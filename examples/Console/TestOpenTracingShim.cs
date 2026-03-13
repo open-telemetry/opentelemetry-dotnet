@@ -6,13 +6,12 @@ using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Shims.OpenTracing;
 using OpenTelemetry.Trace;
-using OpenTracing;
 
 namespace Examples.Console;
 
 internal sealed class TestOpenTracingShim
 {
-    internal static int Run(OpenTracingShimOptions options)
+    internal static int Run()
     {
         // Enable OpenTelemetry for the source "opentracing-shim"
         // and use Console exporter.
@@ -40,13 +39,13 @@ internal sealed class TestOpenTracingShim
 
         // The code below is meant to resemble application code that has been instrumented
         // with the OpenTracing API.
-        using (IScope parentScope = openTracingTracer.BuildSpan("Parent").StartActive(finishSpanOnDispose: true))
+        using (var parentScope = openTracingTracer.BuildSpan("Parent").StartActive(finishSpanOnDispose: true))
         {
             parentScope.Span.SetTag("my", "value");
             parentScope.Span.SetOperationName("parent span new name");
 
             // The child scope will automatically use parentScope as its parent.
-            using IScope childScope = openTracingTracer.BuildSpan("Child").StartActive(finishSpanOnDispose: true);
+            using var childScope = openTracingTracer.BuildSpan("Child").StartActive(finishSpanOnDispose: true);
             childScope.Span.SetTag("Child Tag", "Child Tag Value").SetTag("ch", "value").SetTag("more", "attributes");
         }
 

@@ -38,22 +38,19 @@ public sealed class ZipkinExporterOptions
         IConfiguration configuration,
         BatchExportActivityProcessorOptions defaultBatchOptions)
     {
-        Debug.Assert(configuration != null, "configuration was null");
-        Debug.Assert(defaultBatchOptions != null, "defaultBatchOptions was null");
-
-        if (configuration!.TryGetUriValue(ZipkinExporterEventSource.Log, ZipkinEndpointEnvVar, out var endpoint))
+        if (configuration.TryGetUriValue(ZipkinExporterEventSource.Log, ZipkinEndpointEnvVar, out var endpoint))
         {
             this.Endpoint = endpoint;
         }
 
-        this.BatchExportProcessorOptions = defaultBatchOptions!;
+        this.BatchExportProcessorOptions = defaultBatchOptions;
     }
 
     /// <summary>
     /// Gets or sets Zipkin endpoint address. See https://zipkin.io/zipkin-api/#/default/post_spans.
     /// Typically https://zipkin-server-name:9411/api/v2/spans.
     /// </summary>
-    public Uri Endpoint { get; set; } = new Uri(DefaultZipkinEndpoint);
+    public Uri Endpoint { get; set; } = new(DefaultZipkinEndpoint);
 
     /// <summary>
     /// Gets or sets a value indicating whether short trace id should be used.

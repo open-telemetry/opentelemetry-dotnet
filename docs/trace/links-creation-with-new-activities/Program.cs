@@ -11,23 +11,19 @@ internal static class Program
 {
     private static readonly ActivitySource MyActivitySource = new("LinksCreationWithNewRootActivities");
 
-    public static async Task Main(string[] args)
+    public static async Task Main()
     {
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                 .AddSource("LinksCreationWithNewRootActivities")
                 .AddConsoleExporter()
                 .Build();
 
-        using (var activity = MyActivitySource.StartActivity("OrchestratingActivity"))
-        {
-            activity?.SetTag("foo", 1);
-            await DoFanoutAsync().ConfigureAwait(false);
+        using var activity = MyActivitySource.StartActivity("OrchestratingActivity");
+        activity?.SetTag("foo", 1);
+        await DoFanoutAsync().ConfigureAwait(false);
 
-            using (var nestedActivity = MyActivitySource.StartActivity("WrapUp"))
-            {
-                nestedActivity?.SetTag("foo", 1);
-            }
-        }
+        using var nestedActivity = MyActivitySource.StartActivity("WrapUp");
+        nestedActivity?.SetTag("foo", 1);
     }
 
     public static async Task DoFanoutAsync()
@@ -38,7 +34,7 @@ internal static class Program
         var activityContext = Activity.Current!.Context;
         var links = new List<ActivityLink>
         {
-            new ActivityLink(activityContext),
+            new(activityContext),
         };
 
         var tasks = new List<Task>();
@@ -47,9 +43,9 @@ internal static class Program
         // We create a new root activity for each operation and
         // link it to an outer activity that happens to be the current
         // activity.
-        for (int i = 0; i < NumConcurrentOperations; i++)
+        for (var i = 0; i < NumConcurrentOperations; i++)
         {
-            int operationIndex = i;
+            var operationIndex = i;
 
             var task = Task.Run(() =>
             {

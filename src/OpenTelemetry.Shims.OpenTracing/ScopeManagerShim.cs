@@ -10,7 +10,9 @@ namespace OpenTelemetry.Shims.OpenTracing;
 
 internal sealed class ScopeManagerShim : IScopeManager
 {
+#pragma warning disable IDE0028 // Simplify collection initialization
     private static readonly ConditionalWeakTable<TelemetrySpan, IScope> SpanScopeTable = new();
+#pragma warning restore IDE0028 // Simplify collection initialization
 
 #if DEBUG
     private int spanScopeTableCount;
@@ -24,17 +26,12 @@ internal sealed class ScopeManagerShim : IScopeManager
         get
         {
             var currentSpan = Tracer.CurrentSpan;
-            if (currentSpan == null || !currentSpan.Context.IsValid)
-            {
-                return null;
-            }
-
-            if (SpanScopeTable.TryGetValue(currentSpan, out var openTracingScope))
-            {
-                return openTracingScope;
-            }
-
-            return new ScopeInstrumentation(currentSpan);
+            return
+                currentSpan == null || !currentSpan.Context.IsValid ?
+                null :
+                SpanScopeTable.TryGetValue(currentSpan, out var openTracingScope) ?
+                openTracingScope :
+                new ScopeInstrumentation(currentSpan);
         }
     }
 
@@ -56,7 +53,7 @@ internal sealed class ScopeManagerShim : IScopeManager
                     Interlocked.Decrement(ref this.spanScopeTableCount);
                 }
 #endif
-                scope!.Dispose();
+                scope?.Dispose();
             });
 
         SpanScopeTable.Add(shim.Span, instrumentation);
@@ -82,8 +79,6 @@ internal sealed class ScopeManagerShim : IScopeManager
 
         /// <inheritdoc/>
         public void Dispose()
-        {
-            this.disposeAction?.Invoke();
-        }
+            => this.disposeAction?.Invoke();
     }
 }

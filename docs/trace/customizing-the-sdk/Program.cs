@@ -33,11 +33,11 @@ internal static class Program
             // The following adds subscription to activities from all Activity Sources
             // whose name starts with "AbcCompany.XyzProduct.".
             .AddSource("AbcCompany.XyzProduct.*")
-            .ConfigureResource(resource => resource.AddAttributes(new List<KeyValuePair<string, object>>
-                {
+            .ConfigureResource(resource => resource.AddAttributes(
+                [
                     new KeyValuePair<string, object>("static-attribute1", "v1"),
                     new KeyValuePair<string, object>("static-attribute2", "v2"),
-                }))
+                ]))
             .ConfigureResource(resource => resource.AddService("MyServiceName"))
             .AddConsoleExporter()
             .Build();

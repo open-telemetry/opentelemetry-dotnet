@@ -72,8 +72,7 @@ public class OtlpSecureHttpClientFactoryTests
     }
 
     [Fact]
-    public void CreateHttpClient_ConfiguresServerCertificateValidation_WhenCaCertificatesProvided()
-    {
+    public void CreateHttpClient_ConfiguresServerCertificateValidation_WhenCaCertificatesProvided() =>
         SkipTestIfCryptoNotSupported(() =>
         {
             var tempTrustStoreFile = Path.GetTempFileName();
@@ -110,11 +109,9 @@ public class OtlpSecureHttpClientFactoryTests
                 }
             }
         });
-    }
 
     [Fact]
-    public void CreateHttpClient_ConfiguresServerValidation_WithCaOnly()
-    {
+    public void CreateHttpClient_ConfiguresServerValidation_WithCaOnly() =>
         SkipTestIfCryptoNotSupported(() =>
         {
             var tempTrustStoreFile = Path.GetTempFileName();
@@ -152,11 +149,9 @@ public class OtlpSecureHttpClientFactoryTests
                 }
             }
         });
-    }
 
     [Fact]
-    public void CreateHttpClient_InvokesServerValidationCallbackAfterFactoryReturns()
-    {
+    public void CreateHttpClient_InvokesServerValidationCallbackAfterFactoryReturns() =>
         SkipTestIfCryptoNotSupported(() =>
         {
             var tempTrustStoreFile = Path.GetTempFileName();
@@ -202,7 +197,6 @@ public class OtlpSecureHttpClientFactoryTests
                 }
             }
         });
-    }
 
     [Fact]
     public void ValidateServerCertificate_ReturnsTrue_WhenNoSslPolicyErrors()
@@ -326,7 +320,7 @@ public class OtlpSecureHttpClientFactoryTests
             DateTimeOffset.UtcNow.AddDays(-1),
             DateTimeOffset.UtcNow.AddDays(30));
 #if NET9_0_OR_GREATER
-        return X509CertificateLoader.LoadPkcs12(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
+        return X509CertificateLoader.LoadPkcs12(cert.Export(X509ContentType.Pfx), null, X509KeyStorageFlags.Exportable);
 #else
 #pragma warning disable SYSLIB0057
         return new X509Certificate2(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
@@ -354,7 +348,7 @@ public class OtlpSecureHttpClientFactoryTests
             DateTimeOffset.UtcNow.AddYears(1));
 
 #if NET9_0_OR_GREATER
-        return X509CertificateLoader.LoadPkcs12(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
+        return X509CertificateLoader.LoadPkcs12(cert.Export(X509ContentType.Pfx), null, X509KeyStorageFlags.Exportable);
 #else
 #pragma warning disable SYSLIB0057
         return new X509Certificate2(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
@@ -391,7 +385,7 @@ public class OtlpSecureHttpClientFactoryTests
             serialNumber);
 
 #if NET9_0_OR_GREATER
-        return X509CertificateLoader.LoadPkcs12(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
+        return X509CertificateLoader.LoadPkcs12(cert.Export(X509ContentType.Pfx), null, X509KeyStorageFlags.Exportable);
 #else
 #pragma warning disable SYSLIB0057
         return new X509Certificate2(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
@@ -415,7 +409,7 @@ public class OtlpSecureHttpClientFactoryTests
             DateTimeOffset.UtcNow.AddDays(-1));
 
 #if NET9_0_OR_GREATER
-        return X509CertificateLoader.LoadPkcs12(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
+        return X509CertificateLoader.LoadPkcs12(cert.Export(X509ContentType.Pfx), null, X509KeyStorageFlags.Exportable);
 #else
 #pragma warning disable SYSLIB0057
         return new X509Certificate2(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
@@ -428,7 +422,7 @@ public class OtlpSecureHttpClientFactoryTests
         var builder = new StringBuilder();
         builder.AppendLine(certificate.ExportCertificatePem().Trim());
 
-        using RSA? privateKey = certificate.GetRSAPrivateKey();
+        using var privateKey = certificate.GetRSAPrivateKey();
         if (privateKey != null)
         {
             var pkcs8Bytes = privateKey.ExportPkcs8PrivateKey();

@@ -93,6 +93,9 @@ public class MetricReaderTests
                 }
 
                 break;
+
+            default:
+                break;
         }
 
         provider.ForceFlush();

@@ -1,13 +1,12 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-namespace Examples.AspNetCore.Controllers;
-
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Security.Cryptography;
-using Examples.AspNetCore;
 using Microsoft.AspNetCore.Mvc;
+
+namespace Examples.AspNetCore.Controllers;
 
 [ApiController]
 [Route("[controller]")]

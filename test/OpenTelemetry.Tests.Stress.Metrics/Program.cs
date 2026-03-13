@@ -20,9 +20,7 @@ internal static class Program
     }
 
     public static int Main(string[] args)
-    {
-        return StressTestFactory.RunSynchronously<MetricsStressTest, MetricsStressTestOptions>(args);
-    }
+        => StressTestFactory.RunSynchronously<MetricsStressTest, MetricsStressTestOptions>(args);
 
 #pragma warning disable CA1812 // Avoid uninstantiated internal classes
     private sealed class MetricsStressTest : StressTests<MetricsStressTestOptions>
@@ -40,7 +38,7 @@ internal static class Program
 
         static MetricsStressTest()
         {
-            for (int i = 0; i < ArraySize; i++)
+            for (var i = 0; i < ArraySize; i++)
             {
                 DimensionValues[i] = $"DimValue{i}";
             }
@@ -99,7 +97,12 @@ internal static class Program
 
         protected override void RunWorkItemInParallel()
         {
+#if NET
             var random = ThreadLocalRandom.Value!;
+#else
+            var random = ThreadLocalRandom.Value;
+#endif
+
             if (this.Options.TestType == MetricsStressTestType.Histogram)
             {
                 TestHistogram.Record(

@@ -153,7 +153,7 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
         this.innerBuilder.Services = null;
 
 #if DEBUG
-        bool validateScopes = true;
+        var validateScopes = true;
 #else
         bool validateScopes = false;
 #endif
@@ -171,7 +171,7 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
 
     private static bool IsOtelSdkDisabled(IConfiguration configuration)
     {
-        bool isDisabled = configuration.TryGetBoolValue(OpenTelemetrySdkEventSource.Log, SdkConfigDefinitions.SdkDisableEnvVarName, out bool result) && result;
+        var isDisabled = configuration.TryGetBoolValue(OpenTelemetrySdkEventSource.Log, SdkConfigDefinitions.SdkDisableEnvVarName, out var result) && result;
         if (isDisabled)
         {
             OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Disabled because {SdkConfigDefinitions.SdkDisableEnvVarName} is true.");

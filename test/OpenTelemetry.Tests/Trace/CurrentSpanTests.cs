@@ -8,21 +8,17 @@ namespace OpenTelemetry.Trace.Tests;
 
 public sealed class CurrentSpanTests : IDisposable
 {
-    private readonly Tracer tracer;
-
     public CurrentSpanTests()
     {
         Activity.DefaultIdFormat = ActivityIdFormat.W3C;
         Activity.ForceDefaultIdFormat = true;
 
-        this.tracer = TracerProvider.Default.GetTracer(null!);
+        _ = TracerProvider.Default.GetTracer(null!);
     }
 
     [Fact]
     public void CurrentSpan_WhenNoContext()
-    {
-        Assert.False(Tracer.CurrentSpan.Context.IsValid);
-    }
+        => Assert.False(Tracer.CurrentSpan.Context.IsValid);
 
     [Fact]
     public void CurrentSpan_WhenActivityExists()

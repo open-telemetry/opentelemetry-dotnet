@@ -89,7 +89,7 @@ internal sealed class TestEventListener : EventListener
     protected override void OnEventSourceCreated(EventSource eventSource)
     {
         // Check for null because this method is called by the base class constructor before we can initialize it
-        Action<EventSource>? callback = this.OnOnEventSourceCreated;
+        var callback = this.OnOnEventSourceCreated;
         callback?.Invoke(eventSource);
     }
 }

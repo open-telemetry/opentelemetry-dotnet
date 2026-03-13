@@ -16,13 +16,15 @@ internal sealed class ConsoleTagWriter : JsonStringArrayTagWriter<ConsoleTagWrit
     {
         Debug.Assert(onUnsupportedTagDropped != null, "onUnsupportedTagDropped was null");
 
+#if NET
+        this.onUnsupportedTagDropped = onUnsupportedTagDropped;
+#else
         this.onUnsupportedTagDropped = onUnsupportedTagDropped!;
+#endif
     }
 
     public bool TryTransformTag(KeyValuePair<string, object?> tag, out KeyValuePair<string, string> result)
-    {
-        return this.TryTransformTag(tag.Key, tag.Value, out result);
-    }
+        => this.TryTransformTag(tag.Key, tag.Value, out result);
 
     public bool TryTransformTag(string key, object? value, out KeyValuePair<string, string> result)
     {
@@ -64,15 +66,17 @@ internal sealed class ConsoleTagWriter : JsonStringArrayTagWriter<ConsoleTagWrit
     protected override void WriteArrayTag(ref ConsoleTag consoleTag, string key, ArraySegment<byte> arrayUtf8JsonBytes)
     {
         consoleTag.Key = key;
+#if NET
         consoleTag.Value = Encoding.UTF8.GetString(arrayUtf8JsonBytes.Array!, 0, arrayUtf8JsonBytes.Count);
+#else
+        consoleTag.Value = Encoding.UTF8.GetString(arrayUtf8JsonBytes.Array, 0, arrayUtf8JsonBytes.Count);
+#endif
     }
 
     protected override void OnUnsupportedTagDropped(
         string tagKey,
         string tagValueTypeFullName)
-    {
-        this.onUnsupportedTagDropped(tagKey, tagValueTypeFullName);
-    }
+        => this.onUnsupportedTagDropped(tagKey, tagValueTypeFullName);
 
     protected override bool TryWriteEmptyTag(ref ConsoleTag consoleTag, string key, object? value)
     {

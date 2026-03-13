@@ -49,7 +49,7 @@ internal sealed class TestMeterProviderBuilder : MeterProviderBuilder, IMeterPro
         }
         else
         {
-            foreach (string name in names)
+            foreach (var name in names)
             {
                 this.Meters.Add(name);
             }

@@ -66,7 +66,7 @@ public class HistogramBenchmarks
 
         // Evenly distribute the bound values over the range [0, MaxValue)
         this.bounds = new double[this.BoundCount];
-        for (int i = 0; i < this.bounds.Length; i++)
+        for (var i = 0; i < this.bounds.Length; i++)
         {
             this.bounds[i] = i * MaxValue / this.bounds.Length;
         }

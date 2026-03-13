@@ -58,7 +58,7 @@ internal
     {
         var runningExemplars = this.runningExemplars;
 
-        for (int i = 0; i < runningExemplars.Length; i++)
+        for (var i = 0; i < runningExemplars.Length; i++)
         {
             ref var running = ref runningExemplars[i];
 
@@ -76,7 +76,7 @@ internal
     {
         var viewDefinedTagKeys = aggregatorStore.TagKeysInteresting;
 
-        for (int i = 0; i < this.runningExemplars.Length; i++)
+        for (var i = 0; i < this.runningExemplars.Length; i++)
         {
             this.runningExemplars[i].ViewDefinedTagKeys = viewDefinedTagKeys;
             this.snapshotExemplars[i].ViewDefinedTagKeys = viewDefinedTagKeys;

@@ -12,10 +12,6 @@ internal static class Utils
     public static string GetCurrentMethodName()
     {
         var method = new StackFrame(1).GetMethod();
-
-        Debug.Assert(method != null, "Failed to get Method from the executing stack.");
-        Debug.Assert(method!.DeclaringType != null, "DeclaringType is not expected to be null.");
-
-        return $"{method.DeclaringType!.FullName}.{method.Name}";
+        return $"{method?.DeclaringType?.FullName}.{method?.Name}";
     }
 }

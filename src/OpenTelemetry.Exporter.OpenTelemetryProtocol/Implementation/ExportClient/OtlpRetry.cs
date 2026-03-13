@@ -74,11 +74,9 @@ internal static class OtlpRetry
         }
     }
 
-    public static bool ShouldHandleHttpRequestException(Exception? exception)
-    {
-        // TODO: Handle specific exceptions.
-        return true;
-    }
+#pragma warning disable IDE0060 // Remove unused parameter
+    public static bool ShouldHandleHttpRequestException(Exception? exception) => true; // TODO: Handle specific exceptions.
+#pragma warning restore IDE0060 // Remove unused parameter
 
     public static bool TryGetGrpcRetryResult(ExportClientGrpcResponse response, int retryDelayMilliseconds, out RetryResult retryResult)
     {
@@ -183,11 +181,9 @@ internal static class OtlpRetry
         return true;
     }
 
+    // This implementation is internal, and it is guaranteed that deadline is UTC.
     private static bool IsDeadlineExceeded(DateTime? deadline)
-    {
-        // This implementation is internal, and it is guaranteed that deadline is UTC.
-        return deadline.HasValue && deadline <= DateTime.UtcNow;
-    }
+        => deadline.HasValue && deadline <= DateTime.UtcNow;
 
     private static int CalculateNextRetryDelay(int nextRetryDelayMilliseconds)
     {
@@ -199,49 +195,37 @@ internal static class OtlpRetry
     private static TimeSpan? TryGetHttpRetryDelay(HttpStatusCode statusCode, HttpResponseHeaders? responseHeaders)
     {
 #if NETSTANDARD2_1_OR_GREATER || NET
-        return statusCode == HttpStatusCode.TooManyRequests || statusCode == HttpStatusCode.ServiceUnavailable
+        return statusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable
 #else
-        return statusCode == (HttpStatusCode)429 || statusCode == HttpStatusCode.ServiceUnavailable
+        return statusCode is (HttpStatusCode)429 or HttpStatusCode.ServiceUnavailable
 #endif
             ? responseHeaders?.RetryAfter?.Delta
             : null;
     }
 
-    private static bool IsGrpcStatusCodeRetryable(StatusCode statusCode, bool hasRetryDelay)
+#pragma warning disable IDE0072 // Add missing cases
+    private static bool IsGrpcStatusCodeRetryable(StatusCode statusCode, bool hasRetryDelay) => statusCode switch
+#pragma warning restore IDE0072 // Add missing cases
     {
-        switch (statusCode)
-        {
-            case StatusCode.Cancelled:
-            case StatusCode.DeadlineExceeded:
-            case StatusCode.Aborted:
-            case StatusCode.OutOfRange:
-            case StatusCode.Unavailable:
-            case StatusCode.DataLoss:
-                return true;
-            case StatusCode.ResourceExhausted:
-                return hasRetryDelay;
-            default:
-                return false;
-        }
-    }
+        StatusCode.Cancelled or StatusCode.DeadlineExceeded or StatusCode.Aborted or StatusCode.OutOfRange or StatusCode.Unavailable or StatusCode.DataLoss => true,
+        StatusCode.ResourceExhausted => hasRetryDelay,
+        _ => false,
+    };
 
-    private static bool IsHttpStatusCodeRetryable(HttpStatusCode statusCode, bool hasRetryDelay)
+#pragma warning disable IDE0072 // Add missing cases
+    private static bool IsHttpStatusCodeRetryable(HttpStatusCode statusCode, bool hasRetryDelay) => statusCode switch
+#pragma warning restore IDE0072 // Add missing cases
     {
-        switch (statusCode)
-        {
 #if NETSTANDARD2_1_OR_GREATER || NET
-            case HttpStatusCode.TooManyRequests:
+        HttpStatusCode.TooManyRequests => true,
 #else
-            case (HttpStatusCode)429:
+        (HttpStatusCode)429 => true,
 #endif
-            case HttpStatusCode.BadGateway:
-            case HttpStatusCode.ServiceUnavailable:
-            case HttpStatusCode.GatewayTimeout:
-                return true;
-            default:
-                return false;
-        }
-    }
+        HttpStatusCode.BadGateway => true,
+        HttpStatusCode.ServiceUnavailable => true,
+        HttpStatusCode.GatewayTimeout => true,
+        _ => false,
+    };
 
     private static int GetRandomNumber(int min, int max)
     {

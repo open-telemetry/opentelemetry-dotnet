@@ -28,7 +28,7 @@ public class SamplersTests
 
         Assert.Equal(
             SamplingDecision.RecordAndSample,
-            new AlwaysOnSampler().ShouldSample(new SamplingParameters(parentContext, this.traceId, "Another name", ActivityKind.Server, null, new List<ActivityLink> { link })).Decision);
+            new AlwaysOnSampler().ShouldSample(new SamplingParameters(parentContext, this.traceId, "Another name", ActivityKind.Server, null, [link])).Decision);
     }
 
     [Fact]
@@ -47,7 +47,7 @@ public class SamplersTests
 
         Assert.Equal(
             SamplingDecision.Drop,
-            new AlwaysOffSampler().ShouldSample(new SamplingParameters(parentContext, this.traceId, "Another name", ActivityKind.Server, null, new List<ActivityLink> { link })).Decision);
+            new AlwaysOffSampler().ShouldSample(new SamplingParameters(parentContext, this.traceId, "Another name", ActivityKind.Server, null, [link])).Decision);
     }
 
     [Fact]
@@ -80,7 +80,7 @@ public class SamplersTests
                     .AddLegacySource(operationNameForLegacyActivity)
                     .Build();
 
-        using Activity activity = new Activity(operationNameForLegacyActivity);
+        using var activity = new Activity(operationNameForLegacyActivity);
         activity.Start();
         Assert.NotNull(activity);
         if (samplingDecision != SamplingDecision.Drop)

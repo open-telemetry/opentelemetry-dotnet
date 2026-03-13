@@ -20,7 +20,7 @@ internal sealed class OtelServiceNameEnvVarDetector : IResourceDetector
     {
         var resource = Resource.Empty;
 
-        if (this.configuration.TryGetStringValue(EnvVarKey, out string? envResourceAttributeValue))
+        if (this.configuration.TryGetStringValue(EnvVarKey, out var envResourceAttributeValue))
         {
             resource = new Resource(new Dictionary<string, object>
             {

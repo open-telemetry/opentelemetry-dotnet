@@ -77,7 +77,7 @@ public class TraceBenchmarks
             ActivityStarted = null,
             ActivityStopped = null,
             ShouldListenTo = (activitySource) => activitySource.Name == this.sourceWithPropagationDataListner.Name,
-            Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.PropagationData,
+            Sample = (ref options) => ActivitySamplingResult.PropagationData,
         };
 
         ActivitySource.AddActivityListener(this.activityListenerPropagationData);
@@ -87,7 +87,7 @@ public class TraceBenchmarks
             ActivityStarted = null,
             ActivityStopped = null,
             ShouldListenTo = (activitySource) => activitySource.Name == this.sourceWithAllDataListner.Name,
-            Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllData,
+            Sample = (ref options) => ActivitySamplingResult.AllData,
         };
 
         ActivitySource.AddActivityListener(this.activityListenerAllData);
@@ -97,7 +97,7 @@ public class TraceBenchmarks
             ActivityStarted = null,
             ActivityStopped = null,
             ShouldListenTo = (activitySource) => activitySource.Name == this.sourceWithAllDataAndRecordedListner.Name,
-            Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllDataAndRecorded,
+            Sample = (ref options) => ActivitySamplingResult.AllDataAndRecorded,
         };
 
         ActivitySource.AddActivityListener(this.activityListenerAllDataAndRecordedData);

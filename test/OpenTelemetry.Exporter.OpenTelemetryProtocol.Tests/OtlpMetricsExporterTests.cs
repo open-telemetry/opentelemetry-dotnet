@@ -57,7 +57,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
             var metricReader = typeof(MetricReader)
                 .Assembly
                 .GetType("OpenTelemetry.Metrics.MeterProviderSdk")?
-                .GetField("reader", bindingFlags)?
+                .GetProperty("Reader", bindingFlags)?
                 .GetValue(meterProvider) as PeriodicExportingMetricReader;
 
             Assert.NotNull(metricReader);
@@ -73,8 +73,8 @@ public sealed class OtlpMetricsExporterTests : IDisposable
     [Fact]
     public void TestAddOtlpExporter_NamedOptions()
     {
-        int defaultExporterOptionsConfigureOptionsInvocations = 0;
-        int namedExporterOptionsConfigureOptionsInvocations = 0;
+        var defaultExporterOptionsConfigureOptionsInvocations = 0;
+        var namedExporterOptionsConfigureOptionsInvocations = 0;
 
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .ConfigureServices(services =>
@@ -100,11 +100,11 @@ public sealed class OtlpMetricsExporterTests : IDisposable
     [Fact]
     public void UserHttpFactoryCalled()
     {
-        OtlpExporterOptions options = new OtlpExporterOptions();
+        var options = new OtlpExporterOptions();
 
         var defaultFactory = options.HttpClientFactory;
 
-        int invocations = 0;
+        var invocations = 0;
         options.Protocol = OtlpExportProtocol.HttpProtobuf;
         options.HttpClientFactory = () =>
         {
@@ -142,7 +142,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
 
         services.AddHttpClient();
 
-        int invocations = 0;
+        var invocations = 0;
 
         services.AddHttpClient("OtlpMetricExporter", configureClient: (client) => invocations++);
 
@@ -167,11 +167,10 @@ public sealed class OtlpMetricsExporterTests : IDisposable
         if (includeServiceNameInResource)
         {
             resourceBuilder.AddAttributes(
-                new List<KeyValuePair<string, object>>
-                {
+                [
                     new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceName, "service-name"),
                     new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceNamespace, "ns1"),
-                });
+                ]);
         }
 
         var metrics = new List<Metric>();
@@ -201,7 +200,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
 
         provider.ForceFlush();
 
-        var batch = new Batch<Metric>(metrics.ToArray(), metrics.Count);
+        var batch = new Batch<Metric>([.. metrics], metrics.Count);
         var request = CreateMetricExportRequest(batch, resourceBuilder.Build());
 
         Assert.Single(request.ResourceMetrics);
@@ -257,7 +256,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
 
         provider.ForceFlush();
 
-        var batch = new Batch<Metric>(metrics.ToArray(), metrics.Count);
+        var batch = new Batch<Metric>([.. metrics], metrics.Count);
 
         var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
 
@@ -323,7 +322,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
             })
             .Build();
 
-        var attributes = enableKeyValues ? KeyValues : Array.Empty<KeyValuePair<string, object?>>();
+        var attributes = enableKeyValues ? KeyValues : [];
         if (longValue.HasValue)
         {
             var counter = meter.CreateCounter<long>(name, unit, description);
@@ -337,7 +336,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
 
         provider.ForceFlush();
 
-        var batch = new Batch<Metric>(metrics.ToArray(), metrics.Count);
+        var batch = new Batch<Metric>([.. metrics], metrics.Count);
         var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
 
         var resourceMetric = request.ResourceMetrics.Single();
@@ -418,7 +417,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
             })
             .Build();
 
-        var attributes = enableKeyValues ? KeyValues : Array.Empty<KeyValuePair<string, object?>>();
+        var attributes = enableKeyValues ? KeyValues : [];
         if (longValue.HasValue)
         {
             var counter = meter.CreateUpDownCounter<long>(name, unit, description);
@@ -432,7 +431,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
 
         provider.ForceFlush();
 
-        var batch = new Batch<Metric>(metrics.ToArray(), metrics.Count);
+        var batch = new Batch<Metric>([.. metrics], metrics.Count);
 
         var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
 
@@ -518,7 +517,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
             })
             .Build();
 
-        var attributes = enableKeyValues ? KeyValues : Array.Empty<KeyValuePair<string, object?>>();
+        var attributes = enableKeyValues ? KeyValues : [];
         if (longValue.HasValue)
         {
             var histogram = meter.CreateHistogram<long>(name, unit, description);
@@ -534,7 +533,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
 
         provider.ForceFlush();
 
-        var batch = new Batch<Metric>(metrics.ToArray(), metrics.Count);
+        var batch = new Batch<Metric>([.. metrics], metrics.Count);
         var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
 
         var resourceMetric = request.ResourceMetrics.Single();
@@ -652,7 +651,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
             })
             .Build();
 
-        var attributes = enableKeyValues ? KeyValues : Array.Empty<KeyValuePair<string, object?>>();
+        var attributes = enableKeyValues ? KeyValues : [];
         if (longValue.HasValue)
         {
             var histogram = meter.CreateHistogram<long>(name, unit, description);
@@ -666,7 +665,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
 
         provider.ForceFlush();
 
-        var batch = new Batch<Metric>(metrics.ToArray(), metrics.Count);
+        var batch = new Batch<Metric>([.. metrics], metrics.Count);
         var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
 
         var resourceMetric = request.ResourceMetrics.Single();
@@ -813,7 +812,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
                     ? null
                     : new MetricStreamConfiguration
                     {
-                        TagKeys = Array.Empty<string>(),
+                        TagKeys = [],
                     };
             })
             .AddInMemoryExporter(exportedItems)
@@ -838,7 +837,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
 
         meterProvider.ForceFlush();
 
-        var batch = new Batch<Metric>(exportedItems.ToArray(), exportedItems.Count);
+        var batch = new Batch<Metric>([.. exportedItems], exportedItems.Count);
         var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
 
         Assert.Single(request.ResourceMetrics);
@@ -875,11 +874,11 @@ public sealed class OtlpMetricsExporterTests : IDisposable
             }
             else
             {
-                byte[] traceIdBytes = new byte[16];
+                var traceIdBytes = new byte[16];
                 Assert.NotNull(activity);
                 activity.TraceId.CopyTo(traceIdBytes);
 
-                byte[] spanIdBytes = new byte[8];
+                var spanIdBytes = new byte[8];
                 activity.SpanId.CopyTo(spanIdBytes);
 
                 Assert.Equal(ByteString.CopyFrom(traceIdBytes), otlpExemplar.TraceId);
@@ -938,7 +937,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
 
         provider.ForceFlush();
 
-        var batch = new Batch<Metric>(metrics.ToArray(), metrics.Count);
+        var batch = new Batch<Metric>([.. metrics], metrics.Count);
 
         var buffer = new byte[50];
         var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, ResourceBuilder.CreateEmpty().Build(), in batch);

@@ -23,7 +23,7 @@ public sealed class MetricPointTests : IDisposable
 
         // Evenly distribute the bound values over the range [0, MaxValue)
         this.bounds = new double[10];
-        for (int i = 0; i < this.bounds.Length; i++)
+        for (var i = 0; i < this.bounds.Length; i++)
         {
             this.bounds[i] = i * 1000 / this.bounds.Length;
         }
