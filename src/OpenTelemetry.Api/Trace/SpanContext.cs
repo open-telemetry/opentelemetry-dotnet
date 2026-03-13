@@ -90,7 +90,13 @@ public readonly struct SpanContext : IEquatable<SpanContext>
             }
 
             var traceStateResult = new List<KeyValuePair<string, string>>();
+
+#if NET
+            TraceStateUtils.AppendTraceState(traceState, traceStateResult);
+#else
             TraceStateUtils.AppendTraceState(traceState!, traceStateResult);
+#endif
+
             return traceStateResult;
         }
     }

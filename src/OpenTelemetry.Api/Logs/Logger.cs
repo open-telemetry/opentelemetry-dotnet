@@ -31,7 +31,11 @@ abstract class Logger
     {
         this.Name = string.IsNullOrWhiteSpace(name)
             ? string.Empty
+#if NET10_0_OR_GREATER
+            : name;
+#else
             : name!;
+#endif
     }
 
     /// <summary>
@@ -60,9 +64,5 @@ abstract class Logger
         in LogRecordData data,
         in LogRecordAttributeList attributes);
 
-    internal void SetInstrumentationScope(
-        string? version)
-    {
-        this.Version = version;
-    }
+    internal void SetInstrumentationScope(string? version) => this.Version = version;
 }
