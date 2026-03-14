@@ -30,6 +30,7 @@ jobs:
     if: github.event_name != 'schedule' || (github.event_name == 'schedule' && github.event.repository.fork == false)
     runs-on: windows-latest
     permissions:
+      artifact-metadata: write
       attestations: write
       contents: read
       id-token: write
@@ -50,10 +51,10 @@ jobs:
         fetch-depth: 0
 
     - name: Setup dotnet
-      uses: actions/setup-dotnet@baa11fbfe1d6520db94683bd5c7a3818018e4309 # v5.1.0
+      uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
 
     - name: Install Cosign
-      uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
+      uses: sigstore/cosign-installer@ba7bc0a3fef59531c69a25acd34668d6d3fe6f22 # v4.1.0
 
     - name: dotnet restore
       run: dotnet restore ./build/OpenTelemetry.proj -p:RunningDotNetPack=true
@@ -79,7 +80,7 @@ jobs:
         }
 
     - name: Create GitHub attestations for DLLs
-      uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3.2.0
+      uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
       with:
         subject-path: |
           ./artifacts/bin/*/release_*/OpenTelemetry*.dll
@@ -162,7 +163,7 @@ jobs:
 
     - name: Publish Artifacts
       id: upload-artifacts
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
       with:
         name: ${{ github.ref_name }}-packages
         path: ./artifacts/package/release
