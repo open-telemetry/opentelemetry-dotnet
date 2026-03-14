@@ -134,7 +134,11 @@ internal sealed class LogRecordSharedPool : ILogRecordPool
                 return false;
             }
 
+#if NET
+            wait.SpinOnce(-1);
+#else
             wait.SpinOnce();
+#endif
 
             logRecord = Interlocked.Exchange(ref this.pool[slotIndex], null);
             if (logRecord != null)
