@@ -34,6 +34,7 @@ RUN apt-get update \
   && python3 --version
 
 # HACK Workaround the python tests not working with Python 3.14
+# See https://github.com/w3c/trace-context/issues/581
 RUN python3 -c "from pathlib import Path; path = Path('/test/trace-context/test/server.py'); original = path.read_text(); old = '\t\tself.loop = asyncio.get_event_loop()\n'; new = '\t\tself.loop = asyncio.new_event_loop()\n\t\tasyncio.set_event_loop(self.loop)\n'; import sys; old in original or sys.exit('Expected asyncio.get_event_loop() not found in server.py'); path.write_text(original.replace(old, new, 1))"
 
 RUN pip3 install --requirement requirements.txt --require-hashes --break-system-packages
