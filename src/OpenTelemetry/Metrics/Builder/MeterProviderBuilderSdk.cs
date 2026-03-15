@@ -69,8 +69,7 @@ internal sealed partial class MeterProviderBuilderSdk : MeterProviderBuilder, IM
     /// <param name="customViewName">The view name.</param>
     /// <returns>Boolean indicating if the instrument is valid.</returns>
     public static bool IsValidViewName(string customViewName) =>
-        /* Only validate the view name in case it's not null. In case it's null, the view name will be the instrument name as per the spec. */
-        customViewName == null || InstrumentNameRegex.IsMatch(customViewName);
+        customViewName == null || InstrumentNameRegex.IsMatch(customViewName); // Only validate the view name in case it's not null. In case it's null, the view name will be the instrument name as per the spec.
 
     public void RegisterProvider(MeterProviderSdk meterProvider)
     {

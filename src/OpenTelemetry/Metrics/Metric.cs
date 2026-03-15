@@ -234,10 +234,10 @@ public sealed class Metric
     /// </summary>
     public string MeterVersion => this.InstrumentIdentity.MeterVersion;
 
+#pragma warning disable CA1056 // Change the type of property from 'string' to 'System.Uri'
     /// <summary>
     /// Gets the meter schema URL for the metric stream.
     /// </summary>
-#pragma warning disable CA1056 // Change the type of property from 'string' to 'System.Uri'
     public string MeterSchemaUrl => this.InstrumentIdentity.MeterSchemaUrl;
 #pragma warning restore CA1056 // Change the type of property from 'string' to 'System.Uri'
 

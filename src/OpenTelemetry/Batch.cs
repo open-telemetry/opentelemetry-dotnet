@@ -92,11 +92,10 @@ public readonly struct Batch<T> : IDisposable
     /// <returns><see cref="Enumerator"/>.</returns>
     public Enumerator GetEnumerator()
         => this.circularBuffer != null
-           ? new Enumerator(this.circularBuffer, this.targetCount)
+           ? new(this.circularBuffer, this.targetCount)
            : this.item != null
-               ? new Enumerator(this.item)
-               /* In the event someone uses default/new Batch() to create Batch we fallback to empty items mode. */
-               : new Enumerator(this.items ?? [], this.targetCount);
+               ? new(this.item)
+               : new(this.items ?? [], this.targetCount);
 
     /// <summary>
     /// Enumerates the elements of a <see cref="Batch{T}"/>.

@@ -54,6 +54,7 @@ public class MetricStreamConfiguration
     /// </remarks>
     public string? Description { get; set; }
 
+#pragma warning disable CA1819 // Properties should not return arrays
     /// <summary>
     /// Gets or sets the optional tag keys to include in the metric stream.
     /// </summary>
@@ -69,7 +70,6 @@ public class MetricStreamConfiguration
     /// <item>A copy is made of the provided array.</item>
     /// </list>
     /// </remarks>
-#pragma warning disable CA1819 // Properties should not return arrays
     public string[]? TagKeys
 #pragma warning restore CA1819 // Properties should not return arrays
     {

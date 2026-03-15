@@ -187,8 +187,8 @@ internal sealed class LoggerProviderSdk : LoggerProvider
         }
     }
 
-    /// <inheritdoc />
 #if EXPOSE_EXPERIMENTAL_FEATURES
+    /// <inheritdoc />
     protected
 #else
     internal

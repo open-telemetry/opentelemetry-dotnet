@@ -27,10 +27,10 @@ public readonly struct MetricPointsAccessor
     public Enumerator GetEnumerator()
         => new(this.metricsPoints, this.metricPointsToProcess, this.targetCount);
 
+#pragma warning disable CA1034 // Nested types should not be visible - already part of public API
     /// <summary>
     /// Enumerates the elements of a <see cref="MetricPointsAccessor"/>.
     /// </summary>
-#pragma warning disable CA1034 // Nested types should not be visible - already part of public API
     public struct Enumerator
 #pragma warning restore CA1034 // Nested types should not be visible - already part of public API
     {

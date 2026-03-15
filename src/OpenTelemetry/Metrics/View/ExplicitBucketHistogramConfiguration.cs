@@ -8,6 +8,7 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 public class ExplicitBucketHistogramConfiguration : HistogramConfiguration
 {
+#pragma warning disable CA1819 // Properties should not return arrays
     /// <summary>
     /// Gets or sets the optional boundaries of the histogram metric stream.
     /// </summary>
@@ -23,7 +24,6 @@ public class ExplicitBucketHistogramConfiguration : HistogramConfiguration
     /// </list>
     /// Note: A copy is made of the provided array.
     /// </remarks>
-#pragma warning disable CA1819 // Properties should not return arrays
     public double[]? Boundaries
 #pragma warning restore CA1819 // Properties should not return arrays
     {
