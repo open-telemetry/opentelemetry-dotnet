@@ -28,6 +28,7 @@ public class HttpRetryTestCase
 
     public static TheoryData<HttpRetryTestCase> GetHttpTestCases()
     {
+#pragma warning disable CA1825 // HACK Workaround for https://github.com/dotnet/sdk/issues/53047
         return
         [
             new("NetworkError", [new(statusCode: null)]),
@@ -62,6 +63,7 @@ public class HttpRetryTestCase
                     new(statusCode: HttpStatusCode.ServiceUnavailable, isDeadlineExceeded: true, expectedSuccess: false)
                 ]),
         ];
+#pragma warning restore CA1825
 
         // TODO: Add more cases.
     }

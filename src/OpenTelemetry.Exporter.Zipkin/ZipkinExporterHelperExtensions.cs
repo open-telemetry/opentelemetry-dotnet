@@ -83,13 +83,13 @@ public static class ZipkinExporterHelperExtensions
         {
             options.HttpClientFactory = () =>
             {
-                Type? httpClientFactoryType = Type.GetType("System.Net.Http.IHttpClientFactory, Microsoft.Extensions.Http", throwOnError: false);
+                var httpClientFactoryType = Type.GetType("System.Net.Http.IHttpClientFactory, Microsoft.Extensions.Http", throwOnError: false);
                 if (httpClientFactoryType != null)
                 {
-                    object? httpClientFactory = serviceProvider.GetService(httpClientFactoryType);
+                    var httpClientFactory = serviceProvider.GetService(httpClientFactoryType);
                     if (httpClientFactory != null)
                     {
-                        MethodInfo? createClientMethod = httpClientFactoryType.GetMethod(
+                        var createClientMethod = httpClientFactoryType.GetMethod(
                             "CreateClient",
                             BindingFlags.Public | BindingFlags.Instance,
                             binder: null,

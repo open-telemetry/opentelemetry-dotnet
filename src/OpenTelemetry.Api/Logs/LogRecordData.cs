@@ -89,7 +89,7 @@ internal
     public DateTime Timestamp
     {
         readonly get => this.TimestampBacking;
-        set { this.TimestampBacking = value.Kind == DateTimeKind.Local ? value.ToUniversalTime() : value; }
+        set => this.TimestampBacking = value.Kind == DateTimeKind.Local ? value.ToUniversalTime() : value;
     }
 
     /// <summary>

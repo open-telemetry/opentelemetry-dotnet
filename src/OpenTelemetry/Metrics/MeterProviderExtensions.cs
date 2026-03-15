@@ -126,7 +126,7 @@ public static class MeterProviderExtensions
 
             if (reader is CompositeMetricReader compositeMetricReader)
             {
-                foreach (MetricReader childReader in compositeMetricReader)
+                foreach (var childReader in compositeMetricReader)
                 {
                     if (TryFindExporter(childReader, out exporter))
                     {

@@ -26,7 +26,7 @@ internal sealed class StringArrayEqualityComparer : IEqualityComparer<string[]>
             return false;
         }
 
-        for (int i = 0; i < len1; i++)
+        for (var i = 0; i < len1; i++)
         {
             if (!strings1[i].Equals(strings2[i], StringComparison.Ordinal))
             {
@@ -44,7 +44,7 @@ internal sealed class StringArrayEqualityComparer : IEqualityComparer<string[]>
 #if NET || NETSTANDARD2_1_OR_GREATER
         HashCode hashCode = default;
 
-        for (int i = 0; i < strings.Length; i++)
+        for (var i = 0; i < strings.Length; i++)
         {
             hashCode.Add(strings[i]);
         }
@@ -53,7 +53,7 @@ internal sealed class StringArrayEqualityComparer : IEqualityComparer<string[]>
 #else
         var hash = 17;
 
-        for (int i = 0; i < strings!.Length; i++)
+        for (var i = 0; i < strings!.Length; i++)
         {
             unchecked
             {

@@ -37,12 +37,10 @@ public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
     /// <inheritdoc/>
     public override void OnEnd(LogRecord data)
     {
-        // Note: Intentionally doing a Debug.Assert here and not a
-        // Guard.ThrowIfNull to save prod cycles. Null should really never
-        // happen here.
-        Debug.Assert(data != null, "LogRecord was null.");
-
-        switch (data!.Source)
+        // Note: Intentionally not using Guard.ThrowIfNull
+#pragma warning disable CA1062 // Validate arguments of public methods
+        switch (data.Source)
+#pragma warning restore CA1062 // Validate arguments of public methods
         {
             case LogRecord.LogRecordSource.FromSharedPool:
                 data.Buffer();
@@ -53,10 +51,13 @@ public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
                 }
 
                 break;
+
             case LogRecord.LogRecordSource.CreatedManually:
                 data.Buffer();
                 this.TryExport(data);
                 break;
+
+            case LogRecord.LogRecordSource.FromThreadStaticPool:
             default:
                 Debug.Assert(data.Source == LogRecord.LogRecordSource.FromThreadStaticPool, "LogRecord source was something unexpected");
 

@@ -23,24 +23,16 @@ internal struct IEEE754Double
     }
 
     public static implicit operator double(IEEE754Double value)
-    {
-        return ToDouble(value);
-    }
+        => ToDouble(value);
 
     public static IEEE754Double operator ++(IEEE754Double value)
-    {
-        return Increment(value);
-    }
+        => Increment(value);
 
     public static IEEE754Double operator --(IEEE754Double value)
-    {
-        return Decrement(value);
-    }
+        => Decrement(value);
 
     public static double ToDouble(IEEE754Double value)
-    {
-        return value.DoubleValue;
-    }
+        => value.DoubleValue;
 
     public static IEEE754Double Increment(IEEE754Double value)
     {
@@ -55,20 +47,15 @@ internal struct IEEE754Double
     }
 
     public static IEEE754Double FromDouble(double value)
-    {
-        return new IEEE754Double(value);
-    }
+        => new(value);
 
     public static IEEE754Double FromLong(long value)
-    {
-        return new IEEE754Double { LongValue = value };
-    }
+        => new() { LongValue = value };
 
     public static IEEE754Double FromULong(ulong value)
-    {
-        return new IEEE754Double { ULongValue = value };
-    }
+        => new() { ULongValue = value };
 
+#pragma warning disable IDE0022 // Use expression body for method
     public static IEEE754Double FromString(string value)
     {
 #if NET
@@ -77,31 +64,32 @@ internal struct IEEE754Double
         return FromLong(Convert.ToInt64(value.Replace(" ", string.Empty), 2));
 #endif
     }
+#pragma warning restore IDE0022 // Use expression body for method
 
-    public override string ToString()
+    public override readonly string ToString()
     {
         Span<char> chars = stackalloc char[66];
 
         var bits = this.ULongValue;
         var index = chars.Length - 1;
 
-        for (int i = 0; i < 52; i++)
+        for (var i = 0; i < 52; i++)
         {
-            chars[index--] = (char)(bits & 0x01 | 0x30);
+            chars[index--] = (char)((bits & 0x01) | 0x30);
             bits >>= 1;
         }
 
         chars[index--] = ' ';
 
-        for (int i = 0; i < 11; i++)
+        for (var i = 0; i < 11; i++)
         {
-            chars[index--] = (char)(bits & 0x01 | 0x30);
+            chars[index--] = (char)((bits & 0x01) | 0x30);
             bits >>= 1;
         }
 
         chars[index--] = ' ';
 
-        chars[index--] = (char)(bits & 0x01 | 0x30);
+        chars[index--] = (char)((bits & 0x01) | 0x30);
 
         return chars.ToString();
     }

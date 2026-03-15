@@ -72,22 +72,7 @@ public struct Exemplar
     /// view (<see cref="MetricStreamConfiguration.TagKeys"/>). If view tag
     /// filtering is not configured <see cref="FilteredTags"/> will be empty.
     /// </remarks>
-    public readonly ReadOnlyFilteredTagCollection FilteredTags
-    {
-        get
-        {
-            if (this.tagCount == 0)
-            {
-                return Empty;
-            }
-            else
-            {
-                Debug.Assert(this.tagStorage != null, "tagStorage was null");
-
-                return new(this.ViewDefinedTagKeys, this.tagStorage!, this.tagCount);
-            }
-        }
-    }
+    public readonly ReadOnlyFilteredTagCollection FilteredTags => this.tagCount == 0 ? Empty : new(this.ViewDefinedTagKeys, this.tagStorage!, this.tagCount);
 
     internal void Update<T>(in ExemplarMeasurement<T> measurement)
         where T : struct
@@ -140,14 +125,10 @@ public struct Exemplar
     }
 
     internal void Reset()
-    {
-        this.Timestamp = default;
-    }
+        => this.Timestamp = default;
 
     internal readonly bool IsUpdated()
-    {
-        return this.Timestamp != default;
-    }
+        => this.Timestamp != default;
 
     internal void Collect(ref Exemplar destination, bool reset)
     {
@@ -185,7 +166,7 @@ public struct Exemplar
             Debug.Assert(this.tagStorage != null, "tagStorage was null");
 
             destination.tagStorage = new KeyValuePair<string, object?>[destination.tagCount];
-            Array.Copy(this.tagStorage!, 0, destination.tagStorage, 0, destination.tagCount);
+            Array.Copy(this.tagStorage, 0, destination.tagStorage, 0, destination.tagCount);
         }
     }
 

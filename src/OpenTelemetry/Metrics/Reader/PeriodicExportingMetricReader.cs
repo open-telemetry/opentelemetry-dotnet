@@ -138,6 +138,9 @@ public class PeriodicExportingMetricReader : BaseExportingMetricReader
                     OpenTelemetrySdkEventSource.Log.MetricReaderEvent("PeriodicExportingMetricReader calling MetricReader.Collect because the export interval has elapsed.");
                     this.Collect(this.ExportTimeoutMilliseconds);
                     break;
+
+                default:
+                    break;
             }
         }
     }

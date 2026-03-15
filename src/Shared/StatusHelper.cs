@@ -49,7 +49,7 @@ internal static class StatusHelper
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool TryGetStatusCodeForTagValue(string? statusCodeTagValue, out StatusCode statusCode)
     {
-        StatusCode? tempStatusCode = GetStatusCodeForTagValue(statusCodeTagValue);
+        var tempStatusCode = GetStatusCodeForTagValue(statusCodeTagValue);
 
         statusCode = tempStatusCode ?? default;
 

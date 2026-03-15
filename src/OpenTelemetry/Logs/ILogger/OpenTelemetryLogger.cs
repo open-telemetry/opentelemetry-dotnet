@@ -11,8 +11,8 @@ namespace OpenTelemetry.Logs;
 
 internal sealed class OpenTelemetryLogger : ILogger
 {
-    private static readonly string[] LogLevels = new string[]
-    {
+    private static readonly string[] LogLevels =
+    [
         nameof(LogLevel.Trace),
         nameof(LogLevel.Debug),
         nameof(LogLevel.Information),
@@ -20,7 +20,7 @@ internal sealed class OpenTelemetryLogger : ILogger
         nameof(LogLevel.Error),
         nameof(LogLevel.Critical),
         nameof(LogLevel.None),
-    };
+    ];
 
     private readonly LoggerProviderSdk provider;
     private readonly OpenTelemetryLoggerOptions options;
@@ -31,12 +31,11 @@ internal sealed class OpenTelemetryLogger : ILogger
         OpenTelemetryLoggerOptions options,
         string categoryName)
     {
-        Debug.Assert(provider != null, "provider was null");
         Debug.Assert(categoryName != null, "categoryName was null");
-        Debug.Assert(options != null, "options was null");
 
-        this.provider = provider!;
-        this.options = options!;
+        this.provider = provider;
+        this.options = options;
+
         this.instrumentationScope = InstrumentationScopeLogger.GetInstrumentationScopeLoggerForName(categoryName);
     }
 
@@ -59,7 +58,7 @@ internal sealed class OpenTelemetryLogger : ILogger
 
             var record = pool.Rent();
 
-            ref LogRecord.LogRecordILoggerData iloggerData = ref record.ILoggerData;
+            ref var iloggerData = ref record.ILoggerData;
 
             iloggerData.TraceState = this.options.IncludeTraceState && activity != null
                 ? activity.TraceStateString
@@ -69,7 +68,7 @@ internal sealed class OpenTelemetryLogger : ILogger
             iloggerData.ScopeProvider = this.options.IncludeScopes ? this.ScopeProvider : null;
             iloggerData.BufferedScopes = null;
 
-            ref LogRecordData data = ref record.Data;
+            ref var data = ref record.Data;
 
             data.TimestampBacking = DateTime.UtcNow;
 
@@ -109,16 +108,14 @@ internal sealed class OpenTelemetryLogger : ILogger
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsEnabled(LogLevel logLevel)
-    {
-        return logLevel != LogLevel.None && !Sdk.SuppressInstrumentation;
-    }
+        => logLevel != LogLevel.None && !Sdk.SuppressInstrumentation;
 
     public IDisposable BeginScope<TState>(TState state)
         where TState : notnull => this.ScopeProvider?.Push(state) ?? NullScope.Instance;
 
     internal static void SetLogRecordSeverityFields(ref LogRecordData logRecordData, LogLevel logLevel)
     {
-        uint intLogLevel = (uint)logLevel;
+        var intLogLevel = (uint)logLevel;
         if (intLogLevel < 6)
         {
             logRecordData.Severity = (LogRecordSeverity)((intLogLevel * 4) + 1);
@@ -182,7 +179,7 @@ internal sealed class OpenTelemetryLogger : ILogger
             var attributeStorage = logRecord.AttributeStorage;
             if (attributeStorage == null)
             {
-                return logRecord.AttributeStorage = new List<KeyValuePair<string, object?>>(stateValues);
+                return logRecord.AttributeStorage = [.. stateValues];
             }
             else
             {
@@ -206,7 +203,7 @@ internal sealed class OpenTelemetryLogger : ILogger
 
             OpenTelemetrySdkEventSource.Log.LoggerProcessStateSkipped<TState>();
 
-            return Array.Empty<KeyValuePair<string, object?>>();
+            return [];
         }
     }
 
@@ -216,7 +213,7 @@ internal sealed class OpenTelemetryLogger : ILogger
     {
         if (attributes != null && attributes.Count > 0)
         {
-            for (int i = attributes.Count - 1; i >= 0; i--)
+            for (var i = attributes.Count - 1; i >= 0; i--)
             {
                 var attribute = attributes[i];
                 if (attribute.Key == "{OriginalFormat}"

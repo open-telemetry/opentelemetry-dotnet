@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Diagnostics;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -14,7 +13,6 @@ namespace OpenTelemetry.Exporter.Prometheus;
 [ExportModes(ExportModes.Pull)]
 internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExporter
 {
-    private Resource? resource;
     private bool disposed;
 
     /// <summary>
@@ -53,15 +51,11 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
 
     internal bool DisableTimestamp { get; set; }
 
-    internal Resource Resource => this.resource ??= this.ParentProvider.GetResource();
+    internal Resource Resource { get => field ??= this.ParentProvider.GetResource(); private set; }
 
     /// <inheritdoc/>
     public override ExportResult Export(in Batch<Metric> metrics)
-    {
-        Debug.Assert(this.OnExport != null, "this.OnExport was null");
-
-        return this.OnExport!(in metrics);
-    }
+        => this.OnExport!(in metrics);
 
     /// <inheritdoc/>
     protected override void Dispose(bool disposing)

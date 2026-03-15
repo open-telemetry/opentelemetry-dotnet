@@ -327,7 +327,7 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
     public void WhenOpenTelemetrySdkIsDisabledExceptionNotThrown()
     {
         // Arrange
-        string meterName = "TestMeter";
+        var meterName = "TestMeter";
 
         using (new EnvironmentVariableScope("OTEL_SDK_DISABLED", "true"))
         {

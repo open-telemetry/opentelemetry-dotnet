@@ -61,7 +61,7 @@ public readonly struct SamplingResult : IEquatable<SamplingResult>
         // Note: Decision object takes ownership of the collection.
         // Current implementation has no means to ensure the collection will not be modified by the caller.
         // If this behavior will be abused we must switch to cloning of the collection.
-        this.Attributes = attributes ?? Enumerable.Empty<KeyValuePair<string, object>>();
+        this.Attributes = attributes ?? [];
 
         this.TraceStateString = traceStateString;
     }

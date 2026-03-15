@@ -52,7 +52,7 @@ internal sealed class TestPropagator : TextMapPropagator
         var tracestateCollection = getter(carrier, this.stateHeaderName);
         if (tracestateCollection?.Any() ?? false)
         {
-            TraceContextPropagator.TryExtractTracestate(tracestateCollection.ToArray(), out tracestate);
+            TraceContextPropagator.TryExtractTracestate([.. tracestateCollection], out tracestate);
         }
 
         return new PropagationContext(

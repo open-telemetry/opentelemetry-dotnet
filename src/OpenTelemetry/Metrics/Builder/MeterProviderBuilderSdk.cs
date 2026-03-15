@@ -69,8 +69,7 @@ internal sealed partial class MeterProviderBuilderSdk : MeterProviderBuilder, IM
     /// <param name="customViewName">The view name.</param>
     /// <returns>Boolean indicating if the instrument is valid.</returns>
     public static bool IsValidViewName(string customViewName) =>
-        /* Only validate the view name in case it's not null. In case it's null, the view name will be the instrument name as per the spec. */
-        customViewName == null || InstrumentNameRegex.IsMatch(customViewName);
+        customViewName == null || InstrumentNameRegex.IsMatch(customViewName); // Only validate the view name in case it's not null. In case it's null, the view name will be the instrument name as per the spec.
 
     public void RegisterProvider(MeterProviderSdk meterProvider)
     {
@@ -85,14 +84,10 @@ internal sealed partial class MeterProviderBuilderSdk : MeterProviderBuilder, IM
     }
 
     public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
-    {
-        Debug.Assert(instrumentationFactory != null, "instrumentationFactory was null");
-
-        return this.AddInstrumentation(
-            typeof(TInstrumentation).Name,
-            typeof(TInstrumentation).Assembly.GetName().Version?.ToString() ?? DefaultInstrumentationVersion,
-            instrumentationFactory!());
-    }
+        => this.AddInstrumentation(
+               typeof(TInstrumentation).Name,
+               typeof(TInstrumentation).Assembly.GetName().Version?.ToString() ?? DefaultInstrumentationVersion,
+               instrumentationFactory());
 
     public MeterProviderBuilder AddInstrumentation(
         string instrumentationName,
@@ -113,21 +108,16 @@ internal sealed partial class MeterProviderBuilderSdk : MeterProviderBuilder, IM
 
     public MeterProviderBuilder ConfigureResource(Action<ResourceBuilder> configure)
     {
-        Debug.Assert(configure != null, "configure was null");
-
         var resourceBuilder = this.ResourceBuilder ??= ResourceBuilder.CreateDefault();
 
-        configure!(resourceBuilder);
+        configure(resourceBuilder);
 
         return this;
     }
 
     public MeterProviderBuilder SetResourceBuilder(ResourceBuilder resourceBuilder)
     {
-        Debug.Assert(resourceBuilder != null, "resourceBuilder was null");
-
         this.ResourceBuilder = resourceBuilder;
-
         return this;
     }
 
@@ -140,9 +130,7 @@ internal sealed partial class MeterProviderBuilderSdk : MeterProviderBuilder, IM
 
     public override MeterProviderBuilder AddMeter(params string[] names)
     {
-        Debug.Assert(names != null, "names was null");
-
-        foreach (var name in names!)
+        foreach (var name in names)
         {
             Guard.ThrowIfNullOrWhitespace(name);
 
@@ -154,19 +142,13 @@ internal sealed partial class MeterProviderBuilderSdk : MeterProviderBuilder, IM
 
     public MeterProviderBuilder AddReader(MetricReader reader)
     {
-        Debug.Assert(reader != null, "reader was null");
-
-        this.Readers.Add(reader!);
-
+        this.Readers.Add(reader);
         return this;
     }
 
     public MeterProviderBuilder AddView(Func<Instrument, MetricStreamConfiguration?> viewConfig)
     {
-        Debug.Assert(viewConfig != null, "viewConfig was null");
-
-        this.ViewConfigs.Add(viewConfig!);
-
+        this.ViewConfigs.Add(viewConfig);
         return this;
     }
 
@@ -186,10 +168,7 @@ internal sealed partial class MeterProviderBuilderSdk : MeterProviderBuilder, IM
 
     public MeterProviderBuilder ConfigureBuilder(Action<IServiceProvider, MeterProviderBuilder> configure)
     {
-        Debug.Assert(configure != null, "configure was null");
-
-        configure!(this.serviceProvider, this);
-
+        configure(this.serviceProvider, this);
         return this;
     }
 

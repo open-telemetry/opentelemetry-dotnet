@@ -24,9 +24,8 @@ public class GrpcRetryTestCase
 
     internal GrpcRetryAttempt[] RetryAttempts { get; }
 
-    public static TheoryData<GrpcRetryTestCase> GetGrpcTestCases()
-    {
-        return
+    public static TheoryData<GrpcRetryTestCase> GetGrpcTestCases() =>
+#pragma warning disable CA1825 // HACK Workaround for https://github.com/dotnet/sdk/issues/53047
         [
             new("Cancelled", [new(StatusCode.Cancelled)]),
             new("DeadlineExceeded", [new(StatusCode.DeadlineExceeded)]),
@@ -84,12 +83,10 @@ public class GrpcRetryTestCase
                 ],
                 expectedRetryAttempts: 9),
         ];
-    }
+#pragma warning restore CA1825
 
     public override string ToString()
-    {
-        return this.testRunnerName;
-    }
+        => this.testRunnerName;
 
     private static string GetThrottleDelayString(Duration throttleDelay)
     {
@@ -109,7 +106,7 @@ public class GrpcRetryTestCase
         return Convert.ToBase64String(status.ToByteArray());
     }
 
-    internal struct GrpcRetryAttempt
+    internal readonly struct GrpcRetryAttempt
     {
         internal GrpcRetryAttempt(
             StatusCode statusCode,

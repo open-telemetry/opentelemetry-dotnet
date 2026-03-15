@@ -49,9 +49,9 @@ public sealed class LoggerProviderBuilderExtensionsTests
     [InlineData(false)]
     public void LoggerProviderBuilderNestedResolutionUsingBuilderTest(bool callNestedConfigure)
     {
-        bool innerConfigureBuilderTestExecuted = false;
-        bool innerConfigureOpenTelemetryLoggerProviderTestExecuted = false;
-        bool innerConfigureOpenTelemetryLoggerProviderTestWithServiceProviderExecuted = false;
+        var innerConfigureBuilderTestExecuted = false;
+        var innerConfigureOpenTelemetryLoggerProviderTestExecuted = false;
+        var innerConfigureOpenTelemetryLoggerProviderTestWithServiceProviderExecuted = false;
 
         using var provider = Sdk.CreateLoggerProviderBuilder()
             .ConfigureServices(services =>
@@ -154,8 +154,9 @@ public sealed class LoggerProviderBuilderExtensionsTests
     [Fact]
     public void LoggerProviderBuilderAddProcessorTest()
     {
-        List<CustomProcessor> processorsToAdd = new()
-        {
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        List<CustomProcessor> processorsToAdd =
+        [
             new CustomProcessor()
             {
                 Name = "A",
@@ -168,7 +169,8 @@ public sealed class LoggerProviderBuilderExtensionsTests
             {
                 Name = "C",
             },
-        };
+        ];
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         var builder = Sdk.CreateLoggerProviderBuilder();
         foreach (var processor in processorsToAdd)
@@ -176,14 +178,14 @@ public sealed class LoggerProviderBuilderExtensionsTests
             builder.AddProcessor(processor);
         }
 
-        List<CustomProcessor> expectedProcessors = new()
-        {
+        List<CustomProcessor> expectedProcessors =
+        [
             processorsToAdd.First(p => p.Name == "A"),
             processorsToAdd.First(p => p.Name == "B"),
             processorsToAdd.First(p => p.Name == "C"),
-        };
+        ];
 
-        List<CustomProcessor> actualProcessors = new();
+        List<CustomProcessor> actualProcessors = [];
 
         using (var provider = builder.Build() as LoggerProviderSdk)
         {
@@ -218,8 +220,9 @@ public sealed class LoggerProviderBuilderExtensionsTests
     [Fact]
     public void LoggerProviderBuilderAddProcessorWithWeightTest()
     {
-        List<CustomProcessor> processorsToAdd = new()
-        {
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        List<CustomProcessor> processorsToAdd =
+        [
             new CustomProcessor()
             {
                 Name = "C",
@@ -250,7 +253,8 @@ public sealed class LoggerProviderBuilderExtensionsTests
                 Name = "D",
                 PipelineWeight = 0,
             },
-        };
+        ];
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         var builder = Sdk.CreateLoggerProviderBuilder();
         foreach (var processor in processorsToAdd)
@@ -258,17 +262,17 @@ public sealed class LoggerProviderBuilderExtensionsTests
             builder.AddProcessor(processor);
         }
 
-        List<CustomProcessor> expectedProcessors = new()
-        {
+        List<CustomProcessor> expectedProcessors =
+        [
             processorsToAdd.First(p => p.Name == "A"),
             processorsToAdd.First(p => p.Name == "B"),
             processorsToAdd.First(p => p.Name == "C"),
             processorsToAdd.First(p => p.Name == "D"),
             processorsToAdd.First(p => p.Name == "E"),
             processorsToAdd.First(p => p.Name == "F"),
-        };
+        ];
 
-        List<CustomProcessor> actualProcessors = new();
+        List<CustomProcessor> actualProcessors = [];
 
         using (var provider = builder.Build() as LoggerProviderSdk)
         {
@@ -310,7 +314,7 @@ public sealed class LoggerProviderBuilderExtensionsTests
     {
         var builder = new CustomLoggerProviderBuilder();
 
-        Assert.Throws<NotSupportedException>(() => builder.Build());
+        Assert.Throws<NotSupportedException>(builder.Build);
     }
 
     private sealed class CustomInstrumentation : IDisposable
@@ -319,9 +323,7 @@ public sealed class LoggerProviderBuilderExtensionsTests
         public LoggerProvider? Provider;
 
         public void Dispose()
-        {
-            this.Disposed = true;
-        }
+            => this.Disposed = true;
     }
 
     private sealed class CustomProcessor : BaseProcessor<LogRecord>
@@ -340,8 +342,6 @@ public sealed class LoggerProviderBuilderExtensionsTests
     private sealed class CustomLoggerProviderBuilder : LoggerProviderBuilder
     {
         public override LoggerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
-        {
-            throw new NotImplementedException();
-        }
+            => throw new NotImplementedException();
     }
 }

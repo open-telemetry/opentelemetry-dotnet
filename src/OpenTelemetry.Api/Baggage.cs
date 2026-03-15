@@ -94,8 +94,8 @@ public readonly struct Baggage : IEquatable<Baggage>
             return default;
         }
 
-        Dictionary<string, string> baggageCopy = new Dictionary<string, string>(baggageItems.Count, StringComparer.Ordinal);
-        foreach (KeyValuePair<string, string> baggageItem in baggageItems)
+        var baggageCopy = new Dictionary<string, string>(baggageItems.Count, StringComparer.Ordinal);
+        foreach (var baggageItem in baggageItems)
         {
             if (string.IsNullOrEmpty(baggageItem.Value))
             {
@@ -226,7 +226,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     {
         Guard.ThrowIfNullOrEmpty(name);
 
-        return this.baggage != null && this.baggage.TryGetValue(name, out string? value)
+        return this.baggage != null && this.baggage.TryGetValue(name, out var value)
             ? value
             : null;
     }
@@ -252,7 +252,11 @@ public readonly struct Baggage : IEquatable<Baggage>
         return new Baggage(
             new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.Ordinal)
             {
+#if NET
+                [name] = value,
+#else
                 [name] = value!,
+#endif
             });
     }
 
@@ -290,7 +294,11 @@ public readonly struct Baggage : IEquatable<Baggage>
             }
             else
             {
+#if NET
+                newBaggage[item.Key] = item.Value;
+#else
                 newBaggage[item.Key] = item.Value!;
+#endif
             }
         }
 
@@ -310,14 +318,14 @@ public readonly struct Baggage : IEquatable<Baggage>
         return new Baggage(baggage);
     }
 
+#pragma warning disable CA1822 // Mark members as static
     /// <summary>
     /// Returns a new <see cref="Baggage"/> with all the key/value pairs removed.
     /// </summary>
     /// <returns>New <see cref="Baggage"/> with all the key/value pairs removed.</returns>
-#pragma warning disable CA1822 // Mark members as static
     public Baggage ClearBaggage()
-#pragma warning restore CA1822 // Mark members as static
         => default;
+#pragma warning restore CA1822 // Mark members as static
 
     /// <summary>
     /// Returns an enumerator that iterates through the <see cref="Baggage"/>.
@@ -329,14 +337,15 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <inheritdoc/>
     public bool Equals(Baggage other)
     {
-        bool baggageIsNullOrEmpty = this.baggage == null || this.baggage.Count <= 0;
+        var baggageIsNullOrEmpty = this.baggage == null || this.baggage.Count <= 0;
 
-        if (baggageIsNullOrEmpty != (other.baggage == null || other.baggage.Count <= 0))
-        {
-            return false;
-        }
-
-        return baggageIsNullOrEmpty || this.baggage!.SequenceEqual(other.baggage!);
+        return
+            baggageIsNullOrEmpty == (other.baggage == null || other.baggage.Count <= 0) &&
+#if NET
+            (baggageIsNullOrEmpty || this.baggage!.SequenceEqual(other.baggage!));
+#else
+            (baggageIsNullOrEmpty || this.baggage.SequenceEqual(other.baggage));
+#endif
     }
 
     /// <inheritdoc/>

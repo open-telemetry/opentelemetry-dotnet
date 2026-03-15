@@ -20,14 +20,14 @@ internal static class ZipkinActivityConversionExtensions
     internal static ZipkinSpan ToZipkinSpan(this Activity activity, ZipkinEndpoint localEndpoint, bool useShortTraceIds = false)
     {
         var context = activity.Context;
-        string? parentId = activity.ParentSpanId == default ? null : EncodeSpanId(activity.ParentSpanId);
+        var parentId = activity.ParentSpanId == default ? null : EncodeSpanId(activity.ParentSpanId);
 
         var tags = PooledList<KeyValuePair<string, object?>>.Create();
         ExtractActivityTags(activity, ref tags);
         ExtractActivityStatus(activity, ref tags);
         ExtractActivitySource(activity, ref tags);
 
-        ZipkinEndpoint? remoteEndpoint = ExtractRemoteEndpoint(activity);
+        var remoteEndpoint = ExtractRemoteEndpoint(activity);
         var annotations = ExtractActivityEvents(activity);
 
         return new ZipkinSpan(
@@ -47,28 +47,24 @@ internal static class ZipkinActivityConversionExtensions
     }
 
     internal static string EncodeSpanId(ActivitySpanId spanId)
-    {
-        return spanId.ToHexString();
-    }
+        => spanId.ToHexString();
 
     internal static long ToEpochMicroseconds(this DateTimeOffset dateTimeOffset)
     {
         // Truncate sub-microsecond precision before offsetting by the Unix Epoch to avoid
         // the last digit being off by one for dates that result in negative Unix times
-        long microseconds = dateTimeOffset.Ticks / TicksPerMicrosecond;
+        var microseconds = dateTimeOffset.Ticks / TicksPerMicrosecond;
         return microseconds - UnixEpochMicroseconds;
     }
 
     internal static long ToEpochMicroseconds(this TimeSpan timeSpan)
-    {
-        return timeSpan.Ticks / TicksPerMicrosecond;
-    }
+        => timeSpan.Ticks / TicksPerMicrosecond;
 
     internal static long ToEpochMicroseconds(this DateTime utcDateTime)
     {
         // Truncate sub-microsecond precision before offsetting by the Unix Epoch to avoid
         // the last digit being off by one for dates that result in negative Unix times
-        long microseconds = utcDateTime.Ticks / TicksPerMicrosecond;
+        var microseconds = utcDateTime.Ticks / TicksPerMicrosecond;
         return microseconds - UnixEpochMicroseconds;
     }
 
@@ -84,31 +80,26 @@ internal static class ZipkinActivityConversionExtensions
         return id;
     }
 
-    private static string? ToActivityKind(Activity activity)
+    private static string? ToActivityKind(Activity activity) => activity.Kind switch
     {
-        return activity.Kind switch
-        {
-            ActivityKind.Server => "SERVER",
-            ActivityKind.Producer => "PRODUCER",
-            ActivityKind.Consumer => "CONSUMER",
-            ActivityKind.Client => "CLIENT",
-            _ => null,
-        };
-    }
+        ActivityKind.Server => "SERVER",
+        ActivityKind.Producer => "PRODUCER",
+        ActivityKind.Consumer => "CONSUMER",
+        ActivityKind.Client => "CLIENT",
+        ActivityKind.Internal or _ => null,
+    };
 
     private static string ExtractStatusDescription(Activity activity)
-    {
-        return activity.StatusDescription
-               ?? activity.GetTagItem(SpanAttributeConstants.StatusDescriptionKey) as string
-               ?? activity.GetTagItem(ZipkinErrorFlagTagName) as string
-               ?? string.Empty;
-    }
+        => activity.StatusDescription
+           ?? activity.GetTagItem(SpanAttributeConstants.StatusDescriptionKey) as string
+           ?? activity.GetTagItem(ZipkinErrorFlagTagName) as string
+           ?? string.Empty;
 
     private static void ExtractActivityTags(Activity activity, ref PooledList<KeyValuePair<string, object?>> tags)
     {
         foreach (ref readonly var tag in activity.EnumerateTagObjects())
         {
-            if (tag.Key != ZipkinErrorFlagTagName && tag.Key != SpanAttributeConstants.StatusCodeKey)
+            if (tag.Key is not ZipkinErrorFlagTagName and not SpanAttributeConstants.StatusCodeKey)
             {
                 PooledList<KeyValuePair<string, object?>>.Add(ref tags, tag);
             }
@@ -133,7 +124,7 @@ internal static class ZipkinActivityConversionExtensions
             // activity.Status is Error
             else
             {
-                string statusDescription = ExtractStatusDescription(activity);
+                var statusDescription = ExtractStatusDescription(activity);
                 PooledList<KeyValuePair<string, object?>>.Add(
                     ref tags,
                     new KeyValuePair<string, object?>(
@@ -164,7 +155,7 @@ internal static class ZipkinActivityConversionExtensions
                 }
                 else if (status == "ERROR")
                 {
-                    string statusDescription = ExtractStatusDescription(activity);
+                    var statusDescription = ExtractStatusDescription(activity);
 
                     activity.SetStatus(ActivityStatusCode.Error);
 
@@ -206,7 +197,7 @@ internal static class ZipkinActivityConversionExtensions
 
     private static ZipkinEndpoint? ExtractRemoteEndpoint(Activity activity)
     {
-        if (activity.Kind != ActivityKind.Client && activity.Kind != ActivityKind.Producer)
+        if (activity.Kind is not ActivityKind.Client and not ActivityKind.Producer)
         {
             return null;
         }
@@ -222,7 +213,7 @@ internal static class ZipkinActivityConversionExtensions
             return null;
         }
 
-        string? remoteEndpoint = activity.GetTagItem(SemanticConventions.AttributePeerService) as string;
+        var remoteEndpoint = activity.GetTagItem(SemanticConventions.AttributePeerService) as string;
         var endpoint = TryCreateEndpoint(remoteEndpoint);
         if (endpoint != null)
         {
@@ -244,8 +235,7 @@ internal static class ZipkinActivityConversionExtensions
         }
 
         var peerAddress = activity.GetTagItem(SemanticConventions.AttributeNetworkPeerAddress) as string;
-        var peerPort = activity.GetTagItem(SemanticConventions.AttributeNetworkPeerPort) as string;
-        remoteEndpoint = peerPort != null ? $"{peerAddress}:{peerPort}" : peerAddress;
+        remoteEndpoint = activity.GetTagItem(SemanticConventions.AttributeNetworkPeerPort) is string peerPort ? $"{peerAddress}:{peerPort}" : peerAddress;
         endpoint = TryCreateEndpoint(remoteEndpoint);
         if (endpoint != null)
         {
@@ -260,8 +250,7 @@ internal static class ZipkinActivityConversionExtensions
         }
 
         var serverAddress = activity.GetTagItem(SemanticConventions.AttributeServerSocketAddress) as string;
-        var serverPort = activity.GetTagItem(SemanticConventions.AttributeServerSocketPort) as string;
-        remoteEndpoint = serverPort != null ? $"{serverAddress}:{serverPort}" : serverAddress;
+        remoteEndpoint = activity.GetTagItem(SemanticConventions.AttributeServerSocketPort) is string serverPort ? $"{serverAddress}:{serverPort}" : serverAddress;
         endpoint = TryCreateEndpoint(remoteEndpoint);
         if (endpoint != null)
         {
@@ -276,8 +265,7 @@ internal static class ZipkinActivityConversionExtensions
         }
 
         var socketAddress = activity.GetTagItem(SemanticConventions.AttributeNetSockPeerAddr) as string;
-        var socketPort = activity.GetTagItem(SemanticConventions.AttributeNetSockPeerPort) as string;
-        remoteEndpoint = socketPort != null ? $"{socketAddress}:{socketPort}" : socketAddress;
+        remoteEndpoint = activity.GetTagItem(SemanticConventions.AttributeNetSockPeerPort) is string socketPort ? $"{socketAddress}:{socketPort}" : socketAddress;
         endpoint = TryCreateEndpoint(remoteEndpoint);
         if (endpoint != null)
         {
@@ -300,12 +288,7 @@ internal static class ZipkinActivityConversionExtensions
 
         remoteEndpoint = activity.GetTagItem(SemanticConventions.AttributeDbName) as string;
         endpoint = TryCreateEndpoint(remoteEndpoint);
-        if (endpoint != null)
-        {
-            return endpoint;
-        }
-
-        return null;
+        return endpoint ?? null;
     }
 
     private static PooledList<ZipkinAnnotation> ExtractActivityEvents(Activity activity)

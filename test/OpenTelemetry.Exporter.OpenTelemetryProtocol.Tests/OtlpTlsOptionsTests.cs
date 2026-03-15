@@ -53,8 +53,7 @@ public class OtlpTlsOptionsTests
     }
 
     [Fact]
-    public void OtlpSecureHttpClientFactory_CreatesClient_WithCaCertificateOnly()
-    {
+    public void OtlpSecureHttpClientFactory_CreatesClient_WithCaCertificateOnly() =>
         SkipTestIfCryptoNotSupported(() =>
         {
             var tempCertFile = Path.GetTempFileName();
@@ -81,11 +80,9 @@ public class OtlpTlsOptionsTests
                 }
             }
         });
-    }
 
     [Fact]
-    public void OtlpSecureHttpClientFactory_CreatesClient_WithMtlsClientCertificate()
-    {
+    public void OtlpSecureHttpClientFactory_CreatesClient_WithMtlsClientCertificate() =>
         SkipTestIfCryptoNotSupported(() =>
         {
             var tempCertFile = Path.GetTempFileName();
@@ -113,14 +110,11 @@ public class OtlpTlsOptionsTests
                 }
             }
         });
-    }
 
     [Fact]
-    public void OtlpSecureHttpClientFactory_ThrowsArgumentNullException_WhenOptionsIsNull()
-    {
+    public void OtlpSecureHttpClientFactory_ThrowsArgumentNullException_WhenOptionsIsNull() =>
         Assert.Throws<ArgumentNullException>(() =>
             OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(null!));
-    }
 
     [Fact]
     public void OtlpSecureHttpClientFactory_ThrowsInvalidOperationException_WhenTlsNotEnabled()
@@ -131,11 +125,9 @@ public class OtlpTlsOptionsTests
     }
 
     [Fact]
-    public void OtlpCertificateManager_LoadCaCertificate_ThrowsFileNotFoundException()
-    {
+    public void OtlpCertificateManager_LoadCaCertificate_ThrowsFileNotFoundException() =>
         Assert.Throws<FileNotFoundException>(() =>
             OpenTelemetryProtocol.Implementation.OtlpCertificateManager.LoadCaCertificate("/nonexistent/cert.pem"));
-    }
 
     [Fact]
     public void OtlpCertificateManager_ValidateServerCertificate_ReturnsTrue_WhenNoSslPolicyErrors()
@@ -184,13 +176,8 @@ public class OtlpTlsOptionsTests
         var cert = req.CreateSelfSigned(
             DateTimeOffset.UtcNow.AddDays(-1),
             DateTimeOffset.UtcNow.AddDays(30));
-#if NET9_0_OR_GREATER
-        return X509CertificateLoader.LoadPkcs12(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
-#else
-#pragma warning disable SYSLIB0057
-        return new X509Certificate2(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
-#pragma warning restore SYSLIB0057
-#endif
+
+        return X509CertificateLoader.LoadPkcs12(cert.Export(X509ContentType.Pfx), null, X509KeyStorageFlags.Exportable);
     }
 
     private static X509Certificate2 CreateCertificateAuthority()
@@ -212,13 +199,7 @@ public class OtlpTlsOptionsTests
             DateTimeOffset.UtcNow.AddDays(-1),
             DateTimeOffset.UtcNow.AddYears(1));
 
-#if NET9_0_OR_GREATER
-        return X509CertificateLoader.LoadPkcs12(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
-#else
-#pragma warning disable SYSLIB0057
-        return new X509Certificate2(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
-#pragma warning restore SYSLIB0057
-#endif
+        return X509CertificateLoader.LoadPkcs12(cert.Export(X509ContentType.Pfx), null, X509KeyStorageFlags.Exportable);
     }
 
     private static X509Certificate2 CreateServerCertificate(X509Certificate2 issuer)
@@ -249,13 +230,7 @@ public class OtlpTlsOptionsTests
             DateTimeOffset.UtcNow.AddDays(30),
             serialNumber);
 
-#if NET9_0_OR_GREATER
-        return X509CertificateLoader.LoadPkcs12(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
-#else
-#pragma warning disable SYSLIB0057
-        return new X509Certificate2(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
-#pragma warning restore SYSLIB0057
-#endif
+        return X509CertificateLoader.LoadPkcs12(cert.Export(X509ContentType.Pfx), null, X509KeyStorageFlags.Exportable);
     }
 
     private static string ExportCertificateWithPrivateKey(X509Certificate2 certificate)
@@ -263,7 +238,7 @@ public class OtlpTlsOptionsTests
         var builder = new StringBuilder();
         builder.AppendLine(certificate.ExportCertificatePem().Trim());
 
-        using RSA? privateKey = certificate.GetRSAPrivateKey();
+        using var privateKey = certificate.GetRSAPrivateKey();
         if (privateKey != null)
         {
             var pkcs8Bytes = privateKey.ExportPkcs8PrivateKey();

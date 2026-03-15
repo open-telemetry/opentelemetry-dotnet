@@ -61,9 +61,9 @@ public class ResourceBuilder
     /// <returns><see cref="Resource"/>.</returns>
     public Resource Build()
     {
-        Resource finalResource = Resource.Empty;
+        var finalResource = Resource.Empty;
 
-        foreach (IResourceDetector resourceDetector in this.ResourceDetectors)
+        foreach (var resourceDetector in this.ResourceDetectors)
         {
             if (resourceDetector is ResolvingResourceDetector resolvingResourceDetector)
             {

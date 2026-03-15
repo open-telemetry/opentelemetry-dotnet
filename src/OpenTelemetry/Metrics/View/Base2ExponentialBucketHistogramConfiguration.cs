@@ -8,8 +8,14 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 public sealed class Base2ExponentialBucketHistogramConfiguration : HistogramConfiguration
 {
-    private int maxSize = Metric.DefaultExponentialHistogramMaxBuckets;
-    private int maxScale = Metric.DefaultExponentialHistogramMaxScale;
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Base2ExponentialBucketHistogramConfiguration"/> class.
+    /// </summary>
+    public Base2ExponentialBucketHistogramConfiguration()
+    {
+        this.MaxSize = Metric.DefaultExponentialHistogramMaxBuckets;
+        this.MaxScale = Metric.DefaultExponentialHistogramMaxScale;
+    }
 
     /// <summary>
     /// Gets or sets the maximum number of buckets in each of the positive and negative ranges, not counting the special zero bucket.
@@ -19,10 +25,7 @@ public sealed class Base2ExponentialBucketHistogramConfiguration : HistogramConf
     /// </remarks>
     public int MaxSize
     {
-        get
-        {
-            return this.maxSize;
-        }
+        get;
 
         set
         {
@@ -31,7 +34,7 @@ public sealed class Base2ExponentialBucketHistogramConfiguration : HistogramConf
                 throw new ArgumentException($"Histogram max size is invalid. Minimum size is 2.", nameof(value));
             }
 
-            this.maxSize = value;
+            field = value;
         }
     }
 
@@ -44,19 +47,16 @@ public sealed class Base2ExponentialBucketHistogramConfiguration : HistogramConf
     /// </remarks>
     public int MaxScale
     {
-        get
-        {
-            return this.maxScale;
-        }
+        get;
 
         set
         {
-            if (value < -11 || value > 20)
+            if (value is < -11 or > 20)
             {
                 throw new ArgumentException($"Histogram max scale is invalid. Max scale must be in the range [-11, 20].", nameof(value));
             }
 
-            this.maxScale = value;
+            field = value;
         }
     }
 }

@@ -2,22 +2,25 @@
 # This should be run from the root of the repo:
 # docker build --file test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/Dockerfile .
 
-ARG BUILD_SDK_VERSION=10.0
-ARG TEST_SDK_VERSION=10.0
+ARG BUILD_SDK_VERSION=11.0
+ARG TEST_SDK_VERSION=11.0
 
 FROM ubuntu:24.04@sha256:d1e2e92c075e5ca139d51a140fff46f84315c0fdce203eab2807c7e495eff4f9 AS w3c
-#Install git
+# Install git
 WORKDIR /w3c
 RUN apt-get update && apt-get install -y git
-RUN git clone --branch level-1 https://github.com/w3c/trace-context.git
+# HACK Workaround the python tests not working with Python 3.14
+# See https://github.com/w3c/trace-context/issues/581
+RUN git clone https://github.com/martincostello/trace-context.git \
+  && cd trace-context \
+  && git checkout e37efba66396bff25b737b33bce3c117cc6eb287
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0.419@sha256:9e9690cacf04e7e37722dfd0c93ad99129df850db79c2947704be0752f3e62ac AS dotnet-sdk-8.0
-FROM mcr.microsoft.com/dotnet/sdk:9.0.312@sha256:6416205d95f47e66d4292310710f7d738a4ad8f499c8d2370cf22d29a3c7d4b3 AS dotnet-sdk-9.0
 FROM mcr.microsoft.com/dotnet/sdk:10.0.201@sha256:478b9038d187e5b5c29bfa8173ded5d29e864b5ad06102a12106380ee01e2e49 AS dotnet-sdk-10.0
+FROM mcr.microsoft.com/dotnet/sdk:11.0-preview@sha256:899e7d93f1bc113bf9654afbc4a6be21f407f69f29618e8a0fdfe75ae5348258 AS dotnet-sdk-11.0
 
 FROM dotnet-sdk-${BUILD_SDK_VERSION} AS build
 ARG PUBLISH_CONFIGURATION=Release
-ARG PUBLISH_FRAMEWORK=net10.0
+ARG PUBLISH_FRAMEWORK=net11.0
 WORKDIR /repo
 COPY . ./
 WORKDIR "/repo/test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests"
@@ -31,7 +34,11 @@ COPY --from=w3c /w3c .
 RUN apt-get update \
   && apt-get install -y python3-pip python3-dev \
   && cd /usr/local/bin \
-  && ln -s /usr/bin/python3 python
+  && ln -s /usr/bin/python3 python \
+  && python3 --version
+
+ENV SPEC_LEVEL=1
+ENV STRICT_LEVEL=1
 
 RUN pip3 install --requirement requirements.txt --require-hashes --break-system-packages
 ENTRYPOINT ["dotnet", "vstest", "OpenTelemetry.Instrumentation.W3cTraceContext.Tests.dll", "--logger:console;verbosity=detailed"]

@@ -187,9 +187,7 @@ public class OtlpSpecConfigDefinitionTests : IEnumerable<object[]>
         public string ProtocolValue { get; }
 
         public IConfiguration ToConfiguration()
-        {
-            return this.AddToConfiguration(new ConfigurationBuilder()).Build();
-        }
+            => this.AddToConfiguration(new ConfigurationBuilder()).Build();
 
         public ConfigurationBuilder AddToConfiguration(ConfigurationBuilder configurationBuilder)
         {
@@ -311,12 +309,14 @@ public class OtlpSpecConfigDefinitionTests : IEnumerable<object[]>
 
             if (!string.IsNullOrWhiteSpace(this.HistogramAggregationValue))
             {
+#pragma warning disable IDE0370 // Remove unnecessary suppression
                 // Map spec-defined snake_case values to enum
                 var expectedValue = this.HistogramAggregationValue!.Equals("base2_exponential_bucket_histogram", StringComparison.OrdinalIgnoreCase)
                     ? MetricReaderHistogramAggregation.Base2ExponentialBucketHistogram
                     : this.HistogramAggregationValue.Equals("explicit_bucket_histogram", StringComparison.OrdinalIgnoreCase)
                         ? MetricReaderHistogramAggregation.ExplicitBucketHistogram
                         : (MetricReaderHistogramAggregation?)null;
+#pragma warning restore IDE0370 // Remove unnecessary suppression
 
                 Assert.Equal(expectedValue, metricReaderOptions.DefaultHistogramAggregation);
             }

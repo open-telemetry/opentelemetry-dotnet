@@ -73,7 +73,11 @@ public class LoggerProvider : BaseProvider
             return NoopLogger;
         }
 
+#if NET
+        logger.SetInstrumentationScope(version);
+#else
         logger!.SetInstrumentationScope(version);
+#endif
 
         return logger;
     }

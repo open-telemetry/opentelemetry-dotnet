@@ -561,7 +561,7 @@ public sealed class MockCollectorIntegrationTests
         public void SetStatusCodes(int[] statusCodes)
         {
             this.statusCodeIndex = 0;
-            this.statusCodes = statusCodes.Select(x => (Grpc.Core.StatusCode)x).ToArray();
+            this.statusCodes = [.. statusCodes.Select(x => (Grpc.Core.StatusCode)x)];
         }
 
         public Grpc.Core.StatusCode NextStatus()
@@ -580,7 +580,7 @@ public sealed class MockCollectorIntegrationTests
         public void SetStatusCodes(int[] statusCodes)
         {
             this.statusCodeIndex = 0;
-            this.statusCodes = statusCodes.Select(x => (HttpStatusCode)x).ToArray();
+            this.statusCodes = [.. statusCodes.Select(x => (HttpStatusCode)x)];
         }
 
         public HttpStatusCode NextStatus()

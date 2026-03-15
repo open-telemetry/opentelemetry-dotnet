@@ -2,15 +2,14 @@
 # This should be run from the root of the repo:
 # docker build --file test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/Dockerfile
 
-ARG BUILD_SDK_VERSION=10.0
-ARG TEST_SDK_VERSION=10.0
-FROM mcr.microsoft.com/dotnet/sdk:8.0.419@sha256:9e9690cacf04e7e37722dfd0c93ad99129df850db79c2947704be0752f3e62ac AS dotnet-sdk-8.0
-FROM mcr.microsoft.com/dotnet/sdk:9.0.312@sha256:6416205d95f47e66d4292310710f7d738a4ad8f499c8d2370cf22d29a3c7d4b3 AS dotnet-sdk-9.0
+ARG BUILD_SDK_VERSION=11.0
+ARG TEST_SDK_VERSION=11.0
 FROM mcr.microsoft.com/dotnet/sdk:10.0.201@sha256:478b9038d187e5b5c29bfa8173ded5d29e864b5ad06102a12106380ee01e2e49 AS dotnet-sdk-10.0
+FROM mcr.microsoft.com/dotnet/sdk:11.0-preview@sha256:97f9050efe8b816bd5e616997f754f31ab8ccbdd536272c639f94b1c23d96c53 AS dotnet-sdk-11.0
 
 FROM dotnet-sdk-${BUILD_SDK_VERSION} AS build
 ARG PUBLISH_CONFIGURATION=Release
-ARG PUBLISH_FRAMEWORK=net10.0
+ARG PUBLISH_FRAMEWORK=net11.0
 WORKDIR /repo
 COPY . ./
 WORKDIR "/repo/test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests"
