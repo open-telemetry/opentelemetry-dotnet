@@ -180,6 +180,10 @@ public sealed class LogRecord
     /// Gets or sets the log <see cref="Microsoft.Extensions.Logging.LogLevel"/>.
     /// </summary>
     [Obsolete("Use Severity instead. LogLevel will be removed in a future version.")]
+#else
+    /// <summary>
+    /// Gets or sets the log <see cref="Microsoft.Extensions.Logging.LogLevel"/>.
+    /// </summary>
 #endif
     public LogLevel LogLevel
     {

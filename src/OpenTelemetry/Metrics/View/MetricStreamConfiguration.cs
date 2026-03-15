@@ -13,10 +13,6 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 public class MetricStreamConfiguration
 {
-    private string? name;
-
-    private int? cardinalityLimit;
-
     /// <summary>
     /// Gets the drop configuration.
     /// </summary>
@@ -34,7 +30,7 @@ public class MetricStreamConfiguration
     /// </remarks>
     public string? Name
     {
-        get => this.name;
+        get;
         set
         {
             if (value != null && !MeterProviderBuilderSdk.IsValidViewName(value))
@@ -42,7 +38,7 @@ public class MetricStreamConfiguration
                 throw new ArgumentException($"Custom view name {value} is invalid.", nameof(value));
             }
 
-            this.name = value;
+            field = value;
         }
     }
 
@@ -94,7 +90,7 @@ public class MetricStreamConfiguration
     /// </remarks>
     public int? CardinalityLimit
     {
-        get => this.cardinalityLimit;
+        get;
         set
         {
             if (value != null)
@@ -102,7 +98,7 @@ public class MetricStreamConfiguration
                 Guard.ThrowIfOutOfRange(value.Value, min: 1, max: int.MaxValue);
             }
 
-            this.cardinalityLimit = value;
+            field = value;
         }
     }
 
