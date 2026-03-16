@@ -30,64 +30,48 @@ public class PrometheusHttpListenerTests
     [InlineData("http://example.com", "https://example.com", "http://127.0.0.1")]
     [InlineData("http://example.com")]
     public void UriPrefixesPositiveTest(params string[] uriPrefixes)
-    {
-        TestPrometheusHttpListenerUriPrefixOptions(uriPrefixes);
-    }
+        => TestPrometheusHttpListenerUriPrefixOptions(uriPrefixes);
 
     [Fact]
-    public void UriPrefixesNull()
-    {
+    public void UriPrefixesNull() =>
         Assert.Throws<ArgumentNullException>(() =>
         {
             TestPrometheusHttpListenerUriPrefixOptions(null!);
         });
-    }
 
     [Fact]
-    public void UriPrefixesEmptyList()
-    {
+    public void UriPrefixesEmptyList() =>
         Assert.Throws<ArgumentException>(() =>
         {
             TestPrometheusHttpListenerUriPrefixOptions([]);
         });
-    }
 
     [Fact]
-    public void UriPrefixesInvalid()
-    {
+    public void UriPrefixesInvalid() =>
         Assert.Throws<ArgumentException>(() =>
         {
             TestPrometheusHttpListenerUriPrefixOptions(["ftp://example.com"]);
         });
-    }
 
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
     public async Task PrometheusExporterHttpServerIntegration(bool disableTimestamp)
-    {
-        await RunPrometheusExporterHttpServerIntegrationTest(disableTimestamp: disableTimestamp);
-    }
+        => await RunPrometheusExporterHttpServerIntegrationTest(disableTimestamp: disableTimestamp);
 
     [Fact]
     public async Task PrometheusExporterHttpServerIntegration_NoMetrics()
-    {
-        await RunPrometheusExporterHttpServerIntegrationTest(skipMetrics: true);
-    }
+        => await RunPrometheusExporterHttpServerIntegrationTest(skipMetrics: true);
 
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
     public async Task PrometheusExporterHttpServerIntegration_NoOpenMetrics(bool disableTimestamp)
-    {
-        await RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: string.Empty, disableTimestamp: disableTimestamp);
-    }
+        => await RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: string.Empty, disableTimestamp: disableTimestamp);
 
     [Fact]
     public async Task PrometheusExporterHttpServerIntegration_UseOpenMetricsVersionHeader()
-    {
-        await RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: "application/openmetrics-text; version=1.0.0");
-    }
+        => await RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: "application/openmetrics-text; version=1.0.0");
 
     [Fact]
     public async Task PrometheusExporterHttpServerIntegration_NoOpenMetrics_WithMeterTags()
@@ -116,8 +100,8 @@ public class PrometheusHttpListenerTests
     [Fact]
     public void PrometheusHttpListenerThrowsOnStart()
     {
-        Random random = new Random();
-        int retryAttempts = 5;
+        var random = new Random();
+        var retryAttempts = 5;
         string? address = null;
 
         PrometheusExporter? exporter = null;
@@ -127,7 +111,7 @@ public class PrometheusHttpListenerTests
         while (retryAttempts-- != 0)
         {
 #pragma warning disable CA5394 // Do not use insecure randomness
-            int port = random.Next(2000, 5000);
+            var port = random.Next(2000, 5000);
 #pragma warning restore CA5394 // Do not use insecure randomness
             address = $"http://localhost:{port}/";
 
@@ -196,7 +180,7 @@ public class PrometheusHttpListenerTests
             counter.Add(1);
         }
 
-        using HttpClient client = new HttpClient();
+        using var client = new HttpClient();
 
         if (!string.IsNullOrEmpty(acceptHeader))
         {
@@ -226,15 +210,15 @@ public class PrometheusHttpListenerTests
 
     private static MeterProvider BuildMeterProvider(Meter meter, IEnumerable<KeyValuePair<string, object>> attributes, out string address, bool disableTimestamp = false)
     {
-        Random random = new Random();
-        int retryAttempts = 5;
+        var random = new Random();
+        var retryAttempts = 5;
         string? generatedAddress = null;
         MeterProvider? provider = null;
 
         while (retryAttempts-- != 0)
         {
 #pragma warning disable CA5394 // Do not use insecure randomness
-            int port = random.Next(2000, 5000);
+            var port = random.Next(2000, 5000);
 #pragma warning restore CA5394 // Do not use insecure randomness
             generatedAddress = $"http://localhost:{port}/";
 
@@ -284,7 +268,7 @@ public class PrometheusHttpListenerTests
             counter.Add(0.99D, counterTags);
         }
 
-        using HttpClient client = new HttpClient();
+        using var client = new HttpClient();
 
         if (!string.IsNullOrEmpty(acceptHeader))
         {
@@ -300,11 +284,11 @@ public class PrometheusHttpListenerTests
 
             if (requestOpenMetrics)
             {
-                Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8", response.Content.Headers.ContentType!.ToString());
+                Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8", response.Content.Headers.ContentType?.ToString());
             }
             else
             {
-                Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType!.ToString());
+                Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType?.ToString());
             }
 
             var additionalTags = meterTags is { Length: > 0 }
