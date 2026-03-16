@@ -45,6 +45,8 @@ public static class ActivityExtensions
                 case StatusCode.Error:
                     activity.SetStatus(ActivityStatusCode.Error, status.Description);
                     break;
+                default:
+                    break;
             }
 
             activity.SetTag(SpanAttributeConstants.StatusCodeKey, StatusHelper.GetTagValueForStatusCode(status.StatusCode));
@@ -70,12 +72,13 @@ public static class ActivityExtensions
     {
         if (activity != null)
         {
-            switch (activity.Status)
+            if (activity.Status is ActivityStatusCode.Ok)
             {
-                case ActivityStatusCode.Ok:
-                    return Status.Ok;
-                case ActivityStatusCode.Error:
-                    return new Status(StatusCode.Error, activity.StatusDescription);
+                return Status.Ok;
+            }
+            else if (activity.Status is ActivityStatusCode.Error)
+            {
+                return new Status(StatusCode.Error, activity.StatusDescription);
             }
 
             if (activity.TryGetStatus(out var statusCode, out var statusDescription))
