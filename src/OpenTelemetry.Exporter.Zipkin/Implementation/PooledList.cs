@@ -27,15 +27,10 @@ internal readonly struct PooledList<T> : IEnumerable<T>, ICollection
 
     object ICollection.SyncRoot => this;
 
-    public ref T this[int index]
-    {
-        get => ref this.buffer[index];
-    }
+    public ref T this[int index] => ref this.buffer[index];
 
     public static PooledList<T> Create()
-    {
-        return new PooledList<T>(ArrayPool<T>.Shared.Rent(LastAllocatedSize), 0);
-    }
+        => new(ArrayPool<T>.Shared.Rent(LastAllocatedSize), 0);
 
     public static void Add(ref PooledList<T> list, T item)
     {
@@ -60,9 +55,7 @@ internal readonly struct PooledList<T> : IEnumerable<T>, ICollection
     }
 
     public static void Clear(ref PooledList<T> list)
-    {
-        list = new PooledList<T>(list.buffer, 0);
-    }
+        => list = new PooledList<T>(list.buffer, 0);
 
     public void Return()
     {
@@ -74,24 +67,16 @@ internal readonly struct PooledList<T> : IEnumerable<T>, ICollection
     }
 
     void ICollection.CopyTo(Array array, int index)
-    {
-        Array.Copy(this.buffer, 0, array, index, this.Count);
-    }
+        => Array.Copy(this.buffer, 0, array, index, this.Count);
 
     public Enumerator GetEnumerator()
-    {
-        return new Enumerator(in this);
-    }
+        => new(in this);
 
     IEnumerator<T> IEnumerable<T>.GetEnumerator()
-    {
-        return new Enumerator(in this);
-    }
+        => new Enumerator(in this);
 
     IEnumerator IEnumerable.GetEnumerator()
-    {
-        return new Enumerator(in this);
-    }
+        => new Enumerator(in this);
 
     public struct Enumerator : IEnumerator<T>, IEnumerator
     {
@@ -109,11 +94,11 @@ internal readonly struct PooledList<T> : IEnumerable<T>, ICollection
             this.current = default;
         }
 
-        public T Current => this.current;
+        public readonly T Current => this.current;
 
-        object? IEnumerator.Current => this.Current;
+        readonly object? IEnumerator.Current => this.Current;
 
-        public void Dispose()
+        public readonly void Dispose()
         {
         }
 
