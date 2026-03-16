@@ -3,7 +3,6 @@
 
 using System.Globalization;
 using OpenTelemetry.PersistentStorage.FileSystem;
-using Xunit;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.PersistentStorage;
 
