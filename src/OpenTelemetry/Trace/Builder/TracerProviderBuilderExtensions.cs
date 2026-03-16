@@ -17,6 +17,7 @@ namespace OpenTelemetry.Trace;
 /// </summary>
 public static class TracerProviderBuilderExtensions
 {
+#pragma warning disable IDE0055
     /// <summary>
     /// Sets whether the status of <see cref="Activity"/>
     /// should be set to <c>Status.Error</c> when it ended abnormally due to an unhandled exception.
@@ -30,6 +31,7 @@ public static class TracerProviderBuilderExtensions
 #if NET
     [RequiresDynamicCode("The code for detecting exception and setting error status might not be available.")]
 #endif
+#pragma warning restore IDE0055
     public static TracerProviderBuilder SetErrorStatusOnException(this TracerProviderBuilder tracerProviderBuilder, bool enabled = true)
     {
         tracerProviderBuilder.ConfigureBuilder((sp, builder) =>
@@ -242,13 +244,8 @@ public static class TracerProviderBuilderExtensions
     /// </summary>
     /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
     /// <returns><see cref="TracerProvider"/>.</returns>
-    public static TracerProvider Build(this TracerProviderBuilder tracerProviderBuilder)
-    {
-        if (tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase)
-        {
-            return tracerProviderBuilderBase.InvokeBuild();
-        }
-
-        throw new NotSupportedException($"Build is not supported on '{tracerProviderBuilder?.GetType().FullName ?? "null"}' instances.");
-    }
+    public static TracerProvider Build(this TracerProviderBuilder tracerProviderBuilder) =>
+        tracerProviderBuilder is TracerProviderBuilderBase tracerProviderBuilderBase
+            ? tracerProviderBuilderBase.InvokeBuild()
+            : throw new NotSupportedException($"Build is not supported on '{tracerProviderBuilder?.GetType().FullName ?? "null"}' instances.");
 }

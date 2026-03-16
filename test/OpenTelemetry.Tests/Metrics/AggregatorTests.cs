@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using Xunit;
 
@@ -66,7 +65,7 @@ public class AggregatorTests
 
         Assert.Equal(32, count);
 
-        int actualCount = 0;
+        var actualCount = 0;
         foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
         {
             Assert.Equal(2, histogramMeasurement.BucketCount);
@@ -102,8 +101,8 @@ public class AggregatorTests
         // Count  = # of recordings
         Assert.Equal(7, count);
 
-        int index = 0;
-        int actualCount = 0;
+        var index = 0;
+        var actualCount = 0;
         var expectedBucketCounts = new long[] { 5, 2, 0 };
         foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
         {
@@ -195,8 +194,8 @@ public class AggregatorTests
 
         var numberOfThreads = 2;
         var snapshotThread = new Thread(HistogramSnapshotThread);
-        Thread[] updateThreads = new Thread[numberOfThreads];
-        for (int i = 0; i < numberOfThreads; ++i)
+        var updateThreads = new Thread[numberOfThreads];
+        for (var i = 0; i < numberOfThreads; ++i)
         {
             updateThreads[i] = new Thread(HistogramUpdateThread);
             updateThreads[i].Start(argsToThread);
@@ -204,7 +203,7 @@ public class AggregatorTests
 
         snapshotThread.Start(argsToThread);
 
-        for (int i = 0; i < numberOfThreads; ++i)
+        for (var i = 0; i < numberOfThreads; ++i)
         {
             updateThreads[i].Join();
         }
@@ -251,7 +250,7 @@ public class AggregatorTests
             AggregationTemporality.Cumulative,
             cardinalityLimit: 1024);
 
-        KnownHistogramBuckets actualHistogramBounds = KnownHistogramBuckets.Default;
+        var actualHistogramBounds = KnownHistogramBuckets.Default;
         if (aggregatorStore.HistogramBounds == Metric.DefaultHistogramBoundsShortSeconds)
         {
             actualHistogramBounds = KnownHistogramBuckets.DefaultShortSeconds;
@@ -331,7 +330,7 @@ public class AggregatorTests
 
         foreach (var value in valuesToRecord)
         {
-            aggregatorStore.Update(value, Array.Empty<KeyValuePair<string, object?>>());
+            aggregatorStore.Update(value, []);
 
             if (value >= 0)
             {
@@ -439,7 +438,7 @@ public class AggregatorTests
             AggregationTemporality.Cumulative,
             cardinalityLimit: 1024);
 
-        aggregatorStore.Update(10, Array.Empty<KeyValuePair<string, object?>>());
+        aggregatorStore.Update(10, []);
 
         aggregatorStore.Snapshot();
 
@@ -480,8 +479,8 @@ public class AggregatorTests
         var count = histogramPoint.GetHistogramCount();
         Assert.Equal(boundaryTestCase.InputValues.Length, count);
 
-        int bucketIndex = 0;
-        int actualBucketCount = 0;
+        var bucketIndex = 0;
+        var actualBucketCount = 0;
 
         foreach (var histogramBucket in histogramPoint.GetHistogramBuckets())
         {
@@ -497,7 +496,6 @@ public class AggregatorTests
     private static void HistogramSnapshotThread(object? obj)
     {
         var args = obj as ThreadArguments;
-        Debug.Assert(args != null, "args was null");
         var mreToEnsureAllThreadsStart = args!.MreToEnsureAllThreadsStart;
 
         if (Interlocked.Increment(ref args.ThreadStartedCount) == 3)
@@ -519,7 +517,6 @@ public class AggregatorTests
     private static void HistogramUpdateThread(object? obj)
     {
         var args = obj as ThreadArguments;
-        Debug.Assert(args != null, "args was null");
         var mreToEnsureAllThreadsStart = args!.MreToEnsureAllThreadsStart;
 
         if (Interlocked.Increment(ref args.ThreadStartedCount) == 3)
@@ -529,7 +526,7 @@ public class AggregatorTests
 
         mreToEnsureAllThreadsStart.WaitOne();
 
-        for (int i = 0; i < 10; ++i)
+        for (var i = 0; i < 10; ++i)
         {
             args.HistogramPoint.Update(10);
         }

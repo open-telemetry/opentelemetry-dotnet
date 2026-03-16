@@ -45,18 +45,27 @@ public static class ResourceBuilderExtensions
         Guard.ThrowIfNull(resourceBuilder);
         Guard.ThrowIfNullOrEmpty(serviceName);
 
-        Dictionary<string, object> resourceAttributes = new Dictionary<string, object>();
-
-        resourceAttributes.Add(ResourceSemanticConventions.AttributeServiceName, serviceName);
+        var resourceAttributes = new Dictionary<string, object>
+        {
+            { ResourceSemanticConventions.AttributeServiceName, serviceName },
+        };
 
         if (!string.IsNullOrEmpty(serviceNamespace))
         {
+#if NET || NETSTANDARD2_1_OR_GREATER
+            resourceAttributes.Add(ResourceSemanticConventions.AttributeServiceNamespace, serviceNamespace);
+#else
             resourceAttributes.Add(ResourceSemanticConventions.AttributeServiceNamespace, serviceNamespace!);
+#endif
         }
 
         if (!string.IsNullOrEmpty(serviceVersion))
         {
+#if NET || NETSTANDARD2_1_OR_GREATER
+            resourceAttributes.Add(ResourceSemanticConventions.AttributeServiceVersion, serviceVersion);
+#else
             resourceAttributes.Add(ResourceSemanticConventions.AttributeServiceVersion, serviceVersion!);
+#endif
         }
 
         if (serviceInstanceId == null && autoGenerateServiceInstanceId)
@@ -115,7 +124,7 @@ public static class ResourceBuilderExtensions
     public static ResourceBuilder AddEnvironmentVariableDetector(this ResourceBuilder resourceBuilder)
     {
         Guard.ThrowIfNull(resourceBuilder);
-        Lazy<IConfiguration> configuration = new Lazy<IConfiguration>(() => new ConfigurationBuilder().AddEnvironmentVariables().Build());
+        var configuration = new Lazy<IConfiguration>(() => new ConfigurationBuilder().AddEnvironmentVariables().Build());
 
 #pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
         return resourceBuilder

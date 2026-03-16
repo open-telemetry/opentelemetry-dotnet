@@ -7,7 +7,7 @@ namespace OpenTelemetry.Tests;
 
 internal sealed class TestActivityExportProcessor : SimpleActivityExportProcessor
 {
-    public List<Activity> ExportedItems = new();
+    public List<Activity> ExportedItems = [];
 
     public TestActivityExportProcessor(BaseExporter<Activity> exporter)
         : base(exporter)

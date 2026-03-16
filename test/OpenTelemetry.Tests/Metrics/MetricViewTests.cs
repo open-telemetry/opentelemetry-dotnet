@@ -271,18 +271,10 @@ public class MetricViewTests : MetricTestsBase
         using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter1.Name)
             .AddMeter(meter2.Name)
-            .AddView((instrument) =>
-            {
-                if (instrument.Meter.Name.Equals(meter2.Name, StringComparison.OrdinalIgnoreCase)
-                    && instrument.Name.Equals("name1", StringComparison.OrdinalIgnoreCase))
-                {
-                    return new MetricStreamConfiguration() { Name = "name1_Renamed", Description = "new description" };
-                }
-                else
-                {
-                    return null;
-                }
-            })
+            .AddView((instrument) => instrument.Meter.Name.Equals(meter2.Name, StringComparison.OrdinalIgnoreCase)
+                                     && instrument.Name.Equals("name1", StringComparison.OrdinalIgnoreCase)
+                                     ? new MetricStreamConfiguration() { Name = "name1_Renamed", Description = "new description" }
+                                     : null)
             .AddInMemoryExporter(exportedItems));
 
         // Without views only 1 stream would be
@@ -530,8 +522,8 @@ public class MetricViewTests : MetricTestsBase
         Assert.Equal(40, sum);
         Assert.Equal(7, count);
 
-        int index = 0;
-        int actualCount = 0;
+        var index = 0;
+        var actualCount = 0;
         var expectedBucketCounts = new long[] { 2, 1, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
         foreach (var histogramMeasurement in histogramPoint.GetHistogramBuckets())
         {
@@ -575,7 +567,7 @@ public class MetricViewTests : MetricTestsBase
     {
         using var meter = new Meter(Utils.GetCurrentMethodName());
         var exportedItems = new List<Metric>();
-        int counter = 0;
+        var counter = 0;
 
         using var container = BuildMeterProvider(out var meterProvider, builder =>
         {
@@ -825,7 +817,7 @@ public class MetricViewTests : MetricTestsBase
         }
 
         var histogramPoint = metricPoints[0];
-        if (histogramPoint.TryGetHistogramMinMaxValues(out double min, out double max))
+        if (histogramPoint.TryGetHistogramMinMaxValues(out var min, out var max))
         {
             Assert.Equal(expectedMin, min);
             Assert.Equal(expectedMax, max);
@@ -872,7 +864,7 @@ public class MetricViewTests : MetricTestsBase
         }
 
         var histogramPoint = metricPoints[0];
-        Assert.False(histogramPoint.TryGetHistogramMinMaxValues(out double _, out double _));
+        Assert.False(histogramPoint.TryGetHistogramMinMaxValues(out var _, out var _));
     }
 
     [Fact]
@@ -1127,15 +1119,7 @@ public class MetricViewTests : MetricTestsBase
 
             builder
                 .AddMeter(meter.Name)
-                .AddView((instrument) =>
-                {
-                    if (instrument.Name == "counter2")
-                    {
-                        return new MetricStreamConfiguration() { Name = "MetricStreamA", CardinalityLimit = 10000 };
-                    }
-
-                    return null;
-                })
+                .AddView((instrument) => instrument.Name == "counter2" ? new MetricStreamConfiguration() { Name = "MetricStreamA", CardinalityLimit = 10000 } : null)
                 .AddInMemoryExporter(exportedItems);
         });
 
@@ -1216,7 +1200,7 @@ public class MetricViewTests : MetricTestsBase
         Assert.Equal("MetricStreamC", metricC.Name);
         Assert.Equal(10, GetAggregatedValue(metricC));
 
-        long GetAggregatedValue(Metric metric)
+        static long GetAggregatedValue(Metric metric)
         {
             var metricPoints = new List<MetricPoint>();
             foreach (ref readonly var mp in metric.GetMetricPoints())
@@ -1410,17 +1394,7 @@ public class MetricViewTests : MetricTestsBase
 
         using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
-            .AddView((instrument) =>
-            {
-                if (instrument.Name == "name")
-                {
-                    return new MetricStreamConfiguration { Name = "othername", TagKeys = ["key1"] };
-                }
-                else
-                {
-                    return null;
-                }
-            })
+            .AddView((instrument) => instrument.Name == "name" ? new MetricStreamConfiguration { Name = "othername", TagKeys = ["key1"] } : null)
             .AddInMemoryExporter(exportedItems));
 
         var instrument1 = meter.CreateCounter<long>("name");
@@ -1463,17 +1437,7 @@ public class MetricViewTests : MetricTestsBase
 
         using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
-            .AddView((instrument) =>
-            {
-                if (instrument.Name == "name")
-                {
-                    return new MetricStreamConfiguration { Name = "othername" };
-                }
-                else
-                {
-                    return MetricStreamConfiguration.Drop;
-                }
-            })
+            .AddView((instrument) => instrument.Name == "name" ? new MetricStreamConfiguration { Name = "othername" } : MetricStreamConfiguration.Drop)
             .AddInMemoryExporter(exportedItems));
 
         var instrument1 = meter.CreateCounter<long>("name");

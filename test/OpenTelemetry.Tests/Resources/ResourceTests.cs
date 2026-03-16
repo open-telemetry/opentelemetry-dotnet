@@ -82,7 +82,7 @@ public sealed class ResourceTests : IDisposable
 
         // Assert
         Assert.Single(resource.Attributes);
-        Assert.Equal(Array.Empty<string>(), resource.Attributes.Where(x => x.Key == "EmptyArray").FirstOrDefault().Value);
+        Assert.Equal(Array.Empty<string>(), resource.Attributes.FirstOrDefault(x => x.Key == "EmptyArray").Value);
     }
 
     [Fact]
@@ -157,7 +157,7 @@ public sealed class ResourceTests : IDisposable
         Assert.Contains(new KeyValuePair<string, object>("int", 1L), resource.Attributes);
         Assert.Contains(new KeyValuePair<string, object>("short", 1L), resource.Attributes);
 
-        double convertedFloat = Convert.ToDouble(0.1f, System.Globalization.CultureInfo.InvariantCulture);
+        var convertedFloat = Convert.ToDouble(0.1f, System.Globalization.CultureInfo.InvariantCulture);
         Assert.Contains(new KeyValuePair<string, object>("float", convertedFloat), resource.Attributes);
     }
 
@@ -340,14 +340,14 @@ public sealed class ResourceTests : IDisposable
         // Arrange
         var sourceAttributes = new List<KeyValuePair<string, object>>
         {
-            new KeyValuePair<string, object>("key1", "value1"),
-            new KeyValuePair<string, object>("key1", "value1.1"),
+            new("key1", "value1"),
+            new("key1", "value1.1"),
         };
         var sourceResource = new Resource(sourceAttributes);
 
         var otherAttributes = new List<KeyValuePair<string, object>>
         {
-            new KeyValuePair<string, object>("key2", "value2"),
+            new("key2", "value2"),
         };
 
         var otherResource = new Resource(otherAttributes);
@@ -502,7 +502,7 @@ public sealed class ResourceTests : IDisposable
     [Fact]
     public void ResourceBuilder_AddDetector_Test()
     {
-        bool factoryExecuted = false;
+        var factoryExecuted = false;
 
         var builder = ResourceBuilder.CreateDefault();
 
@@ -512,7 +512,7 @@ public sealed class ResourceTests : IDisposable
             return new NoopResourceDetector();
         });
 
-        Assert.Throws<NotSupportedException>(() => builder.Build());
+        Assert.Throws<NotSupportedException>(builder.Build);
         Assert.False(factoryExecuted);
 
         var serviceCollection = new ServiceCollection();
@@ -530,7 +530,7 @@ public sealed class ResourceTests : IDisposable
     {
         var builder = ResourceBuilder.CreateDefault();
 
-        bool nullTestRun = false;
+        var nullTestRun = false;
 
         builder.AddDetectorInternal(sp =>
         {
@@ -545,7 +545,7 @@ public sealed class ResourceTests : IDisposable
 
         builder = ResourceBuilder.CreateDefault();
 
-        bool validTestRun = false;
+        var validTestRun = false;
 
         var serviceCollection = new ServiceCollection();
         using var serviceProvider = serviceCollection.BuildServiceProvider();
@@ -595,7 +595,7 @@ public sealed class ResourceTests : IDisposable
 
     private static void ValidateAttributes(IEnumerable<KeyValuePair<string, object>> attributes, int startIndex = 0, int endIndex = 0)
     {
-        var keyValuePairs = attributes as KeyValuePair<string, object>[] ?? attributes.ToArray();
+        var keyValuePairs = attributes as KeyValuePair<string, object>[] ?? [.. attributes];
         var endInd = endIndex == 0 ? keyValuePairs.Length - 1 : endIndex;
         for (var i = startIndex; i <= endInd; ++i)
         {

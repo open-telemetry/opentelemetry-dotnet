@@ -20,7 +20,7 @@ public class OpenTelemetrySdkTests
     [Fact]
     public void NoopProvidersReturnedTest()
     {
-        bool builderDelegateInvoked = false;
+        var builderDelegateInvoked = false;
 
         using var sdk = OpenTelemetrySdk.Create(builder =>
         {

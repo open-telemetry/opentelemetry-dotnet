@@ -73,7 +73,7 @@ internal readonly struct Tags : IEquatable<Tags>
             }
         }
 #else
-        for (int i = 0; i < length; i++)
+        for (var i = 0; i < length; i++)
         {
             ref var ours = ref ourKvps[i];
 
@@ -105,7 +105,7 @@ internal readonly struct Tags : IEquatable<Tags>
 #if NET || NETSTANDARD2_1_OR_GREATER
         HashCode hashCode = default;
 
-        for (int i = 0; i < keyValuePairs.Length; i++)
+        for (var i = 0; i < keyValuePairs.Length; i++)
         {
             ref var item = ref keyValuePairs[i];
             hashCode.Add(item.Key.GetHashCode(StringComparison.Ordinal));
@@ -116,7 +116,7 @@ internal readonly struct Tags : IEquatable<Tags>
 #else
         var hash = 17;
 
-        for (int i = 0; i < keyValuePairs!.Length; i++)
+        for (var i = 0; i < keyValuePairs!.Length; i++)
         {
             ref var item = ref keyValuePairs[i];
             unchecked

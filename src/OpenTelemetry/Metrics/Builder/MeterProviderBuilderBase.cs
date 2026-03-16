@@ -85,8 +85,8 @@ public class MeterProviderBuilderBase : MeterProviderBuilder, IMeterProviderBuil
         return this;
     }
 
-    /// <inheritdoc />
 #pragma warning disable CA1033 // Interface methods should be callable by child types
+    /// <inheritdoc />
     MeterProviderBuilder IDeferredMeterProviderBuilder.Configure(Action<IServiceProvider, MeterProviderBuilder> configure)
 #pragma warning restore CA1033 // Interface methods should be callable by child types
     {
@@ -115,7 +115,7 @@ public class MeterProviderBuilderBase : MeterProviderBuilder, IMeterProviderBuil
         this.innerBuilder.Services = null;
 
 #if DEBUG
-        bool validateScopes = true;
+        var validateScopes = true;
 #else
         bool validateScopes = false;
 #endif
@@ -133,7 +133,7 @@ public class MeterProviderBuilderBase : MeterProviderBuilder, IMeterProviderBuil
 
     private static bool IsOtelSdkDisabled(IConfiguration configuration)
     {
-        bool isDisabled = configuration.TryGetBoolValue(OpenTelemetrySdkEventSource.Log, SdkConfigDefinitions.SdkDisableEnvVarName, out bool result) && result;
+        var isDisabled = configuration.TryGetBoolValue(OpenTelemetrySdkEventSource.Log, SdkConfigDefinitions.SdkDisableEnvVarName, out var result) && result;
         if (isDisabled)
         {
             OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Disabled because {SdkConfigDefinitions.SdkDisableEnvVarName} is true.");

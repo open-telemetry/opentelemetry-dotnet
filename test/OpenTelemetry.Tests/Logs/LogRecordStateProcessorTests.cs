@@ -17,7 +17,7 @@ public class LogRecordStateProcessorTests
     [InlineData(false, false)]
     public void LogProcessorSetStateTest(bool includeAttributes, bool parseStateValues)
     {
-        List<LogRecord> exportedItems = new();
+        List<LogRecord> exportedItems = [];
 
         using (var loggerFactory = CreateLoggerFactory(includeAttributes, parseStateValues, exportedItems, OnEnd))
         {
@@ -58,7 +58,7 @@ public class LogRecordStateProcessorTests
     [InlineData(false, false)]
     public void LogProcessorSetStateToUnsupportedTypeTest(bool includeAttributes, bool parseStateValues)
     {
-        List<LogRecord> exportedItems = new();
+        List<LogRecord> exportedItems = [];
 
         using (var loggerFactory = CreateLoggerFactory(includeAttributes, parseStateValues, exportedItems, OnEnd))
         {
@@ -98,7 +98,7 @@ public class LogRecordStateProcessorTests
     [InlineData(false, false)]
     public void LogProcessorSetAttributesTest(bool includeAttributes, bool parseStateValues)
     {
-        List<LogRecord> exportedItems = new();
+        List<LogRecord> exportedItems = [];
 
         using (var loggerFactory = CreateLoggerFactory(includeAttributes, parseStateValues, exportedItems, OnEnd))
         {
@@ -125,10 +125,7 @@ public class LogRecordStateProcessorTests
                 out var state,
                 out var attributes);
 
-            logRecord.Attributes = new List<KeyValuePair<string, object?>>(attributes)
-            {
-                new("enrichedData", "OTel"),
-            };
+            logRecord.Attributes = [.. attributes, new("enrichedData", "OTel")];
         }
     }
 
@@ -143,7 +140,7 @@ public class LogRecordStateProcessorTests
     [InlineData(false, false, 1)]
     public void LogProcessorSetAttributesAndStateMixedTest(bool includeAttributes, bool parseStateValues, int order)
     {
-        List<LogRecord> exportedItems = new();
+        List<LogRecord> exportedItems = [];
 
         using (var loggerFactory = CreateLoggerFactory(includeAttributes, parseStateValues, exportedItems, OnEnd))
         {
@@ -172,10 +169,7 @@ public class LogRecordStateProcessorTests
 
             if (order == 0)
             {
-                logRecord.State = logRecord.Attributes = new List<KeyValuePair<string, object?>>(attributes)
-                {
-                    new("enrichedData", "OTel"),
-                };
+                logRecord.State = logRecord.Attributes = [.. attributes, new("enrichedData", "OTel")];
             }
             else
             {
@@ -195,8 +189,7 @@ public class LogRecordStateProcessorTests
         bool parseStateValues,
         List<LogRecord> exportedItems,
         Action<LogRecord> onEndAction)
-    {
-        return LoggerFactory.Create(logging => logging
+        => LoggerFactory.Create(logging => logging
             .AddOpenTelemetry(options =>
             {
                 options.IncludeAttributes = includeAttributes;
@@ -206,7 +199,6 @@ public class LogRecordStateProcessorTests
                     .AddProcessor(new LogRecordStateProcessor(onEndAction))
                     .AddInMemoryExporter(exportedItems);
             }));
-    }
 
     private static void AssertStateAndAttributes(
         LogRecord logRecord,

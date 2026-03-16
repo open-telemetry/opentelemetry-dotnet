@@ -14,10 +14,10 @@ namespace OpenTelemetry.Metrics;
 public class BaseExportingMetricReader : MetricReader
 #pragma warning restore CA1708 // Identifiers should differ by more than case
 {
+#pragma warning disable CA1051 // Do not declare visible instance fields
     /// <summary>
     /// Gets the exporter used by the metric reader.
     /// </summary>
-#pragma warning disable CA1051 // Do not declare visible instance fields
     protected readonly BaseExporter<Metric> exporter;
 #pragma warning restore CA1051 // Do not declare visible instance fields
 
@@ -48,20 +48,15 @@ public class BaseExportingMetricReader : MetricReader
 
         if (exporter is IPullMetricExporter pullExporter)
         {
-            if (this.SupportedExportModes.HasFlag(ExportModes.Push))
-            {
-                pullExporter.Collect = this.Collect;
-            }
-            else
-            {
-                pullExporter.Collect = (timeoutMilliseconds) =>
+            pullExporter.Collect = this.SupportedExportModes.HasFlag(ExportModes.Push)
+                ? this.Collect
+                : ((timeoutMilliseconds) =>
                 {
                     using (PullMetricScope.Begin())
                     {
                         return this.Collect(timeoutMilliseconds);
                     }
-                };
-            }
+                });
         }
 
         this.exportCalledMessage = $"{nameof(BaseExportingMetricReader)} calling {this.Exporter}.{nameof(this.Exporter.Export)} method.";

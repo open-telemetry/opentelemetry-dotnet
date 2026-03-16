@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
@@ -21,13 +20,11 @@ public sealed class OpenTelemetrySdk : IDisposable
     private OpenTelemetrySdk(
         Action<IOpenTelemetryBuilder> configure)
     {
-        Debug.Assert(configure != null, "configure was null");
-
         var services = new ServiceCollection();
 
         var builder = new OpenTelemetrySdkBuilder(services);
 
-        configure!(builder);
+        configure(builder);
 
         this.serviceProvider = services.BuildServiceProvider();
 
@@ -87,14 +84,14 @@ public sealed class OpenTelemetrySdk : IDisposable
     {
         Guard.ThrowIfNull(configure);
 
+#pragma warning disable CA1062 // Guarded by Guard.ThrowIfNull above.
         return new(configure);
+#pragma warning restore CA1062
     }
 
     /// <inheritdoc/>
     public void Dispose()
-    {
-        this.serviceProvider.Dispose();
-    }
+        => this.serviceProvider.Dispose();
 
     internal sealed class NoopLoggerProvider : LoggerProvider
     {
@@ -112,11 +109,8 @@ public sealed class OpenTelemetrySdk : IDisposable
     {
         public OpenTelemetrySdkBuilder(IServiceCollection services)
         {
-            Debug.Assert(services != null, "services was null");
-
-            services!.AddOpenTelemetrySharedProviderBuilderServices();
-
-            this.Services = services!;
+            services.AddOpenTelemetrySharedProviderBuilderServices();
+            this.Services = services;
         }
 
         public IServiceCollection Services { get; }

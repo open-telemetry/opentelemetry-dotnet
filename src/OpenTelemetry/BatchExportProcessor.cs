@@ -61,7 +61,7 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
         {
             IsBackground = true,
 #pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
-            Name = $"OpenTelemetry-{nameof(BatchExportProcessor<T>)}-{exporter.GetType().Name}",
+            Name = $"OpenTelemetry-{nameof(BatchExportProcessor<>)}-{exporter.GetType().Name}",
 #pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
         };
         this.exporterThread.Start();
@@ -109,9 +109,7 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
 
     /// <inheritdoc/>
     protected override void OnExport(T data)
-    {
-        this.TryExport(data);
-    }
+        => this.TryExport(data);
 
     /// <inheritdoc/>
     protected override bool OnForceFlush(int timeoutMilliseconds)

@@ -66,7 +66,7 @@ public class MetricExemplarTests : MetricTestsBase
     [InlineData(MetricReaderTemporalityPreference.Delta)]
     public void TestExemplarsCounter(MetricReaderTemporalityPreference temporality)
     {
-        DateTime testStartTime = DateTime.UtcNow;
+        var testStartTime = DateTime.UtcNow;
         var exportedItems = new List<Metric>();
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
@@ -180,7 +180,7 @@ public class MetricExemplarTests : MetricTestsBase
     [InlineData(MetricReaderTemporalityPreference.Delta)]
     public void TestExemplarsObservable(MetricReaderTemporalityPreference temporality)
     {
-        DateTime testStartTime = DateTime.UtcNow;
+        var testStartTime = DateTime.UtcNow;
         var exportedItems = new List<Metric>();
 
         (double Value, bool ExpectTraceId)[] measurementValues =
@@ -189,7 +189,7 @@ public class MetricExemplarTests : MetricTestsBase
             (19D, false)
         ];
 
-        int measurementIndex = 0;
+        var measurementIndex = 0;
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
         var gaugeDouble = meter.CreateObservableGauge("testGaugeDouble", () => measurementValues[measurementIndex].Value);
@@ -271,7 +271,7 @@ public class MetricExemplarTests : MetricTestsBase
     [InlineData(MetricReaderTemporalityPreference.Delta, "always_on")]
     public void TestExemplarsHistogramWithBuckets(MetricReaderTemporalityPreference temporality, string? configValue)
     {
-        DateTime testStartTime = DateTime.UtcNow;
+        var testStartTime = DateTime.UtcNow;
         var exportedItems = new List<Metric>();
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
@@ -412,7 +412,7 @@ public class MetricExemplarTests : MetricTestsBase
     [InlineData(MetricReaderTemporalityPreference.Delta)]
     public void TestExemplarsHistogramWithoutBuckets(MetricReaderTemporalityPreference temporality)
     {
-        DateTime testStartTime = DateTime.UtcNow;
+        var testStartTime = DateTime.UtcNow;
         var exportedItems = new List<Metric>();
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
@@ -530,7 +530,7 @@ public class MetricExemplarTests : MetricTestsBase
     [InlineData(MetricReaderTemporalityPreference.Delta)]
     public void TestExemplarsExponentialHistogram(MetricReaderTemporalityPreference temporality)
     {
-        DateTime testStartTime = DateTime.UtcNow;
+        var testStartTime = DateTime.UtcNow;
         var exportedItems = new List<Metric>();
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
@@ -771,7 +771,7 @@ public class MetricExemplarTests : MetricTestsBase
     {
         var random = new Random();
         var values = new (double, bool)[count];
-        for (int i = 0; i < count; i++)
+        for (var i = 0; i < count; i++)
         {
 #pragma warning disable CA5394 // Do not use insecure randomness
             var nextValue = random.NextDouble() * 100_000;
@@ -796,7 +796,7 @@ public class MetricExemplarTests : MetricTestsBase
         IEnumerable<(double Value, bool ExpectTraceId)> measurementValues,
         Func<Exemplar, double> getExemplarValueFunc)
     {
-        int count = 0;
+        var count = 0;
 
         var measurements = measurementValues.ToArray();
 

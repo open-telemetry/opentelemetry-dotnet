@@ -32,7 +32,7 @@ public class LoggerProviderExtensionsTests
     [Fact]
     public void ForceFlushTest()
     {
-        List<LogRecord> exportedItems = new();
+        List<LogRecord> exportedItems = [];
         using var provider = Sdk.CreateLoggerProviderBuilder()
             .AddProcessor(
 #pragma warning disable CA2000 // Dispose objects before losing scope

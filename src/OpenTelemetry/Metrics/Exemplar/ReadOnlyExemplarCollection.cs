@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Diagnostics;
-
 namespace OpenTelemetry.Metrics;
 
 /// <summary>
@@ -17,9 +15,7 @@ public readonly struct ReadOnlyExemplarCollection
 
     internal ReadOnlyExemplarCollection(Exemplar[] exemplars)
     {
-        Debug.Assert(exemplars != null, "exemplars was null");
-
-        this.exemplars = exemplars!;
+        this.exemplars = exemplars;
     }
 
     /// <summary>
@@ -46,7 +42,7 @@ public readonly struct ReadOnlyExemplarCollection
         {
             var exemplarCopies = new Exemplar[maximumCount];
 
-            int i = 0;
+            var i = 0;
             foreach (ref readonly var exemplar in this)
             {
                 if (exemplar.IsUpdated())
@@ -76,10 +72,10 @@ public readonly struct ReadOnlyExemplarCollection
         return list;
     }
 
+#pragma warning disable CA1034 // Nested types should not be visible - already part of public API
     /// <summary>
     /// Enumerates the elements of a <see cref="ReadOnlyExemplarCollection"/>.
     /// </summary>
-#pragma warning disable CA1034 // Nested types should not be visible - already part of public API
     public struct Enumerator
 #pragma warning restore CA1034 // Nested types should not be visible - already part of public API
     {
