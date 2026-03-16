@@ -84,7 +84,7 @@ public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
             if (logRecord.Attributes != null)
             {
                 this.WriteLine("LogRecord.Attributes (Key:Value):");
-                for (int i = 0; i < logRecord.Attributes.Count; i++)
+                for (var i = 0; i < logRecord.Attributes.Count; i++)
                 {
                     // Special casing {OriginalFormat}
                     // See https://github.com/open-telemetry/opentelemetry-dotnet/pull/3182
@@ -114,7 +114,7 @@ public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
                 this.WriteLine($"{"LogRecord.Exception:",-RightPaddingLength}{logRecord.Exception.ToInvariantString()}");
             }
 
-            int scopeDepth = -1;
+            var scopeDepth = -1;
 
             logRecord.ForEachScope(ProcessScope, this);
 
@@ -125,7 +125,7 @@ public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
                     exporter.WriteLine("LogRecord.ScopeValues (Key:Value):");
                 }
 
-                foreach (KeyValuePair<string, object?> scopeItem in scope)
+                foreach (var scopeItem in scope)
                 {
                     if (this.TagWriter.TryTransformTag(scopeItem, out var result))
                     {

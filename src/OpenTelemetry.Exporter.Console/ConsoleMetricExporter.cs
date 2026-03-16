@@ -92,8 +92,8 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
 
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
-                string valueDisplay = string.Empty;
-                StringBuilder tagsBuilder = new StringBuilder();
+                var valueDisplay = string.Empty;
+                var tagsBuilder = new StringBuilder();
                 foreach (var tag in metricPoint.Tags)
                 {
                     if (this.TagWriter.TryTransformTag(tag, out var result))
@@ -111,7 +111,7 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
 
                 var metricType = metric.MetricType;
 
-                if (metricType == MetricType.Histogram || metricType == MetricType.ExponentialHistogram)
+                if (metricType is MetricType.Histogram or MetricType.ExponentialHistogram)
                 {
                     var bucketsBuilder = new StringBuilder();
                     var sum = metricPoint.GetHistogramSum();
@@ -121,7 +121,7 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
 #else
                     bucketsBuilder.Append($"Sum: {sum} Count: {count} ");
 #endif
-                    if (metricPoint.TryGetHistogramMinMaxValues(out double min, out double max))
+                    if (metricPoint.TryGetHistogramMinMaxValues(out var min, out var max))
                     {
 #if NET
                         bucketsBuilder.Append(CultureInfo.InvariantCulture, $"Min: {min} Max: {max} ");
@@ -134,7 +134,7 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
 
                     if (metricType == MetricType.Histogram)
                     {
-                        bool isFirstIteration = true;
+                        var isFirstIteration = true;
                         double previousExplicitBound = default;
                         foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
                         {
@@ -235,7 +235,7 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                             exemplarString.Append(exemplar.SpanId.ToHexString());
                         }
 
-                        bool appendedTagString = false;
+                        var appendedTagString = false;
                         foreach (var tag in exemplar.FilteredTags)
                         {
                             if (this.TagWriter.TryTransformTag(tag, out var result))
