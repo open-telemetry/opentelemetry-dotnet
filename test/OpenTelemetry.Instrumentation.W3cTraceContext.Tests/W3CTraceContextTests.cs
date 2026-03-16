@@ -39,7 +39,9 @@ public sealed class W3CTraceContextTests : IDisposable
     [SkipUnlessEnvVarFoundTheory(W3CTraceContextEnvVarName)]
     [InlineData("placeholder")]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "xUnit1026:Theory methods should use all of their parameters", Justification = "Need to use SkipUnlessEnvVarFoundTheory")]
+#pragma warning disable IDE0060 // Remove unused parameter
     public async Task W3CTraceContextTestSuiteAsync(string value)
+#pragma warning restore IDE0060 // Remove unused parameter
     {
         // configure SDK
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -78,7 +80,7 @@ public sealed class W3CTraceContextTests : IDisposable
 
         // Assert
         // TODO: after W3C Trace Context test suite passes, it might go in standard output
-        string lastLine = ParseLastLine(stderr);
+        var lastLine = ParseLastLine(stderr);
 
         this.output.WriteLine("[stderr]" + stderr);
         this.output.WriteLine("[stdout]" + stdout);
@@ -88,9 +90,7 @@ public sealed class W3CTraceContextTests : IDisposable
     }
 
     public void Dispose()
-    {
-        this.httpClient.Dispose();
-    }
+        => this.httpClient.Dispose();
 
     private static async Task<(string StdOut, string StdErr)> RunCommand(string command, string args)
     {
@@ -167,8 +167,8 @@ public sealed class W3CTraceContextTests : IDisposable
 
         await Task.WhenAll(processErrors, processOutput);
 
-        string error = string.Empty;
-        string output = string.Empty;
+        var error = string.Empty;
+        var output = string.Empty;
 
         if (processErrors.Status == TaskStatus.RanToCompletion)
         {
