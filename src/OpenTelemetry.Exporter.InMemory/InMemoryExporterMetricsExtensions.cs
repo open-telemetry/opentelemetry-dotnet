@@ -168,7 +168,7 @@ public static class InMemoryExporterMetricsExtensions
     {
 #pragma warning disable CA2000 // Dispose objects before losing scope
         var metricExporter = new InMemoryExporter<Metric>(
-            exportFunc: (in Batch<Metric> metricBatch) => ExportMetricSnapshot(in metricBatch, exportedItems));
+            exportFunc: (in metricBatch) => ExportMetricSnapshot(in metricBatch, exportedItems));
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
         return PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(
