@@ -69,14 +69,14 @@ internal static class Generators
 
             // Generate tags
             var tagCount = Math.Min(size, 50);
-            for (int i = 0; i < tagCount; i++)
+            for (var i = 0; i < tagCount; i++)
             {
                 activity.SetTag($"tag.{i}", $"value_{i}_{Guid.NewGuid():N}");
             }
 
             // Generate events
             var eventCount = Math.Min(size / 10, 10);
-            for (int i = 0; i < eventCount; i++)
+            for (var i = 0; i < eventCount; i++)
             {
                 var eventTags = new ActivityTagsCollection
                 {
@@ -87,7 +87,7 @@ internal static class Generators
 
             // Generate links
             var linkCount = Math.Min(size / 10, 10);
-            for (int i = 0; i < linkCount; i++)
+            for (var i = 0; i < linkCount; i++)
             {
                 var linkTags = new ActivityTagsCollection
                 {
@@ -117,7 +117,7 @@ internal static class Generators
             var count = Math.Min(size, 20);
             var attributes = new Dictionary<string, object>(count);
 
-            for (int i = 0; i < count; i++)
+            for (var i = 0; i < count; i++)
             {
                 attributes[$"resource.attr.{i}"] = $"value_{i}";
             }
@@ -144,7 +144,7 @@ internal static class Generators
             if (size % 7 == 0)
             {
                 var boundaries = new double[Math.Min(size % 10, 10)];
-                for (int i = 0; i < boundaries.Length; i++)
+                for (var i = 0; i < boundaries.Length; i++)
                 {
                     boundaries[i] = (i * 50.0) + (size % 50);
                 }
@@ -163,7 +163,7 @@ internal static class Generators
                 var counterSingle = meter.CreateCounter<float>("test.counter.single");
                 var counterDouble = meter.CreateCounter<double>("test.counter.double");
 
-                for (int i = 0; i < size; i++)
+                for (var i = 0; i < size; i++)
                 {
                     counterByte.Add((byte)(100 * i));
                     counterInt16.Add((short)(100 * i));
@@ -175,14 +175,14 @@ internal static class Generators
 
                 var gauge = meter.CreateGauge<double>("test.gauge");
 
-                for (int i = 0; i < size; i++)
+                for (var i = 0; i < size; i++)
                 {
                     gauge.Record(0.1 * i);
                 }
 
                 var histogram = meter.CreateHistogram<int>("test.histogram");
 
-                for (int i = 0; i < size; i++)
+                for (var i = 0; i < size; i++)
                 {
                     histogram.Record(300 * i);
                 }
@@ -213,7 +213,7 @@ internal static class Generators
             // Add attributes
             var count = Math.Min(size, 50);
             var attributes = new List<KeyValuePair<string, object?>>(count);
-            for (int i = 0; i < count; i++)
+            for (var i = 0; i < count; i++)
             {
                 attributes.Add(new KeyValuePair<string, object?>($"log.attribute.{i}", $"value_{i}"));
             }

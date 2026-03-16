@@ -31,11 +31,11 @@ internal static class OtlpExporterOptionsExtensions
         {
             // According to the specification, URL-encoded headers must be supported.
             optionHeaders = Uri.UnescapeDataString(optionHeaders);
-            ReadOnlySpan<char> headersSpan = optionHeaders.AsSpan();
+            var headersSpan = optionHeaders.AsSpan();
 
             while (!headersSpan.IsEmpty)
             {
-                int commaIndex = headersSpan.IndexOf(',');
+                var commaIndex = headersSpan.IndexOf(',');
                 ReadOnlySpan<char> pair;
                 if (commaIndex == -1)
                 {
@@ -48,7 +48,7 @@ internal static class OtlpExporterOptionsExtensions
                     headersSpan = headersSpan.Slice(commaIndex + 1);
                 }
 
-                int equalIndex = pair.IndexOf('=');
+                var equalIndex = pair.IndexOf('=');
                 if (equalIndex == -1)
                 {
                     throw new ArgumentException("Headers provided in an invalid format.");
@@ -75,7 +75,7 @@ internal static class OtlpExporterOptionsExtensions
         // `HttpClient.Timeout.TotalMilliseconds` would be populated with the correct timeout value for both the exporter configuration cases:
         // 1. User provides their own HttpClient. This case is straightforward as the user wants to use their `HttpClient` and thereby the same client's timeout value.
         // 2. If the user configures timeout via the exporter options, then the timeout set for the `HttpClient` initialized by the exporter will be set to user provided value.
-        double timeoutMilliseconds = exportClient is OtlpHttpExportClient httpTraceExportClient
+        var timeoutMilliseconds = exportClient is OtlpHttpExportClient httpTraceExportClient
             ? httpTraceExportClient.HttpClient.Timeout.TotalMilliseconds
             : options.TimeoutMilliseconds;
 
@@ -103,7 +103,7 @@ internal static class OtlpExporterOptionsExtensions
         var httpClient = options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.");
 
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
-        if (options.Protocol != OtlpExportProtocol.Grpc && options.Protocol != OtlpExportProtocol.HttpProtobuf)
+        if (options.Protocol is not OtlpExportProtocol.Grpc and not OtlpExportProtocol.HttpProtobuf)
         {
             throw new NotSupportedException($"Protocol {options.Protocol} is not supported.");
         }
@@ -135,13 +135,13 @@ internal static class OtlpExporterOptionsExtensions
         {
             options.HttpClientFactory = () =>
             {
-                Type? httpClientFactoryType = Type.GetType("System.Net.Http.IHttpClientFactory, Microsoft.Extensions.Http", throwOnError: false);
+                var httpClientFactoryType = Type.GetType("System.Net.Http.IHttpClientFactory, Microsoft.Extensions.Http", throwOnError: false);
                 if (httpClientFactoryType != null)
                 {
-                    object? httpClientFactory = serviceProvider.GetService(httpClientFactoryType);
+                    var httpClientFactory = serviceProvider.GetService(httpClientFactoryType);
                     if (httpClientFactory != null)
                     {
-                        MethodInfo? createClientMethod = httpClientFactoryType.GetMethod(
+                        var createClientMethod = httpClientFactoryType.GetMethod(
                             "CreateClient",
                             BindingFlags.Public | BindingFlags.Instance,
                             binder: null,
@@ -149,7 +149,7 @@ internal static class OtlpExporterOptionsExtensions
                             modifiers: null);
                         if (createClientMethod != null)
                         {
-                            HttpClient? client = (HttpClient?)createClientMethod.Invoke(httpClientFactory, [httpClientName]);
+                            var client = (HttpClient?)createClientMethod.Invoke(httpClientFactory, [httpClientName]);
 
                             if (client != null)
                             {

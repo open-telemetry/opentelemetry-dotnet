@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Buffers.Binary;
-using System.Diagnostics;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
@@ -21,8 +20,6 @@ public class OtlpMetricExporter : BaseExporter<Metric>
     private readonly OtlpExporterTransmissionHandler transmissionHandler;
     private readonly int startWritePosition;
 
-    private Resource? resource;
-
     // Initial buffer size set to ~732KB.
     // This choice allows us to gradually grow the buffer while targeting a final capacity of around 100 MB,
     // by the 7th doubling to maintain efficient allocation without frequent resizing.
@@ -33,7 +30,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
     /// </summary>
     /// <param name="options">Configuration options for the exporter.</param>
     public OtlpMetricExporter(OtlpExporterOptions options)
-        : this(options, experimentalOptions: new(), transmissionHandler: null)
+        : this(options ?? throw new ArgumentNullException(nameof(options)), experimentalOptions: new(), transmissionHandler: null)
     {
     }
 
@@ -48,16 +45,17 @@ public class OtlpMetricExporter : BaseExporter<Metric>
         ExperimentalOptions experimentalOptions,
         OtlpExporterTransmissionHandler? transmissionHandler = null)
     {
-        Debug.Assert(exporterOptions != null, "exporterOptions was null");
-        Debug.Assert(experimentalOptions != null, "experimentalOptions was null");
-
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
-        this.startWritePosition = exporterOptions!.Protocol == OtlpExportProtocol.Grpc ? GrpcStartWritePosition : 0;
+        this.startWritePosition = exporterOptions.Protocol == OtlpExportProtocol.Grpc ? GrpcStartWritePosition : 0;
 #pragma warning restore CS0618 // Suppressing gRPC obsolete warning
-        this.transmissionHandler = transmissionHandler ?? exporterOptions!.GetExportTransmissionHandler(experimentalOptions!, OtlpSignalType.Metrics);
+        this.transmissionHandler = transmissionHandler ?? exporterOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Metrics);
     }
 
-    internal Resource Resource => this.resource ??= this.ParentProvider.GetResource();
+    internal Resource Resource
+    {
+        get => field ??= this.ParentProvider.GetResource();
+        private set;
+    }
 
     /// <inheritdoc />
 #pragma warning disable CA1725 // Parameter names should match base declaration
@@ -69,7 +67,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
 
         try
         {
-            int writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref this.buffer, this.startWritePosition, this.Resource, metrics);
+            var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref this.buffer, this.startWritePosition, this.Resource, metrics);
 
             if (this.startWritePosition == GrpcStartWritePosition)
             {
@@ -77,7 +75,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
                 // byte 0 - Specifying if the payload is compressed.
                 // 1-4 byte - Specifies the length of payload in big endian format.
                 // 5 and above -  Protobuf serialized data.
-                Span<byte> data = new Span<byte>(this.buffer, 1, 4);
+                var data = new Span<byte>(this.buffer, 1, 4);
                 var dataLength = writePosition - GrpcStartWritePosition;
                 BinaryPrimitives.WriteUInt32BigEndian(data, (uint)dataLength);
             }

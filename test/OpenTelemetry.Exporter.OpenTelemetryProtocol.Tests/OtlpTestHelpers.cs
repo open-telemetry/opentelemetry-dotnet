@@ -14,8 +14,8 @@ internal static class OtlpTestHelpers
         RepeatedField<OtlpCommon.KeyValue> actual)
     {
         var expectedAttributes = expected.ToList();
-        int expectedSize = 0;
-        for (int i = 0; i < expectedAttributes.Count; i++)
+        var expectedSize = 0;
+        for (var i = 0; i < expectedAttributes.Count; i++)
         {
             var current = expectedAttributes[i].Value;
             Assert.Equal(expectedAttributes[i].Key, actual[i].Key);
@@ -70,7 +70,7 @@ internal static class OtlpTestHelpers
 
                     Assert.Equal(source.Length, actual[i].Value.ArrayValue.Values.Count);
 
-                    for (int j = 0; j < source.Length; j++)
+                    for (var j = 0; j < source.Length; j++)
                     {
                         var item = source.GetValue(j);
 

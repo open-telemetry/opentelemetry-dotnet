@@ -31,11 +31,11 @@ public class OtlpLogExporterTests
     [Fact]
     public void AddOtlpExporterWithNamedOptions()
     {
-        int defaultConfigureExporterOptionsInvocations = 0;
-        int namedConfigureExporterOptionsInvocations = 0;
+        var defaultConfigureExporterOptionsInvocations = 0;
+        var namedConfigureExporterOptionsInvocations = 0;
 
-        int defaultConfigureSdkLimitsOptionsInvocations = 0;
-        int namedConfigureSdkLimitsOptionsInvocations = 0;
+        var defaultConfigureSdkLimitsOptionsInvocations = 0;
+        var namedConfigureSdkLimitsOptionsInvocations = 0;
 
         using var loggerProvider = Sdk.CreateLoggerProviderBuilder()
             .ConfigureServices(services =>
@@ -73,11 +73,11 @@ public class OtlpLogExporterTests
     [Fact]
     public void UserHttpFactoryCalledWhenUsingHttpProtobuf()
     {
-        OtlpExporterOptions options = new OtlpExporterOptions();
+        var options = new OtlpExporterOptions();
 
         var defaultFactory = options.HttpClientFactory;
 
-        int invocations = 0;
+        var invocations = 0;
         options.Protocol = OtlpExportProtocol.HttpProtobuf;
         options.HttpClientFactory = () =>
         {
@@ -131,7 +131,7 @@ public class OtlpLogExporterTests
     [InlineData(true)]
     public void AddOtlpLogExporterReceivesAttributesWithParseStateValueSetToFalse(bool callUseOpenTelemetry)
     {
-        bool optionsValidated = false;
+        var optionsValidated = false;
 
         var logRecords = new List<LogRecord>();
         using var loggerFactory = LoggerFactory.Create(builder =>
@@ -272,7 +272,7 @@ public class OtlpLogExporterTests
         Assert.Single(logRecords);
 
         var logRecord = logRecords[0];
-        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecord);
+        var otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecord);
 
         Assert.NotNull(otlpLogRecord);
         Assert.Equal("Hello from tomato 2.99.", otlpLogRecord.Body.StringValue);
@@ -319,7 +319,7 @@ public class OtlpLogExporterTests
           .Build();
 
         var logRecord = logRecords[0];
-        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new(configuration), logRecord);
+        var otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new(configuration), logRecord);
 
         Assert.NotNull(otlpLogRecord);
         Assert.Equal("Hello from tomato 2.99.", otlpLogRecord.Body.StringValue);
@@ -376,7 +376,7 @@ public class OtlpLogExporterTests
         logger.LogMessage();
 
         var logRecord = logRecords[0];
-        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecord);
+        var otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecord);
 
         Assert.NotNull(otlpLogRecord);
         Assert.True(otlpLogRecord.TimeUnixNano > 0);
@@ -396,7 +396,7 @@ public class OtlpLogExporterTests
         logger.LogWhenThereIsNoActivity();
 
         var logRecord = logRecords[0];
-        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecord);
+        var otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecord);
 
         Assert.Null(Activity.Current);
         Assert.NotNull(otlpLogRecord);
@@ -429,7 +429,7 @@ public class OtlpLogExporterTests
 
         var logRecord = logRecords[0];
 
-        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecord);
+        var otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecord);
 
         Assert.NotNull(otlpLogRecord);
         Assert.Equal(expectedTraceId.ToString(), ActivityTraceId.CreateFromBytes(otlpLogRecord.TraceId.ToByteArray()).ToString());
@@ -461,7 +461,7 @@ public class OtlpLogExporterTests
         Assert.Single(logRecords);
 
         var logRecord = logRecords[0];
-        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecord);
+        var otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecord);
 
         Assert.NotNull(otlpLogRecord);
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -488,6 +488,9 @@ public class OtlpLogExporterTests
                 break;
             case LogLevel.Critical:
                 Assert.Equal(OtlpLogs.SeverityNumber.Fatal, otlpLogRecord.SeverityNumber);
+                break;
+            case LogLevel.None:
+            default:
                 break;
         }
     }
@@ -516,7 +519,7 @@ public class OtlpLogExporterTests
         Assert.Single(logRecords);
 
         var logRecord = logRecords[0];
-        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecord);
+        var otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecord);
 
         Assert.NotNull(otlpLogRecord);
         if (includeFormattedMessage)
@@ -631,7 +634,7 @@ public class OtlpLogExporterTests
         var logRecord = logRecords[0];
         var loggedException = logRecord.Exception;
 
-        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecord);
+        var otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecord);
 
         Assert.NotNull(otlpLogRecord);
         var otlpLogRecordAttributes = otlpLogRecord.Attributes.ToString();
@@ -668,7 +671,7 @@ public class OtlpLogExporterTests
         logger.OpenTelemetryWithAttributes("I'm an attribute", "I too am an attribute", "I get dropped :(");
 
         var logRecord = logRecords[0];
-        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(sdkLimitOptions, new(), logRecord);
+        var otlpLogRecord = ToOtlpLogs(sdkLimitOptions, new(), logRecord);
 
         Assert.NotNull(otlpLogRecord);
         Assert.Equal(1u, otlpLogRecord.DroppedAttributesCount);
@@ -781,7 +784,7 @@ public class OtlpLogExporterTests
 
         // Assert.
         var logRecord = logRecords.Single();
-        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecord);
+        var otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecord);
 
         Assert.NotNull(otlpLogRecord);
         var actualScope = TryGetAttribute(otlpLogRecord, expectedScopeKey);
@@ -1367,11 +1370,11 @@ public class OtlpLogExporterTests
 
         Assert.Equal(2, logRecords.Count);
 
-        var batch = new Batch<LogRecord>(logRecords.ToArray(), logRecords.Count);
+        var batch = new Batch<LogRecord>([.. logRecords], logRecords.Count);
         var resourceBuilder = ResourceBuilder.CreateEmpty();
         var processResource = CreateResourceSpans(resourceBuilder.Build());
 
-        OtlpCollector.ExportLogsServiceRequest request = CreateLogsExportRequest(DefaultSdkLimitOptions, new ExperimentalOptions(), batch, resourceBuilder.Build());
+        var request = CreateLogsExportRequest(DefaultSdkLimitOptions, new ExperimentalOptions(), batch, resourceBuilder.Build());
 
         Assert.Single(request.ResourceLogs);
 
@@ -1401,8 +1404,7 @@ public class OtlpLogExporterTests
     [InlineData("logging", false)]
     [InlineData(null, true)]
     [InlineData("logging", true)]
-    public void VerifyEnvironmentVariablesTakenFromIConfigurationWhenUsingLoggerFactoryCreate(string? optionsName, bool callUseOpenTelemetry)
-    {
+    public void VerifyEnvironmentVariablesTakenFromIConfigurationWhenUsingLoggerFactoryCreate(string? optionsName, bool callUseOpenTelemetry) =>
         RunVerifyEnvironmentVariablesTakenFromIConfigurationTest(
             optionsName,
             configure =>
@@ -1419,15 +1421,13 @@ public class OtlpLogExporterTests
 
                 return (factory, factory);
             });
-    }
 
     [Theory]
     [InlineData(null, false)]
     [InlineData("logging", false)]
     [InlineData(null, true)]
     [InlineData("logging", true)]
-    public void VerifyEnvironmentVariablesTakenFromIConfigurationWhenUsingLoggingBuilder(string? optionsName, bool callUseOpenTelemetry)
-    {
+    public void VerifyEnvironmentVariablesTakenFromIConfigurationWhenUsingLoggingBuilder(string? optionsName, bool callUseOpenTelemetry) =>
         RunVerifyEnvironmentVariablesTakenFromIConfigurationTest(
             optionsName,
             configure =>
@@ -1448,7 +1448,6 @@ public class OtlpLogExporterTests
 
                 return (sp, factory);
             });
-    }
 
     [Theory]
     [InlineData("my_instrumentation_scope_name", "my_instrumentation_scope_name")]
@@ -1474,7 +1473,7 @@ public class OtlpLogExporterTests
         Assert.Single(logRecords);
 
         var batch = new Batch<LogRecord>([logRecords[0]], 1);
-        OtlpCollector.ExportLogsServiceRequest request = CreateLogsExportRequest(DefaultSdkLimitOptions, new ExperimentalOptions(), batch, ResourceBuilder.CreateEmpty().Build());
+        var request = CreateLogsExportRequest(DefaultSdkLimitOptions, new ExperimentalOptions(), batch, ResourceBuilder.CreateEmpty().Build());
 
         Assert.NotNull(request);
         Assert.Single(request.ResourceLogs);
@@ -1511,7 +1510,7 @@ public class OtlpLogExporterTests
         Assert.Single(logRecords);
         var logRecord = logRecords[0];
 
-        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecord);
+        var otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecord);
 
         Assert.NotNull(otlpLogRecord);
         Assert.Equal("test body", otlpLogRecord.Body.StringValue);
@@ -1639,9 +1638,7 @@ public class OtlpLogExporterTests
     }
 
     private static OtlpCommon.KeyValue? TryGetAttribute(OtlpLogs.LogRecord record, string key)
-    {
-        return record.Attributes.FirstOrDefault(att => att.Key == key);
-    }
+        => record.Attributes.FirstOrDefault(att => att.Key == key);
 
     private static void ConfigureOtlpExporter(
         ILoggingBuilder builder,
@@ -1723,7 +1720,7 @@ public class OtlpLogExporterTests
 
     private static ResourceSpans CreateResourceSpans(Resource resource)
     {
-        byte[] buffer = new byte[1024];
+        var buffer = new byte[1024];
         var writePosition = ProtobufOtlpResourceSerializer.WriteResource(buffer, 0, resource);
 
         ResourceSpans? resourceSpans;

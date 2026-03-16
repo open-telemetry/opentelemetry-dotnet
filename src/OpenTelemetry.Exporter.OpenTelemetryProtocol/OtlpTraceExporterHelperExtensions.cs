@@ -123,15 +123,9 @@ public static class OtlpTraceExporterHelperExtensions
         bool skipUseOtlpExporterRegistrationCheck = false,
         Func<BaseExporter<Activity>, BaseExporter<Activity>>? configureExporterInstance = null)
     {
-        Debug.Assert(serviceProvider != null, "serviceProvider was null");
-        Debug.Assert(exporterOptions != null, "exporterOptions was null");
-        Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
-        Debug.Assert(experimentalOptions != null, "experimentalOptions was null");
-        Debug.Assert(batchExportProcessorOptions != null, "batchExportProcessorOptions was null");
-
 #if NETFRAMEWORK || NETSTANDARD2_0
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
-        if (exporterOptions!.Protocol == OtlpExportProtocol.Grpc &&
+        if (exporterOptions.Protocol == OtlpExportProtocol.Grpc &&
             ReferenceEquals(exporterOptions.HttpClientFactory, exporterOptions.DefaultHttpClientFactory))
 #pragma warning restore CS0618 // Suppressing gRPC obsolete warning
         {
@@ -142,13 +136,13 @@ public static class OtlpTraceExporterHelperExtensions
 
         if (!skipUseOtlpExporterRegistrationCheck)
         {
-            serviceProvider!.EnsureNoUseOtlpExporterRegistrations();
+            serviceProvider.EnsureNoUseOtlpExporterRegistrations();
         }
 
-        exporterOptions!.TryEnableIHttpClientFactoryIntegration(serviceProvider!, "OtlpTraceExporter");
+        exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpTraceExporter");
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
-        BaseExporter<Activity> otlpExporter = new OtlpTraceExporter(exporterOptions!, sdkLimitOptions!, experimentalOptions!);
+        BaseExporter<Activity> otlpExporter = new OtlpTraceExporter(exporterOptions, sdkLimitOptions, experimentalOptions);
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
         try
@@ -158,19 +152,14 @@ public static class OtlpTraceExporterHelperExtensions
                 otlpExporter = configureExporterInstance(otlpExporter);
             }
 
-            if (exportProcessorType == ExportProcessorType.Simple)
-            {
-                return new SimpleActivityExportProcessor(otlpExporter);
-            }
-            else
-            {
-                return new BatchActivityExportProcessor(
+            return exportProcessorType == ExportProcessorType.Simple
+                ? new SimpleActivityExportProcessor(otlpExporter)
+                : new BatchActivityExportProcessor(
                     otlpExporter,
-                    batchExportProcessorOptions!.MaxQueueSize,
+                    batchExportProcessorOptions.MaxQueueSize,
                     batchExportProcessorOptions.ScheduledDelayMilliseconds,
                     batchExportProcessorOptions.ExporterTimeoutMilliseconds,
                     batchExportProcessorOptions.MaxExportBatchSize);
-            }
         }
         catch
         {
