@@ -141,7 +141,7 @@ internal static class PersistentStorageHelper
             dateTime = DateTime.MinValue;
         }
 
-        return dateTime;
+        return dateTime.ToUniversalTime();
     }
 
     internal static DateTime GetDateTimeFromLeaseName(string filePath)
@@ -156,6 +156,6 @@ internal static class PersistentStorageHelper
             dateTime = DateTime.MinValue;
         }
 
-        return dateTime;
+        return dateTime.ToUniversalTime();
     }
 }
