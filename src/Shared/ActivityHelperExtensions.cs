@@ -3,7 +3,6 @@
 
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace;
 
@@ -12,53 +11,6 @@ namespace OpenTelemetry.Trace;
 /// </summary>
 internal static class ActivityHelperExtensions
 {
-    /// <summary>
-    /// Gets the status of activity execution.
-    /// Activity class in .NET does not support 'Status'.
-    /// This extension provides a workaround to retrieve Status from special tags with key name otel.status_code and otel.status_description.
-    /// </summary>
-    /// <param name="activity">Activity instance.</param>
-    /// <param name="statusCode"><see cref="StatusCode"/>.</param>
-    /// <param name="statusDescription">Status description.</param>
-    /// <returns><see langword="true"/> if <see cref="Status"/> was found on the supplied Activity.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [Obsolete]
-    public static bool TryGetStatus(this Activity activity, out StatusCode statusCode, out string? statusDescription)
-    {
-        var foundStatusCode = false;
-        statusCode = default;
-        statusDescription = null;
-
-        foreach (ref readonly var tag in activity.EnumerateTagObjects())
-        {
-            switch (tag.Key)
-            {
-                case SpanAttributeConstants.StatusCodeKey:
-                    foundStatusCode = StatusHelper.TryGetStatusCodeForTagValue(tag.Value as string, out statusCode);
-                    if (!foundStatusCode)
-                    {
-                        // If status code was found but turned out to be invalid give up immediately.
-                        return false;
-                    }
-
-                    break;
-                case SpanAttributeConstants.StatusDescriptionKey:
-                    statusDescription = tag.Value as string;
-                    break;
-                default:
-                    continue;
-            }
-
-            if (foundStatusCode && statusDescription != null)
-            {
-                // If we found a status code and a description we break enumeration because our work is done.
-                break;
-            }
-        }
-
-        return foundStatusCode;
-    }
-
     /// <summary>
     /// Gets the value of a specific tag on an <see cref="Activity"/>.
     /// </summary>
