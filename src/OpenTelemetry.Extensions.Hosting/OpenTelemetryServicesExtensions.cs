@@ -40,7 +40,7 @@ public static class OpenTelemetryServicesExtensions
     {
         Guard.ThrowIfNull(services);
 
-        if (!services.Any((ServiceDescriptor d) => d.ServiceType == typeof(IHostedService) && d.ImplementationType == typeof(TelemetryHostedService)))
+        if (!services.Any(d => d.ServiceType == typeof(IHostedService) && d.ImplementationType == typeof(TelemetryHostedService)))
         {
             services.Insert(0, ServiceDescriptor.Singleton<IHostedService, TelemetryHostedService>());
         }
