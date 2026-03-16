@@ -135,13 +135,13 @@ internal static class PersistentStorageHelper
         var fileName = Path.GetFileNameWithoutExtension(filePath);
         var time = fileName.Substring(0, fileName.LastIndexOf('-'));
 
-        if (!DateTime.TryParseExact(time, "yyyy-MM-ddTHHmmss.fffffffZ", CultureInfo.InvariantCulture, DateTimeStyles.None, out var dateTime))
+        if (!DateTime.TryParseExact(time, "yyyy-MM-ddTHHmmss.fffffffZ", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var dateTime))
         {
-            // In case of failure, return DateTime.MinValue so that the lease file can be removed as expired
+            // In case of failure, return DateTime.MinValue so that the blob file can be removed as expired
             dateTime = DateTime.MinValue;
         }
 
-        return dateTime.ToUniversalTime();
+        return dateTime;
     }
 
     internal static DateTime GetDateTimeFromLeaseName(string filePath)
@@ -150,12 +150,12 @@ internal static class PersistentStorageHelper
         var startIndex = fileName.LastIndexOf('@') + 1;
         var time = fileName.Substring(startIndex);
 
-        if (!DateTime.TryParseExact(time, "yyyy-MM-ddTHHmmss.fffffffZ", CultureInfo.InvariantCulture, DateTimeStyles.None, out var dateTime))
+        if (!DateTime.TryParseExact(time, "yyyy-MM-ddTHHmmss.fffffffZ", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var dateTime))
         {
             // In case of failure, return DateTime.MinValue so that the lease file can be removed as expired
             dateTime = DateTime.MinValue;
         }
 
-        return dateTime.ToUniversalTime();
+        return dateTime;
     }
 }
