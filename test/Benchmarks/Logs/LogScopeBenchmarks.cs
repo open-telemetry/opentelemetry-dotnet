@@ -25,7 +25,7 @@ public class LogScopeBenchmarks
 {
     private readonly LoggerExternalScopeProvider scopeProvider = new();
 
-    private readonly Action<LogRecordScope, object> callback = (LogRecordScope scope, object state) =>
+    private readonly Action<LogRecordScope, object> callback = (scope, state) =>
     {
         foreach (var scopeItem in scope)
         {

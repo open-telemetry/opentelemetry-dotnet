@@ -40,7 +40,7 @@ public class OtlpHttpExporterBenchmarks
         this.server = TestHttpServer.RunServer(
             (ctx) =>
             {
-                using (Stream receiveStream = ctx.Request.InputStream)
+                using (var receiveStream = ctx.Request.InputStream)
                 {
                     while (true)
                     {
@@ -85,9 +85,9 @@ public class OtlpHttpExporterBenchmarks
     [Benchmark]
     public void OtlpExporter_Batching()
     {
-        for (int i = 0; i < this.NumberOfBatches; i++)
+        for (var i = 0; i < this.NumberOfBatches; i++)
         {
-            for (int c = 0; c < this.NumberOfSpans; c++)
+            for (var c = 0; c < this.NumberOfSpans; c++)
             {
                 this.activityBatch!.Add(this.activity!);
             }
