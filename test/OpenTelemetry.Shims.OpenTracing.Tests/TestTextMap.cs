@@ -12,9 +12,7 @@ internal sealed class TestTextMap : ITextMap
 
     public bool SetCalled { get; private set; }
 
-#pragma warning disable IDE0028 // Simplify collection initialization
-    public Dictionary<string, string> Items { get; } = new();
-#pragma warning restore IDE0028 // Simplify collection initialization
+    public Dictionary<string, string> Items { get; } = [];
 
     public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
     {
