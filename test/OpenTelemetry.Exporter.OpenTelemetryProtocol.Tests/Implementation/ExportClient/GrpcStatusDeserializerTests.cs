@@ -23,7 +23,7 @@ public class GrpcStatusDeserializerTests
         };
 
         // Serialize the Status message and encode to base64
-        string grpcStatusDetailsBin = Convert.ToBase64String(status.ToByteArray());
+        var grpcStatusDetailsBin = Convert.ToBase64String(status.ToByteArray());
 
         // Use the GrpcStatusDeserializer to deserialize from the base64 input
         var deserializedStatus = GrpcStatusDeserializer.DeserializeStatus(grpcStatusDetailsBin);
@@ -55,7 +55,7 @@ public class GrpcStatusDeserializerTests
                 },
         };
 
-        string grpcStatusDetailsBin = Convert.ToBase64String(status.ToByteArray());
+        var grpcStatusDetailsBin = Convert.ToBase64String(status.ToByteArray());
 
         // Act
         var retryInfo = GrpcStatusDeserializer.ExtractRetryInfo(grpcStatusDetailsBin);
@@ -70,7 +70,7 @@ public class GrpcStatusDeserializerTests
     {
         // Arrange
         var status = new Google.Rpc.Status();
-        string grpcStatusDetailsBin = Convert.ToBase64String(status.ToByteArray());
+        var grpcStatusDetailsBin = Convert.ToBase64String(status.ToByteArray());
 
         // Act
         var deserializedStatus = GrpcStatusDeserializer.DeserializeStatus(grpcStatusDetailsBin);
@@ -97,7 +97,7 @@ public class GrpcStatusDeserializerTests
                 },
         };
 
-        string grpcStatusDetailsBin = Convert.ToBase64String(status.ToByteArray());
+        var grpcStatusDetailsBin = Convert.ToBase64String(status.ToByteArray());
 
         // Act
         var deserializedStatus = GrpcStatusDeserializer.DeserializeStatus(grpcStatusDetailsBin);
@@ -141,10 +141,9 @@ public class GrpcStatusDeserializerTests
                 },
         };
 
-        string grpcStatusDetailsBin = Convert.ToBase64String(status.ToByteArray());
+        var grpcStatusDetailsBin = Convert.ToBase64String(status.ToByteArray());
 
         // Act
-        byte[] data = Convert.FromBase64String(grpcStatusDetailsBin);
         var retryInfo = GrpcStatusDeserializer.ExtractRetryInfo(grpcStatusDetailsBin);
 
         // Assert
@@ -164,7 +163,7 @@ public class GrpcStatusDeserializerTests
             Details = { Any.Pack(new Google.Rpc.Status { Code = 5 }) }, // A different type packed
         };
 
-        string grpcStatusDetailsBin = Convert.ToBase64String(status.ToByteArray());
+        var grpcStatusDetailsBin = Convert.ToBase64String(status.ToByteArray());
 
         // Act
         var retryInfo = GrpcStatusDeserializer.ExtractRetryInfo(grpcStatusDetailsBin);
@@ -183,7 +182,7 @@ public class GrpcStatusDeserializerTests
             Message = "Boundary code test",
         };
 
-        string grpcStatusDetailsBin = Convert.ToBase64String(status.ToByteArray());
+        var grpcStatusDetailsBin = Convert.ToBase64String(status.ToByteArray());
 
         // Act
         var deserializedStatus = GrpcStatusDeserializer.DeserializeStatus(grpcStatusDetailsBin);
@@ -204,9 +203,7 @@ public class GrpcStatusDeserializerTests
 
     [Fact]
     public void TryGetGrpcRetryDelay_InvalidBase64Input_ReturnsNull()
-    {
-        Assert.Null(GrpcStatusDeserializer.TryGetGrpcRetryDelay("invalid-base64"));
-    }
+        => Assert.Null(GrpcStatusDeserializer.TryGetGrpcRetryDelay("invalid-base64"));
 
     [Fact]
     public void TryGetGrpcRetryDelay_NoRetryInfo_ReturnsNull()
@@ -219,7 +216,7 @@ public class GrpcStatusDeserializerTests
             Details = { Any.Pack(new Google.Rpc.Status { Code = 5 }) }, // Non-RetryInfo type
         };
 
-        string grpcStatusDetailsBin = Convert.ToBase64String(status.ToByteArray());
+        var grpcStatusDetailsBin = Convert.ToBase64String(status.ToByteArray());
 
         // Act
         var result = GrpcStatusDeserializer.TryGetGrpcRetryDelay(grpcStatusDetailsBin);
@@ -249,7 +246,7 @@ public class GrpcStatusDeserializerTests
         },
         };
 
-        string grpcStatusDetailsBin = Convert.ToBase64String(status.ToByteArray());
+        var grpcStatusDetailsBin = Convert.ToBase64String(status.ToByteArray());
 
         // Act
         var result = GrpcStatusDeserializer.TryGetGrpcRetryDelay(grpcStatusDetailsBin);
@@ -279,7 +276,7 @@ public class GrpcStatusDeserializerTests
         },
         };
 
-        string grpcStatusDetailsBin = Convert.ToBase64String(status.ToByteArray());
+        var grpcStatusDetailsBin = Convert.ToBase64String(status.ToByteArray());
 
         // Act
         var result = GrpcStatusDeserializer.TryGetGrpcRetryDelay(grpcStatusDetailsBin);
@@ -306,7 +303,7 @@ public class GrpcStatusDeserializerTests
         },
         };
 
-        string grpcStatusDetailsBin = Convert.ToBase64String(status.ToByteArray());
+        var grpcStatusDetailsBin = Convert.ToBase64String(status.ToByteArray());
 
         // Act
         var result = GrpcStatusDeserializer.TryGetGrpcRetryDelay(grpcStatusDetailsBin);
@@ -326,10 +323,10 @@ public class GrpcStatusDeserializerTests
             Message = "Truncated stream test",
         };
 
-        byte[] fullData = status.ToByteArray();
-        byte[] truncatedData = fullData.Take(fullData.Length / 2).ToArray(); // Truncate the data
+        var fullData = status.ToByteArray();
+        var truncatedData = fullData.Take(fullData.Length / 2).ToArray(); // Truncate the data
 
-        string grpcStatusDetailsBin = Convert.ToBase64String(truncatedData);
+        var grpcStatusDetailsBin = Convert.ToBase64String(truncatedData);
 
         // Act & Assert: Attempt to deserialize and expect an EndOfStreamException
         Assert.Throws<EndOfStreamException>(() =>

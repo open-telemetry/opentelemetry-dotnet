@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Diagnostics;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
@@ -134,9 +133,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         }
 
         public override void WriteNullValue(ref OtlpTagWriterArrayState state)
-        {
-            state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, 0, ProtobufOtlpCommonFieldNumberConstants.ArrayValue_Value, ProtobufWireType.LEN);
-        }
+            => state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, 0, ProtobufOtlpCommonFieldNumberConstants.ArrayValue_Value, ProtobufWireType.LEN);
 
         public override void WriteIntegralValue(ref OtlpTagWriterArrayState state, long value)
         {
@@ -175,8 +172,6 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         public override bool TryResize()
         {
             var buffer = ThreadBuffer;
-
-            Debug.Assert(buffer != null, "buffer was null");
 
             if (buffer!.Length >= MaxBufferSize)
             {

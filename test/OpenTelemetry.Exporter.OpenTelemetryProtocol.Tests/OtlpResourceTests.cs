@@ -25,7 +25,7 @@ public class OtlpResourceTests
         var resource = resourceBuilder.Build();
         Proto.Resource.V1.Resource otlpResource;
 
-        byte[] buffer = new byte[1024];
+        var buffer = new byte[1024];
         var writePosition = ProtobufOtlpResourceSerializer.WriteResource(buffer, 0, resource);
 
         // Deserialize the ResourceSpans and validate the attributes.

@@ -159,13 +159,15 @@ public static class ProtobufOtlpMetricSerializerTests
         var type = typeof(AggregatorStore);
         var bindingAttributes = BindingFlags.NonPublic | BindingFlags.Instance;
 
-        var startTimeProperty = type.GetProperty(nameof(AggregatorStore.StartTimeExclusive), bindingAttributes)!;
-        var endTimeProperty = type.GetProperty(nameof(AggregatorStore.EndTimeInclusive), bindingAttributes)!;
+        var startTimeProperty = type.GetProperty(nameof(AggregatorStore.StartTimeExclusive), bindingAttributes);
+        var endTimeProperty = type.GetProperty(nameof(AggregatorStore.EndTimeInclusive), bindingAttributes);
 
         foreach (var metric in metrics)
         {
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
             startTimeProperty.SetValue(metric.AggregatorStore, startTime);
             endTimeProperty.SetValue(metric.AggregatorStore, endTime);
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
         }
 
         return metrics;

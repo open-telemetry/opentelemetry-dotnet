@@ -31,7 +31,7 @@ public sealed class OtlpHttpTraceExportClientTests : IDisposable
         this.activityListener = new ActivityListener
         {
             ShouldListenTo = _ => true,
-            Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllDataAndRecorded,
+            Sample = (ref options) => ActivitySamplingResult.AllDataAndRecorded,
         };
 
         ActivitySource.AddActivityListener(this.activityListener);
@@ -61,7 +61,7 @@ public sealed class OtlpHttpTraceExportClientTests : IDisposable
         Assert.Contains(client.Headers, kvp => kvp.Key == header1.Name && kvp.Value == header1.Value);
         Assert.Contains(client.Headers, kvp => kvp.Key == header2.Name && kvp.Value == header2.Value);
 
-        for (int i = 0; i < options.StandardHeaders.Length; i++)
+        for (var i = 0; i < options.StandardHeaders.Length; i++)
         {
             Assert.Contains(client.Headers, entry => entry.Key == options.StandardHeaders[i].Key && entry.Value == options.StandardHeaders[i].Value);
         }
@@ -101,11 +101,10 @@ public sealed class OtlpHttpTraceExportClientTests : IDisposable
         if (includeServiceNameInResource)
         {
             resourceBuilder.AddAttributes(
-                new List<KeyValuePair<string, object>>
-                {
+                [
                     new(ResourceSemanticConventions.AttributeServiceName, "service_name"),
                     new(ResourceSemanticConventions.AttributeServiceNamespace, "ns_1"),
-                });
+                ]);
         }
 
         var builder = Sdk.CreateTracerProviderBuilder()
@@ -128,7 +127,7 @@ public sealed class OtlpHttpTraceExportClientTests : IDisposable
             var activityKind = isEven ? ActivityKind.Client : ActivityKind.Server;
             var activityTags = isEven ? evenTags : oddTags;
 
-            using Activity? activity = source.StartActivity($"span-{i}", activityKind, parentContext: default, activityTags);
+            using var activity = source.StartActivity($"span-{i}", activityKind, parentContext: default, activityTags);
             Assert.NotNull(activity);
             processor.OnEnd(activity);
         }
@@ -160,7 +159,7 @@ public sealed class OtlpHttpTraceExportClientTests : IDisposable
             Assert.Contains(httpRequest.Headers, h => h.Key == header1.Name && h.Value.First() == header1.Value);
             Assert.Contains(httpRequest.Headers, h => h.Key == header2.Name && h.Value.First() == header2.Value);
 
-            for (int i = 0; i < options.StandardHeaders.Length; i++)
+            for (var i = 0; i < options.StandardHeaders.Length; i++)
             {
                 Assert.Contains(httpRequest.Headers, entry => entry.Key == options.StandardHeaders[i].Key && entry.Value.First() == options.StandardHeaders[i].Value);
             }
