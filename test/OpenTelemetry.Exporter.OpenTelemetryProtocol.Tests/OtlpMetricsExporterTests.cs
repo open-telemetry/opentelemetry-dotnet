@@ -57,7 +57,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
             var metricReader = typeof(MetricReader)
                 .Assembly
                 .GetType("OpenTelemetry.Metrics.MeterProviderSdk")?
-                .GetField("reader", bindingFlags)?
+                .GetProperty("Reader", bindingFlags)?
                 .GetValue(meterProvider) as PeriodicExportingMetricReader;
 
             Assert.NotNull(metricReader);
