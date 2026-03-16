@@ -31,17 +31,11 @@ internal static class ActivityHelper
             new(
                 "Event1",
                 eventTimestamp,
-                [with(new Dictionary<string, object?>
-                {
-                    { "key", "value" },
-                })]),
+                [new KeyValuePair<string, object?>("key", "value")]),
             new(
                 "Event2",
                 eventTimestamp,
-                [with(new Dictionary<string, object?>
-                {
-                    { "key", "value" },
-                })]),
+                [new KeyValuePair<string, object?>("key", "value")]),
         };
 
         var linkedSpanId = ActivitySpanId.CreateFromString("888915b6286b9c41".AsSpan());

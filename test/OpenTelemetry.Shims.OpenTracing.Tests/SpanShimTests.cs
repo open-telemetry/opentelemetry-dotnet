@@ -122,16 +122,10 @@ public class SpanShimTests
 
         Assert.Throws<ArgumentNullException>(() => shim.Log((IEnumerable<KeyValuePair<string, object>>)null!));
 
-        shim.Log(
-        [
-            new("foo", "bar"),
-        ]);
+        shim.Log([new("foo", "bar")]);
 
         // "event" is a special event name
-        shim.Log(
-        [
-            new("event", "foo"),
-        ]);
+        shim.Log([new("event", "foo")]);
 
         Assert.NotNull(shim.Span.Activity);
 

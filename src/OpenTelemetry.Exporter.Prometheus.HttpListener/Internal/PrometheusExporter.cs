@@ -51,7 +51,11 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
 
     internal bool DisableTimestamp { get; set; }
 
-    internal Resource Resource { get => field ??= this.ParentProvider.GetResource(); private set; }
+    internal Resource Resource
+    {
+        get => field ??= this.ParentProvider.GetResource();
+        private set;
+    }
 
     /// <inheritdoc/>
     public override ExportResult Export(in Batch<Metric> metrics)

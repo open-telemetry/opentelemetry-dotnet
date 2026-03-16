@@ -45,7 +45,7 @@ public sealed class PrometheusMetricTests
         => AssertSanitizeMetricName("unit include", "unit_include");
 
     [Fact]
-    public void SanitizeMetricName_RemoveMultipleUnsupportedChracters()
+    public void SanitizeMetricName_RemoveMultipleUnsupportedCharacters()
         => AssertSanitizeMetricName("sample_me%%$$$_count_ !!@unit include", "sample_me_count_unit_include");
 
     [Fact]
