@@ -146,7 +146,7 @@ public class TracerShimTests
     /// <seealso cref="OpenTracing.Propagation.ITextMap" />
     private sealed class TextMapCarrier : ITextMap
     {
-        private readonly Dictionary<string, string> map = new();
+        private readonly Dictionary<string, string> map = [];
 
         public IDictionary<string, string> Map => this.map;
 

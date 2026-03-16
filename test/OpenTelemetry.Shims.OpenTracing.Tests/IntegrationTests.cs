@@ -4,7 +4,6 @@
 using System.Diagnostics;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
-using OpenTracing;
 using Xunit;
 
 namespace OpenTelemetry.Shims.OpenTracing.Tests;
@@ -68,12 +67,10 @@ public class IntegrationTests
 
         using (var parentActivity = parentActivitySource.StartActivity(ParentActivityName))
         {
-            using (IScope parentScope = otTracer.BuildSpan(ShimActivityName).StartActive())
-            {
-                parentScope.Span.SetTag("parent", true);
+            using var parentScope = otTracer.BuildSpan(ShimActivityName).StartActive();
+            parentScope.Span.SetTag("parent", true);
 
-                using var childActivity = childActivitySource.StartActivity(ChildActivityName);
-            }
+            using var childActivity = childActivitySource.StartActivity(ChildActivityName);
         }
 
         var expectedExportedSpans = new string?[]
@@ -85,7 +82,7 @@ public class IntegrationTests
             .Where(s => s is not null)
             .ToList();
 
-        for (int i = 0; i < expectedExportedSpans.Count; i++)
+        for (var i = 0; i < expectedExportedSpans.Count; i++)
         {
             Assert.Equal(expectedExportedSpans[i], exportedSpans[i].DisplayName);
         }
@@ -109,9 +106,7 @@ public class IntegrationTests
         }
 
         public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
-        {
-            return new SamplingResult(this.shouldSampleDelegate(samplingParameters));
-        }
+            => new(this.shouldSampleDelegate(samplingParameters));
     }
 }
 
