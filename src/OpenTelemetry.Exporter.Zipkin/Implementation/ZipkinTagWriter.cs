@@ -21,7 +21,7 @@ internal sealed class ZipkinTagWriter : JsonStringArrayTagWriter<Utf8JsonWriter>
     protected override void WriteIntegralTag(ref Utf8JsonWriter writer, string key, long value)
     {
         Span<byte> destination = stackalloc byte[StackallocByteThreshold];
-        if (Utf8Formatter.TryFormat(value, destination, out int bytesWritten))
+        if (Utf8Formatter.TryFormat(value, destination, out var bytesWritten))
         {
             writer.WriteString(key, destination.Slice(0, bytesWritten));
         }
@@ -34,7 +34,7 @@ internal sealed class ZipkinTagWriter : JsonStringArrayTagWriter<Utf8JsonWriter>
     protected override void WriteFloatingPointTag(ref Utf8JsonWriter writer, string key, double value)
     {
         Span<byte> destination = stackalloc byte[StackallocByteThreshold];
-        if (Utf8Formatter.TryFormat(value, destination, out int bytesWritten))
+        if (Utf8Formatter.TryFormat(value, destination, out var bytesWritten))
         {
             writer.WriteString(key, destination.Slice(0, bytesWritten));
         }
