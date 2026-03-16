@@ -201,7 +201,7 @@ public sealed class B3Propagator : TextMapPropagator
             }
 
             var parts = header.Split(XB3CombinedDelimiter);
-            if (parts.Length < 2 || parts.Length > 4)
+            if (parts.Length is < 2 or > 4)
             {
                 return context;
             }
