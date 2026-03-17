@@ -154,7 +154,6 @@ public sealed class LogRecord
         set => this.ILoggerData.TraceState = value;
     }
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
     /// Gets or sets the log category name.
     /// </summary>
@@ -164,11 +163,6 @@ public sealed class LogRecord
     /// Setting a new value for <see cref="CategoryName"/> will result in a new
     /// <see cref="Logger"/> being set.
     /// </remarks>
-#else
-    /// <summary>
-    /// Gets or sets the log category name.
-    /// </summary>
-#endif
     public string? CategoryName
     {
         get => this.Logger.Name;
@@ -181,11 +175,15 @@ public sealed class LogRecord
         }
     }
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
     /// Gets or sets the log <see cref="Microsoft.Extensions.Logging.LogLevel"/>.
     /// </summary>
-#if EXPOSE_EXPERIMENTAL_FEATURES
     [Obsolete("Use Severity instead. LogLevel will be removed in a future version.")]
+#else
+    /// <summary>
+    /// Gets or sets the log <see cref="Microsoft.Extensions.Logging.LogLevel"/>.
+    /// </summary>
 #endif
     public LogLevel LogLevel
     {

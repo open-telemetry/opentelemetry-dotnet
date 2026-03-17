@@ -318,14 +318,14 @@ public readonly struct Baggage : IEquatable<Baggage>
         return new Baggage(baggage);
     }
 
+#pragma warning disable CA1822 // Mark members as static
     /// <summary>
     /// Returns a new <see cref="Baggage"/> with all the key/value pairs removed.
     /// </summary>
     /// <returns>New <see cref="Baggage"/> with all the key/value pairs removed.</returns>
-#pragma warning disable CA1822 // Mark members as static
     public Baggage ClearBaggage()
-#pragma warning restore CA1822 // Mark members as static
         => default;
+#pragma warning restore CA1822 // Mark members as static
 
     /// <summary>
     /// Returns an enumerator that iterates through the <see cref="Baggage"/>.
