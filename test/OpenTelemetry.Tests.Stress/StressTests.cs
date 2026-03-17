@@ -124,6 +124,8 @@ public abstract class StressTests<T> : IDisposable
                             bOutput = !bOutput;
                             break;
                         }
+
+                        continue;
                     }
 
                     if (bOutput)

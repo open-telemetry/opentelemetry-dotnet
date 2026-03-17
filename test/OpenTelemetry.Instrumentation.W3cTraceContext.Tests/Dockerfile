@@ -25,7 +25,7 @@ RUN git init trace-context \
   && rm -rf .git
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0.201@sha256:478b9038d187e5b5c29bfa8173ded5d29e864b5ad06102a12106380ee01e2e49 AS dotnet-sdk-10.0
-FROM mcr.microsoft.com/dotnet/sdk:11.0-preview@sha256:899e7d93f1bc113bf9654afbc4a6be21f407f69f29618e8a0fdfe75ae5348258 AS dotnet-sdk-11.0
+FROM mcr.microsoft.com/dotnet/sdk:11.0.100-preview.2@sha256:98c96a6331e1ab4eb73abe6ba341807d686d2ab24a915c617497a8b5995eefe9 AS dotnet-sdk-11.0
 
 FROM dotnet-sdk-${BUILD_SDK_VERSION} AS build
 ARG PUBLISH_CONFIGURATION=Release

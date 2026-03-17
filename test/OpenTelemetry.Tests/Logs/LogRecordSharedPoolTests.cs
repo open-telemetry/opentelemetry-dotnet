@@ -119,7 +119,7 @@ public sealed class LogRecordSharedPoolTests
         var logRecord1 = pool.Rent();
         logRecord1.AttributeStorage =
         [
-with(16),
+            with(16),
             new("key1", "value1"),
             new("key2", "value2"),
         ];
