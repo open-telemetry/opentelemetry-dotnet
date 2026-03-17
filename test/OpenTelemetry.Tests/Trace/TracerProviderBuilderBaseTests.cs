@@ -27,7 +27,7 @@ public sealed class TracerProviderBuilderBaseTests
     [Fact]
     public void AddInstrumentationInvokesFactoryTest()
     {
-        bool factoryInvoked = false;
+        var factoryInvoked = false;
 
         var instrumentation = new TestTracerProviderBuilder();
         instrumentation.AddInstrumentationViaProtectedMethod(() =>

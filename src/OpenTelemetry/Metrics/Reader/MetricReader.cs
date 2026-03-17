@@ -12,10 +12,9 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 public abstract partial class MetricReader : IDisposable
 {
-    private const MetricReaderTemporalityPreference MetricReaderTemporalityPreferenceUnspecified = (MetricReaderTemporalityPreference)0;
+    private const MetricReaderTemporalityPreference MetricReaderTemporalityPreferenceUnspecified = 0;
 
-    private static readonly Func<Type, AggregationTemporality> CumulativeTemporalityPreferenceFunc =
-        (instrumentType) => AggregationTemporality.Cumulative;
+    private static readonly Func<Type, AggregationTemporality> CumulativeTemporalityPreferenceFunc = static (_) => AggregationTemporality.Cumulative;
 
     private static readonly Func<Type, AggregationTemporality> MonotonicDeltaTemporalityPreferenceFunc = (instrumentType) =>
     {
@@ -55,7 +54,6 @@ public abstract partial class MetricReader : IDisposable
     private readonly Lock newTaskLock = new();
     private readonly Lock onCollectLock = new();
     private readonly TaskCompletionSource<bool> shutdownTcs = new();
-    private MetricReaderTemporalityPreference temporalityPreference = MetricReaderTemporalityPreferenceUnspecified;
     private Func<Type, AggregationTemporality> temporalityFunc = CumulativeTemporalityPreferenceFunc;
     private int shutdownCount;
     private TaskCompletionSource<bool>? collectionTcs;
@@ -68,27 +66,27 @@ public abstract partial class MetricReader : IDisposable
     {
         get
         {
-            if (this.temporalityPreference == MetricReaderTemporalityPreferenceUnspecified)
+            if (field == MetricReaderTemporalityPreferenceUnspecified)
             {
-                this.temporalityPreference = MetricReaderTemporalityPreference.Cumulative;
+                field = MetricReaderTemporalityPreference.Cumulative;
             }
 
-            return this.temporalityPreference;
+            return field;
         }
 
         set
         {
-            if (this.temporalityPreference != MetricReaderTemporalityPreferenceUnspecified)
+            if (field != MetricReaderTemporalityPreferenceUnspecified)
             {
-                throw new NotSupportedException($"The temporality preference cannot be modified (the current value is {this.temporalityPreference}).");
+                throw new NotSupportedException($"The temporality preference cannot be modified (the current value is {field}).");
             }
 
-            this.temporalityPreference = value;
+            field = value;
             this.temporalityFunc = value switch
             {
                 MetricReaderTemporalityPreference.Delta => MonotonicDeltaTemporalityPreferenceFunc,
                 MetricReaderTemporalityPreference.LowMemory => LowMemoryTemporalityPreferenceFunc,
-                _ => CumulativeTemporalityPreferenceFunc,
+                MetricReaderTemporalityPreference.Cumulative or _ => CumulativeTemporalityPreferenceFunc,
             };
         }
     }
@@ -260,9 +258,7 @@ public abstract partial class MetricReader : IDisposable
     /// <c>false</c>.
     /// </returns>
     internal virtual bool ProcessMetrics(in Batch<Metric> metrics, int timeoutMilliseconds)
-    {
-        return true;
-    }
+        => true;
 
     /// <summary>
     /// Called by <c>Collect</c>. This function should block the current
@@ -354,9 +350,7 @@ public abstract partial class MetricReader : IDisposable
     /// exceptions.
     /// </remarks>
     protected virtual bool OnShutdown(int timeoutMilliseconds)
-    {
-        return this.Collect(timeoutMilliseconds);
-    }
+        => this.Collect(timeoutMilliseconds);
 
     /// <summary>
     /// Releases the unmanaged resources used by this class and optionally

@@ -31,9 +31,9 @@ public class MetricOverflowAttributeTests
         counter.Add(10); // Record measurement for zero tags
 
         // Max number for MetricPoints available for use when emitted with tags
-        int maxMetricPointsForUse = MeterProviderBuilderSdk.DefaultCardinalityLimit;
+        var maxMetricPointsForUse = MeterProviderBuilderSdk.DefaultCardinalityLimit;
 
-        for (int i = 0; i < maxMetricPointsForUse; i++)
+        for (var i = 0; i < maxMetricPointsForUse; i++)
         {
             // Emit unique key-value pairs to use up the available MetricPoints
             // Once this loop is run, we have used up all available MetricPoints for metrics emitted with tags
@@ -88,7 +88,7 @@ public class MetricOverflowAttributeTests
         counter.Add(15); // Record another measurement for zero tags
 
         // Emit 2500 more newer MetricPoints with distinct dimension combinations
-        for (int i = 2001; i < 4501; i++)
+        for (var i = 2001; i < 4501; i++)
         {
             counter.Add(5, new KeyValuePair<string, object?>("Key", i));
         }
@@ -171,9 +171,9 @@ public class MetricOverflowAttributeTests
         histogram.Record(10); // Record measurement for zero tags
 
         // Max number for MetricPoints available for use when emitted with tags
-        int maxMetricPointsForUse = MeterProviderBuilderSdk.DefaultCardinalityLimit;
+        var maxMetricPointsForUse = MeterProviderBuilderSdk.DefaultCardinalityLimit;
 
-        for (int i = 0; i < maxMetricPointsForUse; i++)
+        for (var i = 0; i < maxMetricPointsForUse; i++)
         {
             // Emit unique key-value pairs to use up the available MetricPoints
             // Once this loop is run, we have used up all available MetricPoints for metrics emitted with tags
@@ -228,7 +228,7 @@ public class MetricOverflowAttributeTests
         histogram.Record(15); // Record another measurement for zero tags
 
         // Emit 2500 more newer MetricPoints with distinct dimension combinations
-        for (int i = 2001; i < 4501; i++)
+        for (var i = 2001; i < 4501; i++)
         {
             histogram.Record(5, new KeyValuePair<string, object?>("Key", i));
         }

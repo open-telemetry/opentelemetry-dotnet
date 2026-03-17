@@ -24,24 +24,20 @@ internal sealed class MeterProviderSdk : MeterProvider
     internal ExemplarFilterType? ExemplarFilterForHistograms;
     internal Action? OnCollectObservableInstruments;
 
-    private readonly List<object> instrumentations = [];
     private readonly List<Func<Instrument, MetricStreamConfiguration?>> viewConfigs;
     private readonly Lock collectLock = new();
     private readonly MeterListener listener;
     private readonly Func<Instrument, bool> shouldListenTo = instrument => false;
     private CompositeMetricReader? compositeMetricReader;
-    private MetricReader? reader;
 
     internal MeterProviderSdk(
         IServiceProvider serviceProvider,
         bool ownsServiceProvider)
     {
-        Debug.Assert(serviceProvider != null, "serviceProvider was null");
-
-        var state = serviceProvider!.GetRequiredService<MeterProviderBuilderSdk>();
+        var state = serviceProvider.GetRequiredService<MeterProviderBuilderSdk>();
         state.RegisterProvider(this);
 
-        this.ServiceProvider = serviceProvider!;
+        this.ServiceProvider = serviceProvider;
 
         if (ownsServiceProvider)
         {
@@ -51,18 +47,18 @@ internal sealed class MeterProviderSdk : MeterProvider
 
         OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("Building MeterProvider.");
 
-        var configureProviderBuilders = serviceProvider!.GetServices<IConfigureMeterProviderBuilder>();
+        var configureProviderBuilders = serviceProvider.GetServices<IConfigureMeterProviderBuilder>();
         foreach (var configureProviderBuilder in configureProviderBuilders)
         {
-            configureProviderBuilder.ConfigureBuilder(serviceProvider!, state);
+            configureProviderBuilder.ConfigureBuilder(serviceProvider, state);
         }
 
         this.ExemplarFilter = state.ExemplarFilter;
 
-        this.ApplySpecificationConfigurationKeys(serviceProvider!.GetRequiredService<IConfiguration>());
+        this.ApplySpecificationConfigurationKeys(serviceProvider.GetRequiredService<IConfiguration>());
 
-        StringBuilder exportersAdded = new StringBuilder();
-        StringBuilder instrumentationFactoriesAdded = new StringBuilder();
+        var exportersAdded = new StringBuilder();
+        var instrumentationFactoriesAdded = new StringBuilder();
 
         var resourceBuilder = state.ResourceBuilder ?? ResourceBuilder.CreateDefault();
         resourceBuilder.ServiceProvider = serviceProvider;
@@ -85,17 +81,17 @@ internal sealed class MeterProviderSdk : MeterProvider
                 this.ExemplarFilter,
                 this.ExemplarFilterForHistograms);
 
-            if (this.reader == null)
+            if (this.Reader == null)
             {
-                this.reader = reader;
+                this.Reader = reader;
             }
-            else if (this.reader is CompositeMetricReader compositeReader)
+            else if (this.Reader is CompositeMetricReader compositeReader)
             {
                 compositeReader.AddReader(reader);
             }
             else
             {
-                this.reader = new CompositeMetricReader([this.reader, reader]);
+                this.Reader = new CompositeMetricReader([this.Reader, reader]);
             }
 
             if (reader is PeriodicExportingMetricReader periodicExportingMetricReader)
@@ -120,7 +116,7 @@ internal sealed class MeterProviderSdk : MeterProvider
             OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Exporters added = \"{exportersAdded}\".");
         }
 
-        this.compositeMetricReader = this.reader as CompositeMetricReader;
+        this.compositeMetricReader = this.Reader as CompositeMetricReader;
 
         if (state.Instrumentation.Count > 0)
         {
@@ -128,7 +124,7 @@ internal sealed class MeterProviderSdk : MeterProvider
             {
                 if (instrumentation.Instance is not null)
                 {
-                    this.instrumentations.Add(instrumentation.Instance);
+                    this.Instrumentations.Add(instrumentation.Instance);
                 }
 
                 instrumentationFactoriesAdded.Append(instrumentation.Name);
@@ -163,7 +159,7 @@ internal sealed class MeterProviderSdk : MeterProvider
 
         this.listener.InstrumentPublished = (instrument, listener) =>
         {
-            object? state = this.InstrumentPublished(instrument, listeningIsManagedExternally: false);
+            var state = this.InstrumentPublished(instrument, listeningIsManagedExternally: false);
             if (state != null)
             {
                 listener.EnableMeasurementEvents(instrument, state);
@@ -189,9 +185,9 @@ internal sealed class MeterProviderSdk : MeterProvider
 
     internal Resource Resource { get; }
 
-    internal List<object> Instrumentations => this.instrumentations;
+    internal List<object> Instrumentations { get; } = [];
 
-    internal MetricReader? Reader => this.reader;
+    internal MetricReader? Reader { get; private set; }
 
     internal static void MeasurementsCompleted(Instrument instrument, object? state)
     {
@@ -268,9 +264,9 @@ internal sealed class MeterProviderSdk : MeterProvider
                     return null;
                 }
 
-                if (this.reader != null)
+                if (this.Reader != null)
                 {
-                    var metrics = this.reader.AddMetricWithNoViews(instrument);
+                    var metrics = this.Reader.AddMetricWithNoViews(instrument);
                     if (metrics.Count == 1)
                     {
                         state = MetricState.BuildForSingleMetric(metrics[0]);
@@ -338,9 +334,9 @@ internal sealed class MeterProviderSdk : MeterProvider
                     metricStreamConfigs.Add(null);
                 }
 
-                if (this.reader != null)
+                if (this.Reader != null)
                 {
-                    var metrics = this.reader.AddMetricWithViews(instrument, metricStreamConfigs);
+                    var metrics = this.Reader.AddMetricWithViews(instrument, metricStreamConfigs);
                     if (metrics.Count == 1)
                     {
                         state = MetricState.BuildForSingleMetric(metrics[0]);
@@ -417,7 +413,7 @@ internal sealed class MeterProviderSdk : MeterProvider
     internal bool OnForceFlush(int timeoutMilliseconds)
     {
         OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"{nameof(MeterProviderSdk)}.{nameof(this.OnForceFlush)} called with {nameof(timeoutMilliseconds)} = {timeoutMilliseconds}.");
-        return this.reader?.Collect(timeoutMilliseconds) ?? true;
+        return this.Reader?.Collect(timeoutMilliseconds) ?? true;
     }
 
     /// <summary>
@@ -439,7 +435,7 @@ internal sealed class MeterProviderSdk : MeterProvider
     internal bool OnShutdown(int timeoutMilliseconds)
     {
         OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"{nameof(MeterProviderSdk)}.{nameof(this.OnShutdown)} called with {nameof(timeoutMilliseconds)} = {timeoutMilliseconds}.");
-        return this.reader?.Shutdown(timeoutMilliseconds) ?? true;
+        return this.Reader?.Shutdown(timeoutMilliseconds) ?? true;
     }
 
     protected override void Dispose(bool disposing)
@@ -449,17 +445,17 @@ internal sealed class MeterProviderSdk : MeterProvider
         {
             if (disposing)
             {
-                foreach (var item in this.instrumentations)
+                foreach (var item in this.Instrumentations)
                 {
                     (item as IDisposable)?.Dispose();
                 }
 
-                this.instrumentations.Clear();
+                this.Instrumentations.Clear();
 
                 // Wait for up to 5 seconds grace period
-                this.reader?.Shutdown(5000);
-                this.reader?.Dispose();
-                this.reader = null;
+                this.Reader?.Shutdown(5000);
+                this.Reader?.Dispose();
+                this.Reader = null;
 
                 this.compositeMetricReader?.Dispose();
                 this.compositeMetricReader = null;

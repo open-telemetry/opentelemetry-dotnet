@@ -35,7 +35,7 @@ public sealed class LoggerProviderSdkTests
 
         Assert.True(provider.ForceFlush());
 
-        List<LogRecord> exportedItems = new();
+        List<LogRecord> exportedItems = [];
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
         provider.AddProcessor(new BatchLogRecordExportProcessor(new InMemoryExporter<LogRecord>(exportedItems)));

@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Diagnostics;
-
 namespace OpenTelemetry.Metrics;
 
 /// <summary>
@@ -17,11 +15,8 @@ public readonly struct MetricPointsAccessor
 
     internal MetricPointsAccessor(MetricPoint[] metricsPoints, int[] metricPointsToProcess, int targetCount)
     {
-        Debug.Assert(metricsPoints != null, "metricPoints was null");
-        Debug.Assert(metricPointsToProcess != null, "metricPointsToProcess was null");
-
-        this.metricsPoints = metricsPoints!;
-        this.metricPointsToProcess = metricPointsToProcess!;
+        this.metricsPoints = metricsPoints;
+        this.metricPointsToProcess = metricPointsToProcess;
         this.targetCount = targetCount;
     }
 
@@ -32,10 +27,10 @@ public readonly struct MetricPointsAccessor
     public Enumerator GetEnumerator()
         => new(this.metricsPoints, this.metricPointsToProcess, this.targetCount);
 
+#pragma warning disable CA1034 // Nested types should not be visible - already part of public API
     /// <summary>
     /// Enumerates the elements of a <see cref="MetricPointsAccessor"/>.
     /// </summary>
-#pragma warning disable CA1034 // Nested types should not be visible - already part of public API
     public struct Enumerator
 #pragma warning restore CA1034 // Nested types should not be visible - already part of public API
     {

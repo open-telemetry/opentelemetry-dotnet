@@ -15,7 +15,7 @@ public sealed class BatchLogRecordExportProcessorTests
     {
         var scopeProvider = new LoggerExternalScopeProvider();
 
-        List<LogRecord> exportedItems = new();
+        List<LogRecord> exportedItems = [];
 
         using var processor = new BatchLogRecordExportProcessor(
 #pragma warning disable CA2000 // Dispose objects before losing scope
@@ -45,13 +45,13 @@ public sealed class BatchLogRecordExportProcessorTests
         Assert.NotNull(logRecord.AttributeStorage);
         Assert.NotNull(logRecord.ILoggerData.BufferedScopes);
 
-        KeyValuePair<string, object?> actualState = logRecord.StateValues[0];
+        var actualState = logRecord.StateValues[0];
 
         Assert.Same("Value", actualState.Key);
         Assert.Same("Hello world", actualState.Value);
 
-        int scopeCount = 0;
-        bool foundScope = false;
+        var scopeCount = 0;
+        var foundScope = false;
 
         logRecord.ForEachScope<object?>(
             (s, o) =>
@@ -77,7 +77,7 @@ public sealed class BatchLogRecordExportProcessorTests
         // after OnEnd may throw. This test verifies that behavior. TODO:
         // Investigate this. Potentially obsolete logRecord.State and force
         // StateValues/ParseStateValues behavior.
-        List<LogRecord> exportedItems = new();
+        List<LogRecord> exportedItems = [];
 
         using var processor = new BatchLogRecordExportProcessor(
 #pragma warning disable CA2000 // Dispose objects before losing scope
@@ -101,7 +101,7 @@ public sealed class BatchLogRecordExportProcessorTests
 
         Assert.Throws<ObjectDisposedException>(() =>
         {
-            IReadOnlyList<KeyValuePair<string, object>> state = (IReadOnlyList<KeyValuePair<string, object>>)logRecord.State;
+            var state = (IReadOnlyList<KeyValuePair<string, object>>)logRecord.State;
 
             foreach (var kvp in state)
             {
@@ -112,7 +112,7 @@ public sealed class BatchLogRecordExportProcessorTests
     [Fact]
     public void CopyMadeWhenLogRecordIsFromThreadStaticPoolTest()
     {
-        List<LogRecord> exportedItems = new();
+        List<LogRecord> exportedItems = [];
 
         using var processor = new BatchLogRecordExportProcessor(
 #pragma warning disable CA2000 // Dispose objects before losing scope
@@ -133,7 +133,7 @@ public sealed class BatchLogRecordExportProcessorTests
     [Fact]
     public void LogRecordAddedToBatchIfNotFromAnyPoolTest()
     {
-        List<LogRecord> exportedItems = new();
+        List<LogRecord> exportedItems = [];
 
         using var processor = new BatchLogRecordExportProcessor(
 #pragma warning disable CA2000 // Dispose objects before losing scope

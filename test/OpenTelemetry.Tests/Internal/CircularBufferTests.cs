@@ -16,7 +16,7 @@ public class CircularBufferTests
     [Fact]
     public void CheckCapacity()
     {
-        int capacity = 1;
+        var capacity = 1;
         var circularBuffer = new CircularBuffer<string>(capacity);
 
         Assert.Equal(capacity, circularBuffer.Capacity);
@@ -25,7 +25,7 @@ public class CircularBufferTests
     [Fact]
     public void CheckValueWhenAdding()
     {
-        int capacity = 1;
+        var capacity = 1;
         var circularBuffer = new CircularBuffer<string>(capacity);
         var result = circularBuffer.Add("a");
         Assert.True(result);
@@ -36,7 +36,7 @@ public class CircularBufferTests
     [Fact]
     public void CheckBufferFull()
     {
-        int capacity = 1;
+        var capacity = 1;
         var circularBuffer = new CircularBuffer<string>(capacity);
         var result = circularBuffer.Add("a");
         Assert.True(result);
@@ -52,15 +52,15 @@ public class CircularBufferTests
     [Fact]
     public void CheckRead()
     {
-        string value = "a";
-        int capacity = 1;
+        var value = "a";
+        var capacity = 1;
         var circularBuffer = new CircularBuffer<string>(capacity);
         var result = circularBuffer.Add(value);
         Assert.True(result);
         Assert.Equal(1, circularBuffer.AddedCount);
         Assert.Equal(1, circularBuffer.Count);
 
-        string read = circularBuffer.Read();
+        var read = circularBuffer.Read();
         Assert.Equal(value, read);
         Assert.Equal(1, circularBuffer.AddedCount);
         Assert.Equal(1, circularBuffer.RemovedCount);
@@ -70,7 +70,7 @@ public class CircularBufferTests
     [Fact]
     public void CheckAddedCountAndCount()
     {
-        int capacity = 2;
+        var capacity = 2;
         var circularBuffer = new CircularBuffer<string>(capacity);
         var result = circularBuffer.Add("a");
         Assert.True(result);
@@ -98,13 +98,13 @@ public class CircularBufferTests
 
         var circularBuffer = new CircularBuffer<string>(2048);
 
-        List<Task> tasks = new();
+        List<Task> tasks = [];
 
-        int numberOfItemsPerWorker = 100_000;
+        var numberOfItemsPerWorker = 100_000;
 
-        for (int i = 0; i < Environment.ProcessorCount; i++)
+        for (var i = 0; i < Environment.ProcessorCount; i++)
         {
-            int tid = i;
+            var tid = i;
 
             tasks.Add(Task.Run(async () =>
             {
@@ -112,7 +112,7 @@ public class CircularBufferTests
 
                 if (tid == 0)
                 {
-                    for (int i = 0; i < numberOfItemsPerWorker * (Environment.ProcessorCount - 1); i++)
+                    for (var i = 0; i < numberOfItemsPerWorker * (Environment.ProcessorCount - 1); i++)
                     {
                         SpinWait wait = default;
                         while (true)
@@ -129,7 +129,7 @@ public class CircularBufferTests
                 }
                 else
                 {
-                    for (int i = 0; i < numberOfItemsPerWorker; i++)
+                    for (var i = 0; i < numberOfItemsPerWorker; i++)
                     {
                         SpinWait wait = default;
                         while (true)

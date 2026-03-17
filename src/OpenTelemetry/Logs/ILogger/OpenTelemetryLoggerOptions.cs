@@ -12,7 +12,7 @@ namespace OpenTelemetry.Logs;
 /// </summary>
 public class OpenTelemetryLoggerOptions
 {
-    internal readonly List<Func<IServiceProvider, BaseProcessor<LogRecord>>> ProcessorFactories = new();
+    internal readonly List<Func<IServiceProvider, BaseProcessor<LogRecord>>> ProcessorFactories = [];
     internal ResourceBuilder? ResourceBuilder;
 
     /// <summary>
@@ -124,15 +124,12 @@ public class OpenTelemetryLoggerOptions
         return this;
     }
 
-    internal OpenTelemetryLoggerOptions Copy()
+    internal OpenTelemetryLoggerOptions Copy() => new()
     {
-        return new()
-        {
-            IncludeFormattedMessage = this.IncludeFormattedMessage,
-            IncludeScopes = this.IncludeScopes,
-            ParseStateValues = this.ParseStateValues,
-            IncludeAttributes = this.IncludeAttributes,
-            IncludeTraceState = this.IncludeTraceState,
-        };
-    }
+        IncludeFormattedMessage = this.IncludeFormattedMessage,
+        IncludeScopes = this.IncludeScopes,
+        ParseStateValues = this.ParseStateValues,
+        IncludeAttributes = this.IncludeAttributes,
+        IncludeTraceState = this.IncludeTraceState,
+    };
 }

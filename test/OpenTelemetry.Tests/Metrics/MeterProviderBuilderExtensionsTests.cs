@@ -111,8 +111,8 @@ public class MeterProviderBuilderExtensionsTests
     {
         var builder = Sdk.CreateMeterProviderBuilder();
 
-        int configureInvocations = 0;
-        bool serviceProviderTestExecuted = false;
+        var configureInvocations = 0;
+        var serviceProviderTestExecuted = false;
 
         builder.SetResourceBuilder(ResourceBuilder.CreateEmpty().AddService("Test"));
         builder.ConfigureResource(builder =>
@@ -157,7 +157,7 @@ public class MeterProviderBuilderExtensionsTests
     {
         Environment.SetEnvironmentVariable("TEST_KEY", "TEST_KEY_VALUE");
 
-        bool configureBuilderCalled = false;
+        var configureBuilderCalled = false;
 
         using var provider = Sdk.CreateMeterProviderBuilder()
             .ConfigureBuilder((sp, builder) =>
@@ -180,7 +180,7 @@ public class MeterProviderBuilderExtensionsTests
     [Fact]
     public void ConfigureBuilderIConfigurationModifiableTest()
     {
-        bool configureBuilderCalled = false;
+        var configureBuilderCalled = false;
 
         using var provider = Sdk.CreateMeterProviderBuilder()
             .ConfigureServices(services =>
@@ -211,9 +211,9 @@ public class MeterProviderBuilderExtensionsTests
     [InlineData(false)]
     public void MeterProviderNestedResolutionUsingBuilderTest(bool callNestedConfigure)
     {
-        bool innerConfigureBuilderTestExecuted = false;
-        bool innerConfigureOpenTelemetryLoggerProviderTestExecuted = false;
-        bool innerConfigureOpenTelemetryLoggerProviderTestWithServiceProviderExecuted = false;
+        var innerConfigureBuilderTestExecuted = false;
+        var innerConfigureOpenTelemetryLoggerProviderTestExecuted = false;
+        var innerConfigureOpenTelemetryLoggerProviderTestWithServiceProviderExecuted = false;
 
         using var provider = Sdk.CreateMeterProviderBuilder()
             .ConfigureServices(services =>
@@ -262,7 +262,7 @@ public class MeterProviderBuilderExtensionsTests
     [Fact]
     public void MeterProviderAddReaderFactoryTest()
     {
-        bool factoryInvoked = false;
+        var factoryInvoked = false;
 
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddReader(sp =>
@@ -286,7 +286,7 @@ public class MeterProviderBuilderExtensionsTests
     {
         var builder = new MyMeterProviderBuilder();
 
-        Assert.Throws<NotSupportedException>(() => builder.Build());
+        Assert.Throws<NotSupportedException>(builder.Build);
     }
 
     private static void RunBuilderServiceLifecycleTest(
@@ -298,7 +298,7 @@ public class MeterProviderBuilderExtensionsTests
 
         builder.AddMeter("TestSource");
 
-        bool configureServicesCalled = false;
+        var configureServicesCalled = false;
         builder.ConfigureServices(services =>
         {
             configureServicesCalled = true;
@@ -317,7 +317,7 @@ public class MeterProviderBuilderExtensionsTests
             });
         });
 
-        int configureBuilderInvocations = 0;
+        var configureBuilderInvocations = 0;
         builder.ConfigureBuilder((sp, builder) =>
         {
             configureBuilderInvocations++;
@@ -366,25 +366,17 @@ public class MeterProviderBuilderExtensionsTests
         internal bool Disposed;
 
         public void Dispose()
-        {
-            this.Disposed = true;
-        }
+            => this.Disposed = true;
     }
 
-    private sealed class MyReader : MetricReader
-    {
-    }
+    private sealed class MyReader : MetricReader;
 
     private sealed class MyMeterProviderBuilder : MeterProviderBuilder
     {
         public override MeterProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
-        {
-            throw new NotImplementedException();
-        }
+            => throw new NotImplementedException();
 
         public override MeterProviderBuilder AddMeter(params string[] names)
-        {
-            throw new NotImplementedException();
-        }
+            => throw new NotImplementedException();
     }
 }

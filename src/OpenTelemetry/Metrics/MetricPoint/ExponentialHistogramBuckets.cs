@@ -9,7 +9,7 @@ namespace OpenTelemetry.Metrics;
 // Note: Does not implement IEnumerable<> to prevent accidental boxing.
 public sealed class ExponentialHistogramBuckets
 {
-    private long[] buckets = Array.Empty<long>();
+    private long[] buckets = [];
     private int size;
 
     internal ExponentialHistogramBuckets()

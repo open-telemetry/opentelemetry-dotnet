@@ -24,12 +24,12 @@ internal
     private readonly Exemplar[] runningExemplars;
     private readonly Exemplar[] snapshotExemplars;
 
+#pragma warning disable RS0022 // Constructor make noninheritable base class inheritable
     /// <summary>
     /// Initializes a new instance of the <see cref="FixedSizeExemplarReservoir"/> class.
     /// </summary>
     /// <param name="capacity">The capacity (number of <see cref="Exemplar"/>s)
     /// to be contained in the reservoir.</param>
-#pragma warning disable RS0022 // Constructor make noninheritable base class inheritable
     protected FixedSizeExemplarReservoir(int capacity)
 #pragma warning restore RS0022 // Constructor make noninheritable base class inheritable
     {
@@ -58,7 +58,7 @@ internal
     {
         var runningExemplars = this.runningExemplars;
 
-        for (int i = 0; i < runningExemplars.Length; i++)
+        for (var i = 0; i < runningExemplars.Length; i++)
         {
             ref var running = ref runningExemplars[i];
 
@@ -76,7 +76,7 @@ internal
     {
         var viewDefinedTagKeys = aggregatorStore.TagKeysInteresting;
 
-        for (int i = 0; i < this.runningExemplars.Length; i++)
+        for (var i = 0; i < this.runningExemplars.Length; i++)
         {
             this.runningExemplars[i].ViewDefinedTagKeys = viewDefinedTagKeys;
             this.snapshotExemplars[i].ViewDefinedTagKeys = viewDefinedTagKeys;

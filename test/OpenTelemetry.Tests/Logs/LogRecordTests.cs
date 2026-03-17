@@ -26,7 +26,7 @@ public sealed class LogRecordTests
     [Fact]
     public void CheckCategoryNameForLog()
     {
-        using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems);
+        using var loggerFactory = InitializeLoggerFactory(out var exportedItems);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
         logger.Log();
@@ -44,7 +44,7 @@ public sealed class LogRecordTests
     [InlineData(LogLevel.Critical)]
     public void CheckLogLevel(LogLevel logLevel)
     {
-        using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+        using var loggerFactory = InitializeLoggerFactory(out var exportedItems, configure: null);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
         logger.Log(logLevel);
@@ -58,7 +58,7 @@ public sealed class LogRecordTests
     [InlineData(false)]
     public void CheckStateForUnstructuredLog(bool includeFormattedMessage)
     {
-        using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: o => o.IncludeFormattedMessage = includeFormattedMessage);
+        using var loggerFactory = InitializeLoggerFactory(out var exportedItems, configure: o => o.IncludeFormattedMessage = includeFormattedMessage);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
         logger.HelloWorld();
@@ -87,7 +87,7 @@ public sealed class LogRecordTests
     [InlineData(false)]
     public void CheckStateForUnstructuredLogWithStringInterpolation(bool includeFormattedMessage)
     {
-        using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: o => o.IncludeFormattedMessage = includeFormattedMessage);
+        using var loggerFactory = InitializeLoggerFactory(out var exportedItems, configure: o => o.IncludeFormattedMessage = includeFormattedMessage);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
 #pragma warning disable CA2254 // Template should be a static expression
@@ -121,7 +121,7 @@ public sealed class LogRecordTests
     [InlineData(false)]
     public void CheckStateForStructuredLogWithTemplate(bool includeFormattedMessage)
     {
-        using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: o => o.IncludeFormattedMessage = includeFormattedMessage);
+        using var loggerFactory = InitializeLoggerFactory(out var exportedItems, configure: o => o.IncludeFormattedMessage = includeFormattedMessage);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
         logger.HelloFrom("tomato", 2.99);
@@ -162,7 +162,7 @@ public sealed class LogRecordTests
     [InlineData(false)]
     public void CheckStateForStructuredLogWithStrongType(bool includeFormattedMessage)
     {
-        using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: o => o.IncludeFormattedMessage = includeFormattedMessage);
+        using var loggerFactory = InitializeLoggerFactory(out var exportedItems, configure: o => o.IncludeFormattedMessage = includeFormattedMessage);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
         var food = new Food { Name = "artichoke", Price = 3.99 };
@@ -204,7 +204,7 @@ public sealed class LogRecordTests
     [InlineData(false)]
     public void CheckStateForStructuredLogWithAnonymousType(bool includeFormattedMessage)
     {
-        using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: o => o.IncludeFormattedMessage = includeFormattedMessage);
+        using var loggerFactory = InitializeLoggerFactory(out var exportedItems, configure: o => o.IncludeFormattedMessage = includeFormattedMessage);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
         var anonymousType = new { Name = "pumpkin", Price = 5.99 };
@@ -246,7 +246,7 @@ public sealed class LogRecordTests
     [InlineData(false)]
     public void CheckStateForStructuredLogWithGeneralType(bool includeFormattedMessage)
     {
-        using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: o => o.IncludeFormattedMessage = includeFormattedMessage);
+        using var loggerFactory = InitializeLoggerFactory(out var exportedItems, configure: o => o.IncludeFormattedMessage = includeFormattedMessage);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
         var trufflePrice = 299.99;
 
@@ -291,7 +291,7 @@ public sealed class LogRecordTests
     [Fact]
     public void CheckStateForExceptionLogged()
     {
-        using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+        using var loggerFactory = InitializeLoggerFactory(out var exportedItems, configure: null);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
         var exceptionMessage = "Exception Message";
@@ -326,7 +326,7 @@ public sealed class LogRecordTests
     [Fact]
     public void CheckStateCanBeSet()
     {
-        using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+        using var loggerFactory = InitializeLoggerFactory(out var exportedItems, configure: null);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
         logger.Log();
@@ -341,7 +341,7 @@ public sealed class LogRecordTests
     [Fact]
     public void CheckStateValuesCanBeSet()
     {
-        using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = true);
+        using var loggerFactory = InitializeLoggerFactory(out var exportedItems, configure: options => options.ParseStateValues = true);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
         logger.Log(
@@ -361,7 +361,7 @@ public sealed class LogRecordTests
     [Fact]
     public void CheckFormattedMessageCanBeSet()
     {
-        using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.IncludeFormattedMessage = true);
+        using var loggerFactory = InitializeLoggerFactory(out var exportedItems, configure: options => options.IncludeFormattedMessage = true);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
         logger.HelloFrom("tomato", 3.0);
@@ -444,7 +444,7 @@ public sealed class LogRecordTests
     [Fact]
     public void CheckTraceIdForLogWithinDroppedActivity()
     {
-        using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+        using var loggerFactory = InitializeLoggerFactory(out var exportedItems, configure: null);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
         logger.LogWithinADroppedActivity();
@@ -461,7 +461,7 @@ public sealed class LogRecordTests
     [InlineData(false)]
     public void CheckTraceIdForLogWithinActivityMarkedAsRecordOnly(bool includeTraceState)
     {
-        using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: o => o.IncludeTraceState = includeTraceState);
+        using var loggerFactory = InitializeLoggerFactory(out var exportedItems, configure: o => o.IncludeTraceState = includeTraceState);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
         var sampler = new RecordOnlySampler();
@@ -500,7 +500,7 @@ public sealed class LogRecordTests
     [Fact]
     public void CheckTraceIdForLogWithinActivityMarkedAsRecordAndSample()
     {
-        using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: null);
+        using var loggerFactory = InitializeLoggerFactory(out var exportedItems, configure: null);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
         var sampler = new AlwaysOnSampler();
@@ -528,7 +528,7 @@ public sealed class LogRecordTests
     [Fact]
     public void VerifyIncludeFormattedMessage_False()
     {
-        using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.IncludeFormattedMessage = false);
+        using var loggerFactory = InitializeLoggerFactory(out var exportedItems, configure: options => options.IncludeFormattedMessage = false);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
         logger.Log();
@@ -539,7 +539,7 @@ public sealed class LogRecordTests
     [Fact]
     public void VerifyIncludeFormattedMessage_True()
     {
-        using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.IncludeFormattedMessage = true);
+        using var loggerFactory = InitializeLoggerFactory(out var exportedItems, configure: options => options.IncludeFormattedMessage = true);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
         logger.Log();
@@ -554,7 +554,7 @@ public sealed class LogRecordTests
     [Fact]
     public void IncludeFormattedMessageTestWhenFormatterNull()
     {
-        using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.IncludeFormattedMessage = true);
+        using var loggerFactory = InitializeLoggerFactory(out var exportedItems, configure: options => options.IncludeFormattedMessage = true);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
         logger.Log(LogLevel.Information, default, "Hello World!", null, null!);
@@ -577,7 +577,7 @@ public sealed class LogRecordTests
     [Fact]
     public void VerifyIncludeScopes_False()
     {
-        using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.IncludeScopes = false);
+        using var loggerFactory = InitializeLoggerFactory(out var exportedItems, configure: options => options.IncludeScopes = false);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
         using var scope = logger.BeginScope("string_scope");
@@ -593,7 +593,7 @@ public sealed class LogRecordTests
     [Fact]
     public void VerifyIncludeScopes_True()
     {
-        using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.IncludeScopes = true);
+        using var loggerFactory = InitializeLoggerFactory(out var exportedItems, configure: options => options.IncludeScopes = true);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
         using var scope = logger.BeginScope("string_scope");
@@ -606,13 +606,13 @@ public sealed class LogRecordTests
         logger.Log();
         logRecord = exportedItems[1];
 
-        int reachedDepth = -1;
+        var reachedDepth = -1;
         logRecord.ForEachScope<object?>(
             (scope, state) =>
             {
                 reachedDepth++;
                 scopes.Add(scope.Scope);
-                foreach (KeyValuePair<string, object?> item in scope)
+                foreach (var item in scope)
                 {
                     Assert.Equal(string.Empty, item.Key);
                     Assert.Equal("string_scope", item.Value);
@@ -642,7 +642,7 @@ public sealed class LogRecordTests
                 scopes.Add(scope.Scope);
                 if (reachedDepth++ == 1)
                 {
-                    foreach (KeyValuePair<string, object?> item in scope)
+                    foreach (var item in scope)
                     {
                         Assert.Contains(item, expectedScope2);
                     }
@@ -673,7 +673,7 @@ public sealed class LogRecordTests
                 scopes.Add(scope.Scope);
                 if (reachedDepth++ == 2)
                 {
-                    foreach (KeyValuePair<string, object?> item in scope)
+                    foreach (var item in scope)
                     {
                         Assert.Contains(item, expectedScope3);
                     }
@@ -692,7 +692,7 @@ public sealed class LogRecordTests
     [InlineData(false)]
     public void VerifyParseStateValues_UsingStandardExtensions(bool parseStateValues)
     {
-        using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = parseStateValues);
+        using var loggerFactory = InitializeLoggerFactory(out var exportedItems, configure: options => options.ParseStateValues = parseStateValues);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
         // Tests state parsing with standard extensions.
@@ -737,7 +737,7 @@ public sealed class LogRecordTests
         Assert.Equal(new KeyValuePair<string, object?>("Year", 2021), logRecord.StateValues[1]);
         Assert.Equal(new KeyValuePair<string, object?>("{OriginalFormat}", "{Product} {Year} {Complex}!"), logRecord.StateValues[3]);
 
-        KeyValuePair<string, object?> actualComplex = logRecord.StateValues[2];
+        var actualComplex = logRecord.StateValues[2];
         Assert.Equal("Complex", actualComplex.Key);
         Assert.Same(complex, actualComplex.Value);
     }
@@ -745,7 +745,7 @@ public sealed class LogRecordTests
     [Fact]
     public void ParseStateValuesUsingStructTest()
     {
-        using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = true);
+        using var loggerFactory = InitializeLoggerFactory(out var exportedItems, configure: options => options.ParseStateValues = true);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
         // Tests struct IReadOnlyList<KeyValuePair<string, object>> parse path.
@@ -767,7 +767,7 @@ public sealed class LogRecordTests
     [Fact]
     public void ParseStateValuesUsingListTest()
     {
-        using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = true);
+        using var loggerFactory = InitializeLoggerFactory(out var exportedItems, configure: options => options.ParseStateValues = true);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
         // Tests ref IReadOnlyList<KeyValuePair<string, object>> parse path.
@@ -789,7 +789,7 @@ public sealed class LogRecordTests
     [Fact]
     public void ParseStateValuesUsingIEnumerableTest()
     {
-        using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = true);
+        using var loggerFactory = InitializeLoggerFactory(out var exportedItems, configure: options => options.ParseStateValues = true);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
         // Tests IEnumerable<KeyValuePair<string, object>> parse path.
@@ -811,12 +811,12 @@ public sealed class LogRecordTests
     [Fact]
     public void ParseStateValuesUsingNonconformingCustomTypeTest()
     {
-        using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = true);
+        using var loggerFactory = InitializeLoggerFactory(out var exportedItems, configure: options => options.ParseStateValues = true);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
         // Tests unknown state parse path.
 
-        CustomState state = new CustomState
+        var state = new CustomState
         {
             Property = "Value",
         };
@@ -841,10 +841,10 @@ public sealed class LogRecordTests
     [Fact]
     public void DisposingStateTest()
     {
-        using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems, configure: options => options.ParseStateValues = true);
+        using var loggerFactory = InitializeLoggerFactory(out var exportedItems, configure: options => options.ParseStateValues = true);
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
-        DisposingState state = new DisposingState("Hello world");
+        var state = new DisposingState("Hello world");
 
         logger.Log(
             LogLevel.Information,
@@ -860,7 +860,7 @@ public sealed class LogRecordTests
         Assert.NotNull(logRecord.StateValues);
         Assert.Single(logRecord.StateValues);
 
-        KeyValuePair<string, object?> actualState = logRecord.StateValues[0];
+        var actualState = logRecord.StateValues[0];
 
         Assert.Same("Value", actualState.Key);
         Assert.Same("Hello world", actualState.Value);
@@ -905,7 +905,7 @@ public sealed class LogRecordTests
     public void IncludeStateTest()
     {
         using var loggerFactory = InitializeLoggerFactory(
-            out List<LogRecord> exportedItems, configure: options =>
+            out var exportedItems, configure: options =>
             {
                 options.IncludeAttributes = false;
             });
@@ -971,7 +971,7 @@ public sealed class LogRecordTests
     [Fact]
     public void LogRecordInstrumentationScopeTest()
     {
-        using var loggerFactory = InitializeLoggerFactory(out List<LogRecord> exportedItems);
+        using var loggerFactory = InitializeLoggerFactory(out var exportedItems);
 
         var logger = loggerFactory.CreateLogger<LogRecordTests>();
 
@@ -1033,7 +1033,7 @@ public sealed class LogRecordTests
         // at the last position. The fix ensures it's found at ANY position.
 
         using var loggerFactory = InitializeLoggerFactory(
-            out List<LogRecord> exportedItems,
+            out var exportedItems,
             configure: o => o.IncludeFormattedMessage = includeFormattedMessage);
 
         var logger = loggerFactory.CreateLogger<LogRecordTests>();

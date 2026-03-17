@@ -157,8 +157,10 @@ public sealed class TracerProviderSdkTests : IDisposable
         }
 
         // Validate that Samplers get the tags passed with Activity creation
-        var initialTags = new ActivityTagsCollection();
-        initialTags["tagA"] = "tagAValue";
+        var initialTags = new ActivityTagsCollection
+        {
+            ["tagA"] = "tagAValue",
+        };
         using (var withInitialTags = activitySource.StartActivity("withInitialTags", ActivityKind.Client, default(ActivityContext), initialTags))
         {
             Assert.NotNull(withInitialTags);
@@ -264,7 +266,7 @@ public sealed class TracerProviderSdkTests : IDisposable
             return new SamplingResult(SamplingDecision.Drop);
         };
 
-        ActivityContext ctx = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None, isRemote: true);
+        var ctx = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.None, isRemote: true);
 
         using var activity = activitySource.StartActivity("root", ActivityKind.Server, ctx);
 
@@ -357,10 +359,10 @@ public sealed class TracerProviderSdkTests : IDisposable
     [Fact]
     public void TracerSdkSetsActivityDataRequestedToFalseWhenSuppressInstrumentationIsTrueForLegacyActivity()
     {
-        using TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+        using var testActivityProcessor = new TestActivityProcessor();
 
-        bool startCalled = false;
-        bool endCalled = false;
+        var startCalled = false;
+        var endCalled = false;
 
         testActivityProcessor.StartAction =
             (a) =>
@@ -398,10 +400,10 @@ public sealed class TracerProviderSdkTests : IDisposable
     {
         var activitySourceName = Utils.GetCurrentMethodName();
         var testSampler = new TestSampler();
-        using TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+        using var testActivityProcessor = new TestActivityProcessor();
 
-        bool startCalled = false;
-        bool endCalled = false;
+        var startCalled = false;
+        var endCalled = false;
 
         testActivityProcessor.StartAction =
             (a) =>
@@ -426,7 +428,7 @@ public sealed class TracerProviderSdkTests : IDisposable
             return new SamplingResult(SamplingDecision.Drop);
         };
 
-        using ActivitySource source = new ActivitySource(activitySourceName);
+        using var source = new ActivitySource(activitySourceName);
         using var activity = source.StartActivity("somename");
 
         Assert.NotNull(activity);
@@ -444,10 +446,10 @@ public sealed class TracerProviderSdkTests : IDisposable
     [Fact]
     public void SdkDoesNotProcessLegacyActivityWithNoAdditionalConfig()
     {
-        using TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+        using var testActivityProcessor = new TestActivityProcessor();
 
-        bool startCalled = false;
-        bool endCalled = false;
+        var startCalled = false;
+        var endCalled = false;
 
         testActivityProcessor.StartAction =
             (a) =>
@@ -488,7 +490,7 @@ public sealed class TracerProviderSdkTests : IDisposable
     [Fact]
     public void SdkSamplesAndProcessesLegacyActivityWithRightConfig()
     {
-        bool samplerCalled = false;
+        var samplerCalled = false;
 
         var sampler = new TestSampler
         {
@@ -500,10 +502,10 @@ public sealed class TracerProviderSdkTests : IDisposable
             },
         };
 
-        using TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+        using var testActivityProcessor = new TestActivityProcessor();
 
-        bool startCalled = false;
-        bool endCalled = false;
+        var startCalled = false;
+        var endCalled = false;
 
         testActivityProcessor.StartAction =
             (a) =>
@@ -549,7 +551,7 @@ public sealed class TracerProviderSdkTests : IDisposable
     [Fact]
     public void SdkSamplesAndProcessesLegacyActivityWithRightConfigOnWildCardMode()
     {
-        bool samplerCalled = false;
+        var samplerCalled = false;
 
         var sampler = new TestSampler
         {
@@ -561,10 +563,10 @@ public sealed class TracerProviderSdkTests : IDisposable
             },
         };
 
-        using TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+        using var testActivityProcessor = new TestActivityProcessor();
 
-        bool startCalled = false;
-        bool endCalled = false;
+        var startCalled = false;
+        var endCalled = false;
 
         testActivityProcessor.StartAction =
             (a) =>
@@ -611,10 +613,10 @@ public sealed class TracerProviderSdkTests : IDisposable
     [Fact]
     public void SdkCallsOnlyProcessorOnStartForLegacyActivityWhenActivitySourceIsUpdatedWithoutAddSource()
     {
-        using TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+        using var testActivityProcessor = new TestActivityProcessor();
 
-        bool startCalled = false;
-        bool endCalled = false;
+        var startCalled = false;
+        var endCalled = false;
 
         testActivityProcessor.StartAction =
             (a) =>
@@ -661,10 +663,10 @@ public sealed class TracerProviderSdkTests : IDisposable
     [Fact]
     public void SdkProcessesLegacyActivityWhenActivitySourceIsUpdatedWithAddSource()
     {
-        using TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+        using var testActivityProcessor = new TestActivityProcessor();
 
-        bool startCalled = false;
-        bool endCalled = false;
+        var startCalled = false;
+        var endCalled = false;
 
         testActivityProcessor.StartAction =
             (a) =>
@@ -711,10 +713,10 @@ public sealed class TracerProviderSdkTests : IDisposable
     [Fact]
     public void SdkProcessesLegacyActivityEvenAfterAddingNewProcessor()
     {
-        using TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+        using var testActivityProcessor = new TestActivityProcessor();
 
-        bool startCalled = false;
-        bool endCalled = false;
+        var startCalled = false;
+        var endCalled = false;
 
         testActivityProcessor.StartAction =
             (a) =>
@@ -753,8 +755,8 @@ public sealed class TracerProviderSdkTests : IDisposable
         // the following validates that updated processors are processing the legacy activities created from here on.
         using var testActivityProcessorNew = new TestActivityProcessor();
 
-        bool startCalledNew = false;
-        bool endCalledNew = false;
+        var startCalledNew = false;
+        var endCalledNew = false;
 
         testActivityProcessorNew.StartAction =
             (a) =>
@@ -899,8 +901,8 @@ public sealed class TracerProviderSdkTests : IDisposable
         var parentTraceId = ActivityTraceId.CreateRandom();
         var parentSpanId = ActivitySpanId.CreateRandom();
         var parentTraceFlag = (parentTraceFlags == ActivityTraceFlags.Recorded) ? "01" : "00";
-        string remoteParentId = $"00-{parentTraceId}-{parentSpanId}-{parentTraceFlag}";
-        string tracestate = "a=b;c=d";
+        var remoteParentId = $"00-{parentTraceId}-{parentSpanId}-{parentTraceFlag}";
+        var tracestate = "a=b;c=d";
 
         var operationNameForLegacyActivity = Utils.GetCurrentMethodName();
         var sampler = new TestSampler()
@@ -949,7 +951,7 @@ public sealed class TracerProviderSdkTests : IDisposable
         var parentTraceId = ActivityTraceId.CreateRandom();
         var parentSpanId = ActivitySpanId.CreateRandom();
         var parentTraceFlag = (parentTraceFlags == ActivityTraceFlags.Recorded) ? "01" : "00";
-        string remoteParentId = $"00-{parentTraceId}-{parentSpanId}-{parentTraceFlag}";
+        var remoteParentId = $"00-{parentTraceId}-{parentSpanId}-{parentTraceFlag}";
 
         var operationNameForLegacyActivity = Utils.GetCurrentMethodName();
 
@@ -985,7 +987,7 @@ public sealed class TracerProviderSdkTests : IDisposable
         var parentTraceId = ActivityTraceId.CreateRandom();
         var parentSpanId = ActivitySpanId.CreateRandom();
         var parentTraceFlag = (parentTraceFlags == ActivityTraceFlags.Recorded) ? "01" : "00";
-        string remoteParentId = $"00-{parentTraceId}-{parentSpanId}-{parentTraceFlag}";
+        var remoteParentId = $"00-{parentTraceId}-{parentSpanId}-{parentTraceFlag}";
 
         var operationNameForLegacyActivity = Utils.GetCurrentMethodName();
 
@@ -1019,7 +1021,7 @@ public sealed class TracerProviderSdkTests : IDisposable
     public void SdkPopulatesSamplingParamsCorrectlyForLegacyActivityWithInProcParent(ActivityTraceFlags traceFlags)
     {
         // Create some parent activity.
-        string tracestate = "a=b;c=d";
+        var tracestate = "a=b;c=d";
         using var activityLocalParent = new Activity("TestParent")
         {
             ActivityTraceFlags = traceFlags,
@@ -1185,7 +1187,7 @@ public sealed class TracerProviderSdkTests : IDisposable
     [Fact]
     public void TracerProviderSdkFlushesProcessorForcibly()
     {
-        using TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+        using var testActivityProcessor = new TestActivityProcessor();
 
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
                     .AddProcessor(testActivityProcessor)
@@ -1211,7 +1213,7 @@ public sealed class TracerProviderSdkTests : IDisposable
             },
         };
 
-        using TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+        using var testActivityProcessor = new TestActivityProcessor();
 
         var onStartProcessedActivities = new List<string>();
         var onStopProcessedActivities = new List<string>();
@@ -1345,9 +1347,7 @@ public sealed class TracerProviderSdkTests : IDisposable
     }
 
     public void Dispose()
-    {
-        GC.SuppressFinalize(this);
-    }
+        => GC.SuppressFinalize(this);
 
     private static Action<Activity, ActivitySource> CreateActivitySourceSetter()
     {
@@ -1364,9 +1364,7 @@ public sealed class TracerProviderSdkTests : IDisposable
     private sealed class TestTracerProviderBuilder : TracerProviderBuilderBase
     {
         public TracerProviderBuilder AddInstrumentation()
-        {
-            return this.AddInstrumentation("SomeInstrumentation", "1.0.0", () => new object());
-        }
+            => this.AddInstrumentation("SomeInstrumentation", "1.0.0", () => new object());
     }
 
     private sealed class TestInstrumentation : IDisposable
@@ -1379,8 +1377,6 @@ public sealed class TracerProviderSdkTests : IDisposable
         }
 
         public void Dispose()
-        {
-            this.IsDisposed = true;
-        }
+            => this.IsDisposed = true;
     }
 }

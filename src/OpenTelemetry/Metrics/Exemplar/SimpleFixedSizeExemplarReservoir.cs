@@ -51,7 +51,7 @@ internal sealed class SimpleFixedSizeExemplarReservoir : FixedSizeExemplarReserv
         }
         else
         {
-            int index = ThreadSafeRandom.Next(0, measurementState);
+            var index = ThreadSafeRandom.Next(0, measurementState);
             if (index < this.Capacity)
             {
                 this.UpdateExemplar(index, in measurement);
