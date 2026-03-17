@@ -181,8 +181,7 @@ internal static class OtlpCertificateManager
 
                 // Check if certificate is expired - this should throw an exception
                 var isExpired = chain.ChainStatus.Any(status =>
-                    status.Status is X509ChainStatusFlags.NotTimeValid or
-                    X509ChainStatusFlags.NotTimeNested);
+                    status.Status is X509ChainStatusFlags.NotTimeValid or X509ChainStatusFlags.NotTimeNested);
 
                 return isExpired
                     ? throw new InvalidOperationException(

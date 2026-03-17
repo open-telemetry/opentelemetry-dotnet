@@ -57,7 +57,11 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
         this.transmissionHandler = transmissionHandler ?? exporterOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Logs);
     }
 
-    internal Resource Resource { get => field ??= this.ParentProvider.GetResource(); private set; }
+    internal Resource Resource
+    {
+        get => field ??= this.ParentProvider.GetResource();
+        private set;
+    }
 
     /// <inheritdoc/>
 #pragma warning disable CA1725 // Parameter names should match base declaration

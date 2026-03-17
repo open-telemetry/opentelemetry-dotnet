@@ -101,9 +101,7 @@ internal sealed class AggregatorStore
 
         this.exemplarFilter = exemplarFilter ?? DefaultExemplarFilter;
         Debug.Assert(
-            this.exemplarFilter is ExemplarFilterType.AlwaysOff
-            or ExemplarFilterType.AlwaysOn
-            or ExemplarFilterType.TraceBased,
+            this.exemplarFilter is ExemplarFilterType.AlwaysOff or ExemplarFilterType.AlwaysOn or ExemplarFilterType.TraceBased,
             "this.exemplarFilter had an unexpected value");
 
         // Setting metricPointIndex to 1 as we would reserve the metricPoints[1] for overflow attribute.

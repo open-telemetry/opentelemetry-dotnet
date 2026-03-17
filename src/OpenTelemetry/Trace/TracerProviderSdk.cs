@@ -337,7 +337,7 @@ internal sealed class TracerProviderSdk : TracerProvider
     /// </remarks>
     internal bool OnShutdown(int timeoutMilliseconds)
     {
-        // TO DO Put OnShutdown logic in a task to run within the user provider timeOutMilliseconds
+        // TODO Put OnShutdown logic in a task to run within the user provider timeoutMilliseconds
         foreach (var item in this.Instrumentations)
         {
             (item as IDisposable)?.Dispose();

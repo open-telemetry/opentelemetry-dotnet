@@ -37,7 +37,7 @@ public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
     /// <inheritdoc/>
     public override void OnEnd(LogRecord data)
     {
-        // Note: Intentionally not using Guard.ThrowIfNull
+        // Note: Intentionally not using Guard.ThrowIfNull to save prod cycles
 #pragma warning disable CA1062 // Validate arguments of public methods
         switch (data.Source)
 #pragma warning restore CA1062 // Validate arguments of public methods

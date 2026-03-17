@@ -51,10 +51,7 @@ public readonly struct LogRecordScope
             }
             else
             {
-                this.scope =
-                [
-                    new KeyValuePair<string, object?>(string.Empty, scope),
-                ];
+                this.scope = [new KeyValuePair<string, object?>(string.Empty, scope)];
             }
 
             this.position = 0;

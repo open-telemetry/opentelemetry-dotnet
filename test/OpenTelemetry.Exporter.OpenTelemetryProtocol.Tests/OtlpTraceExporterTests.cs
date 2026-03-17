@@ -539,7 +539,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
         var expectedEndTimeUnixNano = expectedStartTimeUnixNano + (duration.TotalMilliseconds * 1_000_000);
         Assert.Equal(expectedEndTimeUnixNano, otlpSpan.EndTimeUnixNano);
 
-        var childLinks = new List<ActivityLink> { new(rootActivity.Context, [with(attributes)]) };
+        var childLinks = new List<ActivityLink> { new(rootActivity.Context, [.. attributes]) };
         var childActivity = activitySource.StartActivity(
             "child",
             ActivityKind.Client,
@@ -550,7 +550,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
 
         childActivity.SetStatus(ActivityStatusCode.Error, new string('a', 150));
 
-        var childEvents = new List<ActivityEvent> { new("e0"), new("e1", default, [with(attributes)]) };
+        var childEvents = new List<ActivityEvent> { new("e0"), new("e1", default, [.. attributes]) };
         childActivity.AddEvent(childEvents[0]);
         childActivity.AddEvent(childEvents[1]);
 

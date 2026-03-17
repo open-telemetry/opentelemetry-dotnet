@@ -158,19 +158,19 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
 
     public bool Equals(MetricStreamIdentity other)
         => this.InstrumentType == other.InstrumentType
-           && this.MeterName == other.MeterName
-           && this.MeterVersion == other.MeterVersion
-           && this.MeterSchemaUrl == other.MeterSchemaUrl
-           && this.InstrumentName == other.InstrumentName
-           && this.Unit == other.Unit
-           && this.Description == other.Description
-           && this.ViewId == other.ViewId
-           && this.MeterTags == other.MeterTags
-           && this.HistogramRecordMinMax == other.HistogramRecordMinMax
-           && this.ExponentialHistogramMaxSize == other.ExponentialHistogramMaxSize
-           && this.ExponentialHistogramMaxScale == other.ExponentialHistogramMaxScale
-           && StringArrayComparer.Equals(this.TagKeys, other.TagKeys)
-           && HistogramBoundsEqual(this.HistogramBucketBounds, other.HistogramBucketBounds);
+        && this.MeterName == other.MeterName
+        && this.MeterVersion == other.MeterVersion
+        && this.MeterSchemaUrl == other.MeterSchemaUrl
+        && this.InstrumentName == other.InstrumentName
+        && this.Unit == other.Unit
+        && this.Description == other.Description
+        && this.ViewId == other.ViewId
+        && this.MeterTags == other.MeterTags
+        && this.HistogramRecordMinMax == other.HistogramRecordMinMax
+        && this.ExponentialHistogramMaxSize == other.ExponentialHistogramMaxSize
+        && this.ExponentialHistogramMaxScale == other.ExponentialHistogramMaxScale
+        && StringArrayComparer.Equals(this.TagKeys, other.TagKeys)
+        && HistogramBoundsEqual(this.HistogramBucketBounds, other.HistogramBucketBounds);
 
     public override readonly int GetHashCode() => this.hashCode;
 

@@ -39,9 +39,9 @@ public sealed class LogRecordThreadStaticPoolTests
         var logRecord1 = LogRecordThreadStaticPool.Instance.Rent();
         logRecord1.AttributeStorage =
         [
-with(16),
-            new KeyValuePair<string, object?>("key1", "value1"),
-            new KeyValuePair<string, object?>("key2", "value2"),
+            with(16),
+            new("key1", "value1"),
+            new("key2", "value2"),
         ];
         logRecord1.ScopeStorage = [with(8), null, null];
 
@@ -59,7 +59,7 @@ with(16),
 
         for (var i = 0; i <= LogRecordPoolHelper.DefaultMaxNumberOfAttributes; i++)
         {
-            logRecord1.AttributeStorage!.Add(new KeyValuePair<string, object?>("key", "value"));
+            logRecord1.AttributeStorage!.Add(new("key", "value"));
         }
 
         for (var i = 0; i <= LogRecordPoolHelper.DefaultMaxNumberOfScopes; i++)

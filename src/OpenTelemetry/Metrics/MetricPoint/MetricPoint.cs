@@ -67,32 +67,29 @@ public struct MetricPoint
             reservoir = null;
         }
 
-        if (this.aggType is AggregationType.HistogramWithBuckets or
-            AggregationType.HistogramWithMinMaxBuckets)
+        if (this.aggType is AggregationType.HistogramWithBuckets or AggregationType.HistogramWithMinMaxBuckets)
         {
             this.mpComponents = new MetricPointOptionalComponents
             {
-                HistogramBuckets = new HistogramBuckets(histogramExplicitBounds),
+                HistogramBuckets = new(histogramExplicitBounds),
             };
             if (isExemplarEnabled && reservoir == null)
             {
                 reservoir = new AlignedHistogramBucketExemplarReservoir(histogramExplicitBounds.Bounds.Length);
             }
         }
-        else if (this.aggType is AggregationType.Histogram or
-                 AggregationType.HistogramWithMinMax)
+        else if (this.aggType is AggregationType.Histogram or AggregationType.HistogramWithMinMax)
         {
             this.mpComponents = new MetricPointOptionalComponents
             {
-                HistogramBuckets = new HistogramBuckets(null),
+                HistogramBuckets = new(null),
             };
         }
-        else if (this.aggType is AggregationType.Base2ExponentialHistogram or
-            AggregationType.Base2ExponentialHistogramWithMinMax)
+        else if (this.aggType is AggregationType.Base2ExponentialHistogram or AggregationType.Base2ExponentialHistogramWithMinMax)
         {
             this.mpComponents = new MetricPointOptionalComponents
             {
-                Base2ExponentialBucketHistogram = new Base2ExponentialBucketHistogram(exponentialHistogramMaxSize, exponentialHistogramMaxScale),
+                Base2ExponentialBucketHistogram = new(exponentialHistogramMaxSize, exponentialHistogramMaxScale),
             };
             if (isExemplarEnabled && reservoir == null)
             {
@@ -243,11 +240,11 @@ public struct MetricPoint
     public readonly long GetHistogramCount()
     {
         if (this.aggType is not AggregationType.HistogramWithBuckets and
-            not AggregationType.Histogram and
-            not AggregationType.HistogramWithMinMaxBuckets and
-            not AggregationType.HistogramWithMinMax and
-            not AggregationType.Base2ExponentialHistogram and
-            not AggregationType.Base2ExponentialHistogramWithMinMax)
+                            not AggregationType.Histogram and
+                            not AggregationType.HistogramWithMinMaxBuckets and
+                            not AggregationType.HistogramWithMinMax and
+                            not AggregationType.Base2ExponentialHistogram and
+                            not AggregationType.Base2ExponentialHistogramWithMinMax)
         {
             this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramCount));
         }
@@ -266,11 +263,11 @@ public struct MetricPoint
     public readonly double GetHistogramSum()
     {
         if (this.aggType is not AggregationType.HistogramWithBuckets and
-            not AggregationType.Histogram and
-            not AggregationType.HistogramWithMinMaxBuckets and
-            not AggregationType.HistogramWithMinMax and
-            not AggregationType.Base2ExponentialHistogram and
-            not AggregationType.Base2ExponentialHistogramWithMinMax)
+                            not AggregationType.Histogram and
+                            not AggregationType.HistogramWithMinMaxBuckets and
+                            not AggregationType.HistogramWithMinMax and
+                            not AggregationType.Base2ExponentialHistogram and
+                            not AggregationType.Base2ExponentialHistogramWithMinMax)
         {
             this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramSum));
         }
@@ -291,9 +288,9 @@ public struct MetricPoint
     public readonly HistogramBuckets GetHistogramBuckets()
     {
         if (this.aggType is not AggregationType.HistogramWithBuckets and
-            not AggregationType.Histogram and
-            not AggregationType.HistogramWithMinMaxBuckets and
-            not AggregationType.HistogramWithMinMax)
+                            not AggregationType.Histogram and
+                            not AggregationType.HistogramWithMinMaxBuckets and
+                            not AggregationType.HistogramWithMinMax)
         {
             this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramBuckets));
         }
@@ -312,7 +309,7 @@ public struct MetricPoint
     public ExponentialHistogramData GetExponentialHistogramData()
     {
         if (this.aggType is not AggregationType.Base2ExponentialHistogram and
-            not AggregationType.Base2ExponentialHistogramWithMinMax)
+                            not AggregationType.Base2ExponentialHistogramWithMinMax)
         {
             this.ThrowNotSupportedMetricTypeException(nameof(this.GetExponentialHistogramData));
         }
@@ -329,8 +326,7 @@ public struct MetricPoint
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly bool TryGetHistogramMinMaxValues(out double min, out double max)
     {
-        if (this.aggType is AggregationType.HistogramWithMinMax
-            or AggregationType.HistogramWithMinMaxBuckets)
+        if (this.aggType is AggregationType.HistogramWithMinMax or AggregationType.HistogramWithMinMaxBuckets)
         {
             min = this.mpComponents!.HistogramBuckets!.SnapshotMin;
             max = this.mpComponents.HistogramBuckets.SnapshotMax;
