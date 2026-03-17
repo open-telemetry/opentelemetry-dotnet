@@ -28,13 +28,13 @@ public class PersistentStorageHelperTests
     }
 
     [Theory]
-    [InlineData("2024-01-15T143025.1234567Z-abc123.tmp")]
-    [InlineData("/path/to/2024-01-15T143025.1234567Z-abc123.blob")]
-    [InlineData("C:\\temp\\2024-01-15T143025.1234567Z-abc123.blob")]
+    [InlineData("2024-06-15T143025.1234567Z-abc123.tmp")]
+    [InlineData("/path/to/2024-06-15T143025.1234567Z-abc123.blob")]
+    [InlineData("C:\\temp\\2024-06-15T143025.1234567Z-abc123.blob")]
     public void GetDateTimeFromBlobName_WithDifferentPathFormats_ReturnsCorrectDateTime(string filePath)
     {
         var expectedDateTime = DateTime.ParseExact(
-            "2024-01-15T14:30:25.1234567Z",
+            "2024-06-15T14:30:25.1234567Z",
             "yyyy-MM-ddTHH:mm:ss.fffffffZ",
             CultureInfo.InvariantCulture,
             DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal);
