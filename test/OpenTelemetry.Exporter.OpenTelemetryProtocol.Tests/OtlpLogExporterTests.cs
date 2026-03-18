@@ -1526,6 +1526,42 @@ public class OtlpLogExporterTests
     }
 
     [Fact]
+    public void ExceptionIsRecordedWhenUsingTheBridgeApi()
+    {
+        var logRecords = new List<LogRecord>();
+
+        var exception = new InvalidOperationException("Some exception message");
+
+        using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+                   .AddInMemoryExporter(logRecords)
+                   .Build())
+        {
+            var logger = loggerProvider.GetLogger();
+
+            logger.EmitLog(new LogRecordData
+            {
+                Body = "test body",
+                Exception = exception,
+            });
+        }
+
+        Assert.Single(logRecords);
+        var logRecord = logRecords[0];
+        Assert.Equal(exception, logRecord.Exception);
+
+        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecord);
+
+        Assert.NotNull(otlpLogRecord);
+        Assert.Equal("test body", otlpLogRecord.Body.StringValue);
+
+        Assert.Equal(3, otlpLogRecord.Attributes.Count);
+
+        Assert.Equal(exception.GetType().Name, TryGetAttribute(otlpLogRecord, SemanticConventions.AttributeExceptionType)?.Value.StringValue);
+        Assert.Equal(exception.Message, TryGetAttribute(otlpLogRecord, SemanticConventions.AttributeExceptionMessage)?.Value.StringValue);
+        Assert.Equal(exception.ToInvariantString(), TryGetAttribute(otlpLogRecord, SemanticConventions.AttributeExceptionStacktrace)?.Value.StringValue);
+    }
+
+    [Fact]
     public void LogSerialization_ExpandsBufferForLogsAndSerializes()
     {
         LogRecordAttributeList attributes = default;
