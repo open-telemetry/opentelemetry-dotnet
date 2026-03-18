@@ -28,13 +28,15 @@ internal
 {
     internal DateTime TimestampBacking = DateTime.UtcNow;
 
+    internal DateTime ObservedTimestampBacking = DateTime.UtcNow;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="LogRecordData"/> struct.
     /// </summary>
     /// <remarks>
     /// Notes:
     /// <list type="bullet">
-    /// <item>The <see cref="Timestamp"/> property is initialized to <see
+    /// <item>The <see cref="Timestamp"/> and <see cref="ObservedTimestamp"/> properties are initialized to <see
     /// cref="DateTime.UtcNow"/> automatically.</item>
     /// <item>The <see cref="TraceId"/>, <see cref="SpanId"/>, and <see
     /// cref="TraceFlags"/> properties will be set using the <see
@@ -50,7 +52,7 @@ internal
     /// Initializes a new instance of the <see cref="LogRecordData"/> struct.
     /// </summary>
     /// <remarks>
-    /// Note: The <see cref="Timestamp"/> property is initialized to <see
+    /// Note: <see cref="Timestamp"/> and <see cref="ObservedTimestamp"/> properties are initialized to <see
     /// cref="DateTime.UtcNow"/> automatically.
     /// </remarks>
     /// <param name="activity">Optional <see cref="Activity"/> used to populate
@@ -65,7 +67,7 @@ internal
     /// Initializes a new instance of the <see cref="LogRecordData"/> struct.
     /// </summary>
     /// <remarks>
-    /// Note: The <see cref="Timestamp"/> property is initialized to <see
+    /// Note: <see cref="Timestamp"/> and <see cref="ObservedTimestamp"/> properties are initialized to <see
     /// cref="DateTime.UtcNow"/> automatically.
     /// </remarks>
     /// <param name="activityContext"><see cref="ActivityContext"/> used to
@@ -90,6 +92,20 @@ internal
     {
         readonly get => this.TimestampBacking;
         set => this.TimestampBacking = value.Kind == DateTimeKind.Local ? value.ToUniversalTime() : value;
+    }
+
+    /// <summary>
+    /// Gets or sets the timestamp when the log was recorded by OpenTelemetry's code.
+    /// </summary>
+    /// <remarks>
+    /// Note: If <see cref="ObservedTimestamp"/> is set to a value with <see
+    /// cref="DateTimeKind.Local"/> it will be automatically converted to
+    /// UTC using <see cref="DateTime.ToUniversalTime"/>.
+    /// </remarks>
+    public DateTime ObservedTimestamp
+    {
+        readonly get => this.ObservedTimestampBacking;
+        set { this.ObservedTimestampBacking = value.Kind == DateTimeKind.Local ? value.ToUniversalTime() : value; }
     }
 
     /// <summary>

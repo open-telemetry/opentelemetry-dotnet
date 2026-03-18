@@ -103,6 +103,25 @@ public sealed class LogRecordDataTests
     }
 
     [Fact]
+    public void ObservedTimestampTest()
+    {
+        var nowUtc = DateTime.UtcNow;
+
+        var record = new LogRecordData();
+        Assert.True(record.ObservedTimestamp >= nowUtc);
+
+        record = default;
+        Assert.Equal(DateTime.MinValue, record.ObservedTimestamp);
+
+        var now = DateTime.Now;
+
+        record.ObservedTimestamp = now;
+
+        Assert.Equal(DateTimeKind.Utc, record.ObservedTimestamp.Kind);
+        Assert.Equal(now.ToUniversalTime(), record.ObservedTimestamp);
+    }
+
+    [Fact]
     public void SetActivityContextTest()
     {
         LogRecordData record = default;

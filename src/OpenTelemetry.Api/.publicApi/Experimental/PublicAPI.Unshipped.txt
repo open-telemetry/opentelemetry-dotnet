@@ -73,3 +73,5 @@
 [OTEL1001]static OpenTelemetry.Logs.LogRecordAttributeList.CreateFromEnumerable(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object?>>! attributes) -> OpenTelemetry.Logs.LogRecordAttributeList
 [OTEL1001]static OpenTelemetry.Logs.LogRecordSeverityExtensions.ToShortName(this OpenTelemetry.Logs.LogRecordSeverity logRecordSeverity) -> string!
 [OTEL1001]virtual OpenTelemetry.Logs.LoggerProvider.TryCreateLogger(string? name, out OpenTelemetry.Logs.Logger? logger) -> bool
+[OTEL1001]OpenTelemetry.Logs.LogRecordData.ObservedTimestamp.get -> System.DateTime
+[OTEL1001]OpenTelemetry.Logs.LogRecordData.ObservedTimestamp.set -> void
