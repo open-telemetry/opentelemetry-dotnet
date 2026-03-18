@@ -7,7 +7,7 @@ Notes](../../RELEASENOTES.md).
 ## Unreleased
 
 * This package is deprecated and it will stop receiving any updates in
-  March 2027. Use OpenTelemetry API and SDK directly instead of the OpenTracing
+  March 2027. Use the OpenTelemetry API and SDK directly instead of the OpenTracing
   shims.
   ([#6976](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6976))
 

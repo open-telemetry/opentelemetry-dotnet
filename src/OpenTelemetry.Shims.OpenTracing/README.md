@@ -6,7 +6,7 @@
 > [!IMPORTANT]
 > This package is [Deprecated](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/versioning-and-stability.md)
 > and it will stop receiving any updates in March 2027.
-> Use OpenTelemetry API and SDK directly instead of the OpenTracing shims.
+> Use the OpenTelemetry API and SDK directly instead of the OpenTracing shims.
 
 The OpenTelemetry project aims to provide backwards compatibility with the
 [OpenTracing](https://opentracing.io) project in order to ease migration of

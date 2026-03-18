@@ -15,7 +15,7 @@ namespace OpenTelemetry.Shims.OpenTracing;
 public class TracerShim : global::OpenTracing.ITracer
 {
     private const string ObsoleteNote =
-        "The OpenTracing Shim is obsolete and will be removed in a future release. Use OpenTelemetry API and SDK directly instead of the OpenTracing shims.";
+        "The OpenTracing Shim is obsolete and will be removed in a future release. Use the OpenTelemetry API and SDK directly instead of the OpenTracing shims.";
 
     private readonly Trace.Tracer tracer;
     private readonly TextMapPropagator? definedPropagator;
