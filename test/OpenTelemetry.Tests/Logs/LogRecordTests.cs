@@ -1085,6 +1085,29 @@ public sealed class LogRecordTests
             originalFormatAttribute.Value);
     }
 
+    [Fact]
+    public void ObservedTimestampTest()
+    {
+        using var loggerFactory = InitializeLoggerFactory(out var exportedItems);
+        var logger = loggerFactory.CreateLogger<LogRecordTests>();
+
+        var before = DateTime.UtcNow;
+        logger.Log();
+        var after = DateTime.UtcNow;
+
+        var record = exportedItems[0];
+
+        // ObservedTimestamp is set by the SDK to when the log was captured.
+        Assert.InRange(record.ObservedTimestamp, before, after);
+        Assert.Equal(DateTimeKind.Utc, record.ObservedTimestamp.Kind);
+
+        // Verify the setter converts local time to UTC.
+        var localNow = DateTime.Now;
+        record.ObservedTimestamp = localNow;
+        Assert.Equal(DateTimeKind.Utc, record.ObservedTimestamp.Kind);
+        Assert.Equal(localNow.ToUniversalTime(), record.ObservedTimestamp);
+    }
+
     private static ILoggerFactory InitializeLoggerFactory(out List<LogRecord> exportedItems, Action<OpenTelemetryLoggerOptions>? configure = null)
     {
         var items = exportedItems = [];
