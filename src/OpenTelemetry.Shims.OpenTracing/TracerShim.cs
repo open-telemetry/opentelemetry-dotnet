@@ -11,8 +11,12 @@ namespace OpenTelemetry.Shims.OpenTracing;
 /// Implements OpenTracing <see cref="global::OpenTracing.ITracer"/> interface
 /// using OpenTelemetry <see cref="Trace.Tracer"/> implementation.
 /// </summary>
+[Obsolete(ObsoleteNote)]
 public class TracerShim : global::OpenTracing.ITracer
 {
+    private const string ObsoleteNote =
+        "The OpenTracing Shim is obsolete and will be removed in a future release. Use the OpenTelemetry API and SDK directly instead of the OpenTracing shims.";
+
     private readonly Trace.Tracer tracer;
     private readonly TextMapPropagator? definedPropagator;
 

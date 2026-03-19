@@ -29,7 +29,7 @@ internal static class Program
     /// </summary>
     /// <param name="args">Arguments from command line.</param>
     public static void Main(string[] args) =>
-        Parser.Default.ParseArguments<PrometheusOptions, MetricsOptions, LogsOptions, GrpcNetClientOptions, HttpClientOptions, ConsoleOptions, OpenTelemetryShimOptions, OpenTracingShimOptions, OtlpOptions, InMemoryOptions>(args)
+        Parser.Default.ParseArguments<PrometheusOptions, MetricsOptions, LogsOptions, GrpcNetClientOptions, HttpClientOptions, ConsoleOptions, OpenTelemetryShimOptions, OtlpOptions, InMemoryOptions>(args)
             .MapResult(
                 (PrometheusOptions options) => TestPrometheusExporter.Run(options),
                 (MetricsOptions options) => TestMetrics.Run(options),
@@ -38,7 +38,6 @@ internal static class Program
                 (HttpClientOptions options) => TestHttpClient.Run(options),
                 (ConsoleOptions options) => TestConsoleExporter.Run(),
                 (OpenTelemetryShimOptions options) => TestOTelShimWithConsoleExporter.Run(),
-                (OpenTracingShimOptions options) => TestOpenTracingShim.Run(),
                 (OtlpOptions options) => TestOtlpExporter.Run(options),
                 (InMemoryOptions options) => TestInMemoryExporter.Run(),
                 _ => 1);
@@ -92,9 +91,6 @@ internal sealed class ConsoleOptions;
 
 [Verb("otelshim", HelpText = "Specify the options required to test OpenTelemetry Shim with console exporter")]
 internal sealed class OpenTelemetryShimOptions;
-
-[Verb("opentracing", HelpText = "Specify the options required to test OpenTracing Shim with console exporter")]
-internal sealed class OpenTracingShimOptions;
 
 [Verb("otlp", HelpText = "Specify the options required to test OpenTelemetry Protocol (OTLP)")]
 internal sealed class OtlpOptions
