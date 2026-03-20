@@ -775,11 +775,12 @@ public class MetricViewTests : MetricTestsBase
                 HistogramBucketBoundaries = floatBoundaries,
             });
 
-        // Record values that clearly fall within specific buckets (not on boundaries)
-        // to avoid float->double precision issues at boundary edges
-        histogram.Record(0.02f);   // Should be in bucket with upper bound 0.025 (index 3)
-        histogram.Record(0.07f);   // Should be in bucket with upper bound 0.1 (index 5)
-        histogram.Record(0.3f);    // Should be in bucket with upper bound 0.5 (index 7)
+        // Record values exactly equal to float boundaries.
+        // With the dual-array approach, bucketing uses raw float->double values
+        // so boundary-equal measurements should land in the correct (inclusive) bucket.
+        histogram.Record(0.025f);  // Should be in bucket with upper bound 0.025 (index 3)
+        histogram.Record(0.1f);    // Should be in bucket with upper bound 0.1 (index 5)
+        histogram.Record(0.5f);    // Should be in bucket with upper bound 0.5 (index 7)
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
         Assert.Single(exportedItems);
@@ -794,18 +795,18 @@ public class MetricViewTests : MetricTestsBase
         Assert.Single(metricPoints);
         var histogramPoint = metricPoints[0];
 
-        // Verify the bucket boundaries maintain proper precision
-        // The key assertion is that the boundaries should be clean decimal values
-        // not values with floating-point precision errors like 0.02500000037252903
+        // The exported ExplicitBound values should be clean decimal values
+        // (via DisplayBounds), not values with floating-point precision artifacts
+        // like 0.02500000037252903
         var expectedBoundaries = new double[]
         {
             0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30, 60, 120,
         };
 
-        // Expected bucket counts:
-        // Index 3 (le 0.025): 1 count (0.02f)
-        // Index 5 (le 0.1): 1 count (0.07f)
-        // Index 7 (le 0.5): 1 count (0.3f)
+        // Expected bucket counts: boundary-equal measurements land in the correct inclusive bucket
+        // Index 3 (le 0.025): 1 count (0.025f)
+        // Index 5 (le 0.1):   1 count (0.1f)
+        // Index 7 (le 0.5):   1 count (0.5f)
         var expectedBucketCounts = new long[] { 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 };
 
         var index = 0;
