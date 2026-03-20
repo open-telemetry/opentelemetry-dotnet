@@ -109,17 +109,20 @@ public abstract class StressTests<T> : IDisposable
                     {
                         var key = Console.ReadKey(true).Key;
 
-                        switch (key)
+                        if (key is ConsoleKey.Enter)
                         {
-                            case ConsoleKey.Enter:
-                                Console.WriteLine(string.Format(CultureInfo.InvariantCulture, "{0} {1}", DateTime.UtcNow.ToString("O"), this.output));
-                                break;
-                            case ConsoleKey.Escape:
-                                this.bContinue = false;
-                                return;
-                            case ConsoleKey.Spacebar:
-                                bOutput = !bOutput;
-                                break;
+                            Console.WriteLine(string.Format(CultureInfo.InvariantCulture, "{0} {1}", DateTime.UtcNow.ToString("O"), this.output));
+                            break;
+                        }
+                        else if (key is ConsoleKey.Escape)
+                        {
+                            this.bContinue = false;
+                            return;
+                        }
+                        else if (key is ConsoleKey.Spacebar)
+                        {
+                            bOutput = !bOutput;
+                            break;
                         }
 
                         continue;
@@ -134,20 +137,20 @@ public abstract class StressTests<T> : IDisposable
                         Console.SetCursorPosition(tempCursorLeft, tempCursorTop);
                     }
 
-                    var cntLoopsOld = (ulong)statistics.Select(data => data.Count).Sum();
+                    var cntLoopsOld = (ulong)statistics.Sum(data => data.Count);
                     var cntCpuCyclesOld = StressTestNativeMethods.GetCpuCycles();
 
                     watch.Restart();
                     Thread.Sleep(200);
                     watch.Stop();
 
-                    cntLoopsTotal = (ulong)statistics.Select(data => data.Count).Sum();
+                    cntLoopsTotal = (ulong)statistics.Sum(data => data.Count);
                     var cntCpuCyclesNew = StressTestNativeMethods.GetCpuCycles();
 
                     var nLoops = cntLoopsTotal - cntLoopsOld;
                     var nCpuCycles = cntCpuCyclesNew - cntCpuCyclesOld;
 
-                    dLoopsPerSecond = (double)nLoops / ((double)watch.ElapsedMilliseconds / 1000.0);
+                    dLoopsPerSecond = nLoops / (watch.ElapsedMilliseconds / 1000.0);
                     dCpuCyclesPerLoop = nLoops == 0 ? 0 : nCpuCycles / nLoops;
 
                     var totalElapsedTime = watchForTotal.Elapsed;
@@ -184,8 +187,8 @@ public abstract class StressTests<T> : IDisposable
             });
 
         watchForTotal.Stop();
-        cntLoopsTotal = (ulong)statistics.Select(data => data.Count).Sum();
-        var totalLoopsPerSecond = (double)cntLoopsTotal / ((double)watchForTotal.ElapsedMilliseconds / 1000.0);
+        cntLoopsTotal = (ulong)statistics.Sum(data => data.Count);
+        var totalLoopsPerSecond = cntLoopsTotal / (watchForTotal.ElapsedMilliseconds / 1000.0);
         var cntCpuCyclesTotal = StressTestNativeMethods.GetCpuCycles();
         var cpuCyclesPerLoopTotal = cntLoopsTotal == 0 ? 0 : cntCpuCyclesTotal / cntLoopsTotal;
         Console.WriteLine("Stopping the stress test...");

@@ -28,8 +28,9 @@ public class AssemblyVersionExtensionsTests
     private sealed class TestAssembly(string informationalVersion) : Assembly
     {
         public override object[] GetCustomAttributes(Type attributeType, bool inherit)
-        {
-            return new Attribute[] { new AssemblyInformationalVersionAttribute(informationalVersion) };
-        }
+            => this.GetAttributes();
+
+        private AssemblyInformationalVersionAttribute[] GetAttributes()
+            => [new AssemblyInformationalVersionAttribute(informationalVersion)];
     }
 }

@@ -38,7 +38,7 @@ public class MetricPointReclaimTests
                 var random = new Random();
                 while (true)
                 {
-                    int i = Interlocked.Increment(ref threadArguments!.Counter);
+                    var i = Interlocked.Increment(ref threadArguments!.Counter);
                     if (i <= MaxNumberOfDistinctMetricPoints)
                     {
                         // Check for cases where a metric with no dimension is also emitted
@@ -71,13 +71,13 @@ public class MetricPointReclaimTests
             var threads = new Thread[NumberOfUpdateThreads];
             var threadArgs = new ThreadArguments();
 
-            for (int i = 0; i < threads.Length; i++)
+            for (var i = 0; i < threads.Length; i++)
             {
                 threads[i] = new Thread(EmitMetric);
                 threads[i].Start(threadArgs);
             }
 
-            for (int i = 0; i < threads.Length; i++)
+            for (var i = 0; i < threads.Length; i++)
             {
                 threads[i].Join();
             }
@@ -126,7 +126,7 @@ public class MetricPointReclaimTests
             // Note that one MetricPoint is reserved for zero tags and one MetricPoint is reserved for the overflow tag.
             // This would lead to dropping a few measurements. We want to make sure that they can still be
             // aggregated later on when there are free MetricPoints available.
-            for (int i = 0; i < MaxMetricPointsPerMetricStream; i++)
+            for (var i = 0; i < MaxMetricPointsPerMetricStream; i++)
             {
                 counter.Add(100, new KeyValuePair<string, object?>("key", $"value{i}"));
             }
@@ -138,7 +138,7 @@ public class MetricPointReclaimTests
 
             void EmitMetric()
             {
-                int numberOfMeasurements = 0;
+                var numberOfMeasurements = 0;
                 var random = new Random();
                 while (numberOfMeasurements < NumberOfMeasurementsPerThread)
                 {
@@ -164,13 +164,13 @@ public class MetricPointReclaimTests
 
             var threads = new Thread[NumberOfUpdateThreads];
 
-            for (int i = 0; i < threads.Length; i++)
+            for (var i = 0; i < threads.Length; i++)
             {
                 threads[i] = new Thread(EmitMetric);
                 threads[i].Start();
             }
 
-            for (int i = 0; i < threads.Length; i++)
+            for (var i = 0; i < threads.Length; i++)
             {
                 threads[i].Join();
             }

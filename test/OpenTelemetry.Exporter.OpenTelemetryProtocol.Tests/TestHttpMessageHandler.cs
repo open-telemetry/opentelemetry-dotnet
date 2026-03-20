@@ -19,20 +19,16 @@ internal sealed class TestHttpMessageHandler : HttpMessageHandler
 #if NET
         this.HttpRequestContent = request.Content!.ReadAsByteArrayAsync(cancellationToken).Result;
 #else
-        this.HttpRequestContent = request.Content!.ReadAsByteArrayAsync().Result;
+        this.HttpRequestContent = request.Content.ReadAsByteArrayAsync().Result;
 #endif
         return new HttpResponseMessage();
     }
 
 #if NET
     protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
-    {
-        return this.InternalSend(request, cancellationToken);
-    }
+        => this.InternalSend(request, cancellationToken);
 #endif
 
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-    {
-        return Task.FromResult(this.InternalSend(request, cancellationToken));
-    }
+        => Task.FromResult(this.InternalSend(request, cancellationToken));
 }

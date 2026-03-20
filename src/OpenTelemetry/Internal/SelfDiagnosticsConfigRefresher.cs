@@ -139,9 +139,9 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
 
     private void UpdateMemoryMappedFileFromConfiguration()
     {
-        if (this.configParser.TryGetConfiguration(out string? newLogDirectory, out int fileSizeInKB, out EventLevel newEventLevel, out bool formatMessage))
+        if (this.configParser.TryGetConfiguration(out var newLogDirectory, out var fileSizeInKB, out var newEventLevel, out var formatMessage))
         {
-            int newFileSize = fileSizeInKB * 1024;
+            var newFileSize = fileSizeInKB * 1024;
             if (!newLogDirectory.Equals(this.logDirectory, StringComparison.Ordinal) || this.logFileSize != newFileSize)
             {
                 this.CloseLogFile();
@@ -169,13 +169,13 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
 
     private void CloseLogFile()
     {
-        MemoryMappedFile? mmf = Interlocked.CompareExchange(ref this.memoryMappedFile, null, this.memoryMappedFile);
+        var mmf = Interlocked.CompareExchange(ref this.memoryMappedFile, null, this.memoryMappedFile);
         if (mmf != null)
         {
             // Each thread has its own MemoryMappedViewStream created from the only one MemoryMappedFile.
             // Once worker thread closes the MemoryMappedFile, all the ViewStream objects should be disposed
             // properly.
-            foreach (MemoryMappedViewStream stream in this.viewStream.Values)
+            foreach (var stream in this.viewStream.Values)
             {
                 if (stream != null)
                 {
@@ -186,7 +186,7 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
             mmf.Dispose();
         }
 
-        FileStream? fs = Interlocked.CompareExchange(
+        var fs = Interlocked.CompareExchange(
             ref this.underlyingFileStreamForMemoryMappedFile,
             null,
             this.underlyingFileStreamForMemoryMappedFile);

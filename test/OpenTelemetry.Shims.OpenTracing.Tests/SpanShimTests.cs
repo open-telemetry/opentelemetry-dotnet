@@ -16,9 +16,7 @@ public class SpanShimTests
 
     [Fact]
     public void CtorArgumentValidation()
-    {
-        Assert.Throws<ArgumentNullException>(() => new SpanShim(null!));
-    }
+        => Assert.Throws<ArgumentNullException>(() => new SpanShim(null!));
 
     [Fact]
     public void SpanContextIsNotNull()
@@ -124,16 +122,10 @@ public class SpanShimTests
 
         Assert.Throws<ArgumentNullException>(() => shim.Log((IEnumerable<KeyValuePair<string, object>>)null!));
 
-        shim.Log(new List<KeyValuePair<string, object>>
-        {
-            new("foo", "bar"),
-        });
+        shim.Log([new("foo", "bar")]);
 
         // "event" is a special event name
-        shim.Log(new List<KeyValuePair<string, object>>
-        {
-            new("event", "foo"),
-        });
+        shim.Log([new("event", "foo")]);
 
         Assert.NotNull(shim.Span.Activity);
 
@@ -158,16 +150,10 @@ public class SpanShimTests
         Assert.Throws<ArgumentNullException>(() => shim.Log((IEnumerable<KeyValuePair<string, object>>)null!));
         var now = DateTimeOffset.UtcNow;
 
-        shim.Log(now, new List<KeyValuePair<string, object>>
-        {
-            new("foo", "bar"),
-        });
+        shim.Log(now, [new("foo", "bar")]);
 
         // "event" is a special event name
-        shim.Log(now, new List<KeyValuePair<string, object>>
-        {
-            new("event", "foo"),
-        });
+        shim.Log(now, [new("event", "foo")]);
 
         Assert.NotNull(shim.Span.Activity);
         Assert.Equal(2, shim.Span.Activity.Events.Count());

@@ -43,15 +43,11 @@ internal sealed class SpanShim : ISpan
 
     /// <inheritdoc/>
     public void Finish()
-    {
-        this.Span.End();
-    }
+        => this.Span.End();
 
     /// <inheritdoc/>
     public void Finish(DateTimeOffset finishTimestamp)
-    {
-        this.Span.End(finishTimestamp);
-    }
+        => this.Span.End(finishTimestamp);
 
     /// <inheritdoc/>
     public string? GetBaggageItem(string key)
@@ -114,9 +110,7 @@ internal sealed class SpanShim : ISpan
 
     /// <inheritdoc/>
     public ISpan Log(IEnumerable<KeyValuePair<string, object>> fields)
-    {
-        return this.Log(DateTimeOffset.MinValue, fields);
-    }
+        => this.Log(DateTimeOffset.MinValue, fields);
 
     /// <inheritdoc/>
     public ISpan Log(string @event)
@@ -211,12 +205,9 @@ internal sealed class SpanShim : ISpan
     {
         Guard.ThrowIfNull(tag);
 
-        if (value != null && int.TryParse(value, out var result))
-        {
-            return this.SetTag(tag.Key, result);
-        }
-
-        return this.SetTag(tag.Key, value);
+        return value != null && int.TryParse(value, out var result) ?
+               this.SetTag(tag.Key, result) :
+               this.SetTag(tag.Key, value);
     }
 
     /// <inheritdoc/>
@@ -276,7 +267,11 @@ internal sealed class SpanShim : ISpan
             else
             {
                 // TODO should we completely ignore unsupported types?
+#if NET
                 attributes.Add(field.Key, field.Value.ToString()!);
+#else
+                attributes.Add(field.Key, field.Value.ToString());
+#endif
             }
         }
 

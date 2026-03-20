@@ -32,7 +32,7 @@ internal static partial class PrometheusSerializer
             var result = value.TryFormat(span, out var cchWritten, "G", CultureInfo.InvariantCulture);
             Debug.Assert(result, $"{nameof(result)} should be true.");
 
-            for (int i = 0; i < cchWritten; i++)
+            for (var i = 0; i < cchWritten; i++)
             {
                 buffer[cursor++] = unchecked((byte)span[i]);
             }
@@ -66,7 +66,7 @@ internal static partial class PrometheusSerializer
         var result = value.TryFormat(span, out var cchWritten, "G", CultureInfo.InvariantCulture);
         Debug.Assert(result, $"{nameof(result)} should be true.");
 
-        for (int i = 0; i < cchWritten; i++)
+        for (var i = 0; i < cchWritten; i++)
         {
             buffer[cursor++] = unchecked((byte)span[i]);
         }
@@ -80,7 +80,7 @@ internal static partial class PrometheusSerializer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteAsciiStringNoEscape(byte[] buffer, int cursor, string value)
     {
-        for (int i = 0; i < value.Length; i++)
+        for (var i = 0; i < value.Length; i++)
         {
             buffer[cursor++] = unchecked((byte)value[i]);
         }
@@ -114,7 +114,7 @@ internal static partial class PrometheusSerializer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteUnicodeString(byte[] buffer, int cursor, string value)
     {
-        for (int i = 0; i < value.Length; i++)
+        for (var i = 0; i < value.Length; i++)
         {
             var ordinal = (ushort)value[i];
             switch (ordinal)
@@ -143,25 +143,21 @@ internal static partial class PrometheusSerializer
 
         var ordinal = (ushort)value[0];
 
-        if (ordinal >= (ushort)'0' && ordinal <= (ushort)'9')
+        if (ordinal is >= '0' and <= '9')
         {
             buffer[cursor++] = unchecked((byte)'_');
         }
 
-        for (int i = 0; i < value.Length; i++)
+        for (var i = 0; i < value.Length; i++)
         {
-            ordinal = (ushort)value[i];
+            ordinal = value[i];
 
-            if ((ordinal >= (ushort)'A' && ordinal <= (ushort)'Z') ||
-                (ordinal >= (ushort)'a' && ordinal <= (ushort)'z') ||
-                (ordinal >= (ushort)'0' && ordinal <= (ushort)'9'))
-            {
-                buffer[cursor++] = unchecked((byte)ordinal);
-            }
-            else
-            {
-                buffer[cursor++] = unchecked((byte)'_');
-            }
+            buffer[cursor++] =
+                ordinal is (>= 'A' and <= 'Z') or
+                (>= 'a' and <= 'z') or
+                (>= '0' and <= '9')
+                ? (byte)ordinal
+                : (byte)'_';
         }
 
         return cursor;
@@ -170,9 +166,7 @@ internal static partial class PrometheusSerializer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteLabelValue(byte[] buffer, int cursor, string value)
     {
-        Debug.Assert(value != null, $"{nameof(value)} should not be null.");
-
-        for (int i = 0; i < value!.Length; i++)
+        for (var i = 0; i < value.Length; i++)
         {
             var ordinal = (ushort)value[i];
             switch (ordinal)
@@ -215,12 +209,7 @@ internal static partial class PrometheusSerializer
         {
             // TODO: Attribute values should be written as their JSON representation. Extra logic may need to be added here to correctly convert other .NET types.
             // More detail: https://github.com/open-telemetry/opentelemetry-dotnet/issues/4822#issuecomment-1707328495
-            if (labelValue is bool b)
-            {
-                return b ? "true" : "false";
-            }
-
-            return labelValue?.ToString() ?? string.Empty;
+            return labelValue is bool b ? b ? "true" : "false" : labelValue?.ToString() ?? string.Empty;
         }
     }
 
@@ -232,7 +221,7 @@ internal static partial class PrometheusSerializer
 
         Debug.Assert(!string.IsNullOrWhiteSpace(name), "name was null or whitespace");
 
-        for (int i = 0; i < name.Length; i++)
+        for (var i = 0; i < name.Length; i++)
         {
             var ordinal = (ushort)name[i];
             buffer[cursor++] = unchecked((byte)ordinal);
@@ -249,7 +238,7 @@ internal static partial class PrometheusSerializer
 
         Debug.Assert(!string.IsNullOrWhiteSpace(name), "name was null or whitespace");
 
-        for (int i = 0; i < name.Length; i++)
+        for (var i = 0; i < name.Length; i++)
         {
             var ordinal = (ushort)name[i];
             buffer[cursor++] = unchecked((byte)ordinal);
@@ -320,7 +309,9 @@ internal static partial class PrometheusSerializer
         buffer[cursor++] = unchecked((byte)' ');
 
         // Unit name has already been escaped.
-        for (int i = 0; i < metric.Unit!.Length; i++)
+#pragma warning disable IDE0370 // Remove unnecessary suppression
+        for (var i = 0; i < metric.Unit!.Length; i++)
+#pragma warning restore IDE0370 // Remove unnecessary suppression
         {
             var ordinal = (ushort)metric.Unit[i];
             buffer[cursor++] = unchecked((byte)ordinal);
@@ -364,7 +355,7 @@ internal static partial class PrometheusSerializer
             cursor = WriteLong(buffer, cursor, value / 1000);
             buffer[cursor++] = unchecked((byte)'.');
 
-            long millis = value % 1000;
+            var millis = value % 1000;
 
             if (millis < 100)
             {
@@ -456,15 +447,12 @@ internal static partial class PrometheusSerializer
         return cursor;
     }
 
-    private static string MapPrometheusType(PrometheusType type)
+    private static string MapPrometheusType(PrometheusType type) => type switch
     {
-        return type switch
-        {
-            PrometheusType.Gauge => "gauge",
-            PrometheusType.Counter => "counter",
-            PrometheusType.Summary => "summary",
-            PrometheusType.Histogram => "histogram",
-            _ => "untyped",
-        };
-    }
+        PrometheusType.Gauge => "gauge",
+        PrometheusType.Counter => "counter",
+        PrometheusType.Summary => "summary",
+        PrometheusType.Histogram => "histogram",
+        PrometheusType.Untyped or _ => "untyped",
+    };
 }

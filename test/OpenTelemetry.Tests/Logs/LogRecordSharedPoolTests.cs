@@ -136,12 +136,12 @@ public sealed class LogRecordSharedPoolTests
         Assert.NotNull(logRecord1.AttributeStorage);
         Assert.NotNull(logRecord1.ScopeStorage);
 
-        for (int i = 0; i <= LogRecordPoolHelper.DefaultMaxNumberOfAttributes; i++)
+        for (var i = 0; i <= LogRecordPoolHelper.DefaultMaxNumberOfAttributes; i++)
         {
             logRecord1.AttributeStorage!.Add(new KeyValuePair<string, object?>("key", "value"));
         }
 
-        for (int i = 0; i <= LogRecordPoolHelper.DefaultMaxNumberOfScopes; i++)
+        for (var i = 0; i <= LogRecordPoolHelper.DefaultMaxNumberOfScopes; i++)
         {
             logRecord1.ScopeStorage!.Add(null);
         }
@@ -163,7 +163,7 @@ public sealed class LogRecordSharedPoolTests
 
         if (warmup)
         {
-            for (int i = 0; i < LogRecordSharedPool.DefaultMaxPoolSize; i++)
+            for (var i = 0; i < LogRecordSharedPool.DefaultMaxPoolSize; i++)
             {
                 pool.Return(new LogRecord { Source = LogRecord.LogRecordSource.FromSharedPool, PoolReferenceCount = 1 });
             }
@@ -177,7 +177,7 @@ public sealed class LogRecordSharedPoolTests
 
         List<Task> tasks = [];
 
-        for (int i = 0; i < Environment.ProcessorCount; i++)
+        for (var i = 0; i < Environment.ProcessorCount; i++)
         {
             tasks.Add(Task.Run(async () =>
             {
@@ -192,7 +192,7 @@ public sealed class LogRecordSharedPoolTests
                 await Task.Delay(random.Next(100, 150));
 #pragma warning restore CA5394 // Do not use insecure randomness
 
-                for (int i = 0; i < 1000; i++)
+                for (var i = 0; i < 1000; i++)
                 {
                     var logRecord = pool.Rent();
 
@@ -242,13 +242,13 @@ public sealed class LogRecordSharedPoolTests
 
         List<Task> tasks = [];
 
-        for (int i = 0; i < Environment.ProcessorCount; i++)
+        for (var i = 0; i < Environment.ProcessorCount; i++)
         {
             tasks.Add(Task.Run(async () =>
             {
                 await Task.Delay(2_000);
 
-                for (int i = 0; i < 100_000; i++)
+                for (var i = 0; i < 100_000; i++)
                 {
                     var logRecord = pool.Rent();
 
@@ -274,7 +274,7 @@ public sealed class LogRecordSharedPoolTests
         var pool = LogRecordSharedPool.Current;
 
         // Pre-warm the pool
-        for (int i = 0; i < 16; i++)
+        for (var i = 0; i < 16; i++)
         {
             pool.Return(new LogRecord { Source = LogRecord.LogRecordSource.FromSharedPool, PoolReferenceCount = 1 });
         }
@@ -285,13 +285,13 @@ public sealed class LogRecordSharedPoolTests
         var tasks = new List<Task>();
         using var barrier = new Barrier(Environment.ProcessorCount);
 
-        for (int t = 0; t < Environment.ProcessorCount; t++)
+        for (var t = 0; t < Environment.ProcessorCount; t++)
         {
             tasks.Add(Task.Run(() =>
             {
                 barrier.SignalAndWait(); // Synchronize start for maximum contention
 
-                for (int i = 0; i < 10_000; i++)
+                for (var i = 0; i < 10_000; i++)
                 {
                     var record = pool.Rent();
 

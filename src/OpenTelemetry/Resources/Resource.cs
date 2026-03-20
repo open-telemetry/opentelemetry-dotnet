@@ -29,7 +29,7 @@ public class Resource
         }
 
         // resource creation is expected to be done a few times during app startup i.e. not on the hot path, we can copy attributes.
-        this.Attributes = attributes.Select(SanitizeAttribute).ToList();
+        this.Attributes = [.. attributes.Select(SanitizeAttribute)];
     }
 
     /// <summary>

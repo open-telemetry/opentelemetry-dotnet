@@ -21,9 +21,7 @@ public sealed class UseOtlpExporterExtensionTests : IDisposable
     }
 
     public void Dispose()
-    {
-        OtlpSpecConfigDefinitionTests.ClearEnvVars();
-    }
+        => OtlpSpecConfigDefinitionTests.ClearEnvVars();
 
     [Fact]
     public void UseOtlpExporterDefaultTest()
@@ -204,9 +202,9 @@ public sealed class UseOtlpExporterExtensionTests : IDisposable
 
         using var sp = services.BuildServiceProvider();
 
-        Assert.Throws<NotSupportedException>(() => sp.GetRequiredService<LoggerProvider>());
-        Assert.Throws<NotSupportedException>(() => sp.GetRequiredService<MeterProvider>());
-        Assert.Throws<NotSupportedException>(() => sp.GetRequiredService<TracerProvider>());
+        Assert.Throws<NotSupportedException>(sp.GetRequiredService<LoggerProvider>);
+        Assert.Throws<NotSupportedException>(sp.GetRequiredService<MeterProvider>);
+        Assert.Throws<NotSupportedException>(sp.GetRequiredService<TracerProvider>);
     }
 
     [Fact]
@@ -220,7 +218,7 @@ public sealed class UseOtlpExporterExtensionTests : IDisposable
 
         using var sp = services.BuildServiceProvider();
 
-        Assert.Throws<NotSupportedException>(() => sp.GetRequiredService<LoggerProvider>());
+        Assert.Throws<NotSupportedException>(sp.GetRequiredService<LoggerProvider>);
     }
 
     [Fact]
@@ -234,7 +232,7 @@ public sealed class UseOtlpExporterExtensionTests : IDisposable
 
         using var sp = services.BuildServiceProvider();
 
-        Assert.Throws<NotSupportedException>(() => sp.GetRequiredService<MeterProvider>());
+        Assert.Throws<NotSupportedException>(sp.GetRequiredService<MeterProvider>);
     }
 
     [Fact]
@@ -248,7 +246,7 @@ public sealed class UseOtlpExporterExtensionTests : IDisposable
 
         using var sp = services.BuildServiceProvider();
 
-        Assert.Throws<NotSupportedException>(() => sp.GetRequiredService<TracerProvider>());
+        Assert.Throws<NotSupportedException>(sp.GetRequiredService<TracerProvider>);
     }
 
     [Fact]

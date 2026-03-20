@@ -24,9 +24,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
         ref TTagState state,
         KeyValuePair<string, object?> tag,
         int? tagValueMaxLength = null)
-    {
-        return this.TryWriteTag(ref state, tag.Key, tag.Value, tagValueMaxLength);
-    }
+        => this.TryWriteTag(ref state, tag.Key, tag.Value, tagValueMaxLength);
 
     public bool TryWriteTag(
         ref TTagState state,
@@ -76,7 +74,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
                 {
                     this.WriteArrayTagInternal(ref state, key, array, tagValueMaxLength);
                 }
-                catch (Exception ex) when (ex is IndexOutOfRangeException || ex is ArgumentException)
+                catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
                 {
                     throw;
                 }
@@ -141,11 +139,9 @@ internal abstract class TagWriter<TTagState, TArrayState>
         string tagValueTypeFullName);
 
     private static ReadOnlySpan<char> TruncateString(ReadOnlySpan<char> value, int? maxLength)
-    {
-        return maxLength.HasValue && value.Length > maxLength
-            ? value.Slice(0, maxLength.Value)
-            : value;
-    }
+        => maxLength.HasValue && value.Length > maxLength
+           ? value.Slice(0, maxLength.Value)
+           : value;
 
     private void WriteCharTag(ref TTagState state, string key, char value)
     {
@@ -187,7 +183,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
             this.arrayWriter.EndWriteArray(ref arrayState);
         }
-        catch (Exception ex) when (ex is IndexOutOfRangeException || ex is ArgumentException)
+        catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
         {
             // If the array writer cannot be resized, TryResize should log a message to the event source, return false.
             if (this.arrayWriter.TryResize())
@@ -366,7 +362,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
     private void WriteStructToArray<TItem>(ref TArrayState arrayState, TItem[] array)
         where TItem : struct
     {
-        foreach (TItem item in array)
+        foreach (var item in array)
         {
             if (typeof(TItem) == typeof(char))
             {
@@ -440,9 +436,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
     private bool LogUnsupportedTagTypeAndReturnFalse(string key, object value)
     {
-        Debug.Assert(value != null, "value was null");
-
-        this.OnUnsupportedTagDropped(key, value!.GetType().ToString());
+        this.OnUnsupportedTagDropped(key, value.GetType().ToString());
         return false;
     }
 }

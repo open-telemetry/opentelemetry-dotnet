@@ -94,8 +94,8 @@ public readonly struct Baggage : IEquatable<Baggage>
             return default;
         }
 
-        Dictionary<string, string> baggageCopy = new Dictionary<string, string>(baggageItems.Count, StringComparer.OrdinalIgnoreCase);
-        foreach (KeyValuePair<string, string> baggageItem in baggageItems)
+        var baggageCopy = new Dictionary<string, string>(baggageItems.Count, StringComparer.Ordinal);
+        foreach (var baggageItem in baggageItems)
         {
             if (string.IsNullOrEmpty(baggageItem.Value))
             {
@@ -226,7 +226,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     {
         Guard.ThrowIfNullOrEmpty(name);
 
-        return this.baggage != null && this.baggage.TryGetValue(name, out string? value)
+        return this.baggage != null && this.baggage.TryGetValue(name, out var value)
             ? value
             : null;
     }
@@ -239,15 +239,24 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <returns>New <see cref="Baggage"/> containing the key/value pair.</returns>
     public Baggage SetBaggage(string name, string? value)
     {
+        if (string.IsNullOrEmpty(name))
+        {
+            return this;
+        }
+
         if (string.IsNullOrEmpty(value))
         {
             return this.RemoveBaggage(name);
         }
 
         return new Baggage(
-            new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.OrdinalIgnoreCase)
+            new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.Ordinal)
             {
+#if NET
+                [name] = value,
+#else
                 [name] = value!,
+#endif
             });
     }
 
@@ -271,17 +280,25 @@ public readonly struct Baggage : IEquatable<Baggage>
             return this;
         }
 
-        var newBaggage = new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.OrdinalIgnoreCase);
+        var newBaggage = new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.Ordinal);
 
         foreach (var item in baggageItems)
         {
-            if (string.IsNullOrEmpty(item.Value))
+            if (string.IsNullOrEmpty(item.Key))
+            {
+                continue;
+            }
+            else if (string.IsNullOrEmpty(item.Value))
             {
                 newBaggage.Remove(item.Key);
             }
             else
             {
+#if NET
+                newBaggage[item.Key] = item.Value;
+#else
                 newBaggage[item.Key] = item.Value!;
+#endif
             }
         }
 
@@ -295,20 +312,20 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <returns>New <see cref="Baggage"/> with the key/value pair removed.</returns>
     public Baggage RemoveBaggage(string name)
     {
-        var baggage = new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.OrdinalIgnoreCase);
+        var baggage = new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.Ordinal);
         baggage.Remove(name);
 
         return new Baggage(baggage);
     }
 
+#pragma warning disable CA1822 // Mark members as static
     /// <summary>
     /// Returns a new <see cref="Baggage"/> with all the key/value pairs removed.
     /// </summary>
     /// <returns>New <see cref="Baggage"/> with all the key/value pairs removed.</returns>
-#pragma warning disable CA1822 // Mark members as static
     public Baggage ClearBaggage()
-#pragma warning restore CA1822 // Mark members as static
         => default;
+#pragma warning restore CA1822 // Mark members as static
 
     /// <summary>
     /// Returns an enumerator that iterates through the <see cref="Baggage"/>.
@@ -320,14 +337,15 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <inheritdoc/>
     public bool Equals(Baggage other)
     {
-        bool baggageIsNullOrEmpty = this.baggage == null || this.baggage.Count <= 0;
+        var baggageIsNullOrEmpty = this.baggage == null || this.baggage.Count <= 0;
 
-        if (baggageIsNullOrEmpty != (other.baggage == null || other.baggage.Count <= 0))
-        {
-            return false;
-        }
-
-        return baggageIsNullOrEmpty || this.baggage!.SequenceEqual(other.baggage!);
+        return
+            baggageIsNullOrEmpty == (other.baggage == null || other.baggage.Count <= 0) &&
+#if NET
+            (baggageIsNullOrEmpty || this.baggage!.SequenceEqual(other.baggage!));
+#else
+            (baggageIsNullOrEmpty || this.baggage.SequenceEqual(other.baggage));
+#endif
     }
 
     /// <inheritdoc/>

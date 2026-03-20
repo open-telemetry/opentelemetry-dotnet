@@ -43,7 +43,7 @@ public class TraceContextPropagatorBenchmarks
 
         Span<char> keyBuffer = stackalloc char[length - 2];
 
-        string traceState = string.Empty;
+        var traceState = string.Empty;
         for (var i = 0; i < this.MembersCount; i++)
         {
             // We want a unique key for each member

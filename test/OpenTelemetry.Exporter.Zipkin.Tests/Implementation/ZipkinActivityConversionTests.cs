@@ -31,7 +31,7 @@ public class ZipkinActivityConversionTests
         Assert.Equal(activity.StartTimeUtc.ToEpochMicroseconds(), zipkinSpan.Timestamp);
         Assert.Equal((long)(activity.Duration.TotalMilliseconds * 1000), zipkinSpan.Duration);
 
-        int counter = 0;
+        var counter = 0;
         var tagsArray = zipkinSpan.Tags.ToArray();
 
         foreach (var tags in activity.TagObjects)
@@ -61,7 +61,7 @@ public class ZipkinActivityConversionTests
         Assert.Equal(activity.TraceId.ToHexString(), zipkinSpan.TraceId);
         Assert.Equal(activity.SpanId.ToHexString(), zipkinSpan.Id);
 
-        int counter = 0;
+        var counter = 0;
         var tagsArray = zipkinSpan.Tags.ToArray();
 
         foreach (var tags in activity.TagObjects)

@@ -52,10 +52,10 @@ public class Tracer
     /// </summary>
     /// <param name="span">The span to be made current.</param>
     /// <returns>The supplied span for call chaining.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #if NET
     [return: NotNullIfNotNull(nameof(span))]
 #endif
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static TelemetrySpan? WithSpan(TelemetrySpan? span)
     {
         span?.Activate();

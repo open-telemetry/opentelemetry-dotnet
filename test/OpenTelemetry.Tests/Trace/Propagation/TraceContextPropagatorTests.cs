@@ -149,7 +149,7 @@ public class TraceContextPropagatorTests
         };
 
         var activityContext = new ActivityContext(traceId, spanId, ActivityTraceFlags.Recorded, traceState: null);
-        PropagationContext propagationContext = new PropagationContext(activityContext, default);
+        var propagationContext = new PropagationContext(activityContext, default);
         var carrier = new Dictionary<string, string>();
         var f = new TraceContextPropagator();
         f.Inject(propagationContext, carrier, Setter);
@@ -169,7 +169,7 @@ public class TraceContextPropagatorTests
         };
 
         var activityContext = new ActivityContext(traceId, spanId, ActivityTraceFlags.Recorded, expectedHeaders[TraceState]);
-        PropagationContext propagationContext = new PropagationContext(activityContext, default);
+        var propagationContext = new PropagationContext(activityContext, default);
         var carrier = new Dictionary<string, string>();
         var f = new TraceContextPropagator();
         f.Inject(propagationContext, carrier, Setter);
@@ -248,10 +248,10 @@ public class TraceContextPropagatorTests
     public void Key_KeyLengthLimit()
     {
         // test_tracestate_key_length_limit
-        string input1 = new string('z', 256) + "=1";
+        var input1 = new string('z', 256) + "=1";
         Assert.Equal(input1, CallTraceContextPropagator(input1));
         Assert.Empty(CallTraceContextPropagator(new string('z', 257) + "=1"));
-        string input2 = new string('t', 241) + "@" + new string('v', 14) + "=1";
+        var input2 = new string('t', 241) + "@" + new string('v', 14) + "=1";
         Assert.Equal(input2, CallTraceContextPropagator(input2));
         Assert.Empty(CallTraceContextPropagator(new string('t', 242) + "@v=1"));
         Assert.Empty(CallTraceContextPropagator("t@" + new string('v', 15) + "=1"));

@@ -17,7 +17,7 @@ public class SpanAttributes
     /// </summary>
     public SpanAttributes()
     {
-        this.Attributes = new ActivityTagsCollection();
+        this.Attributes = [];
     }
 
     /// <summary>
@@ -29,7 +29,7 @@ public class SpanAttributes
     {
         Guard.ThrowIfNull(attributes);
 
-        foreach (KeyValuePair<string, object?> kvp in attributes)
+        foreach (var kvp in attributes)
         {
             this.AddInternal(kvp.Key, kvp.Value);
         }
@@ -43,9 +43,7 @@ public class SpanAttributes
     /// <param name="key">Entry key.</param>
     /// <param name="value">Entry value.</param>
     public void Add(string key, long value)
-    {
-        this.AddInternal(key, value);
-    }
+        => this.AddInternal(key, value);
 
     /// <summary>
     /// Add entry to the attributes.
@@ -53,9 +51,7 @@ public class SpanAttributes
     /// <param name="key">Entry key.</param>
     /// <param name="value">Entry value.</param>
     public void Add(string key, string? value)
-    {
-        this.AddInternal(key, value);
-    }
+        => this.AddInternal(key, value);
 
     /// <summary>
     /// Add entry to the attributes.
@@ -63,9 +59,7 @@ public class SpanAttributes
     /// <param name="key">Entry key.</param>
     /// <param name="value">Entry value.</param>
     public void Add(string key, bool value)
-    {
-        this.AddInternal(key, value);
-    }
+        => this.AddInternal(key, value);
 
     /// <summary>
     /// Add entry to the attributes.
@@ -73,9 +67,7 @@ public class SpanAttributes
     /// <param name="key">Entry key.</param>
     /// <param name="value">Entry value.</param>
     public void Add(string key, double value)
-    {
-        this.AddInternal(key, value);
-    }
+        => this.AddInternal(key, value);
 
     /// <summary>
     /// Add entry to the attributes.
@@ -83,9 +75,7 @@ public class SpanAttributes
     /// <param name="key">Entry key.</param>
     /// <param name="values">Entry value.</param>
     public void Add(string key, long[]? values)
-    {
-        this.AddInternal(key, values);
-    }
+        => this.AddInternal(key, values);
 
     /// <summary>
     /// Add entry to the attributes.
@@ -93,9 +83,7 @@ public class SpanAttributes
     /// <param name="key">Entry key.</param>
     /// <param name="values">Entry value.</param>
     public void Add(string key, string?[]? values)
-    {
-        this.AddInternal(key, values);
-    }
+        => this.AddInternal(key, values);
 
     /// <summary>
     /// Add entry to the attributes.
@@ -103,9 +91,7 @@ public class SpanAttributes
     /// <param name="key">Entry key.</param>
     /// <param name="values">Entry value.</param>
     public void Add(string key, bool[]? values)
-    {
-        this.AddInternal(key, values);
-    }
+        => this.AddInternal(key, values);
 
     /// <summary>
     /// Add entry to the attributes.
@@ -113,9 +99,7 @@ public class SpanAttributes
     /// <param name="key">Entry key.</param>
     /// <param name="values">Entry value.</param>
     public void Add(string key, double[]? values)
-    {
-        this.AddInternal(key, values);
-    }
+        => this.AddInternal(key, values);
 
     private void AddInternal(string key, object? value)
     {

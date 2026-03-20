@@ -56,7 +56,7 @@ public static class InMemoryExporterLoggingExtensions
     private static InMemoryExporter<LogRecord> BuildExporter(ICollection<LogRecord> exportedItems)
     {
         return new InMemoryExporter<LogRecord>(
-            exportFunc: (in Batch<LogRecord> batch) => ExportLogRecord(in batch, exportedItems));
+            exportFunc: (in batch) => ExportLogRecord(in batch, exportedItems));
     }
 
     private static ExportResult ExportLogRecord(in Batch<LogRecord> batch, ICollection<LogRecord> exportedItems)

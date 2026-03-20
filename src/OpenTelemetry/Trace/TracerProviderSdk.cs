@@ -23,12 +23,9 @@ internal sealed class TracerProviderSdk : TracerProvider
     internal int ShutdownCount;
     internal bool Disposed;
 
-    private readonly List<object> instrumentations = [];
     private readonly ActivityListener listener;
-    private readonly Sampler sampler;
     private readonly Action<Activity> getRequestedDataAction;
     private readonly bool supportLegacyActivity;
-    private BaseProcessor<Activity>? processor;
 
     internal TracerProviderSdk(
         IServiceProvider serviceProvider,
@@ -55,15 +52,15 @@ internal sealed class TracerProviderSdk : TracerProvider
             configureProviderBuilder.ConfigureBuilder(serviceProvider!, state);
         }
 
-        StringBuilder processorsAdded = new StringBuilder();
-        StringBuilder instrumentationFactoriesAdded = new StringBuilder();
+        var processorsAdded = new StringBuilder();
+        var instrumentationFactoriesAdded = new StringBuilder();
 
         var resourceBuilder = state.ResourceBuilder ?? ResourceBuilder.CreateDefault();
         resourceBuilder.ServiceProvider = serviceProvider;
         this.Resource = resourceBuilder.Build();
 
-        this.sampler = GetSampler(serviceProvider!.GetRequiredService<IConfiguration>(), state.Sampler);
-        OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Sampler added = \"{this.sampler.GetType()}\".");
+        this.Sampler = GetSampler(serviceProvider!.GetRequiredService<IConfiguration>(), state.Sampler);
+        OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Sampler added = \"{this.Sampler.GetType()}\".");
 
         this.supportLegacyActivity = state.LegacyActivityOperationNames.Count > 0;
 
@@ -93,7 +90,7 @@ internal sealed class TracerProviderSdk : TracerProvider
         {
             if (instrumentation.Instance is not null)
             {
-                this.instrumentations.Add(instrumentation.Instance);
+                this.Instrumentations.Add(instrumentation.Instance);
             }
 
             instrumentationFactoriesAdded.Append(instrumentation.Name);
@@ -116,15 +113,9 @@ internal sealed class TracerProviderSdk : TracerProvider
 
         if (this.supportLegacyActivity)
         {
-            Func<Activity, bool>? legacyActivityPredicate = null;
-            if (legacyActivityWildcardModeRegex != null)
-            {
-                legacyActivityPredicate = activity => legacyActivityWildcardModeRegex.IsMatch(activity.OperationName);
-            }
-            else
-            {
-                legacyActivityPredicate = activity => state.LegacyActivityOperationNames.Contains(activity.OperationName);
-            }
+            Func<Activity, bool>? legacyActivityPredicate = legacyActivityWildcardModeRegex != null
+                ? (activity => legacyActivityWildcardModeRegex.IsMatch(activity.OperationName))
+                : (activity => state.LegacyActivityOperationNames.Contains(activity.OperationName));
 
             activityListener.ActivityStarted = activity =>
             {
@@ -160,7 +151,7 @@ internal sealed class TracerProviderSdk : TracerProvider
 
                 if (SuppressInstrumentationScope.IncrementIfTriggered() == 0)
                 {
-                    this.processor?.OnStart(activity);
+                    this.Processor?.OnStart(activity);
                 }
             };
 
@@ -189,7 +180,7 @@ internal sealed class TracerProviderSdk : TracerProvider
 
                 if (SuppressInstrumentationScope.DecrementIfTriggered() == 0)
                 {
-                    this.processor?.OnEnd(activity);
+                    this.Processor?.OnEnd(activity);
                 }
             };
         }
@@ -201,7 +192,7 @@ internal sealed class TracerProviderSdk : TracerProvider
 
                 if (activity.IsAllDataRequested && SuppressInstrumentationScope.IncrementIfTriggered() == 0)
                 {
-                    this.processor?.OnStart(activity);
+                    this.Processor?.OnStart(activity);
                 }
             };
 
@@ -224,28 +215,28 @@ internal sealed class TracerProviderSdk : TracerProvider
 
                 if (SuppressInstrumentationScope.DecrementIfTriggered() == 0)
                 {
-                    this.processor?.OnEnd(activity);
+                    this.Processor?.OnEnd(activity);
                 }
             };
         }
 
-        if (this.sampler is AlwaysOnSampler)
+        if (this.Sampler is AlwaysOnSampler)
         {
-            activityListener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
+            activityListener.Sample = (ref options) =>
                 !Sdk.SuppressInstrumentation ? ActivitySamplingResult.AllDataAndRecorded : ActivitySamplingResult.None;
             this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOnSampler;
         }
-        else if (this.sampler is AlwaysOffSampler)
+        else if (this.Sampler is AlwaysOffSampler)
         {
-            activityListener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
+            activityListener.Sample = (ref options) =>
                 !Sdk.SuppressInstrumentation ? PropagateOrIgnoreData(ref options) : ActivitySamplingResult.None;
             this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOffSampler;
         }
         else
         {
             // This delegate informs ActivitySource about sampling decision when the parent context is an ActivityContext.
-            activityListener.Sample = (ref ActivityCreationOptions<ActivityContext> options) =>
-                !Sdk.SuppressInstrumentation ? ComputeActivitySamplingResult(ref options, this.sampler) : ActivitySamplingResult.None;
+            activityListener.Sample = (ref options) =>
+                !Sdk.SuppressInstrumentation ? ComputeActivitySamplingResult(ref options, this.Sampler) : ActivitySamplingResult.None;
             this.getRequestedDataAction = this.RunGetRequestedDataOtherSampler;
         }
 
@@ -294,11 +285,11 @@ internal sealed class TracerProviderSdk : TracerProvider
 
     internal Resource Resource { get; }
 
-    internal List<object> Instrumentations => this.instrumentations;
+    internal List<object> Instrumentations { get; } = [];
 
-    internal BaseProcessor<Activity>? Processor => this.processor;
+    internal BaseProcessor<Activity>? Processor { get; private set; }
 
-    internal Sampler Sampler => this.sampler;
+    internal Sampler Sampler { get; }
 
     internal TracerProviderSdk AddProcessor(BaseProcessor<Activity> processor)
     {
@@ -306,32 +297,27 @@ internal sealed class TracerProviderSdk : TracerProvider
 
         processor.SetParentProvider(this);
 
-        if (this.processor == null)
+        if (this.Processor == null)
         {
-            this.processor = processor;
+            this.Processor = processor;
         }
-        else if (this.processor is CompositeProcessor<Activity> compositeProcessor)
+        else if (this.Processor is CompositeProcessor<Activity> compositeProcessor)
         {
             compositeProcessor.AddProcessor(processor);
         }
         else
         {
-            var newCompositeProcessor = new CompositeProcessor<Activity>(new[]
-            {
-                this.processor,
-            });
+            var newCompositeProcessor = new CompositeProcessor<Activity>([this.Processor]);
             newCompositeProcessor.SetParentProvider(this);
             newCompositeProcessor.AddProcessor(processor);
-            this.processor = newCompositeProcessor;
+            this.Processor = newCompositeProcessor;
         }
 
         return this;
     }
 
     internal bool OnForceFlush(int timeoutMilliseconds)
-    {
-        return this.processor?.ForceFlush(timeoutMilliseconds) ?? true;
-    }
+        => this.Processor?.ForceFlush(timeoutMilliseconds) ?? true;
 
     /// <summary>
     /// Called by <c>Shutdown</c>. This function should block the current
@@ -351,15 +337,15 @@ internal sealed class TracerProviderSdk : TracerProvider
     /// </remarks>
     internal bool OnShutdown(int timeoutMilliseconds)
     {
-        // TO DO Put OnShutdown logic in a task to run within the user provider timeOutMilliseconds
-        foreach (var item in this.instrumentations)
+        // TODO Put OnShutdown logic in a task to run within the user provider timeoutMilliseconds
+        foreach (var item in this.Instrumentations)
         {
             (item as IDisposable)?.Dispose();
         }
 
-        this.instrumentations.Clear();
+        this.Instrumentations.Clear();
 
-        bool? result = this.processor?.Shutdown(timeoutMilliseconds);
+        var result = this.Processor?.Shutdown(timeoutMilliseconds);
         this.listener?.Dispose();
         return result ?? true;
     }
@@ -370,19 +356,19 @@ internal sealed class TracerProviderSdk : TracerProvider
         {
             if (disposing)
             {
-                foreach (var item in this.instrumentations)
+                foreach (var item in this.Instrumentations)
                 {
                     (item as IDisposable)?.Dispose();
                 }
 
-                this.instrumentations.Clear();
+                this.Instrumentations.Clear();
 
-                (this.sampler as IDisposable)?.Dispose();
+                (this.Sampler as IDisposable)?.Dispose();
 
                 // Wait for up to 5 seconds grace period
-                this.processor?.Shutdown(5000);
-                this.processor?.Dispose();
-                this.processor = null;
+                this.Processor?.Shutdown(5000);
+                this.Processor?.Dispose();
+                this.Processor = null;
 
                 // Shutdown the listener last so that anything created while instrumentation cleans up will still be processed.
                 // Redis instrumentation, for example, flushes during dispose which creates Activity objects for any profiling
@@ -488,7 +474,7 @@ internal sealed class TracerProviderSdk : TracerProvider
         {
             SamplingDecision.RecordAndSample => ActivitySamplingResult.AllDataAndRecorded,
             SamplingDecision.RecordOnly => ActivitySamplingResult.AllData,
-            _ => PropagateOrIgnoreData(ref options),
+            SamplingDecision.Drop or _ => PropagateOrIgnoreData(ref options),
         };
 
         if (activitySamplingResult > ActivitySamplingResult.PropagationData)
@@ -546,27 +532,18 @@ internal sealed class TracerProviderSdk : TracerProvider
 
     private void RunGetRequestedDataOtherSampler(Activity activity)
     {
-        ActivityContext parentContext;
-
         // Check activity.ParentId alone is sufficient to normally determine if a activity is root or not. But if one uses activity.SetParentId to override the TraceId (without intending to set an actual parent), then additional check of parentspanid being empty is required to confirm if an activity is root or not.
         // This checker can be removed, once Activity exposes an API to customize ID Generation (https://github.com/dotnet/runtime/issues/46704) or issue https://github.com/dotnet/runtime/issues/46706 is addressed.
-        if (string.IsNullOrEmpty(activity.ParentId) || activity.ParentSpanId.ToHexString() == "0000000000000000")
-        {
-            parentContext = default;
-        }
-        else if (activity.Parent != null)
-        {
-            parentContext = activity.Parent.Context;
-        }
-        else
-        {
-            parentContext = new ActivityContext(
-                activity.TraceId,
-                activity.ParentSpanId,
-                activity.ActivityTraceFlags,
-                activity.TraceStateString,
-                isRemote: true);
-        }
+        var parentContext = string.IsNullOrEmpty(activity.ParentId) || activity.ParentSpanId.ToHexString() == "0000000000000000"
+            ? default
+            : activity.Parent != null ?
+                activity.Parent.Context :
+                new ActivityContext(
+                    activity.TraceId,
+                    activity.ParentSpanId,
+                    activity.ActivityTraceFlags,
+                    activity.TraceStateString,
+                    isRemote: true);
 
         var samplingParameters = new SamplingParameters(
             parentContext,
@@ -576,7 +553,7 @@ internal sealed class TracerProviderSdk : TracerProvider
             activity.TagObjects,
             activity.Links);
 
-        var samplingResult = this.sampler.ShouldSample(samplingParameters);
+        var samplingResult = this.Sampler.ShouldSample(samplingParameters);
 
         switch (samplingResult.Decision)
         {
@@ -591,6 +568,8 @@ internal sealed class TracerProviderSdk : TracerProvider
             case SamplingDecision.RecordAndSample:
                 activity.IsAllDataRequested = true;
                 activity.ActivityTraceFlags |= ActivityTraceFlags.Recorded;
+                break;
+            default:
                 break;
         }
 

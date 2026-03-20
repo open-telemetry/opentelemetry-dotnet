@@ -20,11 +20,11 @@ public static class Sdk
 {
     static Sdk()
     {
-        Propagators.DefaultTextMapPropagator = new CompositeTextMapPropagator(new TextMapPropagator[]
-        {
+        Propagators.DefaultTextMapPropagator = new CompositeTextMapPropagator(
+        [
             new TraceContextPropagator(),
             new BaggagePropagator(),
-        });
+        ]);
 
         Activity.DefaultIdFormat = ActivityIdFormat.W3C;
         Activity.ForceDefaultIdFormat = true;
@@ -61,9 +61,7 @@ public static class Sdk
     /// </summary>
     /// <returns><see cref="MeterProviderBuilder"/> instance, which is used to build a <see cref="MeterProvider"/>.</returns>
     public static MeterProviderBuilder CreateMeterProviderBuilder()
-    {
-        return new MeterProviderBuilderBase();
-    }
+        => new MeterProviderBuilderBase();
 
     /// <summary>
     /// Creates a <see cref="TracerProviderBuilder"/> which is used to build
@@ -74,9 +72,7 @@ public static class Sdk
     /// </summary>
     /// <returns><see cref="TracerProviderBuilder"/> instance, which is used to build a <see cref="TracerProvider"/>.</returns>
     public static TracerProviderBuilder CreateTracerProviderBuilder()
-    {
-        return new TracerProviderBuilderBase();
-    }
+        => new TracerProviderBuilderBase();
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
@@ -104,7 +100,5 @@ public static class Sdk
     internal
 #endif
             static LoggerProviderBuilder CreateLoggerProviderBuilder()
-    {
-        return new LoggerProviderBuilderBase();
-    }
+        => new LoggerProviderBuilderBase();
 }

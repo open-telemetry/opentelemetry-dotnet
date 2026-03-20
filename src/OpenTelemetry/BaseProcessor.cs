@@ -94,7 +94,7 @@ public abstract class BaseProcessor<T> : IDisposable
 
         try
         {
-            bool result = this.OnForceFlush(timeoutMilliseconds);
+            var result = this.OnForceFlush(timeoutMilliseconds);
 
             OpenTelemetrySdkEventSource.Log.ProcessorForceFlushInvoked(this.typeName, result);
 

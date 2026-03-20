@@ -54,9 +54,9 @@ public class PrometheusSerializerBenchmarks
     [Benchmark]
     public void WriteMetric()
     {
-        for (int i = 0; i < this.NumberOfSerializeCalls; i++)
+        for (var i = 0; i < this.NumberOfSerializeCalls; i++)
         {
-            int cursor = 0;
+            var cursor = 0;
             foreach (var metric in this.metrics)
             {
                 cursor = PrometheusSerializer.WriteMetric(this.buffer, cursor, metric, this.GetPrometheusMetric(metric), openMetricsRequested: false, disableTimestamp: false);

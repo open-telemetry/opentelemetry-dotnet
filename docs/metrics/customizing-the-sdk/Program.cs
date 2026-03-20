@@ -59,43 +59,43 @@ internal static class Program
         var random = new Random();
 
         var counter = Meter1.CreateCounter<long>("MyCounter");
-        for (int i = 0; i < 20000; i++)
+        for (var i = 0; i < 20000; i++)
         {
             counter.Add(1, new("tag1", "value1"), new("tag2", "value2"));
         }
 
         var histogram = Meter1.CreateHistogram<long>("MyHistogram");
-        for (int i = 0; i < 20000; i++)
+        for (var i = 0; i < 20000; i++)
         {
             histogram.Record(random.Next(1, 1000), new("tag1", "value1"), new("tag2", "value2"));
         }
 
         var exponentialBucketHistogram = Meter1.CreateHistogram<long>("MyExponentialBucketHistogram");
-        for (int i = 0; i < 20000; i++)
+        for (var i = 0; i < 20000; i++)
         {
             exponentialBucketHistogram.Record(random.Next(1, 1000), new("tag1", "value1"), new("tag2", "value2"));
         }
 
         var histogramWithMultipleAggregations = Meter1.CreateHistogram<long>("histogramWithMultipleAggregations");
-        for (int i = 0; i < 20000; i++)
+        for (var i = 0; i < 20000; i++)
         {
             histogramWithMultipleAggregations.Record(random.Next(1, 1000), new("tag1", "value1"), new("tag2", "value2"));
         }
 
         var counterCustomTags = Meter1.CreateCounter<long>("MyCounterCustomTags");
-        for (int i = 0; i < 20000; i++)
+        for (var i = 0; i < 20000; i++)
         {
             counterCustomTags.Add(1, new("tag1", "value1"), new("tag2", "value2"), new("tag3", "value4"));
         }
 
         var counterDrop = Meter1.CreateCounter<long>("MyCounterDrop");
-        for (int i = 0; i < 20000; i++)
+        for (var i = 0; i < 20000; i++)
         {
             counterDrop.Add(1, new("tag1", "value1"), new("tag2", "value2"));
         }
 
         var histogram2 = Meter2.CreateHistogram<long>("MyHistogram2");
-        for (int i = 0; i < 20000; i++)
+        for (var i = 0; i < 20000; i++)
         {
             histogram2.Record(random.Next(1, 1000), new("tag1", "value1"), new("tag2", "value2"));
         }

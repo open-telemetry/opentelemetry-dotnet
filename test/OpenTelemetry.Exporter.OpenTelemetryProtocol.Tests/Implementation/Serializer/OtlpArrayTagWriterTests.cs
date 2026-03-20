@@ -27,7 +27,7 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
         this.activityListener = new ActivityListener
         {
             ShouldListenTo = _ => true,
-            Sample = (ref ActivityCreationOptions<ActivityContext> options) => ActivitySamplingResult.AllDataAndRecorded,
+            Sample = (ref options) => ActivitySamplingResult.AllDataAndRecorded,
         };
 
         ActivitySource.AddActivityListener(this.activityListener);
@@ -126,7 +126,7 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
     {
         // Act
         this.arrayTagWriter.BeginWriteArray();
-        bool result = this.arrayTagWriter.TryResize();
+        var result = this.arrayTagWriter.TryResize();
 
         // Assert
         Assert.True(result);
@@ -136,8 +136,8 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
     public void TryResize_RepeatedResizingStopsAtMaxBufferSize()
     {
         // Arrange
-        var arrayState = this.arrayTagWriter.BeginWriteArray();
-        bool resizeResult = true;
+        _ = this.arrayTagWriter.BeginWriteArray();
+        var resizeResult = true;
 
         // Act: Repeatedly attempt to resize until reaching maximum buffer size
         while (resizeResult)
@@ -154,13 +154,13 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
     {
         // Create a large array exceeding 2 MB
         var largeArray = new string[512 * 1024];
-        for (int i = 0; i < largeArray.Length; i++)
+        for (var i = 0; i < largeArray.Length; i++)
         {
             largeArray[i] = "1234";
         }
 
         var lessthat1MBArray = new string[256 * 4];
-        for (int i = 0; i < lessthat1MBArray.Length; i++)
+        for (var i = 0; i < lessthat1MBArray.Length; i++)
         {
             lessthat1MBArray[i] = "1234";
         }
@@ -199,7 +199,7 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
     public void LargeArray_WithSmallBaseBuffer_ThrowsExceptionOnWriteSpan()
     {
         var lessthat1MBArray = new string[256 * 256];
-        for (int i = 0; i < lessthat1MBArray.Length; i++)
+        for (var i = 0; i < lessthat1MBArray.Length; i++)
         {
             lessthat1MBArray[i] = "1234";
         }
@@ -220,7 +220,7 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
     public void LargeArray_WithSmallBaseBuffer_ExpandsOnTraceData()
     {
         var lessthat1MBArray = new string[256 * 256];
-        for (int i = 0; i < lessthat1MBArray.Length; i++)
+        for (var i = 0; i < lessthat1MBArray.Length; i++)
         {
             lessthat1MBArray[i] = "1234";
         }
@@ -237,7 +237,7 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
         var batch = new Batch<Activity>([activity], 1);
         RunTest(new(), batch);
 
-        void RunTest(SdkLimitOptions sdkOptions, Batch<Activity> batch)
+        static void RunTest(SdkLimitOptions sdkOptions, Batch<Activity> batch)
         {
             var buffer = new byte[4096];
             var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, ResourceBuilder.CreateEmpty().Build(), batch);

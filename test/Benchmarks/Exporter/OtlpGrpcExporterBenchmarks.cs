@@ -56,9 +56,9 @@ public class OtlpGrpcExporterBenchmarks
     [Benchmark]
     public void OtlpExporter_Batching()
     {
-        for (int i = 0; i < this.NumberOfBatches; i++)
+        for (var i = 0; i < this.NumberOfBatches; i++)
         {
-            for (int c = 0; c < this.NumberOfSpans; c++)
+            for (var c = 0; c < this.NumberOfSpans; c++)
             {
                 this.activityBatch!.Add(this.activity!);
             }

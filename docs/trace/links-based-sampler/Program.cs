@@ -11,7 +11,7 @@ internal static class Program
 {
     private static readonly ActivitySource MyActivitySource = new("LinksAndParentBasedSampler.Example");
 
-    public static void Main(string[] args)
+    public static void Main()
     {
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
              .SetSampler(new LinksAndParentBasedSampler(new ParentBasedSampler(new TraceIdRatioBasedSampler(0.2))))
@@ -44,7 +44,7 @@ internal static class Program
 
         for (var i = 0; i < 5; i++)
         {
-            int randomValue = random.Next(10);
+            var randomValue = random.Next(10);
             var traceFlags = (randomValue == 0) ? ActivityTraceFlags.Recorded : ActivityTraceFlags.None;
             var context = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), traceFlags);
             linkedActivitiesList.Add(new ActivityLink(context));

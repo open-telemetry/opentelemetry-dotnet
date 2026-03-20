@@ -32,7 +32,7 @@ public class BatchExportActivityProcessorOptions : BatchExportProcessorOptions<A
 
     internal BatchExportActivityProcessorOptions(IConfiguration configuration)
     {
-        if (configuration.TryGetIntValue(OpenTelemetrySdkEventSource.Log, ExporterTimeoutEnvVarKey, out int value))
+        if (configuration.TryGetIntValue(OpenTelemetrySdkEventSource.Log, ExporterTimeoutEnvVarKey, out var value))
         {
             this.ExporterTimeoutMilliseconds = value;
         }

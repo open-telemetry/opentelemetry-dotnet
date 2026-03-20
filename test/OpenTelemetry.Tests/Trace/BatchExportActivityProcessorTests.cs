@@ -101,7 +101,7 @@ public class BatchExportActivityProcessorTests
         Assert.Equal(timeout != 0, result);
 
         // Wait for the expected number of items to be exported
-        int expectedCount = 2;
+        var expectedCount = 2;
 
         await WaitForMinimumCountAsync(exportedItems, expectedCount);
 

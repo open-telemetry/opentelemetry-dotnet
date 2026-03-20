@@ -5,6 +5,7 @@ namespace TestApp.AspNetCore;
 
 internal sealed class ActivityMiddlewareCore
 {
+#pragma warning disable IDE0060 // Remove unused parameter
     public void PreProcess(HttpContext context)
     {
         // Do nothing
@@ -14,4 +15,5 @@ internal sealed class ActivityMiddlewareCore
     {
         // Do nothing
     }
+#pragma warning restore IDE0060 // Remove unused parameter
 }

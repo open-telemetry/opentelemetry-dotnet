@@ -36,7 +36,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
         this.activityListener = new ActivityListener
         {
             ShouldListenTo = _ => true,
-            Sample = (ref ActivityCreationOptions<ActivityContext> options) => options.Parent.TraceFlags.HasFlag(ActivityTraceFlags.Recorded)
+            Sample = (ref options) => options.Parent.TraceFlags.HasFlag(ActivityTraceFlags.Recorded)
                 ? ActivitySamplingResult.AllDataAndRecorded
                 : ActivitySamplingResult.AllData,
         };
@@ -45,15 +45,13 @@ public sealed class OtlpTraceExporterTests : IDisposable
     }
 
     public void Dispose()
-    {
-        this.activityListener.Dispose();
-    }
+        => this.activityListener.Dispose();
 
     [Fact]
     public void AddOtlpTraceExporterNamedOptionsSupported()
     {
-        int defaultExporterOptionsConfigureOptionsInvocations = 0;
-        int namedExporterOptionsConfigureOptionsInvocations = 0;
+        var defaultExporterOptionsConfigureOptionsInvocations = 0;
+        var namedExporterOptionsConfigureOptionsInvocations = 0;
 
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .ConfigureServices(services =>
@@ -80,11 +78,11 @@ public sealed class OtlpTraceExporterTests : IDisposable
     [Fact]
     public void UserHttpFactoryCalled()
     {
-        OtlpExporterOptions options = new OtlpExporterOptions();
+        var options = new OtlpExporterOptions();
 
         var defaultFactory = options.HttpClientFactory;
 
-        int invocations = 0;
+        var invocations = 0;
         options.Protocol = OtlpExportProtocol.HttpProtobuf;
         options.HttpClientFactory = () =>
         {
@@ -122,7 +120,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
 
         services.AddHttpClient();
 
-        int invocations = 0;
+        var invocations = 0;
 
         services.AddHttpClient("OtlpTraceExporter", configureClient: (client) => invocations++);
 
@@ -175,11 +173,11 @@ public sealed class OtlpTraceExporterTests : IDisposable
             var activityKind = isEven ? ActivityKind.Client : ActivityKind.Server;
             var activityTags = isEven ? evenTags : oddTags;
 
-            using Activity? activity = source.StartActivity($"span-{i}", activityKind, parentContext: default, activityTags);
+            using var activity = source.StartActivity($"span-{i}", activityKind, parentContext: default, activityTags);
         }
 
         Assert.Equal(10, exportedItems.Count);
-        var batch = new Batch<Activity>(exportedItems.ToArray(), exportedItems.Count);
+        var batch = new Batch<Activity>([.. exportedItems], exportedItems.Count);
         RunTest(DefaultSdkLimitOptions, batch);
 
         void RunTest(SdkLimitOptions sdkOptions, Batch<Activity> batch)
@@ -261,7 +259,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
         nestedChildActivity?.Dispose();
 
         Assert.Equal(2, exportedItems.Count);
-        var batch = new Batch<Activity>(exportedItems.ToArray(), exportedItems.Count);
+        var batch = new Batch<Activity>([.. exportedItems], exportedItems.Count);
         RunTest(DefaultSdkLimitOptions, batch, activitySourceWithTags);
 
         exportedItems.Clear();
@@ -270,7 +268,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
         parentActivityNoTags?.Dispose();
 
         Assert.Single(exportedItems);
-        batch = new Batch<Activity>(exportedItems.ToArray(), exportedItems.Count);
+        batch = new Batch<Activity>([.. exportedItems], exportedItems.Count);
         RunTest(DefaultSdkLimitOptions, batch, activitySourceWithoutTags);
 
         void RunTest(SdkLimitOptions sdkOptions, Batch<Activity> batch, ActivitySource activitySource)
@@ -344,7 +342,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
         activity?.Stop();
 
         Assert.Single(exportedItems);
-        var batch = new Batch<Activity>(exportedItems.ToArray(), exportedItems.Count);
+        var batch = new Batch<Activity>([.. exportedItems], exportedItems.Count);
 
         var request = CreateTraceExportRequest(DefaultSdkLimitOptions, batch, resourceBuilder.Build());
 
@@ -390,7 +388,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
         activity?.Dispose();
 
         Assert.Single(exportedItems);
-        var batch = new Batch<Activity>(exportedItems.ToArray(), exportedItems.Count);
+        var batch = new Batch<Activity>([.. exportedItems], exportedItems.Count);
         RunTest(sdkOptions, batch);
 
         void RunTest(SdkLimitOptions sdkOptions, Batch<Activity> batch)
@@ -541,7 +539,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
         var expectedEndTimeUnixNano = expectedStartTimeUnixNano + (duration.TotalMilliseconds * 1_000_000);
         Assert.Equal(expectedEndTimeUnixNano, otlpSpan.EndTimeUnixNano);
 
-        var childLinks = new List<ActivityLink> { new(rootActivity.Context, new ActivityTagsCollection(attributes)) };
+        var childLinks = new List<ActivityLink> { new(rootActivity.Context, [.. attributes]) };
         var childActivity = activitySource.StartActivity(
             "child",
             ActivityKind.Client,
@@ -552,7 +550,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
 
         childActivity.SetStatus(ActivityStatusCode.Error, new string('a', 150));
 
-        var childEvents = new List<ActivityEvent> { new("e0"), new("e1", default, new ActivityTagsCollection(attributes)) };
+        var childEvents = new List<ActivityEvent> { new("e0"), new("e1", default, [.. attributes]) };
         childActivity.AddEvent(childEvents[0]);
         childActivity.AddEvent(childEvents[1]);
 
@@ -578,7 +576,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
         for (var i = 0; i < childEvents.Count; i++)
         {
             Assert.Equal(childEvents[i].Name, otlpSpan.Events[i].Name);
-            OtlpTestHelpers.AssertOtlpAttributes(childEvents[i].Tags.ToList(), otlpSpan.Events[i].Attributes);
+            OtlpTestHelpers.AssertOtlpAttributes([.. childEvents[i].Tags], otlpSpan.Events[i].Attributes);
         }
 
         childLinks.Reverse();
@@ -667,7 +665,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
         var batch = new Batch<Activity>([activity], 1);
         RunTest(new(), batch);
 
-        void RunTest(SdkLimitOptions sdkOptions, Batch<Activity> batch)
+        static void RunTest(SdkLimitOptions sdkOptions, Batch<Activity> batch)
         {
             var buffer = new byte[50];
             var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, ResourceBuilder.CreateEmpty().Build(), batch);
@@ -788,7 +786,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
         using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));
         using var activity = activitySource.StartActivity("Name");
         Assert.NotNull(activity);
-        string tracestate = "a=b;c=d";
+        var tracestate = "a=b;c=d";
         if (traceStateWasSet)
         {
             activity.TraceStateString = tracestate;
@@ -813,11 +811,11 @@ public sealed class OtlpTraceExporterTests : IDisposable
     {
         const string ActivitySourceName = "otlp.test";
 #pragma warning disable CA2000 // Dispose objects before losing scope
-        TestActivityProcessor testActivityProcessor = new TestActivityProcessor();
+        var testActivityProcessor = new TestActivityProcessor();
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
-        bool startCalled = false;
-        bool endCalled = false;
+        var startCalled = false;
+        var endCalled = false;
 
         testActivityProcessor.StartAction =
             (a) =>
@@ -860,8 +858,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
     }
 
     [Fact]
-    public void Null_BatchExportProcessorOptions_SupportedTest()
-    {
+    public void Null_BatchExportProcessorOptions_SupportedTest() =>
         Sdk.CreateTracerProviderBuilder()
             .AddOtlpExporter(
                 o =>
@@ -870,7 +867,6 @@ public sealed class OtlpTraceExporterTests : IDisposable
                     o.ExportProcessorType = ExportProcessorType.Batch;
                     o.BatchExportProcessorOptions = null!;
                 });
-    }
 
     [Fact]
     public void NonnamedOptionsMutateSharedInstanceTest()
@@ -973,7 +969,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
     {
         using var activitySource = new ActivitySource(nameof(this.SpanFlagsTest));
 
-        ActivityContext ctx = new ActivityContext(
+        var ctx = new ActivityContext(
             ActivityTraceId.CreateRandom(),
             ActivitySpanId.CreateRandom(),
             isRecorded ? ActivityTraceFlags.Recorded : ActivityTraceFlags.None,
@@ -987,7 +983,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
         Assert.NotNull(otlpSpan);
         var flags = (OtlpTrace.SpanFlags)otlpSpan.Flags;
 
-        ActivityTraceFlags traceFlags = (ActivityTraceFlags)(flags & OtlpTrace.SpanFlags.TraceFlagsMask);
+        var traceFlags = (ActivityTraceFlags)(flags & OtlpTrace.SpanFlags.TraceFlagsMask);
 
         if (isRecorded)
         {
@@ -1019,7 +1015,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
     {
         using var activitySource = new ActivitySource(nameof(this.SpanLinkFlagsTest));
 
-        ActivityContext ctx = new ActivityContext(
+        var ctx = new ActivityContext(
             ActivityTraceId.CreateRandom(),
             ActivitySpanId.CreateRandom(),
             isRecorded ? ActivityTraceFlags.Recorded : ActivityTraceFlags.None,
@@ -1040,7 +1036,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
 
         var flags = (OtlpTrace.SpanFlags)spanLink.Flags;
 
-        ActivityTraceFlags traceFlags = (ActivityTraceFlags)(flags & OtlpTrace.SpanFlags.TraceFlagsMask);
+        var traceFlags = (ActivityTraceFlags)(flags & OtlpTrace.SpanFlags.TraceFlagsMask);
 
         if (isRecorded)
         {

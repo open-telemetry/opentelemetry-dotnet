@@ -7,6 +7,7 @@ internal sealed class CallbackMiddlewareCore
 {
     public Task<bool> ProcessAsync(HttpContext context)
     {
+        System.Diagnostics.Debug.Assert(context != null, "HttpContext is null.");
         return Task.FromResult(true);
     }
 }

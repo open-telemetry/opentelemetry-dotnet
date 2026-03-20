@@ -68,7 +68,7 @@ internal sealed partial class SelfDiagnosticsConfigParser
                 }
             }
 
-            using FileStream file = File.Open(configFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var file = File.Open(configFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
 
             var buffer = this.configBuffer;
             if (buffer == null)
@@ -77,8 +77,8 @@ internal sealed partial class SelfDiagnosticsConfigParser
                 this.configBuffer = buffer;
             }
 
-            int bytesRead = 0;
-            int totalBytesRead = 0;
+            var bytesRead = 0;
+            var totalBytesRead = 0;
 
             while (totalBytesRead < buffer.Length)
             {
@@ -91,7 +91,7 @@ internal sealed partial class SelfDiagnosticsConfigParser
                 totalBytesRead += bytesRead;
             }
 
-            string configJson = Encoding.UTF8.GetString(buffer, 0, totalBytesRead);
+            var configJson = Encoding.UTF8.GetString(buffer, 0, totalBytesRead);
 
             if (!TryParseLogDirectory(configJson, out logDirectory))
             {
