@@ -6,7 +6,7 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* Added `ObservedTimestamp` property to `LogRecordData`. Note that `LogRecordData` 
+* Added `ObservedTimestamp` property to `LogRecordData`. Note that `LogRecordData`
   is only public in pre-release versions of the package.
   ([#6979](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6979))
 
