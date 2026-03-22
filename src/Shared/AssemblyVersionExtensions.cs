@@ -15,8 +15,6 @@ internal static class AssemblyVersionExtensions
 
         var informationalVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
 
-        Debug.Assert(!string.IsNullOrEmpty(informationalVersion), "AssemblyInformationalVersionAttribute was not found in assembly");
-
         return ParsePackageVersion(informationalVersion!);
     }
 
@@ -32,7 +30,9 @@ internal static class AssemblyVersionExtensions
             return false;
         }
 
+#pragma warning disable IDE0370 // Suppression is unnecessary
         packageVersion = ParsePackageVersion(informationalVersion!);
+#pragma warning restore IDE0370 // Suppression is unnecessary
         return true;
     }
 

@@ -45,6 +45,8 @@ public static class ActivityExtensions
                 case StatusCode.Error:
                     activity.SetStatus(ActivityStatusCode.Error, status.Description);
                     break;
+                default:
+                    break;
             }
 
             activity.SetTag(SpanAttributeConstants.StatusCodeKey, StatusHelper.GetTagValueForStatusCode(status.StatusCode));
@@ -70,12 +72,13 @@ public static class ActivityExtensions
     {
         if (activity != null)
         {
-            switch (activity.Status)
+            if (activity.Status is ActivityStatusCode.Ok)
             {
-                case ActivityStatusCode.Ok:
-                    return Status.Ok;
-                case ActivityStatusCode.Error:
-                    return new Status(StatusCode.Error, activity.StatusDescription);
+                return Status.Ok;
+            }
+            else if (activity.Status is ActivityStatusCode.Error)
+            {
+                return new Status(StatusCode.Error, activity.StatusDescription);
             }
 
             if (activity.TryGetStatus(out var statusCode, out var statusDescription))
@@ -123,5 +126,52 @@ public static class ActivityExtensions
         }
 
         activity.AddException(ex, in tags);
+    }
+
+    /// <summary>
+    /// Gets the status of activity execution.
+    /// Activity class in .NET does not support 'Status'.
+    /// This extension provides a workaround to retrieve Status from special tags with key name otel.status_code and otel.status_description.
+    /// </summary>
+    /// <param name="activity">Activity instance.</param>
+    /// <param name="statusCode"><see cref="StatusCode"/>.</param>
+    /// <param name="statusDescription">Status description.</param>
+    /// <returns><see langword="true"/> if <see cref="Status"/> was found on the supplied Activity.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [Obsolete]
+    private static bool TryGetStatus(this Activity activity, out StatusCode statusCode, out string? statusDescription)
+    {
+        var foundStatusCode = false;
+        statusCode = default;
+        statusDescription = null;
+
+        foreach (ref readonly var tag in activity.EnumerateTagObjects())
+        {
+            switch (tag.Key)
+            {
+                case SpanAttributeConstants.StatusCodeKey:
+                    foundStatusCode = StatusHelper.TryGetStatusCodeForTagValue(tag.Value as string, out statusCode);
+                    if (!foundStatusCode)
+                    {
+                        // If status code was found but turned out to be invalid give up immediately.
+                        return false;
+                    }
+
+                    break;
+                case SpanAttributeConstants.StatusDescriptionKey:
+                    statusDescription = tag.Value as string;
+                    break;
+                default:
+                    continue;
+            }
+
+            if (foundStatusCode && statusDescription != null)
+            {
+                // If we found a status code and a description we break enumeration because our work is done.
+                break;
+            }
+        }
+
+        return foundStatusCode;
     }
 }

@@ -26,7 +26,7 @@ internal static class ZipkinActivitySource
         using var activityListener = new ActivityListener
         {
             ShouldListenTo = _ => true,
-            Sample = (ref ActivityCreationOptions<ActivityContext> options) => options.Parent.TraceFlags.HasFlag(ActivityTraceFlags.Recorded)
+            Sample = (ref options) => options.Parent.TraceFlags.HasFlag(ActivityTraceFlags.Recorded)
                 ? ActivitySamplingResult.AllDataAndRecorded
                 : ActivitySamplingResult.AllData,
         };
@@ -72,17 +72,11 @@ internal static class ZipkinActivitySource
             new(
                 "Event1",
                 eventTimestamp,
-                new(new Dictionary<string, object?>
-                {
-                    { "key", "value" },
-                })),
+                [new KeyValuePair<string, object?>("key", "value")]),
             new(
                 "Event2",
                 eventTimestamp,
-                new(new Dictionary<string, object?>
-                {
-                    { "key", "value" },
-                })),
+                [new KeyValuePair<string, object?>("key", "value")]),
         };
 
         var linkedSpanId = ActivitySpanId.CreateFromString("888915b6286b9c41".AsSpan());
@@ -106,7 +100,7 @@ internal static class ZipkinActivitySource
             parentContext: new(traceId, parentSpanId, ActivityTraceFlags.Recorded),
             tags,
             links,
-            startTime: startTimestamp)!;
+            startTime: startTimestamp);
 
         Assert.NotNull(activity);
 

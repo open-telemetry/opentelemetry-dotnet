@@ -41,10 +41,9 @@ internal
     private KeyValuePair<string, object?> attribute6;
     private KeyValuePair<string, object?> attribute7;
     private KeyValuePair<string, object?> attribute8;
-    private int count;
 
     /// <inheritdoc/>
-    public readonly int Count => this.count;
+    public int Count { get; private set; }
 
     /// <inheritdoc/>
     public KeyValuePair<string, object?> this[int index]
@@ -57,23 +56,20 @@ internal
                 return this.OverflowAttributes[index];
             }
 
-            if ((uint)index >= (uint)this.count)
-            {
-                throw new ArgumentOutOfRangeException(nameof(index));
-            }
-
-            return index switch
-            {
-                0 => this.attribute1,
-                1 => this.attribute2,
-                2 => this.attribute3,
-                3 => this.attribute4,
-                4 => this.attribute5,
-                5 => this.attribute6,
-                6 => this.attribute7,
-                7 => this.attribute8,
-                _ => default, // we shouldn't come here anyway.
-            };
+            return (uint)index >= (uint)this.Count
+                ? throw new ArgumentOutOfRangeException(nameof(index))
+                : index switch
+                {
+                    0 => this.attribute1,
+                    1 => this.attribute2,
+                    2 => this.attribute3,
+                    3 => this.attribute4,
+                    4 => this.attribute5,
+                    5 => this.attribute6,
+                    6 => this.attribute7,
+                    7 => this.attribute8,
+                    _ => default, // we shouldn't come here anyway.
+                };
         }
 
         set
@@ -85,7 +81,7 @@ internal
                 return;
             }
 
-            if ((uint)index >= (uint)this.count)
+            if ((uint)index >= (uint)this.Count)
             {
                 throw new ArgumentOutOfRangeException(nameof(index));
             }
@@ -133,7 +129,7 @@ internal
 
         LogRecordAttributeList logRecordAttributes = default;
         logRecordAttributes.OverflowAttributes = [.. attributes];
-        logRecordAttributes.count = logRecordAttributes.OverflowAttributes.Count;
+        logRecordAttributes.Count = logRecordAttributes.OverflowAttributes.Count;
         return logRecordAttributes;
     }
 
@@ -151,7 +147,7 @@ internal
     /// <param name="attribute">Attribute.</param>
     public void Add(KeyValuePair<string, object?> attribute)
     {
-        var count = this.count++;
+        var count = this.Count++;
 
         if (count <= OverflowMaxCount)
         {
@@ -168,11 +164,18 @@ internal
                 case 8:
                     this.MoveAttributesToTheOverflowList();
                     break;
+                default:
+                    break;
             }
         }
 
         Debug.Assert(this.OverflowAttributes is not null, "Overflow attributes creation failure.");
+
+#if NET
+        this.OverflowAttributes.Add(attribute);
+#else
         this.OverflowAttributes!.Add(attribute);
+#endif
     }
 
     /// <summary>
@@ -180,7 +183,7 @@ internal
     /// </summary>
     public void Clear()
     {
-        this.count = 0;
+        this.Count = 0;
         this.OverflowAttributes?.Clear();
     }
 
@@ -212,7 +215,7 @@ internal
 
     internal readonly IReadOnlyList<KeyValuePair<string, object?>> Export(ref List<KeyValuePair<string, object?>>? attributeStorage)
     {
-        int readonlyCount = this.count;
+        var readonlyCount = this.Count;
         if (readonlyCount <= 0)
         {
             return Empty;
@@ -279,7 +282,7 @@ internal
 
     private void MoveAttributesToTheOverflowList()
     {
-        Debug.Assert(this.count - 1 == OverflowMaxCount, "count did not match OverflowMaxCount");
+        Debug.Assert(this.Count - 1 == OverflowMaxCount, "count did not match OverflowMaxCount");
 
         var attributes = this.OverflowAttributes ??= new(OverflowAdditionalCapacity);
 

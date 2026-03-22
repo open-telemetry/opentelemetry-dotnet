@@ -12,8 +12,8 @@ public class BatchTests
     public void CheckConstructorExceptions()
     {
         Assert.Throws<ArgumentNullException>(() => new Batch<string>((string[]?)null!, 0));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new Batch<string>(Array.Empty<string>(), -1));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new Batch<string>(Array.Empty<string>(), 1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new Batch<string>([], -1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new Batch<string>([], 1));
 
         Assert.Throws<ArgumentNullException>(() => new Batch<string>(null!));
     }
@@ -94,7 +94,7 @@ public class BatchTests
         circularBuffer.Add(value);
         var batch = new Batch<string>(circularBuffer, 10);
 
-        int itemsProcessed = 0;
+        var itemsProcessed = 0;
         foreach (var item in batch)
         {
             itemsProcessed++;
@@ -117,7 +117,7 @@ public class BatchTests
         var value = "a";
         var batch = new Batch<string>(value);
         var enumerator = batch.GetEnumerator();
-        Assert.Throws<NotSupportedException>(() => enumerator.Reset());
+        Assert.Throws<NotSupportedException>(enumerator.Reset);
     }
 
     [Fact]
@@ -127,13 +127,13 @@ public class BatchTests
         circularBuffer.Add("a");
         circularBuffer.Add("b");
 
-        Batch<string> batch = new Batch<string>(circularBuffer, 10);
+        var batch = new Batch<string>(circularBuffer, 10);
 
         Assert.Equal(2, batch.Count);
 
-        string[] storage = new string[10];
-        int selectedItemCount = 0;
-        foreach (string item in batch)
+        var storage = new string[10];
+        var selectedItemCount = 0;
+        foreach (var item in batch)
         {
             if (item == "b")
             {

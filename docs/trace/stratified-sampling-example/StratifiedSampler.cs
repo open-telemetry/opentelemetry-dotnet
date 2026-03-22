@@ -15,8 +15,8 @@ internal sealed class StratifiedSampler : Sampler
     private const string QueryTypeUserInitiated = "userInitiated";
     private const string QueryTypeProgrammatic = "programmatic";
 
-    private readonly Dictionary<int, double> samplingRatios = new();
-    private readonly List<Sampler> samplers = new();
+    private readonly Dictionary<int, double> samplingRatios = [];
+    private readonly List<Sampler> samplers = [];
 
     public StratifiedSampler()
     {

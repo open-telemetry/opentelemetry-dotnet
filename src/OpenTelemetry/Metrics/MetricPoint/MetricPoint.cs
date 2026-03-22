@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 
@@ -44,10 +43,6 @@ public struct MetricPoint
         int exponentialHistogramMaxScale,
         LookupData? lookupData = null)
     {
-        Debug.Assert(aggregatorStore != null, "AggregatorStore was null.");
-        Debug.Assert(histogramExplicitBounds != null, "HistogramExplicitBounds was null.");
-        Debug.Assert(!aggregatorStore!.OutputDelta || lookupData != null, "LookupData was null.");
-
         this.aggType = aggType;
         this.Tags = new ReadOnlyTagCollection(tagKeysAndValues);
         this.runningValue = default;
@@ -57,7 +52,7 @@ public struct MetricPoint
         this.ReferenceCount = 1;
         this.LookupData = lookupData;
 
-        var isExemplarEnabled = aggregatorStore!.IsExemplarEnabled();
+        var isExemplarEnabled = aggregatorStore.IsExemplarEnabled();
 
         ExemplarReservoir? reservoir;
         try
@@ -72,27 +67,30 @@ public struct MetricPoint
             reservoir = null;
         }
 
-        if (this.aggType == AggregationType.HistogramWithBuckets ||
-            this.aggType == AggregationType.HistogramWithMinMaxBuckets)
+        if (this.aggType is AggregationType.HistogramWithBuckets or AggregationType.HistogramWithMinMaxBuckets)
         {
-            this.mpComponents = new MetricPointOptionalComponents();
-            this.mpComponents.HistogramBuckets = new HistogramBuckets(histogramExplicitBounds);
+            this.mpComponents = new MetricPointOptionalComponents
+            {
+                HistogramBuckets = new(histogramExplicitBounds),
+            };
             if (isExemplarEnabled && reservoir == null)
             {
-                reservoir = new AlignedHistogramBucketExemplarReservoir(histogramExplicitBounds!.Bounds.Length);
+                reservoir = new AlignedHistogramBucketExemplarReservoir(histogramExplicitBounds.Bounds.Length);
             }
         }
-        else if (this.aggType == AggregationType.Histogram ||
-                 this.aggType == AggregationType.HistogramWithMinMax)
+        else if (this.aggType is AggregationType.Histogram or AggregationType.HistogramWithMinMax)
         {
-            this.mpComponents = new MetricPointOptionalComponents();
-            this.mpComponents.HistogramBuckets = new HistogramBuckets(null);
+            this.mpComponents = new MetricPointOptionalComponents
+            {
+                HistogramBuckets = new(null),
+            };
         }
-        else if (this.aggType == AggregationType.Base2ExponentialHistogram ||
-            this.aggType == AggregationType.Base2ExponentialHistogramWithMinMax)
+        else if (this.aggType is AggregationType.Base2ExponentialHistogram or AggregationType.Base2ExponentialHistogramWithMinMax)
         {
-            this.mpComponents = new MetricPointOptionalComponents();
-            this.mpComponents.Base2ExponentialBucketHistogram = new Base2ExponentialBucketHistogram(exponentialHistogramMaxSize, exponentialHistogramMaxScale);
+            this.mpComponents = new MetricPointOptionalComponents
+            {
+                Base2ExponentialBucketHistogram = new(exponentialHistogramMaxSize, exponentialHistogramMaxScale),
+            };
             if (isExemplarEnabled && reservoir == null)
             {
                 reservoir = new SimpleFixedSizeExemplarReservoir(Math.Min(20, exponentialHistogramMaxSize));
@@ -110,10 +108,7 @@ public struct MetricPoint
 
         if (reservoir != null)
         {
-            if (this.mpComponents == null)
-            {
-                this.mpComponents = new MetricPointOptionalComponents();
-            }
+            this.mpComponents ??= new MetricPointOptionalComponents();
 
             reservoir.Initialize(aggregatorStore);
 
@@ -148,8 +143,10 @@ public struct MetricPoint
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         readonly get;
 
+#pragma warning disable IDE0251 // Make member 'readonly'
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private set;
+#pragma warning restore IDE0251 // Make member 'readonly'
     }
 
     // When the AggregatorStore is reclaiming MetricPoints, this serves the purpose of validating the a given thread is using the right
@@ -170,7 +167,7 @@ public struct MetricPoint
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly long GetSumLong()
     {
-        if (this.aggType != AggregationType.LongSumIncomingDelta && this.aggType != AggregationType.LongSumIncomingCumulative)
+        if (this.aggType is not AggregationType.LongSumIncomingDelta and not AggregationType.LongSumIncomingCumulative)
         {
             this.ThrowNotSupportedMetricTypeException(nameof(this.GetSumLong));
         }
@@ -188,7 +185,7 @@ public struct MetricPoint
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly double GetSumDouble()
     {
-        if (this.aggType != AggregationType.DoubleSumIncomingDelta && this.aggType != AggregationType.DoubleSumIncomingCumulative)
+        if (this.aggType is not AggregationType.DoubleSumIncomingDelta and not AggregationType.DoubleSumIncomingCumulative)
         {
             this.ThrowNotSupportedMetricTypeException(nameof(this.GetSumDouble));
         }
@@ -242,12 +239,12 @@ public struct MetricPoint
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly long GetHistogramCount()
     {
-        if (this.aggType != AggregationType.HistogramWithBuckets &&
-            this.aggType != AggregationType.Histogram &&
-            this.aggType != AggregationType.HistogramWithMinMaxBuckets &&
-            this.aggType != AggregationType.HistogramWithMinMax &&
-            this.aggType != AggregationType.Base2ExponentialHistogram &&
-            this.aggType != AggregationType.Base2ExponentialHistogramWithMinMax)
+        if (this.aggType is not AggregationType.HistogramWithBuckets and
+                            not AggregationType.Histogram and
+                            not AggregationType.HistogramWithMinMaxBuckets and
+                            not AggregationType.HistogramWithMinMax and
+                            not AggregationType.Base2ExponentialHistogram and
+                            not AggregationType.Base2ExponentialHistogramWithMinMax)
         {
             this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramCount));
         }
@@ -265,20 +262,15 @@ public struct MetricPoint
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly double GetHistogramSum()
     {
-        if (this.aggType != AggregationType.HistogramWithBuckets &&
-            this.aggType != AggregationType.Histogram &&
-            this.aggType != AggregationType.HistogramWithMinMaxBuckets &&
-            this.aggType != AggregationType.HistogramWithMinMax &&
-            this.aggType != AggregationType.Base2ExponentialHistogram &&
-            this.aggType != AggregationType.Base2ExponentialHistogramWithMinMax)
+        if (this.aggType is not AggregationType.HistogramWithBuckets and
+                            not AggregationType.Histogram and
+                            not AggregationType.HistogramWithMinMaxBuckets and
+                            not AggregationType.HistogramWithMinMax and
+                            not AggregationType.Base2ExponentialHistogram and
+                            not AggregationType.Base2ExponentialHistogramWithMinMax)
         {
             this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramSum));
         }
-
-        Debug.Assert(
-            this.mpComponents?.HistogramBuckets != null
-            || this.mpComponents?.Base2ExponentialBucketHistogram != null,
-            "HistogramBuckets and Base2ExponentialBucketHistogram were both null");
 
         return this.mpComponents!.HistogramBuckets != null
             ? this.mpComponents.HistogramBuckets.SnapshotSum
@@ -295,15 +287,13 @@ public struct MetricPoint
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly HistogramBuckets GetHistogramBuckets()
     {
-        if (this.aggType != AggregationType.HistogramWithBuckets &&
-            this.aggType != AggregationType.Histogram &&
-            this.aggType != AggregationType.HistogramWithMinMaxBuckets &&
-            this.aggType != AggregationType.HistogramWithMinMax)
+        if (this.aggType is not AggregationType.HistogramWithBuckets and
+                            not AggregationType.Histogram and
+                            not AggregationType.HistogramWithMinMaxBuckets and
+                            not AggregationType.HistogramWithMinMax)
         {
             this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramBuckets));
         }
-
-        Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
 
         return this.mpComponents!.HistogramBuckets!;
     }
@@ -318,13 +308,11 @@ public struct MetricPoint
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ExponentialHistogramData GetExponentialHistogramData()
     {
-        if (this.aggType != AggregationType.Base2ExponentialHistogram &&
-            this.aggType != AggregationType.Base2ExponentialHistogramWithMinMax)
+        if (this.aggType is not AggregationType.Base2ExponentialHistogram and
+                            not AggregationType.Base2ExponentialHistogramWithMinMax)
         {
             this.ThrowNotSupportedMetricTypeException(nameof(this.GetExponentialHistogramData));
         }
-
-        Debug.Assert(this.mpComponents?.Base2ExponentialBucketHistogram != null, "Base2ExponentialBucketHistogram was null");
 
         return this.mpComponents!.Base2ExponentialBucketHistogram!.GetExponentialHistogramData();
     }
@@ -338,11 +326,8 @@ public struct MetricPoint
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly bool TryGetHistogramMinMaxValues(out double min, out double max)
     {
-        if (this.aggType == AggregationType.HistogramWithMinMax
-            || this.aggType == AggregationType.HistogramWithMinMaxBuckets)
+        if (this.aggType is AggregationType.HistogramWithMinMax or AggregationType.HistogramWithMinMaxBuckets)
         {
-            Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
-
             min = this.mpComponents!.HistogramBuckets!.SnapshotMin;
             max = this.mpComponents.HistogramBuckets.SnapshotMax;
             return true;
@@ -350,8 +335,6 @@ public struct MetricPoint
 
         if (this.aggType == AggregationType.Base2ExponentialHistogramWithMinMax)
         {
-            Debug.Assert(this.mpComponents?.Base2ExponentialBucketHistogram != null, "Base2ExponentialBucketHistogram was null");
-
             min = this.mpComponents!.Base2ExponentialBucketHistogram!.SnapshotMin;
             max = this.mpComponents.Base2ExponentialBucketHistogram.SnapshotMax;
             return true;
@@ -376,7 +359,7 @@ public struct MetricPoint
 
     internal readonly MetricPoint Copy()
     {
-        MetricPoint copy = this;
+        var copy = this;
         copy.mpComponents = this.mpComponents?.Copy();
         return copy;
     }
@@ -433,6 +416,13 @@ public struct MetricPoint
                     this.UpdateBase2ExponentialHistogramWithMinMax(number);
                     return;
                 }
+
+            case AggregationType.DoubleGauge:
+            case AggregationType.DoubleSumIncomingCumulative:
+            case AggregationType.DoubleSumIncomingDelta:
+            case AggregationType.Invalid:
+            default:
+                break;
         }
 
         this.CompleteUpdate();
@@ -490,6 +480,13 @@ public struct MetricPoint
                     this.UpdateBase2ExponentialHistogramWithMinMax(number, tags, offerExemplar);
                     return;
                 }
+
+            case AggregationType.DoubleGauge:
+            case AggregationType.DoubleSumIncomingCumulative:
+            case AggregationType.DoubleSumIncomingDelta:
+            case AggregationType.Invalid:
+            default:
+                break;
         }
 
         this.UpdateExemplar(number, tags, offerExemplar);
@@ -549,6 +546,13 @@ public struct MetricPoint
                     this.UpdateBase2ExponentialHistogramWithMinMax(number);
                     return;
                 }
+
+            case AggregationType.Invalid:
+            case AggregationType.LongGauge:
+            case AggregationType.LongSumIncomingCumulative:
+            case AggregationType.LongSumIncomingDelta:
+            default:
+                break;
         }
 
         this.CompleteUpdate();
@@ -606,6 +610,13 @@ public struct MetricPoint
                     this.UpdateBase2ExponentialHistogramWithMinMax(number, tags, offerExemplar);
                     return;
                 }
+
+            case AggregationType.Invalid:
+            case AggregationType.LongGauge:
+            case AggregationType.LongSumIncomingCumulative:
+            case AggregationType.LongSumIncomingDelta:
+            default:
+                break;
         }
 
         this.UpdateExemplar(number, tags, offerExemplar);
@@ -622,7 +633,7 @@ public struct MetricPoint
                 {
                     if (outputDelta)
                     {
-                        long initValue = Interlocked.Read(ref this.runningValue.AsLong);
+                        var initValue = Interlocked.Read(ref this.runningValue.AsLong);
                         this.snapshotValue.AsLong = initValue - this.deltaLastValue.AsLong;
                         this.deltaLastValue.AsLong = initValue;
                         this.MetricPointStatus = MetricPointStatus.NoCollectPending;
@@ -637,6 +648,13 @@ public struct MetricPoint
                     else
                     {
                         this.snapshotValue.AsLong = Interlocked.Read(ref this.runningValue.AsLong);
+
+                        // For asynchronous instruments, reset status so that points
+                        // not reported in the next callback are treated as stale.
+                        if (this.aggregatorStore.IsAsynchronous)
+                        {
+                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+                        }
                     }
 
                     break;
@@ -647,7 +665,7 @@ public struct MetricPoint
                 {
                     if (outputDelta)
                     {
-                        double initValue = InterlockedHelper.Read(ref this.runningValue.AsDouble);
+                        var initValue = InterlockedHelper.Read(ref this.runningValue.AsDouble);
                         this.snapshotValue.AsDouble = initValue - this.deltaLastValue.AsDouble;
                         this.deltaLastValue.AsDouble = initValue;
                         this.MetricPointStatus = MetricPointStatus.NoCollectPending;
@@ -662,6 +680,13 @@ public struct MetricPoint
                     else
                     {
                         this.snapshotValue.AsDouble = InterlockedHelper.Read(ref this.runningValue.AsDouble);
+
+                        // For asynchronous instruments, reset status so that points
+                        // not reported in the next callback are treated as stale.
+                        if (this.aggregatorStore.IsAsynchronous)
+                        {
+                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+                        }
                     }
 
                     break;
@@ -699,8 +724,6 @@ public struct MetricPoint
 
             case AggregationType.HistogramWithBuckets:
                 {
-                    Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
-
                     var histogramBuckets = this.mpComponents!.HistogramBuckets!;
 
                     this.mpComponents.AcquireLock();
@@ -725,8 +748,6 @@ public struct MetricPoint
 
             case AggregationType.Histogram:
                 {
-                    Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
-
                     var histogramBuckets = this.mpComponents!.HistogramBuckets!;
 
                     this.mpComponents.AcquireLock();
@@ -749,8 +770,6 @@ public struct MetricPoint
 
             case AggregationType.HistogramWithMinMaxBuckets:
                 {
-                    Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
-
                     var histogramBuckets = this.mpComponents!.HistogramBuckets!;
 
                     this.mpComponents.AcquireLock();
@@ -779,8 +798,6 @@ public struct MetricPoint
 
             case AggregationType.HistogramWithMinMax:
                 {
-                    Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
-
                     var histogramBuckets = this.mpComponents!.HistogramBuckets!;
 
                     this.mpComponents.AcquireLock();
@@ -807,8 +824,6 @@ public struct MetricPoint
 
             case AggregationType.Base2ExponentialHistogram:
                 {
-                    Debug.Assert(this.mpComponents?.Base2ExponentialBucketHistogram != null, "Base2ExponentialBucketHistogram was null");
-
                     var histogram = this.mpComponents!.Base2ExponentialBucketHistogram!;
 
                     this.mpComponents.AcquireLock();
@@ -832,8 +847,6 @@ public struct MetricPoint
 
             case AggregationType.Base2ExponentialHistogramWithMinMax:
                 {
-                    Debug.Assert(this.mpComponents?.Base2ExponentialBucketHistogram != null, "Base2ExponentialBucketHistogram was null");
-
                     var histogram = this.mpComponents!.Base2ExponentialBucketHistogram!;
 
                     this.mpComponents.AcquireLock();
@@ -856,17 +869,18 @@ public struct MetricPoint
 
                     break;
                 }
+
+            case AggregationType.Invalid:
+            default:
+                break;
         }
     }
 
     internal void TakeSnapshotWithExemplar(bool outputDelta)
     {
-        Debug.Assert(this.mpComponents != null, "this.mpComponents was null");
-        Debug.Assert(this.mpComponents!.ExemplarReservoir != null, "this.mpComponents.ExemplarReservoir was null");
-
         this.TakeSnapshot(outputDelta);
 
-        this.mpComponents.Exemplars = this.mpComponents.ExemplarReservoir!.Collect();
+        this.mpComponents!.Exemplars = this.mpComponents.ExemplarReservoir!.Collect();
     }
 
     /// <summary>
@@ -881,8 +895,6 @@ public struct MetricPoint
 
     private void UpdateHistogram(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool offerExemplar = false)
     {
-        Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
-
         var histogramBuckets = this.mpComponents!.HistogramBuckets!;
 
         this.mpComponents.AcquireLock();
@@ -902,8 +914,6 @@ public struct MetricPoint
 
     private void UpdateHistogramWithMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool offerExemplar = false)
     {
-        Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
-
         var histogramBuckets = this.mpComponents!.HistogramBuckets!;
 
         this.mpComponents.AcquireLock();
@@ -926,11 +936,9 @@ public struct MetricPoint
 
     private void UpdateHistogramWithBuckets(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool offerExemplar = false)
     {
-        Debug.Assert(this.mpComponents?.HistogramBuckets != null, "HistogramBuckets was null");
+        var histogramBuckets = this.mpComponents!.HistogramBuckets!;
 
-        var histogramBuckets = this.mpComponents!.HistogramBuckets;
-
-        int bucketIndex = histogramBuckets!.FindBucketIndex(number);
+        var bucketIndex = histogramBuckets.FindBucketIndex(number);
 
         this.mpComponents.AcquireLock();
 
@@ -950,11 +958,9 @@ public struct MetricPoint
 
     private void UpdateHistogramWithBucketsAndMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool offerExemplar = false)
     {
-        Debug.Assert(this.mpComponents?.HistogramBuckets != null, "histogramBuckets was null");
+        var histogramBuckets = this.mpComponents!.HistogramBuckets!;
 
-        var histogramBuckets = this.mpComponents!.HistogramBuckets;
-
-        int bucketIndex = histogramBuckets!.FindBucketIndex(number);
+        var bucketIndex = histogramBuckets.FindBucketIndex(number);
 
         this.mpComponents.AcquireLock();
 
@@ -983,8 +989,6 @@ public struct MetricPoint
             return;
         }
 
-        Debug.Assert(this.mpComponents?.Base2ExponentialBucketHistogram != null, "Base2ExponentialBucketHistogram was null");
-
         var histogram = this.mpComponents!.Base2ExponentialBucketHistogram!;
 
         this.mpComponents.AcquireLock();
@@ -1010,8 +1014,6 @@ public struct MetricPoint
             this.CompleteUpdateWithoutMeasurement();
             return;
         }
-
-        Debug.Assert(this.mpComponents?.Base2ExponentialBucketHistogram != null, "Base2ExponentialBucketHistogram was null");
 
         var histogram = this.mpComponents!.Base2ExponentialBucketHistogram!;
 
@@ -1039,8 +1041,6 @@ public struct MetricPoint
     {
         if (offerExemplar)
         {
-            Debug.Assert(this.mpComponents?.ExemplarReservoir != null, "ExemplarReservoir was null");
-
             // TODO: A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
             this.mpComponents!.ExemplarReservoir!.Offer(
                 new ExemplarMeasurement<long>(number, tags));
@@ -1052,8 +1052,6 @@ public struct MetricPoint
     {
         if (offerExemplar)
         {
-            Debug.Assert(this.mpComponents?.ExemplarReservoir != null, "ExemplarReservoir was null");
-
             // TODO: A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
             this.mpComponents!.ExemplarReservoir!.Offer(
                 new ExemplarMeasurement<double>(number, tags, explicitBucketHistogramBucketIndex));
@@ -1090,7 +1088,5 @@ public struct MetricPoint
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     private readonly void ThrowNotSupportedMetricTypeException(string methodName)
-    {
-        throw new NotSupportedException($"{methodName} is not supported for this metric type.");
-    }
+        => throw new NotSupportedException($"{methodName} is not supported for this metric type.");
 }

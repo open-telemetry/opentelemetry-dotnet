@@ -23,15 +23,15 @@ internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerP
         this.serviceProvider = serviceProvider;
     }
 
-    public List<InstrumentationRegistration> Instrumentation { get; } = new();
+    public List<InstrumentationRegistration> Instrumentation { get; } = [];
 
     public ResourceBuilder? ResourceBuilder { get; private set; }
 
     public TracerProvider? Provider => this.tracerProvider;
 
-    public List<BaseProcessor<Activity>> Processors { get; } = new();
+    public List<BaseProcessor<Activity>> Processors { get; } = [];
 
-    public List<string> Sources { get; } = new();
+    public List<string> Sources { get; } = [];
 
     public HashSet<string> LegacyActivityOperationNames { get; } = new(StringComparer.OrdinalIgnoreCase);
 
@@ -52,14 +52,10 @@ internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerP
     }
 
     public override TracerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
-    {
-        Debug.Assert(instrumentationFactory != null, "instrumentationFactory was null");
-
-        return this.AddInstrumentation(
+        => this.AddInstrumentation(
             typeof(TInstrumentation).Name,
             typeof(TInstrumentation).Assembly.GetName().Version?.ToString() ?? DefaultInstrumentationVersion,
-            instrumentationFactory!());
-    }
+            instrumentationFactory());
 
     public TracerProviderBuilder AddInstrumentation(
         string instrumentationName,
@@ -80,21 +76,16 @@ internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerP
 
     public TracerProviderBuilder ConfigureResource(Action<ResourceBuilder> configure)
     {
-        Debug.Assert(configure != null, "configure was null");
-
         var resourceBuilder = this.ResourceBuilder ??= ResourceBuilder.CreateDefault();
 
-        configure!(resourceBuilder);
+        configure(resourceBuilder);
 
         return this;
     }
 
     public TracerProviderBuilder SetResourceBuilder(ResourceBuilder resourceBuilder)
     {
-        Debug.Assert(resourceBuilder != null, "resourceBuilder was null");
-
         this.ResourceBuilder = resourceBuilder;
-
         return this;
     }
 
@@ -109,9 +100,7 @@ internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerP
 
     public override TracerProviderBuilder AddSource(params string[] names)
     {
-        Debug.Assert(names != null, "names was null");
-
-        foreach (var name in names!)
+        foreach (var name in names)
         {
             Guard.ThrowIfNullOrWhitespace(name);
 
@@ -125,10 +114,7 @@ internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerP
 
     public TracerProviderBuilder AddProcessor(BaseProcessor<Activity> processor)
     {
-        Debug.Assert(processor != null, "processor was null");
-
-        this.Processors.Add(processor!);
-
+        this.Processors.Add(processor);
         return this;
     }
 
@@ -150,17 +136,13 @@ internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerP
 
     public TracerProviderBuilder ConfigureBuilder(Action<IServiceProvider, TracerProviderBuilder> configure)
     {
-        Debug.Assert(configure != null, "configure was null");
-
-        configure!(this.serviceProvider, this);
+        configure(this.serviceProvider, this);
 
         return this;
     }
 
     public TracerProviderBuilder ConfigureServices(Action<IServiceCollection> configure)
-    {
-        throw new NotSupportedException("Services cannot be configured after ServiceProvider has been created.");
-    }
+        => throw new NotSupportedException("Services cannot be configured after ServiceProvider has been created.");
 
     public void AddExceptionProcessorIfEnabled(ref IEnumerable<BaseProcessor<Activity>> processors)
     {
@@ -168,7 +150,9 @@ internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerP
         {
             try
             {
-                processors = new BaseProcessor<Activity>[] { new ExceptionProcessor() }.Concat(processors);
+#pragma warning disable CA2000 // Dispose objects before losing scope
+                processors = [new ExceptionProcessor(), .. processors];
+#pragma warning restore CA2000 // Dispose objects before losing scope
             }
             catch (Exception ex)
             {

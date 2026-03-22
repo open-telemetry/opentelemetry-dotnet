@@ -45,7 +45,7 @@ public static class MetricTypeExtensions
     public static bool IsSum(this MetricType self)
     {
         var type = self & METRIC_TYPE_MASK;
-        return type == METRIC_TYPE_MONOTONIC_SUM || type == METRIC_TYPE_NON_MONOTONIC_SUM;
+        return type is METRIC_TYPE_MONOTONIC_SUM or METRIC_TYPE_NON_MONOTONIC_SUM;
     }
 
     /// <summary>

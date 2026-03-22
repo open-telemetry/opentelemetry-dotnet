@@ -74,8 +74,11 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
             return position;
         }
 
-        int charCount = str!.Length;
-        int ellipses = isParameter ? "{...}\n".Length : "...\n".Length;
+#pragma warning disable IDE0370 // Suppression is unnecessary
+        var charCount = str!.Length;
+#pragma warning restore IDE0370 // Suppression is unnecessary
+
+        var ellipses = isParameter ? "{...}\n".Length : "...\n".Length;
 
         // Ensure there is space for "{...}\n" or "...\n".
         if (buffer.Length - position - ellipses < 0)
@@ -83,7 +86,7 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
             return position;
         }
 
-        int estimateOfCharacters = (buffer.Length - position - ellipses) / 2;
+        var estimateOfCharacters = (buffer.Length - position - ellipses) / 2;
 
         // Ensure the UTF-16 encoded string can fit in buffer UTF-8 encoding.
         // And leave space for "{...}\n" or "...\n".
@@ -138,8 +141,9 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
     internal static int DateTimeGetBytes(DateTime datetime, byte[] bytes, int byteIndex)
     {
         int num;
-        int pos = byteIndex;
+        var pos = byteIndex;
 
+#pragma warning disable IDE0047 // Remove unnecessary parentheses
         num = datetime.Year;
         bytes[pos++] = (byte)('0' + ((num / 1000) % 10));
         bytes[pos++] = (byte)('0' + ((num / 100) % 10));
@@ -194,7 +198,7 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
                 break;
 
             case DateTimeKind.Local:
-                TimeSpan ts = TimeZoneInfo.Local.GetUtcOffset(datetime);
+                var ts = TimeZoneInfo.Local.GetUtcOffset(datetime);
 
                 bytes[pos++] = (byte)(ts.Hours >= 0 ? '+' : '-');
 
@@ -214,6 +218,7 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
                 // Skip
                 break;
         }
+#pragma warning restore IDE0047 // Remove unnecessary parentheses
 
         return pos - byteIndex;
     }
@@ -235,7 +240,7 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
             if (this.formatMessage && eventMessage != null && payload != null && payload.Count > 0)
             {
                 // Use string.Format to format the message with parameters
-                string messageToWrite = string.Format(System.Globalization.CultureInfo.InvariantCulture, eventMessage, payload.ToArray());
+                var messageToWrite = string.Format(System.Globalization.CultureInfo.InvariantCulture, eventMessage, [.. payload]);
                 pos = EncodeInBuffer(messageToWrite, false, buffer, pos);
             }
             else
@@ -244,25 +249,18 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
                 if (payload != null)
                 {
                     // Not using foreach because it can cause allocations
-                    for (int i = 0; i < payload.Count; ++i)
+                    for (var i = 0; i < payload.Count; ++i)
                     {
-                        object? obj = payload[i];
-                        if (obj != null)
-                        {
-                            pos = EncodeInBuffer(obj.ToString() ?? "null", true, buffer, pos);
-                        }
-                        else
-                        {
-                            pos = EncodeInBuffer("null", true, buffer, pos);
-                        }
+                        var obj = payload[i];
+                        pos = obj != null ? EncodeInBuffer(obj.ToString() ?? "null", true, buffer, pos) : EncodeInBuffer("null", true, buffer, pos);
                     }
                 }
             }
 
             buffer[pos++] = (byte)'\n';
-            int byteCount = pos - 0;
+            var byteCount = pos - 0;
 #pragma warning disable CA2000 // Dispose objects before losing scope
-            if (this.configRefresher.TryGetLogStream(byteCount, out Stream? stream, out int availableByteCount))
+            if (this.configRefresher.TryGetLogStream(byteCount, out var stream, out var availableByteCount))
 #pragma warning restore CA2000 // Dispose objects before losing scope
             {
                 if (availableByteCount >= byteCount)

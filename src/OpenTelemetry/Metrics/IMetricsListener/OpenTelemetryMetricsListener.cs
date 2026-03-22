@@ -47,7 +47,7 @@ internal sealed class OpenTelemetryMetricsListener : IMetricsListener, IDisposab
     public bool InstrumentPublished(Instrument instrument, out object? userState)
     {
         userState = null;
-        bool result = false;
+        var result = false;
 
         if (this.meterProviderSdk is { })
         {

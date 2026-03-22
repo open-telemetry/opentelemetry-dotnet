@@ -11,7 +11,7 @@ internal sealed class Program
 {
     private static readonly ActivitySource MyActivitySource = new("StratifiedSampling.POC");
 
-    public static void Main(string[] args)
+    public static void Main()
     {
         // We wrap the stratified sampler within a parentbased sampler.
         // This is to enable downstream participants (i.e., the non-root spans) to have
@@ -47,10 +47,9 @@ internal sealed class Program
             using (var activity = MyActivitySource.StartActivity(ActivityKind.Internal, parentContext: default, tags: tagsList))
             {
                 activity?.SetTag("foo", "bar");
-                using (var activity2 = MyActivitySource.StartActivity(ActivityKind.Internal, parentContext: default, tags: tagsList))
-                {
-                    activity2?.SetTag("foo", "child");
-                }
+
+                using var activity2 = MyActivitySource.StartActivity(ActivityKind.Internal, parentContext: default, tags: tagsList);
+                activity2?.SetTag("foo", "child");
             }
 
             tagsList.Clear();

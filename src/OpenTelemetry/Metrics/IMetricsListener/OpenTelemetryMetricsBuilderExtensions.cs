@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Internal;
@@ -54,13 +53,11 @@ internal static class OpenTelemetryMetricsBuilderExtensions
         IServiceCollection services,
         Action<MeterProviderBuilder> configure)
     {
-        Debug.Assert(services != null, "services was null");
-
         Guard.ThrowIfNull(configure);
 
-        var builder = new MeterProviderBuilderBase(services!);
+        var builder = new MeterProviderBuilderBase(services);
 
-        services!.TryAddEnumerable(
+        services.TryAddEnumerable(
             ServiceDescriptor.Singleton<IMetricsListener, OpenTelemetryMetricsListener>());
 
         configure(builder);

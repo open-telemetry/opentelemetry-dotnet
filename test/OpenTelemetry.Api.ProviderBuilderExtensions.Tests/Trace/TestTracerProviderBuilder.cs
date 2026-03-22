@@ -65,7 +65,7 @@ internal sealed class TestTracerProviderBuilder : TracerProviderBuilder, ITracer
         }
         else
         {
-            foreach (string name in names)
+            foreach (var name in names)
             {
                 this.Sources.Add(name);
             }

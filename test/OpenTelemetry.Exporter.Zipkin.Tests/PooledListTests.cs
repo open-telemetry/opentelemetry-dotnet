@@ -51,7 +51,7 @@ public class PooledListTests
         // The Add() method has a condition to double the size of the buffer
         // when the Count exceeds the buffer size.
         // This for loop is meant to trigger that condition.
-        for (int i = 0; i <= size; i++)
+        for (var i = 0; i <= size; i++)
         {
             PooledList<int>.Add(ref pooledList, i);
         }

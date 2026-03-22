@@ -1,10 +1,10 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-namespace Examples.AspNetCore;
-
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+
+namespace Examples.AspNetCore;
 
 /// <summary>
 /// It is recommended to use a custom type to hold references for
@@ -19,7 +19,7 @@ public sealed class InstrumentationSource : IDisposable
 
     public InstrumentationSource()
     {
-        string? version = typeof(InstrumentationSource).Assembly.GetName().Version?.ToString();
+        var version = typeof(InstrumentationSource).Assembly.GetName().Version?.ToString();
         this.ActivitySource = new ActivitySource(ActivitySourceName, version);
         this.meter = new Meter(MeterName, version);
         this.FreezingDaysCounter = this.meter.CreateCounter<long>("weather.days.freezing", description: "The number of days where the temperature is below freezing");

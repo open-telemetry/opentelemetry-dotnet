@@ -26,14 +26,22 @@ public class BaggageTests
     [Fact]
     public void SetAndGetTest()
     {
-        var list = new List<KeyValuePair<string, string>>(2)
+        var list = new List<KeyValuePair<string, string>>(4)
         {
             new(K1, V1),
-            new(K2, V2),
+            new("key2", "VALUE2"),
+            new("KEY2", "VALUE2"),
+
+            // Encode Unicode characters in Basic Multilingual Plane (U+0000 to U+FFFF)
+            // and in supplementary code points (U+10000 to U+10FFFF)
+            new("key \U000000A9", "value \U0001F600"),
         };
 
         Baggage.SetBaggage(K1, V1);
-        var baggage = Baggage.Current.SetBaggage(K2, V2);
+        var baggage = Baggage.Current.SetBaggage(new KeyValuePair<string, string?>("key2", "value2"));
+        baggage = baggage.SetBaggage(new KeyValuePair<string, string?>("key2", "VALUE2"));
+        baggage = baggage.SetBaggage(new KeyValuePair<string, string?>("KEY2", "VALUE2"));
+        baggage = baggage.SetBaggage("key \U000000A9", "value \U0001F600");
         Baggage.Current = baggage;
 
         Assert.NotEmpty(Baggage.GetBaggage());
@@ -41,11 +49,13 @@ public class BaggageTests
 
         Assert.Equal(V1, Baggage.GetBaggage(K1));
 #pragma warning disable CA1308 // Normalize strings to uppercase
-        Assert.Equal(V1, Baggage.GetBaggage(K1.ToLower(CultureInfo.InvariantCulture)));
+        Assert.Null(Baggage.GetBaggage(K1.ToLower(CultureInfo.InvariantCulture)));
 #pragma warning restore CA1308 // Normalize strings to uppercase
-        Assert.Equal(V1, Baggage.GetBaggage(K1.ToUpper(CultureInfo.InvariantCulture)));
+        Assert.Null(Baggage.GetBaggage(K1.ToUpper(CultureInfo.InvariantCulture)));
         Assert.Null(Baggage.GetBaggage("NO_KEY"));
-        Assert.Equal(V2, Baggage.Current.GetBaggage(K2));
+        Assert.Equal("VALUE2", Baggage.Current.GetBaggage("key2"));
+        Assert.Equal("VALUE2", Baggage.Current.GetBaggage("KEY2"));
+        Assert.Equal("value \U0001F600", Baggage.Current.GetBaggage("key \U000000A9"));
 
         Assert.Throws<ArgumentException>(() => Baggage.GetBaggage(null!));
     }
@@ -63,6 +73,21 @@ public class BaggageTests
         Baggage.SetBaggage(new Dictionary<string, string?> { [K1] = V1 }, baggage);
 
         Assert.Equal(list, Baggage.GetBaggage());
+    }
+
+    [Fact]
+    public void SetEmptyNameTest()
+    {
+        var baggage = Baggage.Current;
+        baggage = Baggage.SetBaggage(K1, V1, baggage);
+
+        Assert.Equal(1, Baggage.Current.Count);
+        Assert.Equal(1, baggage.Count);
+
+        baggage = Baggage.Current.SetBaggage(string.Empty, "unused-value-1");
+
+        Assert.Equal(1, baggage.Count);
+        Assert.Contains(baggage.GetBaggage(), kvp => kvp.Key == K1);
     }
 
     [Fact]
@@ -100,8 +125,8 @@ public class BaggageTests
         var baggage = Baggage.SetBaggage(new Dictionary<string, string?>
         {
             [K1] = V1,
-            [K2] = V2,
-            [K3] = V3,
+            ["key2"] = "value2",
+            ["KEY2"] = "VALUE2",
         });
 
         var baggage2 = Baggage.RemoveBaggage(K1, baggage);
@@ -133,9 +158,9 @@ public class BaggageTests
     public void ContextFlowTest()
     {
         var baggage = Baggage.SetBaggage(K1, V1);
-        var baggage2 = Baggage.Current.SetBaggage(K2, V2);
+        var baggage2 = Baggage.Current.SetBaggage("key2", "value2");
         Baggage.Current = baggage2;
-        var baggage3 = Baggage.SetBaggage(K3, V3);
+        var baggage3 = Baggage.SetBaggage("KEY2", "VALUE2");
 
         Assert.Equal(1, baggage.Count);
         Assert.Equal(2, baggage2.Count);
@@ -213,9 +238,11 @@ public class BaggageTests
             ["Key3"] = null!, // Note: This causes Key3 to be removed
         });
 
-        Assert.Equal(2, baggage.Count);
+        Assert.Equal(4, baggage.Count);
         Assert.Contains(baggage.GetBaggage(), kvp => kvp.Key == K1);
-        Assert.Equal("VALUE2", Baggage.GetBaggage("key2", baggage));
+        Assert.Equal("value2", Baggage.GetBaggage("key2", baggage));
+        Assert.Equal("VALUE2", Baggage.GetBaggage("KEY2", baggage));
+        Assert.Equal("VALUE3", Baggage.GetBaggage("KEY3", baggage));
     }
 
     [Fact]

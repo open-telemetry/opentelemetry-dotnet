@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using OpenTelemetry.Metrics;
@@ -114,7 +113,10 @@ internal sealed class PrometheusMetric
 
         return sb?.ToString() ?? metricName;
 
-        static StringBuilder CreateStringBuilder(string name) => new(name.Length);
+        static StringBuilder CreateStringBuilder(string name)
+        {
+            return new(name.Length);
+        }
     }
 
     internal static string RemoveAnnotations(string unit)
@@ -157,8 +159,6 @@ internal sealed class PrometheusMetric
             return unit;
         }
 
-        Debug.Assert(sb != null, "sb was null");
-
         sb!.Append(unit, lastWriteIndex, unit.Length - lastWriteIndex);
 
         return sb.ToString();
@@ -166,7 +166,7 @@ internal sealed class PrometheusMetric
 
     internal static PrometheusType GetPrometheusType(MetricType openTelemetryMetricType)
     {
-        int metricType = (int)openTelemetryMetricType >> 4;
+        var metricType = (int)openTelemetryMetricType >> 4;
 
         /* Counter becomes counter
            Gauge becomes gauge
@@ -215,7 +215,7 @@ internal sealed class PrometheusMetric
     {
         updatedPerUnit = null;
 
-        for (int i = 0; i < updatedUnit.Length; i++)
+        for (var i = 0; i < updatedUnit.Length; i++)
         {
             if (updatedUnit[i] == '/')
             {

@@ -52,6 +52,8 @@ public class MetricExporterTests
                 Assert.True(reader.Collect());
                 Assert.True(meterProvider.ForceFlush());
                 break;
+            default:
+                break;
         }
     }
 
@@ -59,9 +61,7 @@ public class MetricExporterTests
     private sealed class PushOnlyMetricExporter : BaseExporter<Metric>
     {
         public override ExportResult Export(in Batch<Metric> batch)
-        {
-            return ExportResult.Success;
-        }
+            => ExportResult.Success;
     }
 
     [ExportModes(ExportModes.Pull)]
@@ -70,17 +70,13 @@ public class MetricExporterTests
         public Func<int, bool>? Collect { get; set; }
 
         public override ExportResult Export(in Batch<Metric> batch)
-        {
-            return ExportResult.Success;
-        }
+            => ExportResult.Success;
     }
 
     [ExportModes(ExportModes.Pull | ExportModes.Push)]
     private sealed class PushPullMetricExporter : BaseExporter<Metric>
     {
         public override ExportResult Export(in Batch<Metric> batch)
-        {
-            return ExportResult.Success;
-        }
+            => ExportResult.Success;
     }
 }

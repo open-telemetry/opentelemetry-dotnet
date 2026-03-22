@@ -88,14 +88,7 @@ public sealed class B3Propagator : TextMapPropagator
             return context;
         }
 
-        if (this.singleHeader)
-        {
-            return ExtractFromSingleHeader(context, carrier, getter);
-        }
-        else
-        {
-            return ExtractFromMultipleHeaders(context, carrier, getter);
-        }
+        return this.singleHeader ? ExtractFromSingleHeader(context, carrier, getter) : ExtractFromMultipleHeaders(context, carrier, getter);
     }
 
     /// <inheritdoc/>
@@ -208,8 +201,14 @@ public sealed class B3Propagator : TextMapPropagator
                 return context;
             }
 
-            var parts = header!.Split(XB3CombinedDelimiter);
-            if (parts.Length < 2 || parts.Length > 4)
+            var parts =
+#if NET
+                header.Split(XB3CombinedDelimiter);
+#else
+                header!.Split(XB3CombinedDelimiter);
+#endif
+
+            if (parts.Length is < 2 or > 4)
             {
                 return context;
             }

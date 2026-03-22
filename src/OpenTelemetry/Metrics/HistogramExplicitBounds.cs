@@ -31,7 +31,7 @@ internal sealed class HistogramExplicitBounds
                     return null;
                 }
 
-                int median = min + ((max - min) / 2);
+                var median = min + ((max - min) / 2);
                 return new BucketLookupNode
                 {
                     Index = median,
@@ -56,9 +56,7 @@ internal sealed class HistogramExplicitBounds
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int FindBucketIndex(double value)
-    {
-        return this.findHistogramBucketIndex(value);
-    }
+        => this.findHistogramBucketIndex(value);
 
     private static double[] CleanUpInfinitiesFromExplicitBounds(double[] bounds)
     {
@@ -66,9 +64,7 @@ internal sealed class HistogramExplicitBounds
         {
             if (double.IsNegativeInfinity(bounds[i]) || double.IsPositiveInfinity(bounds[i]))
             {
-                return bounds
-                    .Where(b => !double.IsNegativeInfinity(b) && !double.IsPositiveInfinity(b))
-                    .ToArray();
+                return [.. bounds.Where(b => !double.IsNegativeInfinity(b) && !double.IsPositiveInfinity(b))];
             }
         }
 
@@ -78,9 +74,7 @@ internal sealed class HistogramExplicitBounds
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int FindBucketIndexBinary(double value)
     {
-        BucketLookupNode? current = this.bucketLookupTreeRoot;
-
-        Debug.Assert(current != null, "Bucket root was null.");
+        var current = this.bucketLookupTreeRoot;
 
         do
         {
@@ -107,10 +101,8 @@ internal sealed class HistogramExplicitBounds
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int FindBucketIndexLinear(double value)
     {
-        Debug.Assert(this.Bounds != null, "ExplicitBounds was null.");
-
         int i;
-        for (i = 0; i < this.Bounds!.Length; i++)
+        for (i = 0; i < this.Bounds.Length; i++)
         {
             // Upper bound is inclusive
             if (value <= this.Bounds[i])

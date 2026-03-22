@@ -26,7 +26,7 @@ internal sealed class MetricPointOptionalComponents
 
     public MetricPointOptionalComponents Copy()
     {
-        MetricPointOptionalComponents copy = new MetricPointOptionalComponents
+        var copy = new MetricPointOptionalComponents
         {
             HistogramBuckets = this.HistogramBuckets?.Copy(),
             Base2ExponentialBucketHistogram = this.Base2ExponentialBucketHistogram?.Copy(),

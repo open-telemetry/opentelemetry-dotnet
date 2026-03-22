@@ -31,7 +31,7 @@ internal static class TraceStateUtils
             return false;
         }
 
-        bool isValid = true;
+        var isValid = true;
         try
         {
             var names = new HashSet<string>();
@@ -41,7 +41,7 @@ internal static class TraceStateUtils
             {
                 // tracestate: rojo=00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-01,congo=BleGNlZWRzIHRohbCBwbGVhc3VyZS4
 
-                int pairEnd = traceStateSpan.IndexOf(',');
+                var pairEnd = traceStateSpan.IndexOf(',');
                 if (pairEnd < 0)
                 {
                     pairEnd = traceStateSpan.Length;
@@ -56,7 +56,11 @@ internal static class TraceStateUtils
                 var keyStr = key.ToString();
                 if (names.Add(keyStr))
                 {
+#if NET
+                    tracestate.Add(new KeyValuePair<string, string>(keyStr, value.ToString()));
+#else
                     tracestate!.Add(new KeyValuePair<string, string>(keyStr, value.ToString()));
+#endif
                 }
                 else
                 {
@@ -82,7 +86,11 @@ internal static class TraceStateUtils
 
             if (!isValid)
             {
+#if NET
+                tracestate.Clear();
+#else
                 tracestate!.Clear();
+#endif
                 return false;
             }
 
@@ -114,7 +122,7 @@ internal static class TraceStateUtils
 
         var sb = new StringBuilder();
 
-        int ind = 0;
+        var ind = 0;
         foreach (var entry in traceState)
         {
             if (ind++ < MaxKeyValuePairsCount)
@@ -191,12 +199,10 @@ internal static class TraceStateUtils
                 break;
             }
 
-            if (!(c >= 'a' && c <= 'z')
-                && !(c >= '0' && c <= '9')
-                && c != '_'
-                && c != '-'
-                && c != '*'
-                && c != '/')
+            if (c is not (>= 'a' and <= 'z') and not (>= '0' and <= '9') and not '_'
+                and not '-'
+                and not '*'
+                and not '/')
             {
                 return false;
             }
@@ -205,34 +211,32 @@ internal static class TraceStateUtils
         i++; // skip @ or increment further than key.Length
 
         var vendorLength = key.Length - i;
-        if (vendorLength == 0 || vendorLength > 14)
+        if (vendorLength is not 0 and <= 14)
         {
-            // vendor name should be at least 1 to 14 character long
-            return false;
-        }
-
-        if (vendorLength > 0 && i > 242)
-        {
-            // tenant section should be less than 241 characters long
-            return false;
-        }
-
-        for (; i < key.Length; i++)
-        {
-            var c = key[i];
-
-            if (!(c >= 'a' && c <= 'z')
-                && !(c >= '0' && c <= '9')
-                && c != '_'
-                && c != '-'
-                && c != '*'
-                && c != '/')
+            if (vendorLength > 0 && i > 242)
             {
+                // tenant section should be less than 241 characters long
                 return false;
             }
+
+            for (; i < key.Length; i++)
+            {
+                var c = key[i];
+
+                if (c is not (>= 'a' and <= 'z') and not (>= '0' and <= '9') and not '_'
+                    and not '-'
+                    and not '*'
+                    and not '/')
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
-        return true;
+        // vendor name should be at least 1 to 14 character long
+        return false;
     }
 
     private static bool ValidateValue(ReadOnlySpan<char> value)
@@ -247,7 +251,7 @@ internal static class TraceStateUtils
 
         foreach (var c in value)
         {
-            if (c == ',' || c == '=' || c < ' ' /* '\u0020' */ || c > '~' /* '\u007E' */)
+            if (c is ',' or '=' or < ' ' /* '\u0020' */ or > '~' /* '\u007E' */)
             {
                 return false;
             }

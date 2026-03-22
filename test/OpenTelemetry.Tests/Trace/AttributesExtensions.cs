@@ -16,8 +16,8 @@ internal static class AttributesExtensions
         this IEnumerable<KeyValuePair<string, object>> attributes,
         IEnumerable<KeyValuePair<string, object>> expectedAttributes)
     {
-        var expectedKeyValuePairs = expectedAttributes as KeyValuePair<string, object>[] ?? expectedAttributes.ToArray();
-        var actualKeyValuePairs = attributes as KeyValuePair<string, object>[] ?? attributes.ToArray();
+        var expectedKeyValuePairs = expectedAttributes as KeyValuePair<string, object>[] ?? [.. expectedAttributes];
+        var actualKeyValuePairs = attributes as KeyValuePair<string, object>[] ?? [.. attributes];
         Assert.Equal(actualKeyValuePairs.Length, expectedKeyValuePairs.Length);
 
         foreach (var attr in actualKeyValuePairs)

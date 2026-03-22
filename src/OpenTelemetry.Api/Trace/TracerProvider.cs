@@ -57,9 +57,7 @@ public class TracerProvider : BaseProvider
         string name,
         string? version,
         IEnumerable<KeyValuePair<string, object?>>? tags)
-    {
-        return this.GetTracer(name, version, null, tags);
-    }
+        => this.GetTracer(name, version, null, tags);
 
     /// <summary>
     /// Gets a tracer with given name, version and tags.
@@ -108,7 +106,7 @@ public class TracerProvider : BaseProvider
                 };
 
                 tracer = new(new(activitySourceOptions));
-                bool result = tracers.TryAdd(key, tracer);
+                var result = tracers.TryAdd(key, tracer);
 #if DEBUG
                 System.Diagnostics.Debug.Assert(result, "Write into tracers cache failed");
 #endif
@@ -160,16 +158,9 @@ public class TracerProvider : BaseProvider
         }
 
         public bool Equals(TracerKey other)
-        {
-            if (!string.Equals(this.Name, other.Name, StringComparison.Ordinal) ||
-                !string.Equals(this.Version, other.Version, StringComparison.Ordinal) ||
-                !string.Equals(this.SchemaUrl, other.SchemaUrl, StringComparison.Ordinal))
-            {
-                return false;
-            }
-
-            return AreTagsEqual(this.Tags, other.Tags);
-        }
+            => string.Equals(this.Name, other.Name, StringComparison.Ordinal) &&
+               string.Equals(this.Version, other.Version, StringComparison.Ordinal) &&
+               string.Equals(this.SchemaUrl, other.SchemaUrl, StringComparison.Ordinal) && AreTagsEqual(this.Tags, other.Tags);
 
         public override int GetHashCode()
         {
@@ -205,7 +196,7 @@ public class TracerProvider : BaseProvider
                 return false;
             }
 
-            for (int i = 0; i < tags1.Length; i++)
+            for (var i = 0; i < tags1.Length; i++)
             {
                 var kvp1 = tags1[i];
                 var kvp2 = tags2[i];
@@ -255,7 +246,7 @@ public class TracerProvider : BaseProvider
 #endif
                     if (kvp.Value != null)
                     {
-                        hash = (hash * 31) + kvp.Value.GetHashCode()!;
+                        hash = (hash * 31) + kvp.Value.GetHashCode();
                     }
                 }
             }
@@ -275,7 +266,7 @@ public class TracerProvider : BaseProvider
             orderedTagList.Sort((left, right) =>
             {
                 // First compare by key
-                int keyComparison = string.Compare(left.Key, right.Key, StringComparison.Ordinal);
+                var keyComparison = string.Compare(left.Key, right.Key, StringComparison.Ordinal);
                 if (keyComparison != 0)
                 {
                     return keyComparison;

@@ -117,7 +117,7 @@ public sealed class PrometheusExporterMiddlewareTests
             services => services.Configure<PrometheusAspNetCoreOptions>(o => o.ScrapeEndpointPath = "/metrics_options"),
             validateResponse: rsp =>
             {
-                if (!rsp.Headers.TryGetValues("X-MiddlewareExecuted", out IEnumerable<string>? headers))
+                if (!rsp.Headers.TryGetValues("X-MiddlewareExecuted", out var headers))
                 {
                     headers = [];
                 }
@@ -144,7 +144,7 @@ public sealed class PrometheusExporterMiddlewareTests
             services => services.Configure<PrometheusAspNetCoreOptions>(o => o.ScrapeEndpointPath = "/metrics_options"),
             validateResponse: rsp =>
             {
-                if (!rsp.Headers.TryGetValues("X-MiddlewareExecuted", out IEnumerable<string>? headers))
+                if (!rsp.Headers.TryGetValues("X-MiddlewareExecuted", out var headers))
                 {
                     headers = [];
                 }
@@ -156,7 +156,7 @@ public sealed class PrometheusExporterMiddlewareTests
     [Fact]
     public async Task PrometheusExporterMiddlewareIntegration_MeterProvider()
     {
-        using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(MeterName)
             .ConfigureResource(x => x.Clear().AddService("my_service", serviceInstanceId: "id1"))
             .AddPrometheusExporter()
@@ -220,7 +220,7 @@ public sealed class PrometheusExporterMiddlewareTests
     [Fact]
     public async Task PrometheusExporterMiddlewareIntegration_MapEndpoint_WithMeterProvider()
     {
-        using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(MeterName)
             .ConfigureResource(x => x.Clear().AddService("my_service", serviceInstanceId: "id1"))
             .AddPrometheusExporter()
@@ -445,11 +445,11 @@ public sealed class PrometheusExporterMiddlewareTests
             ? $"{string.Join(",", meterTags.Select(x => $"{x.Key}=\"{x.Value}\""))},"
             : string.Empty;
 
-        string content = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings();
+        var content = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings();
 
         var timestampPart = disableTimestamp ? string.Empty : " (\\d+)";
         var timestampPartOpenMetrics = disableTimestamp ? string.Empty : " (\\d+\\.\\d{3})";
-        string expected = requestOpenMetrics
+        var expected = requestOpenMetrics
             ? $$"""
                     # TYPE target info
                     # HELP target Target metadata

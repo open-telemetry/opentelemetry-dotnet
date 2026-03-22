@@ -103,9 +103,9 @@ internal
     /// cref="LogRecordSeverity"/>.</returns>
     public static string ToShortName(this LogRecordSeverity logRecordSeverity)
     {
-        int severityLevel = (int)logRecordSeverity;
+        var severityLevel = (int)logRecordSeverity;
 
-        if (severityLevel < 0 || severityLevel > 24)
+        if (severityLevel is < 0 or > 24)
         {
             severityLevel = 0;
         }

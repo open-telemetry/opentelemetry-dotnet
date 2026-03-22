@@ -18,11 +18,11 @@ internal sealed class InstrumentationScopeLogger : Logger
     public static InstrumentationScopeLogger Default { get; } = new(string.Empty);
 
     public static InstrumentationScopeLogger GetInstrumentationScopeLoggerForName(string? name)
-    {
-        return string.IsNullOrWhiteSpace(name)
+        => string.IsNullOrWhiteSpace(name)
             ? Default
+#pragma warning disable IDE0370 // Suppression is unnecessary
             : Cache.GetOrAdd(name!, static n => new(n));
-    }
+#pragma warning restore IDE0370 // Suppression is unnecessary
 
     public override void EmitLog(in LogRecordData data, in LogRecordAttributeList attributes)
         => throw new NotSupportedException();

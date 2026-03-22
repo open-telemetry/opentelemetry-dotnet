@@ -10,7 +10,7 @@ public class SimpleExportProcessorTests
     [Fact]
     public void Verify_SimpleExportProcessor_HandlesException()
     {
-        int counter = 0;
+        var counter = 0;
 
         // here our exporter will throw an exception.
 #pragma warning disable CA2000 // Dispose objects before losing scope

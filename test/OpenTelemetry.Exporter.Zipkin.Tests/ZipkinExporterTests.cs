@@ -37,7 +37,7 @@ public sealed class ZipkinExporterTests : IDisposable
     public ZipkinExporterTests()
     {
         this.testServer = TestHttpServer.RunServer(
-            ctx => ProcessServerRequest(ctx),
+            ProcessServerRequest,
             out this.testServerHost,
             out this.testServerPort);
 
@@ -47,7 +47,7 @@ public sealed class ZipkinExporterTests : IDisposable
 
             using StreamReader readStream = new(context.Request.InputStream);
 
-            string requestContent = readStream.ReadToEnd();
+            var requestContent = readStream.ReadToEnd();
 
             Responses.TryAdd(
                 Guid.Parse(context.Request.QueryString["requestId"]!),
@@ -58,15 +58,13 @@ public sealed class ZipkinExporterTests : IDisposable
     }
 
     public void Dispose()
-    {
-        this.testServer.Dispose();
-    }
+        => this.testServer.Dispose();
 
     [Fact]
     public void AddAddZipkinExporterNamedOptionsSupported()
     {
-        int defaultExporterOptionsConfigureOptionsInvocations = 0;
-        int namedExporterOptionsConfigureOptionsInvocations = 0;
+        var defaultExporterOptionsConfigureOptionsInvocations = 0;
+        var namedExporterOptionsConfigureOptionsInvocations = 0;
 
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .ConfigureServices(services =>
@@ -94,12 +92,12 @@ public sealed class ZipkinExporterTests : IDisposable
     public void SuppressesInstrumentation()
     {
         const string activitySourceName = "zipkin.test";
-        Guid requestId = Guid.NewGuid();
+        var requestId = Guid.NewGuid();
 #pragma warning disable CA2000 // Dispose objects before losing scope
         TestActivityProcessor testActivityProcessor = new();
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
-        int endCalledCount = 0;
+        var endCalledCount = 0;
 
         testActivityProcessor.EndAction =
             (a) =>
@@ -213,7 +211,7 @@ public sealed class ZipkinExporterTests : IDisposable
 
         var defaultFactory = options.HttpClientFactory;
 
-        int invocations = 0;
+        var invocations = 0;
         options.HttpClientFactory = () =>
         {
             invocations++;
@@ -260,7 +258,7 @@ public sealed class ZipkinExporterTests : IDisposable
 
         services.AddHttpClient();
 
-        int invocations = 0;
+        var invocations = 0;
 
         services.AddHttpClient("ZipkinExporter", configureClient: (client) => invocations++);
 
@@ -329,7 +327,7 @@ public sealed class ZipkinExporterTests : IDisposable
         string? statusDescription = null,
         bool addErrorTag = false)
     {
-        Guid requestId = Guid.NewGuid();
+        var requestId = Guid.NewGuid();
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
         ZipkinExporter exporter = new(
@@ -399,7 +397,7 @@ public sealed class ZipkinExporterTests : IDisposable
         var traceId = useShortTraceIds ? TraceId.Substring(TraceId.Length - 16, 16) : TraceId;
 
         string statusTag;
-        string errorTag = string.Empty;
+        var errorTag = string.Empty;
         switch (statusCode)
         {
             case ActivityStatusCode.Ok:

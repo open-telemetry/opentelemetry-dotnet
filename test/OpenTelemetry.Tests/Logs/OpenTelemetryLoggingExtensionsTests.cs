@@ -18,7 +18,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
     [InlineData(true)]
     public void ServiceCollectionAddOpenTelemetryNoParametersTest(bool callUseExtension)
     {
-        bool optionsCallbackInvoked = false;
+        var optionsCallbackInvoked = false;
 
         var serviceCollection = new ServiceCollection();
 
@@ -39,9 +39,9 @@ public sealed class OpenTelemetryLoggingExtensionsTests
             optionsCallbackInvoked = true;
         });
 
-        using ServiceProvider serviceProvider = serviceCollection.BuildServiceProvider();
+        using var serviceProvider = serviceCollection.BuildServiceProvider();
 
-        ILoggerFactory? loggerFactory = serviceProvider.GetService<ILoggerFactory>();
+        var loggerFactory = serviceProvider.GetService<ILoggerFactory>();
 
         Assert.NotNull(loggerFactory);
 
@@ -60,15 +60,15 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         int numberOfBuilderRegistrations,
         int numberOfOptionsRegistrations)
     {
-        int configureCallbackInvocations = 0;
-        int optionsCallbackInvocations = 0;
+        var configureCallbackInvocations = 0;
+        var optionsCallbackInvocations = 0;
         OpenTelemetryLoggerOptions? optionsInstance = null;
 
         var serviceCollection = new ServiceCollection();
 
         serviceCollection.AddLogging(logging =>
         {
-            for (int i = 0; i < numberOfBuilderRegistrations; i++)
+            for (var i = 0; i < numberOfBuilderRegistrations; i++)
             {
                 if (callUseExtension)
                 {
@@ -81,14 +81,14 @@ public sealed class OpenTelemetryLoggingExtensionsTests
             }
         });
 
-        for (int i = 0; i < numberOfOptionsRegistrations; i++)
+        for (var i = 0; i < numberOfOptionsRegistrations; i++)
         {
             serviceCollection.Configure<OpenTelemetryLoggerOptions>(OptionsCallback);
         }
 
-        using ServiceProvider serviceProvider = serviceCollection.BuildServiceProvider();
+        using var serviceProvider = serviceCollection.BuildServiceProvider();
 
-        ILoggerFactory? loggerFactory = serviceProvider.GetService<ILoggerFactory>();
+        var loggerFactory = serviceProvider.GetService<ILoggerFactory>();
 
         Assert.NotNull(loggerFactory);
 
@@ -162,10 +162,10 @@ public sealed class OpenTelemetryLoggingExtensionsTests
     [Fact]
     public void UseOpenTelemetryOptionsOrderingTest()
     {
-        int currentIndex = -1;
-        int beforeDelegateIndex = -1;
-        int extensionDelegateIndex = -1;
-        int afterDelegateIndex = -1;
+        var currentIndex = -1;
+        var beforeDelegateIndex = -1;
+        var extensionDelegateIndex = -1;
+        var afterDelegateIndex = -1;
 
         var serviceCollection = new ServiceCollection();
 

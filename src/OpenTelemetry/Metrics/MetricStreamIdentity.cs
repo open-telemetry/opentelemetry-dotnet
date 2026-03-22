@@ -69,7 +69,7 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
             hash = (hash * 31) + this.MeterName.GetHashCode();
             hash = (hash * 31) + this.MeterVersion.GetHashCode();
             hash = (hash * 31) + this.MeterSchemaUrl.GetHashCode();
-            hash = (hash * 31) + this.MeterTags?.GetHashCode() ?? 0;
+            hash = (hash * 31) + (this.MeterTags?.GetHashCode() ?? 0);
             hash = (hash * 31) + this.InstrumentName.GetHashCode();
             hash = (hash * 31) + this.HistogramRecordMinMax.GetHashCode();
             hash = (hash * 31) + this.ExponentialHistogramMaxSize.GetHashCode();
@@ -132,44 +132,55 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
         || this.InstrumentType == typeof(Histogram<float>)
         || this.InstrumentType == typeof(Histogram<double>);
 
+    public bool IsAsynchronous =>
+        this.InstrumentType == typeof(ObservableCounter<long>)
+        || this.InstrumentType == typeof(ObservableCounter<int>)
+        || this.InstrumentType == typeof(ObservableCounter<short>)
+        || this.InstrumentType == typeof(ObservableCounter<byte>)
+        || this.InstrumentType == typeof(ObservableCounter<float>)
+        || this.InstrumentType == typeof(ObservableCounter<double>)
+        || this.InstrumentType == typeof(ObservableUpDownCounter<long>)
+        || this.InstrumentType == typeof(ObservableUpDownCounter<int>)
+        || this.InstrumentType == typeof(ObservableUpDownCounter<short>)
+        || this.InstrumentType == typeof(ObservableUpDownCounter<byte>)
+        || this.InstrumentType == typeof(ObservableUpDownCounter<float>)
+        || this.InstrumentType == typeof(ObservableUpDownCounter<double>)
+        || this.InstrumentType == typeof(ObservableGauge<long>)
+        || this.InstrumentType == typeof(ObservableGauge<int>)
+        || this.InstrumentType == typeof(ObservableGauge<short>)
+        || this.InstrumentType == typeof(ObservableGauge<byte>)
+        || this.InstrumentType == typeof(ObservableGauge<float>)
+        || this.InstrumentType == typeof(ObservableGauge<double>);
+
     public static bool operator ==(MetricStreamIdentity metricIdentity1, MetricStreamIdentity metricIdentity2) => metricIdentity1.Equals(metricIdentity2);
 
     public static bool operator !=(MetricStreamIdentity metricIdentity1, MetricStreamIdentity metricIdentity2) => !metricIdentity1.Equals(metricIdentity2);
 
     public override readonly bool Equals(object? obj)
-    {
-        return obj is MetricStreamIdentity other && this.Equals(other);
-    }
+        => obj is MetricStreamIdentity other && this.Equals(other);
 
     public bool Equals(MetricStreamIdentity other)
-    {
-        return this.InstrumentType == other.InstrumentType
-            && this.MeterName == other.MeterName
-            && this.MeterVersion == other.MeterVersion
-            && this.MeterSchemaUrl == other.MeterSchemaUrl
-            && this.InstrumentName == other.InstrumentName
-            && this.Unit == other.Unit
-            && this.Description == other.Description
-            && this.ViewId == other.ViewId
-            && this.MeterTags == other.MeterTags
-            && this.HistogramRecordMinMax == other.HistogramRecordMinMax
-            && this.ExponentialHistogramMaxSize == other.ExponentialHistogramMaxSize
-            && this.ExponentialHistogramMaxScale == other.ExponentialHistogramMaxScale
-            && StringArrayComparer.Equals(this.TagKeys, other.TagKeys)
-            && HistogramBoundsEqual(this.HistogramBucketBounds, other.HistogramBucketBounds);
-    }
+        => this.InstrumentType == other.InstrumentType
+        && this.MeterName == other.MeterName
+        && this.MeterVersion == other.MeterVersion
+        && this.MeterSchemaUrl == other.MeterSchemaUrl
+        && this.InstrumentName == other.InstrumentName
+        && this.Unit == other.Unit
+        && this.Description == other.Description
+        && this.ViewId == other.ViewId
+        && this.MeterTags == other.MeterTags
+        && this.HistogramRecordMinMax == other.HistogramRecordMinMax
+        && this.ExponentialHistogramMaxSize == other.ExponentialHistogramMaxSize
+        && this.ExponentialHistogramMaxScale == other.ExponentialHistogramMaxScale
+        && StringArrayComparer.Equals(this.TagKeys, other.TagKeys)
+        && HistogramBoundsEqual(this.HistogramBucketBounds, other.HistogramBucketBounds);
 
     public override readonly int GetHashCode() => this.hashCode;
 
-    private static double[]? GetExplicitBucketHistogramBounds(Instrument instrument, MetricStreamConfiguration? metricStreamConfiguration)
+    private static double[]? GetExplicitBucketHistogramBounds(Instrument instrument, MetricStreamConfiguration? metricStreamConfiguration) => metricStreamConfiguration switch
     {
-        if (metricStreamConfiguration is ExplicitBucketHistogramConfiguration explicitBucketHistogramConfiguration
-            && explicitBucketHistogramConfiguration.CopiedBoundaries != null)
-        {
-            return explicitBucketHistogramConfiguration.CopiedBoundaries;
-        }
-
-        return instrument switch
+        ExplicitBucketHistogramConfiguration explicitConfiguration when explicitConfiguration.CopiedBoundaries != null => explicitConfiguration.CopiedBoundaries,
+        _ => instrument switch
         {
             Histogram<long> longHistogram => GetExplicitBucketHistogramBoundsFromAdvice(longHistogram),
             Histogram<int> intHistogram => GetExplicitBucketHistogramBoundsFromAdvice(intHistogram),
@@ -178,8 +189,8 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
             Histogram<float> floatHistogram => GetExplicitBucketHistogramBoundsFromAdvice(floatHistogram),
             Histogram<double> doubleHistogram => GetExplicitBucketHistogramBoundsFromAdvice(doubleHistogram),
             _ => null,
-        };
-    }
+        },
+    };
 
     private static double[]? GetExplicitBucketHistogramDisplayBounds(Instrument instrument, double[]? rawBounds)
     {
@@ -220,13 +231,14 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
 
         if (typeof(T) == typeof(double))
         {
-            return ((IReadOnlyList<double>)adviceExplicitBucketBoundaries).ToArray();
+            var boundaries = (IReadOnlyList<double>)adviceExplicitBucketBoundaries;
+            return [.. boundaries];
         }
         else
         {
-            double[] explicitBucketBoundaries = new double[adviceExplicitBucketBoundaries.Count];
+            var explicitBucketBoundaries = new double[adviceExplicitBucketBoundaries.Count];
 
-            for (int i = 0; i < adviceExplicitBucketBoundaries.Count; i++)
+            for (var i = 0; i < adviceExplicitBucketBoundaries.Count; i++)
             {
                 explicitBucketBoundaries[i] = Convert.ToDouble(
                     adviceExplicitBucketBoundaries[i],
@@ -244,7 +256,7 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
             return true;
         }
 
-        if (ReferenceEquals(bounds1, null) || ReferenceEquals(bounds2, null))
+        if (bounds1 is null || bounds2 is null)
         {
             return false;
         }
@@ -256,7 +268,7 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
             return false;
         }
 
-        for (int i = 0; i < len1; i++)
+        for (var i = 0; i < len1; i++)
         {
             if (!bounds1[i].Equals(bounds2[i]))
             {

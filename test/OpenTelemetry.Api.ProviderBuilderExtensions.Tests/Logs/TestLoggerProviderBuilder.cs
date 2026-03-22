@@ -17,7 +17,7 @@ internal sealed class TestLoggerProviderBuilder : LoggerProviderBuilder, ILogger
 
     public ServiceProvider? ServiceProvider { get; private set; }
 
-    public List<object> Instrumentation { get; } = new();
+    public List<object> Instrumentation { get; } = [];
 
     public LoggerProvider? Provider { get; private set; }
 

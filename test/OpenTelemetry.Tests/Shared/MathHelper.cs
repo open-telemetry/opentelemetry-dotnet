@@ -15,7 +15,7 @@ internal static class MathHelper
 #if NET
         return Math.BitIncrement(x);
 #else
-        long bits = BitConverter.DoubleToInt64Bits(x);
+        var bits = BitConverter.DoubleToInt64Bits(x);
 
         if (((bits >> 32) & 0x7FF00000) >= 0x7FF00000)
         {
@@ -45,7 +45,7 @@ internal static class MathHelper
 #if NET
         return Math.BitDecrement(x);
 #else
-        long bits = BitConverter.DoubleToInt64Bits(x);
+        var bits = BitConverter.DoubleToInt64Bits(x);
 
         if (((bits >> 32) & 0x7FF00000) >= 0x7FF00000)
         {
