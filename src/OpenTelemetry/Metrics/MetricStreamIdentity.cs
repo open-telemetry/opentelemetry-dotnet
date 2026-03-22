@@ -212,8 +212,11 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
         double[] displayBounds = new double[rawBounds.Length];
         for (int i = 0; i < rawBounds.Length; i++)
         {
+            // Cast back to float to recover the original float precision,
+            // then convert to string to get the clean representation.
+            // e.g., (float)0.0010000000474974513 -> 0.001f -> "0.001" -> 0.001
             displayBounds[i] = double.Parse(
-                rawBounds[i].ToString("G", CultureInfo.InvariantCulture),
+                ((float)rawBounds[i]).ToString("G", CultureInfo.InvariantCulture),
                 CultureInfo.InvariantCulture);
         }
 
