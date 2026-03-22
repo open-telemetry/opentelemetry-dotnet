@@ -75,9 +75,8 @@ internal sealed class AggregatorStore
         this.currentMetricPointBatch = new int[this.NumberOfMetricPoints];
         this.aggType = aggType;
         this.OutputDelta = temporality == AggregationTemporality.Delta;
-        this.histogramExplicitBounds = new(metricStreamIdentity.HistogramBucketBounds ?? FindDefaultHistogramBounds(in metricStreamIdentity), metricStreamIdentity.HistogramBucketDisplayBounds);
         this.IsAsynchronous = metricStreamIdentity.IsAsynchronous;
-        this.histogramExplicitBounds = new(metricStreamIdentity.HistogramBucketBounds ?? FindDefaultHistogramBounds(in metricStreamIdentity));
+        this.histogramExplicitBounds = new(metricStreamIdentity.HistogramBucketBounds ?? FindDefaultHistogramBounds(in metricStreamIdentity), metricStreamIdentity.HistogramBucketDisplayBounds);
         this.exponentialHistogramMaxSize = metricStreamIdentity.ExponentialHistogramMaxSize;
         this.exponentialHistogramMaxScale = metricStreamIdentity.ExponentialHistogramMaxScale;
         this.StartTimeExclusive = DateTimeOffset.UtcNow;

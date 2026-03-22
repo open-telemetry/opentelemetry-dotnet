@@ -125,10 +125,8 @@ public class HistogramBuckets
             {
                 // Use DisplayBounds (cleaned values) for export if available,
                 // otherwise fall back to raw ExplicitBounds
-                double explicitBound = this.index < this.numberOfBuckets - 1
-                    ? (this.histogramMeasurements.DisplayBounds ?? this.histogramMeasurements.ExplicitBounds)![this.index]
                 var explicitBound = this.index < this.numberOfBuckets - 1
-                    ? this.histogramMeasurements.ExplicitBounds![this.index]
+                    ? (this.histogramMeasurements.DisplayBounds ?? this.histogramMeasurements.ExplicitBounds)![this.index]
                     : double.PositiveInfinity;
                 var bucketCount = this.histogramMeasurements.BucketCounts[this.index].SnapshotValue;
                 this.Current = new HistogramBucket(explicitBound, bucketCount);
