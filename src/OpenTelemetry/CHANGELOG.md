@@ -6,7 +6,7 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* Fixed OverflowException in TraceIdRatioBasedSampler when trace ID bytes
+* Fixed `OverflowException` in `TraceIdRatioBasedSampler` when trace ID bytes
 produce `long.MinValue`.
 ([[#6928](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6928)])
 
