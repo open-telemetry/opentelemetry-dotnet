@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed OverflowException in TraceIdRatioBasedSampler when trace ID bytes
+produce `long.MinValue`.
+([[#6928](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6928)])
+
 * Fixed a thread-safety issue in `LogRecordSharedPool.Rent()`.
   ([#6833](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6833)
 

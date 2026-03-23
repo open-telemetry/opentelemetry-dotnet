@@ -31,9 +31,9 @@ public sealed class TraceIdRatioBasedSampler
         this.Description = "TraceIdRatioBasedSampler{" + this.probability.ToString("F6", CultureInfo.InvariantCulture) + "}";
 
         // Special case the limits, to avoid any possible issues with lack of precision across
-        // double/long boundaries. For probability == 0.0, we use Long.MIN_VALUE as this guarantees
-        // that we will never sample a trace, even in the case where the id == Long.MIN_VALUE, since
-        // Math.Abs(Long.MIN_VALUE) == Long.MIN_VALUE.
+        // double/long boundaries. For probability == 0.0, we use long.MinValue as this guarantees
+        // that we will never sample a trace: (anyValue & long.MaxValue) is always >= 0,
+        // and 0 < long.MinValue is false for every possible trace ID.
         if (this.probability == 0.0)
         {
             this.idUpperBound = long.MinValue;
@@ -54,13 +54,15 @@ public sealed class TraceIdRatioBasedSampler
         // Always sample if we are within probability range. This is true even for child activities (that
         // may have had a different sampling decision made) to allow for different sampling policies,
         // and dynamic increases to sampling probabilities for debugging purposes.
+        // Masking with long.MaxValue clears the sign bit, mapping every possible long value uniformly
+        // into [0, long.MaxValue] without any branching or overflow risk.
         // Note use of '<' for comparison. This ensures that we never sample for probability == 0.0,
         // while allowing for a (very) small chance of *not* sampling if the id == Long.MAX_VALUE.
         // This is considered a reasonable trade-off for the simplicity/performance requirements (this
         // code is executed in-line for every Activity creation).
         Span<byte> traceIdBytes = stackalloc byte[16];
         samplingParameters.TraceId.CopyTo(traceIdBytes);
-        return new SamplingResult(Math.Abs(GetLowerLong(traceIdBytes)) < this.idUpperBound);
+        return new SamplingResult((GetLowerLong(traceIdBytes) & long.MaxValue) < this.idUpperBound);
     }
 
     private static long GetLowerLong(ReadOnlySpan<byte> bytes)
