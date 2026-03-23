@@ -87,10 +87,6 @@ public class TraceIdRatioBasedSamplerTests
         Assert.Equal(expectedDescription, new TraceIdRatioBasedSampler(0.5).Description);
     }
 
-    /// <summary>
-    /// Verifies that a trace ID whose bytes produce long.MinValue is correctly dropped
-    /// when probability is 0.0.
-    /// </summary>
     [Fact]
     public void ShouldSample_WithZeroProbabilityAndLongMinValueTraceId_ShouldDrop()
     {
@@ -102,11 +98,6 @@ public class TraceIdRatioBasedSamplerTests
         Assert.Equal(SamplingDecision.Drop, result.Decision);
     }
 
-    /// <summary>
-    /// Verifies that a trace ID whose bytes produce long.MinValue is correctly sampled
-    /// when probability is 0.5. The bit pattern 0x8000000000000000 sits at the bottom of
-    /// the value space and must not be treated as the largest value.
-    /// </summary>
     [Fact]
     public void ShouldSample_WithHalfProbabilityAndLongMinValueTraceId_ShouldRecord()
     {
@@ -118,10 +109,6 @@ public class TraceIdRatioBasedSamplerTests
         Assert.Equal(SamplingDecision.RecordAndSample, result.Decision);
     }
 
-    /// <summary>
-    /// Verifies that a trace ID whose bytes produce long.MinValue is correctly sampled
-    /// when probability is 1.0.
-    /// </summary>
     [Fact]
     public void ShouldSample_WithFullProbabilityAndLongMinValueTraceId_ShouldRecord()
     {
@@ -133,10 +120,6 @@ public class TraceIdRatioBasedSamplerTests
         Assert.Equal(SamplingDecision.RecordAndSample, result.Decision);
     }
 
-    /// <summary>
-    /// Generates a trace ID whose first 8 bytes equal 0x8000000000000000, which
-    /// GetLowerLong converts to long.MinValue - the value that triggers the overflow bug.
-    /// </summary>
     private static ActivityTraceId CreateTraceIdProducingLongMinValue()
     {
         return ActivityTraceId.CreateFromBytes(
