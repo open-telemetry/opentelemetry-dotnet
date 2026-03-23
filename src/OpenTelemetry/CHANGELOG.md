@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed `OverflowException` in `TraceIdRatioBasedSampler` when trace ID bytes
+produced `long.MinValue`.
+([[#6928](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6928)])
+
 * Fixed precision issues when using `Histogram<float>` with custom
   `HistogramBucketBoundaries`.
   ([#6866](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6866))

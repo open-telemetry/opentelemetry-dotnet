@@ -86,4 +86,46 @@ public class TraceIdRatioBasedSamplerTests
         var expectedDescription = "TraceIdRatioBasedSampler{0.500000}";
         Assert.Equal(expectedDescription, new TraceIdRatioBasedSampler(0.5).Description);
     }
+
+    [Fact]
+    public void ShouldSample_WithZeroProbabilityAndLongMinValueTraceId_ShouldDrop()
+    {
+        var sampler = new TraceIdRatioBasedSampler(0.0);
+        var traceId = CreateTraceIdProducingLongMinValue();
+
+        var result = sampler.ShouldSample(new SamplingParameters(default, traceId, ActivityDisplayName, ActivityKind.Server, null, null));
+
+        Assert.Equal(SamplingDecision.Drop, result.Decision);
+    }
+
+    [Fact]
+    public void ShouldSample_WithHalfProbabilityAndLongMinValueTraceId_ShouldRecord()
+    {
+        var sampler = new TraceIdRatioBasedSampler(0.5);
+        var traceId = CreateTraceIdProducingLongMinValue();
+
+        var result = sampler.ShouldSample(new SamplingParameters(default, traceId, ActivityDisplayName, ActivityKind.Server, null, null));
+
+        Assert.Equal(SamplingDecision.RecordAndSample, result.Decision);
+    }
+
+    [Fact]
+    public void ShouldSample_WithFullProbabilityAndLongMinValueTraceId_ShouldRecord()
+    {
+        var sampler = new TraceIdRatioBasedSampler(1.0);
+        var traceId = CreateTraceIdProducingLongMinValue();
+
+        var result = sampler.ShouldSample(new SamplingParameters(default, traceId, ActivityDisplayName, ActivityKind.Server, null, null));
+
+        Assert.Equal(SamplingDecision.RecordAndSample, result.Decision);
+    }
+
+    private static ActivityTraceId CreateTraceIdProducingLongMinValue()
+    {
+        return ActivityTraceId.CreateFromBytes(
+        [
+            0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        ]);
+    }
 }
