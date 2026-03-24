@@ -594,6 +594,34 @@ public sealed class TracerTests : IDisposable
         Assert.Contains(activity.Source.Tags!, kvp => kvp.Key == "tracerTag" && (string)kvp.Value! == "tracerValue");
     }
 
+    [Fact]
+    public void StartSpan_WhenCurrentActivityStoppedOnAnotherThread_DoesNotLeaveNewSpanAsCurrent()
+    {
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource("tracername")
+            .SetSampler(new AlwaysOnSampler())
+            .Build();
+
+        var tracer = tracerProvider.GetTracer("tracername");
+
+        var activeSpan = tracer.StartActiveSpan("previous");
+        var previousActivity = Activity.Current;
+        Assert.NotNull(previousActivity);
+
+        var thread = new Thread(() => previousActivity.Stop());
+        thread.Start();
+        thread.Join();
+
+        Assert.True(previousActivity.IsStopped);
+        Assert.Same(previousActivity, Activity.Current);
+
+        using var newSpan = tracer.StartSpan("new span");
+
+        Assert.Null(Activity.Current);
+
+        activeSpan.Dispose();
+    }
+
     public void Dispose()
     {
         Activity.Current = null;

@@ -227,7 +227,7 @@ public class Tracer
             if (startSpanBehavior.HasFlag(StartSpanBehaviors.DeactivateNewSpan)
                 && Activity.Current != previousActivity)
             {
-                Activity.Current = previousActivity;
+                Activity.Current = previousActivity?.IsStopped == true ? null : previousActivity;
             }
         }
     }

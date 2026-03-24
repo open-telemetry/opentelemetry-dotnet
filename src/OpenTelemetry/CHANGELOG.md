@@ -6,8 +6,12 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed `Tracer.StartSpan()` leaving the new span as `Activity.Current` when
+  the previous activity was stopped by another thread during span creation.
+  ([#6257](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6257))
+
 * Fixed a thread-safety issue in `LogRecordSharedPool.Rent()`.
-  ([#6833](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6833)
+  ([#6833](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6833))
 
 * Fixed observable instruments (ObservableCounter, ObservableUpDownCounter,
   ObservableGauge) continuing to export stale data points after a callback
