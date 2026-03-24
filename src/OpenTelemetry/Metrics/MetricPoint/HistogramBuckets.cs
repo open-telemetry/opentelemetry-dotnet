@@ -13,6 +13,11 @@ public class HistogramBuckets
 {
     internal readonly double[]? ExplicitBounds;
 
+    // Display bounds are cleaned-up values for export/serialization.
+    // For float histograms, this contains precision-corrected values
+    // (e.g., 0.025 instead of 0.02500000037252903).
+    internal readonly double[]? DisplayBounds;
+
     internal readonly HistogramBucketValues[] BucketCounts;
 
     internal double RunningSum;
@@ -30,6 +35,7 @@ public class HistogramBuckets
     {
         this.histogramExplicitBounds = histogramExplicitBounds;
         this.ExplicitBounds = histogramExplicitBounds?.Bounds;
+        this.DisplayBounds = histogramExplicitBounds?.DisplayBounds;
         this.BucketCounts = this.ExplicitBounds != null ? new HistogramBucketValues[this.ExplicitBounds.Length + 1] : [];
     }
 
@@ -117,8 +123,10 @@ public class HistogramBuckets
         {
             if (this.index < this.numberOfBuckets)
             {
+                // Use DisplayBounds (cleaned values) for export if available,
+                // otherwise fall back to raw ExplicitBounds
                 var explicitBound = this.index < this.numberOfBuckets - 1
-                    ? this.histogramMeasurements.ExplicitBounds![this.index]
+                    ? (this.histogramMeasurements.DisplayBounds ?? this.histogramMeasurements.ExplicitBounds)![this.index]
                     : double.PositiveInfinity;
                 var bucketCount = this.histogramMeasurements.BucketCounts[this.index].SnapshotValue;
                 this.Current = new HistogramBucket(explicitBound, bucketCount);

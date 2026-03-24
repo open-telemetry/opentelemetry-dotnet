@@ -76,7 +76,7 @@ internal sealed class AggregatorStore
         this.aggType = aggType;
         this.OutputDelta = temporality == AggregationTemporality.Delta;
         this.IsAsynchronous = metricStreamIdentity.IsAsynchronous;
-        this.histogramExplicitBounds = new(metricStreamIdentity.HistogramBucketBounds ?? FindDefaultHistogramBounds(in metricStreamIdentity));
+        this.histogramExplicitBounds = new(metricStreamIdentity.HistogramBucketBounds ?? FindDefaultHistogramBounds(in metricStreamIdentity), metricStreamIdentity.HistogramBucketDisplayBounds);
         this.exponentialHistogramMaxSize = metricStreamIdentity.ExponentialHistogramMaxSize;
         this.exponentialHistogramMaxScale = metricStreamIdentity.ExponentialHistogramMaxScale;
         this.StartTimeExclusive = DateTimeOffset.UtcNow;

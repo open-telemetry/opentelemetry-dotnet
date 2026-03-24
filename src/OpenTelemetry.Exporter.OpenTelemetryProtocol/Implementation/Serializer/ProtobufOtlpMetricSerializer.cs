@@ -521,7 +521,9 @@ internal static class ProtobufOtlpMetricSerializer
 
         if (buckets.ExplicitBounds is { } explicitBounds)
         {
-            writePosition = WriteExplicitBounds(buffer, writePosition, explicitBounds);
+            // Use DisplayBounds (cleaned values) for export if available,
+            // otherwise fall back to raw ExplicitBounds
+            writePosition = WriteExplicitBounds(buffer, writePosition, buckets.DisplayBounds ?? explicitBounds);
         }
 
         return writePosition;

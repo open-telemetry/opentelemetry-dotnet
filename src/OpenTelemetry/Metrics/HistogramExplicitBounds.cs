@@ -13,9 +13,10 @@ internal sealed class HistogramExplicitBounds
     private readonly BucketLookupNode? bucketLookupTreeRoot;
     private readonly Func<double, int> findHistogramBucketIndex;
 
-    public HistogramExplicitBounds(double[] bounds)
+    public HistogramExplicitBounds(double[] bounds, double[]? displayBounds = null)
     {
         this.Bounds = CleanUpInfinitiesFromExplicitBounds(bounds);
+        this.DisplayBounds = displayBounds != null ? CleanUpInfinitiesFromExplicitBounds(displayBounds) : null;
         this.findHistogramBucketIndex = this.FindBucketIndexLinear;
 
         if (this.Bounds.Length >= DefaultBoundaryCountForBinarySearch)
@@ -44,6 +45,14 @@ internal sealed class HistogramExplicitBounds
     }
 
     public double[] Bounds { get; }
+
+    /// <summary>
+    /// Gets the cleaned display bounds for export/serialization.
+    /// When non-null, exporters should use these values instead of Bounds
+    /// for displaying bucket boundaries. This is used to fix float-to-double
+    /// precision artifacts (e.g., 0.025 instead of 0.02500000037252903).
+    /// </summary>
+    public double[]? DisplayBounds { get; }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int FindBucketIndex(double value)
