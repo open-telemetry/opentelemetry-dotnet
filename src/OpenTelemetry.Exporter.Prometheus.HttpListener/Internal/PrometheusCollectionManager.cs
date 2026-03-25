@@ -318,7 +318,7 @@ internal sealed class PrometheusCollectionManager
 
             return ExportResult.Success;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             if (this.exporter.OpenMetricsRequested)
             {
@@ -328,6 +328,8 @@ internal sealed class PrometheusCollectionManager
             {
                 this.previousPlainTextDataView = new ArraySegment<byte>([], 0, 0);
             }
+
+            PrometheusExporterEventSource.Log.FailedExport(ex);
 
             return ExportResult.Failure;
         }
