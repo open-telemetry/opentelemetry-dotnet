@@ -34,7 +34,7 @@ internal sealed class PeriodicExportingMetricReaderTaskWorker : PeriodicExportin
     /// <inheritdoc/>
     public override void Start()
     {
-        this.workerTask = Task.Run(this.ExporterProcAsync, this.cancellationTokenSource.Token);
+        this.workerTask = Task.Run(this.ExporterProcAsync);
     }
 
     /// <inheritdoc/>

@@ -40,7 +40,7 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
     /// <inheritdoc/>
     public override void Start()
     {
-        this.workerTask = Task.Run(this.ExporterProcAsync, this.cancellationTokenSource.Token);
+        this.workerTask = Task.Run(this.ExporterProcAsync);
     }
 
     /// <inheritdoc/>
