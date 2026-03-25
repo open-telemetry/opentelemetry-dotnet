@@ -3,6 +3,9 @@
 
 using System.Globalization;
 using System.Runtime.CompilerServices;
+#if !NETFRAMEWORK
+using System.Runtime.InteropServices;
+#endif
 
 namespace OpenTelemetry.PersistentStorage.FileSystem;
 
@@ -112,9 +115,7 @@ internal static class PersistentStorageHelper
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static void WriteAllBytes(string path, byte[] buffer)
-    {
-        File.WriteAllBytes(path, buffer);
-    }
+        => File.WriteAllBytes(path, buffer);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static void RemoveFile(string fileName, out long fileSize)
@@ -126,9 +127,7 @@ internal static class PersistentStorageHelper
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static string GetUniqueFileName(string extension)
-    {
-        return string.Format(CultureInfo.InvariantCulture, $"{DateTime.UtcNow:yyyy-MM-ddTHHmmss.fffffffZ}-{Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture)}{extension}");
-    }
+        => string.Format(CultureInfo.InvariantCulture, $"{DateTime.UtcNow:yyyy-MM-ddTHHmmss.fffffffZ}-{Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture)}{extension}");
 
     internal static string CreateSubdirectory(string path)
     {
@@ -138,23 +137,21 @@ internal static class PersistentStorageHelper
 
     internal static DateTime GetDateTimeFromBlobName(string filePath)
     {
-        var fileName = Path.GetFileNameWithoutExtension(filePath);
+        var fileName = GetFileNameWithoutExtension(filePath);
 
-        var time =
+        var timestamp =
 #if NET11_0_OR_GREATER
             fileName.Substring(0, fileName.LastIndexOf('-', StringComparison.Ordinal));
 #else
             fileName.Substring(0, fileName.LastIndexOf('-'));
 #endif
 
-        // TODO:Handle possible parsing failure.
-        DateTime.TryParseExact(time, "yyyy-MM-ddTHHmmss.fffffffZ", CultureInfo.InvariantCulture, DateTimeStyles.None, out var dateTime);
-        return dateTime.ToUniversalTime();
+        return Parse(timestamp);
     }
 
     internal static DateTime GetDateTimeFromLeaseName(string filePath)
     {
-        var fileName = Path.GetFileNameWithoutExtension(filePath);
+        var fileName = GetFileNameWithoutExtension(filePath);
 
         var startIndex =
 #if NET11_0_OR_GREATER
@@ -164,8 +161,43 @@ internal static class PersistentStorageHelper
 #endif
              + 1;
 
-        var time = fileName.Substring(startIndex);
-        DateTime.TryParseExact(time, "yyyy-MM-ddTHHmmss.fffffffZ", CultureInfo.InvariantCulture, DateTimeStyles.None, out var dateTime);
+        var timestamp = fileName.Substring(startIndex);
+
+        return Parse(timestamp);
+    }
+
+    private static string GetFileNameWithoutExtension(string filePath)
+    {
+        var fileName = Path.GetFileNameWithoutExtension(filePath);
+
+#if !NETFRAMEWORK
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            // Non-Windows platforms will treat the entire path as the file name if it contains Windows
+            // path separators, so we need to extract the file name manually from after the last \ character.
+#if NET11_0_OR_GREATER
+            var startIndex = fileName.LastIndexOf('\\', StringComparison.Ordinal);
+#else
+            var startIndex = fileName.LastIndexOf('\\');
+#endif
+            if (startIndex > -1)
+            {
+                fileName = fileName.Substring(startIndex + 1);
+            }
+        }
+#endif
+
+        return fileName;
+    }
+
+    private static DateTime Parse(string timestamp)
+    {
+        if (!DateTime.TryParseExact(timestamp, "yyyy-MM-ddTHHmmss.fffffffZ", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var dateTime))
+        {
+            // In case of failure, return DateTime.MinValue so that the lease file can be removed as expired
+            dateTime = DateTime.MinValue;
+        }
+
         return dateTime.ToUniversalTime();
     }
 }

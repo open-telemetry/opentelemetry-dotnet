@@ -216,7 +216,6 @@ function PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullReques
   }
 
   $foundComment = $false
-  $packagesUrl = ''
   foreach ($comment in $prViewResponse.comments)
   {
     if ($comment.author.login -eq $expectedCommentAuthorUserName -and $comment.body.StartsWith("The packages for [$tag](https://github.com/$gitRepository/releases/tag/$tag) are now available:"))
@@ -232,10 +231,9 @@ function PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullReques
   }
 
   gh release download $tag `
-    -p "$tag-packages.zip" `
+    -p "*.nupkg" `
+    -p "*.snupkg" `
     -D "$artifactDownloadPath"
-
-  Expand-Archive -LiteralPath "$artifactDownloadPath/$tag-packages.zip" -DestinationPath "$artifactDownloadPath\"
 
   if ($pushToNuget)
   {

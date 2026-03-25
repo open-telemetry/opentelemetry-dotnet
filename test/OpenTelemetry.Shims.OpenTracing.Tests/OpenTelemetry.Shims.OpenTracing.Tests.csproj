@@ -3,6 +3,8 @@
   <PropertyGroup>
     <Description>Unit test project for OpenTelemetry.Shims.OpenTracing</Description>
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
+    <!-- CS0618: Do not use Obsolete classes/methods. OpenTracing is deprecated and marked as Obsolete.-->
+    <NoWarn>$(NoWarn);CS0618</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

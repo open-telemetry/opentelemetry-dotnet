@@ -25,6 +25,7 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
         this.MetricStreamName = $"{this.MeterName}.{this.MeterVersion}.{this.InstrumentName}";
         this.TagKeys = metricStreamConfiguration?.CopiedTagKeys;
         this.HistogramBucketBounds = GetExplicitBucketHistogramBounds(instrument, metricStreamConfiguration);
+        this.HistogramBucketDisplayBounds = GetExplicitBucketHistogramDisplayBounds(instrument, this.HistogramBucketBounds);
         this.ExponentialHistogramMaxSize = (metricStreamConfiguration as Base2ExponentialBucketHistogramConfiguration)?.MaxSize ?? 0;
         this.ExponentialHistogramMaxScale = (metricStreamConfiguration as Base2ExponentialBucketHistogramConfiguration)?.MaxScale ?? 0;
         this.HistogramRecordMinMax = (metricStreamConfiguration as HistogramConfiguration)?.RecordMinMax ?? true;
@@ -115,6 +116,8 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
 
     public double[]? HistogramBucketBounds { get; }
 
+    public double[]? HistogramBucketDisplayBounds { get; }
+
     public int ExponentialHistogramMaxSize { get; }
 
     public int ExponentialHistogramMaxScale { get; }
@@ -189,6 +192,37 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
         },
     };
 
+    private static double[]? GetExplicitBucketHistogramDisplayBounds(Instrument instrument, double[]? rawBounds)
+    {
+        if (rawBounds == null)
+        {
+            return null;
+        }
+
+        // Only float histograms need display bounds cleanup.
+        // For float types, the raw float->double cast produces imprecise values
+        // (e.g., 0.025f -> 0.02500000037252903). Display bounds convert via string
+        // to get clean values (0.025) for export/serialization, while raw bounds
+        // are kept for correct bucketing.
+        if (instrument is not Histogram<float>)
+        {
+            return null;
+        }
+
+        double[] displayBounds = new double[rawBounds.Length];
+        for (int i = 0; i < rawBounds.Length; i++)
+        {
+            // Cast back to float to recover the original float precision,
+            // then convert to string to get the clean representation.
+            // e.g., (float)0.0010000000474974513 -> 0.001f -> "0.001" -> 0.001
+            displayBounds[i] = double.Parse(
+                ((float)rawBounds[i]).ToString("G", CultureInfo.InvariantCulture),
+                CultureInfo.InvariantCulture);
+        }
+
+        return displayBounds;
+    }
+
     private static double[]? GetExplicitBucketHistogramBoundsFromAdvice<T>(Histogram<T> histogram)
         where T : struct
     {
@@ -209,7 +243,9 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
 
             for (var i = 0; i < adviceExplicitBucketBoundaries.Count; i++)
             {
-                explicitBucketBoundaries[i] = Convert.ToDouble(adviceExplicitBucketBoundaries[i], CultureInfo.InvariantCulture);
+                explicitBucketBoundaries[i] = Convert.ToDouble(
+                    adviceExplicitBucketBoundaries[i],
+                    CultureInfo.InvariantCulture);
             }
 
             return explicitBucketBoundaries;
