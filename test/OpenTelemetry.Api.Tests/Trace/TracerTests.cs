@@ -620,6 +620,105 @@ public sealed class TracerTests : IDisposable
         Assert.Null(Activity.Current);
     }
 
+    [Fact]
+    public void StartSpan_WhenCurrentActivityStoppedOnAnotherThread_RestoresFirstRunningAncestor()
+    {
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource("tracername")
+            .SetSampler(new AlwaysOnSampler())
+            .Build();
+
+        var tracer = tracerProvider.GetTracer("tracername");
+
+        using var grandparentSpan = tracer.StartActiveSpan("grandparent");
+        var grandparentActivity = Activity.Current;
+        Assert.NotNull(grandparentActivity);
+
+        using var parentSpan = tracer.StartActiveSpan("parent");
+        var parentActivity = Activity.Current;
+        Assert.NotNull(parentActivity);
+
+        using var currentSpan = tracer.StartActiveSpan("current");
+        var currentActivity = Activity.Current;
+        Assert.NotNull(currentActivity);
+
+        var thread = new Thread(() => currentActivity.Stop());
+        thread.Start();
+        thread.Join();
+
+        Assert.True(currentActivity.IsStopped);
+        Assert.Same(currentActivity, Activity.Current);
+
+        using var newSpan = tracer.StartSpan("new span");
+
+        Assert.Same(parentActivity, Activity.Current);
+    }
+
+    [Fact]
+    public void StartSpan_WhenMultipleAncestorsStoppedOnAnotherThread_RestoresFirstRunningAncestor()
+    {
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource("tracername")
+            .SetSampler(new AlwaysOnSampler())
+            .Build();
+
+        var tracer = tracerProvider.GetTracer("tracername");
+
+        using var grandparentSpan = tracer.StartActiveSpan("grandparent");
+        var grandparentActivity = Activity.Current;
+        Assert.NotNull(grandparentActivity);
+
+        using var parentSpan = tracer.StartActiveSpan("parent");
+        var parentActivity = Activity.Current;
+        Assert.NotNull(parentActivity);
+
+        using var currentSpan = tracer.StartActiveSpan("current");
+        var currentActivity = Activity.Current;
+        Assert.NotNull(currentActivity);
+
+        var thread = new Thread(() =>
+        {
+            currentActivity.Stop();
+            parentActivity.Stop();
+        });
+        thread.Start();
+        thread.Join();
+
+        Assert.True(currentActivity.IsStopped);
+        Assert.True(parentActivity.IsStopped);
+        Assert.Same(currentActivity, Activity.Current);
+
+        using var newSpan = tracer.StartSpan("new span");
+
+        Assert.Same(grandparentActivity, Activity.Current);
+    }
+
+    [Fact]
+    public void StartRootSpan_WhenCurrentActivityStoppedOnAnotherThread_DoesNotLeaveNewSpanAsCurrent()
+    {
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource("tracername")
+            .SetSampler(new AlwaysOnSampler())
+            .Build();
+
+        var tracer = tracerProvider.GetTracer("tracername");
+
+        using var activeSpan = tracer.StartActiveSpan("previous");
+        var previousActivity = Activity.Current;
+        Assert.NotNull(previousActivity);
+
+        var thread = new Thread(() => previousActivity.Stop());
+        thread.Start();
+        thread.Join();
+
+        Assert.True(previousActivity.IsStopped);
+        Assert.Same(previousActivity, Activity.Current);
+
+        using var newSpan = tracer.StartRootSpan("new root span");
+
+        Assert.Null(Activity.Current);
+    }
+
     public void Dispose()
     {
         Activity.Current = null;
