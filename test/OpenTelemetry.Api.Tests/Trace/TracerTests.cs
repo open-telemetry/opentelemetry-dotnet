@@ -604,7 +604,7 @@ public sealed class TracerTests : IDisposable
 
         var tracer = tracerProvider.GetTracer("tracername");
 
-        var activeSpan = tracer.StartActiveSpan("previous");
+        using var activeSpan = tracer.StartActiveSpan("previous");
         var previousActivity = Activity.Current;
         Assert.NotNull(previousActivity);
 
@@ -618,8 +618,6 @@ public sealed class TracerTests : IDisposable
         using var newSpan = tracer.StartSpan("new span");
 
         Assert.Null(Activity.Current);
-
-        activeSpan.Dispose();
     }
 
     public void Dispose()
