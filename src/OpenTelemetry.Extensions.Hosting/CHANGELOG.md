@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.15.1
+
+Released 2026-Mar-26
+
 * Fix NullReferenceException when `OTEL_SDK_DISABLED=true`.
   ([#6869](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6869))
 

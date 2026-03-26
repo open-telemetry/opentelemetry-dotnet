@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.15.1
+
+Released 2026-Mar-26
+
 * Fixed `OverflowException` in `TraceIdRatioBasedSampler` when trace ID bytes
 produced `long.MinValue`.
 ([[#6928](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6928)])
