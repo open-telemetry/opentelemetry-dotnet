@@ -131,7 +131,7 @@ services.AddOpenTelemetry()
   constant, which is set when `ExposeExperimentalFeatures=true` (the default for
   pre-release builds).
 - Experimental APIs carry `[Experimental("OTEL####")]` and are tracked in `.publicApi/Experimental/PublicAPI.Unshipped.txt`.
-- `[Obsolete]` warnings for experimental APIs (`OTEL1000`–`OTEL1004`) are suppressed
+- `[Obsolete]` warnings for experimental APIs (`OTEL1000`-`OTEL1004`) are suppressed
   project-wide.
 
 ### Public API tracking (`PublicApiAnalyzers`)
