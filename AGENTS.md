@@ -50,7 +50,7 @@ dotnet format OpenTelemetry.slnx
 markdownlint .
 ```
 
-- .NET SDK **10.0.201** or later is required (see `global.json`).
+- The .NET SDK version specified in `global.json` (or newer) is required.
 - `TreatWarningsAsErrors` is active in Release builds; StyleCop and nullable
   violations fail the build.
 - Tests run **serially** by default
@@ -120,9 +120,10 @@ services.AddOpenTelemetry()
 
 ### Target frameworks
 
-- Production libraries use `$(TargetFrameworksForLibraries)` = `net10.0;net9.0;net8.0;netstandard2.0;net462`.
-- Tests use `$(TargetFrameworksForTests)` = `net10.0;net9.0;net8.0`
-  (+ `net462` on Windows).
+- Production libraries use `$(TargetFrameworksForLibraries)` - All supported versions
+  of .NET plus `netstandard2.0` and `net462`.
+- Tests use `$(TargetFrameworksForTests)` = All supported versions
+  of .NET plus `net462` on Windows.
 - Set these via the shared MSBuild properties rather than hardcoding in `.csproj`.
 
 ### Experimental features
