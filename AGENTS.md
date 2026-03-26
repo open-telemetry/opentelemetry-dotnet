@@ -65,30 +65,30 @@ The codebase is structured around three OpenTelemetry signals (Traces, Metrics,
 Logs) with a strict three-layer design:
 
 ```text
-OpenTelemetry.Api          ← no-op API layer (no SDK dependency)
-OpenTelemetry              ← SDK: provider implementations, processors, samplers
-OpenTelemetry.Exporter.*   ← signal-specific export backends
-OpenTelemetry.Extensions.* ← DI/hosting integration, propagators
+OpenTelemetry.Api          - no-op API layer (no SDK dependency)
+OpenTelemetry              - SDK: provider implementations, processors, samplers
+OpenTelemetry.Exporter.*   - signal-specific export backends
+OpenTelemetry.Extensions.* - DI/hosting integration, propagators
 ```
 
-**API layer** (`src/OpenTelemetry.Api`) — Defines the programming model
+**API layer** (`src/OpenTelemetry.Api`) - Defines the programming model
 (`TracerProvider`, `MeterProvider`, `TelemetrySpan`, `Baggage`, etc.) with no-op
 defaults. Libraries instrument against this layer only.
 
-**SDK layer** (`src/OpenTelemetry`) — Implements the provider pipeline:
+**SDK layer** (`src/OpenTelemetry`) - Implements the provider pipeline:
 `TracerProviderSdk`, `MeterProviderSdk`, `LoggerProviderSdk`. Each signal has its
 own `Trace/`, `Metrics/`, `Logs/` subdirectory. Contains base classes
 `BaseExporter<T>`, `BaseProcessor<T>`, `Sampler`, and `Resource`.
 
-**Exporters** — Each exporter project targets one or more signals. They extend
+**Exporters** - Each exporter project targets one or more signals. They extend
 `BaseExporter<T>` where `T` is `Activity`, `Metric`, or `LogRecord`.
 
-**Shared code** (`src/Shared`) — Utility files (e.g., `SemanticConventions.cs`,
+**Shared code** (`src/Shared`) - Utility files (e.g., `SemanticConventions.cs`,
 `ActivityHelperExtensions.cs`) that are **linked** (not referenced) into consuming
 projects via `<Compile Include="..." Link="Includes/..." />` in `.csproj` files.
 Do not add `Shared/` to a project reference; use the link pattern.
 
-**Provider builder pattern** — All providers are configured fluently:
+**Provider builder pattern** - All providers are configured fluently:
 
 ```csharp
 Sdk.CreateTracerProviderBuilder()
@@ -144,7 +144,7 @@ Every production project has a `.publicApi/` folder.
    (do **not** edit manually).
 2. If APIs differ per framework, place the shared portion in root files and
    overrides in per-framework subdirectories (e.g., `.publicApi/net462/`).
-3. **Never modify `PublicAPI.Shipped.txt`** — only maintainers do this during releases.
+3. **Never modify `PublicAPI.Shipped.txt`** - only maintainers do this during releases.
 4. For experimental APIs use `.publicApi/Stable/` and `.publicApi/Experimental/`
    subdirectories.
 
@@ -202,7 +202,7 @@ activity?.SetTag("key", "value");
 ### Code style
 
 - `LangVersion` is set to `latest`; use current C# features freely.
-- Nullable reference types are **mandatory** — never disable `#nullable`.
+- Nullable reference types are **mandatory** - never disable `#nullable`.
 - `ImplicitUsings` is enabled globally.
 - All source files must start with the Apache-2.0 SPDX header:
   
@@ -218,7 +218,7 @@ activity?.SetTag("key", "value");
 
 - Use `$(TargetFrameworksForLibraries)` (or the appropriate shared property) as
   `<TargetFrameworks>`.
-- Import `build/Common.prod.props` implicitly via `Directory.Build.props` — do
+- Import `build/Common.prod.props` implicitly via `Directory.Build.props` - do
   **not** override `Nullable`, `LangVersion`, `EnforceCodeStyleInBuild`, or `ImplicitUsings`.
 - Add `.publicApi/PublicAPI.Shipped.txt` (empty) and `.publicApi/PublicAPI.Unshipped.txt`.
 - Add `<MinVerTagPrefix>` matching the component category (`core-` or `coreunstable-`).
