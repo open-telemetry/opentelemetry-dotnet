@@ -213,7 +213,7 @@ activity?.SetTag("key", "value");
   ```
 
 - StyleCop enforces ordering and documentation; XML doc comments are required on
-- all public members (`GenerateDocumentationFile=true`).
+  all public members (`GenerateDocumentationFile=true`).
 
 ### New projects checklist
 
