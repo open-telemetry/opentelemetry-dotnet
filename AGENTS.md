@@ -205,7 +205,7 @@ activity?.SetTag("key", "value");
 - Nullable reference types are **mandatory** - never disable `#nullable`.
 - `ImplicitUsings` is enabled globally.
 - All source files must start with the Apache-2.0 SPDX header:
-  
+
   ```csharp
   // Copyright The OpenTelemetry Authors
   // SPDX-License-Identifier: Apache-2.0
