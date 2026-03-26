@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -329,6 +330,51 @@ public sealed class PrometheusExporterMiddlewareTests
         await host.StopAsync();
     }
 
+    [Fact]
+    public async Task PrometheusExporterMiddlewareInvokeAsync_WhenNoData_Returns200()
+    {
+        using var exporter = new PrometheusExporter(new PrometheusExporterOptions());
+        exporter.Collect = _ => true;
+        var middleware = new PrometheusExporterMiddleware(exporter);
+
+        var context = new DefaultHttpContext();
+
+        await middleware.InvokeAsync(context);
+
+        Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PrometheusExporterMiddlewareInvokeAsync_WhenExceptionOccurs_Returns500()
+    {
+        using var exporter = new PrometheusExporter(new PrometheusExporterOptions());
+        exporter.Collect = _ => throw new InvalidOperationException("Simulated collection failure");
+        var middleware = new PrometheusExporterMiddleware(exporter);
+
+        var context = new DefaultHttpContext();
+
+        await middleware.InvokeAsync(context);
+
+        Assert.Equal(StatusCodes.Status500InternalServerError, context.Response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PrometheusExporterMiddlewareInvokeAsync_WhenExceptionOccursAfterResponseStarted_DoesNotReturn500()
+    {
+        using var exporter = new PrometheusExporter(new PrometheusExporterOptions());
+        exporter.Collect = _ => throw new InvalidOperationException("Simulated collection failure");
+        var middleware = new PrometheusExporterMiddleware(exporter);
+
+        var context = new DefaultHttpContext();
+
+        // Replace the response feature so HasStarted returns true, simulating response headers already committed.
+        context.Features.Set<IHttpResponseFeature>(new AlreadyStartedHttpResponseFeature());
+
+        await middleware.InvokeAsync(context);
+
+        Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
+    }
+
     private static async Task RunPrometheusExporterMiddlewareIntegrationTestWithBothFormats(KeyValuePair<string, object?>[]? meterTags = null)
     {
         using var host = await StartTestHostAsync(
@@ -509,6 +555,11 @@ public sealed class PrometheusExporterMiddlewareTests
                 })
                 .Configure(configure))
             .StartAsync();
+    }
+
+    private sealed class AlreadyStartedHttpResponseFeature : HttpResponseFeature
+    {
+        public override bool HasStarted => true;
     }
 }
 #endif
