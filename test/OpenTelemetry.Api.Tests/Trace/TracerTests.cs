@@ -642,6 +642,9 @@ public sealed class TracerTests : IDisposable
         var currentActivity = Activity.Current;
         Assert.NotNull(currentActivity);
 
+        Assert.Same(grandparentActivity, parentActivity.Parent);
+        Assert.Same(parentActivity, currentActivity.Parent);
+
         var thread = new Thread(() => currentActivity.Stop());
         thread.Start();
         thread.Join();
@@ -675,6 +678,9 @@ public sealed class TracerTests : IDisposable
         using var currentSpan = tracer.StartActiveSpan("current");
         var currentActivity = Activity.Current;
         Assert.NotNull(currentActivity);
+
+        Assert.Same(grandparentActivity, parentActivity.Parent);
+        Assert.Same(parentActivity, currentActivity.Parent);
 
         var thread = new Thread(() =>
         {
