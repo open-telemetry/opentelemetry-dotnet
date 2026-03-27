@@ -8,7 +8,7 @@ Notes](../../RELEASENOTES.md).
 
 ## 1.15.1
 
-Released 2026-Mar-26
+Released 2026-Mar-27
 
 * **Breaking change:** The Baggage API implements the latest [Baggage API
   specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.36.0/specification/baggage/api.md),

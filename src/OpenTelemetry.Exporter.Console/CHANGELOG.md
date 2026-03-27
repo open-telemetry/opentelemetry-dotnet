@@ -8,7 +8,7 @@ Notes](../../RELEASENOTES.md).
 
 ## 1.15.1
 
-Released 2026-Mar-26
+Released 2026-Mar-27
 
 ## 1.15.0
 

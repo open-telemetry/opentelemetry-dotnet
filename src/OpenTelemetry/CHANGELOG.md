@@ -8,7 +8,7 @@ Notes](../../RELEASENOTES.md).
 
 ## 1.15.1
 
-Released 2026-Mar-26
+Released 2026-Mar-27
 
 * Fixed `Tracer.StartSpan()` leaving the new span as `Activity.Current` when
   the previous activity was stopped by another thread during span creation.
