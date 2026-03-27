@@ -128,6 +128,11 @@ internal
     /// </summary>
     public string? EventName { get; set; } = null;
 
+    /// <summary>
+    /// Gets or sets the exception associated with the log.
+    /// </summary>
+    public Exception? Exception { get; set; } = null;
+
     internal static void SetActivityContext(ref LogRecordData data, Activity? activity)
     {
         if (activity != null)

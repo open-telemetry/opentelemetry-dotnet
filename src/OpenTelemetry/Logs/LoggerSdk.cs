@@ -37,6 +37,7 @@ internal sealed class LoggerSdk : Logger
             logRecord.Data = data;
             logRecord.ILoggerData = default;
             logRecord.ILoggerData.EventId = new EventId(default, data.EventName);
+            logRecord.ILoggerData.Exception = data.Exception;
 
             logRecord.Logger = this;
 

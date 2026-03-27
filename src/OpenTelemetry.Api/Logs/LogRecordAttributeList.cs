@@ -191,6 +191,7 @@ internal
     /// Adds attributes representing an <see cref="Exception"/> to the list.
     /// </summary>
     /// <param name="exception"><see cref="Exception"/>.</param>
+    [Obsolete("Use LogRecordData.Exception instead. RecordException will be removed in a future version.")]
     public void RecordException(Exception exception)
     {
         Guard.ThrowIfNull(exception);

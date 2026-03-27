@@ -26,6 +26,8 @@
 [OTEL1001]OpenTelemetry.Logs.LogRecordData
 [OTEL1001]OpenTelemetry.Logs.LogRecordData.Body.get -> string?
 [OTEL1001]OpenTelemetry.Logs.LogRecordData.Body.set -> void
+[OTEL1001]OpenTelemetry.Logs.LogRecordData.Exception.get -> System.Exception?
+[OTEL1001]OpenTelemetry.Logs.LogRecordData.Exception.set -> void
 [OTEL1001]OpenTelemetry.Logs.LogRecordData.LogRecordData() -> void
 [OTEL1001]OpenTelemetry.Logs.LogRecordData.LogRecordData(in System.Diagnostics.ActivityContext activityContext) -> void
 [OTEL1001]OpenTelemetry.Logs.LogRecordData.LogRecordData(System.Diagnostics.Activity? activity) -> void

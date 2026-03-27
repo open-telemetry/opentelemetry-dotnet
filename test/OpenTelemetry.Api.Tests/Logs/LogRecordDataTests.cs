@@ -103,6 +103,23 @@ public sealed class LogRecordDataTests
     }
 
     [Fact]
+    public void ExceptionTest()
+    {
+        var record = new LogRecordData();
+        Assert.Null(record.Exception);
+
+        record = default;
+        Assert.Null(record.Exception);
+
+        var exception = new InvalidOperationException("test message");
+        record.Exception = exception;
+        Assert.Equal(exception, record.Exception);
+
+        record.Exception = null;
+        Assert.Null(record.Exception);
+    }
+
+    [Fact]
     public void SetActivityContextTest()
     {
         LogRecordData record = default;
