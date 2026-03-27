@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.15.1-beta.1
+
+Released 2026-Mar-27
+
 * This package is deprecated and it will stop receiving any updates in
   March 2027. Use the OpenTelemetry API and SDK directly instead of the OpenTracing
   shims.
