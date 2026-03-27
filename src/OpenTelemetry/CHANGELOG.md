@@ -10,6 +10,10 @@ Notes](../../RELEASENOTES.md).
 
 Released 2026-Mar-26
 
+* Fixed `Tracer.StartSpan()` leaving the new span as `Activity.Current` when
+  the previous activity was stopped by another thread during span creation.
+  ([#6257](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6257))
+
 * Fixed `OverflowException` in `TraceIdRatioBasedSampler` when trace ID bytes
 produced `long.MinValue`.
 ([[#6928](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6928)])
@@ -18,7 +22,7 @@ produced `long.MinValue`.
   `HistogramBucketBoundaries`.
   ([#6866](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6866))
 * Fixed a thread-safety issue in `LogRecordSharedPool.Rent()`.
-  ([#6833](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6833)
+  ([#6833](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6833))
 
 * Fixed observable instruments (ObservableCounter, ObservableUpDownCounter,
   ObservableGauge) continuing to export stale data points after a callback

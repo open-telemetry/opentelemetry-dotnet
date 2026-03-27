@@ -227,7 +227,13 @@ public class Tracer
             if (startSpanBehavior.HasFlag(StartSpanBehaviors.DeactivateNewSpan)
                 && Activity.Current != previousActivity)
             {
-                Activity.Current = previousActivity;
+                var activityToRestore = previousActivity;
+                while (activityToRestore?.IsStopped == true)
+                {
+                    activityToRestore = activityToRestore.Parent;
+                }
+
+                Activity.Current = activityToRestore;
             }
         }
     }
