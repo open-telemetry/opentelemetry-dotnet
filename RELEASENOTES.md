@@ -4,6 +4,17 @@ This file contains highlights and announcements covering all components.
 For more details see `CHANGELOG.md` files maintained in the root source
 directory of each individual package.
 
+## 1.15.1
+
+Release details: [1.15.1](https://github.com/open-telemetry/opentelemetry-dotnet/releases/tag/core-1.15.1)
+
+* **Breaking change:** The Baggage API now disallows empty baggage names and
+  treats baggage names and values as case sensitive, aligning with the latest
+  [Baggage API specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.36.0/specification/baggage/api.md).
+* Various bug fixes across `OpenTelemetry.Api` and `OpenTelemetry` SDK,
+  including fixes for thread-safety, sampler edge cases, metrics precision,
+  and observable instrument lifecycle handling.
+
 ## 1.15.0
 
 Release details: [1.15.0](https://github.com/open-telemetry/opentelemetry-dotnet/releases/tag/core-1.15.0)

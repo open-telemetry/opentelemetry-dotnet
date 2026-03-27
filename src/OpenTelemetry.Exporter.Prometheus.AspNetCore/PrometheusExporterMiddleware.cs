@@ -64,7 +64,7 @@ internal sealed class PrometheusExporterMiddleware
 
                 if (dataView.Count > 0)
                 {
-                    response.StatusCode = 200;
+                    response.StatusCode = StatusCodes.Status200OK;
 #if NET
                     response.Headers.Append("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
 #else
@@ -79,7 +79,7 @@ internal sealed class PrometheusExporterMiddleware
                 else
                 {
                     // It's not expected to have no metrics to collect, but it's not necessarily a failure, either.
-                    response.StatusCode = 200;
+                    response.StatusCode = StatusCodes.Status200OK;
                     PrometheusExporterEventSource.Log.NoMetrics();
                 }
             }
@@ -93,7 +93,7 @@ internal sealed class PrometheusExporterMiddleware
             PrometheusExporterEventSource.Log.FailedExport(ex);
             if (!response.HasStarted)
             {
-                response.StatusCode = 500;
+                response.StatusCode = StatusCodes.Status500InternalServerError;
             }
         }
     }
