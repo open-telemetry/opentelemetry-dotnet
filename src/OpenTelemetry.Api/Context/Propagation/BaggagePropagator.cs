@@ -163,11 +163,11 @@ public class BaggagePropagator : TextMapPropagator
                 var rawValue = parts[1];
 
                 // semicolon is not a valid baggage-octet
-                #if NET
+#if NET
                 var semicolonIndex = rawValue.IndexOf(';', StringComparison.Ordinal);
-                #else
+#else
                 var semicolonIndex = rawValue.IndexOf(';');
-                #endif
+#endif
                 if (semicolonIndex >= 0)
                 {
                     rawValue = rawValue.Substring(0, semicolonIndex);

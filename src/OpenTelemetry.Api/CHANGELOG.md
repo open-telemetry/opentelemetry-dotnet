@@ -12,6 +12,20 @@ Notes](../../RELEASENOTES.md).
   sensitive.
   ([#6931](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6931))
 
+* Fixed `BaggagePropagator` to trim optional whitespace (OWS) around `=`
+  separators when parsing the `baggage` header, as required by the
+  [W3C Baggage specification](https://www.w3.org/TR/baggage/). This caused
+  incompatibility with .NET 10's default W3C propagator which emits headers
+  with OWS (e.g. `key = value`), resulting in spaces being URL-encoded as `+`
+  in outbound headers received by downstream services.
+  ([#7009](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7009))
+
+* Fixed `BaggagePropagator` to strip baggage properties (e.g. `;metadata`)
+  from values when parsing the `baggage` header. Semicolon is not a valid
+  `baggage-octet` per the W3C Baggage specification and must be interpreted
+  as the start of a property, not part of the value.
+  ([#7009](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7009))
+
 ## 1.15.0
 
 Released 2026-Jan-21

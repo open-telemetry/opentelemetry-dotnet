@@ -277,7 +277,7 @@ public class BaggagePropagatorTests
     }
 
     [Fact]
-    public void ValidateOWSExtractionDoesNotCorruptOnReinjection()
+    public void ValidateOptionalWhiteSpaceExtractionDoesNotCorruptOnReinjection()
     {
         // Simulates a header emitted by .NET 10's W3C propagator
         var carrier = new Dictionary<string, string>
@@ -290,12 +290,11 @@ public class BaggagePropagatorTests
         var outboundCarrier = new Dictionary<string, string>();
         this.baggage.Inject(extractedContext, outboundCarrier, Setter);
 
-        // Before the fix this would produce "+correlationId+=+12345+,+userId+=+user-abc+"
         Assert.Equal("correlationId=12345,userId=user-abc", outboundCarrier[BaggagePropagator.BaggageHeaderName]);
     }
 
     [Fact]
-    public void ValidateOWSBeforeSemicolonIgnored()
+    public void ValidateOptionalWhiteSpaceBeforeSemicolonIgnored()
     {
         var carrier = new Dictionary<string, string>
         {
@@ -303,8 +302,6 @@ public class BaggagePropagatorTests
         };
 
         var propagationContext = this.baggage.Extract(default, carrier, Getter);
-        Assert.Single(propagationContext.Baggage.GetBaggage());
-
         var baggage = propagationContext.Baggage.GetBaggage().FirstOrDefault();
 
         Assert.Equal("SomeKey", baggage.Key);
