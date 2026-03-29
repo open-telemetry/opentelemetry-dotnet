@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Buffers.Text;
-using System.Collections;
 using System.Globalization;
 using System.Text.Json;
 using OpenTelemetry.Internal;

@@ -4,7 +4,6 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Text;
-using Microsoft.Extensions.Primitives;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter;
