@@ -117,6 +117,11 @@ internal abstract class OtlpExportClient : IExportClient
                 // Decode using the charset from the response content headers, if available
                 var encoding = GetEncoding(httpResponse.Content.Headers.ContentType?.CharSet);
                 result = encoding.GetString(buffer, 0, count);
+
+                if (result.Length is MessageSizeLimit)
+                {
+                    result += "[TRUNCATED]";
+                }
             }
             finally
             {

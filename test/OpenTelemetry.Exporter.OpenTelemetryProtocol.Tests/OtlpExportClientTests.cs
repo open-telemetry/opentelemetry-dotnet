@@ -14,6 +14,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 public class OtlpExportClientTests
 {
     private const int MessageSizeLimit = 4 * 1024 * 1024;
+    private const string TruncationSuffix = "[TRUNCATED]";
 
     [Fact]
     public void TryGetResponseBody_NullHttpResponse_ReturnsNull()
@@ -92,8 +93,8 @@ public class OtlpExportClientTests
 
         // Assert
         Assert.NotNull(actual);
-        Assert.Equal(MessageSizeLimit, actual.Length);
-        Assert.Equal(new string('C', MessageSizeLimit), actual);
+        Assert.Equal(MessageSizeLimit + TruncationSuffix.Length, actual.Length);
+        Assert.Equal(new string('C', MessageSizeLimit) + TruncationSuffix, actual);
     }
 
     [Theory]
@@ -132,8 +133,8 @@ public class OtlpExportClientTests
 
         // Assert
         Assert.NotNull(actual);
-        Assert.Equal(MessageSizeLimit, actual.Length);
-        Assert.Equal(new string('G', MessageSizeLimit), actual);
+        Assert.Equal(MessageSizeLimit + TruncationSuffix.Length, actual.Length);
+        Assert.Equal(new string('G', MessageSizeLimit) + TruncationSuffix, actual);
     }
 
     [Fact]
