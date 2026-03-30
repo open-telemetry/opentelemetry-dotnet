@@ -28,7 +28,7 @@ public class OtlpExportClientTests
     }
 
     [Fact]
-    public void TryGetResponseBody_HttpResponseWithoutContent_ReturnsNull()
+    public void TryGetResponseBody_HttpResponseWithoutContent_ReturnsCorrectResult()
     {
         // Arrange
         using var httpResponse = new HttpResponseMessage() { Content = null };
