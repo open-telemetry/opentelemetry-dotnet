@@ -65,7 +65,7 @@ internal abstract class OtlpExportClient : IExportClient
         return true;
     }
 
-    protected static string? TryGetResponseBody(HttpResponseMessage? httpResponse, CancellationToken cancellationToken)
+    protected internal static string? TryGetResponseBody(HttpResponseMessage? httpResponse, CancellationToken cancellationToken)
     {
         if (httpResponse?.Content == null)
         {
@@ -76,15 +76,39 @@ internal abstract class OtlpExportClient : IExportClient
         {
 #if NET
             var stream = httpResponse.Content.ReadAsStream(cancellationToken);
-            using var reader = new StreamReader(stream);
-            return reader.ReadToEnd();
 #else
-            return httpResponse.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+            var stream = httpResponse.Content.ReadAsStreamAsync().GetAwaiter().GetResult();
 #endif
+
+            using var reader = new StreamReader(stream);
+
+            int length = GetSafeStreamLength(stream);
+            var buffer = new char[length];
+
+            length = reader.Read(buffer, 0, buffer.Length);
+
+            return new(buffer, 0, length);
         }
         catch (Exception)
         {
             return null;
+        }
+
+        static int GetSafeStreamLength(Stream stream)
+        {
+            // See https://github.com/open-telemetry/opentelemetry-proto/pull/781
+            const int MessageSizeLimit = 32 * 1024;
+
+            try
+            {
+                // Avoid allocating an overly large buffer if the stream is smaller than the size limit
+                return stream.Length < MessageSizeLimit ? (int)stream.Length : MessageSizeLimit;
+            }
+            catch (Exception)
+            {
+                // Not all Stream types support Length, so default to the maximum
+                return MessageSizeLimit;
+            }
         }
     }
 
@@ -114,16 +138,14 @@ internal abstract class OtlpExportClient : IExportClient
         return request;
     }
 
-    protected HttpResponseMessage SendHttpRequest(HttpRequestMessage request, CancellationToken cancellationToken)
-    {
+    protected HttpResponseMessage SendHttpRequest(HttpRequestMessage request, CancellationToken cancellationToken) =>
 #if NET
         // Note: SendAsync must be used with HTTP/2 because synchronous send is
         // not supported.
-        return this.RequireHttp2 || !SynchronousSendSupportedByCurrentPlatform
+        this.RequireHttp2 || !SynchronousSendSupportedByCurrentPlatform
             ? this.HttpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult()
             : this.HttpClient.Send(request, cancellationToken);
 #else
-        return this.HttpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult();
+        this.HttpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult();
 #endif
-    }
 }
