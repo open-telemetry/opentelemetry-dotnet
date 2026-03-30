@@ -12,7 +12,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
 public class OtlpExportClientTests
 {
-    private const int MessageSizeLimit = 32 * 1024;
+    private const int MessageSizeLimit = 4 * 1024 * 1024;
 
     [Fact]
     public void TryGetResponseBody_NullHttpResponse_ReturnsNull()

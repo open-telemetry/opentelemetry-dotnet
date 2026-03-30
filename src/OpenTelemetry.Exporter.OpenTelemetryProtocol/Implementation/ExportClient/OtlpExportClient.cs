@@ -82,7 +82,7 @@ internal abstract class OtlpExportClient : IExportClient
 #endif
 
             // See https://github.com/open-telemetry/opentelemetry-proto/pull/781
-            const int MessageSizeLimit = 32 * 1024;
+            const int MessageSizeLimit = 4 * 1024 * 1024; // 4MiB
 
             var length = GetBufferLength(stream, MessageSizeLimit);
 
