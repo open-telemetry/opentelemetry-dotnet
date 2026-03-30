@@ -5,6 +5,7 @@
 using System.Net.Http;
 #endif
 using System.Net.Http.Headers;
+using System.Text;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
@@ -67,7 +68,7 @@ internal abstract class OtlpExportClient : IExportClient
 
     protected internal static string? TryGetResponseBody(HttpResponseMessage? httpResponse, CancellationToken cancellationToken)
     {
-        if (httpResponse?.Content == null)
+        if (httpResponse?.Content == null || cancellationToken.IsCancellationRequested)
         {
             return null;
         }
@@ -80,35 +81,67 @@ internal abstract class OtlpExportClient : IExportClient
             var stream = httpResponse.Content.ReadAsStreamAsync().GetAwaiter().GetResult();
 #endif
 
-            using var reader = new StreamReader(stream);
+            // See https://github.com/open-telemetry/opentelemetry-proto/pull/781
+            const int MessageSizeLimit = 32 * 1024;
 
-            int length = GetSafeStreamLength(stream);
-            var buffer = new char[length];
+            var length = GetBufferLength(stream, MessageSizeLimit);
 
-            length = reader.Read(buffer, 0, buffer.Length);
+            var buffer = new byte[length];
+            var count = 0;
 
-            return new(buffer, 0, length);
+            // Read raw bytes so the size limit applies to bytes rather than characters
+            while (count < buffer.Length && !cancellationToken.IsCancellationRequested)
+            {
+                var read = stream.Read(buffer, count, buffer.Length - count);
+
+                if (read is 0)
+                {
+                    break;
+                }
+
+                count += read;
+            }
+
+            // Decode using the charset from the response content headers, if available
+            var encoding = GetEncoding(httpResponse.Content.Headers.ContentType?.CharSet);
+            return encoding.GetString(buffer, 0, count);
         }
         catch (Exception)
         {
             return null;
         }
 
-        static int GetSafeStreamLength(Stream stream)
+        static int GetBufferLength(Stream stream, int limit)
         {
-            // See https://github.com/open-telemetry/opentelemetry-proto/pull/781
-            const int MessageSizeLimit = 32 * 1024;
-
             try
             {
                 // Avoid allocating an overly large buffer if the stream is smaller than the size limit
-                return stream.Length < MessageSizeLimit ? (int)stream.Length : MessageSizeLimit;
+                return stream.Length < limit ? (int)stream.Length : limit;
             }
             catch (Exception)
             {
                 // Not all Stream types support Length, so default to the maximum
-                return MessageSizeLimit;
+                return limit;
             }
+        }
+
+        static Encoding GetEncoding(string? name)
+        {
+            Encoding encoding = Encoding.UTF8;
+
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                try
+                {
+                    encoding = Encoding.GetEncoding(name);
+                }
+                catch (Exception)
+                {
+                    // Invalid encoding name
+                }
+            }
+
+            return encoding;
         }
     }
 
