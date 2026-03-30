@@ -4,6 +4,7 @@
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
+using System.IO.Compression;
 using System.Net;
 using System.Text;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
@@ -93,6 +94,46 @@ public class OtlpExportClientTests
         Assert.NotNull(actual);
         Assert.Equal(MessageSizeLimit, actual.Length);
         Assert.Equal(new string('C', MessageSizeLimit), actual);
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(1024)]
+    [InlineData(2048)]
+    public void TryGetResponseBody_DecompressedContentExceedsLimit_ReturnsTruncatedContent(int excess)
+    {
+        // Arrange
+        var content = new string('G', MessageSizeLimit + excess);
+        var rawBytes = Encoding.UTF8.GetBytes(content);
+        var cancellationToken = CancellationToken.None;
+
+        using var memoryStream = new MemoryStream();
+
+        using (var compressor = new GZipStream(memoryStream, CompressionMode.Compress, leaveOpen: true))
+        {
+            compressor.Write(rawBytes, 0, rawBytes.Length);
+        }
+
+        memoryStream.Seek(0, SeekOrigin.Begin);
+
+        Assert.True(
+            memoryStream.Length < MessageSizeLimit,
+            $"The compressed message length {memoryStream.Length} is not less than {MessageSizeLimit}.");
+
+        using var compressed = new GZipStream(memoryStream, CompressionMode.Decompress, leaveOpen: true);
+
+        using var httpResponse = new HttpResponseMessage()
+        {
+            Content = new StreamContent(compressed),
+        };
+
+        // Act
+        var actual = OtlpExportClient.TryGetResponseBody(httpResponse, cancellationToken);
+
+        // Assert
+        Assert.NotNull(actual);
+        Assert.Equal(MessageSizeLimit, actual.Length);
+        Assert.Equal(new string('G', MessageSizeLimit), actual);
     }
 
     [Fact]
