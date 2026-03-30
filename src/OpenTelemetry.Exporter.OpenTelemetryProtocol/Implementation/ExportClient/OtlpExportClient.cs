@@ -4,6 +4,9 @@
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
+#if NET
+using System.Buffers;
+#endif
 using System.Net.Http.Headers;
 using System.Text;
 using OpenTelemetry.Internal;
@@ -86,13 +89,18 @@ internal abstract class OtlpExportClient : IExportClient
 
             var length = GetBufferLength(stream, MessageSizeLimit);
 
+#if NET
+            var buffer = ArrayPool<byte>.Shared.Rent(length);
+#else
             var buffer = new byte[length];
+#endif
+
             var count = 0;
 
             // Read raw bytes so the size limit applies to bytes rather than characters
-            while (count < buffer.Length && !cancellationToken.IsCancellationRequested)
+            while (count < length && !cancellationToken.IsCancellationRequested)
             {
-                var read = stream.Read(buffer, count, buffer.Length - count);
+                var read = stream.Read(buffer, count, length - count);
 
                 if (read is 0)
                 {
@@ -104,7 +112,13 @@ internal abstract class OtlpExportClient : IExportClient
 
             // Decode using the charset from the response content headers, if available
             var encoding = GetEncoding(httpResponse.Content.Headers.ContentType?.CharSet);
-            return encoding.GetString(buffer, 0, count);
+            var result = encoding.GetString(buffer, 0, count);
+
+#if NET
+            ArrayPool<byte>.Shared.Return(buffer);
+#endif
+
+            return result;
         }
         catch (Exception)
         {
