@@ -95,28 +95,35 @@ internal abstract class OtlpExportClient : IExportClient
             var buffer = new byte[length];
 #endif
 
-            var count = 0;
+            string result;
 
-            // Read raw bytes so the size limit applies to bytes rather than characters
-            while (count < length && !cancellationToken.IsCancellationRequested)
+            try
             {
-                var read = stream.Read(buffer, count, length - count);
+                var count = 0;
 
-                if (read is 0)
+                // Read raw bytes so the size limit applies to bytes rather than characters
+                while (count < length && !cancellationToken.IsCancellationRequested)
                 {
-                    break;
+                    var read = stream.Read(buffer, count, length - count);
+
+                    if (read is 0)
+                    {
+                        break;
+                    }
+
+                    count += read;
                 }
 
-                count += read;
+                // Decode using the charset from the response content headers, if available
+                var encoding = GetEncoding(httpResponse.Content.Headers.ContentType?.CharSet);
+                result = encoding.GetString(buffer, 0, count);
             }
-
-            // Decode using the charset from the response content headers, if available
-            var encoding = GetEncoding(httpResponse.Content.Headers.ContentType?.CharSet);
-            var result = encoding.GetString(buffer, 0, count);
-
+            finally
+            {
 #if NET
-            ArrayPool<byte>.Shared.Return(buffer);
+                ArrayPool<byte>.Shared.Return(buffer);
 #endif
+            }
 
             return result;
         }
