@@ -9,7 +9,7 @@ Notes](../../RELEASENOTES.md).
 
 * Limit how much of the response body is read when export fails and
   error logging is enabled.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7017](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7017))
 
 ## 1.15.1
 
