@@ -302,6 +302,9 @@ public class BaggagePropagatorTests
         };
 
         var propagationContext = this.baggage.Extract(default, carrier, Getter);
+
+        Assert.Single(propagationContext.Baggage.GetBaggage());
+
         var baggage = propagationContext.Baggage.GetBaggage().FirstOrDefault();
 
         Assert.Equal("SomeKey", baggage.Key);
