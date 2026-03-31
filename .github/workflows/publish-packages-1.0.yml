@@ -188,7 +188,7 @@ jobs:
       env:
         MYGET_TOKEN_EXISTS: ${{ secrets.MYGET_TOKEN != '' }}
         API_KEY: ${{ secrets.MYGET_TOKEN }}
-        SOURCE: https://www.myget.org/F/opentelemetry/api/v2/package
+        SOURCE: https://www.myget.org/F/opentelemetry/api/v3/index.json
       if: env.MYGET_TOKEN_EXISTS == 'true' # Skip MyGet publish if run on a fork without the secret
       shell: pwsh
       run: dotnet nuget push *.nupkg --api-key ${env:API_KEY} --skip-duplicate --source ${env:SOURCE}
