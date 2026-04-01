@@ -77,6 +77,40 @@ internal sealed class PrometheusMetric
     public static PrometheusMetric Create(Metric metric, bool disableTotalNameSuffixForCounters)
         => new(metric.Name, metric.Unit, GetPrometheusType(metric.MetricType), disableTotalNameSuffixForCounters);
 
+    internal static string SanitizeMetricUnit(string metricUnit)
+    {
+        StringBuilder? sb = null;
+        var lastCharUnderscore = false;
+
+        for (var i = 0; i < metricUnit.Length; i++)
+        {
+            var c = metricUnit[i];
+
+            if (!char.IsLetterOrDigit(c) && c != ':')
+            {
+                if (!lastCharUnderscore)
+                {
+                    lastCharUnderscore = true;
+                    sb ??= CreateStringBuilder(metricUnit);
+                    sb.Append('_');
+                }
+            }
+            else
+            {
+                sb ??= CreateStringBuilder(metricUnit);
+                sb.Append(c);
+                lastCharUnderscore = false;
+            }
+        }
+
+        return sb?.ToString() ?? metricUnit;
+
+        static StringBuilder CreateStringBuilder(string unit)
+        {
+            return new(unit.Length);
+        }
+    }
+
     internal static string SanitizeMetricName(string metricName)
     {
         StringBuilder? sb = null;
@@ -208,7 +242,7 @@ internal sealed class PrometheusMetric
             updatedUnit = MapUnit(updatedUnit.AsSpan());
         }
 
-        return updatedUnit;
+        return SanitizeMetricUnit(updatedUnit);
     }
 
     private static bool TryProcessRateUnits(string updatedUnit, [NotNullWhen(true)] out string? updatedPerUnit)

@@ -361,7 +361,43 @@ public sealed class PrometheusMetricTests
 
     [Fact]
     public void Name_MultipleSlashesInUnit_FirstSlashProcessed()
-        => AssertName("metric", "req/s/extra", PrometheusType.Gauge, false, "metric_req_per_s/extra"); // // Multiple slashes
+        => AssertName("metric", "req/s/extra", PrometheusType.Gauge, false, "metric_req_per_s_extra"); // // Multiple slashes
+
+    [Fact]
+    public void SanitizeMetricUnit_Valid()
+        => AssertSanitizeMetricUnit("requests", "requests");
+
+    [Fact]
+    public void SanitizeMetricUnit_RemoveConsecutiveUnderscores()
+        => AssertSanitizeMetricUnit("req__per__s", "req_per_s");
+
+    [Fact]
+    public void SanitizeMetricUnit_RemoveUnsupportedCharacters()
+        => AssertSanitizeMetricUnit("# RU", "_RU");
+
+    [Fact]
+    public void SanitizeMetricUnit_RemoveWhitespace()
+        => AssertSanitizeMetricUnit("req s", "req_s");
+
+    [Fact]
+    public void SanitizeMetricUnit_LeadingNumberAllowed()
+        => AssertSanitizeMetricUnit("2", "2");
+
+    [Fact]
+    public void SanitizeMetricUnit_RemoveMultipleUnsupportedCharacters()
+        => AssertSanitizeMetricUnit("##/RU!", "_RU_");
+
+    [Fact]
+    public void Name_UnitWithHash_Sanitized()
+        => AssertName("azure_cosmosdb_client_operation_request_charge", "# RU", PrometheusType.Histogram, false, "azure_cosmosdb_client_operation_request_charge__RU");
+
+    [Fact]
+    public void Name_UnitWithSpace_Sanitized()
+        => AssertName("metric", "req s", PrometheusType.Gauge, false, "metric_req_s");
+
+    [Fact]
+    public void Name_UnitWithSpecialChars_Sanitized()
+        => AssertName("metric", "req!", PrometheusType.Gauge, false, "metric_req_");
 
     [Theory]
     [InlineData(PrometheusType.Counter)]
@@ -373,6 +409,12 @@ public sealed class PrometheusMetricTests
     {
         var metric = new PrometheusMetric("metric", "s", type, false);
         Assert.Equal(type, metric.Type);
+    }
+
+    private static void AssertSanitizeMetricUnit(string unit, string expected)
+    {
+        var sanitizedUnit = PrometheusMetric.SanitizeMetricUnit(unit);
+        Assert.Equal(expected, sanitizedUnit);
     }
 
     private static void AssertName(
