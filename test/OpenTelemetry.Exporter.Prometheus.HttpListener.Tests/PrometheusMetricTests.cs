@@ -381,7 +381,7 @@ public sealed class PrometheusMetricTests
 
     [Fact]
     public void SanitizeMetricUnit_LeadingNumberAllowed()
-        => AssertSanitizeMetricUnit("2", "2");
+        => AssertSanitizeMetricUnit("2_unitname", "2_unitname");
 
     [Fact]
     public void SanitizeMetricUnit_RemoveMultipleUnsupportedCharacters()
