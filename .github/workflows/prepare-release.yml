@@ -93,6 +93,7 @@ jobs:
       with:
         app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
+        permission-contents: read
         permission-pull-requests: write
 
     - name: Check out code
