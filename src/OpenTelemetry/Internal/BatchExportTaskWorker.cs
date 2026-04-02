@@ -136,15 +136,18 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
     /// <inheritdoc/>
     protected override void Dispose(bool disposing)
     {
-        base.Dispose(disposing);
-
         if (!this.disposed)
         {
-            this.disposed = true;
+            if (disposing)
+            {
+                this.cancellationTokenSource.Dispose();
+                this.exportTrigger.Dispose();
+            }
 
-            this.cancellationTokenSource.Dispose();
-            this.exportTrigger.Dispose();
+            this.disposed = true;
         }
+
+        base.Dispose(disposing);
     }
 
     private async Task<bool> WaitForExportAsync(int timeoutMilliseconds, long targetHead)
