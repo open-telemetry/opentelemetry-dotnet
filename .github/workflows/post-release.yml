@@ -139,11 +139,18 @@ jobs:
           -gitUserName ${env:BOT_USER_NAME} `
           -gitUserEmail ${env:BOT_USER_EMAIL}
 
+    - uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3.0.0
+      id: otelbot-contrib-token
+      with:
+        app-id: ${{ vars.OTELBOT_DOTNET_CONTRIB_APP_ID }}
+        private-key: ${{ secrets.OTELBOT_DOTNET_CONTRIB_PRIVATE_KEY }}
+        permission-actions: write
+
     - name: Invoke core version update workflow in opentelemetry-dotnet-contrib repository
       if: vars.CONTRIB_REPO
       shell: pwsh
       env:
-        GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
+        GH_TOKEN: ${{ steps.otelbot-contrib-token.outputs.token }}
         CONTRIB_REPO: ${{ vars.CONTRIB_REPO }}
         TAG: ${{ inputs.tag || github.ref_name }}
       run: |
