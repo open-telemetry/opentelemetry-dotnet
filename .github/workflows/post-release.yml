@@ -144,7 +144,7 @@ jobs:
       if: vars.CONTRIB_REPO
       shell: pwsh
       env:
-        GH_TOKEN: ${{ steps.otelbot-contrib-token.outputs.token }}
+        GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
         CONTRIB_REPO: ${{ vars.CONTRIB_REPO }}
         TAG: ${{ inputs.tag || github.ref_name }}
       run: |
