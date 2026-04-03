@@ -6,6 +6,9 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* `ObservedTimestamp` will now be exported for logs.
+  ([#6979](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6979))
+
 ## 1.15.1
 
 Released 2026-Mar-27

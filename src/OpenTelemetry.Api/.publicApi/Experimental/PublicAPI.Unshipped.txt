@@ -29,6 +29,8 @@
 [OTEL1001]OpenTelemetry.Logs.LogRecordData.LogRecordData() -> void
 [OTEL1001]OpenTelemetry.Logs.LogRecordData.LogRecordData(in System.Diagnostics.ActivityContext activityContext) -> void
 [OTEL1001]OpenTelemetry.Logs.LogRecordData.LogRecordData(System.Diagnostics.Activity? activity) -> void
+[OTEL1001]OpenTelemetry.Logs.LogRecordData.ObservedTimestamp.get -> System.DateTime
+[OTEL1001]OpenTelemetry.Logs.LogRecordData.ObservedTimestamp.set -> void
 [OTEL1001]OpenTelemetry.Logs.LogRecordData.Severity.get -> OpenTelemetry.Logs.LogRecordSeverity?
 [OTEL1001]OpenTelemetry.Logs.LogRecordData.Severity.set -> void
 [OTEL1001]OpenTelemetry.Logs.LogRecordData.SeverityText.get -> string?

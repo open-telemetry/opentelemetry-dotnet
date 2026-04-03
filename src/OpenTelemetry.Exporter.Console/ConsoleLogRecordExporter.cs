@@ -48,6 +48,7 @@ public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
         foreach (var logRecord in batch)
         {
             this.WriteLine($"{"LogRecord.Timestamp:",-RightPaddingLength}{logRecord.Timestamp:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
+            this.WriteLine($"{"LogRecord.ObservedTimestamp:",-RightPaddingLength}{logRecord.ObservedTimestamp:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
 
             if (logRecord.TraceId != default)
             {

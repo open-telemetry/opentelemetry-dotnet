@@ -7,6 +7,11 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* `observed_time_unix_nano` will no longer always be identical to `time_unix_nano`
+  when using the logs bridge API. By default, it will instead be set to the actual
+  observed time of the log record.
+  ([#6979](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6979))
+
 ## 1.15.1
 
 Released 2026-Mar-27
