@@ -104,6 +104,7 @@ jobs:
       with:
         app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
+        permission-actions: write
         permission-contents: write
         permission-pull-requests: write
 
@@ -138,13 +139,6 @@ jobs:
           -targetBranch ${env:TARGET_BRANCH} `
           -gitUserName ${env:BOT_USER_NAME} `
           -gitUserEmail ${env:BOT_USER_EMAIL}
-
-    - uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3.0.0
-      id: otelbot-contrib-token
-      with:
-        app-id: ${{ vars.OTELBOT_DOTNET_CONTRIB_APP_ID }}
-        private-key: ${{ secrets.OTELBOT_DOTNET_CONTRIB_PRIVATE_KEY }}
-        permission-actions: write
 
     - name: Invoke core version update workflow in opentelemetry-dotnet-contrib repository
       if: vars.CONTRIB_REPO
