@@ -295,29 +295,19 @@ For more information about the approver role, see the [community repository](htt
 
 For more information about the triager role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#triager).
 
-### Emeritus Maintainers
+### Emeritus
 
-* [Mike Goldsmith](https://github.com/MikeGoldsmith)
-* [Sergey Kanzhelev](https://github.com/SergeyKanzhelev)
-* [Utkarsh Umesan Pillai](https://github.com/utpilla)
-
-For more information about the emeritus role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#emeritus-maintainerapprovertriager).
-
-### Emeritus Approvers
-
-* [Bruno Garcia](https://github.com/bruno-garcia)
-* [Eddy Nakamura](https://github.com/eddynaka)
-* [Liudmila Molkova](https://github.com/lmolkova)
-* [Paulo Janotti](https://github.com/pjanotti)
-* [Reiley Yang](https://github.com/reyang)
-* [Robert Paj&#x105;k](https://github.com/pellared)
-* [Vishwesh Bankwar](https://github.com/vishweshbankwar)
-
-For more information about the emeritus role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#emeritus-maintainerapprovertriager).
-
-### Emeritus Triagers
-
-* [Victor Lu](https://github.com/victlu)
+* [Bruno Garcia](https://github.com/bruno-garcia), Approver
+* [Eddy Nakamura](https://github.com/eddynaka), Approver
+* [Liudmila Molkova](https://github.com/lmolkova), Approver
+* [Mike Goldsmith](https://github.com/MikeGoldsmith), Maintainer
+* [Paulo Janotti](https://github.com/pjanotti), Approver
+* [Reiley Yang](https://github.com/reyang), Approver
+* [Robert Paj&#x105;k](https://github.com/pellared), Approver
+* [Sergey Kanzhelev](https://github.com/SergeyKanzhelev), Maintainer
+* [Utkarsh Umesan Pillai](https://github.com/utpilla), Maintainer
+* [Victor Lu](https://github.com/victlu), Triager
+* [Vishwesh Bankwar](https://github.com/vishweshbankwar), Approver
 
 For more information about the emeritus role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#emeritus-maintainerapprovertriager).
 
