@@ -6,6 +6,14 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added Task-based worker support for `BatchExportProcessor` and
+  `PeriodicExportingMetricReader` to enable OpenTelemetry to work in
+  single-threaded WebAssembly environments such as Blazor and Uno Platform.
+  The implementation automatically detects the WebAssembly runtime and switches
+  to Task-based workers accordingly; the Thread-based approach remains the
+  default on all other platforms.
+  ([#6379](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6379))
+
 ## 1.15.1
 
 Released 2026-Mar-27
