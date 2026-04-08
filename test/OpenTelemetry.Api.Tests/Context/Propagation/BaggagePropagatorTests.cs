@@ -522,11 +522,11 @@ public class BaggagePropagatorTests
     }
 
     // -------------------------------------------------------------------------
-    // Keys — incorrect path
+    // Keys incorrect path
     // The current implementation URL-decodes keys on extract (#5479).
     // These tests document what the correct behaviour SHOULD be: keys arriving
     // on the wire that happen to contain %-sequences or '+' must be treated as
-    // literal token strings — they are NOT decoded.
+    // literal token strings they are NOT decoded.
     //
     // '%' is a valid tchar, so "key%20name" is a valid token whose name is
     // literally "key%20name", not "key name". '+' is also a valid tchar.
