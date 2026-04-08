@@ -190,7 +190,7 @@ internal static class ProtobufOtlpLogSerializer
         }
         else
         {
-            // Timestamp not set → time_unix_nano = 0 ("unknown or missing" per OTLP spec).
+            // Timestamp not set -> time_unix_nano = 0 ("unknown or missing" per OTLP spec).
             // observed_time_unix_nano MUST still be populated (proto spec requirement).
             timeUnixNano = 0;
             observedTimeUnixNano = (ulong)DateTime.UtcNow.ToUnixTimeNanoseconds();

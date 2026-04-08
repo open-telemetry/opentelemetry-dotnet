@@ -400,7 +400,7 @@ public class OtlpLogExporterTests
         // Capture a lower-bound for the observation timestamp before emitting.
         var beforeEmitUtc = DateTime.UtcNow;
 
-        // Emit with default LogRecordData — Timestamp stays DateTime.MinValue.
+        // Emit with default LogRecordData -- Timestamp stays DateTime.MinValue.
         bridgeLogger.EmitLog(new LogRecordData());
 
         Assert.Single(logRecords);
@@ -410,7 +410,7 @@ public class OtlpLogExporterTests
 
         Assert.NotNull(otlpLogRecord);
 
-        // time_unix_nano must be 0 — "unknown or missing" per OTLP spec.
+        // time_unix_nano must be 0 -- "unknown or missing" per OTLP spec.
         Assert.Equal(0UL, otlpLogRecord.TimeUnixNano);
 
         // observed_time_unix_nano must be >= the moment we captured before emitting.
