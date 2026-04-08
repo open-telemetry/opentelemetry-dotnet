@@ -102,6 +102,7 @@
     <PackageVersion Include="Grpc.Net.Client" Version="2.67.0" />
     <PackageVersion Include="JunitXml.TestLogger" Version="8.0.0" />
     <PackageVersion Include="Microsoft.CSharp" Version="4.7.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="3.12.0-beta1.25218.8" />
     <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="4.14.0" />
     <PackageVersion Include="Microsoft.Coyote" Version="1.7.11" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.5" />
