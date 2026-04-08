@@ -11,7 +11,7 @@ Release details: [1.15.2](https://github.com/open-telemetry/opentelemetry-dotnet
 * Limit how much of the response body is read by the OTLP exporter when
   export fails and error logging is enabled.
 * Added Task-based worker support for `BatchExportProcessor` and
-  `PeriodicExportingMetricReader` to enable the OpenTelemetrySDK to work
+  `PeriodicExportingMetricReader` to enable the OpenTelemetry SDK to work
   in single-threaded WebAssembly environments such as Blazor and
   Uno Platform.
 
