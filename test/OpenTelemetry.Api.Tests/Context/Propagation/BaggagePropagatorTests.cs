@@ -495,9 +495,9 @@ public class BaggagePropagatorTests
 
         var baggageHeader = carrier[BaggagePropagator.BaggageHeaderName];
 
-        Assert.Contains("%09", baggageHeader, StringComparison.Ordinal);  // Tab
-        Assert.Contains("%20", baggageHeader, StringComparison.Ordinal);  // Space
-        Assert.Contains("%22", baggageHeader, StringComparison.Ordinal);  // Quote
+        Assert.Contains("%09", baggageHeader, StringComparison.Ordinal);
+        Assert.Contains("%20", baggageHeader, StringComparison.Ordinal);
+        Assert.Contains("%22", baggageHeader, StringComparison.Ordinal);
 
         var extractedContext = this.baggage.Extract(default, carrier, Getter);
         var extractedBaggage = extractedContext.Baggage.GetBaggage();
@@ -508,8 +508,6 @@ public class BaggagePropagatorTests
     [Fact]
     public void KeyValidTcharSymbolInjectedUnchanged()
     {
-        // Keys composed entirely of tchar characters must appear unchanged in
-        // the injected header. Keys are never percent-encoded.
         var propagationContext = new PropagationContext(
             default,
             new Baggage(new Dictionary<string, string>
@@ -536,8 +534,6 @@ public class BaggagePropagatorTests
     [Fact]
     public void KeyPercentSequenceInKeyPreservedLiterallyOnExtract()
     {
-        // '%' is a valid tchar. "key%20name" is a valid token whose literal
-        // name is "key%20name". The extractor must NOT decode it to "key name".
         var carrier = new Dictionary<string, string>
         {
             { BaggagePropagator.BaggageHeaderName, "key%20name=value,valid-key=valid-value" },
@@ -547,15 +543,13 @@ public class BaggagePropagatorTests
         var baggage = context.Baggage.GetBaggage();
 
         Assert.Equal(2, baggage.Count);
-        Assert.True(baggage.ContainsKey("key%20name")); // literal token, not decoded
-        Assert.False(baggage.ContainsKey("key name"));  // must NOT have been decoded
+        Assert.True(baggage.ContainsKey("key%20name"));
+        Assert.False(baggage.ContainsKey("key name"));
     }
 
     [Fact]
     public void KeyPlusInKeyPreservedLiterallyOnExtract()
     {
-        // '+' is a valid tchar. "key+name" is a valid token whose literal name
-        // is "key+name". The extractor must NOT decode '+' to a space.
         var carrier = new Dictionary<string, string>
         {
             { BaggagePropagator.BaggageHeaderName, "key+name=value" },
@@ -564,7 +558,7 @@ public class BaggagePropagatorTests
         var context = this.baggage.Extract(default, carrier, Getter);
         var entry = Assert.Single(context.Baggage.GetBaggage());
 
-        Assert.Equal("key+name", entry.Key); // '+' is literal, not a space
+        Assert.Equal("key+name", entry.Key);
     }
 
     [Theory]
@@ -588,9 +582,6 @@ public class BaggagePropagatorTests
     [InlineData("}")]
     public void KeyWithDelimiterCharEntirePairDroppedOnExtract(string delimiter)
     {
-        // A key containing any delimiter character is an invalid token.
-        // The pair containing it must be silently dropped. The remaining
-        // valid pair must still be extracted.
         var invalidKey = $"key{delimiter}name";
         var carrier = new Dictionary<string, string>
         {
@@ -612,9 +603,6 @@ public class BaggagePropagatorTests
     [InlineData("@")]
     public void KeyWithDelimiterCharEntirePairDroppedOnInject(string delimiter)
     {
-        // A key containing a delimiter is an invalid token. On inject the
-        // pair must be dropped — not percent-encoded, not partially written.
-        // Other valid pairs in the same baggage must still be injected.
         var propagationContext = new PropagationContext(
             default,
             new Baggage(new Dictionary<string, string>
@@ -885,11 +873,7 @@ public class BaggagePropagatorTests
     {
         var carrier = new Dictionary<string, string>();
         this.baggage.Inject(
-            new PropagationContext(default, new Baggage(new Dictionary<string, string>
-            {
-                { "key", "value=more=equals" },
-            })),
-            carrier, Setter);
+            new PropagationContext(default, new Baggage(new Dictionary<string, string> { { "key", "value=more=equals" }, })), carrier, Setter);
 
         var extracted = this.baggage.Extract(default, carrier, Getter).Baggage.GetBaggage();
         Assert.Equal("value=more=equals", extracted["key"]);
@@ -898,12 +882,9 @@ public class BaggagePropagatorTests
     [Fact]
     public void RoundTripValueWithSpacePreservedAsSpace()
     {
-
         var carrier = new Dictionary<string, string>();
         this.baggage.Inject(
-            new PropagationContext(default, new Baggage(new Dictionary<string, string> {
-                { "key", "value with space" },
-            })), carrier, Setter);
+            new PropagationContext(default, new Baggage(new Dictionary<string, string> { { "key", "value with space" }, })), carrier, Setter);
 
         // The intermediate header must use %20, not '+'
         Assert.Contains("%20", carrier[BaggagePropagator.BaggageHeaderName], StringComparison.Ordinal);
@@ -919,12 +900,7 @@ public class BaggagePropagatorTests
         const string original = "val ue\"wi,th;back\\slash";
 
         var carrier = new Dictionary<string, string>();
-        this.baggage.Inject(
-            new PropagationContext(default, new Baggage(new Dictionary<string, string>
-            {
-                { "key", original },
-            })),
-            carrier, Setter);
+        this.baggage.Inject(new PropagationContext(default, new Baggage(new Dictionary<string, string> { { "key", original }, })), carrier, Setter);
 
         var extracted = this.baggage.Extract(default, carrier, Getter).Baggage.GetBaggage();
         Assert.Equal(original, extracted["key"]);
@@ -935,12 +911,7 @@ public class BaggagePropagatorTests
     {
         var carrier = new Dictionary<string, string>();
         this.baggage.Inject(
-            new PropagationContext(default, new Baggage(new Dictionary<string, string>
-            {
-                { "valid-key",  "valid-value" },
-                { "invalid key", "should-be-dropped" }, // space is not tchar
-            })),
-            carrier, Setter);
+            new PropagationContext(default, new Baggage(new Dictionary<string, string> { { "valid-key",  "valid-value" }, { "invalid key", "should-be-dropped" }, })), carrier, Setter);
 
         var extracted = this.baggage.Extract(default, carrier, Getter).Baggage.GetBaggage();
         Assert.Single(extracted);
