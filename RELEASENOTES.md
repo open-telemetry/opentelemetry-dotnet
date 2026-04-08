@@ -8,9 +8,9 @@ directory of each individual package.
 
 Release details: [1.15.2](https://github.com/open-telemetry/opentelemetry-dotnet/releases/tag/core-1.15.2)
 
-- [OpenTelemetry.Exporter.OpenTelemetryProtocol] Limit how much of the
+* [OpenTelemetry.Exporter.OpenTelemetryProtocol] Limit how much of the
   response body is read when export fails and error logging is enabled.
-- [OpenTelemetry] Added Task-based worker support for `BatchExportProcessor`
+* [OpenTelemetry] Added Task-based worker support for `BatchExportProcessor`
   and `PeriodicExportingMetricReader` to enable OpenTelemetry to work in
   single-threaded WebAssembly environments such as Blazor and Uno Platform.
 
