@@ -104,9 +104,14 @@ public sealed class LogRecord
     /// Gets or sets the log timestamp.
     /// </summary>
     /// <remarks>
-    /// Note: If <see cref="Timestamp"/> is set to a value with <see
-    /// cref="DateTimeKind.Local"/> it will be automatically converted to
-    /// UTC using <see cref="DateTime.ToUniversalTime"/>.
+    /// Notes:
+    /// <list type="bullet">
+    /// <item>The default value is <see cref="DateTime.MinValue"/>, which is
+    /// treated as "not set" per the OpenTelemetry specification.</item>
+    /// <item>If <see cref="Timestamp"/> is set to a value with <see
+    /// cref="DateTimeKind.Local"/> it will be automatically converted to UTC
+    /// using <see cref="DateTime.ToUniversalTime"/>.</item>
+    /// </list>
     /// </remarks>
     public DateTime Timestamp
     {

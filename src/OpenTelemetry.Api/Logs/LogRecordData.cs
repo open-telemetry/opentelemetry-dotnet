@@ -26,7 +26,7 @@ internal
     struct LogRecordData
 #pragma warning restore CA1815 // Override equals and operator equals on value types
 {
-    internal DateTime TimestampBacking = DateTime.UtcNow;
+    internal DateTime TimestampBacking = DateTime.MinValue;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="LogRecordData"/> struct.
@@ -35,7 +35,7 @@ internal
     /// Notes:
     /// <list type="bullet">
     /// <item>The <see cref="Timestamp"/> property is initialized to <see
-    /// cref="DateTime.UtcNow"/> automatically.</item>
+    /// cref="DateTime.MinValue"/> automatically.</item>
     /// <item>The <see cref="TraceId"/>, <see cref="SpanId"/>, and <see
     /// cref="TraceFlags"/> properties will be set using the <see
     /// cref="Activity.Current"/> instance.</item>
@@ -51,7 +51,9 @@ internal
     /// </summary>
     /// <remarks>
     /// Note: The <see cref="Timestamp"/> property is initialized to <see
-    /// cref="DateTime.UtcNow"/> automatically.
+    /// cref="DateTime.MinValue"/> automatically, indicating the timestamp is
+    /// not set. Set <see cref="Timestamp"/> explicitly to provide the time the
+    /// event occurred.
     /// </remarks>
     /// <param name="activity">Optional <see cref="Activity"/> used to populate
     /// trace context properties (<see cref="TraceId"/>, <see cref="SpanId"/>,
@@ -66,7 +68,9 @@ internal
     /// </summary>
     /// <remarks>
     /// Note: The <see cref="Timestamp"/> property is initialized to <see
-    /// cref="DateTime.UtcNow"/> automatically.
+    /// cref="DateTime.MinValue"/> automatically, indicating the timestamp is
+    /// not set. Set <see cref="Timestamp"/> explicitly to provide the time the
+    /// event occurred.
     /// </remarks>
     /// <param name="activityContext"><see cref="ActivityContext"/> used to
     /// populate trace context properties (<see cref="TraceId"/>, <see
@@ -82,9 +86,16 @@ internal
     /// Gets or sets the log timestamp.
     /// </summary>
     /// <remarks>
-    /// Note: If <see cref="Timestamp"/> is set to a value with <see
-    /// cref="DateTimeKind.Local"/> it will be automatically converted to
-    /// UTC using <see cref="DateTime.ToUniversalTime"/>.
+    /// Notes:
+    /// <list type="bullet">
+    /// <item>The default value is <see cref="DateTime.MinValue"/>, which is
+    /// treated as "not set" per the OpenTelemetry specification. When
+    /// exported via OTLP this maps to <c>time_unix_nano = 0</c> (unknown or
+    /// missing timestamp).</item>
+    /// <item>If <see cref="Timestamp"/> is set to a value with <see
+    /// cref="DateTimeKind.Local"/> it will be automatically converted to UTC
+    /// using <see cref="DateTime.ToUniversalTime"/>.</item>
+    /// </list>
     /// </remarks>
     public DateTime Timestamp
     {

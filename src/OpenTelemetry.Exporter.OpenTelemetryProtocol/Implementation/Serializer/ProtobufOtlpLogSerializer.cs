@@ -179,9 +179,25 @@ internal static class ProtobufOtlpLogSerializer
         var logRecordLengthPosition = otlpTagWriterState.WritePosition;
         otlpTagWriterState.WritePosition += ReserveSizeForLength;
 
-        var timestamp = (ulong)logRecord.Timestamp.ToUnixTimeNanoseconds();
-        otlpTagWriterState.WritePosition = ProtobufSerializer.WriteFixed64WithTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpLogFieldNumberConstants.LogRecord_Time_Unix_Nano, timestamp);
-        otlpTagWriterState.WritePosition = ProtobufSerializer.WriteFixed64WithTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpLogFieldNumberConstants.LogRecord_Observed_Time_Unix_Nano, timestamp);
+        var logTimestamp = logRecord.Timestamp;
+        ulong timeUnixNano;
+        ulong observedTimeUnixNano;
+        if (logTimestamp != DateTime.MinValue)
+        {
+            // Timestamp was explicitly set: use it for both fields.
+            timeUnixNano = (ulong)logTimestamp.ToUnixTimeNanoseconds();
+            observedTimeUnixNano = timeUnixNano;
+        }
+        else
+        {
+            // Timestamp not set → time_unix_nano = 0 ("unknown or missing" per OTLP spec).
+            // observed_time_unix_nano MUST still be populated (proto spec requirement).
+            timeUnixNano = 0;
+            observedTimeUnixNano = (ulong)DateTime.UtcNow.ToUnixTimeNanoseconds();
+        }
+
+        otlpTagWriterState.WritePosition = ProtobufSerializer.WriteFixed64WithTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpLogFieldNumberConstants.LogRecord_Time_Unix_Nano, timeUnixNano);
+        otlpTagWriterState.WritePosition = ProtobufSerializer.WriteFixed64WithTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpLogFieldNumberConstants.LogRecord_Observed_Time_Unix_Nano, observedTimeUnixNano);
 
         otlpTagWriterState.WritePosition = ProtobufSerializer.WriteEnumWithTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpLogFieldNumberConstants.LogRecord_Severity_Number, logRecord.Severity.HasValue ? (int)logRecord.Severity : 0);
 
