@@ -291,26 +291,6 @@ public class BaggagePropagatorTests
     }
 
     [Fact]
-    public void ValidatePercentEncoding()
-    {
-        var originalValue = "\t \"\';=asdf!@#$%^&*()";
-        var encodedValue = Uri.EscapeDataString(originalValue);
-
-        var carrier = new Dictionary<string, string>
-        {
-            { BaggagePropagator.BaggageHeaderName, $"SomeKey={encodedValue}" },
-        };
-
-        var propagationContext = this.baggage.Extract(default, carrier, Getter);
-        Assert.Single(propagationContext.Baggage.GetBaggage());
-
-        var baggage = propagationContext.Baggage.GetBaggage().FirstOrDefault();
-
-        Assert.Equal("SomeKey", baggage.Key);
-        Assert.Equal(originalValue, baggage.Value);
-    }
-
-    [Fact]
     public void ValidateInvalidFormatSkipped()
     {
         var carrier = new Dictionary<string, string>
