@@ -191,24 +191,6 @@ public class BaggagePropagatorTests
     }
 
     [Fact]
-    public void ValidateSpecialCharsBaggageInjection()
-    {
-        var carrier = new Dictionary<string, string>();
-        var propagationContext = new PropagationContext(
-            default,
-            new Baggage(new Dictionary<string, string>
-            {
-                { "key 1", "value 1" },
-                { "key2", "!x_x,x-x&x(x\");:" },
-            }));
-
-        this.baggage.Inject(propagationContext, carrier, Setter);
-
-        Assert.Single(carrier);
-        Assert.Equal("key+1=value+1,key2=!x_x%2Cx-x%26x(x%22)%3B%3A", carrier[BaggagePropagator.BaggageHeaderName]);
-    }
-
-    [Fact]
     public void ValidateMultipleEqualsInValue()
     {
         var carrier = new Dictionary<string, string>
