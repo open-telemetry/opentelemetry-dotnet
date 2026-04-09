@@ -643,7 +643,7 @@ public class BaggagePropagatorTests
         var key = $"key{specialChar}name";
         var carrier = new Dictionary<string, string>
         {
-            { BaggagePropagator.BaggageHeaderName, $"prefix{key}suffix=value" },
+            { BaggagePropagator.BaggageHeaderName, $"{key}=value" },
         };
 
         var propagationContext = this.baggage.Extract(default, carrier, Getter);
@@ -724,7 +724,7 @@ public class BaggagePropagatorTests
     {
         var carrier = new Dictionary<string, string>
         {
-            { BaggagePropagator.BaggageHeaderName, $"key=prefix{encoded}suffix" },
+            { BaggagePropagator.BaggageHeaderName, $"key={encoded}" },
         };
 
         var propagationContext = this.baggage.Extract(default, carrier, Getter);
