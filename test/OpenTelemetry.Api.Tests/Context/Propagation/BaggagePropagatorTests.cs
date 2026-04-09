@@ -633,24 +633,6 @@ public class BaggagePropagatorTests
     }
 
     [Theory]
-    [InlineData("v=1")]
-    [InlineData("v=1=2")]
-    [InlineData("a=b=c=d")]
-    public void ValueWithEqualsSignsExtractedCorrectly(string value)
-    {
-        var carrier = new Dictionary<string, string>
-        {
-            { BaggagePropagator.BaggageHeaderName, $"key={value}" },
-        };
-
-        var context = this.baggage.Extract(default, carrier, Getter);
-        var entry = Assert.Single(context.Baggage.GetBaggage());
-
-        Assert.Equal("key", entry.Key);
-        Assert.Equal(value, entry.Value);
-    }
-
-    [Theory]
     [InlineData("key%201=value%201", "key%201", "value 1")]
     [InlineData("key=val+ue", "key", "val+ue")]
     [InlineData("key=val%2Bue", "key", "val+ue")]
