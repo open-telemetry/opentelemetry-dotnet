@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Limit how much of the response body is read when export fails and
+  error logging is enabled.
+  ([#7017](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7017))
+
 ## 1.15.1
 
 Released 2026-Mar-27
