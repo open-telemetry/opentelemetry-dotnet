@@ -10,6 +10,13 @@ Notes](../../RELEASENOTES.md).
 * Fixed metric unit strings containing invalid Prometheus characters (e.g. `# RU`)
   not being sanitized, resulting in malformed metric names
   ([#6187](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6187))
+  
+## 1.15.2-beta.1
+
+Released 2026-Apr-08
+
+* Updated OpenTelemetry core component version(s) to `1.15.2`.
+  ([#7049](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7049))
 
 ## 1.15.1-beta.1
 

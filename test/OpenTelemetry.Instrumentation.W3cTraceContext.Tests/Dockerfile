@@ -5,7 +5,7 @@
 ARG BUILD_SDK_VERSION=10.0
 ARG TEST_SDK_VERSION=10.0
 
-FROM ubuntu:24.04@sha256:186072bba1b2f436cbb91ef2567abca677337cfc786c86e107d25b7072feef0c AS w3c
+FROM ubuntu:24.04@sha256:84e77dee7d1bc93fb029a45e3c6cb9d8aa4831ccfcc7103d36e876938d28895b AS w3c
 
 # renovate: datasource=github-digest depName=w3c/trace-context packageName=w3c/trace-context
 ENV W3C_TRACE_CONTEXT_SHA="34b10ac5af7f0caeb28efe35fe51cd4763ec5771"
@@ -24,7 +24,7 @@ RUN git init trace-context \
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0.419@sha256:a9330090b730c2abde8f3f43b3d1e24e4b8cba028de7bab1a7fdcd50cb7a3b7e AS dotnet-sdk-8.0
 FROM mcr.microsoft.com/dotnet/sdk:9.0.312@sha256:13bd3b19e637289720c0ac75d08f0aefa6a4dd933b27a61c2289fd3d26330f34 AS dotnet-sdk-9.0
-FROM mcr.microsoft.com/dotnet/sdk:10.0.201@sha256:478b9038d187e5b5c29bfa8173ded5d29e864b5ad06102a12106380ee01e2e49 AS dotnet-sdk-10.0
+FROM mcr.microsoft.com/dotnet/sdk:10.0.201@sha256:f061e5a7532b36fa1d1b684857fe1f504ba92115b9934f154643266613c44c62 AS dotnet-sdk-10.0
 
 FROM dotnet-sdk-${BUILD_SDK_VERSION} AS build
 ARG PUBLISH_CONFIGURATION=Release
