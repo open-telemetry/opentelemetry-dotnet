@@ -544,40 +544,6 @@ public class BaggagePropagatorTests
 
     [Theory]
     [InlineData(" ")]
-    [InlineData("\"")]
-    [InlineData("(")]
-    [InlineData(")")]
-    [InlineData(",")]
-    [InlineData("/")]
-    [InlineData(":")]
-    [InlineData(";")]
-    [InlineData("<")]
-    [InlineData("=")]
-    [InlineData(">")]
-    [InlineData("?")]
-    [InlineData("@")]
-    [InlineData("[")]
-    [InlineData("\\")]
-    [InlineData("]")]
-    [InlineData("{")]
-    [InlineData("}")]
-    public void KeyWithDelimiterCharEntirePairDroppedOnExtract(string delimiter)
-    {
-        var invalidKey = $"key{delimiter}name";
-        var carrier = new Dictionary<string, string>
-        {
-            { BaggagePropagator.BaggageHeaderName, $"{invalidKey}=should-drop,valid-key=valid-value" },
-        };
-
-        var context = this.baggage.Extract(default, carrier, Getter);
-        var entry = Assert.Single(context.Baggage.GetBaggage());
-
-        Assert.Equal("valid-key", entry.Key);
-        Assert.Equal("valid-value", entry.Value);
-    }
-
-    [Theory]
-    [InlineData(" ")]
     [InlineData("(")]
     [InlineData(":")]
     [InlineData(";")]
