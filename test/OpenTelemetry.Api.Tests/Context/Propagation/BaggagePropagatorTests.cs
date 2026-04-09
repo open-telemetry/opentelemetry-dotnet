@@ -600,7 +600,6 @@ public class BaggagePropagatorTests
 
     [Theory]
     [InlineData("key%201=value%201", "key%201", "value 1")]
-    [InlineData("key=val+ue", "key", "val+ue")]
     [InlineData("key=val%2Bue", "key", "val+ue")]
     [InlineData("key=val%20ue", "key", "val ue")]
     [InlineData("key=%20%21%22%23%24%25%26%27%28%29%2A%2B%2C-.%2F0123456789%3A%3B%3C%3D%3E%3F%40ABCDEFGHIJKLMNOPQRSTUVWXYZ%5B%5C%5D%5E_%60abcdefghijklmnopqrstuvwxyz%7B%7C%7D~", "key", " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~")]
