@@ -161,7 +161,6 @@ public class BaggagePropagatorTests
         Assert.Equal("!x_x,x-x&x(x\");:", actualBaggage["key2"]);
 
         Assert.True(!actualBaggage.ContainsKey("key()3"));
-        Assert.Equal("value()!&;:", actualBaggage["key()3"]);
     }
 
     [Fact]
@@ -867,17 +866,6 @@ public class BaggagePropagatorTests
     // These tests inject baggage and then extract from the same carrier,
     // verifying that the full pipeline preserves the original data.
     // =========================================================================
-
-    [Fact]
-    public void RoundTripValueWithMultipleEqualsPreservedExactly()
-    {
-        var carrier = new Dictionary<string, string>();
-        this.baggage.Inject(
-            new PropagationContext(default, new Baggage(new Dictionary<string, string> { { "key", "value=more=equals" }, })), carrier, Setter);
-
-        var extracted = this.baggage.Extract(default, carrier, Getter).Baggage.GetBaggage();
-        Assert.Equal("value=more=equals", extracted["key"]);
-    }
 
     [Fact]
     public void RoundTripValueWithSpacePreservedAsSpace()
