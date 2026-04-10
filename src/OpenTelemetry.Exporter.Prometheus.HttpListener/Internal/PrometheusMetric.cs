@@ -101,6 +101,7 @@ internal sealed class PrometheusMetric
                 {
                     sb.Append(c);
                 }
+
                 lastCharUnderscore = false;
             }
         }
