@@ -96,19 +96,25 @@ internal sealed class PrometheusMetric
                 if (!lastCharUnderscore)
                 {
                     lastCharUnderscore = true;
-                    sb ??= CreateStringBuilder(metricUnit);
+                    sb ??= new StringBuilder(metricUnit, 0, i, metricUnit.Length);
                     sb.Append('_');
                 }
             }
             else
             {
-                sb ??= CreateStringBuilder(metricUnit);
-                sb.Append(c);
+                if (sb != null)
+                {
+                    sb.Append(c);
+                }
                 lastCharUnderscore = false;
             }
         }
 
-        return sb?.ToString() ?? metricUnit;
+        var result = sb?.ToString() ?? metricUnit;
+
+        return result.Length > 0 && result[0] == '_'
+        ? result.Substring(1)
+        : result;
     }
 
     internal static string SanitizeMetricName(string metricName)

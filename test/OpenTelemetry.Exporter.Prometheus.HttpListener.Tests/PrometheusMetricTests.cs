@@ -373,7 +373,7 @@ public sealed class PrometheusMetricTests
 
     [Fact]
     public void SanitizeMetricUnit_RemoveUnsupportedCharacters()
-        => AssertSanitizeMetricUnit("# RU", "_RU");
+        => AssertSanitizeMetricUnit("# RU", "RU");
 
     [Fact]
     public void SanitizeMetricUnit_RemoveWhitespace()
@@ -385,11 +385,11 @@ public sealed class PrometheusMetricTests
 
     [Fact]
     public void SanitizeMetricUnit_RemoveMultipleUnsupportedCharacters()
-        => AssertSanitizeMetricUnit("##/RU!", "_RU_");
+        => AssertSanitizeMetricUnit("##/RU!", "RU_");
 
     [Fact]
     public void Name_UnitWithHash_Sanitized()
-        => AssertName("azure_cosmosdb_client_operation_request_charge", "# RU", PrometheusType.Histogram, false, "azure_cosmosdb_client_operation_request_charge__RU");
+        => AssertName("azure_cosmosdb_client_operation_request_charge", "# RU", PrometheusType.Histogram, false, "azure_cosmosdb_client_operation_request_charge_RU");
 
     [Fact]
     public void Name_UnitWithSpace_Sanitized()
