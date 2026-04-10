@@ -11,7 +11,7 @@ namespace OpenTelemetry;
 /// </summary>
 public sealed class SuppressInstrumentationScope : IDisposable
 {
-    private static readonly int BeginPoolMaxSize = Environment.ProcessorCount * 2;
+    private const int BeginPoolMaxSize = 8;
 
     // An integer value which controls whether instrumentation should be suppressed (disabled).
     // * null: instrumentation is not suppressed
@@ -19,14 +19,11 @@ public sealed class SuppressInstrumentationScope : IDisposable
     // * Depth = [1, int.MaxValue]: instrumentation is suppressed in a reference-counting mode
     private static readonly RuntimeContextSlot<SuppressInstrumentationScope?> Slot = RuntimeContext.RegisterSlot<SuppressInstrumentationScope?>("otel.suppress_instrumentation");
 
+    private static readonly NoOpDisposable Noop = new();
+
     // Thread-local pool for Begin() scopes. Bounded to avoid unbounded growth.
     [ThreadStatic]
     private static Stack<SuppressInstrumentationScope>? beginPool;
-
-    // Thread-local no-op singleton returned by nested Begin(true) calls when already in
-    // always-suppress mode. Avoids both a heap allocation and an AsyncLocal write.
-    [ThreadStatic]
-    private static NoOpDisposable? noop;
 
     // Thread-local cached scope for the Enter() path. Reused whenever Enter() is
     // called with no active scope, eliminating the allocation on the hot activity path.
@@ -76,7 +73,7 @@ public sealed class SuppressInstrumentationScope : IDisposable
         // the AsyncLocal write.
         if (value && Slot.Get()?.Depth < 0)
         {
-            return noop ??= new NoOpDisposable();
+            return Noop;
         }
 
         // Rent a scope from the thread-local pool, or allocate a fresh one.
@@ -129,7 +126,7 @@ public sealed class SuppressInstrumentationScope : IDisposable
             // Return the scope to the thread-local pool for reuse by future Begin() calls.
             if (this.pooled)
             {
-                var pool = beginPool ??= new Stack<SuppressInstrumentationScope>(BeginPoolMaxSize);
+                var pool = beginPool ??= new Stack<SuppressInstrumentationScope>();
                 if (pool.Count < BeginPoolMaxSize)
                 {
                     this.previousScope = null; // release the reference before returning to pool
