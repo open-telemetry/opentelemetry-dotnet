@@ -80,7 +80,12 @@ public sealed class SuppressInstrumentationScope : IDisposable
         var pool = beginPool;
         var scope = pool is { Count: > 0 } ? pool.Pop() : new SuppressInstrumentationScope();
         scope.Initialize(value);
-        return scope;
+
+        // Return a token wrapper rather than the scope itself. The token nulls its
+        // scope reference after the first Dispose(), so any stale reference to the
+        // token becomes a safe no-op even if the underlying scope has since been
+        // re-rented from the pool and re-initialized for a different caller.
+        return new ScopeToken(scope);
     }
 
     /// <summary>
@@ -129,7 +134,7 @@ public sealed class SuppressInstrumentationScope : IDisposable
                 var pool = beginPool ??= new Stack<SuppressInstrumentationScope>();
                 if (pool.Count < BeginPoolMaxSize)
                 {
-                    this.previousScope = null; // release the reference before returning to pool
+                    this.previousScope = null; // Release the reference before returning to pool
                     pool.Push(this);
                 }
             }
@@ -192,6 +197,32 @@ public sealed class SuppressInstrumentationScope : IDisposable
         this.pooled = true;
 
         Slot.Set(this);
+    }
+
+    /// <summary>
+    /// Thin wrapper returned by Begin(). Holds a nullable reference to the underlying
+    /// scope and clears it on first Dispose(), making all subsequent calls a safe no-op.
+    /// This prevents a stale IDisposable reference from accidentally affecting a scope
+    /// instance that has been returned to the pool and re-rented for a different caller.
+    /// </summary>
+    private sealed class ScopeToken : IDisposable
+    {
+        private SuppressInstrumentationScope? scope;
+
+        internal ScopeToken(SuppressInstrumentationScope scope)
+        {
+            this.scope = scope;
+        }
+
+        public void Dispose()
+        {
+            var s = this.scope;
+            if (s is not null)
+            {
+                this.scope = null;
+                s.Dispose();
+            }
+        }
     }
 
     private sealed class NoOpDisposable : IDisposable
