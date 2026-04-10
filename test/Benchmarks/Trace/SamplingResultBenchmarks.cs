@@ -49,31 +49,31 @@ public class SamplingResultBenchmarks
             traceState: null,
             isRemote: true);
 
-        // Sampler returns RecordAndSample with no attributes — the common case.
+        // Sampler returns RecordAndSample with no attributes - the common case.
         this.providerNoAttributes = Sdk.CreateTracerProviderBuilder()
             .AddSource(this.sourceNoAttributes.Name)
             .SetSampler(new DelegateSampler(_ => new SamplingResult(SamplingDecision.RecordAndSample)))
             .Build();
 
-        // Sampler returns attributes as a T[] — exercises the array fast-path.
+        // Sampler returns attributes as a T[] - exercises the array fast-path.
         this.providerWithAttributeArray = Sdk.CreateTracerProviderBuilder()
             .AddSource(this.sourceWithAttributeArray.Name)
             .SetSampler(new DelegateSampler(_ => new SamplingResult(SamplingDecision.RecordAndSample, SamplingAttributes)))
             .Build();
 
-        // Sampler returns attributes as a List<T> — exercises the IEnumerable fallback path.
+        // Sampler returns attributes as a List<T> - exercises the IEnumerable fallback path.
         this.providerWithAttributeList = Sdk.CreateTracerProviderBuilder()
             .AddSource(this.sourceWithAttributeList.Name)
             .SetSampler(new DelegateSampler(_ => new SamplingResult(SamplingDecision.RecordAndSample, [.. SamplingAttributes])))
             .Build();
 
-        // Sampler drops the span — attribute loop is never entered.
+        // Sampler drops the span - attribute loop is never entered.
         this.providerDrop = Sdk.CreateTracerProviderBuilder()
             .AddSource(this.sourceDrop.Name)
             .SetSampler(new DelegateSampler(_ => new SamplingResult(SamplingDecision.Drop)))
             .Build();
 
-        // ParentBasedSampler with AlwaysOnSampler root — realistic production default.
+        // ParentBasedSampler with AlwaysOnSampler root - realistic production default.
         this.providerParentBased = Sdk.CreateTracerProviderBuilder()
             .AddSource(this.sourceParentBased.Name)
             .SetSampler(new ParentBasedSampler(new AlwaysOnSampler()))
