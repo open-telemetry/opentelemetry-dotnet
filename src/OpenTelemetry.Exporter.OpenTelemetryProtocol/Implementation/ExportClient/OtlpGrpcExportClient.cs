@@ -8,6 +8,7 @@ using System.Buffers.Binary;
 using System.Diagnostics.Tracing;
 using System.IO.Compression;
 using System.Net.Http.Headers;
+using System.Net.Sockets;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Grpc;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
@@ -33,6 +34,10 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
             status: null,
             grpcStatusDetailsHeader: null);
 
+#if !NET
+    private static readonly byte[] GrpcFrameHeader = [0, 0, 0, 0, 0];
+#endif
+
     public OtlpGrpcExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
         : base(options, httpClient, signalPath)
     {
@@ -41,6 +46,11 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
     internal override MediaTypeHeaderValue MediaTypeHeader => MediaHeaderValue;
 
     internal override bool RequireHttp2 => true;
+
+#if NET
+    // See https://vcsjones.dev/csharp-readonly-span-bytes-static/
+    private static ReadOnlySpan<byte> GrpcFrameHeader => [0, 0, 0, 0, 0];
+#endif
 
     /// <inheritdoc/>
     public override ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default)
@@ -196,8 +206,12 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         //   bytes 5+   - Gzip-compressed protobuf payload.
         var compressedStream = new MemoryStream();
 
-        // Reserve space for the 5-byte gRPC frame header.
-        compressedStream.Write([0, 0, 0, 0, 0], 0, GrpcMessageHeaderSize);
+        // Reserve space for the gRPC frame header.
+#if NET
+        compressedStream.Write(GrpcFrameHeader);
+#else
+        compressedStream.Write(GrpcFrameHeader, 0, GrpcFrameHeader.Length);
+#endif
 
         using (var gzipStream = new GZipStream(compressedStream, CompressionLevel.Fastest, leaveOpen: true))
         {
@@ -222,9 +236,5 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
     }
 
     private static bool IsTransientNetworkError(HttpRequestException ex) =>
-        ex.InnerException is System.Net.Sockets.SocketException socketEx
-        && (socketEx.SocketErrorCode == System.Net.Sockets.SocketError.TimedOut
-            || socketEx.SocketErrorCode == System.Net.Sockets.SocketError.ConnectionReset
-            || socketEx.SocketErrorCode == System.Net.Sockets.SocketError.HostUnreachable
-            || socketEx.SocketErrorCode == System.Net.Sockets.SocketError.ConnectionRefused);
+        ex.InnerException is SocketException { SocketErrorCode: SocketError.TimedOut or SocketError.ConnectionReset or SocketError.HostUnreachable or SocketError.ConnectionRefused };
 }
