@@ -231,7 +231,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         string protocolEnvVarKey,
         string headersEnvVarKey,
         string timeoutEnvVarKey,
-        string? compressionEnvVarKey)
+        string compressionEnvVarKey)
     {
         if (configuration.TryGetUriValue(OpenTelemetryProtocolExporterEventSource.Log, endpointEnvVarKey, out var endpoint))
         {

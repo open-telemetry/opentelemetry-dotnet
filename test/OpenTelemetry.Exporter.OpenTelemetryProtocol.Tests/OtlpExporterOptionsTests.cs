@@ -167,6 +167,40 @@ public sealed class OtlpExporterOptionsTests : IDisposable
         Assert.Equal(OtlpExportCompression.Gzip, options.Compression);
     }
 
+    [Theory]
+    [InlineData("", OtlpExportCompression.None)]
+    [InlineData("foo", OtlpExportCompression.None)]
+    [InlineData("gzip", OtlpExportCompression.Gzip)]
+    [InlineData("GZip", OtlpExportCompression.Gzip)]
+    [InlineData("GZIP", OtlpExportCompression.Gzip)]
+    [InlineData("none", OtlpExportCompression.None)]
+    [InlineData("None", OtlpExportCompression.None)]
+    [InlineData("NONE", OtlpExportCompression.None)]
+    public void OtlpExporterOptions_AppliesCompressionFromEnvironment(string value, OtlpExportCompression expected)
+    {
+        var values = new Dictionary<string, string?>
+        {
+            ["Compression"] = value,
+        };
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(values)
+            .Build();
+
+        var options = new OtlpExporterOptions();
+
+        options.ApplyConfigurationUsingSpecificationEnvVars(
+            configuration,
+            "Endpoint",
+            appendSignalPathToEndpoint: true,
+            "Protocol",
+            "Headers",
+            "Timeout",
+            "Compression");
+
+        Assert.Equal(expected, options.Compression);
+    }
+
     [Fact]
     public void OtlpExporterOptions_EndpointGetterUsesProtocolWhenNull()
     {
