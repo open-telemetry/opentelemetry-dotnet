@@ -109,8 +109,8 @@ internal sealed class PrometheusMetric
         var result = sb?.ToString() ?? metricUnit;
 
         return result.Length > 0 && result[0] == '_'
-        ? result.Substring(1)
-        : result;
+            ? result.Substring(1)
+            : result;
     }
 
     internal static string SanitizeMetricName(string metricName)
