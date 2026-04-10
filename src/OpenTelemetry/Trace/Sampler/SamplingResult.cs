@@ -8,6 +8,10 @@ namespace OpenTelemetry.Trace;
 /// </summary>
 public readonly struct SamplingResult : IEquatable<SamplingResult>
 {
+    // Null when no attributes were supplied; avoids a GetEnumerator() call (and enumerator boxing)
+    // on the hot path inside TracerProviderSdk when the sampler returns no attributes.
+    private readonly IEnumerable<KeyValuePair<string, object>>? attributesField;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="SamplingResult"/> struct.
     /// </summary>
@@ -61,7 +65,8 @@ public readonly struct SamplingResult : IEquatable<SamplingResult>
         // Note: Decision object takes ownership of the collection.
         // Current implementation has no means to ensure the collection will not be modified by the caller.
         // If this behavior will be abused we must switch to cloning of the collection.
-        this.Attributes = attributes ?? [];
+        // Stored as null when empty so the SDK can skip GetEnumerator() entirely in the common no-attributes case.
+        this.attributesField = attributes;
 
         this.TraceStateString = traceStateString;
     }
@@ -74,12 +79,15 @@ public readonly struct SamplingResult : IEquatable<SamplingResult>
     /// <summary>
     /// Gets a map of attributes associated with the sampling decision.
     /// </summary>
-    public IEnumerable<KeyValuePair<string, object>> Attributes { get; }
+    public IEnumerable<KeyValuePair<string, object>> Attributes => this.attributesField ?? [];
 
     /// <summary>
     /// Gets the tracestate.
     /// </summary>
     public string? TraceStateString { get; }
+
+    // Internal accessor used by TracerProviderSdk to skip iteration entirely when null.
+    internal IEnumerable<KeyValuePair<string, object>>? AttributesOrNull => this.attributesField;
 
     /// <summary>
     /// Compare two <see cref="SamplingResult"/> for equality.
