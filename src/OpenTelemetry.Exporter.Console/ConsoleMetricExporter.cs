@@ -266,7 +266,7 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                 msg.Append(metricPoint.EndTime.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture));
                 msg.Append("] ");
                 msg.Append(tags);
-                if (string.IsNullOrEmpty(tags))
+                if (!string.IsNullOrEmpty(tags))
                 {
                     msg.Append(' ');
                 }
