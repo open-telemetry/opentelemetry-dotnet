@@ -43,6 +43,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     private Uri? endpoint;
     private int? timeoutMilliseconds;
     private Func<HttpClient>? httpClientFactory;
+    private OtlpExportCompression? compression;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OtlpExporterOptions"/> class.
@@ -134,6 +135,13 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         set => this.protocol = value;
     }
 
+    /// <inheritdoc/>
+    public OtlpExportCompression Compression
+    {
+        get => this.compression ?? OtlpExportCompression.None;
+        set => this.compression = value;
+    }
+
     /// <summary>
     /// Gets or sets a custom user agent identifier.
     /// This will be prepended to the default user agent string.
@@ -187,7 +195,26 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         => this.protocol.HasValue
         || this.endpoint != null
         || this.timeoutMilliseconds.HasValue
-        || this.httpClientFactory != null;
+        || this.httpClientFactory != null
+        || this.compression.HasValue;
+
+    internal static bool TryParseCompression(string value, out OtlpExportCompression result)
+    {
+        switch (value?.Trim().ToUpperInvariant())
+        {
+            case "NONE":
+                result = OtlpExportCompression.None;
+                return true;
+
+            case "GZIP":
+                result = OtlpExportCompression.Gzip;
+                return true;
+
+            default:
+                result = default;
+                return false;
+        }
+    }
 
     internal static OtlpExporterOptions CreateOtlpExporterOptions(
         IServiceProvider serviceProvider,
@@ -203,7 +230,8 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         bool appendSignalPathToEndpoint,
         string protocolEnvVarKey,
         string headersEnvVarKey,
-        string timeoutEnvVarKey)
+        string timeoutEnvVarKey,
+        string? compressionEnvVarKey)
     {
         if (configuration.TryGetUriValue(OpenTelemetryProtocolExporterEventSource.Log, endpointEnvVarKey, out var endpoint))
         {
@@ -229,6 +257,16 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         {
             this.TimeoutMilliseconds = timeout;
         }
+
+        if (compressionEnvVarKey != null
+            && configuration.TryGetValue<OtlpExportCompression>(
+                OpenTelemetryProtocolExporterEventSource.Log,
+                compressionEnvVarKey,
+                TryParseCompression,
+                out var compression))
+        {
+            this.Compression = compression;
+        }
     }
 
     internal OtlpExporterOptions ApplyDefaults(OtlpExporterOptions defaultExporterOptions)
@@ -246,6 +284,8 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         this.timeoutMilliseconds ??= defaultExporterOptions.timeoutMilliseconds;
 
         this.httpClientFactory ??= defaultExporterOptions.httpClientFactory;
+
+        this.compression ??= defaultExporterOptions.compression;
 
         return this;
     }
@@ -266,7 +306,8 @@ public class OtlpExporterOptions : IOtlpExporterOptions
                 appendSignalPathToEndpoint: true,
                 OtlpSpecConfigDefinitions.DefaultProtocolEnvVarName,
                 OtlpSpecConfigDefinitions.DefaultHeadersEnvVarName,
-                OtlpSpecConfigDefinitions.DefaultTimeoutEnvVarName);
+                OtlpSpecConfigDefinitions.DefaultTimeoutEnvVarName,
+                OtlpSpecConfigDefinitions.DefaultCompressionEnvVarName);
         }
         else if (configurationType == OtlpExporterOptionsConfigurationType.Logs)
         {
@@ -276,7 +317,8 @@ public class OtlpExporterOptions : IOtlpExporterOptions
                 appendSignalPathToEndpoint: false,
                 OtlpSpecConfigDefinitions.LogsProtocolEnvVarName,
                 OtlpSpecConfigDefinitions.LogsHeadersEnvVarName,
-                OtlpSpecConfigDefinitions.LogsTimeoutEnvVarName);
+                OtlpSpecConfigDefinitions.LogsTimeoutEnvVarName,
+                OtlpSpecConfigDefinitions.LogsCompressionEnvVarName);
         }
         else if (configurationType == OtlpExporterOptionsConfigurationType.Metrics)
         {
@@ -286,7 +328,8 @@ public class OtlpExporterOptions : IOtlpExporterOptions
                 appendSignalPathToEndpoint: false,
                 OtlpSpecConfigDefinitions.MetricsProtocolEnvVarName,
                 OtlpSpecConfigDefinitions.MetricsHeadersEnvVarName,
-                OtlpSpecConfigDefinitions.MetricsTimeoutEnvVarName);
+                OtlpSpecConfigDefinitions.MetricsTimeoutEnvVarName,
+                OtlpSpecConfigDefinitions.MetricsCompressionEnvVarName);
         }
         else if (configurationType == OtlpExporterOptionsConfigurationType.Traces)
         {
@@ -296,7 +339,8 @@ public class OtlpExporterOptions : IOtlpExporterOptions
                 appendSignalPathToEndpoint: false,
                 OtlpSpecConfigDefinitions.TracesProtocolEnvVarName,
                 OtlpSpecConfigDefinitions.TracesHeadersEnvVarName,
-                OtlpSpecConfigDefinitions.TracesTimeoutEnvVarName);
+                OtlpSpecConfigDefinitions.TracesTimeoutEnvVarName,
+                OtlpSpecConfigDefinitions.TracesCompressionEnvVarName);
         }
         else
         {

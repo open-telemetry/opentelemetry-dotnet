@@ -4,7 +4,9 @@
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
+using System.Buffers.Binary;
 using System.Diagnostics.Tracing;
+using System.IO.Compression;
 using System.Net.Http.Headers;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Grpc;
 
@@ -14,6 +16,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 internal sealed class OtlpGrpcExportClient : OtlpExportClient
 {
     public const string GrpcStatusDetailsHeader = "grpc-status-details-bin";
+
+    // A gRPC message frame header is 5 bytes:
+    //   byte 0     - Compression flag (0 = not compressed, 1 = compressed).
+    //   bytes 1-4  - Message length in big-endian format.
+    private const int GrpcMessageHeaderSize = 5;
+
     private static readonly ExportClientHttpResponse SuccessExportResponse = new(success: true, deadlineUtc: default, response: null, exception: null);
     private static readonly MediaTypeHeaderValue MediaHeaderValue = new("application/grpc");
 
@@ -46,6 +54,11 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
             // TE is required by some servers, e.g. C Core.
             // A missing TE header results in servers aborting the gRPC call.
             httpRequest.Headers.TryAddWithoutValidation("TE", "trailers");
+
+            if (this.CompressionEnabled)
+            {
+                httpRequest.Headers.Add("grpc-encoding", "gzip");
+            }
 
             httpResponse = this.SendHttpRequest(httpRequest, cancellationToken);
 
@@ -168,6 +181,44 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         {
             httpResponse?.Dispose();
         }
+    }
+
+    protected override HttpContent CreateHttpContent(byte[] buffer, int contentLength)
+    {
+        if (!this.CompressionEnabled)
+        {
+            return base.CreateHttpContent(buffer, contentLength);
+        }
+
+        // Build a gzip-compressed gRPC message frame:
+        //   byte 0     - Compression flag = 1 (gzip).
+        //   bytes 1-4  - Compressed payload length in big-endian format.
+        //   bytes 5+   - Gzip-compressed protobuf payload.
+        var compressedStream = new MemoryStream();
+
+        // Reserve space for the 5-byte gRPC frame header.
+        compressedStream.Write([0, 0, 0, 0, 0], 0, GrpcMessageHeaderSize);
+
+        using (var gzipStream = new GZipStream(compressedStream, CompressionLevel.Fastest, leaveOpen: true))
+        {
+            gzipStream.Write(buffer, GrpcMessageHeaderSize, contentLength - GrpcMessageHeaderSize);
+        }
+
+        var compressedPayloadLength = (uint)(compressedStream.Length - GrpcMessageHeaderSize);
+
+        // Write the gRPC frame header: compression flag + big-endian payload length.
+        compressedStream.Position = 0;
+        compressedStream.WriteByte(1);
+
+        var lengthBytes = new byte[4];
+        BinaryPrimitives.WriteUInt32BigEndian(lengthBytes, compressedPayloadLength);
+        compressedStream.Write(lengthBytes, 0, 4);
+
+        compressedStream.Position = 0;
+
+        var content = new StreamContent(compressedStream);
+        content.Headers.ContentType = this.MediaTypeHeader;
+        return content;
     }
 
     private static bool IsTransientNetworkError(HttpRequestException ex) =>

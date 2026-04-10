@@ -13,10 +13,8 @@ public sealed class OtlpExporterOptionsTests : IDisposable
         OtlpSpecConfigDefinitionTests.ClearEnvVars();
     }
 
-    public void Dispose()
-    {
+    public void Dispose() =>
         OtlpSpecConfigDefinitionTests.ClearEnvVars();
-    }
 
     [Fact]
     public void OtlpExporterOptions_Defaults()
@@ -96,9 +94,10 @@ public sealed class OtlpExporterOptionsTests : IDisposable
     {
         var values = new Dictionary<string, string?>
         {
+            ["CompressionWithInvalidValue"] = "invalid",
             ["EndpointWithInvalidValue"] = "invalid",
-            ["TimeoutWithInvalidValue"] = "invalid",
             ["ProtocolWithInvalidValue"] = "invalid",
+            ["TimeoutWithInvalidValue"] = "invalid",
         };
 
         var configuration = new ConfigurationBuilder()
@@ -113,7 +112,8 @@ public sealed class OtlpExporterOptionsTests : IDisposable
             appendSignalPathToEndpoint: true,
             "ProtocolWithInvalidValue",
             "NoopHeaders",
-            "TimeoutWithInvalidValue");
+            "TimeoutWithInvalidValue",
+            "CompressionWithInvalidValue");
 
 #if NETFRAMEWORK || NETSTANDARD2_0
         Assert.Equal(new Uri(OtlpExporterOptions.DefaultHttpEndpoint), options.Endpoint);
@@ -124,6 +124,7 @@ public sealed class OtlpExporterOptionsTests : IDisposable
         Assert.Equal(10000, options.TimeoutMilliseconds);
         Assert.Equal(OtlpExporterOptions.DefaultOtlpExportProtocol, options.Protocol);
         Assert.Null(options.Headers);
+        Assert.Equal(OtlpExportCompression.None, options.Compression);
     }
 
     [Fact]
@@ -131,10 +132,11 @@ public sealed class OtlpExporterOptionsTests : IDisposable
     {
         var values = new Dictionary<string, string?>
         {
+            ["Compression"] = "GZIP",
             ["Endpoint"] = "http://test:8888",
-            ["Timeout"] = "2000",
-            ["Protocol"] = "grpc",
             ["Headers"] = "A=2,B=3",
+            ["Protocol"] = "grpc",
+            ["Timeout"] = "2000",
         };
 
         var configuration = new ConfigurationBuilder()
@@ -149,7 +151,8 @@ public sealed class OtlpExporterOptionsTests : IDisposable
             appendSignalPathToEndpoint: true,
             "Protocol",
             "Headers",
-            "Timeout");
+            "Timeout",
+            "Compression");
 
         options.Endpoint = new Uri("http://localhost:200");
         options.Headers = "C=3";
@@ -161,6 +164,7 @@ public sealed class OtlpExporterOptionsTests : IDisposable
         Assert.Equal(40000, options.TimeoutMilliseconds);
         Assert.Equal(OtlpExportProtocol.HttpProtobuf, options.Protocol);
         Assert.False(options.AppendSignalPathToEndpoint);
+        Assert.Equal(OtlpExportCompression.Gzip, options.Compression);
     }
 
     [Fact]
