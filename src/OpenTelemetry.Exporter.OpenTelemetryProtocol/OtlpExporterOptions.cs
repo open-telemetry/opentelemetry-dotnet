@@ -200,7 +200,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 
     internal static bool TryParseCompression(string value, out OtlpExportCompression result)
     {
-        switch (value?.Trim().ToUpperInvariant())
+        switch (value.Trim().ToUpperInvariant())
         {
             case "NONE":
                 result = OtlpExportCompression.None;
@@ -258,8 +258,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
             this.TimeoutMilliseconds = timeout;
         }
 
-        if (compressionEnvVarKey != null
-            && configuration.TryGetValue<OtlpExportCompression>(
+        if (configuration.TryGetValue<OtlpExportCompression>(
                 OpenTelemetryProtocolExporterEventSource.Log,
                 compressionEnvVarKey,
                 TryParseCompression,
