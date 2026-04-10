@@ -222,7 +222,7 @@ internal sealed class TracerProviderSdk : TracerProvider
 
         if (this.Sampler is AlwaysOnSampler)
         {
-            activityListener.Sample = (ref options) =>
+            activityListener.Sample = static (ref _) =>
                 !Sdk.SuppressInstrumentation ? ActivitySamplingResult.AllDataAndRecorded : ActivitySamplingResult.None;
             this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOnSampler;
         }
@@ -290,6 +290,69 @@ internal sealed class TracerProviderSdk : TracerProvider
     internal BaseProcessor<Activity>? Processor { get; private set; }
 
     internal Sampler Sampler { get; }
+
+    internal static ActivitySamplingResult ComputeActivitySamplingResult(
+        ref ActivityCreationOptions<ActivityContext> options,
+        Sampler sampler)
+    {
+        var samplingParameters = new SamplingParameters(
+            options.Parent,
+            options.TraceId,
+            options.Name,
+            options.Kind,
+            options.Tags,
+            options.Links);
+
+        var samplingResult = sampler.ShouldSample(samplingParameters);
+
+        var activitySamplingResult = samplingResult.Decision switch
+        {
+            SamplingDecision.RecordAndSample => ActivitySamplingResult.AllDataAndRecorded,
+            SamplingDecision.RecordOnly => ActivitySamplingResult.AllData,
+            SamplingDecision.Drop or _ => PropagateOrIgnoreData(ref options),
+        };
+
+        if (activitySamplingResult > ActivitySamplingResult.PropagationData)
+        {
+            if (samplingResult.AttributesOrNull is { } attributes)
+            {
+                if (attributes is KeyValuePair<string, object?>[] array)
+                {
+                    for (int i = 0; i < array.Length; i++)
+                    {
+                        options.SamplingTags.Add(array[i].Key, array[i].Value);
+                    }
+                }
+                else
+                {
+                    foreach (var att in attributes)
+                    {
+                        options.SamplingTags.Add(att.Key, att.Value);
+                    }
+                }
+            }
+        }
+
+        if (activitySamplingResult != ActivitySamplingResult.None
+            && samplingResult.TraceStateString != null)
+        {
+            // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampler
+            // Spec requires clearing Tracestate if empty Tracestate is returned.
+            // Since .NET did not have this capability, it'll break
+            // existing samplers if we did that. So the following is
+            // adopted to remain spec-compliant and backward compat.
+            // The behavior is:
+            // if sampler returns null, its treated as if it has not intended
+            // to change Tracestate. Existing SamplingResult ctors will put null as default TraceStateString,
+            // so all existing samplers will get this behavior.
+            // if sampler returns non-null, then it'll be used as the
+            // new value for Tracestate
+            // A sampler can return string.Empty if it intends to clear the state.
+            options = options with { TraceState = samplingResult.TraceStateString };
+        }
+
+        return activitySamplingResult;
+    }
 
     internal TracerProviderSdk AddProcessor(BaseProcessor<Activity> processor)
     {
@@ -456,56 +519,6 @@ internal sealed class TracerProviderSdk : TracerProvider
         return 1.0;
     }
 
-    private static ActivitySamplingResult ComputeActivitySamplingResult(
-        ref ActivityCreationOptions<ActivityContext> options,
-        Sampler sampler)
-    {
-        var samplingParameters = new SamplingParameters(
-            options.Parent,
-            options.TraceId,
-            options.Name,
-            options.Kind,
-            options.Tags,
-            options.Links);
-
-        var samplingResult = sampler.ShouldSample(samplingParameters);
-
-        var activitySamplingResult = samplingResult.Decision switch
-        {
-            SamplingDecision.RecordAndSample => ActivitySamplingResult.AllDataAndRecorded,
-            SamplingDecision.RecordOnly => ActivitySamplingResult.AllData,
-            SamplingDecision.Drop or _ => PropagateOrIgnoreData(ref options),
-        };
-
-        if (activitySamplingResult > ActivitySamplingResult.PropagationData)
-        {
-            foreach (var att in samplingResult.Attributes)
-            {
-                options.SamplingTags.Add(att.Key, att.Value);
-            }
-        }
-
-        if (activitySamplingResult != ActivitySamplingResult.None
-            && samplingResult.TraceStateString != null)
-        {
-            // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampler
-            // Spec requires clearing Tracestate if empty Tracestate is returned.
-            // Since .NET did not have this capability, it'll break
-            // existing samplers if we did that. So the following is
-            // adopted to remain spec-compliant and backward compat.
-            // The behavior is:
-            // if sampler returns null, its treated as if it has not intended
-            // to change Tracestate. Existing SamplingResult ctors will put null as default TraceStateString,
-            // so all existing samplers will get this behavior.
-            // if sampler returns non-null, then it'll be used as the
-            // new value for Tracestate
-            // A sampler can return string.Empty if it intends to clear the state.
-            options = options with { TraceState = samplingResult.TraceStateString };
-        }
-
-        return activitySamplingResult;
-    }
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static ActivitySamplingResult PropagateOrIgnoreData(ref ActivityCreationOptions<ActivityContext> options)
     {
@@ -575,9 +588,22 @@ internal sealed class TracerProviderSdk : TracerProvider
 
         if (samplingResult.Decision != SamplingDecision.Drop)
         {
-            foreach (var att in samplingResult.Attributes)
+            if (samplingResult.AttributesOrNull is { } attributes)
             {
-                activity.SetTag(att.Key, att.Value);
+                if (attributes is KeyValuePair<string, object?>[] array)
+                {
+                    for (int i = 0; i < array.Length; i++)
+                    {
+                        activity.SetTag(array[i].Key, array[i].Value);
+                    }
+                }
+                else
+                {
+                    foreach (var att in attributes)
+                    {
+                        activity.SetTag(att.Key, att.Value);
+                    }
+                }
             }
         }
 
