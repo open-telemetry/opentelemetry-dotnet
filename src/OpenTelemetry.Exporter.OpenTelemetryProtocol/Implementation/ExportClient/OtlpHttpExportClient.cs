@@ -5,6 +5,7 @@
 using System.Net.Http;
 #endif
 using System.Diagnostics.Tracing;
+using System.IO.Compression;
 using System.Net.Http.Headers;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
@@ -53,5 +54,28 @@ internal sealed class OtlpHttpExportClient : OtlpExportClient
             OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, ex);
             return new ExportClientHttpResponse(success: false, deadlineUtc: deadlineUtc, response: null, exception: ex);
         }
+    }
+
+    protected override HttpContent CreateHttpContent(byte[] buffer, int contentLength)
+    {
+        if (!this.CompressionEnabled)
+        {
+            return base.CreateHttpContent(buffer, contentLength);
+        }
+
+        var compressedStream = new MemoryStream();
+        using (var gzipStream = new GZipStream(compressedStream, CompressionLevel.Fastest, leaveOpen: true))
+        {
+            gzipStream.Write(buffer, 0, contentLength);
+        }
+
+        compressedStream.Position = 0;
+
+        var content = new StreamContent(compressedStream);
+
+        content.Headers.ContentType = this.MediaTypeHeader;
+        content.Headers.Add("Content-Encoding", "gzip");
+
+        return content;
     }
 }
