@@ -72,7 +72,7 @@ public sealed class SuppressInstrumentationScope : IDisposable
     public static IDisposable Begin(bool value = true)
     {
         // When already in always-suppress mode and asked to suppress again, the
-        // slot state is unchanged — return a no-op disposable to skip both the allocation and
+        // slot state is unchanged - return a no-op disposable to skip both the allocation and
         // the AsyncLocal write.
         if (value && Slot.Get()?.Depth < 0)
         {
