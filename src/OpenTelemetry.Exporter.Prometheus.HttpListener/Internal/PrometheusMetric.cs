@@ -77,11 +77,6 @@ internal sealed class PrometheusMetric
     public static PrometheusMetric Create(Metric metric, bool disableTotalNameSuffixForCounters)
         => new(metric.Name, metric.Unit, GetPrometheusType(metric.MetricType), disableTotalNameSuffixForCounters);
 
-    private static StringBuilder CreateStringBuilder(string value)
-    {
-        return new(value.Length);
-    }
-
     internal static string SanitizeMetricUnit(string metricUnit)
     {
         StringBuilder? sb = null;
@@ -219,6 +214,11 @@ internal sealed class PrometheusMetric
             8 => PrometheusType.Gauge,
             _ => throw new InvalidOperationException($"Invalid {nameof(MetricType)} value."),
         };
+    }
+
+    private static StringBuilder CreateStringBuilder(string value)
+    {
+        return new(value.Length);
     }
 
     private static string SanitizeOpenMetricsName(string metricName)
