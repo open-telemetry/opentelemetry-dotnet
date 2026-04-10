@@ -142,7 +142,7 @@ public class SuppressInstrumentationTests
         var second = SuppressInstrumentationScope.Begin();
         Assert.True(Sdk.SuppressInstrumentation);
 
-        // Stale reference — must not affect second
+        // Stale reference - must not affect second
         first.Dispose();
         Assert.True(Sdk.SuppressInstrumentation);
 
