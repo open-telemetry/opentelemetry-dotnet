@@ -65,7 +65,6 @@ public readonly struct SamplingResult : IEquatable<SamplingResult>
         // Note: Decision object takes ownership of the collection.
         // Current implementation has no means to ensure the collection will not be modified by the caller.
         // If this behavior will be abused we must switch to cloning of the collection.
-        // Stored as null when empty so the SDK can skip GetEnumerator() entirely in the common no-attributes case.
         this.attributesField = attributes;
 
         this.TraceStateString = traceStateString;
