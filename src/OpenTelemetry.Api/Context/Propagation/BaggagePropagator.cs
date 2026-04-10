@@ -54,9 +54,9 @@ public class BaggagePropagator : TextMapPropagator
         try
         {
             var baggageCollection = getter(carrier, BaggageHeaderName);
-            if (baggageCollection?.Any() ?? false)
+            if (baggageCollection is not null)
             {
-                if (TryExtractBaggage([.. baggageCollection], out var baggageItems))
+                if (TryExtractBaggage(baggageCollection, out var baggageItems))
                 {
                     Baggage baggage =
 #if NET
@@ -141,7 +141,7 @@ public class BaggagePropagator : TextMapPropagator
     }
 
     internal static bool TryExtractBaggage(
-        string[] baggageCollection,
+        IEnumerable<string> baggageCollection,
 #if NET
         [NotNullWhen(true)]
 #endif
