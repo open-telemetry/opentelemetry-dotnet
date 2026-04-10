@@ -291,69 +291,6 @@ internal sealed class TracerProviderSdk : TracerProvider
 
     internal Sampler Sampler { get; }
 
-    internal static ActivitySamplingResult ComputeActivitySamplingResult(
-        ref ActivityCreationOptions<ActivityContext> options,
-        Sampler sampler)
-    {
-        var samplingParameters = new SamplingParameters(
-            options.Parent,
-            options.TraceId,
-            options.Name,
-            options.Kind,
-            options.Tags,
-            options.Links);
-
-        var samplingResult = sampler.ShouldSample(samplingParameters);
-
-        var activitySamplingResult = samplingResult.Decision switch
-        {
-            SamplingDecision.RecordAndSample => ActivitySamplingResult.AllDataAndRecorded,
-            SamplingDecision.RecordOnly => ActivitySamplingResult.AllData,
-            SamplingDecision.Drop or _ => PropagateOrIgnoreData(ref options),
-        };
-
-        if (activitySamplingResult > ActivitySamplingResult.PropagationData)
-        {
-            if (samplingResult.AttributesOrNull is { } attributes)
-            {
-                if (attributes is KeyValuePair<string, object?>[] array)
-                {
-                    for (int i = 0; i < array.Length; i++)
-                    {
-                        options.SamplingTags.Add(array[i].Key, array[i].Value);
-                    }
-                }
-                else
-                {
-                    foreach (var att in attributes)
-                    {
-                        options.SamplingTags.Add(att.Key, att.Value);
-                    }
-                }
-            }
-        }
-
-        if (activitySamplingResult != ActivitySamplingResult.None
-            && samplingResult.TraceStateString != null)
-        {
-            // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampler
-            // Spec requires clearing Tracestate if empty Tracestate is returned.
-            // Since .NET did not have this capability, it'll break
-            // existing samplers if we did that. So the following is
-            // adopted to remain spec-compliant and backward compat.
-            // The behavior is:
-            // if sampler returns null, its treated as if it has not intended
-            // to change Tracestate. Existing SamplingResult ctors will put null as default TraceStateString,
-            // so all existing samplers will get this behavior.
-            // if sampler returns non-null, then it'll be used as the
-            // new value for Tracestate
-            // A sampler can return string.Empty if it intends to clear the state.
-            options = options with { TraceState = samplingResult.TraceStateString };
-        }
-
-        return activitySamplingResult;
-    }
-
     internal TracerProviderSdk AddProcessor(BaseProcessor<Activity> processor)
     {
         Guard.ThrowIfNull(processor);
@@ -517,6 +454,69 @@ internal sealed class TracerProviderSdk : TracerProvider
         }
 
         return 1.0;
+    }
+
+    private static ActivitySamplingResult ComputeActivitySamplingResult(
+        ref ActivityCreationOptions<ActivityContext> options,
+        Sampler sampler)
+    {
+        var samplingParameters = new SamplingParameters(
+            options.Parent,
+            options.TraceId,
+            options.Name,
+            options.Kind,
+            options.Tags,
+            options.Links);
+
+        var samplingResult = sampler.ShouldSample(samplingParameters);
+
+        var activitySamplingResult = samplingResult.Decision switch
+        {
+            SamplingDecision.RecordAndSample => ActivitySamplingResult.AllDataAndRecorded,
+            SamplingDecision.RecordOnly => ActivitySamplingResult.AllData,
+            SamplingDecision.Drop or _ => PropagateOrIgnoreData(ref options),
+        };
+
+        if (activitySamplingResult > ActivitySamplingResult.PropagationData)
+        {
+            if (samplingResult.AttributesOrNull is { } attributes)
+            {
+                if (attributes is KeyValuePair<string, object?>[] array)
+                {
+                    for (int i = 0; i < array.Length; i++)
+                    {
+                        options.SamplingTags.Add(array[i].Key, array[i].Value);
+                    }
+                }
+                else
+                {
+                    foreach (var att in attributes)
+                    {
+                        options.SamplingTags.Add(att.Key, att.Value);
+                    }
+                }
+            }
+        }
+
+        if (activitySamplingResult != ActivitySamplingResult.None
+            && samplingResult.TraceStateString != null)
+        {
+            // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampler
+            // Spec requires clearing Tracestate if empty Tracestate is returned.
+            // Since .NET did not have this capability, it'll break
+            // existing samplers if we did that. So the following is
+            // adopted to remain spec-compliant and backward compat.
+            // The behavior is:
+            // if sampler returns null, its treated as if it has not intended
+            // to change Tracestate. Existing SamplingResult ctors will put null as default TraceStateString,
+            // so all existing samplers will get this behavior.
+            // if sampler returns non-null, then it'll be used as the
+            // new value for Tracestate
+            // A sampler can return string.Empty if it intends to clear the state.
+            options = options with { TraceState = samplingResult.TraceStateString };
+        }
+
+        return activitySamplingResult;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
