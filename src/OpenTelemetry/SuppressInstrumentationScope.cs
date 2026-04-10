@@ -11,22 +11,36 @@ namespace OpenTelemetry;
 /// </summary>
 public sealed class SuppressInstrumentationScope : IDisposable
 {
+    private static readonly int BeginPoolMaxSize = Environment.ProcessorCount * 2;
+
     // An integer value which controls whether instrumentation should be suppressed (disabled).
     // * null: instrumentation is not suppressed
     // * Depth = [int.MinValue, -1]: instrumentation is always suppressed
     // * Depth = [1, int.MaxValue]: instrumentation is suppressed in a reference-counting mode
     private static readonly RuntimeContextSlot<SuppressInstrumentationScope?> Slot = RuntimeContext.RegisterSlot<SuppressInstrumentationScope?>("otel.suppress_instrumentation");
 
+    // Thread-local pool for Begin() scopes. Bounded to avoid unbounded growth.
+    [ThreadStatic]
+    private static Stack<SuppressInstrumentationScope>? beginPool;
+
+    // Thread-local no-op singleton returned by nested Begin(true) calls when already in
+    // always-suppress mode. Avoids both a heap allocation and an AsyncLocal write.
+    [ThreadStatic]
+    private static NoOpDisposable? noop;
+
+    // Thread-local cached scope for the Enter() path. Reused whenever Enter() is
+    // called with no active scope, eliminating the allocation on the hot activity path.
+    [ThreadStatic]
+    private static SuppressInstrumentationScope? enterCache;
+
 #pragma warning disable CA2213 // Disposable fields should be disposed
-    private readonly SuppressInstrumentationScope? previousScope;
+    private SuppressInstrumentationScope? previousScope;
 #pragma warning restore CA2213 // Disposable fields should be disposed
     private bool disposed;
+    private bool pooled;
 
-    internal SuppressInstrumentationScope(bool value = true)
+    private SuppressInstrumentationScope()
     {
-        this.previousScope = Slot.Get();
-        this.Depth = value ? -1 : 0;
-        Slot.Set(this);
     }
 
     internal static bool IsSuppressed => (Slot.Get()?.Depth ?? 0) != 0;
@@ -57,7 +71,19 @@ public sealed class SuppressInstrumentationScope : IDisposable
     /// </remarks>
     public static IDisposable Begin(bool value = true)
     {
-        return new SuppressInstrumentationScope(value);
+        // When already in always-suppress mode and asked to suppress again, the
+        // slot state is unchanged — return a no-op disposable to skip both the allocation and
+        // the AsyncLocal write.
+        if (value && Slot.Get()?.Depth < 0)
+        {
+            return noop ??= new NoOpDisposable();
+        }
+
+        // Rent a scope from the thread-local pool, or allocate a fresh one.
+        var pool = beginPool;
+        var scope = pool is { Count: > 0 } ? pool.Pop() : new SuppressInstrumentationScope();
+        scope.Initialize(value);
+        return scope;
     }
 
     /// <summary>
@@ -74,14 +100,11 @@ public sealed class SuppressInstrumentationScope : IDisposable
 
         if (currentScope == null)
         {
-            Slot.Set(
-#pragma warning disable CA2000 // Dispose objects before losing scope
-                new SuppressInstrumentationScope()
-                {
-                    Depth = 1,
-                });
-#pragma warning restore CA2000 // Dispose objects before losing scope
-
+            // Reuse the thread-local cached scope to avoid allocating
+            var scope = enterCache ??= new SuppressInstrumentationScope();
+            scope.previousScope = null;
+            scope.Depth = 1;
+            Slot.Set(scope);
             return 1;
         }
 
@@ -102,6 +125,17 @@ public sealed class SuppressInstrumentationScope : IDisposable
         {
             Slot.Set(this.previousScope);
             this.disposed = true;
+
+            // Return the scope to the thread-local pool for reuse by future Begin() calls.
+            if (this.pooled)
+            {
+                var pool = beginPool ??= new Stack<SuppressInstrumentationScope>(BeginPoolMaxSize);
+                if (pool.Count < BeginPoolMaxSize)
+                {
+                    this.previousScope = null; // release the reference before returning to pool
+                    pool.Push(this);
+                }
+            }
         }
     }
 
@@ -150,5 +184,24 @@ public sealed class SuppressInstrumentationScope : IDisposable
         }
 
         return currentDepth;
+    }
+
+    private void Initialize(bool value)
+    {
+        this.previousScope = Slot.Get();
+
+        this.Depth = value ? -1 : 0;
+        this.disposed = false;
+        this.pooled = true;
+
+        Slot.Set(this);
+    }
+
+    private sealed class NoOpDisposable : IDisposable
+    {
+        public void Dispose()
+        {
+            // No-op
+        }
     }
 }
