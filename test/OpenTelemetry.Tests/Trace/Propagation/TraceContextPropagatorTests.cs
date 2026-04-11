@@ -244,11 +244,19 @@ public class TraceContextPropagatorTests
     }
 
     [Fact]
-    public void Extract_AllowsKeyNamesInsideEarlierValues()
+    public async Task Extract_DoesNotHangWhenLaterKeyAppearsInsideEarlierValue()
     {
-        // Regression test for GHSA-8785-wc3w-h8q6.
-        Assert.Equal("foo=bar,bar=1", CallTraceContextPropagator("foo=bar,bar=1"));
-        Assert.Equal("foo=bar,bar=1", CallTraceContextPropagator(["foo=bar", "bar=1"]));
+        // Regression test for GHSA-8785-wc3w-h8q6
+        const string tracestate = "foo1=foo2,foo2=1";
+
+        var deadline = TimeSpan.FromSeconds(1);
+
+        var extractionTask = Task.Run(() => CallTraceContextPropagator(tracestate));
+        var completedTask = await Task.WhenAny(extractionTask, Task.Delay(deadline));
+
+        Assert.True(extractionTask.IsCompleted, $"The task did not complete within {deadline}.");
+        Assert.Same(extractionTask, completedTask);
+        Assert.Equal(tracestate, await extractionTask);
     }
 
     [Fact]
