@@ -8,6 +8,8 @@ namespace OpenTelemetry.Context.Propagation.Tests;
 
 public class BaggagePropagatorTests
 {
+    const int MaxBaggageLength = 8192;
+
     private static readonly Func<IDictionary<string, string>, string, IEnumerable<string>> Getter =
         static (d, k) => d.TryGetValue(k, out var v) ? [v] : [];
 
@@ -345,7 +347,7 @@ public class BaggagePropagatorTests
     }
 
     [Fact]
-    public void ValidateInjectionOf8192Bytes()
+    public void ValidateInjectionOfMaximumLength()
     {
         var longValue = new string('0', 8190);
 
@@ -364,13 +366,17 @@ public class BaggagePropagatorTests
 
         var baggageHeader = carrier[BaggagePropagator.BaggageHeaderName];
 
-        Assert.Equal(8192, baggageHeader.Length);
+        Assert.Equal(MaxBaggageLength, baggageHeader.Length);
     }
 
-    [Fact]
-    public void ValidateInjectionStopsBeforeExceedingMaximumLength()
+    [Theory]
+    [InlineData(8187)]
+    [InlineData(8188)]
+    [InlineData(8189)]
+    [InlineData(8190)]
+    public void ValidateInjectionStopsBeforeExceedingMaximumLength(int length)
     {
-        var longValue = new string('0', 8187);
+        var longValue = new string('0', length);
 
         var propagationContext = new PropagationContext(
             default,
@@ -384,12 +390,35 @@ public class BaggagePropagatorTests
 
         this.baggage.Inject(propagationContext, carrier, Setter);
 
-        Assert.Single(carrier);
+        var item = Assert.Single(carrier);
 
-        var baggageHeader = carrier[BaggagePropagator.BaggageHeaderName];
+        Assert.Equal(BaggagePropagator.BaggageHeaderName, item.Key);
 
+        var baggageHeader = item.Value;
+        Assert.True(baggageHeader.Length <= MaxBaggageLength, $"Baggage length {baggageHeader.Length} exceeds maximum allowed length of {MaxBaggageLength}");
         Assert.Equal($"a={longValue}", baggageHeader);
-        Assert.True(baggageHeader.Length < 8192);
+    }
+
+    [Theory]
+    [InlineData(8191)]
+    [InlineData(16384)]
+    public void ValidateInjectionDoesNotExceedMaximumLength(int length)
+    {
+        var longValue = new string('0', length);
+
+        var propagationContext = new PropagationContext(
+            default,
+            new Baggage(new Dictionary<string, string>
+            {
+                ["a"] = longValue,
+                ["b"] = "c",
+            }));
+
+        var carrier = new Dictionary<string, string>();
+
+        this.baggage.Inject(propagationContext, carrier, Setter);
+
+        Assert.Empty(carrier);
     }
 
     [Fact]
@@ -412,7 +441,7 @@ public class BaggagePropagatorTests
 
         var baggageHeader = carrier[BaggagePropagator.BaggageHeaderName];
 
-        Assert.True(baggageHeader.Length <= 8192);
+        Assert.True(baggageHeader.Length <= MaxBaggageLength);
     }
 
     [Fact]
