@@ -244,6 +244,14 @@ public class TraceContextPropagatorTests
     }
 
     [Fact]
+    public void Extract_AllowsKeyNamesInsideEarlierValues()
+    {
+        // Regression test for GHSA-8785-wc3w-h8q6.
+        Assert.Equal("foo=bar,bar=1", CallTraceContextPropagator("foo=bar,bar=1"));
+        Assert.Equal("foo=bar,bar=1", CallTraceContextPropagator(["foo=bar", "bar=1"]));
+    }
+
+    [Fact]
     public void TryExtractTracestate_NullCollectionReturnsEmpty()
     {
         Assert.True(TraceContextPropagator.TryExtractTracestate((IEnumerable<string>?)null, out var actual));
