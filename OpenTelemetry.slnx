@@ -219,6 +219,7 @@
   <Project Path="src/OpenTelemetry/OpenTelemetry.csproj" />
   <Project Path="test/Benchmarks/Benchmarks.csproj" />
   <Project Path="test/OpenTelemetry.AotCompatibility.TestApp/OpenTelemetry.AotCompatibility.TestApp.csproj" />
+  <Project Path="test/OpenTelemetry.Api.FuzzTests/OpenTelemetry.Api.FuzzTests.csproj" />
   <Project Path="test/OpenTelemetry.Api.ProviderBuilderExtensions.Tests/OpenTelemetry.Api.ProviderBuilderExtensions.Tests.csproj" />
   <Project Path="test/OpenTelemetry.Api.Tests/OpenTelemetry.Api.Tests.csproj" />
   <Project Path="test/OpenTelemetry.Exporter.Console.Tests/OpenTelemetry.Exporter.Console.Tests.csproj" />
