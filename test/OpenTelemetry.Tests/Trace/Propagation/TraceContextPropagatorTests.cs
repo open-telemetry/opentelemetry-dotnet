@@ -162,6 +162,26 @@ public class TraceContextPropagatorTests
     }
 
     [Fact]
+    public void Extract_EnumeratesEnumerableTracestateValuesOnce()
+    {
+        var tracestateValues = new SingleUseEnumerableCarrierValues("  k1=v1 , k2=v2  ");
+        var headers = new Dictionary<string, IEnumerable<string>>
+        {
+            [TraceParent] = new EnumerableCarrierValues($"00-{TraceId}-{SpanId}-01"),
+            [TraceState] = tracestateValues,
+        };
+
+        var target = new TraceContextPropagator();
+        var actual = target.Extract(default, headers, static (carrier, name) =>
+            carrier.TryGetValue(name, out var value) ? value : Empty);
+
+        Assert.Equal(ActivityTraceId.CreateFromString(TraceId.AsSpan()), actual.ActivityContext.TraceId);
+        Assert.Equal(ActivitySpanId.CreateFromString(SpanId.AsSpan()), actual.ActivityContext.SpanId);
+        Assert.Equal("k1=v1,k2=v2", actual.ActivityContext.TraceState);
+        Assert.Equal(1, tracestateValues.EnumerationCount);
+    }
+
+    [Fact]
     public void Extract_IgnoresMultipleEnumerableTraceparentValues()
     {
         var headers = new Dictionary<string, EnumerableCarrierValues>
@@ -226,7 +246,7 @@ public class TraceContextPropagatorTests
     [Fact]
     public void TryExtractTracestate_NullCollectionReturnsEmpty()
     {
-        Assert.True(TraceContextPropagator.TryExtractTracestate((IEnumerable<string>)null!, out var actual));
+        Assert.True(TraceContextPropagator.TryExtractTracestate((IEnumerable<string>?)null, out var actual));
         Assert.Empty(actual);
     }
 
@@ -447,6 +467,26 @@ public class TraceContextPropagatorTests
     {
         public IEnumerator<string> GetEnumerator()
         {
+            foreach (var value in values)
+            {
+                yield return value;
+            }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+    }
+
+    private sealed class SingleUseEnumerableCarrierValues(params string[] values) : IEnumerable<string>
+    {
+        public int EnumerationCount { get; private set; }
+
+        public IEnumerator<string> GetEnumerator()
+        {
+            if (this.EnumerationCount++ > 0)
+            {
+                throw new InvalidOperationException("Sequence was enumerated multiple times.");
+            }
+
             foreach (var value in values)
             {
                 yield return value;
