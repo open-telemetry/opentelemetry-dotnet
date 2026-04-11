@@ -8,7 +8,7 @@ namespace OpenTelemetry.Context.Propagation.Tests;
 
 public class BaggagePropagatorTests
 {
-    const int MaxBaggageLength = 8192;
+    private const int MaxBaggageLength = 8192;
 
     private static readonly Func<IDictionary<string, string>, string, IEnumerable<string>> Getter =
         static (d, k) => d.TryGetValue(k, out var v) ? [v] : [];
