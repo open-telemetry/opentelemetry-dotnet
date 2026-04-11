@@ -104,11 +104,35 @@ public class BaggagePropagator : TextMapPropagator
                     continue;
                 }
 
-                baggage.Append(WebUtility.UrlEncode(item.Key)).Append('=').Append(WebUtility.UrlEncode(item.Value)).Append(',');
+                var encodedKey = WebUtility.UrlEncode(item.Key);
+                var encodedValue = WebUtility.UrlEncode(item.Value);
+                var baggageItemLength = encodedKey.Length + encodedValue.Length + 1;
+
+                if (baggage.Length > 0)
+                {
+                    baggageItemLength++;
+                }
+
+                if (baggage.Length + baggageItemLength > MaxBaggageLength)
+                {
+                    break;
+                }
+
+                if (baggage.Length > 0)
+                {
+                    baggage.Append(',');
+                }
+
+                baggage.Append(encodedKey)
+                       .Append('=')
+                       .Append(encodedValue);
             }
-            while (e.MoveNext() && ++itemCount < MaxBaggageItems && baggage.Length < MaxBaggageLength);
-            baggage.Remove(baggage.Length - 1, 1);
-            setter(carrier, BaggageHeaderName, baggage.ToString());
+            while (e.MoveNext() && ++itemCount < MaxBaggageItems);
+
+            if (baggage.Length > 0)
+            {
+                setter(carrier, BaggageHeaderName, baggage.ToString());
+            }
         }
     }
 

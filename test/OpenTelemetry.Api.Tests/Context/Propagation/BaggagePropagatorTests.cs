@@ -9,21 +9,10 @@ namespace OpenTelemetry.Context.Propagation.Tests;
 public class BaggagePropagatorTests
 {
     private static readonly Func<IDictionary<string, string>, string, IEnumerable<string>> Getter =
-        (d, k) =>
-        {
-            if (d.TryGetValue(k, out var v))
-            {
-                return [v];
-            }
-
-            return [];
-        };
+        static (d, k) => d.TryGetValue(k, out var v) ? [v] : [];
 
     private static readonly Func<IList<KeyValuePair<string, string>>, string, IEnumerable<string>> GetterList =
-        (d, k) =>
-        {
-            return d.Where(i => i.Key == k).Select(i => i.Value);
-        };
+        static (d, k) => d.Where(i => i.Key == k).Select(i => i.Value);
 
     private static readonly Action<IDictionary<string, string>, string, string> Setter = (carrier, name, value) =>
     {
@@ -85,9 +74,9 @@ public class BaggagePropagatorTests
     {
         var carrier = new List<KeyValuePair<string, string>>
         {
-            new KeyValuePair<string, string>(BaggagePropagator.BaggageHeaderName, "name1=test1"),
-            new KeyValuePair<string, string>(BaggagePropagator.BaggageHeaderName, "name2=test2"),
-            new KeyValuePair<string, string>(BaggagePropagator.BaggageHeaderName, "name2=test2"),
+            new(BaggagePropagator.BaggageHeaderName, "name1=test1"),
+            new(BaggagePropagator.BaggageHeaderName, "name2=test2"),
+            new(BaggagePropagator.BaggageHeaderName, "name2=test2"),
         };
 
         var propagationContext = this.baggage.Extract(default, carrier, GetterList);
@@ -140,7 +129,7 @@ public class BaggagePropagatorTests
         var initialBaggage = $"key+1=value+1,{encodedKey}={encodedValue},{escapedKey}={escapedValue}";
         var carrier = new List<KeyValuePair<string, string>>
         {
-            new KeyValuePair<string, string>(BaggagePropagator.BaggageHeaderName, initialBaggage),
+            new(BaggagePropagator.BaggageHeaderName, initialBaggage),
         };
 
         var propagationContext = this.baggage.Extract(default, carrier, GetterList);
@@ -376,6 +365,31 @@ public class BaggagePropagatorTests
         var baggageHeader = carrier[BaggagePropagator.BaggageHeaderName];
 
         Assert.Equal(8192, baggageHeader.Length);
+    }
+
+    [Fact]
+    public void ValidateInjectionStopsBeforeExceedingMaximumLength()
+    {
+        var longValue = new string('0', 8187);
+
+        var propagationContext = new PropagationContext(
+            default,
+            new Baggage(new Dictionary<string, string>
+            {
+                ["a"] = longValue,
+                ["b"] = "c",
+            }));
+
+        var carrier = new Dictionary<string, string>();
+
+        this.baggage.Inject(propagationContext, carrier, Setter);
+
+        Assert.Single(carrier);
+
+        var baggageHeader = carrier[BaggagePropagator.BaggageHeaderName];
+
+        Assert.Equal($"a={longValue}", baggageHeader);
+        Assert.True(baggageHeader.Length < 8192);
     }
 
     [Fact]
