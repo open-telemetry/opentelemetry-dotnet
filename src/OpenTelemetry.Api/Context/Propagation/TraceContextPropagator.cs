@@ -69,10 +69,10 @@ public class TraceContextPropagator : TextMapPropagator
             }
 
             string? tracestate = null;
-            var tracestateCollection = getter(carrier, TraceState);
-            if (tracestateCollection != null && HasAnyValues(tracestateCollection))
+            TryExtractTracestate(getter(carrier, TraceState), out var extractedTracestate, out var hasTraceState);
+            if (hasTraceState)
             {
-                TryExtractTracestate(tracestateCollection, out tracestate);
+                tracestate = extractedTracestate;
             }
 
             return new PropagationContext(
@@ -224,23 +224,83 @@ public class TraceContextPropagator : TextMapPropagator
         return true;
     }
 
-    internal static bool TryExtractTracestate(string[] tracestateCollection, out string tracestateResult)
-        => TryExtractTracestate((IEnumerable<string>)tracestateCollection, out tracestateResult);
+    internal static bool TryExtractTracestate(string[]? tracestateCollection, out string tracestateResult)
+        => TryExtractTracestate((IEnumerable<string>?)tracestateCollection, out tracestateResult);
 
-    internal static bool TryExtractTracestate(IEnumerable<string> tracestateCollection, out string tracestateResult)
+    internal static bool TryExtractTracestate(IEnumerable<string>? tracestateCollection, out string tracestateResult)
+        => TryExtractTracestate(tracestateCollection, out tracestateResult, out _);
+
+    private static bool TryExtractTracestate(IEnumerable<string>? tracestateCollection, out string tracestateResult, out bool hasTraceState)
     {
         tracestateResult = string.Empty;
+        hasTraceState = false;
 
         if (tracestateCollection == null)
         {
             return true;
         }
 
-        if (TryGetSingleValue(tracestateCollection, out var singleTraceState))
+        if (tracestateCollection is IList<string> list)
+        {
+            if (list.Count == 0)
+            {
+                return true;
+            }
+
+            hasTraceState = true;
+            if (list.Count == 1)
+            {
+                return TryExtractSingleTracestate(list[0], out tracestateResult);
+            }
+
+            return TryExtractMultipleTracestate(list, out tracestateResult);
+        }
+
+        if (tracestateCollection is IReadOnlyList<string> readOnlyList)
+        {
+            if (readOnlyList.Count == 0)
+            {
+                return true;
+            }
+
+            hasTraceState = true;
+            if (readOnlyList.Count == 1)
+            {
+                return TryExtractSingleTracestate(readOnlyList[0], out tracestateResult);
+            }
+
+            return TryExtractMultipleTracestate(readOnlyList, out tracestateResult);
+        }
+
+        using var enumerator = tracestateCollection.GetEnumerator();
+        if (!enumerator.MoveNext())
+        {
+            return true;
+        }
+
+        hasTraceState = true;
+        var singleTraceState = enumerator.Current;
+        if (!enumerator.MoveNext())
         {
             return TryExtractSingleTracestate(singleTraceState, out tracestateResult);
         }
 
+        return TryExtractMultipleTracestate(EnumerateFrom(singleTraceState, enumerator), out tracestateResult);
+    }
+
+    private static IEnumerable<string> EnumerateFrom(string first, IEnumerator<string> enumerator)
+    {
+        yield return first;
+
+        do
+        {
+            yield return enumerator.Current;
+        }
+        while (enumerator.MoveNext());
+    }
+
+    private static bool TryExtractMultipleTracestate(IEnumerable<string> tracestateCollection, out string tracestateResult)
+    {
         var keySet = new HashSet<string>();
         var result = new StringBuilder();
 
@@ -276,6 +336,7 @@ public class TraceContextPropagator : TextMapPropagator
                 {
                     // https://github.com/w3c/trace-context/blob/master/spec/20-http_request_header_format.md#list
                     // test_tracestate_member_count_limit
+                    tracestateResult = string.Empty;
                     return false;
                 }
 
@@ -283,6 +344,7 @@ public class TraceContextPropagator : TextMapPropagator
                 if (keyLength == listMember.Length || keyLength == -1)
                 {
                     // Missing key or value in tracestate
+                    tracestateResult = string.Empty;
                     return false;
                 }
 
@@ -292,6 +354,7 @@ public class TraceContextPropagator : TextMapPropagator
                     // test_tracestate_key_illegal_characters in https://github.com/w3c/trace-context/blob/master/test/test.py
                     // test_tracestate_key_length_limit
                     // test_tracestate_key_illegal_vendor_format
+                    tracestateResult = string.Empty;
                     return false;
                 }
 
@@ -299,6 +362,7 @@ public class TraceContextPropagator : TextMapPropagator
                 if (!ValidateValue(value))
                 {
                     // test_tracestate_value_illegal_characters
+                    tracestateResult = string.Empty;
                     return false;
                 }
 
@@ -306,6 +370,7 @@ public class TraceContextPropagator : TextMapPropagator
                 if (!keySet.Add(key.ToString()))
                 {
                     // test_tracestate_duplicated_keys
+                    tracestateResult = string.Empty;
                     return false;
                 }
 
@@ -508,29 +573,6 @@ public class TraceContextPropagator : TextMapPropagator
             return hash;
         }
 #endif
-    }
-
-    private static bool HasAnyValues(IEnumerable<string> values)
-    {
-#if NET
-        if (values.TryGetNonEnumeratedCount(out var count))
-        {
-            return count > 0;
-        }
-#endif
-
-        if (values is ICollection<string> collection)
-        {
-            return collection.Count > 0;
-        }
-
-        if (values is IReadOnlyCollection<string> readOnlyCollection)
-        {
-            return readOnlyCollection.Count > 0;
-        }
-
-        using var enumerator = values.GetEnumerator();
-        return enumerator.MoveNext();
     }
 
     private static bool TryGetSingleValue(IEnumerable<string>? values, out string value)
