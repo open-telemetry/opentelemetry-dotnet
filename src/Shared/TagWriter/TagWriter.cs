@@ -10,6 +10,11 @@ internal abstract class TagWriter<TTagState, TArrayState>
     where TTagState : notnull
     where TArrayState : notnull
 {
+    internal const int MaxRecursionDepth = 3;
+
+    [ThreadStatic]
+    private static int recursionDepth;
+
     private readonly ArrayTagWriter<TArrayState> arrayWriter;
 
     protected TagWriter(
@@ -67,14 +72,32 @@ internal abstract class TagWriter<TTagState, TArrayState>
             case IEnumerable<KeyValuePair<string, object?>> kvList:
                 try
                 {
+                    if (recursionDepth >= MaxRecursionDepth)
+                    {
+                        var stringValue = Convert.ToString(value, CultureInfo.InvariantCulture);
+                        this.WriteStringTag(
+                            ref state,
+                            key,
+                            TruncateString(stringValue.AsSpan(), tagValueMaxLength));
+
+                        break;
+                    }
+                    else
+                    {
+                        recursionDepth++;
+                    }
+
                     this.WriteKvListTag(ref state, key, kvList, tagValueMaxLength);
+                    recursionDepth--;
                 }
                 catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
                 {
+                    recursionDepth = 0;
                     throw;
                 }
                 catch
                 {
+                    recursionDepth--;
                     return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
                 }
 
