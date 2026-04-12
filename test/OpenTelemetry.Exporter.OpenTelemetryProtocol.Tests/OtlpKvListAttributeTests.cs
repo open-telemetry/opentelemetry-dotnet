@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using OtlpCommon = OpenTelemetry.Proto.Common.V1;
@@ -278,6 +279,81 @@ public sealed class OtlpKvListAttributeTests : IDisposable
         Assert.Equal(largeString, values[0].Value.StringValue);
     }
 
+    [Fact]
+    public void RecursionHasMaxDepthAndRecursionDepthIsReset()
+    {
+        var tags = new ActivityTagsCollection
+        {
+            new("kvList", SelfReferencingKvList()),
+            new("kvList1", SelfReferencingKvList()),
+        };
+
+        using var activitySource = new ActivitySource(nameof(this.RecursionHasMaxDepthAndRecursionDepthIsReset));
+        using var activity = activitySource.StartActivity("test", ActivityKind.Server, default(ActivityContext), tags);
+
+        Assert.NotNull(activity);
+
+        var buffer = new byte[1_000_000];
+
+        var writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, new SdkLimitOptions(), activity);
+
+        using var stream = new MemoryStream(buffer, 0, writePosition);
+        var scopeSpans = OtlpTrace.ScopeSpans.Parser.ParseFrom(stream);
+        Assert.Single(scopeSpans.Spans);
+        var span = scopeSpans.Spans.FirstOrDefault();
+
+        Assert.NotNull(span);
+        Assert.Equal(2, span.Attributes.Count);
+
+        var attribute = span.Attributes[0];
+        Assert.Equal("kvList", attribute.Key);
+
+        var attributeValue = attribute.Value;
+        for (var i = 0; i < 3; i++)
+        {
+            Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.KvlistValue, attributeValue.ValueCase);
+            Assert.Equal(2, attributeValue.KvlistValue.Values.Count);
+
+            Assert.Equal("int", attributeValue.KvlistValue.Values[0].Key);
+            Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.IntValue, attributeValue.KvlistValue.Values[0].Value.ValueCase);
+
+            Assert.Equal("self", attributeValue.KvlistValue.Values[1].Key);
+            if (i < 2)
+            {
+                Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.KvlistValue, attributeValue.KvlistValue.Values[1].Value.ValueCase);
+                attributeValue = attributeValue.KvlistValue.Values[1].Value;
+                continue;
+            }
+
+            Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.StringValue, attributeValue.KvlistValue.Values[1].Value.ValueCase);
+            Assert.Equal(Convert.ToString(SelfReferencingKvList(), CultureInfo.InvariantCulture), attributeValue.KvlistValue.Values[1].Value.StringValue);
+        }
+
+        attribute = span.Attributes[1];
+        Assert.Equal("kvList1", attribute.Key);
+
+        attributeValue = attribute.Value;
+        for (var i = 0; i < 3; i++)
+        {
+            Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.KvlistValue, attributeValue.ValueCase);
+            Assert.Equal(2, attributeValue.KvlistValue.Values.Count);
+
+            Assert.Equal("int", attributeValue.KvlistValue.Values[0].Key);
+            Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.IntValue, attributeValue.KvlistValue.Values[0].Value.ValueCase);
+
+            Assert.Equal("self", attributeValue.KvlistValue.Values[1].Key);
+            if (i < 2)
+            {
+                Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.KvlistValue, attributeValue.KvlistValue.Values[1].Value.ValueCase);
+                attributeValue = attributeValue.KvlistValue.Values[1].Value;
+                continue;
+            }
+
+            Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.StringValue, attributeValue.KvlistValue.Values[1].Value.ValueCase);
+            Assert.Equal(Convert.ToString(SelfReferencingKvList(), CultureInfo.InvariantCulture), attributeValue.KvlistValue.Values[1].Value.StringValue);
+        }
+     }
+
     public void Dispose()
     {
         this.activityListener.Dispose();
@@ -287,6 +363,14 @@ public sealed class OtlpKvListAttributeTests : IDisposable
     {
         yield return new KeyValuePair<string, object?>("key1", "value1");
         throw new InvalidOperationException("simulated failure");
+    }
+
+    private static List<KeyValuePair<string, object?>> SelfReferencingKvList()
+    {
+        var list = new List<KeyValuePair<string, object?>>();
+        list.Add(new("int", 1));
+        list.Add(new("self", list));
+        return list;
     }
 
     private static bool TryTransformTag(KeyValuePair<string, object?> tag, [NotNullWhen(true)] out OtlpCommon.KeyValue? attribute)
