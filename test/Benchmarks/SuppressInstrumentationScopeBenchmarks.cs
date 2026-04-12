@@ -5,6 +5,7 @@ using BenchmarkDotNet.Attributes;
 
 namespace OpenTelemetry.Benchmarks;
 
+[MemoryDiagnoser]
 public class SuppressInstrumentationScopeBenchmarks
 {
     [Benchmark]

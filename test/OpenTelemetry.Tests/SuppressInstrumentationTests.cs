@@ -103,4 +103,74 @@ public class SuppressInstrumentationTests
         Assert.Equal(0, SuppressInstrumentationScope.DecrementIfTriggered());
         Assert.False(Sdk.SuppressInstrumentation); // Instrumentation is not suppressed anymore
     }
+
+    [Fact]
+    public void BeginReturnsNoOpWhenAlreadyAlwaysSuppressed()
+    {
+        Assert.False(Sdk.SuppressInstrumentation);
+
+        using var outer = SuppressInstrumentationScope.Begin(value: true);
+        Assert.True(Sdk.SuppressInstrumentation);
+
+        // Nested Begin(true) while already in always-suppress mode should return a no-op
+        // disposable and must not alter the suppression state in any way.
+        using var inner = SuppressInstrumentationScope.Begin(value: true);
+        Assert.True(Sdk.SuppressInstrumentation);
+
+        inner.Dispose();
+
+        // Suppression should still be active after the no-op inner scope is disposed.
+        Assert.True(Sdk.SuppressInstrumentation);
+
+        outer.Dispose();
+        Assert.False(Sdk.SuppressInstrumentation);
+    }
+
+    [Fact]
+    public void BeginDisposeIsIdempotent()
+    {
+        Assert.False(Sdk.SuppressInstrumentation);
+
+        var first = SuppressInstrumentationScope.Begin();
+        Assert.True(Sdk.SuppressInstrumentation);
+
+        first.Dispose();
+        Assert.False(Sdk.SuppressInstrumentation);
+
+        // Second Dispose() call must be a safe no-op: it must not touch the slot
+        // even if the underlying scope instance has since been re-rented from the pool.
+        var second = SuppressInstrumentationScope.Begin();
+        Assert.True(Sdk.SuppressInstrumentation);
+
+        // Stale reference - must not affect second
+        first.Dispose();
+        Assert.True(Sdk.SuppressInstrumentation);
+
+        second.Dispose();
+        Assert.False(Sdk.SuppressInstrumentation);
+    }
+
+    [Fact]
+    public void BeginScopesCanBeNestedAndUnwoundCorrectly()
+    {
+        Assert.False(Sdk.SuppressInstrumentation);
+
+        using var first = SuppressInstrumentationScope.Begin();
+        Assert.True(Sdk.SuppressInstrumentation);
+
+        using var second = SuppressInstrumentationScope.Begin(value: false);
+        Assert.False(Sdk.SuppressInstrumentation); // second opted out
+
+        using var third = SuppressInstrumentationScope.Begin();
+        Assert.True(Sdk.SuppressInstrumentation);
+
+        third.Dispose();
+        Assert.False(Sdk.SuppressInstrumentation); // Back to second
+
+        second.Dispose();
+        Assert.True(Sdk.SuppressInstrumentation); // Back to first
+
+        first.Dispose();
+        Assert.False(Sdk.SuppressInstrumentation);
+    }
 }
