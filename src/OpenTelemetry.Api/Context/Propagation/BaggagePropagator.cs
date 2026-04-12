@@ -20,8 +20,9 @@ public class BaggagePropagator : TextMapPropagator
     private const int MaxBaggageLength = 8192;
     private const int MaxBaggageItems = 180;
 
-    private static readonly char[] EqualSignSeparator = ['='];
+#if !NET
     private static readonly char[] CommaSignSeparator = [','];
+#endif
 
     /// <inheritdoc/>
     public override ISet<string> Fields => new HashSet<string> { BaggageHeaderName };
@@ -50,9 +51,9 @@ public class BaggagePropagator : TextMapPropagator
         try
         {
             var baggageCollection = getter(carrier, BaggageHeaderName);
-            if (baggageCollection?.Any() ?? false)
+            if (baggageCollection is not null)
             {
-                if (TryExtractBaggage([.. baggageCollection], out var baggageItems))
+                if (TryExtractBaggage(baggageCollection, out var baggageItems))
                 {
                     Baggage baggage =
 #if NET
@@ -113,7 +114,7 @@ public class BaggagePropagator : TextMapPropagator
     }
 
     internal static bool TryExtractBaggage(
-        string[] baggageCollection,
+        IEnumerable<string> baggageCollection,
 #if NET
         [NotNullWhen(true)]
 #endif
@@ -135,9 +136,25 @@ public class BaggagePropagator : TextMapPropagator
                 continue;
             }
 
-            foreach (var pair in item.Split(CommaSignSeparator))
+#if NET
+            var span = item.AsSpan();
+            while (!span.IsEmpty)
             {
-                baggageLength += pair.Length + 1; // pair and comma
+                ReadOnlySpan<char> pairSpan;
+
+                var index = span.IndexOf(',');
+                if (index < 0)
+                {
+                    pairSpan = span;
+                    span = default;
+                }
+                else
+                {
+                    pairSpan = span[..index];
+                    span = span[(index + 1)..];
+                }
+
+                baggageLength += pairSpan.Length + 1;
 
                 if (baggageLength >= MaxBaggageLength || baggageDictionary?.Count >= MaxBaggageItems)
                 {
@@ -145,23 +162,14 @@ public class BaggagePropagator : TextMapPropagator
                     break;
                 }
 
-#if NET
-                if (pair.IndexOf('=', StringComparison.Ordinal) < 0)
-#else
-                if (pair.IndexOf('=') < 0)
-#endif
+                index = pairSpan.IndexOf('=');
+                if (index < 0)
                 {
                     continue;
                 }
 
-                var parts = pair.Split(EqualSignSeparator, 2);
-                if (parts.Length != 2)
-                {
-                    continue;
-                }
-
-                var key = WebUtility.UrlDecode(parts[0]);
-                var value = WebUtility.UrlDecode(parts[1]);
+                var key = WebUtility.UrlDecode(pairSpan[..index].ToString());
+                var value = WebUtility.UrlDecode(pairSpan[(index + 1)..].ToString());
 
                 if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(value))
                 {
@@ -169,9 +177,37 @@ public class BaggagePropagator : TextMapPropagator
                 }
 
                 baggageDictionary ??= [];
-
                 baggageDictionary[key] = value;
             }
+#else
+            foreach (var pair in item.Split(CommaSignSeparator))
+            {
+                baggageLength += pair.Length + 1;
+
+                if (baggageLength >= MaxBaggageLength || baggageDictionary?.Count >= MaxBaggageItems)
+                {
+                    done = true;
+                    break;
+                }
+
+                var index = pair.IndexOf('=');
+                if (index < 0)
+                {
+                    continue;
+                }
+
+                var key = WebUtility.UrlDecode(pair.Substring(0, index));
+                var value = WebUtility.UrlDecode(pair.Substring(index + 1));
+
+                if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(value))
+                {
+                    continue;
+                }
+
+                baggageDictionary ??= [];
+                baggageDictionary[key] = value;
+            }
+#endif
         }
 
         baggage = baggageDictionary;
