@@ -56,15 +56,11 @@ public class TraceContextPropagator : TextMapPropagator
 
         try
         {
-            var traceparentCollection = getter(carrier, TraceParent);
-
-            // There must be a single traceparent
-            if (traceparentCollection == null || traceparentCollection.Count() != 1)
+            if (!TryGetSingleValue(getter(carrier, TraceParent), out var traceparent))
             {
                 return context;
             }
 
-            var traceparent = traceparentCollection.First();
             var traceparentParsed = TryExtractTraceparent(traceparent, out var traceId, out var spanId, out var traceoptions);
 
             if (!traceparentParsed)
@@ -73,10 +69,10 @@ public class TraceContextPropagator : TextMapPropagator
             }
 
             string? tracestate = null;
-            var tracestateCollection = getter(carrier, TraceState);
-            if (tracestateCollection?.Any() ?? false)
+            TryExtractTracestate(getter(carrier, TraceState), out var extractedTracestate, out var hasTraceState);
+            if (hasTraceState)
             {
-                TryExtractTracestate([.. tracestateCollection], out tracestate);
+                tracestate = extractedTracestate;
             }
 
             return new PropagationContext(
@@ -220,94 +216,322 @@ public class TraceContextPropagator : TextMapPropagator
         return true;
     }
 
-    internal static bool TryExtractTracestate(string[] tracestateCollection, out string tracestateResult)
+    internal static bool TryExtractTracestate(string[]? tracestateCollection, out string tracestateResult)
+        => TryExtractTracestate((IEnumerable<string>?)tracestateCollection, out tracestateResult);
+
+    internal static bool TryExtractTracestate(IEnumerable<string>? tracestateCollection, out string tracestateResult)
+        => TryExtractTracestate(tracestateCollection, out tracestateResult, out _);
+
+    private static bool TryExtractTracestate(IEnumerable<string>? tracestateCollection, out string tracestateResult, out bool hasTraceState)
+    {
+        tracestateResult = string.Empty;
+        hasTraceState = false;
+
+        if (tracestateCollection == null)
+        {
+            return true;
+        }
+
+        if (tracestateCollection is IList<string> list)
+        {
+            if (list.Count == 0)
+            {
+                return true;
+            }
+
+            hasTraceState = true;
+            if (list.Count == 1)
+            {
+                return TryExtractSingleTracestate(list[0], out tracestateResult);
+            }
+
+            return TryExtractMultipleTracestate(list, out tracestateResult);
+        }
+
+        if (tracestateCollection is IReadOnlyList<string> readOnlyList)
+        {
+            if (readOnlyList.Count == 0)
+            {
+                return true;
+            }
+
+            hasTraceState = true;
+            if (readOnlyList.Count == 1)
+            {
+                return TryExtractSingleTracestate(readOnlyList[0], out tracestateResult);
+            }
+
+            return TryExtractMultipleTracestate(readOnlyList, out tracestateResult);
+        }
+
+        using var enumerator = tracestateCollection.GetEnumerator();
+        if (!enumerator.MoveNext())
+        {
+            return true;
+        }
+
+        hasTraceState = true;
+        var singleTraceState = enumerator.Current;
+        if (!enumerator.MoveNext())
+        {
+            return TryExtractSingleTracestate(singleTraceState, out tracestateResult);
+        }
+
+        return TryExtractMultipleTracestate(EnumerateFrom(singleTraceState, enumerator), out tracestateResult);
+    }
+
+    private static IEnumerable<string> EnumerateFrom(string first, IEnumerator<string> enumerator)
+    {
+        yield return first;
+
+        do
+        {
+            yield return enumerator.Current;
+        }
+        while (enumerator.MoveNext());
+    }
+
+    private static bool TryExtractMultipleTracestate(IEnumerable<string> tracestateCollection, out string tracestateResult)
+    {
+        var keySet = new HashSet<string>();
+        var result = new StringBuilder();
+
+        foreach (var tracestateEntry in tracestateCollection)
+        {
+            var tracestate = tracestateEntry.AsSpan();
+            var begin = 0;
+            while (begin < tracestate.Length)
+            {
+                ReadOnlySpan<char> listMember;
+
+                var length = tracestate.Slice(begin).IndexOf(',');
+                if (length != -1)
+                {
+                    listMember = tracestate.Slice(begin, length).Trim();
+                    begin += length + 1;
+                }
+                else
+                {
+                    listMember = tracestate.Slice(begin).Trim();
+                    begin = tracestate.Length;
+                }
+
+                // https://github.com/w3c/trace-context/blob/master/spec/20-http_request_header_format.md#tracestate-header-field-values
+                if (listMember.IsEmpty)
+                {
+                    // Empty and whitespace - only list members are allowed.
+                    // Vendors MUST accept empty tracestate headers but SHOULD avoid sending them.
+                    continue;
+                }
+
+                if (keySet.Count >= 32)
+                {
+                    // https://github.com/w3c/trace-context/blob/master/spec/20-http_request_header_format.md#list
+                    // test_tracestate_member_count_limit
+                    tracestateResult = string.Empty;
+                    return false;
+                }
+
+                var keyLength = listMember.IndexOf('=');
+                if (keyLength == listMember.Length || keyLength == -1)
+                {
+                    // Missing key or value in tracestate
+                    tracestateResult = string.Empty;
+                    return false;
+                }
+
+                var key = listMember.Slice(0, keyLength);
+                if (!ValidateKey(key))
+                {
+                    // test_tracestate_key_illegal_characters in https://github.com/w3c/trace-context/blob/master/test/test.py
+                    // test_tracestate_key_length_limit
+                    // test_tracestate_key_illegal_vendor_format
+                    tracestateResult = string.Empty;
+                    return false;
+                }
+
+                var value = listMember.Slice(keyLength + 1);
+                if (!ValidateValue(value))
+                {
+                    // test_tracestate_value_illegal_characters
+                    tracestateResult = string.Empty;
+                    return false;
+                }
+
+                // ValidateKey() call above has ensured the key does not contain upper case letters.
+                if (!keySet.Add(key.ToString()))
+                {
+                    // test_tracestate_duplicated_keys
+                    tracestateResult = string.Empty;
+                    return false;
+                }
+
+                if (result.Length > 0)
+                {
+                    result.Append(',');
+                }
+
+#if NET
+                result.Append(listMember);
+#else
+                result.Append(listMember.ToString());
+#endif
+            }
+        }
+
+        tracestateResult = result.ToString();
+        return true;
+    }
+
+    private static bool TryExtractSingleTracestate(string tracestate, out string tracestateResult)
     {
         tracestateResult = string.Empty;
 
-        if (tracestateCollection != null)
+        if (tracestate.Length == 0)
         {
-            var keySet = new HashSet<string>();
-            var result = new StringBuilder();
-            for (var i = 0; i < tracestateCollection.Length; ++i)
-            {
-                var tracestate = tracestateCollection[i].AsSpan();
-                var begin = 0;
-                while (begin < tracestate.Length)
-                {
-                    var length = tracestate.Slice(begin).IndexOf(',');
-                    ReadOnlySpan<char> listMember;
-                    if (length != -1)
-                    {
-                        listMember = tracestate.Slice(begin, length).Trim();
-                        begin += length + 1;
-                    }
-                    else
-                    {
-                        listMember = tracestate.Slice(begin).Trim();
-                        begin = tracestate.Length;
-                    }
-
-                    // https://github.com/w3c/trace-context/blob/master/spec/20-http_request_header_format.md#tracestate-header-field-values
-                    if (listMember.IsEmpty)
-                    {
-                        // Empty and whitespace - only list members are allowed.
-                        // Vendors MUST accept empty tracestate headers but SHOULD avoid sending them.
-                        continue;
-                    }
-
-                    if (keySet.Count >= 32)
-                    {
-                        // https://github.com/w3c/trace-context/blob/master/spec/20-http_request_header_format.md#list
-                        // test_tracestate_member_count_limit
-                        return false;
-                    }
-
-                    var keyLength = listMember.IndexOf('=');
-                    if (keyLength == listMember.Length || keyLength == -1)
-                    {
-                        // Missing key or value in tracestate
-                        return false;
-                    }
-
-                    var key = listMember.Slice(0, keyLength);
-                    if (!ValidateKey(key))
-                    {
-                        // test_tracestate_key_illegal_characters in https://github.com/w3c/trace-context/blob/master/test/test.py
-                        // test_tracestate_key_length_limit
-                        // test_tracestate_key_illegal_vendor_format
-                        return false;
-                    }
-
-                    var value = listMember.Slice(keyLength + 1);
-                    if (!ValidateValue(value))
-                    {
-                        // test_tracestate_value_illegal_characters
-                        return false;
-                    }
-
-                    // ValidateKey() call above has ensured the key does not contain upper case letters.
-                    if (!keySet.Add(key.ToString()))
-                    {
-                        // test_tracestate_duplicated_keys
-                        return false;
-                    }
-
-                    if (result.Length > 0)
-                    {
-                        result.Append(',');
-                    }
-
-#if NET
-                    result.Append(listMember);
-#else
-                    result.Append(listMember.ToString());
-#endif
-                }
-            }
-
-            tracestateResult = result.ToString();
+            return true;
         }
 
+        var tracestateSpan = tracestate.AsSpan();
+
+        const int Limit = 32;
+
+        Span<int> memberStarts = stackalloc int[Limit];
+        Span<int> memberLengths = stackalloc int[Limit];
+        Span<int> keyLengths = stackalloc int[Limit];
+        Span<int> keyHashes = stackalloc int[Limit];
+
+        var memberCount = 0;
+        var totalLength = 0;
+        var normalized = false;
+        var begin = 0;
+
+        while (begin < tracestateSpan.Length)
+        {
+            var end = begin;
+            while (end < tracestateSpan.Length && tracestateSpan[end] != ',')
+            {
+                end++;
+            }
+
+            var memberStart = begin;
+            var memberEnd = end;
+
+            while (memberStart < memberEnd && char.IsWhiteSpace(tracestateSpan[memberStart]))
+            {
+                memberStart++;
+            }
+
+            while (memberEnd > memberStart && char.IsWhiteSpace(tracestateSpan[memberEnd - 1]))
+            {
+                memberEnd--;
+            }
+
+            if (memberStart != begin || memberEnd != end)
+            {
+                normalized = true;
+            }
+
+            var memberLength = memberEnd - memberStart;
+            if (memberLength > 0)
+            {
+                if (memberCount >= Limit)
+                {
+                    return false;
+                }
+
+                var listMember = tracestateSpan.Slice(memberStart, memberLength);
+                var keyLength = listMember.IndexOf('=');
+                if (keyLength == listMember.Length || keyLength == -1)
+                {
+                    return false;
+                }
+
+                var key = listMember.Slice(0, keyLength);
+                if (!ValidateKey(key))
+                {
+                    return false;
+                }
+
+                var value = listMember.Slice(keyLength + 1);
+                if (!ValidateValue(value))
+                {
+                    return false;
+                }
+
+                var useHashedDuplicateCheck = keyLength <= Limit;
+                var keyHash = 0;
+                if (useHashedDuplicateCheck)
+                {
+                    keyHash = GetKeyHashCode(key);
+                    for (var i = 0; i < memberCount; i++)
+                    {
+                        if (keyHashes[i] != keyHash || keyLengths[i] != keyLength)
+                        {
+                            continue;
+                        }
+
+                        if (key.SequenceEqual(tracestateSpan.Slice(memberStarts[i], keyLength)))
+                        {
+                            return false;
+                        }
+                    }
+                }
+                else
+                {
+                    for (var i = 0; i < memberCount; i++)
+                    {
+                        if (keyLengths[i] == keyLength &&
+                            key.SequenceEqual(tracestateSpan.Slice(memberStarts[i], keyLength)))
+                        {
+                            return false;
+                        }
+                    }
+                }
+
+                memberStarts[memberCount] = memberStart;
+                memberLengths[memberCount] = memberLength;
+                keyLengths[memberCount] = keyLength;
+                keyHashes[memberCount] = keyHash;
+
+                memberCount++;
+                totalLength += memberLength;
+            }
+            else
+            {
+                normalized = true;
+            }
+
+            begin = end + 1;
+        }
+
+        if (!normalized && memberCount > 0 && totalLength + memberCount - 1 == tracestate.Length)
+        {
+            tracestateResult = tracestate;
+            return true;
+        }
+
+        if (memberCount == 0)
+        {
+            return true;
+        }
+
+        var result = new StringBuilder(totalLength + memberCount - 1);
+        for (var i = 0; i < memberCount; i++)
+        {
+            if (i > 0)
+            {
+                result.Append(',');
+            }
+
+#if NET
+            result.Append(tracestateSpan.Slice(memberStarts[i], memberLengths[i]));
+#else
+            result.Append(tracestate.Substring(memberStarts[i], memberLengths[i]));
+#endif
+        }
+
+        tracestateResult = result.ToString();
         return true;
     }
 
@@ -317,6 +541,72 @@ public class TraceContextPropagator : TextMapPropagator
            : c is >= 'a' and <= 'f'
            ? (byte)(c - 'a' + 10)
            : throw new ArgumentOutOfRangeException(nameof(c), c, "Must be within: [0-9] or [a-f]");
+
+    private static int GetKeyHashCode(ReadOnlySpan<char> key)
+    {
+#if NET
+        HashCode hash = default;
+
+        for (var i = 0; i < key.Length; i++)
+        {
+            hash.Add(key[i]);
+        }
+
+        return hash.ToHashCode();
+#else
+        unchecked
+        {
+            var hash = (int)2166136261;
+            for (var i = 0; i < key.Length; i++)
+            {
+                hash = (hash ^ key[i]) * 16777619;
+            }
+
+            return hash;
+        }
+#endif
+    }
+
+    private static bool TryGetSingleValue(IEnumerable<string>? values, out string value)
+    {
+        value = string.Empty;
+
+        if (values == null)
+        {
+            return false;
+        }
+
+        if (values is IList<string> list)
+        {
+            if (list.Count != 1)
+            {
+                return false;
+            }
+
+            value = list[0];
+            return true;
+        }
+
+        if (values is IReadOnlyList<string> readOnlyList)
+        {
+            if (readOnlyList.Count != 1)
+            {
+                return false;
+            }
+
+            value = readOnlyList[0];
+            return true;
+        }
+
+        using var enumerator = values.GetEnumerator();
+        if (!enumerator.MoveNext())
+        {
+            return false;
+        }
+
+        value = enumerator.Current;
+        return !enumerator.MoveNext();
+    }
 
     private static bool ValidateKey(ReadOnlySpan<char> key)
     {
