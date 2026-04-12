@@ -119,6 +119,41 @@ internal sealed class PrometheusMetric
         }
     }
 
+    internal static string SanitizeUnitName(string unit)
+    {
+        if (string.IsNullOrEmpty(unit))
+        {
+            return string.Empty;
+        }
+
+        var sb = new StringBuilder(unit.Length);
+        var lastCharUnderscore = false;
+
+        for (var i = 0; i < unit.Length; i++)
+        {
+            var c = unit[i];
+
+            if (char.IsLetterOrDigit(c))
+            {
+                sb.Append(c);
+                lastCharUnderscore = false;
+            }
+            else if (!lastCharUnderscore && sb.Length > 0)
+            {
+                sb.Append('_');
+                lastCharUnderscore = true;
+            }
+        }
+
+        // Strip trailing underscore
+        if (sb.Length > 0 && sb[sb.Length - 1] == '_')
+        {
+            sb.Length--;
+        }
+
+        return sb.Length == 0 ? string.Empty : sb.ToString();
+    }
+
     internal static string RemoveAnnotations(string unit)
     {
         // UCUM standard says the curly braces shouldn't be nested:
@@ -208,6 +243,7 @@ internal sealed class PrometheusMetric
             updatedUnit = MapUnit(updatedUnit.AsSpan());
         }
 
+        updatedUnit = SanitizeUnitName(updatedUnit);
         return updatedUnit;
     }
 

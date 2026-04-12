@@ -264,6 +264,42 @@ public sealed class PrometheusMetricTests
     public void Name_EmptyUnit_NoSuffixAdded() => AssertName("metric", string.Empty, PrometheusType.Gauge, false, "metric");
 
     [Fact]
+    public void Name_MalformedUnit_HashRU_Sanitized()
+        => AssertName("metric", "# RU", PrometheusType.Gauge, false, "metric_RU");
+
+    [Fact]
+    public void Name_MalformedUnit_HashOnly_Unitless()
+        => AssertName("metric", "#", PrometheusType.Gauge, false, "metric");
+
+    [Fact]
+    public void Name_MalformedUnit_HashSpaceHash_Unitless()
+        => AssertName("metric", "# #", PrometheusType.Gauge, false, "metric");
+
+    [Fact]
+    public void Name_MalformedUnit_HashUnderscoreRDotUDot_Sanitized()
+        => AssertName("metric", "#_R.U.", PrometheusType.Gauge, false, "metric_R_U");
+
+    [Fact]
+    public void SanitizeUnitName_Valid()
+        => Assert.Equal("bytes", PrometheusMetric.SanitizeUnitName("bytes"));
+
+    [Fact]
+    public void SanitizeUnitName_WithInvalidChars()
+        => Assert.Equal("RU", PrometheusMetric.SanitizeUnitName("# RU"));
+
+    [Fact]
+    public void SanitizeUnitName_OnlyInvalidChars_ReturnsEmpty()
+        => Assert.Equal(string.Empty, PrometheusMetric.SanitizeUnitName("#"));
+
+    [Fact]
+    public void SanitizeUnitName_Empty_ReturnsEmpty()
+        => Assert.Equal(string.Empty, PrometheusMetric.SanitizeUnitName(string.Empty));
+
+    [Fact]
+    public void SanitizeUnitName_DotsCollapsed()
+        => Assert.Equal("R_U", PrometheusMetric.SanitizeUnitName("R.U."));
+
+    [Fact]
     public void Name_NullUnit_NoSuffixAdded()
     {
         var prometheusMetric = new PrometheusMetric("metric", null!, PrometheusType.Gauge, false);
@@ -361,7 +397,7 @@ public sealed class PrometheusMetricTests
 
     [Fact]
     public void Name_MultipleSlashesInUnit_FirstSlashProcessed()
-        => AssertName("metric", "req/s/extra", PrometheusType.Gauge, false, "metric_req_per_s/extra"); // // Multiple slashes
+        => AssertName("metric", "req/s/extra", PrometheusType.Gauge, false, "metric_req_per_s_extra"); // Multiple slashes
 
     [Theory]
     [InlineData(PrometheusType.Counter)]
