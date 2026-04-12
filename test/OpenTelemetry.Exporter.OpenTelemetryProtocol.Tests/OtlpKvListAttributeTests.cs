@@ -352,7 +352,7 @@ public sealed class OtlpKvListAttributeTests : IDisposable
             Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.StringValue, attributeValue.KvlistValue.Values[1].Value.ValueCase);
             Assert.Equal(Convert.ToString(SelfReferencingKvList(), CultureInfo.InvariantCulture), attributeValue.KvlistValue.Values[1].Value.StringValue);
         }
-     }
+    }
 
     public void Dispose()
     {
