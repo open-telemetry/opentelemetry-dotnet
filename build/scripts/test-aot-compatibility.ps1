@@ -29,7 +29,7 @@ $app = $IsWindows ? "./OpenTelemetry.AotCompatibility.TestApp.exe" : "./OpenTele
 Push-Location $rootDirectory/artifacts/publish/OpenTelemetry.AotCompatibility.TestApp/release_$targetNetFramework
 
 Write-Host "Executing test App..."
-$app
+& $app
 Write-Host "Finished executing test App"
 
 if ($LastExitCode -ne 0)
