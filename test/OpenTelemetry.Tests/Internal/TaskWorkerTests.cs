@@ -97,11 +97,13 @@ public class TaskWorkerTests
 
     private sealed class TestActivityExporter : BaseExporter<Activity>
     {
-        public int ExportCount { get; private set; }
+        private int exportCount;
+
+        public int ExportCount => this.exportCount;
 
         public override ExportResult Export(in Batch<Activity> batch)
         {
-            this.ExportCount++;
+            Interlocked.Increment(ref this.exportCount);
             return ExportResult.Success;
         }
     }
@@ -110,11 +112,13 @@ public class TaskWorkerTests
     private sealed class TestMetricReader() : BaseExportingMetricReader(new TestMetricExporter())
 #pragma warning restore CA2000
     {
-        public int CollectCount { get; private set; }
+        private int collectCount;
+
+        public int CollectCount => this.collectCount;
 
         protected override bool OnCollect(int timeoutMilliseconds)
         {
-            this.CollectCount++;
+            Interlocked.Increment(ref this.collectCount);
             return true;
         }
     }
