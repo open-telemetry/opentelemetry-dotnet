@@ -181,19 +181,6 @@ public class BaggagePropagator : TextMapPropagator
                     continue;
                 }
 
-                var rawValue = parts[1];
-
-                // semicolon is not a valid baggage-octet
-#if NET
-                var semicolonIndex = rawValue.IndexOf(';', StringComparison.Ordinal);
-#else
-                var semicolonIndex = rawValue.IndexOf(';');
-#endif
-                if (semicolonIndex >= 0)
-                {
-                    rawValue = rawValue.Substring(0, semicolonIndex);
-                }
-
                 var key = DecodeIfNeeded(pair.Slice(0, separatorIndex));
                 var value = DecodeIfNeeded(pair.Slice(separatorIndex + 1));
 
