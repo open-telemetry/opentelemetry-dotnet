@@ -12,6 +12,8 @@ public class BaggagePropagatorFuzzTests
 {
     private const string BaggageHeader = "baggage";
     private const int MaxTests = 200;
+    private const int MaxBaggageLength = 8192;
+    private const int MaxBaggageItems = 180;
 
     [Property(MaxTest = MaxTests)]
     public Property InjectExtractRoundTripPreservesSafeBaggage() => Prop.ForAll(Generators.SafeBaggageDictionaryArbitrary(), (baggageItems) =>
@@ -76,7 +78,49 @@ public class BaggagePropagatorFuzzTests
         }
     });
 
+    [Property(MaxTest = MaxTests)]
+    public Property OversizedExtractionHonorsConfiguredLimits() => Prop.ForAll(Generators.OversizedBaggageValuesArbitrary(), (values) =>
+    {
+        try
+        {
+            var propagator = new BaggagePropagator();
+            var carrier = new Dictionary<string, string[]>(StringComparer.Ordinal)
+            {
+                [BaggageHeader] = [string.Join(",", values.Select((value, index) => $"k{index:D4}={value}"))],
+            };
+
+            var extracted = propagator.Extract(default, carrier, FuzzTestHelpers.ArrayGetter);
+
+            return DictionariesEqual(ExpectedBaggageForOversizedHeader(values), extracted.Baggage.GetBaggage());
+        }
+        catch (Exception ex) when (FuzzTestHelpers.IsAllowedException(ex))
+        {
+            return true;
+        }
+    });
+
     private static bool DictionariesEqual(IReadOnlyDictionary<string, string> expected, IReadOnlyDictionary<string, string> actual) =>
         expected.Count == actual.Count &&
         expected.All(pair => actual.TryGetValue(pair.Key, out var value) && value == pair.Value);
+
+    private static Dictionary<string, string> ExpectedBaggageForOversizedHeader(string[] values)
+    {
+        var expected = new Dictionary<string, string>(StringComparer.Ordinal);
+        var baggageLength = -1;
+
+        for (var i = 0; i < values.Length; i++)
+        {
+            var key = $"k{i:D4}";
+            baggageLength += key.Length + values[i].Length + 2; // key, equals sign, value, and comma.
+
+            if (baggageLength >= MaxBaggageLength || expected.Count >= MaxBaggageItems)
+            {
+                break;
+            }
+
+            expected[key] = values[i];
+        }
+
+        return expected;
+    }
 }

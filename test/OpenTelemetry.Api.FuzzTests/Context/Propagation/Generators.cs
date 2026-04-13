@@ -13,6 +13,7 @@ internal static class Generators
     private static readonly Gen<char> TraceStateKeyChar = Gen.Elements("abcdefghijklmnopqrstuvwxyz0123456789_-*/".ToCharArray());
     private static readonly Gen<char> TraceStateValueChar = Gen.Elements("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!#$%&'*+-.^_`|~:/".ToCharArray());
     private static readonly Gen<char> BaggageChar = Gen.Elements("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 -_./:!$&'()*+;@?=,".ToCharArray());
+    private static readonly Gen<char> CompactBaggageValueChar = Gen.Elements("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-".ToCharArray());
     private static readonly Gen<char> HeaderValueChar = Gen.Elements("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_=,;: ./@".ToCharArray());
 
     public static Arbitrary<ActivityContext> ActivityContextArbitrary()
@@ -95,6 +96,22 @@ internal static class Generators
         return gen.ToArbitrary();
     }
 
+    public static Arbitrary<string[]> OversizedBaggageValuesArbitrary()
+    {
+        var valueGen = CreateString(CompactBaggageValueChar, 1, 64);
+        var gen = Gen.Sized(size =>
+        {
+            var maxCount = Math.Min(Math.Max((size * 4) + 181, 181), 512);
+
+            return
+                from count in Gen.Choose(181, maxCount)
+                from values in Gen.ArrayOf(valueGen, count)
+                select values;
+        });
+
+        return gen.ToArbitrary();
+    }
+
     public static Arbitrary<Dictionary<string, string[]>> B3MultipleHeaderCarrierArbitrary()
     {
         var gen =
@@ -121,6 +138,15 @@ internal static class Generators
             from includeCombined in Gen.Elements(true, false)
             from combinedValues in HeaderValuesArbitrary(4, 128).Generator
             select CreateCarrier(("b3", includeCombined, combinedValues));
+
+        return gen.ToArbitrary();
+    }
+
+    public static Arbitrary<string> DelimiterFloodArbitrary(char delimiter, int minLength = 1024, int maxLength = 50_000)
+    {
+        var gen =
+            from length in Gen.Choose(minLength, maxLength)
+            select new string(delimiter, length);
 
         return gen.ToArbitrary();
     }

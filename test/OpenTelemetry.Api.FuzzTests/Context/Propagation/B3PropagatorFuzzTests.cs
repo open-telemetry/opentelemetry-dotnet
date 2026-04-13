@@ -13,6 +13,7 @@ namespace OpenTelemetry.Api.FuzzTests;
 public class B3PropagatorFuzzTests
 {
     private const int MaxTests = 200;
+    private const int DelimiterFloodTests = 25;
 
     private const string CombinedHeader = "b3";
     private const string TraceIdHeader = "X-B3-TraceId";
@@ -103,6 +104,28 @@ public class B3PropagatorFuzzTests
             return
                 FuzzTestHelpers.CarriersEqual(original, carrier) &&
                 HaveEquivalentB3State(first.ActivityContext, second.ActivityContext);
+        }
+        catch (Exception ex) when (FuzzTestHelpers.IsAllowedException(ex))
+        {
+            return true;
+        }
+    });
+
+    [Property(MaxTest = DelimiterFloodTests)]
+    public Property SingleHeaderDelimiterFloodReturnsDefault() => Prop.ForAll(Generators.DelimiterFloodArbitrary('-'), (headerValue) =>
+    {
+        try
+        {
+            var propagator = new B3Propagator(singleHeader: true);
+            var carrier = new Dictionary<string, string[]>(StringComparer.Ordinal)
+            {
+                [CombinedHeader] = [headerValue],
+            };
+            var original = FuzzTestHelpers.CloneCarrier(carrier);
+
+            var extracted = propagator.Extract(default, carrier, FuzzTestHelpers.ArrayGetter);
+
+            return extracted.Equals(default) && FuzzTestHelpers.CarriersEqual(original, carrier);
         }
         catch (Exception ex) when (FuzzTestHelpers.IsAllowedException(ex))
         {
