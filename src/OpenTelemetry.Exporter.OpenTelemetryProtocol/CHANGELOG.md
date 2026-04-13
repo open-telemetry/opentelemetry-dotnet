@@ -7,6 +7,21 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed an issue in OTLP/gRPC retry handling where parsing gRPC status.
+  ([#7064](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7064))
+
+## 1.15.2
+
+Released 2026-Apr-08
+
+* Limit how much of the response body is read when export fails and
+  error logging is enabled.
+  ([#7017](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7017))
+
+## 1.15.1
+
+Released 2026-Mar-27
+
 ## 1.15.0
 
 Released 2026-Jan-21

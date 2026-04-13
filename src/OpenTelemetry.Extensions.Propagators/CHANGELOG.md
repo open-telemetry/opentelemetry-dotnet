@@ -6,6 +6,17 @@ covering all components see: [Release Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Improve efficiency of parsing of baggage, B3 and Jaeger propagation headers.
+  ([#7061](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7061))
+
+## 1.15.2
+
+Released 2026-Apr-08
+
+## 1.15.1
+
+Released 2026-Mar-27
+
 ## 1.15.0
 
 Released 2026-Jan-21

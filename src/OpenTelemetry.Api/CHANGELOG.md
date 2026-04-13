@@ -6,6 +6,20 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fix baggage and trace headers not respecting the maximum length in some cases.
+  ([#7061](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7061))
+
+* Improve efficiency of parsing of baggage and B3 propagation headers.
+  ([#7061](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7061))
+
+## 1.15.2
+
+Released 2026-Apr-08
+
+## 1.15.1
+
+Released 2026-Mar-27
+
 * **Breaking change:** The Baggage API implements the latest [Baggage API
   specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.36.0/specification/baggage/api.md),
   which disallows empty baggage names and treats baggage names and values as case

@@ -6,17 +6,34 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.15.2
+
+Released 2026-Apr-08
+
+* Added Task-based worker support for `BatchExportProcessor` and
+  `PeriodicExportingMetricReader` to enable OpenTelemetry to work in
+  single-threaded WebAssembly environments such as Blazor and Uno Platform.
+  The implementation automatically detects the WebAssembly runtime and switches
+  to Task-based workers accordingly; the Thread-based approach remains the
+  default on all other platforms.
+  ([#6379](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6379))
+
+## 1.15.1
+
+Released 2026-Mar-27
+
 * Fixed `Tracer.StartSpan()` leaving the new span as `Activity.Current` when
   the previous activity was stopped by another thread during span creation.
   ([#6257](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6257))
 
 * Fixed `OverflowException` in `TraceIdRatioBasedSampler` when trace ID bytes
-produced `long.MinValue`.
-([[#6928](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6928)])
+  produced `long.MinValue`.
+  ([#6928](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6928))
 
 * Fixed precision issues when using `Histogram<float>` with custom
   `HistogramBucketBoundaries`.
   ([#6866](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6866))
+
 * Fixed a thread-safety issue in `LogRecordSharedPool.Rent()`.
   ([#6833](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6833))
 

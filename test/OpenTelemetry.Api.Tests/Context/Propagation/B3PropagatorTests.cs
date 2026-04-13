@@ -20,17 +20,9 @@ public class B3PropagatorTests
     private static readonly ActivityTraceId TraceIdEightBytes = ActivityTraceId.CreateFromString(("0000000000000000" + TraceIdBase16EightBytes).AsSpan());
     private static readonly ActivitySpanId SpanId = ActivitySpanId.CreateFromString(SpanIdBase16.AsSpan());
 
-    private static readonly Action<IDictionary<string, string>, string, string> Setter = (d, k, v) => d[k] = v;
+    private static readonly Action<IDictionary<string, string>, string, string> Setter = static (d, k, v) => d[k] = v;
     private static readonly Func<IDictionary<string, string>, string, IEnumerable<string>> Getter =
-        (d, k) =>
-        {
-            if (d.TryGetValue(k, out var v))
-            {
-                return [v];
-            }
-
-            return [];
-        };
+        static (d, k) => d.TryGetValue(k, out var v) ? [v] : [];
 
     private readonly B3Propagator b3propagator = new();
     private readonly B3Propagator b3PropagatorSingleHeader = new(true);
@@ -355,11 +347,23 @@ public class B3PropagatorTests
     }
 
     [Fact]
-    public void Fields_list()
-    {
+    public void Fields_list() =>
         ContainsExactly(
             this.b3propagator.Fields,
             [B3Propagator.XB3TraceId, B3Propagator.XB3SpanId, B3Propagator.XB3ParentSpanId, B3Propagator.XB3Sampled, B3Propagator.XB3Flags]);
+
+    [Fact]
+    public void ParseSingleHeaderWithManyDelimitersReturnsDefault()
+    {
+        var headerValue = new string('-', 50_000);
+        var headers = new Dictionary<string, string>
+        {
+            { B3Propagator.XB3Combined, headerValue },
+        };
+
+        var result = this.b3PropagatorSingleHeader.Extract(default, headers, Getter);
+
+        Assert.Equal(default, result);
     }
 
     private static void ContainsExactly(ISet<string> list, List<string> items)
