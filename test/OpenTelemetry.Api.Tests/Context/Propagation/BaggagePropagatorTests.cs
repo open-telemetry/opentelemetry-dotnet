@@ -487,7 +487,6 @@ public class BaggagePropagatorTests
         Assert.Equal("value=more=equals", extractedBaggage["key"]);
     }
 
-#if NET
     [Fact]
     public void ValidateOversizedBaggageExtractionHonorsLimits()
     {
@@ -507,7 +506,6 @@ public class BaggagePropagatorTests
         Assert.Equal("v", baggage["k0179"]);
         Assert.False(baggage.ContainsKey("k0180"));
     }
-#endif
 
     [Fact(Skip = "Fails due to spec mismatch, tracked in https://github.com/open-telemetry/opentelemetry-dotnet/issues/5210")]
     public void ValidateSpecialCharactersInjection()

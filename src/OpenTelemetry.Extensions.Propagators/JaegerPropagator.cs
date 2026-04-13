@@ -211,14 +211,18 @@ public class JaegerPropagator : TextMapPropagator
                 case 0:
                     traceId = component.ToString();
                     break;
+
                 case 1:
                     spanId = component.ToString();
                     break;
+
                 case 2:
                     break;
+
                 case 3:
                     traceFlags = component.ToString();
                     break;
+
                 default:
                     return false;
             }

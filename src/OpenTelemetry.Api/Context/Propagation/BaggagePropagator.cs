@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #if NET
+#if NET9_0_OR_GREATER
+using System.Buffers;
+#endif
 using System.Diagnostics.CodeAnalysis;
 #endif
 using System.Net;
@@ -19,6 +22,10 @@ public class BaggagePropagator : TextMapPropagator
 
     private const int MaxBaggageLength = 8192;
     private const int MaxBaggageItems = 180;
+
+#if NET9_0_OR_GREATER
+    private static readonly SearchValues<char> DecodeHints = SearchValues.Create('%', '+');
+#endif
 
     /// <inheritdoc/>
     public override ISet<string> Fields => new HashSet<string> { BaggageHeaderName };
@@ -208,5 +215,9 @@ public class BaggagePropagator : TextMapPropagator
     }
 
     private static string DecodeIfNeeded(ReadOnlySpan<char> value) =>
+#if NET9_0_OR_GREATER
+        value.ContainsAny(DecodeHints) ? WebUtility.UrlDecode(value.ToString()) : value.ToString();
+#else
         value.IndexOfAny('%', '+') < 0 ? value.ToString() : WebUtility.UrlDecode(value.ToString());
+#endif
 }

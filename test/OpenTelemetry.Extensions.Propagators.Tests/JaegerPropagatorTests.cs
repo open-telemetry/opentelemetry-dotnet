@@ -225,7 +225,6 @@ public class JaegerPropagatorTests
         Assert.Equal(expectedValue, headers[JaegerHeader]);
     }
 
-#if NET
     [Fact]
     public void ExtractHeaderWithManyDelimitersReturnsDefault()
     {
@@ -236,5 +235,4 @@ public class JaegerPropagatorTests
 
         Assert.Equal(default, result);
     }
-#endif
 }

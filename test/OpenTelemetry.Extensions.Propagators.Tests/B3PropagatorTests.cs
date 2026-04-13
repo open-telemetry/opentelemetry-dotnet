@@ -356,7 +356,6 @@ public class B3PropagatorTests
             [B3Propagator.XB3TraceId, B3Propagator.XB3SpanId, B3Propagator.XB3ParentSpanId, B3Propagator.XB3Sampled, B3Propagator.XB3Flags]);
     }
 
-#if NET
     [Fact]
     public void ParseSingleHeaderWithManyDelimitersReturnsDefault()
     {
@@ -370,7 +369,6 @@ public class B3PropagatorTests
 
         Assert.Equal(default, result);
     }
-#endif
 
     private static void ContainsExactly(ISet<string> list, List<string> items)
     {

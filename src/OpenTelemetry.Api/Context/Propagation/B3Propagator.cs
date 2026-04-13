@@ -272,9 +272,9 @@ public sealed class B3Propagator : TextMapPropagator
         return true;
     }
 
-    private static bool IsSampledValue(ReadOnlySpan<char> value)
-        => value.Equals(SampledValue.AsSpan(), StringComparison.Ordinal)
-            || value.Equals(LegacySampledValue.AsSpan(), StringComparison.Ordinal);
+    private static bool IsSampledValue(ReadOnlySpan<char> value) =>
+        value.Equals(SampledValue.AsSpan(), StringComparison.Ordinal) ||
+        value.Equals(LegacySampledValue.AsSpan(), StringComparison.Ordinal);
 
     private static string ReadNextPart(string header, ref int position)
     {
