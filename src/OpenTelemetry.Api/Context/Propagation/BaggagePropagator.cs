@@ -189,8 +189,7 @@ public class BaggagePropagator : TextMapPropagator
                     continue;
                 }
 
-                baggageDictionary ??= new(MaxBaggageItems, StringComparer.Ordinal);
-
+                baggageDictionary ??= new(StringComparer.Ordinal);
                 baggageDictionary[key] = value;
             }
         }

@@ -195,19 +195,17 @@ public sealed class B3Propagator : TextMapPropagator
     {
         try
         {
-            var header = getter(carrier, XB3Combined)?.FirstOrDefault();
-            if (string.IsNullOrWhiteSpace(header))
+            var headers = getter(carrier, XB3Combined);
+            if (headers == null)
             {
                 return context;
             }
 
-#if NET
-            var headerValue = header;
-#else
-            var headerValue = header!;
-#endif
-            return
-                !TryExtractSingleHeaderContext(headerValue, out var traceId, out var spanId, out var traceOptions)
+            var header = headers.FirstOrDefault();
+
+            return string.IsNullOrWhiteSpace(header)
+                ? context
+                : !TryExtractSingleHeaderContext(header, out var traceId, out var spanId, out var traceOptions)
                 ? context
                 : new PropagationContext(
                     new ActivityContext(traceId, spanId, traceOptions, isRemote: true),
@@ -230,41 +228,39 @@ public sealed class B3Propagator : TextMapPropagator
         spanId = default;
         traceOptions = ActivityTraceFlags.None;
 
+        var headerValue = header.AsSpan();
         var position = 0;
-        var traceIdStr = ReadNextPart(header, ref position);
-        if (position >= header.Length || traceIdStr.Length == 0)
+        var traceIdStr = ReadNextPart(headerValue, position, out position);
+        if (position >= headerValue.Length || traceIdStr.IsEmpty)
         {
             return false;
         }
 
-        var spanIdStr = ReadNextPart(header, ref position);
-        if (spanIdStr.Length == 0)
+        var spanIdStr = ReadNextPart(headerValue, position, out position);
+        if (spanIdStr.IsEmpty)
         {
             return false;
         }
 
         ReadOnlySpan<char> traceFlagsStr = default;
-        if (position < header.Length)
+        if (position < headerValue.Length)
         {
-            traceFlagsStr = ReadNextPart(header, ref position);
-            if (position < header.Length)
+            traceFlagsStr = ReadNextPart(headerValue, position, out position);
+            if (position < headerValue.Length)
             {
-                _ = ReadNextPart(header, ref position);
-                if (position < header.Length)
+                _ = ReadNextPart(headerValue, position, out position);
+                if (position < headerValue.Length)
                 {
                     return false;
                 }
             }
         }
 
-        traceId = traceIdStr.Length == 16
-            ? ActivityTraceId.CreateFromString(string.Concat(UpperTraceId, traceIdStr).AsSpan())
-            : ActivityTraceId.CreateFromString(traceIdStr.AsSpan());
+        traceId = CreateTraceId(traceIdStr);
+        spanId = ActivitySpanId.CreateFromString(spanIdStr);
 
-        spanId = ActivitySpanId.CreateFromString(spanIdStr.AsSpan());
-
-        if (IsSampledValue(traceFlagsStr)
-            || traceFlagsStr.Equals(FlagsValue.AsSpan(), StringComparison.Ordinal))
+        if (IsSampledValue(traceFlagsStr) ||
+            traceFlagsStr.Equals(FlagsValue.AsSpan(), StringComparison.Ordinal))
         {
             traceOptions |= ActivityTraceFlags.Recorded;
         }
@@ -276,18 +272,34 @@ public sealed class B3Propagator : TextMapPropagator
         value.Equals(SampledValue.AsSpan(), StringComparison.Ordinal) ||
         value.Equals(LegacySampledValue.AsSpan(), StringComparison.Ordinal);
 
-    private static string ReadNextPart(string header, ref int position)
+    private static ActivityTraceId CreateTraceId(ReadOnlySpan<char> traceId)
     {
-        var separatorIndex = header.IndexOf(XB3CombinedDelimiter, position);
+        if (traceId.Length == 16)
+        {
+            Span<char> fullTraceId = stackalloc char[UpperTraceId.Length + 16];
+
+            UpperTraceId.AsSpan().CopyTo(fullTraceId);
+            traceId.CopyTo(fullTraceId.Slice(UpperTraceId.Length));
+
+            return ActivityTraceId.CreateFromString(fullTraceId);
+        }
+
+        return ActivityTraceId.CreateFromString(traceId);
+    }
+
+    private static ReadOnlySpan<char> ReadNextPart(ReadOnlySpan<char> header, int position, out int nextPosition)
+    {
+        var remaining = header.Slice(position);
+        var separatorIndex = remaining.IndexOf(XB3CombinedDelimiter);
         if (separatorIndex < 0)
         {
-            var part = header.Substring(position);
-            position = header.Length;
+            nextPosition = header.Length;
+            var part = remaining;
             return part;
         }
 
-        var result = header.Substring(position, separatorIndex - position);
-        position = separatorIndex + 1;
+        var result = remaining.Slice(0, separatorIndex);
+        nextPosition = position + separatorIndex + 1;
         return result;
     }
 }
