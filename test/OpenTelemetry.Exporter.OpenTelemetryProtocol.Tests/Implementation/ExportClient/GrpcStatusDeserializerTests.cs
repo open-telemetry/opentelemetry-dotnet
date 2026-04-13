@@ -4,6 +4,7 @@
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Grpc;
+using Type = System.Type;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Implementation.ExportClient;
 
@@ -314,7 +315,7 @@ public class GrpcStatusDeserializerTests
     }
 
     [Fact]
-    public void DeserializeStatus_TruncatedStream_ThrowsEndOfStreamException()
+    public void DeserializeStatus_TruncatedStream_ThrowsException()
     {
         // Arrange: Create valid Base64 data and truncate it
         var status = new Google.Rpc.Status
@@ -334,7 +335,7 @@ public class GrpcStatusDeserializerTests
     }
 
     [Fact]
-    public void DeserializeStatus_WithLargeLengthDelimitedField_ThrowsEndOfStreamException()
+    public void DeserializeStatus_WithLargeLengthDelimitedField_ThrowsException()
     {
         // Arrange
         // This payload encodes a Status.details Any.value field with an extremely large
@@ -349,10 +350,66 @@ public class GrpcStatusDeserializerTests
     [Theory]
     [InlineData("GgsS////////////AQ==")] // -1
     [InlineData("GgYSgICAgAg=")] // 0x80000000
-    public void DeserializeStatus_WithInvalidLengthDelimitedField_ThrowsInvalidDataException(string grpcStatusDetailsBin)
+    public void DeserializeStatus_WithInvalidLengthDelimitedField_ThrowsException(string grpcStatusDetailsBin)
     {
         // Act & Assert
         var exception = Assert.Throws<InvalidDataException>(() => GrpcStatusDeserializer.DeserializeStatus(grpcStatusDetailsBin));
         Assert.Contains("Invalid length", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(int.MaxValue / 2, typeof(EndOfStreamException))]
+    [InlineData(int.MaxValue - 1024, typeof(EndOfStreamException))]
+    [InlineData(int.MaxValue - 1, typeof(EndOfStreamException))]
+    [InlineData(int.MaxValue, typeof(EndOfStreamException))]
+    [InlineData(uint.MaxValue, typeof(InvalidDataException))]
+    public void DeserializeStatus_InvalidDetailValueLength_Throws(long value, Type expected)
+    {
+        var anyValueLength = EncodeVarint(value);
+        var statusBytes = new byte[2 + 1 + anyValueLength.Length];
+
+        statusBytes[0] = 0x1A; // field 3 (details), wire type 2
+        statusBytes[1] = (byte)(1 + anyValueLength.Length); // embedded Any payload length
+        statusBytes[2] = 0x12; // field 2 (value), wire type 2
+        anyValueLength.CopyTo(statusBytes, 3);
+
+        var grpcStatusDetailsBin = Convert.ToBase64String(statusBytes);
+
+        Assert.Throws(expected, () => GrpcStatusDeserializer.DeserializeStatus(grpcStatusDetailsBin));
+    }
+
+    [Fact]
+    public void DeserializeStatus_InvalidEmbeddedMessageLength_Throws()
+    {
+        var statusBytes = new byte[1 + EncodeVarint(long.MaxValue).Length];
+
+        statusBytes[0] = 0x1A; // field 3 (details), wire type 2
+        EncodeVarint(long.MaxValue).CopyTo(statusBytes, 1);
+
+        var grpcStatusDetailsBin = Convert.ToBase64String(statusBytes);
+
+        Assert.Throws<InvalidDataException>(() => GrpcStatusDeserializer.DeserializeStatus(grpcStatusDetailsBin));
+    }
+
+    private static byte[] EncodeVarint(long value)
+    {
+        var encoded = new List<byte>();
+        var remaining = unchecked((ulong)value);
+
+        do
+        {
+            var current = (byte)(remaining & 0x7F);
+            remaining >>= 7;
+
+            if (remaining != 0)
+            {
+                current |= 0x80;
+            }
+
+            encoded.Add(current);
+        }
+        while (remaining != 0);
+
+        return [.. encoded];
     }
 }
