@@ -6,6 +6,9 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fix resource leak in batch exporting processors for Blazor/WASM.
+  ([#7069](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7069))
+
 ## 1.15.2
 
 Released 2026-Apr-08
