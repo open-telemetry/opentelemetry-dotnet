@@ -236,6 +236,19 @@ public class B3PropagatorTests
     }
 
     [Fact]
+    public void ParseLegacySampled_SingleHeader()
+    {
+        var headersSampled = new Dictionary<string, string>
+        {
+            { B3Propagator.XB3Combined, $"{TraceIdBase16}-{SpanIdBase16}-true" },
+        };
+
+        Assert.Equal(
+            new PropagationContext(new ActivityContext(TraceId, SpanId, TraceOptions, isRemote: true), default),
+            this.b3PropagatorSingleHeader.Extract(default, headersSampled, Getter));
+    }
+
+    [Fact]
     public void ParseZeroSampled_SingleHeader()
     {
         var headersNotSampled = new Dictionary<string, string>
@@ -321,6 +334,13 @@ public class B3PropagatorTests
     }
 
     [Fact]
+    public void ParseSingleHeaderWithoutDelimiterReturnsDefault()
+    {
+        var invalidHeaders = new Dictionary<string, string> { { B3Propagator.XB3Combined, TraceIdBase16 } };
+        Assert.Equal(default, this.b3PropagatorSingleHeader.Extract(default, invalidHeaders, Getter));
+    }
+
+    [Fact]
     public void ParseInvalidSpanId_SingleHeader()
     {
         var invalidHeaders = new Dictionary<string, string>
@@ -363,6 +383,34 @@ public class B3PropagatorTests
         var headers = new Dictionary<string, string>
         {
             { B3Propagator.XB3Combined, headerValue },
+        };
+
+        var result = this.b3PropagatorSingleHeader.Extract(default, headers, Getter);
+
+        Assert.Equal(default, result);
+    }
+
+    [Fact]
+    public void ParseSingleHeaderWithFourthPartReturnsContext()
+    {
+        var headers = new Dictionary<string, string>
+        {
+            { B3Propagator.XB3Combined, $"{TraceIdBase16}-{SpanIdBase16}-1-parent" },
+        };
+
+        var result = this.b3PropagatorSingleHeader.Extract(default, headers, Getter);
+
+        Assert.Equal(
+            new PropagationContext(new ActivityContext(TraceId, SpanId, TraceOptions, isRemote: true), default),
+            result);
+    }
+
+    [Fact]
+    public void ParseSingleHeaderWithTooManyPartsReturnsDefault()
+    {
+        var headers = new Dictionary<string, string>
+        {
+            { B3Propagator.XB3Combined, $"{TraceIdBase16}-{SpanIdBase16}-1-parent-extra" },
         };
 
         var result = this.b3PropagatorSingleHeader.Extract(default, headers, Getter);

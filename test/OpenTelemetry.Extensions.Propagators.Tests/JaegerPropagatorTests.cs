@@ -147,6 +147,22 @@ public class JaegerPropagatorTests
     }
 
     [Fact]
+    public void ExtractReturnsNewContextIfHeaderContainsEmptyComponent()
+    {
+        var formattedHeader = $"{TraceId}{JaegerDelimiter}{JaegerDelimiter}{SpanId}{JaegerDelimiter}{ParentSpanId}{JaegerDelimiter}{FlagSampled}";
+        var headers = new Dictionary<string, string[]>
+        {
+            [JaegerHeader] = [formattedHeader],
+        };
+
+        var result = new JaegerPropagator().Extract(default, headers, Getter);
+
+        Assert.Equal(TraceId, result.ActivityContext.TraceId.ToString());
+        Assert.Equal(SpanId, result.ActivityContext.SpanId.ToString());
+        Assert.Equal(ActivityTraceFlags.Recorded, result.ActivityContext.TraceFlags);
+    }
+
+    [Fact]
     public void InjectDoesNoopIfContextIsInvalid()
     {
         // arrange
