@@ -6,7 +6,7 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* Fix `baggage` header not respecting the maximum length in some cases.
+* Fix baggage and trace headers not respecting the maximum length in some cases.
   ([#7061](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7061))
 
 * Improve efficiency of parsing of baggage and B3 propagation headers.
