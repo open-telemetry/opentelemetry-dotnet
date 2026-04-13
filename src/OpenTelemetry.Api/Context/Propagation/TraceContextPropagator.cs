@@ -125,7 +125,15 @@ public class TraceContextPropagator : TextMapPropagator
         var tracestateStr = context.ActivityContext.TraceState;
         if (tracestateStr?.Length > 0)
         {
-            setter(carrier, TraceState, tracestateStr);
+            var tracestateEntries = new List<KeyValuePair<string, string>>();
+            if (TraceStateUtils.AppendTraceState(tracestateStr, tracestateEntries))
+            {
+                var normalizedTraceState = TraceStateUtils.GetString(tracestateEntries);
+                if (normalizedTraceState.Length > 0)
+                {
+                    setter(carrier, TraceState, normalizedTraceState);
+                }
+            }
         }
     }
 

@@ -13,31 +13,14 @@ public class TraceContextPropagatorTests
     private const string TraceId = "0af7651916cd43dd8448eb211c80319c";
     private const string SpanId = "b9c7c989f97918e1";
 
-    private static readonly string[] Empty = [];
-    private static readonly Func<IDictionary<string, string>, string, IEnumerable<string>> Getter = (headers, name) =>
-    {
-        if (headers.TryGetValue(name, out var value))
-        {
-            return [value];
-        }
+    private static readonly Func<IDictionary<string, string>, string, IEnumerable<string>> Getter =
+        static (headers, name) => headers.TryGetValue(name, out var value) ? [value] : [];
 
-        return Empty;
-    };
+    private static readonly Func<IDictionary<string, string[]>, string, IEnumerable<string>> ArrayGetter =
+        static (headers, name) => headers.TryGetValue(name, out var value) ? value : [];
 
-    private static readonly Func<IDictionary<string, string[]>, string, IEnumerable<string>> ArrayGetter = (headers, name) =>
-    {
-        if (headers.TryGetValue(name, out var value))
-        {
-            return value;
-        }
-
-        return [];
-    };
-
-    private static readonly Action<IDictionary<string, string>, string, string> Setter = (carrier, name, value) =>
-    {
-        carrier[name] = value;
-    };
+    private static readonly Action<IDictionary<string, string>, string, string> Setter =
+        static (carrier, name, value) => carrier[name] = value;
 
     [Fact]
     public void CanParseExampleFromSpec()
@@ -56,7 +39,7 @@ public class TraceContextPropagatorTests
 
         Assert.True(ctx.ActivityContext.IsRemote);
         Assert.True(ctx.ActivityContext.IsValid());
-        Assert.True((ctx.ActivityContext.TraceFlags & ActivityTraceFlags.Recorded) != 0);
+        Assert.NotEqual(0, (int)(ctx.ActivityContext.TraceFlags & ActivityTraceFlags.Recorded));
 
         Assert.Equal($"congo=lZWRzIHRoNhcm5hbCBwbGVhc3VyZS4,rojo=00-{TraceId}-00f067aa0ba902b7-01", ctx.ActivityContext.TraceState);
     }
@@ -74,7 +57,7 @@ public class TraceContextPropagatorTests
 
         Assert.Equal(ActivityTraceId.CreateFromString(TraceId.AsSpan()), ctx.ActivityContext.TraceId);
         Assert.Equal(ActivitySpanId.CreateFromString(SpanId.AsSpan()), ctx.ActivityContext.SpanId);
-        Assert.True((ctx.ActivityContext.TraceFlags & ActivityTraceFlags.Recorded) == 0);
+        Assert.Equal(0, (int)(ctx.ActivityContext.TraceFlags & ActivityTraceFlags.Recorded));
 
         Assert.True(ctx.ActivityContext.IsRemote);
         Assert.True(ctx.ActivityContext.IsValid());
@@ -175,6 +158,24 @@ public class TraceContextPropagatorTests
         f.Inject(propagationContext, carrier, Setter);
 
         Assert.Equal(expectedHeaders, carrier);
+    }
+
+    [Fact]
+    public void Inject_TruncatesOversizedTracestate()
+    {
+        var traceId = ActivityTraceId.CreateRandom();
+        var spanId = ActivitySpanId.CreateRandom();
+        var expectedTraceState = string.Join(",", Enumerable.Range(0, 17).Select(i => $"k{i:00}={new string('a', 15)}"));
+        var oversizedTraceState = $"big={new string('a', 196)},{expectedTraceState}";
+
+        var activityContext = new ActivityContext(traceId, spanId, ActivityTraceFlags.Recorded, oversizedTraceState);
+        var propagationContext = new PropagationContext(activityContext, default);
+        var carrier = new Dictionary<string, string>();
+        var f = new TraceContextPropagator();
+        f.Inject(propagationContext, carrier, Setter);
+
+        Assert.Equal($"00-{traceId}-{spanId}-01", carrier[TraceParent]);
+        Assert.Equal(expectedTraceState, carrier[TraceState]);
     }
 
     [Fact]

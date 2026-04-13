@@ -199,16 +199,17 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
 
             case DateTimeKind.Local:
                 var ts = TimeZoneInfo.Local.GetUtcOffset(datetime);
+                var absoluteTs = ts.Duration();
 
-                bytes[pos++] = (byte)(ts.Hours >= 0 ? '+' : '-');
+                bytes[pos++] = (byte)(ts >= TimeSpan.Zero ? '+' : '-');
 
-                num = Math.Abs(ts.Hours);
+                num = absoluteTs.Hours;
                 bytes[pos++] = (byte)('0' + ((num / 10) % 10));
                 bytes[pos++] = (byte)('0' + (num % 10));
 
                 bytes[pos++] = (byte)':';
 
-                num = ts.Minutes;
+                num = absoluteTs.Minutes;
                 bytes[pos++] = (byte)('0' + ((num / 10) % 10));
                 bytes[pos++] = (byte)('0' + (num % 10));
                 break;
