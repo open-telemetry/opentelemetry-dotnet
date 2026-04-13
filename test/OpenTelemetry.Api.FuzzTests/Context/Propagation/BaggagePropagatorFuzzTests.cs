@@ -79,6 +79,27 @@ public class BaggagePropagatorFuzzTests
     });
 
     [Property(MaxTest = MaxTests)]
+    public Property ExtractMatchesReplayableGetterForSinglePassEnumerables() => Prop.ForAll(Generators.BaggageCarrierArbitrary(), (carrier) =>
+    {
+        try
+        {
+            var propagator = new BaggagePropagator();
+            var original = FuzzTestHelpers.CloneCarrier(carrier);
+
+            var replayable = propagator.Extract(default, carrier, FuzzTestHelpers.ArrayGetter);
+            var singlePass = propagator.Extract(default, carrier, FuzzTestHelpers.SinglePassArrayGetter);
+
+            return
+                FuzzTestHelpers.CarriersEqual(original, carrier) &&
+                DictionariesEqual(replayable.Baggage.GetBaggage(), singlePass.Baggage.GetBaggage());
+        }
+        catch (Exception ex) when (FuzzTestHelpers.IsAllowedException(ex))
+        {
+            return true;
+        }
+    });
+
+    [Property(MaxTest = MaxTests)]
     public Property OversizedExtractionHonorsConfiguredLimits() => Prop.ForAll(Generators.OversizedBaggageValuesArbitrary(), (values) =>
     {
         try
