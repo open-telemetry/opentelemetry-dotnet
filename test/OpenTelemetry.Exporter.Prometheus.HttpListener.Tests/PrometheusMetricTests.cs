@@ -385,7 +385,7 @@ public sealed class PrometheusMetricTests
 
     [Fact]
     public void SanitizeMetricUnit_RemoveMultipleUnsupportedCharacters()
-        => AssertSanitizeMetricUnit("##/RU!", "RU_");
+        => AssertSanitizeMetricUnit("##/RU!", "RU");
 
     [Fact]
     public void Name_UnitWithHash_Sanitized()
@@ -397,7 +397,7 @@ public sealed class PrometheusMetricTests
 
     [Fact]
     public void Name_UnitWithSpecialChars_Sanitized()
-        => AssertName("metric", "req!", PrometheusType.Gauge, false, "metric_req_");
+        => AssertName("metric", "req!", PrometheusType.Gauge, false, "metric_req");
 
     [Theory]
     [InlineData(PrometheusType.Counter)]
