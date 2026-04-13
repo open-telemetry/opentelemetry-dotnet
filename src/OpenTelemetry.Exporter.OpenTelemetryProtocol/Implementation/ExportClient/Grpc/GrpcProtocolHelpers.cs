@@ -87,6 +87,12 @@ internal static class GrpcProtocolHelpers
         {
             return null;
         }
+#else
+        if (!headers.TryGetValues(name, out var values))
+        {
+            return null;
+        }
+#endif
 
         using (var e = values.GetEnumerator())
         {
@@ -108,29 +114,5 @@ internal static class GrpcProtocolHelpers
         }
 
         throw new InvalidOperationException($"Multiple {name} headers.");
-#else
-        if (!headers.TryGetValues(name, out var values))
-        {
-            return null;
-        }
-
-        // HttpHeaders appears to always return an array, but fallback to converting values to one just in case
-        var valuesArray = values as string[] ?? values.ToArray();
-
-        switch (valuesArray.Length)
-        {
-            case 0:
-                return null;
-            case 1:
-                return valuesArray[0];
-            default:
-                if (first)
-                {
-                    return valuesArray[0];
-                }
-
-                throw new InvalidOperationException($"Multiple {name} headers.");
-        }
-#endif
     }
 }
