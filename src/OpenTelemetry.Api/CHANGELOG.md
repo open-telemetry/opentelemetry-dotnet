@@ -6,6 +6,12 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fix baggage and trace headers not respecting the maximum length in some cases.
+  ([#7061](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7061))
+
+* Improve efficiency of parsing of baggage and B3 propagation headers.
+  ([#7061](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7061))
+
 ## 1.15.2
 
 Released 2026-Apr-08
