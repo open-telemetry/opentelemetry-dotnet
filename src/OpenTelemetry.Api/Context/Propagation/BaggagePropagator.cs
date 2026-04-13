@@ -20,9 +20,6 @@ public class BaggagePropagator : TextMapPropagator
     private const int MaxBaggageLength = 8192;
     private const int MaxBaggageItems = 180;
 
-    private static readonly char[] EqualSignSeparator = ['='];
-    private static readonly char[] CommaSignSeparator = [','];
-
     /// <inheritdoc/>
     public override ISet<string> Fields => new HashSet<string> { BaggageHeaderName };
 
@@ -159,8 +156,10 @@ public class BaggagePropagator : TextMapPropagator
                 continue;
             }
 
-            foreach (var pair in item.Split(CommaSignSeparator))
+            var remaining = item.AsSpan();
+            while (!remaining.IsEmpty)
             {
+                var pair = ReadNextSegment(ref remaining, ',');
                 baggageLength += pair.Length + 1; // pair and comma
 
                 if (baggageLength >= MaxBaggageLength || baggageDictionary?.Count >= MaxBaggageItems)
@@ -169,30 +168,21 @@ public class BaggagePropagator : TextMapPropagator
                     break;
                 }
 
-#if NET
-                if (pair.IndexOf('=', StringComparison.Ordinal) < 0)
-#else
-                if (pair.IndexOf('=') < 0)
-#endif
+                var separatorIndex = pair.IndexOf('=');
+                if (separatorIndex < 0)
                 {
                     continue;
                 }
 
-                var parts = pair.Split(EqualSignSeparator, 2);
-                if (parts.Length != 2)
-                {
-                    continue;
-                }
-
-                var key = WebUtility.UrlDecode(parts[0]);
-                var value = WebUtility.UrlDecode(parts[1]);
+                var key = DecodeIfNeeded(pair.Slice(0, separatorIndex));
+                var value = DecodeIfNeeded(pair.Slice(separatorIndex + 1));
 
                 if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(value))
                 {
                     continue;
                 }
 
-                baggageDictionary ??= [];
+                baggageDictionary ??= new(MaxBaggageItems, StringComparer.Ordinal);
 
                 baggageDictionary[key] = value;
             }
@@ -201,4 +191,22 @@ public class BaggagePropagator : TextMapPropagator
         baggage = baggageDictionary;
         return baggageDictionary != null;
     }
+
+    private static ReadOnlySpan<char> ReadNextSegment(ref ReadOnlySpan<char> remaining, char separator)
+    {
+        var separatorIndex = remaining.IndexOf(separator);
+        if (separatorIndex < 0)
+        {
+            var segment = remaining;
+            remaining = [];
+            return segment;
+        }
+
+        var result = remaining.Slice(0, separatorIndex);
+        remaining = remaining.Slice(separatorIndex + 1);
+        return result;
+    }
+
+    private static string DecodeIfNeeded(ReadOnlySpan<char> value) =>
+        value.IndexOfAny('%', '+') < 0 ? value.ToString() : WebUtility.UrlDecode(value.ToString());
 }

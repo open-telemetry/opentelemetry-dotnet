@@ -16,10 +16,8 @@ public class BaggagePropagatorTests
     private static readonly Func<IList<KeyValuePair<string, string>>, string, IEnumerable<string>> GetterList =
         static (d, k) => d.Where(i => i.Key == k).Select(i => i.Value);
 
-    private static readonly Action<IDictionary<string, string>, string, string> Setter = (carrier, name, value) =>
-    {
-        carrier[name] = value;
-    };
+    private static readonly Action<IDictionary<string, string>, string, string> Setter =
+        static (carrier, name, value) => carrier[name] = value;
 
     private readonly BaggagePropagator baggage = new();
 
@@ -488,6 +486,28 @@ public class BaggagePropagatorTests
         Assert.Single(extractedBaggage);
         Assert.Equal("value=more=equals", extractedBaggage["key"]);
     }
+
+#if NET
+    [Fact]
+    public void ValidateOversizedBaggageExtractionHonorsLimits()
+    {
+        var entries = Enumerable.Range(0, 5000).Select(i => $"k{i:D4}=v");
+        var headerValue = string.Join(",", entries);
+        var carrier = new Dictionary<string, string>
+        {
+            { BaggagePropagator.BaggageHeaderName, headerValue },
+        };
+
+        var propagationContext = this.baggage.Extract(default, carrier, Getter);
+        var baggage = propagationContext.Baggage.GetBaggage();
+
+        Assert.NotEqual(default, propagationContext);
+        Assert.Equal(180, baggage.Count);
+        Assert.Equal("v", baggage["k0000"]);
+        Assert.Equal("v", baggage["k0179"]);
+        Assert.False(baggage.ContainsKey("k0180"));
+    }
+#endif
 
     [Fact(Skip = "Fails due to spec mismatch, tracked in https://github.com/open-telemetry/opentelemetry-dotnet/issues/5210")]
     public void ValidateSpecialCharactersInjection()

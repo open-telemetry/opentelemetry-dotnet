@@ -201,59 +201,93 @@ public sealed class B3Propagator : TextMapPropagator
                 return context;
             }
 
-            var parts =
 #if NET
-                header.Split(XB3CombinedDelimiter);
+            var headerValue = header;
 #else
-                header!.Split(XB3CombinedDelimiter);
+            var headerValue = header!;
 #endif
-
-            if (parts.Length is < 2 or > 4)
-            {
-                return context;
-            }
-
-            var traceIdStr = parts[0];
-            if (string.IsNullOrWhiteSpace(traceIdStr))
-            {
-                return context;
-            }
-
-            if (traceIdStr.Length == 16)
-            {
-                // This is an 8-byte traceID.
-                traceIdStr = UpperTraceId + traceIdStr;
-            }
-
-            var traceId = ActivityTraceId.CreateFromString(traceIdStr.AsSpan());
-
-            var spanIdStr = parts[1];
-            if (string.IsNullOrWhiteSpace(spanIdStr))
-            {
-                return context;
-            }
-
-            var spanId = ActivitySpanId.CreateFromString(spanIdStr.AsSpan());
-
-            var traceOptions = ActivityTraceFlags.None;
-            if (parts.Length > 2)
-            {
-                var traceFlagsStr = parts[2];
-                if (SampledValues.Contains(traceFlagsStr)
-                    || FlagsValue.Equals(traceFlagsStr, StringComparison.Ordinal))
-                {
-                    traceOptions |= ActivityTraceFlags.Recorded;
-                }
-            }
-
-            return new PropagationContext(
-                new ActivityContext(traceId, spanId, traceOptions, isRemote: true),
-                context.Baggage);
+            return
+                !TryExtractSingleHeaderContext(headerValue, out var traceId, out var spanId, out var traceOptions)
+                ? context
+                : new PropagationContext(
+                    new ActivityContext(traceId, spanId, traceOptions, isRemote: true),
+                    context.Baggage);
         }
         catch (Exception e)
         {
             OpenTelemetryApiEventSource.Log.ActivityContextExtractException(nameof(B3Propagator), e);
             return context;
         }
+    }
+
+    private static bool TryExtractSingleHeaderContext(
+        string header,
+        out ActivityTraceId traceId,
+        out ActivitySpanId spanId,
+        out ActivityTraceFlags traceOptions)
+    {
+        traceId = default;
+        spanId = default;
+        traceOptions = ActivityTraceFlags.None;
+
+        var position = 0;
+        var traceIdStr = ReadNextPart(header, ref position);
+        if (position >= header.Length || traceIdStr.Length == 0)
+        {
+            return false;
+        }
+
+        var spanIdStr = ReadNextPart(header, ref position);
+        if (spanIdStr.Length == 0)
+        {
+            return false;
+        }
+
+        ReadOnlySpan<char> traceFlagsStr = default;
+        if (position < header.Length)
+        {
+            traceFlagsStr = ReadNextPart(header, ref position);
+            if (position < header.Length)
+            {
+                _ = ReadNextPart(header, ref position);
+                if (position < header.Length)
+                {
+                    return false;
+                }
+            }
+        }
+
+        traceId = traceIdStr.Length == 16
+            ? ActivityTraceId.CreateFromString(string.Concat(UpperTraceId, traceIdStr).AsSpan())
+            : ActivityTraceId.CreateFromString(traceIdStr.AsSpan());
+
+        spanId = ActivitySpanId.CreateFromString(spanIdStr.AsSpan());
+
+        if (IsSampledValue(traceFlagsStr)
+            || traceFlagsStr.Equals(FlagsValue.AsSpan(), StringComparison.Ordinal))
+        {
+            traceOptions |= ActivityTraceFlags.Recorded;
+        }
+
+        return true;
+    }
+
+    private static bool IsSampledValue(ReadOnlySpan<char> value)
+        => value.Equals(SampledValue.AsSpan(), StringComparison.Ordinal)
+            || value.Equals(LegacySampledValue.AsSpan(), StringComparison.Ordinal);
+
+    private static string ReadNextPart(string header, ref int position)
+    {
+        var separatorIndex = header.IndexOf(XB3CombinedDelimiter, position);
+        if (separatorIndex < 0)
+        {
+            var part = header.Substring(position);
+            position = header.Length;
+            return part;
+        }
+
+        var result = header.Substring(position, separatorIndex - position);
+        position = separatorIndex + 1;
+        return result;
     }
 }
