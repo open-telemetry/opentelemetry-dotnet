@@ -6,6 +6,11 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* **Breaking change:** Fixed `tracestate` parsing to reject keys that do not
+  begin with a lowercase letter, including keys beginning with digits, to
+  align with the W3C Trace Context specification.
+  ([#7065](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7065))
+
 ## 1.15.2
 
 Released 2026-Apr-08
