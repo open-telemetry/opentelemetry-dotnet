@@ -7,6 +7,9 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed an issue in OTLP/gRPC retry handling where parsing gRPC status.
+  ([#7064](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7064))
+
 ## 1.15.2
 
 Released 2026-Apr-08
