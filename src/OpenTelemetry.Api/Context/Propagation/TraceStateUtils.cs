@@ -183,7 +183,7 @@ internal static class TraceStateUtils
 
         if (key.IsEmpty
             || key.Length > KeyMaxSize
-            || ((!(key[i] >= 'a' && key[i] <= 'z')) && (!(key[i] >= '0' && key[i] <= '9'))))
+            || (!(key[i] >= 'a' && key[i] <= 'z')))
         {
             return false;
         }
