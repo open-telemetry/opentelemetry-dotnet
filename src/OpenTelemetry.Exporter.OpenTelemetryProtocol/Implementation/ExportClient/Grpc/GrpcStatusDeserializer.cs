@@ -227,10 +227,22 @@ internal static class GrpcStatusDeserializer
 
     private static byte[] DecodeBytes(Stream stream)
     {
-        var length = (int)DecodeVarint(stream);
-        var buffer = new byte[length];
-        int read = stream.Read(buffer, 0, length);
-        if (read != length)
+        var length = DecodeVarint(stream);
+        if (length < 0 || length > int.MaxValue)
+        {
+            throw new InvalidDataException($"Invalid length: {length}");
+        }
+
+        var remainingBytes = stream.Length - stream.Position;
+        if (length > remainingBytes)
+        {
+            throw new EndOfStreamException();
+        }
+
+        var lengthInt = (int)length;
+        var buffer = new byte[lengthInt];
+        int read = stream.Read(buffer, 0, lengthInt);
+        if (read != lengthInt)
         {
             throw new EndOfStreamException();
         }

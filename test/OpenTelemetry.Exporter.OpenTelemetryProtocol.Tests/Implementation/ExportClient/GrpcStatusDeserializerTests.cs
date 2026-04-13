@@ -332,4 +332,27 @@ public class GrpcStatusDeserializerTests
         Assert.Throws<EndOfStreamException>(() =>
             GrpcStatusDeserializer.DeserializeStatus(grpcStatusDetailsBin));
     }
+
+    [Fact]
+    public void DeserializeStatus_WithLargeLengthDelimitedField_ThrowsEndOfStreamException()
+    {
+        // Arrange
+        // This payload encodes a Status.details Any.value field with an extremely large
+        // length value (0x7FFFFFF0) but without enough bytes in the payload.
+        const string grpcStatusDetailsBin = "GgYS8P///wc=";
+
+        // Act & Assert
+        Assert.Throws<EndOfStreamException>(() =>
+            GrpcStatusDeserializer.DeserializeStatus(grpcStatusDetailsBin));
+    }
+
+    [Theory]
+    [InlineData("GgsS////////////AQ==")] // -1
+    [InlineData("GgYSgICAgAg=")] // 0x80000000
+    public void DeserializeStatus_WithInvalidLengthDelimitedField_ThrowsInvalidDataException(string grpcStatusDetailsBin)
+    {
+        // Act & Assert
+        var exception = Assert.Throws<InvalidDataException>(() => GrpcStatusDeserializer.DeserializeStatus(grpcStatusDetailsBin));
+        Assert.Contains("Invalid length", exception.Message, StringComparison.Ordinal);
+    }
 }
