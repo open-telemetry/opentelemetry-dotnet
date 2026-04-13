@@ -14,6 +14,8 @@ public class TraceContextPropagatorTests
     private const string TraceId = "0af7651916cd43dd8448eb211c80319c";
     private const string SpanId = "b9c7c989f97918e1";
 
+    private static readonly IEnumerable<string> Empty = [];
+
     private static readonly Func<IDictionary<string, string>, string, IEnumerable<string>> Getter =
         static (headers, name) => headers.TryGetValue(name, out var value) ? [value] : [];
 
