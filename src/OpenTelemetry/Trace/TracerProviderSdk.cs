@@ -481,19 +481,9 @@ internal sealed class TracerProviderSdk : TracerProvider
         {
             if (samplingResult.AttributesOrNull is { } attributes)
             {
-                if (attributes is KeyValuePair<string, object?>[] array)
+                foreach (var att in attributes)
                 {
-                    for (int i = 0; i < array.Length; i++)
-                    {
-                        options.SamplingTags.Add(array[i].Key, array[i].Value);
-                    }
-                }
-                else
-                {
-                    foreach (var att in attributes)
-                    {
-                        options.SamplingTags.Add(att.Key, att.Value);
-                    }
+                    options.SamplingTags.Add(att.Key, att.Value);
                 }
             }
         }
@@ -590,19 +580,9 @@ internal sealed class TracerProviderSdk : TracerProvider
         {
             if (samplingResult.AttributesOrNull is { } attributes)
             {
-                if (attributes is KeyValuePair<string, object?>[] array)
+                foreach (var att in attributes)
                 {
-                    for (int i = 0; i < array.Length; i++)
-                    {
-                        activity.SetTag(array[i].Key, array[i].Value);
-                    }
-                }
-                else
-                {
-                    foreach (var att in attributes)
-                    {
-                        activity.SetTag(att.Key, att.Value);
-                    }
+                    activity.SetTag(att.Key, att.Value);
                 }
             }
         }
