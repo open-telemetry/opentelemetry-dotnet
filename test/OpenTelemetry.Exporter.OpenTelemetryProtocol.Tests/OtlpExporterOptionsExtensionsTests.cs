@@ -140,13 +140,7 @@ public class OtlpExporterOptionsExtensionsTests
         try
         {
             var exporterOptions = new OtlpExporterOptions();
-            var signalType = signalTypeName switch
-            {
-                "Traces" => OtlpSignalType.Traces,
-                "Metrics" => OtlpSignalType.Metrics,
-                "Logs" => OtlpSignalType.Logs,
-                _ => throw new ArgumentOutOfRangeException(nameof(signalTypeName)),
-            };
+            var signalType = GetSignalType(signalTypeName);
 
             var configuration = new ConfigurationBuilder()
                 .AddInMemoryCollection(
@@ -164,6 +158,39 @@ public class OtlpExporterOptionsExtensionsTests
             var persistentBlobProvider = Assert.IsType<FileBlobProvider>(fileBlobProviderField?.GetValue(persistentStorageTransmissionHandler));
 
             Assert.EndsWith(expectedDirectoryName, persistentBlobProvider.DirectoryPath, StringComparison.Ordinal);
+        }
+        finally
+        {
+            if (Directory.Exists(retryRootPath))
+            {
+                Directory.Delete(retryRootPath, recursive: true);
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData("Profiles")]
+    [InlineData("Foo")]
+    public void GetTransmissionHandler_DiskRetry_UnsupportedSignalType_ThrowsNotSupportedException(string signalTypeName)
+    {
+        var retryRootPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+
+        try
+        {
+            var exporterOptions = new OtlpExporterOptions();
+            var signalType = GetSignalType(signalTypeName);
+
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(
+                new Dictionary<string, string?>
+                {
+                    [ExperimentalOptions.OtlpRetryEnvVar] = "disk",
+                    [ExperimentalOptions.OtlpDiskRetryDirectoryPathEnvVar] = retryRootPath,
+                })
+                .Build();
+
+            Assert.Throws<NotSupportedException>(
+                () => exporterOptions.GetExportTransmissionHandler(new ExperimentalOptions(configuration), signalType));
         }
         finally
         {
@@ -193,6 +220,17 @@ public class OtlpExporterOptionsExtensionsTests
 
         Assert.Equal(expectedTimeoutMilliseconds, transmissionHandler.TimeoutMilliseconds);
     }
+
+    private static OtlpSignalType GetSignalType(string signalTypeName)
+        => signalTypeName switch
+        {
+            "Traces" => OtlpSignalType.Traces,
+            "Metrics" => OtlpSignalType.Metrics,
+            "Logs" => OtlpSignalType.Logs,
+            "Profiles" => (OtlpSignalType)3,
+            "Foo" => (OtlpSignalType)int.MaxValue,
+            _ => throw new ArgumentOutOfRangeException(nameof(signalTypeName)),
+        };
 
     /// <summary>
     /// Validates whether the `Headers` property in `OtlpExporterOptions` is correctly processed and parsed.
