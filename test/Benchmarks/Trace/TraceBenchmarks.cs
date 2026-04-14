@@ -17,9 +17,9 @@ Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
 | Method                           | Mean      | Error    | StdDev   | Gen0   | Allocated |
 |--------------------------------- |----------:|---------:|---------:|-------:|----------:|
 | NoListener                       |  14.00 ns | 0.173 ns | 0.162 ns |      - |         - |
-| PropagationDataListener           | 265.96 ns | 4.022 ns | 3.762 ns | 0.0663 |     416 B |
-| AllDataListener                   | 255.14 ns | 1.819 ns | 1.702 ns | 0.0663 |     416 B |
-| AllDataAndRecordedListener        | 258.32 ns | 2.387 ns | 2.116 ns | 0.0663 |     416 B |
+| PropagationDataListener          | 265.96 ns | 4.022 ns | 3.762 ns | 0.0663 |     416 B |
+| AllDataListener                  | 255.14 ns | 1.819 ns | 1.702 ns | 0.0663 |     416 B |
+| AllDataAndRecordedListener       | 258.32 ns | 2.387 ns | 2.116 ns | 0.0663 |     416 B |
 | OneProcessor                     | 277.12 ns | 2.059 ns | 1.926 ns | 0.0663 |     416 B |
 | TwoProcessors                    | 276.82 ns | 4.442 ns | 4.155 ns | 0.0663 |     416 B |
 | ThreeProcessors                  | 283.12 ns | 1.970 ns | 1.645 ns | 0.0663 |     416 B |
