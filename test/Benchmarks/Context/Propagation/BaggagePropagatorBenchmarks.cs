@@ -26,6 +26,12 @@ public class BaggagePropagatorBenchmarks
     [Params(false, true)]
     public bool UseSpecialChars { get; set; }
 
+    /// <summary>
+    /// Gets or sets the header style used in each benchmark run.
+    /// </summary>
+    [Params("W3C", "Properties")]
+    public string HeaderStyle { get; set; } = "Clean";
+
     public Dictionary<string, string> ExtractCarrier { get; private set; } = [];
 
     public Dictionary<string, string> InjectCarrier { get; private set; } = [];
@@ -41,8 +47,13 @@ public class BaggagePropagatorBenchmarks
                     ? ($"key {i}", $"value {i} !@#$%^&*()")
                     : ($"key{i}", $"value{i}"));
 
-        var baggageHeader = string.Join(",", Items().Select(p =>
-            $"{Uri.EscapeDataString(p.Key)}={Uri.EscapeDataString(p.Value)}"));
+        var baggageHeader = this.HeaderStyle switch
+        {
+            "W3C" => string.Join(" , ", Items().Select(p =>
+            $"{Uri.EscapeDataString(p.Key)} = {Uri.EscapeDataString(p.Value)} ; prop1 ; propKey=propValue")),
+            _ => string.Join(",", Items().Select(p =>
+                    $"{Uri.EscapeDataString(p.Key)}={Uri.EscapeDataString(p.Value)}")),
+        };
 
         this.ExtractCarrier = new Dictionary<string, string>
         {
