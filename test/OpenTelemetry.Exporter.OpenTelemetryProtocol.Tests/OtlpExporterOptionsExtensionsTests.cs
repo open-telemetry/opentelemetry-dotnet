@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
+using OpenTelemetry.PersistentStorage.FileSystem;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
@@ -126,6 +127,84 @@ public class OtlpExporterOptionsExtensionsTests
 
         var transmissionHandler = exporterOptions.GetExportTransmissionHandler(new ExperimentalOptions(configuration), OtlpSignalType.Traces);
         AssertTransmissionHandler(transmissionHandler, exportClientType, expectedTimeoutMilliseconds, retryStrategy);
+    }
+
+    [Theory]
+    [InlineData("Traces", "traces")]
+    [InlineData("Logs", "logs")]
+    [InlineData("Metrics", "metrics")]
+    public void GetTransmissionHandler_DiskRetry_UsesSignalSpecificStorageDirectory(string signalTypeName, string expectedDirectoryName)
+    {
+        var retryRootPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+
+        try
+        {
+            var exporterOptions = new OtlpExporterOptions();
+            var signalType = signalTypeName switch
+            {
+                "Logs" => OtlpSignalType.Logs,
+                "Metrics" => OtlpSignalType.Metrics,
+                "Traces" => OtlpSignalType.Traces,
+                _ => throw new ArgumentOutOfRangeException(nameof(signalTypeName)),
+            };
+
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(
+                new Dictionary<string, string?>
+                {
+                    [ExperimentalOptions.OtlpRetryEnvVar] = "disk",
+                    [ExperimentalOptions.OtlpDiskRetryDirectoryPathEnvVar] = retryRootPath,
+                })
+                .Build();
+
+            var transmissionHandler = exporterOptions.GetExportTransmissionHandler(new ExperimentalOptions(configuration), signalType);
+            var persistentStorageTransmissionHandler = Assert.IsType<OtlpExporterPersistentStorageTransmissionHandler>(transmissionHandler);
+
+            var fileBlobProviderField = typeof(OtlpExporterPersistentStorageTransmissionHandler).GetField("persistentBlobProvider", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var persistentBlobProvider = Assert.IsType<FileBlobProvider>(fileBlobProviderField?.GetValue(persistentStorageTransmissionHandler));
+
+            Assert.EndsWith(expectedDirectoryName, persistentBlobProvider.DirectoryPath, StringComparison.Ordinal);
+        }
+        finally
+        {
+            if (Directory.Exists(retryRootPath))
+            {
+                Directory.Delete(retryRootPath, recursive: true);
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData(3)] // Profiles
+    [InlineData(int.MaxValue)] // Invalid/Unknown signal type
+    public void GetTransmissionHandler_DiskRetry_UnsupportedSignalType_ThrowsNotSupportedException(int signalTypeValue)
+    {
+        var retryRootPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+
+        try
+        {
+            var exporterOptions = new OtlpExporterOptions();
+            var signalType = (OtlpSignalType)signalTypeValue;
+
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(
+                new Dictionary<string, string?>
+                {
+                    [ExperimentalOptions.OtlpRetryEnvVar] = "disk",
+                    [ExperimentalOptions.OtlpDiskRetryDirectoryPathEnvVar] = retryRootPath,
+                })
+                .Build();
+
+            Assert.Throws<NotSupportedException>(
+                () => exporterOptions.GetExportTransmissionHandler(new ExperimentalOptions(configuration), signalType));
+        }
+        finally
+        {
+            if (Directory.Exists(retryRootPath))
+            {
+                Directory.Delete(retryRootPath, recursive: true);
+            }
+        }
     }
 
     private static void AssertTransmissionHandler(OtlpExporterTransmissionHandler transmissionHandler, Type exportClientType, int expectedTimeoutMilliseconds, string? retryStrategy)

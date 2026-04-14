@@ -77,6 +77,39 @@ internal sealed class PrometheusMetric
     public static PrometheusMetric Create(Metric metric, bool disableTotalNameSuffixForCounters)
         => new(metric.Name, metric.Unit, GetPrometheusType(metric.MetricType), disableTotalNameSuffixForCounters);
 
+    internal static string SanitizeMetricUnit(string metricUnit)
+    {
+        StringBuilder? sb = null;
+        var lastCharUnderscore = false;
+
+        for (var i = 0; i < metricUnit.Length; i++)
+        {
+            var c = metricUnit[i];
+
+            if (!char.IsLetterOrDigit(c) && c != ':')
+            {
+                if (!lastCharUnderscore)
+                {
+                    lastCharUnderscore = true;
+                    sb ??= new StringBuilder(metricUnit, 0, i, metricUnit.Length);
+                    sb.Append('_');
+                }
+            }
+            else
+            {
+                if (sb != null)
+                {
+                    sb.Append(c);
+                }
+
+                lastCharUnderscore = false;
+            }
+        }
+
+        var result = sb?.ToString() ?? metricUnit;
+        return result.Trim('_');
+    }
+
     internal static string SanitizeMetricName(string metricName)
     {
         StringBuilder? sb = null;
@@ -112,11 +145,6 @@ internal sealed class PrometheusMetric
         }
 
         return sb?.ToString() ?? metricName;
-
-        static StringBuilder CreateStringBuilder(string name)
-        {
-            return new(name.Length);
-        }
     }
 
     internal static string RemoveAnnotations(string unit)
@@ -186,6 +214,11 @@ internal sealed class PrometheusMetric
         };
     }
 
+    private static StringBuilder CreateStringBuilder(string value)
+    {
+        return new(value.Length);
+    }
+
     private static string SanitizeOpenMetricsName(string metricName)
         => metricName.EndsWith("_total", StringComparison.Ordinal) ? metricName.Substring(0, metricName.Length - 6) : metricName;
 
@@ -208,7 +241,7 @@ internal sealed class PrometheusMetric
             updatedUnit = MapUnit(updatedUnit.AsSpan());
         }
 
-        return updatedUnit;
+        return SanitizeMetricUnit(updatedUnit);
     }
 
     private static bool TryProcessRateUnits(string updatedUnit, [NotNullWhen(true)] out string? updatedPerUnit)
