@@ -139,7 +139,11 @@ internal static partial class PrometheusSerializer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteLabelKey(byte[] buffer, int cursor, string value)
     {
-        Debug.Assert(!string.IsNullOrEmpty(value), $"{nameof(value)} should not be null or empty.");
+        if (string.IsNullOrEmpty(value))
+        {
+            buffer[cursor++] = unchecked((byte)'_');
+            return cursor;
+        }
 
         var ordinal = (ushort)value[0];
 
