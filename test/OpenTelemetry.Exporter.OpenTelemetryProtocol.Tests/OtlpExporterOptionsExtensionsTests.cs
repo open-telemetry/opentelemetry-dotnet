@@ -131,8 +131,8 @@ public class OtlpExporterOptionsExtensionsTests
 
     [Theory]
     [InlineData("Traces", "traces")]
-    [InlineData("Metrics", "metrics")]
     [InlineData("Logs", "logs")]
+    [InlineData("Metrics", "metrics")]
     public void GetTransmissionHandler_DiskRetry_UsesSignalSpecificStorageDirectory(string signalTypeName, string expectedDirectoryName)
     {
         var retryRootPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
@@ -142,9 +142,9 @@ public class OtlpExporterOptionsExtensionsTests
             var exporterOptions = new OtlpExporterOptions();
             var signalType = signalTypeName switch
             {
-                "Traces" => OtlpSignalType.Traces,
-                "Metrics" => OtlpSignalType.Metrics,
                 "Logs" => OtlpSignalType.Logs,
+                "Metrics" => OtlpSignalType.Metrics,
+                "Traces" => OtlpSignalType.Traces,
                 _ => throw new ArgumentOutOfRangeException(nameof(signalTypeName)),
             };
 
