@@ -140,7 +140,13 @@ public class OtlpExporterOptionsExtensionsTests
         try
         {
             var exporterOptions = new OtlpExporterOptions();
-            var signalType = GetSignalType(signalTypeName);
+            var signalType = signalTypeName switch
+            {
+                "Traces" => OtlpSignalType.Traces,
+                "Metrics" => OtlpSignalType.Metrics,
+                "Logs" => OtlpSignalType.Logs,
+                _ => throw new ArgumentOutOfRangeException(nameof(signalTypeName)),
+            };
 
             var configuration = new ConfigurationBuilder()
                 .AddInMemoryCollection(
@@ -169,16 +175,16 @@ public class OtlpExporterOptionsExtensionsTests
     }
 
     [Theory]
-    [InlineData("Profiles")]
-    [InlineData("Foo")]
-    public void GetTransmissionHandler_DiskRetry_UnsupportedSignalType_ThrowsNotSupportedException(string signalTypeName)
+    [InlineData(3)] // Profiles
+    [InlineData(int.MaxValue)] // Invalid/Unknown signal type
+    public void GetTransmissionHandler_DiskRetry_UnsupportedSignalType_ThrowsNotSupportedException(int signalTypeValue)
     {
         var retryRootPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
 
         try
         {
             var exporterOptions = new OtlpExporterOptions();
-            var signalType = GetSignalType(signalTypeName);
+            var signalType = (OtlpSignalType)signalTypeValue;
 
             var configuration = new ConfigurationBuilder()
                 .AddInMemoryCollection(
@@ -220,16 +226,6 @@ public class OtlpExporterOptionsExtensionsTests
 
         Assert.Equal(expectedTimeoutMilliseconds, transmissionHandler.TimeoutMilliseconds);
     }
-
-    private static OtlpSignalType GetSignalType(string signalTypeName) => signalTypeName switch
-    {
-        "Foo" => (OtlpSignalType)int.MaxValue,
-        "Logs" => OtlpSignalType.Logs,
-        "Metrics" => OtlpSignalType.Metrics,
-        "Profiles" => (OtlpSignalType)3,
-        "Traces" => OtlpSignalType.Traces,
-        _ => throw new ArgumentOutOfRangeException(nameof(signalTypeName)),
-    };
 
     /// <summary>
     /// Validates whether the `Headers` property in `OtlpExporterOptions` is correctly processed and parsed.
