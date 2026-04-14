@@ -426,8 +426,8 @@ public sealed class PrometheusMetricTests
 
     private static void AssertSanitizeMetricName(string name, string expected)
     {
-        var sanatizedName = PrometheusMetric.SanitizeMetricName(name);
-        Assert.Equal(expected, sanatizedName);
+        var sanitizedName = PrometheusMetric.SanitizeMetricName(name);
+        Assert.Equal(expected, sanitizedName);
     }
 
     private static void AssertOpenMetricsName(

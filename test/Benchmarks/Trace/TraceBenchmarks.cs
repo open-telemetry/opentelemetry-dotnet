@@ -17,9 +17,9 @@ Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
 | Method                           | Mean      | Error    | StdDev   | Gen0   | Allocated |
 |--------------------------------- |----------:|---------:|---------:|-------:|----------:|
 | NoListener                       |  14.00 ns | 0.173 ns | 0.162 ns |      - |         - |
-| PropagationDataListner           | 265.96 ns | 4.022 ns | 3.762 ns | 0.0663 |     416 B |
-| AllDataListner                   | 255.14 ns | 1.819 ns | 1.702 ns | 0.0663 |     416 B |
-| AllDataAndRecordedListner        | 258.32 ns | 2.387 ns | 2.116 ns | 0.0663 |     416 B |
+| PropagationDataListener           | 265.96 ns | 4.022 ns | 3.762 ns | 0.0663 |     416 B |
+| AllDataListener                   | 255.14 ns | 1.819 ns | 1.702 ns | 0.0663 |     416 B |
+| AllDataAndRecordedListener        | 258.32 ns | 2.387 ns | 2.116 ns | 0.0663 |     416 B |
 | OneProcessor                     | 277.12 ns | 2.059 ns | 1.926 ns | 0.0663 |     416 B |
 | TwoProcessors                    | 276.82 ns | 4.442 ns | 4.155 ns | 0.0663 |     416 B |
 | ThreeProcessors                  | 283.12 ns | 1.970 ns | 1.645 ns | 0.0663 |     416 B |
@@ -36,22 +36,22 @@ public class TraceBenchmarks
 #pragma warning restore CA1001 // Types that own disposable fields should be disposable - handled by GlobalCleanup
 {
     private ActivitySource? sourceWithNoListener;
-    private ActivitySource? sourceWithPropagationDataListner;
-    private ActivitySource? sourceWithAllDataListner;
-    private ActivitySource? sourceWithAllDataAndRecordedListner;
+    private ActivitySource? sourceWithPropagationDataListener;
+    private ActivitySource? sourceWithAllDataListener;
+    private ActivitySource? sourceWithAllDataAndRecordedListener;
     private ActivitySource? sourceWithOneProcessor;
     private ActivitySource? sourceWithTwoProcessors;
     private ActivitySource? sourceWithThreeProcessors;
     private ActivitySource? sourceWithOneLegacyActivityOperationNameSubscription;
     private ActivitySource? sourceWithTwoLegacyActivityOperationNameSubscriptions;
 
-    private TracerProvider? tracerProvierWithOneProcessor;
-    private TracerProvider? tracerProvierWithTwoProcessors;
-    private TracerProvider? tracerProvierWithThreeProcessors;
-    private TracerProvider? tracerProvierWithOneLegacyActivityOperationNameSubscription;
-    private TracerProvider? tracerProvierWithTwoLegacyActivityOperationNameSubscriptions;
-    private TracerProvider? tracerProvierWithExactMatchLegacyActivityListner;
-    private TracerProvider? tracerProvierWithWildcardMatchLegacyActivityListner;
+    private TracerProvider? tracerProviderWithOneProcessor;
+    private TracerProvider? tracerProviderWithTwoProcessors;
+    private TracerProvider? tracerProviderWithThreeProcessors;
+    private TracerProvider? tracerProviderWithOneLegacyActivityOperationNameSubscription;
+    private TracerProvider? tracerProviderWithTwoLegacyActivityOperationNameSubscriptions;
+    private TracerProvider? tracerProviderWithExactMatchLegacyActivityListener;
+    private TracerProvider? tracerProviderWithWildcardMatchLegacyActivityListener;
 
     private ActivityListener? activityListenerPropagationData;
     private ActivityListener? activityListenerAllData;
@@ -63,9 +63,9 @@ public class TraceBenchmarks
         Activity.DefaultIdFormat = ActivityIdFormat.W3C;
 
         this.sourceWithNoListener = new("Benchmark.NoListener");
-        this.sourceWithPropagationDataListner = new("Benchmark.PropagationDataListner");
-        this.sourceWithAllDataListner = new("Benchmark.AllDataListner");
-        this.sourceWithAllDataAndRecordedListner = new("Benchmark.AllDataAndRecordedListner");
+        this.sourceWithPropagationDataListener = new("Benchmark.PropagationDataListener");
+        this.sourceWithAllDataListener = new("Benchmark.AllDataListener");
+        this.sourceWithAllDataAndRecordedListener = new("Benchmark.AllDataAndRecordedListener");
         this.sourceWithOneProcessor = new("Benchmark.OneProcessor");
         this.sourceWithTwoProcessors = new("Benchmark.TwoProcessors");
         this.sourceWithThreeProcessors = new("Benchmark.ThreeProcessors");
@@ -76,7 +76,7 @@ public class TraceBenchmarks
         {
             ActivityStarted = null,
             ActivityStopped = null,
-            ShouldListenTo = (activitySource) => activitySource.Name == this.sourceWithPropagationDataListner.Name,
+            ShouldListenTo = (activitySource) => activitySource.Name == this.sourceWithPropagationDataListener.Name,
             Sample = (ref options) => ActivitySamplingResult.PropagationData,
         };
 
@@ -86,7 +86,7 @@ public class TraceBenchmarks
         {
             ActivityStarted = null,
             ActivityStopped = null,
-            ShouldListenTo = (activitySource) => activitySource.Name == this.sourceWithAllDataListner.Name,
+            ShouldListenTo = (activitySource) => activitySource.Name == this.sourceWithAllDataListener.Name,
             Sample = (ref options) => ActivitySamplingResult.AllData,
         };
 
@@ -96,27 +96,27 @@ public class TraceBenchmarks
         {
             ActivityStarted = null,
             ActivityStopped = null,
-            ShouldListenTo = (activitySource) => activitySource.Name == this.sourceWithAllDataAndRecordedListner.Name,
+            ShouldListenTo = (activitySource) => activitySource.Name == this.sourceWithAllDataAndRecordedListener.Name;
             Sample = (ref options) => ActivitySamplingResult.AllDataAndRecorded,
         };
 
         ActivitySource.AddActivityListener(this.activityListenerAllDataAndRecordedData);
 
-        this.tracerProvierWithOneProcessor = Sdk.CreateTracerProviderBuilder()
+        this.tracerProviderWithOneProcessor = Sdk.CreateTracerProviderBuilder()
             .SetSampler(new AlwaysOnSampler())
             .AddSource(this.sourceWithOneProcessor.Name)
 #pragma warning disable CA2000 // Dispose objects before losing scope
             .AddProcessor(new DummyActivityProcessor())
             .Build();
 
-        this.tracerProvierWithTwoProcessors = Sdk.CreateTracerProviderBuilder()
+        this.tracerProviderWithTwoProcessors = Sdk.CreateTracerProviderBuilder()
             .SetSampler(new AlwaysOnSampler())
             .AddSource(this.sourceWithTwoProcessors.Name)
             .AddProcessor(new DummyActivityProcessor())
             .AddProcessor(new DummyActivityProcessor())
             .Build();
 
-        this.tracerProvierWithThreeProcessors = Sdk.CreateTracerProviderBuilder()
+        this.tracerProviderWithThreeProcessors = Sdk.CreateTracerProviderBuilder()
             .SetSampler(new AlwaysOnSampler())
             .AddSource(this.sourceWithThreeProcessors.Name)
             .AddProcessor(new DummyActivityProcessor())
@@ -124,14 +124,14 @@ public class TraceBenchmarks
             .AddProcessor(new DummyActivityProcessor())
             .Build();
 
-        this.tracerProvierWithOneLegacyActivityOperationNameSubscription = Sdk.CreateTracerProviderBuilder()
+        this.tracerProviderWithOneLegacyActivityOperationNameSubscription = Sdk.CreateTracerProviderBuilder()
             .SetSampler(new AlwaysOnSampler())
             .AddSource(this.sourceWithOneLegacyActivityOperationNameSubscription.Name)
             .AddLegacySource("TestOperationName")
             .AddProcessor(new DummyActivityProcessor())
             .Build();
 
-        this.tracerProvierWithTwoLegacyActivityOperationNameSubscriptions = Sdk.CreateTracerProviderBuilder()
+        this.tracerProviderWithTwoLegacyActivityOperationNameSubscriptions = Sdk.CreateTracerProviderBuilder()
             .SetSampler(new AlwaysOnSampler())
             .AddSource(this.sourceWithTwoLegacyActivityOperationNameSubscriptions.Name)
             .AddLegacySource("TestOperationName1")
@@ -139,13 +139,13 @@ public class TraceBenchmarks
             .AddProcessor(new DummyActivityProcessor())
             .Build();
 
-        this.tracerProvierWithExactMatchLegacyActivityListner = Sdk.CreateTracerProviderBuilder()
+        this.tracerProviderWithExactMatchLegacyActivityListener = Sdk.CreateTracerProviderBuilder()
             .SetSampler(new AlwaysOnSampler())
             .AddLegacySource("ExactMatch.OperationName1")
             .AddProcessor(new DummyActivityProcessor())
             .Build();
 
-        this.tracerProvierWithWildcardMatchLegacyActivityListner = Sdk.CreateTracerProviderBuilder()
+        this.tracerProviderWithWildcardMatchLegacyActivityListener = Sdk.CreateTracerProviderBuilder()
             .SetSampler(new AlwaysOnSampler())
             .AddLegacySource("WildcardMatch.*")
             .AddProcessor(new DummyActivityProcessor())
@@ -157,22 +157,22 @@ public class TraceBenchmarks
     public void Cleanup()
     {
         this.sourceWithNoListener?.Dispose();
-        this.sourceWithPropagationDataListner?.Dispose();
-        this.sourceWithAllDataListner?.Dispose();
-        this.sourceWithAllDataAndRecordedListner?.Dispose();
+        this.sourceWithPropagationDataListener?.Dispose();
+        this.sourceWithAllDataListener?.Dispose();
+        this.sourceWithAllDataAndRecordedListener?.Dispose();
         this.sourceWithOneProcessor?.Dispose();
         this.sourceWithTwoProcessors?.Dispose();
         this.sourceWithThreeProcessors?.Dispose();
         this.sourceWithOneLegacyActivityOperationNameSubscription?.Dispose();
         this.sourceWithTwoLegacyActivityOperationNameSubscriptions?.Dispose();
 
-        this.tracerProvierWithOneProcessor?.Dispose();
-        this.tracerProvierWithTwoProcessors?.Dispose();
-        this.tracerProvierWithThreeProcessors?.Dispose();
-        this.tracerProvierWithOneLegacyActivityOperationNameSubscription?.Dispose();
-        this.tracerProvierWithTwoLegacyActivityOperationNameSubscriptions?.Dispose();
-        this.tracerProvierWithExactMatchLegacyActivityListner?.Dispose();
-        this.tracerProvierWithWildcardMatchLegacyActivityListner?.Dispose();
+        this.tracerProviderWithOneProcessor?.Dispose();
+        this.tracerProviderWithTwoProcessors?.Dispose();
+        this.tracerProviderWithThreeProcessors?.Dispose();
+        this.tracerProviderWithOneLegacyActivityOperationNameSubscription?.Dispose();
+        this.tracerProviderWithTwoLegacyActivityOperationNameSubscriptions?.Dispose();
+        this.tracerProviderWithExactMatchLegacyActivityListener?.Dispose();
+        this.tracerProviderWithWildcardMatchLegacyActivityListener?.Dispose();
 
         this.activityListenerPropagationData?.Dispose();
         this.activityListenerAllData?.Dispose();
@@ -187,24 +187,24 @@ public class TraceBenchmarks
     }
 
     [Benchmark]
-    public void PropagationDataListner()
+    public void PropagationDataListener()
     {
         // this activity will be created and feed into an ActivityListener that simply drops everything on the floor
-        using var activity = this.sourceWithPropagationDataListner!.StartActivity("Benchmark");
+        using var activity = this.sourceWithPropagationDataListener!.StartActivity("Benchmark");
     }
 
     [Benchmark]
-    public void AllDataListner()
+    public void AllDataListener()
     {
         // this activity will be created and feed into an ActivityListener that simply drops everything on the floor
-        using var activity = this.sourceWithAllDataListner!.StartActivity("Benchmark");
+        using var activity = this.sourceWithAllDataListener!.StartActivity("Benchmark");
     }
 
     [Benchmark]
-    public void AllDataAndRecordedListner()
+    public void AllDataAndRecordedListener()
     {
         // this activity will be created and feed into an ActivityListener that simply drops everything on the floor
-        using var activity = this.sourceWithAllDataAndRecordedListner!.StartActivity("Benchmark");
+        using var activity = this.sourceWithAllDataAndRecordedListener!.StartActivity("Benchmark");
     }
 
     [Benchmark]
