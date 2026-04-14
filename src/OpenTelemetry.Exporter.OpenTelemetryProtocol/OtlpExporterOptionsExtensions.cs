@@ -90,7 +90,7 @@ internal static class OtlpExporterOptionsExtensions
             return new OtlpExporterPersistentStorageTransmissionHandler(
                 exportClient,
                 timeoutMilliseconds,
-                Path.Combine(experimentalOptions.DiskRetryDirectoryPath, "traces"));
+                Path.Combine(experimentalOptions.DiskRetryDirectoryPath, GetSignalStorageDirectoryName(otlpSignalType)));
         }
         else
         {
@@ -196,4 +196,13 @@ internal static class OtlpExporterOptionsExtensions
 
         return new Uri(string.Concat(uri.AbsoluteUri, separator, path));
     }
+
+    private static string GetSignalStorageDirectoryName(OtlpSignalType otlpSignalType)
+        => otlpSignalType switch
+        {
+            OtlpSignalType.Traces => "traces",
+            OtlpSignalType.Metrics => "metrics",
+            OtlpSignalType.Logs => "logs",
+            _ => throw new NotSupportedException($"OtlpSignalType {otlpSignalType} is not supported."),
+        };
 }
