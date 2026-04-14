@@ -492,7 +492,7 @@ public class MetricApiTests : MetricTestsBase
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
         Assert.Single(exportedItems);
 
-        // Expeecting another metric stream since the meter differs by version
+        // Expecting another metric stream since the meter differs by version
         var anotherCounterSameNameDiffMeter = meter2.CreateCounter<long>("name1");
         anotherCounterSameNameDiffMeter.Add(10);
         counterLong.Add(10);

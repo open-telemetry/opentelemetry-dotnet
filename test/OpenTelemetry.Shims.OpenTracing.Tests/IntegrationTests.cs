@@ -54,11 +54,11 @@ public class IntegrationTests
                 b => b.AddSource(ChildActivitySource))
             .Build();
 
-        var otTracer = new TracerShim(
+        var openTracingTracer = new TracerShim(
             tracerProvider,
             Propagators.DefaultTextMapPropagator);
 
-        // Real usage requires a call OpenTracing.Util.GlobalTracer.Register(otTracer),
+        // Real usage requires a call OpenTracing.Util.GlobalTracer.Register(openTracingTracer),
         // however, that can only happen once per process, we don't do it here so we
         // can run multiple tests in the same process.
 
@@ -67,7 +67,7 @@ public class IntegrationTests
 
         using (var parentActivity = parentActivitySource.StartActivity(ParentActivityName))
         {
-            using var parentScope = otTracer.BuildSpan(ShimActivityName).StartActive();
+            using var parentScope = openTracingTracer.BuildSpan(ShimActivityName).StartActive();
             parentScope.Span.SetTag("parent", true);
 
             using var childActivity = childActivitySource.StartActivity(ChildActivityName);
