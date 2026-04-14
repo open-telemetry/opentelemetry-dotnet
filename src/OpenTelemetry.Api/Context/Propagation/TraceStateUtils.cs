@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
-using System.Text;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Context.Propagation;
@@ -15,6 +14,8 @@ internal static class TraceStateUtils
     private const int KeyMaxSize = 256;
     private const int ValueMaxSize = 256;
     private const int MaxKeyValuePairsCount = 32;
+    private const int MaxTraceStateLength = 512;
+    private const int LargeEntryLength = 128;
 
     /// <summary>
     /// Extracts tracestate pairs from the given string and appends it to provided tracestate list.
@@ -106,37 +107,57 @@ internal static class TraceStateUtils
 
     internal static string GetString(IEnumerable<KeyValuePair<string, string>>? traceState)
     {
-#pragma warning disable CA1851 // Possible multiple enumerations of 'IEnumerable' collection
-        if (traceState == null || !traceState.Any())
+        if (traceState == null)
         {
             return string.Empty;
         }
 
-        // it's supposedly cheaper to iterate over very short collection a couple of times
-        // than to convert it to array.
-        var pairsCount = traceState.Count();
+        var entries = new List<string>();
+        var pairsCount = 0;
+        foreach (var entry in traceState)
+        {
+            pairsCount++;
+            if (entries.Count < MaxKeyValuePairsCount)
+            {
+                // Take the first MaxKeyValuePairsCount pairs and ignore older pairs after that.
+                entries.Add(string.Concat(entry.Key, "=", entry.Value));
+            }
+        }
+
+        if (entries.Count == 0)
+        {
+            return string.Empty;
+        }
+
         if (pairsCount > MaxKeyValuePairsCount)
         {
             OpenTelemetryApiEventSource.Log.TooManyItemsInTracestate();
         }
 
-        var sb = new StringBuilder();
+        TruncateEntries(entries);
 
-        var ind = 0;
-        foreach (var entry in traceState)
+        return string.Join(",", entries);
+    }
+
+    private static void TruncateEntries(List<string> entries)
+    {
+        if (GetCombinedLength(entries) <= MaxTraceStateLength)
         {
-            if (ind++ < MaxKeyValuePairsCount)
+            return;
+        }
+
+        for (var i = entries.Count - 1; i >= 0 && GetCombinedLength(entries) > MaxTraceStateLength; i--)
+        {
+            if (entries[i].Length > LargeEntryLength)
             {
-                // take last MaxKeyValuePairsCount pairs, ignore last (oldest) pairs
-                sb.Append(entry.Key)
-                    .Append('=')
-                    .Append(entry.Value)
-                    .Append(',');
+                entries.RemoveAt(i);
             }
         }
-#pragma warning restore CA1851 // Possible multiple enumerations of 'IEnumerable' collection
 
-        return sb.Remove(sb.Length - 1, 1).ToString();
+        while (entries.Count > 0 && GetCombinedLength(entries) > MaxTraceStateLength)
+        {
+            entries.RemoveAt(entries.Count - 1);
+        }
     }
 
     private static bool TryParseKeyValue(ReadOnlySpan<char> pair, out ReadOnlySpan<char> key, out ReadOnlySpan<char> value)
@@ -258,5 +279,22 @@ internal static class TraceStateUtils
         }
 
         return true;
+    }
+
+    private static int GetCombinedLength(List<string> entries)
+    {
+        var combinedLength = 0;
+
+        for (var i = 0; i < entries.Count; i++)
+        {
+            if (i > 0)
+            {
+                combinedLength++;
+            }
+
+            combinedLength += entries[i].Length;
+        }
+
+        return combinedLength;
     }
 }

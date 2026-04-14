@@ -8,27 +8,16 @@ namespace OpenTelemetry.Context.Propagation.Tests;
 
 public class BaggagePropagatorTests
 {
-    private static readonly Func<IDictionary<string, string>, string, IEnumerable<string>> Getter =
-        (d, k) =>
-        {
-            if (d.TryGetValue(k, out var v))
-            {
-                return [v];
-            }
+    private const int MaxBaggageLength = 8192;
 
-            return [];
-        };
+    private static readonly Func<IDictionary<string, string>, string, IEnumerable<string>> Getter =
+        static (d, k) => d.TryGetValue(k, out var v) ? [v] : [];
 
     private static readonly Func<IList<KeyValuePair<string, string>>, string, IEnumerable<string>> GetterList =
-        (d, k) =>
-        {
-            return d.Where(i => i.Key == k).Select(i => i.Value);
-        };
+        static (d, k) => d.Where(i => i.Key == k).Select(i => i.Value);
 
-    private static readonly Action<IDictionary<string, string>, string, string> Setter = (carrier, name, value) =>
-    {
-        carrier[name] = value;
-    };
+    private static readonly Action<IDictionary<string, string>, string, string> Setter =
+        static (carrier, name, value) => carrier[name] = value;
 
     private readonly BaggagePropagator baggage = new();
 
@@ -85,9 +74,9 @@ public class BaggagePropagatorTests
     {
         var carrier = new List<KeyValuePair<string, string>>
         {
-            new KeyValuePair<string, string>(BaggagePropagator.BaggageHeaderName, "name1=test1"),
-            new KeyValuePair<string, string>(BaggagePropagator.BaggageHeaderName, "name2=test2"),
-            new KeyValuePair<string, string>(BaggagePropagator.BaggageHeaderName, "name2=test2"),
+            new(BaggagePropagator.BaggageHeaderName, "name1=test1"),
+            new(BaggagePropagator.BaggageHeaderName, "name2=test2"),
+            new(BaggagePropagator.BaggageHeaderName, "name2=test2"),
         };
 
         var propagationContext = this.baggage.Extract(default, carrier, GetterList);
@@ -311,7 +300,7 @@ public class BaggagePropagatorTests
     }
 
     [Fact]
-    public void ValidateInjectionOf8192Bytes()
+    public void ValidateInjectionOfMaximumLength()
     {
         var longValue = new string('0', 8190);
 
@@ -330,7 +319,59 @@ public class BaggagePropagatorTests
 
         var baggageHeader = carrier[BaggagePropagator.BaggageHeaderName];
 
-        Assert.Equal(8192, baggageHeader.Length);
+        Assert.Equal(MaxBaggageLength, baggageHeader.Length);
+    }
+
+    [Theory]
+    [InlineData(8187)]
+    [InlineData(8188)]
+    [InlineData(8189)]
+    [InlineData(8190)]
+    public void ValidateInjectionStopsBeforeExceedingMaximumLength(int length)
+    {
+        var longValue = new string('0', length);
+
+        var propagationContext = new PropagationContext(
+            default,
+            new Baggage(new Dictionary<string, string>
+            {
+                ["a"] = longValue,
+                ["b"] = "c",
+            }));
+
+        var carrier = new Dictionary<string, string>();
+
+        this.baggage.Inject(propagationContext, carrier, Setter);
+
+        var item = Assert.Single(carrier);
+
+        Assert.Equal(BaggagePropagator.BaggageHeaderName, item.Key);
+
+        var baggageHeader = item.Value;
+        Assert.True(baggageHeader.Length <= MaxBaggageLength, $"Baggage length {baggageHeader.Length} exceeds maximum allowed length of {MaxBaggageLength}");
+        Assert.Equal($"a={longValue}", baggageHeader);
+    }
+
+    [Theory]
+    [InlineData(8191)]
+    [InlineData(16384)]
+    public void ValidateInjectionDoesNotExceedMaximumLength(int length)
+    {
+        var longValue = new string('0', length);
+
+        var propagationContext = new PropagationContext(
+            default,
+            new Baggage(new Dictionary<string, string>
+            {
+                ["a"] = longValue,
+                ["b"] = "c",
+            }));
+
+        var carrier = new Dictionary<string, string>();
+
+        this.baggage.Inject(propagationContext, carrier, Setter);
+
+        Assert.Empty(carrier);
     }
 
     [Fact]
@@ -353,7 +394,7 @@ public class BaggagePropagatorTests
 
         var baggageHeader = carrier[BaggagePropagator.BaggageHeaderName];
 
-        Assert.True(baggageHeader.Length <= 8192);
+        Assert.True(baggageHeader.Length <= MaxBaggageLength);
     }
 
     [Fact]
@@ -399,6 +440,26 @@ public class BaggagePropagatorTests
 
         Assert.Single(extractedBaggage);
         Assert.Equal("value=more=equals", extractedBaggage["key"]);
+    }
+
+    [Fact]
+    public void ValidateOversizedBaggageExtractionHonorsLimits()
+    {
+        var entries = Enumerable.Range(0, 5000).Select(i => $"k{i:D4}=v");
+        var headerValue = string.Join(",", entries);
+        var carrier = new Dictionary<string, string>
+        {
+            { BaggagePropagator.BaggageHeaderName, headerValue },
+        };
+
+        var propagationContext = this.baggage.Extract(default, carrier, Getter);
+        var baggage = propagationContext.Baggage.GetBaggage();
+
+        Assert.NotEqual(default, propagationContext);
+        Assert.Equal(180, baggage.Count);
+        Assert.Equal("v", baggage["k0000"]);
+        Assert.Equal("v", baggage["k0179"]);
+        Assert.False(baggage.ContainsKey("k0180"));
     }
 
     [Fact]
