@@ -197,12 +197,11 @@ internal static class OtlpExporterOptionsExtensions
         return new Uri(string.Concat(uri.AbsoluteUri, separator, path));
     }
 
-    private static string GetSignalStorageDirectoryName(OtlpSignalType otlpSignalType)
-        => otlpSignalType switch
-        {
-            OtlpSignalType.Traces => "traces",
-            OtlpSignalType.Metrics => "metrics",
-            OtlpSignalType.Logs => "logs",
-            _ => throw new NotSupportedException($"OtlpSignalType {otlpSignalType} is not supported."),
-        };
+    private static string GetSignalStorageDirectoryName(OtlpSignalType otlpSignalType) => otlpSignalType switch
+    {
+        OtlpSignalType.Logs => "logs",
+        OtlpSignalType.Metrics => "metrics",
+        OtlpSignalType.Traces => "traces",
+        _ => throw new NotSupportedException($"OtlpSignalType {otlpSignalType} is not supported."),
+    };
 }
