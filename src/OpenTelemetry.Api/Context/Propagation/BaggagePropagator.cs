@@ -226,9 +226,9 @@ public class BaggagePropagator : TextMapPropagator
     }
 
     private static string DecodeIfNeeded(ReadOnlySpan<char> value) =>
-        #if NET9_0_OR_GREATER
+#if NET9_0_OR_GREATER
         value.ContainsAny(DecodeHints) ? WebUtility.UrlDecode(value.ToString()) : value.ToString();
-        #else
+#else
         value.IndexOfAny('%', '+') < 0 ? value.ToString() : WebUtility.UrlDecode(value.ToString());
-        #endif
+#endif
 }
