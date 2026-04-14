@@ -181,8 +181,20 @@ public class BaggagePropagator : TextMapPropagator
                     continue;
                 }
 
-                var key = DecodeIfNeeded(pair.Slice(0, separatorIndex));
-                var value = DecodeIfNeeded(pair.Slice(separatorIndex + 1));
+                var rawKey = pair.Slice(0, separatorIndex).Trim();
+
+                var rawValue = pair.Slice(separatorIndex + 1);
+
+                var semicolonIndex = rawValue.IndexOf(';');
+                if (semicolonIndex >= 0)
+                {
+                    rawValue = rawValue.Slice(0, semicolonIndex);
+                }
+
+                rawValue = rawValue.Trim();
+
+                var key = DecodeIfNeeded(rawKey);
+                var value = DecodeIfNeeded(rawValue);
 
                 if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(value))
                 {
@@ -214,9 +226,9 @@ public class BaggagePropagator : TextMapPropagator
     }
 
     private static string DecodeIfNeeded(ReadOnlySpan<char> value) =>
-#if NET9_0_OR_GREATER
+        #if NET9_0_OR_GREATER
         value.ContainsAny(DecodeHints) ? WebUtility.UrlDecode(value.ToString()) : value.ToString();
-#else
+        #else
         value.IndexOfAny('%', '+') < 0 ? value.ToString() : WebUtility.UrlDecode(value.ToString());
-#endif
+        #endif
 }
