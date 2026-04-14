@@ -1,6 +1,8 @@
 [default.extend-words]
 # "ba" appears in example trace IDs (e.g., "00f067aa0ba902b7")
 ba = "ba"
+# "ot" is the OpenTracing abbreviation used in changelog
+ot = "ot"
 # "caf" appears in "café" encoded as Latin-1 in a test string
 caf = "caf"
 # "Delt" appears in "DeltA" test string for case-insensitive Delta parsing
