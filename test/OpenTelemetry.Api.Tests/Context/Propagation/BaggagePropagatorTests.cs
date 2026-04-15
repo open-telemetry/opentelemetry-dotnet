@@ -678,12 +678,10 @@ public class BaggagePropagatorTests
     [InlineData("\"")]
     [InlineData("(")]
     [InlineData(")")]
-    [InlineData(",")]
     [InlineData("/")]
     [InlineData(":")]
     [InlineData(";")]
     [InlineData("<")]
-    [InlineData("=")]
     [InlineData(">")]
     [InlineData("?")]
     [InlineData("@")]
@@ -706,6 +704,34 @@ public class BaggagePropagatorTests
         var propagationContext = this.baggage.Extract(default, carrier, Getter);
         Assert.Single(propagationContext.Baggage.GetBaggage());
         Assert.Equal("valid-key", propagationContext.Baggage.GetBaggage().First().Key);
+    }
+
+    [Fact]
+    public void ValidateKeyWithValidDelimitersNotDroppedOnExtract()
+    {
+        var invalidKey = $"key,name";
+        var carrier = new Dictionary<string, string>
+        {
+            {
+                BaggagePropagator.BaggageHeaderName,
+                $"{invalidKey}=should-be-dropped,valid-key=valid-value"
+            },
+        };
+
+        var propagationContext = this.baggage.Extract(default, carrier, Getter);
+        Assert.Equal("name", propagationContext.Baggage.GetBaggage().First().Key);
+
+        invalidKey = $"key=name";
+        carrier = new Dictionary<string, string>
+        {
+            {
+                BaggagePropagator.BaggageHeaderName,
+                $"{invalidKey}=should-be-dropped,valid-key=valid-value"
+            },
+        };
+
+        propagationContext = this.baggage.Extract(default, carrier, Getter);
+        Assert.Equal("key", propagationContext.Baggage.GetBaggage().First().Key);
     }
 
     [Theory]
