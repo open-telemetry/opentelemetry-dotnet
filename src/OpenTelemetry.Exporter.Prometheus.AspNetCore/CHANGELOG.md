@@ -11,6 +11,10 @@ Notes](../../RELEASENOTES.md).
   not being sanitized, resulting in malformed metric names.
   ([#6187](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6187))
 
+* Fixed Prometheus metric serialization to handle empty label names without
+  throwing during scrape rendering.
+  ([#7077](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7077))
+
 ## 1.15.2-beta.1
 
 Released 2026-Apr-08
