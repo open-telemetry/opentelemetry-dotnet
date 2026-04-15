@@ -9,7 +9,7 @@ namespace OpenTelemetry.Api.FuzzTests;
 
 internal static class Generators
 {
-    private static readonly Gen<char> LowerAlphaNumericChar = Gen.Elements("abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray());
+    private static readonly Gen<char> LowerAlphaChar = Gen.Elements("abcdefghijklmnopqrstuvwxyz".ToCharArray());
     private static readonly Gen<char> TraceStateKeyChar = Gen.Elements("abcdefghijklmnopqrstuvwxyz0123456789_-*/".ToCharArray());
     private static readonly Gen<char> TraceStateValueChar = Gen.Elements("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!#$%&'*+-.^_`|~:/".ToCharArray());
     private static readonly Gen<char> BaggageChar = Gen.Elements("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 -_./:!$&'()*+;@?=,".ToCharArray());
@@ -198,16 +198,16 @@ internal static class Generators
     {
         var simpleKey =
             from length in Gen.Choose(1, 12)
-            from first in LowerAlphaNumericChar
+            from first in LowerAlphaChar
             from rest in Gen.ArrayOf(TraceStateKeyChar, length - 1)
             select $"{first}{new string(rest)}";
 
         var vendorKey =
             from tenantLength in Gen.Choose(1, 8)
             from vendorLength in Gen.Choose(1, 6)
-            from tenantFirst in LowerAlphaNumericChar
+            from tenantFirst in LowerAlphaChar
             from tenantRest in Gen.ArrayOf(TraceStateKeyChar, tenantLength - 1)
-            from vendorFirst in LowerAlphaNumericChar
+            from vendorFirst in LowerAlphaChar
             from vendorRest in Gen.ArrayOf(TraceStateKeyChar, vendorLength - 1)
             select $"{tenantFirst}{new string(tenantRest)}@{vendorFirst}{new string(vendorRest)}";
 

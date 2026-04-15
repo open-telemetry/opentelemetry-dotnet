@@ -1110,7 +1110,7 @@ public sealed class TracerProviderSdkTests : IDisposable
     }
 
     [Fact]
-    public void TracerProvideSdkCreatesAndDiposesInstrumentation()
+    public void TracerProvideSdkCreatesAndDisposesInstrumentation()
     {
         TestInstrumentation? testInstrumentation = null;
         var tracerProvider = Sdk.CreateTracerProviderBuilder()

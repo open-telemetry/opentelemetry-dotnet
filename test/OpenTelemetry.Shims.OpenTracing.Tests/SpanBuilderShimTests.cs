@@ -106,7 +106,7 @@ public class SpanBuilderShimTests
         Assert.NotNull(spanShim1.Span.Activity);
         Assert.Equal("foo", spanShim1.Span.Activity.OperationName);
 
-        // mis-matched root operation name
+        // mismatched root operation name
         shim = new SpanBuilderShim(tracer, "foo");
         var spanShim2 = (SpanShim)shim.Start();
 

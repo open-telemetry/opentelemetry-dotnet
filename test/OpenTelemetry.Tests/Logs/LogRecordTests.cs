@@ -922,8 +922,8 @@ public sealed class LogRecordTests
     }
 
     [Theory]
-    [InlineData((int)LogRecordSeverity.Unspecified, LogLevel.Trace)]
-    [InlineData(int.MaxValue, LogLevel.Trace)]
+    [InlineData((int)LogRecordSeverity.Unspecified, LogLevel.None)]
+    [InlineData(int.MaxValue, LogLevel.None)]
     [InlineData((int)LogRecordSeverity.Trace, LogLevel.Trace, (int)LogRecordSeverity.Trace)]
     [InlineData((int)LogRecordSeverity.Trace2, LogLevel.Trace, (int)LogRecordSeverity.Trace)]
     [InlineData((int)LogRecordSeverity.Trace3, LogLevel.Trace, (int)LogRecordSeverity.Trace)]
@@ -966,6 +966,19 @@ public sealed class LogRecordTests
             Assert.Equal((LogRecordSeverity)transformedLogSeverity.Value, logRecord.Severity);
             Assert.Equal(logLevel.ToString(), logRecord.SeverityText);
         }
+    }
+
+    [Fact]
+    public void LogLevelNoneRoundTripsWhenSeverityUnset()
+    {
+        var logRecord = new LogRecord
+        {
+            LogLevel = LogLevel.None,
+        };
+
+        Assert.Null(logRecord.Severity);
+        Assert.Null(logRecord.SeverityText);
+        Assert.Equal(LogLevel.None, logRecord.LogLevel);
     }
 
     [Fact]
