@@ -194,7 +194,7 @@ public sealed class LogRecord
                 return LogLevel.None;
             }
 
-            var severity = (uint)this.Data.Severity.Value;
+            var severity = (uint)this.Data.Severity.GetValueOrDefault();
             if (severity is >= 1 and <= 24)
             {
                 return (LogLevel)((severity - 1) / 4);
