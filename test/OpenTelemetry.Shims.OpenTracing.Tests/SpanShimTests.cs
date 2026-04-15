@@ -170,6 +170,36 @@ public class SpanShimTests
     }
 
     [Fact]
+    public void LogUsingFieldsPreservesAllSupportedScalarNumericTypes()
+    {
+        var tracer = TracerProvider.Default.GetTracer(TracerName);
+        var shim = new SpanShim(tracer.StartSpan(SpanName));
+
+        shim.Log(
+        [
+            new("byte-value", (byte)1),
+            new("short-value", (short)2),
+            new("int-value", 3),
+            new("long-value", 4L),
+            new("float-value", 5f),
+            new("double-value", 6D),
+        ]);
+
+        Assert.NotNull(shim.Span.Activity);
+        var evt = Assert.Single(shim.Span.Activity.Events);
+        var tags = evt.Tags.ToDictionary(pair => pair.Key, pair => pair.Value);
+
+        Assert.Equal(6, tags.Count);
+
+        Assert.Equal(1L, Assert.IsType<long>(tags["byte-value"]));
+        Assert.Equal(2L, Assert.IsType<long>(tags["short-value"]));
+        Assert.Equal(3L, Assert.IsType<long>(tags["int-value"]));
+        Assert.Equal(4L, Assert.IsType<long>(tags["long-value"]));
+        Assert.Equal(5D, Assert.IsType<double>(tags["float-value"]));
+        Assert.Equal(6D, Assert.IsType<double>(tags["double-value"]));
+    }
+
+    [Fact]
     public void SetTagStringValue()
     {
         var tracer = TracerProvider.Default.GetTracer(TracerName);
