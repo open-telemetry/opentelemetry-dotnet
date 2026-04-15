@@ -38,7 +38,7 @@ internal sealed class BatchExportThreadWorker<T> : BatchExportWorker<T>
         {
             IsBackground = true,
 #pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
-            Name = $"OpenTelemetry-{nameof(BatchExportProcessor<T>)}-{exporter.GetType().Name}",
+            Name = $"OpenTelemetry-{nameof(BatchExportProcessor<>)}-{exporter.GetType().Name}",
 #pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
         };
     }
