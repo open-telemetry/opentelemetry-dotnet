@@ -189,16 +189,18 @@ public sealed class LogRecord
     {
         get
         {
-            if (this.Data.Severity.HasValue)
+            if (!this.Data.Severity.HasValue)
             {
-                var severity = (uint)this.Data.Severity.Value;
-                if (severity is >= 1 and <= 24)
-                {
-                    return (LogLevel)((severity - 1) / 4);
-                }
+                return LogLevel.None;
             }
 
-            return LogLevel.Trace;
+            var severity = (uint)this.Data.Severity.Value;
+            if (severity is >= 1 and <= 24)
+            {
+                return (LogLevel)((severity - 1) / 4);
+            }
+
+            return LogLevel.None;
         }
 
         set => OpenTelemetryLogger.SetLogRecordSeverityFields(ref this.Data, value);
