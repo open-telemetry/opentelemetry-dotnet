@@ -107,7 +107,7 @@ internal static class HttpClientHelpers
             finally
             {
 #if NET
-                ArrayPool<byte>.Shared.Return(buffer);
+                ArrayPool<byte>.Shared.Return(buffer, clearArray: true);
 #endif
             }
         }
