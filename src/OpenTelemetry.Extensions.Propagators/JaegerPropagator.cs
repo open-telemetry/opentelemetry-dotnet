@@ -144,11 +144,7 @@ public class JaegerPropagator : TextMapPropagator
             return false;
         }
 
-#if NET
         var headerValue = jaegerHeader;
-#else
-        var headerValue = jaegerHeader!;
-#endif
         if (!TryExtractTraceParts(
                 headerValue,
                 out var traceIdStr,
