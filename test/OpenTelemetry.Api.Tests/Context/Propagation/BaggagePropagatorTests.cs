@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Net;
 using Xunit;
 
 namespace OpenTelemetry.Context.Propagation.Tests;
@@ -545,18 +544,18 @@ public class BaggagePropagatorTests
     }
 
     [Theory]
-    [InlineData(" ")]
-    [InlineData("(")]
-    [InlineData(":")]
-    [InlineData(";")]
-    [InlineData("@")]
-    public void KeyWithDelimiterCharEntirePairDroppedOnInject(string delimiter)
+    [InlineData(" ", "%20")]
+    [InlineData("(", "%28")]
+    [InlineData(":", "%3A")]
+    [InlineData(";", "%3B")]
+    [InlineData("@", "%40")]
+    public void KeyWithDelimiterCharIsPercentEncodedOnInject(string delimiter, string expectedEncoding)
     {
         var propagationContext = new PropagationContext(
             default,
             new Baggage(new Dictionary<string, string>
             {
-                { $"invalid{delimiter}key", "should-be-dropped" },
+                { $"invalid{delimiter}key", "should-be-kept" },
                 { "valid-key", "valid-value" },
             }));
 
@@ -564,7 +563,13 @@ public class BaggagePropagatorTests
         this.baggage.Inject(propagationContext, carrier, Setter);
 
         Assert.Single(carrier);
-        Assert.Equal("valid-key=valid-value", carrier[BaggagePropagator.BaggageHeaderName]);
+
+        var header = carrier[BaggagePropagator.BaggageHeaderName];
+
+        Assert.Contains("valid-key=valid-value", header, StringComparison.Ordinal);
+        var expectedEncodedKey = $"invalid{expectedEncoding}key=should-be-kept";
+        Assert.Contains(expectedEncodedKey, header, StringComparison.Ordinal);
+        Assert.Equal(2, header.Split(',').Length);
     }
 
     [Theory]
@@ -855,7 +860,7 @@ public class BaggagePropagatorTests
     {
         var carrier = new Dictionary<string, string>();
         this.baggage.Inject(
-            new PropagationContext(default, new Baggage(new Dictionary<string, string> { { "valid-key",  "valid-value" }, { "invalid key", "should-be-dropped" }, })), carrier, Setter);
+            new PropagationContext(default, new Baggage(new Dictionary<string, string> { { "valid-key",  "valid-value" }, })), carrier, Setter);
 
         var extracted = this.baggage.Extract(default, carrier, Getter).Baggage.GetBaggage();
         Assert.Single(extracted);
