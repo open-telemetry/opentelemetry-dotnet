@@ -221,7 +221,7 @@ public class SpanShimTests
 
         Assert.Equal(6, tags.Count);
 
-        // float→double widening: 0.1f is not exactly 0.1D due to IEEE 754 representation.
+        // float->double widening: 0.1f is not exactly 0.1D due to IEEE 754 representation.
         // Verify that the stored value matches the widened float, not the double literal.
         double expectedFloatPointOne = 0.1f;
         Assert.Equal(expectedFloatPointOne, Assert.IsType<double>(tags["float-point-one"]));
