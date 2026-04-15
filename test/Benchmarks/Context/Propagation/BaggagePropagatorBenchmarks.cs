@@ -49,10 +49,8 @@ public class BaggagePropagatorBenchmarks
 
         var baggageHeader = this.HeaderStyle switch
         {
-            "W3C" => string.Join(" , ", Items().Select(p =>
-            $"{Uri.EscapeDataString(p.Key)} = {Uri.EscapeDataString(p.Value)} ; prop1 ; propKey=propValue")),
-            _ => string.Join(",", Items().Select(p =>
-                    $"{Uri.EscapeDataString(p.Key)}={Uri.EscapeDataString(p.Value)}")),
+            "W3C" => string.Join(" , ", Items().Select(p => $"{Uri.EscapeDataString(p.Key)} = {Uri.EscapeDataString(p.Value)} ; prop1 ; propKey=propValue")),
+            _ => string.Join(",", Items().Select(p => $"{Uri.EscapeDataString(p.Key)}={Uri.EscapeDataString(p.Value)}")),
         };
 
         this.ExtractCarrier = new Dictionary<string, string>
