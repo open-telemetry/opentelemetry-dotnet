@@ -2046,10 +2046,10 @@ tracer_provider:
     - batch:
         exporter:
           otlp:
-            endpont: https://collector.example.com:4317  # typo: "endpont"
+            endpoint: https://collector.example.com:4317  # typo: "endpoint"
 ```
 
-Without schema validation, `endpont` silently becomes an unused
+Without schema validation, `endpoint` silently becomes an unused
 `IConfiguration` key and the endpoint defaults to `localhost:4317`.
 
 ### I.3 `file_format` Versioning
