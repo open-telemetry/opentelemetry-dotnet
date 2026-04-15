@@ -17,7 +17,7 @@ internal sealed class CircularBufferBuckets
 
     public CircularBufferBuckets(int capacity)
     {
-        Guard.ThrowIfOutOfRange(capacity, min: 1);
+        Guard.ThrowIfOutOfRange(capacity, min: 2);
 
         this.Capacity = capacity;
     }
