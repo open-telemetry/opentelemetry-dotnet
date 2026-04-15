@@ -94,7 +94,11 @@ jobs:
         -- RunConfiguration.DisableAppDomain=true
 
     - name: Install coverage tool
-      run: dotnet tool install -g dotnet-coverage
+      shell: pwsh
+      env:
+        # renovate: datasource=nuget depName=dotnet-coverage
+        DOTNET_COVERAGE_VERSION: '18.6.2'
+      run: dotnet tool install -g dotnet-coverage --version ${env:DOTNET_COVERAGE_VERSION}
 
     - name: Merging test results
       run: dotnet-coverage merge -f cobertura -o ./TestResults/Cobertura.xml ./TestResults/**/*.coverage

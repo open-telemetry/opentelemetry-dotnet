@@ -4,6 +4,7 @@
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
+using System.Diagnostics.Tracing;
 using System.Net.Http.Headers;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Grpc;
 
@@ -123,8 +124,12 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         catch (HttpRequestException ex)
         {
             // Handle non-retryable HTTP errors.
-            var response = TryGetResponseBody(httpResponse, cancellationToken);
-            OpenTelemetryProtocolExporterEventSource.Log.HttpRequestFailed(this.Endpoint, response, ex);
+            if (OpenTelemetryProtocolExporterEventSource.Log.IsEnabled(EventLevel.Error, EventKeywords.All))
+            {
+                var response = TryGetResponseBody(httpResponse, cancellationToken);
+                OpenTelemetryProtocolExporterEventSource.Log.HttpRequestFailed(this.Endpoint, response, ex);
+            }
+
             return new ExportClientGrpcResponse(
                 success: false,
                 deadlineUtc: deadlineUtc,
@@ -165,12 +170,10 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         }
     }
 
-    private static bool IsTransientNetworkError(HttpRequestException ex)
-    {
-        return ex.InnerException is System.Net.Sockets.SocketException socketEx
-            && (socketEx.SocketErrorCode == System.Net.Sockets.SocketError.TimedOut
-                || socketEx.SocketErrorCode == System.Net.Sockets.SocketError.ConnectionReset
-                || socketEx.SocketErrorCode == System.Net.Sockets.SocketError.HostUnreachable
-                || socketEx.SocketErrorCode == System.Net.Sockets.SocketError.ConnectionRefused);
-    }
+    private static bool IsTransientNetworkError(HttpRequestException ex) =>
+        ex.InnerException is System.Net.Sockets.SocketException socketEx
+        && (socketEx.SocketErrorCode == System.Net.Sockets.SocketError.TimedOut
+            || socketEx.SocketErrorCode == System.Net.Sockets.SocketError.ConnectionReset
+            || socketEx.SocketErrorCode == System.Net.Sockets.SocketError.HostUnreachable
+            || socketEx.SocketErrorCode == System.Net.Sockets.SocketError.ConnectionRefused);
 }

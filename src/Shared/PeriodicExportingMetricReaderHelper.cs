@@ -14,13 +14,10 @@ internal static class PeriodicExportingMetricReaderHelper
         int defaultExportIntervalMilliseconds = DefaultExportIntervalMilliseconds,
         int defaultExportTimeoutMilliseconds = DefaultExportTimeoutMilliseconds)
     {
-        var exportInterval =
-            options.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds ?? defaultExportIntervalMilliseconds;
+        var exportIntervalMilliseconds = options.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds ?? defaultExportIntervalMilliseconds;
+        var exportTimeoutMilliseconds = options.PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds ?? defaultExportTimeoutMilliseconds;
 
-        var exportTimeout =
-            options.PeriodicExportingMetricReaderOptions.ExportTimeoutMilliseconds ?? defaultExportTimeoutMilliseconds;
-
-        var metricReader = new PeriodicExportingMetricReader(exporter, exportInterval, exportTimeout)
+        var metricReader = new PeriodicExportingMetricReader(exporter, exportIntervalMilliseconds, exportTimeoutMilliseconds)
         {
             TemporalityPreference = options.TemporalityPreference,
             DefaultHistogramAggregation = options.DefaultHistogramAggregation,

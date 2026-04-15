@@ -28,6 +28,7 @@
     <File Path=".github/workflows/verifyaotcompat.yml" />
   </Folder>
   <Folder Name="/build/">
+    <File Path="build/BannedSymbols.txt" />
     <File Path="build/Common.nonprod.props" />
     <File Path="build/Common.prod.props" />
     <File Path="build/Common.props" />
@@ -218,6 +219,7 @@
   <Project Path="src/OpenTelemetry/OpenTelemetry.csproj" />
   <Project Path="test/Benchmarks/Benchmarks.csproj" />
   <Project Path="test/OpenTelemetry.AotCompatibility.TestApp/OpenTelemetry.AotCompatibility.TestApp.csproj" />
+  <Project Path="test/OpenTelemetry.Api.FuzzTests/OpenTelemetry.Api.FuzzTests.csproj" />
   <Project Path="test/OpenTelemetry.Api.ProviderBuilderExtensions.Tests/OpenTelemetry.Api.ProviderBuilderExtensions.Tests.csproj" />
   <Project Path="test/OpenTelemetry.Api.Tests/OpenTelemetry.Api.Tests.csproj" />
   <Project Path="test/OpenTelemetry.Exporter.Console.Tests/OpenTelemetry.Exporter.Console.Tests.csproj" />
@@ -227,6 +229,7 @@
   <Project Path="test/OpenTelemetry.Exporter.Prometheus.HttpListener.Tests/OpenTelemetry.Exporter.Prometheus.HttpListener.Tests.csproj" />
   <Project Path="test/OpenTelemetry.Exporter.Zipkin.Tests/OpenTelemetry.Exporter.Zipkin.Tests.csproj" />
   <Project Path="test/OpenTelemetry.Extensions.Hosting.Tests/OpenTelemetry.Extensions.Hosting.Tests.csproj" />
+  <Project Path="test/OpenTelemetry.Extensions.Propagators.FuzzTests/OpenTelemetry.Extensions.Propagators.FuzzTests.csproj" />
   <Project Path="test/OpenTelemetry.Extensions.Propagators.Tests/OpenTelemetry.Extensions.Propagators.Tests.csproj" />
   <Project Path="test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/OpenTelemetry.Instrumentation.W3cTraceContext.Tests.csproj" />
   <Project Path="test/OpenTelemetry.Shims.OpenTracing.Tests/OpenTelemetry.Shims.OpenTracing.Tests.csproj" />

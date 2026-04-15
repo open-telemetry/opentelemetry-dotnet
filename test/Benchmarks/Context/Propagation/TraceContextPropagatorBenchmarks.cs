@@ -16,15 +16,8 @@ public class TraceContextPropagatorBenchmarks
     private static readonly Random Random = new(455946);
     private static readonly TraceContextPropagator TraceContextPropagator = new();
 
-    private static readonly Func<IReadOnlyDictionary<string, string>, string, IEnumerable<string>> Getter = (headers, name) =>
-    {
-        if (headers.TryGetValue(name, out var value))
-        {
-            return [value];
-        }
-
-        return [];
-    };
+    private static readonly Func<IReadOnlyDictionary<string, string>, string, IEnumerable<string>> Getter =
+        static (headers, name) => headers.TryGetValue(name, out var value) ? [value] : [];
 
     [Params(true, false)]
     public bool LongListMember { get; set; }

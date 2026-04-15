@@ -4,6 +4,7 @@
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
+using System.Diagnostics.Tracing;
 using System.Net.Http.Headers;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
@@ -35,8 +36,12 @@ internal sealed class OtlpHttpExportClient : OtlpExportClient
             }
             catch (HttpRequestException ex)
             {
-                var response = TryGetResponseBody(httpResponse, cancellationToken);
-                OpenTelemetryProtocolExporterEventSource.Log.HttpRequestFailed(this.Endpoint, response, ex);
+                if (OpenTelemetryProtocolExporterEventSource.Log.IsEnabled(EventLevel.Error, EventKeywords.All))
+                {
+                    var response = TryGetResponseBody(httpResponse, cancellationToken);
+                    OpenTelemetryProtocolExporterEventSource.Log.HttpRequestFailed(this.Endpoint, response, ex);
+                }
+
                 return new ExportClientHttpResponse(success: false, deadlineUtc: deadlineUtc, response: httpResponse, ex);
             }
 

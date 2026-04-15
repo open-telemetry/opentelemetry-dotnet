@@ -4,6 +4,17 @@ This file contains highlights and announcements covering all components.
 For more details see `CHANGELOG.md` files maintained in the root source
 directory of each individual package.
 
+## 1.15.2
+
+Release details: [1.15.2](https://github.com/open-telemetry/opentelemetry-dotnet/releases/tag/core-1.15.2)
+
+* Limit how much of the response body is read by the OTLP exporter when
+  export fails and error logging is enabled.
+* Added Task-based worker support for `BatchExportProcessor` and
+  `PeriodicExportingMetricReader` to enable the OpenTelemetry SDK to work
+  in single-threaded WebAssembly environments such as Blazor and
+  Uno Platform.
+
 ## 1.15.1
 
 Release details: [1.15.1](https://github.com/open-telemetry/opentelemetry-dotnet/releases/tag/core-1.15.1)
