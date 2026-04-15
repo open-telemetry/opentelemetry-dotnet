@@ -4,5 +4,15 @@ M:System.Diagnostics.ActivitySource.#ctor(System.String,System.String,System.Col
 M:System.Diagnostics.Metrics.Meter.#ctor(System.String); Use Meter.Meter(MeterOptions) instead.
 M:System.Diagnostics.Metrics.Meter.#ctor(System.String,System.String); Use Meter.Meter(MeterOptions) instead.
 M:System.Diagnostics.Metrics.Meter.#ctor(System.String,System.String,System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,System.Object}},System.Object); Use Meter.Meter(MeterOptions) instead.
+M:System.Net.Http.HttpClient.GetByteArrayAsync(string)
+M:System.Net.Http.HttpClient.GetByteArrayAsync(string, System.Threading.CancellationToken)
+M:System.Net.Http.HttpClient.GetByteArrayAsync(System.Uri)
+M:System.Net.Http.HttpClient.GetByteArrayAsync(System.Uri, System.Threading.CancellationToken)
+M:System.Net.Http.HttpClient.GetStringAsync(string)
+M:System.Net.Http.HttpClient.GetStringAsync(string, System.Threading.CancellationToken)
+M:System.Net.Http.HttpClient.GetStringAsync(System.Uri)
+M:System.Net.Http.HttpClient.GetStringAsync(System.Uri, System.Threading.CancellationToken)
+M:System.Net.Http.HttpContent.ReadAsByteArrayAsync()
+M:System.Net.Http.HttpContent.ReadAsByteArrayAsync(System.Threading.CancellationToken)
 M:System.Net.Http.HttpContent.ReadAsStringAsync()
 M:System.Net.Http.HttpContent.ReadAsStringAsync(System.Threading.CancellationToken)
