@@ -200,6 +200,47 @@ public class SpanShimTests
     }
 
     [Fact]
+    public void LogUsingFieldsPreservesFractionalNumericValues()
+    {
+        var tracer = TracerProvider.Default.GetTracer(TracerName);
+        var shim = new SpanShim(tracer.StartSpan(SpanName));
+
+        shim.Log(
+        [
+            new("float-point-one", 0.1f),
+            new("double-point-one", 0.1D),
+            new("float-point-three", 0.3f),
+            new("double-point-three", 0.3D),
+            new("float-exact", 1.5f),
+            new("double-exact", 1.5D),
+        ]);
+
+        Assert.NotNull(shim.Span.Activity);
+        var evt = Assert.Single(shim.Span.Activity.Events);
+        var tags = evt.Tags.ToDictionary(pair => pair.Key, pair => pair.Value);
+
+        Assert.Equal(6, tags.Count);
+
+        // float→double widening: 0.1f is not exactly 0.1D due to IEEE 754 representation.
+        // Verify that the stored value matches the widened float, not the double literal.
+        double expectedFloatPointOne = 0.1f;
+        Assert.Equal(expectedFloatPointOne, Assert.IsType<double>(tags["float-point-one"]));
+        Assert.NotEqual(0.1D, (double)tags["float-point-one"]!);
+
+        Assert.Equal(0.1D, Assert.IsType<double>(tags["double-point-one"]));
+
+        double expectedFloatPointThree = 0.3f;
+        Assert.Equal(expectedFloatPointThree, Assert.IsType<double>(tags["float-point-three"]));
+        Assert.NotEqual(0.3D, (double)tags["float-point-three"]!);
+
+        Assert.Equal(0.3D, Assert.IsType<double>(tags["double-point-three"]));
+
+        // 1.5 is exactly representable in both float and double.
+        Assert.Equal(1.5D, Assert.IsType<double>(tags["float-exact"]));
+        Assert.Equal(1.5D, Assert.IsType<double>(tags["double-exact"]));
+    }
+
+    [Fact]
     public void SetTagStringValue()
     {
         var tracer = TracerProvider.Default.GetTracer(TracerName);
