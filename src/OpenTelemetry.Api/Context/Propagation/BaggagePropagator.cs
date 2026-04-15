@@ -189,7 +189,7 @@ public class BaggagePropagator : TextMapPropagator
                     continue;
                 }
 
-                baggageDictionary ??= new(StringComparer.Ordinal);
+                baggageDictionary ??= [with(StringComparer.Ordinal)];
                 baggageDictionary[key] = value;
             }
         }

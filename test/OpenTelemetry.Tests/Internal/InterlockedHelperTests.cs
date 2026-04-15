@@ -13,9 +13,15 @@ public class InterlockedHelperTests
         var value = double.NaN;
 
         var task = Task.Run(() => InterlockedHelper.Add(ref value, 1d));
-        var completed = await Task.WhenAny(task, Task.Delay(TimeSpan.FromSeconds(2))) == task;
 
+#if NET
+        await task.WaitAsync(TimeSpan.FromSeconds(2));
+#else
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        var completed = await Task.WhenAny(task, Task.Delay(TimeSpan.FromSeconds(2), cts.Token)) == task;
         Assert.True(completed);
+#endif
+
         Assert.True(double.IsNaN(value));
     }
 }
