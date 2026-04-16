@@ -1,6 +1,7 @@
 # Persistent Storage APIs for OTLP Exporter
 
-TODO: Fix links when https://github.com/open-telemetry/opentelemetry-dotnet-contrib/pull/4128 is merged
+TODO: Fix links when [contrib#4128](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/pull/4128)
+is merged
 
 The files in this folder have been copied over from
 [OpenTelemetry.PersistentStorage.Abstractions](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/1be4157075ad09e13aa54b8e5845d2310bd82673/src/OpenTelemetry.PersistentStorage.Abstractions)
