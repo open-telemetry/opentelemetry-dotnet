@@ -111,6 +111,16 @@ internal static class PersistentStorageHelper
     internal static void WriteAllBytes(string path, byte[] buffer)
         => File.WriteAllBytes(path, buffer);
 
+    internal static void WriteAllBytes(string path, ReadOnlySpan<byte> buffer)
+    {
+#if NET
+        using var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None);
+        stream.Write(buffer);
+#else
+        File.WriteAllBytes(path, buffer.ToArray());
+#endif
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static void RemoveFile(string fileName, out long fileSize)
     {
