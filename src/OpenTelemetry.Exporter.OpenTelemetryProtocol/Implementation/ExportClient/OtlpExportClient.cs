@@ -94,14 +94,18 @@ internal abstract class OtlpExportClient : IExportClient
         return request;
     }
 
-    protected HttpResponseMessage SendHttpRequest(HttpRequestMessage request, CancellationToken cancellationToken) =>
+    protected HttpResponseMessage SendHttpRequest(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        // HTTP/2 (gRPC) requires reading the entire response content to ensure that the response trailers are received
+        var completionOption = this.RequireHttp2 ? HttpCompletionOption.ResponseContentRead : HttpCompletionOption.ResponseHeadersRead;
 #if NET
         // Note: SendAsync must be used with HTTP/2 because synchronous send is
         // not supported.
-        this.RequireHttp2 || !SynchronousSendSupportedByCurrentPlatform
-            ? this.HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).GetAwaiter().GetResult()
-            : this.HttpClient.Send(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        return this.RequireHttp2 || !SynchronousSendSupportedByCurrentPlatform
+            ? this.HttpClient.SendAsync(request, completionOption, cancellationToken).GetAwaiter().GetResult()
+            : this.HttpClient.Send(request, completionOption, cancellationToken);
 #else
-        this.HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).GetAwaiter().GetResult();
+        return this.HttpClient.SendAsync(request, completionOption, cancellationToken).GetAwaiter().GetResult();
 #endif
+    }
 }
