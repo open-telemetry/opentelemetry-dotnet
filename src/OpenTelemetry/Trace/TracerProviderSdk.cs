@@ -444,7 +444,11 @@ internal sealed class TracerProviderSdk : TracerProvider
     private static double ReadTraceIdRatio(IConfiguration configuration)
     {
         if (configuration.TryGetStringValue(TracesSamplerArgConfigKey, out var configValue) &&
-                double.TryParse(configValue, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out var traceIdRatio))
+                double.TryParse(configValue, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out var traceIdRatio) &&
+                !double.IsNaN(traceIdRatio) &&
+                !double.IsInfinity(traceIdRatio) &&
+                traceIdRatio >= 0.0 &&
+                traceIdRatio <= 1.0)
         {
             return traceIdRatio;
         }
