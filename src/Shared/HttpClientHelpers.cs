@@ -30,6 +30,12 @@ internal static class HttpClientHelpers
             return null;
         }
 
+        // Check Content-Length before reading if the header is present.
+        if (!allowTruncation && httpResponse.Content.Headers.ContentLength > limit)
+        {
+            throw new InvalidOperationException($"Response body exceeded the size limit of {limit} bytes.");
+        }
+
         if (cancellationToken.IsCancellationRequested)
         {
             if (allowTruncation)
@@ -43,9 +49,9 @@ internal static class HttpClientHelpers
         try
         {
 #if NET
-            var stream = httpResponse.Content.ReadAsStream(cancellationToken);
+            using var stream = httpResponse.Content.ReadAsStream(cancellationToken);
 #else
-            var stream = httpResponse.Content.ReadAsStreamAsync().GetAwaiter().GetResult();
+            using var stream = httpResponse.Content.ReadAsStreamAsync().GetAwaiter().GetResult();
 #endif
 
             var length = GetBufferLength(stream, limit);
@@ -61,7 +67,7 @@ internal static class HttpClientHelpers
                 var totalRead = 0;
 
                 // Read raw bytes so the size limit applies to bytes rather than characters
-                while (totalRead < limit && !cancellationToken.IsCancellationRequested)
+                while (totalRead < length && !cancellationToken.IsCancellationRequested)
                 {
                     var bytesRead = stream.Read(buffer, totalRead, length - totalRead);
 
@@ -75,9 +81,9 @@ internal static class HttpClientHelpers
 
                 bool extra = false;
 
-                if (totalRead == limit)
+                if (totalRead == length)
                 {
-                    // We've read exactly limit bytes. Check if there's more data.
+                    // We've read exactly length bytes. Check if there's more data.
                     var probe = new byte[1];
 
 #if NETFRAMEWORK || NETSTANDARD
