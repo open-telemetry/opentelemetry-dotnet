@@ -99,9 +99,9 @@ internal abstract class OtlpExportClient : IExportClient
         // Note: SendAsync must be used with HTTP/2 because synchronous send is
         // not supported.
         this.RequireHttp2 || !SynchronousSendSupportedByCurrentPlatform
-            ? this.HttpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult()
-            : this.HttpClient.Send(request, cancellationToken);
+            ? this.HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).GetAwaiter().GetResult()
+            : this.HttpClient.Send(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 #else
-        this.HttpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult();
+        this.HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).GetAwaiter().GetResult();
 #endif
 }
