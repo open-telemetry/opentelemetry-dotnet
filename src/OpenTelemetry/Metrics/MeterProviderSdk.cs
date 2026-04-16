@@ -219,6 +219,12 @@ internal sealed class MeterProviderSdk : MeterProvider
             return;
         }
 
+        if (!MathHelper.IsFinite(value))
+        {
+            OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument?.Name ?? "UnknownInstrument", "Measurement value was invalid.", "Use a finite value for measurements (not NaN or Infinity).");
+            return;
+        }
+
         metricState.RecordMeasurementDouble(value, tags);
     }
 

@@ -104,4 +104,30 @@ public class MeterProviderSdkTests
             }
         }
     }
+
+    [Fact]
+    public void NonFiniteDoubleMeasurementsAreDropped()
+    {
+        var meterName = Utils.GetCurrentMethodName();
+        var exportedItems = new List<Metric>();
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meterName)
+            .AddInMemoryExporter(exportedItems)
+            .Build();
+
+        using var meter = new Meter(meterName);
+        var counter = meter.CreateCounter<double>("counter");
+
+        counter.Add(double.NaN);
+        counter.Add(double.PositiveInfinity);
+        counter.Add(double.NegativeInfinity);
+        counter.Add(2.5);
+
+        Assert.True(meterProvider.ForceFlush());
+        var exportedMetric = Assert.Single(exportedItems);
+        var metric = new MetricSnapshot(exportedMetric);
+        var metricPoint = Assert.Single(metric.MetricPoints);
+        Assert.Equal(2.5, metricPoint.GetSumDouble());
+    }
 }
