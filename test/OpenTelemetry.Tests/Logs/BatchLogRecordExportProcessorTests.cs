@@ -166,7 +166,7 @@ public sealed class BatchLogRecordExportProcessorTests
 
         var scopeProvider = new LoggerExternalScopeProvider();
 
-        List<LogRecord> exportedItems = new();
+        List<LogRecord> exportedItems = [];
 
         var processor = new BatchLogRecordExportProcessor(
 #pragma warning disable CA2000 // Dispose objects before losing scope

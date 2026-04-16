@@ -10,12 +10,19 @@ public class InterlockedHelperTests
     [Fact]
     public async Task AddWhenCurrentValueIsNaNShouldNotHang()
     {
+        var timeout = TimeSpan.FromSeconds(2);
         var value = double.NaN;
 
         var task = Task.Run(() => InterlockedHelper.Add(ref value, 1d));
-        var completed = await Task.WhenAny(task, Task.Delay(TimeSpan.FromSeconds(2))) == task;
 
+#if NET
+        await task.WaitAsync(timeout);
+#else
+        using var cts = new CancellationTokenSource(timeout);
+        var completed = await Task.WhenAny(task, Task.Delay(timeout, cts.Token)) == task;
         Assert.True(completed);
+#endif
+
         Assert.True(double.IsNaN(value));
     }
 }
