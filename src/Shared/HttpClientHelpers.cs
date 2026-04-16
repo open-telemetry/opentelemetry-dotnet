@@ -73,19 +73,24 @@ internal static class HttpClientHelpers
                     totalRead += bytesRead;
                 }
 
-                // We've read exactly limit bytes. Check if there's more data.
-                var probe = new byte[1];
+                bool extra = false;
+
+                if (totalRead == limit)
+                {
+                    // We've read exactly limit bytes. Check if there's more data.
+                    var probe = new byte[1];
 
 #if NETFRAMEWORK || NETSTANDARD
-                var extra = stream.Read(probe, 0, 1);
+                    extra = stream.Read(probe, 0, 1) > 0;
 #else
-                var extra = stream.Read(probe);
+                    extra = stream.Read(probe) > 0;
 #endif
 
-                if (extra > 0 && !allowTruncation)
-                {
-                    // + 1: we read exactly MaxMessageSize bytes and confirmed at least one more byte exists.
-                    throw new InvalidOperationException($"Response body exceeded the size limit of {limit} bytes.");
+                    if (extra && !allowTruncation)
+                    {
+                        // + 1: we read exactly MaxMessageSize bytes and confirmed at least one more byte exists.
+                        throw new InvalidOperationException($"Response body exceeded the size limit of {limit} bytes.");
+                    }
                 }
 
                 if (!allowTruncation)
@@ -97,7 +102,7 @@ internal static class HttpClientHelpers
                 var encoding = GetEncoding(httpResponse.Content.Headers.ContentType?.CharSet);
                 var result = encoding.GetString(buffer, 0, totalRead);
 
-                if (extra > 0)
+                if (extra)
                 {
                     result += "[TRUNCATED]";
                 }
