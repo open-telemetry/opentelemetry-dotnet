@@ -219,9 +219,13 @@ internal sealed class MeterProviderSdk : MeterProvider
             return;
         }
 
-        if (!MathHelper.IsFinite(value))
+        if (!MathHelper.IsFinite(value)
+            && instrument is Counter<double>
+                or UpDownCounter<double>
+                or ObservableCounter<double>
+                or ObservableUpDownCounter<double>)
         {
-            OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument?.Name ?? "UnknownInstrument", "Measurement value was invalid.", "Use a finite value for measurements (not NaN or Infinity).");
+            OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument?.Name ?? "UnknownInstrument", "Measurement value was invalid.", "Use a finite value for sum instruments (not NaN or Infinity).");
             return;
         }
 

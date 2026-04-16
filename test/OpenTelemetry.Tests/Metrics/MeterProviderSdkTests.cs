@@ -106,7 +106,7 @@ public class MeterProviderSdkTests
     }
 
     [Fact]
-    public void NonFiniteDoubleMeasurementsAreDropped()
+    public void NonFiniteCounterDoubleMeasurementsAreDropped()
     {
         var meterName = Utils.GetCurrentMethodName();
         var exportedItems = new List<Metric>();
@@ -125,9 +125,61 @@ public class MeterProviderSdkTests
         counter.Add(2.5);
 
         Assert.True(meterProvider.ForceFlush());
+
         var exportedMetric = Assert.Single(exportedItems);
         var metric = new MetricSnapshot(exportedMetric);
         var metricPoint = Assert.Single(metric.MetricPoints);
         Assert.Equal(2.5, metricPoint.GetSumDouble());
+    }
+
+    [Fact]
+    public void NonFiniteUpDownCounterDoubleMeasurementsAreDropped()
+    {
+        var meterName = Utils.GetCurrentMethodName();
+        var exportedItems = new List<Metric>();
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meterName)
+            .AddInMemoryExporter(exportedItems)
+            .Build();
+
+        using var meter = new Meter(meterName);
+        var upDownCounter = meter.CreateUpDownCounter<double>("updowncounter");
+
+        upDownCounter.Add(double.PositiveInfinity);
+        upDownCounter.Add(double.NegativeInfinity);
+        upDownCounter.Add(2.5);
+
+        Assert.True(meterProvider.ForceFlush());
+
+        var exportedMetric = Assert.Single(exportedItems);
+        var metric = new MetricSnapshot(exportedMetric);
+        var metricPoint = Assert.Single(metric.MetricPoints);
+        Assert.Equal(2.5, metricPoint.GetSumDouble());
+    }
+
+    [Fact]
+    public void NaNHistogramMeasurementsAreNotDropped()
+    {
+        var meterName = Utils.GetCurrentMethodName();
+        var exportedItems = new List<Metric>();
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meterName)
+            .AddInMemoryExporter(exportedItems)
+            .Build();
+
+        using var meter = new Meter(meterName);
+        var histogram = meter.CreateHistogram<double>("histogram");
+
+        histogram.Record(18);
+        histogram.Record(double.NaN);
+
+        Assert.True(meterProvider.ForceFlush());
+
+        var exportedMetric = Assert.Single(exportedItems);
+        var metric = new MetricSnapshot(exportedMetric);
+        var metricPoint = Assert.Single(metric.MetricPoints);
+        Assert.True(double.IsNaN(metricPoint.GetHistogramSum()));
     }
 }
