@@ -56,7 +56,7 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler : OtlpExp
             return false;
         }
 
-        return this.persistentBlobProvider.TryCreateBlob(request.AsSpan(0, contentLength).ToArray(), out _);
+        return this.persistentBlobProvider.TryCreateBlob(request.AsSpan(0, contentLength), out _);
     }
 
     protected override void OnShutdown(int timeoutMilliseconds)
