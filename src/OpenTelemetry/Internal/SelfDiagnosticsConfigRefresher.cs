@@ -61,7 +61,7 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
     }
 
     /// <summary>
-    /// Try to get the log stream which is seeked to the position where the next line of log should be written.
+    /// Try to get the log stream which is sought to the position where the next line of log should be written.
     /// </summary>
     /// <param name="byteCount">The number of bytes that need to be written.</param>
     /// <param name="stream">When this method returns, contains the Stream object where `byteCount` of bytes can be written.</param>

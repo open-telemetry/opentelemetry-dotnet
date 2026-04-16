@@ -174,6 +174,45 @@ public sealed class PrometheusSerializerTests
     }
 
     [Fact]
+    public void GaugeEmptyDimensionName()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        meter.CreateObservableGauge(
+            "test_gauge",
+            () => new Measurement<long>(123, new KeyValuePair<string, object?>(string.Empty, "tagValue")));
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0]);
+        Assert.Matches(
+            ("^"
+                + "# TYPE test_gauge gauge\n"
+                + $"test_gauge{{otel_scope_name='{Utils.GetCurrentMethodName()}',_='tagValue'}} 123 \\d+\n"
+                + "$").Replace('\'', '"'),
+            Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(null)]
+    public void WriteLabelKeyNullOrEmptyName(string? labelName)
+    {
+        var buffer = new byte[32];
+
+        var cursor = PrometheusSerializer.WriteLabelKey(buffer, 0, labelName!);
+
+        Assert.Equal("_", Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Fact]
     public void GaugeDoubleSubnormal()
     {
         var buffer = new byte[85000];
