@@ -141,7 +141,7 @@ internal static class PersistentStorageHelper
         var dashIndex = fileName.LastIndexOf('-');
         if (dashIndex == -1)
         {
-            return DateTime.MinValue;
+            return DateTime.SpecifyKind(DateTime.MinValue, DateTimeKind.Utc);
         }
 
         var timestamp = fileName.Substring(0, dashIndex);
