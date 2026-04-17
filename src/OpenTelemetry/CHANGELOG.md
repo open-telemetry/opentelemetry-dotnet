@@ -6,6 +6,13 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fix resource leak in batch and periodic exporting task workers for Blazor/WASM.
+  ([#7069](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7069))
+
+* Fixed `LogRecord.LogLevel` to preserve `LogLevel.None` and handle
+  unspecified or out-of-range severities without returning invalid enum values.
+  ([#7092](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7092))
+
 ## 1.15.2
 
 Released 2026-Apr-08

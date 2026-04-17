@@ -666,7 +666,7 @@ public class OtlpLogExporterTests
         });
 
         var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
-        logger.ExceptionOccured(new InvalidOperationException("Exception Message"));
+        logger.ExceptionOccurred(new InvalidOperationException("Exception Message"));
 
         var logRecord = logRecords[0];
         var loggedException = logRecord.Exception;
@@ -1339,10 +1339,10 @@ public class OtlpLogExporterTests
         var provider = sp.GetRequiredService<LoggerProvider>() as LoggerProviderSdk;
         Assert.NotNull(provider);
 
-        var batchProcesor = provider.Processor as BatchLogRecordExportProcessor;
-        Assert.NotNull(batchProcesor);
+        var batchProcessor = provider.Processor as BatchLogRecordExportProcessor;
+        Assert.NotNull(batchProcessor);
 
-        Assert.Equal(BatchLogRecordExportProcessor.DefaultScheduledDelayMilliseconds, batchProcesor.ScheduledDelayMilliseconds);
+        Assert.Equal(BatchLogRecordExportProcessor.DefaultScheduledDelayMilliseconds, batchProcessor.ScheduledDelayMilliseconds);
     }
 
     [Theory]
@@ -1377,10 +1377,10 @@ public class OtlpLogExporterTests
 
         if (processorType == ExportProcessorType.Batch)
         {
-            var batchProcesor = processor as BatchLogRecordExportProcessor;
-            Assert.NotNull(batchProcesor);
+            var batchProcessor = processor as BatchLogRecordExportProcessor;
+            Assert.NotNull(batchProcessor);
 
-            Assert.Equal(1000, batchProcesor.ScheduledDelayMilliseconds);
+            Assert.Equal(1000, batchProcessor.ScheduledDelayMilliseconds);
         }
         else
         {

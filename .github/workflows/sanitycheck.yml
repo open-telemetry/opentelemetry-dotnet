@@ -9,20 +9,15 @@ permissions:
   contents: read
 
 jobs:
-  run-misspell:
+  run-typos:
     runs-on: ubuntu-24.04
 
     steps:
     - name: check out code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-    - name: install misspell
-      run: |
-        curl -L -o ./install-misspell.sh https://git.io/misspell
-        sh ./install-misspell.sh
-
-    - name: run misspell
-      run: ./bin/misspell -error .
+    - name: check for typos
+      uses: crate-ci/typos@cf5f1c29a8ac336af8568821ec41919923b05a83 # v1.45.1
 
   run-sanitycheck:
     runs-on: ubuntu-24.04

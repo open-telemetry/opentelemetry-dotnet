@@ -34,6 +34,7 @@ public class TracestateUtilsTests
     [InlineData("k\t=v")]
     [InlineData("k=v,k=v")]
     [InlineData("k1=v1,,,k2=v2")]
+    [InlineData("1k=v")]
     [InlineData("k=morethan256......................................................................................................................................................................................................................................................")]
     [InlineData("v=morethan256......................................................................................................................................................................................................................................................")]
     public void InvalidTracestate(string tracestate)
@@ -75,7 +76,6 @@ public class TracestateUtilsTests
     [InlineData(", k= v, ", "k", "v")]
     [InlineData("k=\tv", "k", "v")]
     [InlineData("k=v\t", "k", "v")]
-    [InlineData("1k=v", "1k", "v")]
     public void ValidPair(string pair, string expectedKey, string expectedValue)
     {
         var tracestateEntries = new List<KeyValuePair<string, string>>();
@@ -99,5 +99,32 @@ public class TracestateUtilsTests
         Assert.Contains(new KeyValuePair<string, string>("k2", "v2"), tracestateEntries);
 
         Assert.Equal("k1=v1,k2=v2", TraceStateUtils.GetString(tracestateEntries));
+    }
+
+    [Fact]
+    public void GetString_RemovesLargeEntriesFirstWhenTruncating()
+    {
+        var tracestateEntries = new List<KeyValuePair<string, string>>
+        {
+            new("big", new string('a', 196)),
+        };
+
+        tracestateEntries.AddRange(Enumerable.Range(0, 17).Select(i => new KeyValuePair<string, string>($"k{i:00}", new string('a', 15))));
+
+        Assert.Equal(
+            string.Join(",", Enumerable.Range(0, 17).Select(i => $"k{i:00}={new string('a', 15)}")),
+            TraceStateUtils.GetString(tracestateEntries));
+    }
+
+    [Fact]
+    public void GetString_RemovesEntriesFromEndWhenStillTooLong()
+    {
+        var tracestateEntries = Enumerable.Range(0, 32)
+            .Select(i => new KeyValuePair<string, string>($"k{i:00}", new string('a', 20)))
+            .ToList();
+
+        Assert.Equal(
+            string.Join(",", Enumerable.Range(0, 20).Select(i => $"k{i:00}={new string('a', 20)}")),
+            TraceStateUtils.GetString(tracestateEntries));
     }
 }

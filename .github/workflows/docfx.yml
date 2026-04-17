@@ -20,7 +20,11 @@ jobs:
       uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
 
     - name: install docfx
-      run: dotnet tool install -g docfx
+      shell: pwsh
+      env:
+        # renovate: datasource=nuget depName=docfx
+        DOCFX_VERSION: '2.78.5'
+      run: dotnet tool install -g docfx --version ${env:DOCFX_VERSION}
 
     - name: run .\build\docfx.cmd
       shell: cmd

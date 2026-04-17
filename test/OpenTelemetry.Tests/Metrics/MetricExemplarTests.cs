@@ -355,10 +355,10 @@ public class MetricExemplarTests : MetricTestsBase
 
         Assert.True(meterProvider.ForceFlush(MaxTimeToAllowForFlush));
 
-        ValidateScondPhase("histogramWithBucketsAndMinMaxDouble", temporality, testStartTime, exportedItems, measurementValues, secondMeasurementValues);
-        ValidateScondPhase("histogramWithBucketsDouble", temporality, testStartTime, exportedItems, measurementValues, secondMeasurementValues);
-        ValidateScondPhase("histogramWithBucketsAndMinMaxLong", temporality, testStartTime, exportedItems, measurementValues, secondMeasurementValues);
-        ValidateScondPhase("histogramWithBucketsLong", temporality, testStartTime, exportedItems, measurementValues, secondMeasurementValues);
+        ValidateSecondPhase("histogramWithBucketsAndMinMaxDouble", temporality, testStartTime, exportedItems, measurementValues, secondMeasurementValues);
+        ValidateSecondPhase("histogramWithBucketsDouble", temporality, testStartTime, exportedItems, measurementValues, secondMeasurementValues);
+        ValidateSecondPhase("histogramWithBucketsAndMinMaxLong", temporality, testStartTime, exportedItems, measurementValues, secondMeasurementValues);
+        ValidateSecondPhase("histogramWithBucketsLong", temporality, testStartTime, exportedItems, measurementValues, secondMeasurementValues);
 
         static void ValidateFirstPhase(
             string instrumentName,
@@ -377,7 +377,7 @@ public class MetricExemplarTests : MetricTestsBase
             ValidateExemplars(exemplars, metricPoint.Value.StartTime, metricPoint.Value.EndTime, measurementValues, e => e.DoubleValue);
         }
 
-        static void ValidateScondPhase(
+        static void ValidateSecondPhase(
             string instrumentName,
             MetricReaderTemporalityPreference temporality,
             DateTime testStartTime,
