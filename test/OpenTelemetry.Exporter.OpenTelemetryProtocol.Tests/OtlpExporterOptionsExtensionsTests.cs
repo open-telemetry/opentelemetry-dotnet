@@ -4,10 +4,13 @@
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
+using System.Reflection;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
+using OpenTelemetry.Logs;
 using OpenTelemetry.PersistentStorage.FileSystem;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
@@ -245,6 +248,97 @@ public class OtlpExporterOptionsExtensionsTests
         }
     }
 
+    [Fact]
+    public void IsIHttpClientFactorySafeForLogExporter_ReturnsFalse_WhenHttpClientFactoryNotRegistered()
+    {
+        // An empty service provider has no IHttpClientFactory — must be treated as unsafe.
+        using var serviceProvider = new ServiceCollection().BuildServiceProvider();
+
+        var result = OtlpLogExporterHelperExtensions.IsIHttpClientFactorySafeForLogExporter(serviceProvider);
+
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void IsIHttpClientFactorySafeForLogExporter_ReturnsFalse_WhenCustomHttpClientFactoryRegistered()
+    {
+        // A hand-rolled IHttpClientFactory has no "_logger" field at all — must be treated as unsafe
+        // because we cannot verify the lazy-logger contract.
+        var services = new ServiceCollection();
+        services.AddSingleton<System.Net.Http.IHttpClientFactory>(new NoLoggerFieldHttpClientFactory());
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var result = OtlpLogExporterHelperExtensions.IsIHttpClientFactorySafeForLogExporter(serviceProvider);
+
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void IsIHttpClientFactorySafeForLogExporter_ReturnsFalse_WhenHttpClientFactoryHasEagerLoggerField()
+    {
+        // Simulate the old DefaultHttpClientFactory whose "_logger" field is plain ILogger (not Lazy<>).
+        var services = new ServiceCollection();
+        services.AddSingleton<System.Net.Http.IHttpClientFactory>(new EagerLoggerHttpClientFactory());
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var result = OtlpLogExporterHelperExtensions.IsIHttpClientFactorySafeForLogExporter(serviceProvider);
+
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void IsIHttpClientFactorySafeForLogExporter_ReturnsTrue_WhenHttpClientFactoryHasLazyLoggerField()
+    {
+        // Simulate the fixed DefaultHttpClientFactory whose "_logger" field is Lazy<ILogger>.
+        var services = new ServiceCollection();
+        services.AddSingleton<System.Net.Http.IHttpClientFactory>(new LazyLoggerHttpClientFactory());
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var result = OtlpLogExporterHelperExtensions.IsIHttpClientFactorySafeForLogExporter(serviceProvider);
+
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void IsIHttpClientFactorySafeForLogExporter_WithRealAddHttpClient_MatchesRuntimeBehavior()
+    {
+        var services = new ServiceCollection();
+        services.AddHttpClient();
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var isSafe = OtlpLogExporterHelperExtensions.IsIHttpClientFactorySafeForLogExporter(serviceProvider);
+
+        // Independently verify the field type by inspecting the concrete factory instance.
+        var httpClientFactoryType = Type.GetType("System.Net.Http.IHttpClientFactory, Microsoft.Extensions.Http", throwOnError: false);
+        Assert.NotNull(httpClientFactoryType);
+
+        var httpClientFactory = serviceProvider.GetService(httpClientFactoryType);
+        Assert.NotNull(httpClientFactory);
+
+        var concreteType = httpClientFactory.GetType();
+        FieldInfo? loggerField = null;
+        for (var t = concreteType; t != null; t = t.BaseType)
+        {
+            loggerField = t.GetField("_logger", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+            if (loggerField != null)
+            {
+                break;
+            }
+        }
+
+        if (loggerField == null)
+        {
+            // No "_logger" field — unknown implementation, expected to be false.
+            Assert.False(isSafe);
+        }
+        else
+        {
+            var expectedSafe = loggerField.FieldType.IsGenericType
+                && loggerField.FieldType.GetGenericTypeDefinition() == typeof(Lazy<>);
+            Assert.Equal(expectedSafe, isSafe);
+        }
+    }
+
     private static void AssertTransmissionHandler(OtlpExporterTransmissionHandler transmissionHandler, Type exportClientType, int expectedTimeoutMilliseconds, string? retryStrategy)
     {
         if (retryStrategy == "in_memory")
@@ -309,5 +403,48 @@ public class OtlpExporterOptionsExtensionsTests
         {
             Assert.Contains(headers, h => h.Key == std.Key && h.Value == std.Value);
         }
+    }
+
+    /// <summary>
+    /// An <see cref="System.Net.Http.IHttpClientFactory"/> implementation with no <c>_logger</c> field.
+    /// Represents a completely custom factory — the safety probe must return <see langword="false"/>.
+    /// </summary>
+    private sealed class NoLoggerFieldHttpClientFactory : System.Net.Http.IHttpClientFactory
+    {
+        public HttpClient CreateClient(string name) => new();
+    }
+
+    /// <summary>
+    /// Simulates the <em>old</em> <c>DefaultHttpClientFactory</c> whose <c>_logger</c> field is a
+    /// plain (non-lazy) <c>ILogger</c> — the version affected by the circular-dependency bug.
+    /// The safety probe must return <see langword="false"/>.
+    /// </summary>
+    private sealed class EagerLoggerHttpClientFactory : System.Net.Http.IHttpClientFactory
+    {
+        // The field name must be exactly "_logger" to mirror the real DefaultHttpClientFactory.
+        // SA1309: suppressed intentionally — the underscore prefix is load-bearing for the reflection probe.
+        // CS0169/CS0649/CA1823: suppressed intentionally — only the declared field type matters, not the value.
+#pragma warning disable SA1309, CS0169, CS0649, CA1823
+        private readonly Microsoft.Extensions.Logging.ILogger? _logger;
+#pragma warning restore SA1309, CS0169, CS0649, CA1823
+
+        public HttpClient CreateClient(string name) => new();
+    }
+
+    /// <summary>
+    /// Simulates the <em>fixed</em> <c>DefaultHttpClientFactory</c> (shipped in <c>Microsoft.Extensions.Http</c> 8.0.0+)
+    /// whose <c>_logger</c> field is <c>Lazy&lt;ILogger&gt;</c>.
+    /// The safety probe must return <see langword="true"/>.
+    /// </summary>
+    private sealed class LazyLoggerHttpClientFactory : System.Net.Http.IHttpClientFactory
+    {
+        // The field name must be exactly "_logger" to mirror the real DefaultHttpClientFactory.
+        // SA1309: suppressed intentionally — the underscore prefix is load-bearing for the reflection probe.
+        // CS0169/CS0649/CA1823: suppressed intentionally — only the declared field type matters, not the value.
+#pragma warning disable SA1309, CS0169, CS0649, CA1823
+        private readonly Lazy<Microsoft.Extensions.Logging.ILogger>? _logger;
+#pragma warning restore SA1309, CS0169, CS0649, CA1823
+
+        public HttpClient CreateClient(string name) => new();
     }
 }

@@ -109,6 +109,46 @@ public class OtlpLogExporterTests
     }
 
     [Fact]
+    public void ServiceProviderHttpClientFactoryInvoked()
+    {
+        // This test verifies that IHttpClientFactory is wired up for OtlpLogExporter when the
+        // runtime version of DefaultHttpClientFactory is known to be safe (i.e. it defers
+        // ILoggerFactory resolution via Lazy<ILogger> so the circular dependency cannot occur).
+        // On older runtimes where the fix is absent the integration is intentionally skipped,
+        // so we only assert when IsIHttpClientFactorySafeForLogExporter returns true.
+
+        IServiceCollection services = new ServiceCollection();
+
+        services.AddHttpClient();
+
+        var invocations = 0;
+
+        services.AddHttpClient("OtlpLogExporter", configureClient: (client) => invocations++);
+
+        services.AddOpenTelemetry().WithLogging(builder => builder
+            .AddOtlpExporter(o => o.Protocol = OtlpExportProtocol.HttpProtobuf));
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var isSafe = OtlpLogExporterHelperExtensions.IsIHttpClientFactorySafeForLogExporter(serviceProvider);
+
+        // Resolving the logger provider triggers BuildOtlpLogExporter which conditionally
+        // calls TryEnableIHttpClientFactoryIntegration.
+        _ = serviceProvider.GetRequiredService<Microsoft.Extensions.Logging.ILoggerFactory>();
+
+        if (isSafe)
+        {
+            Assert.Equal(1, invocations);
+        }
+        else
+        {
+            // On runtimes where the circular-dependency fix is absent the integration is
+            // intentionally disabled — the named-client callback must NOT have been invoked.
+            Assert.Equal(0, invocations);
+        }
+    }
+
+    [Fact]
     public void AddOtlpExporterSetsDefaultBatchExportProcessor()
     {
         using var loggerProvider = Sdk.CreateLoggerProviderBuilder()

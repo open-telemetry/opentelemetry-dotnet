@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -297,21 +298,13 @@ public static class OtlpLogExporterHelperExtensions
             serviceProvider.EnsureNoUseOtlpExporterRegistrations();
         }
 
-        /*
-         * Note:
-         *
-         * We don't currently enable IHttpClientFactory for OtlpLogExporter.
-         *
-         * The DefaultHttpClientFactory requires the ILoggerFactory in its ctor:
-         * https://github.com/dotnet/runtime/blob/fa40ecf7d36bf4e31d7ae968807c1c529bac66d6/src/libraries/Microsoft.Extensions.Http/src/DefaultHttpClientFactory.cs#L64
-         *
-         * This creates a circular reference: ILoggerFactory ->
-         * OpenTelemetryLoggerProvider -> OtlpLogExporter -> IHttpClientFactory
-         * -> ILoggerFactory
-         *
-         * exporterOptions.TryEnableIHttpClientFactoryIntegration(sp,
-         * "OtlpLogExporter");
-         */
+        // IHttpClientFactory integration is only enabled when the registered DefaultHttpClientFactory
+        // resolves ILoggerFactory lazily (Microsoft.Extensions.Http 8.0.0+), avoiding a circular
+        // dependency. See: IsIHttpClientFactorySafeForLogExporter for details.
+        if (IsIHttpClientFactorySafeForLogExporter(serviceProvider))
+        {
+            exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpLogExporter");
+        }
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
         BaseExporter<LogRecord> otlpExporter = new OtlpLogExporter(
@@ -347,6 +340,54 @@ public static class OtlpLogExporterHelperExtensions
         {
             otlpExporter.Dispose();
             throw;
+        }
+    }
+
+    // Returns true when the registered IHttpClientFactory resolves ILoggerFactory lazily
+    // (i.e. stores it as Lazy<ILogger>), which avoids the circular dependency:
+    //   ILoggerFactory -> OpenTelemetryLoggerProvider -> OtlpLogExporter
+    //                  -> IHttpClientFactory -> ILoggerFactory  (circular!)
+    // This was fixed in Microsoft.Extensions.Http 8.0.0 (dotnet/runtime#89531).
+    // See: https://github.com/dotnet/runtime/blob/v8.0.0/src/libraries/Microsoft.Extensions.Http/src/DefaultHttpClientFactory.cs
+    internal static bool IsIHttpClientFactorySafeForLogExporter(IServiceProvider serviceProvider)
+    {
+        try
+        {
+            var httpClientFactoryType = Type.GetType("System.Net.Http.IHttpClientFactory, Microsoft.Extensions.Http", throwOnError: false);
+            if (httpClientFactoryType == null)
+            {
+                return false;
+            }
+
+            var httpClientFactory = serviceProvider.GetService(httpClientFactoryType);
+            if (httpClientFactory == null)
+            {
+                return false;
+            }
+
+            // Walk the concrete type hierarchy looking for "_logger".
+            // Safe (fixed) versions declare it as Lazy<ILogger>; older versions use plain ILogger.
+            var concreteType = httpClientFactory.GetType();
+            while (concreteType != null)
+            {
+                var loggerField = concreteType.GetField(
+                    "_logger",
+                    BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+
+                if (loggerField != null)
+                {
+                    return loggerField.FieldType.IsGenericType
+                        && loggerField.FieldType.GetGenericTypeDefinition() == typeof(Lazy<>);
+                }
+
+                concreteType = concreteType.BaseType;
+            }
+
+            return false;
+        }
+        catch
+        {
+            return false;
         }
     }
 
