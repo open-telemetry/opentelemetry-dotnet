@@ -11,6 +11,7 @@ public class CircularBufferBucketsTests
     public void ConstructorThrowsOnInvalidCapacity()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new CircularBufferBuckets(0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new CircularBufferBuckets(1));
         Assert.Throws<ArgumentOutOfRangeException>(() => new CircularBufferBuckets(-1));
     }
 
@@ -129,53 +130,6 @@ public class CircularBufferBucketsTests
         Assert.Equal(3, buckets[0]);
         Assert.Equal(4, buckets[1]);
         Assert.Equal(5, buckets[2]);
-    }
-
-    [Fact]
-    public void ScaleDownCapacity1()
-    {
-        var buckets = new CircularBufferBuckets(1);
-
-        buckets.ScaleDown(1);
-        buckets.ScaleDown(2);
-        buckets.ScaleDown(3);
-        buckets.ScaleDown(4);
-
-        buckets.TryIncrement(0);
-
-        Assert.Equal(0, buckets.Offset);
-        Assert.Equal(1, buckets.Size);
-        Assert.Equal(1, buckets[0]);
-    }
-
-    [Fact]
-    public void ScaleDownIntMaxValue()
-    {
-        var buckets = new CircularBufferBuckets(1);
-
-        buckets.TryIncrement(int.MaxValue);
-
-        Assert.Equal(int.MaxValue, buckets.Offset);
-
-        buckets.ScaleDown(1);
-
-        Assert.Equal(0x3FFFFFFF, buckets.Offset);
-        Assert.Equal(1, buckets[0x3FFFFFFF]);
-    }
-
-    [Fact]
-    public void ScaleDownIntMinValue()
-    {
-        var buckets = new CircularBufferBuckets(1);
-
-        buckets.TryIncrement(int.MinValue);
-
-        Assert.Equal(int.MinValue, buckets.Offset);
-
-        buckets.ScaleDown(1);
-
-        Assert.Equal(-0x40000000, buckets.Offset);
-        Assert.Equal(1, buckets[-0x40000000]);
     }
 
     [Fact]

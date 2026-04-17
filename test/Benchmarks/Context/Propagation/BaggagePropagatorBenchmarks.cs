@@ -35,11 +35,13 @@ public class BaggagePropagatorBenchmarks
     [GlobalSetup]
     public void Setup()
     {
-        IEnumerable<(string Key, string Value)> Items() =>
-            Enumerable.Range(0, this.ItemCount).Select(i =>
+        IEnumerable<(string Key, string Value)> Items()
+        {
+            return Enumerable.Range(0, this.ItemCount).Select(i =>
                 this.UseSpecialChars
                     ? ($"key {i}", $"value {i} !@#$%^&*()")
                     : ($"key{i}", $"value{i}"));
+        }
 
         var baggageHeader = string.Join(",", Items().Select(p =>
             $"{Uri.EscapeDataString(p.Key)}={Uri.EscapeDataString(p.Value)}"));
