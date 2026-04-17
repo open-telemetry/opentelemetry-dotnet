@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed an issue in persistent storage cleanup where malformed `.blob`, `.tmp`,
+  or `.lock` filenames could throw and interrupt maintenance.
+  ([#7108](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7108))
+
 * Fixed an issue in OTLP/gRPC retry handling where parsing gRPC status.
   ([#7064](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7064))
 
