@@ -12,6 +12,15 @@ Notes](../../RELEASENOTES.md).
 * Improve efficiency of parsing of baggage and B3 propagation headers.
   ([#7061](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7061))
 
+* Fixed `BaggagePropagator` to trim optional whitespace (OWS) around `=`
+  separators when parsing the `baggage` header, as required by the
+  [W3C Baggage specification](https://www.w3.org/TR/baggage/).
+  ([#7009](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7009))
+
+* Fixed `BaggagePropagator` to strip baggage properties (e.g. `;metadata`)
+  from values when parsing the `baggage` header.
+  ([#7009](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7009))
+
 ## 1.15.2
 
 Released 2026-Apr-08
@@ -25,15 +34,6 @@ Released 2026-Mar-27
   which disallows empty baggage names and treats baggage names and values as case
   sensitive.
   ([#6931](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6931))
-
-* Fixed `BaggagePropagator` to trim optional whitespace (OWS) around `=`
-  separators when parsing the `baggage` header, as required by the
-  [W3C Baggage specification](https://www.w3.org/TR/baggage/).
-  ([#7009](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7009))
-
-* Fixed `BaggagePropagator` to strip baggage properties (e.g. `;metadata`)
-  from values when parsing the `baggage` header.
-  ([#7009](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7009))
 
 ## 1.15.0
 
