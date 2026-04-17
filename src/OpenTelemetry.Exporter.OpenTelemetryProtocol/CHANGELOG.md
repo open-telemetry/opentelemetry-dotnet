@@ -7,6 +7,11 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* **Breaking change:** Fixed an insecure disk retry default. Disk retry now
+  requires `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH` when
+  `OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY=disk` is configured. The exporter no
+  longer falls back to a shared temp directory by default.
+
 * Fixed an issue in OTLP/gRPC retry handling where parsing gRPC status.
   ([#7064](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7064))
 
