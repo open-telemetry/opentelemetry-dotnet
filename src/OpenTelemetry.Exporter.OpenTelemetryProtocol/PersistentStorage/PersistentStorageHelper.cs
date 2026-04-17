@@ -40,7 +40,13 @@ internal static class PersistentStorageHelper
             var fileDateTime = GetDateTimeFromLeaseName(filePath);
             if (fileDateTime < leaseDeadline)
             {
-                var newFilePath = filePath.Substring(0, filePath.LastIndexOf('@'));
+                var atSignIndex = filePath.LastIndexOf('@');
+                if (atSignIndex == -1)
+                {
+                    return false;
+                }
+
+                var newFilePath = filePath.Substring(0, atSignIndex);
                 try
                 {
                     File.Move(filePath, newFilePath);
@@ -132,7 +138,13 @@ internal static class PersistentStorageHelper
     internal static DateTime GetDateTimeFromBlobName(string filePath)
     {
         var fileName = GetFileNameWithoutExtension(filePath);
-        var timestamp = fileName.Substring(0, fileName.LastIndexOf('-'));
+        var dashIndex = fileName.LastIndexOf('-');
+        if (dashIndex == -1)
+        {
+            return DateTime.MinValue;
+        }
+
+        var timestamp = fileName.Substring(0, dashIndex);
 
         return Parse(timestamp);
     }
