@@ -11,6 +11,15 @@ Notes](../../RELEASENOTES.md).
   requires `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH` when
   `OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY=disk` is configured. The exporter no
   longer falls back to a shared temp directory by default.
+  To retain the previous behaviour, set the
+  `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH` environment
+  variable to the value one of the following environment variables:
+
+  * `TMP`, `TMP`, or `USERPROFILE` ([Windows](https://learn.microsoft.com/windows/win32/api/fileapi/nf-fileapi-gettemppath2w#remarks))
+  * `TMPDIR` (or the literal value `/tmp/`) ([Linux](https://learn.microsoft.com/dotnet/api/system.io.path.gettemppath?tabs=linux),
+      [macOS](https://learn.microsoft.com/dotnet/api/system.io.path.gettemppath?tabs=macos)).
+
+  ([#7106](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7106))
 
 * Fixed an issue in OTLP/gRPC retry handling where parsing gRPC status.
   ([#7064](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7064))
