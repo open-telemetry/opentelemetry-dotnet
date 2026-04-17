@@ -105,7 +105,6 @@ jobs:
       with:
         client-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
-        permission-actions: write
         permission-contents: write
         permission-pull-requests: write
 
@@ -140,20 +139,6 @@ jobs:
           -targetBranch ${env:TARGET_BRANCH} `
           -gitUserName ${env:BOT_USER_NAME} `
           -gitUserEmail ${env:BOT_USER_EMAIL}
-
-    - name: Invoke core version update workflow in opentelemetry-dotnet-contrib repository
-      if: vars.CONTRIB_REPO
-      shell: pwsh
-      env:
-        GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
-        CONTRIB_REPO: ${{ vars.CONTRIB_REPO }}
-        TAG: ${{ inputs.tag || github.ref_name }}
-      run: |
-        Import-Module .\build\scripts\post-release.psm1
-
-        InvokeCoreVersionUpdateWorkflowInRemoteRepository `
-          -remoteGitRepository ${env:CONTRIB_REPO} `
-          -tag ${env:TAG}
 
     - name: Post notice when release is published
       shell: pwsh
