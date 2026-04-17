@@ -29,7 +29,7 @@ public class BaggagePropagatorBenchmarks
     /// <summary>
     /// Gets or sets the header style used in each benchmark run.
     /// </summary>
-    [Params("W3C", "Properties")]
+    [Params("WithOWSAndProperties", "Clean")]
     public string HeaderStyle { get; set; } = "Clean";
 
     public Dictionary<string, string> ExtractCarrier { get; private set; } = [];
@@ -51,7 +51,7 @@ public class BaggagePropagatorBenchmarks
 
         var baggageHeader = this.HeaderStyle switch
         {
-            "W3C" => string.Join(" , ", Items().Select(p => $"{Uri.EscapeDataString(p.Key)} = {Uri.EscapeDataString(p.Value)} ; prop1 ; propKey=propValue")),
+            "WithOWSAndProperties" => string.Join(" , ", Items().Select(p => $"{Uri.EscapeDataString(p.Key)} = {Uri.EscapeDataString(p.Value)} ; prop1 ; propKey=propValue")),
             _ => string.Join(",", Items().Select(p => $"{Uri.EscapeDataString(p.Key)}={Uri.EscapeDataString(p.Value)}")),
         };
 
