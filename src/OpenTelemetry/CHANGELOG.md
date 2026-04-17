@@ -13,6 +13,11 @@ Notes](../../RELEASENOTES.md).
   unspecified or out-of-range severities without returning invalid enum values.
   ([#7092](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7092))
 
+* Fixed `OTEL_TRACES_SAMPLER_ARG` handling to treat out-of-range, `NaN`, and
+  infinite values as invalid and fall back to the default ratio when using
+  `traceidratio` and `parentbased_traceidratio` samplers.
+  ([#7103](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7103))
+
 ## 1.15.2
 
 Released 2026-Apr-08
