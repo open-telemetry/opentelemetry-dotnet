@@ -5,9 +5,9 @@
 ARG BUILD_SDK_VERSION=10.0
 ARG TEST_SDK_VERSION=10.0
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0.420@sha256:ec47373b40fc22a31c891c5be8df83f8cbadc24e785b10899545e33a1a1c2183 AS dotnet-sdk-8.0
-FROM mcr.microsoft.com/dotnet/sdk:9.0.313@sha256:e04aef5e32fe25cea4641ecd2f2d8d7eca009f5d937bd545250f5ee5f35cf3b5 AS dotnet-sdk-9.0
-FROM mcr.microsoft.com/dotnet/sdk:10.0.202@sha256:adc02be8b87957d07208a4a3e51775935b33bad3317de8c45b1e67357b4c073b AS dotnet-sdk-10.0
+FROM mcr.microsoft.com/dotnet/sdk:8.0.420-azurelinux3.0@sha256:3dfbc203ee6ba8a390e70971460d4af90c0220250cd9c410eb930a2aa218d304 AS dotnet-sdk-8.0
+FROM mcr.microsoft.com/dotnet/sdk:9.0.313-azurelinux3.0@sha256:13b64ec155e9aefa220263957b6d86f1add651106fc5df3cbecacb7a74eb3b06 AS dotnet-sdk-9.0
+FROM mcr.microsoft.com/dotnet/sdk:10.0.202-azurelinux3.0@sha256:5d0b4af94fe23bcdc6e5df135d460a2fee03aec6979e63c669d2bef399327184 AS dotnet-sdk-10.0
 
 FROM dotnet-sdk-${BUILD_SDK_VERSION} AS build
 ARG PUBLISH_CONFIGURATION=Release
@@ -33,15 +33,11 @@ WORKDIR /test
 COPY /test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/requirements.txt .
 COPY --from=build /drop .
 COPY --from=build /w3c/trace-context ./trace-context
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends python3-pip python3-dev \
-  && cd /usr/local/bin \
-  && ln -s /usr/bin/python3 python \
-  && python3 --version \
-  && rm -rf /var/lib/apt/lists/*
-
+RUN tdnf install -y python3-pip \
+  && ln -sf /usr/bin/python3 /usr/bin/python \
+  && python3 -m pip install --requirement requirements.txt --require-hashes --break-system-packages \
+  && tdnf clean all
 ENV SPEC_LEVEL=1
 ENV STRICT_LEVEL=1
 
-RUN pip3 install --requirement requirements.txt --require-hashes --break-system-packages
 ENTRYPOINT ["dotnet", "vstest", "OpenTelemetry.Instrumentation.W3cTraceContext.Tests.dll", "--logger:console;verbosity=detailed"]
