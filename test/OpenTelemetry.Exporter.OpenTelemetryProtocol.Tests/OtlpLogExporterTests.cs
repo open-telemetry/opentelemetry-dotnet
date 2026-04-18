@@ -127,9 +127,6 @@ public class OtlpLogExporterTests
         var loggerProvider = serviceProvider.GetRequiredService<LoggerProvider>();
 
         // IHttpClientFactory integration is only enabled for OtlpLogExporter on .NET 8+.
-        // Earlier versions of DefaultHttpClientFactory resolved ILoggerFactory eagerly, causing
-        // a circular dependency (ILoggerFactory -> OtlpLogExporter -> IHttpClientFactory -> ILoggerFactory).
-        // This was fixed in .NET 8 (dotnet/runtime#89531).
 #if NET8_0_OR_GREATER
         Assert.Equal(1, invocations);
 #else
