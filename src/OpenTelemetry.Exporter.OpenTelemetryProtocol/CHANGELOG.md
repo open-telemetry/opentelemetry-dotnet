@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed an issue in persistent storage cleanup where malformed `.blob`, `.tmp`,
+  or `.lock` filenames could throw and interrupt maintenance.
+  ([#7108](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7108))
+
 * **Breaking change:** Fixed an insecure disk retry default. Disk retry now
   requires `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH` when
   `OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY=disk` is configured. The exporter no
