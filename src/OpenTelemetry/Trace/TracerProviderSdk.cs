@@ -222,7 +222,7 @@ internal sealed class TracerProviderSdk : TracerProvider
 
         if (this.Sampler is AlwaysOnSampler)
         {
-            activityListener.Sample = (ref options) =>
+            activityListener.Sample = static (ref _) =>
                 !Sdk.SuppressInstrumentation ? ActivitySamplingResult.AllDataAndRecorded : ActivitySamplingResult.None;
             this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOnSampler;
         }
@@ -483,9 +483,12 @@ internal sealed class TracerProviderSdk : TracerProvider
 
         if (activitySamplingResult > ActivitySamplingResult.PropagationData)
         {
-            foreach (var att in samplingResult.Attributes)
+            if (samplingResult.AttributesOrNull is { } attributes)
             {
-                options.SamplingTags.Add(att.Key, att.Value);
+                foreach (var att in attributes)
+                {
+                    options.SamplingTags.Add(att.Key, att.Value);
+                }
             }
         }
 
@@ -579,9 +582,12 @@ internal sealed class TracerProviderSdk : TracerProvider
 
         if (samplingResult.Decision != SamplingDecision.Drop)
         {
-            foreach (var att in samplingResult.Attributes)
+            if (samplingResult.AttributesOrNull is { } attributes)
             {
-                activity.SetTag(att.Key, att.Value);
+                foreach (var att in attributes)
+                {
+                    activity.SetTag(att.Key, att.Value);
+                }
             }
         }
 
