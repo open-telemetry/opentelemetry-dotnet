@@ -111,11 +111,9 @@ public class OtlpLogExporterTests
     [Fact]
     public void ServiceProviderHttpClientFactoryInvoked()
     {
-        // This test verifies that IHttpClientFactory is wired up for OtlpLogExporter when the
-        // runtime version of DefaultHttpClientFactory is known to be safe (i.e. it defers
-        // ILoggerFactory resolution via Lazy<ILogger> so the circular dependency cannot occur).
-        // On older runtimes where the fix is absent the integration is intentionally skipped,
-        // so we only assert when IsIHttpClientFactorySafeForLogExporter returns true.
+        // IHttpClientFactory integration for OtlpLogExporter is only enabled on .NET 8+.
+        // On earlier runtimes, DefaultHttpClientFactory took ILoggerFactory eagerly in its
+        // constructor, which caused a circular dependency. This was fixed in .NET 8.
 
         IServiceCollection services = new ServiceCollection();
 
@@ -130,22 +128,14 @@ public class OtlpLogExporterTests
 
         using var serviceProvider = services.BuildServiceProvider();
 
-        var isSafe = OtlpLogExporterHelperExtensions.IsIHttpClientFactorySafeForLogExporter(serviceProvider);
-
-        // Resolving the logger provider triggers BuildOtlpLogExporter which conditionally
-        // calls TryEnableIHttpClientFactoryIntegration.
+        // Resolving the logger provider triggers BuildOtlpLogExporter.
         _ = serviceProvider.GetRequiredService<Microsoft.Extensions.Logging.ILoggerFactory>();
 
-        if (isSafe)
-        {
-            Assert.Equal(1, invocations);
-        }
-        else
-        {
-            // On runtimes where the circular-dependency fix is absent the integration is
-            // intentionally disabled — the named-client callback must NOT have been invoked.
-            Assert.Equal(0, invocations);
-        }
+#if NET8_0_OR_GREATER
+        Assert.Equal(1, invocations);
+#else
+        Assert.Equal(0, invocations);
+#endif
     }
 
     [Fact]
