@@ -8,9 +8,7 @@ Notes](../../RELEASENOTES.md).
 ## Unreleased
 
 * `OtlpLogExporter` now uses `IHttpClientFactory` on .NET 8+, matching the
-  behaviour of the trace and metrics exporters. Earlier runtimes are not
-  supported due to a circular dependency between `ILoggerFactory` and
-  `IHttpClientFactory` that was fixed in .NET 8 (dotnet/runtime#89531).
+  behaviour of the trace and metrics exporters.
   ([#7109](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7109))
 
 * **Breaking change:** Fixed an insecure disk retry default. Disk retry now
