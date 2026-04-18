@@ -111,10 +111,6 @@ public class OtlpLogExporterTests
     [Fact]
     public void ServiceProviderHttpClientFactoryInvoked()
     {
-        // IHttpClientFactory integration for OtlpLogExporter is only enabled on .NET 8+.
-        // On earlier runtimes, DefaultHttpClientFactory took ILoggerFactory eagerly in its
-        // constructor, which caused a circular dependency. This was fixed in .NET 8.
-
         IServiceCollection services = new ServiceCollection();
 
         services.AddHttpClient();
@@ -128,9 +124,12 @@ public class OtlpLogExporterTests
 
         using var serviceProvider = services.BuildServiceProvider();
 
-        // Resolving the logger provider triggers BuildOtlpLogExporter.
-        _ = serviceProvider.GetRequiredService<Microsoft.Extensions.Logging.ILoggerFactory>();
+        var loggerProvider = serviceProvider.GetRequiredService<LoggerProvider>();
 
+        // IHttpClientFactory integration is only enabled for OtlpLogExporter on .NET 8+.
+        // Earlier versions of DefaultHttpClientFactory resolved ILoggerFactory eagerly, causing
+        // a circular dependency (ILoggerFactory -> OtlpLogExporter -> IHttpClientFactory -> ILoggerFactory).
+        // This was fixed in .NET 8 (dotnet/runtime#89531).
 #if NET8_0_OR_GREATER
         Assert.Equal(1, invocations);
 #else
