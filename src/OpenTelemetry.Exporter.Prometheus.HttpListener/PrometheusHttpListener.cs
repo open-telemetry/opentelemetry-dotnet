@@ -74,7 +74,11 @@ internal sealed class PrometheusHttpListener : IDisposable
                 new CancellationTokenSource() :
                 CancellationTokenSource.CreateLinkedTokenSource(token);
 
-            this.workerThread = Task.Factory.StartNew(this.WorkerProc, default, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+            this.workerThread = Task.Factory.StartNew(
+                this.ProcessingLoopAsync,
+                CancellationToken.None,
+                TaskCreationOptions.LongRunning,
+                TaskScheduler.Default);
         }
     }
 
@@ -111,26 +115,29 @@ internal sealed class PrometheusHttpListener : IDisposable
     {
         var acceptHeader = request.Headers["Accept"];
 
-        if (string.IsNullOrEmpty(acceptHeader))
-        {
-            return false;
-        }
-
-        return PrometheusHeadersParser.AcceptsOpenMetrics(acceptHeader);
+        return !string.IsNullOrEmpty(acceptHeader) && PrometheusHeadersParser.AcceptsOpenMetrics(acceptHeader);
     }
 
-    private void WorkerProc()
+    private async Task ProcessingLoopAsync()
     {
         try
         {
             using var scope = SuppressInstrumentationScope.Begin();
-            while (!this.tokenSource!.IsCancellationRequested)
-            {
-                var ctxTask = this.httpListener.GetContextAsync();
-                ctxTask.Wait(this.tokenSource.Token);
-                var ctx = ctxTask.Result;
+            var cancellationToken = this.tokenSource!.Token;
 
-                Task.Run(() => this.ProcessRequestAsync(ctx));
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                var task = this.httpListener.GetContextAsync();
+
+#if NET
+                await task.WaitAsync(cancellationToken).ConfigureAwait(false);
+#else
+                task.Wait(cancellationToken);
+#endif
+
+                var context = await task.ConfigureAwait(false);
+
+                await this.ProcessRequestAsync(context).ConfigureAwait(false);
             }
         }
         catch (OperationCanceledException ex)
