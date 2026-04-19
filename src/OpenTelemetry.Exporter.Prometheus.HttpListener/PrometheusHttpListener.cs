@@ -83,16 +83,37 @@ internal sealed class PrometheusHttpListener : IDisposable
     /// </summary>
     public void Stop()
     {
+        CancellationTokenSource? tokenSource;
+        Task? workerThread;
+
         lock (this.syncObject)
         {
-            if (this.tokenSource == null)
+            tokenSource = this.tokenSource;
+            workerThread = this.workerThread;
+
+            if (tokenSource == null)
             {
                 return;
             }
+        }
 
-            this.tokenSource.Cancel();
-            this.workerThread!.Wait();
-            this.tokenSource = null;
+        try
+        {
+            tokenSource.Cancel();
+            workerThread?.Wait();
+        }
+        finally
+        {
+            lock (this.syncObject)
+            {
+                if (ReferenceEquals(this.tokenSource, tokenSource))
+                {
+                    this.tokenSource = null;
+                    this.workerThread = null;
+                }
+            }
+
+            tokenSource.Dispose();
         }
     }
 
