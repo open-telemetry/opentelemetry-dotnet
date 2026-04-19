@@ -161,21 +161,39 @@ internal static class OtlpSecureHttpClientFactory
 
         protected override void Dispose(bool disposing)
         {
-            base.Dispose(disposing);
-
             if (disposing)
             {
                 this.clientCertificate?.Dispose();
                 this.certificateAuthorityCertificate?.Dispose();
             }
+
+            base.Dispose(disposing);
         }
 
-        private X509Certificate2 EnsureCertificateAuthorityCertificate() =>
+        private X509Certificate2 EnsureCertificateAuthorityCertificate()
+        {
+            if (this.certificateAuthorityCertificate == null)
+            {
 #if NET9_0_OR_GREATER
-            this.certificateAuthorityCertificate ??= X509CertificateLoader.LoadCertificate(this.caCertificateData!);
+                var certificate = X509CertificateLoader.LoadCertificate(this.caCertificateData!);
 #else
-            this.certificateAuthorityCertificate ??= new X509Certificate2(this.caCertificateData!);
+                var certificate = new X509Certificate2(this.caCertificateData!);
 #endif
+
+                var existingCertificate = Interlocked.CompareExchange(
+                    ref this.certificateAuthorityCertificate,
+                    certificate,
+                    null);
+
+                if (existingCertificate != null)
+                {
+                    certificate.Dispose();
+                    return existingCertificate;
+                }
+            }
+
+            return this.certificateAuthorityCertificate;
+        }
 
         private bool ValidateServerCertificate(
             HttpRequestMessage httpRequestMessage,
