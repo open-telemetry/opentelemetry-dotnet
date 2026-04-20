@@ -150,7 +150,7 @@ internal sealed class PrometheusHttpListener : IDisposable
 #else
                 var task = this.httpListener.GetContextAsync();
                 task.Wait(cancellationToken);
-                var context = task.GetAwaiter().GetResult();
+                var context = await task.ConfigureAwait(false);
 #endif
 
                 // Offload the request processing to a separate thread so
