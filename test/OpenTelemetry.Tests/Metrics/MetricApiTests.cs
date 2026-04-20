@@ -1884,14 +1884,14 @@ public class MetricApiTests : MetricTestsBase
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
-        using (var inMemoryEventListener = new InMemoryEventListener(OpenTelemetrySdkEventSource.Log))
+        using (var inMemoryEventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log))
         {
             var counter = meter.CreateCounter<decimal>("counter");
             counter.Add(1);
 
             // This validates that we log InstrumentIgnored event
             // and not something else.
-            var instrumentIgnoredEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 33);
+            var instrumentIgnoredEvents = inMemoryEventListener.Messages.Where((e) => e.EventId == 33);
 #if BUILDING_HOSTING_TESTS
             // Note: When using IMetricsListener this event is fired twice. Once
             // for the SDK listener ignoring it because it isn't listening to

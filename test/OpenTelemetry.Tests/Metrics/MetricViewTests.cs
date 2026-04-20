@@ -105,12 +105,12 @@ public class MetricViewTests : MetricTestsBase
            .AddView(_ => { throw new InvalidOperationException("bad"); })
            .AddInMemoryExporter(exportedItems));
 
-        using (var inMemoryEventListener = new InMemoryEventListener(OpenTelemetrySdkEventSource.Log))
+        using (var inMemoryEventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log))
         {
             var counter1 = meter1.CreateCounter<long>("counter1");
             counter1.Add(1);
 
-            var metricViewIgnoredEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 41);
+            var metricViewIgnoredEvents = inMemoryEventListener.Messages.Where((e) => e.EventId == 41);
             Assert.Single(metricViewIgnoredEvents);
         }
 
@@ -133,11 +133,11 @@ public class MetricViewTests : MetricTestsBase
            .AddView("*", MetricStreamConfiguration.Drop)
            .AddInMemoryExporter(exportedItems));
 
-        using (var inMemoryEventListener = new InMemoryEventListener(OpenTelemetrySdkEventSource.Log))
+        using (var inMemoryEventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log))
         {
             var counter1 = meter1.CreateCounter<long>("counter1");
             counter1.Add(1);
-            Assert.Single(inMemoryEventListener.Events, e => e.EventId == 41);
+            Assert.Single(inMemoryEventListener.Messages, e => e.EventId == 41);
         }
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
@@ -160,12 +160,12 @@ public class MetricViewTests : MetricTestsBase
            .AddView(_ => { return new MetricStreamConfiguration() { Name = "newname" }; })
            .AddInMemoryExporter(exportedItems));
 
-        using (var inMemoryEventListener = new InMemoryEventListener(OpenTelemetrySdkEventSource.Log))
+        using (var inMemoryEventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log))
         {
             var counter1 = meter1.CreateCounter<long>("counter1");
             counter1.Add(1);
 
-            var metricViewIgnoredEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 41);
+            var metricViewIgnoredEvents = inMemoryEventListener.Messages.Where((e) => e.EventId == 41);
             Assert.Single(metricViewIgnoredEvents);
         }
 
