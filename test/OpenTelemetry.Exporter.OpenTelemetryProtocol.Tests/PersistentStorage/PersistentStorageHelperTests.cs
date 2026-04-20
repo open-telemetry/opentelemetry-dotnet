@@ -157,7 +157,7 @@ public class PersistentStorageHelperTests
         var result = PersistentStorageHelper.GetDateTimeFromBlobName(filePath);
 
         Assert.Equal(DateTimeKind.Utc, result.Kind);
-        Assert.Equal(DateTime.MinValue.ToUniversalTime(), result);
+        Assert.Equal(DateTime.SpecifyKind(DateTime.MinValue, DateTimeKind.Utc), result);
     }
 
     [Fact]
@@ -168,7 +168,7 @@ public class PersistentStorageHelperTests
         var result = PersistentStorageHelper.GetDateTimeFromLeaseName(filePath);
 
         Assert.Equal(DateTimeKind.Utc, result.Kind);
-        Assert.Equal(DateTime.MinValue.ToUniversalTime(), result);
+        Assert.Equal(DateTime.SpecifyKind(DateTime.MinValue, DateTimeKind.Utc), result);
     }
 
     [Theory]

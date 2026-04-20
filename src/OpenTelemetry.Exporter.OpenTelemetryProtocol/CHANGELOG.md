@@ -37,6 +37,12 @@ Notes](../../RELEASENOTES.md).
   `traces`, `metrics`, and `logs` directories.
   ([#7074](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7074))
 
+* Fixed full OTLP endpoint being logged by internal diagnostics.
+  ([#7116](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7116))
+
+* Fix `OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT` not being applied.
+  ([#7115](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7115))
+
 ## 1.15.2
 
 Released 2026-Apr-08

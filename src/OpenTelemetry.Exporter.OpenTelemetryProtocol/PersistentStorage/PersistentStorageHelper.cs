@@ -183,7 +183,7 @@ internal static class PersistentStorageHelper
         if (!DateTime.TryParseExact(timestamp, "yyyy-MM-ddTHHmmss.fffffffZ", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var dateTime))
         {
             // In case of failure, return DateTime.MinValue so that the lease file can be removed as expired
-            dateTime = DateTime.MinValue;
+            return DateTime.SpecifyKind(DateTime.MinValue, DateTimeKind.Utc);
         }
 
         return dateTime.ToUniversalTime();

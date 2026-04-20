@@ -17,6 +17,15 @@ Notes](../../RELEASENOTES.md).
   align with the W3C Trace Context specification.
   ([#7065](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7065))
 
+* Fixed `BaggagePropagator` to trim optional whitespace (OWS) around `=`
+  separators when parsing the `baggage` header, as required by the
+  [W3C Baggage specification](https://www.w3.org/TR/baggage/).
+  ([#7009](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7009))
+
+* Fixed `BaggagePropagator` to strip baggage properties (e.g. `;metadata`)
+  from values when parsing the `baggage` header.
+  ([#7009](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7009))
+
 ## 1.15.2
 
 Released 2026-Apr-08
