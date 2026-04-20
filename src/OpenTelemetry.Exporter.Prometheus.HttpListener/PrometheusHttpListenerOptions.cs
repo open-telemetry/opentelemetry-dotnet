@@ -10,7 +10,20 @@ namespace OpenTelemetry.Exporter;
 /// </summary>
 public class PrometheusHttpListenerOptions
 {
+    /// <summary>
+    /// Default path for Prometheus scrapes.
+    /// </summary>
     internal const string DefaultScrapeEndpointPath = "/metrics";
+
+    /// <summary>
+    /// Gets or sets the Host name the HTTP listener will bind to. Defaults to "localhost".
+    /// </summary>
+    public string Host { get; set; } = "localhost";
+
+    /// <summary>
+    /// Gets or sets the TCP port used by the HTTP listener. Defaults to 9464 (commonly used for Prometheus exporters).
+    /// </summary>
+    public int Port { get; set; } = 9464;
 
     private IReadOnlyCollection<string> uriPrefixes = ["http://localhost:9464/"];
 
@@ -29,23 +42,29 @@ public class PrometheusHttpListenerOptions
     /// </summary>
     public bool DisableTimestamp { get; set; }
 
+    // Add a backing field that tracks whether the caller set UriPrefixes.
+    private bool uriPrefixesExplicitlySet = false;
+
     /// <summary>
     /// Gets or sets the URI (Uniform Resource Identifier) prefixes to use for the http listener.
     /// Default value: <c>["http://localhost:9464/"]</c>.
     /// </summary>
+    [Obsolete("UriPrefixes is deprecated. Use Host and Port. This will be removed in the stable release.")]
     public IReadOnlyCollection<string> UriPrefixes
     {
         get => this.uriPrefixes;
         set
         {
             Guard.ThrowIfNull(value);
-
             if (value.Count == 0)
             {
                 throw new ArgumentException("Empty list provided.", nameof(this.UriPrefixes));
             }
-
             this.uriPrefixes = value;
+            this.uriPrefixesExplicitlySet = true;
         }
     }
+
+    // Expose internal read-only property to let the listener detect explicit set
+    internal bool UriPrefixesExplicitlySet => this.uriPrefixesExplicitlySet;
 }

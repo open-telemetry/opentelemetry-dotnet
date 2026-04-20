@@ -48,7 +48,17 @@ internal sealed class PrometheusHttpListener : IDisposable
             path = $"{path}/";
         }
 
-        foreach (var uriPrefix in options.UriPrefixes)
+        IEnumerable<string> prefixesToUse;
+        if (!options.UriPrefixesExplicitlySet)
+        {
+            prefixesToUse = new[] { $"http://{options.Host.TrimEnd('/')}:{options.Port}/" };
+        }
+        else
+        {
+            prefixesToUse = options.UriPrefixes;
+        }
+
+        foreach (var uriPrefix in prefixesToUse)
         {
             this.httpListener.Prefixes.Add($"{uriPrefix.TrimEnd('/')}{path}");
         }

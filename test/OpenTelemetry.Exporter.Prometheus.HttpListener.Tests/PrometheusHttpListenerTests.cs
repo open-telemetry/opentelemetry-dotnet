@@ -324,4 +324,97 @@ public class PrometheusHttpListenerTests
 
         provider.Dispose();
     }
+
+    [Fact]
+    public async Task HostAndPort_Used_When_UriPrefixesNotSet()
+    {
+        var random = new Random();
+        var retryAttempts = 5;
+        string? address = null;
+        PrometheusExporter? exporter = null;
+        PrometheusHttpListener? listener = null;
+
+        while (retryAttempts-- != 0)
+        {
+#pragma warning disable CA5394 // Do not use insecure randomness
+            var port = random.Next(2000, 5000);
+#pragma warning restore CA5394 // Do not use insecure randomness
+            address = $"http://localhost:{port}/";
+
+            try
+            {
+                exporter = new PrometheusExporter(new());
+                listener = new PrometheusHttpListener(
+                    exporter,
+                    new()
+                    {
+                        Host = "localhost",
+                        Port = port,
+                    });
+
+                listener.Start();
+
+                break;
+            }
+            catch
+            {
+                // try another port
+            }
+        }
+
+        if (retryAttempts == 0)
+        {
+            throw new InvalidOperationException("PrometheusHttpListener could not be started using Host+Port");
+        }
+
+        exporter?.Dispose();
+        listener?.Dispose();
+    }
+
+    [Fact]
+    public async Task ExplicitUriPrefixes_TakePrecedence_Over_HostPort()
+    {
+        var random = new Random();
+        var retryAttempts = 5;
+        string? address = null;
+        PrometheusExporter? exporter = null;
+        PrometheusHttpListener? listener = null;
+
+        while (retryAttempts-- != 0)
+        {
+#pragma warning disable CA5394 // Do not use insecure randomness
+            var port = random.Next(2000, 5000);
+#pragma warning restore CA5394 // Do not use insecure randomness
+            address = $"http://localhost:{port}/";
+
+            try
+            {
+                exporter = new PrometheusExporter(new());
+                listener = new PrometheusHttpListener(
+                    exporter,
+                    new()
+                    {
+                        Host = "127.0.0.1",
+                        Port = 9999, // different on-purpose
+                        UriPrefixes = new[] { address },
+                    });
+
+                listener.Start();
+
+                break;
+            }
+            catch
+            {
+                // try another port
+            }
+        }
+
+        if (retryAttempts == 0)
+        {
+            throw new InvalidOperationException("PrometheusHttpListener could not be started using explicit UriPrefixes");
+        }
+
+        exporter?.Dispose();
+        listener?.Dispose();
+    }
 }
