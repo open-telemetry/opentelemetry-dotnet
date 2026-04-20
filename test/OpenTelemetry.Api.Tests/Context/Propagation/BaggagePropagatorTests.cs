@@ -589,7 +589,7 @@ public class BaggagePropagatorTests
     {
         // These characters are valid unencoded baggage-octets and must not be
         // transformed on either inject or extract.
-        var value = $"val{octet}ue";
+        var value = $"val{octet}use";
         var propagationContext = new PropagationContext(
             default,
             new Baggage(new Dictionary<string, string> { { "key", value } }));
@@ -607,8 +607,8 @@ public class BaggagePropagatorTests
 
     [Theory]
     [InlineData("key%201=value%201", "key%201", "value 1")]
-    [InlineData("key=val%2Bue", "key", "val+ue")]
-    [InlineData("key=val%20ue", "key", "val ue")]
+    [InlineData("key=val%2Buse", "key", "val+use")]
+    [InlineData("key=val%20use", "key", "val use")]
     [InlineData("key=%20%21%22%23%24%25%26%27%28%29%2A%2B%2C-.%2F0123456789%3A%3B%3C%3D%3E%3F%40ABCDEFGHIJKLMNOPQRSTUVWXYZ%5B%5C%5D%5E_%60abcdefghijklmnopqrstuvwxyz%7B%7C%7D~", "key", " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~")]
     public void ValidateSpecialCharsBaggageExtraction(string propagatedBaggage, string key, string expectedDecodedValue)
     {
@@ -846,7 +846,7 @@ public class BaggagePropagatorTests
     [Fact]
     public void RoundTripValueWithAllMandatoryEncodeCharsPreservedExactly()
     {
-        const string original = "val ue\"wi,th;back\\slash";
+        const string original = "val use\"wi,th;back\\slash";
 
         var carrier = new Dictionary<string, string>();
         this.baggage.Inject(new PropagationContext(default, new Baggage(new Dictionary<string, string> { { "key", original }, })), carrier, Setter);
