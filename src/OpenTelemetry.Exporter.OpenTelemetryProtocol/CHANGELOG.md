@@ -34,7 +34,7 @@ Notes](../../RELEASENOTES.md).
   ([#7074](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7074))
 
 * Fix `OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT` not being applied.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7115](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7115))
 
 ## 1.15.2
 
