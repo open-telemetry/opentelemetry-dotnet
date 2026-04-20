@@ -207,7 +207,18 @@ public class BaggagePropagator : TextMapPropagator
                 }
 
                 var key = pair.Slice(0, separatorIndex).ToString();
-                var value = DecodeIfNeeded(pair.Slice(separatorIndex + 1));
+
+                var rawValue = pair.Slice(separatorIndex + 1);
+
+                var semicolonIndex = rawValue.IndexOf(';');
+                if (semicolonIndex >= 0)
+                {
+                    rawValue = rawValue.Slice(0, semicolonIndex);
+                }
+
+                rawValue = rawValue.Trim();
+
+                var value = DecodeIfNeeded(rawValue);
 
                 if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(value))
                 {

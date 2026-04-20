@@ -652,12 +652,9 @@ want to solicit feedback from the community.
       Added in `1.8.0`.
 
     * When set to `disk`, it enables retries by storing telemetry on disk during
-    transient errors. The default path where the telemetry is stored is
-    obtained by calling
-    [Path.GetTempPath()](https://learn.microsoft.com/dotnet/api/system.io.path.gettemppath)
-    or can be customized by setting
-    `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH` environment
-    variable.
+    transient errors. You MUST set
+    `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH` to a dedicated
+    directory location.
 
       The OTLP exporter utilizes a forked version of the
       [OpenTelemetry.PersistentStorage.FileSystem](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.PersistentStorage.FileSystem)

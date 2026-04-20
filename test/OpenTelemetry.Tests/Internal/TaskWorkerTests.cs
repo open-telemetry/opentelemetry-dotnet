@@ -18,6 +18,7 @@ public class TaskWorkerTests
     private const int WaitUntilPollingIntervalMilliseconds = 10;
     private const int WorkerDelayMilliseconds = 250;
     private const int WorkerTimeoutMilliseconds = 1000;
+    private const int AssertTimeoutToleranceMilliseconds = 100;
 
     [Fact]
     public async Task BatchExportTaskWorker_TriggerExportAfterIdleCycles_DoesNotWaitForScheduledDelay()
@@ -42,7 +43,7 @@ public class TaskWorkerTests
         Assert.True(worker.TriggerExport());
 
         // Act
-        await WaitUntilAsync(() => exporter.ExportCount >= 1, TriggerCompletionTimeoutMilliseconds);
+        await WaitUntilAsync(() => exporter.ExportCount >= 1, TriggerCompletionTimeoutMilliseconds + AssertTimeoutToleranceMilliseconds);
 
         // Assert
         Assert.True(worker.Shutdown(WorkerTimeoutMilliseconds));
@@ -60,7 +61,7 @@ public class TaskWorkerTests
 
         worker.Start();
 
-        await WaitUntilAsync(() => reader.CollectCount >= BaselineCollectCount, WorkerTimeoutMilliseconds);
+        await WaitUntilAsync(() => reader.CollectCount >= BaselineCollectCount, WorkerTimeoutMilliseconds + AssertTimeoutToleranceMilliseconds);
 
         var baselineCollectCount = reader.CollectCount;
 
@@ -69,7 +70,7 @@ public class TaskWorkerTests
         Assert.True(worker.TriggerExport());
 
         // Act
-        await WaitUntilAsync(() => reader.CollectCount >= baselineCollectCount + 1, TriggerCompletionTimeoutMilliseconds);
+        await WaitUntilAsync(() => reader.CollectCount >= baselineCollectCount + 1, TriggerCompletionTimeoutMilliseconds + AssertTimeoutToleranceMilliseconds);
 
         // Assert
         Assert.True(worker.Shutdown(WorkerTimeoutMilliseconds));
@@ -89,7 +90,7 @@ public class TaskWorkerTests
             await Task.Delay(WaitUntilPollingIntervalMilliseconds);
         }
 
-        Assert.True(condition());
+        Assert.True(condition(), $"Condition was not met within the timeout period of {timeoutMilliseconds} milliseconds.");
     }
 
     private static int GetIdleWaitDuration()

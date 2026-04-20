@@ -49,6 +49,7 @@ public class PersistentStorageHelperTests
     [InlineData("invalid-format.blob")]
     [InlineData("2024-01-15T14:30:25Z-abc123.blob")]
     [InlineData("abc-def.blob")]
+    [InlineData("invalidformat.blob")]
     public void GetDateTimeFromBlobName_InvalidFormat_ReturnsDateTimeMinValue(string filePath)
     {
         var result = PersistentStorageHelper.GetDateTimeFromBlobName(filePath);
@@ -156,7 +157,7 @@ public class PersistentStorageHelperTests
         var result = PersistentStorageHelper.GetDateTimeFromBlobName(filePath);
 
         Assert.Equal(DateTimeKind.Utc, result.Kind);
-        Assert.Equal(DateTime.MinValue.ToUniversalTime(), result);
+        Assert.Equal(DateTime.SpecifyKind(DateTime.MinValue, DateTimeKind.Utc), result);
     }
 
     [Fact]
@@ -167,7 +168,7 @@ public class PersistentStorageHelperTests
         var result = PersistentStorageHelper.GetDateTimeFromLeaseName(filePath);
 
         Assert.Equal(DateTimeKind.Utc, result.Kind);
-        Assert.Equal(DateTime.MinValue.ToUniversalTime(), result);
+        Assert.Equal(DateTime.SpecifyKind(DateTime.MinValue, DateTimeKind.Utc), result);
     }
 
     [Theory]
@@ -216,5 +217,15 @@ public class PersistentStorageHelperTests
 
         Assert.Equal(result1a, result1b);
         Assert.NotEqual(result1a, result2);
+    }
+
+    [Fact]
+    public void RemoveExpiredLease_WithoutLeaseDelimiter_ReturnsFalse()
+    {
+        var leaseDeadline = DateTime.UtcNow;
+
+        var result = PersistentStorageHelper.RemoveExpiredLease(leaseDeadline, "invalid-format.lock");
+
+        Assert.False(result);
     }
 }
