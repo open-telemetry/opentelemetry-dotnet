@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* `OtlpLogExporter` now uses `IHttpClientFactory` on .NET 8+, matching the
+  behaviour of the trace and metrics exporters.
+  ([#7109](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7109))
+
 * Fixed an issue in persistent storage cleanup where malformed `.blob`, `.tmp`,
   or `.lock` filenames could throw and interrupt maintenance.
   ([#7108](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7108))
