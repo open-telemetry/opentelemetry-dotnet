@@ -33,6 +33,9 @@ Notes](../../RELEASENOTES.md).
   `traces`, `metrics`, and `logs` directories.
   ([#7074](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7074))
 
+* Fixed full OTLP collector endpoint being logged by internal diagnostics.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.15.2
 
 Released 2026-Apr-08
