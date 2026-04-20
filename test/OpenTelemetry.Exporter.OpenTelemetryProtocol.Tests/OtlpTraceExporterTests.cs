@@ -475,6 +475,28 @@ public sealed class OtlpTraceExporterTests : IDisposable
     }
 
     [Fact]
+    public void SpanAttributeValueLengthLimitOverridesAttributeValueLengthLimit()
+    {
+        var sdkOptions = new SdkLimitOptions()
+        {
+            AttributeValueLengthLimit = null,
+            SpanAttributeValueLengthLimit = 4,
+        };
+
+        using var activitySource = new ActivitySource(nameof(this.SpanAttributeValueLengthLimitOverridesAttributeValueLengthLimit));
+        using var activity = activitySource.StartActivity("root", ActivityKind.Server);
+
+        Assert.NotNull(activity);
+        activity.SetTag("TruncatedTag", "12345");
+
+        var otlpSpan = ToOtlpSpan(sdkOptions, activity);
+
+        Assert.NotNull(otlpSpan);
+        var attribute = Assert.Single(otlpSpan.Attributes);
+        Assert.Equal("1234", attribute.Value.StringValue);
+    }
+
+    [Fact]
     public void ToOtlpSpanTest()
     {
         using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanTest));

@@ -286,7 +286,7 @@ internal static class ProtobufOtlpTraceSerializer
         StatusCode? statusCode = null;
         string? statusMessage = null;
         var maxAttributeCount = sdkLimitOptions.SpanAttributeCountLimit ?? int.MaxValue;
-        var maxAttributeValueLength = sdkLimitOptions.AttributeValueLengthLimit ?? int.MaxValue;
+        var maxAttributeValueLength = sdkLimitOptions.SpanAttributeValueLengthLimit ?? int.MaxValue;
         var otlpTagWriterState = new ProtobufOtlpTagWriter.OtlpTagWriterState
         {
             Buffer = buffer,
