@@ -66,6 +66,15 @@ internal sealed class SpanShim : ISpan
         {
             switch (field.Value)
             {
+                case byte value:
+                    spanAttributes.Add(field.Key, value);
+                    break;
+                case short value:
+                    spanAttributes.Add(field.Key, value);
+                    break;
+                case int value:
+                    spanAttributes.Add(field.Key, value);
+                    break;
                 case long value:
                     spanAttributes.Add(field.Key, value);
                     break;
@@ -76,6 +85,9 @@ internal sealed class SpanShim : ISpan
                     spanAttributes.Add(field.Key, value);
                     break;
                 case bool[] value:
+                    spanAttributes.Add(field.Key, value);
+                    break;
+                case float value:
                     spanAttributes.Add(field.Key, value);
                     break;
                 case double value:

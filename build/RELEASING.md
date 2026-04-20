@@ -51,7 +51,7 @@ Maintainers (admins) are needed to merge PRs and for the push to NuGet.**
     release](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/prepare-release.yml)
     workflow. Specify the `tag-prefix` and the `version` for the release. Make
     sure to run the workflow on the branch being released. This is typically
-    `main` but could be some other branch for hotfix (eg `main-1.8.0`). The
+    `main` but could be some other branch for hotfix (e.g. `main-1.15.0`). The
     workflow will open a PR to update `CHANGELOG.md` files for the projects
     being released. If a stable version is specified as the `version` parameter,
     the workflow will also merge the contents of any detected
@@ -65,16 +65,16 @@ Maintainers (admins) are needed to merge PRs and for the push to NuGet.**
 
        Run the PowerShell script `.\build\scripts\update-changelogs.ps1
        -minVerTagPrefix [MinVerTagPrefix] -version [Version]`. Where
-       `[MinVerTagPrefix]` is the tag prefix (eg `core-`) for the components
-       being released and `[Version]` is the version being released (eg
-       `1.9.0`). This will update `CHANGELOG.md` files for the projects being
+       `[MinVerTagPrefix]` is the tag prefix (e.g. `core-`) for the components
+       being released and `[Version]` is the version being released (e.g.
+       `1.15.0`). This will update `CHANGELOG.md` files for the projects being
        released.
 
     * **Stable releases only**: Normalize PublicApi files
 
        Run the PowerShell script `.\build\scripts\finalize-publicapi.ps1
        -minVerTagPrefix [MinVerTagPrefix]`. Where `[MinVerTagPrefix]` is the tag
-       prefix (eg `core-`) for the components being released. This will merge
+       prefix (e.g. `core-`) for the components being released. This will merge
        the contents of any detected `PublicAPI.Unshipped.txt` files in the
        `.publicApi` folder into the corresponding `PublicAPI.Shipped.txt` files
        for the projects being released.
@@ -116,16 +116,16 @@ Maintainers (admins) are needed to merge PRs and for the push to NuGet.**
     For example:
 
        ```sh
-       git tag -a core-1.4.0-beta.1 -m "1.4.0-beta.1 of all core components"
-       git push origin core-1.4.0-beta.1
+       git tag -a core-1.15.0 -m "core-1.15.0 of all core components"
+       git push origin core-1.15.0
        ```
 
     * If releasing core unstable components, push the tag prefixed with
     `coreunstable-`. For example:
 
        ```sh
-       git tag -a coreunstable-1.9.0-beta.1 -m "1.9.0-beta.1 of all core unstable components"
-       git push origin coreunstable-1.9.0-beta.1
+       git tag -a coreunstable-1.15.0-beta.1 -m "coreunstable-1.15.0-beta.1 of all core unstable components"
+       git push origin coreunstable-1.15.0-beta.1
        ```
 
     Pushing the tag will kick off the [Build, pack, and publish to
@@ -204,14 +204,12 @@ Maintainers (admins) are needed to merge PRs and for the push to NuGet.**
     `Directory.Packages.props` to the just released stable version. Merge that
     PR once the build passes (this requires the packages be available on NuGet).
 
- 8. The [Complete
-    release](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/post-release.yml)
-    workflow should have invoked the [Core version
-    update](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/actions/workflows/core-version-update.yml)
-    workflow on the
-    [opentelemetry-dotnet-contrib](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/)
-    repository which opens a PR to update dependencies. Verify this PR was
-    opened successfully.
+ 8. Manually run the [Core version update](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/actions/workflows/core-version-update.yml)
+    workflow in the [opentelemetry-dotnet-contrib](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/)
+    repository, which opens a PR to update dependencies. The tag that was created
+    in step 5 should be used as the value of the `Release tag` input (for example
+    `core-1.15.0` or `coreunstable-1.15.0-beta.1`). Verify this PR was opened successfully
+    when the workflow completes.
 
  9. For stable releases post an announcement in the [Slack
     channel](https://cloud-native.slack.com/archives/C01N3BC2W7Q) announcing the
