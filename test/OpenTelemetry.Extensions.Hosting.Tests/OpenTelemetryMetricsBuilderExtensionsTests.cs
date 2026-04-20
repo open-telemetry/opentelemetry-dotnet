@@ -168,7 +168,7 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
     [InlineData(true, MetricReaderTemporalityPreference.Cumulative)]
     public void ReloadOfMetricsViaIConfigurationWithExportCleanupTest(bool useWithMetricsStyle, MetricReaderTemporalityPreference temporalityPreference)
     {
-        using var inMemoryEventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log);
+        using var eventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log);
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
         List<Metric> exportedItems = [];
@@ -238,16 +238,16 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
 
         AssertSingleMetricWithLongSum(exportedItems);
 
-        var duplicateMetricInstrumentEvents = inMemoryEventListener.Messages.Where((e) => e.EventId == 38);
+        var duplicateMetricInstrumentEvents = eventListener.Messages.Where((e) => e.EventId == 38);
 
         // Note: We currently log a duplicate warning anytime a metric is reactivated.
         Assert.Single(duplicateMetricInstrumentEvents);
 
-        var metricInstrumentDeactivatedEvents = inMemoryEventListener.Messages.Where((e) => e.EventId == 52);
+        var metricInstrumentDeactivatedEvents = eventListener.Messages.Where((e) => e.EventId == 52);
 
         Assert.Single(metricInstrumentDeactivatedEvents);
 
-        var metricInstrumentRemovedEvents = inMemoryEventListener.Messages.Where((e) => e.EventId == 53);
+        var metricInstrumentRemovedEvents = eventListener.Messages.Where((e) => e.EventId == 53);
 
         Assert.Single(metricInstrumentRemovedEvents);
     }
@@ -259,7 +259,7 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
     [InlineData(true, MetricReaderTemporalityPreference.Cumulative)]
     public void ReloadOfMetricsViaIConfigurationWithoutExportCleanupTest(bool useWithMetricsStyle, MetricReaderTemporalityPreference temporalityPreference)
     {
-        using var inMemoryEventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log);
+        using var eventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log);
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
         List<Metric> exportedItems = [];
@@ -309,16 +309,16 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
             exportedItems,
             expectedValue: temporalityPreference == MetricReaderTemporalityPreference.Delta ? 1 : 2);
 
-        var duplicateMetricInstrumentEvents = inMemoryEventListener.Messages.Where((e) => e.EventId == 38);
+        var duplicateMetricInstrumentEvents = eventListener.Messages.Where((e) => e.EventId == 38);
 
         // Note: We currently log a duplicate warning anytime a metric is reactivated.
         Assert.Single(duplicateMetricInstrumentEvents);
 
-        var metricInstrumentDeactivatedEvents = inMemoryEventListener.Messages.Where((e) => e.EventId == 52);
+        var metricInstrumentDeactivatedEvents = eventListener.Messages.Where((e) => e.EventId == 52);
 
         Assert.Single(metricInstrumentDeactivatedEvents);
 
-        var metricInstrumentRemovedEvents = inMemoryEventListener.Messages.Where((e) => e.EventId == 53);
+        var metricInstrumentRemovedEvents = eventListener.Messages.Where((e) => e.EventId == 53);
 
         Assert.Single(metricInstrumentRemovedEvents);
     }

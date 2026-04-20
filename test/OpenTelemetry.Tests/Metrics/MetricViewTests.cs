@@ -105,12 +105,12 @@ public class MetricViewTests : MetricTestsBase
            .AddView(_ => { throw new InvalidOperationException("bad"); })
            .AddInMemoryExporter(exportedItems));
 
-        using (var inMemoryEventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log))
+        using (var eventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log))
         {
             var counter1 = meter1.CreateCounter<long>("counter1");
             counter1.Add(1);
 
-            var metricViewIgnoredEvents = inMemoryEventListener.Messages.Where((e) => e.EventId == 41);
+            var metricViewIgnoredEvents = eventListener.Messages.Where((e) => e.EventId == 41);
             Assert.Single(metricViewIgnoredEvents);
         }
 

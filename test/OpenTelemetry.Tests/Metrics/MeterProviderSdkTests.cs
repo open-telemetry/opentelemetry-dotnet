@@ -43,7 +43,7 @@ public class MeterProviderSdkTests
     [InlineData(true, false)]
     public void TransientMeterExhaustsMetricStorageTest(bool withView, bool forceFlushAfterEachTest)
     {
-        using var inMemoryEventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log);
+        using var eventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log);
 
         var meterName = Utils.GetCurrentMethodName();
         var exportedItems = new List<Metric>();
@@ -83,7 +83,7 @@ public class MeterProviderSdkTests
             Assert.Single(exportedItems);
         }
 
-        var metricInstrumentIgnoredEvents = inMemoryEventListener.Messages.Where((e) => e.EventId == 33 && (e.Payload?.Count ?? 0) >= 2 && (e.Payload![1] as string) == meterName);
+        var metricInstrumentIgnoredEvents = eventListener.Messages.Where((e) => e.EventId == 33 && (e.Payload?.Count ?? 0) >= 2 && (e.Payload![1] as string) == meterName);
 
         Assert.Single(metricInstrumentIgnoredEvents);
 
