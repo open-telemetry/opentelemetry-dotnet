@@ -18,8 +18,7 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     {
         if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
         {
-            var redactedCollectorUri = RedactEndpointUri(collectorUri);
-            this.FailedToReachCollector(redactedCollectorUri, ex.ToInvariantString());
+            this.FailedToReachCollector(RedactEndpointUri(collectorUri), ex.ToInvariantString());
         }
     }
 
