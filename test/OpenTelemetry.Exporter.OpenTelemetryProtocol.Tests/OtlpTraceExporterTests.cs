@@ -484,16 +484,42 @@ public sealed class OtlpTraceExporterTests : IDisposable
         };
 
         using var activitySource = new ActivitySource(nameof(this.SpanAttributeValueLengthLimitOverridesAttributeValueLengthLimit));
-        using var activity = activitySource.StartActivity("root", ActivityKind.Server);
+        var links = new[]
+        {
+            new ActivityLink(
+                new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded),
+                new ActivityTagsCollection
+                {
+                    { "TruncatedLinkTag", "12345" },
+                }),
+        };
+
+        using var activity = activitySource.StartActivity("root", ActivityKind.Server, default(ActivityContext), tags: null, links);
 
         Assert.NotNull(activity);
         activity.SetTag("TruncatedTag", "12345");
+        activity.AddEvent(
+            new ActivityEvent(
+                "test-event",
+                tags: new ActivityTagsCollection
+                {
+                    { "TruncatedEventTag", "12345" },
+                }));
 
         var otlpSpan = ToOtlpSpan(sdkOptions, activity);
 
         Assert.NotNull(otlpSpan);
+
         var attribute = Assert.Single(otlpSpan.Attributes);
         Assert.Equal("1234", attribute.Value.StringValue);
+
+        var otlpEvent = Assert.Single(otlpSpan.Events);
+        var eventAttribute = Assert.Single(otlpEvent.Attributes);
+        Assert.Equal("1234", eventAttribute.Value.StringValue);
+
+        var otlpLink = Assert.Single(otlpSpan.Links);
+        var linkAttribute = Assert.Single(otlpLink.Attributes);
+        Assert.Equal("1234", linkAttribute.Value.StringValue);
     }
 
     [Fact]
