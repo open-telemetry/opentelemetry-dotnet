@@ -173,7 +173,7 @@ public class BaggagePropagatorTests
     {
         var carrier = new Dictionary<string, string>
         {
-            { BaggagePropagator.BaggageHeaderName, "SomeKey \t = \t SomeValue \t , \t SomeKey2 \t = \t SomeValue2" },
+            { BaggagePropagator.BaggageHeaderName, "SomeKey= \t SomeValue \t ,SomeKey2= \t SomeValue2" },
         };
 
         var propagationContext = this.baggage.Extract(default, carrier, Getter);
@@ -212,7 +212,7 @@ public class BaggagePropagatorTests
         // Simulates a header emitted by .NET 10's W3C propagator
         var carrier = new Dictionary<string, string>
         {
-            { BaggagePropagator.BaggageHeaderName, "correlationId = 12345, userId = user-abc" },
+            { BaggagePropagator.BaggageHeaderName, "correlationId= 12345,userId= user-abc" },
         };
 
         var extractedContext = this.baggage.Extract(default, carrier, Getter);
