@@ -813,7 +813,7 @@ public class BaggagePropagatorTests
     {
         var propagationContext = new PropagationContext(
             default,
-            new Baggage(new Dictionary<string, string> { { "key", $"val{rawChar}ue" } }));
+            new Baggage(new Dictionary<string, string> { { "key", $"prefix{rawChar}suffix" } }));
 
         var carrier = new Dictionary<string, string>();
         this.baggage.Inject(propagationContext, carrier, Setter);
