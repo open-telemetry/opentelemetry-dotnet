@@ -115,13 +115,21 @@ public class MetricReaderTests
 
         var secondCollectTask = Task.Run(() => metricReader.Collect(50));
 
-        Assert.False(await secondCollectTask);
-        Assert.False(firstCollectTask.IsCompleted);
-        Assert.Equal(1, metricReader.CollectCallCount);
+        var firstCollectResult = false;
 
-        metricReader.AllowCollectionToFinish.Set();
+        try
+        {
+            Assert.False(await secondCollectTask);
+            Assert.False(firstCollectTask.IsCompleted);
+            Assert.Equal(1, metricReader.CollectCallCount);
+        }
+        finally
+        {
+            metricReader.AllowCollectionToFinish.Set();
+            firstCollectResult = await firstCollectTask;
+        }
 
-        Assert.True(await firstCollectTask);
+        Assert.True(firstCollectResult);
     }
 
     private sealed class BlockingMetricReader : MetricReader
@@ -136,9 +144,8 @@ public class MetricReaderTests
         {
             this.CollectCallCount++;
             this.CollectionStarted.Set();
-            this.AllowCollectionToFinish.Wait();
 
-            return true;
+            return this.AllowCollectionToFinish.Wait(TimeSpan.FromSeconds(5));
         }
 
         protected override void Dispose(bool disposing)
