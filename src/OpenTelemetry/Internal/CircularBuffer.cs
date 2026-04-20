@@ -99,12 +99,12 @@ internal sealed class CircularBuffer<T>
     /// </returns>
     public bool TryAdd(T value, int maxSpinCount)
     {
-        Guard.ThrowIfNull(value);
-
         if (maxSpinCount <= 0)
         {
             return this.Add(value);
         }
+
+        Guard.ThrowIfNull(value);
 
         var spinCountDown = maxSpinCount;
 
