@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.15.3
+
+Released 2026-Apr-20
+
 * `OtlpLogExporter` now uses `IHttpClientFactory` on .NET 8+, matching the
   behaviour of the trace and metrics exporters.
   ([#7109](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7109))
