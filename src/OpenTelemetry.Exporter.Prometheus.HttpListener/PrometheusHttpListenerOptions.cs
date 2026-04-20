@@ -42,8 +42,7 @@ public class PrometheusHttpListenerOptions
     /// </summary>
     public bool DisableTimestamp { get; set; }
 
-    // Add a backing field that tracks whether the caller set UriPrefixes.
-    private bool uriPrefixesExplicitlySet = false;
+    internal bool UriPrefixesExplicitlySet { get; private set; }
 
     /// <summary>
     /// Gets or sets the URI (Uniform Resource Identifier) prefixes to use for the http listener.
@@ -61,10 +60,7 @@ public class PrometheusHttpListenerOptions
                 throw new ArgumentException("Empty list provided.", nameof(this.UriPrefixes));
             }
             this.uriPrefixes = value;
-            this.uriPrefixesExplicitlySet = true;
+            this.UriPrefixesExplicitlySet = true;
         }
     }
-
-    // Expose internal read-only property to let the listener detect explicit set
-    internal bool UriPrefixesExplicitlySet => this.uriPrefixesExplicitlySet;
 }

@@ -51,7 +51,8 @@ internal sealed class PrometheusHttpListener : IDisposable
         IEnumerable<string> prefixesToUse;
         if (!options.UriPrefixesExplicitlySet)
         {
-            prefixesToUse = new[] { $"http://{options.Host.TrimEnd('/')}:{options.Port}/" };
+            var uriBuilder = new UriBuilder("http", options.Host, options.Port);
+            prefixesToUse = new[] { uriBuilder.Uri.AbsoluteUri };
         }
         else
         {
