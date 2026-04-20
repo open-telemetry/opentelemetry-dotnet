@@ -859,8 +859,7 @@ public class BaggagePropagatorTests
     public void RoundTripMixedValidAndInvalidKeysOnlyValidKeysSurvive()
     {
         var carrier = new Dictionary<string, string>();
-        this.baggage.Inject(
-            new PropagationContext(default, new Baggage(new Dictionary<string, string> { { "valid-key",  "valid-value" }, })), carrier, Setter);
+        this.baggage.Inject(new PropagationContext(default, new Baggage(new Dictionary<string, string> { { "valid-key", "valid-value" }, })), carrier, Setter);
 
         var extracted = this.baggage.Extract(default, carrier, Getter).Baggage.GetBaggage();
         Assert.Single(extracted);
