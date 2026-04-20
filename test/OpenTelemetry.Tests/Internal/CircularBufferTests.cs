@@ -9,9 +9,7 @@ public class CircularBufferTests
 {
     [Fact]
     public void CheckInvalidArgument()
-    {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new CircularBuffer<string>(0));
-    }
+        => Assert.Throws<ArgumentOutOfRangeException>(() => new CircularBuffer<string>(0));
 
     [Fact]
     public void CheckCapacity()
@@ -31,6 +29,22 @@ public class CircularBufferTests
         Assert.True(result);
         Assert.Equal(1, circularBuffer.AddedCount);
         Assert.Equal(1, circularBuffer.Count);
+    }
+
+    [Fact]
+    public void Add_NullValue_Throws()
+    {
+        var circularBuffer = new CircularBuffer<string>(1);
+
+        Assert.Throws<ArgumentNullException>(() => circularBuffer.Add(null!));
+    }
+
+    [Fact]
+    public void TryAdd_NullValue_Throws()
+    {
+        var circularBuffer = new CircularBuffer<string>(1);
+
+        Assert.Throws<ArgumentNullException>(() => circularBuffer.TryAdd(null!, maxSpinCount: 1));
     }
 
     [Fact]

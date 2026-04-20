@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Internal;
@@ -66,7 +65,7 @@ internal sealed class CircularBuffer<T>
     /// </returns>
     public bool Add(T value)
     {
-        Debug.Assert(value != null, "value was null");
+        Guard.ThrowIfNull(value);
 
         while (true)
         {
@@ -100,12 +99,12 @@ internal sealed class CircularBuffer<T>
     /// </returns>
     public bool TryAdd(T value, int maxSpinCount)
     {
+        Guard.ThrowIfNull(value);
+
         if (maxSpinCount <= 0)
         {
             return this.Add(value);
         }
-
-        Debug.Assert(value != null, "value was null");
 
         var spinCountDown = maxSpinCount;
 
