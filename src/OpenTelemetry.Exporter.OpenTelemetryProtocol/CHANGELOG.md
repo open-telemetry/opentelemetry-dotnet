@@ -33,7 +33,7 @@ Notes](../../RELEASENOTES.md).
   `traces`, `metrics`, and `logs` directories.
   ([#7074](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7074))
 
-* Fixed full OTLP collector endpoint being logged by internal diagnostics.
+* Fixed full OTLP endpoint being logged by internal diagnostics.
   ([#7116](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7116))
 
 ## 1.15.2
