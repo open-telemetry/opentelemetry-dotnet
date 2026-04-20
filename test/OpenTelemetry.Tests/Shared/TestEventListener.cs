@@ -64,7 +64,7 @@ internal sealed class TestEventListener : EventListener
                 this.eventWritten.WaitOne(TimeSpan.FromSeconds(5));
             }
 
-            return [..this.events];
+            return [.. this.events];
         }
     }
 
