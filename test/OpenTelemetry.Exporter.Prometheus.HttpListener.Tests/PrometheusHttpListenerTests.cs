@@ -158,6 +158,132 @@ public class PrometheusHttpListenerTests
         listener?.Dispose();
     }
 
+    [Fact]
+    public async Task PrometheusHttpListenerStopDoesNotWaitForInFlightRequest()
+    {
+        using var exporter = new PrometheusExporter(new());
+        using var collectStarted = new ManualResetEventSlim();
+        using var allowCollectToComplete = new ManualResetEventSlim();
+        using var listener = StartPrometheusHttpListener(exporter, out var address);
+        using var client = new HttpClient();
+
+        exporter.Collect = _ =>
+        {
+            collectStarted.Set();
+
+            if (!allowCollectToComplete.Wait(TimeSpan.FromSeconds(5)))
+            {
+                throw new TimeoutException("Timed out waiting for the test to release the scrape.");
+            }
+
+            return true;
+        };
+
+        var requestTask = client.GetAsync(new Uri($"{address}metrics"));
+
+        Assert.True(collectStarted.Wait(TimeSpan.FromSeconds(5)));
+
+        var stopTask = Task.Run(listener.Stop);
+
+        try
+        {
+            var completedTask = await Task.WhenAny(stopTask, Task.Delay(TimeSpan.FromSeconds(5)));
+
+            Assert.Same(stopTask, completedTask);
+
+            await stopTask;
+        }
+        finally
+        {
+            allowCollectToComplete.Set();
+
+            try
+            {
+                using var response = await requestTask;
+            }
+            catch (HttpRequestException)
+            {
+            }
+            catch (TaskCanceledException)
+            {
+            }
+        }
+    }
+
+    [Fact]
+    public async Task PrometheusHttpListenerHandlesConcurrentScrapes()
+    {
+        using var exporter = new PrometheusExporter(new()
+        {
+            ScrapeResponseCacheDurationMilliseconds = 0,
+        });
+        using var firstCollectStarted = new ManualResetEventSlim();
+        using var allowFirstCollectToComplete = new ManualResetEventSlim();
+        using var secondCollectStarted = new ManualResetEventSlim();
+        using var allowSecondCollectToComplete = new ManualResetEventSlim();
+        using var listener = StartPrometheusHttpListener(exporter, out var address);
+        using var client = new HttpClient();
+        var collectCount = 0;
+
+        exporter.Collect = _ =>
+        {
+            var currentCollect = Interlocked.Increment(ref collectCount);
+
+            if (currentCollect == 1)
+            {
+                firstCollectStarted.Set();
+
+                if (!allowFirstCollectToComplete.Wait(TimeSpan.FromSeconds(5)))
+                {
+                    throw new TimeoutException("Timed out waiting for the test to release the first scrape.");
+                }
+            }
+            else if (currentCollect == 2)
+            {
+                secondCollectStarted.Set();
+
+                if (!allowSecondCollectToComplete.Wait(TimeSpan.FromSeconds(5)))
+                {
+                    throw new TimeoutException("Timed out waiting for the test to release the second scrape.");
+                }
+            }
+
+            return true;
+        };
+
+        var firstRequestTask = client.GetAsync(new Uri($"{address}metrics"));
+
+        Assert.True(firstCollectStarted.Wait(TimeSpan.FromSeconds(5)));
+
+        var secondRequestTask = client.GetAsync(new Uri($"{address}metrics"));
+
+        await Task.Delay(100);
+
+        allowFirstCollectToComplete.Set();
+
+        try
+        {
+            using var firstResponse = await firstRequestTask;
+
+            Assert.Equal(HttpStatusCode.OK, firstResponse.StatusCode);
+
+            var completedTask = await Task.WhenAny(secondRequestTask, Task.Delay(TimeSpan.FromSeconds(5)));
+
+            Assert.Same(secondRequestTask, completedTask);
+            Assert.False(secondCollectStarted.IsSet);
+
+            using var secondResponse = await secondRequestTask;
+
+            Assert.Equal(HttpStatusCode.OK, secondResponse.StatusCode);
+            Assert.Equal(1, Volatile.Read(ref collectCount));
+        }
+        finally
+        {
+            allowFirstCollectToComplete.Set();
+            allowSecondCollectToComplete.Set();
+        }
+    }
+
     [Theory]
     [InlineData("application/openmetrics-text")]
     [InlineData("")]
@@ -206,6 +332,46 @@ public class PrometheusHttpListenerTests
             {
                 UriPrefixes = uriPrefixes,
             });
+    }
+
+    private static PrometheusHttpListener StartPrometheusHttpListener(PrometheusExporter exporter, out string address)
+    {
+        var random = new Random();
+        var retryAttempts = 5;
+        string? generatedAddress = null;
+        PrometheusHttpListener? listener = null;
+
+        while (retryAttempts-- != 0)
+        {
+#pragma warning disable CA5394 // Do not use insecure randomness
+            var port = random.Next(2000, 5000);
+#pragma warning restore CA5394 // Do not use insecure randomness
+            generatedAddress = $"http://localhost:{port}/";
+            PrometheusHttpListener currentListener = null!;
+
+            try
+            {
+                currentListener = new PrometheusHttpListener(
+                    exporter,
+                    new()
+                    {
+                        UriPrefixes = [generatedAddress],
+                    });
+
+                currentListener.Start();
+                listener = currentListener;
+
+                break;
+            }
+            catch (HttpListenerException)
+            {
+                currentListener.Dispose();
+            }
+        }
+
+        address = generatedAddress!;
+
+        return listener ?? throw new InvalidOperationException("PrometheusHttpListener could not be started");
     }
 
     private static MeterProvider BuildMeterProvider(Meter meter, IEnumerable<KeyValuePair<string, object>> attributes, out string address, bool disableTimestamp = false)
