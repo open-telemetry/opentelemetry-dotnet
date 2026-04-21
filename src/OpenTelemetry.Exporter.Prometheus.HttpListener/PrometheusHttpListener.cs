@@ -56,7 +56,13 @@ internal sealed class PrometheusHttpListener : IDisposable
         }
         else
         {
+            // TODO: Remove this branch (along with UriPrefixesExplicitlySet, the
+            // obsolete UriPrefixes property, and this pragma) prior to the stable
+            // release. Kept during the prerelease transition window so existing
+            // consumers of UriPrefixes continue to work.
+#pragma warning disable CS0618 // Type or member is obsolete
             prefixesToUse = options.UriPrefixes;
+#pragma warning restore CS0618 // Type or member is obsolete
         }
 
         foreach (var uriPrefix in prefixesToUse)

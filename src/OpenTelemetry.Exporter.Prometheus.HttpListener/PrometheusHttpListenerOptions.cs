@@ -15,6 +15,8 @@ public class PrometheusHttpListenerOptions
     /// </summary>
     internal const string DefaultScrapeEndpointPath = "/metrics";
 
+    private IReadOnlyCollection<string> uriPrefixes = ["http://localhost:9464/"];
+
     /// <summary>
     /// Gets or sets the Host name the HTTP listener will bind to. Defaults to "localhost".
     /// </summary>
@@ -24,8 +26,6 @@ public class PrometheusHttpListenerOptions
     /// Gets or sets the TCP port used by the HTTP listener. Defaults to 9464 (commonly used for Prometheus exporters).
     /// </summary>
     public int Port { get; set; } = 9464;
-
-    private IReadOnlyCollection<string> uriPrefixes = ["http://localhost:9464/"];
 
     /// <summary>
     /// Gets or sets the path to use for the scraping endpoint. Default value: "/metrics".
@@ -42,8 +42,6 @@ public class PrometheusHttpListenerOptions
     /// </summary>
     public bool DisableTimestamp { get; set; }
 
-    internal bool UriPrefixesExplicitlySet { get; private set; }
-
     /// <summary>
     /// Gets or sets the URI (Uniform Resource Identifier) prefixes to use for the http listener.
     /// Default value: <c>["http://localhost:9464/"]</c>.
@@ -59,8 +57,11 @@ public class PrometheusHttpListenerOptions
             {
                 throw new ArgumentException("Empty list provided.", nameof(this.UriPrefixes));
             }
+
             this.uriPrefixes = value;
             this.UriPrefixesExplicitlySet = true;
         }
     }
+
+    internal bool UriPrefixesExplicitlySet { get; private set; }
 }
