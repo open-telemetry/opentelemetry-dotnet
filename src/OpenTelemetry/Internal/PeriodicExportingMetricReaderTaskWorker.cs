@@ -120,19 +120,20 @@ internal sealed class PeriodicExportingMetricReaderTaskWorker : PeriodicExportin
             {
                 var timeout = (int)(this.ExportIntervalMilliseconds - (sw.ElapsedMilliseconds % this.ExportIntervalMilliseconds));
 
-                var exportTriggerTask = this.exportTrigger.WaitAsync(cancellationToken);
+                Task? exportTriggerTask = null;
                 Task? triggeredTask = null;
 
                 try
                 {
-                    using var delayCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                    using var waitAndDelayCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                    exportTriggerTask = this.exportTrigger.WaitAsync(waitAndDelayCts.Token);
                     triggeredTask = await Task.WhenAny(
                         exportTriggerTask,
-                        Task.Delay(timeout, delayCts.Token)).ConfigureAwait(false);
+                        Task.Delay(timeout, waitAndDelayCts.Token)).ConfigureAwait(false);
 #if NET8_0_OR_GREATER
-                    await delayCts.CancelAsync().ConfigureAwait(false);
+                    await waitAndDelayCts.CancelAsync().ConfigureAwait(false);
 #else
-                    delayCts.Cancel();
+                    waitAndDelayCts.Cancel();
 #endif
                 }
                 catch (OperationCanceledException)
@@ -148,7 +149,7 @@ internal sealed class PeriodicExportingMetricReaderTaskWorker : PeriodicExportin
                 }
 
                 // Check if the trigger was signaled by trying to acquire it with a timeout of 0
-                var exportWasTriggered = triggeredTask == exportTriggerTask;
+                var exportWasTriggered = triggeredTask != null && triggeredTask == exportTriggerTask;
 
                 if (exportWasTriggered)
                 {

@@ -34,6 +34,9 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
 
     internal override bool RequireHttp2 => true;
 
+    // We need the entire response content to ensure that the response trailers are received
+    internal override HttpCompletionOption CompletionOption => HttpCompletionOption.ResponseContentRead;
+
     /// <inheritdoc/>
     public override ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default)
     {

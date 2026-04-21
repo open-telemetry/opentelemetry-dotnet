@@ -86,6 +86,61 @@ public sealed class LogRecordAttributeListTests
         }
     }
 
+    [Fact]
+    public void ClearAfterOverflowThenReuseWithInlineCountTest()
+    {
+        LogRecordAttributeList attributes = default;
+
+        for (var i = 0; i <= LogRecordAttributeList.OverflowMaxCount; i++)
+        {
+            attributes.Add($"key{i}", i);
+        }
+
+        Assert.NotNull(attributes.OverflowAttributes);
+
+        attributes.Clear();
+        attributes.Add("key0", 0);
+
+        var item = attributes[0];
+        Assert.Equal("key0", item.Key);
+        Assert.Equal(0, (int)item.Value!);
+
+        Assert.Collection(
+            attributes,
+            exportedItem =>
+            {
+                Assert.Equal("key0", exportedItem.Key);
+                Assert.Equal(0, (int)exportedItem.Value!);
+            });
+    }
+
+    [Fact]
+    public void CreateFromEnumerableSmallCountThenAddToOverflowTest()
+    {
+        var sourceAttributes = new List<KeyValuePair<string, object?>>
+        {
+            new("key0", 0),
+            new("key1", 1),
+            new("key2", 2),
+        };
+
+        var attributes = LogRecordAttributeList.CreateFromEnumerable(sourceAttributes);
+
+        for (var i = 3; i <= LogRecordAttributeList.OverflowMaxCount; i++)
+        {
+            attributes.Add($"key{i}", i);
+        }
+
+        Assert.Equal(LogRecordAttributeList.OverflowMaxCount + 1, attributes.Count);
+
+        for (var i = 0; i < attributes.Count; i++)
+        {
+            var item = attributes[i];
+            Assert.Equal($"key{i}", item.Key);
+            Assert.Equal(i, (int)item.Value!);
+        }
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(1)]

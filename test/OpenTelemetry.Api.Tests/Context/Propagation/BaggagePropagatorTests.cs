@@ -227,7 +227,7 @@ public class BaggagePropagatorTests
         Assert.Empty(propagationContext.Baggage.GetBaggage());
     }
 
-    [Fact(Skip = "Fails due to spec mismatch, tracked in https://github.com/open-telemetry/opentelemetry-dotnet/issues/5210")]
+    [Fact]
     public void ValidateOWSOnExtraction()
     {
         var carrier = new Dictionary<string, string>
@@ -248,7 +248,7 @@ public class BaggagePropagatorTests
         Assert.Equal("SomeValue2", baggage[1].Value);
     }
 
-    [Fact(Skip = "Fails due to spec mismatch, tracked in https://github.com/open-telemetry/opentelemetry-dotnet/issues/5210")]
+    [Fact]
     public void ValidateSemicolonMetadataIgnoredOnExtraction()
     {
         var carrier = new Dictionary<string, string>
@@ -260,6 +260,39 @@ public class BaggagePropagatorTests
         Assert.Single(propagationContext.Baggage.GetBaggage());
 
         var baggage = propagationContext.Baggage.GetBaggage().FirstOrDefault();
+
+        Assert.Equal("SomeKey", baggage.Key);
+        Assert.Equal("SomeValue", baggage.Value);
+    }
+
+    [Fact]
+    public void ValidateOptionalWhiteSpaceExtractionDoesNotCorruptOnReinjection()
+    {
+        // Simulates a header emitted by .NET 10's W3C propagator
+        var carrier = new Dictionary<string, string>
+        {
+            { BaggagePropagator.BaggageHeaderName, "correlationId = 12345, userId = user-abc" },
+        };
+
+        var extractedContext = this.baggage.Extract(default, carrier, Getter);
+
+        var outboundCarrier = new Dictionary<string, string>();
+        this.baggage.Inject(extractedContext, outboundCarrier, Setter);
+
+        Assert.Equal("correlationId=12345,userId=user-abc", outboundCarrier[BaggagePropagator.BaggageHeaderName]);
+    }
+
+    [Fact]
+    public void ValidateOptionalWhiteSpaceBeforeSemicolonIgnored()
+    {
+        var carrier = new Dictionary<string, string>
+        {
+            { BaggagePropagator.BaggageHeaderName, "SomeKey=SomeValue ; propertyKey=propertyValue" },
+        };
+
+        var propagationContext = this.baggage.Extract(default, carrier, Getter);
+
+        var baggage = Assert.Single(propagationContext.Baggage.GetBaggage());
 
         Assert.Equal("SomeKey", baggage.Key);
         Assert.Equal("SomeValue", baggage.Value);

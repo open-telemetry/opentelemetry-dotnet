@@ -492,7 +492,7 @@ public class MetricApiTests : MetricTestsBase
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
         Assert.Single(exportedItems);
 
-        // Expeecting another metric stream since the meter differs by version
+        // Expecting another metric stream since the meter differs by version
         var anotherCounterSameNameDiffMeter = meter2.CreateCounter<long>("name1");
         anotherCounterSameNameDiffMeter.Add(10);
         counterLong.Add(10);
@@ -1884,14 +1884,14 @@ public class MetricApiTests : MetricTestsBase
             .AddMeter(meter.Name)
             .AddInMemoryExporter(exportedItems));
 
-        using (var inMemoryEventListener = new InMemoryEventListener(OpenTelemetrySdkEventSource.Log))
+        using (var eventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log))
         {
             var counter = meter.CreateCounter<decimal>("counter");
             counter.Add(1);
 
             // This validates that we log InstrumentIgnored event
             // and not something else.
-            var instrumentIgnoredEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 33);
+            var instrumentIgnoredEvents = eventListener.Messages.Where((e) => e.EventId == 33);
 #if BUILDING_HOSTING_TESTS
             // Note: When using IMetricsListener this event is fired twice. Once
             // for the SDK listener ignoring it because it isn't listening to
