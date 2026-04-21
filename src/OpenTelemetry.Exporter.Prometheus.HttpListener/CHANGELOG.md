@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.15.3-beta.1
+
+Released 2026-Apr-21
+
 * Fixed metric unit strings containing invalid Prometheus characters (e.g. `# RU`)
   not being sanitized, resulting in malformed metric names.
   ([#6187](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6187))
@@ -14,6 +18,9 @@ Notes](../../RELEASENOTES.md).
 * Fixed Prometheus metric serialization to handle empty label names without
   throwing during scrape rendering.
   ([#7077](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7077))
+
+* Updated OpenTelemetry core component version(s) to `1.15.3`.
+  ([#7125](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7125))
 
 ## 1.15.2-beta.1
 

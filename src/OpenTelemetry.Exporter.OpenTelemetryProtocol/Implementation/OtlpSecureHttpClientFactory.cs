@@ -127,9 +127,7 @@ internal static class OtlpSecureHttpClientFactory
     public static HttpClient CreateMtlsHttpClient(
         OtlpMtlsOptions mtlsOptions,
         Action<HttpClient>? configureClient = null)
-    {
-        return CreateSecureHttpClient(mtlsOptions, configureClient);
-    }
+        => CreateSecureHttpClient(mtlsOptions, configureClient);
 
     /// <summary>
     /// HttpClientHandler that applies TLS configuration based on loaded certificates.
@@ -138,6 +136,7 @@ internal static class OtlpSecureHttpClientFactory
     {
         private readonly byte[]? caCertificateData;
         private readonly X509Certificate2? clientCertificate;
+        private X509Certificate2? certificateAuthorityCertificate;
 
         internal TlsHttpClientHandler(
             byte[]? caCertificateData,
@@ -146,68 +145,74 @@ internal static class OtlpSecureHttpClientFactory
             this.caCertificateData = caCertificateData;
             this.clientCertificate = clientCertificate;
 
-            this.ConfigureTls();
+            this.CheckCertificateRevocationList = true;
+
+            if (this.clientCertificate != null)
+            {
+                this.ClientCertificates.Add(this.clientCertificate);
+                this.ClientCertificateOptions = ClientCertificateOption.Manual;
+            }
+
+            if (this.caCertificateData != null)
+            {
+                this.ServerCertificateCustomValidationCallback = this.ValidateServerCertificate;
+            }
         }
 
         protected override void Dispose(bool disposing)
         {
-            base.Dispose(disposing);
-
             if (disposing)
             {
                 this.clientCertificate?.Dispose();
-            }
-        }
-
-        private void ConfigureTls()
-        {
-            this.CheckCertificateRevocationList = true;
-
-            this.ConfigureClientCertificate();
-            this.ConfigureCaCertificateValidation();
-        }
-
-        private void ConfigureClientCertificate()
-        {
-            if (this.clientCertificate == null)
-            {
-                return;
+                this.certificateAuthorityCertificate?.Dispose();
             }
 
-            this.ClientCertificates.Add(this.clientCertificate);
-            this.ClientCertificateOptions = ClientCertificateOption.Manual;
+            base.Dispose(disposing);
         }
 
-        private void ConfigureCaCertificateValidation()
+        private X509Certificate2 EnsureCertificateAuthorityCertificate()
         {
-            if (this.caCertificateData == null)
+            if (this.certificateAuthorityCertificate == null)
             {
-                return;
-            }
-
-            var caCertData = this.caCertificateData;
-            this.ServerCertificateCustomValidationCallback = (
-                httpRequestMessage,
-                cert,
-                chain,
-                sslPolicyErrors) =>
-            {
-                if (cert == null || chain == null)
-                {
-                    return false;
-                }
-
 #if NET9_0_OR_GREATER
-                using var caCert = X509CertificateLoader.LoadCertificate(caCertData);
+                var certificate = X509CertificateLoader.LoadCertificate(this.caCertificateData!);
 #else
-                using var caCert = new X509Certificate2(caCertData);
+                var certificate = new X509Certificate2(this.caCertificateData!);
 #endif
-                return OtlpCertificateManager.ValidateServerCertificate(
-                    cert,
-                    chain,
-                    sslPolicyErrors,
-                    caCert);
-            };
+
+                var existingCertificate = Interlocked.CompareExchange(
+                    ref this.certificateAuthorityCertificate,
+                    certificate,
+                    null);
+
+                if (existingCertificate != null)
+                {
+                    certificate.Dispose();
+                    return existingCertificate;
+                }
+            }
+
+            return this.certificateAuthorityCertificate;
+        }
+
+        private bool ValidateServerCertificate(
+            HttpRequestMessage httpRequestMessage,
+            X509Certificate2? certificate,
+            X509Chain? chain,
+            System.Net.Security.SslPolicyErrors errors)
+        {
+            if (certificate == null || chain == null)
+            {
+                return false;
+            }
+
+            var caCertificate = this.EnsureCertificateAuthorityCertificate();
+
+            return OtlpCertificateManager.ValidateServerCertificate(
+                certificate,
+                chain,
+                errors,
+                caCertificate);
         }
     }
 }

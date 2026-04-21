@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.15.3
+
+Released 2026-Apr-21
+
 * Fix resource leak in batch and periodic exporting task workers for Blazor/WASM.
   ([#7069](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7069))
 

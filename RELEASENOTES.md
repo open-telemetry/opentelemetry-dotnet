@@ -4,6 +4,36 @@ This file contains highlights and announcements covering all components.
 For more details see `CHANGELOG.md` files maintained in the root source
 directory of each individual package.
 
+## 1.15.3
+
+Release details: [1.15.3](https://github.com/open-telemetry/opentelemetry-dotnet/releases/tag/core-1.15.3)
+
+* **Breaking change:** Fixed `tracestate` parsing to reject keys that do not
+  begin with a lowercase letter, including keys beginning with digits, to
+  align with the W3C Trace Context specification.
+* **Breaking change:** Fixed an insecure disk retry default for OTLP export.
+  Disk retry now requires `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH`
+  when `OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY=disk` is configured.
+* Improve efficiency of parsing of baggage and B3 propagation headers.
+* `OtlpLogExporter` now uses `IHttpClientFactory` on .NET 8+.
+* Fixed an issue in OTLP/gRPC retry handling when parsing gRPC statuses.
+* Fixed `OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT` not being applied.
+* Fixed baggage and trace headers not respecting the maximum length in some cases.
+* Fixed `BaggagePropagator` to trim optional whitespace (OWS) around `=`
+  separators when parsing the `baggage` header.
+* Fixed `BaggagePropagator` to strip baggage properties from values when
+  parsing the `baggage` header.
+* Fixed OTLP persistent storage clean-up handling for malformed filenames.
+* Fixed resource leak in batch and periodic exporting task workers for Blazor/WASM.
+* Fixed `LogRecord.LogLevel` to preserve `LogLevel.None`.
+* Fixed `OTEL_TRACES_SAMPLER_ARG` handling for out-of-range values.
+* Fixed an issue with OTLP disk retry storage where metrics and logs used the
+  traces storage directory.
+* Fixed full OTLP endpoint being logged by internal diagnostics.
+* Improve efficiency of parsing of baggage, B3 and Jaeger propagation headers.
+* Hardened Zipkin exporter memory usage for endpoint caching and array tag
+  serialization.
+
 ## 1.15.2
 
 Release details: [1.15.2](https://github.com/open-telemetry/opentelemetry-dotnet/releases/tag/core-1.15.2)
