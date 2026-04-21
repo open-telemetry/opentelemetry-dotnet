@@ -54,7 +54,11 @@ internal
             {
                 var overflowAttributes = this.OverflowAttributes;
                 Debug.Assert(overflowAttributes is not null, "Overflow attributes creation failure.");
+#if NET
+                Debug.Assert(index < overflowAttributes.Count, "Invalid index accessed.");
+#else
                 Debug.Assert(index < overflowAttributes!.Count, "Invalid index accessed.");
+#endif
                 return overflowAttributes[index];
             }
 
@@ -80,7 +84,11 @@ internal
             {
                 var overflowAttributes = this.OverflowAttributes;
                 Debug.Assert(overflowAttributes is not null, "Overflow attributes creation failure.");
+#if NET
+                Debug.Assert(index < overflowAttributes.Count, "Invalid index accessed.");
+#else
                 Debug.Assert(index < overflowAttributes!.Count, "Invalid index accessed.");
+#endif
                 overflowAttributes[index] = value;
                 return;
             }
@@ -234,7 +242,11 @@ internal
             Debug.Assert(overflowAttributes is not null, "Overflow attributes creation failure.");
 
             // An allocation has already occurred, just use the list.
+#if NET
+            return overflowAttributes;
+#else
             return overflowAttributes!;
+#endif
         }
 
         Debug.Assert(readonlyCount <= 8, "Invalid size detected.");

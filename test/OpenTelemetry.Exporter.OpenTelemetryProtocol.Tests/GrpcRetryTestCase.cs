@@ -24,7 +24,6 @@ public class GrpcRetryTestCase
 
     internal GrpcRetryAttempt[] RetryAttempts { get; }
 
-#pragma warning disable CA1825 // HACK Workaround for https://github.com/dotnet/sdk/issues/53047
     public static TheoryData<GrpcRetryTestCase> GetGrpcTestCases() =>
     [
         new("Cancelled", [new(StatusCode.Cancelled)]),
@@ -83,7 +82,6 @@ public class GrpcRetryTestCase
             ],
             expectedRetryAttempts: 9),
     ];
-#pragma warning restore CA1825 // HACK Workaround for https://github.com/dotnet/sdk/issues/53047
 
     public override string ToString()
         => this.testRunnerName;
