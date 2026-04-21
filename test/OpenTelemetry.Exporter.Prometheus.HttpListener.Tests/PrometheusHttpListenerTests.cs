@@ -344,42 +344,40 @@ public class PrometheusHttpListenerTests
 
     private static PrometheusHttpListener StartPrometheusHttpListener(PrometheusExporter exporter, out string address)
     {
+#if NET
+        var random = Random.Shared;
+#else
         var random = new Random();
+#endif
+
         var retryAttempts = 5;
-        string? generatedAddress = null;
-        PrometheusHttpListener? listener = null;
 
         while (retryAttempts-- != 0)
         {
 #pragma warning disable CA5394 // Do not use insecure randomness
             var port = random.Next(2000, 5000);
 #pragma warning restore CA5394 // Do not use insecure randomness
-            generatedAddress = $"http://localhost:{port}/";
-            PrometheusHttpListener currentListener = null!;
+
+            string generatedAddress = new UriBuilder(Uri.UriSchemeHttp, "localhost", port).Uri.ToString();
+
+            var listener = new PrometheusHttpListener(
+                exporter,
+                new() { UriPrefixes = [generatedAddress] });
 
             try
             {
-                currentListener = new PrometheusHttpListener(
-                    exporter,
-                    new()
-                    {
-                        UriPrefixes = [generatedAddress],
-                    });
+                listener.Start();
 
-                currentListener.Start();
-                listener = currentListener;
-
-                break;
+                address = generatedAddress;
+                return listener;
             }
             catch (HttpListenerException)
             {
-                currentListener.Dispose();
+                listener.Dispose();
             }
         }
 
-        address = generatedAddress!;
-
-        return listener ?? throw new InvalidOperationException("PrometheusHttpListener could not be started");
+        throw new InvalidOperationException($"{nameof(PrometheusHttpListener)} could not be started.");
     }
 
     private static MeterProvider BuildMeterProvider(Meter meter, IEnumerable<KeyValuePair<string, object>> attributes, out string address, bool disableTimestamp = false)
