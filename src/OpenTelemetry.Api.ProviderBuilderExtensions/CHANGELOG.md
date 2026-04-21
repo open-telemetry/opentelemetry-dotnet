@@ -9,7 +9,7 @@ Notes](../../RELEASENOTES.md).
 
 ## 1.15.3
 
-Released 2026-Apr-20
+Released 2026-Apr-21
 
 ## 1.15.2
 

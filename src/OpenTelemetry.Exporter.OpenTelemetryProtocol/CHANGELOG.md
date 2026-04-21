@@ -9,7 +9,7 @@ Notes](../../RELEASENOTES.md).
 
 ## 1.15.3
 
-Released 2026-Apr-20
+Released 2026-Apr-21
 
 * `OtlpLogExporter` now uses `IHttpClientFactory` on .NET 8+, matching the
   behaviour of the trace and metrics exporters.

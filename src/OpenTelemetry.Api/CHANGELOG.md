@@ -8,7 +8,7 @@ Notes](../../RELEASENOTES.md).
 
 ## 1.15.3
 
-Released 2026-Apr-20
+Released 2026-Apr-21
 
 * Fix baggage and trace headers not respecting the maximum length in some cases.
   ([#7061](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7061))
