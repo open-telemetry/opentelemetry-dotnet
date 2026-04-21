@@ -225,14 +225,14 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
                 {
                     try
                     {
-                        using var delayCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                        using var waitAndDelayCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
                         await Task.WhenAny(
-                            this.exportTrigger.WaitAsync(cancellationToken),
-                            Task.Delay(this.ScheduledDelayMilliseconds, delayCts.Token)).ConfigureAwait(false);
+                            this.exportTrigger.WaitAsync(waitAndDelayCts.Token),
+                            Task.Delay(this.ScheduledDelayMilliseconds, waitAndDelayCts.Token)).ConfigureAwait(false);
 #if NET8_0_OR_GREATER
-                        await delayCts.CancelAsync().ConfigureAwait(false);
+                        await waitAndDelayCts.CancelAsync().ConfigureAwait(false);
 #else
-                        delayCts.Cancel();
+                        waitAndDelayCts.Cancel();
 #endif
                     }
                     catch (OperationCanceledException)

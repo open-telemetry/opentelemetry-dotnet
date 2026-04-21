@@ -6,6 +6,13 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.15.3
+
+Released 2026-Apr-21
+
+* Harden memory usage for endpoint caching and array tag serialization.
+  ([#7081](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7081))
+
 ## 1.15.2
 
 Released 2026-Apr-08

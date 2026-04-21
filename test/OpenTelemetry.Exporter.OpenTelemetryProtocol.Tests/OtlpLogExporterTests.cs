@@ -109,6 +109,32 @@ public class OtlpLogExporterTests
     }
 
     [Fact]
+    public void ServiceProviderHttpClientFactoryInvoked()
+    {
+        IServiceCollection services = new ServiceCollection();
+
+        services.AddHttpClient();
+
+        var invocations = 0;
+
+        services.AddHttpClient("OtlpLogExporter", configureClient: (client) => invocations++);
+
+        services.AddOpenTelemetry().WithLogging(builder => builder
+            .AddOtlpExporter(o => o.Protocol = OtlpExportProtocol.HttpProtobuf));
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var loggerProvider = serviceProvider.GetRequiredService<LoggerProvider>();
+
+        // IHttpClientFactory integration is only enabled for OtlpLogExporter on .NET 8+.
+#if NET8_0_OR_GREATER
+        Assert.Equal(1, invocations);
+#else
+        Assert.Equal(0, invocations);
+#endif
+    }
+
+    [Fact]
     public void AddOtlpExporterSetsDefaultBatchExportProcessor()
     {
         using var loggerProvider = Sdk.CreateLoggerProviderBuilder()
@@ -629,7 +655,7 @@ public class OtlpLogExporterTests
         });
 
         var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
-        logger.ExceptionOccured(new InvalidOperationException("Exception Message"));
+        logger.ExceptionOccurred(new InvalidOperationException("Exception Message"));
 
         var logRecord = logRecords[0];
         var loggedException = logRecord.Exception;
@@ -1302,10 +1328,10 @@ public class OtlpLogExporterTests
         var provider = sp.GetRequiredService<LoggerProvider>() as LoggerProviderSdk;
         Assert.NotNull(provider);
 
-        var batchProcesor = provider.Processor as BatchLogRecordExportProcessor;
-        Assert.NotNull(batchProcesor);
+        var batchProcessor = provider.Processor as BatchLogRecordExportProcessor;
+        Assert.NotNull(batchProcessor);
 
-        Assert.Equal(BatchLogRecordExportProcessor.DefaultScheduledDelayMilliseconds, batchProcesor.ScheduledDelayMilliseconds);
+        Assert.Equal(BatchLogRecordExportProcessor.DefaultScheduledDelayMilliseconds, batchProcessor.ScheduledDelayMilliseconds);
     }
 
     [Theory]
@@ -1340,10 +1366,10 @@ public class OtlpLogExporterTests
 
         if (processorType == ExportProcessorType.Batch)
         {
-            var batchProcesor = processor as BatchLogRecordExportProcessor;
-            Assert.NotNull(batchProcesor);
+            var batchProcessor = processor as BatchLogRecordExportProcessor;
+            Assert.NotNull(batchProcessor);
 
-            Assert.Equal(1000, batchProcesor.ScheduledDelayMilliseconds);
+            Assert.Equal(1000, batchProcessor.ScheduledDelayMilliseconds);
         }
         else
         {

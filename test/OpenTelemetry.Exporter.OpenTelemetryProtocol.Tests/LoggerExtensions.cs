@@ -44,5 +44,5 @@ internal static partial class LoggerExtensions
     public static partial void HelloFromGreenTomato(this ILogger logger);
 
     [LoggerMessage(LogLevel.Information, "Exception Occurred")]
-    public static partial void ExceptionOccured(this ILogger logger, Exception exception);
+    public static partial void ExceptionOccurred(this ILogger logger, Exception exception);
 }

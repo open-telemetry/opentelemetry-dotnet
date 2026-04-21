@@ -28,6 +28,7 @@
     <File Path=".github/workflows/verifyaotcompat.yml" />
   </Folder>
   <Folder Name="/build/">
+    <File Path="build/BannedSymbols.txt" />
     <File Path="build/Common.nonprod.props" />
     <File Path="build/Common.prod.props" />
     <File Path="build/Common.props" />
