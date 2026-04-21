@@ -98,12 +98,16 @@ public readonly struct ReadOnlyFilteredTagCollection
         /// collection.</returns>
         public bool MoveNext()
         {
+            var maximumCount = this.source.MaximumCount;
+            var excludedKeys = this.source.excludedKeys;
+            var tags = this.source.tags;
+
             while (true)
             {
                 var index = ++this.index;
-                if (index < this.source.MaximumCount)
+                if (index < maximumCount)
                 {
-                    if (this.source.excludedKeys?.Contains(this.source.tags[index].Key) ?? false)
+                    if (excludedKeys?.Contains(tags[index].Key) ?? false)
                     {
                         continue;
                     }
