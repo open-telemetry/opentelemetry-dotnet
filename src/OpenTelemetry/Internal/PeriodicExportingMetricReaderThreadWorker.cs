@@ -134,6 +134,8 @@ internal sealed class PeriodicExportingMetricReaderThreadWorker : PeriodicExport
                     OpenTelemetrySdkEventSource.Log.MetricReaderEvent("PeriodicExportingMetricReader calling MetricReader.Collect because the export interval has elapsed.");
                     this.MetricReader.Collect(this.ExportTimeoutMilliseconds);
                     break;
+                default:
+                    break;
             }
         }
     }

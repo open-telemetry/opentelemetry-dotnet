@@ -103,4 +103,60 @@ public class MetricReaderTests
         var metric = Assert.Single(metrics);
         Assert.Equal(expectedTemporality, metric.Temporality);
     }
+
+    [Fact]
+    public async Task Collect_WhenConcurrentCallTimesOut_ReturnsFalseWithoutStartingAnotherCollection()
+    {
+        using var metricReader = new BlockingMetricReader();
+
+        var firstCollectTask = Task.Run(() => metricReader.Collect(Timeout.Infinite));
+
+        Assert.True(metricReader.CollectionStarted.Wait(TimeSpan.FromSeconds(5)));
+
+        var secondCollectTask = Task.Run(() => metricReader.Collect(50));
+
+        var firstCollectResult = false;
+
+        try
+        {
+            Assert.False(await secondCollectTask);
+            Assert.False(firstCollectTask.IsCompleted);
+            Assert.Equal(1, metricReader.CollectCallCount);
+        }
+        finally
+        {
+            metricReader.AllowCollectionToFinish.Set();
+            firstCollectResult = await firstCollectTask;
+        }
+
+        Assert.True(firstCollectResult);
+    }
+
+    private sealed class BlockingMetricReader : MetricReader
+    {
+        public ManualResetEventSlim CollectionStarted { get; } = new();
+
+        public ManualResetEventSlim AllowCollectionToFinish { get; } = new();
+
+        public int CollectCallCount { get; private set; }
+
+        protected override bool OnCollect(int timeoutMilliseconds)
+        {
+            this.CollectCallCount++;
+            this.CollectionStarted.Set();
+
+            return this.AllowCollectionToFinish.Wait(TimeSpan.FromSeconds(5));
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                this.CollectionStarted.Dispose();
+                this.AllowCollectionToFinish.Dispose();
+            }
+
+            base.Dispose(disposing);
+        }
+    }
 }

@@ -47,6 +47,9 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
 
     internal override bool RequireHttp2 => true;
 
+    // We need the entire response content to ensure that the response trailers are received
+    internal override HttpCompletionOption CompletionOption => HttpCompletionOption.ResponseContentRead;
+    
 #if NET
     // See https://vcsjones.dev/csharp-readonly-span-bytes-static/
     private static ReadOnlySpan<byte> GrpcFrameHeader => [0, 0, 0, 0, 0];

@@ -109,6 +109,32 @@ public class OtlpLogExporterTests
     }
 
     [Fact]
+    public void ServiceProviderHttpClientFactoryInvoked()
+    {
+        IServiceCollection services = new ServiceCollection();
+
+        services.AddHttpClient();
+
+        var invocations = 0;
+
+        services.AddHttpClient("OtlpLogExporter", configureClient: (client) => invocations++);
+
+        services.AddOpenTelemetry().WithLogging(builder => builder
+            .AddOtlpExporter(o => o.Protocol = OtlpExportProtocol.HttpProtobuf));
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var loggerProvider = serviceProvider.GetRequiredService<LoggerProvider>();
+
+        // IHttpClientFactory integration is only enabled for OtlpLogExporter on .NET 8+.
+#if NET8_0_OR_GREATER
+        Assert.Equal(1, invocations);
+#else
+        Assert.Equal(0, invocations);
+#endif
+    }
+
+    [Fact]
     public void AddOtlpExporterSetsDefaultBatchExportProcessor()
     {
         using var loggerProvider = Sdk.CreateLoggerProviderBuilder()

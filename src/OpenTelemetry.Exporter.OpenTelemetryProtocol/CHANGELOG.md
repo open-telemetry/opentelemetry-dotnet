@@ -7,7 +7,38 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* Fixed an issue in OTLP/gRPC retry handling where parsing gRPC status.
+* Added opt-in support for gzip compression. Compression can be configured
+  programmatically via the new `OtlpExporterOptions.Compression` property,
+  or through the environment variables such as `OTEL_EXPORTER_OTLP_COMPRESSION=gzip`.
+  ([#3961](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3961))
+
+## 1.15.3
+
+Released 2026-Apr-21
+
+* `OtlpLogExporter` now uses `IHttpClientFactory` on .NET 8+, matching the
+  behaviour of the trace and metrics exporters.
+  ([#7109](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7109))
+
+* Fixed an issue in persistent storage cleanup where malformed `.blob`, `.tmp`,
+  or `.lock` filenames could throw and interrupt maintenance.
+  ([#7108](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7108))
+
+* **Breaking change:** Fixed an insecure disk retry default. Disk retry now
+  requires `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH` when
+  `OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY=disk` is configured. The exporter no
+  longer falls back to a shared temp directory by default.
+  To retain the previous behaviour, set the
+  `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH` environment
+  variable to the value one of the following environment variables:
+
+  * `TMP`, `TMP`, or `USERPROFILE` ([Windows](https://learn.microsoft.com/windows/win32/api/fileapi/nf-fileapi-gettemppath2w#remarks))
+  * `TMPDIR` (or the literal value `/tmp/`) ([Linux](https://learn.microsoft.com/dotnet/api/system.io.path.gettemppath?tabs=linux),
+      [macOS](https://learn.microsoft.com/dotnet/api/system.io.path.gettemppath?tabs=macos)).
+
+  ([#7106](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7106))
+
+* Fixed an issue in OTLP/gRPC retry handling when parsing gRPC statuses.
   ([#7064](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7064))
 
 * Fixed an issue with OTLP disk retry storage where metrics and logs used the
@@ -15,10 +46,11 @@ Notes](../../RELEASENOTES.md).
   `traces`, `metrics`, and `logs` directories.
   ([#7074](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7074))
 
-* Added opt-in support for gzip compression. Compression can be configured
-  programmatically via the new `OtlpExporterOptions.Compression` property,
-  or through the environment variables such as `OTEL_EXPORTER_OTLP_COMPRESSION=gzip`.
-  ([#3961](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3961))
+* Fixed full OTLP endpoint being logged by internal diagnostics.
+  ([#7116](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7116))
+
+* Fix `OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT` not being applied.
+  ([#7115](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7115))
 
 ## 1.15.2
 
