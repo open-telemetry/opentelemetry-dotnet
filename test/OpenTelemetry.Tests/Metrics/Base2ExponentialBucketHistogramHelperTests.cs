@@ -19,7 +19,6 @@ public class Base2ExponentialBucketHistogramHelperTests
     public static TheoryData<int> GetNonPositiveScales()
     {
         TheoryData<int> theoryData = [];
-
         for (var i = -11; i <= 0; ++i)
         {
             theoryData.Add(i);
@@ -31,7 +30,6 @@ public class Base2ExponentialBucketHistogramHelperTests
     public static TheoryData<int> GetPositiveScales()
     {
         TheoryData<int> theoryData = [];
-
         for (var i = 1; i <= 20; ++i)
         {
             theoryData.Add(i);
