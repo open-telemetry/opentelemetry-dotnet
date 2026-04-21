@@ -26,50 +26,42 @@ public class HttpRetryTestCase
 
     internal HttpRetryAttempt[] RetryAttempts { get; }
 
-    public static TheoryData<HttpRetryTestCase> GetHttpTestCases()
-    {
-        return
-        [
-            new("NetworkError", [new(statusCode: null)]),
-            new("GatewayTimeout", [new(statusCode: HttpStatusCode.GatewayTimeout, throttleDelay: TimeSpan.FromSeconds(1))]),
+    public static TheoryData<HttpRetryTestCase> GetHttpTestCases() =>
+    [
+        new("NetworkError", [new(statusCode: null)]),
+        new("GatewayTimeout", [new(statusCode: HttpStatusCode.GatewayTimeout, throttleDelay: TimeSpan.FromSeconds(1))]),
 #if NETSTANDARD2_1_OR_GREATER || NET
-            new("ServiceUnavailable", [new(statusCode: HttpStatusCode.TooManyRequests, throttleDelay: TimeSpan.FromSeconds(1))]),
+        new("ServiceUnavailable", [new(statusCode: HttpStatusCode.TooManyRequests, throttleDelay: TimeSpan.FromSeconds(1))]),
 #endif
 
-            new(
-                "Exponential Backoff",
-                [
-                    new(statusCode: null, expectedNextRetryDelayMilliseconds: 1500),
-                    new(statusCode: null, expectedNextRetryDelayMilliseconds: 2250),
-                    new(statusCode: null, expectedNextRetryDelayMilliseconds: 3375),
-                    new(statusCode: null, expectedNextRetryDelayMilliseconds: 5000),
-                    new(statusCode: null, expectedNextRetryDelayMilliseconds: 5000)
-                ],
-                expectedRetryAttempts: 5),
-            new(
-                "Retry until non-retryable status code encountered",
-                [
-                    new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 1500),
-                    new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 2250),
-                    new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 3375),
-                    new(statusCode: HttpStatusCode.BadRequest, expectedSuccess: false),
-                    new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 5000)
-                ],
-                expectedRetryAttempts: 4),
-            new(
-                "Expired deadline",
-                [
-                    new(statusCode: HttpStatusCode.ServiceUnavailable, isDeadlineExceeded: true, expectedSuccess: false)
-                ]),
-        ];
+        new(
+            "Exponential Backoff",
+            [
+                new(statusCode: null, expectedNextRetryDelayMilliseconds: 1500),
+                new(statusCode: null, expectedNextRetryDelayMilliseconds: 2250),
+                new(statusCode: null, expectedNextRetryDelayMilliseconds: 3375),
+                new(statusCode: null, expectedNextRetryDelayMilliseconds: 5000),
+                new(statusCode: null, expectedNextRetryDelayMilliseconds: 5000)
+            ],
+            expectedRetryAttempts: 5),
+        new(
+            "Retry until non-retryable status code encountered",
+            [
+                new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 1500),
+                new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 2250),
+                new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 3375),
+                new(statusCode: HttpStatusCode.BadRequest, expectedSuccess: false),
+                new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 5000)
+            ],
+            expectedRetryAttempts: 4),
+        new(
+            "Expired deadline",
+            [
+                new(statusCode: HttpStatusCode.ServiceUnavailable, isDeadlineExceeded: true, expectedSuccess: false)
+            ]),
+    ]; // TODO: Add more cases.
 
-        // TODO: Add more cases.
-    }
-
-    public override string ToString()
-    {
-        return this.testRunnerName;
-    }
+    public override string ToString() => this.testRunnerName;
 
     internal sealed class HttpRetryAttempt
     {
