@@ -9,6 +9,9 @@ Notes](../../RELEASENOTES.md).
 * Fixes support for `byte`, `short`, `int`, and `float` attributes.
   ([#7080](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7080))
 
+* Updated OpenTelemetry core component version(s) to `1.15.3`.
+  ([#7125](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7125))
+
 ## 1.15.2-beta.1
 
 Released 2026-Apr-08

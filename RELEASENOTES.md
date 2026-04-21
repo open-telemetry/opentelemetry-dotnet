@@ -16,7 +16,7 @@ Release details: [1.15.3](https://github.com/open-telemetry/opentelemetry-dotnet
   when `OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY=disk` is configured.
 * Improve efficiency of parsing of baggage and B3 propagation headers.
 * `OtlpLogExporter` now uses `IHttpClientFactory` on .NET 8+.
-* Fixed an issue in OTLP/gRPC retry handling where parsing gRPC status.
+* Fixed an issue in OTLP/gRPC retry handling when parsing gRPC statuses.
 * Fixed `OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT` not being applied.
 * Fixed baggage and trace headers not respecting the maximum length in some cases.
 * Fixed `BaggagePropagator` to trim optional whitespace (OWS) around `=`

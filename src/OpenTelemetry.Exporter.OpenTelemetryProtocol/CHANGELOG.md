@@ -33,7 +33,7 @@ Released 2026-Apr-21
 
   ([#7106](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7106))
 
-* Fixed an issue in OTLP/gRPC retry handling where parsing gRPC status.
+* Fixed an issue in OTLP/gRPC retry handling when parsing gRPC statuses.
   ([#7064](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7064))
 
 * Fixed an issue with OTLP disk retry storage where metrics and logs used the
