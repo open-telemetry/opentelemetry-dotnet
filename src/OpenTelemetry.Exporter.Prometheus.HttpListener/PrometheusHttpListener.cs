@@ -87,16 +87,31 @@ internal sealed class PrometheusHttpListener : IDisposable
     /// </summary>
     public void Stop()
     {
+        CancellationTokenSource? tokenSource;
+        Task? workerThread;
+
         lock (this.syncObject)
         {
-            if (this.tokenSource == null)
+            tokenSource = this.tokenSource;
+            workerThread = this.workerThread;
+
+            if (tokenSource == null)
             {
                 return;
             }
 
-            this.tokenSource.Cancel();
-            this.workerThread!.Wait();
             this.tokenSource = null;
+            this.workerThread = null;
+        }
+
+        try
+        {
+            tokenSource.Cancel();
+            workerThread?.Wait();
+        }
+        finally
+        {
+            tokenSource.Dispose();
         }
     }
 
@@ -115,23 +130,20 @@ internal sealed class PrometheusHttpListener : IDisposable
     {
         var acceptHeader = request.Headers["Accept"];
 
-        if (string.IsNullOrEmpty(acceptHeader))
-        {
-            return false;
-        }
-
-        return PrometheusHeadersParser.AcceptsOpenMetrics(acceptHeader);
+        return !string.IsNullOrEmpty(acceptHeader) && PrometheusHeadersParser.AcceptsOpenMetrics(acceptHeader);
     }
 
     private void WorkerProc()
     {
+        var cancellationToken = this.tokenSource!.Token;
+
         try
         {
             using var scope = SuppressInstrumentationScope.Begin();
-            while (!this.tokenSource!.IsCancellationRequested)
+            while (!cancellationToken.IsCancellationRequested)
             {
                 var ctxTask = this.httpListener.GetContextAsync();
-                ctxTask.Wait(this.tokenSource.Token);
+                ctxTask.Wait(cancellationToken);
                 var ctx = ctxTask.Result;
 
                 Task.Run(() => this.ProcessRequestAsync(ctx));

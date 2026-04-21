@@ -40,13 +40,18 @@ internal static class PersistentStorageHelper
             var fileDateTime = GetDateTimeFromLeaseName(filePath);
             if (fileDateTime < leaseDeadline)
             {
-                var newFilePath =
 #if NET11_0_OR_GREATER
-                    filePath.Substring(0, filePath.LastIndexOf('@', StringComparison.Ordinal));
+                var atSignIndex = filePath.LastIndexOf('@', StringComparison.Ordinal);
 #else
-                    filePath.Substring(0, filePath.LastIndexOf('@'));
+                var atSignIndex = filePath.LastIndexOf('@');
 #endif
 
+                if (atSignIndex == -1)
+                {
+                    return false;
+                }
+
+                var newFilePath = filePath.Substring(0, atSignIndex);
                 try
                 {
                     File.Move(filePath, newFilePath);
@@ -139,12 +144,18 @@ internal static class PersistentStorageHelper
     {
         var fileName = GetFileNameWithoutExtension(filePath);
 
-        var timestamp =
 #if NET11_0_OR_GREATER
-            fileName.Substring(0, fileName.LastIndexOf('-', StringComparison.Ordinal));
+        var dashIndex = fileName.LastIndexOf('-', StringComparison.Ordinal);
 #else
-            fileName.Substring(0, fileName.LastIndexOf('-'));
+        var dashIndex = fileName.LastIndexOf('-');
 #endif
+
+        if (dashIndex == -1)
+        {
+            return DateTime.SpecifyKind(DateTime.MinValue, DateTimeKind.Utc);
+        }
+
+        var timestamp = fileName.Substring(0, dashIndex);
 
         return Parse(timestamp);
     }
@@ -195,7 +206,7 @@ internal static class PersistentStorageHelper
         if (!DateTime.TryParseExact(timestamp, "yyyy-MM-ddTHHmmss.fffffffZ", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var dateTime))
         {
             // In case of failure, return DateTime.MinValue so that the lease file can be removed as expired
-            dateTime = DateTime.MinValue;
+            return DateTime.SpecifyKind(DateTime.MinValue, DateTimeKind.Utc);
         }
 
         return dateTime.ToUniversalTime();
