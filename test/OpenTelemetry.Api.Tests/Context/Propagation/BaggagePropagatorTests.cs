@@ -543,6 +543,7 @@ public class BaggagePropagatorTests
     [Fact(Skip = "Fails due to spec mismatch, tracked in https://github.com/open-telemetry/opentelemetry-dotnet/issues/5210")]
     public void ValidateSpecialCharactersInjection()
     {
+        // adding weird comment
         var propagationContext = new PropagationContext(
             default,
             new Baggage(new Dictionary<string, string>
