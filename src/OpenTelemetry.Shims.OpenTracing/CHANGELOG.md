@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.15.3-beta.1
+
+Released 2026-Apr-21
+
 * Fixes support for `byte`, `short`, `int`, and `float` attributes.
   ([#7080](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7080))
 
