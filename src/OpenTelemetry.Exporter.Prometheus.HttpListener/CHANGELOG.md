@@ -14,7 +14,7 @@ Notes](../../RELEASENOTES.md).
   ([#7107](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7114))
 
 * Marked `PrometheusHttpListenerOptions.UriPrefixes` as obsolete in favor
-  of `Host` and `Port`. Behavior is unchanged — existing code that sets
+  of `Host` and `Port`. Behavior is unchanged; existing code that sets
   `UriPrefixes` continues to work. The property is scheduled for removal
   prior to the stable release.
   ([#7107](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7114))
