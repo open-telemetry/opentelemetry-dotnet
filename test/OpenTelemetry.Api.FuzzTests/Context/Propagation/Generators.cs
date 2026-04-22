@@ -13,6 +13,13 @@ internal static class Generators
     private static readonly Gen<char> TraceStateKeyChar = Gen.Elements("abcdefghijklmnopqrstuvwxyz0123456789_-*/".ToCharArray());
     private static readonly Gen<char> TraceStateValueChar = Gen.Elements("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!#$%&'*+-.^_`|~:/".ToCharArray());
     private static readonly Gen<char> BaggageChar = Gen.Elements("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 -_./:!$&'()*+;@?=,".ToCharArray());
+
+    private static readonly Gen<char> SafeBaggageKeyChar = Gen.Elements(
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!#$%&'*+-.^_`|~".ToCharArray());
+
+    private static readonly Gen<char> SafeBaggageValueChar = Gen.Elements(
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!#$%&'()*+-./:<=>?@[]^_`{|}~".ToCharArray());
+
     private static readonly Gen<char> CompactBaggageValueChar = Gen.Elements("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-".ToCharArray());
     private static readonly Gen<char> HeaderValueChar = Gen.Elements("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_=,;: ./@".ToCharArray());
 
@@ -35,8 +42,8 @@ internal static class Generators
     public static Arbitrary<Dictionary<string, string>> SafeBaggageDictionaryArbitrary()
     {
         var pairGen =
-            from key in CreateString(BaggageChar, 1, 12)
-            from value in CreateString(BaggageChar, 1, 24)
+            from key in CreateString(SafeBaggageKeyChar, 1, 12)
+            from value in CreateString(SafeBaggageValueChar, 1, 24)
             select new KeyValuePair<string, string>(key, value);
 
         var gen = Gen.Sized(size =>

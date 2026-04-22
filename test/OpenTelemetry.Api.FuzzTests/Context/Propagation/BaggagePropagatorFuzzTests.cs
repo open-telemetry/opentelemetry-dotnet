@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Net;
 using FsCheck;
 using FsCheck.Fluent;
 using FsCheck.Xunit;
@@ -28,7 +29,11 @@ public class BaggagePropagatorFuzzTests
 
             var extracted = propagator.Extract(default, carrier, FuzzTestHelpers.Getter);
 
-            return DictionariesEqual(baggageItems, extracted.Baggage.GetBaggage());
+            var normalized = Normalize(baggageItems);
+
+            return DictionariesEqual(
+                normalized,
+                extracted.Baggage.GetBaggage());
         }
         catch (Exception ex) when (FuzzTestHelpers.IsAllowedException(ex))
         {
@@ -143,5 +148,88 @@ public class BaggagePropagatorFuzzTests
         }
 
         return expected;
+    }
+
+    private static Dictionary<string, string> Normalize(Dictionary<string, string> input)
+    {
+        var result = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        foreach (KeyValuePair<string, string> kvp in input)
+        {
+            var key = kvp.Key;
+            var value = kvp.Value;
+
+            if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(value))
+            {
+                continue;
+            }
+
+            if (!IsValidKey(key))
+            {
+                continue;
+            }
+
+#if NET || NETSTANDARD2_1_OR_GREATER
+            var semicolonIndex = value.IndexOf(';', StringComparison.Ordinal);
+#else
+            var semicolonIndex = value.IndexOf(';');
+#endif
+
+            var truncated = semicolonIndex >= 0
+                ? value.Substring(0, semicolonIndex)
+                : value;
+
+            truncated = truncated.Trim();
+
+            var decoded = DecodeIfNeeded(truncated);
+
+            if (string.IsNullOrEmpty(decoded))
+            {
+                continue;
+            }
+
+            result[key] = decoded;
+        }
+
+        return result;
+    }
+
+    private static string DecodeIfNeeded(string value)
+    {
+#if NET || NETSTANDARD2_1_OR_GREATER
+        return value.Contains('%', StringComparison.Ordinal) == true
+            ? WebUtility.UrlDecode(value)
+            : value;
+#else
+        return value.Contains('%') == true
+            ? WebUtility.UrlDecode(value)
+            : value;
+#endif
+    }
+
+    private static bool IsValidKey(string key)
+    {
+        foreach (var c in key)
+        {
+            // Control chars
+            if (c <= 31 || c == 127)
+            {
+                return false;
+            }
+
+            // Delimiters disallowed in baggage keys
+            switch (c)
+            {
+                case '(': case ')': case '<': case '>':
+                case '@': case ',': case ';': case ':':
+                case '\\': case '"': case '/': case '[':
+                case ']': case '?': case '=': case '{':
+                case '}': case ' ':
+                case '\t':
+                    return false;
+            }
+        }
+
+        return true;
     }
 }

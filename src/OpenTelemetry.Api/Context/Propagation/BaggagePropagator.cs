@@ -127,7 +127,7 @@ public class BaggagePropagator : TextMapPropagator
                     continue;
                 }
 
-                var encodedKey = Uri.EscapeDataString(item.Key);
+                var encodedKey = EncodeKey(item.Key);
                 var encodedValue = EncodeValue(item.Value);
                 var baggageItemLength = encodedKey.Length + encodedValue.Length + 1;
 
@@ -268,6 +268,38 @@ public class BaggagePropagator : TextMapPropagator
         foreach (var c in value)
         {
             if (IsInvalidValueChar(c))
+            {
+                sb.Append('%')
+                .Append(((int)c).ToString("X2", System.Globalization.CultureInfo.InvariantCulture));
+            }
+            else
+            {
+                sb.Append(c);
+            }
+        }
+
+        return sb.ToString();
+    }
+
+    private static string EncodeKey(ReadOnlySpan<char> key)
+    {
+#if NET9_0_OR_GREATER
+        if (!key.ContainsAny(InvalidKeySearcher))
+        {
+            return key.ToString(); // fast path
+        }
+#else
+        if (key.IndexOfAny(InvalidCharsArray) < 0)
+        {
+            return key.ToString(); // fast path
+        }
+#endif
+
+        var sb = new StringBuilder(key.Length);
+
+        foreach (var c in key)
+        {
+            if (!IsValidKey(new ReadOnlySpan<char>([c])))
             {
                 sb.Append('%')
                 .Append(((int)c).ToString("X2", System.Globalization.CultureInfo.InvariantCulture));
