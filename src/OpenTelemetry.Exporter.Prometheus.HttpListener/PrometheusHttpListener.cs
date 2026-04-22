@@ -51,7 +51,7 @@ internal sealed class PrometheusHttpListener : IDisposable
         IEnumerable<string> prefixesToUse;
         if (!options.UriPrefixesExplicitlySet)
         {
-            var uriBuilder = new UriBuilder("http", options.Host, options.Port);
+            var uriBuilder = new UriBuilder(Uri.UriSchemeHttp, options.Host, options.Port);
             prefixesToUse = new[] { uriBuilder.Uri.AbsoluteUri };
         }
         else
@@ -60,6 +60,7 @@ internal sealed class PrometheusHttpListener : IDisposable
             // obsolete UriPrefixes property, and this pragma) prior to the stable
             // release. Kept during the prerelease transition window so existing
             // consumers of UriPrefixes continue to work.
+            // Tracking issue: https://github.com/open-telemetry/opentelemetry-dotnet/issues/7107
 #pragma warning disable CS0618 // Type or member is obsolete
             prefixesToUse = options.UriPrefixes;
 #pragma warning restore CS0618 // Type or member is obsolete
