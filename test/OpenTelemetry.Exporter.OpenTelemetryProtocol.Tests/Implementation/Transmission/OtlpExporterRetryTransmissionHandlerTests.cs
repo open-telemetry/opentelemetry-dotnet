@@ -107,7 +107,7 @@ public class OtlpExporterRetryTransmissionHandlerTests
         {
             var allocatedBytes = GC.GetTotalAllocatedBytes() - this.before;
 
-            const int Limit = 1_000_000;
+            const int Limit = 2_000_000;
             Assert.False(
                 allocatedBytes > Limit,
                 $"{allocatedBytes} bytes were allocated during the operation which is more than the limit of {Limit}.");

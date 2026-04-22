@@ -42,8 +42,8 @@ internal sealed class ExperimentalOptions
                 }
                 else
                 {
-                    // Fallback to temp location.
-                    this.DiskRetryDirectoryPath = Path.GetTempPath();
+                    throw new NotSupportedException(
+                        $"Retry Policy '{retryPolicy}' requires '{OtlpDiskRetryDirectoryPathEnvVar}' to be configured.");
                 }
             }
             else

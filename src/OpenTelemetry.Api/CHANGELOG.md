@@ -6,6 +6,18 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* **Breaking change** (pre-release only versions): The default value of
+  the `Timestamp` property on `LogRecordData` has changed from `DateTime.UtcNow`
+  to `DateTime.MinValue`. `DateTime.MinValue` represents an unset timestamp as
+  defined by the OpenTelemetry specification. Callers of the [Logs API](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/api.md)
+  who relied on the timestamp being populated automatically must now set
+  `Timestamp = DateTime.UtcNow` explicitly on their `LogRecordData` instance.
+  ([#7045](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7045))
+
+## 1.15.3
+
+Released 2026-Apr-21
+
 * Fix baggage and trace headers not respecting the maximum length in some cases.
   ([#7061](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7061))
 
@@ -17,13 +29,14 @@ Notes](../../RELEASENOTES.md).
   align with the W3C Trace Context specification.
   ([#7065](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7065))
 
-* **Breaking change** (pre-release only versions): The default value of
-  the `Timestamp` property on `LogRecordData` has changed from `DateTime.UtcNow`
-  to `DateTime.MinValue`. `DateTime.MinValue` represents an unset timestamp as
-  defined by the OpenTelemetry specification. Callers of the [Logs API](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/api.md)
-  who relied on the timestamp being populated automatically must now set
-  `Timestamp = DateTime.UtcNow` explicitly on their `LogRecordData` instance.
-  ([#7045](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7045))
+* Fixed `BaggagePropagator` to trim optional whitespace (OWS) around `=`
+  separators when parsing the `baggage` header, as required by the
+  [W3C Baggage specification](https://www.w3.org/TR/baggage/).
+  ([#7009](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7009))
+
+* Fixed `BaggagePropagator` to strip baggage properties (e.g. `;metadata`)
+  from values when parsing the `baggage` header.
+  ([#7009](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7009))
 
 ## 1.15.2
 

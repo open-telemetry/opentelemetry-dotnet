@@ -152,7 +152,6 @@ public abstract partial class MetricReader : IDisposable
         {
             lock (this.onCollectLock)
             {
-                this.collectionTcs = null;
                 result = this.OnCollect(timeoutMilliseconds);
             }
         }
@@ -160,8 +159,18 @@ public abstract partial class MetricReader : IDisposable
         {
             OpenTelemetrySdkEventSource.Log.MetricReaderException(nameof(this.Collect), ex);
         }
+        finally
+        {
+            tcs.TrySetResult(result);
 
-        tcs.TrySetResult(result);
+            lock (this.newTaskLock)
+            {
+                if (ReferenceEquals(this.collectionTcs, tcs))
+                {
+                    this.collectionTcs = null;
+                }
+            }
+        }
 
         if (result)
         {

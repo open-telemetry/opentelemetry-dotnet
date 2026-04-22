@@ -161,7 +161,7 @@ function TryPostPackagesReadyNoticeOnPrepareReleasePullRequest {
 
   $body =
 @"
-The packages for [$tag](https://github.com/$gitRepository/releases/tag/$tag) are now available: $packagesUrl.
+The packages for [$tag](https://github.com/$gitRepository/releases/tag/$tag) are now available: [Download]($packagesUrl).
 
 Once these packages have been validated have a maintainer post a comment with "/PushPackages" in the body if you would like me to push to NuGet.
 "@
