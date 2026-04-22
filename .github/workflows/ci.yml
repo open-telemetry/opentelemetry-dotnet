@@ -156,7 +156,7 @@ jobs:
   validate-benchmarks:
     needs: detect-changes
     if: |
-      contains(needs.detect-changes.outputs.changes, 'packaged-code') ||
+      contains(needs.detect-changes.outputs.changes, 'code') ||
       contains(needs.detect-changes.outputs.changes, 'build') ||
       contains(needs.detect-changes.outputs.changes, 'shared')
     strategy:
