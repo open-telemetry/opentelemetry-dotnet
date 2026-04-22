@@ -4,8 +4,8 @@
 #if !NET9_0_OR_GREATER
 namespace OpenTelemetry;
 
-// Note: .NET9 added the System.Threading.Lock class. The goal here is when
-// compiling against .NET9+ code should use System.Threading.Lock class for
+// Note: .NET 9 added the System.Threading.Lock class. The goal here is when
+// compiling against .NET 9+ code should use System.Threading.Lock class for
 // better perf. Legacy code can use this class which will perform a classic
 // monitor-based lock against a reference of this class. This type is not in the
 // System.Threading namespace so that the compiler doesn't get confused when it

@@ -153,8 +153,5 @@ public class RemoteEndpointPriorityTestCase
 
     public Dictionary<string, object>? RemoteEndpointAttributes { get; private set; }
 
-    public override string? ToString()
-    {
-        return this.Name;
-    }
+    public override string? ToString() => this.Name;
 }
