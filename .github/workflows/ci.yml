@@ -238,6 +238,7 @@ jobs:
       build-test-unstable-core,
       otlp-integration-test,
       w3c-trace-context-integration-test,
+      validate-benchmarks,
       validate-packages,
       generate-docs,
       verify-aot-compat,
