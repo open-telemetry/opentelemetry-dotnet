@@ -220,11 +220,24 @@ public class BaggagePropagatorFuzzTests
             // Delimiters disallowed in baggage keys
             switch (c)
             {
-                case '(': case ')': case '<': case '>':
-                case '@': case ',': case ';': case ':':
-                case '\\': case '"': case '/': case '[':
-                case ']': case '?': case '=': case '{':
-                case '}': case ' ':
+                case '(':
+                case ')':
+                case '<':
+                case '>':
+                case '@':
+                case ',':
+                case ';':
+                case ':':
+                case '\\':
+                case '"':
+                case '/':
+                case '[':
+                case ']':
+                case '?':
+                case '=':
+                case '{':
+                case '}':
+                case ' ':
                 case '\t':
                     return false;
             }
