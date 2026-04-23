@@ -43,7 +43,7 @@ public class BaggagePropagator : TextMapPropagator
     private static readonly SearchValues<char> InvalidKeySearcher = SearchValues.Create(InvalidCharsArray);
 
     private static readonly SearchValues<char> InvalidValueSearcher =
-    SearchValues.Create(InvalidValueChars);
+        SearchValues.Create(InvalidValueChars);
 #endif
 
     /// <inheritdoc/>
@@ -323,14 +323,12 @@ public class BaggagePropagator : TextMapPropagator
         return c == ',' || c == ';' || c == '"' || c == '\\' || c == ' ';
     }
 
-    private static bool IsValidKey(ReadOnlySpan<char> key)
-    {
+    private static bool IsValidKey(ReadOnlySpan<char> key) =>
 #if NET9_0_OR_GREATER
-        return !key.ContainsAny(InvalidKeySearcher);
+        key.ContainsAny(InvalidKeySearcher);
 #else
-        return key.IndexOfAny(InvalidCharsArray) < 0;
+        key.IndexOfAny(InvalidCharsArray) < 0;
 #endif
-    }
 
     private static string DecodeIfNeeded(ReadOnlySpan<char> value) =>
 #if NET9_0_OR_GREATER
