@@ -120,6 +120,7 @@ repository:
   security:
     assessments:
       self:
+        comment: No formal self-assessment yet.
         evidence: https://github.com/open-telemetry/opentelemetry-dotnet/pull/7143
         date: '2026-04-23'
     tools:
