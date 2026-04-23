@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using Microsoft.Extensions.Configuration;
+using OpenTelemetry.Tests;
 using Xunit;
 
 namespace OpenTelemetry.Resources.Tests;
 
+[Collection(EnvVarsCollectionDefinition.Name)]
 public sealed class OtelEnvResourceDetectorTests : IDisposable
 {
     public OtelEnvResourceDetectorTests()
