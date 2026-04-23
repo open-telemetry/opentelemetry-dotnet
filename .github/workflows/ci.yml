@@ -177,13 +177,13 @@ jobs:
     - name: Run benchmarks
       shell: pwsh
       run: |
-        $runtimes = @("net10.0")
+        $runtimes = @("net11.0")
         if ($IsWindows) {
           $runtimes += "net462"
         }
         dotnet run `
           --configuration Release `
-          --framework net10.0 `
+          --framework net11.0 `
           --project ./test/Benchmarks `
           -- `
           --filter "*SamplerBenchmarks*" `

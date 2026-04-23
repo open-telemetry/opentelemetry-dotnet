@@ -1,9 +1,10 @@
 # OpenTelemetry Stress Tests
 
-* [Why would you need stress test](#why-would-you-need-stress-test)
-* [Running the demo](#running-the-demo)
-* [Writing your own stress test](#writing-your-own-stress-test)
-* [Understanding the results](#understanding-the-results)
+- [OpenTelemetry Stress Tests](#opentelemetry-stress-tests)
+  - [Why would you need stress test](#why-would-you-need-stress-test)
+  - [Running the demo](#running-the-demo)
+  - [Writing your own stress test](#writing-your-own-stress-test)
+  - [Understanding the results](#understanding-the-results)
 
 ## Why would you need stress test
 
@@ -18,14 +19,14 @@
 Open a console, run the following command from the current folder:
 
 ```sh
-dotnet run --framework net10.0 --configuration Release
+dotnet run --framework net11.0 --configuration Release
 ```
 
 To see command line options available, run the following command from the
 current folder:
 
 ```sh
-dotnet run --framework net10.0 --configuration Release -- --help
+dotnet run --framework net11.0 --configuration Release -- --help
 ```
 
 The help output includes settings and their explanations:
