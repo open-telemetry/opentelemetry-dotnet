@@ -95,6 +95,31 @@ provider through an options-class parameterless constructor that calls
 
 ## 3. Recommendations
 
+### Status (post-#7141)
+
+The vendored provider was replaced with the
+`Microsoft.Extensions.Configuration.EnvironmentVariables` package dependency,
+which eliminates the driving motivation for R1–R5. The recommendations below
+are not implemented, by design:
+
+- R1, R2, R4, R5 and the §2.1-row-3 empty-prefix scenario all pin mechanics of
+  the runtime `EnvironmentVariablesConfigurationProvider` (prefix filter,
+  `__`→`:` translation, verbatim value storage, `OrdinalIgnoreCase` dictionary,
+  no-prefix load). Post-swap these are third-party contracts owned and tested
+  by Microsoft and versioned via semver. The SDK's own indirect tests
+  (`OtlpExporterOptions_EnvironmentVariableOverride` and siblings) already
+  exercise every contract we depend on in context, with higher-signal error
+  messages tied to SDK behaviour. Adding a second, lower-level copy would be
+  net maintenance cost without matching assurance.
+- R3 (empty-string stored as empty) and R5's Tier-3 Linux case-sensitivity
+  assertion remain deferred regardless — they require the package provider's
+  internal `Load(IDictionary)` overload, which is not visible across assembly
+  boundaries. If ever revisited, they belong with the broader
+  process-isolation test strategy, not here.
+
+The individual recommendations below are kept as the inventory of what was
+originally proposed; they should be read as not-implemented / not-planned.
+
 ### R1: VendoredProvider_NonOtelPrefix_NotLoaded
 
 - **Target test name:** `VendoredProvider_NonOtelPrefix_NotLoaded`
@@ -226,7 +251,9 @@ provider through an options-class parameterless constructor that calls
 
 ## Guards issues
 
-- **Issue 3** - Replace vendored `EnvironmentVariablesConfigurationProvider` with a package
-  dependency. Every test recommended in this file pins a contract that Issue 3 must preserve.
-  When Issue 3 lands, the new test file moves to regression-only status and the
-  `guards Issue 3` code-comment language should be updated to reflect that.
+- **Issue 3** (#7141) - Replace vendored `EnvironmentVariablesConfigurationProvider`
+  with a package dependency. **Resolved.** The landed test file
+  `EnvironmentVariablesConfigurationTests.cs` now pins the runtime package's
+  contracts as regressions rather than pre-swap baselines. R3 and the Tier-3
+  Linux case-sensitivity test remain deferred to the process-isolation
+  strategy.

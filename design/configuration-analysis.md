@@ -60,17 +60,12 @@ path toward declarative configuration, telemetry policies, and dynamic reload.
    exist for these. Samplers have env var support but no `IOptions<T>`
    integration. Resources and propagators are purely programmatic.
 
-8. **Two AOT violations identified.** `OtlpExporterBuilder.cs:153` uses
-   `services.Configure<T>(IConfiguration)` without suppression - an existing
-   IL2026/IL3050 bug. -> [Deep Dive
-   F](configuration-analysis-deep-dives.md#f-aot-compatibility-full-analysis)
-
-9. **`DelegatingOptionsFactory` can be simplified.** The M.E.Options 5.0.0
+8. **`DelegatingOptionsFactory` can be simplified.** The M.E.Options 5.0.0
    threshold for using the virtual `CreateInstance` method has been met across
    all TFMs (minimum resolved is 8.0.0). -> [Deep Dive
    B](configuration-analysis-deep-dives.md#b-delegatingoptionsfactory-simplification)
 
-10. **`OpenTelemetryLoggerOptions` can be refactored.** A non-breaking approach
+9. **`OpenTelemetryLoggerOptions` can be refactored.** A non-breaking approach
     extracts accumulated state (`ProcessorFactories`, `ResourceBuilder`) at
     setup time, making the type a pure value object compatible with reload.
 

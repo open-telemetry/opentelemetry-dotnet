@@ -1402,8 +1402,10 @@ entirely delegate-based and AoT-safe.
 
 The risk is at **options instantiation time** - triggered on both initial load
 and every `IOptionsMonitor` reload. Two `IConfiguration.Bind()` usage points are
-not safe and must be fixed: one is an existing bug in the codebase, the other is
-the vendor extensibility pattern which must show the correct approach.
+not safe and must be fixed before the API goes public: one is a latent violation
+in `OtlpExporterBuilder.BindConfigurationToOptions` (currently dead code from
+the public API perspective), the other is the vendor extensibility pattern which
+must show the correct approach.
 
 ### F.2 What Is Safe
 
@@ -1417,7 +1419,7 @@ the vendor extensibility pattern which must show the correct approach.
 | `DelegatingOptionsFactory<T>` / `RegisterOptionsFactory<T>` / `DisableOptionsReloading<T>` | Annotated with `[DynamicallyAccessedMembers(PublicConstructors)]` on `#if NET` |
 | Reload mechanism: `IChangeToken`, `OnChange` callbacks, `ChangeToken.OnChange` | Purely delegate-based |
 
-### F.3 Current Bug: Reflection-Based Binding in `OtlpExporterBuilder.cs`
+### F.3 Latent Violation: Reflection-Based Binding in `OtlpExporterBuilder.cs`
 
 **File:**
 `src/OpenTelemetry.Exporter.OpenTelemetryProtocol/Builder/OtlpExporterBuilder.cs:153`
@@ -1440,11 +1442,23 @@ services.Configure<ActivityExportProcessorOptions>(
 four target types have nested object properties. Unlike
 `OpenTelemetryLoggingExtensions.cs` (which has a documented suppression
 justified by the type being primitives-only), there is **no**
-`[UnconditionalSuppressMessage]` annotation here - this is an unmitigated
-IL2026/IL3050 violation in AOT-published apps.
+`[UnconditionalSuppressMessage]` annotation here.
 
-**Impact:** Fires on every options instantiation - both at startup and on each
-`IOptionsMonitor` reload cycle.
+**Current status: latent — not an active AOT violation today.** All public
+`UseOtlpExporter` overloads pass `configuration: null`; the AOT/trim compiler's
+null-propagation analysis prunes `BindConfigurationToOptions` as dead code from
+every reachable public call path. The `UseOtlpExporter(IConfiguration)` overload
+that passes a non-null value is `internal`, is not reachable from
+`TrimmerRootAssembly` (which only roots public members), and is only exercised by
+the non-AOT-published unit test project. Confirmed by attempting the obvious
+repro (`UseOtlpExporter()` in a `PublishAot=true` app): no IL warnings fire.
+
+**When it becomes active:** The violation surfaces as IL2026/IL3050 the moment
+`UseOtlpExporter(IConfiguration)` is promoted to a public overload. The fix must
+be applied as part of that promotion, not before.
+
+**Impact (once public):** Fires on every options instantiation - both at startup
+and on each `IOptionsMonitor` reload cycle.
 
 **Fix (preferred):** Move bindings into the options constructors, following the
 pattern all other SDK options already use. The `DelegatingOptionsFactory`
