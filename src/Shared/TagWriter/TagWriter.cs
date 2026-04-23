@@ -10,7 +10,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
     where TTagState : notnull
     where TArrayState : notnull
 {
-    internal const int MaxRecursionDepth = 3;
+    internal const int MaxRecursionDepth = 3; // TODO https://github.com/open-telemetry/semantic-conventions/issues/3648
 
     [ThreadStatic]
     private static int recursionDepth;
