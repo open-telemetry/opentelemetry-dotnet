@@ -17,12 +17,15 @@ project:
     - name: Martin Costello
       affiliation: Grafana Labs
       social: https://github.com/martincostello
+      primary: false
     - name: "Piotr Kie\u0142kowicz"
       affiliation: Splunk
       social: https://github.com/Kielek
+      primary: false
     - name: Rajkumar Rangaraj
       affiliation: Microsoft
       social: https://github.com/rajkumar-rangaraj
+      primary: false
   documentation:
     code-of-conduct: https://github.com/open-telemetry/.github/blob/main/CODE_OF_CONDUCT.md
     detailed-guide: https://opentelemetry.io/docs/languages/dotnet/
@@ -60,18 +63,23 @@ repository:
     - name: Cijo Thomas
       affiliation: Microsoft
       social: https://github.com/cijothomas
+      primary: false
     - name: Martin Costello
       affiliation: Grafana Labs
       social: https://github.com/martincostello
+      primary: false
     - name: Mikel Blanchard
       affiliation: Microsoft
       social: https://github.com/CodeBlanch
+      primary: false
     - name: "Piotr Kie\u0142kowicz"
       affiliation: Splunk
       social: https://github.com/Kielek
+      primary: false
     - name: Rajkumar Rangaraj
       affiliation: Microsoft
       social: https://github.com/rajkumar-rangaraj
+      primary: false
   documentation:
     contributing-guide: https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md
     dependency-management-policy: https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/.github/renovate.json
