@@ -18,8 +18,7 @@ public class PrometheusHttpListenerTests
 {
     private const string MeterVersion = "1.0.1";
 
-    private const string UriPrefixesObsoleteMessage =
-    "Tests the obsolete UriPrefixes property. Remove when UriPrefixes is removed.";
+    private const string UriPrefixesObsoleteMessage = "Tests the obsolete UriPrefixes property. Remove when UriPrefixes is removed.";
 
     private static readonly string MeterName = Utils.GetCurrentMethodName();
 

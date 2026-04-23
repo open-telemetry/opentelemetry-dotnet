@@ -48,11 +48,10 @@ internal sealed class PrometheusHttpListener : IDisposable
             path = $"{path}/";
         }
 
-        IEnumerable<string> prefixesToUse;
         if (!options.UriPrefixesExplicitlySet)
         {
-            var uriBuilder = new UriBuilder(Uri.UriSchemeHttp, options.Host, options.Port);
-            prefixesToUse = new[] { uriBuilder.Uri.AbsoluteUri };
+            var uriBuilder = new UriBuilder(Uri.UriSchemeHttp, options.Host, options.Port) { Path = path };
+            this.httpListener.Prefixes.Add(uriBuilder.Uri.AbsoluteUri);
         }
         else
         {
@@ -62,13 +61,11 @@ internal sealed class PrometheusHttpListener : IDisposable
             // consumers of UriPrefixes continue to work.
             // Tracking issue: https://github.com/open-telemetry/opentelemetry-dotnet/issues/7107
 #pragma warning disable CS0618 // Type or member is obsolete
-            prefixesToUse = options.UriPrefixes;
+            foreach (var uriPrefix in options.UriPrefixes)
+            {
+                this.httpListener.Prefixes.Add($"{uriPrefix.TrimEnd('/')}{path}");
+            }
 #pragma warning restore CS0618 // Type or member is obsolete
-        }
-
-        foreach (var uriPrefix in prefixesToUse)
-        {
-            this.httpListener.Prefixes.Add($"{uriPrefix.TrimEnd('/')}{path}");
         }
     }
 
