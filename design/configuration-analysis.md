@@ -103,7 +103,8 @@ configuration source (appsettings.json, user secrets, etc.).
 **Vendored `EnvironmentVariablesConfigurationProvider`** - Manually vendored
 copy in `src/Shared/EnvironmentVariables/` with no automated sync mechanism;
 divergence risk. -> [Risk
-1.7](configuration-analysis-risks.md#17-the-sdks-internal-environmentvariablesconfigurationprovider-copy)
+1.7](configuration-analysis-risks.md#17-the-sdks-internal-environmentvariablesconfigurationprovider-copy).
+See [#7141](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7141)
 
 ### 2.2 Options Classes Inventory
 
@@ -588,3 +589,40 @@ must be addressed.
 | **`OTEL_CONFIG_FILE` vs `IConfiguration` hierarchy** | Spec says config file disables env vars; .NET model is additive              | [Risk 3.1](configuration-analysis-risks.md#31-otel_config_file-vs-iconfiguration-hierarchy---resolution-via-sdk-option)       |
 | **Change debouncing**                                | Rapid policy updates can flood `OnChange` callbacks                          | [Risk 3.2](configuration-analysis-risks.md#32-configuration-change-debouncing)                                                |
 | **Thundering herd**                                  | Single `IConfigurationProvider.OnReload()` fires all `IOptionsMonitor` types | [Risk 3.3](configuration-analysis-risks.md#33-ioptionsmonitor-change-notification-granularity-thundering-herd)                |
+
+---
+
+## 6. Test coverage
+
+The refactors proposed across the six work streams in
+[`configuration-proposed-issues.md`](configuration-proposed-issues.md) change
+how the SDK resolves configuration. Before any of those land, a test safety
+net locks in today's observable configuration behaviour so that when a test
+breaks, the break maps to a known planned issue with a recorded rationale -
+rather than a silent semantics drift.
+
+The planning artefacts for that safety net live in a sibling tree:
+
+- Entry document:
+  [`configuration-test-coverage.md`](configuration-test-coverage.md) -
+  conventions, modalities, tiers, process-isolation and env-var-isolation
+  options, snapshot-library comparison, naming, code-comment template,
+  scenario-id format.
+- Per-options-class files: `configuration-test-coverage/options/` - one
+  file per in-scope options class, each following the same inventory ->
+  gaps -> recommendations structure.
+- Cross-cutting pathway files: `configuration-test-coverage/pathways/` -
+  one file per pathway that does not belong to a single options class
+  (env-var precedence, named-options resolution, reload no-op baseline,
+  AOT binding, vendored env-var parity, provider-global switches,
+  host-vs-standalone parity, and others).
+- Existing-test inventory:
+  [`configuration-test-coverage/existing-tests.md`](configuration-test-coverage/existing-tests.md) -
+  facts-only survey of every config-adjacent test across the three
+  in-scope test projects. Downstream files reference this inventory
+  rather than re-deriving it.
+
+This section is a pointer only. For the "Test strategy" risks introduced
+by the safety net itself (runtime impact, env-var globalness, reflection
+brittleness, snapshot maintenance cost), see the corresponding subsection in
+[`configuration-analysis-risks.md`](configuration-analysis-risks.md#5-test-strategy).

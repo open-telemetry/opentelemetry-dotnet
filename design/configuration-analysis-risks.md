@@ -312,6 +312,8 @@ table but avoids modifying existing options constructors for the common case.
 
 ### 1.7 The SDK's Internal EnvironmentVariablesConfigurationProvider Copy
 
+See [#7141](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7141)
+
 The SDK maintains a manually vendored copy of the .NET runtime's
 `EnvironmentVariablesConfigurationProvider`,
 `EnvironmentVariablesConfigurationSource`, and `EnvironmentVariablesExtensions`
@@ -1457,3 +1459,106 @@ about its own configuration:
 
 These are lower priority than the EventSource events but valuable for fleets
 managed via telemetry policies (e.g., OpAMP-backed deployments).
+
+---
+
+## 5. Test Strategy
+
+The test safety net being planned in
+[`configuration-test-coverage.md`](configuration-test-coverage.md) pins
+today's observable configuration behaviour so that the refactors across
+the six work streams in
+[`configuration-proposed-issues.md`](configuration-proposed-issues.md)
+cannot silently change it. The safety net itself introduces its own risks.
+This section catalogues them with mitigations; concrete scenarios per risk
+are developed in the per-class and per-pathway files under
+`configuration-test-coverage/`.
+
+### 5.1 Runtime Impact on CI
+
+The planned safety net adds tests across three tiers (in-proc unit, in-proc
+DI/integration, out-of-proc env-var harness) spanning 14 in-scope options
+classes and 12 cross-cutting pathways. If all tiers ran on every PR leg,
+CI duration would rise visibly.
+
+**Mitigation:** tier-based CI slicing. Runtime tiers are defined in
+[Section 3 of the test coverage entry doc](configuration-test-coverage.md#3-runtime-tiers)
+with per-test budgets (Tier 1 < 50 ms, Tier 2 < 500 ms, Tier 3 < 3 s). A
+`Tier` xUnit trait lets CI filter Tier 3 out of the default PR leg and run
+it in a nightly or opt-in leg. The final CI-gating decision is left to
+maintainers; the tier infrastructure supports any policy they pick.
+
+### 5.2 Env-Var Process-Globalness
+
+`Environment.SetEnvironmentVariable` and `Environment.GetEnvironmentVariable`
+operate on a single process-global dictionary. Any test that mutates an
+`OTEL_*` variable risks bleeding state into parallel tests, and any test
+that asserts on the *absence* of a variable can fail nondeterministically
+if another test is setting it. The Session 0a env-var isolation audit
+(`configuration-test-coverage/existing-tests.md#2-env-var-isolation-audit`)
+showed the codebase already mixes three patterns (class-level `IDisposable`
+snapshot/restore, `EnvironmentVariableScope`, and attribute-only
+`[Collection("EnvVars")]`); none of the three fully eliminates the
+process-global risk under parallel collections.
+
+**Mitigation:** a project-wide env-var isolation convention, chosen from
+the options in
+[Section 5 of the test coverage entry doc](configuration-test-coverage.md#5-env-var-isolation-pattern-options-tier-1--tier-2),
+paired with a Tier 3 out-of-process harness for scenarios that fundamentally
+need true process isolation (e.g. env-var reads during static
+initialisation, tests asserting absence). The process-isolation approach
+for Tier 3 is presented as Options A/B/C in
+[Section 4 of the entry doc](configuration-test-coverage.md#4-process-isolation-strategy-options);
+maintainer decision before Tier 3 test code begins.
+
+### 5.3 Reflection Brittleness
+
+Several scenarios can only be observed today by reading private fields of
+built components (for example,
+`BatchExportProcessor<T>.scheduledDelayMilliseconds` or
+`OtlpExporterTransmissionHandler.TimeoutMilliseconds`). Reflection-based
+observation couples tests to internal layout and turns innocent rename
+refactors into test churn.
+
+**Mitigation:** prefer `InternalsVisibleTo` plus a named internal accessor
+where one already exists (decision-support rule in
+[Section 2.4 of the entry doc](configuration-test-coverage.md#24-internalsvisibleto-with-an-internal-accessor));
+where reflection is still necessary, centralise the helper in one place so
+churn from an internal rename is O(1) rather than O(tests), and tag each
+reflection-using test with a comment line per the
+[code-comment template (Section 10)](configuration-test-coverage.md#10-code-comment-template)
+naming the exact field. The trait `Observation=Reflection` (recommended,
+not required) makes these tests greppable for bulk updates.
+
+### 5.4 Snapshot Maintenance Cost
+
+If default-state snapshots for 14 options classes drift (due to
+intentional default changes, new properties added, or serialiser-order
+changes), every affected snapshot must be regenerated. Snapshot
+regeneration churn can swamp review signal if adopted broadly without a
+pilot.
+
+**Mitigation:** pilot first on a single small options class (candidate:
+`ExperimentalOptions`) before expanding. The
+[snapshot library appendix in the entry doc](configuration-test-coverage.md#appendix-a---snapshot-library-comparison)
+keeps the library selection neutral and includes a roll-your-own option so
+maintainers can pick the minimum-footprint path. Expansion to further
+classes is gated on the pilot demonstrating review value that exceeds the
+regeneration carry cost.
+
+### 5.5 Scope Creep from Adjacent Findings
+
+The test planning surveys config pathways across the SDK and may surface
+observations that are strictly *not* config-specific (DI composition
+quirks, silent failures beyond the config path, AOT gaps outside the
+binding fix). Pulling these into the baseline widens scope and delays the
+primary safety net.
+
+**Mitigation:** an adjacent-findings register in
+[Section 9 of the entry doc](configuration-test-coverage.md#9-adjacent-findings-register)
+captures such observations without acting on them in the current cycle.
+Each row is tagged **pre-config**, **during-config**, or **post-config**
+so follow-up work has a scheduling hint. No test in the current planning
+cycle is driven by an adjacent finding; the primary deliverable stays
+config.
+

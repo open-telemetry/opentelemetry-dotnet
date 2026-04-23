@@ -93,6 +93,9 @@ returned to `IOptionsMonitor` - invalid values cause
 `OptionsValidationException`, which the `OnChange` callback catches (retaining
 the previous valid value).
 
+<!-- markdownlint-disable-next-line MD013 -->
+**Baseline tests required:** [otlp-exporter-options.md](configuration-test-coverage/options/otlp-exporter-options.md), [sdk-limit-options.md](configuration-test-coverage/options/sdk-limit-options.md), [batch-export-activity-processor-options.md](configuration-test-coverage/options/batch-export-activity-processor-options.md), [batch-export-logrecord-processor-options.md](configuration-test-coverage/options/batch-export-logrecord-processor-options.md), [periodic-exporting-metric-reader-options.md](configuration-test-coverage/options/periodic-exporting-metric-reader-options.md), [opentelemetry-logger-options.md](configuration-test-coverage/options/opentelemetry-logger-options.md), [otlp-mtls-options.md](configuration-test-coverage/options/otlp-mtls-options.md), [otlp-tls-options.md](configuration-test-coverage/options/otlp-tls-options.md), [experimental-options.md](configuration-test-coverage/options/experimental-options.md), [otlp-exporter-builder-options.md](configuration-test-coverage/options/otlp-exporter-builder-options.md), [batch-export-processor-options.md](configuration-test-coverage/options/batch-export-processor-options.md), [metric-reader-options.md](configuration-test-coverage/options/metric-reader-options.md), [log-record-export-processor-options.md](configuration-test-coverage/options/log-record-export-processor-options.md), [activity-export-processor-options.md](configuration-test-coverage/options/activity-export-processor-options.md), [delegating-options-factory-priority.md](configuration-test-coverage/pathways/delegating-options-factory-priority.md), [env-var-precedence.md](configuration-test-coverage/pathways/env-var-precedence.md)
+
 ---
 
 <!-- markdownlint-disable-next-line MD013 -->
@@ -125,6 +128,9 @@ internal sealed class DelegatingOptionsFactory<TOptions> : OptionsFactory<TOptio
 
 This removes ~100 lines of duplicated framework code.
 
+<!-- markdownlint-disable-next-line MD013 -->
+**Baseline tests required:** [delegating-options-factory-priority.md](configuration-test-coverage/pathways/delegating-options-factory-priority.md)
+
 ---
 
 <!-- markdownlint-disable-next-line MD013 -->
@@ -149,6 +155,9 @@ net9.0, etc.). Verify the public `AddEnvironmentVariables()` extension method
 resolves correctly at all call sites (the vendored copy uses `internal`
 visibility).
 
+<!-- markdownlint-disable-next-line MD013 -->
+**Baseline tests required:** [vendored-env-var-parity.md](configuration-test-coverage/pathways/vendored-env-var-parity.md)
+
 ---
 
 ### Issue 4 - Fix AOT bug: reflection-based binding in `OtlpExporterBuilder.cs`
@@ -168,6 +177,9 @@ key-read pattern (`configuration[key]` via the existing
 `OpenTelemetryConfigurationExtensions` helpers). The `DelegatingOptionsFactory`
 already supplies `IConfiguration` to constructors - no factory wiring change
 needed.
+
+<!-- markdownlint-disable-next-line MD013 -->
+**Baseline tests required:** [otlp-exporter-options.md](configuration-test-coverage/options/otlp-exporter-options.md), [otlp-exporter-builder-options.md](configuration-test-coverage/options/otlp-exporter-builder-options.md), [aot-binding.md](configuration-test-coverage/pathways/aot-binding.md)
 
 ---
 
@@ -200,6 +212,9 @@ services.PostConfigure<SdkLimitOptions>((options) =>
 Also apply the same pattern to `OtlpExporterOptions.AppendSignalPathToEndpoint`
 (which depends on whether `Endpoint` was explicitly set).
 
+<!-- markdownlint-disable-next-line MD013 -->
+**Baseline tests required:** [sdk-limit-options.md](configuration-test-coverage/options/sdk-limit-options.md), [env-var-precedence.md](configuration-test-coverage/pathways/env-var-precedence.md), [env-var-fallback-chains.md](configuration-test-coverage/pathways/env-var-fallback-chains.md)
+
 ---
 
 ### Issue 6 - Add diagnostic logging for `RegisterOptionsFactory` silent skip
@@ -212,6 +227,9 @@ registration and skips its own via `TryAddSingleton`, the skip is completely
 invisible. Log a diagnostic event via `OpenTelemetrySdkEventSource` identifying
 the existing registration type so the user can determine whether the conflict is
 intentional.
+
+<!-- markdownlint-disable-next-line MD013 -->
+**Baseline tests required:** [otlp-exporter-options.md](configuration-test-coverage/options/otlp-exporter-options.md), [sdk-limit-options.md](configuration-test-coverage/options/sdk-limit-options.md), [otlp-mtls-options.md](configuration-test-coverage/options/otlp-mtls-options.md), [try-add-singleton-first-wins.md](configuration-test-coverage/pathways/try-add-singleton-first-wins.md), [observability-and-silent-failures.md](configuration-test-coverage/pathways/observability-and-silent-failures.md)
 
 ---
 
@@ -244,6 +262,9 @@ This is a non-breaking addition with no runtime behaviour change. It delivers
 model for free. It is a prerequisite for both declarative config sampler support
 (the factory needs an options class to bind into) and runtime reload.
 
+<!-- markdownlint-disable-next-line MD013 -->
+**Baseline tests required:** `SamplerOptions` is new surface; tests are authored with the issue. Integration baselines for the pathways the new class joins: [delegating-options-factory-priority.md](configuration-test-coverage/pathways/delegating-options-factory-priority.md), [env-var-precedence.md](configuration-test-coverage/pathways/env-var-precedence.md).
+
 ---
 
 ### Issue 8 - Add `ResourceOptions` with env-var constructor
@@ -267,6 +288,9 @@ Use `IOptions<ResourceOptions>` (not `IOptionsMonitor` - resources don't change
 at runtime). Refactor `ResourceBuilder` to consume `ResourceOptions` when
 available via DI.
 
+<!-- markdownlint-disable-next-line MD013 -->
+**Baseline tests required:** `ResourceOptions` is new surface; tests are authored with the issue. Integration baselines for the pathways the new class joins: [delegating-options-factory-priority.md](configuration-test-coverage/pathways/delegating-options-factory-priority.md), [env-var-precedence.md](configuration-test-coverage/pathways/env-var-precedence.md).
+
 ---
 
 ### Issue 9 - Add `PropagatorOptions` and implement `OTEL_PROPAGATORS`
@@ -286,6 +310,9 @@ built-in propagator factories: `tracecontext`, `baggage`, `b3`, `b3multi`,
 `jaeger`.
 
 This closes one of the five high-priority spec env var gaps.
+
+<!-- markdownlint-disable-next-line MD013 -->
+**Baseline tests required:** `PropagatorOptions` and `OTEL_PROPAGATORS` handling are new surface; tests are authored with the issue. Integration baselines for the pathways the new class joins: [delegating-options-factory-priority.md](configuration-test-coverage/pathways/delegating-options-factory-priority.md), [env-var-precedence.md](configuration-test-coverage/pathways/env-var-precedence.md), [provider-global-switches.md](configuration-test-coverage/pathways/provider-global-switches.md).
 
 ---
 
@@ -318,6 +345,9 @@ current behaviour exactly).
 
 Non-breaking: other exporters (`Console`, `Zipkin`) can opt in incrementally to
 reading from `SdkLimitsOptions`.
+
+<!-- markdownlint-disable-next-line MD013 -->
+**Baseline tests required:** [sdk-limit-options.md](configuration-test-coverage/options/sdk-limit-options.md), [env-var-fallback-chains.md](configuration-test-coverage/pathways/env-var-fallback-chains.md)
 
 ---
 
@@ -353,6 +383,9 @@ F.5](configuration-analysis-deep-dives.md#f5-required-fix-to-vendor-extensibilit
 as the required implementation approach - `configuration.Bind(options)` must not
 appear in any factory `Create` implementation.
 
+<!-- markdownlint-disable-next-line MD013 -->
+**Baseline tests required:** factory interfaces are new surface; tests are authored with the issue. Integration baselines for the pathways the new abstractions join: [aot-binding.md](configuration-test-coverage/pathways/aot-binding.md), [named-options-resolution.md](configuration-test-coverage/pathways/named-options-resolution.md).
+
 ---
 
 ### Issue 12 - Implement built-in sampler factories
@@ -366,6 +399,9 @@ Implement `ISamplerFactory` for the six built-in sampler types: `always_on`,
 `always_off`, `traceidratio`, `parentbased_always_on`, `parentbased_always_off`,
 `parentbased_traceidratio`. Register via `TryAddEnumerable`. Each factory
 creates the sampler from its `IConfiguration` subtree using `SamplerOptions`.
+
+<!-- markdownlint-disable-next-line MD013 -->
+**Baseline tests required:** built-in sampler factories are new surface; tests are authored with the issue. Integration baselines for the pathways the factories join: [delegating-options-factory-priority.md](configuration-test-coverage/pathways/delegating-options-factory-priority.md), [named-options-resolution.md](configuration-test-coverage/pathways/named-options-resolution.md), [aot-binding.md](configuration-test-coverage/pathways/aot-binding.md).
 
 ---
 
@@ -384,6 +420,9 @@ env vars. Read the value via `IConfiguration`, resolve
 unifies the env var path and the future declarative file path through the same
 factory resolution (Deep Dive E.7).
 
+<!-- markdownlint-disable-next-line MD013 -->
+**Baseline tests required:** the `OTEL_*_EXPORTER` env vars are new surface; tests are authored with the issue. Integration baselines for the pathways the env vars join: [env-var-precedence.md](configuration-test-coverage/pathways/env-var-precedence.md), [env-var-fallback-chains.md](configuration-test-coverage/pathways/env-var-fallback-chains.md), [named-options-resolution.md](configuration-test-coverage/pathways/named-options-resolution.md).
+
 ---
 
 ### Issue 14 - Register OTLP exporter component factories
@@ -400,6 +439,9 @@ existing `OtlpExporterOptions` with named options integration ([Deep Dive
 E.3](configuration-analysis-deep-dives.md#e3-named-options-integration-inside-factories)):
 resolve pre-bound named options via
 `IOptionsMonitor<OtlpExporterOptions>.Get(optionsName)`.
+
+<!-- markdownlint-disable-next-line MD013 -->
+**Baseline tests required:** [otlp-exporter-options.md](configuration-test-coverage/options/otlp-exporter-options.md), [otlp-exporter-builder-options.md](configuration-test-coverage/options/otlp-exporter-builder-options.md), [log-record-export-processor-options.md](configuration-test-coverage/options/log-record-export-processor-options.md), [activity-export-processor-options.md](configuration-test-coverage/options/activity-export-processor-options.md), [named-options-resolution.md](configuration-test-coverage/pathways/named-options-resolution.md)
 
 ---
 
@@ -433,6 +475,9 @@ Expose via
 extension. Register at low priority in the `IConfigurationBuilder` so env vars
 and `appsettings.json` override by default (Risk 3.5).
 
+<!-- markdownlint-disable-next-line MD013 -->
+**Baseline tests required:** [env-var-precedence.md](configuration-test-coverage/pathways/env-var-precedence.md), [host-vs-standalone-parity.md](configuration-test-coverage/pathways/host-vs-standalone-parity.md), [provider-global-switches.md](configuration-test-coverage/pathways/provider-global-switches.md)
+
 ---
 
 ### Issue 16 - Declarative config build-time tree walker
@@ -457,6 +502,9 @@ Generate position-based named options keys
 (`declarative:sdk:traces:processors:0:batch:exporter:otlp`). Fail fast with an
 actionable error for unresolvable names. Support multiple instances of the same
 component type (Deep Dive E.6).
+
+<!-- markdownlint-disable-next-line MD013 -->
+**Baseline tests required:** [provider-global-switches.md](configuration-test-coverage/pathways/provider-global-switches.md), [host-vs-standalone-parity.md](configuration-test-coverage/pathways/host-vs-standalone-parity.md)
 
 ---
 
@@ -497,6 +545,9 @@ Add EventSource events to `OpenTelemetrySdkEventSource`:
 The pattern should be a well-documented shared helper or base that all
 reload-capable components use consistently.
 
+<!-- markdownlint-disable-next-line MD013 -->
+**Baseline tests required:** [otlp-exporter-options.md](configuration-test-coverage/options/otlp-exporter-options.md), [sdk-limit-options.md](configuration-test-coverage/options/sdk-limit-options.md), [batch-export-activity-processor-options.md](configuration-test-coverage/options/batch-export-activity-processor-options.md), [batch-export-logrecord-processor-options.md](configuration-test-coverage/options/batch-export-logrecord-processor-options.md), [periodic-exporting-metric-reader-options.md](configuration-test-coverage/options/periodic-exporting-metric-reader-options.md), [opentelemetry-logger-options.md](configuration-test-coverage/options/opentelemetry-logger-options.md), [otlp-exporter-builder-options.md](configuration-test-coverage/options/otlp-exporter-builder-options.md), [metric-reader-options.md](configuration-test-coverage/options/metric-reader-options.md), [singleton-options-manager.md](configuration-test-coverage/pathways/singleton-options-manager.md), [reload-no-op-baseline.md](configuration-test-coverage/pathways/reload-no-op-baseline.md), [observability-and-silent-failures.md](configuration-test-coverage/pathways/observability-and-silent-failures.md)
+
 ---
 
 ### Issue 18 - Add `TestConfigurationProvider` for reload testing
@@ -521,6 +572,9 @@ Include test pattern examples for:
 - Reload during active export (mock exporter with delay; no crash)
 - Reload after provider dispose (no callback side-effects)
 
+<!-- markdownlint-disable-next-line MD013 -->
+**Baseline tests required:** [reload-no-op-baseline.md](configuration-test-coverage/pathways/reload-no-op-baseline.md)
+
 ---
 
 <!-- markdownlint-disable-next-line MD013 -->
@@ -544,6 +598,9 @@ drain needed - `ShouldSample` is a pure function).
 configured via options. Callers who use `SetSampler(new AlwaysOnSampler())`
 programmatically still get the fast path.
 
+<!-- markdownlint-disable-next-line MD013 -->
+**Baseline tests required:** [reload-no-op-baseline.md](configuration-test-coverage/pathways/reload-no-op-baseline.md)
+
 ---
 
 ### Issue 20 - Export enable/disable kill-switch via `OnChange` in `BatchExportProcessor`
@@ -556,6 +613,9 @@ Add a `volatile bool exportEnabled` field to `BatchExportProcessor`. Wire
 `OnChange` to toggle it. When disabled, `TryExport` short-circuits (items
 dropped, not queued). This is the "stop all export" emergency mechanism for
 telemetry policies.
+
+<!-- markdownlint-disable-next-line MD013 -->
+**Baseline tests required:** [log-record-export-processor-options.md](configuration-test-coverage/options/log-record-export-processor-options.md), [activity-export-processor-options.md](configuration-test-coverage/options/activity-export-processor-options.md), [reload-no-op-baseline.md](configuration-test-coverage/pathways/reload-no-op-baseline.md)
 
 ---
 
@@ -575,6 +635,9 @@ ARM).
 **`PeriodicExportingMetricReader`:** Call `Timer.Change()` on reload to apply
 new intervals immediately.
 
+<!-- markdownlint-disable-next-line MD013 -->
+**Baseline tests required:** [otlp-exporter-options.md](configuration-test-coverage/options/otlp-exporter-options.md), [batch-export-activity-processor-options.md](configuration-test-coverage/options/batch-export-activity-processor-options.md), [batch-export-logrecord-processor-options.md](configuration-test-coverage/options/batch-export-logrecord-processor-options.md), [periodic-exporting-metric-reader-options.md](configuration-test-coverage/options/periodic-exporting-metric-reader-options.md), [otlp-exporter-builder-options.md](configuration-test-coverage/options/otlp-exporter-builder-options.md), [metric-reader-options.md](configuration-test-coverage/options/metric-reader-options.md), [log-record-export-processor-options.md](configuration-test-coverage/options/log-record-export-processor-options.md), [activity-export-processor-options.md](configuration-test-coverage/options/activity-export-processor-options.md), [reload-no-op-baseline.md](configuration-test-coverage/pathways/reload-no-op-baseline.md)
+
 ---
 
 ### Issue 22 - Wire `OnChange` for `SdkLimitsOptions` in OTLP serializers
@@ -587,6 +650,9 @@ Replace `readonly SdkLimitOptions` reference in `ProtobufOtlpTraceSerializer`
 and `ProtobufOtlpLogSerializer` with a `volatile` reference. Wire `OnChange` to
 swap the reference. Already per-batch (not per-span), so the volatile read cost
 is negligible.
+
+<!-- markdownlint-disable-next-line MD013 -->
+**Baseline tests required:** [sdk-limit-options.md](configuration-test-coverage/options/sdk-limit-options.md), [reload-no-op-baseline.md](configuration-test-coverage/pathways/reload-no-op-baseline.md)
 
 ---
 
@@ -623,6 +689,9 @@ implementation, blocking `OnChange` is acceptable (OTLP config changes are rare
 events). If profiling shows issues, offload to `ThreadPool.QueueUserWorkItem`
 with a CAS-based sequence guard (Risk 2.8).
 
+<!-- markdownlint-disable-next-line MD013 -->
+**Baseline tests required:** [otlp-exporter-options.md](configuration-test-coverage/options/otlp-exporter-options.md), [otlp-exporter-builder-options.md](configuration-test-coverage/options/otlp-exporter-builder-options.md), [named-options-resolution.md](configuration-test-coverage/pathways/named-options-resolution.md), [reload-no-op-baseline.md](configuration-test-coverage/pathways/reload-no-op-baseline.md)
+
 ---
 
 ## Stream 6: Telemetry Policy Abstractions
@@ -648,6 +717,9 @@ Builder extension for registration with correct priority ordering - registered
 last so runtime policy changes override all static sources (Risk 3.5). These are
 the abstractions that concrete policy sources implement.
 
+<!-- markdownlint-disable-next-line MD013 -->
+**Baseline tests required:** telemetry policy abstractions are new surface; tests are authored with the issue. Integration baselines for the pathways the abstractions join: [reload-no-op-baseline.md](configuration-test-coverage/pathways/reload-no-op-baseline.md), [observability-and-silent-failures.md](configuration-test-coverage/pathways/observability-and-silent-failures.md).
+
 ---
 
 ### Issue 25 - File-based telemetry policy source package
@@ -664,6 +736,9 @@ policy file (YAML/JSON) on disk. No new dependencies beyond what the SDK already
 takes. Expose via `.WithFilePolicySource(path)` builder extension. Could
 potentially be bundled in core SDK given zero new deps, but a separate package
 keeps the SDK minimal.
+
+<!-- markdownlint-disable-next-line MD013 -->
+**Baseline tests required:** the file-based policy source is new surface; tests are authored with the issue. Integration baselines for the pathways the package joins: [reload-no-op-baseline.md](configuration-test-coverage/pathways/reload-no-op-baseline.md), [observability-and-silent-failures.md](configuration-test-coverage/pathways/observability-and-silent-failures.md).
 
 ---
 
@@ -693,3 +768,6 @@ Key constraints:
 - Consumers with their own OpAMP-based configuration source are free to
   implement their own `IConfigurationProvider` - the SDK's abstractions do not
   prevent this
+
+<!-- markdownlint-disable-next-line MD013 -->
+**Baseline tests required:** the OpAMP policy source is new surface; tests are authored with the issue. Integration baselines for the pathways the package joins: [reload-no-op-baseline.md](configuration-test-coverage/pathways/reload-no-op-baseline.md), [observability-and-silent-failures.md](configuration-test-coverage/pathways/observability-and-silent-failures.md).
