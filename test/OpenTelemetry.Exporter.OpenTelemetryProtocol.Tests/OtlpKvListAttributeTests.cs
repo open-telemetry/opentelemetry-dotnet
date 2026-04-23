@@ -26,7 +26,7 @@ public sealed class OtlpKvListAttributeTests : IDisposable
         this.activityListener = new ActivityListener
         {
             ShouldListenTo = _ => true,
-            Sample = (ref options) => ActivitySamplingResult.AllDataAndRecorded,
+            Sample = (ref _) => ActivitySamplingResult.AllDataAndRecorded,
         };
 
         ActivitySource.AddActivityListener(this.activityListener);
