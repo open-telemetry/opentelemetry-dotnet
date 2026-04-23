@@ -8,15 +8,9 @@ Notes](../../RELEASENOTES.md).
 ## Unreleased
 
 * Added `Host` and `Port` properties on `PrometheusHttpListenerOptions`
-  for configuring the HTTP listener endpoint. `Host` defaults to
-  `"localhost"` and `Port` defaults to `9464`. When `UriPrefixes` is
-  explicitly set, it continues to take precedence over `Host`/`Port`.
-  ([#7107](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7114))
-
-* Marked `PrometheusHttpListenerOptions.UriPrefixes` as obsolete in favor
-  of `Host` and `Port`. Behavior is unchanged; existing code that sets
-  `UriPrefixes` continues to work. The property is scheduled for removal
-  prior to the stable release.
+  for configuring the HTTP listener endpoint. The
+  `PrometheusHttpListenerOptions.UriPrefixes` property is now obsolete and
+  will be removed in the stable release.
   ([#7107](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7114))
 
 ## 1.15.3-beta.1
