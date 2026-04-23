@@ -17,7 +17,7 @@ project:
     - name: Martin Costello
       affiliation: Grafana Labs
       social: https://github.com/martincostello
-    - name: Piotr Kie\u0142kowicz
+    - name: "Piotr Kie\u0142kowicz"
       affiliation: Splunk
       social: https://github.com/Kielek
     - name: Rajkumar Rangaraj
@@ -66,7 +66,7 @@ repository:
     - name: Mikel Blanchard
       affiliation: Microsoft
       social: https://github.com/CodeBlanch
-    - name: Piotr Kie\u0142kowicz
+    - name: "Piotr Kie\u0142kowicz"
       affiliation: Splunk
       social: https://github.com/Kielek
     - name: Rajkumar Rangaraj
@@ -112,7 +112,7 @@ repository:
   security:
     assessments:
       self:
-        evidence: https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO
+        evidence: https://github.com/open-telemetry/opentelemetry-dotnet/pull/7143
         date: '2026-04-23'
     tools:
       - name: CodeQL
@@ -123,7 +123,7 @@ repository:
           ci: true
           release: true
         rulesets: https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/.github/workflows/codeql-analysis.yml
-        type: sca
+        type: sast
       - name: FsCheck
         comment: |
           FsCheck is used for fuzz testing as part of CI.
