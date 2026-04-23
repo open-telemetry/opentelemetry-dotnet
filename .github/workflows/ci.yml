@@ -153,6 +153,44 @@ jobs:
         env:
           FRAMEWORK_VERSION: ${{ matrix.version }}
 
+  validate-benchmarks:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'code') ||
+      contains(needs.detect-changes.outputs.changes, 'build') ||
+      contains(needs.detect-changes.outputs.changes, 'shared')
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-24.04, windows-latest ]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+        show-progress: false
+    - name: Setup .NET
+      uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
+    - name: Run benchmarks
+      shell: pwsh
+      run: |
+        $runtimes = @("net10.0")
+        if ($IsWindows) {
+          $runtimes += "net462"
+        }
+        dotnet run `
+          --configuration Release `
+          --framework net10.0 `
+          --project ./test/Benchmarks `
+          -- `
+          --filter "*SamplerBenchmarks*" `
+          --job Short `
+          --memory `
+          --runtimes $runtimes
+
   validate-packages:
     needs: detect-changes
     if: |
@@ -200,6 +238,7 @@ jobs:
       build-test-unstable-core,
       otlp-integration-test,
       w3c-trace-context-integration-test,
+      validate-benchmarks,
       validate-packages,
       generate-docs,
       verify-aot-compat,
