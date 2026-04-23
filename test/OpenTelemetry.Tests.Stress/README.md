@@ -8,10 +8,10 @@
 
 ## Why would you need stress test
 
-* It helps you to understand performance.
-* You can keep it running for days and nights to verify stability.
-* You can use it to generate lots of load to your backend system.
-* You can use it with other stress tools (e.g. a memory limiter) to verify how
+- It helps you to understand performance.
+- You can keep it running for days and nights to verify stability.
+- You can use it to generate lots of load to your backend system.
+- You can use it with other stress tools (e.g. a memory limiter) to verify how
   your code reacts to certain resource constraints.
 
 ## Running the demo
@@ -45,11 +45,9 @@ the console window title and the console window itself.
 
 While a test is running...
 
-* Use the `SPACE` key to toggle the console output, which is on by default.
-
-* Use the `ENTER` key to print the latest performance statistics.
-
-* Use the `ESC` key to exit the stress test.
+- Use the `SPACE` key to toggle the console output, which is on by default.
+- Use the `ENTER` key to print the latest performance statistics.
+- Use the `ESC` key to exit the stress test.
 
 Example output while a test is running:
 
@@ -166,26 +164,26 @@ public static class Program
 
 Some useful notes:
 
-* It is generally best practice to run the stress test for code compiled in
+- It is generally best practice to run the stress test for code compiled in
   `Release` configuration rather than `Debug` configuration. `Debug` builds
   typically are not optimized and contain extra code which will change the
   performance characteristics of the logic under test. The stress test will
   write a warning message to the console when starting if compiled with `Debug`
   configuration.
-* You can specify the concurrency using `-c` or `--concurrency` command line
+- You can specify the concurrency using `-c` or `--concurrency` command line
   argument, the default value if not specified is the number of CPU cores. Keep
   in mind that concurrency level does not equal to the number of threads.
-* You can use the duration `-d` or `--duration` command line argument to run the
+- You can use the duration `-d` or `--duration` command line argument to run the
   stress test for a specific time period. This is useful when comparing changes
   across multiple runs.
 
 ## Understanding the results
 
-* `Loops` represent the total number of `Run()` invocations that are completed.
-* `Loops/Second` represents the rate of `Run()` invocations based on a small
+- `Loops` represent the total number of `Run()` invocations that are completed.
+- `Loops/Second` represents the rate of `Run()` invocations based on a small
   sliding window of few hundreds of milliseconds.
-* `CPU Cycles/Loop` represents the average CPU cycles for each `Run()`
+- `CPU Cycles/Loop` represents the average CPU cycles for each `Run()`
   invocation, based on a small sliding window of few hundreds of milliseconds.
-* `Total Running Time` represents the running time (seconds) since the test started.
-* `GC Total Allocated Bytes` (not available on .NET Framework) shows the total
+- `Total Running Time` represents the running time (seconds) since the test started.
+- `GC Total Allocated Bytes` (not available on .NET Framework) shows the total
   amount of memory allocated while the test was running.
