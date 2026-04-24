@@ -37,10 +37,10 @@ public sealed class ParentBasedSampler : Sampler
         this.Description = $"ParentBased{{{rootSampler.Description}}}";
 #pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
 
-        this.remoteParentSampled = new AlwaysOnSampler();
-        this.remoteParentNotSampled = new AlwaysOffSampler();
-        this.localParentSampled = new AlwaysOnSampler();
-        this.localParentNotSampled = new AlwaysOffSampler();
+        this.remoteParentSampled = AlwaysOnSampler.Instance;
+        this.remoteParentNotSampled = AlwaysOffSampler.Instance;
+        this.localParentSampled = AlwaysOnSampler.Instance;
+        this.localParentNotSampled = AlwaysOffSampler.Instance;
     }
 
     /// <summary>
@@ -76,10 +76,10 @@ public sealed class ParentBasedSampler : Sampler
         Sampler? localParentNotSampled = null)
         : this(rootSampler)
     {
-        this.remoteParentSampled = remoteParentSampled ?? new AlwaysOnSampler();
-        this.remoteParentNotSampled = remoteParentNotSampled ?? new AlwaysOffSampler();
-        this.localParentSampled = localParentSampled ?? new AlwaysOnSampler();
-        this.localParentNotSampled = localParentNotSampled ?? new AlwaysOffSampler();
+        this.remoteParentSampled = remoteParentSampled ?? AlwaysOnSampler.Instance;
+        this.remoteParentNotSampled = remoteParentNotSampled ?? AlwaysOffSampler.Instance;
+        this.localParentSampled = localParentSampled ?? AlwaysOnSampler.Instance;
+        this.localParentNotSampled = localParentNotSampled ?? AlwaysOffSampler.Instance;
     }
 
     /// <inheritdoc />
@@ -93,26 +93,16 @@ public sealed class ParentBasedSampler : Sampler
         }
 
         // Is parent sampled?
-        if ((parentContext.TraceFlags & ActivityTraceFlags.Recorded) != 0)
+        if (parentContext.TraceFlags.HasFlag(ActivityTraceFlags.Recorded))
         {
-            if (parentContext.IsRemote)
-            {
-                return this.remoteParentSampled.ShouldSample(samplingParameters);
-            }
-            else
-            {
-                return this.localParentSampled.ShouldSample(samplingParameters);
-            }
+            return parentContext.IsRemote
+                ? this.remoteParentSampled.ShouldSample(samplingParameters)
+                : this.localParentSampled.ShouldSample(samplingParameters);
         }
 
         // If parent is not sampled => delegate to the "not sampled" inner samplers.
-        if (parentContext.IsRemote)
-        {
-            return this.remoteParentNotSampled.ShouldSample(samplingParameters);
-        }
-        else
-        {
-            return this.localParentNotSampled.ShouldSample(samplingParameters);
-        }
+        return parentContext.IsRemote
+            ? this.remoteParentNotSampled.ShouldSample(samplingParameters)
+            : this.localParentNotSampled.ShouldSample(samplingParameters);
     }
 }
