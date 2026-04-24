@@ -93,7 +93,7 @@ public sealed class ParentBasedSampler : Sampler
         }
 
         // Is parent sampled?
-        if (parentContext.TraceFlags.HasFlag(ActivityTraceFlags.Recorded))
+        if ((parentContext.TraceFlags & ActivityTraceFlags.Recorded) != 0)
         {
             return parentContext.IsRemote
                 ? this.remoteParentSampled.ShouldSample(samplingParameters)
