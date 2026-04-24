@@ -22,17 +22,29 @@ public class GuardTests
         // Invalid
         object? potato = null;
         var ex1 = Assert.Throws<ArgumentNullException>(() => Guard.ThrowIfNull(potato));
+#if NET
+        Assert.StartsWith("Value cannot be null.", ex1.Message, StringComparison.OrdinalIgnoreCase);
+#else
         Assert.Contains("Must not be null", ex1.Message, StringComparison.OrdinalIgnoreCase);
+#endif
         Assert.Equal("potato", ex1.ParamName);
 
         object? @event = null;
         var ex2 = Assert.Throws<ArgumentNullException>(() => Guard.ThrowIfNull(@event));
+#if NET
+        Assert.StartsWith("Value cannot be null.", ex2.Message, StringComparison.OrdinalIgnoreCase);
+#else
         Assert.Contains("Must not be null", ex2.Message, StringComparison.OrdinalIgnoreCase);
+#endif
         Assert.Equal("@event", ex2.ParamName);
 
         Thing? thing = null;
         var ex3 = Assert.Throws<ArgumentNullException>(() => Guard.ThrowIfNull(thing?.Bar));
+#if NET
+        Assert.StartsWith("Value cannot be null.", ex3.Message, StringComparison.OrdinalIgnoreCase);
+#else
         Assert.Contains("Must not be null", ex3.Message, StringComparison.OrdinalIgnoreCase);
+#endif
         Assert.Equal("thing?.Bar", ex3.ParamName);
     }
 
@@ -44,17 +56,30 @@ public class GuardTests
         Guard.ThrowIfNullOrEmpty(" ");
 
         // Invalid
-        var ex1 = Assert.Throws<ArgumentException>(() => Guard.ThrowIfNullOrEmpty(null));
+        var ex1 = Assert.ThrowsAny<ArgumentException>(() => Guard.ThrowIfNullOrEmpty(null));
+#if NET
+        Assert.StartsWith("Value cannot be null.", ex1.Message, StringComparison.OrdinalIgnoreCase);
+#else
         Assert.Contains("Must not be null or empty", ex1.Message, StringComparison.OrdinalIgnoreCase);
+#endif
         Assert.Equal("null", ex1.ParamName);
 
-        var ex2 = Assert.Throws<ArgumentException>(() => Guard.ThrowIfNullOrEmpty(string.Empty));
+        var ex2 = Assert.ThrowsAny<ArgumentException>(() => Guard.ThrowIfNullOrEmpty(string.Empty));
+
+#if NET
+        Assert.StartsWith("The value cannot be an empty string.", ex2.Message, StringComparison.OrdinalIgnoreCase);
+#else
         Assert.Contains("Must not be null or empty", ex2.Message, StringComparison.OrdinalIgnoreCase);
+#endif
         Assert.Equal("string.Empty", ex2.ParamName);
 
         var x = string.Empty;
         var ex3 = Assert.Throws<ArgumentException>(() => Guard.ThrowIfNullOrEmpty(x));
+#if NET
+        Assert.StartsWith("The value cannot be an empty string.", ex3.Message, StringComparison.OrdinalIgnoreCase);
+#else
         Assert.Contains("Must not be null or empty", ex3.Message, StringComparison.OrdinalIgnoreCase);
+#endif
         Assert.Equal("x", ex3.ParamName);
     }
 
@@ -65,16 +90,28 @@ public class GuardTests
         Guard.ThrowIfNullOrWhitespace("a");
 
         // Invalid
-        var ex1 = Assert.Throws<ArgumentException>(() => Guard.ThrowIfNullOrWhitespace(null));
+        var ex1 = Assert.ThrowsAny<ArgumentException>(() => Guard.ThrowIfNullOrWhitespace(null));
+#if NET
+        Assert.StartsWith("Value cannot be null.", ex1.Message, StringComparison.OrdinalIgnoreCase);
+#else
         Assert.Contains("Must not be null or whitespace", ex1.Message, StringComparison.OrdinalIgnoreCase);
+#endif
         Assert.Equal("null", ex1.ParamName);
 
         var ex2 = Assert.Throws<ArgumentException>(() => Guard.ThrowIfNullOrWhitespace(string.Empty));
+#if NET
+        Assert.StartsWith("The value cannot be an empty string or composed entirely of whitespace.", ex2.Message, StringComparison.OrdinalIgnoreCase);
+#else
         Assert.Contains("Must not be null or whitespace", ex2.Message, StringComparison.OrdinalIgnoreCase);
+#endif
         Assert.Equal("string.Empty", ex2.ParamName);
 
         var ex3 = Assert.Throws<ArgumentException>(() => Guard.ThrowIfNullOrWhitespace(" \t\n\r"));
+#if NET
+        Assert.StartsWith("The value cannot be an empty string or composed entirely of whitespace.", ex3.Message, StringComparison.OrdinalIgnoreCase);
+#else
         Assert.Contains("Must not be null or whitespace", ex3.Message, StringComparison.OrdinalIgnoreCase);
+#endif
         Assert.Equal("\" \\t\\n\\r\"", ex3.ParamName);
     }
 
@@ -146,8 +183,12 @@ public class GuardTests
         Guard.ThrowIfZero(1);
 
         // Invalid
-        var ex1 = Assert.Throws<ArgumentException>(() => Guard.ThrowIfZero(0));
+        var ex1 = Assert.ThrowsAny<ArgumentException>(() => Guard.ThrowIfZero(0));
+#if NET
+        Assert.StartsWith("0 ('0') must be a non-zero value.", ex1.Message, StringComparison.OrdinalIgnoreCase);
+#else
         Assert.Contains("Must not be zero", ex1.Message, StringComparison.OrdinalIgnoreCase);
+#endif
         Assert.Equal("0", ex1.ParamName);
     }
 

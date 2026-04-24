@@ -45,7 +45,7 @@ public sealed class TracerProviderBuilderBaseTests
     [Fact]
     public void AddInstrumentationValidatesInputTest()
     {
-        Assert.Throws<ArgumentException>(() =>
+        Assert.ThrowsAny<ArgumentException>(() =>
         {
             new TestTracerProviderBuilder().AddInstrumentationViaProtectedMethod(
                 name: null,
@@ -53,7 +53,7 @@ public sealed class TracerProviderBuilderBaseTests
                 factory: () => null);
         });
 
-        Assert.Throws<ArgumentException>(() =>
+        Assert.ThrowsAny<ArgumentException>(() =>
         {
             new TestTracerProviderBuilder().AddInstrumentationViaProtectedMethod(
                 name: "name",
@@ -73,13 +73,9 @@ public sealed class TracerProviderBuilderBaseTests
     private sealed class TestTracerProviderBuilder : TracerProviderBuilderBase
     {
         public void AddInstrumentationViaProtectedMethod(Func<object?> factory)
-        {
-            this.AddInstrumentation("MyName", "MyVersion", factory);
-        }
+            => this.AddInstrumentation("MyName", "MyVersion", factory);
 
         public void AddInstrumentationViaProtectedMethod(string? name, string? version, Func<object?>? factory)
-        {
-            this.AddInstrumentation(name!, version!, factory!);
-        }
+            => this.AddInstrumentation(name!, version!, factory!);
     }
 }
