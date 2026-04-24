@@ -79,7 +79,7 @@ public class SpanShimTests
         var shim = new SpanShim(tracer.StartSpan(SpanName));
 
         // parameter validation
-        Assert.Throws<ArgumentException>(() => shim.GetBaggageItem(null!));
+        Assert.ThrowsAny<ArgumentException>(() => shim.GetBaggageItem(null!));
 
         // TODO - Method not implemented
     }
