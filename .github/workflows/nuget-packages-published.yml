@@ -1,0 +1,103 @@
+name: NuGet Packages Published
+run-name: ${{ github.event.client_payload.release_tag }}
+
+on:
+  repository_dispatch:
+    types: [ nuget_packages_published ]
+
+permissions: {}
+
+jobs:
+
+  wait-for-publish:
+    runs-on: [ ubuntu-latest ]
+    timeout-minutes: 60
+
+    concurrency:
+      group: '${{ github.workflow }}-${{ github.event.client_payload.release_tag }}'
+      cancel-in-progress: false
+
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      DOTNET_GENERATE_ASPNET_CERTIFICATE: false
+      DOTNET_MULTILEVEL_LOOKUP: 0
+      DOTNET_NOLOGO: true
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+      DOTNET_SYSTEM_CONSOLE_ALLOW_ANSI_COLOR_REDIRECTION: 1
+      FORCE_COLOR: 3
+      NUGET_XMLDOC_MODE: skip
+      TERM: xterm
+
+    outputs:
+      published: ${{ steps.wait-for-publish.outputs.published }}
+
+    permissions:
+      contents: read
+
+    steps:
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
+        with:
+          dotnet-version: ${{ github.event.client_payload.dotnet_sdk_version }}
+
+      - name: Install WaitForNuGetPackage tool
+        shell: pwsh
+        env:
+            # renovate: datasource=nuget depName=MartinCostello.WaitForNuGetPackage
+            WAIT_FOR_NUGET_PACKAGE_VERSION: '1.3.0'
+        run: |
+          dotnet tool install --global MartinCostello.WaitForNuGetPackage --version ${env:WAIT_FOR_NUGET_PACKAGE_VERSION} --allow-roll-forward
+
+      - name: Download NuGet packages
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PACKAGES_DIRECTORY: ${{ github.workspace }}/packages
+          RELEASE_TAG: ${{ github.event.client_payload.release_tag }}
+        run: |
+          gh release download ${env:RELEASE_TAG} --pattern "*.nupkg" --dir ${env:PACKAGES_DIRECTORY}
+
+      - name: Wait for NuGet packages to be published
+        id: wait-for-publish
+        shell: pwsh
+        env:
+          PACKAGES_DIRECTORY: ${{ github.workspace }}/packages
+          PUBLISH_TIMEOUT: '00:45:00'
+        run: |
+          dotnet wait-for-package --directory ${env:PACKAGES_DIRECTORY} --timeout ${env:PUBLISH_TIMEOUT}
+
+          if ($LASTEXITCODE -ne 0) {
+            Write-Output "::warning::Failed to wait for NuGet packages to be published and indexed."
+            exit 0
+          }
+
+          "published=true" >> ${env:GITHUB_OUTPUT}
+
+  notify-release:
+    runs-on: [ ubuntu-latest ]
+    needs: [ wait-for-publish ]
+    if: needs.wait-for-publish.outputs.published == 'true'
+
+    concurrency:
+      group: '${{ github.workflow }}-notify'
+      cancel-in-progress: false
+
+    steps:
+    - name: Create GitHub token
+      uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
+      id: otelbot-token
+      with:
+        client-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
+        private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
+        permission-pull-requests: write
+
+    - name: Post comment on release PR
+      shell: pwsh
+      env:
+        GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
+        PR_NUMBER: ${{ github.event.client_payload.pull_request_number }}
+        RELEASE_TAG: ${{ github.event.client_payload.release_tag }}
+        RELEASE_URL: ${{ format('{0}/releases/tag/{1}', github.repositoryUrl, github.event.client_payload.release_tag) }}
+      run: |
+        gh pr comment ${env:PR_NUMBER} --body "The packages for the [${env:RELEASE_TAG}](${env:RELEASE_URL}) release are now available from NuGet.org :package:"
