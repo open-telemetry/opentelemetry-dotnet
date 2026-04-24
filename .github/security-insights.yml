@@ -39,22 +39,6 @@ project:
         Active primary OpenTelemetry .NET repository. It contains the API,
         SDK, core exporters, and extensions released as NuGet packages from
         this repository.
-    - name: opentelemetry-dotnet-contrib
-      url: https://github.com/open-telemetry/opentelemetry-dotnet-contrib
-      comment: |
-        Active related OpenTelemetry .NET subproject repository. It contains
-        additional instrumentation libraries, exporters, resource detectors,
-        extensions, and standalone utilities that do not fit the scope of the
-        core or automatic instrumentation repositories. It releases
-        independently and is not compiled into packages produced from the
-        opentelemetry-dotnet repository.
-    - name: opentelemetry-dotnet-instrumentation
-      url: https://github.com/open-telemetry/opentelemetry-dotnet-instrumentation
-      comment: |
-        Active related OpenTelemetry .NET subproject repository. It contains
-        automatic instrumentation for .NET applications without requiring
-        source code changes. It releases independently and is not compiled into
-        packages produced from the opentelemetry-dotnet repository.
   vulnerability-reporting:
     bug-bounty-available: false
     reports-accepted: true
