@@ -18,6 +18,8 @@ public class PrometheusHttpListenerTests
 {
     private const string MeterVersion = "1.0.1";
 
+    private const string UriPrefixesObsoleteMessage = "Tests the obsolete UriPrefixes property. Remove when UriPrefixes is removed.";
+
     private static readonly string MeterName = Utils.GetCurrentMethodName();
 
     [Theory]
@@ -29,10 +31,12 @@ public class PrometheusHttpListenerTests
     [InlineData("http://127.0.0.1")]
     [InlineData("http://example.com", "https://example.com", "http://127.0.0.1")]
     [InlineData("http://example.com")]
+    [Obsolete(UriPrefixesObsoleteMessage)]
     public void UriPrefixesPositiveTest(params string[] uriPrefixes)
         => TestPrometheusHttpListenerUriPrefixOptions(uriPrefixes);
 
     [Fact]
+    [Obsolete(UriPrefixesObsoleteMessage)]
     public void UriPrefixesNull() =>
         Assert.Throws<ArgumentNullException>(() =>
         {
@@ -40,6 +44,7 @@ public class PrometheusHttpListenerTests
         });
 
     [Fact]
+    [Obsolete(UriPrefixesObsoleteMessage)]
     public void UriPrefixesEmptyList() =>
         Assert.Throws<ArgumentException>(() =>
         {
@@ -47,6 +52,7 @@ public class PrometheusHttpListenerTests
         });
 
     [Fact]
+    [Obsolete(UriPrefixesObsoleteMessage)]
     public void UriPrefixesInvalid() =>
         Assert.Throws<ArgumentException>(() =>
         {
@@ -102,7 +108,7 @@ public class PrometheusHttpListenerTests
     {
         var random = new Random();
         var retryAttempts = 5;
-        string? address = null;
+        int boundPort = 0;
 
         PrometheusExporter? exporter = null;
         PrometheusHttpListener? listener = null;
@@ -113,7 +119,6 @@ public class PrometheusHttpListenerTests
 #pragma warning disable CA5394 // Do not use insecure randomness
             var port = random.Next(2000, 5000);
 #pragma warning restore CA5394 // Do not use insecure randomness
-            address = $"http://localhost:{port}/";
 
             try
             {
@@ -122,10 +127,12 @@ public class PrometheusHttpListenerTests
                     exporter,
                     new()
                     {
-                        UriPrefixes = [address],
+                        Host = "localhost",
+                        Port = port,
                     });
 
                 listener.Start();
+                boundPort = port;
 
                 break;
             }
@@ -148,7 +155,8 @@ public class PrometheusHttpListenerTests
                 exporter,
                 new()
                 {
-                    UriPrefixes = [address!],
+                    Host = "localhost",
+                    Port = boundPort,
                 });
 
             listener.Start();
@@ -197,6 +205,134 @@ public class PrometheusHttpListenerTests
         provider.Dispose();
     }
 
+    [Fact]
+    public async Task HostAndPort_Used_When_UriPrefixesNotSet()
+    {
+        using var meter = new Meter(MeterName, MeterVersion);
+
+        var random = new Random();
+#pragma warning disable CA5394 // Do not use insecure randomness
+        var port = random.Next(2000, 5000);
+#pragma warning restore CA5394 // Do not use insecure randomness
+
+        var provider = BuildMeterProvider(
+            meter,
+            [],
+            o =>
+            {
+                o.Host = "localhost";
+                o.Port = port;
+            },
+            out var address);
+
+        using var client = new HttpClient();
+        using var response = await client.GetAsync(new Uri($"{address}metrics"));
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        provider.Dispose();
+    }
+
+    [Fact]
+    public async Task PortOnly_Set_HostDefaultsToLocalhost()
+    {
+        using var meter = new Meter(MeterName, MeterVersion);
+
+        var random = new Random();
+#pragma warning disable CA5394 // Do not use insecure randomness
+        var port = random.Next(2000, 5000);
+#pragma warning restore CA5394 // Do not use insecure randomness
+
+        var provider = BuildMeterProvider(meter, [], o => o.Port = port, out var address);
+
+        using var client = new HttpClient();
+        using var response = await client.GetAsync(new Uri($"{address}metrics"));
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        provider.Dispose();
+    }
+
+    [Fact]
+    public async Task HostOnly_Set_PortDefaultsTo9464()
+    {
+        using var meter = new Meter(MeterName, MeterVersion);
+
+        MeterProvider provider;
+        string address;
+        try
+        {
+            provider = BuildMeterProvider(meter, [], o => o.Host = "localhost", out address);
+        }
+        catch (HttpListenerException)
+        {
+            // Default port 9464 is not available on this machine; skip.
+            return;
+        }
+
+        using var client = new HttpClient();
+        using var response = await client.GetAsync(new Uri($"{address}metrics"));
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        provider.Dispose();
+    }
+
+    [Fact]
+    [Obsolete(UriPrefixesObsoleteMessage)]
+    public async Task ExplicitUriPrefixes_TakePrecedence_Over_HostPort()
+    {
+        var random = new Random();
+        var retryAttempts = 5;
+        string? explicitPrefix = null;
+        MeterProvider? provider = null;
+
+        while (retryAttempts-- != 0)
+        {
+#pragma warning disable CA5394 // Do not use insecure randomness
+            var port = random.Next(2000, 5000);
+#pragma warning restore CA5394 // Do not use insecure randomness
+            explicitPrefix = new UriBuilder(Uri.UriSchemeHttp, "localhost", port).Uri.AbsoluteUri;
+
+            try
+            {
+                var prefix = explicitPrefix;
+                provider = BuildMeterProvider(
+                    new Meter(MeterName, MeterVersion),
+                    [],
+                    o =>
+                    {
+                        o.Host = "127.0.0.1";
+                        o.Port = 9999;
+                        o.UriPrefixes = [prefix];
+                    },
+                    out _);
+                break;
+            }
+            catch
+            {
+                // try another port
+            }
+        }
+
+        if (provider == null)
+        {
+            throw new InvalidOperationException("PrometheusHttpListener could not be started using explicit UriPrefixes");
+        }
+
+        using var client = new HttpClient();
+        using var response = await client.GetAsync(new Uri($"{explicitPrefix}metrics"));
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        provider.Dispose();
+    }
+
+    [Fact]
+    public void Host_DefaultValue_IsLocalhost()
+        => Assert.Equal("localhost", new PrometheusHttpListenerOptions().Host);
+
+    [Fact]
+    public void Port_DefaultValue_Is9464()
+        => Assert.Equal(9464, new PrometheusHttpListenerOptions().Port);
+
+    [Obsolete("Supports tests for the obsolete UriPrefixes property. Remove when UriPrefixes is removed.")]
     private static void TestPrometheusHttpListenerUriPrefixOptions(string[] uriPrefixes)
     {
         using var exporter = new PrometheusExporter(new());
@@ -220,7 +356,9 @@ public class PrometheusHttpListenerTests
 #pragma warning disable CA5394 // Do not use insecure randomness
             var port = random.Next(2000, 5000);
 #pragma warning restore CA5394 // Do not use insecure randomness
-            generatedAddress = $"http://localhost:{port}/";
+
+            var uriBuilder = new UriBuilder(Uri.UriSchemeHttp, "localhost", port);
+            generatedAddress = uriBuilder.Uri.AbsoluteUri;
 
             try
             {
@@ -229,7 +367,8 @@ public class PrometheusHttpListenerTests
                     .ConfigureResource(x => x.Clear().AddService("my_service", serviceInstanceId: "id1").AddAttributes(attributes))
                     .AddPrometheusHttpListener(options =>
                     {
-                        options.UriPrefixes = [generatedAddress];
+                        options.Host = "localhost";
+                        options.Port = port;
                         options.DisableTimestamp = disableTimestamp;
                     })
                     .Build();
@@ -245,6 +384,28 @@ public class PrometheusHttpListenerTests
         address = generatedAddress!;
 
         return provider ?? throw new InvalidOperationException("HttpListener could not be started");
+    }
+
+    private static MeterProvider BuildMeterProvider(Meter meter, IEnumerable<KeyValuePair<string, object>> attributes, Action<PrometheusHttpListenerOptions> configureOptions, out string address, bool disableTimestamp = false)
+    {
+        string? capturedHost = null;
+        int capturedPort = 0;
+
+        var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .ConfigureResource(x => x.Clear().AddService("my_service", serviceInstanceId: "id1").AddAttributes(attributes))
+            .AddPrometheusHttpListener(options =>
+            {
+                configureOptions(options);
+                options.DisableTimestamp = disableTimestamp;
+                capturedHost = options.Host;
+                capturedPort = options.Port;
+            })
+            .Build();
+
+        address = new UriBuilder(Uri.UriSchemeHttp, capturedHost!, capturedPort).Uri.AbsoluteUri;
+
+        return provider;
     }
 
     private static async Task RunPrometheusExporterHttpServerIntegrationTest(bool skipMetrics = false, string acceptHeader = "application/openmetrics-text", KeyValuePair<string, object?>[]? meterTags = null, bool disableTimestamp = false)
