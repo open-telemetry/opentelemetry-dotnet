@@ -12,6 +12,8 @@ namespace OpenTelemetry.Context;
 /// </summary>
 public static class RuntimeContext
 {
+    private const string ObsoletionMessage = "Use the RuntimeContextSlot<T> returned by RegisterSlot to get and set values directly.";
+
     private static readonly ConcurrentDictionary<string, object> Slots = new();
 
     private static Type contextSlotType = typeof(AsyncLocalRuntimeContextSlot<>);
@@ -89,7 +91,7 @@ public static class RuntimeContext
     /// <param name="slotName">The name of the context slot.</param>
     /// <typeparam name="T">The type of the underlying value.</typeparam>
     /// <returns>The slot previously registered.</returns>
-    [Obsolete("Use the RuntimeContextSlot<T> returned by RegisterSlot to get and set values directly. Lookup by name does not uniquely identify a slot per the OpenTelemetry specification.")]
+    [Obsolete(ObsoletionMessage)]
     public static RuntimeContextSlot<T> GetSlot<T>(string slotName)
     {
         Guard.ThrowIfNullOrEmpty(slotName);
@@ -129,7 +131,7 @@ public static class RuntimeContext
     /// <param name="slotName">The name of the context slot.</param>
     /// <param name="value">The value to be set.</param>
     /// <typeparam name="T">The type of the value.</typeparam>
-    [Obsolete("Use the RuntimeContextSlot<T> returned by RegisterSlot to get and set values directly. Lookup by name does not uniquely identify a slot per the OpenTelemetry specification.")]
+    [Obsolete(ObsoletionMessage)]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void SetValue<T>(string slotName, T value)
     {
@@ -142,7 +144,7 @@ public static class RuntimeContext
     /// <param name="slotName">The name of the context slot.</param>
     /// <typeparam name="T">The type of the value.</typeparam>
     /// <returns>The value retrieved from the context slot.</returns>
-    [Obsolete("Use the RuntimeContextSlot<T> returned by RegisterSlot to get and set values directly. Lookup by name does not uniquely identify a slot per the OpenTelemetry specification.")]
+    [Obsolete(ObsoletionMessage)]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static T? GetValue<T>(string slotName)
     {
@@ -154,7 +156,7 @@ public static class RuntimeContext
     /// </summary>
     /// <param name="slotName">The name of the context slot.</param>
     /// <param name="value">The value to be set.</param>
-    [Obsolete("Use the RuntimeContextSlot<T> returned by RegisterSlot to get and set values directly. Lookup by name does not uniquely identify a slot per the OpenTelemetry specification.")]
+    [Obsolete(ObsoletionMessage)]
     public static void SetValue(string slotName, object? value)
     {
         Guard.ThrowIfNullOrEmpty(slotName);
@@ -169,7 +171,7 @@ public static class RuntimeContext
     /// </summary>
     /// <param name="slotName">The name of the context slot.</param>
     /// <returns>The value retrieved from the context slot.</returns>
-    [Obsolete("Use the RuntimeContextSlot<T> returned by RegisterSlot to get and set values directly. Lookup by name does not uniquely identify a slot per the OpenTelemetry specification.")]
+    [Obsolete(ObsoletionMessage)]
     public static object? GetValue(string slotName)
     {
         Guard.ThrowIfNullOrEmpty(slotName);

@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#pragma warning disable CS0618 // string-based lookup APIs are intentionally tested here despite being obsolete
-
 using Xunit;
 
 namespace OpenTelemetry.Context.Tests;
@@ -38,6 +36,7 @@ public sealed class RuntimeContextTests : IDisposable
         Assert.Equal(2, slot2.Get());
     }
 
+#pragma warning disable CS0618 // string-based lookup APIs are intentionally tested here despite being obsolete
     [Fact]
     public void GetSlotAfterSameNameRegistrations_ReturnsLastRegistered()
     {
@@ -67,6 +66,7 @@ public sealed class RuntimeContextTests : IDisposable
         RuntimeContext.RegisterSlot<bool>("testslot");
         Assert.Throws<InvalidCastException>(() => RuntimeContext.GetSlot<int>("testslot"));
     }
+#pragma warning restore CS0618 // string-based lookup APIs are intentionally tested here despite being obsolete
 
     [Fact]
     public void RegisterAndGetSlot()
