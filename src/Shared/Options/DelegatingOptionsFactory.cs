@@ -16,10 +16,10 @@ namespace Microsoft.Extensions.Options;
 /// configuration keys before any <see cref="IConfigureOptions{TOptions}"/> delegates
 /// run. This establishes the SDK priority model:
 /// <list type="number">
-///   <item><description>Factory delegate — env var / <see cref="IConfiguration"/> defaults.</description></item>
-///   <item><description><see cref="IConfigureOptions{TOptions}"/> (<c>Configure&lt;T&gt;</c>) — programmatic overrides.</description></item>
-///   <item><description><see cref="IPostConfigureOptions{TOptions}"/> (<c>PostConfigure&lt;T&gt;</c>) — post-configuration.</description></item>
-///   <item><description><see cref="IValidateOptions{TOptions}"/> — validation gate.</description></item>
+///   <item><description>Factory delegate - env var / <see cref="IConfiguration"/> defaults.</description></item>
+///   <item><description><see cref="IConfigureOptions{TOptions}"/> (<c>Configure&lt;T&gt;</c>) - programmatic overrides.</description></item>
+///   <item><description><see cref="IPostConfigureOptions{TOptions}"/> (<c>PostConfigure&lt;T&gt;</c>) - post-configuration.</description></item>
+///   <item><description><see cref="IValidateOptions{TOptions}"/> - validation gate.</description></item>
 /// </list>
 /// </summary>
 /// <typeparam name="TOptions">The options type to create.

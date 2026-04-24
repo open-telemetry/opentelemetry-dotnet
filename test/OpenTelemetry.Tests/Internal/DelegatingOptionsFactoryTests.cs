@@ -232,7 +232,7 @@ public class DelegatingOptionsFactoryTests
     [Fact]
     public void DelegatingOptionsFactory_FullPipeline_OrderIsCorrect()
     {
-        // Verifies the complete priority order: factory → Configure → PostConfigure → Validate
+        // Verifies the complete priority order: factory > Configure > PostConfigure > Validate
         var order = new List<string>();
         var services = new ServiceCollection();
         services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
