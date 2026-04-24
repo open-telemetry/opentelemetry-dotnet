@@ -57,38 +57,30 @@ public static class RuntimeContext
     {
         Guard.ThrowIfNullOrEmpty(slotName);
 
-        RuntimeContextSlot<T>? slot = null;
+        RuntimeContextSlot<T> slot;
 
-        lock (Slots)
+        if (ContextSlotType == typeof(AsyncLocalRuntimeContextSlot<>))
         {
-            if (Slots.ContainsKey(slotName))
-            {
-                throw new InvalidOperationException($"Context slot already registered: '{slotName}'");
-            }
-
-            if (ContextSlotType == typeof(AsyncLocalRuntimeContextSlot<>))
-            {
-                slot = new AsyncLocalRuntimeContextSlot<T>(slotName);
-            }
-            else if (ContextSlotType == typeof(ThreadLocalRuntimeContextSlot<>))
-            {
-                slot = new ThreadLocalRuntimeContextSlot<T>(slotName);
-            }
+            slot = new AsyncLocalRuntimeContextSlot<T>(slotName);
+        }
+        else if (ContextSlotType == typeof(ThreadLocalRuntimeContextSlot<>))
+        {
+            slot = new ThreadLocalRuntimeContextSlot<T>(slotName);
+        }
 
 #if NETFRAMEWORK
-            else if (ContextSlotType == typeof(RemotingRuntimeContextSlot<>))
-            {
-                slot = new RemotingRuntimeContextSlot<T>(slotName);
-            }
-#endif
-            else
-            {
-                throw new NotSupportedException($"ContextSlotType '{ContextSlotType}' is not supported");
-            }
-
-            Slots[slotName] = slot;
-            return slot;
+        else if (ContextSlotType == typeof(RemotingRuntimeContextSlot<>))
+        {
+            slot = new RemotingRuntimeContextSlot<T>(slotName);
         }
+#endif
+        else
+        {
+            throw new NotSupportedException($"ContextSlotType '{ContextSlotType}' is not supported");
+        }
+
+        Slots[slotName] = slot;
+        return slot;
     }
 
     /// <summary>
@@ -97,6 +89,7 @@ public static class RuntimeContext
     /// <param name="slotName">The name of the context slot.</param>
     /// <typeparam name="T">The type of the underlying value.</typeparam>
     /// <returns>The slot previously registered.</returns>
+    [Obsolete("Use the RuntimeContextSlot<T> returned by RegisterSlot to get and set values directly. Lookup by name does not uniquely identify a slot per the OpenTelemetry specification.")]
     public static RuntimeContextSlot<T> GetSlot<T>(string slotName)
     {
         Guard.ThrowIfNullOrEmpty(slotName);
@@ -136,6 +129,7 @@ public static class RuntimeContext
     /// <param name="slotName">The name of the context slot.</param>
     /// <param name="value">The value to be set.</param>
     /// <typeparam name="T">The type of the value.</typeparam>
+    [Obsolete("Use the RuntimeContextSlot<T> returned by RegisterSlot to get and set values directly. Lookup by name does not uniquely identify a slot per the OpenTelemetry specification.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void SetValue<T>(string slotName, T value)
     {
@@ -148,6 +142,7 @@ public static class RuntimeContext
     /// <param name="slotName">The name of the context slot.</param>
     /// <typeparam name="T">The type of the value.</typeparam>
     /// <returns>The value retrieved from the context slot.</returns>
+    [Obsolete("Use the RuntimeContextSlot<T> returned by RegisterSlot to get and set values directly. Lookup by name does not uniquely identify a slot per the OpenTelemetry specification.")]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static T? GetValue<T>(string slotName)
     {
@@ -159,6 +154,7 @@ public static class RuntimeContext
     /// </summary>
     /// <param name="slotName">The name of the context slot.</param>
     /// <param name="value">The value to be set.</param>
+    [Obsolete("Use the RuntimeContextSlot<T> returned by RegisterSlot to get and set values directly. Lookup by name does not uniquely identify a slot per the OpenTelemetry specification.")]
     public static void SetValue(string slotName, object? value)
     {
         Guard.ThrowIfNullOrEmpty(slotName);
@@ -173,6 +169,7 @@ public static class RuntimeContext
     /// </summary>
     /// <param name="slotName">The name of the context slot.</param>
     /// <returns>The value retrieved from the context slot.</returns>
+    [Obsolete("Use the RuntimeContextSlot<T> returned by RegisterSlot to get and set values directly. Lookup by name does not uniquely identify a slot per the OpenTelemetry specification.")]
     public static object? GetValue(string slotName)
     {
         Guard.ThrowIfNullOrEmpty(slotName);

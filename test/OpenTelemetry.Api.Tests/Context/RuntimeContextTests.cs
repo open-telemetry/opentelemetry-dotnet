@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#pragma warning disable CS0618 // string-based lookup APIs are intentionally tested here despite being obsolete
+
 using Xunit;
 
 namespace OpenTelemetry.Context.Tests;
@@ -13,22 +15,41 @@ public sealed class RuntimeContextTests : IDisposable
     }
 
     [Fact]
-    public static void RegisterSlotWithInvalidNameThrows()
+    public void RegisterSlotWithInvalidNameThrows()
     {
         Assert.Throws<ArgumentException>(() => RuntimeContext.RegisterSlot<bool>(string.Empty));
         Assert.Throws<ArgumentException>(() => RuntimeContext.RegisterSlot<bool>(null!));
     }
 
     [Fact]
-    public static void RegisterSlotWithSameName()
+    public void RegisterSlotWithSameName_ReturnsDifferentIndependentSlots()
     {
-        var slot = RuntimeContext.RegisterSlot<bool>("testslot");
-        Assert.NotNull(slot);
-        Assert.Throws<InvalidOperationException>(() => RuntimeContext.RegisterSlot<bool>("testslot"));
+        var slot1 = RuntimeContext.RegisterSlot<int>("testslot");
+        var slot2 = RuntimeContext.RegisterSlot<int>("testslot");
+
+        Assert.NotNull(slot1);
+        Assert.NotNull(slot2);
+        Assert.NotSame(slot1, slot2);
+
+        slot1.Set(1);
+        slot2.Set(2);
+
+        Assert.Equal(1, slot1.Get());
+        Assert.Equal(2, slot2.Get());
     }
 
     [Fact]
-    public static void GetSlotWithInvalidNameThrows()
+    public void GetSlotAfterSameNameRegistrations_ReturnsLastRegistered()
+    {
+        var slot1 = RuntimeContext.RegisterSlot<int>("testslot");
+        var slot2 = RuntimeContext.RegisterSlot<int>("testslot");
+
+        var retrieved = RuntimeContext.GetSlot<int>("testslot");
+        Assert.Same(slot2, retrieved);
+    }
+
+    [Fact]
+    public void GetSlotWithInvalidNameThrows()
     {
         Assert.Throws<ArgumentException>(() => RuntimeContext.GetSlot<bool>(string.Empty));
         Assert.Throws<ArgumentException>(() => RuntimeContext.GetSlot<bool>(null!));
@@ -50,12 +71,10 @@ public sealed class RuntimeContextTests : IDisposable
     [Fact]
     public void RegisterAndGetSlot()
     {
-        var expectedSlot = RuntimeContext.RegisterSlot<int>("testslot");
-        Assert.NotNull(expectedSlot);
-        expectedSlot.Set(100);
-        var actualSlot = RuntimeContext.GetSlot<int>("testslot");
-        Assert.Same(expectedSlot, actualSlot);
-        Assert.Equal(100, expectedSlot.Get());
+        var slot = RuntimeContext.RegisterSlot<int>("testslot");
+        Assert.NotNull(slot);
+        slot.Set(100);
+        Assert.Equal(100, slot.Get());
     }
 
     [Fact]
