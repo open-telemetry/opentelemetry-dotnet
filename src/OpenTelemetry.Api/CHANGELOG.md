@@ -6,6 +6,11 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Align `RuntimeContext` with the spec. Introduces a small behavior change -
+  Multiple calls to `RegisterSlot` no longer throw. `SetValue` and `GetValue`
+  now deprecated.
+  ([#7160](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7160))
+
 ## 1.15.3
 
 Released 2026-Apr-21
