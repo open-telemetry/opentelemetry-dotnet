@@ -222,6 +222,9 @@ public class AggregatorTests
             [double.NegativeInfinity, 1, 2, double.PositiveInfinity],
             [double.NegativeInfinity, 10, 20, double.PositiveInfinity]);
 
+        Assert.NotNull(boundaries.Bounds);
+        Assert.NotNull(boundaries.DisplayBounds);
+
         Assert.Equal([1d, 2d], boundaries.Bounds);
         Assert.Equal([10d, 20d], boundaries.DisplayBounds);
     }
@@ -530,7 +533,9 @@ public class AggregatorTests
     }
 
     [Theory]
+#pragma warning disable xUnit1045 // Avoid using TheoryData type arguments that might not be serializable
     [MemberData(nameof(HistogramBoundaryTestCase.HistogramInfinityBoundariesTestCases))]
+#pragma warning restore xUnit1045 // Avoid using TheoryData type arguments that might not be serializable
     internal void HistogramBucketBoundariesTest(HistogramBoundaryTestCase boundaryTestCase)
     {
         // Arrange
