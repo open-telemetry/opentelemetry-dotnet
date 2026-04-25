@@ -46,13 +46,11 @@ variables.
 ### Configuration using Properties
 
 * `Host`: The host used by the Prometheus exporter (default `localhost`).
-
 * `Port`: The port used by the Prometheus exporter (default `9464`).
-
-* `ScrapeEndpointPath`: Defines the Prometheus scrape endpoint path. Default value: `"/metrics"`.
-
-* `DisableTotalNameSuffixForCounters`: Whether to disable the `_total` suffix for counter metrics (default `false`).
-
+* `ScrapeEndpointPath`: Defines the Prometheus scrape endpoint path.
+  (default `"/metrics"`).
+* `DisableTotalNameSuffixForCounters`: Whether to disable the `_total` suffix for
+  counter metrics (default `false`).
 * `DisableTimestamp`: Whether to disable the timestamp for metrics (default `false`).
 
 ### Configuration using Dependency Injection
