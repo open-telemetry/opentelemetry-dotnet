@@ -245,15 +245,18 @@ public class JaegerPropagator : TextMapPropagator
     {
 #if NET
         var remaining = header.AsSpan(position);
+        var scanOffset = 0;
         while (true)
         {
-            var delimiterIndex = remaining.IndexOfAny(DelimiterHintChars);
+            var delimiterIndex = remaining.Slice(scanOffset).IndexOfAny(DelimiterHintChars);
             if (delimiterIndex < 0)
             {
                 var result = remaining;
                 position = header.Length;
                 return result;
             }
+
+            delimiterIndex += scanOffset;
 
             if (remaining[delimiterIndex] == ':')
             {
@@ -271,8 +274,7 @@ public class JaegerPropagator : TextMapPropagator
                 return component;
             }
 
-            remaining = remaining.Slice(delimiterIndex + 1);
-            position += delimiterIndex + 1;
+            scanOffset = delimiterIndex + 1;
         }
 #else
         var colonIndex = header.IndexOf(JaegerDelimiter, position, StringComparison.Ordinal);
