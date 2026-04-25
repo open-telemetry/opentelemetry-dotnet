@@ -78,6 +78,31 @@ public sealed class PrometheusHttpListenerMeterProviderBuilderExtensionsTests
     }
 
     [Fact]
+    public void TestAddPrometheusHttpListener_Configuration_From_Environment_Variables_Ignores_Invalid_Values()
+    {
+        using (new EnvironmentVariableScope("OTEL_EXPORTER_PROMETHEUS_HOST", string.Empty))
+        using (new EnvironmentVariableScope("OTEL_EXPORTER_PROMETHEUS_PORT", "not-a-number"))
+        {
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddPrometheusHttpListener()
+                .Build();
+
+            var serviceProvider = meterProvider.GetServiceProvider();
+
+            Assert.NotNull(serviceProvider);
+
+            var options = serviceProvider.GetRequiredService<IOptionsMonitor<PrometheusHttpListenerOptions>>();
+
+            Assert.NotNull(options);
+            Assert.NotNull(options.CurrentValue);
+
+            Assert.Equal("localhost", options.CurrentValue.Host);
+            Assert.Equal(9464, options.CurrentValue.Port);
+            Assert.Equal("/metrics", options.CurrentValue.ScrapeEndpointPath);
+        }
+    }
+
+    [Fact]
     public void TestAddPrometheusHttpListener_Manual_Configuration_Overrides_Environment_Variables()
     {
         using (new EnvironmentVariableScope("OTEL_EXPORTER_PROMETHEUS_HOST", "prometheus.local"))
