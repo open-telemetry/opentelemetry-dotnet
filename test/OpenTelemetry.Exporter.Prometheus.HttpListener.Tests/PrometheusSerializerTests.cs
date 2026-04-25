@@ -720,6 +720,13 @@ public sealed class PrometheusSerializerTests
     }
 
     [Fact]
+    public void WriteAsciiStringNoEscapeThrowsArgumentExceptionWhenBufferTooSmall()
+    {
+        var buffer = new byte[4];
+        Assert.Throws<ArgumentException>(() => PrometheusSerializer.WriteAsciiStringNoEscape(buffer, 0, "metric"));
+    }
+
+    [Fact]
     public void WriteLabelValueEscapesSpecialCharacters()
     {
         var buffer = new byte[128];
