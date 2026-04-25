@@ -202,6 +202,31 @@ public class AggregatorTests
     }
 
     [Fact]
+    public void HistogramLargeBucketLookupHandlesDegenerateNaNBounds()
+    {
+        // Ensure the radix lookup fallback works when all bounds collapse to the same sortable key.
+        var values = Enumerable.Repeat(double.NaN, HistogramExplicitBounds.DefaultBoundaryCountForBinarySearch).ToArray();
+
+        var boundaries = new HistogramExplicitBounds(values);
+
+        Assert.Equal(values.Length, boundaries.FindBucketIndex(double.NegativeInfinity));
+        Assert.Equal(values.Length, boundaries.FindBucketIndex(0));
+        Assert.Equal(values.Length, boundaries.FindBucketIndex(double.PositiveInfinity));
+        Assert.Equal(values.Length, boundaries.FindBucketIndex(double.NaN));
+    }
+
+    [Fact]
+    public void HistogramExplicitBoundsCleansInfiniteDisplayBounds()
+    {
+        var boundaries = new HistogramExplicitBounds(
+            [double.NegativeInfinity, 1, 2, double.PositiveInfinity],
+            [double.NegativeInfinity, 10, 20, double.PositiveInfinity]);
+
+        Assert.Equal([1d, 2d], boundaries.Bounds);
+        Assert.Equal([10d, 20d], boundaries.DisplayBounds);
+    }
+
+    [Fact]
     public void HistogramWithOnlySumCount()
     {
         var boundaries = new HistogramExplicitBounds([]);
