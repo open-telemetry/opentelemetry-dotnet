@@ -156,6 +156,52 @@ public class AggregatorTests
     }
 
     [Fact]
+    public void HistogramLargeBucketLookupHandlesMixedSignsAndNaN()
+    {
+        var values = new double[HistogramExplicitBounds.DefaultBoundaryCountForBinarySearch * 4];
+
+        for (var i = 0; i < values.Length; i++)
+        {
+            values[i] = i - (values.Length / 2);
+        }
+
+        var boundaries = new HistogramExplicitBounds(values);
+
+        Assert.Equal(0, boundaries.FindBucketIndex(double.NegativeInfinity));
+        Assert.Equal(0, boundaries.FindBucketIndex(values[0]));
+        Assert.Equal(values.Length / 2, boundaries.FindBucketIndex(0));
+        Assert.Equal(values.Length - 1, boundaries.FindBucketIndex(values[values.Length - 1]));
+        Assert.Equal(values.Length, boundaries.FindBucketIndex(double.PositiveInfinity));
+        Assert.Equal(values.Length, boundaries.FindBucketIndex(double.NaN));
+    }
+
+    [Fact]
+    public void HistogramLargeBucketLookupHandlesPositiveOnlyBoundsAndInfiniteInputBounds()
+    {
+        var values = new double[HistogramExplicitBounds.DefaultBoundaryCountForBinarySearch * 4];
+
+        for (var i = 0; i < values.Length; i++)
+        {
+            values[i] = i;
+        }
+
+        var rawBounds = new double[values.Length + 2];
+        rawBounds[0] = double.NegativeInfinity;
+        Array.Copy(values, 0, rawBounds, 1, values.Length);
+        rawBounds[rawBounds.Length - 1] = double.PositiveInfinity;
+
+        var boundaries = new HistogramExplicitBounds(rawBounds);
+        var midpoint = values.Length / 2;
+        var inRangeValue = values[midpoint - 1] + ((values[midpoint] - values[midpoint - 1]) / 2);
+
+        Assert.Equal(0, boundaries.FindBucketIndex(double.NegativeInfinity));
+        Assert.Equal(midpoint, boundaries.FindBucketIndex(values[midpoint]));
+        Assert.Equal(midpoint, boundaries.FindBucketIndex(inRangeValue));
+        Assert.Equal(values.Length, boundaries.FindBucketIndex(double.PositiveInfinity));
+        Assert.Equal(values.Length, boundaries.FindBucketIndex(double.NaN));
+    }
+
+    [Fact]
     public void HistogramWithOnlySumCount()
     {
         var boundaries = new HistogramExplicitBounds([]);
