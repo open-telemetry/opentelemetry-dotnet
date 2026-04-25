@@ -1,6 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if NET
+using System.Buffers;
+#endif
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -21,6 +24,11 @@ internal static partial class PrometheusSerializer
     private const byte ASCII_LINEFEED = 0x0A; // `\n`
 #pragma warning restore SA1310 // Field name should not contain an underscore
 
+#if NET
+    private static readonly SearchValues<char> UnicodeEscapeChars = SearchValues.Create("\\\n");
+    private static readonly SearchValues<char> LabelValueEscapeChars = SearchValues.Create("\"\\\n");
+#endif
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteDouble(byte[] buffer, int cursor, double value)
     {
@@ -32,10 +40,7 @@ internal static partial class PrometheusSerializer
             var result = value.TryFormat(span, out var cchWritten, "G", CultureInfo.InvariantCulture);
             Debug.Assert(result, $"{nameof(result)} should be true.");
 
-            for (var i = 0; i < cchWritten; i++)
-            {
-                buffer[cursor++] = unchecked((byte)span[i]);
-            }
+            cursor = WriteUtf8NoEscape(buffer, cursor, span[..cchWritten]);
 #else
             cursor = WriteAsciiStringNoEscape(buffer, cursor, value.ToString(CultureInfo.InvariantCulture));
 #endif
@@ -66,10 +71,7 @@ internal static partial class PrometheusSerializer
         var result = value.TryFormat(span, out var cchWritten, "G", CultureInfo.InvariantCulture);
         Debug.Assert(result, $"{nameof(result)} should be true.");
 
-        for (var i = 0; i < cchWritten; i++)
-        {
-            buffer[cursor++] = unchecked((byte)span[i]);
-        }
+        cursor = WriteUtf8NoEscape(buffer, cursor, span[..cchWritten]);
 #else
         cursor = WriteAsciiStringNoEscape(buffer, cursor, value.ToString(CultureInfo.InvariantCulture));
 #endif
@@ -80,12 +82,16 @@ internal static partial class PrometheusSerializer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteAsciiStringNoEscape(byte[] buffer, int cursor, string value)
     {
+#if NET
+        return WriteUtf8NoEscape(buffer, cursor, value.AsSpan());
+#else
         for (var i = 0; i < value.Length; i++)
         {
             buffer[cursor++] = unchecked((byte)value[i]);
         }
 
         return cursor;
+#endif
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -114,6 +120,9 @@ internal static partial class PrometheusSerializer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteUnicodeString(byte[] buffer, int cursor, string value)
     {
+#if NET
+        return WriteEscapedUtf8String(buffer, cursor, value.AsSpan(), UnicodeEscapeChars);
+#else
         for (var i = 0; i < value.Length; i++)
         {
             var ordinal = (ushort)value[i];
@@ -134,6 +143,7 @@ internal static partial class PrometheusSerializer
         }
 
         return cursor;
+#endif
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -170,6 +180,9 @@ internal static partial class PrometheusSerializer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteLabelValue(byte[] buffer, int cursor, string value)
     {
+#if NET
+        return WriteEscapedUtf8String(buffer, cursor, value.AsSpan(), LabelValueEscapeChars);
+#else
         for (var i = 0; i < value.Length; i++)
         {
             var ordinal = (ushort)value[i];
@@ -194,6 +207,7 @@ internal static partial class PrometheusSerializer
         }
 
         return cursor;
+#endif
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -225,13 +239,7 @@ internal static partial class PrometheusSerializer
 
         Debug.Assert(!string.IsNullOrWhiteSpace(name), "name was null or whitespace");
 
-        for (var i = 0; i < name.Length; i++)
-        {
-            var ordinal = (ushort)name[i];
-            buffer[cursor++] = unchecked((byte)ordinal);
-        }
-
-        return cursor;
+        return WriteAsciiStringNoEscape(buffer, cursor, name);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -242,13 +250,7 @@ internal static partial class PrometheusSerializer
 
         Debug.Assert(!string.IsNullOrWhiteSpace(name), "name was null or whitespace");
 
-        for (var i = 0; i < name.Length; i++)
-        {
-            var ordinal = (ushort)name[i];
-            buffer[cursor++] = unchecked((byte)ordinal);
-        }
-
-        return cursor;
+        return WriteAsciiStringNoEscape(buffer, cursor, name);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -312,14 +314,7 @@ internal static partial class PrometheusSerializer
 
         buffer[cursor++] = unchecked((byte)' ');
 
-        // Unit name has already been escaped.
-#pragma warning disable IDE0370 // Remove unnecessary suppression
-        for (var i = 0; i < metric.Unit!.Length; i++)
-#pragma warning restore IDE0370 // Remove unnecessary suppression
-        {
-            var ordinal = (ushort)metric.Unit[i];
-            buffer[cursor++] = unchecked((byte)ordinal);
-        }
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, metric.Unit!);
 
         buffer[cursor++] = ASCII_LINEFEED;
 
@@ -450,6 +445,60 @@ internal static partial class PrometheusSerializer
 
         return cursor;
     }
+
+#if NET
+    private static int WriteUtf8NoEscape(byte[] buffer, int cursor, ReadOnlySpan<char> value) =>
+        cursor + System.Text.Encoding.UTF8.GetBytes(value, buffer.AsSpan(cursor));
+
+    private static int WriteEscapedUtf8String(byte[] buffer, int cursor, ReadOnlySpan<char> value, SearchValues<char> escapedChars)
+    {
+        while (!value.IsEmpty)
+        {
+            var escapedIndex = value.IndexOfAny(escapedChars);
+            var nonAsciiIndex = value.IndexOfAnyExceptInRange((char)0x00, (char)0x7F);
+
+            var specialIndex =
+                escapedIndex < 0 ? nonAsciiIndex
+                : nonAsciiIndex < 0 ? escapedIndex
+                : Math.Min(escapedIndex, nonAsciiIndex);
+
+            if (specialIndex < 0)
+            {
+                return WriteUtf8NoEscape(buffer, cursor, value);
+            }
+
+            if (specialIndex > 0)
+            {
+                cursor = WriteUtf8NoEscape(buffer, cursor, value[..specialIndex]);
+                value = value[specialIndex..];
+            }
+
+            var ordinal = (ushort)value[0];
+            switch (ordinal)
+            {
+                case ASCII_QUOTATION_MARK:
+                    buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
+                    buffer[cursor++] = ASCII_QUOTATION_MARK;
+                    break;
+                case ASCII_REVERSE_SOLIDUS:
+                    buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
+                    buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
+                    break;
+                case ASCII_LINEFEED:
+                    buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
+                    buffer[cursor++] = unchecked((byte)'n');
+                    break;
+                default:
+                    cursor = WriteUnicodeNoEscape(buffer, cursor, ordinal);
+                    break;
+            }
+
+            value = value[1..];
+        }
+
+        return cursor;
+    }
+#endif
 
     private static string MapPrometheusType(PrometheusType type) => type switch
     {

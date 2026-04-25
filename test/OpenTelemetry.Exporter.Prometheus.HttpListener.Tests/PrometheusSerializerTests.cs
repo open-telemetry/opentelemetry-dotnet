@@ -708,8 +708,55 @@ public sealed class PrometheusSerializerTests
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
 
-    private static int WriteMetric(byte[] buffer, int cursor, Metric metric, bool useOpenMetrics = false, bool disableTimestamp = false)
+    [Fact]
+    public void WriteAsciiStringNoEscapeWritesAsciiBytes()
     {
-        return PrometheusSerializer.WriteMetric(buffer, cursor, metric, PrometheusMetric.Create(metric, false), useOpenMetrics, disableTimestamp);
+        var value = "metric_name_total";
+        var buffer = new byte[64];
+
+        var cursor = PrometheusSerializer.WriteAsciiStringNoEscape(buffer, 0, value);
+
+        Assert.Equal("metric_name_total", Encoding.UTF8.GetString(buffer, 0, cursor));
     }
+
+    [Fact]
+    public void WriteLabelValueEscapesSpecialCharacters()
+    {
+        var buffer = new byte[128];
+
+        var cursor = PrometheusSerializer.WriteLabelValue(buffer, 0, "\"line1\\\nline2\"");
+
+        Assert.Equal("\\\"line1\\\\\\nline2\\\"", Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Fact]
+    public void WriteUnicodeStringPreservesUtf16CodeUnitEncoding()
+    {
+        const string value = "rocket:\uD83D\uDE80";
+        var buffer = new byte[128];
+
+        var cursor = PrometheusSerializer.WriteUnicodeString(buffer, 0, value);
+        var actual = ToHexString(buffer, cursor);
+
+        Assert.Equal("726F636B65743AEDA0BDEDBA80", actual);
+    }
+
+    private static string ToHexString(byte[] buffer, int length)
+    {
+        var chars = new char[length * 2];
+
+        for (var i = 0; i < length; i++)
+        {
+            var value = buffer[i];
+            chars[i * 2] = GetHexValue(value >> 4);
+            chars[(i * 2) + 1] = GetHexValue(value & 0xF);
+        }
+
+        return new string(chars);
+
+        static char GetHexValue(int value) => (char)(value < 10 ? '0' + value : 'A' + (value - 10));
+    }
+
+    private static int WriteMetric(byte[] buffer, int cursor, Metric metric, bool useOpenMetrics = false, bool disableTimestamp = false)
+        => PrometheusSerializer.WriteMetric(buffer, cursor, metric, PrometheusMetric.Create(metric, false), useOpenMetrics, disableTimestamp);
 }
