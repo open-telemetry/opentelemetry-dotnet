@@ -32,7 +32,7 @@ dotnet add package --prerelease OpenTelemetry.Exporter.Prometheus.HttpListener
 ```csharp
 var meterProvider = Sdk.CreateMeterProviderBuilder()
     .AddMeter(MyMeter.Name)
-    .AddPrometheusHttpListener();
+    .AddPrometheusHttpListener()
     .Build();
 ```
 
@@ -68,7 +68,7 @@ var meterProvider = Sdk.CreateMeterProviderBuilder()
     {
         options.Host = "localhost";
         options.Port = 9464;
-    });
+    })
     .Build();
 ```
 
