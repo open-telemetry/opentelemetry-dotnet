@@ -234,7 +234,7 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
 
         ExplicitBucketHistogramConfiguration.ThrowIfBoundaryCountExceedsLimit(
             adviceExplicitBucketBoundaries.Count,
-            nameof(adviceExplicitBucketBoundaries));
+            nameof(histogram));
 
         if (typeof(T) == typeof(double))
         {
