@@ -13,7 +13,8 @@ Notes](../../RELEASENOTES.md).
   will be removed in the stable release.
   ([#7107](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7114))
 
-* Removed `DisableTimestamp` property from `PrometheusHttpListenerOptions`.
+* **Breaking Change** Removed `DisableTimestamp` property from
+  `PrometheusHttpListenerOptions`.
   ([#7176](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7176))
 
 ## 1.15.3-beta.1

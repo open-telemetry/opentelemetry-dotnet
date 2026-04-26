@@ -7,7 +7,8 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* Removed `DisableTimestamp` property from `PrometheusAspNetCoreOptions`.
+* **Breaking Change** Removed `DisableTimestamp` property from
+  `PrometheusAspNetCoreOptions`.
   ([#7176](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7176))
 
 ## 1.15.3-beta.1
