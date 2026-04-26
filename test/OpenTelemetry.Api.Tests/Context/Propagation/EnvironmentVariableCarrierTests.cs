@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Collections;
 using System.Diagnostics;
 using Xunit;
 
@@ -135,6 +136,32 @@ public class EnvironmentVariableCarrierTests
         ];
 
         Assert.Equal("value", EnvironmentVariableCarrier.Get(carrier, "_123TRACE")!.Single());
+    }
+
+    [Fact]
+    public void Get_IgnoresLeadingDigitCarrierKeyForNonDigitLookupKey()
+    {
+        List<KeyValuePair<string, string?>> carrier =
+        [
+            new("123trace", "value1"),
+            new("traceparent", "value2"),
+        ];
+
+        Assert.Equal("value2", EnvironmentVariableCarrier.Get(carrier, "traceparent")!.Single());
+    }
+
+    [Fact]
+    public void Get_SupportsDictionaryOnlyCarrierKeys()
+    {
+        var carrier = new DictionaryOnlyCarrier
+        {
+            ["TRACEPARENT"] = "value1",
+            ["OTEL_TRACE_ID"] = "value2",
+        };
+
+        Assert.Equal("value1", EnvironmentVariableCarrier.Get(carrier, "traceparent")!.Single());
+        Assert.Equal("value2", EnvironmentVariableCarrier.Get(carrier, "otel.trace.id")!.Single());
+        Assert.Null(EnvironmentVariableCarrier.Get(carrier, "missing"));
     }
 
     [Fact]
@@ -273,5 +300,46 @@ public class EnvironmentVariableCarrierTests
         }
 
         Assert.Equal(expected.Count, actual.Count);
+    }
+
+    private sealed class DictionaryOnlyCarrier : IDictionary<string, string?>
+    {
+        private readonly Dictionary<string, string?> inner = new(StringComparer.Ordinal);
+
+        public ICollection<string> Keys => this.inner.Keys;
+
+        public ICollection<string?> Values => this.inner.Values;
+
+        public int Count => this.inner.Count;
+
+        public bool IsReadOnly => false;
+
+        public string? this[string key]
+        {
+            get => this.inner[key];
+            set => this.inner[key] = value;
+        }
+
+        public void Add(string key, string? value) => this.inner.Add(key, value);
+
+        public void Add(KeyValuePair<string, string?> item) => ((IDictionary<string, string?>)this.inner).Add(item);
+
+        public void Clear() => this.inner.Clear();
+
+        public bool Contains(KeyValuePair<string, string?> item) => ((IDictionary<string, string?>)this.inner).Contains(item);
+
+        public bool ContainsKey(string key) => this.inner.ContainsKey(key);
+
+        public void CopyTo(KeyValuePair<string, string?>[] array, int arrayIndex) => ((IDictionary<string, string?>)this.inner).CopyTo(array, arrayIndex);
+
+        public IEnumerator<KeyValuePair<string, string?>> GetEnumerator() => this.inner.GetEnumerator();
+
+        public bool Remove(string key) => this.inner.Remove(key);
+
+        public bool Remove(KeyValuePair<string, string?> item) => ((IDictionary<string, string?>)this.inner).Remove(item);
+
+        public bool TryGetValue(string key, out string? value) => this.inner.TryGetValue(key, out value);
+
+        IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
     }
 }
