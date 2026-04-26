@@ -23,7 +23,7 @@ public class BaggagePropagator : TextMapPropagator
     private const int MaxBaggageLength = 8192;
     private const int MaxBaggageItems = 180;
 
-#if NET8_0_OR_GREATER
+#if NET
     private static readonly SearchValues<char> DecodeHints = SearchValues.Create("%");
 
     private static readonly SearchValues<char> InvalidKeySearcher = SearchValues.Create(
@@ -259,7 +259,7 @@ public class BaggagePropagator : TextMapPropagator
 
     private static string EncodeValue(ReadOnlySpan<char> value)
     {
-#if NET8_0_OR_GREATER
+#if NET
         if (!value.ContainsAny(InvalidValueSearcher))
         {
             return value.ToString();
@@ -301,7 +301,7 @@ public class BaggagePropagator : TextMapPropagator
 
     private static string EncodeKey(ReadOnlySpan<char> key)
     {
-#if NET8_0_OR_GREATER
+#if NET
         if (!key.ContainsAny(InvalidKeySearcher))
         {
             return key.ToString();
@@ -342,28 +342,28 @@ public class BaggagePropagator : TextMapPropagator
     }
 
     private static bool IsInvalidValueChar(char c) =>
-#if NET8_0_OR_GREATER
+#if NET
         InvalidValueSearcher.Contains(c);
 #else
         Array.IndexOf(InvalidValueChars, c) >= 0;
 #endif
 
     private static bool IsValidKey(char c) =>
-#if NET8_0_OR_GREATER
+#if NET
         !InvalidKeySearcher.Contains(c);
 #else
         Array.IndexOf(InvalidCharsArray, c) < 0;
 #endif
 
     private static bool IsValidKey(ReadOnlySpan<char> key) =>
-#if NET8_0_OR_GREATER
+#if NET
         !key.ContainsAny(InvalidKeySearcher);
 #else
         key.IndexOfAny(InvalidCharsArray) < 0;
 #endif
 
     private static string DecodeIfNeeded(ReadOnlySpan<char> value) =>
-#if NET8_0_OR_GREATER
+#if NET
         value.ContainsAny(DecodeHints) ? WebUtility.UrlDecode(value.ToString()) : value.ToString();
 #else
         value.IndexOf('%') < 0 ? value.ToString() : WebUtility.UrlDecode(value.ToString());
