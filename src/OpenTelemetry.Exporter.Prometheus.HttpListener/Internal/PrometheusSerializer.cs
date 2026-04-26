@@ -3,6 +3,7 @@
 
 #if NET
 using System.Buffers;
+using System.Buffers.Text;
 #endif
 using System.Diagnostics;
 using System.Globalization;
@@ -35,12 +36,10 @@ internal static partial class PrometheusSerializer
         if (MathHelper.IsFinite(value))
         {
 #if NET
-            Span<char> span = stackalloc char[128];
-
-            var result = value.TryFormat(span, out var cchWritten, "G", CultureInfo.InvariantCulture);
+            var result = Utf8Formatter.TryFormat(value, buffer.AsSpan(cursor), out var bytesWritten, new StandardFormat('G'));
             Debug.Assert(result, $"{nameof(result)} should be true.");
 
-            cursor = WriteUtf8NoEscape(buffer, cursor, span[..cchWritten]);
+            cursor += bytesWritten;
 #else
             cursor = WriteAsciiStringNoEscape(buffer, cursor, value.ToString(CultureInfo.InvariantCulture));
 #endif
@@ -66,12 +65,25 @@ internal static partial class PrometheusSerializer
     public static int WriteLong(byte[] buffer, int cursor, long value)
     {
 #if NET
-        Span<char> span = stackalloc char[20];
-
-        var result = value.TryFormat(span, out var cchWritten, "G", CultureInfo.InvariantCulture);
+        var result = Utf8Formatter.TryFormat(value, buffer.AsSpan(cursor), out var bytesWritten);
         Debug.Assert(result, $"{nameof(result)} should be true.");
 
-        cursor = WriteUtf8NoEscape(buffer, cursor, span[..cchWritten]);
+        cursor += bytesWritten;
+#else
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, value.ToString(CultureInfo.InvariantCulture));
+#endif
+
+        return cursor;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int WriteUnsignedLong(byte[] buffer, int cursor, ulong value)
+    {
+#if NET
+        var result = Utf8Formatter.TryFormat(value, buffer.AsSpan(cursor), out var bytesWritten);
+        Debug.Assert(result, $"{nameof(result)} should be true.");
+
+        cursor += bytesWritten;
 #else
         cursor = WriteAsciiStringNoEscape(buffer, cursor, value.ToString(CultureInfo.InvariantCulture));
 #endif
@@ -211,6 +223,69 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int WriteLabelValue(byte[] buffer, int cursor, object? value)
+    {
+        switch (value)
+        {
+            case null:
+                return cursor;
+
+            case string stringValue:
+                return WriteLabelValue(buffer, cursor, stringValue);
+
+            case bool boolValue:
+                return WriteAsciiStringNoEscape(buffer, cursor, boolValue ? "true" : "false");
+
+            case sbyte signedByteValue:
+                return WriteLong(buffer, cursor, signedByteValue);
+
+            case byte byteValue:
+                return WriteLong(buffer, cursor, byteValue);
+
+            case short shortValue:
+                return WriteLong(buffer, cursor, shortValue);
+
+            case ushort unsignedShortValue:
+                return WriteLong(buffer, cursor, unsignedShortValue);
+
+            case int intValue:
+                return WriteLong(buffer, cursor, intValue);
+
+            case uint unsignedIntValue:
+                return WriteLong(buffer, cursor, unsignedIntValue);
+
+            case long longValue:
+                return WriteLong(buffer, cursor, longValue);
+
+            case ulong unsignedLongValue:
+                return WriteUnsignedLong(buffer, cursor, unsignedLongValue);
+
+            case float floatValue:
+                return WriteDouble(buffer, cursor, floatValue);
+
+            case double doubleValue:
+                return WriteDouble(buffer, cursor, doubleValue);
+
+            case decimal decimalValue:
+#if NET
+                var result = Utf8Formatter.TryFormat(decimalValue, buffer.AsSpan(cursor), out var bytesWritten);
+                Debug.Assert(result, $"{nameof(result)} should be true.");
+                return cursor + bytesWritten;
+#else
+                return WriteLabelValue(buffer, cursor, decimalValue.ToString(CultureInfo.InvariantCulture));
+#endif
+
+            case IFormattable formattableValue:
+                return WriteLabelValue(buffer, cursor, formattableValue.ToString(null, CultureInfo.InvariantCulture) ?? string.Empty);
+
+            // TODO: Attribute values should be written as their JSON representation. Extra logic may need to be added here to correctly convert other .NET types.
+            // More detail: https://github.com/open-telemetry/opentelemetry-dotnet/issues/4822#issuecomment-1707328495
+            default:
+                return WriteLabelValue(buffer, cursor, value.ToString() ?? string.Empty);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteLabel(byte[] buffer, int cursor, string labelKey, object? labelValue)
     {
         cursor = WriteLabelKey(buffer, cursor, labelKey);
@@ -218,17 +293,10 @@ internal static partial class PrometheusSerializer
         buffer[cursor++] = unchecked((byte)'"');
 
         // In Prometheus, a label with an empty label value is considered equivalent to a label that does not exist.
-        cursor = WriteLabelValue(buffer, cursor, GetLabelValueString(labelValue));
+        cursor = WriteLabelValue(buffer, cursor, labelValue);
         buffer[cursor++] = unchecked((byte)'"');
 
         return cursor;
-
-        static string GetLabelValueString(object? labelValue)
-        {
-            // TODO: Attribute values should be written as their JSON representation. Extra logic may need to be added here to correctly convert other .NET types.
-            // More detail: https://github.com/open-telemetry/opentelemetry-dotnet/issues/4822#issuecomment-1707328495
-            return labelValue is bool b ? b ? "true" : "false" : labelValue?.ToString() ?? string.Empty;
-        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -236,10 +304,11 @@ internal static partial class PrometheusSerializer
     {
         // Metric name has already been escaped.
         var name = openMetricsRequested ? metric.OpenMetricsName : metric.Name;
+        var nameBytes = openMetricsRequested ? metric.OpenMetricsNameBytes : metric.NameBytes;
 
         Debug.Assert(!string.IsNullOrWhiteSpace(name), "name was null or whitespace");
 
-        return WriteAsciiStringNoEscape(buffer, cursor, name);
+        return WriteUtf8NoEscape(buffer, cursor, nameBytes);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -247,10 +316,11 @@ internal static partial class PrometheusSerializer
     {
         // Metric name has already been escaped.
         var name = openMetricsRequested ? metric.OpenMetricsMetadataName : metric.Name;
+        var nameBytes = openMetricsRequested ? metric.OpenMetricsMetadataNameBytes : metric.NameBytes;
 
         Debug.Assert(!string.IsNullOrWhiteSpace(name), "name was null or whitespace");
 
-        return WriteAsciiStringNoEscape(buffer, cursor, name);
+        return WriteUtf8NoEscape(buffer, cursor, nameBytes);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -314,7 +384,7 @@ internal static partial class PrometheusSerializer
 
         buffer[cursor++] = unchecked((byte)' ');
 
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, metric.Unit!);
+        cursor = WriteUtf8NoEscape(buffer, cursor, metric.UnitBytes!);
 
         buffer[cursor++] = ASCII_LINEFEED;
 
@@ -374,29 +444,19 @@ internal static partial class PrometheusSerializer
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteTags(byte[] buffer, int cursor, Metric metric, ReadOnlyTagCollection tags, bool writeEnclosingBraces = true)
+        => WriteTags(buffer, cursor, null, metric, tags, writeEnclosingBraces);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int WriteTags(byte[] buffer, int cursor, PrometheusMetric? prometheusMetric, Metric metric, ReadOnlyTagCollection tags, bool writeEnclosingBraces = true)
     {
         if (writeEnclosingBraces)
         {
             buffer[cursor++] = unchecked((byte)'{');
         }
 
-        cursor = WriteLabel(buffer, cursor, "otel_scope_name", metric.MeterName);
-        buffer[cursor++] = unchecked((byte)',');
-
-        if (!string.IsNullOrEmpty(metric.MeterVersion))
-        {
-            cursor = WriteLabel(buffer, cursor, "otel_scope_version", metric.MeterVersion);
-            buffer[cursor++] = unchecked((byte)',');
-        }
-
-        if (metric.MeterTags != null)
-        {
-            foreach (var tag in metric.MeterTags)
-            {
-                cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
-                buffer[cursor++] = unchecked((byte)',');
-            }
-        }
+        cursor = prometheusMetric?.SerializedStaticTags != null
+            ? WriteUtf8NoEscape(buffer, cursor, prometheusMetric.SerializedStaticTags)
+            : WriteStaticTags(buffer, cursor, metric);
 
         foreach (var tag in tags)
         {
@@ -444,6 +504,12 @@ internal static partial class PrometheusSerializer
         buffer[cursor++] = ASCII_LINEFEED;
 
         return cursor;
+    }
+
+    private static int WriteUtf8NoEscape(byte[] buffer, int cursor, ReadOnlySpan<byte> value)
+    {
+        value.CopyTo(buffer.AsSpan(cursor));
+        return cursor + value.Length;
     }
 
 #if NET
@@ -497,6 +563,355 @@ internal static partial class PrometheusSerializer
         }
 
         return cursor;
+    }
+#endif
+
+    private static int WriteStaticTags(byte[] buffer, int cursor, Metric metric)
+    {
+        cursor = WriteLabel(buffer, cursor, "otel_scope_name", metric.MeterName);
+        buffer[cursor++] = unchecked((byte)',');
+
+        if (!string.IsNullOrEmpty(metric.MeterVersion))
+        {
+            cursor = WriteLabel(buffer, cursor, "otel_scope_version", metric.MeterVersion);
+            buffer[cursor++] = unchecked((byte)',');
+        }
+
+        if (metric.MeterTags != null)
+        {
+            foreach (var tag in metric.MeterTags)
+            {
+                cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
+                buffer[cursor++] = unchecked((byte)',');
+            }
+        }
+
+        return cursor;
+    }
+
+#if NET
+    private static bool TryWriteStaticTags(Span<byte> buffer, Metric metric, out int cursor)
+    {
+        cursor = 0;
+        return TryWriteStaticTags(buffer, ref cursor, metric);
+    }
+
+    private static bool TryWriteStaticTags(Span<byte> buffer, ref int cursor, Metric metric)
+    {
+        if (!TryWriteLabel(buffer, ref cursor, "otel_scope_name", metric.MeterName) ||
+            !TryWriteByte(buffer, ref cursor, unchecked((byte)',')))
+        {
+            return false;
+        }
+
+        if (!string.IsNullOrEmpty(metric.MeterVersion) &&
+            (!TryWriteLabel(buffer, ref cursor, "otel_scope_version", metric.MeterVersion) ||
+             !TryWriteByte(buffer, ref cursor, unchecked((byte)','))))
+        {
+            return false;
+        }
+
+        if (metric.MeterTags != null)
+        {
+            foreach (var tag in metric.MeterTags)
+            {
+                if (!TryWriteLabel(buffer, ref cursor, tag.Key, tag.Value) ||
+                    !TryWriteByte(buffer, ref cursor, unchecked((byte)',')))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private static bool TryWriteTags(
+        Span<byte> buffer,
+        PrometheusMetric? prometheusMetric,
+        Metric metric,
+        ReadOnlyTagCollection tags,
+        bool writeEnclosingBraces,
+        out int cursor)
+    {
+        cursor = 0;
+
+        if (writeEnclosingBraces && !TryWriteByte(buffer, ref cursor, unchecked((byte)'{')))
+        {
+            return false;
+        }
+
+        if (prometheusMetric?.SerializedStaticTags != null)
+        {
+            if (!TryWriteBytes(buffer, ref cursor, prometheusMetric.SerializedStaticTags))
+            {
+                return false;
+            }
+        }
+        else if (!TryWriteStaticTags(buffer, ref cursor, metric))
+        {
+            return false;
+        }
+
+        foreach (var tag in tags)
+        {
+            if (!TryWriteLabel(buffer, ref cursor, tag.Key, tag.Value) ||
+                !TryWriteByte(buffer, ref cursor, unchecked((byte)',')))
+            {
+                return false;
+            }
+        }
+
+        if (writeEnclosingBraces)
+        {
+            buffer[cursor - 1] = unchecked((byte)'}');
+        }
+
+        return true;
+    }
+
+    private static bool TryWriteLabel(Span<byte> buffer, ref int cursor, string labelKey, object? labelValue) =>
+        TryWriteLabelKey(buffer, ref cursor, labelKey) &&
+        TryWriteByte(buffer, ref cursor, unchecked((byte)'=')) &&
+        TryWriteByte(buffer, ref cursor, ASCII_QUOTATION_MARK) &&
+        TryWriteLabelValue(buffer, ref cursor, labelValue) &&
+        TryWriteByte(buffer, ref cursor, ASCII_QUOTATION_MARK);
+
+    private static bool TryWriteLabelKey(Span<byte> buffer, ref int cursor, string value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return TryWriteByte(buffer, ref cursor, unchecked((byte)'_'));
+        }
+
+        var ordinal = (ushort)value[0];
+        if (ordinal is >= '0' and <= '9' &&
+            !TryWriteByte(buffer, ref cursor, unchecked((byte)'_')))
+        {
+            return false;
+        }
+
+        for (var i = 0; i < value.Length; i++)
+        {
+            ordinal = value[i];
+            var sanitizedByte =
+                ordinal is (>= 'A' and <= 'Z') or
+                (>= 'a' and <= 'z') or
+                (>= '0' and <= '9')
+                    ? (byte)ordinal
+                    : (byte)'_';
+
+            if (!TryWriteByte(buffer, ref cursor, sanitizedByte))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool TryWriteLabelValue(Span<byte> buffer, ref int cursor, object? value)
+    {
+        switch (value)
+        {
+            case null:
+                return true;
+
+            case string stringValue:
+                return TryWriteLabelValue(buffer, ref cursor, stringValue);
+
+            case bool boolValue:
+                return TryWriteAsciiStringNoEscape(buffer, ref cursor, boolValue ? "true" : "false");
+
+            case sbyte signedByteValue:
+                return TryWriteLong(buffer, ref cursor, signedByteValue);
+
+            case byte byteValue:
+                return TryWriteLong(buffer, ref cursor, byteValue);
+
+            case short shortValue:
+                return TryWriteLong(buffer, ref cursor, shortValue);
+
+            case ushort unsignedShortValue:
+                return TryWriteLong(buffer, ref cursor, unsignedShortValue);
+
+            case int intValue:
+                return TryWriteLong(buffer, ref cursor, intValue);
+
+            case uint unsignedIntValue:
+                return TryWriteLong(buffer, ref cursor, unsignedIntValue);
+
+            case long longValue:
+                return TryWriteLong(buffer, ref cursor, longValue);
+
+            case ulong unsignedLongValue:
+                return TryWriteUnsignedLong(buffer, ref cursor, unsignedLongValue);
+
+            case float floatValue:
+                return TryWriteDouble(buffer, ref cursor, floatValue);
+
+            case double doubleValue:
+                return TryWriteDouble(buffer, ref cursor, doubleValue);
+
+            case decimal decimalValue:
+                if (!Utf8Formatter.TryFormat(decimalValue, buffer[cursor..], out var bytesWritten))
+                {
+                    return false;
+                }
+
+                cursor += bytesWritten;
+                return true;
+
+            case IFormattable formattableValue:
+                return TryWriteLabelValue(buffer, ref cursor, formattableValue.ToString(null, CultureInfo.InvariantCulture) ?? string.Empty);
+
+            // TODO: Attribute values should be written as their JSON representation. Extra logic may need to be added here to correctly convert other .NET types.
+            // More detail: https://github.com/open-telemetry/opentelemetry-dotnet/issues/4822#issuecomment-1707328495
+            default:
+                return TryWriteLabelValue(buffer, ref cursor, value.ToString() ?? string.Empty);
+        }
+    }
+
+    private static bool TryWriteLabelValue(Span<byte> buffer, ref int cursor, string value)
+    {
+        for (var i = 0; i < value.Length; i++)
+        {
+            var ordinal = (ushort)value[i];
+            switch (ordinal)
+            {
+                case ASCII_QUOTATION_MARK:
+                    if (!TryWriteByte(buffer, ref cursor, ASCII_REVERSE_SOLIDUS) ||
+                        !TryWriteByte(buffer, ref cursor, ASCII_QUOTATION_MARK))
+                    {
+                        return false;
+                    }
+
+                    break;
+                case ASCII_REVERSE_SOLIDUS:
+                    if (!TryWriteByte(buffer, ref cursor, ASCII_REVERSE_SOLIDUS) ||
+                        !TryWriteByte(buffer, ref cursor, ASCII_REVERSE_SOLIDUS))
+                    {
+                        return false;
+                    }
+
+                    break;
+                case ASCII_LINEFEED:
+                    if (!TryWriteByte(buffer, ref cursor, ASCII_REVERSE_SOLIDUS) ||
+                        !TryWriteByte(buffer, ref cursor, unchecked((byte)'n')))
+                    {
+                        return false;
+                    }
+
+                    break;
+                default:
+                    if (!TryWriteUnicodeNoEscape(buffer, ref cursor, ordinal))
+                    {
+                        return false;
+                    }
+
+                    break;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool TryWriteAsciiStringNoEscape(Span<byte> buffer, ref int cursor, string value)
+    {
+        if (value.Length > buffer.Length - cursor)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < value.Length; i++)
+        {
+            buffer[cursor++] = unchecked((byte)value[i]);
+        }
+
+        return true;
+    }
+
+    private static bool TryWriteLong(Span<byte> buffer, ref int cursor, long value)
+    {
+        if (!Utf8Formatter.TryFormat(value, buffer[cursor..], out var bytesWritten))
+        {
+            return false;
+        }
+
+        cursor += bytesWritten;
+        return true;
+    }
+
+    private static bool TryWriteUnsignedLong(Span<byte> buffer, ref int cursor, ulong value)
+    {
+        if (!Utf8Formatter.TryFormat(value, buffer[cursor..], out var bytesWritten))
+        {
+            return false;
+        }
+
+        cursor += bytesWritten;
+        return true;
+    }
+
+    private static bool TryWriteDouble(Span<byte> buffer, ref int cursor, double value)
+    {
+        if (MathHelper.IsFinite(value))
+        {
+            if (!Utf8Formatter.TryFormat(value, buffer[cursor..], out var bytesWritten, new StandardFormat('G')))
+            {
+                return false;
+            }
+
+            cursor += bytesWritten;
+            return true;
+        }
+
+        return TryWriteAsciiStringNoEscape(
+            buffer,
+            ref cursor,
+            double.IsPositiveInfinity(value) ? "+Inf" : double.IsNegativeInfinity(value) ? "-Inf" : "Nan");
+    }
+
+    private static bool TryWriteUnicodeNoEscape(Span<byte> buffer, ref int cursor, ushort ordinal)
+    {
+        if (ordinal <= 0x7F)
+        {
+            return TryWriteByte(buffer, ref cursor, unchecked((byte)ordinal));
+        }
+
+        if (ordinal <= 0x07FF)
+        {
+            return TryWriteByte(buffer, ref cursor, unchecked((byte)(0b_1100_0000 | (ordinal >> 6)))) &&
+                   TryWriteByte(buffer, ref cursor, unchecked((byte)(0b_1000_0000 | (ordinal & 0b_0011_1111))));
+        }
+
+        return TryWriteByte(buffer, ref cursor, unchecked((byte)(0b_1110_0000 | (ordinal >> 12)))) &&
+               TryWriteByte(buffer, ref cursor, unchecked((byte)(0b_1000_0000 | ((ordinal >> 6) & 0b_0011_1111)))) &&
+               TryWriteByte(buffer, ref cursor, unchecked((byte)(0b_1000_0000 | (ordinal & 0b_0011_1111))));
+    }
+
+    private static bool TryWriteBytes(Span<byte> buffer, ref int cursor, ReadOnlySpan<byte> value)
+    {
+        if (value.Length > buffer.Length - cursor)
+        {
+            return false;
+        }
+
+        value.CopyTo(buffer[cursor..]);
+        cursor += value.Length;
+
+        return true;
+    }
+
+    private static bool TryWriteByte(Span<byte> buffer, ref int cursor, byte value)
+    {
+        if ((uint)cursor >= (uint)buffer.Length)
+        {
+            return false;
+        }
+
+        buffer[cursor++] = value;
+        return true;
     }
 #endif
 

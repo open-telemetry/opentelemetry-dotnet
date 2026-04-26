@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Globalization;
 using FsCheck;
 using FsCheck.Fluent;
 using FsCheck.Xunit;
@@ -31,10 +32,57 @@ public class PrometheusSerializerFuzzTests
         Generators.PrometheusStringArbitrary(),
         static (value) => Serialize(value, PrometheusSerializer.WriteUnicodeString).SequenceEqual(ReferenceWriteUnicodeString(value)));
 
+    [Property(MaxTest = MaxTests)]
+    public Property WriteLabelValueObjectMatchesReferenceImplementation() => Prop.ForAll(
+        Generators.LabelValueArbitrary(),
+        static (value) => SerializeLabelValue(value).SequenceEqual(ReferenceWriteLabelValueObject(value)));
+
+    [Property(MaxTest = MaxTests)]
+    public Property WriteLongMatchesReferenceImplementation() => Prop.ForAll(
+        Generators.LongArbitrary(),
+        static (value) => SerializeLong(value).SequenceEqual(ReferenceWriteLong(value)));
+
+    [Property(MaxTest = MaxTests)]
+    public Property WriteDoubleMatchesReferenceImplementation() => Prop.ForAll(
+        Generators.DoubleArbitrary(),
+        static (value) => SerializeDouble(value).SequenceEqual(ReferenceWriteDouble(value)));
+
     private static byte[] Serialize(string value, Func<byte[], int, string, int> writer)
     {
         var buffer = new byte[(value.Length * 8) + 16];
         var cursor = writer(buffer, 0, value);
+        return buffer.AsSpan(0, cursor).ToArray();
+    }
+
+    private static byte[] SerializeLabelValue(object? value)
+    {
+        var buffer = new byte[256];
+
+        while (true)
+        {
+            try
+            {
+                var cursor = PrometheusSerializer.WriteLabelValue(buffer, 0, value);
+                return buffer.AsSpan(0, cursor).ToArray();
+            }
+            catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
+            {
+                buffer = new byte[checked(buffer.Length * 2)];
+            }
+        }
+    }
+
+    private static byte[] SerializeLong(long value)
+    {
+        var buffer = new byte[64];
+        var cursor = PrometheusSerializer.WriteLong(buffer, 0, value);
+        return buffer.AsSpan(0, cursor).ToArray();
+    }
+
+    private static byte[] SerializeDouble(double value)
+    {
+        var buffer = new byte[64];
+        var cursor = PrometheusSerializer.WriteDouble(buffer, 0, value);
         return buffer.AsSpan(0, cursor).ToArray();
     }
 
@@ -73,7 +121,36 @@ public class PrometheusSerializerFuzzTests
 
     private static byte[] ReferenceWriteLabelValue(string value) => ReferenceWriteEscapedString(value, escapeQuotationMarks: true);
 
+    private static byte[] ReferenceWriteLabelValueObject(object? value)
+    {
+        var stringValue = value switch
+        {
+            null => string.Empty,
+            bool boolValue => boolValue ? "true" : "false",
+            float floatValue when float.IsPositiveInfinity(floatValue) => "+Inf",
+            float floatValue when float.IsNegativeInfinity(floatValue) => "-Inf",
+            float floatValue when float.IsNaN(floatValue) => "Nan",
+            double doubleValue when double.IsPositiveInfinity(doubleValue) => "+Inf",
+            double doubleValue when double.IsNegativeInfinity(doubleValue) => "-Inf",
+            double doubleValue when double.IsNaN(doubleValue) => "Nan",
+            IFormattable formattableValue => formattableValue.ToString(null, CultureInfo.InvariantCulture),
+            _ => value.ToString(),
+        };
+
+        return ReferenceWriteLabelValue(stringValue ?? string.Empty);
+    }
+
     private static byte[] ReferenceWriteUnicodeString(string value) => ReferenceWriteEscapedString(value, escapeQuotationMarks: false);
+
+    private static byte[] ReferenceWriteLong(long value) => System.Text.Encoding.UTF8.GetBytes(value.ToString(CultureInfo.InvariantCulture));
+
+    private static byte[] ReferenceWriteDouble(double value) => value switch
+    {
+        var doubleValue when double.IsPositiveInfinity(doubleValue) => System.Text.Encoding.UTF8.GetBytes("+Inf"),
+        var doubleValue when double.IsNegativeInfinity(doubleValue) => System.Text.Encoding.UTF8.GetBytes("-Inf"),
+        var doubleValue when double.IsNaN(doubleValue) => System.Text.Encoding.UTF8.GetBytes("Nan"),
+        _ => System.Text.Encoding.UTF8.GetBytes(value.ToString("G", CultureInfo.InvariantCulture)),
+    };
 
     private static byte[] ReferenceWriteEscapedString(string value, bool escapeQuotationMarks)
     {
@@ -135,6 +212,53 @@ public class PrometheusSerializerFuzzTests
         {
             var charGen = Gen.Choose(0, 0xFFFF).Select(static c => (char)c);
             return CreateString(charGen, maxLength: 128).ToArbitrary();
+        }
+
+        public static Arbitrary<double> DoubleArbitrary()
+        {
+            var generator =
+                from mantissa in Gen.Choose(-1_000_000, 1_000_000)
+                from exponent in Gen.Choose(-12, 12)
+                select mantissa * Math.Pow(10, exponent);
+
+            var finite = Gen.OneOf(
+                Gen.Elements(-1d, 0d, 1d, double.Epsilon, double.MinValue, double.MaxValue),
+                generator);
+
+            return Gen.OneOf(
+                finite,
+                Gen.Constant(double.PositiveInfinity),
+                Gen.Constant(double.NegativeInfinity),
+                Gen.Constant(double.NaN)).ToArbitrary();
+        }
+
+        public static Arbitrary<long> LongArbitrary()
+        {
+            var generator = from high in Gen.Choose(int.MinValue, int.MaxValue)
+                            from low in Gen.Choose(int.MinValue, int.MaxValue)
+                            select ((long)high << 32) | (uint)low;
+
+            return Gen.OneOf(Gen.Elements(long.MinValue, -1L, 0L, 1L, long.MaxValue), generator).ToArbitrary();
+        }
+
+        public static Arbitrary<object?> LabelValueArbitrary()
+        {
+            var chars = Gen.Choose(0, 0xFFFF).Select(static value => (object?)(char)value);
+            var decimals = Gen.Choose(int.MinValue, int.MaxValue).Select(static value => (object?)(value / 10m));
+            var unsignedLongs =
+                from high in Gen.Choose(0, int.MaxValue)
+                from low in Gen.Choose(int.MinValue, int.MaxValue)
+                select (object?)(((ulong)(uint)high << 32) | (uint)low);
+
+            return Gen.OneOf(
+                Gen.Constant((object?)null),
+                PrometheusStringArbitrary().Generator.Select(static value => (object?)value),
+                Gen.Elements<object?>(true, false),
+                LongArbitrary().Generator.Select(static value => (object?)value),
+                unsignedLongs,
+                DoubleArbitrary().Generator.Select(static value => (object?)value),
+                decimals,
+                chars).ToArbitrary();
         }
 
         private static Gen<string> CreateString(Gen<char> charGen, int maxLength) =>

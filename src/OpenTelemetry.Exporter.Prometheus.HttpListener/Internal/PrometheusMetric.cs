@@ -62,6 +62,22 @@ internal sealed class PrometheusMetric
         this.OpenMetricsMetadataName = openMetricsMetadataName;
         this.Unit = sanitizedUnit;
         this.Type = type;
+        this.NameBytes = ConvertToAsciiBytes(sanitizedName);
+        this.OpenMetricsNameBytes = ConvertToAsciiBytes(openMetricsName);
+        this.OpenMetricsMetadataNameBytes = ConvertToAsciiBytes(openMetricsMetadataName);
+        this.UnitBytes = sanitizedUnit == null ? null : ConvertToAsciiBytes(sanitizedUnit);
+
+        static byte[] ConvertToAsciiBytes(string value)
+        {
+            var bytes = new byte[value.Length];
+
+            for (var i = 0; i < value.Length; i++)
+            {
+                bytes[i] = unchecked((byte)value[i]);
+            }
+
+            return bytes;
+        }
     }
 
     public string Name { get; }
@@ -74,8 +90,21 @@ internal sealed class PrometheusMetric
 
     public PrometheusType Type { get; }
 
-    public static PrometheusMetric Create(Metric metric, bool disableTotalNameSuffixForCounters)
-        => new(metric.Name, metric.Unit, GetPrometheusType(metric.MetricType), disableTotalNameSuffixForCounters);
+    internal byte[] NameBytes { get; }
+
+    internal byte[] OpenMetricsNameBytes { get; }
+
+    internal byte[] OpenMetricsMetadataNameBytes { get; }
+
+    internal byte[]? UnitBytes { get; }
+
+    internal byte[]? SerializedStaticTags { get; private set; }
+
+    public static PrometheusMetric Create(Metric metric, bool disableTotalNameSuffixForCounters) =>
+        new(metric.Name, metric.Unit, GetPrometheusType(metric.MetricType), disableTotalNameSuffixForCounters)
+        {
+            SerializedStaticTags = PrometheusSerializer.SerializeStaticTags(metric),
+        };
 
     internal static string SanitizeMetricUnit(string metricUnit)
     {
@@ -97,11 +126,7 @@ internal sealed class PrometheusMetric
             }
             else
             {
-                if (sb != null)
-                {
-                    sb.Append(c);
-                }
-
+                sb?.Append(c);
                 lastCharUnderscore = false;
             }
         }
@@ -145,6 +170,11 @@ internal sealed class PrometheusMetric
         }
 
         return sb?.ToString() ?? metricName;
+
+        static StringBuilder CreateStringBuilder(string value)
+        {
+            return new(value.Length);
+        }
     }
 
     internal static string RemoveAnnotations(string unit)
@@ -212,11 +242,6 @@ internal sealed class PrometheusMetric
             8 => PrometheusType.Gauge,
             _ => throw new InvalidOperationException($"Invalid {nameof(MetricType)} value."),
         };
-    }
-
-    private static StringBuilder CreateStringBuilder(string value)
-    {
-        return new(value.Length);
     }
 
     private static string SanitizeOpenMetricsName(string metricName)

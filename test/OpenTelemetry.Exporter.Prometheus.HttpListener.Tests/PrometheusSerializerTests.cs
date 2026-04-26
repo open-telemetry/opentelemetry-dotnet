@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Metrics;
+using System.Globalization;
 using System.Text;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
@@ -738,6 +739,103 @@ public sealed class PrometheusSerializerTests
         var cursor = PrometheusSerializer.WriteLabelValue(buffer, 0, "\"line1\\\nline2\"");
 
         Assert.Equal("\\\"line1\\\\\\nline2\\\"", Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Theory]
+    [InlineData(true, "true")]
+    [InlineData(false, "false")]
+    [InlineData(123456789, "123456789")]
+    [InlineData(123456787L, "123456787")]
+    [InlineData(123456786LU, "123456786")]
+    [InlineData(123456785U, "123456785")]
+    [InlineData(123456784f, "123456784")]
+    [InlineData(123456783d, "123456783")]
+    public void WriteLabelValueObjectFormatsCommonPrimitiveValues(object value, string expected)
+    {
+        var buffer = new byte[128];
+
+        var cursor = PrometheusSerializer.WriteLabelValue(buffer, 0, value);
+
+        Assert.Equal(expected, Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Fact]
+    public void WriteLabelValueObjectFormatsUsingInvariantCulture()
+    {
+        var previousCulture = CultureInfo.CurrentCulture;
+        var previousUiCulture = CultureInfo.CurrentUICulture;
+
+        try
+        {
+            var culture = new CultureInfo("fr-FR");
+
+            CultureInfo.CurrentCulture = culture;
+            CultureInfo.CurrentUICulture = culture;
+
+            var buffer = new byte[128];
+            var doubleCursor = PrometheusSerializer.WriteLabelValue(buffer, 0, 1234.5);
+            Assert.Equal("1234.5", Encoding.UTF8.GetString(buffer, 0, doubleCursor));
+
+            Array.Clear(buffer, 0, buffer.Length);
+
+            var decimalCursor = PrometheusSerializer.WriteLabelValue(buffer, 0, 1234.5m);
+            Assert.Equal("1234.5", Encoding.UTF8.GetString(buffer, 0, decimalCursor));
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = previousCulture;
+            CultureInfo.CurrentUICulture = previousUiCulture;
+        }
+    }
+
+    [Fact]
+    public void WriteLabelFormatsTypedValues()
+    {
+        var buffer = new byte[128];
+
+        var cursor = PrometheusSerializer.WriteLabel(buffer, 0, "value", 18446744073709551615UL);
+
+        Assert.Equal("value=\"18446744073709551615\"", Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Theory]
+    [InlineData(long.MinValue)]
+    [InlineData(-1)]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(long.MaxValue)]
+    public void WriteLongMatchesInvariantFormatting(long value)
+    {
+        var buffer = new byte[64];
+
+        var cursor = PrometheusSerializer.WriteLong(buffer, 0, value);
+
+        Assert.Equal(value.ToString(CultureInfo.InvariantCulture), Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Theory]
+    [InlineData(double.NegativeInfinity, "-Inf")]
+    [InlineData(-1234.5, "-1234.5")]
+    [InlineData(0d, "0")]
+    [InlineData(1234.5, "1234.5")]
+    [InlineData(double.PositiveInfinity, "+Inf")]
+    public void WriteDoubleMatchesInvariantFormatting(double value, string expected)
+    {
+        var buffer = new byte[64];
+
+        var cursor = PrometheusSerializer.WriteDouble(buffer, 0, value);
+
+        Assert.Equal(expected, Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Fact]
+    public void WriteDoubleFormatsNaN()
+    {
+        var buffer = new byte[64];
+
+        var cursor = PrometheusSerializer.WriteDouble(buffer, 0, double.NaN);
+
+        Assert.Equal("Nan", Encoding.UTF8.GetString(buffer, 0, cursor));
     }
 
     [Fact]
