@@ -24,11 +24,15 @@ internal sealed class MetricState
 
     internal delegate void RecordMeasurementAction<T>(T value, ReadOnlySpan<KeyValuePair<string, object?>> tags);
 
-    public static MetricState BuildForSingleMetric(Metric metric) =>
-        new(
-            completeMeasurement: () => MetricReader.DeactivateMetric(metric),
+    public static MetricState BuildForSingleMetric(Metric metric)
+    {
+        metric.AddInstrumentReference();
+
+        return new(
+            completeMeasurement: () => metric.RemoveInstrumentReference(),
             recordMeasurementLong: metric.UpdateLong,
             recordMeasurementDouble: metric.UpdateDouble);
+    }
 
     public static MetricState BuildForMetricList(
         List<Metric> metrics)
@@ -38,12 +42,17 @@ internal sealed class MetricState
         // Note: Use an array here to elide bounds checks.
         var metricsArray = metrics.ToArray();
 
+        for (var i = 0; i < metricsArray.Length; i++)
+        {
+            metricsArray[i].AddInstrumentReference();
+        }
+
         return new(
             completeMeasurement: () =>
             {
                 for (var i = 0; i < metricsArray.Length; i++)
                 {
-                    MetricReader.DeactivateMetric(metricsArray[i]);
+                    metricsArray[i].RemoveInstrumentReference();
                 }
             },
             recordMeasurementLong: (v, t) =>
