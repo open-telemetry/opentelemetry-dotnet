@@ -274,7 +274,8 @@ public class BaggagePropagator : TextMapPropagator
         const string hex = "0123456789ABCDEF";
         var sb = new StringBuilder(value.Length);
 #if NET
-        Span<char> encoded = ['%', '\0', '\0'];
+        Span<char> encoded = stackalloc char[3];
+        encoded[0] = '%';
 #endif
         foreach (var c in value)
         {
@@ -316,7 +317,8 @@ public class BaggagePropagator : TextMapPropagator
         const string hex = "0123456789ABCDEF";
         var sb = new StringBuilder(key.Length);
 #if NET
-        Span<char> encoded = ['%', '\0', '\0'];
+        Span<char> encoded = stackalloc char[3];
+        encoded[0] = '%';
 #endif
         foreach (var c in key)
         {
