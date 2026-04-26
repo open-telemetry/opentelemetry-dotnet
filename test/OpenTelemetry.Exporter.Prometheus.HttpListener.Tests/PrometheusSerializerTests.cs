@@ -14,8 +14,16 @@ public sealed class PrometheusSerializerTests
 {
     public static TheoryData<object?, string> LabelValueBoundaryCases => new()
     {
+        { false, "false" },
+        { true, "true" },
         { null, string.Empty },
         { string.Empty, string.Empty },
+        { "tagValue", "tagValue" },
+        { "tagValueWith\"Quote", "tagValueWith\\\"Quote" },
+        { "tagValueWith\\Backslash", "tagValueWith\\\\Backslash" },
+        { "tagValueWith\nNewline", "tagValueWith\\nNewline" },
+        { "\"line1\\\nline2\"", "\\\"line1\\\\\\nline2\\\"" },
+        { "caf\u00e9", "caf\u00e9" },
         { sbyte.MinValue, "-128" },
         { (sbyte)0, "0" },
         { sbyte.MaxValue, "127" },
@@ -42,6 +50,9 @@ public sealed class PrometheusSerializerTests
         { float.MinValue, "-3.40282346638529E+38" },
 #endif
         { 0f, "0" },
+        { float.NaN, "Nan" },
+        { float.NegativeInfinity, "-Inf" },
+        { float.PositiveInfinity, "+Inf" },
 #if NET
         { float.MaxValue, "3.4028234663852886E+38" },
 #else
@@ -53,6 +64,9 @@ public sealed class PrometheusSerializerTests
         { double.MinValue, "-1.79769313486232E+308" },
 #endif
         { 0d, "0" },
+        { double.NegativeInfinity, "-Inf" },
+        { double.PositiveInfinity, "+Inf" },
+        { double.NaN, "Nan" },
 #if NET
         { double.MaxValue, "1.7976931348623157E+308" },
 #else
@@ -930,6 +944,53 @@ public sealed class PrometheusSerializerTests
         }
     }
 
+    [Theory]
+#pragma warning disable xUnit1045 // Avoid using TheoryData type arguments that might not be serializable
+    [MemberData(nameof(LabelValueBoundaryCases))]
+#pragma warning restore xUnit1045 // Avoid using TheoryData type arguments that might not be serializable
+    public void WriteMetricSerializesStaticMeterTagBoundaryValues(object? meterTagValue, string expectedTagValue)
+    {
+        var output = WriteGaugeMetricWithMeterTags(new KeyValuePair<string, object?>("meter_tag", meterTagValue));
+
+        Assert.Equal(
+            ("# TYPE test_gauge gauge\n"
+             + $"test_gauge{{otel_scope_name='test_meter',meter_tag='{expectedTagValue}'}} 123\n").Replace('\'', '"'),
+            output);
+    }
+
+    [Fact]
+    public void WriteMetricSerializesStaticMeterTagsUsingInvariantCulture()
+    {
+        var previousCulture = CultureInfo.CurrentCulture;
+        var previousUiCulture = CultureInfo.CurrentUICulture;
+
+        try
+        {
+            var culture = new CultureInfo("fr-FR");
+
+            CultureInfo.CurrentCulture = culture;
+            CultureInfo.CurrentUICulture = culture;
+
+            var output = WriteGaugeMetricWithMeterTags(
+                new KeyValuePair<string, object?>("double_value", 1234.5),
+                new KeyValuePair<string, object?>("decimal_value", 1234.5m),
+                new KeyValuePair<string, object?>("formattable_value", new CustomFormattable(1234.5m)),
+                new KeyValuePair<string, object?>("fallback_value", new CustomObject("fallback")));
+
+            Assert.StartsWith("# TYPE test_gauge gauge\ntest_gauge{otel_scope_name=\"test_meter\",", output, StringComparison.Ordinal);
+            Assert.Contains("double_value=\"1234.5\"", output, StringComparison.Ordinal);
+            Assert.Contains("decimal_value=\"1234.5\"", output, StringComparison.Ordinal);
+            Assert.Contains("formattable_value=\"1234.5\"", output, StringComparison.Ordinal);
+            Assert.Contains("fallback_value=\"fallback\"", output, StringComparison.Ordinal);
+            Assert.EndsWith("} 123\n", output, StringComparison.Ordinal);
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = previousCulture;
+            CultureInfo.CurrentUICulture = previousUiCulture;
+        }
+    }
+
     [Fact]
     public void WriteLabelValueObjectFallsBackToToString()
     {
@@ -1020,6 +1081,25 @@ public sealed class PrometheusSerializerTests
 
     private static int WriteMetric(byte[] buffer, int cursor, Metric metric, bool useOpenMetrics = false, bool disableTimestamp = false)
         => PrometheusSerializer.WriteMetric(buffer, cursor, metric, PrometheusMetric.Create(metric, false), useOpenMetrics, disableTimestamp);
+
+    private static string WriteGaugeMetricWithMeterTags(params KeyValuePair<string, object?>[] meterTags)
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter(name: "test_meter", version: null, tags: meterTags);
+        using (var provider = Sdk.CreateMeterProviderBuilder()
+                                 .AddMeter(meter.Name)
+                                 .AddInMemoryExporter(metrics)
+                                 .Build())
+        {
+            meter.CreateObservableGauge("test_gauge", () => 123);
+            provider.ForceFlush();
+        }
+
+        var cursor = WriteMetric(buffer, 0, metrics[0], disableTimestamp: true);
+        return Encoding.UTF8.GetString(buffer, 0, cursor);
+    }
 
     private sealed class CustomFormattable(decimal value) : IFormattable
     {
