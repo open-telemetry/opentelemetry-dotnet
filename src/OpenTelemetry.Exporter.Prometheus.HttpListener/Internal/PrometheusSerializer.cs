@@ -443,10 +443,6 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteTags(byte[] buffer, int cursor, Metric metric, ReadOnlyTagCollection tags, bool writeEnclosingBraces = true)
-        => WriteTags(buffer, cursor, null, metric, tags, writeEnclosingBraces);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteTags(byte[] buffer, int cursor, PrometheusMetric? prometheusMetric, Metric metric, ReadOnlyTagCollection tags, bool writeEnclosingBraces = true)
     {
         if (writeEnclosingBraces)

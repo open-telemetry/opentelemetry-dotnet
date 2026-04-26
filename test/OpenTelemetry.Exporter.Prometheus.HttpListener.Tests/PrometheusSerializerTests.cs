@@ -1063,6 +1063,46 @@ public sealed class PrometheusSerializerTests
         Assert.Equal("726F636B65743AEDA0BDEDBA80", actual);
     }
 
+#if NET
+    [Fact]
+    public void WriteHistogramMetricSerializesStaticTagsWithoutPreSerializedTags()
+    {
+        var buffer = new byte[85000];
+
+        var metric = GetSingleHistogramMetric(
+            meterName: "\u65e5\u672c",
+            meterTags: [new KeyValuePair<string, object?>(string.Empty, "meterTagValue")]);
+
+        var prometheusMetric = new PrometheusMetric(metric.Name, metric.Unit, PrometheusType.Histogram, disableTotalNameSuffixForCounters: false);
+
+        var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metric, prometheusMetric, openMetricsRequested: false, disableTimestamp: true);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        Assert.Contains("test_histogram_bucket{otel_scope_name=\"\u65e5\u672c\",_=\"meterTagValue\",le=\"0\"} 0\n", output, StringComparison.Ordinal);
+        Assert.Contains("test_histogram_sum{otel_scope_name=\"\u65e5\u672c\",_=\"meterTagValue\"} 18\n", output, StringComparison.Ordinal);
+        Assert.Contains("test_histogram_count{otel_scope_name=\"\u65e5\u672c\",_=\"meterTagValue\"} 1\n", output, StringComparison.Ordinal);
+    }
+
+    private static Metric GetSingleHistogramMetric(string meterName, params KeyValuePair<string, object?>[] meterTags)
+    {
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter(name: meterName, version: null, tags: meterTags);
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        var histogram = meter.CreateHistogram<double>("test_histogram");
+        histogram.Record(18);
+
+        provider.ForceFlush();
+
+        return metrics.Single();
+    }
+#endif
+
     private static string ToHexString(byte[] buffer, int length)
     {
         var chars = new char[length * 2];
