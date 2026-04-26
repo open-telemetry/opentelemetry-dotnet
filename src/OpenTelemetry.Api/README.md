@@ -482,7 +482,7 @@ propagated through environment variables. Use
 current process environment, and use `EnvironmentVariableCarrier.Set` to inject
 context into the environment dictionary of a child process. For a runnable
 end-to-end example, see
-[`examples\EnvironmentVariables`](../../examples/EnvironmentVariables).
+[`examples/EnvironmentVariables`](../../examples/EnvironmentVariables/Program.cs).
 
 ```csharp
 using System.Diagnostics;
