@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using System.Globalization;
 using FsCheck;
 using FsCheck.Fluent;
 
@@ -156,7 +157,7 @@ internal static class Generators
         var memberGen =
             from key in ValidTraceStateKey()
             from value in CreateString(TraceStateValueChar, 1, 24)
-            select (key, value);
+            select new KeyValuePair<string, string>(key, value);
 
         var gen = Gen.Sized(size =>
         {
@@ -167,7 +168,7 @@ internal static class Generators
                 from members in Gen.ArrayOf(memberGen, count)
                 select string.Join(
                     ",",
-                    members.Select(static (member, index) => $"{member.key}{index}={member.value}"));
+                    members.Select(static (member, index) => $"{AppendIndexToTraceStateKey(member.Key, index)}={member.Value}"));
         });
 
         return gen.ToArbitrary();
@@ -212,6 +213,37 @@ internal static class Generators
             select $"{tenantFirst}{new string(tenantRest)}@{vendorFirst}{new string(vendorRest)}";
 
         return Gen.OneOf(simpleKey, vendorKey);
+    }
+
+    private static string AppendIndexToTraceStateKey(string key, int index)
+    {
+        var suffix = "_" + index.ToString(CultureInfo.InvariantCulture);
+        var vendorSeparator = key.AsSpan().IndexOf('@');
+        if (vendorSeparator >= 0)
+        {
+            const int traceStateKeyTenantMaxLength = 241;
+
+            var tenant = key.Substring(0, vendorSeparator);
+            var vendor = key.Substring(vendorSeparator + 1);
+            var maxTenantLength = Math.Max(1, traceStateKeyTenantMaxLength - suffix.Length);
+
+            if (tenant.Length > maxTenantLength)
+            {
+                tenant = tenant.Substring(0, maxTenantLength);
+            }
+
+            return $"{tenant}{suffix}@{vendor}";
+        }
+
+        const int traceStateKeyMaxLength = 256;
+        var maxKeyLength = Math.Max(1, traceStateKeyMaxLength - suffix.Length);
+
+        if (key.Length > maxKeyLength)
+        {
+            key = key.Substring(0, maxKeyLength);
+        }
+
+        return $"{key}{suffix}";
     }
 
     private static Dictionary<string, string> ToDictionary(IEnumerable<KeyValuePair<string, string>> pairs)
