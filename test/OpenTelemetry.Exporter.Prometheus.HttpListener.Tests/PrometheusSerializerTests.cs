@@ -12,6 +12,57 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests;
 
 public sealed class PrometheusSerializerTests
 {
+    public static TheoryData<object?, string> LabelValueBoundaryCases => new()
+    {
+        { null, string.Empty },
+        { string.Empty, string.Empty },
+        { sbyte.MinValue, "-128" },
+        { (sbyte)0, "0" },
+        { sbyte.MaxValue, "127" },
+        { byte.MinValue, "0" },
+        { byte.MaxValue, "255" },
+        { short.MinValue, "-32768" },
+        { (short)0, "0" },
+        { short.MaxValue, "32767" },
+        { ushort.MinValue, "0" },
+        { ushort.MaxValue, "65535" },
+        { int.MinValue, "-2147483648" },
+        { 0, "0" },
+        { int.MaxValue, "2147483647" },
+        { uint.MinValue, "0" },
+        { uint.MaxValue, "4294967295" },
+        { long.MinValue, "-9223372036854775808" },
+        { 0L, "0" },
+        { long.MaxValue, "9223372036854775807" },
+        { ulong.MinValue, "0" },
+        { ulong.MaxValue, "18446744073709551615" },
+#if NET
+        { float.MinValue, "-3.4028234663852886E+38" },
+#else
+        { float.MinValue, "-3.40282346638529E+38" },
+#endif
+        { 0f, "0" },
+#if NET
+        { float.MaxValue, "3.4028234663852886E+38" },
+#else
+        { float.MaxValue, "3.40282346638529E+38" },
+#endif
+#if NET
+        { double.MinValue, "-1.7976931348623157E+308" },
+#else
+        { double.MinValue, "-1.79769313486232E+308" },
+#endif
+        { 0d, "0" },
+#if NET
+        { double.MaxValue, "1.7976931348623157E+308" },
+#else
+        { double.MaxValue, "1.79769313486232E+308" },
+#endif
+        { decimal.MinValue, "-79228162514264337593543950335" },
+        { 0m, "0" },
+        { decimal.MaxValue, "79228162514264337593543950335" },
+    };
+
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
@@ -268,6 +319,35 @@ public sealed class PrometheusSerializerTests
             ("^"
                 + "# TYPE test_counter_total counter\n"
                 + $"test_counter_total{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} \\+Inf \\d+\n"
+                + "$").Replace('\'', '"'),
+            Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Theory]
+    [InlineData(0L)]
+    [InlineData(long.MaxValue)]
+    public void SumLongSerializesBoundaryValues(long value)
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        using (var provider = Sdk.CreateMeterProviderBuilder()
+                                 .AddMeter(meter.Name)
+                                 .AddInMemoryExporter(metrics)
+                                 .Build())
+        {
+            var counter = meter.CreateCounter<long>("test_counter");
+            counter.Add(value);
+
+            provider.ForceFlush();
+        }
+
+        var cursor = WriteMetric(buffer, 0, metrics[0]);
+        Assert.Matches(
+            ("^"
+                + "# TYPE test_counter_total counter\n"
+                + $"test_counter_total{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} {value.ToString(CultureInfo.InvariantCulture)} \\d+\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -759,6 +839,43 @@ public sealed class PrometheusSerializerTests
         Assert.Equal(expected, Encoding.UTF8.GetString(buffer, 0, cursor));
     }
 
+    [Theory]
+#pragma warning disable xUnit1045 // Avoid using TheoryData type arguments that might not be serializable
+    [MemberData(nameof(LabelValueBoundaryCases))]
+#pragma warning restore xUnit1045 // Avoid using TheoryData type arguments that might not be serializable
+    public void WriteLabelValueObjectFormatsBoundaryValues(object? value, string expected)
+    {
+        var buffer = new byte[128];
+
+        var cursor = PrometheusSerializer.WriteLabelValue(buffer, 0, value);
+
+        Assert.Equal(expected, Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Theory]
+    [InlineData("café")]
+    [InlineData("Привет, мир")]
+    [InlineData("日本語")]
+    public void WriteLabelValueObjectFormatsNonAsciiStringsUtf8Strings(string value)
+    {
+        var buffer = new byte[128];
+
+        var cursor = PrometheusSerializer.WriteLabelValue(buffer, 0, (object)value);
+
+        Assert.Equal(value, Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Fact]
+    public void WriteLabelValueObjectPreservesEmojiUtf16CodeUnitEncoding()
+    {
+        const string value = "rocket:\uD83D\uDE80";
+        var buffer = new byte[128];
+
+        var cursor = PrometheusSerializer.WriteLabelValue(buffer, 0, (object)value);
+
+        Assert.Equal("726F636B65743AEDA0BDEDBA80", ToHexString(buffer, cursor));
+    }
+
     [Fact]
     public void WriteLabelValueObjectFormatsUsingInvariantCulture()
     {
@@ -786,6 +903,41 @@ public sealed class PrometheusSerializerTests
             CultureInfo.CurrentCulture = previousCulture;
             CultureInfo.CurrentUICulture = previousUiCulture;
         }
+    }
+
+    [Fact]
+    public void WriteLabelValueObjectFormatsIFormattableUsingInvariantCulture()
+    {
+        var previousCulture = CultureInfo.CurrentCulture;
+        var previousUiCulture = CultureInfo.CurrentUICulture;
+
+        try
+        {
+            var culture = new CultureInfo("fr-FR");
+
+            CultureInfo.CurrentCulture = culture;
+            CultureInfo.CurrentUICulture = culture;
+
+            var buffer = new byte[128];
+            var cursor = PrometheusSerializer.WriteLabelValue(buffer, 0, new CustomFormattable(1234.5m));
+
+            Assert.Equal("1234.5", Encoding.UTF8.GetString(buffer, 0, cursor));
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = previousCulture;
+            CultureInfo.CurrentUICulture = previousUiCulture;
+        }
+    }
+
+    [Fact]
+    public void WriteLabelValueObjectFallsBackToToString()
+    {
+        var buffer = new byte[128];
+
+        var cursor = PrometheusSerializer.WriteLabelValue(buffer, 0, new CustomObject("fallback"));
+
+        Assert.Equal("fallback", Encoding.UTF8.GetString(buffer, 0, cursor));
     }
 
     [Fact]
@@ -868,4 +1020,18 @@ public sealed class PrometheusSerializerTests
 
     private static int WriteMetric(byte[] buffer, int cursor, Metric metric, bool useOpenMetrics = false, bool disableTimestamp = false)
         => PrometheusSerializer.WriteMetric(buffer, cursor, metric, PrometheusMetric.Create(metric, false), useOpenMetrics, disableTimestamp);
+
+    private sealed class CustomFormattable(decimal value) : IFormattable
+    {
+        public string ToString(string? format, IFormatProvider? formatProvider)
+            => value.ToString(format, formatProvider);
+
+        public override string ToString()
+            => value.ToString(CultureInfo.CurrentCulture);
+    }
+
+    private sealed class CustomObject(string value)
+    {
+        public override string ToString() => value;
+    }
 }
