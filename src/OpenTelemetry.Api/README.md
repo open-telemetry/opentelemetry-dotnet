@@ -480,7 +480,9 @@ When network protocols are not applicable, context and baggage can also be
 propagated through environment variables. Use
 `EnvironmentVariableCarrier.Capture()` to read a normalized snapshot of the
 current process environment, and use `EnvironmentVariableCarrier.Set` to inject
-context into the environment dictionary of a child process.
+context into the environment dictionary of a child process. For a runnable
+end-to-end example, see
+[`examples\EnvironmentVariables`](../../examples/EnvironmentVariables).
 
 ```csharp
 using System.Diagnostics;
