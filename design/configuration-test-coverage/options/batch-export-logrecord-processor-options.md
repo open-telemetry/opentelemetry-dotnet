@@ -277,7 +277,7 @@ scenario. Tier and observation mechanism per entry-doc Sections 3 and 2.
 
 These tests pin today's deferred-throw or silent-fallback behaviour. All carry
 the code-comment note: "Expected to change under Issue 1 (`IValidateOptions<T>`
-+ `ValidateOnStart`)."
+for reload protection; deferred; no `ValidateOnStart`)."
 
 1. **`BatchExportLogRecordProcessorOptions_InvalidEnvironmentVariableOverride`**
    (new test in
@@ -321,7 +321,7 @@ All five share the code-comment template:
 
 ```csharp
 // BASELINE: pins current behaviour.
-// Expected to change under Issue #1 (IValidateOptions<T> + ValidateOnStart).
+// Expected to change under Issue #1 (IValidateOptions<T> for reload protection; deferred; no ValidateOnStart).
 // Guards risks: 4.7 (silent failures).
 // Observation: Exception - today the guard fires at BatchExportProcessor<T>
 //   construction, not at options set time.
@@ -467,7 +467,7 @@ instances of that pattern.
 This file specifies baseline tests that guard the following entries in
 [`../../configuration-proposed-issues.md`](../../configuration-proposed-issues.md):
 
-- **Issue 1** - Add `IValidateOptions<T>` and `ValidateOnStart` for all
+- **Issue 1** - Add `IValidateOptions<T>` for reload protection (no `ValidateOnStart`; deferred) for all
   options classes. Guarded by: Sections 3.1 (invalid-input characterisation),
   3.2 (priority-order), 3.4 (consumer-effect), 3.5 (sparse IConfiguration).
 - **Issue 17** - Design and implement standard `OnChange` subscriber pattern.

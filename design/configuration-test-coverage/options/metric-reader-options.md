@@ -423,7 +423,7 @@ Shared pathway spec applies; see
 This file specifies baseline tests that guard the following entries in
 [`../../configuration-proposed-issues.md`](../../configuration-proposed-issues.md):
 
-- **Issue 1** - Add `IValidateOptions<T>` and `ValidateOnStart` for all
+- **Issue 1** - Add `IValidateOptions<T>` for reload protection (no `ValidateOnStart`; deferred) for all
   options classes. Guarded by: Sections 3.1, 3.2, 3.3, 3.4, 3.5, 3.7.
 - **Issue 17** - Design and implement standard `OnChange` subscriber
   pattern. Guarded by: Sections 3.3 (priority tests use DI path that

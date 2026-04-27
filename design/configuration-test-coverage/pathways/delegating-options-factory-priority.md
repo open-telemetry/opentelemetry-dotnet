@@ -66,12 +66,12 @@ The `Create` method in `DelegatingOptionsFactory<T>` (line 79) executes in this 
 | `PostConfigure<T>` value wins over `Configure<T>` for the same property | No test | Correct per pipeline ordering | missing |
 | `PostConfigure<T>` applies to every named options instance including non-default names | No test | Correct: `post.PostConfigure(name, options)` always called | missing |
 
-### 2.4 `IValidateOptions<T>` / `ValidateOnStart` (highest gate; never wired today)
+### 2.4 `IValidateOptions<T>` (highest gate; never wired today)
 
 | Scenario | Currently tested by | Current behaviour | Status |
 | --- | --- | --- | --- |
 | `IValidateOptions<T>` failure throws `OptionsValidationException` | No test; validation pipeline exists but no validators registered | `_validations.Length == 0` so the validation block is never entered | missing |
-| `ValidateOnStart` surfaces validation errors at host startup | No test | Not wired | missing |
+| `ValidateOnStart` surfaces validation errors at host startup | No test | Not wired — and will not be wired; see [Risk 1.1](../configuration-analysis-risks.md#11-options-validation-is-completely-absent) | n/a |
 | Validation runs after all `Configure<T>` and `PostConfigure<T>` delegates | No test | Correct per pipeline ordering | missing |
 
 ### 2.5 Named options: `IConfigureNamedOptions<T>` applied to every name
@@ -219,7 +219,9 @@ The `Create` method in `DelegatingOptionsFactory<T>` (line 79) executes in this 
 
 ## Guards issues
 
-- **Issue 1** - Add `IValidateOptions<T>` and `ValidateOnStart` for all options classes.
+- **Issue 1** - Add `IValidateOptions<T>` for reload protection (no `ValidateOnStart`; deferred
+  until declarative config POC and first `OnChange` subscriber; see
+  [Risk 1.1](../configuration-analysis-risks.md#11-options-validation-is-completely-absent)).
   R3 pins the validation code path that Issue 1 exercises.
 - **Issue 2** - Simplify `DelegatingOptionsFactory<T>` using `CreateInstance` override.
   R1, R2, R3, R4, and R5 all pin the execution order of the current implementation.

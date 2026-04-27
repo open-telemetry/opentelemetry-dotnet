@@ -250,7 +250,8 @@ because `TryAddSingleton` skips re-registering if a registration already exists.
 
 ## Guards issues
 
-- **Issue 1** - `IValidateOptions<T>`: validation runs as step 4 in
+- **Issue 1** - `IValidateOptions<T>` (reload protection; no `ValidateOnStart`; deferred until
+  declarative config POC and first `OnChange` subscriber): validation runs as step 4 in
   `DelegatingOptionsFactory.Create`, after `Configure<T>`. Precedence tests
   must exist before the validation step can be tested meaningfully.
 - **Issue 5** - PostConfigure cascade for `SdkLimitOptions`: adds a new

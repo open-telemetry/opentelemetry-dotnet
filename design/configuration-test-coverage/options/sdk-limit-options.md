@@ -327,7 +327,7 @@ labels match Section 2 of the entry doc. All rows describe tests to be
 
      ```csharp
      // BASELINE: pins current behaviour.
-     // Expected to change under Issue #1 (IValidateOptions<T> + ValidateOnStart).
+     // Expected to change under Issue #1 (IValidateOptions<T> for reload protection; deferred; no ValidateOnStart).
      // Guards risks: none class-specific.
      // Observation: DirectProperty - silent fallback to DefaultSdkLimit.
      // Coverage index: sdk-limit-options.attribute-count-limit.invalid-input
@@ -558,7 +558,7 @@ or use `ProtobufHelper` to decode the proto. The serializer methods are
 This file specifies baseline tests that guard the following entries in
 [`../../configuration-proposed-issues.md`](../../configuration-proposed-issues.md):
 
-- **Issue 1** - Add `IValidateOptions<T>` and `ValidateOnStart` for all
+- **Issue 1** - Add `IValidateOptions<T>` for reload protection (no `ValidateOnStart`; deferred) for all
   options classes. Guarded by: Sections 3.1, 3.2, 3.3, 3.5, 3.6.
 - **Issue 5** - Move `SdkLimitOptions` fallback cascade logic to
   `PostConfigure<T>`. Guarded by: Sections 3.3, 3.4, 3.5.

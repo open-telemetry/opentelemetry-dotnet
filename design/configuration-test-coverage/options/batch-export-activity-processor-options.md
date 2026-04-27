@@ -290,7 +290,7 @@ Target location is the existing test file for the scenario.
 
 All tests in this group carry the code comment: "BASELINE: pins current
 silent-accept or deferred-throw behaviour. Expected to change under
-Issue 1 (`IValidateOptions<T>` + `ValidateOnStart`)."
+Issue 1 (`IValidateOptions<T>` for reload protection; deferred; no `ValidateOnStart`)."
 
 1. **`BatchExportProcessorOptions_ExporterTimeoutMilliseconds_Negative_IsAcceptedByOptions`**
    (new; `BatchExportActivityProcessorOptionsTests.cs`). Tier 1. Mechanism:
@@ -431,7 +431,7 @@ Issue 21 has no visible test delta when it lands.
 This file specifies baseline tests that guard the following entries in
 [`../../configuration-proposed-issues.md`](../../configuration-proposed-issues.md):
 
-- **Issue 1** - Add `IValidateOptions<T>` and `ValidateOnStart` for all
+- **Issue 1** - Add `IValidateOptions<T>` for reload protection (no `ValidateOnStart`; deferred) for all
   options classes. Guarded by: Sections 3.1, 3.2, 3.3, 3.5.
 - **Issue 17** - Design and implement standard `OnChange` subscriber
   pattern. Guarded by: Sections 3.1, 3.4.

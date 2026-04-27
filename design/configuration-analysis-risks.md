@@ -21,10 +21,9 @@ calls, and **zero** `PostConfigure<T>` registrations. The validation pipeline in
 B](configuration-analysis-deep-dives.md#b-delegatingoptionsfactory-simplification))
 exists but is never exercised.
 
-Today this is tolerable - config comes from code-controlled env vars and
-`Configure<T>()` lambdas. Once YAML declarative config flows in, arbitrary
-user-supplied strings populate options classes. Examples of invalid values that
-would silently produce broken behaviour rather than failing fast at startup:
+Options classes that accept external input contain no semantic range checks.
+Examples of invalid values that, if accepted, produce broken or degraded
+behaviour:
 
 | Options Class | Property | Invalid Value | Consequence |
 | --- | --- | --- | --- |
@@ -33,11 +32,16 @@ would silently produce broken behaviour rather than failing fast at startup:
 | `OtlpExporterOptions` | `TimeoutMilliseconds` | `-1` | `HttpClient.Timeout` set to `Timeout.InfiniteTimeSpan` - requests never time out |
 | `PeriodicExportingMetricReaderOptions` | `ExportIntervalMilliseconds` | `0` | Tight-loop export; CPU pegged |
 
-Under runtime reload, the risk is amplified: an invalid value arriving via OpAMP
+Under runtime reload the risk is amplified: an invalid value arriving via OpAMP
 or a file change should be **rejected** (previous value retained) rather than
-applied to a running system.
+applied to a running system. This is the primary purpose of `IValidateOptions<T>`
+in this SDK — it is the mechanism that makes the reject-and-retain pattern in
+[S2.3](#23-onchange-callback-exception-safety) work. When `IOptionsMonitor.OnChange`
+fires, `DelegatingOptionsFactory.Create` runs the validation pipeline before the
+new options instance is returned; invalid values cause `OptionsValidationException`,
+which the `OnChange` callback catches to retain the previous valid value.
 
-**Required pattern - validate before apply:**
+**Pattern — validate before apply (reload protection):**
 
 ```csharp
 // IValidateOptions<SamplerOptions> implementation
@@ -53,17 +57,36 @@ public class SamplerOptionsValidator : IValidateOptions<SamplerOptions>
 }
 ```
 
-At startup, `ValidateOnStart` ensures the host fails fast before any telemetry
-is collected. Under reload, validation runs inside the
-`DelegatingOptionsFactory.Create` pipeline before the new options instance is
-returned to `IOptionsMonitor` - invalid values cause
-`OptionsValidationException`, which the `OnChange` callback must catch (see
-[S2.3](#23-onchange-callback-exception-safety)).
+**`ValidateOnStart` is not recommended** for an instrumentation library. Without
+it, validators are lazy and only run when options are first accessed — typically
+during provider construction at startup. If validation throws at that point, the
+result is an unhandled `OptionsValidationException` before the application has
+started, which is strictly worse than the current silent fallback. An
+observability library must not prevent an application from running due to a bad
+telemetry configuration value; the application should start with degraded or
+missing telemetry, not fail entirely.
 
-**Recommendation:** Add `IValidateOptions<T>` implementations for every options
-class that accepts external input. Register `ValidateOnStart<T>` for all options
-types used in the startup path. This is a prerequisite for safe declarative
-config and runtime reload.
+For startup validation of declarative config, the JSON schema embedded in the
+OTel configuration specification is the primary guard. It validates structure and
+range constraints at YAML parse time, before values enter `IConfiguration`, and
+does not require `ValidateOnStart`.
+
+**Sequencing — defer until the reload path exists:** `IValidateOptions<T>`
+implementations have no safe home until the `OnChange` catch blocks described in
+[S2.3](#23-onchange-callback-exception-safety) are in place to handle
+`OptionsValidationException` gracefully. Implementing validators before the
+reload infrastructure means they either do nothing useful (if all option values
+happen to be in range at startup) or produce unexpected startup failures (if any
+are out of range). This work should therefore be deferred until the declarative
+config POC and the first reload-capable `OnChange` subscriber exist.
+
+**Recommendation:** Once the first reload subscriber is wired (Step 9 in
+[S4.5](configuration-analysis.md#45-recommended-build-order)), add
+`IValidateOptions<T>` alongside the `OnChange` handler for that component. Do
+not register `ValidateOnStart`. Use `PeriodicExportingMetricReaderOptions` as the
+prototype — it has two unambiguous constraints (`ExportIntervalMilliseconds > 0`,
+`ExportTimeoutMilliseconds > 0`), no cross-field dependencies, and a clear
+observable consequence when invalid values are accepted.
 
 ### 1.2 Silent Configuration Failure Model vs Fail-Fast
 
@@ -91,18 +114,21 @@ dangerous: a YAML typo (`schedule_delay: "5s"` instead of `schedule_delay:
 5000`) silently produces default behaviour. The user believes their config is
 active; it isn't.
 
-**Recommendation:** Introduce two failure modes based on the config source:
+**Recommendation:** Differentiate failure modes by config source:
 
 | Source | Failure mode | Rationale |
 | --- | --- | --- |
 | Environment variables | Silent fallback + EventSource warning (current behaviour) | Env vars may be inherited from parent processes; crashing is disproportionate |
-| Declarative config file (`OTEL_CONFIG_FILE`) | Fail-fast at startup with actionable error message | The user explicitly authored this file; silent fallback masks bugs |
+| Declarative config file (`OTEL_CONFIG_FILE`) | Reject structurally invalid nodes at YAML parse time via JSON schema; warn + fallback for values that pass schema but fail semantic constraints | JSON schema is the primary guard at the parse layer; `ValidateOnStart` is not used (see [S1.1](#11-options-validation-is-completely-absent)) |
 | Policy provider (OpAMP / HTTP) | Reject invalid value + EventSource warning; retain previous | The running system must not crash due to a bad remote push |
 
-The fail-fast for declarative config can be implemented via `ValidateOnStart`
-([S1.1](#11-options-validation-is-completely-absent)) combined with stricter
-parsing in the YAML `IConfigurationProvider` that rejects structurally invalid
-nodes before they enter the `IConfiguration` tree.
+Structural and range validation for declarative config is implemented in the YAML
+`IConfigurationProvider` using the JSON schema embedded in the OTel configuration
+specification. This rejects malformed nodes before they enter `IConfiguration`
+and is independent of the `IValidateOptions<T>` pipeline. The
+`IValidateOptions<T>` layer ([S1.1](#11-options-validation-is-completely-absent))
+provides the reject-and-retain mechanism for runtime reload; it is not used for
+startup validation.
 
 ### 1.3 TryAddSingleton First-Wins - Silent Misconfiguration Risk
 
@@ -313,6 +339,8 @@ table but avoids modifying existing options constructors for the common case.
 ### 1.7 The SDK's Internal EnvironmentVariablesConfigurationProvider Copy
 
 See [#7141](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7141)
+(tracking issue) / [#7146](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7146)
+(open PR — in progress)
 
 The SDK maintains a manually vendored copy of the .NET runtime's
 `EnvironmentVariablesConfigurationProvider`,
@@ -439,7 +467,7 @@ The reload design proposes `IOptionsMonitor<T>.OnChange` subscriptions in
 `TracerProviderSdk` ([Deep Dive
 D.3](configuration-analysis-deep-dives.md#d3-implementation-approach---reloadablesampler-wrapper)),
 `BatchExportProcessor`
-([S4.5](configuration-analysis.md#45-recommended-build-order) Step 4), and
+([S4.5](configuration-analysis.md#45-recommended-build-order) Step 10), and
 `OtlpTraceExporter` ([Deep Dive
 C.3.1](configuration-analysis-deep-dives.md#c3-solution-approaches)). Each
 `OnChange` call returns an `IDisposable` registration token. Currently, **no
@@ -1420,11 +1448,10 @@ Testing the reload path requires:
 | Reload after provider dispose | Dispose provider; trigger reload; assert no callback side-effects |
 
 **Recommendation:** Build a `TestConfigurationProvider` (extending
-`ConfigurationProvider`) as shared test infrastructure. This should be the first
-deliverable alongside step 2 in the
-[S4.5](configuration-analysis.md#45-recommended-build-order) build order
-(`TelemetryPolicyConfigurationProvider`), since the production and test
-providers share the same shape.
+`ConfigurationProvider`) as shared test infrastructure (Step 8 in
+[S4.5](configuration-analysis.md#45-recommended-build-order)). It should be
+built before the telemetry policy infrastructure (Step 14) since the production
+and test providers share the same shape.
 
 ### 4.7 Configuration System Self-Observability
 

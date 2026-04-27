@@ -307,7 +307,7 @@ Observation-mechanism labels match entry-doc Section 2.
 ### 3.3 Invalid-input characterisation (guards Issue 1)
 
 All tests in this group carry the code comment:
-"Expected to change under Issue 1 (`IValidateOptions<T>` + `ValidateOnStart`)."
+"Expected to change under Issue 1 (`IValidateOptions<T>` for reload protection; deferred; no `ValidateOnStart`)."
 
 1. **`PeriodicExportingMetricReaderOptions_ExportIntervalMilliseconds_InvalidEnvVar_IsNull`**
    (new; `Internal/PeriodicExportingMetricReaderHelperTests.cs`).
@@ -431,7 +431,7 @@ Shared pathway spec: see
 This file specifies baseline tests that guard the following entries in
 [`../../configuration-proposed-issues.md`](../../configuration-proposed-issues.md):
 
-- **Issue 1** - Add `IValidateOptions<T>` and `ValidateOnStart` for all
+- **Issue 1** - Add `IValidateOptions<T>` for reload protection (no `ValidateOnStart`; deferred) for all
   options classes. Guarded by: Sections 3.1, 3.2, 3.3, 3.4.
 - **Issue 17** - Design and implement standard `OnChange` subscriber pattern.
   Guarded by: Section 3.5.

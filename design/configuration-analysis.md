@@ -60,9 +60,11 @@ path toward declarative configuration, telemetry policies, and dynamic reload.
    exist for these. Samplers have env var support but no `IOptions<T>`
    integration. Resources and propagators are purely programmatic.
 
-8. **`DelegatingOptionsFactory` can be simplified.** The M.E.Options 5.0.0
+8. **`DelegatingOptionsFactory` has been simplified.** The M.E.Options 5.0.0
    threshold for using the virtual `CreateInstance` method has been met across
-   all TFMs (minimum resolved is 8.0.0). -> [Deep Dive
+   all TFMs (minimum resolved is 8.0.0). Done —
+   [#7148](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7148). ->
+   [Deep Dive
    B](configuration-analysis-deep-dives.md#b-delegatingoptionsfactory-simplification)
 
 9. **`OpenTelemetryLoggerOptions` can be refactored.** A non-breaking approach
@@ -81,7 +83,8 @@ ensuring options constructors receive `IConfiguration` **before** any
 Factory delegate -> `Configure<T>` -> `PostConfigure<T>` -> `Validate<T>`. -> [Deep
 Dive
 B](configuration-analysis-deep-dives.md#b-delegatingoptionsfactory-simplification)
-covers the simplification opportunity.
+covers the simplification (done —
+[#7148](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7148)).
 
 **`SingletonOptionsManager<T>`** - Disables options reloading for
 `OpenTelemetryLoggerOptions`. Blocks reload today but can be eliminated via
@@ -204,8 +207,13 @@ Two existing violations identified:
 
 1. **`OtlpExporterBuilder.cs:153`** - Four calls to
    `services.Configure<T>(IConfiguration)` invoke `ConfigurationBinder`
-   reflection internally with no `[UnconditionalSuppressMessage]`. This is an
-   unmitigated IL2026/IL3050 bug in AOT-published apps today.
+   reflection internally with no `[UnconditionalSuppressMessage]`. These calls
+   are only reachable when `configuration != null`, which only occurs via
+   `internal` `UseOtlpExporter` overloads (accessible only to test/benchmark
+   assemblies via `InternalsVisibleTo`). All public `UseOtlpExporter` overloads
+   pass `configuration: null`. **Not an active consumer risk** — this code path
+   is dead from any public entry point. The `BindConfigurationToOptions`
+   approach will be superseded by the declarative config factory pattern (Step 6).
 
 2. **`OpenTelemetryLoggingExtensions.cs`** - Uses
    `services.AddOptions<OpenTelemetryLoggerOptions>().Bind(section)` with an
@@ -221,7 +229,7 @@ the full analysis and fix options.
 
 ## 4. Design Direction
 
-### 4.1 Recommendations for Step 2 (Config Provider Registration)
+### 4.1 Recommendations for Step 1 (Config Provider Registration)
 
 1. **Create options classes for gaps:** `SamplerOptions`, `ResourceOptions`,
    `PropagatorOptions` - following the existing `DelegatingOptionsFactory`
@@ -265,9 +273,10 @@ the full analysis and fix options.
    [S4.4](#44-telemetry-policies-architecture) and [Deep Dive
    H](configuration-analysis-deep-dives.md#h-telemetry-policies-architecture).
 
-10. **Fix the `OtlpExporterBuilder.cs` AOT bug.** Replace
-    `services.Configure<T>(IConfiguration)` with the options constructor
-    key-read pattern.
+10. **`OtlpExporterBuilder.cs` AOT reflection.** The `BindConfigurationToOptions`
+    path is dead code from any public entry point (see [S3.4](#34-aot-compatibility-summary)).
+    No immediate fix needed; the approach is superseded by the declarative config
+    factory pattern (Step 6).
 
 11. **Require the constructor key-read pattern for all factory `Create`
     implementations.** The AOT-safe canonical pattern for vendor extensibility.
@@ -333,25 +342,46 @@ diagram, and OpAMP considerations.
 
 ### 4.5 Recommended Build Order
 
-Each step is independently shippable and does not require revisiting earlier
-steps.
+Each numbered step is independently shippable. The table shows minimum
+dependency ordering, not a mandated sequence within a phase — steps that share
+no prerequisites can be worked in parallel.
 
-| Step | What                                                                                             | Prerequisite | Unblocks                             |
-| ---- | ------------------------------------------------------------------------------------------------ | ------------ | ------------------------------------ |
-| 0a   | `IValidateOptions<T>` + `ValidateOnStart` for existing options                                   | None         | Safe declarative config; safe reload |
-| 0b   | Standard `OnChange` subscriber pattern (shared infrastructure)                                   | None         | All reload subscribers               |
-| 0c   | `TestConfigurationProvider` for reload testing                                                   | None         | All reload test scenarios            |
-| 1    | `SamplerOptions` with env-var constructor + validation                                           | 0a           | Declarative config sampler support   |
-| 2a   | Telemetry policy abstractions + base `IConfigurationProvider`/`IConfigurationSource` in core SDK | 0c           | All reload scenarios                 |
-| 2b   | File-based policy source package *(optional - low risk to bundle)*                               | 2a           | File-watch reload testing            |
-| 2c   | OpAMP-backed policy source package *(separate NuGet - opt-in)*                                   | 2a           | OpAMP-driven reload                  |
-| 3    | `ReloadableSampler` + wire `IOptionsMonitor<SamplerOptions>` in `TracerProviderSdk`              | 0b, 1, 2     | Sampling rate reload                 |
-| 4    | Export enable/disable (`volatile bool` + `OnChange`) in `BatchExportProcessor`                   | 0b, 2        | Kill-switch                          |
-| 5    | `OnChange` wiring for `SdkLimitOptions` in OTLP serializers                                      | 0b, 2        | SDK limits reload                    |
-| 6    | `OnChange` wiring for batch and metric export intervals                                          | 0b, 2        | Interval reload                      |
-| 7    | `ReloadableOtlpExportClient` + internal `IOptionsMonitor`-aware OTLP constructor                 | 0b, 2        | OTLP endpoint/token failover         |
+| Step | What                                                                                                                                                                                                                                                                                                                                                                                                                                                       | Prerequisite         | Unblocks                                                                        |
+| ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ------------------------------------------------------------------------------- |
+| 1    | ~~Simplify `DelegatingOptionsFactory<T>` using `OptionsFactory<T>.CreateInstance` override~~ — **done** ([#7147](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7147) / [#7148](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7148)) (see [Deep Dive B](configuration-analysis-deep-dives.md#b-delegatingoptionsfactory-simplification)) | None                 | Tech debt reduction                                                             |
+| 2    | Replace vendored `EnvironmentVariablesConfigurationProvider` with direct package reference — **in progress** ([#7141](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7141) / [#7146](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7146)) (see [Risk 1.7](configuration-analysis-risks.md#17-the-sdks-internal-environmentvariablesconfigurationprovider-copy)) | None                 | Eliminates silent divergence risk                                               |
+| 3    | Move `SdkLimitOptions` fallback cascade logic to `PostConfigure<SdkLimitOptions>` (see [Risk 1.5](configuration-analysis-risks.md#15-postconfigure-gap-for-fallback-chains-under-reload))                                                                                                                                                                                                                                                                  | None                 | Correct cascade under reload and declarative config; prerequisite for Step 6    |
+| 4    | `SamplerOptions` and `ResourceOptions` with env-var constructors + `DelegatingOptionsFactory` registration (see [Risk 2.9](configuration-analysis-risks.md#29-resource-detector-declarative-config-gap), [S4.1 rec 1](configuration-analysis.md#41-recommendations-for-step-2-config-provider-registration))                                                                                                                                               | None                 | Declarative config component resolution; sampler + resource reload              |
+| 5    | Component factory interfaces (`ISpanExporterFactory`, `ISamplerFactory`, `ITextMapPropagatorFactory`, `IResourceDetectorFactory`, …) in core SDK (see [S4.3](configuration-analysis.md#43-component-registry-overview), [Deep Dive E.2](configuration-analysis-deep-dives.md#e2-factory-interface-design))                                                                                                                                                 | None                 | Entire declarative config path; `OTEL_*_EXPORTER` + `OTEL_PROPAGATORS` gaps    |
+| —    | **Design discussion gate** — Before Step 6: YAML key translation strategy ([Risk 1.6](configuration-analysis-risks.md#16-configuration-key-translation---yaml-snake_case-to-iconfiguration-keys)), in-memory config model choice (Options A/B/C, [§5.1.1](#511-in-memory-configuration-model)), `Parse`/`Create` API shape ([§5.1.2](#512-parse-and-create-as-explicit-operations)), YAML env-var substitution ([§5.1.4](#514-yaml-environment-variable-substitution)). Prototype scope: YAML file → sampler factory → sampler creation, end to end. | 1, 4, 5              | Step 6                                                                          |
+| 6    | Declarative config MVP: built-in sampler factories, `OTEL_*_EXPORTER` env var gaps, OTLP component factories, `PropagatorOptions` + `OTEL_PROPAGATORS`, public `SdkLimitsOptions` in core SDK, YAML `IConfigurationProvider` + build-time tree walker (see [S4.2](#42-declarative-config-path), [Deep Dive E](configuration-analysis-deep-dives.md#e-component-registry-detailed-design), [Risks 1.6](configuration-analysis-risks.md#16-configuration-key-translation---yaml-snake_case-to-iconfiguration-keys), [3.1](configuration-analysis-risks.md#31-otel_config_file-vs-iconfiguration-hierarchy---resolution-via-sdk-option), [4.1](configuration-analysis-risks.md#41-yaml-array-to-iconfiguration-projection)) | Design gate, 3, 4, 5 | `OTEL_CONFIG_FILE` support; all remaining spec env var gaps                     |
+| 7    | Standard `OnChange` subscriber pattern + shared infrastructure (see [Risk 2.2](configuration-analysis-risks.md#22-onchange-subscription-lifecycle-and-disposal), [Risk 2.3](configuration-analysis-risks.md#23-onchange-callback-exception-safety), [Risk 2.4](configuration-analysis-risks.md#24-hot-path-performance---readonly-fields-vs-live-options-reads))                                                                                           | None                 | All reload subscribers                                                          |
+| 8    | `TestConfigurationProvider` for reload testing (see [Risk 4.6](configuration-analysis-risks.md#46-testing-infrastructure-for-reload-scenarios))                                                                                                                                                                                                                                                                                                            | None                 | All reload test scenarios                                                       |
+| 9    | `ReloadableSampler` + `IOptionsMonitor<SamplerOptions>` wiring in `TracerProviderSdk`; add `IValidateOptions<T>` reject-invalid/retain-previous guard (no `ValidateOnStart`; see [Risk 1.1](configuration-analysis-risks.md#11-options-validation-is-completely-absent))                                                                                                                                                                                   | 4, 7, 8              | Sampling rate reload; reload validation guard                                   |
+| 10   | Export enable/disable (`volatile bool` + `OnChange`) in `BatchExportProcessor`                                                                                                                                                                                                                                                                                                                                                                             | 7, 8                 | Kill-switch                                                                     |
+| 11   | `OnChange` wiring for `SdkLimitsOptions` in OTLP serializers                                                                                                                                                                                                                                                                                                                                                                                              | 6, 7, 8              | SDK limits reload                                                               |
+| 12   | `OnChange` wiring for batch and metric export intervals                                                                                                                                                                                                                                                                                                                                                                                                    | 7, 8                 | Interval reload                                                                 |
+| 13   | `ReloadableOtlpExportClient` + `IOptionsMonitor`-aware OTLP constructor (see [Deep Dive C](configuration-analysis-deep-dives.md#c-otlp-exporter-snapshot-architecture-and-reload-path), [Risk 2.5](configuration-analysis-risks.md#25-disposal-race-during-component-swap---drain-semantics))                                                                                                                                                             | 7, 8                 | OTLP endpoint/token failover                                                    |
+| 14   | Telemetry policy abstractions + base `TelemetryPolicyConfigurationProvider` in core SDK (see [S4.4](#44-telemetry-policies-architecture), [Deep Dive H](configuration-analysis-deep-dives.md#h-telemetry-policies-architecture))                                                                                                                                                                                                                            | 7, 8                 | All runtime policy scenarios                                                    |
+| 15   | File-based policy source package *(optional — low risk to bundle)*                                                                                                                                                                                                                                                                                                                                                                                         | 14                   | File-watch reload testing                                                       |
+| 16   | OpAMP-backed policy source package *(separate NuGet — opt-in)*                                                                                                                                                                                                                                                                                                                                                                                             | 14                   | OpAMP-driven reload                                                             |
 
-Steps 0a, 0b, 0c, 1, and 2 are independent and can be worked in parallel.
+**Foundation (Steps 1–5):** All independent of each other and of the reload
+track; can be progressed simultaneously. Steps 1–5 carry no observable behaviour
+change and are the prerequisite surface for everything below.
+
+**Declarative config design gate (before Step 6):** The design discussion must
+resolve the open questions in [§5.1](#51-spec-alignment---configuration-sdk-operations)
+before implementation begins. A focused prototype (YAML file → sampler factory →
+sampler end-to-end) should validate the chosen strategy before the full MVP is
+built.
+
+**Reload track (Steps 7–13):** Steps 7 and 8 have no prerequisites and can be
+started at any time in parallel with Steps 1–5. Steps 9–13 are independent of
+each other once Steps 7 and 8 are done. Step 11 additionally requires the public
+`SdkLimitsOptions` type from Step 6. The `IValidateOptions<T>` reload guard
+(Step 9) is co-located with the first `OnChange` handler that catches
+`OptionsValidationException`.
 
 ---
 
@@ -558,14 +588,14 @@ The [Risk Register](configuration-analysis-risks.md) catalogues all identified
 risks. Below are the highest-impact items, grouped by the phase in which they
 must be addressed.
 
-### Must address before Step 2
+### Must address before declarative config (Steps 1–5)
 
 | Risk                                                     | Impact                                                                  | Detail                                                                                                                       |
 | -------------------------------------------------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | **Options validation is completely absent**              | Invalid YAML values silently produce broken behaviour                   | [Risk 1.1](configuration-analysis-risks.md#11-options-validation-is-completely-absent)                                       |
 | **Parameterless constructors bypass declarative config** | Public constructors create isolated `IConfiguration` from env vars only | [Risk 1.4](configuration-analysis-risks.md#14-public-parameterless-constructors-bypass-declarative-config)                   |
 | **YAML key translation**                                 | Spec uses `snake_case`; `IConfiguration` keys need mapping              | [Risk 1.6](configuration-analysis-risks.md#16-configuration-key-translation---yaml-snake_case-to-iconfiguration-keys)        |
-| **AOT: reflection-based binding**                        | Existing IL2026/IL3050 bug in `OtlpExporterBuilder.cs`                  | [Deep Dive F.3](configuration-analysis-deep-dives.md#f3-current-bug-reflection-based-binding-in-otlpexporterbuildercs)       |
+| **AOT: reflection-based binding**                        | Dead code — only reachable via `internal` overloads unavailable to consumers; superseded by declarative config factory (Step 6) | [Deep Dive F.3](configuration-analysis-deep-dives.md#f3-current-bug-reflection-based-binding-in-otlpexporterbuildercs) |
 | **Vendored `EnvironmentVariablesConfigurationProvider`** | Manually vendored copy with no sync mechanism; silent divergence risk   | [Risk 1.7](configuration-analysis-risks.md#17-the-sdks-internal-environmentvariablesconfigurationprovider-copy)              |
 
 ### Must address before reload implementation

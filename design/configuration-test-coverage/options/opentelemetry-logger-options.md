@@ -466,7 +466,7 @@ the options can change without breaking any test.
 This file specifies baseline tests that guard the following entries in
 [`../../configuration-proposed-issues.md`](../../configuration-proposed-issues.md):
 
-- **Issue 1** - Add `IValidateOptions<T>` and `ValidateOnStart` for all
+- **Issue 1** - Add `IValidateOptions<T>` for reload protection (no `ValidateOnStart`; deferred) for all
   options classes. Guarded by: Sections 3.1, 3.2, 3.3, 3.5, 3.6.
 - **Issue 17** - Design and implement standard `OnChange` subscriber pattern.
   Guarded by: Section 3.4 (all four tests). These tests will produce a visible

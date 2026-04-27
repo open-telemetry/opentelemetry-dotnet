@@ -413,7 +413,7 @@ should be consulted.
 This file specifies baseline tests that guard the following entries in
 [`../../configuration-proposed-issues.md`](../../configuration-proposed-issues.md):
 
-- **Issue 1** - Add `IValidateOptions<T>` and `ValidateOnStart` for all
+- **Issue 1** - Add `IValidateOptions<T>` for reload protection (no `ValidateOnStart`; deferred) for all
   options classes. Guarded by: Sections 3.1 (invalid-input
   characterisation), 3.2 (priority order), 3.5 (snapshot).
 - **Issue 6** - Add diagnostic logging for `RegisterOptionsFactory` silent

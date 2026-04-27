@@ -413,7 +413,7 @@ Issues 20 and 21 have no visible test delta when they land.
 This file specifies baseline tests that guard the following entries in
 [`../../configuration-proposed-issues.md`](../../configuration-proposed-issues.md):
 
-- **Issue 1** - Add `IValidateOptions<T>` and `ValidateOnStart` for all
+- **Issue 1** - Add `IValidateOptions<T>` for reload protection (no `ValidateOnStart`; deferred) for all
   options classes. Guarded by: Sections 3.1, 3.2, 3.3.
 - **Issue 14** - Register OTLP exporter component factories. Guarded by:
   Section 3.4 item 8 (missing-logging-registration defensive throw).

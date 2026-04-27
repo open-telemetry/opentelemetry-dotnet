@@ -265,7 +265,7 @@ specialisation is contemplated.
 This file identifies base-class tests that guard the following entry in
 [`../../configuration-proposed-issues.md`](../../configuration-proposed-issues.md):
 
-- **Issue 1** - Add `IValidateOptions<T>` and `ValidateOnStart` for all
+- **Issue 1** - Add `IValidateOptions<T>` for reload protection (no `ValidateOnStart`; deferred) for all
   options classes. The guard scenarios in Section 2.4 (consumer-side
   `Guard.ThrowIfOutOfRange` boundaries) and the two tests recommended in
   Section 3.1 are the base-class contribution. The full set of guard tests

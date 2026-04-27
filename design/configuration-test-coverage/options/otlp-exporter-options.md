@@ -468,7 +468,7 @@ brittleness to highest.
    sources. Guards Issues 1, 6.
 
 All invalid-input recommendations carry the code comment: "Expected to
-change under Issue 1 (`IValidateOptions<T>` + `ValidateOnStart`)."
+change under Issue 1 (`IValidateOptions<T>` for reload protection; deferred; no `ValidateOnStart`)."
 
 ### 3.4 Reload no-op baseline
 
@@ -561,7 +561,7 @@ suite, Issue 23 has no visible test delta when it lands.
 This file specifies baseline tests that guard the following entries in
 [`../../configuration-proposed-issues.md`](../../configuration-proposed-issues.md):
 
-- **Issue 1** - Add `IValidateOptions<T>` and `ValidateOnStart` for all
+- **Issue 1** - Add `IValidateOptions<T>` for reload protection (no `ValidateOnStart`; deferred) for all
   options classes. Guarded by: Sections 3.1, 3.2, 3.3, 3.5.
 - **Issue 4** - Fix AOT bug: reflection-based binding in
   `OtlpExporterBuilder.cs`. Guarded by: Sections 3.2, 3.6 (defaults

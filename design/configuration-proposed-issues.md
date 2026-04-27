@@ -38,7 +38,7 @@ parallel. Issue 9 depends on Issue 11 and starts after that.
 
 | Phase | Focus | Issues | Risk Profile |
 | ---- | ---- | ----- | --------- |
-| **A - Foundation** | No behaviour change, low risk. Options validation, factory simplification, AOT fix, new options classes, shared reload infrastructure, component factory interfaces. | 1, 2, 3, 4, 5, 6, 7, 8, 11, 17, 18 | Low |
+| **A - Foundation** | No behaviour change, low risk. Options validation, factory simplification, new options classes, shared reload infrastructure, component factory interfaces. Issue 4 (AOT fix) is not prioritised — dead code from public API; superseded by Step 6. | 1, 2, 3, 5, 6, 7, 8, 11, 17, 18 | Low |
 | **B - Declarative Config MVP** | Enables `OTEL_CONFIG_FILE`, spec env var gaps, component resolution. | 9, 10, 12, 13, 14, 15, 16 | Medium |
 | **C - Reload Support** | Per-component `OnChange` wiring for sampler, export intervals, SDK limits, OTLP endpoint/headers. | 19, 20, 21, 22, 23, 24 | Medium-High |
 | **D - Telemetry Policies** | Concrete policy source packages (file-based, OpAMP-backed). | 25, 26 | Medium |
@@ -62,36 +62,54 @@ Issues 1--8, 11, 17, 18 can be worked in parallel as the first wave (Issue 9 req
 
 ## Stream 1: Foundation & Infrastructure
 
-### Issue 1 - Add `IValidateOptions<T>` and `ValidateOnStart` for all options classes
+### Issue 1 - Add `IValidateOptions<T>` for reload protection
 
-**Priority:** P0 - prerequisite for safe declarative config and reload **Refs:**
-[Risk
+**Priority:** P1 - prerequisite for safe reload; implement alongside the first
+reload-capable `OnChange` subscriber (Step 9 in
+[S4.5](configuration-analysis.md#45-recommended-build-order)) **Refs:** [Risk
 1.1](configuration-analysis-risks.md#11-options-validation-is-completely-absent),
 [Risk
 1.2](configuration-analysis-risks.md#12-silent-configuration-failure-model-vs-fail-fast),
-[S4.5 Step 0a](configuration-analysis.md#45-recommended-build-order)
+[S4.5 Step 9](configuration-analysis.md#45-recommended-build-order)
 
-The codebase has zero `IValidateOptions<T>` implementations, zero DataAnnotation
-attributes, zero `ValidateOnStart` calls. The validation pipeline in
-`DelegatingOptionsFactory` exists but is never exercised.
+The codebase has zero `IValidateOptions<T>` implementations. The validation
+pipeline in `DelegatingOptionsFactory` exists but is never exercised.
 
-Add validators for every options class that accepts external input. Register
-`ValidateOnStart<T>` for all options types used in the startup path. Key
-validations:
+The primary purpose of validators in this SDK is **reload protection**: when
+`IOptionsMonitor.OnChange` fires, `DelegatingOptionsFactory.Create` runs the
+validation pipeline before the new options instance is returned. Invalid values
+cause `OptionsValidationException`, which the `OnChange` callback catches to
+retain the previous valid value. This prevents a bad OpAMP push or a malformed
+file reload from silently breaking a running system.
+
+**`ValidateOnStart` must not be registered.** Without the `OnChange` catch blocks
+in place, validators run lazily at options access time (provider construction).
+A validation failure at that point produces an unhandled `OptionsValidationException`
+at startup — worse than the current silent fallback. An instrumentation library
+must not prevent the application from running due to a bad telemetry config value.
+For startup validation of declarative YAML config, the JSON schema embedded in the
+OTel configuration specification is the primary guard (see
+[Risk 1.2](configuration-analysis-risks.md#12-silent-configuration-failure-model-vs-fail-fast)).
+
+**Sequencing:** This issue is deferred until the declarative config POC and the
+first reload `OnChange` handler exist. The validators and the handler should land
+together so the catch block that makes `OptionsValidationException` safe is always
+present.
+
+**Prototype first:** Start with `PeriodicExportingMetricReaderOptions`. It has two
+unambiguous constraints, no cross-field dependencies, and a clear observable
+consequence when invalid values are accepted:
+
+- `ExportIntervalMilliseconds > 0` (zero causes a tight export loop; CPU pegged)
+- `ExportTimeoutMilliseconds > 0`
+
+Once the prototype is accepted, expand to:
 
 - `BatchExport*ProcessorOptions`: `MaxQueueSize > 0`, `MaxExportBatchSize > 0 &&
   <= MaxQueueSize`, intervals > 0
-- `PeriodicExportingMetricReaderOptions`: intervals > 0
 - `OtlpExporterOptions`: `TimeoutMilliseconds > 0`, `Endpoint` is valid URI
 - `SdkLimitOptions`: count limits > 0 when set
 - Future `SamplerOptions`: `SamplerArg` in `[0.0, 1.0]` for ratio-based samplers
-
-This is the safety net that prevents invalid YAML or bad policy pushes from
-silently breaking a running system. Under reload, validation runs inside the
-`DelegatingOptionsFactory.Create` pipeline before the new options instance is
-returned to `IOptionsMonitor` - invalid values cause
-`OptionsValidationException`, which the `OnChange` callback catches (retaining
-the previous valid value).
 
 <!-- markdownlint-disable-next-line MD013 -->
 **Baseline tests required:** [otlp-exporter-options.md](configuration-test-coverage/options/otlp-exporter-options.md), [sdk-limit-options.md](configuration-test-coverage/options/sdk-limit-options.md), [batch-export-activity-processor-options.md](configuration-test-coverage/options/batch-export-activity-processor-options.md), [batch-export-logrecord-processor-options.md](configuration-test-coverage/options/batch-export-logrecord-processor-options.md), [periodic-exporting-metric-reader-options.md](configuration-test-coverage/options/periodic-exporting-metric-reader-options.md), [opentelemetry-logger-options.md](configuration-test-coverage/options/opentelemetry-logger-options.md), [otlp-mtls-options.md](configuration-test-coverage/options/otlp-mtls-options.md), [otlp-tls-options.md](configuration-test-coverage/options/otlp-tls-options.md), [experimental-options.md](configuration-test-coverage/options/experimental-options.md), [otlp-exporter-builder-options.md](configuration-test-coverage/options/otlp-exporter-builder-options.md), [batch-export-processor-options.md](configuration-test-coverage/options/batch-export-processor-options.md), [metric-reader-options.md](configuration-test-coverage/options/metric-reader-options.md), [log-record-export-processor-options.md](configuration-test-coverage/options/log-record-export-processor-options.md), [activity-export-processor-options.md](configuration-test-coverage/options/activity-export-processor-options.md), [delegating-options-factory-priority.md](configuration-test-coverage/pathways/delegating-options-factory-priority.md), [env-var-precedence.md](configuration-test-coverage/pathways/env-var-precedence.md)
@@ -105,6 +123,12 @@ the previous valid value).
 Dive
 B](configuration-analysis-deep-dives.md#b-delegatingoptionsfactory-simplification),
 [S2.1](configuration-analysis.md#21-configuration-infrastructure)
+
+**Status: Complete** — tracking issue
+[#7147](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7147)
+closed; merged in
+[#7148](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7148)
+(2026-04-24).
 
 The M.E.Options 5.0.0 threshold for the virtual `CreateInstance` method has been
 met across all TFMs (minimum resolved is 8.0.0). Replace the full fork of
@@ -141,6 +165,11 @@ This removes ~100 lines of duplicated framework code.
 [S4.1 rec
 8](configuration-analysis.md#41-recommendations-for-step-2-config-provider-registration)
 
+**Status: In progress** — tracking issue
+[#7141](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7141);
+open PR
+[#7146](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7146).
+
 The SDK carries a manually vendored copy of the runtime's
 `EnvironmentVariablesConfigurationProvider` in
 `src/Shared/EnvironmentVariables/` (three files). There is no automated sync
@@ -162,18 +191,31 @@ visibility).
 
 ### Issue 4 - Fix AOT bug: reflection-based binding in `OtlpExporterBuilder.cs`
 
-**Priority:** P0 - existing bug in shipped code **Refs:** [Deep Dive
+**Priority:** Not prioritised — see analysis note below **Refs:** [Deep Dive
 F.3](configuration-analysis-deep-dives.md#f3-current-bug-reflection-based-binding-in-otlpexporterbuildercs),
 [S3.4](configuration-analysis.md#34-aot-compatibility-summary), [S4.1 rec
 10](configuration-analysis.md#41-recommendations-for-step-2-config-provider-registration)
 
+**Analysis:** `OtlpExporterBuilder` is `internal sealed`. The four reflection
+calls in `BindConfigurationToOptions` are only reached when
+`configuration != null`, which only occurs via `internal` `UseOtlpExporter`
+overloads. All public overloads pass `configuration: null`. No consumer
+code — whether AOT-published or not — can reach this code path. This is
+effectively dead code from a public API perspective and is not an actionable
+AOT violation for consumers.
+
+The `BindConfigurationToOptions` approach will be entirely superseded once
+declarative config factory support (Step 6) lands. At that point the binding
+responsibility moves to the options constructors in a fully AOT-safe way.
+Until then, no fix is needed.
+
 Four calls to `services.Configure<T>(IConfiguration)` at
 `OtlpExporterBuilder.cs:153` invoke `ConfigurationBinder.Bind()` reflection
-internally with no `[UnconditionalSuppressMessage]`. This is an unmitigated
-IL2026/IL3050 violation in AOT-published apps.
+internally with no `[UnconditionalSuppressMessage]`. This is an IL2026/IL3050
+warning in the library build but not an unmitigated consumer violation.
 
-**Fix:** Move bindings into the options constructors using the constructor
-key-read pattern (`configuration[key]` via the existing
+**Fix (if desired):** Move bindings into the options constructors using the
+constructor key-read pattern (`configuration[key]` via the existing
 `OpenTelemetryConfigurationExtensions` helpers). The `DelegatingOptionsFactory`
 already supplies `IConfiguration` to constructors - no factory wiring change
 needed.
@@ -243,7 +285,7 @@ sampler reload **Refs:** [Deep Dive
 D.4--D.5](configuration-analysis-deep-dives.md#d4-justification-across-scenarios),
 [S4.1 rec
 1](configuration-analysis.md#41-recommendations-for-step-2-config-provider-registration),
-[S4.5 Step 1](configuration-analysis.md#45-recommended-build-order) **Depends
+[S4.5 Step 4](configuration-analysis.md#45-recommended-build-order) **Depends
 on:** None (but should coordinate with Issue 1 for validator)
 
 Create `SamplerOptions` with properties:
@@ -513,7 +555,7 @@ component type (Deep Dive E.6).
 ### Issue 17 - Design and implement standard `OnChange` subscriber pattern
 
 **Priority:** P0 - prerequisite for all reload subscribers **Refs:** [S4.5 Step
-0b](configuration-analysis.md#45-recommended-build-order), [Risk
+7](configuration-analysis.md#45-recommended-build-order), [Risk
 2.2](configuration-analysis-risks.md#22-onchange-subscription-lifecycle-and-disposal),
 [Risk
 2.3](configuration-analysis-risks.md#23-onchange-callback-exception-safety),
@@ -553,7 +595,7 @@ reload-capable components use consistently.
 ### Issue 18 - Add `TestConfigurationProvider` for reload testing
 
 **Priority:** P0 - prerequisite for all reload test scenarios **Refs:** [S4.5
-Step 0c](configuration-analysis.md#45-recommended-build-order), [Risk
+Step 8](configuration-analysis.md#45-recommended-build-order), [Risk
 4.6](configuration-analysis-risks.md#46-testing-infrastructure-for-reload-scenarios)
 **Depends on:** None
 
@@ -582,7 +624,7 @@ Include test pattern examples for:
 
 **Priority:** P1 **Refs:** [Deep Dive
 D.3](configuration-analysis-deep-dives.md#d3-implementation-approach---reloadablesampler-wrapper),
-[S4.5 Step 3](configuration-analysis.md#45-recommended-build-order) **Depends
+[S4.5 Step 9](configuration-analysis.md#45-recommended-build-order) **Depends
 on:** Issues 7, 17, 18
 
 Add internal `ReloadableSampler` wrapper with `volatile Sampler _inner` and
@@ -606,7 +648,7 @@ programmatically still get the fast path.
 ### Issue 20 - Export enable/disable kill-switch via `OnChange` in `BatchExportProcessor`
 
 **Priority:** P2 **Refs:** [S4.5 Step
-4](configuration-analysis.md#45-recommended-build-order) **Depends on:** Issues
+10](configuration-analysis.md#45-recommended-build-order) **Depends on:** Issues
 17, 18
 
 Add a `volatile bool exportEnabled` field to `BatchExportProcessor`. Wire
@@ -622,7 +664,7 @@ telemetry policies.
 ### Issue 21 - Wire `OnChange` for batch and metric export intervals
 
 **Priority:** P2 **Refs:** [S4.5 Step
-6](configuration-analysis.md#45-recommended-build-order), [Risk
+12](configuration-analysis.md#45-recommended-build-order), [Risk
 2.4](configuration-analysis-risks.md#24-hot-path-performance---readonly-fields-vs-live-options-reads)
 **Depends on:** Issues 17, 18
 
@@ -643,7 +685,7 @@ new intervals immediately.
 ### Issue 22 - Wire `OnChange` for `SdkLimitsOptions` in OTLP serializers
 
 **Priority:** P2 **Refs:** [S4.5 Step
-5](configuration-analysis.md#45-recommended-build-order) **Depends on:** Issues
+11](configuration-analysis.md#45-recommended-build-order) **Depends on:** Issues
 10, 17, 18
 
 Replace `readonly SdkLimitOptions` reference in `ProtobufOtlpTraceSerializer`
@@ -661,7 +703,7 @@ is negligible.
 
 **Priority:** P2 **Refs:** [Deep Dive
 C.3--C.5](configuration-analysis-deep-dives.md#c3-solution-approaches), [S4.5
-Step 7](configuration-analysis.md#45-recommended-build-order), [Risk
+Step 13](configuration-analysis.md#45-recommended-build-order), [Risk
 2.5](configuration-analysis-risks.md#25-disposal-race-during-component-swap---drain-semantics)
 **Depends on:** Issues 17, 18
 
@@ -701,7 +743,7 @@ with a CAS-based sequence guard (Risk 2.8).
 
 **Priority:** P1 **Refs:** [Deep Dive
 H.1--H.3](configuration-analysis-deep-dives.md#h1-design-principle---abstractions-in-sdk-implementations-as-opt-in-packages),
-[S4.5 Step 2a](configuration-analysis.md#45-recommended-build-order) **Depends
+[S4.5 Step 14](configuration-analysis.md#45-recommended-build-order) **Depends
 on:** Issues 17, 18
 
 Add to core SDK:
@@ -726,7 +768,7 @@ the abstractions that concrete policy sources implement.
 
 **Priority:** P2 **Refs:** [Deep Dive H.1
 table](configuration-analysis-deep-dives.md#h1-design-principle---abstractions-in-sdk-implementations-as-opt-in-packages),
-[S4.5 Step 2b](configuration-analysis.md#45-recommended-build-order) **Depends
+[S4.5 Step 15](configuration-analysis.md#45-recommended-build-order) **Depends
 on:** Issue 24
 
 Package: `OpenTelemetry.Extensions.TelemetryPolicies.File` *(name TBD)*
@@ -747,7 +789,7 @@ keeps the SDK minimal.
 **Priority:** P2 **Refs:** [Deep Dive H.1
 table](configuration-analysis-deep-dives.md#h1-design-principle---abstractions-in-sdk-implementations-as-opt-in-packages),
 [Deep Dive H.4](configuration-analysis-deep-dives.md#h4-opamp-considerations),
-[S4.5 Step 2c](configuration-analysis.md#45-recommended-build-order) **Depends
+[S4.5 Step 16](configuration-analysis.md#45-recommended-build-order) **Depends
 on:** Issue 24
 
 Package: `OpenTelemetry.Extensions.TelemetryPolicies.OpAMP` *(name TBD)*
