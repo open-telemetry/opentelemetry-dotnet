@@ -17,6 +17,8 @@ public class PrometheusSerializerBenchmarks
     private readonly List<Metric> metrics = [];
     private readonly byte[] buffer = new byte[85000];
     private readonly Dictionary<Metric, PrometheusMetric> cache = [];
+    private Metric? histogramMetric;
+    private Metric? typedLabelsMetric;
     private Meter? meter;
     private MeterProvider? meterProvider;
 
@@ -40,7 +42,13 @@ public class PrometheusSerializerBenchmarks
         var histogram = this.meter.CreateHistogram<long>("histogram_name_1", "long", "histogram_name_1_description");
         histogram.Record(100, new("label1", "value1"), new("label2", "value2"));
 
+        var typedLabelsCounter = this.meter.CreateCounter<long>("counter_name_2", "long", "counter_name_2_description");
+        typedLabelsCounter.Add(18, new("bool_label", true), new("long_label", 9223372036854775807L), new("double_label", 1234.5));
+
         this.meterProvider.ForceFlush();
+
+        this.histogramMetric = this.metrics.Single(metric => metric.Name == "histogram_name_1");
+        this.typedLabelsMetric = this.metrics.Single(metric => metric.Name == "counter_name_2");
     }
 
     [GlobalCleanup]
@@ -60,6 +68,24 @@ public class PrometheusSerializerBenchmarks
             {
                 cursor = PrometheusSerializer.WriteMetric(this.buffer, cursor, metric, this.GetPrometheusMetric(metric), openMetricsRequested: false);
             }
+        }
+    }
+
+    [Benchmark]
+    public void WriteHistogramMetric()
+    {
+        for (var i = 0; i < this.NumberOfSerializeCalls; i++)
+        {
+            _ = PrometheusSerializer.WriteMetric(this.buffer, 0, this.histogramMetric!, this.GetPrometheusMetric(this.histogramMetric!), openMetricsRequested: false);
+        }
+    }
+
+    [Benchmark]
+    public void WriteMetricWithTypedLabels()
+    {
+        for (var i = 0; i < this.NumberOfSerializeCalls; i++)
+        {
+            _ = PrometheusSerializer.WriteMetric(this.buffer, 0, this.typedLabelsMetric!, this.GetPrometheusMetric(this.typedLabelsMetric!), openMetricsRequested: false);
         }
     }
 
