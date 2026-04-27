@@ -3,6 +3,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Tracing;
+using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -143,7 +144,8 @@ internal sealed partial class SelfDiagnosticsConfigParser
     {
         fileSizeInKB = 0;
         var fileSizeResult = GetFileSizeRegex().Match(configJson);
-        return fileSizeResult.Success && int.TryParse(fileSizeResult.Groups["FileSize"].Value, out fileSizeInKB);
+        return fileSizeResult.Success &&
+               int.TryParse(fileSizeResult.Groups["FileSize"].Value, NumberStyles.None, CultureInfo.InvariantCulture, out fileSizeInKB);
     }
 
     internal static bool TryParseLogLevel(
