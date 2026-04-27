@@ -1006,7 +1006,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
     [InlineData("invalid", null)]
     internal void TestDefaultHistogramAggregationUsingEnvVar(string configValue, MetricReaderHistogramAggregation? expectedAggregation)
     {
-        using var scope = new EnvironmentVariableScope(OtlpSpecConfigDefinitions.MetricsDefaultHistogramAggregationEnvVarName, configValue);
+        using var scope = EnvironmentVariableScope.Create(OtlpSpecConfigDefinitions.MetricsDefaultHistogramAggregationEnvVarName, configValue);
 
         var testExecuted = false;
 
