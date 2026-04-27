@@ -210,6 +210,17 @@ public sealed class PrometheusSerializerTests
     }
 
     [Fact]
+    public void WriteMetricNameSanitizesNonAsciiCharacters()
+    {
+        var buffer = new byte[32];
+        var metric = new PrometheusMetric("A\u010A", string.Empty, PrometheusType.Gauge, disableTotalNameSuffixForCounters: false);
+
+        var cursor = PrometheusSerializer.WriteMetricName(buffer, 0, metric, openMetricsRequested: false);
+
+        Assert.Equal("A_", Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Fact]
     public void GaugeDoubleSubnormal()
     {
         var buffer = new byte[85000];

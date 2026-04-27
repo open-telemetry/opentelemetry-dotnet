@@ -57,6 +57,10 @@ public sealed class PrometheusMetricTests
         => AssertSanitizeMetricName("sample_metric_name__:_per_meter", "sample_metric_name_:_per_meter");
 
     [Fact]
+    public void SanitizeMetricName_ReplacesNonAsciiCharacters()
+        => AssertSanitizeMetricName("A\u010A", "A_");
+
+    [Fact]
     public void Unit_Annotation_None()
         => Assert.Equal("Test", PrometheusMetric.RemoveAnnotations("Test"));
 
