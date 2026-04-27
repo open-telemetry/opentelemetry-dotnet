@@ -869,15 +869,29 @@ public sealed class PrometheusSerializerTests
     }
 
     [Fact]
-    public void WriteUnicodeStringPreservesUtf16CodeUnitEncoding()
+    public void WriteUnicodeStringEncodesSurrogatePairsAsUtf8ScalarValues()
     {
         const string value = "rocket:\uD83D\uDE80";
         var buffer = new byte[128];
 
         var cursor = PrometheusSerializer.WriteUnicodeString(buffer, 0, value);
         var actual = ToHexString(buffer, cursor);
+        var expected = ToHexString(Encoding.UTF8.GetBytes(value), Encoding.UTF8.GetByteCount(value));
 
-        Assert.Equal("726F636B65743AEDA0BDEDBA80", actual);
+        Assert.Equal(expected, actual);
+    }
+
+    [Fact]
+    public void WriteUnicodeStringReplacesInvalidSurrogates()
+    {
+        const string value = "rocket:\uD83D";
+        var buffer = new byte[128];
+
+        var cursor = PrometheusSerializer.WriteUnicodeString(buffer, 0, value);
+        var actual = ToHexString(buffer, cursor);
+        var expected = ToHexString(Encoding.UTF8.GetBytes(value), Encoding.UTF8.GetByteCount(value));
+
+        Assert.Equal(expected, actual);
     }
 
 #if NET

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Globalization;
+using System.Text;
 using FsCheck;
 using FsCheck.Fluent;
 using FsCheck.Xunit;
@@ -112,50 +113,28 @@ public class PrometheusSerializerFuzzTests
 
     private static byte[] ReferenceWriteEscapedString(string value, bool escapeQuotationMarks)
     {
-        var bytes = new List<byte>(value.Length * 3);
+        var text = new StringBuilder(value.Length);
 
         foreach (var c in value)
         {
-            switch ((ushort)c)
+            switch (c)
             {
                 case '"' when escapeQuotationMarks:
-                    bytes.Add((byte)'\\');
-                    bytes.Add((byte)'"');
+                    text.Append("\\\"");
                     break;
                 case '\\':
-                    bytes.Add((byte)'\\');
-                    bytes.Add((byte)'\\');
+                    text.Append("\\\\");
                     break;
                 case '\n':
-                    bytes.Add((byte)'\\');
-                    bytes.Add((byte)'n');
+                    text.Append("\\n");
                     break;
                 default:
-                    AppendUnicodeNoEscape(bytes, c);
+                    text.Append(c);
                     break;
             }
         }
 
-        return [.. bytes];
-    }
-
-    private static void AppendUnicodeNoEscape(List<byte> bytes, ushort ordinal)
-    {
-        if (ordinal <= 0x7F)
-        {
-            bytes.Add(unchecked((byte)ordinal));
-        }
-        else if (ordinal <= 0x07FF)
-        {
-            bytes.Add(unchecked((byte)(0b_1100_0000 | (ordinal >> 6))));
-            bytes.Add(unchecked((byte)(0b_1000_0000 | (ordinal & 0b_0011_1111))));
-        }
-        else
-        {
-            bytes.Add(unchecked((byte)(0b_1110_0000 | (ordinal >> 12))));
-            bytes.Add(unchecked((byte)(0b_1000_0000 | ((ordinal >> 6) & 0b_0011_1111))));
-            bytes.Add(unchecked((byte)(0b_1000_0000 | (ordinal & 0b_0011_1111))));
-        }
+        return Encoding.UTF8.GetBytes(text.ToString());
     }
 
     private static class Generators

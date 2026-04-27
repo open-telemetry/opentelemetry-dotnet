@@ -94,8 +94,10 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteUnicodeNoEscape(byte[] buffer, int cursor, ushort ordinal)
+    public static int WriteUnicodeNoEscape(byte[] buffer, int cursor, int ordinal)
     {
+        // Strings MUST only consist of valid UTF-8 characters.
+        // See https://prometheus.io/docs/specs/om/open_metrics_spec/#strings.
         if (ordinal <= 0x7F)
         {
             buffer[cursor++] = unchecked((byte)ordinal);
@@ -105,10 +107,16 @@ internal static partial class PrometheusSerializer
             buffer[cursor++] = unchecked((byte)(0b_1100_0000 | (ordinal >> 6)));
             buffer[cursor++] = unchecked((byte)(0b_1000_0000 | (ordinal & 0b_0011_1111)));
         }
+        else if (ordinal <= 0xFFFF)
+        {
+            buffer[cursor++] = unchecked((byte)(0b_1110_0000 | (ordinal >> 12)));
+            buffer[cursor++] = unchecked((byte)(0b_1000_0000 | ((ordinal >> 6) & 0b_0011_1111)));
+            buffer[cursor++] = unchecked((byte)(0b_1000_0000 | (ordinal & 0b_0011_1111)));
+        }
         else
         {
-            // all other <= 0xFFFF which is ushort.MaxValue
-            buffer[cursor++] = unchecked((byte)(0b_1110_0000 | (ordinal >> 12)));
+            buffer[cursor++] = unchecked((byte)(0b_1111_0000 | (ordinal >> 18)));
+            buffer[cursor++] = unchecked((byte)(0b_1000_0000 | ((ordinal >> 12) & 0b_0011_1111)));
             buffer[cursor++] = unchecked((byte)(0b_1000_0000 | ((ordinal >> 6) & 0b_0011_1111)));
             buffer[cursor++] = unchecked((byte)(0b_1000_0000 | (ordinal & 0b_0011_1111)));
         }
@@ -133,7 +141,7 @@ internal static partial class PrometheusSerializer
                     buffer[cursor++] = unchecked((byte)'n');
                     break;
                 default:
-                    cursor = WriteUnicodeNoEscape(buffer, cursor, ordinal);
+                    cursor = WriteUnicodeScalar(buffer, cursor, value, ref i);
                     break;
             }
         }
@@ -193,7 +201,7 @@ internal static partial class PrometheusSerializer
                     buffer[cursor++] = unchecked((byte)'n');
                     break;
                 default:
-                    cursor = WriteUnicodeNoEscape(buffer, cursor, ordinal);
+                    cursor = WriteUnicodeScalar(buffer, cursor, value, ref i);
                     break;
             }
         }
@@ -467,6 +475,27 @@ internal static partial class PrometheusSerializer
         buffer[cursor++] = ASCII_LINEFEED;
 
         return cursor;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int WriteUnicodeScalar(byte[] buffer, int cursor, string value, ref int index)
+    {
+        // Strings MUST only consist of valid UTF-8 characters.
+        // See https://prometheus.io/docs/specs/om/open_metrics_spec/#strings.
+        var current = value[index];
+
+        if (!char.IsSurrogate(current))
+        {
+            return WriteUnicodeNoEscape(buffer, cursor, current);
+        }
+
+        if (char.IsHighSurrogate(current) && index < value.Length - 1 && char.IsLowSurrogate(value[index + 1]))
+        {
+            index++;
+            return WriteUnicodeNoEscape(buffer, cursor, char.ConvertToUtf32(current, value[index]));
+        }
+
+        return WriteUnicodeNoEscape(buffer, cursor, 0xFFFD);
     }
 
     private static string MapPrometheusType(PrometheusType type) => type switch
