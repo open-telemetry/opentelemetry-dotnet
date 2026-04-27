@@ -60,7 +60,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     public static Baggage Current
     {
         get => RuntimeContextSlot.Get()?.Baggage ?? default;
-        set => EnsureBaggageHolder().Baggage = value;
+        set => RuntimeContextSlot.Set(new BaggageHolder(value));
     }
 
     /// <summary>
@@ -150,9 +150,11 @@ public readonly struct Baggage : IEquatable<Baggage>
         var baggageHolder = EnsureBaggageHolder();
         lock (baggageHolder)
         {
-            return baggageHolder.Baggage = baggage == default
+            var newBaggage = baggage == default
                 ? baggageHolder.Baggage.SetBaggage(name, value)
                 : baggage.SetBaggage(name, value);
+            RuntimeContextSlot.Set(new BaggageHolder(newBaggage));
+            return newBaggage;
         }
     }
 
@@ -169,9 +171,11 @@ public readonly struct Baggage : IEquatable<Baggage>
         var baggageHolder = EnsureBaggageHolder();
         lock (baggageHolder)
         {
-            return baggageHolder.Baggage = baggage == default
+            var newBaggage = baggage == default
                 ? baggageHolder.Baggage.SetBaggage(baggageItems)
                 : baggage.SetBaggage(baggageItems);
+            RuntimeContextSlot.Set(new BaggageHolder(newBaggage));
+            return newBaggage;
         }
     }
 
@@ -187,9 +191,11 @@ public readonly struct Baggage : IEquatable<Baggage>
         var baggageHolder = EnsureBaggageHolder();
         lock (baggageHolder)
         {
-            return baggageHolder.Baggage = baggage == default
+            var newBaggage = baggage == default
                 ? baggageHolder.Baggage.RemoveBaggage(name)
                 : baggage.RemoveBaggage(name);
+            RuntimeContextSlot.Set(new BaggageHolder(newBaggage));
+            return newBaggage;
         }
     }
 
@@ -204,9 +210,11 @@ public readonly struct Baggage : IEquatable<Baggage>
         var baggageHolder = EnsureBaggageHolder();
         lock (baggageHolder)
         {
-            return baggageHolder.Baggage = baggage == default
+            var newBaggage = baggage == default
                 ? baggageHolder.Baggage.ClearBaggage()
                 : baggage.ClearBaggage();
+            RuntimeContextSlot.Set(new BaggageHolder(newBaggage));
+            return newBaggage;
         }
     }
 
@@ -388,6 +396,15 @@ public readonly struct Baggage : IEquatable<Baggage>
 
     private sealed class BaggageHolder
     {
-        public Baggage Baggage;
+        public BaggageHolder()
+        {
+        }
+
+        public BaggageHolder(Baggage baggage)
+        {
+            this.Baggage = baggage;
+        }
+
+        public Baggage Baggage { get; }
     }
 }
