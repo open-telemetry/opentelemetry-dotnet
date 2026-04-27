@@ -24,14 +24,14 @@ appropriate export pipeline.
 
 ```text
 ILogger (single pipeline)
-   │
-   ▼
+   |
+   v
 LoggerProvider
-   │
-   ▼
+   |
+   v
 RoutingProcessor (custom)
-   ├── CategoryName starts with prefix ──► ExportProcessor → OtlpLogExporter (OTLP2)
-   └── otherwise ─────────────────────────► ExportProcessor → OtlpLogExporter (OTLP1)
+   +-- CategoryName starts with prefix --> ExportProcessor -> OtlpLogExporter (OTLP2)
+   +-- otherwise --------------------------> ExportProcessor -> OtlpLogExporter (OTLP1)
 ```
 
 ## How it works
@@ -63,7 +63,7 @@ dotnet run
 
 ## Key considerations
 
-* **Routing condition is evaluated per log record.** Keep the logic fast —
+* **Routing condition is evaluated per log record.** Keep the logic fast --
   it runs synchronously on every log emit.
 * **Lifecycle management.** The routing processor delegates `ForceFlush`,
   `Shutdown`, and `Dispose` to both inner processors so that both export
@@ -75,7 +75,7 @@ dotnet run
 ## Files
 
 | File | Description |
-|------|-------------|
+| ------ | ------------- |
 | [Program.cs](./Program.cs) | Console app demonstrating the routing |
 | [RoutingProcessor.cs](./RoutingProcessor.cs) | Custom routing processor |
 | [routing.csproj](./routing.csproj) | Project file |

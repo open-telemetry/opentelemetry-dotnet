@@ -44,13 +44,13 @@ var loggerFactory = LoggerFactory.Create(builder =>
 var orderLogger = loggerFactory.CreateLogger("Order.Processing");
 var paymentLogger = loggerFactory.CreateLogger("Payment.Processing");
 
-// --- Logs from "Order.Processing" → routed to OTLP1 ---
+// --- Logs from "Order.Processing" --> routed to OTLP1 ---
 orderLogger.LogInformation("Processing order {OrderId}.", "ORD-001");
 
-// --- Logs from "Payment.Processing" → routed to OTLP2 ---
+// --- Logs from "Payment.Processing" --> routed to OTLP2 ---
 paymentLogger.LogInformation("Processing payment {PaymentId}.", "PAY-001");
 
-// --- Another order log → routed to OTLP1 ---
+// --- Another order log --> routed to OTLP1 ---
 orderLogger.LogInformation("Order {OrderId} completed.", "ORD-001");
 
 // Dispose logger factory before the application ends.
