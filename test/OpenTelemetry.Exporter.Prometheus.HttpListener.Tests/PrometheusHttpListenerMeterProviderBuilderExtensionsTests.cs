@@ -55,8 +55,11 @@ public sealed class PrometheusHttpListenerMeterProviderBuilderExtensionsTests
     [Fact]
     public void TestAddPrometheusHttpListener_Configuration_From_Environment_Variables()
     {
-        using (new EnvironmentVariableScope("OTEL_EXPORTER_PROMETHEUS_HOST", "127.0.0.1"))
-        using (new EnvironmentVariableScope("OTEL_EXPORTER_PROMETHEUS_PORT", "4649"))
+        using (EnvironmentVariableScope.Create(
+            [
+                ("OTEL_EXPORTER_PROMETHEUS_HOST", "127.0.0.1"),
+                ("OTEL_EXPORTER_PROMETHEUS_PORT", "4649"),
+            ]))
         {
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddPrometheusHttpListener()
@@ -80,8 +83,11 @@ public sealed class PrometheusHttpListenerMeterProviderBuilderExtensionsTests
     [Fact]
     public void TestAddPrometheusHttpListener_Configuration_From_Environment_Variables_Ignores_Invalid_Values()
     {
-        using (new EnvironmentVariableScope("OTEL_EXPORTER_PROMETHEUS_HOST", string.Empty))
-        using (new EnvironmentVariableScope("OTEL_EXPORTER_PROMETHEUS_PORT", "not-a-number"))
+        using (EnvironmentVariableScope.Create(
+            [
+                ("OTEL_EXPORTER_PROMETHEUS_HOST", string.Empty),
+                ("OTEL_EXPORTER_PROMETHEUS_PORT", "not-a-number"),
+            ]))
         {
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddPrometheusHttpListener()
@@ -105,8 +111,11 @@ public sealed class PrometheusHttpListenerMeterProviderBuilderExtensionsTests
     [Fact]
     public void TestAddPrometheusHttpListener_Manual_Configuration_Overrides_Environment_Variables()
     {
-        using (new EnvironmentVariableScope("OTEL_EXPORTER_PROMETHEUS_HOST", "prometheus.local"))
-        using (new EnvironmentVariableScope("OTEL_EXPORTER_PROMETHEUS_PORT", "4649"))
+        using (EnvironmentVariableScope.Create(
+            [
+                ("OTEL_EXPORTER_PROMETHEUS_HOST", "prometheus.local"),
+                ("OTEL_EXPORTER_PROMETHEUS_PORT", "4649"),
+            ]))
         {
             using var meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddPrometheusHttpListener((options) =>
