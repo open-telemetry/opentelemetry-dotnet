@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Globalization;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 using OpenTracing;
@@ -217,7 +218,7 @@ internal sealed class SpanShim : ISpan
     {
         Guard.ThrowIfNull(tag);
 
-        return value != null && int.TryParse(value, out var result) ?
+        return value != null && int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var result) ?
                this.SetTag(tag.Key, result) :
                this.SetTag(tag.Key, value);
     }
