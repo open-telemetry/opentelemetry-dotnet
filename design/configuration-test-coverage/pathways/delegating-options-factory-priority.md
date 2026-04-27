@@ -134,18 +134,15 @@ The `Create` method in `DelegatingOptionsFactory<T>` (line 79) executes in this 
   `PostConfigure<T>` setting property A to value 2; resolve `IOptions<T>.Value` and assert
   value 2 is present.
 - **Guards issues:** Issue 1, Issue 2
-- **Risks pinned:**
-  [Risk 1.5](../configuration-analysis-risks.md#15-postconfigure-gap-for-fallback-chains-under-reload)
 - **Code-comment hint:**
   ```
   // BASELINE: pins current behaviour.
   // Expected to change under Issue #2 (DelegatingOptionsFactory simplification).
-  // Guards risks: Risk 1.5.
   // Observation: DI - resolves options through full factory pipeline.
   // Coverage index: pathway.delegating-options-factory-priority.post-configure.runs-after-configure
   ```
-- **Risk vs reward:** Low effort. Issue 5 moves `SdkLimitOptions` fallback cascade to
-  `PostConfigure<T>`; this test validates the ordering contract that makes that safe.
+- **Risk vs reward:** Low effort. This test validates the ordering contract of the
+  `DelegatingOptionsFactory` pipeline (Configure runs before PostConfigure).
 
 ### R3: DelegatingOptionsFactory_Validation_ThrowsOnFailure
 

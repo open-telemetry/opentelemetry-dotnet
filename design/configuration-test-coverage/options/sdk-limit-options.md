@@ -49,17 +49,18 @@ and 3; Section 1 is inventory only.
     `AttributeCountLimit`) -
     `src/OpenTelemetry.Exporter.OpenTelemetryProtocol/Implementation/SdkLimitOptions.cs:154-162`.
 
-### Cascade chain (current constructor-time implementation)
+### Cascade chain
 
 The cascade is implemented entirely via property getters backed by
 `*Set` boolean fields. Setting a property sets its `*Set` flag to
 `true`; the getter returns the backing field only when the flag is set,
 otherwise it falls back to the parent property. This makes the cascade a
-read-time decision, not a write-time one. Issue 5 proposes moving the
-cascade logic to `PostConfigure<T>` so it operates within the DI
-options pipeline instead.
+read-time, live computation — the fallback is re-evaluated on every property
+access, after all `Configure<T>` delegates have run. No `PostConfigure<T>`
+registration is needed for correct cascade behavior under reload or declarative
+config.
 
-Current cascade rules (read-time, property getter level):
+Current cascade rules (property getter level):
 
 ```
 SpanAttributeValueLengthLimit -> AttributeValueLengthLimit
@@ -206,7 +207,6 @@ observation are in the partial category below.
 | `SpanLinkAttributeCountLimit` falls back through `SpanAttributeCountLimit` -> `AttributeCountLimit` | `SpanAttributeCountLimitFallback` | Three-level chain verified | covered |
 | `LogRecordAttributeCountLimit` falls back to `AttributeCountLimit` | `SpanAttributeCountLimitFallback` | Getter delegates | covered |
 | Env var sets only `OTEL_ATTRIBUTE_COUNT_LIMIT`; `SpanEventAttributeCountLimit` getter reflects that value through the cascade | - | Constructor sets `AttributeCountLimit = 128`; child `*Set` flags are false; getters cascade | partial (defaults test `SdkLimitOptionsDefaults` proves cascade direction at default; no isolated env-var-only-parent test) |
-| Cascade flipped under reload: `PostConfigure<T>` writes derived values into child properties so they are stable after construction | - | Not implemented today; Issue 5 proposes this change | missing (expected to become testable when Issue 5 lands; mark as "baseline = current behaviour absent") |
 | `IOptionsMonitor<SdkLimitOptions>.OnChange` fires on `IConfiguration` reload | - | Not wired; `OnChange` callbacks exist on the monitor but no subscriber in the serializer path re-reads the options instance | missing |
 | Serializer observes updated limit values after reload (cascade-under-reload) | - | Not observable today; `OtlpTraceExporter` stores `sdkLimitOptions` at construction and never refreshes | missing |
 
@@ -368,15 +368,12 @@ labels match Section 2 of the entry doc. All rows describe tests to be
    - Code-comment hint:
 
      ```csharp
-     // BASELINE: pins current constructor-time cascade.
-     // Expected to change under Issue #5 (cascade moves to PostConfigure<T>).
+     // BASELINE: pins live getter-based cascade chain.
      // Observation: DirectProperty - cascade via property getters, not DI pipeline.
      // Coverage index: sdk-limit-options.attribute-count-limit.env-var-cascade
      ```
 
-   - Risk vs reward: low effort; is the highest-value baseline for
-     Issue 5 because it pins the "current cascade is constructor-time"
-     fact in a way that will fail if Issue 5 changes the cascade path.
+   - Risk vs reward: low effort; pins the live-getter cascade chain.
 
 2. **`SdkLimitOptions_CascadeFromEnvVarParent_ChildEnvVarOverrides`**
    (new; same file). Tier 1. Mechanism: DirectProperty. Set
@@ -384,7 +381,7 @@ labels match Section 2 of the entry doc. All rows describe tests to be
    `OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT = 99`. Assert
    `SpanEventAttributeCountLimit == 99` (own value wins) and
    `SpanLinkAttributeCountLimit == 50` (cascade from parent). Guards
-   Issues 1, 5.
+   Issue 1.
 
 ### 3.4 Cascade-under-reload (cascade-flipped-under-reload baseline)
 
@@ -453,8 +450,7 @@ or use `ProtobufHelper` to decode the proto. The serializer methods are
    2 attribute entries and a non-zero `DroppedAttributesCount` field.
    - Guards Issues 1, 22. Risks pinned: none.
    - Code-comment hint: "BASELINE: pins SpanAttributeCountLimit
-     enforcement at serializer. No planned change to the enforcement;
-     change expected to cascade path only under Issue 5."
+     enforcement at serializer."
    - Risk vs reward: moderate setup; the serializer methods are
      already unit-tested for correctness; this test specifically
      pins the limit enforcement so a regressor shows up as a test
@@ -468,7 +464,7 @@ or use `ProtobufHelper` to decode the proto. The serializer methods are
 3. **`ProtobufOtlpTraceSerializer_WriteEventAttributes_EnforcesEventAttributeCountLimit`**
    (new; same location). Tier 2. Mechanism: InternalAccessor. Pass
    `SpanEventAttributeCountLimit = 1` with an event with 3 attributes.
-   Guards Issues 1, 5, 22 (cascade chain `SpanEventAttributeCountLimit ->
+   Guards Issues 1, 22 (cascade chain `SpanEventAttributeCountLimit ->
    SpanAttributeCountLimit -> AttributeCountLimit` tested in Section
    3.3; this test pins the serializer enforcement path).
 
@@ -497,9 +493,7 @@ or use `ProtobufHelper` to decode the proto. The serializer methods are
    applies in `WriteActivityTags`. This is the "cascade-observed-at-
    serializer" test that complements the property-level cascade tests in
    Section 3.3.
-   - Guards Issues 1, 5 (if Issue 5 changes how the cascade is
-     computed, this test detects that the serializer receives the
-     correct effective value).
+   - Guards Issue 1.
    - Code-comment hint: "BASELINE: pins that SpanAttributeCountLimit
      getter cascades to AttributeCountLimit at the point the
      serializer reads it."
@@ -513,7 +507,7 @@ or use `ProtobufHelper` to decode the proto. The serializer methods are
    registration). Assert default property values through DI rather than
    direct construction. Closes the gap between the current direct-
    construction defaults test and what the DI pathway actually produces.
-   - Guards Issues 1, 5, 10.
+   - Guards Issues 1, 10.
    - Code-comment hint: "BASELINE: pins factory-produced defaults
      through OtlpServiceCollectionExtensions registration."
    - Risk vs reward: low brittleness; medium effort; high value for
@@ -526,7 +520,7 @@ or use `ProtobufHelper` to decode the proto. The serializer methods are
    or `Snapshots/` subfolder). Tier 1. Mechanism: Snapshot (library
    TBD by maintainers; see entry-doc Appendix A). Requires the snapshot-
    library pilot to complete before adoption.
-   - Guards Issues 1, 5, 10.
+   - Guards Issues 1, 10.
    - Code-comment hint: "BASELINE: pins whole-options shape. Snapshot
      update expected on any additive change."
    - Risk vs reward: deferred until pilot on `ExperimentalOptions`
@@ -560,8 +554,6 @@ This file specifies baseline tests that guard the following entries in
 
 - **Issue 1** - Add `IValidateOptions<T>` for reload protection (no `ValidateOnStart`; deferred) for all
   options classes. Guarded by: Sections 3.1, 3.2, 3.3, 3.5, 3.6.
-- **Issue 5** - Move `SdkLimitOptions` fallback cascade logic to
-  `PostConfigure<T>`. Guarded by: Sections 3.3, 3.4, 3.5.
 - **Issue 6** - Add diagnostic logging for `RegisterOptionsFactory`
   silent skip. Guarded by: Section 3.2.1 (`TryGetIntValue` logs on
   parse failure; pinning the silent fallback also pins the log event

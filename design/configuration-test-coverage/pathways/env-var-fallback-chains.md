@@ -103,10 +103,12 @@ different value to prove the specific wins over the generic.
 
 ### 2.2 SdkLimitOptions - Configure<T> after constructor locked specific from env var
 
-This is the core Issue 5 scenario. The cascade flags are set in the constructor
-when an env var is present. A `Configure<T>` delegate that modifies only the
-generic property (`AttributeCountLimit`) cannot propagate its new value through
-to specific properties whose `*Set` flag was set to `true` during construction.
+This section describes a real priority-ordering behavior: when an env var sets a
+signal-specific property (e.g. `OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT`), the
+constructor calls the setter, which sets `*Set = true`. A `Configure<T>` delegate
+that then modifies only the generic property (`AttributeCountLimit`) cannot
+override the specific value, because the getter returns the backing field when
+`*Set = true`.
 
 Example: `OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT=50` set as env var. Constructor runs:
 `spanAttributeCountLimitSet = true`, `spanAttributeCountLimit = 50`.
@@ -118,11 +120,10 @@ because `spanAttributeCountLimitSet` remains `true`.
 | --- | --- | --- | --- |
 | Configure<T> sets generic; specific locked by env var - specific wins | none | Getter returns env-var-sourced specific value; generic change ignored | missing |
 | Configure<T> sets specific directly; overrides env-var value | none | Setter called; `*Set = true`; Configure<T> value wins | missing |
-| PostConfigure sets cascade (expected behavior post-Issue 5) | none | PostConfigure step absent today; this is the gap Issue 5 addresses | missing |
 
-All three rows are `missing`. The first two must exist as baseline tests before
-Issue 5 changes the cascade placement, so the behavioral delta from moving the
-cascade to PostConfigure is visible.
+Both rows are `missing`. These tests document intentional priority ordering: a
+signal-specific env var takes precedence over a `Configure<T>` delegate that sets
+only the generic property.
 
 ### 2.3 OTLP signal-specific to generic fallback - UseOtlpExporter pathway
 
@@ -174,24 +175,24 @@ no effect; the generic `OTEL_EXPORTER_OTLP_ENDPOINT` is used instead.
   `IOptions<SdkLimitOptions>`. Assert `SpanAttributeCountLimit == 50` (env var
   wins because `*Set = true`). Assert `AttributeCountLimit == 200` (Configure<T>
   applied to the simple property).
-- **Guards issues:** 5, 10
+- **Guards issues:** 10
 - **Risks pinned:** 1.1
 - **Code-comment hint:**
 
 ```csharp
-// BASELINE: pins current behaviour.
-// Expected to change under Issue #5 (PostConfigure cascade for SdkLimitOptions;
-// after the move the generic Configure<T> value should propagate through
-// the cascade to SpanAttributeCountLimit when no signal-specific override
-// was provided).
+// BASELINE: pins current priority ordering.
+// env-var-set signal-specific property wins over Configure<T> generic update.
+// This is intentional: the cascade is live (getter-based), but the *Set flag
+// means the specific env-var value is returned regardless of changes to the
+// generic property.
 // Guards risks: 1.1.
 // Observation: DI - IOptions<SdkLimitOptions>; assert specific retains env-var value.
 // Coverage index: pathway.env-var-fallback-chains.sdk-limits.configure-t-after-ctor-locked
 ```
 
-- **Risk vs reward:** Low effort. Highest guard value in this pathway: directly
-  pins the behavior that changes when Issue 5 moves the cascade to PostConfigure.
-  Without this test the Issue 5 change has no red-green signal in CI.
+- **Risk vs reward:** Low effort. Documents non-obvious priority behavior: once
+  the env var sets a signal-specific value, a `Configure<T>` generic update does
+  not propagate through to it.
 
 ### R2: Configure<T> sets specific property directly - overrides env var
 
@@ -204,7 +205,7 @@ no effect; the generic `OTEL_EXPORTER_OTLP_ENDPOINT` is used instead.
   `Configure<SdkLimitOptions>(opts => opts.SpanAttributeCountLimit = 300)`.
   Resolve `IOptions<SdkLimitOptions>`. Assert `SpanAttributeCountLimit == 300`
   (Configure<T> wins by calling the setter, overwriting the env-var value).
-- **Guards issues:** 5, 10
+- **Guards issues:** 10
 - **Risks pinned:** 1.1
 - **Code-comment hint:**
 
@@ -228,7 +229,7 @@ no effect; the generic `OTEL_EXPORTER_OTLP_ENDPOINT` is used instead.
   (no `LogRecordAttributeCountLimit` set). Assert
   `LogRecordAttributeCountLimit == 64`. Then set `LogRecordAttributeCountLimit = 32`
   and assert it returns 32 (specific wins over generic).
-- **Guards issues:** 5, 10
+- **Guards issues:** 10
 - **Risks pinned:** 1.1
 - **Code-comment hint:**
 
@@ -257,7 +258,7 @@ no effect; the generic `OTEL_EXPORTER_OTLP_ENDPOINT` is used instead.
   `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://traces/` (and equivalents for the
   other two signals). Resolve `OtlpExporterBuilderOptions` and assert each
   signal's effective endpoint matches the signal-specific URL.
-- **Guards issues:** 5, 10
+- **Guards issues:** 10
 - **Risks pinned:** 1.1
 - **Code-comment hint:**
 
@@ -286,7 +287,7 @@ no effect; the generic `OTEL_EXPORTER_OTLP_ENDPOINT` is used instead.
   `OTEL_EXPORTER_OTLP_ENDPOINT=http://generic/` (no signal-specific vars).
   Resolve `OtlpExporterBuilderOptions`. Assert all three signal-specific
   effective endpoints equal `http://generic/`.
-- **Guards issues:** 5, 10
+- **Guards issues:** 10
 - **Risks pinned:** 1.1
 - **Code-comment hint:**
 
@@ -312,7 +313,6 @@ no effect; the generic `OTEL_EXPORTER_OTLP_ENDPOINT` is used instead.
   containing `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://traces/`. Assert the
   endpoint returns the default (the signal-specific key is not read in Default
   mode).
-- **Guards issues:** 5
 - **Risks pinned:** 1.1
 - **Code-comment hint:**
 
@@ -329,13 +329,7 @@ no effect; the generic `OTEL_EXPORTER_OTLP_ENDPOINT` is used instead.
 
 ## Guards issues
 
-- **Issue 5** - PostConfigure cascade for `SdkLimitOptions`: the cascade logic
-  (`SpanAttributeCountLimit` falling back to `AttributeCountLimit`, etc.) is
-  proposed to move from the constructor to a `PostConfigure<SdkLimitOptions>`
-  registration. Tests R1 and R2 are the direct baselines: they will change from
-  green to red when the move happens, signaling which behavior was altered.
-  Issue 5 must reference these tests in its implementation checklist.
-- **Issue 10** - Public `SdkLimitOptions`: if the class is made public as part
+- **Issue 10** - Public `SdkLimitsOptions`: if the class is made public as part
   of the SDK limits surface, the cascade logic will move to a new public class.
   Tests R1-R3 are the baselines for the cascade behavior that must be preserved
   (or deliberately changed) during the move.

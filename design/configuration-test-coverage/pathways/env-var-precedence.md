@@ -254,9 +254,6 @@ because `TryAddSingleton` skips re-registering if a registration already exists.
   declarative config POC and first `OnChange` subscriber): validation runs as step 4 in
   `DelegatingOptionsFactory.Create`, after `Configure<T>`. Precedence tests
   must exist before the validation step can be tested meaningfully.
-- **Issue 5** - PostConfigure cascade for `SdkLimitOptions`: adds a new
-  `PostConfigure<T>` step (step 3) to the factory pipeline. The ordering tests
-  here pin the chain before that step is inserted.
 - **Issue 15** - Declarative config YAML `IConfigurationProvider`: must sit
   at the correct priority relative to env vars, appsettings, and `Configure<T>`.
   The tests in Section 3 are the baseline that verifies priority placement.

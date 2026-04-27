@@ -80,7 +80,7 @@ happen to be in range at startup) or produce unexpected startup failures (if any
 are out of range). This work should therefore be deferred until the declarative
 config POC and the first reload-capable `OnChange` subscriber exist.
 
-**Recommendation:** Once the first reload subscriber is wired (Step 9 in
+**Recommendation:** Once the first reload subscriber is wired (Step 8 in
 [S4.5](configuration-analysis.md#45-recommended-build-order)), add
 `IValidateOptions<T>` alongside the `OnChange` handler for that component. Do
 not register `ValidateOnStart`. Use `PeriodicExportingMetricReaderOptions` as the
@@ -228,56 +228,6 @@ should even exist. If the class is only meaningful within the DI/options
 pipeline, an `internal`-only constructor receiving `IConfiguration` is cleaner.
 However, this breaks the convention established by existing options classes and
 prevents direct use in tests without DI.
-
-### 1.5 PostConfigure Gap for Fallback Chains Under Reload
-
-`SdkLimitOptions` ([Deep Dive
-A.13](configuration-analysis-deep-dives.md#a13-sdklimitoptions)) implements
-cascading fallback logic: `SpanEventAttributeCountLimit` ->
-`SpanAttributeCountLimit` -> `AttributeCountLimit`. This logic runs in the
-**constructor**, using `bool xxxSet` flags to track explicit vs inherited
-values. The `DelegatingOptionsFactory` pipeline is: factory delegate
-(constructor) -> `Configure<T>` delegates -> `PostConfigure<T>` -> Validate.
-
-Under reload, a user's `Configure<SdkLimitOptions>` delegate might set
-`SpanAttributeCountLimit = 50` but not set `SpanEventAttributeCountLimit`. The
-fallback should cascade - `SpanEventAttributeCountLimit` should inherit the new
-value of `50`. But the constructor already ran before the `Configure` delegate --
-the cascade was evaluated with the old/default values. The `Configure` delegate
-sets the property, but the cascade relationship is not re-evaluated because the
-constructor logic has already executed.
-
-This is exactly what `PostConfigure<T>` is designed for: running after all
-`Configure` delegates to apply derived/cascading logic.
-
-**Affected options classes:**
-
-| Options Class | Cascading Properties | Current Location of Cascade Logic |
-| --- | --- | --- |
-| `SdkLimitOptions` | 8 signal-specific properties cascade to 2 generic properties | Constructor (`bool xxxSet` flags) |
-| `OtlpExporterOptions` | `AppendSignalPathToEndpoint` depends on whether `Endpoint` was explicitly set | Constructor |
-| `ActivityExportProcessorOptions` | `BatchExportProcessorOptions` resolved by name from inner options | Factory delegate |
-| `MetricReaderOptions` | `PeriodicExportingMetricReaderOptions` resolved by name from inner options | Factory delegate |
-
-**Required change for `SdkLimitOptions`:** Move the cascade/fallback logic from
-the constructor to a `PostConfigure<SdkLimitOptions>` registration. The
-constructor reads `IConfiguration` keys and sets only explicitly-configured
-values. `PostConfigure` then applies the cascade chain after all `Configure`
-delegates have run:
-
-```csharp
-services.PostConfigure<SdkLimitOptions>((options) =>
-{
-    // Apply fallback chain: signal-specific -> generic -> default
-    options.SpanAttributeCountLimit ??= options.AttributeCountLimit ?? 128;
-    options.SpanEventAttributeCountLimit ??= options.SpanAttributeCountLimit;
-    options.SpanLinkAttributeCountLimit ??= options.SpanAttributeCountLimit;
-    // ... remaining cascades
-});
-```
-
-This ensures the cascade correctly reflects any value set by a `Configure`
-delegate, including values from declarative config or runtime policy changes.
 
 ### 1.6 Configuration Key Translation - YAML snake_case to IConfiguration Keys
 
@@ -467,7 +417,7 @@ The reload design proposes `IOptionsMonitor<T>.OnChange` subscriptions in
 `TracerProviderSdk` ([Deep Dive
 D.3](configuration-analysis-deep-dives.md#d3-implementation-approach---reloadablesampler-wrapper)),
 `BatchExportProcessor`
-([S4.5](configuration-analysis.md#45-recommended-build-order) Step 10), and
+([S4.5](configuration-analysis.md#45-recommended-build-order) Step 9), and
 `OtlpTraceExporter` ([Deep Dive
 C.3.1](configuration-analysis-deep-dives.md#c3-solution-approaches)). Each
 `OnChange` call returns an `IDisposable` registration token. Currently, **no
@@ -1448,9 +1398,9 @@ Testing the reload path requires:
 | Reload after provider dispose | Dispose provider; trigger reload; assert no callback side-effects |
 
 **Recommendation:** Build a `TestConfigurationProvider` (extending
-`ConfigurationProvider`) as shared test infrastructure (Step 8 in
+`ConfigurationProvider`) as shared test infrastructure (Step 7 in
 [S4.5](configuration-analysis.md#45-recommended-build-order)). It should be
-built before the telemetry policy infrastructure (Step 14) since the production
+built before the telemetry policy infrastructure (Step 13) since the production
 and test providers share the same shape.
 
 ### 4.7 Configuration System Self-Observability

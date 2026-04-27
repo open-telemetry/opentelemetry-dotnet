@@ -1777,22 +1777,21 @@ placement in one step is the thing that makes this complex.
 | ----- | ----- | --------- | ------ |
 | 1 | Option D: define `IConfiguration` key constants in core SDK | No | Nothing - immediate unblocking for declarative config |
 | 2 | Option B: add public `SdkLimitsOptions` to core SDK with `DelegatingOptionsFactory` | No | Other exporters adopting limits |
-| 2a | Register `PostConfigure<SdkLimitsOptions>` for the fallback cascade chain ([Risk S1.5](configuration-analysis-risks.md#15-postconfigure-gap-for-fallback-chains-under-reload)) | No | Correct cascade behaviour under reload and `Configure<T>` delegates |
 | 3 | Other exporters (`Console`, `Zipkin`) read from `SdkLimitsOptions` if registered | No | Enforcement parity at export time |
 | 4 | Option C: add `WithSpanLimits` / `WithLogLimits` processor to core SDK | No (opt-in) | Spec-correct enforcement at record time |
 | 5 | (Future) deprecate OTLP-internal `SdkLimitOptions` once SDK-level enforcement is adopted | Structural | Full spec compliance |
 
 Step 1 alone is sufficient to unblock declarative config for OTLP exporter
-users. Steps 2-3 extend that to other exporters without any behavioral change
-for existing users. **Step 2a is critical for reload correctness:** the
-cascading fallback chain (`SpanEventAttributeCountLimit` ->
-`SpanAttributeCountLimit` -> `AttributeCountLimit`) currently runs in the
-constructor before `Configure<T>` delegates execute. Moving it to
-`PostConfigure<T>` ensures that user-supplied `Configure` delegates and
-declarative config values are reflected in the cascade ([Risk
-S1.5](configuration-analysis-risks.md#15-postconfigure-gap-for-fallback-chains-under-reload)).
-Step 4 is the spec-correct long-term destination but is independent and can be
-sequenced well after the declarative config milestone.
+users. Steps 2–3 extend that to other exporters without any behavioral change
+for existing users. Note: the fallback chain (`SpanEventAttributeCountLimit` →
+`SpanAttributeCountLimit` → `AttributeCountLimit`) is implemented via live
+property getters — each getter checks its own `*Set` flag and falls through to
+the parent property at read time. The cascade is always re-evaluated when a
+property is read, after all `Configure<T>` delegates have run. No
+`PostConfigure<SdkLimitsOptions>` registration is needed for correct behavior
+under reload or declarative config. Step 4 is the spec-correct long-term
+destination but is independent and can be sequenced well after the declarative
+config milestone.
 
 ---
 

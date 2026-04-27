@@ -391,8 +391,7 @@ only where noted. Tier mapping per entry-doc Section 3.
      is the least-brittle approach.
    - Guards Issues 1, 14.
    - Code-comment hint: "BASELINE: pins `ApplyDefaults` cascade from
-     Default to signal instances. Expected to remain but test must be
-     updated if cascade logic moves to `PostConfigure<T>` under Issue 5."
+     Default to signal instances."
    - Risk vs reward: moderately complex setup due to the provider-build
      requirement; high value because the cascade is the most architecturally
      significant behaviour of this class.
@@ -407,7 +406,7 @@ only where noted. Tier mapping per entry-doc Section 3.
    - Code-comment hint: "BASELINE: pins that signal-specific env var wins
      over a Default Configure delegate because the signal instance
      `HasData == true` before `ApplyDefaults` runs. Non-obvious from the
-     source; regression risk under Issue 5."
+     source."
    - Risk vs reward: high value; non-obvious ordering behaviour; moderate
      setup (provider build + env var isolation).
 
