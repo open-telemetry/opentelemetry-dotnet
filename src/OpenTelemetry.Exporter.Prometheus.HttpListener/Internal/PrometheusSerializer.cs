@@ -148,26 +148,7 @@ internal static partial class PrometheusSerializer
 #if NET
         return WriteEscapedUtf8String(buffer, cursor, value.AsSpan(), UnicodeEscapeChars);
 #else
-        for (var i = 0; i < value.Length; i++)
-        {
-            var ordinal = (ushort)value[i];
-            switch (ordinal)
-            {
-                case ASCII_REVERSE_SOLIDUS:
-                    buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
-                    buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
-                    break;
-                case ASCII_LINEFEED:
-                    buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
-                    buffer[cursor++] = unchecked((byte)'n');
-                    break;
-                default:
-                    cursor = WriteUnicodeNoEscape(buffer, cursor, ordinal);
-                    break;
-            }
-        }
-
-        return cursor;
+        return WriteEscapedUtf16String(buffer, cursor, value, escapeQuotationMarks: false);
 #endif
     }
 
@@ -200,30 +181,7 @@ internal static partial class PrometheusSerializer
 #if NET
         return WriteEscapedUtf8String(buffer, cursor, value.AsSpan(), LabelValueEscapeChars);
 #else
-        for (var i = 0; i < value.Length; i++)
-        {
-            var ordinal = (ushort)value[i];
-            switch (ordinal)
-            {
-                case ASCII_QUOTATION_MARK:
-                    buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
-                    buffer[cursor++] = ASCII_QUOTATION_MARK;
-                    break;
-                case ASCII_REVERSE_SOLIDUS:
-                    buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
-                    buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
-                    break;
-                case ASCII_LINEFEED:
-                    buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
-                    buffer[cursor++] = unchecked((byte)'n');
-                    break;
-                default:
-                    cursor = WriteUnicodeNoEscape(buffer, cursor, ordinal);
-                    break;
-            }
-        }
-
-        return cursor;
+        return WriteEscapedUtf16String(buffer, cursor, value, escapeQuotationMarks: true);
 #endif
     }
 
@@ -529,6 +487,34 @@ internal static partial class PrometheusSerializer
         return cursor + value.Length;
     }
 
+    private static int GetUnicodeOrdinal(ReadOnlySpan<char> value, out int charsConsumed)
+    {
+        const int UnicodeReplacementCharacter = 0xFFFD;
+
+        var character = value[0];
+
+        if (char.IsHighSurrogate(character))
+        {
+            if (value.Length > 1 && char.IsLowSurrogate(value[1]))
+            {
+                charsConsumed = 2;
+                return char.ConvertToUtf32(character, value[1]);
+            }
+
+            charsConsumed = 1;
+            return UnicodeReplacementCharacter;
+        }
+
+        if (char.IsLowSurrogate(character))
+        {
+            charsConsumed = 1;
+            return UnicodeReplacementCharacter;
+        }
+
+        charsConsumed = 1;
+        return character;
+    }
+
 #if NET
     private static int WriteUtf8NoEscape(byte[] buffer, int cursor, ReadOnlySpan<char> value) =>
         cursor + System.Text.Encoding.UTF8.GetBytes(value, buffer.AsSpan(cursor));
@@ -556,27 +542,57 @@ internal static partial class PrometheusSerializer
                 value = value[specialIndex..];
             }
 
-            var ordinal = (ushort)value[0];
-            switch (ordinal)
+            switch (value[0])
             {
-                case ASCII_QUOTATION_MARK:
+                case '"':
+                    buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
+                    buffer[cursor++] = ASCII_QUOTATION_MARK;
+                    value = value[1..];
+                    break;
+                case '\\':
+                    buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
+                    buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
+                    value = value[1..];
+                    break;
+                case '\n':
+                    buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
+                    buffer[cursor++] = unchecked((byte)'n');
+                    value = value[1..];
+                    break;
+                default:
+                    cursor = WriteUnicodeNoEscape(buffer, cursor, GetUnicodeOrdinal(value, out var charsConsumed));
+                    value = value[charsConsumed..];
+                    break;
+            }
+        }
+
+        return cursor;
+    }
+#else
+    private static int WriteEscapedUtf16String(byte[] buffer, int cursor, string value, bool escapeQuotationMarks)
+    {
+        for (var i = 0; i < value.Length; i++)
+        {
+            var character = value[i];
+            switch (character)
+            {
+                case '"' when escapeQuotationMarks:
                     buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
                     buffer[cursor++] = ASCII_QUOTATION_MARK;
                     break;
-                case ASCII_REVERSE_SOLIDUS:
+                case '\\':
                     buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
                     buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
                     break;
-                case ASCII_LINEFEED:
+                case '\n':
                     buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
                     buffer[cursor++] = unchecked((byte)'n');
                     break;
                 default:
-                    cursor = WriteUnicodeNoEscape(buffer, cursor, ordinal);
+                    cursor = WriteUnicodeNoEscape(buffer, cursor, GetUnicodeOrdinal(value.AsSpan(i), out var charsConsumed));
+                    i += charsConsumed - 1;
                     break;
             }
-
-            value = value[1..];
         }
 
         return cursor;

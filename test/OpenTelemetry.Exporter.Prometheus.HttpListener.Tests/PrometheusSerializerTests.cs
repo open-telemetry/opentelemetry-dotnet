@@ -852,14 +852,14 @@ public sealed class PrometheusSerializerTests
     }
 
     [Fact]
-    public void WriteLabelValueObjectPreservesEmojiUtf16CodeUnitEncoding()
+    public void WriteLabelValueObjectEncodesEmojiAsUtf8ScalarValues()
     {
         const string value = "rocket:\uD83D\uDE80";
         var buffer = new byte[128];
 
         var cursor = PrometheusSerializer.WriteLabelValue(buffer, 0, (object)value);
 
-        Assert.Equal("726F636B65743AEDA0BDEDBA80", ToHexString(buffer, cursor));
+        Assert.Equal(ToHexString(Encoding.UTF8.GetBytes(value), Encoding.UTF8.GetByteCount(value)), ToHexString(buffer, cursor));
     }
 
     [Fact]
