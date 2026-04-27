@@ -268,14 +268,14 @@ internal sealed class PooledBufferStream : Stream
 
         if (disposing)
         {
-            var buf = this.buffer;
+            var rented = this.buffer;
             this.buffer = [];
             this.length = 0;
             this.position = 0;
 
-            if (buf is not null)
+            if (rented is { Length: > 0 })
             {
-                this.pool.Return(buf);
+                this.pool.Return(rented);
             }
         }
 
