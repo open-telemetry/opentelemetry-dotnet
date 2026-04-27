@@ -12,6 +12,12 @@ M:System.DateTimeOffset.TryParse(System.ReadOnlySpan{System.Char},System.DateTim
 M:System.DateTimeOffset.TryParse(System.String,System.DateTimeOffset@); Use overloads that specify CultureInfo.InvariantCulture.
 M:System.Decimal.TryParse(System.ReadOnlySpan{System.Char},System.Decimal@); Use overloads that specify CultureInfo.InvariantCulture.
 M:System.Decimal.TryParse(System.String,System.Decimal@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.Diagnostics.ActivitySource.#ctor(System.String); Use ActivitySource.ActivitySource(ActivitySourceOptions) instead.
+M:System.Diagnostics.ActivitySource.#ctor(System.String,System.String); Use ActivitySource.ActivitySource(ActivitySourceOptions) instead.
+M:System.Diagnostics.ActivitySource.#ctor(System.String,System.String,System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,System.Object}}); Use ActivitySource.ActivitySource(ActivitySourceOptions) instead.
+M:System.Diagnostics.Metrics.Meter.#ctor(System.String); Use Meter.Meter(MeterOptions) instead.
+M:System.Diagnostics.Metrics.Meter.#ctor(System.String,System.String); Use Meter.Meter(MeterOptions) instead.
+M:System.Diagnostics.Metrics.Meter.#ctor(System.String,System.String,System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,System.Object}},System.Object); Use Meter.Meter(MeterOptions) instead.
 M:System.Double.TryParse(System.ReadOnlySpan{System.Char},System.Double@); Use overloads that specify CultureInfo.InvariantCulture.
 M:System.Double.TryParse(System.String,System.Double@); Use overloads that specify CultureInfo.InvariantCulture.
 M:System.Half.TryParse(System.ReadOnlySpan{System.Char},System.Half@); Use overloads that specify CultureInfo.InvariantCulture.
