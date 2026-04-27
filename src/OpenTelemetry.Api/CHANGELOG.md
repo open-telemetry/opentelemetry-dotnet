@@ -8,7 +8,7 @@ Notes](../../RELEASENOTES.md).
 
 * Fix issue with `Baggage.Current` updates made in a child async flow that
   could leak back into the parent flow.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7191](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7191))
 
 ## 1.15.3
 
