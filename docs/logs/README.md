@@ -24,8 +24,8 @@ OpenTelemetry .NET:
   Application](./getting-started-aspnetcore/README.md)
 * [Getting Started - Console Application](./getting-started-console/README.md)
 * [Logging with Complex Objects](./complex-objects/README.md)
-* [Routing Logs to Different Destinations Based on
-  Baggage](./routing-with-baggage/README.md)
+* [Routing Logs to Different
+  Destinations](./routing/README.md)
 
 ## Logging API
 

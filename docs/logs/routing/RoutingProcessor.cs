@@ -5,33 +5,39 @@ using OpenTelemetry;
 using OpenTelemetry.Logs;
 
 /// <summary>
-/// A custom processor that routes log records to different export processors
-/// based on the value of a Baggage entry.
+/// A custom processor that routes log records to one of two inner processors
+/// based on a user-supplied predicate evaluated at emit time.
 /// </summary>
-internal sealed class BaggageRoutingProcessor : BaseProcessor<LogRecord>
+internal sealed class RoutingProcessor : BaseProcessor<LogRecord>
 {
-    private readonly string baggageKey;
-    private readonly string baggageValueForSecondary;
+    private readonly Func<LogRecord, bool> routeToSecondary;
     private readonly BaseProcessor<LogRecord> primaryProcessor;
     private readonly BaseProcessor<LogRecord> secondaryProcessor;
 
-    public BaggageRoutingProcessor(
-        string baggageKey,
-        string baggageValueForSecondary,
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RoutingProcessor"/> class.
+    /// </summary>
+    /// <param name="routeToSecondary">
+    /// A predicate evaluated for every log record. When it returns
+    /// <see langword="true"/> the record is sent to
+    /// <paramref name="secondaryProcessor"/>; otherwise it goes to
+    /// <paramref name="primaryProcessor"/>.
+    /// </param>
+    /// <param name="primaryProcessor">The default export processor.</param>
+    /// <param name="secondaryProcessor">The alternative export processor.</param>
+    public RoutingProcessor(
+        Func<LogRecord, bool> routeToSecondary,
         BaseProcessor<LogRecord> primaryProcessor,
         BaseProcessor<LogRecord> secondaryProcessor)
     {
-        this.baggageKey = baggageKey ?? throw new ArgumentNullException(nameof(baggageKey));
-        this.baggageValueForSecondary = baggageValueForSecondary ?? throw new ArgumentNullException(nameof(baggageValueForSecondary));
+        this.routeToSecondary = routeToSecondary ?? throw new ArgumentNullException(nameof(routeToSecondary));
         this.primaryProcessor = primaryProcessor ?? throw new ArgumentNullException(nameof(primaryProcessor));
         this.secondaryProcessor = secondaryProcessor ?? throw new ArgumentNullException(nameof(secondaryProcessor));
     }
 
     public override void OnEnd(LogRecord data)
     {
-        var baggageValue = Baggage.GetBaggage(this.baggageKey);
-
-        if (string.Equals(baggageValue, this.baggageValueForSecondary, StringComparison.Ordinal))
+        if (this.routeToSecondary(data))
         {
             this.secondaryProcessor.OnEnd(data);
         }

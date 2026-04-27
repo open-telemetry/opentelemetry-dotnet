@@ -22,11 +22,14 @@ var otlpExporter2 = new OtlpLogExporter(new OtlpExporterOptions
 var processor1 = new SimpleLogRecordExportProcessor(otlpExporter1);
 var processor2 = new SimpleLogRecordExportProcessor(otlpExporter2);
 
-// Build the routing processor: logs emitted while Baggage
-// contains "team=payments" go to OTLP2; everything else goes to OTLP1.
-var routingProcessor = new BaggageRoutingProcessor(
-    baggageKey: "team",
-    baggageValueForSecondary: "payments",
+// Build the routing processor with a predicate that decides which logs
+// go to the secondary destination. In this example, logs whose category
+// name starts with "Payment." are sent to OTLP2; everything else goes to
+// OTLP1. The predicate can inspect any property on LogRecord or any
+// ambient context (e.g. Baggage) available at emit time.
+var routingProcessor = new RoutingProcessor(
+    routeToSecondary: logRecord =>
+        logRecord.CategoryName?.StartsWith("Payment.", StringComparison.Ordinal) == true,
     primaryProcessor: processor1,
     secondaryProcessor: processor2);
 
@@ -41,19 +44,18 @@ var loggerFactory = LoggerFactory.Create(builder =>
     });
 });
 
-var logger = loggerFactory.CreateLogger<Program>();
+// Both loggers share the same ILoggerFactory / LoggerProvider pipeline.
+var orderLogger = loggerFactory.CreateLogger("Order.Processing");
+var paymentLogger = loggerFactory.CreateLogger("Payment.Processing");
 
-// --- Scenario 1: default baggage → routed to OTLP1 ---
-Baggage.SetBaggage("team", "orders");
-logger.LogInformation("Processing order {OrderId}.", "ORD-001");
+// --- Logs from "Order.Processing" → routed to OTLP1 ---
+orderLogger.LogInformation("Processing order {OrderId}.", "ORD-001");
 
-// --- Scenario 2: "payments" baggage → routed to OTLP2 ---
-Baggage.SetBaggage("team", "payments");
-logger.LogInformation("Processing payment {PaymentId}.", "PAY-001");
+// --- Logs from "Payment.Processing" → routed to OTLP2 ---
+paymentLogger.LogInformation("Processing payment {PaymentId}.", "PAY-001");
 
-// --- Scenario 3: back to a different team → routed to OTLP1 ---
-Baggage.SetBaggage("team", "shipping");
-logger.LogInformation("Shipping package {PackageId}.", "PKG-001");
+// --- Another order log → routed to OTLP1 ---
+orderLogger.LogInformation("Order {OrderId} completed.", "ORD-001");
 
 // Dispose logger factory before the application ends.
 // This will flush the remaining logs and shutdown the logging pipeline.
