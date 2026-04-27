@@ -14,7 +14,7 @@ public sealed class TracerProviderBuilderBaseTests
     [InlineData(null, typeof(TracerProviderSdk))]
     public void TracerProviderIsExpectedType(string? value, Type expected)
     {
-        using (new EnvironmentVariableScope("OTEL_SDK_DISABLED", value))
+        using (EnvironmentVariableScope.Create("OTEL_SDK_DISABLED", value))
         {
             var builder = new TestTracerProviderBuilder();
 

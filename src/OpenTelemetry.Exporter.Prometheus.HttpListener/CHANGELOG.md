@@ -11,7 +11,20 @@ Notes](../../RELEASENOTES.md).
   for configuring the HTTP listener endpoint. The
   `PrometheusHttpListenerOptions.UriPrefixes` property is now obsolete and
   will be removed in the stable release.
-  ([#7107](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7114))
+  ([#7114](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7114))
+
+* **Breaking Change** Removed `DisableTimestamp` property from
+  `PrometheusHttpListenerOptions`.
+  ([#7176](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7176))
+
+* Fixed the serialization of `NaN`, `PositiveInfinity`, and `NegativeInfinity`
+  values in Prometheus metrics to be compliant with the specification.
+  ([#7179](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7179))
+
+* Fixed loss of precision when serializing `double` and `float` values in
+  Prometheus metrics to be compliant with the specification by using 17
+  significant digits to represent such values.
+  ([#7179](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7179))
 
 ## 1.15.3-beta.1
 
