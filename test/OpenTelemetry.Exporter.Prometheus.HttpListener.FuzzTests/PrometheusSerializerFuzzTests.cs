@@ -101,14 +101,14 @@ public class PrometheusSerializerFuzzTests
 
     private static byte[] ReferenceWriteUnicodeString(string value) => ReferenceWriteEscapedString(value, escapeQuotationMarks: false);
 
-    private static byte[] ReferenceWriteLong(long value) => System.Text.Encoding.UTF8.GetBytes(value.ToString(CultureInfo.InvariantCulture));
+    private static byte[] ReferenceWriteLong(long value) => Encoding.UTF8.GetBytes(value.ToString(CultureInfo.InvariantCulture));
 
     private static byte[] ReferenceWriteDouble(double value) => value switch
     {
-        var doubleValue when double.IsPositiveInfinity(doubleValue) => System.Text.Encoding.UTF8.GetBytes("+Inf"),
-        var doubleValue when double.IsNegativeInfinity(doubleValue) => System.Text.Encoding.UTF8.GetBytes("-Inf"),
-        var doubleValue when double.IsNaN(doubleValue) => System.Text.Encoding.UTF8.GetBytes("NaN"),
-        _ => System.Text.Encoding.UTF8.GetBytes(value.ToString("G17", CultureInfo.InvariantCulture)),
+        var doubleValue when double.IsPositiveInfinity(doubleValue) => Encoding.UTF8.GetBytes("+Inf"),
+        var doubleValue when double.IsNegativeInfinity(doubleValue) => Encoding.UTF8.GetBytes("-Inf"),
+        var doubleValue when double.IsNaN(doubleValue) => Encoding.UTF8.GetBytes("NaN"),
+        _ => Encoding.UTF8.GetBytes(value.ToString("G17", CultureInfo.InvariantCulture)),
     };
 
     private static byte[] ReferenceWriteEscapedString(string value, bool escapeQuotationMarks)
