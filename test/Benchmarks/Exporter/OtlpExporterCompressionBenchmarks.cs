@@ -4,6 +4,11 @@
 extern alias OpenTelemetryProtocol;
 
 using System.Diagnostics;
+using System.Net;
+#if NETFRAMEWORK
+using System.Net.Http;
+using System.Net.Http.Headers;
+#endif
 using BenchmarkDotNet.Attributes;
 using Benchmarks.Helper;
 using OpenTelemetry;
@@ -36,6 +41,7 @@ public class OtlpExporterCompressionBenchmarks
         {
             Compression = this.Compression,
             Protocol = OtlpExportProtocol.HttpProtobuf,
+            HttpClientFactory = () => new HttpClient(new StubHttpClientHandler(), true),
         };
 
         this.exporter = new OtlpTraceExporter(
@@ -59,7 +65,7 @@ public class OtlpExporterCompressionBenchmarks
     }
 
     [Benchmark]
-    public void OtlpExporter_Batching()
+    public void OtlpExporter_Compression()
     {
         for (var i = 0; i < NumberOfBatches; i++)
         {
@@ -70,5 +76,35 @@ public class OtlpExporterCompressionBenchmarks
 
             this.exporter!.Export(new Batch<Activity>(this.activityBatch!, NumberOfSpans));
         }
+    }
+
+    private sealed class StubHttpClientHandler : DelegatingHandler
+    {
+#if NET
+        protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken) => CreateResponse();
+#endif
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            => Task.FromResult(CreateResponse());
+
+        private static HttpResponseMessage CreateResponse()
+        {
+            var response = new HttpResponseMessage(HttpStatusCode.OK);
+
+#if NET
+            response.TrailingHeaders.Add("grpc-status", "0");
+#else
+            response.RequestMessage.Properties.Add("__ResponseTrailers", new ResponseTrailers()
+            {
+                { "grpc-status", "0" },
+            });
+#endif
+
+            return response;
+        }
+
+#if NETFRAMEWORK
+        private sealed class ResponseTrailers : HttpHeaders;
+#endif
     }
 }
