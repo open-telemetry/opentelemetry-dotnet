@@ -11,12 +11,8 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests;
 public sealed class PrometheusCollectionManagerTests
 {
     [Theory]
-    [InlineData(0, true)] // disable cache, default value for HttpListener
-    [InlineData(0, false)] // disable cache, default value for HttpListener
-#if PROMETHEUS_ASPNETCORE
-    [InlineData(300, true)] // default value for AspNetCore, no possibility to set on HttpListener
-    [InlineData(300, false)] // default value for AspNetCore, no possibility to set on HttpListener
-#endif
+    [InlineData(300, true)] // default value for HttpListener
+    [InlineData(300, false)] // default value for HttpListener
     public async Task EnterExitCollectTest(int scrapeResponseCacheDurationMilliseconds, bool openMetricsRequested)
     {
         var testTimeout = TimeSpan.FromMinutes(1);
