@@ -32,24 +32,36 @@ public class BatchExportLogRecordProcessorOptions : BatchExportProcessorOptions<
 
     internal BatchExportLogRecordProcessorOptions(IConfiguration configuration)
     {
+        var maxQueueSize = this.MaxQueueSize;
+        var maxExportBatchSize = this.MaxExportBatchSize;
+        var exporterTimeoutMilliseconds = this.ExporterTimeoutMilliseconds;
+        var scheduledDelayMilliseconds = this.ScheduledDelayMilliseconds;
+
         if (configuration.TryGetIntValue(OpenTelemetrySdkEventSource.Log, ExporterTimeoutEnvVarKey, out var value))
         {
-            this.ExporterTimeoutMilliseconds = value;
+            exporterTimeoutMilliseconds = value;
         }
 
         if (configuration.TryGetIntValue(OpenTelemetrySdkEventSource.Log, MaxExportBatchSizeEnvVarKey, out value))
         {
-            this.MaxExportBatchSize = value;
+            maxExportBatchSize = value;
         }
 
         if (configuration.TryGetIntValue(OpenTelemetrySdkEventSource.Log, MaxQueueSizeEnvVarKey, out value))
         {
-            this.MaxQueueSize = value;
+            maxQueueSize = value;
         }
 
         if (configuration.TryGetIntValue(OpenTelemetrySdkEventSource.Log, ScheduledDelayEnvVarKey, out value))
         {
-            this.ScheduledDelayMilliseconds = value;
+            scheduledDelayMilliseconds = value;
         }
+
+        BatchExportProcessorOptions<LogRecord>.ApplyValidatedConfiguration(
+            this,
+            maxQueueSize,
+            maxExportBatchSize,
+            exporterTimeoutMilliseconds,
+            scheduledDelayMilliseconds);
     }
 }
