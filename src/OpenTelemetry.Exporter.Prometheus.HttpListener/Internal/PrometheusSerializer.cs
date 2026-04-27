@@ -378,7 +378,13 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteTags(byte[] buffer, int cursor, PrometheusMetric? prometheusMetric, Metric metric, ReadOnlyTagCollection tags, bool writeEnclosingBraces = true)
+    public static int WriteTags(
+        byte[] buffer,
+        int cursor,
+        PrometheusMetric? prometheusMetric,
+        Metric metric,
+        ReadOnlyTagCollection tags,
+        bool writeEnclosingBraces = true)
     {
         if (writeEnclosingBraces)
         {
@@ -508,8 +514,8 @@ internal static partial class PrometheusSerializer
     private static int WriteEscapedString(byte[] buffer, int cursor, string value, bool escapeQuotationMarks)
         => WriteEscapedUtf8String(buffer, cursor, value.AsSpan(), escapeQuotationMarks ? LabelValueEscapeChars : UnicodeEscapeChars);
 
-    private static int WriteUtf8NoEscape(byte[] buffer, int cursor, ReadOnlySpan<char> value) =>
-        cursor + System.Text.Encoding.UTF8.GetBytes(value, buffer.AsSpan(cursor));
+    private static int WriteUtf8NoEscape(byte[] buffer, int cursor, ReadOnlySpan<char> value)
+        => cursor + System.Text.Encoding.UTF8.GetBytes(value, buffer.AsSpan(cursor));
 
     private static int WriteEscapedUtf8String(byte[] buffer, int cursor, ReadOnlySpan<char> value, SearchValues<char> escapedChars)
     {
