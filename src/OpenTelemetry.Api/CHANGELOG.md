@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fix BaggagePropogator to correctly follow Key and Value Encoding rules as mentioned
+the [W3C Baggage specification](https://www.w3.org/TR/baggage/#key-and-value-encoding).
+  [#7051](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7051)
+
 * Fix baggage and trace headers not respecting the maximum length in some cases.
   ([#7061](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7061))
 
