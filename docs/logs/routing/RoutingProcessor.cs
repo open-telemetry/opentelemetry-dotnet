@@ -6,38 +6,28 @@ using OpenTelemetry.Logs;
 
 /// <summary>
 /// A custom processor that routes log records to one of two inner processors
-/// based on a user-supplied predicate evaluated at emit time.
+/// based on the log category name. Logs whose category starts with a given
+/// prefix are sent to a secondary processor; all others go to the primary.
 /// </summary>
 internal sealed class RoutingProcessor : BaseProcessor<LogRecord>
 {
-    private readonly Func<LogRecord, bool> routeToSecondary;
+    private readonly string categoryPrefix;
     private readonly BaseProcessor<LogRecord> primaryProcessor;
     private readonly BaseProcessor<LogRecord> secondaryProcessor;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="RoutingProcessor"/> class.
-    /// </summary>
-    /// <param name="routeToSecondary">
-    /// A predicate evaluated for every log record. When it returns
-    /// <see langword="true"/> the record is sent to
-    /// <paramref name="secondaryProcessor"/>; otherwise it goes to
-    /// <paramref name="primaryProcessor"/>.
-    /// </param>
-    /// <param name="primaryProcessor">The default export processor.</param>
-    /// <param name="secondaryProcessor">The alternative export processor.</param>
     public RoutingProcessor(
-        Func<LogRecord, bool> routeToSecondary,
+        string categoryPrefix,
         BaseProcessor<LogRecord> primaryProcessor,
         BaseProcessor<LogRecord> secondaryProcessor)
     {
-        this.routeToSecondary = routeToSecondary ?? throw new ArgumentNullException(nameof(routeToSecondary));
+        this.categoryPrefix = categoryPrefix ?? throw new ArgumentNullException(nameof(categoryPrefix));
         this.primaryProcessor = primaryProcessor ?? throw new ArgumentNullException(nameof(primaryProcessor));
         this.secondaryProcessor = secondaryProcessor ?? throw new ArgumentNullException(nameof(secondaryProcessor));
     }
 
     public override void OnEnd(LogRecord data)
     {
-        if (this.routeToSecondary(data))
+        if (data.CategoryName?.StartsWith(this.categoryPrefix, StringComparison.Ordinal) == true)
         {
             this.secondaryProcessor.OnEnd(data);
         }

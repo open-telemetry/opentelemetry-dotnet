@@ -42,28 +42,11 @@ RoutingProcessor (custom)
 2. Each exporter is wrapped in a `SimpleLogRecordExportProcessor` (use
    `BatchLogRecordExportProcessor` for production workloads).
 3. A custom [`RoutingProcessor`](./RoutingProcessor.cs) extends
-   `BaseProcessor<LogRecord>` and overrides `OnEnd`. It evaluates a
-   user-supplied `Func<LogRecord, bool>` predicate to decide which inner
-   processor receives the log record.
+   `BaseProcessor<LogRecord>` and overrides `OnEnd`. It checks if the log
+   record's `CategoryName` starts with a configured prefix to decide which
+   inner processor receives the record.
 4. The routing processor is registered on the `LoggerProvider` via
    `AddProcessor`.
-
-The example in [`Program.cs`](./Program.cs) routes based on the log category
-name, but the predicate can use any condition:
-
-```csharp
-// Route by category name
-routeToSecondary: logRecord =>
-    logRecord.CategoryName?.StartsWith("Payment.", StringComparison.Ordinal) == true
-
-// Route by severity
-routeToSecondary: logRecord =>
-    logRecord.LogLevel >= LogLevel.Error
-
-// Route by Baggage
-routeToSecondary: _ =>
-    Baggage.GetBaggage("team") == "payments"
-```
 
 ## Running the example
 
@@ -81,8 +64,8 @@ dotnet run
 
 ## Key considerations
 
-* **Predicate is evaluated per log record.** Keep the predicate fast — it runs
-  synchronously on every log emit.
+* **Routing condition is evaluated per log record.** Keep the logic fast —
+  it runs synchronously on every log emit.
 * **Lifecycle management.** The routing processor delegates `ForceFlush`,
   `Shutdown`, and `Dispose` to both inner processors so that both export
   pipelines are properly drained and cleaned up.

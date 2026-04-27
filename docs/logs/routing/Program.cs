@@ -22,14 +22,10 @@ var otlpExporter2 = new OtlpLogExporter(new OtlpExporterOptions
 var processor1 = new SimpleLogRecordExportProcessor(otlpExporter1);
 var processor2 = new SimpleLogRecordExportProcessor(otlpExporter2);
 
-// Build the routing processor with a predicate that decides which logs
-// go to the secondary destination. In this example, logs whose category
-// name starts with "Payment." are sent to OTLP2; everything else goes to
-// OTLP1. The predicate can inspect any property on LogRecord or any
-// ambient context (e.g. Baggage) available at emit time.
+// Build the routing processor. Logs whose category name starts with
+// "Payment." are sent to OTLP2; everything else goes to OTLP1.
 var routingProcessor = new RoutingProcessor(
-    routeToSecondary: logRecord =>
-        logRecord.CategoryName?.StartsWith("Payment.", StringComparison.Ordinal) == true,
+    categoryPrefix: "Payment.",
     primaryProcessor: processor1,
     secondaryProcessor: processor2);
 
