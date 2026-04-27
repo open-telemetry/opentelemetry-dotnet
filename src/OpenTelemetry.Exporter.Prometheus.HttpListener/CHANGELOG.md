@@ -17,6 +17,9 @@ Notes](../../RELEASENOTES.md).
   `PrometheusHttpListenerOptions`.
   ([#7176](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7176))
 
+* Fix non-ASCII characters in metric names not being serialized correctly.
+  ([#7184](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7184))
+
 ## 1.15.3-beta.1
 
 Released 2026-Apr-21
