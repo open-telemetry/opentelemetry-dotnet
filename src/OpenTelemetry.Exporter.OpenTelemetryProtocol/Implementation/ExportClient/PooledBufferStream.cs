@@ -40,9 +40,6 @@ internal sealed class PooledBufferStream : Stream
     public override bool CanSeek => !this.disposed;
 
     /// <inheritdoc/>
-    public override bool CanTimeout => false;
-
-    /// <inheritdoc/>
     public override bool CanWrite => !this.disposed;
 
     /// <inheritdoc/>
