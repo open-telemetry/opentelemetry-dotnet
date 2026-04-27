@@ -57,7 +57,7 @@ public class BatchExportActivityProcessorOptions : BatchExportProcessorOptions<A
             scheduledDelayMilliseconds = value;
         }
 
-        BatchExportProcessorOptions<Activity>.ApplyValidatedConfiguration(
+        ApplyValidatedConfiguration(
             this,
             maxQueueSize,
             maxExportBatchSize,
