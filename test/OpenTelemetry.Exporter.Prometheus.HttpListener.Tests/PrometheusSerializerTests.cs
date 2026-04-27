@@ -77,10 +77,8 @@ public sealed class PrometheusSerializerTests
         { decimal.MaxValue, "79228162514264337593543950335" },
     };
 
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void GaugeZeroDimension(bool disableTimestamp)
+    [Fact]
+    public void GaugeZeroDimension()
     {
         var buffer = new byte[85000];
         var metrics = new List<Metric>();
@@ -95,13 +93,12 @@ public sealed class PrometheusSerializerTests
 
         provider.ForceFlush();
 
-        var cursor = WriteMetric(buffer, 0, metrics[0], false, disableTimestamp);
-        var timestampPart = disableTimestamp ? string.Empty : " \\d+";
+        var cursor = WriteMetric(buffer, 0, metrics[0], false);
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
         var expected =
             ("^"
                 + "# TYPE test_gauge gauge\n"
-                + $"test_gauge{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} 123{timestampPart}\n"
+                + $"test_gauge{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} 123\n"
                 + "$").Replace('\'', '"');
         Assert.Matches(expected, output);
     }
@@ -127,7 +124,7 @@ public sealed class PrometheusSerializerTests
             ("^"
                 + "# TYPE test_gauge gauge\n"
                 + "# HELP test_gauge Hello, world!\n"
-                + $"test_gauge{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} 123 \\d+\n"
+                + $"test_gauge{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} 123\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -153,7 +150,7 @@ public sealed class PrometheusSerializerTests
             ("^"
                 + "# TYPE test_gauge_seconds gauge\n"
                 + "# UNIT test_gauge_seconds seconds\n"
-                + $"test_gauge_seconds{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} 123 \\d+\n"
+                + $"test_gauge_seconds{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} 123\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -180,7 +177,7 @@ public sealed class PrometheusSerializerTests
                 + "# TYPE test_gauge_seconds gauge\n"
                 + "# UNIT test_gauge_seconds seconds\n"
                 + "# HELP test_gauge_seconds Hello, world!\n"
-                + $"test_gauge_seconds{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} 123 \\d+\n"
+                + $"test_gauge_seconds{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} 123\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -207,7 +204,7 @@ public sealed class PrometheusSerializerTests
         Assert.Matches(
             ("^"
                 + "# TYPE test_gauge gauge\n"
-                + $"test_gauge{{otel_scope_name='{Utils.GetCurrentMethodName()}',tagKey='tagValue'}} 123 \\d+\n"
+                + $"test_gauge{{otel_scope_name='{Utils.GetCurrentMethodName()}',tagKey='tagValue'}} 123\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -234,7 +231,7 @@ public sealed class PrometheusSerializerTests
         Assert.Matches(
             ("^"
                 + "# TYPE test_gauge gauge\n"
-                + $"test_gauge{{otel_scope_name='{Utils.GetCurrentMethodName()}',tagKey='true'}} 123 \\d+\n"
+                + $"test_gauge{{otel_scope_name='{Utils.GetCurrentMethodName()}',tagKey='true'}} 123\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -261,7 +258,7 @@ public sealed class PrometheusSerializerTests
         Assert.Matches(
             ("^"
                 + "# TYPE test_gauge gauge\n"
-                + $"test_gauge{{otel_scope_name='{Utils.GetCurrentMethodName()}',_='tagValue'}} 123 \\d+\n"
+                + $"test_gauge{{otel_scope_name='{Utils.GetCurrentMethodName()}',_='tagValue'}} 123\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -303,9 +300,9 @@ public sealed class PrometheusSerializerTests
         Assert.Matches(
             ("^"
                 + "# TYPE test_gauge gauge\n"
-                + $"test_gauge{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2'}} -Inf \\d+\n"
-                + $"test_gauge{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='3',y='4'}} \\+Inf \\d+\n"
-                + $"test_gauge{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='5',y='6'}} Nan \\d+\n"
+                + $"test_gauge{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2'}} -Inf\n"
+                + $"test_gauge{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='3',y='4'}} \\+Inf\n"
+                + $"test_gauge{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='5',y='6'}} Nan\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -332,7 +329,7 @@ public sealed class PrometheusSerializerTests
         Assert.Matches(
             ("^"
                 + "# TYPE test_counter_total counter\n"
-                + $"test_counter_total{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} \\+Inf \\d+\n"
+                + $"test_counter_total{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} \\+Inf\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -361,7 +358,7 @@ public sealed class PrometheusSerializerTests
         Assert.Matches(
             ("^"
                 + "# TYPE test_counter_total counter\n"
-                + $"test_counter_total{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} {value.ToString(CultureInfo.InvariantCulture)} \\d+\n"
+                + $"test_counter_total{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} {value.ToString(CultureInfo.InvariantCulture)}\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -388,15 +385,13 @@ public sealed class PrometheusSerializerTests
         Assert.Matches(
             ("^"
                 + "# TYPE test_updown_counter gauge\n"
-                + $"test_updown_counter{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} -1 \\d+\n"
+                + $"test_updown_counter{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} -1\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
 
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void HistogramZeroDimension(bool disableTimestamp)
+    [Fact]
+    public void HistogramZeroDimension()
     {
         var buffer = new byte[85000];
         var metrics = new List<Metric>();
@@ -413,30 +408,29 @@ public sealed class PrometheusSerializerTests
 
         provider.ForceFlush();
 
-        var cursor = WriteMetric(buffer, 0, metrics[0], false, disableTimestamp);
-        var timestampPart = disableTimestamp ? string.Empty : " \\d+";
+        var cursor = WriteMetric(buffer, 0, metrics[0], false);
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
         var expected =
             ("^"
                 + "# TYPE test_histogram histogram\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='0'}} 0{timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='5'}} 0{timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='10'}} 0{timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='25'}} 1{timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='50'}} 1{timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='75'}} 1{timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='100'}} 2{timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='250'}} 2{timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='500'}} 2{timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='750'}} 2{timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='1000'}} 2{timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='2500'}} 2{timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='5000'}} 2{timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='7500'}} 2{timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='10000'}} 2{timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='\\+Inf'}} 2{timestampPart}\n"
-                + $"test_histogram_sum{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} 118{timestampPart}\n"
-                + $"test_histogram_count{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} 2{timestampPart}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='0'}} 0\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='5'}} 0\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='10'}} 0\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='25'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='50'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='75'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='100'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='250'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='500'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='750'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='1000'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='2500'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='5000'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='7500'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='10000'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='\\+Inf'}} 2\n"
+                + $"test_histogram_sum{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} 118\n"
+                + $"test_histogram_count{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} 2\n"
                 + "$").Replace('\'', '"');
         Assert.Matches(expected, output);
     }
@@ -463,24 +457,24 @@ public sealed class PrometheusSerializerTests
         Assert.Matches(
             ("^"
                 + "# TYPE test_histogram histogram\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='0'}} 0 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='5'}} 0 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='10'}} 0 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='25'}} 1 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='50'}} 1 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='75'}} 1 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='100'}} 2 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='250'}} 2 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='500'}} 2 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='750'}} 2 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='1000'}} 2 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='2500'}} 2 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='5000'}} 2 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='7500'}} 2 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='10000'}} 2 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='\\+Inf'}} 2 \\d+\n"
-                + $"test_histogram_sum{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1'}} 118 \\d+\n"
-                + $"test_histogram_count{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1'}} 2 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='0'}} 0\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='5'}} 0\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='10'}} 0\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='25'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='50'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='75'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='100'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='250'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='500'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='750'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='1000'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='2500'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='5000'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='7500'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='10000'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='\\+Inf'}} 2\n"
+                + $"test_histogram_sum{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1'}} 118\n"
+                + $"test_histogram_count{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1'}} 2\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -507,24 +501,24 @@ public sealed class PrometheusSerializerTests
         Assert.Matches(
             ("^"
                 + "# TYPE test_histogram histogram\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='0'}} 0 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='5'}} 0 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='10'}} 0 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='25'}} 1 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='50'}} 1 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='75'}} 1 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='100'}} 2 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='250'}} 2 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='500'}} 2 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='750'}} 2 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='1000'}} 2 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='2500'}} 2 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='5000'}} 2 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='7500'}} 2 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='10000'}} 2 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='\\+Inf'}} 2 \\d+\n"
-                + $"test_histogram_sum{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2'}} 118 \\d+\n"
-                + $"test_histogram_count{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2'}} 2 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='0'}} 0\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='5'}} 0\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='10'}} 0\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='25'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='50'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='75'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='100'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='250'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='500'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='750'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='1000'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='2500'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='5000'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='7500'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='10000'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2',le='\\+Inf'}} 2\n"
+                + $"test_histogram_sum{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2'}} 118\n"
+                + $"test_histogram_count{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2'}} 2\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -552,24 +546,24 @@ public sealed class PrometheusSerializerTests
         Assert.Matches(
             ("^"
                 + "# TYPE test_histogram histogram\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='0'}} 0 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='5'}} 0 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='10'}} 0 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='25'}} 1 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='50'}} 1 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='75'}} 1 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='100'}} 1 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='250'}} 1 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='500'}} 1 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='750'}} 1 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='1000'}} 1 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='2500'}} 1 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='5000'}} 1 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='7500'}} 1 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='10000'}} 1 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='\\+Inf'}} 3 \\d+\n"
-                + $"test_histogram_sum{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} \\+Inf \\d+\n"
-                + $"test_histogram_count{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} 3 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='0'}} 0\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='5'}} 0\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='10'}} 0\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='25'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='50'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='75'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='100'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='250'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='500'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='750'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='1000'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='2500'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='5000'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='7500'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='10000'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='\\+Inf'}} 3\n"
+                + $"test_histogram_sum{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} \\+Inf\n"
+                + $"test_histogram_count{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} 3\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -597,24 +591,24 @@ public sealed class PrometheusSerializerTests
         Assert.Matches(
             ("^"
                 + "# TYPE test_histogram histogram\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='0'}} 0 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='5'}} 0 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='10'}} 0 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='25'}} 1 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='50'}} 1 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='75'}} 1 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='100'}} 1 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='250'}} 1 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='500'}} 1 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='750'}} 1 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='1000'}} 1 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='2500'}} 1 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='5000'}} 1 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='7500'}} 1 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='10000'}} 1 \\d+\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='\\+Inf'}} 3 \\d+\n"
-                + $"test_histogram_sum{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} Nan \\d+\n"
-                + $"test_histogram_count{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} 3 \\d+\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='0'}} 0\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='5'}} 0\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='10'}} 0\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='25'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='50'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='75'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='100'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='250'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='500'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='750'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='1000'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='2500'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='5000'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='7500'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='10000'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='\\+Inf'}} 3\n"
+                + $"test_histogram_sum{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} Nan\n"
+                + $"test_histogram_count{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} 3\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -641,10 +635,8 @@ public sealed class PrometheusSerializerTests
         Assert.False(PrometheusSerializer.CanWriteMetric(metrics[0]));
     }
 
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void SumWithOpenMetricsFormat(bool disableTimestamp)
+    [Fact]
+    public void SumWithOpenMetricsFormat()
     {
         var buffer = new byte[85000];
         var metrics = new List<Metric>();
@@ -661,21 +653,18 @@ public sealed class PrometheusSerializerTests
 
         provider.ForceFlush();
 
-        var cursor = WriteMetric(buffer, 0, metrics[0], true, disableTimestamp);
-        var timestampPart = disableTimestamp ? string.Empty : " \\d+\\.\\d{3}";
+        var cursor = WriteMetric(buffer, 0, metrics[0], true);
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
         var expected =
             ("^"
                 + "# TYPE test_updown_counter gauge\n"
-                + $"test_updown_counter{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} -1{timestampPart}\n"
+                + $"test_updown_counter{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} -1\n"
                 + "$").Replace('\'', '"');
         Assert.Matches(expected, output);
     }
 
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void HistogramOneDimensionWithOpenMetricsFormat(bool disableTimestamp)
+    [Fact]
+    public void HistogramOneDimensionWithOpenMetricsFormat()
     {
         var buffer = new byte[85000];
         var metrics = new List<Metric>();
@@ -692,30 +681,29 @@ public sealed class PrometheusSerializerTests
 
         provider.ForceFlush();
 
-        var cursor = WriteMetric(buffer, 0, metrics[0], true, disableTimestamp);
-        var timestampPart = disableTimestamp ? string.Empty : " \\d+\\.\\d{3}";
+        var cursor = WriteMetric(buffer, 0, metrics[0], true);
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
         var expected =
             ("^"
                 + "# TYPE test_histogram histogram\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='0'}} 0{timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='5'}} 0{timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='10'}} 0{timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='25'}} 1{timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='50'}} 1{timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='75'}} 1{timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='100'}} 2{timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='250'}} 2{timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='500'}} 2{timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='750'}} 2{timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='1000'}} 2{timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='2500'}} 2{timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='5000'}} 2{timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='7500'}} 2{timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='10000'}} 2{timestampPart}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='\\+Inf'}} 2{timestampPart}\n"
-                + $"test_histogram_sum{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1'}} 118{timestampPart}\n"
-                + $"test_histogram_count{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1'}} 2{timestampPart}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='0'}} 0\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='5'}} 0\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='10'}} 0\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='25'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='50'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='75'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='100'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='250'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='500'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='750'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='1000'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='2500'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='5000'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='7500'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='10000'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='\\+Inf'}} 2\n"
+                + $"test_histogram_sum{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1'}} 118\n"
+                + $"test_histogram_count{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1'}} 2\n"
                 + "$").Replace('\'', '"');
         Assert.Matches(expected, output);
     }
@@ -754,7 +742,7 @@ public sealed class PrometheusSerializerTests
         Assert.Matches(
             ("^"
              + "# TYPE test_updown_counter gauge\n"
-             + $"test_updown_counter{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0'}} -1 \\d+\\.\\d{{3}}\n"
+             + $"test_updown_counter{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0'}} -1\n"
              + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -781,24 +769,24 @@ public sealed class PrometheusSerializerTests
         Assert.Matches(
             ("^"
                 + "# TYPE test_histogram histogram\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='0'}} 0 \\d+\\.\\d{{3}}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='5'}} 0 \\d+\\.\\d{{3}}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='10'}} 0 \\d+\\.\\d{{3}}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='25'}} 1 \\d+\\.\\d{{3}}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='50'}} 1 \\d+\\.\\d{{3}}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='75'}} 1 \\d+\\.\\d{{3}}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='100'}} 2 \\d+\\.\\d{{3}}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='250'}} 2 \\d+\\.\\d{{3}}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='500'}} 2 \\d+\\.\\d{{3}}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='750'}} 2 \\d+\\.\\d{{3}}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='1000'}} 2 \\d+\\.\\d{{3}}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='2500'}} 2 \\d+\\.\\d{{3}}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='5000'}} 2 \\d+\\.\\d{{3}}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='7500'}} 2 \\d+\\.\\d{{3}}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='10000'}} 2 \\d+\\.\\d{{3}}\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='\\+Inf'}} 2 \\d+\\.\\d{{3}}\n"
-                + $"test_histogram_sum{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1'}} 118 \\d+\\.\\d{{3}}\n"
-                + $"test_histogram_count{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1'}} 2 \\d+\\.\\d{{3}}\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='0'}} 0\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='5'}} 0\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='10'}} 0\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='25'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='50'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='75'}} 1\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='100'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='250'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='500'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='750'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='1000'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='2500'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='5000'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='7500'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='10000'}} 2\n"
+                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='\\+Inf'}} 2\n"
+                + $"test_histogram_sum{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1'}} 118\n"
+                + $"test_histogram_count{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1'}} 2\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -1075,7 +1063,7 @@ public sealed class PrometheusSerializerTests
 
         var prometheusMetric = new PrometheusMetric(metric.Name, metric.Unit, PrometheusType.Histogram, disableTotalNameSuffixForCounters: false);
 
-        var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metric, prometheusMetric, openMetricsRequested: false, disableTimestamp: true);
+        var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metric, prometheusMetric, openMetricsRequested: false);
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
 
         Assert.Contains("test_histogram_bucket{otel_scope_name=\"\u65e5\u672c\",_=\"meterTagValue\",le=\"0\"} 0\n", output, StringComparison.Ordinal);
@@ -1119,8 +1107,8 @@ public sealed class PrometheusSerializerTests
         static char GetHexValue(int value) => (char)(value < 10 ? '0' + value : 'A' + (value - 10));
     }
 
-    private static int WriteMetric(byte[] buffer, int cursor, Metric metric, bool useOpenMetrics = false, bool disableTimestamp = false)
-        => PrometheusSerializer.WriteMetric(buffer, cursor, metric, PrometheusMetric.Create(metric, false), useOpenMetrics, disableTimestamp);
+    private static int WriteMetric(byte[] buffer, int cursor, Metric metric, bool useOpenMetrics = false)
+        => PrometheusSerializer.WriteMetric(buffer, cursor, metric, PrometheusMetric.Create(metric, false), useOpenMetrics);
 
     private static string WriteGaugeMetricWithMeterTags(params KeyValuePair<string, object?>[] meterTags)
     {
@@ -1137,7 +1125,7 @@ public sealed class PrometheusSerializerTests
             provider.ForceFlush();
         }
 
-        var cursor = WriteMetric(buffer, 0, metrics[0], disableTimestamp: true);
+        var cursor = WriteMetric(buffer, 0, metrics[0]);
         return Encoding.UTF8.GetString(buffer, 0, cursor);
     }
 
