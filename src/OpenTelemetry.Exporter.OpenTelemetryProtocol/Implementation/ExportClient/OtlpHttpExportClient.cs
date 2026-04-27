@@ -76,7 +76,7 @@ internal sealed class OtlpHttpExportClient : OtlpExportClient
 
         compressedStream.Position = 0;
 
-        OpenTelemetryProtocolExporterEventSource.Log.CompressedHttpPayload(contentLength, compressedStream.Length);
+        OpenTelemetryProtocolExporterEventSource.Log.CompressedHttpPayload("gzip", contentLength, compressedStream.Length);
 
         var content = new StreamContent(compressedStream);
 
