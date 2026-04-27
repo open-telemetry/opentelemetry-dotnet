@@ -15,11 +15,10 @@ example:
   (`OTLP2`).
 * All other logs should go to the default endpoint (`OTLP1`).
 
-The routing decision is made at the processor level by evaluating a predicate
-against each `LogRecord`. The predicate can inspect any property on the log
-record (category name, severity, attributes, etc.) or any ambient context
-available at emit time (e.g.
-[Baggage](https://opentelemetry.io/docs/concepts/signals/baggage/)).
+The routing decision is made at the processor level by inspecting the
+`CategoryName` of each `LogRecord`. A custom processor checks whether the
+category name starts with a configured prefix and forwards the record to the
+appropriate export pipeline.
 
 ## Architecture
 
@@ -31,8 +30,8 @@ LoggerProvider
    │
    ▼
 RoutingProcessor (custom)
-   ├── predicate returns true  ──► ExportProcessor → OtlpLogExporter (OTLP2)
-   └── predicate returns false ──► ExportProcessor → OtlpLogExporter (OTLP1)
+   ├── CategoryName starts with prefix ──► ExportProcessor → OtlpLogExporter (OTLP2)
+   └── otherwise ─────────────────────────► ExportProcessor → OtlpLogExporter (OTLP1)
 ```
 
 ## How it works
