@@ -44,10 +44,6 @@ jobs:
           version: net462
         - os: ubuntu-22.04-arm
           version: net462
-        - os: ubuntu-22.04-arm
-          version: net10.0
-        - os: windows-11-arm
-          version: net10.0
 
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
