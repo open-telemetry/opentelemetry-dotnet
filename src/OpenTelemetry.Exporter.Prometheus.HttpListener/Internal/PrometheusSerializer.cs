@@ -180,23 +180,15 @@ internal static partial class PrometheusSerializer
             return cursor;
         }
 
-        var ordinal = (ushort)value[0];
-
-        if (ordinal is >= '0' and <= '9')
+        if (IsAsciiDigit(value[0]))
         {
             buffer[cursor++] = unchecked((byte)'_');
         }
 
         for (var i = 0; i < value.Length; i++)
         {
-            ordinal = value[i];
-
-            buffer[cursor++] =
-                ordinal is (>= 'A' and <= 'Z') or
-                (>= 'a' and <= 'z') or
-                (>= '0' and <= '9')
-                ? (byte)ordinal
-                : (byte)'_';
+            var ch = value[i];
+            buffer[cursor++] = IsAsciiLetterOrDigit(ch) ? (byte)ch : (byte)'_';
         }
 
         return cursor;
@@ -515,6 +507,22 @@ internal static partial class PrometheusSerializer
         return cursor;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool IsAsciiDigit(char value) =>
+#if NET
+        char.IsAsciiDigit(value);
+#else
+        value is >= '0' and <= '9';
+#endif
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool IsAsciiLetterOrDigit(char value) =>
+#if NET
+        char.IsAsciiLetterOrDigit(value);
+#else
+        value is (>= 'A' and <= 'Z') or (>= 'a' and <= 'z') or (>= '0' and <= '9');
+#endif
+
     private static int WriteUtf8NoEscape(byte[] buffer, int cursor, ReadOnlySpan<byte> value)
     {
         value.CopyTo(buffer.AsSpan(cursor));
@@ -693,8 +701,7 @@ internal static partial class PrometheusSerializer
             return TryWriteByte(buffer, ref cursor, unchecked((byte)'_'));
         }
 
-        var ordinal = (ushort)value[0];
-        if (ordinal is >= '0' and <= '9' &&
+        if (IsAsciiDigit(value[0]) &&
             !TryWriteByte(buffer, ref cursor, unchecked((byte)'_')))
         {
             return false;
@@ -702,13 +709,8 @@ internal static partial class PrometheusSerializer
 
         for (var i = 0; i < value.Length; i++)
         {
-            ordinal = value[i];
-            var sanitizedByte =
-                ordinal is (>= 'A' and <= 'Z') or
-                (>= 'a' and <= 'z') or
-                (>= '0' and <= '9')
-                    ? (byte)ordinal
-                    : (byte)'_';
+            var ch = value[i];
+            var sanitizedByte = IsAsciiLetterOrDigit(value[i]) ? (byte)ch : (byte)'_';
 
             if (!TryWriteByte(buffer, ref cursor, sanitizedByte))
             {
@@ -887,8 +889,7 @@ internal static partial class PrometheusSerializer
         {
             return TryWriteByte(buffer, ref cursor, unchecked((byte)ordinal));
         }
-
-        if (ordinal <= 0x07FF)
+        else if (ordinal <= 0x07FF)
         {
             return TryWriteByte(buffer, ref cursor, unchecked((byte)(0b_1100_0000 | (ordinal >> 6)))) &&
                    TryWriteByte(buffer, ref cursor, unchecked((byte)(0b_1000_0000 | (ordinal & 0b_0011_1111))));
