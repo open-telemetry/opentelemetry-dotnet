@@ -80,7 +80,7 @@ public class OtlpHttpExportClientTests
             {
                 Endpoint = new Uri("http://localhost:4318"),
                 Protocol = OtlpExportProtocol.HttpProtobuf,
-                Compression = OtlpExportCompression.Gzip,
+                Compression = OtlpExportCompression.GZip,
             },
             httpClient,
             string.Empty);

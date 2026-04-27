@@ -44,7 +44,7 @@ internal abstract class OtlpExportClient : IExportClient
         this.Endpoint = new UriBuilder(exporterEndpoint).Uri;
         this.Headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
         this.HttpClient = httpClient;
-        this.CompressionEnabled = options.Compression == OtlpExportCompression.Gzip;
+        this.CompressionEnabled = options.Compression == OtlpExportCompression.GZip;
     }
 
     internal HttpClient HttpClient { get; }

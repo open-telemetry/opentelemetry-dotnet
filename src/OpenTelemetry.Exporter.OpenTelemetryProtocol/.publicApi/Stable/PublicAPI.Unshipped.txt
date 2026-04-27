@@ -1,6 +1,6 @@
 #nullable enable
 OpenTelemetry.Exporter.OtlpExportCompression
-OpenTelemetry.Exporter.OtlpExportCompression.Gzip = 1 -> OpenTelemetry.Exporter.OtlpExportCompression
+OpenTelemetry.Exporter.OtlpExportCompression.GZip = 1 -> OpenTelemetry.Exporter.OtlpExportCompression
 OpenTelemetry.Exporter.OtlpExportCompression.None = 0 -> OpenTelemetry.Exporter.OtlpExportCompression
 OpenTelemetry.Exporter.OtlpExporterOptions.Compression.get -> OpenTelemetry.Exporter.OtlpExportCompression
 OpenTelemetry.Exporter.OtlpExporterOptions.Compression.set -> void

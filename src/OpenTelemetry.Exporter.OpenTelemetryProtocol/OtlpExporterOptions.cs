@@ -207,7 +207,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
                 return true;
 
             case "GZIP":
-                result = OtlpExportCompression.Gzip;
+                result = OtlpExportCompression.GZip;
                 return true;
 
             default:

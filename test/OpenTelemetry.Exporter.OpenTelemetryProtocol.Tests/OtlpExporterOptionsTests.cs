@@ -164,15 +164,15 @@ public sealed class OtlpExporterOptionsTests : IDisposable
         Assert.Equal(40000, options.TimeoutMilliseconds);
         Assert.Equal(OtlpExportProtocol.HttpProtobuf, options.Protocol);
         Assert.False(options.AppendSignalPathToEndpoint);
-        Assert.Equal(OtlpExportCompression.Gzip, options.Compression);
+        Assert.Equal(OtlpExportCompression.GZip, options.Compression);
     }
 
     [Theory]
     [InlineData("", OtlpExportCompression.None)]
     [InlineData("foo", OtlpExportCompression.None)]
-    [InlineData("gzip", OtlpExportCompression.Gzip)]
-    [InlineData("GZip", OtlpExportCompression.Gzip)]
-    [InlineData("GZIP", OtlpExportCompression.Gzip)]
+    [InlineData("gzip", OtlpExportCompression.GZip)]
+    [InlineData("GZip", OtlpExportCompression.GZip)]
+    [InlineData("GZIP", OtlpExportCompression.GZip)]
     [InlineData("none", OtlpExportCompression.None)]
     [InlineData("None", OtlpExportCompression.None)]
     [InlineData("NONE", OtlpExportCompression.None)]

@@ -61,7 +61,7 @@ public class OtlpGrpcExportClientTests
             new OtlpExporterOptions
             {
                 Endpoint = new Uri("http://localhost:4317"),
-                Compression = OtlpExportCompression.Gzip,
+                Compression = OtlpExportCompression.GZip,
             },
             httpClient,
             string.Empty);
@@ -91,7 +91,7 @@ public class OtlpGrpcExportClientTests
             new OtlpExporterOptions
             {
                 Endpoint = new Uri("http://localhost:4317"),
-                Compression = OtlpExportCompression.Gzip,
+                Compression = OtlpExportCompression.GZip,
             },
             httpClient,
             string.Empty);

@@ -19,5 +19,5 @@ public enum OtlpExportCompression
     /// <summary>
     /// Compress with GZip.
     /// </summary>
-    Gzip = 1,
+    GZip = 1,
 }
