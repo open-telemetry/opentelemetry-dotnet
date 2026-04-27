@@ -957,18 +957,4 @@ public sealed class PrometheusSerializerTests
         var cursor = WriteMetric(buffer, 0, metrics[0]);
         return Encoding.UTF8.GetString(buffer, 0, cursor);
     }
-
-    private sealed class CustomFormattable(decimal value) : IFormattable
-    {
-        public string ToString(string? format, IFormatProvider? formatProvider)
-            => value.ToString(format, formatProvider);
-
-        public override string ToString()
-            => value.ToString(CultureInfo.CurrentCulture);
-    }
-
-    private sealed class CustomObject(string value)
-    {
-        public override string ToString() => value;
-    }
 }
