@@ -63,7 +63,12 @@ internal sealed class OtlpHttpExportClient : OtlpExportClient
             return base.CreateHttpContent(buffer, contentLength);
         }
 
+#if NET
+        var compressedStream = new PooledBufferStream();
+#else
         var compressedStream = new MemoryStream();
+#endif
+
         using (var gzipStream = new GZipStream(compressedStream, CompressionLevel.Fastest, leaveOpen: true))
         {
             gzipStream.Write(buffer, 0, contentLength);
