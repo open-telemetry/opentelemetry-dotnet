@@ -35,13 +35,17 @@ internal static partial class PrometheusSerializer
     {
         if (MathHelper.IsFinite(value))
         {
+            // From https://prometheus.io/docs/specs/om/open_metrics_spec/#considerations-canonical-numbers:
+            // A warning to implementers in C and other languages that share its printf implementation:
+            // The standard precision of %f, %e and %g is only six significant digits. 17 significant
+            // digits are required for full precision, e.g. printf("%.17g", d).
 #if NET
-            var result = Utf8Formatter.TryFormat(value, buffer.AsSpan(cursor), out var bytesWritten, new StandardFormat('G'));
+            var result = Utf8Formatter.TryFormat(value, buffer.AsSpan(cursor), out var bytesWritten, new StandardFormat('G', 17));
             Debug.Assert(result, $"{nameof(result)} should be true.");
 
             cursor += bytesWritten;
 #else
-            cursor = WriteAsciiStringNoEscape(buffer, cursor, value.ToString(CultureInfo.InvariantCulture));
+            cursor = WriteAsciiStringNoEscape(buffer, cursor, value.ToString("G17", CultureInfo.InvariantCulture));
 #endif
         }
         else if (double.IsPositiveInfinity(value))
@@ -54,8 +58,9 @@ internal static partial class PrometheusSerializer
         }
         else
         {
+            // See https://prometheus.io/docs/instrumenting/exposition_formats/#comments-help-text-and-type-information
             Debug.Assert(double.IsNaN(value), $"{nameof(value)} should be NaN.");
-            cursor = WriteAsciiStringNoEscape(buffer, cursor, "Nan");
+            cursor = WriteAsciiStringNoEscape(buffer, cursor, "NaN");
         }
 
         return cursor;
@@ -107,8 +112,10 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteUnicodeNoEscape(byte[] buffer, int cursor, ushort ordinal)
+    public static int WriteUnicodeNoEscape(byte[] buffer, int cursor, int ordinal)
     {
+        // Strings MUST only consist of valid UTF-8 characters.
+        // See https://prometheus.io/docs/specs/om/open_metrics_spec/#strings.
         if (ordinal <= 0x7F)
         {
             buffer[cursor++] = unchecked((byte)ordinal);
@@ -118,10 +125,16 @@ internal static partial class PrometheusSerializer
             buffer[cursor++] = unchecked((byte)(0b_1100_0000 | (ordinal >> 6)));
             buffer[cursor++] = unchecked((byte)(0b_1000_0000 | (ordinal & 0b_0011_1111)));
         }
+        else if (ordinal <= 0xFFFF)
+        {
+            buffer[cursor++] = unchecked((byte)(0b_1110_0000 | (ordinal >> 12)));
+            buffer[cursor++] = unchecked((byte)(0b_1000_0000 | ((ordinal >> 6) & 0b_0011_1111)));
+            buffer[cursor++] = unchecked((byte)(0b_1000_0000 | (ordinal & 0b_0011_1111)));
+        }
         else
         {
-            // all other <= 0xFFFF which is ushort.MaxValue
-            buffer[cursor++] = unchecked((byte)(0b_1110_0000 | (ordinal >> 12)));
+            buffer[cursor++] = unchecked((byte)(0b_1111_0000 | (ordinal >> 18)));
+            buffer[cursor++] = unchecked((byte)(0b_1000_0000 | ((ordinal >> 12) & 0b_0011_1111)));
             buffer[cursor++] = unchecked((byte)(0b_1000_0000 | ((ordinal >> 6) & 0b_0011_1111)));
             buffer[cursor++] = unchecked((byte)(0b_1000_0000 | (ordinal & 0b_0011_1111)));
         }
@@ -865,7 +878,7 @@ internal static partial class PrometheusSerializer
         return TryWriteAsciiStringNoEscape(
             buffer,
             ref cursor,
-            double.IsPositiveInfinity(value) ? "+Inf" : double.IsNegativeInfinity(value) ? "-Inf" : "Nan");
+            double.IsPositiveInfinity(value) ? "+Inf" : double.IsNegativeInfinity(value) ? "-Inf" : "NaN");
     }
 
     private static bool TryWriteUnicodeNoEscape(Span<byte> buffer, ref int cursor, ushort ordinal)

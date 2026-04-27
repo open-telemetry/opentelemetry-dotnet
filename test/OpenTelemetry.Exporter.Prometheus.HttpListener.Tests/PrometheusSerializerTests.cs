@@ -44,34 +44,18 @@ public sealed class PrometheusSerializerTests
         { long.MaxValue, "9223372036854775807" },
         { ulong.MinValue, "0" },
         { ulong.MaxValue, "18446744073709551615" },
-#if NET
         { float.MinValue, "-3.4028234663852886E+38" },
-#else
-        { float.MinValue, "-3.40282346638529E+38" },
-#endif
         { 0f, "0" },
-        { float.NaN, "Nan" },
+        { float.NaN, "NaN" },
         { float.NegativeInfinity, "-Inf" },
         { float.PositiveInfinity, "+Inf" },
-#if NET
         { float.MaxValue, "3.4028234663852886E+38" },
-#else
-        { float.MaxValue, "3.40282346638529E+38" },
-#endif
-#if NET
         { double.MinValue, "-1.7976931348623157E+308" },
-#else
-        { double.MinValue, "-1.79769313486232E+308" },
-#endif
         { 0d, "0" },
         { double.NegativeInfinity, "-Inf" },
         { double.PositiveInfinity, "+Inf" },
-        { double.NaN, "Nan" },
-#if NET
+        { double.NaN, "NaN" },
         { double.MaxValue, "1.7976931348623157E+308" },
-#else
-        { double.MaxValue, "1.79769313486232E+308" },
-#endif
         { decimal.MinValue, "-79228162514264337593543950335" },
         { 0m, "0" },
         { decimal.MaxValue, "79228162514264337593543950335" },
@@ -302,7 +286,7 @@ public sealed class PrometheusSerializerTests
                 + "# TYPE test_gauge gauge\n"
                 + $"test_gauge{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',y='2'}} -Inf\n"
                 + $"test_gauge{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='3',y='4'}} \\+Inf\n"
-                + $"test_gauge{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='5',y='6'}} Nan\n"
+                + $"test_gauge{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='5',y='6'}} NaN\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -607,7 +591,7 @@ public sealed class PrometheusSerializerTests
                 + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='7500'}} 1\n"
                 + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='10000'}} 1\n"
                 + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',le='\\+Inf'}} 3\n"
-                + $"test_histogram_sum{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} Nan\n"
+                + $"test_histogram_sum{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} NaN\n"
                 + $"test_histogram_count{{otel_scope_name='{Utils.GetCurrentMethodName()}'}} 3\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
@@ -1036,7 +1020,7 @@ public sealed class PrometheusSerializerTests
 
         var cursor = PrometheusSerializer.WriteDouble(buffer, 0, double.NaN);
 
-        Assert.Equal("Nan", Encoding.UTF8.GetString(buffer, 0, cursor));
+        Assert.Equal("NaN", Encoding.UTF8.GetString(buffer, 0, cursor));
     }
 
     [Fact]

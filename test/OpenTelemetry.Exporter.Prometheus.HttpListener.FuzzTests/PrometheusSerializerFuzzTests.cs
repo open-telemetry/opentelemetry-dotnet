@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Globalization;
+using System.Text;
 using FsCheck;
 using FsCheck.Fluent;
 using FsCheck.Xunit;
@@ -129,10 +130,12 @@ public class PrometheusSerializerFuzzTests
             bool boolValue => boolValue ? "true" : "false",
             float floatValue when float.IsPositiveInfinity(floatValue) => "+Inf",
             float floatValue when float.IsNegativeInfinity(floatValue) => "-Inf",
-            float floatValue when float.IsNaN(floatValue) => "Nan",
+            float floatValue when float.IsNaN(floatValue) => "NaN",
+            float floatValue => floatValue.ToString("G17", CultureInfo.InvariantCulture),
             double doubleValue when double.IsPositiveInfinity(doubleValue) => "+Inf",
             double doubleValue when double.IsNegativeInfinity(doubleValue) => "-Inf",
-            double doubleValue when double.IsNaN(doubleValue) => "Nan",
+            double doubleValue when double.IsNaN(doubleValue) => "NaN",
+            double doubleValue => doubleValue.ToString("G17", CultureInfo.InvariantCulture),
             IFormattable formattableValue => formattableValue.ToString(null, CultureInfo.InvariantCulture),
             _ => value.ToString(),
         };
@@ -142,14 +145,14 @@ public class PrometheusSerializerFuzzTests
 
     private static byte[] ReferenceWriteUnicodeString(string value) => ReferenceWriteEscapedString(value, escapeQuotationMarks: false);
 
-    private static byte[] ReferenceWriteLong(long value) => System.Text.Encoding.UTF8.GetBytes(value.ToString(CultureInfo.InvariantCulture));
+    private static byte[] ReferenceWriteLong(long value) => Encoding.UTF8.GetBytes(value.ToString(CultureInfo.InvariantCulture));
 
     private static byte[] ReferenceWriteDouble(double value) => value switch
     {
-        var doubleValue when double.IsPositiveInfinity(doubleValue) => System.Text.Encoding.UTF8.GetBytes("+Inf"),
-        var doubleValue when double.IsNegativeInfinity(doubleValue) => System.Text.Encoding.UTF8.GetBytes("-Inf"),
-        var doubleValue when double.IsNaN(doubleValue) => System.Text.Encoding.UTF8.GetBytes("Nan"),
-        _ => System.Text.Encoding.UTF8.GetBytes(value.ToString("G", CultureInfo.InvariantCulture)),
+        var doubleValue when double.IsPositiveInfinity(doubleValue) => Encoding.UTF8.GetBytes("+Inf"),
+        var doubleValue when double.IsNegativeInfinity(doubleValue) => Encoding.UTF8.GetBytes("-Inf"),
+        var doubleValue when double.IsNaN(doubleValue) => Encoding.UTF8.GetBytes("NaN"),
+        _ => Encoding.UTF8.GetBytes(value.ToString("G17", CultureInfo.InvariantCulture)),
     };
 
     private static byte[] ReferenceWriteEscapedString(string value, bool escapeQuotationMarks)
