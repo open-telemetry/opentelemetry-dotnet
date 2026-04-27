@@ -11,6 +11,15 @@ Notes](../../RELEASENOTES.md).
   `PrometheusAspNetCoreOptions`.
   ([#7176](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7176))
 
+* Fixed the serialization of `NaN`, `PositiveInfinity`, and `NegativeInfinity`
+  values in Prometheus metrics to be compliant with the specification.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
+* Fixed loss of precision when serializing `double` and `float` values in
+  Prometheus metrics to be compliant with the specification by using 17
+  significant digits to represent such values.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.15.3-beta.1
 
 Released 2026-Apr-21
