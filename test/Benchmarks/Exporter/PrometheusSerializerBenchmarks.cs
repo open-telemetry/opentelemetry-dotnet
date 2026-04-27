@@ -76,7 +76,7 @@ public class PrometheusSerializerBenchmarks
     {
         for (var i = 0; i < this.NumberOfSerializeCalls; i++)
         {
-            _ = PrometheusSerializer.WriteMetric(this.buffer, 0, this.histogramMetric!, this.GetPrometheusMetric(this.histogramMetric!), openMetricsRequested: false, disableTimestamp: false);
+            _ = PrometheusSerializer.WriteMetric(this.buffer, 0, this.histogramMetric!, this.GetPrometheusMetric(this.histogramMetric!), openMetricsRequested: false);
         }
     }
 
@@ -85,7 +85,7 @@ public class PrometheusSerializerBenchmarks
     {
         for (var i = 0; i < this.NumberOfSerializeCalls; i++)
         {
-            _ = PrometheusSerializer.WriteMetric(this.buffer, 0, this.typedLabelsMetric!, this.GetPrometheusMetric(this.typedLabelsMetric!), openMetricsRequested: false, disableTimestamp: false);
+            _ = PrometheusSerializer.WriteMetric(this.buffer, 0, this.typedLabelsMetric!, this.GetPrometheusMetric(this.typedLabelsMetric!), openMetricsRequested: false);
         }
     }
 
