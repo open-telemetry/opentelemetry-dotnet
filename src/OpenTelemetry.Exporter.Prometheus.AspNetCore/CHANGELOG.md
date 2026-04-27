@@ -12,7 +12,7 @@ Notes](../../RELEASENOTES.md).
   ([#7176](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7176))
 
 * Fix case where reader tracking could be reset while readers were still active.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7190](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7190))
 
 ## 1.15.3-beta.1
 
