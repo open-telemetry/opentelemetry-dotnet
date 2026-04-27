@@ -144,13 +144,7 @@ internal static partial class PrometheusSerializer
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteUnicodeString(byte[] buffer, int cursor, string value)
-    {
-#if NET
-        return WriteEscapedUtf8String(buffer, cursor, value.AsSpan(), UnicodeEscapeChars);
-#else
-        return WriteEscapedUtf16String(buffer, cursor, value, escapeQuotationMarks: false);
-#endif
-    }
+        => WriteEscapedString(buffer, cursor, value, escapeQuotationMarks: false);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteLabelKey(byte[] buffer, int cursor, string value)
@@ -177,13 +171,7 @@ internal static partial class PrometheusSerializer
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteLabelValue(byte[] buffer, int cursor, string value)
-    {
-#if NET
-        return WriteEscapedUtf8String(buffer, cursor, value.AsSpan(), LabelValueEscapeChars);
-#else
-        return WriteEscapedUtf16String(buffer, cursor, value, escapeQuotationMarks: true);
-#endif
-    }
+        => WriteEscapedString(buffer, cursor, value, escapeQuotationMarks: true);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteLabelValue(byte[] buffer, int cursor, object? value)
@@ -264,27 +252,11 @@ internal static partial class PrometheusSerializer
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteMetricName(byte[] buffer, int cursor, PrometheusMetric metric, bool openMetricsRequested)
-    {
-        // Metric name has already been escaped.
-        var name = openMetricsRequested ? metric.OpenMetricsName : metric.Name;
-        var nameBytes = openMetricsRequested ? metric.OpenMetricsNameBytes : metric.NameBytes;
-
-        Debug.Assert(!string.IsNullOrWhiteSpace(name), "name was null or whitespace");
-
-        return WriteUtf8NoEscape(buffer, cursor, nameBytes);
-    }
+        => WriteCachedMetricName(buffer, cursor, GetMetricName(metric, openMetricsRequested));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteMetricMetadataName(byte[] buffer, int cursor, PrometheusMetric metric, bool openMetricsRequested)
-    {
-        // Metric name has already been escaped.
-        var name = openMetricsRequested ? metric.OpenMetricsMetadataName : metric.Name;
-        var nameBytes = openMetricsRequested ? metric.OpenMetricsMetadataNameBytes : metric.NameBytes;
-
-        Debug.Assert(!string.IsNullOrWhiteSpace(name), "name was null or whitespace");
-
-        return WriteUtf8NoEscape(buffer, cursor, nameBytes);
-    }
+        => WriteCachedMetricName(buffer, cursor, GetMetricMetadataName(metric, openMetricsRequested));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteEof(byte[] buffer, int cursor)
@@ -466,6 +438,13 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int WriteCachedMetricName(byte[] buffer, int cursor, KeyValuePair<string, byte[]> name)
+    {
+        Debug.Assert(!string.IsNullOrWhiteSpace(name.Key), "name was null or whitespace");
+        return WriteUtf8NoEscape(buffer, cursor, name.Value);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IsAsciiDigit(char value) =>
 #if NET
         char.IsAsciiDigit(value);
@@ -486,6 +465,16 @@ internal static partial class PrometheusSerializer
         value.CopyTo(buffer.AsSpan(cursor));
         return cursor + value.Length;
     }
+
+    private static KeyValuePair<string, byte[]> GetMetricName(PrometheusMetric metric, bool openMetricsRequested) =>
+        openMetricsRequested
+            ? new(metric.OpenMetricsName, metric.OpenMetricsNameBytes)
+            : new(metric.Name, metric.NameBytes);
+
+    private static KeyValuePair<string, byte[]> GetMetricMetadataName(PrometheusMetric metric, bool openMetricsRequested) =>
+        openMetricsRequested
+            ? new(metric.OpenMetricsMetadataName, metric.OpenMetricsMetadataNameBytes)
+            : new(metric.Name, metric.NameBytes);
 
     private static int GetUnicodeOrdinal(ReadOnlySpan<char> value, out int charsConsumed)
     {
@@ -516,6 +505,9 @@ internal static partial class PrometheusSerializer
     }
 
 #if NET
+    private static int WriteEscapedString(byte[] buffer, int cursor, string value, bool escapeQuotationMarks)
+        => WriteEscapedUtf8String(buffer, cursor, value.AsSpan(), escapeQuotationMarks ? LabelValueEscapeChars : UnicodeEscapeChars);
+
     private static int WriteUtf8NoEscape(byte[] buffer, int cursor, ReadOnlySpan<char> value) =>
         cursor + System.Text.Encoding.UTF8.GetBytes(value, buffer.AsSpan(cursor));
 
@@ -569,6 +561,9 @@ internal static partial class PrometheusSerializer
         return cursor;
     }
 #else
+    private static int WriteEscapedString(byte[] buffer, int cursor, string value, bool escapeQuotationMarks)
+        => WriteEscapedUtf16String(buffer, cursor, value, escapeQuotationMarks);
+
     private static int WriteEscapedUtf16String(byte[] buffer, int cursor, string value, bool escapeQuotationMarks)
     {
         for (var i = 0; i < value.Length; i++)
