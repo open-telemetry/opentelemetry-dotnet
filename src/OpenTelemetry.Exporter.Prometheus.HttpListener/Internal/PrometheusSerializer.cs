@@ -352,32 +352,6 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteTimestamp(byte[] buffer, int cursor, long value, bool useOpenMetrics)
-    {
-        if (useOpenMetrics)
-        {
-            cursor = WriteLong(buffer, cursor, value / 1000);
-            buffer[cursor++] = unchecked((byte)'.');
-
-            var millis = value % 1000;
-
-            if (millis < 100)
-            {
-                buffer[cursor++] = unchecked((byte)'0');
-            }
-
-            if (millis < 10)
-            {
-                buffer[cursor++] = unchecked((byte)'0');
-            }
-
-            return WriteLong(buffer, cursor, millis);
-        }
-
-        return WriteLong(buffer, cursor, value);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteTags(byte[] buffer, int cursor, Metric metric, ReadOnlyTagCollection tags, bool writeEnclosingBraces = true)
     {
         if (writeEnclosingBraces)

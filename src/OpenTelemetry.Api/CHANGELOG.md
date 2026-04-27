@@ -10,6 +10,10 @@ Notes](../../RELEASENOTES.md).
 the [W3C Baggage specification](https://www.w3.org/TR/baggage/#key-and-value-encoding).
   [#7051](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7051)
 
+## 1.15.3
+
+Released 2026-Apr-21
+
 * Fix baggage and trace headers not respecting the maximum length in some cases.
   ([#7061](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7061))
 
