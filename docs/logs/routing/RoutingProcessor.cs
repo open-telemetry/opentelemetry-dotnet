@@ -39,14 +39,16 @@ internal sealed class RoutingProcessor : BaseProcessor<LogRecord>
 
     protected override bool OnForceFlush(int timeoutMilliseconds)
     {
-        return this.primaryProcessor.ForceFlush(timeoutMilliseconds)
-            && this.secondaryProcessor.ForceFlush(timeoutMilliseconds);
+        var result1 = this.primaryProcessor.ForceFlush(timeoutMilliseconds);
+        var result2 = this.secondaryProcessor.ForceFlush(timeoutMilliseconds);
+        return result1 && result2;
     }
 
     protected override bool OnShutdown(int timeoutMilliseconds)
     {
-        return this.primaryProcessor.Shutdown(timeoutMilliseconds)
-            && this.secondaryProcessor.Shutdown(timeoutMilliseconds);
+        var result1 = this.primaryProcessor.Shutdown(timeoutMilliseconds);
+        var result2 = this.secondaryProcessor.Shutdown(timeoutMilliseconds);
+        return result1 && result2;
     }
 
     protected override void Dispose(bool disposing)
