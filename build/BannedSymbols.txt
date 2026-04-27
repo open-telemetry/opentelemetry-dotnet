@@ -1,66 +1,60 @@
-M:nint.TryParse(System.String,nint@)
-M:nint.TryParse(System.ReadOnlySpan{System.Char},nint@)
-M:nuint.TryParse(System.String,nuint@)
-M:nuint.TryParse(System.ReadOnlySpan{System.Char},nuint@)
-M:System.Byte.TryParse(System.ReadOnlySpan{System.Char},System.Byte@)
-M:System.Byte.TryParse(System.String,System.Byte@)
-M:System.DateOnly.TryParse(System.ReadOnlySpan{System.Char},System.DateOnly@)
-M:System.DateOnly.TryParse(System.String,System.DateOnly@)
-M:System.DateTime.TryParse(System.ReadOnlySpan{System.Char},System.DateTime@)
-M:System.DateTime.TryParse(System.String,System.DateTime@)
-M:System.DateTimeOffset.TryParse(System.ReadOnlySpan{System.Char},System.DateTimeOffset@)
-M:System.DateTimeOffset.TryParse(System.String,System.DateTimeOffset@)
-M:System.Decimal.TryParse(System.ReadOnlySpan{System.Char},System.Decimal@)
-M:System.Decimal.TryParse(System.String,System.Decimal@)
-M:System.Diagnostics.ActivitySource.#ctor(System.String); Use ActivitySource.ActivitySource(ActivitySourceOptions) instead.
-M:System.Diagnostics.ActivitySource.#ctor(System.String,System.String); Use ActivitySource.ActivitySource(ActivitySourceOptions) instead.
-M:System.Diagnostics.ActivitySource.#ctor(System.String,System.String,System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,System.Object}}); Use ActivitySource.ActivitySource(ActivitySourceOptions) instead.
-M:System.Diagnostics.Metrics.Meter.#ctor(System.String); Use Meter.Meter(MeterOptions) instead.
-M:System.Diagnostics.Metrics.Meter.#ctor(System.String,System.String); Use Meter.Meter(MeterOptions) instead.
-M:System.Diagnostics.Metrics.Meter.#ctor(System.String,System.String,System.Collections.Generic.IEnumerable{System.Collections.Generic.KeyValuePair{System.String,System.Object}},System.Object); Use Meter.Meter(MeterOptions) instead.
-M:System.Double.TryParse(System.ReadOnlySpan{System.Char},System.Double@)
-M:System.Double.TryParse(System.String,System.Double@)
-M:System.Half.TryParse(System.ReadOnlySpan{System.Char},System.Half@)
-M:System.Half.TryParse(System.String,System.Half@)
-M:System.Int128.TryParse(System.ReadOnlySpan{System.Char},System.Int128@)
-M:System.Int128.TryParse(System.String,System.Int128@)
-M:System.Int16.TryParse(System.ReadOnlySpan{System.Char},System.Int16@)
-M:System.Int16.TryParse(System.String,System.Int16@)
-M:System.Int32.TryParse(System.ReadOnlySpan{System.Char},System.Int32@)
-M:System.Int32.TryParse(System.String,System.Int32@)
-M:System.Int64.TryParse(System.ReadOnlySpan{System.Char},System.Int64@)
-M:System.Int64.TryParse(System.String,System.Int64@)
-M:System.IntPtr.TryParse(System.ReadOnlySpan{System.Char},System.IntPtr@)
-M:System.IntPtr.TryParse(System.String,System.IntPtr@)
-M:System.Net.Http.HttpClient.GetByteArrayAsync(System.String)
-M:System.Net.Http.HttpClient.GetByteArrayAsync(System.String,System.Threading.CancellationToken)
-M:System.Net.Http.HttpClient.GetByteArrayAsync(System.Uri)
-M:System.Net.Http.HttpClient.GetByteArrayAsync(System.Uri,System.Threading.CancellationToken)
-M:System.Net.Http.HttpClient.GetStringAsync(System.String)
-M:System.Net.Http.HttpClient.GetStringAsync(System.String,System.Threading.CancellationToken)
-M:System.Net.Http.HttpClient.GetStringAsync(System.Uri)
-M:System.Net.Http.HttpClient.GetStringAsync(System.Uri,System.Threading.CancellationToken)
-M:System.Net.Http.HttpContent.ReadAsByteArrayAsync()
-M:System.Net.Http.HttpContent.ReadAsByteArrayAsync(System.Threading.CancellationToken)
-M:System.Net.Http.HttpContent.ReadAsStringAsync()
-M:System.Net.Http.HttpContent.ReadAsStringAsync(System.Threading.CancellationToken)
-M:System.Numerics.BigInteger.TryParse(System.ReadOnlySpan{System.Char},System.Numerics.BigInteger@)
-M:System.Numerics.BigInteger.TryParse(System.String,System.Numerics.BigInteger@)
-M:System.SByte.TryParse(System.ReadOnlySpan{System.Char},System.SByte@)
-M:System.SByte.TryParse(System.String,System.SByte@)
-M:System.Single.TryParse(System.ReadOnlySpan{System.Char},System.Single@)
-M:System.Single.TryParse(System.String,System.Single@)
-M:System.TimeOnly.TryParse(System.ReadOnlySpan{System.Char},System.TimeOnly@)
-M:System.TimeOnly.TryParse(System.String,System.TimeOnly@)
-M:System.TimeSpan.TryParse(System.ReadOnlySpan{System.Char},System.TimeSpan@)
-M:System.TimeSpan.TryParse(System.String,System.TimeSpan@)
-M:System.UInt128.TryParse(System.ReadOnlySpan{System.Char},System.UInt128@)
-M:System.UInt128.TryParse(System.String,System.UInt128@)
-M:System.UInt16.TryParse(System.ReadOnlySpan{System.Char},System.UInt16@)
-M:System.UInt16.TryParse(System.String,System.UInt16@)
-M:System.UInt32.TryParse(System.ReadOnlySpan{System.Char},System.UInt32@)
-M:System.UInt32.TryParse(System.String,System.UInt32@)
-M:System.UInt64.TryParse(System.ReadOnlySpan{System.Char},System.UInt64@
-M:System.UInt64.TryParse(System.String,System.UInt64@
-M:System.UIntPtr.TryParse(System.ReadOnlySpan{System.Char},System.UIntPtr@)
-M:System.UIntPtr.TryParse(System.String,System.UIntPtr@)
+M:nint.TryParse(System.String,nint@); Use overloads that specify CultureInfo.InvariantCulture.
+M:nint.TryParse(System.ReadOnlySpan{System.Char},nint@); Use overloads that specify CultureInfo.InvariantCulture.
+M:nuint.TryParse(System.String,nuint@); Use overloads that specify CultureInfo.InvariantCulture.
+M:nuint.TryParse(System.ReadOnlySpan{System.Char},nuint@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.Byte.TryParse(System.ReadOnlySpan{System.Char},System.Byte@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.Byte.TryParse(System.String,System.Byte@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.DateOnly.TryParse(System.ReadOnlySpan{System.Char},System.DateOnly@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.DateOnly.TryParse(System.String,System.DateOnly@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.DateTime.TryParse(System.ReadOnlySpan{System.Char},System.DateTime@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.DateTime.TryParse(System.String,System.DateTime@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.DateTimeOffset.TryParse(System.ReadOnlySpan{System.Char},System.DateTimeOffset@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.DateTimeOffset.TryParse(System.String,System.DateTimeOffset@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.Decimal.TryParse(System.ReadOnlySpan{System.Char},System.Decimal@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.Decimal.TryParse(System.String,System.Decimal@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.Double.TryParse(System.ReadOnlySpan{System.Char},System.Double@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.Double.TryParse(System.String,System.Double@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.Half.TryParse(System.ReadOnlySpan{System.Char},System.Half@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.Half.TryParse(System.String,System.Half@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.Int128.TryParse(System.ReadOnlySpan{System.Char},System.Int128@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.Int128.TryParse(System.String,System.Int128@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.Int16.TryParse(System.ReadOnlySpan{System.Char},System.Int16@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.Int16.TryParse(System.String,System.Int16@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.Int32.TryParse(System.ReadOnlySpan{System.Char},System.Int32@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.Int32.TryParse(System.String,System.Int32@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.Int64.TryParse(System.ReadOnlySpan{System.Char},System.Int64@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.Int64.TryParse(System.String,System.Int64@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.IntPtr.TryParse(System.ReadOnlySpan{System.Char},System.IntPtr@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.IntPtr.TryParse(System.String,System.IntPtr@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.Net.Http.HttpClient.GetByteArrayAsync(System.String); Use methods on HttpClientHelpers instead.
+M:System.Net.Http.HttpClient.GetByteArrayAsync(System.String,System.Threading.CancellationToken); Use methods on HttpClientHelpers instead.
+M:System.Net.Http.HttpClient.GetByteArrayAsync(System.Uri); Use methods on HttpClientHelpers instead.
+M:System.Net.Http.HttpClient.GetByteArrayAsync(System.Uri,System.Threading.CancellationToken); Use methods on HttpClientHelpers instead.
+M:System.Net.Http.HttpClient.GetStringAsync(System.String); Use methods on HttpClientHelpers instead.
+M:System.Net.Http.HttpClient.GetStringAsync(System.String,System.Threading.CancellationToken); Use methods on HttpClientHelpers instead.
+M:System.Net.Http.HttpClient.GetStringAsync(System.Uri); Use methods on HttpClientHelpers instead.
+M:System.Net.Http.HttpClient.GetStringAsync(System.Uri,System.Threading.CancellationToken); Use methods on HttpClientHelpers instead.
+M:System.Net.Http.HttpContent.ReadAsByteArrayAsync(); Use methods on HttpClientHelpers instead.
+M:System.Net.Http.HttpContent.ReadAsByteArrayAsync(System.Threading.CancellationToken); Use methods on HttpClientHelpers instead.
+M:System.Net.Http.HttpContent.ReadAsStringAsync(); Use methods on HttpClientHelpers instead.
+M:System.Net.Http.HttpContent.ReadAsStringAsync(System.Threading.CancellationToken); Use methods on HttpClientHelpers instead.
+M:System.Numerics.BigInteger.TryParse(System.ReadOnlySpan{System.Char},System.Numerics.BigInteger@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.Numerics.BigInteger.TryParse(System.String,System.Numerics.BigInteger@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.SByte.TryParse(System.ReadOnlySpan{System.Char},System.SByte@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.SByte.TryParse(System.String,System.SByte@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.Single.TryParse(System.ReadOnlySpan{System.Char},System.Single@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.Single.TryParse(System.String,System.Single@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.TimeOnly.TryParse(System.ReadOnlySpan{System.Char},System.TimeOnly@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.TimeOnly.TryParse(System.String,System.TimeOnly@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.TimeSpan.TryParse(System.ReadOnlySpan{System.Char},System.TimeSpan@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.TimeSpan.TryParse(System.String,System.TimeSpan@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.UInt128.TryParse(System.ReadOnlySpan{System.Char},System.UInt128@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.UInt128.TryParse(System.String,System.UInt128@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.UInt16.TryParse(System.ReadOnlySpan{System.Char},System.UInt16@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.UInt16.TryParse(System.String,System.UInt16@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.UInt32.TryParse(System.ReadOnlySpan{System.Char},System.UInt32@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.UInt32.TryParse(System.String,System.UInt32@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.UInt64.TryParse(System.ReadOnlySpan{System.Char},System.UInt64@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.UInt64.TryParse(System.String,System.UInt64@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.UIntPtr.TryParse(System.ReadOnlySpan{System.Char},System.UIntPtr@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.UIntPtr.TryParse(System.String,System.UIntPtr@); Use overloads that specify CultureInfo.InvariantCulture.
