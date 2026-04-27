@@ -11,7 +11,11 @@ Notes](../../RELEASENOTES.md).
   for configuring the HTTP listener endpoint. The
   `PrometheusHttpListenerOptions.UriPrefixes` property is now obsolete and
   will be removed in the stable release.
-  ([#7107](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7114))
+  ([#7114](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7114))
+
+* **Breaking Change** Removed `DisableTimestamp` property from
+  `PrometheusHttpListenerOptions`.
+  ([#7176](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7176))
 
 * Add support for configuring the HTTP listener endpoint host and port using
   the `OTEL_EXPORTER_PROMETHEUS_HOST` and `OTEL_EXPORTER_PROMETHEUS_PORT`
