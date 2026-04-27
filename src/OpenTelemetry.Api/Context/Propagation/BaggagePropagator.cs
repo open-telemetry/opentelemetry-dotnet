@@ -194,7 +194,7 @@ public class BaggagePropagator : TextMapPropagator
             while (!remaining.IsEmpty)
             {
                 var pair = ReadNextSegment(ref remaining, ',');
-                baggageLength += pair.Length + 1; // pair and comma
+                baggageLength += pair.Length + 1;
 
                 if (baggageLength >= MaxBaggageLength || baggageDictionary?.Count >= MaxBaggageItems)
                 {
@@ -208,7 +208,6 @@ public class BaggagePropagator : TextMapPropagator
                     continue;
                 }
 
-                // Do not decode keys, add a function that checks if key-value pair needs to be dropped
                 if (!IsValidKey(pair.Slice(0, separatorIndex)))
                 {
                     continue;
@@ -257,15 +256,19 @@ public class BaggagePropagator : TextMapPropagator
         return result;
     }
 
-    private static string EncodeValue(ReadOnlySpan<char> value)
+    private static string EncodeKey(ReadOnlySpan<char> key) => Encode(key, isKey: true);
+
+    private static string EncodeValue(ReadOnlySpan<char> value) => Encode(value, isKey: false);
+
+    private static string Encode(ReadOnlySpan<char> value, bool isKey)
     {
 #if NET
-        if (!value.ContainsAny(InvalidValueSearcher))
+        if (!value.ContainsAny(isKey ? InvalidKeySearcher : InvalidValueSearcher))
         {
             return value.ToString();
         }
 #else
-        if (value.IndexOfAny(InvalidValueChars) < 0)
+        if (value.IndexOfAny(isKey ? InvalidCharsArray : InvalidValueChars) < 0)
         {
             return value.ToString();
         }
@@ -279,50 +282,8 @@ public class BaggagePropagator : TextMapPropagator
 #endif
         foreach (var c in value)
         {
-            if (IsInvalidValueChar(c))
-            {
-#if NET
-                encoded[1] = hex[(c >> 4) & 0xF];
-                encoded[2] = hex[c & 0xF];
-                sb.Append(encoded);
-#else
-                sb.Append('%')
-                .Append(hex[(c >> 4) & 0xF])
-                .Append(hex[c & 0xF]);
-#endif
-            }
-            else
-            {
-                sb.Append(c);
-            }
-        }
-
-        return sb.ToString();
-    }
-
-    private static string EncodeKey(ReadOnlySpan<char> key)
-    {
-#if NET
-        if (!key.ContainsAny(InvalidKeySearcher))
-        {
-            return key.ToString();
-        }
-#else
-        if (key.IndexOfAny(InvalidCharsArray) < 0)
-        {
-            return key.ToString();
-        }
-#endif
-
-        const string hex = "0123456789ABCDEF";
-        var sb = new StringBuilder(key.Length);
-#if NET
-        Span<char> encoded = stackalloc char[3];
-        encoded[0] = '%';
-#endif
-        foreach (var c in key)
-        {
-            if (!IsValidKey(c))
+            var shouldEncode = isKey ? !IsValidKey(c) : IsInvalidValueChar(c);
+            if (shouldEncode)
             {
 #if NET
                 encoded[1] = hex[(c >> 4) & 0xF];
