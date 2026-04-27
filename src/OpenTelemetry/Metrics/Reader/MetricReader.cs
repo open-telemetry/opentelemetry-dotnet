@@ -120,69 +120,7 @@ public abstract partial class MetricReader : IDisposable
     /// the semantic can be preserved.
     /// </remarks>
     public bool Collect(int timeoutMilliseconds = Timeout.Infinite)
-    {
-        Guard.ThrowIfInvalidTimeout(timeoutMilliseconds);
-
-        OpenTelemetrySdkEventSource.Log.MetricReaderEvent("MetricReader.Collect method called.");
-        var shouldRunCollect = false;
-        var tcs = this.collectionTcs;
-
-        if (tcs == null)
-        {
-            lock (this.newTaskLock)
-            {
-                tcs = this.collectionTcs;
-
-                if (tcs == null)
-                {
-                    shouldRunCollect = true;
-                    tcs = new TaskCompletionSource<bool>();
-                    this.collectionTcs = tcs;
-                }
-            }
-        }
-
-        if (!shouldRunCollect)
-        {
-            return Task.WaitAny([tcs.Task, this.shutdownTcs.Task], timeoutMilliseconds) == 0 && tcs.Task.Result;
-        }
-
-        var result = false;
-        try
-        {
-            lock (this.onCollectLock)
-            {
-                result = this.OnCollect(timeoutMilliseconds);
-            }
-        }
-        catch (Exception ex)
-        {
-            OpenTelemetrySdkEventSource.Log.MetricReaderException(nameof(this.Collect), ex);
-        }
-        finally
-        {
-            tcs.TrySetResult(result);
-
-            lock (this.newTaskLock)
-            {
-                if (ReferenceEquals(this.collectionTcs, tcs))
-                {
-                    this.collectionTcs = null;
-                }
-            }
-        }
-
-        if (result)
-        {
-            OpenTelemetrySdkEventSource.Log.MetricReaderEvent("MetricReader.Collect succeeded.");
-        }
-        else
-        {
-            OpenTelemetrySdkEventSource.Log.MetricReaderEvent("MetricReader.Collect failed.");
-        }
-
-        return result;
-    }
+        => this.Collect(timeoutMilliseconds, collectObservableInstruments: true);
 
     /// <summary>
     /// Attempts to shutdown the processor, blocks the current thread until
@@ -244,6 +182,12 @@ public abstract partial class MetricReader : IDisposable
         GC.SuppressFinalize(this);
     }
 
+    internal bool CollectFromComposite(int timeoutMilliseconds = Timeout.Infinite)
+        => this.Collect(timeoutMilliseconds, collectObservableInstruments: false);
+
+    internal void CollectObservableInstruments()
+        => (this.parentProvider as MeterProviderSdk)?.CollectObservableInstruments();
+
     internal virtual void SetParentProvider(BaseProvider parentProvider)
     {
         if (this.parentProvider != null && this.parentProvider != parentProvider)
@@ -270,6 +214,30 @@ public abstract partial class MetricReader : IDisposable
         => true;
 
     /// <summary>
+    /// Called by <c>CollectFromComposite</c>. This function should block the
+    /// current thread until metrics collection completed, shutdown signaled
+    /// or timed out.
+    /// </summary>
+    /// <param name="timeoutMilliseconds">
+    /// The number (non-negative) of milliseconds to wait, or
+    /// <c>Timeout.Infinite</c> to wait indefinitely.
+    /// </param>
+    /// <returns>
+    /// Returns <c>true</c> when metrics collection succeeded; otherwise,
+    /// <c>false</c>.
+    /// </returns>
+    internal virtual bool OnCollectFromComposite(int timeoutMilliseconds)
+    {
+        OpenTelemetrySdkEventSource.Log.MetricReaderEvent("MetricReader.OnCollectFromComposite called.");
+
+        var sw = timeoutMilliseconds == Timeout.Infinite
+            ? null
+            : Stopwatch.StartNew();
+
+        return this.ProcessMetricsCollection(sw, timeoutMilliseconds);
+    }
+
+    /// <summary>
     /// Called by <c>Collect</c>. This function should block the current
     /// thread until metrics collection completed, shutdown signaled or
     /// timed out.
@@ -294,10 +262,114 @@ public abstract partial class MetricReader : IDisposable
             ? null
             : Stopwatch.StartNew();
 
-        var meterProviderSdk = this.parentProvider as MeterProviderSdk;
-        meterProviderSdk?.CollectObservableInstruments();
+        this.CollectObservableInstruments();
 
         OpenTelemetrySdkEventSource.Log.MetricReaderEvent("Observable instruments collected.");
+
+        return this.ProcessMetricsCollection(sw, timeoutMilliseconds);
+    }
+
+    /// <summary>
+    /// Called by <c>Shutdown</c>. This function should block the current
+    /// thread until shutdown completed or timed out.
+    /// </summary>
+    /// <param name="timeoutMilliseconds">
+    /// The number (non-negative) of milliseconds to wait, or
+    /// <c>Timeout.Infinite</c> to wait indefinitely.
+    /// </param>
+    /// <returns>
+    /// Returns <c>true</c> when shutdown succeeded; otherwise, <c>false</c>.
+    /// </returns>
+    /// <remarks>
+    /// This function is called synchronously on the thread which made the
+    /// first call to <c>Shutdown</c>. This function should not throw
+    /// exceptions.
+    /// </remarks>
+    protected virtual bool OnShutdown(int timeoutMilliseconds)
+        => this.Collect(timeoutMilliseconds);
+
+    /// <summary>
+    /// Releases the unmanaged resources used by this class and optionally
+    /// releases the managed resources.
+    /// </summary>
+    /// <param name="disposing">
+    /// <see langword="true"/> to release both managed and unmanaged resources;
+    /// <see langword="false"/> to release only unmanaged resources.
+    /// </param>
+    protected virtual void Dispose(bool disposing)
+    {
+    }
+
+    private bool Collect(int timeoutMilliseconds, bool collectObservableInstruments)
+    {
+        Guard.ThrowIfInvalidTimeout(timeoutMilliseconds);
+
+        OpenTelemetrySdkEventSource.Log.MetricReaderEvent("MetricReader.Collect method called.");
+        var shouldRunCollect = false;
+        var tcs = this.collectionTcs;
+
+        if (tcs == null)
+        {
+            lock (this.newTaskLock)
+            {
+                tcs = this.collectionTcs;
+
+                if (tcs == null)
+                {
+                    shouldRunCollect = true;
+                    tcs = new TaskCompletionSource<bool>();
+                    this.collectionTcs = tcs;
+                }
+            }
+        }
+
+        if (!shouldRunCollect)
+        {
+            return Task.WaitAny([tcs.Task, this.shutdownTcs.Task], timeoutMilliseconds) == 0 && tcs.Task.Result;
+        }
+
+        var result = false;
+        try
+        {
+            lock (this.onCollectLock)
+            {
+                result = collectObservableInstruments
+                    ? this.OnCollect(timeoutMilliseconds)
+                    : this.OnCollectFromComposite(timeoutMilliseconds);
+            }
+        }
+        catch (Exception ex)
+        {
+            OpenTelemetrySdkEventSource.Log.MetricReaderException(nameof(this.Collect), ex);
+        }
+        finally
+        {
+            tcs.TrySetResult(result);
+
+            lock (this.newTaskLock)
+            {
+                if (ReferenceEquals(this.collectionTcs, tcs))
+                {
+                    this.collectionTcs = null;
+                }
+            }
+        }
+
+        if (result)
+        {
+            OpenTelemetrySdkEventSource.Log.MetricReaderEvent("MetricReader.Collect succeeded.");
+        }
+        else
+        {
+            OpenTelemetrySdkEventSource.Log.MetricReaderEvent("MetricReader.Collect failed.");
+        }
+
+        return result;
+    }
+
+    private bool ProcessMetricsCollection(Stopwatch? sw, int timeoutMilliseconds)
+    {
+        OpenTelemetrySdkEventSource.Log.MetricReaderEvent("ProcessMetricsCollection called.");
 
         var metrics = this.GetMetricsBatch();
 
@@ -340,36 +412,5 @@ public abstract partial class MetricReader : IDisposable
 
             return result;
         }
-    }
-
-    /// <summary>
-    /// Called by <c>Shutdown</c>. This function should block the current
-    /// thread until shutdown completed or timed out.
-    /// </summary>
-    /// <param name="timeoutMilliseconds">
-    /// The number (non-negative) of milliseconds to wait, or
-    /// <c>Timeout.Infinite</c> to wait indefinitely.
-    /// </param>
-    /// <returns>
-    /// Returns <c>true</c> when shutdown succeeded; otherwise, <c>false</c>.
-    /// </returns>
-    /// <remarks>
-    /// This function is called synchronously on the thread which made the
-    /// first call to <c>Shutdown</c>. This function should not throw
-    /// exceptions.
-    /// </remarks>
-    protected virtual bool OnShutdown(int timeoutMilliseconds)
-        => this.Collect(timeoutMilliseconds);
-
-    /// <summary>
-    /// Releases the unmanaged resources used by this class and optionally
-    /// releases the managed resources.
-    /// </summary>
-    /// <param name="disposing">
-    /// <see langword="true"/> to release both managed and unmanaged resources;
-    /// <see langword="false"/> to release only unmanaged resources.
-    /// </param>
-    protected virtual void Dispose(bool disposing)
-    {
     }
 }

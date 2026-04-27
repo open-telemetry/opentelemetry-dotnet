@@ -63,25 +63,27 @@ internal sealed partial class CompositeMetricReader : MetricReader
     }
 
     /// <inheritdoc/>
-    protected override bool OnCollect(int timeoutMilliseconds = Timeout.Infinite)
+    protected override bool OnCollect(int timeoutMilliseconds)
     {
         var result = true;
         var sw = timeoutMilliseconds == Timeout.Infinite
             ? null
             : Stopwatch.StartNew();
 
+        this.CollectObservableInstruments();
+
         for (var cur = this.Head; cur != null; cur = cur.Next)
         {
             if (sw == null)
             {
-                result = cur.Value.Collect(Timeout.Infinite) && result;
+                result = cur.Value.CollectFromComposite(Timeout.Infinite) && result;
             }
             else
             {
                 var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
 
                 // notify all the readers, even if we run overtime
-                result = cur.Value.Collect((int)Math.Max(timeout, 0)) && result;
+                result = cur.Value.CollectFromComposite((int)Math.Max(timeout, 0)) && result;
             }
         }
 

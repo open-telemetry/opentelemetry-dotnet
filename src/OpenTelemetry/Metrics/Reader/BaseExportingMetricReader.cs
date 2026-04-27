@@ -104,6 +104,21 @@ public class BaseExportingMetricReader : MetricReader
     }
 
     /// <inheritdoc />
+    internal override bool OnCollectFromComposite(int timeoutMilliseconds)
+    {
+        if (this.SupportedExportModes.HasFlag(ExportModes.Push))
+        {
+            return base.OnCollectFromComposite(timeoutMilliseconds);
+        }
+        else if (this.SupportedExportModes.HasFlag(ExportModes.Pull) && PullMetricScope.IsPullAllowed)
+        {
+            return base.OnCollectFromComposite(timeoutMilliseconds);
+        }
+
+        return false;
+    }
+
+    /// <inheritdoc />
     protected override bool OnCollect(int timeoutMilliseconds)
     {
         if (this.SupportedExportModes.HasFlag(ExportModes.Push))

@@ -208,18 +208,11 @@ public class MultipleReadersTests
 
         // Check value exported for Gauge
         AssertLongSumValueForMetric(exportedItems1[1], 100);
-        AssertLongSumValueForMetric(exportedItems2[1], 200);
+        AssertLongSumValueForMetric(exportedItems2[1], 100);
 
         // Check value exported for ObservableCounter
         AssertLongSumValueForMetric(exportedItems1[2], 1000);
-        if (aggregationTemporality == MetricReaderTemporalityPreference.Delta)
-        {
-            AssertLongSumValueForMetric(exportedItems2[2], 1200);
-        }
-        else
-        {
-            AssertLongSumValueForMetric(exportedItems2[2], 1200);
-        }
+        AssertLongSumValueForMetric(exportedItems2[2], 1000);
 
         exportedItems1.Clear();
         exportedItems2.Clear();
@@ -243,25 +236,25 @@ public class MultipleReadersTests
         }
 
         // Check value exported for Gauge
-        AssertLongSumValueForMetric(exportedItems1[1], 300);
-        AssertLongSumValueForMetric(exportedItems2[1], 400);
+        AssertLongSumValueForMetric(exportedItems1[1], 200);
+        AssertLongSumValueForMetric(exportedItems2[1], 200);
 
         // Check value exported for ObservableCounter
-        AssertLongSumValueForMetric(exportedItems1[2], 300);
+        AssertLongSumValueForMetric(exportedItems1[2], 200);
         if (aggregationTemporality == MetricReaderTemporalityPreference.Delta)
         {
             AssertLongSumValueForMetric(exportedItems2[2], 200);
         }
         else
         {
-            AssertLongSumValueForMetric(exportedItems2[2], 1400);
+            AssertLongSumValueForMetric(exportedItems2[2], 1200);
         }
     }
 
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public void ObservableInstrumentCallbacksInvokedForEachReaders(bool hasViews)
+    public void ObservableInstrumentCallbacksInvokedOncePerCollection(bool hasViews)
     {
         var exportedItems1 = new List<Metric>();
         var exportedItems2 = new List<Metric>();
@@ -287,7 +280,7 @@ public class MultipleReadersTests
         meterProvider.ForceFlush();
 
         // VALIDATE
-        Assert.Equal(2, callbackInvocationCount);
+        Assert.Equal(1, callbackInvocationCount);
         Assert.Single(exportedItems1);
         Assert.Single(exportedItems2);
 
