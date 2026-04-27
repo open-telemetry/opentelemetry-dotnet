@@ -8,7 +8,7 @@ Notes](../../RELEASENOTES.md).
 
 * Fix observable instrument callbacks running once per reader instead of
   once per collection cycle.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7188](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7188))
 
 ## 1.15.3
 
