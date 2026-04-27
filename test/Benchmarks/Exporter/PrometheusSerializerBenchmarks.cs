@@ -50,7 +50,6 @@ public class PrometheusSerializerBenchmarks
         this.meterProvider?.Dispose();
     }
 
-    // TODO: this has a dependency on https://github.com/open-telemetry/opentelemetry-dotnet/issues/2361
     [Benchmark]
     public void WriteMetric()
     {
@@ -59,7 +58,7 @@ public class PrometheusSerializerBenchmarks
             var cursor = 0;
             foreach (var metric in this.metrics)
             {
-                cursor = PrometheusSerializer.WriteMetric(this.buffer, cursor, metric, this.GetPrometheusMetric(metric), openMetricsRequested: false, disableTimestamp: false);
+                cursor = PrometheusSerializer.WriteMetric(this.buffer, cursor, metric, this.GetPrometheusMetric(metric), openMetricsRequested: false);
             }
         }
     }
