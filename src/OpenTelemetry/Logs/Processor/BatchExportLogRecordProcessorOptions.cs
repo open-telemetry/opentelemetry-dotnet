@@ -57,7 +57,7 @@ public class BatchExportLogRecordProcessorOptions : BatchExportProcessorOptions<
             scheduledDelayMilliseconds = value;
         }
 
-        BatchExportProcessorOptions<LogRecord>.ApplyValidatedConfiguration(
+        ApplyValidatedConfiguration(
             this,
             maxQueueSize,
             maxExportBatchSize,

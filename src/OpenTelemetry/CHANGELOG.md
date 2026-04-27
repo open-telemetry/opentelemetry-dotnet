@@ -7,7 +7,7 @@ Notes](../../RELEASENOTES.md).
 ## Unreleased
 
 * Fix incorrect validation of `OTEL_BSP_*` environment variables.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7187](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7187))
 
 ## 1.15.3
 
