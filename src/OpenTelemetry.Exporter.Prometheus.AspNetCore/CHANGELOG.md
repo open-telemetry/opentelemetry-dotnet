@@ -13,12 +13,12 @@ Notes](../../RELEASENOTES.md).
 
 * Fixed the serialization of `NaN`, `PositiveInfinity`, and `NegativeInfinity`
   values in Prometheus metrics to be compliant with the specification.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7179](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7179))
 
 * Fixed loss of precision when serializing `double` and `float` values in
   Prometheus metrics to be compliant with the specification by using 17
   significant digits to represent such values.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7179](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7179))
 
 ## 1.15.3-beta.1
 
