@@ -19,7 +19,7 @@ Notes](../../RELEASENOTES.md).
 
 * Add support for caching the scrape endpoint HTTP responses using the
   `PrometheusHttpListenerOptions.ScrapeResponseCacheDurationMilliseconds` option.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7189](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7189))
 
 ## 1.15.3-beta.1
 
