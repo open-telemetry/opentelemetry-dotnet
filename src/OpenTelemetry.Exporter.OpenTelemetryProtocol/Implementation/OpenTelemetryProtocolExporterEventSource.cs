@@ -306,6 +306,20 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
         this.WriteEvent(36, exception);
 #endif
 
+    [Event(
+        37,
+        Message = "gRPC export payload content was compressed from {0} bytes to {1} bytes.",
+        Level = EventLevel.Verbose)]
+    internal void CompressedGrpcPayload(long uncompressedLength, long compressedLength) =>
+        this.WriteEvent(37, uncompressedLength, compressedLength);
+
+    [Event(
+        38,
+        Message = "HTTP export payload content was compressed from {0} bytes to {1} bytes.",
+        Level = EventLevel.Verbose)]
+    internal void CompressedHttpPayload(long uncompressedLength, long compressedLength) =>
+        this.WriteEvent(38, uncompressedLength, compressedLength);
+
     private static string RedactEndpointUri(Uri endpoint)
         => endpoint.GetComponents(UriComponents.SchemeAndServer | UriComponents.Path, UriFormat.UriEscaped);
 }
