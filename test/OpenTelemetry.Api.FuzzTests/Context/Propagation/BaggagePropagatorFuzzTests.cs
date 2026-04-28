@@ -18,41 +18,19 @@ public class BaggagePropagatorFuzzTests
     [Property(MaxTest = MaxTests)]
     public Property ExtractNeverThrowsOnArbitraryInput() => Prop.ForAll(Generators.BaggageCarrierArbitrary(), (carrier) =>
     {
-        try
-        {
-            var propagator = new BaggagePropagator();
-            propagator.Extract(default, carrier, FuzzTestHelpers.ArrayGetter);
-            return true;
-        }
-        catch (Exception ex) when (FuzzTestHelpers.IsAllowedException(ex))
-        {
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
+        var propagator = new BaggagePropagator();
+        propagator.Extract(default, carrier, FuzzTestHelpers.ArrayGetter);
+        return true;
     });
 
     [Property(MaxTest = MaxTests)]
     public Property InjectNeverThrowsOnArbitraryInput() => Prop.ForAll(Generators.BaggageDictionaryArbitrary(), (baggageItems) =>
     {
-        try
-        {
-            var propagator = new BaggagePropagator();
-            var carrier = new Dictionary<string, string>(StringComparer.Ordinal);
-            var propagationContext = new PropagationContext(default, Baggage.Create(baggageItems));
-            propagator.Inject(propagationContext, carrier, FuzzTestHelpers.Setter);
-            return true;
-        }
-        catch (Exception ex) when (FuzzTestHelpers.IsAllowedException(ex))
-        {
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
+        var propagator = new BaggagePropagator();
+        var carrier = new Dictionary<string, string>(StringComparer.Ordinal);
+        var propagationContext = new PropagationContext(default, Baggage.Create(baggageItems));
+        propagator.Inject(propagationContext, carrier, FuzzTestHelpers.Setter);
+        return true;
     });
 
     [Property(MaxTest = MaxTests)]
