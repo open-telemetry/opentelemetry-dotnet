@@ -20,6 +20,10 @@ Notes](../../RELEASENOTES.md).
   significant digits to represent such values.
   ([#7179](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7179))
 
+* Fix non-ASCII characters in metric names and unit strings not being sanitized
+  correctly during Prometheus serialization.
+  ([#7184](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7184))
+
 * Fix case where reader tracking could be reset while readers were still active.
   ([#7190](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7190))
 
