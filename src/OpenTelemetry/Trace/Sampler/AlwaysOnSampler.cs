@@ -8,7 +8,7 @@ namespace OpenTelemetry.Trace;
 /// </summary>
 public sealed class AlwaysOnSampler : Sampler
 {
-    internal static readonly AlwaysOnSampler Instance = new();
+    internal static AlwaysOnSampler Instance => field ??= new();
 
     /// <inheritdoc />
     public override SamplingResult ShouldSample(in SamplingParameters samplingParameters) => new(SamplingDecision.RecordAndSample);
