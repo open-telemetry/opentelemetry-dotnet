@@ -36,10 +36,10 @@ public sealed class SamplerOptions
             this.SamplerArgRaw = samplerArgStr;
 
             if (double.TryParse(
-                samplerArgStr,
-                NumberStyles.Float | NumberStyles.AllowThousands,
-                CultureInfo.InvariantCulture,
-                out var parsedArg))
+                    samplerArgStr,
+                    NumberStyles.Float | NumberStyles.AllowThousands,
+                    CultureInfo.InvariantCulture,
+                    out var parsedArg))
             {
                 // Bypass the public setter so that SamplerArgRaw is not cleared.
                 this.samplerArg = parsedArg;
