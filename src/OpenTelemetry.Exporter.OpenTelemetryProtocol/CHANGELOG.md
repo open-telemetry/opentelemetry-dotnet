@@ -7,6 +7,9 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed `NullReferenceException` when exporting logs if the scope key is null.
+  ([#7186](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7186))
+
 ## 1.15.3
 
 Released 2026-Apr-21
