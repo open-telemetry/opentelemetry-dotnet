@@ -94,6 +94,18 @@ public sealed class BatchExportActivityProcessorOptionsTests
     }
 
     [Fact]
+    public void BatchExportProcessorOptions_MaxQueueSizeLowerThanEffectiveMaxExportBatchSizeClampsBatchSize()
+    {
+        using (EnvironmentVariableScope.Create(BatchExportActivityProcessorOptions.MaxQueueSizeEnvVarKey, "10"))
+        {
+            var options = new BatchExportActivityProcessorOptions();
+
+            Assert.Equal(10, options.MaxQueueSize);
+            Assert.Equal(10, options.MaxExportBatchSize);
+        }
+    }
+
+    [Fact]
     public void BatchExportProcessorOptions_SetterOverridesEnvironmentVariable()
     {
         using (EnvironmentVariableScope.Create(BatchExportActivityProcessorOptions.ExporterTimeoutEnvVarKey, "123"))

@@ -37,24 +37,39 @@ public class BatchExportProcessorOptions<T>
         int exporterTimeoutMilliseconds,
         int scheduledDelayMilliseconds)
     {
+        var candidateMaxQueueSize = options.MaxQueueSize;
+        var candidateMaxExportBatchSize = options.MaxExportBatchSize;
+        var candidateExporterTimeoutMilliseconds = options.ExporterTimeoutMilliseconds;
+        var candidateScheduledDelayMilliseconds = options.ScheduledDelayMilliseconds;
+
         if (maxQueueSize > 0)
         {
-            options.MaxQueueSize = maxQueueSize;
+            candidateMaxQueueSize = maxQueueSize;
         }
 
-        if (maxExportBatchSize > 0 && maxExportBatchSize <= options.MaxQueueSize)
+        if (maxExportBatchSize > 0)
         {
-            options.MaxExportBatchSize = maxExportBatchSize;
+            candidateMaxExportBatchSize = maxExportBatchSize;
+        }
+
+        if (candidateMaxExportBatchSize > candidateMaxQueueSize)
+        {
+            candidateMaxExportBatchSize = candidateMaxQueueSize;
         }
 
         if (exporterTimeoutMilliseconds >= 0)
         {
-            options.ExporterTimeoutMilliseconds = exporterTimeoutMilliseconds;
+            candidateExporterTimeoutMilliseconds = exporterTimeoutMilliseconds;
         }
 
         if (scheduledDelayMilliseconds > 0)
         {
-            options.ScheduledDelayMilliseconds = scheduledDelayMilliseconds;
+            candidateScheduledDelayMilliseconds = scheduledDelayMilliseconds;
         }
+
+        options.MaxQueueSize = candidateMaxQueueSize;
+        options.MaxExportBatchSize = candidateMaxExportBatchSize;
+        options.ExporterTimeoutMilliseconds = candidateExporterTimeoutMilliseconds;
+        options.ScheduledDelayMilliseconds = candidateScheduledDelayMilliseconds;
     }
 }
