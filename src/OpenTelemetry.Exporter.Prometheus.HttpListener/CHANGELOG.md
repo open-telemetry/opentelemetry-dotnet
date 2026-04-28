@@ -30,6 +30,12 @@ Notes](../../RELEASENOTES.md).
   correctly during Prometheus serialization.
   ([#7184](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7184))
 
+* Add support for caching the scrape endpoint HTTP responses using the
+  `PrometheusHttpListenerOptions.ScrapeResponseCacheDurationMilliseconds` option.
+  The default value is `300` milliseconds. Set the option to `0` to disable
+  response caching.
+  ([#7189](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7189))
+
 ## 1.15.3-beta.1
 
 Released 2026-Apr-21
