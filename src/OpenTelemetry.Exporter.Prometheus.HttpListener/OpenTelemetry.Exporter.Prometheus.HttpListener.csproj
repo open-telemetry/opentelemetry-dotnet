@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Benchmarks" PublicKey="$(StrongNamePublicKey)" />
+    <InternalsVisibleTo Include="OpenTelemetry.Exporter.Prometheus.HttpListener.FuzzTests" PublicKey="$(StrongNamePublicKey)" />
     <InternalsVisibleTo Include="OpenTelemetry.Exporter.Prometheus.HttpListener.Tests" PublicKey="$(StrongNamePublicKey)" />
     <InternalsVisibleTo Include="OpenTelemetry.Exporter.Prometheus.Tests" PublicKey="$(StrongNamePublicKey)" />
   </ItemGroup>

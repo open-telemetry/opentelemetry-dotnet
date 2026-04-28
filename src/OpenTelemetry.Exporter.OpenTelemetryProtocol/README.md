@@ -341,6 +341,9 @@ appBuilder.Services.AddOptions<OtlpExporterOptions>()
 > provided, including the signal-specific path v1/{signal}. For example, for
 > traces, the full URL will look like `http://your-custom-endpoint/v1/traces`.
 
+* `Compression`: Optionally compress the export payload. The default is no
+  compression. The only supported compression option is `OtlpExportCompression.GZip`.
+
 * `Headers`: Optional headers for the connection.
 
 * `HttpClientFactory`: A factory function called to create the `HttpClient`
@@ -447,12 +450,13 @@ or reader
   The following environment variables can be used to override the default
   values of the `OtlpExporterOptions`:
 
-  | Environment variable          | `OtlpExporterOptions` property        |
-  | ------------------------------| --------------------------------------|
-  | `OTEL_EXPORTER_OTLP_ENDPOINT` | `Endpoint`                            |
-  | `OTEL_EXPORTER_OTLP_HEADERS`  | `Headers`                             |
-  | `OTEL_EXPORTER_OTLP_TIMEOUT`  | `TimeoutMilliseconds`                 |
-  | `OTEL_EXPORTER_OTLP_PROTOCOL` | `Protocol` (`grpc` or `http/protobuf`)|
+  | Environment variable             | `OtlpExporterOptions` property         |
+  | ---------------------------------| ---------------------------------------|
+  | `OTEL_EXPORTER_OTLP_COMPRESSION` | `Compression` (`none` or `gzip`)       |
+  | `OTEL_EXPORTER_OTLP_ENDPOINT`    | `Endpoint`                             |
+  | `OTEL_EXPORTER_OTLP_HEADERS`     | `Headers`                              |
+  | `OTEL_EXPORTER_OTLP_PROTOCOL`    | `Protocol` (`grpc` or `http/protobuf`) |
+  | `OTEL_EXPORTER_OTLP_TIMEOUT`     | `TimeoutMilliseconds`                  |
 
   The following environment variables can be used to configure mTLS
   (mutual TLS) authentication (.NET 8.0+ only):
@@ -479,12 +483,13 @@ or reader
   of the `OtlpExporterOptions` used for logging when using the [UseOtlpExporter
   extension](#enable-otlp-exporter-for-all-signals):
 
-  | Environment variable                  | `OtlpExporterOptions` property        | UseOtlpExporter | AddOtlpExporter |
-  | --------------------------------------| --------------------------------------|-----------------|-----------------|
-  | `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT`    | `Endpoint`                            | Supported       | Not supported   |
-  | `OTEL_EXPORTER_OTLP_LOGS_HEADERS`     | `Headers`                             | Supported       | Not supported   |
-  | `OTEL_EXPORTER_OTLP_LOGS_TIMEOUT`     | `TimeoutMilliseconds`                 | Supported       | Not supported   |
-  | `OTEL_EXPORTER_OTLP_LOGS_PROTOCOL`    | `Protocol` (`grpc` or `http/protobuf`)| Supported       | Not supported   |
+  | Environment variable                  | `OtlpExporterOptions` property         | UseOtlpExporter | AddOtlpExporter |
+  | --------------------------------------| ---------------------------------------|-----------------|-----------------|
+  | `OTEL_EXPORTER_OTLP_LOGS_COMPRESSION` | `Compression` (`none` or `gzip`)       | Supported       | Not supported   |
+  | `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT`    | `Endpoint`                             | Supported       | Not supported   |
+  | `OTEL_EXPORTER_OTLP_LOGS_HEADERS`     | `Headers`                              | Supported       | Not supported   |
+  | `OTEL_EXPORTER_OTLP_LOGS_PROTOCOL`    | `Protocol` (`grpc` or `http/protobuf`) | Supported       | Not supported   |
+  | `OTEL_EXPORTER_OTLP_LOGS_TIMEOUT`     | `TimeoutMilliseconds`                  | Supported       | Not supported   |
 
 * Metrics:
 
@@ -516,12 +521,13 @@ or reader
   of the `OtlpExporterOptions` used for metrics when using the [UseOtlpExporter
   extension](#enable-otlp-exporter-for-all-signals):
 
-  | Environment variable                  | `OtlpExporterOptions` property        | UseOtlpExporter | AddOtlpExporter |
-  | --------------------------------------| --------------------------------------|-----------------|-----------------|
-  | `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` | `Endpoint`                            | Supported       | Not supported   |
-  | `OTEL_EXPORTER_OTLP_METRICS_HEADERS`  | `Headers`                             | Supported       | Not supported   |
-  | `OTEL_EXPORTER_OTLP_METRICS_TIMEOUT`  | `TimeoutMilliseconds`                 | Supported       | Not supported   |
-  | `OTEL_EXPORTER_OTLP_METRICS_PROTOCOL` | `Protocol` (`grpc` or `http/protobuf`)| Supported       | Not supported   |
+  | Environment variable                     | `OtlpExporterOptions` property         | UseOtlpExporter | AddOtlpExporter |
+  | -----------------------------------------| ---------------------------------------|-----------------|-----------------|
+  | `OTEL_EXPORTER_OTLP_METRICS_COMPRESSION` | `Compression` (`none` or `gzip`)       | Supported       | Not supported   |
+  | `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT`    | `Endpoint`                             | Supported       | Not supported   |
+  | `OTEL_EXPORTER_OTLP_METRICS_HEADERS`     | `Headers`                              | Supported       | Not supported   |
+  | `OTEL_EXPORTER_OTLP_METRICS_PROTOCOL`    | `Protocol` (`grpc` or `http/protobuf`) | Supported       | Not supported   |
+  | `OTEL_EXPORTER_OTLP_METRICS_TIMEOUT`     | `TimeoutMilliseconds`                  | Supported       | Not supported   |
 
 * Tracing:
 
@@ -539,12 +545,13 @@ or reader
   of the `OtlpExporterOptions` used for tracing when using the [UseOtlpExporter
   extension](#enable-otlp-exporter-for-all-signals):
 
-  | Environment variable                  | `OtlpExporterOptions` property        | UseOtlpExporter | AddOtlpExporter |
-  | --------------------------------------| --------------------------------------|-----------------|-----------------|
-  | `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`  | `Endpoint`                            | Supported       | Not supported   |
-  | `OTEL_EXPORTER_OTLP_TRACES_HEADERS`   | `Headers`                             | Supported       | Not supported   |
-  | `OTEL_EXPORTER_OTLP_TRACES_TIMEOUT`   | `TimeoutMilliseconds`                 | Supported       | Not supported   |
-  | `OTEL_EXPORTER_OTLP_TRACES_PROTOCOL`  | `Protocol` (`grpc` or `http/protobuf`)| Supported       | Not supported   |
+  | Environment variable                    | `OtlpExporterOptions` property         | UseOtlpExporter | AddOtlpExporter |
+  | ----------------------------------------| ---------------------------------------|-----------------|-----------------|
+  | `OTEL_EXPORTER_OTLP_TRACES_COMPRESSION` | `Compression` (`none` or `gzip`)       | Supported       | Not supported   |
+  | `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`    | `Endpoint`                             | Supported       | Not supported   |
+  | `OTEL_EXPORTER_OTLP_TRACES_HEADERS`     | `Headers`                              | Supported       | Not supported   |
+  | `OTEL_EXPORTER_OTLP_TRACES_PROTOCOL`    | `Protocol` (`grpc` or `http/protobuf`) | Supported       | Not supported   |
+  | `OTEL_EXPORTER_OTLP_TRACES_TIMEOUT`     | `TimeoutMilliseconds`                  | Supported       | Not supported   |
 
 ### Attribute limits
 

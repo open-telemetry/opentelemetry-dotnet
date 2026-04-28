@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Text;
 using OpenTelemetry.Metrics;
 
@@ -86,7 +87,7 @@ internal sealed class PrometheusMetric
         {
             var c = metricUnit[i];
 
-            if (!char.IsLetterOrDigit(c) && c != ':')
+            if (!IsAsciiLetterOrDigit(c) && c != ':')
             {
                 if (!lastCharUnderscore)
                 {
@@ -97,11 +98,7 @@ internal sealed class PrometheusMetric
             }
             else
             {
-                if (sb != null)
-                {
-                    sb.Append(c);
-                }
-
+                sb?.Append(c);
                 lastCharUnderscore = false;
             }
         }
@@ -119,7 +116,7 @@ internal sealed class PrometheusMetric
         {
             var c = metricName[i];
 
-            if (i == 0 && char.IsNumber(c))
+            if (i == 0 && IsAsciiDigit(c))
             {
                 sb ??= CreateStringBuilder(metricName);
                 sb.Append('_');
@@ -127,7 +124,7 @@ internal sealed class PrometheusMetric
                 continue;
             }
 
-            if (!char.IsLetterOrDigit(c) && c != ':')
+            if (!IsAsciiLetterOrDigit(c) && c != ':')
             {
                 if (!lastCharUnderscore)
                 {
@@ -145,6 +142,11 @@ internal sealed class PrometheusMetric
         }
 
         return sb?.ToString() ?? metricName;
+
+        static StringBuilder CreateStringBuilder(string value)
+        {
+            return new(value.Length);
+        }
     }
 
     internal static string RemoveAnnotations(string unit)
@@ -214,10 +216,21 @@ internal sealed class PrometheusMetric
         };
     }
 
-    private static StringBuilder CreateStringBuilder(string value)
-    {
-        return new(value.Length);
-    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool IsAsciiDigit(char value) =>
+#if NET
+        char.IsAsciiDigit(value);
+#else
+        value is >= '0' and <= '9';
+#endif
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool IsAsciiLetterOrDigit(char value) =>
+#if NET
+        char.IsAsciiLetterOrDigit(value);
+#else
+        value is (>= 'A' and <= 'Z') or (>= 'a' and <= 'z') or (>= '0' and <= '9');
+#endif
 
     private static string SanitizeOpenMetricsName(string metricName)
         => metricName.EndsWith("_total", StringComparison.Ordinal) ? metricName.Substring(0, metricName.Length - 6) : metricName;
