@@ -76,7 +76,7 @@ public abstract class StressTests<T> : IDisposable
             .Build() : null;
 
         var statistics = new MeasurementData[options.Concurrency];
-        var startedTimestamp = Stopwatch.GetTimestamp();
+        var watchForTotal = Stopwatch.StartNew();
 
         TimeSpan? duration = options.DurationSeconds > 0
             ? TimeSpan.FromSeconds(options.DurationSeconds)
@@ -153,7 +153,7 @@ public abstract class StressTests<T> : IDisposable
                     dLoopsPerSecond = nLoops / (watch.ElapsedMilliseconds / 1000.0);
                     dCpuCyclesPerLoop = nLoops == 0 ? 0 : nCpuCycles / nLoops;
 
-                    var totalElapsedTime = Stopwatch.GetElapsedTime(startedTimestamp);
+                    var totalElapsedTime = watchForTotal.Elapsed;
 
                     if (duration.HasValue)
                     {
@@ -186,14 +186,13 @@ public abstract class StressTests<T> : IDisposable
                 });
             });
 
+        watchForTotal.Stop();
         cntLoopsTotal = (ulong)statistics.Sum(data => data.Count);
-
-        var totalElapsedTime = Stopwatch.GetElapsedTime(startedTimestamp);
-        var totalLoopsPerSecond = cntLoopsTotal / (totalElapsedTime.TotalMilliseconds / 1000.0);
+        var totalLoopsPerSecond = cntLoopsTotal / (watchForTotal.ElapsedMilliseconds / 1000.0);
         var cntCpuCyclesTotal = StressTestNativeMethods.GetCpuCycles();
         var cpuCyclesPerLoopTotal = cntLoopsTotal == 0 ? 0 : cntCpuCyclesTotal / cntLoopsTotal;
         Console.WriteLine("Stopping the stress test...");
-        Console.WriteLine($"* Total Running Time (Seconds) {totalElapsedTime.TotalSeconds:n0}");
+        Console.WriteLine($"* Total Running Time (Seconds) {watchForTotal.Elapsed.TotalSeconds:n0}");
         Console.WriteLine($"* Total Loops: {cntLoopsTotal:n0}");
         Console.WriteLine($"* Average Loops/Second: {totalLoopsPerSecond:n0}");
         Console.WriteLine($"* Average CPU Cycles/Loop: {cpuCyclesPerLoopTotal:n0}");

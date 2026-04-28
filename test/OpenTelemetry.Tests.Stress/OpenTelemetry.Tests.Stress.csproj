@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <NoWarn>$(NoWarn);CA1515</NoWarn>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
     <ReferenceSystemTextJsonPackages>true</ReferenceSystemTextJsonPackages>
@@ -15,10 +14,6 @@
 
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\OpenTelemetry.Exporter.Prometheus.HttpListener.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Include="$(RepoRoot)\src\Shared\StopwatchExtensions.cs" Link="Includes\StopwatchExtensions.cs" />
   </ItemGroup>
 
 </Project>
