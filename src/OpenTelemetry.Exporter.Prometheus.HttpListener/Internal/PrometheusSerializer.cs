@@ -41,9 +41,7 @@ internal static partial class PrometheusSerializer
             // digits are required for full precision, e.g. printf("%.17g", d).
 #if NET
             var result = Utf8Formatter.TryFormat(value, buffer.AsSpan(cursor), out var bytesWritten, new StandardFormat('G', 17));
-            Debug.Assert(result, $"{nameof(result)} should be true.");
-
-            cursor += bytesWritten;
+            cursor = AdvanceCursorOrThrow(result, cursor, bytesWritten);
 #else
             cursor = WriteAsciiStringNoEscape(buffer, cursor, value.ToString("G17", CultureInfo.InvariantCulture));
 #endif
@@ -71,9 +69,7 @@ internal static partial class PrometheusSerializer
     {
 #if NET
         var result = Utf8Formatter.TryFormat(value, buffer.AsSpan(cursor), out var bytesWritten);
-        Debug.Assert(result, $"{nameof(result)} should be true.");
-
-        cursor += bytesWritten;
+        cursor = AdvanceCursorOrThrow(result, cursor, bytesWritten);
 #else
         cursor = WriteAsciiStringNoEscape(buffer, cursor, value.ToString(CultureInfo.InvariantCulture));
 #endif
@@ -86,9 +82,7 @@ internal static partial class PrometheusSerializer
     {
 #if NET
         var result = Utf8Formatter.TryFormat(value, buffer.AsSpan(cursor), out var bytesWritten);
-        Debug.Assert(result, $"{nameof(result)} should be true.");
-
-        cursor += bytesWritten;
+        cursor = AdvanceCursorOrThrow(result, cursor, bytesWritten);
 #else
         cursor = WriteAsciiStringNoEscape(buffer, cursor, value.ToString(CultureInfo.InvariantCulture));
 #endif
@@ -220,8 +214,7 @@ internal static partial class PrometheusSerializer
             case decimal decimalValue:
 #if NET
                 var result = Utf8Formatter.TryFormat(decimalValue, buffer.AsSpan(cursor), out var bytesWritten);
-                Debug.Assert(result, $"{nameof(result)} should be true.");
-                return cursor + bytesWritten;
+                return AdvanceCursorOrThrow(result, cursor, bytesWritten);
 #else
                 return WriteLabelValue(buffer, cursor, decimalValue.ToString(CultureInfo.InvariantCulture));
 #endif
@@ -788,10 +781,9 @@ internal static partial class PrometheusSerializer
     {
         for (var i = 0; i < value.Length; i++)
         {
-            var ordinal = (ushort)value[i];
-            switch (ordinal)
+            switch (value[i])
             {
-                case ASCII_QUOTATION_MARK:
+                case '"':
                     if (!TryWriteByte(buffer, ref cursor, ASCII_REVERSE_SOLIDUS) ||
                         !TryWriteByte(buffer, ref cursor, ASCII_QUOTATION_MARK))
                     {
@@ -799,7 +791,7 @@ internal static partial class PrometheusSerializer
                     }
 
                     break;
-                case ASCII_REVERSE_SOLIDUS:
+                case '\\':
                     if (!TryWriteByte(buffer, ref cursor, ASCII_REVERSE_SOLIDUS) ||
                         !TryWriteByte(buffer, ref cursor, ASCII_REVERSE_SOLIDUS))
                     {
@@ -807,7 +799,7 @@ internal static partial class PrometheusSerializer
                     }
 
                     break;
-                case ASCII_LINEFEED:
+                case '\n':
                     if (!TryWriteByte(buffer, ref cursor, ASCII_REVERSE_SOLIDUS) ||
                         !TryWriteByte(buffer, ref cursor, unchecked((byte)'n')))
                     {
@@ -816,11 +808,12 @@ internal static partial class PrometheusSerializer
 
                     break;
                 default:
-                    if (!TryWriteUnicodeNoEscape(buffer, ref cursor, ordinal))
+                    if (!TryWriteUnicodeNoEscape(buffer, ref cursor, GetUnicodeOrdinal(value.AsSpan(i), out var charsConsumed)))
                     {
                         return false;
                     }
 
+                    i += charsConsumed - 1;
                     break;
             }
         }
@@ -869,7 +862,7 @@ internal static partial class PrometheusSerializer
     {
         if (MathHelper.IsFinite(value))
         {
-            if (!Utf8Formatter.TryFormat(value, buffer[cursor..], out var bytesWritten, new StandardFormat('G')))
+            if (!Utf8Formatter.TryFormat(value, buffer[cursor..], out var bytesWritten, new StandardFormat('G', 17)))
             {
                 return false;
             }
@@ -884,7 +877,7 @@ internal static partial class PrometheusSerializer
             double.IsPositiveInfinity(value) ? "+Inf" : double.IsNegativeInfinity(value) ? "-Inf" : "NaN");
     }
 
-    private static bool TryWriteUnicodeNoEscape(Span<byte> buffer, ref int cursor, ushort ordinal)
+    private static bool TryWriteUnicodeNoEscape(Span<byte> buffer, ref int cursor, int ordinal)
     {
         if (ordinal <= 0x7F)
         {
@@ -895,8 +888,15 @@ internal static partial class PrometheusSerializer
             return TryWriteByte(buffer, ref cursor, unchecked((byte)(0b_1100_0000 | (ordinal >> 6)))) &&
                    TryWriteByte(buffer, ref cursor, unchecked((byte)(0b_1000_0000 | (ordinal & 0b_0011_1111))));
         }
+        else if (ordinal <= 0xFFFF)
+        {
+            return TryWriteByte(buffer, ref cursor, unchecked((byte)(0b_1110_0000 | (ordinal >> 12)))) &&
+                   TryWriteByte(buffer, ref cursor, unchecked((byte)(0b_1000_0000 | ((ordinal >> 6) & 0b_0011_1111)))) &&
+                   TryWriteByte(buffer, ref cursor, unchecked((byte)(0b_1000_0000 | (ordinal & 0b_0011_1111))));
+        }
 
-        return TryWriteByte(buffer, ref cursor, unchecked((byte)(0b_1110_0000 | (ordinal >> 12)))) &&
+        return TryWriteByte(buffer, ref cursor, unchecked((byte)(0b_1111_0000 | (ordinal >> 18)))) &&
+               TryWriteByte(buffer, ref cursor, unchecked((byte)(0b_1000_0000 | ((ordinal >> 12) & 0b_0011_1111)))) &&
                TryWriteByte(buffer, ref cursor, unchecked((byte)(0b_1000_0000 | ((ordinal >> 6) & 0b_0011_1111)))) &&
                TryWriteByte(buffer, ref cursor, unchecked((byte)(0b_1000_0000 | (ordinal & 0b_0011_1111))));
     }
@@ -924,6 +924,10 @@ internal static partial class PrometheusSerializer
         buffer[cursor++] = value;
         return true;
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int AdvanceCursorOrThrow(bool result, int cursor, int bytesWritten) =>
+        result ? cursor + bytesWritten : throw new ArgumentException("Destination buffer too small.");
 #endif
 
     private static string MapPrometheusType(PrometheusType type) => type switch

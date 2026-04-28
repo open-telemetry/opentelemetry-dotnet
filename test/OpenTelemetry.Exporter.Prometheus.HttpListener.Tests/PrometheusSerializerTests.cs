@@ -829,6 +829,40 @@ public sealed class PrometheusSerializerTests
         Assert.Equal("\\\"line1\\\\\\nline2\\\"", Encoding.UTF8.GetString(buffer, 0, cursor));
     }
 
+#if NET
+    [Fact]
+    public void WriteLongThrowsArgumentExceptionWhenBufferTooSmall()
+    {
+        var buffer = new byte[2];
+
+        Assert.Throws<ArgumentException>(() => PrometheusSerializer.WriteLong(buffer, 0, 1234));
+    }
+
+    [Fact]
+    public void WriteUnsignedLongThrowsArgumentExceptionWhenBufferTooSmall()
+    {
+        var buffer = new byte[2];
+
+        Assert.Throws<ArgumentException>(() => PrometheusSerializer.WriteUnsignedLong(buffer, 0, 1234));
+    }
+
+    [Fact]
+    public void WriteDoubleThrowsArgumentExceptionWhenBufferTooSmall()
+    {
+        var buffer = new byte[2];
+
+        Assert.Throws<ArgumentException>(() => PrometheusSerializer.WriteDouble(buffer, 0, 1234.5));
+    }
+
+    [Fact]
+    public void WriteLabelValueDecimalThrowsArgumentExceptionWhenBufferTooSmall()
+    {
+        var buffer = new byte[2];
+
+        Assert.Throws<ArgumentException>(() => PrometheusSerializer.WriteLabelValue(buffer, 0, 1234.5m));
+    }
+#endif
+
     [Theory]
     [InlineData(true, "true")]
     [InlineData(false, "false")]
@@ -983,6 +1017,26 @@ public sealed class PrometheusSerializerTests
             CultureInfo.CurrentCulture = previousCulture;
             CultureInfo.CurrentUICulture = previousUiCulture;
         }
+    }
+
+    [Fact]
+    public void WriteMetricSerializesStaticMeterTagDoubleUsingG17()
+    {
+        const double value = 0.84551240822557006d;
+
+        var output = WriteGaugeMetricWithMeterTags(new KeyValuePair<string, object?>("double_value", value));
+
+        Assert.Contains($"double_value=\"{value.ToString("G17", CultureInfo.InvariantCulture)}\"", output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void WriteMetricSerializesStaticMeterTagEmojiAsUtf8ScalarValues()
+    {
+        const string value = "rocket:\uD83D\uDE80";
+
+        var output = WriteGaugeMetricWithMeterTags(new KeyValuePair<string, object?>("emoji_value", value));
+
+        Assert.Contains($"emoji_value=\"{value}\"", output, StringComparison.Ordinal);
     }
 
     [Fact]
