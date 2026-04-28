@@ -137,13 +137,12 @@ internal static class Program
 
         var fileName = Path.GetFileNameWithoutExtension(processPath);
 
-        var startInfo = string.Equals(fileName, "dotnet", StringComparison.OrdinalIgnoreCase)
-            ? new ProcessStartInfo(processPath)
-            : new ProcessStartInfo(processPath);
-
-        startInfo.RedirectStandardOutput = true;
-        startInfo.RedirectStandardError = true;
-        startInfo.UseShellExecute = false;
+        var startInfo = new ProcessStartInfo(processPath)
+        {
+            RedirectStandardError = true,
+            RedirectStandardOutput = true,
+            UseShellExecute = false,
+        };
 
         if (string.Equals(fileName, "dotnet", StringComparison.OrdinalIgnoreCase))
         {

@@ -71,11 +71,15 @@ public static class EnvironmentVariableCarrier
     }
 
     /// <summary>
-    /// Gets a value from an environment variable carrier using a normalized key.
+    /// Gets a value from an environment variable carrier using the supplied
+    /// propagation key, which is normalized before lookup.
     /// </summary>
     /// <typeparam name="T">The carrier type.</typeparam>
     /// <param name="carrier">The carrier to read.</param>
-    /// <param name="key">The propagation key to look up.</param>
+    /// <param name="key">
+    /// The propagation key to look up. This value may be unnormalized and
+    /// will be normalized before lookup.
+    /// </param>
     /// <returns>
     /// A single-item sequence containing the value when the key exists;
     /// otherwise <see langword="null"/>.
@@ -117,11 +121,12 @@ public static class EnvironmentVariableCarrier
     }
 
     /// <summary>
-    /// Sets a value on an environment variable carrier using a normalized key.
+    /// Sets a value on an environment variable carrier by normalizing the
+    /// supplied propagation key before storing it.
     /// </summary>
     /// <typeparam name="T">The carrier type.</typeparam>
     /// <param name="carrier">The carrier to write.</param>
-    /// <param name="key">The propagation key to normalize and store.</param>
+    /// <param name="key">The propagation key to normalize before storing.</param>
     /// <param name="value">The value to store.</param>
     public static void Set<T>(T carrier, string key, string value)
         where T : IDictionary<string, string?>
