@@ -18,15 +18,15 @@ var otlpExporter2 = new OtlpLogExporter(new OtlpExporterOptions
 });
 
 // Wrap each exporter in a BatchLogRecordExportProcessor.
-var processor1 = new BatchLogRecordExportProcessor(otlpExporter1);
-var processor2 = new BatchLogRecordExportProcessor(otlpExporter2);
+var defaultExportProcessor = new BatchLogRecordExportProcessor(otlpExporter1);
+var paymentExportProcessor = new BatchLogRecordExportProcessor(otlpExporter2);
 
 // Build the routing processor. Logs whose category name starts with
 // "Payment." are sent to OTLP2; everything else goes to OTLP1.
 var routingProcessor = new RoutingProcessor(
     categoryPrefix: "Payment.",
-    primaryProcessor: processor1,
-    secondaryProcessor: processor2);
+    defaultProcessor: defaultExportProcessor,
+    paymentProcessor: paymentExportProcessor);
 
 var loggerFactory = LoggerFactory.Create(builder =>
 {
