@@ -75,3 +75,16 @@ dotnet run
 | [Program.cs](./Program.cs) | Console app demonstrating the routing |
 | [RoutingProcessor.cs](./RoutingProcessor.cs) | Custom routing processor |
 | [routing.csproj](./routing.csproj) | Project file |
+
+## Alternatives
+
+This example achieves routing at the **processor level**, which means a single
+`ILoggerFactory` and `LoggerProvider` can send logs to different destinations.
+This is typically what is needed because most applications use a single
+`ILoggerFactory` provided by dependency injection.
+
+If your application can create multiple `ILoggerFactory` instances, routing can
+be achieved at the `ILogger` level instead -- each factory is configured with
+its own export pipeline, and callers pick the appropriate logger. See the
+[dedicated pipeline](../dedicated-pipeline/README.md) example for that
+approach.
