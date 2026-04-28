@@ -432,7 +432,7 @@ internal sealed class TracerProviderSdk : TracerProvider
                 OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Trace sampler set to '{sampler.GetType().FullName}' from configuration.");
             }
 
-            return sampler ?? new ParentBasedSampler(new AlwaysOnSampler());
+            return sampler ?? new ParentBasedSampler(AlwaysOnSampler.Instance);
         }
 
         return sampler ?? new ParentBasedSampler(AlwaysOnSampler.Instance);
