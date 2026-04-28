@@ -290,9 +290,7 @@ public abstract partial class MetricReader : IDisposable
     {
         OpenTelemetrySdkEventSource.Log.MetricReaderEvent("MetricReader.OnCollect called.");
 
-        var sw = timeoutMilliseconds == Timeout.Infinite
-            ? null
-            : Stopwatch.StartNew();
+        long? timestamp = timeoutMilliseconds == Timeout.Infinite ? null : Stopwatch.GetTimestamp();
 
         var meterProviderSdk = this.parentProvider as MeterProviderSdk;
         meterProviderSdk?.CollectObservableInstruments();
@@ -301,45 +299,30 @@ public abstract partial class MetricReader : IDisposable
 
         var metrics = this.GetMetricsBatch();
 
-        bool result;
-        if (sw == null)
+        if (timestamp is { } startedAt)
         {
-            OpenTelemetrySdkEventSource.Log.MetricReaderEvent("ProcessMetrics called.");
-            result = this.ProcessMetrics(metrics, Timeout.Infinite);
-            if (result)
-            {
-                OpenTelemetrySdkEventSource.Log.MetricReaderEvent("ProcessMetrics succeeded.");
-            }
-            else
-            {
-                OpenTelemetrySdkEventSource.Log.MetricReaderEvent("ProcessMetrics failed.");
-            }
+            timeoutMilliseconds = Stopwatch.Remaining(timeoutMilliseconds, startedAt);
 
-            return result;
-        }
-        else
-        {
-            var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
-
-            if (timeout <= 0)
+            if (timeoutMilliseconds <= 0)
             {
                 OpenTelemetrySdkEventSource.Log.MetricReaderEvent("OnCollect failed timeout period has elapsed.");
                 return false;
             }
-
-            OpenTelemetrySdkEventSource.Log.MetricReaderEvent("ProcessMetrics called.");
-            result = this.ProcessMetrics(metrics, (int)timeout);
-            if (result)
-            {
-                OpenTelemetrySdkEventSource.Log.MetricReaderEvent("ProcessMetrics succeeded.");
-            }
-            else
-            {
-                OpenTelemetrySdkEventSource.Log.MetricReaderEvent("ProcessMetrics failed.");
-            }
-
-            return result;
         }
+
+        OpenTelemetrySdkEventSource.Log.MetricReaderEvent("ProcessMetrics called.");
+
+        var result = this.ProcessMetrics(metrics, Timeout.Infinite);
+        if (result)
+        {
+            OpenTelemetrySdkEventSource.Log.MetricReaderEvent("ProcessMetrics succeeded.");
+        }
+        else
+        {
+            OpenTelemetrySdkEventSource.Log.MetricReaderEvent("ProcessMetrics failed.");
+        }
+
+        return result;
     }
 
     /// <summary>

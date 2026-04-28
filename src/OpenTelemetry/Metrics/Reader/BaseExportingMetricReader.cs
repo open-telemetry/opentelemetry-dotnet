@@ -123,22 +123,16 @@ public class BaseExportingMetricReader : MetricReader
     /// <inheritdoc />
     protected override bool OnShutdown(int timeoutMilliseconds)
     {
-        var result = true;
+        long? timestamp = timeoutMilliseconds == Timeout.Infinite ? null : Stopwatch.GetTimestamp();
 
-        if (timeoutMilliseconds == Timeout.Infinite)
+        var result = this.Collect(timeoutMilliseconds);
+
+        if (timestamp is { } startedAt)
         {
-            result = this.Collect(Timeout.Infinite) && result;
-            result = this.exporter.Shutdown(Timeout.Infinite) && result;
-        }
-        else
-        {
-            var sw = Stopwatch.StartNew();
-            result = this.Collect(timeoutMilliseconds) && result;
-            var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
-            result = this.exporter.Shutdown((int)Math.Max(timeout, 0)) && result;
+            timeoutMilliseconds = Stopwatch.Remaining(timeoutMilliseconds, startedAt);
         }
 
-        return result;
+        return this.exporter.Shutdown(timeoutMilliseconds) && result;
     }
 
     /// <inheritdoc/>

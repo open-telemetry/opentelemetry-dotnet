@@ -54,35 +54,28 @@ internal sealed partial class CompositeMetricReader : MetricReader
 
     public Enumerator GetEnumerator() => new(this.Head);
 
+    // CompositeMetricReader delegates the work to its underlying readers,
+    // so CompositeMetricReader.ProcessMetrics should never be called.
+
     /// <inheritdoc/>
     internal override bool ProcessMetrics(in Batch<Metric> metrics, int timeoutMilliseconds)
-    {
-        // CompositeMetricReader delegates the work to its underlying readers,
-        // so CompositeMetricReader.ProcessMetrics should never be called.
-        throw new NotSupportedException();
-    }
+        => throw new NotSupportedException();
 
     /// <inheritdoc/>
     protected override bool OnCollect(int timeoutMilliseconds = Timeout.Infinite)
     {
         var result = true;
-        var sw = timeoutMilliseconds == Timeout.Infinite
-            ? null
-            : Stopwatch.StartNew();
+        long? timestamp = timeoutMilliseconds == Timeout.Infinite ? null : Stopwatch.GetTimestamp();
 
-        for (var cur = this.Head; cur != null; cur = cur.Next)
+        for (var current = this.Head; current != null; current = current.Next)
         {
-            if (sw == null)
+            if (timestamp is { } startedAt)
             {
-                result = cur.Value.Collect(Timeout.Infinite) && result;
+                timeoutMilliseconds = Stopwatch.Remaining(timeoutMilliseconds, startedAt);
             }
-            else
-            {
-                var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
 
-                // notify all the readers, even if we run overtime
-                result = cur.Value.Collect((int)Math.Max(timeout, 0)) && result;
-            }
+            // Notify all the readers, even if we run overtime
+            result = current.Value.Collect(timeoutMilliseconds) && result;
         }
 
         return result;
@@ -92,23 +85,17 @@ internal sealed partial class CompositeMetricReader : MetricReader
     protected override bool OnShutdown(int timeoutMilliseconds)
     {
         var result = true;
-        var sw = timeoutMilliseconds == Timeout.Infinite
-            ? null
-            : Stopwatch.StartNew();
+        long? timestamp = timeoutMilliseconds == Timeout.Infinite ? null : Stopwatch.GetTimestamp();
 
-        for (var cur = this.Head; cur != null; cur = cur.Next)
+        for (var current = this.Head; current != null; current = current.Next)
         {
-            if (sw == null)
+            if (timestamp is { } startedAt)
             {
-                result = cur.Value.Shutdown(Timeout.Infinite) && result;
+                timeoutMilliseconds = Stopwatch.Remaining(timeoutMilliseconds, startedAt);
             }
-            else
-            {
-                var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
 
-                // notify all the readers, even if we run overtime
-                result = cur.Value.Shutdown((int)Math.Max(timeout, 0)) && result;
-            }
+            // Notify all the readers, even if we run overtime
+            result = current.Value.Shutdown(timeoutMilliseconds) && result;
         }
 
         return result;
@@ -120,11 +107,11 @@ internal sealed partial class CompositeMetricReader : MetricReader
         {
             if (disposing)
             {
-                for (var cur = this.Head; cur != null; cur = cur.Next)
+                for (var current = this.Head; current != null; current = current.Next)
                 {
                     try
                     {
-                        cur.Value?.Dispose();
+                        current.Value?.Dispose();
                     }
                     catch (Exception ex)
                     {
