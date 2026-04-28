@@ -312,7 +312,7 @@ public abstract partial class MetricReader : IDisposable
 
         OpenTelemetrySdkEventSource.Log.MetricReaderEvent("ProcessMetrics called.");
 
-        var result = this.ProcessMetrics(metrics, Timeout.Infinite);
+        var result = this.ProcessMetrics(metrics, timeoutMilliseconds);
         if (result)
         {
             OpenTelemetrySdkEventSource.Log.MetricReaderEvent("ProcessMetrics succeeded.");
