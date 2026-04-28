@@ -51,7 +51,7 @@ internal static class Program
 
             if (options.PrometheusTestMetricsPort != 0)
             {
-                builder.AddPrometheusHttpListener(o => o.UriPrefixes = [$"http://localhost:{options.PrometheusTestMetricsPort}/"]);
+                builder.AddPrometheusHttpListener(o => o.Port = options.PrometheusTestMetricsPort);
             }
 
             if (options.EnableExemplars)

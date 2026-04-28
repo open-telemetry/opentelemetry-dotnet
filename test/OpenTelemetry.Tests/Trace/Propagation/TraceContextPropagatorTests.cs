@@ -251,10 +251,17 @@ public class TraceContextPropagatorTests
         var deadline = TimeSpan.FromSeconds(1);
 
         var extractionTask = Task.Run(() => CallTraceContextPropagator(tracestate));
-        var completedTask = await Task.WhenAny(extractionTask, Task.Delay(deadline));
 
+        using var cts = new CancellationTokenSource(deadline);
+
+#if NET
+        await extractionTask.WaitAsync(cts.Token);
+#else
+        var completedTask = await Task.WhenAny(extractionTask, Task.Delay(deadline, cts.Token));
         Assert.True(extractionTask.IsCompleted, $"The task did not complete within {deadline}.");
         Assert.Same(extractionTask, completedTask);
+#endif
+
         Assert.Equal(tracestate, await extractionTask);
     }
 

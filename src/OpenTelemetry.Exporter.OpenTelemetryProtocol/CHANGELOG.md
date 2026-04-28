@@ -7,6 +7,9 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed `NullReferenceException` when exporting logs if the scope key is null.
+  ([#7186](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7186))
+
 * Added opt-in support for gzip compression. Compression can be configured
   programmatically via the new `OtlpExporterOptions.Compression` property,
   or through the environment variables such as `OTEL_EXPORTER_OTLP_COMPRESSION=gzip`.

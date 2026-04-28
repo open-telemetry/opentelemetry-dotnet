@@ -280,7 +280,7 @@ internal static class ProtobufOtlpLogSerializer
         {
             foreach (var scopeItem in scope)
             {
-                if (scopeItem.Key.Equals("{OriginalFormat}", StringComparison.Ordinal) || string.IsNullOrEmpty(scopeItem.Key))
+                if (string.IsNullOrEmpty(scopeItem.Key) || string.Equals(scopeItem.Key, "{OriginalFormat}", StringComparison.Ordinal))
                 {
                     // Ignore if the scope key is empty.
                     // Ignore if the scope key is {OriginalFormat}

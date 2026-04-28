@@ -14,7 +14,7 @@ public sealed class MeterProviderBuilderBaseTests
     [InlineData(null, typeof(MeterProviderSdk))]
     public void LoggerProviderIsExpectedType(string? value, Type expected)
     {
-        using (new EnvironmentVariableScope("OTEL_SDK_DISABLED", value))
+        using (EnvironmentVariableScope.Create("OTEL_SDK_DISABLED", value))
         {
             var builder = new MeterProviderBuilderBase();
 
