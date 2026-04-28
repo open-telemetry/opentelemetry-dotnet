@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Collections;
-
 #if !NET
 using System.Collections.ObjectModel;
 #endif
+using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Context.Propagation;
@@ -160,9 +160,7 @@ public static class EnvironmentVariableCarrier
 
         foreach (var ch in key)
         {
-            bool isNormalized = (ch >= 'A' && ch <= 'Z') || IsAsciiDigit(ch) || ch == '_';
-
-            if (!isNormalized)
+            if (!IsNormalized(ch))
             {
                 return false;
             }
@@ -238,12 +236,16 @@ public static class EnvironmentVariableCarrier
 
     private static char NormalizeCharacter(char value)
     {
+#if NET
+        if (char.IsAsciiLetterLower(value))
+#else
         if (value >= 'a' && value <= 'z')
+#endif
         {
             return (char)(value - 32);
         }
 
-        if ((value >= 'A' && value <= 'Z') || IsAsciiDigit(value) || value == '_')
+        if (IsNormalized(value))
         {
             return value;
         }
@@ -252,5 +254,23 @@ public static class EnvironmentVariableCarrier
         return '_';
     }
 
-    private static bool IsAsciiDigit(char value) => value >= '0' && value <= '9';
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool IsNormalized(char value) =>
+        IsAsciiLetterUpper(value) || IsAsciiDigit(value) || value == '_';
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool IsAsciiLetterUpper(char value) =>
+#if NET
+        char.IsAsciiLetterUpper(value);
+#else
+       value >= 'A' && value <= 'Z';
+#endif
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool IsAsciiDigit(char value) =>
+#if NET
+        char.IsAsciiDigit(value);
+#else
+        value >= '0' && value <= '9';
+#endif
 }
