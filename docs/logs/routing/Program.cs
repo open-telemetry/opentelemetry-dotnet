@@ -17,10 +17,9 @@ var otlpExporter2 = new OtlpLogExporter(new OtlpExporterOptions
     Endpoint = new Uri("http://localhost:4318"), // OTLP destination 2
 });
 
-// Wrap each exporter in a SimpleLogRecordExportProcessor.
-// (Use BatchLogRecordExportProcessor for production workloads.)
-var processor1 = new SimpleLogRecordExportProcessor(otlpExporter1);
-var processor2 = new SimpleLogRecordExportProcessor(otlpExporter2);
+// Wrap each exporter in a BatchLogRecordExportProcessor.
+var processor1 = new BatchLogRecordExportProcessor(otlpExporter1);
+var processor2 = new BatchLogRecordExportProcessor(otlpExporter2);
 
 // Build the routing processor. Logs whose category name starts with
 // "Payment." are sent to OTLP2; everything else goes to OTLP1.

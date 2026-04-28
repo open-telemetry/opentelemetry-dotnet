@@ -38,8 +38,7 @@ RoutingProcessor (custom)
 
 1. Two `OtlpLogExporter` instances are created, each pointing at a different
    endpoint.
-2. Each exporter is wrapped in a `SimpleLogRecordExportProcessor` (use
-   `BatchLogRecordExportProcessor` for production workloads).
+2. Each exporter is wrapped in a `BatchLogRecordExportProcessor`.
 3. A custom [`RoutingProcessor`](./RoutingProcessor.cs) extends
    `BaseProcessor<LogRecord>` and overrides `OnEnd`. It checks if the log
    record's `CategoryName` starts with a configured prefix to decide which
@@ -68,9 +67,6 @@ dotnet run
 * **Lifecycle management.** The routing processor delegates `ForceFlush`,
   `Shutdown`, and `Dispose` to both inner processors so that both export
   pipelines are properly drained and cleaned up.
-* **Production batching.** Replace `SimpleLogRecordExportProcessor` with
-  `BatchLogRecordExportProcessor` for production scenarios to get better
-  throughput.
 
 ## Files
 
