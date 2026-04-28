@@ -44,14 +44,26 @@ var orderLogger = loggerFactory.CreateLogger("Order.Processing");
 var paymentLogger = loggerFactory.CreateLogger("Payment.Processing");
 
 // --- Logs from "Order.Processing" --> routed to OTLP1 ---
-orderLogger.LogInformation("Processing order {OrderId}.", "ORD-001");
+orderLogger.ProcessingOrder("ORD-001");
 
 // --- Logs from "Payment.Processing" --> routed to OTLP2 ---
-paymentLogger.LogInformation("Processing payment {PaymentId}.", "PAY-001");
+paymentLogger.ProcessingPayment("PAY-001");
 
 // --- Another order log --> routed to OTLP1 ---
-orderLogger.LogInformation("Order {OrderId} completed.", "ORD-001");
+orderLogger.OrderCompleted("ORD-001");
 
 // Dispose logger factory before the application ends.
 // This will flush the remaining logs and shutdown the logging pipeline.
 loggerFactory.Dispose();
+
+internal static partial class LoggerExtensions
+{
+    [LoggerMessage(LogLevel.Information, "Processing order {OrderId}.")]
+    public static partial void ProcessingOrder(this ILogger logger, string orderId);
+
+    [LoggerMessage(LogLevel.Information, "Processing payment {PaymentId}.")]
+    public static partial void ProcessingPayment(this ILogger logger, string paymentId);
+
+    [LoggerMessage(LogLevel.Information, "Order {OrderId} completed.")]
+    public static partial void OrderCompleted(this ILogger logger, string orderId);
+}
