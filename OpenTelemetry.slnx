@@ -161,11 +161,6 @@
     <File Path="src/Shared/Configuration/IConfigurationExtensionsLogger.cs" />
     <File Path="src/Shared/Configuration/OpenTelemetryConfigurationExtensions.cs" />
   </Folder>
-  <Folder Name="/Shared/EnvironmentVariables/">
-    <File Path="src/Shared/EnvironmentVariables/EnvironmentVariablesConfigurationProvider.cs" />
-    <File Path="src/Shared/EnvironmentVariables/EnvironmentVariablesConfigurationSource.cs" />
-    <File Path="src/Shared/EnvironmentVariables/EnvironmentVariablesExtensions.cs" />
-  </Folder>
   <Folder Name="/Shared/Metrics/">
     <File Path="src/Shared/Metrics/Base2ExponentialBucketHistogramHelper.cs" />
   </Folder>
