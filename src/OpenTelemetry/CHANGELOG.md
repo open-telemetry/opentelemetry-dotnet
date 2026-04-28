@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Introduce `SamplerOptions` to encapsulate trace sampler configuration, parsing
+  `OTEL_TRACES_SAMPLER` and `OTEL_TRACES_SAMPLER_ARG` from `IConfiguration`.
+  ([#7192](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7192))
+
 ## 1.15.3
 
 Released 2026-Apr-21
