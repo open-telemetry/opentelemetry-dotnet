@@ -320,7 +320,7 @@ public class BaggageTests
         Baggage.ClearBaggage();
         Baggage.SetBaggage("key1", "value1");
 
-        await InnerTask();
+        await Task.Run(InnerTask);
 
         Baggage.SetBaggage("key4", "value4");
 
@@ -340,7 +340,7 @@ public class BaggageTests
 
             Baggage.SetBaggage("key3", "value3");
 
-            // key2 & key3 changes don't flow backward automatically
+            // The entire child task is isolated from the caller.
         }
     }
 
