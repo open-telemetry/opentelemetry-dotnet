@@ -1,6 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if NET
+using System.Buffers;
+#endif
 using System.Diagnostics;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Internal;
@@ -24,6 +27,10 @@ public class JaegerPropagator : TextMapPropagator
 
     private static readonly int TraceId128BitLength = "0af7651916cd43dd8448eb211c80319c".Length;
     private static readonly int SpanIdLength = "00f067aa0ba902b7".Length;
+
+#if NET
+    private static readonly SearchValues<char> DelimiterHintChars = SearchValues.Create(":%");
+#endif
 
     /// <inheritdoc/>
 #pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
@@ -236,6 +243,40 @@ public class JaegerPropagator : TextMapPropagator
 
     private static ReadOnlySpan<char> ReadNextComponent(string header, ref int position)
     {
+#if NET
+        var remaining = header.AsSpan(position);
+        var scanOffset = 0;
+        while (true)
+        {
+            var delimiterIndex = remaining.Slice(scanOffset).IndexOfAny(DelimiterHintChars);
+            if (delimiterIndex < 0)
+            {
+                var result = remaining;
+                position = header.Length;
+                return result;
+            }
+
+            delimiterIndex += scanOffset;
+
+            if (remaining[delimiterIndex] == ':')
+            {
+                var component = remaining.Slice(0, delimiterIndex);
+                position += delimiterIndex + 1;
+                return component;
+            }
+
+            if (remaining.Length - delimiterIndex >= JaegerDelimiterEncoded.Length &&
+                remaining[delimiterIndex + 1] == '3' &&
+                remaining[delimiterIndex + 2] == 'A')
+            {
+                var component = remaining.Slice(0, delimiterIndex);
+                position += delimiterIndex + JaegerDelimiterEncoded.Length;
+                return component;
+            }
+
+            scanOffset = delimiterIndex + 1;
+        }
+#else
         var colonIndex = header.IndexOf(JaegerDelimiter, position, StringComparison.Ordinal);
         var encodedIndex = header.IndexOf(JaegerDelimiterEncoded, position, StringComparison.Ordinal);
 
@@ -263,5 +304,6 @@ public class JaegerPropagator : TextMapPropagator
         var component = header.AsSpan(position, nextIndex - position);
         position = nextIndex + delimiterLength;
         return component;
+#endif
     }
 }
