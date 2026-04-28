@@ -70,11 +70,11 @@ public class EnvironmentVariableCarrierTests
         var key = $"otel.traceparent.{Guid.NewGuid():N}";
         var normalizedKey = EnvironmentVariableCarrier.NormalizeKey(key);
 
-        using (new EnvironmentVariableScope(normalizedKey, "value-before"))
+        using (EnvironmentVariableScope.Create(normalizedKey, "value-before"))
         {
             var snapshot = EnvironmentVariableCarrier.Capture();
 
-            using (new EnvironmentVariableScope(normalizedKey, "value-after"))
+            using (EnvironmentVariableScope.Create(normalizedKey, "value-after"))
             {
                 Assert.Equal("value-before", EnvironmentVariableCarrier.Get(snapshot, key)!.Single());
             }
@@ -197,7 +197,7 @@ public class EnvironmentVariableCarrierTests
         var normalizedKey = EnvironmentVariableCarrier.NormalizeKey(key);
         var originalValue = Environment.GetEnvironmentVariable(normalizedKey);
 
-        using (new EnvironmentVariableScope(normalizedKey, "process-value"))
+        using (EnvironmentVariableScope.Create(normalizedKey, "process-value"))
         {
             var childEnvironment = EnvironmentVariableCarrier.Capture()
                 .ToDictionary((item) => item.Key, (item) => item.Value, StringComparer.Ordinal);
