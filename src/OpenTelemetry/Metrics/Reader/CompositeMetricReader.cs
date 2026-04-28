@@ -65,17 +65,20 @@ internal sealed partial class CompositeMetricReader : MetricReader
     protected override bool OnCollect(int timeoutMilliseconds = Timeout.Infinite)
     {
         var result = true;
+        var initialTimeoutMilliseconds = timeoutMilliseconds;
         long? timestamp = timeoutMilliseconds == Timeout.Infinite ? null : Stopwatch.GetTimestamp();
 
         for (var current = this.Head; current != null; current = current.Next)
         {
+            var currentTimeoutMilliseconds = timeoutMilliseconds;
+
             if (timestamp is { } startedAt)
             {
-                timeoutMilliseconds = Stopwatch.Remaining(timeoutMilliseconds, startedAt);
+                currentTimeoutMilliseconds = Stopwatch.Remaining(initialTimeoutMilliseconds, startedAt);
             }
 
             // Notify all the readers, even if we run overtime
-            result = current.Value.Collect(timeoutMilliseconds) && result;
+            result = current.Value.Collect(currentTimeoutMilliseconds) && result;
         }
 
         return result;
@@ -85,17 +88,20 @@ internal sealed partial class CompositeMetricReader : MetricReader
     protected override bool OnShutdown(int timeoutMilliseconds)
     {
         var result = true;
+        var initialTimeoutMilliseconds = timeoutMilliseconds;
         long? timestamp = timeoutMilliseconds == Timeout.Infinite ? null : Stopwatch.GetTimestamp();
 
         for (var current = this.Head; current != null; current = current.Next)
         {
+            var currentTimeoutMilliseconds = timeoutMilliseconds;
+
             if (timestamp is { } startedAt)
             {
-                timeoutMilliseconds = Stopwatch.Remaining(timeoutMilliseconds, startedAt);
+                currentTimeoutMilliseconds = Stopwatch.Remaining(initialTimeoutMilliseconds, startedAt);
             }
 
             // Notify all the readers, even if we run overtime
-            result = current.Value.Shutdown(timeoutMilliseconds) && result;
+            result = current.Value.Shutdown(currentTimeoutMilliseconds) && result;
         }
 
         return result;

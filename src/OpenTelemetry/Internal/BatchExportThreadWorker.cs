@@ -84,6 +84,7 @@ internal sealed class BatchExportThreadWorker<T> : BatchExportWorker<T>
 
         var triggers = new WaitHandle[] { this.dataExportedNotification, this.shutdownTrigger };
 
+        var initialTimeoutMilliseconds = timeoutMilliseconds;
         long? timestamp = timeoutMilliseconds == Timeout.Infinite ? null : Stopwatch.GetTimestamp();
 
         // There is a chance that the export thread finished processing all the data from the queue,
@@ -96,12 +97,14 @@ internal sealed class BatchExportThreadWorker<T> : BatchExportWorker<T>
 
             if (timestamp is { } startedAt)
             {
-                timeoutMilliseconds = Stopwatch.Remaining(timeoutMilliseconds, startedAt);
+                var remainingMilliseconds = Stopwatch.Remaining(initialTimeoutMilliseconds, startedAt);
 
-                if (timeoutMilliseconds <= 0)
+                if (remainingMilliseconds <= 0)
                 {
                     return this.CircularBuffer.RemovedCount >= head;
                 }
+
+                timeout = Math.Min(remainingMilliseconds, pollingMilliseconds);
             }
 
             try

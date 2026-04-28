@@ -100,7 +100,8 @@ internal sealed class PeriodicExportingMetricReaderThreadWorker : PeriodicExport
 
         while (true)
         {
-            var timeout = this.ExportIntervalMilliseconds - ((int)Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds % this.ExportIntervalMilliseconds);
+            var elapsedMilliseconds = Stopwatch.GetElapsedTime(startedAt).Ticks / TimeSpan.TicksPerMillisecond;
+            var timeout = this.ExportIntervalMilliseconds - (int)(elapsedMilliseconds % this.ExportIntervalMilliseconds);
             int index;
 
             try

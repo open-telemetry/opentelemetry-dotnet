@@ -111,7 +111,8 @@ internal sealed class PeriodicExportingMetricReaderTaskWorker : PeriodicExportin
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                var timeout = this.ExportIntervalMilliseconds - ((int)Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds % this.ExportIntervalMilliseconds);
+                var elapsedMilliseconds = Stopwatch.GetElapsedTime(startedAt).Ticks / TimeSpan.TicksPerMillisecond;
+                var timeout = this.ExportIntervalMilliseconds - (int)(elapsedMilliseconds % this.ExportIntervalMilliseconds);
 
                 Task? exportTriggerTask = null;
                 Task? triggeredTask = null;

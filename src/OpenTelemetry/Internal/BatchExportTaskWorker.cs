@@ -146,6 +146,7 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
 
     private async Task<bool> WaitForExportAsync(int timeoutMilliseconds, long targetHead)
     {
+        var initialTimeoutMilliseconds = timeoutMilliseconds;
         long? timestamp = timeoutMilliseconds == Timeout.Infinite ? null : Stopwatch.GetTimestamp();
 
         // There is a chance that the export task finished processing all the data from the queue,
@@ -158,12 +159,14 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
 
             if (timestamp is { } startedAt)
             {
-                timeoutMilliseconds = Stopwatch.Remaining(timeoutMilliseconds, startedAt);
+                var remainingMilliseconds = Stopwatch.Remaining(initialTimeoutMilliseconds, startedAt);
 
-                if (timeoutMilliseconds <= 0)
+                if (remainingMilliseconds <= 0)
                 {
                     return this.CircularBuffer.RemovedCount >= targetHead;
                 }
+
+                timeout = Math.Min(remainingMilliseconds, pollingMilliseconds);
             }
 
             try

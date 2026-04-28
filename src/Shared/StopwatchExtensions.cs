@@ -5,16 +5,18 @@ namespace System.Diagnostics;
 
 internal static class StopwatchExtensions
 {
+#if !NET
+    private static readonly double ToTicks = TimeSpan.TicksPerSecond / (double)Stopwatch.Frequency;
+#endif
+
     extension(Stopwatch)
     {
 #if !NET
         public static TimeSpan GetElapsedTime(long begin)
         {
             var end = Stopwatch.GetTimestamp();
-
-            var timestampToTicks = TimeSpan.TicksPerSecond / (double)Stopwatch.Frequency;
             var delta = end - begin;
-            var ticks = (long)(timestampToTicks * delta);
+            var ticks = (long)(ToTicks * delta);
 
             return new TimeSpan(ticks);
         }
@@ -22,8 +24,10 @@ internal static class StopwatchExtensions
 
         public static int Remaining(int durationMilliseconds, long begin)
         {
-            var elapsed = (int)Stopwatch.GetElapsedTime(begin).TotalMilliseconds;
-            return elapsed >= durationMilliseconds ? 0 : durationMilliseconds - elapsed;
+            var elapsedMilliseconds = Stopwatch.GetElapsedTime(begin).Ticks / TimeSpan.TicksPerMillisecond;
+            elapsedMilliseconds = elapsedMilliseconds < 0 ? 0 : elapsedMilliseconds > int.MaxValue ? int.MaxValue : elapsedMilliseconds;
+
+            return elapsedMilliseconds >= durationMilliseconds ? 0 : durationMilliseconds - (int)elapsedMilliseconds;
         }
     }
 }
