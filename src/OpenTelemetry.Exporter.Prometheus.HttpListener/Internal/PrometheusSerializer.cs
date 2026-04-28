@@ -155,7 +155,7 @@ internal static partial class PrometheusSerializer
             return cursor;
         }
 
-        if (IsAsciiDigit(value[0]))
+        if (char.IsAsciiDigit(value[0]))
         {
             buffer[cursor++] = unchecked((byte)'_');
         }
@@ -163,7 +163,7 @@ internal static partial class PrometheusSerializer
         for (var i = 0; i < value.Length; i++)
         {
             var ch = value[i];
-            buffer[cursor++] = IsAsciiLetterOrDigit(ch) ? (byte)ch : (byte)'_';
+            buffer[cursor++] = char.IsAsciiLetterOrDigit(ch) ? (byte)ch : (byte)'_';
         }
 
         return cursor;
@@ -450,22 +450,6 @@ internal static partial class PrometheusSerializer
         return WriteUtf8NoEscape(buffer, cursor, name.Value);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool IsAsciiDigit(char value) =>
-#if NET
-        char.IsAsciiDigit(value);
-#else
-        value is >= '0' and <= '9';
-#endif
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool IsAsciiLetterOrDigit(char value) =>
-#if NET
-        char.IsAsciiLetterOrDigit(value);
-#else
-        value is (>= 'A' and <= 'Z') or (>= 'a' and <= 'z') or (>= '0' and <= '9');
-#endif
-
     private static int WriteUtf8NoEscape(byte[] buffer, int cursor, ReadOnlySpan<byte> value)
     {
         value.CopyTo(buffer.AsSpan(cursor));
@@ -718,7 +702,7 @@ internal static partial class PrometheusSerializer
             return TryWriteByte(buffer, ref cursor, unchecked((byte)'_'));
         }
 
-        if (IsAsciiDigit(value[0]) &&
+        if (char.IsAsciiDigit(value[0]) &&
             !TryWriteByte(buffer, ref cursor, unchecked((byte)'_')))
         {
             return false;
@@ -727,7 +711,7 @@ internal static partial class PrometheusSerializer
         for (var i = 0; i < value.Length; i++)
         {
             var ch = value[i];
-            var sanitizedByte = IsAsciiLetterOrDigit(value[i]) ? (byte)ch : (byte)'_';
+            var sanitizedByte = char.IsAsciiLetterOrDigit(value[i]) ? (byte)ch : (byte)'_';
 
             if (!TryWriteByte(buffer, ref cursor, sanitizedByte))
             {
