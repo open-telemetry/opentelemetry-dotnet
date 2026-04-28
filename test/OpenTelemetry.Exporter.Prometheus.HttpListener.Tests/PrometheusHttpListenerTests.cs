@@ -149,7 +149,7 @@ public class PrometheusHttpListenerTests
             client.DefaultRequestHeaders.Add("Accept", acceptHeader);
         }
 
-        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
+        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -179,7 +179,7 @@ public class PrometheusHttpListenerTests
         Assert.Equal(port, context.Port);
 
         using var client = new HttpClient() { BaseAddress = context.BaseAddress };
-        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
+        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
@@ -201,7 +201,7 @@ public class PrometheusHttpListenerTests
         Assert.Equal(port, context.Port);
 
         using var client = new HttpClient() { BaseAddress = context.BaseAddress };
-        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
+        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
@@ -209,6 +209,14 @@ public class PrometheusHttpListenerTests
     [Fact]
     public async Task HostOnly_Set_Port_DefaultsTo9464()
     {
+#if NET
+        if (OperatingSystem.IsLinux())
+        {
+            // Linux does not like binding to 127.0.0.1 for some reason
+            return;
+        }
+#endif
+
         using var meter = new Meter(MeterName, MeterVersion);
 
         var host = "127.0.0.1";
@@ -222,7 +230,7 @@ public class PrometheusHttpListenerTests
         Assert.Equal(9464, context.Port);
 
         using var client = new HttpClient() { BaseAddress = context.BaseAddress };
-        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
+        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
@@ -242,7 +250,7 @@ public class PrometheusHttpListenerTests
 
             port = GetRandomPort();
 
-            options.UriPrefixes = [$"http://127.0.0.1:{port}"];
+            options.UriPrefixes = [$"http://localhost:{port}"];
 
             return port;
         });
@@ -251,7 +259,7 @@ public class PrometheusHttpListenerTests
         Assert.Equal($"http://localhost:{port}/", context.BaseAddress.ToString());
 
         using var client = new HttpClient() { BaseAddress = context.BaseAddress };
-        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
+        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
