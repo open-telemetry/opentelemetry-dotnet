@@ -307,7 +307,11 @@ public sealed class PrometheusCollectionManagerTests
             {
                 return Sdk.CreateMeterProviderBuilder()
                     .AddMeter(meter.Name)
-                    .AddPrometheusHttpListener(options => options.Port = port)
+                    .AddPrometheusHttpListener((options) =>
+                    {
+                        options.Port = port;
+                        options.ScrapeResponseCacheDurationMilliseconds = 0;
+                    })
                     .Build();
             }
             catch (System.Net.HttpListenerException)
