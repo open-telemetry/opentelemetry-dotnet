@@ -17,6 +17,25 @@ Notes](../../RELEASENOTES.md).
   `PrometheusHttpListenerOptions`.
   ([#7176](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7176))
 
+* Fixed the serialization of `NaN`, `PositiveInfinity`, and `NegativeInfinity`
+  values in Prometheus metrics to be compliant with the specification.
+  ([#7179](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7179))
+
+* Fixed loss of precision when serializing `double` and `float` values in
+  Prometheus metrics to be compliant with the specification by using 17
+  significant digits to represent such values.
+  ([#7179](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7179))
+
+* Fix non-ASCII characters in metric names and unit strings not being sanitized
+  correctly during Prometheus serialization.
+  ([#7184](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7184))
+
+* Add support for caching the scrape endpoint HTTP responses using the
+  `PrometheusHttpListenerOptions.ScrapeResponseCacheDurationMilliseconds` option.
+  The default value is `300` milliseconds. Set the option to `0` to disable
+  response caching.
+  ([#7189](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7189))
+
 ## 1.15.3-beta.1
 
 Released 2026-Apr-21

@@ -163,6 +163,20 @@ public class JaegerPropagatorTests
     }
 
     [Fact]
+    public void ExtractReturnsOriginalContextIfHeaderContainsUnexpectedPercentCharacter()
+    {
+        var formattedHeader = $"%{TraceId}{JaegerDelimiter}{SpanId}{JaegerDelimiter}{ParentSpanId}{JaegerDelimiter}{FlagSampled}";
+        var headers = new Dictionary<string, string[]>
+        {
+            [JaegerHeader] = [formattedHeader],
+        };
+
+        var result = new JaegerPropagator().Extract(default, headers, Getter);
+
+        Assert.Equal(default, result);
+    }
+
+    [Fact]
     public void InjectDoesNoopIfContextIsInvalid()
     {
         // arrange

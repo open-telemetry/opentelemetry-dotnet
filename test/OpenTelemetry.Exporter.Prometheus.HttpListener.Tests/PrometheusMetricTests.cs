@@ -57,6 +57,10 @@ public sealed class PrometheusMetricTests
         => AssertSanitizeMetricName("sample_metric_name__:_per_meter", "sample_metric_name_:_per_meter");
 
     [Fact]
+    public void SanitizeMetricName_ReplacesNonAsciiCharacters()
+        => AssertSanitizeMetricName("A\u010A", "A_");
+
+    [Fact]
     public void Unit_Annotation_None()
         => Assert.Equal("Test", PrometheusMetric.RemoveAnnotations("Test"));
 
@@ -177,14 +181,17 @@ public sealed class PrometheusMetricTests
         => AssertOpenMetricsName("db_bytes_written_total", "By", PrometheusType.Counter, false, "db_bytes_written_bytes_total");
 
     [Fact]
-    public void OpenMetricsMetadataName_Counter_NotAppendTotal() => AssertOpenMetricsMetadataName("db_bytes_written", "By", PrometheusType.Counter, false, "db_bytes_written_bytes");
+    public void OpenMetricsMetadataName_Counter_NotAppendTotal()
+        => AssertOpenMetricsMetadataName("db_bytes_written", "By", PrometheusType.Counter, false, "db_bytes_written_bytes");
 
     [Fact]
     public void OpenMetricsMetadataName_Counter_DisableSuffixTotal_NotAppendTotal()
         => AssertOpenMetricsMetadataName("db_bytes_written", "By", PrometheusType.Counter, true, "db_bytes_written_bytes");
 
     [Theory]
+#pragma warning disable xUnit1045 // Avoid using TheoryData type arguments that might not be serializable
     [MemberData(nameof(GetPrometheusType_Data))]
+#pragma warning restore xUnit1045 // Avoid using TheoryData type arguments that might not be serializable
     public void GetPrometheusType_MapsOpenTelemetryMetricsTypeToPrometheus(MetricsMappingTestData mappingTestData)
     {
         var result = PrometheusMetric.GetPrometheusType(mappingTestData.OpenTelemetryMetricType);
@@ -386,6 +393,10 @@ public sealed class PrometheusMetricTests
     [Fact]
     public void SanitizeMetricUnit_RemoveMultipleUnsupportedCharacters()
         => AssertSanitizeMetricUnit("##/RU!", "RU");
+
+    [Fact]
+    public void SanitizeMetricUnit_ReplacesNonAsciiCharacters()
+        => AssertSanitizeMetricUnit("s\u010A", "s");
 
     [Fact]
     public void Name_UnitWithHash_Sanitized()
