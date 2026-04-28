@@ -7,7 +7,7 @@ Notes](../../RELEASENOTES.md).
 ## Unreleased
 
 * Fix `BaggagePropagator` to correctly follow Key and Value Encoding rules as mentioned
-the [W3C Baggage specification](https://www.w3.org/TR/baggage/#key-and-value-encoding).
+  the [W3C Baggage specification](https://www.w3.org/TR/baggage/#key-and-value-encoding).
   [#7051](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7051)
 
 ## 1.15.3
