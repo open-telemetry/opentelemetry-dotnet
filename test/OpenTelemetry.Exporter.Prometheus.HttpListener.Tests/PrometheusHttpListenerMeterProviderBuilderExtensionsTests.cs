@@ -140,4 +140,17 @@ public sealed class PrometheusHttpListenerMeterProviderBuilderExtensionsTests
             Assert.Equal("/custom-metrics", options.CurrentValue.ScrapeEndpointPath);
         }
     }
+
+    [Fact]
+    public void TestAddPrometheusHttpListener_UsesConfiguredCacheDuration()
+    {
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddPrometheusHttpListener(options => options.ScrapeResponseCacheDurationMilliseconds = 123)
+            .Build();
+
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        Assert.True(meterProvider.TryFindExporter(out PrometheusExporter? exporter));
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+        Assert.Equal(123, exporter!.ScrapeResponseCacheDurationMilliseconds);
+    }
 }
