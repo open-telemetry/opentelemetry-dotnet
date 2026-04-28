@@ -222,7 +222,8 @@ internal static partial class PrometheusSerializer
             case IFormattable formattableValue:
                 return WriteLabelValue(buffer, cursor, formattableValue.ToString(null, CultureInfo.InvariantCulture) ?? string.Empty);
 
-            // TODO: Attribute values should be written as their JSON representation. Extra logic may need to be added here to correctly convert other .NET types.
+            // Attribute values should be written as their JSON representation.
+            // Extra logic may need to be added here to correctly convert other .NET types.
             // More detail: https://github.com/open-telemetry/opentelemetry-dotnet/issues/4822#issuecomment-1707328495
             default:
                 return WriteLabelValue(buffer, cursor, value.ToString() ?? string.Empty);
@@ -770,7 +771,8 @@ internal static partial class PrometheusSerializer
             case IFormattable formattableValue:
                 return TryWriteLabelValue(buffer, ref cursor, formattableValue.ToString(null, CultureInfo.InvariantCulture) ?? string.Empty);
 
-            // TODO: Attribute values should be written as their JSON representation. Extra logic may need to be added here to correctly convert other .NET types.
+            // Attribute values should be written as their JSON representation.
+            // Extra logic may need to be added here to correctly convert other .NET types.
             // More detail: https://github.com/open-telemetry/opentelemetry-dotnet/issues/4822#issuecomment-1707328495
             default:
                 return TryWriteLabelValue(buffer, ref cursor, value.ToString() ?? string.Empty);
