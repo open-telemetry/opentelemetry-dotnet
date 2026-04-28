@@ -46,7 +46,7 @@ public sealed class PrometheusCollectionManagerTests
         exporter.Collect = (timeout) =>
         {
             var result = collectFunc!(timeout);
-            runningCollectCount++;
+            Interlocked.Increment(ref runningCollectCount);
 
             cts.Token.ThrowIfCancellationRequested();
             Thread.Sleep(5000);
@@ -237,38 +237,59 @@ public sealed class PrometheusCollectionManagerTests
         counter.Add(100);
 
         var firstResponse = await exporter.CollectionManager.EnterCollect(openMetricsRequested: false);
-
-        Assert.False(firstResponse.FromCache);
-        Assert.Equal(1, collectCount);
-
-        var secondCollectTask = Task.Run(async () =>
-        {
-            secondCollectStarted.SetResult(true);
-            return await exporter.CollectionManager.EnterCollect(openMetricsRequested: false);
-        });
-
-        await secondCollectStarted.Task;
-
-        var completion = await Task.WhenAny(secondCollectTask, Task.Delay(TimeSpan.FromSeconds(1)));
-        Assert.NotSame(secondCollectTask, completion);
-        Assert.False(secondCollectTask.IsCompleted);
-        Assert.Equal(1, collectCount);
-
-        exporter.CollectionManager.ExitCollect();
-
-        completion = await Task.WhenAny(secondCollectTask, Task.Delay(TimeSpan.FromSeconds(5)));
-        Assert.Same(secondCollectTask, completion);
-
-        var secondResponse = await secondCollectTask;
+        var firstCollectExited = false;
         try
         {
+            Assert.False(firstResponse.FromCache);
+            Assert.Equal(1, collectCount);
+
+            var secondCollectTask = Task.Run(async () =>
+            {
+                secondCollectStarted.SetResult(true);
+                var response = await exporter.CollectionManager.EnterCollect(openMetricsRequested: false);
+                try
+                {
+                    return response;
+                }
+                finally
+                {
+                    exporter.CollectionManager.ExitCollect();
+                }
+            });
+
+            await secondCollectStarted.Task;
+
+            var completion = await Task.WhenAny(secondCollectTask, Task.Delay(TimeSpan.FromSeconds(1)));
+
+            Assert.NotSame(secondCollectTask, completion);
+            Assert.False(secondCollectTask.IsCompleted);
+            Assert.Equal(1, collectCount);
+
+            exporter.CollectionManager.ExitCollect();
+            firstCollectExited = true;
+
+            var timeout = TimeSpan.FromSeconds(5);
+
+#if NET
+            await secondCollectTask.WaitAsync(timeout);
+#else
+            using var cts = new CancellationTokenSource(timeout);
+            completion = await Task.WhenAny(secondCollectTask, Task.Delay(timeout, cts.Token));
+            Assert.Same(secondCollectTask, completion);
+#endif
+
+            var secondResponse = await secondCollectTask;
+
             Assert.False(secondResponse.FromCache);
             Assert.Equal(2, collectCount);
             Assert.True(firstResponse.GeneratedAtUtc < secondResponse.GeneratedAtUtc);
         }
         finally
         {
-            exporter.CollectionManager.ExitCollect();
+            if (!firstCollectExited)
+            {
+                exporter.CollectionManager.ExitCollect();
+            }
         }
     }
 
