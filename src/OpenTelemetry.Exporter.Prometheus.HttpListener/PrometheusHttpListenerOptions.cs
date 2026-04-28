@@ -42,13 +42,6 @@ public class PrometheusHttpListenerOptions
 
         this.Host = host;
         this.Port = port;
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="PrometheusHttpListenerOptions"/> class.
-    /// </summary>
-    public PrometheusHttpListenerOptions()
-    {
         this.ScrapeResponseCacheDurationMilliseconds = 300;
     }
 
