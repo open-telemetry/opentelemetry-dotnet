@@ -9,7 +9,9 @@ internal static class StopwatchExtensions
     private static readonly double ToTicks = TimeSpan.TicksPerSecond / (double)Stopwatch.Frequency;
 #endif
 
+#pragma warning disable SA1201 // A <unknown> should not follow a field
     extension(Stopwatch)
+#pragma warning disable SA1201 // A <unknown> should not follow a field
     {
 #if !NET
         public static TimeSpan GetElapsedTime(long begin)
