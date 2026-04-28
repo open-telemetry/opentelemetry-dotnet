@@ -54,13 +54,12 @@ internal sealed partial class CompositeMetricReader : MetricReader
 
     public Enumerator GetEnumerator() => new(this.Head);
 
+    // CompositeMetricReader delegates the work to its underlying readers,
+    // so CompositeMetricReader.ProcessMetrics should never be called.
+
     /// <inheritdoc/>
     internal override bool ProcessMetrics(in Batch<Metric> metrics, int timeoutMilliseconds)
-    {
-        // CompositeMetricReader delegates the work to its underlying readers,
-        // so CompositeMetricReader.ProcessMetrics should never be called.
-        throw new NotSupportedException();
-    }
+        => throw new NotSupportedException();
 
     /// <inheritdoc/>
     protected override bool OnCollect(int timeoutMilliseconds)
@@ -98,18 +97,20 @@ internal sealed partial class CompositeMetricReader : MetricReader
             ? null
             : Stopwatch.StartNew();
 
+        this.CollectObservableInstruments();
+
         for (var cur = this.Head; cur != null; cur = cur.Next)
         {
             if (sw == null)
             {
-                result = cur.Value.Shutdown(Timeout.Infinite) && result;
+                result = cur.Value.ShutdownFromComposite(Timeout.Infinite) && result;
             }
             else
             {
                 var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
 
                 // notify all the readers, even if we run overtime
-                result = cur.Value.Shutdown((int)Math.Max(timeout, 0)) && result;
+                result = cur.Value.ShutdownFromComposite((int)Math.Max(timeout, 0)) && result;
             }
         }
 

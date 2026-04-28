@@ -119,6 +119,27 @@ public class BaseExportingMetricReader : MetricReader
     }
 
     /// <inheritdoc />
+    internal override bool OnShutdownFromComposite(int timeoutMilliseconds)
+    {
+        var result = true;
+
+        if (timeoutMilliseconds == Timeout.Infinite)
+        {
+            result = this.CollectFromComposite(Timeout.Infinite) && result;
+            result = this.exporter.Shutdown(Timeout.Infinite) && result;
+        }
+        else
+        {
+            var sw = Stopwatch.StartNew();
+            result = this.CollectFromComposite(timeoutMilliseconds) && result;
+            var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
+            result = this.exporter.Shutdown((int)Math.Max(timeout, 0)) && result;
+        }
+
+        return result;
+    }
+
+    /// <inheritdoc />
     protected override bool OnCollect(int timeoutMilliseconds)
     {
         if (this.SupportedExportModes.HasFlag(ExportModes.Push))
