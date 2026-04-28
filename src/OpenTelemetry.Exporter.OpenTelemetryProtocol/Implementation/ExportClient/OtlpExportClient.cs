@@ -44,6 +44,7 @@ internal abstract class OtlpExportClient : IExportClient
         this.Endpoint = new UriBuilder(exporterEndpoint).Uri;
         this.Headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
         this.HttpClient = httpClient;
+        this.CompressionEnabled = options.Compression == OtlpExportCompression.GZip;
     }
 
     internal HttpClient HttpClient { get; }
@@ -51,6 +52,8 @@ internal abstract class OtlpExportClient : IExportClient
     internal Uri Endpoint { get; }
 
     internal IReadOnlyDictionary<string, string> Headers { get; }
+
+    internal bool CompressionEnabled { get; }
 
     internal abstract MediaTypeHeaderValue MediaTypeHeader { get; }
 
@@ -88,12 +91,23 @@ internal abstract class OtlpExportClient : IExportClient
             request.Headers.Add(header.Key, header.Value);
         }
 
-        // TODO: Support compression.
-
-        request.Content = new ByteArrayContent(buffer, 0, contentLength);
-        request.Content.Headers.ContentType = this.MediaTypeHeader;
+        request.Content = this.CreateHttpContent(buffer, contentLength);
 
         return request;
+    }
+
+    /// <summary>
+    /// Creates the <see cref="HttpContent"/> for a request. Override in subclasses to
+    /// customise content creation (e.g. to apply compression).
+    /// </summary>
+    /// <param name="buffer">The serialized protobuf payload buffer.</param>
+    /// <param name="contentLength">The number of bytes within <paramref name="buffer"/> that make up the message.</param>
+    /// <returns>An <see cref="HttpContent"/> representing the export payload.</returns>
+    protected virtual HttpContent CreateHttpContent(byte[] buffer, int contentLength)
+    {
+        var content = new ByteArrayContent(buffer, 0, contentLength);
+        content.Headers.ContentType = this.MediaTypeHeader;
+        return content;
     }
 
     protected HttpResponseMessage SendHttpRequest(HttpRequestMessage request, CancellationToken cancellationToken) =>

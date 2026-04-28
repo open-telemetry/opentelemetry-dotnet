@@ -17,6 +17,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System.Globalization;
 #if NET462
 using System.Net.Http;
 #endif
@@ -55,7 +56,7 @@ internal static class GrpcProtocolHelpers
         }
 
         int statusValue;
-        if (!int.TryParse(grpcStatus, out statusValue))
+        if (!int.TryParse(grpcStatus, NumberStyles.None, CultureInfo.InvariantCulture, out statusValue))
         {
             throw new InvalidOperationException("Unexpected grpc-status value: " + grpcStatus);
         }
