@@ -13,7 +13,7 @@ Notes](../../RELEASENOTES.md).
 * Added opt-in support for gzip compression. Compression can be configured
   programmatically via the new `OtlpExporterOptions.Compression` property,
   or through the environment variables such as `OTEL_EXPORTER_OTLP_COMPRESSION=gzip`.
-  ([#3961](https://github.com/open-telemetry/opentelemetry-dotnet/issues/3961))
+  ([#7055](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7055))
 
 ## 1.15.3
 
