@@ -477,9 +477,9 @@ public class BaggagePropagatorTests
 
         var baggageHeader = carrier[BaggagePropagator.BaggageHeaderName];
 
-        Assert.Contains("%09", baggageHeader, StringComparison.Ordinal);
-        Assert.Contains("%20", baggageHeader, StringComparison.Ordinal);
-        Assert.Contains("%22", baggageHeader, StringComparison.Ordinal);
+        Assert.Contains("%09", baggageHeader, StringComparison.Ordinal); // Tab
+        Assert.Contains("%20", baggageHeader, StringComparison.Ordinal); // Space
+        Assert.Contains("%22", baggageHeader, StringComparison.Ordinal); // Quote
 
         var extractedContext = this.baggage.Extract(default, carrier, Getter);
         var extractedBaggage = extractedContext.Baggage.GetBaggage();
@@ -488,7 +488,7 @@ public class BaggagePropagatorTests
     }
 
     [Fact]
-    public void KeyValidTcharSymbolInjectedUnchanged()
+    public void KeyValidTokenCharSymbolInjectedUnchanged()
     {
         var propagationContext = new PropagationContext(
             default,
@@ -510,8 +510,8 @@ public class BaggagePropagatorTests
     // on the wire that happen to contain %-sequences or '+' must be treated as
     // literal token strings they are NOT decoded.
     //
-    // '%' is a valid tchar, so "key%20name" is a valid token whose name is
-    // literally "key%20name", not "key name". '+' is also a valid tchar.
+    // '%' is a valid token char, so "key%20name" is a valid token whose name is
+    // literally "key%20name", not "key name". '+' is also a valid token char.
     // -------------------------------------------------------------------------
     [Fact]
     public void KeyPercentSequenceInKeyPreservedLiterallyOnExtract()
@@ -601,8 +601,9 @@ public class BaggagePropagatorTests
         Assert.Contains(value, carrier[BaggagePropagator.BaggageHeaderName], StringComparison.Ordinal);
 
         // Confirm it round-trips back unchanged
-        var extracted = this.baggage.Extract(default, carrier, Getter);
-        Assert.Equal(value, extracted.Baggage.GetBaggage()["key"]);
+        var extracted = this.baggage.Extract(default, carrier, Getter).Baggage.GetBaggage();
+        Assert.True(extracted.TryGetValue("key", out var extractedValue));
+        Assert.Equal(value, extractedValue);
     }
 
     [Theory]
@@ -633,7 +634,7 @@ public class BaggagePropagatorTests
     }
 
     [Fact]
-    public void ValidatePlusInValueIsLiteralOnExtract()
+    public void ValidatePlusIsNotEncoded()
     {
         var carrier = new Dictionary<string, string>
         {
@@ -664,9 +665,8 @@ public class BaggagePropagatorTests
     [InlineData("`")]
     [InlineData("|")]
     [InlineData("~")]
-    public void ValidateValidTcharInKeyIsAcceptedOnExtract(string specialChar)
+    public void ValidateValidTokenCharInKeyIsAcceptedOnExtract(string specialChar)
     {
-        // This test is for all tchar characters are valid.
         var key = $"key{specialChar}name";
         var carrier = new Dictionary<string, string>
         {
@@ -695,7 +695,7 @@ public class BaggagePropagatorTests
     [InlineData("]")]
     [InlineData("{")]
     [InlineData("}")]
-    public void ValidateKeyWithInvalidTcharDroppedOnExtract(string invalidChar)
+    public void ValidateKeyWithInvalidTokenCharDroppedOnExtract(string invalidChar)
     {
         var invalidKey = $"key{invalidChar}name";
         var carrier = new Dictionary<string, string>
@@ -789,7 +789,7 @@ public class BaggagePropagatorTests
     [InlineData("key=%")]
     [InlineData("key=%2")]
     [InlineData("key=%GG")]
-    public void ValidateMalformedPercentSequenceInValueIsHandledGracefully(string headerValue)
+    public void ValidateMalformedPercentSequenceInValueDoesNotThrow(string headerValue)
     {
         var carrier = new Dictionary<string, string>
         {
@@ -861,8 +861,8 @@ public class BaggagePropagatorTests
         var carrier = new Dictionary<string, string>();
         this.baggage.Inject(new PropagationContext(default, new Baggage(new Dictionary<string, string> { { "valid-key", "valid-value" }, })), carrier, Setter);
 
-        var extracted = this.baggage.Extract(default, carrier, Getter).Baggage.GetBaggage();
-        Assert.Single(extracted);
-        Assert.Equal("valid-value", extracted["valid-key"]);
+        var entry = Assert.Single(this.baggage.Extract(default, carrier, Getter).Baggage.GetBaggage());
+        Assert.Equal("valid-key", entry.Key);
+        Assert.Equal("valid-value", entry.Value);
     }
 }
