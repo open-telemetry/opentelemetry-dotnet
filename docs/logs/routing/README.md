@@ -74,7 +74,6 @@ dotnet run
 | ------ | ------------- |
 | [Program.cs](./Program.cs) | Console app demonstrating the routing |
 | [RoutingProcessor.cs](./RoutingProcessor.cs) | Custom routing processor |
-| [routing.csproj](./routing.csproj) | Project file |
 
 ## Alternatives
 
