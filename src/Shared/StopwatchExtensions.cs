@@ -1,16 +1,10 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#pragma warning disable SA1201 // A <unknown> should not follow a field
-
 namespace System.Diagnostics;
 
 internal static class StopwatchExtensions
 {
-#if !NET
-    private static readonly double ToTicks = TimeSpan.TicksPerSecond / (double)Stopwatch.Frequency;
-#endif
-
     extension(Stopwatch)
     {
 #if !NET
@@ -18,7 +12,7 @@ internal static class StopwatchExtensions
         {
             var end = Stopwatch.GetTimestamp();
             var delta = end - begin;
-            var ticks = (long)(ToTicks * delta);
+            var ticks = (long)(Conversion.ToTicks * delta);
 
             return new TimeSpan(ticks);
         }
@@ -32,4 +26,11 @@ internal static class StopwatchExtensions
             return elapsedMilliseconds >= durationMilliseconds ? 0 : durationMilliseconds - (int)elapsedMilliseconds;
         }
     }
+
+#if !NET
+    private static class Conversion
+    {
+        internal static readonly double ToTicks = TimeSpan.TicksPerSecond / (double)Stopwatch.Frequency;
+    }
+#endif
 }
