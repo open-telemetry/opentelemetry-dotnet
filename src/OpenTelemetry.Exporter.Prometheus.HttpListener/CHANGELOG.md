@@ -36,6 +36,10 @@ Notes](../../RELEASENOTES.md).
   response caching.
   ([#7189](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7189))
 
+* Use the canonical representation for "quantile" and "le" label values when
+  using OpenMetrics.
+  ([#7218](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7218))
+
 ## 1.15.3-beta.1
 
 Released 2026-Apr-21

@@ -24,6 +24,10 @@ Notes](../../RELEASENOTES.md).
   correctly during Prometheus serialization.
   ([#7184](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7184))
 
+* Use the canonical representation for "quantile" and "le" label values when
+  using OpenMetrics.
+  ([#7218](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7218))
+
 ## 1.15.3-beta.1
 
 Released 2026-Apr-21
