@@ -587,14 +587,6 @@ internal static partial class PrometheusSerializer
             destination[1] = exponent >= 0 ? (byte)'+' : (byte)'-';
 
             var absoluteExponent = Math.Abs(exponent);
-            if (absoluteExponent >= 100)
-            {
-                destination[2] = unchecked((byte)('0' + (absoluteExponent / 100)));
-                destination[3] = unchecked((byte)('0' + ((absoluteExponent / 10) % 10)));
-                destination[4] = unchecked((byte)('0' + (absoluteExponent % 10)));
-                return 5;
-            }
-
             (var quotient, var remainder) = Math.DivRem(absoluteExponent, 10);
 
             destination[2] = unchecked((byte)('0' + quotient));
@@ -675,10 +667,7 @@ internal static partial class PrometheusSerializer
     private static bool TryGetPowerOfTenExponent(double absoluteValue, out int exponent)
     {
         exponent = 0;
-        if (absoluteValue <= 0)
-        {
-            return false;
-        }
+        Debug.Assert(absoluteValue > 0, $"{nameof(absoluteValue)} should be positive.");
 
         var roundedExponent = (int)Math.Round(Math.Log10(absoluteValue));
         if (roundedExponent is < -10 or > 10)
