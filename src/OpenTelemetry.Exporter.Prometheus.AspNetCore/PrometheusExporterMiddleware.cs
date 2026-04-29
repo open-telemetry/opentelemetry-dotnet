@@ -16,6 +16,9 @@ namespace OpenTelemetry.Exporter;
 internal sealed class PrometheusExporterMiddleware
 {
     private const string OpenMetricsMediaType = "application/openmetrics-text";
+    private const string OpenMetricsVersion = "1.0.0";
+    private const string OpenMetricsContentType = $"application/openmetrics-text; version={OpenMetricsVersion}; charset=utf-8";
+
     private const string PrometheusTextMediaType = "text/plain";
 
     private readonly PrometheusExporter exporter;
@@ -72,7 +75,7 @@ internal sealed class PrometheusExporterMiddleware
                     response.Headers.Append("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
 
                     response.ContentType = openMetricsRequested
-                        ? "application/openmetrics-text; version=1.0.0; charset=utf-8"
+                        ? OpenMetricsContentType
                         : "text/plain; charset=utf-8; version=0.0.4";
 
                     await response.Body.WriteAsync(dataView.Array.AsMemory(0, dataView.Count)).ConfigureAwait(false);
@@ -141,7 +144,7 @@ internal sealed class PrometheusExporterMiddleware
         {
             if (string.Equals(parameter.Name.Value, "version", StringComparison.OrdinalIgnoreCase))
             {
-                return string.Equals(parameter.Value.Value?.Trim('"'), "1.0.0", StringComparison.Ordinal);
+                return string.Equals(parameter.Value.Value?.Trim('"'), OpenMetricsVersion, StringComparison.Ordinal);
             }
         }
 

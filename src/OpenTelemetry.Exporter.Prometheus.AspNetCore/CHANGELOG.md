@@ -26,7 +26,7 @@ Notes](../../RELEASENOTES.md).
 
 * Improve `Accept` header handling for format negotiation so OpenMetrics is
   selected correctly by considering whitespace and `q` weights.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/issues/TODO))
+  ([#7208](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7208))
 
 ## 1.15.3-beta.1
 
