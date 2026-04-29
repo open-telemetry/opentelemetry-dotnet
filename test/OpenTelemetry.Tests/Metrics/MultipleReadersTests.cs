@@ -303,6 +303,33 @@ public class MultipleReadersTests
         }
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void CompositeMetricReader_PreservesOriginalTimeoutBudget(bool shutdown)
+    {
+        const int delayMilliseconds = 200;
+        const int timeoutMilliseconds = 1500;
+
+        using var first = new TimeoutCapturingMetricReader(delayMilliseconds);
+        using var second = new TimeoutCapturingMetricReader(delayMilliseconds);
+        using var third = new TimeoutCapturingMetricReader();
+
+        using var composite = new CompositeMetricReader([first, second, third]);
+
+        if (shutdown)
+        {
+            composite.Shutdown(timeoutMilliseconds);
+        }
+        else
+        {
+            composite.Collect(timeoutMilliseconds);
+        }
+
+        Assert.Equal(timeoutMilliseconds, shutdown ? first.LastShutdownTimeoutMilliseconds : first.LastCollectTimeoutMilliseconds);
+        Assert.InRange(shutdown ? third.LastShutdownTimeoutMilliseconds : third.LastCollectTimeoutMilliseconds, 1000, timeoutMilliseconds);
+    }
+
     private static void AssertLongSumValueForMetric(Metric metric, long value)
     {
         var metricPoints = metric.GetMetricPoints();
@@ -317,5 +344,33 @@ public class MultipleReadersTests
         {
             Assert.Equal(value, metricPointForFirstExport.GetGaugeLastValueLong());
         }
+    }
+
+#pragma warning disable CA2000 // BaseExportingMetricReader owns the exporter lifecycle
+    private sealed class TimeoutCapturingMetricReader(int delayMilliseconds = 0) : BaseExportingMetricReader(new TimeoutCapturingMetricExporter())
+#pragma warning restore CA2000
+    {
+        public int LastCollectTimeoutMilliseconds { get; private set; } = Timeout.Infinite;
+
+        public int LastShutdownTimeoutMilliseconds { get; private set; } = Timeout.Infinite;
+
+        protected override bool OnCollect(int timeoutMilliseconds)
+        {
+            this.LastCollectTimeoutMilliseconds = timeoutMilliseconds;
+            Thread.Sleep(delayMilliseconds);
+            return true;
+        }
+
+        protected override bool OnShutdown(int timeoutMilliseconds)
+        {
+            this.LastShutdownTimeoutMilliseconds = timeoutMilliseconds;
+            Thread.Sleep(delayMilliseconds);
+            return true;
+        }
+    }
+
+    private sealed class TimeoutCapturingMetricExporter : BaseExporter<Metric>
+    {
+        public override ExportResult Export(in Batch<Metric> batch) => ExportResult.Success;
     }
 }
