@@ -151,12 +151,28 @@ public class PooledBufferStreamTests
         Assert.Equal(2, pool.Returned.Count);
         Assert.Same(pool.Rented[0], pool.Returned[0]);
         Assert.Same(pool.Rented[1], pool.Returned[1]);
+        Assert.All(pool.Returned[0], (p) => Assert.Equal(0, p));
+        Assert.All(pool.Returned[1], (p) => Assert.Equal(0, p));
         Assert.Throws<ObjectDisposedException>(stream.Flush);
         Assert.Throws<ObjectDisposedException>(() => _ = stream.Length);
 
         stream.Dispose();
 
         Assert.Equal(2, pool.Returned.Count);
+    }
+
+    [Fact]
+    public void Grow_ClearsPreviousBufferBeforeReturn()
+    {
+        var pool = new TrackingArrayPool();
+
+        using var stream = new PooledBufferStream(initialCapacity: 1, pool);
+
+        stream.Write([1, 2]);
+
+        Assert.Equal(2, pool.Rented.Count);
+        var returned = Assert.Single(pool.Returned);
+        Assert.All(returned, (p) => Assert.Equal(0, p));
     }
 
     private sealed class TrackingArrayPool : ArrayPool<byte>
