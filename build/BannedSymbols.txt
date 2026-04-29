@@ -50,6 +50,8 @@ M:System.SByte.TryParse(System.ReadOnlySpan{System.Char},System.SByte@); Use ove
 M:System.SByte.TryParse(System.String,System.SByte@); Use overloads that specify CultureInfo.InvariantCulture.
 M:System.Single.TryParse(System.ReadOnlySpan{System.Char},System.Single@); Use overloads that specify CultureInfo.InvariantCulture.
 M:System.Single.TryParse(System.String,System.Single@); Use overloads that specify CultureInfo.InvariantCulture.
+M:System.String.Equals(System.String); Use the static string.Equals(string, string) method instead.
+M:System.String.Equals(System.String,System.StringComparison); Use the static string.Equals(string, string, StringComparison) method instead.
 M:System.TimeOnly.TryParse(System.ReadOnlySpan{System.Char},System.TimeOnly@); Use overloads that specify CultureInfo.InvariantCulture.
 M:System.TimeOnly.TryParse(System.String,System.TimeOnly@); Use overloads that specify CultureInfo.InvariantCulture.
 M:System.TimeSpan.TryParse(System.ReadOnlySpan{System.Char},System.TimeSpan@); Use overloads that specify CultureInfo.InvariantCulture.
