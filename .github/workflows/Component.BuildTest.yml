@@ -24,7 +24,7 @@ on:
         required: false
         type: string
       tfm-list:
-        default: '[ "net462", "net8.0", "net9.0", "net10.0" ]'
+        default: '[ "net462", "net10.0", "net11.0" ]'
         required: false
         type: string
 
@@ -65,8 +65,7 @@ jobs:
       uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
       with:
         dotnet-version: |
-          8.0.x
-          9.0.x
+          10.0.x
 
     - name: Setup .NET
       uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
