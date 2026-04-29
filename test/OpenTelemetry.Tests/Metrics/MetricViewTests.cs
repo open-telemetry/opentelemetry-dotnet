@@ -187,6 +187,21 @@ public class MetricViewTests : MetricTestsBase
         Assert.Contains("Histogram boundaries must be in ascending order with distinct values", ex.Message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void HistogramBoundaryCountValidationThrowsArgumentException()
+    {
+        var boundaryCount = ExplicitBucketHistogramConfiguration.MaxBoundaryCount + 1;
+
+        var ex = Assert.Throws<ArgumentOutOfRangeException>(
+            () => ExplicitBucketHistogramConfiguration.ThrowIfBoundaryCountExceedsLimit(
+                boundaryCount,
+                "value"));
+
+        Assert.Contains("Maximum supported boundary count is", ex.Message, StringComparison.Ordinal);
+        Assert.Equal("value", ex.ParamName);
+        Assert.Equal(boundaryCount, ex.ActualValue);
+    }
+
     [Theory]
     [InlineData(-1)]
     [InlineData(0)]
