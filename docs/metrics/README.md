@@ -252,13 +252,14 @@ follows while implementing the metrics aggregation logic:
 
 ### Example
 
-Let us take the following example:
+Let us take the following example, where we use a `Counter` to track the number
+of fruits sold:
 
 * During the time range (T0, T1]:
   * value = 1, name = `apple`, color = `red`
   * value = 2, name = `lemon`, color = `yellow`
 * During the time range (T1, T2]:
-  * no fruit has been received
+  * no fruit has been sold
 * During the time range (T2, T3]:
   * value = 5, name = `apple`, color = `red`
   * value = 2, name = `apple`, color = `green`
@@ -268,7 +269,8 @@ Let us take the following example:
   * value = 3, name = `lemon`, color = `yellow`
 
 If we aggregate and export the metrics using [Cumulative Aggregation
-Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#temporality):
+Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#temporality)
+with a **synchronous** instrument (e.g. `Counter`):
 
 * (T0, T1]
   * attributes: {name = `apple`, color = `red`}, count: `1`
@@ -280,6 +282,17 @@ Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/
   * attributes: {name = `apple`, color = `red`}, count: `6`
   * attributes: {name = `apple`, color = `green`}, count: `2`
   * attributes: {verb = `lemon`, color = `yellow`}, count: `12`
+
+> [!NOTE]
+> For synchronous instruments with cumulative temporality, every attribute set
+  that was ever recorded continues to be exported on every collection cycle,
+  even if no new measurements are reported (as shown in the (T0, T2] interval
+  above). For **observable (async) instruments** (e.g. `ObservableGauge`,
+  `ObservableCounter`), the behavior is different: only attribute sets reported
+  by the callback during the current collection cycle are exported. If the
+  callback stops reporting a particular attribute set, it will be omitted from
+  subsequent exports. This means users are responsible for managing the state
+  in their callback — to stop exporting a series, simply stop reporting it.
 
 If we aggregate and export the metrics using [Delta Aggregation
 Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#temporality):
