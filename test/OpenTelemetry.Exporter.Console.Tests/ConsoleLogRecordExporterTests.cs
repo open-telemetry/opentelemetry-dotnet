@@ -157,6 +157,34 @@ public class ConsoleLogRecordExporterTests
     }
 
     [Fact]
+    public void Export_WithNullScopeKey_Success()
+    {
+        var records = new List<LogRecord>();
+        using var loggerFactory = LoggerFactory.Create(builder =>
+        {
+            builder.AddOpenTelemetry(options =>
+            {
+                options.IncludeScopes = true;
+                options.AddInMemoryExporter(records);
+            });
+        });
+
+        var logger = loggerFactory.CreateLogger<ConsoleLogRecordExporterTests>();
+
+        using (logger.BeginScope(new List<KeyValuePair<string, object?>> { new(null!, "ScopeValue") }))
+        {
+            logger.LogInformation("Message with null scope key");
+        }
+
+        var logRecord = Assert.Single(records);
+
+        using var exporter = new ConsoleLogRecordExporter(new ConsoleExporterOptions());
+        var actual = exporter.Export(new Batch<LogRecord>([logRecord], 1));
+
+        Assert.Equal(ExportResult.Success, actual);
+    }
+
+    [Fact]
     public void Export_WithAttributes()
     {
         // Arrange

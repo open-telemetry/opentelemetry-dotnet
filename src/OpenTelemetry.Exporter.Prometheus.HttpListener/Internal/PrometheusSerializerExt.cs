@@ -22,7 +22,7 @@ internal static partial class PrometheusSerializer
         return true;
     }
 
-    public static int WriteMetric(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric, bool openMetricsRequested, bool disableTimestamp)
+    public static int WriteMetric(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric, bool openMetricsRequested)
     {
         cursor = WriteTypeMetadata(buffer, cursor, prometheusMetric, openMetricsRequested);
         cursor = WriteUnitMetadata(buffer, cursor, prometheusMetric, openMetricsRequested);
@@ -32,8 +32,6 @@ internal static partial class PrometheusSerializer
         {
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
-                var timestamp = metricPoint.EndTime.ToUnixTimeMilliseconds();
-
                 // Counter and Gauge
                 cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
                 cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags);
@@ -45,31 +43,15 @@ internal static partial class PrometheusSerializer
                 // for each MetricPoint
                 if (((int)metric.MetricType & 0b_0000_1111) == 0x0a /* I8 */)
                 {
-                    if (metric.MetricType.IsSum())
-                    {
-                        cursor = WriteLong(buffer, cursor, metricPoint.GetSumLong());
-                    }
-                    else
-                    {
-                        cursor = WriteLong(buffer, cursor, metricPoint.GetGaugeLastValueLong());
-                    }
+                    cursor = metric.MetricType.IsSum()
+                        ? WriteLong(buffer, cursor, metricPoint.GetSumLong())
+                        : WriteLong(buffer, cursor, metricPoint.GetGaugeLastValueLong());
                 }
                 else
                 {
-                    if (metric.MetricType.IsSum())
-                    {
-                        cursor = WriteDouble(buffer, cursor, metricPoint.GetSumDouble());
-                    }
-                    else
-                    {
-                        cursor = WriteDouble(buffer, cursor, metricPoint.GetGaugeLastValueDouble());
-                    }
-                }
-
-                if (!disableTimestamp)
-                {
-                    buffer[cursor++] = unchecked((byte)' ');
-                    cursor = WriteTimestamp(buffer, cursor, timestamp, openMetricsRequested);
+                    cursor = metric.MetricType.IsSum()
+                        ? WriteDouble(buffer, cursor, metricPoint.GetSumDouble())
+                        : WriteDouble(buffer, cursor, metricPoint.GetGaugeLastValueDouble());
                 }
 
                 buffer[cursor++] = ASCII_LINEFEED;
@@ -80,7 +62,6 @@ internal static partial class PrometheusSerializer
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
                 var tags = metricPoint.Tags;
-                var timestamp = metricPoint.EndTime.ToUnixTimeMilliseconds();
 
                 long totalCount = 0;
                 foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
@@ -93,24 +74,13 @@ internal static partial class PrometheusSerializer
 
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "le=\"");
 
-                    if (histogramMeasurement.ExplicitBound != double.PositiveInfinity)
-                    {
-                        cursor = WriteDouble(buffer, cursor, histogramMeasurement.ExplicitBound);
-                    }
-                    else
-                    {
-                        cursor = WriteAsciiStringNoEscape(buffer, cursor, "+Inf");
-                    }
+                    cursor = histogramMeasurement.ExplicitBound != double.PositiveInfinity
+                        ? WriteDouble(buffer, cursor, histogramMeasurement.ExplicitBound)
+                        : WriteAsciiStringNoEscape(buffer, cursor, "+Inf");
 
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "\"} ");
 
                     cursor = WriteLong(buffer, cursor, totalCount);
-
-                    if (!disableTimestamp)
-                    {
-                        buffer[cursor++] = unchecked((byte)' ');
-                        cursor = WriteTimestamp(buffer, cursor, timestamp, openMetricsRequested);
-                    }
 
                     buffer[cursor++] = ASCII_LINEFEED;
                 }
@@ -124,12 +94,6 @@ internal static partial class PrometheusSerializer
 
                 cursor = WriteDouble(buffer, cursor, metricPoint.GetHistogramSum());
 
-                if (!disableTimestamp)
-                {
-                    buffer[cursor++] = unchecked((byte)' ');
-                    cursor = WriteTimestamp(buffer, cursor, timestamp, openMetricsRequested);
-                }
-
                 buffer[cursor++] = ASCII_LINEFEED;
 
                 // Histogram count
@@ -140,12 +104,6 @@ internal static partial class PrometheusSerializer
                 buffer[cursor++] = unchecked((byte)' ');
 
                 cursor = WriteLong(buffer, cursor, metricPoint.GetHistogramCount());
-
-                if (!disableTimestamp)
-                {
-                    buffer[cursor++] = unchecked((byte)' ');
-                    cursor = WriteTimestamp(buffer, cursor, timestamp, openMetricsRequested);
-                }
 
                 buffer[cursor++] = ASCII_LINEFEED;
             }
