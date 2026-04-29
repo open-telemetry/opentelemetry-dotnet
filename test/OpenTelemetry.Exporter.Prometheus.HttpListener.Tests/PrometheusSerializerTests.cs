@@ -836,6 +836,7 @@ public sealed class PrometheusSerializerTests
         var expected =
             ("^"
                 + "# TYPE test_histogram histogram\n"
+                + "# TYPE test_histogram_created gauge\n"
                 + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='0.0'}} 0\n"
                 + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='5.0'}} 0\n"
                 + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='10.0'}} 0\n"
@@ -854,6 +855,7 @@ public sealed class PrometheusSerializerTests
                 + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='\\+Inf'}} 2\n"
                 + $"test_histogram_sum{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1'}} 118\n"
                 + $"test_histogram_count{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1'}} 2\n"
+                + $"test_histogram_created{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1'}} [0-9]+(?:\\.[0-9]+)?\n"
                 + "$").Replace('\'', '"');
         Assert.Matches(expected, output);
     }
@@ -975,6 +977,7 @@ public sealed class PrometheusSerializerTests
         Assert.Matches(
             ("^"
                 + "# TYPE test_histogram histogram\n"
+                + "# TYPE test_histogram_created gauge\n"
                 + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='0.0'}} 0\n"
                 + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='5.0'}} 0\n"
                 + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='10.0'}} 0\n"
@@ -993,6 +996,7 @@ public sealed class PrometheusSerializerTests
                 + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='\\+Inf'}} 2\n"
                 + $"test_histogram_sum{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1'}} 118\n"
                 + $"test_histogram_count{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1'}} 2\n"
+                + $"test_histogram_created{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1'}} [0-9]+(?:\\.[0-9]+)?\n"
                 + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -1236,6 +1240,7 @@ public sealed class PrometheusSerializerTests
 
         if (useOpenMetrics)
         {
+            Assert.Contains("# TYPE test_counter_created gauge", output, StringComparison.Ordinal);
             Assert.Matches("test_counter_created\\{otel_scope_name=\"test_meter\",key=\"value\"\\} [0-9]+(?:\\.[0-9]+)?", output);
         }
         else
@@ -1268,6 +1273,7 @@ public sealed class PrometheusSerializerTests
 
         if (useOpenMetrics)
         {
+            Assert.Contains("# TYPE test_histogram_created gauge", output, StringComparison.Ordinal);
             Assert.Matches("test_histogram_created\\{otel_scope_name=\"test_meter\",key=\"value\"\\} [0-9]+(?:\\.[0-9]+)?", output);
         }
         else
