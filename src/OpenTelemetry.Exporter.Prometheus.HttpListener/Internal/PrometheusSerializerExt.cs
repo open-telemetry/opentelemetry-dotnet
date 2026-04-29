@@ -126,20 +126,36 @@ internal static partial class PrometheusSerializer
         return cursor;
     }
 
-    private static bool TryGetLatestExemplar(in MetricPoint metricPoint, out Exemplar exemplar)
-    {
-        exemplar = default;
+    internal static bool ShouldPreferExemplar(DateTimeOffset currentTimestamp, DateTimeOffset candidateTimestamp)
+        => currentTimestamp <= candidateTimestamp;
 
-        if (!metricPoint.TryGetExemplars(out var exemplars))
+    internal static bool IsHistogramBucketExemplarMatch(
+        double exemplarValue,
+        double lowerBoundExclusive,
+        double upperBoundInclusive)
+    {
+        if (double.IsNaN(exemplarValue))
         {
             return false;
         }
+
+        var isAboveLowerBound =
+            exemplarValue > lowerBoundExclusive ||
+            (lowerBoundExclusive == double.NegativeInfinity &&
+             exemplarValue == double.NegativeInfinity);
+
+        return exemplarValue <= upperBoundInclusive && isAboveLowerBound;
+    }
+
+    internal static bool TryGetLatestExemplar(ReadOnlyExemplarCollection exemplars, out Exemplar exemplar)
+    {
+        exemplar = default;
 
         var found = false;
 
         foreach (var candidate in exemplars)
         {
-            if (!found || exemplar.Timestamp < candidate.Timestamp)
+            if (!found || ShouldPreferExemplar(exemplar.Timestamp, candidate.Timestamp))
             {
                 exemplar = candidate;
                 found = true;
@@ -149,6 +165,35 @@ internal static partial class PrometheusSerializer
         return found;
     }
 
+    internal static bool TryGetLatestHistogramBucketExemplar(
+        ReadOnlyExemplarCollection exemplars,
+        double lowerBoundExclusive,
+        double upperBoundInclusive,
+        out Exemplar exemplar)
+    {
+        exemplar = default;
+
+        var found = false;
+
+        foreach (var candidate in exemplars)
+        {
+            if (IsHistogramBucketExemplarMatch(candidate.DoubleValue, lowerBoundExclusive, upperBoundInclusive) &&
+                (!found || ShouldPreferExemplar(exemplar.Timestamp, candidate.Timestamp)))
+            {
+                exemplar = candidate;
+                found = true;
+            }
+        }
+
+        return found;
+    }
+
+    private static bool TryGetLatestExemplar(in MetricPoint metricPoint, out Exemplar exemplar)
+    {
+        exemplar = default;
+        return metricPoint.TryGetExemplars(out var exemplars) && TryGetLatestExemplar(exemplars, out exemplar);
+    }
+
     private static bool TryGetLatestHistogramBucketExemplar(
         in MetricPoint metricPoint,
         double lowerBoundExclusive,
@@ -156,33 +201,7 @@ internal static partial class PrometheusSerializer
         out Exemplar exemplar)
     {
         exemplar = default;
-
-        if (!metricPoint.TryGetExemplars(out var exemplars))
-        {
-            return false;
-        }
-
-        var found = false;
-
-        foreach (var candidate in exemplars)
-        {
-            var exemplarValue = candidate.DoubleValue;
-
-            if (double.IsNaN(exemplarValue))
-            {
-                continue;
-            }
-
-            if (exemplarValue <= upperBoundInclusive && exemplarValue > lowerBoundExclusive)
-            {
-                if (!found || exemplar.Timestamp < candidate.Timestamp)
-                {
-                    exemplar = candidate;
-                    found = true;
-                }
-            }
-        }
-
-        return found;
+        return metricPoint.TryGetExemplars(out var exemplars) &&
+               TryGetLatestHistogramBucketExemplar(exemplars, lowerBoundExclusive, upperBoundInclusive, out exemplar);
     }
 }

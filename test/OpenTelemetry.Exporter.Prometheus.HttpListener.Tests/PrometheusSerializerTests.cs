@@ -753,6 +753,15 @@ public sealed class PrometheusSerializerTests
     }
 
     [Fact]
+    public void TryGetLatestExemplarPrefersLaterCandidateWhenTimestampsMatch()
+    {
+        var timestamp = new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero);
+
+        Assert.True(PrometheusSerializer.ShouldPreferExemplar(timestamp, timestamp));
+        Assert.False(PrometheusSerializer.ShouldPreferExemplar(timestamp, timestamp.AddTicks(-1)));
+    }
+
+    [Fact]
     public void HistogramOneDimensionWithOpenMetricsFormat()
     {
         var buffer = new byte[85000];
@@ -844,6 +853,13 @@ public sealed class PrometheusSerializerTests
             StringComparison.Ordinal);
         Assert.DoesNotContain("ignored-trace", bucketLine, StringComparison.Ordinal);
         Assert.DoesNotContain("ignored-span", bucketLine, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TryGetLatestHistogramBucketExemplarMatchesNegativeInfinityInFirstBucket()
+    {
+        Assert.True(PrometheusSerializer.IsHistogramBucketExemplarMatch(double.NegativeInfinity, double.NegativeInfinity, 5));
+        Assert.False(PrometheusSerializer.IsHistogramBucketExemplarMatch(double.NegativeInfinity, 5, 10));
     }
 
     [Fact]
