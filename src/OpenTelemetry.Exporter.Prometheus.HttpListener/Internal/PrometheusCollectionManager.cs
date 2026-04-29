@@ -238,7 +238,7 @@ internal sealed class PrometheusCollectionManager
                         {
                             try
                             {
-                                cursor = PrometheusSerializer.WriteScopeInfo(buffer, cursor, metric.MeterName);
+                                cursor = PrometheusSerializer.WriteScopeInfo(buffer, cursor, metric.MeterName, openMetricsRequested: true);
 
                                 break;
                             }
@@ -342,7 +342,7 @@ internal sealed class PrometheusCollectionManager
             {
                 try
                 {
-                    this.targetInfoBufferLength = PrometheusSerializer.WriteTargetInfo(buffer, 0, this.exporter.Resource);
+                    this.targetInfoBufferLength = PrometheusSerializer.WriteTargetInfo(buffer, 0, this.exporter.Resource, openMetricsRequested: true);
 
                     break;
                 }

@@ -1,47 +1,125 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Globalization;
+
 namespace OpenTelemetry.Exporter.Prometheus;
 
 internal static class PrometheusHeadersParser
 {
+    private const string OpenMetricsEscapingScheme = "underscores";
     private const string OpenMetricsMediaType = "application/openmetrics-text";
+    private const string OpenMetricsVersion = "1.0.0";
+    private const string PrometheusTextMediaType = "text/plain";
 
     internal static bool AcceptsOpenMetrics(string? contentType)
     {
         var value = contentType.AsSpan();
+        double? bestOpenMetricsQuality = null;
+        double? bestPrometheusQuality = null;
 
         while (value.Length > 0)
         {
-            var headerValue = SplitNext(ref value, ',');
-            var mediaType = SplitNext(ref headerValue, ';');
+            var headerValue = TrimWhitespace(SplitNext(ref value, ','));
+            var mediaType = TrimWhitespace(SplitNext(ref headerValue, ';'));
+            var quality = 1.0;
+            var hasSupportedOpenMetricsEscaping = true;
+            var hasSupportedOpenMetricsVersion = true;
 
-            if (mediaType.Equals(OpenMetricsMediaType.AsSpan(), StringComparison.Ordinal))
+            while (headerValue.Length > 0)
             {
-                return true;
+                var parameter = TrimWhitespace(SplitNext(ref headerValue, ';'));
+
+                if (!parameter.StartsWith("q=".AsSpan(), StringComparison.OrdinalIgnoreCase))
+                {
+                    if (parameter.StartsWith("version=".AsSpan(), StringComparison.OrdinalIgnoreCase))
+                    {
+                        hasSupportedOpenMetricsVersion = IsSupportedOpenMetricsVersion(parameter.Slice("version=".Length));
+                    }
+                    else if (parameter.StartsWith("escaping=".AsSpan(), StringComparison.OrdinalIgnoreCase))
+                    {
+                        hasSupportedOpenMetricsEscaping = IsSupportedOpenMetricsEscaping(parameter.Slice("escaping=".Length));
+                    }
+
+                    continue;
+                }
+
+                if (double.TryParse(
+                        parameter.Slice(2).ToString(),
+                        NumberStyles.AllowDecimalPoint,
+                        CultureInfo.InvariantCulture,
+                        out var parsedQuality))
+                {
+                    quality = parsedQuality;
+                }
+            }
+
+            if (mediaType.Equals(OpenMetricsMediaType.AsSpan(), StringComparison.Ordinal) &&
+                hasSupportedOpenMetricsVersion &&
+                hasSupportedOpenMetricsEscaping)
+            {
+                bestOpenMetricsQuality =
+                    bestOpenMetricsQuality is not { } comparison || quality > comparison ?
+                    quality :
+                    bestOpenMetricsQuality ?? quality;
+            }
+            else if (mediaType.Equals(PrometheusTextMediaType.AsSpan(), StringComparison.Ordinal))
+            {
+                bestPrometheusQuality =
+                    bestPrometheusQuality is not { } comparison || quality > comparison ?
+                    quality :
+                    bestPrometheusQuality ?? quality;
             }
         }
 
-        return false;
+        return bestOpenMetricsQuality is { } openMetricsQuality &&
+               (bestPrometheusQuality is not { } prometheusQuality || openMetricsQuality >= prometheusQuality);
     }
+
+    private static bool IsSupportedOpenMetricsVersion(ReadOnlySpan<char> value)
+        => TrimQuotes(value).Equals(OpenMetricsVersion.AsSpan(), StringComparison.Ordinal);
+
+    private static bool IsSupportedOpenMetricsEscaping(ReadOnlySpan<char> value)
+        => TrimQuotes(value).Equals(OpenMetricsEscapingScheme.AsSpan(), StringComparison.Ordinal);
 
     private static ReadOnlySpan<char> SplitNext(ref ReadOnlySpan<char> span, char character)
     {
         var index = span.IndexOf(character);
+        ReadOnlySpan<char> part;
 
         if (index == -1)
         {
-            var part = span;
+            part = span;
             span = span.Slice(span.Length);
-
-            return part;
         }
         else
         {
-            var part = span.Slice(0, index);
+            part = span.Slice(0, index);
             span = span.Slice(index + 1);
-
-            return part;
         }
+
+        return part;
     }
+
+    private static ReadOnlySpan<char> TrimWhitespace(ReadOnlySpan<char> value)
+    {
+        var start = 0;
+        while (start < value.Length && char.IsWhiteSpace(value[start]))
+        {
+            start++;
+        }
+
+        var end = value.Length - 1;
+        while (end >= start && char.IsWhiteSpace(value[end]))
+        {
+            end--;
+        }
+
+        return value.Slice(start, end - start + 1);
+    }
+
+    private static ReadOnlySpan<char> TrimQuotes(ReadOnlySpan<char> value) =>
+        value.Length >= 2 &&
+        value[0] == '"' &&
+        value[value.Length - 1] == '"' ? value.Slice(1, value.Length - 2) : value;
 }

@@ -19,9 +19,14 @@ public class PrometheusSerializerFuzzTests
         static (value) => Serialize(value, PrometheusSerializer.WriteAsciiStringNoEscape).SequenceEqual(ReferenceWriteAsciiStringNoEscape(value)));
 
     [Property(MaxTest = MaxTests)]
-    public Property WriteLabelKeyMatchesReferenceImplementation() => Prop.ForAll(
+    public Property WritePrometheusLabelKeyMatchesReferenceImplementation() => Prop.ForAll(
         Generators.PrometheusStringArbitrary(),
-        static (value) => Serialize(value, PrometheusSerializer.WriteLabelKey).SequenceEqual(ReferenceWriteLabelKey(value)));
+        static (value) => Serialize(value, static (buffer, cursor, text) => PrometheusSerializer.WriteLabelKey(buffer, cursor, text, openMetricsRequested: false)).SequenceEqual(ReferenceWriteLabelKey(value)));
+
+    [Property(MaxTest = MaxTests)]
+    public Property WriteOpenMetricsLabelKeyMatchesReferenceImplementation() => Prop.ForAll(
+        Generators.PrometheusStringArbitrary(),
+        static (value) => SerializeOpenMetricsLabelKey(value).SequenceEqual(ReferenceWriteOpenMetricsLabelKey(value)));
 
     [Property(MaxTest = MaxTests)]
     public Property WriteLabelValueMatchesReferenceImplementation() => Prop.ForAll(
@@ -47,6 +52,13 @@ public class PrometheusSerializerFuzzTests
     {
         var buffer = new byte[(value.Length * 8) + 16];
         var cursor = writer(buffer, 0, value);
+        return buffer.AsSpan(0, cursor).ToArray();
+    }
+
+    private static byte[] SerializeOpenMetricsLabelKey(string value)
+    {
+        var buffer = new byte[(value.Length * 8) + 16];
+        var cursor = PrometheusSerializer.WriteLabelKey(buffer, 0, value, openMetricsRequested: true);
         return buffer.AsSpan(0, cursor).ToArray();
     }
 
@@ -84,14 +96,55 @@ public class PrometheusSerializerFuzzTests
             return [.. bytes];
         }
 
-        if (value[0] is >= '0' and <= '9')
+        var lastCharUnderscore = false;
+        foreach (var c in value)
+        {
+            if ((bytes.Count == 0 && c is >= '0' and <= '9') ||
+                !(c is (>= 'A' and <= 'Z') or (>= 'a' and <= 'z') or (>= '0' and <= '9') or '_'))
+            {
+                if (!lastCharUnderscore)
+                {
+                    bytes.Add((byte)'_');
+                    lastCharUnderscore = true;
+                }
+
+                continue;
+            }
+
+            bytes.Add((byte)c);
+            lastCharUnderscore = c == '_';
+        }
+
+        return [.. bytes];
+    }
+
+    private static byte[] ReferenceWriteOpenMetricsLabelKey(string value)
+    {
+        var bytes = new List<byte>(value.Length + 1);
+        if (string.IsNullOrEmpty(value))
         {
             bytes.Add((byte)'_');
+            return [.. bytes];
         }
+
+        var lastCharUnderscore = false;
 
         foreach (var c in value)
         {
-            bytes.Add(c is (>= 'A' and <= 'Z') or (>= 'a' and <= 'z') or (>= '0' and <= '9') ? (byte)c : (byte)'_');
+            if ((bytes.Count == 0 && c is >= '0' and <= '9') ||
+                !(c is (>= 'A' and <= 'Z') or (>= 'a' and <= 'z') or (>= '0' and <= '9') or '_' or ':'))
+            {
+                if (!lastCharUnderscore)
+                {
+                    bytes.Add((byte)'_');
+                    lastCharUnderscore = true;
+                }
+
+                continue;
+            }
+
+            bytes.Add((byte)c);
+            lastCharUnderscore = c == '_';
         }
 
         return [.. bytes];
