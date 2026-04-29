@@ -36,6 +36,9 @@ Notes](../../RELEASENOTES.md).
   response caching.
   ([#7189](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7189))
 
+* Fix case where reader tracking could be reset while readers were still active.
+  ([#7190](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7190))
+
 ## 1.15.3-beta.1
 
 Released 2026-Apr-21
