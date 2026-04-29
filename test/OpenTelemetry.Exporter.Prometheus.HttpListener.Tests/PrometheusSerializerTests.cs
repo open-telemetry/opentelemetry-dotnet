@@ -798,6 +798,35 @@ public sealed class PrometheusSerializerTests
     }
 
     [Fact]
+    public void HistogramWithNegativeBucketBoundsOmitsSumAndCountWithOpenMetricsFormat()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView(instrument => new ExplicitBucketHistogramConfiguration { Boundaries = [-1, 0, 1] })
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        var histogram = meter.CreateHistogram<double>("test_histogram");
+        histogram.Record(-0.5, new KeyValuePair<string, object?>("x", "1"));
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0], true);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        Assert.Contains($"test_histogram_bucket{{otel_scope_name=\"{Utils.GetCurrentMethodName()}\",x=\"1\",le=\"-1\"}} 0\n", output, StringComparison.Ordinal);
+        Assert.Contains($"test_histogram_bucket{{otel_scope_name=\"{Utils.GetCurrentMethodName()}\",x=\"1\",le=\"0\"}} 1\n", output, StringComparison.Ordinal);
+        Assert.Contains($"test_histogram_bucket{{otel_scope_name=\"{Utils.GetCurrentMethodName()}\",x=\"1\",le=\"1\"}} 1\n", output, StringComparison.Ordinal);
+        Assert.Contains($"test_histogram_bucket{{otel_scope_name=\"{Utils.GetCurrentMethodName()}\",x=\"1\",le=\"+Inf\"}} 1\n", output, StringComparison.Ordinal);
+        Assert.DoesNotContain("test_histogram_sum{", output, StringComparison.Ordinal);
+        Assert.DoesNotContain("test_histogram_count{", output, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void WriteAsciiStringNoEscapeWritesAsciiBytes()
     {
         var value = "metric_name_total";
