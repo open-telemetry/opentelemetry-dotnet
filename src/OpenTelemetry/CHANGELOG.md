@@ -6,6 +6,12 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed CA1815 by implementing `IEquatable<T>`, `operator ==`, and `operator !=`
+  on `HistogramBucket`, `MetricPointsAccessor`, `ReadOnlyExemplarCollection`,
+  `ReadOnlyFilteredTagCollection`, `ReadOnlyTagCollection`, `LogRecordScope`,
+  and `SamplingParameters`.
+  ([#6278](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6278))
+
 * Fix incorrect validation of `OTEL_BSP_*` and `OTEL_BLRP_*` environment
   variables.
   ([#7187](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7187))
