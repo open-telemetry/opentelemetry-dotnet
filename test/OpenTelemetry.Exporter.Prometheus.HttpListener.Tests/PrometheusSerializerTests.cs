@@ -1092,6 +1092,8 @@ public sealed class PrometheusSerializerTests
 
     [Theory]
     [InlineData(double.NegativeInfinity, "-Inf")]
+    [InlineData(-1e10d, "-1e+10")]
+    [InlineData(-1e-10d, "-1e-10")]
     [InlineData(0d, "0.0")]
     [InlineData(0.001d, "0.001")]
     [InlineData(0.002d, "0.002")]
@@ -1133,6 +1135,7 @@ public sealed class PrometheusSerializerTests
 
     [Theory]
     [InlineData(0.00011d, "0.00011")]
+    [InlineData(1e11d, "1.00000000000000000e+011")]
     [InlineData(1234567.89d, "1.23456788999999990e+006")]
     public void WriteCanonicalLabelValueUsesBuiltInFormattingForNonCanonicalNumbers(double value, string expected)
     {
