@@ -204,7 +204,7 @@ internal static class TraceStateUtils
 
         if (key.IsEmpty
             || key.Length > KeyMaxSize
-            || (!(key[i] >= 'a' && key[i] <= 'z')))
+            || !char.IsAsciiLetterLower(key[i]))
         {
             return false;
         }
@@ -220,7 +220,8 @@ internal static class TraceStateUtils
                 break;
             }
 
-            if (c is not (>= 'a' and <= 'z') and not (>= '0' and <= '9') and not '_'
+            if (!(char.IsAsciiLetterLower(c) || char.IsAsciiDigit(c)) &&
+                c is not '_'
                 and not '-'
                 and not '*'
                 and not '/')
@@ -244,7 +245,8 @@ internal static class TraceStateUtils
             {
                 var c = key[i];
 
-                if (c is not (>= 'a' and <= 'z') and not (>= '0' and <= '9') and not '_'
+                if (!(char.IsAsciiLetterLower(c) || char.IsAsciiDigit(c)) &&
+                    c is not '_'
                     and not '-'
                     and not '*'
                     and not '/')

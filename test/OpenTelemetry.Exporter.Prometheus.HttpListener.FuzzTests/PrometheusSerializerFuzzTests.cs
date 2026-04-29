@@ -34,6 +34,11 @@ public class PrometheusSerializerFuzzTests
         static (value) => Serialize(value, PrometheusSerializer.WriteUnicodeString).SequenceEqual(ReferenceWriteUnicodeString(value)));
 
     [Property(MaxTest = MaxTests)]
+    public Property WriteLabelValueObjectMatchesReferenceImplementation() => Prop.ForAll(
+        Generators.LabelValueArbitrary(),
+        static (value) => SerializeLabelValue(value).SequenceEqual(ReferenceWriteLabelValueObject(value)));
+
+    [Property(MaxTest = MaxTests)]
     public Property WriteLongMatchesReferenceImplementation() => Prop.ForAll(
         Generators.LongArbitrary(),
         static (value) => SerializeLong(value).SequenceEqual(ReferenceWriteLong(value)));
@@ -48,6 +53,24 @@ public class PrometheusSerializerFuzzTests
         var buffer = new byte[(value.Length * 8) + 16];
         var cursor = writer(buffer, 0, value);
         return buffer.AsSpan(0, cursor).ToArray();
+    }
+
+    private static byte[] SerializeLabelValue(object? value)
+    {
+        var buffer = new byte[256];
+
+        while (true)
+        {
+            try
+            {
+                var cursor = PrometheusSerializer.WriteLabelValue(buffer, 0, value);
+                return buffer.AsSpan(0, cursor).ToArray();
+            }
+            catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
+            {
+                buffer = new byte[checked(buffer.Length * 2)];
+            }
+        }
     }
 
     private static byte[] SerializeLong(long value)
@@ -98,6 +121,27 @@ public class PrometheusSerializerFuzzTests
     }
 
     private static byte[] ReferenceWriteLabelValue(string value) => ReferenceWriteEscapedString(value, escapeQuotationMarks: true);
+
+    private static byte[] ReferenceWriteLabelValueObject(object? value)
+    {
+        var stringValue = value switch
+        {
+            null => string.Empty,
+            bool boolValue => boolValue ? "true" : "false",
+            float floatValue when float.IsPositiveInfinity(floatValue) => "+Inf",
+            float floatValue when float.IsNegativeInfinity(floatValue) => "-Inf",
+            float floatValue when float.IsNaN(floatValue) => "NaN",
+            float floatValue => floatValue.ToString("G17", CultureInfo.InvariantCulture),
+            double doubleValue when double.IsPositiveInfinity(doubleValue) => "+Inf",
+            double doubleValue when double.IsNegativeInfinity(doubleValue) => "-Inf",
+            double doubleValue when double.IsNaN(doubleValue) => "NaN",
+            double doubleValue => doubleValue.ToString("G17", CultureInfo.InvariantCulture),
+            IFormattable formattableValue => formattableValue.ToString(null, CultureInfo.InvariantCulture),
+            _ => value.ToString(),
+        };
+
+        return ReferenceWriteLabelValue(stringValue ?? string.Empty);
+    }
 
     private static byte[] ReferenceWriteUnicodeString(string value) => ReferenceWriteEscapedString(value, escapeQuotationMarks: false);
 

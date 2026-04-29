@@ -812,8 +812,11 @@ public sealed class PrometheusSerializerTests
     public void WriteAsciiStringNoEscapeThrowsExceptionWhenBufferTooSmall()
     {
         var buffer = new byte[4];
-
+#if NET
+        Assert.Throws<ArgumentException>(() => PrometheusSerializer.WriteAsciiStringNoEscape(buffer, 0, "metric"));
+#else
         Assert.Throws<IndexOutOfRangeException>(() => PrometheusSerializer.WriteAsciiStringNoEscape(buffer, 0, "metric"));
+#endif
     }
 
     [Fact]
@@ -824,6 +827,149 @@ public sealed class PrometheusSerializerTests
         var cursor = PrometheusSerializer.WriteLabelValue(buffer, 0, "\"line1\\\nline2\"");
 
         Assert.Equal("\\\"line1\\\\\\nline2\\\"", Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+#if NET
+    [Fact]
+    public void WriteLongThrowsArgumentExceptionWhenBufferTooSmall()
+    {
+        var buffer = new byte[2];
+
+        Assert.Throws<ArgumentException>(() => PrometheusSerializer.WriteLong(buffer, 0, 1234));
+    }
+
+    [Fact]
+    public void WriteUnsignedLongThrowsArgumentExceptionWhenBufferTooSmall()
+    {
+        var buffer = new byte[2];
+
+        Assert.Throws<ArgumentException>(() => PrometheusSerializer.WriteUnsignedLong(buffer, 0, 1234));
+    }
+
+    [Fact]
+    public void WriteDoubleThrowsArgumentExceptionWhenBufferTooSmall()
+    {
+        var buffer = new byte[2];
+
+        Assert.Throws<ArgumentException>(() => PrometheusSerializer.WriteDouble(buffer, 0, 1234.5));
+    }
+
+    [Fact]
+    public void WriteLabelValueDecimalThrowsArgumentExceptionWhenBufferTooSmall()
+    {
+        var buffer = new byte[2];
+
+        Assert.Throws<ArgumentException>(() => PrometheusSerializer.WriteLabelValue(buffer, 0, 1234.5m));
+    }
+#endif
+
+    [Theory]
+    [InlineData(true, "true")]
+    [InlineData(false, "false")]
+    [InlineData(123456789, "123456789")]
+    [InlineData(123456787L, "123456787")]
+    [InlineData(123456786LU, "123456786")]
+    [InlineData(123456785U, "123456785")]
+    [InlineData(123456784f, "123456784")]
+    [InlineData(123456783d, "123456783")]
+    public void WriteLabelValueObjectFormatsCommonPrimitiveValues(object value, string expected)
+    {
+        var buffer = new byte[128];
+
+        var cursor = PrometheusSerializer.WriteLabelValue(buffer, 0, value);
+
+        Assert.Equal(expected, Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Theory]
+#pragma warning disable xUnit1045 // Avoid using TheoryData type arguments that might not be serializable
+    [MemberData(nameof(LabelValueBoundaryCases))]
+#pragma warning restore xUnit1045 // Avoid using TheoryData type arguments that might not be serializable
+    public void WriteLabelValueObjectFormatsBoundaryValues(object? value, string expected)
+    {
+        var buffer = new byte[128];
+
+        var cursor = PrometheusSerializer.WriteLabelValue(buffer, 0, value);
+
+        Assert.Equal(expected, Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Theory]
+    [InlineData("caf\xc3\xa9")]
+    [InlineData("\xd0\x9f\xd1\x80\xd0\xb8\xd0\xb2\xd0\xb5\xd1\x82, \xd0\xbc\xd0\xb8\xd1\x80")]
+    [InlineData("\xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e")]
+    public void WriteLabelValueObjectFormatsNonAsciiStringsUtf8Strings(string value)
+    {
+        var buffer = new byte[128];
+
+        var cursor = PrometheusSerializer.WriteLabelValue(buffer, 0, (object)value);
+
+        Assert.Equal(value, Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Fact]
+    public void WriteLabelValueObjectEncodesEmojiAsUtf8ScalarValues()
+    {
+        const string value = "rocket:\uD83D\uDE80";
+        var buffer = new byte[128];
+
+        var cursor = PrometheusSerializer.WriteLabelValue(buffer, 0, (object)value);
+
+        Assert.Equal(ToHexString(Encoding.UTF8.GetBytes(value), Encoding.UTF8.GetByteCount(value)), ToHexString(buffer, cursor));
+    }
+
+    [Fact]
+    public void WriteLabelValueObjectFormatsUsingInvariantCulture()
+    {
+        var previousCulture = CultureInfo.CurrentCulture;
+        var previousUiCulture = CultureInfo.CurrentUICulture;
+
+        try
+        {
+            var culture = new CultureInfo("fr-FR");
+
+            CultureInfo.CurrentCulture = culture;
+            CultureInfo.CurrentUICulture = culture;
+
+            var buffer = new byte[128];
+            var doubleCursor = PrometheusSerializer.WriteLabelValue(buffer, 0, 1234.5);
+            Assert.Equal("1234.5", Encoding.UTF8.GetString(buffer, 0, doubleCursor));
+
+            Array.Clear(buffer, 0, buffer.Length);
+
+            var decimalCursor = PrometheusSerializer.WriteLabelValue(buffer, 0, 1234.5m);
+            Assert.Equal("1234.5", Encoding.UTF8.GetString(buffer, 0, decimalCursor));
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = previousCulture;
+            CultureInfo.CurrentUICulture = previousUiCulture;
+        }
+    }
+
+    [Fact]
+    public void WriteLabelValueObjectFormatsIFormattableUsingInvariantCulture()
+    {
+        var previousCulture = CultureInfo.CurrentCulture;
+        var previousUiCulture = CultureInfo.CurrentUICulture;
+
+        try
+        {
+            var culture = new CultureInfo("fr-FR");
+
+            CultureInfo.CurrentCulture = culture;
+            CultureInfo.CurrentUICulture = culture;
+
+            var buffer = new byte[128];
+            var cursor = PrometheusSerializer.WriteLabelValue(buffer, 0, new CustomFormattable(1234.5m));
+
+            Assert.Equal("1234.5", Encoding.UTF8.GetString(buffer, 0, cursor));
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = previousCulture;
+            CultureInfo.CurrentUICulture = previousUiCulture;
+        }
     }
 
     [Theory]
@@ -838,6 +984,69 @@ public sealed class PrometheusSerializerTests
             ("# TYPE test_gauge gauge\n"
              + $"test_gauge{{otel_scope_name='test_meter',meter_tag='{expectedTagValue}'}} 123\n").Replace('\'', '"'),
             output);
+    }
+
+    [Fact]
+    public void WriteMetricSerializesStaticMeterTagsUsingInvariantCulture()
+    {
+        var previousCulture = CultureInfo.CurrentCulture;
+        var previousUiCulture = CultureInfo.CurrentUICulture;
+
+        try
+        {
+            var culture = new CultureInfo("fr-FR");
+
+            CultureInfo.CurrentCulture = culture;
+            CultureInfo.CurrentUICulture = culture;
+
+            var output = WriteGaugeMetricWithMeterTags(
+                new KeyValuePair<string, object?>("double_value", 1234.5),
+                new KeyValuePair<string, object?>("decimal_value", 1234.5m),
+                new KeyValuePair<string, object?>("formattable_value", new CustomFormattable(1234.5m)),
+                new KeyValuePair<string, object?>("fallback_value", new CustomObject("fallback")));
+
+            Assert.StartsWith("# TYPE test_gauge gauge\ntest_gauge{otel_scope_name=\"test_meter\",", output, StringComparison.Ordinal);
+            Assert.Contains("double_value=\"1234.5\"", output, StringComparison.Ordinal);
+            Assert.Contains("decimal_value=\"1234.5\"", output, StringComparison.Ordinal);
+            Assert.Contains("formattable_value=\"1234.5\"", output, StringComparison.Ordinal);
+            Assert.Contains("fallback_value=\"fallback\"", output, StringComparison.Ordinal);
+            Assert.EndsWith("} 123\n", output, StringComparison.Ordinal);
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = previousCulture;
+            CultureInfo.CurrentUICulture = previousUiCulture;
+        }
+    }
+
+    [Fact]
+    public void WriteMetricSerializesStaticMeterTagDoubleUsingG17()
+    {
+        const double value = 0.84551240822557006d;
+
+        var output = WriteGaugeMetricWithMeterTags(new KeyValuePair<string, object?>("double_value", value));
+
+        Assert.Contains($"double_value=\"{value.ToString("G17", CultureInfo.InvariantCulture)}\"", output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void WriteMetricSerializesStaticMeterTagEmojiAsUtf8ScalarValues()
+    {
+        const string value = "rocket:\uD83D\uDE80";
+
+        var output = WriteGaugeMetricWithMeterTags(new KeyValuePair<string, object?>("emoji_value", value));
+
+        Assert.Contains($"emoji_value=\"{value}\"", output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void WriteLabelValueObjectFallsBackToToString()
+    {
+        var buffer = new byte[128];
+
+        var cursor = PrometheusSerializer.WriteLabelValue(buffer, 0, new CustomObject("fallback"));
+
+        Assert.Equal("fallback", Encoding.UTF8.GetString(buffer, 0, cursor));
     }
 
     [Fact]
@@ -992,5 +1201,19 @@ public sealed class PrometheusSerializerTests
 
         var cursor = WriteMetric(buffer, 0, metrics[0]);
         return Encoding.UTF8.GetString(buffer, 0, cursor);
+    }
+
+    private sealed class CustomFormattable(decimal value) : IFormattable
+    {
+        public string ToString(string? format, IFormatProvider? formatProvider)
+            => value.ToString(format, formatProvider);
+
+        public override string ToString()
+            => value.ToString(CultureInfo.CurrentCulture);
+    }
+
+    private sealed class CustomObject(string value)
+    {
+        public override string ToString() => value;
     }
 }
