@@ -29,6 +29,9 @@ public class RemotingRuntimeContextSlot<T> : RuntimeContextSlot<T>, IRuntimeCont
     // marshalling.
     private static readonly FieldInfo WrapperField = typeof(BitArray).GetField("_syncRoot", BindingFlags.Instance | BindingFlags.NonPublic);
 
+    // Use a unique key per instance so two slots with the same name don't stomp each other's values.
+    private readonly string callContextKey = $"__otel_{Guid.NewGuid():N}";
+
     /// <summary>
     /// Initializes a new instance of the <see cref="RemotingRuntimeContextSlot{T}"/> class.
     /// </summary>
@@ -59,7 +62,7 @@ public class RemotingRuntimeContextSlot<T> : RuntimeContextSlot<T>, IRuntimeCont
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public override T? Get()
     {
-        if (CallContext.LogicalGetData(this.Name) is not BitArray wrapper)
+        if (CallContext.LogicalGetData(this.callContextKey) is not BitArray wrapper)
         {
             return default;
         }
@@ -80,7 +83,7 @@ public class RemotingRuntimeContextSlot<T> : RuntimeContextSlot<T>, IRuntimeCont
     {
         var wrapper = new BitArray(0);
         WrapperField.SetValue(wrapper, value);
-        CallContext.LogicalSetData(this.Name, wrapper);
+        CallContext.LogicalSetData(this.callContextKey, wrapper);
     }
 }
 #endif
