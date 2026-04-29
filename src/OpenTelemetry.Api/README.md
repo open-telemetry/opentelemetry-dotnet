@@ -474,6 +474,58 @@ Propagator Api used by the instrumentation libraries is different than
 available in `System.Diagnostics`. Implementing this will have no impact on the
 propagation, if used alongside instrumentation libraries.
 
+### Environment variable propagation
+
+When network protocols are not applicable, context and baggage can also be
+propagated through environment variables. Use
+`EnvironmentVariableCarrier.Capture()` to read a normalized snapshot of the
+current process environment, and use `EnvironmentVariableCarrier.Set` to inject
+context into the environment dictionary of a child process. For a runnable
+end-to-end example, see
+[`examples/EnvironmentVariables`](../../examples/EnvironmentVariables/Program.cs).
+
+```csharp
+using System.Diagnostics;
+using OpenTelemetry.Context.Propagation;
+
+var propagator = new CompositeTextMapPropagator(
+[
+    new TraceContextPropagator(),
+    new BaggagePropagator(),
+]);
+
+// Child process startup: extract from the current process' environment snapshot
+var parentContext = propagator.Extract(
+    default,
+    EnvironmentVariableCarrier.Capture(),
+    EnvironmentVariableCarrier.Get);
+
+using var activity = activitySource.StartActivity(
+    "RunChildProcess",
+    ActivityKind.Internal,
+    parentContext.ActivityContext);
+
+var startInfo = new ProcessStartInfo("child.exe")
+{
+    UseShellExecute = false,
+};
+
+foreach (DictionaryEntry environmentVariable in Environment.GetEnvironmentVariables())
+{
+    startInfo.Environment[(string)environmentVariable.Key] = (string?)environmentVariable.Value;
+}
+
+// Parent process: inject into the child process environment copy
+var context = new PropagationContext(activity?.Context ?? default, Baggage.Current);
+propagator.Inject(context, startInfo.Environment, EnvironmentVariableCarrier.Set);
+```
+
+`EnvironmentVariableCarrier` normalizes keys by uppercasing ASCII letters,
+replacing non-ASCII letters, non-digits, and non-underscore characters with
+underscores, and prefixing `_` when a key would otherwise start with a digit.
+Values are treated as opaque strings and are not validated or modified by the
+carrier.
+
 ## Introduction to OpenTelemetry .NET Metrics API
 
 Metrics in OpenTelemetry .NET are a somewhat unique implementation of the
@@ -549,6 +601,7 @@ seeing these internal logs.
 ## References
 
 * [OpenTelemetry Baggage API specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/baggage/api.md)
+* [OpenTelemetry Environment Variable Carrier specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/context/env-carriers.md)
 * [OpenTelemetry Logs Bridge API specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/bridge-api.md)
 * [OpenTelemetry Metrics API specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md)
 * [OpenTelemetry Propagators API specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/context/api-propagators.md)
