@@ -24,6 +24,7 @@ Notes](../../RELEASENOTES.md).
   correctly during Prometheus serialization.
   ([#7184](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7184))
 
+<<<<<<< HEAD
 * Fix case where reader tracking could be reset while readers were still active.
   ([#7190](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7190))
 
@@ -42,6 +43,9 @@ Notes](../../RELEASENOTES.md).
 * Add `escaping=underscores` to the `Accept` header handling for content
   negotiation so OpenMetrics are handled correctly.
   ([#7209](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7209))
+
+* Fix incorrect handling of untyped metrics when using OpenMetrics format.
+  ([#7219](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7219))
 
 * Use the canonical representation for histogram "le" label values when using
   OpenMetrics.
