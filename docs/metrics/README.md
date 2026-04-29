@@ -292,7 +292,7 @@ with a **synchronous** instrument (e.g. `Counter`):
   by the callback during the current collection cycle are exported. If the
   callback stops reporting a particular attribute set, it will be omitted from
   subsequent exports. This means users are responsible for managing the state
-  in their callback — to stop exporting a series, simply stop reporting it.
+  in their callback - to stop exporting a series, simply stop reporting it.
 
 If we aggregate and export the metrics using [Delta Aggregation
 Temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#temporality):
