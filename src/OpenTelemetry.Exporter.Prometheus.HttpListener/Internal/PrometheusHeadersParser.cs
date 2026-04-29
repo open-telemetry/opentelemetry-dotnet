@@ -22,6 +22,7 @@ internal static class PrometheusHeadersParser
             var headerValue = TrimWhitespace(SplitNext(ref value, ','));
             var mediaType = TrimWhitespace(SplitNext(ref headerValue, ';'));
             var quality = 1.0;
+            var hasValidQuality = true;
             var hasSupportedOpenMetricsVersion = true;
 
             while (headerValue.Length > 0)
@@ -42,20 +43,30 @@ internal static class PrometheusHeadersParser
                         parameter.Slice(2).ToString(),
                         NumberStyles.AllowDecimalPoint,
                         CultureInfo.InvariantCulture,
-                        out var parsedQuality))
+                        out var parsedQuality) &&
+                    parsedQuality is > 0 and <= 1)
                 {
                     quality = parsedQuality;
                 }
+                else
+                {
+                    hasValidQuality = false;
+                }
             }
 
-            if (mediaType.Equals(OpenMetricsMediaType.AsSpan(), StringComparison.Ordinal) && hasSupportedOpenMetricsVersion)
+            if (!hasValidQuality)
+            {
+                continue;
+            }
+
+            if (mediaType.Equals(OpenMetricsMediaType.AsSpan(), StringComparison.OrdinalIgnoreCase) && hasSupportedOpenMetricsVersion)
             {
                 bestOpenMetricsQuality =
                     bestOpenMetricsQuality is not { } comparison || quality > comparison ?
                     quality :
                     bestOpenMetricsQuality ?? quality;
             }
-            else if (mediaType.Equals(PrometheusTextMediaType.AsSpan(), StringComparison.Ordinal))
+            else if (mediaType.Equals(PrometheusTextMediaType.AsSpan(), StringComparison.OrdinalIgnoreCase))
             {
                 bestPrometheusQuality =
                     bestPrometheusQuality is not { } comparison || quality > comparison ?

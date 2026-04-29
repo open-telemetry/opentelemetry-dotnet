@@ -117,7 +117,12 @@ internal sealed class PrometheusExporterMiddleware
         {
             var quality = mediaType.Quality ?? 1.0;
 
-            if (string.Equals(mediaType.MediaType.Value, OpenMetricsMediaType, StringComparison.Ordinal) &&
+            if (quality is <= 0 or > 1)
+            {
+                continue;
+            }
+
+            if (string.Equals(mediaType.MediaType.Value, OpenMetricsMediaType, StringComparison.OrdinalIgnoreCase) &&
                 HasSupportedOpenMetricsVersion(mediaType))
             {
                 bestOpenMetricsQuality =
@@ -125,7 +130,7 @@ internal sealed class PrometheusExporterMiddleware
                     quality :
                     bestOpenMetricsQuality ?? quality;
             }
-            else if (string.Equals(mediaType.MediaType.Value, PrometheusTextMediaType, StringComparison.Ordinal))
+            else if (string.Equals(mediaType.MediaType.Value, PrometheusTextMediaType, StringComparison.OrdinalIgnoreCase))
             {
                 bestPrometheusQuality =
                     bestPrometheusQuality is not { } comparison || quality > comparison ?
