@@ -286,7 +286,7 @@ with a **synchronous** instrument (e.g. `Counter`):
 > [!NOTE]
 > For synchronous instruments with cumulative temporality, every attribute set
   that was ever recorded continues to be exported on every collection cycle,
-  even if no new measurements are reported (as shown in the (T0, T2] interval
+  even if no new measurements are reported (as shown in the `(T0, T2]` interval
   above). For **observable (async) instruments** (e.g. `ObservableGauge`,
   `ObservableCounter`), the behavior is different: only attribute sets reported
   by the callback during the current collection cycle are exported. If the
