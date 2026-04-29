@@ -69,10 +69,16 @@ internal static partial class PrometheusSerializer
             {
                 var tags = metricPoint.Tags;
                 var previousBound = double.NegativeInfinity;
+                var hasNegativeBucketBounds = false;
 
                 long totalCount = 0;
                 foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
                 {
+                    if (openMetricsRequested && histogramMeasurement.ExplicitBound < 0)
+                    {
+                        hasNegativeBucketBounds = true;
+                    }
+
                     totalCount += histogramMeasurement.BucketCount;
 
                     cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
@@ -106,27 +112,32 @@ internal static partial class PrometheusSerializer
                     previousBound = histogramMeasurement.ExplicitBound;
                 }
 
-                // Histogram sum
-                cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
-                cursor = WriteAsciiStringNoEscape(buffer, cursor, "_sum");
-                cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags, openMetricsRequested);
+                if (!openMetricsRequested || !hasNegativeBucketBounds)
+                {
+                    // OpenMetrics histograms with negative bucket thresholds MUST NOT expose
+                    // _sum and therefore MUST NOT expose _count.
+                    // See https://prometheus.io/docs/specs/om/open_metrics_spec/#histogram-1
+                    cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
+                    cursor = WriteAsciiStringNoEscape(buffer, cursor, "_sum");
+                    cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags, openMetricsRequested);
 
-                buffer[cursor++] = unchecked((byte)' ');
+                    buffer[cursor++] = unchecked((byte)' ');
 
-                cursor = WriteDouble(buffer, cursor, metricPoint.GetHistogramSum());
+                    cursor = WriteDouble(buffer, cursor, metricPoint.GetHistogramSum());
 
-                buffer[cursor++] = ASCII_LINEFEED;
+                    buffer[cursor++] = ASCII_LINEFEED;
 
-                // Histogram count
-                cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
-                cursor = WriteAsciiStringNoEscape(buffer, cursor, "_count");
-                cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags, openMetricsRequested);
+                    // Histogram count
+                    cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
+                    cursor = WriteAsciiStringNoEscape(buffer, cursor, "_count");
+                    cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags, openMetricsRequested);
 
-                buffer[cursor++] = unchecked((byte)' ');
+                    buffer[cursor++] = unchecked((byte)' ');
 
-                cursor = WriteLong(buffer, cursor, metricPoint.GetHistogramCount());
+                    cursor = WriteLong(buffer, cursor, metricPoint.GetHistogramCount());
 
-                buffer[cursor++] = ASCII_LINEFEED;
+                    buffer[cursor++] = ASCII_LINEFEED;
+                }
             }
         }
 
