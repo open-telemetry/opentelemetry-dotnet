@@ -7,7 +7,7 @@ namespace OpenTelemetry.Metrics;
 /// A struct for accessing the <see cref="MetricPoint"/>s collected for a
 /// <see cref="Metric"/>.
 /// </summary>
-public readonly struct MetricPointsAccessor
+public readonly struct MetricPointsAccessor : IEquatable<MetricPointsAccessor>
 {
     private readonly MetricPoint[] metricsPoints;
     private readonly int[] metricPointsToProcess;
@@ -26,6 +26,42 @@ public readonly struct MetricPointsAccessor
     /// <returns><see cref="Enumerator"/>.</returns>
     public Enumerator GetEnumerator()
         => new(this.metricsPoints, this.metricPointsToProcess, this.targetCount);
+
+    /// <summary>
+    /// Compare two <see cref="MetricPointsAccessor"/> for equality.
+    /// </summary>
+    public static bool operator ==(MetricPointsAccessor left, MetricPointsAccessor right) => left.Equals(right);
+
+    /// <summary>
+    /// Compare two <see cref="MetricPointsAccessor"/> for inequality.
+    /// </summary>
+    public static bool operator !=(MetricPointsAccessor left, MetricPointsAccessor right) => !left.Equals(right);
+
+    /// <inheritdoc/>
+    public override bool Equals(object? obj) => obj is MetricPointsAccessor other && this.Equals(other);
+
+    /// <inheritdoc/>
+    public bool Equals(MetricPointsAccessor other)
+        => ReferenceEquals(this.metricsPoints, other.metricsPoints)
+        && ReferenceEquals(this.metricPointsToProcess, other.metricPointsToProcess)
+        && this.targetCount == other.targetCount;
+
+    /// <inheritdoc/>
+    public override int GetHashCode()
+    {
+#if NET || NETSTANDARD2_1_OR_GREATER
+        return HashCode.Combine(this.metricsPoints, this.metricPointsToProcess, this.targetCount);
+#else
+        unchecked
+        {
+            var hash = 17;
+            hash = (31 * hash) + (this.metricsPoints?.GetHashCode() ?? 0);
+            hash = (31 * hash) + (this.metricPointsToProcess?.GetHashCode() ?? 0);
+            hash = (31 * hash) + this.targetCount.GetHashCode();
+            return hash;
+        }
+#endif
+    }
 
 #pragma warning disable CA1034 // Nested types should not be visible - already part of public API
     /// <summary>

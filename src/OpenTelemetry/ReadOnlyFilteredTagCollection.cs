@@ -14,7 +14,7 @@ namespace OpenTelemetry;
 // Note: Does not implement IReadOnlyCollection<> or IEnumerable<> to
 // prevent accidental boxing.
 #pragma warning disable CA1711 // Identifiers should not have incorrect suffix
-public readonly struct ReadOnlyFilteredTagCollection
+public readonly struct ReadOnlyFilteredTagCollection : IEquatable<ReadOnlyFilteredTagCollection>
 #pragma warning restore CA1711 // Identifiers should not have incorrect suffix
 {
 #if NET
@@ -52,6 +52,42 @@ public readonly struct ReadOnlyFilteredTagCollection
     /// </summary>
     /// <returns><see cref="Enumerator"/>.</returns>
     public Enumerator GetEnumerator() => new(this);
+
+    /// <summary>
+    /// Compare two <see cref="ReadOnlyFilteredTagCollection"/> for equality.
+    /// </summary>
+    public static bool operator ==(ReadOnlyFilteredTagCollection left, ReadOnlyFilteredTagCollection right) => left.Equals(right);
+
+    /// <summary>
+    /// Compare two <see cref="ReadOnlyFilteredTagCollection"/> for inequality.
+    /// </summary>
+    public static bool operator !=(ReadOnlyFilteredTagCollection left, ReadOnlyFilteredTagCollection right) => !left.Equals(right);
+
+    /// <inheritdoc/>
+    public override bool Equals(object? obj) => obj is ReadOnlyFilteredTagCollection other && this.Equals(other);
+
+    /// <inheritdoc/>
+    public bool Equals(ReadOnlyFilteredTagCollection other)
+        => ReferenceEquals(this.excludedKeys, other.excludedKeys)
+        && ReferenceEquals(this.tags, other.tags)
+        && this.MaximumCount == other.MaximumCount;
+
+    /// <inheritdoc/>
+    public override int GetHashCode()
+    {
+#if NET || NETSTANDARD2_1_OR_GREATER
+        return HashCode.Combine(this.excludedKeys, this.tags, this.MaximumCount);
+#else
+        unchecked
+        {
+            var hash = 17;
+            hash = (31 * hash) + (this.excludedKeys?.GetHashCode() ?? 0);
+            hash = (31 * hash) + (this.tags?.GetHashCode() ?? 0);
+            hash = (31 * hash) + this.MaximumCount.GetHashCode();
+            return hash;
+        }
+#endif
+    }
 
     internal IReadOnlyList<KeyValuePair<string, object?>> ToReadOnlyList()
     {

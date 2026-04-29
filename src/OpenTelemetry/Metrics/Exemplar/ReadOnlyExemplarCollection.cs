@@ -7,7 +7,7 @@ namespace OpenTelemetry.Metrics;
 /// A read-only collection of <see cref="Exemplar" />s.
 /// </summary>
 #pragma warning disable CA1711 // Identifiers should not have incorrect suffix
-public readonly struct ReadOnlyExemplarCollection
+public readonly struct ReadOnlyExemplarCollection : IEquatable<ReadOnlyExemplarCollection>
 #pragma warning restore CA1711 // Identifiers should not have incorrect suffix
 {
     internal static readonly ReadOnlyExemplarCollection Empty = new([]);
@@ -33,6 +33,25 @@ public readonly struct ReadOnlyExemplarCollection
     /// <returns><see cref="Enumerator"/>.</returns>
     public Enumerator GetEnumerator()
         => new(this.exemplars);
+
+    /// <summary>
+    /// Compare two <see cref="ReadOnlyExemplarCollection"/> for equality.
+    /// </summary>
+    public static bool operator ==(ReadOnlyExemplarCollection left, ReadOnlyExemplarCollection right) => left.Equals(right);
+
+    /// <summary>
+    /// Compare two <see cref="ReadOnlyExemplarCollection"/> for inequality.
+    /// </summary>
+    public static bool operator !=(ReadOnlyExemplarCollection left, ReadOnlyExemplarCollection right) => !left.Equals(right);
+
+    /// <inheritdoc/>
+    public override bool Equals(object? obj) => obj is ReadOnlyExemplarCollection other && this.Equals(other);
+
+    /// <inheritdoc/>
+    public bool Equals(ReadOnlyExemplarCollection other) => ReferenceEquals(this.exemplars, other.exemplars);
+
+    /// <inheritdoc/>
+    public override int GetHashCode() => this.exemplars.GetHashCode();
 
     internal ReadOnlyExemplarCollection Copy()
     {
