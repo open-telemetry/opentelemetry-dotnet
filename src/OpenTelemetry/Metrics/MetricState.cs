@@ -26,10 +26,10 @@ internal sealed class MetricState
 
     public static MetricState BuildForSingleMetric(Metric metric)
     {
-        metric.AddInstrumentReference();
+        metric.AddReference();
 
         return new(
-            completeMeasurement: () => metric.RemoveInstrumentReference(),
+            completeMeasurement: metric.RemoveReference,
             recordMeasurementLong: metric.UpdateLong,
             recordMeasurementDouble: metric.UpdateDouble);
     }
@@ -44,7 +44,7 @@ internal sealed class MetricState
 
         for (var i = 0; i < metricsArray.Length; i++)
         {
-            metricsArray[i].AddInstrumentReference();
+            metricsArray[i].AddReference();
         }
 
         return new(
@@ -52,7 +52,7 @@ internal sealed class MetricState
             {
                 for (var i = 0; i < metricsArray.Length; i++)
                 {
-                    metricsArray[i].RemoveInstrumentReference();
+                    metricsArray[i].RemoveReference();
                 }
             },
             recordMeasurementLong: (v, t) =>
