@@ -24,6 +24,9 @@ Notes](../../RELEASENOTES.md).
   correctly during Prometheus serialization.
   ([#7184](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7184))
 
+* Emit OpenMetrics exemplars for counters and histogram buckets.
+  ([#7222](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7222))
+
 ## 1.15.3-beta.1
 
 Released 2026-Apr-21

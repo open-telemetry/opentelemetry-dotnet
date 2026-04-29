@@ -30,6 +30,8 @@ internal static partial class PrometheusSerializer
 
         if (!metric.MetricType.IsHistogram())
         {
+            var isLongValue = ((int)metric.MetricType & 0b_0000_1111) == 0x0a; // I8
+
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
                 // Counter and Gauge
@@ -38,10 +40,7 @@ internal static partial class PrometheusSerializer
 
                 buffer[cursor++] = unchecked((byte)' ');
 
-                // TODO: MetricType is same for all MetricPoints
-                // within a given Metric, so this check can avoided
-                // for each MetricPoint
-                if (((int)metric.MetricType & 0b_0000_1111) == 0x0a /* I8 */)
+                if (isLongValue)
                 {
                     cursor = metric.MetricType.IsSum()
                         ? WriteLong(buffer, cursor, metricPoint.GetSumLong())
@@ -54,6 +53,13 @@ internal static partial class PrometheusSerializer
                         : WriteDouble(buffer, cursor, metricPoint.GetGaugeLastValueDouble());
                 }
 
+                if (openMetricsRequested &&
+                    prometheusMetric.Type == PrometheusType.Counter &&
+                    TryGetLatestExemplar(metricPoint, out var exemplar))
+                {
+                    cursor = WriteExemplar(buffer, cursor, in exemplar, isLongValue);
+                }
+
                 buffer[cursor++] = ASCII_LINEFEED;
             }
         }
@@ -62,6 +68,7 @@ internal static partial class PrometheusSerializer
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
                 var tags = metricPoint.Tags;
+                var previousBound = double.NegativeInfinity;
 
                 long totalCount = 0;
                 foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
@@ -82,7 +89,14 @@ internal static partial class PrometheusSerializer
 
                     cursor = WriteLong(buffer, cursor, totalCount);
 
+                    if (openMetricsRequested &&
+                        TryGetLatestHistogramBucketExemplar(metricPoint, previousBound, histogramMeasurement.ExplicitBound, out var exemplar))
+                    {
+                        cursor = WriteExemplar(buffer, cursor, in exemplar, isLongValue: false);
+                    }
+
                     buffer[cursor++] = ASCII_LINEFEED;
+                    previousBound = histogramMeasurement.ExplicitBound;
                 }
 
                 // Histogram sum
@@ -110,5 +124,65 @@ internal static partial class PrometheusSerializer
         }
 
         return cursor;
+    }
+
+    private static bool TryGetLatestExemplar(in MetricPoint metricPoint, out Exemplar exemplar)
+    {
+        exemplar = default;
+
+        if (!metricPoint.TryGetExemplars(out var exemplars))
+        {
+            return false;
+        }
+
+        var found = false;
+
+        foreach (var candidate in exemplars)
+        {
+            if (!found || exemplar.Timestamp < candidate.Timestamp)
+            {
+                exemplar = candidate;
+                found = true;
+            }
+        }
+
+        return found;
+    }
+
+    private static bool TryGetLatestHistogramBucketExemplar(
+        in MetricPoint metricPoint,
+        double lowerBoundExclusive,
+        double upperBoundInclusive,
+        out Exemplar exemplar)
+    {
+        exemplar = default;
+
+        if (!metricPoint.TryGetExemplars(out var exemplars))
+        {
+            return false;
+        }
+
+        var found = false;
+
+        foreach (var candidate in exemplars)
+        {
+            var exemplarValue = candidate.DoubleValue;
+
+            if (double.IsNaN(exemplarValue))
+            {
+                continue;
+            }
+
+            if (exemplarValue <= upperBoundInclusive && exemplarValue > lowerBoundExclusive)
+            {
+                if (!found || exemplar.Timestamp < candidate.Timestamp)
+                {
+                    exemplar = candidate;
+                    found = true;
+                }
+            }
+        }
+
+        return found;
     }
 }
