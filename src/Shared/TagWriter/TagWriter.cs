@@ -10,6 +10,11 @@ internal abstract class TagWriter<TTagState, TArrayState>
     where TTagState : notnull
     where TArrayState : notnull
 {
+    internal const int MaxRecursionDepth = 3; // TODO https://github.com/open-telemetry/semantic-conventions/issues/3648
+
+    [ThreadStatic]
+    private static int recursionDepth;
+
     private readonly ArrayTagWriter<TArrayState> arrayWriter;
 
     protected TagWriter(
@@ -64,6 +69,40 @@ internal abstract class TagWriter<TTagState, TArrayState>
             case double:
                 this.WriteFloatingPointTag(ref state, key, Convert.ToDouble(value, CultureInfo.InvariantCulture));
                 break;
+            case IEnumerable<KeyValuePair<string, object?>> kvList:
+                try
+                {
+                    if (recursionDepth >= MaxRecursionDepth)
+                    {
+                        var stringValue = Convert.ToString(value, CultureInfo.InvariantCulture);
+                        this.WriteStringTag(
+                            ref state,
+                            key,
+                            TruncateString(stringValue.AsSpan(), tagValueMaxLength));
+
+                        break;
+                    }
+                    else
+                    {
+                        recursionDepth++;
+                    }
+
+                    this.WriteKvListTag(ref state, key, kvList, tagValueMaxLength);
+                    recursionDepth--;
+                }
+                catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
+                {
+                    recursionDepth = 0;
+                    throw;
+                }
+                catch
+                {
+                    recursionDepth--;
+                    return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
+                }
+
+                break;
+
             case Array array:
                 if (value.GetType() == typeof(byte[]) && this.TryWriteByteArrayTag(ref state, key, ((byte[])value).AsSpan()))
                 {
@@ -133,6 +172,8 @@ internal abstract class TagWriter<TTagState, TArrayState>
     protected abstract void WriteStringTag(ref TTagState state, string key, ReadOnlySpan<char> value);
 
     protected abstract void WriteArrayTag(ref TTagState state, string key, ref TArrayState value);
+
+    protected abstract void WriteKvListTag(ref TTagState state, string key, IEnumerable<KeyValuePair<string, object?>> kvList, int? tagValueMaxLength);
 
     protected abstract void OnUnsupportedTagDropped(
         string tagKey,
