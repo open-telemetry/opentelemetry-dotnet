@@ -43,8 +43,8 @@ Notes](../../RELEASENOTES.md).
   negotiation so OpenMetrics are handled correctly.
   ([#7209](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7209))
 
-* Use the canonical representation for "quantile" and "le" label values when
-  using OpenMetrics.
+* Use the canonical representation for histogram "le" label values when using
+  OpenMetrics.
   ([#7218](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7218))
 
 ## 1.15.3-beta.1

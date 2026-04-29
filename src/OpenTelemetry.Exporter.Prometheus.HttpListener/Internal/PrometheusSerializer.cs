@@ -606,23 +606,19 @@ internal static partial class PrometheusSerializer
     {
         if (double.IsPositiveInfinity(value))
         {
-            "+Inf"u8.CopyTo(destination);
-            return 4;
+            return GetBytesWrittenOrThrow("+Inf"u8.TryCopyTo(destination), 4);
         }
         else if (double.IsNegativeInfinity(value))
         {
-            "-Inf"u8.CopyTo(destination);
-            return 4;
+            return GetBytesWrittenOrThrow("-Inf"u8.TryCopyTo(destination), 4);
         }
         else if (double.IsNaN(value))
         {
-            "NaN"u8.CopyTo(destination);
-            return 3;
+            return GetBytesWrittenOrThrow("NaN"u8.TryCopyTo(destination), 3);
         }
         else if (value == 0)
         {
-            "0.0"u8.CopyTo(destination);
-            return 3;
+            return GetBytesWrittenOrThrow("0.0"u8.TryCopyTo(destination), 3);
         }
 
         var absoluteValue = Math.Abs(value);
@@ -663,6 +659,11 @@ internal static partial class PrometheusSerializer
 
         static int FormatPowerOfTenScientific(Span<byte> destination, bool isNegative, int exponent)
         {
+            if (destination.Length < (isNegative ? 6 : 5))
+            {
+                throw new ArgumentException("Destination buffer too small.");
+            }
+
             var bytesWritten = 0;
             if (isNegative)
             {
@@ -681,6 +682,11 @@ internal static partial class PrometheusSerializer
 
         static int WriteExponent(Span<byte> destination, int exponent)
         {
+            if (destination.Length < 4)
+            {
+                throw new ArgumentException("Destination buffer too small.");
+            }
+
             destination[0] = (byte)'e';
             destination[1] = exponent >= 0 ? (byte)'+' : (byte)'-';
 
