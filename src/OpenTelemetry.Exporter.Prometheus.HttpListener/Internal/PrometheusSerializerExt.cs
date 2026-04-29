@@ -30,6 +30,8 @@ internal static partial class PrometheusSerializer
 
         if (!metric.MetricType.IsHistogram())
         {
+            var isLong = ((int)metric.MetricType & 0b_0000_1111) == 0x0a; // I8
+
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
                 // Counter and Gauge
@@ -38,10 +40,7 @@ internal static partial class PrometheusSerializer
 
                 buffer[cursor++] = unchecked((byte)' ');
 
-                // TODO: MetricType is same for all MetricPoints
-                // within a given Metric, so this check can avoided
-                // for each MetricPoint
-                if (((int)metric.MetricType & 0b_0000_1111) == 0x0a /* I8 */)
+                if (isLong)
                 {
                     cursor = metric.MetricType.IsSum()
                         ? WriteLong(buffer, cursor, metricPoint.GetSumLong())
@@ -74,9 +73,16 @@ internal static partial class PrometheusSerializer
 
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "le=\"");
 
-                    cursor = histogramMeasurement.ExplicitBound != double.PositiveInfinity
-                        ? WriteDouble(buffer, cursor, histogramMeasurement.ExplicitBound)
-                        : WriteAsciiStringNoEscape(buffer, cursor, "+Inf");
+                    if (histogramMeasurement.ExplicitBound != double.PositiveInfinity)
+                    {
+                        cursor = openMetricsRequested
+                            ? WriteCanonicalLabelValue(buffer, cursor, histogramMeasurement.ExplicitBound)
+                            : WriteDouble(buffer, cursor, histogramMeasurement.ExplicitBound);
+                    }
+                    else
+                    {
+                        cursor = WriteAsciiStringNoEscape(buffer, cursor, "+Inf");
+                    }
 
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "\"} ");
 
