@@ -7,6 +7,14 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed `NullReferenceException` when exporting logs if the scope key is null.
+  ([#7186](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7186))
+
+* Added opt-in support for gzip compression. Compression can be configured
+  programmatically via the new `OtlpExporterOptions.Compression` property,
+  or through the environment variables such as `OTEL_EXPORTER_OTLP_COMPRESSION=gzip`.
+  ([#7055](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7055))
+
 ## 1.15.3
 
 Released 2026-Apr-21
@@ -16,7 +24,8 @@ Released 2026-Apr-21
   ([#7109](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7109))
 
 * Fixed an issue in persistent storage cleanup where malformed `.blob`, `.tmp`,
-  or `.lock` filenames could throw and interrupt maintenance.
+  or `.lock` filenames could throw and interrupt maintenance to resolve
+  [GHSA-88hf-wf7h-7w4m](https://github.com/advisories/GHSA-88hf-wf7h-7w4m).
   ([#7108](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7108))
 
 * **Breaking change:** Fixed an insecure disk retry default. Disk retry now
@@ -31,9 +40,13 @@ Released 2026-Apr-21
   * `TMPDIR` (or the literal value `/tmp/`) ([Linux](https://learn.microsoft.com/dotnet/api/system.io.path.gettemppath?tabs=linux),
       [macOS](https://learn.microsoft.com/dotnet/api/system.io.path.gettemppath?tabs=macos)).
 
+  This change resolves
+  [GHSA-4625-4j76-fww9](https://github.com/open-telemetry/opentelemetry-dotnet/security/advisories/GHSA-4625-4j76-fww9).
+
   ([#7106](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7106))
 
-* Fixed an issue in OTLP/gRPC retry handling when parsing gRPC statuses.
+* Fixed an issue in OTLP/gRPC retry handling when parsing gRPC statuses to
+  resolve [GHSA-mr8r-92fq-pj8p](https://github.com/advisories/GHSA-mr8r-92fq-pj8p).
   ([#7064](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7064))
 
 * Fixed an issue with OTLP disk retry storage where metrics and logs used the
@@ -52,7 +65,8 @@ Released 2026-Apr-21
 Released 2026-Apr-08
 
 * Limit how much of the response body is read when export fails and
-  error logging is enabled.
+  error logging is enabled to resolve
+  [GHSA-q834-8qmm-v933](https://github.com/advisories/GHSA-q834-8qmm-v933).
   ([#7017](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7017))
 
 ## 1.15.1
