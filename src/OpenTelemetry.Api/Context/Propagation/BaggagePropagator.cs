@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #if NET
-#if NET9_0_OR_GREATER
+#if NET
 using System.Buffers;
 #endif
 using System.Diagnostics.CodeAnalysis;
@@ -23,8 +23,35 @@ public class BaggagePropagator : TextMapPropagator
     private const int MaxBaggageLength = 8192;
     private const int MaxBaggageItems = 180;
 
-#if NET9_0_OR_GREATER
-    private static readonly SearchValues<char> DecodeHints = SearchValues.Create('%', '+');
+#if NET
+    private static readonly SearchValues<char> DecodeHints = SearchValues.Create("%");
+
+    private static readonly SearchValues<char> InvalidKeySearcher = SearchValues.Create(
+        "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F\x7F \"(),/:;<=>?@[\\]{}");
+
+    private static readonly SearchValues<char> InvalidValueSearcher = SearchValues.Create(
+        "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F\x7F \",;\\");
+
+#else
+
+    private static readonly char[] InvalidCharsArray =
+    [
+        '\x00', '\x01', '\x02', '\x03', '\x04', '\x05', '\x06', '\x07',
+        '\x08', '\x09', '\x0A', '\x0B', '\x0C', '\x0D', '\x0E', '\x0F',
+        '\x10', '\x11', '\x12', '\x13', '\x14', '\x15', '\x16', '\x17',
+        '\x18', '\x19', '\x1A', '\x1B', '\x1C', '\x1D', '\x1E', '\x1F',
+        '\x7F', ' ', '"', '(', ')', ',', '/', ':', ';', '<',
+        '=', '>', '?', '@', '[', '\\', ']', '{', '}',
+    ];
+
+    private static readonly char[] InvalidValueChars =
+    [
+        '\x00', '\x01', '\x02', '\x03', '\x04', '\x05', '\x06', '\x07',
+        '\x08', '\x09', '\x0A', '\x0B', '\x0C', '\x0D', '\x0E', '\x0F',
+        '\x10', '\x11', '\x12', '\x13', '\x14', '\x15', '\x16', '\x17',
+        '\x18', '\x19', '\x1A', '\x1B', '\x1C', '\x1D', '\x1E', '\x1F',
+        '\x7F', ' ', '"', ',', ';', '\\',
+    ];
 #endif
 
     /// <inheritdoc/>
@@ -108,8 +135,8 @@ public class BaggagePropagator : TextMapPropagator
                     continue;
                 }
 
-                var encodedKey = WebUtility.UrlEncode(item.Key);
-                var encodedValue = WebUtility.UrlEncode(item.Value);
+                var encodedKey = EncodeKey(item.Key);
+                var encodedValue = EncodeValue(item.Value);
                 var baggageItemLength = encodedKey.Length + encodedValue.Length + 1;
 
                 if (baggage.Length > 0)
@@ -167,7 +194,7 @@ public class BaggagePropagator : TextMapPropagator
             while (!remaining.IsEmpty)
             {
                 var pair = ReadNextSegment(ref remaining, ',');
-                baggageLength += pair.Length + 1; // pair and comma
+                baggageLength += pair.Length + 1;
 
                 if (baggageLength >= MaxBaggageLength || baggageDictionary?.Count >= MaxBaggageItems)
                 {
@@ -181,7 +208,12 @@ public class BaggagePropagator : TextMapPropagator
                     continue;
                 }
 
-                var rawKey = pair.Slice(0, separatorIndex).Trim();
+                if (!IsValidKey(pair.Slice(0, separatorIndex)))
+                {
+                    continue;
+                }
+
+                var key = pair.Slice(0, separatorIndex).ToString();
 
                 var rawValue = pair.Slice(separatorIndex + 1);
 
@@ -193,7 +225,6 @@ public class BaggagePropagator : TextMapPropagator
 
                 rawValue = rawValue.Trim();
 
-                var key = DecodeIfNeeded(rawKey);
                 var value = DecodeIfNeeded(rawValue);
 
                 if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(value))
@@ -225,10 +256,79 @@ public class BaggagePropagator : TextMapPropagator
         return result;
     }
 
+    private static string EncodeKey(ReadOnlySpan<char> key) => Encode(key, isKey: true);
+
+    private static string EncodeValue(ReadOnlySpan<char> value) => Encode(value, isKey: false);
+
+    private static string Encode(ReadOnlySpan<char> value, bool isKey)
+    {
+#if NET
+        if (!value.ContainsAny(isKey ? InvalidKeySearcher : InvalidValueSearcher))
+        {
+            return value.ToString();
+        }
+#else
+        if (value.IndexOfAny(isKey ? InvalidCharsArray : InvalidValueChars) < 0)
+        {
+            return value.ToString();
+        }
+#endif
+
+        const string hex = "0123456789ABCDEF";
+        var sb = new StringBuilder(value.Length);
+#if NET
+        Span<char> encoded = stackalloc char[3];
+        encoded[0] = '%';
+#endif
+        foreach (var c in value)
+        {
+            var shouldEncode = isKey ? !IsValidKey(c) : IsInvalidValueChar(c);
+            if (shouldEncode)
+            {
+#if NET
+                encoded[1] = hex[(c >> 4) & 0xF];
+                encoded[2] = hex[c & 0xF];
+                sb.Append(encoded);
+#else
+                sb.Append('%')
+                .Append(hex[(c >> 4) & 0xF])
+                .Append(hex[c & 0xF]);
+#endif
+            }
+            else
+            {
+                sb.Append(c);
+            }
+        }
+
+        return sb.ToString();
+    }
+
+    private static bool IsInvalidValueChar(char c) =>
+#if NET
+        InvalidValueSearcher.Contains(c);
+#else
+        Array.IndexOf(InvalidValueChars, c) >= 0;
+#endif
+
+    private static bool IsValidKey(char c) =>
+#if NET
+        !InvalidKeySearcher.Contains(c);
+#else
+        Array.IndexOf(InvalidCharsArray, c) < 0;
+#endif
+
+    private static bool IsValidKey(ReadOnlySpan<char> key) =>
+#if NET
+        !key.ContainsAny(InvalidKeySearcher);
+#else
+        key.IndexOfAny(InvalidCharsArray) < 0;
+#endif
+
     private static string DecodeIfNeeded(ReadOnlySpan<char> value) =>
-#if NET9_0_OR_GREATER
+#if NET
         value.ContainsAny(DecodeHints) ? WebUtility.UrlDecode(value.ToString()) : value.ToString();
 #else
-        value.IndexOfAny('%', '+') < 0 ? value.ToString() : WebUtility.UrlDecode(value.ToString());
+        value.IndexOf('%') < 0 ? value.ToString() : WebUtility.UrlDecode(value.ToString());
 #endif
 }

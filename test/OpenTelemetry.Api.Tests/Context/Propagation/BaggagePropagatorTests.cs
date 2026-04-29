@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Net;
 using Xunit;
 
 namespace OpenTelemetry.Context.Propagation.Tests;
@@ -114,46 +113,6 @@ public class BaggagePropagatorTests
     }
 
     [Fact]
-    public void ValidateSpecialCharsBaggageExtraction()
-    {
-        var encodedKey = WebUtility.UrlEncode("key2");
-        var encodedValue = WebUtility.UrlEncode("!x_x,x-x&x(x\");:");
-        var escapedKey = Uri.EscapeDataString("key()3");
-        var escapedValue = Uri.EscapeDataString("value()!&;:");
-
-        Assert.Equal("key2", encodedKey);
-        Assert.Equal("!x_x%2Cx-x%26x(x%22)%3B%3A", encodedValue);
-        Assert.Equal("key%28%293", escapedKey);
-        Assert.Equal("value%28%29%21%26%3B%3A", escapedValue);
-
-        var initialBaggage = $"key+1=value+1,{encodedKey}={encodedValue},{escapedKey}={escapedValue}";
-        var carrier = new List<KeyValuePair<string, string>>
-        {
-            new(BaggagePropagator.BaggageHeaderName, initialBaggage),
-        };
-
-        var propagationContext = this.baggage.Extract(default, carrier, GetterList);
-
-        Assert.False(propagationContext == default);
-        Assert.True(propagationContext.ActivityContext == default);
-
-        Assert.Equal(3, propagationContext.Baggage.Count);
-
-        var actualBaggage = propagationContext.Baggage.GetBaggage();
-
-        Assert.Equal(3, actualBaggage.Count);
-
-        Assert.True(actualBaggage.ContainsKey("key 1"));
-        Assert.Equal("value 1", actualBaggage["key 1"]);
-
-        Assert.True(actualBaggage.ContainsKey("key2"));
-        Assert.Equal("!x_x,x-x&x(x\");:", actualBaggage["key2"]);
-
-        Assert.True(actualBaggage.ContainsKey("key()3"));
-        Assert.Equal("value()!&;:", actualBaggage["key()3"]);
-    }
-
-    [Fact]
     public void ValidateEmptyBaggageInjection()
     {
         var carrier = new Dictionary<string, string>();
@@ -178,24 +137,6 @@ public class BaggagePropagatorTests
 
         Assert.Single(carrier);
         Assert.Equal("key1=value1,key2=value2", carrier[BaggagePropagator.BaggageHeaderName]);
-    }
-
-    [Fact]
-    public void ValidateSpecialCharsBaggageInjection()
-    {
-        var carrier = new Dictionary<string, string>();
-        var propagationContext = new PropagationContext(
-            default,
-            new Baggage(new Dictionary<string, string>
-            {
-                { "key 1", "value 1" },
-                { "key2", "!x_x,x-x&x(x\");:" },
-            }));
-
-        this.baggage.Inject(propagationContext, carrier, Setter);
-
-        Assert.Single(carrier);
-        Assert.Equal("key+1=value+1,key2=!x_x%2Cx-x%26x(x%22)%3B%3A", carrier[BaggagePropagator.BaggageHeaderName]);
     }
 
     [Fact]
@@ -232,7 +173,7 @@ public class BaggagePropagatorTests
     {
         var carrier = new Dictionary<string, string>
         {
-            { BaggagePropagator.BaggageHeaderName, "SomeKey \t = \t SomeValue \t , \t SomeKey2 \t = \t SomeValue2" },
+            { BaggagePropagator.BaggageHeaderName, "SomeKey= \t SomeValue \t ,SomeKey2= \t SomeValue2" },
         };
 
         var propagationContext = this.baggage.Extract(default, carrier, Getter);
@@ -271,7 +212,7 @@ public class BaggagePropagatorTests
         // Simulates a header emitted by .NET 10's W3C propagator
         var carrier = new Dictionary<string, string>
         {
-            { BaggagePropagator.BaggageHeaderName, "correlationId = 12345, userId = user-abc" },
+            { BaggagePropagator.BaggageHeaderName, "correlationId= 12345,userId= user-abc" },
         };
 
         var extractedContext = this.baggage.Extract(default, carrier, Getter);
@@ -296,26 +237,6 @@ public class BaggagePropagatorTests
 
         Assert.Equal("SomeKey", baggage.Key);
         Assert.Equal("SomeValue", baggage.Value);
-    }
-
-    [Fact]
-    public void ValidatePercentEncoding()
-    {
-        var originalValue = "\t \"\';=asdf!@#$%^&*()";
-        var encodedValue = Uri.EscapeDataString(originalValue);
-
-        var carrier = new Dictionary<string, string>
-        {
-            { BaggagePropagator.BaggageHeaderName, $"SomeKey={encodedValue}" },
-        };
-
-        var propagationContext = this.baggage.Extract(default, carrier, Getter);
-        Assert.Single(propagationContext.Baggage.GetBaggage());
-
-        var baggage = propagationContext.Baggage.GetBaggage().FirstOrDefault();
-
-        Assert.Equal("SomeKey", baggage.Key);
-        Assert.Equal(originalValue, baggage.Value);
     }
 
     [Fact]
@@ -540,8 +461,8 @@ public class BaggagePropagatorTests
         Assert.False(baggage.ContainsKey("k0180"));
     }
 
-    [Fact(Skip = "Fails due to spec mismatch, tracked in https://github.com/open-telemetry/opentelemetry-dotnet/issues/5210")]
-    public void ValidateSpecialCharactersInjection()
+    [Fact]
+    public void ValidateSpecialCharactersInjectionForValue()
     {
         var propagationContext = new PropagationContext(
             default,
@@ -556,13 +477,392 @@ public class BaggagePropagatorTests
 
         var baggageHeader = carrier[BaggagePropagator.BaggageHeaderName];
 
-        Assert.Contains("%09", baggageHeader, StringComparison.Ordinal);  // Tab
-        Assert.Contains("%20", baggageHeader, StringComparison.Ordinal);  // Space
-        Assert.Contains("%22", baggageHeader, StringComparison.Ordinal);  // Quote
+        Assert.Contains("%09", baggageHeader, StringComparison.Ordinal); // Tab
+        Assert.Contains("%20", baggageHeader, StringComparison.Ordinal); // Space
+        Assert.Contains("%22", baggageHeader, StringComparison.Ordinal); // Quote
 
         var extractedContext = this.baggage.Extract(default, carrier, Getter);
         var extractedBaggage = extractedContext.Baggage.GetBaggage();
 
         Assert.Equal("\t \"';=asdf!@#$%^&*()", extractedBaggage["key"]);
+    }
+
+    [Fact]
+    public void KeyValidTokenCharSymbolInjectedUnchanged()
+    {
+        var propagationContext = new PropagationContext(
+            default,
+            new Baggage(new Dictionary<string, string>
+            {
+                { "my.key-name_here", "value" },
+            }));
+
+        var carrier = new Dictionary<string, string>();
+        this.baggage.Inject(propagationContext, carrier, Setter);
+
+        Assert.Equal("my.key-name_here=value", carrier[BaggagePropagator.BaggageHeaderName]);
+    }
+
+    // -------------------------------------------------------------------------
+    // Keys incorrect path
+    // The current implementation URL-decodes keys on extract (#5479).
+    // These tests document what the correct behaviour SHOULD be: keys arriving
+    // on the wire that happen to contain %-sequences or '+' must be treated as
+    // literal token strings they are NOT decoded.
+    //
+    // '%' is a valid token char, so "key%20name" is a valid token whose name is
+    // literally "key%20name", not "key name". '+' is also a valid token char.
+    // -------------------------------------------------------------------------
+    [Fact]
+    public void KeyPercentSequenceInKeyPreservedLiterallyOnExtract()
+    {
+        var carrier = new Dictionary<string, string>
+        {
+            { BaggagePropagator.BaggageHeaderName, "key%20name=value,valid-key=valid-value" },
+        };
+
+        var context = this.baggage.Extract(default, carrier, Getter);
+        var baggage = context.Baggage.GetBaggage();
+
+        Assert.Equal(2, baggage.Count);
+        Assert.True(baggage.ContainsKey("key%20name"));
+        Assert.False(baggage.ContainsKey("key name"));
+    }
+
+    [Fact]
+    public void KeyPlusInKeyPreservedLiterallyOnExtract()
+    {
+        var carrier = new Dictionary<string, string>
+        {
+            { BaggagePropagator.BaggageHeaderName, "key+name=value" },
+        };
+
+        var context = this.baggage.Extract(default, carrier, Getter);
+        var entry = Assert.Single(context.Baggage.GetBaggage());
+
+        Assert.Equal("key+name", entry.Key);
+    }
+
+    [Theory]
+    [InlineData(" ", "%20")]
+    [InlineData("(", "%28")]
+    [InlineData(":", "%3A")]
+    [InlineData(";", "%3B")]
+    [InlineData("@", "%40")]
+    public void KeyWithDelimiterCharIsPercentEncodedOnInject(string delimiter, string expectedEncoding)
+    {
+        var propagationContext = new PropagationContext(
+            default,
+            new Baggage(new Dictionary<string, string>
+            {
+                { $"invalid{delimiter}key", "should-be-kept" },
+                { "valid-key", "valid-value" },
+            }));
+
+        var carrier = new Dictionary<string, string>();
+        this.baggage.Inject(propagationContext, carrier, Setter);
+
+        Assert.Single(carrier);
+
+        var header = carrier[BaggagePropagator.BaggageHeaderName];
+
+        Assert.Contains("valid-key=valid-value", header, StringComparison.Ordinal);
+        var expectedEncodedKey = $"invalid{expectedEncoding}key=should-be-kept";
+        Assert.Contains(expectedEncodedKey, header, StringComparison.Ordinal);
+        Assert.Equal(2, header.Split(',').Length);
+    }
+
+    [Theory]
+    [InlineData("!")]
+    [InlineData("#")]
+    [InlineData("&")]
+    [InlineData("*")]
+    [InlineData("+")]
+    [InlineData("-")]
+    [InlineData("/")]
+    [InlineData(":")]
+    [InlineData("=")]
+    [InlineData("?")]
+    [InlineData("@")]
+    [InlineData("~")]
+    public void ValueValidBaggageOctetCharPassesThroughUnchanged(string octet)
+    {
+        // These characters are valid unencoded baggage-octets and must not be
+        // transformed on either inject or extract.
+        var value = $"val{octet}use";
+        var propagationContext = new PropagationContext(
+            default,
+            new Baggage(new Dictionary<string, string> { { "key", value } }));
+
+        var carrier = new Dictionary<string, string>();
+        this.baggage.Inject(propagationContext, carrier, Setter);
+
+        // Confirm it was injected without encoding
+        Assert.Contains(value, carrier[BaggagePropagator.BaggageHeaderName], StringComparison.Ordinal);
+
+        // Confirm it round-trips back unchanged
+        var extracted = this.baggage.Extract(default, carrier, Getter).Baggage.GetBaggage();
+        Assert.True(extracted.TryGetValue("key", out var extractedValue));
+        Assert.Equal(value, extractedValue);
+    }
+
+    [Theory]
+    [InlineData("key%201=value%201", "key%201", "value 1")]
+    [InlineData("key=val%2Buse", "key", "val+use")]
+    [InlineData("key=val%20use", "key", "val use")]
+    [InlineData("key=%20%21%22%23%24%25%26%27%28%29%2A%2B%2C-.%2F0123456789%3A%3B%3C%3D%3E%3F%40ABCDEFGHIJKLMNOPQRSTUVWXYZ%5B%5C%5D%5E_%60abcdefghijklmnopqrstuvwxyz%7B%7C%7D~", "key", " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~")]
+    public void ValidateSpecialCharsBaggageExtraction(string propagatedBaggage, string key, string expectedDecodedValue)
+    {
+        var carrier = new List<KeyValuePair<string, string>>
+        {
+            new(BaggagePropagator.BaggageHeaderName, propagatedBaggage),
+        };
+
+        var propagationContext = this.baggage.Extract(default, carrier, GetterList);
+
+        Assert.False(propagationContext == default);
+        Assert.True(propagationContext.ActivityContext == default);
+
+        Assert.Equal(1, propagationContext.Baggage.Count);
+
+        var actualBaggage = propagationContext.Baggage.GetBaggage();
+
+        Assert.Single(actualBaggage);
+
+        Assert.Contains(key, actualBaggage);
+        Assert.Equal(expectedDecodedValue, actualBaggage[key]);
+    }
+
+    [Fact]
+    public void ValidatePlusIsNotEncoded()
+    {
+        var carrier = new Dictionary<string, string>
+        {
+            { BaggagePropagator.BaggageHeaderName, "key=value+1" },
+        };
+
+        var propagationContext = this.baggage.Extract(default, carrier, Getter);
+        Assert.Single(propagationContext.Baggage.GetBaggage());
+
+        var entry = propagationContext.Baggage.GetBaggage().First();
+        Assert.Equal("key", entry.Key);
+        Assert.Equal("value+1", entry.Value); // '+' stays as '+', not ' '
+    }
+
+    [Theory]
+    [InlineData("!")]
+    [InlineData("#")]
+    [InlineData("$")]
+    [InlineData("%")]
+    [InlineData("&")]
+    [InlineData("'")]
+    [InlineData("*")]
+    [InlineData("+")]
+    [InlineData("-")]
+    [InlineData(".")]
+    [InlineData("^")]
+    [InlineData("_")]
+    [InlineData("`")]
+    [InlineData("|")]
+    [InlineData("~")]
+    public void ValidateValidTokenCharInKeyIsAcceptedOnExtract(string specialChar)
+    {
+        var key = $"key{specialChar}name";
+        var carrier = new Dictionary<string, string>
+        {
+            { BaggagePropagator.BaggageHeaderName, $"{key}=value" },
+        };
+
+        var propagationContext = this.baggage.Extract(default, carrier, Getter);
+        Assert.Single(propagationContext.Baggage.GetBaggage());
+        Assert.Equal(key, propagationContext.Baggage.GetBaggage().First().Key);
+    }
+
+    [Theory]
+    [InlineData(" ")]
+    [InlineData("\"")]
+    [InlineData("(")]
+    [InlineData(")")]
+    [InlineData("/")]
+    [InlineData(":")]
+    [InlineData(";")]
+    [InlineData("<")]
+    [InlineData(">")]
+    [InlineData("?")]
+    [InlineData("@")]
+    [InlineData("[")]
+    [InlineData("\\")]
+    [InlineData("]")]
+    [InlineData("{")]
+    [InlineData("}")]
+    public void ValidateKeyWithInvalidTokenCharDroppedOnExtract(string invalidChar)
+    {
+        var invalidKey = $"key{invalidChar}name";
+        var carrier = new Dictionary<string, string>
+        {
+            {
+                BaggagePropagator.BaggageHeaderName,
+                $"{invalidKey}=should-be-dropped,valid-key=valid-value"
+            },
+        };
+
+        var propagationContext = this.baggage.Extract(default, carrier, Getter);
+        Assert.Single(propagationContext.Baggage.GetBaggage());
+        Assert.Equal("valid-key", propagationContext.Baggage.GetBaggage().First().Key);
+    }
+
+    [Fact]
+    public void ValidateKeyWithValidDelimitersNotDroppedOnExtract()
+    {
+        var invalidKey = $"key,name";
+        var carrier = new Dictionary<string, string>
+        {
+            {
+                BaggagePropagator.BaggageHeaderName,
+                $"{invalidKey}=should-be-dropped,valid-key=valid-value"
+            },
+        };
+
+        var propagationContext = this.baggage.Extract(default, carrier, Getter);
+        Assert.Equal("name", propagationContext.Baggage.GetBaggage().First().Key);
+
+        invalidKey = $"key=name";
+        carrier = new Dictionary<string, string>
+        {
+            {
+                BaggagePropagator.BaggageHeaderName,
+                $"{invalidKey}=should-be-dropped,valid-key=valid-value"
+            },
+        };
+
+        propagationContext = this.baggage.Extract(default, carrier, Getter);
+        Assert.Equal("key", propagationContext.Baggage.GetBaggage().First().Key);
+    }
+
+    [Theory]
+    [InlineData("%21", "!")]
+    [InlineData("%22", "\"")]
+    [InlineData("%23", "#")]
+    [InlineData("%24", "$")]
+    [InlineData("%25", "%")]
+    [InlineData("%26", "&")]
+    [InlineData("%27", "'")]
+    [InlineData("%28", "(")]
+    [InlineData("%29", ")")]
+    [InlineData("%2A", "*")]
+    [InlineData("%2B", "+")]
+    [InlineData("%2C", ",")]
+    [InlineData("%2D", "-")]
+    [InlineData("%2E", ".")]
+    [InlineData("%2F", "/")]
+    [InlineData("%3A", ":")]
+    [InlineData("%3B", ";")]
+    [InlineData("%3C", "<")]
+    [InlineData("%3D", "=")]
+    [InlineData("%3E", ">")]
+    [InlineData("%3F", "?")]
+    [InlineData("%40", "@")]
+    [InlineData("%5B", "[")]
+    [InlineData("%5C", "\\")]
+    [InlineData("%5D", "]")]
+    [InlineData("%5E", "^")]
+    [InlineData("%5F", "_")]
+    [InlineData("%60", "`")]
+    [InlineData("%7B", "{")]
+    [InlineData("%7C", "|")]
+    [InlineData("%7D", "}")]
+    [InlineData("%7E", "~")]
+    [InlineData("%20", " ")]
+    public void ValidatePercentEncodedValueCharacterDecodesCorrectly(string encoded, string expected)
+    {
+        var carrier = new Dictionary<string, string>
+        {
+            { BaggagePropagator.BaggageHeaderName, $"key={encoded}" },
+        };
+
+        var propagationContext = this.baggage.Extract(default, carrier, Getter);
+        var baggage = Assert.Single(propagationContext.Baggage.GetBaggage());
+        Assert.Equal(expected, baggage.Value);
+    }
+
+    [Theory]
+    [InlineData("key=%")]
+    [InlineData("key=%2")]
+    [InlineData("key=%GG")]
+    public void ValidateMalformedPercentSequenceInValueDoesNotThrow(string headerValue)
+    {
+        var carrier = new Dictionary<string, string>
+        {
+            { BaggagePropagator.BaggageHeaderName, headerValue },
+        };
+
+        var exception = Record.Exception(() =>
+            this.baggage.Extract(default, carrier, Getter));
+
+        Assert.Null(exception);
+    }
+
+    [Theory]
+    [InlineData(" ", "%20")]
+    [InlineData("\"", "%22")]
+    [InlineData(",", "%2C")]
+    [InlineData(";", "%3B")]
+    [InlineData("\\", "%5C")]
+    public void ValidateCharacterOutsideBaggageOctetIsPercentEncodedOnInject(
+        string rawChar, string expectedEncoded)
+    {
+        var propagationContext = new PropagationContext(
+            default,
+            new Baggage(new Dictionary<string, string> { { "key", $"prefix{rawChar}suffix" } }));
+
+        var carrier = new Dictionary<string, string>();
+        this.baggage.Inject(propagationContext, carrier, Setter);
+
+        Assert.Single(carrier);
+        Assert.Contains(expectedEncoded, carrier[BaggagePropagator.BaggageHeaderName], StringComparison.Ordinal);
+    }
+
+    // =========================================================================
+    // ROUND-TRIP
+    // These tests inject baggage and then extract from the same carrier,
+    // verifying that the full pipeline preserves the original data.
+    // =========================================================================
+
+    [Fact]
+    public void RoundTripValueWithSpacePreservedAsSpace()
+    {
+        var carrier = new Dictionary<string, string>();
+        this.baggage.Inject(
+            new PropagationContext(default, new Baggage(new Dictionary<string, string> { { "key", "value with space" }, })), carrier, Setter);
+
+        // The intermediate header must use %20, not '+'
+        Assert.Contains("%20", carrier[BaggagePropagator.BaggageHeaderName], StringComparison.Ordinal);
+        Assert.DoesNotContain("+", carrier[BaggagePropagator.BaggageHeaderName], StringComparison.Ordinal);
+
+        var extracted = this.baggage.Extract(default, carrier, Getter).Baggage.GetBaggage();
+        Assert.Equal("value with space", extracted["key"]);
+    }
+
+    [Fact]
+    public void RoundTripValueWithAllMandatoryEncodeCharsPreservedExactly()
+    {
+        const string original = "val use\"wi,th;back\\slash";
+
+        var carrier = new Dictionary<string, string>();
+        this.baggage.Inject(new PropagationContext(default, new Baggage(new Dictionary<string, string> { { "key", original }, })), carrier, Setter);
+
+        var extracted = this.baggage.Extract(default, carrier, Getter).Baggage.GetBaggage();
+        Assert.Equal(original, extracted["key"]);
+    }
+
+    [Fact]
+    public void RoundTripMixedValidAndInvalidKeysOnlyValidKeysSurvive()
+    {
+        var carrier = new Dictionary<string, string>();
+        this.baggage.Inject(new PropagationContext(default, new Baggage(new Dictionary<string, string> { { "valid-key", "valid-value" }, })), carrier, Setter);
+
+        var entry = Assert.Single(this.baggage.Extract(default, carrier, Getter).Baggage.GetBaggage());
+        Assert.Equal("valid-key", entry.Key);
+        Assert.Equal("valid-value", entry.Value);
     }
 }
