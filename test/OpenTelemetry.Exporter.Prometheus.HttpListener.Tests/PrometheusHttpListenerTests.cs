@@ -439,7 +439,7 @@ public class PrometheusHttpListenerTests
 
             if (requestOpenMetrics)
             {
-                Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8", response.Content.Headers.ContentType?.ToString());
+                Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores", response.Content.Headers.ContentType?.ToString());
             }
             else
             {

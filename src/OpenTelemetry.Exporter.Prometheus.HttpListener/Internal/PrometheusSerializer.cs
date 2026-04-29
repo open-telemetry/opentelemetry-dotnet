@@ -150,7 +150,7 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteLabelKey(byte[] buffer, int cursor, string value)
+    public static int WriteLabelKey(byte[] buffer, int cursor, string value, bool openMetricsRequested)
     {
         if (string.IsNullOrEmpty(value))
         {
@@ -158,26 +158,9 @@ internal static partial class PrometheusSerializer
             return cursor;
         }
 
-        var ordinal = (ushort)value[0];
-
-        if (ordinal is >= '0' and <= '9')
-        {
-            buffer[cursor++] = unchecked((byte)'_');
-        }
-
-        for (var i = 0; i < value.Length; i++)
-        {
-            ordinal = value[i];
-
-            buffer[cursor++] =
-                ordinal is (>= 'A' and <= 'Z') or
-                (>= 'a' and <= 'z') or
-                (>= '0' and <= '9')
-                ? (byte)ordinal
-                : (byte)'_';
-        }
-
-        return cursor;
+        return openMetricsRequested ?
+               WriteOpenMetricsLabelKey(buffer, cursor, value) :
+               WritePrometheusLabelKey(buffer, cursor, value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -210,9 +193,9 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteLabel(byte[] buffer, int cursor, string labelKey, object? labelValue)
+    public static int WriteLabel(byte[] buffer, int cursor, string labelKey, object? labelValue, bool openMetricsRequested)
     {
-        cursor = WriteLabelKey(buffer, cursor, labelKey);
+        cursor = WriteLabelKey(buffer, cursor, labelKey, openMetricsRequested);
         buffer[cursor++] = unchecked((byte)'=');
         buffer[cursor++] = unchecked((byte)'"');
 
@@ -379,7 +362,7 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteScopeInfo(byte[] buffer, int cursor, string scopeName)
+    public static int WriteScopeInfo(byte[] buffer, int cursor, string scopeName, bool openMetricsRequested)
     {
         if (string.IsNullOrEmpty(scopeName))
         {
@@ -394,7 +377,7 @@ internal static partial class PrometheusSerializer
 
         cursor = WriteAsciiStringNoEscape(buffer, cursor, "otel_scope_info");
         buffer[cursor++] = unchecked((byte)'{');
-        cursor = WriteLabel(buffer, cursor, "otel_scope_name", scopeName);
+        cursor = WriteLabel(buffer, cursor, "otel_scope_name", scopeName, openMetricsRequested);
         buffer[cursor++] = unchecked((byte)'}');
         buffer[cursor++] = unchecked((byte)' ');
         buffer[cursor++] = unchecked((byte)'1');
@@ -404,19 +387,25 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteTags(byte[] buffer, int cursor, Metric metric, ReadOnlyTagCollection tags, bool writeEnclosingBraces = true)
+    public static int WriteTags(
+        byte[] buffer,
+        int cursor,
+        Metric metric,
+        ReadOnlyTagCollection tags,
+        bool openMetricsRequested,
+        bool writeEnclosingBraces = true)
     {
         if (writeEnclosingBraces)
         {
             buffer[cursor++] = unchecked((byte)'{');
         }
 
-        cursor = WriteLabel(buffer, cursor, "otel_scope_name", metric.MeterName);
+        cursor = WriteLabel(buffer, cursor, "otel_scope_name", metric.MeterName, openMetricsRequested);
         buffer[cursor++] = unchecked((byte)',');
 
         if (!string.IsNullOrEmpty(metric.MeterVersion))
         {
-            cursor = WriteLabel(buffer, cursor, "otel_scope_version", metric.MeterVersion);
+            cursor = WriteLabel(buffer, cursor, "otel_scope_version", metric.MeterVersion, openMetricsRequested);
             buffer[cursor++] = unchecked((byte)',');
         }
 
@@ -424,14 +413,14 @@ internal static partial class PrometheusSerializer
         {
             foreach (var tag in metric.MeterTags)
             {
-                cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
+                cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value, openMetricsRequested);
                 buffer[cursor++] = unchecked((byte)',');
             }
         }
 
         foreach (var tag in tags)
         {
-            cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
+            cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value, openMetricsRequested);
             buffer[cursor++] = unchecked((byte)',');
         }
 
@@ -444,7 +433,7 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteTargetInfo(byte[] buffer, int cursor, Resource resource)
+    public static int WriteTargetInfo(byte[] buffer, int cursor, Resource resource, bool openMetricsRequested)
     {
         if (resource == Resource.Empty)
         {
@@ -462,7 +451,7 @@ internal static partial class PrometheusSerializer
 
         foreach (var attribute in resource.Attributes)
         {
-            cursor = WriteLabel(buffer, cursor, attribute.Key, attribute.Value);
+            cursor = WriteLabel(buffer, cursor, attribute.Key, attribute.Value, openMetricsRequested);
 
             buffer[cursor++] = unchecked((byte)',');
         }
@@ -476,6 +465,43 @@ internal static partial class PrometheusSerializer
 
         return cursor;
     }
+
+    private static int WritePrometheusLabelKey(byte[] buffer, int cursor, string value)
+        => WriteNormalizedLabelKey(buffer, cursor, value, isOpenMetrics: false);
+
+    private static int WriteOpenMetricsLabelKey(byte[] buffer, int cursor, string value)
+        => WriteNormalizedLabelKey(buffer, cursor, value, isOpenMetrics: true);
+
+    private static int WriteNormalizedLabelKey(byte[] buffer, int cursor, string value, bool isOpenMetrics)
+    {
+        var lastCharUnderscore = false;
+
+        for (var i = 0; i < value.Length; i++)
+        {
+            var ch = value[i];
+
+            if ((i == 0 && ch is >= '0' and <= '9') ||
+                !IsAllowedMetricsLabelCharacter(ch, isOpenMetrics))
+            {
+                if (!lastCharUnderscore)
+                {
+                    buffer[cursor++] = unchecked((byte)'_');
+                    lastCharUnderscore = true;
+                }
+
+                continue;
+            }
+
+            buffer[cursor++] = unchecked((byte)ch);
+            lastCharUnderscore = ch == '_';
+        }
+
+        return cursor;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool IsAllowedMetricsLabelCharacter(char value, bool isOpenMetrics) =>
+        value is (>= 'A' and <= 'Z') or (>= 'a' and <= 'z') or (>= '0' and <= '9') or '_' || (isOpenMetrics && value == ':');
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int WriteUnicodeScalar(byte[] buffer, int cursor, string value, ref int index)

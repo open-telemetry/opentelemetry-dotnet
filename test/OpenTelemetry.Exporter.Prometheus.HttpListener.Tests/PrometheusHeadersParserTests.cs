@@ -11,7 +11,10 @@ public class PrometheusHeadersParserTests
     [InlineData("application/openmetrics-text")]
     [InlineData("application/openmetrics-text; version=1.0.0")]
     [InlineData("application/openmetrics-text; version=\"1.0.0\"")]
+    [InlineData("application/openmetrics-text; version=1.0.0; escaping=underscores")]
+    [InlineData("application/openmetrics-text; version=\"1.0.0\"; escaping=\"underscores\"")]
     [InlineData("application/openmetrics-text; version=1.0.0; charset=utf-8")]
+    [InlineData("application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores")]
     [InlineData("text/plain,application/openmetrics-text; version=1.0.0; charset=utf-8")]
     [InlineData("text/plain, application/openmetrics-text; version=1.0.0; charset=utf-8")]
     [InlineData("text/plain; charset=utf-8,application/openmetrics-text; version=1.0.0; charset=utf-8")]
@@ -33,6 +36,9 @@ public class PrometheusHeadersParserTests
     [InlineData("application/openmetrics-text; version=0.0.1")]
     [InlineData("application/openmetrics-text; version=\"0.0.1\"")]
     [InlineData("application/openmetrics-text; version=0.0.1; charset=utf-8")]
+    [InlineData("application/openmetrics-text; version=1.0.0; escaping=allow-utf-8")]
+    [InlineData("application/openmetrics-text; version=1.0.0; escaping=dots")]
+    [InlineData("application/openmetrics-text; version=1.0.0; escaping=values")]
     public void ParseHeader_AcceptHeaders_OtherHeadersInvalid(string header)
     {
         var result = PrometheusHeadersParser.AcceptsOpenMetrics(header);
