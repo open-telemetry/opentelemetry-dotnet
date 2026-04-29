@@ -60,7 +60,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     public static Baggage Current
     {
         get => RuntimeContextSlot.Get()?.Baggage ?? default;
-        set => EnsureBaggageHolder().Baggage = value;
+        set => SetCurrent(value);
     }
 
     /// <summary>
@@ -147,13 +147,12 @@ public readonly struct Baggage : IEquatable<Baggage>
     [SuppressMessage("roslyn", "RS0026", Justification = "TODO: fix APIs that violate the backcompt requirement - multiple overloads with optional parameters: https://github.com/dotnet/roslyn/blob/main/docs/Adding%20Optional%20Parameters%20in%20Public%20API.md.")]
     public static Baggage SetBaggage(string name, string? value, Baggage baggage = default)
     {
-        var baggageHolder = EnsureBaggageHolder();
-        lock (baggageHolder)
-        {
-            return baggageHolder.Baggage = baggage == default
-                ? baggageHolder.Baggage.SetBaggage(name, value)
-                : baggage.SetBaggage(name, value);
-        }
+        var newBaggage = baggage == default
+            ? Current.SetBaggage(name, value)
+            : baggage.SetBaggage(name, value);
+
+        SetCurrent(newBaggage);
+        return newBaggage;
     }
 
     /// <summary>
@@ -166,13 +165,12 @@ public readonly struct Baggage : IEquatable<Baggage>
     [SuppressMessage("roslyn", "RS0026", Justification = "TODO: fix APIs that violate the backcompt requirement - multiple overloads with optional parameters: https://github.com/dotnet/roslyn/blob/main/docs/Adding%20Optional%20Parameters%20in%20Public%20API.md.")]
     public static Baggage SetBaggage(IEnumerable<KeyValuePair<string, string?>> baggageItems, Baggage baggage = default)
     {
-        var baggageHolder = EnsureBaggageHolder();
-        lock (baggageHolder)
-        {
-            return baggageHolder.Baggage = baggage == default
-                ? baggageHolder.Baggage.SetBaggage(baggageItems)
-                : baggage.SetBaggage(baggageItems);
-        }
+        var newBaggage = baggage == default
+            ? Current.SetBaggage(baggageItems)
+            : baggage.SetBaggage(baggageItems);
+
+        SetCurrent(newBaggage);
+        return newBaggage;
     }
 
     /// <summary>
@@ -184,13 +182,12 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <remarks>Note: The <see cref="Baggage"/> returned will be set as the new <see cref="Current"/> instance.</remarks>
     public static Baggage RemoveBaggage(string name, Baggage baggage = default)
     {
-        var baggageHolder = EnsureBaggageHolder();
-        lock (baggageHolder)
-        {
-            return baggageHolder.Baggage = baggage == default
-                ? baggageHolder.Baggage.RemoveBaggage(name)
-                : baggage.RemoveBaggage(name);
-        }
+        var newBaggage = baggage == default
+            ? Current.RemoveBaggage(name)
+            : baggage.RemoveBaggage(name);
+
+        SetCurrent(newBaggage);
+        return newBaggage;
     }
 
     /// <summary>
@@ -201,13 +198,12 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <remarks>Note: The <see cref="Baggage"/> returned will be set as the new <see cref="Current"/> instance.</remarks>
     public static Baggage ClearBaggage(Baggage baggage = default)
     {
-        var baggageHolder = EnsureBaggageHolder();
-        lock (baggageHolder)
-        {
-            return baggageHolder.Baggage = baggage == default
-                ? baggageHolder.Baggage.ClearBaggage()
-                : baggage.ClearBaggage();
-        }
+        var newBaggage = baggage == default
+            ? Current.ClearBaggage()
+            : baggage.ClearBaggage();
+
+        SetCurrent(newBaggage);
+        return newBaggage;
     }
 
     /// <summary>
@@ -374,20 +370,24 @@ public readonly struct Baggage : IEquatable<Baggage>
         return hash;
     }
 
-    private static BaggageHolder EnsureBaggageHolder()
+    private static void SetCurrent(Baggage baggage)
     {
-        var baggageHolder = RuntimeContextSlot.Get();
-        if (baggageHolder == null)
+        if (baggage.Count == 0)
         {
-            baggageHolder = new BaggageHolder();
-            RuntimeContextSlot.Set(baggageHolder);
+            RuntimeContextSlot.Set(null!);
+            return;
         }
 
-        return baggageHolder;
+        RuntimeContextSlot.Set(new BaggageHolder(baggage));
     }
 
     private sealed class BaggageHolder
     {
-        public Baggage Baggage;
+        public BaggageHolder(Baggage baggage)
+        {
+            this.Baggage = baggage;
+        }
+
+        public Baggage Baggage { get; }
     }
 }
