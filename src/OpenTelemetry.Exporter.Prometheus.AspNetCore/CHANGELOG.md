@@ -24,6 +24,10 @@ Notes](../../RELEASENOTES.md).
   correctly during Prometheus serialization.
   ([#7184](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7184))
 
+* Improve `Accept` header handling for format negotiation so OpenMetrics is
+  selected correctly by considering whitespace and `q` weights.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/issues/TODO))
+
 ## 1.15.3-beta.1
 
 Released 2026-Apr-21
