@@ -36,6 +36,10 @@ Notes](../../RELEASENOTES.md).
   response caching.
   ([#7189](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7189))
 
+* Export `{name}_created` series for counters and histograms when using
+  OpenMetrics and a start time is available.
+  ([#7223](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7223))
+
 ## 1.15.3-beta.1
 
 Released 2026-Apr-21

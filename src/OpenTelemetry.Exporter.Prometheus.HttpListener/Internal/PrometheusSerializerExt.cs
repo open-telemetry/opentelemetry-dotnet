@@ -55,6 +55,11 @@ internal static partial class PrometheusSerializer
                 }
 
                 buffer[cursor++] = ASCII_LINEFEED;
+
+                if (openMetricsRequested && prometheusMetric.Type == PrometheusType.Counter)
+                {
+                    cursor = WriteCreatedMetric(buffer, cursor, metric, prometheusMetric, metricPoint);
+                }
             }
         }
         else
@@ -106,9 +111,43 @@ internal static partial class PrometheusSerializer
                 cursor = WriteLong(buffer, cursor, metricPoint.GetHistogramCount());
 
                 buffer[cursor++] = ASCII_LINEFEED;
+
+                if (openMetricsRequested)
+                {
+                    cursor = WriteCreatedMetric(buffer, cursor, metric, prometheusMetric, metricPoint);
+                }
             }
         }
 
         return cursor;
     }
+
+    private static int WriteCreatedMetric(
+        byte[] buffer,
+        int cursor,
+        Metric metric,
+        PrometheusMetric prometheusMetric,
+        in MetricPoint metricPoint)
+    {
+        if (metricPoint.StartTime == default)
+        {
+            return cursor;
+        }
+
+        cursor = WriteMetricMetadataName(buffer, cursor, prometheusMetric, openMetricsRequested: true);
+
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "_created");
+        cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags);
+
+        buffer[cursor++] = unchecked((byte)' ');
+
+        cursor = WriteUnixTimeSeconds(buffer, cursor, metricPoint.StartTime);
+
+        buffer[cursor++] = ASCII_LINEFEED;
+
+        return cursor;
+    }
+
+    private static int WriteUnixTimeSeconds(byte[] buffer, int cursor, DateTimeOffset value)
+        => WriteDouble(buffer, cursor, value.ToUnixTimeMilliseconds() / 1000.0);
 }
