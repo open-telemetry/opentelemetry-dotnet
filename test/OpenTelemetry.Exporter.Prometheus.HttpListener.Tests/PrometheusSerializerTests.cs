@@ -933,6 +933,21 @@ public sealed class PrometheusSerializerTests
         Assert.Equal("NaN", Encoding.UTF8.GetString(buffer, 0, cursor));
     }
 
+#if NET
+    [Theory]
+    [InlineData(double.PositiveInfinity, 3)]
+    [InlineData(0d, 2)]
+    [InlineData(1e6d, 4)]
+    public void WriteCanonicalLabelValueThrowsArgumentExceptionWhenBufferTooSmall(double value, int bufferLength)
+    {
+        var buffer = new byte[bufferLength];
+
+        var exception = Assert.Throws<ArgumentException>(() => PrometheusSerializer.WriteCanonicalLabelValue(buffer, 0, value));
+
+        Assert.Equal("Destination buffer too small.", exception.Message);
+    }
+#endif
+
     [Theory]
     [InlineData(0.00011d, "0.00011")]
     [InlineData(1e11d, "1.00000000000000000e+011")]
