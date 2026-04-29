@@ -52,7 +52,7 @@ Notes](../../RELEASENOTES.md).
 
 * Omit histogram `_sum` and `_count` in OpenMetrics when negative bucket
   thresholds are present.
-  ([#7220](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7220))
+  ([#7221](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7221))
 
 ## 1.15.3-beta.1
 
