@@ -28,6 +28,11 @@ internal static partial class PrometheusSerializer
         cursor = WriteUnitMetadata(buffer, cursor, prometheusMetric, openMetricsRequested);
         cursor = WriteHelpMetadata(buffer, cursor, prometheusMetric, metric.Description, openMetricsRequested);
 
+        if (openMetricsRequested && HasCreatedMetric(metric, prometheusMetric))
+        {
+            cursor = WriteCreatedTypeMetadata(buffer, cursor, prometheusMetric);
+        }
+
         if (!metric.MetricType.IsHistogram())
         {
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
@@ -118,6 +123,35 @@ internal static partial class PrometheusSerializer
                 }
             }
         }
+
+        return cursor;
+    }
+
+    private static bool HasCreatedMetric(Metric metric, PrometheusMetric prometheusMetric)
+    {
+        if (prometheusMetric.Type != PrometheusType.Counter && !metric.MetricType.IsHistogram())
+        {
+            return false;
+        }
+
+        foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+        {
+            if (metricPoint.StartTime != default)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static int WriteCreatedTypeMetadata(byte[] buffer, int cursor, PrometheusMetric prometheusMetric)
+    {
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# TYPE ");
+        cursor = WriteMetricMetadataName(buffer, cursor, prometheusMetric, openMetricsRequested: true);
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "_created gauge");
+
+        buffer[cursor++] = ASCII_LINEFEED;
 
         return cursor;
     }
