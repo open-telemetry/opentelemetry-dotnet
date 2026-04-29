@@ -18,7 +18,7 @@ services:
       - zipkin
 
   rabbitmq:
-    image: rabbitmq:4-management-alpine@sha256:5554af48743bc2a5fc8735f345c918edd4bfde19863f4fbbc905d3b6dd2fe91f
+    image: rabbitmq:4-management-alpine@sha256:8724c6573b43d315bcec914f16a509d0b5faf5f3b281a832b484ece0bbcbe914
     ports:
       - 5672:5672
       - 15672:15672
