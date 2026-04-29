@@ -47,7 +47,7 @@ public readonly struct ReadOnlyTagCollection : IEquatable<ReadOnlyTagCollection>
     public bool Equals(ReadOnlyTagCollection other) => ReferenceEquals(this.KeyAndValues, other.KeyAndValues);
 
     /// <inheritdoc/>
-    public override int GetHashCode() => this.KeyAndValues.GetHashCode();
+    public override int GetHashCode() => this.KeyAndValues?.GetHashCode() ?? 0;
 
     /// <summary>
     /// Enumerates the elements of a <see cref="ReadOnlyTagCollection"/>.

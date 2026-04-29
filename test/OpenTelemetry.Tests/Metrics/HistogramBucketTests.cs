@@ -64,4 +64,13 @@ public class HistogramBucketTests
         Assert.True(bucket1 == bucket2);
         Assert.Equal(bucket1.GetHashCode(), bucket2.GetHashCode());
     }
+
+    [Fact]
+    public void Verify_NaN_Reflexive()
+    {
+        var bucket = new HistogramBucket(double.NaN, 0L);
+
+        Assert.True(bucket.Equals(bucket));
+        Assert.True(bucket == bucket);
+    }
 }

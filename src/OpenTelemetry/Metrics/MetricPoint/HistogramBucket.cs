@@ -40,7 +40,7 @@ public readonly struct HistogramBucket : IEquatable<HistogramBucket>
 
     /// <inheritdoc/>
     public bool Equals(HistogramBucket other)
-        => this.ExplicitBound == other.ExplicitBound && this.BucketCount == other.BucketCount;
+        => this.ExplicitBound.Equals(other.ExplicitBound) && this.BucketCount == other.BucketCount;
 
     /// <inheritdoc/>
     public override int GetHashCode()

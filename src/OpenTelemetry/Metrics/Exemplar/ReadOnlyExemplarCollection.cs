@@ -51,7 +51,7 @@ public readonly struct ReadOnlyExemplarCollection : IEquatable<ReadOnlyExemplarC
     public bool Equals(ReadOnlyExemplarCollection other) => ReferenceEquals(this.exemplars, other.exemplars);
 
     /// <inheritdoc/>
-    public override int GetHashCode() => this.exemplars.GetHashCode();
+    public override int GetHashCode() => this.exemplars?.GetHashCode() ?? 0;
 
     internal ReadOnlyExemplarCollection Copy()
     {
