@@ -36,7 +36,7 @@ internal static partial class PrometheusSerializer
             {
                 // Counter and Gauge
                 cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
-                cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags);
+                cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags, openMetricsRequested);
 
                 buffer[cursor++] = unchecked((byte)' ');
 
@@ -77,7 +77,7 @@ internal static partial class PrometheusSerializer
 
                     cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "_bucket{");
-                    cursor = WriteTags(buffer, cursor, metric, tags, writeEnclosingBraces: false);
+                    cursor = WriteTags(buffer, cursor, metric, tags, openMetricsRequested, writeEnclosingBraces: false);
 
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "le=\"");
 
@@ -102,7 +102,7 @@ internal static partial class PrometheusSerializer
                 // Histogram sum
                 cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
                 cursor = WriteAsciiStringNoEscape(buffer, cursor, "_sum");
-                cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags);
+                cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags, openMetricsRequested);
 
                 buffer[cursor++] = unchecked((byte)' ');
 
@@ -113,7 +113,7 @@ internal static partial class PrometheusSerializer
                 // Histogram count
                 cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
                 cursor = WriteAsciiStringNoEscape(buffer, cursor, "_count");
-                cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags);
+                cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags, openMetricsRequested);
 
                 buffer[cursor++] = unchecked((byte)' ');
 

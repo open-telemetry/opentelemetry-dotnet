@@ -51,6 +51,15 @@ Notes](../../RELEASENOTES.md).
   environment variables.
   ([#7167](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7167))
 
+* Fix Prometheus/OpenMetrics serialization to emit metric and label names
+  containing `:` and `_` instead of dropping them and prefixing leading digits.
+  Invalid characters are replaced with `_` instead of being dropped.
+  ([#7209](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7209))
+
+* Add `escaping=underscores` to the `Accept` header handling for content
+  negotiation so OpenMetrics are handled correctly.
+  ([#7209](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7209))
+
 ## 1.15.3-beta.1
 
 Released 2026-Apr-21

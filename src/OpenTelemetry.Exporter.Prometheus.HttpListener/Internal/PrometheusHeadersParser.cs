@@ -7,6 +7,7 @@ namespace OpenTelemetry.Exporter.Prometheus;
 
 internal static class PrometheusHeadersParser
 {
+    private const string OpenMetricsEscapingScheme = "underscores";
     private const string OpenMetricsMediaType = "application/openmetrics-text";
     private const string OpenMetricsVersion = "1.0.0";
     private const string PrometheusTextMediaType = "text/plain";
@@ -23,6 +24,7 @@ internal static class PrometheusHeadersParser
             var mediaType = TrimWhitespace(SplitNext(ref headerValue, ';'));
             var quality = 1.0;
             var hasValidQuality = true;
+            var hasSupportedOpenMetricsEscaping = true;
             var hasSupportedOpenMetricsVersion = true;
 
             while (headerValue.Length > 0)
@@ -34,6 +36,10 @@ internal static class PrometheusHeadersParser
                     if (parameter.StartsWith("version=".AsSpan(), StringComparison.OrdinalIgnoreCase))
                     {
                         hasSupportedOpenMetricsVersion = IsSupportedOpenMetricsVersion(parameter.Slice("version=".Length));
+                    }
+                    else if (parameter.StartsWith("escaping=".AsSpan(), StringComparison.OrdinalIgnoreCase))
+                    {
+                        hasSupportedOpenMetricsEscaping = IsSupportedOpenMetricsEscaping(parameter.Slice("escaping=".Length));
                     }
 
                     continue;
@@ -59,7 +65,9 @@ internal static class PrometheusHeadersParser
                 continue;
             }
 
-            if (mediaType.Equals(OpenMetricsMediaType.AsSpan(), StringComparison.OrdinalIgnoreCase) && hasSupportedOpenMetricsVersion)
+            if (mediaType.Equals(OpenMetricsMediaType.AsSpan(), StringComparison.OrdinalIgnoreCase) &&
+                hasSupportedOpenMetricsVersion &&
+                hasSupportedOpenMetricsEscaping)
             {
                 bestOpenMetricsQuality =
                     bestOpenMetricsQuality is not { } comparison || quality > comparison ?
@@ -81,6 +89,9 @@ internal static class PrometheusHeadersParser
 
     private static bool IsSupportedOpenMetricsVersion(ReadOnlySpan<char> value)
         => TrimQuotes(value).Equals(OpenMetricsVersion.AsSpan(), StringComparison.Ordinal);
+
+    private static bool IsSupportedOpenMetricsEscaping(ReadOnlySpan<char> value)
+        => TrimQuotes(value).Equals(OpenMetricsEscapingScheme.AsSpan(), StringComparison.Ordinal);
 
     private static ReadOnlySpan<char> SplitNext(ref ReadOnlySpan<char> span, char character)
     {
