@@ -22,16 +22,16 @@ internal static class Program
         new BaggagePropagator(),
     ]);
 
-    public static int Main(string[] args)
+    public static async Task<int> Main(string[] args)
     {
         using var listener = CreateActivityListener();
 
         return args.Contains(ChildModeArgument, StringComparer.Ordinal)
             ? RunAsChild()
-            : RunAsParent();
+            : await RunAsParentAsync();
     }
 
-    private static int RunAsParent()
+    private static async Task<int> RunAsParentAsync()
     {
         Baggage.ClearBaggage();
         Baggage.SetBaggage("tenant.id", "contoso");
@@ -40,7 +40,7 @@ internal static class Program
         using var activity = ActivitySource.StartActivity("parent-process");
         if (activity == null)
         {
-            Console.Error.WriteLine("Failed to create the parent activity.");
+            await Console.Error.WriteLineAsync("Failed to create the parent activity.");
             return 1;
         }
 
@@ -60,14 +60,21 @@ internal static class Program
         using var child = Process.Start(startInfo);
         if (child == null)
         {
-            Console.Error.WriteLine("Failed to start the child process.");
+            await Console.Error.WriteLineAsync("Failed to start the child process.");
             return 1;
         }
 
-        var childStandardOutput = child.StandardOutput.ReadToEnd();
-        var childStandardError = child.StandardError.ReadToEnd();
+        // See https://stackoverflow.com/a/16326426/1064169 and
+        // https://learn.microsoft.com/dotnet/api/system.diagnostics.processstartinfo.redirectstandardoutput.
+        using var outputTokenSource = new CancellationTokenSource();
 
-        child.WaitForExit();
+#pragma warning disable CA2025
+        var readOutput = ReadOutputAsync(child, outputTokenSource.Token);
+#pragma warning restore CA2025
+
+        await child.WaitForExitAsync();
+
+        (string childStandardError, string childStandardOutput) = await readOutput;
 
         if (!string.IsNullOrEmpty(childStandardOutput))
         {
@@ -77,13 +84,66 @@ internal static class Program
 
         if (!string.IsNullOrEmpty(childStandardError))
         {
-            Console.Error.Write(childStandardError);
+            await Console.Error.WriteAsync(childStandardError);
         }
 
         Console.WriteLine();
         Console.WriteLine($"[Parent] Child process exited with code {child.ExitCode}.");
 
         return child.ExitCode;
+
+        static async Task<(string Error, string Output)> ReadOutputAsync(
+            Process process,
+            CancellationToken cancellationToken)
+        {
+            var processErrors = ConsumeStreamAsync(process.StandardError, process.StartInfo.RedirectStandardError, cancellationToken);
+            var processOutput = ConsumeStreamAsync(process.StandardOutput, process.StartInfo.RedirectStandardOutput, cancellationToken);
+
+            await Task.WhenAll(processErrors, processOutput);
+
+            string error = string.Empty;
+            string output = string.Empty;
+
+            if (processErrors.Status == TaskStatus.RanToCompletion)
+            {
+                error = (await processErrors).ToString();
+            }
+
+            if (processOutput.Status == TaskStatus.RanToCompletion)
+            {
+                output = (await processOutput).ToString();
+            }
+
+            return (error, output);
+        }
+
+        static Task<StringBuilder> ConsumeStreamAsync(
+            StreamReader reader,
+            bool isRedirected,
+            CancellationToken cancellationToken)
+        {
+            return isRedirected ?
+                Task.Run(() => ProcessStream(reader, cancellationToken), cancellationToken) :
+                Task.FromResult(new StringBuilder(0));
+
+            static async Task<StringBuilder> ProcessStream(
+                StreamReader reader,
+                CancellationToken cancellationToken)
+            {
+                var builder = new StringBuilder();
+
+                try
+                {
+                    builder.Append(await reader.ReadToEndAsync(cancellationToken));
+                }
+                catch (OperationCanceledException)
+                {
+                    // Ignore
+                }
+
+                return builder;
+            }
+        }
     }
 
     private static int RunAsChild()
