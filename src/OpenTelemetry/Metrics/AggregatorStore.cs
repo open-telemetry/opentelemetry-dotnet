@@ -938,10 +938,13 @@ internal sealed class AggregatorStore
     {
         var index = this.FindMetricAggregatorsCustomTag(tags);
 
-        if (this.IsAsynchronous && this.aggType == AggregationType.LongSumIncomingCumulative && this.metricPoints[index].MetricPointStatus == MetricPointStatus.CollectPending)
+        if (this.IsAsynchronous && this.aggType == AggregationType.LongSumIncomingCumulative)
         {
-            this.UpdateLongMetricPoint(index, value + this.metricPoints[index].GetRunningValueLong(), tags);
-            return;
+            ref var metricPoint = ref this.metricPoints[index];
+            if (metricPoint.MetricPointStatus == MetricPointStatus.CollectPending)
+            {
+                value += metricPoint.GetRunningValueLong();
+            }
         }
 
         this.UpdateLongMetricPoint(index, value, tags);
@@ -991,10 +994,13 @@ internal sealed class AggregatorStore
     {
         var index = this.FindMetricAggregatorsCustomTag(tags);
 
-        if (this.IsAsynchronous && this.aggType == AggregationType.DoubleSumIncomingCumulative && this.metricPoints[index].MetricPointStatus == MetricPointStatus.CollectPending)
+        if (this.IsAsynchronous && this.aggType == AggregationType.DoubleSumIncomingCumulative)
         {
-            this.UpdateDoubleMetricPoint(index, value + this.metricPoints[index].GetRunningValueDouble(), tags);
-            return;
+            ref var metricPoint = ref this.metricPoints[index];
+            if (metricPoint.MetricPointStatus == MetricPointStatus.CollectPending)
+            {
+                value += metricPoint.GetRunningValueDouble();
+            }
         }
 
         this.UpdateDoubleMetricPoint(index, value, tags);
