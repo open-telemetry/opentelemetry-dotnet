@@ -20,6 +20,17 @@ Notes](../../RELEASENOTES.md).
   significant digits to represent such values.
   ([#7179](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7179))
 
+* Fix non-ASCII characters in metric names and unit strings not being sanitized
+  correctly during Prometheus serialization.
+  ([#7184](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7184))
+
+* Fix case where reader tracking could be reset while readers were still active.
+  ([#7190](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7190))
+
+* Improve `Accept` header handling for format negotiation so OpenMetrics is
+  selected correctly by considering whitespace and `q` weights.
+  ([#7208](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7208))
+
 ## 1.15.3-beta.1
 
 Released 2026-Apr-21

@@ -210,6 +210,14 @@ If you made changes to the Markdown documents (`*.md` files), install the latest
 markdownlint .
 ```
 
+CI also runs a sanity check that rejects non-ASCII characters (e.g. smart
+quotes, em dashes) and trailing whitespace in Markdown files. You can check
+locally if you have `python3` installed:
+
+```sh
+python3 ./build/scripts/sanitycheck.py
+```
+
 Check out a new branch, make modifications, and push the branch to your fork:
 
 ```sh

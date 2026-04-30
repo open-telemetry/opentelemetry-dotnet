@@ -1695,7 +1695,7 @@ public class MetricApiTests : MetricTestsBase
     public void MultithreadedLongCounterTest()
         => this.MultithreadedCounterTest(DeltaLongValueUpdatedByEachCall);
 
-    [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/6803")]
+    [Fact]
     public void MultithreadedSingleCounterTest()
         => this.MultithreadedCounterTest((float)DeltaDoubleValueUpdatedByEachCall);
 
@@ -2487,7 +2487,7 @@ public class MetricApiTests : MetricTestsBase
         }
 
         argToThread.MreToEnsureAllThreadsStart.WaitOne();
-        var sw = Stopwatch.StartNew();
+        var startedTimestamp = Stopwatch.GetTimestamp();
         argToThread.MreToBlockUpdateThread.Set();
 
         for (var i = 0; i < NumberOfThreads; i++)
@@ -2495,7 +2495,8 @@ public class MetricApiTests : MetricTestsBase
             t[i].Join();
         }
 
-        this.output.WriteLine($"Took {sw.ElapsedMilliseconds} msecs. Total threads: {NumberOfThreads}, each thread doing {NumberOfMetricUpdateByEachThread} recordings.");
+        var elapsed = Stopwatch.GetElapsedTime(startedTimestamp);
+        this.output.WriteLine($"Took {elapsed.TotalMilliseconds} msecs. Total threads: {NumberOfThreads}, each thread doing {NumberOfMetricUpdateByEachThread} recordings.");
 
         meterProvider.ForceFlush();
 
@@ -2505,7 +2506,13 @@ public class MetricApiTests : MetricTestsBase
             var expectedSum = DeltaLongValueUpdatedByEachCall * NumberOfMetricUpdateByEachThread * NumberOfThreads;
             Assert.Equal(expectedSum, sumReceived);
         }
-        else if (typeof(T) == typeof(float) || typeof(T) == typeof(double))
+        else if (typeof(T) == typeof(float))
+        {
+            var sumReceived = GetDoubleSum(metricItems);
+            var expectedSum = (double)(float)DeltaDoubleValueUpdatedByEachCall * NumberOfMetricUpdateByEachThread * NumberOfThreads;
+            Assert.Equal(expectedSum, sumReceived, 2);
+        }
+        else if (typeof(T) == typeof(double))
         {
             var sumReceived = GetDoubleSum(metricItems);
             var expectedSum = DeltaDoubleValueUpdatedByEachCall * NumberOfMetricUpdateByEachThread * NumberOfThreads;
