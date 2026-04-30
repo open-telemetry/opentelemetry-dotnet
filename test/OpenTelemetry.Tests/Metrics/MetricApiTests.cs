@@ -1695,7 +1695,7 @@ public class MetricApiTests : MetricTestsBase
     public void MultithreadedLongCounterTest()
         => this.MultithreadedCounterTest(DeltaLongValueUpdatedByEachCall);
 
-    [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/6803")]
+    [Fact]
     public void MultithreadedSingleCounterTest()
         => this.MultithreadedCounterTest((float)DeltaDoubleValueUpdatedByEachCall);
 
@@ -2506,7 +2506,13 @@ public class MetricApiTests : MetricTestsBase
             var expectedSum = DeltaLongValueUpdatedByEachCall * NumberOfMetricUpdateByEachThread * NumberOfThreads;
             Assert.Equal(expectedSum, sumReceived);
         }
-        else if (typeof(T) == typeof(float) || typeof(T) == typeof(double))
+        else if (typeof(T) == typeof(float))
+        {
+            var sumReceived = GetDoubleSum(metricItems);
+            var expectedSum = (double)(float)DeltaDoubleValueUpdatedByEachCall * NumberOfMetricUpdateByEachThread * NumberOfThreads;
+            Assert.Equal(expectedSum, sumReceived, 2);
+        }
+        else if (typeof(T) == typeof(double))
         {
             var sumReceived = GetDoubleSum(metricItems);
             var expectedSum = DeltaDoubleValueUpdatedByEachCall * NumberOfMetricUpdateByEachThread * NumberOfThreads;

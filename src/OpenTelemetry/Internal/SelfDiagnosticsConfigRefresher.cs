@@ -142,7 +142,7 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
         if (this.configParser.TryGetConfiguration(out var newLogDirectory, out var fileSizeInKB, out var newEventLevel, out var formatMessage))
         {
             var newFileSize = fileSizeInKB * 1024;
-            if (!newLogDirectory.Equals(this.logDirectory, StringComparison.Ordinal) || this.logFileSize != newFileSize)
+            if (!string.Equals(newLogDirectory, this.logDirectory, StringComparison.Ordinal) || this.logFileSize != newFileSize)
             {
                 this.CloseLogFile();
                 this.OpenLogFile(newLogDirectory, newFileSize);
@@ -150,11 +150,7 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
 
             if (!newEventLevel.Equals(this.logEventLevel) || this.formatMessage != formatMessage)
             {
-                if (this.eventListener != null)
-                {
-                    this.eventListener.Dispose();
-                }
-
+                this.eventListener?.Dispose();
                 this.eventListener = new SelfDiagnosticsEventListener(newEventLevel, this, formatMessage);
                 this.logEventLevel = newEventLevel;
             }
@@ -177,10 +173,7 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
             // properly.
             foreach (var stream in this.viewStream.Values)
             {
-                if (stream != null)
-                {
-                    stream.Dispose();
-                }
+                stream?.Dispose();
             }
 
             mmf.Dispose();

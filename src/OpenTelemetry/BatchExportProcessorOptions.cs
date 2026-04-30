@@ -29,4 +29,47 @@ public class BatchExportProcessorOptions<T>
     /// Gets or sets the maximum batch size of every export. It must be smaller or equal to <see cref="MaxQueueSize"/>. The default value is 512.
     /// </summary>
     public int MaxExportBatchSize { get; set; } = BatchExportProcessor<T>.DefaultMaxExportBatchSize;
+
+    internal static void ApplyValidatedConfiguration(
+        BatchExportProcessorOptions<T> options,
+        int maxQueueSize,
+        int maxExportBatchSize,
+        int exporterTimeoutMilliseconds,
+        int scheduledDelayMilliseconds)
+    {
+        var candidateMaxQueueSize = options.MaxQueueSize;
+        var candidateMaxExportBatchSize = options.MaxExportBatchSize;
+        var candidateExporterTimeoutMilliseconds = options.ExporterTimeoutMilliseconds;
+        var candidateScheduledDelayMilliseconds = options.ScheduledDelayMilliseconds;
+
+        if (maxQueueSize > 0)
+        {
+            candidateMaxQueueSize = maxQueueSize;
+        }
+
+        if (maxExportBatchSize > 0)
+        {
+            candidateMaxExportBatchSize = maxExportBatchSize;
+        }
+
+        if (candidateMaxExportBatchSize > candidateMaxQueueSize)
+        {
+            candidateMaxExportBatchSize = candidateMaxQueueSize;
+        }
+
+        if (exporterTimeoutMilliseconds >= 0)
+        {
+            candidateExporterTimeoutMilliseconds = exporterTimeoutMilliseconds;
+        }
+
+        if (scheduledDelayMilliseconds > 0)
+        {
+            candidateScheduledDelayMilliseconds = scheduledDelayMilliseconds;
+        }
+
+        options.MaxQueueSize = candidateMaxQueueSize;
+        options.MaxExportBatchSize = candidateMaxExportBatchSize;
+        options.ExporterTimeoutMilliseconds = candidateExporterTimeoutMilliseconds;
+        options.ScheduledDelayMilliseconds = candidateScheduledDelayMilliseconds;
+    }
 }
