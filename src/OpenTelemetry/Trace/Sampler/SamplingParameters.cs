@@ -8,7 +8,7 @@ namespace OpenTelemetry.Trace;
 /// <summary>
 /// Sampling parameters passed to a <see cref="Sampler"/> for it to make a sampling decision.
 /// </summary>
-public readonly struct SamplingParameters : IEquatable<SamplingParameters>
+public readonly struct SamplingParameters
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="SamplingParameters"/> struct.
@@ -77,46 +77,4 @@ public readonly struct SamplingParameters : IEquatable<SamplingParameters>
     /// Gets the links to be added to the activity to be created.
     /// </summary>
     public IEnumerable<ActivityLink>? Links { get; }
-
-    /// <summary>
-    /// Compare two <see cref="SamplingParameters"/> for equality.
-    /// </summary>
-    public static bool operator ==(SamplingParameters left, SamplingParameters right) => left.Equals(right);
-
-    /// <summary>
-    /// Compare two <see cref="SamplingParameters"/> for inequality.
-    /// </summary>
-    public static bool operator !=(SamplingParameters left, SamplingParameters right) => !left.Equals(right);
-
-    /// <inheritdoc/>
-    public override bool Equals(object? obj) => obj is SamplingParameters other && this.Equals(other);
-
-    /// <inheritdoc/>
-    public bool Equals(SamplingParameters other)
-        => this.ParentContext == other.ParentContext
-        && this.TraceId == other.TraceId
-        && this.Name == other.Name
-        && this.Kind == other.Kind
-        && ReferenceEquals(this.Tags, other.Tags)
-        && ReferenceEquals(this.Links, other.Links);
-
-    /// <inheritdoc/>
-    public override int GetHashCode()
-    {
-#if NET || NETSTANDARD2_1_OR_GREATER
-        return HashCode.Combine(this.ParentContext, this.TraceId, this.Name, this.Kind, this.Tags, this.Links);
-#else
-        unchecked
-        {
-            var hash = 17;
-            hash = (31 * hash) + this.ParentContext.GetHashCode();
-            hash = (31 * hash) + this.TraceId.GetHashCode();
-            hash = (31 * hash) + (this.Name?.GetHashCode() ?? 0);
-            hash = (31 * hash) + this.Kind.GetHashCode();
-            hash = (31 * hash) + (this.Tags?.GetHashCode() ?? 0);
-            hash = (31 * hash) + (this.Links?.GetHashCode() ?? 0);
-            return hash;
-        }
-#endif
-    }
 }

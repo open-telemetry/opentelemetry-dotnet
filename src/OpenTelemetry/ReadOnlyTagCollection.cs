@@ -9,7 +9,7 @@ namespace OpenTelemetry;
 // Note: Does not implement IReadOnlyCollection<> or IEnumerable<> to
 // prevent accidental boxing.
 #pragma warning disable CA1711 // Identifiers should not have incorrect suffix
-public readonly struct ReadOnlyTagCollection : IEquatable<ReadOnlyTagCollection>
+public readonly struct ReadOnlyTagCollection
 #pragma warning restore CA1711 // Identifiers should not have incorrect suffix
 {
     internal readonly KeyValuePair<string, object?>[] KeyAndValues;
@@ -29,25 +29,6 @@ public readonly struct ReadOnlyTagCollection : IEquatable<ReadOnlyTagCollection>
     /// </summary>
     /// <returns><see cref="Enumerator"/>.</returns>
     public Enumerator GetEnumerator() => new(this);
-
-    /// <summary>
-    /// Compare two <see cref="ReadOnlyTagCollection"/> for equality.
-    /// </summary>
-    public static bool operator ==(ReadOnlyTagCollection left, ReadOnlyTagCollection right) => left.Equals(right);
-
-    /// <summary>
-    /// Compare two <see cref="ReadOnlyTagCollection"/> for inequality.
-    /// </summary>
-    public static bool operator !=(ReadOnlyTagCollection left, ReadOnlyTagCollection right) => !left.Equals(right);
-
-    /// <inheritdoc/>
-    public override bool Equals(object? obj) => obj is ReadOnlyTagCollection other && this.Equals(other);
-
-    /// <inheritdoc/>
-    public bool Equals(ReadOnlyTagCollection other) => ReferenceEquals(this.KeyAndValues, other.KeyAndValues);
-
-    /// <inheritdoc/>
-    public override int GetHashCode() => this.KeyAndValues?.GetHashCode() ?? 0;
 
     /// <summary>
     /// Enumerates the elements of a <see cref="ReadOnlyTagCollection"/>.

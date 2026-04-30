@@ -1,22 +1,7 @@
 #nullable enable
 OpenTelemetry.Logs.LogRecordScope.Equals(OpenTelemetry.Logs.LogRecordScope other) -> bool
 OpenTelemetry.Metrics.HistogramBucket.Equals(OpenTelemetry.Metrics.HistogramBucket other) -> bool
-OpenTelemetry.Metrics.MetricPointsAccessor.Equals(OpenTelemetry.Metrics.MetricPointsAccessor other) -> bool
-OpenTelemetry.Metrics.ReadOnlyExemplarCollection.Equals(OpenTelemetry.Metrics.ReadOnlyExemplarCollection other) -> bool
-OpenTelemetry.ReadOnlyFilteredTagCollection.Equals(OpenTelemetry.ReadOnlyFilteredTagCollection other) -> bool
-OpenTelemetry.ReadOnlyTagCollection.Equals(OpenTelemetry.ReadOnlyTagCollection other) -> bool
-OpenTelemetry.Trace.SamplingParameters.Equals(OpenTelemetry.Trace.SamplingParameters other) -> bool
 static OpenTelemetry.Logs.LogRecordScope.operator !=(OpenTelemetry.Logs.LogRecordScope left, OpenTelemetry.Logs.LogRecordScope right) -> bool
 static OpenTelemetry.Logs.LogRecordScope.operator ==(OpenTelemetry.Logs.LogRecordScope left, OpenTelemetry.Logs.LogRecordScope right) -> bool
 static OpenTelemetry.Metrics.HistogramBucket.operator !=(OpenTelemetry.Metrics.HistogramBucket left, OpenTelemetry.Metrics.HistogramBucket right) -> bool
 static OpenTelemetry.Metrics.HistogramBucket.operator ==(OpenTelemetry.Metrics.HistogramBucket left, OpenTelemetry.Metrics.HistogramBucket right) -> bool
-static OpenTelemetry.Metrics.MetricPointsAccessor.operator !=(OpenTelemetry.Metrics.MetricPointsAccessor left, OpenTelemetry.Metrics.MetricPointsAccessor right) -> bool
-static OpenTelemetry.Metrics.MetricPointsAccessor.operator ==(OpenTelemetry.Metrics.MetricPointsAccessor left, OpenTelemetry.Metrics.MetricPointsAccessor right) -> bool
-static OpenTelemetry.Metrics.ReadOnlyExemplarCollection.operator !=(OpenTelemetry.Metrics.ReadOnlyExemplarCollection left, OpenTelemetry.Metrics.ReadOnlyExemplarCollection right) -> bool
-static OpenTelemetry.Metrics.ReadOnlyExemplarCollection.operator ==(OpenTelemetry.Metrics.ReadOnlyExemplarCollection left, OpenTelemetry.Metrics.ReadOnlyExemplarCollection right) -> bool
-static OpenTelemetry.ReadOnlyFilteredTagCollection.operator !=(OpenTelemetry.ReadOnlyFilteredTagCollection left, OpenTelemetry.ReadOnlyFilteredTagCollection right) -> bool
-static OpenTelemetry.ReadOnlyFilteredTagCollection.operator ==(OpenTelemetry.ReadOnlyFilteredTagCollection left, OpenTelemetry.ReadOnlyFilteredTagCollection right) -> bool
-static OpenTelemetry.ReadOnlyTagCollection.operator !=(OpenTelemetry.ReadOnlyTagCollection left, OpenTelemetry.ReadOnlyTagCollection right) -> bool
-static OpenTelemetry.ReadOnlyTagCollection.operator ==(OpenTelemetry.ReadOnlyTagCollection left, OpenTelemetry.ReadOnlyTagCollection right) -> bool
-static OpenTelemetry.Trace.SamplingParameters.operator !=(OpenTelemetry.Trace.SamplingParameters left, OpenTelemetry.Trace.SamplingParameters right) -> bool
-static OpenTelemetry.Trace.SamplingParameters.operator ==(OpenTelemetry.Trace.SamplingParameters left, OpenTelemetry.Trace.SamplingParameters right) -> bool
