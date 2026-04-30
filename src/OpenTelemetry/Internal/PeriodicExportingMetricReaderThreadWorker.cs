@@ -39,9 +39,7 @@ internal sealed class PeriodicExportingMetricReaderThreadWorker : PeriodicExport
 
     /// <inheritdoc/>
     public override void Start()
-    {
-        this.exporterThread.Start();
-    }
+        => this.exporterThread.Start();
 
     /// <inheritdoc/>
     public override bool TriggerExport()
@@ -75,12 +73,7 @@ internal sealed class PeriodicExportingMetricReaderThreadWorker : PeriodicExport
             return true;
         }
 
-        if (timeoutMilliseconds == 0)
-        {
-            return true;
-        }
-
-        return this.exporterThread.Join(timeoutMilliseconds);
+        return timeoutMilliseconds == 0 || this.exporterThread.Join(timeoutMilliseconds);
     }
 
     /// <inheritdoc/>
@@ -102,14 +95,14 @@ internal sealed class PeriodicExportingMetricReaderThreadWorker : PeriodicExport
 
     private void ExporterProc()
     {
-        int index;
-        int timeout;
         var triggers = new WaitHandle[] { this.exportTrigger, this.shutdownTrigger };
-        var sw = Stopwatch.StartNew();
+        var startedAt = Stopwatch.GetTimestamp();
 
         while (true)
         {
-            timeout = (int)(this.ExportIntervalMilliseconds - (sw.ElapsedMilliseconds % this.ExportIntervalMilliseconds));
+            var elapsedMilliseconds = Stopwatch.GetElapsedTime(startedAt).Ticks / TimeSpan.TicksPerMillisecond;
+            var timeout = this.ExportIntervalMilliseconds - (int)(elapsedMilliseconds % this.ExportIntervalMilliseconds);
+            int index;
 
             try
             {

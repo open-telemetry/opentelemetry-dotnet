@@ -2487,7 +2487,7 @@ public class MetricApiTests : MetricTestsBase
         }
 
         argToThread.MreToEnsureAllThreadsStart.WaitOne();
-        var sw = Stopwatch.StartNew();
+        var startedTimestamp = Stopwatch.GetTimestamp();
         argToThread.MreToBlockUpdateThread.Set();
 
         for (var i = 0; i < NumberOfThreads; i++)
@@ -2495,7 +2495,8 @@ public class MetricApiTests : MetricTestsBase
             t[i].Join();
         }
 
-        this.output.WriteLine($"Took {sw.ElapsedMilliseconds} msecs. Total threads: {NumberOfThreads}, each thread doing {NumberOfMetricUpdateByEachThread} recordings.");
+        var elapsed = Stopwatch.GetElapsedTime(startedTimestamp);
+        this.output.WriteLine($"Took {elapsed.TotalMilliseconds} msecs. Total threads: {NumberOfThreads}, each thread doing {NumberOfMetricUpdateByEachThread} recordings.");
 
         meterProvider.ForceFlush();
 
