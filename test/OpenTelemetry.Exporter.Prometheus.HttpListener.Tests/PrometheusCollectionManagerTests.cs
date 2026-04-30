@@ -294,14 +294,11 @@ public sealed class PrometheusCollectionManagerTests
 #if PROMETHEUS_HTTP_LISTENER
     private static MeterProvider CreateMeterProviderWithRandomPort(Meter meter)
     {
-        var random = new Random();
         var retryAttempts = 5;
 
         while (retryAttempts-- != 0)
         {
-#pragma warning disable CA5394 // Do not use insecure randomness
-            var port = random.Next(2000, 5000);
-#pragma warning restore CA5394 // Do not use insecure randomness
+            var port = TcpPortProvider.GetOpenPort();
 
             try
             {

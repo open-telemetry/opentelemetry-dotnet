@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Collections.Concurrent;
 using System.Diagnostics.Metrics;
 using System.Globalization;
 using System.Net;
@@ -21,6 +22,8 @@ public class PrometheusHttpListenerTests
     private const string UriPrefixesObsoleteMessage = "Tests the obsolete UriPrefixes property.";
 
     private static readonly string MeterName = Utils.GetCurrentMethodName();
+
+    private static readonly ConcurrentDictionary<int, int> ConsumedPorts = [];
 
     [Theory]
     [InlineData("http://+:9464")]
@@ -361,17 +364,16 @@ public class PrometheusHttpListenerTests
         }
     }
 
-    private static int GetRandomPort(Random? random = null)
+    private static int GetRandomPort()
     {
-#if NET
-        random ??= Random.Shared;
-#else
-        random ??= new Random();
-#endif
+        int port;
 
-#pragma warning disable CA5394 // Do not use insecure randomness
-        return random.Next(2000, 5000);
-#pragma warning restore CA5394 // Do not use insecure randomness
+        // Try to only use each port number exactly once
+        while (!ConsumedPorts.TryAdd(port = TcpPortProvider.GetOpenPort(), port))
+        {
+        }
+
+        return port;
     }
 
     private static PrometheusTestContext CreateListener(int? port = null)

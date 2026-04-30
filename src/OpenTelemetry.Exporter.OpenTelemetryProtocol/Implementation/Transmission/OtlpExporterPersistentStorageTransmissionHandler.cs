@@ -61,7 +61,7 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler : OtlpExp
 
     protected override void OnShutdown(int timeoutMilliseconds)
     {
-        var sw = timeoutMilliseconds == Timeout.Infinite ? null : Stopwatch.StartNew();
+        long? timestamp = timeoutMilliseconds == Timeout.Infinite ? null : Stopwatch.GetTimestamp();
 
         try
         {
@@ -74,16 +74,12 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler : OtlpExp
 
         this.thread.Join(timeoutMilliseconds);
 
-        if (sw != null)
+        if (timestamp is { } startedAt)
         {
-            var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
+            timeoutMilliseconds = Stopwatch.Remaining(timeoutMilliseconds, startedAt);
+        }
 
-            base.OnShutdown((int)Math.Max(timeout, 0));
-        }
-        else
-        {
-            base.OnShutdown(timeoutMilliseconds);
-        }
+        base.OnShutdown(timeoutMilliseconds);
     }
 
     protected override void Dispose(bool disposing)
