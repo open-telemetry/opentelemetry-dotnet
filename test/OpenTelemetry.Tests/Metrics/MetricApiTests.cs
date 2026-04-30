@@ -877,7 +877,7 @@ public class MetricApiTests : MetricTestsBase
         ValidateMetricPointTags(tags3, metricPoint3.Tags);
     }
 
-    [Theory(Skip = "https://github.com/open-telemetry/opentelemetry-specification/issues/1874")]
+    [Theory]
     [InlineData(true)]
     [InlineData(false)]
     public void ObservableCounterSpatialAggregationTest(bool exportDelta)

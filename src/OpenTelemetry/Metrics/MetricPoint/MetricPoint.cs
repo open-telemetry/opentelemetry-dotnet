@@ -893,6 +893,10 @@ public struct MetricPoint
         this.mpComponents = null;
     }
 
+    internal long GetRunningValueLong() => Interlocked.Read(ref this.runningValue.AsLong);
+
+    internal double GetRunningValueDouble() => InterlockedHelper.Read(ref this.runningValue.AsDouble);
+
     private void UpdateHistogram(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool offerExemplar = false)
     {
         var histogramBuckets = this.mpComponents!.HistogramBuckets!;
