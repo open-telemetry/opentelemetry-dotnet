@@ -81,7 +81,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
             var trailingHeaders = httpResponse.TrailingHeaders();
             var status = GrpcProtocolHelpers.GetResponseStatus(httpResponse, trailingHeaders);
 
-            if (status.Detail.Equals(Status.NoReplyDetailMessage, StringComparison.Ordinal))
+            if (string.Equals(status.Detail, Status.NoReplyDetailMessage, StringComparison.Ordinal))
             {
 #if NET
                 using var responseStream = httpResponse.Content.ReadAsStream(cancellationToken);
