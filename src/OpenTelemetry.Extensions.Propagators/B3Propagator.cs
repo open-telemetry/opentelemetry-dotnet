@@ -167,7 +167,7 @@ public sealed class B3Propagator : TextMapPropagator
             var traceOptions = ActivityTraceFlags.None;
             var xb3Sampled = getter(carrier, XB3Sampled)?.FirstOrDefault();
             if ((xb3Sampled != null && SampledValues.Contains(xb3Sampled))
-                || FlagsValue.Equals(getter(carrier, XB3Flags)?.FirstOrDefault(), StringComparison.Ordinal))
+                || string.Equals(FlagsValue, getter(carrier, XB3Flags)?.FirstOrDefault(), StringComparison.Ordinal))
             {
                 traceOptions |= ActivityTraceFlags.Recorded;
             }
