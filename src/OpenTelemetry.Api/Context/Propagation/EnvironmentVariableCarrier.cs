@@ -146,19 +146,12 @@ public static class EnvironmentVariableCarrier
     public static string NormalizeKey(string key)
     {
         Guard.ThrowIfNull(key);
-
-        if (IsAlreadyNormalized(key))
-        {
-            return key;
-        }
-
-        var prefixLength = IsAsciiDigit(key[0]) ? 1 : 0;
-        return CreateNormalizedKey(key, prefixLength);
+        return IsAlreadyNormalized(key) ? key : CreateNormalizedKey(key);
     }
 
     private static bool IsAlreadyNormalized(string key)
     {
-        if (key.Length == 0 || IsAsciiDigit(key[0]))
+        if (key.Length == 0 || char.IsAsciiDigit(key[0]))
         {
             return key.Length == 0;
         }
@@ -179,7 +172,7 @@ public static class EnvironmentVariableCarrier
         var candidateLength = candidateKey.Length;
         var normalizedIndex = 0;
 
-        if (candidateLength > 0 && IsAsciiDigit(candidateKey[0]))
+        if (candidateLength > 0 && char.IsAsciiDigit(candidateKey[0]))
         {
             if (normalizedKey.IsEmpty || normalizedKey[0] != '_')
             {
@@ -205,8 +198,9 @@ public static class EnvironmentVariableCarrier
         return true;
     }
 
-    private static string CreateNormalizedKey(string key, int prefixLength)
+    private static string CreateNormalizedKey(string key)
     {
+        var prefixLength = char.IsAsciiDigit(key[0]) ? 1 : 0;
         int length = key.Length + prefixLength;
 
 #if NETSTANDARD2_1_OR_GREATER || NET
@@ -241,11 +235,7 @@ public static class EnvironmentVariableCarrier
 
     private static char NormalizeCharacter(char value)
     {
-#if NET
         if (char.IsAsciiLetterLower(value))
-#else
-        if (value >= 'a' && value <= 'z')
-#endif
         {
             return (char)(value - 32);
         }
@@ -261,21 +251,5 @@ public static class EnvironmentVariableCarrier
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IsNormalized(char value) =>
-        IsAsciiLetterUpper(value) || IsAsciiDigit(value) || value == '_';
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool IsAsciiLetterUpper(char value) =>
-#if NET
-        char.IsAsciiLetterUpper(value);
-#else
-       value >= 'A' && value <= 'Z';
-#endif
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool IsAsciiDigit(char value) =>
-#if NET
-        char.IsAsciiDigit(value);
-#else
-        value >= '0' && value <= '9';
-#endif
+        char.IsAsciiLetterUpper(value) || char.IsAsciiDigit(value) || value == '_';
 }

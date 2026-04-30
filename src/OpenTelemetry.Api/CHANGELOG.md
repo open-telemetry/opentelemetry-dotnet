@@ -32,6 +32,9 @@ Released 2026-Apr-21
   from values when parsing the `baggage` header.
   ([#7009](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7009))
 
+* Add support for using environment variables as context propagation carriers.
+  ([#7174](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7174))
+
 ## 1.15.2
 
 Released 2026-Apr-08

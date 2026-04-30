@@ -484,6 +484,15 @@ context into the environment dictionary of a child process. For a runnable
 end-to-end example, see
 [`examples/EnvironmentVariables`](../../examples/EnvironmentVariables/Program.cs).
 
+> [!IMPORTANT]
+> A process' environment variables may contain sensitive information, like secrets
+> or credentials. Ensure that any environment variables used for context propagation
+> are not exposed to untrusted child processes.
+>
+> See [Environment Variables as Context Propagation Carriers](https://opentelemetry.io/docs/specs/otel/context/env-carriers/#security)
+> for more information about security considerations when propagating context via
+> environment variables.
+
 ```csharp
 using System.Diagnostics;
 using OpenTelemetry.Context.Propagation;
@@ -525,6 +534,9 @@ replacing non-ASCII letters, non-digits, and non-underscore characters with
 underscores, and prefixing `_` when a key would otherwise start with a digit.
 Values are treated as opaque strings and are not validated or modified by the
 carrier.
+
+See [Environment Variables as Context Propagation Carriers](https://opentelemetry.io/docs/specs/otel/context/env-carriers/)
+for more information.
 
 ## Introduction to OpenTelemetry .NET Metrics API
 
