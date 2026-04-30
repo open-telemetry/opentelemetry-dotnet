@@ -94,6 +94,8 @@ internal sealed class MeterProviderSdk : MeterProvider
                 this.Reader = new CompositeMetricReader([this.Reader, reader]);
             }
 
+            this.Reader.SetParentProvider(this);
+
             if (reader is PeriodicExportingMetricReader periodicExportingMetricReader)
             {
                 exportersAdded.Append(periodicExportingMetricReader.Exporter);
