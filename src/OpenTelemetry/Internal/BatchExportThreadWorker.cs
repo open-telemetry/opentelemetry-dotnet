@@ -45,9 +45,7 @@ internal sealed class BatchExportThreadWorker<T> : BatchExportWorker<T>
 
     /// <inheritdoc/>
     public override void Start()
-    {
-        this.exporterThread.Start();
-    }
+        => this.exporterThread.Start();
 
     /// <inheritdoc/>
     public override bool TriggerExport()
@@ -86,9 +84,8 @@ internal sealed class BatchExportThreadWorker<T> : BatchExportWorker<T>
 
         var triggers = new WaitHandle[] { this.dataExportedNotification, this.shutdownTrigger };
 
-        var sw = timeoutMilliseconds == Timeout.Infinite
-            ? null
-            : Stopwatch.StartNew();
+        var initialTimeoutMilliseconds = timeoutMilliseconds;
+        long? timestamp = timeoutMilliseconds == Timeout.Infinite ? null : Stopwatch.GetTimestamp();
 
         // There is a chance that the export thread finished processing all the data from the queue,
         // and signaled before we enter wait here, use polling to prevent being blocked indefinitely.
@@ -96,34 +93,27 @@ internal sealed class BatchExportThreadWorker<T> : BatchExportWorker<T>
 
         while (true)
         {
-            if (sw == null)
-            {
-                try
-                {
-                    WaitHandle.WaitAny(triggers, pollingMilliseconds);
-                }
-                catch (ObjectDisposedException)
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
+            var timeout = pollingMilliseconds;
 
-                if (timeout <= 0)
+            if (timestamp is { } startedAt)
+            {
+                var remainingMilliseconds = Stopwatch.Remaining(initialTimeoutMilliseconds, startedAt);
+
+                if (remainingMilliseconds <= 0)
                 {
                     return this.CircularBuffer.RemovedCount >= head;
                 }
 
-                try
-                {
-                    WaitHandle.WaitAny(triggers, Math.Min((int)timeout, pollingMilliseconds));
-                }
-                catch (ObjectDisposedException)
-                {
-                    return false;
-                }
+                timeout = Math.Min(remainingMilliseconds, pollingMilliseconds);
+            }
+
+            try
+            {
+                WaitHandle.WaitAny(triggers, timeout);
+            }
+            catch (ObjectDisposedException)
+            {
+                return false;
             }
 
             if (this.CircularBuffer.RemovedCount >= head)
@@ -158,12 +148,7 @@ internal sealed class BatchExportThreadWorker<T> : BatchExportWorker<T>
             return true;
         }
 
-        if (timeoutMilliseconds == 0)
-        {
-            return true;
-        }
-
-        return this.exporterThread.Join(timeoutMilliseconds);
+        return timeoutMilliseconds == 0 || this.exporterThread.Join(timeoutMilliseconds);
     }
 
     /// <inheritdoc/>

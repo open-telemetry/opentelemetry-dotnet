@@ -33,9 +33,7 @@ internal sealed class PeriodicExportingMetricReaderTaskWorker : PeriodicExportin
 
     /// <inheritdoc/>
     public override void Start()
-    {
-        this.workerTask = Task.Run(this.ExporterProcAsync);
-    }
+        => this.workerTask = Task.Run(this.ExporterProcAsync);
 
     /// <inheritdoc/>
     public override bool TriggerExport()
@@ -84,12 +82,7 @@ internal sealed class PeriodicExportingMetricReaderTaskWorker : PeriodicExportin
             return true;
         }
 
-        if (timeoutMilliseconds == 0)
-        {
-            return true;
-        }
-
-        return this.workerTask.Wait(timeoutMilliseconds);
+        return timeoutMilliseconds == 0 || this.workerTask.Wait(timeoutMilliseconds);
     }
 
     /// <inheritdoc/>
@@ -112,13 +105,14 @@ internal sealed class PeriodicExportingMetricReaderTaskWorker : PeriodicExportin
     private async Task ExporterProcAsync()
     {
         var cancellationToken = this.cancellationTokenSource.Token;
-        var sw = Stopwatch.StartNew();
+        var startedAt = Stopwatch.GetTimestamp();
 
         try
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                var timeout = (int)(this.ExportIntervalMilliseconds - (sw.ElapsedMilliseconds % this.ExportIntervalMilliseconds));
+                var elapsedMilliseconds = Stopwatch.GetElapsedTime(startedAt).Ticks / TimeSpan.TicksPerMillisecond;
+                var timeout = this.ExportIntervalMilliseconds - (int)(elapsedMilliseconds % this.ExportIntervalMilliseconds);
 
                 Task? exportTriggerTask = null;
                 Task? triggeredTask = null;
