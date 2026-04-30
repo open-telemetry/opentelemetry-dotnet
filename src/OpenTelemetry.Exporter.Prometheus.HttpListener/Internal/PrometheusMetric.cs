@@ -86,7 +86,7 @@ internal sealed class PrometheusMetric
         {
             var c = metricUnit[i];
 
-            if (!char.IsLetterOrDigit(c) && c != ':')
+            if (!char.IsAsciiLetterOrDigit(c) && c != ':')
             {
                 if (!lastCharUnderscore)
                 {
@@ -97,11 +97,7 @@ internal sealed class PrometheusMetric
             }
             else
             {
-                if (sb != null)
-                {
-                    sb.Append(c);
-                }
-
+                sb?.Append(c);
                 lastCharUnderscore = false;
             }
         }
@@ -119,7 +115,7 @@ internal sealed class PrometheusMetric
         {
             var c = metricName[i];
 
-            if (i == 0 && char.IsNumber(c))
+            if (i == 0 && char.IsAsciiDigit(c))
             {
                 sb ??= CreateStringBuilder(metricName);
                 sb.Append('_');
@@ -127,7 +123,7 @@ internal sealed class PrometheusMetric
                 continue;
             }
 
-            if (!char.IsLetterOrDigit(c) && c != ':')
+            if (!char.IsAsciiLetterOrDigit(c) && c != ':')
             {
                 if (!lastCharUnderscore)
                 {
@@ -145,6 +141,11 @@ internal sealed class PrometheusMetric
         }
 
         return sb?.ToString() ?? metricName;
+
+        static StringBuilder CreateStringBuilder(string value)
+        {
+            return new(value.Length);
+        }
     }
 
     internal static string RemoveAnnotations(string unit)
@@ -212,11 +213,6 @@ internal sealed class PrometheusMetric
             8 => PrometheusType.Gauge,
             _ => throw new InvalidOperationException($"Invalid {nameof(MetricType)} value."),
         };
-    }
-
-    private static StringBuilder CreateStringBuilder(string value)
-    {
-        return new(value.Length);
     }
 
     private static string SanitizeOpenMetricsName(string metricName)

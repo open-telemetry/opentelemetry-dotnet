@@ -63,18 +63,18 @@ public class CompositeProcessor<T> : BaseProcessor<T>
     /// <inheritdoc/>
     public override void OnEnd(T data)
     {
-        for (var cur = this.Head; cur != null; cur = cur.Next)
+        for (var current = this.Head; current != null; current = current.Next)
         {
-            cur.Value.OnEnd(data);
+            current.Value.OnEnd(data);
         }
     }
 
     /// <inheritdoc/>
     public override void OnStart(T data)
     {
-        for (var cur = this.Head; cur != null; cur = cur.Next)
+        for (var current = this.Head; current != null; current = current.Next)
         {
-            cur.Value.OnStart(data);
+            current.Value.OnStart(data);
         }
     }
 
@@ -82,9 +82,9 @@ public class CompositeProcessor<T> : BaseProcessor<T>
     {
         base.SetParentProvider(parentProvider);
 
-        for (var cur = this.Head; cur != null; cur = cur.Next)
+        for (var current = this.Head; current != null; current = current.Next)
         {
-            cur.Value.SetParentProvider(parentProvider);
+            current.Value.SetParentProvider(parentProvider);
         }
     }
 
@@ -92,9 +92,9 @@ public class CompositeProcessor<T> : BaseProcessor<T>
     {
         var list = new List<BaseProcessor<T>>();
 
-        for (var cur = this.Head; cur != null; cur = cur.Next)
+        for (var current = this.Head; current != null; current = current.Next)
         {
-            list.Add(cur.Value);
+            list.Add(current.Value);
         }
 
         return list;
@@ -104,23 +104,20 @@ public class CompositeProcessor<T> : BaseProcessor<T>
     protected override bool OnForceFlush(int timeoutMilliseconds)
     {
         var result = true;
-        var sw = timeoutMilliseconds == Timeout.Infinite
-            ? null
-            : Stopwatch.StartNew();
+        var initialTimeoutMilliseconds = timeoutMilliseconds;
+        long? timestamp = timeoutMilliseconds == Timeout.Infinite ? null : Stopwatch.GetTimestamp();
 
-        for (var cur = this.Head; cur != null; cur = cur.Next)
+        for (var current = this.Head; current != null; current = current.Next)
         {
-            if (sw == null)
-            {
-                result = cur.Value.ForceFlush() && result;
-            }
-            else
-            {
-                var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
+            var currentTimeoutMilliseconds = timeoutMilliseconds;
 
-                // notify all the processors, even if we run overtime
-                result = cur.Value.ForceFlush((int)Math.Max(timeout, 0)) && result;
+            if (timestamp is { } startedAt)
+            {
+                currentTimeoutMilliseconds = Stopwatch.Remaining(initialTimeoutMilliseconds, startedAt);
             }
+
+            // Notify all the processors, even if we run overtime
+            result = current.Value.ForceFlush(currentTimeoutMilliseconds) && result;
         }
 
         return result;
@@ -130,23 +127,20 @@ public class CompositeProcessor<T> : BaseProcessor<T>
     protected override bool OnShutdown(int timeoutMilliseconds)
     {
         var result = true;
-        var sw = timeoutMilliseconds == Timeout.Infinite
-            ? null
-            : Stopwatch.StartNew();
+        var initialTimeoutMilliseconds = timeoutMilliseconds;
+        long? timestamp = timeoutMilliseconds == Timeout.Infinite ? null : Stopwatch.GetTimestamp();
 
-        for (var cur = this.Head; cur != null; cur = cur.Next)
+        for (var current = this.Head; current != null; current = current.Next)
         {
-            if (sw == null)
-            {
-                result = cur.Value.Shutdown() && result;
-            }
-            else
-            {
-                var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
+            var currentTimeoutMilliseconds = timeoutMilliseconds;
 
-                // notify all the processors, even if we run overtime
-                result = cur.Value.Shutdown((int)Math.Max(timeout, 0)) && result;
+            if (timestamp is { } startedAt)
+            {
+                currentTimeoutMilliseconds = Stopwatch.Remaining(initialTimeoutMilliseconds, startedAt);
             }
+
+            // Notify all the processors, even if we run overtime
+            result = current.Value.Shutdown(currentTimeoutMilliseconds) && result;
         }
 
         return result;
@@ -159,11 +153,11 @@ public class CompositeProcessor<T> : BaseProcessor<T>
         {
             if (disposing)
             {
-                for (var cur = this.Head; cur != null; cur = cur.Next)
+                for (var current = this.Head; current != null; current = current.Next)
                 {
                     try
                     {
-                        cur.Value.Dispose();
+                        current.Value.Dispose();
                     }
                     catch (Exception ex)
                     {
