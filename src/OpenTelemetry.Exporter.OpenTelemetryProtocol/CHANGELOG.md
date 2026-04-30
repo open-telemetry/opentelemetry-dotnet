@@ -15,6 +15,10 @@ Notes](../../RELEASENOTES.md).
   or through the environment variables such as `OTEL_EXPORTER_OTLP_COMPRESSION=gzip`.
   ([#7055](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7055))
 
+* Fixed disk retry data being stored incorrectly when using persistent storage
+  retry.
+  ([#7228](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7228))
+
 ## 1.15.3
 
 Released 2026-Apr-21
