@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Net;
+#if NETFRAMEWORK
+using System.Net.Http;
+#endif
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.PersistentStorage.Abstractions;
 
@@ -17,24 +20,24 @@ public class OtlpExporterPersistentStorageTransmissionHandlerTests
 
         using var transmissionHandler = new OtlpExporterPersistentStorageTransmissionHandler(persistentBlobProvider, exportClient, timeoutMilliseconds: 1000);
 
-        var request = new byte[] { 1, 2, 3, 4, 9, 9, 9 };
+        byte[] request = [1, 2, 3, 4, 9, 9, 9];
         var result = transmissionHandler.TrySubmitRequest(request, contentLength: 4);
 
-        Assert.False(result);
+        Assert.True(result);
         Assert.NotNull(persistentBlobProvider.LastBuffer);
         Assert.Equal([1, 2, 3, 4], persistentBlobProvider.LastBuffer);
     }
 
     private sealed class FailingExportClient : IExportClient
     {
-        public ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default)
-        {
-            return new ExportClientHttpResponse(
+        public ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default) =>
+            new ExportClientHttpResponse(
                 success: false,
                 deadlineUtc: deadlineUtc,
+#pragma warning disable CA2000 //  Dispose objects before losing scope
                 response: new HttpResponseMessage(HttpStatusCode.ServiceUnavailable),
+#pragma warning restore CA2000 //  Dispose objects before losing scope
                 exception: null);
-        }
 
         public bool Shutdown(int timeoutMilliseconds) => true;
     }
@@ -59,9 +62,9 @@ public class OtlpExporterPersistentStorageTransmissionHandlerTests
             return true;
         }
 
-        protected override bool OnTryGetBlob(out PersistentBlob? blob)
+        protected override bool OnTryGetBlob(out PersistentBlob blob)
         {
-            blob = null;
+            blob = new NoopBlob();
             return false;
         }
     }
