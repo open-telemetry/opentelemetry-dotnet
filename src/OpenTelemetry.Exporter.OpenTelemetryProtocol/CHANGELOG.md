@@ -7,13 +7,11 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-## 1.16.0
-
-Released 2026-Jun-10
-
-## 1.16.0-rc.1
-
-Released 2026-Jun-10
+* Fixed `OtlpExporterOptions.Headers` parsing to correctly handle URL-encoded
+  commas (`%2C`) in header values. Previously the entire header string was
+  URL-decoded before splitting, causing `%2C` to be treated as a pair separator
+  instead of a value character.
+  ([#6510](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6510))
 
 * Fixed `NullReferenceException` when exporting logs if the scope key is null.
   ([#7186](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7186))
