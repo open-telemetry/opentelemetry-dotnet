@@ -375,11 +375,6 @@ public struct MetricPoint
                 }
 
             case AggregationType.LongSumIncomingCumulative:
-                {
-                    Interlocked.Add(ref this.runningValue.AsLong, number);
-                    break;
-                }
-
             case AggregationType.LongGauge:
                 {
                     Interlocked.Exchange(ref this.runningValue.AsLong, number);
@@ -444,11 +439,6 @@ public struct MetricPoint
                 }
 
             case AggregationType.LongSumIncomingCumulative:
-                {
-                    Interlocked.Add(ref this.runningValue.AsLong, number);
-                    break;
-                }
-
             case AggregationType.LongGauge:
                 {
                     Interlocked.Exchange(ref this.runningValue.AsLong, number);
@@ -515,11 +505,6 @@ public struct MetricPoint
                 }
 
             case AggregationType.DoubleSumIncomingCumulative:
-                {
-                    InterlockedHelper.Add(ref this.runningValue.AsDouble, number);
-                    break;
-                }
-
             case AggregationType.DoubleGauge:
                 {
                     Interlocked.Exchange(ref this.runningValue.AsDouble, number);
@@ -584,11 +569,6 @@ public struct MetricPoint
                 }
 
             case AggregationType.DoubleSumIncomingCumulative:
-                {
-                    InterlockedHelper.Add(ref this.runningValue.AsDouble, number);
-                    break;
-                }
-
             case AggregationType.DoubleGauge:
                 {
                     Interlocked.Exchange(ref this.runningValue.AsDouble, number);
@@ -649,6 +629,7 @@ public struct MetricPoint
         switch (this.aggType)
         {
             case AggregationType.LongSumIncomingDelta:
+            case AggregationType.LongSumIncomingCumulative:
                 {
                     if (outputDelta)
                     {
@@ -679,35 +660,8 @@ public struct MetricPoint
                     break;
                 }
 
-            case AggregationType.LongSumIncomingCumulative:
-                {
-                    var cycleValue = Interlocked.Exchange(ref this.runningValue.AsLong, 0);
-
-                    if (outputDelta)
-                    {
-                        this.snapshotValue.AsLong = cycleValue - this.deltaLastValue.AsLong;
-                        this.deltaLastValue.AsLong = cycleValue;
-                        this.MetricPointStatus = MetricPointStatus.NoCollectPending;
-
-                        if (Interlocked.Read(ref this.runningValue.AsLong) != 0)
-                        {
-                            this.MetricPointStatus = MetricPointStatus.CollectPending;
-                        }
-                    }
-                    else
-                    {
-                        this.snapshotValue.AsLong = cycleValue;
-
-                        if (this.aggregatorStore.IsAsynchronous)
-                        {
-                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
-                        }
-                    }
-
-                    break;
-                }
-
             case AggregationType.DoubleSumIncomingDelta:
+            case AggregationType.DoubleSumIncomingCumulative:
                 {
                     if (outputDelta)
                     {
@@ -729,35 +683,6 @@ public struct MetricPoint
 
                         // For asynchronous instruments, reset status so that points
                         // not reported in the next callback are treated as stale.
-                        if (this.aggregatorStore.IsAsynchronous)
-                        {
-                            this.MetricPointStatus = MetricPointStatus.NoCollectPending;
-                            this.runningValue.AsDouble = 0;
-                        }
-                    }
-
-                    break;
-                }
-
-            case AggregationType.DoubleSumIncomingCumulative:
-                {
-                    var cycleValue = Interlocked.Exchange(ref this.runningValue.AsDouble, 0);
-
-                    if (outputDelta)
-                    {
-                        this.snapshotValue.AsDouble = cycleValue - this.deltaLastValue.AsDouble;
-                        this.deltaLastValue.AsDouble = cycleValue;
-                        this.MetricPointStatus = MetricPointStatus.NoCollectPending;
-
-                        if (Interlocked.Read(ref this.runningValue.AsLong) != 0)
-                        {
-                            this.MetricPointStatus = MetricPointStatus.CollectPending;
-                        }
-                    }
-                    else
-                    {
-                        this.snapshotValue.AsDouble = cycleValue;
-
                         if (this.aggregatorStore.IsAsynchronous)
                         {
                             this.MetricPointStatus = MetricPointStatus.NoCollectPending;
