@@ -120,41 +120,15 @@ public class BaseExportingMetricReader : MetricReader
 
     /// <inheritdoc />
     internal override bool OnShutdownFromComposite(int timeoutMilliseconds)
-    {
-        var result = true;
-
-        if (timeoutMilliseconds == Timeout.Infinite)
-        {
-            result = this.CollectFromComposite(Timeout.Infinite) && result;
-            result = this.exporter.Shutdown(Timeout.Infinite) && result;
-        }
-        else
-        {
-            var sw = Stopwatch.StartNew();
-            result = this.CollectFromComposite(timeoutMilliseconds) && result;
-            var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
-            result = this.exporter.Shutdown((int)Math.Max(timeout, 0)) && result;
-        }
-
-        return result;
-    }
+        => base.OnShutdownFromComposite(timeoutMilliseconds);
 
     /// <inheritdoc />
-    protected override bool OnCollect(int timeoutMilliseconds)
-    {
-        if (this.SupportedExportModes.HasFlag(ExportModes.Push))
-        {
-            return base.OnCollect(timeoutMilliseconds);
-        }
-
-        if (this.SupportedExportModes.HasFlag(ExportModes.Pull) && PullMetricScope.IsPullAllowed)
-        {
-            return base.OnCollect(timeoutMilliseconds);
-        }
-
-        // TODO: add some error log
-        return false;
-    }
+    protected override bool OnCollect(int timeoutMilliseconds) =>
+        this.SupportedExportModes.HasFlag(ExportModes.Push)
+            ? base.OnCollect(timeoutMilliseconds)
+            : this.SupportedExportModes.HasFlag(ExportModes.Pull) &&
+              PullMetricScope.IsPullAllowed &&
+              base.OnCollect(timeoutMilliseconds);
 
     /// <inheritdoc />
     protected override bool OnShutdown(int timeoutMilliseconds)

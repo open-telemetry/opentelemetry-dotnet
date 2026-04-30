@@ -14,11 +14,11 @@ public abstract partial class MetricReader : IDisposable
 {
     private const MetricReaderTemporalityPreference MetricReaderTemporalityPreferenceUnspecified = 0;
 
-    private static readonly Func<Type, AggregationTemporality> CumulativeTemporalityPreferenceFunc = static (_) => AggregationTemporality.Cumulative;
+    private static readonly Func<Type, AggregationTemporality> CumulativeTemporalityPreferenceFunc =
+        static (_) => AggregationTemporality.Cumulative;
 
-    private static readonly Func<Type, AggregationTemporality> MonotonicDeltaTemporalityPreferenceFunc = (instrumentType) =>
-    {
-        return instrumentType.GetGenericTypeDefinition() switch
+    private static readonly Func<Type, AggregationTemporality> MonotonicDeltaTemporalityPreferenceFunc =
+        static (instrumentType) => instrumentType.GetGenericTypeDefinition() switch
         {
             var type when type == typeof(Counter<>) => AggregationTemporality.Delta,
             var type when type == typeof(ObservableCounter<>) => AggregationTemporality.Delta,
@@ -34,11 +34,9 @@ public abstract partial class MetricReader : IDisposable
             // TODO: Consider logging here because we should not fall through to this case.
             _ => AggregationTemporality.Delta,
         };
-    };
 
-    private static readonly Func<Type, AggregationTemporality> LowMemoryTemporalityPreferenceFunc = (instrumentType) =>
-    {
-        return instrumentType.GetGenericTypeDefinition() switch
+    private static readonly Func<Type, AggregationTemporality> LowMemoryTemporalityPreferenceFunc =
+        static (instrumentType) => instrumentType.GetGenericTypeDefinition() switch
         {
             var type when type == typeof(Counter<>) => AggregationTemporality.Delta,
             var type when type == typeof(Histogram<>) => AggregationTemporality.Delta,
@@ -49,12 +47,12 @@ public abstract partial class MetricReader : IDisposable
 
             _ => AggregationTemporality.Cumulative,
         };
-    };
 
     private readonly Lock newTaskLock = new();
     private readonly Lock onCollectLock = new();
     private readonly TaskCompletionSource<bool> shutdownTcs = new();
     private Func<Type, AggregationTemporality> temporalityFunc = CumulativeTemporalityPreferenceFunc;
+    private int suppressObservableInstrumentsCollection;
     private int shutdownCount;
     private TaskCompletionSource<bool>? collectionTcs;
     private BaseProvider? parentProvider;
@@ -157,7 +155,14 @@ public abstract partial class MetricReader : IDisposable
         => this.Shutdown(timeoutMilliseconds, fromComposite: true);
 
     internal void CollectObservableInstruments()
-        => (this.parentProvider as MeterProviderSdk)?.CollectObservableInstruments();
+    {
+        if (this.suppressObservableInstrumentsCollection > 0)
+        {
+            return;
+        }
+
+        (this.parentProvider as MeterProviderSdk)?.CollectObservableInstruments();
+    }
 
     internal virtual void SetParentProvider(BaseProvider parentProvider)
     {
@@ -200,12 +205,16 @@ public abstract partial class MetricReader : IDisposable
     internal virtual bool OnCollectFromComposite(int timeoutMilliseconds)
     {
         OpenTelemetrySdkEventSource.Log.MetricReaderEvent("MetricReader.OnCollectFromComposite called.");
+        this.suppressObservableInstrumentsCollection++;
 
-        var sw = timeoutMilliseconds == Timeout.Infinite
-            ? null
-            : Stopwatch.StartNew();
-
-        return this.ProcessMetricsCollection(sw, timeoutMilliseconds);
+        try
+        {
+            return this.OnCollect(timeoutMilliseconds);
+        }
+        finally
+        {
+            this.suppressObservableInstrumentsCollection--;
+        }
     }
 
     /// <summary>
@@ -220,7 +229,18 @@ public abstract partial class MetricReader : IDisposable
     /// Returns <c>true</c> when shutdown succeeded; otherwise, <c>false</c>.
     /// </returns>
     internal virtual bool OnShutdownFromComposite(int timeoutMilliseconds)
-        => this.OnShutdown(timeoutMilliseconds);
+    {
+        this.suppressObservableInstrumentsCollection++;
+
+        try
+        {
+            return this.OnShutdown(timeoutMilliseconds);
+        }
+        finally
+        {
+            this.suppressObservableInstrumentsCollection--;
+        }
+    }
 
     /// <summary>
     /// Called by <c>Collect</c>. This function should block the current
@@ -243,15 +263,13 @@ public abstract partial class MetricReader : IDisposable
     {
         OpenTelemetrySdkEventSource.Log.MetricReaderEvent("MetricReader.OnCollect called.");
 
-        var sw = timeoutMilliseconds == Timeout.Infinite
-            ? null
-            : Stopwatch.StartNew();
+        long? timestamp = timeoutMilliseconds == Timeout.Infinite ? null : Stopwatch.GetTimestamp();
 
         this.CollectObservableInstruments();
 
         OpenTelemetrySdkEventSource.Log.MetricReaderEvent("Observable instruments collected.");
 
-        return this.ProcessMetricsCollection(sw, timeoutMilliseconds);
+        return this.ProcessMetricsCollection(timestamp, timeoutMilliseconds);
     }
 
     /// <summary>
@@ -389,50 +407,35 @@ public abstract partial class MetricReader : IDisposable
         return result;
     }
 
-    private bool ProcessMetricsCollection(Stopwatch? sw, int timeoutMilliseconds)
+    private bool ProcessMetricsCollection(long? startedAtTimestamp, int timeoutMilliseconds)
     {
         OpenTelemetrySdkEventSource.Log.MetricReaderEvent("ProcessMetricsCollection called.");
 
         var metrics = this.GetMetricsBatch();
 
-        bool result;
-        if (sw == null)
+        if (startedAtTimestamp is { } startedAt)
         {
-            OpenTelemetrySdkEventSource.Log.MetricReaderEvent("ProcessMetrics called.");
-            result = this.ProcessMetrics(metrics, Timeout.Infinite);
-            if (result)
-            {
-                OpenTelemetrySdkEventSource.Log.MetricReaderEvent("ProcessMetrics succeeded.");
-            }
-            else
-            {
-                OpenTelemetrySdkEventSource.Log.MetricReaderEvent("ProcessMetrics failed.");
-            }
+            timeoutMilliseconds = Stopwatch.Remaining(timeoutMilliseconds, startedAt);
 
-            return result;
-        }
-        else
-        {
-            var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
-
-            if (timeout <= 0)
+            if (timeoutMilliseconds <= 0)
             {
                 OpenTelemetrySdkEventSource.Log.MetricReaderEvent("OnCollect failed timeout period has elapsed.");
                 return false;
             }
-
-            OpenTelemetrySdkEventSource.Log.MetricReaderEvent("ProcessMetrics called.");
-            result = this.ProcessMetrics(metrics, (int)timeout);
-            if (result)
-            {
-                OpenTelemetrySdkEventSource.Log.MetricReaderEvent("ProcessMetrics succeeded.");
-            }
-            else
-            {
-                OpenTelemetrySdkEventSource.Log.MetricReaderEvent("ProcessMetrics failed.");
-            }
-
-            return result;
         }
+
+        OpenTelemetrySdkEventSource.Log.MetricReaderEvent("ProcessMetrics called.");
+
+        var result = this.ProcessMetrics(metrics, timeoutMilliseconds);
+        if (result)
+        {
+            OpenTelemetrySdkEventSource.Log.MetricReaderEvent("ProcessMetrics succeeded.");
+        }
+        else
+        {
+            OpenTelemetrySdkEventSource.Log.MetricReaderEvent("ProcessMetrics failed.");
+        }
+
+        return result;
     }
 }
