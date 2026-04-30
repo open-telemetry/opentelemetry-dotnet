@@ -147,6 +147,7 @@
   <Folder Name="/Shared/">
     <File Path="src/Shared/ActivityHelperExtensions.cs" />
     <File Path="src/Shared/AssemblyVersionExtensions.cs" />
+    <File Path="src/Shared/CharExtensions.cs" />
     <File Path="src/Shared/DiagnosticDefinitions.cs" />
     <File Path="src/Shared/ExceptionExtensions.cs" />
     <File Path="src/Shared/Guard.cs" />
@@ -156,6 +157,7 @@
     <File Path="src/Shared/SemanticConventions.cs" />
     <File Path="src/Shared/SpanAttributeConstants.cs" />
     <File Path="src/Shared/StatusHelper.cs" />
+    <File Path="src/Shared/StopwatchExtensions.cs" />
     <File Path="src/Shared/ThreadSafeRandom.cs" />
   </Folder>
   <Folder Name="/Shared/Configuration/">

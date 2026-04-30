@@ -208,18 +208,11 @@ public class MultipleReadersTests
 
         // Check value exported for Gauge
         AssertLongSumValueForMetric(exportedItems1[1], 100);
-        AssertLongSumValueForMetric(exportedItems2[1], 200);
+        AssertLongSumValueForMetric(exportedItems2[1], 100);
 
         // Check value exported for ObservableCounter
         AssertLongSumValueForMetric(exportedItems1[2], 1000);
-        if (aggregationTemporality == MetricReaderTemporalityPreference.Delta)
-        {
-            AssertLongSumValueForMetric(exportedItems2[2], 1200);
-        }
-        else
-        {
-            AssertLongSumValueForMetric(exportedItems2[2], 1200);
-        }
+        AssertLongSumValueForMetric(exportedItems2[2], 1000);
 
         exportedItems1.Clear();
         exportedItems2.Clear();
@@ -243,25 +236,25 @@ public class MultipleReadersTests
         }
 
         // Check value exported for Gauge
-        AssertLongSumValueForMetric(exportedItems1[1], 300);
-        AssertLongSumValueForMetric(exportedItems2[1], 400);
+        AssertLongSumValueForMetric(exportedItems1[1], 200);
+        AssertLongSumValueForMetric(exportedItems2[1], 200);
 
         // Check value exported for ObservableCounter
-        AssertLongSumValueForMetric(exportedItems1[2], 300);
+        AssertLongSumValueForMetric(exportedItems1[2], 200);
         if (aggregationTemporality == MetricReaderTemporalityPreference.Delta)
         {
             AssertLongSumValueForMetric(exportedItems2[2], 200);
         }
         else
         {
-            AssertLongSumValueForMetric(exportedItems2[2], 1400);
+            AssertLongSumValueForMetric(exportedItems2[2], 1200);
         }
     }
 
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public void ObservableInstrumentCallbacksInvokedForEachReaders(bool hasViews)
+    public void ObservableInstrumentCallbacksInvokedOncePerCollection(bool hasViews)
     {
         var exportedItems1 = new List<Metric>();
         var exportedItems2 = new List<Metric>();
@@ -287,9 +280,11 @@ public class MultipleReadersTests
         meterProvider.ForceFlush();
 
         // VALIDATE
-        Assert.Equal(2, callbackInvocationCount);
+        Assert.Equal(1, callbackInvocationCount);
         Assert.Single(exportedItems1);
         Assert.Single(exportedItems2);
+        AssertLongSumValueForMetric(exportedItems1[0], 10);
+        AssertLongSumValueForMetric(exportedItems2[0], 10);
 
         if (hasViews)
         {
@@ -301,6 +296,40 @@ public class MultipleReadersTests
             Assert.Equal("gauge", exportedItems1[0].Name);
             Assert.Equal("gauge", exportedItems2[0].Name);
         }
+
+        Assert.True(meterProvider.Shutdown());
+        Assert.Equal(2, callbackInvocationCount);
+        Assert.Equal(2, exportedItems1.Count);
+        Assert.Equal(2, exportedItems2.Count);
+        AssertLongSumValueForMetric(exportedItems1[1], 20);
+        AssertLongSumValueForMetric(exportedItems2[1], 20);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void CompositeMetricReader_PreservesOriginalTimeoutBudget(bool shutdown)
+    {
+        const int delayMilliseconds = 200;
+        const int timeoutMilliseconds = 1500;
+
+        using var first = new TimeoutCapturingMetricReader(delayMilliseconds);
+        using var second = new TimeoutCapturingMetricReader(delayMilliseconds);
+        using var third = new TimeoutCapturingMetricReader();
+
+        using var composite = new CompositeMetricReader([first, second, third]);
+
+        if (shutdown)
+        {
+            composite.Shutdown(timeoutMilliseconds);
+        }
+        else
+        {
+            composite.Collect(timeoutMilliseconds);
+        }
+
+        Assert.Equal(timeoutMilliseconds, shutdown ? first.LastShutdownTimeoutMilliseconds : first.LastCollectTimeoutMilliseconds);
+        Assert.InRange(shutdown ? third.LastShutdownTimeoutMilliseconds : third.LastCollectTimeoutMilliseconds, 1000, timeoutMilliseconds);
     }
 
     private static void AssertLongSumValueForMetric(Metric metric, long value)
@@ -317,5 +346,33 @@ public class MultipleReadersTests
         {
             Assert.Equal(value, metricPointForFirstExport.GetGaugeLastValueLong());
         }
+    }
+
+#pragma warning disable CA2000 // BaseExportingMetricReader owns the exporter lifecycle
+    private sealed class TimeoutCapturingMetricReader(int delayMilliseconds = 0) : BaseExportingMetricReader(new TimeoutCapturingMetricExporter())
+#pragma warning restore CA2000
+    {
+        public int LastCollectTimeoutMilliseconds { get; private set; } = Timeout.Infinite;
+
+        public int LastShutdownTimeoutMilliseconds { get; private set; } = Timeout.Infinite;
+
+        protected override bool OnCollect(int timeoutMilliseconds)
+        {
+            this.LastCollectTimeoutMilliseconds = timeoutMilliseconds;
+            Thread.Sleep(delayMilliseconds);
+            return true;
+        }
+
+        protected override bool OnShutdown(int timeoutMilliseconds)
+        {
+            this.LastShutdownTimeoutMilliseconds = timeoutMilliseconds;
+            Thread.Sleep(delayMilliseconds);
+            return true;
+        }
+    }
+
+    private sealed class TimeoutCapturingMetricExporter : BaseExporter<Metric>
+    {
+        public override ExportResult Export(in Batch<Metric> batch) => ExportResult.Success;
     }
 }
