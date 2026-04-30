@@ -355,22 +355,13 @@ public class PrometheusHttpListenerTests
         }
     }
 
-    private static int GetRandomPort(Random? random = null)
+    private static int GetRandomPort()
     {
-#if NET
-        random ??= Random.Shared;
-#else
-        random ??= new Random();
-#endif
-
         int port;
 
         // Try to only use each port number exactly once
-#pragma warning disable CA5394 // Do not use insecure randomness
-        while (!ConsumedPorts.TryAdd(port = random.Next(2000, 5000), port))
-#pragma warning restore CA5394 // Do not use insecure randomness
+        while (!ConsumedPorts.TryAdd(port = TcpPortProvider.GetOpenPort(), port))
         {
-            Thread.Sleep(1);
         }
 
         return port;
