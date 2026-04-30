@@ -1264,6 +1264,31 @@ public class OtlpLogExporterTests
         Assert.Contains(scopeValue2, allScopeValues);
     }
 
+    [Fact]
+    public void ToOtlpLog_WhenScopeKeyIsNull_IgnoresScopeItem()
+    {
+        var logRecords = new List<LogRecord>(1);
+        using var loggerFactory = LoggerFactory.Create(builder =>
+        {
+            builder.UseOpenTelemetry(
+                logging => logging.AddInMemoryExporter(logRecords),
+                options => options.IncludeScopes = true);
+        });
+        var logger = loggerFactory.CreateLogger(nameof(OtlpLogExporterTests));
+
+        using (logger.BeginScope(new List<KeyValuePair<string, object?>> { new(null!, "Some scope value") }))
+        {
+            logger.SomeLogInformation();
+        }
+
+        var logRecord = logRecords.Single();
+
+        var otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecord);
+
+        Assert.NotNull(otlpLogRecord);
+        Assert.Empty(otlpLogRecord.Attributes);
+    }
+
     [Theory]
     [InlineData("Same scope key", "Same scope key")]
     [InlineData("Scope key 1", "Scope key 2")]

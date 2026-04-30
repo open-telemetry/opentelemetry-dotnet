@@ -1,8 +1,8 @@
 header:
-  last-reviewed: '2026-04-23'
-  last-updated: '2026-04-23'
+  last-reviewed: '2026-04-24'
+  last-updated: '2026-04-24'
   schema-version: 2.0.0
-  url: https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/SECURITY-INSIGHTS.yml
+  url: https://raw.githubusercontent.com/open-telemetry/opentelemetry-dotnet/main/.github/security-insights.yml
   comment: |
     This file contains the minimum information for https://github.com/open-telemetry/opentelemetry-dotnet.
 
@@ -17,12 +17,15 @@ project:
     - name: Martin Costello
       affiliation: Grafana Labs
       social: https://github.com/martincostello
+      primary: false
     - name: "Piotr Kie\u0142kowicz"
       affiliation: Splunk
       social: https://github.com/Kielek
+      primary: false
     - name: Rajkumar Rangaraj
       affiliation: Microsoft
       social: https://github.com/rajkumar-rangaraj
+      primary: false
   documentation:
     code-of-conduct: https://github.com/open-telemetry/.github/blob/main/CODE_OF_CONDUCT.md
     detailed-guide: https://opentelemetry.io/docs/languages/dotnet/
@@ -33,7 +36,9 @@ project:
     - name: opentelemetry-dotnet
       url: https://github.com/open-telemetry/opentelemetry-dotnet
       comment: |
-        The OpenTelemetry .NET Client repository.
+        Active primary OpenTelemetry .NET repository. It contains the API,
+        SDK, core exporters, and extensions released as NuGet packages from
+        this repository.
   vulnerability-reporting:
     bug-bounty-available: false
     reports-accepted: true
@@ -60,18 +65,23 @@ repository:
     - name: Cijo Thomas
       affiliation: Microsoft
       social: https://github.com/cijothomas
+      primary: false
     - name: Martin Costello
       affiliation: Grafana Labs
       social: https://github.com/martincostello
+      primary: false
     - name: Mikel Blanchard
       affiliation: Microsoft
       social: https://github.com/CodeBlanch
+      primary: false
     - name: "Piotr Kie\u0142kowicz"
       affiliation: Splunk
       social: https://github.com/Kielek
+      primary: false
     - name: Rajkumar Rangaraj
       affiliation: Microsoft
       social: https://github.com/rajkumar-rangaraj
+      primary: false
   documentation:
     contributing-guide: https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md
     dependency-management-policy: https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/.github/renovate.json
@@ -107,11 +117,12 @@ repository:
         comment: OpenTelemetry.Extensions.Propagators NuGet package distributed from NuGet.org.
       - uri: https://www.nuget.org/packages/OpenTelemetry.Shims.OpenTracing
         comment: OpenTelemetry.Shims.OpenTracing NuGet package distributed from NuGet.org.
-    attestations:
+    attestations: []
 
   security:
     assessments:
       self:
+        comment: No formal self-assessment yet.
         evidence: https://github.com/open-telemetry/opentelemetry-dotnet/pull/7143
         date: '2026-04-23'
     tools:
@@ -122,8 +133,9 @@ repository:
           adhoc: true
           ci: true
           release: true
-        rulesets: https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/.github/workflows/codeql-analysis.yml
-        type: sast
+        rulesets:
+          - https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/.github/workflows/codeql-analysis.yml
+        type: SAST
       - name: FsCheck
         comment: |
           FsCheck is used for fuzz testing as part of CI.
@@ -131,7 +143,8 @@ repository:
           adhoc: true
           ci: true
           release: true
-        rulesets: default
+        rulesets:
+          - default
         type: fuzzing
       - name: Renovate
         comment: |
@@ -140,5 +153,6 @@ repository:
           adhoc: true
           ci: true
           release: true
-        rulesets: https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/.github/renovate.json
-        type: sca
+        rulesets:
+          - https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/.github/renovate.json
+        type: SCA

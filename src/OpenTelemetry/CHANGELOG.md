@@ -6,6 +6,14 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fix incorrect validation of `OTEL_BSP_*` and `OTEL_BLRP_*` environment
+  variables.
+  ([#7187](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7187))
+
+* Fix observable instrument callbacks running once per reader instead of
+  once per collection cycle.
+  ([#7188](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7188))
+
 * Replaced the vendored copy of
   `EnvironmentVariablesConfigurationProvider` with a direct
   `Microsoft.Extensions.Configuration.EnvironmentVariables` package dependency.

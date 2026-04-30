@@ -67,9 +67,8 @@ public static class PrometheusHttpListenerMeterProviderBuilderExtensions
     {
         var exporter = new PrometheusExporter(new PrometheusExporterOptions
         {
-            ScrapeResponseCacheDurationMilliseconds = 0,
+            ScrapeResponseCacheDurationMilliseconds = options.ScrapeResponseCacheDurationMilliseconds,
             DisableTotalNameSuffixForCounters = options.DisableTotalNameSuffixForCounters,
-            DisableTimestamp = options.DisableTimestamp,
         });
 
         var reader = new BaseExportingMetricReader(exporter)

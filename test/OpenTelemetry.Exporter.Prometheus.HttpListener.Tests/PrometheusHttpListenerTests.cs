@@ -18,6 +18,8 @@ public class PrometheusHttpListenerTests
 {
     private const string MeterVersion = "1.0.1";
 
+    private const string UriPrefixesObsoleteMessage = "Tests the obsolete UriPrefixes property.";
+
     private static readonly string MeterName = Utils.GetCurrentMethodName();
 
     [Theory]
@@ -29,45 +31,39 @@ public class PrometheusHttpListenerTests
     [InlineData("http://127.0.0.1")]
     [InlineData("http://example.com", "https://example.com", "http://127.0.0.1")]
     [InlineData("http://example.com")]
+    [Obsolete(UriPrefixesObsoleteMessage)]
     public void UriPrefixesPositiveTest(params string[] uriPrefixes)
-        => TestPrometheusHttpListenerUriPrefixOptions(uriPrefixes);
+    {
+        var options = TestPrometheusHttpListenerUriPrefixOptions(uriPrefixes);
+        Assert.Equivalent(uriPrefixes, options.UriPrefixes);
+    }
 
     [Fact]
+    [Obsolete(UriPrefixesObsoleteMessage)]
     public void UriPrefixesNull() =>
-        Assert.Throws<ArgumentNullException>(() =>
-        {
-            TestPrometheusHttpListenerUriPrefixOptions(null!);
-        });
+        Assert.Throws<ArgumentNullException>(() => TestPrometheusHttpListenerUriPrefixOptions(null!));
 
     [Fact]
+    [Obsolete(UriPrefixesObsoleteMessage)]
     public void UriPrefixesEmptyList() =>
-        Assert.Throws<ArgumentException>(() =>
-        {
-            TestPrometheusHttpListenerUriPrefixOptions([]);
-        });
+        Assert.Throws<ArgumentException>(() => TestPrometheusHttpListenerUriPrefixOptions([]));
 
     [Fact]
+    [Obsolete(UriPrefixesObsoleteMessage)]
     public void UriPrefixesInvalid() =>
-        Assert.Throws<ArgumentException>(() =>
-        {
-            TestPrometheusHttpListenerUriPrefixOptions(["ftp://example.com"]);
-        });
+        Assert.Throws<ArgumentException>(() => TestPrometheusHttpListenerUriPrefixOptions(["ftp://example.com"]));
 
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public async Task PrometheusExporterHttpServerIntegration(bool disableTimestamp)
-        => await RunPrometheusExporterHttpServerIntegrationTest(disableTimestamp: disableTimestamp);
+    [Fact]
+    public async Task PrometheusExporterHttpServerIntegration()
+        => await RunPrometheusExporterHttpServerIntegrationTest();
 
     [Fact]
     public async Task PrometheusExporterHttpServerIntegration_NoMetrics()
         => await RunPrometheusExporterHttpServerIntegrationTest(skipMetrics: true);
 
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public async Task PrometheusExporterHttpServerIntegration_NoOpenMetrics(bool disableTimestamp)
-        => await RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: string.Empty, disableTimestamp: disableTimestamp);
+    [Fact]
+    public async Task PrometheusExporterHttpServerIntegration_NoOpenMetrics()
+        => await RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: string.Empty);
 
     [Fact]
     public async Task PrometheusExporterHttpServerIntegration_UseOpenMetricsVersionHeader()
@@ -82,7 +78,9 @@ public class PrometheusHttpListenerTests
             new("meter2", "value2"),
         };
 
-        await RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: string.Empty, meterTags: tags);
+        await RunPrometheusExporterHttpServerIntegrationTest(
+            acceptHeader: string.Empty,
+            meterTags: tags);
     }
 
     [Fact]
@@ -94,68 +92,28 @@ public class PrometheusHttpListenerTests
             new("meter2", "value2"),
         };
 
-        await RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: "application/openmetrics-text; version=1.0.0", meterTags: tags);
+        await RunPrometheusExporterHttpServerIntegrationTest(
+            acceptHeader: "application/openmetrics-text; version=1.0.0",
+            meterTags: tags);
     }
 
     [Fact]
     public void PrometheusHttpListenerThrowsOnStart()
     {
-        var random = new Random();
-        var retryAttempts = 5;
-        string? address = null;
-
-        PrometheusExporter? exporter = null;
-        PrometheusHttpListener? listener = null;
-
         // Step 1: Start a listener on a random port.
-        while (retryAttempts-- != 0)
-        {
-#pragma warning disable CA5394 // Do not use insecure randomness
-            var port = random.Next(2000, 5000);
-#pragma warning restore CA5394 // Do not use insecure randomness
-            address = $"http://localhost:{port}/";
+        using var context = CreateListener();
 
-            try
+        // Step 2: Try to start a second listener on the same port
+        using var exporter = new PrometheusExporter(new());
+        using var listener = new PrometheusHttpListener(
+            exporter,
+            new()
             {
-                exporter = new PrometheusExporter(new());
-                listener = new PrometheusHttpListener(
-                    exporter,
-                    new()
-                    {
-                        UriPrefixes = [address],
-                    });
+                Host = "localhost",
+                Port = context.Port,
+            });
 
-                listener.Start();
-
-                break;
-            }
-            catch
-            {
-                // ignored
-            }
-        }
-
-        if (retryAttempts == 0)
-        {
-            throw new InvalidOperationException("PrometheusHttpListener could not be started");
-        }
-
-        // Step 2: Make sure if we start a second listener on the same port an exception is thrown.
-        Assert.Throws<HttpListenerException>(() =>
-        {
-            using var exporter = new PrometheusExporter(new());
-            using var listener = new PrometheusHttpListener(
-                exporter,
-                new()
-                {
-                    UriPrefixes = [address!],
-                });
-
-            listener.Start();
-        });
-
-        exporter?.Dispose();
-        listener?.Dispose();
+        Assert.Throws<HttpListenerException>(() => listener.Start());
     }
 
     [Theory]
@@ -167,93 +125,163 @@ public class PrometheusHttpListenerTests
 
         var attributes = new List<KeyValuePair<string, object>>();
         var oneKb = new string('A', 1024);
-        for (var x = 0; x < 8500; x++)
+
+        for (var x = 0; x < 8_500; x++)
         {
             attributes.Add(new KeyValuePair<string, object>(x.ToString(CultureInfo.InvariantCulture), oneKb));
         }
 
-        var provider = BuildMeterProvider(meter, attributes, out var address);
+        using var context = CreateMeterProvider(meter, attributes: attributes);
 
-        for (var x = 0; x < 1000; x++)
+        for (var x = 0; x < 1_000; x++)
         {
             var counter = meter.CreateCounter<double>("counter_double_" + x, unit: "By");
             counter.Add(1);
         }
 
-        using var client = new HttpClient();
+        using var client = new HttpClient()
+        {
+            BaseAddress = context.BaseAddress,
+        };
 
         if (!string.IsNullOrEmpty(acceptHeader))
         {
             client.DefaultRequestHeaders.Add("Accept", acceptHeader);
         }
 
-        using var response = await client.GetAsync(new Uri($"{address}metrics"));
+        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
         var content = await response.Content.ReadAsStringAsync();
+
         Assert.Contains("counter_double_999", content, StringComparison.Ordinal);
         Assert.DoesNotContain('\0', content);
-
-        provider.Dispose();
     }
 
-    private static void TestPrometheusHttpListenerUriPrefixOptions(string[] uriPrefixes)
+    [Fact]
+    public async Task HostAndPort_Used_When_UriPrefixesNotSet()
     {
-        using var exporter = new PrometheusExporter(new());
-        using var listener = new PrometheusHttpListener(
-            exporter,
-            new()
-            {
-                UriPrefixes = uriPrefixes,
-            });
-    }
+        using var meter = new Meter(MeterName, MeterVersion);
 
-    private static MeterProvider BuildMeterProvider(Meter meter, IEnumerable<KeyValuePair<string, object>> attributes, out string address, bool disableTimestamp = false)
-    {
-        var random = new Random();
-        var retryAttempts = 5;
-        string? generatedAddress = null;
-        MeterProvider? provider = null;
+        var host = "localhost";
+        var port = GetRandomPort();
 
-        while (retryAttempts-- != 0)
+        using var context = CreateMeterProvider(meter, configure: (options) =>
         {
-#pragma warning disable CA5394 // Do not use insecure randomness
-            var port = random.Next(2000, 5000);
-#pragma warning restore CA5394 // Do not use insecure randomness
-            generatedAddress = $"http://localhost:{port}/";
+            options.Host = host;
+            options.Port = port;
 
-            try
-            {
-                provider = Sdk.CreateMeterProviderBuilder()
-                    .AddMeter(meter.Name)
-                    .ConfigureResource(x => x.Clear().AddService("my_service", serviceInstanceId: "id1").AddAttributes(attributes))
-                    .AddPrometheusHttpListener(options =>
-                    {
-                        options.UriPrefixes = [generatedAddress];
-                        options.DisableTimestamp = disableTimestamp;
-                    })
-                    .Build();
+            return port;
+        });
 
-                break;
-            }
-            catch
-            {
-                // ignored
-            }
-        }
+        Assert.Equal(host, context.BaseAddress.Host);
+        Assert.Equal(port, context.Port);
 
-        address = generatedAddress!;
+        using var client = new HttpClient() { BaseAddress = context.BaseAddress };
+        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative));
 
-        return provider ?? throw new InvalidOperationException("HttpListener could not be started");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
-    private static async Task RunPrometheusExporterHttpServerIntegrationTest(bool skipMetrics = false, string acceptHeader = "application/openmetrics-text", KeyValuePair<string, object?>[]? meterTags = null, bool disableTimestamp = false)
+    [Fact]
+    public async Task PortOnly_Set_HostDefaultsToLocalhost()
+    {
+        using var meter = new Meter(MeterName, MeterVersion);
+
+        var port = GetRandomPort();
+
+        using var context = CreateMeterProvider(meter, configure: (options) =>
+        {
+            options.Port = port;
+            return port;
+        });
+
+        Assert.Equal("localhost", context.BaseAddress.Host);
+        Assert.Equal(port, context.Port);
+
+        using var client = new HttpClient() { BaseAddress = context.BaseAddress };
+        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task HostOnly_Set_Port_DefaultsTo9464()
+    {
+#if NET
+        if (OperatingSystem.IsLinux())
+        {
+            // Linux does not like binding to 127.0.0.1 for some reason
+            return;
+        }
+#endif
+
+        using var meter = new Meter(MeterName, MeterVersion);
+
+        var host = "127.0.0.1";
+
+        using var context = CreateMeterProvider(meter, configure: (options) =>
+        {
+            options.Host = host;
+            return options.Port;
+        });
+
+        Assert.Equal(9464, context.Port);
+
+        using var client = new HttpClient() { BaseAddress = context.BaseAddress };
+        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    [Obsolete(UriPrefixesObsoleteMessage)]
+    public async Task ExplicitUriPrefixes_TakePrecedence_Over_HostPort()
+    {
+        using var meter = new Meter(MeterName, MeterVersion);
+
+        int port = 0;
+
+        using var context = CreateMeterProvider(meter, configure: (options) =>
+        {
+            options.Host = "prometheus.local";
+            options.Port = 9999;
+
+            port = GetRandomPort();
+
+            options.UriPrefixes = [$"http://localhost:{port}"];
+
+            return port;
+        });
+
+        Assert.Equal(port, context.Port);
+        Assert.Equal($"http://localhost:{port}/", context.BaseAddress.ToString());
+
+        using var client = new HttpClient() { BaseAddress = context.BaseAddress };
+        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public void Host_DefaultValue_Is_Localhost()
+        => Assert.Equal("localhost", new PrometheusHttpListenerOptions().Host);
+
+    [Fact]
+    public void Port_DefaultValue_Is_9464()
+        => Assert.Equal(9464, new PrometheusHttpListenerOptions().Port);
+
+    private static async Task RunPrometheusExporterHttpServerIntegrationTest(
+        bool skipMetrics = false,
+        string acceptHeader = "application/openmetrics-text",
+        KeyValuePair<string, object?>[]? meterTags = null)
     {
         var requestOpenMetrics = acceptHeader.StartsWith("application/openmetrics-text", StringComparison.Ordinal);
 
         using var meter = new Meter(MeterName, MeterVersion, meterTags);
 
-        var provider = BuildMeterProvider(meter, [], out var address, disableTimestamp);
+        using var context = CreateMeterProvider(meter);
 
         var counterTags = new KeyValuePair<string, object?>[]
         {
@@ -268,14 +296,17 @@ public class PrometheusHttpListenerTests
             counter.Add(0.99D, counterTags);
         }
 
-        using var client = new HttpClient();
+        using var client = new HttpClient()
+        {
+            BaseAddress = context.BaseAddress,
+        };
 
         if (!string.IsNullOrEmpty(acceptHeader))
         {
             client.DefaultRequestHeaders.Add("Accept", acceptHeader);
         }
 
-        using var response = await client.GetAsync(new Uri($"{address}metrics"));
+        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative));
 
         if (!skipMetrics)
         {
@@ -297,8 +328,6 @@ public class PrometheusHttpListenerTests
 
             var content = await response.Content.ReadAsStringAsync();
 
-            var timestampPart = disableTimestamp ? string.Empty : " (\\d+)";
-            var timestampPartOpenMetrics = disableTimestamp ? string.Empty : " (\\d+\\.\\d{3})";
             var expected = requestOpenMetrics
                 ? "# TYPE target info\n"
                   + "# HELP target Target metadata\n"
@@ -308,11 +337,11 @@ public class PrometheusHttpListenerTests
                   + $"otel_scope_info{{otel_scope_name='{MeterName}'}} 1\n"
                   + "# TYPE counter_double_bytes counter\n"
                   + "# UNIT counter_double_bytes bytes\n"
-                  + $"counter_double_bytes_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',{additionalTags}key1='value1',key2='value2'}} 101.17{timestampPartOpenMetrics}\n"
+                  + $"counter_double_bytes_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',{additionalTags}key1='value1',key2='value2'}} 101.17\n"
                   + "# EOF\n"
                 : "# TYPE counter_double_bytes_total counter\n"
                   + "# UNIT counter_double_bytes_total bytes\n"
-                  + $"counter_double_bytes_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',{additionalTags}key1='value1',key2='value2'}} 101.17{timestampPart}\n"
+                  + $"counter_double_bytes_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',{additionalTags}key1='value1',key2='value2'}} 101.17\n"
                   + "# EOF\n";
 
             Assert.Matches(("^" + expected + "$").Replace('\'', '"'), content);
@@ -321,7 +350,151 @@ public class PrometheusHttpListenerTests
         {
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
+    }
 
-        provider.Dispose();
+    private static int GetRandomPort(Random? random = null)
+    {
+#if NET
+        random ??= Random.Shared;
+#else
+        random ??= new Random();
+#endif
+
+#pragma warning disable CA5394 // Do not use insecure randomness
+        return random.Next(2000, 5000);
+#pragma warning restore CA5394 // Do not use insecure randomness
+    }
+
+    private static PrometheusTestContext CreateListener(int? port = null)
+    {
+        var maximumAttempts = 5;
+        var attemptsLeft = maximumAttempts;
+        int boundPort = 0;
+
+        var options = new PrometheusHttpListenerOptions()
+        {
+            Host = "localhost",
+        };
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        var exporter = new PrometheusExporter(new());
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        try
+        {
+            while (attemptsLeft-- > 0)
+            {
+                port ??= GetRandomPort();
+
+                options.Port = port.Value;
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+                var listener = new PrometheusHttpListener(exporter, options);
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+                try
+                {
+                    listener.Start();
+
+                    return new(exporter, listener, boundPort);
+                }
+                catch (Exception)
+                {
+                    // Try again, possibly with a different port
+                    listener.Dispose();
+                }
+            }
+
+            throw new InvalidOperationException($"{nameof(PrometheusHttpListener)} could not be started within {maximumAttempts} attempts.");
+        }
+        catch (Exception)
+        {
+            exporter.Dispose();
+            throw;
+        }
+    }
+
+    private static MeterProviderTestContext CreateMeterProvider(
+        Meter meter,
+        Func<PrometheusHttpListenerOptions, int>? configure = null,
+        IEnumerable<KeyValuePair<string, object>>? attributes = null)
+    {
+        var maximumAttempts = 5;
+        var attemptsLeft = maximumAttempts;
+
+        configure ??= static (options) =>
+        {
+            options.Port = GetRandomPort();
+            return options.Port;
+        };
+
+        while (attemptsLeft-- > 0)
+        {
+            int port = -1;
+
+            var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .ConfigureResource((p) =>
+                {
+                    p.Clear().AddService("my_service", serviceInstanceId: "id1");
+
+                    if (attributes is not null)
+                    {
+                        p.AddAttributes(attributes);
+                    }
+                })
+                .AddPrometheusHttpListener((options) =>
+                {
+                    port = configure(options);
+                })
+                .Build();
+
+            return new(provider, port);
+        }
+
+        throw new InvalidOperationException($"{nameof(MeterProvider)} could not be created within {maximumAttempts} attempts.");
+    }
+
+    [Obsolete("Supports tests for the obsolete UriPrefixes property.")]
+    private static PrometheusHttpListenerOptions TestPrometheusHttpListenerUriPrefixOptions(string[] uriPrefixes)
+    {
+        var options = new PrometheusHttpListenerOptions()
+        {
+            UriPrefixes = uriPrefixes,
+        };
+
+        using var exporter = new PrometheusExporter(new());
+        using var listener = new PrometheusHttpListener(
+            exporter,
+            options);
+
+        return options;
+    }
+
+    private sealed class MeterProviderTestContext(MeterProvider provider, int port) : IDisposable
+    {
+        public MeterProvider Provider { get; } = provider;
+
+        public Uri BaseAddress { get; } = new UriBuilder(Uri.UriSchemeHttp, "localhost", port).Uri;
+
+        public int Port { get; } = port;
+
+        public void Dispose()
+            => this.Provider.Dispose();
+    }
+
+    private sealed class PrometheusTestContext(PrometheusExporter exporter, PrometheusHttpListener listener, int port) : IDisposable
+    {
+        public PrometheusExporter Exporter { get; } = exporter;
+
+        public PrometheusHttpListener Listener { get; } = listener;
+
+        public int Port { get; } = port;
+
+        public void Dispose()
+        {
+            this.Exporter.Dispose();
+            this.Listener.Dispose();
+        }
     }
 }
