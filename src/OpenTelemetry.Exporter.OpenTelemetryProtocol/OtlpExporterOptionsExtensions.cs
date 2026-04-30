@@ -30,7 +30,8 @@ internal static class OtlpExporterOptionsExtensions
         if (!string.IsNullOrEmpty(optionHeaders))
         {
             // According to the specification, URL-encoded headers must be supported.
-            optionHeaders = Uri.UnescapeDataString(optionHeaders);
+            // We split on raw commas first so that %2C within a value is not mistaken
+            // for a pair separator, then URL-decode each key and value individually.
             var headersSpan = optionHeaders.AsSpan();
 
             while (!headersSpan.IsEmpty)
@@ -54,8 +55,8 @@ internal static class OtlpExporterOptionsExtensions
                     throw new ArgumentException("Headers provided in an invalid format.");
                 }
 
-                var key = pair.Slice(0, equalIndex).Trim().ToString();
-                var value = pair.Slice(equalIndex + 1).Trim().ToString();
+                var key = Uri.UnescapeDataString(pair.Slice(0, equalIndex).Trim().ToString());
+                var value = Uri.UnescapeDataString(pair.Slice(equalIndex + 1).Trim().ToString());
                 addHeader(headers, key, value);
             }
         }
