@@ -254,9 +254,49 @@ public sealed class PrometheusSerializerTests
     {
         var buffer = new byte[32];
 
-        var cursor = PrometheusSerializer.WriteLabelKey(buffer, 0, labelName!);
+        var cursor = PrometheusSerializer.WriteLabelKey(buffer, 0, labelName!, openMetricsRequested: false);
 
         Assert.Equal("_", Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Fact]
+    public void WriteLabelKeyNormalizesPrometheusLabelNames()
+    {
+        var buffer = new byte[32];
+
+        var cursor = PrometheusSerializer.WriteLabelKey(buffer, 0, "a_b:c", openMetricsRequested: false);
+
+        Assert.Equal("a_b_c", Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Fact]
+    public void WriteLabelKeyCollapsesPrometheusInvalidCharacters()
+    {
+        var buffer = new byte[32];
+
+        var cursor = PrometheusSerializer.WriteLabelKey(buffer, 0, "a../b", openMetricsRequested: false);
+
+        Assert.Equal("a_b", Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Fact]
+    public void WriteLabelKeyPreservesOpenMetricsLegacyValidCharacters()
+    {
+        var buffer = new byte[32];
+
+        var cursor = PrometheusSerializer.WriteLabelKey(buffer, 0, "a_b:c", openMetricsRequested: true);
+
+        Assert.Equal("a_b:c", Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Fact]
+    public void WriteLabelKeyCollapsesOpenMetricsInvalidCharacters()
+    {
+        var buffer = new byte[32];
+
+        var cursor = PrometheusSerializer.WriteLabelKey(buffer, 0, "a../b", openMetricsRequested: true);
+
+        Assert.Equal("a_b", Encoding.UTF8.GetString(buffer, 0, cursor));
     }
 
     [Fact]
@@ -719,7 +759,7 @@ public sealed class PrometheusSerializerTests
     {
         var buffer = new byte[85000];
 
-        var cursor = PrometheusSerializer.WriteScopeInfo(buffer, 0, "test_meter");
+        var cursor = PrometheusSerializer.WriteScopeInfo(buffer, 0, "test_meter", openMetricsRequested: true);
 
         Assert.Matches(
             ("^"
@@ -845,7 +885,7 @@ public sealed class PrometheusSerializerTests
     {
         var buffer = new byte[128];
 
-        var cursor = PrometheusSerializer.WriteLabel(buffer, 0, "value", 18446744073709551615UL);
+        var cursor = PrometheusSerializer.WriteLabel(buffer, 0, "value", 18446744073709551615UL, openMetricsRequested: false);
 
         Assert.Equal("value=\"18446744073709551615\"", Encoding.UTF8.GetString(buffer, 0, cursor));
     }
