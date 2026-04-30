@@ -46,13 +46,6 @@ internal sealed class ExceptionProcessor : BaseProcessor<Activity>
     /// <inheritdoc />
     public override void OnEnd(Activity activity)
     {
-        var pointers = this.fnGetExceptionPointers();
-
-        if (pointers == IntPtr.Zero)
-        {
-            return;
-        }
-
         var snapshot = activity.GetTagValue(ExceptionPointersKey) as IntPtr?;
 
         if (snapshot != null)
@@ -60,7 +53,9 @@ internal sealed class ExceptionProcessor : BaseProcessor<Activity>
             activity.SetTag(ExceptionPointersKey, null);
         }
 
-        if (snapshot != pointers)
+        var pointers = this.fnGetExceptionPointers();
+
+        if (pointers != IntPtr.Zero && snapshot != pointers)
         {
 #pragma warning disable CS0618 // Type or member is obsolete
             activity.SetStatus(Status.Error);

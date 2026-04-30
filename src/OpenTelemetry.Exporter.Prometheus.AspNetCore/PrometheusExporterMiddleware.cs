@@ -3,7 +3,7 @@
 
 using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Primitives;
+using Microsoft.Net.Http.Headers;
 using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
@@ -15,6 +15,12 @@ namespace OpenTelemetry.Exporter;
 /// </summary>
 internal sealed class PrometheusExporterMiddleware
 {
+    private const string OpenMetricsMediaType = "application/openmetrics-text";
+    private const string OpenMetricsVersion = "1.0.0";
+    private const string OpenMetricsContentType = $"application/openmetrics-text; version={OpenMetricsVersion}; charset=utf-8";
+
+    private const string PrometheusTextMediaType = "text/plain";
+
     private readonly PrometheusExporter exporter;
 
     /// <summary>
@@ -62,16 +68,14 @@ internal sealed class PrometheusExporterMiddleware
             {
                 var dataView = openMetricsRequested ? collectionResponse.OpenMetricsView : collectionResponse.PlainTextView;
 
+                response.StatusCode = StatusCodes.Status200OK;
+
                 if (dataView.Count > 0)
                 {
-                    response.StatusCode = StatusCodes.Status200OK;
-#if NET
                     response.Headers.Append("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
-#else
-                    response.Headers.Add("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
-#endif
+
                     response.ContentType = openMetricsRequested
-                        ? "application/openmetrics-text; version=1.0.0; charset=utf-8"
+                        ? OpenMetricsContentType
                         : "text/plain; charset=utf-8; version=0.0.4";
 
                     await response.Body.WriteAsync(dataView.Array.AsMemory(0, dataView.Count)).ConfigureAwait(false);
@@ -79,7 +83,6 @@ internal sealed class PrometheusExporterMiddleware
                 else
                 {
                     // It's not expected to have no metrics to collect, but it's not necessarily a failure, either.
-                    response.StatusCode = StatusCodes.Status200OK;
                     PrometheusExporterEventSource.Log.NoMetrics();
                 }
             }
@@ -98,23 +101,58 @@ internal sealed class PrometheusExporterMiddleware
         }
     }
 
-    private static bool AcceptsOpenMetrics(HttpRequest request)
+    internal static bool AcceptsOpenMetrics(HttpRequest request)
     {
-        var acceptHeader = request.Headers.Accept;
+        var acceptHeader = request.GetTypedHeaders().Accept;
 
-        if (StringValues.IsNullOrEmpty(acceptHeader))
+        if (acceptHeader is not { Count: > 0 })
         {
             return false;
         }
 
-        foreach (var header in acceptHeader)
+        double? bestOpenMetricsQuality = null;
+        double? bestPrometheusQuality = null;
+
+        foreach (var mediaType in acceptHeader)
         {
-            if (PrometheusHeadersParser.AcceptsOpenMetrics(header))
+            var quality = mediaType.Quality ?? 1.0;
+
+            if (quality is <= 0 or > 1)
             {
-                return true;
+                continue;
+            }
+
+            if (string.Equals(mediaType.MediaType.Value, OpenMetricsMediaType, StringComparison.OrdinalIgnoreCase) &&
+                HasSupportedOpenMetricsVersion(mediaType))
+            {
+                bestOpenMetricsQuality =
+                    bestOpenMetricsQuality is not { } comparison || quality > comparison ?
+                    quality :
+                    bestOpenMetricsQuality ?? quality;
+            }
+            else if (string.Equals(mediaType.MediaType.Value, PrometheusTextMediaType, StringComparison.OrdinalIgnoreCase))
+            {
+                bestPrometheusQuality =
+                    bestPrometheusQuality is not { } comparison || quality > comparison ?
+                    quality :
+                    bestPrometheusQuality ?? quality;
             }
         }
 
-        return false;
+        return bestOpenMetricsQuality is { } openMetricsQuality &&
+               (bestPrometheusQuality is not { } prometheusQuality || openMetricsQuality >= prometheusQuality);
+    }
+
+    private static bool HasSupportedOpenMetricsVersion(MediaTypeHeaderValue value)
+    {
+        foreach (var parameter in value.Parameters)
+        {
+            if (string.Equals(parameter.Name.Value, "version", StringComparison.OrdinalIgnoreCase))
+            {
+                return string.Equals(parameter.Value.Value?.Trim('"'), OpenMetricsVersion, StringComparison.Ordinal);
+            }
+        }
+
+        return true;
     }
 }
