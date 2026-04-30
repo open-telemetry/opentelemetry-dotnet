@@ -542,6 +542,7 @@ public class PrometheusHttpListenerTests
                 try
                 {
                     listener.Start();
+                    boundPort = port;
 
                     return new(exporter, listener, boundPort);
                 }
