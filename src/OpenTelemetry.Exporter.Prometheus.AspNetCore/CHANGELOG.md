@@ -24,6 +24,9 @@ Notes](../../RELEASENOTES.md).
   correctly during Prometheus serialization.
   ([#7184](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7184))
 
+* Fix case where reader tracking could be reset while readers were still active.
+  ([#7190](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7190))
+
 * Export `{name}_created` series for counters and histograms when using
   OpenMetrics and a start time is available.
   ([#7223](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7223))
