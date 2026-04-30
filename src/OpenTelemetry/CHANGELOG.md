@@ -10,6 +10,10 @@ Notes](../../RELEASENOTES.md).
   variables.
   ([#7187](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7187))
 
+* Fix observable instrument callbacks running once per reader instead of
+  once per collection cycle.
+  ([#7188](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7188))
+
 ## 1.15.3
 
 Released 2026-Apr-21

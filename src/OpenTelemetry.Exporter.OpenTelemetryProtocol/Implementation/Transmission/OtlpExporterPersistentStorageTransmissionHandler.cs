@@ -48,11 +48,20 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler : OtlpExp
     }
 
     protected override bool OnSubmitRequestFailure(byte[] request, int contentLength, ExportClientResponse response)
-        => RetryHelper.ShouldRetryRequest(response, OtlpRetry.InitialBackoffMilliseconds, out _) && this.persistentBlobProvider.TryCreateBlob(request, out _);
+    {
+        Debug.Assert(contentLength >= 0 && contentLength <= request.Length, "contentLength was invalid");
+
+        if (!RetryHelper.ShouldRetryRequest(response, OtlpRetry.InitialBackoffMilliseconds, out _))
+        {
+            return false;
+        }
+
+        return this.persistentBlobProvider.TryCreateBlob(request.AsSpan(0, contentLength).ToArray(), out _);
+    }
 
     protected override void OnShutdown(int timeoutMilliseconds)
     {
-        var sw = timeoutMilliseconds == Timeout.Infinite ? null : Stopwatch.StartNew();
+        long? timestamp = timeoutMilliseconds == Timeout.Infinite ? null : Stopwatch.GetTimestamp();
 
         try
         {
@@ -65,16 +74,12 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler : OtlpExp
 
         this.thread.Join(timeoutMilliseconds);
 
-        if (sw != null)
+        if (timestamp is { } startedAt)
         {
-            var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
+            timeoutMilliseconds = Stopwatch.Remaining(timeoutMilliseconds, startedAt);
+        }
 
-            base.OnShutdown((int)Math.Max(timeout, 0));
-        }
-        else
-        {
-            base.OnShutdown(timeoutMilliseconds);
-        }
+        base.OnShutdown(timeoutMilliseconds);
     }
 
     protected override void Dispose(bool disposing)

@@ -154,23 +154,15 @@ internal static partial class PrometheusSerializer
             return cursor;
         }
 
-        var ordinal = (ushort)value[0];
-
-        if (ordinal is >= '0' and <= '9')
+        if (char.IsAsciiDigit(value[0]))
         {
             buffer[cursor++] = unchecked((byte)'_');
         }
 
         for (var i = 0; i < value.Length; i++)
         {
-            ordinal = value[i];
-
-            buffer[cursor++] =
-                ordinal is (>= 'A' and <= 'Z') or
-                (>= 'a' and <= 'z') or
-                (>= '0' and <= '9')
-                ? (byte)ordinal
-                : (byte)'_';
+            var ch = value[i];
+            buffer[cursor++] = char.IsAsciiLetterOrDigit(ch) ? (byte)ch : (byte)'_';
         }
 
         return cursor;

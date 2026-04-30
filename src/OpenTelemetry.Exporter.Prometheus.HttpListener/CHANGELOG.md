@@ -36,6 +36,13 @@ Notes](../../RELEASENOTES.md).
   response caching.
   ([#7189](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7189))
 
+* Fix case where reader tracking could be reset while readers were still active.
+  ([#7190](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7190))
+
+* Improve `Accept` header handling for format negotiation so OpenMetrics is
+  selected correctly by considering whitespace and `q` weights.
+  ([#7208](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7208))
+
 * Use the canonical representation for histogram "le" label values when using
   OpenMetrics.
   ([#7218](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7218))
