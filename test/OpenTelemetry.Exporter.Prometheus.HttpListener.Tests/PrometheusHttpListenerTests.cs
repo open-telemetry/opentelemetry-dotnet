@@ -348,7 +348,10 @@ public class PrometheusHttpListenerTests
                   + $"counter_double_bytes_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',{additionalTags}key1='value1',key2='value2'}} 101.17\n"
                   + createdMetricSample
                   + "# EOF\n"
-                : "# TYPE counter_double_bytes_total counter\n"
+                : "# TYPE target_info gauge\n"
+                  + "# HELP target_info Target metadata\n"
+                  + "target_info{service_name='my_service',service_instance_id='id1'} 1\n"
+                  + "# TYPE counter_double_bytes_total counter\n"
                   + "# UNIT counter_double_bytes_total bytes\n"
                   + $"counter_double_bytes_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',{additionalTags}key1='value1',key2='value2'}} 101.17\n"
                   + "# EOF\n";

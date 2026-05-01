@@ -31,6 +31,7 @@ Notes](../../RELEASENOTES.md).
   selected correctly by considering whitespace and `q` weights.
   ([#7208](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7208))
 
+<<<<<<< HEAD
 * Emit OpenMetrics exemplars for counters and histogram buckets.
   ([#7222](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7222))
 
@@ -68,6 +69,10 @@ Notes](../../RELEASENOTES.md).
 
 * Drop conflicting scope attributes named `name`, `version`, and `schema_url`.
   ([#7237](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7237))
+
+* Add a Prometheus text fallback `target_info` gauge when OpenMetrics-only scope
+  metadata is unavailable.
+  ([#7238](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7238))
 
 ## 1.15.3-beta.1
 
