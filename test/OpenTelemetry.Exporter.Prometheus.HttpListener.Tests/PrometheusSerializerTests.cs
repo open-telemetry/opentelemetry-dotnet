@@ -720,7 +720,7 @@ public sealed class PrometheusSerializerTests
         var buffer = new byte[85000];
         var metrics = new List<Metric>();
 
-        using var meter = new Meter("test_meter", "1.0.0", [new("library.mascot", "gopher")], scope: null);
+        using var meter = new Meter("test_meter", "1.0.0", [new("library.mascot", "dotnetbot")], scope: null);
         using var provider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
             .AddInMemoryExporter(metrics)
@@ -736,7 +736,7 @@ public sealed class PrometheusSerializerTests
             ("^"
              + "# TYPE otel_scope info\n"
              + "# HELP otel_scope Scope metadata\n"
-             + "otel_scope_info{otel_scope_name='test_meter',otel_scope_version='1.0.0',otel_scope_library_mascot='gopher'} 1\n"
+             + "otel_scope_info{otel_scope_name='test_meter',otel_scope_version='1.0.0',otel_scope_library_mascot='dotnetbot'} 1\n"
              + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -755,7 +755,7 @@ public sealed class PrometheusSerializerTests
                 TelemetrySchemaUrl = "https://opentelemetry.io/schemas/1.0.0",
                 Tags =
                 [
-                    new("library.mascot", "gopher"),
+                    new("library.mascot", "dotnetbot"),
                     new("name", "ignored-name"),
                     new("version", "ignored-version"),
                     new("schema_url", "ignored-schema"),
@@ -767,7 +767,7 @@ public sealed class PrometheusSerializerTests
             version: "1.0.0",
             tags:
             [
-                new("library.mascot", "gopher"),
+                new("library.mascot", "dotnetbot"),
                 new("name", "ignored-name"),
                 new("version", "ignored-version"),
                 new("schema_url", "ignored-schema"),
@@ -788,7 +788,7 @@ public sealed class PrometheusSerializerTests
         var cursor = WriteMetric(buffer, 0, metrics[0]);
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
 
-        Assert.Contains("otel_scope_library_mascot=\"gopher\"", output, StringComparison.Ordinal);
+        Assert.Contains("otel_scope_library_mascot=\"dotnetbot\"", output, StringComparison.Ordinal);
         Assert.Contains("metric_tag=\"value\"", output, StringComparison.Ordinal);
         Assert.DoesNotContain("otel_scope_name=\"ignored-name\"", output, StringComparison.Ordinal);
         Assert.DoesNotContain("otel_scope_version=\"ignored-version\"", output, StringComparison.Ordinal);
