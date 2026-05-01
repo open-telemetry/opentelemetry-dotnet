@@ -290,8 +290,6 @@ For more information about the approver role, see the [community repository](htt
 
 ### Triagers
 
-* [Martin Thwaites](https://github.com/martinjt), Honeycomb
-* [Timothy "Mothra" Lee](https://github.com/TimothyMothra)
 
 For more information about the triager role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#triager).
 
@@ -300,11 +298,13 @@ For more information about the triager role, see the [community repository](http
 * [Bruno Garcia](https://github.com/bruno-garcia), Approver
 * [Eddy Nakamura](https://github.com/eddynaka), Approver
 * [Liudmila Molkova](https://github.com/lmolkova), Approver
+* [Martin Thwaites](https://github.com/martinjt), Triager
 * [Mike Goldsmith](https://github.com/MikeGoldsmith), Maintainer
 * [Paulo Janotti](https://github.com/pjanotti), Approver
 * [Reiley Yang](https://github.com/reyang), Approver
 * [Robert Paj&#x105;k](https://github.com/pellared), Approver
 * [Sergey Kanzhelev](https://github.com/SergeyKanzhelev), Maintainer
+* [Timothy "Mothra" Lee](https://github.com/TimothyMothra), Triager
 * [Utkarsh Umesan Pillai](https://github.com/utpilla), Maintainer
 * [Victor Lu](https://github.com/victlu), Triager
 * [Vishwesh Bankwar](https://github.com/vishweshbankwar), Approver
