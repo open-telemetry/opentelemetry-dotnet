@@ -980,6 +980,72 @@ public sealed class PrometheusSerializerTests
     }
 
     [Fact]
+    public void WriteMetricConcatenatesCollidingEmptyAndUnderscoreLabelKeys()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter("test_meter");
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        meter.CreateObservableGauge<long>(
+            "test_gauge",
+            () =>
+            [
+                new Measurement<long>(
+                    123,
+                    new(string.Empty, "empty"),
+                    new("_", "underscore")),
+            ]);
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0]);
+        Assert.Matches(
+            ("^"
+             + "# TYPE test_gauge gauge\n"
+             + "test_gauge{otel_scope_name='test_meter',_='empty;underscore'} 123\n"
+             + "$").Replace('\'', '"'),
+            Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Fact]
+    public void WriteMetricConcatenatesCollidingLeadingDigitLabelKeys()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter("test_meter");
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        meter.CreateObservableGauge<long>(
+            "test_gauge",
+            () =>
+            [
+                new Measurement<long>(
+                    123,
+                    new("1foo", "digit"),
+                    new("_1foo", "underscore")),
+            ]);
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0]);
+        Assert.Matches(
+            ("^"
+             + "# TYPE test_gauge gauge\n"
+             + "test_gauge{otel_scope_name='test_meter',_1foo='digit;underscore'} 123\n"
+             + "$").Replace('\'', '"'),
+            Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Fact]
     public void WriteAsciiStringNoEscapeWritesAsciiBytes()
     {
         var value = "metric_name_total";
