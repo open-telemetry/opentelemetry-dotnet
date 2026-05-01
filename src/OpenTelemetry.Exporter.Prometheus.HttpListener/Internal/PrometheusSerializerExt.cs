@@ -30,7 +30,9 @@ internal static partial class PrometheusSerializer
         bool openMetricsRequested,
         bool writeType = true,
         bool writeUnit = true,
-        bool writeHelp = true)
+        bool writeHelp = true,
+        string? unitOverride = null,
+        string? helpOverride = null)
     {
         if (writeType)
         {
@@ -39,12 +41,12 @@ internal static partial class PrometheusSerializer
 
         if (writeUnit)
         {
-            cursor = WriteUnitMetadata(buffer, cursor, prometheusMetric, openMetricsRequested);
+            cursor = WriteUnitMetadata(buffer, cursor, prometheusMetric, unitOverride ?? prometheusMetric.Unit, openMetricsRequested);
         }
 
         if (writeHelp)
         {
-            cursor = WriteHelpMetadata(buffer, cursor, prometheusMetric, metric.Description, openMetricsRequested);
+            cursor = WriteHelpMetadata(buffer, cursor, prometheusMetric, helpOverride ?? metric.Description, openMetricsRequested);
         }
 
         if (!metric.MetricType.IsHistogram())
