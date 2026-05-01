@@ -10,6 +10,10 @@ namespace OpenTelemetry.Exporter.Prometheus;
 /// </summary>
 internal static partial class PrometheusSerializer
 {
+#if !NET
+    private static readonly DateTimeOffset UnixEpoch = new(1970, 1, 1, 0, 0, 0, TimeSpan.Zero);
+#endif
+
     public static bool CanWriteMetric(Metric metric)
     {
         if (metric.MetricType == MetricType.ExponentialHistogram)
@@ -27,11 +31,6 @@ internal static partial class PrometheusSerializer
         cursor = WriteTypeMetadata(buffer, cursor, prometheusMetric, openMetricsRequested);
         cursor = WriteUnitMetadata(buffer, cursor, prometheusMetric, openMetricsRequested);
         cursor = WriteHelpMetadata(buffer, cursor, prometheusMetric, metric.Description, openMetricsRequested);
-
-        if (openMetricsRequested && HasCreatedMetric(metric, prometheusMetric))
-        {
-            cursor = WriteCreatedTypeMetadata(buffer, cursor, prometheusMetric);
-        }
 
         if (!metric.MetricType.IsHistogram())
         {
@@ -127,35 +126,6 @@ internal static partial class PrometheusSerializer
         return cursor;
     }
 
-    private static bool HasCreatedMetric(Metric metric, PrometheusMetric prometheusMetric)
-    {
-        if (prometheusMetric.Type != PrometheusType.Counter && !metric.MetricType.IsHistogram())
-        {
-            return false;
-        }
-
-        foreach (ref readonly var metricPoint in metric.GetMetricPoints())
-        {
-            if (metricPoint.StartTime != default)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private static int WriteCreatedTypeMetadata(byte[] buffer, int cursor, PrometheusMetric prometheusMetric)
-    {
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# TYPE ");
-        cursor = WriteMetricMetadataName(buffer, cursor, prometheusMetric, openMetricsRequested: true);
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, "_created gauge");
-
-        buffer[cursor++] = ASCII_LINEFEED;
-
-        return cursor;
-    }
-
     private static int WriteCreatedMetric(
         byte[] buffer,
         int cursor,
@@ -182,6 +152,10 @@ internal static partial class PrometheusSerializer
         return cursor;
     }
 
-    private static int WriteUnixTimeSeconds(byte[] buffer, int cursor, DateTimeOffset value)
-        => WriteDouble(buffer, cursor, value.ToUnixTimeMilliseconds() / 1000.0);
+    private static int WriteUnixTimeSeconds(byte[] buffer, int cursor, DateTimeOffset value) =>
+#if NET
+        WriteDouble(buffer, cursor, (value.UtcDateTime.Ticks - DateTimeOffset.UnixEpoch.Ticks) / (double)TimeSpan.TicksPerSecond);
+#else
+        WriteDouble(buffer, cursor, (value.UtcDateTime.Ticks - UnixEpoch.Ticks) / (double)TimeSpan.TicksPerSecond);
+#endif
 }

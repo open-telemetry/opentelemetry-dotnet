@@ -328,9 +328,6 @@ public class PrometheusHttpListenerTests
             var additionalTags = meterTags is { Length: > 0 }
                 ? $"{string.Join(",", meterTags.Select(x => $"{x.Key}='{x.Value}'"))},"
                 : string.Empty;
-            var createdMetric = requestOpenMetrics
-                ? "# TYPE counter_double_bytes_created gauge\n"
-                : string.Empty;
             var createdMetricSample = requestOpenMetrics
                 ? $"counter_double_bytes_created{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',{additionalTags}key1='value1',key2='value2'}} [0-9]+(?:\\.[0-9]+)?\n"
                 : string.Empty;
@@ -346,14 +343,12 @@ public class PrometheusHttpListenerTests
                   + $"otel_scope_info{{otel_scope_name='{MeterName}'}} 1\n"
                   + "# TYPE counter_double_bytes counter\n"
                   + "# UNIT counter_double_bytes bytes\n"
-                  + createdMetric
                   + $"counter_double_bytes_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',{additionalTags}key1='value1',key2='value2'}} 101.17\n"
                   + createdMetricSample
                   + "# EOF\n"
                 : "# TYPE counter_double_bytes_total counter\n"
                   + "# UNIT counter_double_bytes_total bytes\n"
                   + $"counter_double_bytes_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',{additionalTags}key1='value1',key2='value2'}} 101.17\n"
-                  + createdMetric
                   + "# EOF\n";
 
             Assert.Matches(("^" + expected + "$").Replace('\'', '"'), content);
