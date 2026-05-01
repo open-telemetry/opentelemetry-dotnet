@@ -75,7 +75,7 @@ Notes](../../RELEASENOTES.md).
   ([#7238](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7238))
 
 * Merge colliding sanitized label keys.
-  ([#7239](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7239))
+  ([#7239](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7239))
 
 ## 1.15.3-beta.1
 
