@@ -280,6 +280,18 @@ public sealed class PrometheusSerializerTests
         Assert.Equal("a_b", Encoding.UTF8.GetString(buffer, 0, cursor));
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void WriteLabelKeyPrefixesLeadingDigits(bool openMetricsRequested)
+    {
+        var buffer = new byte[32];
+
+        var cursor = PrometheusSerializer.WriteLabelKey(buffer, 0, "2foo", openMetricsRequested);
+
+        Assert.Equal("_2foo", Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
     [Fact]
     public void WriteLabelKeyPreservesOpenMetricsLegacyValidCharacters()
     {
