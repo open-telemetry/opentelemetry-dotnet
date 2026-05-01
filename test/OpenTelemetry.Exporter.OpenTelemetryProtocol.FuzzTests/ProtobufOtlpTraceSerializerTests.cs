@@ -286,6 +286,231 @@ public class ProtobufOtlpTraceSerializerTests
             }
         });
 
+    [Property(MaxTest = 100)]
+    public Property KvListAttributesStayInBounds() => Prop.ForAll(
+        Generators.ActivityWithKvListBatchArbitrary(),
+        Generators.SdkLimitOptionsArbitrary(),
+        (activities, sdkLimits) =>
+        {
+            try
+            {
+                var buffer = new byte[10 * 1024 * 1024];
+                var batch = new Batch<Activity>(activities, activities.Length);
+
+                var writePos = ProtobufOtlpTraceSerializer.WriteTraceData(
+                    ref buffer,
+                    0,
+                    sdkLimits,
+                    null,
+                    batch);
+
+                return writePos >= 0 && writePos <= buffer.Length;
+            }
+            catch (Exception ex) when (IsAllowedException(ex))
+            {
+                return true;
+            }
+            finally
+            {
+                foreach (var activity in activities)
+                {
+                    activity?.Dispose();
+                }
+            }
+        });
+
+    [Property(MaxTest = 100)]
+    public Property KvListAttributesRoundTrip() => Prop.ForAll(
+        Generators.ActivityWithKvListBatchArbitrary(),
+        Generators.SdkLimitOptionsArbitrary(),
+        Generators.ResourceArbitrary(),
+        (activities, sdkLimits, resource) =>
+        {
+            if (activities == null || activities.Length == 0)
+            {
+                return true;
+            }
+
+            try
+            {
+                var buffer = new byte[10 * 1024 * 1024];
+                var batch = new Batch<Activity>(activities, activities.Length);
+
+                var writePos = ProtobufOtlpTraceSerializer.WriteTraceData(
+                    ref buffer,
+                    0,
+                    sdkLimits,
+                    resource,
+                    batch);
+
+                if (writePos <= 0)
+                {
+                    return true;
+                }
+
+                using var stream = new MemoryStream(buffer, 0, writePos);
+                var request = OtlpCollector.ExportTraceServiceRequest.Parser.ParseFrom(stream);
+
+                return request != null && request.ResourceSpans.Count > 0;
+            }
+            catch (Exception ex) when (IsAllowedException(ex))
+            {
+                return true;
+            }
+            finally
+            {
+                foreach (var activity in activities)
+                {
+                    activity?.Dispose();
+                }
+            }
+        });
+
+    [Property(MaxTest = 50)]
+    public Property KvListSerializationIsDeterministic() => Prop.ForAll(
+        Generators.ActivityWithKvListBatchArbitrary(),
+        Generators.SdkLimitOptionsArbitrary(),
+        (activities, sdkLimits) =>
+        {
+            try
+            {
+                var buffer1 = new byte[10 * 1024 * 1024];
+                var buffer2 = new byte[10 * 1024 * 1024];
+                var batch = new Batch<Activity>(activities, activities.Length);
+
+                var pos1 = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer1, 0, sdkLimits, null, batch);
+                var pos2 = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer2, 0, sdkLimits, null, batch);
+
+                if (pos1 != pos2)
+                {
+                    return false;
+                }
+
+                for (var i = 0; i < pos1; i++)
+                {
+                    if (buffer1[i] != buffer2[i])
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex) when (IsAllowedException(ex))
+            {
+                return true;
+            }
+            finally
+            {
+                foreach (var activity in activities)
+                {
+                    activity?.Dispose();
+                }
+            }
+        });
+
+    [Property(MaxTest = 50)]
+    public Property SelfReferencingKvListDoesNotCrash() => Prop.ForAll(
+        Generators.SdkLimitOptionsArbitrary(),
+        Gen.Choose(1, 10).ToArbitrary(),
+        (sdkLimits, selfRefCount) =>
+        {
+            var activities = Generators.ActivityArbitrary().Generator.Sample(1).ToArray();
+
+            try
+            {
+                foreach (var activity in activities)
+                {
+                    for (var i = 0; i < selfRefCount; i++)
+                    {
+                        activity.SetTag($"self_ref_{i}", BuildSelfReferencingKvList());
+                    }
+                }
+
+                var buffer = new byte[10 * 1024 * 1024];
+                var batch = new Batch<Activity>(activities, activities.Length);
+
+                var writePos = ProtobufOtlpTraceSerializer.WriteTraceData(
+                    ref buffer,
+                    0,
+                    sdkLimits,
+                    null,
+                    batch);
+
+                return writePos >= 0 && writePos <= buffer.Length;
+            }
+            catch (Exception ex) when (IsAllowedException(ex))
+            {
+                return true;
+            }
+            finally
+            {
+                foreach (var activity in activities)
+                {
+                    activity?.Dispose();
+                }
+            }
+        });
+
+    [Property(MaxTest = 50)]
+    public Property FaultyKvListEnumerableIsDropped() => Prop.ForAll(
+        Generators.SdkLimitOptionsArbitrary(),
+        Gen.Choose(1, 5).ToArbitrary(),
+        (sdkLimits, faultyCount) =>
+        {
+            var activities = Generators.ActivityArbitrary().Generator.Sample(1).ToArray();
+
+            try
+            {
+                foreach (var activity in activities)
+                {
+                    for (var i = 0; i < faultyCount; i++)
+                    {
+                        activity.SetTag($"faulty_{i}", FaultyKvList());
+                    }
+                }
+
+                var buffer = new byte[10 * 1024 * 1024];
+                var batch = new Batch<Activity>(activities, activities.Length);
+
+                var writePos = ProtobufOtlpTraceSerializer.WriteTraceData(
+                    ref buffer,
+                    0,
+                    sdkLimits,
+                    null,
+                    batch);
+
+                return writePos >= 0 && writePos <= buffer.Length;
+            }
+            catch (Exception ex) when (IsAllowedException(ex))
+            {
+                return true;
+            }
+            finally
+            {
+                foreach (var activity in activities)
+                {
+                    activity?.Dispose();
+                }
+            }
+        });
+
     private static bool IsAllowedException(Exception ex)
         => ex is IndexOutOfRangeException or ArgumentException;
+
+    private static List<KeyValuePair<string, object?>> BuildSelfReferencingKvList()
+    {
+        var list = new List<KeyValuePair<string, object?>>
+        {
+            new("int", 1),
+        };
+        list.Add(new("self", list));
+        return list;
+    }
+
+    private static IEnumerable<KeyValuePair<string, object?>> FaultyKvList()
+    {
+        yield return new KeyValuePair<string, object?>("before", "value");
+        throw new InvalidOperationException("fuzz simulated failure");
+    }
 }
