@@ -29,6 +29,10 @@ internal static partial class PrometheusSerializer
     private const byte ASCII_LINEFEED = 0x0A; // `\n`
 #pragma warning restore SA1310 // Field name should not contain an underscore
 
+#if !NET
+    private static readonly DateTimeOffset UnixEpoch = new(1970, 1, 1, 0, 0, 0, TimeSpan.Zero);
+#endif
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteDouble(byte[] buffer, int cursor, double value)
     {
@@ -591,6 +595,7 @@ internal static partial class PrometheusSerializer
 
         return WriteUnicodeNoEscape(buffer, cursor, 0xFFFD);
     }
+
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int WriteUnixTimeSeconds(byte[] buffer, int cursor, DateTimeOffset value) =>
