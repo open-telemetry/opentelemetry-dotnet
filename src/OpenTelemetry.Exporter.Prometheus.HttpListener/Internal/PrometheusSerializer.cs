@@ -480,8 +480,16 @@ internal static partial class PrometheusSerializer
         {
             var ch = value[i];
 
-            if ((i == 0 && char.IsAsciiDigit(ch)) ||
-                !IsAllowedMetricsLabelCharacter(ch, isOpenMetrics))
+            if (i == 0 && char.IsAsciiDigit(ch))
+            {
+                if (!lastCharUnderscore)
+                {
+                    buffer[cursor++] = unchecked((byte)'_');
+                    lastCharUnderscore = true;
+                }
+            }
+
+            if (!IsAllowedMetricsLabelCharacter(ch, isOpenMetrics))
             {
                 if (!lastCharUnderscore)
                 {
