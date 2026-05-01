@@ -103,11 +103,7 @@ public sealed class PrometheusCollectionManagerTests
                 cts.Token,
                 async (_, _) => bag.Add(await CollectAsync(advanceClock)));
 
-            await Task.WhenAny(parallel, Task.Delay(testTimeout, cts.Token));
-
-            cts.Token.ThrowIfCancellationRequested();
-
-            await parallel;
+            await parallel.WaitAsync(testTimeout, cts.Token);
 
             return [.. bag.Select((r) => Task.FromResult(r))];
 #else
