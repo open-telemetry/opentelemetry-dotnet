@@ -297,7 +297,7 @@ public sealed class PrometheusCollectionManagerTests
     public async Task OpenMetricsScopeInfoIsWrittenAsASingleMetricFamily()
     {
         using var meter1 = new Meter("test_meter", "1.0.0");
-        using var meter2 = new Meter("test_meter", "2.0.0", [new("library.mascot", "gopher")], scope: null);
+        using var meter2 = new Meter("test_meter", "2.0.0", [new("library.mascot", "dotnetbot")], scope: null);
 
         using var provider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter1.Name)
@@ -331,7 +331,7 @@ public sealed class PrometheusCollectionManagerTests
             Assert.Single(Regex.Matches(output, "^# HELP otel_scope Scope metadata$", RegexOptions.Multiline));
 #endif
             Assert.Contains("otel_scope_info{otel_scope_name=\"test_meter\",otel_scope_version=\"1.0.0\"} 1", output, StringComparison.Ordinal);
-            Assert.Contains("otel_scope_info{otel_scope_name=\"test_meter\",otel_scope_version=\"2.0.0\",otel_scope_library_mascot=\"gopher\"} 1", output, StringComparison.Ordinal);
+            Assert.Contains("otel_scope_info{otel_scope_name=\"test_meter\",otel_scope_version=\"2.0.0\",otel_scope_library_mascot=\"dotnetbot\"} 1", output, StringComparison.Ordinal);
         }
         finally
         {
