@@ -242,14 +242,14 @@ internal sealed class PrometheusCollectionManager
 
                                 break;
                             }
-                            catch (IndexOutOfRangeException)
+                            catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
                             {
                                 if (!IncreaseBufferSize(ref buffer))
                                 {
                                     // there are two cases we might run into the following condition:
                                     // 1. we have many metrics to be exported - in this case we probably want
                                     //    to put some upper limit and allow the user to configure it.
-                                    // 2. we got an IndexOutOfRangeException which was triggered by some other
+                                    // 2. we got an ArgumentException/IndexOutOfRangeException which was triggered by some other
                                     //    code instead of the buffer[cursor++] - in this case we should give up
                                     //    at certain point rather than allocating like crazy.
                                     throw;
@@ -280,7 +280,7 @@ internal sealed class PrometheusCollectionManager
 
                         break;
                     }
-                    catch (IndexOutOfRangeException)
+                    catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
                     {
                         if (!IncreaseBufferSize(ref buffer))
                         {
@@ -297,7 +297,7 @@ internal sealed class PrometheusCollectionManager
                     cursor = PrometheusSerializer.WriteEof(buffer, cursor);
                     break;
                 }
-                catch (IndexOutOfRangeException)
+                catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
                 {
                     if (!IncreaseBufferSize(ref buffer))
                     {
@@ -346,7 +346,7 @@ internal sealed class PrometheusCollectionManager
 
                     break;
                 }
-                catch (IndexOutOfRangeException)
+                catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
                 {
                     if (!IncreaseBufferSize(ref buffer))
                     {

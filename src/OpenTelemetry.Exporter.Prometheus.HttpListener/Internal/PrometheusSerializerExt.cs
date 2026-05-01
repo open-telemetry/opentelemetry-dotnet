@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Buffers;
 using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Exporter.Prometheus;
@@ -28,30 +29,29 @@ internal static partial class PrometheusSerializer
         cursor = WriteUnitMetadata(buffer, cursor, prometheusMetric, openMetricsRequested);
         cursor = WriteHelpMetadata(buffer, cursor, prometheusMetric, metric.Description, openMetricsRequested);
 
-        if (!metric.MetricType.IsHistogram())
+        var metricType = metric.MetricType;
+        if (!metricType.IsHistogram())
         {
+            var isLongValue = ((int)metricType & 0b_0000_1111) == 0x0a; // I8
+            var isSum = metricType.IsSum();
+
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
                 // Counter and Gauge
                 cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
-                cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags);
+                cursor = WriteTags(buffer, cursor, prometheusMetric, metric, metricPoint.Tags);
 
                 buffer[cursor++] = unchecked((byte)' ');
 
-                // TODO: MetricType is same for all MetricPoints
-                // within a given Metric, so this check can avoided
-                // for each MetricPoint
-                if (((int)metric.MetricType & 0b_0000_1111) == 0x0a /* I8 */)
+                if (isLongValue)
                 {
-                    cursor = metric.MetricType.IsSum()
-                        ? WriteLong(buffer, cursor, metricPoint.GetSumLong())
-                        : WriteLong(buffer, cursor, metricPoint.GetGaugeLastValueLong());
+                    long value = isSum ? metricPoint.GetSumLong() : metricPoint.GetGaugeLastValueLong();
+                    cursor = WriteLong(buffer, cursor, value);
                 }
                 else
                 {
-                    cursor = metric.MetricType.IsSum()
-                        ? WriteDouble(buffer, cursor, metricPoint.GetSumDouble())
-                        : WriteDouble(buffer, cursor, metricPoint.GetGaugeLastValueDouble());
+                    double value = isSum ? metricPoint.GetSumDouble() : metricPoint.GetGaugeLastValueDouble();
+                    cursor = WriteDouble(buffer, cursor, value);
                 }
 
                 buffer[cursor++] = ASCII_LINEFEED;
@@ -61,54 +61,137 @@ internal static partial class PrometheusSerializer
         {
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
-                var tags = metricPoint.Tags;
-
-                long totalCount = 0;
-                foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
-                {
-                    totalCount += histogramMeasurement.BucketCount;
-
-                    cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
-                    cursor = WriteAsciiStringNoEscape(buffer, cursor, "_bucket{");
-                    cursor = WriteTags(buffer, cursor, metric, tags, writeEnclosingBraces: false);
-
-                    cursor = WriteAsciiStringNoEscape(buffer, cursor, "le=\"");
-
-                    cursor = histogramMeasurement.ExplicitBound != double.PositiveInfinity
-                        ? WriteDouble(buffer, cursor, histogramMeasurement.ExplicitBound)
-                        : WriteAsciiStringNoEscape(buffer, cursor, "+Inf");
-
-                    cursor = WriteAsciiStringNoEscape(buffer, cursor, "\"} ");
-
-                    cursor = WriteLong(buffer, cursor, totalCount);
-
-                    buffer[cursor++] = ASCII_LINEFEED;
-                }
-
-                // Histogram sum
-                cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
-                cursor = WriteAsciiStringNoEscape(buffer, cursor, "_sum");
-                cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags);
-
-                buffer[cursor++] = unchecked((byte)' ');
-
-                cursor = WriteDouble(buffer, cursor, metricPoint.GetHistogramSum());
-
-                buffer[cursor++] = ASCII_LINEFEED;
-
-                // Histogram count
-                cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
-                cursor = WriteAsciiStringNoEscape(buffer, cursor, "_count");
-                cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags);
-
-                buffer[cursor++] = unchecked((byte)' ');
-
-                cursor = WriteLong(buffer, cursor, metricPoint.GetHistogramCount());
-
-                buffer[cursor++] = ASCII_LINEFEED;
+                cursor = WriteHistogramMetricPoint(buffer, cursor, metric, prometheusMetric, in metricPoint, openMetricsRequested);
             }
         }
 
         return cursor;
+    }
+
+    internal static byte[] SerializeStaticTags(Metric metric)
+    {
+#if NET
+        Span<byte> stackBuffer = stackalloc byte[256];
+        if (TryWriteStaticTags(stackBuffer, metric, out var stackCursor))
+        {
+            return stackBuffer[..stackCursor].ToArray();
+        }
+#endif
+
+        var buffer = new byte[128];
+
+        while (true)
+        {
+            try
+            {
+                var cursor = WriteStaticTags(buffer, 0, metric);
+                return buffer.AsSpan(0, cursor).ToArray();
+            }
+            catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
+            {
+                buffer = new byte[checked(buffer.Length * 2)];
+            }
+        }
+    }
+
+    private static int WriteHistogramMetricPoint(
+        byte[] buffer,
+        int cursor,
+        Metric metric,
+        PrometheusMetric prometheusMetric,
+        in MetricPoint metricPoint,
+        bool openMetricsRequested)
+    {
+#if NET
+        Span<byte> stackTags = stackalloc byte[256];
+        if (TryWriteTags(stackTags, prometheusMetric, metric, metricPoint.Tags, writeEnclosingBraces: false, out var stackTagsLength))
+        {
+            return WriteHistogramMetricPoint(buffer, cursor, prometheusMetric, in metricPoint, openMetricsRequested, stackTags[..stackTagsLength]);
+        }
+#endif
+
+        var serializedTags = RentSerializedTags(prometheusMetric, metric, metricPoint.Tags, out var tagsLength);
+
+        try
+        {
+            return WriteHistogramMetricPoint(buffer, cursor, prometheusMetric, in metricPoint, openMetricsRequested, serializedTags.AsSpan(0, tagsLength));
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(serializedTags);
+        }
+    }
+
+    private static int WriteHistogramMetricPoint(
+        byte[] buffer,
+        int cursor,
+        PrometheusMetric prometheusMetric,
+        in MetricPoint metricPoint,
+        bool openMetricsRequested,
+        ReadOnlySpan<byte> tags)
+    {
+        long totalCount = 0;
+        foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
+        {
+            totalCount += histogramMeasurement.BucketCount;
+
+            cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
+            cursor = WriteAsciiStringNoEscape(buffer, cursor, "_bucket{");
+            cursor = WriteUtf8NoEscape(buffer, cursor, tags);
+
+            cursor = WriteAsciiStringNoEscape(buffer, cursor, "le=\"");
+
+            cursor = histogramMeasurement.ExplicitBound != double.PositiveInfinity
+                ? WriteDouble(buffer, cursor, histogramMeasurement.ExplicitBound)
+                : WriteAsciiStringNoEscape(buffer, cursor, "+Inf");
+
+            cursor = WriteAsciiStringNoEscape(buffer, cursor, "\"} ");
+
+            cursor = WriteLong(buffer, cursor, totalCount);
+
+            buffer[cursor++] = ASCII_LINEFEED;
+        }
+
+        // Histogram sum
+        cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "_sum{");
+        cursor = WriteUtf8NoEscape(buffer, cursor, tags);
+        buffer[cursor - 1] = unchecked((byte)'}');
+        buffer[cursor++] = unchecked((byte)' ');
+        cursor = WriteDouble(buffer, cursor, metricPoint.GetHistogramSum());
+
+        buffer[cursor++] = ASCII_LINEFEED;
+
+        // Histogram count
+        cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "_count{");
+        cursor = WriteUtf8NoEscape(buffer, cursor, tags);
+        buffer[cursor - 1] = unchecked((byte)'}');
+        buffer[cursor++] = unchecked((byte)' ');
+        cursor = WriteLong(buffer, cursor, metricPoint.GetHistogramCount());
+
+        buffer[cursor++] = ASCII_LINEFEED;
+
+        return cursor;
+    }
+
+    private static byte[] RentSerializedTags(PrometheusMetric prometheusMetric, Metric metric, ReadOnlyTagCollection tags, out int tagsLength)
+    {
+        var length = Math.Max(prometheusMetric.SerializedStaticTags?.Length ?? 0, 64) + 128;
+        var buffer = ArrayPool<byte>.Shared.Rent(length);
+
+        while (true)
+        {
+            try
+            {
+                tagsLength = WriteTags(buffer, 0, prometheusMetric, metric, tags, writeEnclosingBraces: false);
+                return buffer;
+            }
+            catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
+                buffer = ArrayPool<byte>.Shared.Rent(checked(buffer.Length * 2));
+            }
+        }
     }
 }
