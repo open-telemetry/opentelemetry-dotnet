@@ -148,7 +148,7 @@ internal static class Program
 
     private static int RunAsChild()
     {
-        var carrier = EnvironmentVariableCarrier.Capture();
+        var carrier = EnvironmentVariableCarrier.CurrentProcess;
         var parentContext = Propagator.Extract(default, carrier, EnvironmentVariableCarrier.Get);
 
         Baggage.Current = parentContext.Baggage;

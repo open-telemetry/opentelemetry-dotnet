@@ -2,9 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Collections;
-#if !NET
 using System.Collections.ObjectModel;
-#endif
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 
@@ -29,26 +27,12 @@ internal
 static class EnvironmentVariableCarrier
 {
     /// <summary>
-    /// Captures a snapshot of the current process environment variables using
-    /// normalized environment variable names.
+    /// Gets a snapshot of the current process' environment variables.
     /// </summary>
-    /// <returns>A read-only snapshot of the current environment variables.</returns>
-    public static IReadOnlyDictionary<string, string?> Capture()
-    {
-        var environmentVariables = Environment.GetEnvironmentVariables();
-        var carrier = new Dictionary<string, string?>(environmentVariables.Count, StringComparer.Ordinal);
-
-        foreach (DictionaryEntry environmentVariable in environmentVariables)
-        {
-            carrier[NormalizeKey(Guard.ThrowIfNotOfType<string>(environmentVariable.Key))] = environmentVariable.Value?.ToString();
-        }
-
-#if NET
-        return carrier.AsReadOnly();
-#else
-        return new ReadOnlyDictionary<string, string?>(carrier);
-#endif
-    }
+    /// <remarks>
+    /// This property is only initialized on the first access by an application.
+    /// </remarks>
+    public static IReadOnlyDictionary<string, string?> CurrentProcess => field ??= CaptureFromCurrentProcess();
 
     /// <summary>
     /// Captures a snapshot of the supplied environment variables using normalized
@@ -153,6 +137,23 @@ static class EnvironmentVariableCarrier
     {
         Guard.ThrowIfNull(key);
         return IsAlreadyNormalized(key) ? key : CreateNormalizedKey(key);
+    }
+
+    internal static ReadOnlyDictionary<string, string?> CaptureFromCurrentProcess()
+    {
+        var environmentVariables = Environment.GetEnvironmentVariables();
+        var carrier = new Dictionary<string, string?>(environmentVariables.Count, StringComparer.Ordinal);
+
+        foreach (DictionaryEntry environmentVariable in environmentVariables)
+        {
+            carrier[NormalizeKey(Guard.ThrowIfNotOfType<string>(environmentVariable.Key))] = environmentVariable.Value?.ToString();
+        }
+
+#if NET
+        return carrier.AsReadOnly();
+#else
+        return new ReadOnlyDictionary<string, string?>(carrier);
+#endif
     }
 
     private static bool IsAlreadyNormalized(string key)

@@ -74,8 +74,8 @@
 [OTEL1001]static OpenTelemetry.Logs.LogRecordSeverityExtensions.ToShortName(this OpenTelemetry.Logs.LogRecordSeverity logRecordSeverity) -> string!
 [OTEL1001]virtual OpenTelemetry.Logs.LoggerProvider.TryCreateLogger(string? name, out OpenTelemetry.Logs.Logger? logger) -> bool
 [OTEL1005]OpenTelemetry.Context.Propagation.EnvironmentVariableCarrier
-[OTEL1005]static OpenTelemetry.Context.Propagation.EnvironmentVariableCarrier.Capture() -> System.Collections.Generic.IReadOnlyDictionary<string!, string?>!
 [OTEL1005]static OpenTelemetry.Context.Propagation.EnvironmentVariableCarrier.Capture(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, string?>>! environmentVariables) -> System.Collections.Generic.IReadOnlyDictionary<string!, string?>!
+[OTEL1005]static OpenTelemetry.Context.Propagation.EnvironmentVariableCarrier.CurrentProcess.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string?>!
 [OTEL1005]static OpenTelemetry.Context.Propagation.EnvironmentVariableCarrier.Get<T>(T carrier, string! key) -> System.Collections.Generic.IEnumerable<string!>?
 [OTEL1005]static OpenTelemetry.Context.Propagation.EnvironmentVariableCarrier.NormalizeKey(string! key) -> string!
 [OTEL1005]static OpenTelemetry.Context.Propagation.EnvironmentVariableCarrier.Set<T>(T carrier, string! key, string! value) -> void

@@ -72,7 +72,7 @@ public class EnvironmentVariableCarrierTests
 
         using (EnvironmentVariableScope.Create(normalizedKey, "value-before"))
         {
-            var snapshot = EnvironmentVariableCarrier.Capture();
+            var snapshot = EnvironmentVariableCarrier.CaptureFromCurrentProcess();
 
             using (EnvironmentVariableScope.Create(normalizedKey, "value-after"))
             {
@@ -199,7 +199,7 @@ public class EnvironmentVariableCarrierTests
 
         using (EnvironmentVariableScope.Create(normalizedKey, "process-value"))
         {
-            var childEnvironment = EnvironmentVariableCarrier.Capture()
+            var childEnvironment = EnvironmentVariableCarrier.CaptureFromCurrentProcess()
                 .ToDictionary((item) => item.Key, (item) => item.Value, StringComparer.Ordinal);
 
             EnvironmentVariableCarrier.Set(childEnvironment, key, "child-value");
