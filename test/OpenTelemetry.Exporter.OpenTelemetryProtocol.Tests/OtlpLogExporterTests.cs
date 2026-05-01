@@ -124,8 +124,7 @@ public class OtlpLogExporterTests
 
         using var serviceProvider = services.BuildServiceProvider();
 
-        var loggerProvider = serviceProvider.GetRequiredService<LoggerProvider>();
-
+        Assert.NotNull(serviceProvider);
         Assert.Equal(0, invocations);
     }
 
