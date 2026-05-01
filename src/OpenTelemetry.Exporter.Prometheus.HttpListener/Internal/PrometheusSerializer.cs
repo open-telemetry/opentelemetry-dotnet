@@ -554,7 +554,6 @@ internal static partial class PrometheusSerializer
         return WriteUnicodeNoEscape(buffer, cursor, 0xFFFD);
     }
 
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int WriteUnixTimeSeconds(byte[] buffer, int cursor, DateTimeOffset value) =>
 #if NET
