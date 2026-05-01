@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Metrics;
+using System.Text;
+using System.Text.RegularExpressions;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 using Xunit;
@@ -288,6 +290,52 @@ public sealed class PrometheusCollectionManagerTests
             {
                 exporter.CollectionManager.ExitCollect();
             }
+        }
+    }
+
+    [Fact]
+    public async Task OpenMetricsScopeInfoIsWrittenAsASingleMetricFamily()
+    {
+        using var meter1 = new Meter("test_meter", "1.0.0");
+        using var meter2 = new Meter("test_meter", "2.0.0", [new("library.mascot", "gopher")], scope: null);
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter1.Name)
+#if PROMETHEUS_HTTP_LISTENER
+            .AddPrometheusHttpListener()
+#elif PROMETHEUS_ASPNETCORE
+            .AddPrometheusExporter()
+#endif
+            .Build();
+
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        Assert.True(provider.TryFindExporter(out PrometheusExporter? exporter));
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        meter1.CreateCounter<int>("counter_1").Add(1);
+        meter2.CreateCounter<int>("counter_2").Add(1);
+
+        var response = await exporter!.CollectionManager.EnterCollect(openMetricsRequested: true);
+        try
+        {
+            var output = Encoding.UTF8.GetString(
+                response.OpenMetricsView.Array!,
+                response.OpenMetricsView.Offset,
+                response.OpenMetricsView.Count);
+
+#if NET
+            Assert.Equal(1, Regex.Count(output, "^# TYPE otel_scope info$", RegexOptions.Multiline));
+            Assert.Equal(1, Regex.Count(output, "^# HELP otel_scope Scope metadata$", RegexOptions.Multiline));
+#else
+            Assert.Single(Regex.Matches(output, "^# TYPE otel_scope info$", RegexOptions.Multiline));
+            Assert.Single(Regex.Matches(output, "^# HELP otel_scope Scope metadata$", RegexOptions.Multiline));
+#endif
+            Assert.Contains("otel_scope_info{otel_scope_name=\"test_meter\",otel_scope_version=\"1.0.0\"} 1", output, StringComparison.Ordinal);
+            Assert.Contains("otel_scope_info{otel_scope_name=\"test_meter\",otel_scope_version=\"2.0.0\",otel_scope_library_mascot=\"gopher\"} 1", output, StringComparison.Ordinal);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect();
         }
     }
 

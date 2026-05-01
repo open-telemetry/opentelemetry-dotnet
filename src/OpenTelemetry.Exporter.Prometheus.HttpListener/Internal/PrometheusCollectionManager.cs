@@ -166,6 +166,29 @@ internal sealed class PrometheusCollectionManager
         return true;
     }
 
+    private static string CreateScopeIdentity(Metric metric)
+    {
+        var builder = new StringBuilder(metric.MeterName);
+
+        builder.Append('\0')
+               .Append(metric.MeterVersion)
+               .Append('\0')
+               .Append(metric.MeterSchemaUrl);
+
+        if (metric.MeterTags != null)
+        {
+            foreach (var tag in metric.MeterTags.OrderBy(static t => t.Key, StringComparer.Ordinal))
+            {
+                builder.Append('\0')
+                       .Append(tag.Key)
+                       .Append('\0')
+                       .Append(tag.Value);
+            }
+        }
+
+        return builder.ToString();
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void EnterGlobalLock()
     {
@@ -224,6 +247,7 @@ internal sealed class PrometheusCollectionManager
                 cursor = this.WriteTargetInfo(ref buffer);
 
                 this.scopes.Clear();
+                var scopeInfoMetadataWritten = false;
 
                 foreach (var metric in metrics)
                 {
@@ -232,13 +256,19 @@ internal sealed class PrometheusCollectionManager
                         continue;
                     }
 
-                    if (this.scopes.Add(metric.MeterName))
+                    if (this.scopes.Add(CreateScopeIdentity(metric)))
                     {
                         while (true)
                         {
                             try
                             {
-                                cursor = PrometheusSerializer.WriteScopeInfo(buffer, cursor, metric.MeterName, openMetricsRequested: true);
+                                if (!scopeInfoMetadataWritten)
+                                {
+                                    cursor = PrometheusSerializer.WriteScopeInfoMetadata(buffer, cursor);
+                                    scopeInfoMetadataWritten = true;
+                                }
+
+                                cursor = PrometheusSerializer.WriteScopeInfoMetric(buffer, cursor, metric);
 
                                 break;
                             }

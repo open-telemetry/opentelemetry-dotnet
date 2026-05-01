@@ -22,6 +22,7 @@ internal static partial class PrometheusSerializer
 #if !NET
     private static readonly DateTimeOffset UnixEpoch = new(1970, 1, 1, 0, 0, 0, TimeSpan.Zero);
 #endif
+    private static readonly HashSet<string> ReservedScopeAttributeNames = ["name", "schema_url", "version"];
 
 #pragma warning disable SA1310 // Field name should not contain an underscore
     private const byte ASCII_QUOTATION_MARK = 0x22; // '"'
@@ -426,23 +427,34 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteScopeInfo(byte[] buffer, int cursor, string scopeName, bool openMetricsRequested)
+    public static int WriteScopeInfo(byte[] buffer, int cursor, Metric metric)
     {
-        if (string.IsNullOrEmpty(scopeName))
+        cursor = WriteScopeInfoMetadata(buffer, cursor);
+        return WriteScopeInfoMetric(buffer, cursor, metric);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int WriteScopeInfoMetadata(byte[] buffer, int cursor)
+    {
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# TYPE otel_scope info");
+        buffer[cursor++] = ASCII_LINEFEED;
+
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# HELP otel_scope Scope metadata");
+        buffer[cursor++] = ASCII_LINEFEED;
+
+        return cursor;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int WriteScopeInfoMetric(byte[] buffer, int cursor, Metric metric)
+    {
+        if (string.IsNullOrEmpty(metric.MeterName))
         {
             return cursor;
         }
 
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# TYPE otel_scope_info info");
-        buffer[cursor++] = ASCII_LINEFEED;
-
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# HELP otel_scope_info Scope metadata");
-        buffer[cursor++] = ASCII_LINEFEED;
-
         cursor = WriteAsciiStringNoEscape(buffer, cursor, "otel_scope_info");
-        buffer[cursor++] = unchecked((byte)'{');
-        cursor = WriteLabel(buffer, cursor, "otel_scope_name", scopeName, openMetricsRequested);
-        buffer[cursor++] = unchecked((byte)'}');
+        cursor = WriteScopeLabels(buffer, cursor, metric, openMetricsRequested: true);
         buffer[cursor++] = unchecked((byte)' ');
         buffer[cursor++] = unchecked((byte)'1');
         buffer[cursor++] = ASCII_LINEFEED;
@@ -464,33 +476,23 @@ internal static partial class PrometheusSerializer
             buffer[cursor++] = unchecked((byte)'{');
         }
 
-        cursor = WriteLabel(buffer, cursor, "otel_scope_name", metric.MeterName, openMetricsRequested);
-        buffer[cursor++] = unchecked((byte)',');
-
-        if (!string.IsNullOrEmpty(metric.MeterVersion))
-        {
-            cursor = WriteLabel(buffer, cursor, "otel_scope_version", metric.MeterVersion, openMetricsRequested);
-            buffer[cursor++] = unchecked((byte)',');
-        }
-
-        if (metric.MeterTags != null)
-        {
-            foreach (var tag in metric.MeterTags)
-            {
-                cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value, openMetricsRequested);
-                buffer[cursor++] = unchecked((byte)',');
-            }
-        }
+        var wroteLabel = false;
+        cursor = WriteScopeLabels(buffer, cursor, metric, openMetricsRequested, ref wroteLabel);
 
         foreach (var tag in tags)
         {
+            if (wroteLabel)
+            {
+                buffer[cursor++] = unchecked((byte)',');
+            }
+
             cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value, openMetricsRequested);
-            buffer[cursor++] = unchecked((byte)',');
+            wroteLabel = true;
         }
 
         if (writeEnclosingBraces)
         {
-            buffer[cursor - 1] = unchecked((byte)'}'); // Note: We write the '}' over the last written comma, which is extra.
+            buffer[cursor++] = unchecked((byte)'}');
         }
 
         return cursor;
@@ -567,6 +569,58 @@ internal static partial class PrometheusSerializer
             buffer[cursor++] = unchecked((byte)ch);
             lastCharUnderscore = ch == '_';
         }
+
+        return cursor;
+    }
+
+    private static int WriteScopeLabels(byte[] buffer, int cursor, Metric metric, bool openMetricsRequested)
+    {
+        buffer[cursor++] = unchecked((byte)'{');
+        var wroteLabel = false;
+
+        cursor = WriteScopeLabels(buffer, cursor, metric, openMetricsRequested, ref wroteLabel);
+
+        buffer[cursor++] = unchecked((byte)'}');
+        return cursor;
+    }
+
+    private static int WriteScopeLabels(byte[] buffer, int cursor, Metric metric, bool openMetricsRequested, ref bool wroteLabel)
+    {
+        cursor = WriteScopeLabel(buffer, cursor, "otel_scope_name", metric.MeterName, openMetricsRequested, ref wroteLabel);
+
+        if (!string.IsNullOrEmpty(metric.MeterVersion))
+        {
+            cursor = WriteScopeLabel(buffer, cursor, "otel_scope_version", metric.MeterVersion, openMetricsRequested, ref wroteLabel);
+        }
+
+        if (!string.IsNullOrEmpty(metric.MeterSchemaUrl))
+        {
+            cursor = WriteScopeLabel(buffer, cursor, "otel_scope_schema_url", metric.MeterSchemaUrl, openMetricsRequested, ref wroteLabel);
+        }
+
+        if (metric.MeterTags != null)
+        {
+            foreach (var tag in metric.MeterTags)
+            {
+                if (!ReservedScopeAttributeNames.Contains(tag.Key))
+                {
+                    cursor = WriteScopeLabel(buffer, cursor, $"otel_scope_{tag.Key}", tag.Value, openMetricsRequested, ref wroteLabel);
+                }
+            }
+        }
+
+        return cursor;
+    }
+
+    private static int WriteScopeLabel(byte[] buffer, int cursor, string key, object? value, bool openMetricsRequested, ref bool wroteLabel)
+    {
+        if (wroteLabel)
+        {
+            buffer[cursor++] = unchecked((byte)',');
+        }
+
+        cursor = WriteLabel(buffer, cursor, key, value, openMetricsRequested);
+        wroteLabel = true;
 
         return cursor;
     }
