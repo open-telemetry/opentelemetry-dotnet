@@ -21,6 +21,8 @@ internal static partial class PrometheusSerializer
     private const byte ASCII_LINEFEED = 0x0A; // `\n`
 #pragma warning restore SA1310 // Field name should not contain an underscore
 
+    private static readonly HashSet<string> ReservedScopeAttributeNames = ["name", "schema_url", "version"];
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteDouble(byte[] buffer, int cursor, double value)
     {
@@ -371,23 +373,34 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteScopeInfo(byte[] buffer, int cursor, string scopeName)
+    public static int WriteScopeInfo(byte[] buffer, int cursor, Metric metric)
     {
-        if (string.IsNullOrEmpty(scopeName))
+        cursor = WriteScopeInfoMetadata(buffer, cursor);
+        return WriteScopeInfoMetric(buffer, cursor, metric);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int WriteScopeInfoMetadata(byte[] buffer, int cursor)
+    {
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# TYPE otel_scope info");
+        buffer[cursor++] = ASCII_LINEFEED;
+
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# HELP otel_scope Scope metadata");
+        buffer[cursor++] = ASCII_LINEFEED;
+
+        return cursor;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int WriteScopeInfoMetric(byte[] buffer, int cursor, Metric metric)
+    {
+        if (string.IsNullOrEmpty(metric.MeterName))
         {
             return cursor;
         }
 
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# TYPE otel_scope_info info");
-        buffer[cursor++] = ASCII_LINEFEED;
-
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# HELP otel_scope_info Scope metadata");
-        buffer[cursor++] = ASCII_LINEFEED;
-
         cursor = WriteAsciiStringNoEscape(buffer, cursor, "otel_scope_info");
-        buffer[cursor++] = unchecked((byte)'{');
-        cursor = WriteLabel(buffer, cursor, "otel_scope_name", scopeName);
-        buffer[cursor++] = unchecked((byte)'}');
+        cursor = WriteScopeLabels(buffer, cursor, metric);
         buffer[cursor++] = unchecked((byte)' ');
         buffer[cursor++] = unchecked((byte)'1');
         buffer[cursor++] = ASCII_LINEFEED;
@@ -403,33 +416,23 @@ internal static partial class PrometheusSerializer
             buffer[cursor++] = unchecked((byte)'{');
         }
 
-        cursor = WriteLabel(buffer, cursor, "otel_scope_name", metric.MeterName);
-        buffer[cursor++] = unchecked((byte)',');
-
-        if (!string.IsNullOrEmpty(metric.MeterVersion))
-        {
-            cursor = WriteLabel(buffer, cursor, "otel_scope_version", metric.MeterVersion);
-            buffer[cursor++] = unchecked((byte)',');
-        }
-
-        if (metric.MeterTags != null)
-        {
-            foreach (var tag in metric.MeterTags)
-            {
-                cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
-                buffer[cursor++] = unchecked((byte)',');
-            }
-        }
+        var wroteLabel = false;
+        cursor = WriteScopeLabels(buffer, cursor, metric, ref wroteLabel);
 
         foreach (var tag in tags)
         {
+            if (wroteLabel)
+            {
+                buffer[cursor++] = unchecked((byte)',');
+            }
+
             cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
-            buffer[cursor++] = unchecked((byte)',');
+            wroteLabel = true;
         }
 
         if (writeEnclosingBraces)
         {
-            buffer[cursor - 1] = unchecked((byte)'}'); // Note: We write the '}' over the last written comma, which is extra.
+            buffer[cursor++] = unchecked((byte)'}');
         }
 
         return cursor;
@@ -465,6 +468,58 @@ internal static partial class PrometheusSerializer
         buffer[cursor++] = unchecked((byte)' ');
         buffer[cursor++] = unchecked((byte)'1');
         buffer[cursor++] = ASCII_LINEFEED;
+
+        return cursor;
+    }
+
+    private static int WriteScopeLabels(byte[] buffer, int cursor, Metric metric)
+    {
+        buffer[cursor++] = unchecked((byte)'{');
+        var wroteLabel = false;
+
+        cursor = WriteScopeLabels(buffer, cursor, metric, ref wroteLabel);
+
+        buffer[cursor++] = unchecked((byte)'}');
+        return cursor;
+    }
+
+    private static int WriteScopeLabels(byte[] buffer, int cursor, Metric metric, ref bool wroteLabel)
+    {
+        cursor = WriteScopeLabel(buffer, cursor, "otel_scope_name", metric.MeterName, ref wroteLabel);
+
+        if (!string.IsNullOrEmpty(metric.MeterVersion))
+        {
+            cursor = WriteScopeLabel(buffer, cursor, "otel_scope_version", metric.MeterVersion, ref wroteLabel);
+        }
+
+        if (!string.IsNullOrEmpty(metric.MeterSchemaUrl))
+        {
+            cursor = WriteScopeLabel(buffer, cursor, "otel_scope_schema_url", metric.MeterSchemaUrl, ref wroteLabel);
+        }
+
+        if (metric.MeterTags != null)
+        {
+            foreach (var tag in metric.MeterTags)
+            {
+                if (!ReservedScopeAttributeNames.Contains(tag.Key))
+                {
+                    cursor = WriteScopeLabel(buffer, cursor, $"otel_scope_{tag.Key}", tag.Value, ref wroteLabel);
+                }
+            }
+        }
+
+        return cursor;
+    }
+
+    private static int WriteScopeLabel(byte[] buffer, int cursor, string key, object? value, ref bool wroteLabel)
+    {
+        if (wroteLabel)
+        {
+            buffer[cursor++] = unchecked((byte)',');
+        }
+
+        cursor = WriteLabel(buffer, cursor, key, value);
+        wroteLabel = true;
 
         return cursor;
     }

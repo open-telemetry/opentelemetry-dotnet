@@ -71,6 +71,7 @@ internal static partial class PrometheusSerializer
                     cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "_bucket{");
                     cursor = WriteTags(buffer, cursor, metric, tags, writeEnclosingBraces: false);
+                    buffer[cursor++] = unchecked((byte)',');
 
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "le=\"");
 
