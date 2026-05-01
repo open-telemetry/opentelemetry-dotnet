@@ -43,6 +43,17 @@ Notes](../../RELEASENOTES.md).
   selected correctly by considering whitespace and `q` weights.
   ([#7208](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7208))
 
+* Emit OpenMetrics scope metadata as a single `otel_scope` metric family with
+  `otel_scope_info` samples instead of repeating metadata for every scope.
+  ([#7237](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7237))
+
+* Include instrumentation scope metadata on samples using `otel_scope_*` labels
+  including scope version, schema URL, and prefixed scope attributes.
+  ([#7237](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7237))
+
+* Drop conflicting scope attributes named `name`, `version`, and `schema_url`.
+  ([#7237](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7237))
+
 ## 1.15.3-beta.1
 
 Released 2026-Apr-21
