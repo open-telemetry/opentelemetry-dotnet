@@ -10,6 +10,7 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Context.Propagation;
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
 /// A class containing helper methods for using environment variables as context propagation carriers.
 /// </summary>
@@ -20,7 +21,12 @@ namespace OpenTelemetry.Context.Propagation;
 /// non-underscore characters with underscores, prefixing an underscore when
 /// a normalized key would otherwise start with a digit.
 /// </remarks>
-public static class EnvironmentVariableCarrier
+[System.Diagnostics.CodeAnalysis.Experimental(DiagnosticDefinitions.EnvironmentVariableContextPropagationExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+public
+#else
+internal
+#endif
+static class EnvironmentVariableCarrier
 {
     /// <summary>
     /// Captures a snapshot of the current process environment variables using

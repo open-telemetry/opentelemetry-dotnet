@@ -1,6 +1,0 @@
-OpenTelemetry.Context.Propagation.EnvironmentVariableCarrier
-static OpenTelemetry.Context.Propagation.EnvironmentVariableCarrier.Capture() -> System.Collections.Generic.IReadOnlyDictionary<string!, string?>!
-static OpenTelemetry.Context.Propagation.EnvironmentVariableCarrier.Capture(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, string?>>! environmentVariables) -> System.Collections.Generic.IReadOnlyDictionary<string!, string?>!
-static OpenTelemetry.Context.Propagation.EnvironmentVariableCarrier.Get<T>(T carrier, string! key) -> System.Collections.Generic.IEnumerable<string!>?
-static OpenTelemetry.Context.Propagation.EnvironmentVariableCarrier.NormalizeKey(string! key) -> string!
-static OpenTelemetry.Context.Propagation.EnvironmentVariableCarrier.Set<T>(T carrier, string! key, string! value) -> void
