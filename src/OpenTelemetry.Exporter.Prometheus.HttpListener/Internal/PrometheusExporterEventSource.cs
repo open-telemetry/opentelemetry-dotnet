@@ -64,4 +64,22 @@ internal sealed class PrometheusExporterEventSource : EventSource
     {
         this.WriteEvent(4);
     }
+
+    [Event(5, Message = "Dropping metric family '{0}' due to conflicting TYPE metadata '{1}' and '{2}'.", Level = EventLevel.Warning)]
+    public void ConflictingType(string metricName, string firstType, string conflictingType)
+    {
+        this.WriteEvent(5, metricName, firstType, conflictingType);
+    }
+
+    [Event(6, Message = "Dropping duplicate HELP metadata for metric family '{0}' because values '{1}' and '{2}' conflict.", Level = EventLevel.Warning)]
+    public void ConflictingHelp(string metricName, string firstHelp, string conflictingHelp)
+    {
+        this.WriteEvent(6, metricName, firstHelp, conflictingHelp);
+    }
+
+    [Event(7, Message = "Dropping duplicate UNIT metadata for metric family '{0}' because values '{1}' and '{2}' conflict.", Level = EventLevel.Warning)]
+    public void ConflictingUnit(string metricName, string firstUnit, string conflictingUnit)
+    {
+        this.WriteEvent(7, metricName, firstUnit, conflictingUnit);
+    }
 }
