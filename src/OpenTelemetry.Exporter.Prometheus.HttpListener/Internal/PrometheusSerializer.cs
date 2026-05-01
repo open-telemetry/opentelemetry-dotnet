@@ -19,6 +19,10 @@ namespace OpenTelemetry.Exporter.Prometheus;
 /// </summary>
 internal static partial class PrometheusSerializer
 {
+#if !NET
+    private static readonly DateTimeOffset UnixEpoch = new(1970, 1, 1, 0, 0, 0, TimeSpan.Zero);
+#endif
+
 #pragma warning disable SA1310 // Field name should not contain an underscore
     private const byte ASCII_QUOTATION_MARK = 0x22; // '"'
     private const byte ASCII_REVERSE_SOLIDUS = 0x5C; // '\\'
@@ -589,8 +593,12 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int WriteUnixTimeSeconds(byte[] buffer, int cursor, DateTimeOffset value)
-        => WriteDouble(buffer, cursor, value.ToUnixTimeMilliseconds() / 1000.0);
+    private static int WriteUnixTimeSeconds(byte[] buffer, int cursor, DateTimeOffset value) =>
+#if NET
+        WriteDouble(buffer, cursor, (value.UtcDateTime.Ticks - DateTimeOffset.UnixEpoch.Ticks) / (double)TimeSpan.TicksPerSecond);
+#else
+        WriteDouble(buffer, cursor, (value.UtcDateTime.Ticks - UnixEpoch.Ticks) / (double)TimeSpan.TicksPerSecond);
+#endif
 
     private static string MapPrometheusType(PrometheusType type, bool openMetricsRequested) => type switch
     {
