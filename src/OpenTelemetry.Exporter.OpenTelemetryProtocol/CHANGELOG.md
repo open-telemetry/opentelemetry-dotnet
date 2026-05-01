@@ -22,7 +22,7 @@ Notes](../../RELEASENOTES.md).
 * Reverts `OtlpLogExporter` from using `IHttpClientFactory` on .NET 8+ to fix
   an issue with circular dependencies detected by some dependency injection
   container implementations such as Autofac.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7234](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7234))
 
 ## 1.15.3
 
