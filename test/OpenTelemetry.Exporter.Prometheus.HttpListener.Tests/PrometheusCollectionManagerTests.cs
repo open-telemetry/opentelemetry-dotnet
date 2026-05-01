@@ -339,6 +339,50 @@ public sealed class PrometheusCollectionManagerTests
         }
     }
 
+    [Fact]
+    public async Task OpenMetricsScopeInfoIsDeduplicatedUsingSerializedScopeLabels()
+    {
+        using var meter1 = new Meter("test_meter", "1.0.0", [new("library.mascot", true)], scope: null);
+        using var meter2 = new Meter("test_meter", "1.0.0", [new("library.mascot", "true")], scope: null);
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter1.Name)
+#if PROMETHEUS_HTTP_LISTENER
+            .AddPrometheusHttpListener()
+#elif PROMETHEUS_ASPNETCORE
+            .AddPrometheusExporter()
+#endif
+            .Build();
+
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        Assert.True(provider.TryFindExporter(out PrometheusExporter? exporter));
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        meter1.CreateCounter<int>("counter_1").Add(1);
+        meter2.CreateCounter<int>("counter_2").Add(1);
+
+        var response = await exporter!.CollectionManager.EnterCollect(openMetricsRequested: true);
+        try
+        {
+            var output = Encoding.UTF8.GetString(
+                response.OpenMetricsView.Array!,
+                response.OpenMetricsView.Offset,
+                response.OpenMetricsView.Count);
+
+#if NET
+            Assert.Equal(1, Regex.Count(output, "^otel_scope_info\\{otel_scope_name=\"test_meter\",otel_scope_version=\"1.0.0\",otel_scope_library_mascot=\"true\"\\} 1$", RegexOptions.Multiline));
+#else
+            Assert.Single(Regex.Matches(output, "^otel_scope_info\\{otel_scope_name=\"test_meter\",otel_scope_version=\"1.0.0\",otel_scope_library_mascot=\"true\"\\} 1$", RegexOptions.Multiline));
+#endif
+            Assert.Contains("counter_1_total{otel_scope_name=\"test_meter\",otel_scope_version=\"1.0.0\",otel_scope_library_mascot=\"true\"} 1", output, StringComparison.Ordinal);
+            Assert.Contains("counter_2_total{otel_scope_name=\"test_meter\",otel_scope_version=\"1.0.0\",otel_scope_library_mascot=\"true\"} 1", output, StringComparison.Ordinal);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect();
+        }
+    }
+
 #if PROMETHEUS_HTTP_LISTENER
     private static MeterProvider CreateMeterProviderWithRandomPort(Meter meter)
     {
