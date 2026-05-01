@@ -91,6 +91,9 @@ Notes](../../RELEASENOTES.md).
 * Add Prometheus text fallback `target_info` output as a gauge.
   ([#7238](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7238))
 
+* Merge colliding sanitized label keys.
+  ([#7239](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7239))
+
 ## 1.15.3-beta.1
 
 Released 2026-Apr-21
