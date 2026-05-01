@@ -798,6 +798,37 @@ public sealed class PrometheusSerializerTests
     }
 
     [Fact]
+    public void WriteMetricConcatenatesCollidingSanitizedLabelValuesInLexicographicOrder()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter("test_meter");
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        meter.CreateObservableGauge<long>(
+            "test_gauge",
+            () =>
+            [
+                new Measurement<long>(
+                    123,
+                    new("foo.bar", "dot"),
+                    new("foo-bar", "hyphen"),
+                    new("foo_bar", "underscore")),
+            ]);
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0]);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        Assert.Contains("foo_bar=\"hyphen;dot;underscore\"", output, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void WriteAsciiStringNoEscapeWritesAsciiBytes()
     {
         var value = "metric_name_total";
