@@ -839,9 +839,12 @@ public sealed class PrometheusSerializerTests
         provider.ForceFlush();
 
         var cursor = WriteMetric(buffer, 0, metrics[0]);
-        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
-
-        Assert.Contains("foo_bar=\"hyphen;dot;underscore\"", output, StringComparison.Ordinal);
+        Assert.Matches(
+            ("^"
+             + "# TYPE test_gauge gauge\n"
+             + "test_gauge{otel_scope_name='test_meter',foo_bar='hyphen;dot;underscore'} 123\n"
+             + "$").Replace('\'', '"'),
+            Encoding.UTF8.GetString(buffer, 0, cursor));
     }
 
     [Fact]

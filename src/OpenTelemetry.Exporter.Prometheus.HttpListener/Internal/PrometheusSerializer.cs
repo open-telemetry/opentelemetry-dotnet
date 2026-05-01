@@ -158,17 +158,7 @@ internal static partial class PrometheusSerializer
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteLabelKey(byte[] buffer, int cursor, string value, bool openMetricsRequested)
-    {
-        if (string.IsNullOrEmpty(value))
-        {
-            buffer[cursor++] = unchecked((byte)'_');
-            return cursor;
-        }
-
-        return openMetricsRequested ?
-               WriteOpenMetricsLabelKey(buffer, cursor, value) :
-               WritePrometheusLabelKey(buffer, cursor, value);
-    }
+        => WriteSanitizedLabelKey(buffer, cursor, value, openMetricsRequested, builder: null);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteLabelValue(byte[] buffer, int cursor, string value)
@@ -427,6 +417,33 @@ internal static partial class PrometheusSerializer
         bool openMetricsRequested,
         bool writeEnclosingBraces = true)
     {
+        var startCursor = cursor;
+        List<string>? writtenOutputKeys = null;
+        var wroteLabel = false;
+
+        if (writeEnclosingBraces)
+        {
+            buffer[cursor++] = unchecked((byte)'{');
+        }
+
+        if (TryWriteLabel("otel_scope_name", metric.MeterName) &&
+            (string.IsNullOrEmpty(metric.MeterVersion) || TryWriteLabel("otel_scope_version", metric.MeterVersion)) &&
+            TryWriteMetricTags() &&
+            TryWritePointTags())
+        {
+            if (writeEnclosingBraces)
+            {
+                buffer[cursor++] = unchecked((byte)'}');
+            }
+            else if (wroteLabel)
+            {
+                buffer[cursor++] = unchecked((byte)',');
+            }
+
+            return cursor;
+        }
+
+        cursor = startCursor;
         List<LabelData>? labels = null;
         AddScopeLabels(metric, openMetricsRequested, ref labels);
 
@@ -436,6 +453,58 @@ internal static partial class PrometheusSerializer
         }
 
         return WriteLabels(buffer, cursor, labels, openMetricsRequested, writeEnclosingBraces);
+
+        bool TryWriteMetricTags()
+        {
+            if (metric.MeterTags != null)
+            {
+                foreach (var tag in metric.MeterTags)
+                {
+                    if (!TryWriteLabel(tag.Key, tag.Value))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        bool TryWritePointTags()
+        {
+            foreach (var tag in tags)
+            {
+                if (!TryWriteLabel(tag.Key, tag.Value))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        bool TryWriteLabel(string key, object? value)
+        {
+            var outputKey = GetSanitizedLabelKey(key, openMetricsRequested);
+
+            if (writtenOutputKeys?.Contains(outputKey) == true)
+            {
+                return false;
+            }
+
+            writtenOutputKeys ??= [];
+            writtenOutputKeys.Add(outputKey);
+
+            if (wroteLabel)
+            {
+                buffer[cursor++] = unchecked((byte)',');
+            }
+
+            cursor = WriteLabel(buffer, cursor, key, value, openMetricsRequested);
+            wroteLabel = true;
+
+            return true;
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -618,17 +687,23 @@ internal static partial class PrometheusSerializer
 
     private static string GetSanitizedLabelKey(string value, bool openMetricsRequested)
     {
+        var builder = new StringBuilder(value.Length + 1);
+        _ = WriteSanitizedLabelKey(null, 0, value, openMetricsRequested, builder);
+        return builder.ToString();
+    }
+
+    private static int WriteSanitizedLabelKey(byte[]? buffer, int cursor, string value, bool openMetricsRequested, StringBuilder? builder)
+    {
         if (string.IsNullOrEmpty(value))
         {
-            return "_";
+            return AppendSanitizedLabelKeyCharacter(buffer, cursor, builder, '_');
         }
 
-        var builder = new StringBuilder(value.Length + 1);
         var lastCharUnderscore = false;
 
         if (char.IsAsciiDigit(value[0]))
         {
-            builder.Append('_');
+            cursor = AppendSanitizedLabelKeyCharacter(buffer, cursor, builder, '_');
             lastCharUnderscore = true;
         }
 
@@ -640,18 +715,33 @@ internal static partial class PrometheusSerializer
             {
                 if (!lastCharUnderscore)
                 {
-                    builder.Append('_');
+                    cursor = AppendSanitizedLabelKeyCharacter(buffer, cursor, builder, '_');
                     lastCharUnderscore = true;
                 }
 
                 continue;
             }
 
-            builder.Append(ch);
+            cursor = AppendSanitizedLabelKeyCharacter(buffer, cursor, builder, ch);
             lastCharUnderscore = ch == '_';
         }
 
-        return builder.ToString();
+        return cursor;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int AppendSanitizedLabelKeyCharacter(byte[]? buffer, int cursor, StringBuilder? builder, char value)
+    {
+        if (buffer != null)
+        {
+            buffer[cursor++] = unchecked((byte)value);
+        }
+        else
+        {
+            builder!.Append(value);
+        }
+
+        return cursor;
     }
 
     private static void AddLabel(string originalKey, object? value, bool openMetricsRequested, ref List<LabelData>? labels)
