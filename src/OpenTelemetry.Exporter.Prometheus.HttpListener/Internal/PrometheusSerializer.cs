@@ -404,9 +404,9 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteUnitMetadata(byte[] buffer, int cursor, PrometheusMetric metric, bool openMetricsRequested)
+    public static int WriteUnitMetadata(byte[] buffer, int cursor, PrometheusMetric metric, string? unit, bool openMetricsRequested)
     {
-        if (string.IsNullOrEmpty(metric.Unit))
+        if (string.IsNullOrEmpty(unit))
         {
             return cursor;
         }
@@ -418,10 +418,10 @@ internal static partial class PrometheusSerializer
 
         // Unit name has already been escaped.
 #pragma warning disable IDE0370 // Remove unnecessary suppression
-        for (var i = 0; i < metric.Unit!.Length; i++)
+        for (var i = 0; i < unit!.Length; i++)
 #pragma warning restore IDE0370 // Remove unnecessary suppression
         {
-            var ordinal = (ushort)metric.Unit[i];
+            var ordinal = (ushort)unit[i];
             buffer[cursor++] = unchecked((byte)ordinal);
         }
 

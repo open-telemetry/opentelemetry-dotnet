@@ -336,6 +336,56 @@ public sealed class PrometheusCollectionManagerTests
     }
 
     [Fact]
+    public async Task MetricMetadataDiscoveredLaterIsWrittenBeforeSamples()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+#if PROMETHEUS_HTTP_LISTENER
+            .AddPrometheusHttpListener()
+#elif PROMETHEUS_ASPNETCORE
+            .AddPrometheusExporter()
+#endif
+            .Build();
+
+#pragma warning disable CA2000
+        Assert.True(provider.TryFindExporter(out PrometheusExporter? exporter));
+#pragma warning restore CA2000
+
+        var counter1 = meter.CreateCounter<int>("test.metric");
+        var counter2 = meter.CreateCounter<int>("test-metric", description: "Test help");
+
+        counter1.Add(1, [new("source", "a")]);
+        counter2.Add(2, [new("source", "b")]);
+
+        var response = await exporter!.CollectionManager.EnterCollect(openMetricsRequested: false);
+        try
+        {
+            var view = response.PlainTextView;
+            var output = Encoding.UTF8.GetString(view.Array!, view.Offset, view.Count);
+
+            var typeIndex = output.IndexOf("# TYPE test_metric_total counter", StringComparison.Ordinal);
+            var helpIndex = output.IndexOf("# HELP test_metric_total Test help", StringComparison.Ordinal);
+            var sampleAIndex = output.IndexOf("test_metric_total{otel_scope_name=\"" + meter.Name + "\",source=\"a\"} 1", StringComparison.Ordinal);
+            var sampleBIndex = output.IndexOf("test_metric_total{otel_scope_name=\"" + meter.Name + "\",source=\"b\"} 2", StringComparison.Ordinal);
+
+            Assert.True(typeIndex >= 0, "No TYPE found.");
+            Assert.True(helpIndex >= 0, "No HELP found.");
+            Assert.True(sampleAIndex >= 0, "No sample A found.");
+            Assert.True(sampleBIndex >= 0, "No sample B found.");
+            Assert.True(typeIndex < sampleAIndex, "TYPE appears after sample A.");
+            Assert.True(typeIndex < sampleBIndex, "TYPE appears after sample B.");
+            Assert.True(helpIndex < sampleAIndex, "HELP appears after sample A.");
+            Assert.True(helpIndex < sampleBIndex, "HELP appears after sample B.");
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect();
+        }
+    }
+
+    [Fact]
     public async Task ConflictingMetricTypesAreDroppedFromAScrape()
     {
         using var meter = new Meter(Utils.GetCurrentMethodName());

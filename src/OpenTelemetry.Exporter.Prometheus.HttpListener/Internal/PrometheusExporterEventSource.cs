@@ -41,6 +41,15 @@ internal sealed class PrometheusExporterEventSource : EventSource
         }
     }
 
+    [NonEvent]
+    public void ConflictingType(string metricName, PrometheusType firstType, PrometheusType conflictingType)
+    {
+        if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+        {
+            this.ConflictingType(metricName, firstType.ToString(), conflictingType.ToString());
+        }
+    }
+
     [Event(1, Message = "Failed to export metrics: '{0}'", Level = EventLevel.Error)]
     public void FailedExport(string exception)
     {
