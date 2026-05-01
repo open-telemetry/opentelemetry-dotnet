@@ -275,7 +275,7 @@ internal sealed class PooledBufferStream : Stream
 
             if (rented is { Length: > 0 })
             {
-                this.pool.Return(rented);
+                this.pool.Return(rented, clearArray: true);
             }
         }
 
@@ -364,7 +364,7 @@ internal sealed class PooledBufferStream : Stream
         }
 
         this.buffer = replacement;
-        this.pool.Return(previous);
+        this.pool.Return(previous, clearArray: true);
     }
 
     private void ThrowIfDisposed()

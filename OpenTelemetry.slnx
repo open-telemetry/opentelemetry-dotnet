@@ -156,6 +156,7 @@
     <File Path="src/Shared/SemanticConventions.cs" />
     <File Path="src/Shared/SpanAttributeConstants.cs" />
     <File Path="src/Shared/StatusHelper.cs" />
+    <File Path="src/Shared/StopwatchExtensions.cs" />
     <File Path="src/Shared/ThreadSafeRandom.cs" />
   </Folder>
   <Folder Name="/Shared/Configuration/">

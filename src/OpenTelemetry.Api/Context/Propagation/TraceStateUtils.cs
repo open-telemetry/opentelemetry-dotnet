@@ -220,11 +220,7 @@ internal static class TraceStateUtils
                 break;
             }
 
-            if (!(char.IsAsciiLetterLower(c) || char.IsAsciiDigit(c)) &&
-                c is not '_'
-                and not '-'
-                and not '*'
-                and not '/')
+            if (!IsValidCharacter(c))
             {
                 return false;
             }
@@ -245,11 +241,7 @@ internal static class TraceStateUtils
             {
                 var c = key[i];
 
-                if (!(char.IsAsciiLetterLower(c) || char.IsAsciiDigit(c)) &&
-                    c is not '_'
-                    and not '-'
-                    and not '*'
-                    and not '/')
+                if (!IsValidCharacter(c))
                 {
                     return false;
                 }
@@ -260,6 +252,11 @@ internal static class TraceStateUtils
 
         // vendor name should be at least 1 to 14 character long
         return false;
+
+        static bool IsValidCharacter(char c)
+        {
+            return char.IsAsciiLetterLower(c) || char.IsAsciiDigit(c) || c is '_' or '-' or '*' or '/';
+        }
     }
 
     private static bool ValidateValue(ReadOnlySpan<char> value)
