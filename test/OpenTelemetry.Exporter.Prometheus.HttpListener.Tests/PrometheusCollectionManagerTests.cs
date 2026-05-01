@@ -383,6 +383,86 @@ public sealed class PrometheusCollectionManagerTests
         }
     }
 
+    [Fact]
+    public async Task DuplicateMetricMetadataIsWrittenOncePerScrape()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+#if PROMETHEUS_HTTP_LISTENER
+            .AddPrometheusHttpListener()
+#elif PROMETHEUS_ASPNETCORE
+            .AddPrometheusExporter()
+#endif
+            .Build();
+
+#pragma warning disable CA2000
+        Assert.True(provider.TryFindExporter(out PrometheusExporter? exporter));
+#pragma warning restore CA2000
+
+        var counter1 = meter.CreateCounter<int>("test.metric", unit: "By", description: "Test help");
+        var counter2 = meter.CreateCounter<int>("test-metric", unit: "By", description: "Test help");
+
+        counter1.Add(1, [new("source", "a")]);
+        counter2.Add(2, [new("source", "b")]);
+
+        var response = await exporter!.CollectionManager.EnterCollect(openMetricsRequested: false);
+        try
+        {
+            var view = response.PlainTextView;
+            var output = Encoding.UTF8.GetString(view.Array!, view.Offset, view.Count);
+
+            Assert.Single(Regex.Matches(output, "^# TYPE test_metric_bytes_total counter$", RegexOptions.Multiline).Cast<Match>());
+            Assert.Single(Regex.Matches(output, "^# UNIT test_metric_bytes_total bytes$", RegexOptions.Multiline).Cast<Match>());
+            Assert.Single(Regex.Matches(output, "^# HELP test_metric_bytes_total Test help$", RegexOptions.Multiline).Cast<Match>());
+            Assert.Contains("test_metric_bytes_total{otel_scope_name=\"" + meter.Name + "\",source=\"a\"} 1", output, StringComparison.Ordinal);
+            Assert.Contains("test_metric_bytes_total{otel_scope_name=\"" + meter.Name + "\",source=\"b\"} 2", output, StringComparison.Ordinal);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect();
+        }
+    }
+
+    [Fact]
+    public async Task ConflictingMetricTypesAreDroppedFromAScrape()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+#if PROMETHEUS_HTTP_LISTENER
+            .AddPrometheusHttpListener()
+#elif PROMETHEUS_ASPNETCORE
+            .AddPrometheusExporter()
+#endif
+            .Build();
+
+#pragma warning disable CA2000
+        Assert.True(provider.TryFindExporter(out PrometheusExporter? exporter));
+#pragma warning restore CA2000
+
+        var counter = meter.CreateCounter<int>("test.metric");
+        meter.CreateObservableGauge("test-metric", () => 1);
+        counter.Add(1);
+
+        var response = await exporter!.CollectionManager.EnterCollect(openMetricsRequested: true);
+        try
+        {
+            var view = response.OpenMetricsView;
+            var output = Encoding.UTF8.GetString(view.Array!, view.Offset, view.Count);
+
+            Assert.DoesNotContain("# TYPE test_metric", output, StringComparison.Ordinal);
+            Assert.DoesNotContain("test_metric_total", output, StringComparison.Ordinal);
+            Assert.Contains("# EOF", output, StringComparison.Ordinal);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect();
+        }
+    }
+
 #if PROMETHEUS_HTTP_LISTENER
     private static MeterProvider CreateMeterProviderWithRandomPort(Meter meter)
     {
