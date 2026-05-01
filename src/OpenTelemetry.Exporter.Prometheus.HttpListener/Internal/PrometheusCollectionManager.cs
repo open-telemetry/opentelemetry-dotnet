@@ -166,29 +166,6 @@ internal sealed class PrometheusCollectionManager
         return true;
     }
 
-    private static string CreateScopeIdentity(Metric metric)
-    {
-        var builder = new StringBuilder(metric.MeterName);
-
-        builder.Append('\0')
-               .Append(metric.MeterVersion)
-               .Append('\0')
-               .Append(metric.MeterSchemaUrl);
-
-        if (metric.MeterTags != null)
-        {
-            foreach (var tag in metric.MeterTags.OrderBy(static t => t.Key, StringComparer.Ordinal))
-            {
-                builder.Append('\0')
-                       .Append(tag.Key)
-                       .Append('\0')
-                       .Append(tag.Value);
-            }
-        }
-
-        return builder.ToString();
-    }
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void EnterGlobalLock()
     {
@@ -256,7 +233,7 @@ internal sealed class PrometheusCollectionManager
                         continue;
                     }
 
-                    if (this.scopes.Add(CreateScopeIdentity(metric)))
+                    if (this.scopes.Add(PrometheusSerializer.CreateScopeIdentity(metric)))
                     {
                         while (true)
                         {

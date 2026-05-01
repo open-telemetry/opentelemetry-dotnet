@@ -999,6 +999,44 @@ public sealed class PrometheusSerializerTests
         Assert.DoesNotContain("otel_scope_schema_url=\"ignored-schema\"", output, StringComparison.Ordinal);
     }
 
+#if NET
+    [Fact]
+    public void WriteMetricDropsScopeAttributesWhoseNormalizedNamesConflictWithGeneratedScopeLabels()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter(
+            new MeterOptions("test_meter")
+            {
+                Version = "1.0.0",
+                TelemetrySchemaUrl = "https://opentelemetry.io/schemas/1.0.0",
+                Tags =
+                [
+                    new("library.mascot", "dotnetbot"),
+                    new("schema-url", "ignored-schema"),
+                ],
+            });
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        meter.CreateObservableGauge<long>(
+            "test_gauge",
+            () => [new Measurement<long>(123, new KeyValuePair<string, object?>("metric_tag", "value"))]);
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0]);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        Assert.Contains("otel_scope_schema_url=\"https://opentelemetry.io/schemas/1.0.0\"", output, StringComparison.Ordinal);
+        Assert.DoesNotContain("otel_scope_schema_url=\"ignored-schema\"", output, StringComparison.Ordinal);
+    }
+#endif
+
     [Fact]
     public void SumWithScopeVersion()
     {
