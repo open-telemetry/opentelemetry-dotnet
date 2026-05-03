@@ -72,12 +72,7 @@ public class PrometheusIntegrationTests(PromToolFixture fixture, ITestOutputHelp
                 if (OperatingSystem.IsLinux())
                 {
 #pragma warning disable CS0618 // Type or member is obsolete
-                    options.UriPrefixes =
-                    [
-                        $"http://127.0.0.1:{port}",
-                        $"http://host.docker.internal:{port}",
-                        $"http://localhost:{port}",
-                    ];
+                    options.UriPrefixes = [$"http://*:{port}/"];
 #pragma warning restore CS0618 // Type or member is obsolete
                 }
                 else
