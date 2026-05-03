@@ -60,29 +60,57 @@ public class PrometheusIntegrationTests(PromToolFixture fixture, ITestOutputHelp
 
         const string KeepTag = "keep";
 
-        using var context = PrometheusHttpListenerTests.CreateMeterProvider(meter, configureMeterProvider: (builder) =>
-        {
-            builder
-                .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
-                .AddView(
-                    counter.Name,
-                    new MetricStreamConfiguration
-                    {
-                        ExemplarReservoirFactory = () => new SimpleFixedSizeExemplarReservoir(3),
-                        TagKeys = [KeepTag],
-                    })
-                .AddView(
-                    histogram.Name,
-                    new ExplicitBucketHistogramConfiguration
-                    {
-                        Boundaries = [5, 10],
-                        ExemplarReservoirFactory = () => new SimpleFixedSizeExemplarReservoir(3),
-                        TagKeys = [KeepTag],
-                    })
-                .AddView(
-                    ignoredHistogram.Name,
-                    new Base2ExponentialBucketHistogramConfiguration());
-        });
+        using var context = PrometheusHttpListenerTests.CreateMeterProvider(
+            meter,
+#if NET
+            configureListener: (options) =>
+            {
+                int port = TcpPortProvider.GetOpenPort();
+
+                // On Linux we need to explicitly use the internal Docker
+                // host address to reach the Prometheus listener from promtool.
+                if (OperatingSystem.IsLinux())
+                {
+#pragma warning disable CS0618 // Type or member is obsolete
+                    options.UriPrefixes =
+                    [
+                        $"http://127.0.0.1:{port}",
+                        $"http://host.docker.internal:{port}",
+                        $"http://localhost:{port}",
+                    ];
+#pragma warning restore CS0618 // Type or member is obsolete
+                }
+                else
+                {
+                    options.Port = port;
+                }
+
+                return port;
+            },
+#endif
+            configureMeterProvider: (builder) =>
+            {
+                builder
+                    .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
+                    .AddView(
+                        counter.Name,
+                        new MetricStreamConfiguration
+                        {
+                            ExemplarReservoirFactory = () => new SimpleFixedSizeExemplarReservoir(3),
+                            TagKeys = [KeepTag],
+                        })
+                    .AddView(
+                        histogram.Name,
+                        new ExplicitBucketHistogramConfiguration
+                        {
+                            Boundaries = [5, 10],
+                            ExemplarReservoirFactory = () => new SimpleFixedSizeExemplarReservoir(3),
+                            TagKeys = [KeepTag],
+                        })
+                    .AddView(
+                        ignoredHistogram.Name,
+                        new Base2ExponentialBucketHistogramConfiguration());
+            });
 
         counter.Add(1, new(KeepTag, "value"), new("filtered", "older"));
 
