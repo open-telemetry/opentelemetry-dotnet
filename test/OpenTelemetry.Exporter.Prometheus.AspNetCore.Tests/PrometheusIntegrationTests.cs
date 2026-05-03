@@ -76,6 +76,7 @@ public class PrometheusIntegrationTests(PromToolFixture fixture, ITestOutputHelp
             .WithMetrics((builder) =>
             {
                 builder.AddAspNetCoreInstrumentation()
+                       .AddMeter(meter.Name)
                        .AddPrometheusExporter()
                        .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
                        .AddView(
