@@ -68,7 +68,8 @@ public class PrometheusIntegrationTests(PromToolFixture fixture, ITestOutputHelp
         var builder = WebApplication.CreateBuilder();
 
         // Listen on any available port
-        builder.WebHost.UseUrls("http://127.0.0.1:0");
+        builder.WebHost.UseUrls("http://0.0.0.0:0");
+        builder.WebHost.UseSetting("AllowedHosts", "*");
 
         builder.Services
             .AddOpenTelemetry()
@@ -110,6 +111,20 @@ public class PrometheusIntegrationTests(PromToolFixture fixture, ITestOutputHelp
         var baseAddress = addresses!.Addresses
             .Select((p) => new Uri(p))
             .Last();
+
+        // Remap bind-any addresses with loopback address
+        baseAddress = new UriBuilder(baseAddress)
+        {
+            Host = baseAddress.Host switch
+            {
+                "0.0.0.0" => "127.0.0.1",
+                "[::]" => "localhost",
+                "::" => "localhost",
+                "::0" => "localhost",
+                "0:0:0:0:0:0:0:0" => "127.0.0.1",
+                _ => baseAddress.Host,
+            },
+        }.Uri;
 
         using (var httpClient = new HttpClient())
         {
