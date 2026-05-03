@@ -68,6 +68,7 @@ internal static class DockerHelper
             process.ErrorDataReceived -= AppendStderr;
         }
 
-        return process.ExitCode == 0 && stdout.ToString().IndexOf(dockerPlatform.ToString(), StringComparison.OrdinalIgnoreCase) > 0;
+        return process.ExitCode == 0 &&
+               stdout.ToString().Contains(dockerPlatform.ToString(), StringComparison.OrdinalIgnoreCase);
     }
 }
