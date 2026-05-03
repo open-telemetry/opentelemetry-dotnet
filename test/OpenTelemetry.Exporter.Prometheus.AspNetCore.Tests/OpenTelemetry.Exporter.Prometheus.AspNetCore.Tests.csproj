@@ -4,7 +4,7 @@
     <Description>Unit test project for Prometheus Exporter AspNetCore for OpenTelemetry</Description>
     <TargetFrameworks>$(TargetFrameworksForAspNetCoreTests)</TargetFrameworks>
     <DefineConstants>$(DefineConstants);PROMETHEUS_ASPNETCORE</DefineConstants>
-    <NoWarn>$(NoWarn);CA1062;CA1515</NoWarn>
+    <NoWarn>$(NoWarn);CA1019;CA1062;CA1515</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
