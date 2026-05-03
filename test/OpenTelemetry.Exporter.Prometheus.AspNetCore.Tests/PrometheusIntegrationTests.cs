@@ -14,7 +14,7 @@ using OpenTelemetry.Tests;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace OpenTelemetry.Exporter.Prometheus.HttpListener.Tests;
+namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests;
 
 [Collection(PromToolCollection.Name)]
 public class PrometheusIntegrationTests(PromToolFixture fixture, ITestOutputHelper outputHelper)
