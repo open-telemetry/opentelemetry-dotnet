@@ -79,7 +79,7 @@ var app = builder.Build();
 app.MapPrometheusScrapingEndpoint();
 ```
 
-You can use the `IEndpointConventionBuilder` returned by the extention
+You can use the `IEndpointConventionBuilder` returned by the extension
 method to compose with other functionality, such as to not require
 authentication or to exclude HTTP metrics from the scraping endpoint
 itself. For example:
