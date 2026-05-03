@@ -67,8 +67,8 @@ public class PrometheusIntegrationTests(PromToolFixture fixture, ITestOutputHelp
             {
                 int port = TcpPortProvider.GetOpenPort();
 
-                // On Linux we need to explicitly use the internal Docker
-                // host address to reach the Prometheus listener from promtool.
+                // On Linux we need to bind to all available hosts to reach the
+                // Prometheus listener from promtool using Docker's internal host.
                 if (OperatingSystem.IsLinux())
                 {
 #pragma warning disable CS0618 // Type or member is obsolete
