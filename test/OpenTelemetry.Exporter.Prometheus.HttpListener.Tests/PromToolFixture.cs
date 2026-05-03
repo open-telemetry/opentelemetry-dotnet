@@ -8,6 +8,8 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests;
 
 public sealed class PromToolFixture : PrometheusFixture
 {
+    private const string DockerInternalHost = "host.docker.internal";
+
     public async Task<ExecResult> CheckMetricsAsync(
         Uri targetUri,
         string accept,
@@ -17,7 +19,7 @@ public sealed class PromToolFixture : PrometheusFixture
         // avoid issues with localhost resolution inside the container
         var metricsUri = new UriBuilder(targetUri)
         {
-            Host = "host.docker.internal",
+            Host = DockerInternalHost,
         };
 
         // Use wget to fetch the metrics and pipe them to promtool for validation.
@@ -43,5 +45,6 @@ public sealed class PromToolFixture : PrometheusFixture
         new ContainerBuilder(this.GetImage())
             .WithEntrypoint("sh", "-c")
             .WithCommand("sleep infinity")
+            .WithExtraHost(DockerInternalHost, "host-gateway")
             .Build();
 }
