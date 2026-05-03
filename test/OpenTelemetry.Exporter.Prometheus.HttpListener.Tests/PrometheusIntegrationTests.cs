@@ -14,7 +14,7 @@ namespace OpenTelemetry.Exporter.Prometheus.HttpListener.Tests;
 [Collection(PromToolCollection.Name)]
 public class PrometheusIntegrationTests(PromToolFixture fixture, ITestOutputHelper outputHelper)
 {
-    [EnabledOnDockerPlatformTheory(DockerPlatform.Linux)]
+    [EnabledOnDockerPlatformTheory(DockerPlatform.Linux, Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/pull/7240")]
     [InlineData("")]
     [InlineData("text/plain")]
     [InlineData("text/plain;version=0.0.4")]
