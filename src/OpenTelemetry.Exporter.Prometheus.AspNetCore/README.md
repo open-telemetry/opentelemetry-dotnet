@@ -66,7 +66,7 @@ dotnet add package --prerelease OpenTelemetry.Exporter.Prometheus.AspNetCore
 ### Step 3: Configure Prometheus Scraping Endpoint
 
 You can use register the Prometheus scraping middleware using the
-`MapPrometheusScrapingEndpoint` extension method using the
+`MapPrometheusScrapingEndpoint` extension method on
 `IEndpointRouteBuilder` interface with
 [Minimal APIs](https://learn.microsoft.com/aspnet/core/fundamentals/minimal-apis/webapplication).
 For example:
@@ -91,7 +91,7 @@ app.MapPrometheusScrapingEndpoint()
 ```
 
 If you are using the older [Generic Host API](https://learn.microsoft.com/aspnet/core/fundamentals/host/generic-host)
-you can use register the Prometheus scraping middleware using the
+you can register the Prometheus scraping middleware with the
 `UseOpenTelemetryPrometheusScrapingEndpoint` extension method on
 `IApplicationBuilder` instead:
 
