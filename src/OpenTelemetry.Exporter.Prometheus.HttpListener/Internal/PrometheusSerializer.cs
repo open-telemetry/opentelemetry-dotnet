@@ -20,11 +20,6 @@ namespace OpenTelemetry.Exporter.Prometheus;
 /// </summary>
 internal static partial class PrometheusSerializer
 {
-#if !NET
-    private static readonly DateTimeOffset UnixEpoch = new(1970, 1, 1, 0, 0, 0, TimeSpan.Zero);
-#endif
-    private static readonly HashSet<string> ReservedScopeAttributeNames = ["name", "schema_url", "version"];
-
 #pragma warning disable SA1310 // Field name should not contain an underscore
     private const byte ASCII_QUOTATION_MARK = 0x22; // '"'
     private const byte ASCII_REVERSE_SOLIDUS = 0x5C; // '\\'
@@ -258,14 +253,14 @@ internal static partial class PrometheusSerializer
 
         if (exemplar.TraceId != default)
         {
-            cursor = WriteLabel(buffer, cursor, "trace_id", exemplar.TraceId.ToHexString());
+            cursor = WriteLabel(buffer, cursor, "trace_id", exemplar.TraceId.ToHexString(), openMetricsRequested: true);
             buffer[cursor++] = unchecked((byte)',');
             hasLabels = true;
         }
 
         if (exemplar.SpanId != default)
         {
-            cursor = WriteLabel(buffer, cursor, "span_id", exemplar.SpanId.ToHexString());
+            cursor = WriteLabel(buffer, cursor, "span_id", exemplar.SpanId.ToHexString(), openMetricsRequested: true);
             buffer[cursor++] = unchecked((byte)',');
             hasLabels = true;
         }
@@ -277,7 +272,7 @@ internal static partial class PrometheusSerializer
                 continue;
             }
 
-            cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
+            cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value, openMetricsRequested: true);
             buffer[cursor++] = unchecked((byte)',');
             hasLabels = true;
         }
@@ -417,33 +412,6 @@ internal static partial class PrometheusSerializer
         bool openMetricsRequested,
         bool writeEnclosingBraces = true)
     {
-        var startCursor = cursor;
-        List<string>? writtenOutputKeys = null;
-        var wroteLabel = false;
-
-        if (writeEnclosingBraces)
-        {
-            buffer[cursor++] = unchecked((byte)'{');
-        }
-
-        if (TryWriteLabel("otel_scope_name", metric.MeterName) &&
-            (string.IsNullOrEmpty(metric.MeterVersion) || TryWriteLabel("otel_scope_version", metric.MeterVersion)) &&
-            TryWriteMetricTags() &&
-            TryWritePointTags())
-        {
-            if (writeEnclosingBraces)
-            {
-                buffer[cursor++] = unchecked((byte)'}');
-            }
-            else if (wroteLabel)
-            {
-                buffer[cursor++] = unchecked((byte)',');
-            }
-
-            return cursor;
-        }
-
-        cursor = startCursor;
         List<LabelData>? labels = null;
         AddScopeLabels(metric, openMetricsRequested, ref labels);
 
@@ -453,58 +421,6 @@ internal static partial class PrometheusSerializer
         }
 
         return WriteLabels(buffer, cursor, labels, openMetricsRequested, writeEnclosingBraces);
-
-        bool TryWriteMetricTags()
-        {
-            if (metric.MeterTags != null)
-            {
-                foreach (var tag in metric.MeterTags)
-                {
-                    if (!TryWriteLabel(tag.Key, tag.Value))
-                    {
-                        return false;
-                    }
-                }
-            }
-
-            return true;
-        }
-
-        bool TryWritePointTags()
-        {
-            foreach (var tag in tags)
-            {
-                if (!TryWriteLabel(tag.Key, tag.Value))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        bool TryWriteLabel(string key, object? value)
-        {
-            var outputKey = GetSanitizedLabelKey(key, openMetricsRequested);
-
-            if (writtenOutputKeys?.Contains(outputKey) == true)
-            {
-                return false;
-            }
-
-            writtenOutputKeys ??= [];
-            writtenOutputKeys.Add(outputKey);
-
-            if (wroteLabel)
-            {
-                buffer[cursor++] = unchecked((byte)',');
-            }
-
-            cursor = WriteLabel(buffer, cursor, key, value, openMetricsRequested);
-            wroteLabel = true;
-
-            return true;
-        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -543,6 +459,30 @@ internal static partial class PrometheusSerializer
         buffer[cursor++] = ASCII_LINEFEED;
 
         return cursor;
+    }
+
+    internal static string CreateScopeIdentity(Metric metric)
+    {
+        List<LabelData>? labels = null;
+        AddScopeLabels(metric, openMetricsRequested: true, ref labels);
+        var scopeLabels = MergeLabels(labels);
+        scopeLabels.Sort(static (x, y) =>
+        {
+            var keyCompare = string.CompareOrdinal(x.Key, y.Key);
+            return keyCompare != 0 ? keyCompare : string.CompareOrdinal(x.Value, y.Value);
+        });
+
+        var builder = new StringBuilder();
+
+        foreach (var scopeLabel in scopeLabels)
+        {
+            builder.Append('\0')
+                   .Append(scopeLabel.Key)
+                   .Append('\0')
+                   .Append(scopeLabel.Value);
+        }
+
+        return builder.ToString();
     }
 
     private static int WritePrometheusLabelKey(byte[] buffer, int cursor, string value)
@@ -618,30 +558,6 @@ internal static partial class PrometheusSerializer
                 }
             }
         }
-    }
-
-    internal static string CreateScopeIdentity(Metric metric)
-    {
-        List<LabelData>? labels = null;
-        AddScopeLabels(metric, openMetricsRequested: true, ref labels);
-        var scopeLabels = MergeLabels(labels);
-        scopeLabels.Sort(static (x, y) =>
-        {
-            var keyCompare = string.CompareOrdinal(x.Key, y.Key);
-            return keyCompare != 0 ? keyCompare : string.CompareOrdinal(x.Value, y.Value);
-        });
-
-        var builder = new StringBuilder();
-
-        foreach (var scopeLabel in scopeLabels)
-        {
-            builder.Append('\0')
-                   .Append(scopeLabel.Key)
-                   .Append('\0')
-                   .Append(scopeLabel.Value);
-        }
-
-        return builder.ToString();
     }
 
     private static string GetLabelValueString(object? labelValue)
@@ -809,6 +725,10 @@ internal static partial class PrometheusSerializer
                 buffer[cursor++] = unchecked((byte)'}');
             }
         }
+        else if (labels != null && labels.Count > 0)
+        {
+            cursor--;
+        }
 
         return cursor;
     }
@@ -853,15 +773,6 @@ internal static partial class PrometheusSerializer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IsAllowedMetricsLabelCharacter(char value, bool isOpenMetrics) =>
         char.IsAsciiLetterOrDigit(value) || value is '_' || (isOpenMetrics && value == ':');
-
-    private readonly struct LabelData(string originalKey, string outputKey, string value)
-    {
-        public readonly string OriginalKey { get; } = originalKey;
-
-        public readonly string OutputKey { get; } = outputKey;
-
-        public readonly string Value { get; } = value;
-    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int WriteUnicodeScalar(byte[] buffer, int cursor, string value, ref int index)
@@ -1091,5 +1002,14 @@ internal static partial class PrometheusSerializer
 
         exponent = roundedExponent;
         return true;
+    }
+
+    private readonly struct LabelData(string originalKey, string outputKey, string value)
+    {
+        public readonly string OriginalKey { get; } = originalKey;
+
+        public readonly string OutputKey { get; } = outputKey;
+
+        public readonly string Value { get; } = value;
     }
 }
