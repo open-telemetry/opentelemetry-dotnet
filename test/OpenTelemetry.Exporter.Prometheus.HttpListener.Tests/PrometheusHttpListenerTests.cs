@@ -170,7 +170,7 @@ public class PrometheusHttpListenerTests
         var host = "localhost";
         var port = GetRandomPort();
 
-        using var context = CreateMeterProvider(meter, configure: (options) =>
+        using var context = CreateMeterProvider(meter, configureListener: (options) =>
         {
             options.Host = host;
             options.Port = port;
@@ -194,7 +194,7 @@ public class PrometheusHttpListenerTests
 
         var port = GetRandomPort();
 
-        using var context = CreateMeterProvider(meter, configure: (options) =>
+        using var context = CreateMeterProvider(meter, configureListener: (options) =>
         {
             options.Port = port;
             return port;
@@ -224,7 +224,7 @@ public class PrometheusHttpListenerTests
 
         var host = "127.0.0.1";
 
-        using var context = CreateMeterProvider(meter, configure: (options) =>
+        using var context = CreateMeterProvider(meter, configureListener: (options) =>
         {
             options.Host = host;
             return options.Port;
@@ -246,7 +246,7 @@ public class PrometheusHttpListenerTests
 
         int port = 0;
 
-        using var context = CreateMeterProvider(meter, configure: (options) =>
+        using var context = CreateMeterProvider(meter, configureListener: (options) =>
         {
             options.Host = "prometheus.local";
             options.Port = 9999;
@@ -274,6 +274,51 @@ public class PrometheusHttpListenerTests
     [Fact]
     public void Port_DefaultValue_Is_9464()
         => Assert.Equal(9464, new PrometheusHttpListenerOptions().Port);
+
+    internal static MeterProviderTestContext CreateMeterProvider(
+        Meter meter,
+        Func<PrometheusHttpListenerOptions, int>? configureListener = null,
+        Action<MeterProviderBuilder>? configureMeterProvider = null,
+        IEnumerable<KeyValuePair<string, object>>? attributes = null)
+    {
+        var maximumAttempts = 5;
+        var attemptsLeft = maximumAttempts;
+
+        configureListener ??= static (options) =>
+        {
+            options.Port = GetRandomPort();
+            return options.Port;
+        };
+
+        while (attemptsLeft-- > 0)
+        {
+            int port = -1;
+
+            var builder = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .ConfigureResource((p) =>
+                {
+                    p.Clear().AddService("my_service", serviceInstanceId: "id1");
+
+                    if (attributes is not null)
+                    {
+                        p.AddAttributes(attributes);
+                    }
+                })
+                .AddPrometheusHttpListener((options) =>
+                {
+                    port = configureListener(options);
+                });
+
+            configureMeterProvider?.Invoke(builder);
+
+            var provider = builder.Build();
+
+            return new(provider, port);
+        }
+
+        throw new InvalidOperationException($"{nameof(MeterProvider)} could not be created within {maximumAttempts} attempts.");
+    }
 
     private static async Task RunPrometheusExporterHttpServerIntegrationTest(
         bool skipMetrics = false,
@@ -425,47 +470,6 @@ public class PrometheusHttpListenerTests
         }
     }
 
-    private static MeterProviderTestContext CreateMeterProvider(
-        Meter meter,
-        Func<PrometheusHttpListenerOptions, int>? configure = null,
-        IEnumerable<KeyValuePair<string, object>>? attributes = null)
-    {
-        var maximumAttempts = 5;
-        var attemptsLeft = maximumAttempts;
-
-        configure ??= static (options) =>
-        {
-            options.Port = GetRandomPort();
-            return options.Port;
-        };
-
-        while (attemptsLeft-- > 0)
-        {
-            int port = -1;
-
-            var provider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter(meter.Name)
-                .ConfigureResource((p) =>
-                {
-                    p.Clear().AddService("my_service", serviceInstanceId: "id1");
-
-                    if (attributes is not null)
-                    {
-                        p.AddAttributes(attributes);
-                    }
-                })
-                .AddPrometheusHttpListener((options) =>
-                {
-                    port = configure(options);
-                })
-                .Build();
-
-            return new(provider, port);
-        }
-
-        throw new InvalidOperationException($"{nameof(MeterProvider)} could not be created within {maximumAttempts} attempts.");
-    }
-
     [Obsolete("Supports tests for the obsolete UriPrefixes property.")]
     private static PrometheusHttpListenerOptions TestPrometheusHttpListenerUriPrefixOptions(string[] uriPrefixes)
     {
@@ -482,7 +486,7 @@ public class PrometheusHttpListenerTests
         return options;
     }
 
-    private sealed class MeterProviderTestContext(MeterProvider provider, int port) : IDisposable
+    internal sealed class MeterProviderTestContext(MeterProvider provider, int port) : IDisposable
     {
         public MeterProvider Provider { get; } = provider;
 
