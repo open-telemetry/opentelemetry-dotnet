@@ -43,8 +43,6 @@ Notes](../../RELEASENOTES.md).
   selected correctly by considering whitespace and `q` weights.
   ([#7208](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7208))
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 * Emit OpenMetrics exemplars for counters and histogram buckets.
   ([#7222](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7222))
 
