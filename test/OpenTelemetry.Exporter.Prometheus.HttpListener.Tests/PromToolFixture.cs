@@ -22,7 +22,7 @@ public sealed class PromToolFixture : PrometheusFixture
 
         // Use wget to fetch the metrics and pipe them to promtool for validation.
         // The metrics text is output to a temporary file so that we can capture
-        // the response to print to stdout to aid with debugging if neccessary.
+        // the response to print to stdout to aid with debugging if necessary.
         string[] command =
         [
             "sh",
