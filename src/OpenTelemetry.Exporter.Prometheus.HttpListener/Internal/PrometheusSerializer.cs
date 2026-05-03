@@ -464,8 +464,11 @@ internal static partial class PrometheusSerializer
     internal static string CreateScopeIdentity(Metric metric)
     {
         List<LabelData>? labels = null;
+
         AddScopeLabels(metric, openMetricsRequested: true, ref labels);
+
         var scopeLabels = MergeLabels(labels);
+
         scopeLabels.Sort(static (x, y) =>
         {
             var keyCompare = string.CompareOrdinal(x.Key, y.Key);
@@ -474,12 +477,12 @@ internal static partial class PrometheusSerializer
 
         var builder = new StringBuilder();
 
-        foreach (var scopeLabel in scopeLabels)
+        foreach (var label in scopeLabels)
         {
             builder.Append('\0')
-                   .Append(scopeLabel.Key)
+                   .Append(label.Key)
                    .Append('\0')
-                   .Append(scopeLabel.Value);
+                   .Append(label.Value);
         }
 
         return builder.ToString();
@@ -950,8 +953,7 @@ internal static partial class PrometheusSerializer
         {
             return FormatFixedAndTrim(value, 1);
         }
-
-        if (TryGetPowerOfTenExponent(absoluteValue, out var exponent))
+        else if (TryGetPowerOfTenExponent(absoluteValue, out var exponent))
         {
             return exponent is >= 6 or <= -5
                 ? string.Concat(value < 0 ? "-1" : "1", FormatExponent(exponent))
