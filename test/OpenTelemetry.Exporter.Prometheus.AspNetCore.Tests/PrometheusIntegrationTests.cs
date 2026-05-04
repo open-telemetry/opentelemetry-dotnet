@@ -258,7 +258,7 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
 
         builder.Services
             .AddOpenTelemetry()
-            .ConfigureResource((builder) => builder.AddService("my-service", "my-namespce", "1.2.3"))
+            .ConfigureResource((builder) => builder.AddService("my-service", "my-namespace", "1.2.3"))
             .WithMetrics((builder) =>
             {
                 builder.AddAspNetCoreInstrumentation()
