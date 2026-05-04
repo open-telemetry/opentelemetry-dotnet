@@ -6,7 +6,7 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* **Experimental (pre-release builds only):** (only in pre-release versions):
+* **Experimental (pre-release builds only):**
   Add support for using environment variables as context propagation carriers.
   ([#7174](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7174))
 
