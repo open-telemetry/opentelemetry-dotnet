@@ -34,6 +34,9 @@ Notes](../../RELEASENOTES.md).
 * Emit OpenMetrics exemplars for counters and histogram buckets.
   ([#7222](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7222))
 
+* Fix incorrect handling of untyped metrics when using OpenMetrics format.
+  ([#7219](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7219))
+
 * Fix Prometheus/OpenMetrics serialization to emit metric and label names
   containing `:` and `_` instead of dropping them and prefixing leading digits.
   Invalid characters are replaced with `_` instead of being dropped.
@@ -42,9 +45,6 @@ Notes](../../RELEASENOTES.md).
 * Add `escaping=underscores` to the `Accept` header handling for content
   negotiation so OpenMetrics are handled correctly.
   ([#7209](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7209))
-
-* Fix incorrect handling of untyped metrics when using OpenMetrics format.
-  ([#7219](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7219))
 
 * Use the canonical representation for histogram "le" label values when using
   OpenMetrics.
