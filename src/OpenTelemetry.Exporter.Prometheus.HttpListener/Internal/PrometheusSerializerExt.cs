@@ -57,7 +57,7 @@ internal static partial class PrometheusSerializer
                     prometheusMetric.Type == PrometheusType.Counter &&
                     TryGetLatestExemplar(metricPoint, out var exemplar))
                 {
-                    cursor = WriteExemplar(buffer, cursor, in exemplar, isLongValue);
+                    cursor = WriteExemplar(buffer, cursor, in exemplar, isLongValue, openMetricsRequested);
                 }
 
                 buffer[cursor++] = ASCII_LINEFEED;
@@ -92,7 +92,7 @@ internal static partial class PrometheusSerializer
                     if (openMetricsRequested &&
                         TryGetLatestHistogramBucketExemplar(metricPoint, previousBound, histogramMeasurement.ExplicitBound, out var exemplar))
                     {
-                        cursor = WriteExemplar(buffer, cursor, in exemplar, isLongValue: false);
+                        cursor = WriteExemplar(buffer, cursor, in exemplar, isLongValue: false, openMetricsRequested);
                     }
 
                     buffer[cursor++] = ASCII_LINEFEED;
