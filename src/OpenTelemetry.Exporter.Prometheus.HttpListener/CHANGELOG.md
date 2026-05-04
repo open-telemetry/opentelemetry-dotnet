@@ -46,6 +46,9 @@ Notes](../../RELEASENOTES.md).
 * Emit OpenMetrics exemplars for counters and histogram buckets.
   ([#7222](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7222))
 
+* Fix incorrect handling of untyped metrics when using OpenMetrics format.
+  ([#7219](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7219))
+
 * Export `{name}_created` series for counters and histograms when using
   OpenMetrics and a start time is available.
   ([#7223](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7223))
