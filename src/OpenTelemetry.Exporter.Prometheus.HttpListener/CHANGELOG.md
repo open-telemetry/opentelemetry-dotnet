@@ -43,6 +43,9 @@ Notes](../../RELEASENOTES.md).
   selected correctly by considering whitespace and `q` weights.
   ([#7208](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7208))
 
+* Emit OpenMetrics exemplars for counters and histogram buckets.
+  ([#7222](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7222))
+
 * Add support for configuring the HTTP listener endpoint host and port using
   the `OTEL_EXPORTER_PROMETHEUS_HOST` and `OTEL_EXPORTER_PROMETHEUS_PORT`
   environment variables.

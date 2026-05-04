@@ -297,13 +297,19 @@ public static class OtlpLogExporterHelperExtensions
             serviceProvider.EnsureNoUseOtlpExporterRegistrations();
         }
 
-        // IHttpClientFactory integration is only safe on .NET 8+. On earlier versions,
+        // TODO IHttpClientFactory integration should be safe on .NET 8+. On earlier versions,
         // DefaultHttpClientFactory took ILoggerFactory eagerly in its constructor, creating a
         // circular dependency: ILoggerFactory -> OpenTelemetryLoggerProvider -> OtlpLogExporter
         // -> IHttpClientFactory -> ILoggerFactory. This was fixed in .NET 8 (dotnet/runtime#89531).
+        // However, this doesn't appear to be true in all cases and can create circular dependencies
+        // when using Autofac and the .NET 11 IHttpClientFactory integration.
+        // Disabled until we can safely resolve this and have appropriate test coverage to ensure
+        // the circular dependency does not exist. See https://github.com/open-telemetry/opentelemetry-dotnet/issues/7233.
+        /*
 #if NET8_0_OR_GREATER
         exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpLogExporter");
 #endif
+        */
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
         BaseExporter<LogRecord> otlpExporter = new OtlpLogExporter(
