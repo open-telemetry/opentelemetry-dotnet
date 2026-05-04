@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Globalization;
 using System.Text;
@@ -670,6 +671,97 @@ public sealed class PrometheusSerializerTests
     }
 
     [Fact]
+    public void CounterWithOpenMetricsFormatEmitsLatestExemplar()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateCounter<long>("test_counter");
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
+            .AddView(
+                counter.Name,
+                new MetricStreamConfiguration
+                {
+                    TagKeys = ["keep"],
+                    ExemplarReservoirFactory = () => new SimpleFixedSizeExemplarReservoir(3),
+                })
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        counter.Add(1, new("keep", "value"), new("filtered", "first"));
+
+        WaitForNextExemplarTimestamp();
+
+        using var activity = new Activity("test");
+        activity.Start();
+        counter.Add(2, new("keep", "value"), new("filtered", "second"), new("trace_id", "ignored-trace"), new("span_id", "ignored-span"));
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0], true);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+        var counterLine = output.Split(['\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Single(line => line.StartsWith("test_counter", StringComparison.Ordinal));
+
+        Assert.Contains(" 3 # ", counterLine, StringComparison.Ordinal);
+        Assert.Contains(
+            $"# {{trace_id=\"{activity.TraceId.ToHexString()}\",span_id=\"{activity.SpanId.ToHexString()}\",filtered=\"second\"}} 2 ",
+            counterLine,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("ignored-trace", counterLine, StringComparison.Ordinal);
+        Assert.DoesNotContain("ignored-span", counterLine, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void CounterWithOpenMetricsFormatEmitsExemplarWithoutLabelsWhenOnlyReservedTagNamesAreFiltered()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateCounter<long>("test_counter");
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
+            .AddView(
+                counter.Name,
+                new MetricStreamConfiguration
+                {
+                    TagKeys = ["keep"],
+                    ExemplarReservoirFactory = () => new SimpleFixedSizeExemplarReservoir(3),
+                })
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        counter.Add(2, new("keep", "value"), new("trace_id", "ignored-trace"), new("span_id", "ignored-span"));
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0], true);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+        var counterLine = output.Split(['\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Single(line => line.StartsWith("test_counter", StringComparison.Ordinal));
+
+        Assert.Contains(" 2 # {} 2 ", counterLine, StringComparison.Ordinal);
+        Assert.DoesNotContain("ignored-trace", counterLine, StringComparison.Ordinal);
+        Assert.DoesNotContain("ignored-span", counterLine, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TryGetLatestExemplarPrefersLaterCandidateWhenTimestampsMatch()
+    {
+        var timestamp = new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero);
+
+        Assert.True(PrometheusSerializer.ShouldPreferExemplar(timestamp, timestamp));
+        Assert.False(PrometheusSerializer.ShouldPreferExemplar(timestamp, timestamp.AddTicks(-1)));
+    }
+
+    [Fact]
     public void HistogramOneDimensionWithOpenMetricsFormat()
     {
         var buffer = new byte[85000];
@@ -712,6 +804,62 @@ public sealed class PrometheusSerializerTests
                 + $"test_histogram_count{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1'}} 2\n"
                 + "$").Replace('\'', '"');
         Assert.Matches(expected, output);
+    }
+
+    [Fact]
+    public void HistogramWithOpenMetricsFormatEmitsLatestBucketExemplar()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var histogram = meter.CreateHistogram<double>("test_histogram");
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
+            .AddView(
+                histogram.Name,
+                new ExplicitBucketHistogramConfiguration
+                {
+                    Boundaries = [5, 10],
+                    TagKeys = ["keep"],
+                    ExemplarReservoirFactory = () => new SimpleFixedSizeExemplarReservoir(3),
+                })
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        histogram.Record(4, new("keep", "value"), new("filtered", "older"));
+        histogram.Record(8, new("keep", "value"), new("filtered", "first"));
+
+        WaitForNextExemplarTimestamp();
+
+        using var activity = new Activity("test");
+        activity.Start();
+        histogram.Record(9, new("keep", "value"), new("filtered", "latest"), new("trace_id", "ignored-trace"), new("span_id", "ignored-span"));
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0], true);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+        var bucketLine = output.Split(['\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Single(line => line.Contains("test_histogram_bucket{", StringComparison.Ordinal)
+                && line.Contains("le=\"10\"", StringComparison.Ordinal));
+
+        Assert.Contains("} 3 # ", bucketLine, StringComparison.Ordinal);
+        Assert.Contains(
+            $"# {{trace_id=\"{activity.TraceId.ToHexString()}\",span_id=\"{activity.SpanId.ToHexString()}\",filtered=\"latest\"}} 9 ",
+            bucketLine,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("ignored-trace", bucketLine, StringComparison.Ordinal);
+        Assert.DoesNotContain("ignored-span", bucketLine, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TryGetLatestHistogramBucketExemplarMatchesNegativeInfinityInFirstBucket()
+    {
+        Assert.True(PrometheusSerializer.IsHistogramBucketExemplarMatch(double.NegativeInfinity, double.NegativeInfinity, 5));
+        Assert.False(PrometheusSerializer.IsHistogramBucketExemplarMatch(double.NegativeInfinity, 5, 10));
     }
 
     [Fact]
@@ -996,6 +1144,16 @@ public sealed class PrometheusSerializerTests
 
     private static int WriteMetric(byte[] buffer, int cursor, Metric metric, bool useOpenMetrics = false)
         => PrometheusSerializer.WriteMetric(buffer, cursor, metric, PrometheusMetric.Create(metric, false), useOpenMetrics);
+
+    private static void WaitForNextExemplarTimestamp()
+    {
+        var timestamp = DateTimeOffset.UtcNow;
+
+        while (DateTimeOffset.UtcNow <= timestamp)
+        {
+            Thread.Sleep(1);
+        }
+    }
 
     private static string WriteGaugeMetricWithMeterTags(params KeyValuePair<string, object?>[] meterTags)
     {
