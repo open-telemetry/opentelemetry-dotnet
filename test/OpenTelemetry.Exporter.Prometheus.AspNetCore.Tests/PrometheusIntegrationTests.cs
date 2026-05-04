@@ -67,7 +67,6 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
                 }
             }
 
-            Assert.Contains("aspnetcore_memory_pool_allocated_bytes_total", series);
             Assert.Contains("http_server_active_requests", series);
             Assert.Contains("http_server_request_duration_seconds_bucket", series);
             Assert.Contains("http_server_request_duration_seconds_count", series);
@@ -79,6 +78,10 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
             Assert.Contains("processed_bytes_total", series);
             Assert.Contains("queue_balance", series);
             Assert.Contains("temperature_celsius", series);
+
+#if NET10_0_OR_GREATER
+            Assert.Contains("aspnetcore_memory_pool_allocated_bytes_total", series);
+#endif
         }
         finally
         {

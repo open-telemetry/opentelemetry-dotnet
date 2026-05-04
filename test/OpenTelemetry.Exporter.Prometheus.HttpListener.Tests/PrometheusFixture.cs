@@ -9,6 +9,8 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests;
 
 public class PrometheusFixture : XunitContainerFixture<IContainer>
 {
+    private const string DockerInternalHost = "host.docker.internal";
+
     public IList<string> ScrapeProtocols { get; } = [];
 
     public int? TargetPort { get; set; }
@@ -32,6 +34,7 @@ public class PrometheusFixture : XunitContainerFixture<IContainer>
             .WithBindMount(prometheusConfigurationPath, "/etc/prometheus/prometheus.yml")
             .WithBindMount(sdPath, "/etc/prometheus/targets/targets.json")
             .WithCommand("--config.file=/etc/prometheus/prometheus.yml")
+            .WithExtraHost(DockerInternalHost, "host-gateway")
             .WithPortBinding(4318)
             .WithPortBinding(9090)
             .WithWaitStrategy(Wait.ForUnixContainer().UntilExternalTcpPortIsAvailable(4318))
@@ -57,7 +60,7 @@ public class PrometheusFixture : XunitContainerFixture<IContainer>
           [
             {
               "labels": { "job": "prometheus-target" },
-              "targets": ["host.docker.internal:{{port}}"]
+              "targets": ["{{DockerInternalHost}}:{{port}}"]
             }
           ]
           """;
