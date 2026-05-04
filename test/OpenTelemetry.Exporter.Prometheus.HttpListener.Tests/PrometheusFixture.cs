@@ -27,12 +27,21 @@ public class PrometheusFixture : XunitContainerFixture<IContainer>
         var prometheusConfigurationPath = Path.GetTempFileName();
         File.WriteAllText(prometheusConfigurationPath, CreatePrometheusConfiguration(this.ScrapeProtocols));
 
-        var sdPath = Path.GetTempFileName();
-        File.WriteAllText(sdPath, CreateServiceDiscoveryConfiguration(targetPort));
+        var serviceDiscoveryTargetsPath = Path.GetTempFileName();
+        File.WriteAllText(serviceDiscoveryTargetsPath, CreateServiceDiscoveryConfiguration(targetPort));
+
+#if NET
+        if (OperatingSystem.IsLinux())
+        {
+            var mode = UnixFileMode.UserRead | UnixFileMode.GroupRead | UnixFileMode.OtherRead;
+            File.SetUnixFileMode(prometheusConfigurationPath, mode);
+            File.SetUnixFileMode(serviceDiscoveryTargetsPath, mode);
+        }
+#endif
 
         return new ContainerBuilder(this.GetImage())
             .WithBindMount(prometheusConfigurationPath, "/etc/prometheus/prometheus.yml")
-            .WithBindMount(sdPath, "/etc/prometheus/targets/targets.json")
+            .WithBindMount(serviceDiscoveryTargetsPath, "/etc/prometheus/targets/targets.json")
             .WithCommand("--config.file=/etc/prometheus/prometheus.yml")
             .WithExtraHost(DockerInternalHost, "host-gateway")
             .WithPortBinding(4318)
