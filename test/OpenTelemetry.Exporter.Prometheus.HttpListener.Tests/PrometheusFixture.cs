@@ -43,7 +43,7 @@ public class PrometheusFixture : XunitContainerFixture<IContainer>
         $"""
          global:
            scrape_interval: 2s
-           {(scrapeProtocols.Count > 0 ? $"scrape_protocols: [\"{string.Join("\", \"", scrapeProtocols)}\"]" : string.Empty)}
+           {(scrapeProtocols?.Count > 0 ? $"scrape_protocols: [\"{string.Join("\", \"", scrapeProtocols)}\"]" : string.Empty)}
          scrape_configs:
            - job_name: "prometheus-target"
              file_sd_configs:
