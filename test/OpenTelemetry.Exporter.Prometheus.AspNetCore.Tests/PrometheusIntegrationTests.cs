@@ -3,13 +3,17 @@
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using System.Net.Http.Json;
+using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter.Prometheus.Tests;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
 using Xunit;
 using Xunit.Abstractions;
@@ -17,8 +21,164 @@ using Xunit.Abstractions;
 namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests;
 
 [Collection(PromToolCollection.Name)]
-public class PrometheusIntegrationTests(PromToolFixture fixture, ITestOutputHelper outputHelper)
+public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHelper outputHelper)
 {
+    [EnabledOnDockerPlatformTheory(DockerPlatform.Linux)]
+    [InlineData("")]
+    [InlineData("OpenMetricsText0.0.1")]
+    [InlineData("OpenMetricsText1.0.0")]
+    [InlineData("PrometheusText0.0.4")]
+    [InlineData("PrometheusText1.0.0")]
+
+    public async Task Prometheus_Can_Scrape_Metrics(string scrapeProtocol) => await GenerateMetricsAsync(async (baseAddress) =>
+    {
+        // Arrange
+        var prometheus = new PrometheusFixture()
+        {
+            TargetPort = baseAddress.Port,
+        };
+
+        if (!string.IsNullOrEmpty(scrapeProtocol))
+        {
+            prometheus.ScrapeProtocols = [scrapeProtocol];
+        }
+
+        try
+        {
+            // Act
+            await prometheus.StartAsync();
+
+            var prometheusBaseAddress = prometheus.GetBaseAddress(9090);
+
+            await WaitForServiceDiscoveryAsync(prometheusBaseAddress);
+
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+
+            IReadOnlyList<string> series = [];
+
+            // Assert
+            while (!cts.IsCancellationRequested)
+            {
+                series = await WaitForMetricsSeriesAsync(prometheusBaseAddress);
+
+                if (series.Contains("temperature_celsius"))
+                {
+                    break;
+                }
+            }
+
+            Assert.Contains("aspnetcore_memory_pool_allocated_bytes_total", series);
+            Assert.Contains("http_server_active_requests", series);
+            Assert.Contains("http_server_request_duration_seconds_bucket", series);
+            Assert.Contains("http_server_request_duration_seconds_count", series);
+            Assert.Contains("http_server_request_duration_seconds_sum", series);
+            Assert.Contains("kestrel_active_connections", series);
+            Assert.Contains("kestrel_connection_duration_seconds_bucket", series);
+            Assert.Contains("kestrel_connection_duration_seconds_count", series);
+            Assert.Contains("kestrel_connection_duration_seconds_sum", series);
+            Assert.Contains("processed_bytes_total", series);
+            Assert.Contains("queue_balance", series);
+            Assert.Contains("temperature_celsius", series);
+        }
+        finally
+        {
+            await prometheus.DisposeAsync();
+        }
+
+        static async Task<IReadOnlyList<string>> WaitForMetricsSeriesAsync(Uri baseAddress)
+        {
+            // See https://prometheus.io/docs/prometheus/latest/querying/api/#finding-series-by-label-matchers
+            var seriesUrl = QueryHelpers.AddQueryString(
+                "/api/v1/series",
+                [
+                    KeyValuePair.Create<string, string?>("limit", "0"),
+                    KeyValuePair.Create<string, string?>("match[]", "{job=\"prometheus-target\"}"),
+                ]);
+
+            var seriesUri = new Uri(seriesUrl, UriKind.Relative);
+
+            var frequency = TimeSpan.FromMilliseconds(250);
+            using var client = new HttpClient() { BaseAddress = baseAddress };
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+
+            while (!cts.IsCancellationRequested)
+            {
+                try
+                {
+                    using var metrics = await client.GetFromJsonAsync<JsonDocument>(seriesUri, cts.Token);
+
+                    if (metrics!.RootElement.ValueKind is JsonValueKind.Object &&
+                        metrics.RootElement.TryGetProperty("status", out var status) &&
+                        status.GetString() == "success")
+                    {
+                        var data = metrics.RootElement.GetProperty("data");
+
+                        if (data.GetArrayLength() > 0)
+                        {
+                            var series = new HashSet<string>();
+
+                            foreach (var seriesElement in data.EnumerateArray())
+                            {
+                                if (seriesElement.ValueKind is JsonValueKind.Object &&
+                                    seriesElement.TryGetProperty("__name__", out var name))
+                                {
+                                    series.Add(name.GetString()!);
+                                }
+                            }
+
+                            return [.. series];
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+                    await Task.Delay(frequency);
+                }
+            }
+
+            cts.Token.ThrowIfCancellationRequested();
+            return [];
+        }
+
+        static async Task WaitForServiceDiscoveryAsync(Uri baseAddress)
+        {
+            // See https://prometheus.io/docs/prometheus/latest/querying/api/#targets
+            using var client = new HttpClient() { BaseAddress = baseAddress };
+            var targetsUri = new Uri("/api/v1/targets", UriKind.Relative);
+
+            var frequency = TimeSpan.FromMilliseconds(250);
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+
+            while (!cts.IsCancellationRequested)
+            {
+                try
+                {
+                    using var targets = await client.GetFromJsonAsync<JsonDocument>(targetsUri, cts.Token);
+
+                    if (targets!.RootElement.ValueKind is JsonValueKind.Object &&
+                        targets.RootElement.TryGetProperty("status", out var status) &&
+                        status.GetString() == "success")
+                    {
+                        var activeTargets = targets.RootElement
+                            .GetProperty("data")
+                            .GetProperty("activeTargets");
+
+                        if (activeTargets.GetArrayLength() > 0)
+                        {
+                            break;
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+                    await Task.Delay(frequency);
+                }
+            }
+
+            cts.Token.ThrowIfCancellationRequested();
+        }
+    });
+
     [EnabledOnDockerPlatformTheory(DockerPlatform.Linux)]
     [InlineData("")]
     [InlineData("text/plain")]
@@ -29,7 +189,32 @@ public class PrometheusIntegrationTests(PromToolFixture fixture, ITestOutputHelp
     [InlineData("application/openmetrics-text;version=1.0.0", Skip = "https://github.com/prometheus/prometheus/issues/8932")]
     [InlineData("application/openmetrics-text;version=1.0.0;escaping=allow-utf-8;q=0.5,application/openmetrics-text;version=0.0.1;q=0.4,text/plain;version=1.0.0;escaping=allow-utf-8;q=0.3,text/plain;version=0.0.4;q=0.2,/;q=0.1", Skip = "https://github.com/prometheus/prometheus/issues/8932")]
 
-    public async Task Can_Scrape_Prometheus(string accept)
+    public async Task Promtool_Considers_Scrape_Response_Valid(string accept) => await GenerateMetricsAsync(async (baseAddress) =>
+    {
+        // Act
+        var actual = await promtool.CheckMetricsAsync(new(baseAddress, "metrics"), accept);
+
+        outputHelper.WriteLine($"[promtool] ExitCode: {actual.ExitCode}");
+        outputHelper.WriteLine("[promtool] stdout:");
+        outputHelper.WriteLine(string.Empty);
+        outputHelper.WriteLine(actual.Stdout);
+
+        if (!string.IsNullOrEmpty(actual.Stderr))
+        {
+            outputHelper.WriteLine(string.Empty);
+            outputHelper.WriteLine("[promtool] stderr:");
+            outputHelper.WriteLine(string.Empty);
+            outputHelper.WriteLine(actual.Stderr);
+        }
+
+        // Assert
+        Assert.Equal(0, actual.ExitCode);
+        Assert.NotEmpty(actual.Stdout);
+        Assert.Empty(actual.Stderr);
+    });
+
+    private static async Task GenerateMetricsAsync(
+        Func<Uri, Task> actAndAssert)
     {
         // Arrange
         const string meterName = "prometheus.integration.tests";
@@ -73,6 +258,7 @@ public class PrometheusIntegrationTests(PromToolFixture fixture, ITestOutputHelp
 
         builder.Services
             .AddOpenTelemetry()
+            .ConfigureResource((builder) => builder.AddService("my-service", "my-namespce", "1.2.3"))
             .WithMetrics((builder) =>
             {
                 builder.AddAspNetCoreInstrumentation()
@@ -152,26 +338,8 @@ public class PrometheusIntegrationTests(PromToolFixture fixture, ITestOutputHelp
 
         activity.Stop();
 
-        // Act
-        var actual = await fixture.CheckMetricsAsync(new(baseAddress, "metrics"), accept);
-
-        outputHelper.WriteLine($"[promtool] ExitCode: {actual.ExitCode}");
-        outputHelper.WriteLine("[promtool] stdout:");
-        outputHelper.WriteLine(string.Empty);
-        outputHelper.WriteLine(actual.Stdout);
-
-        if (!string.IsNullOrEmpty(actual.Stderr))
-        {
-            outputHelper.WriteLine(string.Empty);
-            outputHelper.WriteLine("[promtool] stderr:");
-            outputHelper.WriteLine(string.Empty);
-            outputHelper.WriteLine(actual.Stderr);
-        }
-
-        // Assert
-        Assert.Equal(0, actual.ExitCode);
-        Assert.NotEmpty(actual.Stdout);
-        Assert.Empty(actual.Stderr);
+        // Act and Assert
+        await actAndAssert(baseAddress);
     }
 
     private static void WaitForNextExemplarTimestamp()
