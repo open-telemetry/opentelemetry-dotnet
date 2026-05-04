@@ -85,6 +85,11 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
         }
         finally
         {
+            (var stdout, var stderr) = await prometheus.TypedContainer.GetLogsAsync();
+
+            outputHelper.WriteLine($"[prometheus] [stdout]: {stdout}");
+            outputHelper.WriteLine($"[prometheus] [stderr]: {stderr}");
+
             await prometheus.DisposeAsync();
         }
 
@@ -172,7 +177,7 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
 
                         if (activeTargets.GetArrayLength() > 0)
                         {
-                            break;
+                            return;
                         }
                     }
                 }
