@@ -101,8 +101,10 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
             var seriesUri = new Uri(seriesUrl, UriKind.Relative);
 
             var frequency = TimeSpan.FromMilliseconds(250);
+            var timeout = TimeSpan.FromSeconds(15);
+
             using var client = new HttpClient() { BaseAddress = baseAddress };
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            using var cts = new CancellationTokenSource(timeout);
 
             while (!cts.IsCancellationRequested)
             {
@@ -139,7 +141,7 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
                 }
             }
 
-            cts.Token.ThrowIfCancellationRequested();
+            Assert.Fail($"Timed out after {timeout} waiting for metric series.");
             return [];
         }
 
@@ -150,7 +152,9 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
             var targetsUri = new Uri("/api/v1/targets", UriKind.Relative);
 
             var frequency = TimeSpan.FromMilliseconds(250);
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            var timeout = TimeSpan.FromSeconds(15);
+
+            using var cts = new CancellationTokenSource(timeout);
 
             while (!cts.IsCancellationRequested)
             {
@@ -178,7 +182,7 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
                 }
             }
 
-            cts.Token.ThrowIfCancellationRequested();
+            Assert.Fail($"Timed out after {timeout} waiting for service discovery active targets.");
         }
     });
 
