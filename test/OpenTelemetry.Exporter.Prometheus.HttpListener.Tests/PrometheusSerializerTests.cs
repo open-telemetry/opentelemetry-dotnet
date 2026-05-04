@@ -844,7 +844,7 @@ public sealed class PrometheusSerializerTests
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
         var bucketLine = output.Split(['\n'], StringSplitOptions.RemoveEmptyEntries)
             .Single(line => line.Contains("test_histogram_bucket{", StringComparison.Ordinal)
-                && line.Contains("le=\"10\"", StringComparison.Ordinal));
+                && line.Contains("le=\"10.0\"", StringComparison.Ordinal));
 
         Assert.Contains("} 3 # ", bucketLine, StringComparison.Ordinal);
         Assert.Contains(
