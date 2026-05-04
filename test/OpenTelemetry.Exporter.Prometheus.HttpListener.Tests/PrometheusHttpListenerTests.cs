@@ -142,7 +142,7 @@ public class PrometheusHttpListenerTests
             counter.Add(1);
         }
 
-        using var client = new HttpClient()
+        using var client = new HttpClient
         {
             BaseAddress = context.BaseAddress,
         };
@@ -181,7 +181,7 @@ public class PrometheusHttpListenerTests
         Assert.Equal(host, context.BaseAddress.Host);
         Assert.Equal(port, context.Port);
 
-        using var client = new HttpClient() { BaseAddress = context.BaseAddress };
+        using var client = new HttpClient { BaseAddress = context.BaseAddress };
         using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -203,7 +203,7 @@ public class PrometheusHttpListenerTests
         Assert.Equal("localhost", context.BaseAddress.Host);
         Assert.Equal(port, context.Port);
 
-        using var client = new HttpClient() { BaseAddress = context.BaseAddress };
+        using var client = new HttpClient { BaseAddress = context.BaseAddress };
         using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -232,7 +232,7 @@ public class PrometheusHttpListenerTests
 
         Assert.Equal(9464, context.Port);
 
-        using var client = new HttpClient() { BaseAddress = context.BaseAddress };
+        using var client = new HttpClient { BaseAddress = context.BaseAddress };
         using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -261,10 +261,99 @@ public class PrometheusHttpListenerTests
         Assert.Equal(port, context.Port);
         Assert.Equal($"http://localhost:{port}/", context.BaseAddress.ToString());
 
-        using var client = new HttpClient() { BaseAddress = context.BaseAddress };
+        using var client = new HttpClient { BaseAddress = context.BaseAddress };
         using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public void Start_ThrowsObjectDisposedException_AfterDisposal()
+    {
+        using var exporter = new PrometheusExporter(new());
+        var listener = new PrometheusHttpListener(
+            exporter,
+            new()
+            {
+                Host = "localhost",
+                Port = GetRandomPort(),
+            });
+
+        listener.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => listener.Start());
+    }
+
+    [Fact]
+    public async Task ProcessRequest_Returns503_AfterDisposal()
+    {
+        using var meter = new Meter(MeterName, MeterVersion);
+
+        var port = GetRandomPort();
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddPrometheusHttpListener(options =>
+            {
+                options.Host = "localhost";
+                options.Port = port;
+            })
+            .Build();
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        if (!provider.TryFindExporter(out PrometheusExporter? exporter))
+#pragma warning restore CA2000 // Dispose objects before losing scope
+        {
+            throw new InvalidOperationException("PrometheusExporter could not be found on MeterProvider.");
+        }
+
+        // Create a counter and record a value so that collection has something to export.
+        var counter = meter.CreateCounter<int>("test_counter");
+        counter.Add(1);
+
+        // Replace the Collect delegate with one that blocks until we release it.
+        // This lets us hold a request inside ProcessRequestAsync (in EnterCollect)
+        // while we trigger disposal.
+        using var collectBlocker = new ManualResetEventSlim(false);
+        using var collectEntered = new ManualResetEventSlim(false);
+        var originalCollect = exporter.Collect;
+        exporter.Collect = (timeout) =>
+        {
+            collectEntered.Set();
+            collectBlocker.Wait(TimeSpan.FromSeconds(10));
+            return originalCollect!(timeout);
+        };
+
+        var baseAddress = new UriBuilder(Uri.UriSchemeHttp, "localhost", port).Uri;
+        using var client = new HttpClient { BaseAddress = baseAddress };
+
+        // Send a scrape request; it will block inside EnterCollect.
+        var scrapeTask = client.GetAsync(new Uri("metrics", UriKind.Relative));
+
+        // Wait until the request is actually inside the Collect delegate.
+        Assert.True(collectEntered.Wait(TimeSpan.FromSeconds(10)), "Request did not enter Collect in time.");
+
+        // Dispose the provider on a background thread. This sets disposed = true,
+        // cancels the CancellationToken, and then blocks on SpinWait waiting for
+        // the in-flight request to drain.
+        var disposeTask = Task.Run(() => provider.Dispose());
+
+        // Confirm Dispose() is actually blocked (meaning it has cancelled the
+        // token and is now waiting for activeRequestCount to reach 0). If
+        // disposeTask completes within 500ms it means the request wasn't held.
+        var completed = await Task.WhenAny(disposeTask, Task.Delay(500));
+        Assert.NotSame(disposeTask, completed);
+
+        // Release the blocker so EnterCollect can finish.
+        // After EnterCollect completes, ProcessRequestAsync will hit
+        // cancellationToken.ThrowIfCancellationRequested() and return 503.
+        collectBlocker.Set();
+
+        // Wait for both the scrape response and disposal to complete.
+        using var response = await scrapeTask;
+        await disposeTask;
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
     }
 
     [Fact]
@@ -344,7 +433,7 @@ public class PrometheusHttpListenerTests
             counter.Add(0.99D, counterTags);
         }
 
-        using var client = new HttpClient()
+        using var client = new HttpClient
         {
             BaseAddress = context.BaseAddress,
         };
@@ -418,7 +507,7 @@ public class PrometheusHttpListenerTests
         var attemptsLeft = maximumAttempts;
         int boundPort = 0;
 
-        var options = new PrometheusHttpListenerOptions()
+        var options = new PrometheusHttpListenerOptions
         {
             Host = "localhost",
         };
@@ -464,7 +553,7 @@ public class PrometheusHttpListenerTests
     [Obsolete("Supports tests for the obsolete UriPrefixes property.")]
     private static PrometheusHttpListenerOptions TestPrometheusHttpListenerUriPrefixOptions(string[] uriPrefixes)
     {
-        var options = new PrometheusHttpListenerOptions()
+        var options = new PrometheusHttpListenerOptions
         {
             UriPrefixes = uriPrefixes,
         };
