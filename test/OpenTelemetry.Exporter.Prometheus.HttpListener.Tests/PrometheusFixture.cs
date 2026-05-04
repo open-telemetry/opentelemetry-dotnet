@@ -9,7 +9,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests;
 
 public class PrometheusFixture : XunitContainerFixture<IContainer>
 {
-    public IList<string>? ScrapeProtocols { get; set; }
+    public IList<string> ScrapeProtocols { get; } = [];
 
     public int? TargetPort { get; set; }
 
@@ -23,7 +23,7 @@ public class PrometheusFixture : XunitContainerFixture<IContainer>
         }
 
         var prometheusConfigurationPath = Path.GetTempFileName();
-        File.WriteAllText(prometheusConfigurationPath, CreatePrometheusConfiguration(ScrapeProtocols));
+        File.WriteAllText(prometheusConfigurationPath, CreatePrometheusConfiguration(this.ScrapeProtocols));
 
         var sdPath = Path.GetTempFileName();
         File.WriteAllText(sdPath, CreateServiceDiscoveryConfiguration(targetPort));
@@ -43,7 +43,7 @@ public class PrometheusFixture : XunitContainerFixture<IContainer>
         $"""
          global:
            scrape_interval: 2s
-           {(scrapeProtocols is not null ? $"scrape_protocols: [\"{string.Join("\", \"", scrapeProtocols)}\"]" : string.Empty)}
+           {(scrapeProtocols.Count > 0 ? $"scrape_protocols: [\"{string.Join("\", \"", scrapeProtocols)}\"]" : string.Empty)}
          scrape_configs:
            - job_name: "prometheus-target"
              file_sd_configs:

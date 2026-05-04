@@ -40,7 +40,7 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
 
         if (!string.IsNullOrEmpty(scrapeProtocol))
         {
-            prometheus.ScrapeProtocols = [scrapeProtocol];
+            prometheus.ScrapeProtocols.Add(scrapeProtocol);
         }
 
         try
