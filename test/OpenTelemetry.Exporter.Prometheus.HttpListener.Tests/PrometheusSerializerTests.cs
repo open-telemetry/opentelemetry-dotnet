@@ -1150,6 +1150,28 @@ public sealed class PrometheusSerializerTests
     }
 
     [Fact]
+    public void UntypedMetricUsesUnknownTypeForOpenMetrics()
+    {
+        var buffer = new byte[64];
+        var metric = new PrometheusMetric("test_metric", string.Empty, PrometheusType.Untyped, disableTotalNameSuffixForCounters: false);
+
+        var cursor = PrometheusSerializer.WriteTypeMetadata(buffer, 0, metric, openMetricsRequested: true);
+
+        Assert.Equal("# TYPE test_metric unknown\n", Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Fact]
+    public void UntypedMetricUsesUntypedTypeForPrometheusTextFormat()
+    {
+        var buffer = new byte[64];
+        var metric = new PrometheusMetric("test_metric", string.Empty, PrometheusType.Untyped, disableTotalNameSuffixForCounters: false);
+
+        var cursor = PrometheusSerializer.WriteTypeMetadata(buffer, 0, metric, openMetricsRequested: false);
+
+        Assert.Equal("# TYPE test_metric untyped\n", Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Fact]
     public void WriteAsciiStringNoEscapeThrowsExceptionWhenBufferTooSmall()
     {
         var buffer = new byte[4];
