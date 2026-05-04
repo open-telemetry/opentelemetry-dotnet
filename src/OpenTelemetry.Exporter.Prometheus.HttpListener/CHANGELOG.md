@@ -46,6 +46,9 @@ Notes](../../RELEASENOTES.md).
 * Emit OpenMetrics exemplars for counters and histogram buckets.
   ([#7222](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7222))
 
+* Fix incorrect handling of untyped metrics when using OpenMetrics format.
+  ([#7219](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7219))
+
 * Use the canonical representation for histogram "le" label values when using
   OpenMetrics.
   ([#7218](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7218))

@@ -385,7 +385,7 @@ internal static partial class PrometheusSerializer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteTypeMetadata(byte[] buffer, int cursor, PrometheusMetric metric, bool openMetricsRequested)
     {
-        var metricType = MapPrometheusType(metric.Type);
+        var metricType = MapPrometheusType(metric.Type, openMetricsRequested);
 
         Debug.Assert(!string.IsNullOrEmpty(metricType), $"{nameof(metricType)} should not be null or empty.");
 
@@ -550,13 +550,16 @@ internal static partial class PrometheusSerializer
     private static int WriteUnixTimeSeconds(byte[] buffer, int cursor, DateTimeOffset value)
         => WriteDouble(buffer, cursor, value.ToUnixTimeMilliseconds() / 1000.0);
 
-    private static string MapPrometheusType(PrometheusType type) => type switch
+    private static string MapPrometheusType(PrometheusType type, bool openMetricsRequested) => type switch
     {
         PrometheusType.Gauge => "gauge",
         PrometheusType.Counter => "counter",
         PrometheusType.Summary => "summary",
         PrometheusType.Histogram => "histogram",
-        PrometheusType.Untyped or _ => "untyped",
+
+        // OpenMetrics 1.0 uses "unknown" while Prometheus text format 0.0.4 uses "untyped".
+        // See https://prometheus.io/docs/specs/om/open_metrics_spec/#unknown-1
+        PrometheusType.Untyped or _ => openMetricsRequested ? "unknown" : "untyped",
     };
 
 #if NET
