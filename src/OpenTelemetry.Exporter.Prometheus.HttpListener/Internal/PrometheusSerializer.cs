@@ -301,6 +301,66 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int WriteExemplar(byte[] buffer, int cursor, in Exemplar exemplar, bool isLongValue)
+    {
+        buffer[cursor++] = unchecked((byte)' ');
+        buffer[cursor++] = unchecked((byte)'#');
+        buffer[cursor++] = unchecked((byte)' ');
+        buffer[cursor++] = unchecked((byte)'{');
+
+        var hasLabels = false;
+
+        if (exemplar.TraceId != default)
+        {
+            cursor = WriteLabel(buffer, cursor, "trace_id", exemplar.TraceId.ToHexString());
+            buffer[cursor++] = unchecked((byte)',');
+            hasLabels = true;
+        }
+
+        if (exemplar.SpanId != default)
+        {
+            cursor = WriteLabel(buffer, cursor, "span_id", exemplar.SpanId.ToHexString());
+            buffer[cursor++] = unchecked((byte)',');
+            hasLabels = true;
+        }
+
+        foreach (var tag in exemplar.FilteredTags)
+        {
+            if (tag.Key == "trace_id" || tag.Key == "span_id")
+            {
+                continue;
+            }
+
+            cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
+            buffer[cursor++] = unchecked((byte)',');
+            hasLabels = true;
+        }
+
+        if (hasLabels)
+        {
+            buffer[cursor - 1] = unchecked((byte)'}');
+        }
+        else
+        {
+            buffer[cursor++] = unchecked((byte)'}');
+        }
+
+        buffer[cursor++] = unchecked((byte)' ');
+
+        cursor = isLongValue
+            ? WriteLong(buffer, cursor, exemplar.LongValue)
+            : WriteDouble(buffer, cursor, exemplar.DoubleValue);
+
+        if (exemplar.Timestamp != default)
+        {
+            buffer[cursor++] = unchecked((byte)' ');
+            cursor = WriteUnixTimeSeconds(buffer, cursor, exemplar.Timestamp);
+        }
+
+        return cursor;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteHelpMetadata(byte[] buffer, int cursor, PrometheusMetric metric, string metricDescription, bool openMetricsRequested)
     {
         if (string.IsNullOrEmpty(metricDescription))
@@ -485,6 +545,10 @@ internal static partial class PrometheusSerializer
 
         return WriteUnicodeNoEscape(buffer, cursor, 0xFFFD);
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int WriteUnixTimeSeconds(byte[] buffer, int cursor, DateTimeOffset value)
+        => WriteDouble(buffer, cursor, value.ToUnixTimeMilliseconds() / 1000.0);
 
     private static string MapPrometheusType(PrometheusType type) => type switch
     {

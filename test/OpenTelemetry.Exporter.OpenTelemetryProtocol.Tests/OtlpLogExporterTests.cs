@@ -109,9 +109,29 @@ public class OtlpLogExporterTests
     }
 
     [Fact]
+    public void ServiceProviderHttpClientFactoryNotInvoked()
+    {
+        var services = new ServiceCollection();
+
+        services.AddHttpClient();
+
+        var invocations = 0;
+
+        services.AddHttpClient("OtlpLogExporter", configureClient: (client) => invocations++);
+
+        services.AddOpenTelemetry().WithLogging(builder => builder
+            .AddOtlpExporter(o => o.Protocol = OtlpExportProtocol.HttpProtobuf));
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        Assert.NotNull(serviceProvider);
+        Assert.Equal(0, invocations);
+    }
+
+    [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/7233")]
     public void ServiceProviderHttpClientFactoryInvoked()
     {
-        IServiceCollection services = new ServiceCollection();
+        var services = new ServiceCollection();
 
         services.AddHttpClient();
 
