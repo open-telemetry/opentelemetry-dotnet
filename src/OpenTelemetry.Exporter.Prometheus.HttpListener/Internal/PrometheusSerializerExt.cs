@@ -144,7 +144,7 @@ internal static partial class PrometheusSerializer
                     // Histogram count
                     cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "_count");
-                    cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags);
+                    cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags, openMetricsRequested);
 
                     buffer[cursor++] = unchecked((byte)' ');
 
