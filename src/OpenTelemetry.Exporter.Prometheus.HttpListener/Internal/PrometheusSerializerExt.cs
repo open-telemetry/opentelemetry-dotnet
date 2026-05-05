@@ -28,11 +28,11 @@ internal static partial class PrometheusSerializer
         Metric metric,
         PrometheusMetric prometheusMetric,
         bool openMetricsRequested,
-        bool writeType = true,
-        bool writeUnit = true,
-        bool writeHelp = true,
-        string? unitOverride = null,
-        string? helpOverride = null)
+        bool writeType,
+        bool writeUnit,
+        bool writeHelp,
+        string? unitOverride,
+        string? helpOverride)
     {
         if (writeType)
         {

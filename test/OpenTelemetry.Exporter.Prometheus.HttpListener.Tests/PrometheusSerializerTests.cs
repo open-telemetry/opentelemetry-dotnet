@@ -104,7 +104,7 @@ public sealed class PrometheusSerializerTests
 
         provider.ForceFlush();
 
-        var cursor = WriteMetric(buffer, 0, metrics[0]);
+        var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics: false);
         Assert.Matches(
             ("^"
                 + "# TYPE test_gauge gauge\n"
@@ -130,7 +130,7 @@ public sealed class PrometheusSerializerTests
 
         provider.ForceFlush();
 
-        var cursor = WriteMetric(buffer, 0, metrics[0]);
+        var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics: false);
         Assert.Matches(
             ("^"
                 + "# TYPE test_gauge_seconds gauge\n"
@@ -156,7 +156,7 @@ public sealed class PrometheusSerializerTests
 
         provider.ForceFlush();
 
-        var cursor = WriteMetric(buffer, 0, metrics[0]);
+        var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics: false);
         Assert.Matches(
             ("^"
                 + "# TYPE test_gauge_seconds gauge\n"
@@ -185,7 +185,7 @@ public sealed class PrometheusSerializerTests
 
         provider.ForceFlush();
 
-        var cursor = WriteMetric(buffer, 0, metrics[0]);
+        var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics: false);
         Assert.Matches(
             ("^"
                 + "# TYPE test_gauge gauge\n"
@@ -212,7 +212,7 @@ public sealed class PrometheusSerializerTests
 
         provider.ForceFlush();
 
-        var cursor = WriteMetric(buffer, 0, metrics[0]);
+        var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics: false);
         Assert.Matches(
             ("^"
                 + "# TYPE test_gauge gauge\n"
@@ -239,7 +239,7 @@ public sealed class PrometheusSerializerTests
 
         provider.ForceFlush();
 
-        var cursor = WriteMetric(buffer, 0, metrics[0]);
+        var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics: false);
         Assert.Matches(
             ("^"
                 + "# TYPE test_gauge gauge\n"
@@ -303,7 +303,7 @@ public sealed class PrometheusSerializerTests
 
         provider.ForceFlush();
 
-        var cursor = WriteMetric(buffer, 0, metrics[0]);
+        var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics: false);
         Assert.Matches(
             ("^"
                 + "# TYPE test_gauge gauge\n"
@@ -332,7 +332,7 @@ public sealed class PrometheusSerializerTests
 
         provider.ForceFlush();
 
-        var cursor = WriteMetric(buffer, 0, metrics[0]);
+        var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics: false);
         Assert.Matches(
             ("^"
                 + "# TYPE test_counter_total counter\n"
@@ -361,7 +361,7 @@ public sealed class PrometheusSerializerTests
             provider.ForceFlush();
         }
 
-        var cursor = WriteMetric(buffer, 0, metrics[0]);
+        var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics: false);
         Assert.Matches(
             ("^"
                 + "# TYPE test_counter_total counter\n"
@@ -388,7 +388,7 @@ public sealed class PrometheusSerializerTests
 
         provider.ForceFlush();
 
-        var cursor = WriteMetric(buffer, 0, metrics[0]);
+        var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics: false);
         Assert.Matches(
             ("^"
                 + "# TYPE test_updown_counter gauge\n"
@@ -460,7 +460,7 @@ public sealed class PrometheusSerializerTests
 
         provider.ForceFlush();
 
-        var cursor = WriteMetric(buffer, 0, metrics[0]);
+        var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics: false);
         Assert.Matches(
             ("^"
                 + "# TYPE test_histogram histogram\n"
@@ -504,7 +504,7 @@ public sealed class PrometheusSerializerTests
 
         provider.ForceFlush();
 
-        var cursor = WriteMetric(buffer, 0, metrics[0]);
+        var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics: false);
         Assert.Matches(
             ("^"
                 + "# TYPE test_histogram histogram\n"
@@ -549,7 +549,7 @@ public sealed class PrometheusSerializerTests
 
         provider.ForceFlush();
 
-        var cursor = WriteMetric(buffer, 0, metrics[0]);
+        var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics: false);
         Assert.Matches(
             ("^"
                 + "# TYPE test_histogram histogram\n"
@@ -594,7 +594,7 @@ public sealed class PrometheusSerializerTests
 
         provider.ForceFlush();
 
-        var cursor = WriteMetric(buffer, 0, metrics[0]);
+        var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics: false);
         Assert.Matches(
             ("^"
                 + "# TYPE test_histogram histogram\n"
@@ -1076,7 +1076,18 @@ public sealed class PrometheusSerializerTests
 
         var prometheusMetric = new PrometheusMetric(metric.Name, metric.Unit, PrometheusType.Histogram, disableTotalNameSuffixForCounters: false);
 
-        var cursor = PrometheusSerializer.WriteMetric(buffer, 0, metric, prometheusMetric, openMetricsRequested: false);
+        var cursor = PrometheusSerializer.WriteMetric(
+            buffer,
+            0,
+            metric,
+            prometheusMetric,
+            openMetricsRequested: false,
+            writeType: true,
+            writeUnit: true,
+            writeHelp: true,
+            unitOverride: null,
+            helpOverride: null);
+
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
 
         Assert.Contains("test_histogram_bucket{otel_scope_name=\"\u65e5\u672c\",_=\"meterTagValue\",le=\"0\"} 0\n", output, StringComparison.Ordinal);
@@ -1120,8 +1131,18 @@ public sealed class PrometheusSerializerTests
         static char GetHexValue(int value) => (char)(value < 10 ? '0' + value : 'A' + (value - 10));
     }
 
-    private static int WriteMetric(byte[] buffer, int cursor, Metric metric, bool useOpenMetrics = false)
-        => PrometheusSerializer.WriteMetric(buffer, cursor, metric, PrometheusMetric.Create(metric, false), useOpenMetrics);
+    private static int WriteMetric(byte[] buffer, int cursor, Metric metric, bool useOpenMetrics) =>
+        PrometheusSerializer.WriteMetric(
+            buffer,
+            cursor,
+            metric,
+            PrometheusMetric.Create(metric, false),
+            useOpenMetrics,
+            writeType: true,
+            writeUnit: true,
+            writeHelp: true,
+            unitOverride: null,
+            helpOverride: null);
 
     private static void WaitForNextExemplarTimestamp()
     {
@@ -1148,7 +1169,7 @@ public sealed class PrometheusSerializerTests
             provider.ForceFlush();
         }
 
-        var cursor = WriteMetric(buffer, 0, metrics[0]);
+        var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics: false);
         return Encoding.UTF8.GetString(buffer, 0, cursor);
     }
 }
