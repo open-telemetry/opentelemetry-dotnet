@@ -26,6 +26,43 @@ Notes](../../RELEASENOTES.md).
   significant digits to represent such values.
   ([#7179](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7179))
 
+* Fix non-ASCII characters in metric names and unit strings not being sanitized
+  correctly during Prometheus serialization.
+  ([#7184](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7184))
+
+* Add support for caching the scrape endpoint HTTP responses using the
+  `PrometheusHttpListenerOptions.ScrapeResponseCacheDurationMilliseconds` option.
+  The default value is `300` milliseconds. Set the option to `0` to disable
+  response caching.
+  ([#7189](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7189))
+
+* Fix case where reader tracking could be reset while readers were still active.
+  ([#7190](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7190))
+
+* Improve `Accept` header handling for format negotiation so OpenMetrics is
+  selected correctly by considering whitespace and `q` weights.
+  ([#7208](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7208))
+
+* Emit OpenMetrics exemplars for counters and histogram buckets.
+  ([#7222](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7222))
+
+* Fix incorrect handling of untyped metrics when using OpenMetrics format.
+  ([#7219](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7219))
+
+* Add support for configuring the HTTP listener endpoint host and port using
+  the `OTEL_EXPORTER_PROMETHEUS_HOST` and `OTEL_EXPORTER_PROMETHEUS_PORT`
+  environment variables.
+  ([#7167](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7167))
+
+* Fix Prometheus/OpenMetrics serialization to emit metric and label names
+  containing `:` and `_` instead of dropping them and prefixing leading digits.
+  Invalid characters are replaced with `_` instead of being dropped.
+  ([#7209](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7209))
+
+* Add `escaping=underscores` to the `Accept` header handling for content
+  negotiation so OpenMetrics are handled correctly.
+  ([#7209](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7209))
+
 ## 1.15.3-beta.1
 
 Released 2026-Apr-21

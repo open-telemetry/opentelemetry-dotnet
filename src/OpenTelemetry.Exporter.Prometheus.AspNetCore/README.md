@@ -18,15 +18,6 @@ to scrape.
   Grafana](../../docs/metrics/getting-started-prometheus-grafana/README.md)
   tutorial for more information.
 
-<!-- This comment is to make sure the two notes above and below are not merged -->
-
-> [!NOTE]
-> This exporter does not support Exemplars. For using Exemplars, use the [OTLP
-Exporter](../OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md) and use a
-component like OTel Collector to expose metrics (with exemplars) to Prometheus.
-This [tutorial](../../docs/metrics/exemplars/README.md) shows one way how to do
-that.
-
 ## Prerequisite
 
 * [Get Prometheus](https://prometheus.io/docs/introduction/first_steps/)
@@ -47,8 +38,7 @@ dotnet add package --prerelease OpenTelemetry.Exporter.Prometheus.AspNetCore
 
     ```csharp
     services.AddOpenTelemetry()
-        .WithMetrics(builder => builder
-            .AddPrometheusExporter());
+        .WithMetrics(builder => builder.AddPrometheusExporter());
     ```
 
 * Or configure directly:
@@ -60,34 +50,63 @@ dotnet add package --prerelease OpenTelemetry.Exporter.Prometheus.AspNetCore
     var meterProvider = Sdk.CreateMeterProviderBuilder()
         .AddPrometheusExporter()
         .Build();
+
     builder.Services.AddSingleton(meterProvider);
     ```
 
 ### Step 3: Configure Prometheus Scraping Endpoint
 
-* Register Prometheus scraping middleware using the
-  `UseOpenTelemetryPrometheusScrapingEndpoint` extension method
-  on `IApplicationBuilder` :
+You can use register the Prometheus scraping middleware using the
+`MapPrometheusScrapingEndpoint` extension method on
+`IEndpointRouteBuilder` interface with
+[Minimal APIs](https://learn.microsoft.com/aspnet/core/fundamentals/minimal-apis/webapplication).
+For example:
 
-    ```csharp
-    var builder = WebApplication.CreateBuilder(args);
-    var app = builder.Build();
-    app.UseOpenTelemetryPrometheusScrapingEndpoint();
-    ```
+```csharp
+var builder = WebApplication.CreateBuilder(args);
 
-    Overloads of the `UseOpenTelemetryPrometheusScrapingEndpoint` extension are
-    provided to change the path or for more advanced configuration a predicate
-    function can be used:
+var app = builder.Build();
 
-    ```csharp
-    app.UseOpenTelemetryPrometheusScrapingEndpoint(
-            context => context.Request.Path == "/internal/metrics"
-                && context.Connection.LocalPort == 5067);
-    ```
+app.MapPrometheusScrapingEndpoint();
+```
 
-    This can be used in combination with
-    [configuring multiple ports on the ASP.NET application](https://learn.microsoft.com/aspnet/core/fundamentals/servers/kestrel/endpoints)
-    to expose the scraping endpoint on a different port.
+You can use the `IEndpointConventionBuilder` returned by the extension
+method to compose with other functionality, such as to not require
+authentication or to exclude HTTP metrics from the scraping endpoint
+itself. For example:
+
+```csharp
+app.MapPrometheusScrapingEndpoint()
+   .AllowAnonymous()
+   .DisableHttpMetrics();
+```
+
+If you are using the older [Generic Host API](https://learn.microsoft.com/aspnet/core/fundamentals/host/generic-host)
+you can register the Prometheus scraping middleware with the
+`UseOpenTelemetryPrometheusScrapingEndpoint` extension method on
+`IApplicationBuilder` instead:
+
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+
+var app = builder.Build();
+
+app.UseOpenTelemetryPrometheusScrapingEndpoint();
+```
+
+Overloads of the `UseOpenTelemetryPrometheusScrapingEndpoint` extension are
+provided to change the path or for more advanced configuration a predicate
+function can be used:
+
+```csharp
+app.UseOpenTelemetryPrometheusScrapingEndpoint(
+        context => context.Request.Path == "/internal/metrics" &&
+                   context.Connection.LocalPort == 5067);
+```
+
+This can be used in combination with
+[configuring multiple ports on the ASP.NET application](https://learn.microsoft.com/aspnet/core/fundamentals/servers/kestrel/endpoints)
+to expose the scraping endpoint on a different port.
 
 ## Configuration
 
@@ -97,7 +116,7 @@ properties.
 ### ScrapeEndpointPath
 
 Defines the path for the Prometheus scrape endpoint for the middleware
-registered by
+registered by `MapPrometheusScrapingEndpoint` and
 `UseOpenTelemetryPrometheusScrapingEndpoint`. Default value: `"/metrics"`.
 
 ### ScrapeResponseCacheDurationMilliseconds

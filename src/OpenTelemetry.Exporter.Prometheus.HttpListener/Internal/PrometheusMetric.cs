@@ -17,7 +17,7 @@ internal sealed class PrometheusMetric
         // consecutive `_` characters MUST be replaced with a single `_` character.
         // https://github.com/open-telemetry/opentelemetry-specification/blob/b2f923fb1650dde1f061507908b834035506a796/specification/compatibility/prometheus_and_openmetrics.md#L230-L233
         var sanitizedName = SanitizeMetricName(name);
-        var openMetricsName = SanitizeOpenMetricsName(sanitizedName);
+        var openMetricsName = RemoveOpenMetricsCounterNameSuffix(name);
 
         string? sanitizedUnit = null;
         if (!string.IsNullOrEmpty(unit))
@@ -34,6 +34,8 @@ internal sealed class PrometheusMetric
                 openMetricsName += $"_{sanitizedUnit}";
             }
         }
+
+        openMetricsName = EscapeOpenMetricsName(openMetricsName);
 
         // If the metric name for monotonic Sum metric points does not end in a suffix of `_total` a suffix of `_total` MUST be added by default, otherwise the name MUST remain unchanged.
         // Exporters SHOULD provide a configuration option to disable the addition of `_total` suffixes.
@@ -54,8 +56,8 @@ internal sealed class PrometheusMetric
         // In OpenMetrics format, the UNIT, TYPE and HELP metadata must be suffixed with the unit (handled above), and not the '_total' suffix, as in the case for counters.
         // https://github.com/prometheus/OpenMetrics/blob/v1.0.0/specification/OpenMetrics.md#unit
         var openMetricsMetadataName = type == PrometheusType.Counter
-            ? SanitizeOpenMetricsName(openMetricsName)
-            : sanitizedName;
+            ? RemoveOpenMetricsCounterNameSuffix(openMetricsName)
+            : openMetricsName;
 
         this.Name = sanitizedName;
         this.OpenMetricsName = openMetricsName;
@@ -86,7 +88,7 @@ internal sealed class PrometheusMetric
         {
             var c = metricUnit[i];
 
-            if (!char.IsLetterOrDigit(c) && c != ':')
+            if (!char.IsAsciiLetterOrDigit(c) && c != ':')
             {
                 if (!lastCharUnderscore)
                 {
@@ -97,11 +99,7 @@ internal sealed class PrometheusMetric
             }
             else
             {
-                if (sb != null)
-                {
-                    sb.Append(c);
-                }
-
+                sb?.Append(c);
                 lastCharUnderscore = false;
             }
         }
@@ -119,7 +117,7 @@ internal sealed class PrometheusMetric
         {
             var c = metricName[i];
 
-            if (i == 0 && char.IsNumber(c))
+            if (i == 0 && char.IsAsciiDigit(c))
             {
                 sb ??= CreateStringBuilder(metricName);
                 sb.Append('_');
@@ -127,7 +125,7 @@ internal sealed class PrometheusMetric
                 continue;
             }
 
-            if (!char.IsLetterOrDigit(c) && c != ':')
+            if (!char.IsAsciiLetterOrDigit(c) && c != ':')
             {
                 if (!lastCharUnderscore)
                 {
@@ -145,6 +143,52 @@ internal sealed class PrometheusMetric
         }
 
         return sb?.ToString() ?? metricName;
+
+        static StringBuilder CreateStringBuilder(string value)
+        {
+            return new(value.Length);
+        }
+    }
+
+    internal static string EscapeOpenMetricsName(string metricName)
+    {
+        StringBuilder? sb = null;
+        var lastCharUnderscore = false;
+
+        for (var i = 0; i < metricName.Length; i++)
+        {
+            var c = metricName[i];
+
+            if (i == 0 && char.IsAsciiDigit(c))
+            {
+                sb ??= CreateStringBuilder(metricName);
+                sb.Append('_');
+                lastCharUnderscore = true;
+            }
+
+            if (!char.IsAsciiLetterOrDigit(c) && c != ':')
+            {
+                if (!lastCharUnderscore)
+                {
+                    sb ??= CreateStringBuilder(metricName);
+                    sb.Append('_');
+                    lastCharUnderscore = true;
+                }
+            }
+            else
+            {
+                sb ??= CreateStringBuilder(metricName);
+                sb.Append(c);
+                lastCharUnderscore = c == '_';
+            }
+        }
+
+        return sb?.ToString() ?? metricName;
+
+        static StringBuilder CreateStringBuilder(string value)
+        {
+            return new(value.Length + 1);
+        }
     }
 
     internal static string RemoveAnnotations(string unit)
@@ -214,12 +258,7 @@ internal sealed class PrometheusMetric
         };
     }
 
-    private static StringBuilder CreateStringBuilder(string value)
-    {
-        return new(value.Length);
-    }
-
-    private static string SanitizeOpenMetricsName(string metricName)
+    private static string RemoveOpenMetricsCounterNameSuffix(string metricName)
         => metricName.EndsWith("_total", StringComparison.Ordinal) ? metricName.Substring(0, metricName.Length - 6) : metricName;
 
     private static string GetUnit(string unit)

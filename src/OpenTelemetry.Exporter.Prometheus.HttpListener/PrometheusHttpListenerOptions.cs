@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using Microsoft.Extensions.Configuration;
+using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter;
@@ -15,17 +17,43 @@ public class PrometheusHttpListenerOptions
     /// </summary>
     internal const string DefaultScrapeEndpointPath = "/metrics";
 
-    private IReadOnlyCollection<string> uriPrefixes = ["http://localhost:9464/"];
+    internal const string PrometheusHostEnvVar = "OTEL_EXPORTER_PROMETHEUS_HOST";
+    internal const string PrometheusPortEnvVar = "OTEL_EXPORTER_PROMETHEUS_PORT";
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PrometheusHttpListenerOptions"/> class.
+    /// </summary>
+    public PrometheusHttpListenerOptions()
+         : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
+    {
+    }
+
+    internal PrometheusHttpListenerOptions(IConfiguration configuration)
+    {
+        if (!configuration.TryGetStringValue(PrometheusHostEnvVar, out var host))
+        {
+            host = "localhost";
+        }
+
+        if (!configuration.TryGetIntValue(PrometheusExporterEventSource.Log, PrometheusPortEnvVar, out var port))
+        {
+            port = 9464;
+        }
+
+        this.Host = host;
+        this.Port = port;
+        this.ScrapeResponseCacheDurationMilliseconds = 300;
+    }
 
     /// <summary>
     /// Gets or sets the Host name the HTTP listener will bind to. Defaults to <c>localhost</c>.
     /// </summary>
-    public string Host { get; set; } = "localhost";
+    public string Host { get; set; }
 
     /// <summary>
     /// Gets or sets the TCP port used by the HTTP listener. Defaults to <c>9464</c>.
     /// </summary>
-    public int Port { get; set; } = 9464;
+    public int Port { get; set; }
 
     /// <summary>
     /// Gets or sets the path to use for the scraping endpoint. Default value: "/metrics".
@@ -38,22 +66,38 @@ public class PrometheusHttpListenerOptions
     public bool DisableTotalNameSuffixForCounters { get; set; }
 
     /// <summary>
+    /// Gets or sets the cache duration in milliseconds for scrape responses. Default value: 300.
+    /// </summary>
+    /// <remarks>
+    /// Note: Specify 0 to disable response caching.
+    /// </remarks>
+    public int ScrapeResponseCacheDurationMilliseconds
+    {
+        get => field;
+        set
+        {
+            Guard.ThrowIfOutOfRange(value, min: 0);
+            field = value;
+        }
+    }
+
+    /// <summary>
     /// Gets or sets the URI (Uniform Resource Identifier) prefixes to use for the http listener.
     /// Default value: <c>["http://localhost:9464/"]</c>.
     /// </summary>
     [Obsolete("UriPrefixes is deprecated. Use Host and Port. This will be removed in a future stable release.")]
     public IReadOnlyCollection<string> UriPrefixes
     {
-        get => this.uriPrefixes;
+        get => field ?? ["http://localhost:9464/"];
         set
         {
             Guard.ThrowIfNull(value);
             if (value.Count == 0)
             {
-                throw new ArgumentException("Empty list provided.", nameof(this.UriPrefixes));
+                throw new ArgumentException("Empty list provided.", nameof(value));
             }
 
-            this.uriPrefixes = value;
+            field = value;
             this.UriPrefixesExplicitlySet = true;
         }
     }

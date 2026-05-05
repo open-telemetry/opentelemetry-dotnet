@@ -106,7 +106,53 @@ public class CompositeActivityProcessorTests
         Assert.Equal(provider, p2.ParentProvider);
     }
 
-    private sealed class TestProvider : TracerProvider
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void CompositeActivityProcessor_PreservesOriginalTimeoutBudget(bool shutdown)
     {
+        const int delayMilliseconds = 200;
+        const int timeoutMilliseconds = 1500;
+
+        using var first = new TimeoutCapturingActivityProcessor(delayMilliseconds);
+        using var second = new TimeoutCapturingActivityProcessor(delayMilliseconds);
+        using var third = new TimeoutCapturingActivityProcessor();
+
+        using var composite = new CompositeProcessor<Activity>([first, second, third]);
+
+        if (shutdown)
+        {
+            composite.Shutdown(timeoutMilliseconds);
+        }
+        else
+        {
+            composite.ForceFlush(timeoutMilliseconds);
+        }
+
+        Assert.Equal(timeoutMilliseconds, shutdown ? first.LastShutdownTimeoutMilliseconds : first.LastForceFlushTimeoutMilliseconds);
+        Assert.InRange(shutdown ? third.LastShutdownTimeoutMilliseconds : third.LastForceFlushTimeoutMilliseconds, 1000, timeoutMilliseconds);
+    }
+
+    private sealed class TestProvider : TracerProvider;
+
+    private sealed class TimeoutCapturingActivityProcessor(int delayMilliseconds = 0) : BaseProcessor<Activity>
+    {
+        public int LastForceFlushTimeoutMilliseconds { get; private set; } = Timeout.Infinite;
+
+        public int LastShutdownTimeoutMilliseconds { get; private set; } = Timeout.Infinite;
+
+        protected override bool OnForceFlush(int timeoutMilliseconds)
+        {
+            this.LastForceFlushTimeoutMilliseconds = timeoutMilliseconds;
+            Thread.Sleep(delayMilliseconds);
+            return true;
+        }
+
+        protected override bool OnShutdown(int timeoutMilliseconds)
+        {
+            this.LastShutdownTimeoutMilliseconds = timeoutMilliseconds;
+            Thread.Sleep(delayMilliseconds);
+            return true;
+        }
     }
 }

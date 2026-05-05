@@ -92,7 +92,7 @@
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
     <PackageVersion Include="CommandLineParser" Version="2.9.1" />
     <PackageVersion Include="FSharp.Core" Version="10.1.203" />
-    <PackageVersion Include="FsCheck.Xunit" Version="3.3.2" />
+    <PackageVersion Include="FsCheck.Xunit" Version="3.3.3" />
     <PackageVersion Include="GitHubActionsTestLogger" Version="3.0.3" />
     <PackageVersion Include="Grpc.AspNetCore" Version="2.67.0" />
     <PackageVersion Include="Grpc.AspNetCore.Server" Version="2.67.0" />
@@ -111,7 +111,7 @@
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="9.10.0" />
     <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" Condition="$(OS) != 'Windows_NT'" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.5.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.5.1" />
     <PackageVersion Include="MinVer" Version="7.0.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.2" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.GrpcNetClient" Version="1.15.1-beta.1" />
@@ -121,6 +121,7 @@
     <PackageVersion Include="StyleCop.Analyzers" Version="1.2.0-beta.556" />
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="10.1.7" />
     <PackageVersion Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
+    <PackageVersion Include="Testcontainers" Version="4.11.0" />
     <PackageVersion Include="Verify.Xunit" Version="31.12.5" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="[2.8.2,)" />
