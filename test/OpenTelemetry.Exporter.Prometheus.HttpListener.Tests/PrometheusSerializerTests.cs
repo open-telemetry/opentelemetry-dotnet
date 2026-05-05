@@ -293,13 +293,13 @@ public sealed class PrometheusSerializerTests
     }
 
     [Fact]
-    public void WriteLabelKeyPreservesOpenMetricsLegacyValidCharacters()
+    public void WriteLabelKeyNormalizesOpenMetricsLabelNames()
     {
         var buffer = new byte[32];
 
         var cursor = PrometheusSerializer.WriteLabelKey(buffer, 0, "a_b:c", openMetricsRequested: true);
 
-        Assert.Equal("a_b:c", Encoding.UTF8.GetString(buffer, 0, cursor));
+        Assert.Equal("a_b_c", Encoding.UTF8.GetString(buffer, 0, cursor));
     }
 
     [Fact]

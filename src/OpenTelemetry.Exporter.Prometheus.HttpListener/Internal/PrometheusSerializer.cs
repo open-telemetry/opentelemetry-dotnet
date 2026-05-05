@@ -527,12 +527,12 @@ internal static partial class PrometheusSerializer
     }
 
     private static int WritePrometheusLabelKey(byte[] buffer, int cursor, string value)
-        => WriteNormalizedLabelKey(buffer, cursor, value, isOpenMetrics: false);
+        => WriteNormalizedLabelKey(buffer, cursor, value);
 
     private static int WriteOpenMetricsLabelKey(byte[] buffer, int cursor, string value)
-        => WriteNormalizedLabelKey(buffer, cursor, value, isOpenMetrics: true);
+        => WriteNormalizedLabelKey(buffer, cursor, value);
 
-    private static int WriteNormalizedLabelKey(byte[] buffer, int cursor, string value, bool isOpenMetrics)
+    private static int WriteNormalizedLabelKey(byte[] buffer, int cursor, string value)
     {
         var lastCharUnderscore = false;
 
@@ -549,7 +549,7 @@ internal static partial class PrometheusSerializer
                 }
             }
 
-            if (!IsAllowedMetricsLabelCharacter(ch, isOpenMetrics))
+            if (!IsAllowedMetricsLabelCharacter(ch))
             {
                 if (!lastCharUnderscore)
                 {
@@ -568,8 +568,8 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool IsAllowedMetricsLabelCharacter(char value, bool isOpenMetrics) =>
-        char.IsAsciiLetterOrDigit(value) || value is '_' || (isOpenMetrics && value == ':');
+    private static bool IsAllowedMetricsLabelCharacter(char value) =>
+        char.IsAsciiLetterOrDigit(value) || value is '_';
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int WriteUnicodeScalar(byte[] buffer, int cursor, string value, ref int index)

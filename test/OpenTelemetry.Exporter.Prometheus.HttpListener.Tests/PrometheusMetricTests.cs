@@ -169,6 +169,10 @@ public sealed class PrometheusMetricTests
         => AssertOpenMetricsName("2_metric_name", "By", PrometheusType.Gauge, false, "_2_metric_name_bytes");
 
     [Fact]
+    public void OpenMetricsName_UnitStartingWithNumber_DoesNotAddExtraSeparator()
+        => AssertOpenMetricsName("metric", "2", PrometheusType.Gauge, false, "metric_2");
+
+    [Fact]
     public void OpenMetricsName_CollapsesConsecutiveUnsupportedCharacters()
         => AssertOpenMetricsName("s%%ple", "%/m", PrometheusType.Summary, false, "s_ple_percent_per_minute");
 
