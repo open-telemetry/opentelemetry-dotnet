@@ -66,7 +66,17 @@ public class PrometheusSerializerBenchmarks
             var cursor = 0;
             foreach (var metric in this.metrics)
             {
-                cursor = PrometheusSerializer.WriteMetric(this.buffer, cursor, metric, this.GetPrometheusMetric(metric), openMetricsRequested: false);
+                cursor = PrometheusSerializer.WriteMetric(
+                    this.buffer,
+                    cursor,
+                    metric,
+                    this.GetPrometheusMetric(metric),
+                    openMetricsRequested: false,
+                    writeType: true,
+                    writeUnit: true,
+                    writeHelp: true,
+                    unitOverride: null,
+                    helpOverride: null);
             }
         }
     }
@@ -76,7 +86,17 @@ public class PrometheusSerializerBenchmarks
     {
         for (var i = 0; i < this.NumberOfSerializeCalls; i++)
         {
-            _ = PrometheusSerializer.WriteMetric(this.buffer, 0, this.histogramMetric!, this.GetPrometheusMetric(this.histogramMetric!), openMetricsRequested: false);
+            _ = PrometheusSerializer.WriteMetric(
+                this.buffer,
+                0,
+                this.histogramMetric!,
+                this.GetPrometheusMetric(this.histogramMetric!),
+                openMetricsRequested: false,
+                writeType: true,
+                writeUnit: true,
+                writeHelp: true,
+                unitOverride: null,
+                helpOverride: null);
         }
     }
 
@@ -85,7 +105,17 @@ public class PrometheusSerializerBenchmarks
     {
         for (var i = 0; i < this.NumberOfSerializeCalls; i++)
         {
-            _ = PrometheusSerializer.WriteMetric(this.buffer, 0, this.typedLabelsMetric!, this.GetPrometheusMetric(this.typedLabelsMetric!), openMetricsRequested: false);
+            _ = PrometheusSerializer.WriteMetric(
+                this.buffer,
+                0,
+                this.typedLabelsMetric!,
+                this.GetPrometheusMetric(this.typedLabelsMetric!),
+                openMetricsRequested: false,
+                writeType: true,
+                writeUnit: true,
+                writeHelp: true,
+                unitOverride: null,
+                helpOverride: null);
         }
     }
 

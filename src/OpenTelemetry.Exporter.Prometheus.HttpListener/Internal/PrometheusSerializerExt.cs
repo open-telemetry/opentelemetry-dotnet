@@ -22,11 +22,32 @@ internal static partial class PrometheusSerializer
         return true;
     }
 
-    public static int WriteMetric(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric, bool openMetricsRequested)
+    public static int WriteMetric(
+        byte[] buffer,
+        int cursor,
+        Metric metric,
+        PrometheusMetric prometheusMetric,
+        bool openMetricsRequested,
+        bool writeType,
+        bool writeUnit,
+        bool writeHelp,
+        string? unitOverride,
+        string? helpOverride)
     {
-        cursor = WriteTypeMetadata(buffer, cursor, prometheusMetric, openMetricsRequested);
-        cursor = WriteUnitMetadata(buffer, cursor, prometheusMetric, openMetricsRequested);
-        cursor = WriteHelpMetadata(buffer, cursor, prometheusMetric, metric.Description, openMetricsRequested);
+        if (writeType)
+        {
+            cursor = WriteTypeMetadata(buffer, cursor, prometheusMetric, openMetricsRequested);
+        }
+
+        if (writeUnit)
+        {
+            cursor = WriteUnitMetadata(buffer, cursor, prometheusMetric, unitOverride ?? prometheusMetric.Unit, openMetricsRequested);
+        }
+
+        if (writeHelp)
+        {
+            cursor = WriteHelpMetadata(buffer, cursor, prometheusMetric, helpOverride ?? metric.Description, openMetricsRequested);
+        }
 
         if (!metric.MetricType.IsHistogram())
         {
