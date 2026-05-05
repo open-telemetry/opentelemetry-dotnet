@@ -503,6 +503,43 @@ public class BaggagePropagatorTests
         Assert.Equal("my.key-name_here=value", carrier[BaggagePropagator.BaggageHeaderName]);
     }
 
+    [Fact]
+    public void ValidateNonAsciiEncodingIsCountedAgainstByteLimitNotCharCount()
+    {
+        // 'é' encodes to %C3%A9 (6 wire bytes per char, not 1).
+        // 1000 'é' chars = 6000 wire bytes for the value alone.
+        // With key "k=" (2 bytes) + 6000 = 6002 bytes, well within 8192 chars
+        // but the CHARACTER count (1002) would have appeared safe under the old code.
+        // We construct a case where purely char-count-based accounting would allow
+        // a second entry through that pushes the header over 8192 bytes.
+        // key "a" (1) + "=" (1) + 1365 × "é" → 1365 × 6 = 8190 wire bytes = 8192 total
+        // key "b" = "c" must be rejected as it would push past the limit
+        var nonAsciiValue = new string('\u00E9', 1365);
+
+        var propagationContext = new PropagationContext(
+            default,
+            new Baggage(new Dictionary<string, string>
+            {
+                { "a", nonAsciiValue },
+                { "b", "c" },
+            }));
+
+        var carrier = new Dictionary<string, string>();
+        this.baggage.Inject(propagationContext, carrier, Setter);
+
+        Assert.Single(carrier);
+
+        var header = carrier[BaggagePropagator.BaggageHeaderName];
+
+        Assert.True(
+            header.Length <= 8192,
+            $"Injected header length {header.Length} exceeds maximum of 8192 bytes");
+
+        Assert.False(
+            header.Contains("b=c", StringComparison.Ordinal),
+            "Second entry should have been excluded to stay within the byte limit");
+    }
+
     // -------------------------------------------------------------------------
     // Keys incorrect path
     // The current implementation URL-decodes keys on extract (#5479).
