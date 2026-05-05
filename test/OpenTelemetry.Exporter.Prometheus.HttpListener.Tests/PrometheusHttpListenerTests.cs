@@ -336,7 +336,7 @@ public class PrometheusHttpListenerTests
         // Dispose the provider on a background thread. This sets disposed = true,
         // cancels the CancellationToken, and then blocks on SpinWait waiting for
         // the in-flight request to drain.
-        var disposeTask = Task.Run(() => provider.Dispose());
+        var disposeTask = Task.Run(provider.Dispose);
 
         // Confirm Dispose() is actually blocked (meaning it has cancelled the
         // token and is now waiting for activeRequestCount to reach 0). If
