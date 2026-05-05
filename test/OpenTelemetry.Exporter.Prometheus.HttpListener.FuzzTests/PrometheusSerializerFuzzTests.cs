@@ -19,9 +19,14 @@ public class PrometheusSerializerFuzzTests
         static (value) => Serialize(value, PrometheusSerializer.WriteAsciiStringNoEscape).SequenceEqual(ReferenceWriteAsciiStringNoEscape(value)));
 
     [Property(MaxTest = MaxTests)]
-    public Property WriteLabelKeyMatchesReferenceImplementation() => Prop.ForAll(
+    public Property WritePrometheusLabelKeyMatchesReferenceImplementation() => Prop.ForAll(
         Generators.PrometheusStringArbitrary(),
-        static (value) => Serialize(value, PrometheusSerializer.WriteLabelKey).SequenceEqual(ReferenceWriteLabelKey(value)));
+        static (value) => Serialize(value, static (buffer, cursor, text) => PrometheusSerializer.WriteLabelKey(buffer, cursor, text, openMetricsRequested: false)).SequenceEqual(ReferenceWriteLabelKey(value)));
+
+    [Property(MaxTest = MaxTests)]
+    public Property WriteOpenMetricsLabelKeyMatchesReferenceImplementation() => Prop.ForAll(
+        Generators.PrometheusStringArbitrary(),
+        static (value) => SerializeOpenMetricsLabelKey(value).SequenceEqual(ReferenceWriteLabelKey(value)));
 
     [Property(MaxTest = MaxTests)]
     public Property WriteLabelValueMatchesReferenceImplementation() => Prop.ForAll(
@@ -47,6 +52,13 @@ public class PrometheusSerializerFuzzTests
     {
         var buffer = new byte[(value.Length * 8) + 16];
         var cursor = writer(buffer, 0, value);
+        return buffer.AsSpan(0, cursor).ToArray();
+    }
+
+    private static byte[] SerializeOpenMetricsLabelKey(string value)
+    {
+        var buffer = new byte[(value.Length * 8) + 16];
+        var cursor = PrometheusSerializer.WriteLabelKey(buffer, 0, value, openMetricsRequested: true);
         return buffer.AsSpan(0, cursor).ToArray();
     }
 
@@ -84,14 +96,36 @@ public class PrometheusSerializerFuzzTests
             return [.. bytes];
         }
 
-        if (value[0] is >= '0' and <= '9')
-        {
-            bytes.Add((byte)'_');
-        }
+        var lastCharUnderscore = false;
 
-        foreach (var c in value)
+        for (var i = 0; i < value.Length; i++)
         {
-            bytes.Add(c is (>= 'A' and <= 'Z') or (>= 'a' and <= 'z') or (>= '0' and <= '9') ? (byte)c : (byte)'_');
+            var c = value[i];
+            var isAllowed =
+                (c is >= 'A' and <= 'Z') ||
+                (c is >= 'a' and <= 'z') ||
+                (c is >= '0' and <= '9') ||
+                c == '_';
+
+            if (i == 0 && c is >= '0' and <= '9')
+            {
+                bytes.Add((byte)'_');
+                lastCharUnderscore = true;
+            }
+
+            if (!isAllowed)
+            {
+                if (!lastCharUnderscore)
+                {
+                    bytes.Add((byte)'_');
+                    lastCharUnderscore = true;
+                }
+
+                continue;
+            }
+
+            bytes.Add((byte)c);
+            lastCharUnderscore = c == '_';
         }
 
         return [.. bytes];

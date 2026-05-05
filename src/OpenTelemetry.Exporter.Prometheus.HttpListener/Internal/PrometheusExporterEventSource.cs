@@ -42,6 +42,15 @@ internal sealed class PrometheusExporterEventSource : EventSource, IConfiguratio
         }
     }
 
+    [NonEvent]
+    public void ConflictingType(string metricName, PrometheusType firstType, PrometheusType conflictingType)
+    {
+        if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+        {
+            this.ConflictingType(metricName, firstType.ToString(), conflictingType.ToString());
+        }
+    }
+
     [Event(1, Message = "Failed to export metrics: '{0}'", Level = EventLevel.Error)]
     public void FailedExport(string exception)
         => this.WriteEvent(1, exception);
@@ -64,4 +73,16 @@ internal sealed class PrometheusExporterEventSource : EventSource, IConfiguratio
 
     void IConfigurationExtensionsLogger.LogInvalidConfigurationValue(string key, string value)
         => this.InvalidConfigurationValue(key, value);
+
+    [Event(6, Message = "Dropping metric family '{0}' due to conflicting TYPE metadata '{1}' and '{2}'.", Level = EventLevel.Warning)]
+    public void ConflictingType(string metricName, string firstType, string conflictingType)
+        => this.WriteEvent(6, metricName, firstType, conflictingType);
+
+    [Event(7, Message = "Dropping duplicate HELP metadata for metric family '{0}' because values '{1}' and '{2}' conflict.", Level = EventLevel.Warning)]
+    public void ConflictingHelp(string metricName, string firstHelp, string conflictingHelp)
+        => this.WriteEvent(7, metricName, firstHelp, conflictingHelp);
+
+    [Event(8, Message = "Dropping duplicate UNIT metadata for metric family '{0}' because values '{1}' and '{2}' conflict.", Level = EventLevel.Warning)]
+    public void ConflictingUnit(string metricName, string firstUnit, string conflictingUnit)
+        => this.WriteEvent(8, metricName, firstUnit, conflictingUnit);
 }
