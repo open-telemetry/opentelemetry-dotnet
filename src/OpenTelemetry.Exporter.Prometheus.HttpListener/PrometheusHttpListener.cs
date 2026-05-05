@@ -243,6 +243,7 @@ internal sealed class PrometheusHttpListener : IDisposable
         if (this.disposed || cancellationToken.IsCancellationRequested)
         {
             context.Response.StatusCode = 503;
+            context.Response.ContentLength64 = 0;
 
             try
             {
@@ -273,7 +274,7 @@ internal sealed class PrometheusHttpListener : IDisposable
                     context.Response.StatusCode = 200;
                     context.Response.Headers.Add("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
                     context.Response.ContentType = openMetricsRequested
-                        ? "application/openmetrics-text; version=1.0.0; charset=utf-8"
+                        ? "application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores"
                         : "text/plain; charset=utf-8; version=0.0.4";
 
 #if NET
@@ -297,6 +298,7 @@ internal sealed class PrometheusHttpListener : IDisposable
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             context.Response.StatusCode = 503;
+            context.Response.ContentLength64 = 0;
         }
         catch (Exception ex)
         {

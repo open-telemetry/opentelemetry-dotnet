@@ -328,7 +328,7 @@ public class PrometheusHttpListenerTests
         using var client = new HttpClient { BaseAddress = baseAddress };
 
         // Send a scrape request; it will block inside EnterCollect.
-        var scrapeTask = client.GetAsync(new Uri("metrics", UriKind.Relative));
+        var scrapeTask = client.GetAsync(new Uri("metrics", UriKind.Relative), HttpCompletionOption.ResponseHeadersRead);
 
         // Wait until the request is actually inside the Collect delegate.
         Assert.True(collectEntered.Wait(TimeSpan.FromSeconds(10)), "Request did not enter Collect in time.");
@@ -336,7 +336,7 @@ public class PrometheusHttpListenerTests
         // Dispose the provider on a background thread. This sets disposed = true,
         // cancels the CancellationToken, and then blocks on SpinWait waiting for
         // the in-flight request to drain.
-        var disposeTask = Task.Run(() => provider.Dispose());
+        var disposeTask = Task.Run(provider.Dispose);
 
         // Confirm Dispose() is actually blocked (meaning it has cancelled the
         // token and is now waiting for activeRequestCount to reach 0). If
@@ -552,7 +552,7 @@ public class PrometheusHttpListenerTests
 
             if (requestOpenMetrics)
             {
-                Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8", response.Content.Headers.ContentType?.ToString());
+                Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores", response.Content.Headers.ContentType?.ToString());
             }
             else
             {
