@@ -243,6 +243,7 @@ internal sealed class PrometheusHttpListener : IDisposable
         if (this.disposed || cancellationToken.IsCancellationRequested)
         {
             context.Response.StatusCode = 503;
+            context.Response.ContentLength64 = 0;
 
             try
             {
@@ -297,6 +298,7 @@ internal sealed class PrometheusHttpListener : IDisposable
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             context.Response.StatusCode = 503;
+            context.Response.ContentLength64 = 0;
         }
         catch (Exception ex)
         {
