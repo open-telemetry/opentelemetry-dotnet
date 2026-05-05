@@ -49,8 +49,15 @@ Notes](../../RELEASENOTES.md).
 * Fix incorrect handling of untyped metrics when using OpenMetrics format.
   ([#7219](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7219))
 
+<<<<<<< merge-colliding-label-keys
 * Merge colliding sanitized label keys.
   ([#7239](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7239))
+=======
+* Add support for configuring the HTTP listener endpoint host and port using
+  the `OTEL_EXPORTER_PROMETHEUS_HOST` and `OTEL_EXPORTER_PROMETHEUS_PORT`
+  environment variables.
+  ([#7167](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7167))
+>>>>>>> main
 
 ## 1.15.3-beta.1
 

@@ -242,7 +242,7 @@ internal sealed class MeterProviderSdk : MeterProvider
             OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(
                 instrument.Name,
                 instrument.Meter.Name,
-                "Instrument belongs to a Meter not subscribed by the provider.",
+                "Instrument belongs to a Meter not subscribed by this provider. If another MeterProvider is configured to listen to this Meter, this warning can be ignored.",
                 "Use AddMeter to add the Meter to the provider.");
             return null;
         }
