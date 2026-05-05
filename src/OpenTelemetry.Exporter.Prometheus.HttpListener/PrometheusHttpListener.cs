@@ -104,7 +104,7 @@ internal sealed class PrometheusHttpListener : IDisposable
             this.workerThread = Task.Factory.StartNew(
                 (paramToken) => this.ProcessingLoopAsync((CancellationToken)paramToken!),
                 workerToken,
-                workerToken,
+                CancellationToken.None,
                 TaskCreationOptions.LongRunning,
                 TaskScheduler.Default).Unwrap();
         }
@@ -140,6 +140,13 @@ internal sealed class PrometheusHttpListener : IDisposable
         }
     }
 
+    private static bool AcceptsOpenMetrics(HttpListenerRequest request)
+    {
+        var acceptHeader = request.Headers["Accept"];
+
+        return !string.IsNullOrEmpty(acceptHeader) && PrometheusHeadersParser.AcceptsOpenMetrics(acceptHeader);
+    }
+
     /// <summary>
     /// Gracefully stop the PrometheusHttpListener.
     /// </summary>
@@ -171,13 +178,6 @@ internal sealed class PrometheusHttpListener : IDisposable
         {
             tokenSource.Dispose();
         }
-    }
-
-    private static bool AcceptsOpenMetrics(HttpListenerRequest request)
-    {
-        var acceptHeader = request.Headers["Accept"];
-
-        return !string.IsNullOrEmpty(acceptHeader) && PrometheusHeadersParser.AcceptsOpenMetrics(acceptHeader);
     }
 
     private async Task ProcessingLoopAsync(CancellationToken cancellationToken)

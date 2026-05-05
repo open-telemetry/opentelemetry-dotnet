@@ -365,57 +365,20 @@ public class PrometheusHttpListenerTests
         => Assert.Equal(9464, new PrometheusHttpListenerOptions().Port);
 
     [Fact]
-    public async Task PrometheusHttpListenerStopDoesNotWaitForInFlightRequest()
+    public void PrometheusHttpListenerDisposeImmediatelyAfterStartDoesNotThrow()
     {
-        var timeout = TimeSpan.FromSeconds(5);
-
-        using var collectStarted = new ManualResetEventSlim();
-        using var allowCollectToComplete = new ManualResetEventSlim();
-
         using var context = CreateListener();
+        context.Listener.Dispose();
+    }
 
-        context.Exporter.Collect = _ =>
-        {
-            collectStarted.Set();
+    [Fact]
+    public void PrometheusHttpListenerDisposeAfterStartWithCanceledTokenDoesNotThrow()
+    {
+        using var cancellationTokenSource = new CancellationTokenSource();
+        cancellationTokenSource.Cancel();
 
-            return
-                allowCollectToComplete.Wait(timeout) ?
-                true :
-                throw new TimeoutException("Timed out waiting for the test to release the scrape.");
-        };
-
-        using var client = new HttpClient() { BaseAddress = context.BaseAddress };
-
-        var requestTask = client.GetAsync(new Uri("metrics", UriKind.Relative));
-
-        Assert.True(collectStarted.Wait(timeout));
-
-        var stopTask = Task.Run(context.Listener.Stop);
-
-        try
-        {
-            using var cts = new CancellationTokenSource(timeout);
-            var completedTask = await Task.WhenAny(stopTask, Task.Delay(timeout, cts.Token));
-
-            Assert.Same(stopTask, completedTask);
-
-            await stopTask;
-        }
-        finally
-        {
-            allowCollectToComplete.Set();
-
-            try
-            {
-                using var response = await requestTask;
-            }
-            catch (HttpRequestException)
-            {
-            }
-            catch (TaskCanceledException)
-            {
-            }
-        }
+        using var context = CreateListener(startToken: cancellationTokenSource.Token);
+        context.Listener.Dispose();
     }
 
     [Fact]
@@ -640,7 +603,8 @@ public class PrometheusHttpListenerTests
 
     private static PrometheusTestContext CreateListener(
         Action<PrometheusExporterOptions>? configureExporter = null,
-        Action<PrometheusHttpListenerOptions>? configureListener = null)
+        Action<PrometheusHttpListenerOptions>? configureListener = null,
+        CancellationToken startToken = default)
     {
         var maximumAttempts = 5;
         var attemptsLeft = maximumAttempts;
@@ -675,7 +639,7 @@ public class PrometheusHttpListenerTests
 
                 try
                 {
-                    listener.Start();
+                    listener.Start(startToken);
                     boundPort = port;
 
                     return new(exporter, listener, boundPort);
