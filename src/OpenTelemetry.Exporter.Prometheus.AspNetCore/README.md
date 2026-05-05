@@ -79,7 +79,6 @@ app.MapPrometheusScrapingEndpoint()
    .DisableHttpMetrics();
 ```
 
-
 If you are using the older [Generic Host API](https://learn.microsoft.com/aspnet/core/fundamentals/host/generic-host)
 you can register the Prometheus scraping middleware with the
 `UseOpenTelemetryPrometheusScrapingEndpoint` extension method on
