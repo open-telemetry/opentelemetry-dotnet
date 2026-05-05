@@ -22,11 +22,32 @@ internal static partial class PrometheusSerializer
         return true;
     }
 
-    public static int WriteMetric(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric, bool openMetricsRequested)
+    public static int WriteMetric(
+        byte[] buffer,
+        int cursor,
+        Metric metric,
+        PrometheusMetric prometheusMetric,
+        bool openMetricsRequested,
+        bool writeType,
+        bool writeUnit,
+        bool writeHelp,
+        string? unitOverride,
+        string? helpOverride)
     {
-        cursor = WriteTypeMetadata(buffer, cursor, prometheusMetric, openMetricsRequested);
-        cursor = WriteUnitMetadata(buffer, cursor, prometheusMetric, openMetricsRequested);
-        cursor = WriteHelpMetadata(buffer, cursor, prometheusMetric, metric.Description, openMetricsRequested);
+        if (writeType)
+        {
+            cursor = WriteTypeMetadata(buffer, cursor, prometheusMetric, openMetricsRequested);
+        }
+
+        if (writeUnit)
+        {
+            cursor = WriteUnitMetadata(buffer, cursor, prometheusMetric, unitOverride ?? prometheusMetric.Unit, openMetricsRequested);
+        }
+
+        if (writeHelp)
+        {
+            cursor = WriteHelpMetadata(buffer, cursor, prometheusMetric, helpOverride ?? metric.Description, openMetricsRequested);
+        }
 
         if (!metric.MetricType.IsHistogram())
         {
@@ -36,7 +57,7 @@ internal static partial class PrometheusSerializer
             {
                 // Counter and Gauge
                 cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
-                cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags);
+                cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags, openMetricsRequested);
 
                 buffer[cursor++] = unchecked((byte)' ');
 
@@ -57,7 +78,7 @@ internal static partial class PrometheusSerializer
                     prometheusMetric.Type == PrometheusType.Counter &&
                     TryGetLatestExemplar(metricPoint, out var exemplar))
                 {
-                    cursor = WriteExemplar(buffer, cursor, in exemplar, isLongValue);
+                    cursor = WriteExemplar(buffer, cursor, in exemplar, isLongValue, openMetricsRequested);
                 }
 
                 buffer[cursor++] = ASCII_LINEFEED;
@@ -83,7 +104,7 @@ internal static partial class PrometheusSerializer
 
                     cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "_bucket{");
-                    cursor = WriteTags(buffer, cursor, metric, tags, writeEnclosingBraces: false);
+                    cursor = WriteTags(buffer, cursor, metric, tags, openMetricsRequested, writeEnclosingBraces: false);
 
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "le=\"");
 
@@ -98,7 +119,7 @@ internal static partial class PrometheusSerializer
                     if (openMetricsRequested &&
                         TryGetLatestHistogramBucketExemplar(metricPoint, previousBound, histogramMeasurement.ExplicitBound, out var exemplar))
                     {
-                        cursor = WriteExemplar(buffer, cursor, in exemplar, isLongValue: false);
+                        cursor = WriteExemplar(buffer, cursor, in exemplar, isLongValue: false, openMetricsRequested);
                     }
 
                     buffer[cursor++] = ASCII_LINEFEED;
@@ -112,7 +133,7 @@ internal static partial class PrometheusSerializer
                     // See https://prometheus.io/docs/specs/om/open_metrics_spec/#histogram-1
                     cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "_sum");
-                    cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags);
+                    cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags, openMetricsRequested);
 
                     buffer[cursor++] = unchecked((byte)' ');
 

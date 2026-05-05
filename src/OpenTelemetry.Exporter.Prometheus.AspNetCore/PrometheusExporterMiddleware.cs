@@ -15,9 +15,10 @@ namespace OpenTelemetry.Exporter;
 /// </summary>
 internal sealed class PrometheusExporterMiddleware
 {
+    private const string OpenMetricsEscapingScheme = "underscores";
     private const string OpenMetricsMediaType = "application/openmetrics-text";
     private const string OpenMetricsVersion = "1.0.0";
-    private const string OpenMetricsContentType = $"application/openmetrics-text; version={OpenMetricsVersion}; charset=utf-8";
+    private const string OpenMetricsContentType = $"application/openmetrics-text; version={OpenMetricsVersion}; charset=utf-8; escaping={OpenMetricsEscapingScheme}";
 
     private const string PrometheusTextMediaType = "text/plain";
 
@@ -123,7 +124,7 @@ internal sealed class PrometheusExporterMiddleware
             }
 
             if (string.Equals(mediaType.MediaType.Value, OpenMetricsMediaType, StringComparison.OrdinalIgnoreCase) &&
-                HasSupportedOpenMetricsVersion(mediaType))
+                HasSupportedOpenMetricsParameters(mediaType))
             {
                 bestOpenMetricsQuality =
                     bestOpenMetricsQuality is not { } comparison || quality > comparison ?
@@ -143,16 +144,23 @@ internal sealed class PrometheusExporterMiddleware
                (bestPrometheusQuality is not { } prometheusQuality || openMetricsQuality >= prometheusQuality);
     }
 
-    private static bool HasSupportedOpenMetricsVersion(MediaTypeHeaderValue value)
+    private static bool HasSupportedOpenMetricsParameters(MediaTypeHeaderValue value)
     {
+        var hasSupportedOpenMetricsEscaping = true;
+        var hasSupportedOpenMetricsVersion = true;
+
         foreach (var parameter in value.Parameters)
         {
             if (string.Equals(parameter.Name.Value, "version", StringComparison.OrdinalIgnoreCase))
             {
-                return string.Equals(parameter.Value.Value?.Trim('"'), OpenMetricsVersion, StringComparison.Ordinal);
+                hasSupportedOpenMetricsVersion = string.Equals(parameter.Value.Value?.Trim('"'), OpenMetricsVersion, StringComparison.Ordinal);
+            }
+            else if (string.Equals(parameter.Name.Value, "escaping", StringComparison.OrdinalIgnoreCase))
+            {
+                hasSupportedOpenMetricsEscaping = string.Equals(parameter.Value.Value?.Trim('"'), OpenMetricsEscapingScheme, StringComparison.Ordinal);
             }
         }
 
-        return true;
+        return hasSupportedOpenMetricsVersion && hasSupportedOpenMetricsEscaping;
     }
 }
