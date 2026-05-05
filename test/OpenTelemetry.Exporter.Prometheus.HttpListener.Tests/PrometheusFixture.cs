@@ -11,11 +11,32 @@ public class PrometheusFixture : XunitContainerFixture<IContainer>
 {
     private const string DockerInternalHost = "host.docker.internal";
 
+    private readonly HashSet<string> temporaryFiles = [];
+
     public IList<string> ScrapeProtocols { get; } = [];
 
     public int? TargetPort { get; set; }
 
     protected override string DockerfileName => "prometheus.Dockerfile";
+
+    public override ValueTask DisposeAsync()
+    {
+        foreach (var path in this.temporaryFiles)
+        {
+            try
+            {
+                File.Delete(path);
+            }
+            catch (Exception)
+            {
+                // Ignore
+            }
+        }
+
+        GC.SuppressFinalize(this);
+
+        return base.DisposeAsync();
+    }
 
     protected override IContainer CreateContainer()
     {
@@ -25,9 +46,13 @@ public class PrometheusFixture : XunitContainerFixture<IContainer>
         }
 
         var prometheusConfigurationPath = Path.GetTempFileName();
+        this.temporaryFiles.Add(prometheusConfigurationPath);
+
         File.WriteAllText(prometheusConfigurationPath, CreatePrometheusConfiguration(this.ScrapeProtocols));
 
         var serviceDiscoveryTargetsPath = Path.GetTempFileName();
+        this.temporaryFiles.Add(serviceDiscoveryTargetsPath);
+
         File.WriteAllText(serviceDiscoveryTargetsPath, CreateServiceDiscoveryConfiguration(targetPort));
 
 #if NET
