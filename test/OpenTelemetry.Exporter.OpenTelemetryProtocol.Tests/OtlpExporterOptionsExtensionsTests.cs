@@ -51,10 +51,41 @@ public class OtlpExporterOptionsExtensionsTests
     [InlineData("key1= value with spaces ,key2=another value", "key1=value with spaces,key2=another value")]
     [InlineData("=value1", "=value1")]
     [InlineData("key1=", "key1=")]
-    [InlineData("key1=value1%2Ckey2=value2", "key1=value1,key2=value2")]
-    [InlineData("key1=value1%2Ckey2=value2%2Ckey3=value3", "key1=value1,key2=value2,key3=value3")]
     public void GetHeaders_ValidAndUrlEncodedHeaders_ReturnsCorrectHeaders(string inputOptionHeaders, string expectedNormalizedOptional)
         => VerifyHeaders(inputOptionHeaders, expectedNormalizedOptional);
+
+    [Fact]
+    public void GetHeaders_UrlEncodedCommaInValue_TreatedAsValueNotSeparator()
+    {
+        // Regression test for https://github.com/open-telemetry/opentelemetry-dotnet/issues/6510
+        // %2C in a value must remain a comma within that value, not act as a pair separator.
+        var options = new OtlpExporterOptions
+        {
+            Headers = "VL-Stream-Fields=service.name%2Cservice.environment,Authorization=Bearer token",
+        };
+
+        var headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+
+        Assert.True(headers.TryGetValue("VL-Stream-Fields", out var streamFields));
+        Assert.Equal("service.name,service.environment", streamFields);
+
+        Assert.True(headers.TryGetValue("Authorization", out var auth));
+        Assert.Equal("Bearer token", auth);
+    }
+
+    [Fact]
+    public void GetHeaders_UrlEncodedEqualsInValue_ParsedCorrectly()
+    {
+        var options = new OtlpExporterOptions
+        {
+            Headers = "Authorization=Basic dXNlcjpwYXNz%3D%3D",
+        };
+
+        var headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
+
+        Assert.True(headers.TryGetValue("Authorization", out var auth));
+        Assert.Equal("Basic dXNlcjpwYXNz==", auth);
+    }
 
     [Theory]
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
