@@ -37,17 +37,6 @@ Notes](../../RELEASENOTES.md).
 * Fix incorrect handling of untyped metrics when using OpenMetrics format.
   ([#7219](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7219))
 
-* Emit OpenMetrics scope metadata as a single `otel_scope` metric family with
-  `otel_scope_info` samples instead of repeating metadata for every scope.
-  ([#7237](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7237))
-
-* Include instrumentation scope metadata on samples using `otel_scope_*` labels
-  including scope version, schema URL, and prefixed scope attributes.
-  ([#7237](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7237))
-
-* Drop conflicting scope attributes named `name`, `version`, and `schema_url`.
-  ([#7237](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7237))
-
 * Fix Prometheus/OpenMetrics serialization to emit metric and label names
   containing `_` instead of dropping them and prefixing leading digits.
   Invalid characters are replaced with `_` instead of being dropped.
@@ -60,6 +49,17 @@ Notes](../../RELEASENOTES.md).
 * Omit histogram `_sum` and `_count` in OpenMetrics when negative bucket
   thresholds are present.
   ([#7221](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7221))
+
+* Emit OpenMetrics scope metadata as a single `otel_scope` metric family with
+  `otel_scope_info` samples instead of repeating metadata for every scope.
+  ([#7237](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7237))
+
+* Include instrumentation scope metadata on samples using `otel_scope_*` labels
+  including scope version, schema URL, and prefixed scope attributes.
+  ([#7237](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7237))
+
+* Drop conflicting scope attributes named `name`, `version`, and `schema_url`.
+  ([#7237](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7237))
 
 ## 1.15.3-beta.1
 
