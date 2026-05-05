@@ -2,9 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #if NET
-#if NET
 using System.Buffers;
-#endif
 using System.Diagnostics.CodeAnalysis;
 #endif
 using System.Net;
