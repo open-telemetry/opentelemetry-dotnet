@@ -464,6 +464,45 @@ public class PrometheusHttpListenerTests
         }
     }
 
+    [Fact]
+    public async Task WhenRequestDeadlineExceeded_Returns408()
+    {
+        using var context = CreateListener();
+
+        context.Exporter.Collect = _ =>
+        {
+            Thread.Sleep(TimeSpan.FromSeconds(2));
+            return true;
+        };
+
+        using var client = new HttpClient { BaseAddress = context.BaseAddress };
+        client.DefaultRequestHeaders.Add("X-Prometheus-Scrape-Timeout-Seconds", "1");
+
+        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative));
+
+        Assert.Equal(HttpStatusCode.RequestTimeout, response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData("-1")]
+    [InlineData("0")]
+    [InlineData("0.9")]
+    [InlineData("1.1")]
+    [InlineData("foo")]
+    public async Task WhenRequestDeadlineInvalid_Returns200(string scrapeTimeoutSeconds)
+    {
+        using var meter = new Meter(MeterName, MeterVersion);
+
+        using var context = CreateMeterProvider(meter);
+
+        using var client = new HttpClient { BaseAddress = context.BaseAddress };
+        client.DefaultRequestHeaders.Add("X-Prometheus-Scrape-Timeout-Seconds", scrapeTimeoutSeconds);
+
+        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
     internal static MeterProviderTestContext CreateMeterProvider(
         Meter meter,
         Func<PrometheusHttpListenerOptions, int>? configureListener = null,

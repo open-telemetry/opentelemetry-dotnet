@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using System.Globalization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Net.Http.Headers;
 using OpenTelemetry.Exporter.Prometheus;
@@ -49,11 +50,6 @@ internal sealed class PrometheusExporterMiddleware
         this.exporter = exporter;
     }
 
-    /// <summary>
-    /// Invoke.
-    /// </summary>
-    /// <param name="httpContext"> context.</param>
-    /// <returns>Task.</returns>
     public async Task InvokeAsync(HttpContext httpContext)
     {
         Debug.Assert(httpContext != null, "httpContext should not be null");
@@ -62,11 +58,25 @@ internal sealed class PrometheusExporterMiddleware
 
         try
         {
+            using var requestCancelled = new CancellationTokenSource();
+
+            int scrapeTimeoutSeconds = -1;
+            if (httpContext.Request.Headers.TryGetValue("X-Prometheus-Scrape-Timeout-Seconds", out var value) &&
+                int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out scrapeTimeoutSeconds) &&
+                scrapeTimeoutSeconds > 0)
+            {
+                requestCancelled.CancelAfter(TimeSpan.FromSeconds(scrapeTimeoutSeconds));
+            }
+
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(requestCancelled.Token, httpContext.RequestAborted);
+
             var openMetricsRequested = AcceptsOpenMetrics(httpContext.Request);
             var collectionResponse = await this.exporter.CollectionManager.EnterCollect(openMetricsRequested).ConfigureAwait(false);
 
             try
             {
+                linkedCts.Token.ThrowIfCancellationRequested();
+
                 var dataView = openMetricsRequested ? collectionResponse.OpenMetricsView : collectionResponse.PlainTextView;
 
                 response.StatusCode = StatusCodes.Status200OK;
@@ -79,13 +89,18 @@ internal sealed class PrometheusExporterMiddleware
                         ? OpenMetricsContentType
                         : "text/plain; charset=utf-8; version=0.0.4";
 
-                    await response.Body.WriteAsync(dataView.Array.AsMemory(0, dataView.Count)).ConfigureAwait(false);
+                    await response.Body.WriteAsync(dataView.Array.AsMemory(0, dataView.Count), linkedCts.Token).ConfigureAwait(false);
                 }
                 else
                 {
                     // It's not expected to have no metrics to collect, but it's not necessarily a failure, either.
                     PrometheusExporterEventSource.Log.NoMetrics();
                 }
+            }
+            catch (OperationCanceledException) when (linkedCts.Token.IsCancellationRequested)
+            {
+                PrometheusExporterEventSource.Log.ScrapeTimedOut(scrapeTimeoutSeconds);
+                response.StatusCode = StatusCodes.Status408RequestTimeout;
             }
             finally
             {
