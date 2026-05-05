@@ -29,7 +29,37 @@ public abstract class PersistentBlobProvider
     /// <returns>
     /// True if the blob was created or else false.
     /// </returns>
+    [Obsolete("Use TryCreateBlob(ReadOnlySpan<byte>, int, out PersistentBlob?) instead. This overload will be removed in a future major version.")]
     public bool TryCreateBlob(byte[] buffer, int leasePeriodMilliseconds, [NotNullWhen(true)] out PersistentBlob? blob)
+    {
+        try
+        {
+            return this.OnTryCreateBlob(buffer, leasePeriodMilliseconds, out blob);
+        }
+        catch (Exception ex)
+        {
+            PersistentStorageAbstractionsEventSource.Log.PersistentStorageAbstractionsException(nameof(PersistentBlobProvider), "Failed to create and lease the blob", ex);
+            blob = null;
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Attempts to create a new blob with the provided data and lease it.
+    /// </summary>
+    /// <param name="buffer">
+    /// The content to be written.
+    /// </param>
+    /// <param name="leasePeriodMilliseconds">
+    /// The number of milliseconds to lease after the blob is created.
+    /// </param>
+    /// <param name="blob">
+    /// Blob if it is created.
+    /// </param>
+    /// <returns>
+    /// True if the blob was created or else false.
+    /// </returns>
+    public bool TryCreateBlob(ReadOnlySpan<byte> buffer, int leasePeriodMilliseconds, [NotNullWhen(true)] out PersistentBlob? blob)
     {
         try
         {
@@ -55,7 +85,34 @@ public abstract class PersistentBlobProvider
     /// <returns>
     /// True if the blob was created or else false.
     /// </returns>
+    [Obsolete("Use TryCreateBlob(ReadOnlySpan<byte>, out PersistentBlob?) instead. This overload will be removed in a future major version.")]
     public bool TryCreateBlob(byte[] buffer, [NotNullWhen(true)] out PersistentBlob? blob)
+    {
+        try
+        {
+            return this.OnTryCreateBlob(buffer, out blob);
+        }
+        catch (Exception ex)
+        {
+            PersistentStorageAbstractionsEventSource.Log.PersistentStorageAbstractionsException(nameof(PersistentBlobProvider), "Failed to create the blob", ex);
+            blob = null;
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Attempts to create a new blob with the provided data.
+    /// </summary>
+    /// <param name="buffer">
+    /// The content to be written.
+    /// </param>
+    /// <param name="blob">
+    /// Blob if it is created.
+    /// </param>
+    /// <returns>
+    /// True if the blob was created or else false.
+    /// </returns>
+    public bool TryCreateBlob(ReadOnlySpan<byte> buffer, [NotNullWhen(true)] out PersistentBlob? blob)
     {
         try
         {
@@ -116,6 +173,12 @@ public abstract class PersistentBlobProvider
     protected abstract bool OnTryCreateBlob(byte[] buffer, int leasePeriodMilliseconds, [NotNullWhen(true)] out PersistentBlob? blob);
 
     protected abstract bool OnTryCreateBlob(byte[] buffer, [NotNullWhen(true)] out PersistentBlob? blob);
+
+    protected virtual bool OnTryCreateBlob(ReadOnlySpan<byte> buffer, int leasePeriodMilliseconds, [NotNullWhen(true)] out PersistentBlob? blob)
+        => this.OnTryCreateBlob(buffer.ToArray(), leasePeriodMilliseconds, out blob);
+
+    protected virtual bool OnTryCreateBlob(ReadOnlySpan<byte> buffer, [NotNullWhen(true)] out PersistentBlob? blob)
+        => this.OnTryCreateBlob(buffer.ToArray(), out blob);
 
     protected abstract bool OnTryGetBlob([NotNullWhen(true)] out PersistentBlob? blob);
 }
