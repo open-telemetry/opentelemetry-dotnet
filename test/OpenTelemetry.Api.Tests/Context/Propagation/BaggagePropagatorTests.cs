@@ -540,6 +540,36 @@ public class BaggagePropagatorTests
             "Second entry should have been excluded to stay within the byte limit");
     }
 
+    [Fact]
+    public void ValidateRawPercentInValueIsEncodedOnInject()
+    {
+        var propagationContext = new PropagationContext(
+            default,
+            new Baggage(new Dictionary<string, string> { { "key", "x%20y" } }));
+
+        var carrier = new Dictionary<string, string>();
+        this.baggage.Inject(propagationContext, carrier, Setter);
+
+        // The literal '%' must be encoded as %25 so the value is unambiguous on the wire
+        Assert.Contains("%2520", carrier[BaggagePropagator.BaggageHeaderName], StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void RoundTripRawPercentInValuePreservesLiteralPercent()
+    {
+        var propagationContext = new PropagationContext(
+            default,
+            new Baggage(new Dictionary<string, string> { { "key", "x%20y" } }));
+
+        var carrier = new Dictionary<string, string>();
+        this.baggage.Inject(propagationContext, carrier, Setter);
+
+        var extracted = this.baggage.Extract(default, carrier, Getter).Baggage.GetBaggage();
+        var entry = Assert.Single(extracted);
+        Assert.Equal("key", entry.Key);
+        Assert.Equal("x%20y", entry.Value);
+    }
+
     // -------------------------------------------------------------------------
     // Keys incorrect path
     // The current implementation URL-decodes keys on extract (#5479).
@@ -901,5 +931,71 @@ public class BaggagePropagatorTests
         var entry = Assert.Single(this.baggage.Extract(default, carrier, Getter).Baggage.GetBaggage());
         Assert.Equal("valid-key", entry.Key);
         Assert.Equal("valid-value", entry.Value);
+    }
+
+    // -------------------------------------------------------------------------
+    // Non-ASCII encoding
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public void ValidateNonAsciiValueIsUtf8PercentEncodedOnInject()
+    {
+        // 'é' is U+00E9, UTF-8: 0xC3 0xA9 → %C3%A9
+        var propagationContext = new PropagationContext(
+            default,
+            new Baggage(new Dictionary<string, string> { { "key", "caf\u00E9" } }));
+
+        var carrier = new Dictionary<string, string>();
+        this.baggage.Inject(propagationContext, carrier, Setter);
+
+        Assert.Contains("%C3%A9", carrier[BaggagePropagator.BaggageHeaderName], StringComparison.Ordinal);
+        Assert.DoesNotContain("é", carrier[BaggagePropagator.BaggageHeaderName], StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void RoundTripNonAsciiValuePreservesOriginalString()
+    {
+        var propagationContext = new PropagationContext(
+            default,
+            new Baggage(new Dictionary<string, string> { { "key", "caf\u00E9" } }));
+
+        var carrier = new Dictionary<string, string>();
+        this.baggage.Inject(propagationContext, carrier, Setter);
+
+        var extracted = this.baggage.Extract(default, carrier, Getter).Baggage.GetBaggage();
+        var entry = Assert.Single(extracted);
+        Assert.Equal("key", entry.Key);
+        Assert.Equal("caf\u00E9", entry.Value);
+    }
+
+    [Theory]
+    [InlineData("\u00E9", "%C3%A9")]
+    [InlineData("\u4E2D", "%E4%B8%AD")]
+    [InlineData("\u00A3", "%C2%A3")]
+    public void ValidateNonAsciiUtf8EncodingIsCorrect(string character, string expectedEncoding)
+    {
+        var propagationContext = new PropagationContext(
+            default,
+            new Baggage(new Dictionary<string, string> { { "key", character } }));
+
+        var carrier = new Dictionary<string, string>();
+        this.baggage.Inject(propagationContext, carrier, Setter);
+
+        Assert.Contains(expectedEncoding, carrier[BaggagePropagator.BaggageHeaderName], StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ValidateNonAsciiInExtractedValueIsPreservedAfterPercentEncoding()
+    {
+        // Simulate a header that already has correctly UTF-8 percent-encoded non-ASCII
+        var carrier = new Dictionary<string, string>
+        {
+            { BaggagePropagator.BaggageHeaderName, "key=%C3%A9" },
+        };
+
+        var extracted = this.baggage.Extract(default, carrier, Getter).Baggage.GetBaggage();
+        var entry = Assert.Single(extracted);
+        Assert.Equal("key", entry.Key);
+        Assert.Equal("\u00E9", entry.Value);
     }
 }
