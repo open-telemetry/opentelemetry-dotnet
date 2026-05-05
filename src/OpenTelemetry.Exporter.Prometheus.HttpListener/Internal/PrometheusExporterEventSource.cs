@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Tracing;
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.Prometheus;
@@ -10,9 +11,9 @@ namespace OpenTelemetry.Exporter.Prometheus;
 /// EventSource events emitted from the project.
 /// </summary>
 [EventSource(Name = "OpenTelemetry-Exporter-Prometheus")]
-internal sealed class PrometheusExporterEventSource : EventSource
+internal sealed class PrometheusExporterEventSource : EventSource, IConfigurationExtensionsLogger
 {
-    public static PrometheusExporterEventSource Log = new();
+    public static readonly PrometheusExporterEventSource Log = new();
 
     [NonEvent]
     public void FailedExport(Exception ex)
@@ -52,43 +53,36 @@ internal sealed class PrometheusExporterEventSource : EventSource
 
     [Event(1, Message = "Failed to export metrics: '{0}'", Level = EventLevel.Error)]
     public void FailedExport(string exception)
-    {
-        this.WriteEvent(1, exception);
-    }
+        => this.WriteEvent(1, exception);
 
     [Event(2, Message = "Canceled to export metrics: '{0}'", Level = EventLevel.Error)]
     public void CanceledExport(string exception)
-    {
-        this.WriteEvent(2, exception);
-    }
+        => this.WriteEvent(2, exception);
 
     [Event(3, Message = "Failed to shutdown Metrics server '{0}'", Level = EventLevel.Error)]
     public void FailedShutdown(string exception)
-    {
-        this.WriteEvent(3, exception);
-    }
+        => this.WriteEvent(3, exception);
 
     [Event(4, Message = "No metrics are available for export.", Level = EventLevel.Warning)]
     public void NoMetrics()
-    {
-        this.WriteEvent(4);
-    }
+        => this.WriteEvent(4);
 
-    [Event(5, Message = "Dropping metric family '{0}' due to conflicting TYPE metadata '{1}' and '{2}'.", Level = EventLevel.Warning)]
+    [Event(5, Message = "Configuration key '{0}' has an invalid value: '{1}'", Level = EventLevel.Warning)]
+    public void InvalidConfigurationValue(string key, string value)
+        => this.WriteEvent(5, key, value);
+
+    void IConfigurationExtensionsLogger.LogInvalidConfigurationValue(string key, string value)
+        => this.InvalidConfigurationValue(key, value);
+
+    [Event(6, Message = "Dropping metric family '{0}' due to conflicting TYPE metadata '{1}' and '{2}'.", Level = EventLevel.Warning)]
     public void ConflictingType(string metricName, string firstType, string conflictingType)
-    {
-        this.WriteEvent(5, metricName, firstType, conflictingType);
-    }
+        => this.WriteEvent(6, metricName, firstType, conflictingType);
 
-    [Event(6, Message = "Dropping duplicate HELP metadata for metric family '{0}' because values '{1}' and '{2}' conflict.", Level = EventLevel.Warning)]
+    [Event(7, Message = "Dropping duplicate HELP metadata for metric family '{0}' because values '{1}' and '{2}' conflict.", Level = EventLevel.Warning)]
     public void ConflictingHelp(string metricName, string firstHelp, string conflictingHelp)
-    {
-        this.WriteEvent(6, metricName, firstHelp, conflictingHelp);
-    }
+        => this.WriteEvent(7, metricName, firstHelp, conflictingHelp);
 
-    [Event(7, Message = "Dropping duplicate UNIT metadata for metric family '{0}' because values '{1}' and '{2}' conflict.", Level = EventLevel.Warning)]
+    [Event(8, Message = "Dropping duplicate UNIT metadata for metric family '{0}' because values '{1}' and '{2}' conflict.", Level = EventLevel.Warning)]
     public void ConflictingUnit(string metricName, string firstUnit, string conflictingUnit)
-    {
-        this.WriteEvent(7, metricName, firstUnit, conflictingUnit);
-    }
+        => this.WriteEvent(8, metricName, firstUnit, conflictingUnit);
 }
