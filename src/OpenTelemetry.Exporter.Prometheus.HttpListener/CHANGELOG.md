@@ -49,6 +49,11 @@ Notes](../../RELEASENOTES.md).
 * Fix incorrect handling of untyped metrics when using OpenMetrics format.
   ([#7219](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7219))
 
+* Add support for configuring the HTTP listener endpoint host and port using
+  the `OTEL_EXPORTER_PROMETHEUS_HOST` and `OTEL_EXPORTER_PROMETHEUS_PORT`
+  environment variables.
+  ([#7167](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7167))
+
 * Use the canonical representation for histogram "le" label values when using
   OpenMetrics.
   ([#7218](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7218))
