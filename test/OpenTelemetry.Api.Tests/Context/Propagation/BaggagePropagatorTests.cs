@@ -853,20 +853,22 @@ public class BaggagePropagatorTests
     }
 
     [Theory]
-    [InlineData("key=%")]
-    [InlineData("key=%2")]
-    [InlineData("key=%GG")]
-    public void ValidateMalformedPercentSequenceInValueDoesNotThrow(string headerValue)
+    [InlineData("key=%", "key", "\uFFFD")]
+    [InlineData("key=%2", "key", "\uFFFD")]
+    [InlineData("key=%GG", "key", "\uFFFD")]
+    public void ValidateMalformedPercentSequenceInValueIsReplacedWithReplacementCharacter(
+        string headerValue, string expectedKey, string expectedValue)
     {
         var carrier = new Dictionary<string, string>
         {
             { BaggagePropagator.BaggageHeaderName, headerValue },
         };
 
-        var exception = Record.Exception(() =>
-            this.baggage.Extract(default, carrier, Getter));
+        var propagationContext = this.baggage.Extract(default, carrier, Getter);
 
-        Assert.Null(exception);
+        var entry = Assert.Single(propagationContext.Baggage.GetBaggage());
+        Assert.Equal(expectedKey, entry.Key);
+        Assert.Equal(expectedValue, entry.Value);
     }
 
     [Theory]
