@@ -71,15 +71,19 @@ app.MapPrometheusScrapingEndpoint();
 ```
 
 You can use the `IEndpointConventionBuilder` returned by the extension
-method to compose with other functionality, such as to not require
-authentication or to exclude HTTP metrics from the scraping endpoint
-itself. For example:
+method to compose with other functionality, such as to exclude HTTP metrics
+from the scraping endpoint itself. For example:
 
 ```csharp
 app.MapPrometheusScrapingEndpoint()
-   .AllowAnonymous()
    .DisableHttpMetrics();
 ```
+
+> [!WARNING]
+> Applying `.AllowAnonymous()` to the scraping endpoint disables authorization
+> for that endpoint. Only do this when the endpoint is otherwise protected
+> (for example, on a trusted internal network, behind a private listener, or
+> by equivalent network controls).
 
 If you are using the older [Generic Host API](https://learn.microsoft.com/aspnet/core/fundamentals/host/generic-host)
 you can register the Prometheus scraping middleware with the
