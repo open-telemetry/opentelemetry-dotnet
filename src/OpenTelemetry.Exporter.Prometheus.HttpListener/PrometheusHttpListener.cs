@@ -101,7 +101,12 @@ internal sealed class PrometheusHttpListener : IDisposable
                 CancellationTokenSource.CreateLinkedTokenSource(token);
 
             var workerToken = this.tokenSource.Token;
-            this.workerThread = Task.Factory.StartNew(paramToken => this.WorkerProc((CancellationToken)paramToken!), workerToken, workerToken, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+            this.workerThread = Task.Factory.StartNew(
+                (paramToken) => this.ProcessingLoopAsync((CancellationToken)paramToken!),
+                workerToken,
+                workerToken,
+                TaskCreationOptions.LongRunning,
+                TaskScheduler.Default).Unwrap();
         }
     }
 
@@ -133,13 +138,6 @@ internal sealed class PrometheusHttpListener : IDisposable
         catch (Exception ex) when (ex is ObjectDisposedException or HttpListenerException)
         {
         }
-    }
-
-    private static bool AcceptsOpenMetrics(HttpListenerRequest request)
-    {
-        var acceptHeader = request.Headers["Accept"];
-
-        return !string.IsNullOrEmpty(acceptHeader) && PrometheusHeadersParser.AcceptsOpenMetrics(acceptHeader);
     }
 
     /// <summary>
@@ -175,24 +173,38 @@ internal sealed class PrometheusHttpListener : IDisposable
         }
     }
 
-    private void WorkerProc(CancellationToken cancellationToken)
+    private static bool AcceptsOpenMetrics(HttpListenerRequest request)
+    {
+        var acceptHeader = request.Headers["Accept"];
+
+        return !string.IsNullOrEmpty(acceptHeader) && PrometheusHeadersParser.AcceptsOpenMetrics(acceptHeader);
+    }
+
+    private async Task ProcessingLoopAsync(CancellationToken cancellationToken)
     {
         try
         {
             using var scope = SuppressInstrumentationScope.Begin();
             while (!cancellationToken.IsCancellationRequested)
             {
-                var ctxTask = this.httpListener.GetContextAsync();
-                ctxTask.Wait(cancellationToken);
-                var ctx = ctxTask.Result;
+#if NET
+                var context = await this.httpListener
+                    .GetContextAsync()
+                    .WaitAsync(cancellationToken)
+                    .ConfigureAwait(false);
+#else
+                var task = this.httpListener.GetContextAsync();
+                task.Wait(cancellationToken);
+                var context = await task.ConfigureAwait(false);
+#endif
 
                 Interlocked.Increment(ref this.activeRequestCount);
-                Task.Run(
+                _ = Task.Run(
                     async () =>
                     {
                         try
                         {
-                            await this.ProcessRequestAsync(ctx, cancellationToken).ConfigureAwait(false);
+                            await this.ProcessRequestAsync(context, cancellationToken).ConfigureAwait(false);
                         }
                         finally
                         {

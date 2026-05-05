@@ -364,6 +364,143 @@ public class PrometheusHttpListenerTests
     public void Port_DefaultValue_Is_9464()
         => Assert.Equal(9464, new PrometheusHttpListenerOptions().Port);
 
+    [Fact]
+    public async Task PrometheusHttpListenerStopDoesNotWaitForInFlightRequest()
+    {
+        var timeout = TimeSpan.FromSeconds(5);
+
+        using var collectStarted = new ManualResetEventSlim();
+        using var allowCollectToComplete = new ManualResetEventSlim();
+
+        using var context = CreateListener();
+
+        context.Exporter.Collect = _ =>
+        {
+            collectStarted.Set();
+
+            return
+                allowCollectToComplete.Wait(timeout) ?
+                true :
+                throw new TimeoutException("Timed out waiting for the test to release the scrape.");
+        };
+
+        using var client = new HttpClient() { BaseAddress = context.BaseAddress };
+
+        var requestTask = client.GetAsync(new Uri("metrics", UriKind.Relative));
+
+        Assert.True(collectStarted.Wait(timeout));
+
+        var stopTask = Task.Run(context.Listener.Stop);
+
+        try
+        {
+            using var cts = new CancellationTokenSource(timeout);
+            var completedTask = await Task.WhenAny(stopTask, Task.Delay(timeout, cts.Token));
+
+            Assert.Same(stopTask, completedTask);
+
+            await stopTask;
+        }
+        finally
+        {
+            allowCollectToComplete.Set();
+
+            try
+            {
+                using var response = await requestTask;
+            }
+            catch (HttpRequestException)
+            {
+            }
+            catch (TaskCanceledException)
+            {
+            }
+        }
+    }
+
+    [Fact]
+    public async Task PrometheusHttpListenerHandlesConcurrentScrapes()
+    {
+        var timeout = TimeSpan.FromSeconds(5);
+
+        using var firstCollectStarted = new ManualResetEventSlim();
+        using var allowFirstCollectToComplete = new ManualResetEventSlim();
+        using var secondCollectStarted = new ManualResetEventSlim();
+        using var allowSecondCollectToComplete = new ManualResetEventSlim();
+
+        using var context = CreateListener(
+            configureExporter: (options) => options.ScrapeResponseCacheDurationMilliseconds = 0);
+
+        using var client = new HttpClient() { BaseAddress = context.BaseAddress };
+
+        var collectCount = 0;
+
+        context.Exporter.Collect = _ =>
+        {
+            var currentCollect = Interlocked.Increment(ref collectCount);
+
+            if (currentCollect == 1)
+            {
+                firstCollectStarted.Set();
+
+                if (!allowFirstCollectToComplete.Wait(timeout))
+                {
+                    throw new TimeoutException("Timed out waiting for the test to release the first scrape.");
+                }
+            }
+            else if (currentCollect == 2)
+            {
+                secondCollectStarted.Set();
+
+                if (!allowSecondCollectToComplete.Wait(timeout))
+                {
+                    throw new TimeoutException("Timed out waiting for the test to release the second scrape.");
+                }
+            }
+
+            return true;
+        };
+
+        var requestUri = new Uri("metrics", UriKind.Relative);
+
+        var firstRequestTask = client.GetAsync(requestUri);
+
+        Assert.True(firstCollectStarted.Wait(timeout));
+
+        var secondRequestTask = client.GetAsync(requestUri);
+
+        await Task.Delay(100);
+
+        allowFirstCollectToComplete.Set();
+
+        try
+        {
+            using var firstResponse = await firstRequestTask;
+
+            Assert.Equal(HttpStatusCode.OK, firstResponse.StatusCode);
+
+#if NET
+            await secondRequestTask.WaitAsync(timeout);
+#else
+            using var cts = new CancellationTokenSource(timeout);
+            var completedTask = await Task.WhenAny(secondRequestTask, Task.Delay(timeout, cts.Token));
+            Assert.Same(secondRequestTask, completedTask);
+#endif
+
+            Assert.False(secondCollectStarted.IsSet);
+
+            using var secondResponse = await secondRequestTask;
+
+            Assert.Equal(HttpStatusCode.OK, secondResponse.StatusCode);
+            Assert.Equal(1, Volatile.Read(ref collectCount));
+        }
+        finally
+        {
+            allowFirstCollectToComplete.Set();
+            allowSecondCollectToComplete.Set();
+        }
+    }
+
     internal static MeterProviderTestContext CreateMeterProvider(
         Meter meter,
         Func<PrometheusHttpListenerOptions, int>? configureListener = null,
@@ -501,36 +638,45 @@ public class PrometheusHttpListenerTests
         return port;
     }
 
-    private static PrometheusTestContext CreateListener(int? port = null)
+    private static PrometheusTestContext CreateListener(
+        Action<PrometheusExporterOptions>? configureExporter = null,
+        Action<PrometheusHttpListenerOptions>? configureListener = null)
     {
         var maximumAttempts = 5;
         var attemptsLeft = maximumAttempts;
         int boundPort = 0;
 
-        var options = new PrometheusHttpListenerOptions
+        var exporterOptions = new PrometheusExporterOptions();
+
+        configureExporter?.Invoke(exporterOptions);
+
+        var listenerOptions = new PrometheusHttpListenerOptions()
         {
             Host = "localhost",
         };
 
+        configureListener?.Invoke(listenerOptions);
+
 #pragma warning disable CA2000 // Dispose objects before losing scope
-        var exporter = new PrometheusExporter(new());
+        var exporter = new PrometheusExporter(exporterOptions);
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
         try
         {
             while (attemptsLeft-- > 0)
             {
-                port ??= GetRandomPort();
+                var port = GetRandomPort();
 
-                options.Port = port.Value;
+                listenerOptions.Port = port;
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
-                var listener = new PrometheusHttpListener(exporter, options);
+                var listener = new PrometheusHttpListener(exporter, listenerOptions);
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
                 try
                 {
                     listener.Start();
+                    boundPort = port;
 
                     return new(exporter, listener, boundPort);
                 }
@@ -580,6 +726,8 @@ public class PrometheusHttpListenerTests
 
     private sealed class PrometheusTestContext(PrometheusExporter exporter, PrometheusHttpListener listener, int port) : IDisposable
     {
+        public Uri BaseAddress { get; } = new UriBuilder(Uri.UriSchemeHttp, "localhost", port).Uri;
+
         public PrometheusExporter Exporter { get; } = exporter;
 
         public PrometheusHttpListener Listener { get; } = listener;
