@@ -620,18 +620,19 @@ public sealed class MockCollectorIntegrationTests
 
         public IEnumerable<PersistentBlob> TryGetBlobs() => this.mockStorage.AsEnumerable();
 
-        protected override IEnumerable<PersistentBlob> OnGetBlobs()
-        {
-            return this.mockStorage.AsEnumerable();
-        }
+        protected override IEnumerable<PersistentBlob> OnGetBlobs() => this.mockStorage.AsEnumerable();
 
-        protected override bool OnTryCreateBlob(byte[] buffer, int leasePeriodMilliseconds, out PersistentBlob blob)
+        protected override bool OnTryCreateBlob(byte[] buffer, int leasePeriodMilliseconds, [NotNullWhen(true)] out PersistentBlob? blob) => this.OnTryCreateBlob(buffer.AsSpan(), out blob);
+
+        protected override bool OnTryCreateBlob(byte[] buffer, [NotNullWhen(true)] out PersistentBlob? blob) => this.OnTryCreateBlob(buffer.AsSpan(), out blob);
+
+        protected override bool OnTryCreateBlob(ReadOnlySpan<byte> buffer, int leasePeriodMilliseconds, out PersistentBlob blob)
         {
             blob = new MockFileBlob(this.mockStorage);
             return blob.TryWrite(buffer);
         }
 
-        protected override bool OnTryCreateBlob(byte[] buffer, out PersistentBlob blob)
+        protected override bool OnTryCreateBlob(ReadOnlySpan<byte> buffer, out PersistentBlob blob)
         {
             blob = new MockFileBlob(this.mockStorage);
             return blob.TryWrite(buffer);
