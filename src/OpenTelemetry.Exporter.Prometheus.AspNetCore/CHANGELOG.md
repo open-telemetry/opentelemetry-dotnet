@@ -11,6 +11,45 @@ Notes](../../RELEASENOTES.md).
   `PrometheusAspNetCoreOptions`.
   ([#7176](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7176))
 
+* Fixed the serialization of `NaN`, `PositiveInfinity`, and `NegativeInfinity`
+  values in Prometheus metrics to be compliant with the specification.
+  ([#7179](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7179))
+
+* Fixed loss of precision when serializing `double` and `float` values in
+  Prometheus metrics to be compliant with the specification by using 17
+  significant digits to represent such values.
+  ([#7179](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7179))
+
+* Fix non-ASCII characters in metric names and unit strings not being sanitized
+  correctly during Prometheus serialization.
+  ([#7184](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7184))
+
+* Fix case where reader tracking could be reset while readers were still active.
+  ([#7190](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7190))
+
+* Improve `Accept` header handling for format negotiation so OpenMetrics is
+  selected correctly by considering whitespace and `q` weights.
+  ([#7208](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7208))
+
+* Emit OpenMetrics exemplars for counters and histogram buckets.
+  ([#7222](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7222))
+
+* Fix incorrect handling of untyped metrics when using OpenMetrics format.
+  ([#7219](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7219))
+
+* Fix Prometheus/OpenMetrics serialization to emit metric and label names
+  containing `_` instead of dropping them and prefixing leading digits.
+  Invalid characters are replaced with `_` instead of being dropped.
+  ([#7209](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7209))
+
+* Add `escaping=underscores` to the `Accept` header handling for content
+  negotiation so OpenMetrics are handled correctly.
+  ([#7209](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7209))
+
+* Omit histogram `_sum` and `_count` in OpenMetrics when negative bucket
+  thresholds are present.
+  ([#7221](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7221))
+
 ## 1.15.3-beta.1
 
 Released 2026-Apr-21

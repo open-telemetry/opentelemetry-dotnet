@@ -271,25 +271,41 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <returns>New <see cref="Baggage"/> containing the key/value pairs.</returns>
     public Baggage SetBaggage(IEnumerable<KeyValuePair<string, string?>> baggageItems)
     {
-        if (baggageItems?.Any() != true)
+        using var enumerator = baggageItems?.GetEnumerator();
+        if (enumerator == null || !enumerator.MoveNext())
         {
             return this;
         }
 
-        var newBaggage = new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.Ordinal);
-
-        foreach (var item in baggageItems)
+        Dictionary<string, string>? newBaggage = null;
+        do
         {
+            var item = enumerator.Current;
             if (string.IsNullOrEmpty(item.Key))
             {
                 continue;
             }
             else if (string.IsNullOrEmpty(item.Value))
             {
-                newBaggage.Remove(item.Key);
+                var currentBaggage = newBaggage ?? this.baggage;
+                if (currentBaggage?.ContainsKey(item.Key) == true)
+                {
+                    newBaggage ??= new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.Ordinal);
+                    newBaggage.Remove(item.Key);
+                }
             }
             else
             {
+                var currentBaggage = newBaggage ?? this.baggage;
+
+                if (currentBaggage != null &&
+                    currentBaggage.TryGetValue(item.Key, out var existingValue) &&
+                    existingValue == item.Value)
+                {
+                    continue;
+                }
+
+                newBaggage ??= new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.Ordinal);
 #if NET
                 newBaggage[item.Key] = item.Value;
 #else
@@ -297,8 +313,10 @@ public readonly struct Baggage : IEquatable<Baggage>
 #endif
             }
         }
+        while (enumerator.MoveNext());
 
-        return new Baggage(newBaggage);
+        // If nothing was changed return the current instance
+        return newBaggage == null ? this : new Baggage(newBaggage);
     }
 
     /// <summary>
@@ -308,6 +326,12 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <returns>New <see cref="Baggage"/> with the key/value pair removed.</returns>
     public Baggage RemoveBaggage(string name)
     {
+        var currentBaggage = this.baggage ?? EmptyBaggage;
+        if (!currentBaggage.ContainsKey(name))
+        {
+            return this;
+        }
+
         var baggage = new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.Ordinal);
         baggage.Remove(name);
 
@@ -333,6 +357,11 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <inheritdoc/>
     public bool Equals(Baggage other)
     {
+        if (ReferenceEquals(this.baggage, other.baggage))
+        {
+            return true;
+        }
+
         var baggageIsNullOrEmpty = this.baggage == null || this.baggage.Count <= 0;
 
         return

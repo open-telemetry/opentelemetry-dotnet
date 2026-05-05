@@ -57,7 +57,7 @@ public class BaggageTests
         Assert.Equal("VALUE2", Baggage.Current.GetBaggage("KEY2"));
         Assert.Equal("value \U0001F600", Baggage.Current.GetBaggage("key \U000000A9"));
 
-        Assert.Throws<ArgumentException>(() => Baggage.GetBaggage(null!));
+        Assert.ThrowsAny<ArgumentException>(() => Baggage.GetBaggage(null!));
     }
 
     [Fact]

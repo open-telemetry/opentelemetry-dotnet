@@ -26,10 +26,14 @@ internal static partial class PrometheusSerializer
     {
         if (MathHelper.IsFinite(value))
         {
+            // From https://prometheus.io/docs/specs/om/open_metrics_spec/#considerations-canonical-numbers:
+            // A warning to implementers in C and other languages that share its printf implementation:
+            // The standard precision of %f, %e and %g is only six significant digits. 17 significant
+            // digits are required for full precision, e.g. printf("%.17g", d).
 #if NET
             Span<char> span = stackalloc char[128];
 
-            var result = value.TryFormat(span, out var cchWritten, "G", CultureInfo.InvariantCulture);
+            var result = value.TryFormat(span, out var cchWritten, "G17", CultureInfo.InvariantCulture);
             Debug.Assert(result, $"{nameof(result)} should be true.");
 
             for (var i = 0; i < cchWritten; i++)
@@ -37,7 +41,7 @@ internal static partial class PrometheusSerializer
                 buffer[cursor++] = unchecked((byte)span[i]);
             }
 #else
-            cursor = WriteAsciiStringNoEscape(buffer, cursor, value.ToString(CultureInfo.InvariantCulture));
+            cursor = WriteAsciiStringNoEscape(buffer, cursor, value.ToString("G17", CultureInfo.InvariantCulture));
 #endif
         }
         else if (double.IsPositiveInfinity(value))
@@ -50,8 +54,9 @@ internal static partial class PrometheusSerializer
         }
         else
         {
+            // See https://prometheus.io/docs/instrumenting/exposition_formats/#comments-help-text-and-type-information
             Debug.Assert(double.IsNaN(value), $"{nameof(value)} should be NaN.");
-            cursor = WriteAsciiStringNoEscape(buffer, cursor, "Nan");
+            cursor = WriteAsciiStringNoEscape(buffer, cursor, "NaN");
         }
 
         return cursor;
@@ -89,8 +94,10 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteUnicodeNoEscape(byte[] buffer, int cursor, ushort ordinal)
+    public static int WriteUnicodeNoEscape(byte[] buffer, int cursor, int ordinal)
     {
+        // Strings MUST only consist of valid UTF-8 characters.
+        // See https://prometheus.io/docs/specs/om/open_metrics_spec/#strings.
         if (ordinal <= 0x7F)
         {
             buffer[cursor++] = unchecked((byte)ordinal);
@@ -100,10 +107,16 @@ internal static partial class PrometheusSerializer
             buffer[cursor++] = unchecked((byte)(0b_1100_0000 | (ordinal >> 6)));
             buffer[cursor++] = unchecked((byte)(0b_1000_0000 | (ordinal & 0b_0011_1111)));
         }
+        else if (ordinal <= 0xFFFF)
+        {
+            buffer[cursor++] = unchecked((byte)(0b_1110_0000 | (ordinal >> 12)));
+            buffer[cursor++] = unchecked((byte)(0b_1000_0000 | ((ordinal >> 6) & 0b_0011_1111)));
+            buffer[cursor++] = unchecked((byte)(0b_1000_0000 | (ordinal & 0b_0011_1111)));
+        }
         else
         {
-            // all other <= 0xFFFF which is ushort.MaxValue
-            buffer[cursor++] = unchecked((byte)(0b_1110_0000 | (ordinal >> 12)));
+            buffer[cursor++] = unchecked((byte)(0b_1111_0000 | (ordinal >> 18)));
+            buffer[cursor++] = unchecked((byte)(0b_1000_0000 | ((ordinal >> 12) & 0b_0011_1111)));
             buffer[cursor++] = unchecked((byte)(0b_1000_0000 | ((ordinal >> 6) & 0b_0011_1111)));
             buffer[cursor++] = unchecked((byte)(0b_1000_0000 | (ordinal & 0b_0011_1111)));
         }
@@ -128,7 +141,7 @@ internal static partial class PrometheusSerializer
                     buffer[cursor++] = unchecked((byte)'n');
                     break;
                 default:
-                    cursor = WriteUnicodeNoEscape(buffer, cursor, ordinal);
+                    cursor = WriteUnicodeScalar(buffer, cursor, value, ref i);
                     break;
             }
         }
@@ -137,7 +150,7 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteLabelKey(byte[] buffer, int cursor, string value)
+    public static int WriteLabelKey(byte[] buffer, int cursor, string value, bool openMetricsRequested)
     {
         if (string.IsNullOrEmpty(value))
         {
@@ -145,26 +158,9 @@ internal static partial class PrometheusSerializer
             return cursor;
         }
 
-        var ordinal = (ushort)value[0];
-
-        if (ordinal is >= '0' and <= '9')
-        {
-            buffer[cursor++] = unchecked((byte)'_');
-        }
-
-        for (var i = 0; i < value.Length; i++)
-        {
-            ordinal = value[i];
-
-            buffer[cursor++] =
-                ordinal is (>= 'A' and <= 'Z') or
-                (>= 'a' and <= 'z') or
-                (>= '0' and <= '9')
-                ? (byte)ordinal
-                : (byte)'_';
-        }
-
-        return cursor;
+        return openMetricsRequested ?
+               WriteOpenMetricsLabelKey(buffer, cursor, value) :
+               WritePrometheusLabelKey(buffer, cursor, value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -188,7 +184,7 @@ internal static partial class PrometheusSerializer
                     buffer[cursor++] = unchecked((byte)'n');
                     break;
                 default:
-                    cursor = WriteUnicodeNoEscape(buffer, cursor, ordinal);
+                    cursor = WriteUnicodeScalar(buffer, cursor, value, ref i);
                     break;
             }
         }
@@ -197,9 +193,9 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteLabel(byte[] buffer, int cursor, string labelKey, object? labelValue)
+    public static int WriteLabel(byte[] buffer, int cursor, string labelKey, object? labelValue, bool openMetricsRequested)
     {
-        cursor = WriteLabelKey(buffer, cursor, labelKey);
+        cursor = WriteLabelKey(buffer, cursor, labelKey, openMetricsRequested);
         buffer[cursor++] = unchecked((byte)'=');
         buffer[cursor++] = unchecked((byte)'"');
 
@@ -213,7 +209,46 @@ internal static partial class PrometheusSerializer
         {
             // TODO: Attribute values should be written as their JSON representation. Extra logic may need to be added here to correctly convert other .NET types.
             // More detail: https://github.com/open-telemetry/opentelemetry-dotnet/issues/4822#issuecomment-1707328495
-            return labelValue is bool b ? b ? "true" : "false" : labelValue?.ToString() ?? string.Empty;
+            if (labelValue is bool booleanValue)
+            {
+                return booleanValue ? "true" : "false";
+            }
+            else if (labelValue is double doubleValue)
+            {
+                return DoubleToString(doubleValue);
+            }
+            else if (labelValue is float floatValue)
+            {
+                return DoubleToString(floatValue);
+            }
+
+            return labelValue?.ToString() ?? string.Empty;
+
+            static string DoubleToString(double value)
+            {
+                // From https://prometheus.io/docs/specs/om/open_metrics_spec/#considerations-canonical-numbers:
+                // A warning to implementers in C and other languages that share its printf implementation:
+                // The standard precision of %f, %e and %g is only six significant digits. 17 significant
+                // digits are required for full precision, e.g. printf("%.17g", d).
+                if (MathHelper.IsFinite(value))
+                {
+                    return value.ToString("G17", CultureInfo.InvariantCulture);
+                }
+                else if (double.IsPositiveInfinity(value))
+                {
+                    return "+Inf";
+                }
+                else if (double.IsNegativeInfinity(value))
+                {
+                    return "-Inf";
+                }
+                else
+                {
+                    // See https://prometheus.io/docs/instrumenting/exposition_formats/#comments-help-text-and-type-information
+                    Debug.Assert(double.IsNaN(value), $"{nameof(value)} should be NaN.");
+                    return "NaN";
+                }
+            }
         }
     }
 
@@ -261,6 +296,66 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int WriteExemplar(byte[] buffer, int cursor, in Exemplar exemplar, bool isLongValue, bool openMetricsRequested)
+    {
+        buffer[cursor++] = unchecked((byte)' ');
+        buffer[cursor++] = unchecked((byte)'#');
+        buffer[cursor++] = unchecked((byte)' ');
+        buffer[cursor++] = unchecked((byte)'{');
+
+        var hasLabels = false;
+
+        if (exemplar.TraceId != default)
+        {
+            cursor = WriteLabel(buffer, cursor, "trace_id", exemplar.TraceId.ToHexString(), openMetricsRequested);
+            buffer[cursor++] = unchecked((byte)',');
+            hasLabels = true;
+        }
+
+        if (exemplar.SpanId != default)
+        {
+            cursor = WriteLabel(buffer, cursor, "span_id", exemplar.SpanId.ToHexString(), openMetricsRequested);
+            buffer[cursor++] = unchecked((byte)',');
+            hasLabels = true;
+        }
+
+        foreach (var tag in exemplar.FilteredTags)
+        {
+            if (tag.Key == "trace_id" || tag.Key == "span_id")
+            {
+                continue;
+            }
+
+            cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value, openMetricsRequested);
+            buffer[cursor++] = unchecked((byte)',');
+            hasLabels = true;
+        }
+
+        if (hasLabels)
+        {
+            buffer[cursor - 1] = unchecked((byte)'}');
+        }
+        else
+        {
+            buffer[cursor++] = unchecked((byte)'}');
+        }
+
+        buffer[cursor++] = unchecked((byte)' ');
+
+        cursor = isLongValue
+            ? WriteLong(buffer, cursor, exemplar.LongValue)
+            : WriteDouble(buffer, cursor, exemplar.DoubleValue);
+
+        if (exemplar.Timestamp != default)
+        {
+            buffer[cursor++] = unchecked((byte)' ');
+            cursor = WriteUnixTimeSeconds(buffer, cursor, exemplar.Timestamp);
+        }
+
+        return cursor;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteHelpMetadata(byte[] buffer, int cursor, PrometheusMetric metric, string metricDescription, bool openMetricsRequested)
     {
         if (string.IsNullOrEmpty(metricDescription))
@@ -285,7 +380,7 @@ internal static partial class PrometheusSerializer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteTypeMetadata(byte[] buffer, int cursor, PrometheusMetric metric, bool openMetricsRequested)
     {
-        var metricType = MapPrometheusType(metric.Type);
+        var metricType = MapPrometheusType(metric.Type, openMetricsRequested);
 
         Debug.Assert(!string.IsNullOrEmpty(metricType), $"{nameof(metricType)} should not be null or empty.");
 
@@ -300,9 +395,9 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteUnitMetadata(byte[] buffer, int cursor, PrometheusMetric metric, bool openMetricsRequested)
+    public static int WriteUnitMetadata(byte[] buffer, int cursor, PrometheusMetric metric, string? unit, bool openMetricsRequested)
     {
-        if (string.IsNullOrEmpty(metric.Unit))
+        if (string.IsNullOrEmpty(unit))
         {
             return cursor;
         }
@@ -314,10 +409,10 @@ internal static partial class PrometheusSerializer
 
         // Unit name has already been escaped.
 #pragma warning disable IDE0370 // Remove unnecessary suppression
-        for (var i = 0; i < metric.Unit!.Length; i++)
+        for (var i = 0; i < unit!.Length; i++)
 #pragma warning restore IDE0370 // Remove unnecessary suppression
         {
-            var ordinal = (ushort)metric.Unit[i];
+            var ordinal = (ushort)unit[i];
             buffer[cursor++] = unchecked((byte)ordinal);
         }
 
@@ -327,7 +422,7 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteScopeInfo(byte[] buffer, int cursor, string scopeName)
+    public static int WriteScopeInfo(byte[] buffer, int cursor, string scopeName, bool openMetricsRequested)
     {
         if (string.IsNullOrEmpty(scopeName))
         {
@@ -342,7 +437,7 @@ internal static partial class PrometheusSerializer
 
         cursor = WriteAsciiStringNoEscape(buffer, cursor, "otel_scope_info");
         buffer[cursor++] = unchecked((byte)'{');
-        cursor = WriteLabel(buffer, cursor, "otel_scope_name", scopeName);
+        cursor = WriteLabel(buffer, cursor, "otel_scope_name", scopeName, openMetricsRequested);
         buffer[cursor++] = unchecked((byte)'}');
         buffer[cursor++] = unchecked((byte)' ');
         buffer[cursor++] = unchecked((byte)'1');
@@ -352,19 +447,25 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteTags(byte[] buffer, int cursor, Metric metric, ReadOnlyTagCollection tags, bool writeEnclosingBraces = true)
+    public static int WriteTags(
+        byte[] buffer,
+        int cursor,
+        Metric metric,
+        ReadOnlyTagCollection tags,
+        bool openMetricsRequested,
+        bool writeEnclosingBraces = true)
     {
         if (writeEnclosingBraces)
         {
             buffer[cursor++] = unchecked((byte)'{');
         }
 
-        cursor = WriteLabel(buffer, cursor, "otel_scope_name", metric.MeterName);
+        cursor = WriteLabel(buffer, cursor, "otel_scope_name", metric.MeterName, openMetricsRequested);
         buffer[cursor++] = unchecked((byte)',');
 
         if (!string.IsNullOrEmpty(metric.MeterVersion))
         {
-            cursor = WriteLabel(buffer, cursor, "otel_scope_version", metric.MeterVersion);
+            cursor = WriteLabel(buffer, cursor, "otel_scope_version", metric.MeterVersion, openMetricsRequested);
             buffer[cursor++] = unchecked((byte)',');
         }
 
@@ -372,14 +473,14 @@ internal static partial class PrometheusSerializer
         {
             foreach (var tag in metric.MeterTags)
             {
-                cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
+                cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value, openMetricsRequested);
                 buffer[cursor++] = unchecked((byte)',');
             }
         }
 
         foreach (var tag in tags)
         {
-            cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
+            cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value, openMetricsRequested);
             buffer[cursor++] = unchecked((byte)',');
         }
 
@@ -392,7 +493,7 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteTargetInfo(byte[] buffer, int cursor, Resource resource)
+    public static int WriteTargetInfo(byte[] buffer, int cursor, Resource resource, bool openMetricsRequested)
     {
         if (resource == Resource.Empty)
         {
@@ -410,7 +511,7 @@ internal static partial class PrometheusSerializer
 
         foreach (var attribute in resource.Attributes)
         {
-            cursor = WriteLabel(buffer, cursor, attribute.Key, attribute.Value);
+            cursor = WriteLabel(buffer, cursor, attribute.Key, attribute.Value, openMetricsRequested);
 
             buffer[cursor++] = unchecked((byte)',');
         }
@@ -425,12 +526,85 @@ internal static partial class PrometheusSerializer
         return cursor;
     }
 
-    private static string MapPrometheusType(PrometheusType type) => type switch
+    private static int WritePrometheusLabelKey(byte[] buffer, int cursor, string value)
+        => WriteNormalizedLabelKey(buffer, cursor, value);
+
+    private static int WriteOpenMetricsLabelKey(byte[] buffer, int cursor, string value)
+        => WriteNormalizedLabelKey(buffer, cursor, value);
+
+    private static int WriteNormalizedLabelKey(byte[] buffer, int cursor, string value)
+    {
+        var lastCharUnderscore = false;
+
+        for (var i = 0; i < value.Length; i++)
+        {
+            var ch = value[i];
+
+            if (i == 0 && char.IsAsciiDigit(ch))
+            {
+                if (!lastCharUnderscore)
+                {
+                    buffer[cursor++] = unchecked((byte)'_');
+                    lastCharUnderscore = true;
+                }
+            }
+
+            if (!IsAllowedMetricsLabelCharacter(ch))
+            {
+                if (!lastCharUnderscore)
+                {
+                    buffer[cursor++] = unchecked((byte)'_');
+                    lastCharUnderscore = true;
+                }
+
+                continue;
+            }
+
+            buffer[cursor++] = unchecked((byte)ch);
+            lastCharUnderscore = ch == '_';
+        }
+
+        return cursor;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool IsAllowedMetricsLabelCharacter(char value) =>
+        char.IsAsciiLetterOrDigit(value) || value is '_';
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int WriteUnicodeScalar(byte[] buffer, int cursor, string value, ref int index)
+    {
+        // Strings MUST only consist of valid UTF-8 characters.
+        // See https://prometheus.io/docs/specs/om/open_metrics_spec/#strings.
+        var current = value[index];
+
+        if (!char.IsSurrogate(current))
+        {
+            return WriteUnicodeNoEscape(buffer, cursor, current);
+        }
+
+        if (char.IsHighSurrogate(current) && index < value.Length - 1 && char.IsLowSurrogate(value[index + 1]))
+        {
+            index++;
+            return WriteUnicodeNoEscape(buffer, cursor, char.ConvertToUtf32(current, value[index]));
+        }
+
+        return WriteUnicodeNoEscape(buffer, cursor, 0xFFFD);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int WriteUnixTimeSeconds(byte[] buffer, int cursor, DateTimeOffset value)
+        => WriteDouble(buffer, cursor, value.ToUnixTimeMilliseconds() / 1000.0);
+
+    private static string MapPrometheusType(PrometheusType type, bool openMetricsRequested) => type switch
     {
         PrometheusType.Gauge => "gauge",
         PrometheusType.Counter => "counter",
         PrometheusType.Summary => "summary",
         PrometheusType.Histogram => "histogram",
-        PrometheusType.Untyped or _ => "untyped",
+
+        // OpenMetrics 1.0 uses "unknown" while Prometheus text format 0.0.4 uses "untyped".
+        // See https://prometheus.io/docs/specs/om/open_metrics_spec/#unknown-1
+        PrometheusType.Untyped or _ => openMetricsRequested ? "unknown" : "untyped",
     };
 }

@@ -88,6 +88,7 @@
     <File Path="docs/diagnostics/experimental-apis/OTEL1000.md" />
     <File Path="docs/diagnostics/experimental-apis/OTEL1001.md" />
     <File Path="docs/diagnostics/experimental-apis/OTEL1004.md" />
+    <File Path="docs/diagnostics/experimental-apis/OTEL1005.md" />
     <File Path="docs/diagnostics/experimental-apis/README.md" />
   </Folder>
   <Folder Name="/docs/logs/">
@@ -131,6 +132,7 @@
   <Folder Name="/examples/">
     <Project Path="examples/AspNetCore/Examples.AspNetCore.csproj" />
     <Project Path="examples/Console/Examples.Console.csproj" />
+    <Project Path="examples/EnvironmentVariables/Examples.EnvironmentVariables.csproj" />
     <Project Path="examples/FSharp/Examples.FSharp.fsproj" />
     <Project Path="examples/GrpcService/Examples.GrpcService.csproj" />
   </Folder>
@@ -146,6 +148,7 @@
   <Folder Name="/Shared/">
     <File Path="src/Shared/ActivityHelperExtensions.cs" />
     <File Path="src/Shared/AssemblyVersionExtensions.cs" />
+    <File Path="src/Shared/CharExtensions.cs" />
     <File Path="src/Shared/DiagnosticDefinitions.cs" />
     <File Path="src/Shared/ExceptionExtensions.cs" />
     <File Path="src/Shared/Guard.cs" />
@@ -155,6 +158,7 @@
     <File Path="src/Shared/SemanticConventions.cs" />
     <File Path="src/Shared/SpanAttributeConstants.cs" />
     <File Path="src/Shared/StatusHelper.cs" />
+    <File Path="src/Shared/StopwatchExtensions.cs" />
     <File Path="src/Shared/ThreadSafeRandom.cs" />
   </Folder>
   <Folder Name="/Shared/Configuration/">
@@ -227,6 +231,7 @@
   <Project Path="test/OpenTelemetry.Exporter.OpenTelemetryProtocol.FuzzTests/OpenTelemetry.Exporter.OpenTelemetryProtocol.FuzzTests.csproj" />
   <Project Path="test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.csproj" />
   <Project Path="test/OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests/OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests.csproj" />
+  <Project Path="test/OpenTelemetry.Exporter.Prometheus.HttpListener.FuzzTests/OpenTelemetry.Exporter.Prometheus.HttpListener.FuzzTests.csproj" />
   <Project Path="test/OpenTelemetry.Exporter.Prometheus.HttpListener.Tests/OpenTelemetry.Exporter.Prometheus.HttpListener.Tests.csproj" />
   <Project Path="test/OpenTelemetry.Exporter.Zipkin.Tests/OpenTelemetry.Exporter.Zipkin.Tests.csproj" />
   <Project Path="test/OpenTelemetry.Extensions.Hosting.Tests/OpenTelemetry.Extensions.Hosting.Tests.csproj" />

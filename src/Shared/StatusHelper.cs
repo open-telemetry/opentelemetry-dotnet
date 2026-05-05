@@ -13,38 +13,32 @@ internal static class StatusHelper
     public const string ErrorStatusCodeTagValue = "ERROR";
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static string? GetTagValueForStatusCode(StatusCode statusCode)
+    public static string? GetTagValueForStatusCode(StatusCode statusCode) => statusCode switch
     {
-        return statusCode switch
-        {
-            /*
-             * Note: Order here does matter for perf. Unset is
-             * first because assumption is most spans will be
-             * Unset, then Error. Ok is not set by the SDK.
-             */
-            StatusCode.Unset => UnsetStatusCodeTagValue,
-            StatusCode.Error => ErrorStatusCodeTagValue,
-            StatusCode.Ok => OkStatusCodeTagValue,
-            _ => null,
-        };
-    }
+        /*
+         * Note: Order here matters for performance. Unset
+         * is first because the assumption is most spans will
+         * be Unset, then Error. Ok is not set by the SDK.
+         */
+        StatusCode.Unset => UnsetStatusCodeTagValue,
+        StatusCode.Error => ErrorStatusCodeTagValue,
+        StatusCode.Ok => OkStatusCodeTagValue,
+        _ => null,
+    };
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static StatusCode? GetStatusCodeForTagValue(string? statusCodeTagValue)
+    public static StatusCode? GetStatusCodeForTagValue(string? statusCodeTagValue) => statusCodeTagValue switch
     {
-        return statusCodeTagValue switch
-        {
-            /*
-             * Note: Order here does matter for perf. Unset is
-             * first because assumption is most spans will be
-             * Unset, then Error. Ok is not set by the SDK.
-             */
-            not null when UnsetStatusCodeTagValue.Equals(statusCodeTagValue, StringComparison.OrdinalIgnoreCase) => StatusCode.Unset,
-            not null when ErrorStatusCodeTagValue.Equals(statusCodeTagValue, StringComparison.OrdinalIgnoreCase) => StatusCode.Error,
-            not null when OkStatusCodeTagValue.Equals(statusCodeTagValue, StringComparison.OrdinalIgnoreCase) => StatusCode.Ok,
-            _ => null,
-        };
-    }
+        /*
+         * Note: Order here matters for performance. Unset
+         * is first because the assumption is most spans will
+         * be Unset, then Error. Ok is not set by the SDK.
+         */
+        not null when string.Equals(UnsetStatusCodeTagValue, statusCodeTagValue, StringComparison.OrdinalIgnoreCase) => StatusCode.Unset,
+        not null when string.Equals(ErrorStatusCodeTagValue, statusCodeTagValue, StringComparison.OrdinalIgnoreCase) => StatusCode.Error,
+        not null when string.Equals(OkStatusCodeTagValue, statusCodeTagValue, StringComparison.OrdinalIgnoreCase) => StatusCode.Ok,
+        _ => null,
+    };
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool TryGetStatusCodeForTagValue(string? statusCodeTagValue, out StatusCode statusCode)

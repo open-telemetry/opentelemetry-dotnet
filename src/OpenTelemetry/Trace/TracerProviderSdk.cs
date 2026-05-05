@@ -402,10 +402,10 @@ internal sealed class TracerProviderSdk : TracerProvider
             switch (configValue)
             {
                 case var _ when string.Equals(configValue, "always_on", StringComparison.OrdinalIgnoreCase):
-                    sampler = new AlwaysOnSampler();
+                    sampler = AlwaysOnSampler.Instance;
                     break;
                 case var _ when string.Equals(configValue, "always_off", StringComparison.OrdinalIgnoreCase):
-                    sampler = new AlwaysOffSampler();
+                    sampler = AlwaysOffSampler.Instance;
                     break;
                 case var _ when string.Equals(configValue, "traceidratio", StringComparison.OrdinalIgnoreCase):
                     {
@@ -415,10 +415,10 @@ internal sealed class TracerProviderSdk : TracerProvider
                     }
 
                 case var _ when string.Equals(configValue, "parentbased_always_on", StringComparison.OrdinalIgnoreCase):
-                    sampler = new ParentBasedSampler(new AlwaysOnSampler());
+                    sampler = new ParentBasedSampler(AlwaysOnSampler.Instance);
                     break;
                 case var _ when string.Equals(configValue, "parentbased_always_off", StringComparison.OrdinalIgnoreCase):
-                    sampler = new ParentBasedSampler(new AlwaysOffSampler());
+                    sampler = new ParentBasedSampler(AlwaysOffSampler.Instance);
                     break;
                 case var _ when string.Equals(configValue, "parentbased_traceidratio", StringComparison.OrdinalIgnoreCase):
                     {
@@ -438,7 +438,7 @@ internal sealed class TracerProviderSdk : TracerProvider
             }
         }
 
-        return sampler ?? new ParentBasedSampler(new AlwaysOnSampler());
+        return sampler ?? new ParentBasedSampler(AlwaysOnSampler.Instance);
     }
 
     private static double ReadTraceIdRatio(IConfiguration configuration)

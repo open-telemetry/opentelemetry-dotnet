@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* **Experimental (pre-release builds only):**
+  Add support for using environment variables as context propagation carriers.
+  ([#7174](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7174))
+
 * Fix issue with `Baggage.Current` updates made in a child async flow that
   could leak back into the parent flow.
   ([#7191](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7191))
@@ -14,10 +18,12 @@ Notes](../../RELEASENOTES.md).
 
 Released 2026-Apr-21
 
-* Fix baggage and trace headers not respecting the maximum length in some cases.
+* Fix baggage and trace headers not respecting the maximum length in some cases
+  to resolve [GHSA-g94r-2vxg-569j](https://github.com/advisories/GHSA-g94r-2vxg-569j).
   ([#7061](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7061))
 
-* Improve efficiency of parsing of baggage and B3 propagation headers.
+* Improve efficiency of parsing of baggage and B3 propagation headers
+  to resolve [GHSA-g94r-2vxg-569j](https://github.com/advisories/GHSA-g94r-2vxg-569j).
   ([#7061](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7061))
 
 * **Breaking change:** Fixed `tracestate` parsing to reject keys that do not

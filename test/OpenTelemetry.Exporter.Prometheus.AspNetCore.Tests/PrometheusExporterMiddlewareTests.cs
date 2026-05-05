@@ -26,30 +26,24 @@ public sealed class PrometheusExporterMiddlewareTests
     private static readonly string MeterName = Utils.GetCurrentMethodName();
 
     [Fact]
-    public Task PrometheusExporterMiddlewareIntegration()
-    {
-        return RunPrometheusExporterMiddlewareIntegrationTest(
+    public Task PrometheusExporterMiddlewareIntegration() =>
+        RunPrometheusExporterMiddlewareIntegrationTest(
             "/metrics",
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint());
-    }
 
     [Fact]
-    public Task PrometheusExporterMiddlewareIntegration_Options()
-    {
-        return RunPrometheusExporterMiddlewareIntegrationTest(
+    public Task PrometheusExporterMiddlewareIntegration_Options() =>
+        RunPrometheusExporterMiddlewareIntegrationTest(
             "/metrics_options",
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
             services => services.Configure<PrometheusAspNetCoreOptions>(o => o.ScrapeEndpointPath = "metrics_options"));
-    }
 
     [Fact]
-    public Task PrometheusExporterMiddlewareIntegration_OptionsFallback()
-    {
-        return RunPrometheusExporterMiddlewareIntegrationTest(
+    public Task PrometheusExporterMiddlewareIntegration_OptionsFallback() =>
+        RunPrometheusExporterMiddlewareIntegrationTest(
             "/metrics",
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
             services => services.Configure<PrometheusAspNetCoreOptions>(o => o.ScrapeEndpointPath = null));
-    }
 
     [Fact]
     public Task PrometheusExporterMiddlewareIntegration_OptionsViaAddPrometheusExporter() =>
@@ -62,17 +56,14 @@ public sealed class PrometheusExporterMiddlewareTests
             });
 
     [Fact]
-    public Task PrometheusExporterMiddlewareIntegration_PathOverride()
-    {
-        return RunPrometheusExporterMiddlewareIntegrationTest(
+    public Task PrometheusExporterMiddlewareIntegration_PathOverride() =>
+        RunPrometheusExporterMiddlewareIntegrationTest(
             "/metrics_override",
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint("/metrics_override"));
-    }
 
     [Fact]
-    public Task PrometheusExporterMiddlewareIntegration_WithPathNamedOptionsOverride()
-    {
-        return RunPrometheusExporterMiddlewareIntegrationTest(
+    public Task PrometheusExporterMiddlewareIntegration_WithPathNamedOptionsOverride() =>
+        RunPrometheusExporterMiddlewareIntegrationTest(
             "/metrics_override",
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(
                 meterProvider: null,
@@ -84,20 +75,16 @@ public sealed class PrometheusExporterMiddlewareTests
             {
                 services.Configure<PrometheusAspNetCoreOptions>("myOptions", o => o.ScrapeEndpointPath = "/metrics_override");
             });
-    }
 
     [Fact]
-    public Task PrometheusExporterMiddlewareIntegration_Predicate()
-    {
-        return RunPrometheusExporterMiddlewareIntegrationTest(
+    public Task PrometheusExporterMiddlewareIntegration_Predicate() =>
+        RunPrometheusExporterMiddlewareIntegrationTest(
             "/metrics_predicate?enabled=true",
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(httpcontext => httpcontext.Request.Path == "/metrics_predicate" && httpcontext.Request.Query["enabled"] == "true"));
-    }
 
     [Fact]
-    public Task PrometheusExporterMiddlewareIntegration_MixedPredicateAndPath()
-    {
-        return RunPrometheusExporterMiddlewareIntegrationTest(
+    public Task PrometheusExporterMiddlewareIntegration_MixedPredicateAndPath() =>
+        RunPrometheusExporterMiddlewareIntegrationTest(
             "/metrics_predicate",
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(
                 meterProvider: null,
@@ -119,12 +106,10 @@ public sealed class PrometheusExporterMiddlewareTests
 
                 Assert.Equal("true", headers.FirstOrDefault());
             });
-    }
 
     [Fact]
-    public Task PrometheusExporterMiddlewareIntegration_MixedPath()
-    {
-        return RunPrometheusExporterMiddlewareIntegrationTest(
+    public Task PrometheusExporterMiddlewareIntegration_MixedPath() =>
+        RunPrometheusExporterMiddlewareIntegrationTest(
             "/metrics_path",
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(
                 meterProvider: null,
@@ -146,7 +131,6 @@ public sealed class PrometheusExporterMiddlewareTests
 
                 Assert.Equal("true", headers.FirstOrDefault());
             });
-    }
 
     [Fact]
     public async Task PrometheusExporterMiddlewareIntegration_MeterProvider()
@@ -169,36 +153,29 @@ public sealed class PrometheusExporterMiddlewareTests
     }
 
     [Fact]
-    public Task PrometheusExporterMiddlewareIntegration_NoMetrics()
-    {
-        return RunPrometheusExporterMiddlewareIntegrationTest(
+    public Task PrometheusExporterMiddlewareIntegration_NoMetrics() =>
+        RunPrometheusExporterMiddlewareIntegrationTest(
             "/metrics",
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
             skipMetrics: true);
-    }
 
     [Fact]
-    public Task PrometheusExporterMiddlewareIntegration_MapEndpoint()
-    {
-        return RunPrometheusExporterMiddlewareIntegrationTest(
+    public Task PrometheusExporterMiddlewareIntegration_MapEndpoint() =>
+        RunPrometheusExporterMiddlewareIntegrationTest(
             "/metrics",
             app => app.UseRouting().UseEndpoints(builder => builder.MapPrometheusScrapingEndpoint()),
             services => services.AddRouting());
-    }
 
     [Fact]
-    public Task PrometheusExporterMiddlewareIntegration_MapEndpoint_WithPathOverride()
-    {
-        return RunPrometheusExporterMiddlewareIntegrationTest(
+    public Task PrometheusExporterMiddlewareIntegration_MapEndpoint_WithPathOverride() =>
+        RunPrometheusExporterMiddlewareIntegrationTest(
             "/metrics_path",
             app => app.UseRouting().UseEndpoints(builder => builder.MapPrometheusScrapingEndpoint("metrics_path")),
             services => services.AddRouting());
-    }
 
     [Fact]
-    public Task PrometheusExporterMiddlewareIntegration_MapEndpoint_WithPathNamedOptionsOverride()
-    {
-        return RunPrometheusExporterMiddlewareIntegrationTest(
+    public Task PrometheusExporterMiddlewareIntegration_MapEndpoint_WithPathNamedOptionsOverride() =>
+        RunPrometheusExporterMiddlewareIntegrationTest(
             "/metrics_path",
             app => app.UseRouting().UseEndpoints(builder => builder.MapPrometheusScrapingEndpoint(
                 path: null,
@@ -210,7 +187,6 @@ public sealed class PrometheusExporterMiddlewareTests
                 services.AddRouting();
                 services.Configure<PrometheusAspNetCoreOptions>("myOptions", o => o.ScrapeEndpointPath = "/metrics_path");
             });
-    }
 
     [Fact]
     public async Task PrometheusExporterMiddlewareIntegration_MapEndpoint_WithMeterProvider()
@@ -245,6 +221,45 @@ public sealed class PrometheusExporterMiddlewareTests
             "/metrics",
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
             acceptHeader: "application/openmetrics-text; version=1.0.0");
+
+    [Theory]
+    [InlineData("application/openmetrics-text", true)]
+    [InlineData("application/openmetrics-text; version=1.0.0", true)]
+    [InlineData("application/openmetrics-text; version=\"1.0.0\"", true)]
+    [InlineData("application/openmetrics-text; version=1.0.0; escaping=underscores", true)]
+    [InlineData("application/openmetrics-text; version=\"1.0.0\"; escaping=\"underscores\"", true)]
+    [InlineData("application/openmetrics-text; version=1.0.0; charset=utf-8", true)]
+    [InlineData("Application/OpenMetrics-Text; version=1.0.0", true)]
+    [InlineData("application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores", true)]
+    [InlineData("text/plain,application/openmetrics-text; version=1.0.0; charset=utf-8", true)]
+    [InlineData("text/plain, application/openmetrics-text; version=1.0.0; charset=utf-8", true)]
+    [InlineData("text/plain; charset=utf-8,application/openmetrics-text; version=1.0.0; charset=utf-8", true)]
+    [InlineData("text/plain, */*;q=0.8,application/openmetrics-text; version=1.0.0; charset=utf-8", true)]
+    [InlineData("text/plain; q=0.3, application/openmetrics-text; version=1.0.0; q=0.9", true)]
+    [InlineData("TEXT/PLAIN; q=0.3, Application/OpenMetrics-Text; version=1.0.0; q=0.9", true)]
+    [InlineData("application/openmetrics-text; version=0.0.1", false)]
+    [InlineData("application/openmetrics-text; version=\"0.0.1\"", false)]
+    [InlineData("application/openmetrics-text; version=0.0.1; charset=utf-8", false)]
+    [InlineData("application/openmetrics-text; version=1.0.0; q=0", false)]
+    [InlineData("application/openmetrics-text; version=1.0.0; escaping=allow-utf-8", false)]
+    [InlineData("application/openmetrics-text; version=1.0.0; escaping=dots", false)]
+    [InlineData("application/openmetrics-text; version=1.0.0; escaping=values", false)]
+    [InlineData("text/plain", false)]
+    [InlineData("text/plain; charset=utf-8", false)]
+    [InlineData("text/plain; charset=utf-8; version=0.0.4", false)]
+    [InlineData("text/plain; q=0.9, application/openmetrics-text; version=1.0.0; q=0.1", false)]
+    [InlineData("TEXT/PLAIN; q=0.9, Application/OpenMetrics-Text; version=1.0.0; q=0.1", false)]
+    [InlineData("text/plain; q=0, application/openmetrics-text; version=1.0.0; q=0", false)]
+    [InlineData("*/*;q=0.8,text/plain; charset=utf-8; version=0.0.4", false)]
+    public void PrometheusExporterMiddlewareAcceptsOpenMetrics_UsesTypedAcceptHeaders(string header, bool expected)
+    {
+        var context = new DefaultHttpContext();
+        context.Request.Headers.Accept = header;
+
+        var result = PrometheusExporterMiddleware.AcceptsOpenMetrics(context.Request);
+
+        Assert.Equal(expected, result);
+    }
 
     [Fact]
     public Task PrometheusExporterMiddlewareIntegration_TextPlainResponse_WithMeterTags()
@@ -461,7 +476,7 @@ public sealed class PrometheusExporterMiddlewareTests
 
         if (requestOpenMetrics)
         {
-            Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8", response.Content.Headers.ContentType!.ToString());
+            Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores", response.Content.Headers.ContentType!.ToString());
         }
         else
         {
