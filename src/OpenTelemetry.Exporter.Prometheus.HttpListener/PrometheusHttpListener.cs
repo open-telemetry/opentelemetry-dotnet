@@ -89,7 +89,11 @@ internal sealed class PrometheusHttpListener : IDisposable
                 new CancellationTokenSource() :
                 CancellationTokenSource.CreateLinkedTokenSource(token);
 
-            this.workerThread = Task.Factory.StartNew(this.WorkerProc, default, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+            this.workerThread = Task.Factory.StartNew(
+                this.ProcessingLoopAsync,
+                CancellationToken.None,
+                TaskCreationOptions.LongRunning,
+                TaskScheduler.Default).Unwrap();
         }
     }
 
@@ -144,7 +148,7 @@ internal sealed class PrometheusHttpListener : IDisposable
         return !string.IsNullOrEmpty(acceptHeader) && PrometheusHeadersParser.AcceptsOpenMetrics(acceptHeader);
     }
 
-    private void WorkerProc()
+    private async Task ProcessingLoopAsync()
     {
         var cancellationToken = this.tokenSource!.Token;
 
@@ -153,11 +157,20 @@ internal sealed class PrometheusHttpListener : IDisposable
             using var scope = SuppressInstrumentationScope.Begin();
             while (!cancellationToken.IsCancellationRequested)
             {
-                var ctxTask = this.httpListener.GetContextAsync();
-                ctxTask.Wait(cancellationToken);
-                var ctx = ctxTask.Result;
+#if NET
+                var context = await this.httpListener
+                    .GetContextAsync()
+                    .WaitAsync(cancellationToken)
+                    .ConfigureAwait(false);
+#else
+                var task = this.httpListener.GetContextAsync();
+                task.Wait(cancellationToken);
+                var context = await task.ConfigureAwait(false);
+#endif
 
-                Task.Run(() => this.ProcessRequestAsync(ctx));
+                // Offload the request processing to a separate thread so
+                // that we can continue to listen for new scrape requests.
+                _ = Task.Run(() => this.ProcessRequestAsync(context));
             }
         }
         catch (OperationCanceledException ex)
