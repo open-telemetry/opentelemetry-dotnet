@@ -13,6 +13,8 @@ internal sealed class PrometheusHttpListener : IDisposable
     private readonly HttpListener httpListener = new();
     private readonly Lock syncObject = new();
 
+    private volatile bool disposed;
+    private int activeRequestCount;
     private CancellationTokenSource? tokenSource;
     private Task? workerThread;
 
@@ -77,6 +79,15 @@ internal sealed class PrometheusHttpListener : IDisposable
     {
         lock (this.syncObject)
         {
+#if NET
+            ObjectDisposedException.ThrowIf(this.disposed, this);
+#else
+            if (this.disposed)
+            {
+                throw new ObjectDisposedException(nameof(PrometheusHttpListener));
+            }
+#endif
+
             if (this.tokenSource != null)
             {
                 return;
@@ -85,22 +96,61 @@ internal sealed class PrometheusHttpListener : IDisposable
             this.httpListener.Start();
 
             // link the passed in token if not null
-            this.tokenSource = token == default ?
+            this.tokenSource = token == CancellationToken.None ?
                 new CancellationTokenSource() :
                 CancellationTokenSource.CreateLinkedTokenSource(token);
 
+            var workerToken = this.tokenSource.Token;
             this.workerThread = Task.Factory.StartNew(
-                this.ProcessingLoopAsync,
+                (paramToken) => this.ProcessingLoopAsync((CancellationToken)paramToken!),
+                workerToken,
                 CancellationToken.None,
                 TaskCreationOptions.LongRunning,
                 TaskScheduler.Default).Unwrap();
         }
     }
 
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        lock (this.syncObject)
+        {
+            if (this.disposed)
+            {
+                return;
+            }
+
+            this.disposed = true;
+        }
+
+        this.Stop();
+
+        // Wait for in-flight requests to finish (they will observe the
+        // cancelled token and return 503 quickly). Use a timeout to avoid
+        // blocking indefinitely if a request is unexpectedly stuck.
+        SpinWait.SpinUntil(() => Volatile.Read(ref this.activeRequestCount) == 0, TimeSpan.FromSeconds(5));
+
+        try
+        {
+            this.httpListener.Stop();
+            this.httpListener.Close();
+        }
+        catch (Exception ex) when (ex is ObjectDisposedException or HttpListenerException)
+        {
+        }
+    }
+
+    private static bool AcceptsOpenMetrics(HttpListenerRequest request)
+    {
+        var acceptHeader = request.Headers["Accept"];
+
+        return !string.IsNullOrEmpty(acceptHeader) && PrometheusHeadersParser.AcceptsOpenMetrics(acceptHeader);
+    }
+
     /// <summary>
     /// Gracefully stop the PrometheusHttpListener.
     /// </summary>
-    public void Stop()
+    private void Stop()
     {
         CancellationTokenSource? tokenSource;
         Task? workerThread;
@@ -130,28 +180,8 @@ internal sealed class PrometheusHttpListener : IDisposable
         }
     }
 
-    /// <inheritdoc/>
-    public void Dispose()
+    private async Task ProcessingLoopAsync(CancellationToken cancellationToken)
     {
-        this.Stop();
-
-        if (this.httpListener.IsListening)
-        {
-            this.httpListener.Close();
-        }
-    }
-
-    private static bool AcceptsOpenMetrics(HttpListenerRequest request)
-    {
-        var acceptHeader = request.Headers["Accept"];
-
-        return !string.IsNullOrEmpty(acceptHeader) && PrometheusHeadersParser.AcceptsOpenMetrics(acceptHeader);
-    }
-
-    private async Task ProcessingLoopAsync()
-    {
-        var cancellationToken = this.tokenSource!.Token;
-
         try
         {
             using var scope = SuppressInstrumentationScope.Begin();
@@ -168,9 +198,20 @@ internal sealed class PrometheusHttpListener : IDisposable
                 var context = await task.ConfigureAwait(false);
 #endif
 
-                // Offload the request processing to a separate thread so
-                // that we can continue to listen for new scrape requests.
-                _ = Task.Run(() => this.ProcessRequestAsync(context));
+                Interlocked.Increment(ref this.activeRequestCount);
+                _ = Task.Run(
+                    async () =>
+                    {
+                        try
+                        {
+                            await this.ProcessRequestAsync(context, cancellationToken).ConfigureAwait(false);
+                        }
+                        finally
+                        {
+                            Interlocked.Decrement(ref this.activeRequestCount);
+                        }
+                    },
+                    CancellationToken.None);
             }
         }
         catch (OperationCanceledException ex)
@@ -179,20 +220,41 @@ internal sealed class PrometheusHttpListener : IDisposable
         }
         finally
         {
-            try
+            // If the worker exited due to an external token cancellation (not
+            // Dispose), clean up the listener here. When Dispose() is the caller
+            // it will handle stop/close itself after draining in-flight requests.
+            if (!this.disposed)
             {
-                this.httpListener.Stop();
-                this.httpListener.Close();
-            }
-            catch (Exception exFromFinally)
-            {
-                PrometheusExporterEventSource.Log.FailedShutdown(exFromFinally);
+                try
+                {
+                    this.httpListener.Stop();
+                    this.httpListener.Close();
+                }
+                catch (Exception exFromFinally)
+                {
+                    PrometheusExporterEventSource.Log.FailedShutdown(exFromFinally);
+                }
             }
         }
     }
 
-    private async Task ProcessRequestAsync(HttpListenerContext context)
+    private async Task ProcessRequestAsync(HttpListenerContext context, CancellationToken cancellationToken)
     {
+        if (this.disposed || cancellationToken.IsCancellationRequested)
+        {
+            context.Response.StatusCode = 503;
+
+            try
+            {
+                context.Response.Close();
+            }
+            catch
+            {
+            }
+
+            return;
+        }
+
         try
         {
             var openMetricsRequested = AcceptsOpenMetrics(context.Request);
@@ -200,6 +262,8 @@ internal sealed class PrometheusHttpListener : IDisposable
 
             try
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 context.Response.Headers.Add("Server", string.Empty);
 
                 var dataView = openMetricsRequested ? collectionResponse.OpenMetricsView : collectionResponse.PlainTextView;
@@ -213,9 +277,9 @@ internal sealed class PrometheusHttpListener : IDisposable
                         : "text/plain; charset=utf-8; version=0.0.4";
 
 #if NET
-                    await context.Response.OutputStream.WriteAsync(dataView.Array.AsMemory(0, dataView.Count)).ConfigureAwait(false);
+                    await context.Response.OutputStream.WriteAsync(dataView.Array.AsMemory(0, dataView.Count), cancellationToken).ConfigureAwait(false);
 #else
-                    await context.Response.OutputStream.WriteAsync(dataView.Array, 0, dataView.Count).ConfigureAwait(false);
+                    await context.Response.OutputStream.WriteAsync(dataView.Array, 0, dataView.Count, cancellationToken).ConfigureAwait(false);
 #endif
                 }
                 else
@@ -229,6 +293,10 @@ internal sealed class PrometheusHttpListener : IDisposable
             {
                 this.exporter.CollectionManager.ExitCollect();
             }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            context.Response.StatusCode = 503;
         }
         catch (Exception ex)
         {
