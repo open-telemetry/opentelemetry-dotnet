@@ -328,7 +328,7 @@ public class PrometheusHttpListenerTests
         using var client = new HttpClient { BaseAddress = baseAddress };
 
         // Send a scrape request; it will block inside EnterCollect.
-        var scrapeTask = client.GetAsync(new Uri("metrics", UriKind.Relative));
+        var scrapeTask = client.GetAsync(new Uri("metrics", UriKind.Relative), HttpCompletionOption.ResponseHeadersRead);
 
         // Wait until the request is actually inside the Collect delegate.
         Assert.True(collectEntered.Wait(TimeSpan.FromSeconds(10)), "Request did not enter Collect in time.");
