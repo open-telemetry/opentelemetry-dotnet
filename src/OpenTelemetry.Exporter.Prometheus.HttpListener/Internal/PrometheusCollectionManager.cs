@@ -414,7 +414,8 @@ internal sealed class PrometheusCollectionManager
             if (!string.IsNullOrEmpty(prometheusMetric.Unit) &&
                 metadataState.Unit == null)
             {
-                metadataStates[metadataName] = new MetadataState(metadataState.Type, metadataState.Help, prometheusMetric.Unit);
+                metadataState = new MetadataState(metadataState.Type, metadataState.Help, prometheusMetric.Unit);
+                metadataStates[metadataName] = metadataState;
             }
             else if (!string.IsNullOrEmpty(prometheusMetric.Unit) &&
                      metadataState.Unit != null &&
@@ -426,7 +427,8 @@ internal sealed class PrometheusCollectionManager
             if (!string.IsNullOrEmpty(metric.Description) &&
                 metadataState.Help == null)
             {
-                metadataStates[metadataName] = new MetadataState(metadataState.Type, metric.Description, metadataState.Unit);
+                metadataState = new MetadataState(metadataState.Type, metric.Description, metadataState.Unit);
+                metadataStates[metadataName] = metadataState;
             }
             else if (!string.IsNullOrEmpty(metric.Description) &&
                      metadataState.Help != null &&
