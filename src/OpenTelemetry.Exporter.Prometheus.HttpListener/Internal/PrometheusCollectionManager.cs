@@ -18,7 +18,8 @@ internal sealed class PrometheusCollectionManager
     private int metricsCacheCount;
     private byte[] plainTextBuffer = new byte[85000]; // encourage the object to live in LOH (large object heap)
     private byte[] openMetricsBuffer = new byte[85000]; // encourage the object to live in LOH (large object heap)
-    private int targetInfoBufferLength = -1; // zero or positive when target_info has been written for the first time
+    private int plainTextTargetInfoBufferLength = -1;
+    private int openMetricsTargetInfoBufferLength = -1;
     private ArraySegment<byte> previousPlainTextDataView;
     private ArraySegment<byte> previousOpenMetricsDataView;
     private int globalLockState;
@@ -219,11 +220,12 @@ internal sealed class PrometheusCollectionManager
 
         try
         {
+            cursor = this.WriteTargetInfo(ref buffer);
+
             if (this.exporter.OpenMetricsRequested)
             {
-                cursor = this.WriteTargetInfo(ref buffer);
-
                 this.scopes.Clear();
+                var scopeInfoMetadataWritten = false;
 
                 foreach (var metric in metrics)
                 {
@@ -232,13 +234,19 @@ internal sealed class PrometheusCollectionManager
                         continue;
                     }
 
-                    if (this.scopes.Add(metric.MeterName))
+                    if (this.scopes.Add(PrometheusSerializer.CreateScopeIdentity(metric)))
                     {
                         while (true)
                         {
                             try
                             {
-                                cursor = PrometheusSerializer.WriteScopeInfo(buffer, cursor, metric.MeterName);
+                                if (!scopeInfoMetadataWritten)
+                                {
+                                    cursor = PrometheusSerializer.WriteScopeInfoMetadata(buffer, cursor);
+                                    scopeInfoMetadataWritten = true;
+                                }
+
+                                cursor = PrometheusSerializer.WriteScopeInfoMetric(buffer, cursor, metric);
 
                                 break;
                             }
@@ -260,13 +268,10 @@ internal sealed class PrometheusCollectionManager
                 }
             }
 
-            foreach (var metric in metrics)
-            {
-                if (!PrometheusSerializer.CanWriteMetric(metric))
-                {
-                    continue;
-                }
+            var metricStates = this.GetMetricStates(metrics, this.exporter.OpenMetricsRequested);
 
+            foreach (var metricState in metricStates)
+            {
                 while (true)
                 {
                     try
@@ -274,9 +279,14 @@ internal sealed class PrometheusCollectionManager
                         cursor = PrometheusSerializer.WriteMetric(
                             buffer,
                             cursor,
-                            metric,
-                            this.GetPrometheusMetric(metric),
-                            this.exporter.OpenMetricsRequested);
+                            metricState.Metric,
+                            metricState.PrometheusMetric,
+                            this.exporter.OpenMetricsRequested,
+                            writeType: metricState.WriteType,
+                            writeUnit: metricState.WriteUnit,
+                            writeHelp: metricState.WriteHelp,
+                            unitOverride: metricState.Unit,
+                            helpOverride: metricState.Help);
 
                         break;
                     }
@@ -336,13 +346,17 @@ internal sealed class PrometheusCollectionManager
 
     private int WriteTargetInfo(ref byte[] buffer)
     {
-        if (this.targetInfoBufferLength < 0)
+        ref var targetInfoBufferLength = ref this.exporter.OpenMetricsRequested
+            ? ref this.openMetricsTargetInfoBufferLength
+            : ref this.plainTextTargetInfoBufferLength;
+
+        if (targetInfoBufferLength < 0)
         {
             while (true)
             {
                 try
                 {
-                    this.targetInfoBufferLength = PrometheusSerializer.WriteTargetInfo(buffer, 0, this.exporter.Resource);
+                    targetInfoBufferLength = PrometheusSerializer.WriteTargetInfo(buffer, 0, this.exporter.Resource, this.exporter.OpenMetricsRequested);
 
                     break;
                 }
@@ -356,7 +370,7 @@ internal sealed class PrometheusCollectionManager
             }
         }
 
-        return this.targetInfoBufferLength;
+        return targetInfoBufferLength;
     }
 
     private PrometheusMetric GetPrometheusMetric(Metric metric)
@@ -377,6 +391,90 @@ internal sealed class PrometheusCollectionManager
         return prometheusMetric;
     }
 
+    private List<MetricState> GetMetricStates(in Batch<Metric> metrics, bool openMetricsRequested)
+    {
+        var precomputedMetricStates = new List<PrecomputedMetricState>();
+        var metadataStates = new Dictionary<string, MetadataState>(StringComparer.Ordinal);
+        var droppedMetricNames = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var metric in metrics)
+        {
+            if (!PrometheusSerializer.CanWriteMetric(metric))
+            {
+                continue;
+            }
+
+            var prometheusMetric = this.GetPrometheusMetric(metric);
+            var metadataName = openMetricsRequested ? prometheusMetric.OpenMetricsMetadataName : prometheusMetric.Name;
+            precomputedMetricStates.Add(new PrecomputedMetricState(metric, prometheusMetric, metadataName));
+
+            if (!metadataStates.TryGetValue(metadataName, out var metadataState))
+            {
+                metadataStates[metadataName] = new MetadataState(
+                    prometheusMetric.Type,
+                    string.IsNullOrEmpty(metric.Description) ? null : metric.Description,
+                    string.IsNullOrEmpty(prometheusMetric.Unit) ? null : prometheusMetric.Unit);
+                continue;
+            }
+
+            if (metadataState.Type != prometheusMetric.Type)
+            {
+                droppedMetricNames.Add(metadataName);
+                PrometheusExporterEventSource.Log.ConflictingType(metadataName, metadataState.Type, prometheusMetric.Type);
+            }
+
+            if (!string.IsNullOrEmpty(prometheusMetric.Unit) &&
+                metadataState.Unit == null)
+            {
+                metadataStates[metadataName] = new MetadataState(metadataState.Type, metadataState.Help, prometheusMetric.Unit);
+            }
+            else if (!string.IsNullOrEmpty(prometheusMetric.Unit) &&
+                     metadataState.Unit != null &&
+                     metadataState.Unit != prometheusMetric.Unit)
+            {
+                PrometheusExporterEventSource.Log.ConflictingUnit(metadataName, metadataState.Unit, prometheusMetric.Unit!);
+            }
+
+            if (!string.IsNullOrEmpty(metric.Description) &&
+                metadataState.Help == null)
+            {
+                metadataStates[metadataName] = new MetadataState(metadataState.Type, metric.Description, metadataState.Unit);
+            }
+            else if (!string.IsNullOrEmpty(metric.Description) &&
+                     metadataState.Help != null &&
+                     metadataState.Help != metric.Description)
+            {
+                PrometheusExporterEventSource.Log.ConflictingHelp(metadataName, metadataState.Help, metric.Description);
+            }
+        }
+
+        var metricStates = new List<MetricState>(precomputedMetricStates.Count);
+        var emittedMetricNames = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var metricState in precomputedMetricStates)
+        {
+            if (droppedMetricNames.Contains(metricState.MetadataName))
+            {
+                continue;
+            }
+
+            var writeMetadata = emittedMetricNames.Add(metricState.MetadataName);
+            var metadataState = metadataStates[metricState.MetadataName];
+
+            metricStates.Add(
+                new MetricState(
+                    metricState.Metric,
+                    metricState.PrometheusMetric,
+                    writeMetadata,
+                    writeMetadata && metadataState.Unit != null,
+                    writeMetadata && metadataState.Help != null,
+                    metadataState.Unit,
+                    metadataState.Help));
+        }
+
+        return metricStates;
+    }
+
     public readonly struct CollectionResponse
     {
         public CollectionResponse(ArraySegment<byte> openMetricsView, ArraySegment<byte> plainTextView, DateTime generatedAtUtc, bool fromCache)
@@ -387,12 +485,79 @@ internal sealed class PrometheusCollectionManager
             this.FromCache = fromCache;
         }
 
-        public ArraySegment<byte> OpenMetricsView { get; }
+        public readonly ArraySegment<byte> OpenMetricsView { get; }
 
-        public ArraySegment<byte> PlainTextView { get; }
+        public readonly ArraySegment<byte> PlainTextView { get; }
 
-        public DateTime GeneratedAtUtc { get; }
+        public readonly DateTime GeneratedAtUtc { get; }
 
-        public bool FromCache { get; }
+        public readonly bool FromCache { get; }
+    }
+
+    private readonly struct MetricState
+    {
+        public MetricState(
+            Metric metric,
+            PrometheusMetric prometheusMetric,
+            bool writeType,
+            bool writeUnit,
+            bool writeHelp,
+            string? unit,
+            string? help)
+        {
+            this.Metric = metric;
+            this.PrometheusMetric = prometheusMetric;
+            this.WriteType = writeType;
+            this.WriteUnit = writeUnit;
+            this.WriteHelp = writeHelp;
+            this.Unit = unit;
+            this.Help = help;
+        }
+
+        public readonly Metric Metric { get; }
+
+        public readonly PrometheusMetric PrometheusMetric { get; }
+
+        public readonly bool WriteType { get; }
+
+        public readonly bool WriteUnit { get; }
+
+        public readonly bool WriteHelp { get; }
+
+        public readonly string? Unit { get; }
+
+        public readonly string? Help { get; }
+    }
+
+    private readonly struct PrecomputedMetricState
+    {
+        public PrecomputedMetricState(Metric metric, PrometheusMetric prometheusMetric, string metadataName)
+        {
+            this.Metric = metric;
+            this.PrometheusMetric = prometheusMetric;
+            this.MetadataName = metadataName;
+        }
+
+        public readonly Metric Metric { get; }
+
+        public readonly PrometheusMetric PrometheusMetric { get; }
+
+        public readonly string MetadataName { get; }
+    }
+
+    private readonly struct MetadataState
+    {
+        public MetadataState(PrometheusType type, string? help, string? unit)
+        {
+            this.Type = type;
+            this.Help = help;
+            this.Unit = unit;
+        }
+
+        public readonly PrometheusType Type { get; }
+
+        public readonly string? Help { get; }
+
+        public readonly string? Unit { get; }
     }
 }

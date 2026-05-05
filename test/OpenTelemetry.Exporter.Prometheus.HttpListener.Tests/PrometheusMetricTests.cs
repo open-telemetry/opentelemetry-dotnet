@@ -161,6 +161,22 @@ public sealed class PrometheusMetricTests
         => AssertOpenMetricsName("db_bytes_written", "By", PrometheusType.Gauge, false, "db_bytes_written_bytes");
 
     [Fact]
+    public void OpenMetricsName_CollapsesConsecutiveUnderscores()
+        => AssertOpenMetricsName("cpu_sp__d_hertz", string.Empty, PrometheusType.Gauge, false, "cpu_sp_d_hertz");
+
+    [Fact]
+    public void OpenMetricsName_PreserveLeadingNumber()
+        => AssertOpenMetricsName("2_metric_name", "By", PrometheusType.Gauge, false, "_2_metric_name_bytes");
+
+    [Fact]
+    public void OpenMetricsName_CollapsesConsecutiveUnsupportedCharacters()
+        => AssertOpenMetricsName("s%%ple", "%/m", PrometheusType.Summary, false, "s_ple_percent_per_minute");
+
+    [Fact]
+    public void OpenMetricsName_NameEscapingAndUnitNormalization_AreAppliedIndependently()
+        => AssertOpenMetricsName("s%%ple", "req__per__s", PrometheusType.Summary, false, "s_ple_req_per_s");
+
+    [Fact]
     public void OpenMetricsName_SuffixedWithUnit_NotAppended()
         => AssertOpenMetricsName("db_written_bytes", "By", PrometheusType.Gauge, false, "db_written_bytes");
 

@@ -226,8 +226,11 @@ public sealed class PrometheusExporterMiddlewareTests
     [InlineData("application/openmetrics-text", true)]
     [InlineData("application/openmetrics-text; version=1.0.0", true)]
     [InlineData("application/openmetrics-text; version=\"1.0.0\"", true)]
+    [InlineData("application/openmetrics-text; version=1.0.0; escaping=underscores", true)]
+    [InlineData("application/openmetrics-text; version=\"1.0.0\"; escaping=\"underscores\"", true)]
     [InlineData("application/openmetrics-text; version=1.0.0; charset=utf-8", true)]
     [InlineData("Application/OpenMetrics-Text; version=1.0.0", true)]
+    [InlineData("application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores", true)]
     [InlineData("text/plain,application/openmetrics-text; version=1.0.0; charset=utf-8", true)]
     [InlineData("text/plain, application/openmetrics-text; version=1.0.0; charset=utf-8", true)]
     [InlineData("text/plain; charset=utf-8,application/openmetrics-text; version=1.0.0; charset=utf-8", true)]
@@ -238,6 +241,9 @@ public sealed class PrometheusExporterMiddlewareTests
     [InlineData("application/openmetrics-text; version=\"0.0.1\"", false)]
     [InlineData("application/openmetrics-text; version=0.0.1; charset=utf-8", false)]
     [InlineData("application/openmetrics-text; version=1.0.0; q=0", false)]
+    [InlineData("application/openmetrics-text; version=1.0.0; escaping=allow-utf-8", false)]
+    [InlineData("application/openmetrics-text; version=1.0.0; escaping=dots", false)]
+    [InlineData("application/openmetrics-text; version=1.0.0; escaping=values", false)]
     [InlineData("text/plain", false)]
     [InlineData("text/plain; charset=utf-8", false)]
     [InlineData("text/plain; charset=utf-8; version=0.0.4", false)]
@@ -470,7 +476,7 @@ public sealed class PrometheusExporterMiddlewareTests
 
         if (requestOpenMetrics)
         {
-            Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8", response.Content.Headers.ContentType!.ToString());
+            Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores", response.Content.Headers.ContentType!.ToString());
         }
         else
         {
@@ -478,8 +484,13 @@ public sealed class PrometheusExporterMiddlewareTests
         }
 
         var additionalTags = meterTags is { Length: > 0 }
-            ? $"{string.Join(",", meterTags.Select(x => $"{x.Key}=\"{x.Value}\""))},"
+            ? $"{string.Join(",", meterTags.Select(x => $"otel_scope_{x.Key}=\"{x.Value}\""))},"
             : string.Empty;
+        var createdMetricSample = requestOpenMetrics
+            ? $"\ncounter_double_bytes_created{{otel_scope_name=\"{MeterName}\",otel_scope_version=\"{MeterVersion}\",{additionalTags}key1=\"value1\",key2=\"value2\"}} [0-9]+(?:\\.[0-9]+)?"
+            : string.Empty;
+
+        var scopeInfoMetric = $"otel_scope_info{{otel_scope_name=\"{MeterName}\",otel_scope_version=\"{MeterVersion}\"{(string.IsNullOrEmpty(additionalTags) ? string.Empty : "," + additionalTags.TrimEnd(','))}}} 1";
 
         var content = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings();
 
@@ -488,16 +499,19 @@ public sealed class PrometheusExporterMiddlewareTests
                     # TYPE target info
                     # HELP target Target metadata
                     target_info{service_name="my_service",service_instance_id="id1"} 1
-                    # TYPE otel_scope_info info
-                    # HELP otel_scope_info Scope metadata
-                    otel_scope_info{otel_scope_name="{{MeterName}}"} 1
+                    # TYPE otel_scope info
+                    # HELP otel_scope Scope metadata
+                    {{scopeInfoMetric}}
                     # TYPE counter_double_bytes counter
                     # UNIT counter_double_bytes bytes
-                    counter_double_bytes_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",{{additionalTags}}key1="value1",key2="value2"} 101.17
+                    counter_double_bytes_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",{{additionalTags}}key1="value1",key2="value2"} 101.17{{createdMetricSample}}
                     # EOF
 
                     """.ReplaceLineEndings()
             : $$"""
+                    # TYPE target_info gauge
+                    # HELP target_info Target metadata
+                    target_info{service_name="my_service",service_instance_id="id1"} 1
                     # TYPE counter_double_bytes_total counter
                     # UNIT counter_double_bytes_total bytes
                     counter_double_bytes_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",{{additionalTags}}key1="value1",key2="value2"} 101.17

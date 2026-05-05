@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Metrics;
+using System.Text;
+using System.Text.RegularExpressions;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 using Xunit;
@@ -284,6 +286,276 @@ public sealed class PrometheusCollectionManagerTests
             {
                 exporter.CollectionManager.ExitCollect();
             }
+        }
+    }
+
+    [Fact]
+    public async Task OpenMetricsScopeInfoIsWrittenAsASingleMetricFamily()
+    {
+        using var meter1 = new Meter("test_meter", "1.0.0");
+        using var meter2 = new Meter("test_meter", "2.0.0", [new("library.mascot", "dotnetbot")], scope: null);
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter1.Name)
+#if PROMETHEUS_HTTP_LISTENER
+            .AddPrometheusHttpListener()
+#elif PROMETHEUS_ASPNETCORE
+            .AddPrometheusExporter()
+#endif
+            .Build();
+
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        Assert.True(provider.TryFindExporter(out PrometheusExporter? exporter));
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        meter1.CreateCounter<int>("counter_1").Add(1);
+        meter2.CreateCounter<int>("counter_2").Add(1);
+
+        var response = await exporter!.CollectionManager.EnterCollect(openMetricsRequested: true);
+        try
+        {
+            var output = Encoding.UTF8.GetString(
+                response.OpenMetricsView.Array!,
+                response.OpenMetricsView.Offset,
+                response.OpenMetricsView.Count);
+
+#if NET
+            Assert.Equal(1, Regex.Count(output, "^# TYPE otel_scope info$", RegexOptions.Multiline));
+            Assert.Equal(1, Regex.Count(output, "^# HELP otel_scope Scope metadata$", RegexOptions.Multiline));
+#else
+            Assert.Single(Regex.Matches(output, "^# TYPE otel_scope info$", RegexOptions.Multiline));
+            Assert.Single(Regex.Matches(output, "^# HELP otel_scope Scope metadata$", RegexOptions.Multiline));
+#endif
+            Assert.Contains("otel_scope_info{otel_scope_name=\"test_meter\",otel_scope_version=\"1.0.0\"} 1", output, StringComparison.Ordinal);
+            Assert.Contains("otel_scope_info{otel_scope_name=\"test_meter\",otel_scope_version=\"2.0.0\",otel_scope_library_mascot=\"dotnetbot\"} 1", output, StringComparison.Ordinal);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect();
+        }
+    }
+
+    [Fact]
+    public async Task OpenMetricsScopeInfoIsDeduplicatedUsingSerializedScopeLabels()
+    {
+        using var meter1 = new Meter("test_meter", "1.0.0", [new("library.mascot", true)], scope: null);
+        using var meter2 = new Meter("test_meter", "1.0.0", [new("library.mascot", "true")], scope: null);
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter1.Name)
+#if PROMETHEUS_HTTP_LISTENER
+            .AddPrometheusHttpListener()
+#elif PROMETHEUS_ASPNETCORE
+            .AddPrometheusExporter()
+#endif
+            .Build();
+
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        Assert.True(provider.TryFindExporter(out PrometheusExporter? exporter));
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        meter1.CreateCounter<int>("counter_1").Add(1);
+        meter2.CreateCounter<int>("counter_2").Add(1);
+
+        var response = await exporter!.CollectionManager.EnterCollect(openMetricsRequested: true);
+        try
+        {
+            var output = Encoding.UTF8.GetString(
+                response.OpenMetricsView.Array!,
+                response.OpenMetricsView.Offset,
+                response.OpenMetricsView.Count);
+
+#if NET
+            Assert.Equal(1, Regex.Count(output, "^otel_scope_info\\{otel_scope_name=\"test_meter\",otel_scope_version=\"1.0.0\",otel_scope_library_mascot=\"true\"\\} 1$", RegexOptions.Multiline));
+#else
+            Assert.Single(Regex.Matches(output, "^otel_scope_info\\{otel_scope_name=\"test_meter\",otel_scope_version=\"1.0.0\",otel_scope_library_mascot=\"true\"\\} 1$", RegexOptions.Multiline));
+#endif
+            Assert.Contains("counter_1_total{otel_scope_name=\"test_meter\",otel_scope_version=\"1.0.0\",otel_scope_library_mascot=\"true\"} 1", output, StringComparison.Ordinal);
+            Assert.Contains("counter_2_total{otel_scope_name=\"test_meter\",otel_scope_version=\"1.0.0\",otel_scope_library_mascot=\"true\"} 1", output, StringComparison.Ordinal);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect();
+        }
+    }
+
+    [Fact]
+    public async Task DuplicateMetricMetadataIsWrittenOncePerScrape()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+#if PROMETHEUS_HTTP_LISTENER
+            .AddPrometheusHttpListener()
+#elif PROMETHEUS_ASPNETCORE
+            .AddPrometheusExporter()
+#endif
+            .Build();
+
+#pragma warning disable CA2000
+        Assert.True(provider.TryFindExporter(out PrometheusExporter? exporter));
+#pragma warning restore CA2000
+
+        var counter1 = meter.CreateCounter<int>("test.metric", unit: "By", description: "Test help");
+        var counter2 = meter.CreateCounter<int>("test-metric", unit: "By", description: "Test help");
+
+        counter1.Add(1, [new("source", "a")]);
+        counter2.Add(2, [new("source", "b")]);
+
+        var response = await exporter!.CollectionManager.EnterCollect(openMetricsRequested: false);
+        try
+        {
+            var view = response.PlainTextView;
+            var output = Encoding.UTF8.GetString(view.Array!, view.Offset, view.Count);
+
+            Assert.Single(Regex.Matches(output, "^# TYPE test_metric_bytes_total counter$", RegexOptions.Multiline).Cast<Match>());
+            Assert.Single(Regex.Matches(output, "^# UNIT test_metric_bytes_total bytes$", RegexOptions.Multiline).Cast<Match>());
+            Assert.Single(Regex.Matches(output, "^# HELP test_metric_bytes_total Test help$", RegexOptions.Multiline).Cast<Match>());
+            Assert.Contains("test_metric_bytes_total{otel_scope_name=\"" + meter.Name + "\",source=\"a\"} 1", output, StringComparison.Ordinal);
+            Assert.Contains("test_metric_bytes_total{otel_scope_name=\"" + meter.Name + "\",source=\"b\"} 2", output, StringComparison.Ordinal);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect();
+        }
+    }
+
+    [Fact]
+    public async Task MetricMetadataDiscoveredLaterIsWrittenBeforeSamples()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+#if PROMETHEUS_HTTP_LISTENER
+            .AddPrometheusHttpListener()
+#elif PROMETHEUS_ASPNETCORE
+            .AddPrometheusExporter()
+#endif
+            .Build();
+
+#pragma warning disable CA2000
+        Assert.True(provider.TryFindExporter(out PrometheusExporter? exporter));
+#pragma warning restore CA2000
+
+        var counter1 = meter.CreateCounter<int>("test.metric");
+        var counter2 = meter.CreateCounter<int>("test-metric", description: "Test help");
+
+        counter1.Add(1, [new("source", "a")]);
+        counter2.Add(2, [new("source", "b")]);
+
+        var response = await exporter!.CollectionManager.EnterCollect(openMetricsRequested: false);
+        try
+        {
+            var view = response.PlainTextView;
+            var output = Encoding.UTF8.GetString(view.Array!, view.Offset, view.Count);
+
+            var typeIndex = output.IndexOf("# TYPE test_metric_total counter", StringComparison.Ordinal);
+            var helpIndex = output.IndexOf("# HELP test_metric_total Test help", StringComparison.Ordinal);
+            var sampleAIndex = output.IndexOf("test_metric_total{otel_scope_name=\"" + meter.Name + "\",source=\"a\"} 1", StringComparison.Ordinal);
+            var sampleBIndex = output.IndexOf("test_metric_total{otel_scope_name=\"" + meter.Name + "\",source=\"b\"} 2", StringComparison.Ordinal);
+
+            Assert.True(typeIndex >= 0, "No TYPE found.");
+            Assert.True(helpIndex >= 0, "No HELP found.");
+            Assert.True(sampleAIndex >= 0, "No sample A found.");
+            Assert.True(sampleBIndex >= 0, "No sample B found.");
+            Assert.True(typeIndex < sampleAIndex, "TYPE appears after sample A.");
+            Assert.True(typeIndex < sampleBIndex, "TYPE appears after sample B.");
+            Assert.True(helpIndex < sampleAIndex, "HELP appears after sample A.");
+            Assert.True(helpIndex < sampleBIndex, "HELP appears after sample B.");
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect();
+        }
+    }
+
+    [Fact]
+    public async Task MetricUnitDiscoveredLaterIsWrittenBeforeSamples()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+#if PROMETHEUS_HTTP_LISTENER
+            .AddPrometheusHttpListener()
+#elif PROMETHEUS_ASPNETCORE
+            .AddPrometheusExporter()
+#endif
+            .Build();
+
+#pragma warning disable CA2000
+        Assert.True(provider.TryFindExporter(out PrometheusExporter? exporter));
+#pragma warning restore CA2000
+
+        var counter1 = meter.CreateCounter<int>("test.metric.bytes");
+        var counter2 = meter.CreateCounter<int>("test-metric-bytes", unit: "By");
+
+        counter1.Add(1, [new("source", "a")]);
+        counter2.Add(2, [new("source", "b")]);
+
+        var response = await exporter!.CollectionManager.EnterCollect(openMetricsRequested: false);
+        try
+        {
+            var view = response.PlainTextView;
+            var output = Encoding.UTF8.GetString(view.Array!, view.Offset, view.Count);
+
+            var typeIndex = output.IndexOf("# TYPE test_metric_bytes_total counter", StringComparison.Ordinal);
+            var unitIndex = output.IndexOf("# UNIT test_metric_bytes_total bytes", StringComparison.Ordinal);
+            var sampleAIndex = output.IndexOf("test_metric_bytes_total{otel_scope_name=\"" + meter.Name + "\",source=\"a\"} 1", StringComparison.Ordinal);
+            var sampleBIndex = output.IndexOf("test_metric_bytes_total{otel_scope_name=\"" + meter.Name + "\",source=\"b\"} 2", StringComparison.Ordinal);
+
+            Assert.True(typeIndex >= 0, "No TYPE found.");
+            Assert.True(unitIndex >= 0, "No UNIT found.");
+            Assert.True(sampleAIndex >= 0, "No sample A found.");
+            Assert.True(sampleBIndex >= 0, "No sample B found.");
+            Assert.True(typeIndex < sampleAIndex, "TYPE appears after sample A.");
+            Assert.True(typeIndex < sampleBIndex, "TYPE appears after sample B.");
+            Assert.True(unitIndex < sampleAIndex, "UNIT appears after sample A.");
+            Assert.True(unitIndex < sampleBIndex, "UNIT appears after sample B.");
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect();
+        }
+    }
+
+    [Fact]
+    public async Task ConflictingMetricTypesAreDroppedFromAScrape()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+#if PROMETHEUS_HTTP_LISTENER
+            .AddPrometheusHttpListener()
+#elif PROMETHEUS_ASPNETCORE
+            .AddPrometheusExporter()
+#endif
+            .Build();
+
+#pragma warning disable CA2000
+        Assert.True(provider.TryFindExporter(out PrometheusExporter? exporter));
+#pragma warning restore CA2000
+
+        var counter = meter.CreateCounter<int>("test.metric");
+        meter.CreateObservableGauge("test-metric", () => 1);
+        counter.Add(1);
+
+        var response = await exporter!.CollectionManager.EnterCollect(openMetricsRequested: true);
+        try
+        {
+            var view = response.OpenMetricsView;
+            var output = Encoding.UTF8.GetString(view.Array!, view.Offset, view.Count);
+
+            Assert.DoesNotContain("# TYPE test_metric", output, StringComparison.Ordinal);
+            Assert.DoesNotContain("test_metric_total", output, StringComparison.Ordinal);
+            Assert.Contains("# EOF", output, StringComparison.Ordinal);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect();
         }
     }
 
