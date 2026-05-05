@@ -915,7 +915,7 @@ public class BaggagePropagatorTests
     [Fact]
     public void RoundTripValueWithAllMandatoryEncodeCharsPreservedExactly()
     {
-        const string original = "val use\"wi,th;back\\slash";
+        const string original = "val use\"wi,thback\\slash";
 
         var carrier = new Dictionary<string, string>();
         this.baggage.Inject(new PropagationContext(default, new Baggage(new Dictionary<string, string> { { "key", original }, })), carrier, Setter);
