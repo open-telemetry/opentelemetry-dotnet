@@ -173,7 +173,7 @@ public class BaggagePropagatorTests
     {
         var carrier = new Dictionary<string, string>
         {
-            { BaggagePropagator.BaggageHeaderName, "SomeKey= \t SomeValue \t ,SomeKey2= \t SomeValue2" },
+            { BaggagePropagator.BaggageHeaderName, "SomeKey = \t SomeValue \t , SomeKey2 = \t SomeValue2" },
         };
 
         var propagationContext = this.baggage.Extract(default, carrier, Getter);
@@ -638,7 +638,7 @@ public class BaggagePropagatorTests
     {
         var carrier = new Dictionary<string, string>
         {
-            { BaggagePropagator.BaggageHeaderName, "key=value+1" },
+            { BaggagePropagator.BaggageHeaderName, "key=a+b%20c" },
         };
 
         var propagationContext = this.baggage.Extract(default, carrier, Getter);
@@ -646,7 +646,7 @@ public class BaggagePropagatorTests
 
         var entry = propagationContext.Baggage.GetBaggage().First();
         Assert.Equal("key", entry.Key);
-        Assert.Equal("value+1", entry.Value); // '+' stays as '+', not ' '
+        Assert.Equal("a+b c", entry.Value); // '+' stays as '+', not ' '
     }
 
     [Theory]
