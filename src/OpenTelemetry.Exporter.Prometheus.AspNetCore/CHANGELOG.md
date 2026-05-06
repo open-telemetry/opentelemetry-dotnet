@@ -53,7 +53,7 @@ Notes](../../RELEASENOTES.md).
 * Update `Accept` header parsing to more closely follow the Prometheus
   [Scrape protocol content negotiation](https://prometheus.io/docs/instrumenting/content_negotiation/)
   specification.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/issues/TODO))
+  ([#7266](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7266))
 
 ## 1.15.3-beta.1
 
