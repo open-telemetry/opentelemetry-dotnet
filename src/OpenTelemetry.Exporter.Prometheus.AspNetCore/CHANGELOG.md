@@ -50,6 +50,11 @@ Notes](../../RELEASENOTES.md).
   thresholds are present.
   ([#7221](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7221))
 
+* Update `Accept` header parsing to more closely follow the Prometheus
+  [Scrape protocol content negotiation](https://prometheus.io/docs/instrumenting/content_negotiation/)
+  specification.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/issues/TODO))
+
 ## 1.15.3-beta.1
 
 Released 2026-Apr-21

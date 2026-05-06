@@ -7,91 +7,164 @@ namespace OpenTelemetry.Exporter.Prometheus;
 
 internal static class PrometheusHeadersParser
 {
-    private const string OpenMetricsEscapingScheme = "underscores";
-    private const string OpenMetricsMediaType = "application/openmetrics-text";
-    private const string OpenMetricsVersion = "1.0.0";
-    private const string PrometheusTextMediaType = "text/plain";
-
-    internal static bool AcceptsOpenMetrics(string? contentType)
+    internal static PrometheusProtocol Negotiate(string? contentType)
     {
+        if (string.IsNullOrWhiteSpace(contentType))
+        {
+            return PrometheusProtocol.Fallback;
+        }
+
         var value = contentType.AsSpan();
-        double? bestOpenMetricsQuality = null;
-        double? bestPrometheusQuality = null;
+
+        const int SupportedProtocols = 4;
+        var preferences = new List<(PrometheusProtocol Protocol, double Quality)>(SupportedProtocols);
+
+        var supportedEscapingSchemes = PrometheusProtocol.SupportedEscapingSchemes;
+        HashSet<Version> supportedVersions;
 
         while (value.Length > 0)
         {
             var headerValue = TrimWhitespace(SplitNext(ref value, ','));
-            var mediaType = TrimWhitespace(SplitNext(ref headerValue, ';'));
+            var mediaType = TrimWhitespace(SplitNext(ref headerValue, ';')).ToString();
+
+            bool isOpenMetrics;
+
+            if (string.Equals(mediaType, PrometheusProtocol.PrometheusTextMediaType, StringComparison.OrdinalIgnoreCase))
+            {
+                isOpenMetrics = false;
+                mediaType = PrometheusProtocol.PrometheusTextMediaType;
+                supportedVersions = PrometheusProtocol.SupportedPrometheusVersions;
+            }
+            else
+            {
+                if (!string.Equals(mediaType, PrometheusProtocol.OpenMetricsMediaType, StringComparison.OrdinalIgnoreCase))
+                {
+                    // Unsupported media type
+                    continue;
+                }
+
+                isOpenMetrics = true;
+                mediaType = PrometheusProtocol.OpenMetricsMediaType;
+                supportedVersions = PrometheusProtocol.SupportedOpenMetricsVersions;
+            }
+
+            string? escaping = null;
+            Version? version = null;
+
             var quality = 1.0;
-            var hasValidQuality = true;
-            var hasSupportedOpenMetricsEscaping = true;
-            var hasSupportedOpenMetricsVersion = true;
+
+            var valid = true;
 
             while (headerValue.Length > 0)
             {
                 var parameter = TrimWhitespace(SplitNext(ref headerValue, ';'));
 
-                if (!parameter.StartsWith("q=".AsSpan(), StringComparison.OrdinalIgnoreCase))
+                if (parameter.StartsWith("q=".AsSpan(), StringComparison.OrdinalIgnoreCase))
                 {
-                    if (parameter.StartsWith("version=".AsSpan(), StringComparison.OrdinalIgnoreCase))
-                    {
-                        hasSupportedOpenMetricsVersion = IsSupportedOpenMetricsVersion(parameter.Slice("version=".Length));
-                    }
-                    else if (parameter.StartsWith("escaping=".AsSpan(), StringComparison.OrdinalIgnoreCase))
-                    {
-                        hasSupportedOpenMetricsEscaping = IsSupportedOpenMetricsEscaping(parameter.Slice("escaping=".Length));
-                    }
-
-                    continue;
-                }
-
-                if (double.TryParse(
+                    if (double.TryParse(
                         parameter.Slice(2).ToString(),
                         NumberStyles.AllowDecimalPoint,
                         CultureInfo.InvariantCulture,
                         out var parsedQuality) &&
-                    parsedQuality is > 0 and <= 1)
-                {
-                    quality = parsedQuality;
+                        parsedQuality is > 0 and <= 1)
+                    {
+                        quality = parsedQuality;
+                    }
+                    else
+                    {
+                        valid = false;
+                        break;
+                    }
                 }
-                else
+                else if (parameter.StartsWith("version=".AsSpan(), StringComparison.OrdinalIgnoreCase))
                 {
-                    hasValidQuality = false;
+                    version = GetVersion(parameter.Slice("version=".Length), supportedVersions);
+
+                    if (version is null)
+                    {
+                        // Unsupported version
+                        valid = false;
+                        break;
+                    }
+                }
+                else if (parameter.StartsWith("escaping=".AsSpan(), StringComparison.OrdinalIgnoreCase))
+                {
+                    escaping = GetEscaping(parameter.Slice("escaping=".Length));
+
+                    if (escaping is null)
+                    {
+                        // Unsupported escaping scheme
+                        valid = false;
+                        break;
+                    }
                 }
             }
 
-            if (!hasValidQuality)
+            if (!valid)
             {
                 continue;
             }
 
-            if (mediaType.Equals(OpenMetricsMediaType.AsSpan(), StringComparison.OrdinalIgnoreCase) &&
-                hasSupportedOpenMetricsVersion &&
-                hasSupportedOpenMetricsEscaping)
+            if (version is null)
             {
-                bestOpenMetricsQuality =
-                    bestOpenMetricsQuality is not { } comparison || quality > comparison ?
-                    quality :
-                    bestOpenMetricsQuality ?? quality;
+                // Use the oldest version if no version preference was specified
+                version = isOpenMetrics ? PrometheusProtocol.OpenMetricsV0 : PrometheusProtocol.PrometheusVersion0;
             }
-            else if (mediaType.Equals(PrometheusTextMediaType.AsSpan(), StringComparison.OrdinalIgnoreCase))
+            else if (version.Major is not > 0)
             {
-                bestPrometheusQuality =
-                    bestPrometheusQuality is not { } comparison || quality > comparison ?
-                    quality :
-                    bestPrometheusQuality ?? quality;
+                // From https://prometheus.io/docs/instrumenting/content_negotiation/#content-type-response:
+                // "The Content-Type header MUST include [...] For text formats version 1.0.0 and above, the escaping scheme parameter."
+                escaping = null;
             }
+            else
+            {
+                escaping ??= PrometheusProtocol.UnderscoresEscaping;
+            }
+
+            var protocol = new PrometheusProtocol(
+                mediaType,
+                escaping,
+                version,
+                isOpenMetrics);
+
+            preferences.Add((protocol, quality));
         }
 
-        return bestOpenMetricsQuality is { } openMetricsQuality &&
-               (bestPrometheusQuality is not { } prometheusQuality || openMetricsQuality >= prometheusQuality);
+        // Use the first supported protocol that was parsed that has the highest quality factor
+        return preferences
+            .OrderByDescending((p) => p.Quality)
+            .Select((p) => p.Protocol)
+            .DefaultIfEmpty(PrometheusProtocol.Fallback)
+            .FirstOrDefault();
     }
 
-    private static bool IsSupportedOpenMetricsVersion(ReadOnlySpan<char> value)
-        => TrimQuotes(value).Equals(OpenMetricsVersion.AsSpan(), StringComparison.Ordinal);
+    private static Version? GetVersion(ReadOnlySpan<char> value, HashSet<Version> supportedVersions)
+    {
+        var trimmed = TrimQuotes(value);
 
-    private static bool IsSupportedOpenMetricsEscaping(ReadOnlySpan<char> value)
-        => TrimQuotes(value).Equals(OpenMetricsEscapingScheme.AsSpan(), StringComparison.Ordinal);
+        return Version.TryParse(trimmed.ToString(), out var version) && supportedVersions.Contains(version)
+            ? version
+            : null;
+    }
+
+    private static string? GetEscaping(ReadOnlySpan<char> value)
+    {
+        var trimmed = TrimQuotes(value);
+        var escaping = trimmed.ToString();
+
+        if (PrometheusProtocol.SupportedEscapingSchemes.Contains(escaping))
+        {
+            return escaping;
+        }
+
+        // TODO Support other escaping schemes, including at least "allow-utf-8".
+        // For now we treat "allow-utf-8" as if it were "underscores" to avoid fallback
+        // to PrometheusText0.0.4 where it would previously match to OpenMetricsText1.0.0.
+        // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/7246.
+        return string.Equals(escaping, PrometheusProtocol.AllowUtf8Escaping, StringComparison.Ordinal)
+            ? PrometheusProtocol.UnderscoresEscaping
+            : null;
+    }
 
     private static ReadOnlySpan<char> SplitNext(ref ReadOnlySpan<char> span, char character)
     {
