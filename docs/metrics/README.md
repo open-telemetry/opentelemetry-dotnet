@@ -447,9 +447,25 @@ while measuring an operation which normally takes 10 milliseconds).
 
 ## Metrics Correlation
 
-In OpenTelemetry, metrics can be correlated to [traces](../trace/README.md) via
-[exemplars](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#exemplar).
-Check the [Exemplars](./exemplars/README.md) tutorial to learn more.
+:stop_sign: You should avoid using `TraceId` and `SpanId` as attributes in metrics.
+
+> [!WARNING]
+> Including trace context (TraceId, SpanId) as metric attributes might seem like
+> an intuitive way to correlate metrics with traces, but this approach is
+> ineffective and can make metrics practically unusable. Including trace context
+> as attributes leads to cardinality explosion since each unique trace context
+> becomes a new attribute combination. This can quickly cause metrics to hit the
+> [cardinality limit](#cardinality-limits), resulting in measurements being
+> folded into the overflow bucket and losing the correlation information you
+> were trying to achieve.
+
+:heavy_check_mark: You should use exemplars for correlating metrics with traces.
+
+[Exemplars](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#exemplar)
+provide a mechanism to correlate metrics with traces by sampling specific
+measurements and attaching trace context to them. This approach preserves metric
+cardinality while enabling trace correlation for a subset of measurements. Check
+the [Exemplars](./exemplars/README.md) tutorial to learn more.
 
 ## Metrics Enrichment
 
