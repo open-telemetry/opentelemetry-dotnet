@@ -234,6 +234,76 @@ public class ProtobufOtlpLogSerializerTests
             }
         });
 
+    [Property(MaxTest = 100)]
+    public Property KvListAttributesStayInBounds() => Prop.ForAll(
+        Generators.LogRecordsWithKvListArbitrary(),
+        Generators.SdkLimitOptionsArbitrary(),
+        (logRecords, sdkLimits) =>
+        {
+            try
+            {
+                var buffer = new byte[10 * 1024 * 1024];
+                var batch = new Batch<LogRecord>(logRecords, logRecords.Length);
+                var experimentalOptions = new ExperimentalOptions();
+
+                var writePos = ProtobufOtlpLogSerializer.WriteLogsData(
+                    ref buffer,
+                    0,
+                    sdkLimits,
+                    experimentalOptions,
+                    null,
+                    batch);
+
+                return writePos >= 0 && writePos <= buffer.Length;
+            }
+            catch (Exception ex) when (IsAllowedException(ex))
+            {
+                return true;
+            }
+        });
+
+    [Property(MaxTest = 100)]
+    public Property KvListAttributesRoundTrip() => Prop.ForAll(
+        Generators.LogRecordsWithKvListArbitrary(),
+        Generators.SdkLimitOptionsArbitrary(),
+        Generators.ResourceArbitrary(),
+        (logRecords, sdkLimits, resource) =>
+        {
+            if (logRecords == null || logRecords.Length == 0)
+            {
+                return true;
+            }
+
+            try
+            {
+                var buffer = new byte[10 * 1024 * 1024];
+                var batch = new Batch<LogRecord>(logRecords, logRecords.Length);
+                var experimentalOptions = new ExperimentalOptions();
+
+                var writePos = ProtobufOtlpLogSerializer.WriteLogsData(
+                    ref buffer,
+                    0,
+                    sdkLimits,
+                    experimentalOptions,
+                    resource,
+                    batch);
+
+                if (writePos <= 0)
+                {
+                    return true;
+                }
+
+                using var stream = new MemoryStream(buffer, 0, writePos);
+                var request = OtlpCollector.ExportLogsServiceRequest.Parser.ParseFrom(stream);
+
+                return request != null && request.ResourceLogs.Count > 0;
+            }
+            catch (Exception ex) when (IsAllowedException(ex))
+            {
+                return true;
+            }
+        });
+
     private static LogRecord[] CreateLogRecords(LogRecordSeverity severity)
         => Generators.LogRecordArbitrary(severity).Generator.ArrayOf().Sample(1, 10).First();
 

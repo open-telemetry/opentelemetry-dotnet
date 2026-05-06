@@ -34,6 +34,17 @@ internal static class Generators
         LogRecordSeverity.Warn,
     ]);
 
+    private static readonly Gen<object?> KvListLeafValueGen = Gen.OneOf(
+        Gen.Constant<object?>(null),
+        Gen.Elements<object?>(string.Empty, "value", "multi\nline", "with spaces", new string('x', 256)),
+        Gen.Choose(int.MinValue, int.MaxValue).Select(x => (object?)(long)x),
+        Gen.Choose(-1000, 1000).Select(x => (object?)x),
+        Gen.Elements<object?>(0.0, 3.14, -1.5, double.NaN, double.PositiveInfinity, double.MinValue, double.MaxValue),
+        Gen.Elements<object?>(true, false),
+        Gen.Constant<object?>(new[] { 1, 2, 3 }),
+        Gen.Constant<object?>(new[] { "a", "b", "c" }),
+        Gen.Constant<object?>(new byte[] { 0, 1, 2, 3 }));
+
     public static Arbitrary<SdkLimitOptions> SdkLimitOptionsArbitrary()
     {
         var gen = from spanAttributesLimit in Gen.Choose(0, 1000).Select(x => (int?)x)
@@ -243,4 +254,96 @@ internal static class Generators
     public static Arbitrary<int> BufferSizeArbitrary() => Gen.Choose(64, 10 * 1024 * 1024).ToArbitrary();
 
     public static Arbitrary<LogRecordSeverity> LogRecordSeverityArbitrary() => LogRecordSeverities.ToArbitrary();
+
+    // Depth up to 5 exceeds TagWriter.MaxRecursionDepth (3) so the stringify-fallback path is also exercised.
+    public static Arbitrary<List<KeyValuePair<string, object?>>> KvListArbitrary() => KvListGen(5).ToArbitrary();
+
+    public static Arbitrary<Activity[]> ActivityWithKvListBatchArbitrary()
+    {
+        var gen = Gen.Sized(size =>
+        {
+            var batchSize = Math.Min(Math.Max(size / 4, 1), 20);
+            return Gen.ArrayOf(ActivityWithKvListGen(), batchSize);
+        });
+
+        return gen.ToArbitrary();
+    }
+
+    public static Arbitrary<LogRecord[]> LogRecordsWithKvListArbitrary()
+    {
+        var gen = Gen.Sized(size =>
+        {
+            var count = Math.Min(Math.Max(size / 4, 1), 10);
+            return Gen.ArrayOf(LogRecordWithKvListGen(), count);
+        });
+
+        return gen.ToArbitrary();
+    }
+
+    private static Gen<List<KeyValuePair<string, object?>>> KvListGen(int maxDepth) =>
+        Gen.Sized(size =>
+        {
+            var count = Math.Min(Math.Max(size / 4, 0), 8);
+
+            Gen<object?> valueGen = maxDepth > 0
+                ? Gen.Frequency(
+                    (4, KvListLeafValueGen),
+                    (1, KvListGen(maxDepth - 1).Select(l => (object?)l)))
+                : KvListLeafValueGen;
+
+            var entryGen = from keyIndex in Gen.Choose(0, 1_000_000)
+                           from value in valueGen
+                           select new KeyValuePair<string, object?>($"k{keyIndex}", value);
+
+            return Gen.ArrayOf(entryGen, count).Select(arr => arr.ToList());
+        });
+
+    private static Gen<Activity> ActivityWithKvListGen() =>
+        from activity in ActivityArbitrary().Generator
+        from kvListCount in Gen.Choose(0, 5)
+        from kvLists in Gen.ArrayOf(KvListGen(5), kvListCount)
+        select AttachKvListTags(activity, kvLists);
+
+    private static Gen<LogRecord> LogRecordWithKvListGen() =>
+        from severity in Gen.Elements(
+            LogRecordSeverity.Debug,
+            LogRecordSeverity.Error,
+            LogRecordSeverity.Fatal,
+            LogRecordSeverity.Info,
+            LogRecordSeverity.Trace,
+            LogRecordSeverity.Unspecified,
+            LogRecordSeverity.Warn)
+        from kvListCount in Gen.Choose(0, 5)
+        from kvLists in Gen.ArrayOf(KvListGen(5), kvListCount)
+        select BuildLogRecordWithKvLists(severity, kvLists);
+
+    private static Activity AttachKvListTags(Activity activity, List<KeyValuePair<string, object?>>[] kvLists)
+    {
+        for (var i = 0; i < kvLists.Length; i++)
+        {
+            activity.SetTag($"kvlist.{i}", kvLists[i]);
+        }
+
+        return activity;
+    }
+
+    private static LogRecord BuildLogRecordWithKvLists(LogRecordSeverity severity, List<KeyValuePair<string, object?>>[] kvLists)
+    {
+        var logRecord = LogRecordSharedPool.Current.Rent();
+        logRecord.Severity = severity;
+        logRecord.Timestamp = DateTime.UtcNow;
+
+        if (kvLists.Length > 0)
+        {
+            var attributes = new List<KeyValuePair<string, object?>>(kvLists.Length);
+            for (var i = 0; i < kvLists.Length; i++)
+            {
+                attributes.Add(new KeyValuePair<string, object?>($"kvlist.{i}", kvLists[i]));
+            }
+
+            logRecord.Attributes = attributes;
+        }
+
+        return logRecord;
+    }
 }

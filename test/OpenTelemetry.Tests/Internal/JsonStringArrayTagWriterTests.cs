@@ -195,6 +195,9 @@ public class JsonStringArrayTagWriterTests
 
         protected override bool TryWriteByteArrayTag(ref Tag consoleTag, string key, ReadOnlySpan<byte> value) => false;
 
+        protected override void WriteKvListTag(ref Tag state, string key, IEnumerable<KeyValuePair<string, object?>> kvList, int? tagValueMaxLength)
+            => throw new NotImplementedException();
+
         public struct Tag
         {
             public string? Key;
