@@ -9,10 +9,93 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests;
 
 public class PrometheusFixture : XunitContainerFixture<IContainer>
 {
+    private const string DockerInternalHost = "host.docker.internal";
+
+    private readonly HashSet<string> temporaryFiles = [];
+
+    public IList<string> ScrapeProtocols { get; } = [];
+
+    public int? TargetPort { get; set; }
+
     protected override string DockerfileName => "prometheus.Dockerfile";
 
-    protected override IContainer CreateContainer() =>
-        new ContainerBuilder(this.GetImage())
+    public override ValueTask DisposeAsync()
+    {
+        foreach (var path in this.temporaryFiles)
+        {
+            try
+            {
+                File.Delete(path);
+            }
+            catch (Exception)
+            {
+                // Ignore
+            }
+        }
+
+        GC.SuppressFinalize(this);
+
+        return base.DisposeAsync();
+    }
+
+    protected override IContainer CreateContainer()
+    {
+        if (this.TargetPort is not { } targetPort)
+        {
+            throw new InvalidOperationException($"No scrape target port configured.");
+        }
+
+        var prometheusConfigurationPath = Path.GetTempFileName();
+        this.temporaryFiles.Add(prometheusConfigurationPath);
+
+        File.WriteAllText(prometheusConfigurationPath, CreatePrometheusConfiguration(this.ScrapeProtocols));
+
+        var serviceDiscoveryTargetsPath = Path.GetTempFileName();
+        this.temporaryFiles.Add(serviceDiscoveryTargetsPath);
+
+        File.WriteAllText(serviceDiscoveryTargetsPath, CreateServiceDiscoveryConfiguration(targetPort));
+
+#if NET
+        if (OperatingSystem.IsLinux())
+        {
+            var mode = UnixFileMode.UserRead | UnixFileMode.GroupRead | UnixFileMode.OtherRead;
+            File.SetUnixFileMode(prometheusConfigurationPath, mode);
+            File.SetUnixFileMode(serviceDiscoveryTargetsPath, mode);
+        }
+#endif
+
+        return new ContainerBuilder(this.GetImage())
+            .WithBindMount(prometheusConfigurationPath, "/etc/prometheus/prometheus.yml")
+            .WithBindMount(serviceDiscoveryTargetsPath, "/etc/prometheus/targets/targets.json")
+            .WithCommand("--config.file=/etc/prometheus/prometheus.yml")
+            .WithExtraHost(DockerInternalHost, "host-gateway")
+            .WithPortBinding(4318)
             .WithPortBinding(9090)
+            .WithWaitStrategy(Wait.ForUnixContainer().UntilExternalTcpPortIsAvailable(4318))
+            .WithWaitStrategy(Wait.ForUnixContainer().UntilExternalTcpPortIsAvailable(9090))
             .Build();
+    }
+
+    private static string CreatePrometheusConfiguration(IList<string>? scrapeProtocols) =>
+        $"""
+         global:
+           scrape_interval: 2s
+           {(scrapeProtocols?.Count > 0 ? $"scrape_protocols: [\"{string.Join("\", \"", scrapeProtocols)}\"]" : string.Empty)}
+         scrape_configs:
+           - job_name: "prometheus-target"
+             file_sd_configs:
+               - files:
+                   - /etc/prometheus/targets/targets.json
+                 refresh_interval: 1s
+         """;
+
+    private static string CreateServiceDiscoveryConfiguration(int port) =>
+        $$"""
+          [
+            {
+              "labels": { "job": "prometheus-target" },
+              "targets": ["{{DockerInternalHost}}:{{port}}"]
+            }
+          ]
+          """;
 }
