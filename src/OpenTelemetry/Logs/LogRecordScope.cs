@@ -8,7 +8,7 @@ namespace OpenTelemetry.Logs;
 /// <summary>
 /// Stores details about a scope attached to a log message.
 /// </summary>
-public readonly struct LogRecordScope
+public readonly struct LogRecordScope : IEquatable<LogRecordScope>
 {
     internal LogRecordScope(object? scope)
     {
@@ -26,6 +26,25 @@ public readonly struct LogRecordScope
     /// </summary>
     /// <returns><see cref="Enumerator"/>.</returns>
     public Enumerator GetEnumerator() => new(this.Scope);
+
+    /// <summary>
+    /// Compare two <see cref="LogRecordScope"/> for equality.
+    /// </summary>
+    public static bool operator ==(LogRecordScope left, LogRecordScope right) => left.Equals(right);
+
+    /// <summary>
+    /// Compare two <see cref="LogRecordScope"/> for inequality.
+    /// </summary>
+    public static bool operator !=(LogRecordScope left, LogRecordScope right) => !left.Equals(right);
+
+    /// <inheritdoc/>
+    public override bool Equals(object? obj) => obj is LogRecordScope other && this.Equals(other);
+
+    /// <inheritdoc/>
+    public bool Equals(LogRecordScope other) => object.Equals(this.Scope, other.Scope);
+
+    /// <inheritdoc/>
+    public override int GetHashCode() => this.Scope?.GetHashCode() ?? 0;
 
     /// <summary>
     /// LogRecordScope enumerator.

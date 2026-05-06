@@ -1,0 +1,7 @@
+#nullable enable
+OpenTelemetry.Logs.LogRecordScope.Equals(OpenTelemetry.Logs.LogRecordScope other) -> bool
+OpenTelemetry.Metrics.HistogramBucket.Equals(OpenTelemetry.Metrics.HistogramBucket other) -> bool
+static OpenTelemetry.Logs.LogRecordScope.operator !=(OpenTelemetry.Logs.LogRecordScope left, OpenTelemetry.Logs.LogRecordScope right) -> bool
+static OpenTelemetry.Logs.LogRecordScope.operator ==(OpenTelemetry.Logs.LogRecordScope left, OpenTelemetry.Logs.LogRecordScope right) -> bool
+static OpenTelemetry.Metrics.HistogramBucket.operator !=(OpenTelemetry.Metrics.HistogramBucket left, OpenTelemetry.Metrics.HistogramBucket right) -> bool
+static OpenTelemetry.Metrics.HistogramBucket.operator ==(OpenTelemetry.Metrics.HistogramBucket left, OpenTelemetry.Metrics.HistogramBucket right) -> bool
