@@ -723,7 +723,7 @@ public sealed class PrometheusSerializerTests
     }
 
     [Fact]
-    public void CounterWithOpenMetricsFormatSuppressesExemplarLabelsByDefault()
+    public void CounterWithOpenMetricsFormatEmitsLatestExemplar()
     {
         var buffer = new byte[85000];
         var metrics = new List<Metric>();
@@ -755,52 +755,6 @@ public sealed class PrometheusSerializerTests
         provider.ForceFlush();
 
         var cursor = WriteMetric(buffer, 0, metrics[0], true);
-        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
-        var counterLine = output.Split(['\n'], StringSplitOptions.RemoveEmptyEntries)
-            .Single(line => line.StartsWith("test_counter", StringComparison.Ordinal));
-
-        Assert.Contains(" 3 # ", counterLine, StringComparison.Ordinal);
-        Assert.Contains(" 3 # {} 2 ", counterLine, StringComparison.Ordinal);
-        Assert.DoesNotContain(activity.TraceId.ToHexString(), counterLine, StringComparison.Ordinal);
-        Assert.DoesNotContain(activity.SpanId.ToHexString(), counterLine, StringComparison.Ordinal);
-        Assert.DoesNotContain("filtered=\"second\"", counterLine, StringComparison.Ordinal);
-        Assert.DoesNotContain("ignored-trace", counterLine, StringComparison.Ordinal);
-        Assert.DoesNotContain("ignored-span", counterLine, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void CounterWithOpenMetricsFormatCanEmitExemplarLabelsWhenEnabled()
-    {
-        var buffer = new byte[85000];
-        var metrics = new List<Metric>();
-
-        using var meter = new Meter(Utils.GetCurrentMethodName());
-        var counter = meter.CreateCounter<long>("test_counter");
-
-        using var provider = Sdk.CreateMeterProviderBuilder()
-            .AddMeter(meter.Name)
-            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
-            .AddView(
-                counter.Name,
-                new MetricStreamConfiguration
-                {
-                    TagKeys = ["keep"],
-                    ExemplarReservoirFactory = () => new SimpleFixedSizeExemplarReservoir(3),
-                })
-            .AddInMemoryExporter(metrics)
-            .Build();
-
-        counter.Add(1, new("keep", "value"), new("filtered", "first"));
-
-        WaitForNextExemplarTimestamp();
-
-        using var activity = new Activity("test");
-        activity.Start();
-        counter.Add(2, new("keep", "value"), new("filtered", "second"), new("trace_id", "ignored-trace"), new("span_id", "ignored-span"));
-
-        provider.ForceFlush();
-
-        var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics: true, enableOpenMetricsExemplarLabels: true);
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
         var counterLine = output.Split(['\n'], StringSplitOptions.RemoveEmptyEntries)
             .Single(line => line.StartsWith("test_counter", StringComparison.Ordinal));
@@ -905,7 +859,7 @@ public sealed class PrometheusSerializerTests
     }
 
     [Fact]
-    public void HistogramWithOpenMetricsFormatSuppressesLatestBucketExemplarLabelsByDefault()
+    public void HistogramWithOpenMetricsFormatEmitsLatestBucketExemplar()
     {
         var buffer = new byte[85000];
         var metrics = new List<Metric>();
@@ -939,55 +893,6 @@ public sealed class PrometheusSerializerTests
         provider.ForceFlush();
 
         var cursor = WriteMetric(buffer, 0, metrics[0], true);
-        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
-        var bucketLine = output.Split(['\n'], StringSplitOptions.RemoveEmptyEntries)
-            .Single(line => line.Contains("test_histogram_bucket{", StringComparison.Ordinal)
-                && line.Contains("le=\"10\"", StringComparison.Ordinal));
-
-        Assert.Contains("} 3 # ", bucketLine, StringComparison.Ordinal);
-        Assert.Contains("} 3 # {} 9 ", bucketLine, StringComparison.Ordinal);
-        Assert.DoesNotContain(activity.TraceId.ToHexString(), bucketLine, StringComparison.Ordinal);
-        Assert.DoesNotContain(activity.SpanId.ToHexString(), bucketLine, StringComparison.Ordinal);
-        Assert.DoesNotContain("filtered=\"latest\"", bucketLine, StringComparison.Ordinal);
-        Assert.DoesNotContain("ignored-trace", bucketLine, StringComparison.Ordinal);
-        Assert.DoesNotContain("ignored-span", bucketLine, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void HistogramWithOpenMetricsFormatCanEmitLatestBucketExemplarLabelsWhenEnabled()
-    {
-        var buffer = new byte[85000];
-        var metrics = new List<Metric>();
-
-        using var meter = new Meter(Utils.GetCurrentMethodName());
-        var histogram = meter.CreateHistogram<double>("test_histogram");
-
-        using var provider = Sdk.CreateMeterProviderBuilder()
-            .AddMeter(meter.Name)
-            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
-            .AddView(
-                histogram.Name,
-                new ExplicitBucketHistogramConfiguration
-                {
-                    Boundaries = [5, 10],
-                    TagKeys = ["keep"],
-                    ExemplarReservoirFactory = () => new SimpleFixedSizeExemplarReservoir(3),
-                })
-            .AddInMemoryExporter(metrics)
-            .Build();
-
-        histogram.Record(4, new("keep", "value"), new("filtered", "older"));
-        histogram.Record(8, new("keep", "value"), new("filtered", "first"));
-
-        WaitForNextExemplarTimestamp();
-
-        using var activity = new Activity("test");
-        activity.Start();
-        histogram.Record(9, new("keep", "value"), new("filtered", "latest"), new("trace_id", "ignored-trace"), new("span_id", "ignored-span"));
-
-        provider.ForceFlush();
-
-        var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics: true, enableOpenMetricsExemplarLabels: true);
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
         var bucketLine = output.Split(['\n'], StringSplitOptions.RemoveEmptyEntries)
             .Single(line => line.Contains("test_histogram_bucket{", StringComparison.Ordinal)
@@ -1280,7 +1185,6 @@ public sealed class PrometheusSerializerTests
             metric,
             prometheusMetric,
             openMetricsRequested: false,
-            enableOpenMetricsExemplarLabels: false,
             writeType: true,
             writeUnit: true,
             writeHelp: true,
@@ -1330,14 +1234,13 @@ public sealed class PrometheusSerializerTests
         static char GetHexValue(int value) => (char)(value < 10 ? '0' + value : 'A' + (value - 10));
     }
 
-    private static int WriteMetric(byte[] buffer, int cursor, Metric metric, bool useOpenMetrics, bool enableOpenMetricsExemplarLabels = false) =>
+    private static int WriteMetric(byte[] buffer, int cursor, Metric metric, bool useOpenMetrics) =>
         PrometheusSerializer.WriteMetric(
             buffer,
             cursor,
             metric,
             PrometheusMetric.Create(metric, false),
             useOpenMetrics,
-            enableOpenMetricsExemplarLabels,
             writeType: true,
             writeUnit: true,
             writeHelp: true,

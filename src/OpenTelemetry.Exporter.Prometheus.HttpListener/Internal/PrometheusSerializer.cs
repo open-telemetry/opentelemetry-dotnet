@@ -296,7 +296,7 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteExemplar(byte[] buffer, int cursor, in Exemplar exemplar, bool isLongValue, bool openMetricsRequested, bool enableOpenMetricsExemplarLabels)
+    public static int WriteExemplar(byte[] buffer, int cursor, in Exemplar exemplar, bool isLongValue, bool openMetricsRequested)
     {
         buffer[cursor++] = unchecked((byte)' ');
         buffer[cursor++] = unchecked((byte)'#');
@@ -305,35 +305,30 @@ internal static partial class PrometheusSerializer
 
         var hasLabels = false;
 
-        if (enableOpenMetricsExemplarLabels &&
-            exemplar.TraceId != default)
+        if (exemplar.TraceId != default)
         {
             cursor = WriteLabel(buffer, cursor, "trace_id", exemplar.TraceId.ToHexString(), openMetricsRequested);
             buffer[cursor++] = unchecked((byte)',');
             hasLabels = true;
         }
 
-        if (enableOpenMetricsExemplarLabels &&
-            exemplar.SpanId != default)
+        if (exemplar.SpanId != default)
         {
             cursor = WriteLabel(buffer, cursor, "span_id", exemplar.SpanId.ToHexString(), openMetricsRequested);
             buffer[cursor++] = unchecked((byte)',');
             hasLabels = true;
         }
 
-        if (enableOpenMetricsExemplarLabels)
+        foreach (var tag in exemplar.FilteredTags)
         {
-            foreach (var tag in exemplar.FilteredTags)
+            if (tag.Key == "trace_id" || tag.Key == "span_id")
             {
-                if (tag.Key == "trace_id" || tag.Key == "span_id")
-                {
-                    continue;
-                }
-
-                cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value, openMetricsRequested);
-                buffer[cursor++] = unchecked((byte)',');
-                hasLabels = true;
+                continue;
             }
+
+            cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value, openMetricsRequested);
+            buffer[cursor++] = unchecked((byte)',');
+            hasLabels = true;
         }
 
         if (hasLabels)

@@ -123,18 +123,6 @@ Configures scrape endpoint response caching. Multiple scrape requests within the
 cache duration time period will receive the same previously generated response.
 The default value is `300`. Set to `0` to disable response caching.
 
-### EnableExemplarLabels
-
-> [!NOTE]
-> This option is only applicable when OpenMetrics is being used.
-
-Whether to enable exemplar labels in the Prometheus scrape endpoint response.
-The default value is `false`.
-
-When disabled, OpenMetrics exemplars are still exported but their
-label sets are emitted as empty, suppressing trace/span context and
-any tags filtered out of the metric label set.
-
 ## Troubleshooting
 
 This component uses an

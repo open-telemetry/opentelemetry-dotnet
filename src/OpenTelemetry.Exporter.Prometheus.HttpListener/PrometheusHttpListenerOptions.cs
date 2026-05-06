@@ -72,17 +72,6 @@ public class PrometheusHttpListenerOptions
     public bool DisableTotalNameSuffixForCounters { get; set; }
 
     /// <summary>
-    /// Gets or sets a value indicating whether exemplar labels are emitted when
-    /// using OpenMetrics. The default value: <see langword="false"/>.
-    /// </summary>
-    /// <remarks>
-    /// When disabled, OpenMetrics exemplars are still exported but their
-    /// label sets are emitted as empty, suppressing trace/span context and
-    /// any tags filtered out of the metric label set.
-    /// </remarks>
-    public bool EnableExemplarLabels { get; set; }
-
-    /// <summary>
     /// Gets or sets the cache duration in milliseconds for scrape responses. Default value: 300.
     /// </summary>
     /// <remarks>

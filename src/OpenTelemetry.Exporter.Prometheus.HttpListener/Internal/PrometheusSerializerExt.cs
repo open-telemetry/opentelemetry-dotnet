@@ -28,7 +28,6 @@ internal static partial class PrometheusSerializer
         Metric metric,
         PrometheusMetric prometheusMetric,
         bool openMetricsRequested,
-        bool enableOpenMetricsExemplarLabels,
         bool writeType,
         bool writeUnit,
         bool writeHelp,
@@ -79,7 +78,7 @@ internal static partial class PrometheusSerializer
                     prometheusMetric.Type == PrometheusType.Counter &&
                     TryGetLatestExemplar(metricPoint, out var exemplar))
                 {
-                    cursor = WriteExemplar(buffer, cursor, in exemplar, isLongValue, openMetricsRequested, enableOpenMetricsExemplarLabels);
+                    cursor = WriteExemplar(buffer, cursor, in exemplar, isLongValue, openMetricsRequested);
                 }
 
                 buffer[cursor++] = ASCII_LINEFEED;
@@ -120,7 +119,7 @@ internal static partial class PrometheusSerializer
                     if (openMetricsRequested &&
                         TryGetLatestHistogramBucketExemplar(metricPoint, previousBound, histogramMeasurement.ExplicitBound, out var exemplar))
                     {
-                        cursor = WriteExemplar(buffer, cursor, in exemplar, isLongValue: false, openMetricsRequested, enableOpenMetricsExemplarLabels);
+                        cursor = WriteExemplar(buffer, cursor, in exemplar, isLongValue: false, openMetricsRequested);
                     }
 
                     buffer[cursor++] = ASCII_LINEFEED;
