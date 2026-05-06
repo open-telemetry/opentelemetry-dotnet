@@ -274,6 +274,7 @@ internal sealed class PrometheusCollectionManager
                             metricState.Metric,
                             metricState.PrometheusMetric,
                             this.exporter.OpenMetricsRequested,
+                            this.exporter.EnableExemplarLabels,
                             metricState.WriteType,
                             metricState.WriteUnit,
                             metricState.WriteHelp,

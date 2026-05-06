@@ -296,7 +296,7 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteExemplar(byte[] buffer, int cursor, in Exemplar exemplar, bool isLongValue, bool openMetricsRequested)
+    public static int WriteExemplar(byte[] buffer, int cursor, in Exemplar exemplar, bool isLongValue, bool openMetricsRequested, bool enableOpenMetricsExemplarLabels)
     {
         buffer[cursor++] = unchecked((byte)' ');
         buffer[cursor++] = unchecked((byte)'#');
@@ -305,30 +305,35 @@ internal static partial class PrometheusSerializer
 
         var hasLabels = false;
 
-        if (exemplar.TraceId != default)
+        if (enableOpenMetricsExemplarLabels &&
+            exemplar.TraceId != default)
         {
             cursor = WriteLabel(buffer, cursor, "trace_id", exemplar.TraceId.ToHexString(), openMetricsRequested);
             buffer[cursor++] = unchecked((byte)',');
             hasLabels = true;
         }
 
-        if (exemplar.SpanId != default)
+        if (enableOpenMetricsExemplarLabels &&
+            exemplar.SpanId != default)
         {
             cursor = WriteLabel(buffer, cursor, "span_id", exemplar.SpanId.ToHexString(), openMetricsRequested);
             buffer[cursor++] = unchecked((byte)',');
             hasLabels = true;
         }
 
-        foreach (var tag in exemplar.FilteredTags)
+        if (enableOpenMetricsExemplarLabels)
         {
-            if (tag.Key == "trace_id" || tag.Key == "span_id")
+            foreach (var tag in exemplar.FilteredTags)
             {
-                continue;
-            }
+                if (tag.Key == "trace_id" || tag.Key == "span_id")
+                {
+                    continue;
+                }
 
-            cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value, openMetricsRequested);
-            buffer[cursor++] = unchecked((byte)',');
-            hasLabels = true;
+                cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value, openMetricsRequested);
+                buffer[cursor++] = unchecked((byte)',');
+                hasLabels = true;
+            }
         }
 
         if (hasLabels)

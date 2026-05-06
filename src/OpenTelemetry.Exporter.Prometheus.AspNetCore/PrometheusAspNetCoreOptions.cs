@@ -38,5 +38,20 @@ public class PrometheusAspNetCoreOptions
         set => this.ExporterOptions.ScrapeResponseCacheDurationMilliseconds = value;
     }
 
+    /// <summary>
+    /// Gets or sets a value indicating whether exemplar labels are emitted when
+    /// using OpenMetrics. The default value: <see langword="false"/>.
+    /// </summary>
+    /// <remarks>
+    /// When disabled, OpenMetrics exemplars are still exported but their
+    /// label sets are emitted as empty, suppressing trace/span context and
+    /// any tags filtered out of the metric label set.
+    /// </remarks>
+    public bool EnableExemplarLabels
+    {
+        get => this.ExporterOptions.EnableExemplarLabels;
+        set => this.ExporterOptions.EnableExemplarLabels = value;
+    }
+
     internal PrometheusExporterOptions ExporterOptions { get; } = new();
 }

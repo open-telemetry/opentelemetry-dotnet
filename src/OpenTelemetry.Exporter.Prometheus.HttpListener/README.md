@@ -52,6 +52,8 @@ variables.
 * `DisableTotalNameSuffixForCounters`: Whether to disable the `_total` suffix for
   counter metrics (default `false`).
 * `DisableTimestamp`: Whether to disable the timestamp for metrics (default `false`).
+* `EnableExemplarLabels`: Whether to enable exemplar labels in the Prometheus
+  scrape endpoint response when using OpenMetrics (default `false`).
 
 ### Configuration using Dependency Injection
 
