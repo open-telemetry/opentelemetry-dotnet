@@ -422,12 +422,10 @@ public class BaggagePropagator : TextMapPropagator
         char.IsAsciiDigit(c) || c is (>= 'A' and <= 'F') or (>= 'a' and <= 'f');
 
     private static int HexDigitValue(char c) =>
-        c >= '0' && c <= '9' ? c - '0' :
-        c >= 'A' && c <= 'F' ? c - 'A' + 10 :
-        c - 'a' + 10;
+        c <= '9' ? c - '0' : (c & 0x0f) + 9;
 
     private static void AppendPercentEncoded(StringBuilder sb, byte b) =>
         sb.Append('%')
-        .Append(Hex[(b >> 4) & 0xF])
-        .Append(Hex[b & 0xF]);
+            .Append(Hex[(b >> 4) & 0xF])
+            .Append(Hex[b & 0xF]);
 }
