@@ -488,6 +488,7 @@ public class PrometheusHttpListenerTests
     [InlineData("0")]
     [InlineData("0.9")]
     [InlineData("1.1")]
+    [InlineData("2147484")]
     [InlineData("foo")]
     public async Task WhenRequestDeadlineInvalid_Returns200(string scrapeTimeoutSeconds)
     {

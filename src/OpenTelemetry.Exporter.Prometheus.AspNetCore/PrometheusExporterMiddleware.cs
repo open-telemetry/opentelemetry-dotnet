@@ -60,12 +60,13 @@ internal sealed class PrometheusExporterMiddleware
         {
             using var requestCancelled = new CancellationTokenSource();
 
-            int scrapeTimeoutSeconds = -1;
+            int? scrapeTimeoutSeconds = null;
             if (httpContext.Request.Headers.TryGetValue("X-Prometheus-Scrape-Timeout-Seconds", out var value) &&
-                int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out scrapeTimeoutSeconds) &&
-                scrapeTimeoutSeconds > 0)
+                int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var parsedValue) &&
+                parsedValue is > 0 and < int.MaxValue / 1_000)
             {
-                requestCancelled.CancelAfter(TimeSpan.FromSeconds(scrapeTimeoutSeconds));
+                scrapeTimeoutSeconds = parsedValue;
+                requestCancelled.CancelAfter(TimeSpan.FromSeconds(scrapeTimeoutSeconds.Value));
             }
 
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(requestCancelled.Token, httpContext.RequestAborted);
@@ -97,10 +98,17 @@ internal sealed class PrometheusExporterMiddleware
                     PrometheusExporterEventSource.Log.NoMetrics();
                 }
             }
-            catch (OperationCanceledException) when (linkedCts.Token.IsCancellationRequested)
+            catch (OperationCanceledException ex) when (ex.CancellationToken == linkedCts.Token)
             {
-                PrometheusExporterEventSource.Log.ScrapeTimedOut(scrapeTimeoutSeconds);
-                response.StatusCode = StatusCodes.Status408RequestTimeout;
+                if (scrapeTimeoutSeconds is { } timeout)
+                {
+                    PrometheusExporterEventSource.Log.ScrapeTimedOut(timeout);
+                }
+
+                if (!response.HasStarted)
+                {
+                    response.StatusCode = StatusCodes.Status408RequestTimeout;
+                }
             }
             finally
             {

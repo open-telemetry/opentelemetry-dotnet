@@ -261,12 +261,13 @@ internal sealed class PrometheusHttpListener : IDisposable
         {
             using var requestCancelled = new CancellationTokenSource();
 
-            int scrapeTimeoutSeconds = -1;
+            int? scrapeTimeoutSeconds = null;
             if (context.Request.Headers["X-Prometheus-Scrape-Timeout-Seconds"] is { Length: > 0 } value &&
-                int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out scrapeTimeoutSeconds) &&
-                scrapeTimeoutSeconds > 0)
+                int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var parsedValue) &&
+                parsedValue is > 0 and < int.MaxValue / 1_000)
             {
-                requestCancelled.CancelAfter(TimeSpan.FromSeconds(scrapeTimeoutSeconds));
+                scrapeTimeoutSeconds = parsedValue;
+                requestCancelled.CancelAfter(TimeSpan.FromSeconds(scrapeTimeoutSeconds.Value));
             }
 
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(requestCancelled.Token, cancellationToken);
@@ -276,7 +277,7 @@ internal sealed class PrometheusHttpListener : IDisposable
 
             try
             {
-                linkedCts.Token.ThrowIfCancellationRequested();
+                requestCancelled.Token.ThrowIfCancellationRequested();
 
                 context.Response.Headers.Add("Server", string.Empty);
 
@@ -303,9 +304,13 @@ internal sealed class PrometheusHttpListener : IDisposable
                     PrometheusExporterEventSource.Log.NoMetrics();
                 }
             }
-            catch (OperationCanceledException) when (requestCancelled.Token.IsCancellationRequested)
+            catch (OperationCanceledException ex) when (ex.CancellationToken == requestCancelled.Token)
             {
-                PrometheusExporterEventSource.Log.ScrapeTimedOut(scrapeTimeoutSeconds);
+                if (scrapeTimeoutSeconds is { } timeout)
+                {
+                    PrometheusExporterEventSource.Log.ScrapeTimedOut(timeout);
+                }
+
                 context.Response.StatusCode = 408;
                 context.Response.ContentLength64 = 0;
             }
@@ -322,7 +327,6 @@ internal sealed class PrometheusHttpListener : IDisposable
         catch (Exception ex)
         {
             PrometheusExporterEventSource.Log.FailedExport(ex);
-
             context.Response.StatusCode = 500;
         }
 
