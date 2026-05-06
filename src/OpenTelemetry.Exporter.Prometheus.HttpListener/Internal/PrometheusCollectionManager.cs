@@ -20,7 +20,8 @@ internal sealed class PrometheusCollectionManager
     private int metricsCacheCount;
     private byte[] plainTextBuffer = new byte[85000]; // encourage the object to live in LOH (large object heap)
     private byte[] openMetricsBuffer = new byte[85000]; // encourage the object to live in LOH (large object heap)
-    private int targetInfoBufferLength = -1; // zero or positive when target_info has been written for the first time
+    private int plainTextTargetInfoBufferLength = -1;
+    private int openMetricsTargetInfoBufferLength = -1;
     private ArraySegment<byte> previousPlainTextDataView;
     private ArraySegment<byte> previousOpenMetricsDataView;
     private int globalLockState;
@@ -231,10 +232,10 @@ internal sealed class PrometheusCollectionManager
 
         try
         {
+            cursor = this.WriteTargetInfo(ref buffer);
+
             if (this.exporter.OpenMetricsRequested)
             {
-                cursor = this.WriteTargetInfo(ref buffer);
-
                 this.scopes.Clear();
 
                 foreach (var metric in metrics)
@@ -350,14 +351,17 @@ internal sealed class PrometheusCollectionManager
 
     private int WriteTargetInfo(ref byte[] buffer)
     {
-        if (this.targetInfoBufferLength < 0)
+        ref var targetInfoBufferLength = ref this.exporter.OpenMetricsRequested
+            ? ref this.openMetricsTargetInfoBufferLength
+            : ref this.plainTextTargetInfoBufferLength;
+
+        if (targetInfoBufferLength < 0)
         {
             while (true)
             {
                 try
                 {
-                    this.targetInfoBufferLength = PrometheusSerializer.WriteTargetInfo(buffer, 0, this.exporter.Resource, openMetricsRequested: true);
-
+                    targetInfoBufferLength = PrometheusSerializer.WriteTargetInfo(buffer, 0, this.exporter.Resource, this.exporter.OpenMetricsRequested);
                     break;
                 }
                 catch (IndexOutOfRangeException)
@@ -370,7 +374,7 @@ internal sealed class PrometheusCollectionManager
             }
         }
 
-        return this.targetInfoBufferLength;
+        return targetInfoBufferLength;
     }
 
     private PrometheusMetric GetPrometheusMetric(Metric metric)

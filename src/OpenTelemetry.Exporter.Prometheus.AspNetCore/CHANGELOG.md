@@ -54,6 +54,9 @@ Notes](../../RELEASENOTES.md).
   thresholds are present.
   ([#7221](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7221))
 
+* Add Prometheus text fallback `target_info` output as a gauge.
+  ([#7238](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7238))
+
 ## 1.15.3-beta.1
 
 Released 2026-Apr-21

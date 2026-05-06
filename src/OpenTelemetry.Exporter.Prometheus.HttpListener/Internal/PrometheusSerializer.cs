@@ -500,10 +500,18 @@ internal static partial class PrometheusSerializer
             return cursor;
         }
 
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# TYPE target info");
+        // "If info-typed metric families are not yet supported...a gauge-typed metric
+        // family named target_info with a constant value of 1 MUST be used instead.".
+        // See https://opentelemetry.io/docs/specs/otel/compatibility/prometheus_and_openmetrics/#resource-attributes-1
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# TYPE ");
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, openMetricsRequested ? "target" : "target_info");
+        buffer[cursor++] = unchecked((byte)' ');
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, openMetricsRequested ? "info" : "gauge");
         buffer[cursor++] = ASCII_LINEFEED;
 
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# HELP target Target metadata");
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# HELP ");
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, openMetricsRequested ? "target" : "target_info");
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, " Target metadata");
         buffer[cursor++] = ASCII_LINEFEED;
 
         cursor = WriteAsciiStringNoEscape(buffer, cursor, "target_info");
