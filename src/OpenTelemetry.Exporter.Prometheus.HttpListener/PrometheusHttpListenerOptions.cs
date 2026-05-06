@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Globalization;
 using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Internal;
@@ -37,6 +38,11 @@ public class PrometheusHttpListenerOptions
 
         if (!configuration.TryGetIntValue(PrometheusExporterEventSource.Log, PrometheusPortEnvVar, out var port))
         {
+            port = 9464;
+        }
+        else if (port is <= 0 or > 65535)
+        {
+            PrometheusExporterEventSource.Log.LogInvalidConfigurationValue(PrometheusPortEnvVar, port.ToString(CultureInfo.InvariantCulture));
             port = 9464;
         }
 
