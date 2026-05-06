@@ -26,7 +26,7 @@ public class BaggagePropagator : TextMapPropagator
     private static readonly SearchValues<char> ValidKeySearcher = SearchValues.Create(
         "!#$%&'*+-.^_`|~0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
 
-    // W3C Baggage §3.3 baggage-octet, '%' excluded so raw '%' is always encoded as %25
+    // W3C Baggage 3.3 baggage-octet, '%' excluded so raw '%' is always encoded as %25
     private static readonly SearchValues<char> ValidValueSearcher = SearchValues.Create(
         "!#$&'()*+-./:<=>?@[]^_`|~0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz{}");
 
@@ -403,7 +403,7 @@ public class BaggagePropagator : TextMapPropagator
                 }
                 else
                 {
-                    // Malformed %XX token here consume the whole token (up to 3 chars) and emit one U+FFFD per W3C Baggage spec §3.3.1.3
+                    // Malformed %XX token here consume the whole token (up to 3 chars) and emit one U+FFFD per W3C Baggage spec 3.3.1.3
                     FlushByteBuffer(sb, byteBuffer, ref byteCount);
                     sb.Append('\uFFFD');
                     i += Math.Min(3, value.Length - i);  // ← here

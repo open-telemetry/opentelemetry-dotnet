@@ -506,14 +506,14 @@ public class BaggagePropagatorTests
     [Fact]
     public void ValidateNonAsciiEncodingIsCountedAgainstByteLimitNotCharCount()
     {
-        // 'é' encodes to %C3%A9 (6 wire bytes per char, not 1).
-        // 1000 'é' chars = 6000 wire bytes for the value alone.
+        // '\u00E9' encodes to %C3%A9 (6 wire bytes per char, not 1).
+        // 1000 '\u00E9' chars = 6000 wire bytes for the value alone.
         // With key "k=" (2 bytes) + 6000 = 6002 bytes, well within 8192 chars
         // but the CHARACTER count (1002) would have appeared safe under the old code.
         // We construct a case where purely char-count-based accounting would allow
         // a second entry through that pushes the header over 8192 bytes.
-        // key "a" (1) + "=" (1) + 1365 × "é" → 1365 × 6 = 8190 wire bytes = 8192 total
-        // key "b" = "c" must be rejected as it would push past the limit
+        // key "a" (1) + "=" (1) + 1365 x "\u00E9" -> 1365 x 6 = 8190 wire bytes = 8192 total
+
         var nonAsciiValue = new string('\u00E9', 1365);
 
         var propagationContext = new PropagationContext(
@@ -942,7 +942,7 @@ public class BaggagePropagatorTests
     [Fact]
     public void ValidateNonAsciiValueIsUtf8PercentEncodedOnInject()
     {
-        // 'é' is U+00E9, UTF-8: 0xC3 0xA9 → %C3%A9
+        // '\u00E9' is U+00E9, UTF-8: 0xC3 0xA9 -> %C3%A9
         var propagationContext = new PropagationContext(
             default,
             new Baggage(new Dictionary<string, string> { { "key", "caf\u00E9" } }));
@@ -951,7 +951,7 @@ public class BaggagePropagatorTests
         this.baggage.Inject(propagationContext, carrier, Setter);
 
         Assert.Contains("%C3%A9", carrier[BaggagePropagator.BaggageHeaderName], StringComparison.Ordinal);
-        Assert.DoesNotContain("é", carrier[BaggagePropagator.BaggageHeaderName], StringComparison.Ordinal);
+        Assert.DoesNotContain("\u00E9", carrier[BaggagePropagator.BaggageHeaderName], StringComparison.Ordinal);
     }
 
     [Fact]
