@@ -10,6 +10,10 @@ Notes](../../RELEASENOTES.md).
   Add support for using environment variables as context propagation carriers.
   ([#7174](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7174))
 
+* Fix issue with `Baggage.Current` updates made in a child async flow that
+  could leak back into the parent flow.
+  ([#7191](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7191))
+
 ## 1.15.3
 
 Released 2026-Apr-21
