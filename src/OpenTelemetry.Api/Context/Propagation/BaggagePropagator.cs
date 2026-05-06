@@ -5,7 +5,6 @@
 using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 #endif
-using System.Net;
 using System.Text;
 using OpenTelemetry.Internal;
 
@@ -24,31 +23,35 @@ public class BaggagePropagator : TextMapPropagator
 #if NET
     private static readonly SearchValues<char> DecodeHints = SearchValues.Create("%");
 
-    private static readonly SearchValues<char> InvalidKeySearcher = SearchValues.Create(
-        "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F\x7F \"(),/:;<=>?@[\\]{}");
+    private static readonly SearchValues<char> ValidKeySearcher = SearchValues.Create(
+        "!#$%&'*+-.^_`|~0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
 
-    private static readonly SearchValues<char> InvalidValueSearcher = SearchValues.Create(
-        "\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F\x7F \",;\\");
+    // W3C Baggage §3.3 baggage-octet, '%' excluded so raw '%' is always encoded as %25
+    private static readonly SearchValues<char> ValidValueSearcher = SearchValues.Create(
+        "!#$&'()*+-./:<=>?@[]^_`|~0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz{}");
 
 #else
 
-    private static readonly char[] InvalidCharsArray =
+    private static readonly char[] ValidKeyChars =
     [
-        '\x00', '\x01', '\x02', '\x03', '\x04', '\x05', '\x06', '\x07',
-        '\x08', '\x09', '\x0A', '\x0B', '\x0C', '\x0D', '\x0E', '\x0F',
-        '\x10', '\x11', '\x12', '\x13', '\x14', '\x15', '\x16', '\x17',
-        '\x18', '\x19', '\x1A', '\x1B', '\x1C', '\x1D', '\x1E', '\x1F',
-        '\x7F', ' ', '"', '(', ')', ',', '/', ':', ';', '<',
-        '=', '>', '?', '@', '[', '\\', ']', '{', '}',
+        '!', '#', '$', '%', '&', '\'', '*', '+', '-', '.', '^', '_', '`', '|', '~',
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+        'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+        'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
     ];
 
-    private static readonly char[] InvalidValueChars =
+    // baggage-octet minus %, so raw % is always encoded as %25
+    private static readonly char[] ValidValueChars =
     [
-        '\x00', '\x01', '\x02', '\x03', '\x04', '\x05', '\x06', '\x07',
-        '\x08', '\x09', '\x0A', '\x0B', '\x0C', '\x0D', '\x0E', '\x0F',
-        '\x10', '\x11', '\x12', '\x13', '\x14', '\x15', '\x16', '\x17',
-        '\x18', '\x19', '\x1A', '\x1B', '\x1C', '\x1D', '\x1E', '\x1F',
-        '\x7F', ' ', '"', ',', ';', '\\',
+        '!', '#', '$', '&', '\'', '(', ')', '*', '+', '-', '.', '/', ':',
+        '<', '=', '>', '?', '@', '[', ']', '^', '_', '`', '{', '|', '}', '~',
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+        'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+        'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
     ];
 #endif
 
@@ -206,12 +209,14 @@ public class BaggagePropagator : TextMapPropagator
                     continue;
                 }
 
-                if (!IsValidKey(pair.Slice(0, separatorIndex)))
+                var rawKey = pair.Slice(0, separatorIndex).Trim();
+
+                if (!IsValidKey(rawKey))
                 {
                     continue;
                 }
 
-                var key = pair.Slice(0, separatorIndex).ToString();
+                var key = rawKey.ToString();
 
                 var rawValue = pair.Slice(separatorIndex + 1);
 
@@ -261,12 +266,23 @@ public class BaggagePropagator : TextMapPropagator
     private static string Encode(ReadOnlySpan<char> value, bool isKey)
     {
 #if NET
-        if (!value.ContainsAny(isKey ? InvalidKeySearcher : InvalidValueSearcher))
+        if (!value.ContainsAnyExcept(isKey ? ValidKeySearcher : ValidValueSearcher))
         {
             return value.ToString();
         }
 #else
-        if (value.IndexOfAny(isKey ? InvalidCharsArray : InvalidValueChars) < 0)
+        var validChars = isKey ? ValidKeyChars : ValidValueChars;
+        var allValid = true;
+        foreach (var c in value)
+        {
+            if (Array.IndexOf(validChars, c) < 0)
+            {
+                allValid = false;
+                break;
+            }
+        }
+
+        if (allValid)
         {
             return value.ToString();
         }
@@ -277,21 +293,44 @@ public class BaggagePropagator : TextMapPropagator
 #if NET
         Span<char> encoded = stackalloc char[3];
         encoded[0] = '%';
+        Span<byte> utf8Buffer = stackalloc byte[4];
 #endif
         foreach (var c in value)
         {
-            var shouldEncode = isKey ? !IsValidKey(c) : IsInvalidValueChar(c);
+            var shouldEncode = isKey ? !IsValidKey(c) : !IsValidValueChar(c);
             if (shouldEncode)
             {
+                if (!isKey && c > '\x7F')
+                {
 #if NET
-                encoded[1] = hex[(c >> 4) & 0xF];
-                encoded[2] = hex[c & 0xF];
-                sb.Append(encoded);
+                    var byteCount = Encoding.UTF8.GetBytes(new ReadOnlySpan<char>(in c), utf8Buffer);
+                    foreach (var b in utf8Buffer[..byteCount])
+                    {
+                        encoded[1] = hex[(b >> 4) & 0xF];
+                        encoded[2] = hex[b & 0xF];
+                        sb.Append(encoded);
+                    }
 #else
-                sb.Append('%')
-                .Append(hex[(c >> 4) & 0xF])
-                .Append(hex[c & 0xF]);
+                    foreach (var b in Encoding.UTF8.GetBytes(c.ToString()))
+                    {
+                        sb.Append('%')
+                        .Append(hex[(b >> 4) & 0xF])
+                        .Append(hex[b & 0xF]);
+                    }
 #endif
+                }
+                else
+                {
+#if NET
+                    encoded[1] = hex[(c >> 4) & 0xF];
+                    encoded[2] = hex[c & 0xF];
+                    sb.Append(encoded);
+#else
+                    sb.Append('%')
+                    .Append(hex[(c >> 4) & 0xF])
+                    .Append(hex[c & 0xF]);
+#endif
+                }
             }
             else
             {
@@ -302,31 +341,103 @@ public class BaggagePropagator : TextMapPropagator
         return sb.ToString();
     }
 
-    private static bool IsInvalidValueChar(char c) =>
+    private static bool IsValidValueChar(char c) =>
 #if NET
-        InvalidValueSearcher.Contains(c);
+        ValidValueSearcher.Contains(c);
 #else
-        Array.IndexOf(InvalidValueChars, c) >= 0;
+        Array.IndexOf(ValidValueChars, c) >= 0;
 #endif
 
     private static bool IsValidKey(char c) =>
 #if NET
-        !InvalidKeySearcher.Contains(c);
+        ValidKeySearcher.Contains(c);
 #else
-        Array.IndexOf(InvalidCharsArray, c) < 0;
+        Array.IndexOf(ValidKeyChars, c) >= 0;
 #endif
 
-    private static bool IsValidKey(ReadOnlySpan<char> key) =>
+    private static bool IsValidKey(ReadOnlySpan<char> key)
+    {
 #if NET
-        !key.ContainsAny(InvalidKeySearcher);
+        return !key.ContainsAnyExcept(ValidKeySearcher);
 #else
-        key.IndexOfAny(InvalidCharsArray) < 0;
+        foreach (var c in key)
+        {
+            if (Array.IndexOf(ValidKeyChars, c) < 0)
+            {
+                return false;
+            }
+        }
+
+        return true;
+#endif
+    }
+
+    private static string DecodeIfNeeded(ReadOnlySpan<char> value)
+    {
+#if NET
+        if (!value.ContainsAny(DecodeHints))
+        {
+            return value.ToString();
+        }
+#else
+        if (value.IndexOf('%') < 0)
+        {
+            return value.ToString();
+        }
 #endif
 
-    private static string DecodeIfNeeded(ReadOnlySpan<char> value) =>
-#if NET
-        value.ContainsAny(DecodeHints) ? WebUtility.UrlDecode(value.ToString()) : value.ToString();
-#else
-        value.IndexOf('%') < 0 ? value.ToString() : WebUtility.UrlDecode(value.ToString());
-#endif
+        var sb = new StringBuilder(value.Length);
+
+        var byteBuffer = new byte[value.Length];
+        var byteCount = 0;
+        var i = 0;
+
+        while (i < value.Length)
+        {
+            if (value[i] == '%')
+            {
+                if (i + 2 < value.Length && IsHexDigit(value[i + 1]) && IsHexDigit(value[i + 2]))
+                {
+                    byteBuffer[byteCount++] = (byte)((HexDigitValue(value[i + 1]) << 4) | HexDigitValue(value[i + 2]));
+                    i += 3;
+                }
+                else
+                {
+                    // Malformed %XX token here consume the whole token (up to 3 chars) and emit one U+FFFD per W3C Baggage spec §3.3.1.3
+                    FlushByteBuffer(sb, byteBuffer, ref byteCount);
+                    sb.Append('\uFFFD');
+                    i += Math.Min(3, value.Length - i);  // ← here
+                }
+            }
+            else
+            {
+                FlushByteBuffer(sb, byteBuffer, ref byteCount);
+                sb.Append(value[i]);
+                i++;
+            }
+        }
+
+        FlushByteBuffer(sb, byteBuffer, ref byteCount);
+
+        return sb.ToString();
+    }
+
+    private static void FlushByteBuffer(StringBuilder sb, byte[] buffer, ref int count)
+    {
+        if (count == 0)
+        {
+            return;
+        }
+
+        sb.Append(Encoding.UTF8.GetString(buffer, 0, count));
+        count = 0;
+    }
+
+    private static bool IsHexDigit(char c) =>
+        (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
+
+    private static int HexDigitValue(char c) =>
+        c >= '0' && c <= '9' ? c - '0' :
+        c >= 'A' && c <= 'F' ? c - 'A' + 10 :
+        c - 'a' + 10;
 }
