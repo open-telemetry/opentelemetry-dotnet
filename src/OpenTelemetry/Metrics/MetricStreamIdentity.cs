@@ -237,6 +237,66 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
             var boundaries = (IReadOnlyList<double>)adviceExplicitBucketBoundaries;
             return [.. boundaries];
         }
+        else if (typeof(T) == typeof(float))
+        {
+            var boundaries = (IReadOnlyList<float>)adviceExplicitBucketBoundaries;
+            var explicitBucketBoundaries = new double[boundaries.Count];
+
+            for (var i = 0; i < boundaries.Count; i++)
+            {
+                explicitBucketBoundaries[i] = boundaries[i];
+            }
+
+            return explicitBucketBoundaries;
+        }
+        else if (typeof(T) == typeof(long))
+        {
+            var boundaries = (IReadOnlyList<long>)adviceExplicitBucketBoundaries;
+            var explicitBucketBoundaries = new double[boundaries.Count];
+
+            for (var i = 0; i < boundaries.Count; i++)
+            {
+                explicitBucketBoundaries[i] = boundaries[i];
+            }
+
+            return explicitBucketBoundaries;
+        }
+        else if (typeof(T) == typeof(int))
+        {
+            var boundaries = (IReadOnlyList<int>)adviceExplicitBucketBoundaries;
+            var explicitBucketBoundaries = new double[boundaries.Count];
+
+            for (var i = 0; i < boundaries.Count; i++)
+            {
+                explicitBucketBoundaries[i] = boundaries[i];
+            }
+
+            return explicitBucketBoundaries;
+        }
+        else if (typeof(T) == typeof(short))
+        {
+            var boundaries = (IReadOnlyList<short>)adviceExplicitBucketBoundaries;
+            var explicitBucketBoundaries = new double[boundaries.Count];
+
+            for (var i = 0; i < boundaries.Count; i++)
+            {
+                explicitBucketBoundaries[i] = boundaries[i];
+            }
+
+            return explicitBucketBoundaries;
+        }
+        else if (typeof(T) == typeof(byte))
+        {
+            var boundaries = (IReadOnlyList<byte>)adviceExplicitBucketBoundaries;
+            var explicitBucketBoundaries = new double[boundaries.Count];
+
+            for (var i = 0; i < boundaries.Count; i++)
+            {
+                explicitBucketBoundaries[i] = boundaries[i];
+            }
+
+            return explicitBucketBoundaries;
+        }
         else
         {
             var explicitBucketBoundaries = new double[adviceExplicitBucketBoundaries.Count];
