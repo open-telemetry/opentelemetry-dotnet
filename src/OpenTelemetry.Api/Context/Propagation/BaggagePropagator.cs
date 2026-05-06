@@ -403,10 +403,9 @@ public class BaggagePropagator : TextMapPropagator
                 }
                 else
                 {
-                    // Malformed %XX token here consume the whole token (up to 3 chars) and emit one U+FFFD per W3C Baggage spec 3.3.1.3
                     FlushByteBuffer(sb, byteBuffer, ref byteCount);
                     sb.Append('\uFFFD');
-                    i += Math.Min(3, value.Length - i);  // ← here
+                    i += Math.Min(3, value.Length - i);
                 }
             }
             else
