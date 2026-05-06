@@ -1,6 +1,10 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if NET
+using System.Buffers;
+using System.Buffers.Text;
+#endif
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -31,55 +35,47 @@ internal static partial class PrometheusSerializer
             // The standard precision of %f, %e and %g is only six significant digits. 17 significant
             // digits are required for full precision, e.g. printf("%.17g", d).
 #if NET
-            Span<char> span = stackalloc char[128];
-
-            var result = value.TryFormat(span, out var cchWritten, "G17", CultureInfo.InvariantCulture);
-            Debug.Assert(result, $"{nameof(result)} should be true.");
-
-            for (var i = 0; i < cchWritten; i++)
-            {
-                buffer[cursor++] = unchecked((byte)span[i]);
-            }
+            var result = Utf8Formatter.TryFormat(value, buffer.AsSpan(cursor), out var bytesWritten, new StandardFormat('G', 17));
+            return AdvanceCursorOrThrow(result, cursor, bytesWritten);
 #else
-            cursor = WriteAsciiStringNoEscape(buffer, cursor, value.ToString("G17", CultureInfo.InvariantCulture));
+            return WriteAsciiStringNoEscape(buffer, cursor, value.ToString("G17", CultureInfo.InvariantCulture));
 #endif
         }
         else if (double.IsPositiveInfinity(value))
         {
-            cursor = WriteAsciiStringNoEscape(buffer, cursor, "+Inf");
+            return WriteAsciiStringNoEscape(buffer, cursor, "+Inf");
         }
         else if (double.IsNegativeInfinity(value))
         {
-            cursor = WriteAsciiStringNoEscape(buffer, cursor, "-Inf");
+            return WriteAsciiStringNoEscape(buffer, cursor, "-Inf");
         }
         else
         {
             // See https://prometheus.io/docs/instrumenting/exposition_formats/#comments-help-text-and-type-information
             Debug.Assert(double.IsNaN(value), $"{nameof(value)} should be NaN.");
-            cursor = WriteAsciiStringNoEscape(buffer, cursor, "NaN");
+            return WriteAsciiStringNoEscape(buffer, cursor, "NaN");
         }
-
-        return cursor;
     }
+
+    // Histogram "le" and summary "quantile" label values use OpenMetrics canonical numbers.
+    // See https://prometheus.io/docs/specs/om/open_metrics_spec/#considerations-canonical-numbers
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int WriteCanonicalLabelValue(byte[] buffer, int cursor, double value) =>
+#if NET
+        cursor + FormatCanonicalLabelValue(buffer.AsSpan(cursor), value);
+#else
+        WriteAsciiStringNoEscape(buffer, cursor, GetCanonicalLabelValueString(value));
+#endif
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteLong(byte[] buffer, int cursor, long value)
     {
 #if NET
-        Span<char> span = stackalloc char[20];
-
-        var result = value.TryFormat(span, out var cchWritten, "G", CultureInfo.InvariantCulture);
-        Debug.Assert(result, $"{nameof(result)} should be true.");
-
-        for (var i = 0; i < cchWritten; i++)
-        {
-            buffer[cursor++] = unchecked((byte)span[i]);
-        }
+        var result = Utf8Formatter.TryFormat(value, buffer.AsSpan(cursor), out var bytesWritten);
+        return AdvanceCursorOrThrow(result, cursor, bytesWritten);
 #else
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, value.ToString(CultureInfo.InvariantCulture));
+        return WriteAsciiStringNoEscape(buffer, cursor, value.ToString(CultureInfo.InvariantCulture));
 #endif
-
-        return cursor;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -607,4 +603,193 @@ internal static partial class PrometheusSerializer
         // See https://prometheus.io/docs/specs/om/open_metrics_spec/#unknown-1
         PrometheusType.Untyped or _ => openMetricsRequested ? "unknown" : "untyped",
     };
+
+#if NET
+    private static int FormatCanonicalLabelValue(Span<byte> destination, double value)
+    {
+        if (double.IsPositiveInfinity(value))
+        {
+            return GetBytesWrittenOrThrow("+Inf"u8.TryCopyTo(destination), 4);
+        }
+        else if (double.IsNegativeInfinity(value))
+        {
+            return GetBytesWrittenOrThrow("-Inf"u8.TryCopyTo(destination), 4);
+        }
+        else if (double.IsNaN(value))
+        {
+            return GetBytesWrittenOrThrow("NaN"u8.TryCopyTo(destination), 3);
+        }
+        else if (value == 0)
+        {
+            return GetBytesWrittenOrThrow("0.0"u8.TryCopyTo(destination), 3);
+        }
+
+        var absoluteValue = Math.Abs(value);
+        if (absoluteValue <= 10 && value == Math.Round(value, 3))
+        {
+            return FormatFixedAndTrim(destination, value, 3);
+        }
+
+        if (absoluteValue < 1e6 && value == Math.Round(value))
+        {
+            return FormatFixedAndTrim(destination, value, 1);
+        }
+
+        if (TryGetPowerOfTenExponent(absoluteValue, out var exponent))
+        {
+            return exponent is >= 6 or <= -5
+                ? FormatPowerOfTenScientific(destination, value < 0, exponent)
+                : FormatFixedAndTrim(destination, value, Math.Max(1, -exponent));
+        }
+
+        char symbol = absoluteValue >= 1e6 || absoluteValue < 1e-4 ? 'e' : 'G';
+
+        return TryFormat(destination, value, new(symbol, 17));
+
+        static int FormatFixedAndTrim(Span<byte> destination, double value, int decimalPlaces)
+        {
+            var bytesWritten = TryFormat(destination, value, new StandardFormat('F', (byte)decimalPlaces));
+            var decimalIndex = destination.Slice(0, bytesWritten).IndexOf((byte)'.');
+            Debug.Assert(decimalIndex >= 0, $"{nameof(decimalIndex)} should be non-negative.");
+
+            while (bytesWritten > decimalIndex + 2 && destination[bytesWritten - 1] == (byte)'0')
+            {
+                bytesWritten--;
+            }
+
+            return bytesWritten;
+        }
+
+        static int FormatPowerOfTenScientific(Span<byte> destination, bool isNegative, int exponent)
+        {
+            if (destination.Length < (isNegative ? 6 : 5))
+            {
+                throw new ArgumentException("Destination buffer too small.");
+            }
+
+            var bytesWritten = 0;
+            if (isNegative)
+            {
+                destination[bytesWritten++] = (byte)'-';
+            }
+
+            destination[bytesWritten++] = (byte)'1';
+            return bytesWritten + WriteExponent(destination.Slice(bytesWritten), exponent);
+        }
+
+        static int TryFormat(Span<byte> destination, double value, StandardFormat format)
+        {
+            var result = Utf8Formatter.TryFormat(value, destination, out var bytesWritten, format);
+            return GetBytesWrittenOrThrow(result, bytesWritten);
+        }
+
+        static int WriteExponent(Span<byte> destination, int exponent)
+        {
+            if (destination.Length < 4)
+            {
+                throw new ArgumentException("Destination buffer too small.");
+            }
+
+            destination[0] = (byte)'e';
+            destination[1] = exponent >= 0 ? (byte)'+' : (byte)'-';
+
+            var absoluteExponent = Math.Abs(exponent);
+            (var quotient, var remainder) = Math.DivRem(absoluteExponent, 10);
+
+            destination[2] = unchecked((byte)('0' + quotient));
+            destination[3] = unchecked((byte)('0' + remainder));
+            return 4;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int GetBytesWrittenOrThrow(bool result, int bytesWritten) =>
+        result ? bytesWritten : throw new ArgumentException("Destination buffer too small.");
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int AdvanceCursorOrThrow(bool result, int cursor, int bytesWritten) =>
+        result ? cursor + bytesWritten : throw new ArgumentException("Destination buffer too small.");
+#else
+    private static string GetCanonicalLabelValueString(double value)
+    {
+        if (double.IsPositiveInfinity(value))
+        {
+            return "+Inf";
+        }
+        else if (double.IsNegativeInfinity(value))
+        {
+            return "-Inf";
+        }
+        else if (double.IsNaN(value))
+        {
+            return "NaN";
+        }
+        else if (value == 0)
+        {
+            return "0.0";
+        }
+
+        var absoluteValue = Math.Abs(value);
+        if (absoluteValue <= 10 && value == Math.Round(value, 3))
+        {
+            return FormatFixedAndTrim(value, 3);
+        }
+
+        if (absoluteValue < 1e6 && value == Math.Round(value))
+        {
+            return FormatFixedAndTrim(value, 1);
+        }
+
+        if (TryGetPowerOfTenExponent(absoluteValue, out var exponent))
+        {
+            return exponent is >= 6 or <= -5
+                ? string.Concat(value < 0 ? "-1" : "1", FormatExponent(exponent))
+                : FormatFixedAndTrim(value, Math.Max(1, -exponent));
+        }
+
+        return value.ToString(absoluteValue >= 1e6 || absoluteValue < 1e-4 ? "e17" : "G17", CultureInfo.InvariantCulture);
+
+        static string FormatFixedAndTrim(double value, int decimalPlaces)
+        {
+            var formattedValue = value.ToString($"F{decimalPlaces}", CultureInfo.InvariantCulture);
+            var minimumLength = formattedValue.IndexOf('.') + 2;
+            while (formattedValue.Length > minimumLength && formattedValue[formattedValue.Length - 1] == '0')
+            {
+                formattedValue = formattedValue.Substring(0, formattedValue.Length - 1);
+            }
+
+            return formattedValue;
+        }
+
+        static string FormatExponent(int exponent)
+        {
+            return string.Concat(
+                "e",
+                exponent >= 0 ? "+" : "-",
+                Math.Abs(exponent).ToString("00", CultureInfo.InvariantCulture));
+        }
+    }
+#endif
+
+    private static bool TryGetPowerOfTenExponent(double absoluteValue, out int exponent)
+    {
+        exponent = 0;
+        Debug.Assert(absoluteValue > 0, $"{nameof(absoluteValue)} should be positive.");
+
+        var roundedExponent = (int)Math.Round(Math.Log10(absoluteValue));
+        if (roundedExponent is < -10 or > 10)
+        {
+            return false;
+        }
+
+        var powerOfTen = Math.Pow(10, roundedExponent);
+
+        if (Math.Abs(absoluteValue - powerOfTen) > powerOfTen * 1e-12)
+        {
+            return false;
+        }
+
+        exponent = roundedExponent;
+        return true;
+    }
 }

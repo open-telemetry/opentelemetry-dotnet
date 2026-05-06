@@ -72,6 +72,10 @@ Notes](../../RELEASENOTES.md).
   thresholds are present.
   ([#7221](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7221))
 
+* Use the canonical representation for histogram "le" label values when using
+  OpenMetrics.
+  ([#7218](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7218))
+
 ## 1.15.3-beta.1
 
 Released 2026-Apr-21

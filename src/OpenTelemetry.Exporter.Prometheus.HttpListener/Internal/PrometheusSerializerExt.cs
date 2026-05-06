@@ -108,9 +108,16 @@ internal static partial class PrometheusSerializer
 
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "le=\"");
 
-                    cursor = histogramMeasurement.ExplicitBound != double.PositiveInfinity
-                        ? WriteDouble(buffer, cursor, histogramMeasurement.ExplicitBound)
-                        : WriteAsciiStringNoEscape(buffer, cursor, "+Inf");
+                    if (histogramMeasurement.ExplicitBound != double.PositiveInfinity)
+                    {
+                        cursor = openMetricsRequested
+                            ? WriteCanonicalLabelValue(buffer, cursor, histogramMeasurement.ExplicitBound)
+                            : WriteDouble(buffer, cursor, histogramMeasurement.ExplicitBound);
+                    }
+                    else
+                    {
+                        cursor = WriteAsciiStringNoEscape(buffer, cursor, "+Inf");
+                    }
 
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "\"} ");
 
