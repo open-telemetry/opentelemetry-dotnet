@@ -40,7 +40,7 @@ public class PrometheusHttpListenerOptions
         {
             port = 9464;
         }
-        else if (port is <= 0 or > 65535)
+        else if (port is <= 0 or > ushort.MaxValue)
         {
             PrometheusExporterEventSource.Log.LogInvalidConfigurationValue(PrometheusPortEnvVar, port.ToString(CultureInfo.InvariantCulture));
             port = 9464;
