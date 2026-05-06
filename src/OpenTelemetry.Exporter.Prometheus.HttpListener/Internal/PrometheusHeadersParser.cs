@@ -3,6 +3,12 @@
 
 using System.Globalization;
 
+#if NET8_0_OR_GREATER
+using SupportedVersions = System.Collections.Immutable.ImmutableHashSet<System.Version>;
+#else
+using SupportedVersions = System.Collections.Generic.HashSet<System.Version>;
+#endif
+
 namespace OpenTelemetry.Exporter.Prometheus;
 
 internal static class PrometheusHeadersParser
@@ -20,7 +26,12 @@ internal static class PrometheusHeadersParser
         var preferences = new List<(PrometheusProtocol Protocol, double Quality)>(SupportedProtocols);
 
         var supportedEscapingSchemes = PrometheusProtocol.SupportedEscapingSchemes;
-        HashSet<Version> supportedVersions;
+
+#if NET8_0_OR_GREATER
+        SupportedVersions supportedVersions;
+#else
+        SupportedVersions supportedVersions;
+#endif
 
         while (value.Length > 0)
         {
@@ -138,7 +149,7 @@ internal static class PrometheusHeadersParser
             .FirstOrDefault();
     }
 
-    private static Version? GetVersion(ReadOnlySpan<char> value, HashSet<Version> supportedVersions)
+    private static Version? GetVersion(ReadOnlySpan<char> value, SupportedVersions supportedVersions)
     {
         var trimmed = TrimQuotes(value);
 

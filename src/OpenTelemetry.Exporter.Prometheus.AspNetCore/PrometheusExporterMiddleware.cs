@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Http;
@@ -134,7 +135,7 @@ internal sealed class PrometheusExporterMiddleware
         string mediaType;
 
         var supportedEscapingSchemes = PrometheusProtocol.SupportedEscapingSchemes;
-        HashSet<Version> supportedVersions;
+        ImmutableHashSet<Version> supportedVersions;
 
         if (string.Equals(value.MediaType.Value, PrometheusProtocol.OpenMetricsMediaType, StringComparison.OrdinalIgnoreCase))
         {

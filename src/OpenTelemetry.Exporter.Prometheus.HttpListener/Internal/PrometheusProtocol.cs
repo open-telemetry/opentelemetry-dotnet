@@ -3,6 +3,14 @@
 
 using System.Text;
 
+#if NET8_0_OR_GREATER
+using SupportedEscapingSchemes = System.Collections.Immutable.ImmutableHashSet<string>;
+using SupportedVersions = System.Collections.Immutable.ImmutableHashSet<System.Version>;
+#else
+using SupportedEscapingSchemes = System.Collections.Generic.HashSet<string>;
+using SupportedVersions = System.Collections.Generic.HashSet<System.Version>;
+#endif
+
 namespace OpenTelemetry.Exporter.Prometheus;
 
 internal readonly struct PrometheusProtocol
@@ -22,18 +30,18 @@ internal readonly struct PrometheusProtocol
 
     // TODO Support other escaping schemes, including at least "allow-utf-8".
     // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/7246.
-    internal static readonly HashSet<string> SupportedEscapingSchemes =
+    internal static readonly SupportedEscapingSchemes SupportedEscapingSchemes =
     [
         UnderscoresEscaping,
     ];
 
-    internal static readonly HashSet<Version> SupportedOpenMetricsVersions =
+    internal static readonly SupportedVersions SupportedOpenMetricsVersions =
     [
         OpenMetricsV0,
         OpenMetricsV1,
     ];
 
-    internal static readonly HashSet<Version> SupportedPrometheusVersions =
+    internal static readonly SupportedVersions SupportedPrometheusVersions =
     [
         PrometheusVersion0,
         PrometheusVersion1,
