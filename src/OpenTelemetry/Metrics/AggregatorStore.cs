@@ -938,6 +938,15 @@ internal sealed class AggregatorStore
     {
         var index = this.FindMetricAggregatorsCustomTag(tags);
 
+        if (this.IsAsynchronous && this.aggType == AggregationType.LongSumIncomingCumulative)
+        {
+            ref var metricPoint = ref this.metricPoints[index];
+            if (metricPoint.MetricPointStatus == MetricPointStatus.CollectPending)
+            {
+                value += metricPoint.GetRunningValueLong();
+            }
+        }
+
         this.UpdateLongMetricPoint(index, value, tags);
     }
 
@@ -984,6 +993,15 @@ internal sealed class AggregatorStore
     private void UpdateDoubleCustomTags(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         var index = this.FindMetricAggregatorsCustomTag(tags);
+
+        if (this.IsAsynchronous && this.aggType == AggregationType.DoubleSumIncomingCumulative)
+        {
+            ref var metricPoint = ref this.metricPoints[index];
+            if (metricPoint.MetricPointStatus == MetricPointStatus.CollectPending)
+            {
+                value += metricPoint.GetRunningValueDouble();
+            }
+        }
 
         this.UpdateDoubleMetricPoint(index, value, tags);
     }
