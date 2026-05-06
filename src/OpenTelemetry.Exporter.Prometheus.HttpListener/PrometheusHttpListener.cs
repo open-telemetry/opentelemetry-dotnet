@@ -140,11 +140,10 @@ internal sealed class PrometheusHttpListener : IDisposable
         }
     }
 
-    private static bool AcceptsOpenMetrics(HttpListenerRequest request)
+    private static PrometheusProtocol Negotiate(HttpListenerRequest request)
     {
         var acceptHeader = request.Headers["Accept"];
-
-        return !string.IsNullOrEmpty(acceptHeader) && PrometheusHeadersParser.AcceptsOpenMetrics(acceptHeader);
+        return PrometheusHeadersParser.Negotiate(acceptHeader);
     }
 
     /// <summary>
@@ -258,8 +257,9 @@ internal sealed class PrometheusHttpListener : IDisposable
 
         try
         {
-            var openMetricsRequested = AcceptsOpenMetrics(context.Request);
-            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(openMetricsRequested).ConfigureAwait(false);
+            var protocol = Negotiate(context.Request);
+
+            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(protocol.IsOpenMetrics).ConfigureAwait(false);
 
             try
             {
@@ -267,15 +267,13 @@ internal sealed class PrometheusHttpListener : IDisposable
 
                 context.Response.Headers.Add("Server", string.Empty);
 
-                var dataView = openMetricsRequested ? collectionResponse.OpenMetricsView : collectionResponse.PlainTextView;
+                var dataView = protocol.IsOpenMetrics ? collectionResponse.OpenMetricsView : collectionResponse.PlainTextView;
 
                 if (dataView.Count > 0)
                 {
                     context.Response.StatusCode = 200;
                     context.Response.Headers.Add("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
-                    context.Response.ContentType = openMetricsRequested
-                        ? "application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores"
-                        : "text/plain; charset=utf-8; version=0.0.4";
+                    context.Response.ContentType = PrometheusProtocol.GetContentType(protocol);
 
 #if NET
                     await context.Response.OutputStream.WriteAsync(dataView.Array.AsMemory(0, dataView.Count), cancellationToken).ConfigureAwait(false);

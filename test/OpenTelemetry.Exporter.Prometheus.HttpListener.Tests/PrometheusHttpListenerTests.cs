@@ -70,7 +70,9 @@ public class PrometheusHttpListenerTests
 
     [Fact]
     public async Task PrometheusExporterHttpServerIntegration_UseOpenMetricsVersionHeader()
-        => await RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: "application/openmetrics-text; version=1.0.0");
+        => await RunPrometheusExporterHttpServerIntegrationTest(
+            acceptHeader: "application/openmetrics-text; version=1.0.0",
+            contentType: "application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores");
 
     [Fact]
     public async Task PrometheusExporterHttpServerIntegration_NoOpenMetrics_WithMeterTags()
@@ -97,6 +99,7 @@ public class PrometheusHttpListenerTests
 
         await RunPrometheusExporterHttpServerIntegrationTest(
             acceptHeader: "application/openmetrics-text; version=1.0.0",
+            contentType: "application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores",
             meterTags: tags);
     }
 
@@ -512,6 +515,7 @@ public class PrometheusHttpListenerTests
     private static async Task RunPrometheusExporterHttpServerIntegrationTest(
         bool skipMetrics = false,
         string acceptHeader = "application/openmetrics-text",
+        string? contentType = null,
         KeyValuePair<string, object?>[]? meterTags = null)
     {
         var requestOpenMetrics = acceptHeader.StartsWith("application/openmetrics-text", StringComparison.Ordinal);
@@ -550,14 +554,14 @@ public class PrometheusHttpListenerTests
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             Assert.True(response.Content.Headers.Contains("Last-Modified"));
 
-            if (requestOpenMetrics)
-            {
-                Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores", response.Content.Headers.ContentType?.ToString());
-            }
-            else
-            {
-                Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType?.ToString());
-            }
+            contentType ??=
+                requestOpenMetrics ?
+                "application/openmetrics-text; version=0.0.1; charset=utf-8" :
+                "text/plain; version=0.0.4; charset=utf-8";
+
+            Assert.NotNull(response.Content);
+            Assert.NotNull(response.Content.Headers.ContentType);
+            Assert.Equal(contentType, response.Content.Headers.ContentType.ToString());
 
             var additionalTags = meterTags is { Length: > 0 }
                 ? $"{string.Join(",", meterTags.Select(x => $"{x.Key}='{x.Value}'"))},"

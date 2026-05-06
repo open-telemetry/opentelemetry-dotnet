@@ -1,7 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Net.Http.Headers;
 using OpenTelemetry.Exporter.Prometheus;
@@ -15,13 +17,6 @@ namespace OpenTelemetry.Exporter;
 /// </summary>
 internal sealed class PrometheusExporterMiddleware
 {
-    private const string OpenMetricsEscapingScheme = "underscores";
-    private const string OpenMetricsMediaType = "application/openmetrics-text";
-    private const string OpenMetricsVersion = "1.0.0";
-    private const string OpenMetricsContentType = $"application/openmetrics-text; version={OpenMetricsVersion}; charset=utf-8; escaping={OpenMetricsEscapingScheme}";
-
-    private const string PrometheusTextMediaType = "text/plain";
-
     private readonly PrometheusExporter exporter;
 
     /// <summary>
@@ -49,11 +44,6 @@ internal sealed class PrometheusExporterMiddleware
         this.exporter = exporter;
     }
 
-    /// <summary>
-    /// Invoke.
-    /// </summary>
-    /// <param name="httpContext"> context.</param>
-    /// <returns>Task.</returns>
     public async Task InvokeAsync(HttpContext httpContext)
     {
         Debug.Assert(httpContext != null, "httpContext should not be null");
@@ -62,22 +52,20 @@ internal sealed class PrometheusExporterMiddleware
 
         try
         {
-            var openMetricsRequested = AcceptsOpenMetrics(httpContext.Request);
-            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(openMetricsRequested).ConfigureAwait(false);
+            var protocol = Negotiate(httpContext.Request);
+
+            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(protocol.IsOpenMetrics).ConfigureAwait(false);
 
             try
             {
-                var dataView = openMetricsRequested ? collectionResponse.OpenMetricsView : collectionResponse.PlainTextView;
+                var dataView = protocol.IsOpenMetrics ? collectionResponse.OpenMetricsView : collectionResponse.PlainTextView;
 
                 response.StatusCode = StatusCodes.Status200OK;
 
                 if (dataView.Count > 0)
                 {
                     response.Headers.Append("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
-
-                    response.ContentType = openMetricsRequested
-                        ? OpenMetricsContentType
-                        : "text/plain; charset=utf-8; version=0.0.4";
+                    response.ContentType = PrometheusProtocol.GetContentType(protocol);
 
                     await response.Body.WriteAsync(dataView.Array.AsMemory(0, dataView.Count)).ConfigureAwait(false);
                 }
@@ -102,65 +90,144 @@ internal sealed class PrometheusExporterMiddleware
         }
     }
 
-    internal static bool AcceptsOpenMetrics(HttpRequest request)
+    internal static PrometheusProtocol Negotiate(HttpRequest request)
     {
         var acceptHeader = request.GetTypedHeaders().Accept;
 
         if (acceptHeader is not { Count: > 0 })
         {
-            return false;
+            return PrometheusProtocol.Fallback;
         }
 
-        double? bestOpenMetricsQuality = null;
-        double? bestPrometheusQuality = null;
+        if (acceptHeader is { Count: 1 })
+        {
+            return TryParse(acceptHeader[0], out var protocol, out _)
+                ? protocol.GetValueOrDefault(PrometheusProtocol.Fallback)
+                : PrometheusProtocol.Fallback;
+        }
+
+        const int SupportedProtocols = 4;
+        var preferences = new PriorityQueue<PrometheusProtocol, double>(SupportedProtocols);
 
         foreach (var mediaType in acceptHeader)
         {
-            var quality = mediaType.Quality ?? 1.0;
-
-            if (quality is <= 0 or > 1)
+            if (TryParse(mediaType, out var protocol, out var quality))
             {
-                continue;
-            }
-
-            if (string.Equals(mediaType.MediaType.Value, OpenMetricsMediaType, StringComparison.OrdinalIgnoreCase) &&
-                HasSupportedOpenMetricsParameters(mediaType))
-            {
-                bestOpenMetricsQuality =
-                    bestOpenMetricsQuality is not { } comparison || quality > comparison ?
-                    quality :
-                    bestOpenMetricsQuality ?? quality;
-            }
-            else if (string.Equals(mediaType.MediaType.Value, PrometheusTextMediaType, StringComparison.OrdinalIgnoreCase))
-            {
-                bestPrometheusQuality =
-                    bestPrometheusQuality is not { } comparison || quality > comparison ?
-                    quality :
-                    bestPrometheusQuality ?? quality;
+                preferences.Enqueue(protocol.Value, -quality);
             }
         }
 
-        return bestOpenMetricsQuality is { } openMetricsQuality &&
-               (bestPrometheusQuality is not { } prometheusQuality || openMetricsQuality >= prometheusQuality);
+        // Use the first supported protocol that was parsed that has the highest quality factor
+        return preferences.TryDequeue(out var preferred, out _)
+            ? preferred
+            : PrometheusProtocol.Fallback;
     }
 
-    private static bool HasSupportedOpenMetricsParameters(MediaTypeHeaderValue value)
+    private static bool TryParse(
+        MediaTypeHeaderValue value,
+        [NotNullWhen(true)] out PrometheusProtocol? protocol,
+        out double quality)
     {
-        var hasSupportedOpenMetricsEscaping = true;
-        var hasSupportedOpenMetricsVersion = true;
+        protocol = null;
+        quality = default;
+
+        bool isOpenMetrics;
+        string mediaType;
+
+        var supportedEscapingSchemes = PrometheusProtocol.SupportedEscapingSchemes;
+        ImmutableHashSet<Version> supportedVersions;
+
+        if (string.Equals(value.MediaType.Value, PrometheusProtocol.OpenMetricsMediaType, StringComparison.OrdinalIgnoreCase))
+        {
+            isOpenMetrics = true;
+            mediaType = PrometheusProtocol.OpenMetricsMediaType;
+            supportedVersions = PrometheusProtocol.SupportedOpenMetricsVersions;
+        }
+        else if (string.Equals(value.MediaType.Value, PrometheusProtocol.PrometheusTextMediaType, StringComparison.OrdinalIgnoreCase))
+        {
+            isOpenMetrics = false;
+            mediaType = PrometheusProtocol.PrometheusTextMediaType;
+            supportedVersions = PrometheusProtocol.SupportedPrometheusVersions;
+        }
+        else
+        {
+            // Unsupported media type
+            return false;
+        }
+
+        // Quality ignores values greater than one and returns null so we cannot
+        // distinguish between an invalid quality and the quality not be provided.
+        // Default to a value of 0.99 so that an invalid quality value will be treated
+        // as a lower preference than a valid quality value of 1.0.
+        quality = value.Quality ?? 0.99;
+
+        if (quality <= 0)
+        {
+            return false;
+        }
+
+        string? escaping = null;
+        Version? version = null;
 
         foreach (var parameter in value.Parameters)
         {
             if (string.Equals(parameter.Name.Value, "version", StringComparison.OrdinalIgnoreCase))
             {
-                hasSupportedOpenMetricsVersion = string.Equals(parameter.Value.Value?.Trim('"'), OpenMetricsVersion, StringComparison.Ordinal);
+                if (Version.TryParse(parameter.Value.Value?.Trim('"'), out var parsedVersion) &&
+                    supportedVersions.Contains(parsedVersion))
+                {
+                    version = parsedVersion;
+                }
+                else
+                {
+                    // Unsupported version
+                    return false;
+                }
             }
             else if (string.Equals(parameter.Name.Value, "escaping", StringComparison.OrdinalIgnoreCase))
             {
-                hasSupportedOpenMetricsEscaping = string.Equals(parameter.Value.Value?.Trim('"'), OpenMetricsEscapingScheme, StringComparison.Ordinal);
+                var escapedValue = parameter.Value.Value?.Trim('"');
+
+                if (escapedValue == null || !supportedEscapingSchemes.Contains(escapedValue))
+                {
+                    // TODO Support other escaping schemes, including at least "allow-utf-8".
+                    // For now we treat "allow-utf-8" as if it were "underscores" to avoid fallback
+                    // to PrometheusText0.0.4 where it would previously match to OpenMetricsText1.0.0.
+                    // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/7246.
+                    if (string.Equals(escapedValue, PrometheusProtocol.AllowUtf8Escaping, StringComparison.Ordinal))
+                    {
+                        escaping = PrometheusProtocol.UnderscoresEscaping;
+                    }
+                    else
+                    {
+                        // Unsupported escaping scheme
+                        return false;
+                    }
+                }
+                else
+                {
+                    escaping = escapedValue;
+                }
             }
         }
 
-        return hasSupportedOpenMetricsVersion && hasSupportedOpenMetricsEscaping;
+        if (version is null)
+        {
+            // Use the oldest version if no version preference was specified
+            version = isOpenMetrics ? PrometheusProtocol.OpenMetricsV0 : PrometheusProtocol.PrometheusVersion0;
+        }
+        else if (version.Major is not > 0)
+        {
+            // From https://prometheus.io/docs/instrumenting/content_negotiation/#content-type-response:
+            // "The Content-Type header MUST include [...] For text formats version 1.0.0 and above, the escaping scheme parameter."
+            escaping = null;
+        }
+        else
+        {
+            escaping ??= PrometheusProtocol.UnderscoresEscaping;
+        }
+
+        protocol = new(mediaType, escaping, version, isOpenMetrics);
+        return true;
     }
 }
