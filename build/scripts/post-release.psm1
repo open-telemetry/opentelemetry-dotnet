@@ -567,7 +567,7 @@ function TryPostReleasePublishedNoticeOnPrepareReleasePullRequest {
   if ($prListResponse.Length -eq 0)
   {
     Write-Host 'No prepare release PR found for tag & commit skipping post notice'
-    return
+    return $null
   }
 
   foreach ($pr in $prListResponse)
@@ -602,7 +602,7 @@ Have a nice day!
     $pullRequestNumber = $pr.number
 
     gh pr comment $pullRequestNumber --body $body
-    return
+    return $pullRequestNumber
   }
 
   Write-Host 'No prepare release PR found matched author and title with a valid comment'

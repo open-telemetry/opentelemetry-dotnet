@@ -118,6 +118,7 @@ jobs:
 
     - name: Setup dotnet
       uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
+      id: setup-dotnet
 
     - name: Create GitHub Pull Request to update stable build version in props
       if: |
@@ -141,6 +142,7 @@ jobs:
           -gitUserEmail ${env:BOT_USER_EMAIL}
 
     - name: Post notice when release is published
+      id: post-notice
       shell: pwsh
       env:
         GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
@@ -150,8 +152,23 @@ jobs:
       run: |
         Import-Module .\build\scripts\post-release.psm1
 
-        TryPostReleasePublishedNoticeOnPrepareReleasePullRequest `
+        $prNumber = TryPostReleasePublishedNoticeOnPrepareReleasePullRequest `
           -gitRepository ${env:GITHUB_REPOSITORY} `
           -expectedPrAuthorUserName ${env:EXPECTED_PR_AUTHOR_USER_NAME} `
           -expectedCommentAuthorUserName ${env:EXPECTED_COMMENT_AUTHOR_USER_NAME} `
           -tag ${env:TAG}
+
+        "pr-number=${prNumber}" >> ${env:GITHUB_OUTPUT}
+
+    - name: Publish nuget_packages_published
+      if: steps.post-notice.outputs.pr-number != ''
+      uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 # v4.0.1
+      with:
+        event-type: nuget_packages_published
+        token: ${{ steps.otelbot-token.outputs.token }}
+        client-payload: |-
+          {
+            "dotnet_sdk_version": "${{ steps.setup-dotnet.outputs.dotnet-version }}",
+            "pull_request_number": "${{ steps.post-notice.outputs.pr-number }}",
+            "release_tag": "${{ inputs.tag || github.ref_name }}"
+          }
