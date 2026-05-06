@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Globalization;
 using System.Net;
 using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Internal;
@@ -258,12 +259,25 @@ internal sealed class PrometheusHttpListener : IDisposable
 
         try
         {
+            using var requestCancelled = new CancellationTokenSource();
+
+            int? scrapeTimeoutSeconds = null;
+            if (context.Request.Headers["X-Prometheus-Scrape-Timeout-Seconds"] is { Length: > 0 } value &&
+                int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var parsedValue) &&
+                parsedValue is > 0 and < int.MaxValue / 1_000)
+            {
+                scrapeTimeoutSeconds = parsedValue;
+                requestCancelled.CancelAfter(TimeSpan.FromSeconds(scrapeTimeoutSeconds.Value));
+            }
+
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(requestCancelled.Token, cancellationToken);
+
             var openMetricsRequested = AcceptsOpenMetrics(context.Request);
             var collectionResponse = await this.exporter.CollectionManager.EnterCollect(openMetricsRequested).ConfigureAwait(false);
 
             try
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                requestCancelled.Token.ThrowIfCancellationRequested();
 
                 context.Response.Headers.Add("Server", string.Empty);
 
@@ -278,9 +292,9 @@ internal sealed class PrometheusHttpListener : IDisposable
                         : "text/plain; charset=utf-8; version=0.0.4";
 
 #if NET
-                    await context.Response.OutputStream.WriteAsync(dataView.Array.AsMemory(0, dataView.Count), cancellationToken).ConfigureAwait(false);
+                    await context.Response.OutputStream.WriteAsync(dataView.Array.AsMemory(0, dataView.Count), linkedCts.Token).ConfigureAwait(false);
 #else
-                    await context.Response.OutputStream.WriteAsync(dataView.Array, 0, dataView.Count, cancellationToken).ConfigureAwait(false);
+                    await context.Response.OutputStream.WriteAsync(dataView.Array, 0, dataView.Count, linkedCts.Token).ConfigureAwait(false);
 #endif
                 }
                 else
@@ -289,6 +303,16 @@ internal sealed class PrometheusHttpListener : IDisposable
                     context.Response.StatusCode = 200;
                     PrometheusExporterEventSource.Log.NoMetrics();
                 }
+            }
+            catch (OperationCanceledException ex) when (ex.CancellationToken == requestCancelled.Token)
+            {
+                if (scrapeTimeoutSeconds is { } timeout)
+                {
+                    PrometheusExporterEventSource.Log.ScrapeTimedOut(timeout);
+                }
+
+                context.Response.StatusCode = 408;
+                context.Response.ContentLength64 = 0;
             }
             finally
             {
@@ -303,7 +327,6 @@ internal sealed class PrometheusHttpListener : IDisposable
         catch (Exception ex)
         {
             PrometheusExporterEventSource.Log.FailedExport(ex);
-
             context.Response.StatusCode = 500;
         }
 
