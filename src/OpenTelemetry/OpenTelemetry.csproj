@@ -39,6 +39,7 @@
     <InternalsVisibleTo Include="OpenTelemetry.Exporter.Prometheus.HttpListener.Tests" PublicKey="$(StrongNamePublicKey)" />
     <InternalsVisibleTo Include="OpenTelemetry.Extensions.Hosting" PublicKey="$(StrongNamePublicKey)" />
     <InternalsVisibleTo Include="OpenTelemetry.Extensions.Hosting.Tests" PublicKey="$(StrongNamePublicKey)" />
+    <InternalsVisibleTo Include="OpenTelemetry.FuzzTests" PublicKey="$(StrongNamePublicKey)" />
     <InternalsVisibleTo Include="OpenTelemetry.Tests" PublicKey="$(StrongNamePublicKey)" />
     <InternalsVisibleTo Include="OpenTelemetry.Tests.Stress.Metrics" PublicKey="$(StrongNamePublicKey)" />
     <InternalsVisibleTo Include="Benchmarks" PublicKey="$(StrongNamePublicKey)" />

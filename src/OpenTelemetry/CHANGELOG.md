@@ -14,6 +14,10 @@ Notes](../../RELEASENOTES.md).
   once per collection cycle.
   ([#7188](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7188))
 
+* **Breaking Change** Explicit histogram boundaries no longer allow more than
+  10 million values.
+  ([#7165](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7165))
+
 ## 1.15.3
 
 Released 2026-Apr-21

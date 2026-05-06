@@ -2,7 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+#if NET
+using System.Numerics;
+using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.Arm;
+using System.Runtime.Intrinsics.X86;
+#endif
 using System.Runtime.CompilerServices;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics;
 
@@ -10,37 +18,19 @@ internal sealed class HistogramExplicitBounds
 {
     internal const int DefaultBoundaryCountForBinarySearch = 50;
 
-    private readonly BucketLookupNode? bucketLookupTreeRoot;
-    private readonly Func<double, int> findHistogramBucketIndex;
+    private const int RadixLookupBitCount = 12;
+    private const int RadixLinearSearchThreshold = 32;
+
+    private readonly RadixBucketLookup? radixBucketLookup;
 
     public HistogramExplicitBounds(double[] bounds, double[]? displayBounds = null)
     {
         this.Bounds = CleanUpInfinitiesFromExplicitBounds(bounds);
         this.DisplayBounds = displayBounds != null ? CleanUpInfinitiesFromExplicitBounds(displayBounds) : null;
-        this.findHistogramBucketIndex = this.FindBucketIndexLinear;
 
         if (this.Bounds.Length >= DefaultBoundaryCountForBinarySearch)
         {
-            this.bucketLookupTreeRoot = ConstructBalancedBST(this.Bounds, 0, this.Bounds.Length);
-            this.findHistogramBucketIndex = this.FindBucketIndexBinary;
-
-            static BucketLookupNode? ConstructBalancedBST(double[] values, int min, int max)
-            {
-                if (min == max)
-                {
-                    return null;
-                }
-
-                var median = min + ((max - min) / 2);
-                return new BucketLookupNode
-                {
-                    Index = median,
-                    UpperBoundInclusive = values[median],
-                    LowerBoundExclusive = median > 0 ? values[median - 1] : double.NegativeInfinity,
-                    Left = ConstructBalancedBST(values, min, median),
-                    Right = ConstructBalancedBST(values, median + 1, max),
-                };
-            }
+            this.radixBucketLookup = new(this.Bounds);
         }
     }
 
@@ -56,8 +46,42 @@ internal sealed class HistogramExplicitBounds
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int FindBucketIndex(double value)
-        => this.findHistogramBucketIndex(value);
+    {
+        if (double.IsNaN(value))
+        {
+            return this.Bounds.Length;
+        }
 
+        if (this.Bounds.Length == 0)
+        {
+            return 0;
+        }
+
+        if (value <= this.Bounds[0])
+        {
+            return 0;
+        }
+
+        if (value > this.Bounds[this.Bounds.Length - 1])
+        {
+            return this.Bounds.Length;
+        }
+
+        if (this.radixBucketLookup != null)
+        {
+            (var start, var end) = this.radixBucketLookup.GetBucketSearchRange(value);
+
+            return start == end
+                ? start
+                : end - start > RadixLinearSearchThreshold
+                ? this.FindBucketIndexBinary(value, start, end)
+                : this.FindBucketIndexLinear(value, start, end);
+        }
+
+        return this.FindBucketIndexLinear(value, 0, this.Bounds.Length);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static double[] CleanUpInfinitiesFromExplicitBounds(double[] bounds)
     {
         for (var i = 0; i < bounds.Length; i++)
@@ -71,59 +95,209 @@ internal sealed class HistogramExplicitBounds
         return bounds;
     }
 
+#if NET
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private int FindBucketIndexBinary(double value)
+    private static int FindBucketIndexLinearSimd(ReadOnlySpan<double> bounds, double value)
     {
-        var current = this.bucketLookupTreeRoot;
+        var index = 0;
 
-        do
+        if (Avx.IsSupported && bounds.Length >= Vector256<double>.Count)
         {
-            if (value <= current!.LowerBoundExclusive)
+            ref var searchSpace = ref MemoryMarshal.GetReference(bounds);
+            var valueVector = Vector256.Create(value);
+            var lastStart = bounds.Length - Vector256<double>.Count;
+
+            while (index <= lastStart)
             {
-                current = current.Left;
+                var boundsVector = Vector256.LoadUnsafe(ref searchSpace, (nuint)index);
+                var compare = Avx.CompareLessThanOrEqual(valueVector, boundsVector);
+                var mask = Avx.MoveMask(compare);
+
+                if (mask != 0)
+                {
+                    return index + BitOperations.TrailingZeroCount((uint)mask);
+                }
+
+                index += Vector256<double>.Count;
             }
-            else if (value > current.UpperBoundInclusive)
+        }
+        else if (Sse2.IsSupported && bounds.Length >= Vector128<double>.Count)
+        {
+            ref var searchSpace = ref MemoryMarshal.GetReference(bounds);
+            var valueVector = Vector128.Create(value);
+            var lastStart = bounds.Length - Vector128<double>.Count;
+
+            while (index <= lastStart)
             {
-                current = current.Right;
+                var boundsVector = Vector128.LoadUnsafe(ref searchSpace, (nuint)index);
+                var compare = Sse2.CompareLessThanOrEqual(valueVector, boundsVector);
+                var mask = Sse2.MoveMask(compare);
+
+                if (mask != 0)
+                {
+                    return index + BitOperations.TrailingZeroCount((uint)mask);
+                }
+
+                index += Vector128<double>.Count;
+            }
+        }
+        else if (AdvSimd.Arm64.IsSupported && bounds.Length >= Vector128<double>.Count)
+        {
+            ref var searchSpace = ref MemoryMarshal.GetReference(bounds);
+            var valueVector = Vector128.Create(value);
+            var lastStart = bounds.Length - Vector128<double>.Count;
+
+            while (index <= lastStart)
+            {
+                var boundsVector = Vector128.LoadUnsafe(ref searchSpace, (nuint)index);
+                var compare = AdvSimd.Arm64.CompareLessThanOrEqual(valueVector, boundsVector).AsUInt64();
+
+                if (compare.GetElement(0) != 0)
+                {
+                    return index;
+                }
+
+                if (compare.GetElement(1) != 0)
+                {
+                    return index + 1;
+                }
+
+                index += Vector128<double>.Count;
+            }
+        }
+
+        for (; index < bounds.Length; index++)
+        {
+            if (value <= bounds[index])
+            {
+                return index;
+            }
+        }
+
+        return -1;
+    }
+#endif
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static ulong ToSortableBits(double value)
+    {
+        var bits = (ulong)BitConverter.DoubleToInt64Bits(value);
+        return (bits & 0x8000_0000_0000_0000UL) == 0
+            ? bits ^ 0x8000_0000_0000_0000UL
+            : ~bits;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private int FindBucketIndexBinary(double value, int start, int end)
+    {
+        var bounds = this.Bounds;
+        var left = start;
+        var right = end - 1;
+
+        while (left <= right)
+        {
+            var middle = left + ((right - left) / 2);
+
+            if (value <= bounds[middle])
+            {
+                right = middle - 1;
             }
             else
             {
-                return current.Index;
+                left = middle + 1;
             }
         }
-        while (current != null);
 
-        Debug.Assert(this.Bounds != null, "ExplicitBounds was null.");
-
-        return this.Bounds!.Length;
+        return left;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private int FindBucketIndexLinear(double value)
+    private int FindBucketIndexLinear(double value, int start, int end)
     {
-        int i;
-        for (i = 0; i < this.Bounds.Length; i++)
+#if NET
+        if (!double.IsNaN(value))
+        {
+            var index = FindBucketIndexLinearSimd(this.Bounds.AsSpan(start, end - start), value);
+            if (index >= 0)
+            {
+                return start + index;
+            }
+        }
+#endif
+
+        var bounds = this.Bounds;
+
+        for (var i = start; i < end; i++)
         {
             // Upper bound is inclusive
-            if (value <= this.Bounds[i])
+            if (value <= bounds[i])
             {
-                break;
+                return i;
             }
         }
 
-        return i;
+        return end;
     }
 
-    private sealed class BucketLookupNode
+    private sealed class RadixBucketLookup
     {
-        public double UpperBoundInclusive { get; set; }
+        private readonly int[] bucketSearchStarts;
+        private readonly int keyMask;
+        private readonly int shift;
 
-        public double LowerBoundExclusive { get; set; }
+        public RadixBucketLookup(double[] bounds)
+        {
+            Debug.Assert(bounds.Length > 0, "bounds was empty");
 
-        public int Index { get; set; }
+            var firstKey = ToSortableBits(bounds[0]);
+            var lastKey = ToSortableBits(bounds[bounds.Length - 1]);
+            var commonPrefixLength = MathHelper.LeadingZero64((long)(firstKey ^ lastKey));
+            var radixBits = Math.Min(RadixLookupBitCount, 64 - commonPrefixLength);
 
-        public BucketLookupNode? Left { get; set; }
+            if (radixBits == 0)
+            {
+                this.bucketSearchStarts = [0, bounds.Length];
+                this.keyMask = 0;
+                this.shift = 0;
+            }
+            else
+            {
+                var bucketCount = 1 << radixBits;
+                this.bucketSearchStarts = new int[bucketCount + 1];
+                this.keyMask = bucketCount - 1;
+                this.shift = 64 - commonPrefixLength - radixBits;
 
-        public BucketLookupNode? Right { get; set; }
+                var boundaryIndex = 0;
+
+                for (var key = 0; key < bucketCount; key++)
+                {
+                    this.bucketSearchStarts[key] = boundaryIndex;
+
+                    while (boundaryIndex < bounds.Length && this.GetKey(ToSortableBits(bounds[boundaryIndex])) == key)
+                    {
+                        boundaryIndex++;
+                    }
+                }
+
+                this.bucketSearchStarts[bucketCount] = bounds.Length;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public (int Start, int End) GetBucketSearchRange(double value)
+        {
+            if (double.IsNaN(value))
+            {
+                var end = this.bucketSearchStarts[this.bucketSearchStarts.Length - 1];
+                return (end, end);
+            }
+
+            var key = this.GetKey(ToSortableBits(value));
+            return (this.bucketSearchStarts[key], this.bucketSearchStarts[key + 1]);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private int GetKey(ulong sortableBits)
+            => this.keyMask == 0 ? 0 : (int)((sortableBits >> this.shift) & (uint)this.keyMask);
     }
 }
