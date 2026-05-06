@@ -954,12 +954,14 @@ public class BaggagePropagatorTests
         Assert.DoesNotContain("\u00E9", carrier[BaggagePropagator.BaggageHeaderName], StringComparison.Ordinal);
     }
 
-    [Fact]
-    public void RoundTripNonAsciiValuePreservesOriginalString()
+    [Theory]
+    [InlineData("caf\u00E9")]
+    [InlineData("emoji-\U0001F600")]
+    public void RoundTripNonAsciiValuePreservesOriginalString(string value)
     {
         var propagationContext = new PropagationContext(
             default,
-            new Baggage(new Dictionary<string, string> { { "key", "caf\u00E9" } }));
+            new Baggage(new Dictionary<string, string> { { "key", value } }));
 
         var carrier = new Dictionary<string, string>();
         this.baggage.Inject(propagationContext, carrier, Setter);
@@ -967,13 +969,14 @@ public class BaggagePropagatorTests
         var extracted = this.baggage.Extract(default, carrier, Getter).Baggage.GetBaggage();
         var entry = Assert.Single(extracted);
         Assert.Equal("key", entry.Key);
-        Assert.Equal("caf\u00E9", entry.Value);
+        Assert.Equal(value, entry.Value);
     }
 
     [Theory]
     [InlineData("\u00E9", "%C3%A9")]
     [InlineData("\u4E2D", "%E4%B8%AD")]
     [InlineData("\u00A3", "%C2%A3")]
+    [InlineData("\U0001F600", "%F0%9F%98%80")]
     public void ValidateNonAsciiUtf8EncodingIsCorrect(string character, string expectedEncoding)
     {
         var propagationContext = new PropagationContext(

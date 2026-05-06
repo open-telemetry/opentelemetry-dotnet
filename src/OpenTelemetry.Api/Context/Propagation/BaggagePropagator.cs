@@ -290,39 +290,79 @@ public class BaggagePropagator : TextMapPropagator
 #endif
 
         var sb = new StringBuilder(value.Length);
+
 #if NET
         Span<byte> utf8Buffer = stackalloc byte[4];
-#endif
-        foreach (var c in value)
+        foreach (var rune in value.EnumerateRunes())
         {
-            var shouldEncode = isKey ? !IsValidKey(c) : !IsValidValueChar(c);
-            if (shouldEncode)
+            if (rune.IsAscii)
             {
-                if (!isKey && c > '\x7F')
+                var c = (char)rune.Value;
+                if (isKey ? !IsValidKey(c) : !IsValidValueChar(c))
                 {
-#if NET
-                    var byteCount = Encoding.UTF8.GetBytes(new ReadOnlySpan<char>(in c), utf8Buffer);
-                    foreach (var b in utf8Buffer[..byteCount])
-                    {
-                        AppendPercentEncoded(sb, b);
-                    }
-#else
-                    foreach (var b in Encoding.UTF8.GetBytes(c.ToString()))
-                    {
-                        AppendPercentEncoded(sb, b);
-                    }
-#endif
+                    AppendPercentEncoded(sb, (byte)c);
                 }
                 else
                 {
-                    AppendPercentEncoded(sb, (byte)c);
+                    sb.Append(c);
                 }
             }
             else
             {
-                sb.Append(c);
+                // Non-ASCII rune: always encode as UTF-8 bytes.
+                // This correctly handles non-BMP scalar values (emoji, etc.)
+                // because Rune represents the full codepoint, not a surrogate half.
+                var byteCount = rune.EncodeToUtf8(utf8Buffer);
+                foreach (var b in utf8Buffer[..byteCount])
+                {
+                    AppendPercentEncoded(sb, b);
+                }
             }
         }
+#else
+        var i = 0;
+        while (i < value.Length)
+        {
+            var c = value[i];
+
+            if (char.IsHighSurrogate(c) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
+            {
+                // Non-BMP pair: encode both chars as one UTF-8 sequence.
+                // Passing the pair to Encoding.UTF8 produces the correct 4-byte result
+                // rather than two replacement characters.
+                foreach (var b in Encoding.UTF8.GetBytes(new string(new[] { c, value[i + 1] })))
+                {
+                    AppendPercentEncoded(sb, b);
+                }
+
+                i += 2;
+            }
+            else
+            {
+                var shouldEncode = isKey ? !IsValidKey(c) : !IsValidValueChar(c);
+                if (shouldEncode)
+                {
+                    if (c > '\x7F')
+                    {
+                        foreach (var b in Encoding.UTF8.GetBytes(c.ToString()))
+                        {
+                            AppendPercentEncoded(sb, b);
+                        }
+                    }
+                    else
+                    {
+                        AppendPercentEncoded(sb, (byte)c);
+                    }
+                }
+                else
+                {
+                    sb.Append(c);
+                }
+
+                i++;
+            }
+        }
+#endif
 
         return sb.ToString();
     }
