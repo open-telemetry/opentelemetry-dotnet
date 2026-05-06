@@ -240,7 +240,7 @@ public class EnvironmentVariableCarrierTests
     {
         var baggage = Baggage.Create(new Dictionary<string, string>
         {
-            ["key 1"] = "value 1",
+            ["key1"] = "value 1", // space is not a valid token char in keys refer to #7051
             ["key2"] = "value2",
         });
 
@@ -252,7 +252,7 @@ public class EnvironmentVariableCarrierTests
 
         var extracted = propagator.Extract(default, EnvironmentVariableCarrier.Capture(carrier), EnvironmentVariableCarrier.Get);
 
-        Assert.Equal("key+1=value+1,key2=value2", carrier["BAGGAGE"]);
+        Assert.Equal("key1=value%201,key2=value2", carrier["BAGGAGE"]);
         AssertBaggageEqual(baggage.GetBaggage(), extracted.Baggage.GetBaggage());
     }
 
