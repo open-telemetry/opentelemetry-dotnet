@@ -37,12 +37,13 @@ public sealed class LogRecordThreadStaticPoolTests
     public void ClearTests()
     {
         var logRecord1 = LogRecordThreadStaticPool.Instance.Rent();
-        logRecord1.AttributeStorage = new List<KeyValuePair<string, object?>>(16)
-        {
+        logRecord1.AttributeStorage =
+        [
+            with(16),
             new("key1", "value1"),
             new("key2", "value2"),
-        };
-        logRecord1.ScopeStorage = new List<object?>(8) { null, null };
+        ];
+        logRecord1.ScopeStorage = [with(8), null, null];
 
         LogRecordThreadStaticPool.Instance.Return(logRecord1);
 

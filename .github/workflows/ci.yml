@@ -123,7 +123,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [ net8.0, net9.0, net10.0 ]
+        version: [ net10.0, net11.0 ]
     env:
       FRAMEWORK_VERSION: ${{ matrix.version }}
     steps:
@@ -145,7 +145,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [ net8.0, net9.0, net10.0 ]
+        version: [ net10.0, net11.0 ]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Run W3C Trace Context docker compose
@@ -177,13 +177,13 @@ jobs:
     - name: Run benchmarks
       shell: pwsh
       run: |
-        $runtimes = @("net10.0")
+        $runtimes = @("net11.0")
         if ($IsWindows) {
           $runtimes += "net462"
         }
         dotnet run `
           --configuration Release `
-          --framework net10.0 `
+          --framework net11.0 `
           --project ./test/Benchmarks `
           -- `
           --filter "*SamplerBenchmarks*" `

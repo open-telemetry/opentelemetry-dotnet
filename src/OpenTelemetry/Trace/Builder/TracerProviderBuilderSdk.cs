@@ -33,7 +33,7 @@ internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerP
 
     public List<string> Sources { get; } = [];
 
-    public HashSet<string> LegacyActivityOperationNames { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public HashSet<string> LegacyActivityOperationNames { get; } = [with(StringComparer.OrdinalIgnoreCase)];
 
     public Sampler? Sampler { get; private set; }
 
