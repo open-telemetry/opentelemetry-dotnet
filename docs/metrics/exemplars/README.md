@@ -131,6 +131,11 @@ var meterProvider = Sdk.CreateMeterProviderBuilder()
     ...
 ```
 
+Exemplars do not require a separate instrumentation API. Continue using the
+regular `System.Diagnostics.Metrics` instrument APIs; when exemplar filtering
+is enabled and backend support exists, the SDK/export path attaches exemplars
+automatically. For regular API usage, see [Metrics API](../README.md#metrics-api).
+
 For more details about the `SetExemplarFilter` API see: [Customizing
 OpenTelemetry .NET SDK for Metrics >
 ExemplarFilter](../customizing-the-sdk/README.md#exemplarfilter).
@@ -148,7 +153,7 @@ The Exemplars appear as special "diamond shaped dots" along with the metric
 charts in the UI. Select any exemplar to see the exemplar data, which includes
 the timestamp when the measurement was recorded, the raw value, and trace
 context when the recording was done. The "trace_id" enables jumping to the
-tracing backed (Jaeger in this case). Click on the "Query with Jaeger" button
+tracing backend (Jaeger in this case). Click on the "Query with Jaeger" button
 next to the "trace_id" field to open the corresponding trace in Jaeger.
 
 ![Navigate to trace with
