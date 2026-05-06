@@ -52,7 +52,8 @@ Notes](../../RELEASENOTES.md).
 * Add support for configuring the HTTP listener endpoint host and port using
   the `OTEL_EXPORTER_PROMETHEUS_HOST` and `OTEL_EXPORTER_PROMETHEUS_PORT`
   environment variables.
-  ([#7167](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7167))
+  ([#7167](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7167),
+  [#7255](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7255))
 
 * Fix Prometheus/OpenMetrics serialization to emit metric and label names
   containing and `_` instead of dropping them and prefixing leading digits.
