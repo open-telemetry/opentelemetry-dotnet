@@ -236,6 +236,7 @@ internal sealed class PrometheusCollectionManager
                 cursor = this.WriteTargetInfo(ref buffer);
 
                 this.scopes.Clear();
+                var scopeInfoMetadataWritten = false;
 
                 foreach (var metric in metrics)
                 {
@@ -244,13 +245,19 @@ internal sealed class PrometheusCollectionManager
                         continue;
                     }
 
-                    if (this.scopes.Add(metric.MeterName))
+                    if (this.scopes.Add(PrometheusSerializer.CreateScopeIdentity(metric)))
                     {
                         while (true)
                         {
                             try
                             {
-                                cursor = PrometheusSerializer.WriteScopeInfo(buffer, cursor, metric.MeterName, openMetricsRequested: true);
+                                if (!scopeInfoMetadataWritten)
+                                {
+                                    cursor = PrometheusSerializer.WriteScopeInfoMetadata(buffer, cursor);
+                                    scopeInfoMetadataWritten = true;
+                                }
+
+                                cursor = PrometheusSerializer.WriteScopeInfoMetric(buffer, cursor, metric);
 
                                 break;
                             }

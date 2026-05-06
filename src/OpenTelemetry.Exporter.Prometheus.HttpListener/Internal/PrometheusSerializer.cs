@@ -1,9 +1,13 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if NET
+using System.Collections.Immutable;
+#endif
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Text;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -20,6 +24,12 @@ internal static partial class PrometheusSerializer
     private const byte ASCII_REVERSE_SOLIDUS = 0x5C; // '\\'
     private const byte ASCII_LINEFEED = 0x0A; // `\n`
 #pragma warning restore SA1310 // Field name should not contain an underscore
+
+#if NET
+    private static readonly ImmutableHashSet<string> ReservedScopeLabelNames = ["otel_scope_name", "otel_scope_schema_url", "otel_scope_version"];
+#else
+    private static readonly HashSet<string> ReservedScopeLabelNames = ["otel_scope_name", "otel_scope_schema_url", "otel_scope_version"];
+#endif
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteDouble(byte[] buffer, int cursor, double value)
@@ -204,52 +214,6 @@ internal static partial class PrometheusSerializer
         buffer[cursor++] = unchecked((byte)'"');
 
         return cursor;
-
-        static string GetLabelValueString(object? labelValue)
-        {
-            // TODO: Attribute values should be written as their JSON representation. Extra logic may need to be added here to correctly convert other .NET types.
-            // More detail: https://github.com/open-telemetry/opentelemetry-dotnet/issues/4822#issuecomment-1707328495
-            if (labelValue is bool booleanValue)
-            {
-                return booleanValue ? "true" : "false";
-            }
-            else if (labelValue is double doubleValue)
-            {
-                return DoubleToString(doubleValue);
-            }
-            else if (labelValue is float floatValue)
-            {
-                return DoubleToString(floatValue);
-            }
-
-            return labelValue?.ToString() ?? string.Empty;
-
-            static string DoubleToString(double value)
-            {
-                // From https://prometheus.io/docs/specs/om/open_metrics_spec/#considerations-canonical-numbers:
-                // A warning to implementers in C and other languages that share its printf implementation:
-                // The standard precision of %f, %e and %g is only six significant digits. 17 significant
-                // digits are required for full precision, e.g. printf("%.17g", d).
-                if (MathHelper.IsFinite(value))
-                {
-                    return value.ToString("G17", CultureInfo.InvariantCulture);
-                }
-                else if (double.IsPositiveInfinity(value))
-                {
-                    return "+Inf";
-                }
-                else if (double.IsNegativeInfinity(value))
-                {
-                    return "-Inf";
-                }
-                else
-                {
-                    // See https://prometheus.io/docs/instrumenting/exposition_formats/#comments-help-text-and-type-information
-                    Debug.Assert(double.IsNaN(value), $"{nameof(value)} should be NaN.");
-                    return "NaN";
-                }
-            }
-        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -422,23 +386,34 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteScopeInfo(byte[] buffer, int cursor, string scopeName, bool openMetricsRequested)
+    public static int WriteScopeInfo(byte[] buffer, int cursor, Metric metric)
     {
-        if (string.IsNullOrEmpty(scopeName))
+        cursor = WriteScopeInfoMetadata(buffer, cursor);
+        return WriteScopeInfoMetric(buffer, cursor, metric);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int WriteScopeInfoMetadata(byte[] buffer, int cursor)
+    {
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# TYPE otel_scope info");
+        buffer[cursor++] = ASCII_LINEFEED;
+
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# HELP otel_scope Scope metadata");
+        buffer[cursor++] = ASCII_LINEFEED;
+
+        return cursor;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int WriteScopeInfoMetric(byte[] buffer, int cursor, Metric metric)
+    {
+        if (string.IsNullOrEmpty(metric.MeterName))
         {
             return cursor;
         }
 
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# TYPE otel_scope_info info");
-        buffer[cursor++] = ASCII_LINEFEED;
-
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# HELP otel_scope_info Scope metadata");
-        buffer[cursor++] = ASCII_LINEFEED;
-
         cursor = WriteAsciiStringNoEscape(buffer, cursor, "otel_scope_info");
-        buffer[cursor++] = unchecked((byte)'{');
-        cursor = WriteLabel(buffer, cursor, "otel_scope_name", scopeName, openMetricsRequested);
-        buffer[cursor++] = unchecked((byte)'}');
+        cursor = WriteScopeLabels(buffer, cursor, metric, openMetricsRequested: true);
         buffer[cursor++] = unchecked((byte)' ');
         buffer[cursor++] = unchecked((byte)'1');
         buffer[cursor++] = ASCII_LINEFEED;
@@ -460,33 +435,27 @@ internal static partial class PrometheusSerializer
             buffer[cursor++] = unchecked((byte)'{');
         }
 
-        cursor = WriteLabel(buffer, cursor, "otel_scope_name", metric.MeterName, openMetricsRequested);
-        buffer[cursor++] = unchecked((byte)',');
-
-        if (!string.IsNullOrEmpty(metric.MeterVersion))
-        {
-            cursor = WriteLabel(buffer, cursor, "otel_scope_version", metric.MeterVersion, openMetricsRequested);
-            buffer[cursor++] = unchecked((byte)',');
-        }
-
-        if (metric.MeterTags != null)
-        {
-            foreach (var tag in metric.MeterTags)
-            {
-                cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value, openMetricsRequested);
-                buffer[cursor++] = unchecked((byte)',');
-            }
-        }
+        var wroteLabel = false;
+        cursor = WriteScopeLabels(buffer, cursor, metric, openMetricsRequested, ref wroteLabel);
 
         foreach (var tag in tags)
         {
+            if (wroteLabel)
+            {
+                buffer[cursor++] = unchecked((byte)',');
+            }
+
             cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value, openMetricsRequested);
-            buffer[cursor++] = unchecked((byte)',');
+            wroteLabel = true;
         }
 
         if (writeEnclosingBraces)
         {
-            buffer[cursor - 1] = unchecked((byte)'}'); // Note: We write the '}' over the last written comma, which is extra.
+            buffer[cursor++] = unchecked((byte)'}');
+        }
+        else if (wroteLabel)
+        {
+            buffer[cursor++] = unchecked((byte)',');
         }
 
         return cursor;
@@ -522,6 +491,202 @@ internal static partial class PrometheusSerializer
         buffer[cursor++] = unchecked((byte)' ');
         buffer[cursor++] = unchecked((byte)'1');
         buffer[cursor++] = ASCII_LINEFEED;
+
+        return cursor;
+    }
+
+    internal static string CreateScopeIdentity(Metric metric)
+    {
+        var scopeLabels = new List<KeyValuePair<string, string>>(3)
+        {
+            new("otel_scope_name", GetLabelValueString(metric.MeterName)),
+        };
+
+        if (!string.IsNullOrEmpty(metric.MeterVersion))
+        {
+            scopeLabels.Add(new("otel_scope_version", GetLabelValueString(metric.MeterVersion)));
+        }
+
+        if (!string.IsNullOrEmpty(metric.MeterSchemaUrl))
+        {
+            scopeLabels.Add(new("otel_scope_schema_url", GetLabelValueString(metric.MeterSchemaUrl)));
+        }
+
+        if (metric.MeterTags != null)
+        {
+            foreach (var tag in metric.MeterTags)
+            {
+                if (TryCreateScopeLabel(tag, out var scopeLabel))
+                {
+                    scopeLabels.Add(scopeLabel);
+                }
+            }
+        }
+
+        scopeLabels.Sort(static (x, y) =>
+        {
+            var keyCompare = string.CompareOrdinal(x.Key, y.Key);
+            return keyCompare != 0 ? keyCompare : string.CompareOrdinal(x.Value, y.Value);
+        });
+
+        var builder = new StringBuilder();
+
+        foreach (var scopeLabel in scopeLabels)
+        {
+            builder.Append('\0')
+                   .Append(scopeLabel.Key)
+                   .Append('\0')
+                   .Append(scopeLabel.Value);
+        }
+
+        return builder.ToString();
+    }
+
+    private static int WriteScopeLabels(byte[] buffer, int cursor, Metric metric, bool openMetricsRequested)
+    {
+        buffer[cursor++] = unchecked((byte)'{');
+        var wroteLabel = false;
+
+        cursor = WriteScopeLabels(buffer, cursor, metric, openMetricsRequested, ref wroteLabel);
+
+        buffer[cursor++] = unchecked((byte)'}');
+        return cursor;
+    }
+
+    private static int WriteScopeLabels(byte[] buffer, int cursor, Metric metric, bool openMetricsRequested, ref bool wroteLabel)
+    {
+        cursor = WriteScopeLabel(buffer, cursor, "otel_scope_name", metric.MeterName, openMetricsRequested, ref wroteLabel);
+
+        if (!string.IsNullOrEmpty(metric.MeterVersion))
+        {
+            cursor = WriteScopeLabel(buffer, cursor, "otel_scope_version", metric.MeterVersion, openMetricsRequested, ref wroteLabel);
+        }
+
+        if (!string.IsNullOrEmpty(metric.MeterSchemaUrl))
+        {
+            cursor = WriteScopeLabel(buffer, cursor, "otel_scope_schema_url", metric.MeterSchemaUrl, openMetricsRequested, ref wroteLabel);
+        }
+
+        if (metric.MeterTags != null)
+        {
+            foreach (var tag in metric.MeterTags)
+            {
+                if (TryCreateScopeLabel(tag, out var scopeLabel))
+                {
+                    cursor = WriteScopeLabel(buffer, cursor, scopeLabel.Key, scopeLabel.Value, openMetricsRequested, ref wroteLabel);
+                }
+            }
+        }
+
+        return cursor;
+    }
+
+    private static string GetLabelValueString(object? labelValue)
+    {
+        // TODO: Attribute values should be written as their JSON representation. Extra logic may need to be added here to correctly convert other .NET types.
+        // More detail: https://github.com/open-telemetry/opentelemetry-dotnet/issues/4822#issuecomment-1707328495
+        if (labelValue is bool booleanValue)
+        {
+            return booleanValue ? "true" : "false";
+        }
+        else if (labelValue is double doubleValue)
+        {
+            return DoubleToString(doubleValue);
+        }
+        else if (labelValue is float floatValue)
+        {
+            return DoubleToString(floatValue);
+        }
+
+        return labelValue?.ToString() ?? string.Empty;
+
+        static string DoubleToString(double value)
+        {
+            // From https://prometheus.io/docs/specs/om/open_metrics_spec/#considerations-canonical-numbers:
+            // A warning to implementers in C and other languages that share its printf implementation:
+            // The standard precision of %f, %e and %g is only six significant digits. 17 significant
+            // digits are required for full precision, e.g. printf("%.17g", d).
+            if (MathHelper.IsFinite(value))
+            {
+                return value.ToString("G17", CultureInfo.InvariantCulture);
+            }
+            else if (double.IsPositiveInfinity(value))
+            {
+                return "+Inf";
+            }
+            else if (double.IsNegativeInfinity(value))
+            {
+                return "-Inf";
+            }
+            else
+            {
+                // See https://prometheus.io/docs/instrumenting/exposition_formats/#comments-help-text-and-type-information
+                Debug.Assert(double.IsNaN(value), $"{nameof(value)} should be NaN.");
+                return "NaN";
+            }
+        }
+    }
+
+    private static string NormalizeLabelKey(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return "_";
+        }
+
+        var builder = new StringBuilder(value.Length + 1);
+        var lastCharUnderscore = false;
+
+        if (char.IsAsciiDigit(value[0]))
+        {
+            builder.Append('_');
+            lastCharUnderscore = true;
+        }
+
+        for (var i = 0; i < value.Length; i++)
+        {
+            var ch = value[i];
+            if (!IsAllowedMetricsLabelCharacter(ch))
+            {
+                if (!lastCharUnderscore)
+                {
+                    builder.Append('_');
+                    lastCharUnderscore = true;
+                }
+
+                continue;
+            }
+
+            builder.Append(ch);
+            lastCharUnderscore = ch == '_';
+        }
+
+        return builder.ToString();
+    }
+
+    private static bool TryCreateScopeLabel(KeyValuePair<string, object?> tag, out KeyValuePair<string, string> scopeLabel)
+    {
+        var labelKey = NormalizeLabelKey($"otel_scope_{tag.Key}");
+
+        if (ReservedScopeLabelNames.Contains(labelKey))
+        {
+            scopeLabel = default;
+            return false;
+        }
+
+        scopeLabel = new(labelKey, GetLabelValueString(tag.Value));
+        return true;
+    }
+
+    private static int WriteScopeLabel(byte[] buffer, int cursor, string key, object? value, bool openMetricsRequested, ref bool wroteLabel)
+    {
+        if (wroteLabel)
+        {
+            buffer[cursor++] = unchecked((byte)',');
+        }
+
+        cursor = WriteLabel(buffer, cursor, key, value, openMetricsRequested);
+        wroteLabel = true;
 
         return cursor;
     }

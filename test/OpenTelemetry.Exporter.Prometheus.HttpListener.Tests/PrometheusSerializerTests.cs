@@ -918,17 +918,210 @@ public sealed class PrometheusSerializerTests
     public void ScopeInfo()
     {
         var buffer = new byte[85000];
+        var metrics = new List<Metric>();
 
-        var cursor = PrometheusSerializer.WriteScopeInfo(buffer, 0, "test_meter", openMetricsRequested: true);
+        using var meter = new Meter("test_meter", "1.0.0", [new("library.mascot", "dotnetbot")], scope: null);
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        meter.CreateObservableGauge("test_gauge", () => 1);
+
+        provider.ForceFlush();
+
+        var cursor = PrometheusSerializer.WriteScopeInfo(buffer, 0, metrics[0]);
 
         Assert.Matches(
             ("^"
-             + "# TYPE otel_scope_info info\n"
-             + "# HELP otel_scope_info Scope metadata\n"
-             + "otel_scope_info{otel_scope_name='test_meter'} 1\n"
+             + "# TYPE otel_scope info\n"
+             + "# HELP otel_scope Scope metadata\n"
+             + "otel_scope_info{otel_scope_name='test_meter',otel_scope_version='1.0.0',otel_scope_library_mascot='dotnetbot'} 1\n"
              + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
+
+    [Fact]
+    public void WriteMetricPrefixesScopeAttributesAndDropsConflictingScopeAttributeNames()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+#if NET
+        using var meter = new Meter(
+            new MeterOptions("test_meter")
+            {
+                Version = "1.0.0",
+                TelemetrySchemaUrl = "https://opentelemetry.io/schemas/1.0.0",
+                Tags =
+                [
+                    new("library.mascot", "dotnetbot"),
+                    new("name", "ignored-name"),
+                    new("version", "ignored-version"),
+                    new("schema_url", "ignored-schema"),
+                ],
+            });
+#else
+        using var meter = new Meter(
+            name: "test_meter",
+            version: "1.0.0",
+            tags:
+            [
+                new("library.mascot", "dotnetbot"),
+                new("name", "ignored-name"),
+                new("version", "ignored-version"),
+                new("schema_url", "ignored-schema"),
+            ]);
+#endif
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        meter.CreateObservableGauge<long>(
+            "test_gauge",
+            () => [new Measurement<long>(123, new KeyValuePair<string, object?>("metric_tag", "value"))]);
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0], false);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        Assert.Contains("otel_scope_library_mascot=\"dotnetbot\"", output, StringComparison.Ordinal);
+        Assert.Contains("metric_tag=\"value\"", output, StringComparison.Ordinal);
+        Assert.DoesNotContain("otel_scope_name=\"ignored-name\"", output, StringComparison.Ordinal);
+        Assert.DoesNotContain("otel_scope_version=\"ignored-version\"", output, StringComparison.Ordinal);
+#if NET
+        Assert.Contains("otel_scope_schema_url=\"https://opentelemetry.io/schemas/1.0.0\"", output, StringComparison.Ordinal);
+#endif
+        Assert.DoesNotContain("otel_scope_schema_url=\"ignored-schema\"", output, StringComparison.Ordinal);
+    }
+
+#if NET
+    [Fact]
+    public void WriteMetricDropsScopeAttributesWhoseNormalizedNamesConflictWithGeneratedScopeLabels()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter(
+            new MeterOptions("test_meter")
+            {
+                Version = "1.0.0",
+                TelemetrySchemaUrl = "https://opentelemetry.io/schemas/1.0.0",
+                Tags =
+                [
+                    new("library.mascot", "dotnetbot"),
+                    new("schema-url", "ignored-schema"),
+                ],
+            });
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        meter.CreateObservableGauge<long>(
+            "test_gauge",
+            () => [new Measurement<long>(123, new KeyValuePair<string, object?>("metric_tag", "value"))]);
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0], false);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        Assert.Contains("otel_scope_schema_url=\"https://opentelemetry.io/schemas/1.0.0\"", output, StringComparison.Ordinal);
+        Assert.DoesNotContain("otel_scope_schema_url=\"ignored-schema\"", output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void WriteMetricDropsScopeAttributesWhoseNormalizedNamesConflictWithGeneratedScopeNameAndVersionLabels()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter(
+            new MeterOptions("test_meter")
+            {
+                Version = "1.0.0",
+                Tags =
+                [
+                    new("na-me", "ignored-name"),
+                    new("ver-sion", "ignored-version"),
+                    new("library.mascot", "dotnetbot"),
+                ],
+            });
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        meter.CreateObservableGauge<long>(
+            "test_gauge",
+            () => [new Measurement<long>(123, new KeyValuePair<string, object?>("metric_tag", "value"))]);
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0], false);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        Assert.Contains("otel_scope_name=\"test_meter\"", output, StringComparison.Ordinal);
+        Assert.Contains("otel_scope_version=\"1.0.0\"", output, StringComparison.Ordinal);
+        Assert.Contains("otel_scope_library_mascot=\"dotnetbot\"", output, StringComparison.Ordinal);
+        Assert.DoesNotContain("otel_scope_name=\"ignored-name\"", output, StringComparison.Ordinal);
+        Assert.DoesNotContain("otel_scope_version=\"ignored-version\"", output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void CreateScopeIdentityIgnoresNormalizedReservedScopeAttributeNames()
+    {
+        var metricsWithConflicts = new List<Metric>();
+        using var meterWithConflicts = new Meter(
+            new MeterOptions("test_meter")
+            {
+                Version = "1.0.0",
+                TelemetrySchemaUrl = "https://opentelemetry.io/schemas/1.0.0",
+                Tags =
+                [
+                    new("na-me", "ignored-name"),
+                    new("ver-sion", "ignored-version"),
+                    new("schema-url", "ignored-schema"),
+                    new("library.mascot", "dotnetbot"),
+                ],
+            });
+        using var providerWithConflicts = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meterWithConflicts.Name)
+            .AddInMemoryExporter(metricsWithConflicts)
+            .Build();
+        meterWithConflicts.CreateObservableGauge("test_gauge", () => 1);
+        providerWithConflicts.ForceFlush();
+
+        var metricsWithoutConflicts = new List<Metric>();
+        using var meterWithoutConflicts = new Meter(
+            new MeterOptions("test_meter")
+            {
+                Version = "1.0.0",
+                TelemetrySchemaUrl = "https://opentelemetry.io/schemas/1.0.0",
+                Tags =
+                [
+                    new("library.mascot", "dotnetbot"),
+                ],
+            });
+        using var providerWithoutConflicts = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meterWithoutConflicts.Name)
+            .AddInMemoryExporter(metricsWithoutConflicts)
+            .Build();
+        meterWithoutConflicts.CreateObservableGauge("test_gauge", () => 1);
+        providerWithoutConflicts.ForceFlush();
+
+        var identityWithConflicts = PrometheusSerializer.CreateScopeIdentity(metricsWithConflicts[0]);
+        var identityWithoutConflicts = PrometheusSerializer.CreateScopeIdentity(metricsWithoutConflicts[0]);
+
+        Assert.Equal(identityWithoutConflicts, identityWithConflicts);
+    }
+#endif
 
     [Fact]
     public void SumWithScopeVersion()
@@ -1087,7 +1280,7 @@ public sealed class PrometheusSerializerTests
 
         Assert.Equal(
             ("# TYPE test_gauge gauge\n"
-             + $"test_gauge{{otel_scope_name='test_meter',meter_tag='{expectedTagValue}'}} 123\n").Replace('\'', '"'),
+             + $"test_gauge{{otel_scope_name='test_meter',otel_scope_meter_tag='{expectedTagValue}'}} 123\n").Replace('\'', '"'),
             output);
     }
 
@@ -1193,9 +1386,11 @@ public sealed class PrometheusSerializerTests
 
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
 
-        Assert.Contains("test_histogram_bucket{otel_scope_name=\"\u65e5\u672c\",_=\"meterTagValue\",le=\"0\"} 0\n", output, StringComparison.Ordinal);
-        Assert.Contains("test_histogram_sum{otel_scope_name=\"\u65e5\u672c\",_=\"meterTagValue\"} 18\n", output, StringComparison.Ordinal);
-        Assert.Contains("test_histogram_count{otel_scope_name=\"\u65e5\u672c\",_=\"meterTagValue\"} 1\n", output, StringComparison.Ordinal);
+        Assert.Contains("test_histogram_bucket{", output, StringComparison.Ordinal);
+        Assert.Contains("test_histogram_sum{", output, StringComparison.Ordinal);
+        Assert.Contains("test_histogram_count{", output, StringComparison.Ordinal);
+        Assert.Contains("otel_scope_name=\"\u65e5\u672c\"", output, StringComparison.Ordinal);
+        Assert.Contains("otel_scope_=\"meterTagValue\"", output, StringComparison.Ordinal);
     }
 
     private static Metric GetSingleHistogramMetric(string meterName, params KeyValuePair<string, object?>[] meterTags)

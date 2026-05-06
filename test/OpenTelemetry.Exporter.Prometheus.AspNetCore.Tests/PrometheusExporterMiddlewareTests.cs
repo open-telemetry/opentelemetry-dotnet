@@ -484,8 +484,10 @@ public sealed class PrometheusExporterMiddlewareTests
         }
 
         var additionalTags = meterTags is { Length: > 0 }
-            ? $"{string.Join(",", meterTags.Select(x => $"{x.Key}=\"{x.Value}\""))},"
+            ? $"{string.Join(",", meterTags.Select(x => $"otel_scope_{x.Key}=\"{x.Value}\""))},"
             : string.Empty;
+
+        var scopeInfoMetric = $"otel_scope_info{{otel_scope_name=\"{MeterName}\",otel_scope_version=\"{MeterVersion}\"{(string.IsNullOrEmpty(additionalTags) ? string.Empty : "," + additionalTags.TrimEnd(','))}}} 1";
 
         var content = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings();
 
@@ -494,9 +496,9 @@ public sealed class PrometheusExporterMiddlewareTests
                     # TYPE target info
                     # HELP target Target metadata
                     target_info{service_name="my_service",service_instance_id="id1"} 1
-                    # TYPE otel_scope_info info
-                    # HELP otel_scope_info Scope metadata
-                    otel_scope_info{otel_scope_name="{{MeterName}}"} 1
+                    # TYPE otel_scope info
+                    # HELP otel_scope Scope metadata
+                    {{scopeInfoMetric}}
                     # TYPE counter_double_bytes counter
                     # UNIT counter_double_bytes bytes
                     counter_double_bytes_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",{{additionalTags}}key1="value1",key2="value2"} 101.17
