@@ -16,6 +16,7 @@ namespace OpenTelemetry.Context.Propagation;
 public class BaggagePropagator : TextMapPropagator
 {
     internal const string BaggageHeaderName = "baggage";
+    private const string Hex = "0123456789ABCDEF";
 
     private const int MaxBaggageLength = 8192;
     private const int MaxBaggageItems = 180;
@@ -288,11 +289,8 @@ public class BaggagePropagator : TextMapPropagator
         }
 #endif
 
-        const string hex = "0123456789ABCDEF";
         var sb = new StringBuilder(value.Length);
 #if NET
-        Span<char> encoded = stackalloc char[3];
-        encoded[0] = '%';
         Span<byte> utf8Buffer = stackalloc byte[4];
 #endif
         foreach (var c in value)
@@ -306,30 +304,18 @@ public class BaggagePropagator : TextMapPropagator
                     var byteCount = Encoding.UTF8.GetBytes(new ReadOnlySpan<char>(in c), utf8Buffer);
                     foreach (var b in utf8Buffer[..byteCount])
                     {
-                        encoded[1] = hex[(b >> 4) & 0xF];
-                        encoded[2] = hex[b & 0xF];
-                        sb.Append(encoded);
+                        AppendPercentEncoded(sb, b);
                     }
 #else
                     foreach (var b in Encoding.UTF8.GetBytes(c.ToString()))
                     {
-                        sb.Append('%')
-                        .Append(hex[(b >> 4) & 0xF])
-                        .Append(hex[b & 0xF]);
+                        AppendPercentEncoded(sb, b);
                     }
 #endif
                 }
                 else
                 {
-#if NET
-                    encoded[1] = hex[(c >> 4) & 0xF];
-                    encoded[2] = hex[c & 0xF];
-                    sb.Append(encoded);
-#else
-                    sb.Append('%')
-                    .Append(hex[(c >> 4) & 0xF])
-                    .Append(hex[c & 0xF]);
-#endif
+                    AppendPercentEncoded(sb, (byte)c);
                 }
             }
             else
@@ -433,10 +419,15 @@ public class BaggagePropagator : TextMapPropagator
     }
 
     private static bool IsHexDigit(char c) =>
-        (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f');
+        char.IsAsciiDigit(c) || c is (>= 'A' and <= 'F') or (>= 'a' and <= 'f');
 
     private static int HexDigitValue(char c) =>
         c >= '0' && c <= '9' ? c - '0' :
         c >= 'A' && c <= 'F' ? c - 'A' + 10 :
         c - 'a' + 10;
+
+    private static void AppendPercentEncoded(StringBuilder sb, byte b) =>
+        sb.Append('%')
+        .Append(Hex[(b >> 4) & 0xF])
+        .Append(Hex[b & 0xF]);
 }
