@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Metrics;
 
@@ -11,7 +12,8 @@ internal sealed class PrometheusCollectionManager
     private const int MaxCachedMetrics = 1024;
 
     private readonly PrometheusExporter exporter;
-    private readonly int scrapeResponseCacheDurationMilliseconds;
+    private readonly TimeSpan scrapeResponseCacheDuration;
+    private readonly long baseTimestamp = Stopwatch.GetTimestamp();
     private readonly PrometheusExporter.ExportFunc onCollectRef;
     private readonly Dictionary<Metric, PrometheusMetric> metricsCache;
     private readonly HashSet<string> scopes;
@@ -24,6 +26,8 @@ internal sealed class PrometheusCollectionManager
     private int globalLockState;
     private DateTime? previousPlainTextDataViewGeneratedAtUtc;
     private DateTime? previousOpenMetricsDataViewGeneratedAtUtc;
+    private TimeSpan previousPlainTextDataViewGeneratedAtElapsed;
+    private TimeSpan previousOpenMetricsDataViewGeneratedAtElapsed;
     private int readerCount;
     private bool collectionRunning;
     private TaskCompletionSource<CollectionResponse>? collectionTcs;
@@ -31,13 +35,16 @@ internal sealed class PrometheusCollectionManager
     public PrometheusCollectionManager(PrometheusExporter exporter)
     {
         this.exporter = exporter;
-        this.scrapeResponseCacheDurationMilliseconds = this.exporter.ScrapeResponseCacheDurationMilliseconds;
+        this.scrapeResponseCacheDuration = TimeSpan.FromMilliseconds(this.exporter.ScrapeResponseCacheDurationMilliseconds);
         this.onCollectRef = this.OnCollect;
         this.metricsCache = [];
         this.scopes = [];
+        this.GetElapsedTime = () => Stopwatch.GetElapsedTime(this.baseTimestamp);
     }
 
     internal Func<DateTime> UtcNow { get; set; } = static () => DateTime.UtcNow;
+
+    internal Func<TimeSpan> GetElapsedTime { get; set; }
 
 #if NET
     public ValueTask<CollectionResponse> EnterCollect(bool openMetricsRequested)
@@ -51,15 +58,17 @@ internal sealed class PrometheusCollectionManager
 
         try
         {
-            // If we are within {ScrapeResponseCacheDurationMilliseconds} of the
-            // last successful collect, return the previous view.
             previousDataViewGeneratedAtUtc = openMetricsRequested
                 ? this.previousOpenMetricsDataViewGeneratedAtUtc
                 : this.previousPlainTextDataViewGeneratedAtUtc;
 
+            var previousDataViewGeneratedAtElapsed = openMetricsRequested
+                ? this.previousOpenMetricsDataViewGeneratedAtElapsed
+                : this.previousPlainTextDataViewGeneratedAtElapsed;
+
             if (previousDataViewGeneratedAtUtc.HasValue
-                && this.scrapeResponseCacheDurationMilliseconds > 0
-                && previousDataViewGeneratedAtUtc.Value.AddMilliseconds(this.scrapeResponseCacheDurationMilliseconds) >= this.UtcNow())
+                && this.scrapeResponseCacheDuration > TimeSpan.Zero
+                && this.GetElapsedTime() - previousDataViewGeneratedAtElapsed < this.scrapeResponseCacheDuration)
             {
 #if NET
                 return new ValueTask<CollectionResponse>(new CollectionResponse(this.previousOpenMetricsDataView, this.previousPlainTextDataView, previousDataViewGeneratedAtUtc.Value, fromCache: true));
@@ -105,14 +114,17 @@ internal sealed class PrometheusCollectionManager
         if (result)
         {
             var generatedAt = this.UtcNow();
+            var generatedAtElapsed = this.GetElapsedTime();
 
             if (openMetricsRequested)
             {
                 this.previousOpenMetricsDataViewGeneratedAtUtc = generatedAt;
+                this.previousOpenMetricsDataViewGeneratedAtElapsed = generatedAtElapsed;
             }
             else
             {
                 this.previousPlainTextDataViewGeneratedAtUtc = generatedAt;
+                this.previousPlainTextDataViewGeneratedAtElapsed = generatedAtElapsed;
             }
 
             previousDataViewGeneratedAtUtc = openMetricsRequested
