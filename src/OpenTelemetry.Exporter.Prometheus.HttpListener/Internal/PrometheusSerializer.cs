@@ -150,7 +150,7 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteLabelKey(byte[] buffer, int cursor, string value)
+    public static int WriteLabelKey(byte[] buffer, int cursor, string value, bool openMetricsRequested)
     {
         if (string.IsNullOrEmpty(value))
         {
@@ -158,18 +158,9 @@ internal static partial class PrometheusSerializer
             return cursor;
         }
 
-        if (char.IsAsciiDigit(value[0]))
-        {
-            buffer[cursor++] = unchecked((byte)'_');
-        }
-
-        for (var i = 0; i < value.Length; i++)
-        {
-            var ch = value[i];
-            buffer[cursor++] = char.IsAsciiLetterOrDigit(ch) ? (byte)ch : (byte)'_';
-        }
-
-        return cursor;
+        return openMetricsRequested ?
+               WriteOpenMetricsLabelKey(buffer, cursor, value) :
+               WritePrometheusLabelKey(buffer, cursor, value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -202,9 +193,9 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteLabel(byte[] buffer, int cursor, string labelKey, object? labelValue)
+    public static int WriteLabel(byte[] buffer, int cursor, string labelKey, object? labelValue, bool openMetricsRequested)
     {
-        cursor = WriteLabelKey(buffer, cursor, labelKey);
+        cursor = WriteLabelKey(buffer, cursor, labelKey, openMetricsRequested);
         buffer[cursor++] = unchecked((byte)'=');
         buffer[cursor++] = unchecked((byte)'"');
 
@@ -305,7 +296,7 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteExemplar(byte[] buffer, int cursor, in Exemplar exemplar, bool isLongValue)
+    public static int WriteExemplar(byte[] buffer, int cursor, in Exemplar exemplar, bool isLongValue, bool openMetricsRequested, bool enableOpenMetricsExemplarLabels)
     {
         buffer[cursor++] = unchecked((byte)' ');
         buffer[cursor++] = unchecked((byte)'#');
@@ -314,30 +305,35 @@ internal static partial class PrometheusSerializer
 
         var hasLabels = false;
 
-        if (exemplar.TraceId != default)
+        if (enableOpenMetricsExemplarLabels &&
+            exemplar.TraceId != default)
         {
-            cursor = WriteLabel(buffer, cursor, "trace_id", exemplar.TraceId.ToHexString());
+            cursor = WriteLabel(buffer, cursor, "trace_id", exemplar.TraceId.ToHexString(), openMetricsRequested);
             buffer[cursor++] = unchecked((byte)',');
             hasLabels = true;
         }
 
-        if (exemplar.SpanId != default)
+        if (enableOpenMetricsExemplarLabels &&
+            exemplar.SpanId != default)
         {
-            cursor = WriteLabel(buffer, cursor, "span_id", exemplar.SpanId.ToHexString());
+            cursor = WriteLabel(buffer, cursor, "span_id", exemplar.SpanId.ToHexString(), openMetricsRequested);
             buffer[cursor++] = unchecked((byte)',');
             hasLabels = true;
         }
 
-        foreach (var tag in exemplar.FilteredTags)
+        if (enableOpenMetricsExemplarLabels)
         {
-            if (tag.Key == "trace_id" || tag.Key == "span_id")
+            foreach (var tag in exemplar.FilteredTags)
             {
-                continue;
-            }
+                if (tag.Key == "trace_id" || tag.Key == "span_id")
+                {
+                    continue;
+                }
 
-            cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
-            buffer[cursor++] = unchecked((byte)',');
-            hasLabels = true;
+                cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value, openMetricsRequested);
+                buffer[cursor++] = unchecked((byte)',');
+                hasLabels = true;
+            }
         }
 
         if (hasLabels)
@@ -404,9 +400,9 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteUnitMetadata(byte[] buffer, int cursor, PrometheusMetric metric, bool openMetricsRequested)
+    public static int WriteUnitMetadata(byte[] buffer, int cursor, PrometheusMetric metric, string? unit, bool openMetricsRequested)
     {
-        if (string.IsNullOrEmpty(metric.Unit))
+        if (string.IsNullOrEmpty(unit))
         {
             return cursor;
         }
@@ -418,10 +414,10 @@ internal static partial class PrometheusSerializer
 
         // Unit name has already been escaped.
 #pragma warning disable IDE0370 // Remove unnecessary suppression
-        for (var i = 0; i < metric.Unit!.Length; i++)
+        for (var i = 0; i < unit!.Length; i++)
 #pragma warning restore IDE0370 // Remove unnecessary suppression
         {
-            var ordinal = (ushort)metric.Unit[i];
+            var ordinal = (ushort)unit[i];
             buffer[cursor++] = unchecked((byte)ordinal);
         }
 
@@ -431,7 +427,7 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteScopeInfo(byte[] buffer, int cursor, string scopeName)
+    public static int WriteScopeInfo(byte[] buffer, int cursor, string scopeName, bool openMetricsRequested)
     {
         if (string.IsNullOrEmpty(scopeName))
         {
@@ -446,7 +442,7 @@ internal static partial class PrometheusSerializer
 
         cursor = WriteAsciiStringNoEscape(buffer, cursor, "otel_scope_info");
         buffer[cursor++] = unchecked((byte)'{');
-        cursor = WriteLabel(buffer, cursor, "otel_scope_name", scopeName);
+        cursor = WriteLabel(buffer, cursor, "otel_scope_name", scopeName, openMetricsRequested);
         buffer[cursor++] = unchecked((byte)'}');
         buffer[cursor++] = unchecked((byte)' ');
         buffer[cursor++] = unchecked((byte)'1');
@@ -456,19 +452,25 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteTags(byte[] buffer, int cursor, Metric metric, ReadOnlyTagCollection tags, bool writeEnclosingBraces = true)
+    public static int WriteTags(
+        byte[] buffer,
+        int cursor,
+        Metric metric,
+        ReadOnlyTagCollection tags,
+        bool openMetricsRequested,
+        bool writeEnclosingBraces = true)
     {
         if (writeEnclosingBraces)
         {
             buffer[cursor++] = unchecked((byte)'{');
         }
 
-        cursor = WriteLabel(buffer, cursor, "otel_scope_name", metric.MeterName);
+        cursor = WriteLabel(buffer, cursor, "otel_scope_name", metric.MeterName, openMetricsRequested);
         buffer[cursor++] = unchecked((byte)',');
 
         if (!string.IsNullOrEmpty(metric.MeterVersion))
         {
-            cursor = WriteLabel(buffer, cursor, "otel_scope_version", metric.MeterVersion);
+            cursor = WriteLabel(buffer, cursor, "otel_scope_version", metric.MeterVersion, openMetricsRequested);
             buffer[cursor++] = unchecked((byte)',');
         }
 
@@ -476,14 +478,14 @@ internal static partial class PrometheusSerializer
         {
             foreach (var tag in metric.MeterTags)
             {
-                cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
+                cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value, openMetricsRequested);
                 buffer[cursor++] = unchecked((byte)',');
             }
         }
 
         foreach (var tag in tags)
         {
-            cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value);
+            cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value, openMetricsRequested);
             buffer[cursor++] = unchecked((byte)',');
         }
 
@@ -496,7 +498,7 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteTargetInfo(byte[] buffer, int cursor, Resource resource)
+    public static int WriteTargetInfo(byte[] buffer, int cursor, Resource resource, bool openMetricsRequested)
     {
         if (resource == Resource.Empty)
         {
@@ -514,7 +516,7 @@ internal static partial class PrometheusSerializer
 
         foreach (var attribute in resource.Attributes)
         {
-            cursor = WriteLabel(buffer, cursor, attribute.Key, attribute.Value);
+            cursor = WriteLabel(buffer, cursor, attribute.Key, attribute.Value, openMetricsRequested);
 
             buffer[cursor++] = unchecked((byte)',');
         }
@@ -528,6 +530,51 @@ internal static partial class PrometheusSerializer
 
         return cursor;
     }
+
+    private static int WritePrometheusLabelKey(byte[] buffer, int cursor, string value)
+        => WriteNormalizedLabelKey(buffer, cursor, value);
+
+    private static int WriteOpenMetricsLabelKey(byte[] buffer, int cursor, string value)
+        => WriteNormalizedLabelKey(buffer, cursor, value);
+
+    private static int WriteNormalizedLabelKey(byte[] buffer, int cursor, string value)
+    {
+        var lastCharUnderscore = false;
+
+        for (var i = 0; i < value.Length; i++)
+        {
+            var ch = value[i];
+
+            if (i == 0 && char.IsAsciiDigit(ch))
+            {
+                if (!lastCharUnderscore)
+                {
+                    buffer[cursor++] = unchecked((byte)'_');
+                    lastCharUnderscore = true;
+                }
+            }
+
+            if (!IsAllowedMetricsLabelCharacter(ch))
+            {
+                if (!lastCharUnderscore)
+                {
+                    buffer[cursor++] = unchecked((byte)'_');
+                    lastCharUnderscore = true;
+                }
+
+                continue;
+            }
+
+            buffer[cursor++] = unchecked((byte)ch);
+            lastCharUnderscore = ch == '_';
+        }
+
+        return cursor;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool IsAllowedMetricsLabelCharacter(char value) =>
+        char.IsAsciiLetterOrDigit(value) || value is '_';
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int WriteUnicodeScalar(byte[] buffer, int cursor, string value, ref int index)

@@ -19,7 +19,7 @@ instance for Prometheus to scrape.
 
 * [Get Prometheus](https://prometheus.io/docs/introduction/first_steps/)
 
-## Steps to enable OpenTelemetry.Exporter.Prometheus.HttpListener
+## Installation
 
 ### Step 1: Install Package
 
@@ -32,23 +32,57 @@ dotnet add package --prerelease OpenTelemetry.Exporter.Prometheus.HttpListener
 ```csharp
 var meterProvider = Sdk.CreateMeterProviderBuilder()
     .AddMeter(MyMeter.Name)
-    .AddPrometheusHttpListener(
-        options => options.UriPrefixes = new string[] { "http://localhost:9464/" })
+    .AddPrometheusHttpListener()
     .Build();
 ```
 
-### UriPrefixes
+## Configuration
 
-Defines one or more URI (Uniform Resource Identifier) prefixes which will be
-used by the HTTP listener. The default value is `["http://localhost:9464/"]`.
+You can configure the `PrometheusHttpListener` through
+`PrometheusHttpListenerOptions` and environment variables. The
+`PrometheusHttpListenerOptions` setters take precedence over the environment
+variables.
 
-Refer to
-[HttpListenerPrefixCollection.Add(String)](https://docs.microsoft.com/dotnet/api/system.net.httplistenerprefixcollection.add)
-for more details.
+### Configuration using Properties
 
-### ScrapeEndpointPath
+* `Host`: The host used by the Prometheus exporter (default `localhost`).
+* `Port`: The port used by the Prometheus exporter (default `9464`).
+* `ScrapeEndpointPath`: Defines the Prometheus scrape endpoint path.
+  (default `"/metrics"`).
+* `DisableTotalNameSuffixForCounters`: Whether to disable the `_total` suffix for
+  counter metrics (default `false`).
+* `DisableTimestamp`: Whether to disable the timestamp for metrics (default `false`).
+* `EnableExemplarLabels`: Whether to enable exemplar labels in the Prometheus
+  scrape endpoint response when using OpenMetrics (default `false`).
 
-Defines the Prometheus scrape endpoint path. Default value: `"/metrics"`.
+### Configuration using Dependency Injection
+
+This exporter allows easy configuration of `PrometheusHttpListenerOptions` from
+the dependency injection container, when used in conjunction with
+[`OpenTelemetry.Extensions.Hosting`](../OpenTelemetry.Extensions.Hosting/README.md).
+
+For example:
+
+```csharp
+var meterProvider = Sdk.CreateMeterProviderBuilder()
+    .AddMeter(MyMeter.Name)
+    .AddPrometheusHttpListener(options =>
+    {
+        options.Host = "localhost";
+        options.Port = 9464;
+    })
+    .Build();
+```
+
+### Configuration using Environment Variables
+
+The following environment variables can be used to override the default
+values of the `PrometheusHttpListenerOptions`.
+
+| Environment variable            | `PrometheusHttpListenerOptions` property |
+| --------------------------------| ---------------------------------------- |
+| `OTEL_EXPORTER_PROMETHEUS_HOST` | `Host`                                   |
+| `OTEL_EXPORTER_PROMETHEUS_PORT` | `Port`                                   |
 
 ### ScrapeResponseCacheDurationMilliseconds
 

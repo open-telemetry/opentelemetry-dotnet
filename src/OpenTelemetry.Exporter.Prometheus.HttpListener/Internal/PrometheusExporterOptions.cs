@@ -32,7 +32,14 @@ internal sealed class PrometheusExporterOptions
     }
 
     /// <summary>
-    /// Gets or sets a value indicating whether addition of _total suffix for counter metric names is disabled. Default value: <see langword="false"/>.
+    /// Gets or sets a value indicating whether addition of _total suffix
+    /// for counter metric names is disabled. Default value: <see langword="false"/>.
     /// </summary>
     public bool DisableTotalNameSuffixForCounters { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether exemplar labels
+    /// are emitted when using OpenMetrics. Default value: <see langword="false"/>.
+    /// </summary>
+    public bool EnableExemplarLabels { get; set; }
 }

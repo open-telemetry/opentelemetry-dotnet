@@ -18,15 +18,6 @@ to scrape.
   Grafana](../../docs/metrics/getting-started-prometheus-grafana/README.md)
   tutorial for more information.
 
-<!-- This comment is to make sure the two notes above and below are not merged -->
-
-> [!NOTE]
-> This exporter does not support Exemplars. For using Exemplars, use the [OTLP
-Exporter](../OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md) and use a
-component like OTel Collector to expose metrics (with exemplars) to Prometheus.
-This [tutorial](../../docs/metrics/exemplars/README.md) shows one way how to do
-that.
-
 ## Prerequisite
 
 * [Get Prometheus](https://prometheus.io/docs/introduction/first_steps/)
@@ -80,13 +71,11 @@ app.MapPrometheusScrapingEndpoint();
 ```
 
 You can use the `IEndpointConventionBuilder` returned by the extension
-method to compose with other functionality, such as to not require
-authentication or to exclude HTTP metrics from the scraping endpoint
-itself. For example:
+method to compose with other functionality, such as to exclude HTTP metrics
+from the scraping endpoint itself. For example:
 
 ```csharp
 app.MapPrometheusScrapingEndpoint()
-   .AllowAnonymous()
    .DisableHttpMetrics();
 ```
 
@@ -133,6 +122,18 @@ registered by `MapPrometheusScrapingEndpoint` and
 Configures scrape endpoint response caching. Multiple scrape requests within the
 cache duration time period will receive the same previously generated response.
 The default value is `300`. Set to `0` to disable response caching.
+
+### EnableExemplarLabels
+
+> [!NOTE]
+> This option is only applicable when OpenMetrics is being used.
+
+Whether to enable exemplar labels in the Prometheus scrape endpoint response.
+The default value is `false`.
+
+When disabled, OpenMetrics exemplars are still exported but their
+label sets are emitted as empty, suppressing trace/span context and
+any tags filtered out of the metric label set.
 
 ## Troubleshooting
 
