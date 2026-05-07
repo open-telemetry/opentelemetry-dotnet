@@ -191,7 +191,7 @@ with the metric are of interest to you.
 > drops them from the **aggregated metric** stream, but does **not**
 > drop them from any [Exemplars](#exemplars) recorded for the same
 > instrument. Dropped attributes are preserved on Exemplars as
-> *filtered tags* — see the [Exemplars](#exemplars) section below for
+> *filtered tags* - see the [Exemplars](#exemplars) section below for
 > details.
 >
 > If the goal of dropping the attribute is **data redaction** (for
