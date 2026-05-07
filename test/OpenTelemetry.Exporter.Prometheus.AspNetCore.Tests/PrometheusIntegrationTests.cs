@@ -50,16 +50,16 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
 
             var prometheusBaseAddress = prometheus.GetBaseAddress(9090);
 
-            await WaitForServiceDiscoveryAsync(prometheusBaseAddress);
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(20));
 
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            await WaitForServiceDiscoveryAsync(prometheusBaseAddress, outputHelper, cts.Token);
 
             IReadOnlyList<string> series = [];
 
             // Assert
             while (!cts.IsCancellationRequested)
             {
-                series = await WaitForMetricsSeriesAsync(prometheusBaseAddress);
+                series = await WaitForMetricsSeriesAsync(prometheusBaseAddress, outputHelper, cts.Token);
 
                 if (series.Contains("temperature_celsius"))
                 {
@@ -93,7 +93,10 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
             await prometheus.DisposeAsync();
         }
 
-        static async Task<IReadOnlyList<string>> WaitForMetricsSeriesAsync(Uri baseAddress)
+        static async Task<IReadOnlyList<string>> WaitForMetricsSeriesAsync(
+            Uri baseAddress,
+            ITestOutputHelper outputHelper,
+            CancellationToken cancellationToken)
         {
             // See https://prometheus.io/docs/prometheus/latest/querying/api/#finding-series-by-label-matchers
             var seriesUrl = QueryHelpers.AddQueryString(
@@ -106,16 +109,14 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
             var seriesUri = new Uri(seriesUrl, UriKind.Relative);
 
             var frequency = TimeSpan.FromMilliseconds(250);
-            var timeout = TimeSpan.FromSeconds(15);
 
             using var client = new HttpClient() { BaseAddress = baseAddress };
-            using var cts = new CancellationTokenSource(timeout);
 
-            while (!cts.IsCancellationRequested)
+            while (!cancellationToken.IsCancellationRequested)
             {
                 try
                 {
-                    using var metrics = await client.GetFromJsonAsync<JsonDocument>(seriesUri, cts.Token);
+                    using var metrics = await client.GetFromJsonAsync<JsonDocument>(seriesUri, cancellationToken);
 
                     if (metrics!.RootElement.ValueKind is JsonValueKind.Object &&
                         metrics.RootElement.TryGetProperty("status", out var status) &&
@@ -140,32 +141,41 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
                         }
                     }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    await Task.Delay(frequency);
+                    outputHelper.WriteLine($"[prometheus] Exception while waiting for metric series: {ex}");
+
+                    try
+                    {
+                        await Task.Delay(frequency, cancellationToken);
+                    }
+                    catch (TaskCanceledException)
+                    {
+                        break;
+                    }
                 }
             }
 
-            Assert.Fail($"Timed out after {timeout} waiting for metric series.");
+            Assert.Fail($"Timed out waiting for metric series.");
             return [];
         }
 
-        static async Task WaitForServiceDiscoveryAsync(Uri baseAddress)
+        static async Task WaitForServiceDiscoveryAsync(
+            Uri baseAddress,
+            ITestOutputHelper outputHelper,
+            CancellationToken cancellationToken)
         {
             // See https://prometheus.io/docs/prometheus/latest/querying/api/#targets
             using var client = new HttpClient() { BaseAddress = baseAddress };
             var targetsUri = new Uri("/api/v1/targets", UriKind.Relative);
 
             var frequency = TimeSpan.FromMilliseconds(250);
-            var timeout = TimeSpan.FromSeconds(15);
 
-            using var cts = new CancellationTokenSource(timeout);
-
-            while (!cts.IsCancellationRequested)
+            while (!cancellationToken.IsCancellationRequested)
             {
                 try
                 {
-                    using var targets = await client.GetFromJsonAsync<JsonDocument>(targetsUri, cts.Token);
+                    using var targets = await client.GetFromJsonAsync<JsonDocument>(targetsUri, cancellationToken);
 
                     if (targets!.RootElement.ValueKind is JsonValueKind.Object &&
                         targets.RootElement.TryGetProperty("status", out var status) &&
@@ -181,13 +191,22 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
                         }
                     }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    await Task.Delay(frequency);
+                    outputHelper.WriteLine($"[prometheus] Exception while waiting for service discovery: {ex}");
+
+                    try
+                    {
+                        await Task.Delay(frequency, cancellationToken);
+                    }
+                    catch (TaskCanceledException)
+                    {
+                        break;
+                    }
                 }
             }
 
-            Assert.Fail($"Timed out after {timeout} waiting for service discovery active targets.");
+            Assert.Fail($"Timed out waiting for service discovery active targets.");
         }
     });
 
