@@ -186,6 +186,25 @@ with the metric are of interest to you.
     ...
 ```
 
+> [!IMPORTANT]
+> Restricting `TagKeys` (or otherwise dropping attributes via a `View`)
+> drops them from the **aggregated metric** stream, but does **not**
+> drop them from any [Exemplars](#exemplars) recorded for the same
+> instrument. Dropped attributes are preserved on Exemplars as
+> *filtered tags* — see the [Exemplars](#exemplars) section below for
+> details.
+>
+> If the goal of dropping the attribute is **data redaction** (for
+> example, removing an attribute containing sensitive data), the View
+> alone is **not** sufficient when Exemplars are enabled. Either keep
+> the default `ExemplarFilterType.AlwaysOff` to disable Exemplars
+> entirely, or configure a custom `ExemplarFilter` /
+> `ExemplarReservoir` to control which measurements are sampled. See
+> [opentelemetry-specification#5073][spec-pr-5073] for the
+> corresponding spec clarification.
+
+[spec-pr-5073]: https://github.com/open-telemetry/opentelemetry-specification/pull/5073
+
 #### Configuring the aggregation of a Histogram
 
 There are two types of
