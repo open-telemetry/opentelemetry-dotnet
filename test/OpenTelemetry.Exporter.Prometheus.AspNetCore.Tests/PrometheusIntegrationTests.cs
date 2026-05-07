@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter.Prometheus.Tests;
 using OpenTelemetry.Metrics;
@@ -25,41 +26,43 @@ public class PrometheusIntegrationTests(PromToolFixture fixture, ITestOutputHelp
     public async Task Scrape_Endpoint_Returns_No_Content_If_Sdk_Disabled()
     {
         // Arrange
-        using (EnvironmentVariableScope.Create("OTEL_SDK_DISABLED", "true"))
-        {
-            var builder = WebApplication.CreateBuilder();
+        var builder = WebApplication.CreateBuilder();
 
-            // Listen on any available port
-            builder.WebHost.UseUrls("http://127.0.0.1:0");
+        builder.Configuration.AddInMemoryCollection(
+            [
+                KeyValuePair.Create<string, string?>("OTEL_SDK_DISABLED", "true"),
+            ]);
 
-            builder.Services
-                .AddOpenTelemetry()
-                .WithMetrics((builder) => builder.AddPrometheusExporter());
+        // Listen on any available port
+        builder.WebHost.UseUrls("http://127.0.0.1:0");
 
-            using var app = builder.Build();
+        builder.Services
+            .AddOpenTelemetry()
+            .WithMetrics((builder) => builder.AddPrometheusExporter());
 
-            app.MapPrometheusScrapingEndpoint();
+        using var app = builder.Build();
 
-            await app.StartAsync();
+        app.MapPrometheusScrapingEndpoint();
 
-            var server = app.Services.GetRequiredService<IServer>();
-            var addresses = server.Features.Get<IServerAddressesFeature>();
+        await app.StartAsync();
 
-            var baseAddress = addresses!.Addresses
-                .Select((p) => new Uri(p))
-                .Last();
+        var server = app.Services.GetRequiredService<IServer>();
+        var addresses = server.Features.Get<IServerAddressesFeature>();
 
-            using var httpClient = new HttpClient();
-            using var response = await httpClient.GetAsync(new Uri(baseAddress, "metrics"));
+        var baseAddress = addresses!.Addresses
+            .Select((p) => new Uri(p))
+            .Last();
 
-            // Assert
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            Assert.Null(response.Content.Headers.ContentType);
+        using var httpClient = new HttpClient();
+        using var response = await httpClient.GetAsync(new Uri(baseAddress, "metrics"));
 
-            var content = await response.Content.ReadAsStringAsync();
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Null(response.Content.Headers.ContentType);
 
-            Assert.Empty(content);
-        }
+        var content = await response.Content.ReadAsStringAsync();
+
+        Assert.Empty(content);
     }
 
     [EnabledOnDockerPlatformTheory(DockerPlatform.Linux)]
@@ -74,8 +77,6 @@ public class PrometheusIntegrationTests(PromToolFixture fixture, ITestOutputHelp
 
     public async Task Can_Scrape_Prometheus(string accept)
     {
-        using var scope = EnvironmentVariableScope.Create("OTEL_SDK_DISABLED", "true");
-
         // Arrange
         const string meterName = "prometheus.integration.tests";
         const string meterVersion = "1.2.3";
