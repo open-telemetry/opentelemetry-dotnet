@@ -3,8 +3,8 @@
 
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Globalization;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Net.Http.Headers;
 using OpenTelemetry.Exporter.Prometheus;
