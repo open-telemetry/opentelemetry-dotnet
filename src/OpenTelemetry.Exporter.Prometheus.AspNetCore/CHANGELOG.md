@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed scrape response cache freshness using monotonic time so it is not
+  affected by NTP system clock adjustments.
+  ([#7253](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7253))
+
 * **Breaking Change** Removed `DisableTimestamp` property from
   `PrometheusAspNetCoreOptions`.
   ([#7176](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7176))
@@ -49,7 +53,6 @@ Notes](../../RELEASENOTES.md).
 * Use the canonical representation for histogram "le" label values when using
   OpenMetrics.
   ([#7218](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7218))
-
 * Omit histogram `_sum` and `_count` in OpenMetrics when negative bucket
   thresholds are present.
   ([#7221](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7221))
@@ -74,7 +77,6 @@ Notes](../../RELEASENOTES.md).
 
 * Merge colliding sanitized label keys.
   ([#7239](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7239))
-
 ## 1.15.3-beta.1
 
 Released 2026-Apr-21

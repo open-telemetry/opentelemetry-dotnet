@@ -49,11 +49,37 @@ public abstract class PersistentBlob
     /// <returns>
     /// True if the write operation succeeded or else false.
     /// </returns>
+    [Obsolete("Use TryWrite(ReadOnlySpan<byte>, int) instead. This overload will be removed in a future major version.")]
     public bool TryWrite(byte[] buffer, int leasePeriodMilliseconds = 0)
     {
         try
         {
             return this.OnTryWrite(buffer, leasePeriodMilliseconds);
+        }
+        catch (Exception ex)
+        {
+            PersistentStorageAbstractionsEventSource.Log.PersistentStorageAbstractionsException(nameof(PersistentBlob), "Failed to write the blob", ex);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Attempts to write the given content to the blob.
+    /// </summary>
+    /// <param name="buffer">
+    /// The content to be written.
+    /// </param>
+    /// <param name="leasePeriodMilliseconds">
+    /// The number of milliseconds to lease after the write operation finished.
+    /// </param>
+    /// <returns>
+    /// True if the write operation succeeded or else false.
+    /// </returns>
+    public bool TryWrite(ReadOnlySpan<byte> buffer, int leasePeriodMilliseconds = 0)
+    {
+        try
+        {
+            return this.OnTryWriteSpan(buffer, leasePeriodMilliseconds);
         }
         catch (Exception ex)
         {
@@ -106,6 +132,9 @@ public abstract class PersistentBlob
     protected abstract bool OnTryRead([NotNullWhen(true)] out byte[]? buffer);
 
     protected abstract bool OnTryWrite(byte[] buffer, int leasePeriodMilliseconds = 0);
+
+    protected virtual bool OnTryWriteSpan(ReadOnlySpan<byte> buffer, int leasePeriodMilliseconds)
+        => this.OnTryWrite(buffer.ToArray(), leasePeriodMilliseconds);
 
     protected abstract bool OnTryLease(int leasePeriodMilliseconds);
 

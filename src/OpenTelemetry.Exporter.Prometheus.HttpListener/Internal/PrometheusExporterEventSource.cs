@@ -71,7 +71,7 @@ internal sealed class PrometheusExporterEventSource : EventSource, IConfiguratio
     public void InvalidConfigurationValue(string key, string value)
         => this.WriteEvent(5, key, value);
 
-    void IConfigurationExtensionsLogger.LogInvalidConfigurationValue(string key, string value)
+    public void LogInvalidConfigurationValue(string key, string value)
         => this.InvalidConfigurationValue(key, value);
 
     [Event(6, Message = "Dropping metric family '{0}' due to conflicting TYPE metadata '{1}' and '{2}'.", Level = EventLevel.Warning)]

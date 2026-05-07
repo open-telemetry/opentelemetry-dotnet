@@ -242,7 +242,7 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteExemplar(byte[] buffer, int cursor, in Exemplar exemplar, bool isLongValue)
+    public static int WriteExemplar(byte[] buffer, int cursor, in Exemplar exemplar, bool isLongValue, bool openMetricsRequested)
     {
         buffer[cursor++] = unchecked((byte)' ');
         buffer[cursor++] = unchecked((byte)'#');
@@ -253,14 +253,14 @@ internal static partial class PrometheusSerializer
 
         if (exemplar.TraceId != default)
         {
-            cursor = WriteLabel(buffer, cursor, "trace_id", exemplar.TraceId.ToHexString(), openMetricsRequested: true);
+            cursor = WriteLabel(buffer, cursor, "trace_id", exemplar.TraceId.ToHexString(), openMetricsRequested);
             buffer[cursor++] = unchecked((byte)',');
             hasLabels = true;
         }
 
         if (exemplar.SpanId != default)
         {
-            cursor = WriteLabel(buffer, cursor, "span_id", exemplar.SpanId.ToHexString(), openMetricsRequested: true);
+            cursor = WriteLabel(buffer, cursor, "span_id", exemplar.SpanId.ToHexString(), openMetricsRequested);
             buffer[cursor++] = unchecked((byte)',');
             hasLabels = true;
         }
@@ -272,7 +272,7 @@ internal static partial class PrometheusSerializer
                 continue;
             }
 
-            cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value, openMetricsRequested: true);
+            cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value, openMetricsRequested);
             buffer[cursor++] = unchecked((byte)',');
             hasLabels = true;
         }

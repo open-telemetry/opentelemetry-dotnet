@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed scrape response cache freshness using monotonic time so it is not
+  affected by NTP system clock adjustments.
+  ([#7253](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7253))
+
 * Added `Host` and `Port` properties on `PrometheusHttpListenerOptions`
   for configuring the HTTP listener endpoint. The
   `PrometheusHttpListenerOptions.UriPrefixes` property is now obsolete and
@@ -52,7 +56,21 @@ Notes](../../RELEASENOTES.md).
 * Add support for configuring the HTTP listener endpoint host and port using
   the `OTEL_EXPORTER_PROMETHEUS_HOST` and `OTEL_EXPORTER_PROMETHEUS_PORT`
   environment variables.
-  ([#7167](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7167))
+  ([#7167](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7167),
+  [#7255](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7255))
+
+* Fix Prometheus/OpenMetrics serialization to emit metric and label names
+  containing and `_` instead of dropping them and prefixing leading digits.
+  Invalid characters are replaced with `_` instead of being dropped.
+  ([#7209](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7209))
+
+* Add `escaping=underscores` to the `Accept` header handling for content
+  negotiation so OpenMetrics are handled correctly.
+  ([#7209](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7209))
+
+* Omit histogram `_sum` and `_count` in OpenMetrics when negative bucket
+  thresholds are present.
+  ([#7221](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7221))
 
 * Fix Prometheus/OpenMetrics serialization to emit metric and label names
   containing `:` and `_` instead of dropping them and prefixing leading digits.

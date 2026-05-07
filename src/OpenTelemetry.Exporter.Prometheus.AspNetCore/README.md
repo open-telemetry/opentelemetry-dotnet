@@ -18,6 +18,19 @@ to scrape.
   Grafana](../../docs/metrics/getting-started-prometheus-grafana/README.md)
   tutorial for more information.
 
+<!-- Comment to separate the notes -->
+
+> [!IMPORTANT]
+> The Prometheus scraping endpoint is not secured by default, so it is important
+> to consider the security implications of exposing this endpoint in your application.
+>
+> Refer to the
+> [Prometheus Security model](https://prometheus.io/docs/operating/security/) and
+> [ASP.NET Core security](https://learn.microsoft.com/en-us/aspnet/core/security/)
+> documentation for more information and guidance on securing the Prometheus
+> scraping endpoint to ensure only authorized users can access the information
+> exposed by it.
+
 ## Prerequisite
 
 * [Get Prometheus](https://prometheus.io/docs/introduction/first_steps/)
@@ -71,13 +84,11 @@ app.MapPrometheusScrapingEndpoint();
 ```
 
 You can use the `IEndpointConventionBuilder` returned by the extension
-method to compose with other functionality, such as to not require
-authentication or to exclude HTTP metrics from the scraping endpoint
-itself. For example:
+method to compose with other functionality, such as to exclude HTTP metrics
+from the scraping endpoint itself. For example:
 
 ```csharp
 app.MapPrometheusScrapingEndpoint()
-   .AllowAnonymous()
    .DisableHttpMetrics();
 ```
 

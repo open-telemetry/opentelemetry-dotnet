@@ -17,7 +17,7 @@ internal sealed class PrometheusMetric
         // consecutive `_` characters MUST be replaced with a single `_` character.
         // https://github.com/open-telemetry/opentelemetry-specification/blob/b2f923fb1650dde1f061507908b834035506a796/specification/compatibility/prometheus_and_openmetrics.md#L230-L233
         var sanitizedName = SanitizeMetricName(name);
-        var openMetricsName = EscapeOpenMetricsName(RemoveOpenMetricsCounterNameSuffix(name));
+        var openMetricsName = RemoveOpenMetricsCounterNameSuffix(name);
 
         string? sanitizedUnit = null;
         if (!string.IsNullOrEmpty(unit))
@@ -35,6 +35,8 @@ internal sealed class PrometheusMetric
                 openMetricsName += $"_{openMetricsUnitSuffix}";
             }
         }
+
+        openMetricsName = EscapeOpenMetricsName(openMetricsName);
 
         // If the metric name for monotonic Sum metric points does not end in a suffix of `_total` a suffix of `_total` MUST be added by default, otherwise the name MUST remain unchanged.
         // Exporters SHOULD provide a configuration option to disable the addition of `_total` suffixes.

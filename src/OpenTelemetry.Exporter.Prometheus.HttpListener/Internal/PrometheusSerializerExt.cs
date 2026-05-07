@@ -78,7 +78,7 @@ internal static partial class PrometheusSerializer
                     prometheusMetric.Type == PrometheusType.Counter &&
                     TryGetLatestExemplar(metricPoint, out var exemplar))
                 {
-                    cursor = WriteExemplar(buffer, cursor, in exemplar, isLong);
+                    cursor = WriteExemplar(buffer, cursor, in exemplar, isLong, openMetricsRequested);
                 }
 
                 buffer[cursor++] = ASCII_LINEFEED;
@@ -94,8 +94,8 @@ internal static partial class PrometheusSerializer
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
                 var tags = metricPoint.Tags;
-                var previousBound = double.NegativeInfinity;
                 var hasNegativeBucketBounds = false;
+                var previousBound = double.NegativeInfinity;
 
                 long totalCount = 0;
                 foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
@@ -132,7 +132,7 @@ internal static partial class PrometheusSerializer
                     if (openMetricsRequested &&
                         TryGetLatestHistogramBucketExemplar(metricPoint, previousBound, histogramMeasurement.ExplicitBound, out var exemplar))
                     {
-                        cursor = WriteExemplar(buffer, cursor, in exemplar, isLongValue: false);
+                        cursor = WriteExemplar(buffer, cursor, in exemplar, isLongValue: false, openMetricsRequested);
                     }
 
                     buffer[cursor++] = ASCII_LINEFEED;

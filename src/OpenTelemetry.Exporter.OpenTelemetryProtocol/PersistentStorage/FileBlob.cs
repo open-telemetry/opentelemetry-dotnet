@@ -58,6 +58,11 @@ public class FileBlob : PersistentBlob
     {
         Guard.ThrowIfNull(buffer);
 
+        return this.OnTryWriteSpan(buffer.AsSpan(), leasePeriodMilliseconds);
+    }
+
+    protected override bool OnTryWriteSpan(ReadOnlySpan<byte> buffer, int leasePeriodMilliseconds)
+    {
         var path = this.FullPath + ".tmp";
 
         try
@@ -78,7 +83,7 @@ public class FileBlob : PersistentBlob
             return false;
         }
 
-        this.directorySizeTracker?.FileAdded(buffer.LongLength);
+        this.directorySizeTracker?.FileAdded(buffer.Length);
         return true;
     }
 

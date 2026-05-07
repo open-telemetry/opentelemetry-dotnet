@@ -114,12 +114,26 @@ public class FileBlobProvider : PersistentBlobProvider, IDisposable
 
     protected override bool OnTryCreateBlob(byte[] buffer, int leasePeriodMilliseconds, [NotNullWhen(true)] out PersistentBlob? blob)
     {
-        blob = this.CreateFileBlob(buffer, leasePeriodMilliseconds);
+        blob = this.CreateFileBlob(new ReadOnlySpan<byte>(buffer), leasePeriodMilliseconds);
 
         return blob != null;
     }
 
     protected override bool OnTryCreateBlob(byte[] buffer, [NotNullWhen(true)] out PersistentBlob? blob)
+    {
+        blob = this.CreateFileBlob(new ReadOnlySpan<byte>(buffer));
+
+        return blob != null;
+    }
+
+    protected override bool OnTryCreateBlob(ReadOnlySpan<byte> buffer, int leasePeriodMilliseconds, [NotNullWhen(true)] out PersistentBlob? blob)
+    {
+        blob = this.CreateFileBlob(buffer, leasePeriodMilliseconds);
+
+        return blob != null;
+    }
+
+    protected override bool OnTryCreateBlob(ReadOnlySpan<byte> buffer, [NotNullWhen(true)] out PersistentBlob? blob)
     {
         blob = this.CreateFileBlob(buffer);
 
@@ -185,7 +199,7 @@ public class FileBlobProvider : PersistentBlobProvider, IDisposable
         return true;
     }
 
-    private FileBlob? CreateFileBlob(byte[] buffer, int leasePeriodMilliseconds = 0)
+    private FileBlob? CreateFileBlob(ReadOnlySpan<byte> buffer, int leasePeriodMilliseconds = 0)
     {
         if (!this.CheckStorageSize())
         {
