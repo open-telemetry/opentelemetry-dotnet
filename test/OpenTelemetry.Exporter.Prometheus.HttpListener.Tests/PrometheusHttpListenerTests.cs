@@ -342,13 +342,9 @@ public class PrometheusHttpListenerTests
         // token and is now waiting for activeRequestCount to reach 0). If
         // disposeTask completes within 500ms it means the request wasn't held.
         var timeout = TimeSpan.FromSeconds(0.5);
-#if NET
-        await disposeTask.WaitAsync(timeout);
-#else
         using var cts = new CancellationTokenSource(timeout);
         var completed = await Task.WhenAny(disposeTask, Task.Delay(timeout, cts.Token));
         Assert.NotSame(disposeTask, completed);
-#endif
 
         // Release the blocker so EnterCollect can finish.
         // After EnterCollect completes, ProcessRequestAsync will hit

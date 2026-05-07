@@ -257,16 +257,13 @@ public sealed class PrometheusCollectionManagerTests
             await secondCollectStarted.Task;
 
             var firstTimeout = TimeSpan.FromSeconds(1);
-#if NET
-            await secondCollectTask.WaitAsync(firstTimeout);
-#else
+
             using (var cts = new CancellationTokenSource(firstTimeout))
             {
                 var completion = await Task.WhenAny(secondCollectTask, Task.Delay(firstTimeout, cts.Token));
                 Assert.NotSame(secondCollectTask, completion);
                 Assert.False(secondCollectTask.IsCompleted);
             }
-#endif
 
             Assert.Equal(1, collectCount);
 
@@ -275,15 +272,11 @@ public sealed class PrometheusCollectionManagerTests
 
             var secondTimeout = TimeSpan.FromSeconds(5);
 
-#if NET
-            await secondCollectTask.WaitAsync(secondTimeout);
-#else
             using (var cts = new CancellationTokenSource(secondTimeout))
             {
                 var completion = await Task.WhenAny(secondCollectTask, Task.Delay(secondTimeout, cts.Token));
                 Assert.Same(secondCollectTask, completion);
             }
-#endif
 
             var secondResponse = await secondCollectTask;
 
