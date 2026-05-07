@@ -110,6 +110,10 @@ Notes](../../RELEASENOTES.md).
 * Merge colliding sanitized label keys.
   ([#7239](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7239))
 
+* Abort scrape request processing if request exceeds the value specified by the
+  `X-Prometheus-Scrape-Timeout-Seconds` HTTP request header.
+  ([#7252](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7252))
+
 ## 1.15.3-beta.1
 
 Released 2026-Apr-21
