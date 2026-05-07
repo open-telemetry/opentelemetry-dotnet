@@ -256,7 +256,7 @@ public sealed class PrometheusExporterMiddlewareTests
         var context = new DefaultHttpContext();
         context.Request.Headers.Accept = header;
 
-        var result = PrometheusExporterMiddleware.AcceptsOpenMetrics(context.Request);
+        var result = PrometheusExporterMiddleware.AcceptsOpenMetrics(context.Request.GetTypedHeaders());
 
         Assert.Equal(expected, result);
     }
