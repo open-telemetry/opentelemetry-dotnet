@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using System.Globalization;
 using FsCheck;
 using FsCheck.Fluent;
 
@@ -14,6 +15,8 @@ internal static class Generators
     private static readonly Gen<char> TraceStateValueChar = Gen.Elements("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!#$%&'*+-.^_`|~:/".ToCharArray());
     private static readonly Gen<char> BaggageChar = Gen.Elements("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 -_./:!$&'()*+;@?=,".ToCharArray());
     private static readonly Gen<char> CompactBaggageValueChar = Gen.Elements("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-".ToCharArray());
+    private static readonly Gen<char> EnvironmentKeyChar = Gen.Elements("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._ /@".ToCharArray());
+    private static readonly Gen<char> OpaqueValueChar = Gen.Elements("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 \t!@#$%^&*()_-+=[]{}|;:',.<>/?`~\u0000\u0001\u007f\u0080".ToCharArray());
     private static readonly Gen<char> HeaderValueChar = Gen.Elements("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_=,;: ./@".ToCharArray());
 
     public static Arbitrary<ActivityContext> ActivityContextArbitrary()
@@ -142,6 +145,36 @@ internal static class Generators
         return gen.ToArbitrary();
     }
 
+    public static Arbitrary<string> EnvironmentKeyArbitrary()
+    {
+        var gen = Gen.Sized(size =>
+            from length in Gen.Choose(0, Math.Min(Math.Max(size + 1, 1), 32))
+            from chars in Gen.ArrayOf(EnvironmentKeyChar, length)
+            select new string(chars));
+
+        return gen.ToArbitrary();
+    }
+
+    public static Arbitrary<Dictionary<string, string?>> EnvironmentCarrierArbitrary()
+    {
+        var pairGen =
+            from key in CreateString(EnvironmentKeyChar, 1, 16)
+            from value in CreateString(OpaqueValueChar, 0, 32)
+            select new KeyValuePair<string, string?>(key, value);
+
+        var gen = Gen.Sized(size =>
+        {
+            var maxCount = Math.Min(Math.Max(size + 1, 1), 20);
+
+            return
+                from count in Gen.Choose(0, maxCount)
+                from pairs in Gen.ArrayOf(pairGen, count)
+                select ToNullableDictionary(pairs);
+        });
+
+        return gen.ToArbitrary();
+    }
+
     public static Arbitrary<string> DelimiterFloodArbitrary(char delimiter, int minLength = 1024, int maxLength = 50_000)
     {
         var gen =
@@ -156,7 +189,7 @@ internal static class Generators
         var memberGen =
             from key in ValidTraceStateKey()
             from value in CreateString(TraceStateValueChar, 1, 24)
-            select (key, value);
+            select new KeyValuePair<string, string>(key, value);
 
         var gen = Gen.Sized(size =>
         {
@@ -167,7 +200,7 @@ internal static class Generators
                 from members in Gen.ArrayOf(memberGen, count)
                 select string.Join(
                     ",",
-                    members.Select(static (member, index) => $"{member.key}{index}={member.value}"));
+                    members.Select(static (member, index) => $"{AppendIndexToTraceStateKey(member.Key, index)}={member.Value}"));
         });
 
         return gen.ToArbitrary();
@@ -214,9 +247,52 @@ internal static class Generators
         return Gen.OneOf(simpleKey, vendorKey);
     }
 
+    private static string AppendIndexToTraceStateKey(string key, int index)
+    {
+        var suffix = "_" + index.ToString(CultureInfo.InvariantCulture);
+        var vendorSeparator = key.AsSpan().IndexOf('@');
+        if (vendorSeparator >= 0)
+        {
+            const int traceStateKeyTenantMaxLength = 241;
+
+            var tenant = key.Substring(0, vendorSeparator);
+            var vendor = key.Substring(vendorSeparator + 1);
+            var maxTenantLength = Math.Max(1, traceStateKeyTenantMaxLength - suffix.Length);
+
+            if (tenant.Length > maxTenantLength)
+            {
+                tenant = tenant.Substring(0, maxTenantLength);
+            }
+
+            return $"{tenant}{suffix}@{vendor}";
+        }
+
+        const int traceStateKeyMaxLength = 256;
+        var maxKeyLength = Math.Max(1, traceStateKeyMaxLength - suffix.Length);
+
+        if (key.Length > maxKeyLength)
+        {
+            key = key.Substring(0, maxKeyLength);
+        }
+
+        return $"{key}{suffix}";
+    }
+
     private static Dictionary<string, string> ToDictionary(IEnumerable<KeyValuePair<string, string>> pairs)
     {
         var dictionary = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        foreach (var pair in pairs)
+        {
+            dictionary[pair.Key] = pair.Value;
+        }
+
+        return dictionary;
+    }
+
+    private static Dictionary<string, string?> ToNullableDictionary(IEnumerable<KeyValuePair<string, string?>> pairs)
+    {
+        var dictionary = new Dictionary<string, string?>(StringComparer.Ordinal);
 
         foreach (var pair in pairs)
         {

@@ -1,8 +1,8 @@
 header:
-  last-reviewed: '2026-04-23'
-  last-updated: '2026-04-23'
+  last-reviewed: '2026-04-24'
+  last-updated: '2026-04-24'
   schema-version: 2.0.0
-  url: https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/SECURITY-INSIGHTS.yml
+  url: https://raw.githubusercontent.com/open-telemetry/opentelemetry-dotnet/main/.github/security-insights.yml
   comment: |
     This file contains the minimum information for https://github.com/open-telemetry/opentelemetry-dotnet.
 
@@ -36,7 +36,9 @@ project:
     - name: opentelemetry-dotnet
       url: https://github.com/open-telemetry/opentelemetry-dotnet
       comment: |
-        The OpenTelemetry .NET Client repository.
+        Active primary OpenTelemetry .NET repository. It contains the API,
+        SDK, core exporters, and extensions released as NuGet packages from
+        this repository.
   vulnerability-reporting:
     bug-bounty-available: false
     reports-accepted: true
@@ -115,7 +117,7 @@ repository:
         comment: OpenTelemetry.Extensions.Propagators NuGet package distributed from NuGet.org.
       - uri: https://www.nuget.org/packages/OpenTelemetry.Shims.OpenTracing
         comment: OpenTelemetry.Shims.OpenTracing NuGet package distributed from NuGet.org.
-    attestations:
+    attestations: []
 
   security:
     assessments:
@@ -131,8 +133,9 @@ repository:
           adhoc: true
           ci: true
           release: true
-        rulesets: https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/.github/workflows/codeql-analysis.yml
-        type: sast
+        rulesets:
+          - https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/.github/workflows/codeql-analysis.yml
+        type: SAST
       - name: FsCheck
         comment: |
           FsCheck is used for fuzz testing as part of CI.
@@ -140,7 +143,8 @@ repository:
           adhoc: true
           ci: true
           release: true
-        rulesets: default
+        rulesets:
+          - default
         type: fuzzing
       - name: Renovate
         comment: |
@@ -149,5 +153,6 @@ repository:
           adhoc: true
           ci: true
           release: true
-        rulesets: https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/.github/renovate.json
-        type: sca
+        rulesets:
+          - https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/.github/renovate.json
+        type: SCA

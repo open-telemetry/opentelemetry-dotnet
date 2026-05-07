@@ -4,8 +4,11 @@
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
+using System.Buffers.Binary;
 using System.Diagnostics.Tracing;
+using System.IO.Compression;
 using System.Net.Http.Headers;
+using System.Net.Sockets;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Grpc;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
@@ -14,6 +17,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 internal sealed class OtlpGrpcExportClient : OtlpExportClient
 {
     public const string GrpcStatusDetailsHeader = "grpc-status-details-bin";
+
+    // A gRPC message frame header is 5 bytes:
+    //   byte 0     - Compression flag (0 = not compressed, 1 = compressed).
+    //   bytes 1-4  - Message length in big-endian format.
+    private const int GrpcMessageHeaderSize = 5;
+
     private static readonly ExportClientHttpResponse SuccessExportResponse = new(success: true, deadlineUtc: default, response: null, exception: null);
     private static readonly MediaTypeHeaderValue MediaHeaderValue = new("application/grpc");
 
@@ -24,6 +33,10 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
             exception: null,
             status: null,
             grpcStatusDetailsHeader: null);
+
+#if !NET
+    private static readonly byte[] GrpcFrameHeader = [0, 0, 0, 0, 0];
+#endif
 
     public OtlpGrpcExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
         : base(options, httpClient, signalPath)
@@ -36,6 +49,11 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
 
     // We need the entire response content to ensure that the response trailers are received
     internal override HttpCompletionOption CompletionOption => HttpCompletionOption.ResponseContentRead;
+
+#if NET
+    // See https://vcsjones.dev/csharp-readonly-span-bytes-static/
+    private static ReadOnlySpan<byte> GrpcFrameHeader => [0, 0, 0, 0, 0];
+#endif
 
     /// <inheritdoc/>
     public override ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default)
@@ -50,6 +68,12 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
             // A missing TE header results in servers aborting the gRPC call.
             httpRequest.Headers.TryAddWithoutValidation("TE", "trailers");
 
+            if (this.CompressionEnabled)
+            {
+                httpRequest.Headers.Remove("grpc-encoding");
+                httpRequest.Headers.TryAddWithoutValidation("grpc-encoding", "gzip");
+            }
+
             httpResponse = this.SendHttpRequest(httpRequest, cancellationToken);
 
             httpResponse.EnsureSuccessStatusCode();
@@ -57,7 +81,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
             var trailingHeaders = httpResponse.TrailingHeaders();
             var status = GrpcProtocolHelpers.GetResponseStatus(httpResponse, trailingHeaders);
 
-            if (status.Detail.Equals(Status.NoReplyDetailMessage, StringComparison.Ordinal))
+            if (string.Equals(status.Detail, Status.NoReplyDetailMessage, StringComparison.Ordinal))
             {
 #if NET
                 using var responseStream = httpResponse.Content.ReadAsStream(cancellationToken);
@@ -173,10 +197,54 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         }
     }
 
+    protected override HttpContent CreateHttpContent(byte[] buffer, int contentLength)
+    {
+        if (!this.CompressionEnabled)
+        {
+            return base.CreateHttpContent(buffer, contentLength);
+        }
+
+        // Build a gzip-compressed gRPC message frame:
+        //   byte 0     - Compression flag = 1 (gzip).
+        //   bytes 1-4  - Compressed payload length in big-endian format.
+        //   bytes 5+   - Gzip-compressed protobuf payload.
+#if NET
+        var compressedStream = new PooledBufferStream();
+#else
+        var compressedStream = new MemoryStream();
+#endif
+
+        // Reserve space for the gRPC frame header.
+#if NET
+        compressedStream.Write(GrpcFrameHeader);
+#else
+        compressedStream.Write(GrpcFrameHeader, 0, GrpcFrameHeader.Length);
+#endif
+
+        using (var gzipStream = new GZipStream(compressedStream, CompressionLevel.Fastest, leaveOpen: true))
+        {
+            gzipStream.Write(buffer, GrpcMessageHeaderSize, contentLength - GrpcMessageHeaderSize);
+        }
+
+        var compressedPayloadLength = (uint)(compressedStream.Length - GrpcMessageHeaderSize);
+
+        // Write the gRPC frame header: compression flag + big-endian payload length.
+        compressedStream.Position = 0;
+        compressedStream.WriteByte(1);
+
+        var lengthBytes = new byte[4];
+        BinaryPrimitives.WriteUInt32BigEndian(lengthBytes, compressedPayloadLength);
+        compressedStream.Write(lengthBytes, 0, 4);
+
+        compressedStream.Position = 0;
+
+        OpenTelemetryProtocolExporterEventSource.Log.CompressedGrpcPayload("gzip", contentLength, compressedStream.Length);
+
+        var content = new StreamContent(compressedStream);
+        content.Headers.ContentType = this.MediaTypeHeader;
+        return content;
+    }
+
     private static bool IsTransientNetworkError(HttpRequestException ex) =>
-        ex.InnerException is System.Net.Sockets.SocketException socketEx
-        && (socketEx.SocketErrorCode == System.Net.Sockets.SocketError.TimedOut
-            || socketEx.SocketErrorCode == System.Net.Sockets.SocketError.ConnectionReset
-            || socketEx.SocketErrorCode == System.Net.Sockets.SocketError.HostUnreachable
-            || socketEx.SocketErrorCode == System.Net.Sockets.SocketError.ConnectionRefused);
+        ex.InnerException is SocketException { SocketErrorCode: SocketError.TimedOut or SocketError.ConnectionReset or SocketError.HostUnreachable or SocketError.ConnectionRefused };
 }

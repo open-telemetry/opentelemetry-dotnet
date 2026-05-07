@@ -1153,7 +1153,7 @@ public sealed class TracerProviderSdkTests : IDisposable
     public void AddLegacyOperationName_BadArgs(string? operationName)
     {
         var builder = Sdk.CreateTracerProviderBuilder();
-        Assert.Throws<ArgumentException>(() => builder.AddLegacySource(operationName!));
+        Assert.ThrowsAny<ArgumentException>(() => builder.AddLegacySource(operationName!));
     }
 
     [Fact]

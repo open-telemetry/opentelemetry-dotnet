@@ -29,22 +29,18 @@ internal sealed class ExperimentalOptions
 
         if (configuration.TryGetStringValue(OtlpRetryEnvVar, out var retryPolicy))
         {
-            if (retryPolicy.Equals("in_memory", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(retryPolicy, "in_memory", StringComparison.OrdinalIgnoreCase))
             {
                 this.EnableInMemoryRetry = true;
             }
-            else if (retryPolicy.Equals("disk", StringComparison.OrdinalIgnoreCase))
+            else if (string.Equals(retryPolicy, "disk", StringComparison.OrdinalIgnoreCase))
             {
                 this.EnableDiskRetry = true;
-                if (configuration.TryGetStringValue(OtlpDiskRetryDirectoryPathEnvVar, out var path))
-                {
-                    this.DiskRetryDirectoryPath = path;
-                }
-                else
-                {
-                    throw new NotSupportedException(
+
+                this.DiskRetryDirectoryPath = configuration.TryGetStringValue(OtlpDiskRetryDirectoryPathEnvVar, out var path)
+                    ? path
+                    : throw new NotSupportedException(
                         $"Retry Policy '{retryPolicy}' requires '{OtlpDiskRetryDirectoryPathEnvVar}' to be configured.");
-                }
             }
             else
             {

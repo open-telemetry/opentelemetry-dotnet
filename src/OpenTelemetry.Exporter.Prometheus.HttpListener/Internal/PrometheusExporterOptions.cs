@@ -10,7 +10,10 @@ namespace OpenTelemetry.Exporter.Prometheus;
 /// </summary>
 internal sealed class PrometheusExporterOptions
 {
-    private int scrapeResponseCacheDurationMilliseconds = 300;
+    public PrometheusExporterOptions()
+    {
+        this.ScrapeResponseCacheDurationMilliseconds = 300;
+    }
 
     /// <summary>
     /// Gets or sets the cache duration in milliseconds for scrape responses. Default value: 300.
@@ -20,12 +23,11 @@ internal sealed class PrometheusExporterOptions
     /// </remarks>
     public int ScrapeResponseCacheDurationMilliseconds
     {
-        get => this.scrapeResponseCacheDurationMilliseconds;
+        get => field;
         set
         {
             Guard.ThrowIfOutOfRange(value, min: 0);
-
-            this.scrapeResponseCacheDurationMilliseconds = value;
+            field = value;
         }
     }
 
@@ -33,9 +35,4 @@ internal sealed class PrometheusExporterOptions
     /// Gets or sets a value indicating whether addition of _total suffix for counter metric names is disabled. Default value: <see langword="false"/>.
     /// </summary>
     public bool DisableTotalNameSuffixForCounters { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether timestamps should be disabled. Default value: <see langword="false"/>.
-    /// </summary>
-    public bool DisableTimestamp { get; set; }
 }

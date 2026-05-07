@@ -329,7 +329,7 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
         // Arrange
         var meterName = "TestMeter";
 
-        using (new EnvironmentVariableScope("OTEL_SDK_DISABLED", "true"))
+        using (EnvironmentVariableScope.Create("OTEL_SDK_DISABLED", "true"))
         {
             var services = new ServiceCollection();
 

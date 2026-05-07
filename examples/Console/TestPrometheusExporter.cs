@@ -33,8 +33,7 @@ internal sealed class TestPrometheusExporter
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(MyMeter.Name)
             .AddMeter(MyMeter2.Name)
-            .AddPrometheusHttpListener(
-                o => o.UriPrefixes = [$"http://localhost:{options.Port}/"])
+            .AddPrometheusHttpListener(o => o.Port = options.Port)
             .Build();
 
         var process = Process.GetCurrentProcess();

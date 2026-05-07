@@ -51,7 +51,7 @@ public sealed class BatchExportLogRecordProcessorOptionsTests : IDisposable
     {
         var values = new Dictionary<string, string?>()
         {
-            [BatchExportLogRecordProcessorOptions.MaxQueueSizeEnvVarKey] = "1",
+            [BatchExportLogRecordProcessorOptions.MaxQueueSizeEnvVarKey] = "3",
             [BatchExportLogRecordProcessorOptions.MaxExportBatchSizeEnvVarKey] = "2",
             [BatchExportLogRecordProcessorOptions.ExporterTimeoutEnvVarKey] = "3",
             [BatchExportLogRecordProcessorOptions.ScheduledDelayEnvVarKey] = "4",
@@ -63,7 +63,7 @@ public sealed class BatchExportLogRecordProcessorOptionsTests : IDisposable
 
         var options = new BatchExportLogRecordProcessorOptions(configuration);
 
-        Assert.Equal(1, options.MaxQueueSize);
+        Assert.Equal(3, options.MaxQueueSize);
         Assert.Equal(2, options.MaxExportBatchSize);
         Assert.Equal(3, options.ExporterTimeoutMilliseconds);
         Assert.Equal(4, options.ScheduledDelayMilliseconds);

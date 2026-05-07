@@ -103,4 +103,9 @@ internal interface IOtlpExporterOptions
     /// </list>
     /// </remarks>
     Func<HttpClient> HttpClientFactory { get; set; }
+
+    /// <summary>
+    /// Gets or sets the compression method to use when sending telemetry.
+    /// </summary>
+    OtlpExportCompression Compression { get; set; }
 }

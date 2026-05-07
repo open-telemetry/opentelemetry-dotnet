@@ -544,7 +544,7 @@ public class TraceContextPropagator : TextMapPropagator
     }
 
     private static byte HexCharToByte(char c)
-        => c is >= '0' and <= '9'
+        => char.IsAsciiDigit(c)
            ? (byte)(c - '0')
            : c is >= 'a' and <= 'f'
            ? (byte)(c - 'a' + 10)
@@ -634,7 +634,7 @@ public class TraceContextPropagator : TextMapPropagator
         // (There is an inconsistency in the expression above and the description in note.
         // Here is following the description in note:
         // "Identifiers MUST begin with a lowercase letter or a digit.")
-        if (!IsLowerAlphaDigit(key[0]))
+        if (!IsAsciiLetterOrDigitLower(key[0]))
         {
             return false;
         }
@@ -649,7 +649,7 @@ public class TraceContextPropagator : TextMapPropagator
                 break;
             }
 
-            if (!(IsLowerAlphaDigit(ch)
+            if (!(IsAsciiLetterOrDigitLower(ch)
                 || ch == '_'
                 || ch == '-'
                 || ch == '*'
@@ -681,7 +681,7 @@ public class TraceContextPropagator : TextMapPropagator
         for (var i = tenantLength + 1; i < key.Length; ++i)
         {
             var ch = key[i];
-            if (!(IsLowerAlphaDigit(ch)
+            if (!(IsAsciiLetterOrDigitLower(ch)
                 || ch == '_'
                 || ch == '-'
                 || ch == '*'
@@ -719,8 +719,8 @@ public class TraceContextPropagator : TextMapPropagator
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool IsLowerAlphaDigit(char c)
-        => c is (>= '0' and <= '9') or (>= 'a' and <= 'z');
+    private static bool IsAsciiLetterOrDigitLower(char c)
+        => char.IsAsciiDigit(c) || char.IsAsciiLetterLower(c);
 
 #if NET
     private static void WriteTraceParentIntoSpan(Span<char> destination, ActivityContext context)

@@ -20,7 +20,9 @@ public class OtlpSpecConfigDefinitionTests : IEnumerable<object[]>
         OtlpSpecConfigDefinitions.DefaultTimeoutEnvVarName,
         "1001",
         OtlpSpecConfigDefinitions.DefaultProtocolEnvVarName,
-        "http/protobuf");
+        "http/protobuf",
+        OtlpSpecConfigDefinitions.DefaultCompressionEnvVarName,
+        "gzip");
 
     internal static TestData LoggingData { get; } = new TestData(
         OtlpExporterOptionsConfigurationType.Logs,
@@ -32,7 +34,9 @@ public class OtlpSpecConfigDefinitionTests : IEnumerable<object[]>
         OtlpSpecConfigDefinitions.LogsTimeoutEnvVarName,
         "1002",
         OtlpSpecConfigDefinitions.LogsProtocolEnvVarName,
-        "http/protobuf");
+        "http/protobuf",
+        OtlpSpecConfigDefinitions.LogsCompressionEnvVarName,
+        "gzip");
 
     internal static MetricsTestData MetricsData { get; } = new MetricsTestData(
         OtlpSpecConfigDefinitions.MetricsEndpointEnvVarName,
@@ -44,6 +48,8 @@ public class OtlpSpecConfigDefinitionTests : IEnumerable<object[]>
         "1003",
         OtlpSpecConfigDefinitions.MetricsProtocolEnvVarName,
         "http/protobuf",
+        OtlpSpecConfigDefinitions.MetricsCompressionEnvVarName,
+        "gzip",
         OtlpSpecConfigDefinitions.MetricsTemporalityPreferenceEnvVarName,
         "Delta",
         OtlpSpecConfigDefinitions.MetricsDefaultHistogramAggregationEnvVarName,
@@ -59,32 +65,38 @@ public class OtlpSpecConfigDefinitionTests : IEnumerable<object[]>
         OtlpSpecConfigDefinitions.TracesTimeoutEnvVarName,
         "1004",
         OtlpSpecConfigDefinitions.TracesProtocolEnvVarName,
-        "http/protobuf");
+        "http/protobuf",
+        OtlpSpecConfigDefinitions.TracesCompressionEnvVarName,
+        "gzip");
 
     [Fact]
     public void VerifyKeyNamesMatchSpec()
     {
+        Assert.Equal("OTEL_EXPORTER_OTLP_COMPRESSION", DefaultData.CompressionKeyName);
         Assert.Equal("OTEL_EXPORTER_OTLP_ENDPOINT", DefaultData.EndpointKeyName);
         Assert.Equal("OTEL_EXPORTER_OTLP_HEADERS", DefaultData.HeadersKeyName);
-        Assert.Equal("OTEL_EXPORTER_OTLP_TIMEOUT", DefaultData.TimeoutKeyName);
         Assert.Equal("OTEL_EXPORTER_OTLP_PROTOCOL", DefaultData.ProtocolKeyName);
+        Assert.Equal("OTEL_EXPORTER_OTLP_TIMEOUT", DefaultData.TimeoutKeyName);
 
+        Assert.Equal("OTEL_EXPORTER_OTLP_LOGS_COMPRESSION", LoggingData.CompressionKeyName);
         Assert.Equal("OTEL_EXPORTER_OTLP_LOGS_ENDPOINT", LoggingData.EndpointKeyName);
         Assert.Equal("OTEL_EXPORTER_OTLP_LOGS_HEADERS", LoggingData.HeadersKeyName);
-        Assert.Equal("OTEL_EXPORTER_OTLP_LOGS_TIMEOUT", LoggingData.TimeoutKeyName);
         Assert.Equal("OTEL_EXPORTER_OTLP_LOGS_PROTOCOL", LoggingData.ProtocolKeyName);
+        Assert.Equal("OTEL_EXPORTER_OTLP_LOGS_TIMEOUT", LoggingData.TimeoutKeyName);
 
+        Assert.Equal("OTEL_EXPORTER_OTLP_METRICS_COMPRESSION", MetricsData.CompressionKeyName);
         Assert.Equal("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", MetricsData.EndpointKeyName);
         Assert.Equal("OTEL_EXPORTER_OTLP_METRICS_HEADERS", MetricsData.HeadersKeyName);
-        Assert.Equal("OTEL_EXPORTER_OTLP_METRICS_TIMEOUT", MetricsData.TimeoutKeyName);
         Assert.Equal("OTEL_EXPORTER_OTLP_METRICS_PROTOCOL", MetricsData.ProtocolKeyName);
+        Assert.Equal("OTEL_EXPORTER_OTLP_METRICS_TIMEOUT", MetricsData.TimeoutKeyName);
         Assert.Equal("OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE", MetricsData.TemporalityKeyName);
         Assert.Equal("OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION", MetricsData.HistogramAggregationKeyName);
 
+        Assert.Equal("OTEL_EXPORTER_OTLP_TRACES_COMPRESSION", TracingData.CompressionKeyName);
         Assert.Equal("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", TracingData.EndpointKeyName);
         Assert.Equal("OTEL_EXPORTER_OTLP_TRACES_HEADERS", TracingData.HeadersKeyName);
-        Assert.Equal("OTEL_EXPORTER_OTLP_TRACES_TIMEOUT", TracingData.TimeoutKeyName);
         Assert.Equal("OTEL_EXPORTER_OTLP_TRACES_PROTOCOL", TracingData.ProtocolKeyName);
+        Assert.Equal("OTEL_EXPORTER_OTLP_TRACES_TIMEOUT", TracingData.TimeoutKeyName);
     }
 
     public IEnumerator<object[]> GetEnumerator()
@@ -152,7 +164,9 @@ public class OtlpSpecConfigDefinitionTests : IEnumerable<object[]>
             string timeoutKeyName,
             string timeoutValue,
             string protocolKeyName,
-            string protocolValue)
+            string protocolValue,
+            string compressionKeyName,
+            string compressionValue)
         {
             this.ConfigurationType = configurationType;
             this.EndpointKeyName = endpointKeyName;
@@ -164,6 +178,8 @@ public class OtlpSpecConfigDefinitionTests : IEnumerable<object[]>
             this.TimeoutValue = timeoutValue;
             this.ProtocolKeyName = protocolKeyName;
             this.ProtocolValue = protocolValue;
+            this.CompressionKeyName = compressionKeyName;
+            this.CompressionValue = compressionValue;
         }
 
         public OtlpExporterOptionsConfigurationType ConfigurationType { get; }
@@ -186,6 +202,10 @@ public class OtlpSpecConfigDefinitionTests : IEnumerable<object[]>
 
         public string ProtocolValue { get; }
 
+        public string CompressionKeyName { get; }
+
+        public string CompressionValue { get; }
+
         public IConfiguration ToConfiguration()
             => this.AddToConfiguration(new ConfigurationBuilder()).Build();
 
@@ -193,10 +213,11 @@ public class OtlpSpecConfigDefinitionTests : IEnumerable<object[]>
         {
             Dictionary<string, string?> dictionary = new()
             {
+                [this.CompressionKeyName] = this.CompressionValue,
                 [this.EndpointKeyName] = this.EndpointValue,
                 [this.HeadersKeyName] = this.HeadersValue,
-                [this.TimeoutKeyName] = this.TimeoutValue,
                 [this.ProtocolKeyName] = this.ProtocolValue,
+                [this.TimeoutKeyName] = this.TimeoutValue,
             };
 
             this.OnAddToDictionary(dictionary);
@@ -208,20 +229,22 @@ public class OtlpSpecConfigDefinitionTests : IEnumerable<object[]>
 
         public void SetEnvVars()
         {
+            Environment.SetEnvironmentVariable(this.CompressionKeyName, this.CompressionValue);
             Environment.SetEnvironmentVariable(this.EndpointKeyName, this.EndpointValue);
             Environment.SetEnvironmentVariable(this.HeadersKeyName, this.HeadersValue);
-            Environment.SetEnvironmentVariable(this.TimeoutKeyName, this.TimeoutValue);
             Environment.SetEnvironmentVariable(this.ProtocolKeyName, this.ProtocolValue);
+            Environment.SetEnvironmentVariable(this.TimeoutKeyName, this.TimeoutValue);
 
             this.OnSetEnvVars();
         }
 
         public void ClearEnvVars()
         {
+            Environment.SetEnvironmentVariable(this.CompressionKeyName, null);
             Environment.SetEnvironmentVariable(this.EndpointKeyName, null);
             Environment.SetEnvironmentVariable(this.HeadersKeyName, null);
-            Environment.SetEnvironmentVariable(this.TimeoutKeyName, null);
             Environment.SetEnvironmentVariable(this.ProtocolKeyName, null);
+            Environment.SetEnvironmentVariable(this.TimeoutKeyName, null);
 
             this.OnClearEnvVars();
         }
@@ -238,6 +261,13 @@ public class OtlpSpecConfigDefinitionTests : IEnumerable<object[]>
             }
 
             Assert.Equal(protocol, otlpExporterOptions.Protocol);
+
+            if (!OtlpExporterOptions.TryParseCompression(this.CompressionValue, out var compression))
+            {
+                Assert.Fail();
+            }
+
+            Assert.Equal(compression, otlpExporterOptions.Compression);
 
             var concreteOptions = otlpExporterOptions as OtlpExporterOptions;
             Assert.NotNull(concreteOptions);
@@ -269,6 +299,8 @@ public class OtlpSpecConfigDefinitionTests : IEnumerable<object[]>
             string timeoutValue,
             string protocolKeyName,
             string protocolValue,
+            string compressionKeyName,
+            string compressionValue,
             string temporalityKeyName,
             string temporalityValue,
             string? histogramAggregationKeyName = null,
@@ -283,7 +315,9 @@ public class OtlpSpecConfigDefinitionTests : IEnumerable<object[]>
                   timeoutKeyName,
                   timeoutValue,
                   protocolKeyName,
-                  protocolValue)
+                  protocolValue,
+                  compressionKeyName,
+                  compressionValue)
         {
             this.TemporalityKeyName = temporalityKeyName;
             this.TemporalityValue = temporalityValue;

@@ -35,12 +35,8 @@ internal class OtlpExporterTransmissionHandler : IDisposable
         {
             var deadlineUtc = DateTime.UtcNow.AddMilliseconds(this.TimeoutMilliseconds);
             var response = this.ExportClient.SendExportRequest(request, contentLength, deadlineUtc);
-            if (response.Success)
-            {
-                return true;
-            }
 
-            return this.OnSubmitRequestFailure(request, contentLength, response);
+            return response.Success || this.OnSubmitRequestFailure(request, contentLength, response);
         }
         catch (Exception ex)
         {
@@ -65,15 +61,13 @@ internal class OtlpExporterTransmissionHandler : IDisposable
     {
         Guard.ThrowIfInvalidTimeout(timeoutMilliseconds);
 
-        var sw = timeoutMilliseconds == Timeout.Infinite ? null : Stopwatch.StartNew();
+        long? timestamp = timeoutMilliseconds == Timeout.Infinite ? null : Stopwatch.GetTimestamp();
 
         this.OnShutdown(timeoutMilliseconds);
 
-        if (sw != null)
+        if (timestamp is { } startedAt)
         {
-            var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
-
-            return this.ExportClient.Shutdown((int)Math.Max(timeout, 0));
+            timeoutMilliseconds = Stopwatch.Remaining(timeoutMilliseconds, startedAt);
         }
 
         return this.ExportClient.Shutdown(timeoutMilliseconds);
