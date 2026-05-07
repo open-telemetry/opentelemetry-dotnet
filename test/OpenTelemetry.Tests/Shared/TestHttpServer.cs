@@ -7,8 +7,6 @@ namespace OpenTelemetry.Tests;
 
 internal static class TestHttpServer
 {
-    private static readonly Random GlobalRandom = new();
-
     public static IDisposable RunServer(Action<HttpListenerContext> action, out string host, out int port)
     {
         host = "localhost";
@@ -16,13 +14,13 @@ internal static class TestHttpServer
         RunningServer? server = null;
 
         var retryCount = 5;
-        while (retryCount > 0)
+        var remainingAttempts = retryCount;
+
+        while (remainingAttempts > 0)
         {
             try
             {
-#pragma warning disable CA5394 // Do not use insecure randomness
-                port = GlobalRandom.Next(2000, 5000);
-#pragma warning restore CA5394 // Do not use insecure randomness
+                port = TcpPortProvider.GetOpenPort();
                 server = new RunningServer(action, host, port);
                 server.Start();
                 break;
@@ -31,16 +29,11 @@ internal static class TestHttpServer
             {
                 server?.Dispose();
                 server = null;
-                retryCount--;
+                remainingAttempts--;
             }
         }
 
-        if (server == null)
-        {
-            throw new InvalidOperationException("Server could not be started.");
-        }
-
-        return server;
+        return server ?? throw new InvalidOperationException($"Server could not be started within {retryCount} attempts.");
     }
 
     private sealed class RunningServer : IDisposable

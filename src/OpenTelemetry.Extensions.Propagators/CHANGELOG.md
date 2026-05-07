@@ -10,7 +10,8 @@ covering all components see: [Release Notes](../../RELEASENOTES.md).
 
 Released 2026-Apr-21
 
-* Improve efficiency of parsing of baggage, B3 and Jaeger propagation headers.
+* Improve efficiency of parsing of baggage, B3 and Jaeger propagation headers
+  to resolve [GHSA-g94r-2vxg-569j](https://github.com/advisories/GHSA-g94r-2vxg-569j).
   ([#7061](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7061))
 
 ## 1.15.2

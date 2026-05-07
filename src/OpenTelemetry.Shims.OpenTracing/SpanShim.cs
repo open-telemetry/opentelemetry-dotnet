@@ -175,7 +175,7 @@ internal sealed class SpanShim : ISpan
 
         // Special case the OpenTracing Error Tag
         // see https://opentracing.io/specification/conventions/
-        if (global::OpenTracing.Tag.Tags.Error.Key.Equals(key, StringComparison.Ordinal))
+        if (string.Equals(global::OpenTracing.Tag.Tags.Error.Key, key, StringComparison.Ordinal))
         {
             this.Span.SetStatus(value ? Status.Error : Status.Ok);
         }
@@ -263,7 +263,7 @@ internal sealed class SpanShim : ISpan
                 continue;
             }
 
-            if (eventName == null && field.Key.Equals(LogFields.Event, StringComparison.Ordinal) && field.Value is string value)
+            if (eventName == null && string.Equals(field.Key, LogFields.Event, StringComparison.Ordinal) && field.Value is string value)
             {
                 // This is meant to be the event name
                 eventName = value;

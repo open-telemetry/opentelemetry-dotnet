@@ -693,6 +693,79 @@ public class MetricExemplarTests : MetricTestsBase
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
+    public void TestExemplarsObservableFilterTags(bool enableTagFiltering)
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+
+        var gauge = meter.CreateObservableGauge(
+            "testObservableGauge",
+            () => new Measurement<double>(
+                18D,
+                new("key1", "value1"),
+                new("key2", "value2"),
+                new("key3", "value3")));
+
+        var counter = meter.CreateObservableCounter(
+            "testObservableCounter",
+            () => new Measurement<long>(
+                100,
+                new("key1", "value1"),
+                new("key2", "value2"),
+                new("key3", "value3")));
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
+            .AddView(
+                "testObservableGauge",
+                new MetricStreamConfiguration()
+                {
+                    TagKeys = enableTagFiltering ? ["key1"] : null,
+                })
+            .AddView(
+                "testObservableCounter",
+                new MetricStreamConfiguration()
+                {
+                    TagKeys = enableTagFiltering ? ["key1"] : null,
+                })
+            .AddInMemoryExporter(exportedItems));
+
+        meterProvider.ForceFlush();
+
+        Assert.Equal(2, exportedItems.Count);
+
+        foreach (var metric in exportedItems)
+        {
+            var metricPoint = GetFirstMetricPoint(new[] { metric });
+            Assert.NotNull(metricPoint);
+
+            var exemplars = GetExemplars(metricPoint.Value);
+            Assert.NotNull(exemplars);
+            Assert.Single(exemplars);
+
+            var exemplar = exemplars[0];
+
+            if (!enableTagFiltering)
+            {
+                Assert.Equal(0, exemplar.FilteredTags.MaximumCount);
+            }
+            else
+            {
+                var filteredTags = exemplar.FilteredTags.ToReadOnlyList();
+
+                Assert.Equal(2, filteredTags.Count);
+
+                Assert.Contains(new("key2", "value2"), filteredTags);
+                Assert.Contains(new("key3", "value3"), filteredTags);
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
     public void TestExemplarsFilterTags(bool enableTagFiltering)
     {
         var exportedItems = new List<Metric>();

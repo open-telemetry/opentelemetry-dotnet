@@ -28,9 +28,7 @@ internal readonly struct Tags : IEquatable<Tags>
     public static bool operator !=(Tags tag1, Tags tag2) => !tag1.Equals(tag2);
 
     public override readonly bool Equals(object? obj)
-    {
-        return obj is Tags other && this.Equals(other);
-    }
+        => obj is Tags other && this.Equals(other);
 
     public readonly bool Equals(Tags other)
     {
@@ -53,12 +51,12 @@ internal readonly struct Tags : IEquatable<Tags>
             ref var theirs = ref MemoryMarshal.GetArrayDataReference(theirKvps);
             while (true)
             {
-                if (!ours.Key.Equals(theirs.Key, StringComparison.Ordinal))
+                if (!string.Equals(ours.Key, theirs.Key, StringComparison.Ordinal))
                 {
                     return false;
                 }
 
-                if (!ours.Value?.Equals(theirs.Value) ?? theirs.Value != null)
+                if (!ours.Value?.Equals(theirs.Value) ?? (theirs.Value != null))
                 {
                     return false;
                 }
@@ -80,12 +78,12 @@ internal readonly struct Tags : IEquatable<Tags>
             // Note: Bounds check happens here for theirKvps element access
             ref var theirs = ref theirKvps[i];
 
-            if (!ours.Key.Equals(theirs.Key, StringComparison.Ordinal))
+            if (!string.Equals(ours.Key, theirs.Key, StringComparison.Ordinal))
             {
                 return false;
             }
 
-            if (!ours.Value?.Equals(theirs.Value) ?? theirs.Value != null)
+            if (!ours.Value?.Equals(theirs.Value) ?? (theirs.Value != null))
             {
                 return false;
             }

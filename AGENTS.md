@@ -50,6 +50,15 @@ dotnet format OpenTelemetry.slnx
 markdownlint .
 ```
 
+**Check for non-ASCII characters and trailing whitespace** (requires `python3`):
+
+CI runs a sanity check that rejects non-ASCII characters (e.g. smart quotes,
+em dashes) and trailing whitespace. To check locally:
+
+```sh
+python3 ./build/scripts/sanitycheck.py
+```
+
 - The .NET SDK version specified in `global.json` (or newer) is required.
 - `TreatWarningsAsErrors` is active in Release builds; StyleCop and nullable
   violations fail the build.

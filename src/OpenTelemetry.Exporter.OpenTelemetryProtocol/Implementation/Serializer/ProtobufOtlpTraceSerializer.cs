@@ -304,13 +304,13 @@ internal static class ProtobufOtlpTraceSerializer
                     statusCode = tag.Value switch
                     {
                         /*
-                         * Note: Order here does matter for perf. Unset is
-                         * first because assumption is most spans will be
-                         * Unset, then Error. Ok is not set by the SDK.
+                         * Note: Order here matters for performance. Unset
+                         * is first because the assumption is most spans will
+                         * be Unset, then Error. Ok is not set by the SDK.
                          */
-                        not null when UnsetStatusCodeTagValue.Equals(tag.Value as string, StringComparison.OrdinalIgnoreCase) => StatusCode.Unset,
-                        not null when ErrorStatusCodeTagValue.Equals(tag.Value as string, StringComparison.OrdinalIgnoreCase) => StatusCode.Error,
-                        not null when OkStatusCodeTagValue.Equals(tag.Value as string, StringComparison.OrdinalIgnoreCase) => StatusCode.Ok,
+                        not null when string.Equals(UnsetStatusCodeTagValue, tag.Value as string, StringComparison.OrdinalIgnoreCase) => StatusCode.Unset,
+                        not null when string.Equals(ErrorStatusCodeTagValue, tag.Value as string, StringComparison.OrdinalIgnoreCase) => StatusCode.Error,
+                        not null when string.Equals(OkStatusCodeTagValue, tag.Value as string, StringComparison.OrdinalIgnoreCase) => StatusCode.Ok,
                         _ => null,
                     };
                     continue;
