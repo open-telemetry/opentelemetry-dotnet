@@ -55,7 +55,7 @@ Notes](../../RELEASENOTES.md).
   ([#7221](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7221))
 
 * Fix `ArgumentException` if `OTEL_SDK_DISABLED=true`.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/issues/TODO))
+  ([#7273](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7273))
 
 ## 1.15.3-beta.1
 
