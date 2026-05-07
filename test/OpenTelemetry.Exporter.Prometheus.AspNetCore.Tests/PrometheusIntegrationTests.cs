@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using System.Net;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server;
@@ -19,6 +20,48 @@ namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests;
 [Collection(PromToolCollection.Name)]
 public class PrometheusIntegrationTests(PromToolFixture fixture, ITestOutputHelper outputHelper)
 {
+    [Fact]
+
+    public async Task Scrape_Endpoint_Returns_No_Content_If_Sdk_Disabled()
+    {
+        // Arrange
+        using (EnvironmentVariableScope.Create("OTEL_SDK_DISABLED", "true"))
+        {
+            var builder = WebApplication.CreateBuilder();
+
+            // Listen on any available port
+            builder.WebHost.UseUrls("http://127.0.0.1:0");
+
+            builder.Services
+                .AddOpenTelemetry()
+                .WithMetrics((builder) => builder.AddPrometheusExporter());
+
+            using var app = builder.Build();
+
+            app.MapPrometheusScrapingEndpoint();
+
+            await app.StartAsync();
+
+            var server = app.Services.GetRequiredService<IServer>();
+            var addresses = server.Features.Get<IServerAddressesFeature>();
+
+            var baseAddress = addresses!.Addresses
+                .Select((p) => new Uri(p))
+                .Last();
+
+            using var httpClient = new HttpClient();
+            using var response = await httpClient.GetAsync(new Uri(baseAddress, "metrics"));
+
+            // Assert
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Null(response.Content.Headers.ContentType);
+
+            var content = await response.Content.ReadAsStringAsync();
+
+            Assert.Empty(content);
+        }
+    }
+
     [EnabledOnDockerPlatformTheory(DockerPlatform.Linux)]
     [InlineData("")]
     [InlineData("text/plain")]
@@ -31,6 +74,8 @@ public class PrometheusIntegrationTests(PromToolFixture fixture, ITestOutputHelp
 
     public async Task Can_Scrape_Prometheus(string accept)
     {
+        using var scope = EnvironmentVariableScope.Create("OTEL_SDK_DISABLED", "true");
+
         // Arrange
         const string meterName = "prometheus.integration.tests";
         const string meterVersion = "1.2.3";
