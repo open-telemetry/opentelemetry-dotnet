@@ -304,7 +304,7 @@ public class EnvironmentVariableCarrierTests
 
     private sealed class DictionaryOnlyCarrier : IDictionary<string, string?>
     {
-        private readonly Dictionary<string, string?> inner = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, string?> inner = [with(StringComparer.Ordinal)];
 
         public ICollection<string> Keys => this.inner.Keys;
 

@@ -106,8 +106,7 @@ internal sealed class PrometheusHttpListener : IDisposable
 
             var workerToken = this.tokenSource.Token;
             this.workerThread = Task.Factory.StartNew(
-                (paramToken) => this.ProcessingLoopAsync((CancellationToken)paramToken!),
-                workerToken,
+                () => this.ProcessingLoopAsync(workerToken),
                 CancellationToken.None,
                 TaskCreationOptions.LongRunning,
                 TaskScheduler.Default).Unwrap();
