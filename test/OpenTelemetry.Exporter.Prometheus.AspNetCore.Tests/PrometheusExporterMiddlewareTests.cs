@@ -236,7 +236,7 @@ public sealed class PrometheusExporterMiddlewareTests
         var context = new DefaultHttpContext();
         context.Request.Headers.Accept = accept;
 
-        var actual = PrometheusExporterMiddleware.Negotiate(context.Request);
+        var actual = PrometheusExporterMiddleware.Negotiate(context.Request.GetTypedHeaders());
 
         Assert.Equal(mediaType, actual.MediaType);
         Assert.Equal(isOpenMetrics, actual.IsOpenMetrics);
@@ -251,7 +251,7 @@ public sealed class PrometheusExporterMiddlewareTests
         var context = new DefaultHttpContext();
         context.Request.Headers.Accept = accept;
 
-        var actual = PrometheusExporterMiddleware.Negotiate(context.Request);
+        var actual = PrometheusExporterMiddleware.Negotiate(context.Request.GetTypedHeaders());
 
         Assert.Equivalent(PrometheusProtocol.Fallback, actual);
     }

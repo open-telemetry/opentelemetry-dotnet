@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using System.IO.Compression;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -66,6 +67,56 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
         var content = await response.Content.ReadAsStringAsync();
 
         Assert.Empty(content);
+    }
+
+    [Fact]
+    public async Task Scrape_Endpoint_Uses_GZip_When_Requested()
+    {
+        // Arrange
+        var builder = WebApplication.CreateBuilder();
+
+        // Listen on any available port
+        builder.WebHost.UseUrls("http://127.0.0.1:0");
+
+        builder.Services
+            .AddOpenTelemetry()
+            .WithMetrics((builder) => builder.AddPrometheusExporter());
+
+        using var app = builder.Build();
+
+        app.MapPrometheusScrapingEndpoint();
+
+        await app.StartAsync();
+
+        var server = app.Services.GetRequiredService<IServer>();
+        var addresses = server.Features.Get<IServerAddressesFeature>();
+
+        var baseAddress = addresses!.Addresses
+            .Select((p) => new Uri(p))
+            .Last();
+
+        using var httpClient = new HttpClient();
+
+        httpClient.DefaultRequestHeaders.Add("Accept-Encoding", "gzip");
+
+        using var response = await httpClient.GetAsync(new Uri(baseAddress, "metrics"));
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.NotNull(response.Content);
+        Assert.NotNull(response.Content.Headers.ContentEncoding);
+        Assert.Equal<string>(["gzip"], response.Content.Headers.ContentEncoding);
+        Assert.NotNull(response.Content.Headers.ContentType);
+        Assert.Equal("text/plain; version=0.0.4; charset=utf-8", response.Content.Headers.ContentType.ToString());
+
+        using var compressed = await response.Content.ReadAsStreamAsync();
+        using var decompressed = new GZipStream(compressed, CompressionMode.Decompress);
+        using var reader = new StreamReader(decompressed);
+
+        var content = await reader.ReadToEndAsync();
+
+        Assert.NotEmpty(content);
+        Assert.EndsWith("# EOF\n", content, StringComparison.Ordinal);
     }
 
     [EnabledOnDockerPlatformTheory(DockerPlatform.Linux)]
