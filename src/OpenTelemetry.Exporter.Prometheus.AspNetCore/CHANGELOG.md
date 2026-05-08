@@ -87,6 +87,9 @@ Notes](../../RELEASENOTES.md).
   specification.
   ([#7266](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7266))
 
+* Fix `ArgumentException` if `OTEL_SDK_DISABLED=true`.
+  ([#7273](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7273))
+
 ## 1.15.3-beta.1
 
 Released 2026-Apr-21

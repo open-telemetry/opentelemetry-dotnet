@@ -220,9 +220,15 @@ internal sealed class PrometheusCollectionManager
     {
         this.exporter.OnExport = this.onCollectRef;
         this.exporter.OpenMetricsRequested = openMetricsRequested;
-        var result = this.exporter.Collect!(Timeout.Infinite);
-        this.exporter.OnExport = null;
-        return result;
+
+        try
+        {
+            return this.exporter.Collect!(Timeout.Infinite);
+        }
+        finally
+        {
+            this.exporter.OnExport = null;
+        }
     }
 
     private ExportResult OnCollect(in Batch<Metric> metrics)

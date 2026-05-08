@@ -71,6 +71,7 @@ internal sealed class PrometheusExporterEventSource : EventSource, IConfiguratio
     public void InvalidConfigurationValue(string key, string value)
         => this.WriteEvent(5, key, value);
 
+    [NonEvent]
     public void LogInvalidConfigurationValue(string key, string value)
         => this.InvalidConfigurationValue(key, value);
 
