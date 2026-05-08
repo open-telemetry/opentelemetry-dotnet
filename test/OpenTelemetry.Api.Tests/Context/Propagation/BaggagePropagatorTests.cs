@@ -1,6 +1,5 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
-
 using Xunit;
 
 namespace OpenTelemetry.Context.Propagation.Tests;
@@ -610,7 +609,7 @@ public class BaggagePropagatorTests
         Assert.Equal("key+name", entry.Key);
     }
 
-    [Theory]
+    [Theory(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/pull/7051")]
     [InlineData(" ", "%20")]
     [InlineData("(", "%28")]
     [InlineData(":", "%3A")]

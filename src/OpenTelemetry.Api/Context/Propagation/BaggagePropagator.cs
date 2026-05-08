@@ -137,7 +137,12 @@ public class BaggagePropagator : TextMapPropagator
                     continue;
                 }
 
-                var encodedKey = EncodeKey(item.Key);
+                if (!IsValidKey(item.Key))
+                {
+                    continue;
+                }
+
+                var encodedKey = item.Key;
                 var encodedValue = EncodeValue(item.Value);
                 var baggageItemLength = encodedKey.Length + encodedValue.Length + 1;
 
