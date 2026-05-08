@@ -837,6 +837,48 @@ public class MetricExemplarTests : MetricTestsBase
         }
     }
 
+    [Theory]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData(MetricReaderTemporalityPreference.Delta)]
+    public void TestExemplarPlumbingUnderSpatialAggregation(MetricReaderTemporalityPreference temporality)
+    {
+        var exportedItems = new List<Metric>();
+
+        var tags1 = new List<KeyValuePair<string, object?>> { new("verb", "get") };
+        var tags2 = new List<KeyValuePair<string, object?>> { new("verb", "post") };
+
+        using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{temporality}");
+        meter.CreateObservableCounter(
+            "requestCount",
+            () => new List<Measurement<long>>
+            {
+                new(10L, tags1),
+                new(10L, tags2),
+            });
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
+            .AddView("requestCount", new MetricStreamConfiguration() { TagKeys = [] })
+            .AddInMemoryExporter(exportedItems, options =>
+            {
+                options.TemporalityPreference = temporality;
+            }));
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+
+        var metricPoint = GetFirstMetricPoint(exportedItems);
+        Assert.NotNull(metricPoint);
+
+        Assert.Equal(20, metricPoint.Value.GetSumLong());
+
+        var exemplars = GetExemplars(metricPoint.Value);
+        Assert.NotEmpty(exemplars);
+
+        Assert.Equal(2, exemplars.ToArray().Length);
+    }
+
     private static (double Value, bool ExpectTraceId)[] GenerateRandomValues(
         int count,
         bool expectTraceId,
