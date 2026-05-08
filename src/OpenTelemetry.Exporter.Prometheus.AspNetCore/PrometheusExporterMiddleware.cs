@@ -219,7 +219,7 @@ internal sealed class PrometheusExporterMiddleware
 
             await using var gzip = new GZipStream(
                 response.Body,
-                CompressionLevel.Optimal,
+                CompressionLevel.Fastest,
                 leaveOpen: true);
 
             await gzip.WriteAsync(content, cancellationToken);
