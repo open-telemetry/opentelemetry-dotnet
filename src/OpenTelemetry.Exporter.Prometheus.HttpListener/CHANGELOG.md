@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed scrape response cache freshness using monotonic time so it is not
+  affected by NTP system clock adjustments.
+  ([#7253](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7253))
+
 * Added `Host` and `Port` properties on `PrometheusHttpListenerOptions`
   for configuring the HTTP listener endpoint. The
   `PrometheusHttpListenerOptions.UriPrefixes` property is now obsolete and
