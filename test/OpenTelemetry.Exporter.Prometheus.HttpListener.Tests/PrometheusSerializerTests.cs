@@ -222,6 +222,48 @@ public sealed class PrometheusSerializerTests
     }
 
     [Fact]
+    public void GaugeMergesCollidingNormalizedDimensionNames()
+    {
+        var previousCulture = CultureInfo.CurrentCulture;
+        var previousUiCulture = CultureInfo.CurrentUICulture;
+        CultureInfo.CurrentCulture = new CultureInfo("fr-FR");
+        CultureInfo.CurrentUICulture = CultureInfo.CurrentCulture;
+
+        try
+        {
+            var buffer = new byte[85_000];
+            var metrics = new List<Metric>();
+
+            using var meter = new Meter(Utils.GetCurrentMethodName());
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meter.Name)
+                .AddInMemoryExporter(metrics)
+                .Build();
+
+            meter.CreateObservableGauge(
+                "test_gauge",
+                () => new Measurement<long>(
+                    123,
+                    new("a.b", true),
+                    new("a/b", 1.5),
+                    new("a-b", double.PositiveInfinity)));
+
+            provider.ForceFlush();
+
+            var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics: false);
+            var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+            Assert.Contains($"test_gauge{{otel_scope_name=\"{Utils.GetCurrentMethodName()}\",a_b=\"+Inf;true;1.5\"}} 123\n", output, StringComparison.Ordinal);
+            Assert.Contains("+Inf", output, StringComparison.Ordinal);
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = previousCulture;
+            CultureInfo.CurrentUICulture = previousUiCulture;
+        }
+    }
+
+    [Fact]
     public void GaugeEmptyDimensionName()
     {
         var buffer = new byte[85000];
@@ -1363,7 +1405,11 @@ public sealed class PrometheusSerializerTests
     {
         var buffer = new byte[4];
 
+#if NET8_0_OR_GREATER
+        Assert.Throws<ArgumentException>(() => PrometheusSerializer.WriteAsciiStringNoEscape(buffer, 0, "metric"));
+#else
         Assert.Throws<IndexOutOfRangeException>(() => PrometheusSerializer.WriteAsciiStringNoEscape(buffer, 0, "metric"));
+#endif
     }
 
     [Fact]
