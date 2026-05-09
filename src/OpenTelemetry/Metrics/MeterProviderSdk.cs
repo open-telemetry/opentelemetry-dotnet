@@ -195,7 +195,7 @@ internal sealed class MeterProviderSdk : MeterProvider
     {
         if (state is not MetricState metricState)
         {
-            // todo: Log
+            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"MeasurementsCompleted called with unexpected state type '{state?.GetType().Name ?? "null"}'.");
             return;
         }
 

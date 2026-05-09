@@ -167,6 +167,15 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
         }
     }
 
+    [NonEvent]
+    public void ExemplarReservoirException(Exception ex)
+    {
+        if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+        {
+            this.ExemplarReservoirException(ex.ToInvariantString());
+        }
+    }
+
     [Event(4, Message = "Unknown error in SpanProcessor event '{0}': '{1}'.", Level = EventLevel.Error)]
     public void SpanProcessorException(string evnt, string ex)
         => this.WriteEvent(4, evnt, ex);
@@ -309,6 +318,10 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
     [Event(56, Message = "Exception thrown by user code supplied on metric view ('{0}'): '{1}'.", Level = EventLevel.Error)]
     public void MetricViewException(string source, string ex)
         => this.WriteEvent(56, source, ex);
+
+    [Event(57, Message = "Exception thrown by user-supplied ExemplarReservoir.Offer implementation: '{0}'.", Level = EventLevel.Warning)]
+    public void ExemplarReservoirException(string ex)
+        => this.WriteEvent(57, ex);
 
     void IConfigurationExtensionsLogger.LogInvalidConfigurationValue(string key, string value)
         => this.InvalidConfigurationValue(key, value);
