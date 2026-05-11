@@ -1282,6 +1282,84 @@ public class MetricApiTests : MetricTestsBase
         Assert.Equal(9, metricPoints[0].GetSumLong());
     }
 
+    [Fact]
+    public void ObservableGaugeSpatialAggregationTest()
+    {
+        var exportedItems = new List<Metric>();
+
+        var tags1 = new List<KeyValuePair<string, object?>>
+        {
+            new("entity", "A"),
+            new("region", "west"),
+        };
+        var tags2 = new List<KeyValuePair<string, object?>>
+        {
+            new("entity", "B"),
+            new("region", "east"),
+        };
+        var tags3 = new List<KeyValuePair<string, object?>>
+        {
+            new("entity", "C"),
+            new("region", "west"),
+        };
+
+        var callbackValues = new long[] { 5L, 3L, 7L };
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        meter.CreateObservableGauge(
+            "temperature",
+            () => new List<Measurement<long>>
+            {
+                new(callbackValues[0], tags1),
+                new(callbackValues[1], tags2),
+                new(callbackValues[2], tags3),
+            });
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems)
+            .AddView("temperature", new MetricStreamConfiguration() { TagKeys = [] }));
+
+        var emptyTags = new List<KeyValuePair<string, object?>>();
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        List<MetricPoint> metricPoints = [];
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        ValidateMetricPointTags(emptyTags, metricPoints[0].Tags);
+        Assert.Equal(callbackValues[2], metricPoints[0].GetGaugeLastValueLong());
+
+        exportedItems.Clear();
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        metricPoints.Clear();
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        ValidateMetricPointTags(emptyTags, metricPoints[0].Tags);
+        Assert.Equal(callbackValues[2], metricPoints[0].GetGaugeLastValueLong());
+
+        exportedItems.Clear();
+        callbackValues = [10L, 20L, 15L];
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        metricPoints.Clear();
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        ValidateMetricPointTags(emptyTags, metricPoints[0].Tags);
+        Assert.Equal(callbackValues[2], metricPoints[0].GetGaugeLastValueLong());
+    }
+
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
