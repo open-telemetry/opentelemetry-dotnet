@@ -428,7 +428,7 @@ public struct MetricPoint
         this.CompleteUpdate();
     }
 
-    internal void UpdateWithExemplar(long number, ReadOnlySpan<KeyValuePair<string, object?>> tags, bool offerExemplar)
+    internal void UpdateWithExemplar(long number, long exemplarValue, ReadOnlySpan<KeyValuePair<string, object?>> tags, bool offerExemplar)
     {
         switch (this.aggType)
         {
@@ -489,7 +489,7 @@ public struct MetricPoint
                 break;
         }
 
-        this.UpdateExemplar(number, tags, offerExemplar);
+        this.UpdateExemplar(exemplarValue, tags, offerExemplar);
 
         this.CompleteUpdate();
     }
@@ -558,7 +558,7 @@ public struct MetricPoint
         this.CompleteUpdate();
     }
 
-    internal void UpdateWithExemplar(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags, bool offerExemplar)
+    internal void UpdateWithExemplar(double number, double exemplarValue, ReadOnlySpan<KeyValuePair<string, object?>> tags, bool offerExemplar)
     {
         switch (this.aggType)
         {
@@ -619,7 +619,7 @@ public struct MetricPoint
                 break;
         }
 
-        this.UpdateExemplar(number, tags, offerExemplar);
+        this.UpdateExemplar(exemplarValue, tags, offerExemplar);
 
         this.CompleteUpdate();
     }

@@ -918,7 +918,6 @@ public class MetricExemplarTests : MetricTestsBase
                 options.TemporalityPreference = temporality;
             }));
 
-        // Cycle 1: two measurements collapse to index 0; reservoir holds both.
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
         Assert.Single(exportedItems);
 
@@ -929,12 +928,8 @@ public class MetricExemplarTests : MetricTestsBase
         var exemplarsCycle1 = GetExemplars(metricPoint.Value);
         Assert.Equal(2, exemplarsCycle1.Count);
 
-        // Exemplar values are the raw measurements (10), not the accumulated sum (20).
         Assert.All(exemplarsCycle1, e => Assert.Equal(10L, e.LongValue));
 
-        // Cycle 2: values change to verify the reservoir resets each collection cycle.
-        // Spec: "Any stateful portion of sampling computation SHOULD be reset every
-        // collection cycle." (opentelemetry-specification/metrics/sdk.md#simplefixedsizeexemplarreservoir)
         exportedItems.Clear();
         callbackValue1 = 20L;
         callbackValue2 = 30L;
@@ -946,11 +941,8 @@ public class MetricExemplarTests : MetricTestsBase
 
         var exemplarsCycle2 = GetExemplars(metricPoint.Value);
 
-        // Both cycle-2 measurements are captured, confirming the reservoir reset.
         Assert.Equal(2, exemplarsCycle2.Count);
 
-        // Exemplar values reflect cycle 2 raw measurements (20 and 30),
-        // not the stale cycle 1 values (10).
         var cycle2Values = new HashSet<long>(exemplarsCycle2.Select(e => e.LongValue));
         Assert.Contains(20L, cycle2Values);
         Assert.Contains(30L, cycle2Values);
