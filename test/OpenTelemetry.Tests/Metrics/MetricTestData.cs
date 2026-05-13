@@ -7,6 +7,7 @@ namespace OpenTelemetry.Metrics.Tests;
 
 internal static class MetricTestData
 {
+#pragma warning disable CA1825 // Workaround for https://github.com/dotnet/sdk/issues/54275
     public static TheoryData<string> InvalidInstrumentNames =>
     [
         " ",
@@ -36,6 +37,7 @@ internal static class MetricTestData
         [0.0, 1.0, 1.0, 2.0],
         [0.0, 1.0, 2.0, -1.0],
     ];
+#pragma warning restore CA1825 // Workaround for https://github.com/dotnet/sdk/issues/54275
 
     public static TheoryData<double[], HistogramConfiguration, double, double> ValidHistogramMinMax => new()
     {
