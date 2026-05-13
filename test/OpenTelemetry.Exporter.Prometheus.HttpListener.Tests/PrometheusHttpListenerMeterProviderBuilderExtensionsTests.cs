@@ -108,6 +108,34 @@ public sealed class PrometheusHttpListenerMeterProviderBuilderExtensionsTests
         }
     }
 
+    [Theory]
+    [InlineData("65536")]
+    [InlineData("0")]
+    [InlineData("-1")]
+    public void TestAddPrometheusHttpListener_Configuration_From_Environment_Variables_Ignores_OutOfRange_Port(string port)
+    {
+        using (EnvironmentVariableScope.Create(
+            [
+                ("OTEL_EXPORTER_PROMETHEUS_PORT", port),
+            ]))
+        {
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddPrometheusHttpListener()
+                .Build();
+
+            var serviceProvider = meterProvider.GetServiceProvider();
+
+            Assert.NotNull(serviceProvider);
+
+            var options = serviceProvider.GetRequiredService<IOptionsMonitor<PrometheusHttpListenerOptions>>();
+
+            Assert.NotNull(options);
+            Assert.NotNull(options.CurrentValue);
+
+            Assert.Equal(9464, options.CurrentValue.Port);
+        }
+    }
+
     [Fact]
     public void TestAddPrometheusHttpListener_Manual_Configuration_Overrides_Environment_Variables()
     {
