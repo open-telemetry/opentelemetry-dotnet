@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed scrape response cache freshness using monotonic time so it is not
+  affected by NTP system clock adjustments.
+  ([#7253](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7253))
+
 * **Breaking Change** Removed `DisableTimestamp` property from
   `PrometheusAspNetCoreOptions`.
   ([#7176](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7176))
@@ -49,6 +53,9 @@ Notes](../../RELEASENOTES.md).
 * Omit histogram `_sum` and `_count` in OpenMetrics when negative bucket
   thresholds are present.
   ([#7221](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7221))
+
+* Fix `ArgumentException` if `OTEL_SDK_DISABLED=true`.
+  ([#7273](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7273))
 
 * Emit OpenMetrics scope metadata as a single `otel_scope` metric family with
   `otel_scope_info` samples instead of repeating metadata for every scope.
