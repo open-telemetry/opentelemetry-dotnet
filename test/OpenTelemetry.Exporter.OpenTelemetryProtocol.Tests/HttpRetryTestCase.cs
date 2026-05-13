@@ -26,6 +26,7 @@ public class HttpRetryTestCase
 
     internal HttpRetryAttempt[] RetryAttempts { get; }
 
+#pragma warning disable CA1825 // Avoid zero-length array allocations
     public static TheoryData<HttpRetryTestCase> GetHttpTestCases() =>
     [
         new("NetworkError", [new(statusCode: null)]),
@@ -59,7 +60,8 @@ public class HttpRetryTestCase
             [
                 new(statusCode: HttpStatusCode.ServiceUnavailable, isDeadlineExceeded: true, expectedSuccess: false)
             ]),
-    ]; // TODO: Add more cases.
+    ];
+#pragma warning restore CA1825 // Avoid zero-length array allocations
 
     public override string ToString() => this.testRunnerName;
 
