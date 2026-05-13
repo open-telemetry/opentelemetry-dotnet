@@ -54,12 +54,13 @@ public sealed class PrometheusCollectionManagerTests
             return result;
         };
 
-        var utcNow = DateTime.UtcNow;
+        var startUtc = DateTime.UtcNow;
+        var utcNow = startUtc;
 
         if (cacheEnabled)
         {
-            // Override the cache to ensure the cache is always seen again during its validity period.
             exporter.CollectionManager.UtcNow = () => utcNow;
+            exporter.CollectionManager.GetElapsedTime = () => utcNow - startUtc;
         }
 
         var counter = meter.CreateCounter<int>("counter_int", description: "Prometheus help text goes here \n escaping.");

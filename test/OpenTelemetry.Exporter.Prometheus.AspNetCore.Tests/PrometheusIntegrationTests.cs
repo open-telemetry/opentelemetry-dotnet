@@ -3,10 +3,12 @@
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using System.Net;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter.Prometheus.Tests;
 using OpenTelemetry.Metrics;
@@ -19,6 +21,49 @@ namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests;
 [Collection(PromToolCollection.Name)]
 public class PrometheusIntegrationTests(PromToolFixture fixture, ITestOutputHelper outputHelper)
 {
+    [Fact]
+    public async Task Scrape_Endpoint_Returns_No_Content_If_Sdk_Disabled()
+    {
+        // Arrange
+        var builder = WebApplication.CreateBuilder();
+
+        builder.Configuration.AddInMemoryCollection(
+            [
+                KeyValuePair.Create<string, string?>("OTEL_SDK_DISABLED", "true"),
+            ]);
+
+        // Listen on any available port
+        builder.WebHost.UseUrls("http://127.0.0.1:0");
+
+        builder.Services
+            .AddOpenTelemetry()
+            .WithMetrics((builder) => builder.AddPrometheusExporter());
+
+        using var app = builder.Build();
+
+        app.MapPrometheusScrapingEndpoint();
+
+        await app.StartAsync();
+
+        var server = app.Services.GetRequiredService<IServer>();
+        var addresses = server.Features.Get<IServerAddressesFeature>();
+
+        var baseAddress = addresses!.Addresses
+            .Select((p) => new Uri(p))
+            .Last();
+
+        using var httpClient = new HttpClient();
+        using var response = await httpClient.GetAsync(new Uri(baseAddress, "metrics"));
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Null(response.Content.Headers.ContentType);
+
+        var content = await response.Content.ReadAsStringAsync();
+
+        Assert.Empty(content);
+    }
+
     [EnabledOnDockerPlatformTheory(DockerPlatform.Linux)]
     [InlineData("")]
     [InlineData("text/plain")]
@@ -28,7 +73,6 @@ public class PrometheusIntegrationTests(PromToolFixture fixture, ITestOutputHelp
     [InlineData("application/openmetrics-text;version=0.0.4")]
     [InlineData("application/openmetrics-text;version=1.0.0", Skip = "https://github.com/prometheus/prometheus/issues/8932")]
     [InlineData("application/openmetrics-text;version=1.0.0;escaping=allow-utf-8;q=0.5,application/openmetrics-text;version=0.0.1;q=0.4,text/plain;version=1.0.0;escaping=allow-utf-8;q=0.3,text/plain;version=0.0.4;q=0.2,/;q=0.1", Skip = "https://github.com/prometheus/prometheus/issues/8932")]
-
     public async Task Can_Scrape_Prometheus(string accept)
     {
         // Arrange
