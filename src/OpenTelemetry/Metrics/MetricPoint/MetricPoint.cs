@@ -1054,6 +1054,7 @@ public struct MetricPoint
         }
     }
 
+    [MethodImpl(MethodImplOptions.NoInlining)]
     private readonly void OfferExemplarSafe(long number, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         try
@@ -1067,6 +1068,7 @@ public struct MetricPoint
         }
     }
 
+    [MethodImpl(MethodImplOptions.NoInlining)]
     private readonly void OfferExemplarSafe(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags, int explicitBucketHistogramBucketIndex)
     {
         try
