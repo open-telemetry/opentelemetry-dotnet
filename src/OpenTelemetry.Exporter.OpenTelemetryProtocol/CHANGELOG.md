@@ -24,6 +24,10 @@ Notes](../../RELEASENOTES.md).
   container implementations such as Autofac.
   ([#7234](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7234))
 
+* Fixed `OtlpLogExporter` integration with `IHttpClientFactory` so named clients
+  can be used without triggering circular dependencies during logger construction.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.15.3
 
 Released 2026-Apr-21
