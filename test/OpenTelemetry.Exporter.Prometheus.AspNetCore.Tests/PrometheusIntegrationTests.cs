@@ -27,6 +27,49 @@ namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests;
 public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHelper outputHelper)
 {
     [Fact]
+    public async Task Scrape_Endpoint_Returns_No_Content_If_Sdk_Disabled()
+    {
+        // Arrange
+        var builder = WebApplication.CreateBuilder();
+
+        builder.Configuration.AddInMemoryCollection(
+            [
+                KeyValuePair.Create<string, string?>("OTEL_SDK_DISABLED", "true"),
+            ]);
+
+        // Listen on any available port
+        builder.WebHost.UseUrls("http://127.0.0.1:0");
+
+        builder.Services
+            .AddOpenTelemetry()
+            .WithMetrics((builder) => builder.AddPrometheusExporter());
+
+        using var app = builder.Build();
+
+        app.MapPrometheusScrapingEndpoint();
+
+        await app.StartAsync();
+
+        var server = app.Services.GetRequiredService<IServer>();
+        var addresses = server.Features.Get<IServerAddressesFeature>();
+
+        var baseAddress = addresses!.Addresses
+            .Select((p) => new Uri(p))
+            .Last();
+
+        using var httpClient = new HttpClient();
+        using var response = await httpClient.GetAsync(new Uri(baseAddress, "metrics"));
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Null(response.Content.Headers.ContentType);
+
+        var content = await response.Content.ReadAsStringAsync();
+
+        Assert.Empty(content);
+    }
+
+    [Fact]
     public async Task Scrape_Endpoint_Uses_GZip_When_Requested()
     {
         // Arrange
