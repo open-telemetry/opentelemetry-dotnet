@@ -30,7 +30,11 @@ public class ExportProcessorTests
         {
             Assert.NotNull(activity);
             Assert.False(activity.IsAllDataRequested);
+#if NET10_0
             Assert.Equal(ActivityTraceFlags.None, activity.ActivityTraceFlags);
+#else
+            Assert.Equal(ActivityTraceFlags.RandomTraceId, activity.ActivityTraceFlags);
+#endif
         }
 
         Assert.Empty(processor.ExportedItems);
@@ -56,7 +60,11 @@ public class ExportProcessorTests
         {
             Assert.NotNull(activity);
             Assert.True(activity.IsAllDataRequested);
+#if NET10_0
             Assert.Equal(ActivityTraceFlags.None, activity.ActivityTraceFlags);
+#else
+            Assert.Equal(ActivityTraceFlags.RandomTraceId, activity.ActivityTraceFlags);
+#endif
         }
 
         Assert.Empty(processor.ExportedItems);
@@ -82,7 +90,12 @@ public class ExportProcessorTests
         {
             Assert.NotNull(activity);
             Assert.True(activity.IsAllDataRequested);
+
+#if NET10_0
             Assert.Equal(ActivityTraceFlags.Recorded, activity.ActivityTraceFlags);
+#else
+            Assert.Equal(ActivityTraceFlags.Recorded | ActivityTraceFlags.RandomTraceId, activity.ActivityTraceFlags);
+#endif
         }
 
         Assert.Single(processor.ExportedItems);
