@@ -60,7 +60,6 @@ Notes](../../RELEASENOTES.md).
 * Abort scrape request processing if request exceeds the value specified by the
   `X-Prometheus-Scrape-Timeout-Seconds` HTTP request header.  ([#7252](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7252))
 
-
 ## 1.15.3-beta.1
 
 Released 2026-Apr-21
