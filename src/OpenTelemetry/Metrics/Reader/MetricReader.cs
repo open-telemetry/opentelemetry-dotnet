@@ -20,45 +20,27 @@ public abstract partial class MetricReader : IDisposable
     private static readonly Func<Type, AggregationTemporality> MonotonicDeltaTemporalityPreferenceFunc =
         static (instrumentType) =>
         {
-            var genericType = instrumentType.GetGenericTypeDefinition();
-            if (genericType == typeof(Counter<>))
+            return instrumentType.GetGenericTypeDefinition() switch
             {
+                var type when type == typeof(Counter<>) => AggregationTemporality.Delta,
+                var type when type == typeof(ObservableCounter<>) => AggregationTemporality.Delta,
+                var type when type == typeof(Histogram<>) => AggregationTemporality.Delta,
+
+                // Temporality is not defined for gauges, so this does not really affect anything.
+                var type when type == typeof(ObservableGauge<>) => AggregationTemporality.Delta,
+                var type when type == typeof(Gauge<>) => AggregationTemporality.Delta,
+
+                var type when type == typeof(UpDownCounter<>) => AggregationTemporality.Cumulative,
+                var type when type == typeof(ObservableUpDownCounter<>) => AggregationTemporality.Cumulative,
+
+                _ => LogAndDefault(instrumentType),
+            };
+
+            static AggregationTemporality LogAndDefault(Type type)
+            {
+                OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Unexpected instrument type '{type.FullName}' encountered in temporality preference. Defaulting to Delta.");
                 return AggregationTemporality.Delta;
             }
-
-            if (genericType == typeof(ObservableCounter<>))
-            {
-                return AggregationTemporality.Delta;
-            }
-
-            if (genericType == typeof(Histogram<>))
-            {
-                return AggregationTemporality.Delta;
-            }
-
-            // Temporality is not defined for gauges, so this does not really affect anything.
-            if (genericType == typeof(ObservableGauge<>))
-            {
-                return AggregationTemporality.Delta;
-            }
-
-            if (genericType == typeof(Gauge<>))
-            {
-                return AggregationTemporality.Delta;
-            }
-
-            if (genericType == typeof(UpDownCounter<>))
-            {
-                return AggregationTemporality.Cumulative;
-            }
-
-            if (genericType == typeof(ObservableUpDownCounter<>))
-            {
-                return AggregationTemporality.Cumulative;
-            }
-
-            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Unexpected instrument type '{instrumentType.FullName}' encountered in temporality preference. Defaulting to Delta.");
-            return AggregationTemporality.Delta;
         };
 
     private static readonly Func<Type, AggregationTemporality> LowMemoryTemporalityPreferenceFunc =
