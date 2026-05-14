@@ -53,9 +53,13 @@ Notes](../../RELEASENOTES.md).
 * Use the canonical representation for histogram "le" label values when using
   OpenMetrics.
   ([#7218](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7218))
+
 * Omit histogram `_sum` and `_count` in OpenMetrics when negative bucket
   thresholds are present.
   ([#7221](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7221))
+
+* Fix `ArgumentException` if `OTEL_SDK_DISABLED=true`.
+  ([#7273](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7273))
 
 * Export `{name}_created` series for counters and histograms when using
   OpenMetrics and a start time is available.
