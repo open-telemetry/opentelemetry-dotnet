@@ -6,6 +6,17 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Relax instrument name validation to accept the expanded character set
+  defined by the OpenTelemetry specification. The allowed character set now
+  includes `:`, `\`, `(`, `)`, `%`, `*`, `#`, and space (with space restricted
+  to non-leading, non-trailing positions), and the first character is no
+  longer required to be alphabetic. This enables, among other things, names
+  shaped like Windows performance counters
+  (`\Processor(_Total)\% Processor Time`,
+  `\.NET CLR Memory(*)\# Bytes in all Heaps`). ASCII, case-insensitivity, and
+  the 255-character maximum are unchanged. See
+  [opentelemetry-specification#5092](https://github.com/open-telemetry/opentelemetry-specification/pull/5092).
+
 * Fix incorrect validation of `OTEL_BSP_*` and `OTEL_BLRP_*` environment
   variables.
   ([#7187](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7187))

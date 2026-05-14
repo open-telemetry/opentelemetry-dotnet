@@ -18,7 +18,7 @@ internal sealed partial class MeterProviderBuilderSdk : MeterProviderBuilder, IM
     public const int DefaultMetricLimit = 1000;
     public const int DefaultCardinalityLimit = 2000;
     private const string DefaultInstrumentationVersion = "1.0.0.0";
-    private const string InstrumentNameRegexPattern = @"^[a-z][a-z0-9-._/]{0,254}$";
+    private const string InstrumentNameRegexPattern = @"^[A-Za-z0-9_.:%\\()*#/-](?:[A-Za-z0-9_.:%\\()*# /-]{0,253}[A-Za-z0-9_.:%\\()*#/-])?$";
 
     private readonly IServiceProvider serviceProvider;
     private MeterProviderSdk? meterProvider;

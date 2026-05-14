@@ -11,11 +11,19 @@ internal static class MetricTestData
     public static TheoryData<string> InvalidInstrumentNames =>
     [
         " ",
-        "-first-char-not-alphabetic",
-        "1first-char-not-alphabetic",
+        "  ",
+        " leading-space",
+        "trailing-space ",
         "invalid+separator",
+        "invalid[separator",
+        "invalid;separator",
+        "invalid,separator",
+        "invalid=separator",
+        "invalid?separator",
         new('m', 256),
-        "a\xb5", // `\xb5` is the Micro character
+        "a\xb5", // `\xb5` is the Micro character (non-ASCII)
+        "name\twith\ttab",
+        "name\nwith\nnewline",
     ];
 
     public static TheoryData<string> ValidInstrumentNames =>
@@ -28,6 +36,39 @@ internal static class MetricTestData
         new('m', 255),
         "CaSe-InSeNsItIvE",
         "my_metric/environment/database",
+
+        // Newly valid characters: ':', '\', '(', ')', '%', '*', '#', and space.
+        // See https://github.com/open-telemetry/opentelemetry-specification/pull/5092.
+        "with:colon",
+        @"with\backslash",
+        "with(parens)",
+        "with%percent",
+        "with*asterisk",
+        "with#hash",
+        "name with spaces",
+        "name with  consecutive  spaces",
+
+        // Newly valid: leading character no longer required to be alphabetic.
+        "-leadingDash",
+        ".leadingDot",
+        "1leadingDigit",
+        "_leadingUnderscore",
+        ":leadingColon",
+        @"\leadingBackslash",
+        "(leadingParen)",
+        "%leadingPercent",
+        "*leadingAsterisk",
+        "#leadingHash",
+
+        // Real-world Windows performance counter style names.
+        @"\Processor(_Total)\% Processor Time",
+        @"\Memory\Available Bytes",
+        @"\PhysicalDisk(_Total)\Avg. Disk Queue Length",
+        @"\Network Interface(*)\Bytes Total/sec",
+
+        // Real-world .NET CLR performance counter style names.
+        @"\.NET CLR Memory(*)\# Bytes in all Heaps",
+        @"\.NET CLR Memory(_Global_)\# Gen 0 Collections",
     ];
 
     public static TheoryData<double[]> InvalidHistogramBoundaries =>
