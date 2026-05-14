@@ -17,7 +17,7 @@ namespace OpenTelemetry.Exporter;
 /// </summary>
 internal sealed class PrometheusExporterMiddleware
 {
-    private readonly PrometheusExporter exporter;
+    private readonly PrometheusExporter? exporter;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PrometheusExporterMiddleware"/> class.
