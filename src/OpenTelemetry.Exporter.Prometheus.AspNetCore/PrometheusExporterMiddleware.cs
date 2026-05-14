@@ -31,7 +31,10 @@ internal sealed class PrometheusExporterMiddleware
 
         if (!meterProvider.TryFindExporter(out PrometheusExporter? exporter))
         {
-            throw new ArgumentException("A PrometheusExporter could not be found configured on the provided MeterProvider.");
+            // If the SDK is disabled, just configure a no-op exporter
+            exporter = meterProvider is OpenTelemetrySdk.NoopMeterProvider
+                ? null
+                : throw new ArgumentException("A PrometheusExporter could not be found configured on the provided MeterProvider.");
         }
 
         this.exporter = exporter;
@@ -52,6 +55,14 @@ internal sealed class PrometheusExporterMiddleware
 
         try
         {
+            if (this.exporter is null)
+            {
+                // The SDK was disabled, so we don't have an exporter to use.
+                // Just return 200 OK with no content as an effective no-op.
+                response.StatusCode = StatusCodes.Status200OK;
+                return;
+            }
+
             var protocol = Negotiate(httpContext.Request);
 
             var collectionResponse = await this.exporter.CollectionManager.EnterCollect(protocol.IsOpenMetrics).ConfigureAwait(false);
