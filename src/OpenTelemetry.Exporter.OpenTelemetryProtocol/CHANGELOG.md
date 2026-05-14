@@ -26,7 +26,7 @@ Notes](../../RELEASENOTES.md).
 
 * Fixed `OtlpLogExporter` integration with `IHttpClientFactory` so named clients
   can be used without triggering circular dependencies during logger construction.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7298](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7298))
 
 ## 1.15.3
 
