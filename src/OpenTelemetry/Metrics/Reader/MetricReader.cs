@@ -38,7 +38,7 @@ public abstract partial class MetricReader : IDisposable
 
             static AggregationTemporality LogAndDefault(Type type)
             {
-                OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Unexpected instrument type '{type.FullName}' encountered in temporality preference. Defaulting to Delta.");
+                OpenTelemetrySdkEventSource.Log.MetricReaderEvent($"Unexpected instrument type '{type.FullName}' encountered in temporality preference. Defaulting to Delta.");
                 return AggregationTemporality.Delta;
             }
         };
