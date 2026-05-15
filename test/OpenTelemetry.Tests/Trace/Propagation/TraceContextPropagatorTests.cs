@@ -67,6 +67,50 @@ public class TraceContextPropagatorTests
     }
 
     [Fact]
+    public void RandomTraceId()
+    {
+        var headers = new Dictionary<string, string>
+        {
+            { TraceParent, $"00-{TraceId}-{SpanId}-02" },
+        };
+
+        var f = new TraceContextPropagator();
+        var ctx = f.Extract(default, headers, Getter);
+
+        Assert.Equal(ActivityTraceId.CreateFromString(TraceId.AsSpan()), ctx.ActivityContext.TraceId);
+        Assert.Equal(ActivitySpanId.CreateFromString(SpanId.AsSpan()), ctx.ActivityContext.SpanId);
+
+        // https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899
+        // will change this to use ActivityTraceFlags.RandomTraceId instead.
+        Assert.Equal((ActivityTraceFlags)2, ctx.ActivityContext.TraceFlags);
+
+        Assert.True(ctx.ActivityContext.IsValid());
+    }
+
+    [Fact]
+    public void RandomTraceIdAndRecorded()
+    {
+        var headers = new Dictionary<string, string>
+        {
+            { TraceParent, $"00-{TraceId}-{SpanId}-03" },
+        };
+
+        var f = new TraceContextPropagator();
+        var ctx = f.Extract(default, headers, Getter);
+
+        Assert.Equal(ActivityTraceId.CreateFromString(TraceId.AsSpan()), ctx.ActivityContext.TraceId);
+        Assert.Equal(ActivitySpanId.CreateFromString(SpanId.AsSpan()), ctx.ActivityContext.SpanId);
+
+        Assert.True(ctx.ActivityContext.TraceFlags.HasFlag(ActivityTraceFlags.Recorded));
+
+        // https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899
+        // will change this to use ActivityTraceFlags.RandomTraceId instead.
+        Assert.True(ctx.ActivityContext.TraceFlags.HasFlag((ActivityTraceFlags)2));
+
+        Assert.True(ctx.ActivityContext.IsValid());
+    }
+
+    [Fact]
     public void IsBlankIfNoHeader()
     {
         var headers = new Dictionary<string, string>();
@@ -79,6 +123,8 @@ public class TraceContextPropagatorTests
 
     [Theory]
     [InlineData($"00-xyz7651916cd43dd8448eb211c80319c-{SpanId}-01")]
+    [InlineData($"00-xyz7651916cd43dd8448eb211c80319c-{SpanId}-02")]
+    [InlineData($"00-xyz7651916cd43dd8448eb211c80319c-{SpanId}-03")]
     [InlineData($"00-{TraceId}-xyz7c989f97918e1-01")]
     [InlineData($"00-{TraceId}-{SpanId}-x1")]
     [InlineData($"00-{TraceId}-{SpanId}-1x")]
@@ -303,6 +349,28 @@ public class TraceContextPropagatorTests
         };
 
         var activityContext = new ActivityContext(traceId, spanId, ActivityTraceFlags.Recorded, expectedHeaders[TraceState]);
+        var propagationContext = new PropagationContext(activityContext, default);
+        var carrier = new Dictionary<string, string>();
+        var f = new TraceContextPropagator();
+        f.Inject(propagationContext, carrier, Setter);
+
+        Assert.Equal(expectedHeaders, carrier);
+    }
+
+    [Fact]
+    public void Inject_WithRandomTraceId()
+    {
+        var traceId = ActivityTraceId.CreateRandom();
+        var spanId = ActivitySpanId.CreateRandom();
+        var expectedHeaders = new Dictionary<string, string>
+        {
+            { TraceParent, $"00-{traceId}-{spanId}-02" },
+            { TraceState, $"congo=lZWRzIHRoNhcm5hbCBwbGVhc3VyZS4,rojo=00-{traceId}-00f067aa0ba902b7-02" },
+        };
+
+        // https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899
+        // will change this to use ActivityTraceFlags.RandomTraceId instead.
+        var activityContext = new ActivityContext(traceId, spanId, (ActivityTraceFlags)2, expectedHeaders[TraceState]);
         var propagationContext = new PropagationContext(activityContext, default);
         var carrier = new Dictionary<string, string>();
         var f = new TraceContextPropagator();
