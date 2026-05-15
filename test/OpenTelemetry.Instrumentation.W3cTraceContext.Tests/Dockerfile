@@ -36,7 +36,7 @@ RUN tdnf install -y python3-pip \
   && ln -sf /usr/bin/python3 /usr/bin/python \
   && python3 -m pip install --requirement requirements.txt --require-hashes --break-system-packages \
   && tdnf clean all
-ENV SPEC_LEVEL=1
+ENV SPEC_LEVEL=2
 ENV STRICT_LEVEL=1
 
 ENTRYPOINT ["dotnet", "vstest", "OpenTelemetry.Instrumentation.W3cTraceContext.Tests.dll", "--logger:console;verbosity=detailed"]

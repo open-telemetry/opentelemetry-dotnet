@@ -113,7 +113,8 @@ public class TraceContextPropagator : TextMapPropagator
         var traceparent = string.Create(55, context.ActivityContext, WriteTraceParentIntoSpan);
 #else
         var traceparent = string.Concat("00-", context.ActivityContext.TraceId.ToHexString(), "-", context.ActivityContext.SpanId.ToHexString());
-        traceparent = string.Concat(traceparent, (context.ActivityContext.TraceFlags & ActivityTraceFlags.Recorded) != 0 ? "-01" : "-00");
+        var traceFlags = ((byte)context.ActivityContext.TraceFlags).ToString("x2", System.Globalization.CultureInfo.InvariantCulture);
+        traceparent = string.Concat(traceparent, "-", traceFlags);
 #endif
 
         setter(carrier, TraceParent, traceparent);
@@ -208,6 +209,11 @@ public class TraceContextPropagator : TextMapPropagator
             traceOptions |= ActivityTraceFlags.Recorded;
         }
 
+        if ((optionsLowByte & 2) == 2)
+        {
+            traceOptions |= ActivityTraceFlags.RandomTraceId;
+        }
+
         if ((!bestAttempt) && (traceparent.Length != VersionAndTraceIdAndSpanIdLength + OptionsLength))
         {
             return false;
@@ -248,12 +254,10 @@ public class TraceContextPropagator : TextMapPropagator
             }
 
             hasTraceState = true;
-            if (list.Count == 1)
-            {
-                return TryExtractSingleTracestate(list[0], out tracestateResult);
-            }
 
-            return TryExtractMultipleTracestate(list, out tracestateResult);
+            return list.Count == 1 ?
+                TryExtractSingleTracestate(list[0], out tracestateResult) :
+                TryExtractMultipleTracestate(list, out tracestateResult);
         }
 
         if (tracestateCollection is IReadOnlyList<string> readOnlyList)
@@ -264,12 +268,11 @@ public class TraceContextPropagator : TextMapPropagator
             }
 
             hasTraceState = true;
-            if (readOnlyList.Count == 1)
-            {
-                return TryExtractSingleTracestate(readOnlyList[0], out tracestateResult);
-            }
 
-            return TryExtractMultipleTracestate(readOnlyList, out tracestateResult);
+            return
+                readOnlyList.Count == 1 ?
+                TryExtractSingleTracestate(readOnlyList[0], out tracestateResult) :
+                TryExtractMultipleTracestate(readOnlyList, out tracestateResult);
         }
 
         using var enumerator = tracestateCollection.GetEnumerator();
@@ -280,12 +283,10 @@ public class TraceContextPropagator : TextMapPropagator
 
         hasTraceState = true;
         var singleTraceState = enumerator.Current;
-        if (!enumerator.MoveNext())
-        {
-            return TryExtractSingleTracestate(singleTraceState, out tracestateResult);
-        }
 
-        return TryExtractMultipleTracestate(EnumerateFrom(singleTraceState, enumerator), out tracestateResult);
+        return enumerator.MoveNext() ?
+            TryExtractMultipleTracestate(EnumerateFrom(singleTraceState, enumerator), out tracestateResult) :
+            TryExtractSingleTracestate(singleTraceState, out tracestateResult);
     }
 
     private static IEnumerable<string> EnumerateFrom(string first, IEnumerator<string> enumerator)
@@ -729,13 +730,16 @@ public class TraceContextPropagator : TextMapPropagator
         context.TraceId.ToHexString().CopyTo(destination.Slice(3));
         destination[35] = '-';
         context.SpanId.ToHexString().CopyTo(destination.Slice(36));
-        if ((context.TraceFlags & ActivityTraceFlags.Recorded) != 0)
+
+        var flags = (byte)context.TraceFlags;
+        destination[52] = '-';
+        destination[53] = GetHexChar(flags >> 4);
+        destination[54] = GetHexChar(flags & 0xF);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static char GetHexChar(int value)
         {
-            "-01".CopyTo(destination.Slice(52));
-        }
-        else
-        {
-            "-00".CopyTo(destination.Slice(52));
+            return (char)(value + (value < 10 ? '0' : 'a' - 10));
         }
     }
 #endif
