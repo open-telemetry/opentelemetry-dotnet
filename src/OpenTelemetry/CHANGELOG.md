@@ -15,7 +15,7 @@ Notes](../../RELEASENOTES.md).
   ([#7188](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7188))
 
 * Update `OpenTelemetrySdkEventSource` to support the W3C randomness flag.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7301](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7301))
 
 ## 1.15.3
 

@@ -11,7 +11,7 @@ Notes](../../RELEASENOTES.md).
   ([#7174](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7174))
 
 * Update `TraceContextPropagator` to support the W3C randomness flag.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7301](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7301))
 
 ## 1.15.3
 
