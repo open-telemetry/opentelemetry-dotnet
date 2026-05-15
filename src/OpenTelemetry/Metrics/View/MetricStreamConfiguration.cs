@@ -26,21 +26,12 @@ public class MetricStreamConfiguration
     /// Gets or sets the optional name of the metric stream.
     /// </summary>
     /// <remarks>
-    /// Note: If not provided the instrument name will be used.
+    /// <para>Note: If not provided the instrument name will be used.</para>
+    /// <para>Per the OpenTelemetry specification, the View-provided stream
+    /// <c>name</c> is not subject to the instrument name syntax and the SDK
+    /// MUST NOT validate it against that syntax.</para>
     /// </remarks>
-    public string? Name
-    {
-        get;
-        set
-        {
-            if (value != null && !MeterProviderBuilderSdk.IsValidViewName(value))
-            {
-                throw new ArgumentException($"Custom view name {value} is invalid.", nameof(value));
-            }
-
-            field = value;
-        }
-    }
+    public string? Name { get; set; }
 
     /// <summary>
     /// Gets or sets the optional description of the metric stream.

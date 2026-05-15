@@ -6,6 +6,19 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* The View-provided metric stream `Name` (set via
+  `MetricStreamConfiguration.Name` or the `AddView(instrumentName, name)`
+  overload) is no longer validated against the
+  [instrument name syntax](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#instrument-name-syntax).
+  Previously, supplying a name that did not match the syntax threw
+  `ArgumentException` (or, when set inside a Func-based view, caused the
+  metric to be silently ignored). With this change, View-provided names are
+  accepted as-is, allowing Views to be used to rename instruments to names
+  that fall outside the syntax (e.g. legacy/third-party names, OS-level
+  counter names). Aligns with OpenTelemetry specification clarification
+  [#5094](https://github.com/open-telemetry/opentelemetry-specification/pull/5094).
+  Direct instrument creation via `Meter` continues to enforce the syntax.
+
 * Fix incorrect validation of `OTEL_BSP_*` and `OTEL_BLRP_*` environment
   variables.
   ([#7187](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7187))
