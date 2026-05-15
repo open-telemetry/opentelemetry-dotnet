@@ -1011,13 +1011,8 @@ public class MetricExemplarTests : MetricTestsBase
             => throw new NotSupportedException();
     }
 
-    private sealed class ThrowingExemplarReservoir : FixedSizeExemplarReservoir
+    private sealed class ThrowingExemplarReservoir() : FixedSizeExemplarReservoir(1)
     {
-        public ThrowingExemplarReservoir()
-            : base(1)
-        {
-        }
-
         public override void Offer(in ExemplarMeasurement<long> measurement)
             => throw new InvalidOperationException("Simulated reservoir failure (long).");
 
