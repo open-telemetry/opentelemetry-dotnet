@@ -27,9 +27,11 @@ public class MetricStreamConfiguration
     /// </summary>
     /// <remarks>
     /// <para>Note: If not provided the instrument name will be used.</para>
-    /// <para>Per the OpenTelemetry specification, the View-provided stream
-    /// <c>name</c> is not subject to the instrument name syntax and the SDK
-    /// MUST NOT validate it against that syntax.</para>
+    /// <para>The name supplied here is used as-is; it is not required to
+    /// follow the instrument name syntax. This lets you rename instruments
+    /// to names that the OpenTelemetry instrument naming rules would
+    /// otherwise reject (for example, legacy or third-party names, or
+    /// OS-level counter names).</para>
     /// </remarks>
     public string? Name { get; set; }
 
