@@ -33,8 +33,3 @@ internal static class MyExporterExtensions
         });
     }
 }
-
-internal sealed class MyExporterOptions
-{
-    public string Name { get; set; } = "MyExporter";
-}
