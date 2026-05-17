@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Buffers;
+using System.Collections.Concurrent;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
@@ -8,8 +10,43 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer
 internal static class ProtobufOtlpResourceSerializer
 {
     private const int ReserveSizeForLength = 4;
+    private const int InitialScratchSize = 8192;
+
+    private static readonly ConcurrentDictionary<Resource, byte[]> CachedResourceBytes = new();
 
     internal static int WriteResource(byte[] buffer, int writePosition, Resource? resource)
+    {
+        var cached = CachedResourceBytes.GetOrAdd(resource ?? Resource.Empty, static r => SerializeResourceToBytes(r));
+        Buffer.BlockCopy(cached, 0, buffer, writePosition, cached.Length);
+        return writePosition + cached.Length;
+    }
+
+    private static byte[] SerializeResourceToBytes(Resource resource)
+    {
+        var scratch = ArrayPool<byte>.Shared.Rent(InitialScratchSize);
+        try
+        {
+            while (true)
+            {
+                try
+                {
+                    var length = WriteResourceCore(scratch, 0, resource);
+                    return scratch.AsSpan(0, length).ToArray();
+                }
+                catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
+                {
+                    ArrayPool<byte>.Shared.Return(scratch);
+                    scratch = ArrayPool<byte>.Shared.Rent(scratch.Length * 2);
+                }
+            }
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(scratch);
+        }
+    }
+
+    private static int WriteResourceCore(byte[] buffer, int writePosition, Resource resource)
     {
         var otlpTagWriterState = new ProtobufOtlpTagWriter.OtlpTagWriterState
         {
@@ -21,7 +58,7 @@ internal static class ProtobufOtlpResourceSerializer
         var resourceLengthPosition = otlpTagWriterState.WritePosition;
         otlpTagWriterState.WritePosition += ReserveSizeForLength;
 
-        if (resource != null && resource != Resource.Empty)
+        if (resource != Resource.Empty)
         {
             if (resource.Attributes is IReadOnlyList<KeyValuePair<string, object>> resourceAttributesList)
             {
