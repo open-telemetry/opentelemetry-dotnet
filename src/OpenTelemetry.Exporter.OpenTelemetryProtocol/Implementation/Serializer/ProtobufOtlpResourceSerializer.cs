@@ -23,7 +23,9 @@ internal static class ProtobufOtlpResourceSerializer
 
     private static byte[] SerializeResourceToBytes(Resource resource)
     {
-        var scratch = ArrayPool<byte>.Shared.Rent(InitialScratchSize);
+        var pool = ArrayPool<byte>.Shared;
+
+        var scratch = pool.Rent(InitialScratchSize);
         try
         {
             while (true)
@@ -35,14 +37,14 @@ internal static class ProtobufOtlpResourceSerializer
                 }
                 catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
                 {
-                    ArrayPool<byte>.Shared.Return(scratch);
-                    scratch = ArrayPool<byte>.Shared.Rent(scratch.Length * 2);
+                    pool.Return(scratch);
+                    scratch = pool.Rent(scratch.Length * 2);
                 }
             }
         }
         finally
         {
-            ArrayPool<byte>.Shared.Return(scratch);
+            pool.Return(scratch);
         }
     }
 
