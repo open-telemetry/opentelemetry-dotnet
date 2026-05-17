@@ -7,9 +7,6 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* Cached pre-serialized resource bytes to avoid re-encoding on every OTLP export.
-  ([#7303](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7303))
-
 * Fixed `NullReferenceException` when exporting logs if the scope key is null.
   ([#7186](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7186))
 
@@ -26,6 +23,9 @@ Notes](../../RELEASENOTES.md).
   an issue with circular dependencies detected by some dependency injection
   container implementations such as Autofac.
   ([#7234](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7234))
+
+* Cached pre-serialized resource bytes to avoid re-encoding on every OTLP export.
+  ([#7303](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7303))
 
 ## 1.15.3
 
