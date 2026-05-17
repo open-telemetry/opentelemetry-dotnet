@@ -10,7 +10,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer
 internal static class ProtobufOtlpResourceSerializer
 {
     private const int ReserveSizeForLength = 4;
-    private const int InitialScratchSize = 8192;
+    private const int InitialScratchSize = 2048;
 
     private static readonly ConcurrentDictionary<Resource, byte[]> CachedResourceBytes = new();
 
