@@ -16,7 +16,7 @@ public class OtlpResourceTests
         var writePosition = ProtobufOtlpResourceSerializer.WriteResource(buffer, 0, Resource.Empty);
 
         Assert.Equal(5, writePosition);
-        Assert.Equal(new byte[] { 0x0A, 0x80, 0x80, 0x80, 0x00 }, buffer[..writePosition]);
+        Assert.Equal(new byte[] { 0x0A, 0x80, 0x80, 0x80, 0x00 }, buffer.AsSpan(0, writePosition).ToArray());
     }
 
     [Fact]
@@ -26,7 +26,7 @@ public class OtlpResourceTests
         var writePosition = ProtobufOtlpResourceSerializer.WriteResource(buffer, 0, resource: null);
 
         Assert.Equal(5, writePosition);
-        Assert.Equal(new byte[] { 0x0A, 0x80, 0x80, 0x80, 0x00 }, buffer[..writePosition]);
+        Assert.Equal(new byte[] { 0x0A, 0x80, 0x80, 0x80, 0x00 }, buffer.AsSpan(0, writePosition).ToArray());
     }
 
     [Theory]
