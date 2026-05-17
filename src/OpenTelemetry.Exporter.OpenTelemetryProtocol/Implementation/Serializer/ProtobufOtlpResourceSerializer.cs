@@ -14,9 +14,17 @@ internal static class ProtobufOtlpResourceSerializer
 
     private static readonly ConcurrentDictionary<Resource, byte[]> CachedResourceBytes = new();
 
+    private static ReadOnlySpan<byte> EmptyResourceBytes => [0x0A, 0x80, 0x80, 0x80, 0x00];
+
     internal static int WriteResource(byte[] buffer, int writePosition, Resource? resource)
     {
-        var cached = CachedResourceBytes.GetOrAdd(resource ?? Resource.Empty, static r => SerializeResourceToBytes(r));
+        if (resource == null || resource == Resource.Empty)
+        {
+            EmptyResourceBytes.CopyTo(buffer.AsSpan(writePosition));
+            return writePosition + EmptyResourceBytes.Length;
+        }
+
+        var cached = CachedResourceBytes.GetOrAdd(resource, static r => SerializeResourceToBytes(r));
         Buffer.BlockCopy(cached, 0, buffer, writePosition, cached.Length);
         return writePosition + cached.Length;
     }
@@ -60,21 +68,18 @@ internal static class ProtobufOtlpResourceSerializer
         var resourceLengthPosition = otlpTagWriterState.WritePosition;
         otlpTagWriterState.WritePosition += ReserveSizeForLength;
 
-        if (resource != Resource.Empty)
+        if (resource.Attributes is IReadOnlyList<KeyValuePair<string, object>> resourceAttributesList)
         {
-            if (resource.Attributes is IReadOnlyList<KeyValuePair<string, object>> resourceAttributesList)
+            for (var i = 0; i < resourceAttributesList.Count; i++)
             {
-                for (var i = 0; i < resourceAttributesList.Count; i++)
-                {
-                    ProcessResourceAttribute(ref otlpTagWriterState, resourceAttributesList[i]);
-                }
+                ProcessResourceAttribute(ref otlpTagWriterState, resourceAttributesList[i]);
             }
-            else
+        }
+        else
+        {
+            foreach (var attribute in resource.Attributes)
             {
-                foreach (var attribute in resource.Attributes)
-                {
-                    ProcessResourceAttribute(ref otlpTagWriterState, attribute);
-                }
+                ProcessResourceAttribute(ref otlpTagWriterState, attribute);
             }
         }
 
