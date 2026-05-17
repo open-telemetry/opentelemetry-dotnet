@@ -7,6 +7,9 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Cached pre-serialized resource bytes to avoid re-encoding on every OTLP export.
+  ([#7303](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7303))
+
 * Fixed `NullReferenceException` when exporting logs if the scope key is null.
   ([#7186](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7186))
 
