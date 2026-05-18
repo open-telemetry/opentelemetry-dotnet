@@ -33,7 +33,7 @@ Notes](../../RELEASENOTES.md).
 
 * Do not enable the `OtlpLogExporter` integration with `IHttpClientFactory`
   when mTLS is enabled.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7305](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7305))
 
 ## 1.15.3
 
