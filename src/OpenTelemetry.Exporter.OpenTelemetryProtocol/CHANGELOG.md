@@ -34,6 +34,9 @@ Notes](../../RELEASENOTES.md).
 * Cached pre-serialized resource bytes to avoid re-encoding on every OTLP export.
   ([#7303](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7303))
 
+* Do not enable the integration with `IHttpClientFactory` when mTLS is enabled.
+  ([#7305](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7305))
+
 ## 1.15.3
 
 Released 2026-Apr-21
