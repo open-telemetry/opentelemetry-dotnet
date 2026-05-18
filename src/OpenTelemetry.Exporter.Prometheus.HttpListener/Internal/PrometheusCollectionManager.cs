@@ -442,11 +442,11 @@ internal sealed class PrometheusCollectionManager
                 metadataState = new MetadataState(metadataState.Type, metadataState.Help, prometheusMetric.Unit);
                 metadataStates[metadataName] = metadataState;
             }
-            else if (!string.IsNullOrEmpty(prometheusMetric.Unit) &&
+            else if (prometheusMetric.Unit is { Length: > 0 } &&
                      metadataState.Unit != null &&
                      metadataState.Unit != prometheusMetric.Unit)
             {
-                PrometheusExporterEventSource.Log.ConflictingUnit(metadataName, metadataState.Unit, prometheusMetric.Unit!);
+                PrometheusExporterEventSource.Log.ConflictingUnit(metadataName, metadataState.Unit, prometheusMetric.Unit);
             }
 
             if (!string.IsNullOrEmpty(metric.Description) &&

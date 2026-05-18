@@ -57,6 +57,11 @@ Notes](../../RELEASENOTES.md).
 * Fix `ArgumentException` if `OTEL_SDK_DISABLED=true`.
   ([#7273](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7273))
 
+* Update `Accept` header parsing to more closely follow the Prometheus
+  [Scrape protocol content negotiation](https://prometheus.io/docs/instrumenting/content_negotiation/)
+  specification.
+  ([#7266](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7266))
+
 * Emit OpenMetrics scope metadata as a single `otel_scope` metric family with
   `otel_scope_info` samples instead of repeating metadata for every scope.
   ([#7237](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7237))

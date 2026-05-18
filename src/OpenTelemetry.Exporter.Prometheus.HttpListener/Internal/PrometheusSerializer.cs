@@ -285,7 +285,7 @@ internal static partial class PrometheusSerializer
 
         foreach (var tag in exemplar.FilteredTags)
         {
-            if (tag.Key == "trace_id" || tag.Key == "span_id")
+            if (tag.Key is "trace_id" or "span_id")
             {
                 continue;
             }

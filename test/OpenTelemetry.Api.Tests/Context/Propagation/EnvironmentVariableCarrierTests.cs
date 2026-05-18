@@ -209,13 +209,21 @@ public class EnvironmentVariableCarrierTests
         }
     }
 
-    [Fact]
-    public void TraceContextPropagator_RoundTripsThroughEnvironmentVariableCarrier()
+    [Theory]
+    [InlineData(ActivityTraceFlags.None, "00")]
+    [InlineData(ActivityTraceFlags.Recorded, "01")]
+    //// https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899
+    //// will change this to use ActivityTraceFlags.RandomTraceId instead.
+    [InlineData((ActivityTraceFlags)2, "02")]
+    [InlineData((ActivityTraceFlags)2 | ActivityTraceFlags.Recorded, "03")]
+    public void TraceContextPropagator_RoundTripsThroughEnvironmentVariableCarrier(
+        ActivityTraceFlags flags,
+        string expectedSuffix)
     {
         var activityContext = new ActivityContext(
             ActivityTraceId.CreateFromString("0af7651916cd43dd8448eb211c80319c"),
             ActivitySpanId.CreateFromString("b9c7c989f97918e1"),
-            ActivityTraceFlags.Recorded,
+            flags,
             "key1=value1,key2=value2");
 
         var carrier = new Dictionary<string, string?>(StringComparer.Ordinal);
@@ -226,7 +234,7 @@ public class EnvironmentVariableCarrierTests
 
         var extracted = propagator.Extract(default, EnvironmentVariableCarrier.Capture(carrier), EnvironmentVariableCarrier.Get);
 
-        Assert.Equal("00-0af7651916cd43dd8448eb211c80319c-b9c7c989f97918e1-01", carrier["TRACEPARENT"]);
+        Assert.Equal($"00-0af7651916cd43dd8448eb211c80319c-b9c7c989f97918e1-{expectedSuffix}", carrier["TRACEPARENT"]);
         Assert.Equal("key1=value1,key2=value2", carrier["TRACESTATE"]);
         Assert.Equal(activityContext.TraceId, extracted.ActivityContext.TraceId);
         Assert.Equal(activityContext.SpanId, extracted.ActivityContext.SpanId);
