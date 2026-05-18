@@ -23,7 +23,7 @@ internal sealed class PrometheusExporterOptions
     /// </remarks>
     public int ScrapeResponseCacheDurationMilliseconds
     {
-        get => field;
+        get;
         set
         {
             Guard.ThrowIfOutOfRange(value, min: 0);
