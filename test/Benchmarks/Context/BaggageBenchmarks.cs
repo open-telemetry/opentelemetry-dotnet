@@ -21,15 +21,14 @@ public class BaggageBenchmarks
     [GlobalSetup]
     public void Setup()
     {
-        this.sameItems = Enumerable.Range(0, this.ItemCount)
-            .Select(i => new KeyValuePair<string, string?>($"key{i}", $"value{i}"))
-            .ToArray();
+        this.sameItems = [.. Enumerable
+            .Range(0, this.ItemCount)
+            .Select(i => new KeyValuePair<string, string?>($"key{i}", $"value{i}"))];
 
-        this.changedItems = this.sameItems
+        this.changedItems = [.. this.sameItems
             .Select((item, index) => index == this.sameItems.Length - 1
                 ? new KeyValuePair<string, string?>(item.Key, $"{item.Value}-updated")
-                : item)
-            .ToArray();
+                : item)];
 
         var baggageItems = this.sameItems.ToDictionary(item => item.Key, item => item.Value!);
 

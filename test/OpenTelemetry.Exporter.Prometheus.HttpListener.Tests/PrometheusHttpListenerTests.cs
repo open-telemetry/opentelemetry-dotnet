@@ -70,7 +70,9 @@ public class PrometheusHttpListenerTests
 
     [Fact]
     public async Task PrometheusExporterHttpServerIntegration_UseOpenMetricsVersionHeader()
-        => await RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: "application/openmetrics-text; version=1.0.0");
+        => await RunPrometheusExporterHttpServerIntegrationTest(
+            acceptHeader: "application/openmetrics-text; version=1.0.0",
+            contentType: "application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores");
 
     [Fact]
     public async Task PrometheusExporterHttpServerIntegration_NoOpenMetrics_WithMeterTags()
@@ -97,6 +99,7 @@ public class PrometheusHttpListenerTests
 
         await RunPrometheusExporterHttpServerIntegrationTest(
             acceptHeader: "application/openmetrics-text; version=1.0.0",
+            contentType: "application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores",
             meterTags: tags);
     }
 
@@ -244,7 +247,7 @@ public class PrometheusHttpListenerTests
     {
         using var meter = new Meter(MeterName, MeterVersion);
 
-        int port = 0;
+        var port = 0;
 
         using var context = CreateMeterProvider(meter, configureListener: (options) =>
         {
@@ -341,7 +344,9 @@ public class PrometheusHttpListenerTests
         // Confirm Dispose() is actually blocked (meaning it has cancelled the
         // token and is now waiting for activeRequestCount to reach 0). If
         // disposeTask completes within 500ms it means the request wasn't held.
-        var completed = await Task.WhenAny(disposeTask, Task.Delay(500));
+        var timeout = TimeSpan.FromSeconds(0.5);
+        using var cts = new CancellationTokenSource(timeout);
+        var completed = await Task.WhenAny(disposeTask, Task.Delay(timeout, cts.Token));
         Assert.NotSame(disposeTask, completed);
 
         // Release the blocker so EnterCollect can finish.
@@ -521,7 +526,7 @@ public class PrometheusHttpListenerTests
 
         while (attemptsLeft-- > 0)
         {
-            int port = -1;
+            var port = -1;
 
             var builder = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
@@ -552,6 +557,7 @@ public class PrometheusHttpListenerTests
     private static async Task RunPrometheusExporterHttpServerIntegrationTest(
         bool skipMetrics = false,
         string acceptHeader = "application/openmetrics-text",
+        string? contentType = null,
         KeyValuePair<string, object?>[]? meterTags = null)
     {
         var requestOpenMetrics = acceptHeader.StartsWith("application/openmetrics-text", StringComparison.Ordinal);
@@ -590,14 +596,14 @@ public class PrometheusHttpListenerTests
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             Assert.True(response.Content.Headers.Contains("Last-Modified"));
 
-            if (requestOpenMetrics)
-            {
-                Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores", response.Content.Headers.ContentType?.ToString());
-            }
-            else
-            {
-                Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType?.ToString());
-            }
+            contentType ??=
+                requestOpenMetrics ?
+                "application/openmetrics-text; version=0.0.1; charset=utf-8" :
+                "text/plain; version=0.0.4; charset=utf-8";
+
+            Assert.NotNull(response.Content);
+            Assert.NotNull(response.Content.Headers.ContentType);
+            Assert.Equal(contentType, response.Content.Headers.ContentType.ToString());
 
             var additionalTags = meterTags is { Length: > 0 }
                 ? $"{string.Join(",", meterTags.Select(x => $"{x.Key}='{x.Value}'"))},"
@@ -648,7 +654,7 @@ public class PrometheusHttpListenerTests
     {
         var maximumAttempts = 5;
         var attemptsLeft = maximumAttempts;
-        int boundPort = 0;
+        var boundPort = 0;
 
         var exporterOptions = new PrometheusExporterOptions();
 
