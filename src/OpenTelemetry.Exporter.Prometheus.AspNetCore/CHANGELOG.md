@@ -57,6 +57,11 @@ Notes](../../RELEASENOTES.md).
 * Fix `ArgumentException` if `OTEL_SDK_DISABLED=true`.
   ([#7273](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7273))
 
+* Update `Accept` header parsing to more closely follow the Prometheus
+  [Scrape protocol content negotiation](https://prometheus.io/docs/instrumenting/content_negotiation/)
+  specification.
+  ([#7266](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7266))
+
 * Add Prometheus text fallback `target_info` output as a gauge.
   ([#7238](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7238))
 
