@@ -113,8 +113,8 @@ public class TraceContextPropagator : TextMapPropagator
         var traceparent = string.Create(55, context.ActivityContext, WriteTraceParentIntoSpan);
 #else
         var traceparent = string.Concat("00-", context.ActivityContext.TraceId.ToHexString(), "-", context.ActivityContext.SpanId.ToHexString());
-        var traceFlags = ((byte)context.ActivityContext.TraceFlags).ToString("x2", System.Globalization.CultureInfo.InvariantCulture);
-        traceparent = string.Concat(traceparent, "-", traceFlags);
+        var traceFlags = FormatActivityTraceFlags(context.ActivityContext.TraceFlags);
+        traceparent = string.Concat(traceparent, traceFlags);
 #endif
 
         setter(carrier, TraceParent, traceparent);
@@ -131,6 +131,78 @@ public class TraceContextPropagator : TextMapPropagator
                     setter(carrier, TraceState, normalizedTraceState);
                 }
             }
+        }
+
+#if NET
+        static void WriteTraceParentIntoSpan(Span<char> destination, ActivityContext context)
+        {
+            "00-".CopyTo(destination);
+
+            context.TraceId.ToHexString().CopyTo(destination.Slice(3));
+
+            destination[35] = '-';
+
+            context.SpanId.ToHexString().CopyTo(destination.Slice(36));
+
+            // https://github.com/open-telemetry/opentelemetry-dotnet-contrib/pull/3867
+            // will change this code to use ActivityTraceFlags.RandomTraceId instead of 2.
+            // If new enem values are added in the future the Fallback path will ensure
+            // that the handling is functionally correct, but the condition should be updated
+            // to include the new value(s) for better readability and performance where possible.
+            if (context.TraceFlags == ActivityTraceFlags.Recorded)
+            {
+                "-01".CopyTo(destination.Slice(52));
+            }
+            else if (context.TraceFlags == (ActivityTraceFlags)2)
+            {
+                "-02".CopyTo(destination.Slice(52));
+            }
+            else if (context.TraceFlags == (ActivityTraceFlags.Recorded | (ActivityTraceFlags)2))
+            {
+                "-03".CopyTo(destination.Slice(52));
+            }
+            else
+            {
+                var flags = (byte)context.TraceFlags;
+                destination[52] = '-';
+                destination[53] = GetHexChar(flags >> 4);
+                destination[54] = GetHexChar(flags & 0xF);
+            }
+        }
+#else
+        static string FormatActivityTraceFlags(ActivityTraceFlags flags)
+        {
+            // https://github.com/open-telemetry/opentelemetry-dotnet-contrib/pull/3867
+            // will change this code to use ActivityTraceFlags.RandomTraceId instead of 2.
+            // If new enem values are added in the future the Fallback path will ensure
+            // that the handling is functionally correct, but the switch should be updated
+            // to include the new value(s) for better readability and performance where possible.
+            return flags switch
+            {
+                ActivityTraceFlags.None => "-00",
+                ActivityTraceFlags.Recorded => "-01",
+                (ActivityTraceFlags)2 => "-02",
+                ActivityTraceFlags.Recorded | (ActivityTraceFlags)2 => "-03",
+                _ => Fallback((byte)flags),
+            };
+
+            static string Fallback(byte flags)
+            {
+                Span<char> buffer = stackalloc char[3];
+
+                buffer[0] = '-';
+                buffer[1] = GetHexChar(flags >> 4);
+                buffer[2] = GetHexChar(flags & 0xF);
+
+                return buffer.ToString();
+            }
+        }
+#endif
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static char GetHexChar(int value)
+        {
+            return (char)(value + (value < 10 ? '0' : 'a' - 10));
         }
     }
 
@@ -724,25 +796,4 @@ public class TraceContextPropagator : TextMapPropagator
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IsAsciiLetterOrDigitLower(char c)
         => char.IsAsciiDigit(c) || char.IsAsciiLetterLower(c);
-
-#if NET
-    private static void WriteTraceParentIntoSpan(Span<char> destination, ActivityContext context)
-    {
-        "00-".CopyTo(destination);
-        context.TraceId.ToHexString().CopyTo(destination.Slice(3));
-        destination[35] = '-';
-        context.SpanId.ToHexString().CopyTo(destination.Slice(36));
-
-        var flags = (byte)context.TraceFlags;
-        destination[52] = '-';
-        destination[53] = GetHexChar(flags >> 4);
-        destination[54] = GetHexChar(flags & 0xF);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static char GetHexChar(int value)
-        {
-            return (char)(value + (value < 10 ? '0' : 'a' - 10));
-        }
-    }
-#endif
 }
