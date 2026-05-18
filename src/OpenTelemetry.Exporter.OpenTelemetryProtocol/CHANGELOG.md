@@ -31,6 +31,10 @@ Notes](../../RELEASENOTES.md).
 * Reduce the overhead of GZip compression.
   ([#7275](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7275))
 
+* Do not enable the `OtlpLogExporter` integration with `IHttpClientFactory`
+  when mTLS is enabled.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.15.3
 
 Released 2026-Apr-21
