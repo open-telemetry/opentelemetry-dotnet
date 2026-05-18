@@ -103,9 +103,12 @@ public class OtlpExporterOptionsExtensionsTests
 
 #if NET
     [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void TryEnableIHttpClientFactoryIntegration_DoesNotReplaceDefaultFactory_WhenMutualTlsIsEnabled(bool enabled)
+    [InlineData(null, "client.pem")]
+    [InlineData("ca.pem", null)]
+    [InlineData("ca.pem", "client.pem")]
+    public void TryEnableIHttpClientFactoryIntegration_DoesNotReplaceDefaultFactory_WhenTlsIsEnabled(
+        string? caCertificatePath,
+        string? clientCertificatePath)
     {
         var services = new ServiceCollection();
 
@@ -118,8 +121,8 @@ public class OtlpExporterOptionsExtensionsTests
             Protocol = OtlpExportProtocol.HttpProtobuf,
             MtlsOptions = new OtlpMtlsOptions
             {
-                CaCertificatePath = "ca.pem",
-                ClientCertificatePath = enabled ? "client.pem" : null,
+                CaCertificatePath = caCertificatePath,
+                ClientCertificatePath = clientCertificatePath,
             },
         };
 
