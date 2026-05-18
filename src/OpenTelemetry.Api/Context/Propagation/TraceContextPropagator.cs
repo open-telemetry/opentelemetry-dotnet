@@ -174,7 +174,7 @@ public class TraceContextPropagator : TextMapPropagator
         {
             // https://github.com/open-telemetry/opentelemetry-dotnet-contrib/pull/3867
             // will change this code to use ActivityTraceFlags.RandomTraceId instead of 2.
-            // If new enem values are added in the future the Fallback path will ensure
+            // If new enum values are added in the future the Fallback path will ensure
             // that the handling is functionally correct, but the switch should be updated
             // to include the new value(s) for better readability and performance where possible.
             return flags switch
