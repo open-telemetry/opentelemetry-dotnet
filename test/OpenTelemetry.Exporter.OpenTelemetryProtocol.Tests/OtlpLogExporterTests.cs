@@ -1727,6 +1727,10 @@ public class OtlpLogExporterTests
 
         Assert.NotNull(factory);
 
+        var logger = factory.CreateLogger("TestLogger");
+
+        Assert.NotNull(logger);
+
         Assert.True(configureDelegateCalled);
         Assert.True(configureExportProcessorOptionsCalled);
         Assert.True(configureBatchOptionsCalled);
