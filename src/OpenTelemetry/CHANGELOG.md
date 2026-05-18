@@ -17,6 +17,9 @@ Notes](../../RELEASENOTES.md).
 * Update `OpenTelemetrySdkEventSource` to support the W3C randomness flag.
   ([#7301](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7301))
 
+* Fix circular reference when `LoggerProvider` requires `ILogger`.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.15.3
 
 Released 2026-Apr-21
