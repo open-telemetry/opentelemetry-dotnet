@@ -156,7 +156,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
 
         Assert.NotNull(loggerProvider.Processor);
 
-        Assert.True(loggerProvider.Processor is TestLogProcessor);
+        Assert.IsType<TestLogProcessor>(loggerProvider.Processor);
     }
 
     [Fact]
@@ -246,7 +246,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         // assert
         Assert.NotNull(loggerProvider);
         Assert.NotNull(loggerProvider.Processor);
-        Assert.True(loggerProvider.Processor is TestLogProcessor);
+        Assert.IsType<TestLogProcessor>(loggerProvider.Processor);
     }
 
     [Fact]
@@ -266,7 +266,7 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         Assert.Throws<ArgumentNullException>(() => sp.GetRequiredService<LoggerProvider>() as LoggerProviderSdk);
     }
 
-    [Theory(Skip = "TODO Investigate why this is now failing.")]
+    [Theory]
     [InlineData(true)]
     [InlineData(false)]
     public void CircularReferenceTest(bool requestLoggerProviderDirectly)
@@ -288,13 +288,15 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         {
             var factory = sp.GetRequiredService<ILoggerFactory>();
             Assert.NotNull(factory);
+
+            var logger = factory.CreateLogger("MyLogger");
+            Assert.NotNull(logger);
         }
 
         var loggerProvider = sp.GetRequiredService<LoggerProvider>() as LoggerProviderSdk;
 
         Assert.NotNull(loggerProvider);
-
-        Assert.True(loggerProvider.Processor is TestLogProcessorWithILoggerFactoryDependency);
+        Assert.IsType<TestLogProcessorWithILoggerFactoryDependency>(loggerProvider.Processor);
     }
 
     [Theory]
