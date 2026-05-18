@@ -63,13 +63,13 @@ public class ProtobufOtlpResourceSerializerBenchmarks
         }
 
         var attributes = new Dictionary<string, object>(this.AttributeCount);
-        var realistic = Math.Min(this.AttributeCount, AllAttributes.Length);
-        for (var i = 0; i < realistic; i++)
+        var count = Math.Min(this.AttributeCount, AllAttributes.Length);
+        for (var i = 0; i < count; i++)
         {
             attributes[AllAttributes[i].Key] = AllAttributes[i].Value;
         }
 
-        for (var i = realistic; i < this.AttributeCount; i++)
+        for (var i = count; i < this.AttributeCount; i++)
         {
             attributes[$"custom.attribute.{i}"] = Guid.NewGuid().ToString();
         }

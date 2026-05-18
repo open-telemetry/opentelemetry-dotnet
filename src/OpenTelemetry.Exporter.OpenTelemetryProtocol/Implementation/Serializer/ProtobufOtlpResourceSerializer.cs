@@ -10,7 +10,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer
 internal static class ProtobufOtlpResourceSerializer
 {
     private const int ReserveSizeForLength = 4;
-    private const int InitialScratchSize = 2048;
+    private const int InitialBufferSize = 2048;
 
     private static readonly ConcurrentDictionary<Resource, byte[]> CachedResourceBytes = new();
 
@@ -33,26 +33,26 @@ internal static class ProtobufOtlpResourceSerializer
     {
         var pool = ArrayPool<byte>.Shared;
 
-        var scratch = pool.Rent(InitialScratchSize);
+        var buffer = pool.Rent(InitialBufferSize);
         try
         {
             while (true)
             {
                 try
                 {
-                    var length = WriteResourceCore(scratch, 0, resource);
-                    return scratch.AsSpan(0, length).ToArray();
+                    var length = WriteResourceCore(buffer, 0, resource);
+                    return buffer.AsSpan(0, length).ToArray();
                 }
                 catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
                 {
-                    pool.Return(scratch);
-                    scratch = pool.Rent(scratch.Length * 2);
+                    pool.Return(buffer);
+                    buffer = pool.Rent(buffer.Length * 2);
                 }
             }
         }
         finally
         {
-            pool.Return(scratch);
+            pool.Return(buffer);
         }
     }
 

@@ -12,21 +12,21 @@ public class OtlpResourceTests
     [Fact]
     public void EmptyResourceSerializesToExpectedBytes()
     {
-        var buffer = new byte[16];
+        var buffer = new byte[5];
         var writePosition = ProtobufOtlpResourceSerializer.WriteResource(buffer, 0, Resource.Empty);
 
         Assert.Equal(5, writePosition);
-        Assert.Equal(new byte[] { 0x0A, 0x80, 0x80, 0x80, 0x00 }, buffer.AsSpan(0, writePosition).ToArray());
+        Assert.Equal(new byte[] { 0x0A, 0x80, 0x80, 0x80, 0x00 }, buffer);
     }
 
     [Fact]
     public void NullResourceSerializesToExpectedBytes()
     {
-        var buffer = new byte[16];
+        var buffer = new byte[5];
         var writePosition = ProtobufOtlpResourceSerializer.WriteResource(buffer, 0, resource: null);
 
         Assert.Equal(5, writePosition);
-        Assert.Equal(new byte[] { 0x0A, 0x80, 0x80, 0x80, 0x00 }, buffer.AsSpan(0, writePosition).ToArray());
+        Assert.Equal(new byte[] { 0x0A, 0x80, 0x80, 0x80, 0x00 }, buffer);
     }
 
     [Theory]
