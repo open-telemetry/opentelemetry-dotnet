@@ -197,13 +197,16 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         }
     }
 
-    protected override HttpContent CreateHttpContent(byte[] buffer, int contentLength)
-    {
-        if (!this.CompressionEnabled)
-        {
-            return base.CreateHttpContent(buffer, contentLength);
-        }
+    protected override HttpContent CreateHttpContent(byte[] buffer, int contentLength) =>
+        this.CompressionEnabled
+            ? this.CreateGZipHttpContent(buffer, contentLength)
+            : base.CreateHttpContent(buffer, contentLength);
 
+    private static bool IsTransientNetworkError(HttpRequestException ex) =>
+        ex.InnerException is SocketException { SocketErrorCode: SocketError.TimedOut or SocketError.ConnectionReset or SocketError.HostUnreachable or SocketError.ConnectionRefused };
+
+    private StreamContent CreateGZipHttpContent(byte[] buffer, int contentLength)
+    {
         // Build a gzip-compressed gRPC message frame:
         //   byte 0     - Compression flag = 1 (gzip).
         //   bytes 1-4  - Compressed payload length in big-endian format.
@@ -232,9 +235,17 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         compressedStream.Position = 0;
         compressedStream.WriteByte(1);
 
-        var lengthBytes = new byte[4];
+        Span<byte> lengthBytes = stackalloc byte[4];
         BinaryPrimitives.WriteUInt32BigEndian(lengthBytes, compressedPayloadLength);
-        compressedStream.Write(lengthBytes, 0, 4);
+
+#if NET
+        compressedStream.Write(lengthBytes);
+#else
+        compressedStream.WriteByte(lengthBytes[0]);
+        compressedStream.WriteByte(lengthBytes[1]);
+        compressedStream.WriteByte(lengthBytes[2]);
+        compressedStream.WriteByte(lengthBytes[3]);
+#endif
 
         compressedStream.Position = 0;
 
@@ -244,7 +255,4 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
         content.Headers.ContentType = this.MediaTypeHeader;
         return content;
     }
-
-    private static bool IsTransientNetworkError(HttpRequestException ex) =>
-        ex.InnerException is SocketException { SocketErrorCode: SocketError.TimedOut or SocketError.ConnectionReset or SocketError.HostUnreachable or SocketError.ConnectionRefused };
 }

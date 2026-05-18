@@ -256,24 +256,27 @@ public sealed class PrometheusCollectionManagerTests
 
             await secondCollectStarted.Task;
 
-            var completion = await Task.WhenAny(secondCollectTask, Task.Delay(TimeSpan.FromSeconds(1)));
+            var firstTimeout = TimeSpan.FromSeconds(1);
 
-            Assert.NotSame(secondCollectTask, completion);
-            Assert.False(secondCollectTask.IsCompleted);
+            using (var cts = new CancellationTokenSource(firstTimeout))
+            {
+                var completion = await Task.WhenAny(secondCollectTask, Task.Delay(firstTimeout, cts.Token));
+                Assert.NotSame(secondCollectTask, completion);
+                Assert.False(secondCollectTask.IsCompleted);
+            }
+
             Assert.Equal(1, collectCount);
 
             exporter.CollectionManager.ExitCollect();
             firstCollectExited = true;
 
-            var timeout = TimeSpan.FromSeconds(5);
+            var secondTimeout = TimeSpan.FromSeconds(5);
 
-#if NET
-            await secondCollectTask.WaitAsync(timeout);
-#else
-            using var cts = new CancellationTokenSource(timeout);
-            completion = await Task.WhenAny(secondCollectTask, Task.Delay(timeout, cts.Token));
-            Assert.Same(secondCollectTask, completion);
-#endif
+            using (var cts = new CancellationTokenSource(secondTimeout))
+            {
+                var completion = await Task.WhenAny(secondCollectTask, Task.Delay(secondTimeout, cts.Token));
+                Assert.Same(secondCollectTask, completion);
+            }
 
             var secondResponse = await secondCollectTask;
 
@@ -320,9 +323,11 @@ public sealed class PrometheusCollectionManagerTests
             var view = response.PlainTextView;
             var output = Encoding.UTF8.GetString(view.Array!, view.Offset, view.Count);
 
+#pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
             Assert.Single(Regex.Matches(output, "^# TYPE test_metric_bytes_total counter$", RegexOptions.Multiline).Cast<Match>());
             Assert.Single(Regex.Matches(output, "^# UNIT test_metric_bytes_total bytes$", RegexOptions.Multiline).Cast<Match>());
             Assert.Single(Regex.Matches(output, "^# HELP test_metric_bytes_total Test help$", RegexOptions.Multiline).Cast<Match>());
+#pragma warning restore SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
             Assert.Contains("test_metric_bytes_total{otel_scope_name=\"" + meter.Name + "\",source=\"a\"} 1", output, StringComparison.Ordinal);
             Assert.Contains("test_metric_bytes_total{otel_scope_name=\"" + meter.Name + "\",source=\"b\"} 2", output, StringComparison.Ordinal);
         }
