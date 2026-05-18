@@ -4,7 +4,10 @@
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
+using System.IO.Compression;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Headers;
 using Microsoft.Net.Http.Headers;
 using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Internal;
@@ -63,12 +66,29 @@ internal sealed class PrometheusExporterMiddleware
                 return;
             }
 
-            var protocol = Negotiate(httpContext.Request);
+            using var requestCancelled = new CancellationTokenSource();
 
-            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(protocol.IsOpenMetrics).ConfigureAwait(false);
+            int? scrapeTimeoutSeconds = null;
+            if (httpContext.Request.Headers.TryGetValue("X-Prometheus-Scrape-Timeout-Seconds", out var value) &&
+                int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var parsedValue) &&
+                parsedValue is > 0 and < int.MaxValue / 1_000)
+            {
+                scrapeTimeoutSeconds = parsedValue;
+                requestCancelled.CancelAfter(TimeSpan.FromSeconds(scrapeTimeoutSeconds.Value));
+            }
+
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(requestCancelled.Token, httpContext.RequestAborted);
+
+            var requestHeaders = httpContext.Request.GetTypedHeaders();
+
+            var protocol = Negotiate(requestHeaders);
+
+            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(protocol.IsOpenMetrics);
 
             try
             {
+                linkedCts.Token.ThrowIfCancellationRequested();
+
                 var dataView = protocol.IsOpenMetrics ? collectionResponse.OpenMetricsView : collectionResponse.PlainTextView;
 
                 response.StatusCode = StatusCodes.Status200OK;
@@ -78,12 +98,24 @@ internal sealed class PrometheusExporterMiddleware
                     response.Headers.Append("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
                     response.ContentType = PrometheusProtocol.GetContentType(protocol);
 
-                    await response.Body.WriteAsync(dataView.Array.AsMemory(0, dataView.Count)).ConfigureAwait(false);
+                    await WriteResponseAsync(response, dataView.Array.AsMemory(0, dataView.Count), AcceptsGZip(requestHeaders), linkedCts.Token);
                 }
                 else
                 {
                     // It's not expected to have no metrics to collect, but it's not necessarily a failure, either.
                     PrometheusExporterEventSource.Log.NoMetrics();
+                }
+            }
+            catch (OperationCanceledException ex) when (ex.CancellationToken == linkedCts.Token)
+            {
+                if (scrapeTimeoutSeconds is { } timeout)
+                {
+                    PrometheusExporterEventSource.Log.ScrapeTimedOut(timeout);
+                }
+
+                if (!response.HasStarted)
+                {
+                    response.StatusCode = StatusCodes.Status408RequestTimeout;
                 }
             }
             finally
@@ -101,9 +133,9 @@ internal sealed class PrometheusExporterMiddleware
         }
     }
 
-    internal static PrometheusProtocol Negotiate(HttpRequest request)
+    internal static PrometheusProtocol Negotiate(RequestHeaders headers)
     {
-        var acceptHeader = request.GetTypedHeaders().Accept;
+        var acceptHeader = headers.Accept;
 
         if (acceptHeader is not { Count: > 0 })
         {
@@ -240,5 +272,45 @@ internal sealed class PrometheusExporterMiddleware
 
         protocol = new(mediaType, escaping, version, isOpenMetrics);
         return true;
+    }
+
+    private static bool AcceptsGZip(RequestHeaders headers)
+    {
+        if (headers.AcceptEncoding is { Count: > 0 } acceptEncoding)
+        {
+            foreach (var parameter in acceptEncoding)
+            {
+                if (parameter.Value.Equals("gzip", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static async Task WriteResponseAsync(
+        HttpResponse response,
+        ReadOnlyMemory<byte> content,
+        bool compress,
+        CancellationToken cancellationToken)
+    {
+        if (compress)
+        {
+            response.Headers.Append("Content-Encoding", "gzip");
+
+            await using var gzip = new GZipStream(
+                response.Body,
+                CompressionLevel.Optimal,
+                leaveOpen: true);
+
+            await gzip.WriteAsync(content, cancellationToken);
+            await gzip.FlushAsync(cancellationToken);
+        }
+        else
+        {
+            await response.BodyWriter.WriteAsync(content, cancellationToken);
+        }
     }
 }

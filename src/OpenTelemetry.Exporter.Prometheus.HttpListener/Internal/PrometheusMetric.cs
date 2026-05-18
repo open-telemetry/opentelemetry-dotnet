@@ -23,6 +23,7 @@ internal sealed class PrometheusMetric
         if (!string.IsNullOrEmpty(unit))
         {
             sanitizedUnit = GetUnit(unit);
+            var openMetricsUnitSuffix = EscapeOpenMetricsName(sanitizedUnit);
 
             // The resulting unit SHOULD be added to the metric as
             // [OpenMetrics UNIT metadata](https://github.com/prometheus/OpenMetrics/blob/v1.0.0/specification/OpenMetrics.md#metricfamily)
@@ -31,7 +32,7 @@ internal sealed class PrometheusMetric
             if (!sanitizedName.EndsWith(sanitizedUnit, StringComparison.Ordinal))
             {
                 sanitizedName += $"_{sanitizedUnit}";
-                openMetricsName += $"_{sanitizedUnit}";
+                openMetricsName += $"_{openMetricsUnitSuffix}";
             }
         }
 
@@ -64,6 +65,22 @@ internal sealed class PrometheusMetric
         this.OpenMetricsMetadataName = openMetricsMetadataName;
         this.Unit = sanitizedUnit;
         this.Type = type;
+        this.NameBytes = ConvertToAsciiBytes(sanitizedName);
+        this.OpenMetricsNameBytes = ConvertToAsciiBytes(openMetricsName);
+        this.OpenMetricsMetadataNameBytes = ConvertToAsciiBytes(openMetricsMetadataName);
+        this.UnitBytes = sanitizedUnit == null ? null : ConvertToAsciiBytes(sanitizedUnit);
+
+        static byte[] ConvertToAsciiBytes(string value)
+        {
+            var bytes = new byte[value.Length];
+
+            for (var i = 0; i < value.Length; i++)
+            {
+                bytes[i] = unchecked((byte)value[i]);
+            }
+
+            return bytes;
+        }
     }
 
     public string Name { get; }
@@ -75,6 +92,14 @@ internal sealed class PrometheusMetric
     public string? Unit { get; }
 
     public PrometheusType Type { get; }
+
+    internal byte[] NameBytes { get; }
+
+    internal byte[] OpenMetricsNameBytes { get; }
+
+    internal byte[] OpenMetricsMetadataNameBytes { get; }
+
+    internal byte[]? UnitBytes { get; }
 
     public static PrometheusMetric Create(Metric metric, bool disableTotalNameSuffixForCounters)
         => new(metric.Name, metric.Unit, GetPrometheusType(metric.MetricType), disableTotalNameSuffixForCounters);

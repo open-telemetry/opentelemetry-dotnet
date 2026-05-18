@@ -236,7 +236,7 @@ public sealed class PrometheusExporterMiddlewareTests
         var context = new DefaultHttpContext();
         context.Request.Headers.Accept = accept;
 
-        var actual = PrometheusExporterMiddleware.Negotiate(context.Request);
+        var actual = PrometheusExporterMiddleware.Negotiate(context.Request.GetTypedHeaders());
 
         Assert.Equal(mediaType, actual.MediaType);
         Assert.Equal(isOpenMetrics, actual.IsOpenMetrics);
@@ -251,7 +251,7 @@ public sealed class PrometheusExporterMiddlewareTests
         var context = new DefaultHttpContext();
         context.Request.Headers.Accept = accept;
 
-        var actual = PrometheusExporterMiddleware.Negotiate(context.Request);
+        var actual = PrometheusExporterMiddleware.Negotiate(context.Request.GetTypedHeaders());
 
         Assert.Equivalent(PrometheusProtocol.Fallback, actual);
     }
@@ -374,6 +374,68 @@ public sealed class PrometheusExporterMiddlewareTests
         Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
     }
 
+    [Fact]
+    public async Task PrometheusExporterMiddlewareInvokeAsync_WhenRequest_TimesOut_Returns408()
+    {
+        using var exporter = new PrometheusExporter(new PrometheusExporterOptions());
+        exporter.Collect = _ => true;
+        var middleware = new PrometheusExporterMiddleware(exporter);
+
+        var context = new DefaultHttpContext()
+        {
+            RequestAborted = new CancellationToken(canceled: true),
+        };
+
+        await middleware.InvokeAsync(context);
+
+        Assert.Equal(StatusCodes.Status408RequestTimeout, context.Response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PrometheusExporterMiddlewareInvokeAsync_WhenRequestDeadlineExceeded_Returns408()
+    {
+        using var exporter = new PrometheusExporter(new PrometheusExporterOptions());
+
+        exporter.Collect = _ =>
+        {
+            Thread.Sleep(TimeSpan.FromSeconds(2));
+            return true;
+        };
+
+        var middleware = new PrometheusExporterMiddleware(exporter);
+
+        var context = new DefaultHttpContext();
+
+        context.Request.Headers.Append("X-Prometheus-Scrape-Timeout-Seconds", "1");
+
+        await middleware.InvokeAsync(context);
+
+        Assert.Equal(StatusCodes.Status408RequestTimeout, context.Response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData("-1")]
+    [InlineData("0")]
+    [InlineData("0.9")]
+    [InlineData("1.1")]
+    [InlineData("2147484")]
+    [InlineData("foo")]
+    public async Task PrometheusExporterMiddlewareInvokeAsync_WhenRequestDeadlineInvalid_Returns200(string scrapeTimeoutSeconds)
+    {
+        using var exporter = new PrometheusExporter(new PrometheusExporterOptions());
+        exporter.Collect = _ => true;
+
+        var middleware = new PrometheusExporterMiddleware(exporter);
+
+        var context = new DefaultHttpContext();
+
+        context.Request.Headers.Append("X-Prometheus-Scrape-Timeout-Seconds", scrapeTimeoutSeconds);
+
+        await middleware.InvokeAsync(context);
+
+        Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
+    }
+
     private static async Task RunPrometheusExporterMiddlewareIntegrationTestWithBothFormats(
         KeyValuePair<string, object?>[]? meterTags = null,
         string? contentType = null)
@@ -485,8 +547,13 @@ public sealed class PrometheusExporterMiddlewareTests
         Assert.Equal(contentType, response.Content.Headers.ContentType!.ToString());
 
         var additionalTags = meterTags is { Length: > 0 }
-            ? $"{string.Join(",", meterTags.Select(x => $"{x.Key}=\"{x.Value}\""))},"
+            ? $"{string.Join(",", meterTags.Select(x => $"otel_scope_{x.Key}=\"{x.Value}\""))},"
             : string.Empty;
+        var createdMetricSample = requestOpenMetrics
+            ? $"\ncounter_double_bytes_created{{otel_scope_name=\"{MeterName}\",otel_scope_version=\"{MeterVersion}\",{additionalTags}key1=\"value1\",key2=\"value2\"}} [0-9]+(?:\\.[0-9]+)?"
+            : string.Empty;
+
+        var scopeInfoMetric = $"otel_scope_info{{otel_scope_name=\"{MeterName}\",otel_scope_version=\"{MeterVersion}\"{(string.IsNullOrEmpty(additionalTags) ? string.Empty : "," + additionalTags.TrimEnd(','))}}} 1";
 
         var content = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings();
 
@@ -495,16 +562,19 @@ public sealed class PrometheusExporterMiddlewareTests
                     # TYPE target info
                     # HELP target Target metadata
                     target_info{service_name="my_service",service_instance_id="id1"} 1
-                    # TYPE otel_scope_info info
-                    # HELP otel_scope_info Scope metadata
-                    otel_scope_info{otel_scope_name="{{MeterName}}"} 1
+                    # TYPE otel_scope info
+                    # HELP otel_scope Scope metadata
+                    {{scopeInfoMetric}}
                     # TYPE counter_double_bytes counter
                     # UNIT counter_double_bytes bytes
-                    counter_double_bytes_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",{{additionalTags}}key1="value1",key2="value2"} 101.17
+                    counter_double_bytes_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",{{additionalTags}}key1="value1",key2="value2"} 101.17{{createdMetricSample}}
                     # EOF
 
                     """.ReplaceLineEndings()
             : $$"""
+                    # TYPE target_info gauge
+                    # HELP target_info Target metadata
+                    target_info{service_name="my_service",service_instance_id="id1"} 1
                     # TYPE counter_double_bytes_total counter
                     # UNIT counter_double_bytes_total bytes
                     counter_double_bytes_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",{{additionalTags}}key1="value1",key2="value2"} 101.17

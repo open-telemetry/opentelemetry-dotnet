@@ -469,6 +469,46 @@ public class PrometheusHttpListenerTests
         }
     }
 
+    [Fact]
+    public async Task WhenRequestDeadlineExceeded_Returns408()
+    {
+        using var context = CreateListener();
+
+        context.Exporter.Collect = _ =>
+        {
+            Thread.Sleep(TimeSpan.FromSeconds(2));
+            return true;
+        };
+
+        using var client = new HttpClient { BaseAddress = context.BaseAddress };
+        client.DefaultRequestHeaders.Add("X-Prometheus-Scrape-Timeout-Seconds", "1");
+
+        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative));
+
+        Assert.Equal(HttpStatusCode.RequestTimeout, response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData("-1")]
+    [InlineData("0")]
+    [InlineData("0.9")]
+    [InlineData("1.1")]
+    [InlineData("2147484")]
+    [InlineData("foo")]
+    public async Task WhenRequestDeadlineInvalid_Returns200(string scrapeTimeoutSeconds)
+    {
+        using var meter = new Meter(MeterName, MeterVersion);
+
+        using var context = CreateMeterProvider(meter);
+
+        using var client = new HttpClient { BaseAddress = context.BaseAddress };
+        client.DefaultRequestHeaders.Add("X-Prometheus-Scrape-Timeout-Seconds", scrapeTimeoutSeconds);
+
+        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
     internal static MeterProviderTestContext CreateMeterProvider(
         Meter meter,
         Func<PrometheusHttpListenerOptions, int>? configureListener = null,
@@ -566,8 +606,13 @@ public class PrometheusHttpListenerTests
             Assert.Equal(contentType, response.Content.Headers.ContentType.ToString());
 
             var additionalTags = meterTags is { Length: > 0 }
-                ? $"{string.Join(",", meterTags.Select(x => $"{x.Key}='{x.Value}'"))},"
+                ? $"{string.Join(",", meterTags.Select(x => $"otel_scope_{x.Key}='{x.Value}'"))},"
                 : string.Empty;
+            var createdMetricSample = requestOpenMetrics
+                ? $"counter_double_bytes_created{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',{additionalTags}key1='value1',key2='value2'}} [0-9]+(?:\\.[0-9]+)?\n"
+                : string.Empty;
+
+            var scopeInfoMetric = $"otel_scope_info{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}'{(string.IsNullOrEmpty(additionalTags) ? string.Empty : "," + additionalTags.TrimEnd(','))}}} 1\n";
 
             var content = await response.Content.ReadAsStringAsync();
 
@@ -575,14 +620,18 @@ public class PrometheusHttpListenerTests
                 ? "# TYPE target info\n"
                   + "# HELP target Target metadata\n"
                   + "target_info{service_name='my_service',service_instance_id='id1'} 1\n"
-                  + "# TYPE otel_scope_info info\n"
-                  + "# HELP otel_scope_info Scope metadata\n"
-                  + $"otel_scope_info{{otel_scope_name='{MeterName}'}} 1\n"
+                  + "# TYPE otel_scope info\n"
+                  + "# HELP otel_scope Scope metadata\n"
+                  + scopeInfoMetric
                   + "# TYPE counter_double_bytes counter\n"
                   + "# UNIT counter_double_bytes bytes\n"
                   + $"counter_double_bytes_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',{additionalTags}key1='value1',key2='value2'}} 101.17\n"
+                  + createdMetricSample
                   + "# EOF\n"
-                : "# TYPE counter_double_bytes_total counter\n"
+                : "# TYPE target_info gauge\n"
+                  + "# HELP target_info Target metadata\n"
+                  + "target_info{service_name='my_service',service_instance_id='id1'} 1\n"
+                  + "# TYPE counter_double_bytes_total counter\n"
                   + "# UNIT counter_double_bytes_total bytes\n"
                   + $"counter_double_bytes_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',{additionalTags}key1='value1',key2='value2'}} 101.17\n"
                   + "# EOF\n";
