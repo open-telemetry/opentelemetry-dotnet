@@ -28,6 +28,9 @@ Notes](../../RELEASENOTES.md).
   can be used without triggering circular dependencies during logger construction.
   ([#7298](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7298))
 
+* Reduce the overhead of GZip compression.
+  ([#7275](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7275))
+
 ## 1.15.3
 
 Released 2026-Apr-21
