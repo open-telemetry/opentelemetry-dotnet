@@ -14,6 +14,13 @@ Notes](../../RELEASENOTES.md).
   once per collection cycle.
   ([#7188](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7188))
 
+* Replaced the vendored copy of
+  `EnvironmentVariablesConfigurationProvider` with a direct
+  `Microsoft.Extensions.Configuration.EnvironmentVariables` package dependency.
+  Consumers gain automatic pickup of upstream bug fixes and security patches;
+  no public API or behavioural change.
+  ([#7146](hhttps://github.com/open-telemetry/opentelemetry-dotnet/pull/7146))
+
 ## 1.15.3
 
 Released 2026-Apr-21
