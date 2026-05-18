@@ -5,6 +5,9 @@
 using System.Net.Http;
 #endif
 using Microsoft.Extensions.Configuration;
+#if NET
+using Microsoft.Extensions.DependencyInjection;
+#endif
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
@@ -97,6 +100,41 @@ public class OtlpExporterOptionsExtensionsTests
 
         Assert.Equal(expected, resultUri.AbsoluteUri);
     }
+
+#if NET
+    [Theory]
+    [InlineData(null, "client.pem")]
+    [InlineData("ca.pem", null)]
+    [InlineData("ca.pem", "client.pem")]
+    public void TryEnableIHttpClientFactoryIntegration_DoesNotReplaceDefaultFactory_WhenTlsIsEnabled(
+        string? caCertificatePath,
+        string? clientCertificatePath)
+    {
+        var services = new ServiceCollection();
+
+        services.AddHttpClient("OtlpLogExporter");
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var options = new OtlpExporterOptions
+        {
+            Protocol = OtlpExportProtocol.HttpProtobuf,
+            MtlsOptions = new OtlpMtlsOptions
+            {
+                CaCertificatePath = caCertificatePath,
+                ClientCertificatePath = clientCertificatePath,
+            },
+        };
+
+        var originalFactory = options.HttpClientFactory;
+
+        var actual = options.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpLogExporter");
+
+        Assert.False(actual);
+        Assert.Same(originalFactory, options.HttpClientFactory);
+        Assert.Same(options.DefaultHttpClientFactory, options.HttpClientFactory);
+    }
+#endif
 
     [Theory]
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning

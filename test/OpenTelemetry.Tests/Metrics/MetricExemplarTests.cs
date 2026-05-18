@@ -738,7 +738,7 @@ public class MetricExemplarTests : MetricTestsBase
 
         foreach (var metric in exportedItems)
         {
-            var metricPoint = GetFirstMetricPoint(new[] { metric });
+            var metricPoint = GetFirstMetricPoint([metric]);
             Assert.NotNull(metricPoint);
 
             var exemplars = GetExemplars(metricPoint.Value);

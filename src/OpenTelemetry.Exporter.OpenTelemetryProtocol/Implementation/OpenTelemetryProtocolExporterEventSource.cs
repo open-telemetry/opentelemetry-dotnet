@@ -313,12 +313,7 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     internal void CompressedGrpcPayload(string compression, long uncompressedLength, long compressedLength) =>
         this.WriteEvent(37, compression, uncompressedLength, compressedLength);
 
-    [Event(
-        38,
-        Message = "HTTP export payload content was compressed with '{0}' from {1} bytes to {2} bytes.",
-        Level = EventLevel.Verbose)]
-    internal void CompressedHttpPayload(string compression, long uncompressedLength, long compressedLength) =>
-        this.WriteEvent(38, compression, uncompressedLength, compressedLength);
+    // Event 38 was removed
 
     private static string RedactEndpointUri(Uri endpoint)
         => endpoint.GetComponents(UriComponents.SchemeAndServer | UriComponents.Path, UriFormat.UriEscaped);
