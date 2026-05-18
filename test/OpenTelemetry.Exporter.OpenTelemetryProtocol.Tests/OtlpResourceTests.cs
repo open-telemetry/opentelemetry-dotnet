@@ -9,6 +9,26 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
 public class OtlpResourceTests
 {
+    [Fact]
+    public void EmptyResourceSerializesToExpectedBytes()
+    {
+        var buffer = new byte[5];
+        var writePosition = ProtobufOtlpResourceSerializer.WriteResource(buffer, 0, Resource.Empty);
+
+        Assert.Equal(5, writePosition);
+        Assert.Equal(new byte[] { 0x0A, 0x80, 0x80, 0x80, 0x00 }, buffer);
+    }
+
+    [Fact]
+    public void NullResourceSerializesToExpectedBytes()
+    {
+        var buffer = new byte[5];
+        var writePosition = ProtobufOtlpResourceSerializer.WriteResource(buffer, 0, resource: null);
+
+        Assert.Equal(5, writePosition);
+        Assert.Equal(new byte[] { 0x0A, 0x80, 0x80, 0x80, 0x00 }, buffer);
+    }
+
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
