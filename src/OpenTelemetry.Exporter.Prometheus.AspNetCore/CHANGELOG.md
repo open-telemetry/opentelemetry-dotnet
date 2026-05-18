@@ -58,7 +58,8 @@ Notes](../../RELEASENOTES.md).
   ([#7273](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7273))
 
 * Abort scrape request processing if request exceeds the value specified by the
-  `X-Prometheus-Scrape-Timeout-Seconds` HTTP request header.  ([#7252](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7252))
+  `X-Prometheus-Scrape-Timeout-Seconds` HTTP request header.
+  ([#7252](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7252))
 
 ## 1.15.3-beta.1
 
