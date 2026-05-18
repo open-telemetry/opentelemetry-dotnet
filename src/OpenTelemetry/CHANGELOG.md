@@ -18,7 +18,7 @@ Notes](../../RELEASENOTES.md).
   ([#7301](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7301))
 
 * Fix circular reference when `LoggerProvider` requires `ILogger`.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7308](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7308))
 
 ## 1.15.3
 
