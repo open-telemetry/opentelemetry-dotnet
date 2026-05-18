@@ -102,10 +102,10 @@ public class PrometheusSerializerFuzzTests
         {
             var c = value[i];
             var isAllowed =
-                (c is >= 'A' and <= 'Z') ||
-                (c is >= 'a' and <= 'z') ||
-                (c is >= '0' and <= '9') ||
-                c == '_';
+                c is (>= 'A' and <= 'Z') or
+                (>= 'a' and <= 'z') or
+                (>= '0' and <= '9') or
+                '_';
 
             if (i == 0 && c is >= '0' and <= '9')
             {
