@@ -139,24 +139,46 @@ public class OtlpGrpcExportClientTests
 
         public List<KeyValuePair<string, IEnumerable<string>>>? CapturedRequestHeaders { get; private set; }
 
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-            => Task.FromResult(this.Handle(request, cancellationToken));
-
 #if NET
         protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
-            => this.Handle(request, cancellationToken);
+        {
+            this.CapturedRequestHeaders = [.. request.Headers];
+
+            using var stream = request.Content!.ReadAsStream(cancellationToken);
+            using var memoryStream = new MemoryStream();
+
+            stream.CopyTo(memoryStream);
+
+            this.CapturedRequestBytes = memoryStream.ToArray();
+
+            return CreateResponse(request);
+        }
 #endif
 
-        private HttpResponseMessage Handle(HttpRequestMessage request, CancellationToken cancellationToken)
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             this.CapturedRequestHeaders = [.. request.Headers];
 
 #if NET
-            this.CapturedRequestBytes = request.Content!.ReadAsByteArrayAsync(cancellationToken).Result;
+            using var stream = await request.Content!.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
 #else
-            this.CapturedRequestBytes = request.Content.ReadAsByteArrayAsync().Result;
+            using var stream = await request.Content.ReadAsStreamAsync().ConfigureAwait(false);
+#endif
+            using var memoryStream = new MemoryStream();
+
+#if NET
+            await stream.CopyToAsync(memoryStream, cancellationToken).ConfigureAwait(false);
+#else
+            await stream.CopyToAsync(memoryStream).ConfigureAwait(false);
 #endif
 
+            this.CapturedRequestBytes = memoryStream.ToArray();
+
+            return CreateResponse(request);
+        }
+
+        private static HttpResponseMessage CreateResponse(HttpRequestMessage request)
+        {
             var response = new HttpResponseMessage(System.Net.HttpStatusCode.OK)
             {
                 RequestMessage = request,

@@ -1331,7 +1331,10 @@ public sealed class PrometheusSerializerTests
 
         return new string(chars);
 
-        static char GetHexValue(int value) => (char)(value < 10 ? '0' + value : 'A' + (value - 10));
+        static char GetHexValue(int value)
+        {
+            return (char)(value < 10 ? '0' + value : 'A' + (value - 10));
+        }
     }
 
     private static int WriteMetric(byte[] buffer, int cursor, Metric metric, bool useOpenMetrics) =>

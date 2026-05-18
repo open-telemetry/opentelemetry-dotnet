@@ -24,7 +24,7 @@ public class GrpcRetryTestCase
 
     internal GrpcRetryAttempt[] RetryAttempts { get; }
 
-#pragma warning disable CA1825 // Avoid zero-length array allocations
+#pragma warning disable CA1825 // Workaround for https://github.com/dotnet/sdk/issues/54275
     public static TheoryData<GrpcRetryTestCase> GetGrpcTestCases() =>
     [
         new("Cancelled", [new(StatusCode.Cancelled)]),
@@ -83,7 +83,7 @@ public class GrpcRetryTestCase
             ],
             expectedRetryAttempts: 9),
     ];
-#pragma warning restore CA1825 // Avoid zero-length array allocations
+#pragma warning restore CA1825 // Workaround for https://github.com/dotnet/sdk/issues/54275
 
     public override string ToString()
         => this.testRunnerName;
