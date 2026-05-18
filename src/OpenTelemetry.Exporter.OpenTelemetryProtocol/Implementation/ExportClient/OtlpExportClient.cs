@@ -105,7 +105,11 @@ internal abstract class OtlpExportClient : IExportClient
     /// <returns>An <see cref="HttpContent"/> representing the export payload.</returns>
     protected virtual HttpContent CreateHttpContent(byte[] buffer, int contentLength)
     {
+#if NET
+        var content = new ReadOnlyMemoryContent(buffer.AsMemory(0, contentLength));
+#else
         var content = new ByteArrayContent(buffer, 0, contentLength);
+#endif
         content.Headers.ContentType = this.MediaTypeHeader;
         return content;
     }

@@ -15,13 +15,14 @@ namespace OpenTelemetry.Exporter;
 /// </summary>
 internal sealed class PrometheusExporterMiddleware
 {
+    private const string OpenMetricsEscapingScheme = "underscores";
     private const string OpenMetricsMediaType = "application/openmetrics-text";
     private const string OpenMetricsVersion = "1.0.0";
-    private const string OpenMetricsContentType = $"application/openmetrics-text; version={OpenMetricsVersion}; charset=utf-8";
+    private const string OpenMetricsContentType = $"application/openmetrics-text; version={OpenMetricsVersion}; charset=utf-8; escaping={OpenMetricsEscapingScheme}";
 
     private const string PrometheusTextMediaType = "text/plain";
 
-    private readonly PrometheusExporter exporter;
+    private readonly PrometheusExporter? exporter;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PrometheusExporterMiddleware"/> class.
@@ -35,7 +36,10 @@ internal sealed class PrometheusExporterMiddleware
 
         if (!meterProvider.TryFindExporter(out PrometheusExporter? exporter))
         {
-            throw new ArgumentException("A PrometheusExporter could not be found configured on the provided MeterProvider.");
+            // If the SDK is disabled, just configure a no-op exporter
+            exporter = meterProvider is OpenTelemetrySdk.NoopMeterProvider
+                ? null
+                : throw new ArgumentException("A PrometheusExporter could not be found configured on the provided MeterProvider.");
         }
 
         this.exporter = exporter;
@@ -61,6 +65,14 @@ internal sealed class PrometheusExporterMiddleware
 
         try
         {
+            if (this.exporter is null)
+            {
+                // The SDK was disabled, so we don't have an exporter to use.
+                // Just return 200 OK with no content as an effective no-op.
+                response.StatusCode = StatusCodes.Status200OK;
+                return;
+            }
+
             var openMetricsRequested = AcceptsOpenMetrics(httpContext.Request);
             var collectionResponse = await this.exporter.CollectionManager.EnterCollect(openMetricsRequested).ConfigureAwait(false);
 
@@ -123,7 +135,7 @@ internal sealed class PrometheusExporterMiddleware
             }
 
             if (string.Equals(mediaType.MediaType.Value, OpenMetricsMediaType, StringComparison.OrdinalIgnoreCase) &&
-                HasSupportedOpenMetricsVersion(mediaType))
+                HasSupportedOpenMetricsParameters(mediaType))
             {
                 bestOpenMetricsQuality =
                     bestOpenMetricsQuality is not { } comparison || quality > comparison ?
@@ -143,16 +155,23 @@ internal sealed class PrometheusExporterMiddleware
                (bestPrometheusQuality is not { } prometheusQuality || openMetricsQuality >= prometheusQuality);
     }
 
-    private static bool HasSupportedOpenMetricsVersion(MediaTypeHeaderValue value)
+    private static bool HasSupportedOpenMetricsParameters(MediaTypeHeaderValue value)
     {
+        var hasSupportedOpenMetricsEscaping = true;
+        var hasSupportedOpenMetricsVersion = true;
+
         foreach (var parameter in value.Parameters)
         {
             if (string.Equals(parameter.Name.Value, "version", StringComparison.OrdinalIgnoreCase))
             {
-                return string.Equals(parameter.Value.Value?.Trim('"'), OpenMetricsVersion, StringComparison.Ordinal);
+                hasSupportedOpenMetricsVersion = string.Equals(parameter.Value.Value?.Trim('"'), OpenMetricsVersion, StringComparison.Ordinal);
+            }
+            else if (string.Equals(parameter.Name.Value, "escaping", StringComparison.OrdinalIgnoreCase))
+            {
+                hasSupportedOpenMetricsEscaping = string.Equals(parameter.Value.Value?.Trim('"'), OpenMetricsEscapingScheme, StringComparison.Ordinal);
             }
         }
 
-        return true;
+        return hasSupportedOpenMetricsVersion && hasSupportedOpenMetricsEscaping;
     }
 }

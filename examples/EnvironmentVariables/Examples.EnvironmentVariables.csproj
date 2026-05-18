@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);CA2007</NoWarn>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>$(DefaultTargetFrameworkForExampleApps)</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Api\OpenTelemetry.Api.csproj" />
+  </ItemGroup>
+
+</Project>

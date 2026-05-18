@@ -4,10 +4,9 @@
     <Description>Unit test project for Prometheus Exporter HttpListener for OpenTelemetry</Description>
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
     <DefineConstants>$(DefineConstants);PROMETHEUS_HTTP_LISTENER</DefineConstants>
+    <NoWarn>$(NoWarn);CA1019;CA1062;CA1515</NoWarn>
     <!-- Avoid conflicting port registrations if TFMs tested in parallel -->
     <TestTfmsInParallel>false</TestTfmsInParallel>
-    <!-- CA1062 Validate arguments of public methods - needed for Theory methods -->
-    <NoWarn>$(NoWarn);CA1062</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,10 +26,29 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Testcontainers" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\EnvironmentVariableScope.cs" Link="Includes\EnvironmentVariableScope.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\EventSourceTestHelper.cs" Link="Includes\EventSourceTestHelper.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TcpPortProvider.cs" Link="Includes\TcpPortProvider.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TestEventListener.cs" Link="Includes\TestEventListener.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\Utils.cs" Link="Includes\Utils.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="$(RepoRoot)\test\Shared\ContainerFixture.cs" Link="Includes\ContainerFixture.cs" />
+    <Compile Include="$(RepoRoot)\test\Shared\ContainerFixture{T}.cs" Link="Includes\ContainerFixture{T}.cs" />
+    <Compile Include="$(RepoRoot)\test\Shared\DockerHelper.cs" Link="Includes\DockerHelper.cs" />
+    <Compile Include="$(RepoRoot)\test\Shared\DockerPlatform.cs" Link="Includes\DockerPlatform.cs" />
+    <Compile Include="$(RepoRoot)\test\Shared\EnabledOnDockerPlatformFactAttribute.cs" Link="Includes\EnabledOnDockerPlatformFactAttribute.cs" />
+    <Compile Include="$(RepoRoot)\test\Shared\EnabledOnDockerPlatformTheoryAttribute.cs" Link="Includes\EnabledOnDockerPlatformTheoryAttribute.cs" />
+    <Compile Include="$(RepoRoot)\test\Shared\XunitContainerFixture{T}.cs" Link="Includes\XunitContainerFixture{T}.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="*.Dockerfile" LogicalName="%(FileName)%(Extension)" />
   </ItemGroup>
 
 </Project>

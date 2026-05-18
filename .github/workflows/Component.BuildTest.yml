@@ -92,7 +92,7 @@ jobs:
         --logger:"console;verbosity=detailed"
         --logger:"GitHubActions;report-warnings=false"
         --logger:"junit;LogFilePath=TestResults/junit.xml"
-        -- RunConfiguration.DisableAppDomain=true
+        -- RunConfiguration.DisableAppDomain=${{ matrix.version == 'net462' && 'false' || 'true' }}
 
     - name: Install coverage tool
       shell: pwsh

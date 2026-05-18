@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed scrape response cache freshness using monotonic time so it is not
+  affected by NTP system clock adjustments.
+  ([#7253](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7253))
+
 * **Breaking Change** Removed `DisableTimestamp` property from
   `PrometheusAspNetCoreOptions`.
   ([#7176](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7176))
@@ -30,6 +34,28 @@ Notes](../../RELEASENOTES.md).
 * Improve `Accept` header handling for format negotiation so OpenMetrics is
   selected correctly by considering whitespace and `q` weights.
   ([#7208](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7208))
+
+* Emit OpenMetrics exemplars for counters and histogram buckets.
+  ([#7222](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7222))
+
+* Fix incorrect handling of untyped metrics when using OpenMetrics format.
+  ([#7219](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7219))
+
+* Fix Prometheus/OpenMetrics serialization to emit metric and label names
+  containing `_` instead of dropping them and prefixing leading digits.
+  Invalid characters are replaced with `_` instead of being dropped.
+  ([#7209](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7209))
+
+* Add `escaping=underscores` to the `Accept` header handling for content
+  negotiation so OpenMetrics are handled correctly.
+  ([#7209](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7209))
+
+* Omit histogram `_sum` and `_count` in OpenMetrics when negative bucket
+  thresholds are present.
+  ([#7221](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7221))
+
+* Fix `ArgumentException` if `OTEL_SDK_DISABLED=true`.
+  ([#7273](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7273))
 
 ## 1.15.3-beta.1
 

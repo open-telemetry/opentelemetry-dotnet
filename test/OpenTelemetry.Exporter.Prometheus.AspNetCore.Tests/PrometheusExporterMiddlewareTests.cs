@@ -226,8 +226,11 @@ public sealed class PrometheusExporterMiddlewareTests
     [InlineData("application/openmetrics-text", true)]
     [InlineData("application/openmetrics-text; version=1.0.0", true)]
     [InlineData("application/openmetrics-text; version=\"1.0.0\"", true)]
+    [InlineData("application/openmetrics-text; version=1.0.0; escaping=underscores", true)]
+    [InlineData("application/openmetrics-text; version=\"1.0.0\"; escaping=\"underscores\"", true)]
     [InlineData("application/openmetrics-text; version=1.0.0; charset=utf-8", true)]
     [InlineData("Application/OpenMetrics-Text; version=1.0.0", true)]
+    [InlineData("application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores", true)]
     [InlineData("text/plain,application/openmetrics-text; version=1.0.0; charset=utf-8", true)]
     [InlineData("text/plain, application/openmetrics-text; version=1.0.0; charset=utf-8", true)]
     [InlineData("text/plain; charset=utf-8,application/openmetrics-text; version=1.0.0; charset=utf-8", true)]
@@ -238,6 +241,9 @@ public sealed class PrometheusExporterMiddlewareTests
     [InlineData("application/openmetrics-text; version=\"0.0.1\"", false)]
     [InlineData("application/openmetrics-text; version=0.0.1; charset=utf-8", false)]
     [InlineData("application/openmetrics-text; version=1.0.0; q=0", false)]
+    [InlineData("application/openmetrics-text; version=1.0.0; escaping=allow-utf-8", false)]
+    [InlineData("application/openmetrics-text; version=1.0.0; escaping=dots", false)]
+    [InlineData("application/openmetrics-text; version=1.0.0; escaping=values", false)]
     [InlineData("text/plain", false)]
     [InlineData("text/plain; charset=utf-8", false)]
     [InlineData("text/plain; charset=utf-8; version=0.0.4", false)]
@@ -470,7 +476,7 @@ public sealed class PrometheusExporterMiddlewareTests
 
         if (requestOpenMetrics)
         {
-            Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8", response.Content.Headers.ContentType!.ToString());
+            Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores", response.Content.Headers.ContentType!.ToString());
         }
         else
         {

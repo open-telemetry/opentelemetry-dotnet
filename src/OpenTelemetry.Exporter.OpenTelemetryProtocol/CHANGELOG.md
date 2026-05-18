@@ -19,6 +19,21 @@ Notes](../../RELEASENOTES.md).
   retry.
   ([#7228](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7228))
 
+* Reverted `OtlpLogExporter` from using `IHttpClientFactory` on .NET 8+ to fix
+  an issue with circular dependencies detected by some dependency injection
+  container implementations such as Autofac.
+  ([#7234](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7234))
+
+* Fixed `OtlpLogExporter` integration with `IHttpClientFactory` so named clients
+  can be used without triggering circular dependencies during logger construction.
+  ([#7298](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7298))
+
+* Reduce the overhead of GZip compression.
+  ([#7275](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7275))
+
+* Cached pre-serialized resource bytes to avoid re-encoding on every OTLP export.
+  ([#7303](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7303))
+
 ## 1.15.3
 
 Released 2026-Apr-21

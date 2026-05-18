@@ -6,6 +6,13 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* **Experimental (pre-release builds only):**
+  Add support for using environment variables as context propagation carriers.
+  ([#7174](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7174))
+
+* Update `TraceContextPropagator` to support the W3C randomness flag.
+  ([#7301](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7301))
+
 ## 1.15.3
 
 Released 2026-Apr-21
