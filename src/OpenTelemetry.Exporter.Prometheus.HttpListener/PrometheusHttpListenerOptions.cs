@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Globalization;
 using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Internal;
@@ -39,6 +40,11 @@ public class PrometheusHttpListenerOptions
         {
             port = 9464;
         }
+        else if (port is <= 0 or > ushort.MaxValue)
+        {
+            PrometheusExporterEventSource.Log.LogInvalidConfigurationValue(PrometheusPortEnvVar, port.ToString(CultureInfo.InvariantCulture));
+            port = 9464;
+        }
 
         this.Host = host;
         this.Port = port;
@@ -73,7 +79,7 @@ public class PrometheusHttpListenerOptions
     /// </remarks>
     public int ScrapeResponseCacheDurationMilliseconds
     {
-        get => field;
+        get;
         set
         {
             Guard.ThrowIfOutOfRange(value, min: 0);

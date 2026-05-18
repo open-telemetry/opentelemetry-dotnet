@@ -251,8 +251,7 @@ public class DelegatingOptionsFactoryTests
 
         factory.Create(Options.DefaultName);
 
-        static string[] GetExpectedOrder() => ["factory", "configure", "postconfigure", "validate"];
-        Assert.Equal(GetExpectedOrder(), order);
+        Assert.Equal<string>(["factory", "configure", "postconfigure", "validate"], order);
     }
 
     [Fact]

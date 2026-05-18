@@ -244,7 +244,7 @@ public class PrometheusHttpListenerTests
     {
         using var meter = new Meter(MeterName, MeterVersion);
 
-        int port = 0;
+        var port = 0;
 
         using var context = CreateMeterProvider(meter, configureListener: (options) =>
         {
@@ -341,7 +341,9 @@ public class PrometheusHttpListenerTests
         // Confirm Dispose() is actually blocked (meaning it has cancelled the
         // token and is now waiting for activeRequestCount to reach 0). If
         // disposeTask completes within 500ms it means the request wasn't held.
-        var completed = await Task.WhenAny(disposeTask, Task.Delay(500));
+        var timeout = TimeSpan.FromSeconds(0.5);
+        using var cts = new CancellationTokenSource(timeout);
+        var completed = await Task.WhenAny(disposeTask, Task.Delay(timeout, cts.Token));
         Assert.NotSame(disposeTask, completed);
 
         // Release the blocker so EnterCollect can finish.
@@ -481,7 +483,7 @@ public class PrometheusHttpListenerTests
 
         while (attemptsLeft-- > 0)
         {
-            int port = -1;
+            var port = -1;
 
             var builder = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(meter.Name)
@@ -608,7 +610,7 @@ public class PrometheusHttpListenerTests
     {
         var maximumAttempts = 5;
         var attemptsLeft = maximumAttempts;
-        int boundPort = 0;
+        var boundPort = 0;
 
         var exporterOptions = new PrometheusExporterOptions();
 
