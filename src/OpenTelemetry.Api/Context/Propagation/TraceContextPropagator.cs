@@ -151,15 +151,15 @@ public class TraceContextPropagator : TextMapPropagator
             // to include the new value(s) for better readability and performance where possible.
             if (context.TraceFlags == ActivityTraceFlags.Recorded)
             {
-                "-01".CopyTo(destination.Slice(52));
+                "-01".CopyTo(destination[52..]);
             }
             else if (context.TraceFlags == (ActivityTraceFlags)2)
             {
-                "-02".CopyTo(destination.Slice(52));
+                "-02".CopyTo(destination[52..]);
             }
             else if (context.TraceFlags == (ActivityTraceFlags.Recorded | (ActivityTraceFlags)2))
             {
-                "-03".CopyTo(destination.Slice(52));
+                "-03".CopyTo(destination[52..]);
             }
             else
             {
