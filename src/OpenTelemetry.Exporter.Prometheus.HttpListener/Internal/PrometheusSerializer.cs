@@ -25,6 +25,31 @@ internal static partial class PrometheusSerializer
     private const byte ASCII_LINEFEED = 0x0A; // `\n`
 #pragma warning restore SA1310 // Field name should not contain an underscore
 
+    private static readonly double[] ExactPowersOfTen =
+    [
+        1e-10d,
+        1e-09d,
+        1e-08d,
+        1e-07d,
+        1e-06d,
+        1e-05d,
+        1e-04d,
+        1e-03d,
+        1e-02d,
+        1e-01d,
+        1e00d,
+        1e01d,
+        1e02d,
+        1e03d,
+        1e04d,
+        1e05d,
+        1e06d,
+        1e07d,
+        1e08d,
+        1e09d,
+        1e10d,
+    ];
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteDouble(byte[] buffer, int cursor, double value)
     {
@@ -776,20 +801,13 @@ internal static partial class PrometheusSerializer
         exponent = 0;
         Debug.Assert(absoluteValue > 0, $"{nameof(absoluteValue)} should be positive.");
 
-        var roundedExponent = (int)Math.Round(Math.Log10(absoluteValue));
-        if (roundedExponent is < -10 or > 10)
+        var index = Array.IndexOf(ExactPowersOfTen, absoluteValue);
+        if (index < 0)
         {
             return false;
         }
 
-        var powerOfTen = Math.Pow(10, roundedExponent);
-
-        if (Math.Abs(absoluteValue - powerOfTen) > powerOfTen * 1e-12)
-        {
-            return false;
-        }
-
-        exponent = roundedExponent;
+        exponent = index - 10;
         return true;
     }
 }

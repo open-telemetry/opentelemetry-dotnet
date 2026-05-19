@@ -1213,6 +1213,29 @@ public sealed class PrometheusSerializerTests
     }
 
     [Fact]
+    public void WriteCanonicalLabelValueDoesNotRoundNearPowersOfTen()
+    {
+        const double ExactPowerOfTen = 1e6d;
+        const double NearPowerOfTen = 1000000.0000005d;
+
+        var exact = WriteCanonicalLabelValueToString(ExactPowerOfTen);
+        var near = WriteCanonicalLabelValueToString(NearPowerOfTen);
+
+        Assert.Equal("1e+06", exact);
+        Assert.Equal(NearPowerOfTen.ToString("e17", CultureInfo.InvariantCulture), near);
+        Assert.NotEqual(exact, near);
+
+        static string WriteCanonicalLabelValueToString(double value)
+        {
+            var buffer = new byte[64];
+
+            var cursor = PrometheusSerializer.WriteCanonicalLabelValue(buffer, 0, value);
+
+            return Encoding.UTF8.GetString(buffer, 0, cursor);
+        }
+    }
+
+    [Fact]
     public void WriteUnicodeStringEncodesSurrogatePairsAsUtf8ScalarValues()
     {
         const string value = "rocket:\uD83D\uDE80";
