@@ -234,6 +234,7 @@ internal sealed class PrometheusCollectionManager
     {
         var cursor = 0;
         ref var buffer = ref (this.exporter.OpenMetricsRequested ? ref this.openMetricsBuffer : ref this.plainTextBuffer);
+        var scopeInfoMetadataWritten = false;
 
         try
         {
@@ -242,7 +243,6 @@ internal sealed class PrometheusCollectionManager
                 cursor = this.WriteTargetInfo(ref buffer);
 
                 this.scopes.Clear();
-                var scopeInfoMetadataWritten = false;
 
                 foreach (var metric in metrics)
                 {
@@ -285,7 +285,7 @@ internal sealed class PrometheusCollectionManager
                 }
             }
 
-            var metricStates = this.GetMetricStates(metrics, this.exporter.OpenMetricsRequested);
+            var metricStates = this.GetMetricStates(metrics, this.exporter.OpenMetricsRequested, scopeInfoMetadataWritten);
 
             foreach (var metricState in metricStates)
             {
@@ -404,11 +404,11 @@ internal sealed class PrometheusCollectionManager
         return prometheusMetric;
     }
 
-    private List<MetricState> GetMetricStates(in Batch<Metric> metrics, bool openMetricsRequested)
+    private List<MetricState> GetMetricStates(in Batch<Metric> metrics, bool openMetricsRequested, bool scopeInfoMetadataWritten)
     {
         var precomputedMetricStates = new List<PrecomputedMetricState>();
         var metadataStates = new Dictionary<string, MetadataState>(StringComparer.Ordinal);
-        var droppedMetricNames = new HashSet<string>(StringComparer.Ordinal);
+        HashSet<string>? droppedMetricNames = null;
 
         foreach (var metric in metrics)
         {
@@ -421,6 +421,15 @@ internal sealed class PrometheusCollectionManager
             var metadataName = openMetricsRequested ? prometheusMetric.OpenMetricsMetadataName : prometheusMetric.Name;
             precomputedMetricStates.Add(new PrecomputedMetricState(metric, prometheusMetric, metadataName));
 
+            if (openMetricsRequested &&
+                scopeInfoMetadataWritten &&
+                metadataName == "otel_scope")
+            {
+                droppedMetricNames ??= new(StringComparer.Ordinal);
+                droppedMetricNames.Add(metadataName);
+                continue;
+            }
+
             if (!metadataStates.TryGetValue(metadataName, out var metadataState))
             {
                 metadataStates[metadataName] = new MetadataState(
@@ -432,6 +441,7 @@ internal sealed class PrometheusCollectionManager
 
             if (metadataState.Type != prometheusMetric.Type)
             {
+                droppedMetricNames ??= new(StringComparer.Ordinal);
                 droppedMetricNames.Add(metadataName);
                 PrometheusExporterEventSource.Log.ConflictingType(metadataName, metadataState.Type, prometheusMetric.Type);
             }
@@ -468,7 +478,7 @@ internal sealed class PrometheusCollectionManager
 
         foreach (var metricState in precomputedMetricStates)
         {
-            if (droppedMetricNames.Contains(metricState.MetadataName))
+            if (droppedMetricNames?.Contains(metricState.MetadataName) is true)
             {
                 continue;
             }

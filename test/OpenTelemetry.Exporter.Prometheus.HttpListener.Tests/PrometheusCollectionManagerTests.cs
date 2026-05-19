@@ -324,8 +324,10 @@ public sealed class PrometheusCollectionManagerTests
                 response.OpenMetricsView.Count);
 
 #if NET
+#pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
             Assert.Equal(1, Regex.Count(output, "^# TYPE otel_scope info$", RegexOptions.Multiline));
             Assert.Equal(1, Regex.Count(output, "^# HELP otel_scope Scope metadata$", RegexOptions.Multiline));
+#pragma warning restore SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
 #else
             Assert.Single(Regex.Matches(output, "^# TYPE otel_scope info$", RegexOptions.Multiline));
             Assert.Single(Regex.Matches(output, "^# HELP otel_scope Scope metadata$", RegexOptions.Multiline));
@@ -370,12 +372,105 @@ public sealed class PrometheusCollectionManagerTests
                 response.OpenMetricsView.Count);
 
 #if NET
+#pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
             Assert.Equal(1, Regex.Count(output, "^otel_scope_info\\{otel_scope_name=\"test_meter\",otel_scope_version=\"1.0.0\",otel_scope_library_mascot=\"true\"\\} 1$", RegexOptions.Multiline));
+#pragma warning restore SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
 #else
             Assert.Single(Regex.Matches(output, "^otel_scope_info\\{otel_scope_name=\"test_meter\",otel_scope_version=\"1.0.0\",otel_scope_library_mascot=\"true\"\\} 1$", RegexOptions.Multiline));
 #endif
             Assert.Contains("counter_1_total{otel_scope_name=\"test_meter\",otel_scope_version=\"1.0.0\",otel_scope_library_mascot=\"true\"} 1", output, StringComparison.Ordinal);
             Assert.Contains("counter_2_total{otel_scope_name=\"test_meter\",otel_scope_version=\"1.0.0\",otel_scope_library_mascot=\"true\"} 1", output, StringComparison.Ordinal);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect();
+        }
+    }
+
+    [Fact]
+    public async Task OpenMetricsScopeInfoConcatenatesCollidingSerializedScopeLabels()
+    {
+        using var meter1 = new Meter("test_meter", "1.0.0", [new("library.mascot", "dotnetbot"), new("library-mascot", "otter")], scope: null);
+        using var meter2 = new Meter("test_meter", "1.0.0", [new("library-mascot", "otter"), new("library.mascot", "dotnetbot")], scope: null);
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter1.Name)
+#if PROMETHEUS_HTTP_LISTENER
+            .AddPrometheusHttpListener()
+#elif PROMETHEUS_ASPNETCORE
+            .AddPrometheusExporter()
+#endif
+            .Build();
+
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        Assert.True(provider.TryFindExporter(out PrometheusExporter? exporter));
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        meter1.CreateCounter<int>("counter_1").Add(1);
+        meter2.CreateCounter<int>("counter_2").Add(1);
+
+        var response = await exporter!.CollectionManager.EnterCollect(openMetricsRequested: true);
+        try
+        {
+            var output = Encoding.UTF8.GetString(
+                response.OpenMetricsView.Array!,
+                response.OpenMetricsView.Offset,
+                response.OpenMetricsView.Count);
+
+#if NET
+#pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
+            Assert.Equal(1, Regex.Count(output, "^otel_scope_info\\{otel_scope_name=\"test_meter\",otel_scope_version=\"1.0.0\",otel_scope_library_mascot=\"otter;dotnetbot\"\\} 1$", RegexOptions.Multiline));
+#pragma warning restore SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
+#else
+            Assert.Single(Regex.Matches(output, "^otel_scope_info\\{otel_scope_name=\"test_meter\",otel_scope_version=\"1.0.0\",otel_scope_library_mascot=\"otter;dotnetbot\"\\} 1$", RegexOptions.Multiline));
+#endif
+            Assert.Contains("counter_1_total{otel_scope_name=\"test_meter\",otel_scope_version=\"1.0.0\",otel_scope_library_mascot=\"otter;dotnetbot\"} 1", output, StringComparison.Ordinal);
+            Assert.Contains("counter_2_total{otel_scope_name=\"test_meter\",otel_scope_version=\"1.0.0\",otel_scope_library_mascot=\"otter;dotnetbot\"} 1", output, StringComparison.Ordinal);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect();
+        }
+    }
+
+    [Fact]
+    public async Task OpenMetricsScopeInfoMetadataReservesOtelScopeMetricFamily()
+    {
+        using var meter = new Meter("test_meter", "1.0.0");
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+#if PROMETHEUS_HTTP_LISTENER
+            .AddPrometheusHttpListener()
+#elif PROMETHEUS_ASPNETCORE
+            .AddPrometheusExporter()
+#endif
+            .Build();
+
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        Assert.True(provider.TryFindExporter(out PrometheusExporter? exporter));
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        meter.CreateCounter<int>("counter_1").Add(1);
+        meter.CreateObservableGauge("otel.scope", () => 1);
+
+        var response = await exporter!.CollectionManager.EnterCollect(openMetricsRequested: true);
+        try
+        {
+            var output = Encoding.UTF8.GetString(
+                response.OpenMetricsView.Array!,
+                response.OpenMetricsView.Offset,
+                response.OpenMetricsView.Count);
+
+#if NET
+#pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
+            Assert.Equal(1, Regex.Count(output, "^# TYPE otel_scope info$", RegexOptions.Multiline));
+#pragma warning restore SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
+#else
+            Assert.Single(Regex.Matches(output, "^# TYPE otel_scope info$", RegexOptions.Multiline));
+#endif
+            Assert.Contains("otel_scope_info{otel_scope_name=\"test_meter\",otel_scope_version=\"1.0.0\"} 1", output, StringComparison.Ordinal);
+            Assert.DoesNotContain("otel_scope{", output, StringComparison.Ordinal);
         }
         finally
         {

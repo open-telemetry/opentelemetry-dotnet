@@ -497,31 +497,7 @@ internal static partial class PrometheusSerializer
 
     internal static string CreateScopeIdentity(Metric metric)
     {
-        var scopeLabels = new List<KeyValuePair<string, string>>(3)
-        {
-            new("otel_scope_name", GetLabelValueString(metric.MeterName)),
-        };
-
-        if (!string.IsNullOrEmpty(metric.MeterVersion))
-        {
-            scopeLabels.Add(new("otel_scope_version", GetLabelValueString(metric.MeterVersion)));
-        }
-
-        if (!string.IsNullOrEmpty(metric.MeterSchemaUrl))
-        {
-            scopeLabels.Add(new("otel_scope_schema_url", GetLabelValueString(metric.MeterSchemaUrl)));
-        }
-
-        if (metric.MeterTags != null)
-        {
-            foreach (var tag in metric.MeterTags)
-            {
-                if (TryCreateScopeLabel(tag, out var scopeLabel))
-                {
-                    scopeLabels.Add(scopeLabel);
-                }
-            }
-        }
+        var scopeLabels = CreateScopeLabels(metric);
 
         scopeLabels.Sort(static (x, y) =>
         {
@@ -555,27 +531,9 @@ internal static partial class PrometheusSerializer
 
     private static int WriteScopeLabels(byte[] buffer, int cursor, Metric metric, bool openMetricsRequested, ref bool wroteLabel)
     {
-        cursor = WriteScopeLabel(buffer, cursor, "otel_scope_name", metric.MeterName, openMetricsRequested, ref wroteLabel);
-
-        if (!string.IsNullOrEmpty(metric.MeterVersion))
+        foreach (var scopeLabel in CreateScopeLabels(metric))
         {
-            cursor = WriteScopeLabel(buffer, cursor, "otel_scope_version", metric.MeterVersion, openMetricsRequested, ref wroteLabel);
-        }
-
-        if (!string.IsNullOrEmpty(metric.MeterSchemaUrl))
-        {
-            cursor = WriteScopeLabel(buffer, cursor, "otel_scope_schema_url", metric.MeterSchemaUrl, openMetricsRequested, ref wroteLabel);
-        }
-
-        if (metric.MeterTags != null)
-        {
-            foreach (var tag in metric.MeterTags)
-            {
-                if (TryCreateScopeLabel(tag, out var scopeLabel))
-                {
-                    cursor = WriteScopeLabel(buffer, cursor, scopeLabel.Key, scopeLabel.Value, openMetricsRequested, ref wroteLabel);
-                }
-            }
+            cursor = WriteScopeLabel(buffer, cursor, scopeLabel.Key, scopeLabel.Value, openMetricsRequested, ref wroteLabel);
         }
 
         return cursor;
@@ -664,7 +622,81 @@ internal static partial class PrometheusSerializer
         return builder.ToString();
     }
 
-    private static bool TryCreateScopeLabel(KeyValuePair<string, object?> tag, out KeyValuePair<string, string> scopeLabel)
+    private static List<KeyValuePair<string, string>> CreateScopeLabels(Metric metric)
+    {
+        var scopeLabels = new List<KeyValuePair<string, string>>(3)
+        {
+            new("otel_scope_name", GetLabelValueString(metric.MeterName)),
+        };
+
+        if (!string.IsNullOrEmpty(metric.MeterVersion))
+        {
+            scopeLabels.Add(new("otel_scope_version", GetLabelValueString(metric.MeterVersion)));
+        }
+
+        if (!string.IsNullOrEmpty(metric.MeterSchemaUrl))
+        {
+            scopeLabels.Add(new("otel_scope_schema_url", GetLabelValueString(metric.MeterSchemaUrl)));
+        }
+
+        if (metric.MeterTags == null)
+        {
+            return scopeLabels;
+        }
+
+        var serializedScopeLabels = new Dictionary<string, List<ScopeLabelPart>>(StringComparer.Ordinal);
+        var serializedScopeLabelOrder = new List<string>();
+        var tagIndex = 0;
+
+        foreach (var tag in metric.MeterTags)
+        {
+            if (!TryCreateScopeLabel(tag, tagIndex++, out var scopeLabel))
+            {
+                continue;
+            }
+
+            if (!serializedScopeLabels.TryGetValue(scopeLabel.Key, out var labelParts))
+            {
+                labelParts = [];
+                serializedScopeLabels[scopeLabel.Key] = labelParts;
+                serializedScopeLabelOrder.Add(scopeLabel.Key);
+            }
+
+            labelParts.Add(scopeLabel.Value);
+        }
+
+        foreach (var labelKey in serializedScopeLabelOrder)
+        {
+            var labelParts = serializedScopeLabels[labelKey];
+
+            if (labelParts.Count > 1)
+            {
+                labelParts.Sort(static (x, y) =>
+                {
+                    var keyCompare = string.CompareOrdinal(x.OriginalKey, y.OriginalKey);
+                    return keyCompare != 0 ? keyCompare : x.TagIndex.CompareTo(y.TagIndex);
+                });
+            }
+
+            var builder = new StringBuilder();
+
+            for (var i = 0; i < labelParts.Count; i++)
+            {
+                if (i > 0)
+                {
+                    builder.Append(';');
+                }
+
+                builder.Append(labelParts[i].LabelValue);
+            }
+
+            scopeLabels.Add(new(labelKey, builder.ToString()));
+        }
+
+        return scopeLabels;
+    }
+
+    private static bool TryCreateScopeLabel(KeyValuePair<string, object?> tag, int tagIndex, out KeyValuePair<string, ScopeLabelPart> scopeLabel)
     {
         var labelKey = NormalizeLabelKey($"otel_scope_{tag.Key}");
 
@@ -674,7 +706,7 @@ internal static partial class PrometheusSerializer
             return false;
         }
 
-        scopeLabel = new(labelKey, GetLabelValueString(tag.Value));
+        scopeLabel = new(labelKey, new(tag.Key, GetLabelValueString(tag.Value), tagIndex));
         return true;
     }
 
@@ -772,4 +804,13 @@ internal static partial class PrometheusSerializer
         // See https://prometheus.io/docs/specs/om/open_metrics_spec/#unknown-1
         PrometheusType.Untyped or _ => openMetricsRequested ? "unknown" : "untyped",
     };
+
+    private readonly struct ScopeLabelPart(string originalKey, string labelValue, int tagIndex)
+    {
+        public readonly string OriginalKey { get; } = originalKey;
+
+        public readonly string LabelValue { get; } = labelValue;
+
+        public readonly int TagIndex { get; } = tagIndex;
+    }
 }
