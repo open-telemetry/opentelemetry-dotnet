@@ -89,7 +89,6 @@ jobs:
         --configuration Release
         --no-restore
         --no-build
-        --logger:"console;verbosity=detailed"
         --logger:"GitHubActions;report-warnings=false"
         --logger:"junit;LogFilePath=TestResults/junit.xml"
         -- RunConfiguration.DisableAppDomain=${{ matrix.version == 'net462' && 'false' || 'true' }}
