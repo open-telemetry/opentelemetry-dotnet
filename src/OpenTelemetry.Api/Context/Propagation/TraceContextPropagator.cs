@@ -445,8 +445,7 @@ public class TraceContextPropagator : TextMapPropagator
                 if (!keySet.Add(key.ToString()))
                 {
                     // test_tracestate_duplicated_keys
-                    tracestateResult = string.Empty;
-                    return false;
+                    continue;
                 }
 
                 if (result.Length > 0)
@@ -542,6 +541,7 @@ public class TraceContextPropagator : TextMapPropagator
                     return false;
                 }
 
+                var duplicateKey = false;
                 var useHashedDuplicateCheck = keyLength <= Limit;
                 var keyHash = 0;
                 if (useHashedDuplicateCheck)
@@ -556,7 +556,8 @@ public class TraceContextPropagator : TextMapPropagator
 
                         if (key.SequenceEqual(tracestateSpan.Slice(memberStarts[i], keyLength)))
                         {
-                            return false;
+                            duplicateKey = true;
+                            break;
                         }
                     }
                 }
@@ -567,9 +568,17 @@ public class TraceContextPropagator : TextMapPropagator
                         if (keyLengths[i] == keyLength &&
                             key.SequenceEqual(tracestateSpan.Slice(memberStarts[i], keyLength)))
                         {
-                            return false;
+                            duplicateKey = true;
+                            break;
                         }
                     }
+                }
+
+                if (duplicateKey)
+                {
+                    normalized = true;
+                    begin = end + 1;
+                    continue;
                 }
 
                 memberStarts[memberCount] = memberStart;
