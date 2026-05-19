@@ -79,7 +79,7 @@ internal sealed class PrometheusExporterMiddleware
 
             var protocol = Negotiate(requestHeaders);
 
-            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(protocol.IsOpenMetrics).ConfigureAwait(false);
+            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(protocol.IsOpenMetrics);
 
             try
             {
