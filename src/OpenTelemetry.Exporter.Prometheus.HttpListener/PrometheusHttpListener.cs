@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Net;
 using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Internal;
@@ -102,8 +104,7 @@ internal sealed class PrometheusHttpListener : IDisposable
 
             var workerToken = this.tokenSource.Token;
             this.workerThread = Task.Factory.StartNew(
-                (paramToken) => this.ProcessingLoopAsync((CancellationToken)paramToken!),
-                workerToken,
+                () => this.ProcessingLoopAsync(workerToken),
                 CancellationToken.None,
                 TaskCreationOptions.LongRunning,
                 TaskScheduler.Default).Unwrap();
@@ -140,11 +141,10 @@ internal sealed class PrometheusHttpListener : IDisposable
         }
     }
 
-    private static bool AcceptsOpenMetrics(HttpListenerRequest request)
+    private static PrometheusProtocol Negotiate(HttpListenerRequest request)
     {
         var acceptHeader = request.Headers["Accept"];
-
-        return !string.IsNullOrEmpty(acceptHeader) && PrometheusHeadersParser.AcceptsOpenMetrics(acceptHeader);
+        return PrometheusHeadersParser.Negotiate(acceptHeader);
     }
 
     /// <summary>
@@ -258,29 +258,37 @@ internal sealed class PrometheusHttpListener : IDisposable
 
         try
         {
-            var openMetricsRequested = AcceptsOpenMetrics(context.Request);
-            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(openMetricsRequested).ConfigureAwait(false);
+            using var requestCancelled = new CancellationTokenSource();
+
+            if (TryGetScrapeTimeout(context.Request.Headers, out var scrapeTimeout))
+            {
+                requestCancelled.CancelAfter(scrapeTimeout.GetValueOrDefault());
+            }
+
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(requestCancelled.Token, cancellationToken);
+
+            var protocol = Negotiate(context.Request);
+
+            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(protocol.IsOpenMetrics).ConfigureAwait(false);
 
             try
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                requestCancelled.Token.ThrowIfCancellationRequested();
 
                 context.Response.Headers.Add("Server", string.Empty);
 
-                var dataView = openMetricsRequested ? collectionResponse.OpenMetricsView : collectionResponse.PlainTextView;
+                var dataView = protocol.IsOpenMetrics ? collectionResponse.OpenMetricsView : collectionResponse.PlainTextView;
 
                 if (dataView.Count > 0)
                 {
                     context.Response.StatusCode = 200;
                     context.Response.Headers.Add("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
-                    context.Response.ContentType = openMetricsRequested
-                        ? "application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores"
-                        : "text/plain; charset=utf-8; version=0.0.4";
+                    context.Response.ContentType = PrometheusProtocol.GetContentType(protocol);
 
 #if NET
-                    await context.Response.OutputStream.WriteAsync(dataView.Array.AsMemory(0, dataView.Count), cancellationToken).ConfigureAwait(false);
+                    await context.Response.OutputStream.WriteAsync(dataView.Array.AsMemory(0, dataView.Count), linkedCts.Token).ConfigureAwait(false);
 #else
-                    await context.Response.OutputStream.WriteAsync(dataView.Array, 0, dataView.Count, cancellationToken).ConfigureAwait(false);
+                    await context.Response.OutputStream.WriteAsync(dataView.Array, 0, dataView.Count, linkedCts.Token).ConfigureAwait(false);
 #endif
                 }
                 else
@@ -289,6 +297,16 @@ internal sealed class PrometheusHttpListener : IDisposable
                     context.Response.StatusCode = 200;
                     PrometheusExporterEventSource.Log.NoMetrics();
                 }
+            }
+            catch (OperationCanceledException ex) when (ex.CancellationToken == requestCancelled.Token)
+            {
+                if (scrapeTimeout is { } timeout)
+                {
+                    PrometheusExporterEventSource.Log.ScrapeTimedOut(timeout.TotalSeconds);
+                }
+
+                context.Response.StatusCode = 408;
+                context.Response.ContentLength64 = 0;
             }
             finally
             {
@@ -303,7 +321,6 @@ internal sealed class PrometheusHttpListener : IDisposable
         catch (Exception ex)
         {
             PrometheusExporterEventSource.Log.FailedExport(ex);
-
             context.Response.StatusCode = 500;
         }
 
@@ -313,6 +330,25 @@ internal sealed class PrometheusHttpListener : IDisposable
         }
         catch
         {
+        }
+
+        static bool TryGetScrapeTimeout(
+            System.Collections.Specialized.NameValueCollection headers,
+            [NotNullWhen(true)] out TimeSpan? scrapeTimeout)
+        {
+            const double MinTimeout = 0.001; // 1 millisecond
+            const double MaxTimeout = int.MaxValue / 1_000; // Prevent overflow of TimeSpan.FromSeconds()
+
+            if (headers["X-Prometheus-Scrape-Timeout-Seconds"] is { Length: > 0 } value &&
+                double.TryParse(value, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var scrapeTimeoutSeconds) &&
+                scrapeTimeoutSeconds is >= MinTimeout and <= MaxTimeout)
+            {
+                scrapeTimeout = TimeSpan.FromSeconds(scrapeTimeoutSeconds);
+                return true;
+            }
+
+            scrapeTimeout = null;
+            return false;
         }
     }
 }

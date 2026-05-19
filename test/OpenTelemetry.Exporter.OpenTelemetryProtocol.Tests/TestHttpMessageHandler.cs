@@ -13,22 +13,29 @@ internal sealed class TestHttpMessageHandler : HttpMessageHandler
 
     public byte[]? HttpRequestContent { get; private set; }
 
-    public HttpResponseMessage InternalSend(HttpRequestMessage request, CancellationToken cancellationToken)
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         this.HttpRequestMessage = request;
 #if NET
-        this.HttpRequestContent = request.Content!.ReadAsByteArrayAsync(cancellationToken).Result;
+        this.HttpRequestContent = await request.Content!.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
 #else
-        this.HttpRequestContent = request.Content.ReadAsByteArrayAsync().Result;
+        this.HttpRequestContent = await request.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
 #endif
         return new HttpResponseMessage();
     }
 
 #if NET
     protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
-        => this.InternalSend(request, cancellationToken);
-#endif
+    {
+        this.HttpRequestMessage = request;
 
-    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-        => Task.FromResult(this.InternalSend(request, cancellationToken));
+        using var stream = request.Content!.ReadAsStream(cancellationToken);
+        using var memoryStream = new MemoryStream();
+
+        stream.CopyTo(memoryStream);
+        this.HttpRequestContent = memoryStream.ToArray();
+
+        return new HttpResponseMessage();
+    }
+#endif
 }
