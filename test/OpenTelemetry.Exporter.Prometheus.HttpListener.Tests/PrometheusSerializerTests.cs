@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 using Xunit;
@@ -836,6 +837,7 @@ public sealed class PrometheusSerializerTests
         var expected =
             ("^"
                 + "# TYPE test_histogram histogram\n"
+                + "# TYPE test_histogram_created gauge\n"
                 + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='0'}} 0\n"
                 + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='5'}} 0\n"
                 + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='10'}} 0\n"
@@ -976,6 +978,7 @@ public sealed class PrometheusSerializerTests
         Assert.Matches(
             ("^"
                 + "# TYPE test_histogram histogram\n"
+                + "# TYPE test_histogram_created gauge\n"
                 + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='0'}} 0\n"
                 + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='5'}} 0\n"
                 + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='10'}} 0\n"
@@ -1026,6 +1029,7 @@ public sealed class PrometheusSerializerTests
         Assert.Contains($"test_histogram_bucket{{otel_scope_name=\"{Utils.GetCurrentMethodName()}\",x=\"1\",le=\"+Inf\"}} 1\n", output, StringComparison.Ordinal);
         Assert.DoesNotContain("test_histogram_sum{", output, StringComparison.Ordinal);
         Assert.DoesNotContain("test_histogram_count{", output, StringComparison.Ordinal);
+        Assert.DoesNotContain("_created", output, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -1158,7 +1162,8 @@ public sealed class PrometheusSerializerTests
             .Build();
 
         var counter = meter.CreateCounter<double>("test_counter");
-        counter.Add(1, [new KeyValuePair<string, object?>("key", "value")]);
+        counter.Add(1, [new KeyValuePair<string, object?>("key", "value1")]);
+        counter.Add(2, [new KeyValuePair<string, object?>("key", "value2")]);
 
         provider.ForceFlush();
 
@@ -1167,7 +1172,11 @@ public sealed class PrometheusSerializerTests
 
         if (useOpenMetrics)
         {
-            Assert.Matches("test_counter_created\\{otel_scope_name=\"test_meter\",key=\"value\"\\} [0-9]+(?:\\.[0-9]+)?", output);
+#pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
+            Assert.Single(Regex.Matches(output, "^# TYPE test_counter_created gauge$", RegexOptions.Multiline));
+#pragma warning restore SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
+            Assert.Matches("test_counter_created\\{otel_scope_name=\"test_meter\",key=\"value1\"\\} [0-9]+(?:\\.[0-9]+)?", output);
+            Assert.Matches("test_counter_created\\{otel_scope_name=\"test_meter\",key=\"value2\"\\} [0-9]+(?:\\.[0-9]+)?", output);
         }
         else
         {
@@ -1190,7 +1199,8 @@ public sealed class PrometheusSerializerTests
             .Build();
 
         var histogram = meter.CreateHistogram<double>("test_histogram");
-        histogram.Record(1, [new KeyValuePair<string, object?>("key", "value")]);
+        histogram.Record(1, [new KeyValuePair<string, object?>("key", "value1")]);
+        histogram.Record(2, [new KeyValuePair<string, object?>("key", "value2")]);
 
         provider.ForceFlush();
 
@@ -1199,7 +1209,11 @@ public sealed class PrometheusSerializerTests
 
         if (useOpenMetrics)
         {
-            Assert.Matches("test_histogram_created\\{otel_scope_name=\"test_meter\",key=\"value\"\\} [0-9]+(?:\\.[0-9]+)?", output);
+#pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
+            Assert.Single(Regex.Matches(output, "^# TYPE test_histogram_created gauge$", RegexOptions.Multiline));
+#pragma warning restore SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
+            Assert.Matches("test_histogram_created\\{otel_scope_name=\"test_meter\",key=\"value1\"\\} [0-9]+(?:\\.[0-9]+)?", output);
+            Assert.Matches("test_histogram_created\\{otel_scope_name=\"test_meter\",key=\"value2\"\\} [0-9]+(?:\\.[0-9]+)?", output);
         }
         else
         {
