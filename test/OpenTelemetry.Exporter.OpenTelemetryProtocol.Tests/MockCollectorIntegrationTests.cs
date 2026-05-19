@@ -220,7 +220,6 @@ public sealed class MockCollectorIntegrationTests
     [InlineData(false, ExportResult.Failure, HttpStatusCode.BadRequest)]
     public async Task HttpRetryTests(bool useRetryTransmissionHandler, ExportResult expectedResult, HttpStatusCode initialHttpStatusCode)
     {
-        var testGrpcPort = TcpPortProvider.GetOpenPort();
         var testHttpPort = TcpPortProvider.GetOpenPort();
 
         using var host = await new HostBuilder()
