@@ -106,6 +106,7 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
         Assert.NotNull(response.Content);
         Assert.NotNull(response.Content.Headers.ContentEncoding);
         Assert.Equal<string>(["gzip"], response.Content.Headers.ContentEncoding);
+        Assert.Equal(["Accept-Encoding"], response.Headers.Vary);
         Assert.NotNull(response.Content.Headers.ContentType);
         Assert.Equal("text/plain; version=0.0.4; charset=utf-8", response.Content.Headers.ContentType.ToString());
 
@@ -116,7 +117,7 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
         var content = await reader.ReadToEndAsync();
 
         Assert.NotEmpty(content);
-        Assert.EndsWith(content, "# EOF\n", StringComparison.Ordinal);
+        Assert.EndsWith("# EOF\n", content, StringComparison.Ordinal);
     }
 
     [EnabledOnDockerPlatformTheory(DockerPlatform.Linux)]

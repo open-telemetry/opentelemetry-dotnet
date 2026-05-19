@@ -295,7 +295,7 @@ internal sealed class PrometheusExporterMiddleware
         {
             foreach (var parameter in acceptEncoding)
             {
-                if (parameter.Value.Equals("gzip", StringComparison.OrdinalIgnoreCase))
+                if (parameter.Quality is not 0 && parameter.Value.Equals("gzip", StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }
@@ -313,7 +313,8 @@ internal sealed class PrometheusExporterMiddleware
     {
         if (compress)
         {
-            response.Headers.Append("Content-Encoding", "gzip");
+            response.Headers.Append(HeaderNames.ContentEncoding, "gzip");
+            response.Headers.AppendCommaSeparatedValues(HeaderNames.Vary, HeaderNames.AcceptEncoding);
 
             await using var gzip = new GZipStream(
                 response.Body,
