@@ -82,7 +82,7 @@ Notes](../../RELEASENOTES.md).
   ([#7252](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7252))
 
 * Add Prometheus text fallback `target_info` output as a gauge.
-  ([#7238](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7238))
+  ([#7238](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7238))
 
 ## 1.15.3-beta.1
 
