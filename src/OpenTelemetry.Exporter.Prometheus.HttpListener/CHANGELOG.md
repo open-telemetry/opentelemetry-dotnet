@@ -77,6 +77,10 @@ Notes](../../RELEASENOTES.md).
   specification.
   ([#7266](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7266))
 
+* Abort scrape request processing if request exceeds the value specified by the
+  `X-Prometheus-Scrape-Timeout-Seconds` HTTP request header.
+  ([#7252](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7252))
+
 * Add Prometheus text fallback `target_info` output as a gauge.
   ([#7238](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7238))
 
