@@ -21,8 +21,16 @@ internal static class Generators
 
     public static Arbitrary<ActivityContext> ActivityContextArbitrary()
     {
+#if NET
+        var allTraceFlags = Enum.GetValues<ActivityTraceFlags>();
+#else
+        var allTraceFlags = Enum.GetValues(typeof(ActivityTraceFlags)).OfType<ActivityTraceFlags>().ToArray();
+#endif
+
         var gen =
-            from traceFlags in Gen.Elements(default, ActivityTraceFlags.Recorded)
+            from traceFlags in Gen
+                .SubListOf(allTraceFlags)
+                .Select((flags) => flags.Aggregate(ActivityTraceFlags.None, (current, next) => current | next))
             from traceState in Gen.OneOf(
                 Gen.Constant((string?)null),
                 ValidTraceStateArbitrary().Generator.Select(static value => (string?)value))
