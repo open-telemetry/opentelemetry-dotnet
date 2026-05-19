@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -591,6 +592,7 @@ public sealed class PrometheusExporterMiddlewareTests
         bool registerMeterProvider = true,
         Action<PrometheusAspNetCoreOptions>? configureOptions = null) =>
         new HostBuilder()
+            .ConfigureLogging((logging) => logging.ClearProviders())
             .ConfigureWebHost(webBuilder => webBuilder
                 .UseTestServer()
                 .ConfigureServices(services =>

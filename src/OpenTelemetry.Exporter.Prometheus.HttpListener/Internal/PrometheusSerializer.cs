@@ -22,6 +22,9 @@ internal static partial class PrometheusSerializer
     private const byte ASCII_LINEFEED = 0x0A; // `\n`
 #pragma warning restore SA1310 // Field name should not contain an underscore
 
+    private static readonly string[] ReservedExemplarLabelNames = ["trace_id", "span_id"];
+    private static readonly string[] ReservedHistogramLabelNames = ["le"];
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteDouble(byte[] buffer, int cursor, double value)
     {
@@ -256,44 +259,24 @@ internal static partial class PrometheusSerializer
         buffer[cursor++] = unchecked((byte)' ');
         buffer[cursor++] = unchecked((byte)'#');
         buffer[cursor++] = unchecked((byte)' ');
-        buffer[cursor++] = unchecked((byte)'{');
-
-        var hasLabels = false;
+        List<LabelData>? labels = null;
 
         if (exemplar.TraceId != default)
         {
-            cursor = WriteLabel(buffer, cursor, "trace_id", exemplar.TraceId.ToHexString(), openMetricsRequested);
-            buffer[cursor++] = unchecked((byte)',');
-            hasLabels = true;
+            AddLabel("trace_id", exemplar.TraceId.ToHexString(), ref labels);
         }
 
         if (exemplar.SpanId != default)
         {
-            cursor = WriteLabel(buffer, cursor, "span_id", exemplar.SpanId.ToHexString(), openMetricsRequested);
-            buffer[cursor++] = unchecked((byte)',');
-            hasLabels = true;
+            AddLabel("span_id", exemplar.SpanId.ToHexString(), ref labels);
         }
 
         foreach (var tag in exemplar.FilteredTags)
         {
-            if (tag.Key is "trace_id" or "span_id")
-            {
-                continue;
-            }
-
-            cursor = WriteLabel(buffer, cursor, tag.Key, tag.Value, openMetricsRequested);
-            buffer[cursor++] = unchecked((byte)',');
-            hasLabels = true;
+            AddLabel(tag.Key, tag.Value, ref labels, ReservedExemplarLabelNames);
         }
 
-        if (hasLabels)
-        {
-            buffer[cursor - 1] = unchecked((byte)'}');
-        }
-        else
-        {
-            buffer[cursor++] = unchecked((byte)'}');
-        }
+        cursor = WriteLabels(buffer, cursor, labels, writeEnclosingBraces: true, openMetricsRequested);
 
         buffer[cursor++] = unchecked((byte)' ');
 
@@ -408,7 +391,8 @@ internal static partial class PrometheusSerializer
         Metric metric,
         ReadOnlyTagCollection tags,
         bool openMetricsRequested,
-        bool writeEnclosingBraces = true)
+        bool writeEnclosingBraces = true,
+        IReadOnlyCollection<string>? reservedOutputKeys = null)
     {
         var startCursor = cursor;
         List<string>? writtenOutputKeys = null;
@@ -439,24 +423,24 @@ internal static partial class PrometheusSerializer
         cursor = startCursor;
         List<LabelData>? labels = null;
 
-        AddLabel("otel_scope_name", metric.MeterName, ref labels);
+        AddLabel("otel_scope_name", metric.MeterName, ref labels, reservedOutputKeys);
 
         if (!string.IsNullOrEmpty(metric.MeterVersion))
         {
-            AddLabel("otel_scope_version", metric.MeterVersion, ref labels);
+            AddLabel("otel_scope_version", metric.MeterVersion, ref labels, reservedOutputKeys);
         }
 
         if (metric.MeterTags != null)
         {
             foreach (var tag in metric.MeterTags)
             {
-                AddLabel(tag.Key, tag.Value, ref labels);
+                AddLabel(tag.Key, tag.Value, ref labels, reservedOutputKeys);
             }
         }
 
         foreach (var tag in tags)
         {
-            AddLabel(tag.Key, tag.Value, ref labels);
+            AddLabel(tag.Key, tag.Value, ref labels, reservedOutputKeys);
         }
 
         return WriteLabels(buffer, cursor, labels, writeEnclosingBraces, openMetricsRequested);
@@ -493,6 +477,11 @@ internal static partial class PrometheusSerializer
         bool TryWriteLabel(string key, object? value)
         {
             var outputKey = GetSanitizedLabelKey(key);
+
+            if (reservedOutputKeys?.Contains(outputKey) == true)
+            {
+                return true;
+            }
 
             if (writtenOutputKeys?.Contains(outputKey) == true)
             {
@@ -714,10 +703,16 @@ internal static partial class PrometheusSerializer
         return cursor;
     }
 
-    private static void AddLabel(string originalKey, object? value, ref List<LabelData>? labels)
+    private static void AddLabel(string originalKey, object? value, ref List<LabelData>? labels, IReadOnlyCollection<string>? reservedOutputKeys = null)
     {
+        var outputKey = GetSanitizedLabelKey(originalKey);
+        if (reservedOutputKeys?.Contains(outputKey) == true)
+        {
+            return;
+        }
+
         labels ??= [];
-        labels.Add(new LabelData(originalKey, GetSanitizedLabelKey(originalKey), GetLabelValueString(value)));
+        labels.Add(new LabelData(originalKey, outputKey, GetLabelValueString(value)));
     }
 
     private static int WriteLabels(byte[] buffer, int cursor, IReadOnlyList<LabelData>? labels, bool writeEnclosingBraces, bool openMetricsRequested)
