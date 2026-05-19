@@ -151,6 +151,9 @@ internal static class OtlpExporterOptionsExtensions
     {
         if (serviceProvider != null
             && options.Protocol == OtlpExportProtocol.HttpProtobuf
+#if NET
+            && options.MtlsOptions?.IsEnabled != true
+#endif
             && options.HttpClientFactory == options.DefaultHttpClientFactory)
         {
             options.HttpClientFactory = () =>
