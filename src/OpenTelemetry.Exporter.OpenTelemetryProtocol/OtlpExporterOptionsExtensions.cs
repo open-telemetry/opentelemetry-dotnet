@@ -68,16 +68,34 @@ internal static class OtlpExporterOptionsExtensions
         return headers;
     }
 
-    public static OtlpExporterTransmissionHandler GetExportTransmissionHandler(this OtlpExporterOptions options, ExperimentalOptions experimentalOptions, OtlpSignalType otlpSignalType)
+    public static OtlpExporterTransmissionHandler GetExportTransmissionHandler(
+        this OtlpExporterOptions options,
+        ExperimentalOptions experimentalOptions,
+        OtlpSignalType otlpSignalType,
+        bool deferExportClientCreation = false)
     {
-        var exportClient = GetExportClient(options, otlpSignalType);
+        IExportClient exportClient;
+        double timeoutMilliseconds;
 
-        // `HttpClient.Timeout.TotalMilliseconds` would be populated with the correct timeout value for both the exporter configuration cases:
-        // 1. User provides their own HttpClient. This case is straightforward as the user wants to use their `HttpClient` and thereby the same client's timeout value.
-        // 2. If the user configures timeout via the exporter options, then the timeout set for the `HttpClient` initialized by the exporter will be set to user provided value.
-        var timeoutMilliseconds = exportClient is OtlpHttpExportClient httpTraceExportClient
-            ? httpTraceExportClient.HttpClient.Timeout.TotalMilliseconds
-            : options.TimeoutMilliseconds;
+        if (deferExportClientCreation)
+        {
+            // Defer creating the export client until the first export so named
+            // HttpClient pipelines can safely resolve logging services after
+            // ILoggerFactory construction has completed.
+            exportClient = new LazyExportClient(() => GetExportClient(options, otlpSignalType));
+            timeoutMilliseconds = options.TimeoutMilliseconds;
+        }
+        else
+        {
+            exportClient = GetExportClient(options, otlpSignalType);
+
+            // `HttpClient.Timeout.TotalMilliseconds` would be populated with the correct timeout value for both the exporter configuration cases:
+            // 1. User provides their own HttpClient. This case is straightforward as the user wants to use their `HttpClient` and thereby the same client's timeout value.
+            // 2. If the user configures timeout via the exporter options, then the timeout set for the `HttpClient` initialized by the exporter will be set to user provided value.
+            timeoutMilliseconds = exportClient is OtlpHttpExportClient httpTraceExportClient
+                ? httpTraceExportClient.HttpClient.Timeout.TotalMilliseconds
+                : options.TimeoutMilliseconds;
+        }
 
         if (experimentalOptions.EnableInMemoryRetry)
         {
@@ -108,29 +126,34 @@ internal static class OtlpExporterOptionsExtensions
             throw new NotSupportedException($"Protocol {options.Protocol} is not supported.");
         }
 
+        bool isGrpc = options.Protocol == OtlpExportProtocol.Grpc;
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
+
         return otlpSignalType switch
         {
-            OtlpSignalType.Traces => options.Protocol == OtlpExportProtocol.Grpc
+            OtlpSignalType.Traces => isGrpc
                 ? new OtlpGrpcExportClient(options, httpClient, TraceGrpcServicePath)
                 : new OtlpHttpExportClient(options, httpClient, TraceHttpServicePath),
 
-            OtlpSignalType.Metrics => options.Protocol == OtlpExportProtocol.Grpc
+            OtlpSignalType.Metrics => isGrpc
                 ? new OtlpGrpcExportClient(options, httpClient, MetricsGrpcServicePath)
                 : new OtlpHttpExportClient(options, httpClient, MetricsHttpServicePath),
 
-            OtlpSignalType.Logs => options.Protocol == OtlpExportProtocol.Grpc
+            OtlpSignalType.Logs => isGrpc
                 ? new OtlpGrpcExportClient(options, httpClient, LogsGrpcServicePath)
                 : new OtlpHttpExportClient(options, httpClient, LogsHttpServicePath),
 
             _ => throw new NotSupportedException($"OtlpSignalType {otlpSignalType} is not supported."),
         };
-#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
     }
 
-    public static void TryEnableIHttpClientFactoryIntegration(this OtlpExporterOptions options, IServiceProvider serviceProvider, string httpClientName)
+    public static bool TryEnableIHttpClientFactoryIntegration(this OtlpExporterOptions options, IServiceProvider serviceProvider, string httpClientName)
     {
         if (serviceProvider != null
             && options.Protocol == OtlpExportProtocol.HttpProtobuf
+#if NET
+            && options.MtlsOptions?.IsEnabled != true
+#endif
             && options.HttpClientFactory == options.DefaultHttpClientFactory)
         {
             options.HttpClientFactory = () =>
@@ -163,7 +186,11 @@ internal static class OtlpExporterOptionsExtensions
 
                 return options.DefaultHttpClientFactory();
             };
+
+            return true;
         }
+
+        return false;
     }
 
     internal static Uri AppendPathIfNotPresent(this Uri uri, string path)

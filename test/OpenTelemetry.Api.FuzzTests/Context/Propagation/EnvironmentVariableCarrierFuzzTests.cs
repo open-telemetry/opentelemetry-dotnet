@@ -99,9 +99,7 @@ public class EnvironmentVariableCarrierFuzzTests
         expected.All(pair => actual.TryGetValue(pair.Key, out var value) && value == pair.Value);
 
     private static bool IsValidEnvironmentCharacter(char value) =>
-        (value >= 'A' && value <= 'Z') ||
-        (value >= '0' && value <= '9') ||
-        value == '_';
+        value is (>= 'A' and <= 'Z') or (>= '0' and <= '9') or '_';
 
-    private static bool IsAsciiDigit(char value) => value >= '0' && value <= '9';
+    private static bool IsAsciiDigit(char value) => value is >= '0' and <= '9';
 }

@@ -66,3 +66,4 @@ M:System.UInt64.TryParse(System.ReadOnlySpan{System.Char},System.UInt64@); Use o
 M:System.UInt64.TryParse(System.String,System.UInt64@); Use overloads that specify CultureInfo.InvariantCulture.
 M:System.UIntPtr.TryParse(System.ReadOnlySpan{System.Char},System.UIntPtr@); Use overloads that specify CultureInfo.InvariantCulture.
 M:System.UIntPtr.TryParse(System.String,System.UIntPtr@); Use overloads that specify CultureInfo.InvariantCulture.
+P:System.Threading.Tasks.Task`1.Result; Use await or GetAwaiter().GetResult() instead of blocking on Task<T>.Result.
