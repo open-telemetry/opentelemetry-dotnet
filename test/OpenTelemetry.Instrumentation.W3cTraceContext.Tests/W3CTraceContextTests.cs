@@ -154,7 +154,13 @@ public sealed class W3CTraceContextTests : IDisposable
         }
 
         // The output ends with '\n', which should be ignored.
-        var lastNewLineCharacterPos = output.LastIndexOf('\n', output.Length - 2);
+        var lastNewLineCharacterPos =
+#if NET11_0_OR_GREATER
+            output.LastIndexOf('\n', output.Length - 2, StringComparison.Ordinal);
+#else
+            output.LastIndexOf('\n', output.Length - 2);
+#endif
+
         return output.Substring(lastNewLineCharacterPos + 1);
     }
 

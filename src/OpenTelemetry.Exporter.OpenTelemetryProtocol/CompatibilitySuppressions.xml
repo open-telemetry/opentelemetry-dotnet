@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Suppressions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <Suppression>
+        <DiagnosticId>CP0008</DiagnosticId>
+        <Target>T:OpenTelemetry.Exporter.OtlpExportProtocol</Target>
+        <Left>lib/net8.0/OpenTelemetry.Exporter.OpenTelemetryProtocol.dll</Left>
+        <Right>lib/netstandard2.1/OpenTelemetry.Exporter.OpenTelemetryProtocol.dll</Right>
+        <IsBaselineSuppression>true</IsBaselineSuppression>
+    </Suppression>
+    <Suppression>
+        <DiagnosticId>CP0008</DiagnosticId>
+        <Target>T:OpenTelemetry.Exporter.OtlpExportProtocol</Target>
+        <Left>lib/net9.0/OpenTelemetry.Exporter.OpenTelemetryProtocol.dll</Left>
+        <Right>lib/netstandard2.1/OpenTelemetry.Exporter.OpenTelemetryProtocol.dll</Right>
+        <IsBaselineSuppression>true</IsBaselineSuppression>
+    </Suppression>
+</Suppressions>

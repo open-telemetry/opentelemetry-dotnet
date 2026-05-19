@@ -494,7 +494,7 @@ public sealed class LogRecord
             return;
         }
 
-        var attributeStorage = this.AttributeStorage ??= new List<KeyValuePair<string, object?>>(attributes.Count);
+        var attributeStorage = this.AttributeStorage ??= [with(attributes.Count)];
 
         // Note: AddRange here will copy all of the KeyValuePairs from
         // attributes to AttributeStorage. This "captures" the state and
@@ -518,7 +518,7 @@ public sealed class LogRecord
             return;
         }
 
-        var scopeStorage = this.ScopeStorage ??= new List<object?>(LogRecordPoolHelper.DefaultMaxNumberOfScopes);
+        var scopeStorage = this.ScopeStorage ??= [with(LogRecordPoolHelper.DefaultMaxNumberOfScopes)];
 
         scopeProvider.ForEachScope(AddScopeToBufferedList, scopeStorage);
 
