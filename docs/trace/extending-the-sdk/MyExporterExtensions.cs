@@ -8,22 +8,44 @@ using OpenTelemetry.Trace;
 
 internal static class MyExporterExtensions
 {
-    public static TracerProviderBuilder AddMyExporter(
-        this TracerProviderBuilder builder,
-        string? name = null,
-        Action<MyExporterOptions>? configure = null)
+    public static TracerProviderBuilder AddMyExporter(this TracerProviderBuilder builder)
     {
         if (builder == null)
         {
             throw new ArgumentNullException(nameof(builder));
         }
 
-        name ??= Options.DefaultName;
+        return builder.AddProcessor(new BatchActivityExportProcessor(new MyExporter()));
+    }
 
-        if (configure != null)
+    public static TracerProviderBuilder AddMyExporter(
+        this TracerProviderBuilder builder,
+        Action<MyExporterOptions> configure)
+    {
+        return builder.AddMyExporter(Options.DefaultName, configure);
+    }
+
+    public static TracerProviderBuilder AddMyExporter(
+        this TracerProviderBuilder builder,
+        string name,
+        Action<MyExporterOptions> configure)
+    {
+        if (builder == null)
         {
-            builder.ConfigureServices(services => services.Configure(name, configure));
+            throw new ArgumentNullException(nameof(builder));
         }
+
+        if (name == null)
+        {
+            throw new ArgumentNullException(nameof(name));
+        }
+
+        if (configure == null)
+        {
+            throw new ArgumentNullException(nameof(configure));
+        }
+
+        builder.ConfigureServices(services => services.Configure(name, configure));
 
         return builder.AddProcessor(serviceProvider =>
         {
