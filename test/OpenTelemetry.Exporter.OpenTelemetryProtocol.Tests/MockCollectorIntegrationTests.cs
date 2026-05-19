@@ -27,14 +27,11 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 [Collection(MockCollectorCollection.Name)]
 public sealed class MockCollectorIntegrationTests
 {
-    private static int gRPCPort = 4317;
-    private static int httpPort = 5051;
-
     [Fact]
     public async Task TestRecoveryAfterFailedExport()
     {
-        var testGrpcPort = Interlocked.Increment(ref gRPCPort);
-        var testHttpPort = Interlocked.Increment(ref httpPort);
+        var testGrpcPort = TcpPortProvider.GetOpenPort();
+        var testHttpPort = TcpPortProvider.GetOpenPort();
 
         using var host = await new HostBuilder()
            .ConfigureWebHostDefaults(webBuilder => webBuilder
@@ -137,8 +134,8 @@ public sealed class MockCollectorIntegrationTests
     [InlineData(false, ExportResult.Failure, Grpc.Core.StatusCode.DeadlineExceeded)]
     public async Task GrpcRetryTests(bool useRetryTransmissionHandler, ExportResult expectedResult, Grpc.Core.StatusCode initialStatusCode)
     {
-        var testGrpcPort = Interlocked.Increment(ref gRPCPort);
-        var testHttpPort = Interlocked.Increment(ref httpPort);
+        var testGrpcPort = TcpPortProvider.GetOpenPort();
+        var testHttpPort = TcpPortProvider.GetOpenPort();
 
         using var host = await new HostBuilder()
            .ConfigureWebHostDefaults(webBuilder => webBuilder
@@ -223,7 +220,8 @@ public sealed class MockCollectorIntegrationTests
     [InlineData(false, ExportResult.Failure, HttpStatusCode.BadRequest)]
     public async Task HttpRetryTests(bool useRetryTransmissionHandler, ExportResult expectedResult, HttpStatusCode initialHttpStatusCode)
     {
-        var testHttpPort = Interlocked.Increment(ref httpPort);
+        var testGrpcPort = TcpPortProvider.GetOpenPort();
+        var testHttpPort = TcpPortProvider.GetOpenPort();
 
         using var host = await new HostBuilder()
            .ConfigureWebHostDefaults(webBuilder => webBuilder
@@ -309,7 +307,8 @@ public sealed class MockCollectorIntegrationTests
     [InlineData(false, ExportResult.Failure, HttpStatusCode.BadRequest)]
     public async Task HttpPersistentStorageRetryTests(bool usePersistentStorageTransmissionHandler, ExportResult expectedResult, HttpStatusCode initialHttpStatusCode)
     {
-        var testHttpPort = Interlocked.Increment(ref httpPort);
+        var testGrpcPort = TcpPortProvider.GetOpenPort();
+        var testHttpPort = TcpPortProvider.GetOpenPort();
 
         using var host = await new HostBuilder()
            .ConfigureWebHostDefaults(webBuilder => webBuilder
@@ -446,8 +445,8 @@ public sealed class MockCollectorIntegrationTests
     [InlineData(false, ExportResult.Failure, Grpc.Core.StatusCode.DeadlineExceeded)]
     public async Task GrpcPersistentStorageRetryTests(bool usePersistentStorageTransmissionHandler, ExportResult expectedResult, Grpc.Core.StatusCode initialgrpcStatusCode)
     {
-        var testGrpcPort = Interlocked.Increment(ref gRPCPort);
-        var testHttpPort = Interlocked.Increment(ref httpPort);
+        var testGrpcPort = TcpPortProvider.GetOpenPort();
+        var testHttpPort = TcpPortProvider.GetOpenPort();
 
         using var host = await new HostBuilder()
            .ConfigureWebHostDefaults(webBuilder => webBuilder
