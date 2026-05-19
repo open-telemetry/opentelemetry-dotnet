@@ -66,13 +66,9 @@ internal sealed class PrometheusExporterMiddleware
 
             using var requestCancelled = new CancellationTokenSource();
 
-            int? scrapeTimeoutSeconds = null;
-            if (httpContext.Request.Headers.TryGetValue("X-Prometheus-Scrape-Timeout-Seconds", out var value) &&
-                int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var parsedValue) &&
-                parsedValue is > 0 and < int.MaxValue / 1_000)
+            if (TryGetScrapeTimeout(httpContext.Request.Headers, out var scrapeTimeout))
             {
-                scrapeTimeoutSeconds = parsedValue;
-                requestCancelled.CancelAfter(TimeSpan.FromSeconds(scrapeTimeoutSeconds.Value));
+                requestCancelled.CancelAfter(scrapeTimeout.GetValueOrDefault());
             }
 
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(requestCancelled.Token, httpContext.RequestAborted);
@@ -104,9 +100,9 @@ internal sealed class PrometheusExporterMiddleware
             }
             catch (OperationCanceledException ex) when (ex.CancellationToken == linkedCts.Token)
             {
-                if (scrapeTimeoutSeconds is { } timeout)
+                if (scrapeTimeout is { } timeout)
                 {
-                    PrometheusExporterEventSource.Log.ScrapeTimedOut(timeout);
+                    PrometheusExporterEventSource.Log.ScrapeTimedOut(timeout.TotalSeconds);
                 }
 
                 if (!response.HasStarted)
@@ -126,6 +122,25 @@ internal sealed class PrometheusExporterMiddleware
             {
                 response.StatusCode = StatusCodes.Status500InternalServerError;
             }
+        }
+
+        static bool TryGetScrapeTimeout(
+            IHeaderDictionary headers,
+            [NotNullWhen(true)] out TimeSpan? scrapeTimeout)
+        {
+            const double MinTimeout = 0.001; // 1 millisecond
+            const double MaxTimeout = int.MaxValue / 1_000; // Prevent overflow of TimeSpan.FromSeconds()
+
+            if (headers.TryGetValue("X-Prometheus-Scrape-Timeout-Seconds", out var value) &&
+                double.TryParse(value, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var scrapeTimeoutSeconds) &&
+                scrapeTimeoutSeconds is >= MinTimeout and <= MaxTimeout)
+            {
+                scrapeTimeout = TimeSpan.FromSeconds(scrapeTimeoutSeconds);
+                return true;
+            }
+
+            scrapeTimeout = null;
+            return false;
         }
     }
 

@@ -88,6 +88,6 @@ internal sealed class PrometheusExporterEventSource : EventSource, IConfiguratio
         => this.WriteEvent(8, metricName, firstUnit, conflictingUnit);
 
     [Event(9, Message = "Metrics scrape request timed out after {0} seconds.", Level = EventLevel.Warning)]
-    public void ScrapeTimedOut(int scrapeTimeoutSeconds)
+    public void ScrapeTimedOut(double scrapeTimeoutSeconds)
         => this.WriteEvent(9, scrapeTimeoutSeconds);
 }
