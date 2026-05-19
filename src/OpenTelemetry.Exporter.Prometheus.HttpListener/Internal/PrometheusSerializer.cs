@@ -500,6 +500,12 @@ internal static partial class PrometheusSerializer
             return cursor;
         }
 
+        using var attributes = resource.Attributes.GetEnumerator();
+        if (!attributes.MoveNext())
+        {
+            return cursor;
+        }
+
         // "If info-typed metric families are not yet supported...a gauge-typed metric
         // family named target_info with a constant value of 1 MUST be used instead.".
         // See https://opentelemetry.io/docs/specs/otel/compatibility/prometheus_and_openmetrics/#resource-attributes-1
@@ -517,12 +523,14 @@ internal static partial class PrometheusSerializer
         cursor = WriteAsciiStringNoEscape(buffer, cursor, "target_info");
         buffer[cursor++] = unchecked((byte)'{');
 
-        foreach (var attribute in resource.Attributes)
+        do
         {
+            var attribute = attributes.Current;
             cursor = WriteLabel(buffer, cursor, attribute.Key, attribute.Value, openMetricsRequested);
 
             buffer[cursor++] = unchecked((byte)',');
         }
+        while (attributes.MoveNext());
 
         cursor--; // Write over the last written comma
 

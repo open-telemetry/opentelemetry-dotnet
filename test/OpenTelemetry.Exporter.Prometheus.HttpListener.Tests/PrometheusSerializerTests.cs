@@ -6,6 +6,7 @@ using System.Diagnostics.Metrics;
 using System.Globalization;
 using System.Text;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
 using Xunit;
 
@@ -1139,6 +1140,19 @@ public sealed class PrometheusSerializerTests
         var cursor = PrometheusSerializer.WriteDouble(buffer, 0, double.NaN);
 
         Assert.Equal("NaN", Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void WriteTargetInfoSkipsEmptyNonSingletonResource(bool openMetricsRequested)
+    {
+        var buffer = new byte[128];
+        var resource = Resource.Empty.Merge(Resource.Empty);
+
+        var cursor = PrometheusSerializer.WriteTargetInfo(buffer, 0, resource, openMetricsRequested);
+
+        Assert.Equal(0, cursor);
     }
 
     [Fact]
