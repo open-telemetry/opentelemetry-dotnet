@@ -83,7 +83,7 @@ Notes](../../RELEASENOTES.md).
 
 * Use the canonical representation for histogram "le" label values when using
   OpenMetrics.
-  ([#7218](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7218))
+  ([#7218](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7218))
 
 ## 1.15.3-beta.1
 
