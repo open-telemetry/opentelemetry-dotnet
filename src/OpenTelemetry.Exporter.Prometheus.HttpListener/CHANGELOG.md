@@ -77,6 +77,10 @@ Notes](../../RELEASENOTES.md).
   specification.
   ([#7266](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7266))
 
+* Abort scrape request processing if request exceeds the value specified by the
+  `X-Prometheus-Scrape-Timeout-Seconds` HTTP request header.
+  ([#7252](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7252))
+
 * Emit OpenMetrics scope metadata as a single `otel_scope` metric family with
   `otel_scope_info` samples instead of repeating metadata for every scope.
   ([#7237](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7237))
