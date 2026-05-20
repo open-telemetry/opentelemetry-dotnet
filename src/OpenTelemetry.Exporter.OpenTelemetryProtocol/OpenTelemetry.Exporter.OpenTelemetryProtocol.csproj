@@ -35,6 +35,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="$(RepoRoot)\src\Shared\ConditionalWeakTableExtensions.cs" Link="Includes\ConditionalWeakTableExtensions.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\DynamicallyAccessedMembersAttribute.cs" Link="Includes\DynamicallyAccessedMembersAttribute.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\DynamicallyAccessedMemberTypes.cs" Link="Includes\DynamicallyAccessedMemberTypes.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\EncodingExtensions.cs" Link="Includes\EncodingExtensions.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\HttpClientHelpers.cs" Link="Includes\HttpClientHelpers.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\PeriodicExportingMetricReaderHelper.cs" Link="Includes\PeriodicExportingMetricReaderHelper.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\TagWriter\ArrayTagWriter.cs" Link="Includes\TagWriter\ArrayTagWriter.cs" />
