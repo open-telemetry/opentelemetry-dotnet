@@ -24,16 +24,14 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
+[Collection(MockCollectorCollection.Name)]
 public sealed class MockCollectorIntegrationTests
 {
-    private static int gRPCPort = 4317;
-    private static int httpPort = 5051;
-
     [Fact]
     public async Task TestRecoveryAfterFailedExport()
     {
-        var testGrpcPort = Interlocked.Increment(ref gRPCPort);
-        var testHttpPort = Interlocked.Increment(ref httpPort);
+        var testGrpcPort = TcpPortProvider.GetOpenPort();
+        var testHttpPort = TcpPortProvider.GetOpenPort();
 
         using var host = await new HostBuilder()
            .ConfigureWebHostDefaults(webBuilder => webBuilder
@@ -136,8 +134,8 @@ public sealed class MockCollectorIntegrationTests
     [InlineData(false, ExportResult.Failure, Grpc.Core.StatusCode.DeadlineExceeded)]
     public async Task GrpcRetryTests(bool useRetryTransmissionHandler, ExportResult expectedResult, Grpc.Core.StatusCode initialStatusCode)
     {
-        var testGrpcPort = Interlocked.Increment(ref gRPCPort);
-        var testHttpPort = Interlocked.Increment(ref httpPort);
+        var testGrpcPort = TcpPortProvider.GetOpenPort();
+        var testHttpPort = TcpPortProvider.GetOpenPort();
 
         using var host = await new HostBuilder()
            .ConfigureWebHostDefaults(webBuilder => webBuilder
@@ -222,7 +220,7 @@ public sealed class MockCollectorIntegrationTests
     [InlineData(false, ExportResult.Failure, HttpStatusCode.BadRequest)]
     public async Task HttpRetryTests(bool useRetryTransmissionHandler, ExportResult expectedResult, HttpStatusCode initialHttpStatusCode)
     {
-        var testHttpPort = Interlocked.Increment(ref httpPort);
+        var testHttpPort = TcpPortProvider.GetOpenPort();
 
         using var host = await new HostBuilder()
            .ConfigureWebHostDefaults(webBuilder => webBuilder
@@ -308,7 +306,8 @@ public sealed class MockCollectorIntegrationTests
     [InlineData(false, ExportResult.Failure, HttpStatusCode.BadRequest)]
     public async Task HttpPersistentStorageRetryTests(bool usePersistentStorageTransmissionHandler, ExportResult expectedResult, HttpStatusCode initialHttpStatusCode)
     {
-        var testHttpPort = Interlocked.Increment(ref httpPort);
+        var testGrpcPort = TcpPortProvider.GetOpenPort();
+        var testHttpPort = TcpPortProvider.GetOpenPort();
 
         using var host = await new HostBuilder()
            .ConfigureWebHostDefaults(webBuilder => webBuilder
@@ -445,8 +444,8 @@ public sealed class MockCollectorIntegrationTests
     [InlineData(false, ExportResult.Failure, Grpc.Core.StatusCode.DeadlineExceeded)]
     public async Task GrpcPersistentStorageRetryTests(bool usePersistentStorageTransmissionHandler, ExportResult expectedResult, Grpc.Core.StatusCode initialgrpcStatusCode)
     {
-        var testGrpcPort = Interlocked.Increment(ref gRPCPort);
-        var testHttpPort = Interlocked.Increment(ref httpPort);
+        var testGrpcPort = TcpPortProvider.GetOpenPort();
+        var testHttpPort = TcpPortProvider.GetOpenPort();
 
         using var host = await new HostBuilder()
            .ConfigureWebHostDefaults(webBuilder => webBuilder
@@ -564,12 +563,10 @@ public sealed class MockCollectorIntegrationTests
             this.statusCodes = [.. statusCodes.Select(x => (Grpc.Core.StatusCode)x)];
         }
 
-        public Grpc.Core.StatusCode NextStatus()
-        {
-            return this.statusCodeIndex < this.statusCodes.Length
+        public Grpc.Core.StatusCode NextStatus() =>
+            this.statusCodeIndex < this.statusCodes.Length
                 ? this.statusCodes[this.statusCodeIndex++]
                 : Grpc.Core.StatusCode.OK;
-        }
     }
 
     private sealed class MockCollectorHttpState
@@ -583,12 +580,10 @@ public sealed class MockCollectorIntegrationTests
             this.statusCodes = [.. statusCodes.Select(x => (HttpStatusCode)x)];
         }
 
-        public HttpStatusCode NextStatus()
-        {
-            return this.statusCodeIndex < this.statusCodes.Length
+        public HttpStatusCode NextStatus() =>
+            this.statusCodeIndex < this.statusCodes.Length
                 ? this.statusCodes[this.statusCodeIndex++]
                 : HttpStatusCode.OK;
-        }
     }
 
 #pragma warning disable CA1812 // Avoid uninstantiated internal classes
@@ -605,12 +600,9 @@ public sealed class MockCollectorIntegrationTests
         public override Task<ExportTraceServiceResponse> Export(ExportTraceServiceRequest request, ServerCallContext context)
         {
             var statusCode = this.state.NextStatus();
-            if (statusCode != Grpc.Core.StatusCode.OK)
-            {
-                throw new RpcException(new Grpc.Core.Status(statusCode, "Error."));
-            }
-
-            return Task.FromResult(new ExportTraceServiceResponse());
+            return statusCode != Grpc.Core.StatusCode.OK
+                ? throw new RpcException(new Grpc.Core.Status(statusCode, "Error."))
+                : Task.FromResult(new ExportTraceServiceResponse());
         }
     }
 
@@ -672,15 +664,9 @@ public sealed class MockCollectorIntegrationTests
             return true;
         }
 
-        protected override bool OnTryLease(int leasePeriodMilliseconds)
-        {
-            return true;
-        }
+        protected override bool OnTryLease(int leasePeriodMilliseconds) => true;
 
-        protected override bool OnTryDelete()
-        {
-            return this.mockStorage.Remove(this);
-        }
+        protected override bool OnTryDelete() => this.mockStorage.Remove(this);
     }
 }
 #endif
