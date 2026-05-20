@@ -4,6 +4,9 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
+#if NETFRAMEWORK
+using System.Net.Http;
+#endif
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -108,8 +111,10 @@ public class OtlpLogExporterTests
         });
     }
 
-    [Fact]
-    public void ServiceProviderHttpClientFactoryNotInvoked()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ServiceProviderHttpClientFactoryNotInvokedDuringLoggerFactoryCreation(bool callUseOpenTelemetry)
     {
         var services = new ServiceCollection();
 
@@ -119,39 +124,64 @@ public class OtlpLogExporterTests
 
         services.AddHttpClient("OtlpLogExporter", configureClient: (client) => invocations++);
 
-        services.AddOpenTelemetry().WithLogging(builder => builder
-            .AddOtlpExporter(o => o.Protocol = OtlpExportProtocol.HttpProtobuf));
+        services.AddLogging(builder =>
+        {
+            ConfigureOtlpExporter(
+                builder,
+                callUseOpenTelemetry,
+                configureExporter: o => o.Protocol = OtlpExportProtocol.HttpProtobuf);
+        });
 
         using var serviceProvider = services.BuildServiceProvider();
+        _ = serviceProvider.GetRequiredService<ILoggerFactory>();
 
         Assert.NotNull(serviceProvider);
         Assert.Equal(0, invocations);
     }
 
-    [Fact(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/7233")]
-    public void ServiceProviderHttpClientFactoryInvoked()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ServiceProviderHttpClientFactoryInvokedForExportWithoutCircularDependency(bool callUseOpenTelemetry)
     {
-        var services = new ServiceCollection();
+        using var testHandler = new TestHttpMessageHandler();
 
-        services.AddHttpClient();
+        var services = new ServiceCollection();
 
         var invocations = 0;
 
-        services.AddHttpClient("OtlpLogExporter", configureClient: (client) => invocations++);
+        services.AddHttpClient("OtlpLogExporter")
+            .ConfigurePrimaryHttpMessageHandler(() => testHandler)
+            .AddHttpMessageHandler(sp =>
+            {
+                _ = sp.GetRequiredService<ILoggerFactory>();
+                invocations++;
+                return new PassThroughDelegatingHandler();
+            });
 
-        services.AddOpenTelemetry().WithLogging(builder => builder
-            .AddOtlpExporter(o => o.Protocol = OtlpExportProtocol.HttpProtobuf));
+        services.AddLogging(builder =>
+        {
+            ConfigureOtlpExporter(
+                builder,
+                callUseOpenTelemetry,
+                configureExporterAndProcessor: (exporter, processor) =>
+                {
+                    exporter.Protocol = OtlpExportProtocol.HttpProtobuf;
+                    exporter.Endpoint = new Uri("http://localhost:4318");
+                    processor.ExportProcessorType = ExportProcessorType.Simple;
+                });
+        });
 
         using var serviceProvider = services.BuildServiceProvider();
+        var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+        var logger = loggerFactory.CreateLogger(nameof(OtlpLogExporterTests));
 
-        var loggerProvider = serviceProvider.GetRequiredService<LoggerProvider>();
-
-        // IHttpClientFactory integration is only enabled for OtlpLogExporter on .NET 8+.
-#if NET8_0_OR_GREATER
-        Assert.Equal(1, invocations);
-#else
         Assert.Equal(0, invocations);
-#endif
+
+        logger.HelloFrom("tomato", 2.99);
+
+        Assert.Equal(1, invocations);
+        Assert.NotNull(testHandler.HttpRequestMessage);
     }
 
     [Fact]
@@ -260,6 +290,7 @@ public class OtlpLogExporterTests
         var hostBuilder = new HostBuilder();
         hostBuilder.ConfigureLogging(logging =>
         {
+            logging.ClearProviders();
             ConfigureOtlpExporter(logging, callUseOpenTelemetry, logRecords: logRecords);
         });
 
@@ -1839,4 +1870,6 @@ public class OtlpLogExporterTests
 
         return resourceSpans;
     }
+
+    private sealed class PassThroughDelegatingHandler : DelegatingHandler;
 }

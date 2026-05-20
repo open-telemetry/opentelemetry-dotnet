@@ -219,9 +219,15 @@ internal sealed class PrometheusCollectionManager
     {
         this.exporter.OnExport = this.onCollectRef;
         this.exporter.OpenMetricsRequested = openMetricsRequested;
-        var result = this.exporter.Collect!(Timeout.Infinite);
-        this.exporter.OnExport = null;
-        return result;
+
+        try
+        {
+            return this.exporter.Collect!(Timeout.Infinite);
+        }
+        finally
+        {
+            this.exporter.OnExport = null;
+        }
     }
 
     private ExportResult OnCollect(in Batch<Metric> metrics)
@@ -429,11 +435,11 @@ internal sealed class PrometheusCollectionManager
                 metadataState = new MetadataState(metadataState.Type, metadataState.Help, prometheusMetric.Unit);
                 metadataStates[metadataName] = metadataState;
             }
-            else if (!string.IsNullOrEmpty(prometheusMetric.Unit) &&
+            else if (prometheusMetric.Unit is { Length: > 0 } &&
                      metadataState.Unit != null &&
                      metadataState.Unit != prometheusMetric.Unit)
             {
-                PrometheusExporterEventSource.Log.ConflictingUnit(metadataName, metadataState.Unit, prometheusMetric.Unit!);
+                PrometheusExporterEventSource.Log.ConflictingUnit(metadataName, metadataState.Unit, prometheusMetric.Unit);
             }
 
             if (!string.IsNullOrEmpty(metric.Description) &&

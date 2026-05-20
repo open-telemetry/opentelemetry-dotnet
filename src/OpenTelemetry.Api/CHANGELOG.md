@@ -10,7 +10,10 @@ Notes](../../RELEASENOTES.md).
   Add support for using environment variables as context propagation carriers.
   ([#7174](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7174))
 
-* **Breaking change** (pre-release only versions): The default value of
+* Update `TraceContextPropagator` to support the W3C randomness flag.
+  ([#7301](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7301))
+
+ * **Breaking change** (pre-release only versions): The default value of
   the `Timestamp` property on `LogRecordData` has changed from `DateTime.UtcNow`
   to `DateTime.MinValue`. `DateTime.MinValue` represents an unset timestamp as
   defined by the OpenTelemetry specification. Callers of the [Logs API](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/api.md)

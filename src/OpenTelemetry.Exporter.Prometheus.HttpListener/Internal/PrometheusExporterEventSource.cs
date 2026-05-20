@@ -71,6 +71,7 @@ internal sealed class PrometheusExporterEventSource : EventSource, IConfiguratio
     public void InvalidConfigurationValue(string key, string value)
         => this.WriteEvent(5, key, value);
 
+    [NonEvent]
     public void LogInvalidConfigurationValue(string key, string value)
         => this.InvalidConfigurationValue(key, value);
 
@@ -85,4 +86,8 @@ internal sealed class PrometheusExporterEventSource : EventSource, IConfiguratio
     [Event(8, Message = "Dropping duplicate UNIT metadata for metric family '{0}' because values '{1}' and '{2}' conflict.", Level = EventLevel.Warning)]
     public void ConflictingUnit(string metricName, string firstUnit, string conflictingUnit)
         => this.WriteEvent(8, metricName, firstUnit, conflictingUnit);
+
+    [Event(9, Message = "Metrics scrape request timed out after {0} seconds.", Level = EventLevel.Warning)]
+    public void ScrapeTimedOut(double scrapeTimeoutSeconds)
+        => this.WriteEvent(9, scrapeTimeoutSeconds);
 }

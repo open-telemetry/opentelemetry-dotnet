@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Logs;
@@ -297,25 +298,21 @@ public static class OtlpLogExporterHelperExtensions
             serviceProvider.EnsureNoUseOtlpExporterRegistrations();
         }
 
-        // TODO IHttpClientFactory integration should be safe on .NET 8+. On earlier versions,
-        // DefaultHttpClientFactory took ILoggerFactory eagerly in its constructor, creating a
-        // circular dependency: ILoggerFactory -> OpenTelemetryLoggerProvider -> OtlpLogExporter
-        // -> IHttpClientFactory -> ILoggerFactory. This was fixed in .NET 8 (dotnet/runtime#89531).
-        // However, this doesn't appear to be true in all cases and can create circular dependencies
-        // when using Autofac and the .NET 11 IHttpClientFactory integration.
-        // Disabled until we can safely resolve this and have appropriate test coverage to ensure
-        // the circular dependency does not exist. See https://github.com/open-telemetry/opentelemetry-dotnet/issues/7233.
-        /*
-#if NET8_0_OR_GREATER
-        exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpLogExporter");
-#endif
-        */
+        OtlpExporterTransmissionHandler? transmissionHandler = null;
+        if (exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpLogExporter"))
+        {
+            transmissionHandler = exporterOptions.GetExportTransmissionHandler(
+                experimentalOptions,
+                OtlpSignalType.Logs,
+                deferExportClientCreation: true);
+        }
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
         BaseExporter<LogRecord> otlpExporter = new OtlpLogExporter(
             exporterOptions,
             sdkLimitOptions,
-            experimentalOptions);
+            experimentalOptions,
+            transmissionHandler);
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
         try
