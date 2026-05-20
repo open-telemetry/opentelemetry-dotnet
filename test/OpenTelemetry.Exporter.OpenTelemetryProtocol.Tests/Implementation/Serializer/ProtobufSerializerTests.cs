@@ -372,4 +372,25 @@ public class ProtobufSerializerTests
         Array.Copy(buffer, 2, actualContent, 0, 3);
         Assert.True(expectedContent.SequenceEqual(actualContent));
     }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("Hello")]
+    [InlineData("Hello\u4E16\u754C")]
+    [InlineData("\u3053\u3093\u306B\u3061\u306F")]
+    [InlineData("\uD83D\uDCD6")]
+    [InlineData("Hello\n\t\"World\"")]
+    [InlineData("Hello\0World")]
+    public void WriteStringWithTag_Span_ProducesSameBytesAsArray(string value)
+    {
+        var arrayBuffer = new byte[1024];
+        var arrayPosition = ProtobufSerializer.WriteStringWithTag(arrayBuffer, 0, 1, value);
+
+        var spanBacking = new byte[1024];
+        Span<byte> spanBuffer = spanBacking;
+        var spanPosition = ProtobufSerializer.WriteStringWithTag(spanBuffer, 0, 1, value);
+
+        Assert.Equal(arrayPosition, spanPosition);
+        Assert.True(arrayBuffer.AsSpan(0, arrayPosition).SequenceEqual(spanBuffer.Slice(0, spanPosition)));
+    }
 }

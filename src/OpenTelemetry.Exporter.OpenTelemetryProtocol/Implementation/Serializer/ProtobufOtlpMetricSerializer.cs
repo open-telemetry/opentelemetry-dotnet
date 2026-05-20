@@ -1,7 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Buffers;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
@@ -11,6 +13,9 @@ internal static class ProtobufOtlpMetricSerializer
     private const int ReserveSizeForLength = 4;
     private const int TraceIdSize = 16;
     private const int SpanIdSize = 8;
+    private const int InitialMetadataBufferSize = 512;
+
+    private static readonly ConditionalWeakTable<Metric, byte[]> CachedMetricMetadata = new();
 
     [ThreadStatic]
     private static Stack<List<Metric>>? metricListPool;
@@ -172,17 +177,9 @@ internal static class ProtobufOtlpMetricSerializer
         var metricLengthPosition = writePosition;
         writePosition += ReserveSizeForLength;
 
-        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Metric_Name, metric.Name);
-
-        if (metric.Description != null)
-        {
-            writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Metric_Description, metric.Description);
-        }
-
-        if (metric.Unit != null)
-        {
-            writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Metric_Unit, metric.Unit);
-        }
+        var cachedMetadata = CachedMetricMetadata.GetOrAdd(metric, SerializeMetricMetadataToBytes);
+        Buffer.BlockCopy(cachedMetadata, 0, buffer, writePosition, cachedMetadata.Length);
+        writePosition += cachedMetadata.Length;
 
         var aggregationValue = metric.Temporality == AggregationTemporality.Cumulative
             ? ProtobufOtlpMetricFieldNumberConstants.Aggregation_Temporality_Cumulative
@@ -591,5 +588,63 @@ internal static class ProtobufOtlpMetricSerializer
                 fieldNumber,
                 ProtobufWireType.LEN);
         }
+    }
+
+    private static byte[] SerializeMetricMetadataToBytes(Metric metric)
+    {
+        Span<byte> stackBuffer = stackalloc byte[InitialMetadataBufferSize];
+        try
+        {
+            var length = WriteMetricMetadataCore(stackBuffer, 0, metric);
+            return stackBuffer.Slice(0, length).ToArray();
+        }
+        catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
+        {
+            return SerializeMetricMetadataToBytesFromPool(metric);
+        }
+    }
+
+    private static byte[] SerializeMetricMetadataToBytesFromPool(Metric metric)
+    {
+        var pool = ArrayPool<byte>.Shared;
+
+        var buffer = pool.Rent(InitialMetadataBufferSize * 2);
+        try
+        {
+            while (true)
+            {
+                try
+                {
+                    var length = WriteMetricMetadataCore(buffer, 0, metric);
+                    return buffer.AsSpan(0, length).ToArray();
+                }
+                catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
+                {
+                    pool.Return(buffer);
+                    buffer = pool.Rent(buffer.Length * 2);
+                }
+            }
+        }
+        finally
+        {
+            pool.Return(buffer);
+        }
+    }
+
+    private static int WriteMetricMetadataCore(Span<byte> buffer, int writePosition, Metric metric)
+    {
+        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Metric_Name, metric.Name);
+
+        if (metric.Description != null)
+        {
+            writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Metric_Description, metric.Description);
+        }
+
+        if (metric.Unit != null)
+        {
+            writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Metric_Unit, metric.Unit);
+        }
+
+        return writePosition;
     }
 }

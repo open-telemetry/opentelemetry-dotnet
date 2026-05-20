@@ -40,6 +40,10 @@ Notes](../../RELEASENOTES.md).
 * Handle `Retry-After` response headers that specify a date instead of a delay.
   ([#7364](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7364))
 
+* Cached pre-serialized metric metadata (`Name` / `Description` / `Unit`) to avoid
+  re-encoding on every OTLP metric export.
+  ([#7307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7307))
+
 ## 1.15.3
 
 Released 2026-Apr-21
