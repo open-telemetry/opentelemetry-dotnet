@@ -7,6 +7,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer
 
 internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.OtlpTagWriterState, ProtobufOtlpTagWriter.OtlpTagWriterArrayState>
 {
+    private const int ReserveSizeForLength = 4;
+
     private ProtobufOtlpTagWriter()
         : base(new OtlpArrayTagWriter())
     {
@@ -99,6 +101,55 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         state.WritePosition = ProtobufSerializer.WriteByteArrayWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.AnyValue_Bytes_Value, value);
 
         return true;
+    }
+
+    protected override void WriteKvListTag(ref OtlpTagWriterState state, string key, IEnumerable<KeyValuePair<string, object?>> kvList, int? tagValueMaxLength)
+    {
+        var startPosition = state.WritePosition;
+
+        state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Key, key);
+
+        // Reserve space for KeyValue.value (AnyValue wrapper)
+        state.WritePosition = ProtobufSerializer.WriteTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value, ProtobufWireType.LEN);
+        int anyValueLengthPos = state.WritePosition;
+        state.WritePosition += ReserveSizeForLength;
+
+        // Reserve space for AnyValue.kvlist_value (KeyValueList wrapper)
+        state.WritePosition = ProtobufSerializer.WriteTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.AnyValue_Kvlist_Value, ProtobufWireType.LEN);
+        int kvlistLengthPos = state.WritePosition;
+        state.WritePosition += ReserveSizeForLength;
+
+        try
+        {
+            foreach (var kvp in kvList)
+            {
+                var startEntryPosition = state.WritePosition;
+
+                // Write KeyValueList.values tag (field 1, LEN) + reserve length per entry
+                state.WritePosition = ProtobufSerializer.WriteTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValueList_Values, ProtobufWireType.LEN);
+                int entryLengthPos = state.WritePosition;
+                state.WritePosition += ReserveSizeForLength;
+
+                // Drop a tag if we fail to write it, and reset the position to the start of the entry to overwrite the reserved tag and length for the next entry.
+                if (!this.TryWriteTag(ref state, kvp.Key, kvp.Value, tagValueMaxLength))
+                {
+                    state.WritePosition = startEntryPosition;
+                    continue;
+                }
+
+                ProtobufSerializer.WriteReservedLength(state.Buffer, entryLengthPos, state.WritePosition - (entryLengthPos + ReserveSizeForLength));
+            }
+        }
+        catch (Exception)
+        {
+            state.WritePosition = startPosition;
+
+            throw;
+        }
+
+        // Fill in reserved lengths
+        ProtobufSerializer.WriteReservedLength(state.Buffer, kvlistLengthPos, state.WritePosition - (kvlistLengthPos + ReserveSizeForLength));
+        ProtobufSerializer.WriteReservedLength(state.Buffer, anyValueLengthPos, state.WritePosition - (anyValueLengthPos + ReserveSizeForLength));
     }
 
     internal struct OtlpTagWriterState
