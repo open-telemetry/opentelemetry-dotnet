@@ -13,7 +13,8 @@ internal static class ProtobufOtlpMetricSerializer
     private const int ReserveSizeForLength = 4;
     private const int TraceIdSize = 16;
     private const int SpanIdSize = 8;
-    private const int InitialMetadataBufferSize = 512;
+    private const int StackallocByteThreshold = 256;
+    private const int InitialPoolBufferSize = 512;
 
     private static readonly ConditionalWeakTable<Metric, byte[]> CachedMetricMetadata = new();
 
@@ -592,7 +593,7 @@ internal static class ProtobufOtlpMetricSerializer
 
     private static byte[] SerializeMetricMetadataToBytes(Metric metric)
     {
-        Span<byte> stackBuffer = stackalloc byte[InitialMetadataBufferSize];
+        Span<byte> stackBuffer = stackalloc byte[StackallocByteThreshold];
         try
         {
             var length = WriteMetricMetadataCore(stackBuffer, 0, metric);
@@ -608,7 +609,7 @@ internal static class ProtobufOtlpMetricSerializer
     {
         var pool = ArrayPool<byte>.Shared;
 
-        var buffer = pool.Rent(InitialMetadataBufferSize * 2);
+        var buffer = pool.Rent(InitialPoolBufferSize);
         try
         {
             while (true)
