@@ -1047,6 +1047,36 @@ public class MetricViewTests : MetricTestsBase
     }
 
     [Fact]
+    public void SynchronousCounterWithTagFilteringDoesNotSpatiallyAggregateTest()
+    {
+        // Regression guard for the ObservableCounter spatial aggregation fix.
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("requests", new MetricStreamConfiguration() { TagKeys = [] })
+            .AddInMemoryExporter(exportedItems));
+
+        var counter = meter.CreateCounter<long>("requests");
+        counter.Add(10, new KeyValuePair<string, object?>("verb", "get"));
+        counter.Add(5, new KeyValuePair<string, object?>("verb", "post"));
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        List<MetricPoint> metricPoints = [];
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+
+        Assert.Equal(15, metricPoints[0].GetSumLong());
+    }
+
+    [Fact]
     public void ViewToDropSingleInstrument()
     {
         using var meter = new Meter(Utils.GetCurrentMethodName());
