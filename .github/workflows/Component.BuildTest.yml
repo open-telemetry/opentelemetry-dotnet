@@ -27,6 +27,9 @@ on:
         default: '[ "net462", "net8.0", "net9.0", "net10.0" ]'
         required: false
         type: string
+      trigger:
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -35,7 +38,7 @@ jobs:
   build-test:
 
     strategy:
-      fail-fast: false # ensures the entire test matrix is run, even if one permutation fails
+      fail-fast: ${{ inputs.trigger == 'merge_group' }}
       matrix:
         os: ${{ fromJSON(inputs.os-list) }}
         version: ${{ fromJSON(inputs.tfm-list) }}

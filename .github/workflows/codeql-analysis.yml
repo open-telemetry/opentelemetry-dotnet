@@ -15,3 +15,5 @@ jobs:
       actions: read
       contents: read
       security-events: write
+    with:
+      trigger: ${{ github.event_name }}
