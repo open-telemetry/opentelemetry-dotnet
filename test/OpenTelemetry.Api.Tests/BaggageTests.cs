@@ -175,6 +175,33 @@ public class BaggageTests
     }
 
     [Fact]
+    public async Task CurrentIsIsolatedAcrossAsyncFlows()
+    {
+        Baggage.ClearBaggage();
+        Baggage.SetBaggage(K1, V1);
+
+        await Task.Factory.StartNew(
+            () =>
+            {
+                Assert.Equal(V1, Baggage.GetBaggage(K1));
+                Assert.Null(Baggage.GetBaggage(K2));
+
+                Baggage.SetBaggage(K2, V2);
+
+                Assert.Equal(V1, Baggage.GetBaggage(K1));
+                Assert.Equal(V2, Baggage.GetBaggage(K2));
+            },
+            CancellationToken.None,
+            TaskCreationOptions.None,
+            TaskScheduler.Default);
+
+        Assert.Equal(V1, Baggage.GetBaggage(K1));
+        Assert.Null(Baggage.GetBaggage(K2));
+
+        Baggage.ClearBaggage();
+    }
+
+    [Fact]
     public void EnumeratorTest()
     {
         var list = new List<KeyValuePair<string, string>>(2)
@@ -288,42 +315,155 @@ public class BaggageTests
     }
 
     [Fact]
-    public async Task AsyncLocalTests()
+    public async Task AsyncLocalChildChangesShouldNotFlowBackToParent()
     {
+        Baggage.ClearBaggage();
         Baggage.SetBaggage("key1", "value1");
 
-        await InnerTask();
+        await Task.Run(InnerTask);
 
         Baggage.SetBaggage("key4", "value4");
 
-        Assert.Equal(4, Baggage.Current.Count);
+        Assert.Equal(2, Baggage.Current.Count);
         Assert.Equal("value1", Baggage.GetBaggage("key1"));
-        Assert.Equal("value2", Baggage.GetBaggage("key2"));
-        Assert.Equal("value3", Baggage.GetBaggage("key3"));
+        Assert.Null(Baggage.GetBaggage("key2"));
+        Assert.Null(Baggage.GetBaggage("key3"));
         Assert.Equal("value4", Baggage.GetBaggage("key4"));
+
+        Baggage.ClearBaggage();
 
         static async Task InnerTask()
         {
+            Assert.Equal("value1", Baggage.GetBaggage("key1"));
+            Assert.Null(Baggage.GetBaggage("key2"));
+
             Baggage.SetBaggage("key2", "value2");
 
             await Task.Yield();
 
-            Baggage.SetBaggage("key3", "value3");
+            Assert.Equal("value1", Baggage.GetBaggage("key1"));
+            Assert.Equal("value2", Baggage.GetBaggage("key2"));
 
-            // key2 & key3 changes don't flow backward automatically
+            Baggage.SetBaggage("key3", "value3");
+            Assert.Equal("value3", Baggage.GetBaggage("key3"));
+
+            // key2 & key3 changes should not flow backward into parent context.
         }
     }
 
     [Fact]
-    public void ThreadSafetyTest()
+    public async Task AsyncLocalSiblingTasksShouldNotLeakIntoEachOther()
     {
-        Baggage.SetBaggage("rootKey", "rootValue"); // Note: Required to establish a root ExecutionContext containing the BaggageHolder we use as a lock
+        Baggage.ClearBaggage();
+        Baggage.SetBaggage("root", "r1");
+
+        string? t1SeesT2 = null;
+        string? t2SeesT1 = null;
+
+        var t1 = Task.Run(async () =>
+        {
+            Assert.Equal("r1", Baggage.GetBaggage("root"));
+
+            Baggage.SetBaggage("t1", "v1");
+
+            await Task.Yield();
+
+            t1SeesT2 = Baggage.GetBaggage("t2");
+
+            Assert.Equal("v1", Baggage.GetBaggage("t1"));
+        });
+
+        var t2 = Task.Run(async () =>
+        {
+            Assert.Equal("r1", Baggage.GetBaggage("root"));
+
+            Baggage.SetBaggage("t2", "v2");
+
+            await Task.Yield();
+
+            t2SeesT1 = Baggage.GetBaggage("t1");
+
+            Assert.Equal("v2", Baggage.GetBaggage("t2"));
+        });
+
+        await Task.WhenAll(t1, t2);
+
+        Assert.Null(t1SeesT2);
+        Assert.Null(t2SeesT1);
+        Assert.Equal("r1", Baggage.GetBaggage("root"));
+        Assert.Null(Baggage.GetBaggage("t1"));
+        Assert.Null(Baggage.GetBaggage("t2"));
+
+        Baggage.ClearBaggage();
+    }
+
+    [Fact]
+    public async Task AsyncLocalRemoveAndClearInChildShouldNotAffectParent()
+    {
+        Baggage.ClearBaggage();
+        Baggage.SetBaggage("k1", "v1");
+        Baggage.SetBaggage("k2", "v2");
+
+        await Task.Run(async () =>
+        {
+            Baggage.RemoveBaggage("k1");
+
+            await Task.Yield();
+
+            Baggage.ClearBaggage();
+
+            Assert.Equal(0, Baggage.Current.Count);
+        });
+
+        Assert.Equal("v1", Baggage.GetBaggage("k1"));
+        Assert.Equal("v2", Baggage.GetBaggage("k2"));
+        Assert.Equal(2, Baggage.Current.Count);
+
+        Baggage.ClearBaggage();
+    }
+
+    [Fact]
+    public async Task SuppressedFlowShouldNotCarryParentBaggageIntoChild()
+    {
+        Baggage.ClearBaggage();
+        Baggage.SetBaggage("parent", "p");
+
+        string? childParentValue = "unset";
+
+        Task task;
+
+        using (ExecutionContext.SuppressFlow())
+        {
+            task = Task.Run(() =>
+            {
+                childParentValue = Baggage.GetBaggage("parent");
+                Baggage.SetBaggage("child", "c");
+            });
+        }
+
+        await task;
+
+        Assert.Null(childParentValue);
+        Assert.Equal("p", Baggage.GetBaggage("parent"));
+        Assert.Null(Baggage.GetBaggage("child"));
+
+        Baggage.ClearBaggage();
+    }
+
+    [Fact]
+    public void ParallelFlowsDoNotMutateParentBaggage()
+    {
+        Baggage.ClearBaggage();
+        Baggage.SetBaggage("rootKey", "rootValue");
 
         Parallel.For(0, 100, (i) =>
         {
             Baggage.SetBaggage($"key{i}", $"value{i}");
         });
 
-        Assert.Equal(101, Baggage.Current.Count);
+        Assert.Equal(1, Baggage.Current.Count);
+        Assert.Equal("rootValue", Baggage.GetBaggage("rootKey"));
+
+        Baggage.ClearBaggage();
     }
 }
