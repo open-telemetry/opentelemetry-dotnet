@@ -20,7 +20,8 @@ internal sealed class PrometheusCollectionManager
     private int metricsCacheCount;
     private byte[] plainTextBuffer = new byte[85000]; // encourage the object to live in LOH (large object heap)
     private byte[] openMetricsBuffer = new byte[85000]; // encourage the object to live in LOH (large object heap)
-    private int targetInfoBufferLength = -1; // zero or positive when target_info has been written for the first time
+    private int plainTextTargetInfoBufferLength = -1;
+    private int openMetricsTargetInfoBufferLength = -1;
     private ArraySegment<byte> previousPlainTextDataView;
     private ArraySegment<byte> previousOpenMetricsDataView;
     private int globalLockState;
@@ -237,11 +238,12 @@ internal sealed class PrometheusCollectionManager
 
         try
         {
+            cursor = this.WriteTargetInfo(ref buffer);
+
             if (this.exporter.OpenMetricsRequested)
             {
-                cursor = this.WriteTargetInfo(ref buffer);
-
                 this.scopes.Clear();
+                var scopeInfoMetadataWritten = false;
 
                 foreach (var metric in metrics)
                 {
@@ -250,13 +252,19 @@ internal sealed class PrometheusCollectionManager
                         continue;
                     }
 
-                    if (this.scopes.Add(metric.MeterName))
+                    if (this.scopes.Add(PrometheusSerializer.CreateScopeIdentity(metric)))
                     {
                         while (true)
                         {
                             try
                             {
-                                cursor = PrometheusSerializer.WriteScopeInfo(buffer, cursor, metric.MeterName, openMetricsRequested: true);
+                                if (!scopeInfoMetadataWritten)
+                                {
+                                    cursor = PrometheusSerializer.WriteScopeInfoMetadata(buffer, cursor);
+                                    scopeInfoMetadataWritten = true;
+                                }
+
+                                cursor = PrometheusSerializer.WriteScopeInfoMetric(buffer, cursor, metric);
 
                                 break;
                             }
@@ -292,11 +300,11 @@ internal sealed class PrometheusCollectionManager
                             metricState.Metric,
                             metricState.PrometheusMetric,
                             this.exporter.OpenMetricsRequested,
-                            metricState.WriteType,
-                            metricState.WriteUnit,
-                            metricState.WriteHelp,
-                            metricState.Unit,
-                            metricState.Help);
+                            writeType: metricState.WriteType,
+                            writeUnit: metricState.WriteUnit,
+                            writeHelp: metricState.WriteHelp,
+                            unitOverride: metricState.Unit,
+                            helpOverride: metricState.Help);
 
                         break;
                     }
@@ -356,13 +364,18 @@ internal sealed class PrometheusCollectionManager
 
     private int WriteTargetInfo(ref byte[] buffer)
     {
-        if (this.targetInfoBufferLength < 0)
+        ref var targetInfoBufferLength = ref this.exporter.OpenMetricsRequested
+            ? ref this.openMetricsTargetInfoBufferLength
+            : ref this.plainTextTargetInfoBufferLength;
+
+        if (targetInfoBufferLength < 0)
         {
             while (true)
             {
                 try
                 {
-                    this.targetInfoBufferLength = PrometheusSerializer.WriteTargetInfo(buffer, 0, this.exporter.Resource, openMetricsRequested: true);
+                    targetInfoBufferLength = PrometheusSerializer.WriteTargetInfo(buffer, 0, this.exporter.Resource, this.exporter.OpenMetricsRequested);
+                    targetInfoBufferLength = PrometheusSerializer.WriteTargetInfo(buffer, 0, this.exporter.Resource, this.exporter.OpenMetricsRequested);
 
                     break;
                 }
@@ -376,7 +389,7 @@ internal sealed class PrometheusCollectionManager
             }
         }
 
-        return this.targetInfoBufferLength;
+        return targetInfoBufferLength;
     }
 
     private PrometheusMetric GetPrometheusMetric(Metric metric)
