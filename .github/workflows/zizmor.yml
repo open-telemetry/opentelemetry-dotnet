@@ -17,10 +17,14 @@ jobs:
     name: zizmor
     runs-on: ubuntu-24.04
 
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: false
+
     permissions:
-      actions: read
-      contents: read
-      security-events: write
+      actions: read # Scan GitHub Actions workflows
+      contents: read # Checkout the repository
+      security-events: write # Store results in the Security tab
 
     steps:
 
