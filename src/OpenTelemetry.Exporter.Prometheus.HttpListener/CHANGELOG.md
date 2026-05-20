@@ -81,6 +81,9 @@ Notes](../../RELEASENOTES.md).
   `X-Prometheus-Scrape-Timeout-Seconds` HTTP request header.
   ([#7252](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7252))
 
+* Merge colliding sanitized label keys.
+  ([#7239](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7239))
+
 ## 1.15.3-beta.1
 
 Released 2026-Apr-21
