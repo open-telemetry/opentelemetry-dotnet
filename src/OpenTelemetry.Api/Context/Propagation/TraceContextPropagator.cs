@@ -113,7 +113,8 @@ public class TraceContextPropagator : TextMapPropagator
         var traceparent = string.Create(55, context.ActivityContext, WriteTraceParentIntoSpan);
 #else
         var traceparent = string.Concat("00-", context.ActivityContext.TraceId.ToHexString(), "-", context.ActivityContext.SpanId.ToHexString());
-        traceparent = string.Concat(traceparent, (context.ActivityContext.TraceFlags & ActivityTraceFlags.Recorded) != 0 ? "-01" : "-00");
+        var traceFlags = FormatActivityTraceFlags(context.ActivityContext.TraceFlags);
+        traceparent = string.Concat(traceparent, traceFlags);
 #endif
 
         setter(carrier, TraceParent, traceparent);
@@ -130,6 +131,78 @@ public class TraceContextPropagator : TextMapPropagator
                     setter(carrier, TraceState, normalizedTraceState);
                 }
             }
+        }
+
+#if NET
+        static void WriteTraceParentIntoSpan(Span<char> destination, ActivityContext context)
+        {
+            "00-".CopyTo(destination);
+
+            context.TraceId.ToHexString().CopyTo(destination.Slice(3));
+
+            destination[35] = '-';
+
+            context.SpanId.ToHexString().CopyTo(destination.Slice(36));
+
+            // https://github.com/open-telemetry/opentelemetry-dotnet-contrib/pull/3867
+            // will change this code to use ActivityTraceFlags.RandomTraceId instead of 2.
+            // If new enum values are added in the future the Fallback path will ensure
+            // that the handling is functionally correct, but the condition should be updated
+            // to include the new value(s) for better readability and performance where possible.
+            if (context.TraceFlags == ActivityTraceFlags.Recorded)
+            {
+                "-01".CopyTo(destination[52..]);
+            }
+            else if (context.TraceFlags == (ActivityTraceFlags)2)
+            {
+                "-02".CopyTo(destination[52..]);
+            }
+            else if (context.TraceFlags == (ActivityTraceFlags.Recorded | (ActivityTraceFlags)2))
+            {
+                "-03".CopyTo(destination[52..]);
+            }
+            else
+            {
+                var flags = (byte)context.TraceFlags;
+                destination[52] = '-';
+                destination[53] = GetHexChar(flags >> 4);
+                destination[54] = GetHexChar(flags & 0xF);
+            }
+        }
+#else
+        static string FormatActivityTraceFlags(ActivityTraceFlags flags)
+        {
+            // https://github.com/open-telemetry/opentelemetry-dotnet-contrib/pull/3867
+            // will change this code to use ActivityTraceFlags.RandomTraceId instead of 2.
+            // If new enum values are added in the future the Fallback path will ensure
+            // that the handling is functionally correct, but the switch should be updated
+            // to include the new value(s) for better readability and performance where possible.
+            return flags switch
+            {
+                ActivityTraceFlags.None => "-00",
+                ActivityTraceFlags.Recorded => "-01",
+                (ActivityTraceFlags)2 => "-02",
+                ActivityTraceFlags.Recorded | (ActivityTraceFlags)2 => "-03",
+                _ => Fallback((byte)flags),
+            };
+
+            static string Fallback(byte flags)
+            {
+                Span<char> buffer = stackalloc char[3];
+
+                buffer[0] = '-';
+                buffer[1] = GetHexChar(flags >> 4);
+                buffer[2] = GetHexChar(flags & 0xF);
+
+                return buffer.ToString();
+            }
+        }
+#endif
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static char GetHexChar(int value)
+        {
+            return (char)(value + (value < 10 ? '0' : 'a' - 10));
         }
     }
 
@@ -208,6 +281,13 @@ public class TraceContextPropagator : TextMapPropagator
             traceOptions |= ActivityTraceFlags.Recorded;
         }
 
+        if ((optionsLowByte & 2) == 2)
+        {
+            // https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899
+            // will change this to use ActivityTraceFlags.RandomTraceId instead.
+            traceOptions |= (ActivityTraceFlags)2;
+        }
+
         if ((!bestAttempt) && (traceparent.Length != VersionAndTraceIdAndSpanIdLength + OptionsLength))
         {
             return false;
@@ -248,12 +328,10 @@ public class TraceContextPropagator : TextMapPropagator
             }
 
             hasTraceState = true;
-            if (list.Count == 1)
-            {
-                return TryExtractSingleTracestate(list[0], out tracestateResult);
-            }
 
-            return TryExtractMultipleTracestate(list, out tracestateResult);
+            return list.Count == 1 ?
+                TryExtractSingleTracestate(list[0], out tracestateResult) :
+                TryExtractMultipleTracestate(list, out tracestateResult);
         }
 
         if (tracestateCollection is IReadOnlyList<string> readOnlyList)
@@ -264,12 +342,11 @@ public class TraceContextPropagator : TextMapPropagator
             }
 
             hasTraceState = true;
-            if (readOnlyList.Count == 1)
-            {
-                return TryExtractSingleTracestate(readOnlyList[0], out tracestateResult);
-            }
 
-            return TryExtractMultipleTracestate(readOnlyList, out tracestateResult);
+            return
+                readOnlyList.Count == 1 ?
+                TryExtractSingleTracestate(readOnlyList[0], out tracestateResult) :
+                TryExtractMultipleTracestate(readOnlyList, out tracestateResult);
         }
 
         using var enumerator = tracestateCollection.GetEnumerator();
@@ -280,12 +357,10 @@ public class TraceContextPropagator : TextMapPropagator
 
         hasTraceState = true;
         var singleTraceState = enumerator.Current;
-        if (!enumerator.MoveNext())
-        {
-            return TryExtractSingleTracestate(singleTraceState, out tracestateResult);
-        }
 
-        return TryExtractMultipleTracestate(EnumerateFrom(singleTraceState, enumerator), out tracestateResult);
+        return enumerator.MoveNext() ?
+            TryExtractMultipleTracestate(EnumerateFrom(singleTraceState, enumerator), out tracestateResult) :
+            TryExtractSingleTracestate(singleTraceState, out tracestateResult);
     }
 
     private static IEnumerable<string> EnumerateFrom(string first, IEnumerator<string> enumerator)
@@ -721,22 +796,4 @@ public class TraceContextPropagator : TextMapPropagator
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IsAsciiLetterOrDigitLower(char c)
         => char.IsAsciiDigit(c) || char.IsAsciiLetterLower(c);
-
-#if NET
-    private static void WriteTraceParentIntoSpan(Span<char> destination, ActivityContext context)
-    {
-        "00-".CopyTo(destination);
-        context.TraceId.ToHexString().CopyTo(destination.Slice(3));
-        destination[35] = '-';
-        context.SpanId.ToHexString().CopyTo(destination.Slice(36));
-        if ((context.TraceFlags & ActivityTraceFlags.Recorded) != 0)
-        {
-            "-01".CopyTo(destination.Slice(52));
-        }
-        else
-        {
-            "-00".CopyTo(destination.Slice(52));
-        }
-    }
-#endif
 }

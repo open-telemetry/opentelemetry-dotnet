@@ -83,13 +83,13 @@ internal sealed class PooledBufferStream : Stream
 
         this.ThrowIfDisposed();
 
-        int available = this.length - this.position;
+        var available = this.length - this.position;
         if (available <= 0)
         {
             return 0;
         }
 
-        int toCopy = Math.Min(available, count);
+        var toCopy = Math.Min(available, count);
         Buffer.BlockCopy(this.buffer, this.position, buffer, offset, toCopy);
         this.position += toCopy;
 
@@ -101,13 +101,13 @@ internal sealed class PooledBufferStream : Stream
     {
         this.ThrowIfDisposed();
 
-        int available = this.length - this.position;
+        var available = this.length - this.position;
         if (available <= 0)
         {
             return 0;
         }
 
-        int toCopy = Math.Min(available, destination.Length);
+        var toCopy = Math.Min(available, destination.Length);
         this.buffer.AsSpan(this.position, toCopy).CopyTo(destination);
         this.position += toCopy;
 
@@ -124,7 +124,7 @@ internal sealed class PooledBufferStream : Stream
 
         try
         {
-            int bytesRead = this.Read(buffer.Span);
+            var bytesRead = this.Read(buffer.Span);
             return ValueTask.FromResult(bytesRead);
         }
         catch (Exception ex)
@@ -138,7 +138,7 @@ internal sealed class PooledBufferStream : Stream
     {
         this.ThrowIfDisposed();
 
-        long newOffset = origin switch
+        var newOffset = origin switch
         {
             SeekOrigin.Begin => offset,
             SeekOrigin.Current => this.position + offset,
@@ -146,7 +146,7 @@ internal sealed class PooledBufferStream : Stream
             _ => throw new ArgumentOutOfRangeException(nameof(origin), origin, "Invalid seek origin."),
         };
 
-        if (newOffset < 0 || newOffset > int.MaxValue)
+        if (newOffset is < 0 or > int.MaxValue)
         {
             throw new IOException("Attempted to seek outside the bounds of the stream.");
         }
@@ -163,7 +163,7 @@ internal sealed class PooledBufferStream : Stream
         ArgumentOutOfRangeException.ThrowIfNegative(value, nameof(value));
         ArgumentOutOfRangeException.ThrowIfGreaterThan(value, int.MaxValue, nameof(value));
 
-        int newLength = (int)value;
+        var newLength = (int)value;
         this.EnsureCapacity(newLength);
 
         // If we grew length, zero the gap to preserve typical MemoryStream behavior.
@@ -285,7 +285,7 @@ internal sealed class PooledBufferStream : Stream
     private static int ComputeNewCapacity(int minCapacity, int currentCapacity)
     {
         // Growth heuristic: double, with a small starting point.
-        int newCapacity = currentCapacity switch
+        var newCapacity = currentCapacity switch
         {
             <= 0 => 256,
             < 1024 * 1024 => currentCapacity * 2,
@@ -329,7 +329,7 @@ internal sealed class PooledBufferStream : Stream
     {
         Debug.Assert(additionalCount >= 0, $"{nameof(additionalCount)} is negative.");
 
-        long required = (long)this.position + additionalCount;
+        var required = (long)this.position + additionalCount;
         if (required > int.MaxValue)
         {
             throw new IOException($"The stream's buffer cannot be greater than {int.MaxValue} bytes in length.");
@@ -352,11 +352,11 @@ internal sealed class PooledBufferStream : Stream
     {
         this.ThrowIfDisposed();
 
-        byte[] previous = this.buffer;
+        var previous = this.buffer;
 
-        int newCapacity = ComputeNewCapacity(minCapacity, previous.Length);
+        var newCapacity = ComputeNewCapacity(minCapacity, previous.Length);
 
-        byte[] replacement = this.pool.Rent(newCapacity);
+        var replacement = this.pool.Rent(newCapacity);
 
         if (this.length != 0)
         {
