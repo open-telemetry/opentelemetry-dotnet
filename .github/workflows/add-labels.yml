@@ -3,23 +3,27 @@ on:
   issues:
     types: [ opened ]
 
-  pull_request_target:
+  pull_request_target: # zizmor: ignore[dangerous-triggers] Only code from the main branch is executed
     branches: [ 'main*' ]
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   add-labels-on-issues:
     permissions:
-      issues: write
+      contents: read # To checkout the code
+      issues: write # To add labels to the issue
     if: github.event.repository.fork == false && github.event_name == 'issues' && !github.event.issue.pull_request
 
     runs-on: ubuntu-24.04
 
     steps:
-      - name: check out code
+      - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          filter: 'tree:0'
+          persist-credentials: false
+          show-progress: false
 
       - name: Add labels for package found in bug issue descriptions
         shell: pwsh
@@ -36,16 +40,20 @@ jobs:
 
   add-labels-on-pull-requests:
     permissions:
-      pull-requests: write
+      contents: read # To checkout the code
+      pull-requests: write # To add labels to the PR
     if: github.event.repository.fork == false && github.event_name == 'pull_request_target'
 
     runs-on: ubuntu-24.04
 
     steps:
-      - name: check out code
+      - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          filter: 'tree:0'
+          persist-credentials: false
           ref: ${{ github.event.repository.default_branch }} # Note: Do not run on the PR branch we want to execute add-labels.psm1 from main on the base repo only because pull_request_target can see secrets
+          show-progress: false
 
       - name: Add labels for files changed on pull requests
         shell: pwsh

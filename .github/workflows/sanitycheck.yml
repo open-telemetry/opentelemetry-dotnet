@@ -13,18 +13,27 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-    - name: check out code
+    - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        filter: 'tree:0'
+        persist-credentials: false
+        show-progress: false
 
     - name: check for typos
       uses: crate-ci/typos@aca895bf05aec0cb7dffa6f94495e923224d9f17 # v1.46.2
 
   run-sanitycheck:
+    name: run-sanitycheck
     runs-on: ubuntu-24.04
 
     steps:
-    - name: check out code
+    - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        filter: 'tree:0'
+        persist-credentials: false
+        show-progress: false
 
     - name: detect non-ASCII encoding and trailing space
       run: python3 ./build/scripts/sanitycheck.py
