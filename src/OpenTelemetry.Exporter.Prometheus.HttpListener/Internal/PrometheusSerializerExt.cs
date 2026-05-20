@@ -49,6 +49,11 @@ internal static partial class PrometheusSerializer
             cursor = WriteHelpMetadata(buffer, cursor, prometheusMetric, helpOverride ?? metric.Description, openMetricsRequested);
         }
 
+        if (openMetricsRequested && ShouldWriteCreatedTypeMetadata(metric, prometheusMetric))
+        {
+            cursor = WriteCreatedTypeMetadata(buffer, cursor, prometheusMetric);
+        }
+
         if (!metric.MetricType.IsHistogram())
         {
             var isLongValue = ((int)metric.MetricType & 0b_0000_1111) == 0x0a; // I8
@@ -82,6 +87,11 @@ internal static partial class PrometheusSerializer
                 }
 
                 buffer[cursor++] = ASCII_LINEFEED;
+
+                if (openMetricsRequested && prometheusMetric.Type == PrometheusType.Counter)
+                {
+                    cursor = WriteCreatedMetric(buffer, cursor, metric, prometheusMetric, metricPoint);
+                }
             }
         }
         else
@@ -151,6 +161,11 @@ internal static partial class PrometheusSerializer
                     cursor = WriteLong(buffer, cursor, metricPoint.GetHistogramCount());
 
                     buffer[cursor++] = ASCII_LINEFEED;
+
+                    if (openMetricsRequested)
+                    {
+                        cursor = WriteCreatedMetric(buffer, cursor, metric, prometheusMetric, metricPoint);
+                    }
                 }
             }
         }
@@ -235,5 +250,80 @@ internal static partial class PrometheusSerializer
         exemplar = default;
         return metricPoint.TryGetExemplars(out var exemplars) &&
                TryGetLatestHistogramBucketExemplar(exemplars, lowerBoundExclusive, upperBoundInclusive, out exemplar);
+    }
+
+    private static int WriteCreatedMetric(
+        byte[] buffer,
+        int cursor,
+        Metric metric,
+        PrometheusMetric prometheusMetric,
+        in MetricPoint metricPoint)
+    {
+        if (metricPoint.StartTime == default)
+        {
+            return cursor;
+        }
+
+        cursor = WriteMetricMetadataName(buffer, cursor, prometheusMetric, openMetricsRequested: true);
+
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "_created");
+        cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags, openMetricsRequested: true);
+
+        buffer[cursor++] = unchecked((byte)' ');
+
+        cursor = WriteUnixTimeSeconds(buffer, cursor, metricPoint.StartTime);
+
+        buffer[cursor++] = ASCII_LINEFEED;
+
+        return cursor;
+    }
+
+    private static bool ShouldWriteCreatedTypeMetadata(Metric metric, PrometheusMetric prometheusMetric)
+    {
+        if (prometheusMetric.Type == PrometheusType.Counter)
+        {
+            foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+            {
+                if (metricPoint.StartTime != default)
+                {
+                    return true;
+                }
+            }
+        }
+        else if (prometheusMetric.Type == PrometheusType.Histogram)
+        {
+            foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+            {
+                if (metricPoint.StartTime != default && !HasNegativeBucketBounds(metricPoint))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static bool HasNegativeBucketBounds(in MetricPoint metricPoint)
+    {
+        foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
+        {
+            if (histogramMeasurement.ExplicitBound < 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static int WriteCreatedTypeMetadata(byte[] buffer, int cursor, PrometheusMetric prometheusMetric)
+    {
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# TYPE ");
+        cursor = WriteMetricMetadataName(buffer, cursor, prometheusMetric, openMetricsRequested: true);
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "_created gauge");
+        buffer[cursor++] = ASCII_LINEFEED;
+
+        return cursor;
     }
 }
