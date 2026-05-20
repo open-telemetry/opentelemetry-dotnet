@@ -52,11 +52,13 @@ jobs:
         permission-contents: write
         permission-pull-requests: write
 
-    - name: Check out code
+    - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
+        persist-credentials: true # zizmor: ignore[artipacked] Needed to push commits
         token: ${{ steps.otelbot-token.outputs.token }}
         ref: ${{ github.event.repository.default_branch }}
+        show-progress: false
 
     - name: Setup .NET
       uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
@@ -108,15 +110,19 @@ jobs:
         permission-contents: write
         permission-pull-requests: write
 
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - name: Checkout code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
-        # Note: By default GitHub only fetches 1 commit. We need all the tags
-        # for this work.
+        # Note: By default GitHub only fetches 1 commit. MinVer needs to find
+        # the version tag which is typically NOT on the first commit so we
+        # retrieve them all.
         fetch-depth: 0
+        persist-credentials: true # zizmor: ignore[artipacked] Needed to push commits
         ref: ${{ github.event.repository.default_branch }}
+        show-progress: false
         token: ${{ steps.otelbot-token.outputs.token }}
 
-    - name: Setup dotnet
+    - name: Setup .NET
       uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
 
     - name: Create GitHub Pull Request to update stable build version in props

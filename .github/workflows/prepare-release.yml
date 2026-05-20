@@ -48,9 +48,11 @@ jobs:
         permission-contents: write
         permission-pull-requests: write
 
-    - name: Check out code
+    - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
+        persist-credentials: true # zizmor: ignore[artipacked] Needed to push commits
+        show-progress: false
         token: ${{ steps.otelbot-token.outputs.token }}
 
     - name: Create GitHub Pull Request to prepare release
@@ -96,9 +98,11 @@ jobs:
         permission-contents: read
         permission-pull-requests: write
 
-    - name: Check out code
+    - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
+        persist-credentials: true # zizmor: ignore[artipacked] Needed to push commits
+        show-progress: false
         token: ${{ steps.otelbot-token.outputs.token }}
 
     - name: Lock GitHub Pull Request to prepare release
@@ -139,11 +143,13 @@ jobs:
         permission-contents: write
         permission-pull-requests: write
 
-    - name: Check out code
+    - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         # Note: By default GitHub only fetches 1 commit which fails the git tag operation below
         fetch-depth: 0
+        persist-credentials: true # zizmor: ignore[artipacked] Needed to push commits
+        show-progress: false
         token: ${{ steps.otelbot-token.outputs.token }}
 
     - name: Create release tag
@@ -189,11 +195,13 @@ jobs:
         permission-contents: write
         permission-pull-requests: write
 
-    - name: Check out code
+    - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         # Note: By default GitHub only fetches 1 commit which fails the git tag operation below
         fetch-depth: 0
+        persist-credentials: true # zizmor: ignore[artipacked] Needed to push commits
+        show-progress: false
         token: ${{ steps.otelbot-token.outputs.token }}
 
     - name: Update release date
@@ -240,11 +248,13 @@ jobs:
         permission-contents: write
         permission-pull-requests: write
 
-    - name: Check out code
+    - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         # Note: By default GitHub only fetches 1 commit which fails the git tag operation below
         fetch-depth: 0
+        persist-credentials: true # zizmor: ignore[artipacked] Needed to push commits
+        show-progress: false
         token: ${{ steps.otelbot-token.outputs.token }}
 
     - name: Update release notes

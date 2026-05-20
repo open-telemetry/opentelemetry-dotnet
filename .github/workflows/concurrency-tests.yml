@@ -14,6 +14,7 @@ permissions:
 
 jobs:
   run-concurrency-tests:
+    name: run-concurrency-tests
 
     strategy:
       fail-fast: ${{ inputs.trigger == 'merge_group' }}
@@ -24,9 +25,14 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - name: Checkout code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        filter: 'tree:0'
+        persist-credentials: false
+        show-progress: false
 
-    - name: Setup dotnet
+    - name: Setup .NET
       uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
 
     - name: Run Coyote Tests

@@ -12,9 +12,9 @@ permissions: {}
 jobs:
   analyze:
     permissions:
-      actions: read  # for github/codeql-action/init to get workflow details
-      contents: read  # for actions/checkout to fetch code
-      security-events: write  # for github/codeql-action/analyze to upload SARIF results
+      actions: read # Scan GitHub Actions workflows
+      contents: read # Checkout the repository
+      security-events: write # Store results in the Security tab
     runs-on: windows-latest
 
     strategy:
