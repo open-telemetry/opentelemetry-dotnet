@@ -8,6 +8,8 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 public class ExplicitBucketHistogramConfiguration : HistogramConfiguration
 {
+    internal const int MaxBoundaryCount = 10_000_000;
+
 #pragma warning disable CA1819 // Properties should not return arrays
     /// <summary>
     /// Gets or sets the optional boundaries of the histogram metric stream.
@@ -21,6 +23,7 @@ public class ExplicitBucketHistogramConfiguration : HistogramConfiguration
     /// calculated.</item>
     /// <item>A null value would result in default bucket boundaries being
     /// used.</item>
+    /// <item>The array must not contain more than 10,000,000 values.</item>
     /// </list>
     /// Note: A copy is made of the provided array.
     /// </remarks>
@@ -33,6 +36,8 @@ public class ExplicitBucketHistogramConfiguration : HistogramConfiguration
         {
             if (value != null)
             {
+                ThrowIfBoundaryCountExceedsLimit(value.Length, nameof(value));
+
                 if (!IsSortedAndDistinct(value))
                 {
                     throw new ArgumentException($"Histogram boundaries are invalid. Histogram boundaries must be in ascending order with distinct values.", nameof(value));
@@ -48,6 +53,17 @@ public class ExplicitBucketHistogramConfiguration : HistogramConfiguration
     }
 
     internal double[]? CopiedBoundaries { get; private set; }
+
+    internal static void ThrowIfBoundaryCountExceedsLimit(int boundaryCount, string? paramName)
+    {
+        if (boundaryCount > MaxBoundaryCount)
+        {
+            throw new ArgumentOutOfRangeException(
+                paramName,
+                boundaryCount,
+                $"Histogram boundaries are invalid. Maximum supported boundary count is {MaxBoundaryCount}.");
+        }
+    }
 
     private static bool IsSortedAndDistinct(double[] values)
     {

@@ -156,6 +156,80 @@ public class AggregatorTests
     }
 
     [Fact]
+    public void HistogramLargeBucketLookupHandlesMixedSignsAndNaN()
+    {
+        var values = new double[HistogramExplicitBounds.DefaultBoundaryCountForBinarySearch * 4];
+
+        for (var i = 0; i < values.Length; i++)
+        {
+            values[i] = i - (values.Length / 2);
+        }
+
+        var boundaries = new HistogramExplicitBounds(values);
+
+        Assert.Equal(0, boundaries.FindBucketIndex(double.NegativeInfinity));
+        Assert.Equal(0, boundaries.FindBucketIndex(values[0]));
+        Assert.Equal(values.Length / 2, boundaries.FindBucketIndex(0));
+        Assert.Equal(values.Length - 1, boundaries.FindBucketIndex(values[values.Length - 1]));
+        Assert.Equal(values.Length, boundaries.FindBucketIndex(double.PositiveInfinity));
+        Assert.Equal(values.Length, boundaries.FindBucketIndex(double.NaN));
+    }
+
+    [Fact]
+    public void HistogramLargeBucketLookupHandlesPositiveOnlyBoundsAndInfiniteInputBounds()
+    {
+        var values = new double[HistogramExplicitBounds.DefaultBoundaryCountForBinarySearch * 4];
+
+        for (var i = 0; i < values.Length; i++)
+        {
+            values[i] = i;
+        }
+
+        var rawBounds = new double[values.Length + 2];
+        rawBounds[0] = double.NegativeInfinity;
+        Array.Copy(values, 0, rawBounds, 1, values.Length);
+        rawBounds[rawBounds.Length - 1] = double.PositiveInfinity;
+
+        var boundaries = new HistogramExplicitBounds(rawBounds);
+        var midpoint = values.Length / 2;
+        var inRangeValue = values[midpoint - 1] + ((values[midpoint] - values[midpoint - 1]) / 2);
+
+        Assert.Equal(0, boundaries.FindBucketIndex(double.NegativeInfinity));
+        Assert.Equal(midpoint, boundaries.FindBucketIndex(values[midpoint]));
+        Assert.Equal(midpoint, boundaries.FindBucketIndex(inRangeValue));
+        Assert.Equal(values.Length, boundaries.FindBucketIndex(double.PositiveInfinity));
+        Assert.Equal(values.Length, boundaries.FindBucketIndex(double.NaN));
+    }
+
+    [Fact]
+    public void HistogramLargeBucketLookupHandlesDegenerateNaNBounds()
+    {
+        // Ensure the radix lookup fallback works when all bounds collapse to the same sortable key.
+        var values = Enumerable.Repeat(double.NaN, HistogramExplicitBounds.DefaultBoundaryCountForBinarySearch).ToArray();
+
+        var boundaries = new HistogramExplicitBounds(values);
+
+        Assert.Equal(values.Length, boundaries.FindBucketIndex(double.NegativeInfinity));
+        Assert.Equal(values.Length, boundaries.FindBucketIndex(0));
+        Assert.Equal(values.Length, boundaries.FindBucketIndex(double.PositiveInfinity));
+        Assert.Equal(values.Length, boundaries.FindBucketIndex(double.NaN));
+    }
+
+    [Fact]
+    public void HistogramExplicitBoundsCleansInfiniteDisplayBounds()
+    {
+        var boundaries = new HistogramExplicitBounds(
+            [double.NegativeInfinity, 1, 2, double.PositiveInfinity],
+            [double.NegativeInfinity, 10, 20, double.PositiveInfinity]);
+
+        Assert.NotNull(boundaries.Bounds);
+        Assert.NotNull(boundaries.DisplayBounds);
+
+        Assert.Equal([1d, 2d], boundaries.Bounds);
+        Assert.Equal([10d, 20d], boundaries.DisplayBounds);
+    }
+
+    [Fact]
     public void HistogramWithOnlySumCount()
     {
         var boundaries = new HistogramExplicitBounds([]);
@@ -459,7 +533,9 @@ public class AggregatorTests
     }
 
     [Theory]
+#pragma warning disable xUnit1045 // Avoid using TheoryData type arguments that might not be serializable
     [MemberData(nameof(HistogramBoundaryTestCase.HistogramInfinityBoundariesTestCases))]
+#pragma warning restore xUnit1045 // Avoid using TheoryData type arguments that might not be serializable
     internal void HistogramBucketBoundariesTest(HistogramBoundaryTestCase boundaryTestCase)
     {
         // Arrange
