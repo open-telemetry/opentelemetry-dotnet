@@ -5,7 +5,9 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.IO.Compression;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Headers;
 using Microsoft.Net.Http.Headers;
 using OpenTelemetry.Exporter.Prometheus;
 using OpenTelemetry.Internal;
@@ -73,9 +75,11 @@ internal sealed class PrometheusExporterMiddleware
 
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(requestCancelled.Token, httpContext.RequestAborted);
 
-            var protocol = Negotiate(httpContext.Request);
+            var requestHeaders = httpContext.Request.GetTypedHeaders();
 
-            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(protocol.IsOpenMetrics).ConfigureAwait(false);
+            var protocol = Negotiate(requestHeaders);
+
+            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(protocol.IsOpenMetrics);
 
             try
             {
@@ -90,7 +94,7 @@ internal sealed class PrometheusExporterMiddleware
                     response.Headers.Append("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
                     response.ContentType = PrometheusProtocol.GetContentType(protocol);
 
-                    await response.Body.WriteAsync(dataView.Array.AsMemory(0, dataView.Count), linkedCts.Token).ConfigureAwait(false);
+                    await WriteResponseAsync(response, dataView.Array.AsMemory(0, dataView.Count), AcceptsGZip(requestHeaders), linkedCts.Token);
                 }
                 else
                 {
@@ -144,9 +148,9 @@ internal sealed class PrometheusExporterMiddleware
         }
     }
 
-    internal static PrometheusProtocol Negotiate(HttpRequest request)
+    internal static PrometheusProtocol Negotiate(RequestHeaders headers)
     {
-        var acceptHeader = request.GetTypedHeaders().Accept;
+        var acceptHeader = headers.Accept;
 
         if (acceptHeader is not { Count: > 0 })
         {
@@ -283,5 +287,46 @@ internal sealed class PrometheusExporterMiddleware
 
         protocol = new(mediaType, escaping, version, isOpenMetrics);
         return true;
+    }
+
+    private static bool AcceptsGZip(RequestHeaders headers)
+    {
+        if (headers.AcceptEncoding is { Count: > 0 } acceptEncoding)
+        {
+            foreach (var parameter in acceptEncoding)
+            {
+                if (parameter.Quality is not 0 && parameter.Value.Equals("gzip", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static async Task WriteResponseAsync(
+        HttpResponse response,
+        ReadOnlyMemory<byte> content,
+        bool compress,
+        CancellationToken cancellationToken)
+    {
+        if (compress)
+        {
+            response.Headers.Append(HeaderNames.ContentEncoding, "gzip");
+            response.Headers.AppendCommaSeparatedValues(HeaderNames.Vary, HeaderNames.AcceptEncoding);
+
+            await using var gzip = new GZipStream(
+                response.Body,
+                CompressionLevel.Fastest,
+                leaveOpen: true);
+
+            await gzip.WriteAsync(content, cancellationToken);
+            await gzip.FlushAsync(cancellationToken);
+        }
+        else
+        {
+            await response.BodyWriter.WriteAsync(content, cancellationToken);
+        }
     }
 }
