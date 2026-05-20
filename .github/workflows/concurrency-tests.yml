@@ -4,6 +4,10 @@ name: Concurrency Tests
 
 on:
   workflow_call:
+    inputs:
+      trigger:
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -12,7 +16,7 @@ jobs:
   run-concurrency-tests:
 
     strategy:
-      fail-fast: false  # ensures the entire test matrix is run, even if one permutation fails
+      fail-fast: ${{ inputs.trigger == 'merge_group' }}
       matrix:
         os: [ windows-latest, ubuntu-22.04 ]
         version: [ net8.0, net10.0 ]

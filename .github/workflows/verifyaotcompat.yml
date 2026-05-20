@@ -4,6 +4,10 @@ name: Publish & Verify AOT Compatibility
 
 on:
   workflow_call:
+    inputs:
+      trigger:
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -12,7 +16,7 @@ jobs:
   run-verify-aot-compat:
 
     strategy:
-      fail-fast: false # ensures the entire test matrix is run, even if one permutation fails
+      fail-fast: ${{ inputs.trigger == 'merge_group' }}
       matrix:
         os: [ ubuntu-22.04, windows-latest ]
         version: [ net8.0, net9.0, net10.0 ]
