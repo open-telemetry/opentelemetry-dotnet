@@ -74,6 +74,10 @@ public sealed class Metric
 
     internal readonly AggregatorStore AggregatorStore;
 
+    private readonly Lock referenceLock = new();
+
+    private int referenceCount;
+
     internal Metric(
         MetricStreamIdentity instrumentIdentity,
         AggregationTemporality temporality,
@@ -268,4 +272,24 @@ public sealed class Metric
 
     internal int Snapshot()
         => this.AggregatorStore.Snapshot();
+
+    internal void AddReference()
+    {
+        lock (this.referenceLock)
+        {
+            this.referenceCount++;
+        }
+    }
+
+    internal void RemoveReference()
+    {
+        lock (this.referenceLock)
+        {
+            this.referenceCount--;
+            if (this.referenceCount == 0)
+            {
+                MetricReader.DeactivateMetric(this);
+            }
+        }
+    }
 }
