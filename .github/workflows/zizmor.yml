@@ -13,7 +13,8 @@ env:
   TERM: xterm
 
 jobs:
-  lint:
+  zizmor:
+    name: zizmor
     runs-on: ubuntu-24.04
 
     permissions:
