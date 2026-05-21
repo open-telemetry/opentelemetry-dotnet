@@ -60,20 +60,15 @@ function ConvertTo-SafePathSegment {
     $invalidChars.Add([System.IO.Path]::DirectorySeparatorChar) | Out-Null
     $invalidChars.Add([System.IO.Path]::AltDirectorySeparatorChar) | Out-Null
 
-    $safeValue = [string]::Create(
-        $Value.Length,
-        [PSCustomObject]@{
-            Source = $Value
-            InvalidChars = $invalidChars
-        },
-        {
-            param($buffer, $state)
+    $buffer = $Value.ToCharArray()
 
-            for ($i = 0; $i -lt $buffer.Length; $i++) {
-                $char = $state.Source[$i]
-                $buffer[$i] = if ($state.InvalidChars.Contains($char)) { '_' } else { $char }
-            }
-        })
+    for ($i = 0; $i -lt $buffer.Length; $i++) {
+        if ($invalidChars.Contains($buffer[$i])) {
+            $buffer[$i] = '_'
+        }
+    }
+
+    $safeValue = [string]::new($buffer)
 
     $safeValue = $safeValue.TrimEnd('.')
 
