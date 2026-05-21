@@ -20,7 +20,7 @@ on:
         required: false
         type: string
       os-list:
-        default: '[ "windows-latest", "windows-11-arm", "ubuntu-22.04", "ubuntu-22.04-arm" ]'
+        default: '[ "windows-2025", "windows-11-arm", "ubuntu-22.04", "ubuntu-22.04-arm" ]'
         required: false
         type: string
       tfm-list:
@@ -36,6 +36,7 @@ permissions:
 
 jobs:
   build-test:
+    name: build-test
 
     strategy:
       fail-fast: ${{ inputs.trigger == 'merge_group' }}
@@ -43,8 +44,10 @@ jobs:
         os: ${{ fromJSON(inputs.os-list) }}
         version: ${{ fromJSON(inputs.tfm-list) }}
         exclude:
+        # renovate: datasource=github-runners depName=ubuntu depType=github-runner
         - os: ubuntu-22.04
           version: net462
+        # renovate: datasource=github-runners depName=ubuntu depType=github-runner
         - os: ubuntu-22.04-arm
           version: net462
 
@@ -52,17 +55,21 @@ jobs:
     timeout-minutes: 30
 
     env:
+      DISABLE_APP_DOMAIN: ${{ matrix.version == 'net462' && 'false' || 'true' }}
       PROJECT_NAME: ${{ inputs.project-name }}
       PROJECT_BUILD_COMMANDS: ${{ inputs.project-build-commands }}
       TARGET_FRAMEWORK: ${{ matrix.version }}
 
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - name: Checkout code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         # Note: By default GitHub only fetches 1 commit. MinVer needs to find
         # the version tag which is typically NOT on the first commit so we
         # retrieve them all.
         fetch-depth: 0
+        persist-credentials: false
+        show-progress: false
 
     - name: Setup previous .NET runtimes
       uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
@@ -94,7 +101,7 @@ jobs:
         --no-build
         --logger:"GitHubActions;report-warnings=false"
         --logger:"junit;LogFilePath=TestResults/junit.xml"
-        -- RunConfiguration.DisableAppDomain=${{ matrix.version == 'net462' && 'false' || 'true' }}
+        -- RunConfiguration.DisableAppDomain=${env:DISABLE_APP_DOMAIN}
 
     - name: Install coverage tool
       shell: pwsh

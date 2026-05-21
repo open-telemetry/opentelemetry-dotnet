@@ -14,6 +14,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.sha }}
+  cancel-in-progress: false
+
 jobs:
   lint-misspell-sanitycheck:
     uses: ./.github/workflows/sanitycheck.yml
@@ -21,19 +25,26 @@ jobs:
   code-ql:
     uses: ./.github/workflows/codeql-analysis-steps.yml
     permissions:
-      actions: read
-      contents: read
-      security-events: write
+      actions: read # Scan GitHub Actions workflows
+      contents: read # Checkout the repository
+      security-events: write # Store results in the Security tab
     with:
       trigger: ${{ github.event_name }}
 
   detect-changes:
-    runs-on: windows-latest
+    name: Detect changes
+    runs-on: windows-2025
     outputs:
       changes: ${{ steps.changes.outputs.changes }}
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-    - uses: AurorNZ/paths-filter@c9dd42e99db87803313ff6f4b1150cc9f6c836af # v5.0.0
+    - name: Checkout code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        filter: 'tree:0'
+        persist-credentials: false
+        show-progress: false
+    - name: Filter paths
+      uses: AurorNZ/paths-filter@c9dd42e99db87803313ff6f4b1150cc9f6c836af # v5.0.0
       id: changes
       with:
         filters: |
@@ -118,6 +129,7 @@ jobs:
       trigger: ${{ github.event_name }}
 
   otlp-integration-test:
+    name: OTLP integration tests
     needs: detect-changes
     if: |
       contains(needs.detect-changes.outputs.changes, 'api-packages')
@@ -133,13 +145,19 @@ jobs:
     env:
       FRAMEWORK_VERSION: ${{ matrix.version }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          filter: 'tree:0'
+          persist-credentials: false
+          show-progress: false
       - name: Build OTLP test image
         run: docker compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/docker-compose.yml "--file=build/docker-compose.${FRAMEWORK_VERSION}.yml" --project-directory=. --profile build build build-image
       - name: Run OTLP Exporter docker compose
         run: docker compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/docker-compose.yml "--file=build/docker-compose.${FRAMEWORK_VERSION}.yml" --project-directory=. up --exit-code-from=tests --no-build
 
   w3c-trace-context-integration-test:
+    name: W3C Trace Context integration tests
     needs: detect-changes
     if: |
       contains(needs.detect-changes.outputs.changes, 'api-packages')
@@ -153,13 +171,19 @@ jobs:
       matrix:
         version: [ net8.0, net9.0, net10.0 ]
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          filter: 'tree:0'
+          persist-credentials: false
+          show-progress: false
       - name: Run W3C Trace Context docker compose
         run: docker compose --file=test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/docker-compose.yml "--file=build/docker-compose.${FRAMEWORK_VERSION}.yml" --project-directory=. up --exit-code-from=tests --build
         env:
           FRAMEWORK_VERSION: ${{ matrix.version }}
 
   validate-benchmarks:
+    name: Validate benchmarks
     needs: detect-changes
     if: |
       contains(needs.detect-changes.outputs.changes, 'code') ||
@@ -168,7 +192,11 @@ jobs:
     strategy:
       fail-fast: ${{ github.event_name == 'merge_group' }}
       matrix:
-        os: [ ubuntu-24.04, windows-latest ]
+        os:
+          # renovate: datasource=github-runners depName=ubuntu depType=github-runner
+          - ubuntu-24.04
+          # renovate: datasource=github-runners depName=windows depType=github-runner
+          - windows-2025
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     steps:
@@ -236,6 +264,7 @@ jobs:
       trigger: ${{ github.event_name }}
 
   build-test:
+    name: build-test
     needs: [
       detect-changes,
       code-ql,
