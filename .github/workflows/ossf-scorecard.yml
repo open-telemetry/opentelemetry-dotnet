@@ -20,8 +20,11 @@ jobs:
     if: github.event_name != 'schedule' || (github.event_name == 'schedule' && github.event.repository.fork == false)
     runs-on: ubuntu-latest
     permissions:
+      checks: read # Read CI results
       contents: read # Checkout the repository
       id-token: write # Publish Scorecard results with GitHub OIDC
+      issues: read # Read issues
+      pull-requests: read # Read pull requests
       security-events: write # Upload the SARIF results to code scanning
     steps:
       - name: Checkout code
