@@ -14,10 +14,14 @@ on:
       - 'core-*'
       - 'coreunstable-*'
   schedule:
-    - cron: '0 0 * * *' # once in a day at 00:00
+    - cron: '0 0 * * *' # Once a day at 00:00 UTC
 
 permissions:
   contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   automation:
@@ -27,13 +31,14 @@ jobs:
       OTELBOT_DOTNET_PRIVATE_KEY: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
 
   build-pack-publish:
+    name: Build, pack, and publish
     if: github.event_name != 'schedule' || (github.event_name == 'schedule' && github.event.repository.fork == false)
-    runs-on: windows-latest
+    runs-on: windows-2025
     permissions:
-      artifact-metadata: write
-      attestations: write
-      contents: read
-      id-token: write
+      artifact-metadata: write # Publish artifact metadata for the uploaded packages
+      attestations: write # Create GitHub attestations for the build outputs
+      contents: read # Checkout the repository
+      id-token: write # Sign packages and attestations with GitHub OIDC
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       COSIGN_YES: "yes"
@@ -197,6 +202,7 @@ jobs:
       run: dotnet nuget push *.nupkg --api-key ${env:API_KEY} --skip-duplicate --source ${env:SOURCE}
 
   post-build:
+    name: Post build release tasks
     runs-on: ubuntu-24.04
 
     needs:
@@ -206,7 +212,8 @@ jobs:
     if: needs.automation.outputs.enabled && github.event_name == 'push'
 
     steps:
-    - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+    - name: Generate GitHub App token
+      uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
       id: otelbot-token
       with:
         client-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}

@@ -11,11 +11,12 @@ permissions: {}
 
 jobs:
   analyze:
+    name: 'Analyze ${{ matrix.language }}'
     permissions:
       actions: read # Scan GitHub Actions workflows
       contents: read # Checkout the repository
       security-events: write # Store results in the Security tab
-    runs-on: windows-latest
+    runs-on: windows-2025
 
     strategy:
       fail-fast: ${{ inputs.trigger == 'merge_group' }}
@@ -50,6 +51,7 @@ jobs:
           category: '/language:${{ matrix.language }}'
 
   results:
+    name: results
     if: ${{ !cancelled() }}
     needs: [ analyze ]
     runs-on: ubuntu-latest

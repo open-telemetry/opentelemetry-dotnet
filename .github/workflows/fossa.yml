@@ -8,8 +8,13 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   fossa:
+    name: Run FOSSA scan
     runs-on: ubuntu-latest
     if: github.event.repository.fork == false
     steps:

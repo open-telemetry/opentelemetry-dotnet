@@ -1,7 +1,7 @@
 name: "Manage stale issues and pull requests"
 on:
   schedule:
-    - cron: "12 3 * * *"  # arbitrary time not to DDOS GitHub
+    - cron: "12 3 * * *"  # Arbitrary time not to DDoS GitHub
 
 permissions: {}
 

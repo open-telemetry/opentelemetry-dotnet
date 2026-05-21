@@ -10,7 +10,8 @@ permissions:
 
 jobs:
   run-dotnet-format-stable:
-    runs-on: windows-latest
+    name: Run dotnet format (stable)
+    runs-on: windows-2025
 
     steps:
     - name: Checkout code
@@ -32,7 +33,8 @@ jobs:
         ExposeExperimentalFeatures: false
 
   run-dotnet-format-experimental:
-    runs-on: windows-latest
+    name: Run dotnet format (experimental)
+    runs-on: windows-2025
 
     steps:
     - name: Checkout code

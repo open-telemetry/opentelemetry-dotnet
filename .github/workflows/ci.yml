@@ -14,6 +14,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
 jobs:
   lint-misspell-sanitycheck:
     uses: ./.github/workflows/sanitycheck.yml
@@ -28,7 +32,8 @@ jobs:
       trigger: ${{ github.event_name }}
 
   detect-changes:
-    runs-on: windows-latest
+    name: Detect changes
+    runs-on: windows-2025
     outputs:
       changes: ${{ steps.changes.outputs.changes }}
     steps:
@@ -38,7 +43,8 @@ jobs:
         filter: 'tree:0'
         persist-credentials: false
         show-progress: false
-    - uses: AurorNZ/paths-filter@c9dd42e99db87803313ff6f4b1150cc9f6c836af # v5.0.0
+    - name: Filter paths
+      uses: AurorNZ/paths-filter@c9dd42e99db87803313ff6f4b1150cc9f6c836af # v5.0.0
       id: changes
       with:
         filters: |
@@ -123,6 +129,7 @@ jobs:
       trigger: ${{ github.event_name }}
 
   otlp-integration-test:
+    name: OTLP integration tests
     needs: detect-changes
     if: |
       contains(needs.detect-changes.outputs.changes, 'api-packages')
@@ -150,6 +157,7 @@ jobs:
         run: docker compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/docker-compose.yml "--file=build/docker-compose.${FRAMEWORK_VERSION}.yml" --project-directory=. up --exit-code-from=tests --no-build
 
   w3c-trace-context-integration-test:
+    name: W3C Trace Context integration tests
     needs: detect-changes
     if: |
       contains(needs.detect-changes.outputs.changes, 'api-packages')
@@ -175,6 +183,7 @@ jobs:
           FRAMEWORK_VERSION: ${{ matrix.version }}
 
   validate-benchmarks:
+    name: Validate benchmarks
     needs: detect-changes
     if: |
       contains(needs.detect-changes.outputs.changes, 'code') ||
@@ -183,7 +192,11 @@ jobs:
     strategy:
       fail-fast: ${{ github.event_name == 'merge_group' }}
       matrix:
-        os: [ ubuntu-24.04, windows-latest ]
+        os:
+          # renovate: datasource=github-runners depName=ubuntu depType=github-runner
+          - ubuntu-22.04
+          # renovate: datasource=github-runners depName=windows depType=github-runner
+          - windows-2025
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     steps:
