@@ -1,3 +1,6 @@
 rules:
+  dependabot-cooldown:
+    config:
+      days: 3
   secrets-outside-env:
     disable: true

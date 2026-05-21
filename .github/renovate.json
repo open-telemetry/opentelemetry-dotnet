@@ -40,6 +40,8 @@
     "**/__fixtures__/**"
   ],
   "labels": ["dependencies", "infra"],
+  "minimumReleaseAge": "3 days",
+  "minimumReleaseAgeBehaviour": "timestamp-optional",
   "packageRules": [
     {
       "matchManagers": ["dockerfile"],
@@ -62,6 +64,12 @@
       "matchManagers": ["nuget"],
       "matchCurrentValue": "^\\[[^,]+,\\)$",
       "enabled": false
+    },
+    {
+      "extends": ["monorepo:dotnet"],
+      "description": ["Cooldown on .NET updates to maximize batching"],
+      "matchManagers": ["nuget"],
+      "minimumReleaseAge": "6 hours"
     },
     {
       "extends": ["monorepo:dotnet"],
