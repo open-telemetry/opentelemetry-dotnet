@@ -172,7 +172,7 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
     [NonEvent]
     public void ExemplarReservoirException(Exception ex)
     {
-        if (this.IsEnabled(EventLevel.Warning, EventKeywords.All))
+        if (this.IsEnabled(EventLevel.Verbose, EventKeywords.All))
         {
             this.ExemplarReservoirException(ex.ToInvariantString());
         }
@@ -321,7 +321,7 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
     public void MetricViewException(string source, string ex)
         => this.WriteEvent(56, source, ex);
 
-    [Event(57, Message = "Exception thrown by user-supplied ExemplarReservoir.Offer implementation: '{0}'.", Level = EventLevel.Warning)]
+    [Event(57, Message = "Exception thrown by user-supplied ExemplarReservoir.Offer implementation: '{0}'.", Level = EventLevel.Verbose)]
     public void ExemplarReservoirException(string ex)
         => this.WriteEvent(57, ex);
 

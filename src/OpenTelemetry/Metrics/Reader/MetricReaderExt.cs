@@ -181,7 +181,6 @@ public abstract partial class MetricReader
             }
         }
 
-        metrics.TrimExcess();
         return metrics;
     }
 
