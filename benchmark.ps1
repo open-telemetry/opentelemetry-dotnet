@@ -105,6 +105,14 @@ if (-not [string]::IsNullOrWhiteSpace($workingTreeStatus)) {
 $startingBranch = Get-GitOutput -Arguments @("branch", "--show-current")
 $startingCommit = Resolve-GitCommit -RefName "HEAD"
 
+if ($env:GITHUB_ACTIONS -eq "true") {
+    $startingBranch = $env:GITHUB_REF_NAME
+
+    if ($startingBranch -eq "main") {
+        $Baseline = "$startingBranch~1"
+    }
+}
+
 if ([string]::IsNullOrEmpty($Target)) {
     if ([string]::IsNullOrEmpty($startingBranch)) {
         throw "Target must be specified when the repository is in a detached HEAD state."
