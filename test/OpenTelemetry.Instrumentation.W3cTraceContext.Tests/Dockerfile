@@ -40,4 +40,4 @@ RUN tdnf install -y python3-pip \
 ENV SPEC_LEVEL=2
 ENV STRICT_LEVEL=2
 
-ENTRYPOINT ["dotnet", "vstest", "OpenTelemetry.Instrumentation.W3cTraceContext.Tests.dll", "--logger:console;verbosity=detailed"]
+ENTRYPOINT ["dotnet", "vstest", "OpenTelemetry.Instrumentation.W3cTraceContext.Tests.dll"]
