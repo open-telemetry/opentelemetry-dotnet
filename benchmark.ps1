@@ -3,6 +3,55 @@
 #Requires -PSEdition Core
 #Requires -Version 7
 
+<#
+.SYNOPSIS
+Runs BenchmarkDotNet benchmarks for a target git ref and an optional baseline ref.
+
+.DESCRIPTION
+Checks out each requested ref, runs the Benchmarks test project with the supplied
+BenchmarkDotNet filters and options, and writes artifacts into ref-specific
+subdirectories under BenchmarkDotNet.Artifacts in the root of the current repository.
+
+This script requires a clean working tree because it switches refs while running.
+When -Target is omitted, the current branch is used. In a detached HEAD state,
+-Target must be explicitly provided.
+
+.PARAMETER Benchmarks
+One or more BenchmarkDotNet filter expressions to pass through using --filter.
+
+.PARAMETER Target
+The target branch, tag, or commit to benchmark. Defaults to the current branch.
+
+.PARAMETER Baseline
+The baseline branch, tag, or commit to benchmark for comparison. Defaults to "main".
+
+.PARAMETER Job
+The BenchmarkDotNet job to use (e.g. "Short"). Defaults to "Default".
+
+.PARAMETER Runtimes
+One or more target frameworks to benchmark. Defaults to "net10.0".
+
+.PARAMETER EnableMemoryDiagnoser
+Enables the BenchmarkDotNet memory diagnoser.
+
+.PARAMETER EnableEventPipeProfiler
+Enables the BenchmarkDotNet EventPipe profiler.
+
+.PARAMETER SkipBaseline
+Runs only the target benchmark and skips the baseline ref.
+
+.EXAMPLE
+./benchmark.ps1 @("*SamplerBenchmarks*") -SkipBaseline
+
+Runs the matching benchmarks for the current branch only.
+
+.EXAMPLE
+./benchmark.ps1 @("*ExporterBenchmarks*") -Target my-feature -Job Short -Runtimes @("net10.0", "net462")
+
+Runs the matching exporter benchmarks for the my-feature branch and main using the
+"Short" job for .NET 10 and .NET Framework 4.6.2.
+#>
+
 param(
     [Parameter(Mandatory = $true, Position = 0)][string[]] $Benchmarks,
     [Parameter(Mandatory = $false)][string] $Target,
