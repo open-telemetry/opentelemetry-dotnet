@@ -18,7 +18,7 @@ jobs:
   analysis:
     name: Scorecard analysis
     if: github.event_name != 'schedule' || (github.event_name == 'schedule' && github.event.repository.fork == false)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       checks: read # Read CI results
       contents: read # Checkout the repository
