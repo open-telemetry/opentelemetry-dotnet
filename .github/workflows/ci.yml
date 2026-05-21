@@ -181,7 +181,7 @@ jobs:
         if ($IsWindows) {
           $runtimes += "net462"
         }
-        ./benchmark.ps1 @("*SamplerBenchmarks*") -EnableMemoryDiagnoser -Job Short -Runtimes $runtimes
+        ./benchmark.ps1 @("*SamplerBenchmarks*") -EnableMemoryDiagnoser -Job Short -Runtimes $runtimes -SkipBaseline
 
   validate-packages:
     needs: detect-changes

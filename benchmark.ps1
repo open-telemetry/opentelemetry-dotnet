@@ -10,7 +10,8 @@ param(
     [Parameter(Mandatory = $false)][string] $Job = "Default",
     [Parameter(Mandatory = $false)][string[]] $Runtimes = @("net10.0"),
     [Parameter(Mandatory = $false)][switch] $EnableMemoryDiagnoser,
-    [Parameter(Mandatory = $false)][switch] $EnableEventPipeProfiler
+    [Parameter(Mandatory = $false)][switch] $EnableEventPipeProfiler,
+    [Parameter(Mandatory = $false)][switch] $SkipBaseline
 )
 
 $ErrorActionPreference = "Stop"
@@ -155,16 +156,23 @@ $solutionPath = $PSScriptRoot
 $project = Join-Path $solutionPath "test" "Benchmarks" "Benchmarks.csproj"
 $artifacts = Join-Path $solutionPath "BenchmarkDotNet.Artifacts"
 
-$benchmarkRefs = @(
-    [PSCustomObject]@{
-        Name = $targetName
-        Commit = Resolve-GitCommit -RefName $Target
-    },
-    [PSCustomObject]@{
-        Name = $baselineName
-        Commit = Resolve-GitCommit -RefName $Baseline
-    }
-)
+$targetBenchmark = [PSCustomObject]@{
+    Name = $targetName
+    Commit = Resolve-GitCommit -RefName $Target
+}
+
+if ($SkipBaseline) {
+    $benchmarkRefs = @($targetBenchmark)
+}
+else {
+    $benchmarkRefs = @(
+        $targetBenchmark,
+        [PSCustomObject]@{
+            Name = $baselineName
+            Commit = Resolve-GitCommit -RefName $Baseline
+        }
+    )
+}
 
 try {
     foreach ($benchmarkRef in $benchmarkRefs) {
