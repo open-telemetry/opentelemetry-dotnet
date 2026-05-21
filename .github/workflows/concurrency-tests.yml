@@ -20,9 +20,9 @@ jobs:
       fail-fast: ${{ inputs.trigger == 'merge_group' }}
       matrix:
         os:
-          # renovate: datasource=github-runners depName=ubuntu depType=github-runner
-          - ubuntu-22.04
-          # renovate: datasource=github-runners depName=windows depType=github-runner
+          # renovate: datasource=github-runners depType=github-runner
+          - ubuntu-24.04
+          # renovate: datasource=github-runners depType=github-runner
           - windows-2025
         version: [ net8.0, net10.0 ]
         project: [ OpenTelemetry.Tests, OpenTelemetry.Api.Tests ]
