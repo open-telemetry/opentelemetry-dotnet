@@ -1,30 +1,42 @@
-# Called by ci.yml to perform AOT validation
-# See: https://docs.github.com/en/actions/using-workflows/reusing-workflows#creating-a-reusable-workflow
 name: Publish & Verify AOT Compatibility
 
 on:
   workflow_call:
+    inputs:
+      trigger:
+        required: true
+        type: string
 
 permissions:
   contents: read
 
 jobs:
   run-verify-aot-compat:
+    name: Verify AOT compatibility
 
     strategy:
-      fail-fast: false # ensures the entire test matrix is run, even if one permutation fails
+      fail-fast: ${{ inputs.trigger == 'merge_group' }}
       matrix:
-        os: [ ubuntu-22.04, windows-latest ]
+        os:
+          # renovate: datasource=github-runners depName=ubuntu depType=github-runner
+          - ubuntu-22.04
+          # renovate: datasource=github-runners depName=windows depType=github-runner
+          - windows-2025
         version: [ net8.0, net9.0, net10.0 ]
 
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - name: Checkout code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        filter: 'tree:0'
+        persist-credentials: false
+        show-progress: false
 
-    - name: Setup dotnet
+    - name: Setup .NET
       uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
 
-    - name: publish AOT testApp, assert static analysis warning count, and run the app
+    - name: Publish AOT testApp, assert static analysis warning count, and run the app
       shell: pwsh
       run: .\build\scripts\test-aot-compatibility.ps1 ${env:TARGET_FRAMEWORK}
       env:

@@ -1,23 +1,24 @@
-# Syntax: https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions
-# Github Actions Stale: https://github.com/actions/stale
-
 name: "Manage stale issues and pull requests"
 on:
   schedule:
-    - cron: "12 3 * * *"  # arbitrary time not to DDOS GitHub
+    - cron: "12 3 * * *"  # Arbitrary time not to DDoS GitHub
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   stale:
     if: github.event.repository.fork == false
+    concurrency:
+      group: ${{ github.workflow }}
+      cancel-in-progress: false
+    name: stale
     permissions:
-      issues: write  # for actions/stale to close stale issues
-      pull-requests: write  # for actions/stale to close stale PRs
+      issues: write  # For actions/stale to close stale issues
+      pull-requests: write  # For actions/stale to close stale PRs
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/stale@b5d41d4e1d5dceea10e7104786b73624c18a190f # v10.2.0
+      - name: Mark stale issues and pull requests
+        uses: actions/stale@b5d41d4e1d5dceea10e7104786b73624c18a190f # v10.2.0
         with:
           stale-issue-message: 'This issue was marked stale due to lack of activity and will be closed in 7 days. Commenting will instruct the bot to automatically remove the label. This bot runs once per day.'
           close-issue-message: 'Closed as inactive. Feel free to reopen if this issue is still a concern.'
