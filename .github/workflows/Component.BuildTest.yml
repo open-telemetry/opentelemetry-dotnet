@@ -45,7 +45,7 @@ jobs:
         version: ${{ fromJSON(inputs.tfm-list) }}
         exclude:
         # renovate: datasource=github-runners depType=github-runner
-        - os: ubuntu-22.04
+        - os: ubuntu-24.04
           version: net462
         # renovate: datasource=github-runners depType=github-runner
         - os: ubuntu-22.04-arm
