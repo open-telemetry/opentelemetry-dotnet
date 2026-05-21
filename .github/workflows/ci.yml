@@ -194,7 +194,7 @@ jobs:
       matrix:
         os:
           # renovate: datasource=github-runners depName=ubuntu depType=github-runner
-          - ubuntu-22.04
+          - ubuntu-24.04
           # renovate: datasource=github-runners depName=windows depType=github-runner
           - windows-2025
     runs-on: ${{ matrix.os }}

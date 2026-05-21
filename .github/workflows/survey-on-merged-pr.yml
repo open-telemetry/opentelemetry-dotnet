@@ -1,7 +1,7 @@
 name: Survey on Merged PR by Non-Member
 
 on:
-  pull_request_target: # zizmor: ignore[dangerous-triggers] This usage is safe as no user code is excecuted
+  pull_request_target: # zizmor: ignore[dangerous-triggers] This usage is safe as no user code is executed
     branches: [main]
     types: [closed]
 
