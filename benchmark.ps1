@@ -104,12 +104,30 @@ if (-not [string]::IsNullOrWhiteSpace($workingTreeStatus)) {
 
 $startingBranch = Get-GitOutput -Arguments @("branch", "--show-current")
 $startingCommit = Resolve-GitCommit -RefName "HEAD"
+$targetName = $Target
+$baselineName = $Baseline
 
 if ($env:GITHUB_ACTIONS -eq "true") {
-    $startingBranch = $env:GITHUB_REF_NAME
+    if ([string]::IsNullOrEmpty($Target)) {
+        $Target = $env:GITHUB_SHA
 
-    if ($startingBranch -eq "main") {
-        $Baseline = "$startingBranch~1"
+        if (-not [string]::IsNullOrEmpty($env:GITHUB_HEAD_REF)) {
+            $targetName = $env:GITHUB_HEAD_REF
+        }
+        elseif (-not [string]::IsNullOrEmpty($env:GITHUB_REF_NAME)) {
+            $targetName = $env:GITHUB_REF_NAME
+        }
+    }
+
+    if (-not $PSBoundParameters.ContainsKey("Baseline")) {
+        if (-not [string]::IsNullOrEmpty($env:GITHUB_BASE_REF)) {
+            $Baseline = "origin/$($env:GITHUB_BASE_REF)"
+            $baselineName = $env:GITHUB_BASE_REF
+        }
+        elseif ($env:GITHUB_REF_TYPE -eq "branch" -and $env:GITHUB_REF_NAME -like "main*") {
+            $Baseline = "$($env:GITHUB_SHA)~1"
+            $baselineName = "$($env:GITHUB_REF_NAME)~1"
+        }
     }
 }
 
@@ -119,6 +137,14 @@ if ([string]::IsNullOrEmpty($Target)) {
     }
 
     $Target = $startingBranch
+}
+
+if ([string]::IsNullOrEmpty($targetName)) {
+    $targetName = $Target
+}
+
+if ([string]::IsNullOrEmpty($baselineName)) {
+    $baselineName = $Baseline
 }
 
 if ($Target -eq $Baseline) {
@@ -131,11 +157,11 @@ $artifacts = Join-Path $solutionPath "BenchmarkDotNet.Artifacts"
 
 $benchmarkRefs = @(
     [PSCustomObject]@{
-        Name = $Target
+        Name = $targetName
         Commit = Resolve-GitCommit -RefName $Target
     },
     [PSCustomObject]@{
-        Name = $Baseline
+        Name = $baselineName
         Commit = Resolve-GitCommit -RefName $Baseline
     }
 )
