@@ -30,15 +30,14 @@ public sealed class MockCollectorIntegrationTests
     [Fact]
     public async Task TestRecoveryAfterFailedExport()
     {
-        var testGrpcPort = TcpPortProvider.GetOpenPort();
-        var testHttpPort = TcpPortProvider.GetOpenPort();
+        (var grpcPort, var httpPort) = GetTwoOpenPorts();
 
         using var host = await new HostBuilder()
            .ConfigureWebHostDefaults(webBuilder => webBuilder
                 .ConfigureKestrel(options =>
                 {
-                    options.ListenLocalhost(testHttpPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1);
-                    options.ListenLocalhost(testGrpcPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http2);
+                    options.ListenLocalhost(httpPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1);
+                    options.ListenLocalhost(grpcPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http2);
                 })
                .ConfigureServices(services =>
                {
@@ -65,13 +64,13 @@ public sealed class MockCollectorIntegrationTests
                }))
            .StartAsync();
 
-        using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{testHttpPort}") };
+        using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{httpPort}") };
 
         var codes = new[] { Grpc.Core.StatusCode.Unimplemented, Grpc.Core.StatusCode.OK };
         await httpClient.GetAsync(new Uri($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}", UriKind.Relative));
 
         var exportResults = new List<ExportResult>();
-        using var otlpExporter = new OtlpTraceExporter(new OtlpExporterOptions() { Endpoint = new Uri($"http://localhost:{testGrpcPort}") });
+        using var otlpExporter = new OtlpTraceExporter(new OtlpExporterOptions() { Endpoint = new Uri($"http://localhost:{grpcPort}") });
 #pragma warning disable CA2000 // Dispose objects before losing scope
         var delegatingExporter = new DelegatingExporter<Activity>
 #pragma warning disable CA2000 // Dispose objects before losing scope
@@ -134,15 +133,14 @@ public sealed class MockCollectorIntegrationTests
     [InlineData(false, ExportResult.Failure, Grpc.Core.StatusCode.DeadlineExceeded)]
     public async Task GrpcRetryTests(bool useRetryTransmissionHandler, ExportResult expectedResult, Grpc.Core.StatusCode initialStatusCode)
     {
-        var testGrpcPort = TcpPortProvider.GetOpenPort();
-        var testHttpPort = TcpPortProvider.GetOpenPort();
+        (var grpcPort, var httpPort) = GetTwoOpenPorts();
 
         using var host = await new HostBuilder()
            .ConfigureWebHostDefaults(webBuilder => webBuilder
                 .ConfigureKestrel(options =>
                 {
-                    options.ListenLocalhost(testHttpPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1);
-                    options.ListenLocalhost(testGrpcPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http2);
+                    options.ListenLocalhost(httpPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1);
+                    options.ListenLocalhost(grpcPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http2);
                 })
                .ConfigureServices(services =>
                {
@@ -169,13 +167,13 @@ public sealed class MockCollectorIntegrationTests
                }))
            .StartAsync();
 
-        using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{testHttpPort}") };
+        using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{httpPort}") };
 
         // First reply with failure and then Ok
         var codes = new[] { initialStatusCode, Grpc.Core.StatusCode.OK };
         await httpClient.GetAsync(new Uri($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}", UriKind.Relative));
 
-        var endpoint = new Uri($"http://localhost:{testGrpcPort}");
+        var endpoint = new Uri($"http://localhost:{grpcPort}");
 
         var exporterOptions = new OtlpExporterOptions() { Endpoint = endpoint, TimeoutMilliseconds = 20000, Protocol = OtlpExportProtocol.Grpc };
 
@@ -220,13 +218,13 @@ public sealed class MockCollectorIntegrationTests
     [InlineData(false, ExportResult.Failure, HttpStatusCode.BadRequest)]
     public async Task HttpRetryTests(bool useRetryTransmissionHandler, ExportResult expectedResult, HttpStatusCode initialHttpStatusCode)
     {
-        var testHttpPort = TcpPortProvider.GetOpenPort();
+        var httpPort = TcpPortProvider.GetOpenPort();
 
         using var host = await new HostBuilder()
            .ConfigureWebHostDefaults(webBuilder => webBuilder
                 .ConfigureKestrel(options =>
                 {
-                    options.ListenLocalhost(testHttpPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1);
+                    options.ListenLocalhost(httpPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1);
                 })
                .ConfigureServices(services =>
                {
@@ -258,12 +256,12 @@ public sealed class MockCollectorIntegrationTests
                }))
            .StartAsync();
 
-        using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{testHttpPort}") };
+        using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{httpPort}") };
 
         var codes = new[] { initialHttpStatusCode, HttpStatusCode.OK };
         await httpClient.GetAsync(new Uri($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}", UriKind.Relative));
 
-        var endpoint = new Uri($"http://localhost:{testHttpPort}/v1/traces");
+        var endpoint = new Uri($"http://localhost:{httpPort}/v1/traces");
 
         var exporterOptions = new OtlpExporterOptions() { Endpoint = endpoint, TimeoutMilliseconds = 20000, Protocol = OtlpExportProtocol.HttpProtobuf };
 
@@ -306,14 +304,13 @@ public sealed class MockCollectorIntegrationTests
     [InlineData(false, ExportResult.Failure, HttpStatusCode.BadRequest)]
     public async Task HttpPersistentStorageRetryTests(bool usePersistentStorageTransmissionHandler, ExportResult expectedResult, HttpStatusCode initialHttpStatusCode)
     {
-        var testGrpcPort = TcpPortProvider.GetOpenPort();
-        var testHttpPort = TcpPortProvider.GetOpenPort();
+        (var grpcPort, var httpPort) = GetTwoOpenPorts();
 
         using var host = await new HostBuilder()
            .ConfigureWebHostDefaults(webBuilder => webBuilder
                 .ConfigureKestrel(options =>
                 {
-                    options.ListenLocalhost(testHttpPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1);
+                    options.ListenLocalhost(httpPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1);
                 })
                .ConfigureServices(services =>
                {
@@ -345,12 +342,12 @@ public sealed class MockCollectorIntegrationTests
                }))
            .StartAsync();
 
-        using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{testHttpPort}") };
+        using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{httpPort}") };
 
         var codes = new[] { initialHttpStatusCode, HttpStatusCode.OK };
         await httpClient.GetAsync(new Uri($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}", UriKind.Relative));
 
-        var endpoint = new Uri($"http://localhost:{testHttpPort}/v1/traces");
+        var endpoint = new Uri($"http://localhost:{httpPort}/v1/traces");
 
         var exporterOptions = new OtlpExporterOptions() { Endpoint = endpoint, TimeoutMilliseconds = 20000 };
 
@@ -444,15 +441,14 @@ public sealed class MockCollectorIntegrationTests
     [InlineData(false, ExportResult.Failure, Grpc.Core.StatusCode.DeadlineExceeded)]
     public async Task GrpcPersistentStorageRetryTests(bool usePersistentStorageTransmissionHandler, ExportResult expectedResult, Grpc.Core.StatusCode initialgrpcStatusCode)
     {
-        var testGrpcPort = TcpPortProvider.GetOpenPort();
-        var testHttpPort = TcpPortProvider.GetOpenPort();
+        (var grpcPort, var httpPort) = GetTwoOpenPorts();
 
         using var host = await new HostBuilder()
            .ConfigureWebHostDefaults(webBuilder => webBuilder
                 .ConfigureKestrel(options =>
                 {
-                    options.ListenLocalhost(testHttpPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1);
-                    options.ListenLocalhost(testGrpcPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http2);
+                    options.ListenLocalhost(httpPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1);
+                    options.ListenLocalhost(grpcPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http2);
                 })
                .ConfigureServices(services =>
                {
@@ -479,12 +475,12 @@ public sealed class MockCollectorIntegrationTests
                }))
            .StartAsync();
 
-        using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{testHttpPort}") };
+        using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{httpPort}") };
 
         var codes = new[] { initialgrpcStatusCode, Grpc.Core.StatusCode.OK };
         await httpClient.GetAsync(new Uri($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}", UriKind.Relative));
 
-        var endpoint = new Uri($"http://localhost:{testGrpcPort}");
+        var endpoint = new Uri($"http://localhost:{grpcPort}");
 
         var exporterOptions = new OtlpExporterOptions() { Endpoint = endpoint, TimeoutMilliseconds = 20000 };
 
@@ -550,6 +546,19 @@ public sealed class MockCollectorIntegrationTests
         transmissionHandler.Shutdown(0);
 
         transmissionHandler.Dispose();
+    }
+
+    private static (int First, int Second) GetTwoOpenPorts()
+    {
+        int first = TcpPortProvider.GetOpenPort();
+        int second;
+
+        while ((second = TcpPortProvider.GetOpenPort()) == first)
+        {
+            // Try again
+        }
+
+        return (first, second);
     }
 
     private sealed class MockCollectorState

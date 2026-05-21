@@ -105,10 +105,10 @@ public static class MeterProviderBuilderExtensions
     {
         Guard.ThrowIfNull(instrumentName);
 
-        if (!MeterProviderBuilderSdk.IsValidInstrumentName(name))
-        {
-            throw new ArgumentException($"Custom view name {name} is invalid.", nameof(name));
-        }
+        // Per the OpenTelemetry specification, the View-provided stream name
+        // is not subject to the instrument name syntax and the SDK MUST NOT
+        // validate it against that syntax. See:
+        // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view
 
 #pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
 #if NET || NETSTANDARD2_1_OR_GREATER
