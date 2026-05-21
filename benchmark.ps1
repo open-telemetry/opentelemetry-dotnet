@@ -17,6 +17,73 @@ $ErrorActionPreference = "Stop"
 $InformationPreference = "Continue"
 $ProgressPreference = "SilentlyContinue"
 
+function Invoke-Git {
+    param(
+        [Parameter(Mandatory = $true)][string[]] $Arguments
+    )
+
+    & git @Arguments
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "git $($Arguments -join ' ') failed with exit code $LASTEXITCODE."
+    }
+}
+
+function Get-GitOutput {
+    param(
+        [Parameter(Mandatory = $true)][string[]] $Arguments
+    )
+
+    $output = & git @Arguments
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "git $($Arguments -join ' ') failed with exit code $LASTEXITCODE."
+    }
+
+    return ($output | Out-String).Trim()
+}
+
+function Resolve-GitCommit {
+    param(
+        [Parameter(Mandatory = $true)][string] $RefName
+    )
+
+    return Get-GitOutput -Arguments @("rev-parse", "--verify", "--end-of-options", "$RefName`^{commit}")
+}
+
+function ConvertTo-SafePathSegment {
+    param(
+        [Parameter(Mandatory = $true)][string] $Value
+    )
+
+    $invalidChars = [System.Collections.Generic.HashSet[char]]::new([System.IO.Path]::GetInvalidFileNameChars())
+    $invalidChars.Add([System.IO.Path]::DirectorySeparatorChar) | Out-Null
+    $invalidChars.Add([System.IO.Path]::AltDirectorySeparatorChar) | Out-Null
+
+    $safeValue = [string]::Create(
+        $Value.Length,
+        [PSCustomObject]@{
+            Source = $Value
+            InvalidChars = $invalidChars
+        },
+        {
+            param($buffer, $state)
+
+            for ($i = 0; $i -lt $buffer.Length; $i++) {
+                $char = $state.Source[$i]
+                $buffer[$i] = if ($state.InvalidChars.Contains($char)) { '_' } else { $char }
+            }
+        })
+
+    $safeValue = $safeValue.TrimEnd('.')
+
+    if ([string]::IsNullOrEmpty($safeValue)) {
+        return "_"
+    }
+
+    return $safeValue
+}
+
 $Configuration = "Release"
 $Framework = "net10.0"
 
@@ -28,8 +95,27 @@ if ($Runtimes.Count -eq 0) {
     throw "At least one .NET runtime must be specified."
 }
 
+$unsupportedRuntimes = $Runtimes | Where-Object { $_ -match "^net4\d+$" }
+
+if (-not $IsWindows -and $unsupportedRuntimes.Count -gt 0) {
+    throw ".NET Framework runtimes ($($unsupportedRuntimes -join ", ")) are only supported on Windows."
+}
+
+$workingTreeStatus = Get-GitOutput -Arguments @("status", "--porcelain")
+
+if (-not [string]::IsNullOrWhiteSpace($workingTreeStatus)) {
+    throw "The git working tree must be clean before running benchmarks."
+}
+
+$startingBranch = Get-GitOutput -Arguments @("branch", "--show-current")
+$startingCommit = Resolve-GitCommit -RefName "HEAD"
+
 if ([string]::IsNullOrEmpty($Target)) {
-    $Target = (git branch --show-current).Trim()
+    if ([string]::IsNullOrEmpty($startingBranch)) {
+        throw "Target must be specified when the repository is in a detached HEAD state."
+    }
+
+    $Target = $startingBranch
 }
 
 if ($Target -eq $Baseline) {
@@ -40,57 +126,75 @@ $solutionPath = $PSScriptRoot
 $project = Join-Path $solutionPath "test" "Benchmarks" "Benchmarks.csproj"
 $artifacts = Join-Path $solutionPath "BenchmarkDotNet.Artifacts"
 
-$branches = @($Target, $Baseline)
-
-foreach ($branch in $branches) {
-
-    Write-Information "Checking out branch '$branch'..."
-
-    git checkout $branch
-
-    if ($LASTEXITCODE -ne 0) {
-      throw "git checkout $branch failed with exit code $LASTEXITCODE"
+$benchmarkRefs = @(
+    [PSCustomObject]@{
+        Name = $Target
+        Commit = Resolve-GitCommit -RefName $Target
+    },
+    [PSCustomObject]@{
+        Name = $Baseline
+        Commit = Resolve-GitCommit -RefName $Baseline
     }
+)
 
-    Write-Information "Running benchmarks for branch '$branch'..."
+try {
+    foreach ($benchmarkRef in $benchmarkRefs) {
+        $branch = $benchmarkRef.Name
 
-    $additionalArgs = @()
+        Write-Information "Checking out ref '$branch'..."
 
-    $additionalArgs += "--artifacts"
-    $additionalArgs += (Join-Path $artifacts $branch.Replace("/", "_"))
+        Invoke-Git -Arguments @("switch", "--detach", "--", $benchmarkRef.Commit)
 
-    $additionalArgs += "--runtimes"
-    $additionalArgs += $Runtimes
+        Write-Information "Running benchmarks for ref '$branch'..."
 
-    $additionalArgs += "--filter"
-    $additionalArgs += $Benchmarks
+        $additionalArgs = @()
 
-    if (-Not [string]::IsNullOrEmpty($Job)) {
-        $additionalArgs += "--job"
-        $additionalArgs += $Job
+        $additionalArgs += "--artifacts"
+        $additionalArgs += (Join-Path $artifacts (ConvertTo-SafePathSegment -Value $branch))
+
+        $additionalArgs += "--runtimes"
+        $additionalArgs += $Runtimes
+
+        $additionalArgs += "--filter"
+        $additionalArgs += $Benchmarks
+
+        if (-Not [string]::IsNullOrEmpty($Job)) {
+            $additionalArgs += "--job"
+            $additionalArgs += $Job
+        }
+
+        if ($EnableMemoryDiagnoser) {
+            $additionalArgs += "--memory"
+        }
+
+        if ($EnableEventPipeProfiler) {
+            $additionalArgs += "--profiler"
+            $additionalArgs += "EP"
+        }
+
+        $dotnetArgs = @(
+            "run"
+            "--configuration", $Configuration
+            "--framework", $Framework
+            "--project", $project
+            "--"
+        ) + $additionalArgs
+
+        $p = Start-Process -FilePath "dotnet" -ArgumentList $dotnetArgs -NoNewWindow -Wait -PassThru
+
+        if ($p.ExitCode -ne 0) {
+            throw "Benchmarks failed with exit code $($p.ExitCode)."
+        }
     }
-
-    if ($EnableMemoryDiagnoser) {
-        $additionalArgs += "--memory"
+}
+finally {
+    if (-not [string]::IsNullOrEmpty($startingBranch)) {
+        Write-Information "Restoring original ref '$startingBranch'..."
+        Invoke-Git -Arguments @("switch", "--", $startingBranch)
     }
-
-    if ($EnableEventPipeProfiler) {
-        $additionalArgs += "--profiler"
-        $additionalArgs += "EP"
-    }
-
-    $dotnetArgs = @(
-        "run"
-        "--configuration", $Configuration
-        "--framework", $Framework
-        "--project", $project
-        "--"
-    ) + $additionalArgs
-
-    $p = Start-Process -FilePath "dotnet" -ArgumentList $dotnetArgs -NoNewWindow -Wait -PassThru
-
-    if ($p.ExitCode -ne 0) {
-        throw "Benchmarks failed with exit code $($p.ExitCode)."
+    else {
+        Write-Information "Restoring original ref '$startingCommit'..."
+        Invoke-Git -Arguments @("switch", "--detach", "--", $startingCommit)
     }
 }
 
