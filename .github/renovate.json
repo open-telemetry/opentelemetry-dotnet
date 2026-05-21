@@ -13,7 +13,7 @@
         "/(^|/)action\\.ya?ml$/"
       ],
       "matchStrings": [
-        "# renovate:\\s*datasource=(?<datasource>github-runners)\\s+depName=(?<depName>[^\\s]+)(?:\\s+[A-Za-z][A-Za-z0-9_-]*=[^\\s]+)*?(?:\\s+versioning=(?<versioning>[^\\s]+))?(?:\\s+[A-Za-z][A-Za-z0-9_-]*=[^\\s]+)*\\s*\\r?\\n\\s*(?:-\\s*)?(?:[A-Za-z0-9_-]+:\\s*)?['\"]?(?<currentValue>[A-Za-z0-9._-]+)['\"]?"
+        "# renovate:\\s*datasource=(?<datasource>github-runners)(?:\\s+[A-Za-z][A-Za-z0-9_-]*=[^\\s]+)*?(?:\\s+versioning=(?<versioning>[^\\s]+))?(?:\\s+[A-Za-z][A-Za-z0-9_-]*=[^\\s]+)*\\s*\\r?\\n\\s*(?:-\\s*)?(?:[A-Za-z0-9_-]+:\\s*)?['\"]?(?<depName>[a-zA-Z]+)-(?<currentValue>[A-Za-z0-9._-]+)['\"]?"
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}github-runner{{/if}}"
     }
