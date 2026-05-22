@@ -54,7 +54,7 @@ jobs:
     name: results
     if: ${{ !cancelled() }}
     needs: [ analyze ]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Report status

@@ -15,7 +15,7 @@ concurrency:
 jobs:
   fossa:
     name: Run FOSSA scan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: github.event.repository.fork == false
     steps:
       - name: Checkout code
