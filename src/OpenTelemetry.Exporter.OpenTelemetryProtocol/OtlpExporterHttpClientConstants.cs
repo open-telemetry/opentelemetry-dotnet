@@ -9,11 +9,11 @@ namespace OpenTelemetry.Exporter;
 public static class OtlpExporterHttpClientConstants
 {
     /// <summary>The <see cref="System.Net.Http.HttpClient"/> name used for the OTLP trace exporter.</summary>
-    public const string TraceExporterHttpClientName = "OtlpTraceExporter";
+    public static readonly string TraceExporterHttpClientName = nameof(OtlpTraceExporter);
 
     /// <summary>The <see cref="System.Net.Http.HttpClient"/> name used for the OTLP log exporter.</summary>
-    public const string LogExporterHttpClientName = "OtlpLogExporter";
+    public static readonly string LogExporterHttpClientName = nameof(OtlpLogExporter);
 
     /// <summary>The <see cref="System.Net.Http.HttpClient"/> name used for the OTLP metric exporter.</summary>
-    public const string MetricExporterHttpClientName = "OtlpMetricExporter";
+    public static readonly string MetricExporterHttpClientName = nameof(OtlpMetricExporter);
 }
