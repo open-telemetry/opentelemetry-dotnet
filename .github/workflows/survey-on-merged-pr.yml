@@ -1,7 +1,7 @@
 name: Survey on Merged PR by Non-Member
 
 on:
-  pull_request_target:
+  pull_request_target: # zizmor: ignore[dangerous-triggers] This usage is safe as no user code is executed
     branches: [main]
     types: [closed]
 
@@ -10,9 +10,12 @@ permissions: {}
 jobs:
   comment-on-pr:
     name: Add survey to PR if author is not a member
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: false
     permissions:
-      pull-requests: write
-    runs-on: ubuntu-latest
+      pull-requests: write # To add comment to the PR
+    runs-on: ubuntu-24.04
     # Only run for merged pull requests by non-members users (i.e. not bots or opentelemetrybot)
     if: |
       github.event.pull_request.merged &&
