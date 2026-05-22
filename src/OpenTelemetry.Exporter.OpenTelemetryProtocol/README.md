@@ -619,18 +619,29 @@ services.AddOpenTelemetry()
 
 For users using
 [IHttpClientFactory](https://docs.microsoft.com/dotnet/architecture/microservices/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests)
-you may also customize the named "OtlpTraceExporter" and/or "OtlpMetricExporter"
-`HttpClient` using the built-in `AddHttpClient` extension:
+you may also customize the `HttpClient` for each exporter using the built-in
+`AddHttpClient` extension. The recommended way to obtain the client name is via
+`nameof()` on the exporter type:
 
 ```csharp
+// Traces
 services.AddHttpClient(
-    "OtlpTraceExporter",
+    nameof(OtlpTraceExporter),
+    configureClient: (client) =>
+        client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value"));
+
+// Metrics
+services.AddHttpClient(
+    nameof(OtlpMetricExporter),
+    configureClient: (client) =>
+        client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value"));
+
+// Logs
+services.AddHttpClient(
+    nameof(OtlpLogExporter),
     configureClient: (client) =>
         client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value"));
 ```
-
-> [!NOTE]
-> `IHttpClientFactory` is NOT currently supported by `OtlpLogExporter`.
 
 ## Experimental features
 
