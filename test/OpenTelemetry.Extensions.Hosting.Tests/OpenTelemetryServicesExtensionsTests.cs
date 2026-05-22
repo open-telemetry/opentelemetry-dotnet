@@ -5,6 +5,7 @@ using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
@@ -22,6 +23,8 @@ public class OpenTelemetryServicesExtensionsTests
             services.AddOpenTelemetry();
         });
 
+        builder.ConfigureLogging(logging => logging.SetMinimumLevel(LogLevel.Warning));
+
         var host = builder.Build();
 
         await host.StartAsync();
@@ -34,31 +37,33 @@ public class OpenTelemetryServicesExtensionsTests
     {
         var expectedInnerExceptionThrown = false;
 
-        var builder = new HostBuilder().ConfigureServices(services =>
-        {
-            services.AddOpenTelemetry()
-                .WithTracing(builder =>
-                {
-                    if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
+        var builder = new HostBuilder()
+            .ConfigureLogging((logging) => logging.SetMinimumLevel(LogLevel.Warning))
+            .ConfigureServices(services =>
+            {
+                services.AddOpenTelemetry()
+                    .WithTracing(builder =>
                     {
-                        deferredTracerProviderBuilder.Configure((sp, sdkBuilder) =>
+                        if (builder is IDeferredTracerProviderBuilder deferredTracerProviderBuilder)
                         {
-                            try
+                            deferredTracerProviderBuilder.Configure((sp, sdkBuilder) =>
                             {
-                                // Note: This throws because services cannot be
-                                // registered after IServiceProvider has been
-                                // created.
-                                sdkBuilder.SetSampler<MySampler>();
-                            }
-                            catch (NotSupportedException)
-                            {
-                                expectedInnerExceptionThrown = true;
-                                throw;
-                            }
-                        });
-                    }
-                });
-        });
+                                try
+                                {
+                                    // Note: This throws because services cannot be
+                                    // registered after IServiceProvider has been
+                                    // created.
+                                    sdkBuilder.SetSampler<MySampler>();
+                                }
+                                catch (NotSupportedException)
+                                {
+                                    expectedInnerExceptionThrown = true;
+                                    throw;
+                                }
+                            });
+                        }
+                    });
+            });
 
         var host = builder.Build();
 
