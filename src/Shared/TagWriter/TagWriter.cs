@@ -51,18 +51,32 @@ internal abstract class TagWriter<TTagState, TArrayState>
             case bool b:
                 this.WriteBooleanTag(ref state, key, b);
                 break;
-            case byte:
-            case sbyte:
-            case short:
-            case ushort:
-            case int:
-            case uint:
-            case long:
-                this.WriteIntegralTag(ref state, key, Convert.ToInt64(value, CultureInfo.InvariantCulture));
+            case byte b:
+                this.WriteIntegralTag(ref state, key, b);
                 break;
-            case float:
-            case double:
-                this.WriteFloatingPointTag(ref state, key, Convert.ToDouble(value, CultureInfo.InvariantCulture));
+            case sbyte sb:
+                this.WriteIntegralTag(ref state, key, sb);
+                break;
+            case short s:
+                this.WriteIntegralTag(ref state, key, s);
+                break;
+            case ushort us:
+                this.WriteIntegralTag(ref state, key, us);
+                break;
+            case int i:
+                this.WriteIntegralTag(ref state, key, i);
+                break;
+            case uint ui:
+                this.WriteIntegralTag(ref state, key, ui);
+                break;
+            case long l:
+                this.WriteIntegralTag(ref state, key, l);
+                break;
+            case float f:
+                this.WriteFloatingPointTag(ref state, key, f);
+                break;
+            case double d:
+                this.WriteFloatingPointTag(ref state, key, d);
                 break;
             case Array array:
                 if (value.GetType() == typeof(byte[]) && this.TryWriteByteArrayTag(ref state, key, ((byte[])value).AsSpan()))
@@ -262,18 +276,32 @@ internal abstract class TagWriter<TTagState, TArrayState>
                 case bool b:
                     this.arrayWriter.WriteBooleanValue(ref arrayState, b);
                     break;
-                case byte:
-                case sbyte:
-                case short:
-                case ushort:
-                case int:
-                case uint:
-                case long:
-                    this.arrayWriter.WriteIntegralValue(ref arrayState, Convert.ToInt64(item, CultureInfo.InvariantCulture));
+                case byte b:
+                    this.arrayWriter.WriteIntegralValue(ref arrayState, b);
                     break;
-                case float:
-                case double:
-                    this.arrayWriter.WriteFloatingPointValue(ref arrayState, Convert.ToDouble(item, CultureInfo.InvariantCulture));
+                case sbyte sb:
+                    this.arrayWriter.WriteIntegralValue(ref arrayState, sb);
+                    break;
+                case short s:
+                    this.arrayWriter.WriteIntegralValue(ref arrayState, s);
+                    break;
+                case ushort us:
+                    this.arrayWriter.WriteIntegralValue(ref arrayState, us);
+                    break;
+                case int intValue:
+                    this.arrayWriter.WriteIntegralValue(ref arrayState, intValue);
+                    break;
+                case uint ui:
+                    this.arrayWriter.WriteIntegralValue(ref arrayState, ui);
+                    break;
+                case long l:
+                    this.arrayWriter.WriteIntegralValue(ref arrayState, l);
+                    break;
+                case float f:
+                    this.arrayWriter.WriteFloatingPointValue(ref arrayState, f);
+                    break;
+                case double d:
+                    this.arrayWriter.WriteFloatingPointValue(ref arrayState, d);
                     break;
 
                 // All other types are converted to strings including the following
@@ -359,61 +387,91 @@ internal abstract class TagWriter<TTagState, TArrayState>
         }
     }
 
-    private void WriteStructToArray<TItem>(ref TArrayState arrayState, TItem[] array)
-        where TItem : struct
+    private void WriteStructToArray(ref TArrayState arrayState, char[] array)
     {
         foreach (var item in array)
         {
-            if (typeof(TItem) == typeof(char))
-            {
-                this.WriteCharValue(ref arrayState, (char)(object)item);
-            }
-            else if (typeof(TItem) == typeof(bool))
-            {
-                this.arrayWriter.WriteBooleanValue(ref arrayState, (bool)(object)item);
-            }
-            else if (typeof(TItem) == typeof(byte))
-            {
-                this.arrayWriter.WriteIntegralValue(ref arrayState, (byte)(object)item);
-            }
-            else if (typeof(TItem) == typeof(sbyte))
-            {
-                this.arrayWriter.WriteIntegralValue(ref arrayState, (sbyte)(object)item);
-            }
-            else if (typeof(TItem) == typeof(short))
-            {
-                this.arrayWriter.WriteIntegralValue(ref arrayState, (short)(object)item);
-            }
-            else if (typeof(TItem) == typeof(ushort))
-            {
-                this.arrayWriter.WriteIntegralValue(ref arrayState, (ushort)(object)item);
-            }
-            else if (typeof(TItem) == typeof(int))
-            {
-                this.arrayWriter.WriteIntegralValue(ref arrayState, (int)(object)item);
-            }
-            else if (typeof(TItem) == typeof(uint))
-            {
-                this.arrayWriter.WriteIntegralValue(ref arrayState, (uint)(object)item);
-            }
-            else if (typeof(TItem) == typeof(long))
-            {
-                this.arrayWriter.WriteIntegralValue(ref arrayState, (long)(object)item);
-            }
-            else if (typeof(TItem) == typeof(float))
-            {
-                this.arrayWriter.WriteFloatingPointValue(ref arrayState, (float)(object)item);
-            }
-            else if (typeof(TItem) == typeof(double))
-            {
-                this.arrayWriter.WriteFloatingPointValue(ref arrayState, (double)(object)item);
-            }
-            else
-            {
-                Debug.Fail("Unexpected type encountered");
+            this.WriteCharValue(ref arrayState, item);
+        }
+    }
 
-                throw new NotSupportedException();
-            }
+    private void WriteStructToArray(ref TArrayState arrayState, bool[] array)
+    {
+        foreach (var item in array)
+        {
+            this.arrayWriter.WriteBooleanValue(ref arrayState, item);
+        }
+    }
+
+    private void WriteStructToArray(ref TArrayState arrayState, sbyte[] array)
+    {
+        foreach (var item in array)
+        {
+            this.arrayWriter.WriteIntegralValue(ref arrayState, item);
+        }
+    }
+
+    private void WriteStructToArray(ref TArrayState arrayState, byte[] array)
+    {
+        foreach (var item in array)
+        {
+            this.arrayWriter.WriteIntegralValue(ref arrayState, item);
+        }
+    }
+
+    private void WriteStructToArray(ref TArrayState arrayState, short[] array)
+    {
+        foreach (var item in array)
+        {
+            this.arrayWriter.WriteIntegralValue(ref arrayState, item);
+        }
+    }
+
+    private void WriteStructToArray(ref TArrayState arrayState, ushort[] array)
+    {
+        foreach (var item in array)
+        {
+            this.arrayWriter.WriteIntegralValue(ref arrayState, item);
+        }
+    }
+
+    private void WriteStructToArray(ref TArrayState arrayState, int[] array)
+    {
+        foreach (var item in array)
+        {
+            this.arrayWriter.WriteIntegralValue(ref arrayState, item);
+        }
+    }
+
+    private void WriteStructToArray(ref TArrayState arrayState, uint[] array)
+    {
+        foreach (var item in array)
+        {
+            this.arrayWriter.WriteIntegralValue(ref arrayState, item);
+        }
+    }
+
+    private void WriteStructToArray(ref TArrayState arrayState, long[] array)
+    {
+        foreach (var item in array)
+        {
+            this.arrayWriter.WriteIntegralValue(ref arrayState, item);
+        }
+    }
+
+    private void WriteStructToArray(ref TArrayState arrayState, float[] array)
+    {
+        foreach (var item in array)
+        {
+            this.arrayWriter.WriteFloatingPointValue(ref arrayState, item);
+        }
+    }
+
+    private void WriteStructToArray(ref TArrayState arrayState, double[] array)
+    {
+        foreach (var item in array)
+        {
+            this.arrayWriter.WriteFloatingPointValue(ref arrayState, item);
         }
     }
 
