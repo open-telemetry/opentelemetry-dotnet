@@ -144,7 +144,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
 
         var invocations = 0;
 
-        services.AddHttpClient("OtlpMetricExporter", configureClient: (client) => invocations++);
+        services.AddHttpClient(nameof(OtlpMetricExporter), configureClient: (client) => invocations++);
 
         services.AddOpenTelemetry().WithMetrics(builder => builder
             .AddOtlpExporter(o => o.Protocol = OtlpExportProtocol.HttpProtobuf));

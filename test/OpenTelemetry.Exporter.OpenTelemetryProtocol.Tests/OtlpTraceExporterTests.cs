@@ -122,7 +122,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
 
         var invocations = 0;
 
-        services.AddHttpClient("OtlpTraceExporter", configureClient: (client) => invocations++);
+        services.AddHttpClient(nameof(OtlpTraceExporter), configureClient: (client) => invocations++);
 
         services.AddOpenTelemetry().WithTracing(builder => builder
             .AddOtlpExporter(o => o.Protocol = OtlpExportProtocol.HttpProtobuf));

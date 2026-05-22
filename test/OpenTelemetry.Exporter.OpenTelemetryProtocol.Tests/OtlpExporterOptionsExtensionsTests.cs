@@ -112,7 +112,7 @@ public class OtlpExporterOptionsExtensionsTests
     {
         var services = new ServiceCollection();
 
-        services.AddHttpClient("OtlpLogExporter");
+        services.AddHttpClient(nameof(OtlpLogExporter));
 
         using var serviceProvider = services.BuildServiceProvider();
 
@@ -128,7 +128,7 @@ public class OtlpExporterOptionsExtensionsTests
 
         var originalFactory = options.HttpClientFactory;
 
-        var actual = options.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpLogExporter");
+        var actual = options.TryEnableIHttpClientFactoryIntegration(serviceProvider, nameof(OtlpLogExporter));
 
         Assert.False(actual);
         Assert.Same(originalFactory, options.HttpClientFactory);

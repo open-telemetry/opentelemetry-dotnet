@@ -178,7 +178,7 @@ public static class OtlpMetricExporterExtensions
             serviceProvider.EnsureNoUseOtlpExporterRegistrations();
         }
 
-        exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpMetricExporter");
+        exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, nameof(OtlpMetricExporter));
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
         BaseExporter<Metric> metricExporter = new OtlpMetricExporter(exporterOptions, experimentalOptions);

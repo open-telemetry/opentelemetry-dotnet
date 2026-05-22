@@ -122,7 +122,7 @@ public class OtlpLogExporterTests
 
         var invocations = 0;
 
-        services.AddHttpClient("OtlpLogExporter", configureClient: (client) => invocations++);
+        services.AddHttpClient(nameof(OtlpLogExporter), configureClient: (client) => invocations++);
 
         services.AddLogging(builder =>
         {
@@ -150,7 +150,7 @@ public class OtlpLogExporterTests
 
         var invocations = 0;
 
-        services.AddHttpClient("OtlpLogExporter")
+        services.AddHttpClient(nameof(OtlpLogExporter))
             .ConfigurePrimaryHttpMessageHandler(() => testHandler)
             .AddHttpMessageHandler(sp =>
             {
