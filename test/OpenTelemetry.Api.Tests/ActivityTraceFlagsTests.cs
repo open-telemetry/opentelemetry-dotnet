@@ -21,6 +21,6 @@ public static class ActivityTraceFlagsTests
         // If this test fails, new members have been added to the ActivityTraceFlags
         // enum. Review the code for any changes that are needed to accommodate the
         // new value(s) and then update this test to include them.
-        Assert.Equal<ActivityTraceFlags>([ActivityTraceFlags.None, ActivityTraceFlags.Recorded], actual);
+        Assert.Equal<ActivityTraceFlags>([ActivityTraceFlags.None, ActivityTraceFlags.Recorded, ActivityTraceFlags.RandomTraceId], actual);
     }
 }
