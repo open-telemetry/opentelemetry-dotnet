@@ -3,6 +3,7 @@
 
 using System.Diagnostics.Metrics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using OpenTelemetry.Metrics;
@@ -38,6 +39,36 @@ public static class ProtobufOtlpMetricSerializerTests
         var request = OtlpCollector.ExportMetricsServiceRequest.Parser.ParseFrom(stream);
         var parsedMetric = request.ResourceMetrics[0].ScopeMetrics[0].Metrics[0];
         Assert.Equal(description, parsedMetric.Description);
+    }
+
+    [Fact]
+    public static void WriteMetricsDataDoesNotKeepMetricAlive()
+    {
+        var reference = CreateSerializedMetricWeakReference();
+
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+
+        Assert.False(reference.TryGetTarget(out _), "Metric should not be kept alive after serialization.");
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static WeakReference<Metric> CreateSerializedMetricWeakReference()
+    {
+        var metrics = GenerateMetrics();
+
+        Metric capturedMetric = null!;
+        foreach (var metric in metrics)
+        {
+            capturedMetric = metric;
+            break;
+        }
+
+        var buffer = new byte[16 * 1024];
+        _ = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, Resource.Empty, metrics);
+
+        return new WeakReference<Metric>(capturedMetric);
     }
 
     [Fact]
