@@ -50,6 +50,7 @@ jobs:
         filters: |
           md: ['**.md']
           build: ['build/**', '.github/**/*.yml', '**/*.targets', '**/*.props', 'global.json']
+          github: ['.github/**/*']
           shared: ['src/Shared/**']
           code: ['**.cs', '**.csproj', '.editorconfig']
           solution: ['OpenTelemetry.slnx']
@@ -61,6 +62,15 @@ jobs:
           sdk-package: ['src/OpenTelemetry/**', '!**/*.md']
           unstable-core-packages: ['src/OpenTelemetry.Exporter.Prometheus.AspNetCore/**', 'src/OpenTelemetry.Exporter.Prometheus.HttpListener/**', 'src/OpenTelemetry.Shims.OpenTracing/**', '!**/*.md']
           otlp: ['*/OpenTelemetry.Exporter.OpenTelemetryProtocol*/**', '!**/*.md']
+
+  lint-actions:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'github')
+    uses: ./.github/workflows/actionlint.yml
+    permissions:
+      actions: read # Read GitHub Actions workflows
+      contents: read # Read repository contents
 
   lint-md:
     needs: detect-changes
@@ -268,6 +278,7 @@ jobs:
     needs: [
       detect-changes,
       code-ql,
+      lint-actions,
       lint-misspell-sanitycheck,
       lint-md,
       lint-dotnet-format,
