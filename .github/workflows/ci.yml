@@ -14,6 +14,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.sha }}
+  cancel-in-progress: false
+
 jobs:
   lint-misspell-sanitycheck:
     uses: ./.github/workflows/sanitycheck.yml
@@ -21,22 +25,32 @@ jobs:
   code-ql:
     uses: ./.github/workflows/codeql-analysis-steps.yml
     permissions:
-      actions: read
-      contents: read
-      security-events: write
+      actions: read # Scan GitHub Actions workflows
+      contents: read # Checkout the repository
+      security-events: write # Store results in the Security tab
+    with:
+      trigger: ${{ github.event_name }}
 
   detect-changes:
-    runs-on: windows-latest
+    name: Detect changes
+    runs-on: windows-2025
     outputs:
       changes: ${{ steps.changes.outputs.changes }}
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-    - uses: AurorNZ/paths-filter@c9dd42e99db87803313ff6f4b1150cc9f6c836af # v5.0.0
+    - name: Checkout code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        filter: 'tree:0'
+        persist-credentials: false
+        show-progress: false
+    - name: Filter paths
+      uses: AurorNZ/paths-filter@c9dd42e99db87803313ff6f4b1150cc9f6c836af # v5.0.0
       id: changes
       with:
         filters: |
           md: ['**.md']
           build: ['build/**', '.github/**/*.yml', '**/*.targets', '**/*.props', 'global.json']
+          github: ['.github/**/*']
           shared: ['src/Shared/**']
           code: ['**.cs', '**.csproj', '.editorconfig']
           solution: ['OpenTelemetry.slnx']
@@ -48,6 +62,15 @@ jobs:
           sdk-package: ['src/OpenTelemetry/**', '!**/*.md']
           unstable-core-packages: ['src/OpenTelemetry.Exporter.Prometheus.AspNetCore/**', 'src/OpenTelemetry.Exporter.Prometheus.HttpListener/**', 'src/OpenTelemetry.Shims.OpenTracing/**', '!**/*.md']
           otlp: ['*/OpenTelemetry.Exporter.OpenTelemetryProtocol*/**', '!**/*.md']
+
+  lint-actions:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'github')
+    uses: ./.github/workflows/actionlint.yml
+    permissions:
+      actions: read # Read GitHub Actions workflows
+      contents: read # Read repository contents
 
   lint-md:
     needs: detect-changes
@@ -73,6 +96,7 @@ jobs:
     with:
       project-name: 'OpenTelemetry.slnx'
       code-cov-name: 'Solution'
+      trigger: ${{ github.event_name }}
 
   build-test-project-stable:
     needs: detect-changes
@@ -85,6 +109,7 @@ jobs:
       project-name: './build/OpenTelemetry.proj'
       project-build-commands: '-p:ExposeExperimentalFeatures=false'
       code-cov-name: 'Project-Stable'
+      trigger: ${{ github.event_name }}
 
   build-test-project-experimental:
     needs: detect-changes
@@ -97,6 +122,7 @@ jobs:
       project-name: './build/OpenTelemetry.proj'
       project-build-commands: '-p:ExposeExperimentalFeatures=true'
       code-cov-name: 'Project-Experimental'
+      trigger: ${{ github.event_name }}
 
   # Build unstable core libraries using stable packages released to NuGet
   build-test-unstable-core:
@@ -110,8 +136,10 @@ jobs:
       project-name: './build/UnstableCoreLibraries.proj'
       project-build-commands: '-p:RunningDotNetPack=true -p:ExposeExperimentalFeatures=true'
       code-cov-name: 'UnstableCoreLibraries-Experimental'
+      trigger: ${{ github.event_name }}
 
   otlp-integration-test:
+    name: OTLP integration tests
     needs: detect-changes
     if: |
       contains(needs.detect-changes.outputs.changes, 'api-packages')
@@ -121,19 +149,25 @@ jobs:
       || contains(needs.detect-changes.outputs.changes, 'shared')
     runs-on: ubuntu-24.04
     strategy:
-      fail-fast: false
+      fail-fast: ${{ github.event_name == 'merge_group' }}
       matrix:
         version: [ net8.0, net9.0, net10.0 ]
     env:
       FRAMEWORK_VERSION: ${{ matrix.version }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          filter: 'tree:0'
+          persist-credentials: false
+          show-progress: false
       - name: Build OTLP test image
         run: docker compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/docker-compose.yml "--file=build/docker-compose.${FRAMEWORK_VERSION}.yml" --project-directory=. --profile build build build-image
       - name: Run OTLP Exporter docker compose
         run: docker compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/docker-compose.yml "--file=build/docker-compose.${FRAMEWORK_VERSION}.yml" --project-directory=. up --exit-code-from=tests --no-build
 
   w3c-trace-context-integration-test:
+    name: W3C Trace Context integration tests
     needs: detect-changes
     if: |
       contains(needs.detect-changes.outputs.changes, 'api-packages')
@@ -143,26 +177,36 @@ jobs:
       || contains(needs.detect-changes.outputs.changes, 'shared')
     runs-on: ubuntu-24.04
     strategy:
-      fail-fast: false
+      fail-fast: ${{ github.event_name == 'merge_group' }}
       matrix:
         version: [ net8.0, net9.0, net10.0 ]
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          filter: 'tree:0'
+          persist-credentials: false
+          show-progress: false
       - name: Run W3C Trace Context docker compose
         run: docker compose --file=test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/docker-compose.yml "--file=build/docker-compose.${FRAMEWORK_VERSION}.yml" --project-directory=. up --exit-code-from=tests --build
         env:
           FRAMEWORK_VERSION: ${{ matrix.version }}
 
   validate-benchmarks:
+    name: Validate benchmarks
     needs: detect-changes
     if: |
       contains(needs.detect-changes.outputs.changes, 'code') ||
       contains(needs.detect-changes.outputs.changes, 'build') ||
       contains(needs.detect-changes.outputs.changes, 'shared')
     strategy:
-      fail-fast: false
+      fail-fast: ${{ github.event_name == 'merge_group' }}
       matrix:
-        os: [ ubuntu-24.04, windows-latest ]
+        os:
+          # renovate: datasource=github-runners depType=github-runner
+          - ubuntu-24.04
+          # renovate: datasource=github-runners depType=github-runner
+          - windows-2025
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     steps:
@@ -215,6 +259,8 @@ jobs:
       || contains(needs.detect-changes.outputs.changes, 'build')
       || contains(needs.detect-changes.outputs.changes, 'shared')
     uses: ./.github/workflows/verifyaotcompat.yml
+    with:
+      trigger: ${{ github.event_name }}
 
   concurrency-tests:
     needs: detect-changes
@@ -224,11 +270,15 @@ jobs:
       || contains(needs.detect-changes.outputs.changes, 'build')
       || contains(needs.detect-changes.outputs.changes, 'shared')
     uses: ./.github/workflows/concurrency-tests.yml
+    with:
+      trigger: ${{ github.event_name }}
 
   build-test:
+    name: build-test
     needs: [
       detect-changes,
       code-ql,
+      lint-actions,
       lint-misspell-sanitycheck,
       lint-md,
       lint-dotnet-format,

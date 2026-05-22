@@ -131,12 +131,18 @@ public abstract partial class MetricReader
                     ? this.exemplarFilterForHistograms ?? this.exemplarFilter
                     : this.exemplarFilter;
 
-                if (!MeterProviderBuilderSdk.IsValidInstrumentName(metricStreamIdentity.InstrumentName))
+                // Per the OpenTelemetry specification, View-provided names are
+                // not subject to the instrument name syntax. Only validate the
+                // name when it originates from the instrument itself (no View
+                // rename). The Meter API does not validate instrument names,
+                // so the SDK must validate them here.
+                if (metricStreamConfig?.Name == null
+                    && !MeterProviderBuilderSdk.IsValidInstrumentName(metricStreamIdentity.InstrumentName))
                 {
                     OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(
                         metricStreamIdentity.InstrumentName,
                         metricStreamIdentity.MeterName,
-                        metricStreamConfig?.Name == null ? "Instrument name is invalid." : "View name is invalid.",
+                        "Instrument name is invalid.",
                         "The name must comply with the OpenTelemetry specification.");
 
                     continue;
