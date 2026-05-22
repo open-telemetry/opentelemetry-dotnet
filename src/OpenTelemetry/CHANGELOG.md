@@ -6,6 +6,11 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Stop validating View-provided metric stream `Name` against the instrument
+  name syntax, per
+  [spec clarification](https://github.com/open-telemetry/opentelemetry-specification/pull/5094).
+  ([#7300](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7300))
+
 * Fix incorrect validation of `OTEL_BSP_*` and `OTEL_BLRP_*` environment
   variables.
   ([#7187](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7187))

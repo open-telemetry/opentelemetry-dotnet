@@ -85,6 +85,16 @@ internal static class Generators
                 activity.AddEvent(new ActivityEvent($"Event_{i}", DateTimeOffset.UtcNow, eventTags));
             }
 
+#if NET
+            var allTraceFlags = Enum.GetValues<ActivityTraceFlags>();
+#else
+            var allTraceFlags = Enum.GetValues(typeof(ActivityTraceFlags)).OfType<ActivityTraceFlags>().ToArray();
+#endif
+
+            var traceFlagsGenerator = Gen
+                .SubListOf(allTraceFlags)
+                .Select((flags) => flags.Aggregate(ActivityTraceFlags.None, (current, next) => current | next));
+
             // Generate links
             var linkCount = Math.Min(size / 10, 10);
             for (var i = 0; i < linkCount; i++)
@@ -97,7 +107,7 @@ internal static class Generators
                 var context = new ActivityContext(
                     ActivityTraceId.CreateRandom(),
                     ActivitySpanId.CreateRandom(),
-                    ActivityTraceFlags.Recorded);
+                    traceFlagsGenerator.Sample(0, 1).First());
 
                 activity.AddLink(new ActivityLink(context, linkTags));
             }

@@ -290,6 +290,7 @@ public class OtlpLogExporterTests
         var hostBuilder = new HostBuilder();
         hostBuilder.ConfigureLogging(logging =>
         {
+            logging.ClearProviders();
             ConfigureOtlpExporter(logging, callUseOpenTelemetry, logRecords: logRecords);
         });
 
