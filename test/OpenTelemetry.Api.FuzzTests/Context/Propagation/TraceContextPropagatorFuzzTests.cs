@@ -39,6 +39,9 @@ public class TraceContextPropagatorFuzzTests
     });
 
     [Property(MaxTest = MaxTests)]
+    public Property ValidTraceStateGeneratorRespectsLengthLimit() => Prop.ForAll(Generators.ValidTraceStateArbitrary(), traceState => traceState.Length <= 512);
+
+    [Property(MaxTest = MaxTests)]
     public Property ExtractIsDeterministicForArbitraryHeaders() => Prop.ForAll(Generators.TraceContextCarrierArbitrary(), (carrier) =>
     {
         try
