@@ -11,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
@@ -122,7 +123,7 @@ public class OtlpLogExporterTests
 
         var invocations = 0;
 
-        services.AddHttpClient("OtlpLogExporter", configureClient: (client) => invocations++);
+        services.AddHttpClient(OtlpExporterHttpClientConstants.LogExporterHttpClientName, configureClient: (client) => invocations++);
 
         services.AddLogging(builder =>
         {
@@ -150,7 +151,7 @@ public class OtlpLogExporterTests
 
         var invocations = 0;
 
-        services.AddHttpClient("OtlpLogExporter")
+        services.AddHttpClient(OtlpExporterHttpClientConstants.LogExporterHttpClientName)
             .ConfigurePrimaryHttpMessageHandler(() => testHandler)
             .AddHttpMessageHandler(sp =>
             {

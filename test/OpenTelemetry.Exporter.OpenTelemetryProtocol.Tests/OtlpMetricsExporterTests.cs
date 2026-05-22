@@ -7,6 +7,7 @@ using System.Reflection;
 using Google.Protobuf;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -144,7 +145,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
 
         var invocations = 0;
 
-        services.AddHttpClient("OtlpMetricExporter", configureClient: (client) => invocations++);
+        services.AddHttpClient(OtlpExporterHttpClientConstants.MetricExporterHttpClientName, configureClient: (client) => invocations++);
 
         services.AddOpenTelemetry().WithMetrics(builder => builder
             .AddOtlpExporter(o => o.Protocol = OtlpExportProtocol.HttpProtobuf));

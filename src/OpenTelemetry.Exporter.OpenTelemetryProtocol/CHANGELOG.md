@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added `OtlpExporterHttpClientConstants` to expose the HTTP client names used
+  by the OTLP trace, metric, and log exporters as public constants.
+  ([#7344](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7344))
+
 * Fixed `NullReferenceException` when exporting logs if the scope key is null.
   ([#7186](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7186))
 

@@ -4,6 +4,7 @@
 using System.Diagnostics;
 using Google.Protobuf.Collections;
 using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
@@ -122,7 +123,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
 
         var invocations = 0;
 
-        services.AddHttpClient("OtlpTraceExporter", configureClient: (client) => invocations++);
+        services.AddHttpClient(OtlpExporterHttpClientConstants.TraceExporterHttpClientName, configureClient: (client) => invocations++);
 
         services.AddOpenTelemetry().WithTracing(builder => builder
             .AddOtlpExporter(o => o.Protocol = OtlpExportProtocol.HttpProtobuf));

@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 #if NET
 using Microsoft.Extensions.DependencyInjection;
 #endif
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
@@ -112,7 +113,7 @@ public class OtlpExporterOptionsExtensionsTests
     {
         var services = new ServiceCollection();
 
-        services.AddHttpClient("OtlpLogExporter");
+        services.AddHttpClient(OtlpExporterHttpClientConstants.LogExporterHttpClientName);
 
         using var serviceProvider = services.BuildServiceProvider();
 
@@ -128,7 +129,7 @@ public class OtlpExporterOptionsExtensionsTests
 
         var originalFactory = options.HttpClientFactory;
 
-        var actual = options.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpLogExporter");
+        var actual = options.TryEnableIHttpClientFactoryIntegration(serviceProvider, OtlpExporterHttpClientConstants.LogExporterHttpClientName);
 
         Assert.False(actual);
         Assert.Same(originalFactory, options.HttpClientFactory);
