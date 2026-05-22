@@ -53,24 +53,6 @@ public static class ProtobufOtlpMetricSerializerTests
         Assert.False(reference.TryGetTarget(out _), "Metric should not be kept alive after serialization.");
     }
 
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private static WeakReference<Metric> CreateSerializedMetricWeakReference()
-    {
-        var metrics = GenerateMetrics();
-
-        Metric capturedMetric = null!;
-        foreach (var metric in metrics)
-        {
-            capturedMetric = metric;
-            break;
-        }
-
-        var buffer = new byte[16 * 1024];
-        _ = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, Resource.Empty, metrics);
-
-        return new WeakReference<Metric>(capturedMetric);
-    }
-
     [Fact]
     public static async Task WriteMetricsData_Serializes_Metrics_Correctly()
     {
@@ -278,5 +260,23 @@ public static class ProtobufOtlpMetricSerializerTests
         }
 
         return metrics;
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static WeakReference<Metric> CreateSerializedMetricWeakReference()
+    {
+        var metrics = GenerateMetrics();
+
+        Metric capturedMetric = null!;
+        foreach (var metric in metrics)
+        {
+            capturedMetric = metric;
+            break;
+        }
+
+        var buffer = new byte[16 * 1024];
+        _ = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, Resource.Empty, metrics);
+
+        return new WeakReference<Metric>(capturedMetric);
     }
 }
