@@ -5,6 +5,8 @@
 version: 2
 updates:
   - package-ecosystem: "nuget"
+    cooldown:
+      default-days: 3
     directory: "/"
     schedule:
       interval: yearly

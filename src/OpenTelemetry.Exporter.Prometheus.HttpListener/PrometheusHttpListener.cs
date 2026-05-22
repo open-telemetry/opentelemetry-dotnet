@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Net;
 using OpenTelemetry.Exporter.Prometheus;
@@ -259,13 +260,9 @@ internal sealed class PrometheusHttpListener : IDisposable
         {
             using var requestCancelled = new CancellationTokenSource();
 
-            int? scrapeTimeoutSeconds = null;
-            if (context.Request.Headers["X-Prometheus-Scrape-Timeout-Seconds"] is { Length: > 0 } value &&
-                int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var parsedValue) &&
-                parsedValue is > 0 and < int.MaxValue / 1_000)
+            if (TryGetScrapeTimeout(context.Request.Headers, out var scrapeTimeout))
             {
-                scrapeTimeoutSeconds = parsedValue;
-                requestCancelled.CancelAfter(TimeSpan.FromSeconds(scrapeTimeoutSeconds.Value));
+                requestCancelled.CancelAfter(scrapeTimeout.GetValueOrDefault());
             }
 
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(requestCancelled.Token, cancellationToken);
@@ -303,9 +300,9 @@ internal sealed class PrometheusHttpListener : IDisposable
             }
             catch (OperationCanceledException ex) when (ex.CancellationToken == requestCancelled.Token)
             {
-                if (scrapeTimeoutSeconds is { } timeout)
+                if (scrapeTimeout is { } timeout)
                 {
-                    PrometheusExporterEventSource.Log.ScrapeTimedOut(timeout);
+                    PrometheusExporterEventSource.Log.ScrapeTimedOut(timeout.TotalSeconds);
                 }
 
                 context.Response.StatusCode = 408;
@@ -333,6 +330,25 @@ internal sealed class PrometheusHttpListener : IDisposable
         }
         catch
         {
+        }
+
+        static bool TryGetScrapeTimeout(
+            System.Collections.Specialized.NameValueCollection headers,
+            [NotNullWhen(true)] out TimeSpan? scrapeTimeout)
+        {
+            const double MinTimeout = 0.001; // 1 millisecond
+            const double MaxTimeout = int.MaxValue / 1_000; // Prevent overflow of TimeSpan.FromSeconds()
+
+            if (headers["X-Prometheus-Scrape-Timeout-Seconds"] is { Length: > 0 } value &&
+                double.TryParse(value, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var scrapeTimeoutSeconds) &&
+                scrapeTimeoutSeconds is >= MinTimeout and <= MaxTimeout)
+            {
+                scrapeTimeout = TimeSpan.FromSeconds(scrapeTimeoutSeconds);
+                return true;
+            }
+
+            scrapeTimeout = null;
+            return false;
         }
     }
 }

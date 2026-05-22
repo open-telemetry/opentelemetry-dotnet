@@ -391,8 +391,10 @@ public sealed class PrometheusExporterMiddlewareTests
         Assert.Equal(StatusCodes.Status408RequestTimeout, context.Response.StatusCode);
     }
 
-    [Fact]
-    public async Task PrometheusExporterMiddlewareInvokeAsync_WhenRequestDeadlineExceeded_Returns408()
+    [Theory]
+    [InlineData("0.9")]
+    [InlineData("1")]
+    public async Task PrometheusExporterMiddlewareInvokeAsync_WhenRequestDeadlineExceeded_Returns408(string value)
     {
         using var exporter = new PrometheusExporter(new PrometheusExporterOptions());
 
@@ -406,7 +408,7 @@ public sealed class PrometheusExporterMiddlewareTests
 
         var context = new DefaultHttpContext();
 
-        context.Request.Headers.Append("X-Prometheus-Scrape-Timeout-Seconds", "1");
+        context.Request.Headers.Append("X-Prometheus-Scrape-Timeout-Seconds", value);
 
         await middleware.InvokeAsync(context);
 
@@ -416,10 +418,14 @@ public sealed class PrometheusExporterMiddlewareTests
     [Theory]
     [InlineData("-1")]
     [InlineData("0")]
-    [InlineData("0.9")]
-    [InlineData("1.1")]
-    [InlineData("2147484")]
+    [InlineData("0.0009")]
+    [InlineData("2147483")]
+    [InlineData("2147483.1")]
+    [InlineData("1.05e+003")]
     [InlineData("foo")]
+    [InlineData("+Inf")]
+    [InlineData("-Inf")]
+    [InlineData("NaN")]
     public async Task PrometheusExporterMiddlewareInvokeAsync_WhenRequestDeadlineInvalid_Returns200(string scrapeTimeoutSeconds)
     {
         using var exporter = new PrometheusExporter(new PrometheusExporterOptions());

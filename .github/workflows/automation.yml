@@ -24,6 +24,7 @@ permissions:
 
 jobs:
   resolve-automation:
+    name: Resolve automation secrets access
 
     runs-on: ubuntu-24.04
 
@@ -31,7 +32,8 @@ jobs:
       enabled: ${{ steps.evaluate.outputs.enabled }}
 
     steps:
-    - id: evaluate
+    - name: Evaluate settings
+      id: evaluate
       env:
         IS_ENABLED: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY != '' }}
       run: |
