@@ -24,12 +24,7 @@ internal static class ProtobufOtlpResourceSerializer
             return writePosition + EmptyResourceBytes.Length;
         }
 
-#if NET10_0_OR_GREATER
         var cached = CachedResourceBytes.GetOrAdd(resource, SerializeResourceToBytes);
-#else
-        var cached = CachedResourceBytes.GetValue(resource, SerializeResourceToBytes);
-#endif
-
         Buffer.BlockCopy(cached, 0, buffer, writePosition, cached.Length);
         return writePosition + cached.Length;
     }
