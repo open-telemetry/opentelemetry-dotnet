@@ -275,11 +275,12 @@ public class TraceContextPropagatorTests
     }
 
     [Fact]
-    public void TryExtractTracestate_SingleHeaderRejectsDuplicateLongKeys()
+    public void TryExtractTracestate_SingleHeaderDeduplicatesDuplicateLongKeys()
     {
         var key = new string('a', 33);
 
-        Assert.False(TraceContextPropagator.TryExtractTracestate([$"{key}=1,{key}=2"], out _));
+        Assert.True(TraceContextPropagator.TryExtractTracestate([$"{key}=1,{key}=2"], out var actual));
+        Assert.Equal($"{key}=1", actual);
     }
 
     [Fact]
@@ -393,11 +394,11 @@ public class TraceContextPropagatorTests
     public void DuplicateKeys()
     {
         // test_tracestate_duplicated_keys
-        Assert.Empty(CallTraceContextPropagator("foo=1,foo=1"));
-        Assert.Empty(CallTraceContextPropagator("foo=1,foo=2"));
-        Assert.Empty(CallTraceContextPropagator(["foo=1", "foo=1"]));
-        Assert.Empty(CallTraceContextPropagator(["foo=1", "foo=2"]));
-        Assert.Empty(CallTraceContextPropagator("foo=1,bar=2,baz=3,foo=4"));
+        Assert.Equal("foo=1", CallTraceContextPropagator("foo=1,foo=1"));
+        Assert.Equal("foo=1", CallTraceContextPropagator("foo=1,foo=2"));
+        Assert.Equal("foo=1", CallTraceContextPropagator(["foo=1", "foo=1"]));
+        Assert.Equal("foo=1", CallTraceContextPropagator(["foo=1", "foo=2"]));
+        Assert.Equal("foo=1,bar=2,baz=3", CallTraceContextPropagator("foo=1,bar=2,baz=3,foo=4"));
     }
 
     [Fact]

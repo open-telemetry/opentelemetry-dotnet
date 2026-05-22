@@ -26,21 +26,14 @@ public class MetricStreamConfiguration
     /// Gets or sets the optional name of the metric stream.
     /// </summary>
     /// <remarks>
-    /// Note: If not provided the instrument name will be used.
+    /// <para>Note: If not provided the instrument name will be used.</para>
+    /// <para>The name supplied here is used as-is; it is not required to
+    /// follow the instrument name syntax. This lets you rename instruments
+    /// to names that the OpenTelemetry instrument naming rules would
+    /// otherwise reject (for example, legacy or third-party names, or
+    /// OS-level counter names).</para>
     /// </remarks>
-    public string? Name
-    {
-        get;
-        set
-        {
-            if (value != null && !MeterProviderBuilderSdk.IsValidViewName(value))
-            {
-                throw new ArgumentException($"Custom view name {value} is invalid.", nameof(value));
-            }
-
-            field = value;
-        }
-    }
+    public string? Name { get; set; }
 
     /// <summary>
     /// Gets or sets the optional description of the metric stream.

@@ -5,7 +5,7 @@
 ARG BUILD_SDK_VERSION=11.0
 ARG TEST_SDK_VERSION=11.0
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0.300-azurelinux3.0@sha256:9295edd1d3dab97acb5a526c2129b5549374f95b2c8734674ec90b04364c8260 AS dotnet-sdk-10.0
+FROM mcr.microsoft.com/dotnet/sdk:10.0.300-azurelinux3.0@sha256:6b157661bfc04c13c2307276b84e6e34f03e2f3991e5b2486a6bac8d2f4010d7 AS dotnet-sdk-10.0
 FROM mcr.microsoft.com/dotnet/sdk:11.0.100-preview.4-azurelinux3.0@sha256:32e5e394c680125dec8c137c5eed159ed3c00de0877e056ad5ab37c6386f6819 AS dotnet-sdk-11.0
 
 FROM dotnet-sdk-${BUILD_SDK_VERSION} AS build
@@ -37,6 +37,6 @@ RUN tdnf install -y python3-pip \
   && python3 -m pip install --requirement requirements.txt --require-hashes --break-system-packages \
   && tdnf clean all
 ENV SPEC_LEVEL=2
-ENV STRICT_LEVEL=1
+ENV STRICT_LEVEL=2
 
-ENTRYPOINT ["dotnet", "vstest", "OpenTelemetry.Instrumentation.W3cTraceContext.Tests.dll", "--logger:console;verbosity=detailed"]
+ENTRYPOINT ["dotnet", "vstest", "OpenTelemetry.Instrumentation.W3cTraceContext.Tests.dll"]
