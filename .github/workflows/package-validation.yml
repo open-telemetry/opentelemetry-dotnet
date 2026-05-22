@@ -1,5 +1,3 @@
-# Called by ci.yml to perform package validation
-# See: https://docs.github.com/en/actions/using-workflows/reusing-workflows#creating-a-reusable-workflow
 name: Package Validation
 
 on:
@@ -10,17 +8,21 @@ permissions:
 
 jobs:
   run-package-validation-stable:
-    runs-on: windows-latest
+    name: Validate packages (stable)
+    runs-on: windows-2025
 
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - name: Checkout code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         # Note: By default GitHub only fetches 1 commit. MinVer needs to find
         # the version tag which is typically NOT on the first commit so we
         # retrieve them all.
         fetch-depth: 0
+        persist-credentials: false
+        show-progress: false
 
-    - name: Setup dotnet
+    - name: Setup .NET
       uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
 
     - name: dotnet pack
@@ -34,17 +36,21 @@ jobs:
         if-no-files-found: error
 
   run-package-validation-experimental:
-    runs-on: windows-latest
+    name: Validate packages (experimental)
+    runs-on: windows-2025
 
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - name: Checkout code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         # Note: By default GitHub only fetches 1 commit. MinVer needs to find
         # the version tag which is typically NOT on the first commit so we
         # retrieve them all.
         fetch-depth: 0
+        persist-credentials: false
+        show-progress: false
 
-    - name: Setup dotnet
+    - name: Setup .NET
       uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
 
     - name: dotnet pack
