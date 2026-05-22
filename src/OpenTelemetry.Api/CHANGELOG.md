@@ -13,6 +13,10 @@ Notes](../../RELEASENOTES.md).
 * Update `TraceContextPropagator` to support the W3C randomness flag.
   ([#7301](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7301))
 
+* Fixed `TraceContextPropagator` to deduplicate duplicate `tracestate` keys
+  instead of discarding the entire `tracestate` header.
+  ([#7309](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7309))
+
 * **Breaking change** (pre-release only versions): The default value of
   the `Timestamp` property on `LogRecordData` has changed from `DateTime.UtcNow`
   to `DateTime.MinValue`. `DateTime.MinValue` represents an unset timestamp as

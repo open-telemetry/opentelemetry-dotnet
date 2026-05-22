@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Buffers;
-using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
@@ -12,7 +12,7 @@ internal static class ProtobufOtlpResourceSerializer
     private const int ReserveSizeForLength = 4;
     private const int InitialBufferSize = 2048;
 
-    private static readonly ConcurrentDictionary<Resource, byte[]> CachedResourceBytes = new();
+    private static readonly ConditionalWeakTable<Resource, byte[]> CachedResourceBytes = new();
 
     private static ReadOnlySpan<byte> EmptyResourceBytes => [0x0A, 0x80, 0x80, 0x80, 0x00];
 
@@ -24,7 +24,12 @@ internal static class ProtobufOtlpResourceSerializer
             return writePosition + EmptyResourceBytes.Length;
         }
 
-        var cached = CachedResourceBytes.GetOrAdd(resource, static r => SerializeResourceToBytes(r));
+#if NET10_0_OR_GREATER
+        var cached = CachedResourceBytes.GetOrAdd(resource, SerializeResourceToBytes);
+#else
+        var cached = CachedResourceBytes.GetValue(resource, SerializeResourceToBytes);
+#endif
+
         Buffer.BlockCopy(cached, 0, buffer, writePosition, cached.Length);
         return writePosition + cached.Length;
     }
@@ -32,8 +37,8 @@ internal static class ProtobufOtlpResourceSerializer
     private static byte[] SerializeResourceToBytes(Resource resource)
     {
         var pool = ArrayPool<byte>.Shared;
-
         var buffer = pool.Rent(InitialBufferSize);
+
         try
         {
             while (true)
