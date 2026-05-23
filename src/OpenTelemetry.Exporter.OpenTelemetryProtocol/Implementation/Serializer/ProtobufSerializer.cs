@@ -1,9 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#if NETFRAMEWORK || NETSTANDARD2_0
-using System.Buffers;
-#endif
 using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -20,8 +17,15 @@ internal static class ProtobufSerializer
     private const int Fixed64Size = 8;
     private const int MaskBitsLow = 0b_0111_1111;
     private const int MaskBitHigh = 0b_1000_0000;
+#if NETFRAMEWORK || NETSTANDARD2_0
+    private const int MaxThreadStaticCharBufferSize = 1024;
+#endif
 
     private static readonly Encoding Utf8Encoding = Encoding.UTF8;
+#if NETFRAMEWORK || NETSTANDARD2_0
+    [ThreadStatic]
+    private static char[]? threadCharBuffer;
+#endif
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static uint GetTagValue(int fieldNumber, ProtobufWireType wireType) => ((uint)(fieldNumber << 3)) | (uint)wireType;
@@ -271,16 +275,9 @@ internal static class ProtobufSerializer
             return 0;
         }
 
-        var rentedBuffer = ArrayPool<char>.Shared.Rent(value.Length);
-        try
-        {
-            value.CopyTo(rentedBuffer);
-            return Utf8Encoding.GetByteCount(rentedBuffer, 0, value.Length);
-        }
-        finally
-        {
-            ArrayPool<char>.Shared.Return(rentedBuffer);
-        }
+        var buffer = GetCharBuffer(value.Length);
+        value.CopyTo(buffer);
+        return Utf8Encoding.GetByteCount(buffer, 0, value.Length);
 #else
         return Utf8Encoding.GetByteCount(value);
 #endif
@@ -341,17 +338,10 @@ internal static class ProtobufSerializer
 #pragma warning restore CA2201 // Do not raise reserved exception types
         }
 
-        var rentedBuffer = ArrayPool<char>.Shared.Rent(value.Length);
-        try
-        {
-            value.CopyTo(rentedBuffer);
-            var bytesWritten = Utf8Encoding.GetBytes(rentedBuffer, 0, value.Length, buffer, writePosition);
-            Debug.Assert(bytesWritten == numberOfUtf8CharsInString, "bytesWritten did not match numberOfUtf8CharsInString");
-        }
-        finally
-        {
-            ArrayPool<char>.Shared.Return(rentedBuffer);
-        }
+        var charBuffer = GetCharBuffer(value.Length);
+        value.CopyTo(charBuffer);
+        var bytesWritten = Utf8Encoding.GetBytes(charBuffer, 0, value.Length, buffer, writePosition);
+        Debug.Assert(bytesWritten == numberOfUtf8CharsInString, "bytesWritten did not match numberOfUtf8CharsInString");
 #else
         var bytesWritten = Utf8Encoding.GetBytes(value, buffer.AsSpan(writePosition));
         Debug.Assert(bytesWritten == numberOfUtf8CharsInString, "bytesWritten did not match numberOfUtf8CharsInString");
@@ -381,4 +371,23 @@ internal static class ProtobufSerializer
             return false;
         }
     }
+
+#if NETFRAMEWORK || NETSTANDARD2_0
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static char[] GetCharBuffer(int minimumLength)
+    {
+        if (minimumLength > MaxThreadStaticCharBufferSize)
+        {
+            return new char[minimumLength];
+        }
+
+        var buffer = threadCharBuffer;
+        if (buffer == null || buffer.Length < minimumLength)
+        {
+            threadCharBuffer = buffer = new char[Math.Max(minimumLength, 256)];
+        }
+
+        return buffer;
+    }
+#endif
 }
