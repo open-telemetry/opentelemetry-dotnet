@@ -3,9 +3,6 @@
 
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-#if NET
-using System.Runtime.InteropServices;
-#endif
 
 namespace OpenTelemetry.Metrics;
 
@@ -42,41 +39,11 @@ internal readonly struct Tags : IEquatable<Tags>
             return false;
         }
 
-#if NET
-        // Note: This loop uses unsafe code (pointers) to elide bounds checks on
-        // two arrays we know to be of equal length.
-        if (length > 0)
-        {
-            ref var ours = ref MemoryMarshal.GetArrayDataReference(ourKvps);
-            ref var theirs = ref MemoryMarshal.GetArrayDataReference(theirKvps);
-            while (true)
-            {
-                if (!string.Equals(ours.Key, theirs.Key, StringComparison.Ordinal))
-                {
-                    return false;
-                }
-
-                if (!ours.Value?.Equals(theirs.Value) ?? (theirs.Value != null))
-                {
-                    return false;
-                }
-
-                if (--length == 0)
-                {
-                    break;
-                }
-
-                ours = ref Unsafe.Add(ref ours, 1);
-                theirs = ref Unsafe.Add(ref theirs, 1);
-            }
-        }
-#else
         for (var i = 0; i < length; i++)
         {
-            ref var ours = ref ourKvps[i];
+            ref readonly var ours = ref ourKvps[i];
 
-            // Note: Bounds check happens here for theirKvps element access
-            ref var theirs = ref theirKvps[i];
+            ref readonly var theirs = ref theirKvps[i];
 
             if (!string.Equals(ours.Key, theirs.Key, StringComparison.Ordinal))
             {
@@ -88,7 +55,6 @@ internal readonly struct Tags : IEquatable<Tags>
                 return false;
             }
         }
-#endif
 
         return true;
     }
