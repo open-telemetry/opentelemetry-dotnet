@@ -20,7 +20,7 @@ on:
         required: false
         type: string
       os-list:
-        default: '[ "windows-2025", "windows-11-arm", "ubuntu-22.04", "ubuntu-22.04-arm" ]'
+        default: '[ "windows-2025", "windows-11-arm", "ubuntu-24.04", "ubuntu-24.04-arm" ]'
         required: false
         type: string
       tfm-list:
@@ -44,11 +44,11 @@ jobs:
         os: ${{ fromJSON(inputs.os-list) }}
         version: ${{ fromJSON(inputs.tfm-list) }}
         exclude:
-        # renovate: datasource=github-runners depName=ubuntu depType=github-runner
-        - os: ubuntu-22.04
+        # renovate: datasource=github-runners depType=github-runner
+        - os: ubuntu-24.04
           version: net462
-        # renovate: datasource=github-runners depName=ubuntu depType=github-runner
-        - os: ubuntu-22.04-arm
+        # renovate: datasource=github-runners depType=github-runner
+        - os: ubuntu-24.04-arm
           version: net462
 
     runs-on: ${{ matrix.os }}
@@ -100,7 +100,7 @@ jobs:
         --no-restore
         --no-build
         --logger:"GitHubActions;report-warnings=false"
-        --logger:"junit;LogFilePath=TestResults/junit.xml"
+        --logger:"junit;LogFilePath=${env:GITHUB_WORKSPACE}/TestResults/junit.xml"
         -- RunConfiguration.DisableAppDomain=${env:DISABLE_APP_DOMAIN}
 
     - name: Install coverage tool
@@ -120,18 +120,21 @@ jobs:
         OS: ${{ matrix.os }}
         TFM: ${{ matrix.version }}
       with:
-        files: TestResults/Cobertura.xml
+        disable_search: true
         env_vars: OS,TFM
+        files: TestResults/Cobertura.xml
         flags: ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}
         name: Code Coverage for ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }} on [${{ matrix.os }}.${{ matrix.version }}]
         codecov_yml_path: .github/codecov.yml
         token: ${{ secrets.CODECOV_TOKEN }}
 
     - name: Upload test results ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}
-      if: ${{ !cancelled() && hashFiles('./**/TestResults/junit.xml') != '' }}
+      if: ${{ !cancelled() && hashFiles('./TestResults/junit.xml') != '' }}
       uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
       with:
+        disable_search: true
         env_vars: OS,TFM
+        files: TestResults/junit.xml
         flags: ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}
         name: Test results for ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }} on [${{ matrix.os }}.${{ matrix.version }}]
         report_type: test_results
