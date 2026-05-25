@@ -51,6 +51,7 @@ jobs:
           md: ['**.md']
           build: ['build/**', '.github/**/*.yml', '**/*.targets', '**/*.props', 'global.json']
           github: ['.github/**/*']
+          pwsh: [ '**.ps1', '**.psm1', '**.psd1' ]
           shared: ['src/Shared/**']
           code: ['**.cs', '**.csproj', '.editorconfig']
           solution: ['OpenTelemetry.slnx']
@@ -78,6 +79,15 @@ jobs:
       contains(needs.detect-changes.outputs.changes, 'md')
       || contains(needs.detect-changes.outputs.changes, 'build')
     uses: ./.github/workflows/markdownlint.yml
+
+  lint-pwsh:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'pwsh')
+      || contains(needs.detect-changes.outputs.changes, 'github')
+    uses: ./.github/workflows/pwshlint.yml
+    permissions:
+      contents: read # To checkout the code
 
   lint-dotnet-format:
     needs: detect-changes
@@ -281,6 +291,7 @@ jobs:
       lint-actions,
       lint-misspell-sanitycheck,
       lint-md,
+      lint-pwsh,
       lint-dotnet-format,
       build-test-solution,
       build-test-project-stable,
