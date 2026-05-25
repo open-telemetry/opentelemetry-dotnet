@@ -10,6 +10,8 @@ public class AggregatorTests
 {
     private static readonly Meter Meter = new("testMeter");
     private static readonly Instrument Instrument = Meter.CreateHistogram<long>("testInstrument");
+    private static readonly Instrument LongCounterInstrument = Meter.CreateCounter<long>("testCounter");
+    private static readonly Instrument ObservableLongCounterInstrument = Meter.CreateObservableCounter("testObservableCounter", () => 0L);
     private static readonly ExplicitBucketHistogramConfiguration HistogramConfiguration = new() { Boundaries = Metric.DefaultHistogramBounds };
     private static readonly MetricStreamIdentity MetricStreamIdentity = new(Instrument, HistogramConfiguration);
 
@@ -458,6 +460,182 @@ public class AggregatorTests
         Assert.Equal(expectedScale, metricPoint.GetExponentialHistogramData().Scale);
     }
 
+    [Fact]
+    internal void LazyMetricPointAllocationStartsWithInitialChunkAndEagerAllocationPreservesFullCapacity()
+    {
+        var cardinalityLimit = 10_000;
+        var eagerAggregatorStore = CreateLongSumAggregatorStore(
+            AggregationTemporality.Cumulative,
+            cardinalityLimit,
+            enableMetricPointLazyAllocation: false);
+        var lazyAggregatorStore = CreateLongSumAggregatorStore(
+            AggregationTemporality.Cumulative,
+            cardinalityLimit);
+
+        Assert.False(eagerAggregatorStore.UsesMetricPointLazyAllocation);
+        Assert.Equal(cardinalityLimit + 2, eagerAggregatorStore.NumberOfMetricPoints);
+        Assert.Equal(eagerAggregatorStore.NumberOfMetricPoints, eagerAggregatorStore.AllocatedMetricPointCapacity);
+
+        Assert.True(lazyAggregatorStore.UsesMetricPointLazyAllocation);
+        Assert.Equal(cardinalityLimit + 2, lazyAggregatorStore.NumberOfMetricPoints);
+        Assert.Equal(SegmentedMetricPointStorage.ChunkSize, lazyAggregatorStore.AllocatedMetricPointCapacity);
+    }
+
+    [Fact]
+    internal void LazyCumulativeMetricPointsGrowAcrossChunksAndResizeSnapshotBatch()
+    {
+        var aggregatorStore = CreateLongSumAggregatorStore(
+            AggregationTemporality.Cumulative,
+            cardinalityLimit: SegmentedMetricPointStorage.ChunkSize);
+
+        aggregatorStore.Update(9, []);
+
+        for (var i = 0; i < SegmentedMetricPointStorage.ChunkSize; i++)
+        {
+            aggregatorStore.Update(1, CreateSingleTag(i));
+        }
+
+        var metricPoints = SnapshotAndCollect(aggregatorStore);
+
+        Assert.Equal(SegmentedMetricPointStorage.ChunkSize + 1, metricPoints.Count);
+        Assert.Equal(aggregatorStore.NumberOfMetricPoints, aggregatorStore.AllocatedMetricPointCapacity);
+        Assert.DoesNotContain(metricPoints, IsOverflowMetricPoint);
+        Assert.Equal(SegmentedMetricPointStorage.ChunkSize + 9, GetLongSum(metricPoints));
+    }
+
+    [Fact]
+    internal void LazyCumulativeOverflowUsesReservedMetricPoint()
+    {
+        var aggregatorStore = CreateLongSumAggregatorStore(
+            AggregationTemporality.Cumulative,
+            cardinalityLimit: 2);
+
+        aggregatorStore.Update(1, CreateSingleTag(1));
+        aggregatorStore.Update(2, CreateSingleTag(2));
+        aggregatorStore.Update(3, CreateSingleTag(3));
+
+        var metricPoints = SnapshotAndCollect(aggregatorStore);
+        var overflowMetricPoint = Assert.Single(metricPoints, IsOverflowMetricPoint);
+
+        Assert.Equal(1, aggregatorStore.DroppedMeasurements);
+        Assert.Equal(3, metricPoints.Count);
+        Assert.Equal(3, overflowMetricPoint.GetSumLong());
+        Assert.Equal(6, GetLongSum(metricPoints));
+    }
+
+    [Fact]
+    internal void LazyCumulativeMultiTagLookupReusesSortedTagMetricPoint()
+    {
+        var aggregatorStore = CreateLongSumAggregatorStore(
+            AggregationTemporality.Cumulative,
+            cardinalityLimit: SegmentedMetricPointStorage.ChunkSize);
+
+        aggregatorStore.Update(1, [new("tag2", "value2"), new("tag1", "value1")]);
+        aggregatorStore.Update(2, [new("tag1", "value1"), new("tag2", "value2")]);
+
+        var metricPoint = Assert.Single(SnapshotAndCollect(aggregatorStore));
+
+        Assert.Equal(3, metricPoint.GetSumLong());
+        Assert.Equal(2, metricPoint.Tags.Count);
+        Assert.True(HasTag(metricPoint, "tag1", "value1"));
+        Assert.True(HasTag(metricPoint, "tag2", "value2"));
+        Assert.Equal(SegmentedMetricPointStorage.ChunkSize, aggregatorStore.AllocatedMetricPointCapacity);
+    }
+
+    [Fact]
+    internal void LazyDeltaMultiTagLookupReusesSortedTagMetricPoint()
+    {
+        var aggregatorStore = CreateLongSumAggregatorStore(
+            AggregationTemporality.Delta,
+            cardinalityLimit: SegmentedMetricPointStorage.ChunkSize);
+
+        aggregatorStore.Update(1, [new("tag2", "value2"), new("tag1", "value1")]);
+        aggregatorStore.Update(2, [new("tag1", "value1"), new("tag2", "value2")]);
+
+        var metricPoint = Assert.Single(SnapshotAndCollect(aggregatorStore));
+
+        Assert.Equal(3, metricPoint.GetSumLong());
+        Assert.Equal(2, metricPoint.Tags.Count);
+        Assert.True(HasTag(metricPoint, "tag1", "value1"));
+        Assert.True(HasTag(metricPoint, "tag2", "value2"));
+        Assert.Equal(SegmentedMetricPointStorage.ChunkSize, aggregatorStore.AllocatedMetricPointCapacity);
+    }
+
+    [Fact]
+    internal void LazyDeltaMetricPointsAreReclaimedAndReusedAcrossChunks()
+    {
+        var aggregatorStore = CreateLongSumAggregatorStore(
+            AggregationTemporality.Delta,
+            cardinalityLimit: SegmentedMetricPointStorage.ChunkSize * 2);
+        var timeSeriesCount = SegmentedMetricPointStorage.ChunkSize - 1;
+
+        for (var i = 0; i < timeSeriesCount; i++)
+        {
+            aggregatorStore.Update(1, CreateSingleTag(i));
+        }
+
+        var metricPoints = SnapshotAndCollect(aggregatorStore);
+
+        Assert.Equal(timeSeriesCount, metricPoints.Count);
+        Assert.Equal(SegmentedMetricPointStorage.ChunkSize * 2, aggregatorStore.AllocatedMetricPointCapacity);
+
+        metricPoints = SnapshotAndCollect(aggregatorStore);
+
+        Assert.Empty(metricPoints);
+
+        for (var i = 0; i < timeSeriesCount; i++)
+        {
+            aggregatorStore.Update(1, CreateSingleTag(i + timeSeriesCount));
+        }
+
+        metricPoints = SnapshotAndCollect(aggregatorStore);
+
+        Assert.Equal(timeSeriesCount, metricPoints.Count);
+        Assert.Equal(SegmentedMetricPointStorage.ChunkSize * 2, aggregatorStore.AllocatedMetricPointCapacity);
+    }
+
+    [Fact]
+    internal void LazyAsynchronousCumulativeSnapshotSkipsStalePoints()
+    {
+        var aggregatorStore = CreateLongSumAggregatorStore(
+            AggregationTemporality.Cumulative,
+            cardinalityLimit: 10,
+            instrument: ObservableLongCounterInstrument,
+            aggregationType: AggregationType.LongSumIncomingCumulative);
+
+        aggregatorStore.Update(1, CreateSingleTag(1));
+
+        var metricPoint = Assert.Single(SnapshotAndCollect(aggregatorStore));
+
+        Assert.Equal(1, metricPoint.GetSumLong());
+        Assert.Empty(SnapshotAndCollect(aggregatorStore));
+    }
+
+    [Fact]
+    internal void LazyCustomTagFilteringUsesSegmentedStorage()
+    {
+        var metricStreamConfiguration = new MetricStreamConfiguration
+        {
+            TagKeys = ["keep"],
+        };
+        var aggregatorStore = CreateLongSumAggregatorStore(
+            AggregationTemporality.Cumulative,
+            cardinalityLimit: SegmentedMetricPointStorage.ChunkSize,
+            metricStreamConfiguration: metricStreamConfiguration);
+
+        aggregatorStore.Update(1, [new("drop", "value1")]);
+        aggregatorStore.Update(2, [new("drop", "value2"), new("keep", "value")]);
+
+        var metricPoints = SnapshotAndCollect(aggregatorStore);
+        var zeroTagMetricPoint = Assert.Single(metricPoints, metricPoint => metricPoint.Tags.Count == 0);
+        var filteredTagMetricPoint = Assert.Single(metricPoints, metricPoint => HasTag(metricPoint, "keep", "value"));
+
+        Assert.Equal(2, metricPoints.Count);
+        Assert.Equal(1, zeroTagMetricPoint.GetSumLong());
+        Assert.Equal(2, filteredTagMetricPoint.GetSumLong());
+        Assert.Equal(SegmentedMetricPointStorage.ChunkSize, aggregatorStore.AllocatedMetricPointCapacity);
+    }
+
     [Theory]
     [MemberData(nameof(HistogramBoundaryTestCase.HistogramInfinityBoundariesTestCases))]
     internal void HistogramBucketBoundariesTest(HistogramBoundaryTestCase boundaryTestCase)
@@ -491,6 +669,66 @@ public class AggregatorTests
         }
 
         Assert.Equal(expectedTotalBuckets, actualBucketCount);
+    }
+
+    private static AggregatorStore CreateLongSumAggregatorStore(
+        AggregationTemporality temporality,
+        int cardinalityLimit,
+        bool enableMetricPointLazyAllocation = true,
+        MetricStreamConfiguration? metricStreamConfiguration = null,
+        Instrument? instrument = null,
+        AggregationType aggregationType = AggregationType.LongSumIncomingDelta)
+        => new(
+            new MetricStreamIdentity(instrument ?? LongCounterInstrument, metricStreamConfiguration),
+            aggregationType,
+            temporality,
+            cardinalityLimit,
+            enableMetricPointLazyAllocation: enableMetricPointLazyAllocation);
+
+    private static KeyValuePair<string, object?>[] CreateSingleTag(int value)
+        => [new("tag", value)];
+
+    private static List<MetricPoint> SnapshotAndCollect(AggregatorStore aggregatorStore)
+    {
+        var snapshotCount = aggregatorStore.Snapshot();
+        var metricPoints = new List<MetricPoint>();
+
+        foreach (ref readonly var metricPoint in aggregatorStore.GetMetricPoints())
+        {
+            metricPoints.Add(metricPoint);
+        }
+
+        Assert.Equal(snapshotCount, metricPoints.Count);
+
+        return metricPoints;
+    }
+
+    private static long GetLongSum(IEnumerable<MetricPoint> metricPoints)
+    {
+        long sum = 0;
+        foreach (var metricPoint in metricPoints)
+        {
+            sum += metricPoint.GetSumLong();
+        }
+
+        return sum;
+    }
+
+    private static bool IsOverflowMetricPoint(MetricPoint metricPoint)
+        => metricPoint.Tags.Count == 1
+            && HasTag(metricPoint, "otel.metric.overflow", true);
+
+    private static bool HasTag(MetricPoint metricPoint, string key, object? value)
+    {
+        foreach (var tag in metricPoint.Tags)
+        {
+            if (tag.Key == key && Equals(tag.Value, value))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static void HistogramSnapshotThread(object? obj)

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Metrics;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
 using Xunit;
@@ -1258,6 +1259,423 @@ public class MetricViewTests : MetricTestsBase
     }
 
     [Fact]
+    public void MetricPointLazyAllocationIsDisabledByDefault()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = 10000 })
+            .AddInMemoryExporter(exportedItems));
+
+        var counter = meter.CreateCounter<long>("counter");
+        counter.Add(1, new KeyValuePair<string, object?>("key", "value"));
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        var metric = Assert.Single(exportedItems);
+        Assert.False(metric.AggregatorStore.UsesMetricPointLazyAllocation);
+        Assert.Equal(10002, metric.AggregatorStore.NumberOfMetricPoints);
+        Assert.Equal(metric.AggregatorStore.NumberOfMetricPoints, metric.AggregatorStore.AllocatedMetricPointCapacity);
+    }
+
+    [Fact]
+    public void MetricPointLazyAllocationCanBeEnabledWithView()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+#pragma warning disable OTEL1006 // Experimental API
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = 10000, EnableMetricPointLazyAllocation = true })
+            .AddInMemoryExporter(exportedItems));
+#pragma warning restore OTEL1006 // Experimental API
+
+        var counter = meter.CreateCounter<long>("counter");
+        for (var i = 0; i < SegmentedMetricPointStorage.ChunkSize + 1; i++)
+        {
+            counter.Add(1, new KeyValuePair<string, object?>("key", "value" + i));
+        }
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        var metric = Assert.Single(exportedItems);
+        Assert.True(metric.AggregatorStore.UsesMetricPointLazyAllocation);
+        Assert.Equal(10002, metric.AggregatorStore.NumberOfMetricPoints);
+        Assert.Equal(SegmentedMetricPointStorage.ChunkSize * 2, metric.AggregatorStore.AllocatedMetricPointCapacity);
+    }
+
+    [Fact]
+    public void MetricPointLazyAllocationAllocatesNextChunkOnlyAfterFirstMetricPointInThatChunk()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+        var firstChunkUserTimeSeries = SegmentedMetricPointStorage.ChunkSize - 2;
+
+#pragma warning disable OTEL1006 // Experimental API
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = SegmentedMetricPointStorage.ChunkSize * 2, EnableMetricPointLazyAllocation = true })
+            .AddInMemoryExporter(exportedItems));
+#pragma warning restore OTEL1006 // Experimental API
+
+        var counter = meter.CreateCounter<long>("counter");
+        for (var i = 0; i < firstChunkUserTimeSeries; i++)
+        {
+            counter.Add(1, new KeyValuePair<string, object?>("key", "value" + i));
+        }
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        var metric = Assert.Single(exportedItems);
+        Assert.Equal(SegmentedMetricPointStorage.ChunkSize, metric.AggregatorStore.AllocatedMetricPointCapacity);
+        Assert.Equal(firstChunkUserTimeSeries, GetMetricPointsSum(metric));
+
+        exportedItems.Clear();
+        counter.Add(1, new KeyValuePair<string, object?>("key", "value" + firstChunkUserTimeSeries));
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        metric = Assert.Single(exportedItems);
+        Assert.Equal(SegmentedMetricPointStorage.ChunkSize * 2, metric.AggregatorStore.AllocatedMetricPointCapacity);
+        Assert.Equal(firstChunkUserTimeSeries + 1, GetMetricPointsSum(metric));
+    }
+
+    [Fact]
+    public void MetricPointLazyAllocationWorksWithDeltaTemporality()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+        using var exporter = new InMemoryExporter<Metric>(exportedItems);
+        using var reader = new BaseExportingMetricReader(exporter)
+        {
+            TemporalityPreference = MetricReaderTemporalityPreference.Delta,
+        };
+
+#pragma warning disable OTEL1006 // Experimental API
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = 10000, EnableMetricPointLazyAllocation = true })
+            .AddReader(reader));
+#pragma warning restore OTEL1006 // Experimental API
+
+        var counter = meter.CreateCounter<long>("counter");
+        for (var i = 0; i < SegmentedMetricPointStorage.ChunkSize + 1; i++)
+        {
+            counter.Add(1, new KeyValuePair<string, object?>("key", "value" + i));
+        }
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        var metric = Assert.Single(exportedItems);
+        Assert.True(metric.AggregatorStore.UsesMetricPointLazyAllocation);
+        Assert.Equal(SegmentedMetricPointStorage.ChunkSize + 1, GetMetricPointsSum(metric));
+        Assert.Equal(SegmentedMetricPointStorage.ChunkSize * 2, metric.AggregatorStore.AllocatedMetricPointCapacity);
+
+        exportedItems.Clear();
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        exportedItems.Clear();
+        counter.Add(1, new KeyValuePair<string, object?>("key", "value-new"));
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        metric = Assert.Single(exportedItems);
+        Assert.Equal(1, GetMetricPointsSum(metric));
+        Assert.Equal(SegmentedMetricPointStorage.ChunkSize * 2, metric.AggregatorStore.AllocatedMetricPointCapacity);
+    }
+
+    [Fact]
+    public void MetricPointLazyAllocationReusesDeltaMetricPointsAcrossChunkBoundaries()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+        using var exporter = new InMemoryExporter<Metric>(exportedItems);
+        using var reader = new BaseExportingMetricReader(exporter)
+        {
+            TemporalityPreference = MetricReaderTemporalityPreference.Delta,
+        };
+        var cardinalityLimit = SegmentedMetricPointStorage.ChunkSize + 1;
+
+#pragma warning disable OTEL1006 // Experimental API
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = cardinalityLimit, EnableMetricPointLazyAllocation = true })
+            .AddReader(reader));
+#pragma warning restore OTEL1006 // Experimental API
+
+        var counter = meter.CreateCounter<long>("counter");
+        for (var i = 0; i < cardinalityLimit; i++)
+        {
+            counter.Add(1, new KeyValuePair<string, object?>("key", "value" + i));
+        }
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        var metric = Assert.Single(exportedItems);
+        Assert.Equal(cardinalityLimit, GetMetricPointsSum(metric));
+        Assert.False(ContainsOverflowMetricPoint(metric));
+        Assert.Equal(0, metric.AggregatorStore.DroppedMeasurements);
+        Assert.Equal(metric.AggregatorStore.NumberOfMetricPoints, metric.AggregatorStore.AllocatedMetricPointCapacity);
+
+        exportedItems.Clear();
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        exportedItems.Clear();
+        counter.Add(1, new KeyValuePair<string, object?>("key", "reused"));
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        metric = Assert.Single(exportedItems);
+        Assert.Equal(1, GetMetricPointsSum(metric));
+        Assert.True(ContainsMetricPointWithTag(metric, "key", "reused"));
+        Assert.False(ContainsOverflowMetricPoint(metric));
+        Assert.Equal(0, metric.AggregatorStore.DroppedMeasurements);
+        Assert.Equal(metric.AggregatorStore.NumberOfMetricPoints, metric.AggregatorStore.AllocatedMetricPointCapacity);
+    }
+
+    [Fact]
+    public void MetricPointLazyAllocationPreservesOverflowAtCardinalityLimit()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+#pragma warning disable OTEL1006 // Experimental API
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = SegmentedMetricPointStorage.ChunkSize, EnableMetricPointLazyAllocation = true })
+            .AddInMemoryExporter(exportedItems));
+#pragma warning restore OTEL1006 // Experimental API
+
+        var counter = meter.CreateCounter<long>("counter");
+        for (var i = 0; i < SegmentedMetricPointStorage.ChunkSize; i++)
+        {
+            counter.Add(1, new KeyValuePair<string, object?>("key", "value" + i));
+        }
+
+        counter.Add(5, new KeyValuePair<string, object?>("key", "overflow"));
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        var metric = Assert.Single(exportedItems);
+        Assert.True(metric.AggregatorStore.UsesMetricPointLazyAllocation);
+        Assert.Equal(SegmentedMetricPointStorage.ChunkSize + 2, metric.AggregatorStore.NumberOfMetricPoints);
+        Assert.Equal(metric.AggregatorStore.NumberOfMetricPoints, metric.AggregatorStore.AllocatedMetricPointCapacity);
+        Assert.Equal(1, metric.AggregatorStore.DroppedMeasurements);
+        Assert.Equal(SegmentedMetricPointStorage.ChunkSize + 5, GetMetricPointsSum(metric));
+    }
+
+    [Fact]
+    public void MetricPointLazyAllocationUsesFinalAllowedSlotBeforeOverflow()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+        var cardinalityLimit = SegmentedMetricPointStorage.ChunkSize + 1;
+
+#pragma warning disable OTEL1006 // Experimental API
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = cardinalityLimit, EnableMetricPointLazyAllocation = true })
+            .AddInMemoryExporter(exportedItems));
+#pragma warning restore OTEL1006 // Experimental API
+
+        var counter = meter.CreateCounter<long>("counter");
+        for (var i = 0; i < cardinalityLimit; i++)
+        {
+            counter.Add(1, new KeyValuePair<string, object?>("key", "value" + i));
+        }
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        var metric = Assert.Single(exportedItems);
+        Assert.Equal(cardinalityLimit, GetMetricPointsSum(metric));
+        Assert.False(ContainsOverflowMetricPoint(metric));
+        Assert.Equal(0, metric.AggregatorStore.DroppedMeasurements);
+        Assert.Equal(cardinalityLimit + 2, metric.AggregatorStore.NumberOfMetricPoints);
+        Assert.Equal(metric.AggregatorStore.NumberOfMetricPoints, metric.AggregatorStore.AllocatedMetricPointCapacity);
+
+        exportedItems.Clear();
+        counter.Add(5, new KeyValuePair<string, object?>("key", "overflow"));
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        metric = Assert.Single(exportedItems);
+        Assert.True(ContainsOverflowMetricPoint(metric));
+        Assert.Equal(1, metric.AggregatorStore.DroppedMeasurements);
+        Assert.Equal(cardinalityLimit + 5, GetMetricPointsSum(metric));
+    }
+
+    [Fact]
+    public async Task MetricPointLazyAllocationSupportsConcurrentGrowthAndCollection()
+    {
+        const int MeasurementCount = 600;
+        const int UpdateTaskCount = 4;
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        using var exporter = new ConcurrentSumExporter();
+        using var reader = new BaseExportingMetricReader(exporter);
+
+#pragma warning disable OTEL1006 // Experimental API
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = SegmentedMetricPointStorage.ChunkSize * UpdateTaskCount, EnableMetricPointLazyAllocation = true })
+            .AddReader(reader));
+#pragma warning restore OTEL1006 // Experimental API
+
+        var counter = meter.CreateCounter<long>("counter");
+        using var start = new ManualResetEventSlim();
+        var nextTagValue = 0;
+        var updateCompleted = 0;
+
+        var updateTasks = Enumerable.Range(0, UpdateTaskCount)
+            .Select(_ => Task.Run(() =>
+            {
+                start.Wait();
+
+                while (true)
+                {
+                    var tagValue = Interlocked.Increment(ref nextTagValue);
+                    if (tagValue > MeasurementCount)
+                    {
+                        return;
+                    }
+
+                    counter.Add(1, new KeyValuePair<string, object?>("key", "value" + tagValue));
+                    if ((tagValue & 15) == 0)
+                    {
+                        Thread.Yield();
+                    }
+                }
+            }))
+            .ToArray();
+
+        var collectTask = Task.Run(() =>
+        {
+            start.Wait();
+
+            while (Volatile.Read(ref updateCompleted) == 0)
+            {
+                meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+                Thread.Yield();
+            }
+        });
+
+        start.Set();
+        await Task.WhenAll(updateTasks);
+        Volatile.Write(ref updateCompleted, 1);
+        await collectTask;
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        Assert.Equal(MeasurementCount, exporter.LastSum);
+        Assert.Equal(0, exporter.LastDroppedMeasurements);
+        Assert.Equal(SegmentedMetricPointStorage.ChunkSize * 3, exporter.LastAllocatedMetricPointCapacity);
+    }
+
+    [Fact]
+    public void MetricPointLazyAllocationWorksWithObservableCounter()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+        var callbackCount = 0;
+
+        meter.CreateObservableCounter(
+            "observable-counter",
+            () =>
+            {
+                callbackCount++;
+                return callbackCount == 1
+                    ? CreateMeasurements(SegmentedMetricPointStorage.ChunkSize + 1)
+                    : [];
+            });
+
+#pragma warning disable OTEL1006 // Experimental API
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("observable-counter", new MetricStreamConfiguration { CardinalityLimit = 10000, EnableMetricPointLazyAllocation = true })
+            .AddInMemoryExporter(exportedItems));
+#pragma warning restore OTEL1006 // Experimental API
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        var metric = Assert.Single(exportedItems);
+        Assert.True(metric.AggregatorStore.UsesMetricPointLazyAllocation);
+        Assert.Equal(SegmentedMetricPointStorage.ChunkSize + 1, GetMetricPointsSum(metric));
+        Assert.Equal(SegmentedMetricPointStorage.ChunkSize * 2, metric.AggregatorStore.AllocatedMetricPointCapacity);
+
+        exportedItems.Clear();
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        Assert.Empty(exportedItems);
+
+        static Measurement<long>[] CreateMeasurements(int count)
+        {
+            var measurements = new Measurement<long>[count];
+            for (var i = 0; i < measurements.Length; i++)
+            {
+                measurements[i] = new Measurement<long>(1, new KeyValuePair<string, object?>("key", "value" + i));
+            }
+
+            return measurements;
+        }
+    }
+
+    [Fact]
+    public void MetricPointLazyAllocationProviderDefaultCanBeOverriddenByView()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+#pragma warning disable OTEL1006 // Experimental API
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .SetDefaultMetricPointLazyAllocation(true)
+            .AddMeter(meter.Name)
+            .AddView("counter2", new MetricStreamConfiguration { EnableMetricPointLazyAllocation = false })
+            .AddInMemoryExporter(exportedItems));
+#pragma warning restore OTEL1006 // Experimental API
+
+        var counter1 = meter.CreateCounter<long>("counter1");
+        counter1.Add(1, new KeyValuePair<string, object?>("key", "value"));
+
+        var counter2 = meter.CreateCounter<long>("counter2");
+        counter2.Add(1, new KeyValuePair<string, object?>("key", "value"));
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        var metric1 = exportedItems.Single(metric => metric.Name == "counter1");
+        Assert.True(metric1.AggregatorStore.UsesMetricPointLazyAllocation);
+
+        var metric2 = exportedItems.Single(metric => metric.Name == "counter2");
+        Assert.False(metric2.AggregatorStore.UsesMetricPointLazyAllocation);
+    }
+
+    [Fact]
+    public void MetricPointLazyAllocationViewCanOverrideProviderDefaultOff()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+#pragma warning disable OTEL1006 // Experimental API
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("counter1", new MetricStreamConfiguration { EnableMetricPointLazyAllocation = true })
+            .AddInMemoryExporter(exportedItems));
+#pragma warning restore OTEL1006 // Experimental API
+
+        var counter1 = meter.CreateCounter<long>("counter1");
+        counter1.Add(1, new KeyValuePair<string, object?>("key", "value"));
+
+        var counter2 = meter.CreateCounter<long>("counter2");
+        counter2.Add(1, new KeyValuePair<string, object?>("key", "value"));
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        var metric1 = exportedItems.Single(metric => metric.Name == "counter1");
+        Assert.True(metric1.AggregatorStore.UsesMetricPointLazyAllocation);
+
+        var metric2 = exportedItems.Single(metric => metric.Name == "counter2");
+        Assert.False(metric2.AggregatorStore.UsesMetricPointLazyAllocation);
+    }
+
+    [Fact]
     public void ViewConflict_TwoDistinctInstruments_ThreeStreams()
     {
         var exportedItems = new List<Metric>();
@@ -1561,5 +1979,71 @@ public class MetricViewTests : MetricTestsBase
 
         Assert.Equal("othername", exportedItems[0].Name);
         Assert.Equal(10, GetLongSum(metric1));
+    }
+
+    private static long GetMetricPointsSum(Metric metric)
+    {
+        long sum = 0;
+        foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+        {
+            sum += metricPoint.GetSumLong();
+        }
+
+        return sum;
+    }
+
+    private static bool ContainsOverflowMetricPoint(Metric metric)
+        => ContainsMetricPointWithTag(metric, "otel.metric.overflow", true);
+
+    private static bool ContainsMetricPointWithTag(Metric metric, string key, object? value)
+    {
+        foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+        {
+            foreach (var tag in metricPoint.Tags)
+            {
+                if (tag.Key == key && Equals(tag.Value, value))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private sealed class ConcurrentSumExporter : BaseExporter<Metric>
+    {
+        private long lastSum;
+        private long lastDroppedMeasurements;
+        private int lastAllocatedMetricPointCapacity;
+
+        public long LastSum => Volatile.Read(ref this.lastSum);
+
+        public long LastDroppedMeasurements => Volatile.Read(ref this.lastDroppedMeasurements);
+
+        public int LastAllocatedMetricPointCapacity => Volatile.Read(ref this.lastAllocatedMetricPointCapacity);
+
+        public override ExportResult Export(in Batch<Metric> batch)
+        {
+            long sum = 0;
+            long droppedMeasurements = 0;
+            var allocatedMetricPointCapacity = 0;
+
+            foreach (var metric in batch)
+            {
+                droppedMeasurements += metric.AggregatorStore.DroppedMeasurements;
+                allocatedMetricPointCapacity = Math.Max(allocatedMetricPointCapacity, metric.AggregatorStore.AllocatedMetricPointCapacity);
+                foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                {
+                    sum += metricPoint.GetSumLong();
+                }
+            }
+
+            Volatile.Write(ref this.lastSum, sum);
+            Volatile.Write(ref this.lastDroppedMeasurements, droppedMeasurements);
+            Volatile.Write(ref this.lastAllocatedMetricPointCapacity, allocatedMetricPointCapacity);
+
+            return ExportResult.Success;
+        }
     }
 }

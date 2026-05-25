@@ -69,6 +69,9 @@ public class MetricsBenchmarks
     [Params(MetricReaderTemporalityPreference.Cumulative, MetricReaderTemporalityPreference.Delta)]
     public MetricReaderTemporalityPreference AggregationTemporality { get; set; }
 
+    [Params(false, true)]
+    public bool MetricPointLazyAllocation { get; set; }
+
     [GlobalSetup]
     public void Setup()
     {
@@ -77,6 +80,12 @@ public class MetricsBenchmarks
         var exportedItems = new List<Metric>();
         this.meterProvider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(this.meter.Name) // All instruments from this meter are enabled.
+            .AddView("counter", new ExplicitBucketHistogramConfiguration
+            {
+#pragma warning disable OTEL1006 // Experimental API
+                EnableMetricPointLazyAllocation = this.MetricPointLazyAllocation,
+#pragma warning restore OTEL1006 // Experimental API
+            })
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
             {
                 metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 1000;

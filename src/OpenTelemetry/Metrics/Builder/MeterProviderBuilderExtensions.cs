@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#if NET
+#if NET || EXPOSE_EXPERIMENTAL_FEATURES
 using System.Diagnostics.CodeAnalysis;
 #endif
 using System.Diagnostics.Metrics;
@@ -275,6 +275,36 @@ public static class MeterProviderBuilderExtensions
 
         return meterProviderBuilder;
     }
+
+#if EXPOSE_EXPERIMENTAL_FEATURES
+    /// <summary>
+    /// Sets whether metric point storage should be allocated lazily by default
+    /// for metric streams created by the MeterProvider.
+    /// </summary>
+    /// <remarks>
+    /// <para>The default is <see langword="false"/>, which preserves the eager
+    /// metric point allocation behavior.</para>
+    /// <para>A view can override this default by setting <see
+    /// cref="MetricStreamConfiguration.EnableMetricPointLazyAllocation"/>.</para>
+    /// </remarks>
+    /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
+    /// <param name="enabled"><see langword="true"/> to allocate metric point
+    /// storage on demand; <see langword="false"/> to allocate eagerly.</param>
+    /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
+    [Experimental(DiagnosticDefinitions.LazyMetricPointAllocationExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+    public static MeterProviderBuilder SetDefaultMetricPointLazyAllocation(this MeterProviderBuilder meterProviderBuilder, bool enabled)
+    {
+        meterProviderBuilder.ConfigureBuilder((sp, builder) =>
+        {
+            if (builder is MeterProviderBuilderSdk meterProviderBuilderSdk)
+            {
+                meterProviderBuilderSdk.SetDefaultMetricPointLazyAllocation(enabled);
+            }
+        });
+
+        return meterProviderBuilder;
+    }
+#endif
 
     /// <summary>
     /// Sets the <see cref="ResourceBuilder"/> from which the Resource associated with
