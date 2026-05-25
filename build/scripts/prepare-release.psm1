@@ -9,6 +9,9 @@ function CreatePullRequestToUpdateChangelogsAndPublicApis {
     [Parameter()][string]$gitUserEmail
   )
 
+  $ErrorActionPreference = "Stop"
+  $InformationPreference = "Continue"
+
   $match = [regex]::Match($version, '^(\d+\.\d+\.\d+)(?:-((?:alpha)|(?:beta)|(?:rc))\.(\d+))?$')
   if ($match.Success -eq $false)
   {
@@ -28,7 +31,7 @@ function CreatePullRequestToUpdateChangelogsAndPublicApis {
     git config user.email $gitUserEmail
   }
 
-  git switch --create $branch 2>&1 | % ToString
+  git switch --create $branch 2>&1 | ForEach-Object ToString
   if ($LASTEXITCODE -gt 0)
   {
       throw 'git switch failure'
@@ -80,13 +83,13 @@ Requested by: @$requestedByUserName
 ``/PushPackages``: Use after the created packages have been validated to push to NuGet [``maintainers``]
 "@
 
-  git commit -a -m "Prepare repo to release $tag." 2>&1 | % ToString
+  git commit -a -m "Prepare repo to release $tag." 2>&1 | ForEach-Object ToString
   if ($LASTEXITCODE -gt 0)
   {
       throw 'git commit failure'
   }
 
-  git push -u origin $branch 2>&1 | % ToString
+  git push -u origin $branch 2>&1 | ForEach-Object ToString
   if ($LASTEXITCODE -gt 0)
   {
       throw 'git push failure'
@@ -99,7 +102,7 @@ Requested by: @$requestedByUserName
     --head $branch `
     --label release
 
-  Write-Host $createPullRequestResponse
+  Write-Information $createPullRequestResponse
 
   $match = [regex]::Match($createPullRequestResponse, "\/pull\/(.*)$")
   if ($match.Success -eq $false)
@@ -213,13 +216,13 @@ function CreateReleaseTagAndPostNoticeOnPullRequest {
     git config user.email $gitUserEmail
   }
 
-  git tag -a $tag -m "$tag" $commit 2>&1 | % ToString
+  git tag -a $tag -m "$tag" $commit 2>&1 | ForEach-Object ToString
   if ($LASTEXITCODE -gt 0)
   {
       throw 'git tag failure'
   }
 
-  git push origin $tag 2>&1 | % ToString
+  git push origin $tag 2>&1 | ForEach-Object ToString
   if ($LASTEXITCODE -gt 0)
   {
       throw 'git push failure'
@@ -290,7 +293,7 @@ function UpdateChangelogReleaseDatesAndPostNoticeOnPullRequest {
     git config user.email $gitUserEmail
   }
 
-  git switch $prViewResponse.headRefName 2>&1 | % ToString
+  git switch $prViewResponse.headRefName 2>&1 | ForEach-Object ToString
   if ($LASTEXITCODE -gt 0)
   {
       throw 'git switch failure'
@@ -304,7 +307,7 @@ function UpdateChangelogReleaseDatesAndPostNoticeOnPullRequest {
 Released $(Get-Date -UFormat '%Y-%b-%d')
 "@
 
-  $projectDirs = Get-ChildItem -Path src/**/*.csproj | Select-String "<MinVerTagPrefix>$tagPrefix</MinVerTagPrefix>" -List | Select Path | Split-Path -Parent
+  $projectDirs = Get-ChildItem -Path src/**/*.csproj | Select-String "<MinVerTagPrefix>$tagPrefix</MinVerTagPrefix>" -List | Select-Object -ExpandProperty Path | Split-Path -Parent
 
   foreach ($projectDir in $projectDirs)
   {
@@ -325,13 +328,13 @@ Released $(Get-Date -UFormat '%Y-%b-%d')
     return
   }
 
-  git commit -a -m "Update CHANGELOG release dates for $tag." 2>&1 | % ToString
+  git commit -a -m "Update CHANGELOG release dates for $tag." 2>&1 | ForEach-Object ToString
   if ($LASTEXITCODE -gt 0)
   {
       throw 'git commit failure'
   }
 
-  git push -u origin $prViewResponse.headRefName 2>&1 | % ToString
+  git push -u origin $prViewResponse.headRefName 2>&1 | ForEach-Object ToString
   if ($LASTEXITCODE -gt 0)
   {
       throw 'git push failure'
@@ -402,7 +405,7 @@ function UpdateReleaseNotesAndPostNoticeOnPullRequest {
     git config user.email $gitUserEmail
   }
 
-  git switch $prViewResponse.headRefName 2>&1 | % ToString
+  git switch $prViewResponse.headRefName 2>&1 | ForEach-Object ToString
   if ($LASTEXITCODE -gt 0)
   {
       throw 'git switch failure'
@@ -447,13 +450,13 @@ $content
     Set-Content -Path "RELEASENOTES.md" -Value $content.TrimEnd()
   }
 
-  git commit -a -m "Update RELEASENOTES for $tag." 2>&1 | % ToString
+  git commit -a -m "Update RELEASENOTES for $tag." 2>&1 | ForEach-Object ToString
   if ($LASTEXITCODE -gt 0)
   {
       throw 'git commit failure'
   }
 
-  git push -u origin $prViewResponse.headRefName 2>&1 | % ToString
+  git push -u origin $prViewResponse.headRefName 2>&1 | ForEach-Object ToString
   if ($LASTEXITCODE -gt 0)
   {
       throw 'git push failure'
