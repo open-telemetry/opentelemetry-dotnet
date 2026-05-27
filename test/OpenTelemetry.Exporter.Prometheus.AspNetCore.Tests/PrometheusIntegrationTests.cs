@@ -150,34 +150,38 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
 
             await WaitForServiceDiscoveryAsync(prometheusBaseAddress, outputHelper, cts.Token);
 
-            IReadOnlyList<string> series = [];
+            HashSet<string> expectedSeries =
+            [
+#if NET10_0_OR_GREATER
+                "aspnetcore_memory_pool_allocated_bytes_total",
+#endif
+                "http_server_active_requests",
+                "http_server_request_duration_seconds_bucket",
+                "http_server_request_duration_seconds_count",
+                "http_server_request_duration_seconds_sum",
+                "kestrel_active_connections",
+                "kestrel_connection_duration_seconds_bucket",
+                "kestrel_connection_duration_seconds_count",
+                "kestrel_connection_duration_seconds_sum",
+                "processed_bytes_total",
+                "queue_balance",
+                "temperature_celsius",
+            ];
+
+            HashSet<string> actualSeries = [];
 
             // Assert
             while (!cts.IsCancellationRequested)
             {
-                series = await WaitForMetricsSeriesAsync(prometheusBaseAddress, outputHelper, cts.Token);
+                actualSeries = await WaitForMetricsSeriesAsync(prometheusBaseAddress, outputHelper, cts.Token);
 
-                if (series.Contains("temperature_celsius"))
+                if (actualSeries.IsProperSupersetOf(expectedSeries))
                 {
                     break;
                 }
             }
 
-            Assert.Contains("http_server_active_requests", series);
-            Assert.Contains("http_server_request_duration_seconds_bucket", series);
-            Assert.Contains("http_server_request_duration_seconds_count", series);
-            Assert.Contains("http_server_request_duration_seconds_sum", series);
-            Assert.Contains("kestrel_active_connections", series);
-            Assert.Contains("kestrel_connection_duration_seconds_bucket", series);
-            Assert.Contains("kestrel_connection_duration_seconds_count", series);
-            Assert.Contains("kestrel_connection_duration_seconds_sum", series);
-            Assert.Contains("processed_bytes_total", series);
-            Assert.Contains("queue_balance", series);
-            Assert.Contains("temperature_celsius", series);
-
-#if NET10_0_OR_GREATER
-            Assert.Contains("aspnetcore_memory_pool_allocated_bytes_total", series);
-#endif
+            Assert.ProperSuperset(expectedSeries, actualSeries);
         }
         finally
         {
@@ -189,7 +193,7 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
             await prometheus.DisposeAsync();
         }
 
-        static async Task<IReadOnlyList<string>> WaitForMetricsSeriesAsync(
+        static async Task<HashSet<string>> WaitForMetricsSeriesAsync(
             Uri baseAddress,
             ITestOutputHelper outputHelper,
             CancellationToken cancellationToken)
@@ -233,7 +237,7 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
                                 }
                             }
 
-                            return [.. series];
+                            return series;
                         }
                     }
                 }
