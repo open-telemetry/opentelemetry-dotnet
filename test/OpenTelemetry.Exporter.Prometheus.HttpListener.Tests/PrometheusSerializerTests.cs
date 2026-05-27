@@ -1155,6 +1155,7 @@ public sealed class PrometheusSerializerTests
         Assert.Equal(0, cursor);
     }
 
+    [Theory]
     [InlineData(double.NegativeInfinity, "-Inf")]
     [InlineData(-1e10d, "-1e+10")]
     [InlineData(-1e-10d, "-1e-10")]
