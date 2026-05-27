@@ -70,6 +70,9 @@ Notes](../../RELEASENOTES.md).
   OpenMetrics.
   ([#7218](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7218))
 
+* Add Prometheus text fallback `target_info` output as a gauge.
+  ([#7238](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7238))
+
 ## 1.15.3-beta.1
 
 Released 2026-Apr-21
