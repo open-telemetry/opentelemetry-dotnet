@@ -50,6 +50,8 @@ jobs:
         filters: |
           md: ['**.md']
           build: ['build/**', '.github/**/*.yml', '**/*.targets', '**/*.props', 'global.json']
+          github: ['.github/**/*']
+          pwsh: [ '**.ps1', '**.psm1', '**.psd1' ]
           shared: ['src/Shared/**']
           code: ['**.cs', '**.csproj', '.editorconfig']
           solution: ['OpenTelemetry.slnx']
@@ -62,12 +64,30 @@ jobs:
           unstable-core-packages: ['src/OpenTelemetry.Exporter.Prometheus.AspNetCore/**', 'src/OpenTelemetry.Exporter.Prometheus.HttpListener/**', 'src/OpenTelemetry.Shims.OpenTracing/**', '!**/*.md']
           otlp: ['*/OpenTelemetry.Exporter.OpenTelemetryProtocol*/**', '!**/*.md']
 
+  lint-actions:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'github')
+    uses: ./.github/workflows/actionlint.yml
+    permissions:
+      actions: read # Read GitHub Actions workflows
+      contents: read # Read repository contents
+
   lint-md:
     needs: detect-changes
     if: |
       contains(needs.detect-changes.outputs.changes, 'md')
       || contains(needs.detect-changes.outputs.changes, 'build')
     uses: ./.github/workflows/markdownlint.yml
+
+  lint-pwsh:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'pwsh')
+      || contains(needs.detect-changes.outputs.changes, 'github')
+    uses: ./.github/workflows/pwshlint.yml
+    permissions:
+      contents: read # To checkout the code
 
   lint-dotnet-format:
     needs: detect-changes
@@ -215,15 +235,7 @@ jobs:
         if ($IsWindows) {
           $runtimes += "net462"
         }
-        dotnet run `
-          --configuration Release `
-          --framework net10.0 `
-          --project ./test/Benchmarks `
-          -- `
-          --filter "*SamplerBenchmarks*" `
-          --job Short `
-          --memory `
-          --runtimes $runtimes
+        ./benchmark.ps1 @("*SamplerBenchmarks*") -EnableMemoryDiagnoser -Job Short -Runtimes $runtimes -SkipBaseline
 
   validate-packages:
     needs: detect-changes
@@ -268,8 +280,10 @@ jobs:
     needs: [
       detect-changes,
       code-ql,
+      lint-actions,
       lint-misspell-sanitycheck,
       lint-md,
+      lint-pwsh,
       lint-dotnet-format,
       build-test-solution,
       build-test-project-stable,
