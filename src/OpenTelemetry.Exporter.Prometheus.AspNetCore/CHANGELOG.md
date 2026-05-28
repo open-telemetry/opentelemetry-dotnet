@@ -66,6 +66,13 @@ Notes](../../RELEASENOTES.md).
   `X-Prometheus-Scrape-Timeout-Seconds` HTTP request header.
   ([#7252](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7252))
 
+* Use the canonical representation for histogram "le" label values when using
+  OpenMetrics.
+  ([#7218](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7218))
+
+* Add Prometheus text fallback `target_info` output as a gauge.
+  ([#7238](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7238))
+
 ## 1.15.3-beta.1
 
 Released 2026-Apr-21
