@@ -113,6 +113,22 @@ public class BaggagePropagatorTests
     }
 
     [Fact]
+    public void ValidateMaximumLengthBaggageExtraction()
+    {
+        var value = new string('x', MaxBaggageLength - "name=".Length);
+        var carrier = new Dictionary<string, string>
+        {
+            { BaggagePropagator.BaggageHeaderName, $"name={value}" },
+        };
+
+        var propagationContext = this.baggage.Extract(default, carrier, Getter);
+        var baggage = Assert.Single(propagationContext.Baggage.GetBaggage());
+
+        Assert.Equal("name", baggage.Key);
+        Assert.Equal(value, baggage.Value);
+    }
+
+    [Fact]
     public void ValidateEmptyBaggageInjection()
     {
         var carrier = new Dictionary<string, string>();

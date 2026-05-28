@@ -205,7 +205,7 @@ public class BaggagePropagator : TextMapPropagator
                 var pair = ReadNextSegment(ref remaining, ',');
                 baggageLength += pair.Length + 1;
 
-                if (baggageLength >= MaxBaggageLength || baggageDictionary?.Count >= MaxBaggageItems)
+                if (baggageLength > MaxBaggageLength || baggageDictionary?.Count >= MaxBaggageItems)
                 {
                     done = true;
                     break;
