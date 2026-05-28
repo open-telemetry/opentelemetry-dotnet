@@ -17,6 +17,10 @@ Notes](../../RELEASENOTES.md).
 * Update `TraceContextPropagator` to support the W3C randomness flag.
   ([#7301](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7301))
 
+* Fixed `TraceContextPropagator` to deduplicate duplicate `tracestate` keys
+  instead of discarding the entire `tracestate` header.
+  ([#7309](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7309))
+
 ## 1.15.3
 
 Released 2026-Apr-21

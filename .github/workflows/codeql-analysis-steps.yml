@@ -2,19 +2,24 @@ name: codeql-analysis-steps
 
 on:
   workflow_call:
+    inputs:
+      trigger:
+        required: true
+        type: string
 
 permissions: {}
 
 jobs:
   analyze:
+    name: 'Analyze ${{ matrix.language }}'
     permissions:
-      actions: read  # for github/codeql-action/init to get workflow details
-      contents: read  # for actions/checkout to fetch code
-      security-events: write  # for github/codeql-action/analyze to upload SARIF results
-    runs-on: windows-latest
+      actions: read # Scan GitHub Actions workflows
+      contents: read # Checkout the repository
+      security-events: write # Store results in the Security tab
+    runs-on: windows-2025
 
     strategy:
-      fail-fast: false
+      fail-fast: ${{ inputs.trigger == 'merge_group' }}
       matrix:
         language: ['actions', 'csharp']
 
@@ -35,20 +40,22 @@ jobs:
           show-progress: false
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4.35.4
+        uses: github/codeql-action/init@7211b7c8077ea37d8641b6271f6a365a22a5fbfa # v4.36.0
         with:
           build-mode: none
           languages: ${{ matrix.language }}
+          queries: security-extended
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4.35.4
+        uses: github/codeql-action/analyze@7211b7c8077ea37d8641b6271f6a365a22a5fbfa # v4.36.0
         with:
           category: '/language:${{ matrix.language }}'
 
   results:
+    name: results
     if: ${{ !cancelled() }}
     needs: [ analyze ]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Report status
