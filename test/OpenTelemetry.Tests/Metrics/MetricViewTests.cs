@@ -1028,7 +1028,7 @@ public class MetricViewTests : MetricTestsBase
     }
 
     [Fact]
-    public void SynchronousCounterWithTagFilteringDoesNotSpatiallyAggregateTest()
+    public void SynchronousCounterWithTagFilteringAggregatesMeasurementsTest()
     {
         // Regression guard for the ObservableCounter spatial aggregation fix.
         var exportedItems = new List<Metric>();

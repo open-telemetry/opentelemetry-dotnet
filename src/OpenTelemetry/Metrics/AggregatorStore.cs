@@ -939,7 +939,7 @@ internal sealed class AggregatorStore
         var index = this.FindMetricAggregatorsCustomTag(tags);
         var exemplarValue = value;
 
-        if (this.IsAsynchronous && this.aggType == AggregationType.LongSumIncomingCumulative)
+        if (index >= 0 && this.IsAsynchronous && this.aggType == AggregationType.LongSumIncomingCumulative)
         {
             ref var metricPoint = ref this.metricPoints[index];
             if (metricPoint.MetricPointStatus == MetricPointStatus.CollectPending)
@@ -998,7 +998,7 @@ internal sealed class AggregatorStore
         var index = this.FindMetricAggregatorsCustomTag(tags);
         var exemplarValue = value;
 
-        if (this.IsAsynchronous && this.aggType == AggregationType.DoubleSumIncomingCumulative)
+        if (index >= 0 && this.IsAsynchronous && this.aggType == AggregationType.DoubleSumIncomingCumulative)
         {
             ref var metricPoint = ref this.metricPoints[index];
             if (metricPoint.MetricPointStatus == MetricPointStatus.CollectPending)

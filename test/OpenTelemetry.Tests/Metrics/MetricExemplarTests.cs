@@ -935,6 +935,7 @@ public class MetricExemplarTests : MetricTestsBase
         callbackValue2 = 30L;
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
 
         metricPoint = GetFirstMetricPoint(exportedItems);
         Assert.NotNull(metricPoint);
