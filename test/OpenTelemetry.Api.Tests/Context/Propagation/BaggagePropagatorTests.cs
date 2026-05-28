@@ -140,6 +140,23 @@ public class BaggagePropagatorTests
     }
 
     [Fact]
+    public void ValidateEmptyValueInjection()
+    {
+        var carrier = new Dictionary<string, string>();
+        var propagationContext = new PropagationContext(
+            default,
+            Baggage.Create(new Dictionary<string, string>
+            {
+                ["key"] = string.Empty,
+            }));
+
+        this.baggage.Inject(propagationContext, carrier, Setter);
+
+        Assert.Single(carrier);
+        Assert.Equal("key=", carrier[BaggagePropagator.BaggageHeaderName]);
+    }
+
+    [Fact]
     public void ValidateMultipleEqualsInValue()
     {
         var carrier = new Dictionary<string, string>
@@ -157,7 +174,7 @@ public class BaggagePropagatorTests
     }
 
     [Fact]
-    public void ValidateEmptyValueSkipped()
+    public void ValidateEmptyValueExtraction()
     {
         var carrier = new Dictionary<string, string>
         {
@@ -165,7 +182,9 @@ public class BaggagePropagatorTests
         };
 
         var propagationContext = this.baggage.Extract(default, carrier, Getter);
-        Assert.Empty(propagationContext.Baggage.GetBaggage());
+        var baggage = Assert.Single(propagationContext.Baggage.GetBaggage());
+        Assert.Equal("SomeKey", baggage.Key);
+        Assert.Equal(string.Empty, baggage.Value);
     }
 
     [Fact]

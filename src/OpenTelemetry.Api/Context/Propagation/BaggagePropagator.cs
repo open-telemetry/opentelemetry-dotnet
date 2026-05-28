@@ -132,7 +132,7 @@ public class BaggagePropagator : TextMapPropagator
             do
             {
                 var item = e.Current;
-                if (string.IsNullOrEmpty(item.Value))
+                if (item.Value == null)
                 {
                     continue;
                 }
@@ -238,7 +238,7 @@ public class BaggagePropagator : TextMapPropagator
 
                 var value = DecodeIfNeeded(rawValue);
 
-                if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(value))
+                if (string.IsNullOrEmpty(key))
                 {
                     continue;
                 }
