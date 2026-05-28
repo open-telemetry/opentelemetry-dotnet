@@ -7,6 +7,7 @@ namespace OpenTelemetry.Context.Propagation.Tests;
 public class BaggagePropagatorTests
 {
     private const int MaxBaggageLength = 8192;
+    private const int MaxBaggageItems = 180;
 
     private static readonly Func<IDictionary<string, string>, string, IEnumerable<string>> Getter =
         static (d, k) => d.TryGetValue(k, out var v) ? [v] : [];
@@ -853,8 +854,9 @@ public class BaggagePropagatorTests
 
     [Theory]
     [InlineData("key=%", "key", "\uFFFD")]
-    [InlineData("key=%2", "key", "\uFFFD")]
-    [InlineData("key=%GG", "key", "\uFFFD")]
+    [InlineData("key=%2", "key", "\uFFFD2")]
+    [InlineData("key=%GG", "key", "\uFFFDGG")]
+    [InlineData("key=%%20", "key", "\uFFFD ")]
     public void ValidateMalformedPercentSequenceInValueIsReplacedWithReplacementCharacter(
         string headerValue, string expectedKey, string expectedValue)
     {
@@ -927,11 +929,34 @@ public class BaggagePropagatorTests
     public void RoundTripMixedValidAndInvalidKeysOnlyValidKeysSurvive()
     {
         var carrier = new Dictionary<string, string>();
-        this.baggage.Inject(new PropagationContext(default, new Baggage(new Dictionary<string, string> { { "valid-key", "valid-value" }, })), carrier, Setter);
+        var baggage = Baggage.Create(new Dictionary<string, string>
+        {
+            ["invalid key"] = "invalid-value",
+            ["valid-key"] = "valid-value",
+        });
+
+        this.baggage.Inject(new PropagationContext(default, baggage), carrier, Setter);
 
         var entry = Assert.Single(this.baggage.Extract(default, carrier, Getter).Baggage.GetBaggage());
         Assert.Equal("valid-key", entry.Key);
         Assert.Equal("valid-value", entry.Value);
+    }
+
+    [Fact]
+    public void InjectInvalidKeysDoNotConsumeMaxBaggageItemsLimit()
+    {
+        var baggageItems = new Dictionary<string, string>(StringComparer.Ordinal);
+        for (var i = 0; i < MaxBaggageItems; i++)
+        {
+            baggageItems[$"invalid key {i}"] = "invalid-value";
+        }
+
+        baggageItems["valid-key"] = "valid-value";
+
+        var carrier = new Dictionary<string, string>();
+        this.baggage.Inject(new PropagationContext(default, Baggage.Create(baggageItems)), carrier, Setter);
+
+        Assert.Equal("valid-key=valid-value", carrier[BaggagePropagator.BaggageHeaderName]);
     }
 
     // -------------------------------------------------------------------------

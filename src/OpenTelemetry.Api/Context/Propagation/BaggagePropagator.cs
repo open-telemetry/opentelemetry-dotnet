@@ -164,8 +164,10 @@ public class BaggagePropagator : TextMapPropagator
                 baggage.Append(encodedKey)
                        .Append('=')
                        .Append(encodedValue);
+
+                itemCount++;
             }
-            while (e.MoveNext() && ++itemCount < MaxBaggageItems);
+            while (itemCount < MaxBaggageItems && e.MoveNext());
 
             if (baggage.Length > 0)
             {
@@ -436,7 +438,7 @@ public class BaggagePropagator : TextMapPropagator
                 {
                     FlushByteBuffer(sb, byteBuffer, ref byteCount);
                     sb.Append('\uFFFD');
-                    i += Math.Min(3, value.Length - i);
+                    i++;
                 }
             }
             else
