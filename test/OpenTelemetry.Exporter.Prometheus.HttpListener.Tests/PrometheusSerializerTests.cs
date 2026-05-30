@@ -46,18 +46,26 @@ public sealed class PrometheusSerializerTests
         { long.MaxValue, "9223372036854775807" },
         { ulong.MinValue, "0" },
         { ulong.MaxValue, "18446744073709551615" },
-        { float.MinValue, "-3.4028234663852886E+38" },
-        { 0f, "0" },
+        { float.MinValue, "-3.40282346638528860e+038" },
+        { 0f, "0.0" },
         { float.NaN, "NaN" },
         { float.NegativeInfinity, "-Inf" },
         { float.PositiveInfinity, "+Inf" },
-        { float.MaxValue, "3.4028234663852886E+38" },
-        { double.MinValue, "-1.7976931348623157E+308" },
-        { 0d, "0" },
+        { float.MaxValue, "3.40282346638528860e+038" },
+#if NET
+        { double.MinValue, "-1.79769313486231571e+308" },
+#else
+        { double.MinValue, "-1.79769313486231570e+308" },
+#endif
+        { 0d, "0.0" },
         { double.NegativeInfinity, "-Inf" },
         { double.PositiveInfinity, "+Inf" },
         { double.NaN, "NaN" },
-        { double.MaxValue, "1.7976931348623157E+308" },
+#if NET
+        { double.MaxValue, "1.79769313486231571e+308" },
+#else
+        { double.MaxValue, "1.79769313486231570e+308" },
+#endif
         { decimal.MinValue, "-79228162514264337593543950335" },
         { 0m, "0" },
         { decimal.MaxValue, "79228162514264337593543950335" },
