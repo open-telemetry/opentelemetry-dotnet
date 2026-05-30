@@ -26,7 +26,7 @@ internal static partial class PrometheusSerializer
 #pragma warning restore SA1310 // Field name should not contain an underscore
 
 #if !NET
-    private static readonly DateTimeOffset UnixEpoch = new(1970, 1, 1, 0, 0, 0, TimeSpan.Zero);
+    private static readonly long UnixEpochTicks = new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero).Ticks;
 #endif
 
     private static readonly double[] ExactPowersOfTen =
@@ -638,7 +638,7 @@ internal static partial class PrometheusSerializer
 #if NET
         WriteDouble(buffer, cursor, (value.UtcDateTime.Ticks - DateTimeOffset.UnixEpoch.Ticks) / (double)TimeSpan.TicksPerSecond);
 #else
-        WriteDouble(buffer, cursor, (value.UtcDateTime.Ticks - UnixEpoch.Ticks) / (double)TimeSpan.TicksPerSecond);
+        WriteDouble(buffer, cursor, (value.UtcDateTime.Ticks - UnixEpochTicks) / (double)TimeSpan.TicksPerSecond);
 #endif
 
     private static string MapPrometheusType(PrometheusType type, bool openMetricsRequested) => type switch
