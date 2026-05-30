@@ -81,6 +81,13 @@ Notes](../../RELEASENOTES.md).
   `X-Prometheus-Scrape-Timeout-Seconds` HTTP request header.
   ([#7252](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7252))
 
+* Use the canonical representation for histogram "le" label values when using
+  OpenMetrics.
+  ([#7218](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7218))
+
+* Add Prometheus text fallback `target_info` output as a gauge.
+  ([#7238](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7238))
+
 * Emit OpenMetrics scope metadata as a single `otel_scope` metric family with
   `otel_scope_info` samples instead of repeating metadata for every scope.
   ([#7237](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7237))
