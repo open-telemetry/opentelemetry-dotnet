@@ -965,7 +965,7 @@ public sealed class PrometheusSerializerTests
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
         var bucketLine = output.Split(['\n'], StringSplitOptions.RemoveEmptyEntries)
             .Single(line => line.Contains("test_histogram_bucket{", StringComparison.Ordinal)
-                && line.Contains("le=\"25\"", StringComparison.Ordinal));
+                && line.Contains("le=\"25.0\"", StringComparison.Ordinal));
 
         Assert.Contains($"otel_scope_name=\"{Utils.GetCurrentMethodName()}\"", bucketLine, StringComparison.Ordinal);
         Assert.Contains("x=\"1\"", bucketLine, StringComparison.Ordinal);
@@ -1004,7 +1004,7 @@ public sealed class PrometheusSerializerTests
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
         var bucketLine = output.Split(['\n'], StringSplitOptions.RemoveEmptyEntries)
             .Single(line => line.Contains("test_histogram_bucket{", StringComparison.Ordinal)
-                && line.Contains("le=\"10\"", StringComparison.Ordinal));
+                && line.Contains("le=\"10.0\"", StringComparison.Ordinal));
 
         Assert.Contains("} 1 # {} 9 ", bucketLine, StringComparison.Ordinal);
         Assert.DoesNotContain("ignored-trace", bucketLine, StringComparison.Ordinal);
