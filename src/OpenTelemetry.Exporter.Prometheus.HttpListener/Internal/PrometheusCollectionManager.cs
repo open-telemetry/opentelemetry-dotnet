@@ -427,7 +427,7 @@ internal sealed class PrometheusCollectionManager
 
             if (openMetricsRequested &&
                 scopeInfoMetadataWritten &&
-                metadataName == "otel_scope")
+                (metadataName == "otel_scope" || metadataName == "otel_scope_info"))
             {
                 droppedMetricNames ??= new(StringComparer.Ordinal);
                 droppedMetricNames.Add(metadataName);

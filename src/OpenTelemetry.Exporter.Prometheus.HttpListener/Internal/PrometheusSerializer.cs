@@ -455,9 +455,7 @@ internal static partial class PrometheusSerializer
         }
 
         var wroteLabel = false;
-        cursor = WriteScopeLabels(buffer, cursor, metric, openMetricsRequested, ref wroteLabel);
-
-        foreach (var tag in tags)
+        foreach (var tag in CreateMetricPointLabels(metric, tags))
         {
             if (wroteLabel)
             {
@@ -701,6 +699,40 @@ internal static partial class PrometheusSerializer
         }
 
         return scopeLabels;
+    }
+
+    private static List<KeyValuePair<string, string>> CreateMetricPointLabels(Metric metric, ReadOnlyTagCollection tags)
+    {
+        var labels = CreateScopeLabels(metric);
+        Dictionary<string, int>? labelIndexes = null;
+
+        if (labels.Count > 0)
+        {
+            labelIndexes = new(labels.Count, StringComparer.Ordinal);
+
+            for (var i = 0; i < labels.Count; i++)
+            {
+                labelIndexes[labels[i].Key] = i;
+            }
+        }
+
+        foreach (var tag in tags)
+        {
+            var labelKey = NormalizeLabelKey(tag.Key);
+            var labelValue = GetLabelValueString(tag.Value);
+
+            if (labelIndexes?.TryGetValue(labelKey, out var existingIndex) is true)
+            {
+                labels[existingIndex] = new(labelKey, $"{labels[existingIndex].Value};{labelValue}");
+                continue;
+            }
+
+            labelIndexes ??= new(StringComparer.Ordinal);
+            labelIndexes[labelKey] = labels.Count;
+            labels.Add(new(labelKey, labelValue));
+        }
+
+        return labels;
     }
 
     private static bool TryCreateScopeLabel(KeyValuePair<string, object?> tag, int tagIndex, out KeyValuePair<string, ScopeLabelPart> scopeLabel)

@@ -479,6 +479,51 @@ public sealed class PrometheusCollectionManagerTests
     }
 
     [Fact]
+    public async Task OpenMetricsScopeInfoMetadataReservesOtelScopeInfoMetricFamily()
+    {
+        using var meter = new Meter("test_meter", "1.0.0");
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+#if PROMETHEUS_HTTP_LISTENER
+            .AddPrometheusHttpListener()
+#elif PROMETHEUS_ASPNETCORE
+            .AddPrometheusExporter()
+#endif
+            .Build();
+
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        Assert.True(provider.TryFindExporter(out PrometheusExporter? exporter));
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        meter.CreateCounter<int>("counter_1").Add(1);
+        meter.CreateObservableGauge("otel.scope.info", () => 1);
+
+        var response = await exporter!.CollectionManager.EnterCollect(openMetricsRequested: true);
+        try
+        {
+            var output = Encoding.UTF8.GetString(
+                response.OpenMetricsView.Array!,
+                response.OpenMetricsView.Offset,
+                response.OpenMetricsView.Count);
+
+#if NET
+#pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
+            Assert.Equal(1, Regex.Count(output, "^otel_scope_info\\{otel_scope_name=\"test_meter\",otel_scope_version=\"1.0.0\"\\} 1$", RegexOptions.Multiline));
+#pragma warning restore SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
+#else
+            Assert.Single(Regex.Matches(output, "^otel_scope_info\\{otel_scope_name=\"test_meter\",otel_scope_version=\"1.0.0\"\\} 1$", RegexOptions.Multiline));
+#endif
+            Assert.DoesNotContain("# TYPE otel_scope_info ", output, StringComparison.Ordinal);
+            Assert.DoesNotContain("# HELP otel_scope_info ", output, StringComparison.Ordinal);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect();
+        }
+    }
+
+    [Fact]
     public async Task DuplicateMetricMetadataIsWrittenOncePerScrape()
     {
         using var meter = new Meter(Utils.GetCurrentMethodName());

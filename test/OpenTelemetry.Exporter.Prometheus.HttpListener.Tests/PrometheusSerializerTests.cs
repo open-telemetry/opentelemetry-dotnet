@@ -321,6 +321,43 @@ public sealed class PrometheusSerializerTests
         Assert.Equal("a_b", Encoding.UTF8.GetString(buffer, 0, cursor));
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void WriteMetricConcatenatesPointTagsThatCollideWithScopeLabels(bool useOpenMetrics)
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter(
+            Utils.GetCurrentMethodName(),
+            "1.0.0",
+            [new("library.mascot", "dotnetbot"), new("service.name", "checkout")],
+            scope: null);
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        meter.CreateCounter<int>("test_counter").Add(
+            1,
+            new("otel_scope_library_mascot", "otter"),
+            new("service.name", "frontend"));
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+        var typeMetadataName = useOpenMetrics ? "test_counter" : "test_counter_total";
+        var expected =
+            ("^"
+                + $"# TYPE {typeMetadataName} counter\n"
+                + $"test_counter_total{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',otel_scope_library_mascot='dotnetbot;otter',otel_scope_service_name='checkout',service_name='frontend'}} 1\n"
+                + "$").Replace('\'', '"');
+
+        Assert.Matches(expected, output);
+    }
+
     [Fact]
     public void WriteMetricNameSanitizesNonAsciiCharacters()
     {
