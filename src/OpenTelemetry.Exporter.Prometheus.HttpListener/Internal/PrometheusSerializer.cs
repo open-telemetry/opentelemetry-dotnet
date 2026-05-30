@@ -683,7 +683,7 @@ internal static partial class PrometheusSerializer
                 : FormatFixedAndTrim(destination, value, Math.Max(1, -exponent));
         }
 
-        char symbol = absoluteValue >= 1e6 || absoluteValue < 1e-4 ? 'e' : 'G';
+        char symbol = absoluteValue is >= 1e6 or < 1e-4 ? 'e' : 'G';
 
         return TryFormat(destination, value, new(symbol, 17));
 
@@ -788,7 +788,7 @@ internal static partial class PrometheusSerializer
                 : FormatFixedAndTrim(value, Math.Max(1, -exponent));
         }
 
-        return value.ToString(absoluteValue >= 1e6 || absoluteValue < 1e-4 ? "e17" : "G17", CultureInfo.InvariantCulture);
+        return value.ToString(absoluteValue is >= 1e6 or < 1e-4 ? "e17" : "G17", CultureInfo.InvariantCulture);
 
         static string FormatFixedAndTrim(double value, int decimalPlaces)
         {
