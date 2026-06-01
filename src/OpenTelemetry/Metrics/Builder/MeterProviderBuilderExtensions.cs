@@ -105,10 +105,10 @@ public static class MeterProviderBuilderExtensions
     {
         Guard.ThrowIfNull(instrumentName);
 
-        if (!MeterProviderBuilderSdk.IsValidInstrumentName(name))
-        {
-            throw new ArgumentException($"Custom view name {name} is invalid.", nameof(name));
-        }
+        // Per the OpenTelemetry specification, the View-provided stream name
+        // is not subject to the instrument name syntax and the SDK MUST NOT
+        // validate it against that syntax. See:
+        // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#view
 
 #pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
 #if NET || NETSTANDARD2_1_OR_GREATER
@@ -179,7 +179,7 @@ public static class MeterProviderBuilderExtensions
                 }
                 else
                 {
-                    meterProviderBuilderSdk.AddView(instrument => instrument.Name.Equals(instrumentName, StringComparison.OrdinalIgnoreCase) ? metricStreamConfiguration : null);
+                    meterProviderBuilderSdk.AddView(instrument => string.Equals(instrument.Name, instrumentName, StringComparison.OrdinalIgnoreCase) ? metricStreamConfiguration : null);
                 }
             }
         });
@@ -327,15 +327,10 @@ public static class MeterProviderBuilderExtensions
     /// </summary>
     /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
     /// <returns><see cref="MeterProvider"/>.</returns>
-    public static MeterProvider Build(this MeterProviderBuilder meterProviderBuilder)
-    {
-        if (meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase)
-        {
-            return meterProviderBuilderBase.InvokeBuild();
-        }
-
-        throw new NotSupportedException($"Build is not supported on '{meterProviderBuilder?.GetType().FullName ?? "null"}' instances.");
-    }
+    public static MeterProvider Build(this MeterProviderBuilder meterProviderBuilder) =>
+        meterProviderBuilder is MeterProviderBuilderBase meterProviderBuilderBase
+            ? meterProviderBuilderBase.InvokeBuild()
+            : throw new NotSupportedException($"Build is not supported on '{meterProviderBuilder?.GetType().FullName ?? "null"}' instances.");
 
     /// <summary>
     /// Sets the default <see cref="ExemplarFilterType"/> for the provider.

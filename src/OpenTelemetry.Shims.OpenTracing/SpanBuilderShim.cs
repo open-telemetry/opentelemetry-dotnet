@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Globalization;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 using OpenTracing;
@@ -71,14 +72,7 @@ internal sealed class SpanBuilderShim : ISpanBuilder
 
     /// <inheritdoc/>
     public ISpanBuilder AsChildOf(ISpanContext? parent)
-    {
-        if (parent == null)
-        {
-            return this;
-        }
-
-        return this.AddReference(References.ChildOf, parent);
-    }
+        => parent == null ? this : this.AddReference(References.ChildOf, parent);
 
     /// <inheritdoc/>
     public ISpanBuilder AsChildOf(ISpan? parent)
@@ -184,7 +178,7 @@ internal sealed class SpanBuilderShim : ISpanBuilder
         }
 
         // see https://opentracing.io/specification/conventions/ for special key handling.
-        if (global::OpenTracing.Tag.Tags.SpanKind.Key.Equals(key, StringComparison.Ordinal))
+        if (string.Equals(global::OpenTracing.Tag.Tags.SpanKind.Key, key, StringComparison.Ordinal))
         {
             this.spanKind = value switch
             {
@@ -195,7 +189,7 @@ internal sealed class SpanBuilderShim : ISpanBuilder
                 _ => SpanKind.Internal,
             };
         }
-        else if (global::OpenTracing.Tag.Tags.Error.Key.Equals(key, StringComparison.Ordinal) && bool.TryParse(value, out var booleanValue))
+        else if (string.Equals(global::OpenTracing.Tag.Tags.Error.Key, key, StringComparison.Ordinal) && bool.TryParse(value, out var booleanValue))
         {
             this.error = booleanValue;
         }
@@ -210,7 +204,7 @@ internal sealed class SpanBuilderShim : ISpanBuilder
     /// <inheritdoc/>
     public ISpanBuilder WithTag(string key, bool value)
     {
-        if (global::OpenTracing.Tag.Tags.Error.Key.Equals(key, StringComparison.Ordinal))
+        if (string.Equals(global::OpenTracing.Tag.Tags.Error.Key, key, StringComparison.Ordinal))
         {
             this.error = value;
         }
@@ -249,12 +243,9 @@ internal sealed class SpanBuilderShim : ISpanBuilder
     {
         Guard.ThrowIfNull(tag);
 
-        if (value != null && int.TryParse(value, out var result))
-        {
-            return this.WithTag(tag.Key, result);
-        }
-
-        return this.WithTag(tag.Key, value);
+        return value != null && int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var result)
+            ? this.WithTag(tag.Key, result)
+            : this.WithTag(tag.Key, value);
     }
 
     /// <inheritdoc/>

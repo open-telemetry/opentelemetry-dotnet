@@ -97,18 +97,12 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
 
     /// <inheritdoc/>
     protected override bool OnForceFlush(int timeoutMilliseconds)
-    {
-        return this.worker.WaitForExport(timeoutMilliseconds);
-    }
+        => this.worker.WaitForExport(timeoutMilliseconds);
 
     /// <inheritdoc/>
     protected override bool OnShutdown(int timeoutMilliseconds)
     {
-        Stopwatch? shutdownStopwatch = null;
-        if (timeoutMilliseconds > 0)
-        {
-            shutdownStopwatch = Stopwatch.StartNew();
-        }
+        long? timestamp = timeoutMilliseconds == Timeout.Infinite ? null : Stopwatch.GetTimestamp();
 
         var result = this.worker.Shutdown(timeoutMilliseconds);
 
@@ -124,18 +118,12 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
             return this.exporter.Shutdown(0) && result;
         }
 
-        int remainingTimeout = timeoutMilliseconds;
-        if (shutdownStopwatch != null)
+        if (timestamp is { } startedAt)
         {
-            shutdownStopwatch.Stop();
-            remainingTimeout -= (int)shutdownStopwatch.ElapsedMilliseconds;
-            if (remainingTimeout < 0)
-            {
-                remainingTimeout = 0;
-            }
+            timeoutMilliseconds = Stopwatch.Remaining(timeoutMilliseconds, startedAt);
         }
 
-        return this.exporter.Shutdown(remainingTimeout) && result;
+        return this.exporter.Shutdown(timeoutMilliseconds) && result;
     }
 
     /// <inheritdoc/>

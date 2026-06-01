@@ -6,6 +6,22 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Stop validating View-provided metric stream `Name` against the instrument
+  name syntax, per
+  [spec clarification](https://github.com/open-telemetry/opentelemetry-specification/pull/5094).
+  ([#7300](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7300))
+
+* Fix incorrect validation of `OTEL_BSP_*` and `OTEL_BLRP_*` environment
+  variables.
+  ([#7187](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7187))
+
+* Fix observable instrument callbacks running once per reader instead of
+  once per collection cycle.
+  ([#7188](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7188))
+
+* Update `OpenTelemetrySdkEventSource` to support the W3C randomness flag.
+  ([#7301](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7301))
+
 ## 1.15.3
 
 Released 2026-Apr-21

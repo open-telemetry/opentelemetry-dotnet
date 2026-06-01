@@ -25,7 +25,6 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
 
         this.ScrapeResponseCacheDurationMilliseconds = options.ScrapeResponseCacheDurationMilliseconds;
         this.DisableTotalNameSuffixForCounters = options.DisableTotalNameSuffixForCounters;
-        this.DisableTimestamp = options.DisableTimestamp;
 
         this.CollectionManager = new PrometheusCollectionManager(this);
     }
@@ -48,8 +47,6 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
     internal bool DisableTotalNameSuffixForCounters { get; }
 
     internal bool OpenMetricsRequested { get; set; }
-
-    internal bool DisableTimestamp { get; set; }
 
     internal Resource Resource
     {

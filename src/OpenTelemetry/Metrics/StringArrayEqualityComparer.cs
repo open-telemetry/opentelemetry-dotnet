@@ -14,7 +14,7 @@ internal sealed class StringArrayEqualityComparer : IEqualityComparer<string[]>
             return true;
         }
 
-        if (ReferenceEquals(strings1, null) || ReferenceEquals(strings2, null))
+        if (strings1 is null || strings2 is null)
         {
             return false;
         }
@@ -28,7 +28,7 @@ internal sealed class StringArrayEqualityComparer : IEqualityComparer<string[]>
 
         for (var i = 0; i < len1; i++)
         {
-            if (!strings1[i].Equals(strings2[i], StringComparison.Ordinal))
+            if (!string.Equals(strings1[i], strings2[i], StringComparison.Ordinal))
             {
                 return false;
             }

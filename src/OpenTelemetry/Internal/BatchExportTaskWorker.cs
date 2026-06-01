@@ -39,9 +39,7 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
 
     /// <inheritdoc/>
     public override void Start()
-    {
-        this.workerTask = Task.Run(this.ExporterProcAsync);
-    }
+        => this.workerTask = Task.Run(this.ExporterProcAsync);
 
     /// <inheritdoc/>
     public override bool TriggerExport()
@@ -97,6 +95,7 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
             return true;
         }
 
+        // Otherwise we can just wait for the export to complete synchronously
         return this.WaitForExportAsync(timeoutMilliseconds, head).GetAwaiter().GetResult();
     }
 
@@ -125,12 +124,7 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
             return true;
         }
 
-        if (timeoutMilliseconds == 0)
-        {
-            return true;
-        }
-
-        return this.workerTask.Wait(timeoutMilliseconds);
+        return timeoutMilliseconds == 0 || this.workerTask.Wait(timeoutMilliseconds);
     }
 
     /// <inheritdoc/>
@@ -152,9 +146,8 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
 
     private async Task<bool> WaitForExportAsync(int timeoutMilliseconds, long targetHead)
     {
-        var sw = timeoutMilliseconds == Timeout.Infinite
-            ? null
-            : Stopwatch.StartNew();
+        var initialTimeoutMilliseconds = timeoutMilliseconds;
+        long? timestamp = timeoutMilliseconds == Timeout.Infinite ? null : Stopwatch.GetTimestamp();
 
         // There is a chance that the export task finished processing all the data from the queue,
         // and signaled before we enter wait here, use polling to prevent being blocked indefinitely.
@@ -163,15 +156,17 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
         while (true)
         {
             var timeout = pollingMilliseconds;
-            if (sw != null)
+
+            if (timestamp is { } startedAt)
             {
-                var remaining = timeoutMilliseconds - sw.ElapsedMilliseconds;
-                if (remaining <= 0)
+                var remainingMilliseconds = Stopwatch.Remaining(initialTimeoutMilliseconds, startedAt);
+
+                if (remainingMilliseconds <= 0)
                 {
                     return this.CircularBuffer.RemovedCount >= targetHead;
                 }
 
-                timeout = Math.Min((int)remaining, pollingMilliseconds);
+                timeout = Math.Min(remainingMilliseconds, pollingMilliseconds);
             }
 
             try
@@ -185,7 +180,7 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
                     this.dataExportedNotification.Task,
                     this.shutdownCompletionSource.Task,
                     Task.Delay(timeout, combinedTokenSource.Token)).ConfigureAwait(false);
-#if NET8_0_OR_GREATER
+#if NET
                 await combinedTokenSource.CancelAsync().ConfigureAwait(false);
 #else
                 combinedTokenSource.Cancel();
@@ -229,7 +224,7 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
                         await Task.WhenAny(
                             this.exportTrigger.WaitAsync(waitAndDelayCts.Token),
                             Task.Delay(this.ScheduledDelayMilliseconds, waitAndDelayCts.Token)).ConfigureAwait(false);
-#if NET8_0_OR_GREATER
+#if NET
                         await waitAndDelayCts.CancelAsync().ConfigureAwait(false);
 #else
                         waitAndDelayCts.Cancel();
