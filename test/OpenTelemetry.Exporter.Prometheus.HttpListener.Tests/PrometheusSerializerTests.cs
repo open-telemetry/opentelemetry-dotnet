@@ -974,11 +974,19 @@ public sealed class PrometheusSerializerTests
         var bucketLine = output.Split(['\n'], StringSplitOptions.RemoveEmptyEntries)
             .Single(line => line.Contains("test_histogram_bucket{", StringComparison.Ordinal)
                 && line.Contains("le=\"25.0\"", StringComparison.Ordinal));
+        var sumLine = output.Split(['\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Single(line => line.Contains("test_histogram_sum{", StringComparison.Ordinal));
+        var countLine = output.Split(['\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Single(line => line.Contains("test_histogram_count{", StringComparison.Ordinal));
 
         Assert.Contains($"otel_scope_name=\"{Utils.GetCurrentMethodName()}\"", bucketLine, StringComparison.Ordinal);
         Assert.Contains("x=\"1\"", bucketLine, StringComparison.Ordinal);
         Assert.Equal(bucketLine.IndexOf("le=\"", StringComparison.Ordinal), bucketLine.LastIndexOf("le=\"", StringComparison.Ordinal));
         Assert.DoesNotContain("user-value", bucketLine, StringComparison.Ordinal);
+        Assert.DoesNotContain("le=\"", sumLine, StringComparison.Ordinal);
+        Assert.DoesNotContain("user-value", sumLine, StringComparison.Ordinal);
+        Assert.DoesNotContain("le=\"", countLine, StringComparison.Ordinal);
+        Assert.DoesNotContain("user-value", countLine, StringComparison.Ordinal);
     }
 
     [Fact]

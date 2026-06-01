@@ -140,7 +140,7 @@ internal static partial class PrometheusSerializer
                     // See https://prometheus.io/docs/specs/om/open_metrics_spec/#histogram-1
                     cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "_sum");
-                    cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags, openMetricsRequested);
+                    cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags, openMetricsRequested, reservedOutputKeys: ReservedHistogramLabelNames);
 
                     buffer[cursor++] = unchecked((byte)' ');
 
@@ -151,7 +151,7 @@ internal static partial class PrometheusSerializer
                     // Histogram count
                     cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "_count");
-                    cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags, openMetricsRequested);
+                    cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags, openMetricsRequested, reservedOutputKeys: ReservedHistogramLabelNames);
 
                     buffer[cursor++] = unchecked((byte)' ');
 
