@@ -27,14 +27,13 @@ internal static partial class PrometheusSerializer
 #pragma warning restore SA1310 // Field name should not contain an underscore
 
     private const int MaxExemplarLabelSetCharacters = 128;
-  
+
 #if !NET
     private static readonly long UnixEpochTicks = new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero).Ticks;
 #endif
 
     private static readonly string[] ReservedExemplarLabelNames = ["trace_id", "span_id"];
     private static readonly string[] ReservedHistogramLabelNames = ["le"];
-
     private static readonly double[] ExactPowersOfTen =
     [
         1e-10d,
