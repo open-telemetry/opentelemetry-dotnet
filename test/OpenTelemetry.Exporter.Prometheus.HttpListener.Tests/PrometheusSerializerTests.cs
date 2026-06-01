@@ -47,18 +47,26 @@ public sealed class PrometheusSerializerTests
         { long.MaxValue, "9223372036854775807" },
         { ulong.MinValue, "0" },
         { ulong.MaxValue, "18446744073709551615" },
-        { float.MinValue, "-3.4028234663852886E+38" },
-        { 0f, "0" },
+        { float.MinValue, "-3.40282346638528860e+038" },
+        { 0f, "0.0" },
         { float.NaN, "NaN" },
         { float.NegativeInfinity, "-Inf" },
         { float.PositiveInfinity, "+Inf" },
-        { float.MaxValue, "3.4028234663852886E+38" },
-        { double.MinValue, "-1.7976931348623157E+308" },
-        { 0d, "0" },
+        { float.MaxValue, "3.40282346638528860e+038" },
+#if NET
+        { double.MinValue, "-1.79769313486231571e+308" },
+#else
+        { double.MinValue, "-1.79769313486231570e+308" },
+#endif
+        { 0d, "0.0" },
         { double.NegativeInfinity, "-Inf" },
         { double.PositiveInfinity, "+Inf" },
         { double.NaN, "NaN" },
-        { double.MaxValue, "1.7976931348623157E+308" },
+#if NET
+        { double.MaxValue, "1.79769313486231571e+308" },
+#else
+        { double.MaxValue, "1.79769313486231570e+308" },
+#endif
         { decimal.MinValue, "-79228162514264337593543950335" },
         { 0m, "0" },
         { decimal.MaxValue, "79228162514264337593543950335" },
@@ -807,6 +815,84 @@ public sealed class PrometheusSerializerTests
     }
 
     [Fact]
+    public void CounterWithOpenMetricsFormatFiltersSanitizedReservedExemplarTagNames()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateCounter<long>("test_counter");
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
+            .AddView(
+                counter.Name,
+                new MetricStreamConfiguration
+                {
+                    TagKeys = ["keep"],
+                    ExemplarReservoirFactory = () => new SimpleFixedSizeExemplarReservoir(3),
+                })
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        counter.Add(2, new("keep", "value"), new("trace.id", "ignored-trace"), new("span-id", "ignored-span"));
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0], true);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+        var counterLine = output.Split(['\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Single(line => line.StartsWith("test_counter", StringComparison.Ordinal));
+
+        Assert.Contains(" 2 # {} 2 ", counterLine, StringComparison.Ordinal);
+        Assert.DoesNotContain("ignored-trace", counterLine, StringComparison.Ordinal);
+        Assert.DoesNotContain("ignored-span", counterLine, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void CounterWithOpenMetricsFormatDropsExemplarLabelsExceedingLimit()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+        var droppedValue = new string('x', 80);
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateCounter<long>("test_counter");
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
+            .AddView(
+                counter.Name,
+                new MetricStreamConfiguration
+                {
+                    TagKeys = ["keep"],
+                    ExemplarReservoirFactory = () => new SimpleFixedSizeExemplarReservoir(3),
+                })
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        using var activity = new Activity("test");
+        activity.Start();
+        counter.Add(2, new("keep", "value"), new("short", "ok"), new("too.long", droppedValue));
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0], true);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+        var counterLine = output.Split(['\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Single(line => line.StartsWith("test_counter", StringComparison.Ordinal));
+
+        Assert.Contains(
+            $"# {{trace_id=\"{activity.TraceId.ToHexString()}\",span_id=\"{activity.SpanId.ToHexString()}\",short=\"ok\"}} 2 ",
+            counterLine,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("too_long", counterLine, StringComparison.Ordinal);
+        Assert.DoesNotContain(droppedValue, counterLine, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void TryGetLatestExemplarPrefersLaterCandidateWhenTimestampsMatch()
     {
         var timestamp = new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero);
@@ -912,6 +998,81 @@ public sealed class PrometheusSerializerTests
     }
 
     [Fact]
+    public void HistogramWithOpenMetricsFormatDropsCollidingLeLabelKeys()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        var histogram = meter.CreateHistogram<double>("test_histogram");
+        histogram.Record(18, new KeyValuePair<string, object?>("le", "user-value"), new KeyValuePair<string, object?>("x", "1"));
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0], true);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+        var bucketLine = output.Split(['\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Single(line => line.Contains("test_histogram_bucket{", StringComparison.Ordinal)
+                && line.Contains("le=\"25.0\"", StringComparison.Ordinal));
+        var sumLine = output.Split(['\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Single(line => line.Contains("test_histogram_sum{", StringComparison.Ordinal));
+        var countLine = output.Split(['\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Single(line => line.Contains("test_histogram_count{", StringComparison.Ordinal));
+
+        Assert.Contains($"otel_scope_name=\"{Utils.GetCurrentMethodName()}\"", bucketLine, StringComparison.Ordinal);
+        Assert.Contains("x=\"1\"", bucketLine, StringComparison.Ordinal);
+        Assert.Equal(bucketLine.IndexOf("le=\"", StringComparison.Ordinal), bucketLine.LastIndexOf("le=\"", StringComparison.Ordinal));
+        Assert.DoesNotContain("user-value", bucketLine, StringComparison.Ordinal);
+        Assert.DoesNotContain("le=\"", sumLine, StringComparison.Ordinal);
+        Assert.DoesNotContain("user-value", sumLine, StringComparison.Ordinal);
+        Assert.DoesNotContain("le=\"", countLine, StringComparison.Ordinal);
+        Assert.DoesNotContain("user-value", countLine, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void HistogramWithOpenMetricsFormatFiltersSanitizedReservedExemplarTagNames()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var histogram = meter.CreateHistogram<double>("test_histogram");
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
+            .AddView(
+                histogram.Name,
+                new ExplicitBucketHistogramConfiguration
+                {
+                    Boundaries = [5, 10],
+                    TagKeys = ["keep"],
+                    ExemplarReservoirFactory = () => new SimpleFixedSizeExemplarReservoir(3),
+                })
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        histogram.Record(9, new("keep", "value"), new("trace.id", "ignored-trace"), new("span-id", "ignored-span"));
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0], true);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+        var bucketLine = output.Split(['\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Single(line => line.Contains("test_histogram_bucket{", StringComparison.Ordinal)
+                && line.Contains("le=\"10.0\"", StringComparison.Ordinal));
+
+        Assert.Contains("} 1 # {} 9 ", bucketLine, StringComparison.Ordinal);
+        Assert.DoesNotContain("ignored-trace", bucketLine, StringComparison.Ordinal);
+        Assert.DoesNotContain("ignored-span", bucketLine, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void TryGetLatestHistogramBucketExemplarMatchesNegativeInfinityInFirstBucket()
     {
         Assert.True(PrometheusSerializer.IsHistogramBucketExemplarMatch(double.NegativeInfinity, double.NegativeInfinity, 5));
@@ -1000,6 +1161,106 @@ public sealed class PrometheusSerializerTests
                 + $"test_histogram_count{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1'}} 2\n"
                 + $"test_histogram_created{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1'}} [0-9]+(?:\\.[0-9]+)?\n"
                 + "$").Replace('\'', '"'),
+            Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Fact]
+    public void WriteMetricConcatenatesCollidingSanitizedLabelValuesInLexicographicOrder()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter("test_meter");
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        meter.CreateObservableGauge<long>(
+            "test_gauge",
+            () =>
+            [
+                new Measurement<long>(
+                    123,
+                    new("foo.bar", "dot"),
+                    new("foo-bar", "hyphen"),
+                    new("foo_bar", "underscore")),
+            ]);
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0], false);
+        Assert.Matches(
+            ("^"
+             + "# TYPE test_gauge gauge\n"
+             + "test_gauge{otel_scope_name='test_meter',foo_bar='hyphen;dot;underscore'} 123\n"
+             + "$").Replace('\'', '"'),
+            Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Fact]
+    public void WriteMetricConcatenatesCollidingEmptyAndUnderscoreLabelKeys()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter("test_meter");
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        meter.CreateObservableGauge<long>(
+            "test_gauge",
+            () =>
+            [
+                new Measurement<long>(
+                    123,
+                    new(string.Empty, "empty"),
+                    new("_", "underscore")),
+            ]);
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0], false);
+        Assert.Matches(
+            ("^"
+             + "# TYPE test_gauge gauge\n"
+             + "test_gauge{otel_scope_name='test_meter',_='empty;underscore'} 123\n"
+             + "$").Replace('\'', '"'),
+            Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Fact]
+    public void WriteMetricConcatenatesCollidingLeadingDigitLabelKeys()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter("test_meter");
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        meter.CreateObservableGauge<long>(
+            "test_gauge",
+            () =>
+            [
+                new Measurement<long>(
+                    123,
+                    new("1foo", "digit"),
+                    new("_1foo", "underscore")),
+            ]);
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0], false);
+        Assert.Matches(
+            ("^"
+             + "# TYPE test_gauge gauge\n"
+             + "test_gauge{otel_scope_name='test_meter',_1foo='digit;underscore'} 123\n"
+             + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
     }
 
