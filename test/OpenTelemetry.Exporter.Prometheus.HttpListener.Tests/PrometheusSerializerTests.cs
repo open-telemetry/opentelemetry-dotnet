@@ -322,9 +322,18 @@ public sealed class PrometheusSerializerTests
     }
 
     [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void WriteMetricConcatenatesPointTagsThatCollideWithScopeLabels(bool useOpenMetrics)
+    [InlineData(false, "library.mascot", "dotnetbot", "otel_scope_library_mascot", "otter", "otel_scope_library_mascot", "dotnetbot;otter")]
+    [InlineData(true, "library.mascot", "dotnetbot", "otel_scope_library_mascot", "otter", "otel_scope_library_mascot", "dotnetbot;otter")]
+    [InlineData(false, "z", "scope", "otel_scope_z", "point", "otel_scope_z", "point;scope")]
+    [InlineData(true, "z", "scope", "otel_scope_z", "point", "otel_scope_z", "point;scope")]
+    public void WriteMetricConcatenatesPointTagsThatCollideWithScopeLabels(
+        bool useOpenMetrics,
+        string scopeTagKey,
+        string scopeTagValue,
+        string pointTagKey,
+        string pointTagValue,
+        string expectedLabelKey,
+        string expectedLabelValue)
     {
         var buffer = new byte[85000];
         var metrics = new List<Metric>();
@@ -332,7 +341,7 @@ public sealed class PrometheusSerializerTests
         using var meter = new Meter(
             Utils.GetCurrentMethodName(),
             "1.0.0",
-            [new("library.mascot", "dotnetbot"), new("service.name", "checkout")],
+            [new(scopeTagKey, scopeTagValue)],
             scope: null);
         using var provider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
@@ -341,8 +350,7 @@ public sealed class PrometheusSerializerTests
 
         meter.CreateCounter<int>("test_counter").Add(
             1,
-            new("otel_scope_library_mascot", "otter"),
-            new("service.name", "frontend"));
+            new KeyValuePair<string, object?>(pointTagKey, pointTagValue));
 
         provider.ForceFlush();
 
@@ -352,7 +360,7 @@ public sealed class PrometheusSerializerTests
         var expected =
             ("^"
                 + $"# TYPE {typeMetadataName} counter\n"
-                + $"test_counter_total{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',otel_scope_library_mascot='dotnetbot;otter',otel_scope_service_name='checkout',service_name='frontend'}} 1\n"
+                + $"test_counter_total{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',{expectedLabelKey}='{expectedLabelValue}'}} 1\n"
                 + "$").Replace('\'', '"');
 
         Assert.Matches(expected, output);

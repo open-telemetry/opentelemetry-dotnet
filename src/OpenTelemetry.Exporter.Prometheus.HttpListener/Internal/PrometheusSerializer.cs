@@ -467,9 +467,9 @@ internal static partial class PrometheusSerializer
         cursor = startCursor;
         List<LabelData>? labels = null;
 
-        foreach (var scopeLabel in CreateScopeLabels(metric))
+        foreach (var scopeLabel in CreateScopeLabelData(metric))
         {
-            AddLabel(scopeLabel.Key, scopeLabel.Value, ref labels, reservedOutputKeys);
+            AddLabel(scopeLabel.OriginalKey, scopeLabel.OutputKey, scopeLabel.Value, ref labels, reservedOutputKeys);
         }
 
         foreach (var tag in tags)
@@ -680,19 +680,46 @@ internal static partial class PrometheusSerializer
 
     private static List<KeyValuePair<string, string>> CreateScopeLabels(Metric metric)
     {
-        var scopeLabels = new List<KeyValuePair<string, string>>(3)
+        var orderedKeys = new List<string>();
+        var labelsByOutputKey = new Dictionary<string, List<LabelData>>(StringComparer.Ordinal);
+
+        foreach (var label in CreateScopeLabelData(metric))
         {
-            new("otel_scope_name", GetLabelValueString(metric.MeterName)),
+            if (!labelsByOutputKey.TryGetValue(label.OutputKey, out var bucket))
+            {
+                bucket = [];
+                labelsByOutputKey[label.OutputKey] = bucket;
+                orderedKeys.Add(label.OutputKey);
+            }
+
+            bucket.Add(label);
+        }
+
+        var scopeLabels = new List<KeyValuePair<string, string>>(orderedKeys.Count);
+
+        foreach (var key in orderedKeys)
+        {
+            scopeLabels.Add(new(key, GetMergedLabelValue(labelsByOutputKey[key])));
+        }
+
+        return scopeLabels;
+    }
+
+    private static List<LabelData> CreateScopeLabelData(Metric metric)
+    {
+        var scopeLabels = new List<LabelData>(3)
+        {
+            new("otel_scope_name", "otel_scope_name", GetLabelValueString(metric.MeterName)),
         };
 
         if (!string.IsNullOrEmpty(metric.MeterVersion))
         {
-            scopeLabels.Add(new("otel_scope_version", GetLabelValueString(metric.MeterVersion)));
+            scopeLabels.Add(new("otel_scope_version", "otel_scope_version", GetLabelValueString(metric.MeterVersion)));
         }
 
         if (!string.IsNullOrEmpty(metric.MeterSchemaUrl))
         {
-            scopeLabels.Add(new("otel_scope_schema_url", GetLabelValueString(metric.MeterSchemaUrl)));
+            scopeLabels.Add(new("otel_scope_schema_url", "otel_scope_schema_url", GetLabelValueString(metric.MeterSchemaUrl)));
         }
 
         if (metric.MeterTags == null)
@@ -700,104 +727,19 @@ internal static partial class PrometheusSerializer
             return scopeLabels;
         }
 
-        var serializedScopeLabels = new Dictionary<string, List<ScopeLabelPart>>(StringComparer.Ordinal);
-        var serializedScopeLabelOrder = new List<string>();
-        var tagIndex = 0;
-
         foreach (var tag in metric.MeterTags)
         {
-            if (!TryCreateScopeLabel(tag, tagIndex++, out var scopeLabel))
+            var labelKey = NormalizeLabelKey($"otel_scope_{tag.Key}");
+
+            if (ReservedScopeLabelNames.Contains(labelKey))
             {
                 continue;
             }
 
-            if (!serializedScopeLabels.TryGetValue(scopeLabel.Key, out var labelParts))
-            {
-                labelParts = [];
-                serializedScopeLabels[scopeLabel.Key] = labelParts;
-                serializedScopeLabelOrder.Add(scopeLabel.Key);
-            }
-
-            labelParts.Add(scopeLabel.Value);
-        }
-
-        foreach (var labelKey in serializedScopeLabelOrder)
-        {
-            var labelParts = serializedScopeLabels[labelKey];
-
-            if (labelParts.Count > 1)
-            {
-                labelParts.Sort(static (x, y) =>
-                {
-                    var keyCompare = string.CompareOrdinal(x.OriginalKey, y.OriginalKey);
-                    return keyCompare != 0 ? keyCompare : x.TagIndex.CompareTo(y.TagIndex);
-                });
-            }
-
-            var builder = new StringBuilder();
-
-            for (var i = 0; i < labelParts.Count; i++)
-            {
-                if (i > 0)
-                {
-                    builder.Append(';');
-                }
-
-                builder.Append(labelParts[i].LabelValue);
-            }
-
-            scopeLabels.Add(new(labelKey, builder.ToString()));
+            scopeLabels.Add(new(tag.Key, labelKey, GetLabelValueString(tag.Value)));
         }
 
         return scopeLabels;
-    }
-
-    private static List<KeyValuePair<string, string>> CreateMetricPointLabels(Metric metric, ReadOnlyTagCollection tags)
-    {
-        var labels = CreateScopeLabels(metric);
-        Dictionary<string, int>? labelIndexes = null;
-
-        if (labels.Count > 0)
-        {
-            labelIndexes = new(labels.Count, StringComparer.Ordinal);
-
-            for (var i = 0; i < labels.Count; i++)
-            {
-                labelIndexes[labels[i].Key] = i;
-            }
-        }
-
-        foreach (var tag in tags)
-        {
-            var labelKey = NormalizeLabelKey(tag.Key);
-            var labelValue = GetLabelValueString(tag.Value);
-
-            if (labelIndexes?.TryGetValue(labelKey, out var existingIndex) is true)
-            {
-                labels[existingIndex] = new(labelKey, $"{labels[existingIndex].Value};{labelValue}");
-                continue;
-            }
-
-            labelIndexes ??= new(StringComparer.Ordinal);
-            labelIndexes[labelKey] = labels.Count;
-            labels.Add(new(labelKey, labelValue));
-        }
-
-        return labels;
-    }
-
-    private static bool TryCreateScopeLabel(KeyValuePair<string, object?> tag, int tagIndex, out KeyValuePair<string, ScopeLabelPart> scopeLabel)
-    {
-        var labelKey = NormalizeLabelKey($"otel_scope_{tag.Key}");
-
-        if (ReservedScopeLabelNames.Contains(labelKey))
-        {
-            scopeLabel = default;
-            return false;
-        }
-
-        scopeLabel = new(labelKey, new(tag.Key, GetLabelValueString(tag.Value), tagIndex));
-        return true;
     }
 
     private static int WriteScopeLabel(byte[] buffer, int cursor, string key, object? value, bool openMetricsRequested, ref bool wroteLabel)
@@ -939,8 +881,10 @@ internal static partial class PrometheusSerializer
     }
 
     private static void AddLabel(string originalKey, object? value, ref List<LabelData>? labels, IReadOnlyCollection<string>? reservedOutputKeys = null)
+        => AddLabel(originalKey, GetSanitizedLabelKey(originalKey), value, ref labels, reservedOutputKeys);
+
+    private static void AddLabel(string originalKey, string outputKey, object? value, ref List<LabelData>? labels, IReadOnlyCollection<string>? reservedOutputKeys = null)
     {
-        var outputKey = GetSanitizedLabelKey(originalKey);
         if (reservedOutputKeys?.Contains(outputKey) == true)
         {
             return;
@@ -1275,15 +1219,6 @@ internal static partial class PrometheusSerializer
 
         exponent = index - 10;
         return true;
-    }
-
-    private readonly struct ScopeLabelPart(string originalKey, string labelValue, int tagIndex)
-    {
-        public readonly string OriginalKey { get; } = originalKey;
-
-        public readonly string LabelValue { get; } = labelValue;
-
-        public readonly int TagIndex { get; } = tagIndex;
     }
 
     private readonly struct LabelData(string originalKey, string outputKey, string value)
