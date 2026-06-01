@@ -781,10 +781,10 @@ internal static partial class PrometheusSerializer
             {
                 var value = GetMergedLabelValue(groupedLabels[key]);
 
-                if (maxLabelSetCharacters.HasValue)
+                if (maxLabelSetCharacters is { } maxCharactersValue)
                 {
                     var labelCharacters = GetUtf8CodePointCount(key) + GetUtf8CodePointCount(value);
-                    if (labelSetCharacters + labelCharacters > maxLabelSetCharacters.Value)
+                    if (labelSetCharacters + labelCharacters > maxCharactersValue)
                     {
                         continue;
                     }
