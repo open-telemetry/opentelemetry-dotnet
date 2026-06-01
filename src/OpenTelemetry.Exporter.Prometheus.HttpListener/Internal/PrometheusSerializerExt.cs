@@ -162,7 +162,6 @@ internal static partial class PrometheusSerializer
 
                     cursor = WriteLong(buffer, cursor, metricPoint.GetHistogramCount());
                     buffer[cursor++] = ASCII_LINEFEED;
-                    buffer[cursor++] = ASCII_LINEFEED;
                 }
 
                 if (openMetricsRequested)

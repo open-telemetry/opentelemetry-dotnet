@@ -392,18 +392,21 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteScopeInfo(byte[] buffer, int cursor, string scopeName, bool openMetricsRequested)
+    public static int WriteScopeInfo(byte[] buffer, int cursor, string scopeName, bool openMetricsRequested, bool writeMetadata = true)
     {
         if (string.IsNullOrEmpty(scopeName))
         {
             return cursor;
         }
 
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# TYPE otel_scope_info info");
-        buffer[cursor++] = ASCII_LINEFEED;
+        if (writeMetadata)
+        {
+            cursor = WriteAsciiStringNoEscape(buffer, cursor, "# TYPE otel_scope_info info");
+            buffer[cursor++] = ASCII_LINEFEED;
 
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# HELP otel_scope_info Scope metadata");
-        buffer[cursor++] = ASCII_LINEFEED;
+            cursor = WriteAsciiStringNoEscape(buffer, cursor, "# HELP otel_scope_info Scope metadata");
+            buffer[cursor++] = ASCII_LINEFEED;
+        }
 
         cursor = WriteAsciiStringNoEscape(buffer, cursor, "otel_scope_info");
         buffer[cursor++] = unchecked((byte)'{');

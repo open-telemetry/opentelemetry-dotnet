@@ -929,6 +929,7 @@ public sealed class PrometheusSerializerTests
         Assert.Contains($"test_histogram_count{{otel_scope_name=\"{Utils.GetCurrentMethodName()}\",x=\"1\"}} 2\n", output, StringComparison.Ordinal);
         Assert.Matches($"test_histogram_created\\{{otel_scope_name=\"{Regex.Escape(Utils.GetCurrentMethodName())}\",x=\"1\"\\}} [0-9]+(?:\\.[0-9]+)?", output);
         Assert.DoesNotContain("# TYPE test_histogram_created", output, StringComparison.Ordinal);
+        Assert.DoesNotContain("\n\n", output, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -1130,6 +1131,7 @@ public sealed class PrometheusSerializerTests
         Assert.Contains($"test_histogram_count{{otel_scope_name=\"{Utils.GetCurrentMethodName()}\",otel_scope_version=\"1.0.0\",x=\"1\"}} 2\n", output, StringComparison.Ordinal);
         Assert.Matches($"test_histogram_created\\{{otel_scope_name=\"{Regex.Escape(Utils.GetCurrentMethodName())}\",otel_scope_version=\"1.0.0\",x=\"1\"\\}} [0-9]+(?:\\.[0-9]+)?", output);
         Assert.DoesNotContain("# TYPE test_histogram_created", output, StringComparison.Ordinal);
+        Assert.DoesNotContain("\n\n", output, StringComparison.Ordinal);
     }
 
     [Fact]
