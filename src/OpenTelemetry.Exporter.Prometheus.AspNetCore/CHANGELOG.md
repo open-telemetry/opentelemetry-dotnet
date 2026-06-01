@@ -73,6 +73,9 @@ Notes](../../RELEASENOTES.md).
 * Add Prometheus text fallback `target_info` output as a gauge.
   ([#7238](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7238))
 
+* Merge colliding sanitized label keys.
+  ([#7239](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7239))
+
 * GZip compress scrape endpoint responses when `Accept-Encoding: gzip` is
   specified by the HTTP request headers.
   ([#7274](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7274))
