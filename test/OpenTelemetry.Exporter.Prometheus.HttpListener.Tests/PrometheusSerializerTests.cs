@@ -843,7 +843,7 @@ public sealed class PrometheusSerializerTests
         var cursor = WriteMetric(buffer, 0, metrics[0], true);
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
         var counterLine = output.Split(['\n'], StringSplitOptions.RemoveEmptyEntries)
-            .Single(line => line.StartsWith("test_counter", StringComparison.Ordinal));
+            .Single(line => line.StartsWith("test_counter_total", StringComparison.Ordinal));
 
         Assert.Contains(" 2 # {} 2 ", counterLine, StringComparison.Ordinal);
         Assert.DoesNotContain("ignored-trace", counterLine, StringComparison.Ordinal);
@@ -882,7 +882,7 @@ public sealed class PrometheusSerializerTests
         var cursor = WriteMetric(buffer, 0, metrics[0], true);
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
         var counterLine = output.Split(['\n'], StringSplitOptions.RemoveEmptyEntries)
-            .Single(line => line.StartsWith("test_counter", StringComparison.Ordinal));
+            .Single(line => line.StartsWith("test_counter_total", StringComparison.Ordinal));
 
         Assert.Contains(
             $"# {{trace_id=\"{activity.TraceId.ToHexString()}\",span_id=\"{activity.SpanId.ToHexString()}\",short=\"ok\"}} 2 ",
