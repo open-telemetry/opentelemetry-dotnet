@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using OpenTelemetry.Exporter.Prometheus.Tests;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -35,6 +36,8 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
             [
                 KeyValuePair.Create<string, string?>("OTEL_SDK_DISABLED", "true"),
             ]);
+
+        builder.Logging.SetMinimumLevel(LogLevel.Warning);
 
         // Listen on any available port
         builder.WebHost.UseUrls("http://127.0.0.1:0");
@@ -330,6 +333,8 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
         const string KeepTag = "keep";
 
         var builder = WebApplication.CreateBuilder();
+
+        builder.Logging.SetMinimumLevel(LogLevel.Warning);
 
         // Listen on any available port
         builder.WebHost.UseUrls("http://0.0.0.0:0");

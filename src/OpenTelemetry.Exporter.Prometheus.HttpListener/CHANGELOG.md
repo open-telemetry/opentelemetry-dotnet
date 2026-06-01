@@ -88,6 +88,9 @@ Notes](../../RELEASENOTES.md).
 * Add Prometheus text fallback `target_info` output as a gauge.
   ([#7238](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7238))
 
+* Merge colliding sanitized label keys.
+  ([#7239](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7239))
+
 * Emit OpenMetrics scope metadata as a single `otel_scope` metric family with
   `otel_scope_info` samples instead of repeating metadata for every scope.
   ([#7237](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7237))
