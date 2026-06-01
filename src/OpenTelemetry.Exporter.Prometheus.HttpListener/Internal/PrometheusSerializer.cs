@@ -26,6 +26,8 @@ internal static partial class PrometheusSerializer
     private const byte ASCII_LINEFEED = 0x0A; // `\n`
 #pragma warning restore SA1310 // Field name should not contain an underscore
 
+    private const int MaxExemplarLabelSetCharacters = 128;
+
     private static readonly string[] ReservedExemplarLabelNames = ["trace_id", "span_id"];
     private static readonly string[] ReservedHistogramLabelNames = ["le"];
     private static readonly double[] ExactPowersOfTen =
@@ -296,7 +298,13 @@ internal static partial class PrometheusSerializer
             AddLabel(tag.Key, tag.Value, ref labels, ReservedExemplarLabelNames);
         }
 
-        cursor = WriteLabels(buffer, cursor, labels, writeEnclosingBraces: true, openMetricsRequested);
+        cursor = WriteLabels(
+            buffer,
+            cursor,
+            labels,
+            writeEnclosingBraces: true,
+            openMetricsRequested,
+            maxLabelSetCharacters: MaxExemplarLabelSetCharacters);
 
         buffer[cursor++] = unchecked((byte)' ');
 
@@ -723,12 +731,21 @@ internal static partial class PrometheusSerializer
         labels.Add(new LabelData(originalKey, outputKey, GetLabelValueString(value)));
     }
 
-    private static int WriteLabels(byte[] buffer, int cursor, IReadOnlyList<LabelData>? labels, bool writeEnclosingBraces, bool openMetricsRequested)
+    private static int WriteLabels(
+        byte[] buffer,
+        int cursor,
+        IReadOnlyList<LabelData>? labels,
+        bool writeEnclosingBraces,
+        bool openMetricsRequested,
+        int? maxLabelSetCharacters = null)
     {
         if (writeEnclosingBraces)
         {
             buffer[cursor++] = unchecked((byte)'{');
         }
+
+        var wroteLabel = false;
+        var labelSetCharacters = 0;
 
         if (labels != null && labels.Count > 0)
         {
@@ -758,14 +775,28 @@ internal static partial class PrometheusSerializer
 
             foreach (var key in orderedOutputKeys)
             {
-                cursor = WriteLabel(buffer, cursor, key, GetMergedLabelValue(groupedLabels[key]), openMetricsRequested);
+                var value = GetMergedLabelValue(groupedLabels[key]);
+
+                if (maxLabelSetCharacters.HasValue)
+                {
+                    var labelCharacters = GetUtf8CodePointCount(key) + GetUtf8CodePointCount(value);
+                    if (labelSetCharacters + labelCharacters > maxLabelSetCharacters.Value)
+                    {
+                        continue;
+                    }
+
+                    labelSetCharacters += labelCharacters;
+                }
+
+                cursor = WriteLabel(buffer, cursor, key, value, openMetricsRequested);
                 buffer[cursor++] = unchecked((byte)',');
+                wroteLabel = true;
             }
         }
 
         if (writeEnclosingBraces)
         {
-            if (labels != null && labels.Count > 0)
+            if (wroteLabel)
             {
                 buffer[cursor - 1] = unchecked((byte)'}');
             }
@@ -776,6 +807,23 @@ internal static partial class PrometheusSerializer
         }
 
         return cursor;
+    }
+
+    private static int GetUtf8CodePointCount(string value)
+    {
+        var count = 0;
+
+        for (var i = 0; i < value.Length; i++)
+        {
+            if (char.IsHighSurrogate(value[i]) && i < value.Length - 1 && char.IsLowSurrogate(value[i + 1]))
+            {
+                i++;
+            }
+
+            count++;
+        }
+
+        return count;
     }
 
     private static string GetMergedLabelValue(List<LabelData> labels)

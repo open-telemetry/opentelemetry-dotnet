@@ -850,6 +850,48 @@ public sealed class PrometheusSerializerTests
     }
 
     [Fact]
+    public void CounterWithOpenMetricsFormatDropsExemplarLabelsExceedingLimit()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+        var droppedValue = new string('x', 80);
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateCounter<long>("test_counter");
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
+            .AddView(
+                counter.Name,
+                new MetricStreamConfiguration
+                {
+                    TagKeys = ["keep"],
+                    ExemplarReservoirFactory = () => new SimpleFixedSizeExemplarReservoir(3),
+                })
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        using var activity = new Activity("test");
+        activity.Start();
+        counter.Add(2, new("keep", "value"), new("short", "ok"), new("too.long", droppedValue));
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0], true);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+        var counterLine = output.Split(['\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Single(line => line.StartsWith("test_counter", StringComparison.Ordinal));
+
+        Assert.Contains(
+            $"# {{trace_id=\"{activity.TraceId.ToHexString()}\",span_id=\"{activity.SpanId.ToHexString()}\",short=\"ok\"}} 2 ",
+            counterLine,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("too_long", counterLine, StringComparison.Ordinal);
+        Assert.DoesNotContain(droppedValue, counterLine, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void TryGetLatestExemplarPrefersLaterCandidateWhenTimestampsMatch()
     {
         var timestamp = new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero);
