@@ -27,12 +27,13 @@ internal static partial class PrometheusSerializer
     private const byte ASCII_LINEFEED = 0x0A; // `\n`
 #pragma warning restore SA1310 // Field name should not contain an underscore
 
+    private const int MaxExemplarLabelSetCharacters = 128;
+
 #if NET
     private static readonly ImmutableHashSet<string> ReservedScopeLabelNames = ["otel_scope_name", "otel_scope_schema_url", "otel_scope_version"];
 #else
     private static readonly HashSet<string> ReservedScopeLabelNames = ["otel_scope_name", "otel_scope_schema_url", "otel_scope_version"];
 #endif
-    private const int MaxExemplarLabelSetCharacters = 128;
 
     private static readonly string[] ReservedExemplarLabelNames = ["trace_id", "span_id"];
     private static readonly string[] ReservedHistogramLabelNames = ["le"];
