@@ -311,10 +311,11 @@ internal sealed class PrometheusExporterMiddleware
         bool compress,
         CancellationToken cancellationToken)
     {
+        response.Headers.AppendCommaSeparatedValues(HeaderNames.Vary, HeaderNames.AcceptEncoding);
+
         if (compress)
         {
             response.Headers.Append(HeaderNames.ContentEncoding, "gzip");
-            response.Headers.AppendCommaSeparatedValues(HeaderNames.Vary, HeaderNames.AcceptEncoding);
 
             await using var gzip = new GZipStream(
                 response.Body,
