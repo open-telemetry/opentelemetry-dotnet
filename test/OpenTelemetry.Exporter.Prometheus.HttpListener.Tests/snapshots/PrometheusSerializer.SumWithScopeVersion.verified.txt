@@ -1,0 +1,2 @@
+﻿# TYPE test_updown_counter gauge
+test_updown_counter{otel_scope_name="SumWithScopeVersion",otel_scope_version="1.0.0"} -1
