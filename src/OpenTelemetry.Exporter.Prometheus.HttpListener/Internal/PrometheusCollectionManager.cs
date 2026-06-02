@@ -243,6 +243,7 @@ internal sealed class PrometheusCollectionManager
             if (this.exporter.OpenMetricsRequested)
             {
                 this.scopes.Clear();
+                var writeScopeMetadata = true;
 
                 foreach (var metric in metrics)
                 {
@@ -257,7 +258,8 @@ internal sealed class PrometheusCollectionManager
                         {
                             try
                             {
-                                cursor = PrometheusSerializer.WriteScopeInfo(buffer, cursor, metric.MeterName, openMetricsRequested: true);
+                                cursor = PrometheusSerializer.WriteScopeInfo(buffer, cursor, metric.MeterName, openMetricsRequested: true, writeMetadata: writeScopeMetadata);
+                                writeScopeMetadata = false;
 
                                 break;
                             }
@@ -459,6 +461,23 @@ internal sealed class PrometheusCollectionManager
                 PrometheusExporterEventSource.Log.ConflictingHelp(metadataName, metadataState.Help, metric.Description);
             }
         }
+
+        precomputedMetricStates.Sort(static (left, right) =>
+        {
+            var result = string.CompareOrdinal(left.MetadataName, right.MetadataName);
+            if (result != 0)
+            {
+                return result;
+            }
+
+            result = string.CompareOrdinal(left.Metric.MeterName, right.Metric.MeterName);
+            if (result != 0)
+            {
+                return result;
+            }
+
+            return string.CompareOrdinal(left.Metric.Name, right.Metric.Name);
+        });
 
         var metricStates = new List<MetricState>(precomputedMetricStates.Count);
         var emittedMetricNames = new HashSet<string>(StringComparer.Ordinal);

@@ -28,6 +28,10 @@ internal static partial class PrometheusSerializer
 
     private const int MaxExemplarLabelSetCharacters = 128;
 
+#if !NET
+    private static readonly long UnixEpochTicks = new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero).Ticks;
+#endif
+
     private static readonly string[] ReservedExemplarLabelNames = ["trace_id", "span_id"];
     private static readonly string[] ReservedHistogramLabelNames = ["le"];
     private static readonly double[] ExactPowersOfTen =
@@ -388,18 +392,21 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteScopeInfo(byte[] buffer, int cursor, string scopeName, bool openMetricsRequested)
+    public static int WriteScopeInfo(byte[] buffer, int cursor, string scopeName, bool openMetricsRequested, bool writeMetadata = true)
     {
         if (string.IsNullOrEmpty(scopeName))
         {
             return cursor;
         }
 
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# TYPE otel_scope_info info");
-        buffer[cursor++] = ASCII_LINEFEED;
+        if (writeMetadata)
+        {
+            cursor = WriteAsciiStringNoEscape(buffer, cursor, "# TYPE otel_scope_info info");
+            buffer[cursor++] = ASCII_LINEFEED;
 
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# HELP otel_scope_info Scope metadata");
-        buffer[cursor++] = ASCII_LINEFEED;
+            cursor = WriteAsciiStringNoEscape(buffer, cursor, "# HELP otel_scope_info Scope metadata");
+            buffer[cursor++] = ASCII_LINEFEED;
+        }
 
         cursor = WriteAsciiStringNoEscape(buffer, cursor, "otel_scope_info");
         buffer[cursor++] = unchecked((byte)'{');
@@ -777,10 +784,10 @@ internal static partial class PrometheusSerializer
             {
                 var value = GetMergedLabelValue(groupedLabels[key]);
 
-                if (maxLabelSetCharacters.HasValue)
+                if (maxLabelSetCharacters is { } maxCharactersValue)
                 {
                     var labelCharacters = GetUtf8CodePointCount(key) + GetUtf8CodePointCount(value);
-                    if (labelSetCharacters + labelCharacters > maxLabelSetCharacters.Value)
+                    if (labelSetCharacters + labelCharacters > maxCharactersValue)
                     {
                         continue;
                     }
@@ -857,8 +864,12 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int WriteUnixTimeSeconds(byte[] buffer, int cursor, DateTimeOffset value)
-        => WriteDouble(buffer, cursor, value.ToUnixTimeMilliseconds() / 1000.0);
+    private static int WriteUnixTimeSeconds(byte[] buffer, int cursor, DateTimeOffset value) =>
+#if NET
+        WriteDouble(buffer, cursor, (value.UtcDateTime.Ticks - DateTimeOffset.UnixEpoch.Ticks) / (double)TimeSpan.TicksPerSecond);
+#else
+        WriteDouble(buffer, cursor, (value.UtcDateTime.Ticks - UnixEpochTicks) / (double)TimeSpan.TicksPerSecond);
+#endif
 
     private static string MapPrometheusType(PrometheusType type, bool openMetricsRequested) => type switch
     {
