@@ -76,6 +76,10 @@ Notes](../../RELEASENOTES.md).
 * Merge colliding sanitized label keys.
   ([#7239](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7239))
 
+* Export `{name}_created` series for counters and histograms when using
+  OpenMetrics and a start time is available.
+  ([#7223](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7223))
+
 * GZip compress scrape endpoint responses when `Accept-Encoding: gzip` is
   specified by the HTTP request headers.
   ([#7274](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7274))

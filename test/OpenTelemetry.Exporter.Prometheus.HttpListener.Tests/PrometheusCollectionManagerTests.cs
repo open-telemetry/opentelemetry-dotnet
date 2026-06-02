@@ -529,6 +529,71 @@ public sealed class PrometheusCollectionManagerTests
         }
     }
 
+    [Fact]
+    public async Task OpenMetricsWritesMetricFamiliesContiguously()
+    {
+        using var meter1 = new Meter($"{Utils.GetCurrentMethodName()}.one");
+        using var meter2 = new Meter($"{Utils.GetCurrentMethodName()}.two");
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter1.Name)
+            .AddMeter(meter2.Name)
+#if PROMETHEUS_HTTP_LISTENER
+            .AddPrometheusHttpListener()
+#elif PROMETHEUS_ASPNETCORE
+            .AddPrometheusExporter()
+#endif
+            .Build();
+
+#pragma warning disable CA2000
+        Assert.True(provider.TryFindExporter(out PrometheusExporter? exporter));
+#pragma warning restore CA2000
+
+        meter1.CreateObservableGauge("test.metric", () => 1, description: "Test help");
+        meter1.CreateObservableGauge("other.metric", () => 3, description: "Other help");
+        meter2.CreateObservableGauge("test-metric", () => 2, description: "Test help");
+
+        var response = await exporter!.CollectionManager.EnterCollect(openMetricsRequested: true);
+        try
+        {
+            var view = response.OpenMetricsView;
+            var output = Encoding.UTF8.GetString(view.Array!, view.Offset, view.Count);
+
+#pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
+            Assert.Single(Regex.Matches(output, "^# TYPE otel_scope_info info$", RegexOptions.Multiline).Cast<Match>());
+            Assert.Single(Regex.Matches(output, "^# HELP otel_scope_info Scope metadata$", RegexOptions.Multiline).Cast<Match>());
+#pragma warning restore SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
+
+            var scopeTypeIndex = output.IndexOf("# TYPE otel_scope_info info", StringComparison.Ordinal);
+            var testMetricTypeIndex = output.IndexOf("# TYPE test_metric gauge", StringComparison.Ordinal);
+
+            Assert.True(scopeTypeIndex >= 0, "No TYPE found for otel_scope_info.");
+            Assert.True(testMetricTypeIndex > scopeTypeIndex, "otel_scope_info block should appear before test_metric.");
+
+            var scopeBlock = output.Substring(scopeTypeIndex, testMetricTypeIndex - scopeTypeIndex);
+            Assert.Contains($"otel_scope_info{{otel_scope_name=\"{meter1.Name}\"}} 1", scopeBlock, StringComparison.Ordinal);
+            Assert.Contains($"otel_scope_info{{otel_scope_name=\"{meter2.Name}\"}} 1", scopeBlock, StringComparison.Ordinal);
+
+            var nextTypeIndex = output.IndexOf("\n# TYPE ", testMetricTypeIndex + 1, StringComparison.Ordinal);
+            if (nextTypeIndex < 0)
+            {
+                nextTypeIndex = output.IndexOf("\n# EOF", testMetricTypeIndex + 1, StringComparison.Ordinal);
+            }
+
+            Assert.True(nextTypeIndex > testMetricTypeIndex, "No subsequent metric family found after test_metric.");
+
+            var testMetricBlock = output.Substring(testMetricTypeIndex, nextTypeIndex - testMetricTypeIndex);
+            Assert.Contains("# HELP test_metric Test help", testMetricBlock, StringComparison.Ordinal);
+            Assert.Contains($"test_metric{{otel_scope_name=\"{meter1.Name}\"}} 1", testMetricBlock, StringComparison.Ordinal);
+            Assert.Contains($"test_metric{{otel_scope_name=\"{meter2.Name}\"}} 2", testMetricBlock, StringComparison.Ordinal);
+            Assert.DoesNotContain("other_metric{", testMetricBlock, StringComparison.Ordinal);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect();
+        }
+    }
+
 #if PROMETHEUS_HTTP_LISTENER
     private static MeterProvider CreateMeterProviderWithRandomPort(Meter meter)
     {
