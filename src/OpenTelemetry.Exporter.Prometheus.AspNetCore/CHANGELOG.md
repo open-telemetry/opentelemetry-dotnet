@@ -84,12 +84,9 @@ Notes](../../RELEASENOTES.md).
   specified by the HTTP request headers.
   ([#7274](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7274))
 
-* Emit OpenMetrics scope metadata as a single `otel_scope` metric family with
-  `otel_scope_info` samples instead of repeating metadata for every scope.
-  ([#7237](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7237))
-
 * Include instrumentation scope metadata on samples using `otel_scope_*` labels
-  including scope version, schema URL, and prefixed scope attributes.
+  including scope version, schema URL, and prefixed scope attributes. OpenMetrics
+  output no longer emits a separate `otel_scope_info` scope metadata metric.
   ([#7237](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7237))
 
 * Drop conflicting scope attributes named `name`, `version`, and `schema_url`.

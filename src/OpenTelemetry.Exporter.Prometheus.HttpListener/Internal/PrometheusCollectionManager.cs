@@ -16,7 +16,6 @@ internal sealed class PrometheusCollectionManager
     private readonly long baseTimestamp = Stopwatch.GetTimestamp();
     private readonly PrometheusExporter.ExportFunc onCollectRef;
     private readonly Dictionary<Metric, PrometheusMetric> metricsCache;
-    private readonly HashSet<string> scopes;
     private int metricsCacheCount;
     private byte[] plainTextBuffer = new byte[85000]; // encourage the object to live in LOH (large object heap)
     private byte[] openMetricsBuffer = new byte[85000]; // encourage the object to live in LOH (large object heap)
@@ -39,7 +38,6 @@ internal sealed class PrometheusCollectionManager
         this.scrapeResponseCacheDuration = TimeSpan.FromMilliseconds(this.exporter.ScrapeResponseCacheDurationMilliseconds);
         this.onCollectRef = this.OnCollect;
         this.metricsCache = [];
-        this.scopes = [];
         this.GetElapsedTime = () => Stopwatch.GetElapsedTime(this.baseTimestamp);
     }
 
@@ -235,58 +233,11 @@ internal sealed class PrometheusCollectionManager
     {
         var cursor = 0;
         ref var buffer = ref (this.exporter.OpenMetricsRequested ? ref this.openMetricsBuffer : ref this.plainTextBuffer);
-        var scopeInfoMetadataWritten = false;
-
         try
         {
             cursor = this.WriteTargetInfo(ref buffer);
 
-            if (this.exporter.OpenMetricsRequested)
-            {
-                this.scopes.Clear();
-
-                foreach (var metric in metrics)
-                {
-                    if (!PrometheusSerializer.CanWriteMetric(metric))
-                    {
-                        continue;
-                    }
-
-                    if (this.scopes.Add(PrometheusSerializer.CreateScopeIdentity(metric)))
-                    {
-                        while (true)
-                        {
-                            try
-                            {
-                                if (!scopeInfoMetadataWritten)
-                                {
-                                    cursor = PrometheusSerializer.WriteScopeInfoMetadata(buffer, cursor);
-                                    scopeInfoMetadataWritten = true;
-                                }
-
-                                cursor = PrometheusSerializer.WriteScopeInfoMetric(buffer, cursor, metric);
-
-                                break;
-                            }
-                            catch (IndexOutOfRangeException)
-                            {
-                                if (!IncreaseBufferSize(ref buffer))
-                                {
-                                    // there are two cases we might run into the following condition:
-                                    // 1. we have many metrics to be exported - in this case we probably want
-                                    //    to put some upper limit and allow the user to configure it.
-                                    // 2. we got an IndexOutOfRangeException which was triggered by some other
-                                    //    code instead of the buffer[cursor++] - in this case we should give up
-                                    //    at certain point rather than allocating like crazy.
-                                    throw;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            var metricStates = this.GetMetricStates(metrics, this.exporter.OpenMetricsRequested, scopeInfoMetadataWritten);
+            var metricStates = this.GetMetricStates(metrics, this.exporter.OpenMetricsRequested);
 
             foreach (var metricState in metricStates)
             {
@@ -408,7 +359,7 @@ internal sealed class PrometheusCollectionManager
         return prometheusMetric;
     }
 
-    private List<MetricState> GetMetricStates(in Batch<Metric> metrics, bool openMetricsRequested, bool scopeInfoMetadataWritten)
+    private List<MetricState> GetMetricStates(in Batch<Metric> metrics, bool openMetricsRequested)
     {
         var precomputedMetricStates = new List<PrecomputedMetricState>();
         var metadataStates = new Dictionary<string, MetadataState>(StringComparer.Ordinal);
@@ -424,15 +375,6 @@ internal sealed class PrometheusCollectionManager
             var prometheusMetric = this.GetPrometheusMetric(metric);
             var metadataName = openMetricsRequested ? prometheusMetric.OpenMetricsMetadataName : prometheusMetric.Name;
             precomputedMetricStates.Add(new PrecomputedMetricState(metric, prometheusMetric, metadataName));
-
-            if (openMetricsRequested &&
-                scopeInfoMetadataWritten &&
-                (metadataName == "otel_scope" || metadataName == "otel_scope_info"))
-            {
-                droppedMetricNames ??= new(StringComparer.Ordinal);
-                droppedMetricNames.Add(metadataName);
-                continue;
-            }
 
             if (!metadataStates.TryGetValue(metadataName, out var metadataState))
             {

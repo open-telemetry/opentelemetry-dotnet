@@ -1116,33 +1116,6 @@ public sealed class PrometheusSerializerTests
     }
 
     [Fact]
-    public void ScopeInfo()
-    {
-        var buffer = new byte[85000];
-        var metrics = new List<Metric>();
-
-        using var meter = new Meter("test_meter", "1.0.0", [new("library.mascot", "dotnetbot")], scope: null);
-        using var provider = Sdk.CreateMeterProviderBuilder()
-            .AddMeter(meter.Name)
-            .AddInMemoryExporter(metrics)
-            .Build();
-
-        meter.CreateObservableGauge("test_gauge", () => 1);
-
-        provider.ForceFlush();
-
-        var cursor = PrometheusSerializer.WriteScopeInfo(buffer, 0, metrics[0]);
-
-        Assert.Matches(
-            ("^"
-             + "# TYPE otel_scope info\n"
-             + "# HELP otel_scope Scope metadata\n"
-             + "otel_scope_info{otel_scope_name='test_meter',otel_scope_version='1.0.0',otel_scope_library_mascot='dotnetbot'} 1\n"
-             + "$").Replace('\'', '"'),
-            Encoding.UTF8.GetString(buffer, 0, cursor));
-    }
-
-    [Fact]
     public void WriteMetricPrefixesScopeAttributesAndDropsConflictingScopeAttributeNames()
     {
         var buffer = new byte[85000];
@@ -1275,53 +1248,6 @@ public sealed class PrometheusSerializerTests
         Assert.DoesNotContain("otel_scope_version=\"ignored-version\"", output, StringComparison.Ordinal);
     }
 
-    [Fact]
-    public void CreateScopeIdentityIgnoresNormalizedReservedScopeAttributeNames()
-    {
-        var metricsWithConflicts = new List<Metric>();
-        using var meterWithConflicts = new Meter(
-            new MeterOptions("test_meter")
-            {
-                Version = "1.0.0",
-                TelemetrySchemaUrl = "https://opentelemetry.io/schemas/1.0.0",
-                Tags =
-                [
-                    new("na-me", "ignored-name"),
-                    new("ver-sion", "ignored-version"),
-                    new("schema-url", "ignored-schema"),
-                    new("library.mascot", "dotnetbot"),
-                ],
-            });
-        using var providerWithConflicts = Sdk.CreateMeterProviderBuilder()
-            .AddMeter(meterWithConflicts.Name)
-            .AddInMemoryExporter(metricsWithConflicts)
-            .Build();
-        meterWithConflicts.CreateObservableGauge("test_gauge", () => 1);
-        providerWithConflicts.ForceFlush();
-
-        var metricsWithoutConflicts = new List<Metric>();
-        using var meterWithoutConflicts = new Meter(
-            new MeterOptions("test_meter")
-            {
-                Version = "1.0.0",
-                TelemetrySchemaUrl = "https://opentelemetry.io/schemas/1.0.0",
-                Tags =
-                [
-                    new("library.mascot", "dotnetbot"),
-                ],
-            });
-        using var providerWithoutConflicts = Sdk.CreateMeterProviderBuilder()
-            .AddMeter(meterWithoutConflicts.Name)
-            .AddInMemoryExporter(metricsWithoutConflicts)
-            .Build();
-        meterWithoutConflicts.CreateObservableGauge("test_gauge", () => 1);
-        providerWithoutConflicts.ForceFlush();
-
-        var identityWithConflicts = PrometheusSerializer.CreateScopeIdentity(metricsWithConflicts[0]);
-        var identityWithoutConflicts = PrometheusSerializer.CreateScopeIdentity(metricsWithoutConflicts[0]);
-
-        Assert.Equal(identityWithoutConflicts, identityWithConflicts);
-    }
 #endif
 
     [Fact]
