@@ -80,6 +80,10 @@ Notes](../../RELEASENOTES.md).
   OpenMetrics and a start time is available.
   ([#7223](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7223))
 
+* GZip compress scrape endpoint responses when `Accept-Encoding: gzip` is
+  specified by the HTTP request headers.
+  ([#7274](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7274))
+
 ## 1.15.3-beta.1
 
 Released 2026-Apr-21

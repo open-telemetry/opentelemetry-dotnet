@@ -237,7 +237,7 @@ public sealed class PrometheusExporterMiddlewareTests
         var context = new DefaultHttpContext();
         context.Request.Headers.Accept = accept;
 
-        var actual = PrometheusExporterMiddleware.Negotiate(context.Request);
+        var actual = PrometheusExporterMiddleware.Negotiate(context.Request.GetTypedHeaders());
 
         Assert.Equal(mediaType, actual.MediaType);
         Assert.Equal(isOpenMetrics, actual.IsOpenMetrics);
@@ -252,7 +252,7 @@ public sealed class PrometheusExporterMiddlewareTests
         var context = new DefaultHttpContext();
         context.Request.Headers.Accept = accept;
 
-        var actual = PrometheusExporterMiddleware.Negotiate(context.Request);
+        var actual = PrometheusExporterMiddleware.Negotiate(context.Request.GetTypedHeaders());
 
         Assert.Equivalent(PrometheusProtocol.Fallback, actual);
     }
@@ -552,6 +552,7 @@ public sealed class PrometheusExporterMiddlewareTests
             "text/plain; version=0.0.4; charset=utf-8";
 
         Assert.Equal(contentType, response.Content.Headers.ContentType!.ToString());
+        Assert.Equal(["Accept-Encoding"], response.Headers.Vary);
 
         var additionalTags = meterTags is { Length: > 0 }
             ? $"{string.Join(",", meterTags.Select(x => $"{x.Key}=\"{x.Value}\""))},"
