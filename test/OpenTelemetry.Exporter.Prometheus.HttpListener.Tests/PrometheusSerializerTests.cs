@@ -15,7 +15,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests;
 
 public sealed partial class PrometheusSerializerTests
 {
-    private static readonly VerifySettings VerifySettings = CreateVerifySettings();
+    internal static readonly VerifySettings VerifySettings = CreateVerifySettings();
 
     public static TheoryData<object?, string> LabelValueBoundaryCases => new()
     {
@@ -1632,10 +1632,11 @@ public sealed partial class PrometheusSerializerTests
         // Shorten name to avoid PATH_TOO_LONG issues on Windows
         settings.UseTypeName("PrometheusSerializer");
 
-        // Scrub unstable timestamps and IDs from snapshots
+        // Scrub unstable values from snapshots
         settings.ScrubLinesWithReplace((line) => CreatedMetric().Replace(line, "$1<TIMESTAMP>"));
         settings.ScrubLinesWithReplace((line) => ExemplarTimestamp().Replace(line, "$1<TIMESTAMP>"));
         settings.ScrubLinesWithReplace((line) => SpanOrTraceIds().Replace(line, "$1=\"<ID>\""));
+        settings.ScrubLinesWithReplace((line) => SdkVersion().Replace(line, "telemetry_sdk_version=\"<VERSION>\""));
 
         return settings;
     }
@@ -1649,11 +1650,16 @@ public sealed partial class PrometheusSerializerTests
 
     [GeneratedRegex("(?m)(trace_id|span_id)=\"[^\"]*\"")]
     private static partial Regex SpanOrTraceIds();
+
+    [GeneratedRegex("telemetry_sdk_version=\"[^\"]*\"")]
+    private static partial Regex SdkVersion();
 #else
     private static Regex CreatedMetric() => new("(?m)^([^\\s]*_created(?:\\{[^}]*\\})?\\s+)\\S+$", RegexOptions.Compiled);
 
     private static Regex ExemplarTimestamp() => new("(?m)^(.+?\\s#\\s\\{[^}]*\\}\\s+\\S+\\s+)\\S+$", RegexOptions.Compiled);
 
     private static Regex SpanOrTraceIds() => new("(?m)(trace_id|span_id)=\"[^\"]*\"", RegexOptions.Compiled);
+
+    private static Regex SdkVersion() => new("telemetry_sdk_version=\"[^\"]*\"", RegexOptions.Compiled);
 #endif
 }
