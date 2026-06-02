@@ -477,6 +477,23 @@ internal sealed class PrometheusCollectionManager
             }
         }
 
+        precomputedMetricStates.Sort(static (left, right) =>
+        {
+            var result = string.CompareOrdinal(left.MetadataName, right.MetadataName);
+            if (result != 0)
+            {
+                return result;
+            }
+
+            result = string.CompareOrdinal(left.Metric.MeterName, right.Metric.MeterName);
+            if (result != 0)
+            {
+                return result;
+            }
+
+            return string.CompareOrdinal(left.Metric.Name, right.Metric.Name);
+        });
+
         var metricStates = new List<MetricState>(precomputedMetricStates.Count);
         var emittedMetricNames = new HashSet<string>(StringComparer.Ordinal);
 

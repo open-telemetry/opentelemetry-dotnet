@@ -18,7 +18,6 @@ public static class PrometheusAcceptHeaders
             "text/plain; charset=utf-8; version=0.0.4",
             "text/plain,application/openmetrics-text; version=1.0.0; charset=utf-8",
             "text/plain, application/openmetrics-text; version=1.0.0; charset=utf-8",
-            "text/plain, application/openmetrics-text; version=1.0.0; charset=utf-8",
             "text/plain; charset=utf-8,application/openmetrics-text; version=1.0.0; charset=utf-8",
             "text/plain, */*;q=0.8,application/openmetrics-text; version=1.0.0; charset=utf-8",
             "text/plain;version=0.0.4;q=0.6,*/*;q=0.5",

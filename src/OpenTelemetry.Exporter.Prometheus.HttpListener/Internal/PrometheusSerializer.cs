@@ -33,6 +33,7 @@ internal static partial class PrometheusSerializer
     private static readonly ImmutableHashSet<string> ReservedScopeLabelNames = ["otel_scope_name", "otel_scope_schema_url", "otel_scope_version"];
 #else
     private static readonly HashSet<string> ReservedScopeLabelNames = ["otel_scope_name", "otel_scope_schema_url", "otel_scope_version"];
+    private static readonly long UnixEpochTicks = new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero).Ticks;
 #endif
 
     private static readonly string[] ReservedExemplarLabelNames = ["trace_id", "span_id"];
@@ -940,10 +941,10 @@ internal static partial class PrometheusSerializer
             {
                 var value = GetMergedLabelValue(groupedLabels[key]);
 
-                if (maxLabelSetCharacters.HasValue)
+                if (maxLabelSetCharacters is { } maxCharactersValue)
                 {
                     var labelCharacters = GetUtf8CodePointCount(key) + GetUtf8CodePointCount(value);
-                    if (labelSetCharacters + labelCharacters > maxLabelSetCharacters.Value)
+                    if (labelSetCharacters + labelCharacters > maxCharactersValue)
                     {
                         continue;
                     }
@@ -1020,8 +1021,12 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int WriteUnixTimeSeconds(byte[] buffer, int cursor, DateTimeOffset value)
-        => WriteDouble(buffer, cursor, value.ToUnixTimeMilliseconds() / 1000.0);
+    private static int WriteUnixTimeSeconds(byte[] buffer, int cursor, DateTimeOffset value) =>
+#if NET
+        WriteDouble(buffer, cursor, (value.UtcDateTime.Ticks - DateTimeOffset.UnixEpoch.Ticks) / (double)TimeSpan.TicksPerSecond);
+#else
+        WriteDouble(buffer, cursor, (value.UtcDateTime.Ticks - UnixEpochTicks) / (double)TimeSpan.TicksPerSecond);
+#endif
 
     private static string MapPrometheusType(PrometheusType type, bool openMetricsRequested) => type switch
     {

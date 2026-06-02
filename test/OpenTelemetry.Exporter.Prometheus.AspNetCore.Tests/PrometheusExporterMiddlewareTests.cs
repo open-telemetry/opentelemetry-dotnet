@@ -237,7 +237,7 @@ public sealed class PrometheusExporterMiddlewareTests
         var context = new DefaultHttpContext();
         context.Request.Headers.Accept = accept;
 
-        var actual = PrometheusExporterMiddleware.Negotiate(context.Request);
+        var actual = PrometheusExporterMiddleware.Negotiate(context.Request.GetTypedHeaders());
 
         Assert.Equal(mediaType, actual.MediaType);
         Assert.Equal(isOpenMetrics, actual.IsOpenMetrics);
@@ -252,7 +252,7 @@ public sealed class PrometheusExporterMiddlewareTests
         var context = new DefaultHttpContext();
         context.Request.Headers.Accept = accept;
 
-        var actual = PrometheusExporterMiddleware.Negotiate(context.Request);
+        var actual = PrometheusExporterMiddleware.Negotiate(context.Request.GetTypedHeaders());
 
         Assert.Equivalent(PrometheusProtocol.Fallback, actual);
     }
@@ -552,9 +552,13 @@ public sealed class PrometheusExporterMiddlewareTests
             "text/plain; version=0.0.4; charset=utf-8";
 
         Assert.Equal(contentType, response.Content.Headers.ContentType!.ToString());
+        Assert.Equal(["Accept-Encoding"], response.Headers.Vary);
 
         var additionalTags = meterTags is { Length: > 0 }
             ? $"{string.Join(",", meterTags.Select(x => $"otel_scope_{x.Key}=\"{x.Value}\""))},"
+            : string.Empty;
+        var createdMetricSample = requestOpenMetrics
+            ? $"counter_double_bytes_created{{otel_scope_name=\"{MeterName}\",otel_scope_version=\"{MeterVersion}\",{additionalTags}key1=\"value1\",key2=\"value2\"}} [0-9]+(?:\\.[0-9]+)?"
             : string.Empty;
 
         var scopeInfoMetric = $"otel_scope_info{{otel_scope_name=\"{MeterName}\",otel_scope_version=\"{MeterVersion}\"{(string.IsNullOrEmpty(additionalTags) ? string.Empty : "," + additionalTags.TrimEnd(','))}}} 1";
@@ -572,6 +576,7 @@ public sealed class PrometheusExporterMiddlewareTests
                     # TYPE counter_double_bytes counter
                     # UNIT counter_double_bytes bytes
                     counter_double_bytes_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",{{additionalTags}}key1="value1",key2="value2"} 101.17
+                    {{createdMetricSample}}
                     # EOF
 
                     """.ReplaceLineEndings()

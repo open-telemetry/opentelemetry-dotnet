@@ -32,7 +32,7 @@ Notes](../../RELEASENOTES.md).
 
 * Fix non-ASCII characters in metric names and unit strings not being sanitized
   correctly during Prometheus serialization.
-  ([#7184](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7184))
+  ([#7184](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7184))
 
 * Add support for caching the scrape endpoint HTTP responses using the
   `PrometheusHttpListenerOptions.ScrapeResponseCacheDurationMilliseconds` option.
@@ -45,13 +45,13 @@ Notes](../../RELEASENOTES.md).
 
 * Improve `Accept` header handling for format negotiation so OpenMetrics is
   selected correctly by considering whitespace and `q` weights.
-  ([#7208](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7208))
+  ([#7208](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7208))
 
 * Emit OpenMetrics exemplars for counters and histogram buckets.
-  ([#7222](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7222))
+  ([#7222](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7222))
 
 * Fix incorrect handling of untyped metrics when using OpenMetrics format.
-  ([#7219](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7219))
+  ([#7219](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7219))
 
 * Add support for configuring the HTTP listener endpoint host and port using
   the `OTEL_EXPORTER_PROMETHEUS_HOST` and `OTEL_EXPORTER_PROMETHEUS_PORT`
@@ -62,24 +62,24 @@ Notes](../../RELEASENOTES.md).
 * Fix Prometheus/OpenMetrics serialization to emit metric and label names
   containing and `_` instead of dropping them and prefixing leading digits.
   Invalid characters are replaced with `_` instead of being dropped.
-  ([#7209](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7209))
+  ([#7209](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7209))
 
 * Add `escaping=underscores` to the `Accept` header handling for content
   negotiation so OpenMetrics are handled correctly.
-  ([#7209](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7209))
+  ([#7209](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7209))
 
 * Omit histogram `_sum` and `_count` in OpenMetrics when negative bucket
   thresholds are present.
-  ([#7221](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7221))
+  ([#7221](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7221))
 
 * Update `Accept` header parsing to more closely follow the Prometheus
   [Scrape protocol content negotiation](https://prometheus.io/docs/instrumenting/content_negotiation/)
   specification.
-  ([#7266](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7266))
+  ([#7266](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7266))
 
 * Abort scrape request processing if request exceeds the value specified by the
   `X-Prometheus-Scrape-Timeout-Seconds` HTTP request header.
-  ([#7252](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7252))
+  ([#7252](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7252))
 
 * Use the canonical representation for histogram "le" label values when using
   OpenMetrics.
@@ -90,6 +90,10 @@ Notes](../../RELEASENOTES.md).
 
 * Merge colliding sanitized label keys.
   ([#7239](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7239))
+
+* Export `{name}_created` series for counters and histograms when using
+  OpenMetrics and a start time is available.
+  ([#7223](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7223))
 
 * Emit OpenMetrics scope metadata as a single `otel_scope` metric family with
   `otel_scope_info` samples instead of repeating metadata for every scope.
@@ -108,7 +112,7 @@ Released 2026-Apr-21
 
 * Fixed metric unit strings containing invalid Prometheus characters (e.g. `# RU`)
   not being sanitized, resulting in malformed metric names.
-  ([#6187](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6187))
+  ([#7033](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7033))
 
 * Fixed Prometheus metric serialization to handle empty label names without
   throwing during scrape rendering.
