@@ -94,7 +94,7 @@ public class OtlpRetryTests
 
             if (retryResult.Throttled)
             {
-                Assert.Equal(retryAttempt.ThrottleDelay, retryResult.RetryDelay);
+                Assert.Equal(retryAttempt.ThrottleDelay!.Value.TotalSeconds, retryResult.RetryDelay.TotalSeconds, retryAttempt.TimestampTolerance.TotalSeconds);
             }
             else
             {
@@ -102,7 +102,7 @@ public class OtlpRetryTests
                 Assert.True(retryResult.RetryDelay < TimeSpan.FromMilliseconds(nextRetryDelayMilliseconds));
             }
 
-            Assert.Equal(retryAttempt.ExpectedNextRetryDelayMilliseconds, retryResult.NextRetryDelayMilliseconds);
+            Assert.Equal((double)retryAttempt.ExpectedNextRetryDelayMilliseconds!.Value, (double)retryResult.NextRetryDelayMilliseconds, retryAttempt.TimestampTolerance.TotalMilliseconds);
 
             nextRetryDelayMilliseconds = retryResult.NextRetryDelayMilliseconds;
         }
