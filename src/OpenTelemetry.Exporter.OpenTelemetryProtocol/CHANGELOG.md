@@ -38,7 +38,7 @@ Notes](../../RELEASENOTES.md).
   ([#7305](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7305))
 
 * Handle `Retry-After` response headers that specify a date instead of a delay.
-  ([#7305](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7305))
+  ([#7364](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7364))
 
 ## 1.15.3
 
