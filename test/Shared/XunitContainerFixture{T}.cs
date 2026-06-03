@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using DotNet.Testcontainers.Containers;
-using Xunit;
 
 namespace OpenTelemetry.Tests;
 

@@ -13,11 +13,9 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Primitives;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
-using Xunit;
 
 namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests;
 

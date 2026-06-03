@@ -9,8 +9,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
-using Xunit;
-using Xunit.Abstractions;
 
 namespace OpenTelemetry.Instrumentation.W3cTraceContext.Tests;
 

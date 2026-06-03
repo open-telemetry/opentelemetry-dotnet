@@ -9,7 +9,6 @@ using System.Text.RegularExpressions;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
-using Xunit;
 
 namespace OpenTelemetry.Exporter.Prometheus.Tests;
 
