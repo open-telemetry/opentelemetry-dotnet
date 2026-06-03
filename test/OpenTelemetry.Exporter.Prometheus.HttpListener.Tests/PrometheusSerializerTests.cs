@@ -337,7 +337,7 @@ public sealed partial class PrometheusSerializerTests
     }
 
     [Fact]
-    public async Task WriteMetricNameSanitizesNonAsciiCharacters()
+    public void WriteMetricNameSanitizesNonAsciiCharacters()
     {
         var buffer = new byte[32];
         var metric = new PrometheusMetric("A\u010A", string.Empty, PrometheusType.Gauge, disableTotalNameSuffixForCounters: false);
@@ -348,7 +348,7 @@ public sealed partial class PrometheusSerializerTests
     }
 
     [Fact]
-    public async Task WriteMetricNameSanitizesNonAsciiUnitCharacters()
+    public void WriteMetricNameSanitizesNonAsciiUnitCharacters()
     {
         var buffer = new byte[32];
         var metric = new PrometheusMetric("metric", "s\u010A", PrometheusType.Gauge, disableTotalNameSuffixForCounters: false);
