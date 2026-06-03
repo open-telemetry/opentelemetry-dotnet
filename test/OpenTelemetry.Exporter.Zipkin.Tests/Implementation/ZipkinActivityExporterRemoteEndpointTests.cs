@@ -3,7 +3,6 @@
 
 using OpenTelemetry.Exporter.Zipkin.Tests;
 using OpenTelemetry.Trace;
-using Xunit;
 
 namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests;
 

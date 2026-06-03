@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using Xunit;
-
 namespace OpenTelemetry.Metrics.Tests;
 
 #pragma warning disable CA1819 // Properties should not return arrays

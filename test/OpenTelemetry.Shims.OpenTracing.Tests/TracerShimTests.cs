@@ -7,7 +7,6 @@ using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 using OpenTracing;
 using OpenTracing.Propagation;
-using Xunit;
 
 namespace OpenTelemetry.Shims.OpenTracing.Tests;
 

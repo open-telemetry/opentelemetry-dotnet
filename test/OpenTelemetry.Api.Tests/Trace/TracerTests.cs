@@ -5,8 +5,6 @@ using System.Diagnostics;
 using Microsoft.Coyote;
 using Microsoft.Coyote.SystematicTesting;
 using OpenTelemetry.Tests;
-using Xunit;
-using Xunit.Abstractions;
 
 namespace OpenTelemetry.Trace.Tests;
 

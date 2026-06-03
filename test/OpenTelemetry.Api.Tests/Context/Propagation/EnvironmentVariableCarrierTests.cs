@@ -3,7 +3,6 @@
 
 using System.Collections;
 using System.Diagnostics;
-using Xunit;
 
 namespace OpenTelemetry.Context.Propagation.Tests;
 

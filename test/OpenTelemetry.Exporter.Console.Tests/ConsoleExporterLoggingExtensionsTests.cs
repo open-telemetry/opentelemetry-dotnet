@@ -3,7 +3,6 @@
 
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
-using Xunit;
 
 namespace OpenTelemetry.Exporter.Console.Tests;
 
