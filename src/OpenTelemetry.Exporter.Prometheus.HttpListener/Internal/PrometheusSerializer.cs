@@ -4,7 +4,11 @@
 #if NET
 using System.Buffers;
 using System.Buffers.Text;
+#if NET9_0_OR_GREATER
+using System.Collections.Frozen;
+#else
 using System.Collections.Immutable;
+#endif
 #endif
 using System.Diagnostics;
 using System.Globalization;
@@ -29,7 +33,9 @@ internal static partial class PrometheusSerializer
 
     private const int MaxExemplarLabelSetCharacters = 128;
 
-#if NET
+#if NET9_0_OR_GREATER
+    private static readonly FrozenSet<string> ReservedScopeLabelNames = FrozenSet.Create(["otel_scope_name", "otel_scope_schema_url", "otel_scope_version"]);
+#elif NET
     private static readonly ImmutableHashSet<string> ReservedScopeLabelNames = ["otel_scope_name", "otel_scope_schema_url", "otel_scope_version"];
 #else
     private static readonly HashSet<string> ReservedScopeLabelNames = ["otel_scope_name", "otel_scope_schema_url", "otel_scope_version"];
