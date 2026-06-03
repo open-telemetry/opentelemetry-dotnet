@@ -16,7 +16,7 @@ internal static class InterlockedHelper
         var currentValue = Volatile.Read(ref location);
 
         var returnedValue = Interlocked.CompareExchange(ref location, currentValue + value, currentValue);
-        if (!AreSame(returnedValue, currentValue))
+        if (returnedValue != currentValue)
         {
             AddRare(ref location, value, returnedValue);
         }
@@ -35,7 +35,7 @@ internal static class InterlockedHelper
             sw.SpinOnce();
 
             var returnedValue = Interlocked.CompareExchange(ref location, currentValue + value, currentValue);
-            if (AreSame(returnedValue, currentValue))
+            if (returnedValue == currentValue)
             {
                 break;
             }
@@ -43,8 +43,4 @@ internal static class InterlockedHelper
             currentValue = returnedValue;
         }
     }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool AreSame(double left, double right)
-        => BitConverter.DoubleToInt64Bits(left) == BitConverter.DoubleToInt64Bits(right);
 }
