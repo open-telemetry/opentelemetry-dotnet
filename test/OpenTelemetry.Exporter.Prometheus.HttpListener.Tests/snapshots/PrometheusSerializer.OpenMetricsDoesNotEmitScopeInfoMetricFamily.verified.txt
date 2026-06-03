@@ -1,6 +1,6 @@
 ﻿# TYPE target info
 # HELP target Target metadata
-target_info{telemetry_sdk_name="opentelemetry",telemetry_sdk_language="dotnet",telemetry_sdk_version="<VERSION>",service_name="unknown_service:testhost"} 1
+target_info{service_name="prometheus",telemetry_sdk_name="opentelemetry",telemetry_sdk_language="dotnet",telemetry_sdk_version="<VERSION>"} 1
 # TYPE counter_1 counter
 counter_1_total{otel_scope_name="test_meter",otel_scope_version="1.0.0",otel_scope_library_mascot="dotnetbot"} 1
 counter_1_created{otel_scope_name="test_meter",otel_scope_version="1.0.0",otel_scope_library_mascot="dotnetbot"} <TIMESTAMP>

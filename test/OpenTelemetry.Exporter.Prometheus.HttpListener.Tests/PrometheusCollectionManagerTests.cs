@@ -5,6 +5,7 @@ using System.Diagnostics.Metrics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 #if PROMETHEUS_HTTP_LISTENER
 using OpenTelemetry.Tests;
 #endif
@@ -300,6 +301,7 @@ public sealed class PrometheusCollectionManagerTests
         using var meter = new Meter("test_meter", "1.0.0", [new("library.mascot", "dotnetbot")], scope: null);
 
         using var provider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureResource((p) => p.AddAttributes([new("service.name", "prometheus")]))
             .AddMeter(meter.Name)
 #if PROMETHEUS_HTTP_LISTENER
             .AddPrometheusHttpListener()
@@ -336,6 +338,7 @@ public sealed class PrometheusCollectionManagerTests
         using var meter = new Meter("test_meter", "1.0.0");
 
         using var provider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureResource((p) => p.AddAttributes([new("service.name", "prometheus")]))
             .AddMeter(meter.Name)
 #if PROMETHEUS_HTTP_LISTENER
             .AddPrometheusHttpListener()
@@ -373,6 +376,7 @@ public sealed class PrometheusCollectionManagerTests
         using var meter = CreateMeter();
 
         using var provider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureResource((p) => p.AddAttributes([new("service.name", "prometheus")]))
             .AddMeter(meter.Name)
 #if PROMETHEUS_HTTP_LISTENER
             .AddPrometheusHttpListener()
@@ -411,6 +415,7 @@ public sealed class PrometheusCollectionManagerTests
         using var meter = CreateMeter();
 
         using var provider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureResource((p) => p.AddAttributes([new("service.name", "prometheus")]))
             .AddMeter(meter.Name)
 #if PROMETHEUS_HTTP_LISTENER
             .AddPrometheusHttpListener()
@@ -449,6 +454,7 @@ public sealed class PrometheusCollectionManagerTests
         using var meter = CreateMeter();
 
         using var provider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureResource((p) => p.AddAttributes([new("service.name", "prometheus")]))
             .AddMeter(meter.Name)
 #if PROMETHEUS_HTTP_LISTENER
             .AddPrometheusHttpListener()
@@ -487,6 +493,7 @@ public sealed class PrometheusCollectionManagerTests
         using var meter = CreateMeter();
 
         using var provider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureResource((p) => p.AddAttributes([new("service.name", "prometheus")]))
             .AddMeter(meter.Name)
 #if PROMETHEUS_HTTP_LISTENER
             .AddPrometheusHttpListener()
@@ -525,6 +532,7 @@ public sealed class PrometheusCollectionManagerTests
         using var meter = CreateMeter();
 
         using var provider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureResource((p) => p.AddAttributes([new("service.name", "prometheus")]))
             .AddMeter(meter.Name)
 #if PROMETHEUS_HTTP_LISTENER
             .AddPrometheusHttpListener()
@@ -563,6 +571,7 @@ public sealed class PrometheusCollectionManagerTests
         using var meter2 = new Meter($"{prefix}.two");
 
         using var provider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureResource((p) => p.AddAttributes([new("service.name", "prometheus")]))
             .AddMeter(meter1.Name)
             .AddMeter(meter2.Name)
 #if PROMETHEUS_HTTP_LISTENER
