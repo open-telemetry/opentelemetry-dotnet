@@ -6,7 +6,6 @@ using System.Diagnostics.Metrics;
 using OpenTelemetry.Exporter.Prometheus.Tests;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
-using Xunit.Abstractions;
 
 namespace OpenTelemetry.Exporter.Prometheus.HttpListener.Tests;
 

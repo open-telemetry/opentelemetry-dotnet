@@ -2,9 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using DotNet.Testcontainers.Containers;
-#pragma warning disable IDE0005 // Using directive is unnecessary.
-using Xunit;
-#pragma warning restore IDE0005 // Using directive is unnecessary.
 
 namespace OpenTelemetry.Tests;
 

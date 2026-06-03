@@ -19,7 +19,6 @@ using OpenTelemetry.Exporter.Prometheus.Tests;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
-using Xunit.Abstractions;
 
 namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests;
 

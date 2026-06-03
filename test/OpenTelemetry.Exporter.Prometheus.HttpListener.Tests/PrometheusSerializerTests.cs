@@ -10,6 +10,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.Prometheus.Tests;
 
