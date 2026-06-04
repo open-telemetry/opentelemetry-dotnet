@@ -44,11 +44,11 @@ internal static class ProtobufOtlpTraceFieldNumberConstants
     internal const int Span_Flags = 16;
 
     // SpanKind
-    internal const int SpanKind_Internal = 2;
-    internal const int SpanKind_Server = 3;
-    internal const int SpanKind_Client = 4;
-    internal const int SpanKind_Producer = 5;
-    internal const int SpanKind_Consumer = 6;
+    internal const int SpanKind_Internal = 1;
+    internal const int SpanKind_Server = 2;
+    internal const int SpanKind_Client = 3;
+    internal const int SpanKind_Producer = 4;
+    internal const int SpanKind_Consumer = 5;
 
     // Events
     internal const int Event_Time_Unix_Nano = 1;
