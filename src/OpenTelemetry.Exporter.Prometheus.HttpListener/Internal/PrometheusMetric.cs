@@ -23,7 +23,6 @@ internal sealed class PrometheusMetric
         if (!string.IsNullOrEmpty(unit))
         {
             sanitizedUnit = GetUnit(unit);
-            var openMetricsUnitSuffix = EscapeOpenMetricsName(sanitizedUnit);
 
             // The resulting unit SHOULD be added to the metric as
             // [OpenMetrics UNIT metadata](https://github.com/prometheus/OpenMetrics/blob/v1.0.0/specification/OpenMetrics.md#metricfamily)
@@ -32,7 +31,7 @@ internal sealed class PrometheusMetric
             if (!sanitizedName.EndsWith(sanitizedUnit, StringComparison.Ordinal))
             {
                 sanitizedName += $"_{sanitizedUnit}";
-                openMetricsName += $"_{openMetricsUnitSuffix}";
+                openMetricsName += $"_{sanitizedUnit}";
             }
         }
 
