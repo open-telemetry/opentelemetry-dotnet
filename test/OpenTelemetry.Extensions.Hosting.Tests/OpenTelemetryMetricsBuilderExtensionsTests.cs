@@ -8,12 +8,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.Metrics;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Metrics.Tests;
 using OpenTelemetry.Tests;
-using OpenTelemetry.Trace;
-using Xunit;
 
 namespace OpenTelemetry.Extensions.Hosting.Tests;
 

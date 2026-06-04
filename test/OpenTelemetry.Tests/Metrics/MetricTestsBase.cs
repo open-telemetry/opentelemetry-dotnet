@@ -9,9 +9,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.Metrics;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 #endif
 using OpenTelemetry.Internal;
-using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests;
 
@@ -33,6 +33,7 @@ public abstract class MetricTestsBase
     {
         var hostBuilder = new HostBuilder()
             .ConfigureDefaults(null)
+            .ConfigureLogging((logging) => logging.SetMinimumLevel(LogLevel.Warning))
             .ConfigureAppConfiguration((context, builder) =>
             {
                 configureAppConfiguration?.Invoke(context, builder);

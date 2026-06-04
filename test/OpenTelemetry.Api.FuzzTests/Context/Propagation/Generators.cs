@@ -10,6 +10,8 @@ namespace OpenTelemetry.Api.FuzzTests;
 
 internal static class Generators
 {
+    private const int MaxTraceStateLength = 512;
+
     private static readonly Gen<char> LowerAlphaChar = Gen.Elements("abcdefghijklmnopqrstuvwxyz".ToCharArray());
     private static readonly Gen<char> TraceStateKeyChar = Gen.Elements("abcdefghijklmnopqrstuvwxyz0123456789_-*/".ToCharArray());
     private static readonly Gen<char> TraceStateValueChar = Gen.Elements("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!#$%&'*+-.^_`|~:/".ToCharArray());
@@ -21,8 +23,16 @@ internal static class Generators
 
     public static Arbitrary<ActivityContext> ActivityContextArbitrary()
     {
+#if NET
+        var allTraceFlags = Enum.GetValues<ActivityTraceFlags>();
+#else
+        var allTraceFlags = Enum.GetValues(typeof(ActivityTraceFlags)).OfType<ActivityTraceFlags>().ToArray();
+#endif
+
         var gen =
-            from traceFlags in Gen.Elements(default, ActivityTraceFlags.Recorded)
+            from traceFlags in Gen
+                .SubListOf(allTraceFlags)
+                .Select((flags) => flags.Aggregate(ActivityTraceFlags.None, (current, next) => current | next))
             from traceState in Gen.OneOf(
                 Gen.Constant((string?)null),
                 ValidTraceStateArbitrary().Generator.Select(static value => (string?)value))
@@ -198,9 +208,7 @@ internal static class Generators
             return
                 from count in Gen.Choose(1, maxCount)
                 from members in Gen.ArrayOf(memberGen, count)
-                select string.Join(
-                    ",",
-                    members.Select(static (member, index) => $"{AppendIndexToTraceStateKey(member.Key, index)}={member.Value}"));
+                select CreateValidTraceState(members);
         });
 
         return gen.ToArbitrary();
@@ -276,6 +284,28 @@ internal static class Generators
         }
 
         return $"{key}{suffix}";
+    }
+
+    private static string CreateValidTraceState(KeyValuePair<string, string>[] members)
+    {
+        var entries = new List<string>(members.Length);
+        var length = 0;
+
+        foreach (var (member, index) in members.Select(static (member, index) => (member, index)))
+        {
+            var entry = $"{AppendIndexToTraceStateKey(member.Key, index)}={member.Value}";
+            var nextLength = length + entry.Length + (entries.Count > 0 ? 1 : 0);
+
+            if (nextLength > MaxTraceStateLength)
+            {
+                break;
+            }
+
+            entries.Add(entry);
+            length = nextLength;
+        }
+
+        return string.Join(",", entries);
     }
 
     private static Dictionary<string, string> ToDictionary(IEnumerable<KeyValuePair<string, string>> pairs)

@@ -25,7 +25,7 @@ internal static class CharExtensions
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static bool IsAsciiLetterUpper(char value) =>
-            value >= 'A' && value <= 'Z';
+            value is >= 'A' and <= 'Z';
     }
 }
 

@@ -82,6 +82,11 @@ internal static partial class PrometheusSerializer
                 }
 
                 buffer[cursor++] = ASCII_LINEFEED;
+
+                if (openMetricsRequested && prometheusMetric.Type == PrometheusType.Counter)
+                {
+                    cursor = WriteCreatedMetric(buffer, cursor, metric, prometheusMetric, metricPoint);
+                }
             }
         }
         else
@@ -104,13 +109,20 @@ internal static partial class PrometheusSerializer
 
                     cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "_bucket{");
-                    cursor = WriteTags(buffer, cursor, metric, tags, openMetricsRequested, writeEnclosingBraces: false);
+                    cursor = WriteTags(buffer, cursor, metric, tags, openMetricsRequested, writeEnclosingBraces: false, reservedOutputKeys: ReservedHistogramLabelNames);
 
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "le=\"");
 
-                    cursor = histogramMeasurement.ExplicitBound != double.PositiveInfinity
-                        ? WriteDouble(buffer, cursor, histogramMeasurement.ExplicitBound)
-                        : WriteAsciiStringNoEscape(buffer, cursor, "+Inf");
+                    if (histogramMeasurement.ExplicitBound != double.PositiveInfinity)
+                    {
+                        cursor = openMetricsRequested
+                            ? WriteCanonicalLabelValue(buffer, cursor, histogramMeasurement.ExplicitBound)
+                            : WriteDouble(buffer, cursor, histogramMeasurement.ExplicitBound);
+                    }
+                    else
+                    {
+                        cursor = WriteAsciiStringNoEscape(buffer, cursor, "+Inf");
+                    }
 
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "\"} ");
 
@@ -133,7 +145,7 @@ internal static partial class PrometheusSerializer
                     // See https://prometheus.io/docs/specs/om/open_metrics_spec/#histogram-1
                     cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "_sum");
-                    cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags, openMetricsRequested);
+                    cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags, openMetricsRequested, reservedOutputKeys: ReservedHistogramLabelNames);
 
                     buffer[cursor++] = unchecked((byte)' ');
 
@@ -144,13 +156,17 @@ internal static partial class PrometheusSerializer
                     // Histogram count
                     cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "_count");
-                    cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags, openMetricsRequested);
+                    cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags, openMetricsRequested, reservedOutputKeys: ReservedHistogramLabelNames);
 
                     buffer[cursor++] = unchecked((byte)' ');
 
                     cursor = WriteLong(buffer, cursor, metricPoint.GetHistogramCount());
-
                     buffer[cursor++] = ASCII_LINEFEED;
+                }
+
+                if (openMetricsRequested)
+                {
+                    cursor = WriteCreatedMetric(buffer, cursor, metric, prometheusMetric, metricPoint, ReservedHistogramLabelNames);
                 }
             }
         }
@@ -235,5 +251,32 @@ internal static partial class PrometheusSerializer
         exemplar = default;
         return metricPoint.TryGetExemplars(out var exemplars) &&
                TryGetLatestHistogramBucketExemplar(exemplars, lowerBoundExclusive, upperBoundInclusive, out exemplar);
+    }
+
+    private static int WriteCreatedMetric(
+        byte[] buffer,
+        int cursor,
+        Metric metric,
+        PrometheusMetric prometheusMetric,
+        in MetricPoint metricPoint,
+        IReadOnlyCollection<string>? reservedOutputKeys = null)
+    {
+        if (metricPoint.StartTime == default)
+        {
+            return cursor;
+        }
+
+        cursor = WriteMetricMetadataName(buffer, cursor, prometheusMetric, openMetricsRequested: true);
+
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "_created");
+        cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags, openMetricsRequested: true, reservedOutputKeys: reservedOutputKeys);
+
+        buffer[cursor++] = unchecked((byte)' ');
+
+        cursor = WriteUnixTimeSeconds(buffer, cursor, metricPoint.StartTime);
+
+        buffer[cursor++] = ASCII_LINEFEED;
+
+        return cursor;
     }
 }

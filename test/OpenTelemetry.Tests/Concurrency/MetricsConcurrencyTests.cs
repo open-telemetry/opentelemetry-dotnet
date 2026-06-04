@@ -4,8 +4,6 @@
 using Microsoft.Coyote;
 using Microsoft.Coyote.SystematicTesting;
 using OpenTelemetry.Metrics.Tests;
-using Xunit;
-using Xunit.Abstractions;
 
 namespace OpenTelemetry.Tests.Concurrency;
 

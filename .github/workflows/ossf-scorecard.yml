@@ -5,44 +5,50 @@ on:
     branches:
       - main
   schedule:
-    - cron: "24 5 * * 0" # once a week
+    - cron: "24 5 * * 0" # Once a week
   workflow_dispatch:
 
-permissions: read-all
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   analysis:
+    name: Scorecard analysis
     if: github.event_name != 'schedule' || (github.event_name == 'schedule' && github.event.repository.fork == false)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
-      # Needed for Code scanning upload
-      security-events: write
-      # Needed for GitHub OIDC token if publish_results is true
-      id-token: write
+      checks: read # Read CI results
+      contents: read # Checkout the repository
+      id-token: write # Publish Scorecard results with GitHub OIDC
+      issues: read # Read issues
+      pull-requests: read # Read pull requests
+      security-events: write # Upload the SARIF results to code scanning
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          filter: 'tree:0'
           persist-credentials: false
+          show-progress: false
 
-      - uses: ossf/scorecard-action@4eaacf0543bb3f2c246792bd56e8cdeffafb205a # v2.4.3
+      - name: Run Scorecard analysis
+        uses: ossf/scorecard-action@4eaacf0543bb3f2c246792bd56e8cdeffafb205a # v2.4.3
         with:
           results_file: results.sarif
           results_format: sarif
           publish_results: true
 
-      # Upload the results as artifacts (optional). Commenting out will disable
-      # uploads of run results in SARIF format to the repository Actions tab.
-      # https://docs.github.com/en/actions/advanced-guides/storing-workflow-data-as-artifacts
-      - name: "Upload artifact"
+      - name: Upload artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: SARIF file
           path: results.sarif
           retention-days: 5
 
-      # Upload the results to GitHub's code scanning dashboard (optional).
-      # Commenting out will disable upload of results to your repo's Code Scanning dashboard
-      - name: "Upload to code-scanning"
-        uses: github/codeql-action/upload-sarif@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4.35.4
+      - name: Upload code scanning results
+        uses: github/codeql-action/upload-sarif@7211b7c8077ea37d8641b6271f6a365a22a5fbfa # v4.36.0
         with:
           sarif_file: results.sarif

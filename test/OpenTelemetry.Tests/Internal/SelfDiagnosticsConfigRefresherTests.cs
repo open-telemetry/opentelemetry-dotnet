@@ -4,8 +4,6 @@
 using System.Diagnostics;
 using System.Text;
 using OpenTelemetry.Tests;
-using Xunit;
-using Xunit.Abstractions;
 
 namespace OpenTelemetry.Internal.Tests;
 
