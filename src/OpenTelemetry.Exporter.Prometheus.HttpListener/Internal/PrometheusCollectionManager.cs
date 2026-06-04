@@ -236,6 +236,7 @@ internal sealed class PrometheusCollectionManager
         try
         {
             cursor = this.WriteTargetInfo(ref buffer);
+
             var metricStates = this.GetMetricStates(metrics, this.exporter.OpenMetricsRequested);
 
             foreach (var metricState in metricStates)
@@ -250,11 +251,11 @@ internal sealed class PrometheusCollectionManager
                             metricState.Metric,
                             metricState.PrometheusMetric,
                             this.exporter.OpenMetricsRequested,
-                            writeType: metricState.WriteType,
-                            writeUnit: metricState.WriteUnit,
-                            writeHelp: metricState.WriteHelp,
-                            unitOverride: metricState.Unit,
-                            helpOverride: metricState.Help);
+                            metricState.WriteType,
+                            metricState.WriteUnit,
+                            metricState.WriteHelp,
+                            metricState.Unit,
+                            metricState.Help);
 
                         break;
                     }

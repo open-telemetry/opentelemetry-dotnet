@@ -28,11 +28,11 @@ internal static partial class PrometheusSerializer
         Metric metric,
         PrometheusMetric prometheusMetric,
         bool openMetricsRequested,
-        bool writeType = true,
-        bool writeUnit = true,
-        bool writeHelp = true,
-        string? unitOverride = null,
-        string? helpOverride = null)
+        bool writeType,
+        bool writeUnit,
+        bool writeHelp,
+        string? unitOverride,
+        string? helpOverride)
     {
         if (writeType)
         {
@@ -51,7 +51,7 @@ internal static partial class PrometheusSerializer
 
         if (!metric.MetricType.IsHistogram())
         {
-            var isLong = ((int)metric.MetricType & 0b_0000_1111) == 0x0a; // I8
+            var isLongValue = ((int)metric.MetricType & 0b_0000_1111) == 0x0a; // I8
 
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
@@ -61,7 +61,7 @@ internal static partial class PrometheusSerializer
 
                 buffer[cursor++] = unchecked((byte)' ');
 
-                if (isLong)
+                if (isLongValue)
                 {
                     cursor = metric.MetricType.IsSum()
                         ? WriteLong(buffer, cursor, metricPoint.GetSumLong())
@@ -78,7 +78,7 @@ internal static partial class PrometheusSerializer
                     prometheusMetric.Type == PrometheusType.Counter &&
                     TryGetLatestExemplar(metricPoint, out var exemplar))
                 {
-                    cursor = WriteExemplar(buffer, cursor, in exemplar, isLong, openMetricsRequested);
+                    cursor = WriteExemplar(buffer, cursor, in exemplar, isLongValue, openMetricsRequested);
                 }
 
                 buffer[cursor++] = ASCII_LINEFEED;

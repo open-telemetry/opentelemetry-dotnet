@@ -1103,11 +1103,7 @@ internal static partial class PrometheusSerializer
         {
             var formattedValue = value.ToString($"F{decimalPlaces}", CultureInfo.InvariantCulture);
 #if NET
-#if NET
             var minimumLength = formattedValue.IndexOf('.', StringComparison.Ordinal) + 2;
-#else
-            var minimumLength = formattedValue.IndexOf('.') + 2;
-#endif
 #else
             var minimumLength = formattedValue.IndexOf('.') + 2;
 #endif

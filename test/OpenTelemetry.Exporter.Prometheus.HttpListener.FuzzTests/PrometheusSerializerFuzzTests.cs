@@ -26,7 +26,7 @@ public class PrometheusSerializerFuzzTests
     [Property(MaxTest = MaxTests)]
     public Property WriteOpenMetricsLabelKeyMatchesReferenceImplementation() => Prop.ForAll(
         Generators.PrometheusStringArbitrary(),
-        static (value) => SerializeOpenMetricsLabelKey(value).SequenceEqual(ReferenceWriteOpenMetricsLabelKey(value)));
+        static (value) => SerializeOpenMetricsLabelKey(value).SequenceEqual(ReferenceWriteLabelKey(value)));
 
     [Property(MaxTest = MaxTests)]
     public Property WriteLabelValueMatchesReferenceImplementation() => Prop.ForAll(
@@ -88,12 +88,6 @@ public class PrometheusSerializerFuzzTests
     }
 
     private static byte[] ReferenceWriteLabelKey(string value)
-        => ReferenceWriteLabelKey(value, openMetricsRequested: false);
-
-    private static byte[] ReferenceWriteOpenMetricsLabelKey(string value)
-        => ReferenceWriteLabelKey(value, openMetricsRequested: true);
-
-    private static byte[] ReferenceWriteLabelKey(string value, bool openMetricsRequested)
     {
         var bytes = new List<byte>(value.Length + 1);
         if (string.IsNullOrEmpty(value))
@@ -108,11 +102,10 @@ public class PrometheusSerializerFuzzTests
         {
             var c = value[i];
             var isAllowed =
-                (c is >= 'A' and <= 'Z') ||
-                (c is >= 'a' and <= 'z') ||
-                (c is >= '0' and <= '9') ||
-                c == '_' ||
-                (openMetricsRequested && c == ':');
+                c is (>= 'A' and <= 'Z') or
+                (>= 'a' and <= 'z') or
+                (>= '0' and <= '9') or
+                '_';
 
             if (i == 0 && c is >= '0' and <= '9')
             {
