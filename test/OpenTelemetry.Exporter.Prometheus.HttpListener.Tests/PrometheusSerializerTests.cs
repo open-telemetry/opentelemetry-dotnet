@@ -5,9 +5,10 @@ using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
-using Xunit;
 
 namespace OpenTelemetry.Exporter.Prometheus.Tests;
 
@@ -45,18 +46,26 @@ public sealed class PrometheusSerializerTests
         { long.MaxValue, "9223372036854775807" },
         { ulong.MinValue, "0" },
         { ulong.MaxValue, "18446744073709551615" },
-        { float.MinValue, "-3.4028234663852886E+38" },
-        { 0f, "0" },
+        { float.MinValue, "-3.40282346638528860e+038" },
+        { 0f, "0.0" },
         { float.NaN, "NaN" },
         { float.NegativeInfinity, "-Inf" },
         { float.PositiveInfinity, "+Inf" },
-        { float.MaxValue, "3.4028234663852886E+38" },
-        { double.MinValue, "-1.7976931348623157E+308" },
-        { 0d, "0" },
+        { float.MaxValue, "3.40282346638528860e+038" },
+#if NET
+        { double.MinValue, "-1.79769313486231571e+308" },
+#else
+        { double.MinValue, "-1.79769313486231570e+308" },
+#endif
+        { 0d, "0.0" },
         { double.NegativeInfinity, "-Inf" },
         { double.PositiveInfinity, "+Inf" },
         { double.NaN, "NaN" },
-        { double.MaxValue, "1.7976931348623157E+308" },
+#if NET
+        { double.MaxValue, "1.79769313486231571e+308" },
+#else
+        { double.MaxValue, "1.79769313486231570e+308" },
+#endif
         { decimal.MinValue, "-79228162514264337593543950335" },
         { 0m, "0" },
         { decimal.MaxValue, "79228162514264337593543950335" },
@@ -222,48 +231,6 @@ public sealed class PrometheusSerializerTests
     }
 
     [Fact]
-    public void GaugeMergesCollidingNormalizedDimensionNames()
-    {
-        var previousCulture = CultureInfo.CurrentCulture;
-        var previousUiCulture = CultureInfo.CurrentUICulture;
-        CultureInfo.CurrentCulture = new CultureInfo("fr-FR");
-        CultureInfo.CurrentUICulture = CultureInfo.CurrentCulture;
-
-        try
-        {
-            var buffer = new byte[85_000];
-            var metrics = new List<Metric>();
-
-            using var meter = new Meter(Utils.GetCurrentMethodName());
-            using var provider = Sdk.CreateMeterProviderBuilder()
-                .AddMeter(meter.Name)
-                .AddInMemoryExporter(metrics)
-                .Build();
-
-            meter.CreateObservableGauge(
-                "test_gauge",
-                () => new Measurement<long>(
-                    123,
-                    new("a.b", true),
-                    new("a/b", 1.5),
-                    new("a-b", double.PositiveInfinity)));
-
-            provider.ForceFlush();
-
-            var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics: false);
-            var output = Encoding.UTF8.GetString(buffer, 0, cursor);
-
-            Assert.Contains($"test_gauge{{otel_scope_name=\"{Utils.GetCurrentMethodName()}\",a_b=\"+Inf;true;1.5\"}} 123\n", output, StringComparison.Ordinal);
-            Assert.Contains("+Inf", output, StringComparison.Ordinal);
-        }
-        finally
-        {
-            CultureInfo.CurrentCulture = previousCulture;
-            CultureInfo.CurrentUICulture = previousUiCulture;
-        }
-    }
-
-    [Fact]
     public void GaugeEmptyDimensionName()
     {
         var buffer = new byte[85000];
@@ -335,14 +302,13 @@ public sealed class PrometheusSerializerTests
     }
 
     [Fact]
-    public void WriteLabelKeyPreservesOpenMetricsLegacyValidCharacters()
+    public void WriteLabelKeyNormalizesOpenMetricsLabelNames()
     {
         var buffer = new byte[32];
 
         var cursor = PrometheusSerializer.WriteLabelKey(buffer, 0, "a_b:c", openMetricsRequested: true);
 
-        Assert.Equal("a_b:c", Encoding.UTF8.GetString(buffer, 0, cursor));
-        Assert.Equal("a_b:c", Encoding.UTF8.GetString(buffer, 0, cursor));
+        Assert.Equal("a_b_c", Encoding.UTF8.GetString(buffer, 0, cursor));
     }
 
     [Fact]
@@ -353,6 +319,58 @@ public sealed class PrometheusSerializerTests
         var cursor = PrometheusSerializer.WriteLabelKey(buffer, 0, "a../b", openMetricsRequested: true);
 
         Assert.Equal("a_b", Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Theory]
+    [InlineData(false, "library.mascot", "dotnetbot", "otel_scope_library_mascot", "otter", "otel_scope_library_mascot", "dotnetbot;otter")]
+    [InlineData(true, "library.mascot", "dotnetbot", "otel_scope_library_mascot", "otter", "otel_scope_library_mascot", "dotnetbot;otter")]
+    [InlineData(false, "z", "scope", "otel_scope_z", "point", "otel_scope_z", "point;scope")]
+    [InlineData(true, "z", "scope", "otel_scope_z", "point", "otel_scope_z", "point;scope")]
+    public void WriteMetricConcatenatesPointTagsThatCollideWithScopeLabels(
+        bool useOpenMetrics,
+        string scopeTagKey,
+        string scopeTagValue,
+        string pointTagKey,
+        string pointTagValue,
+        string expectedLabelKey,
+        string expectedLabelValue)
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter(
+            Utils.GetCurrentMethodName(),
+            "1.0.0",
+            [new(scopeTagKey, scopeTagValue)],
+            scope: null);
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        meter.CreateCounter<int>("test_counter").Add(
+            1,
+            new KeyValuePair<string, object?>(pointTagKey, pointTagValue));
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+        var typeMetadataName = useOpenMetrics ? "test_counter" : "test_counter_total";
+        var expectedLabels =
+            $"otel_scope_name=\"{Utils.GetCurrentMethodName()}\",otel_scope_version=\"1.0.0\",{expectedLabelKey}=\"{expectedLabelValue}\"";
+
+        Assert.StartsWith($"# TYPE {typeMetadataName} counter\n", output, StringComparison.Ordinal);
+        Assert.Contains($"test_counter_total{{{expectedLabels}}} 1\n", output, StringComparison.Ordinal);
+
+        if (useOpenMetrics)
+        {
+            Assert.Matches($"test_counter_created\\{{{Regex.Escape(expectedLabels)}\\}} [0-9]+(?:\\.[0-9]+)?\n$", output);
+        }
+        else
+        {
+            Assert.DoesNotContain("test_counter_created{", output, StringComparison.Ordinal);
+        }
     }
 
     [Fact]
@@ -848,46 +866,90 @@ public sealed class PrometheusSerializerTests
     }
 
     [Fact]
+    public void CounterWithOpenMetricsFormatFiltersSanitizedReservedExemplarTagNames()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateCounter<long>("test_counter");
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
+            .AddView(
+                counter.Name,
+                new MetricStreamConfiguration
+                {
+                    TagKeys = ["keep"],
+                    ExemplarReservoirFactory = () => new SimpleFixedSizeExemplarReservoir(3),
+                })
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        counter.Add(2, new("keep", "value"), new("trace.id", "ignored-trace"), new("span-id", "ignored-span"));
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0], true);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+        var counterLine = output.Split(['\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Single(line => line.StartsWith("test_counter_total{", StringComparison.Ordinal));
+
+        Assert.Contains(" 2 # {} 2 ", counterLine, StringComparison.Ordinal);
+        Assert.DoesNotContain("ignored-trace", counterLine, StringComparison.Ordinal);
+        Assert.DoesNotContain("ignored-span", counterLine, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void CounterWithOpenMetricsFormatDropsExemplarLabelsExceedingLimit()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+        var droppedValue = new string('x', 80);
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateCounter<long>("test_counter");
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
+            .AddView(
+                counter.Name,
+                new MetricStreamConfiguration
+                {
+                    TagKeys = ["keep"],
+                    ExemplarReservoirFactory = () => new SimpleFixedSizeExemplarReservoir(3),
+                })
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        using var activity = new Activity("test");
+        activity.Start();
+        counter.Add(2, new("keep", "value"), new("short", "ok"), new("too.long", droppedValue));
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0], true);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+        var counterLine = output.Split(['\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Single(line => line.StartsWith("test_counter_total{", StringComparison.Ordinal));
+
+        Assert.Contains(
+            $"# {{trace_id=\"{activity.TraceId.ToHexString()}\",span_id=\"{activity.SpanId.ToHexString()}\",short=\"ok\"}} 2 ",
+            counterLine,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("too_long", counterLine, StringComparison.Ordinal);
+        Assert.DoesNotContain(droppedValue, counterLine, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void TryGetLatestExemplarPrefersLaterCandidateWhenTimestampsMatch()
     {
         var timestamp = new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
         Assert.True(PrometheusSerializer.ShouldPreferExemplar(timestamp, timestamp));
         Assert.False(PrometheusSerializer.ShouldPreferExemplar(timestamp, timestamp.AddTicks(-1)));
-    }
-
-    [Fact]
-    public void WriteMetricConcatenatesCollidingSanitizedLabelValuesInLexicographicOrder()
-    {
-        var buffer = new byte[85000];
-        var metrics = new List<Metric>();
-
-        using var meter = new Meter("test_meter");
-        using var provider = Sdk.CreateMeterProviderBuilder()
-            .AddMeter(meter.Name)
-            .AddInMemoryExporter(metrics)
-            .Build();
-
-        meter.CreateObservableGauge<long>(
-            "test_gauge",
-            () =>
-            [
-                new Measurement<long>(
-                    123,
-                    new("foo.bar", "dot"),
-                    new("foo-bar", "hyphen"),
-                    new("foo_bar", "underscore")),
-            ]);
-
-        provider.ForceFlush();
-
-        var cursor = WriteMetric(buffer, 0, metrics[0]);
-        Assert.Matches(
-            ("^"
-             + "# TYPE test_gauge gauge\n"
-             + "test_gauge{otel_scope_name='test_meter',foo_bar='hyphen;dot;underscore'} 123\n"
-             + "$").Replace('\'', '"'),
-            Encoding.UTF8.GetString(buffer, 0, cursor));
     }
 
     [Fact]
@@ -910,30 +972,15 @@ public sealed class PrometheusSerializerTests
 
         var cursor = WriteMetric(buffer, 0, metrics[0], true);
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
-        var expected =
-            ("^"
-                + "# TYPE test_histogram histogram\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='0.0'}} 0\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='5.0'}} 0\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='10.0'}} 0\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='25.0'}} 1\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='50.0'}} 1\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='75.0'}} 1\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='100.0'}} 2\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='250.0'}} 2\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='500.0'}} 2\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='750.0'}} 2\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='1000.0'}} 2\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='2500.0'}} 2\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='5000.0'}} 2\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='7500.0'}} 2\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='10000.0'}} 2\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1',le='\\+Inf'}} 2\n"
-                + $"test_histogram_sum{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1'}} 118\n"
-                + $"test_histogram_count{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1'}} 2\n"
-                + $"test_histogram_created{{otel_scope_name='{Utils.GetCurrentMethodName()}',x='1'}} [0-9]+(?:\\.[0-9]+)?\n"
-                + "$").Replace('\'', '"');
-        Assert.Matches(expected, output);
+        Assert.Contains("# TYPE test_histogram histogram\n", output, StringComparison.Ordinal);
+        Assert.Contains($"test_histogram_bucket{{otel_scope_name=\"{Utils.GetCurrentMethodName()}\",x=\"1\",le=\"0.0\"}} 0\n", output, StringComparison.Ordinal);
+        Assert.Contains($"test_histogram_bucket{{otel_scope_name=\"{Utils.GetCurrentMethodName()}\",x=\"1\",le=\"100.0\"}} 2\n", output, StringComparison.Ordinal);
+        Assert.Contains($"test_histogram_bucket{{otel_scope_name=\"{Utils.GetCurrentMethodName()}\",x=\"1\",le=\"+Inf\"}} 2\n", output, StringComparison.Ordinal);
+        Assert.Contains($"test_histogram_sum{{otel_scope_name=\"{Utils.GetCurrentMethodName()}\",x=\"1\"}} 118\n", output, StringComparison.Ordinal);
+        Assert.Contains($"test_histogram_count{{otel_scope_name=\"{Utils.GetCurrentMethodName()}\",x=\"1\"}} 2\n", output, StringComparison.Ordinal);
+        Assert.Matches($"test_histogram_created\\{{otel_scope_name=\"{Regex.Escape(Utils.GetCurrentMethodName())}\",x=\"1\"\\}} [0-9]+(?:\\.[0-9]+)?", output);
+        Assert.DoesNotContain("# TYPE test_histogram_created", output, StringComparison.Ordinal);
+        Assert.DoesNotContain("\n\n", output, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -986,37 +1033,85 @@ public sealed class PrometheusSerializerTests
     }
 
     [Fact]
-    public void TryGetLatestHistogramBucketExemplarMatchesNegativeInfinityInFirstBucket()
-    {
-        Assert.True(PrometheusSerializer.IsHistogramBucketExemplarMatch(double.NegativeInfinity, double.NegativeInfinity, 5));
-        Assert.False(PrometheusSerializer.IsHistogramBucketExemplarMatch(double.NegativeInfinity, 5, 10));
-    }
-
-    [Fact]
-    public void ScopeInfo()
+    public void HistogramWithOpenMetricsFormatDropsCollidingLeLabelKeys()
     {
         var buffer = new byte[85000];
         var metrics = new List<Metric>();
 
-        using var meter = new Meter("test_meter", "1.0.0", [new("library.mascot", "dotnetbot")], scope: null);
+        using var meter = new Meter(Utils.GetCurrentMethodName());
         using var provider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
             .AddInMemoryExporter(metrics)
             .Build();
 
-        meter.CreateObservableGauge("test_gauge", () => 1);
+        var histogram = meter.CreateHistogram<double>("test_histogram");
+        histogram.Record(18, new KeyValuePair<string, object?>("le", "user-value"), new KeyValuePair<string, object?>("x", "1"));
 
         provider.ForceFlush();
 
-        var cursor = PrometheusSerializer.WriteScopeInfo(buffer, 0, metrics[0]);
+        var cursor = WriteMetric(buffer, 0, metrics[0], true);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+        var bucketLine = output.Split(['\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Single(line => line.Contains("test_histogram_bucket{", StringComparison.Ordinal)
+                && line.Contains("le=\"25.0\"", StringComparison.Ordinal));
+        var sumLine = output.Split(['\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Single(line => line.Contains("test_histogram_sum{", StringComparison.Ordinal));
+        var countLine = output.Split(['\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Single(line => line.Contains("test_histogram_count{", StringComparison.Ordinal));
 
-        Assert.Matches(
-            ("^"
-             + "# TYPE otel_scope info\n"
-             + "# HELP otel_scope Scope metadata\n"
-             + "otel_scope_info{otel_scope_name='test_meter',otel_scope_version='1.0.0',otel_scope_library_mascot='dotnetbot'} 1\n"
-             + "$").Replace('\'', '"'),
-            Encoding.UTF8.GetString(buffer, 0, cursor));
+        Assert.Contains($"otel_scope_name=\"{Utils.GetCurrentMethodName()}\"", bucketLine, StringComparison.Ordinal);
+        Assert.Contains("x=\"1\"", bucketLine, StringComparison.Ordinal);
+        Assert.Equal(bucketLine.IndexOf("le=\"", StringComparison.Ordinal), bucketLine.LastIndexOf("le=\"", StringComparison.Ordinal));
+        Assert.DoesNotContain("user-value", bucketLine, StringComparison.Ordinal);
+        Assert.DoesNotContain("le=\"", sumLine, StringComparison.Ordinal);
+        Assert.DoesNotContain("user-value", sumLine, StringComparison.Ordinal);
+        Assert.DoesNotContain("le=\"", countLine, StringComparison.Ordinal);
+        Assert.DoesNotContain("user-value", countLine, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void HistogramWithOpenMetricsFormatFiltersSanitizedReservedExemplarTagNames()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var histogram = meter.CreateHistogram<double>("test_histogram");
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
+            .AddView(
+                histogram.Name,
+                new ExplicitBucketHistogramConfiguration
+                {
+                    Boundaries = [5, 10],
+                    TagKeys = ["keep"],
+                    ExemplarReservoirFactory = () => new SimpleFixedSizeExemplarReservoir(3),
+                })
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        histogram.Record(9, new("keep", "value"), new("trace.id", "ignored-trace"), new("span-id", "ignored-span"));
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0], true);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+        var bucketLine = output.Split(['\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Single(line => line.Contains("test_histogram_bucket{", StringComparison.Ordinal)
+                && line.Contains("le=\"10.0\"", StringComparison.Ordinal));
+
+        Assert.Contains("} 1 # {} 9 ", bucketLine, StringComparison.Ordinal);
+        Assert.DoesNotContain("ignored-trace", bucketLine, StringComparison.Ordinal);
+        Assert.DoesNotContain("ignored-span", bucketLine, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TryGetLatestHistogramBucketExemplarMatchesNegativeInfinityInFirstBucket()
+    {
+        Assert.True(PrometheusSerializer.IsHistogramBucketExemplarMatch(double.NegativeInfinity, double.NegativeInfinity, 5));
+        Assert.False(PrometheusSerializer.IsHistogramBucketExemplarMatch(double.NegativeInfinity, 5, 10));
     }
 
     [Fact]
@@ -1063,7 +1158,7 @@ public sealed class PrometheusSerializerTests
 
         provider.ForceFlush();
 
-        var cursor = WriteMetric(buffer, 0, metrics[0]);
+        var cursor = WriteMetric(buffer, 0, metrics[0], false);
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
 
         Assert.Contains("otel_scope_library_mascot=\"dotnetbot\"", output, StringComparison.Ordinal);
@@ -1106,7 +1201,7 @@ public sealed class PrometheusSerializerTests
 
         provider.ForceFlush();
 
-        var cursor = WriteMetric(buffer, 0, metrics[0]);
+        var cursor = WriteMetric(buffer, 0, metrics[0], false);
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
 
         Assert.Contains("otel_scope_schema_url=\"https://opentelemetry.io/schemas/1.0.0\"", output, StringComparison.Ordinal);
@@ -1142,7 +1237,7 @@ public sealed class PrometheusSerializerTests
 
         provider.ForceFlush();
 
-        var cursor = WriteMetric(buffer, 0, metrics[0]);
+        var cursor = WriteMetric(buffer, 0, metrics[0], false);
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
 
         Assert.Contains("otel_scope_name=\"test_meter\"", output, StringComparison.Ordinal);
@@ -1152,53 +1247,6 @@ public sealed class PrometheusSerializerTests
         Assert.DoesNotContain("otel_scope_version=\"ignored-version\"", output, StringComparison.Ordinal);
     }
 
-    [Fact]
-    public void CreateScopeIdentityIgnoresNormalizedReservedScopeAttributeNames()
-    {
-        var metricsWithConflicts = new List<Metric>();
-        using var meterWithConflicts = new Meter(
-            new MeterOptions("test_meter")
-            {
-                Version = "1.0.0",
-                TelemetrySchemaUrl = "https://opentelemetry.io/schemas/1.0.0",
-                Tags =
-                [
-                    new("na-me", "ignored-name"),
-                    new("ver-sion", "ignored-version"),
-                    new("schema-url", "ignored-schema"),
-                    new("library.mascot", "dotnetbot"),
-                ],
-            });
-        using var providerWithConflicts = Sdk.CreateMeterProviderBuilder()
-            .AddMeter(meterWithConflicts.Name)
-            .AddInMemoryExporter(metricsWithConflicts)
-            .Build();
-        meterWithConflicts.CreateObservableGauge("test_gauge", () => 1);
-        providerWithConflicts.ForceFlush();
-
-        var metricsWithoutConflicts = new List<Metric>();
-        using var meterWithoutConflicts = new Meter(
-            new MeterOptions("test_meter")
-            {
-                Version = "1.0.0",
-                TelemetrySchemaUrl = "https://opentelemetry.io/schemas/1.0.0",
-                Tags =
-                [
-                    new("library.mascot", "dotnetbot"),
-                ],
-            });
-        using var providerWithoutConflicts = Sdk.CreateMeterProviderBuilder()
-            .AddMeter(meterWithoutConflicts.Name)
-            .AddInMemoryExporter(metricsWithoutConflicts)
-            .Build();
-        meterWithoutConflicts.CreateObservableGauge("test_gauge", () => 1);
-        providerWithoutConflicts.ForceFlush();
-
-        var identityWithConflicts = PrometheusSerializer.CreateScopeIdentity(metricsWithConflicts[0]);
-        var identityWithoutConflicts = PrometheusSerializer.CreateScopeIdentity(metricsWithoutConflicts[0]);
-
-        Assert.Equal(identityWithoutConflicts, identityWithConflicts);
-    }
 #endif
 
     [Fact]
@@ -1243,62 +1291,51 @@ public sealed class PrometheusSerializerTests
         provider.ForceFlush();
 
         var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics: true);
-        Assert.Matches(
-            ("^"
-                + "# TYPE test_histogram histogram\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='0.0'}} 0\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='5.0'}} 0\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='10.0'}} 0\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='25.0'}} 1\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='50.0'}} 1\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='75.0'}} 1\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='100.0'}} 2\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='250.0'}} 2\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='500.0'}} 2\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='750.0'}} 2\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='1000.0'}} 2\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='2500.0'}} 2\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='5000.0'}} 2\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='7500.0'}} 2\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='10000.0'}} 2\n"
-                + $"test_histogram_bucket{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1',le='\\+Inf'}} 2\n"
-                + $"test_histogram_sum{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1'}} 118\n"
-                + $"test_histogram_count{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1'}} 2\n"
-                + $"test_histogram_created{{otel_scope_name='{Utils.GetCurrentMethodName()}',otel_scope_version='1.0.0',x='1'}} [0-9]+(?:\\.[0-9]+)?\n"
-                + "$").Replace('\'', '"'),
-            Encoding.UTF8.GetString(buffer, 0, cursor));
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        Assert.Contains("# TYPE test_histogram histogram\n", output, StringComparison.Ordinal);
+        Assert.Contains($"test_histogram_bucket{{otel_scope_name=\"{Utils.GetCurrentMethodName()}\",otel_scope_version=\"1.0.0\",x=\"1\",le=\"0.0\"}} 0\n", output, StringComparison.Ordinal);
+        Assert.Contains($"test_histogram_bucket{{otel_scope_name=\"{Utils.GetCurrentMethodName()}\",otel_scope_version=\"1.0.0\",x=\"1\",le=\"100.0\"}} 2\n", output, StringComparison.Ordinal);
+        Assert.Contains($"test_histogram_bucket{{otel_scope_name=\"{Utils.GetCurrentMethodName()}\",otel_scope_version=\"1.0.0\",x=\"1\",le=\"+Inf\"}} 2\n", output, StringComparison.Ordinal);
+        Assert.Contains($"test_histogram_sum{{otel_scope_name=\"{Utils.GetCurrentMethodName()}\",otel_scope_version=\"1.0.0\",x=\"1\"}} 118\n", output, StringComparison.Ordinal);
+        Assert.Contains($"test_histogram_count{{otel_scope_name=\"{Utils.GetCurrentMethodName()}\",otel_scope_version=\"1.0.0\",x=\"1\"}} 2\n", output, StringComparison.Ordinal);
+        Assert.Matches($"test_histogram_created\\{{otel_scope_name=\"{Regex.Escape(Utils.GetCurrentMethodName())}\",otel_scope_version=\"1.0.0\",x=\"1\"\\}} [0-9]+(?:\\.[0-9]+)?", output);
+        Assert.DoesNotContain("# TYPE test_histogram_created", output, StringComparison.Ordinal);
+        Assert.DoesNotContain("\n\n", output, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void HistogramWithNegativeBucketBoundsOmitsSumAndCountWithOpenMetricsFormat()
+    public void WriteMetricConcatenatesCollidingSanitizedLabelValuesInLexicographicOrder()
     {
         var buffer = new byte[85000];
         var metrics = new List<Metric>();
 
-        using var meter = new Meter(Utils.GetCurrentMethodName());
+        using var meter = new Meter("test_meter");
         using var provider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
-            .AddView(instrument => new ExplicitBucketHistogramConfiguration { Boundaries = [-1, 0, 1] })
             .AddInMemoryExporter(metrics)
             .Build();
 
-        var histogram = meter.CreateHistogram<double>("test_histogram");
-        histogram.Record(-0.5, new KeyValuePair<string, object?>("x", "1"));
+        meter.CreateObservableGauge<long>(
+            "test_gauge",
+            () =>
+            [
+                new Measurement<long>(
+                    123,
+                    new("foo.bar", "dot"),
+                    new("foo-bar", "hyphen"),
+                    new("foo_bar", "underscore")),
+            ]);
 
         provider.ForceFlush();
 
-        var cursor = WriteMetric(buffer, 0, metrics[0], true);
-        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
-
-        Assert.Contains($"test_histogram_bucket{{otel_scope_name=\"{Utils.GetCurrentMethodName()}\",x=\"1\",le=\"-1.0\"}} 0\n", output, StringComparison.Ordinal);
-        Assert.Contains($"test_histogram_bucket{{otel_scope_name=\"{Utils.GetCurrentMethodName()}\",x=\"1\",le=\"0.0\"}} 1\n", output, StringComparison.Ordinal);
-        Assert.Contains($"test_histogram_bucket{{otel_scope_name=\"{Utils.GetCurrentMethodName()}\",x=\"1\",le=\"1.0\"}} 1\n", output, StringComparison.Ordinal);
-        Assert.Contains($"test_histogram_bucket{{otel_scope_name=\"{Utils.GetCurrentMethodName()}\",x=\"1\",le=\"-1.0\"}} 0\n", output, StringComparison.Ordinal);
-        Assert.Contains($"test_histogram_bucket{{otel_scope_name=\"{Utils.GetCurrentMethodName()}\",x=\"1\",le=\"0.0\"}} 1\n", output, StringComparison.Ordinal);
-        Assert.Contains($"test_histogram_bucket{{otel_scope_name=\"{Utils.GetCurrentMethodName()}\",x=\"1\",le=\"1.0\"}} 1\n", output, StringComparison.Ordinal);
-        Assert.Contains($"test_histogram_bucket{{otel_scope_name=\"{Utils.GetCurrentMethodName()}\",x=\"1\",le=\"+Inf\"}} 1\n", output, StringComparison.Ordinal);
-        Assert.DoesNotContain("test_histogram_sum{", output, StringComparison.Ordinal);
-        Assert.DoesNotContain("test_histogram_count{", output, StringComparison.Ordinal);
+        var cursor = WriteMetric(buffer, 0, metrics[0], false);
+        Assert.Matches(
+            ("^"
+             + "# TYPE test_gauge gauge\n"
+             + "test_gauge{otel_scope_name='test_meter',foo_bar='hyphen;dot;underscore'} 123\n"
+             + "$").Replace('\'', '"'),
+            Encoding.UTF8.GetString(buffer, 0, cursor));
     }
 
     [Fact]
@@ -1325,7 +1362,7 @@ public sealed class PrometheusSerializerTests
 
         provider.ForceFlush();
 
-        var cursor = WriteMetric(buffer, 0, metrics[0]);
+        var cursor = WriteMetric(buffer, 0, metrics[0], false);
         Assert.Matches(
             ("^"
              + "# TYPE test_gauge gauge\n"
@@ -1358,13 +1395,43 @@ public sealed class PrometheusSerializerTests
 
         provider.ForceFlush();
 
-        var cursor = WriteMetric(buffer, 0, metrics[0]);
+        var cursor = WriteMetric(buffer, 0, metrics[0], false);
         Assert.Matches(
             ("^"
              + "# TYPE test_gauge gauge\n"
              + "test_gauge{otel_scope_name='test_meter',_1foo='digit;underscore'} 123\n"
              + "$").Replace('\'', '"'),
             Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Fact]
+    public void HistogramWithNegativeBucketBoundsOmitsSumAndCountWithOpenMetricsFormat()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView(instrument => new ExplicitBucketHistogramConfiguration { Boundaries = [-1, 0, 1] })
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        var histogram = meter.CreateHistogram<double>("test_histogram");
+        histogram.Record(-0.5, new KeyValuePair<string, object?>("x", "1"));
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0], true);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        Assert.Contains($"test_histogram_bucket{{otel_scope_name=\"{Utils.GetCurrentMethodName()}\",x=\"1\",le=\"-1.0\"}} 0\n", output, StringComparison.Ordinal);
+        Assert.Contains($"test_histogram_bucket{{otel_scope_name=\"{Utils.GetCurrentMethodName()}\",x=\"1\",le=\"0.0\"}} 1\n", output, StringComparison.Ordinal);
+        Assert.Contains($"test_histogram_bucket{{otel_scope_name=\"{Utils.GetCurrentMethodName()}\",x=\"1\",le=\"1.0\"}} 1\n", output, StringComparison.Ordinal);
+        Assert.Contains($"test_histogram_bucket{{otel_scope_name=\"{Utils.GetCurrentMethodName()}\",x=\"1\",le=\"+Inf\"}} 1\n", output, StringComparison.Ordinal);
+        Assert.DoesNotContain("test_histogram_sum{", output, StringComparison.Ordinal);
+        Assert.DoesNotContain("test_histogram_count{", output, StringComparison.Ordinal);
+        Assert.Matches($"test_histogram_created\\{{otel_scope_name=\"{Regex.Escape(Utils.GetCurrentMethodName())}\",x=\"1\"\\}} [0-9]+(?:\\.[0-9]+)?", output);
     }
 
     [Fact]
@@ -1405,11 +1472,7 @@ public sealed class PrometheusSerializerTests
     {
         var buffer = new byte[4];
 
-#if NET8_0_OR_GREATER
-        Assert.Throws<ArgumentException>(() => PrometheusSerializer.WriteAsciiStringNoEscape(buffer, 0, "metric"));
-#else
         Assert.Throws<IndexOutOfRangeException>(() => PrometheusSerializer.WriteAsciiStringNoEscape(buffer, 0, "metric"));
-#endif
     }
 
     [Fact]
@@ -1487,6 +1550,113 @@ public sealed class PrometheusSerializerTests
     }
 
     [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void CounterExportsCreatedMetric(bool useOpenMetrics)
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter("test_meter");
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        var counter = meter.CreateCounter<double>("test_counter");
+        counter.Add(1, [new KeyValuePair<string, object?>("key", "value1")]);
+        counter.Add(2, [new KeyValuePair<string, object?>("key", "value2")]);
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        if (useOpenMetrics)
+        {
+            Assert.Matches("test_counter_created\\{otel_scope_name=\"test_meter\",key=\"value1\"\\} [0-9]+(?:\\.[0-9]+)?", output);
+            Assert.Matches("test_counter_created\\{otel_scope_name=\"test_meter\",key=\"value2\"\\} [0-9]+(?:\\.[0-9]+)?", output);
+            Assert.DoesNotContain("# TYPE test_counter_created", output, StringComparison.Ordinal);
+        }
+        else
+        {
+            Assert.DoesNotContain("_created{", output, StringComparison.Ordinal);
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void HistogramExportsCreatedMetric(bool useOpenMetrics)
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter("test_meter");
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        var histogram = meter.CreateHistogram<double>("test_histogram");
+        histogram.Record(1, [new KeyValuePair<string, object?>("key", "value1")]);
+        histogram.Record(2, [new KeyValuePair<string, object?>("key", "value2")]);
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        if (useOpenMetrics)
+        {
+            Assert.Matches("test_histogram_created\\{otel_scope_name=\"test_meter\",key=\"value1\"\\} [0-9]+(?:\\.[0-9]+)?", output);
+            Assert.Matches("test_histogram_created\\{otel_scope_name=\"test_meter\",key=\"value2\"\\} [0-9]+(?:\\.[0-9]+)?", output);
+            Assert.DoesNotContain("# TYPE test_histogram_created", output, StringComparison.Ordinal);
+        }
+        else
+        {
+            Assert.DoesNotContain("_created{", output, StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
+    public void HistogramCreatedMetricSkipsReservedHistogramLabels()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter("test_meter");
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        var histogram = meter.CreateHistogram<double>("test_histogram");
+        histogram.Record(1, [new KeyValuePair<string, object?>("key", "value1"), new KeyValuePair<string, object?>("le", "reserved")]);
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics: true);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        Assert.Matches("test_histogram_created\\{otel_scope_name=\"test_meter\",key=\"value1\"\\} [0-9]+(?:\\.[0-9]+)?", output);
+        Assert.DoesNotContain("test_histogram_created{otel_scope_name=\"test_meter\",key=\"value1\",le=\"reserved\"}", output, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void WriteTargetInfoSkipsEmptyNonSingletonResource(bool openMetricsRequested)
+    {
+        var buffer = new byte[128];
+        var resource = Resource.Empty.Merge(Resource.Empty);
+
+        var cursor = PrometheusSerializer.WriteTargetInfo(buffer, 0, resource, openMetricsRequested);
+
+        Assert.Equal(0, cursor);
+    }
+
+    [Theory]
     [InlineData(double.NegativeInfinity, "-Inf")]
     [InlineData(-1e10d, "-1e+10")]
     [InlineData(-1e-10d, "-1e-10")]
@@ -1557,67 +1727,26 @@ public sealed class PrometheusSerializerTests
         Assert.Equal(expected, Encoding.UTF8.GetString(buffer, 0, cursor));
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void CounterExportsCreatedMetric(bool useOpenMetrics)
+    [Fact]
+    public void WriteCanonicalLabelValueDoesNotRoundNearPowersOfTen()
     {
-        var buffer = new byte[85000];
-        var metrics = new List<Metric>();
+        const double ExactPowerOfTen = 1e6d;
+        const double NearPowerOfTen = 1000000.0000005d;
 
-        using var meter = new Meter("test_meter");
-        using var provider = Sdk.CreateMeterProviderBuilder()
-            .AddMeter(meter.Name)
-            .AddInMemoryExporter(metrics)
-            .Build();
+        var exact = WriteCanonicalLabelValueToString(ExactPowerOfTen);
+        var near = WriteCanonicalLabelValueToString(NearPowerOfTen);
 
-        var counter = meter.CreateCounter<double>("test_counter");
-        counter.Add(1, [new KeyValuePair<string, object?>("key", "value")]);
+        Assert.Equal("1e+06", exact);
+        Assert.Equal(NearPowerOfTen.ToString("e17", CultureInfo.InvariantCulture), near);
+        Assert.NotEqual(exact, near);
 
-        provider.ForceFlush();
-
-        var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics);
-        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
-
-        if (useOpenMetrics)
+        static string WriteCanonicalLabelValueToString(double value)
         {
-            Assert.Matches("test_counter_created\\{otel_scope_name=\"test_meter\",key=\"value\"\\} [0-9]+(?:\\.[0-9]+)?", output);
-        }
-        else
-        {
-            Assert.DoesNotContain("_created{", output, StringComparison.Ordinal);
-        }
-    }
+            var buffer = new byte[64];
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void HistogramExportsCreatedMetric(bool useOpenMetrics)
-    {
-        var buffer = new byte[85000];
-        var metrics = new List<Metric>();
+            var cursor = PrometheusSerializer.WriteCanonicalLabelValue(buffer, 0, value);
 
-        using var meter = new Meter("test_meter");
-        using var provider = Sdk.CreateMeterProviderBuilder()
-            .AddMeter(meter.Name)
-            .AddInMemoryExporter(metrics)
-            .Build();
-
-        var histogram = meter.CreateHistogram<double>("test_histogram");
-        histogram.Record(1, [new KeyValuePair<string, object?>("key", "value")]);
-
-        provider.ForceFlush();
-
-        var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics);
-        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
-
-        if (useOpenMetrics)
-        {
-            Assert.Matches("test_histogram_created\\{otel_scope_name=\"test_meter\",key=\"value\"\\} [0-9]+(?:\\.[0-9]+)?", output);
-        }
-        else
-        {
-            Assert.DoesNotContain("_created{", output, StringComparison.Ordinal);
+            return Encoding.UTF8.GetString(buffer, 0, cursor);
         }
     }
 
@@ -1673,9 +1802,11 @@ public sealed class PrometheusSerializerTests
 
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
 
-        Assert.Contains("test_histogram_bucket{otel_scope_name=\"\u65e5\u672c\",otel_scope_=\"meterTagValue\",le=\"0\"} 0\n", output, StringComparison.Ordinal);
-        Assert.Contains("test_histogram_sum{otel_scope_name=\"\u65e5\u672c\",otel_scope_=\"meterTagValue\"} 18\n", output, StringComparison.Ordinal);
-        Assert.Contains("test_histogram_count{otel_scope_name=\"\u65e5\u672c\",otel_scope_=\"meterTagValue\"} 1\n", output, StringComparison.Ordinal);
+        Assert.Contains("test_histogram_bucket{", output, StringComparison.Ordinal);
+        Assert.Contains("test_histogram_sum{", output, StringComparison.Ordinal);
+        Assert.Contains("test_histogram_count{", output, StringComparison.Ordinal);
+        Assert.Contains("otel_scope_name=\"\u65e5\u672c\"", output, StringComparison.Ordinal);
+        Assert.Contains("otel_scope_=\"meterTagValue\"", output, StringComparison.Ordinal);
     }
 
     private static Metric GetSingleHistogramMetric(string meterName, params KeyValuePair<string, object?>[] meterTags)
@@ -1717,7 +1848,7 @@ public sealed class PrometheusSerializerTests
         }
     }
 
-    private static int WriteMetric(byte[] buffer, int cursor, Metric metric, bool useOpenMetrics = false) =>
+    private static int WriteMetric(byte[] buffer, int cursor, Metric metric, bool useOpenMetrics) =>
         PrometheusSerializer.WriteMetric(
             buffer,
             cursor,

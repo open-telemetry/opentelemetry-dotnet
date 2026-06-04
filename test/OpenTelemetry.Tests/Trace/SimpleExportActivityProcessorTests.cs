@@ -3,7 +3,6 @@
 
 using System.Diagnostics;
 using OpenTelemetry.Exporter;
-using Xunit;
 
 namespace OpenTelemetry.Trace.Tests;
 

@@ -6,7 +6,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
-using Xunit;
 
 namespace OpenTelemetry.Exporter.Prometheus.Tests;
 
@@ -294,13 +293,12 @@ public sealed class PrometheusCollectionManagerTests
     }
 
     [Fact]
-    public async Task OpenMetricsScopeInfoIsWrittenAsASingleMetricFamily()
+    public async Task OpenMetricsDoesNotEmitScopeInfoMetricFamily()
     {
-        using var meter1 = new Meter("test_meter", "1.0.0");
-        using var meter2 = new Meter("test_meter", "2.0.0", [new("library.mascot", "dotnetbot")], scope: null);
+        using var meter = new Meter("test_meter", "1.0.0", [new("library.mascot", "dotnetbot")], scope: null);
 
         using var provider = Sdk.CreateMeterProviderBuilder()
-            .AddMeter(meter1.Name)
+            .AddMeter(meter.Name)
 #if PROMETHEUS_HTTP_LISTENER
             .AddPrometheusHttpListener()
 #elif PROMETHEUS_ASPNETCORE
@@ -312,8 +310,7 @@ public sealed class PrometheusCollectionManagerTests
         Assert.True(provider.TryFindExporter(out PrometheusExporter? exporter));
 #pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
 
-        meter1.CreateCounter<int>("counter_1").Add(1);
-        meter2.CreateCounter<int>("counter_2").Add(1);
+        meter.CreateCounter<int>("counter_1").Add(1);
 
         var response = await exporter!.CollectionManager.EnterCollect(openMetricsRequested: true);
         try
@@ -323,15 +320,10 @@ public sealed class PrometheusCollectionManagerTests
                 response.OpenMetricsView.Offset,
                 response.OpenMetricsView.Count);
 
-#if NET
-            Assert.Equal(1, Regex.Count(output, "^# TYPE otel_scope info$", RegexOptions.Multiline));
-            Assert.Equal(1, Regex.Count(output, "^# HELP otel_scope Scope metadata$", RegexOptions.Multiline));
-#else
-            Assert.Single(Regex.Matches(output, "^# TYPE otel_scope info$", RegexOptions.Multiline));
-            Assert.Single(Regex.Matches(output, "^# HELP otel_scope Scope metadata$", RegexOptions.Multiline));
-#endif
-            Assert.Contains("otel_scope_info{otel_scope_name=\"test_meter\",otel_scope_version=\"1.0.0\"} 1", output, StringComparison.Ordinal);
-            Assert.Contains("otel_scope_info{otel_scope_name=\"test_meter\",otel_scope_version=\"2.0.0\",otel_scope_library_mascot=\"dotnetbot\"} 1", output, StringComparison.Ordinal);
+            Assert.DoesNotContain("# TYPE otel_scope info", output, StringComparison.Ordinal);
+            Assert.DoesNotContain("# HELP otel_scope Scope metadata", output, StringComparison.Ordinal);
+            Assert.DoesNotContain("otel_scope_info{", output, StringComparison.Ordinal);
+            Assert.Contains("counter_1_total{otel_scope_name=\"test_meter\",otel_scope_version=\"1.0.0\",otel_scope_library_mascot=\"dotnetbot\"} 1", output, StringComparison.Ordinal);
         }
         finally
         {
@@ -340,13 +332,12 @@ public sealed class PrometheusCollectionManagerTests
     }
 
     [Fact]
-    public async Task OpenMetricsScopeInfoIsDeduplicatedUsingSerializedScopeLabels()
+    public async Task OpenMetricsDoesNotReserveOtelScopeMetricFamilyNames()
     {
-        using var meter1 = new Meter("test_meter", "1.0.0", [new("library.mascot", true)], scope: null);
-        using var meter2 = new Meter("test_meter", "1.0.0", [new("library.mascot", "true")], scope: null);
+        using var meter = new Meter("test_meter", "1.0.0");
 
         using var provider = Sdk.CreateMeterProviderBuilder()
-            .AddMeter(meter1.Name)
+            .AddMeter(meter.Name)
 #if PROMETHEUS_HTTP_LISTENER
             .AddPrometheusHttpListener()
 #elif PROMETHEUS_ASPNETCORE
@@ -358,8 +349,8 @@ public sealed class PrometheusCollectionManagerTests
         Assert.True(provider.TryFindExporter(out PrometheusExporter? exporter));
 #pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
 
-        meter1.CreateCounter<int>("counter_1").Add(1);
-        meter2.CreateCounter<int>("counter_2").Add(1);
+        meter.CreateObservableGauge("otel.scope", () => 1);
+        meter.CreateObservableGauge("otel.scope.info", () => 2);
 
         var response = await exporter!.CollectionManager.EnterCollect(openMetricsRequested: true);
         try
@@ -369,13 +360,10 @@ public sealed class PrometheusCollectionManagerTests
                 response.OpenMetricsView.Offset,
                 response.OpenMetricsView.Count);
 
-#if NET
-            Assert.Equal(1, Regex.Count(output, "^otel_scope_info\\{otel_scope_name=\"test_meter\",otel_scope_version=\"1.0.0\",otel_scope_library_mascot=\"true\"\\} 1$", RegexOptions.Multiline));
-#else
-            Assert.Single(Regex.Matches(output, "^otel_scope_info\\{otel_scope_name=\"test_meter\",otel_scope_version=\"1.0.0\",otel_scope_library_mascot=\"true\"\\} 1$", RegexOptions.Multiline));
-#endif
-            Assert.Contains("counter_1_total{otel_scope_name=\"test_meter\",otel_scope_version=\"1.0.0\",otel_scope_library_mascot=\"true\"} 1", output, StringComparison.Ordinal);
-            Assert.Contains("counter_2_total{otel_scope_name=\"test_meter\",otel_scope_version=\"1.0.0\",otel_scope_library_mascot=\"true\"} 1", output, StringComparison.Ordinal);
+            Assert.Contains("# TYPE otel_scope gauge", output, StringComparison.Ordinal);
+            Assert.Contains("otel_scope{otel_scope_name=\"test_meter\",otel_scope_version=\"1.0.0\"} 1", output, StringComparison.Ordinal);
+            Assert.Contains("# TYPE otel_scope_info gauge", output, StringComparison.Ordinal);
+            Assert.Contains("otel_scope_info{otel_scope_name=\"test_meter\",otel_scope_version=\"1.0.0\"} 2", output, StringComparison.Ordinal);
         }
         finally
         {
@@ -612,6 +600,63 @@ public sealed class PrometheusCollectionManagerTests
             Assert.DoesNotContain("# TYPE test_metric", output, StringComparison.Ordinal);
             Assert.DoesNotContain("test_metric_total", output, StringComparison.Ordinal);
             Assert.Contains("# EOF", output, StringComparison.Ordinal);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect();
+        }
+    }
+
+    [Fact]
+    public async Task OpenMetricsWritesMetricFamiliesContiguously()
+    {
+        using var meter1 = new Meter($"{Utils.GetCurrentMethodName()}.one");
+        using var meter2 = new Meter($"{Utils.GetCurrentMethodName()}.two");
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter1.Name)
+            .AddMeter(meter2.Name)
+#if PROMETHEUS_HTTP_LISTENER
+            .AddPrometheusHttpListener()
+#elif PROMETHEUS_ASPNETCORE
+            .AddPrometheusExporter()
+#endif
+            .Build();
+
+#pragma warning disable CA2000
+        Assert.True(provider.TryFindExporter(out PrometheusExporter? exporter));
+#pragma warning restore CA2000
+
+        meter1.CreateObservableGauge("test.metric", () => 1, description: "Test help");
+        meter1.CreateObservableGauge("other.metric", () => 3, description: "Other help");
+        meter2.CreateObservableGauge("test-metric", () => 2, description: "Test help");
+
+        var response = await exporter!.CollectionManager.EnterCollect(openMetricsRequested: true);
+        try
+        {
+            var view = response.OpenMetricsView;
+            var output = Encoding.UTF8.GetString(view.Array!, view.Offset, view.Count);
+
+            var testMetricTypeIndex = output.IndexOf("# TYPE test_metric gauge", StringComparison.Ordinal);
+
+            Assert.DoesNotContain("# TYPE otel_scope info", output, StringComparison.Ordinal);
+            Assert.DoesNotContain("# HELP otel_scope Scope metadata", output, StringComparison.Ordinal);
+            Assert.DoesNotContain("otel_scope_info{", output, StringComparison.Ordinal);
+            Assert.True(testMetricTypeIndex >= 0, "No TYPE found for test_metric.");
+
+            var nextTypeIndex = output.IndexOf("\n# TYPE ", testMetricTypeIndex + 1, StringComparison.Ordinal);
+            if (nextTypeIndex < 0)
+            {
+                nextTypeIndex = output.IndexOf("\n# EOF", testMetricTypeIndex + 1, StringComparison.Ordinal);
+            }
+
+            Assert.True(nextTypeIndex > testMetricTypeIndex, "No subsequent metric family found after test_metric.");
+
+            var testMetricBlock = output.Substring(testMetricTypeIndex, nextTypeIndex - testMetricTypeIndex);
+            Assert.Contains("# HELP test_metric Test help", testMetricBlock, StringComparison.Ordinal);
+            Assert.Contains($"test_metric{{otel_scope_name=\"{meter1.Name}\"}} 1", testMetricBlock, StringComparison.Ordinal);
+            Assert.Contains($"test_metric{{otel_scope_name=\"{meter2.Name}\"}} 2", testMetricBlock, StringComparison.Ordinal);
+            Assert.DoesNotContain("other_metric{", testMetricBlock, StringComparison.Ordinal);
         }
         finally
         {

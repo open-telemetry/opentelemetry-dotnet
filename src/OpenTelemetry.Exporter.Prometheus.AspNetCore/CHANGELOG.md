@@ -42,17 +42,13 @@ Notes](../../RELEASENOTES.md).
   ([#7219](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7219))
 
 * Fix Prometheus/OpenMetrics serialization to emit metric and label names
-  containing `:` and `_` instead of dropping them and prefixing leading digits.
+  containing `_` instead of dropping them and prefixing leading digits.
   Invalid characters are replaced with `_` instead of being dropped.
   ([#7209](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7209))
 
 * Add `escaping=underscores` to the `Accept` header handling for content
   negotiation so OpenMetrics are handled correctly.
   ([#7209](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7209))
-
-* Use the canonical representation for histogram "le" label values when using
-  OpenMetrics.
-  ([#7218](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7218))
 
 * Omit histogram `_sum` and `_count` in OpenMetrics when negative bucket
   thresholds are present.
@@ -70,24 +66,9 @@ Notes](../../RELEASENOTES.md).
   `X-Prometheus-Scrape-Timeout-Seconds` HTTP request header.
   ([#7252](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7252))
 
-* GZip compress scrape endpoint responses when `Accept-Encoding: gzip` is
-  specified by the HTTP request headers.
-  ([#7274](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7274))
-
-* Export `{name}_created` series for counters and histograms when using
-  OpenMetrics and a start time is available.
-  ([#7223](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7223))
-
-* Emit OpenMetrics scope metadata as a single `otel_scope` metric family with
-  `otel_scope_info` samples instead of repeating metadata for every scope.
-  ([#7237](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7237))
-
-* Include instrumentation scope metadata on samples using `otel_scope_*` labels
-  including scope version, schema URL, and prefixed scope attributes.
-  ([#7237](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7237))
-
-* Drop conflicting scope attributes named `name`, `version`, and `schema_url`.
-  ([#7237](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7237))
+* Use the canonical representation for histogram "le" label values when using
+  OpenMetrics.
+  ([#7218](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7218))
 
 * Add Prometheus text fallback `target_info` output as a gauge.
   ([#7238](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7238))
@@ -95,13 +76,29 @@ Notes](../../RELEASENOTES.md).
 * Merge colliding sanitized label keys.
   ([#7239](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7239))
 
+* Export `{name}_created` series for counters and histograms when using
+  OpenMetrics and a start time is available.
+  ([#7223](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7223))
+
+* GZip compress scrape endpoint responses when `Accept-Encoding: gzip` is
+  specified by the HTTP request headers.
+  ([#7274](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7274))
+
+* Include instrumentation scope metadata on samples using `otel_scope_*` labels
+  including scope version, schema URL, and prefixed scope attributes. OpenMetrics
+  output no longer emits a separate `otel_scope_info` scope metadata metric.
+  ([#7237](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7237))
+
+* Drop conflicting scope attributes named `name`, `version`, and `schema_url`.
+  ([#7237](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7237))
+
 ## 1.15.3-beta.1
 
 Released 2026-Apr-21
 
 * Fixed metric unit strings containing invalid Prometheus characters (e.g. `# RU`)
   not being sanitized, resulting in malformed metric names.
-  ([#6187](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6187))
+  ([#7033](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7033))
 
 * Fixed Prometheus metric serialization to handle empty label names without
   throwing during scrape rendering.

@@ -4,7 +4,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Tests;
-using Xunit;
 
 namespace OpenTelemetry.Logs.Tests;
 
