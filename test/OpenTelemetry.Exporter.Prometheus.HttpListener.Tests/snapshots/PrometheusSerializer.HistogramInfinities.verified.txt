@@ -1,0 +1,19 @@
+﻿# TYPE test_histogram histogram
+test_histogram_bucket{otel_scope_name="HistogramInfinities",le="0"} 0
+test_histogram_bucket{otel_scope_name="HistogramInfinities",le="5"} 0
+test_histogram_bucket{otel_scope_name="HistogramInfinities",le="10"} 0
+test_histogram_bucket{otel_scope_name="HistogramInfinities",le="25"} 1
+test_histogram_bucket{otel_scope_name="HistogramInfinities",le="50"} 1
+test_histogram_bucket{otel_scope_name="HistogramInfinities",le="75"} 1
+test_histogram_bucket{otel_scope_name="HistogramInfinities",le="100"} 1
+test_histogram_bucket{otel_scope_name="HistogramInfinities",le="250"} 1
+test_histogram_bucket{otel_scope_name="HistogramInfinities",le="500"} 1
+test_histogram_bucket{otel_scope_name="HistogramInfinities",le="750"} 1
+test_histogram_bucket{otel_scope_name="HistogramInfinities",le="1000"} 1
+test_histogram_bucket{otel_scope_name="HistogramInfinities",le="2500"} 1
+test_histogram_bucket{otel_scope_name="HistogramInfinities",le="5000"} 1
+test_histogram_bucket{otel_scope_name="HistogramInfinities",le="7500"} 1
+test_histogram_bucket{otel_scope_name="HistogramInfinities",le="10000"} 1
+test_histogram_bucket{otel_scope_name="HistogramInfinities",le="+Inf"} 3
+test_histogram_sum{otel_scope_name="HistogramInfinities"} +Inf
+test_histogram_count{otel_scope_name="HistogramInfinities"} 3

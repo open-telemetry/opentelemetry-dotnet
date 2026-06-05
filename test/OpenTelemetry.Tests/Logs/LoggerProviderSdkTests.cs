@@ -4,7 +4,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter;
-using Xunit;
 
 namespace OpenTelemetry.Logs.Tests;
 

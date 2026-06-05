@@ -1,10 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#pragma warning disable IDE0005 // Using directive is unnecessary.
-using Xunit;
-#pragma warning restore IDE0005 // Using directive is unnecessary.
-
 namespace OpenTelemetry.Tests;
 
 internal sealed class SkipUnlessEnvVarFoundTheoryAttribute : TheoryAttribute

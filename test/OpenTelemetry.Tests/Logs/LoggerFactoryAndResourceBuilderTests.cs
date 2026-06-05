@@ -4,7 +4,6 @@
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Resources;
-using Xunit;
 
 namespace OpenTelemetry.Logs.Tests;
 
