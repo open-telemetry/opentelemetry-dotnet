@@ -102,7 +102,7 @@ public class OtlpRetryTests
                 Assert.True(retryResult.RetryDelay < TimeSpan.FromMilliseconds(nextRetryDelayMilliseconds));
             }
 
-            Assert.Equal((double)retryAttempt.ExpectedNextRetryDelayMilliseconds!.Value, (double)retryResult.NextRetryDelayMilliseconds, retryAttempt.TimestampTolerance.TotalMilliseconds);
+            Assert.Equal(retryAttempt.ExpectedNextRetryDelayMilliseconds!.Value, retryResult.NextRetryDelayMilliseconds, retryAttempt.TimestampTolerance.TotalMilliseconds);
 
             nextRetryDelayMilliseconds = retryResult.NextRetryDelayMilliseconds;
         }

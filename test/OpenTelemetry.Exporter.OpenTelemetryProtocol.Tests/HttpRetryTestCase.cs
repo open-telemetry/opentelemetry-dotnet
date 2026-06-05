@@ -34,15 +34,15 @@ public class HttpRetryTestCase
         new("ServiceUnavailable", [new(statusCode: HttpStatusCode.ServiceUnavailable, throttleDelay: TimeSpan.FromSeconds(1))]),
 
 #if NET
-        new("TooManyRequests (Delta)", [new(statusCode: HttpStatusCode.TooManyRequests, throttleDelay: TimeSpan.FromSeconds(1), useDateForRetryCondition: true)]),
+        new("TooManyRequests (Delta)", [new(statusCode: HttpStatusCode.TooManyRequests, throttleDelay: TimeSpan.FromSeconds(1))]),
         new("TooManyRequests (HTTP-Date)", [new(statusCode: HttpStatusCode.TooManyRequests, throttleDelay: TimeSpan.FromSeconds(1), useDateForRetryCondition: true)]),
         new("TooManyRequests (Delta) too large", [new(statusCode: HttpStatusCode.TooManyRequests, throttleDelay: TimeSpan.FromSeconds(30), expectedNextRetryDelayMilliseconds: 5000)]),
-        new("TooManyRequests (Delta) too large", [new(statusCode: HttpStatusCode.TooManyRequests, throttleDelay: TimeSpan.FromSeconds(30), useDateForRetryCondition: true, expectedNextRetryDelayMilliseconds: 5000)]),
+        new("TooManyRequests (HTTP-Date) too large", [new(statusCode: HttpStatusCode.TooManyRequests, throttleDelay: TimeSpan.FromSeconds(30), useDateForRetryCondition: true, expectedNextRetryDelayMilliseconds: 5000)]),
 #else
-        new("TooManyRequests (Delta)", [new(statusCode: (HttpStatusCode)429, throttleDelay: TimeSpan.FromSeconds(1), useDateForRetryCondition: true)]),
+        new("TooManyRequests (Delta)", [new(statusCode: (HttpStatusCode)429, throttleDelay: TimeSpan.FromSeconds(1))]),
         new("TooManyRequests (HTTP-Date)", [new(statusCode: (HttpStatusCode)429, throttleDelay: TimeSpan.FromSeconds(1), useDateForRetryCondition: true)]),
         new("TooManyRequests (Delta) too large", [new(statusCode: (HttpStatusCode)429, throttleDelay: TimeSpan.FromSeconds(30), expectedNextRetryDelayMilliseconds: 5000)]),
-        new("TooManyRequests (Delta) too large", [new(statusCode: (HttpStatusCode)429, throttleDelay: TimeSpan.FromSeconds(30), useDateForRetryCondition: true, expectedNextRetryDelayMilliseconds: 5000)]),
+        new("TooManyRequests (HTTP-Date) too large", [new(statusCode: (HttpStatusCode)429, throttleDelay: TimeSpan.FromSeconds(30), useDateForRetryCondition: true, expectedNextRetryDelayMilliseconds: 5000)]),
 #endif
 
         new(
@@ -92,7 +92,7 @@ public class HttpRetryTestCase
             bool useDateForRetryCondition = false)
         {
             this.ThrottleDelay = throttleDelay;
-            this.TimestampTolerance = useDateForRetryCondition ? TimeSpan.FromSeconds(1) : TimeSpan.Zero;
+            this.TimestampTolerance = useDateForRetryCondition ? TimeSpan.FromMilliseconds(expectedNextRetryDelayMilliseconds) : TimeSpan.Zero;
 
             HttpResponseMessage? responseMessage = null;
             if (statusCode != null)

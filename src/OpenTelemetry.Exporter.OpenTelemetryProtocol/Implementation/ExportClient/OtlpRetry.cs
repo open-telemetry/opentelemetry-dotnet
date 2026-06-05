@@ -212,7 +212,7 @@ internal static class OtlpRetry
 
         if (retryAfter.Date is { } date)
         {
-            var utcNow = DateTime.UtcNow;
+            var utcNow = DateTimeOffset.UtcNow;
             var delay = date - utcNow;
 
             if (delay > TimeSpan.Zero)
