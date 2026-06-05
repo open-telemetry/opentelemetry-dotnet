@@ -33,7 +33,7 @@ internal static partial class PrometheusSerializer
 
     private const int MaxExemplarLabelSetCharacters = 128;
 
-#if NET8_0_OR_GREATER
+#if NET
     private static readonly SearchValues<char> UnicodeEscapeChars = SearchValues.Create("\\\n");
     private static readonly SearchValues<char> LabelValueEscapeChars = SearchValues.Create("\"\\\n");
 #endif
@@ -718,7 +718,7 @@ internal static partial class PrometheusSerializer
     private static bool IsAllowedMetricsLabelCharacter(char value) =>
         char.IsAsciiLetterOrDigit(value) || value is '_';
 
-#if NET8_0_OR_GREATER
+#if NET
     private static int WriteEscapedString(byte[] buffer, int cursor, string value, bool escapeQuotationMarks)
         => WriteEscapedUtf8String(buffer, cursor, value.AsSpan(), escapeQuotationMarks ? LabelValueEscapeChars : UnicodeEscapeChars);
 
