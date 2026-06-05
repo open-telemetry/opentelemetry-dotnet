@@ -1,0 +1,8 @@
+﻿# TYPE target_info gauge
+# HELP target_info Target metadata
+target_info{service_name="prometheus",telemetry_sdk_name="opentelemetry",telemetry_sdk_language="dotnet",telemetry_sdk_version="<VERSION>"} 1
+# TYPE test_metric_bytes_total counter
+# UNIT test_metric_bytes_total bytes
+test_metric_bytes_total{otel_scope_name="MetricUnitDiscoveredLaterIsWrittenBeforeSamples",source="b"} 2
+test_metric_bytes_total{otel_scope_name="MetricUnitDiscoveredLaterIsWrittenBeforeSamples",source="a"} 1
+# EOF
