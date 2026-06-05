@@ -21,7 +21,6 @@ internal sealed class PrometheusCollectionManager
     private readonly Dictionary<Metric, PrometheusMetric> metricsCache;
     private int metricsCacheCount;
     private int globalLockState;
-    private int readerCount;
     private CollectionContext? collectionContext;
     private CollectionContext? onCollectContext;
     private CollectionExecutionResult collectionExecutionResult;
@@ -65,12 +64,21 @@ internal sealed class PrometheusCollectionManager
                 if (this.TryGetCachedResponse(protocol, out var response))
                 {
                     cachedResponse = response;
-                    Interlocked.Increment(ref this.readerCount);
+                    this.IncrementReaderCount(protocol);
                     break;
                 }
 
                 if (this.collectionContext is { } currentCollectionContext)
                 {
+                    pendingCollectionTask = currentCollectionContext.Task;
+                    joinedActiveCollection = currentCollectionContext.TryRegisterProtocol(protocol, this.HasActiveReaders(protocol));
+
+                    if (joinedActiveCollection)
+                    {
+                        this.IncrementReaderCount(protocol);
+                        break;
+                    }
+
                     if (currentCollectionContext.Task.IsCompleted)
                     {
                         if (ReferenceEquals(this.collectionContext, currentCollectionContext))
@@ -78,19 +86,12 @@ internal sealed class PrometheusCollectionManager
                             this.collectionContext = null;
                         }
 
+                        pendingCollectionTask = null;
                         retry = true;
                     }
                     else
                     {
-                    pendingCollectionTask = currentCollectionContext.Task;
-                    joinedActiveCollection = currentCollectionContext.TryRegisterProtocol(protocol);
-
-                    if (joinedActiveCollection)
-                    {
-                        Interlocked.Increment(ref this.readerCount);
-                    }
-
-                    break;
+                        break;
                     }
                 }
             }
@@ -104,7 +105,10 @@ internal sealed class PrometheusCollectionManager
                 continue;
             }
 
-            this.WaitForReadersToComplete();
+            if (this.WaitForReadersToComplete(protocol))
+            {
+                continue;
+            }
 
             this.EnterGlobalLock();
 
@@ -113,12 +117,21 @@ internal sealed class PrometheusCollectionManager
                 if (this.TryGetCachedResponse(protocol, out var response))
                 {
                     cachedResponse = response;
-                    Interlocked.Increment(ref this.readerCount);
+                    this.IncrementReaderCount(protocol);
                     break;
                 }
 
                 if (this.collectionContext is { } currentCollectionContext)
                 {
+                    pendingCollectionTask = currentCollectionContext.Task;
+                    joinedActiveCollection = currentCollectionContext.TryRegisterProtocol(protocol, this.HasActiveReaders(protocol));
+
+                    if (joinedActiveCollection)
+                    {
+                        this.IncrementReaderCount(protocol);
+                        break;
+                    }
+
                     if (currentCollectionContext.Task.IsCompleted)
                     {
                         if (ReferenceEquals(this.collectionContext, currentCollectionContext))
@@ -129,21 +142,13 @@ internal sealed class PrometheusCollectionManager
                         continue;
                     }
 
-                    pendingCollectionTask = currentCollectionContext.Task;
-                    joinedActiveCollection = currentCollectionContext.TryRegisterProtocol(protocol);
-
-                    if (joinedActiveCollection)
-                    {
-                        Interlocked.Increment(ref this.readerCount);
-                    }
-
                     break;
                 }
 
                 activeCollectionContext = new CollectionContext(protocol);
                 this.collectionContext = activeCollectionContext;
 
-                Interlocked.Increment(ref this.readerCount);
+                this.IncrementReaderCount(protocol);
                 break;
             }
             finally
@@ -205,8 +210,8 @@ internal sealed class PrometheusCollectionManager
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void ExitCollect()
-        => Interlocked.Decrement(ref this.readerCount);
+    public void ExitCollect(PrometheusProtocol protocol)
+        => this.GetProtocolState(protocol).DecrementReaderCount();
 
 #if NET
     private async ValueTask<CollectionResponse> WaitForCollectionResponseAsync(PrometheusProtocol protocol, Task<CollectionResult> pendingCollectionTask, bool protocolWasRegistered)
@@ -224,7 +229,7 @@ internal sealed class PrometheusCollectionManager
 
         if (protocolWasRegistered)
         {
-            Interlocked.Decrement(ref this.readerCount);
+            this.ExitCollect(protocol);
         }
 
         return await this.EnterCollect(protocol).ConfigureAwait(false);
@@ -251,19 +256,45 @@ internal sealed class PrometheusCollectionManager
         => Interlocked.Exchange(ref this.globalLockState, 0);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void WaitForReadersToComplete()
+    private void IncrementReaderCount(PrometheusProtocol protocol)
+        => this.GetProtocolState(protocol).IncrementReaderCount();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool HasActiveReaders(PrometheusProtocol protocol)
+        => this.protocolStates.TryGetValue(protocol, out var state) && state.HasActiveReaders();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool WaitForReadersToComplete(PrometheusProtocol protocol)
     {
+        var state = this.GetProtocolState(protocol);
+        var didSpin = false;
         SpinWait readWait = default;
         while (true)
         {
-            if (Interlocked.CompareExchange(ref this.readerCount, 0, 0) != 0)
+            if (!state.HasActiveReaders())
             {
-                readWait.SpinOnce();
-                continue;
+                break;
             }
 
-            break;
+            this.EnterGlobalLock();
+
+            try
+            {
+                if (this.collectionContext is not null)
+                {
+                    return true;
+                }
+            }
+            finally
+            {
+                this.ExitGlobalLock();
+            }
+
+            didSpin = true;
+            readWait.SpinOnce();
         }
+
+        return didSpin;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -298,11 +329,7 @@ internal sealed class PrometheusCollectionManager
 
         foreach (var protocol in protocols)
         {
-            if (!this.protocolStates.TryGetValue(protocol, out var state))
-            {
-                this.protocolStates[protocol] = state = new();
-            }
-
+            var state = this.GetProtocolState(protocol);
             if (this.TryWriteResponse(protocol, state, metrics))
             {
                 successfulProtocols ??= [];
@@ -437,6 +464,10 @@ internal sealed class PrometheusCollectionManager
         response = default;
         return false;
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private PrometheusProtocolState GetProtocolState(PrometheusProtocol protocol)
+        => this.protocolStates.GetOrAdd(protocol, static _ => new());
 
     private int WriteTargetInfo(PrometheusProtocol protocol, PrometheusProtocolState state)
     {
@@ -716,7 +747,7 @@ internal sealed class PrometheusCollectionManager
         public void SetResult(CollectionResult result)
             => this.tcs.SetResult(result);
 
-        public bool TryRegisterProtocol(PrometheusProtocol protocol)
+        public bool TryRegisterProtocol(PrometheusProtocol protocol, bool hasActiveReaders)
         {
             lock (this.gate)
             {
@@ -726,6 +757,11 @@ internal sealed class PrometheusCollectionManager
                 }
 
                 if (this.frozen)
+                {
+                    return false;
+                }
+
+                if (hasActiveReaders)
                 {
                     return false;
                 }
@@ -741,6 +777,8 @@ internal sealed class PrometheusCollectionManager
         private const int InitialBufferSize = 85_000; // Encourage the object to live in Large Object Heap (LOH)
         private const int MaxBufferSize = 100 * 1024 * 1024; // 100 MB
 
+        private int readerCount;
+
         public static ArraySegment<byte> EmptyView { get; } =
 #if NET
             ArraySegment<byte>.Empty;
@@ -755,6 +793,15 @@ internal sealed class PrometheusCollectionManager
         public DateTime? GeneratedAt { get; private set; }
 
         public TimeSpan? GeneratedAtElapsed { get; private set; }
+
+        public int DecrementReaderCount()
+            => Interlocked.Decrement(ref this.readerCount);
+
+        public bool HasActiveReaders()
+            => Interlocked.CompareExchange(ref this.readerCount, 0, 0) != 0;
+
+        public void IncrementReaderCount()
+            => Interlocked.Increment(ref this.readerCount);
 
         public bool TryExpandBuffer()
         {

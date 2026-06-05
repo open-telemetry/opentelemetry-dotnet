@@ -116,7 +116,7 @@ internal sealed class PrometheusExporterMiddleware
             }
             finally
             {
-                this.exporter.CollectionManager.ExitCollect();
+                this.exporter.CollectionManager.ExitCollect(protocol);
             }
         }
         catch (Exception ex)

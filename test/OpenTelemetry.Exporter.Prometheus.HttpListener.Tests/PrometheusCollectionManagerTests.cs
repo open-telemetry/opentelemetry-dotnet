@@ -91,7 +91,7 @@ public sealed class PrometheusCollectionManagerTests
             }
             finally
             {
-                exporter.CollectionManager.ExitCollect();
+                exporter.CollectionManager.ExitCollect(protocol);
             }
         }
 
@@ -151,10 +151,9 @@ public sealed class PrometheusCollectionManagerTests
 
         counter.Add(100);
 
+        var protocol = GetProtocol(openMetricsRequested);
         try
         {
-            var protocol = GetProtocol(openMetricsRequested);
-
             // This should use the cache and ignore the second counter update.
             var task = exporter.CollectionManager.EnterCollect(protocol);
 
@@ -176,7 +175,7 @@ public sealed class PrometheusCollectionManagerTests
         }
         finally
         {
-            exporter.CollectionManager.ExitCollect();
+            exporter.CollectionManager.ExitCollect(protocol);
         }
 
         if (cacheEnabled)
@@ -259,7 +258,7 @@ public sealed class PrometheusCollectionManagerTests
                 }
                 finally
                 {
-                    exporter.CollectionManager.ExitCollect();
+                    exporter.CollectionManager.ExitCollect(protocol);
                 }
             });
 
@@ -276,7 +275,7 @@ public sealed class PrometheusCollectionManagerTests
 
             Assert.Equal(1, collectCount);
 
-            exporter.CollectionManager.ExitCollect();
+            exporter.CollectionManager.ExitCollect(protocol);
             firstCollectExited = true;
 
             var secondTimeout = TimeSpan.FromSeconds(5);
@@ -297,7 +296,7 @@ public sealed class PrometheusCollectionManagerTests
         {
             if (!firstCollectExited)
             {
-                exporter.CollectionManager.ExitCollect();
+                exporter.CollectionManager.ExitCollect(protocol);
             }
         }
     }
@@ -398,8 +397,8 @@ public sealed class PrometheusCollectionManagerTests
         }
         finally
         {
-            exporter.CollectionManager.ExitCollect();
-            exporter.CollectionManager.ExitCollect();
+            exporter.CollectionManager.ExitCollect(firstProtocol);
+            exporter.CollectionManager.ExitCollect(secondProtocol);
         }
     }
 
@@ -454,7 +453,7 @@ public sealed class PrometheusCollectionManagerTests
             }
             finally
             {
-                exporter.CollectionManager.ExitCollect();
+                exporter.CollectionManager.ExitCollect(protocol);
             }
         });
 
@@ -469,7 +468,7 @@ public sealed class PrometheusCollectionManagerTests
             }
             finally
             {
-                exporter.CollectionManager.ExitCollect();
+                exporter.CollectionManager.ExitCollect(protocol);
             }
         });
 
@@ -527,7 +526,7 @@ public sealed class PrometheusCollectionManagerTests
         }
         finally
         {
-            exporter.CollectionManager.ExitCollect();
+            exporter.CollectionManager.ExitCollect(protocol);
         }
     }
 
@@ -567,7 +566,7 @@ public sealed class PrometheusCollectionManagerTests
         }
         finally
         {
-            exporter.CollectionManager.ExitCollect();
+            exporter.CollectionManager.ExitCollect(protocol);
         }
     }
 
@@ -608,7 +607,7 @@ public sealed class PrometheusCollectionManagerTests
         }
         finally
         {
-            exporter.CollectionManager.ExitCollect();
+            exporter.CollectionManager.ExitCollect(protocol);
         }
     }
 
@@ -649,7 +648,7 @@ public sealed class PrometheusCollectionManagerTests
         }
         finally
         {
-            exporter.CollectionManager.ExitCollect();
+            exporter.CollectionManager.ExitCollect(protocol);
         }
     }
 
@@ -690,7 +689,7 @@ public sealed class PrometheusCollectionManagerTests
         }
         finally
         {
-            exporter.CollectionManager.ExitCollect();
+            exporter.CollectionManager.ExitCollect(protocol);
         }
     }
 
@@ -731,7 +730,7 @@ public sealed class PrometheusCollectionManagerTests
         }
         finally
         {
-            exporter.CollectionManager.ExitCollect();
+            exporter.CollectionManager.ExitCollect(protocol);
         }
     }
 
@@ -770,7 +769,7 @@ public sealed class PrometheusCollectionManagerTests
         }
         finally
         {
-            exporter.CollectionManager.ExitCollect();
+            exporter.CollectionManager.ExitCollect(protocol);
         }
     }
 
@@ -812,7 +811,7 @@ public sealed class PrometheusCollectionManagerTests
         }
         finally
         {
-            exporter.CollectionManager.ExitCollect();
+            exporter.CollectionManager.ExitCollect(protocol);
         }
     }
 

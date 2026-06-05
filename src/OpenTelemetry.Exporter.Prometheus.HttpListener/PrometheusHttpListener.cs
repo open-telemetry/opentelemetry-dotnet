@@ -310,7 +310,7 @@ internal sealed class PrometheusHttpListener : IDisposable
             }
             finally
             {
-                this.exporter.CollectionManager.ExitCollect();
+                this.exporter.CollectionManager.ExitCollect(protocol);
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
