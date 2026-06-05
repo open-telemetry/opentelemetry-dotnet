@@ -23,6 +23,7 @@ internal sealed class PrometheusCollectionManager
     private int globalLockState;
     private int readerCount;
     private bool collectionRunning;
+    private PrometheusProtocol collectionProtocol;
     private TaskCompletionSource<CollectionResponse>? collectionTcs;
 
     public PrometheusCollectionManager(PrometheusExporter exporter)
@@ -44,6 +45,10 @@ internal sealed class PrometheusCollectionManager
     public Task<CollectionResponse> EnterCollect(PrometheusProtocol protocol)
 #endif
     {
+        CollectionResponse? cachedResponse = null;
+        Task<CollectionResponse>? pendingCollectionTask = null;
+        var incrementReaderCount = false;
+
         this.EnterGlobalLock();
 
         try
@@ -55,36 +60,56 @@ internal sealed class PrometheusCollectionManager
                 this.scrapeResponseCacheDuration > TimeSpan.Zero &&
                 this.GetElapsedTime() - state.GeneratedAtElapsed < this.scrapeResponseCacheDuration)
             {
-                var collectionResponse = new CollectionResponse(state.View, generatedAt, fromCache: true);
-
-#if NET
-                return new ValueTask<CollectionResponse>(collectionResponse);
-#else
-                return Task.FromResult(collectionResponse);
-#endif
+                cachedResponse = new CollectionResponse(state.View, generatedAt, fromCache: true);
+                incrementReaderCount = true;
             }
-
-            // If a collection is already running, return a task to wait on the result.
-            if (this.collectionRunning)
+            else if (this.collectionRunning)
             {
                 this.collectionTcs ??= new TaskCompletionSource<CollectionResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
-
-#if NET
-                return new ValueTask<CollectionResponse>(this.collectionTcs.Task);
-#else
-                return this.collectionTcs.Task;
-#endif
+                pendingCollectionTask = this.collectionTcs.Task;
+                incrementReaderCount = this.collectionProtocol.Equals(protocol);
             }
+            else
+            {
+                this.WaitForReadersToComplete();
 
-            this.WaitForReadersToComplete();
-
-            // Start a collection on the current thread.
-            this.collectionRunning = true;
+                // Start a collection on the current thread.
+                this.collectionRunning = true;
+                this.collectionProtocol = protocol;
+                incrementReaderCount = true;
+            }
         }
         finally
         {
-            Interlocked.Increment(ref this.readerCount);
+            if (incrementReaderCount)
+            {
+                Interlocked.Increment(ref this.readerCount);
+            }
+
             this.ExitGlobalLock();
+        }
+
+        if (cachedResponse is { } collectionResponse)
+        {
+#if NET
+            return new ValueTask<CollectionResponse>(collectionResponse);
+#else
+            return Task.FromResult(collectionResponse);
+#endif
+        }
+
+        if (pendingCollectionTask is not null)
+        {
+            if (incrementReaderCount)
+            {
+#if NET
+                return new ValueTask<CollectionResponse>(pendingCollectionTask);
+#else
+                return pendingCollectionTask;
+#endif
+            }
+
+            return this.WaitForRunningCollectionAndRetryAsync(protocol, pendingCollectionTask);
         }
 
         CollectionResponse response;
@@ -137,6 +162,16 @@ internal sealed class PrometheusCollectionManager
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void ExitCollect()
         => Interlocked.Decrement(ref this.readerCount);
+
+#if NET
+    private async ValueTask<CollectionResponse> WaitForRunningCollectionAndRetryAsync(PrometheusProtocol protocol, Task<CollectionResponse> pendingCollectionTask)
+#else
+    private async Task<CollectionResponse> WaitForRunningCollectionAndRetryAsync(PrometheusProtocol protocol, Task<CollectionResponse> pendingCollectionTask)
+#endif
+    {
+        await pendingCollectionTask.ConfigureAwait(false);
+        return await this.EnterCollect(protocol).ConfigureAwait(false);
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void EnterGlobalLock()

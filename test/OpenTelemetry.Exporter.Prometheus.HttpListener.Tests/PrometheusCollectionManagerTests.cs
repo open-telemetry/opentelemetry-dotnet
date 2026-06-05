@@ -302,6 +302,116 @@ public sealed class PrometheusCollectionManagerTests
         }
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task EnterCollectRunsDifferentProtocolsSeparately(bool firstOpenMetricsRequested)
+    {
+        using var meter = CreateMeter();
+#if PROMETHEUS_HTTP_LISTENER
+        using var provider = CreateMeterProviderWithRandomPort(meter);
+#elif PROMETHEUS_ASPNETCORE
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddPrometheusExporter(options => options.ScrapeResponseCacheDurationMilliseconds = 0)
+            .Build();
+#endif
+
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        if (!provider.TryFindExporter(out PrometheusExporter? exporter))
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+        {
+            throw new InvalidOperationException("PrometheusExporter could not be found on MeterProvider.");
+        }
+
+        var collectCount = 0;
+        var firstCollectStarted = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var allowFirstCollectToContinue = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var originalCollect = exporter.Collect;
+        exporter.Collect = (timeout) =>
+        {
+            var currentCollectCount = Interlocked.Increment(ref collectCount);
+
+            if (currentCollectCount == 1)
+            {
+                firstCollectStarted.SetResult(true);
+
+                var completed = allowFirstCollectToContinue.Task.Wait(TimeSpan.FromSeconds(5));
+                Assert.True(completed, "First collection did not resume.");
+            }
+
+            return originalCollect!(timeout);
+        };
+
+        var counter = meter.CreateCounter<int>("counter_int");
+        counter.Add(100);
+
+        var firstProtocol = GetProtocol(firstOpenMetricsRequested);
+        var secondProtocol = GetProtocol(!firstOpenMetricsRequested);
+
+        var firstCollectTask = Task.Run(async () => await EnterCollectAsync(exporter, firstProtocol));
+
+        await firstCollectStarted.Task;
+
+        var secondCollectTask = Task.Run(async () => await EnterCollectAsync(exporter, secondProtocol));
+
+        Assert.False(secondCollectTask.IsCompleted, "Second collection completed while the first protocol was still collecting.");
+
+        allowFirstCollectToContinue.SetResult(true);
+
+        var firstResponse = await firstCollectTask;
+        var firstCollectExited = false;
+
+        try
+        {
+            var timeout = TimeSpan.FromSeconds(1);
+
+            using (var cts = new CancellationTokenSource(timeout))
+            {
+                var completion = await Task.WhenAny(secondCollectTask, Task.Delay(timeout, cts.Token));
+                Assert.NotSame(secondCollectTask, completion);
+                Assert.False(secondCollectTask.IsCompleted);
+            }
+
+            Assert.Equal(1, collectCount);
+
+            exporter.CollectionManager.ExitCollect();
+            firstCollectExited = true;
+
+            var secondResponse = await secondCollectTask;
+
+            try
+            {
+                Assert.Equal(2, collectCount);
+                Assert.True(firstResponse.GeneratedAtUtc < secondResponse.GeneratedAtUtc);
+
+                var firstPayload = Encoding.UTF8.GetString(firstResponse.View.Array!, firstResponse.View.Offset, firstResponse.View.Count);
+                var secondPayload = Encoding.UTF8.GetString(secondResponse.View.Array!, secondResponse.View.Offset, secondResponse.View.Count);
+
+                Assert.NotEqual(firstPayload, secondPayload);
+
+                var openMetricsPayload = firstOpenMetricsRequested ? firstPayload : secondPayload;
+                var prometheusPayload = firstOpenMetricsRequested ? secondPayload : firstPayload;
+
+                Assert.Contains("# TYPE counter_int counter", openMetricsPayload, StringComparison.Ordinal);
+                Assert.Contains("counter_int_created", openMetricsPayload, StringComparison.Ordinal);
+                Assert.Contains("# TYPE counter_int_total counter", prometheusPayload, StringComparison.Ordinal);
+                Assert.DoesNotContain("counter_int_created", prometheusPayload, StringComparison.Ordinal);
+            }
+            finally
+            {
+                exporter.CollectionManager.ExitCollect();
+            }
+        }
+        finally
+        {
+            if (!firstCollectExited)
+            {
+                exporter.CollectionManager.ExitCollect();
+            }
+        }
+    }
+
     [Fact]
     public async Task OpenMetricsDoesNotEmitScopeInfoMetricFamily()
     {
@@ -631,6 +741,13 @@ public sealed class PrometheusCollectionManagerTests
         escaping: PrometheusProtocol.UnderscoresEscaping,
         version: openMetricsRequested ? PrometheusProtocol.OpenMetricsV1 : PrometheusProtocol.PrometheusV1,
         isOpenMetrics: openMetricsRequested);
+
+    private static Task<PrometheusCollectionManager.CollectionResponse> EnterCollectAsync(PrometheusExporter exporter, PrometheusProtocol protocol) =>
+#if NET
+        exporter.CollectionManager.EnterCollect(protocol).AsTask();
+#else
+        exporter.CollectionManager.EnterCollect(protocol);
+#endif
 
     private static Meter CreateMeter([CallerMemberName] string name = "") => new(name);
 
