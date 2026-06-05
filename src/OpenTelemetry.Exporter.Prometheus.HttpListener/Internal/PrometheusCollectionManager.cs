@@ -259,7 +259,7 @@ internal sealed class PrometheusCollectionManager
 
                         break;
                     }
-                    catch (IndexOutOfRangeException)
+                    catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
                     {
                         if (!IncreaseBufferSize(ref buffer))
                         {
@@ -276,7 +276,7 @@ internal sealed class PrometheusCollectionManager
                     cursor = PrometheusSerializer.WriteEof(buffer, cursor);
                     break;
                 }
-                catch (IndexOutOfRangeException)
+                catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
                 {
                     if (!IncreaseBufferSize(ref buffer))
                     {
@@ -328,7 +328,7 @@ internal sealed class PrometheusCollectionManager
                     targetInfoBufferLength = PrometheusSerializer.WriteTargetInfo(buffer, 0, this.exporter.Resource, this.exporter.OpenMetricsRequested);
                     break;
                 }
-                catch (IndexOutOfRangeException)
+                catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
                 {
                     if (!IncreaseBufferSize(ref buffer))
                     {
