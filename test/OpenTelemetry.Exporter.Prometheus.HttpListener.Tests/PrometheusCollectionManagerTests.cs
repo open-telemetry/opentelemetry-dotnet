@@ -353,11 +353,14 @@ public sealed class PrometheusCollectionManagerTests
 
         await firstCollectStarted.Task;
 
+#pragma warning disable CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
         var secondCollectTask = Task.Run(async () =>
         {
+            var collectTask = EnterCollectAsync(exporter, secondProtocol);
             secondCollectStarted.SetResult(true);
-            return await EnterCollectAsync(exporter, secondProtocol);
+            return await collectTask;
         });
+#pragma warning restore CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
 
         await secondCollectStarted.Task;
 
