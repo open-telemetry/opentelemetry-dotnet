@@ -305,7 +305,7 @@ public sealed class PrometheusCollectionManagerTests
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public async Task EnterCollectRunsDifferentProtocolsSeparately(bool firstOpenMetricsRequested)
+    public async Task EnterCollectSharesActiveCollectionAcrossProtocols(bool firstOpenMetricsRequested)
     {
         using var meter = CreateMeter();
 #if PROMETHEUS_HTTP_LISTENER
@@ -326,6 +326,7 @@ public sealed class PrometheusCollectionManagerTests
 
         var collectCount = 0;
         var firstCollectStarted = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var secondCollectStarted = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         var allowFirstCollectToContinue = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         var originalCollect = exporter.Collect;
         exporter.Collect = (timeout) =>
@@ -353,63 +354,142 @@ public sealed class PrometheusCollectionManagerTests
 
         await firstCollectStarted.Task;
 
-        var secondCollectTask = Task.Run(async () => await EnterCollectAsync(exporter, secondProtocol));
+        var secondCollectTask = Task.Run(async () =>
+        {
+            secondCollectStarted.SetResult(true);
+            return await EnterCollectAsync(exporter, secondProtocol);
+        });
+
+        await secondCollectStarted.Task;
 
         Assert.False(secondCollectTask.IsCompleted, "Second collection completed while the first protocol was still collecting.");
 
         allowFirstCollectToContinue.SetResult(true);
 
+        var timeout = TimeSpan.FromSeconds(5);
+
+        using (var cts = new CancellationTokenSource(timeout))
+        {
+            var all = Task.WhenAll(firstCollectTask, secondCollectTask);
+            var completion = await Task.WhenAny(all, Task.Delay(timeout, cts.Token));
+            Assert.Same(all, completion);
+        }
+
         var firstResponse = await firstCollectTask;
-        var firstCollectExited = false;
+        var secondResponse = await secondCollectTask;
 
         try
         {
-            var timeout = TimeSpan.FromSeconds(1);
+            Assert.Equal(1, collectCount);
+            Assert.Equal(firstResponse.GeneratedAtUtc, secondResponse.GeneratedAtUtc);
 
-            using (var cts = new CancellationTokenSource(timeout))
+            var firstPayload = Encoding.UTF8.GetString(firstResponse.View.Array!, firstResponse.View.Offset, firstResponse.View.Count);
+            var secondPayload = Encoding.UTF8.GetString(secondResponse.View.Array!, secondResponse.View.Offset, secondResponse.View.Count);
+
+            Assert.NotEqual(firstPayload, secondPayload);
+
+            var openMetricsPayload = firstOpenMetricsRequested ? firstPayload : secondPayload;
+            var prometheusPayload = firstOpenMetricsRequested ? secondPayload : firstPayload;
+
+            Assert.Contains("# TYPE counter_int counter", openMetricsPayload, StringComparison.Ordinal);
+            Assert.Contains("counter_int_created", openMetricsPayload, StringComparison.Ordinal);
+            Assert.Contains("# TYPE counter_int_total counter", prometheusPayload, StringComparison.Ordinal);
+            Assert.DoesNotContain("counter_int_created", prometheusPayload, StringComparison.Ordinal);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect();
+            exporter.CollectionManager.ExitCollect();
+        }
+    }
+
+    [Fact]
+    public async Task EnterCollectRetriesAfterFailedSharedCollection()
+    {
+        using var meter = CreateMeter();
+#if PROMETHEUS_HTTP_LISTENER
+        using var provider = CreateMeterProviderWithRandomPort(meter);
+#elif PROMETHEUS_ASPNETCORE
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddPrometheusExporter(options => options.ScrapeResponseCacheDurationMilliseconds = 0)
+            .Build();
+#endif
+
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        if (!provider.TryFindExporter(out PrometheusExporter? exporter))
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+        {
+            throw new InvalidOperationException("PrometheusExporter could not be found on MeterProvider.");
+        }
+
+        var collectCount = 0;
+        var firstCollectStarted = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var allowFirstCollectToComplete = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var originalCollect = exporter.Collect;
+        exporter.Collect = (timeout) =>
+        {
+            var currentCollectCount = Interlocked.Increment(ref collectCount);
+
+            if (currentCollectCount == 1)
             {
-                var completion = await Task.WhenAny(secondCollectTask, Task.Delay(timeout, cts.Token));
-                Assert.NotSame(secondCollectTask, completion);
-                Assert.False(secondCollectTask.IsCompleted);
+                firstCollectStarted.SetResult(true);
+                Assert.True(allowFirstCollectToComplete.Task.Wait(TimeSpan.FromSeconds(5)), "First collection did not resume.");
+                return false;
             }
 
-            Assert.Equal(1, collectCount);
+            return originalCollect!(timeout);
+        };
 
-            exporter.CollectionManager.ExitCollect();
-            firstCollectExited = true;
+        meter.CreateCounter<int>("counter_int").Add(100);
 
-            var secondResponse = await secondCollectTask;
+        var protocol = GetProtocol(openMetricsRequested: false);
 
+        var firstCollectTask = Task.Run(async () =>
+        {
+            var response = await EnterCollectAsync(exporter, protocol);
             try
             {
-                Assert.Equal(2, collectCount);
-                Assert.True(firstResponse.GeneratedAtUtc < secondResponse.GeneratedAtUtc);
-
-                var firstPayload = Encoding.UTF8.GetString(firstResponse.View.Array!, firstResponse.View.Offset, firstResponse.View.Count);
-                var secondPayload = Encoding.UTF8.GetString(secondResponse.View.Array!, secondResponse.View.Offset, secondResponse.View.Count);
-
-                Assert.NotEqual(firstPayload, secondPayload);
-
-                var openMetricsPayload = firstOpenMetricsRequested ? firstPayload : secondPayload;
-                var prometheusPayload = firstOpenMetricsRequested ? secondPayload : firstPayload;
-
-                Assert.Contains("# TYPE counter_int counter", openMetricsPayload, StringComparison.Ordinal);
-                Assert.Contains("counter_int_created", openMetricsPayload, StringComparison.Ordinal);
-                Assert.Contains("# TYPE counter_int_total counter", prometheusPayload, StringComparison.Ordinal);
-                Assert.DoesNotContain("counter_int_created", prometheusPayload, StringComparison.Ordinal);
+                return response;
             }
             finally
             {
                 exporter.CollectionManager.ExitCollect();
             }
-        }
-        finally
+        });
+
+        await firstCollectStarted.Task;
+
+        var secondCollectTask = Task.Run(async () =>
         {
-            if (!firstCollectExited)
+            var response = await EnterCollectAsync(exporter, protocol);
+            try
+            {
+                return response;
+            }
+            finally
             {
                 exporter.CollectionManager.ExitCollect();
             }
+        });
+
+        allowFirstCollectToComplete.SetResult(true);
+
+        var timeout = TimeSpan.FromSeconds(5);
+
+        using (var cts = new CancellationTokenSource(timeout))
+        {
+            var all = Task.WhenAll(firstCollectTask, secondCollectTask);
+            var completion = await Task.WhenAny(all, Task.Delay(timeout, cts.Token));
+            Assert.Same(all, completion);
         }
+
+        var firstResponse = await firstCollectTask;
+        var secondResponse = await secondCollectTask;
+
+        Assert.Equal(2, collectCount);
+        Assert.Equal(0, firstResponse.View.Count);
+        Assert.True(secondResponse.View.Count > 0);
     }
 
     [Fact]

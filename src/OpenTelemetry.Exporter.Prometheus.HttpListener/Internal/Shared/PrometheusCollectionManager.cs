@@ -22,9 +22,9 @@ internal sealed class PrometheusCollectionManager
     private int metricsCacheCount;
     private int globalLockState;
     private int readerCount;
-    private bool collectionRunning;
-    private PrometheusProtocol collectionProtocol;
-    private TaskCompletionSource<CollectionResponse>? collectionTcs;
+    private CollectionContext? collectionContext;
+    private CollectionContext? onCollectContext;
+    private CollectionExecutionResult collectionExecutionResult;
 
     public PrometheusCollectionManager(PrometheusExporter exporter)
     {
@@ -46,47 +46,110 @@ internal sealed class PrometheusCollectionManager
 #endif
     {
         CollectionResponse? cachedResponse = null;
-        Task<CollectionResponse>? pendingCollectionTask = null;
-        var incrementReaderCount = false;
+        Task<CollectionResult>? pendingCollectionTask = null;
+        CollectionContext? activeCollectionContext = null;
+        var joinedActiveCollection = false;
 
-        this.EnterGlobalLock();
-
-        try
+        while (true)
         {
-            // If we are within {ScrapeResponseCacheDurationMilliseconds} of the
-            // last successful collect, return the previous view.
-            if (this.protocolStates.TryGetValue(protocol, out var state) &&
-                state.GeneratedAt is { } generatedAt &&
-                this.scrapeResponseCacheDuration > TimeSpan.Zero &&
-                this.GetElapsedTime() - state.GeneratedAtElapsed < this.scrapeResponseCacheDuration)
-            {
-                cachedResponse = new CollectionResponse(state.View, generatedAt, fromCache: true);
-                incrementReaderCount = true;
-            }
-            else if (this.collectionRunning)
-            {
-                this.collectionTcs ??= new TaskCompletionSource<CollectionResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
-                pendingCollectionTask = this.collectionTcs.Task;
-                incrementReaderCount = this.collectionProtocol.Equals(protocol);
-            }
-            else
-            {
-                this.WaitForReadersToComplete();
+            pendingCollectionTask = null;
+            joinedActiveCollection = false;
+            var retry = false;
 
-                // Start a collection on the current thread.
-                this.collectionRunning = true;
-                this.collectionProtocol = protocol;
-                incrementReaderCount = true;
-            }
-        }
-        finally
-        {
-            if (incrementReaderCount)
+            this.EnterGlobalLock();
+
+            try
             {
+                // If we are within {ScrapeResponseCacheDurationMilliseconds} of the
+                // last successful collect, return the previous view.
+                if (this.TryGetCachedResponse(protocol, out var response))
+                {
+                    cachedResponse = response;
+                    Interlocked.Increment(ref this.readerCount);
+                    break;
+                }
+
+                if (this.collectionContext is { } currentCollectionContext)
+                {
+                    if (currentCollectionContext.Task.IsCompleted)
+                    {
+                        if (ReferenceEquals(this.collectionContext, currentCollectionContext))
+                        {
+                            this.collectionContext = null;
+                        }
+
+                        retry = true;
+                    }
+                    else
+                    {
+                    pendingCollectionTask = currentCollectionContext.Task;
+                    joinedActiveCollection = currentCollectionContext.TryRegisterProtocol(protocol);
+
+                    if (joinedActiveCollection)
+                    {
+                        Interlocked.Increment(ref this.readerCount);
+                    }
+
+                    break;
+                    }
+                }
+            }
+            finally
+            {
+                this.ExitGlobalLock();
+            }
+
+            if (retry)
+            {
+                continue;
+            }
+
+            this.WaitForReadersToComplete();
+
+            this.EnterGlobalLock();
+
+            try
+            {
+                if (this.TryGetCachedResponse(protocol, out var response))
+                {
+                    cachedResponse = response;
+                    Interlocked.Increment(ref this.readerCount);
+                    break;
+                }
+
+                if (this.collectionContext is { } currentCollectionContext)
+                {
+                    if (currentCollectionContext.Task.IsCompleted)
+                    {
+                        if (ReferenceEquals(this.collectionContext, currentCollectionContext))
+                        {
+                            this.collectionContext = null;
+                        }
+
+                        continue;
+                    }
+
+                    pendingCollectionTask = currentCollectionContext.Task;
+                    joinedActiveCollection = currentCollectionContext.TryRegisterProtocol(protocol);
+
+                    if (joinedActiveCollection)
+                    {
+                        Interlocked.Increment(ref this.readerCount);
+                    }
+
+                    break;
+                }
+
+                activeCollectionContext = new CollectionContext(protocol);
+                this.collectionContext = activeCollectionContext;
+
                 Interlocked.Increment(ref this.readerCount);
+                break;
             }
-
-            this.ExitGlobalLock();
+            finally
+            {
+                this.ExitGlobalLock();
+            }
         }
 
         if (cachedResponse is { } collectionResponse)
@@ -100,62 +163,44 @@ internal sealed class PrometheusCollectionManager
 
         if (pendingCollectionTask is not null)
         {
-            if (incrementReaderCount)
-            {
 #if NET
-                return new ValueTask<CollectionResponse>(pendingCollectionTask);
+            return this.WaitForCollectionResponseAsync(protocol, pendingCollectionTask, joinedActiveCollection);
 #else
-                return pendingCollectionTask;
+            return this.WaitForCollectionResponseAsync(protocol, pendingCollectionTask, joinedActiveCollection);
 #endif
-            }
-
-            return this.WaitForRunningCollectionAndRetryAsync(protocol, pendingCollectionTask);
         }
 
-        CollectionResponse response;
-        var result = this.ExecuteCollect(protocol);
+        var result = this.ExecuteCollect(activeCollectionContext!);
 
-        if (result)
-        {
-            var generatedAt = this.UtcNow();
-            var generatedAtElapsed = this.GetElapsedTime();
-
-            ArraySegment<byte> view;
-
-            if (this.protocolStates.TryGetValue(protocol, out var state))
-            {
-                state.UpdateTimestamps(generatedAt, generatedAtElapsed);
-                view = state.View;
-            }
-            else
-            {
-                view = PrometheusProtocolState.EmptyView;
-            }
-
-            response = new CollectionResponse(view, generatedAt, fromCache: false);
-        }
-        else
-        {
-            response = default;
-        }
+        activeCollectionContext!.SetResult(result);
 
         this.EnterGlobalLock();
 
         try
         {
-            this.collectionRunning = false;
-            this.collectionTcs?.SetResult(response);
-            this.collectionTcs = null;
+            if (ReferenceEquals(this.collectionContext, activeCollectionContext))
+            {
+                this.collectionContext = null;
+            }
         }
         finally
         {
             this.ExitGlobalLock();
         }
 
+        if (result.TryGetResponse(protocol, out collectionResponse))
+        {
 #if NET
-        return new ValueTask<CollectionResponse>(response);
+            return new ValueTask<CollectionResponse>(collectionResponse);
 #else
-        return Task.FromResult(response);
+            return Task.FromResult(collectionResponse);
+#endif
+        }
+
+#if NET
+        return new ValueTask<CollectionResponse>(default(CollectionResponse));
+#else
+        return Task.FromResult(default(CollectionResponse));
 #endif
     }
 
@@ -164,12 +209,24 @@ internal sealed class PrometheusCollectionManager
         => Interlocked.Decrement(ref this.readerCount);
 
 #if NET
-    private async ValueTask<CollectionResponse> WaitForRunningCollectionAndRetryAsync(PrometheusProtocol protocol, Task<CollectionResponse> pendingCollectionTask)
+    private async ValueTask<CollectionResponse> WaitForCollectionResponseAsync(PrometheusProtocol protocol, Task<CollectionResult> pendingCollectionTask, bool protocolWasRegistered)
 #else
-    private async Task<CollectionResponse> WaitForRunningCollectionAndRetryAsync(PrometheusProtocol protocol, Task<CollectionResponse> pendingCollectionTask)
+    private async Task<CollectionResponse> WaitForCollectionResponseAsync(PrometheusProtocol protocol, Task<CollectionResult> pendingCollectionTask, bool protocolWasRegistered)
 #endif
     {
-        await pendingCollectionTask.ConfigureAwait(false);
+        var collectionResult = await pendingCollectionTask.ConfigureAwait(false);
+
+        if (protocolWasRegistered &&
+            collectionResult.TryGetResponse(protocol, out var response))
+        {
+            return response;
+        }
+
+        if (protocolWasRegistered)
+        {
+            Interlocked.Decrement(ref this.readerCount);
+        }
+
         return await this.EnterCollect(protocol).ConfigureAwait(false);
     }
 
@@ -179,7 +236,7 @@ internal sealed class PrometheusCollectionManager
         SpinWait lockWait = default;
         while (true)
         {
-            if (Interlocked.CompareExchange(ref this.globalLockState, 1, this.globalLockState) != 0)
+            if (Interlocked.CompareExchange(ref this.globalLockState, 1, 0) != 0)
             {
                 lockWait.SpinOnce();
                 continue;
@@ -210,34 +267,61 @@ internal sealed class PrometheusCollectionManager
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool ExecuteCollect(PrometheusProtocol protocol)
+    private CollectionResult ExecuteCollect(CollectionContext collectionContext)
     {
+        this.onCollectContext = collectionContext;
+        this.collectionExecutionResult = default;
         this.exporter.OnExport = this.onCollectRef;
 
         try
         {
-            this.exporter.Protocol = protocol;
-            return this.exporter.Collect!(Timeout.Infinite);
+            var succeeded = this.exporter.Collect!(Timeout.Infinite);
+            return this.CreateCollectionResult(collectionContext, succeeded, this.collectionExecutionResult);
         }
         finally
         {
             this.exporter.OnExport = null;
+            this.onCollectContext = null;
         }
     }
 
     private ExportResult OnCollect(in Batch<Metric> metrics)
     {
-        var protocol = this.exporter.Protocol;
-
-        if (!this.protocolStates.TryGetValue(protocol, out var state))
+        if (this.onCollectContext is not { } collectionContext)
         {
-            this.protocolStates[protocol] = state = new();
+            this.collectionExecutionResult = default;
+            return ExportResult.Failure;
         }
 
+        var protocols = collectionContext.FreezeProtocols();
+        HashSet<PrometheusProtocol>? successfulProtocols = null;
+
+        foreach (var protocol in protocols)
+        {
+            if (!this.protocolStates.TryGetValue(protocol, out var state))
+            {
+                this.protocolStates[protocol] = state = new();
+            }
+
+            if (this.TryWriteResponse(protocol, state, metrics))
+            {
+                successfulProtocols ??= [];
+                successfulProtocols.Add(protocol);
+            }
+        }
+
+        this.collectionExecutionResult = new CollectionExecutionResult(protocols, successfulProtocols);
+
+        return successfulProtocols is { Count: > 0 }
+            ? ExportResult.Success
+            : ExportResult.Failure;
+    }
+
+    private bool TryWriteResponse(PrometheusProtocol protocol, PrometheusProtocolState state, in Batch<Metric> metrics)
+    {
         try
         {
             var cursor = this.WriteTargetInfo(protocol, state);
-
             var metricStates = this.GetMetricStates(metrics, protocol.IsOpenMetrics);
 
             foreach (var metricState in metricStates)
@@ -288,7 +372,7 @@ internal sealed class PrometheusCollectionManager
 
             state.UpdateView(cursor);
 
-            return ExportResult.Success;
+            return true;
         }
         catch (Exception ex)
         {
@@ -296,8 +380,62 @@ internal sealed class PrometheusCollectionManager
 
             PrometheusExporterEventSource.Log.FailedExport(ex);
 
-            return ExportResult.Failure;
+            return false;
         }
+    }
+
+    private CollectionResult CreateCollectionResult(CollectionContext collectionContext, bool succeeded, CollectionExecutionResult executionResult)
+    {
+        var protocols = executionResult.Protocols ?? collectionContext.FreezeProtocols();
+        var responses = new Dictionary<PrometheusProtocol, CollectionResponse>(protocols.Length);
+
+        if (succeeded)
+        {
+            var generatedAt = this.UtcNow();
+            var generatedAtElapsed = this.GetElapsedTime();
+            var successfulProtocols = executionResult.SuccessfulProtocols;
+
+            foreach (var protocol in protocols)
+            {
+                if (successfulProtocols is not null &&
+                    !successfulProtocols.Contains(protocol))
+                {
+                    continue;
+                }
+
+                ArraySegment<byte> view;
+
+                if (this.protocolStates.TryGetValue(protocol, out var state))
+                {
+                    state.UpdateTimestamps(generatedAt, generatedAtElapsed);
+                    view = state.View;
+                }
+                else
+                {
+                    view = PrometheusProtocolState.EmptyView;
+                }
+
+                responses[protocol] = new CollectionResponse(view, generatedAt, fromCache: false);
+            }
+        }
+
+        return new CollectionResult(responses);
+    }
+
+    private bool TryGetCachedResponse(PrometheusProtocol protocol, out CollectionResponse response)
+    {
+        if (this.protocolStates.TryGetValue(protocol, out var state) &&
+            state.GeneratedAt is { } generatedAt &&
+            state.GeneratedAtElapsed is { } generatedAtElapsed &&
+            this.scrapeResponseCacheDuration > TimeSpan.Zero &&
+            this.GetElapsedTime() - generatedAtElapsed < this.scrapeResponseCacheDuration)
+        {
+            response = new CollectionResponse(state.View, generatedAt, fromCache: true);
+            return true;
+        }
+
+        response = default;
+        return false;
     }
 
     private int WriteTargetInfo(PrometheusProtocol protocol, PrometheusProtocolState state)
@@ -451,6 +589,27 @@ internal sealed class PrometheusCollectionManager
         public readonly bool FromCache { get; }
     }
 
+    private readonly struct CollectionResult
+    {
+        private readonly IReadOnlyDictionary<PrometheusProtocol, CollectionResponse>? responses;
+
+        public CollectionResult(IReadOnlyDictionary<PrometheusProtocol, CollectionResponse> responses)
+        {
+            this.responses = responses;
+        }
+
+        public bool TryGetResponse(PrometheusProtocol protocol, out CollectionResponse response)
+        {
+            if (this.responses?.TryGetValue(protocol, out response) == true)
+            {
+                return true;
+            }
+
+            response = default;
+            return false;
+        }
+    }
+
     private readonly struct MetricState
     {
         public MetricState(
@@ -518,16 +677,75 @@ internal sealed class PrometheusCollectionManager
         public readonly string? Unit { get; }
     }
 
+    private readonly struct CollectionExecutionResult
+    {
+        public CollectionExecutionResult(PrometheusProtocol[] protocols, HashSet<PrometheusProtocol>? successfulProtocols)
+        {
+            this.Protocols = protocols;
+            this.SuccessfulProtocols = successfulProtocols;
+        }
+
+        public PrometheusProtocol[] Protocols { get; }
+
+        public HashSet<PrometheusProtocol>? SuccessfulProtocols { get; }
+    }
+
+    private sealed class CollectionContext
+    {
+        private readonly Lock gate = new();
+        private readonly HashSet<PrometheusProtocol> protocols = [];
+        private readonly TaskCompletionSource<CollectionResult> tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private bool frozen;
+
+        public CollectionContext(PrometheusProtocol protocol)
+        {
+            this.protocols.Add(protocol);
+        }
+
+        public Task<CollectionResult> Task => this.tcs.Task;
+
+        public PrometheusProtocol[] FreezeProtocols()
+        {
+            lock (this.gate)
+            {
+                this.frozen = true;
+                return [.. this.protocols];
+            }
+        }
+
+        public void SetResult(CollectionResult result)
+            => this.tcs.SetResult(result);
+
+        public bool TryRegisterProtocol(PrometheusProtocol protocol)
+        {
+            lock (this.gate)
+            {
+                if (this.protocols.Contains(protocol))
+                {
+                    return true;
+                }
+
+                if (this.frozen)
+                {
+                    return false;
+                }
+
+                this.protocols.Add(protocol);
+                return true;
+            }
+        }
+    }
+
     private sealed class PrometheusProtocolState
     {
-        private const int InitialBufferSize = 85_000; // Encourage the object to live in LOH (large object heap)
+        private const int InitialBufferSize = 85_000; // Encourage the object to live in Large Object Heap (LOH)
         private const int MaxBufferSize = 100 * 1024 * 1024; // 100 MB
 
         public static ArraySegment<byte> EmptyView { get; } =
 #if NET
             ArraySegment<byte>.Empty;
 #else
-            new([], 0, 0);
+            new([]);
 #endif
 
         public byte[] Buffer { get; private set; } = new byte[InitialBufferSize];
