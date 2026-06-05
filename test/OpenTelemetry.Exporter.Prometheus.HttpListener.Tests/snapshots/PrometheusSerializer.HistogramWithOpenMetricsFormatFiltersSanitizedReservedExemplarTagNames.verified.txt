@@ -1,0 +1,7 @@
+﻿# TYPE test_histogram histogram
+test_histogram_bucket{otel_scope_name="HistogramWithOpenMetricsFormatFiltersSanitizedReservedExemplarTagNames",keep="value",le="5.0"} 0
+test_histogram_bucket{otel_scope_name="HistogramWithOpenMetricsFormatFiltersSanitizedReservedExemplarTagNames",keep="value",le="10.0"} 1 # {} 9 <TIMESTAMP>
+test_histogram_bucket{otel_scope_name="HistogramWithOpenMetricsFormatFiltersSanitizedReservedExemplarTagNames",keep="value",le="+Inf"} 1
+test_histogram_sum{otel_scope_name="HistogramWithOpenMetricsFormatFiltersSanitizedReservedExemplarTagNames",keep="value"} 9
+test_histogram_count{otel_scope_name="HistogramWithOpenMetricsFormatFiltersSanitizedReservedExemplarTagNames",keep="value"} 1
+test_histogram_created{otel_scope_name="HistogramWithOpenMetricsFormatFiltersSanitizedReservedExemplarTagNames",keep="value"} <TIMESTAMP>
