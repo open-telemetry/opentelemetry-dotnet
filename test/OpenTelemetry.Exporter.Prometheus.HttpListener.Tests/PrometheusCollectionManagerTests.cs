@@ -78,13 +78,15 @@ public sealed class PrometheusCollectionManagerTests
                 utcNow = utcNow.AddMilliseconds(1);
             }
 
-            var response = await exporter.CollectionManager.EnterCollect(openMetricsRequested);
+            var protocol = GetProtocol(openMetricsRequested);
+            var response = await exporter.CollectionManager.EnterCollect(protocol);
+
             try
             {
                 return new()
                 {
                     CollectionResponse = response,
-                    ViewPayload = openMetricsRequested ? [.. response.OpenMetricsView] : [.. response.PlainTextView],
+                    ViewPayload = [.. response.View],
                 };
             }
             finally
@@ -151,8 +153,11 @@ public sealed class PrometheusCollectionManagerTests
 
         try
         {
+            var protocol = GetProtocol(openMetricsRequested);
+
             // This should use the cache and ignore the second counter update.
-            var task = exporter.CollectionManager.EnterCollect(openMetricsRequested);
+            var task = exporter.CollectionManager.EnterCollect(protocol);
+
             Assert.True(task.IsCompleted, "Collection did not complete.");
             var response = await task;
 
@@ -235,7 +240,9 @@ public sealed class PrometheusCollectionManagerTests
         var counter = meter.CreateCounter<int>("counter_int");
         counter.Add(100);
 
-        var firstResponse = await exporter.CollectionManager.EnterCollect(openMetricsRequested: false);
+        var protocol = GetProtocol(openMetricsRequested: false);
+
+        var firstResponse = await exporter.CollectionManager.EnterCollect(protocol);
         var firstCollectExited = false;
         try
         {
@@ -245,7 +252,7 @@ public sealed class PrometheusCollectionManagerTests
             var secondCollectTask = Task.Run(async () =>
             {
                 secondCollectStarted.SetResult(true);
-                var response = await exporter.CollectionManager.EnterCollect(openMetricsRequested: false);
+                var response = await exporter.CollectionManager.EnterCollect(protocol);
                 try
                 {
                     return response;
@@ -316,13 +323,15 @@ public sealed class PrometheusCollectionManagerTests
 
         meter.CreateCounter<int>("counter_1").Add(1);
 
-        var response = await exporter!.CollectionManager.EnterCollect(openMetricsRequested: true);
+        var protocol = GetProtocol(openMetricsRequested: true);
+        var response = await exporter!.CollectionManager.EnterCollect(protocol);
+
         try
         {
             var output = Encoding.UTF8.GetString(
-                response.OpenMetricsView.Array!,
-                response.OpenMetricsView.Offset,
-                response.OpenMetricsView.Count);
+                response.View.Array!,
+                response.View.Offset,
+                response.View.Count);
 
             await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
         }
@@ -354,13 +363,15 @@ public sealed class PrometheusCollectionManagerTests
         meter.CreateObservableGauge("otel.scope", () => 1);
         meter.CreateObservableGauge("otel.scope.info", () => 2);
 
-        var response = await exporter!.CollectionManager.EnterCollect(openMetricsRequested: true);
+        var protocol = GetProtocol(openMetricsRequested: true);
+        var response = await exporter!.CollectionManager.EnterCollect(protocol);
+
         try
         {
             var output = Encoding.UTF8.GetString(
-                response.OpenMetricsView.Array!,
-                response.OpenMetricsView.Offset,
-                response.OpenMetricsView.Count);
+                response.View.Array!,
+                response.View.Offset,
+                response.View.Count);
 
             await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
         }
@@ -395,10 +406,12 @@ public sealed class PrometheusCollectionManagerTests
         counter1.Add(1, [new("source", "a")]);
         counter2.Add(2, [new("source", "b")]);
 
-        var response = await exporter!.CollectionManager.EnterCollect(openMetricsRequested: false);
+        var protocol = GetProtocol(openMetricsRequested: false);
+        var response = await exporter!.CollectionManager.EnterCollect(protocol);
+
         try
         {
-            var view = response.PlainTextView;
+            var view = response.View;
             var output = Encoding.UTF8.GetString(view.Array!, view.Offset, view.Count);
 
             await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
@@ -434,10 +447,12 @@ public sealed class PrometheusCollectionManagerTests
         counter1.Add(1, [new("source", "a")]);
         counter2.Add(2, [new("source", "b")]);
 
-        var response = await exporter!.CollectionManager.EnterCollect(openMetricsRequested: false);
+        var protocol = GetProtocol(openMetricsRequested: false);
+        var response = await exporter!.CollectionManager.EnterCollect(protocol);
+
         try
         {
-            var view = response.PlainTextView;
+            var view = response.View;
             var output = Encoding.UTF8.GetString(view.Array!, view.Offset, view.Count);
 
             await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
@@ -473,10 +488,12 @@ public sealed class PrometheusCollectionManagerTests
         counter1.Add(1, [new("source", "a")]);
         counter2.Add(2, [new("source", "b")]);
 
-        var response = await exporter!.CollectionManager.EnterCollect(openMetricsRequested: false);
+        var protocol = GetProtocol(openMetricsRequested: false);
+        var response = await exporter!.CollectionManager.EnterCollect(protocol);
+
         try
         {
-            var view = response.PlainTextView;
+            var view = response.View;
             var output = Encoding.UTF8.GetString(view.Array!, view.Offset, view.Count);
 
             await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
@@ -512,10 +529,12 @@ public sealed class PrometheusCollectionManagerTests
         counter1.Add(1, [new("source", "a")]);
         counter2.Add(2, [new("source", "b")]);
 
-        var response = await exporter!.CollectionManager.EnterCollect(openMetricsRequested: false);
+        var protocol = GetProtocol(openMetricsRequested: false);
+        var response = await exporter!.CollectionManager.EnterCollect(protocol);
+
         try
         {
-            var view = response.PlainTextView;
+            var view = response.View;
             var output = Encoding.UTF8.GetString(view.Array!, view.Offset, view.Count);
 
             await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
@@ -549,10 +568,12 @@ public sealed class PrometheusCollectionManagerTests
         meter.CreateObservableGauge("test-metric", () => 1);
         counter.Add(1);
 
-        var response = await exporter!.CollectionManager.EnterCollect(openMetricsRequested: true);
+        var protocol = GetProtocol(openMetricsRequested: true);
+        var response = await exporter!.CollectionManager.EnterCollect(protocol);
+
         try
         {
-            var view = response.OpenMetricsView;
+            var view = response.View;
             var output = Encoding.UTF8.GetString(view.Array!, view.Offset, view.Count);
 
             await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
@@ -589,10 +610,12 @@ public sealed class PrometheusCollectionManagerTests
         meter1.CreateObservableGauge("other.metric", () => 3, description: "Other help");
         meter2.CreateObservableGauge("test-metric", () => 2, description: "Test help");
 
-        var response = await exporter!.CollectionManager.EnterCollect(openMetricsRequested: true);
+        var protocol = GetProtocol(openMetricsRequested: true);
+        var response = await exporter!.CollectionManager.EnterCollect(protocol);
+
         try
         {
-            var view = response.OpenMetricsView;
+            var view = response.View;
             var output = Encoding.UTF8.GetString(view.Array!, view.Offset, view.Count);
 
             await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
@@ -602,6 +625,12 @@ public sealed class PrometheusCollectionManagerTests
             exporter.CollectionManager.ExitCollect();
         }
     }
+
+    private static PrometheusProtocol GetProtocol(bool openMetricsRequested) => new(
+        mediaType: openMetricsRequested ? PrometheusProtocol.OpenMetricsMediaType : PrometheusProtocol.PrometheusTextMediaType,
+        escaping: PrometheusProtocol.UnderscoresEscaping,
+        version: openMetricsRequested ? PrometheusProtocol.OpenMetricsV1 : PrometheusProtocol.PrometheusV1,
+        isOpenMetrics: openMetricsRequested);
 
     private static Meter CreateMeter([CallerMemberName] string name = "") => new(name);
 

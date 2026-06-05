@@ -79,13 +79,13 @@ internal sealed class PrometheusExporterMiddleware
 
             var protocol = Negotiate(requestHeaders);
 
-            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(protocol.IsOpenMetrics);
+            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(protocol);
 
             try
             {
                 linkedCts.Token.ThrowIfCancellationRequested();
 
-                var dataView = protocol.IsOpenMetrics ? collectionResponse.OpenMetricsView : collectionResponse.PlainTextView;
+                var dataView = collectionResponse.View;
 
                 response.StatusCode = StatusCodes.Status200OK;
 
@@ -272,7 +272,7 @@ internal sealed class PrometheusExporterMiddleware
         if (version is null)
         {
             // Use the oldest version if no version preference was specified
-            version = isOpenMetrics ? PrometheusProtocol.OpenMetricsV0 : PrometheusProtocol.PrometheusVersion0;
+            version = isOpenMetrics ? PrometheusProtocol.OpenMetricsV0 : PrometheusProtocol.PrometheusV0;
         }
         else if (version.Major is not > 0)
         {
@@ -286,6 +286,9 @@ internal sealed class PrometheusExporterMiddleware
         }
 
         protocol = new(mediaType, escaping, version, isOpenMetrics);
+
+        protocol.Value.Validate();
+
         return true;
     }
 

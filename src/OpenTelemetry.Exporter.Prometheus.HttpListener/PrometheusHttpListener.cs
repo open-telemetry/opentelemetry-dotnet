@@ -269,7 +269,7 @@ internal sealed class PrometheusHttpListener : IDisposable
 
             var protocol = Negotiate(context.Request);
 
-            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(protocol.IsOpenMetrics).ConfigureAwait(false);
+            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(protocol).ConfigureAwait(false);
 
             try
             {
@@ -277,7 +277,7 @@ internal sealed class PrometheusHttpListener : IDisposable
 
                 context.Response.Headers.Add("Server", string.Empty);
 
-                var dataView = protocol.IsOpenMetrics ? collectionResponse.OpenMetricsView : collectionResponse.PlainTextView;
+                var dataView = collectionResponse.View;
 
                 if (dataView.Count > 0)
                 {

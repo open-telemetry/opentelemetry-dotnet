@@ -46,7 +46,7 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
 
     internal bool DisableTotalNameSuffixForCounters { get; }
 
-    internal bool OpenMetricsRequested { get; set; }
+    internal PrometheusProtocol Protocol { get; set; }
 
     internal Resource Resource
     {
