@@ -71,6 +71,7 @@ internal sealed class PrometheusMetric
 
         static byte[] ConvertToAsciiBytes(string value)
         {
+            // Metric names and units are sanitized before conversion, so every character here is ASCII
             var bytes = new byte[value.Length];
 
             for (var i = 0; i < value.Length; i++)

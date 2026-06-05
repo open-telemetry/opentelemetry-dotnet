@@ -554,23 +554,25 @@ internal static partial class PrometheusSerializer
         return cursor;
     }
 
-    private static string GetLabelValueString(object? labelValue)
+    private static string GetLabelValueString(object? labelValue) => labelValue switch
     {
-        if (labelValue is bool booleanValue)
-        {
-            return booleanValue ? "true" : "false";
-        }
-        else if (labelValue is double doubleValue)
-        {
-            return GetCanonicalLabelValueString(doubleValue);
-        }
-        else if (labelValue is float floatValue)
-        {
-            return GetCanonicalLabelValueString(floatValue);
-        }
-
-        return labelValue?.ToString() ?? string.Empty;
-    }
+        null => string.Empty,
+        string stringValue => stringValue,
+        bool booleanValue => booleanValue ? "true" : "false",
+        sbyte signedByteValue => signedByteValue.ToString(CultureInfo.InvariantCulture),
+        byte byteValue => byteValue.ToString(CultureInfo.InvariantCulture),
+        short shortValue => shortValue.ToString(CultureInfo.InvariantCulture),
+        ushort unsignedShortValue => unsignedShortValue.ToString(CultureInfo.InvariantCulture),
+        int intValue => intValue.ToString(CultureInfo.InvariantCulture),
+        uint unsignedIntValue => unsignedIntValue.ToString(CultureInfo.InvariantCulture),
+        long longValue => longValue.ToString(CultureInfo.InvariantCulture),
+        ulong unsignedLongValue => unsignedLongValue.ToString(CultureInfo.InvariantCulture),
+        float floatValue => GetCanonicalLabelValueString(floatValue),
+        double doubleValue => GetCanonicalLabelValueString(doubleValue),
+        decimal decimalValue => decimalValue.ToString(CultureInfo.InvariantCulture),
+        IFormattable formattableValue => formattableValue.ToString(null, CultureInfo.InvariantCulture) ?? string.Empty,
+        _ => labelValue.ToString() ?? string.Empty,
+    };
 
     private static string NormalizeLabelKey(string value)
     {

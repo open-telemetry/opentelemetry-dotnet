@@ -1248,6 +1248,30 @@ public sealed partial class PrometheusSerializerTests
     }
 
     [Fact]
+    public void WriteMetricSerializesCollidingStaticMeterTagValuesUsingInvariantFormatting()
+    {
+        var previousCulture = CultureInfo.CurrentCulture;
+
+        try
+        {
+            CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("fr-FR");
+
+            var output = WriteGaugeMetricWithMeterTags(
+                new("meter tag", 1.23m),
+                new("meter_tag", 4.56m));
+
+            Assert.Equal(
+                "# TYPE test_gauge gauge\n"
+                 + "test_gauge{otel_scope_name=\"test_meter\",otel_scope_meter_tag=\"1.23;4.56\"} 123\n",
+                output);
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = previousCulture;
+        }
+    }
+
+    [Fact]
     public void WriteLabelFormatsTypedValues()
     {
         var buffer = new byte[128];
@@ -1312,8 +1336,8 @@ public sealed partial class PrometheusSerializerTests
             .Build();
 
         var counter = meter.CreateCounter<double>("test_counter");
-        counter.Add(1, [new KeyValuePair<string, object?>("key", "value1")]);
-        counter.Add(2, [new KeyValuePair<string, object?>("key", "value2")]);
+        counter.Add(1, [new("key", "value1")]);
+        counter.Add(2, [new("key", "value2")]);
 
         provider.ForceFlush();
 
@@ -1338,8 +1362,8 @@ public sealed partial class PrometheusSerializerTests
             .Build();
 
         var histogram = meter.CreateHistogram<double>("test_histogram");
-        histogram.Record(1, [new KeyValuePair<string, object?>("key", "value1")]);
-        histogram.Record(2, [new KeyValuePair<string, object?>("key", "value2")]);
+        histogram.Record(1, [new("key", "value1")]);
+        histogram.Record(2, [new("key", "value2")]);
 
         provider.ForceFlush();
 
@@ -1362,7 +1386,7 @@ public sealed partial class PrometheusSerializerTests
             .Build();
 
         var histogram = meter.CreateHistogram<double>("test_histogram");
-        histogram.Record(1, [new KeyValuePair<string, object?>("key", "value1"), new KeyValuePair<string, object?>("le", "reserved")]);
+        histogram.Record(1, [new("key", "value1"), new("le", "reserved")]);
 
         provider.ForceFlush();
 
@@ -1513,7 +1537,7 @@ public sealed partial class PrometheusSerializerTests
 
         var metric = GetSingleHistogramMetric(
             meterName: "\u65e5\u672c",
-            meterTags: [new KeyValuePair<string, object?>(string.Empty, "meterTagValue")]);
+            meterTags: [new(string.Empty, "meterTagValue")]);
 
         var prometheusMetric = new PrometheusMetric(metric.Name, metric.Unit, PrometheusType.Histogram, disableTotalNameSuffixForCounters: false);
 
