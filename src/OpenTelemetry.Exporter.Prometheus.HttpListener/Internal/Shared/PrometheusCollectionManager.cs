@@ -428,12 +428,7 @@ internal sealed class PrometheusCollectionManager
             }
 
             result = string.CompareOrdinal(left.Metric.MeterName, right.Metric.MeterName);
-            if (result != 0)
-            {
-                return result;
-            }
-
-            return string.CompareOrdinal(left.Metric.Name, right.Metric.Name);
+            return result != 0 ? result : string.CompareOrdinal(left.Metric.Name, right.Metric.Name);
         });
 
         var metricStates = new List<MetricState>(precomputedMetricStates.Count);
