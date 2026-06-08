@@ -1,0 +1,2 @@
+OpenTelemetry.Metrics.MetricStreamConfiguration.ExcludedTagKeys.get -> string![]?
+OpenTelemetry.Metrics.MetricStreamConfiguration.ExcludedTagKeys.set -> void

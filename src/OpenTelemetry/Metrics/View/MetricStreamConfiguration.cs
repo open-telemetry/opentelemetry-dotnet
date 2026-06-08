@@ -115,7 +115,53 @@ public class MetricStreamConfiguration
     internal Func<ExemplarReservoir?>? ExemplarReservoirFactory { get; set; }
 #endif
 
+#pragma warning disable CA1819 // Properties should not return arrays
+    /// <summary>
+    /// Gets or sets the optional tag keys to exclude from the metric stream.
+    /// </summary>
+    /// <remarks>
+    /// Notes:
+    /// <list type="bullet">
+    /// <item>If not provided, all the tags provided by the instrument
+    /// while reporting measurements will be used for aggregation.
+    /// If provided, only those tags not in this list will be used
+    /// for aggregation. Providing an empty array will result
+    /// in a metric stream without any tags (same effect as
+    /// all tags being excluded).
+    /// </item>
+    /// <item>A copy is made of the provided array.</item>
+    /// <item>This is mutually exclusive with <see cref="TagKeys"/>
+    /// setting both will cause the view to be ignored.</item>
+    /// </list>
+    /// </remarks>
+    public string[]? ExcludedTagKeys
+#pragma warning restore CA1819 // Properties should not return arrays
+    {
+        get => this.CopiedExcludedTagKeys?.ToArray();
+        set => this.CopiedExcludedTagKeys = value?.ToArray();
+    }
+
     internal string[]? CopiedTagKeys { get; private set; }
 
+    internal string[]? CopiedExcludedTagKeys { get; private set; }
+
     internal int? ViewId { get; set; }
+
+    internal void Validate()
+    {
+        if (this.CopiedTagKeys != null && this.CopiedExcludedTagKeys != null)
+        {
+            throw new InvalidOperationException(
+                "TagKeys and ExcludedTagKeys cannot both be set. They are mutually exclusive. " +
+                "Use only one filtering strategy per view. For combined behavior, use the " +
+                "Func<Instrument, MetricStreamConfiguration> overload of AddView with custom logic.");
+        }
+
+        if (this.CopiedTagKeys?.Length == 0)
+        {
+            throw new InvalidOperationException(
+                "TagKeys is empty (all attributes are dropped). " +
+                "Remove TagKeys or use a non-empty array.");
+        }
+    }
 }

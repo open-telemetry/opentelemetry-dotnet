@@ -24,6 +24,7 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
         this.ViewId = metricStreamConfiguration?.ViewId;
         this.MetricStreamName = $"{this.MeterName}.{this.MeterVersion}.{this.InstrumentName}";
         this.TagKeys = metricStreamConfiguration?.CopiedTagKeys;
+        this.ExcludedTagKeys = metricStreamConfiguration?.CopiedExcludedTagKeys;
         this.HistogramBucketBounds = GetExplicitBucketHistogramBounds(instrument, metricStreamConfiguration);
         this.HistogramBucketDisplayBounds = GetExplicitBucketHistogramDisplayBounds(instrument, this.HistogramBucketBounds);
         this.ExponentialHistogramMaxSize = (metricStreamConfiguration as Base2ExponentialBucketHistogramConfiguration)?.MaxSize ?? 0;
@@ -43,12 +44,13 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
         hashCode.Add(this.Description);
         hashCode.Add(this.ViewId);
 
-        // Note: The this.TagKeys! here is strange but it is fine for the value
-        // to be null. HashCode.Add is coded to handle the value being null. We
-        // are essentially suppressing a false positive due to an issue/quirk
-        // with the annotations. See:
+        // Note: The this.TagKeys! / this.ExcludedTagKeys! here is strange but
+        // it is fine for the value to be null. HashCode.Add is coded to handle
+        // the value being null. We are essentially suppressing a false positive
+        // due to an issue/quirk with the annotations. See:
         // https://github.com/dotnet/runtime/pull/91905.
         hashCode.Add(this.TagKeys!, StringArrayComparer);
+        hashCode.Add(this.ExcludedTagKeys!, StringArrayComparer);
 
         hashCode.Add(this.ExponentialHistogramMaxSize);
         hashCode.Add(this.ExponentialHistogramMaxScale);
@@ -78,6 +80,7 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
             hash = (hash * 31) + this.Description.GetHashCode();
             hash = (hash * 31) + (this.ViewId ?? 0);
             hash = (hash * 31) + (this.TagKeys != null ? StringArrayComparer.GetHashCode(this.TagKeys) : 0);
+            hash = (hash * 31) + (this.ExcludedTagKeys != null ? StringArrayComparer.GetHashCode(this.ExcludedTagKeys) : 0);
             if (this.HistogramBucketBounds != null)
             {
                 var len = this.HistogramBucketBounds.Length;
@@ -113,6 +116,8 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
     public string MetricStreamName { get; }
 
     public string[]? TagKeys { get; }
+
+    public string[]? ExcludedTagKeys { get; }
 
     public double[]? HistogramBucketBounds { get; }
 
@@ -173,6 +178,7 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
         && this.ExponentialHistogramMaxSize == other.ExponentialHistogramMaxSize
         && this.ExponentialHistogramMaxScale == other.ExponentialHistogramMaxScale
         && StringArrayComparer.Equals(this.TagKeys, other.TagKeys)
+        && StringArrayComparer.Equals(this.ExcludedTagKeys, other.ExcludedTagKeys)
         && HistogramBoundsEqual(this.HistogramBucketBounds, other.HistogramBucketBounds);
 
     public override readonly int GetHashCode() => this.hashCode;

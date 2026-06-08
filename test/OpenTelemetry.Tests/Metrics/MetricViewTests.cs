@@ -995,7 +995,7 @@ public class MetricViewTests : MetricTestsBase
             })
             .AddView("FruitCounter", new MetricStreamConfiguration()
             {
-                TagKeys = [],
+                ExcludedTagKeys = ["name", "color", "size"],
                 Name = "NoTags",
             })
             .AddInMemoryExporter(exportedItems));
@@ -1561,5 +1561,201 @@ public class MetricViewTests : MetricTestsBase
 
         Assert.Equal("othername", exportedItems[0].Name);
         Assert.Equal(10, GetLongSum(metric1));
+    }
+
+    [Fact]
+    public void ViewToExcludeTagKeys()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("FruitCounter", new MetricStreamConfiguration()
+            {
+                ExcludedTagKeys = ["color", "size"],
+                Name = "ExcludeColorAndSize",
+            })
+            .AddInMemoryExporter(exportedItems));
+
+        var counter = meter.CreateCounter<long>("FruitCounter");
+        counter.Add(10, new("name", "apple"), new("color", "red"), new("size", "small"));
+        counter.Add(10, new("name", "apple"), new("color", "red"), new("size", "small"));
+
+        counter.Add(10, new("name", "apple"), new("color", "red"), new("size", "medium"));
+        counter.Add(10, new("name", "apple"), new("color", "red"), new("size", "medium"));
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        var metric = exportedItems[0];
+        Assert.Equal("ExcludeColorAndSize", metric.Name);
+        List<MetricPoint> metricPoints = [];
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        // Only one point expected since "name" is the only surviving tag (all are "apple")
+        Assert.Single(metricPoints);
+    }
+
+    [Fact]
+    public void ViewToExcludeTagKeys_ConflictWithInclude()
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("FruitCounter", new MetricStreamConfiguration()
+            {
+                TagKeys = ["a"],
+                ExcludedTagKeys = ["a"],
+            })
+            .AddInMemoryExporter(exportedItems));
+
+        using (var inMemoryEventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log))
+        {
+            var counter = meter.CreateCounter<long>("FruitCounter");
+            counter.Add(10, new("name", "apple"), new("color", "red"));
+
+            // View should be ignored, warning logged
+            Assert.Single(inMemoryEventListener.Messages, e => e.EventId == 41);
+        }
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        // Counter is still reported with default config even if view is ignored
+        Assert.Single(exportedItems);
+    }
+
+    [Fact]
+    public void ViewToExcludeTagKeys_ConflictWithIncludeNoOverlap()
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("FruitCounter", new MetricStreamConfiguration()
+            {
+                TagKeys = ["a", "b"],
+                ExcludedTagKeys = ["c"],
+            })
+            .AddInMemoryExporter(exportedItems));
+
+        using (var inMemoryEventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log))
+        {
+            var counter = meter.CreateCounter<long>("FruitCounter");
+            counter.Add(10, new("name", "apple"), new("color", "red"));
+
+            // View should be ignored, warning logged
+            Assert.Single(inMemoryEventListener.Messages, e => e.EventId == 41);
+        }
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        // Counter is still reported with default config
+        Assert.Single(exportedItems);
+    }
+
+    [Fact]
+    public void ViewToExcludeTagKeys_EmptyExclude()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("FruitCounter", new MetricStreamConfiguration()
+            {
+                ExcludedTagKeys = [],
+                Name = "EmptyExclude",
+            })
+            .AddInMemoryExporter(exportedItems));
+
+        var counter = meter.CreateCounter<long>("FruitCounter");
+        counter.Add(10, new("name", "apple"), new("color", "red"), new("size", "small"));
+        counter.Add(10, new("name", "orange"), new("color", "blue"), new("size", "large"));
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        var metric = exportedItems[0];
+        Assert.Equal("EmptyExclude", metric.Name);
+
+        // All attributes preserved (same as default)
+        List<MetricPoint> metricPoints = [];
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Equal(2, metricPoints.Count);
+    }
+
+    [Fact]
+    public void ViewToExcludeTagKeys_NoMatch()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("FruitCounter", new MetricStreamConfiguration()
+            {
+                ExcludedTagKeys = ["nonexistent"],
+                Name = "NoMatchExclude",
+            })
+            .AddInMemoryExporter(exportedItems));
+
+        var counter = meter.CreateCounter<long>("FruitCounter");
+        counter.Add(10, new("name", "apple"), new("color", "red"), new("size", "small"));
+        counter.Add(10, new("name", "orange"), new("color", "blue"), new("size", "large"));
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        var metric = exportedItems[0];
+        Assert.Equal("NoMatchExclude", metric.Name);
+
+        // All attributes preserved (no tags matched exclusion)
+        List<MetricPoint> metricPoints = [];
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Equal(2, metricPoints.Count);
+    }
+
+    [Fact]
+    public void ViewToExcludeTagKeys_EmptyTagKeys()
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("FruitCounter", new MetricStreamConfiguration()
+            {
+                TagKeys = [],
+            })
+            .AddInMemoryExporter(exportedItems));
+
+        using (var inMemoryEventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log))
+        {
+            var counter = meter.CreateCounter<long>("FruitCounter");
+            counter.Add(10, new("name", "apple"), new("color", "red"));
+
+            // Empty TagKeys is a contradiction → view ignored
+            Assert.Single(inMemoryEventListener.Messages, e => e.EventId == 41);
+        }
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        // Counter is still reported with default config
+        Assert.Single(exportedItems);
     }
 }

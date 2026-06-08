@@ -322,6 +322,19 @@ internal sealed class MeterProviderSdk : MeterProvider
 
                     if (metricStreamConfig != null)
                     {
+                        try
+                        {
+                            metricStreamConfig.Validate();
+                        }
+                        catch (Exception ex)
+                        {
+                            OpenTelemetrySdkEventSource.Log.MetricViewIgnored(instrument.Name, instrument.Meter.Name, ex.Message, "Fix the view configuration.");
+                            metricStreamConfig = null;
+                        }
+                    }
+
+                    if (metricStreamConfig != null)
+                    {
                         metricStreamConfigs.Add(metricStreamConfig);
                     }
                 }

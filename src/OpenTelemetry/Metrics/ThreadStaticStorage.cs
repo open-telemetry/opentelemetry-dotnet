@@ -117,6 +117,66 @@ internal sealed class ThreadStaticStorage
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void SplitToKeysAndValuesExclude(
+        ReadOnlySpan<KeyValuePair<string, object?>> tags,
+        int tagLength,
+#if NET
+        FrozenSet<string> excludedTagKeys,
+#else
+        HashSet<string> excludedTagKeys,
+#endif
+        out KeyValuePair<string, object?>[]? tagKeysAndValues,
+        out int actualLength)
+    {
+        // Worst case: no tags excluded, all survive.
+        var maxLength = tagLength;
+        tagKeysAndValues = maxLength == 0
+            ? null
+            : maxLength <= MaxTagCacheSize
+                ? this.primaryTagStorage[maxLength - 1].TagKeysAndValues
+                : (new KeyValuePair<string, object?>[maxLength]);
+
+        actualLength = 0;
+        for (var n = 0; n < tagLength; n++)
+        {
+            // Copy only tags NOT in the excluded set.
+            if (!excludedTagKeys.Contains(tags[n].Key))
+            {
+                tagKeysAndValues![actualLength] = tags[n];
+                actualLength++;
+            }
+        }
+
+        if (actualLength < maxLength)
+        {
+            if (actualLength == 0)
+            {
+                tagKeysAndValues = null;
+                return;
+            }
+
+            Debug.Assert(tagKeysAndValues != null, "tagKeysAndValues was null");
+
+            if (actualLength <= MaxTagCacheSize)
+            {
+                var tmpTagKeysAndValues = this.primaryTagStorage[actualLength - 1].TagKeysAndValues;
+
+                Array.Copy(tagKeysAndValues, 0, tmpTagKeysAndValues, 0, actualLength);
+
+                tagKeysAndValues = tmpTagKeysAndValues;
+            }
+            else
+            {
+                var tmpTagKeysAndValues = new KeyValuePair<string, object?>[actualLength];
+
+                Array.Copy(tagKeysAndValues, 0, tmpTagKeysAndValues, 0, actualLength);
+
+                tagKeysAndValues = tmpTagKeysAndValues;
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void CloneKeysAndValues(
         KeyValuePair<string, object?>[] inputTagKeysAndValues,
         int tagLength,
