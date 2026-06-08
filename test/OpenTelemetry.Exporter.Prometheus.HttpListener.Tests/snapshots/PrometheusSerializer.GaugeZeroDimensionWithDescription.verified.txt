@@ -1,0 +1,3 @@
+﻿# TYPE test_gauge gauge
+# HELP test_gauge Hello, world!
+test_gauge{otel_scope_name="GaugeZeroDimensionWithDescription"} 123

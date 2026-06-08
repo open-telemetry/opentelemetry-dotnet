@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <PackageReference Include="Testcontainers" />
+    <PackageReference Include="Verify.Xunit" />
   </ItemGroup>
 
   <ItemGroup>
@@ -49,6 +50,10 @@
 
   <ItemGroup>
     <EmbeddedResource Include="*.Dockerfile" LogicalName="%(FileName)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="PrometheusSerializerTestsSnapshotsPath" Value="$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)/snapshots'))" />
   </ItemGroup>
 
 </Project>

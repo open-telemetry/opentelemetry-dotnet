@@ -1,6 +1,5 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
-using Xunit;
 
 namespace OpenTelemetry.Context.Propagation.Tests;
 

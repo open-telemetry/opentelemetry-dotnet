@@ -4,7 +4,6 @@
 using System.Diagnostics;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Tests;
-using Xunit;
 
 namespace OpenTelemetry.Trace.Tests;
 

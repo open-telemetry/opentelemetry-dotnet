@@ -82,6 +82,11 @@ internal static partial class PrometheusSerializer
                 }
 
                 buffer[cursor++] = ASCII_LINEFEED;
+
+                if (openMetricsRequested && prometheusMetric.Type == PrometheusType.Counter)
+                {
+                    cursor = WriteCreatedMetric(buffer, cursor, metric, prometheusMetric, metricPoint);
+                }
             }
         }
         else
@@ -89,6 +94,7 @@ internal static partial class PrometheusSerializer
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
                 var tags = metricPoint.Tags;
+                var serializedTags = SerializeTags(metric, tags, openMetricsRequested, ReservedHistogramLabelNames);
                 var hasNegativeBucketBounds = false;
                 var previousBound = double.NegativeInfinity;
 
@@ -104,7 +110,7 @@ internal static partial class PrometheusSerializer
 
                     cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "_bucket{");
-                    cursor = WriteTags(buffer, cursor, metric, tags, openMetricsRequested, writeEnclosingBraces: false, reservedOutputKeys: ReservedHistogramLabelNames);
+                    cursor = WriteSerializedTagValues(buffer, cursor, serializedTags, appendTrailingComma: true);
 
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "le=\"");
 
@@ -140,7 +146,7 @@ internal static partial class PrometheusSerializer
                     // See https://prometheus.io/docs/specs/om/open_metrics_spec/#histogram-1
                     cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "_sum");
-                    cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags, openMetricsRequested, reservedOutputKeys: ReservedHistogramLabelNames);
+                    cursor = WriteSerializedTags(buffer, cursor, serializedTags);
 
                     buffer[cursor++] = unchecked((byte)' ');
 
@@ -151,13 +157,17 @@ internal static partial class PrometheusSerializer
                     // Histogram count
                     cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "_count");
-                    cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags, openMetricsRequested, reservedOutputKeys: ReservedHistogramLabelNames);
+                    cursor = WriteSerializedTags(buffer, cursor, serializedTags);
 
                     buffer[cursor++] = unchecked((byte)' ');
 
                     cursor = WriteLong(buffer, cursor, metricPoint.GetHistogramCount());
-
                     buffer[cursor++] = ASCII_LINEFEED;
+                }
+
+                if (openMetricsRequested)
+                {
+                    cursor = WriteCreatedMetric(buffer, cursor, metric, prometheusMetric, metricPoint, ReservedHistogramLabelNames);
                 }
             }
         }
@@ -242,5 +252,105 @@ internal static partial class PrometheusSerializer
         exemplar = default;
         return metricPoint.TryGetExemplars(out var exemplars) &&
                TryGetLatestHistogramBucketExemplar(exemplars, lowerBoundExclusive, upperBoundInclusive, out exemplar);
+    }
+
+    private static int WriteCreatedMetric(
+        byte[] buffer,
+        int cursor,
+        Metric metric,
+        PrometheusMetric prometheusMetric,
+        in MetricPoint metricPoint,
+        IReadOnlyCollection<string>? reservedOutputKeys = null)
+    {
+        if (metricPoint.StartTime == default)
+        {
+            return cursor;
+        }
+
+        cursor = WriteMetricMetadataName(buffer, cursor, prometheusMetric, openMetricsRequested: true);
+
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "_created");
+        cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags, openMetricsRequested: true, reservedOutputKeys: reservedOutputKeys);
+
+        buffer[cursor++] = unchecked((byte)' ');
+
+        cursor = WriteUnixTimeSeconds(buffer, cursor, metricPoint.StartTime);
+
+        buffer[cursor++] = ASCII_LINEFEED;
+
+        return cursor;
+    }
+
+    private static byte[] SerializeTags(
+        Metric metric,
+        ReadOnlyTagCollection tags,
+        bool openMetricsRequested,
+        IReadOnlyCollection<string>? reservedOutputKeys = null)
+    {
+        var buffer = new byte[128];
+
+        while (true)
+        {
+            try
+            {
+                var cursor = WriteTags(
+                    buffer,
+                    0,
+                    metric,
+                    tags,
+                    openMetricsRequested,
+                    writeEnclosingBraces: false,
+                    reservedOutputKeys: reservedOutputKeys);
+
+                if (cursor > 0 && buffer[cursor - 1] == unchecked((byte)','))
+                {
+                    cursor--;
+                }
+
+                return buffer.AsSpan(0, cursor).ToArray();
+            }
+            catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
+            {
+                buffer = new byte[checked(buffer.Length * 2)];
+            }
+        }
+    }
+
+    private static int WriteSerializedTagValues(
+        byte[] buffer,
+        int cursor,
+        ReadOnlySpan<byte> serializedTags,
+        bool appendTrailingComma = false)
+    {
+        if (!serializedTags.IsEmpty)
+        {
+            if (serializedTags.Length > buffer.Length - cursor)
+            {
+                throw new ArgumentException("Destination buffer too small.", nameof(buffer));
+            }
+
+            serializedTags.CopyTo(buffer.AsSpan(cursor));
+            cursor += serializedTags.Length;
+
+            if (appendTrailingComma)
+            {
+                buffer[cursor++] = unchecked((byte)',');
+            }
+        }
+
+        return cursor;
+    }
+
+    private static int WriteSerializedTags(
+        byte[] buffer,
+        int cursor,
+        ReadOnlySpan<byte> serializedTags,
+        bool appendTrailingComma = false)
+    {
+        buffer[cursor++] = unchecked((byte)'{');
+        cursor = WriteSerializedTagValues(buffer, cursor, serializedTags, appendTrailingComma);
+
+        buffer[cursor++] = unchecked((byte)'}');
+        return cursor;
     }
 }

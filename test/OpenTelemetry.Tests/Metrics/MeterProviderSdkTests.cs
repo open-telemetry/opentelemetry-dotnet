@@ -4,7 +4,6 @@
 using System.Diagnostics.Metrics;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
-using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests;
 

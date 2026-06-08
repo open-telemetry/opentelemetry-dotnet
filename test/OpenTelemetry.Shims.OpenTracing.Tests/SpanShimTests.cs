@@ -4,7 +4,6 @@
 using System.Diagnostics;
 using OpenTelemetry.Trace;
 using OpenTracing.Tag;
-using Xunit;
 
 namespace OpenTelemetry.Shims.OpenTracing.Tests;
 
