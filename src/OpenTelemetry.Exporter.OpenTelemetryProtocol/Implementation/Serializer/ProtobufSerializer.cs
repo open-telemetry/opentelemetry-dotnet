@@ -4,9 +4,6 @@
 using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-#if NETFRAMEWORK || NETSTANDARD2_0
-using System.Runtime.InteropServices;
-#endif
 using System.Text;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
@@ -20,8 +17,15 @@ internal static class ProtobufSerializer
     private const int Fixed64Size = 8;
     private const int MaskBitsLow = 0b_0111_1111;
     private const int MaskBitHigh = 0b_1000_0000;
+#if NETFRAMEWORK || NETSTANDARD2_0
+    private const int MaxThreadStaticCharBufferSize = 1024;
+#endif
 
     private static readonly Encoding Utf8Encoding = Encoding.UTF8;
+#if NETFRAMEWORK || NETSTANDARD2_0
+    [ThreadStatic]
+    private static char[]? threadCharBuffer;
+#endif
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static uint GetTagValue(int fieldNumber, ProtobufWireType wireType) => ((uint)(fieldNumber << 3)) | (uint)wireType;
@@ -251,25 +255,32 @@ internal static class ProtobufSerializer
     {
         Debug.Assert(value != null, "value was null");
 
-        return WriteStringWithTag(buffer, writePosition, fieldNumber, value.AsSpan());
+        var numberOfUtf8CharsInString = GetNumberOfUtf8CharsInString(value!);
+        return WriteStringWithTag(buffer, writePosition, fieldNumber, numberOfUtf8CharsInString, value!);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int GetNumberOfUtf8CharsInString(string value)
+    {
+        Debug.Assert(value != null, "value was null");
+        return Utf8Encoding.GetByteCount(value!);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int GetNumberOfUtf8CharsInString(ReadOnlySpan<char> value)
     {
 #if NETFRAMEWORK || NETSTANDARD2_0
-        int numberOfUtf8CharsInString;
-        unsafe
+        if (value.Length == 0)
         {
-            fixed (char* strPtr = &GetNonNullPinnableReference(value))
-            {
-                numberOfUtf8CharsInString = Utf8Encoding.GetByteCount(strPtr, value.Length);
-            }
+            return 0;
         }
+
+        var buffer = GetCharBuffer(value.Length);
+        value.CopyTo(buffer);
+        return Utf8Encoding.GetByteCount(buffer, 0, value.Length);
 #else
-        var numberOfUtf8CharsInString = Utf8Encoding.GetByteCount(value);
+        return Utf8Encoding.GetByteCount(value);
 #endif
-        return numberOfUtf8CharsInString;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -280,7 +291,7 @@ internal static class ProtobufSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int WriteStringWithTag(byte[] buffer, int writePosition, int fieldNumber, int numberOfUtf8CharsInString, ReadOnlySpan<char> value)
+    internal static int WriteStringWithTag(byte[] buffer, int writePosition, int fieldNumber, int numberOfUtf8CharsInString, string value)
     {
         writePosition = WriteTag(buffer, writePosition, fieldNumber, ProtobufWireType.LEN);
         writePosition = WriteLength(buffer, writePosition, numberOfUtf8CharsInString);
@@ -295,17 +306,42 @@ internal static class ProtobufSerializer
 #pragma warning restore CA2201 // Do not raise reserved exception types
         }
 
-        unsafe
+        var bytesWritten = Utf8Encoding.GetBytes(value, 0, value.Length, buffer, writePosition);
+        Debug.Assert(bytesWritten == numberOfUtf8CharsInString, "bytesWritten did not match numberOfUtf8CharsInString");
+#else
+        var bytesWritten = Utf8Encoding.GetBytes(value.AsSpan(), buffer.AsSpan(writePosition));
+        Debug.Assert(bytesWritten == numberOfUtf8CharsInString, "bytesWritten did not match numberOfUtf8CharsInString");
+#endif
+
+        writePosition += numberOfUtf8CharsInString;
+        return writePosition;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int WriteStringWithTag(byte[] buffer, int writePosition, int fieldNumber, int numberOfUtf8CharsInString, ReadOnlySpan<char> value)
+    {
+        writePosition = WriteTag(buffer, writePosition, fieldNumber, ProtobufWireType.LEN);
+        writePosition = WriteLength(buffer, writePosition, numberOfUtf8CharsInString);
+
+#if NETFRAMEWORK || NETSTANDARD2_0
+        if (value.Length == 0)
         {
-            fixed (char* strPtr = &GetNonNullPinnableReference(value))
-            {
-                fixed (byte* bufferPtr = buffer)
-                {
-                    var bytesWritten = Utf8Encoding.GetBytes(strPtr, value.Length, bufferPtr + writePosition, numberOfUtf8CharsInString);
-                    Debug.Assert(bytesWritten == numberOfUtf8CharsInString, "bytesWritten did not match numberOfUtf8CharsInString");
-                }
-            }
+            return writePosition;
         }
+
+        if (buffer.Length - writePosition < numberOfUtf8CharsInString)
+        {
+            // Note: Validate there is enough space in the buffer to hold the
+            // string otherwise throw to trigger a resize of the buffer.
+#pragma warning disable CA2201 // Do not raise reserved exception types
+            throw new IndexOutOfRangeException();
+#pragma warning restore CA2201 // Do not raise reserved exception types
+        }
+
+        var charBuffer = GetCharBuffer(value.Length);
+        value.CopyTo(charBuffer);
+        var bytesWritten = Utf8Encoding.GetBytes(charBuffer, 0, value.Length, buffer, writePosition);
+        Debug.Assert(bytesWritten == numberOfUtf8CharsInString, "bytesWritten did not match numberOfUtf8CharsInString");
 #else
         var bytesWritten = Utf8Encoding.GetBytes(value, buffer.AsSpan(writePosition));
         Debug.Assert(bytesWritten == numberOfUtf8CharsInString, "bytesWritten did not match numberOfUtf8CharsInString");
@@ -338,7 +374,20 @@ internal static class ProtobufSerializer
 
 #if NETFRAMEWORK || NETSTANDARD2_0
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static unsafe ref T GetNonNullPinnableReference<T>(ReadOnlySpan<T> span)
-        => ref (span.Length != 0) ? ref Unsafe.AsRef(in MemoryMarshal.GetReference(span)) : ref Unsafe.AsRef<T>((void*)1);
+    private static char[] GetCharBuffer(int minimumLength)
+    {
+        if (minimumLength > MaxThreadStaticCharBufferSize)
+        {
+            return new char[minimumLength];
+        }
+
+        var buffer = threadCharBuffer;
+        if (buffer == null || buffer.Length < minimumLength)
+        {
+            threadCharBuffer = buffer = new char[Math.Max(minimumLength, 256)];
+        }
+
+        return buffer;
+    }
 #endif
 }

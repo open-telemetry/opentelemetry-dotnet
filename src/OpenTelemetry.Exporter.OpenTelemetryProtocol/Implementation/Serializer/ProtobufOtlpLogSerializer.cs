@@ -143,13 +143,12 @@ internal static class ProtobufOtlpLogSerializer
 
     internal static int WriteScopeLog(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, string loggerName, List<LogRecord> logRecords)
     {
-        var value = loggerName.AsSpan();
-        var numberOfUtf8CharsInString = ProtobufSerializer.GetNumberOfUtf8CharsInString(value);
+        var numberOfUtf8CharsInString = ProtobufSerializer.GetNumberOfUtf8CharsInString(loggerName);
         var serializedLengthSize = ProtobufSerializer.ComputeVarInt64Size((ulong)numberOfUtf8CharsInString);
 
         // numberOfUtf8CharsInString + tagSize + length field size.
         writePosition = ProtobufSerializer.WriteTagAndLength(buffer, writePosition, numberOfUtf8CharsInString + 1 + serializedLengthSize, ProtobufOtlpLogFieldNumberConstants.ScopeLogs_Scope, ProtobufWireType.LEN);
-        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Name, numberOfUtf8CharsInString, value);
+        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Name, numberOfUtf8CharsInString, loggerName);
 
         for (var i = 0; i < logRecords.Count; i++)
         {
@@ -216,7 +215,7 @@ internal static class ProtobufOtlpLogSerializer
 
         if (logRecord.FormattedMessage != null)
         {
-            otlpTagWriterState.WritePosition = WriteLogRecordBody(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, logRecord.FormattedMessage.AsSpan());
+            otlpTagWriterState.WritePosition = WriteLogRecordBody(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, logRecord.FormattedMessage);
             bodyPopulatedFromFormattedMessage = true;
             isLogRecordBodySet = true;
         }
@@ -230,8 +229,15 @@ internal static class ProtobufOtlpLogSerializer
                 // for explanation.
                 if (string.Equals(attribute.Key, "{OriginalFormat}", StringComparison.Ordinal) && !bodyPopulatedFromFormattedMessage)
                 {
-                    otlpTagWriterState.WritePosition = WriteLogRecordBody(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, (attribute.Value as string).AsSpan());
-                    isLogRecordBodySet = true;
+                    if (attribute.Value is string originalFormat)
+                    {
+                        otlpTagWriterState.WritePosition = WriteLogRecordBody(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, originalFormat);
+                        isLogRecordBodySet = true;
+                    }
+                    else
+                    {
+                        AddLogAttribute(state, attribute);
+                    }
                 }
                 else
                 {
@@ -244,7 +250,7 @@ internal static class ProtobufOtlpLogSerializer
             {
                 // If {OriginalFormat} is not present in the attributes,
                 // use logRecord.Body if it is set.
-                otlpTagWriterState.WritePosition = WriteLogRecordBody(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, logRecord.Body.AsSpan());
+                otlpTagWriterState.WritePosition = WriteLogRecordBody(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, logRecord.Body);
             }
         }
 
@@ -310,7 +316,7 @@ internal static class ProtobufOtlpLogSerializer
         }
     }
 
-    private static int WriteLogRecordBody(byte[] buffer, int writePosition, ReadOnlySpan<char> value)
+    private static int WriteLogRecordBody(byte[] buffer, int writePosition, string value)
     {
         var numberOfUtf8CharsInString = ProtobufSerializer.GetNumberOfUtf8CharsInString(value);
         var serializedLengthSize = ProtobufSerializer.ComputeVarInt64Size((ulong)numberOfUtf8CharsInString);
