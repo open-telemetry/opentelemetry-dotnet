@@ -92,6 +92,8 @@ public class OtlpRetryTests
                 break;
             }
 
+            Assert.Equal(retryAttempt.ExpectedThrottled, retryResult.Throttled);
+
             if (retryResult.Throttled)
             {
                 Assert.Equal(retryAttempt.ThrottleDelay!.Value.TotalSeconds, retryResult.RetryDelay.TotalSeconds, retryAttempt.TimestampTolerance.TotalSeconds);
