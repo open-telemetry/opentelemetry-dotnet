@@ -1,0 +1,19 @@
+﻿# TYPE test_histogram histogram
+test_histogram_bucket{otel_scope_name="HistogramNaN",le="0"} 0
+test_histogram_bucket{otel_scope_name="HistogramNaN",le="5"} 0
+test_histogram_bucket{otel_scope_name="HistogramNaN",le="10"} 0
+test_histogram_bucket{otel_scope_name="HistogramNaN",le="25"} 1
+test_histogram_bucket{otel_scope_name="HistogramNaN",le="50"} 1
+test_histogram_bucket{otel_scope_name="HistogramNaN",le="75"} 1
+test_histogram_bucket{otel_scope_name="HistogramNaN",le="100"} 1
+test_histogram_bucket{otel_scope_name="HistogramNaN",le="250"} 1
+test_histogram_bucket{otel_scope_name="HistogramNaN",le="500"} 1
+test_histogram_bucket{otel_scope_name="HistogramNaN",le="750"} 1
+test_histogram_bucket{otel_scope_name="HistogramNaN",le="1000"} 1
+test_histogram_bucket{otel_scope_name="HistogramNaN",le="2500"} 1
+test_histogram_bucket{otel_scope_name="HistogramNaN",le="5000"} 1
+test_histogram_bucket{otel_scope_name="HistogramNaN",le="7500"} 1
+test_histogram_bucket{otel_scope_name="HistogramNaN",le="10000"} 1
+test_histogram_bucket{otel_scope_name="HistogramNaN",le="+Inf"} 3
+test_histogram_sum{otel_scope_name="HistogramNaN"} NaN
+test_histogram_count{otel_scope_name="HistogramNaN"} 3

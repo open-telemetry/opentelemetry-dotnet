@@ -11,6 +11,7 @@
     <PackageReference Include="Microsoft.AspNetCore.TestHost" />
     <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
     <PackageReference Include="Testcontainers" />
+    <PackageReference Include="Verify.Xunit" />
   </ItemGroup>
 
   <ItemGroup>
@@ -55,6 +56,10 @@
   <ItemGroup>
     <EmbeddedResource Include="*.Dockerfile" LogicalName="%(FileName)%(Extension)" />
     <EmbeddedResource Include="$(RepoRoot)\test\OpenTelemetry.Exporter.Prometheus.HttpListener.Tests\prometheus.Dockerfile" LogicalName="prometheus.Dockerfile" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="PrometheusSerializerTestsSnapshotsPath" Value="$(RepoRoot)\test\OpenTelemetry.Exporter.Prometheus.HttpListener.Tests\snapshots" />
   </ItemGroup>
 
 </Project>

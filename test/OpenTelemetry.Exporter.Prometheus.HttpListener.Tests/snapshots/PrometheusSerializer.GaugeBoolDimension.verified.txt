@@ -1,0 +1,2 @@
+﻿# TYPE test_gauge gauge
+test_gauge{otel_scope_name="GaugeBoolDimension",tagKey="true"} 123
