@@ -132,6 +132,10 @@ function ConvertTo-SafePathSegment {
 $Configuration = "Release"
 $Framework = "net10.0"
 
+if (-not ($Runtimes | Where-Object { $_ -notmatch "^net4\d+$" })) {
+    $Framework = "net462"
+}
+
 if ($Benchmarks.Count -eq 0) {
     throw "At least one benchmark filter must be specified."
 }
