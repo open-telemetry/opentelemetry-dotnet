@@ -117,6 +117,10 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
 
     public string[]? TagKeys { get; }
 
+    // Note: ExcludedTagKeys uses element-wise comparison (same as TagKeys).
+    // ["a","b"] and ["b","a"] produce different stream identities even though
+    // the filtering behavior is identical. This is a pre-existing limitation
+    // inherited from TagKeys.
     public string[]? ExcludedTagKeys { get; }
 
     public double[]? HistogramBucketBounds { get; }

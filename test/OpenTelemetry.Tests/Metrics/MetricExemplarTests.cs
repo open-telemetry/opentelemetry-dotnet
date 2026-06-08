@@ -837,6 +837,65 @@ public class MetricExemplarTests : MetricTestsBase
         }
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void TestExemplarsFilterTagsExclude(bool enableTagFiltering)
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+
+        var histogram = meter.CreateHistogram<double>("testHistogram");
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
+            .AddView(
+                histogram.Name,
+                new MetricStreamConfiguration()
+                {
+                    ExcludedTagKeys = enableTagFiltering ? ["key1"] : null,
+                })
+            .AddInMemoryExporter(exportedItems));
+
+        histogram.Record(
+            0,
+            new("key1", "value1"),
+            new("key2", "value2"),
+            new("key3", "value3"));
+
+        meterProvider.ForceFlush();
+
+        Assert.Single(exportedItems);
+
+        var metricPoint = GetFirstMetricPoint(exportedItems);
+        Assert.NotNull(metricPoint);
+
+        var exemplars = GetExemplars(metricPoint.Value);
+        Assert.NotNull(exemplars);
+        Assert.Single(exemplars);
+
+        var exemplar = exemplars[0];
+
+        if (!enableTagFiltering)
+        {
+            Assert.Equal(0, exemplar.FilteredTags.MaximumCount);
+        }
+        else
+        {
+            var filteredTags = exemplar.FilteredTags.ToReadOnlyList();
+
+            Assert.Equal(3, exemplar.FilteredTags.MaximumCount);
+            Assert.Single(filteredTags);
+
+            // key1 was excluded, so it should appear in FilteredTags
+            Assert.Contains(new("key1", "value1"), filteredTags);
+            Assert.DoesNotContain(new("key2", "value2"), filteredTags);
+            Assert.DoesNotContain(new("key3", "value3"), filteredTags);
+        }
+    }
+
     private static (double Value, bool ExpectTraceId)[] GenerateRandomValues(
         int count,
         bool expectTraceId,

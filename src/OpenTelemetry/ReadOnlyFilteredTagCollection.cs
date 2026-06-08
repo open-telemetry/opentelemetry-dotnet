@@ -18,22 +18,27 @@ public readonly struct ReadOnlyFilteredTagCollection
 #pragma warning restore CA1711 // Identifiers should not have incorrect suffix
 {
 #if NET
-    private readonly FrozenSet<string>? excludedKeys;
+    private readonly FrozenSet<string>? includeKeys;
+    private readonly FrozenSet<string>? excludeKeys;
 #else
-    private readonly HashSet<string>? excludedKeys;
+    private readonly HashSet<string>? includeKeys;
+    private readonly HashSet<string>? excludeKeys;
 #endif
     private readonly KeyValuePair<string, object?>[] tags;
 
     internal ReadOnlyFilteredTagCollection(
 #if NET
-        FrozenSet<string>? excludedKeys,
+        FrozenSet<string>? includeKeys,
+        FrozenSet<string>? excludeKeys,
 #else
-        HashSet<string>? excludedKeys,
+        HashSet<string>? includeKeys,
+        HashSet<string>? excludeKeys,
 #endif
         KeyValuePair<string, object?>[] tags,
         int count)
     {
-        this.excludedKeys = excludedKeys;
+        this.includeKeys = includeKeys;
+        this.excludeKeys = excludeKeys;
         this.tags = tags;
         this.MaximumCount = count;
     }
@@ -99,7 +104,8 @@ public readonly struct ReadOnlyFilteredTagCollection
         public bool MoveNext()
         {
             var maximumCount = this.source.MaximumCount;
-            var excludedKeys = this.source.excludedKeys;
+            var includeKeys = this.source.includeKeys;
+            var excludeKeys = this.source.excludeKeys;
             var tags = this.source.tags;
 
             while (true)
@@ -107,9 +113,25 @@ public readonly struct ReadOnlyFilteredTagCollection
                 var index = ++this.index;
                 if (index < maximumCount)
                 {
-                    if (excludedKeys?.Contains(tags[index].Key) ?? false)
+                    if (includeKeys != null)
                     {
-                        continue;
+                        // Include mode: skip tags that were kept (not filtered)
+                        if (includeKeys.Contains(tags[index].Key))
+                        {
+                            continue;
+                        }
+
+                        return true;
+                    }
+                    else if (excludeKeys != null)
+                    {
+                        // Exclude mode: yield only tags that were dropped (filtered)
+                        if (!excludeKeys.Contains(tags[index].Key))
+                        {
+                            continue;
+                        }
+
+                        return true;
                     }
 
                     return true;
