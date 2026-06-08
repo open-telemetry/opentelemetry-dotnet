@@ -896,6 +896,54 @@ public class MetricExemplarTests : MetricTestsBase
         }
     }
 
+    [Fact]
+    public void ViewToExcludeTagKeys_ExemplarFilteredTagsAreCorrect()
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+
+        var histogram = meter.CreateHistogram<double>("testHistogram");
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
+            .AddView(
+                histogram.Name,
+                new MetricStreamConfiguration()
+                {
+                    ExcludedTagKeys = ["color"],
+                })
+            .AddInMemoryExporter(exportedItems));
+
+        histogram.Record(
+            10,
+            new("name", "apple"),
+            new("color", "red"));
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        Assert.Single(exportedItems);
+
+        var metricPoint = GetFirstMetricPoint(exportedItems);
+        Assert.NotNull(metricPoint);
+
+        var exemplars = GetExemplars(metricPoint.Value);
+        Assert.NotNull(exemplars);
+        Assert.Single(exemplars);
+
+        var exemplar = exemplars[0];
+
+        Assert.Equal(2, exemplar.FilteredTags.MaximumCount);
+
+        var filteredTags = exemplar.FilteredTags.ToReadOnlyList();
+        Assert.Single(filteredTags);
+
+        // "color" was excluded from the metric point, so it should appear in FilteredTags
+        Assert.Contains(new("color", "red"), filteredTags);
+        Assert.DoesNotContain(new("name", "apple"), filteredTags);
+    }
+
     private static (double Value, bool ExpectTraceId)[] GenerateRandomValues(
         int count,
         bool expectTraceId,
