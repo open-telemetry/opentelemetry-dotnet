@@ -197,7 +197,7 @@ if ([string]::IsNullOrEmpty($baselineName)) {
     $baselineName = $Baseline
 }
 
-if ($Target -eq $Baseline) {
+if (-not $SkipBaseline -and $Target -eq $Baseline) {
     throw "Target branch '$Target' cannot be the same as baseline branch '$Baseline'."
 }
 
@@ -244,7 +244,7 @@ try {
         $additionalArgs += "--filter"
         $additionalArgs += $Benchmarks
 
-        if (-Not [string]::IsNullOrEmpty($Job)) {
+        if (-not [string]::IsNullOrEmpty($Job)) {
             $additionalArgs += "--job"
             $additionalArgs += $Job
         }
