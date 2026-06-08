@@ -1749,7 +1749,7 @@ public class MetricViewTests : MetricTestsBase
             var counter = meter.CreateCounter<long>("FruitCounter");
             counter.Add(10, new("name", "apple"), new("color", "red"));
 
-            // Empty TagKeys is a contradiction → view ignored
+            // Empty TagKeys is a contradiction, view ignored
             Assert.Single(inMemoryEventListener.Messages, e => e.EventId == 41);
         }
 
