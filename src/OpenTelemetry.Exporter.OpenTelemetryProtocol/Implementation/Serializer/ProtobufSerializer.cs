@@ -19,12 +19,15 @@ internal static class ProtobufSerializer
     private const int MaskBitHigh = 0b_1000_0000;
 #if NETFRAMEWORK || NETSTANDARD2_0
     private const int MaxThreadStaticCharBufferSize = 1024;
+    private const int MaxThreadStaticByteBufferSize = 1024;
 #endif
 
     private static readonly Encoding Utf8Encoding = Encoding.UTF8;
 #if NETFRAMEWORK || NETSTANDARD2_0
     [ThreadStatic]
     private static char[]? threadCharBuffer;
+    [ThreadStatic]
+    private static byte[]? threadByteBuffer;
 #endif
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -351,6 +354,76 @@ internal static class ProtobufSerializer
         return writePosition;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int WriteVarInt32(Span<byte> buffer, int writePosition, uint value)
+    {
+        while (value >= UInt128)
+        {
+            buffer[writePosition++] = (byte)(MaskBitHigh | (value & MaskBitsLow));
+            value >>= 7;
+        }
+
+        buffer[writePosition++] = (byte)value;
+        return writePosition;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int WriteTag(Span<byte> buffer, int writePosition, int fieldNumber, ProtobufWireType type) => WriteVarInt32(buffer, writePosition, GetTagValue(fieldNumber, type));
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int WriteLength(Span<byte> buffer, int writePosition, int length) => WriteVarInt32(buffer, writePosition, (uint)length);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int WriteStringWithTag(Span<byte> buffer, int writePosition, int fieldNumber, string value)
+    {
+        Debug.Assert(value != null, "value was null");
+
+        return WriteStringWithTag(buffer, writePosition, fieldNumber, value!.AsSpan());
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int WriteStringWithTag(Span<byte> buffer, int writePosition, int fieldNumber, ReadOnlySpan<char> value)
+    {
+        var numberOfUtf8CharsInString = GetNumberOfUtf8CharsInString(value);
+        return WriteStringWithTag(buffer, writePosition, fieldNumber, numberOfUtf8CharsInString, value);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int WriteStringWithTag(Span<byte> buffer, int writePosition, int fieldNumber, int numberOfUtf8CharsInString, ReadOnlySpan<char> value)
+    {
+        writePosition = WriteTag(buffer, writePosition, fieldNumber, ProtobufWireType.LEN);
+        writePosition = WriteLength(buffer, writePosition, numberOfUtf8CharsInString);
+
+#if NETFRAMEWORK || NETSTANDARD2_0
+        if (value.Length == 0)
+        {
+            return writePosition;
+        }
+
+        if (buffer.Length - writePosition < numberOfUtf8CharsInString)
+        {
+            // Note: Validate there is enough space in the buffer to hold the
+            // string otherwise throw to trigger a resize of the buffer.
+#pragma warning disable CA2201 // Do not raise reserved exception types
+            throw new IndexOutOfRangeException();
+#pragma warning restore CA2201 // Do not raise reserved exception types
+        }
+
+        var charBuffer = GetCharBuffer(value.Length);
+        value.CopyTo(charBuffer);
+        var byteBuffer = GetByteBuffer(numberOfUtf8CharsInString);
+        var bytesWritten = Utf8Encoding.GetBytes(charBuffer, 0, value.Length, byteBuffer, 0);
+        Debug.Assert(bytesWritten == numberOfUtf8CharsInString, "bytesWritten did not match numberOfUtf8CharsInString");
+        byteBuffer.AsSpan(0, bytesWritten).CopyTo(buffer.Slice(writePosition));
+#else
+        var bytesWritten = Utf8Encoding.GetBytes(value, buffer.Slice(writePosition));
+        Debug.Assert(bytesWritten == numberOfUtf8CharsInString, "bytesWritten did not match numberOfUtf8CharsInString");
+#endif
+
+        writePosition += numberOfUtf8CharsInString;
+        return writePosition;
+    }
+
     internal static bool IncreaseBufferSize(ref byte[] buffer, OtlpSignalType otlpSignalType)
     {
         if (buffer.Length >= MaxBufferSize)
@@ -385,6 +458,23 @@ internal static class ProtobufSerializer
         if (buffer == null || buffer.Length < minimumLength)
         {
             threadCharBuffer = buffer = new char[Math.Max(minimumLength, 256)];
+        }
+
+        return buffer;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static byte[] GetByteBuffer(int minimumLength)
+    {
+        if (minimumLength > MaxThreadStaticByteBufferSize)
+        {
+            return new byte[minimumLength];
+        }
+
+        var buffer = threadByteBuffer;
+        if (buffer == null || buffer.Length < minimumLength)
+        {
+            threadByteBuffer = buffer = new byte[Math.Max(minimumLength, 256)];
         }
 
         return buffer;
