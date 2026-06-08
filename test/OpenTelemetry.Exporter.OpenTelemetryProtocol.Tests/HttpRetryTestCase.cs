@@ -31,8 +31,18 @@ public class HttpRetryTestCase
     [
         new("NetworkError", [new(statusCode: null)]),
         new("GatewayTimeout", [new(statusCode: HttpStatusCode.GatewayTimeout, throttleDelay: TimeSpan.FromSeconds(1))]),
-#if NETSTANDARD2_1_OR_GREATER || NET
-        new("ServiceUnavailable", [new(statusCode: HttpStatusCode.TooManyRequests, throttleDelay: TimeSpan.FromSeconds(1))]),
+        new("ServiceUnavailable", [new(statusCode: HttpStatusCode.ServiceUnavailable, throttleDelay: TimeSpan.FromSeconds(1), expectedThrottled: true)]),
+
+#if NET
+        new("TooManyRequests (Delta)", [new(statusCode: HttpStatusCode.TooManyRequests, throttleDelay: TimeSpan.FromSeconds(1), expectedThrottled: true)]),
+        new("TooManyRequests (HTTP-Date)", [new(statusCode: HttpStatusCode.TooManyRequests, throttleDelay: TimeSpan.FromSeconds(1), expectedThrottled: true, useDateForRetryCondition: true)]),
+        new("TooManyRequests (Delta) too large", [new(statusCode: HttpStatusCode.TooManyRequests, throttleDelay: TimeSpan.FromSeconds(30), expectedNextRetryDelayMilliseconds: 5000, expectedThrottled: true)]),
+        new("TooManyRequests (HTTP-Date) too large", [new(statusCode: HttpStatusCode.TooManyRequests, throttleDelay: TimeSpan.FromSeconds(30), expectedNextRetryDelayMilliseconds: 5000, expectedThrottled: true, useDateForRetryCondition: true)]),
+#else
+        new("TooManyRequests (Delta)", [new(statusCode: (HttpStatusCode)429, throttleDelay: TimeSpan.FromSeconds(1), expectedThrottled: true)]),
+        new("TooManyRequests (HTTP-Date)", [new(statusCode: (HttpStatusCode)429, throttleDelay: TimeSpan.FromSeconds(1), expectedThrottled: true, useDateForRetryCondition: true)]),
+        new("TooManyRequests (Delta) too large", [new(statusCode: (HttpStatusCode)429, throttleDelay: TimeSpan.FromSeconds(30), expectedNextRetryDelayMilliseconds: 5000, expectedThrottled: true)]),
+        new("TooManyRequests (HTTP-Date) too large", [new(statusCode: (HttpStatusCode)429, throttleDelay: TimeSpan.FromSeconds(30), expectedNextRetryDelayMilliseconds: 5000, expectedThrottled: true, useDateForRetryCondition: true)]),
 #endif
 
         new(
@@ -69,17 +79,22 @@ public class HttpRetryTestCase
     {
         public ExportClientHttpResponse Response;
         public TimeSpan? ThrottleDelay;
+        public TimeSpan TimestampTolerance;
         public int? ExpectedNextRetryDelayMilliseconds;
         public bool ExpectedSuccess;
+        public bool ExpectedThrottled;
 
         internal HttpRetryAttempt(
             HttpStatusCode? statusCode,
             TimeSpan? throttleDelay = null,
             bool isDeadlineExceeded = false,
             int expectedNextRetryDelayMilliseconds = 1500,
-            bool expectedSuccess = true)
+            bool expectedSuccess = true,
+            bool expectedThrottled = false,
+            bool useDateForRetryCondition = false)
         {
             this.ThrottleDelay = throttleDelay;
+            this.TimestampTolerance = useDateForRetryCondition ? TimeSpan.FromMilliseconds(expectedNextRetryDelayMilliseconds) : TimeSpan.Zero;
 
             HttpResponseMessage? responseMessage = null;
             if (statusCode != null)
@@ -88,9 +103,11 @@ public class HttpRetryTestCase
                 responseMessage = new HttpResponseMessage();
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
-                if (throttleDelay != null)
+                if (throttleDelay is { } value)
                 {
-                    responseMessage.Headers.RetryAfter = new RetryConditionHeaderValue(throttleDelay.Value);
+                    responseMessage.Headers.RetryAfter = useDateForRetryCondition
+                        ? new RetryConditionHeaderValue(DateTimeOffset.UtcNow.Add(value))
+                        : new RetryConditionHeaderValue(value);
                 }
 
                 responseMessage.StatusCode = (HttpStatusCode)statusCode;
@@ -101,6 +118,7 @@ public class HttpRetryTestCase
             this.Response = new ExportClientHttpResponse(expectedSuccess, deadlineUtc, responseMessage, new HttpRequestException());
             this.ExpectedNextRetryDelayMilliseconds = expectedNextRetryDelayMilliseconds;
             this.ExpectedSuccess = expectedSuccess;
+            this.ExpectedThrottled = expectedThrottled;
         }
     }
 }
