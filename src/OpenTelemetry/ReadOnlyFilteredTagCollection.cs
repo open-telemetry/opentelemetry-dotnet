@@ -115,7 +115,6 @@ public readonly struct ReadOnlyFilteredTagCollection
                 {
                     if (includeKeys != null)
                     {
-                        // Include mode: skip tags that were kept (not filtered)
                         if (includeKeys.Contains(tags[index].Key))
                         {
                             continue;
@@ -125,7 +124,6 @@ public readonly struct ReadOnlyFilteredTagCollection
                     }
                     else if (excludeKeys != null)
                     {
-                        // Exclude mode: yield only tags that were dropped (filtered)
                         if (!excludeKeys.Contains(tags[index].Key))
                         {
                             continue;
