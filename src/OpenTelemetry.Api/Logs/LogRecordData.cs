@@ -56,7 +56,7 @@ internal
     /// <remarks>
     /// Notes:
     /// <list type="bullet">
-     /// <item> The <see cref="Timestamp"/> property is initialized  to <see cref="DateTime.MinValue"/>
+    /// <item> The <see cref="Timestamp"/> property is initialized  to <see cref="DateTime.MinValue"/>
     /// automatically, indicating the timestamp is not set.</item>
     /// <item>The <see cref="ObservedTimestamp"/> property is  initialized
     /// to <see cref="DateTime.UtcNow"/> automatically.</item>
