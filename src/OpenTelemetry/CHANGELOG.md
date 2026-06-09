@@ -34,6 +34,15 @@ Notes](../../RELEASENOTES.md).
   10 million values.
   ([#7165](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7165))
 
+* Fixed a circular reference which could cause a `LoggerProvider` to fail to
+  resolve when one of its dependencies depends on `ILogger` or `ILoggerFactory`.
+  As part of this fix the `LoggerProvider` resolved from dependency injection
+  is now created lazily when the first logger is created rather than when
+  `ILoggerProvider` or `ILoggerFactory` is resolved. A consequence is that any
+  invalid configuration now surfaces when the first log record is written instead
+  of when the logging services are resolved.
+  ([#7308](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7308))
+
 ## 1.15.3
 
 Released 2026-Apr-21

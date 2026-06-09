@@ -59,15 +59,18 @@ public class OtlpExporterHelperExtensionsTests
 
         using var sp = services.BuildServiceProvider();
 
-        Assert.Throws<NotSupportedException>(sp.GetRequiredService<ILoggerProvider>);
+        var loggerProvider = sp.GetRequiredService<ILoggerProvider>();
 
-        Assert.Throws<NotSupportedException>(() => LoggerFactory.Create(builder =>
+        using var loggerFactory = LoggerFactory.Create(builder =>
         {
             builder.AddOpenTelemetry(logging =>
             {
                 logging.AddOtlpExporter(o => o.Protocol = OtlpExportProtocol.Grpc);
             });
-        }));
+        });
+
+        Assert.Throws<NotSupportedException>(() => loggerProvider.CreateLogger("MyLogger"));
+        Assert.Throws<NotSupportedException>(() => loggerFactory.CreateLogger("MyLogger"));
     }
 
     [Fact]
