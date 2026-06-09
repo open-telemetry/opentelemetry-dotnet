@@ -1183,6 +1183,50 @@ public sealed partial class PrometheusSerializerTests
     }
 
     [Fact]
+    public async Task HistogramWithLargeTagValueSerializesUsingGrownBuffer()
+    {
+        // A tag value larger than the SerializeTags initial 128-byte scratch buffer must
+        // still serialize correctly by growing that buffer (now bounded by the size cap).
+        var largeTagValue = new string('a', 4096);
+
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView(instrument => new ExplicitBucketHistogramConfiguration { Boundaries = [1, 2] })
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        var histogram = meter.CreateHistogram<double>("test_histogram");
+        histogram.Record(1.5, new KeyValuePair<string, object?>("key", largeTagValue));
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics: false);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        await Verify(output, "txt", VerifySettings);
+    }
+
+    [Fact]
+    public void SerializeTagsBufferGrowthIsCappedToPreventUnboundedAllocation()
+    {
+        // Grows by doubling while under the cap.
+        Assert.Equal(256, PrometheusSerializer.GetNextSerializedTagsBufferSize(128));
+
+        // Growth up to exactly the maximum is permitted.
+        Assert.Equal(
+            PrometheusSerializer.MaxSerializedTagsBufferSize,
+            PrometheusSerializer.GetNextSerializedTagsBufferSize(PrometheusSerializer.MaxSerializedTagsBufferSize / 2));
+
+        // Growth beyond the maximum fails fast rather than allocating without bound.
+        Assert.Throws<InvalidOperationException>(
+            () => PrometheusSerializer.GetNextSerializedTagsBufferSize((PrometheusSerializer.MaxSerializedTagsBufferSize / 2) + 1));
+    }
+
+    [Fact]
     public void WriteAsciiStringNoEscapeWritesAsciiBytes()
     {
         var value = "metric_name_total";

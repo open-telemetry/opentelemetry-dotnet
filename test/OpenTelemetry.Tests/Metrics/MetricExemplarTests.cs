@@ -997,6 +997,99 @@ public class MetricExemplarTests : MetricTestsBase
         Assert.All(exemplars, e => Assert.Equal(10.0, e.DoubleValue));
     }
 
+    [Fact]
+    public void ExemplarReservoirOfferThrowingForLongCounter_ExceptionSwallowedAndMeasurementRecorded()
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateCounter<long>("testCounter");
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
+            .AddView(
+                counter.Name,
+                new MetricStreamConfiguration
+                {
+                    ExemplarReservoirFactory = () => new ThrowingExemplarReservoir(),
+                })
+            .AddInMemoryExporter(exportedItems));
+
+        counter.Add(10);
+        counter.Add(20);
+        counter.Add(30);
+
+        Assert.True(meterProvider.ForceFlush(MaxTimeToAllowForFlush));
+
+        var metricPoint = GetFirstMetricPoint(exportedItems);
+        Assert.NotNull(metricPoint);
+        Assert.Equal(60L, metricPoint.Value.GetSumLong());
+    }
+
+    [Fact]
+    public void ExemplarReservoirOfferThrowingForDoubleCounter_ExceptionSwallowedAndMeasurementRecorded()
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateCounter<double>("testCounter");
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
+            .AddView(
+                counter.Name,
+                new MetricStreamConfiguration
+                {
+                    ExemplarReservoirFactory = () => new ThrowingExemplarReservoir(),
+                })
+            .AddInMemoryExporter(exportedItems));
+
+        counter.Add(1.5);
+        counter.Add(2.5);
+        counter.Add(3.0);
+
+        Assert.True(meterProvider.ForceFlush(MaxTimeToAllowForFlush));
+
+        var metricPoint = GetFirstMetricPoint(exportedItems);
+        Assert.NotNull(metricPoint);
+        Assert.Equal(7.0, metricPoint.Value.GetSumDouble());
+    }
+
+    [Fact]
+    public void ExemplarReservoirOfferThrowing_SubsequentMeasurementsAreStillRecorded()
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var histogram = meter.CreateHistogram<double>("testHistogram");
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
+            .AddView(
+                histogram.Name,
+                new MetricStreamConfiguration
+                {
+                    ExemplarReservoirFactory = () => new ThrowingExemplarReservoir(),
+                })
+            .AddInMemoryExporter(exportedItems));
+
+        histogram.Record(1);
+        histogram.Record(2);
+        histogram.Record(3);
+        histogram.Record(4);
+        histogram.Record(5);
+
+        Assert.True(meterProvider.ForceFlush(MaxTimeToAllowForFlush));
+
+        var metricPoint = GetFirstMetricPoint(exportedItems);
+        Assert.NotNull(metricPoint);
+        Assert.Equal(5L, metricPoint.Value.GetHistogramCount());
+        Assert.Equal(15.0, metricPoint.Value.GetHistogramSum());
+    }
+
     private static (double Value, bool ExpectTraceId)[] GenerateRandomValues(
         int count,
         bool expectTraceId,
@@ -1076,5 +1169,14 @@ public class MetricExemplarTests : MetricTestsBase
 
         public override void Offer(in ExemplarMeasurement<long> measurement)
             => throw new NotSupportedException();
+    }
+
+    private sealed class ThrowingExemplarReservoir() : FixedSizeExemplarReservoir(1)
+    {
+        public override void Offer(in ExemplarMeasurement<long> measurement)
+            => throw new InvalidOperationException("Simulated reservoir failure (long).");
+
+        public override void Offer(in ExemplarMeasurement<double> measurement)
+            => throw new InvalidOperationException("Simulated reservoir failure (double).");
     }
 }
