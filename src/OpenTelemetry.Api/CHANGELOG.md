@@ -29,6 +29,10 @@ Notes](../../RELEASENOTES.md).
   `Timestamp = DateTime.UtcNow` explicitly on their `LogRecordData` instance.
   ([#7045](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7045))
 
+* Added `ObservedTimestamp` property to `LogRecordData`. Note that `LogRecordData`
+  is only public in pre-release versions of the package.
+  ([#6979](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6979))
+
 ## 1.15.3
 
 Released 2026-Apr-21

@@ -28,14 +28,18 @@ internal
 {
     internal DateTime TimestampBacking = DateTime.MinValue;
 
+    internal DateTime ObservedTimestampBacking = DateTime.UtcNow;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="LogRecordData"/> struct.
     /// </summary>
     /// <remarks>
     /// Notes:
     /// <list type="bullet">
-    /// <item>The <see cref="Timestamp"/> property is initialized to <see
-    /// cref="DateTime.MinValue"/> automatically.</item>
+    /// <item> The <see cref="Timestamp"/> property is initialized  to <see cref="DateTime.MinValue"/>
+    /// automatically, indicating the timestamp is not set.</item>
+    /// <item>The <see cref="ObservedTimestamp"/> property is  initialized
+    /// to <see cref="DateTime.UtcNow"/> automatically.</item>
     /// <item>The <see cref="TraceId"/>, <see cref="SpanId"/>, and <see
     /// cref="TraceFlags"/> properties will be set using the <see
     /// cref="Activity.Current"/> instance.</item>
@@ -50,10 +54,13 @@ internal
     /// Initializes a new instance of the <see cref="LogRecordData"/> struct.
     /// </summary>
     /// <remarks>
-    /// Note: The <see cref="Timestamp"/> property is initialized to <see
-    /// cref="DateTime.MinValue"/> automatically, indicating the timestamp is
-    /// not set. Set <see cref="Timestamp"/> explicitly to provide the time the
-    /// event occurred.
+    /// Notes:
+    /// <list type="bullet">
+    /// <item> The <see cref="Timestamp"/> property is initialized  to <see cref="DateTime.MinValue"/>
+    /// automatically, indicating the timestamp is not set.</item>
+    /// <item>The <see cref="ObservedTimestamp"/> property is  initialized
+    /// to <see cref="DateTime.UtcNow"/> automatically.</item>
+    /// </list>
     /// </remarks>
     /// <param name="activity">Optional <see cref="Activity"/> used to populate
     /// trace context properties (<see cref="TraceId"/>, <see cref="SpanId"/>,
@@ -67,10 +74,13 @@ internal
     /// Initializes a new instance of the <see cref="LogRecordData"/> struct.
     /// </summary>
     /// <remarks>
-    /// Note: The <see cref="Timestamp"/> property is initialized to <see
-    /// cref="DateTime.MinValue"/> automatically, indicating the timestamp is
-    /// not set. Set <see cref="Timestamp"/> explicitly to provide the time the
-    /// event occurred.
+    /// Notes:
+    /// <list type="bullet">
+    /// <item> The <see cref="Timestamp"/> property is initialized  to <see cref="DateTime.MinValue"/>
+    /// automatically, indicating the timestamp is not set.</item>
+    /// <item>The <see cref="ObservedTimestamp"/> property is  initialized
+    /// to <see cref="DateTime.UtcNow"/> automatically.</item>
+    /// </list>
     /// </remarks>
     /// <param name="activityContext"><see cref="ActivityContext"/> used to
     /// populate trace context properties (<see cref="TraceId"/>, <see
@@ -101,6 +111,20 @@ internal
     {
         readonly get => this.TimestampBacking;
         set => this.TimestampBacking = value.Kind == DateTimeKind.Local ? value.ToUniversalTime() : value;
+    }
+
+    /// <summary>
+    /// Gets or sets the timestamp when the log was recorded by OpenTelemetry's code.
+    /// </summary>
+    /// <remarks>
+    /// Note: If <see cref="ObservedTimestamp"/> is set to a value with <see
+    /// cref="DateTimeKind.Local"/> it will be automatically converted to
+    /// UTC using <see cref="DateTime.ToUniversalTime"/>.
+    /// </remarks>
+    public DateTime ObservedTimestamp
+    {
+        readonly get => this.ObservedTimestampBacking;
+        set { this.ObservedTimestampBacking = value.Kind == DateTimeKind.Local ? value.ToUniversalTime() : value; }
     }
 
     /// <summary>

@@ -27,6 +27,9 @@ Notes](../../RELEASENOTES.md).
 * Update `OpenTelemetrySdkEventSource` to support the W3C randomness flag.
   ([#7301](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7301))
 
+* Added `ObservedTimestamp` property to `LogRecord`.
+  ([#6979](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6979))
+
 * **Breaking Change** Explicit histogram boundaries no longer allow more than
   10 million values.
   ([#7165](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7165))
