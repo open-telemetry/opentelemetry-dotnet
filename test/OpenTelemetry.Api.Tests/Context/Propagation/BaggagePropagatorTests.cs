@@ -237,7 +237,7 @@ public class BaggagePropagatorTests
         var baggage = propagationContext.Baggage.GetBaggage().FirstOrDefault();
 
         Assert.Equal("SomeKey", baggage.Key);
-        Assert.Equal("SomeValue;metdata", baggage.Value);
+        Assert.Equal("SomeValue;metadata", baggage.Value);
     }
 
     [Fact]
