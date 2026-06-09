@@ -48,7 +48,7 @@ Notes](../../RELEASENOTES.md).
 * Fixed the retry deadline check so a `Retry-After` delay (whether a delta or an
   HTTP-date) that would extend a retry beyond the configured export timeout now
   correctly fails fast and drops the data.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7375](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7375))
 
 ## 1.15.3
 
