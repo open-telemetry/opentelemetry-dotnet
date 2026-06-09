@@ -119,7 +119,7 @@ internal static class PrometheusHeadersParser
             if (version is null)
             {
                 // Use the oldest version if no version preference was specified
-                version = isOpenMetrics ? PrometheusProtocol.OpenMetricsV0 : PrometheusProtocol.PrometheusVersion0;
+                version = isOpenMetrics ? PrometheusProtocol.OpenMetricsV0 : PrometheusProtocol.PrometheusV0;
             }
             else if (version.Major is not > 0)
             {
@@ -137,6 +137,8 @@ internal static class PrometheusHeadersParser
                 escaping,
                 version,
                 isOpenMetrics);
+
+            protocol.Validate();
 
             preferences.Add((protocol, quality));
         }
