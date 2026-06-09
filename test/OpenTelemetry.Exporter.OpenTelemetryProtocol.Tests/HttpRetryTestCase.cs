@@ -33,6 +33,11 @@ public class HttpRetryTestCase
         new("GatewayTimeout", [new(statusCode: HttpStatusCode.GatewayTimeout, throttleDelay: TimeSpan.FromSeconds(1))]),
         new("ServiceUnavailable", [new(statusCode: HttpStatusCode.ServiceUnavailable, throttleDelay: TimeSpan.FromSeconds(1), expectedThrottled: true)]),
 
+        // A throttle delay that would push the retry past the configured deadline must
+        // fail fast and drop the data rather than blocking for the throttle duration.
+        new("ServiceUnavailable (Delta) exceeds deadline", [new(statusCode: HttpStatusCode.ServiceUnavailable, throttleDelay: TimeSpan.FromSeconds(30), deadlineFromNow: TimeSpan.FromSeconds(1), expectedSuccess: false)]),
+        new("ServiceUnavailable (HTTP-Date) exceeds deadline", [new(statusCode: HttpStatusCode.ServiceUnavailable, throttleDelay: TimeSpan.FromSeconds(30), deadlineFromNow: TimeSpan.FromSeconds(1), expectedSuccess: false, useDateForRetryCondition: true)]),
+
 #if NET
         new("TooManyRequests (Delta)", [new(statusCode: HttpStatusCode.TooManyRequests, throttleDelay: TimeSpan.FromSeconds(1), expectedThrottled: true)]),
         new("TooManyRequests (HTTP-Date)", [new(statusCode: HttpStatusCode.TooManyRequests, throttleDelay: TimeSpan.FromSeconds(1), expectedThrottled: true, useDateForRetryCondition: true)]),
@@ -91,7 +96,8 @@ public class HttpRetryTestCase
             int expectedNextRetryDelayMilliseconds = 1500,
             bool expectedSuccess = true,
             bool expectedThrottled = false,
-            bool useDateForRetryCondition = false)
+            bool useDateForRetryCondition = false,
+            TimeSpan? deadlineFromNow = null)
         {
             this.ThrottleDelay = throttleDelay;
             this.TimestampTolerance = useDateForRetryCondition ? TimeSpan.FromMilliseconds(expectedNextRetryDelayMilliseconds) : TimeSpan.Zero;
@@ -113,8 +119,11 @@ public class HttpRetryTestCase
                 responseMessage.StatusCode = (HttpStatusCode)statusCode;
             }
 
-            // Using arbitrary +1 hr for deadline for test purposes.
-            var deadlineUtc = isDeadlineExceeded ? DateTime.UtcNow.AddMilliseconds(-1) : DateTime.UtcNow.AddHours(1);
+            // Using arbitrary +1 hr for deadline for test purposes, unless a deadline is specified.
+            var deadlineUtc = isDeadlineExceeded
+                ? DateTime.UtcNow.AddMilliseconds(-1)
+                : DateTime.UtcNow.Add(deadlineFromNow ?? TimeSpan.FromHours(1));
+
             this.Response = new ExportClientHttpResponse(expectedSuccess, deadlineUtc, responseMessage, new HttpRequestException());
             this.ExpectedNextRetryDelayMilliseconds = expectedNextRetryDelayMilliseconds;
             this.ExpectedSuccess = expectedSuccess;
