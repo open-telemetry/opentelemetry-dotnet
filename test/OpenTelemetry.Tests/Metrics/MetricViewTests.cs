@@ -1743,18 +1743,21 @@ public class MetricViewTests : MetricTestsBase
             })
             .AddInMemoryExporter(exportedItems));
 
-        using (var inMemoryEventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log))
-        {
-            var counter = meter.CreateCounter<long>("FruitCounter");
-            counter.Add(10, new("name", "apple"), new("color", "red"));
-
-            // Empty TagKeys is a contradiction, view ignored
-            Assert.Single(inMemoryEventListener.Messages, e => e.EventId == 41);
-        }
+        var counter = meter.CreateCounter<long>("FruitCounter");
+        counter.Add(10, new("name", "apple"), new("color", "red"));
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
-        // Counter is still reported with default config
+        // Empty TagKeys = no attributes; all measurements collapse to a single point
         Assert.Single(exportedItems);
+        var metric = exportedItems[0];
+        Assert.Equal("FruitCounter", metric.Name);
+        long sum = 0;
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            sum += mp.GetSumLong();
+        }
+
+        Assert.Equal(10, sum);
     }
 }

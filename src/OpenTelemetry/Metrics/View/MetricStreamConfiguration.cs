@@ -156,12 +156,5 @@ public class MetricStreamConfiguration
                 "Use only one filtering strategy per view. For combined behavior, use the " +
                 "Func<Instrument, MetricStreamConfiguration> overload of AddView with custom logic.");
         }
-
-        if (this.CopiedTagKeys?.Length == 0)
-        {
-            throw new InvalidOperationException(
-                "TagKeys is empty (all attributes are dropped). " +
-                "Remove TagKeys or use a non-empty array.");
-        }
     }
 }
