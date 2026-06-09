@@ -30,6 +30,10 @@ Notes](../../RELEASENOTES.md).
 * Added `ObservedTimestamp` property to `LogRecord`.
   ([#6979](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6979))
 
+* **Breaking Change** Explicit histogram boundaries no longer allow more than
+  10 million values.
+  ([#7165](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7165))
+
 * Fixed a circular reference which could cause a `LoggerProvider` to fail to
   resolve when one of its dependencies depends on `ILogger` or `ILoggerFactory`.
   As part of this fix the `LoggerProvider` resolved from dependency injection
