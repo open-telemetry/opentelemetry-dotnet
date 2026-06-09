@@ -1,0 +1,11 @@
+#nullable enable
+Microsoft.Extensions.Configuration.DeclarativeConfigurationBuilderExtensions
+[OTEL1006]OpenTelemetry.Configuration.Declarative.DeclarativeConfigurationException
+[OTEL1006]OpenTelemetry.Configuration.Declarative.DeclarativeConfigurationException.DeclarativeConfigurationException() -> void
+[OTEL1006]OpenTelemetry.Configuration.Declarative.DeclarativeConfigurationException.DeclarativeConfigurationException(string! message) -> void
+[OTEL1006]OpenTelemetry.Configuration.Declarative.DeclarativeConfigurationException.DeclarativeConfigurationException(string! message, System.Exception! innerException) -> void
+OpenTelemetry.OpenTelemetryBuilderDeclarativeConfigurationExtensions
+[OTEL1006]static Microsoft.Extensions.Configuration.DeclarativeConfigurationBuilderExtensions.AddOpenTelemetryDeclarativeConfiguration(this Microsoft.Extensions.Configuration.IConfigurationBuilder! builder) -> Microsoft.Extensions.Configuration.IConfigurationBuilder!
+[OTEL1006]static Microsoft.Extensions.Configuration.DeclarativeConfigurationBuilderExtensions.AddOpenTelemetryDeclarativeConfiguration(this Microsoft.Extensions.Configuration.IConfigurationBuilder! builder, string! filePath) -> Microsoft.Extensions.Configuration.IConfigurationBuilder!
+[OTEL1006]static OpenTelemetry.OpenTelemetryBuilderDeclarativeConfigurationExtensions.UseDeclarativeConfiguration(this OpenTelemetry.IOpenTelemetryBuilder! builder) -> OpenTelemetry.IOpenTelemetryBuilder!
+[OTEL1006]static OpenTelemetry.OpenTelemetryBuilderDeclarativeConfigurationExtensions.UseDeclarativeConfiguration(this OpenTelemetry.IOpenTelemetryBuilder! builder, string! filePath) -> OpenTelemetry.IOpenTelemetryBuilder!

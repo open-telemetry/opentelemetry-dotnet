@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>$(TargetFrameworksForLibraries)</TargetFrameworks>
+    <Description>
+      Declarative configuration source for the OpenTelemetry .NET SDK.
+      Implements the OpenTelemetry declarative-configuration specification
+      as an IConfigurationSource/IConfigurationProvider.</Description>
+    <PackageTags>$(PackageTags);configuration;declarative;yaml</PackageTags>
+    <MinVerTagPrefix>coreunstable-</MinVerTagPrefix>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="YamlDotNet" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OpenTelemetry.Api.ProviderBuilderExtensions\OpenTelemetry.Api.ProviderBuilderExtensions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="$(RepoRoot)\src\Shared\DiagnosticDefinitions.cs" Link="Includes\DiagnosticDefinitions.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\ExceptionExtensions.cs" Link="Includes\ExceptionExtensions.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\Guard.cs" Link="Includes\Guard.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\Shims\ExperimentalAttribute.cs" Link="Includes\Shims\ExperimentalAttribute.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\Shims\IsExternalInit.cs" Link="Includes\Shims\IsExternalInit.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\Shims\NullableAttributes.cs" Link="Includes\Shims\NullableAttributes.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="OpenTelemetry.Configuration.Declarative.Tests" PublicKey="$(StrongNamePublicKey)" />
+  </ItemGroup>
+
+</Project>
