@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using System.IO.Compression;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -13,12 +14,11 @@ using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using OpenTelemetry.Exporter.Prometheus.Tests;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
-using Xunit;
-using Xunit.Abstractions;
 
 namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests;
 
@@ -35,6 +35,8 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
             [
                 KeyValuePair.Create<string, string?>("OTEL_SDK_DISABLED", "true"),
             ]);
+
+        builder.Logging.SetMinimumLevel(LogLevel.Warning);
 
         // Listen on any available port
         builder.WebHost.UseUrls("http://127.0.0.1:0");
@@ -68,13 +70,63 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
         Assert.Empty(content);
     }
 
+    [Fact]
+    public async Task Scrape_Endpoint_Uses_GZip_When_Requested()
+    {
+        // Arrange
+        var builder = WebApplication.CreateBuilder();
+
+        // Listen on any available port
+        builder.WebHost.UseUrls("http://127.0.0.1:0");
+
+        builder.Services
+            .AddOpenTelemetry()
+            .WithMetrics((builder) => builder.AddPrometheusExporter());
+
+        using var app = builder.Build();
+
+        app.MapPrometheusScrapingEndpoint();
+
+        await app.StartAsync();
+
+        var server = app.Services.GetRequiredService<IServer>();
+        var addresses = server.Features.Get<IServerAddressesFeature>();
+
+        var baseAddress = addresses!.Addresses
+            .Select((p) => new Uri(p))
+            .Last();
+
+        using var httpClient = new HttpClient();
+
+        httpClient.DefaultRequestHeaders.Add("Accept-Encoding", "gzip");
+
+        using var response = await httpClient.GetAsync(new Uri(baseAddress, "metrics"));
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.NotNull(response.Content);
+        Assert.NotNull(response.Content.Headers.ContentEncoding);
+        Assert.Equal<string>(["gzip"], response.Content.Headers.ContentEncoding);
+        Assert.Equal(["Accept-Encoding"], response.Headers.Vary);
+        Assert.NotNull(response.Content.Headers.ContentType);
+        Assert.Equal("text/plain; version=0.0.4; charset=utf-8", response.Content.Headers.ContentType.ToString());
+
+        using var compressed = await response.Content.ReadAsStreamAsync();
+        using var decompressed = new GZipStream(compressed, CompressionMode.Decompress);
+        using var reader = new StreamReader(decompressed);
+
+        var content = await reader.ReadToEndAsync();
+
+        Assert.NotEmpty(content);
+        Assert.EndsWith("# EOF\n", content, StringComparison.Ordinal);
+    }
+
     [EnabledOnDockerPlatformTheory(DockerPlatform.Linux)]
     [InlineData("")]
     [InlineData("OpenMetricsText0.0.1")]
     [InlineData("OpenMetricsText1.0.0")]
     [InlineData("PrometheusText0.0.4")]
     [InlineData("PrometheusText1.0.0")]
-
     public async Task Prometheus_Can_Scrape_Metrics(string scrapeProtocol) => await GenerateMetricsAsync(async (baseAddress) =>
     {
         // Arrange
@@ -99,34 +151,38 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
 
             await WaitForServiceDiscoveryAsync(prometheusBaseAddress, outputHelper, cts.Token);
 
-            IReadOnlyList<string> series = [];
+            HashSet<string> expectedSeries =
+            [
+#if NET10_0_OR_GREATER
+                "aspnetcore_memory_pool_allocated_bytes_total",
+#endif
+                "http_server_active_requests",
+                "http_server_request_duration_seconds_bucket",
+                "http_server_request_duration_seconds_count",
+                "http_server_request_duration_seconds_sum",
+                "kestrel_active_connections",
+                "kestrel_connection_duration_seconds_bucket",
+                "kestrel_connection_duration_seconds_count",
+                "kestrel_connection_duration_seconds_sum",
+                "processed_bytes_total",
+                "queue_balance",
+                "temperature_celsius",
+            ];
+
+            HashSet<string> actualSeries = [];
 
             // Assert
             while (!cts.IsCancellationRequested)
             {
-                series = await WaitForMetricsSeriesAsync(prometheusBaseAddress, outputHelper, cts.Token);
+                actualSeries = await WaitForMetricsSeriesAsync(prometheusBaseAddress, outputHelper, cts.Token);
 
-                if (series.Contains("temperature_celsius"))
+                if (actualSeries.IsProperSupersetOf(expectedSeries))
                 {
                     break;
                 }
             }
 
-            Assert.Contains("http_server_active_requests", series);
-            Assert.Contains("http_server_request_duration_seconds_bucket", series);
-            Assert.Contains("http_server_request_duration_seconds_count", series);
-            Assert.Contains("http_server_request_duration_seconds_sum", series);
-            Assert.Contains("kestrel_active_connections", series);
-            Assert.Contains("kestrel_connection_duration_seconds_bucket", series);
-            Assert.Contains("kestrel_connection_duration_seconds_count", series);
-            Assert.Contains("kestrel_connection_duration_seconds_sum", series);
-            Assert.Contains("processed_bytes_total", series);
-            Assert.Contains("queue_balance", series);
-            Assert.Contains("temperature_celsius", series);
-
-#if NET10_0_OR_GREATER
-            Assert.Contains("aspnetcore_memory_pool_allocated_bytes_total", series);
-#endif
+            Assert.ProperSuperset(expectedSeries, actualSeries);
         }
         finally
         {
@@ -138,7 +194,7 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
             await prometheus.DisposeAsync();
         }
 
-        static async Task<IReadOnlyList<string>> WaitForMetricsSeriesAsync(
+        static async Task<HashSet<string>> WaitForMetricsSeriesAsync(
             Uri baseAddress,
             ITestOutputHelper outputHelper,
             CancellationToken cancellationToken)
@@ -182,7 +238,7 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
                                 }
                             }
 
-                            return [.. series];
+                            return series;
                         }
                     }
                 }
@@ -326,6 +382,8 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
         const string KeepTag = "keep";
 
         var builder = WebApplication.CreateBuilder();
+
+        builder.Logging.SetMinimumLevel(LogLevel.Warning);
 
         // Listen on any available port
         builder.WebHost.UseUrls("http://0.0.0.0:0");

@@ -51,6 +51,7 @@ jobs:
           md: ['**.md']
           build: ['build/**', '.github/**/*.yml', '**/*.targets', '**/*.props', 'global.json']
           github: ['.github/**/*']
+          pwsh: [ '**.ps1', '**.psm1', '**.psd1' ]
           shared: ['src/Shared/**']
           code: ['**.cs', '**.csproj', '.editorconfig']
           solution: ['OpenTelemetry.slnx']
@@ -78,6 +79,15 @@ jobs:
       contains(needs.detect-changes.outputs.changes, 'md')
       || contains(needs.detect-changes.outputs.changes, 'build')
     uses: ./.github/workflows/markdownlint.yml
+
+  lint-pwsh:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'pwsh')
+      || contains(needs.detect-changes.outputs.changes, 'github')
+    uses: ./.github/workflows/pwshlint.yml
+    permissions:
+      contents: read # To checkout the code
 
   lint-dotnet-format:
     needs: detect-changes
@@ -217,7 +227,7 @@ jobs:
         persist-credentials: false
         show-progress: false
     - name: Setup .NET
-      uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
+      uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5.3.0
     - name: Run benchmarks
       shell: pwsh
       run: |
@@ -225,15 +235,7 @@ jobs:
         if ($IsWindows) {
           $runtimes += "net462"
         }
-        dotnet run `
-          --configuration Release `
-          --framework net10.0 `
-          --project ./test/Benchmarks `
-          -- `
-          --filter "*SamplerBenchmarks*" `
-          --job Short `
-          --memory `
-          --runtimes $runtimes
+        ./benchmark.ps1 @("*SamplerBenchmarks*") -EnableMemoryDiagnoser -Job Short -Runtimes $runtimes -SkipBaseline
 
   validate-packages:
     needs: detect-changes
@@ -281,6 +283,7 @@ jobs:
       lint-actions,
       lint-misspell-sanitycheck,
       lint-md,
+      lint-pwsh,
       lint-dotnet-format,
       build-test-solution,
       build-test-project-stable,

@@ -19,8 +19,16 @@ Notes](../../RELEASENOTES.md).
   once per collection cycle.
   ([#7188](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7188))
 
+* Added exception safety for user-supplied `ExemplarReservoir` implementations.
+  Exceptions thrown from `Offer` are now caught and logged rather than propagating
+  out of `Counter.Add`/`Histogram.Record`.
+  ([#7277](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7277))
+
 * Update `OpenTelemetrySdkEventSource` to support the W3C randomness flag.
   ([#7301](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7301))
+
+* Added `ObservedTimestamp` property to `LogRecord`.
+  ([#6979](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6979))
 
 * Fixed a circular reference which could cause a `LoggerProvider` to fail to
   resolve when one of its dependencies depends on `ILogger` or `ILoggerFactory`.

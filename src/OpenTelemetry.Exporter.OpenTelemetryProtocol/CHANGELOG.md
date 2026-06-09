@@ -37,6 +37,14 @@ Notes](../../RELEASENOTES.md).
 * Do not enable the integration with `IHttpClientFactory` when mTLS is enabled.
   ([#7305](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7305))
 
+* Handle `Retry-After` response headers that specify a date instead of a delay.
+  ([#7364](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7364))
+
+* `observed_time_unix_nano` will no longer always be identical to `time_unix_nano`
+  when using the logs bridge API. By default, it will instead be set to the actual
+  observed time of the log record.
+  ([#6979](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6979))
+
 ## 1.15.3
 
 Released 2026-Apr-21

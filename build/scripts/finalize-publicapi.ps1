@@ -2,26 +2,29 @@ param(
   [Parameter(Mandatory=$true)][string]$minVerTagPrefix
 )
 
+$ErrorActionPreference = "Stop"
+$InformationPreference = "Continue"
+
 # For stable releases "Unshipped" PublicApi text files are merged into "Shipped" versions.
 
-$projectDirs = Get-ChildItem -Path src/**/*.csproj | Select-String "<MinVerTagPrefix>$minVerTagPrefix</MinVerTagPrefix>" -List | Select Path | Split-Path -Parent
+$projectDirs = Get-ChildItem -Path src/**/*.csproj | Select-String "<MinVerTagPrefix>$minVerTagPrefix</MinVerTagPrefix>" -List | Select-Object -ExpandProperty Path | Split-Path -Parent
 
-$path = "\.publicApi\**\PublicAPI.Shipped.txt";
+$path = ".publicApi\**\PublicAPI.Shipped.txt";
 
 foreach ($projectDir in $projectDirs) {
     $searchPath = Join-Path -Path $projectDir -ChildPath $path;
 
-    Write-Host "Search glob: $searchPath";
+    Write-Information "Search glob: $searchPath"
 
     Get-ChildItem -Path $searchPath -Recurse |
         ForEach-Object {
-            Write-Host "Shipped: $_";
+            Write-Information "Shipped: $($_.FullName)"
 
             [string]$shipped = $_.FullName;
             [string]$unshipped = $shipped -replace ".shipped.txt", ".Unshipped.txt";
 
             if (Test-Path $unshipped) {
-                Write-Host "Unshipped: $unshipped";
+                Write-Information "Unshipped: $unshipped"
 
                 Get-Content $shipped, $unshipped |  # get contents of both text files
                     Where-Object {$_ -ne ""} |      # filter empty lines
@@ -31,9 +34,9 @@ foreach ($projectDir in $projectDirs) {
 
                 Clear-Content $unshipped;           # empty unshipped.txt
 
-                Write-Host "...MERGED and SORTED";
+                Write-Information "...MERGED and SORTED"
             }
 
-            Write-Host "";
+            Write-Information ""
         }
 }
