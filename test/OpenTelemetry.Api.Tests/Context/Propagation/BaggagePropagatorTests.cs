@@ -270,7 +270,7 @@ public class BaggagePropagatorTests
         var baggage = Assert.Single(propagationContext.Baggage.GetBaggage());
 
         Assert.Equal("SomeKey", baggage.Key);
-        Assert.Equal("SomeValue;propertyKey=propertyValue", baggage.Value);
+        Assert.Equal("SomeValue ; propertyKey=propertyValue", baggage.Value);
     }
 
     [Fact]
