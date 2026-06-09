@@ -95,26 +95,6 @@ public class MetricStreamConfiguration
         }
     }
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
-    /// <summary>
-    /// Gets or sets a factory function used to generate an <see
-    /// cref="ExemplarReservoir"/> for the metric managed by the view to use
-    /// when storing <see cref="Exemplar"/>s.
-    /// </summary>
-    /// <remarks>
-    /// <inheritdoc cref="ExemplarReservoir" path="/remarks/para[@experimental-warning='true']"/>
-    /// <para>Note: Returning <see langword="null"/> from the factory function will
-    /// result in the default <see cref="ExemplarReservoir"/> being chosen by
-    /// the SDK based on the type of metric.</para>
-    /// Specification: <see
-    /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#stream-configuration"/>.
-    /// </remarks>
-    [Experimental(DiagnosticDefinitions.ExemplarReservoirExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-    public Func<ExemplarReservoir?>? ExemplarReservoirFactory { get; set; }
-#else
-    internal Func<ExemplarReservoir?>? ExemplarReservoirFactory { get; set; }
-#endif
-
 #pragma warning disable CA1819 // Properties should not return arrays
     /// <summary>
     /// Gets or sets the optional tag keys to exclude from the metric stream.
@@ -140,6 +120,26 @@ public class MetricStreamConfiguration
         get => this.CopiedExcludedTagKeys?.ToArray();
         set => this.CopiedExcludedTagKeys = value?.ToArray();
     }
+
+#if EXPOSE_EXPERIMENTAL_FEATURES
+    /// <summary>
+    /// Gets or sets a factory function used to generate an <see
+    /// cref="ExemplarReservoir"/> for the metric managed by the view to use
+    /// when storing <see cref="Exemplar"/>s.
+    /// </summary>
+    /// <remarks>
+    /// <inheritdoc cref="ExemplarReservoir" path="/remarks/para[@experimental-warning='true']"/>
+    /// <para>Note: Returning <see langword="null"/> from the factory function will
+    /// result in the default <see cref="ExemplarReservoir"/> being chosen by
+    /// the SDK based on the type of metric.</para>
+    /// Specification: <see
+    /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#stream-configuration"/>.
+    /// </remarks>
+    [Experimental(DiagnosticDefinitions.ExemplarReservoirExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+    public Func<ExemplarReservoir?>? ExemplarReservoirFactory { get; set; }
+#else
+    internal Func<ExemplarReservoir?>? ExemplarReservoirFactory { get; set; }
+#endif
 
     internal string[]? CopiedTagKeys { get; private set; }
 
