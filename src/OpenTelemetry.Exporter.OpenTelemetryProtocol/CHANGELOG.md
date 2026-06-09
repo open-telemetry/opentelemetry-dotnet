@@ -37,6 +37,9 @@ Notes](../../RELEASENOTES.md).
 * Do not enable the integration with `IHttpClientFactory` when mTLS is enabled.
   ([#7305](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7305))
 
+* Handle `Retry-After` response headers that specify a date instead of a delay.
+  ([#7364](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7364))
+
 ## 1.15.3
 
 Released 2026-Apr-21

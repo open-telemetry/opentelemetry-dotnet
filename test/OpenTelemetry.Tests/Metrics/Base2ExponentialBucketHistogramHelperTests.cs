@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using OpenTelemetry.Tests;
-using Xunit;
-using Xunit.Abstractions;
 
 namespace OpenTelemetry.Metrics.Tests;
 

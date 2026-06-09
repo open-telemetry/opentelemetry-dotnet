@@ -5,7 +5,6 @@ using System.Diagnostics;
 using OpenTelemetry.Exporter.Zipkin.Tests;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
-using Xunit;
 
 namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests;
 

@@ -67,7 +67,7 @@ public class PrometheusFixture : XunitContainerFixture<IContainer>
         return new ContainerBuilder(this.GetImage())
             .WithBindMount(prometheusConfigurationPath, "/etc/prometheus/prometheus.yml")
             .WithBindMount(serviceDiscoveryTargetsPath, "/etc/prometheus/targets/targets.json")
-            .WithCommand("--config.file=/etc/prometheus/prometheus.yml")
+            .WithCommand("--config.file=/etc/prometheus/prometheus.yml", "--log.level=debug")
             .WithExtraHost(DockerInternalHost, "host-gateway")
             .WithPortBinding(4318)
             .WithPortBinding(9090)

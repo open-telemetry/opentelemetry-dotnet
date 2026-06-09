@@ -1,0 +1,2 @@
+﻿# TYPE test_gauge gauge
+test_gauge{otel_scope_name="test_meter",otel_scope_version="1.0.0",otel_scope_library_mascot="dotnetbot",otel_scope_na_me="ignored-name",otel_scope_ver_sion="ignored-version",metric_tag="value"} 123

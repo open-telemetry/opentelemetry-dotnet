@@ -3,7 +3,6 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Metrics;
-using Xunit;
 
 namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests;
 

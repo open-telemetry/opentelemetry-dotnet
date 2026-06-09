@@ -18,7 +18,6 @@
       and https://github.com/dotnet/runtime/issues/92509
     -->
     <NoWarn>$(NoWarn);SYSLIB1100;SYSLIB1101</NoWarn>
-    <AllowUnsafeBlocks Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == '$(NetFrameworkMinimumSupportedVersion)'">true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <!-- This package is explicitly upgraded for .NET 8 to fix native AoT compatibility issues -->
