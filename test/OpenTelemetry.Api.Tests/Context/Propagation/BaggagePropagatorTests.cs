@@ -283,12 +283,7 @@ public class BaggagePropagatorTests
             { BaggagePropagator.BaggageHeaderName, "noequals,=orphanvalue,validkey=validvalue," },
         };
         var propagationContext = this.baggage.Extract(default, carrier, Getter);
-        Assert.Single(propagationContext.Baggage.GetBaggage());
-
-        var baggage = propagationContext.Baggage.GetBaggage().FirstOrDefault();
-
-        Assert.Equal("validkey", baggage.Key);
-        Assert.Equal("validvalue", baggage.Value);
+        Assert.Empty(propagationContext.Baggage.GetBaggage());
     }
 
     [Fact]
@@ -808,8 +803,7 @@ public class BaggagePropagatorTests
         };
 
         var propagationContext = this.baggage.Extract(default, carrier, Getter);
-        Assert.Single(propagationContext.Baggage.GetBaggage());
-        Assert.Equal("valid-key", propagationContext.Baggage.GetBaggage().First().Key);
+        Assert.Empty(propagationContext.Baggage.GetBaggage());
     }
 
     [Fact]

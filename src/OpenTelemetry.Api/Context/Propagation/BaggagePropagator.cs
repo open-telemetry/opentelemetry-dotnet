@@ -221,26 +221,20 @@ public class BaggagePropagator : TextMapPropagator
 
                 if (!IsValidKey(rawKey))
                 {
-                    continue;
+                    // follow dotnet/runtime
+                    break;
                 }
 
                 var key = rawKey.ToString();
 
                 var rawValue = pair.Slice(separatorIndex + 1);
-
-                var semicolonIndex = rawValue.IndexOf(';');
-                if (semicolonIndex >= 0)
-                {
-                    rawValue = rawValue.Slice(0, semicolonIndex);
-                }
-
                 rawValue = rawValue.Trim();
 
                 var value = DecodeIfNeeded(rawValue);
 
                 if (string.IsNullOrEmpty(key))
                 {
-                    continue;
+                    break;
                 }
 
                 baggageDictionary ??= new(StringComparer.Ordinal);
