@@ -224,7 +224,7 @@ public class BaggagePropagatorTests
     }
 
     [Fact]
-    public void ValidateSemicolonMetadataIgnoredOnExtraction()
+    public void ValidateSemicolonMetadataReceivedOnExtraction()
     {
         var carrier = new Dictionary<string, string>
         {
@@ -258,7 +258,7 @@ public class BaggagePropagatorTests
     }
 
     [Fact]
-    public void ValidateOptionalWhiteSpaceBeforeSemicolonIgnored()
+    public void ValidateOptionalWhiteSpaceBeforeSemicolonPreserved()
     {
         var carrier = new Dictionary<string, string>
         {
