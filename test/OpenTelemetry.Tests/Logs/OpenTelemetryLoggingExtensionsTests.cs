@@ -271,6 +271,11 @@ public sealed class OpenTelemetryLoggingExtensionsTests
     [InlineData(false)]
     public void CircularReferenceTest(bool requestLoggerProviderDirectly)
     {
+        // Note: This test exercises the deferred LoggerProvider resolution path
+        // that breaks the circular reference fixed by
+        // https://github.com/open-telemetry/opentelemetry-dotnet/pull/7308. The
+        // re-entrant resolution it guards against only throws under the stricter
+        // circular dependency detection in .NET 11's dependency injection container.
         var services = new ServiceCollection();
 
         services.AddLogging(logging => logging.AddOpenTelemetry());
