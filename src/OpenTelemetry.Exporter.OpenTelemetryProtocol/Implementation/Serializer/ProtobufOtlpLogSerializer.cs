@@ -178,23 +178,9 @@ internal static class ProtobufOtlpLogSerializer
         var logRecordLengthPosition = otlpTagWriterState.WritePosition;
         otlpTagWriterState.WritePosition += ReserveSizeForLength;
 
-        var logTimestamp = logRecord.Timestamp;
-        ulong timeUnixNano;
-        ulong observedTimeUnixNano;
-        if (logTimestamp != DateTime.MinValue)
-        {
-            // Timestamp was explicitly set: use it for both fields.
-            timeUnixNano = (ulong)logTimestamp.ToUnixTimeNanoseconds();
-            observedTimeUnixNano = timeUnixNano;
-        }
-        else
-        {
-            // Timestamp not set -> time_unix_nano = 0 ("unknown or missing" per OTLP spec).
-            // observed_time_unix_nano MUST still be populated (proto spec requirement).
-            timeUnixNano = 0;
-            observedTimeUnixNano = (ulong)DateTime.UtcNow.ToUnixTimeNanoseconds();
-        }
-
+        var timeUnixNano = logRecord.Timestamp == DateTime.MinValue ? 0 : (ulong)logRecord.Timestamp.ToUnixTimeNanoseconds();
+        var observedTimeUnixNano = logRecord.ObservedTimestamp == logRecord.Timestamp ? timeUnixNano
+            : (ulong)logRecord.ObservedTimestamp.ToUnixTimeNanoseconds();
         otlpTagWriterState.WritePosition = ProtobufSerializer.WriteFixed64WithTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpLogFieldNumberConstants.LogRecord_Time_Unix_Nano, timeUnixNano);
         otlpTagWriterState.WritePosition = ProtobufSerializer.WriteFixed64WithTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpLogFieldNumberConstants.LogRecord_Observed_Time_Unix_Nano, observedTimeUnixNano);
 

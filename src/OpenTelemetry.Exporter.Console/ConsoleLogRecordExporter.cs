@@ -50,6 +50,7 @@ public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
         {
             var timestamp = logRecord.Timestamp;
             this.WriteLine($"{"LogRecord.Timestamp:",-RightPaddingLength}{(timestamp == DateTime.MinValue ? "(not set)" : timestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture))}");
+            this.WriteLine($"{"LogRecord.ObservedTimestamp:",-RightPaddingLength}{logRecord.ObservedTimestamp:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
 
             if (logRecord.TraceId != default)
             {
