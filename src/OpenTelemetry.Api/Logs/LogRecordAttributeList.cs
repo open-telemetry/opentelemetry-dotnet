@@ -50,10 +50,16 @@ internal
     {
         readonly get
         {
-            if (this.OverflowAttributes is not null)
+            if (this.Count > OverflowMaxCount)
             {
-                Debug.Assert(index < this.OverflowAttributes.Count, "Invalid index accessed.");
-                return this.OverflowAttributes[index];
+                var overflowAttributes = this.OverflowAttributes;
+                Debug.Assert(overflowAttributes is not null, "Overflow attributes creation failure.");
+#if NET
+                Debug.Assert(index < overflowAttributes.Count, "Invalid index accessed.");
+#else
+                Debug.Assert(index < overflowAttributes!.Count, "Invalid index accessed.");
+#endif
+                return overflowAttributes[index];
             }
 
             return (uint)index >= (uint)this.Count
@@ -74,10 +80,16 @@ internal
 
         set
         {
-            if (this.OverflowAttributes is not null)
+            if (this.Count > OverflowMaxCount)
             {
-                Debug.Assert(index < this.OverflowAttributes.Count, "Invalid index accessed.");
-                this.OverflowAttributes[index] = value;
+                var overflowAttributes = this.OverflowAttributes;
+                Debug.Assert(overflowAttributes is not null, "Overflow attributes creation failure.");
+#if NET
+                Debug.Assert(index < overflowAttributes.Count, "Invalid index accessed.");
+#else
+                Debug.Assert(index < overflowAttributes!.Count, "Invalid index accessed.");
+#endif
+                overflowAttributes[index] = value;
                 return;
             }
 
@@ -128,8 +140,11 @@ internal
         Guard.ThrowIfNull(attributes);
 
         LogRecordAttributeList logRecordAttributes = default;
-        logRecordAttributes.OverflowAttributes = [.. attributes];
-        logRecordAttributes.Count = logRecordAttributes.OverflowAttributes.Count;
+        foreach (var attribute in attributes)
+        {
+            logRecordAttributes.Add(attribute);
+        }
+
         return logRecordAttributes;
     }
 
@@ -221,11 +236,17 @@ internal
             return Empty;
         }
 
-        var overflowAttributes = this.OverflowAttributes;
-        if (overflowAttributes != null)
+        if (readonlyCount > OverflowMaxCount)
         {
+            var overflowAttributes = this.OverflowAttributes;
+            Debug.Assert(overflowAttributes is not null, "Overflow attributes creation failure.");
+
             // An allocation has already occurred, just use the list.
+#if NET
             return overflowAttributes;
+#else
+            return overflowAttributes!;
+#endif
         }
 
         Debug.Assert(readonlyCount <= 8, "Invalid size detected.");
@@ -285,6 +306,7 @@ internal
         Debug.Assert(this.Count - 1 == OverflowMaxCount, "count did not match OverflowMaxCount");
 
         var attributes = this.OverflowAttributes ??= new(OverflowAdditionalCapacity);
+        Debug.Assert(attributes.Count == 0, "Overflow attributes should be empty before transfer.");
 
         attributes.Add(this.attribute1);
         attributes.Add(this.attribute2);

@@ -3,7 +3,6 @@
 
 using System.Diagnostics;
 using OpenTelemetry.Tests;
-using Xunit;
 
 namespace OpenTelemetry.Trace.Tests;
 
@@ -93,17 +92,7 @@ public class ExceptionProcessorTests
 
         Assert.NotNull(activity5);
         Assert.Equal(StatusCode.Unset, activity5.GetStatus().StatusCode);
-#if !NETFRAMEWORK
-        if (Environment.Is64BitProcess)
-        {
-            // In this rare case, the following Activity tag will not get cleaned up due to perf consideration.
-            Assert.NotNull(GetTagValue(activity5, "otel.exception_pointers"));
-        }
-        else
-        {
-            Assert.Null(GetTagValue(activity5, "otel.exception_pointers"));
-        }
-#endif
+        Assert.Null(GetTagValue(activity5, "otel.exception_pointers"));
     }
 
     [Fact]

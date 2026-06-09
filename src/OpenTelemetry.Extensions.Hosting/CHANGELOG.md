@@ -6,6 +6,14 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.15.3
+
+Released 2026-Apr-21
+
+## 1.15.2
+
+Released 2026-Apr-08
+
 ## 1.15.1
 
 Released 2026-Mar-27

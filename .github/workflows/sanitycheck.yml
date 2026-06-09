@@ -1,5 +1,3 @@
-# Called by ci.yml to perform general linting
-# See: https://docs.github.com/en/actions/using-workflows/reusing-workflows#creating-a-reusable-workflow
 name: Lint - Spelling & Encoding
 
 on:
@@ -9,27 +7,32 @@ permissions:
   contents: read
 
 jobs:
-  run-misspell:
+  run-typos:
+    name: Check for typos
     runs-on: ubuntu-24.04
 
     steps:
-    - name: check out code
+    - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        filter: 'tree:0'
+        persist-credentials: false
+        show-progress: false
 
-    - name: install misspell
-      run: |
-        curl -L -o ./install-misspell.sh https://git.io/misspell
-        sh ./install-misspell.sh
-
-    - name: run misspell
-      run: ./bin/misspell -error .
+    - name: Check for typos
+      uses: crate-ci/typos@f8a58b6b53f2279f71eb605f03a4ae4d10608f45 # v1.47.0
 
   run-sanitycheck:
+    name: Run sanity check
     runs-on: ubuntu-24.04
 
     steps:
-    - name: check out code
+    - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        filter: 'tree:0'
+        persist-credentials: false
+        show-progress: false
 
-    - name: detect non-ASCII encoding and trailing space
+    - name: Detect non-ASCII encoding and trailing space
       run: python3 ./build/scripts/sanitycheck.py

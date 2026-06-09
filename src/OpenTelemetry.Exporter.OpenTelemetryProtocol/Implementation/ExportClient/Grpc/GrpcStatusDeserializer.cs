@@ -125,6 +125,9 @@ internal static class GrpcStatusDeserializer
     private static Duration DecodeDuration(Stream stream)
     {
         var length = DecodeVarint(stream);
+
+        CheckLength(length, stream);
+
         var endPosition = stream.Position + length;
         long seconds = 0;
         int nanos = 0;
@@ -155,6 +158,9 @@ internal static class GrpcStatusDeserializer
     private static Any DecodeAny(Stream stream)
     {
         var length = DecodeVarint(stream);
+
+        CheckLength(length, stream);
+
         var endPosition = stream.Position + length;
 
         string? typeUrl = null;
@@ -228,6 +234,9 @@ internal static class GrpcStatusDeserializer
     private static byte[] DecodeBytes(Stream stream)
     {
         var length = (int)DecodeVarint(stream);
+
+        CheckLength(length, stream);
+
         var buffer = new byte[length];
         int read = stream.Read(buffer, 0, length);
         if (read != length)
@@ -250,6 +259,7 @@ internal static class GrpcStatusDeserializer
                 break;
             case WIRETYPE_LENGTH_DELIMITED:
                 var length = DecodeVarint(stream);
+                CheckLength(length, stream);
                 stream.Position += length;
                 break;
             case WIRETYPE_FIXED32:
@@ -257,6 +267,21 @@ internal static class GrpcStatusDeserializer
                 break;
             default:
                 throw new InvalidDataException($"Unknown wire type: {wireType}");
+        }
+    }
+
+    private static void CheckLength(long length, Stream stream)
+    {
+        if (length < 0 || length > int.MaxValue)
+        {
+            throw new InvalidDataException($"Invalid length: {length}.");
+        }
+
+        long available = stream.Length - stream.Position;
+
+        if (length > available)
+        {
+            throw new EndOfStreamException();
         }
     }
 

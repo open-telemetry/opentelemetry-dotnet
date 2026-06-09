@@ -20,12 +20,15 @@ on:
         required: false
         type: string
       os-list:
-        default: '[ "windows-latest", "windows-11-arm", "ubuntu-22.04", "ubuntu-22.04-arm" ]'
+        default: '[ "windows-2025", "windows-11-arm", "ubuntu-24.04", "ubuntu-24.04-arm" ]'
         required: false
         type: string
       tfm-list:
         default: '[ "net462", "net8.0", "net9.0", "net10.0" ]'
         required: false
+        type: string
+      trigger:
+        required: true
         type: string
 
 permissions:
@@ -33,47 +36,50 @@ permissions:
 
 jobs:
   build-test:
+    name: build-test
 
     strategy:
-      fail-fast: false # ensures the entire test matrix is run, even if one permutation fails
+      fail-fast: ${{ inputs.trigger == 'merge_group' }}
       matrix:
         os: ${{ fromJSON(inputs.os-list) }}
         version: ${{ fromJSON(inputs.tfm-list) }}
         exclude:
-        - os: ubuntu-22.04
+        # renovate: datasource=github-runners depType=github-runner
+        - os: ubuntu-24.04
           version: net462
-        - os: ubuntu-22.04-arm
+        # renovate: datasource=github-runners depType=github-runner
+        - os: ubuntu-24.04-arm
           version: net462
-        - os: ubuntu-22.04-arm
-          version: net10.0
-        - os: windows-11-arm
-          version: net10.0
 
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
 
     env:
+      DISABLE_APP_DOMAIN: ${{ matrix.version == 'net462' && 'false' || 'true' }}
       PROJECT_NAME: ${{ inputs.project-name }}
       PROJECT_BUILD_COMMANDS: ${{ inputs.project-build-commands }}
       TARGET_FRAMEWORK: ${{ matrix.version }}
 
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - name: Checkout code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         # Note: By default GitHub only fetches 1 commit. MinVer needs to find
         # the version tag which is typically NOT on the first commit so we
         # retrieve them all.
         fetch-depth: 0
+        persist-credentials: false
+        show-progress: false
 
     - name: Setup previous .NET runtimes
-      uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
+      uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5.3.0
       with:
         dotnet-version: |
           8.0.x
           9.0.x
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
+      uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5.3.0
 
     - name: dotnet restore ${{ inputs.project-name }}
       shell: pwsh
@@ -93,36 +99,42 @@ jobs:
         --configuration Release
         --no-restore
         --no-build
-        --logger:"console;verbosity=detailed"
         --logger:"GitHubActions;report-warnings=false"
-        --logger:"junit;LogFilePath=TestResults/junit.xml"
-        -- RunConfiguration.DisableAppDomain=true
+        --logger:"junit;LogFilePath=${env:GITHUB_WORKSPACE}/TestResults/junit.xml"
+        -- RunConfiguration.DisableAppDomain=${env:DISABLE_APP_DOMAIN}
 
     - name: Install coverage tool
-      run: dotnet tool install -g dotnet-coverage
+      shell: pwsh
+      env:
+        # renovate: datasource=nuget depName=dotnet-coverage
+        DOTNET_COVERAGE_VERSION: '18.7.0'
+      run: dotnet tool install -g dotnet-coverage --version ${env:DOTNET_COVERAGE_VERSION}
 
     - name: Merging test results
       run: dotnet-coverage merge -f cobertura -o ./TestResults/Cobertura.xml ./TestResults/**/*.coverage
 
     - name: Upload code coverage ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}
-      uses: codecov/codecov-action@1af58845a975a7985b0beb0cbe6fbbb71a41dbad # v5.5.3
+      uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
       continue-on-error: true # Note: Don't fail for upload failures
       env:
         OS: ${{ matrix.os }}
         TFM: ${{ matrix.version }}
       with:
-        files: TestResults/Cobertura.xml
+        disable_search: true
         env_vars: OS,TFM
+        files: TestResults/Cobertura.xml
         flags: ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}
         name: Code Coverage for ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }} on [${{ matrix.os }}.${{ matrix.version }}]
         codecov_yml_path: .github/codecov.yml
         token: ${{ secrets.CODECOV_TOKEN }}
 
     - name: Upload test results ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}
-      if: ${{ !cancelled() && hashFiles('./**/TestResults/junit.xml') != '' }}
-      uses: codecov/codecov-action@1af58845a975a7985b0beb0cbe6fbbb71a41dbad # v5.5.3
+      if: ${{ !cancelled() && hashFiles('./TestResults/junit.xml') != '' }}
+      uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
       with:
+        disable_search: true
         env_vars: OS,TFM
+        files: TestResults/junit.xml
         flags: ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}
         name: Test results for ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }} on [${{ matrix.os }}.${{ matrix.version }}]
         report_type: test_results

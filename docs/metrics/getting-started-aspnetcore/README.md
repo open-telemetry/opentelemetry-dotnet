@@ -30,25 +30,26 @@ in the console for your application (ex `http://localhost:5154`). You should see
 the metrics output from the console.
 
 ```text
-Export http.server.duration, Measures the duration of inbound HTTP requests., Unit: ms, Meter: OpenTelemetry.Instrumentation.AspNetCore/1.0.0.0
-(2023-04-11T21:49:43.6915232Z, 2023-04-11T21:50:50.6564690Z] http.flavor: 1.1 http.method: GET http.route: / http.scheme: http http.status_code: 200 net.host.name: localhost net.host.port: 5000 Histogram
-Value: Sum: 3.5967 Count: 11 Min: 0.073 Max: 2.5539
-(-Infinity,0]:0
-(0,5]:11
-(5,10]:0
-(10,25]:0
-(25,50]:0
-(50,75]:0
-(75,100]:0
-(100,250]:0
-(250,500]:0
-(500,750]:0
-(750,1000]:0
-(1000,2500]:0
-(2500,5000]:0
-(5000,7500]:0
-(7500,10000]:0
-(10000,+Infinity]:0
+Metric Name: http.server.request.duration, Description: Duration of HTTP server requests., Unit: s, Metric Type: Histogram
+Instrumentation scope (Meter):
+        Name: Microsoft.AspNetCore.Hosting
+(2026-04-02T22:41:03.8661885Z, 2026-04-02T22:41:12.0061720Z] http.request.method: GET http.response.status_code: 200 http.route: / network.protocol.version: 1.1 url.scheme: http
+Value: Sum: 0.0276842 Count: 1 Min: 0.0276842 Max: 0.0276842
+(-Infinity,0.005]:0
+(0.005,0.01]:0
+(0.01,0.025]:0
+(0.025,0.05]:1
+(0.05,0.075]:0
+(0.075,0.1]:0
+(0.1,0.25]:0
+(0.25,0.5]:0
+(0.5,0.75]:0
+(0.75,1]:0
+(1,2.5]:0
+(2.5,5]:0
+(5,7.5]:0
+(7.5,10]:0
+(10,+Infinity]:0
 ```
 
 Congratulations! You are now collecting metrics using OpenTelemetry.
@@ -66,16 +67,15 @@ configuring an OpenTelemetry
 methods and setting it to auto-start when the host is started:
 
 ```csharp
-appBuilder.Services.AddOpenTelemetry()
-    .ConfigureResource(builder => builder
-        .AddService(serviceName: "OTel.NET Getting Started"))
-    .WithMetrics(builder => builder
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource
+        .AddService(serviceName: builder.Environment.ApplicationName))
+    .WithMetrics(metrics => metrics
         .AddAspNetCoreInstrumentation()
         .AddConsoleExporter((exporterOptions, metricReaderOptions) =>
         {
             metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 1000;
-        })
-    );
+        }));
 ```
 
 > [!NOTE]

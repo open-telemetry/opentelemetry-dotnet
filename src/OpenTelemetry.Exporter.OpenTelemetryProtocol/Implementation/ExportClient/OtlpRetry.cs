@@ -53,9 +53,9 @@ internal static class OtlpRetry
 
     public static bool TryGetHttpRetryResult(ExportClientHttpResponse response, int retryDelayInMilliSeconds, out RetryResult retryResult)
     {
-        if (response.StatusCode.HasValue)
+        if (response.StatusCode is { } statusCode)
         {
-            return TryGetRetryResult(response.StatusCode.Value, IsHttpStatusCodeRetryable, response.DeadlineUtc, response.Headers, TryGetHttpRetryDelay, retryDelayInMilliSeconds, out retryResult);
+            return TryGetRetryResult(statusCode, IsHttpStatusCodeRetryable, response.DeadlineUtc, response.Headers, TryGetHttpRetryDelay, retryDelayInMilliSeconds, out retryResult);
         }
         else
         {
@@ -106,12 +106,12 @@ internal static class OtlpRetry
                 return false;
             }
 
-            if (throttleDelay.HasValue)
+            if (throttleDelay is { } throttleDelayValue)
             {
                 try
                 {
                     // TODO: Consider making nextRetryDelayMilliseconds a double to avoid the need for convert/overflow handling
-                    nextRetryDelayMilliseconds = Convert.ToInt32(throttleDelay.Value.TotalMilliseconds);
+                    nextRetryDelayMilliseconds = Convert.ToInt32(throttleDelayValue.TotalMilliseconds);
                 }
                 catch (OverflowException)
                 {
@@ -195,12 +195,33 @@ internal static class OtlpRetry
     private static TimeSpan? TryGetHttpRetryDelay(HttpStatusCode statusCode, HttpResponseHeaders? responseHeaders)
     {
 #if NETSTANDARD2_1_OR_GREATER || NET
-        return statusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable
+        var isRetryable = statusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable;
 #else
-        return statusCode is (HttpStatusCode)429 or HttpStatusCode.ServiceUnavailable
+        var isRetryable = statusCode is (HttpStatusCode)429 or HttpStatusCode.ServiceUnavailable;
 #endif
-            ? responseHeaders?.RetryAfter?.Delta
-            : null;
+
+        if (!isRetryable || responseHeaders?.RetryAfter is not { } retryAfter)
+        {
+            return null;
+        }
+
+        if (retryAfter.Delta is { } delta)
+        {
+            return delta;
+        }
+
+        if (retryAfter.Date is { } date)
+        {
+            var utcNow = DateTimeOffset.UtcNow;
+            var delay = date - utcNow;
+
+            if (delay > TimeSpan.Zero)
+            {
+                return delay;
+            }
+        }
+
+        return null;
     }
 
 #pragma warning disable IDE0072 // Add missing cases

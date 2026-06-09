@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics.Tracing;
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
@@ -35,8 +36,12 @@ internal sealed class OtlpHttpExportClient : OtlpExportClient
             }
             catch (HttpRequestException ex)
             {
-                var response = TryGetResponseBody(httpResponse, cancellationToken);
-                OpenTelemetryProtocolExporterEventSource.Log.HttpRequestFailed(this.Endpoint, response, ex);
+                if (OpenTelemetryProtocolExporterEventSource.Log.IsEnabled(EventLevel.Error, EventKeywords.All))
+                {
+                    var response = TryGetResponseBody(httpResponse, cancellationToken);
+                    OpenTelemetryProtocolExporterEventSource.Log.HttpRequestFailed(this.Endpoint, response, ex);
+                }
+
                 return new ExportClientHttpResponse(success: false, deadlineUtc: deadlineUtc, response: httpResponse, ex);
             }
 
@@ -49,4 +54,9 @@ internal sealed class OtlpHttpExportClient : OtlpExportClient
             return new ExportClientHttpResponse(success: false, deadlineUtc: deadlineUtc, response: null, exception: ex);
         }
     }
+
+    protected override HttpContent CreateHttpContent(byte[] buffer, int contentLength) =>
+        this.CompressionEnabled
+            ? new GZipHttpContent(buffer, contentLength, this.MediaTypeHeader)
+            : base.CreateHttpContent(buffer, contentLength);
 }

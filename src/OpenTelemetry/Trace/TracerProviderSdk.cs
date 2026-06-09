@@ -222,7 +222,7 @@ internal sealed class TracerProviderSdk : TracerProvider
 
         if (this.Sampler is AlwaysOnSampler)
         {
-            activityListener.Sample = (ref options) =>
+            activityListener.Sample = static (ref _) =>
                 !Sdk.SuppressInstrumentation ? ActivitySamplingResult.AllDataAndRecorded : ActivitySamplingResult.None;
             this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOnSampler;
         }
@@ -402,10 +402,10 @@ internal sealed class TracerProviderSdk : TracerProvider
             switch (configValue)
             {
                 case var _ when string.Equals(configValue, "always_on", StringComparison.OrdinalIgnoreCase):
-                    sampler = new AlwaysOnSampler();
+                    sampler = AlwaysOnSampler.Instance;
                     break;
                 case var _ when string.Equals(configValue, "always_off", StringComparison.OrdinalIgnoreCase):
-                    sampler = new AlwaysOffSampler();
+                    sampler = AlwaysOffSampler.Instance;
                     break;
                 case var _ when string.Equals(configValue, "traceidratio", StringComparison.OrdinalIgnoreCase):
                     {
@@ -415,10 +415,10 @@ internal sealed class TracerProviderSdk : TracerProvider
                     }
 
                 case var _ when string.Equals(configValue, "parentbased_always_on", StringComparison.OrdinalIgnoreCase):
-                    sampler = new ParentBasedSampler(new AlwaysOnSampler());
+                    sampler = new ParentBasedSampler(AlwaysOnSampler.Instance);
                     break;
                 case var _ when string.Equals(configValue, "parentbased_always_off", StringComparison.OrdinalIgnoreCase):
-                    sampler = new ParentBasedSampler(new AlwaysOffSampler());
+                    sampler = new ParentBasedSampler(AlwaysOffSampler.Instance);
                     break;
                 case var _ when string.Equals(configValue, "parentbased_traceidratio", StringComparison.OrdinalIgnoreCase):
                     {
@@ -438,13 +438,17 @@ internal sealed class TracerProviderSdk : TracerProvider
             }
         }
 
-        return sampler ?? new ParentBasedSampler(new AlwaysOnSampler());
+        return sampler ?? new ParentBasedSampler(AlwaysOnSampler.Instance);
     }
 
     private static double ReadTraceIdRatio(IConfiguration configuration)
     {
         if (configuration.TryGetStringValue(TracesSamplerArgConfigKey, out var configValue) &&
-                double.TryParse(configValue, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out var traceIdRatio))
+                double.TryParse(configValue, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out var traceIdRatio) &&
+                !double.IsNaN(traceIdRatio) &&
+                !double.IsInfinity(traceIdRatio) &&
+                traceIdRatio >= 0.0 &&
+                traceIdRatio <= 1.0)
         {
             return traceIdRatio;
         }
@@ -479,9 +483,12 @@ internal sealed class TracerProviderSdk : TracerProvider
 
         if (activitySamplingResult > ActivitySamplingResult.PropagationData)
         {
-            foreach (var att in samplingResult.Attributes)
+            if (samplingResult.AttributesOrNull is { } attributes)
             {
-                options.SamplingTags.Add(att.Key, att.Value);
+                foreach (var att in attributes)
+                {
+                    options.SamplingTags.Add(att.Key, att.Value);
+                }
             }
         }
 
@@ -575,9 +582,12 @@ internal sealed class TracerProviderSdk : TracerProvider
 
         if (samplingResult.Decision != SamplingDecision.Drop)
         {
-            foreach (var att in samplingResult.Attributes)
+            if (samplingResult.AttributesOrNull is { } attributes)
             {
-                activity.SetTag(att.Key, att.Value);
+                foreach (var att in attributes)
+                {
+                    activity.SetTag(att.Key, att.Value);
+                }
             }
         }
 

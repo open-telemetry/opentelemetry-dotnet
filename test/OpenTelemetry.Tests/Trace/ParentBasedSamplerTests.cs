@@ -3,7 +3,6 @@
 
 using System.Diagnostics;
 using OpenTelemetry.Tests;
-using Xunit;
 
 namespace OpenTelemetry.Trace.Tests;
 
@@ -60,7 +59,7 @@ public class ParentBasedSamplerTests
     {
         var sampledLink = new ActivityLink[]
         {
-            new ActivityLink(
+            new(
                 new ActivityContext(
                     ActivityTraceId.CreateRandom(),
                     ActivitySpanId.CreateRandom(),
@@ -118,13 +117,10 @@ public class ParentBasedSamplerTests
 
     [Fact]
     public void DisallowNullRootSampler()
-    {
-        Assert.Throws<ArgumentNullException>(() => new ParentBasedSampler(null!));
-    }
+        => Assert.Throws<ArgumentNullException>(() => new ParentBasedSampler(null!));
 
-    private static SamplingParameters MakeTestParameters(bool parentIsRemote, bool parentIsSampled)
-    {
-        return new SamplingParameters(
+    private static SamplingParameters MakeTestParameters(bool parentIsRemote, bool parentIsSampled) =>
+        new(
             parentContext: new ActivityContext(
                 ActivityTraceId.CreateRandom(),
                 ActivitySpanId.CreateRandom(),
@@ -134,5 +130,4 @@ public class ParentBasedSamplerTests
             traceId: default,
             name: "Span",
             kind: ActivityKind.Client);
-    }
 }

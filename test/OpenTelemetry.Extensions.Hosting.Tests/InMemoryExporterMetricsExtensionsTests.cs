@@ -11,11 +11,10 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
-
-using Xunit;
 
 namespace OpenTelemetry.Extensions.Hosting.Tests;
 
@@ -73,6 +72,7 @@ public class InMemoryExporterMetricsExtensionsTests
         using var host = await new HostBuilder()
            .ConfigureWebHost(webBuilder => webBuilder
                .UseTestServer()
+               .ConfigureLogging((logging) => logging.SetMinimumLevel(LogLevel.Warning))
                .ConfigureServices(services => services.AddOpenTelemetry().WithMetrics(configure))
                .Configure(app => app.Run(httpContext =>
                {

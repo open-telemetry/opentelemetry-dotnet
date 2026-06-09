@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Collections.Concurrent;
 using System.Diagnostics.Tracing;
 
 namespace OpenTelemetry.Tests;
@@ -15,18 +16,20 @@ internal sealed class TestEventListener : EventListener
     /// <summary>Unique Id used to identify events from the test thread.</summary>
     private readonly Guid activityId;
 
-    /// <summary>A queue of events that have been logged.</summary>
-    private readonly List<EventWrittenEventArgs> events;
-
     /// <summary>
     /// Lock for event writing tracking.
     /// </summary>
     private readonly AutoResetEvent eventWritten;
 
+    /// <summary>A queue of events that have been logged.</summary>
+    private ConcurrentQueue<EventWrittenEventArgs> events;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="TestEventListener"/> class.
     /// </summary>
-    public TestEventListener()
+    /// <param name="eventSource">The optional <see cref="EventSource"/> to enable.</param>
+    /// <param name="minLevel">The optional <see cref="EventLevel"/> to use with <paramref name="eventSource"/>.</param>
+    public TestEventListener(EventSource? eventSource = null, EventLevel minLevel = EventLevel.Verbose)
     {
         this.activityId = Guid.NewGuid();
         EventSource.SetCurrentThreadActivityId(this.activityId);
@@ -35,9 +38,14 @@ internal sealed class TestEventListener : EventListener
         this.eventWritten = new AutoResetEvent(false);
         this.OnOnEventWritten = e =>
         {
-            this.events.Add(e);
+            this.events.Enqueue(e);
             this.eventWritten.Set();
         };
+
+        if (eventSource is not null)
+        {
+            this.EnableEvents(eventSource, minLevel);
+        }
     }
 
     /// <summary>Gets or sets the handler for event source creation.</summary>
@@ -51,22 +59,19 @@ internal sealed class TestEventListener : EventListener
     {
         get
         {
-            if (this.events.Count == 0)
+            if (this.events.IsEmpty)
             {
                 this.eventWritten.WaitOne(TimeSpan.FromSeconds(5));
             }
 
-            return this.events;
+            return [.. this.events];
         }
     }
 
     /// <summary>
     /// Clears all event messages so that testing can assert expected counts.
     /// </summary>
-    public void ClearMessages()
-    {
-        this.events.Clear();
-    }
+    public void ClearMessages() => this.events = [];
 
     public override void Dispose()
     {

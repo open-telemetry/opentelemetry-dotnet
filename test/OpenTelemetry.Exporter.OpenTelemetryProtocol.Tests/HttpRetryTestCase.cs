@@ -26,66 +26,75 @@ public class HttpRetryTestCase
 
     internal HttpRetryAttempt[] RetryAttempts { get; }
 
-    public static TheoryData<HttpRetryTestCase> GetHttpTestCases()
-    {
-        return
-        [
-            new("NetworkError", [new(statusCode: null)]),
-            new("GatewayTimeout", [new(statusCode: HttpStatusCode.GatewayTimeout, throttleDelay: TimeSpan.FromSeconds(1))]),
-#if NETSTANDARD2_1_OR_GREATER || NET
-            new("ServiceUnavailable", [new(statusCode: HttpStatusCode.TooManyRequests, throttleDelay: TimeSpan.FromSeconds(1))]),
+#pragma warning disable CA1825 // Workaround for https://github.com/dotnet/sdk/issues/54275
+    public static TheoryData<HttpRetryTestCase> GetHttpTestCases() =>
+    [
+        new("NetworkError", [new(statusCode: null)]),
+        new("GatewayTimeout", [new(statusCode: HttpStatusCode.GatewayTimeout, throttleDelay: TimeSpan.FromSeconds(1))]),
+        new("ServiceUnavailable", [new(statusCode: HttpStatusCode.ServiceUnavailable, throttleDelay: TimeSpan.FromSeconds(1), expectedThrottled: true)]),
+
+#if NET
+        new("TooManyRequests (Delta)", [new(statusCode: HttpStatusCode.TooManyRequests, throttleDelay: TimeSpan.FromSeconds(1), expectedThrottled: true)]),
+        new("TooManyRequests (HTTP-Date)", [new(statusCode: HttpStatusCode.TooManyRequests, throttleDelay: TimeSpan.FromSeconds(1), expectedThrottled: true, useDateForRetryCondition: true)]),
+        new("TooManyRequests (Delta) too large", [new(statusCode: HttpStatusCode.TooManyRequests, throttleDelay: TimeSpan.FromSeconds(30), expectedNextRetryDelayMilliseconds: 5000, expectedThrottled: true)]),
+        new("TooManyRequests (HTTP-Date) too large", [new(statusCode: HttpStatusCode.TooManyRequests, throttleDelay: TimeSpan.FromSeconds(30), expectedNextRetryDelayMilliseconds: 5000, expectedThrottled: true, useDateForRetryCondition: true)]),
+#else
+        new("TooManyRequests (Delta)", [new(statusCode: (HttpStatusCode)429, throttleDelay: TimeSpan.FromSeconds(1), expectedThrottled: true)]),
+        new("TooManyRequests (HTTP-Date)", [new(statusCode: (HttpStatusCode)429, throttleDelay: TimeSpan.FromSeconds(1), expectedThrottled: true, useDateForRetryCondition: true)]),
+        new("TooManyRequests (Delta) too large", [new(statusCode: (HttpStatusCode)429, throttleDelay: TimeSpan.FromSeconds(30), expectedNextRetryDelayMilliseconds: 5000, expectedThrottled: true)]),
+        new("TooManyRequests (HTTP-Date) too large", [new(statusCode: (HttpStatusCode)429, throttleDelay: TimeSpan.FromSeconds(30), expectedNextRetryDelayMilliseconds: 5000, expectedThrottled: true, useDateForRetryCondition: true)]),
 #endif
 
-            new(
-                "Exponential Backoff",
-                [
-                    new(statusCode: null, expectedNextRetryDelayMilliseconds: 1500),
-                    new(statusCode: null, expectedNextRetryDelayMilliseconds: 2250),
-                    new(statusCode: null, expectedNextRetryDelayMilliseconds: 3375),
-                    new(statusCode: null, expectedNextRetryDelayMilliseconds: 5000),
-                    new(statusCode: null, expectedNextRetryDelayMilliseconds: 5000)
-                ],
-                expectedRetryAttempts: 5),
-            new(
-                "Retry until non-retryable status code encountered",
-                [
-                    new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 1500),
-                    new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 2250),
-                    new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 3375),
-                    new(statusCode: HttpStatusCode.BadRequest, expectedSuccess: false),
-                    new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 5000)
-                ],
-                expectedRetryAttempts: 4),
-            new(
-                "Expired deadline",
-                [
-                    new(statusCode: HttpStatusCode.ServiceUnavailable, isDeadlineExceeded: true, expectedSuccess: false)
-                ]),
-        ];
+        new(
+            "Exponential Backoff",
+            [
+                new(statusCode: null, expectedNextRetryDelayMilliseconds: 1500),
+                new(statusCode: null, expectedNextRetryDelayMilliseconds: 2250),
+                new(statusCode: null, expectedNextRetryDelayMilliseconds: 3375),
+                new(statusCode: null, expectedNextRetryDelayMilliseconds: 5000),
+                new(statusCode: null, expectedNextRetryDelayMilliseconds: 5000)
+            ],
+            expectedRetryAttempts: 5),
+        new(
+            "Retry until non-retryable status code encountered",
+            [
+                new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 1500),
+                new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 2250),
+                new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 3375),
+                new(statusCode: HttpStatusCode.BadRequest, expectedSuccess: false),
+                new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 5000)
+            ],
+            expectedRetryAttempts: 4),
+        new(
+            "Expired deadline",
+            [
+                new(statusCode: HttpStatusCode.ServiceUnavailable, isDeadlineExceeded: true, expectedSuccess: false)
+            ]),
+    ];
+#pragma warning restore CA1825 // Workaround for https://github.com/dotnet/sdk/issues/54275
 
-        // TODO: Add more cases.
-    }
-
-    public override string ToString()
-    {
-        return this.testRunnerName;
-    }
+    public override string ToString() => this.testRunnerName;
 
     internal sealed class HttpRetryAttempt
     {
         public ExportClientHttpResponse Response;
         public TimeSpan? ThrottleDelay;
+        public TimeSpan TimestampTolerance;
         public int? ExpectedNextRetryDelayMilliseconds;
         public bool ExpectedSuccess;
+        public bool ExpectedThrottled;
 
         internal HttpRetryAttempt(
             HttpStatusCode? statusCode,
             TimeSpan? throttleDelay = null,
             bool isDeadlineExceeded = false,
             int expectedNextRetryDelayMilliseconds = 1500,
-            bool expectedSuccess = true)
+            bool expectedSuccess = true,
+            bool expectedThrottled = false,
+            bool useDateForRetryCondition = false)
         {
             this.ThrottleDelay = throttleDelay;
+            this.TimestampTolerance = useDateForRetryCondition ? TimeSpan.FromMilliseconds(expectedNextRetryDelayMilliseconds) : TimeSpan.Zero;
 
             HttpResponseMessage? responseMessage = null;
             if (statusCode != null)
@@ -94,9 +103,11 @@ public class HttpRetryTestCase
                 responseMessage = new HttpResponseMessage();
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
-                if (throttleDelay != null)
+                if (throttleDelay is { } value)
                 {
-                    responseMessage.Headers.RetryAfter = new RetryConditionHeaderValue(throttleDelay.Value);
+                    responseMessage.Headers.RetryAfter = useDateForRetryCondition
+                        ? new RetryConditionHeaderValue(DateTimeOffset.UtcNow.Add(value))
+                        : new RetryConditionHeaderValue(value);
                 }
 
                 responseMessage.StatusCode = (HttpStatusCode)statusCode;
@@ -107,6 +118,7 @@ public class HttpRetryTestCase
             this.Response = new ExportClientHttpResponse(expectedSuccess, deadlineUtc, responseMessage, new HttpRequestException());
             this.ExpectedNextRetryDelayMilliseconds = expectedNextRetryDelayMilliseconds;
             this.ExpectedSuccess = expectedSuccess;
+            this.ExpectedThrottled = expectedThrottled;
         }
     }
 }

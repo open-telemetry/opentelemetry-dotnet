@@ -210,6 +210,14 @@ If you made changes to the Markdown documents (`*.md` files), install the latest
 markdownlint .
 ```
 
+CI also runs a sanity check that rejects non-ASCII characters (e.g. smart
+quotes, em dashes) and trailing whitespace in Markdown files. You can check
+locally if you have `python3` installed:
+
+```sh
+python3 ./build/scripts/sanitycheck.py
+```
+
 Check out a new branch, make modifications, and push the branch to your fork:
 
 ```sh
@@ -256,7 +264,7 @@ A PR is considered to be **ready to merge** when:
 
 Any maintainer can merge PRs once they are **ready to merge** however
 maintainers might decide to wait on merging changes until there are more
-approvals and/or dicussion, or based on other factors such as release timing and
+approvals and/or discussion, or based on other factors such as release timing and
 risk to users. For example if a stable release is planned and a new change is
 introduced adding public API(s) or behavioral changes it might be held until the
 next alpha/beta release.

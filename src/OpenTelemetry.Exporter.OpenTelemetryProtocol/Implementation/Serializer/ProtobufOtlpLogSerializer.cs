@@ -143,13 +143,12 @@ internal static class ProtobufOtlpLogSerializer
 
     internal static int WriteScopeLog(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, string loggerName, List<LogRecord> logRecords)
     {
-        var value = loggerName.AsSpan();
-        var numberOfUtf8CharsInString = ProtobufSerializer.GetNumberOfUtf8CharsInString(value);
+        var numberOfUtf8CharsInString = ProtobufSerializer.GetNumberOfUtf8CharsInString(loggerName);
         var serializedLengthSize = ProtobufSerializer.ComputeVarInt64Size((ulong)numberOfUtf8CharsInString);
 
         // numberOfUtf8CharsInString + tagSize + length field size.
         writePosition = ProtobufSerializer.WriteTagAndLength(buffer, writePosition, numberOfUtf8CharsInString + 1 + serializedLengthSize, ProtobufOtlpLogFieldNumberConstants.ScopeLogs_Scope, ProtobufWireType.LEN);
-        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Name, numberOfUtf8CharsInString, value);
+        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Name, numberOfUtf8CharsInString, loggerName);
 
         for (var i = 0; i < logRecords.Count; i++)
         {
@@ -179,11 +178,11 @@ internal static class ProtobufOtlpLogSerializer
         var logRecordLengthPosition = otlpTagWriterState.WritePosition;
         otlpTagWriterState.WritePosition += ReserveSizeForLength;
 
-        var timestamp = (ulong)logRecord.Timestamp.ToUnixTimeNanoseconds();
-        var observedTimestamp = logRecord.ObservedTimestamp == logRecord.Timestamp ? timestamp
+        var timeUnixNano = logRecord.Timestamp == DateTime.MinValue ? 0 : (ulong)logRecord.Timestamp.ToUnixTimeNanoseconds();
+        var observedTimeUnixNano = logRecord.ObservedTimestamp == logRecord.Timestamp ? timeUnixNano
             : (ulong)logRecord.ObservedTimestamp.ToUnixTimeNanoseconds();
-        otlpTagWriterState.WritePosition = ProtobufSerializer.WriteFixed64WithTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpLogFieldNumberConstants.LogRecord_Time_Unix_Nano, timestamp);
-        otlpTagWriterState.WritePosition = ProtobufSerializer.WriteFixed64WithTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpLogFieldNumberConstants.LogRecord_Observed_Time_Unix_Nano, observedTimestamp);
+        otlpTagWriterState.WritePosition = ProtobufSerializer.WriteFixed64WithTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpLogFieldNumberConstants.LogRecord_Time_Unix_Nano, timeUnixNano);
+        otlpTagWriterState.WritePosition = ProtobufSerializer.WriteFixed64WithTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpLogFieldNumberConstants.LogRecord_Observed_Time_Unix_Nano, observedTimeUnixNano);
 
         otlpTagWriterState.WritePosition = ProtobufSerializer.WriteEnumWithTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpLogFieldNumberConstants.LogRecord_Severity_Number, logRecord.Severity.HasValue ? (int)logRecord.Severity : 0);
 
@@ -218,7 +217,7 @@ internal static class ProtobufOtlpLogSerializer
 
         if (logRecord.FormattedMessage != null)
         {
-            otlpTagWriterState.WritePosition = WriteLogRecordBody(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, logRecord.FormattedMessage.AsSpan());
+            otlpTagWriterState.WritePosition = WriteLogRecordBody(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, logRecord.FormattedMessage);
             bodyPopulatedFromFormattedMessage = true;
             isLogRecordBodySet = true;
         }
@@ -230,10 +229,17 @@ internal static class ProtobufOtlpLogSerializer
                 // Special casing {OriginalFormat}
                 // See https://github.com/open-telemetry/opentelemetry-dotnet/pull/3182
                 // for explanation.
-                if (attribute.Key.Equals("{OriginalFormat}", StringComparison.Ordinal) && !bodyPopulatedFromFormattedMessage)
+                if (string.Equals(attribute.Key, "{OriginalFormat}", StringComparison.Ordinal) && !bodyPopulatedFromFormattedMessage)
                 {
-                    otlpTagWriterState.WritePosition = WriteLogRecordBody(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, (attribute.Value as string).AsSpan());
-                    isLogRecordBodySet = true;
+                    if (attribute.Value is string originalFormat)
+                    {
+                        otlpTagWriterState.WritePosition = WriteLogRecordBody(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, originalFormat);
+                        isLogRecordBodySet = true;
+                    }
+                    else
+                    {
+                        AddLogAttribute(state, attribute);
+                    }
                 }
                 else
                 {
@@ -246,7 +252,7 @@ internal static class ProtobufOtlpLogSerializer
             {
                 // If {OriginalFormat} is not present in the attributes,
                 // use logRecord.Body if it is set.
-                otlpTagWriterState.WritePosition = WriteLogRecordBody(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, logRecord.Body.AsSpan());
+                otlpTagWriterState.WritePosition = WriteLogRecordBody(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, logRecord.Body);
             }
         }
 
@@ -282,7 +288,7 @@ internal static class ProtobufOtlpLogSerializer
         {
             foreach (var scopeItem in scope)
             {
-                if (scopeItem.Key.Equals("{OriginalFormat}", StringComparison.Ordinal) || string.IsNullOrEmpty(scopeItem.Key))
+                if (string.IsNullOrEmpty(scopeItem.Key) || string.Equals(scopeItem.Key, "{OriginalFormat}", StringComparison.Ordinal))
                 {
                     // Ignore if the scope key is empty.
                     // Ignore if the scope key is {OriginalFormat}
@@ -312,7 +318,7 @@ internal static class ProtobufOtlpLogSerializer
         }
     }
 
-    private static int WriteLogRecordBody(byte[] buffer, int writePosition, ReadOnlySpan<char> value)
+    private static int WriteLogRecordBody(byte[] buffer, int writePosition, string value)
     {
         var numberOfUtf8CharsInString = ProtobufSerializer.GetNumberOfUtf8CharsInString(value);
         var serializedLengthSize = ProtobufSerializer.ComputeVarInt64Size((ulong)numberOfUtf8CharsInString);

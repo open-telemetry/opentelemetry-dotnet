@@ -1,7 +1,7 @@
 # OpenTelemetry .NET Experimental APIs
 
 This document describes experimental APIs exposed in OpenTelemetry .NET
-pre-relase builds. APIs are exposed experimentally when either the OpenTelemetry
+pre-release builds. APIs are exposed experimentally when either the OpenTelemetry
 Specification has explicitly marked some feature as
 [experimental](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/document-status.md)
 or when the SIG members are still working through the design for a feature and
@@ -32,6 +32,12 @@ Details: [OTEL1001](./OTEL1001.md)
 Description: ExemplarReservoir Support
 
 Details: [OTEL1004](./OTEL1004.md)
+
+### OTEL1005
+
+Description: Environment variable context propagation
+
+Details: [OTEL1005](./OTEL1005.md)
 
 ## Inactive
 

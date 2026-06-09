@@ -1,0 +1,2 @@
+﻿# TYPE test_updown_counter gauge
+test_updown_counter{otel_scope_name="SumWithOpenMetricsFormat"} -1

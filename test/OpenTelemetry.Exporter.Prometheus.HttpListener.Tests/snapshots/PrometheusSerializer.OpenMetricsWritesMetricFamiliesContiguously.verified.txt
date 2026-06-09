@@ -1,0 +1,11 @@
+﻿# TYPE target info
+# HELP target Target metadata
+target_info{service_name="prometheus",telemetry_sdk_name="opentelemetry",telemetry_sdk_language="dotnet",telemetry_sdk_version="<VERSION>"} 1
+# TYPE other_metric gauge
+# HELP other_metric Other help
+other_metric{otel_scope_name="OpenMetricsWritesMetricFamiliesContiguously.one"} 3
+# TYPE test_metric gauge
+# HELP test_metric Test help
+test_metric{otel_scope_name="OpenMetricsWritesMetricFamiliesContiguously.one"} 1
+test_metric{otel_scope_name="OpenMetricsWritesMetricFamiliesContiguously.two"} 2
+# EOF

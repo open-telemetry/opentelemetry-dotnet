@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Logs;
@@ -297,27 +298,21 @@ public static class OtlpLogExporterHelperExtensions
             serviceProvider.EnsureNoUseOtlpExporterRegistrations();
         }
 
-        /*
-         * Note:
-         *
-         * We don't currently enable IHttpClientFactory for OtlpLogExporter.
-         *
-         * The DefaultHttpClientFactory requires the ILoggerFactory in its ctor:
-         * https://github.com/dotnet/runtime/blob/fa40ecf7d36bf4e31d7ae968807c1c529bac66d6/src/libraries/Microsoft.Extensions.Http/src/DefaultHttpClientFactory.cs#L64
-         *
-         * This creates a circular reference: ILoggerFactory ->
-         * OpenTelemetryLoggerProvider -> OtlpLogExporter -> IHttpClientFactory
-         * -> ILoggerFactory
-         *
-         * exporterOptions.TryEnableIHttpClientFactoryIntegration(sp,
-         * "OtlpLogExporter");
-         */
+        OtlpExporterTransmissionHandler? transmissionHandler = null;
+        if (exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpLogExporter"))
+        {
+            transmissionHandler = exporterOptions.GetExportTransmissionHandler(
+                experimentalOptions,
+                OtlpSignalType.Logs,
+                deferExportClientCreation: true);
+        }
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
         BaseExporter<LogRecord> otlpExporter = new OtlpLogExporter(
             exporterOptions,
             sdkLimitOptions,
-            experimentalOptions);
+            experimentalOptions,
+            transmissionHandler);
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
         try

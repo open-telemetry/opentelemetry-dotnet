@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Globalization;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 using OpenTracing;
@@ -66,6 +67,15 @@ internal sealed class SpanShim : ISpan
         {
             switch (field.Value)
             {
+                case byte value:
+                    spanAttributes.Add(field.Key, value);
+                    break;
+                case short value:
+                    spanAttributes.Add(field.Key, value);
+                    break;
+                case int value:
+                    spanAttributes.Add(field.Key, value);
+                    break;
                 case long value:
                     spanAttributes.Add(field.Key, value);
                     break;
@@ -76,6 +86,9 @@ internal sealed class SpanShim : ISpan
                     spanAttributes.Add(field.Key, value);
                     break;
                 case bool[] value:
+                    spanAttributes.Add(field.Key, value);
+                    break;
+                case float value:
                     spanAttributes.Add(field.Key, value);
                     break;
                 case double value:
@@ -162,7 +175,7 @@ internal sealed class SpanShim : ISpan
 
         // Special case the OpenTracing Error Tag
         // see https://opentracing.io/specification/conventions/
-        if (global::OpenTracing.Tag.Tags.Error.Key.Equals(key, StringComparison.Ordinal))
+        if (string.Equals(global::OpenTracing.Tag.Tags.Error.Key, key, StringComparison.Ordinal))
         {
             this.Span.SetStatus(value ? Status.Error : Status.Ok);
         }
@@ -205,7 +218,7 @@ internal sealed class SpanShim : ISpan
     {
         Guard.ThrowIfNull(tag);
 
-        return value != null && int.TryParse(value, out var result) ?
+        return value != null && int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var result) ?
                this.SetTag(tag.Key, result) :
                this.SetTag(tag.Key, value);
     }
@@ -250,7 +263,7 @@ internal sealed class SpanShim : ISpan
                 continue;
             }
 
-            if (eventName == null && field.Key.Equals(LogFields.Event, StringComparison.Ordinal) && field.Value is string value)
+            if (eventName == null && string.Equals(field.Key, LogFields.Event, StringComparison.Ordinal) && field.Value is string value)
             {
                 // This is meant to be the event name
                 eventName = value;

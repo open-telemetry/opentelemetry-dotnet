@@ -3,10 +3,10 @@
 
 using System.Diagnostics;
 using OpenTelemetry.Context.Propagation;
-using Xunit;
 
 namespace OpenTelemetry.Extensions.Propagators.Tests;
 
+[Obsolete("We still want to test obsolete APIs.")]
 public class JaegerPropagatorTests
 {
     private const string JaegerHeader = "uber-trace-id";
@@ -21,15 +21,11 @@ public class JaegerPropagatorTests
     private const string FlagSampled = "1";
     private const string FlagNotSampled = "0";
 
-    private static readonly Func<IDictionary<string, string[]>, string, IEnumerable<string>> Getter = (headers, name) =>
-    {
-        return headers.TryGetValue(name, out var value) ? value : [];
-    };
+    private static readonly Func<IDictionary<string, string[]>, string, IEnumerable<string>> Getter =
+        static (headers, name) => headers.TryGetValue(name, out var value) ? value : [];
 
-    private static readonly Action<IDictionary<string, string>, string, string> Setter = (carrier, name, value) =>
-    {
-        carrier[name] = value;
-    };
+    private static readonly Action<IDictionary<string, string>, string, string> Setter =
+        static (carrier, name, value) => carrier[name] = value;
 
     [Fact]
     public void ExtractReturnsOriginalContextIfContextIsAlreadyValid()
@@ -44,9 +40,7 @@ public class JaegerPropagatorTests
         var headers = new Dictionary<string, string[]>();
 
         // act
-#pragma warning disable CS0618 // Type or member is obsolete
         var result = new JaegerPropagator().Extract(propagationContext, headers, Getter);
-#pragma warning restore CS0618
 
         // assert
         Assert.Equal(propagationContext, result);
@@ -59,9 +53,7 @@ public class JaegerPropagatorTests
         var propagationContext = default(PropagationContext);
 
         // act
-#pragma warning disable CS0618 // Type or member is obsolete
         var result = new JaegerPropagator().Extract(propagationContext, null, Getter!);
-#pragma warning restore CS0618
 
         // assert
         Assert.Equal(propagationContext, result);
@@ -76,9 +68,7 @@ public class JaegerPropagatorTests
         var headers = new Dictionary<string, string[]>();
 
         // act
-#pragma warning disable CS0618 // Type or member is obsolete
         var result = new JaegerPropagator().Extract(propagationContext, headers, null!);
-#pragma warning restore CS0618
 
         // assert
         Assert.Equal(propagationContext, result);
@@ -108,9 +98,7 @@ public class JaegerPropagatorTests
         var headers = new Dictionary<string, string[]> { { JaegerHeader, [formattedHeader] } };
 
         // act
-#pragma warning disable CS0618 // Type or member is obsolete
         var result = new JaegerPropagator().Extract(propagationContext, headers, Getter);
-#pragma warning restore CS0618
 
         // assert
         Assert.Equal(propagationContext, result);
@@ -149,14 +137,42 @@ public class JaegerPropagatorTests
         var headers = new Dictionary<string, string[]> { { JaegerHeader, [formattedHeader] } };
 
         // act
-#pragma warning disable CS0618 // Type or member is obsolete
         var result = new JaegerPropagator().Extract(propagationContext, headers, Getter);
-#pragma warning restore CS0618
 
         // assert
         Assert.Equal(traceId.PadLeft(TraceId.Length, '0'), result.ActivityContext.TraceId.ToString());
         Assert.Equal(spanId.PadLeft(SpanId.Length, '0'), result.ActivityContext.SpanId.ToString());
         Assert.Equal(flags == "1" ? ActivityTraceFlags.Recorded : ActivityTraceFlags.None, result.ActivityContext.TraceFlags);
+    }
+
+    [Fact]
+    public void ExtractReturnsNewContextIfHeaderContainsEmptyComponent()
+    {
+        var formattedHeader = $"{TraceId}{JaegerDelimiter}{JaegerDelimiter}{SpanId}{JaegerDelimiter}{ParentSpanId}{JaegerDelimiter}{FlagSampled}";
+        var headers = new Dictionary<string, string[]>
+        {
+            [JaegerHeader] = [formattedHeader],
+        };
+
+        var result = new JaegerPropagator().Extract(default, headers, Getter);
+
+        Assert.Equal(TraceId, result.ActivityContext.TraceId.ToString());
+        Assert.Equal(SpanId, result.ActivityContext.SpanId.ToString());
+        Assert.Equal(ActivityTraceFlags.Recorded, result.ActivityContext.TraceFlags);
+    }
+
+    [Fact]
+    public void ExtractReturnsOriginalContextIfHeaderContainsUnexpectedPercentCharacter()
+    {
+        var formattedHeader = $"%{TraceId}{JaegerDelimiter}{SpanId}{JaegerDelimiter}{ParentSpanId}{JaegerDelimiter}{FlagSampled}";
+        var headers = new Dictionary<string, string[]>
+        {
+            [JaegerHeader] = [formattedHeader],
+        };
+
+        var result = new JaegerPropagator().Extract(default, headers, Getter);
+
+        Assert.Equal(default, result);
     }
 
     [Fact]
@@ -168,9 +184,7 @@ public class JaegerPropagatorTests
         var headers = new Dictionary<string, string>();
 
         // act
-#pragma warning disable CS0618 // Type or member is obsolete
         new JaegerPropagator().Inject(propagationContext, headers, Setter);
-#pragma warning restore CS0618
 
         // assert
         Assert.Empty(headers);
@@ -187,9 +201,7 @@ public class JaegerPropagatorTests
             default);
 
         // act
-#pragma warning disable CS0618 // Type or member is obsolete
         new JaegerPropagator().Inject(propagationContext, null, Setter!);
-#pragma warning restore CS0618
 
         // assert
     }
@@ -207,9 +219,7 @@ public class JaegerPropagatorTests
         var headers = new Dictionary<string, string>();
 
         // act
-#pragma warning disable CS0618 // Type or member is obsolete
         new JaegerPropagator().Inject(propagationContext, headers, null!);
-#pragma warning restore CS0618
 
         // assert
         Assert.Empty(headers);
@@ -237,12 +247,21 @@ public class JaegerPropagatorTests
         var headers = new Dictionary<string, string>();
 
         // act
-#pragma warning disable CS0618 // Type or member is obsolete
         new JaegerPropagator().Inject(propagationContext, headers, Setter);
-#pragma warning restore CS0618
 
         // assert
         Assert.Single(headers);
         Assert.Equal(expectedValue, headers[JaegerHeader]);
+    }
+
+    [Fact]
+    public void ExtractHeaderWithManyDelimitersReturnsDefault()
+    {
+        var formattedHeader = string.Join(JaegerDelimiter, Enumerable.Repeat("part", 50_000));
+        var headers = new Dictionary<string, string[]> { { JaegerHeader, [formattedHeader] } };
+
+        var result = new JaegerPropagator().Extract(default, headers, Getter);
+
+        Assert.Equal(default, result);
     }
 }

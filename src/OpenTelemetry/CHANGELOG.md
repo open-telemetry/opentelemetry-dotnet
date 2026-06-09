@@ -6,8 +6,52 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Stop validating View-provided metric stream `Name` against the instrument
+  name syntax, per
+  [spec clarification](https://github.com/open-telemetry/opentelemetry-specification/pull/5094).
+  ([#7300](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7300))
+
+* Fix incorrect validation of `OTEL_BSP_*` and `OTEL_BLRP_*` environment
+  variables.
+  ([#7187](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7187))
+
+* Fix observable instrument callbacks running once per reader instead of
+  once per collection cycle.
+  ([#7188](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7188))
+
+* Update `OpenTelemetrySdkEventSource` to support the W3C randomness flag.
+  ([#7301](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7301))
+
 * Added `ObservedTimestamp` property to `LogRecord`.
   ([#6979](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6979))
+
+## 1.15.3
+
+Released 2026-Apr-21
+
+* Fix resource leak in batch and periodic exporting task workers for Blazor/WASM.
+  ([#7069](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7069))
+
+* Fixed `LogRecord.LogLevel` to preserve `LogLevel.None` and handle
+  unspecified or out-of-range severities without returning invalid enum values.
+  ([#7092](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7092))
+
+* Fixed `OTEL_TRACES_SAMPLER_ARG` handling to treat out-of-range, `NaN`, and
+  infinite values as invalid and fall back to the default ratio when using
+  `traceidratio` and `parentbased_traceidratio` samplers.
+  ([#7103](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7103))
+
+## 1.15.2
+
+Released 2026-Apr-08
+
+* Added Task-based worker support for `BatchExportProcessor` and
+  `PeriodicExportingMetricReader` to enable OpenTelemetry to work in
+  single-threaded WebAssembly environments such as Blazor and Uno Platform.
+  The implementation automatically detects the WebAssembly runtime and switches
+  to Task-based workers accordingly; the Thread-based approach remains the
+  default on all other platforms.
+  ([#6379](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6379))
 
 ## 1.15.1
 

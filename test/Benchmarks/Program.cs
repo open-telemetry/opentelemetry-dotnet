@@ -3,12 +3,5 @@
 
 using BenchmarkDotNet.Running;
 
-namespace OpenTelemetry.Benchmarks;
-
-internal static class Program
-{
-    public static void Main(string[] args)
-    {
-        BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args);
-    }
-}
+var summary = BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args);
+return summary.SelectMany((p) => p.Reports).Any((p) => !p.Success) ? 1 : 0;

@@ -5,7 +5,6 @@ using System.Globalization;
 using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
-using Xunit;
 
 namespace OpenTelemetry.Internal.Tests;
 
@@ -24,6 +23,20 @@ public sealed class PeriodicExportingMetricReaderHelperTests : IDisposable
     [Fact]
     public void CreatePeriodicExportingMetricReader_Defaults()
     {
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        var reader = CreatePeriodicExportingMetricReader();
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        Assert.Equal(60000, reader.ExportIntervalMilliseconds);
+        Assert.Equal(30000, reader.ExportTimeoutMilliseconds);
+        Assert.Equal(MetricReaderTemporalityPreference.Cumulative, reader.TemporalityPreference);
+    }
+
+    [Fact]
+    public void CreatePeriodicExportingMetricReader_Defaults_WithTask()
+    {
+        using var threadingOverride = ThreadingHelper.BeginThreadingOverride(isThreadingDisabled: true);
+
 #pragma warning disable CA2000 // Dispose objects before losing scope
         var reader = CreatePeriodicExportingMetricReader();
 #pragma warning restore CA2000 // Dispose objects before losing scope

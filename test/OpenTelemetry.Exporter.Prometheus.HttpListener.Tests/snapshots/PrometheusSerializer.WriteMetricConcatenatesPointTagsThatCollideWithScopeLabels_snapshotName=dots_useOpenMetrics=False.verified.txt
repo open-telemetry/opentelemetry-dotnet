@@ -1,0 +1,2 @@
+﻿# TYPE test_counter_total counter
+test_counter_total{otel_scope_name="WriteMetricConcatenatesPointTagsThatCollideWithScopeLabels",otel_scope_version="1.0.0",otel_scope_library_mascot="dotnetbot;otter"} 1

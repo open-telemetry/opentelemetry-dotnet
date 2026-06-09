@@ -31,7 +31,6 @@
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\MetricTestData.cs" Link="Includes\Metrics\MetricTestData.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\MetricTestsBase.cs" Link="Includes\Metrics\MetricTestsBase.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Metrics\MetricViewTests.cs" Link="Includes\Metrics\MetricViewTests.cs" />
-    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\InMemoryEventListener.cs" Link="Includes\InMemoryEventListener.cs" />
   </ItemGroup>
 
   <ItemGroup>

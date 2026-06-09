@@ -1,6 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if NET
+using System.Buffers;
+#endif
 using System.Diagnostics;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Internal;
@@ -24,6 +27,10 @@ public class JaegerPropagator : TextMapPropagator
 
     private static readonly int TraceId128BitLength = "0af7651916cd43dd8448eb211c80319c".Length;
     private static readonly int SpanIdLength = "00f067aa0ba902b7".Length;
+
+#if NET
+    private static readonly SearchValues<char> DelimiterHintChars = SearchValues.Create(":%");
+#endif
 
     /// <inheritdoc/>
 #pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
@@ -71,14 +78,11 @@ public class JaegerPropagator : TextMapPropagator
 
             var jaegerHeaderParsed = TryExtractTraceContext(jaegerHeader, out var traceId, out var spanId, out var traceOptions);
 
-            if (!jaegerHeaderParsed)
-            {
-                return context;
-            }
-
-            return new PropagationContext(
-                new ActivityContext(traceId, spanId, traceOptions, isRemote: true),
-                context.Baggage);
+            return !jaegerHeaderParsed
+                ? context
+                : new PropagationContext(
+                    new ActivityContext(traceId, spanId, traceOptions, isRemote: true),
+                    context.Baggage);
         }
         catch (Exception ex)
         {
@@ -147,13 +151,16 @@ public class JaegerPropagator : TextMapPropagator
             return false;
         }
 
-        var traceComponents = jaegerHeader.Split(JaegerDelimiters, StringSplitOptions.RemoveEmptyEntries);
-        if (traceComponents.Length != 4)
+        var headerValue = jaegerHeader;
+        if (!TryExtractTraceParts(
+                headerValue,
+                out var traceIdStr,
+                out var spanIdStr,
+                out var traceFlagsStr))
         {
             return false;
         }
 
-        var traceIdStr = traceComponents[0];
         if (traceIdStr.Length < TraceId128BitLength)
         {
             traceIdStr = traceIdStr.PadLeft(TraceId128BitLength, '0');
@@ -161,7 +168,6 @@ public class JaegerPropagator : TextMapPropagator
 
         traceId = ActivityTraceId.CreateFromString(traceIdStr.AsSpan());
 
-        var spanIdStr = traceComponents[1];
         if (spanIdStr.Length < SpanIdLength)
         {
             spanIdStr = spanIdStr.PadLeft(SpanIdLength, '0');
@@ -169,12 +175,135 @@ public class JaegerPropagator : TextMapPropagator
 
         spanId = ActivitySpanId.CreateFromString(spanIdStr.AsSpan());
 
-        var traceFlagsStr = traceComponents[3];
-        if (SampledValue.Equals(traceFlagsStr, StringComparison.Ordinal))
+        if (string.Equals(SampledValue, traceFlagsStr, StringComparison.Ordinal))
         {
             traceOptions |= ActivityTraceFlags.Recorded;
         }
 
         return true;
+    }
+
+    private static bool TryExtractTraceParts(
+        string jaegerHeader,
+        out string traceId,
+        out string spanId,
+        out string traceFlags)
+    {
+        traceId = string.Empty;
+        spanId = string.Empty;
+        traceFlags = string.Empty;
+
+        var position = 0;
+        var componentCount = 0;
+
+        while (position <= jaegerHeader.Length)
+        {
+            var component = ReadNextComponent(jaegerHeader, ref position);
+            if (component.IsEmpty)
+            {
+                if (position >= jaegerHeader.Length)
+                {
+                    break;
+                }
+
+                continue;
+            }
+
+            switch (componentCount)
+            {
+                case 0:
+                    traceId = component.ToString();
+                    break;
+
+                case 1:
+                    spanId = component.ToString();
+                    break;
+
+                case 2:
+                    break;
+
+                case 3:
+                    traceFlags = component.ToString();
+                    break;
+
+                default:
+                    return false;
+            }
+
+            componentCount++;
+
+            if (position >= jaegerHeader.Length)
+            {
+                break;
+            }
+        }
+
+        return componentCount == 4;
+    }
+
+    private static ReadOnlySpan<char> ReadNextComponent(string header, ref int position)
+    {
+#if NET
+        var remaining = header.AsSpan(position);
+        var scanOffset = 0;
+        while (true)
+        {
+            var delimiterIndex = remaining.Slice(scanOffset).IndexOfAny(DelimiterHintChars);
+            if (delimiterIndex < 0)
+            {
+                var result = remaining;
+                position = header.Length;
+                return result;
+            }
+
+            delimiterIndex += scanOffset;
+
+            if (remaining[delimiterIndex] == ':')
+            {
+                var component = remaining.Slice(0, delimiterIndex);
+                position += delimiterIndex + 1;
+                return component;
+            }
+
+            if (remaining.Length - delimiterIndex >= JaegerDelimiterEncoded.Length &&
+                remaining[delimiterIndex + 1] == '3' &&
+                remaining[delimiterIndex + 2] == 'A')
+            {
+                var component = remaining.Slice(0, delimiterIndex);
+                position += delimiterIndex + JaegerDelimiterEncoded.Length;
+                return component;
+            }
+
+            scanOffset = delimiterIndex + 1;
+        }
+#else
+        var colonIndex = header.IndexOf(JaegerDelimiter, position, StringComparison.Ordinal);
+        var encodedIndex = header.IndexOf(JaegerDelimiterEncoded, position, StringComparison.Ordinal);
+
+        var nextIndex = -1;
+        var delimiterLength = 0;
+
+        if (colonIndex >= 0 && (encodedIndex < 0 || colonIndex < encodedIndex))
+        {
+            nextIndex = colonIndex;
+            delimiterLength = JaegerDelimiter.Length;
+        }
+        else if (encodedIndex >= 0)
+        {
+            nextIndex = encodedIndex;
+            delimiterLength = JaegerDelimiterEncoded.Length;
+        }
+
+        if (nextIndex < 0)
+        {
+            var result = header.AsSpan(position);
+            position = header.Length;
+            return result;
+        }
+
+        var component = header.AsSpan(position, nextIndex - position);
+        position = nextIndex + delimiterLength;
+        return component;
+#endif
     }
 }

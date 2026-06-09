@@ -44,6 +44,7 @@ internal abstract class OtlpExportClient : IExportClient
         this.Endpoint = new UriBuilder(exporterEndpoint).Uri;
         this.Headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
         this.HttpClient = httpClient;
+        this.CompressionEnabled = options.Compression == OtlpExportCompression.GZip;
     }
 
     internal HttpClient HttpClient { get; }
@@ -52,9 +53,13 @@ internal abstract class OtlpExportClient : IExportClient
 
     internal IReadOnlyDictionary<string, string> Headers { get; }
 
+    internal bool CompressionEnabled { get; }
+
     internal abstract MediaTypeHeaderValue MediaTypeHeader { get; }
 
     internal virtual bool RequireHttp2 => false;
+
+    internal virtual HttpCompletionOption CompletionOption => HttpCompletionOption.ResponseHeadersRead;
 
     public abstract ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default);
 
@@ -65,28 +70,8 @@ internal abstract class OtlpExportClient : IExportClient
         return true;
     }
 
-    protected static string? TryGetResponseBody(HttpResponseMessage? httpResponse, CancellationToken cancellationToken)
-    {
-        if (httpResponse?.Content == null)
-        {
-            return null;
-        }
-
-        try
-        {
-#if NET
-            var stream = httpResponse.Content.ReadAsStream(cancellationToken);
-            using var reader = new StreamReader(stream);
-            return reader.ReadToEnd();
-#else
-            return httpResponse.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-#endif
-        }
-        catch (Exception)
-        {
-            return null;
-        }
-    }
+    protected internal static string? TryGetResponseBody(HttpResponseMessage? httpResponse, CancellationToken cancellationToken) =>
+        HttpClientHelpers.TryGetResponseBodyAsString(httpResponse, cancellationToken);
 
     protected HttpRequestMessage CreateHttpRequest(byte[] buffer, int contentLength)
     {
@@ -106,24 +91,37 @@ internal abstract class OtlpExportClient : IExportClient
             request.Headers.Add(header.Key, header.Value);
         }
 
-        // TODO: Support compression.
-
-        request.Content = new ByteArrayContent(buffer, 0, contentLength);
-        request.Content.Headers.ContentType = this.MediaTypeHeader;
+        request.Content = this.CreateHttpContent(buffer, contentLength);
 
         return request;
     }
 
-    protected HttpResponseMessage SendHttpRequest(HttpRequestMessage request, CancellationToken cancellationToken)
+    /// <summary>
+    /// Creates the <see cref="HttpContent"/> for a request. Override in subclasses to
+    /// customise content creation (e.g. to apply compression).
+    /// </summary>
+    /// <param name="buffer">The serialized protobuf payload buffer.</param>
+    /// <param name="contentLength">The number of bytes within <paramref name="buffer"/> that make up the message.</param>
+    /// <returns>An <see cref="HttpContent"/> representing the export payload.</returns>
+    protected virtual HttpContent CreateHttpContent(byte[] buffer, int contentLength)
     {
+#if NET
+        var content = new ReadOnlyMemoryContent(buffer.AsMemory(0, contentLength));
+#else
+        var content = new ByteArrayContent(buffer, 0, contentLength);
+#endif
+        content.Headers.ContentType = this.MediaTypeHeader;
+        return content;
+    }
+
+    protected HttpResponseMessage SendHttpRequest(HttpRequestMessage request, CancellationToken cancellationToken) =>
 #if NET
         // Note: SendAsync must be used with HTTP/2 because synchronous send is
         // not supported.
-        return this.RequireHttp2 || !SynchronousSendSupportedByCurrentPlatform
-            ? this.HttpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult()
-            : this.HttpClient.Send(request, cancellationToken);
+        this.RequireHttp2 || !SynchronousSendSupportedByCurrentPlatform
+            ? this.HttpClient.SendAsync(request, this.CompletionOption, cancellationToken).GetAwaiter().GetResult()
+            : this.HttpClient.Send(request, this.CompletionOption, cancellationToken);
 #else
-        return this.HttpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult();
+        this.HttpClient.SendAsync(request, this.CompletionOption, cancellationToken).GetAwaiter().GetResult();
 #endif
-    }
 }

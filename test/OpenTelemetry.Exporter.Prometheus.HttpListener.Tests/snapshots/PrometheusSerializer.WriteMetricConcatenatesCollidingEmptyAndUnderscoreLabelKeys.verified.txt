@@ -1,0 +1,2 @@
+﻿# TYPE test_gauge gauge
+test_gauge{otel_scope_name="test_meter",_="empty;underscore"} 123

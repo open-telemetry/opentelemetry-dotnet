@@ -8,12 +8,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.Metrics;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
-using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Metrics.Tests;
 using OpenTelemetry.Tests;
-using OpenTelemetry.Trace;
-using Xunit;
 
 namespace OpenTelemetry.Extensions.Hosting.Tests;
 
@@ -168,7 +165,7 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
     [InlineData(true, MetricReaderTemporalityPreference.Cumulative)]
     public void ReloadOfMetricsViaIConfigurationWithExportCleanupTest(bool useWithMetricsStyle, MetricReaderTemporalityPreference temporalityPreference)
     {
-        using var inMemoryEventListener = new InMemoryEventListener(OpenTelemetrySdkEventSource.Log);
+        using var eventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log);
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
         List<Metric> exportedItems = [];
@@ -238,16 +235,16 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
 
         AssertSingleMetricWithLongSum(exportedItems);
 
-        var duplicateMetricInstrumentEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 38);
+        var duplicateMetricInstrumentEvents = eventListener.Messages.Where((e) => e.EventId == 38);
 
         // Note: We currently log a duplicate warning anytime a metric is reactivated.
         Assert.Single(duplicateMetricInstrumentEvents);
 
-        var metricInstrumentDeactivatedEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 52);
+        var metricInstrumentDeactivatedEvents = eventListener.Messages.Where((e) => e.EventId == 52);
 
         Assert.Single(metricInstrumentDeactivatedEvents);
 
-        var metricInstrumentRemovedEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 53);
+        var metricInstrumentRemovedEvents = eventListener.Messages.Where((e) => e.EventId == 53);
 
         Assert.Single(metricInstrumentRemovedEvents);
     }
@@ -259,7 +256,7 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
     [InlineData(true, MetricReaderTemporalityPreference.Cumulative)]
     public void ReloadOfMetricsViaIConfigurationWithoutExportCleanupTest(bool useWithMetricsStyle, MetricReaderTemporalityPreference temporalityPreference)
     {
-        using var inMemoryEventListener = new InMemoryEventListener(OpenTelemetrySdkEventSource.Log);
+        using var eventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log);
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
         List<Metric> exportedItems = [];
@@ -309,16 +306,16 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
             exportedItems,
             expectedValue: temporalityPreference == MetricReaderTemporalityPreference.Delta ? 1 : 2);
 
-        var duplicateMetricInstrumentEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 38);
+        var duplicateMetricInstrumentEvents = eventListener.Messages.Where((e) => e.EventId == 38);
 
         // Note: We currently log a duplicate warning anytime a metric is reactivated.
         Assert.Single(duplicateMetricInstrumentEvents);
 
-        var metricInstrumentDeactivatedEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 52);
+        var metricInstrumentDeactivatedEvents = eventListener.Messages.Where((e) => e.EventId == 52);
 
         Assert.Single(metricInstrumentDeactivatedEvents);
 
-        var metricInstrumentRemovedEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 53);
+        var metricInstrumentRemovedEvents = eventListener.Messages.Where((e) => e.EventId == 53);
 
         Assert.Single(metricInstrumentRemovedEvents);
     }
@@ -329,7 +326,7 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
         // Arrange
         var meterName = "TestMeter";
 
-        using (new EnvironmentVariableScope("OTEL_SDK_DISABLED", "true"))
+        using (EnvironmentVariableScope.Create("OTEL_SDK_DISABLED", "true"))
         {
             var services = new ServiceCollection();
 

@@ -4,7 +4,6 @@
 using System.Diagnostics.Metrics;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
-using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests;
 
@@ -34,25 +33,45 @@ public class MetricViewTests : MetricTestsBase
 
     [Theory]
     [MemberData(nameof(MetricTestData.InvalidInstrumentNames), MemberType = typeof(MetricTestData))]
-    public void AddViewWithInvalidNameThrowsArgumentException(string viewNewName)
+    public void AddViewWithNonInstrumentSyntaxNameAccepted_StringOverload(string viewNewName)
+    {
+        // Per spec, View-provided stream names are NOT subject to the
+        // instrument name syntax. Names that would be invalid as instrument
+        // names (and previously threw ArgumentException) MUST now be accepted.
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter("AddViewWithNonInstrumentSyntaxNameAccepted_StringOverload");
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("name1", viewNewName)
+            .AddInMemoryExporter(exportedItems));
+
+        var counter = meter.CreateCounter<long>("name1");
+        counter.Add(10);
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        Assert.Single(exportedItems);
+        Assert.Equal(viewNewName, exportedItems[0].Name);
+    }
+
+    [Theory]
+    [MemberData(nameof(MetricTestData.InvalidInstrumentNames), MemberType = typeof(MetricTestData))]
+    public void AddViewWithNonInstrumentSyntaxNameAccepted_ConfigOverload(string viewNewName)
     {
         var exportedItems = new List<Metric>();
 
-        using var meter1 = new Meter("AddViewWithInvalidNameThrowsArgumentException");
-
-        var ex = Assert.Throws<ArgumentException>(() => BuildMeterProvider(out var meterProvider, builder => builder
-            .AddMeter(meter1.Name)
-            .AddView("name1", viewNewName)
-            .AddInMemoryExporter(exportedItems)));
-
-        Assert.Contains($"Custom view name {viewNewName} is invalid.", ex.Message, StringComparison.Ordinal);
-
-        ex = Assert.Throws<ArgumentException>(() => BuildMeterProvider(out var meterProvider, builder => builder
-            .AddMeter(meter1.Name)
+        using var meter = new Meter("AddViewWithNonInstrumentSyntaxNameAccepted_ConfigOverload");
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
             .AddView("name1", new MetricStreamConfiguration() { Name = viewNewName })
-            .AddInMemoryExporter(exportedItems)));
+            .AddInMemoryExporter(exportedItems));
 
-        Assert.Contains($"Custom view name {viewNewName} is invalid.", ex.Message, StringComparison.Ordinal);
+        var counter = meter.CreateCounter<long>("name1");
+        counter.Add(10);
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        Assert.Single(exportedItems);
+        Assert.Equal(viewNewName, exportedItems[0].Name);
     }
 
     [Fact]
@@ -105,12 +124,12 @@ public class MetricViewTests : MetricTestsBase
            .AddView(_ => { throw new InvalidOperationException("bad"); })
            .AddInMemoryExporter(exportedItems));
 
-        using (var inMemoryEventListener = new InMemoryEventListener(OpenTelemetrySdkEventSource.Log))
+        using (var eventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log))
         {
             var counter1 = meter1.CreateCounter<long>("counter1");
             counter1.Add(1);
 
-            var metricViewIgnoredEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 41);
+            var metricViewIgnoredEvents = eventListener.Messages.Where((e) => e.EventId == 41);
             Assert.Single(metricViewIgnoredEvents);
         }
 
@@ -133,11 +152,11 @@ public class MetricViewTests : MetricTestsBase
            .AddView("*", MetricStreamConfiguration.Drop)
            .AddInMemoryExporter(exportedItems));
 
-        using (var inMemoryEventListener = new InMemoryEventListener(OpenTelemetrySdkEventSource.Log))
+        using (var inMemoryEventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log))
         {
             var counter1 = meter1.CreateCounter<long>("counter1");
             counter1.Add(1);
-            Assert.Single(inMemoryEventListener.Events, e => e.EventId == 41);
+            Assert.Single(inMemoryEventListener.Messages, e => e.EventId == 41);
         }
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
@@ -160,12 +179,12 @@ public class MetricViewTests : MetricTestsBase
            .AddView(_ => { return new MetricStreamConfiguration() { Name = "newname" }; })
            .AddInMemoryExporter(exportedItems));
 
-        using (var inMemoryEventListener = new InMemoryEventListener(OpenTelemetrySdkEventSource.Log))
+        using (var inMemoryEventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log))
         {
             var counter1 = meter1.CreateCounter<long>("counter1");
             counter1.Add(1);
 
-            var metricViewIgnoredEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 41);
+            var metricViewIgnoredEvents = inMemoryEventListener.Messages.Where((e) => e.EventId == 41);
             Assert.Single(metricViewIgnoredEvents);
         }
 
@@ -295,21 +314,20 @@ public class MetricViewTests : MetricTestsBase
 
     [Theory]
     [MemberData(nameof(MetricTestData.InvalidInstrumentNames), MemberType = typeof(MetricTestData))]
-    public void ViewWithInvalidNameIgnoredConditionally(string viewNewName)
+    public void ViewWithNonInstrumentSyntaxNameAcceptedConditionally(string viewNewName)
     {
+        // Per spec, View-provided stream names are NOT subject to the
+        // instrument name syntax. Names that would be invalid as instrument
+        // names MUST still be accepted when supplied via a View.
         using var meter1 = new Meter("ViewToRenameMetricConditionallyTest");
         var exportedItems = new List<Metric>();
         using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter1.Name)
-
-            // since here it's a func, we can't validate the name right away
-            // so the view is allowed to be added, but upon instrument creation it's going to be ignored.
             .AddView((instrument) =>
             {
                 if (instrument.Meter.Name.Equals(meter1.Name, StringComparison.OrdinalIgnoreCase)
                     && instrument.Name.Equals("name1", StringComparison.OrdinalIgnoreCase))
                 {
-                    // invalid instrument name as per the spec
                     return new MetricStreamConfiguration() { Name = viewNewName, Description = "new description" };
                 }
                 else
@@ -319,14 +337,14 @@ public class MetricViewTests : MetricTestsBase
             })
             .AddInMemoryExporter(exportedItems));
 
-        // Because the MetricStreamName passed is invalid, the view is ignored,
-        // and default aggregation is used.
         var counter1 = meter1.CreateCounter<long>("name1", "unit", "original_description");
         counter1.Add(10);
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
         Assert.Single(exportedItems);
+        Assert.Equal(viewNewName, exportedItems[0].Name);
+        Assert.Equal("new description", exportedItems[0].Description);
     }
 
     [Theory]

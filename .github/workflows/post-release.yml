@@ -19,6 +19,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.issue.number || github.ref }}
+  cancel-in-progress: false
+
 jobs:
   automation:
     uses: ./.github/workflows/automation.yml
@@ -26,12 +30,13 @@ jobs:
       OTELBOT_DOTNET_PRIVATE_KEY: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
 
   push-packages-and-publish-release:
+    name: Push packages and publish release
     runs-on: ubuntu-24.04
 
     needs: automation
 
     permissions:
-      id-token: write
+      id-token: write # Publish NuGet packages with trusted GitHub OIDC
 
     if: |
       github.event_name == 'issue_comment' &&
@@ -44,23 +49,28 @@ jobs:
       needs.automation.outputs.enabled
 
     steps:
-    - uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3.0.0
+    - name: Generate GitHub App token
+      uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
       id: otelbot-token
       with:
-        app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
+        client-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
+        permission-contents: write
+        permission-pull-requests: write
 
-    - name: Check out code
+    - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
+        persist-credentials: true # zizmor: ignore[artipacked] Needed to push commits
         token: ${{ steps.otelbot-token.outputs.token }}
         ref: ${{ github.event.repository.default_branch }}
+        show-progress: false
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
+      uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5.3.0
 
     - name: NuGet log in
-      uses: NuGet/login@d22cc5f58ff5b88bf9bd452535b4335137e24544 # v1.1.0
+      uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
       id: nuget-login
       with:
         user: ${{ secrets.NUGET_USER }}
@@ -88,6 +98,7 @@ jobs:
           -pushToNuget $HasToken
 
   post-release-published:
+    name: Post release published notice
     runs-on: ubuntu-24.04
 
     needs:
@@ -98,22 +109,29 @@ jobs:
       (github.event_name == 'release' || github.event_name == 'workflow_dispatch')
 
     steps:
-    - uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3.0.0
+    - name: Generate GitHub App token
+      uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
       id: otelbot-token
       with:
-        app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
+        client-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
+        permission-contents: write
+        permission-pull-requests: write
 
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - name: Checkout code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
-        # Note: By default GitHub only fetches 1 commit. We need all the tags
-        # for this work.
+        # Note: By default GitHub only fetches 1 commit. MinVer needs to find
+        # the version tag which is typically NOT on the first commit so we
+        # retrieve them all.
         fetch-depth: 0
+        persist-credentials: true # zizmor: ignore[artipacked] Needed to push commits
         ref: ${{ github.event.repository.default_branch }}
+        show-progress: false
         token: ${{ steps.otelbot-token.outputs.token }}
 
-    - name: Setup dotnet
-      uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
+    - name: Setup .NET
+      uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5.3.0
 
     - name: Create GitHub Pull Request to update stable build version in props
       if: |
@@ -135,20 +153,6 @@ jobs:
           -targetBranch ${env:TARGET_BRANCH} `
           -gitUserName ${env:BOT_USER_NAME} `
           -gitUserEmail ${env:BOT_USER_EMAIL}
-
-    - name: Invoke core version update workflow in opentelemetry-dotnet-contrib repository
-      if: vars.CONTRIB_REPO
-      shell: pwsh
-      env:
-        GH_TOKEN: ${{ steps.otelbot-token.outputs.token }}
-        CONTRIB_REPO: ${{ vars.CONTRIB_REPO }}
-        TAG: ${{ inputs.tag || github.ref_name }}
-      run: |
-        Import-Module .\build\scripts\post-release.psm1
-
-        InvokeCoreVersionUpdateWorkflowInRemoteRepository `
-          -remoteGitRepository ${env:CONTRIB_REPO} `
-          -tag ${env:TAG}
 
     - name: Post notice when release is published
       shell: pwsh

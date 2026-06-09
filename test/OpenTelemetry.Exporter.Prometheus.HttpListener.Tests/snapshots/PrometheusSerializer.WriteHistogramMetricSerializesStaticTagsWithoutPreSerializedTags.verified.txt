@@ -1,0 +1,19 @@
+﻿# TYPE test_histogram histogram
+test_histogram_bucket{otel_scope_name="日本",otel_scope_="meterTagValue",le="0"} 0
+test_histogram_bucket{otel_scope_name="日本",otel_scope_="meterTagValue",le="5"} 0
+test_histogram_bucket{otel_scope_name="日本",otel_scope_="meterTagValue",le="10"} 0
+test_histogram_bucket{otel_scope_name="日本",otel_scope_="meterTagValue",le="25"} 1
+test_histogram_bucket{otel_scope_name="日本",otel_scope_="meterTagValue",le="50"} 1
+test_histogram_bucket{otel_scope_name="日本",otel_scope_="meterTagValue",le="75"} 1
+test_histogram_bucket{otel_scope_name="日本",otel_scope_="meterTagValue",le="100"} 1
+test_histogram_bucket{otel_scope_name="日本",otel_scope_="meterTagValue",le="250"} 1
+test_histogram_bucket{otel_scope_name="日本",otel_scope_="meterTagValue",le="500"} 1
+test_histogram_bucket{otel_scope_name="日本",otel_scope_="meterTagValue",le="750"} 1
+test_histogram_bucket{otel_scope_name="日本",otel_scope_="meterTagValue",le="1000"} 1
+test_histogram_bucket{otel_scope_name="日本",otel_scope_="meterTagValue",le="2500"} 1
+test_histogram_bucket{otel_scope_name="日本",otel_scope_="meterTagValue",le="5000"} 1
+test_histogram_bucket{otel_scope_name="日本",otel_scope_="meterTagValue",le="7500"} 1
+test_histogram_bucket{otel_scope_name="日本",otel_scope_="meterTagValue",le="10000"} 1
+test_histogram_bucket{otel_scope_name="日本",otel_scope_="meterTagValue",le="+Inf"} 1
+test_histogram_sum{otel_scope_name="日本",otel_scope_="meterTagValue"} 18
+test_histogram_count{otel_scope_name="日本",otel_scope_="meterTagValue"} 1

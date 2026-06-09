@@ -6,7 +6,6 @@ using System.Diagnostics.Metrics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Tests;
-using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests;
 
@@ -355,10 +354,10 @@ public class MetricExemplarTests : MetricTestsBase
 
         Assert.True(meterProvider.ForceFlush(MaxTimeToAllowForFlush));
 
-        ValidateScondPhase("histogramWithBucketsAndMinMaxDouble", temporality, testStartTime, exportedItems, measurementValues, secondMeasurementValues);
-        ValidateScondPhase("histogramWithBucketsDouble", temporality, testStartTime, exportedItems, measurementValues, secondMeasurementValues);
-        ValidateScondPhase("histogramWithBucketsAndMinMaxLong", temporality, testStartTime, exportedItems, measurementValues, secondMeasurementValues);
-        ValidateScondPhase("histogramWithBucketsLong", temporality, testStartTime, exportedItems, measurementValues, secondMeasurementValues);
+        ValidateSecondPhase("histogramWithBucketsAndMinMaxDouble", temporality, testStartTime, exportedItems, measurementValues, secondMeasurementValues);
+        ValidateSecondPhase("histogramWithBucketsDouble", temporality, testStartTime, exportedItems, measurementValues, secondMeasurementValues);
+        ValidateSecondPhase("histogramWithBucketsAndMinMaxLong", temporality, testStartTime, exportedItems, measurementValues, secondMeasurementValues);
+        ValidateSecondPhase("histogramWithBucketsLong", temporality, testStartTime, exportedItems, measurementValues, secondMeasurementValues);
 
         static void ValidateFirstPhase(
             string instrumentName,
@@ -377,7 +376,7 @@ public class MetricExemplarTests : MetricTestsBase
             ValidateExemplars(exemplars, metricPoint.Value.StartTime, metricPoint.Value.EndTime, measurementValues, e => e.DoubleValue);
         }
 
-        static void ValidateScondPhase(
+        static void ValidateSecondPhase(
             string instrumentName,
             MetricReaderTemporalityPreference temporality,
             DateTime testStartTime,
@@ -687,6 +686,79 @@ public class MetricExemplarTests : MetricTestsBase
         else
         {
             Assert.Empty(exemplars);
+        }
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void TestExemplarsObservableFilterTags(bool enableTagFiltering)
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+
+        var gauge = meter.CreateObservableGauge(
+            "testObservableGauge",
+            () => new Measurement<double>(
+                18D,
+                new("key1", "value1"),
+                new("key2", "value2"),
+                new("key3", "value3")));
+
+        var counter = meter.CreateObservableCounter(
+            "testObservableCounter",
+            () => new Measurement<long>(
+                100,
+                new("key1", "value1"),
+                new("key2", "value2"),
+                new("key3", "value3")));
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
+            .AddView(
+                "testObservableGauge",
+                new MetricStreamConfiguration()
+                {
+                    TagKeys = enableTagFiltering ? ["key1"] : null,
+                })
+            .AddView(
+                "testObservableCounter",
+                new MetricStreamConfiguration()
+                {
+                    TagKeys = enableTagFiltering ? ["key1"] : null,
+                })
+            .AddInMemoryExporter(exportedItems));
+
+        meterProvider.ForceFlush();
+
+        Assert.Equal(2, exportedItems.Count);
+
+        foreach (var metric in exportedItems)
+        {
+            var metricPoint = GetFirstMetricPoint([metric]);
+            Assert.NotNull(metricPoint);
+
+            var exemplars = GetExemplars(metricPoint.Value);
+            Assert.NotNull(exemplars);
+            Assert.Single(exemplars);
+
+            var exemplar = exemplars[0];
+
+            if (!enableTagFiltering)
+            {
+                Assert.Equal(0, exemplar.FilteredTags.MaximumCount);
+            }
+            else
+            {
+                var filteredTags = exemplar.FilteredTags.ToReadOnlyList();
+
+                Assert.Equal(2, filteredTags.Count);
+
+                Assert.Contains(new("key2", "value2"), filteredTags);
+                Assert.Contains(new("key3", "value3"), filteredTags);
+            }
         }
     }
 

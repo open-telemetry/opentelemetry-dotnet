@@ -5,9 +5,13 @@
 using System.Net.Http;
 #endif
 using Microsoft.Extensions.Configuration;
+#if NET
+using Microsoft.Extensions.DependencyInjection;
+#endif
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
+using OpenTelemetry.PersistentStorage.FileSystem;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
@@ -97,18 +101,50 @@ public class OtlpExporterOptionsExtensionsTests
         Assert.Equal(expected, resultUri.AbsoluteUri);
     }
 
+#if NET
+    [Theory]
+    [InlineData(null, "client.pem")]
+    [InlineData("ca.pem", null)]
+    [InlineData("ca.pem", "client.pem")]
+    public void TryEnableIHttpClientFactoryIntegration_DoesNotReplaceDefaultFactory_WhenTlsIsEnabled(
+        string? caCertificatePath,
+        string? clientCertificatePath)
+    {
+        var services = new ServiceCollection();
+
+        services.AddHttpClient("OtlpLogExporter");
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var options = new OtlpExporterOptions
+        {
+            Protocol = OtlpExportProtocol.HttpProtobuf,
+            MtlsOptions = new OtlpMtlsOptions
+            {
+                CaCertificatePath = caCertificatePath,
+                ClientCertificatePath = clientCertificatePath,
+            },
+        };
+
+        var originalFactory = options.HttpClientFactory;
+
+        var actual = options.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpLogExporter");
+
+        Assert.False(actual);
+        Assert.Same(originalFactory, options.HttpClientFactory);
+        Assert.Same(options.DefaultHttpClientFactory, options.HttpClientFactory);
+    }
+#endif
+
     [Theory]
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
     [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcExportClient), false, 10000, null)]
     [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcExportClient), false, 10000, "in_memory")]
-    [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcExportClient), false, 10000, "disk")]
 #pragma warning restore CS0618 // Suppressing gRPC obsolete warning
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpExportClient), false, 10000, null)]
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpExportClient), true, 8000, null)]
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpExportClient), false, 10000, "in_memory")]
     [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpExportClient), true, 8000, "in_memory")]
-    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpExportClient), false, 10000, "disk")]
-    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpExportClient), true, 8000, "disk")]
     public void GetTransmissionHandler_InitializesCorrectHandlerExportClientAndTimeoutValue(OtlpExportProtocol protocol, Type exportClientType, bool customHttpClient, int expectedTimeoutMilliseconds, string? retryStrategy)
     {
         var exporterOptions = new OtlpExporterOptions() { Protocol = protocol };
@@ -126,6 +162,125 @@ public class OtlpExporterOptionsExtensionsTests
 
         var transmissionHandler = exporterOptions.GetExportTransmissionHandler(new ExperimentalOptions(configuration), OtlpSignalType.Traces);
         AssertTransmissionHandler(transmissionHandler, exportClientType, expectedTimeoutMilliseconds, retryStrategy);
+    }
+
+    [Theory]
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
+    [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcExportClient), false, 10000)]
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
+    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpExportClient), false, 10000)]
+    [InlineData(OtlpExportProtocol.HttpProtobuf, typeof(OtlpHttpExportClient), true, 8000)]
+    public void GetTransmissionHandler_DiskRetryWithDirectory_InitializesCorrectHandlerExportClientAndTimeoutValue(OtlpExportProtocol protocol, Type exportClientType, bool customHttpClient, int expectedTimeoutMilliseconds)
+    {
+        var exporterOptions = new OtlpExporterOptions() { Protocol = protocol };
+        if (customHttpClient)
+        {
+            exporterOptions.HttpClientFactory = () =>
+            {
+                return new HttpClient { Timeout = TimeSpan.FromMilliseconds(expectedTimeoutMilliseconds) };
+            };
+        }
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(
+            new Dictionary<string, string?>
+            {
+                [ExperimentalOptions.OtlpRetryEnvVar] = "disk",
+                [ExperimentalOptions.OtlpDiskRetryDirectoryPathEnvVar] = Path.GetTempPath(),
+            })
+            .Build();
+
+        var transmissionHandler = exporterOptions.GetExportTransmissionHandler(new ExperimentalOptions(configuration), OtlpSignalType.Traces);
+        AssertTransmissionHandler(transmissionHandler, exportClientType, expectedTimeoutMilliseconds, "disk");
+    }
+
+    [Fact]
+    public void GetTransmissionHandler_DiskRetryWithoutDirectory_Throws()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { [ExperimentalOptions.OtlpRetryEnvVar] = "disk" })
+            .Build();
+
+        var exception = Assert.Throws<NotSupportedException>(() => new ExperimentalOptions(configuration));
+        Assert.Contains(ExperimentalOptions.OtlpDiskRetryDirectoryPathEnvVar, exception.Message, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("Traces", "traces")]
+    [InlineData("Logs", "logs")]
+    [InlineData("Metrics", "metrics")]
+    public void GetTransmissionHandler_DiskRetry_UsesSignalSpecificStorageDirectory(string signalTypeName, string expectedDirectoryName)
+    {
+        var retryRootPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+
+        try
+        {
+            var exporterOptions = new OtlpExporterOptions();
+            var signalType = signalTypeName switch
+            {
+                "Logs" => OtlpSignalType.Logs,
+                "Metrics" => OtlpSignalType.Metrics,
+                "Traces" => OtlpSignalType.Traces,
+                _ => throw new ArgumentOutOfRangeException(nameof(signalTypeName)),
+            };
+
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(
+                new Dictionary<string, string?>
+                {
+                    [ExperimentalOptions.OtlpRetryEnvVar] = "disk",
+                    [ExperimentalOptions.OtlpDiskRetryDirectoryPathEnvVar] = retryRootPath,
+                })
+                .Build();
+
+            var transmissionHandler = exporterOptions.GetExportTransmissionHandler(new ExperimentalOptions(configuration), signalType);
+            var persistentStorageTransmissionHandler = Assert.IsType<OtlpExporterPersistentStorageTransmissionHandler>(transmissionHandler);
+
+            var fileBlobProviderField = typeof(OtlpExporterPersistentStorageTransmissionHandler).GetField("persistentBlobProvider", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var persistentBlobProvider = Assert.IsType<FileBlobProvider>(fileBlobProviderField?.GetValue(persistentStorageTransmissionHandler));
+
+            Assert.EndsWith(expectedDirectoryName, persistentBlobProvider.DirectoryPath, StringComparison.Ordinal);
+        }
+        finally
+        {
+            if (Directory.Exists(retryRootPath))
+            {
+                Directory.Delete(retryRootPath, recursive: true);
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData(3)] // Profiles
+    [InlineData(int.MaxValue)] // Invalid/Unknown signal type
+    public void GetTransmissionHandler_DiskRetry_UnsupportedSignalType_ThrowsNotSupportedException(int signalTypeValue)
+    {
+        var retryRootPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+
+        try
+        {
+            var exporterOptions = new OtlpExporterOptions();
+            var signalType = (OtlpSignalType)signalTypeValue;
+
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(
+                new Dictionary<string, string?>
+                {
+                    [ExperimentalOptions.OtlpRetryEnvVar] = "disk",
+                    [ExperimentalOptions.OtlpDiskRetryDirectoryPathEnvVar] = retryRootPath,
+                })
+                .Build();
+
+            Assert.Throws<NotSupportedException>(
+                () => exporterOptions.GetExportTransmissionHandler(new ExperimentalOptions(configuration), signalType));
+        }
+        finally
+        {
+            if (Directory.Exists(retryRootPath))
+            {
+                Directory.Delete(retryRootPath, recursive: true);
+            }
+        }
     }
 
     private static void AssertTransmissionHandler(OtlpExporterTransmissionHandler transmissionHandler, Type exportClientType, int expectedTimeoutMilliseconds, string? retryStrategy)

@@ -36,6 +36,8 @@ internal abstract class JsonStringArrayTagWriter<TTagState> : TagWriter<TTagStat
 
     internal sealed class JsonArrayTagWriter : ArrayTagWriter<JsonArrayTagWriterState>
     {
+        private const int MaxThreadStaticStreamCapacity = 64 * 1024;
+
         [ThreadStatic]
         private static MemoryStream? threadStream;
 
@@ -91,6 +93,11 @@ internal abstract class JsonStringArrayTagWriter<TTagState> : TagWriter<TTagStat
             else
             {
                 threadStream.SetLength(0);
+                if (threadStream.Capacity > MaxThreadStaticStreamCapacity)
+                {
+                    threadStream.Capacity = 0;
+                }
+
                 threadWriter!.Reset(threadStream);
                 return new(threadStream, threadWriter);
             }

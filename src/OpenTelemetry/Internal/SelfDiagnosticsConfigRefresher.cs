@@ -61,7 +61,7 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
     }
 
     /// <summary>
-    /// Try to get the log stream which is seeked to the position where the next line of log should be written.
+    /// Try to get the log stream which is sought to the position where the next line of log should be written.
     /// </summary>
     /// <param name="byteCount">The number of bytes that need to be written.</param>
     /// <param name="stream">When this method returns, contains the Stream object where `byteCount` of bytes can be written.</param>
@@ -142,7 +142,7 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
         if (this.configParser.TryGetConfiguration(out var newLogDirectory, out var fileSizeInKB, out var newEventLevel, out var formatMessage))
         {
             var newFileSize = fileSizeInKB * 1024;
-            if (!newLogDirectory.Equals(this.logDirectory, StringComparison.Ordinal) || this.logFileSize != newFileSize)
+            if (!string.Equals(newLogDirectory, this.logDirectory, StringComparison.Ordinal) || this.logFileSize != newFileSize)
             {
                 this.CloseLogFile();
                 this.OpenLogFile(newLogDirectory, newFileSize);
@@ -150,11 +150,7 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
 
             if (!newEventLevel.Equals(this.logEventLevel) || this.formatMessage != formatMessage)
             {
-                if (this.eventListener != null)
-                {
-                    this.eventListener.Dispose();
-                }
-
+                this.eventListener?.Dispose();
                 this.eventListener = new SelfDiagnosticsEventListener(newEventLevel, this, formatMessage);
                 this.logEventLevel = newEventLevel;
             }
@@ -177,10 +173,7 @@ internal class SelfDiagnosticsConfigRefresher : IDisposable
             // properly.
             foreach (var stream in this.viewStream.Values)
             {
-                if (stream != null)
-                {
-                    stream.Dispose();
-                }
+                stream?.Dispose();
             }
 
             mmf.Dispose();

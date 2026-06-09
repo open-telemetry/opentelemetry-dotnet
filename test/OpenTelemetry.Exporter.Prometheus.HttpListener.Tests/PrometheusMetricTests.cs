@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using OpenTelemetry.Metrics;
-using Xunit;
 
 namespace OpenTelemetry.Exporter.Prometheus.Tests;
 
@@ -55,6 +54,10 @@ public sealed class PrometheusMetricTests
     [Fact]
     public void SanitizeMetricName_SupportColon()
         => AssertSanitizeMetricName("sample_metric_name__:_per_meter", "sample_metric_name_:_per_meter");
+
+    [Fact]
+    public void SanitizeMetricName_ReplacesNonAsciiCharacters()
+        => AssertSanitizeMetricName("A\u010A", "A_");
 
     [Fact]
     public void Unit_Annotation_None()
@@ -157,6 +160,30 @@ public sealed class PrometheusMetricTests
         => AssertOpenMetricsName("db_bytes_written", "By", PrometheusType.Gauge, false, "db_bytes_written_bytes");
 
     [Fact]
+    public void OpenMetricsName_CollapsesConsecutiveUnderscores()
+        => AssertOpenMetricsName("cpu_sp__d_hertz", string.Empty, PrometheusType.Gauge, false, "cpu_sp_d_hertz");
+
+    [Fact]
+    public void OpenMetricsName_PreserveLeadingNumber()
+        => AssertOpenMetricsName("2_metric_name", "By", PrometheusType.Gauge, false, "_2_metric_name_bytes");
+
+    [Fact]
+    public void OpenMetricsName_UnitStartingWithNumber_DoesNotAddExtraSeparator()
+        => AssertOpenMetricsName("metric", "2", PrometheusType.Gauge, false, "metric_2");
+
+    [Fact]
+    public void OpenMetricsName_UnitStartingWithMultipleDigits_PreservesSingleSeparator()
+        => AssertOpenMetricsName("metric", "10ms", PrometheusType.Gauge, false, "metric_10ms");
+
+    [Fact]
+    public void OpenMetricsName_CollapsesConsecutiveUnsupportedCharacters()
+        => AssertOpenMetricsName("s%%ple", "%/m", PrometheusType.Summary, false, "s_ple_percent_per_minute");
+
+    [Fact]
+    public void OpenMetricsName_NameEscapingAndUnitNormalization_AreAppliedIndependently()
+        => AssertOpenMetricsName("s%%ple", "req__per__s", PrometheusType.Summary, false, "s_ple_req_per_s");
+
+    [Fact]
     public void OpenMetricsName_SuffixedWithUnit_NotAppended()
         => AssertOpenMetricsName("db_written_bytes", "By", PrometheusType.Gauge, false, "db_written_bytes");
 
@@ -177,14 +204,17 @@ public sealed class PrometheusMetricTests
         => AssertOpenMetricsName("db_bytes_written_total", "By", PrometheusType.Counter, false, "db_bytes_written_bytes_total");
 
     [Fact]
-    public void OpenMetricsMetadataName_Counter_NotAppendTotal() => AssertOpenMetricsMetadataName("db_bytes_written", "By", PrometheusType.Counter, false, "db_bytes_written_bytes");
+    public void OpenMetricsMetadataName_Counter_NotAppendTotal()
+        => AssertOpenMetricsMetadataName("db_bytes_written", "By", PrometheusType.Counter, false, "db_bytes_written_bytes");
 
     [Fact]
     public void OpenMetricsMetadataName_Counter_DisableSuffixTotal_NotAppendTotal()
         => AssertOpenMetricsMetadataName("db_bytes_written", "By", PrometheusType.Counter, true, "db_bytes_written_bytes");
 
     [Theory]
+#pragma warning disable xUnit1045 // Avoid using TheoryData type arguments that might not be serializable
     [MemberData(nameof(GetPrometheusType_Data))]
+#pragma warning restore xUnit1045 // Avoid using TheoryData type arguments that might not be serializable
     public void GetPrometheusType_MapsOpenTelemetryMetricsTypeToPrometheus(MetricsMappingTestData mappingTestData)
     {
         var result = PrometheusMetric.GetPrometheusType(mappingTestData.OpenTelemetryMetricType);
@@ -361,7 +391,47 @@ public sealed class PrometheusMetricTests
 
     [Fact]
     public void Name_MultipleSlashesInUnit_FirstSlashProcessed()
-        => AssertName("metric", "req/s/extra", PrometheusType.Gauge, false, "metric_req_per_s/extra"); // // Multiple slashes
+        => AssertName("metric", "req/s/extra", PrometheusType.Gauge, false, "metric_req_per_s_extra"); // // Multiple slashes
+
+    [Fact]
+    public void SanitizeMetricUnit_Valid()
+        => AssertSanitizeMetricUnit("requests", "requests");
+
+    [Fact]
+    public void SanitizeMetricUnit_RemoveConsecutiveUnderscores()
+        => AssertSanitizeMetricUnit("req__per__s", "req_per_s");
+
+    [Fact]
+    public void SanitizeMetricUnit_RemoveUnsupportedCharacters()
+        => AssertSanitizeMetricUnit("# RU", "RU");
+
+    [Fact]
+    public void SanitizeMetricUnit_RemoveWhitespace()
+        => AssertSanitizeMetricUnit("req s", "req_s");
+
+    [Fact]
+    public void SanitizeMetricUnit_LeadingNumberAllowed()
+        => AssertSanitizeMetricUnit("2_unitname", "2_unitname");
+
+    [Fact]
+    public void SanitizeMetricUnit_RemoveMultipleUnsupportedCharacters()
+        => AssertSanitizeMetricUnit("##/RU!", "RU");
+
+    [Fact]
+    public void SanitizeMetricUnit_ReplacesNonAsciiCharacters()
+        => AssertSanitizeMetricUnit("s\u010A", "s");
+
+    [Fact]
+    public void Name_UnitWithHash_Sanitized()
+        => AssertName("azure_cosmosdb_client_operation_request_charge", "# RU", PrometheusType.Histogram, false, "azure_cosmosdb_client_operation_request_charge_RU");
+
+    [Fact]
+    public void Name_UnitWithSpace_Sanitized()
+        => AssertName("metric", "req s", PrometheusType.Gauge, false, "metric_req_s");
+
+    [Fact]
+    public void Name_UnitWithSpecialChars_Sanitized()
+        => AssertName("metric", "req!", PrometheusType.Gauge, false, "metric_req");
 
     [Theory]
     [InlineData(PrometheusType.Counter)]
@@ -375,6 +445,12 @@ public sealed class PrometheusMetricTests
         Assert.Equal(type, metric.Type);
     }
 
+    private static void AssertSanitizeMetricUnit(string unit, string expected)
+    {
+        var sanitizedUnit = PrometheusMetric.SanitizeMetricUnit(unit);
+        Assert.Equal(expected, sanitizedUnit);
+    }
+
     private static void AssertName(
         string name, string unit, PrometheusType type, bool disableTotalNameSuffixForCounters, string expected)
     {
@@ -384,8 +460,8 @@ public sealed class PrometheusMetricTests
 
     private static void AssertSanitizeMetricName(string name, string expected)
     {
-        var sanatizedName = PrometheusMetric.SanitizeMetricName(name);
-        Assert.Equal(expected, sanatizedName);
+        var sanitizedName = PrometheusMetric.SanitizeMetricName(name);
+        Assert.Equal(expected, sanitizedName);
     }
 
     private static void AssertOpenMetricsName(

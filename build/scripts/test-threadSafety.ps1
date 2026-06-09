@@ -7,19 +7,20 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$InformationPreference = "Continue"
 
 $env:OTEL_RUN_COYOTE_TESTS = 'true'
 
 $rootDirectory = Get-Location
 
-Write-Host "Install Coyote CLI."
+Write-Information "Install Coyote CLI..."
 dotnet tool install --global Microsoft.Coyote.CLI --version $coyoteVersion
 
 if ($LASTEXITCODE -ne 0) {
     throw "Microsoft.Coyote.CLI installation failed with exit code $LASTEXITCODE"
 }
 
-Write-Host "Build $testProjectName project."
+Write-Information "Build $testProjectName project..."
 dotnet build "$rootDirectory/test/$testProjectName/$testProjectName.csproj" --configuration $configuration
 
 if ($LASTEXITCODE -ne 0) {
@@ -28,7 +29,7 @@ if ($LASTEXITCODE -ne 0) {
 
 $artifactsPath = Join-Path $rootDirectory "artifacts/bin/$testProjectName/$($configuration.ToLowerInvariant())_$targetFramework"
 
-Write-Host "Generate Coyote rewriting options JSON file."
+Write-Information "Generating Coyote rewriting options JSON file..."
 $assemblies = Get-ChildItem $artifactsPath -Filter OpenTelemetry*.dll | ForEach-Object {$_.Name}
 
 $RewriteOptionsJson = @{}
@@ -36,14 +37,14 @@ $RewriteOptionsJson = @{}
 [void]$RewriteOptionsJson.Add("Assemblies", $assemblies)
 $RewriteOptionsJson | ConvertTo-Json -Compress | Set-Content -Path "$rootDirectory/test/$testProjectName/rewrite.coyote.json"
 
-Write-Host "Run Coyote rewrite."
+Write-Information "Running Coyote rewrite..."
 coyote rewrite "$rootDirectory/test/$testProjectName/rewrite.coyote.json"
 
 if ($LASTEXITCODE -ne 0) {
     throw "coyote rewrite failed with exit code $LASTEXITCODE"
 }
 
-Write-Host "Execute re-written binary."
+Write-Information "Executing re-written binary..."
 dotnet test "$artifactsPath/$testProjectName.dll" --framework $targetFramework --filter CategoryName=$categoryName
 
 if ($LASTEXITCODE -ne 0) {

@@ -7,7 +7,6 @@ using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Resources.Tests;
 using OpenTelemetry.Tests;
-using Xunit;
 
 namespace OpenTelemetry.Trace.Tests;
 
@@ -1063,10 +1062,14 @@ public sealed class TracerProviderSdkTests : IDisposable
     [InlineData("always_OFF", null, "AlwaysOffSampler")]
     [InlineData("traceidratio", "0.5", "TraceIdRatioBasedSampler{0.500000}")]
     [InlineData("traceidratio", "not_a_double", "TraceIdRatioBasedSampler{1.000000}")]
+    [InlineData("traceidratio", "2.0", "TraceIdRatioBasedSampler{1.000000}")]
+    [InlineData("traceidratio", "-0.1", "TraceIdRatioBasedSampler{1.000000}")]
+    [InlineData("traceidratio", "NaN", "TraceIdRatioBasedSampler{1.000000}")]
     [InlineData("parentbased_always_on", null, "ParentBased{AlwaysOnSampler}")]
     [InlineData("parentbased_always_off", null, "ParentBased{AlwaysOffSampler}")]
     [InlineData("parentbased_traceidratio", "0.111", "ParentBased{TraceIdRatioBasedSampler{0.111000}}")]
     [InlineData("parentbased_traceidratio", "not_a_double", "ParentBased{TraceIdRatioBasedSampler{1.000000}}")]
+    [InlineData("parentbased_traceidratio", "Infinity", "ParentBased{TraceIdRatioBasedSampler{1.000000}}")]
     [InlineData("ParentBased_TraceIdRatio", "0.000001", "ParentBased{TraceIdRatioBasedSampler{0.000001}}")]
     public void TestSamplerSetFromConfiguration(string? configValue, string? argValue, string samplerDescription)
     {
@@ -1110,7 +1113,7 @@ public sealed class TracerProviderSdkTests : IDisposable
     }
 
     [Fact]
-    public void TracerProvideSdkCreatesAndDiposesInstrumentation()
+    public void TracerProvideSdkCreatesAndDisposesInstrumentation()
     {
         TestInstrumentation? testInstrumentation = null;
         var tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -1149,7 +1152,7 @@ public sealed class TracerProviderSdkTests : IDisposable
     public void AddLegacyOperationName_BadArgs(string? operationName)
     {
         var builder = Sdk.CreateTracerProviderBuilder();
-        Assert.Throws<ArgumentException>(() => builder.AddLegacySource(operationName!));
+        Assert.ThrowsAny<ArgumentException>(() => builder.AddLegacySource(operationName!));
     }
 
     [Fact]

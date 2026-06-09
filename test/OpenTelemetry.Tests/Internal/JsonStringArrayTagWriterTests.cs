@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Text;
-using Xunit;
 
 namespace OpenTelemetry.Internal.Tests;
 
@@ -119,6 +118,35 @@ public class JsonStringArrayTagWriterTests
     [InlineData([new object?[] { null, float.MinValue, float.MaxValue, double.MinValue, double.MaxValue, int.MinValue, int.MaxValue, long.MinValue, long.MaxValue, true, false, "Hello world", new object[] { "inner array" } }, """[null,-3.4028234663852886E+38,3.4028234663852886E+38,-1.7976931348623157E+308,1.7976931348623157E+308,-2147483648,2147483647,-9223372036854775808,9223372036854775807,true,false,"Hello world","System.Object[]"]"""])]
     public void ObjectArray(object?[] data, string expectedValue)
         => VerifySerialization(data, expectedValue);
+
+    [Fact]
+    public void ThreadStaticStreamCapacityIsReducedAfterLargeWrite()
+    {
+        var streamField = typeof(JsonStringArrayTagWriter<TestTagWriter.Tag>.JsonArrayTagWriter).GetField("threadStream", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        var writerField = typeof(JsonStringArrayTagWriter<TestTagWriter.Tag>.JsonArrayTagWriter).GetField("threadWriter", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+        Assert.NotNull(streamField);
+        Assert.NotNull(writerField);
+
+        var largeData = new[] { new string('x', 128 * 1024) };
+        VerifySerialization(largeData, $"""["{largeData[0]}"]""");
+
+        var largeStream = (MemoryStream?)streamField.GetValue(null);
+        var largeWriter = writerField.GetValue(null);
+        Assert.NotNull(largeStream);
+        Assert.NotNull(largeWriter);
+        Assert.True(largeStream.Capacity > 64 * 1024);
+
+        string[] smallData = ["small"];
+        VerifySerialization(smallData, """["small"]""");
+
+        var reusedStream = (MemoryStream?)streamField.GetValue(null);
+        var reusedWriter = writerField.GetValue(null);
+        Assert.NotNull(reusedStream);
+        Assert.NotNull(reusedWriter);
+        Assert.Same(largeStream, reusedStream);
+        Assert.Same(largeWriter, reusedWriter);
+        Assert.True(reusedStream.Capacity <= 64 * 1024);
+    }
 
     private static void VerifySerialization(Array data, string expectedValue)
     {

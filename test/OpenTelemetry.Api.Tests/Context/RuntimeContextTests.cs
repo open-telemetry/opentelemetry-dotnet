@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using Xunit;
-
 namespace OpenTelemetry.Context.Tests;
 
 public sealed class RuntimeContextTests : IDisposable
@@ -16,7 +14,7 @@ public sealed class RuntimeContextTests : IDisposable
     public static void RegisterSlotWithInvalidNameThrows()
     {
         Assert.Throws<ArgumentException>(() => RuntimeContext.RegisterSlot<bool>(string.Empty));
-        Assert.Throws<ArgumentException>(() => RuntimeContext.RegisterSlot<bool>(null!));
+        Assert.ThrowsAny<ArgumentException>(() => RuntimeContext.RegisterSlot<bool>(null!));
     }
 
     [Fact]
@@ -31,7 +29,7 @@ public sealed class RuntimeContextTests : IDisposable
     public static void GetSlotWithInvalidNameThrows()
     {
         Assert.Throws<ArgumentException>(() => RuntimeContext.GetSlot<bool>(string.Empty));
-        Assert.Throws<ArgumentException>(() => RuntimeContext.GetSlot<bool>(null!));
+        Assert.ThrowsAny<ArgumentException>(() => RuntimeContext.GetSlot<bool>(null!));
     }
 
     [Fact]

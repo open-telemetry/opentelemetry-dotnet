@@ -4,7 +4,6 @@
 using System.Diagnostics.Metrics;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
-using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests;
 
@@ -43,7 +42,7 @@ public class MeterProviderSdkTests
     [InlineData(true, false)]
     public void TransientMeterExhaustsMetricStorageTest(bool withView, bool forceFlushAfterEachTest)
     {
-        using var inMemoryEventListener = new InMemoryEventListener(OpenTelemetrySdkEventSource.Log);
+        using var eventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log);
 
         var meterName = Utils.GetCurrentMethodName();
         var exportedItems = new List<Metric>();
@@ -83,7 +82,7 @@ public class MeterProviderSdkTests
             Assert.Single(exportedItems);
         }
 
-        var metricInstrumentIgnoredEvents = inMemoryEventListener.Events.Where((e) => e.EventId == 33 && (e.Payload?.Count ?? 0) >= 2 && e.Payload![1] as string == meterName);
+        var metricInstrumentIgnoredEvents = eventListener.Messages.Where((e) => e.EventId == 33 && (e.Payload?.Count ?? 0) >= 2 && (e.Payload![1] as string) == meterName);
 
         Assert.Single(metricInstrumentIgnoredEvents);
 

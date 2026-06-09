@@ -5,6 +5,9 @@ function CreateDraftRelease {
     [Parameter()][string]$releaseFiles
   )
 
+  $ErrorActionPreference = "Stop"
+  $InformationPreference = "Continue"
+
   $match = [regex]::Match($tag, '^(.*?-)(.*)$')
   if ($match.Success -eq $false)
   {
@@ -15,7 +18,7 @@ function CreateDraftRelease {
   $version = $match.Groups[2].Value
   $isPrerelease = $version -match '-alpha' -or $version -match '-beta' -or $version -match '-rc'
 
-  $projects = @(Get-ChildItem -Path src/**/*.csproj | Select-String "<MinVerTagPrefix>$tagPrefix</MinVerTagPrefix>" -List | Select Path)
+  $projects = @(Get-ChildItem -Path src/**/*.csproj | Select-String "<MinVerTagPrefix>$tagPrefix</MinVerTagPrefix>" -List | Select-Object Path)
 
   if ($projects.Length -eq 0)
   {
@@ -133,7 +136,7 @@ function TryPostPackagesReadyNoticeOnPrepareReleasePullRequest {
 
   if ($prListResponse.Length -eq 0)
   {
-    Write-Host 'No prepare release PR found for tag & commit skipping post notice'
+    Write-Information 'No prepare release PR found for tag & commit skipping post notice'
     return
   }
 
@@ -161,7 +164,7 @@ function TryPostPackagesReadyNoticeOnPrepareReleasePullRequest {
 
   $body =
 @"
-The packages for [$tag](https://github.com/$gitRepository/releases/tag/$tag) are now available: $packagesUrl.
+The packages for [$tag](https://github.com/$gitRepository/releases/tag/$tag) are now available: [Download]($packagesUrl).
 
 Once these packages have been validated have a maintainer post a comment with "/PushPackages" in the body if you would like me to push to NuGet.
 "@
@@ -174,7 +177,7 @@ Once these packages have been validated have a maintainer post a comment with "/
     return
   }
 
-  Write-Host 'No prepare release PR found matched author and title with a valid comment'
+  Write-Information 'No prepare release PR found matched author and title with a valid comment'
 }
 
 Export-ModuleMember -Function TryPostPackagesReadyNoticeOnPrepareReleasePullRequest
@@ -297,7 +300,7 @@ function CreateStableVersionUpdatePullRequest {
     git config user.email $gitUserEmail
   }
 
-  git switch --create $branch origin/$targetBranch --no-track 2>&1 | % ToString
+  git switch --create $branch origin/$targetBranch --no-track 2>&1 | ForEach-Object ToString
   if ($LASTEXITCODE -gt 0)
   {
       throw 'git switch failure'
@@ -328,19 +331,19 @@ function CreateStableVersionUpdatePullRequest {
     }
   }
 
-  git add Directory.Packages.props 2>&1 | % ToString
+  git add Directory.Packages.props 2>&1 | ForEach-Object ToString
   if ($LASTEXITCODE -gt 0)
   {
       throw 'git add failure'
   }
 
-  git commit -m "Update OTelLatestStableVer in Directory.Packages.props to $version." 2>&1 | % ToString
+  git commit -m "Update OTelLatestStableVer in Directory.Packages.props to $version." 2>&1 | ForEach-Object ToString
   if ($LASTEXITCODE -gt 0)
   {
       throw 'git commit failure'
   }
 
-  git push -u origin $branch 2>&1 | % ToString
+  git push -u origin $branch 2>&1 | ForEach-Object ToString
   if ($LASTEXITCODE -gt 0)
   {
       throw 'git push failure'
@@ -364,7 +367,7 @@ Merge once packages are available on NuGet and the build passes.
     --head $branch `
     --label release
 
-  Write-Host $createPullRequestResponse
+  Write-Information $createPullRequestResponse
 
   $match = [regex]::Match($createPullRequestResponse, "\/pull\/(.*)$")
   if ($match.Success -eq $false)
@@ -395,7 +398,7 @@ Merge once packages are available on NuGet and the build passes.
 
       if ([System.IO.File]::Exists($path) -eq $false)
       {
-        Write-Host "No CHANGELOG found in $projectDir"
+        Write-Information "No CHANGELOG found in $projectDir"
         continue
       }
 
@@ -462,7 +465,7 @@ Merge once packages are available on NuGet and the build passes.
 
       Set-Content -Path $path -Value $content.TrimEnd()
 
-      git add $path 2>&1 | % ToString
+      git add $path 2>&1 | ForEach-Object ToString
       if ($LASTEXITCODE -gt 0)
       {
           throw 'git add failure'
@@ -473,13 +476,13 @@ Merge once packages are available on NuGet and the build passes.
 
   if ($changelogFilesUpdated -gt 0)
   {
-    git commit -m "Update CHANGELOGs for projects using OTelLatestStableVer." 2>&1 | % ToString
+    git commit -m "Update CHANGELOGs for projects using OTelLatestStableVer." 2>&1 | ForEach-Object ToString
     if ($LASTEXITCODE -gt 0)
     {
         throw 'git commit failure'
     }
 
-    git push -u origin $branch 2>&1 | % ToString
+    git push -u origin $branch 2>&1 | ForEach-Object ToString
     if ($LASTEXITCODE -gt 0)
     {
         throw 'git push failure'
@@ -497,7 +500,7 @@ function GetCoreDependenciesForProjects {
     foreach ($project in $projects)
     {
         # Note: dotnet restore may fail if the core packages aren't available yet but that is fine, we just want to generate project.assets.json for these projects.
-        $output = dotnet restore $project -p:RunningDotNetPack=true
+        dotnet restore $project -p:RunningDotNetPack=true
 
         $projectDir = $project | Split-Path -Parent
         $projectDirName = $projectDir | Split-Path -Leaf
@@ -507,8 +510,8 @@ function GetCoreDependenciesForProjects {
 
         $projectDependencies = @{}
 
-        $matches = [regex]::Matches($content, '"(OpenTelemetry(?:.*))?": {[\S\s]*?"target": "Package",[\S\s]*?"version": "(.*)"[\S\s]*?}')
-        foreach ($match in $matches)
+        $dependencyMatches = [regex]::Matches($content, '"(OpenTelemetry(?:.*))?": {[\S\s]*?"target": "Package",[\S\s]*?"version": "(.*)"[\S\s]*?}')
+        foreach ($match in $dependencyMatches)
         {
             $packageName = $match.Groups[1].Value
             $packageVersion = $match.Groups[2].Value
@@ -556,7 +559,7 @@ function TryPostReleasePublishedNoticeOnPrepareReleasePullRequest {
     [Parameter(Mandatory=$true)][string]$tag
   )
 
-  $tagSha = git rev-list -n 1 $tag 2>&1 | % ToString
+  $tagSha = git rev-list -n 1 $tag 2>&1 | ForEach-Object ToString
   if ($LASTEXITCODE -gt 0)
   {
       throw 'git rev-list failure'
@@ -566,7 +569,7 @@ function TryPostReleasePublishedNoticeOnPrepareReleasePullRequest {
 
   if ($prListResponse.Length -eq 0)
   {
-    Write-Host 'No prepare release PR found for tag & commit skipping post notice'
+    Write-Information 'No prepare release PR found for tag & commit skipping post notice'
     return
   }
 
@@ -605,7 +608,7 @@ Have a nice day!
     return
   }
 
-  Write-Host 'No prepare release PR found matched author and title with a valid comment'
+  Write-Information 'No prepare release PR found matched author and title with a valid comment'
 }
 
 Export-ModuleMember -Function TryPostReleasePublishedNoticeOnPrepareReleasePullRequest

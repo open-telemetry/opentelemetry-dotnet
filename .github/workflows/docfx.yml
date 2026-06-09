@@ -1,5 +1,3 @@
-# Called by ci.yml to run documentation build
-# See: https://docs.github.com/en/actions/using-workflows/reusing-workflows#creating-a-reusable-workflow
 name: Build docfx
 
 on:
@@ -10,18 +8,27 @@ permissions:
 
 jobs:
   run-docfx-build:
-    runs-on: windows-latest
+    name: Build docfx
+    runs-on: windows-2025
 
     steps:
-    - name: check out code
+    - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        filter: 'tree:0'
+        persist-credentials: false
+        show-progress: false
 
-    - name: Setup dotnet
-      uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
+    - name: Setup .NET
+      uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5.3.0
 
-    - name: install docfx
-      run: dotnet tool install -g docfx
+    - name: Install docfx
+      shell: pwsh
+      env:
+        # renovate: datasource=nuget depName=docfx
+        DOCFX_VERSION: '2.78.5'
+      run: dotnet tool install -g docfx --version ${env:DOCFX_VERSION}
 
-    - name: run .\build\docfx.cmd
-      shell: cmd
+    - name: Build docfx
+      shell: pwsh
       run: .\build\docfx.cmd

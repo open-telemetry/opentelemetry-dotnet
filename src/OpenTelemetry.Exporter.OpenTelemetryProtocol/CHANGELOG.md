@@ -7,10 +7,97 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed `NullReferenceException` when exporting logs if the scope key is null.
+  ([#7186](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7186))
+
+* Added opt-in support for gzip compression. Compression can be configured
+  programmatically via the new `OtlpExporterOptions.Compression` property,
+  or through the environment variables such as `OTEL_EXPORTER_OTLP_COMPRESSION=gzip`.
+  ([#7055](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7055))
+
+* Fixed disk retry data being stored incorrectly when using persistent storage
+  retry.
+  ([#7228](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7228))
+
+* Reverted `OtlpLogExporter` from using `IHttpClientFactory` on .NET 8+ to fix
+  an issue with circular dependencies detected by some dependency injection
+  container implementations such as Autofac.
+  ([#7234](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7234))
+
+* Fixed `OtlpLogExporter` integration with `IHttpClientFactory` so named clients
+  can be used without triggering circular dependencies during logger construction.
+  ([#7298](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7298))
+
+* Reduce the overhead of GZip compression.
+  ([#7275](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7275))
+
+* Cached pre-serialized resource bytes to avoid re-encoding on every OTLP export.
+  ([#7303](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7303))
+
+* Do not enable the integration with `IHttpClientFactory` when mTLS is enabled.
+  ([#7305](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7305))
+
+* Handle `Retry-After` response headers that specify a date instead of a delay.
+  ([#7364](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7364))
+
 * `observed_time_unix_nano` will no longer always be identical to `time_unix_nano`
   when using the logs bridge API. By default, it will instead be set to the actual
   observed time of the log record.
   ([#6979](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6979))
+
+## 1.15.3
+
+Released 2026-Apr-21
+
+* `OtlpLogExporter` now uses `IHttpClientFactory` on .NET 8+, matching the
+  behaviour of the trace and metrics exporters.
+  ([#7109](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7109))
+
+* Fixed an issue in persistent storage cleanup where malformed `.blob`, `.tmp`,
+  or `.lock` filenames could throw and interrupt maintenance to resolve
+  [GHSA-88hf-wf7h-7w4m](https://github.com/advisories/GHSA-88hf-wf7h-7w4m).
+  ([#7108](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7108))
+
+* **Breaking change:** Fixed an insecure disk retry default. Disk retry now
+  requires `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH` when
+  `OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY=disk` is configured. The exporter no
+  longer falls back to a shared temp directory by default.
+  To retain the previous behaviour, set the
+  `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH` environment
+  variable to the value one of the following environment variables:
+
+  * `TMP`, `TMP`, or `USERPROFILE` ([Windows](https://learn.microsoft.com/windows/win32/api/fileapi/nf-fileapi-gettemppath2w#remarks))
+  * `TMPDIR` (or the literal value `/tmp/`) ([Linux](https://learn.microsoft.com/dotnet/api/system.io.path.gettemppath?tabs=linux),
+      [macOS](https://learn.microsoft.com/dotnet/api/system.io.path.gettemppath?tabs=macos)).
+
+  This change resolves
+  [GHSA-4625-4j76-fww9](https://github.com/open-telemetry/opentelemetry-dotnet/security/advisories/GHSA-4625-4j76-fww9).
+
+  ([#7106](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7106))
+
+* Fixed an issue in OTLP/gRPC retry handling when parsing gRPC statuses to
+  resolve [GHSA-mr8r-92fq-pj8p](https://github.com/advisories/GHSA-mr8r-92fq-pj8p).
+  ([#7064](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7064))
+
+* Fixed an issue with OTLP disk retry storage where metrics and logs used the
+  traces storage directory. Disk retry storage is now separated by signal using
+  `traces`, `metrics`, and `logs` directories.
+  ([#7074](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7074))
+
+* Fixed full OTLP endpoint being logged by internal diagnostics.
+  ([#7116](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7116))
+
+* Fix `OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT` not being applied.
+  ([#7115](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7115))
+
+## 1.15.2
+
+Released 2026-Apr-08
+
+* Limit how much of the response body is read when export fails and
+  error logging is enabled to resolve
+  [GHSA-q834-8qmm-v933](https://github.com/advisories/GHSA-q834-8qmm-v933).
+  ([#7017](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7017))
 
 ## 1.15.1
 

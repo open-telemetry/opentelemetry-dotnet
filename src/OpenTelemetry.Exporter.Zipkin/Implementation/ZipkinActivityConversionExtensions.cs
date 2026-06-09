@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Collections.Concurrent;
 using System.Diagnostics;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
@@ -11,11 +10,12 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation;
 internal static class ZipkinActivityConversionExtensions
 {
     internal const string ZipkinErrorFlagTagName = "error";
+    internal const int MaxRemoteEndpointCacheSize = 1024;
     private const long TicksPerMicrosecond = TimeSpan.TicksPerMillisecond / 1000;
     private const long UnixEpochTicks = 621355968000000000L; // = DateTimeOffset.FromUnixTimeMilliseconds(0).Ticks
     private const long UnixEpochMicroseconds = UnixEpochTicks / TicksPerMicrosecond;
 
-    private static readonly ConcurrentDictionary<(string, int), ZipkinEndpoint> RemoteEndpointCache = new();
+    private static readonly ZipkinEndpointLruCache RemoteEndpointCache = new(MaxRemoteEndpointCacheSize);
 
     internal static ZipkinSpan ToZipkinSpan(this Activity activity, ZipkinEndpoint localEndpoint, bool useShortTraceIds = false)
     {
@@ -59,6 +59,12 @@ internal static class ZipkinActivityConversionExtensions
 
     internal static long ToEpochMicroseconds(this TimeSpan timeSpan)
         => timeSpan.Ticks / TicksPerMicrosecond;
+
+    internal static int GetRemoteEndpointCacheCount()
+        => RemoteEndpointCache.Count;
+
+    internal static void ClearRemoteEndpointCache()
+        => RemoteEndpointCache.Clear();
 
     internal static long ToEpochMicroseconds(this DateTime utcDateTime)
     {
@@ -204,13 +210,12 @@ internal static class ZipkinActivityConversionExtensions
 
         static ZipkinEndpoint? TryCreateEndpoint(string? remoteEndpoint)
         {
-            if (remoteEndpoint != null)
+            if (remoteEndpoint == null)
             {
-                var endpoint = RemoteEndpointCache.GetOrAdd((remoteEndpoint, default), ZipkinEndpoint.Create);
-                return endpoint;
+                return null;
             }
 
-            return null;
+            return RemoteEndpointCache.GetOrAdd(remoteEndpoint);
         }
 
         var remoteEndpoint = activity.GetTagItem(SemanticConventions.AttributePeerService) as string;

@@ -13,9 +13,6 @@ using Zipkin::OpenTelemetry.Exporter;
 
 namespace Benchmarks.Exporter;
 
-#if !NETFRAMEWORK
-[ThreadingDiagnoser]
-#endif
 public class ZipkinExporterBenchmarks
 {
     private readonly byte[] buffer = new byte[4096];

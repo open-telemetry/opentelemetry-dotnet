@@ -26,6 +26,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.event.issue.number || github.ref }}
+  cancel-in-progress: false
+
 jobs:
   automation:
     uses: ./.github/workflows/automation.yml
@@ -33,6 +37,7 @@ jobs:
       OTELBOT_DOTNET_PRIVATE_KEY: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
 
   prepare-release-pr:
+    name: Prepare release pull request
     runs-on: ubuntu-24.04
 
     needs: automation
@@ -40,15 +45,20 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && needs.automation.outputs.enabled
 
     steps:
-    - uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3.0.0
+    - name: Generate GitHub App token
+      uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
       id: otelbot-token
       with:
-        app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
+        client-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
+        permission-contents: write
+        permission-pull-requests: write
 
-    - name: Check out code
+    - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
+        persist-credentials: true # zizmor: ignore[artipacked] Needed to push commits
+        show-progress: false
         token: ${{ steps.otelbot-token.outputs.token }}
 
     - name: Create GitHub Pull Request to prepare release
@@ -73,6 +83,7 @@ jobs:
           -gitUserEmail ${env:BOT_USER_EMAIL}
 
   lock-pr-and-post-notice-to-create-release-tag:
+    name: Lock pull request and post release tag notice
     runs-on: ubuntu-24.04
 
     needs: automation
@@ -86,15 +97,20 @@ jobs:
       needs.automation.outputs.enabled
 
     steps:
-    - uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3.0.0
+    - name: Generate GitHub App token
+      uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
       id: otelbot-token
       with:
-        app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
+        client-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
+        permission-contents: read
+        permission-pull-requests: write
 
-    - name: Check out code
+    - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
+        persist-credentials: true # zizmor: ignore[artipacked] Needed to push commits
+        show-progress: false
         token: ${{ steps.otelbot-token.outputs.token }}
 
     - name: Lock GitHub Pull Request to prepare release
@@ -112,6 +128,7 @@ jobs:
           -expectedPrAuthorUserName ${env:EXPECTED_PR_AUTHOR_USER_NAME}
 
   create-release-tag-pr-post-notice:
+    name: Create release tag and post notice
     runs-on: ubuntu-24.04
 
     needs: automation
@@ -127,17 +144,22 @@ jobs:
       needs.automation.outputs.enabled
 
     steps:
-    - uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3.0.0
+    - name: Generate GitHub App token
+      uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
       id: otelbot-token
       with:
-        app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
+        client-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
+        permission-contents: write
+        permission-pull-requests: write
 
-    - name: Check out code
+    - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         # Note: By default GitHub only fetches 1 commit which fails the git tag operation below
         fetch-depth: 0
+        persist-credentials: true # zizmor: ignore[artipacked] Needed to push commits
+        show-progress: false
         token: ${{ steps.otelbot-token.outputs.token }}
 
     - name: Create release tag
@@ -160,6 +182,7 @@ jobs:
           -gitUserEmail ${env:BOT_USER_EMAIL}
 
   update-changelog-release-dates-on-prepare-pr-post-notice:
+    name: Update changelog release dates and post notice
     runs-on: ubuntu-24.04
 
     needs: automation
@@ -175,17 +198,22 @@ jobs:
       needs.automation.outputs.enabled
 
     steps:
-    - uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3.0.0
+    - name: Generate GitHub App token
+      uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
       id: otelbot-token
       with:
-        app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
+        client-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
+        permission-contents: write
+        permission-pull-requests: write
 
-    - name: Check out code
+    - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         # Note: By default GitHub only fetches 1 commit which fails the git tag operation below
         fetch-depth: 0
+        persist-credentials: true # zizmor: ignore[artipacked] Needed to push commits
+        show-progress: false
         token: ${{ steps.otelbot-token.outputs.token }}
 
     - name: Update release date
@@ -209,6 +237,7 @@ jobs:
           -gitUserEmail ${env:BOT_USER_EMAIL}
 
   update-releasenotes-on-prepare-pr-post-notice:
+    name: Update release notes and post notice
     runs-on: ubuntu-24.04
 
     needs: automation
@@ -224,17 +253,22 @@ jobs:
       needs.automation.outputs.enabled
 
     steps:
-    - uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3.0.0
+    - name: Generate GitHub App token
+      uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
       id: otelbot-token
       with:
-        app-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
+        client-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
+        permission-contents: write
+        permission-pull-requests: write
 
-    - name: Check out code
+    - name: Checkout code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         # Note: By default GitHub only fetches 1 commit which fails the git tag operation below
         fetch-depth: 0
+        persist-credentials: true # zizmor: ignore[artipacked] Needed to push commits
+        show-progress: false
         token: ${{ steps.otelbot-token.outputs.token }}
 
     - name: Update release notes
