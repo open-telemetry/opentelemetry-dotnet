@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Globalization;
-using Xunit;
 
 namespace OpenTelemetry.Tests;
 
@@ -113,6 +112,28 @@ public class BaggageTests
         });
         Assert.Equal(1, Baggage.Current.Count);
         Assert.Contains(Baggage.GetBaggage(), kvp => kvp.Key == K2);
+    }
+
+    [Fact]
+    public void SetEmptyValueTest()
+    {
+        var baggage = default(Baggage).SetBaggage(K1, string.Empty);
+
+        Assert.Single(baggage.GetBaggage());
+        Assert.Equal(string.Empty, baggage.GetBaggage(K1));
+
+        baggage = default(Baggage).SetBaggage(new KeyValuePair<string, string?>(K2, string.Empty));
+
+        Assert.Single(baggage.GetBaggage());
+        Assert.Equal(string.Empty, baggage.GetBaggage(K2));
+
+        baggage = Baggage.Create(new Dictionary<string, string>
+        {
+            [K3] = string.Empty,
+        });
+
+        Assert.Single(baggage.GetBaggage());
+        Assert.Equal(string.Empty, baggage.GetBaggage(K3));
     }
 
     [Fact]

@@ -6,8 +6,6 @@ using System.Diagnostics.Metrics;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
-using Xunit;
-using Xunit.Abstractions;
 
 namespace OpenTelemetry.Metrics.Tests;
 

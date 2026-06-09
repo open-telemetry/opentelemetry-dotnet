@@ -1,0 +1,3 @@
+﻿# TYPE test_counter counter
+test_counter_total{otel_scope_name="CounterWithOpenMetricsFormatFiltersSanitizedReservedExemplarTagNames",keep="value"} 2 # {} 2 <TIMESTAMP>
+test_counter_created{otel_scope_name="CounterWithOpenMetricsFormatFiltersSanitizedReservedExemplarTagNames",keep="value"} <TIMESTAMP>

@@ -6,7 +6,6 @@ using System.Globalization;
 using System.IO.MemoryMappedFiles;
 using System.Text;
 using OpenTelemetry.Tests;
-using Xunit;
 
 namespace OpenTelemetry.Internal.Tests;
 

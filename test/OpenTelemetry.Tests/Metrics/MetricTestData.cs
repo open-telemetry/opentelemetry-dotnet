@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using Xunit;
-
 namespace OpenTelemetry.Metrics.Tests;
 
 internal static class MetricTestData

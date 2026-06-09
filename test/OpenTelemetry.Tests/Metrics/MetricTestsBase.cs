@@ -12,7 +12,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 #endif
 using OpenTelemetry.Internal;
-using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests;
 

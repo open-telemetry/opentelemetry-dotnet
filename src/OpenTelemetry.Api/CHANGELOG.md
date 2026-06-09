@@ -10,12 +10,24 @@ Notes](../../RELEASENOTES.md).
   Add support for using environment variables as context propagation carriers.
   ([#7174](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7174))
 
+* Fix `BaggagePropagator` to correctly follow Key and Value Encoding rules as per
+  the [W3C Baggage specification](https://www.w3.org/TR/baggage/#key-and-value-encoding).
+  [#7051](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7051)
+
 * Update `TraceContextPropagator` to support the W3C randomness flag.
   ([#7301](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7301))
 
 * Fixed `TraceContextPropagator` to deduplicate duplicate `tracestate` keys
   instead of discarding the entire `tracestate` header.
   ([#7309](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7309))
+
+* **Breaking change** (pre-release only versions): The default value of
+  the `Timestamp` property on `LogRecordData` has changed from `DateTime.UtcNow`
+  to `DateTime.MinValue`. `DateTime.MinValue` represents an unset timestamp as
+  defined by the OpenTelemetry specification. Callers of the [Logs API](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/api.md)
+  who relied on the timestamp being populated automatically must now set
+  `Timestamp = DateTime.UtcNow` explicitly on their `LogRecordData` instance.
+  ([#7045](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7045))
 
 ## 1.15.3
 
