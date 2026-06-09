@@ -274,7 +274,7 @@ public class BaggagePropagatorTests
     }
 
     [Fact]
-    public void ValidateInvalidFormatSkipped()
+    public void ValidateInvalidFormatSkippedStopsProcessing()
     {
         var carrier = new Dictionary<string, string>
         {
@@ -791,7 +791,7 @@ public class BaggagePropagatorTests
     [InlineData("]")]
     [InlineData("{")]
     [InlineData("}")]
-    public void ValidateKeyWithInvalidTokenCharDroppedOnExtract(string invalidChar)
+    public void ValidateKeyWithInvalidTokenCharDroppedAndProcessingStopsExtract(string invalidChar)
     {
         var invalidKey = $"key{invalidChar}name";
         var carrier = new Dictionary<string, string>
