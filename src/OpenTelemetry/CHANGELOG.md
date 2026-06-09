@@ -30,6 +30,10 @@ Notes](../../RELEASENOTES.md).
 * Added `ObservedTimestamp` property to `LogRecord`.
   ([#6979](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6979))
 
+* **Breaking Change** Explicit histogram boundaries no longer allow more than
+  10 million values.
+  ([#7165](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7165))
+
 ## 1.15.3
 
 Released 2026-Apr-21
