@@ -28,7 +28,7 @@ internal sealed class HistogramExplicitBounds
         this.Bounds = CleanUpInfinitiesFromExplicitBounds(bounds);
         this.DisplayBounds = displayBounds != null ? CleanUpInfinitiesFromExplicitBounds(displayBounds) : null;
 
-        if (this.Bounds.Length >= DefaultBoundaryCountForBinarySearch)
+        if (this.Bounds.Length >= DefaultBoundaryCountForBinarySearch && !ContainsNaN(this.Bounds))
         {
             this.radixBucketLookup = new(this.Bounds);
         }
@@ -93,6 +93,19 @@ internal sealed class HistogramExplicitBounds
         }
 
         return bounds;
+    }
+
+    private static bool ContainsNaN(double[] bounds)
+    {
+        for (var i = 0; i < bounds.Length; i++)
+        {
+            if (double.IsNaN(bounds[i]))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 #if NET

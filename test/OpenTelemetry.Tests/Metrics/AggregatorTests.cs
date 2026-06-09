@@ -216,6 +216,26 @@ public class AggregatorTests
     }
 
     [Fact]
+    public void HistogramLargeBucketLookupHandlesMixedNaNBounds()
+    {
+        var values = new double[HistogramExplicitBounds.DefaultBoundaryCountForBinarySearch];
+
+        for (var i = 0; i < values.Length; i++)
+        {
+            values[i] = i;
+        }
+
+        var nanIndex = values.Length / 2;
+        values[nanIndex] = double.NaN;
+
+        var boundaries = new HistogramExplicitBounds(values);
+
+        Assert.Equal(nanIndex - 1, boundaries.FindBucketIndex(values[nanIndex - 1]));
+        Assert.Equal(nanIndex + 1, boundaries.FindBucketIndex(values[nanIndex + 1]));
+        Assert.Equal(values.Length, boundaries.FindBucketIndex(double.NaN));
+    }
+
+    [Fact]
     public void HistogramExplicitBoundsCleansInfiniteDisplayBounds()
     {
         var boundaries = new HistogramExplicitBounds(

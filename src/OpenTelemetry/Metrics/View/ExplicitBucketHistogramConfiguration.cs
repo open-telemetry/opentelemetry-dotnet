@@ -67,9 +67,9 @@ public class ExplicitBucketHistogramConfiguration : HistogramConfiguration
 
     private static bool IsSortedAndDistinct(double[] values)
     {
-        for (var i = 1; i < values.Length; i++)
+        for (var i = 0; i < values.Length; i++)
         {
-            if (values[i] <= values[i - 1])
+            if (double.IsNaN(values[i]) || (i > 0 && values[i] <= values[i - 1]))
             {
                 return false;
             }
