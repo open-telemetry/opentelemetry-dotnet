@@ -818,6 +818,79 @@ public sealed class PrometheusCollectionManagerTests
         }
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task LargeScrapeExpandsBufferAndReturnsCompleteResponse(bool openMetricsRequested)
+    {
+        using var meter = CreateMeter();
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+#if PROMETHEUS_HTTP_LISTENER
+            .AddPrometheusHttpListener()
+#elif PROMETHEUS_ASPNETCORE
+            .AddPrometheusExporter()
+#endif
+            .Build();
+
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        Assert.True(provider.TryFindExporter(out PrometheusExporter? exporter));
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        // Emit enough unique time series that the serialized output is far larger than the
+        // 85,000-byte initial scrape buffer, forcing the collection manager to grow it one or
+        // more times. On modern .NET the serializer signals an insufficient destination buffer
+        // by throwing ArgumentException (rather than IndexOutOfRangeException) from its numeric
+        // and string write helpers. The collection manager must treat both exceptions the same
+        // way - expand the buffer and retry - otherwise the exception escapes, the response view
+        // is cleared, and the scrape silently returns an empty (but successful) payload.
+        var counter = meter.CreateCounter<long>("test_counter", description: "Help text.");
+        const int SeriesCount = 4000;
+        for (var i = 0; i < SeriesCount; i++)
+        {
+            counter.Add(
+                1234567890123456789L,
+                new KeyValuePair<string, object?>("index", $"series-value-{i:D8}-padding-padding-padding"));
+        }
+
+        var protocol = GetProtocol(openMetricsRequested);
+        var response = await exporter!.CollectionManager.EnterCollect(protocol);
+
+        try
+        {
+            var view = response.View;
+
+            // A non-empty view that is larger than the initial buffer proves the buffer was
+            // expanded successfully while serializing, rather than the scrape failing.
+            Assert.True(view.Count > 85_000, $"Expected a buffer expansion, but only {view.Count} bytes were written.");
+
+            var output = Encoding.UTF8.GetString(view.Array!, view.Offset, view.Count);
+
+            // Every emitted sample should be present in the response.
+            var sampleLineCount = CountOccurrences(output, "test_counter_total{");
+            Assert.True(sampleLineCount > 1000, $"Expected many sample lines, but found {sampleLineCount}.");
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect(protocol);
+        }
+    }
+
+    private static int CountOccurrences(string value, string substring)
+    {
+        var count = 0;
+        var index = 0;
+
+        while ((index = value.IndexOf(substring, index, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            index += substring.Length;
+        }
+
+        return count;
+    }
+
     private static PrometheusProtocol GetProtocol(bool openMetricsRequested) => new(
         mediaType: openMetricsRequested ? PrometheusProtocol.OpenMetricsMediaType : PrometheusProtocol.PrometheusTextMediaType,
         escaping: PrometheusProtocol.UnderscoresEscaping,
