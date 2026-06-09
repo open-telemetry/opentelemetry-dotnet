@@ -4,7 +4,6 @@
 using System.Diagnostics;
 #if NET
 using System.Numerics;
-using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.Arm;
 using System.Runtime.Intrinsics.X86;
@@ -116,13 +115,12 @@ internal sealed class HistogramExplicitBounds
 
         if (Avx.IsSupported && bounds.Length >= Vector256<double>.Count)
         {
-            ref var searchSpace = ref MemoryMarshal.GetReference(bounds);
             var valueVector = Vector256.Create(value);
             var lastStart = bounds.Length - Vector256<double>.Count;
 
             while (index <= lastStart)
             {
-                var boundsVector = Vector256.LoadUnsafe(ref searchSpace, (nuint)index);
+                var boundsVector = Vector256.Create(bounds.Slice(index));
                 var compare = Avx.CompareLessThanOrEqual(valueVector, boundsVector);
                 var mask = Avx.MoveMask(compare);
 
@@ -136,13 +134,12 @@ internal sealed class HistogramExplicitBounds
         }
         else if (Sse2.IsSupported && bounds.Length >= Vector128<double>.Count)
         {
-            ref var searchSpace = ref MemoryMarshal.GetReference(bounds);
             var valueVector = Vector128.Create(value);
             var lastStart = bounds.Length - Vector128<double>.Count;
 
             while (index <= lastStart)
             {
-                var boundsVector = Vector128.LoadUnsafe(ref searchSpace, (nuint)index);
+                var boundsVector = Vector128.Create(bounds.Slice(index));
                 var compare = Sse2.CompareLessThanOrEqual(valueVector, boundsVector);
                 var mask = Sse2.MoveMask(compare);
 
@@ -156,13 +153,12 @@ internal sealed class HistogramExplicitBounds
         }
         else if (AdvSimd.Arm64.IsSupported && bounds.Length >= Vector128<double>.Count)
         {
-            ref var searchSpace = ref MemoryMarshal.GetReference(bounds);
             var valueVector = Vector128.Create(value);
             var lastStart = bounds.Length - Vector128<double>.Count;
 
             while (index <= lastStart)
             {
-                var boundsVector = Vector128.LoadUnsafe(ref searchSpace, (nuint)index);
+                var boundsVector = Vector128.Create(bounds.Slice(index));
                 var compare = AdvSimd.Arm64.CompareLessThanOrEqual(valueVector, boundsVector).AsUInt64();
 
                 if (compare.GetElement(0) != 0)
