@@ -10,6 +10,10 @@ Notes](../../RELEASENOTES.md).
   Add support for using environment variables as context propagation carriers.
   ([#7174](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7174))
 
+* Fix `BaggagePropagator` to correctly follow Key and Value Encoding rules as per
+  the [W3C Baggage specification](https://www.w3.org/TR/baggage/#key-and-value-encoding).
+  [#7051](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7051)
+
 * Update `TraceContextPropagator` to support the W3C randomness flag.
   ([#7301](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7301))
 

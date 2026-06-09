@@ -115,6 +115,28 @@ public class BaggageTests
     }
 
     [Fact]
+    public void SetEmptyValueTest()
+    {
+        var baggage = default(Baggage).SetBaggage(K1, string.Empty);
+
+        Assert.Single(baggage.GetBaggage());
+        Assert.Equal(string.Empty, baggage.GetBaggage(K1));
+
+        baggage = default(Baggage).SetBaggage(new KeyValuePair<string, string?>(K2, string.Empty));
+
+        Assert.Single(baggage.GetBaggage());
+        Assert.Equal(string.Empty, baggage.GetBaggage(K2));
+
+        baggage = Baggage.Create(new Dictionary<string, string>
+        {
+            [K3] = string.Empty,
+        });
+
+        Assert.Single(baggage.GetBaggage());
+        Assert.Equal(string.Empty, baggage.GetBaggage(K3));
+    }
+
+    [Fact]
     public void RemoveTest()
     {
         var empty = Baggage.Current;
