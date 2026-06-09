@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Metrics;
+using System.Runtime.CompilerServices;
 using System.Text;
-using System.Text.RegularExpressions;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+#if PROMETHEUS_HTTP_LISTENER
 using OpenTelemetry.Tests;
-using Xunit;
+#endif
 
 namespace OpenTelemetry.Exporter.Prometheus.Tests;
 
@@ -23,7 +25,7 @@ public sealed class PrometheusCollectionManagerTests
         using var cts = new CancellationTokenSource(testTimeout);
 
         var cacheEnabled = scrapeResponseCacheDurationMilliseconds != 0;
-        using var meter = new Meter(Utils.GetCurrentMethodName());
+        using var meter = CreateMeter();
 
         using var provider = Sdk.CreateMeterProviderBuilder()
             .AddMeter(meter.Name)
@@ -204,7 +206,7 @@ public sealed class PrometheusCollectionManagerTests
     [Fact]
     public async Task EnterCollectWaitsForActiveReadersToExit()
     {
-        using var meter = new Meter(Utils.GetCurrentMethodName());
+        using var meter = CreateMeter();
 #if PROMETHEUS_HTTP_LISTENER
         using var provider = CreateMeterProviderWithRandomPort(meter);
 #elif PROMETHEUS_ASPNETCORE
@@ -294,11 +296,87 @@ public sealed class PrometheusCollectionManagerTests
     }
 
     [Fact]
-    public async Task DuplicateMetricMetadataIsWrittenOncePerScrape()
+    public async Task OpenMetricsDoesNotEmitScopeInfoMetricFamily()
     {
-        using var meter = new Meter(Utils.GetCurrentMethodName());
+        using var meter = new Meter("test_meter", "1.0.0", [new("library.mascot", "dotnetbot")], scope: null);
 
         using var provider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureResource((p) => p.AddAttributes([new("service.name", "prometheus")]))
+            .AddMeter(meter.Name)
+#if PROMETHEUS_HTTP_LISTENER
+            .AddPrometheusHttpListener()
+#elif PROMETHEUS_ASPNETCORE
+            .AddPrometheusExporter()
+#endif
+            .Build();
+
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        Assert.True(provider.TryFindExporter(out PrometheusExporter? exporter));
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        meter.CreateCounter<int>("counter_1").Add(1);
+
+        var response = await exporter!.CollectionManager.EnterCollect(openMetricsRequested: true);
+        try
+        {
+            var output = Encoding.UTF8.GetString(
+                response.OpenMetricsView.Array!,
+                response.OpenMetricsView.Offset,
+                response.OpenMetricsView.Count);
+
+            await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect();
+        }
+    }
+
+    [Fact]
+    public async Task OpenMetricsDoesNotReserveOtelScopeMetricFamilyNames()
+    {
+        using var meter = new Meter("test_meter", "1.0.0");
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureResource((p) => p.AddAttributes([new("service.name", "prometheus")]))
+            .AddMeter(meter.Name)
+#if PROMETHEUS_HTTP_LISTENER
+            .AddPrometheusHttpListener()
+#elif PROMETHEUS_ASPNETCORE
+            .AddPrometheusExporter()
+#endif
+            .Build();
+
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        Assert.True(provider.TryFindExporter(out PrometheusExporter? exporter));
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        meter.CreateObservableGauge("otel.scope", () => 1);
+        meter.CreateObservableGauge("otel.scope.info", () => 2);
+
+        var response = await exporter!.CollectionManager.EnterCollect(openMetricsRequested: true);
+        try
+        {
+            var output = Encoding.UTF8.GetString(
+                response.OpenMetricsView.Array!,
+                response.OpenMetricsView.Offset,
+                response.OpenMetricsView.Count);
+
+            await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect();
+        }
+    }
+
+    [Fact]
+    public async Task DuplicateMetricMetadataIsWrittenOncePerScrape()
+    {
+        using var meter = CreateMeter();
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureResource((p) => p.AddAttributes([new("service.name", "prometheus")]))
             .AddMeter(meter.Name)
 #if PROMETHEUS_HTTP_LISTENER
             .AddPrometheusHttpListener()
@@ -323,13 +401,7 @@ public sealed class PrometheusCollectionManagerTests
             var view = response.PlainTextView;
             var output = Encoding.UTF8.GetString(view.Array!, view.Offset, view.Count);
 
-#pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
-            Assert.Single(Regex.Matches(output, "^# TYPE test_metric_bytes_total counter$", RegexOptions.Multiline).Cast<Match>());
-            Assert.Single(Regex.Matches(output, "^# UNIT test_metric_bytes_total bytes$", RegexOptions.Multiline).Cast<Match>());
-            Assert.Single(Regex.Matches(output, "^# HELP test_metric_bytes_total Test help$", RegexOptions.Multiline).Cast<Match>());
-#pragma warning restore SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
-            Assert.Contains("test_metric_bytes_total{otel_scope_name=\"" + meter.Name + "\",source=\"a\"} 1", output, StringComparison.Ordinal);
-            Assert.Contains("test_metric_bytes_total{otel_scope_name=\"" + meter.Name + "\",source=\"b\"} 2", output, StringComparison.Ordinal);
+            await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
         }
         finally
         {
@@ -340,9 +412,10 @@ public sealed class PrometheusCollectionManagerTests
     [Fact]
     public async Task MetricMetadataDiscoveredLaterIsWrittenBeforeSamples()
     {
-        using var meter = new Meter(Utils.GetCurrentMethodName());
+        using var meter = CreateMeter();
 
         using var provider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureResource((p) => p.AddAttributes([new("service.name", "prometheus")]))
             .AddMeter(meter.Name)
 #if PROMETHEUS_HTTP_LISTENER
             .AddPrometheusHttpListener()
@@ -367,19 +440,7 @@ public sealed class PrometheusCollectionManagerTests
             var view = response.PlainTextView;
             var output = Encoding.UTF8.GetString(view.Array!, view.Offset, view.Count);
 
-            var typeIndex = output.IndexOf("# TYPE test_metric_total counter", StringComparison.Ordinal);
-            var helpIndex = output.IndexOf("# HELP test_metric_total Test help", StringComparison.Ordinal);
-            var sampleAIndex = output.IndexOf("test_metric_total{otel_scope_name=\"" + meter.Name + "\",source=\"a\"} 1", StringComparison.Ordinal);
-            var sampleBIndex = output.IndexOf("test_metric_total{otel_scope_name=\"" + meter.Name + "\",source=\"b\"} 2", StringComparison.Ordinal);
-
-            Assert.True(typeIndex >= 0, "No TYPE found.");
-            Assert.True(helpIndex >= 0, "No HELP found.");
-            Assert.True(sampleAIndex >= 0, "No sample A found.");
-            Assert.True(sampleBIndex >= 0, "No sample B found.");
-            Assert.True(typeIndex < sampleAIndex, "TYPE appears after sample A.");
-            Assert.True(typeIndex < sampleBIndex, "TYPE appears after sample B.");
-            Assert.True(helpIndex < sampleAIndex, "HELP appears after sample A.");
-            Assert.True(helpIndex < sampleBIndex, "HELP appears after sample B.");
+            await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
         }
         finally
         {
@@ -390,9 +451,10 @@ public sealed class PrometheusCollectionManagerTests
     [Fact]
     public async Task MetricUnitDiscoveredLaterIsWrittenBeforeSamples()
     {
-        using var meter = new Meter(Utils.GetCurrentMethodName());
+        using var meter = CreateMeter();
 
         using var provider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureResource((p) => p.AddAttributes([new("service.name", "prometheus")]))
             .AddMeter(meter.Name)
 #if PROMETHEUS_HTTP_LISTENER
             .AddPrometheusHttpListener()
@@ -417,19 +479,7 @@ public sealed class PrometheusCollectionManagerTests
             var view = response.PlainTextView;
             var output = Encoding.UTF8.GetString(view.Array!, view.Offset, view.Count);
 
-            var typeIndex = output.IndexOf("# TYPE test_metric_bytes_total counter", StringComparison.Ordinal);
-            var unitIndex = output.IndexOf("# UNIT test_metric_bytes_total bytes", StringComparison.Ordinal);
-            var sampleAIndex = output.IndexOf("test_metric_bytes_total{otel_scope_name=\"" + meter.Name + "\",source=\"a\"} 1", StringComparison.Ordinal);
-            var sampleBIndex = output.IndexOf("test_metric_bytes_total{otel_scope_name=\"" + meter.Name + "\",source=\"b\"} 2", StringComparison.Ordinal);
-
-            Assert.True(typeIndex >= 0, "No TYPE found.");
-            Assert.True(unitIndex >= 0, "No UNIT found.");
-            Assert.True(sampleAIndex >= 0, "No sample A found.");
-            Assert.True(sampleBIndex >= 0, "No sample B found.");
-            Assert.True(typeIndex < sampleAIndex, "TYPE appears after sample A.");
-            Assert.True(typeIndex < sampleBIndex, "TYPE appears after sample B.");
-            Assert.True(unitIndex < sampleAIndex, "UNIT appears after sample A.");
-            Assert.True(unitIndex < sampleBIndex, "UNIT appears after sample B.");
+            await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
         }
         finally
         {
@@ -440,9 +490,10 @@ public sealed class PrometheusCollectionManagerTests
     [Fact]
     public async Task MetricHelpAndUnitDiscoveredTogetherLaterAreBothWrittenBeforeSamples()
     {
-        using var meter = new Meter(Utils.GetCurrentMethodName());
+        using var meter = CreateMeter();
 
         using var provider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureResource((p) => p.AddAttributes([new("service.name", "prometheus")]))
             .AddMeter(meter.Name)
 #if PROMETHEUS_HTTP_LISTENER
             .AddPrometheusHttpListener()
@@ -467,23 +518,7 @@ public sealed class PrometheusCollectionManagerTests
             var view = response.PlainTextView;
             var output = Encoding.UTF8.GetString(view.Array!, view.Offset, view.Count);
 
-            var typeIndex = output.IndexOf("# TYPE test_metric_bytes_total counter", StringComparison.Ordinal);
-            var unitIndex = output.IndexOf("# UNIT test_metric_bytes_total bytes", StringComparison.Ordinal);
-            var helpIndex = output.IndexOf("# HELP test_metric_bytes_total Test help", StringComparison.Ordinal);
-            var sampleAIndex = output.IndexOf("test_metric_bytes_total{otel_scope_name=\"" + meter.Name + "\",source=\"a\"} 1", StringComparison.Ordinal);
-            var sampleBIndex = output.IndexOf("test_metric_bytes_total{otel_scope_name=\"" + meter.Name + "\",source=\"b\"} 2", StringComparison.Ordinal);
-
-            Assert.True(typeIndex >= 0, "No TYPE found.");
-            Assert.True(unitIndex >= 0, "No UNIT found.");
-            Assert.True(helpIndex >= 0, "No HELP found.");
-            Assert.True(sampleAIndex >= 0, "No sample A found.");
-            Assert.True(sampleBIndex >= 0, "No sample B found.");
-            Assert.True(typeIndex < sampleAIndex, "TYPE appears after sample A.");
-            Assert.True(typeIndex < sampleBIndex, "TYPE appears after sample B.");
-            Assert.True(unitIndex < sampleAIndex, "UNIT appears after sample A.");
-            Assert.True(unitIndex < sampleBIndex, "UNIT appears after sample B.");
-            Assert.True(helpIndex < sampleAIndex, "HELP appears after sample A.");
-            Assert.True(helpIndex < sampleBIndex, "HELP appears after sample B.");
+            await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
         }
         finally
         {
@@ -494,9 +529,10 @@ public sealed class PrometheusCollectionManagerTests
     [Fact]
     public async Task ConflictingMetricTypesAreDroppedFromAScrape()
     {
-        using var meter = new Meter(Utils.GetCurrentMethodName());
+        using var meter = CreateMeter();
 
         using var provider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureResource((p) => p.AddAttributes([new("service.name", "prometheus")]))
             .AddMeter(meter.Name)
 #if PROMETHEUS_HTTP_LISTENER
             .AddPrometheusHttpListener()
@@ -519,9 +555,7 @@ public sealed class PrometheusCollectionManagerTests
             var view = response.OpenMetricsView;
             var output = Encoding.UTF8.GetString(view.Array!, view.Offset, view.Count);
 
-            Assert.DoesNotContain("# TYPE test_metric", output, StringComparison.Ordinal);
-            Assert.DoesNotContain("test_metric_total", output, StringComparison.Ordinal);
-            Assert.Contains("# EOF", output, StringComparison.Ordinal);
+            await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
         }
         finally
         {
@@ -532,10 +566,12 @@ public sealed class PrometheusCollectionManagerTests
     [Fact]
     public async Task OpenMetricsWritesMetricFamiliesContiguously()
     {
-        using var meter1 = new Meter($"{Utils.GetCurrentMethodName()}.one");
-        using var meter2 = new Meter($"{Utils.GetCurrentMethodName()}.two");
+        var prefix = nameof(this.OpenMetricsWritesMetricFamiliesContiguously);
+        using var meter1 = new Meter($"{prefix}.one");
+        using var meter2 = new Meter($"{prefix}.two");
 
         using var provider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureResource((p) => p.AddAttributes([new("service.name", "prometheus")]))
             .AddMeter(meter1.Name)
             .AddMeter(meter2.Name)
 #if PROMETHEUS_HTTP_LISTENER
@@ -559,40 +595,15 @@ public sealed class PrometheusCollectionManagerTests
             var view = response.OpenMetricsView;
             var output = Encoding.UTF8.GetString(view.Array!, view.Offset, view.Count);
 
-#pragma warning disable SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
-            Assert.Single(Regex.Matches(output, "^# TYPE otel_scope_info info$", RegexOptions.Multiline).Cast<Match>());
-            Assert.Single(Regex.Matches(output, "^# HELP otel_scope_info Scope metadata$", RegexOptions.Multiline).Cast<Match>());
-#pragma warning restore SYSLIB1045 // Convert to 'GeneratedRegexAttribute'.
-
-            var scopeTypeIndex = output.IndexOf("# TYPE otel_scope_info info", StringComparison.Ordinal);
-            var testMetricTypeIndex = output.IndexOf("# TYPE test_metric gauge", StringComparison.Ordinal);
-
-            Assert.True(scopeTypeIndex >= 0, "No TYPE found for otel_scope_info.");
-            Assert.True(testMetricTypeIndex > scopeTypeIndex, "otel_scope_info block should appear before test_metric.");
-
-            var scopeBlock = output.Substring(scopeTypeIndex, testMetricTypeIndex - scopeTypeIndex);
-            Assert.Contains($"otel_scope_info{{otel_scope_name=\"{meter1.Name}\"}} 1", scopeBlock, StringComparison.Ordinal);
-            Assert.Contains($"otel_scope_info{{otel_scope_name=\"{meter2.Name}\"}} 1", scopeBlock, StringComparison.Ordinal);
-
-            var nextTypeIndex = output.IndexOf("\n# TYPE ", testMetricTypeIndex + 1, StringComparison.Ordinal);
-            if (nextTypeIndex < 0)
-            {
-                nextTypeIndex = output.IndexOf("\n# EOF", testMetricTypeIndex + 1, StringComparison.Ordinal);
-            }
-
-            Assert.True(nextTypeIndex > testMetricTypeIndex, "No subsequent metric family found after test_metric.");
-
-            var testMetricBlock = output.Substring(testMetricTypeIndex, nextTypeIndex - testMetricTypeIndex);
-            Assert.Contains("# HELP test_metric Test help", testMetricBlock, StringComparison.Ordinal);
-            Assert.Contains($"test_metric{{otel_scope_name=\"{meter1.Name}\"}} 1", testMetricBlock, StringComparison.Ordinal);
-            Assert.Contains($"test_metric{{otel_scope_name=\"{meter2.Name}\"}} 2", testMetricBlock, StringComparison.Ordinal);
-            Assert.DoesNotContain("other_metric{", testMetricBlock, StringComparison.Ordinal);
+            await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
         }
         finally
         {
             exporter.CollectionManager.ExitCollect();
         }
     }
+
+    private static Meter CreateMeter([CallerMemberName] string name = "") => new(name);
 
 #if PROMETHEUS_HTTP_LISTENER
     private static MeterProvider CreateMeterProviderWithRandomPort(Meter meter)

@@ -1,4 +1,9 @@
 <Project>
   <Import Project="$([System.IO.Path]::Combine($(MSBuildThisFileDirectory), '..', 'Directory.Build.props'))" />
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.slnx'))\build\Common.nonprod.props" />
+
+  <ItemGroup Condition="$(MSBuildProjectName.EndsWith('.Tests')) or $(MSBuildProjectName.EndsWith('.FuzzTests'))">
+    <Using Include="Xunit" />
+    <Using Include="Xunit.Abstractions" />
+  </ItemGroup>
 </Project>

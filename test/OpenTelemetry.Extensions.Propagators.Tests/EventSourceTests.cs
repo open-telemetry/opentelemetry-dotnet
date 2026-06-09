@@ -3,7 +3,6 @@
 
 using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
-using Xunit;
 
 namespace OpenTelemetry.Extensions.Propagators.Tests;
 

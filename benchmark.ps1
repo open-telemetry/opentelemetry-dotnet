@@ -132,6 +132,10 @@ function ConvertTo-SafePathSegment {
 $Configuration = "Release"
 $Framework = "net10.0"
 
+if (-not ($Runtimes | Where-Object { $_ -notmatch "^net4\d+$" })) {
+    $Framework = "net462"
+}
+
 if ($Benchmarks.Count -eq 0) {
     throw "At least one benchmark filter must be specified."
 }
@@ -197,7 +201,7 @@ if ([string]::IsNullOrEmpty($baselineName)) {
     $baselineName = $Baseline
 }
 
-if ($Target -eq $Baseline) {
+if (-not $SkipBaseline -and $Target -eq $Baseline) {
     throw "Target branch '$Target' cannot be the same as baseline branch '$Baseline'."
 }
 
@@ -244,7 +248,7 @@ try {
         $additionalArgs += "--filter"
         $additionalArgs += $Benchmarks
 
-        if (-Not [string]::IsNullOrEmpty($Job)) {
+        if (-not [string]::IsNullOrEmpty($Job)) {
             $additionalArgs += "--job"
             $additionalArgs += $Job
         }

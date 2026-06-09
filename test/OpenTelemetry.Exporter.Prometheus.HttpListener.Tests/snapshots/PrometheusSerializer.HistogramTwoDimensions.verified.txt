@@ -1,0 +1,19 @@
+﻿# TYPE test_histogram histogram
+test_histogram_bucket{otel_scope_name="HistogramTwoDimensions",x="1",y="2",le="0"} 0
+test_histogram_bucket{otel_scope_name="HistogramTwoDimensions",x="1",y="2",le="5"} 0
+test_histogram_bucket{otel_scope_name="HistogramTwoDimensions",x="1",y="2",le="10"} 0
+test_histogram_bucket{otel_scope_name="HistogramTwoDimensions",x="1",y="2",le="25"} 1
+test_histogram_bucket{otel_scope_name="HistogramTwoDimensions",x="1",y="2",le="50"} 1
+test_histogram_bucket{otel_scope_name="HistogramTwoDimensions",x="1",y="2",le="75"} 1
+test_histogram_bucket{otel_scope_name="HistogramTwoDimensions",x="1",y="2",le="100"} 2
+test_histogram_bucket{otel_scope_name="HistogramTwoDimensions",x="1",y="2",le="250"} 2
+test_histogram_bucket{otel_scope_name="HistogramTwoDimensions",x="1",y="2",le="500"} 2
+test_histogram_bucket{otel_scope_name="HistogramTwoDimensions",x="1",y="2",le="750"} 2
+test_histogram_bucket{otel_scope_name="HistogramTwoDimensions",x="1",y="2",le="1000"} 2
+test_histogram_bucket{otel_scope_name="HistogramTwoDimensions",x="1",y="2",le="2500"} 2
+test_histogram_bucket{otel_scope_name="HistogramTwoDimensions",x="1",y="2",le="5000"} 2
+test_histogram_bucket{otel_scope_name="HistogramTwoDimensions",x="1",y="2",le="7500"} 2
+test_histogram_bucket{otel_scope_name="HistogramTwoDimensions",x="1",y="2",le="10000"} 2
+test_histogram_bucket{otel_scope_name="HistogramTwoDimensions",x="1",y="2",le="+Inf"} 2
+test_histogram_sum{otel_scope_name="HistogramTwoDimensions",x="1",y="2"} 118
+test_histogram_count{otel_scope_name="HistogramTwoDimensions",x="1",y="2"} 2
