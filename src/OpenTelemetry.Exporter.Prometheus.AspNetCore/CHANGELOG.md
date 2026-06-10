@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.16.0-beta.1
+
+Released 2026-Jun-10
+
 * Fixed scrape response cache freshness using monotonic time so it is not
   affected by NTP system clock adjustments.
   ([#7253](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7253))
