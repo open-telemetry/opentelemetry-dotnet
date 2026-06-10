@@ -304,7 +304,7 @@ internal static class ProtobufSerializer
         {
             // Note: Validate there is enough space in the buffer to hold the
             // string otherwise throw to trigger a resize of the buffer.
-            ThrowBufferTooSmallException();
+            ThrowBufferTooSmallException(nameof(buffer));
         }
 
         var bytesWritten = Utf8Encoding.GetBytes(value, 0, value.Length, buffer, writePosition);
@@ -334,7 +334,7 @@ internal static class ProtobufSerializer
         {
             // Note: Validate there is enough space in the buffer to hold the
             // string otherwise throw to trigger a resize of the buffer.
-            ThrowBufferTooSmallException();
+            ThrowBufferTooSmallException(nameof(buffer));
         }
 
         var charBuffer = GetCharBuffer(value.Length);
@@ -390,7 +390,7 @@ internal static class ProtobufSerializer
     }
 
     [DoesNotReturn]
-    private static void ThrowBufferTooSmallException()
-        => throw new ArgumentException("The buffer is too small to hold the data being written.");
+    private static void ThrowBufferTooSmallException(string paramName)
+        => throw new ArgumentException("The buffer is too small to hold the data being written.", paramName);
 #endif
 }

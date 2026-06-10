@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Cached pre-serialized metric metadata (`Name` / `Description` / `Unit`) to avoid
+  re-encoding on every OTLP metric export.
+  ([#7307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7307))
+
 ## 1.16.0
 
 Released 2026-Jun-10
@@ -57,10 +61,6 @@ Released 2026-Jun-10
   HTTP-date) that would extend a retry beyond the configured export timeout now
   correctly fails fast and drops the data.
   ([#7375](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7375))
-
-* Cached pre-serialized metric metadata (`Name` / `Description` / `Unit`) to avoid
-  re-encoding on every OTLP metric export.
-  ([#7307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7307))
 
 ## 1.15.3
 
