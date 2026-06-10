@@ -55,8 +55,10 @@ internal static class OtlpExporterOptionsExtensions
                     throw new ArgumentException("Headers provided in an invalid format.");
                 }
 
-                var key = Uri.UnescapeDataString(pair.Slice(0, equalIndex).Trim().ToString());
-                var value = Uri.UnescapeDataString(pair.Slice(equalIndex + 1).Trim().ToString());
+                var keySpan = pair.Slice(0, equalIndex).Trim();
+                var valueSpan = pair.Slice(equalIndex + 1).Trim();
+                var key = keySpan.Contains('%') ? Uri.UnescapeDataString(keySpan.ToString()) : keySpan.ToString();
+                var value = valueSpan.Contains('%') ? Uri.UnescapeDataString(valueSpan.ToString()) : valueSpan.ToString();
                 addHeader(headers, key, value);
             }
         }
