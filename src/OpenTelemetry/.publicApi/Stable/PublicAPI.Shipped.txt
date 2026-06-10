@@ -75,6 +75,8 @@ OpenTelemetry.Logs.LogRecord.FormattedMessage.get -> string?
 OpenTelemetry.Logs.LogRecord.FormattedMessage.set -> void
 OpenTelemetry.Logs.LogRecord.LogLevel.get -> Microsoft.Extensions.Logging.LogLevel
 OpenTelemetry.Logs.LogRecord.LogLevel.set -> void
+OpenTelemetry.Logs.LogRecord.ObservedTimestamp.get -> System.DateTime
+OpenTelemetry.Logs.LogRecord.ObservedTimestamp.set -> void
 OpenTelemetry.Logs.LogRecord.SpanId.get -> System.Diagnostics.ActivitySpanId
 OpenTelemetry.Logs.LogRecord.SpanId.set -> void
 OpenTelemetry.Logs.LogRecord.State.get -> object?
