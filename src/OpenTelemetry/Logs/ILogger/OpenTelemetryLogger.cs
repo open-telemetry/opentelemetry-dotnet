@@ -71,6 +71,7 @@ internal sealed class OpenTelemetryLogger : ILogger
             ref var data = ref record.Data;
 
             data.TimestampBacking = DateTime.UtcNow;
+            data.ObservedTimestampBacking = data.TimestampBacking;
 
             SetLogRecordSeverityFields(ref data, logLevel);
 

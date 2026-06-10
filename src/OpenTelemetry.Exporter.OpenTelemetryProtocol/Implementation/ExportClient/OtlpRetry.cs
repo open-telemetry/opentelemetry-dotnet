@@ -62,7 +62,7 @@ internal static class OtlpRetry
             if (ShouldHandleHttpRequestException(response.Exception))
             {
                 var delay = TimeSpan.FromMilliseconds(GetRandomNumber(0, retryDelayInMilliSeconds));
-                if (!IsDeadlineExceeded(response.DeadlineUtc + delay))
+                if (!WouldExceedDeadline(response.DeadlineUtc, delay))
                 {
                     retryResult = new RetryResult(false, delay, CalculateNextRetryDelay(retryDelayInMilliSeconds));
                     return true;
@@ -101,7 +101,7 @@ internal static class OtlpRetry
 
             var delayDuration = throttleDelay ?? TimeSpan.FromMilliseconds(GetRandomNumber(0, nextRetryDelayMilliseconds));
 
-            if (IsDeadlineExceeded(response.DeadlineUtc + delayDuration))
+            if (WouldExceedDeadline(response.DeadlineUtc, delayDuration))
             {
                 return false;
             }
@@ -158,7 +158,7 @@ internal static class OtlpRetry
 
         var delayDuration = throttleDelay ?? TimeSpan.FromMilliseconds(GetRandomNumber(0, nextRetryDelayMilliseconds));
 
-        if (deadline.HasValue && IsDeadlineExceeded(deadline + delayDuration))
+        if (WouldExceedDeadline(deadline, delayDuration))
         {
             return false;
         }
@@ -184,6 +184,18 @@ internal static class OtlpRetry
     // This implementation is internal, and it is guaranteed that deadline is UTC.
     private static bool IsDeadlineExceeded(DateTime? deadline)
         => deadline.HasValue && deadline <= DateTime.UtcNow;
+
+    /// <summary>
+    /// Checks if the delay would exceed the deadline. This is used to determine if a retry
+    /// should be attempted based on the remaining time until the deadline.
+    /// </summary>
+    /// <param name="deadline">The deadline value.</param>
+    /// <param name="delay">The delay duration.</param>
+    /// <returns>
+    /// <see langword="true"/> if the delay would exceed the deadline; otherwise, <see langword="false"/>.
+    /// </returns>
+    private static bool WouldExceedDeadline(DateTime? deadline, TimeSpan delay)
+        => deadline is { } value && delay >= value - DateTime.UtcNow;
 
     private static int CalculateNextRetryDelay(int nextRetryDelayMilliseconds)
     {

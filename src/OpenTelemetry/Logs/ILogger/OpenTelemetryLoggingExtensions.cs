@@ -196,38 +196,41 @@ public static class OpenTelemetryLoggingExtensions
                 {
                     var state = sp.GetRequiredService<LoggerProviderBuilderSdk>();
 
-                    var provider = state.Provider;
-                    if (provider == null)
-                    {
-                        /*
-                         * Note:
-                         *
-                         * There is a possibility of a circular reference when
-                         * accessing LoggerProvider from the IServiceProvider.
-                         *
-                         * If LoggerProvider is the first thing accessed, and it
-                         * requires some service which accesses ILogger (for
-                         * example, IHttpClientFactory), then the
-                         * OpenTelemetryLoggerProvider will try to access a new
-                         * (second) LoggerProvider while still in the process of
-                         * building the first one:
-                         *
-                         * LoggerProvider -> IHttpClientFactory ->
-                         * ILoggerFactory -> OpenTelemetryLoggerProvider ->
-                         * LoggerProvider
-                         *
-                         * This check uses the provider reference captured on
-                         * LoggerProviderBuilderSdk during construction of
-                         * LoggerProviderSdk to detect if a provider has already
-                         * been created to give to OpenTelemetryLoggerProvider
-                         * and stop the loop.
-                         */
-                        provider = sp.GetRequiredService<LoggerProvider>();
-                        Debug.Assert(provider == state.Provider, "state.Provider did not match resolved LoggerProvider.");
-                    }
-
                     return new OpenTelemetryLoggerProvider(
-                        provider,
+                        () =>
+                        {
+                            var provider = state.Provider;
+                            if (provider != null)
+                            {
+                                return provider;
+                            }
+
+                            /*
+                             * Note:
+                             *
+                             * There is a possibility of a circular reference when
+                             * accessing LoggerProvider from the IServiceProvider.
+                             *
+                             * If ILoggerFactory is the first thing accessed while
+                             * LoggerProvider is still being built, then
+                             * OpenTelemetryLoggerProvider.CreateLogger will need
+                             * to use the provider that is already under
+                             * construction instead of asking DI to create a
+                             * second provider:
+                             *
+                             * LoggerProvider -> IHttpClientFactory ->
+                             * ILoggerFactory -> OpenTelemetryLoggerProvider ->
+                             * LoggerProvider
+                             *
+                             * This check uses the provider reference captured on
+                             * LoggerProviderBuilderSdk during construction of
+                             * LoggerProviderSdk to detect if a provider has
+                             * already been created and stop the loop.
+                             */
+                            provider = sp.GetRequiredService<LoggerProvider>();
+                            Debug.Assert(provider == state.Provider, "state.Provider did not match resolved LoggerProvider.");
+                            return provider;
+                        },
                         sp.GetRequiredService<IOptions<OpenTelemetryLoggerOptions>>().Value,
                         disposeProvider: false);
                 }));

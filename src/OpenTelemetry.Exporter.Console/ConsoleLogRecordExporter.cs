@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Globalization;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
@@ -47,7 +48,9 @@ public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
 
         foreach (var logRecord in batch)
         {
-            this.WriteLine($"{"LogRecord.Timestamp:",-RightPaddingLength}{logRecord.Timestamp:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
+            var timestamp = logRecord.Timestamp;
+            this.WriteLine($"{"LogRecord.Timestamp:",-RightPaddingLength}{(timestamp == DateTime.MinValue ? "(not set)" : timestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture))}");
+            this.WriteLine($"{"LogRecord.ObservedTimestamp:",-RightPaddingLength}{logRecord.ObservedTimestamp:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
 
             if (logRecord.TraceId != default)
             {

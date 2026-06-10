@@ -25,6 +25,13 @@ namespace OpenTelemetry.Exporter.Prometheus;
 /// </summary>
 internal static partial class PrometheusSerializer
 {
+    // Matches the 100 MiB cap applied to the main scrape response buffer in
+    // PrometheusCollectionManager. The serialized tags are ultimately copied into
+    // that buffer, so they can never usefully exceed this size. Capping growth in
+    // SerializeTags prevents an attacker-influenced, oversized histogram label value
+    // from forcing unbounded scratch-buffer allocations during a scrape.
+    internal const int MaxSerializedTagsBufferSize = 100 * 1024 * 1024;
+
 #pragma warning disable SA1310 // Field name should not contain an underscore
     private const byte ASCII_QUOTATION_MARK = 0x22; // '"'
     private const byte ASCII_REVERSE_SOLIDUS = 0x5C; // '\\'

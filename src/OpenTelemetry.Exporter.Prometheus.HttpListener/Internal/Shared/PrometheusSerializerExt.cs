@@ -237,6 +237,21 @@ internal static partial class PrometheusSerializer
         return found;
     }
 
+    internal static int GetNextSerializedTagsBufferSize(int currentBufferSize)
+    {
+        // Doubles the supplied buffer size, throwing once growth would exceed
+        // MaxSerializedTagsBufferSize so that serializing an oversized tag set fails
+        // fast instead of allocating without bound. An InvalidOperationException is
+        // used deliberately: the buffer-growth retry loops in PrometheusCollectionManager
+        // only retry on IndexOutOfRangeException/ArgumentException, so this terminates
+        // the scrape immediately rather than repeatedly re-entering this allocation.
+        var newBufferSize = currentBufferSize * 2;
+
+        return newBufferSize <= 0 || newBufferSize > MaxSerializedTagsBufferSize
+            ? throw new InvalidOperationException("The serialized Prometheus tag set exceeded the maximum supported size.")
+            : newBufferSize;
+    }
+
     private static bool TryGetLatestExemplar(in MetricPoint metricPoint, out Exemplar exemplar)
     {
         exemplar = default;
@@ -311,7 +326,7 @@ internal static partial class PrometheusSerializer
             }
             catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
             {
-                buffer = new byte[checked(buffer.Length * 2)];
+                buffer = new byte[GetNextSerializedTagsBufferSize(buffer.Length)];
             }
         }
     }
