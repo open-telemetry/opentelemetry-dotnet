@@ -20,7 +20,7 @@ jobs:
         show-progress: false
 
     - name: Check for typos
-      uses: crate-ci/typos@f8a58b6b53f2279f71eb605f03a4ae4d10608f45 # v1.47.0
+      uses: crate-ci/typos@37bb98842b0d8c4ffebdb75301a13db0267cef89 # v1.47.2
 
   run-sanitycheck:
     name: Run sanity check
