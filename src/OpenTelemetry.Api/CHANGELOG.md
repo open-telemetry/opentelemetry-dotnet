@@ -6,10 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* Update `BaggagePropagator` to preserve baggage properties in extracted values 
+* Update `BaggagePropagator` to preserve baggage properties in extracted values
   and to stop processing remaining baggage entries when
   an entry with an invalid key is encountered, consistent with the behavior of
-  the `dotnet/runtime` W3C propagator. 
+  the `dotnet/runtime` W3C propagator.
   ([#7376](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7376))
 
 * **Experimental (pre-release builds only):**
