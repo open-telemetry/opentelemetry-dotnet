@@ -1,2 +1,0 @@
-OpenTelemetry.Logs.LogRecord.ObservedTimestamp.get -> System.DateTime
-OpenTelemetry.Logs.LogRecord.ObservedTimestamp.set -> void
