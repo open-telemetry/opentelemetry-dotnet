@@ -218,8 +218,7 @@ public class BaggagePropagator : TextMapPropagator
                 }
 
                 var rawKey = pair.Slice(0, separatorIndex).Trim();
-
-                if (!IsValidKey(rawKey))
+                if (rawKey.IsEmpty || !IsValidKey(rawKey))
                 {
                     // follow dotnet/runtime
                     break;
@@ -231,11 +230,6 @@ public class BaggagePropagator : TextMapPropagator
                 rawValue = rawValue.Trim();
 
                 var value = DecodeIfNeeded(rawValue);
-
-                if (string.IsNullOrEmpty(key))
-                {
-                    break;
-                }
 
                 baggageDictionary ??= new(StringComparer.Ordinal);
                 baggageDictionary[key] = value;
