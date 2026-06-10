@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.16.0-rc.1
+
+Released 2026-Jun-10
+
 * Stop validating View-provided metric stream `Name` against the instrument
   name syntax, per
   [spec clarification](https://github.com/open-telemetry/opentelemetry-specification/pull/5094).

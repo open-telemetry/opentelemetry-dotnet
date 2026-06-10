@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.16.0-rc.1
+
+Released 2026-Jun-10
+
 * **Experimental (pre-release builds only):**
   Add support for using environment variables as context propagation carriers.
   ([#7174](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7174))
