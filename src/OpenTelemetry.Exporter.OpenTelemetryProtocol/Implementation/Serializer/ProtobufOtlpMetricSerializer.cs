@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Buffers;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Metrics;
@@ -13,9 +12,6 @@ internal static class ProtobufOtlpMetricSerializer
     private const int ReserveSizeForLength = 4;
     private const int TraceIdSize = 16;
     private const int SpanIdSize = 8;
-    private const int StackallocByteThreshold = 256;
-    private const int InitialPoolBufferSize = 512;
-
     private static readonly ConditionalWeakTable<Metric, byte[]> CachedMetricMetadata = new();
 
     [ThreadStatic]
@@ -593,59 +589,54 @@ internal static class ProtobufOtlpMetricSerializer
 
     private static byte[] SerializeMetricMetadataToBytes(Metric metric)
     {
-        Span<byte> stackBuffer = stackalloc byte[StackallocByteThreshold];
-        try
-        {
-            var length = WriteMetricMetadataCore(stackBuffer, 0, metric);
-            return stackBuffer.Slice(0, length).ToArray();
-        }
-        catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
-        {
-            return SerializeMetricMetadataToBytesFromPool(metric);
-        }
-    }
+        var nameUtf8Length = ProtobufSerializer.GetNumberOfUtf8CharsInString(metric.Name);
+        var size = ComputeStringWithTagSize(ProtobufOtlpMetricFieldNumberConstants.Metric_Name, nameUtf8Length);
 
-    private static byte[] SerializeMetricMetadataToBytesFromPool(Metric metric)
-    {
-        var pool = ArrayPool<byte>.Shared;
-
-        var buffer = pool.Rent(InitialPoolBufferSize);
-        try
+        var descriptionUtf8Length = 0;
+        if (metric.Description != null)
         {
-            while (true)
-            {
-                try
-                {
-                    var length = WriteMetricMetadataCore(buffer, 0, metric);
-                    return buffer.AsSpan(0, length).ToArray();
-                }
-                catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
-                {
-                    pool.Return(buffer);
-                    buffer = pool.Rent(buffer.Length * 2);
-                }
-            }
+            descriptionUtf8Length = ProtobufSerializer.GetNumberOfUtf8CharsInString(metric.Description);
+            size += ComputeStringWithTagSize(ProtobufOtlpMetricFieldNumberConstants.Metric_Description, descriptionUtf8Length);
         }
-        finally
-        {
-            pool.Return(buffer);
-        }
-    }
 
-    private static int WriteMetricMetadataCore(Span<byte> buffer, int writePosition, Metric metric)
-    {
-        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Metric_Name, metric.Name);
+        var unitUtf8Length = 0;
+        if (metric.Unit != null)
+        {
+            unitUtf8Length = ProtobufSerializer.GetNumberOfUtf8CharsInString(metric.Unit);
+            size += ComputeStringWithTagSize(ProtobufOtlpMetricFieldNumberConstants.Metric_Unit, unitUtf8Length);
+        }
+
+        var buffer = new byte[size];
+        var writePosition = ProtobufSerializer.WriteStringWithTag(buffer, 0, ProtobufOtlpMetricFieldNumberConstants.Metric_Name, nameUtf8Length, metric.Name);
 
         if (metric.Description != null)
         {
-            writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Metric_Description, metric.Description);
+            writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Metric_Description, descriptionUtf8Length, metric.Description);
         }
 
         if (metric.Unit != null)
         {
-            writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Metric_Unit, metric.Unit);
+            writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Metric_Unit, unitUtf8Length, metric.Unit);
         }
 
-        return writePosition;
+        Debug.Assert(writePosition == size, "writePosition did not match the computed size");
+        return buffer;
+    }
+
+    private static int ComputeStringWithTagSize(int fieldNumber, int numberOfUtf8Chars) =>
+        ComputeVarInt32Size(ProtobufSerializer.GetTagValue(fieldNumber, ProtobufWireType.LEN))
+        + ComputeVarInt32Size((uint)numberOfUtf8Chars)
+        + numberOfUtf8Chars;
+
+    private static int ComputeVarInt32Size(uint value)
+    {
+        var size = 1;
+        while (value >= 0x80)
+        {
+            size++;
+            value >>= 7;
+        }
+
+        return size;
     }
 }
