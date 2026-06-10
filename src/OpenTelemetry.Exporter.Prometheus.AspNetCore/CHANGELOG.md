@@ -92,6 +92,9 @@ Notes](../../RELEASENOTES.md).
 * Drop conflicting scope attributes named `name`, `version`, and `schema_url`.
   ([#7237](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7237))
 
+* Updated OpenTelemetry core component version(s) to `1.16.0`.
+  ([#52](https://github.com/open-telemetry/opentelemetry-dotnet/pull/52))
+
 ## 1.15.3-beta.1
 
 Released 2026-Apr-21
