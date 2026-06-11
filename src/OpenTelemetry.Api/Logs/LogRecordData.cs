@@ -124,7 +124,7 @@ internal
     public DateTime ObservedTimestamp
     {
         readonly get => this.ObservedTimestampBacking;
-        set { this.ObservedTimestampBacking = value.Kind == DateTimeKind.Local ? value.ToUniversalTime() : value; }
+        set => this.ObservedTimestampBacking = value.Kind == DateTimeKind.Local ? value.ToUniversalTime() : value;
     }
 
     /// <summary>
