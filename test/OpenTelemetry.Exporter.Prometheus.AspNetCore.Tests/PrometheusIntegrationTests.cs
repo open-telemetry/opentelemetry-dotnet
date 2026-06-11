@@ -5,7 +5,9 @@ using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.IO.Compression;
 using System.Net;
+#if !NET11_0_OR_GREATER
 using System.Net.Http.Json;
+#endif
 using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;

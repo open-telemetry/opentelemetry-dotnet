@@ -26,7 +26,7 @@ public class HistogramExplicitBoundsBenchmarks
         var finite = CreateBounds(this.BoundCount, this.Layout);
         var infinite = CreateInfiniteBounds(finite);
 
-        this.emptyBounds = new(Array.Empty<double>());
+        this.emptyBounds = new([]);
         this.finiteBounds = new(finite);
         this.infiniteBounds = new(infinite);
 

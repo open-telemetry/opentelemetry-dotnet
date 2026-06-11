@@ -156,6 +156,12 @@ dotnet_diagnostic.IDE0002.severity = warning
 # IDE0005: Remove unnecessary import
 dotnet_diagnostic.IDE0005.severity = warning
 
+# IDE0045: if statement can be simplified
+dotnet_diagnostic.IDE0045.severity = silent
+
+# IDE0046: if statement can be simplified
+dotnet_diagnostic.IDE0046.severity = silent
+
 # RS0041: Public members should not use oblivious types
 dotnet_diagnostic.RS0041.severity = suggestion
 
