@@ -39,6 +39,12 @@ Description: Environment variable context propagation
 
 Details: [OTEL1005](./OTEL1005.md)
 
+### OTEL1006
+
+Description: Lazy metric point allocation
+
+Details: [OTEL1006](./OTEL1006.md)
+
 ## Inactive
 
 Experimental APIs which have been released stable or removed:
