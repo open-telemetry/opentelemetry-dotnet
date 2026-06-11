@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 #endif
 using System.Diagnostics.Tracing;
+using System.Globalization;
 using Microsoft.Extensions.Configuration;
 
 namespace OpenTelemetry.Internal;
@@ -69,7 +70,8 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
             // correct sampling flags
             // https://github.com/dotnet/runtime/issues/61857
             var activityId = string.Concat("00-", activity.TraceId.ToHexString(), "-", activity.SpanId.ToHexString());
-            activityId = string.Concat(activityId, activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded) ? "-01" : "-00");
+            var traceFlags = ((byte)activity.ActivityTraceFlags).ToString("x2", CultureInfo.InvariantCulture);
+            activityId = string.Concat(activityId, "-", traceFlags);
             this.ActivityStarted(activity.DisplayName, activityId);
         }
     }
@@ -164,6 +166,15 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
         if (this.IsEnabled(EventLevel.Error, EventKeywords.All))
         {
             this.MetricViewException(source, ex.ToInvariantString());
+        }
+    }
+
+    [NonEvent]
+    public void ExemplarReservoirException(Exception ex)
+    {
+        if (this.IsEnabled(EventLevel.Verbose, EventKeywords.All))
+        {
+            this.ExemplarReservoirException(ex.ToInvariantString());
         }
     }
 
@@ -310,6 +321,10 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
     public void MetricViewException(string source, string ex)
         => this.WriteEvent(56, source, ex);
 
+    [Event(57, Message = "Exception thrown by user-supplied ExemplarReservoir.Offer implementation: '{0}'.", Level = EventLevel.Verbose)]
+    public void ExemplarReservoirException(string ex)
+        => this.WriteEvent(57, ex);
+
     void IConfigurationExtensionsLogger.LogInvalidConfigurationValue(string key, string value)
         => this.InvalidConfigurationValue(key, value);
 
@@ -355,7 +370,7 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
             }
 
             var message = e.Message != null && e.Payload != null && e.Payload.Count > 0
-                ? string.Format(System.Globalization.CultureInfo.CurrentCulture, e.Message, [.. e.Payload])
+                ? string.Format(CultureInfo.CurrentCulture, e.Message, [.. e.Payload])
                 : e.Message;
 
             Debug.WriteLine($"{e.EventSource.Name} - Level: [{e.Level}], EventId: [{e.EventId}], EventName: [{e.EventName}], Message: [{message}]");

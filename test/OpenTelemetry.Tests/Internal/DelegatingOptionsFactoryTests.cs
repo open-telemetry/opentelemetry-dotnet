@@ -4,7 +4,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Xunit;
 
 namespace OpenTelemetry.Internal.Tests;
 
@@ -251,8 +250,7 @@ public class DelegatingOptionsFactoryTests
 
         factory.Create(Options.DefaultName);
 
-        static string[] GetExpectedOrder() => ["factory", "configure", "postconfigure", "validate"];
-        Assert.Equal(GetExpectedOrder(), order);
+        Assert.Equal<string>(["factory", "configure", "postconfigure", "validate"], order);
     }
 
     [Fact]

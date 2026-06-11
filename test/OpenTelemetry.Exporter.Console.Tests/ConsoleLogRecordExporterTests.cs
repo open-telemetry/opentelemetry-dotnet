@@ -5,7 +5,6 @@ using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
-using Xunit;
 
 namespace OpenTelemetry.Exporter.Console.Tests;
 
@@ -212,6 +211,47 @@ public class ConsoleLogRecordExporterTests
 
         // Assert
         Assert.Equal(ExportResult.Success, actual);
+    }
+
+    [Fact]
+    public void Export_WithAttributesContainingNullKey_DoesNotThrow()
+    {
+        // Arrange
+        var logRecords = new List<LogRecord>();
+        using var loggerFactory = LoggerFactory.Create(builder =>
+        {
+            builder.AddOpenTelemetry(options =>
+            {
+                options.ParseStateValues = true;
+                options.AddInMemoryExporter(logRecords);
+            });
+        });
+
+        var state = new List<KeyValuePair<string, object?>>
+        {
+            new(null!, "value"),
+            new("{OriginalFormat}", "Test log"),
+        };
+
+        var logger = loggerFactory.CreateLogger<ConsoleLogRecordExporterTests>();
+
+        // Act
+        logger.Log(
+            LogLevel.Information,
+            default,
+            state,
+            exception: null,
+            formatter: static (s, _) => s[1].Value?.ToString() ?? string.Empty);
+
+        // Assert
+        var logRecord = Assert.Single(logRecords);
+        Assert.NotNull(logRecord.Attributes);
+        Assert.Null(logRecord.Attributes[0].Key);
+
+        using var exporter = new ConsoleLogRecordExporter(new ConsoleExporterOptions());
+        var result = exporter.Export(new Batch<LogRecord>([.. logRecords], logRecords.Count));
+
+        Assert.Equal(ExportResult.Success, result);
     }
 
     [Fact]

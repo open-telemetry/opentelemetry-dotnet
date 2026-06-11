@@ -16,6 +16,9 @@ internal abstract class ArrayTagWriter<TArrayState>
 
     public abstract void WriteBooleanValue(ref TArrayState state, bool value);
 
+    public virtual void WriteStringValue(ref TArrayState state, string value)
+        => this.WriteStringValue(ref state, value.AsSpan());
+
     public abstract void WriteStringValue(ref TArrayState state, ReadOnlySpan<char> value);
 
     public abstract void EndWriteArray(ref TArrayState state);

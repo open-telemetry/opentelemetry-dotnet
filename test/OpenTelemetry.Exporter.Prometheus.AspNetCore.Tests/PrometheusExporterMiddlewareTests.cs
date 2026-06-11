@@ -12,10 +12,10 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
-using Xunit;
 
 namespace OpenTelemetry.Exporter.Prometheus.AspNetCore.Tests;
 
@@ -26,30 +26,24 @@ public sealed class PrometheusExporterMiddlewareTests
     private static readonly string MeterName = Utils.GetCurrentMethodName();
 
     [Fact]
-    public Task PrometheusExporterMiddlewareIntegration()
-    {
-        return RunPrometheusExporterMiddlewareIntegrationTest(
+    public Task PrometheusExporterMiddlewareIntegration() =>
+        RunPrometheusExporterMiddlewareIntegrationTest(
             "/metrics",
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint());
-    }
 
     [Fact]
-    public Task PrometheusExporterMiddlewareIntegration_Options()
-    {
-        return RunPrometheusExporterMiddlewareIntegrationTest(
+    public Task PrometheusExporterMiddlewareIntegration_Options() =>
+        RunPrometheusExporterMiddlewareIntegrationTest(
             "/metrics_options",
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
             services => services.Configure<PrometheusAspNetCoreOptions>(o => o.ScrapeEndpointPath = "metrics_options"));
-    }
 
     [Fact]
-    public Task PrometheusExporterMiddlewareIntegration_OptionsFallback()
-    {
-        return RunPrometheusExporterMiddlewareIntegrationTest(
+    public Task PrometheusExporterMiddlewareIntegration_OptionsFallback() =>
+        RunPrometheusExporterMiddlewareIntegrationTest(
             "/metrics",
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
             services => services.Configure<PrometheusAspNetCoreOptions>(o => o.ScrapeEndpointPath = null));
-    }
 
     [Fact]
     public Task PrometheusExporterMiddlewareIntegration_OptionsViaAddPrometheusExporter() =>
@@ -62,17 +56,14 @@ public sealed class PrometheusExporterMiddlewareTests
             });
 
     [Fact]
-    public Task PrometheusExporterMiddlewareIntegration_PathOverride()
-    {
-        return RunPrometheusExporterMiddlewareIntegrationTest(
+    public Task PrometheusExporterMiddlewareIntegration_PathOverride() =>
+        RunPrometheusExporterMiddlewareIntegrationTest(
             "/metrics_override",
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint("/metrics_override"));
-    }
 
     [Fact]
-    public Task PrometheusExporterMiddlewareIntegration_WithPathNamedOptionsOverride()
-    {
-        return RunPrometheusExporterMiddlewareIntegrationTest(
+    public Task PrometheusExporterMiddlewareIntegration_WithPathNamedOptionsOverride() =>
+        RunPrometheusExporterMiddlewareIntegrationTest(
             "/metrics_override",
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(
                 meterProvider: null,
@@ -84,20 +75,16 @@ public sealed class PrometheusExporterMiddlewareTests
             {
                 services.Configure<PrometheusAspNetCoreOptions>("myOptions", o => o.ScrapeEndpointPath = "/metrics_override");
             });
-    }
 
     [Fact]
-    public Task PrometheusExporterMiddlewareIntegration_Predicate()
-    {
-        return RunPrometheusExporterMiddlewareIntegrationTest(
+    public Task PrometheusExporterMiddlewareIntegration_Predicate() =>
+        RunPrometheusExporterMiddlewareIntegrationTest(
             "/metrics_predicate?enabled=true",
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(httpcontext => httpcontext.Request.Path == "/metrics_predicate" && httpcontext.Request.Query["enabled"] == "true"));
-    }
 
     [Fact]
-    public Task PrometheusExporterMiddlewareIntegration_MixedPredicateAndPath()
-    {
-        return RunPrometheusExporterMiddlewareIntegrationTest(
+    public Task PrometheusExporterMiddlewareIntegration_MixedPredicateAndPath() =>
+        RunPrometheusExporterMiddlewareIntegrationTest(
             "/metrics_predicate",
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(
                 meterProvider: null,
@@ -119,12 +106,10 @@ public sealed class PrometheusExporterMiddlewareTests
 
                 Assert.Equal("true", headers.FirstOrDefault());
             });
-    }
 
     [Fact]
-    public Task PrometheusExporterMiddlewareIntegration_MixedPath()
-    {
-        return RunPrometheusExporterMiddlewareIntegrationTest(
+    public Task PrometheusExporterMiddlewareIntegration_MixedPath() =>
+        RunPrometheusExporterMiddlewareIntegrationTest(
             "/metrics_path",
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(
                 meterProvider: null,
@@ -146,7 +131,6 @@ public sealed class PrometheusExporterMiddlewareTests
 
                 Assert.Equal("true", headers.FirstOrDefault());
             });
-    }
 
     [Fact]
     public async Task PrometheusExporterMiddlewareIntegration_MeterProvider()
@@ -169,36 +153,29 @@ public sealed class PrometheusExporterMiddlewareTests
     }
 
     [Fact]
-    public Task PrometheusExporterMiddlewareIntegration_NoMetrics()
-    {
-        return RunPrometheusExporterMiddlewareIntegrationTest(
+    public Task PrometheusExporterMiddlewareIntegration_NoMetrics() =>
+        RunPrometheusExporterMiddlewareIntegrationTest(
             "/metrics",
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
             skipMetrics: true);
-    }
 
     [Fact]
-    public Task PrometheusExporterMiddlewareIntegration_MapEndpoint()
-    {
-        return RunPrometheusExporterMiddlewareIntegrationTest(
+    public Task PrometheusExporterMiddlewareIntegration_MapEndpoint() =>
+        RunPrometheusExporterMiddlewareIntegrationTest(
             "/metrics",
             app => app.UseRouting().UseEndpoints(builder => builder.MapPrometheusScrapingEndpoint()),
             services => services.AddRouting());
-    }
 
     [Fact]
-    public Task PrometheusExporterMiddlewareIntegration_MapEndpoint_WithPathOverride()
-    {
-        return RunPrometheusExporterMiddlewareIntegrationTest(
+    public Task PrometheusExporterMiddlewareIntegration_MapEndpoint_WithPathOverride() =>
+        RunPrometheusExporterMiddlewareIntegrationTest(
             "/metrics_path",
             app => app.UseRouting().UseEndpoints(builder => builder.MapPrometheusScrapingEndpoint("metrics_path")),
             services => services.AddRouting());
-    }
 
     [Fact]
-    public Task PrometheusExporterMiddlewareIntegration_MapEndpoint_WithPathNamedOptionsOverride()
-    {
-        return RunPrometheusExporterMiddlewareIntegrationTest(
+    public Task PrometheusExporterMiddlewareIntegration_MapEndpoint_WithPathNamedOptionsOverride() =>
+        RunPrometheusExporterMiddlewareIntegrationTest(
             "/metrics_path",
             app => app.UseRouting().UseEndpoints(builder => builder.MapPrometheusScrapingEndpoint(
                 path: null,
@@ -210,7 +187,6 @@ public sealed class PrometheusExporterMiddlewareTests
                 services.AddRouting();
                 services.Configure<PrometheusAspNetCoreOptions>("myOptions", o => o.ScrapeEndpointPath = "/metrics_path");
             });
-    }
 
     [Fact]
     public async Task PrometheusExporterMiddlewareIntegration_MapEndpoint_WithMeterProvider()
@@ -244,7 +220,40 @@ public sealed class PrometheusExporterMiddlewareTests
         RunPrometheusExporterMiddlewareIntegrationTest(
             "/metrics",
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
-            acceptHeader: "application/openmetrics-text; version=1.0.0");
+            acceptHeader: "application/openmetrics-text; version=1.0.0",
+            contentType: "application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores");
+
+    [Theory]
+    [MemberData(nameof(PrometheusAcceptHeaders.Valid), MemberType = typeof(PrometheusAcceptHeaders))]
+    public void PrometheusExporterMiddlewareNegotiate_UsesTypedAcceptHeaders(
+        string accept,
+        string mediaType,
+        bool isOpenMetrics,
+        string version,
+        string? escaping)
+    {
+        var context = new DefaultHttpContext();
+        context.Request.Headers.Accept = accept;
+
+        var actual = PrometheusExporterMiddleware.Negotiate(context.Request.GetTypedHeaders());
+
+        Assert.Equal(mediaType, actual.MediaType);
+        Assert.Equal(isOpenMetrics, actual.IsOpenMetrics);
+        Assert.Equal(Version.Parse(version), actual.Version);
+        Assert.Equal(escaping, actual.Escaping);
+    }
+
+    [Theory]
+    [MemberData(nameof(PrometheusAcceptHeaders.Invalid), MemberType = typeof(PrometheusAcceptHeaders))]
+    public void PrometheusExporterMiddlewareNegotiate_UsesFallbackForInvalidHeader(string accept)
+    {
+        var context = new DefaultHttpContext();
+        context.Request.Headers.Accept = accept;
+
+        var actual = PrometheusExporterMiddleware.Negotiate(context.Request.GetTypedHeaders());
+
+        Assert.Equivalent(PrometheusProtocol.Fallback, actual);
+    }
 
     [Fact]
     public Task PrometheusExporterMiddlewareIntegration_TextPlainResponse_WithMeterTags()
@@ -275,6 +284,7 @@ public sealed class PrometheusExporterMiddlewareTests
             "/metrics",
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
             acceptHeader: "application/openmetrics-text; version=1.0.0",
+            contentType: "application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores",
             meterTags: meterTags);
     }
 
@@ -363,7 +373,77 @@ public sealed class PrometheusExporterMiddlewareTests
         Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
     }
 
-    private static async Task RunPrometheusExporterMiddlewareIntegrationTestWithBothFormats(KeyValuePair<string, object?>[]? meterTags = null)
+    [Fact]
+    public async Task PrometheusExporterMiddlewareInvokeAsync_WhenRequest_TimesOut_Returns408()
+    {
+        using var exporter = new PrometheusExporter(new PrometheusExporterOptions());
+        exporter.Collect = _ => true;
+        var middleware = new PrometheusExporterMiddleware(exporter);
+
+        var context = new DefaultHttpContext()
+        {
+            RequestAborted = new CancellationToken(canceled: true),
+        };
+
+        await middleware.InvokeAsync(context);
+
+        Assert.Equal(StatusCodes.Status408RequestTimeout, context.Response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData("0.9")]
+    [InlineData("1")]
+    public async Task PrometheusExporterMiddlewareInvokeAsync_WhenRequestDeadlineExceeded_Returns408(string value)
+    {
+        using var exporter = new PrometheusExporter(new PrometheusExporterOptions());
+
+        exporter.Collect = _ =>
+        {
+            Thread.Sleep(TimeSpan.FromSeconds(2));
+            return true;
+        };
+
+        var middleware = new PrometheusExporterMiddleware(exporter);
+
+        var context = new DefaultHttpContext();
+
+        context.Request.Headers.Append("X-Prometheus-Scrape-Timeout-Seconds", value);
+
+        await middleware.InvokeAsync(context);
+
+        Assert.Equal(StatusCodes.Status408RequestTimeout, context.Response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData("-1")]
+    [InlineData("0")]
+    [InlineData("0.0009")]
+    [InlineData("2147483")]
+    [InlineData("2147483.1")]
+    [InlineData("1.05e+003")]
+    [InlineData("foo")]
+    [InlineData("+Inf")]
+    [InlineData("-Inf")]
+    [InlineData("NaN")]
+    public async Task PrometheusExporterMiddlewareInvokeAsync_WhenRequestDeadlineInvalid_Returns200(string scrapeTimeoutSeconds)
+    {
+        using var exporter = new PrometheusExporter(new PrometheusExporterOptions());
+        exporter.Collect = _ => true;
+
+        var middleware = new PrometheusExporterMiddleware(exporter);
+
+        var context = new DefaultHttpContext();
+
+        context.Request.Headers.Append("X-Prometheus-Scrape-Timeout-Seconds", scrapeTimeoutSeconds);
+
+        await middleware.InvokeAsync(context);
+
+        Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
+    }
+
+    private static async Task RunPrometheusExporterMiddlewareIntegrationTestWithBothFormats(
+        KeyValuePair<string, object?>[]? meterTags = null,
+        string? contentType = null)
     {
         using var host = await StartTestHostAsync(
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint());
@@ -393,7 +473,7 @@ public sealed class PrometheusExporterMiddlewareTests
                 Method = HttpMethod.Get,
             };
             using var response = await client.SendAsync(request);
-            await VerifyAsync(response, testCase, meterTags);
+            await VerifyAsync(response, testCase, meterTags, contentType);
         }
 
         await host.StopAsync();
@@ -408,6 +488,7 @@ public sealed class PrometheusExporterMiddlewareTests
         Action<PrometheusAspNetCoreOptions>? configureOptions = null,
         bool skipMetrics = false,
         string acceptHeader = "application/openmetrics-text",
+        string? contentType = null,
         KeyValuePair<string, object?>[]? meterTags = null)
     {
         var requestOpenMetrics = acceptHeader.StartsWith("application/openmetrics-text", StringComparison.Ordinal);
@@ -442,7 +523,7 @@ public sealed class PrometheusExporterMiddlewareTests
         {
             var options = new PrometheusAspNetCoreOptions();
             configureOptions?.Invoke(options);
-            await VerifyAsync(response, requestOpenMetrics, meterTags);
+            await VerifyAsync(response, requestOpenMetrics, meterTags, contentType);
         }
         else
         {
@@ -454,22 +535,28 @@ public sealed class PrometheusExporterMiddlewareTests
         await host.StopAsync();
     }
 
-    private static async Task VerifyAsync(HttpResponseMessage response, bool requestOpenMetrics, KeyValuePair<string, object?>[]? meterTags)
+    private static async Task VerifyAsync(
+        HttpResponseMessage response,
+        bool requestOpenMetrics,
+        KeyValuePair<string, object?>[]? meterTags,
+        string? contentType)
     {
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.True(response.Content.Headers.Contains("Last-Modified"));
 
-        if (requestOpenMetrics)
-        {
-            Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8", response.Content.Headers.ContentType!.ToString());
-        }
-        else
-        {
-            Assert.Equal("text/plain; charset=utf-8; version=0.0.4", response.Content.Headers.ContentType!.ToString());
-        }
+        contentType ??=
+            requestOpenMetrics ?
+            "application/openmetrics-text; version=0.0.1; charset=utf-8" :
+            "text/plain; version=0.0.4; charset=utf-8";
+
+        Assert.Equal(contentType, response.Content.Headers.ContentType!.ToString());
+        Assert.Equal(["Accept-Encoding"], response.Headers.Vary);
 
         var additionalTags = meterTags is { Length: > 0 }
-            ? $"{string.Join(",", meterTags.Select(x => $"{x.Key}=\"{x.Value}\""))},"
+            ? $"{string.Join(",", meterTags.Select(x => $"otel_scope_{x.Key}=\"{x.Value}\""))},"
+            : string.Empty;
+        var createdMetricSample = requestOpenMetrics
+            ? $"counter_double_bytes_created{{otel_scope_name=\"{MeterName}\",otel_scope_version=\"{MeterVersion}\",{additionalTags}key1=\"value1\",key2=\"value2\"}} [0-9]+(?:\\.[0-9]+)?"
             : string.Empty;
 
         var content = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings();
@@ -479,16 +566,17 @@ public sealed class PrometheusExporterMiddlewareTests
                     # TYPE target info
                     # HELP target Target metadata
                     target_info{service_name="my_service",service_instance_id="id1"} 1
-                    # TYPE otel_scope_info info
-                    # HELP otel_scope_info Scope metadata
-                    otel_scope_info{otel_scope_name="{{MeterName}}"} 1
                     # TYPE counter_double_bytes counter
                     # UNIT counter_double_bytes bytes
                     counter_double_bytes_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",{{additionalTags}}key1="value1",key2="value2"} 101.17
+                    {{createdMetricSample}}
                     # EOF
 
                     """.ReplaceLineEndings()
             : $$"""
+                    # TYPE target_info gauge
+                    # HELP target_info Target metadata
+                    target_info{service_name="my_service",service_instance_id="id1"} 1
                     # TYPE counter_double_bytes_total counter
                     # UNIT counter_double_bytes_total bytes
                     counter_double_bytes_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",{{additionalTags}}key1="value1",key2="value2"} 101.17
@@ -507,6 +595,7 @@ public sealed class PrometheusExporterMiddlewareTests
         bool registerMeterProvider = true,
         Action<PrometheusAspNetCoreOptions>? configureOptions = null) =>
         new HostBuilder()
+            .ConfigureLogging((logging) => logging.ClearProviders())
             .ConfigureWebHost(webBuilder => webBuilder
                 .UseTestServer()
                 .ConfigureServices(services =>

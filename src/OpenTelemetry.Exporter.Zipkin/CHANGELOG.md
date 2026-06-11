@@ -6,11 +6,20 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.16.0
+
+Released 2026-Jun-10
+
+## 1.16.0-rc.1
+
+Released 2026-Jun-10
+
 ## 1.15.3
 
 Released 2026-Apr-21
 
-* Harden memory usage for endpoint caching and array tag serialization.
+* Harden memory usage for endpoint caching and array tag serialization to resolve
+  [GHSA-88hf-wf7h-7w4m](https://github.com/advisories/GHSA-88hf-wf7h-7w4m).
   ([#7081](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7081))
 
 ## 1.15.2

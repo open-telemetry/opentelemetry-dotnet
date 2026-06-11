@@ -178,7 +178,7 @@ internal sealed class SpanBuilderShim : ISpanBuilder
         }
 
         // see https://opentracing.io/specification/conventions/ for special key handling.
-        if (global::OpenTracing.Tag.Tags.SpanKind.Key.Equals(key, StringComparison.Ordinal))
+        if (string.Equals(global::OpenTracing.Tag.Tags.SpanKind.Key, key, StringComparison.Ordinal))
         {
             this.spanKind = value switch
             {
@@ -189,7 +189,7 @@ internal sealed class SpanBuilderShim : ISpanBuilder
                 _ => SpanKind.Internal,
             };
         }
-        else if (global::OpenTracing.Tag.Tags.Error.Key.Equals(key, StringComparison.Ordinal) && bool.TryParse(value, out var booleanValue))
+        else if (string.Equals(global::OpenTracing.Tag.Tags.Error.Key, key, StringComparison.Ordinal) && bool.TryParse(value, out var booleanValue))
         {
             this.error = booleanValue;
         }
@@ -204,7 +204,7 @@ internal sealed class SpanBuilderShim : ISpanBuilder
     /// <inheritdoc/>
     public ISpanBuilder WithTag(string key, bool value)
     {
-        if (global::OpenTracing.Tag.Tags.Error.Key.Equals(key, StringComparison.Ordinal))
+        if (string.Equals(global::OpenTracing.Tag.Tags.Error.Key, key, StringComparison.Ordinal))
         {
             this.error = value;
         }

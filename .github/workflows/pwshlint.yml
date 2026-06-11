@@ -1,0 +1,55 @@
+name: pwshlint
+
+on:
+  workflow_call:
+
+permissions: {}
+
+env:
+  FORCE_COLOR: 3
+  # renovate: datasource=github-releases depName=powershell-yaml packageName=cloudbase/powershell-yaml
+  POWERSHELL_YAML_VERSION: '0.4.12'
+  # renovate: datasource=github-releases depName=PSScriptAnalyzer packageName=PowerShell/PSScriptAnalyzer
+  PSSCRIPTANALYZER_VERSION: '1.25.0'
+  TERM: xterm
+
+jobs:
+  pwsh-lint:
+    name: Lint PowerShell in workflows and scripts
+    runs-on: ubuntu-24.04
+
+    permissions:
+      contents: read
+
+    steps:
+
+    - name: Checkout code
+      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      with:
+        filter: 'tree:0'
+        persist-credentials: false
+        show-progress: false
+
+    - name: Lint PowerShell in workflows
+      uses: martincostello/lint-actions-powershell@e088367ebeb113cd7c1ebee5c541175d93e945b7 # v1.0.1
+      with:
+        powershell-yaml-version: ${{ env.POWERSHELL_YAML_VERSION }}
+        psscriptanalyzer-version: ${{ env.PSSCRIPTANALYZER_VERSION }}
+        treat-warnings-as-errors: true
+
+    - name: Lint PowerShell scripts
+      shell: pwsh
+      run: |
+        $settings = @{
+          IncludeDefaultRules = $true
+          Severity = @("Error", "Warning")
+        }
+        $issues = Invoke-ScriptAnalyzer -Path ${env:GITHUB_WORKSPACE} -Recurse -ReportSummary -Settings $settings
+        foreach ($issue in $issues) {
+          $severity = $issue.Severity.ToString()
+          $level = $severity.Contains("Error") ? "error" : $severity.Contains("Warning") ? "warning" : "notice"
+          Write-Output "::${level} file=$($issue.ScriptName),line=$($issue.Line),title=PSScriptAnalyzer::$($issue.Message)"
+        }
+        if ($issues.Count -gt 0) {
+          exit 1
+        }

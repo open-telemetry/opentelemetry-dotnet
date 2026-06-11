@@ -4,6 +4,36 @@ This file contains highlights and announcements covering all components.
 For more details see `CHANGELOG.md` files maintained in the root source
 directory of each individual package.
 
+## 1.16.0
+
+Release details: [1.16.0](https://github.com/open-telemetry/opentelemetry-dotnet/releases/tag/core-1.16.0)
+
+* **Breaking Change** Explicit histogram boundaries no longer allow more than
+  10 million values.
+* Fix `BaggagePropagator` to correctly follow Key and Value Encoding rules.
+* Add support for the W3C randomness flag.
+* Fixed `TraceContextPropagator` to deduplicate duplicate `tracestate` keys.
+* `ObservedTimestamp` will now be exported for logs in the console exporter.
+* Fixed `NullReferenceException` when exporting OTLP logs if the scope key is
+  null.
+* Added opt-in support for gzip compression to the OTLP exporter.
+* Fixed OTLP disk retry data being stored incorrectly when using persistent
+  storage retry.
+* Fixed `OtlpLogExporter` integration with `IHttpClientFactory`.
+* Do not enable the OTLP integration with `IHttpClientFactory` when mTLS is
+  enabled.
+* Handle `Retry-After` response headers that specify a date instead of a delay.
+* `observed_time_unix_nano` will no longer always be identical to `time_unix_nano`
+  when using the logs bridge API.
+* Stop validating View-provided metric stream `Name` against the instrument name
+  syntax.
+* Fix incorrect validation of `OTEL_BSP_*` and `OTEL_BLRP_*` environment variables.
+* Fix observable instrument callbacks running once per reader instead of once per
+  collection cycle.
+* Added exception safety for user-supplied `ExemplarReservoir` implementations.
+* Fixed a circular reference which could cause a `LoggerProvider` to fail to
+  resolve when one of its dependencies depends on `ILogger` or `ILoggerFactory`.
+
 ## 1.15.3
 
 Release details: [1.15.3](https://github.com/open-telemetry/opentelemetry-dotnet/releases/tag/core-1.15.3)

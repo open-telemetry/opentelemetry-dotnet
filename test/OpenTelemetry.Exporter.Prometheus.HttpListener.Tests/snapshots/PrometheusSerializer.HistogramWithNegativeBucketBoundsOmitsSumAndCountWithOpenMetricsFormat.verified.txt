@@ -1,0 +1,6 @@
+﻿# TYPE test_histogram histogram
+test_histogram_bucket{otel_scope_name="HistogramWithNegativeBucketBoundsOmitsSumAndCountWithOpenMetricsFormat",x="1",le="-1.0"} 0
+test_histogram_bucket{otel_scope_name="HistogramWithNegativeBucketBoundsOmitsSumAndCountWithOpenMetricsFormat",x="1",le="0.0"} 1
+test_histogram_bucket{otel_scope_name="HistogramWithNegativeBucketBoundsOmitsSumAndCountWithOpenMetricsFormat",x="1",le="1.0"} 1
+test_histogram_bucket{otel_scope_name="HistogramWithNegativeBucketBoundsOmitsSumAndCountWithOpenMetricsFormat",x="1",le="+Inf"} 1
+test_histogram_created{otel_scope_name="HistogramWithNegativeBucketBoundsOmitsSumAndCountWithOpenMetricsFormat",x="1"} <TIMESTAMP>

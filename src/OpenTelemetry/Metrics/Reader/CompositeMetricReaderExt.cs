@@ -15,9 +15,9 @@ internal sealed partial class CompositeMetricReader
     {
         var metrics = new List<Metric>(this.count);
 
-        for (var cur = this.Head; cur != null; cur = cur.Next)
+        for (var current = this.Head; current != null; current = current.Next)
         {
-            var innerMetrics = cur.Value.AddMetricWithNoViews(instrument);
+            var innerMetrics = current.Value.AddMetricWithNoViews(instrument);
             if (innerMetrics.Count > 0)
             {
                 Debug.Assert(innerMetrics.Count == 1, "Multiple metrics returned without view configuration");
@@ -33,9 +33,9 @@ internal sealed partial class CompositeMetricReader
     {
         var metrics = new List<Metric>(this.count * metricStreamConfigs.Count);
 
-        for (var cur = this.Head; cur != null; cur = cur.Next)
+        for (var current = this.Head; current != null; current = current.Next)
         {
-            var innerMetrics = cur.Value.AddMetricWithViews(instrument, metricStreamConfigs);
+            var innerMetrics = current.Value.AddMetricWithViews(instrument, metricStreamConfigs);
 
             metrics.AddRange(innerMetrics);
         }

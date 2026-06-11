@@ -4,6 +4,9 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
+#if NETFRAMEWORK
+using System.Net.Http;
+#endif
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -108,10 +111,12 @@ public class OtlpLogExporterTests
         });
     }
 
-    [Fact]
-    public void ServiceProviderHttpClientFactoryInvoked()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ServiceProviderHttpClientFactoryNotInvokedDuringLoggerFactoryCreation(bool callUseOpenTelemetry)
     {
-        IServiceCollection services = new ServiceCollection();
+        var services = new ServiceCollection();
 
         services.AddHttpClient();
 
@@ -119,19 +124,64 @@ public class OtlpLogExporterTests
 
         services.AddHttpClient("OtlpLogExporter", configureClient: (client) => invocations++);
 
-        services.AddOpenTelemetry().WithLogging(builder => builder
-            .AddOtlpExporter(o => o.Protocol = OtlpExportProtocol.HttpProtobuf));
+        services.AddLogging(builder =>
+        {
+            ConfigureOtlpExporter(
+                builder,
+                callUseOpenTelemetry,
+                configureExporter: o => o.Protocol = OtlpExportProtocol.HttpProtobuf);
+        });
 
         using var serviceProvider = services.BuildServiceProvider();
+        _ = serviceProvider.GetRequiredService<ILoggerFactory>();
 
-        var loggerProvider = serviceProvider.GetRequiredService<LoggerProvider>();
-
-        // IHttpClientFactory integration is only enabled for OtlpLogExporter on .NET 8+.
-#if NET8_0_OR_GREATER
-        Assert.Equal(1, invocations);
-#else
+        Assert.NotNull(serviceProvider);
         Assert.Equal(0, invocations);
-#endif
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ServiceProviderHttpClientFactoryInvokedForExportWithoutCircularDependency(bool callUseOpenTelemetry)
+    {
+        using var testHandler = new TestHttpMessageHandler();
+
+        var services = new ServiceCollection();
+
+        var invocations = 0;
+
+        services.AddHttpClient("OtlpLogExporter")
+            .ConfigurePrimaryHttpMessageHandler(() => testHandler)
+            .AddHttpMessageHandler(sp =>
+            {
+                _ = sp.GetRequiredService<ILoggerFactory>();
+                invocations++;
+                return new PassThroughDelegatingHandler();
+            });
+
+        services.AddLogging(builder =>
+        {
+            ConfigureOtlpExporter(
+                builder,
+                callUseOpenTelemetry,
+                configureExporterAndProcessor: (exporter, processor) =>
+                {
+                    exporter.Protocol = OtlpExportProtocol.HttpProtobuf;
+                    exporter.Endpoint = new Uri("http://localhost:4318");
+                    processor.ExportProcessorType = ExportProcessorType.Simple;
+                });
+        });
+
+        using var serviceProvider = services.BuildServiceProvider();
+        var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+        var logger = loggerFactory.CreateLogger(nameof(OtlpLogExporterTests));
+
+        Assert.Equal(0, invocations);
+
+        logger.HelloFrom("tomato", 2.99);
+
+        Assert.Equal(1, invocations);
+        Assert.NotNull(testHandler.HttpRequestMessage);
     }
 
     [Fact]
@@ -240,6 +290,7 @@ public class OtlpLogExporterTests
         var hostBuilder = new HostBuilder();
         hostBuilder.ConfigureLogging(logging =>
         {
+            logging.ClearProviders();
             ConfigureOtlpExporter(logging, callUseOpenTelemetry, logRecords: logRecords);
         });
 
@@ -407,6 +458,104 @@ public class OtlpLogExporterTests
         Assert.NotNull(otlpLogRecord);
         Assert.True(otlpLogRecord.TimeUnixNano > 0);
         Assert.True(otlpLogRecord.ObservedTimeUnixNano > 0);
+    }
+
+    [Fact]
+    public void CheckToOtlpLogRecordTimestamps_BridgeApi_UnsetTimestamp()
+    {
+        // When the Bridge API caller leaves Timestamp as DateTime.MinValue
+        // (not set), the serializer must write:
+        //   time_unix_nano         = 0   (unknown/missing per OTLP spec)
+        //   observed_time_unix_nano >= the time of observation (MUST be set per OTLP spec)
+        var logRecords = new List<LogRecord>();
+        using var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+            .AddInMemoryExporter(logRecords)
+            .Build();
+
+        var bridgeLogger = loggerProvider.GetLogger("OtlpLogExporterTests");
+
+        // Capture a lower-bound for the observation timestamp before emitting.
+        var beforeEmitUtc = DateTime.UtcNow;
+
+        // Emit with default LogRecordData -- Timestamp stays DateTime.MinValue.
+        bridgeLogger.EmitLog(new LogRecordData());
+
+        Assert.Single(logRecords);
+        Assert.Equal(DateTime.MinValue, logRecords[0].Timestamp);
+
+        var otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecords[0]);
+
+        Assert.NotNull(otlpLogRecord);
+
+        // time_unix_nano must be 0 -- "unknown or missing" per OTLP spec.
+        Assert.Equal(0UL, otlpLogRecord.TimeUnixNano);
+
+        // observed_time_unix_nano must be >= the moment we captured before emitting.
+        var beforeEmitNano = (ulong)new DateTimeOffset(beforeEmitUtc).ToUnixTimeNanoseconds();
+        Assert.True(
+            otlpLogRecord.ObservedTimeUnixNano >= beforeEmitNano,
+            $"ObservedTimeUnixNano ({otlpLogRecord.ObservedTimeUnixNano}) should be >= beforeEmitNano ({beforeEmitNano})");
+    }
+
+    [Fact]
+    public void CheckToOtlpLogRecordTimestamps_BridgeApi_DefaultData()
+    {
+        var logRecords = new List<LogRecord>();
+        using var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+            .AddInMemoryExporter(logRecords)
+            .Build();
+
+        var bridgeLogger = loggerProvider.GetLogger("OtlpLogExporterTests");
+
+        var beforeEmitUtc = DateTime.UtcNow;
+
+        bridgeLogger.EmitLog(default);
+
+        Assert.Single(logRecords);
+        Assert.Equal(DateTime.MinValue, logRecords[0].Timestamp);
+        Assert.InRange(logRecords[0].ObservedTimestamp, beforeEmitUtc, DateTime.UtcNow);
+
+        var otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecords[0]);
+
+        Assert.NotNull(otlpLogRecord);
+        Assert.Equal(0UL, otlpLogRecord.TimeUnixNano);
+
+        var beforeEmitNano = (ulong)new DateTimeOffset(beforeEmitUtc).ToUnixTimeNanoseconds();
+        Assert.True(
+            otlpLogRecord.ObservedTimeUnixNano >= beforeEmitNano,
+            $"ObservedTimeUnixNano ({otlpLogRecord.ObservedTimeUnixNano}) should be >= beforeEmitNano ({beforeEmitNano})");
+    }
+
+    [Fact]
+    public void CheckToOtlpLogRecordTimestamps_BridgeApi_TimestampSetObservedTimestampUnset()
+    {
+        var logRecords = new List<LogRecord>();
+        using var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+            .AddInMemoryExporter(logRecords)
+            .Build();
+
+        var bridgeLogger = loggerProvider.GetLogger("OtlpLogExporterTests");
+        var timestamp = new DateTime(2020, 1, 2, 3, 4, 5, DateTimeKind.Utc);
+        LogRecordData data = default;
+        data.Timestamp = timestamp;
+
+        var beforeEmitUtc = DateTime.UtcNow;
+
+        bridgeLogger.EmitLog(data);
+
+        Assert.Single(logRecords);
+        Assert.Equal(timestamp, logRecords[0].Timestamp);
+        Assert.InRange(logRecords[0].ObservedTimestamp, beforeEmitUtc, DateTime.UtcNow);
+
+        var otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecords[0]);
+
+        Assert.NotNull(otlpLogRecord);
+        Assert.Equal((ulong)timestamp.ToUnixTimeNanoseconds(), otlpLogRecord.TimeUnixNano);
+
+        var beforeEmitNano = (ulong)new DateTimeOffset(beforeEmitUtc).ToUnixTimeNanoseconds();
+        Assert.True(
+            otlpLogRecord.ObservedTimeUnixNano >= beforeEmitNano,
+            $"ObservedTimeUnixNano ({otlpLogRecord.ObservedTimeUnixNano}) should be >= beforeEmitNano ({beforeEmitNano})");
     }
 
     [Fact]
@@ -1677,6 +1826,10 @@ public class OtlpLogExporterTests
 
         Assert.NotNull(factory);
 
+        var logger = factory.CreateLogger("TestLogger");
+
+        Assert.NotNull(logger);
+
         Assert.True(configureDelegateCalled);
         Assert.True(configureExportProcessorOptionsCalled);
         Assert.True(configureBatchOptionsCalled);
@@ -1782,4 +1935,6 @@ public class OtlpLogExporterTests
 
         return resourceSpans;
     }
+
+    private sealed class PassThroughDelegatingHandler : DelegatingHandler;
 }

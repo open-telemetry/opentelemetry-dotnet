@@ -5,7 +5,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
-using Xunit;
 
 namespace OpenTelemetry.Tests;
 

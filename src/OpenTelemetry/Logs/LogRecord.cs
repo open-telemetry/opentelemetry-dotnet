@@ -51,6 +51,7 @@ public sealed class LogRecord
         this.Data = new(activity)
         {
             TimestampBacking = timestamp,
+            ObservedTimestampBacking = timestamp,
 
             Body = formattedMessage,
         };
@@ -104,14 +105,33 @@ public sealed class LogRecord
     /// Gets or sets the log timestamp.
     /// </summary>
     /// <remarks>
-    /// Note: If <see cref="Timestamp"/> is set to a value with <see
-    /// cref="DateTimeKind.Local"/> it will be automatically converted to
-    /// UTC using <see cref="DateTime.ToUniversalTime"/>.
+    /// Notes:
+    /// <list type="bullet">
+    /// <item>The default value is <see cref="DateTime.MinValue"/>, which is
+    /// treated as "not set" per the OpenTelemetry specification.</item>
+    /// <item>If <see cref="Timestamp"/> is set to a value with <see
+    /// cref="DateTimeKind.Local"/> it will be automatically converted to UTC
+    /// using <see cref="DateTime.ToUniversalTime"/>.</item>
+    /// </list>
     /// </remarks>
     public DateTime Timestamp
     {
         get => this.Data.Timestamp;
         set => this.Data.Timestamp = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the observed timestamp.
+    /// </summary>
+    /// <remarks>
+    /// Note: If <see cref="ObservedTimestamp"/> is set to a value with <see
+    /// cref="DateTimeKind.Local"/> it will be automatically converted to
+    /// UTC using <see cref="DateTime.ToUniversalTime"/>.
+    /// </remarks>
+    public DateTime ObservedTimestamp
+    {
+        get => this.Data.ObservedTimestamp;
+        set => this.Data.ObservedTimestamp = value;
     }
 
     /// <summary>

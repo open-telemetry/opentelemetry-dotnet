@@ -3,9 +3,6 @@
 
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-#if NET
-using System.Runtime.InteropServices;
-#endif
 
 namespace OpenTelemetry.Metrics;
 
@@ -28,14 +25,17 @@ internal readonly struct Tags : IEquatable<Tags>
     public static bool operator !=(Tags tag1, Tags tag2) => !tag1.Equals(tag2);
 
     public override readonly bool Equals(object? obj)
-    {
-        return obj is Tags other && this.Equals(other);
-    }
+        => obj is Tags other && this.Equals(other);
 
     public readonly bool Equals(Tags other)
     {
         var ourKvps = this.KeyValuePairs;
         var theirKvps = other.KeyValuePairs;
+
+        if (ReferenceEquals(ourKvps, theirKvps))
+        {
+            return true;
+        }
 
         var length = ourKvps.Length;
 
@@ -44,55 +44,80 @@ internal readonly struct Tags : IEquatable<Tags>
             return false;
         }
 
-#if NET
-        // Note: This loop uses unsafe code (pointers) to elide bounds checks on
-        // two arrays we know to be of equal length.
-        if (length > 0)
+        if (this.hashCode != other.hashCode)
         {
-            ref var ours = ref MemoryMarshal.GetArrayDataReference(ourKvps);
-            ref var theirs = ref MemoryMarshal.GetArrayDataReference(theirKvps);
-            while (true)
-            {
-                if (!ours.Key.Equals(theirs.Key, StringComparison.Ordinal))
-                {
-                    return false;
-                }
-
-                if (!ours.Value?.Equals(theirs.Value) ?? theirs.Value != null)
-                {
-                    return false;
-                }
-
-                if (--length == 0)
-                {
-                    break;
-                }
-
-                ours = ref Unsafe.Add(ref ours, 1);
-                theirs = ref Unsafe.Add(ref theirs, 1);
-            }
+            return false;
         }
-#else
-        for (var i = 0; i < length; i++)
+
+        switch (length)
         {
-            ref var ours = ref ourKvps[i];
+            case 0:
+                return true;
+            case 1:
+                return AreEqual(in ourKvps[0], in theirKvps[0]);
+            case 2:
+                return AreEqual(in ourKvps[0], in theirKvps[0])
+                    && AreEqual(in ourKvps[1], in theirKvps[1]);
+            case 3:
+                return AreEqual(in ourKvps[0], in theirKvps[0])
+                    && AreEqual(in ourKvps[1], in theirKvps[1])
+                    && AreEqual(in ourKvps[2], in theirKvps[2]);
+            case 4:
+                return AreEqual(in ourKvps[0], in theirKvps[0])
+                    && AreEqual(in ourKvps[1], in theirKvps[1])
+                    && AreEqual(in ourKvps[2], in theirKvps[2])
+                    && AreEqual(in ourKvps[3], in theirKvps[3]);
+            case 5:
+                return AreEqual(in ourKvps[0], in theirKvps[0])
+                    && AreEqual(in ourKvps[1], in theirKvps[1])
+                    && AreEqual(in ourKvps[2], in theirKvps[2])
+                    && AreEqual(in ourKvps[3], in theirKvps[3])
+                    && AreEqual(in ourKvps[4], in theirKvps[4]);
+            case 6:
+                return AreEqual(in ourKvps[0], in theirKvps[0])
+                    && AreEqual(in ourKvps[1], in theirKvps[1])
+                    && AreEqual(in ourKvps[2], in theirKvps[2])
+                    && AreEqual(in ourKvps[3], in theirKvps[3])
+                    && AreEqual(in ourKvps[4], in theirKvps[4])
+                    && AreEqual(in ourKvps[5], in theirKvps[5]);
+            case 7:
+                return AreEqual(in ourKvps[0], in theirKvps[0])
+                    && AreEqual(in ourKvps[1], in theirKvps[1])
+                    && AreEqual(in ourKvps[2], in theirKvps[2])
+                    && AreEqual(in ourKvps[3], in theirKvps[3])
+                    && AreEqual(in ourKvps[4], in theirKvps[4])
+                    && AreEqual(in ourKvps[5], in theirKvps[5])
+                    && AreEqual(in ourKvps[6], in theirKvps[6]);
+            case 8:
+                return AreEqual(in ourKvps[0], in theirKvps[0])
+                    && AreEqual(in ourKvps[1], in theirKvps[1])
+                    && AreEqual(in ourKvps[2], in theirKvps[2])
+                    && AreEqual(in ourKvps[3], in theirKvps[3])
+                    && AreEqual(in ourKvps[4], in theirKvps[4])
+                    && AreEqual(in ourKvps[5], in theirKvps[5])
+                    && AreEqual(in ourKvps[6], in theirKvps[6])
+                    && AreEqual(in ourKvps[7], in theirKvps[7]);
+            case 9:
+                return AreEqual(in ourKvps[0], in theirKvps[0])
+                    && AreEqual(in ourKvps[1], in theirKvps[1])
+                    && AreEqual(in ourKvps[2], in theirKvps[2])
+                    && AreEqual(in ourKvps[3], in theirKvps[3])
+                    && AreEqual(in ourKvps[4], in theirKvps[4])
+                    && AreEqual(in ourKvps[5], in theirKvps[5])
+                    && AreEqual(in ourKvps[6], in theirKvps[6])
+                    && AreEqual(in ourKvps[7], in theirKvps[7])
+                    && AreEqual(in ourKvps[8], in theirKvps[8]);
+            default:
+                for (var i = 0; i < length; i++)
+                {
+                    if (!AreEqual(in ourKvps[i], in theirKvps[i]))
+                    {
+                        return false;
+                    }
+                }
 
-            // Note: Bounds check happens here for theirKvps element access
-            ref var theirs = ref theirKvps[i];
-
-            if (!ours.Key.Equals(theirs.Key, StringComparison.Ordinal))
-            {
-                return false;
-            }
-
-            if (!ours.Value?.Equals(theirs.Value) ?? theirs.Value != null)
-            {
-                return false;
-            }
+                return true;
         }
-#endif
-
-        return true;
     }
 
     public override readonly int GetHashCode() => this.hashCode;
@@ -128,5 +153,20 @@ internal readonly struct Tags : IEquatable<Tags>
 
         return hash;
 #endif
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool AreEqual(in KeyValuePair<string, object?> ours, in KeyValuePair<string, object?> theirs)
+    {
+        if (!string.Equals(ours.Key, theirs.Key, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        var ourValue = ours.Value;
+        var theirValue = theirs.Value;
+
+        return ReferenceEquals(ourValue, theirValue)
+            || (ourValue?.Equals(theirValue) ?? (theirValue == null));
     }
 }

@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Globalization;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
@@ -47,7 +48,9 @@ public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
 
         foreach (var logRecord in batch)
         {
-            this.WriteLine($"{"LogRecord.Timestamp:",-RightPaddingLength}{logRecord.Timestamp:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
+            var timestamp = logRecord.Timestamp;
+            this.WriteLine($"{"LogRecord.Timestamp:",-RightPaddingLength}{(timestamp == DateTime.MinValue ? "(not set)" : timestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ", CultureInfo.InvariantCulture))}");
+            this.WriteLine($"{"LogRecord.ObservedTimestamp:",-RightPaddingLength}{logRecord.ObservedTimestamp:yyyy-MM-ddTHH:mm:ss.fffffffZ}");
 
             if (logRecord.TraceId != default)
             {
@@ -89,7 +92,7 @@ public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
                     // Special casing {OriginalFormat}
                     // See https://github.com/open-telemetry/opentelemetry-dotnet/pull/3182
                     // for explanation.
-                    var valueToTransform = logRecord.Attributes[i].Key.Equals("{OriginalFormat}", StringComparison.Ordinal)
+                    var valueToTransform = string.Equals(logRecord.Attributes[i].Key, "{OriginalFormat}", StringComparison.Ordinal)
                         ? new KeyValuePair<string, object?>("OriginalFormat (a.k.a Body)", logRecord.Attributes[i].Value)
                         : logRecord.Attributes[i];
 

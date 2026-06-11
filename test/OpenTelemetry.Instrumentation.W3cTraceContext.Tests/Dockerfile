@@ -5,9 +5,9 @@
 ARG BUILD_SDK_VERSION=10.0
 ARG TEST_SDK_VERSION=10.0
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0.420-azurelinux3.0@sha256:3dfbc203ee6ba8a390e70971460d4af90c0220250cd9c410eb930a2aa218d304 AS dotnet-sdk-8.0
-FROM mcr.microsoft.com/dotnet/sdk:9.0.313-azurelinux3.0@sha256:13b64ec155e9aefa220263957b6d86f1add651106fc5df3cbecacb7a74eb3b06 AS dotnet-sdk-9.0
-FROM mcr.microsoft.com/dotnet/sdk:10.0.203-azurelinux3.0@sha256:4f08dbd55f00d1f7eb232ddacb24ecdab62fd64774a25c1da5b6daeb76e76a75 AS dotnet-sdk-10.0
+FROM mcr.microsoft.com/dotnet/sdk:8.0.422-azurelinux3.0@sha256:f87de79795ac89ce34b481259a36dedd779c15c4bd7bd89a3639adf1325a000f AS dotnet-sdk-8.0
+FROM mcr.microsoft.com/dotnet/sdk:9.0.315-azurelinux3.0@sha256:920ff2f97cc94d5e281f8cf0d6a4f36ce20981788ee183ec985a0d4d034d0528 AS dotnet-sdk-9.0
+FROM mcr.microsoft.com/dotnet/sdk:10.0.301-azurelinux3.0@sha256:b9ba3498cd0ea65e665bbc921f91215309d007a5c2e407a79ba61aa627975b5e AS dotnet-sdk-10.0
 
 FROM dotnet-sdk-${BUILD_SDK_VERSION} AS build
 ARG PUBLISH_CONFIGURATION=Release
@@ -37,7 +37,7 @@ RUN tdnf install -y python3-pip \
   && ln -sf /usr/bin/python3 /usr/bin/python \
   && python3 -m pip install --requirement requirements.txt --require-hashes --break-system-packages \
   && tdnf clean all
-ENV SPEC_LEVEL=1
-ENV STRICT_LEVEL=1
+ENV SPEC_LEVEL=2
+ENV STRICT_LEVEL=2
 
-ENTRYPOINT ["dotnet", "vstest", "OpenTelemetry.Instrumentation.W3cTraceContext.Tests.dll", "--logger:console;verbosity=detailed"]
+ENTRYPOINT ["dotnet", "vstest", "OpenTelemetry.Instrumentation.W3cTraceContext.Tests.dll"]

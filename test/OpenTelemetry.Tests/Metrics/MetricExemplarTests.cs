@@ -6,7 +6,6 @@ using System.Diagnostics.Metrics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Tests;
-using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests;
 
@@ -693,6 +692,79 @@ public class MetricExemplarTests : MetricTestsBase
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
+    public void TestExemplarsObservableFilterTags(bool enableTagFiltering)
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+
+        var gauge = meter.CreateObservableGauge(
+            "testObservableGauge",
+            () => new Measurement<double>(
+                18D,
+                new("key1", "value1"),
+                new("key2", "value2"),
+                new("key3", "value3")));
+
+        var counter = meter.CreateObservableCounter(
+            "testObservableCounter",
+            () => new Measurement<long>(
+                100,
+                new("key1", "value1"),
+                new("key2", "value2"),
+                new("key3", "value3")));
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
+            .AddView(
+                "testObservableGauge",
+                new MetricStreamConfiguration()
+                {
+                    TagKeys = enableTagFiltering ? ["key1"] : null,
+                })
+            .AddView(
+                "testObservableCounter",
+                new MetricStreamConfiguration()
+                {
+                    TagKeys = enableTagFiltering ? ["key1"] : null,
+                })
+            .AddInMemoryExporter(exportedItems));
+
+        meterProvider.ForceFlush();
+
+        Assert.Equal(2, exportedItems.Count);
+
+        foreach (var metric in exportedItems)
+        {
+            var metricPoint = GetFirstMetricPoint([metric]);
+            Assert.NotNull(metricPoint);
+
+            var exemplars = GetExemplars(metricPoint.Value);
+            Assert.NotNull(exemplars);
+            Assert.Single(exemplars);
+
+            var exemplar = exemplars[0];
+
+            if (!enableTagFiltering)
+            {
+                Assert.Equal(0, exemplar.FilteredTags.MaximumCount);
+            }
+            else
+            {
+                var filteredTags = exemplar.FilteredTags.ToReadOnlyList();
+
+                Assert.Equal(2, filteredTags.Count);
+
+                Assert.Contains(new("key2", "value2"), filteredTags);
+                Assert.Contains(new("key3", "value3"), filteredTags);
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
     public void TestExemplarsFilterTags(bool enableTagFiltering)
     {
         var exportedItems = new List<Metric>();
@@ -762,6 +834,99 @@ public class MetricExemplarTests : MetricTestsBase
                 Assert.Contains(new("key3", "value3"), filteredTags);
             }
         }
+    }
+
+    [Fact]
+    public void ExemplarReservoirOfferThrowingForLongCounter_ExceptionSwallowedAndMeasurementRecorded()
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateCounter<long>("testCounter");
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
+            .AddView(
+                counter.Name,
+                new MetricStreamConfiguration
+                {
+                    ExemplarReservoirFactory = () => new ThrowingExemplarReservoir(),
+                })
+            .AddInMemoryExporter(exportedItems));
+
+        counter.Add(10);
+        counter.Add(20);
+        counter.Add(30);
+
+        Assert.True(meterProvider.ForceFlush(MaxTimeToAllowForFlush));
+
+        var metricPoint = GetFirstMetricPoint(exportedItems);
+        Assert.NotNull(metricPoint);
+        Assert.Equal(60L, metricPoint.Value.GetSumLong());
+    }
+
+    [Fact]
+    public void ExemplarReservoirOfferThrowingForDoubleCounter_ExceptionSwallowedAndMeasurementRecorded()
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateCounter<double>("testCounter");
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
+            .AddView(
+                counter.Name,
+                new MetricStreamConfiguration
+                {
+                    ExemplarReservoirFactory = () => new ThrowingExemplarReservoir(),
+                })
+            .AddInMemoryExporter(exportedItems));
+
+        counter.Add(1.5);
+        counter.Add(2.5);
+        counter.Add(3.0);
+
+        Assert.True(meterProvider.ForceFlush(MaxTimeToAllowForFlush));
+
+        var metricPoint = GetFirstMetricPoint(exportedItems);
+        Assert.NotNull(metricPoint);
+        Assert.Equal(7.0, metricPoint.Value.GetSumDouble());
+    }
+
+    [Fact]
+    public void ExemplarReservoirOfferThrowing_SubsequentMeasurementsAreStillRecorded()
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var histogram = meter.CreateHistogram<double>("testHistogram");
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
+            .AddView(
+                histogram.Name,
+                new MetricStreamConfiguration
+                {
+                    ExemplarReservoirFactory = () => new ThrowingExemplarReservoir(),
+                })
+            .AddInMemoryExporter(exportedItems));
+
+        histogram.Record(1);
+        histogram.Record(2);
+        histogram.Record(3);
+        histogram.Record(4);
+        histogram.Record(5);
+
+        Assert.True(meterProvider.ForceFlush(MaxTimeToAllowForFlush));
+
+        var metricPoint = GetFirstMetricPoint(exportedItems);
+        Assert.NotNull(metricPoint);
+        Assert.Equal(5L, metricPoint.Value.GetHistogramCount());
+        Assert.Equal(15.0, metricPoint.Value.GetHistogramSum());
     }
 
     private static (double Value, bool ExpectTraceId)[] GenerateRandomValues(
@@ -843,5 +1008,14 @@ public class MetricExemplarTests : MetricTestsBase
 
         public override void Offer(in ExemplarMeasurement<long> measurement)
             => throw new NotSupportedException();
+    }
+
+    private sealed class ThrowingExemplarReservoir() : FixedSizeExemplarReservoir(1)
+    {
+        public override void Offer(in ExemplarMeasurement<long> measurement)
+            => throw new InvalidOperationException("Simulated reservoir failure (long).");
+
+        public override void Offer(in ExemplarMeasurement<double> measurement)
+            => throw new InvalidOperationException("Simulated reservoir failure (double).");
     }
 }

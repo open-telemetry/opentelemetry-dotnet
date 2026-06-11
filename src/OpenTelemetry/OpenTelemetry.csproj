@@ -24,6 +24,7 @@
     <Compile Include="$(RepoRoot)\src\Shared\Options\*.cs" Link="Includes\Options\%(Filename).cs" />
     <Compile Include="$(RepoRoot)\src\Shared\ResourceSemanticConventions.cs" Link="Includes\ResourceSemanticConventions.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\Shims\NullableAttributes.cs" Link="Includes\Shims\NullableAttributes.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\StopwatchExtensions.cs" Link="Includes\StopwatchExtensions.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\ThreadSafeRandom.cs" Link="Includes\ThreadSafeRandom.cs" />
   </ItemGroup>
 
@@ -38,6 +39,7 @@
     <InternalsVisibleTo Include="OpenTelemetry.Exporter.Prometheus.HttpListener.Tests" PublicKey="$(StrongNamePublicKey)" />
     <InternalsVisibleTo Include="OpenTelemetry.Extensions.Hosting" PublicKey="$(StrongNamePublicKey)" />
     <InternalsVisibleTo Include="OpenTelemetry.Extensions.Hosting.Tests" PublicKey="$(StrongNamePublicKey)" />
+    <InternalsVisibleTo Include="OpenTelemetry.FuzzTests" PublicKey="$(StrongNamePublicKey)" />
     <InternalsVisibleTo Include="OpenTelemetry.Tests" PublicKey="$(StrongNamePublicKey)" />
     <InternalsVisibleTo Include="OpenTelemetry.Tests.Stress.Metrics" PublicKey="$(StrongNamePublicKey)" />
     <InternalsVisibleTo Include="Benchmarks" PublicKey="$(StrongNamePublicKey)" />

@@ -304,13 +304,13 @@ internal static class ProtobufOtlpTraceSerializer
                     statusCode = tag.Value switch
                     {
                         /*
-                         * Note: Order here does matter for perf. Unset is
-                         * first because assumption is most spans will be
-                         * Unset, then Error. Ok is not set by the SDK.
+                         * Note: Order here matters for performance. Unset
+                         * is first because the assumption is most spans will
+                         * be Unset, then Error. Ok is not set by the SDK.
                          */
-                        not null when UnsetStatusCodeTagValue.Equals(tag.Value as string, StringComparison.OrdinalIgnoreCase) => StatusCode.Unset,
-                        not null when ErrorStatusCodeTagValue.Equals(tag.Value as string, StringComparison.OrdinalIgnoreCase) => StatusCode.Error,
-                        not null when OkStatusCodeTagValue.Equals(tag.Value as string, StringComparison.OrdinalIgnoreCase) => StatusCode.Ok,
+                        not null when string.Equals(UnsetStatusCodeTagValue, tag.Value as string, StringComparison.OrdinalIgnoreCase) => StatusCode.Unset,
+                        not null when string.Equals(ErrorStatusCodeTagValue, tag.Value as string, StringComparison.OrdinalIgnoreCase) => StatusCode.Error,
+                        not null when string.Equals(OkStatusCodeTagValue, tag.Value as string, StringComparison.OrdinalIgnoreCase) => StatusCode.Ok,
                         _ => null,
                     };
                     continue;
@@ -516,13 +516,12 @@ internal static class ProtobufOtlpTraceSerializer
 
         if (isError && description != null)
         {
-            var descriptionSpan = description.AsSpan();
-            var numberOfUtf8CharsInString = ProtobufSerializer.GetNumberOfUtf8CharsInString(descriptionSpan);
+            var numberOfUtf8CharsInString = ProtobufSerializer.GetNumberOfUtf8CharsInString(description);
             var serializedLengthSize = ProtobufSerializer.ComputeVarInt64Size((ulong)numberOfUtf8CharsInString);
 
             // length = numberOfUtf8CharsInString + Status_Message tag size + serializedLengthSize field size + Span_Status tag size + Span_Status length size.
             position = ProtobufSerializer.WriteTagAndLength(buffer, position, numberOfUtf8CharsInString + 1 + serializedLengthSize + 2, ProtobufOtlpTraceFieldNumberConstants.Span_Status, ProtobufWireType.LEN);
-            position = ProtobufSerializer.WriteStringWithTag(buffer, position, ProtobufOtlpTraceFieldNumberConstants.Status_Message, numberOfUtf8CharsInString, descriptionSpan);
+            position = ProtobufSerializer.WriteStringWithTag(buffer, position, ProtobufOtlpTraceFieldNumberConstants.Status_Message, numberOfUtf8CharsInString, description);
         }
         else
         {

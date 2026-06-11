@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using OpenTelemetry.Trace;
-using Xunit;
 
 namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests;
 
@@ -10,6 +9,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests;
 public class RemoteEndpointPriorityTestCase
 #pragma warning restore CA1515 // Consider making public types internal
 {
+#pragma warning disable CA1825 // Workaround for https://github.com/dotnet/sdk/issues/54275
     public static TheoryData<RemoteEndpointPriorityTestCase> TestCases =>
     [
         new()
@@ -146,6 +146,7 @@ public class RemoteEndpointPriorityTestCase
             },
         },
     ];
+#pragma warning restore CA1825 // Workaround for https://github.com/dotnet/sdk/issues/54275
 
     public string? Name { get; private set; }
 

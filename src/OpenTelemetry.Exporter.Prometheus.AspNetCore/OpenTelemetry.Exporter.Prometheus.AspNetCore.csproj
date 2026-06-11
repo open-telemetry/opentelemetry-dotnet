@@ -7,6 +7,7 @@
     <PackageTags>$(PackageTags);prometheus;metrics</PackageTags>
     <MinVerTagPrefix>coreunstable-</MinVerTagPrefix>
     <DefineConstants>$(DefineConstants);PROMETHEUS_ASPNETCORE</DefineConstants>
+    <NoWarn>$(NoWarn);CA2007</NoWarn>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(RunningDotNetPack)' != 'true'">
@@ -22,18 +23,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\Internal\PrometheusCollectionManager.cs" Link="Includes/PrometheusCollectionManager.cs" />
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\Internal\PrometheusExporter.cs" Link="Includes/PrometheusExporter.cs" />
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\Internal\PrometheusExporterEventSource.cs" Link="Includes/PrometheusExporterEventSource.cs" />
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\Internal\PrometheusExporterOptions.cs" Link="Includes/PrometheusExporterOptions.cs" />
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\Internal\PrometheusSerializer.cs" Link="Includes/PrometheusSerializer.cs" />
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\Internal\PrometheusSerializerExt.cs" Link="Includes/PrometheusSerializerExt.cs" />
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\Internal\PrometheusType.cs" Link="Includes/PrometheusType.cs" />
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\Internal\PrometheusMetric.cs" Link="Includes/PrometheusMetric.cs" />
-    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\Internal\PrometheusHeadersParser.cs" Link="Includes/PrometheusHeadersParser.cs" />
+    <Compile Include="$(RepoRoot)\src\OpenTelemetry.Exporter.Prometheus.HttpListener\Internal\Shared\**\*.cs" Link="Includes\Prometheus\%(RecursiveDir)\%(Filename)%(Extension)" />
+    <Compile Include="$(RepoRoot)\src\Shared\CharExtensions.cs" Link="Includes\CharExtensions.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\ExceptionExtensions.cs" Link="Includes\ExceptionExtensions.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\Guard.cs" Link="Includes\Guard.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\Shims\Lock.cs" Link="Includes\Shims\Lock.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\Shims\NullableAttributes.cs" Link="Includes\Shims\NullableAttributes.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\StopwatchExtensions.cs" Link="Includes\StopwatchExtensions.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -42,4 +38,3 @@
   </ItemGroup>
 
 </Project>
-

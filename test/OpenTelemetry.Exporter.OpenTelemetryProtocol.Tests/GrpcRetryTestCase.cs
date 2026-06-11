@@ -24,6 +24,7 @@ public class GrpcRetryTestCase
 
     internal GrpcRetryAttempt[] RetryAttempts { get; }
 
+#pragma warning disable CA1825 // Workaround for https://github.com/dotnet/sdk/issues/54275
     public static TheoryData<GrpcRetryTestCase> GetGrpcTestCases() =>
     [
         new("Cancelled", [new(StatusCode.Cancelled)]),
@@ -43,6 +44,10 @@ public class GrpcRetryTestCase
         new("Unavailable w/ RetryInfo", [new(StatusCode.Unavailable, throttleDelay: GetThrottleDelayString(Duration.FromTimeSpan(TimeSpan.FromMilliseconds(2000))), expectedNextRetryDelayMilliseconds: 3000)]),
 
         new("Expired deadline", [new(StatusCode.Unavailable, deadlineExceeded: true, expectedSuccess: false)]),
+
+        // A throttle delay that would push the retry past the configured deadline must
+        // fail fast and drop the data rather than blocking for the throttle duration.
+        new("Throttle delay exceeds deadline", [new(StatusCode.ResourceExhausted, throttleDelay: GetThrottleDelayString(Duration.FromTimeSpan(TimeSpan.FromSeconds(30))), deadlineFromNow: TimeSpan.FromSeconds(1), expectedSuccess: false)]),
 
         new(
             "Exponential backoff",
@@ -82,6 +87,7 @@ public class GrpcRetryTestCase
             ],
             expectedRetryAttempts: 9),
     ];
+#pragma warning restore CA1825 // Workaround for https://github.com/dotnet/sdk/issues/54275
 
     public override string ToString()
         => this.testRunnerName;
@@ -111,12 +117,15 @@ public class GrpcRetryTestCase
             bool deadlineExceeded = false,
             string? throttleDelay = null,
             int expectedNextRetryDelayMilliseconds = 1500,
-            bool expectedSuccess = true)
+            bool expectedSuccess = true,
+            TimeSpan? deadlineFromNow = null)
         {
             var status = new Status(statusCode, "Error");
 
-            // Using arbitrary +1 hr for deadline for test purposes.
-            var deadlineUtc = deadlineExceeded ? DateTime.UtcNow.AddSeconds(-1) : DateTime.UtcNow.AddHours(1);
+            // Using arbitrary +1 hr for deadline for test purposes, unless a deadline is specified.
+            var deadlineUtc = deadlineExceeded
+                ? DateTime.UtcNow.AddSeconds(-1)
+                : DateTime.UtcNow.Add(deadlineFromNow ?? TimeSpan.FromHours(1));
 
             this.ThrottleDelay = throttleDelay;
 

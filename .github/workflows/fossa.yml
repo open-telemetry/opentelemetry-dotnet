@@ -8,14 +8,25 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   fossa:
-    runs-on: ubuntu-latest
+    name: Run FOSSA scan
+    runs-on: ubuntu-24.04
     if: github.event.repository.fork == false
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Checkout code
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          filter: 'tree:0'
+          persist-credentials: false
+          show-progress: false
 
-      - uses: fossas/fossa-action@ff70fe9fe17cbd2040648f1c45e8ec4e4884dcf3 # v1.9.0
+      - name: Run FOSSA analysis
+        uses: fossas/fossa-action@ff70fe9fe17cbd2040648f1c45e8ec4e4884dcf3 # v1.9.0
         with:
           api-key: ${{ secrets.FOSSA_API_KEY }}
           team: OpenTelemetry

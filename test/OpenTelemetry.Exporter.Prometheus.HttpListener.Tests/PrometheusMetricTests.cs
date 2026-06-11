@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using OpenTelemetry.Metrics;
-using Xunit;
 
 namespace OpenTelemetry.Exporter.Prometheus.Tests;
 
@@ -159,6 +158,30 @@ public sealed class PrometheusMetricTests
     [Fact]
     public void OpenMetricsName_UnitAlreadyPresentInName_Appended()
         => AssertOpenMetricsName("db_bytes_written", "By", PrometheusType.Gauge, false, "db_bytes_written_bytes");
+
+    [Fact]
+    public void OpenMetricsName_CollapsesConsecutiveUnderscores()
+        => AssertOpenMetricsName("cpu_sp__d_hertz", string.Empty, PrometheusType.Gauge, false, "cpu_sp_d_hertz");
+
+    [Fact]
+    public void OpenMetricsName_PreserveLeadingNumber()
+        => AssertOpenMetricsName("2_metric_name", "By", PrometheusType.Gauge, false, "_2_metric_name_bytes");
+
+    [Fact]
+    public void OpenMetricsName_UnitStartingWithNumber_DoesNotAddExtraSeparator()
+        => AssertOpenMetricsName("metric", "2", PrometheusType.Gauge, false, "metric_2");
+
+    [Fact]
+    public void OpenMetricsName_UnitStartingWithMultipleDigits_PreservesSingleSeparator()
+        => AssertOpenMetricsName("metric", "10ms", PrometheusType.Gauge, false, "metric_10ms");
+
+    [Fact]
+    public void OpenMetricsName_CollapsesConsecutiveUnsupportedCharacters()
+        => AssertOpenMetricsName("s%%ple", "%/m", PrometheusType.Summary, false, "s_ple_percent_per_minute");
+
+    [Fact]
+    public void OpenMetricsName_NameEscapingAndUnitNormalization_AreAppliedIndependently()
+        => AssertOpenMetricsName("s%%ple", "req__per__s", PrometheusType.Summary, false, "s_ple_req_per_s");
 
     [Fact]
     public void OpenMetricsName_SuffixedWithUnit_NotAppended()

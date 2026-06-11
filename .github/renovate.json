@@ -4,6 +4,19 @@
   "automerge": false,
   "commitBodyTable": true,
   "commitMessageAction": "Bump",
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": ["Update GitHub runner labels in workflow fields and matrix values"],
+      "managerFilePatterns": [
+        "/(^|/)(workflow-templates|\\.(?:github|gitea|forgejo)/(?:workflows|actions))/.+\\.ya?ml$/",
+        "/(^|/)action\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "# renovate:\\s*datasource=(?<datasource>github-runners)(?:\\s+[A-Za-z][A-Za-z0-9_-]*=[^\\s]+)*?(?:\\s+versioning=(?<versioning>[^\\s]+))?(?:\\s+[A-Za-z][A-Za-z0-9_-]*=[^\\s]+)*\\s*\\r?\\n\\s*(?:-\\s*)?(?:[A-Za-z0-9_-]+:\\s*)?['\"]?(?<depName>[a-zA-Z]+)-(?<currentValue>[A-Za-z0-9._-]+)['\"]?"
+      ]
+    }
+  ],
   "dependencyDashboard": false,
   "extends": [
     "config:best-practices",
@@ -26,6 +39,8 @@
     "**/__fixtures__/**"
   ],
   "labels": ["dependencies", "infra"],
+  "minimumReleaseAge": "3 days",
+  "minimumReleaseAgeBehaviour": "timestamp-optional",
   "packageRules": [
     {
       "matchManagers": ["dockerfile"],
@@ -44,10 +59,21 @@
       "addLabels": ["python"]
     },
     {
+      "description": ["Workaround for https://github.com/renovatebot/renovate/discussions/43794"],
+      "matchManagers": ["nuget"],
+      "rangeStrategy": "bump"
+    },
+    {
       "description": ["Skip pinned NuGet package versions"],
       "matchManagers": ["nuget"],
-      "matchCurrentValue": "^\\[[^,]+,\\)$",
+      "matchCurrentValue": "/^\\[[^,]+,\\)$/",
       "enabled": false
+    },
+    {
+      "extends": ["monorepo:dotnet"],
+      "description": ["Cooldown on .NET updates to maximize batching"],
+      "matchManagers": ["nuget"],
+      "minimumReleaseAge": "6 hours"
     },
     {
       "extends": ["monorepo:dotnet"],

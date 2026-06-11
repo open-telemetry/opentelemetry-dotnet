@@ -104,41 +104,45 @@ public class BaseExportingMetricReader : MetricReader
     }
 
     /// <inheritdoc />
-    protected override bool OnCollect(int timeoutMilliseconds)
+    internal override bool OnCollectFromComposite(int timeoutMilliseconds)
     {
         if (this.SupportedExportModes.HasFlag(ExportModes.Push))
         {
-            return base.OnCollect(timeoutMilliseconds);
+            return base.OnCollectFromComposite(timeoutMilliseconds);
         }
-
-        if (this.SupportedExportModes.HasFlag(ExportModes.Pull) && PullMetricScope.IsPullAllowed)
+        else if (this.SupportedExportModes.HasFlag(ExportModes.Pull) && PullMetricScope.IsPullAllowed)
         {
-            return base.OnCollect(timeoutMilliseconds);
+            return base.OnCollectFromComposite(timeoutMilliseconds);
         }
 
-        // TODO: add some error log
         return false;
     }
 
     /// <inheritdoc />
+    internal override bool OnShutdownFromComposite(int timeoutMilliseconds)
+        => base.OnShutdownFromComposite(timeoutMilliseconds);
+
+    /// <inheritdoc />
+    protected override bool OnCollect(int timeoutMilliseconds) =>
+        this.SupportedExportModes.HasFlag(ExportModes.Push)
+            ? base.OnCollect(timeoutMilliseconds)
+            : this.SupportedExportModes.HasFlag(ExportModes.Pull) &&
+              PullMetricScope.IsPullAllowed &&
+              base.OnCollect(timeoutMilliseconds);
+
+    /// <inheritdoc />
     protected override bool OnShutdown(int timeoutMilliseconds)
     {
-        var result = true;
+        long? timestamp = timeoutMilliseconds == Timeout.Infinite ? null : Stopwatch.GetTimestamp();
 
-        if (timeoutMilliseconds == Timeout.Infinite)
+        var result = this.Collect(timeoutMilliseconds);
+
+        if (timestamp is { } startedAt)
         {
-            result = this.Collect(Timeout.Infinite) && result;
-            result = this.exporter.Shutdown(Timeout.Infinite) && result;
-        }
-        else
-        {
-            var sw = Stopwatch.StartNew();
-            result = this.Collect(timeoutMilliseconds) && result;
-            var timeout = timeoutMilliseconds - sw.ElapsedMilliseconds;
-            result = this.exporter.Shutdown((int)Math.Max(timeout, 0)) && result;
+            timeoutMilliseconds = Stopwatch.Remaining(timeoutMilliseconds, startedAt);
         }
 
-        return result;
+        return this.exporter.Shutdown(timeoutMilliseconds) && result;
     }
 
     /// <inheritdoc/>
