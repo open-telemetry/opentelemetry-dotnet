@@ -7,6 +7,11 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed `OtlpLogExporter` so `OtlpExporterOptions.ExportProcessorType` and
+  `OtlpExporterOptions.BatchExportProcessorOptions` are respected when
+  `LogRecordExportProcessorOptions` are not configured.
+  ([#7281](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7281))
+
 * Fixed `NullReferenceException` when exporting logs if the scope key is null.
   ([#7186](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7186))
 

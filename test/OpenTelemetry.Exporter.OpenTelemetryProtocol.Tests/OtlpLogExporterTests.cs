@@ -1411,6 +1411,94 @@ public class OtlpLogExporterTests
     }
 
     [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void AddOtlpLogExporterUsesOtlpExporterProcessorTypeWhenLogRecordProcessorOptionsUnset(bool callUseOpenTelemetry)
+    {
+        var services = new ServiceCollection();
+        services.AddLogging(builder =>
+        {
+            ConfigureOtlpExporter(
+                builder,
+                callUseOpenTelemetry,
+                configureExporter: e => e.ExportProcessorType = ExportProcessorType.Simple);
+        });
+
+        using var sp = services.BuildServiceProvider();
+
+        sp.GetRequiredService<ILoggerFactory>();
+
+        var provider = sp.GetRequiredService<LoggerProvider>() as LoggerProviderSdk;
+        Assert.NotNull(provider);
+
+        var simpleProcessor = provider.Processor as SimpleLogRecordExportProcessor;
+        Assert.NotNull(simpleProcessor);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void AddOtlpLogExporterUsesOtlpExporterBatchOptionsWhenLogRecordProcessorOptionsUnset(bool callUseOpenTelemetry)
+    {
+        var services = new ServiceCollection();
+        services.AddLogging(builder =>
+        {
+            ConfigureOtlpExporter(
+                builder,
+                callUseOpenTelemetry,
+                configureExporter: e => e.BatchExportProcessorOptions.ScheduledDelayMilliseconds = 1000);
+        });
+
+        using var sp = services.BuildServiceProvider();
+
+        sp.GetRequiredService<ILoggerFactory>();
+
+        var provider = sp.GetRequiredService<LoggerProvider>() as LoggerProviderSdk;
+        Assert.NotNull(provider);
+
+        var batchProcessor = provider.Processor as BatchLogRecordExportProcessor;
+        Assert.NotNull(batchProcessor);
+
+        Assert.Equal(1000, batchProcessor.ScheduledDelayMilliseconds);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void AddOtlpLogExporterMergesBatchOptionsBySetting(bool callUseOpenTelemetry)
+    {
+        var services = new ServiceCollection();
+        services.AddLogging(builder =>
+        {
+            ConfigureOtlpExporter(
+                builder,
+                callUseOpenTelemetry,
+                configureExporterAndProcessor: (e, p) =>
+                {
+                    e.BatchExportProcessorOptions.ScheduledDelayMilliseconds = 2000;
+                    e.BatchExportProcessorOptions.ExporterTimeoutMilliseconds = 3000;
+                    e.BatchExportProcessorOptions.MaxExportBatchSize = 42;
+
+                    p.BatchExportProcessorOptions.ScheduledDelayMilliseconds = 1000;
+                });
+        });
+
+        using var sp = services.BuildServiceProvider();
+
+        sp.GetRequiredService<ILoggerFactory>();
+
+        var provider = sp.GetRequiredService<LoggerProvider>() as LoggerProviderSdk;
+        Assert.NotNull(provider);
+
+        var batchProcessor = provider.Processor as BatchLogRecordExportProcessor;
+        Assert.NotNull(batchProcessor);
+
+        Assert.Equal(1000, batchProcessor.ScheduledDelayMilliseconds);
+        Assert.Equal(3000, batchProcessor.ExporterTimeoutMilliseconds);
+        Assert.Equal(42, batchProcessor.MaxExportBatchSize);
+    }
+
+    [Theory]
     [InlineData(ExportProcessorType.Simple, false)]
     [InlineData(ExportProcessorType.Batch, false)]
     [InlineData(ExportProcessorType.Simple, true)]
@@ -1425,6 +1513,10 @@ public class OtlpLogExporterTests
                 callUseOpenTelemetry,
                 configureExporterAndProcessor: (e, p) =>
                 {
+                    e.ExportProcessorType = processorType == ExportProcessorType.Batch
+                        ? ExportProcessorType.Simple
+                        : ExportProcessorType.Batch;
+                    e.BatchExportProcessorOptions.ScheduledDelayMilliseconds = 2000;
                     p.ExportProcessorType = processorType;
                     p.BatchExportProcessorOptions = new BatchExportLogRecordProcessorOptions() { ScheduledDelayMilliseconds = 1000 };
                 });
