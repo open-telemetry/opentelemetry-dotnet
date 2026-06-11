@@ -310,11 +310,11 @@ public class MultipleReadersTests
     [InlineData(true)]
     public void CompositeMetricReader_PreservesOriginalTimeoutBudget(bool shutdown)
     {
-        const int firstReaderDelayMilliseconds = 1000;
-        const int timeoutMilliseconds = 4000;
+        const int delayMilliseconds = 200;
+        const int timeoutMilliseconds = 1500;
 
-        using var first = new TimeoutCapturingMetricReader(firstReaderDelayMilliseconds);
-        using var second = new TimeoutCapturingMetricReader();
+        using var first = new TimeoutCapturingMetricReader(delayMilliseconds);
+        using var second = new TimeoutCapturingMetricReader(delayMilliseconds);
         using var third = new TimeoutCapturingMetricReader();
 
         using var composite = new CompositeMetricReader([first, second, third]);
@@ -329,7 +329,7 @@ public class MultipleReadersTests
         }
 
         Assert.Equal(timeoutMilliseconds, shutdown ? first.LastShutdownTimeoutMilliseconds : first.LastCollectTimeoutMilliseconds);
-        Assert.InRange(shutdown ? third.LastShutdownTimeoutMilliseconds : third.LastCollectTimeoutMilliseconds, 2500, timeoutMilliseconds);
+        Assert.InRange(shutdown ? third.LastShutdownTimeoutMilliseconds : third.LastCollectTimeoutMilliseconds, 1000, timeoutMilliseconds);
     }
 
     private static void AssertLongSumValueForMetric(Metric metric, long value)

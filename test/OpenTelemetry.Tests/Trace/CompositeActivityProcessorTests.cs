@@ -111,11 +111,11 @@ public class CompositeActivityProcessorTests
     [InlineData(true)]
     public void CompositeActivityProcessor_PreservesOriginalTimeoutBudget(bool shutdown)
     {
-        const int firstProcessorDelayMilliseconds = 1000;
-        const int timeoutMilliseconds = 4000;
+        const int delayMilliseconds = 200;
+        const int timeoutMilliseconds = 1500;
 
-        using var first = new TimeoutCapturingActivityProcessor(firstProcessorDelayMilliseconds);
-        using var second = new TimeoutCapturingActivityProcessor();
+        using var first = new TimeoutCapturingActivityProcessor(delayMilliseconds);
+        using var second = new TimeoutCapturingActivityProcessor(delayMilliseconds);
         using var third = new TimeoutCapturingActivityProcessor();
 
         using var composite = new CompositeProcessor<Activity>([first, second, third]);
@@ -130,7 +130,7 @@ public class CompositeActivityProcessorTests
         }
 
         Assert.Equal(timeoutMilliseconds, shutdown ? first.LastShutdownTimeoutMilliseconds : first.LastForceFlushTimeoutMilliseconds);
-        Assert.InRange(shutdown ? third.LastShutdownTimeoutMilliseconds : third.LastForceFlushTimeoutMilliseconds, 2500, timeoutMilliseconds);
+        Assert.InRange(shutdown ? third.LastShutdownTimeoutMilliseconds : third.LastForceFlushTimeoutMilliseconds, 1000, timeoutMilliseconds);
     }
 
     private sealed class TestProvider : TracerProvider;
