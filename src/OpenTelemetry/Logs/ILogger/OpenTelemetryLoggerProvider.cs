@@ -78,7 +78,10 @@ public class OpenTelemetryLoggerProvider : BaseProvider, ILoggerProvider, ISuppo
     {
         get
         {
-            var provider = this.provider;
+            // Volatile.Read/Write are used to make the lock-free fast path
+            // correct on weaker memory models, guaranteeing the provider
+            // is fully constructed before it is observed by another thread.
+            var provider = Volatile.Read(ref this.provider);
             if (provider != null)
             {
                 return provider;
@@ -89,8 +92,11 @@ public class OpenTelemetryLoggerProvider : BaseProvider, ILoggerProvider, ISuppo
                 provider = this.provider;
                 if (provider == null)
                 {
+                    // If the factory throws (e.g. an invalid configuration)
+                    // it is intentionally left in place so the next access
+                    // retries instead of caching the failure.
                     provider = this.loggerProviderFactory!();
-                    this.provider = provider;
+                    Volatile.Write(ref this.provider, provider);
                     this.loggerProviderFactory = null;
                 }
 

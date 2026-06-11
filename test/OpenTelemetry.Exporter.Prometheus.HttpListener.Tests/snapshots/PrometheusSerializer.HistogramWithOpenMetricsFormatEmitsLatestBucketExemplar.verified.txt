@@ -1,0 +1,7 @@
+﻿# TYPE test_histogram histogram
+test_histogram_bucket{otel_scope_name="HistogramWithOpenMetricsFormatEmitsLatestBucketExemplar",keep="value",le="5.0"} 1 # {filtered="older"} 4 <TIMESTAMP>
+test_histogram_bucket{otel_scope_name="HistogramWithOpenMetricsFormatEmitsLatestBucketExemplar",keep="value",le="10.0"} 3 # {trace_id="<ID>",span_id="<ID>",filtered="latest"} 9 <TIMESTAMP>
+test_histogram_bucket{otel_scope_name="HistogramWithOpenMetricsFormatEmitsLatestBucketExemplar",keep="value",le="+Inf"} 3
+test_histogram_sum{otel_scope_name="HistogramWithOpenMetricsFormatEmitsLatestBucketExemplar",keep="value"} 21
+test_histogram_count{otel_scope_name="HistogramWithOpenMetricsFormatEmitsLatestBucketExemplar",keep="value"} 3
+test_histogram_created{otel_scope_name="HistogramWithOpenMetricsFormatEmitsLatestBucketExemplar",keep="value"} <TIMESTAMP>

@@ -53,16 +53,16 @@ internal static class OtlpRetry
 
     public static bool TryGetHttpRetryResult(ExportClientHttpResponse response, int retryDelayInMilliSeconds, out RetryResult retryResult)
     {
-        if (response.StatusCode.HasValue)
+        if (response.StatusCode is { } statusCode)
         {
-            return TryGetRetryResult(response.StatusCode.Value, IsHttpStatusCodeRetryable, response.DeadlineUtc, response.Headers, TryGetHttpRetryDelay, retryDelayInMilliSeconds, out retryResult);
+            return TryGetRetryResult(statusCode, IsHttpStatusCodeRetryable, response.DeadlineUtc, response.Headers, TryGetHttpRetryDelay, retryDelayInMilliSeconds, out retryResult);
         }
         else
         {
             if (ShouldHandleHttpRequestException(response.Exception))
             {
                 var delay = TimeSpan.FromMilliseconds(GetRandomNumber(0, retryDelayInMilliSeconds));
-                if (!IsDeadlineExceeded(response.DeadlineUtc + delay))
+                if (!WouldExceedDeadline(response.DeadlineUtc, delay))
                 {
                     retryResult = new RetryResult(false, delay, CalculateNextRetryDelay(retryDelayInMilliSeconds));
                     return true;
@@ -101,17 +101,17 @@ internal static class OtlpRetry
 
             var delayDuration = throttleDelay ?? TimeSpan.FromMilliseconds(GetRandomNumber(0, nextRetryDelayMilliseconds));
 
-            if (IsDeadlineExceeded(response.DeadlineUtc + delayDuration))
+            if (WouldExceedDeadline(response.DeadlineUtc, delayDuration))
             {
                 return false;
             }
 
-            if (throttleDelay.HasValue)
+            if (throttleDelay is { } throttleDelayValue)
             {
                 try
                 {
                     // TODO: Consider making nextRetryDelayMilliseconds a double to avoid the need for convert/overflow handling
-                    nextRetryDelayMilliseconds = Convert.ToInt32(throttleDelay.Value.TotalMilliseconds);
+                    nextRetryDelayMilliseconds = Convert.ToInt32(throttleDelayValue.TotalMilliseconds);
                 }
                 catch (OverflowException)
                 {
@@ -158,7 +158,7 @@ internal static class OtlpRetry
 
         var delayDuration = throttleDelay ?? TimeSpan.FromMilliseconds(GetRandomNumber(0, nextRetryDelayMilliseconds));
 
-        if (deadline.HasValue && IsDeadlineExceeded(deadline + delayDuration))
+        if (WouldExceedDeadline(deadline, delayDuration))
         {
             return false;
         }
@@ -185,6 +185,18 @@ internal static class OtlpRetry
     private static bool IsDeadlineExceeded(DateTime? deadline)
         => deadline.HasValue && deadline <= DateTime.UtcNow;
 
+    /// <summary>
+    /// Checks if the delay would exceed the deadline. This is used to determine if a retry
+    /// should be attempted based on the remaining time until the deadline.
+    /// </summary>
+    /// <param name="deadline">The deadline value.</param>
+    /// <param name="delay">The delay duration.</param>
+    /// <returns>
+    /// <see langword="true"/> if the delay would exceed the deadline; otherwise, <see langword="false"/>.
+    /// </returns>
+    private static bool WouldExceedDeadline(DateTime? deadline, TimeSpan delay)
+        => deadline is { } value && delay >= value - DateTime.UtcNow;
+
     private static int CalculateNextRetryDelay(int nextRetryDelayMilliseconds)
     {
         var nextMilliseconds = nextRetryDelayMilliseconds * BackoffMultiplier;
@@ -195,12 +207,33 @@ internal static class OtlpRetry
     private static TimeSpan? TryGetHttpRetryDelay(HttpStatusCode statusCode, HttpResponseHeaders? responseHeaders)
     {
 #if NETSTANDARD2_1_OR_GREATER || NET
-        return statusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable
+        var isRetryable = statusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable;
 #else
-        return statusCode is (HttpStatusCode)429 or HttpStatusCode.ServiceUnavailable
+        var isRetryable = statusCode is (HttpStatusCode)429 or HttpStatusCode.ServiceUnavailable;
 #endif
-            ? responseHeaders?.RetryAfter?.Delta
-            : null;
+
+        if (!isRetryable || responseHeaders?.RetryAfter is not { } retryAfter)
+        {
+            return null;
+        }
+
+        if (retryAfter.Delta is { } delta)
+        {
+            return delta;
+        }
+
+        if (retryAfter.Date is { } date)
+        {
+            var utcNow = DateTimeOffset.UtcNow;
+            var delay = date - utcNow;
+
+            if (delay > TimeSpan.Zero)
+            {
+                return delay;
+            }
+        }
+
+        return null;
     }
 
 #pragma warning disable IDE0072 // Add missing cases

@@ -43,10 +43,18 @@ internal abstract class TagWriter<TTagState, TArrayState>
                 this.WriteCharTag(ref state, key, c);
                 break;
             case string s:
-                this.WriteStringTag(
-                    ref state,
-                    key,
-                    TruncateString(s.AsSpan(), tagValueMaxLength));
+                if (tagValueMaxLength is { } length && s.Length > length)
+                {
+                    this.WriteStringTag(
+                        ref state,
+                        key,
+                        s.AsSpan(0, length));
+                }
+                else
+                {
+                    this.WriteStringTag(ref state, key, s);
+                }
+
                 break;
             case bool b:
                 this.WriteBooleanTag(ref state, key, b);
@@ -120,7 +128,8 @@ internal abstract class TagWriter<TTagState, TArrayState>
                     this.WriteStringTag(
                         ref state,
                         key,
-                        TruncateString(stringValue.AsSpan(), tagValueMaxLength));
+                        stringValue,
+                        tagValueMaxLength);
                 }
                 catch
                 {
@@ -143,6 +152,9 @@ internal abstract class TagWriter<TTagState, TArrayState>
     protected abstract void WriteFloatingPointTag(ref TTagState state, string key, double value);
 
     protected abstract void WriteBooleanTag(ref TTagState state, string key, bool value);
+
+    protected virtual void WriteStringTag(ref TTagState state, string key, string value)
+        => this.WriteStringTag(ref state, key, value.AsSpan());
 
     protected abstract void WriteStringTag(ref TTagState state, string key, ReadOnlySpan<char> value);
 
@@ -269,9 +281,10 @@ internal abstract class TagWriter<TTagState, TArrayState>
                     this.WriteCharValue(ref arrayState, c);
                     break;
                 case string s:
-                    this.arrayWriter.WriteStringValue(
+                    this.WriteStringValue(
                         ref arrayState,
-                        TruncateString(s.AsSpan(), tagValueMaxLength));
+                        s,
+                        tagValueMaxLength);
                     break;
                 case bool b:
                     this.arrayWriter.WriteBooleanValue(ref arrayState, b);
@@ -319,9 +332,10 @@ internal abstract class TagWriter<TTagState, TArrayState>
                     }
                     else
                     {
-                        this.arrayWriter.WriteStringValue(
+                        this.WriteStringValue(
                             ref arrayState,
-                            TruncateString(stringValue.AsSpan(), tagValueMaxLength));
+                            stringValue,
+                            tagValueMaxLength);
                     }
 
                     break;
@@ -485,10 +499,35 @@ internal abstract class TagWriter<TTagState, TArrayState>
             }
             else
             {
-                this.arrayWriter.WriteStringValue(
+                this.WriteStringValue(
                     ref arrayState,
-                    TruncateString(item.AsSpan(), tagValueMaxLength));
+                    item,
+                    tagValueMaxLength);
             }
+        }
+    }
+
+    private void WriteStringTag(ref TTagState state, string key, string value, int? maxLength)
+    {
+        if (maxLength is { } length && value.Length > length)
+        {
+            this.WriteStringTag(ref state, key, value.AsSpan(0, length));
+        }
+        else
+        {
+            this.WriteStringTag(ref state, key, value);
+        }
+    }
+
+    private void WriteStringValue(ref TArrayState state, string value, int? maxLength)
+    {
+        if (maxLength is { } length && value.Length > length)
+        {
+            this.arrayWriter.WriteStringValue(ref state, value.AsSpan(0, length));
+        }
+        else
+        {
+            this.arrayWriter.WriteStringValue(ref state, value);
         }
     }
 
