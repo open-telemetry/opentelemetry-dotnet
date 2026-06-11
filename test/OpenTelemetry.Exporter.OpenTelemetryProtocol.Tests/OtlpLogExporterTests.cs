@@ -461,6 +461,104 @@ public class OtlpLogExporterTests
     }
 
     [Fact]
+    public void CheckToOtlpLogRecordTimestamps_BridgeApi_UnsetTimestamp()
+    {
+        // When the Bridge API caller leaves Timestamp as DateTime.MinValue
+        // (not set), the serializer must write:
+        //   time_unix_nano         = 0   (unknown/missing per OTLP spec)
+        //   observed_time_unix_nano >= the time of observation (MUST be set per OTLP spec)
+        var logRecords = new List<LogRecord>();
+        using var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+            .AddInMemoryExporter(logRecords)
+            .Build();
+
+        var bridgeLogger = loggerProvider.GetLogger("OtlpLogExporterTests");
+
+        // Capture a lower-bound for the observation timestamp before emitting.
+        var beforeEmitUtc = DateTime.UtcNow;
+
+        // Emit with default LogRecordData -- Timestamp stays DateTime.MinValue.
+        bridgeLogger.EmitLog(new LogRecordData());
+
+        Assert.Single(logRecords);
+        Assert.Equal(DateTime.MinValue, logRecords[0].Timestamp);
+
+        var otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecords[0]);
+
+        Assert.NotNull(otlpLogRecord);
+
+        // time_unix_nano must be 0 -- "unknown or missing" per OTLP spec.
+        Assert.Equal(0UL, otlpLogRecord.TimeUnixNano);
+
+        // observed_time_unix_nano must be >= the moment we captured before emitting.
+        var beforeEmitNano = (ulong)new DateTimeOffset(beforeEmitUtc).ToUnixTimeNanoseconds();
+        Assert.True(
+            otlpLogRecord.ObservedTimeUnixNano >= beforeEmitNano,
+            $"ObservedTimeUnixNano ({otlpLogRecord.ObservedTimeUnixNano}) should be >= beforeEmitNano ({beforeEmitNano})");
+    }
+
+    [Fact]
+    public void CheckToOtlpLogRecordTimestamps_BridgeApi_DefaultData()
+    {
+        var logRecords = new List<LogRecord>();
+        using var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+            .AddInMemoryExporter(logRecords)
+            .Build();
+
+        var bridgeLogger = loggerProvider.GetLogger("OtlpLogExporterTests");
+
+        var beforeEmitUtc = DateTime.UtcNow;
+
+        bridgeLogger.EmitLog(default);
+
+        Assert.Single(logRecords);
+        Assert.Equal(DateTime.MinValue, logRecords[0].Timestamp);
+        Assert.InRange(logRecords[0].ObservedTimestamp, beforeEmitUtc, DateTime.UtcNow);
+
+        var otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecords[0]);
+
+        Assert.NotNull(otlpLogRecord);
+        Assert.Equal(0UL, otlpLogRecord.TimeUnixNano);
+
+        var beforeEmitNano = (ulong)new DateTimeOffset(beforeEmitUtc).ToUnixTimeNanoseconds();
+        Assert.True(
+            otlpLogRecord.ObservedTimeUnixNano >= beforeEmitNano,
+            $"ObservedTimeUnixNano ({otlpLogRecord.ObservedTimeUnixNano}) should be >= beforeEmitNano ({beforeEmitNano})");
+    }
+
+    [Fact]
+    public void CheckToOtlpLogRecordTimestamps_BridgeApi_TimestampSetObservedTimestampUnset()
+    {
+        var logRecords = new List<LogRecord>();
+        using var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+            .AddInMemoryExporter(logRecords)
+            .Build();
+
+        var bridgeLogger = loggerProvider.GetLogger("OtlpLogExporterTests");
+        var timestamp = new DateTime(2020, 1, 2, 3, 4, 5, DateTimeKind.Utc);
+        LogRecordData data = default;
+        data.Timestamp = timestamp;
+
+        var beforeEmitUtc = DateTime.UtcNow;
+
+        bridgeLogger.EmitLog(data);
+
+        Assert.Single(logRecords);
+        Assert.Equal(timestamp, logRecords[0].Timestamp);
+        Assert.InRange(logRecords[0].ObservedTimestamp, beforeEmitUtc, DateTime.UtcNow);
+
+        var otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecords[0]);
+
+        Assert.NotNull(otlpLogRecord);
+        Assert.Equal((ulong)timestamp.ToUnixTimeNanoseconds(), otlpLogRecord.TimeUnixNano);
+
+        var beforeEmitNano = (ulong)new DateTimeOffset(beforeEmitUtc).ToUnixTimeNanoseconds();
+        Assert.True(
+            otlpLogRecord.ObservedTimeUnixNano >= beforeEmitNano,
+            $"ObservedTimeUnixNano ({otlpLogRecord.ObservedTimeUnixNano}) should be >= beforeEmitNano ({beforeEmitNano})");
+    }
+
+    [Fact]
     public void CheckToOtlpLogRecordTraceIdSpanIdFlagWithNoActivity()
     {
         var logRecords = new List<LogRecord>();
@@ -1819,6 +1917,10 @@ public class OtlpLogExporterTests
         var factory = testState.LoggerFactory;
 
         Assert.NotNull(factory);
+
+        var logger = factory.CreateLogger("TestLogger");
+
+        Assert.NotNull(logger);
 
         Assert.True(configureDelegateCalled);
         Assert.True(configureExportProcessorOptionsCalled);

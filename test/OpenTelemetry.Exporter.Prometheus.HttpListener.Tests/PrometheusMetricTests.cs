@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using OpenTelemetry.Metrics;
-using Xunit;
 
 namespace OpenTelemetry.Exporter.Prometheus.Tests;
 
@@ -171,6 +170,10 @@ public sealed class PrometheusMetricTests
     [Fact]
     public void OpenMetricsName_UnitStartingWithNumber_DoesNotAddExtraSeparator()
         => AssertOpenMetricsName("metric", "2", PrometheusType.Gauge, false, "metric_2");
+
+    [Fact]
+    public void OpenMetricsName_UnitStartingWithMultipleDigits_PreservesSingleSeparator()
+        => AssertOpenMetricsName("metric", "10ms", PrometheusType.Gauge, false, "metric_10ms");
 
     [Fact]
     public void OpenMetricsName_CollapsesConsecutiveUnsupportedCharacters()

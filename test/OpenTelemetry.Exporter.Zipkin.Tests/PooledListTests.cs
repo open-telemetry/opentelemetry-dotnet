@@ -3,8 +3,6 @@
 
 using System.Collections;
 
-using Xunit;
-
 namespace OpenTelemetry.Internal.Tests;
 
 public class PooledListTests

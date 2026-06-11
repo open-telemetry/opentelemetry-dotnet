@@ -1,0 +1,2 @@
+﻿# TYPE test_counter_total counter
+test_counter_total{otel_scope_name="SumLongSerializesBoundaryValues"} 0

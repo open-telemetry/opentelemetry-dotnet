@@ -94,6 +94,7 @@ internal static partial class PrometheusSerializer
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
                 var tags = metricPoint.Tags;
+                var serializedTags = SerializeTags(metric, tags, openMetricsRequested, ReservedHistogramLabelNames);
                 var hasNegativeBucketBounds = false;
                 var previousBound = double.NegativeInfinity;
 
@@ -109,7 +110,7 @@ internal static partial class PrometheusSerializer
 
                     cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "_bucket{");
-                    cursor = WriteTags(buffer, cursor, metric, tags, openMetricsRequested, writeEnclosingBraces: false, reservedOutputKeys: ReservedHistogramLabelNames);
+                    cursor = WriteSerializedTagValues(buffer, cursor, serializedTags, appendTrailingComma: true);
 
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "le=\"");
 
@@ -145,7 +146,7 @@ internal static partial class PrometheusSerializer
                     // See https://prometheus.io/docs/specs/om/open_metrics_spec/#histogram-1
                     cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "_sum");
-                    cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags, openMetricsRequested, reservedOutputKeys: ReservedHistogramLabelNames);
+                    cursor = WriteSerializedTags(buffer, cursor, serializedTags);
 
                     buffer[cursor++] = unchecked((byte)' ');
 
@@ -156,7 +157,7 @@ internal static partial class PrometheusSerializer
                     // Histogram count
                     cursor = WriteMetricName(buffer, cursor, prometheusMetric, openMetricsRequested);
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "_count");
-                    cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags, openMetricsRequested, reservedOutputKeys: ReservedHistogramLabelNames);
+                    cursor = WriteSerializedTags(buffer, cursor, serializedTags);
 
                     buffer[cursor++] = unchecked((byte)' ');
 
@@ -236,6 +237,21 @@ internal static partial class PrometheusSerializer
         return found;
     }
 
+    internal static int GetNextSerializedTagsBufferSize(int currentBufferSize)
+    {
+        // Doubles the supplied buffer size, throwing once growth would exceed
+        // MaxSerializedTagsBufferSize so that serializing an oversized tag set fails
+        // fast instead of allocating without bound. An InvalidOperationException is
+        // used deliberately: the buffer-growth retry loops in PrometheusCollectionManager
+        // only retry on IndexOutOfRangeException/ArgumentException, so this terminates
+        // the scrape immediately rather than repeatedly re-entering this allocation.
+        var newBufferSize = currentBufferSize * 2;
+
+        return newBufferSize <= 0 || newBufferSize > MaxSerializedTagsBufferSize
+            ? throw new InvalidOperationException("The serialized Prometheus tag set exceeded the maximum supported size.")
+            : newBufferSize;
+    }
+
     private static bool TryGetLatestExemplar(in MetricPoint metricPoint, out Exemplar exemplar)
     {
         exemplar = default;
@@ -277,6 +293,79 @@ internal static partial class PrometheusSerializer
 
         buffer[cursor++] = ASCII_LINEFEED;
 
+        return cursor;
+    }
+
+    private static byte[] SerializeTags(
+        Metric metric,
+        ReadOnlyTagCollection tags,
+        bool openMetricsRequested,
+        IReadOnlyCollection<string>? reservedOutputKeys = null)
+    {
+        var buffer = new byte[128];
+
+        while (true)
+        {
+            try
+            {
+                var cursor = WriteTags(
+                    buffer,
+                    0,
+                    metric,
+                    tags,
+                    openMetricsRequested,
+                    writeEnclosingBraces: false,
+                    reservedOutputKeys: reservedOutputKeys);
+
+                if (cursor > 0 && buffer[cursor - 1] == unchecked((byte)','))
+                {
+                    cursor--;
+                }
+
+                return buffer.AsSpan(0, cursor).ToArray();
+            }
+            catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
+            {
+                buffer = new byte[GetNextSerializedTagsBufferSize(buffer.Length)];
+            }
+        }
+    }
+
+    private static int WriteSerializedTagValues(
+        byte[] buffer,
+        int cursor,
+        ReadOnlySpan<byte> serializedTags,
+        bool appendTrailingComma = false)
+    {
+        if (!serializedTags.IsEmpty)
+        {
+            if (serializedTags.Length > buffer.Length - cursor)
+            {
+                throw new ArgumentException("Destination buffer too small.", nameof(buffer));
+            }
+
+            serializedTags.CopyTo(buffer.AsSpan(cursor));
+            cursor += serializedTags.Length;
+
+            if (appendTrailingComma)
+            {
+                buffer[cursor++] = unchecked((byte)',');
+            }
+        }
+
+        return cursor;
+    }
+
+    private static int WriteSerializedTags(
+        byte[] buffer,
+        int cursor,
+        ReadOnlySpan<byte> serializedTags,
+        bool appendTrailingComma = false)
+    {
+        buffer[cursor++] = unchecked((byte)'{');
+        cursor = WriteSerializedTagValues(buffer, cursor, serializedTags, appendTrailingComma);
+
+        buffer[cursor++] = unchecked((byte)'}');
         return cursor;
     }
 }
