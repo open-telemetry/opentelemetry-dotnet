@@ -4,7 +4,6 @@
 #if NETFRAMEWORK
 using System.Runtime.CompilerServices;
 #endif
-using Xunit;
 
 namespace OpenTelemetry.Internal.Tests;
 

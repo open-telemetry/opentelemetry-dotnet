@@ -19,7 +19,11 @@ public class OtlpExporterRetryTransmissionHandlerTests
         var maliciousHeader = CreateMalformedGrpcStatusDetailsHeader(value);
         var exportClient = new RetryingTestExportClient(maliciousHeader);
 
-        using var transmissionHandler = new OtlpExporterRetryTransmissionHandler(exportClient, timeoutMilliseconds: 1_000);
+        // The timeout must be comfortably larger than OtlpRetry.InitialBackoffMilliseconds (1000ms).
+        // Otherwise the random retry backoff (drawn from [0, InitialBackoffMilliseconds)) can exceed
+        // the remaining deadline budget, in which case the handler does not retry at all and the test
+        // flakes with "Expected at least 2 send attempts, but got 1.".
+        using var transmissionHandler = new OtlpExporterRetryTransmissionHandler(exportClient, timeoutMilliseconds: 100_000);
 
         bool actual;
 
@@ -78,11 +82,17 @@ public class OtlpExporterRetryTransmissionHandlerTests
         {
             this.SendCount++;
 
+            // The first attempt returns a retryable status so the handler parses the malformed
+            // status details header and schedules a retry. Subsequent attempts return a
+            // non-retryable status so the retry loop terminates deterministically after a single
+            // retry, instead of looping until the deadline elapses.
+            var retryable = this.SendCount == 1;
+
             return new ExportClientGrpcResponse(
                 success: false,
                 deadlineUtc: deadlineUtc,
                 exception: null,
-                status: new Status(StatusCode.Unavailable, "retryable"),
+                status: new Status(retryable ? StatusCode.Unavailable : StatusCode.Internal, retryable ? "retryable" : "non-retryable"),
                 grpcStatusDetailsHeader: maliciousHeader);
         }
 

@@ -3,7 +3,6 @@
 
 using System.Diagnostics;
 using OpenTelemetry.Tests;
-using Xunit;
 
 namespace OpenTelemetry.Trace.Tests;
 
@@ -130,7 +129,16 @@ public class CompositeActivityProcessorTests
         }
 
         Assert.Equal(timeoutMilliseconds, shutdown ? first.LastShutdownTimeoutMilliseconds : first.LastForceFlushTimeoutMilliseconds);
-        Assert.InRange(shutdown ? third.LastShutdownTimeoutMilliseconds : third.LastForceFlushTimeoutMilliseconds, 1000, timeoutMilliseconds);
+
+        // The first two processors each sleep delayMilliseconds before the third processor's timeout
+        // is computed, so the third processor must receive at most (timeoutMilliseconds - 2 * delayMilliseconds)
+        // of the budget. The exact remaining value depends on scheduling, so only assert the upper
+        // bound rather than a tight lower bound (which flaked under CI load). The Assert.Equal above
+        // proves the budget is not reset to the full value for every processor.
+        Assert.InRange(
+            shutdown ? third.LastShutdownTimeoutMilliseconds : third.LastForceFlushTimeoutMilliseconds,
+            0,
+            timeoutMilliseconds - (2 * delayMilliseconds));
     }
 
     private sealed class TestProvider : TracerProvider;

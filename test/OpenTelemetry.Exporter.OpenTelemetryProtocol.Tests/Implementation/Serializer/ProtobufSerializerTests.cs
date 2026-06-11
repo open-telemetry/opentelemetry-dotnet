@@ -355,4 +355,21 @@ public class ProtobufSerializerTests
         Array.Copy(buffer, 2, actualContent, 0, 4);
         Assert.True(expectedContent.SequenceEqual(actualContent));
     }
+
+    [Fact]
+    public void WriteStringWithTag_SlicedSpan_WritesCorrectly()
+    {
+        var buffer = new byte[20];
+        var value = "012345".AsSpan(1, 3);
+        var position = ProtobufSerializer.WriteStringWithTag(buffer, 0, 1, value);
+
+        Assert.Equal(5, position);
+        Assert.Equal(10, buffer[0]);
+        Assert.Equal(3, buffer[1]);
+
+        var expectedContent = Encoding.UTF8.GetBytes("123");
+        var actualContent = new byte[3];
+        Array.Copy(buffer, 2, actualContent, 0, 3);
+        Assert.True(expectedContent.SequenceEqual(actualContent));
+    }
 }

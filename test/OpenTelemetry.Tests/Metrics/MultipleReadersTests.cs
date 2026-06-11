@@ -5,7 +5,6 @@ using System.Diagnostics.Metrics;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Tests;
-using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests;
 
@@ -329,7 +328,16 @@ public class MultipleReadersTests
         }
 
         Assert.Equal(timeoutMilliseconds, shutdown ? first.LastShutdownTimeoutMilliseconds : first.LastCollectTimeoutMilliseconds);
-        Assert.InRange(shutdown ? third.LastShutdownTimeoutMilliseconds : third.LastCollectTimeoutMilliseconds, 1000, timeoutMilliseconds);
+
+        // The first two readers each sleep delayMilliseconds before the third reader's timeout is
+        // computed, so the third reader must receive at most (timeoutMilliseconds - 2 * delayMilliseconds)
+        // of the budget. The exact remaining value depends on scheduling, so only assert the upper
+        // bound rather than a tight lower bound (which flaked under CI load). The Assert.Equal above
+        // proves the budget is not reset to the full value for every reader.
+        Assert.InRange(
+            shutdown ? third.LastShutdownTimeoutMilliseconds : third.LastCollectTimeoutMilliseconds,
+            0,
+            timeoutMilliseconds - (2 * delayMilliseconds));
     }
 
     private static void AssertLongSumValueForMetric(Metric metric, long value)

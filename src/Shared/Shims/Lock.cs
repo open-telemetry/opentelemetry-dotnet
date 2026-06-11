@@ -12,7 +12,5 @@ namespace OpenTelemetry;
 // sees it used. It is in OpenTelemetry namespace and not OpenTelemetry.Internal
 // namespace so that code should be able to use it without the presence of a
 // dedicated "using OpenTelemetry.Internal" just for the shim.
-internal sealed class Lock
-{
-}
+internal sealed class Lock;
 #endif

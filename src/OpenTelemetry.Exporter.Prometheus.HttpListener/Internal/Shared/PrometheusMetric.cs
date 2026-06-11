@@ -64,6 +64,23 @@ internal sealed class PrometheusMetric
         this.OpenMetricsMetadataName = openMetricsMetadataName;
         this.Unit = sanitizedUnit;
         this.Type = type;
+        this.NameBytes = ConvertToAsciiBytes(sanitizedName);
+        this.OpenMetricsNameBytes = ConvertToAsciiBytes(openMetricsName);
+        this.OpenMetricsMetadataNameBytes = ConvertToAsciiBytes(openMetricsMetadataName);
+        this.UnitBytes = sanitizedUnit == null ? null : ConvertToAsciiBytes(sanitizedUnit);
+
+        static byte[] ConvertToAsciiBytes(string value)
+        {
+            // Metric names and units are sanitized before conversion, so every character here is ASCII
+            var bytes = new byte[value.Length];
+
+            for (var i = 0; i < value.Length; i++)
+            {
+                bytes[i] = unchecked((byte)value[i]);
+            }
+
+            return bytes;
+        }
     }
 
     public string Name { get; }
@@ -75,6 +92,14 @@ internal sealed class PrometheusMetric
     public string? Unit { get; }
 
     public PrometheusType Type { get; }
+
+    internal byte[] NameBytes { get; }
+
+    internal byte[] OpenMetricsNameBytes { get; }
+
+    internal byte[] OpenMetricsMetadataNameBytes { get; }
+
+    internal byte[]? UnitBytes { get; }
 
     public static PrometheusMetric Create(Metric metric, bool disableTotalNameSuffixForCounters)
         => new(metric.Name, metric.Unit, GetPrometheusType(metric.MetricType), disableTotalNameSuffixForCounters);

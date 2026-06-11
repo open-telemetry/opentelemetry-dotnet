@@ -4,10 +4,6 @@
 using System.Diagnostics.Tracing;
 using System.Reflection;
 
-#pragma warning disable IDE0005 // Using directive is unnecessary.
-using Xunit;
-#pragma warning restore IDE0005 // Using directive is unnecessary.
-
 namespace OpenTelemetry.Tests;
 
 // Adapted from https://github.com/dotnet/aspnetcore/blob/3a973a5f4d28242262f27c86eb3f14299fe712ba/src/Testing/test/EventSourceValidatorTests.cs

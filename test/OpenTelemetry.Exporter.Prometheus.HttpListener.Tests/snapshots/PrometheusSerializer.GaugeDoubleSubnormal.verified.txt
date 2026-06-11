@@ -1,0 +1,4 @@
+﻿# TYPE test_gauge gauge
+test_gauge{otel_scope_name="GaugeDoubleSubnormal",x="1",y="2"} -Inf
+test_gauge{otel_scope_name="GaugeDoubleSubnormal",x="3",y="4"} +Inf
+test_gauge{otel_scope_name="GaugeDoubleSubnormal",x="5",y="6"} NaN

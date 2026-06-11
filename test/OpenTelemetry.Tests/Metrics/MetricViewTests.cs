@@ -5,7 +5,6 @@ using System.Diagnostics.Metrics;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
-using Xunit;
 
 namespace OpenTelemetry.Metrics.Tests;
 
@@ -206,6 +205,21 @@ public class MetricViewTests : MetricTestsBase
             .AddView("name1", new ExplicitBucketHistogramConfiguration { Boundaries = boundaries })));
 
         Assert.Contains("Histogram boundaries must be in ascending order with distinct values", ex.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void HistogramBoundaryCountValidationThrowsArgumentException()
+    {
+        var boundaryCount = ExplicitBucketHistogramConfiguration.MaxBoundaryCount + 1;
+
+        var ex = Assert.Throws<ArgumentOutOfRangeException>(
+            () => ExplicitBucketHistogramConfiguration.ThrowIfBoundaryCountExceedsLimit(
+                boundaryCount,
+                "value"));
+
+        Assert.Contains("Maximum supported boundary count is", ex.Message, StringComparison.Ordinal);
+        Assert.Equal("value", ex.ParamName);
+        Assert.Equal(boundaryCount, ex.ActualValue);
     }
 
     [Theory]

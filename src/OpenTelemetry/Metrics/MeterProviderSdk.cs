@@ -196,7 +196,7 @@ internal sealed class MeterProviderSdk : MeterProvider
     {
         if (state is not MetricState metricState)
         {
-            // todo: Log
+            OpenTelemetrySdkEventSource.Log.MeasurementDropped(instrument?.Name ?? "UnknownInstrument", "SDK internal error occurred.", "Contact SDK owners.");
             return;
         }
 

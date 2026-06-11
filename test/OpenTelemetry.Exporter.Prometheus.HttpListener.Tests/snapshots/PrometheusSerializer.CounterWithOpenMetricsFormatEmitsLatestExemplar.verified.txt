@@ -1,0 +1,3 @@
+﻿# TYPE test_counter counter
+test_counter_total{otel_scope_name="CounterWithOpenMetricsFormatEmitsLatestExemplar",keep="value"} 3 # {trace_id="<ID>",span_id="<ID>",filtered="second"} 2 <TIMESTAMP>
+test_counter_created{otel_scope_name="CounterWithOpenMetricsFormatEmitsLatestExemplar",keep="value"} <TIMESTAMP>

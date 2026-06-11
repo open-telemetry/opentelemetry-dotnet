@@ -35,6 +35,11 @@ internal sealed class LoggerSdk : Logger
             var logRecord = pool.Rent();
 
             logRecord.Data = data;
+            if (logRecord.Data.ObservedTimestampBacking == DateTime.MinValue)
+            {
+                logRecord.Data.ObservedTimestampBacking = DateTime.UtcNow;
+            }
+
             logRecord.ILoggerData = default;
             logRecord.ILoggerData.EventId = new EventId(default, data.EventName);
 

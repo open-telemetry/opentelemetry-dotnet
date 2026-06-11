@@ -18,7 +18,11 @@ public class OtlpExporterPersistentStorageTransmissionHandlerTests
         var exportClient = new FailingExportClient();
         var persistentBlobProvider = new CapturingBlobProvider();
 
-        using var transmissionHandler = new OtlpExporterPersistentStorageTransmissionHandler(persistentBlobProvider, exportClient, timeoutMilliseconds: 1000);
+        // The timeout must be comfortably larger than OtlpRetry.InitialBackoffMilliseconds (1000ms).
+        // Otherwise the random retry backoff (drawn from [0, InitialBackoffMilliseconds)) can exceed
+        // the remaining deadline budget, in which case the failure is treated as non-retryable, the
+        // request is not persisted, and the test flakes with Assert.True(result) returning False.
+        using var transmissionHandler = new OtlpExporterPersistentStorageTransmissionHandler(persistentBlobProvider, exportClient, timeoutMilliseconds: 100_000);
 
         byte[] request = [1, 2, 3, 4, 9, 9, 9];
         var result = transmissionHandler.TrySubmitRequest(request, contentLength: 4);

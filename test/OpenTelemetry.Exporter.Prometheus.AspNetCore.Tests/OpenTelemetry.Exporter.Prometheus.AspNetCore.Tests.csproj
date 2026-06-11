@@ -11,6 +11,7 @@
     <PackageReference Include="Microsoft.AspNetCore.TestHost" />
     <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
     <PackageReference Include="Testcontainers" />
+    <PackageReference Include="Verify.Xunit" />
   </ItemGroup>
 
   <ItemGroup>
@@ -33,6 +34,7 @@
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Exporter.Prometheus.HttpListener.Tests\PrometheusCollection.cs" Link="Includes\PrometheusCollection.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Exporter.Prometheus.HttpListener.Tests\PrometheusCollectionManagerTests.cs" Link="Includes\PrometheusCollectionManagerTests.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Exporter.Prometheus.HttpListener.Tests\PrometheusFixture.cs" Link="Includes\PrometheusFixture.cs" />
+    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Exporter.Prometheus.HttpListener.Tests\PrometheusProtocolTests.cs" Link="Includes\PrometheusProtocolTests.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Exporter.Prometheus.HttpListener.Tests\PrometheusSerializerTests.cs" Link="Includes\PrometheusSerializerTests.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Exporter.Prometheus.HttpListener.Tests\PromToolCollection.cs" Link="Includes\PromToolCollection.cs" />
     <Compile Include="$(RepoRoot)\test\OpenTelemetry.Exporter.Prometheus.HttpListener.Tests\PromToolFixture.cs" Link="Includes\PromToolFixture.cs" />
@@ -55,6 +57,10 @@
   <ItemGroup>
     <EmbeddedResource Include="*.Dockerfile" LogicalName="%(FileName)%(Extension)" />
     <EmbeddedResource Include="$(RepoRoot)\test\OpenTelemetry.Exporter.Prometheus.HttpListener.Tests\prometheus.Dockerfile" LogicalName="prometheus.Dockerfile" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="PrometheusSerializerTestsSnapshotsPath" Value="$(RepoRoot)\test\OpenTelemetry.Exporter.Prometheus.HttpListener.Tests\snapshots" />
   </ItemGroup>
 
 </Project>
