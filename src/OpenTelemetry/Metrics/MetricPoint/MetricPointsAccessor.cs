@@ -7,7 +7,11 @@ namespace OpenTelemetry.Metrics;
 /// A struct for accessing the <see cref="MetricPoint"/>s collected for a
 /// <see cref="Metric"/>.
 /// </summary>
+// Note: Equality is intentionally not implemented — this is a view over a
+// shared MetricPoint array; element-wise comparison is not meaningful.
+#pragma warning disable CA1815 // Override equals and operator equals on value types
 public readonly struct MetricPointsAccessor
+#pragma warning restore CA1815 // Override equals and operator equals on value types
 {
     private readonly MetricPoint[] metricsPoints;
     private readonly int[] metricPointsToProcess;

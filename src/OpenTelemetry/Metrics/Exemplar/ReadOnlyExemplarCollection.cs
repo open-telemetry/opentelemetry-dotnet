@@ -6,8 +6,12 @@ namespace OpenTelemetry.Metrics;
 /// <summary>
 /// A read-only collection of <see cref="Exemplar" />s.
 /// </summary>
+// Note: Equality is intentionally not implemented — element-wise comparison
+// would be O(n) and this type is a view over a shared array.
 #pragma warning disable CA1711 // Identifiers should not have incorrect suffix
+#pragma warning disable CA1815 // Override equals and operator equals on value types
 public readonly struct ReadOnlyExemplarCollection
+#pragma warning restore CA1815 // Override equals and operator equals on value types
 #pragma warning restore CA1711 // Identifiers should not have incorrect suffix
 {
     internal static readonly ReadOnlyExemplarCollection Empty = new([]);

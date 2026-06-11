@@ -8,8 +8,12 @@ namespace OpenTelemetry;
 /// </summary>
 // Note: Does not implement IReadOnlyCollection<> or IEnumerable<> to
 // prevent accidental boxing.
+// Note: Equality is intentionally not implemented — element-wise comparison
+// would be O(n) and this type is used on hot paths where allocations matter.
 #pragma warning disable CA1711 // Identifiers should not have incorrect suffix
+#pragma warning disable CA1815 // Override equals and operator equals on value types
 public readonly struct ReadOnlyTagCollection
+#pragma warning restore CA1815 // Override equals and operator equals on value types
 #pragma warning restore CA1711 // Identifiers should not have incorrect suffix
 {
     internal readonly KeyValuePair<string, object?>[] KeyAndValues;

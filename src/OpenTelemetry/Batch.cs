@@ -13,7 +13,12 @@ namespace OpenTelemetry;
 /// Stores a batch of completed <typeparamref name="T"/> objects to be exported.
 /// </summary>
 /// <typeparam name="T">The type of object in the <see cref="Batch{T}"/>.</typeparam>
+// Note: Equality is intentionally not implemented — the batch wraps a shared
+// buffer whose contents change after export, so element-wise equality is
+// not meaningful.
+#pragma warning disable CA1815 // Override equals and operator equals on value types
 public readonly struct Batch<T> : IDisposable
+#pragma warning restore CA1815 // Override equals and operator equals on value types
     where T : class
 {
     private readonly T? item = null;

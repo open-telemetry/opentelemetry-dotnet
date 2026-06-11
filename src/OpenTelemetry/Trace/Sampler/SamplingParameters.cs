@@ -8,7 +8,7 @@ namespace OpenTelemetry.Trace;
 /// <summary>
 /// Sampling parameters passed to a <see cref="Sampler"/> for it to make a sampling decision.
 /// </summary>
-public readonly struct SamplingParameters
+public readonly struct SamplingParameters : IEquatable<SamplingParameters>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="SamplingParameters"/> struct.
@@ -77,4 +77,46 @@ public readonly struct SamplingParameters
     /// Gets the links to be added to the activity to be created.
     /// </summary>
     public IEnumerable<ActivityLink>? Links { get; }
+
+    /// <inheritdoc/>
+    public static bool operator ==(SamplingParameters left, SamplingParameters right) => left.Equals(right);
+
+    /// <inheritdoc/>
+    public static bool operator !=(SamplingParameters left, SamplingParameters right) => !left.Equals(right);
+
+    /// <inheritdoc/>
+    public override bool Equals(object? obj) => obj is SamplingParameters other && this.Equals(other);
+
+    /// <inheritdoc/>
+    public bool Equals(SamplingParameters other)
+        => this.ParentContext == other.ParentContext
+            && this.TraceId == other.TraceId
+            && this.Name == other.Name
+            && this.Kind == other.Kind
+            && (this.Tags?.SequenceEqual(other.Tags ?? []) ?? other.Tags == null)
+            && (this.Links?.SequenceEqual(other.Links ?? []) ?? other.Links == null);
+
+    /// <inheritdoc/>
+    public override int GetHashCode()
+    {
+#if NET || NETSTANDARD2_1_OR_GREATER
+        var hashCode = new HashCode();
+        hashCode.Add(this.ParentContext);
+        hashCode.Add(this.TraceId);
+        hashCode.Add(this.Name);
+        hashCode.Add(this.Kind);
+        return hashCode.ToHashCode();
+#else
+        var hash = 17;
+        unchecked
+        {
+            hash = (31 * hash) + this.ParentContext.GetHashCode();
+            hash = (31 * hash) + this.TraceId.GetHashCode();
+            hash = (31 * hash) + (this.Name?.GetHashCode() ?? 0);
+            hash = (31 * hash) + this.Kind.GetHashCode();
+        }
+
+        return hash;
+#endif
+    }
 }
