@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
-using Xunit;
 
 namespace OpenTelemetry.Logs.Tests;
 
@@ -86,10 +85,8 @@ public sealed class LogRecordDataTests
     [Fact]
     public void TimestampTest()
     {
-        var nowUtc = DateTime.UtcNow;
-
         var record = new LogRecordData();
-        Assert.True(record.Timestamp >= nowUtc);
+        Assert.Equal(DateTime.MinValue, record.Timestamp);
 
         record = default;
         Assert.Equal(DateTime.MinValue, record.Timestamp);
@@ -100,6 +97,25 @@ public sealed class LogRecordDataTests
 
         Assert.Equal(DateTimeKind.Utc, record.Timestamp.Kind);
         Assert.Equal(now.ToUniversalTime(), record.Timestamp);
+    }
+
+    [Fact]
+    public void ObservedTimestampTest()
+    {
+        var nowUtc = DateTime.UtcNow;
+
+        var record = new LogRecordData();
+        Assert.True(record.ObservedTimestamp >= nowUtc);
+
+        record = default;
+        Assert.Equal(DateTime.MinValue, record.ObservedTimestamp);
+
+        var now = DateTime.Now;
+
+        record.ObservedTimestamp = now;
+
+        Assert.Equal(DateTimeKind.Utc, record.ObservedTimestamp.Kind);
+        Assert.Equal(now.ToUniversalTime(), record.ObservedTimestamp);
     }
 
     [Fact]

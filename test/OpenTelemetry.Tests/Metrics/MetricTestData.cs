@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using Xunit;
-
 namespace OpenTelemetry.Metrics.Tests;
 
 internal static class MetricTestData
@@ -36,6 +34,8 @@ internal static class MetricTestData
         [1.0, 0.0],
         [0.0, 1.0, 1.0, 2.0],
         [0.0, 1.0, 2.0, -1.0],
+        [double.NaN],
+        [0.0, double.NaN, 1.0],
     ];
 #pragma warning restore CA1825 // Workaround for https://github.com/dotnet/sdk/issues/54275
 

@@ -1,0 +1,3 @@
+﻿# TYPE test_counter counter
+test_counter_total{otel_scope_name="CounterWithOpenMetricsFormatDropsExemplarLabelsExceedingLimit",keep="value"} 2 # {trace_id="<ID>",span_id="<ID>",short="ok"} 2 <TIMESTAMP>
+test_counter_created{otel_scope_name="CounterWithOpenMetricsFormatDropsExemplarLabelsExceedingLimit",keep="value"} <TIMESTAMP>

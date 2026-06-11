@@ -1041,9 +1041,7 @@ public struct MetricPoint
     {
         if (offerExemplar)
         {
-            // TODO: A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
-            this.mpComponents!.ExemplarReservoir!.Offer(
-                new ExemplarMeasurement<long>(number, tags));
+            this.OfferExemplarSafe(number, tags);
         }
     }
 
@@ -1052,9 +1050,35 @@ public struct MetricPoint
     {
         if (offerExemplar)
         {
-            // TODO: A custom implementation of `ExemplarReservoir.Offer` might throw an exception.
+            this.OfferExemplarSafe(number, tags, explicitBucketHistogramBucketIndex);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private readonly void OfferExemplarSafe(long number, ReadOnlySpan<KeyValuePair<string, object?>> tags)
+    {
+        try
+        {
+            this.mpComponents!.ExemplarReservoir!.Offer(
+                new ExemplarMeasurement<long>(number, tags));
+        }
+        catch (Exception ex)
+        {
+            OpenTelemetrySdkEventSource.Log.ExemplarReservoirException(ex);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private readonly void OfferExemplarSafe(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags, int explicitBucketHistogramBucketIndex)
+    {
+        try
+        {
             this.mpComponents!.ExemplarReservoir!.Offer(
                 new ExemplarMeasurement<double>(number, tags, explicitBucketHistogramBucketIndex));
+        }
+        catch (Exception ex)
+        {
+            OpenTelemetrySdkEventSource.Log.ExemplarReservoirException(ex);
         }
     }
 

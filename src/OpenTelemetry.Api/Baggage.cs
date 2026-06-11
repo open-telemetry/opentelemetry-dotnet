@@ -97,7 +97,7 @@ public readonly struct Baggage : IEquatable<Baggage>
         var baggageCopy = new Dictionary<string, string>(baggageItems.Count, StringComparer.Ordinal);
         foreach (var baggageItem in baggageItems)
         {
-            if (string.IsNullOrEmpty(baggageItem.Value))
+            if (baggageItem.Value == null)
             {
                 baggageCopy.Remove(baggageItem.Key);
                 continue;
@@ -240,7 +240,7 @@ public readonly struct Baggage : IEquatable<Baggage>
             return this;
         }
 
-        if (string.IsNullOrEmpty(value))
+        if (value == null)
         {
             return this.RemoveBaggage(name);
         }
@@ -285,7 +285,7 @@ public readonly struct Baggage : IEquatable<Baggage>
             {
                 continue;
             }
-            else if (string.IsNullOrEmpty(item.Value))
+            else if (item.Value == null)
             {
                 var currentBaggage = newBaggage ?? this.baggage;
                 if (currentBaggage?.ContainsKey(item.Key) == true)
