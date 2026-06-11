@@ -11,7 +11,7 @@ public class AggregatorTests
     private static readonly Meter Meter = new("testMeter");
     private static readonly Instrument Instrument = Meter.CreateHistogram<long>("testInstrument");
     private static readonly Instrument LongCounterInstrument = Meter.CreateCounter<long>("testCounter");
-    private static readonly Instrument ObservableLongCounterInstrument = Meter.CreateObservableCounter("testObservableCounter", () => 0L);
+    private static readonly Instrument ObservableLongCounterInstrument = Meter.CreateObservableCounter("testObservableCounter", () => 42L);
     private static readonly ExplicitBucketHistogramConfiguration HistogramConfiguration = new() { Boundaries = Metric.DefaultHistogramBounds };
     private static readonly MetricStreamIdentity MetricStreamIdentity = new(Instrument, HistogramConfiguration);
 
