@@ -6,6 +6,14 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.16.0
+
+Released 2026-Jun-10
+
+## 1.16.0-rc.1
+
+Released 2026-Jun-10
+
 * Stop validating View-provided metric stream `Name` against the instrument
   name syntax, per
   [spec clarification](https://github.com/open-telemetry/opentelemetry-specification/pull/5094).
@@ -33,6 +41,15 @@ Notes](../../RELEASENOTES.md).
 * **Breaking Change** Explicit histogram boundaries no longer allow more than
   10 million values.
   ([#7165](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7165))
+
+* Fixed a circular reference which could cause a `LoggerProvider` to fail to
+  resolve when one of its dependencies depends on `ILogger` or `ILoggerFactory`.
+  As part of this fix the `LoggerProvider` resolved from dependency injection
+  is now created lazily when the first logger is created rather than when
+  `ILoggerProvider` or `ILoggerFactory` is resolved. A consequence is that any
+  invalid configuration now surfaces when the first log record is written instead
+  of when the logging services are resolved.
+  ([#7308](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7308))
 
 ## 1.15.3
 
