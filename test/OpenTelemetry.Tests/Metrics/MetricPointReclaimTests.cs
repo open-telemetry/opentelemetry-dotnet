@@ -199,9 +199,7 @@ public class MetricPointReclaimTests
     // reclaimed in the next collect cycle.
     //
     // This is a stress test: it asserts that the total exported value always equals the total
-    // recorded value (no measurement is ever lost). On strongly-ordered architectures (x86/x64)
-    // it passes regardless of the fix; on weak-memory hardware it reliably fails without the fix
-    // and passes with it.
+    // recorded value (no measurement is ever lost).
     [Fact]
     public void MeasurementsAreNotLostWhenReclaimRacesWithUpdates()
     {
