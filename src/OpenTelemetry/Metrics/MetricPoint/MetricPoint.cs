@@ -633,17 +633,20 @@ public struct MetricPoint
                 {
                     if (outputDelta)
                     {
+                        // Clear the collect-pending flag *before* reading the running value.
+                        // Any concurrent Update that bumps the running value after our read is
+                        // then guaranteed to re-set the flag to CollectPending *after* this clear
+                        // (the Interlocked.Read below and the Interlocked barriers in Update form
+                        // a full-barrier ordering). Clearing the flag *after* the read and patching
+                        // it with a second read is not safe on weak memory models (e.g. Arm): the
+                        // Update's CollectPending write can lose the race with this NoCollectPending
+                        // write, leaving an unexported measurement on a point that then looks drained
+                        // and gets reclaimed (lost). See CompleteUpdate.
+                        this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
                         var initValue = Interlocked.Read(ref this.runningValue.AsLong);
                         this.snapshotValue.AsLong = initValue - this.deltaLastValue.AsLong;
                         this.deltaLastValue.AsLong = initValue;
-                        this.MetricPointStatus = MetricPointStatus.NoCollectPending;
-
-                        // Check again if value got updated, if yes reset status.
-                        // This ensures no Updates get Lost.
-                        if (initValue != Interlocked.Read(ref this.runningValue.AsLong))
-                        {
-                            this.MetricPointStatus = MetricPointStatus.CollectPending;
-                        }
                     }
                     else
                     {
@@ -665,17 +668,14 @@ public struct MetricPoint
                 {
                     if (outputDelta)
                     {
+                        // Clear the collect-pending flag *before* reading the running value so a
+                        // concurrent Update cannot be stranded on a point that then looks drained
+                        // and gets reclaimed. See the LongSum case above and CompleteUpdate.
+                        this.MetricPointStatus = MetricPointStatus.NoCollectPending;
+
                         var initValue = InterlockedHelper.Read(ref this.runningValue.AsDouble);
                         this.snapshotValue.AsDouble = initValue - this.deltaLastValue.AsDouble;
                         this.deltaLastValue.AsDouble = initValue;
-                        this.MetricPointStatus = MetricPointStatus.NoCollectPending;
-
-                        // Check again if value got updated, if yes reset status.
-                        // This ensures no Updates get Lost.
-                        if (initValue != InterlockedHelper.Read(ref this.runningValue.AsDouble))
-                        {
-                            this.MetricPointStatus = MetricPointStatus.CollectPending;
-                        }
                     }
                     else
                     {
@@ -694,30 +694,24 @@ public struct MetricPoint
 
             case AggregationType.LongGauge:
                 {
-                    this.snapshotValue.AsLong = Interlocked.Read(ref this.runningValue.AsLong);
+                    // Clear the collect-pending flag *before* reading the running value so a
+                    // concurrent Update that records a newer value after our read re-flags the
+                    // point afterwards instead of being stranded (and potentially reclaimed).
+                    // See the LongSum case above and CompleteUpdate.
                     this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
-                    // Check again if value got updated, if yes reset status.
-                    // This ensures no Updates get Lost.
-                    if (this.snapshotValue.AsLong != Interlocked.Read(ref this.runningValue.AsLong))
-                    {
-                        this.MetricPointStatus = MetricPointStatus.CollectPending;
-                    }
+                    this.snapshotValue.AsLong = Interlocked.Read(ref this.runningValue.AsLong);
 
                     break;
                 }
 
             case AggregationType.DoubleGauge:
                 {
-                    this.snapshotValue.AsDouble = InterlockedHelper.Read(ref this.runningValue.AsDouble);
+                    // Clear the collect-pending flag *before* reading the running value. See the
+                    // LongGauge/LongSum cases above and CompleteUpdate.
                     this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
-                    // Check again if value got updated, if yes reset status.
-                    // This ensures no Updates get Lost.
-                    if (this.snapshotValue.AsDouble != InterlockedHelper.Read(ref this.runningValue.AsDouble))
-                    {
-                        this.MetricPointStatus = MetricPointStatus.CollectPending;
-                    }
+                    this.snapshotValue.AsDouble = InterlockedHelper.Read(ref this.runningValue.AsDouble);
 
                     break;
                 }

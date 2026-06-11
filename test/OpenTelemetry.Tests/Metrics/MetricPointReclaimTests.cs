@@ -187,9 +187,127 @@ public class MetricPointReclaimTests
         Assert.Equal(sum, exporter.Sum);
     }
 
+    // Regression test for a metric point reclaim data race where a measurement recorded
+    // concurrently with a snapshot could be stranded on a metric point that then looked
+    // "drained" and was reclaimed, permanently losing the value.
+    //
+    // The race is between AggregatorStore.SnapshotDeltaWithMetricPointReclaim (which clears a
+    // point's CollectPending flag) and MetricPoint.Update/CompleteUpdate (which sets it). Before
+    // the fix, the snapshot cleared the flag *after* reading the running value; on a weak memory
+    // model (e.g. Arm) the update's CollectPending write could lose the race with the snapshot's
+    // NoCollectPending write, leaving the running value unexported on a point that is then
+    // reclaimed in the next collect cycle.
+    //
+    // This is a stress test: it asserts that the total exported value always equals the total
+    // recorded value (no measurement is ever lost). On strongly-ordered architectures (x86/x64)
+    // it passes regardless of the fix; on weak-memory hardware it reliably fails without the fix
+    // and passes with it.
+    [Fact]
+    public void MeasurementsAreNotLostWhenReclaimRacesWithUpdates()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateCounter<long>("MyFruitCounter");
+
+        long recordedSum = 0;
+        long exportedSum = 0;
+
+        // A small limit relative to the number of distinct tag values forces continuous
+        // reclaim of metric points, maximizing the window for the snapshot/update race.
+        const int MaxMetricPointsPerMetricStream = 10;
+        const int NumberOfUpdateThreads = 8;
+        const int DistinctTagValues = 500;
+        const int MeasurementsPerThread = 100_000;
+
+        using var exporter = new SumCapturingExporter(value => Interlocked.Add(ref exportedSum, value));
+        using var metricReader = new BaseExportingMetricReader(exporter)
+        {
+            TemporalityPreference = MetricReaderTemporalityPreference.Delta,
+        };
+
+        using (var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .SetMaxMetricPointsPerMetricStream(MaxMetricPointsPerMetricStream)
+            .AddReader(metricReader)
+            .Build())
+        {
+            var stopCollecting = 0;
+
+            // Collect as aggressively as possible to drive reclaim churn and interleave snapshots
+            // with in-flight updates.
+            var collector = new Thread(() =>
+            {
+                while (Volatile.Read(ref stopCollecting) == 0)
+                {
+                    metricReader.Collect();
+                }
+            });
+            collector.Start();
+
+            var threads = new Thread[NumberOfUpdateThreads];
+            for (var t = 0; t < threads.Length; t++)
+            {
+                var seed = t + 1;
+                threads[t] = new Thread(() =>
+                {
+                    var random = new Random(seed);
+                    for (var i = 0; i < MeasurementsPerThread; i++)
+                    {
+#pragma warning disable CA5394 // Insecure randomness is fine for a stress test
+                        long value = random.Next(1, 100);
+                        var tagValue = random.Next(DistinctTagValues);
+#pragma warning restore CA5394
+                        counter.Add(value, new KeyValuePair<string, object?>("key", tagValue));
+                        Interlocked.Add(ref recordedSum, value);
+                    }
+                });
+                threads[t].Start();
+            }
+
+            foreach (var thread in threads)
+            {
+                thread.Join();
+            }
+
+            Volatile.Write(ref stopCollecting, 1);
+            collector.Join();
+
+            Assert.True(meterProvider.ForceFlush());
+        }
+
+        Assert.Equal(Interlocked.Read(ref recordedSum), Interlocked.Read(ref exportedSum));
+    }
+
     private sealed class ThreadArguments
     {
         public int Counter;
+    }
+
+    private sealed class SumCapturingExporter : BaseExporter<Metric>
+    {
+        private readonly Action<long> onSum;
+
+        public SumCapturingExporter(Action<long> onSum)
+        {
+            this.onSum = onSum;
+        }
+
+        public override ExportResult Export(in Batch<Metric> batch)
+        {
+            foreach (var metric in batch)
+            {
+                if (!metric.MetricType.IsSum())
+                {
+                    continue;
+                }
+
+                foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+                {
+                    this.onSum(metricPoint.GetSumLong());
+                }
+            }
+
+            return ExportResult.Success;
+        }
     }
 
     private sealed class CustomExporter : BaseExporter<Metric>
