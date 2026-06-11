@@ -1465,6 +1465,97 @@ public class MetricViewTests : MetricTestsBase
     }
 
     [Fact]
+    public void LazyAllocationWorksWithMultiTagDeltaTemporality()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+        using var exporter = new InMemoryExporter<Metric>(exportedItems);
+        using var reader = new BaseExportingMetricReader(exporter)
+        {
+            TemporalityPreference = MetricReaderTemporalityPreference.Delta,
+        };
+
+#pragma warning disable OTEL1006 // Experimental API
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = 10000, EnableLazyAllocation = true })
+            .AddReader(reader));
+#pragma warning restore OTEL1006 // Experimental API
+
+        var counter = meter.CreateCounter<long>("counter");
+        var uniqueSeries = SegmentedMetricPointStorage.ChunkSize + 1;
+        for (var i = 0; i < uniqueSeries; i++)
+        {
+            counter.Add(
+                1,
+                new KeyValuePair<string, object?>("key1", "value" + i),
+                new KeyValuePair<string, object?>("key2", "value" + i));
+        }
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        var metric = Assert.Single(exportedItems);
+        Assert.True(metric.AggregatorStore.UsesLazyAllocation);
+        Assert.Equal(uniqueSeries, GetMetricPointsSum(metric));
+        Assert.False(ContainsOverflowMetricPoint(metric));
+        Assert.Equal(0, metric.AggregatorStore.DroppedMeasurements);
+        Assert.Equal(SegmentedMetricPointStorage.ChunkSize * 2, metric.AggregatorStore.AllocatedMetricPointCapacity);
+
+        exportedItems.Clear();
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        exportedItems.Clear();
+        counter.Add(
+            1,
+            new KeyValuePair<string, object?>("key1", "reused-a"),
+            new KeyValuePair<string, object?>("key2", "reused-b"));
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        metric = Assert.Single(exportedItems);
+        Assert.Equal(1, GetMetricPointsSum(metric));
+        Assert.False(ContainsOverflowMetricPoint(metric));
+        Assert.Equal(0, metric.AggregatorStore.DroppedMeasurements);
+    }
+
+    [Fact]
+    public void LazyAllocationOverflowsDoubleCounter()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+#pragma warning disable OTEL1006 // Experimental API
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .SetExemplarFilter(ExemplarFilterType.TraceBased)
+            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = SegmentedMetricPointStorage.ChunkSize, EnableLazyAllocation = true })
+            .AddInMemoryExporter(exportedItems));
+#pragma warning restore OTEL1006 // Experimental API
+
+        var counter = meter.CreateCounter<double>("counter");
+        for (var i = 0; i < SegmentedMetricPointStorage.ChunkSize; i++)
+        {
+            counter.Add(1.5, new KeyValuePair<string, object?>("key", "value" + i));
+        }
+
+        counter.Add(7.25, new KeyValuePair<string, object?>("key", "overflow"));
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        var metric = Assert.Single(exportedItems);
+        Assert.True(metric.AggregatorStore.UsesLazyAllocation);
+        Assert.True(ContainsOverflowMetricPoint(metric));
+        Assert.Equal(1, metric.AggregatorStore.DroppedMeasurements);
+
+        double sum = 0;
+        foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+        {
+            sum += metricPoint.GetSumDouble();
+        }
+
+        Assert.Equal((SegmentedMetricPointStorage.ChunkSize * 1.5) + 7.25, sum);
+    }
+
+    [Fact]
     public void LazyAllocationUsesFinalAllowedSlotBeforeOverflow()
     {
         using var meter = new Meter(Utils.GetCurrentMethodName());
