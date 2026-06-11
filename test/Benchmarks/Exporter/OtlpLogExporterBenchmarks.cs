@@ -51,14 +51,21 @@ public class OtlpLogExporterBenchmarks
     public void GlobalSetupGrpc()
     {
         var appBuilder = WebApplication.CreateBuilder();
+        appBuilder.Services.AddGrpc();
+
         appBuilder.WebHost.ConfigureKestrel(options =>
         {
-            options.ListenLocalhost(4317, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http2);
+            options.ListenLocalhost(
+                4317,
+                listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http2);
         });
-        appBuilder.Services.AddGrpc();
+
         var app = appBuilder.Build();
+
         app.MapGrpcService<MockLogService>();
+
         app.Start();
+
         this.host = app;
 
         var options = new OtlpExporterOptions();
