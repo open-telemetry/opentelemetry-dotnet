@@ -50,7 +50,7 @@ internal sealed class AggregatorStore
     private readonly UpdateDoubleDelegate updateDoubleCallback;
     private readonly ExemplarFilterType exemplarFilter;
     private readonly Func<KeyValuePair<string, object?>[], int, int> lookupAggregatorStore;
-    private readonly bool enableMetricPointLazyAllocation;
+    private readonly bool enableLazyAllocation;
 
     private int[] currentMetricPointBatch;
     private int metricPointIndex;
@@ -65,7 +65,7 @@ internal sealed class AggregatorStore
         int cardinalityLimit,
         ExemplarFilterType? exemplarFilter = null,
         Func<ExemplarReservoir?>? exemplarReservoirFactory = null,
-        bool enableMetricPointLazyAllocation = false)
+        bool enableLazyAllocation = false)
     {
         this.name = metricStreamIdentity.InstrumentName;
 
@@ -74,8 +74,8 @@ internal sealed class AggregatorStore
         // Previously, these were included within the original cardinalityLimit, but now they are explicitly added to enhance clarity.
         this.NumberOfMetricPoints = cardinalityLimit + 2;
 
-        this.enableMetricPointLazyAllocation = enableMetricPointLazyAllocation;
-        if (enableMetricPointLazyAllocation)
+        this.enableLazyAllocation = enableLazyAllocation;
+        if (enableLazyAllocation)
         {
             this.segmentedMetricPoints = new(this.NumberOfMetricPoints);
             this.segmentedMetricPoints.EnsureAllocated(1);
@@ -125,7 +125,7 @@ internal sealed class AggregatorStore
         // Always reclaim unused MetricPoints for Delta aggregation temporality
         if (this.OutputDelta)
         {
-            this.availableMetricPoints = enableMetricPointLazyAllocation
+            this.availableMetricPoints = enableLazyAllocation
                 ? new Queue<int>()
                 : new Queue<int>(cardinalityLimit);
 
@@ -133,9 +133,9 @@ internal sealed class AggregatorStore
             // Using the DefaultConcurrencyLevel defined in the ConcurrentDictionary class: https://github.com/dotnet/runtime/blob/v7.0.5/src/libraries/System.Collections.Concurrent/src/System/Collections/Concurrent/ConcurrentDictionary.cs#L2020
             // We expect at the most (user provided cardinality limit) * 2 entries- one for sorted and one for unsorted input
             this.TagsToMetricPointIndexDictionaryDelta =
-                new ConcurrentDictionary<Tags, LookupData>(concurrencyLevel: Environment.ProcessorCount, capacity: enableMetricPointLazyAllocation ? Math.Min(cardinalityLimit, 128) : cardinalityLimit * 2);
+                new ConcurrentDictionary<Tags, LookupData>(concurrencyLevel: Environment.ProcessorCount, capacity: enableLazyAllocation ? Math.Min(cardinalityLimit, 128) : cardinalityLimit * 2);
 
-            if (!enableMetricPointLazyAllocation)
+            if (!enableLazyAllocation)
             {
                 // Add all the indices except for the reserved ones to the queue so that threads have
                 // readily available access to these MetricPoints for their use.
@@ -164,7 +164,7 @@ internal sealed class AggregatorStore
 
     internal double[] HistogramBounds => this.histogramExplicitBounds.Bounds;
 
-    internal bool UsesMetricPointLazyAllocation => this.enableMetricPointLazyAllocation;
+    internal bool UsesLazyAllocation => this.enableLazyAllocation;
 
     internal int AllocatedMetricPointCapacity => this.segmentedMetricPoints?.AllocatedCapacity ?? this.NumberOfMetricPoints;
 
@@ -236,7 +236,7 @@ internal sealed class AggregatorStore
         }
 
         // Index 0 and 1 are reserved for no tags and overflow
-        var endMetricPointIndex = this.enableMetricPointLazyAllocation
+        var endMetricPointIndex = this.enableLazyAllocation
             ? Math.Min(Volatile.Read(ref this.metricPointIndex), this.NumberOfMetricPoints - 1)
             : this.NumberOfMetricPoints - 1;
         for (var i = 2; i <= endMetricPointIndex; i++)
@@ -401,7 +401,7 @@ internal sealed class AggregatorStore
             return true;
         }
 
-        if (this.enableMetricPointLazyAllocation)
+        if (this.enableLazyAllocation)
         {
             var nextMetricPointIndex = this.metricPointIndex + 1;
             if (nextMetricPointIndex < this.NumberOfMetricPoints)

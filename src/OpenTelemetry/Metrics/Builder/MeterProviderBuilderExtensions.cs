@@ -285,20 +285,20 @@ public static class MeterProviderBuilderExtensions
     /// <para>The default is <see langword="false"/>, which preserves the eager
     /// metric point allocation behavior.</para>
     /// <para>A view can override this default by setting <see
-    /// cref="MetricStreamConfiguration.EnableMetricPointLazyAllocation"/>.</para>
+    /// cref="MetricStreamConfiguration.EnableLazyAllocation"/>.</para>
     /// </remarks>
     /// <param name="meterProviderBuilder"><see cref="MeterProviderBuilder"/>.</param>
     /// <param name="enabled"><see langword="true"/> to allocate metric point
     /// storage on demand; <see langword="false"/> to allocate eagerly.</param>
     /// <returns>The supplied <see cref="MeterProviderBuilder"/> for chaining.</returns>
-    [Experimental(DiagnosticDefinitions.LazyMetricPointAllocationExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-    public static MeterProviderBuilder SetDefaultMetricPointLazyAllocation(this MeterProviderBuilder meterProviderBuilder, bool enabled)
+    [Experimental(DiagnosticDefinitions.LazyAllocationExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+    public static MeterProviderBuilder SetDefaultLazyAllocation(this MeterProviderBuilder meterProviderBuilder, bool enabled)
     {
         meterProviderBuilder.ConfigureBuilder((sp, builder) =>
         {
             if (builder is MeterProviderBuilderSdk meterProviderBuilderSdk)
             {
-                meterProviderBuilderSdk.SetDefaultMetricPointLazyAllocation(enabled);
+                meterProviderBuilderSdk.SetDefaultLazyAllocation(enabled);
             }
         });
 

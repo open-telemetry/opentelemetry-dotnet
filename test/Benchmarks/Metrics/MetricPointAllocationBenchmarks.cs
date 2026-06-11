@@ -127,7 +127,7 @@ public class MetricPointAllocationBenchmarks
         if (enableLazyAllocation)
         {
 #pragma warning disable OTEL1006 // Experimental API
-            configuration.EnableMetricPointLazyAllocation = true;
+            configuration.EnableLazyAllocation = true;
 #pragma warning restore OTEL1006 // Experimental API
         }
 

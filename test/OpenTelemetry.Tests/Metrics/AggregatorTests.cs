@@ -461,22 +461,22 @@ public class AggregatorTests
     }
 
     [Fact]
-    internal void LazyMetricPointAllocationStartsWithInitialChunkAndEagerAllocationPreservesFullCapacity()
+    internal void LazyAllocationStartsWithInitialChunkAndEagerAllocationPreservesFullCapacity()
     {
         var cardinalityLimit = 10_000;
         var eagerAggregatorStore = CreateLongSumAggregatorStore(
             AggregationTemporality.Cumulative,
             cardinalityLimit,
-            enableMetricPointLazyAllocation: false);
+            enableLazyAllocation: false);
         var lazyAggregatorStore = CreateLongSumAggregatorStore(
             AggregationTemporality.Cumulative,
             cardinalityLimit);
 
-        Assert.False(eagerAggregatorStore.UsesMetricPointLazyAllocation);
+        Assert.False(eagerAggregatorStore.UsesLazyAllocation);
         Assert.Equal(cardinalityLimit + 2, eagerAggregatorStore.NumberOfMetricPoints);
         Assert.Equal(eagerAggregatorStore.NumberOfMetricPoints, eagerAggregatorStore.AllocatedMetricPointCapacity);
 
-        Assert.True(lazyAggregatorStore.UsesMetricPointLazyAllocation);
+        Assert.True(lazyAggregatorStore.UsesLazyAllocation);
         Assert.Equal(cardinalityLimit + 2, lazyAggregatorStore.NumberOfMetricPoints);
         Assert.Equal(SegmentedMetricPointStorage.ChunkSize, lazyAggregatorStore.AllocatedMetricPointCapacity);
     }
@@ -674,7 +674,7 @@ public class AggregatorTests
     private static AggregatorStore CreateLongSumAggregatorStore(
         AggregationTemporality temporality,
         int cardinalityLimit,
-        bool enableMetricPointLazyAllocation = true,
+        bool enableLazyAllocation = true,
         MetricStreamConfiguration? metricStreamConfiguration = null,
         Instrument? instrument = null,
         AggregationType aggregationType = AggregationType.LongSumIncomingDelta)
@@ -683,7 +683,7 @@ public class AggregatorTests
             aggregationType,
             temporality,
             cardinalityLimit,
-            enableMetricPointLazyAllocation: enableMetricPointLazyAllocation);
+            enableLazyAllocation: enableLazyAllocation);
 
     private static KeyValuePair<string, object?>[] CreateSingleTag(int value)
         => [new("tag", value)];

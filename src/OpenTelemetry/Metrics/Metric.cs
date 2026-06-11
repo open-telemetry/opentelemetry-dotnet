@@ -80,7 +80,7 @@ public sealed class Metric
         int cardinalityLimit,
         ExemplarFilterType? exemplarFilter = null,
         Func<ExemplarReservoir?>? exemplarReservoirFactory = null,
-        bool enableMetricPointLazyAllocation = false)
+        bool enableLazyAllocation = false)
     {
         this.InstrumentIdentity = instrumentIdentity;
 
@@ -197,7 +197,7 @@ public sealed class Metric
             cardinalityLimit,
             exemplarFilter,
             exemplarReservoirFactory,
-            enableMetricPointLazyAllocation);
+            enableLazyAllocation);
         this.Temporality = temporality;
     }
 

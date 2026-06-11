@@ -18,7 +18,7 @@ public abstract partial class MetricReader
     private readonly Lock instrumentCreationLock = new();
     private int metricLimit;
     private int cardinalityLimit;
-    private bool enableMetricPointLazyAllocation;
+    private bool enableLazyAllocation;
     private Metric?[] metrics = [];
     private Metric[] metricsCurrentBatch = [];
     private int metricIndex = -1;
@@ -84,7 +84,7 @@ public abstract partial class MetricReader
                         this.GetAggregationTemporality(metricStreamIdentity.InstrumentType),
                         this.cardinalityLimit,
                         exemplarFilter,
-                        enableMetricPointLazyAllocation: this.enableMetricPointLazyAllocation);
+                        enableLazyAllocation: this.enableLazyAllocation);
                 }
                 catch (NotSupportedException nse)
                 {
@@ -170,7 +170,7 @@ public abstract partial class MetricReader
                 else
                 {
 #pragma warning disable OTEL1006 // Experimental API
-                    var enableMetricPointLazyAllocation = metricStreamConfig?.EnableMetricPointLazyAllocation ?? this.enableMetricPointLazyAllocation;
+                    var enableLazyAllocation = metricStreamConfig?.EnableLazyAllocation ?? this.enableLazyAllocation;
 #pragma warning restore OTEL1006 // Experimental API
 
                     Metric metric = new(
@@ -179,7 +179,7 @@ public abstract partial class MetricReader
                         metricStreamConfig?.CardinalityLimit ?? this.cardinalityLimit,
                         exemplarFilter,
                         metricStreamConfig?.ExemplarReservoirFactory,
-                        enableMetricPointLazyAllocation);
+                        enableLazyAllocation);
 
                     this.instrumentIdentityToMetric[metricStreamIdentity] = metric;
                     this.metrics[index] = metric;
@@ -196,7 +196,7 @@ public abstract partial class MetricReader
     internal void ApplyParentProviderSettings(
         int metricLimit,
         int cardinalityLimit,
-        bool enableMetricPointLazyAllocation,
+        bool enableLazyAllocation,
         ExemplarFilterType? exemplarFilter,
         ExemplarFilterType? exemplarFilterForHistograms)
     {
@@ -204,7 +204,7 @@ public abstract partial class MetricReader
         this.metrics = new Metric[metricLimit];
         this.metricsCurrentBatch = new Metric[metricLimit];
         this.cardinalityLimit = cardinalityLimit;
-        this.enableMetricPointLazyAllocation = enableMetricPointLazyAllocation;
+        this.enableLazyAllocation = enableLazyAllocation;
         this.exemplarFilter = exemplarFilter;
         this.exemplarFilterForHistograms = exemplarFilterForHistograms;
     }

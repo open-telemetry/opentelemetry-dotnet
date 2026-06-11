@@ -67,7 +67,7 @@ internal sealed class MeterProviderSdk : MeterProvider
         this.viewConfigs = state.ViewConfigs;
 
         OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent(
-            $"MeterProvider configuration: {{MetricLimit={state.MetricLimit}, CardinalityLimit={state.CardinalityLimit}, EnableMetricPointLazyAllocation={state.EnableMetricPointLazyAllocation}, ExemplarFilter={this.ExemplarFilter}, ExemplarFilterForHistograms={this.ExemplarFilterForHistograms}}}.");
+            $"MeterProvider configuration: {{MetricLimit={state.MetricLimit}, CardinalityLimit={state.CardinalityLimit}, EnableLazyAllocation={state.EnableLazyAllocation}, ExemplarFilter={this.ExemplarFilter}, ExemplarFilterForHistograms={this.ExemplarFilterForHistograms}}}.");
 
         foreach (var reader in state.Readers)
         {
@@ -78,7 +78,7 @@ internal sealed class MeterProviderSdk : MeterProvider
             reader.ApplyParentProviderSettings(
                 state.MetricLimit,
                 state.CardinalityLimit,
-                state.EnableMetricPointLazyAllocation,
+                state.EnableLazyAllocation,
                 this.ExemplarFilter,
                 this.ExemplarFilterForHistograms);
 

@@ -108,10 +108,10 @@ public class MetricStreamConfiguration
     /// eagerly for this metric stream even if the MeterProvider default enables
     /// lazy allocation.</para>
     /// </remarks>
-    [Experimental(DiagnosticDefinitions.LazyMetricPointAllocationExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-    public bool? EnableMetricPointLazyAllocation { get; set; }
+    [Experimental(DiagnosticDefinitions.LazyAllocationExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+    public bool? EnableLazyAllocation { get; set; }
 #else
-    internal bool? EnableMetricPointLazyAllocation { get; set; }
+    internal bool? EnableLazyAllocation { get; set; }
 #endif
 
 #if EXPOSE_EXPERIMENTAL_FEATURES

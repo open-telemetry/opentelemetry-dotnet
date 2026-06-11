@@ -70,7 +70,7 @@ public class MetricsBenchmarks
     public MetricReaderTemporalityPreference AggregationTemporality { get; set; }
 
     [Params(false, true)]
-    public bool MetricPointLazyAllocation { get; set; }
+    public bool EnableLazyAllocation { get; set; }
 
     [GlobalSetup]
     public void Setup()
@@ -83,7 +83,7 @@ public class MetricsBenchmarks
             .AddView("counter", new ExplicitBucketHistogramConfiguration
             {
 #pragma warning disable OTEL1006 // Experimental API
-                EnableMetricPointLazyAllocation = this.MetricPointLazyAllocation,
+                EnableLazyAllocation = this.EnableLazyAllocation,
 #pragma warning restore OTEL1006 // Experimental API
             })
             .AddInMemoryExporter(exportedItems, metricReaderOptions =>
