@@ -218,18 +218,30 @@ public class BaggagePropagator : TextMapPropagator
                 }
 
                 var rawKey = pair.Slice(0, separatorIndex).Trim();
-                if (rawKey.IsEmpty || !IsValidKey(rawKey))
+
+                if (!IsValidKey(rawKey))
                 {
-                    // follow dotnet/runtime
-                    break;
+                    continue;
                 }
 
                 var key = rawKey.ToString();
 
                 var rawValue = pair.Slice(separatorIndex + 1);
+
+                var semicolonIndex = rawValue.IndexOf(';');
+                if (semicolonIndex >= 0)
+                {
+                    rawValue = rawValue.Slice(0, semicolonIndex);
+                }
+
                 rawValue = rawValue.Trim();
 
                 var value = DecodeIfNeeded(rawValue);
+
+                if (string.IsNullOrEmpty(key))
+                {
+                    continue;
+                }
 
                 baggageDictionary ??= new(StringComparer.Ordinal);
                 baggageDictionary[key] = value;

@@ -224,7 +224,7 @@ public class BaggagePropagatorTests
     }
 
     [Fact]
-    public void ValidateSemicolonMetadataReceivedOnExtraction()
+    public void ValidateSemicolonMetadataIgnoredOnExtraction()
     {
         var carrier = new Dictionary<string, string>
         {
@@ -237,7 +237,7 @@ public class BaggagePropagatorTests
         var baggage = propagationContext.Baggage.GetBaggage().FirstOrDefault();
 
         Assert.Equal("SomeKey", baggage.Key);
-        Assert.Equal("SomeValue;metadata", baggage.Value);
+        Assert.Equal("SomeValue", baggage.Value);
     }
 
     [Fact]
@@ -258,7 +258,7 @@ public class BaggagePropagatorTests
     }
 
     [Fact]
-    public void ValidateOptionalWhiteSpaceBeforeSemicolonPreserved()
+    public void ValidateOptionalWhiteSpaceBeforeSemicolonIgnored()
     {
         var carrier = new Dictionary<string, string>
         {
@@ -270,11 +270,11 @@ public class BaggagePropagatorTests
         var baggage = Assert.Single(propagationContext.Baggage.GetBaggage());
 
         Assert.Equal("SomeKey", baggage.Key);
-        Assert.Equal("SomeValue ; propertyKey=propertyValue", baggage.Value);
+        Assert.Equal("SomeValue", baggage.Value);
     }
 
     [Fact]
-    public void ValidateInvalidFormatSkippedStopsProcessing()
+    public void ValidateInvalidFormatSkipped()
     {
         var carrier = new Dictionary<string, string>
         {
@@ -283,7 +283,12 @@ public class BaggagePropagatorTests
             { BaggagePropagator.BaggageHeaderName, "noequals,=orphanvalue,validkey=validvalue," },
         };
         var propagationContext = this.baggage.Extract(default, carrier, Getter);
-        Assert.Empty(propagationContext.Baggage.GetBaggage());
+        Assert.Single(propagationContext.Baggage.GetBaggage());
+
+        var baggage = propagationContext.Baggage.GetBaggage().FirstOrDefault();
+
+        Assert.Equal("validkey", baggage.Key);
+        Assert.Equal("validvalue", baggage.Value);
     }
 
     [Fact]
@@ -791,7 +796,7 @@ public class BaggagePropagatorTests
     [InlineData("]")]
     [InlineData("{")]
     [InlineData("}")]
-    public void ValidateKeyWithInvalidTokenCharDroppedAndProcessingStopsExtract(string invalidChar)
+    public void ValidateKeyWithInvalidTokenCharDroppedOnExtract(string invalidChar)
     {
         var invalidKey = $"key{invalidChar}name";
         var carrier = new Dictionary<string, string>
@@ -803,7 +808,8 @@ public class BaggagePropagatorTests
         };
 
         var propagationContext = this.baggage.Extract(default, carrier, Getter);
-        Assert.Empty(propagationContext.Baggage.GetBaggage());
+        Assert.Single(propagationContext.Baggage.GetBaggage());
+        Assert.Equal("valid-key", propagationContext.Baggage.GetBaggage().First().Key);
     }
 
     [Fact]
