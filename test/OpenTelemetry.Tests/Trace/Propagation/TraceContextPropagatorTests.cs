@@ -154,6 +154,24 @@ public class TraceContextPropagatorTests
         Assert.Null(context.ActivityContext.TraceState);
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    [InlineData(" ,  ")]
+    public void TracestateToStringEmptyHeaderValue(string traceState)
+    {
+        var headers = new Dictionary<string, string>
+        {
+            { TraceParent, $"00-{TraceId}-{SpanId}-01" },
+            { TraceState, traceState },
+        };
+
+        var propagator = new TraceContextPropagator();
+        var context = propagator.Extract(default, headers, Getter);
+
+        Assert.Null(context.ActivityContext.TraceState);
+    }
+
     [Fact]
     public void TracestateToString()
     {
