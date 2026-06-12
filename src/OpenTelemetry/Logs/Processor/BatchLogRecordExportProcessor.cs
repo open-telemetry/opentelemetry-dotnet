@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 
 namespace OpenTelemetry;
@@ -11,6 +12,14 @@ namespace OpenTelemetry;
 /// </summary>
 public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
 {
+    // POC: stable component identity used for the otel.sdk.component.shutdown
+    // event. Spec recommends "<type>/<instance-counter>" with a monotonic
+    // counter scoped per SDK instance; for the POC we use a process-global
+    // counter, which is sufficient for the single-instance test cases.
+    private static int instanceCounter = -1;
+
+    private readonly string componentName;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="BatchLogRecordExportProcessor"/> class.
     /// </summary>
@@ -32,6 +41,8 @@ public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
             exporterTimeoutMilliseconds,
             maxExportBatchSize)
     {
+        var index = Interlocked.Increment(ref instanceCounter);
+        this.componentName = "batching_log_processor/" + index.ToString(System.Globalization.CultureInfo.InvariantCulture);
     }
 
     /// <inheritdoc/>
@@ -65,5 +76,24 @@ public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
                 this.TryExport(data.Copy());
                 break;
         }
+    }
+
+    /// <inheritdoc/>
+    protected override bool OnShutdown(int timeoutMilliseconds)
+    {
+        // POC: time the entire shutdown (worker drain + exporter shutdown)
+        // so the event reflects wall-clock cost the way the spec defines
+        // otel.component.shutdown.duration. Per the spec's Nesting note,
+        // this duration mechanically includes the inner exporter's shutdown.
+        var startTimestamp = Stopwatch.GetTimestamp();
+        var success = base.OnShutdown(timeoutMilliseconds);
+        var elapsed = Stopwatch.GetElapsedTime(startTimestamp);
+        var result = SdkSelfObservability.ClassifyResult(success, timeoutMilliseconds, elapsed.TotalMilliseconds);
+        SdkSelfObservability.EmitComponentShutdown(
+            componentType: "batching_log_processor",
+            componentName: this.componentName,
+            result: result,
+            durationSeconds: elapsed.TotalSeconds);
+        return success;
     }
 }

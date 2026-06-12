@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Buffers.Binary;
+using System.Diagnostics;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 
@@ -17,10 +19,19 @@ namespace OpenTelemetry.Exporter;
 public sealed class OtlpLogExporter : BaseExporter<LogRecord>
 {
     private const int GrpcStartWritePosition = 5;
+
+    // POC: process-global counters to assign a stable instance index per
+    // component type for otel.component.name. Separate counters per type so
+    // each protocol gets a clean "<type>/0..N" sequence.
+    private static int grpcInstanceCounter = -1;
+    private static int httpInstanceCounter = -1;
+
     private readonly SdkLimitOptions sdkLimitOptions;
     private readonly ExperimentalOptions experimentalOptions;
     private readonly OtlpExporterTransmissionHandler transmissionHandler;
     private readonly int startWritePosition;
+    private readonly string componentType;
+    private readonly string componentName;
 
     // Initial buffer size set to ~732KB.
     // This choice allows us to gradually grow the buffer while targeting a final capacity of around 100 MB,
@@ -52,9 +63,26 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
         this.experimentalOptions = experimentalOptions;
         this.sdkLimitOptions = sdkLimitOptions;
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
-        this.startWritePosition = exporterOptions.Protocol == OtlpExportProtocol.Grpc ? GrpcStartWritePosition : 0;
+        var isGrpc = exporterOptions.Protocol == OtlpExportProtocol.Grpc;
 #pragma warning restore CS0618 // Suppressing gRPC obsolete warning
+        this.startWritePosition = isGrpc ? GrpcStartWritePosition : 0;
         this.transmissionHandler = transmissionHandler ?? exporterOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Logs);
+
+        // POC: stable component identity for the otel.sdk.component.shutdown
+        // event. Type string comes from the well-known values in the spec
+        // registry; instance index is per-type.
+        if (isGrpc)
+        {
+            this.componentType = "otlp_grpc_log_exporter";
+            var index = Interlocked.Increment(ref grpcInstanceCounter);
+            this.componentName = "otlp_grpc_log_exporter/" + index.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+        else
+        {
+            this.componentType = "otlp_http_log_exporter";
+            var index = Interlocked.Increment(ref httpInstanceCounter);
+            this.componentName = "otlp_http_log_exporter/" + index.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
     }
 
     internal Resource Resource
@@ -101,5 +129,20 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
     }
 
     /// <inheritdoc />
-    protected override bool OnShutdown(int timeoutMilliseconds) => this.transmissionHandler?.Shutdown(timeoutMilliseconds) ?? true;
+    protected override bool OnShutdown(int timeoutMilliseconds)
+    {
+        // POC: time the underlying transmissionHandler shutdown and emit
+        // the otel.sdk.component.shutdown event. The handler returns bool,
+        // so timed_out is inferred from elapsed >= timeout.
+        var startTimestamp = Stopwatch.GetTimestamp();
+        var success = this.transmissionHandler?.Shutdown(timeoutMilliseconds) ?? true;
+        var elapsed = Stopwatch.GetElapsedTime(startTimestamp);
+        var result = SdkSelfObservability.ClassifyResult(success, timeoutMilliseconds, elapsed.TotalMilliseconds);
+        SdkSelfObservability.EmitComponentShutdown(
+            componentType: this.componentType,
+            componentName: this.componentName,
+            result: result,
+            durationSeconds: elapsed.TotalSeconds);
+        return success;
+    }
 }
