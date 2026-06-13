@@ -6,7 +6,7 @@ namespace OpenTelemetry;
 /// </summary>
 /// <remarks>
 /// Spec reference:
-/// <a href="https://www.w3.org/TR/baggage/#list-member">W3C Baggage §3.2 list-member</a>.
+/// <a href="https://www.w3.org/TR/baggage/#list-member">W3C Baggage 3.2 list-member</a>.
 /// <para>
 /// The W3C grammar is:
 ///   list-member = key OWS "=" OWS value *( OWS ";" OWS property )
