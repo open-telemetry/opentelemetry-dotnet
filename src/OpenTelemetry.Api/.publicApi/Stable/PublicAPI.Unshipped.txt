@@ -1,0 +1,10 @@
+OpenTelemetry.Baggage.GetBaggageWithMetadata() -> System.Collections.Generic.IReadOnlyDictionary<string!, OpenTelemetry.BaggageEntry>!
+OpenTelemetry.BaggageEntry
+OpenTelemetry.BaggageEntry.BaggageEntry() -> void
+OpenTelemetry.BaggageEntry.Equals(OpenTelemetry.BaggageEntry other) -> bool
+OpenTelemetry.BaggageEntry.Metadata.get -> string?
+OpenTelemetry.BaggageEntry.Value.get -> string!
+static OpenTelemetry.BaggageEntry.operator !=(OpenTelemetry.BaggageEntry left, OpenTelemetry.BaggageEntry right) -> bool
+static OpenTelemetry.BaggageEntry.operator ==(OpenTelemetry.BaggageEntry left, OpenTelemetry.BaggageEntry right) -> bool
+override OpenTelemetry.BaggageEntry.Equals(object? obj) -> bool
+override OpenTelemetry.BaggageEntry.GetHashCode() -> int

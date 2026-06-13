@@ -256,6 +256,10 @@ public class BaggagePropagator : TextMapPropagator
     /// Attempts to extract baggage from the collection, preserving W3C
     /// property metadata alongside each value.
     /// </summary>
+    /// <param name="baggageCollection">The collection of baggage header values.</param>
+    /// <param name="baggage">When this method returns, contains the extracted baggage key/value pairs, or <see langword="null"/> if extraction failed.</param>
+    /// <param name="baggageWithMetadata">When this method returns, contains the extracted baggage entries with W3C property metadata, or <see langword="null"/> if extraction failed.</param>
+    /// <returns><see langword="true"/> if baggage was successfully extracted; otherwise, <see langword="false"/>.</returns>
     /// <remarks>
     /// This method is a superset of <see cref="TryExtractBaggage"/>. Once
     /// this approach is approved, <see cref="TryExtractBaggage"/> should be

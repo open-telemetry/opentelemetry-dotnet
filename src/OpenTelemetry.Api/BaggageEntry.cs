@@ -1,3 +1,6 @@
+// Copyright The OpenTelemetry Authors
+// SPDX-License-Identifier: Apache-2.0
+
 namespace OpenTelemetry;
 
 /// <summary>
@@ -9,7 +12,7 @@ namespace OpenTelemetry;
 /// <a href="https://www.w3.org/TR/baggage/#list-member">W3C Baggage 3.2 list-member</a>.
 /// <para>
 /// The W3C grammar is:
-///   list-member = key OWS "=" OWS value *( OWS ";" OWS property )
+///   list-member = key OWS "=" OWS value *( OWS ";" OWS property ).
 /// </para>
 /// <para>
 /// <see cref="Value"/> contains only the <c>value</c> portion (decoded).
@@ -50,11 +53,21 @@ public readonly struct BaggageEntry : IEquatable<BaggageEntry>
     /// </remarks>
     public string? Metadata { get; }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Compares two <see cref="BaggageEntry"/> instances for equality.
+    /// </summary>
+    /// <param name="left">First baggage entry to compare.</param>
+    /// <param name="right">Second baggage entry to compare.</param>
+    /// <returns><see langword="true"/> if the entries are equal; otherwise, <see langword="false"/>.</returns>
     public static bool operator ==(BaggageEntry left, BaggageEntry right)
         => left.Equals(right);
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Compares two <see cref="BaggageEntry"/> instances for inequality.
+    /// </summary>
+    /// <param name="left">First baggage entry to compare.</param>
+    /// <param name="right">Second baggage entry to compare.</param>
+    /// <returns><see langword="true"/> if the entries are not equal; otherwise, <see langword="false"/>.</returns>
     public static bool operator !=(BaggageEntry left, BaggageEntry right)
         => !(left == right);
 
@@ -76,6 +89,7 @@ public readonly struct BaggageEntry : IEquatable<BaggageEntry>
             hash = (hash * 23) + (this.Value?.GetHashCode(StringComparison.Ordinal) ?? 0);
             hash = (hash * 23) + (this.Metadata?.GetHashCode(StringComparison.Ordinal) ?? 0);
         }
+
         return hash;
     }
 }

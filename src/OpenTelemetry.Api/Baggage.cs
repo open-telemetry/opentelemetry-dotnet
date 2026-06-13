@@ -19,7 +19,6 @@ public readonly struct Baggage : IEquatable<Baggage>
     private static readonly Dictionary<string, string> EmptyBaggage = [];
     private static readonly Dictionary<string, BaggageEntry> EmptyBaggageWithMetadata = [];
 
-
     private readonly Dictionary<string, string> baggage;
 
     // Populated only when baggage was extracted via TryExtractBaggageWithMetadata.
@@ -131,6 +130,14 @@ public readonly struct Baggage : IEquatable<Baggage>
         => baggage == default ? Current.GetBaggage() : baggage.GetBaggage();
 
     /// <summary>
+    /// Returns an enumerator that iterates through the <see cref="Baggage"/>.
+    /// </summary>
+    /// <param name="baggage">Optional <see cref="Baggage"/>. <see cref="Current"/> is used if not specified.</param>
+    /// <returns><see cref="Dictionary{TKey, TValue}.Enumerator"/>.</returns>
+    public static Dictionary<string, string>.Enumerator GetEnumerator(Baggage baggage = default)
+        => baggage == default ? Current.GetEnumerator() : baggage.GetEnumerator();
+
+    /// <summary>
     /// Returns the name/<see cref="BaggageEntry"/> pairs in the
     /// <see cref="Baggage"/>, including any W3C properties (metadata) that
     /// were present when the baggage was extracted from a propagation header.
@@ -146,17 +153,10 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// will be empty because no wire metadata exists for those entries.
     /// Use <see cref="GetBaggage()"/> in that case.
     /// </remarks>
+    [SuppressMessage("Design", "CA1024", Justification = "Method form required to match OpenTelemetry specification patterns.")]
     public IReadOnlyDictionary<string, BaggageEntry> GetBaggageWithMetadata()
         => (IReadOnlyDictionary<string, BaggageEntry>?)this.baggageWithMetadata
         ?? EmptyBaggageWithMetadata;
-
-    /// <summary>
-    /// Returns an enumerator that iterates through the <see cref="Baggage"/>.
-    /// </summary>
-    /// <param name="baggage">Optional <see cref="Baggage"/>. <see cref="Current"/> is used if not specified.</param>
-    /// <returns><see cref="Dictionary{TKey, TValue}.Enumerator"/>.</returns>
-    public static Dictionary<string, string>.Enumerator GetEnumerator(Baggage baggage = default)
-        => baggage == default ? Current.GetEnumerator() : baggage.GetEnumerator();
 
     /// <summary>
     /// Returns the value associated with the given name, or <see langword="null"/> if the given name is not present.
