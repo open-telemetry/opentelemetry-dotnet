@@ -252,6 +252,107 @@ public class BaggagePropagator : TextMapPropagator
         return baggageDictionary != null;
     }
 
+    /// <summary>
+    /// Attempts to extract baggage from the collection, preserving W3C
+    /// property metadata alongside each value.
+    /// </summary>
+    /// <remarks>
+    /// This method is a superset of <see cref="TryExtractBaggage"/>. Once
+    /// this approach is approved, <see cref="TryExtractBaggage"/> should be
+    /// replaced by this method and <see cref="Extract"/> updated accordingly.
+    /// See https://github.com/open-telemetry/opentelemetry-dotnet/issues/7374.
+    /// </remarks>
+    internal static bool TryExtractBaggageWithMetadata(
+        IEnumerable<string> baggageCollection,
+#if NET
+        [NotNullWhen(true)]
+#endif
+        out Dictionary<string, string>? baggage,
+        out Dictionary<string, BaggageEntry>? baggageWithMetadata)
+    {
+        var baggageLength = -1;
+        var done = false;
+        Dictionary<string, string>? baggageDictionary = null;
+        Dictionary<string, BaggageEntry>? baggageWithMetadataDictionary = null;
+
+        foreach (var item in baggageCollection)
+        {
+            if (done)
+            {
+                break;
+            }
+
+            if (string.IsNullOrEmpty(item))
+            {
+                continue;
+            }
+
+            var remaining = item.AsSpan();
+            while (!remaining.IsEmpty)
+            {
+                var pair = ReadNextSegment(ref remaining, ',');
+                baggageLength += pair.Length + 1;
+
+                if (baggageLength > MaxBaggageLength || baggageDictionary?.Count >= MaxBaggageItems)
+                {
+                    done = true;
+                    break;
+                }
+
+                var separatorIndex = pair.IndexOf('=');
+                if (separatorIndex < 0)
+                {
+                    continue;
+                }
+
+                var rawKey = pair.Slice(0, separatorIndex).Trim();
+
+                if (!IsValidKey(rawKey))
+                {
+                    continue;
+                }
+
+                var key = rawKey.ToString();
+
+                if (string.IsNullOrEmpty(key))
+                {
+                    continue;
+                }
+
+                // NEW in TryExtractBaggageWithMetadata:
+                string? metadata = null;
+                var rawValue = pair.Slice(separatorIndex + 1);
+
+                // Split value from W3C properties at the first semicolon.
+                var semicolonIndex = rawValue.IndexOf(';');
+                if (semicolonIndex >= 0)
+                {
+                    metadata = rawValue.Slice(semicolonIndex + 1).Trim().ToString();
+                    if (metadata.Length == 0)
+                    {
+                        metadata = null;
+                    }
+
+                    rawValue = rawValue.Slice(0, semicolonIndex).TrimEnd();
+                }
+
+                rawValue = rawValue.Trim();
+                var value = DecodeIfNeeded(rawValue);
+
+                baggageDictionary ??= new(StringComparer.Ordinal);
+                baggageDictionary[key] = value;
+
+                var entry = new BaggageEntry(value, metadata);
+                baggageWithMetadataDictionary ??= new(StringComparer.Ordinal);
+                baggageWithMetadataDictionary[key] = entry;
+            }
+        }
+
+        baggage = baggageDictionary;
+        baggageWithMetadata = baggageWithMetadataDictionary;
+        return baggageWithMetadataDictionary != null;
+    }
+
     private static ReadOnlySpan<char> ReadNextSegment(ref ReadOnlySpan<char> remaining, char separator)
     {
         var separatorIndex = remaining.IndexOf(separator);
