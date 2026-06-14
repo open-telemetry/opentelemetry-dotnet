@@ -58,6 +58,12 @@ jobs:
         persist-credentials: false
         show-progress: false
 
+    - name: Get Git commit timestamp
+      id: get-commit-timestamp
+      shell: pwsh
+      run: |
+        "epoch=$(git log -1 --pretty=%ct)" >> ${env:GITHUB_OUTPUT}
+
     - name: Setup .NET
       uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5.3.0
 
@@ -97,6 +103,7 @@ jobs:
       shell: pwsh
       env:
         PACK_TAG: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+        SOURCE_DATE_EPOCH: ${{ steps.get-commit-timestamp.outputs.epoch }}
       run: dotnet pack ./build/OpenTelemetry.proj --configuration Release --no-restore --no-build -p:"PackTag=${env:PACK_TAG}"
 
     - name: Install NuGet package validation tools
