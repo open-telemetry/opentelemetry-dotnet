@@ -19,6 +19,27 @@ internal abstract class OpenMetricsSerializer : TextFormatSerializer
     public override string GetMetadataName(PrometheusMetric metric)
         => metric.OpenMetricsMetadataName;
 
+    internal static bool ShouldPreferExemplar(DateTimeOffset currentTimestamp, DateTimeOffset candidateTimestamp)
+        => currentTimestamp <= candidateTimestamp;
+
+    internal static bool IsHistogramBucketExemplarMatch(
+        double exemplarValue,
+        double lowerBoundExclusive,
+        double upperBoundInclusive)
+    {
+        if (double.IsNaN(exemplarValue))
+        {
+            return false;
+        }
+
+        var isAboveLowerBound =
+            exemplarValue > lowerBoundExclusive ||
+            (lowerBoundExclusive == double.NegativeInfinity &&
+             exemplarValue == double.NegativeInfinity);
+
+        return exemplarValue <= upperBoundInclusive && isAboveLowerBound;
+    }
+
     protected override ReadOnlySpan<byte> GetMetricNameBytes(PrometheusMetric metric)
         => metric.OpenMetricsNameBytes;
 
@@ -64,27 +85,6 @@ internal abstract class OpenMetricsSerializer : TextFormatSerializer
 
     protected override int WriteHistogramCreated(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric, in MetricPoint metricPoint)
         => this.WriteCreatedMetric(buffer, cursor, metric, prometheusMetric, metricPoint, ReservedHistogramLabelNames);
-
-    private static bool ShouldPreferExemplar(DateTimeOffset currentTimestamp, DateTimeOffset candidateTimestamp)
-        => currentTimestamp <= candidateTimestamp;
-
-    private static bool IsHistogramBucketExemplarMatch(
-        double exemplarValue,
-        double lowerBoundExclusive,
-        double upperBoundInclusive)
-    {
-        if (double.IsNaN(exemplarValue))
-        {
-            return false;
-        }
-
-        var isAboveLowerBound =
-            exemplarValue > lowerBoundExclusive ||
-            (lowerBoundExclusive == double.NegativeInfinity &&
-             exemplarValue == double.NegativeInfinity);
-
-        return exemplarValue <= upperBoundInclusive && isAboveLowerBound;
-    }
 
     private static bool TryGetLatestExemplar(in MetricPoint metricPoint, out Exemplar exemplar)
     {

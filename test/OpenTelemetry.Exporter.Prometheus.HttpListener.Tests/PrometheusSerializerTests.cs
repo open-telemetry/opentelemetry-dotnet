@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using OpenTelemetry.Exporter.Prometheus.Serialization;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 
@@ -241,7 +242,7 @@ public sealed partial class PrometheusSerializerTests
     {
         var buffer = new byte[32];
 
-        var cursor = PrometheusSerializer.WriteLabelKey(buffer, 0, labelName!, openMetricsRequested: false);
+        var cursor = TextFormatSerializer.WriteLabelKey(buffer, 0, labelName!);
 
         Assert.Equal("_", Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -251,7 +252,7 @@ public sealed partial class PrometheusSerializerTests
     {
         var buffer = new byte[32];
 
-        var cursor = PrometheusSerializer.WriteLabelKey(buffer, 0, "a_b:c", openMetricsRequested: false);
+        var cursor = TextFormatSerializer.WriteLabelKey(buffer, 0, "a_b:c");
 
         Assert.Equal("a_b_c", Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -261,19 +262,17 @@ public sealed partial class PrometheusSerializerTests
     {
         var buffer = new byte[32];
 
-        var cursor = PrometheusSerializer.WriteLabelKey(buffer, 0, "a../b", openMetricsRequested: false);
+        var cursor = TextFormatSerializer.WriteLabelKey(buffer, 0, "a../b");
 
         Assert.Equal("a_b", Encoding.UTF8.GetString(buffer, 0, cursor));
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void WriteLabelKeyPrefixesLeadingDigits(bool openMetricsRequested)
+    [Fact]
+    public void WriteLabelKeyPrefixesLeadingDigits()
     {
         var buffer = new byte[32];
 
-        var cursor = PrometheusSerializer.WriteLabelKey(buffer, 0, "2foo", openMetricsRequested);
+        var cursor = TextFormatSerializer.WriteLabelKey(buffer, 0, "2foo");
 
         Assert.Equal("_2foo", Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -283,7 +282,7 @@ public sealed partial class PrometheusSerializerTests
     {
         var buffer = new byte[32];
 
-        var cursor = PrometheusSerializer.WriteLabelKey(buffer, 0, "a_b:c", openMetricsRequested: true);
+        var cursor = TextFormatSerializer.WriteLabelKey(buffer, 0, "a_b:c");
 
         Assert.Equal("a_b_c", Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -293,7 +292,7 @@ public sealed partial class PrometheusSerializerTests
     {
         var buffer = new byte[32];
 
-        var cursor = PrometheusSerializer.WriteLabelKey(buffer, 0, "a../b", openMetricsRequested: true);
+        var cursor = TextFormatSerializer.WriteLabelKey(buffer, 0, "a../b");
 
         Assert.Equal("a_b", Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -342,7 +341,7 @@ public sealed partial class PrometheusSerializerTests
         var buffer = new byte[32];
         var metric = new PrometheusMetric("A\u010A", string.Empty, PrometheusType.Gauge, disableTotalNameSuffixForCounters: false);
 
-        var cursor = PrometheusSerializer.WriteMetricName(buffer, 0, metric, openMetricsRequested: false);
+        var cursor = TextFormatSerializer.PrometheusV1.WriteMetricName(buffer, 0, metric);
 
         Assert.Equal("A_", Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -353,7 +352,7 @@ public sealed partial class PrometheusSerializerTests
         var buffer = new byte[32];
         var metric = new PrometheusMetric("metric", "s\u010A", PrometheusType.Gauge, disableTotalNameSuffixForCounters: false);
 
-        var cursor = PrometheusSerializer.WriteMetricName(buffer, 0, metric, openMetricsRequested: false);
+        var cursor = TextFormatSerializer.PrometheusV1.WriteMetricName(buffer, 0, metric);
 
         Assert.Equal("metric_s", Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -600,7 +599,7 @@ public sealed partial class PrometheusSerializerTests
 
         provider.ForceFlush();
 
-        Assert.False(PrometheusSerializer.CanWriteMetric(metrics[0]));
+        Assert.False(TextFormatSerializer.CanWriteMetric(metrics[0]));
     }
 
     [Fact]
@@ -769,8 +768,8 @@ public sealed partial class PrometheusSerializerTests
     {
         var timestamp = new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
-        Assert.True(PrometheusSerializer.ShouldPreferExemplar(timestamp, timestamp));
-        Assert.False(PrometheusSerializer.ShouldPreferExemplar(timestamp, timestamp.AddTicks(-1)));
+        Assert.True(OpenMetricsSerializer.ShouldPreferExemplar(timestamp, timestamp));
+        Assert.False(OpenMetricsSerializer.ShouldPreferExemplar(timestamp, timestamp.AddTicks(-1)));
     }
 
     [Fact]
@@ -896,8 +895,8 @@ public sealed partial class PrometheusSerializerTests
     [Fact]
     public void TryGetLatestHistogramBucketExemplarMatchesNegativeInfinityInFirstBucket()
     {
-        Assert.True(PrometheusSerializer.IsHistogramBucketExemplarMatch(double.NegativeInfinity, double.NegativeInfinity, 5));
-        Assert.False(PrometheusSerializer.IsHistogramBucketExemplarMatch(double.NegativeInfinity, 5, 10));
+        Assert.True(OpenMetricsSerializer.IsHistogramBucketExemplarMatch(double.NegativeInfinity, double.NegativeInfinity, 5));
+        Assert.False(OpenMetricsSerializer.IsHistogramBucketExemplarMatch(double.NegativeInfinity, 5, 10));
     }
 
     [Fact]
@@ -1214,16 +1213,16 @@ public sealed partial class PrometheusSerializerTests
     public void SerializeTagsBufferGrowthIsCappedToPreventUnboundedAllocation()
     {
         // Grows by doubling while under the cap.
-        Assert.Equal(256, PrometheusSerializer.GetNextSerializedTagsBufferSize(128));
+        Assert.Equal(256, TextFormatSerializer.GetNextSerializedTagsBufferSize(128));
 
         // Growth up to exactly the maximum is permitted.
         Assert.Equal(
-            PrometheusSerializer.MaxSerializedTagsBufferSize,
-            PrometheusSerializer.GetNextSerializedTagsBufferSize(PrometheusSerializer.MaxSerializedTagsBufferSize / 2));
+            TextFormatSerializer.MaxSerializedTagsBufferSize,
+            TextFormatSerializer.GetNextSerializedTagsBufferSize(TextFormatSerializer.MaxSerializedTagsBufferSize / 2));
 
         // Growth beyond the maximum fails fast rather than allocating without bound.
         Assert.Throws<InvalidOperationException>(
-            () => PrometheusSerializer.GetNextSerializedTagsBufferSize((PrometheusSerializer.MaxSerializedTagsBufferSize / 2) + 1));
+            () => TextFormatSerializer.GetNextSerializedTagsBufferSize((TextFormatSerializer.MaxSerializedTagsBufferSize / 2) + 1));
     }
 
     [Fact]
@@ -1232,7 +1231,7 @@ public sealed partial class PrometheusSerializerTests
         var value = "metric_name_total";
         var buffer = new byte[64];
 
-        var cursor = PrometheusSerializer.WriteAsciiStringNoEscape(buffer, 0, value);
+        var cursor = TextFormatSerializer.WriteAsciiStringNoEscape(buffer, 0, value);
 
         Assert.Equal("metric_name_total", Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -1243,7 +1242,7 @@ public sealed partial class PrometheusSerializerTests
         var buffer = new byte[64];
         var metric = new PrometheusMetric("test_metric", string.Empty, PrometheusType.Untyped, disableTotalNameSuffixForCounters: false);
 
-        var cursor = PrometheusSerializer.WriteTypeMetadata(buffer, 0, metric, openMetricsRequested: true);
+        var cursor = TextFormatSerializer.OpenMetricsV1.WriteTypeMetadata(buffer, 0, metric);
 
         Assert.Equal("# TYPE test_metric unknown\n", Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -1254,7 +1253,7 @@ public sealed partial class PrometheusSerializerTests
         var buffer = new byte[64];
         var metric = new PrometheusMetric("test_metric", string.Empty, PrometheusType.Untyped, disableTotalNameSuffixForCounters: false);
 
-        var cursor = PrometheusSerializer.WriteTypeMetadata(buffer, 0, metric, openMetricsRequested: false);
+        var cursor = TextFormatSerializer.PrometheusV1.WriteTypeMetadata(buffer, 0, metric);
 
         Assert.Equal("# TYPE test_metric untyped\n", Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -1264,7 +1263,7 @@ public sealed partial class PrometheusSerializerTests
     {
         var buffer = new byte[4];
 
-        Assert.Throws<IndexOutOfRangeException>(() => PrometheusSerializer.WriteAsciiStringNoEscape(buffer, 0, "metric"));
+        Assert.Throws<IndexOutOfRangeException>(() => TextFormatSerializer.WriteAsciiStringNoEscape(buffer, 0, "metric"));
     }
 
     [Fact]
@@ -1272,7 +1271,7 @@ public sealed partial class PrometheusSerializerTests
     {
         var buffer = new byte[128];
 
-        var cursor = PrometheusSerializer.WriteLabelValue(buffer, 0, "\"line1\\\nline2\"");
+        var cursor = TextFormatSerializer.WriteLabelValue(buffer, 0, "\"line1\\\nline2\"");
 
         Assert.Equal("\\\"line1\\\\\\nline2\\\"", Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -1320,7 +1319,7 @@ public sealed partial class PrometheusSerializerTests
     {
         var buffer = new byte[128];
 
-        var cursor = PrometheusSerializer.WriteLabel(buffer, 0, "value", 18446744073709551615UL, openMetricsRequested: false);
+        var cursor = TextFormatSerializer.WriteLabel(buffer, 0, "value", 18446744073709551615UL);
 
         Assert.Equal("value=\"18446744073709551615\"", Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -1335,7 +1334,7 @@ public sealed partial class PrometheusSerializerTests
     {
         var buffer = new byte[64];
 
-        var cursor = PrometheusSerializer.WriteLong(buffer, 0, value);
+        var cursor = TextFormatSerializer.WriteLong(buffer, 0, value);
 
         Assert.Equal(value.ToString(CultureInfo.InvariantCulture), Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -1350,7 +1349,7 @@ public sealed partial class PrometheusSerializerTests
     {
         var buffer = new byte[64];
 
-        var cursor = PrometheusSerializer.WriteDouble(buffer, 0, value);
+        var cursor = TextFormatSerializer.WriteDouble(buffer, 0, value);
 
         Assert.Equal(expected, Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -1360,7 +1359,7 @@ public sealed partial class PrometheusSerializerTests
     {
         var buffer = new byte[64];
 
-        var cursor = PrometheusSerializer.WriteDouble(buffer, 0, double.NaN);
+        var cursor = TextFormatSerializer.WriteDouble(buffer, 0, double.NaN);
 
         Assert.Equal("NaN", Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -1448,7 +1447,7 @@ public sealed partial class PrometheusSerializerTests
         var buffer = new byte[128];
         var resource = Resource.Empty.Merge(Resource.Empty);
 
-        var cursor = PrometheusSerializer.WriteTargetInfo(buffer, 0, resource, openMetricsRequested);
+        var cursor = (openMetricsRequested ? (TextFormatSerializer)TextFormatSerializer.OpenMetricsV1 : TextFormatSerializer.PrometheusV1).WriteTargetInfo(buffer, 0, resource);
 
         Assert.Equal(0, cursor);
     }
@@ -1481,7 +1480,7 @@ public sealed partial class PrometheusSerializerTests
     {
         var buffer = new byte[64];
 
-        var cursor = PrometheusSerializer.WriteCanonicalLabelValue(buffer, 0, value);
+        var cursor = TextFormatSerializer.WriteCanonicalLabelValue(buffer, 0, value);
 
         Assert.Equal(expected, Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -1491,7 +1490,7 @@ public sealed partial class PrometheusSerializerTests
     {
         var buffer = new byte[64];
 
-        var cursor = PrometheusSerializer.WriteCanonicalLabelValue(buffer, 0, double.NaN);
+        var cursor = TextFormatSerializer.WriteCanonicalLabelValue(buffer, 0, double.NaN);
 
         Assert.Equal("NaN", Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -1505,7 +1504,7 @@ public sealed partial class PrometheusSerializerTests
     {
         var buffer = new byte[bufferLength];
 
-        var exception = Assert.Throws<ArgumentException>(() => PrometheusSerializer.WriteCanonicalLabelValue(buffer, 0, value));
+        var exception = Assert.Throws<ArgumentException>(() => TextFormatSerializer.WriteCanonicalLabelValue(buffer, 0, value));
 
         Assert.Equal("Destination buffer too small.", exception.Message);
     }
@@ -1519,7 +1518,7 @@ public sealed partial class PrometheusSerializerTests
     {
         var buffer = new byte[64];
 
-        var cursor = PrometheusSerializer.WriteCanonicalLabelValue(buffer, 0, value);
+        var cursor = TextFormatSerializer.WriteCanonicalLabelValue(buffer, 0, value);
 
         Assert.Equal(expected, Encoding.UTF8.GetString(buffer, 0, cursor));
     }
@@ -1541,7 +1540,7 @@ public sealed partial class PrometheusSerializerTests
         {
             var buffer = new byte[64];
 
-            var cursor = PrometheusSerializer.WriteCanonicalLabelValue(buffer, 0, value);
+            var cursor = TextFormatSerializer.WriteCanonicalLabelValue(buffer, 0, value);
 
             return Encoding.UTF8.GetString(buffer, 0, cursor);
         }
@@ -1553,7 +1552,7 @@ public sealed partial class PrometheusSerializerTests
         const string value = "rocket:\uD83D\uDE80";
         var buffer = new byte[128];
 
-        var cursor = PrometheusSerializer.WriteUnicodeString(buffer, 0, value);
+        var cursor = TextFormatSerializer.WriteUnicodeString(buffer, 0, value);
         var actual = ToHexString(buffer, cursor);
         var expected = ToHexString(Encoding.UTF8.GetBytes(value), Encoding.UTF8.GetByteCount(value));
 
@@ -1566,7 +1565,7 @@ public sealed partial class PrometheusSerializerTests
         const string value = "rocket:\uD83D";
         var buffer = new byte[128];
 
-        var cursor = PrometheusSerializer.WriteUnicodeString(buffer, 0, value);
+        var cursor = TextFormatSerializer.WriteUnicodeString(buffer, 0, value);
         var actual = ToHexString(buffer, cursor);
         var expected = ToHexString(Encoding.UTF8.GetBytes(value), Encoding.UTF8.GetByteCount(value));
 
@@ -1585,12 +1584,11 @@ public sealed partial class PrometheusSerializerTests
 
         var prometheusMetric = new PrometheusMetric(metric.Name, metric.Unit, PrometheusType.Histogram, disableTotalNameSuffixForCounters: false);
 
-        var cursor = PrometheusSerializer.WriteMetric(
+        var cursor = TextFormatSerializer.PrometheusV1.WriteMetric(
             buffer,
             0,
             metric,
             prometheusMetric,
-            openMetricsRequested: false,
             writeType: true,
             writeUnit: true,
             writeHelp: true,
@@ -1642,12 +1640,12 @@ public sealed partial class PrometheusSerializerTests
     }
 
     private static int WriteMetric(byte[] buffer, int cursor, Metric metric, bool useOpenMetrics) =>
-        PrometheusSerializer.WriteMetric(
+        (useOpenMetrics ? (TextFormatSerializer)TextFormatSerializer.OpenMetricsV1 : TextFormatSerializer.PrometheusV1)
+        .WriteMetric(
             buffer,
             cursor,
             metric,
             PrometheusMetric.Create(metric, false),
-            useOpenMetrics,
             writeType: true,
             writeUnit: true,
             writeHelp: true,

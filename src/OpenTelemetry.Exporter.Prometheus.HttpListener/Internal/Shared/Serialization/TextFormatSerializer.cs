@@ -128,6 +128,18 @@ internal abstract class TextFormatSerializer
         },
     };
 
+    public static bool CanWriteMetric(Metric metric)
+    {
+        if (metric.MetricType == MetricType.ExponentialHistogram)
+        {
+            // Exponential histograms are not yet support by Prometheus.
+            // They are ignored for now.
+            return false;
+        }
+
+        return true;
+    }
+
     public int WriteMetric(
         byte[] buffer,
         int cursor,
@@ -336,7 +348,7 @@ internal abstract class TextFormatSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected static int WriteDouble(byte[] buffer, int cursor, double value)
+    internal static int WriteDouble(byte[] buffer, int cursor, double value)
     {
         if (MathHelper.IsFinite(value))
         {
@@ -370,7 +382,7 @@ internal abstract class TextFormatSerializer
     // Histogram "le" and summary "quantile" label values use OpenMetrics canonical numbers.
     // See https://prometheus.io/docs/specs/om/open_metrics_spec/#considerations-canonical-numbers
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected static int WriteCanonicalLabelValue(byte[] buffer, int cursor, double value) =>
+    internal static int WriteCanonicalLabelValue(byte[] buffer, int cursor, double value) =>
 #if NET
         cursor + FormatCanonicalLabelValue(buffer.AsSpan(cursor), value);
 #else
@@ -378,7 +390,7 @@ internal abstract class TextFormatSerializer
 #endif
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected static int WriteLong(byte[] buffer, int cursor, long value)
+    internal static int WriteLong(byte[] buffer, int cursor, long value)
     {
 #if NET
         var result = Utf8Formatter.TryFormat(value, buffer.AsSpan(cursor), out var bytesWritten);
@@ -389,7 +401,7 @@ internal abstract class TextFormatSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected static int WriteUnsignedLong(byte[] buffer, int cursor, ulong value)
+    internal static int WriteUnsignedLong(byte[] buffer, int cursor, ulong value)
     {
 #if NET
         var result = Utf8Formatter.TryFormat(value, buffer.AsSpan(cursor), out var bytesWritten);
@@ -400,7 +412,7 @@ internal abstract class TextFormatSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected static int WriteAsciiStringNoEscape(byte[] buffer, int cursor, string value)
+    internal static int WriteAsciiStringNoEscape(byte[] buffer, int cursor, string value)
     {
         for (var i = 0; i < value.Length; i++)
         {
@@ -411,7 +423,7 @@ internal abstract class TextFormatSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected static int WriteUnicodeNoEscape(byte[] buffer, int cursor, int ordinal)
+    internal static int WriteUnicodeNoEscape(byte[] buffer, int cursor, int ordinal)
     {
         // Strings MUST only consist of valid UTF-8 characters.
         // See https://prometheus.io/docs/specs/om/open_metrics_spec/#strings.
@@ -442,11 +454,11 @@ internal abstract class TextFormatSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected static int WriteUnicodeString(byte[] buffer, int cursor, string value)
+    internal static int WriteUnicodeString(byte[] buffer, int cursor, string value)
         => WriteEscapedString(buffer, cursor, value, escapeQuotationMarks: false);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected static int WriteLabelKey(byte[] buffer, int cursor, string value)
+    internal static int WriteLabelKey(byte[] buffer, int cursor, string value)
     {
         if (string.IsNullOrEmpty(value))
         {
@@ -458,11 +470,11 @@ internal abstract class TextFormatSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected static int WriteLabelValue(byte[] buffer, int cursor, string value)
+    internal static int WriteLabelValue(byte[] buffer, int cursor, string value)
         => WriteEscapedString(buffer, cursor, value, escapeQuotationMarks: true);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected static int WriteLabelValue(byte[] buffer, int cursor, object? value)
+    internal static int WriteLabelValue(byte[] buffer, int cursor, object? value)
     {
         switch (value)
         {
@@ -522,14 +534,14 @@ internal abstract class TextFormatSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected static int WriteLabel(byte[] buffer, int cursor, string labelKey, object? labelValue)
+    internal static int WriteLabel(byte[] buffer, int cursor, string labelKey, object? labelValue)
     {
         cursor = WriteLabelKey(buffer, cursor, labelKey);
         return WriteSanitizedLabel(buffer, cursor, labelValue);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected static int WriteExemplar(byte[] buffer, int cursor, in Exemplar exemplar, bool isLongValue)
+    internal static int WriteExemplar(byte[] buffer, int cursor, in Exemplar exemplar, bool isLongValue)
     {
         buffer[cursor++] = unchecked((byte)' ');
         buffer[cursor++] = unchecked((byte)'#');
@@ -574,7 +586,7 @@ internal abstract class TextFormatSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected static int WriteTags(
+    internal static int WriteTags(
         byte[] buffer,
         int cursor,
         Metric metric,
@@ -677,14 +689,14 @@ internal abstract class TextFormatSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected static int WriteUnixTimeSeconds(byte[] buffer, int cursor, DateTimeOffset value) =>
+    internal static int WriteUnixTimeSeconds(byte[] buffer, int cursor, DateTimeOffset value) =>
 #if NET
         WriteDouble(buffer, cursor, (value.UtcDateTime.Ticks - DateTimeOffset.UnixEpoch.Ticks) / (double)TimeSpan.TicksPerSecond);
 #else
         WriteDouble(buffer, cursor, (value.UtcDateTime.Ticks - UnixEpochTicks) / (double)TimeSpan.TicksPerSecond);
 #endif
 
-    protected static byte[] SerializeTags(
+    internal static byte[] SerializeTags(
         Metric metric,
         ReadOnlyTagCollection tags,
         IReadOnlyCollection<string>? reservedOutputKeys = null)
@@ -717,7 +729,7 @@ internal abstract class TextFormatSerializer
         }
     }
 
-    protected static int WriteSerializedTagValues(
+    internal static int WriteSerializedTagValues(
         byte[] buffer,
         int cursor,
         ReadOnlySpan<byte> serializedTags,
@@ -742,7 +754,7 @@ internal abstract class TextFormatSerializer
         return cursor;
     }
 
-    protected static int WriteSerializedTags(
+    internal static int WriteSerializedTags(
         byte[] buffer,
         int cursor,
         ReadOnlySpan<byte> serializedTags,
@@ -755,40 +767,16 @@ internal abstract class TextFormatSerializer
         return cursor;
     }
 
-    // The bytes used when writing a metric's sample family name.
-    protected abstract ReadOnlySpan<byte> GetMetricNameBytes(PrometheusMetric metric);
-
-    // The bytes used when writing a metric's metadata (TYPE/UNIT/HELP) name.
-    protected abstract ReadOnlySpan<byte> GetMetricMetadataNameBytes(PrometheusMetric metric);
-
-    // Writes the value of a histogram bucket's "le" upper bound.
-    protected abstract int WriteExplicitBound(byte[] buffer, int cursor, double explicitBound);
-
-    // Writes the exemplar (if any) that follows a counter or gauge sample value.
-    protected abstract int WriteCounterExemplar(byte[] buffer, int cursor, in MetricPoint metricPoint, PrometheusMetric prometheusMetric, bool isLongValue);
-
-    // Writes the "_created" series (if any) that follows a counter sample.
-    protected abstract int WriteCounterCreated(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric, in MetricPoint metricPoint);
-
-    // Writes the exemplar (if any) that follows a histogram bucket sample value.
-    protected abstract int WriteHistogramBucketExemplar(byte[] buffer, int cursor, in MetricPoint metricPoint, double lowerBoundExclusive, double upperBoundInclusive);
-
-    // Determines whether the histogram "_sum" and "_count" series should be written.
-    protected abstract bool ShouldWriteSumAndCount(bool hasNegativeBucketBounds);
-
-    // Writes the "_created" series (if any) that follows a histogram's samples.
-    protected abstract int WriteHistogramCreated(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric, in MetricPoint metricPoint);
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected int WriteMetricName(byte[] buffer, int cursor, PrometheusMetric metric)
+    internal int WriteMetricName(byte[] buffer, int cursor, PrometheusMetric metric)
         => WriteUtf8NoEscape(buffer, cursor, this.GetMetricNameBytes(metric));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected int WriteMetricMetadataName(byte[] buffer, int cursor, PrometheusMetric metric)
+    internal int WriteMetricMetadataName(byte[] buffer, int cursor, PrometheusMetric metric)
         => WriteUtf8NoEscape(buffer, cursor, this.GetMetricMetadataNameBytes(metric));
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected int WriteHelpMetadata(byte[] buffer, int cursor, PrometheusMetric metric, string metricDescription)
+    internal int WriteHelpMetadata(byte[] buffer, int cursor, PrometheusMetric metric, string metricDescription)
     {
         if (string.IsNullOrEmpty(metricDescription))
         {
@@ -810,7 +798,7 @@ internal abstract class TextFormatSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected int WriteTypeMetadata(byte[] buffer, int cursor, PrometheusMetric metric)
+    internal int WriteTypeMetadata(byte[] buffer, int cursor, PrometheusMetric metric)
     {
         var metricType = this.MapMetricType(metric.Type);
 
@@ -827,7 +815,7 @@ internal abstract class TextFormatSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected int WriteUnitMetadata(byte[] buffer, int cursor, PrometheusMetric metric, string? unit)
+    internal int WriteUnitMetadata(byte[] buffer, int cursor, PrometheusMetric metric, string? unit)
     {
         if (string.IsNullOrEmpty(unit))
         {
@@ -860,7 +848,7 @@ internal abstract class TextFormatSerializer
         return cursor;
     }
 
-    protected string MapMetricType(PrometheusType type) => type switch
+    internal string MapMetricType(PrometheusType type) => type switch
     {
         PrometheusType.Gauge => "gauge",
         PrometheusType.Counter => "counter",
@@ -871,6 +859,30 @@ internal abstract class TextFormatSerializer
         // See https://prometheus.io/docs/specs/om/open_metrics_spec/#unknown-1
         PrometheusType.Untyped or _ => this.UnknownMetricTypeName,
     };
+
+    // The bytes used when writing a metric's sample family name.
+    protected abstract ReadOnlySpan<byte> GetMetricNameBytes(PrometheusMetric metric);
+
+    // The bytes used when writing a metric's metadata (TYPE/UNIT/HELP) name.
+    protected abstract ReadOnlySpan<byte> GetMetricMetadataNameBytes(PrometheusMetric metric);
+
+    // Writes the value of a histogram bucket's "le" upper bound.
+    protected abstract int WriteExplicitBound(byte[] buffer, int cursor, double explicitBound);
+
+    // Writes the exemplar (if any) that follows a counter or gauge sample value.
+    protected abstract int WriteCounterExemplar(byte[] buffer, int cursor, in MetricPoint metricPoint, PrometheusMetric prometheusMetric, bool isLongValue);
+
+    // Writes the "_created" series (if any) that follows a counter sample.
+    protected abstract int WriteCounterCreated(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric, in MetricPoint metricPoint);
+
+    // Writes the exemplar (if any) that follows a histogram bucket sample value.
+    protected abstract int WriteHistogramBucketExemplar(byte[] buffer, int cursor, in MetricPoint metricPoint, double lowerBoundExclusive, double upperBoundInclusive);
+
+    // Determines whether the histogram "_sum" and "_count" series should be written.
+    protected abstract bool ShouldWriteSumAndCount(bool hasNegativeBucketBounds);
+
+    // Writes the "_created" series (if any) that follows a histogram's samples.
+    protected abstract int WriteHistogramCreated(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric, in MetricPoint metricPoint);
 
     private static string GetLabelValueString(object? labelValue) => labelValue switch
     {
