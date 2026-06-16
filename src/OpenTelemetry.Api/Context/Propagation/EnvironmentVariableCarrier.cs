@@ -74,6 +74,12 @@ static class EnvironmentVariableCarrier
     /// A single-item sequence containing the value when the key exists;
     /// otherwise <see langword="null"/>.
     /// </returns>
+    /// <remarks>
+    /// The requested key is normalized and only the matching normalized
+    /// environment variable name is read from the carrier. A non-normalized
+    /// carrier key is not matched, even when it would normalize to the
+    /// requested key.
+    /// </remarks>
     public static IEnumerable<string>? Get<T>(T carrier, string key)
         where T : IEnumerable<KeyValuePair<string, string?>>
     {
@@ -96,7 +102,10 @@ static class EnvironmentVariableCarrier
 
         foreach (var entry in carrier)
         {
-            if (IsNormalizedMatch(entry.Key, normalizedKey.AsSpan()))
+            // The specification requires reading only the normalized environment
+            // variable name. Non-normalized carrier keys are not matched, even
+            // when they would normalize to the requested key.
+            if (string.Equals(entry.Key, normalizedKey, StringComparison.Ordinal))
             {
                 return ToEnumerable(entry.Value);
             }
@@ -166,37 +175,6 @@ static class EnvironmentVariableCarrier
         foreach (var ch in key)
         {
             if (!IsNormalized(ch))
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private static bool IsNormalizedMatch(string candidateKey, ReadOnlySpan<char> normalizedKey)
-    {
-        var candidateLength = candidateKey.Length;
-        var normalizedIndex = 0;
-
-        if (candidateLength > 0 && char.IsAsciiDigit(candidateKey[0]))
-        {
-            if (normalizedKey.IsEmpty || normalizedKey[0] != '_')
-            {
-                return false;
-            }
-
-            normalizedIndex = 1;
-        }
-
-        if (candidateLength + normalizedIndex != normalizedKey.Length)
-        {
-            return false;
-        }
-
-        for (var candidateIndex = 0; candidateIndex < candidateLength; candidateIndex++, normalizedIndex++)
-        {
-            if (NormalizeCharacter(candidateKey[candidateIndex]) != normalizedKey[normalizedIndex])
             {
                 return false;
             }
