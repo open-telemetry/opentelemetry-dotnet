@@ -902,7 +902,9 @@ public struct MetricPoint
     /// <returns><see langword="true"/> if there is unexported data; otherwise, <see langword="false"/>.</returns>
     internal bool HasUnexportedData()
     {
+#pragma warning disable IDE0066 // Convert switch statement to expression
         switch (this.aggType)
+#pragma warning restore IDE0066 // Convert switch statement to expression
         {
             case AggregationType.LongSumIncomingDelta:
             case AggregationType.LongSumIncomingCumulative:
