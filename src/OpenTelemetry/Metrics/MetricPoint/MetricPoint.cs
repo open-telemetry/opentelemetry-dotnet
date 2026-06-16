@@ -918,6 +918,13 @@ public struct MetricPoint
             case AggregationType.DoubleGauge:
                 return InterlockedHelper.Read(ref this.runningValue.AsDouble) != this.snapshotValue.AsDouble;
 
+            case AggregationType.Base2ExponentialHistogram:
+            case AggregationType.Base2ExponentialHistogramWithMinMax:
+            case AggregationType.Histogram:
+            case AggregationType.HistogramWithBuckets:
+            case AggregationType.HistogramWithMinMax:
+            case AggregationType.HistogramWithMinMaxBuckets:
+            case AggregationType.Invalid:
             default:
                 // Histogram aggregations reset the running count to zero on each delta snapshot, so
                 // a non-zero running count means measurements have been recorded since the last
