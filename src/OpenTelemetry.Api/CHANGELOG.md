@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed `TraceContextPropagator` to normalize empty `tracestate` header values
+  to `null` when extracting trace context.
+  ([#7407](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7407))
+
 * Fix issue with `Baggage.Current` updates made in a child async flow that
   could leak back into the parent flow.
   ([#7191](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7191))
