@@ -1147,27 +1147,7 @@ internal abstract class TextFormatSerializer
         return cursor + value.Length;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int WriteUnicodeScalar(byte[] buffer, int cursor, string value, ref int index)
-    {
-        // Strings MUST only consist of valid UTF-8 characters.
-        // See https://prometheus.io/docs/specs/om/open_metrics_spec/#strings.
-        var current = value[index];
-
-        if (!char.IsSurrogate(current))
-        {
-            return WriteUnicodeNoEscape(buffer, cursor, current);
-        }
-
-        if (char.IsHighSurrogate(current) && index < value.Length - 1 && char.IsLowSurrogate(value[index + 1]))
-        {
-            index++;
-            return WriteUnicodeNoEscape(buffer, cursor, char.ConvertToUtf32(current, value[index]));
-        }
-
-        return WriteUnicodeNoEscape(buffer, cursor, 0xFFFD);
-    }
-
+#if NET
     private static int GetUnicodeOrdinal(ReadOnlySpan<char> value, out int charsConsumed)
     {
         const int UnicodeReplacementCharacter = 0xFFFD;
@@ -1195,6 +1175,28 @@ internal abstract class TextFormatSerializer
         charsConsumed = 1;
         return character;
     }
+#else
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int WriteUnicodeScalar(byte[] buffer, int cursor, string value, ref int index)
+    {
+        // Strings MUST only consist of valid UTF-8 characters.
+        // See https://prometheus.io/docs/specs/om/open_metrics_spec/#strings.
+        var current = value[index];
+
+        if (!char.IsSurrogate(current))
+        {
+            return WriteUnicodeNoEscape(buffer, cursor, current);
+        }
+
+        if (char.IsHighSurrogate(current) && index < value.Length - 1 && char.IsLowSurrogate(value[index + 1]))
+        {
+            index++;
+            return WriteUnicodeNoEscape(buffer, cursor, char.ConvertToUtf32(current, value[index]));
+        }
+
+        return WriteUnicodeNoEscape(buffer, cursor, 0xFFFD);
+    }
+#endif
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int WriteSanitizedLabel(byte[] buffer, int cursor, object? labelValue)
@@ -1320,8 +1322,10 @@ internal abstract class TextFormatSerializer
             Debug.Assert(orderedKeys != null, $"{nameof(orderedKeys)} should not be null.");
             Debug.Assert(labelsBySanitizedKey != null, $"{nameof(labelsBySanitizedKey)} should not be null.");
 
+#pragma warning disable IDE0370 // Remove unnecessary suppression
             var orderedOutputKeys = orderedKeys!;
             var groupedLabels = labelsBySanitizedKey!;
+#pragma warning restore IDE0370 // Remove unnecessary suppression
 
             foreach (var key in orderedOutputKeys)
             {
@@ -1444,7 +1448,7 @@ internal abstract class TextFormatSerializer
                 : FormatFixedAndTrim(destination, value, Math.Max(1, -exponent));
         }
 
-        char symbol = absoluteValue >= 1e6 || absoluteValue < 1e-4 ? 'e' : 'G';
+        var symbol = absoluteValue is >= 1e6 or < 1e-4 ? 'e' : 'G';
 
         return TryFormat(destination, value, new(symbol, 17));
 
@@ -1550,7 +1554,7 @@ internal abstract class TextFormatSerializer
                 : FormatFixedAndTrim(value, Math.Max(1, -exponent));
         }
 
-        return value.ToString(absoluteValue >= 1e6 || absoluteValue < 1e-4 ? "e17" : "G17", CultureInfo.InvariantCulture);
+        return value.ToString(absoluteValue is >= 1e6 or < 1e-4 ? "e17" : "G17", CultureInfo.InvariantCulture);
 
         static string FormatFixedAndTrim(double value, int decimalPlaces)
         {

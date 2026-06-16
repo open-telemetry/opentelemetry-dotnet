@@ -7,20 +7,6 @@ using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 
-/*
-BenchmarkDotNet v0.13.10, Windows 11 (10.0.23424.1000)
-Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
-.NET SDK 8.0.100
-  [Host]     : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
-  DefaultJob : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
-
-
-| Method  | UseWithRef | Mean     | Error    | StdDev   | Allocated |
-|-------- |----------- |---------:|---------:|---------:|----------:|
-| Collect | False      | 21.03 us | 0.148 us | 0.361 us |      96 B |
-| Collect | True       | 20.37 us | 0.399 us | 0.559 us |      96 B |
-*/
-
 namespace Benchmarks.Metrics;
 
 #pragma warning disable CA1001 // Types that own disposable fields should be disposable - handled by GlobalCleanup
@@ -29,8 +15,11 @@ public class MetricCollectBenchmarks
 {
     private readonly string[] dimensionValues = ["DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10"];
 
-    // TODO: Confirm if this needs to be thread-safe
+#if NET
+    private readonly Random random = Random.Shared;
+#else
     private readonly Random random = new();
+#endif
     private Counter<double>? counter;
     private MeterProvider? provider;
     private Meter? meter;
@@ -40,6 +29,9 @@ public class MetricCollectBenchmarks
 
     [Params(false, true)]
     public bool UseWithRef { get; set; }
+
+    [Params(MetricReaderTemporalityPreference.Cumulative, MetricReaderTemporalityPreference.Delta)]
+    public MetricReaderTemporalityPreference TemporalityPreference { get; set; }
 
     [GlobalSetup]
     public void Setup()
@@ -74,7 +66,7 @@ public class MetricCollectBenchmarks
 
         this.reader = new BaseExportingMetricReader(metricExporter)
         {
-            TemporalityPreference = MetricReaderTemporalityPreference.Cumulative,
+            TemporalityPreference = this.TemporalityPreference,
         };
 
         this.meter = new Meter(Utils.GetCurrentMethodName());

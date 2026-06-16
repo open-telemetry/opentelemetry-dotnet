@@ -11,6 +11,7 @@ namespace OpenTelemetry.Logs;
 public class LogRecordExportProcessorOptions
 {
     private BatchExportLogRecordProcessorOptions batchExportProcessorOptions;
+    private ExportProcessorType? exportProcessorType;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="LogRecordExportProcessorOptions"/> class.
@@ -29,7 +30,11 @@ public class LogRecordExportProcessorOptions
     /// <summary>
     /// Gets or sets the export processor type to be used. The default value is <see cref="ExportProcessorType.Batch"/>.
     /// </summary>
-    public ExportProcessorType ExportProcessorType { get; set; } = ExportProcessorType.Batch;
+    public ExportProcessorType ExportProcessorType
+    {
+        get => this.exportProcessorType ?? ExportProcessorType.Batch;
+        set => this.exportProcessorType = value;
+    }
 
     /// <summary>
     /// Gets or sets the batch export options. Ignored unless <see cref="ExportProcessorType"/> is <see cref="ExportProcessorType.Batch"/>.
@@ -43,4 +48,6 @@ public class LogRecordExportProcessorOptions
             this.batchExportProcessorOptions = value;
         }
     }
+
+    internal ExportProcessorType? ExportProcessorTypeValue => this.exportProcessorType;
 }
