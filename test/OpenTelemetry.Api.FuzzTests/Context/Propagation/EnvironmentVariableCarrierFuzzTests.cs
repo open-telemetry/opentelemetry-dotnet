@@ -94,10 +94,6 @@ public class EnvironmentVariableCarrierFuzzTests
         expected.TraceFlags == actual.TraceFlags &&
         expected.TraceState == actual.TraceState;
 
-    private static bool DictionariesEqual(Dictionary<string, string> expected, IReadOnlyDictionary<string, string> actual) =>
-        expected.Count == actual.Count &&
-        expected.All(pair => actual.TryGetValue(pair.Key, out var value) && value == pair.Value);
-
     private static bool IsValidEnvironmentCharacter(char value) =>
         value is (>= 'A' and <= 'Z') or (>= '0' and <= '9') or '_';
 
