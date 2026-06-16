@@ -322,13 +322,17 @@ public static class OtlpLogExporterHelperExtensions
                 otlpExporter = configureExporterInstance(otlpExporter);
             }
 
-            if (processorOptions.ExportProcessorType == ExportProcessorType.Simple)
+            var exportProcessorType = processorOptions.ExportProcessorTypeValue
+                ?? exporterOptions.ExportProcessorTypeValue
+                ?? ExportProcessorType.Batch;
+
+            if (exportProcessorType == ExportProcessorType.Simple)
             {
                 return new SimpleLogRecordExportProcessor(otlpExporter);
             }
             else
             {
-                var batchOptions = processorOptions.BatchExportProcessorOptions;
+                var batchOptions = GetBatchExportProcessorOptions(exporterOptions, processorOptions);
 
                 return new BatchLogRecordExportProcessor(
                     otlpExporter,
@@ -343,6 +347,38 @@ public static class OtlpLogExporterHelperExtensions
             otlpExporter.Dispose();
             throw;
         }
+    }
+
+    private static (int MaxQueueSize, int ScheduledDelayMilliseconds, int ExporterTimeoutMilliseconds, int MaxExportBatchSize) GetBatchExportProcessorOptions(
+        OtlpExporterOptions exporterOptions,
+        LogRecordExportProcessorOptions processorOptions)
+    {
+        var processorBatchOptions = processorOptions.BatchExportProcessorOptions;
+        var exporterBatchOptions = exporterOptions.BatchExportProcessorOptionsForFallback;
+
+        var maxQueueSize = processorBatchOptions.MaxQueueSizeValue
+            ?? exporterBatchOptions?.MaxQueueSizeValue
+            ?? BatchExportProcessor<LogRecord>.DefaultMaxQueueSize;
+        var scheduledDelayMilliseconds = processorBatchOptions.ScheduledDelayMillisecondsValue
+            ?? exporterBatchOptions?.ScheduledDelayMillisecondsValue
+            ?? BatchExportProcessor<LogRecord>.DefaultScheduledDelayMilliseconds;
+        var exporterTimeoutMilliseconds = processorBatchOptions.ExporterTimeoutMillisecondsValue
+            ?? exporterBatchOptions?.ExporterTimeoutMillisecondsValue
+            ?? BatchExportProcessor<LogRecord>.DefaultExporterTimeoutMilliseconds;
+        var maxExportBatchSize = processorBatchOptions.MaxExportBatchSizeValue
+            ?? exporterBatchOptions?.MaxExportBatchSizeValue
+            ?? BatchExportProcessor<LogRecord>.DefaultMaxExportBatchSize;
+
+        if (maxExportBatchSize > maxQueueSize)
+        {
+            maxExportBatchSize = maxQueueSize;
+        }
+
+        return (
+            maxQueueSize,
+            scheduledDelayMilliseconds,
+            exporterTimeoutMilliseconds,
+            maxExportBatchSize);
     }
 
     private static T GetOptions<T>(

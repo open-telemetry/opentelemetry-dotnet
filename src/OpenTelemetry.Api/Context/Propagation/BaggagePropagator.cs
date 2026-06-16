@@ -372,8 +372,6 @@ public class BaggagePropagator : TextMapPropagator
         return result;
     }
 
-    private static string EncodeKey(ReadOnlySpan<char> key) => Encode(key, isKey: true);
-
     private static string EncodeValue(ReadOnlySpan<char> value) => Encode(value, isKey: false);
 
     private static string Encode(ReadOnlySpan<char> value, bool isKey)
@@ -442,7 +440,7 @@ public class BaggagePropagator : TextMapPropagator
                 // Non-BMP pair: encode both chars as one UTF-8 sequence.
                 // Passing the pair to Encoding.UTF8 produces the correct 4-byte result
                 // rather than two replacement characters.
-                foreach (var b in Encoding.UTF8.GetBytes(new string(new[] { c, value[i + 1] })))
+                foreach (var b in Encoding.UTF8.GetBytes(new string([c, value[i + 1]])))
                 {
                     AppendPercentEncoded(sb, b);
                 }

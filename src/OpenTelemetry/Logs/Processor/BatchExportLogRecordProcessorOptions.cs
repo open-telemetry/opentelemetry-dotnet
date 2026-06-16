@@ -32,10 +32,10 @@ public class BatchExportLogRecordProcessorOptions : BatchExportProcessorOptions<
 
     internal BatchExportLogRecordProcessorOptions(IConfiguration configuration)
     {
-        var maxQueueSize = this.MaxQueueSize;
-        var maxExportBatchSize = this.MaxExportBatchSize;
-        var exporterTimeoutMilliseconds = this.ExporterTimeoutMilliseconds;
-        var scheduledDelayMilliseconds = this.ScheduledDelayMilliseconds;
+        int? maxQueueSize = null;
+        int? maxExportBatchSize = null;
+        int? exporterTimeoutMilliseconds = null;
+        int? scheduledDelayMilliseconds = null;
 
         if (configuration.TryGetIntValue(OpenTelemetrySdkEventSource.Log, ExporterTimeoutEnvVarKey, out var value))
         {

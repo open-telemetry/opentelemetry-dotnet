@@ -884,6 +884,49 @@ public struct MetricPoint
     }
 
     /// <summary>
+    /// Determines whether this MetricPoint has measurements that have been recorded since the
+    /// last collection but not yet exported (i.e. it is not safe to reclaim).
+    /// </summary>
+    /// <remarks>
+    /// This must only be called by the collection thread after it has exclusively claimed the
+    /// MetricPoint for reclaim (<see cref="ReferenceCount"/> == <see cref="int.MinValue"/>). At
+    /// that point no <c>Update</c> can be in progress and the <c>CompareExchange</c> that set the
+    /// claim establishes an acquire barrier, so the running value reflects all completed updates.
+    /// The decision is derived from the authoritative running value rather than the
+    /// <see cref="MetricPointStatus"/> flag: that flag is written by both <c>Update</c> and
+    /// <c>Snapshot</c> without a common lock, so on weak memory models (e.g. Arm/.NET Framework)
+    /// an <c>Update</c>'s <see cref="MetricPointStatus.CollectPending"/> write can be lost against
+    /// the snapshot's <see cref="MetricPointStatus.NoCollectPending"/> write, which would otherwise
+    /// allow a MetricPoint that still has an unexported measurement to be reclaimed (losing it).
+    /// </remarks>
+    /// <returns><see langword="true"/> if there is unexported data; otherwise, <see langword="false"/>.</returns>
+    internal bool HasUnexportedData()
+    {
+        switch (this.aggType)
+        {
+            case AggregationType.LongSumIncomingDelta:
+            case AggregationType.LongSumIncomingCumulative:
+                return Interlocked.Read(ref this.runningValue.AsLong) != this.deltaLastValue.AsLong;
+
+            case AggregationType.DoubleSumIncomingDelta:
+            case AggregationType.DoubleSumIncomingCumulative:
+                return InterlockedHelper.Read(ref this.runningValue.AsDouble) != this.deltaLastValue.AsDouble;
+
+            case AggregationType.LongGauge:
+                return Interlocked.Read(ref this.runningValue.AsLong) != this.snapshotValue.AsLong;
+
+            case AggregationType.DoubleGauge:
+                return InterlockedHelper.Read(ref this.runningValue.AsDouble) != this.snapshotValue.AsDouble;
+
+            default:
+                // Histogram aggregations reset the running count to zero on each delta snapshot, so
+                // a non-zero running count means measurements have been recorded since the last
+                // collection. (Reclaim only runs for delta temporality.)
+                return Interlocked.Read(ref this.runningValue.AsLong) != 0;
+        }
+    }
+
+    /// <summary>
     /// This method sets the member object references of MetricPoint to `null`.
     /// This is done to have them collected faster by GC.
     /// </summary>
