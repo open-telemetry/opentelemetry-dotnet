@@ -15,9 +15,11 @@ namespace OpenTelemetry.Logs;
 [ProviderAlias("OpenTelemetry")]
 public class OpenTelemetryLoggerProvider : BaseProvider, ILoggerProvider, ISupportExternalScope
 {
-    internal readonly LoggerProvider Provider;
+    private readonly Lock syncObject = new();
     private readonly bool ownsProvider;
     private readonly Hashtable loggers = [];
+    private Func<LoggerProvider>? loggerProviderFactory;
+    private LoggerProvider? provider;
     private bool disposed;
 
     static OpenTelemetryLoggerProvider()
@@ -40,7 +42,7 @@ public class OpenTelemetryLoggerProvider : BaseProvider, ILoggerProvider, ISuppo
         var optionsInstance = options.CurrentValue;
 #pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
 
-        this.Provider = Sdk
+        this.provider = Sdk
             .CreateLoggerProviderBuilder()
             .ConfigureBuilder((sp, builder) =>
             {
@@ -61,13 +63,46 @@ public class OpenTelemetryLoggerProvider : BaseProvider, ILoggerProvider, ISuppo
     }
 
     internal OpenTelemetryLoggerProvider(
-        LoggerProvider loggerProvider,
+        Func<LoggerProvider> loggerProviderFactory,
         OpenTelemetryLoggerOptions options,
         bool disposeProvider)
     {
-        this.Provider = loggerProvider;
+        Guard.ThrowIfNull(loggerProviderFactory);
+
+        this.loggerProviderFactory = loggerProviderFactory;
         this.Options = options.Copy();
         this.ownsProvider = disposeProvider;
+    }
+
+    internal LoggerProvider Provider
+    {
+        get
+        {
+            // Volatile.Read/Write are used to make the lock-free fast path
+            // correct on weaker memory models, guaranteeing the provider
+            // is fully constructed before it is observed by another thread.
+            var provider = Volatile.Read(ref this.provider);
+            if (provider != null)
+            {
+                return provider;
+            }
+
+            lock (this.syncObject)
+            {
+                provider = this.provider;
+                if (provider == null)
+                {
+                    // If the factory throws (e.g. an invalid configuration)
+                    // it is intentionally left in place so the next access
+                    // retries instead of caching the failure.
+                    provider = this.loggerProviderFactory!();
+                    Volatile.Write(ref this.provider, provider);
+                    this.loggerProviderFactory = null;
+                }
+
+                return provider;
+            }
+        }
     }
 
     internal OpenTelemetryLoggerOptions Options { get; }
@@ -130,7 +165,7 @@ public class OpenTelemetryLoggerProvider : BaseProvider, ILoggerProvider, ISuppo
             {
                 if (this.ownsProvider)
                 {
-                    this.Provider.Dispose();
+                    this.provider?.Dispose();
                 }
             }
 
