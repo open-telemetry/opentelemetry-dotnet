@@ -15,7 +15,7 @@ Notes](../../RELEASENOTES.md).
   [environment variable carrier specification](https://github.com/open-telemetry/opentelemetry-specification/pull/5144).
   Non-normalized carrier keys are no longer matched, even when they would
   normalize to the requested key.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7410](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7410))
 
 ## 1.16.0
 
