@@ -253,17 +253,15 @@ internal static class ProtobufSerializer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteStringWithTag(byte[] buffer, int writePosition, int fieldNumber, string value)
     {
-        Debug.Assert(value != null, "value was null");
-
-        var numberOfUtf8CharsInString = GetNumberOfUtf8CharsInString(value!);
-        return WriteStringWithTag(buffer, writePosition, fieldNumber, numberOfUtf8CharsInString, value!);
+        var numberOfUtf8CharsInString = GetNumberOfUtf8CharsInString(value);
+        return WriteStringWithTag(buffer, writePosition, fieldNumber, numberOfUtf8CharsInString, value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int GetNumberOfUtf8CharsInString(string value)
     {
         Debug.Assert(value != null, "value was null");
-        return Utf8Encoding.GetByteCount(value!);
+        return Utf8Encoding.GetByteCount(value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

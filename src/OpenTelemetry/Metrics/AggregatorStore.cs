@@ -252,16 +252,19 @@ internal sealed class AggregatorStore
                     // and update the MetricPoint, thereby, setting its status to `CollectPending`. Note that the ReferenceCount would be 0 after the update.
                     // If the Collect thread now wakes up, it would be able to set the ReferenceCount to `int.MinValue`, thereby, marking the MetricPoint
                     // invalid for newer updates. In such cases, the MetricPoint, should not be reclaimed before taking its Snapshot.
-
-#pragma warning disable CA1508 // Avoid dead conditional code - see previous comment
-                    if (metricPoint.MetricPointStatus == MetricPointStatus.NoCollectPending)
-#pragma warning restore CA1508 // Avoid dead conditional code - see previous comment
+                    //
+                    // The MetricPoint is now exclusively claimed (ReferenceCount == int.MinValue), so no concurrent Update can be in progress. Decide
+                    // whether it is safe to reclaim from the authoritative running value (see MetricPoint.HasUnexportedData) rather than the
+                    // MetricPointStatus flag. The status flag is written by both Update and Snapshot without a common lock; on weak memory models
+                    // (e.g. Arm/.NET Framework) an Update's `CollectPending` write can be lost against the snapshot's `NoCollectPending` write, which
+                    // would otherwise let a MetricPoint that still holds an unexported measurement be reclaimed (losing the measurement).
+                    if (!metricPoint.HasUnexportedData())
                     {
                         this.ReclaimMetricPoint(ref metricPoint, i);
                     }
                     else
                     {
-                        // MetricPoint's ReferenceCount is `int.MinValue` but it still has a collect pending. Take the MetricPoint's Snapshot
+                        // The MetricPoint still has an unexported measurement. Take its Snapshot
                         // and mark it to be reclaimed in the next Collect cycle.
 
                         metricPoint.LookupData.DeferredReclaim = true;
