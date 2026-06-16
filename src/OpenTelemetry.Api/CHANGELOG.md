@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed `TraceContextPropagator` to normalize empty `tracestate` header values
+  to `null` when extracting trace context.
+  ([#7407](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7407))
+
 ## 1.16.0
 
 Released 2026-Jun-10

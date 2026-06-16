@@ -264,8 +264,10 @@ for specific dates and for Zoom meeting links.
 
 Meeting notes are available as a public [Google
 doc](https://docs.google.com/document/d/1yjjD6aBcLxlRazYrawukDgrhZMObwHARJbB9glWdHj8/edit?usp=sharing).
-If you have trouble accessing the doc, please get in touch on
-[Slack](https://cloud-native.slack.com/archives/C01N3BC2W7Q).
+If you have trouble accessing the doc, please get in touch on the
+[#otel-dotnet](https://cloud-native.slack.com/archives/C01N3BC2W7Q)
+channel on CNCF Slack. If you are new to the CNCF Slack community,
+you can [create an account](https://slack.cncf.io/).
 
 The meeting is open for all to join. We invite everyone to join our meeting,
 regardless of your experience level. Whether you're a seasoned OpenTelemetry
