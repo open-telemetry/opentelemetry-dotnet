@@ -5,4 +5,5 @@ namespace OpenTelemetry.Exporter.Prometheus.Serialization;
 
 internal sealed class PrometheusTextV0Serializer : PrometheusTextSerializer
 {
+    // Version-specific behaviour will be added here later
 }

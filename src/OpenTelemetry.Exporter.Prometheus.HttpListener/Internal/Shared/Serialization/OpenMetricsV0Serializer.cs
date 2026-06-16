@@ -5,4 +5,5 @@ namespace OpenTelemetry.Exporter.Prometheus.Serialization;
 
 internal sealed class OpenMetricsV0Serializer : OpenMetricsSerializer
 {
+    // Version-specific behaviour will be added here later
 }
