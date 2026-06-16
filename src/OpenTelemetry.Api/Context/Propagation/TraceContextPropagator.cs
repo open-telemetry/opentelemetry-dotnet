@@ -69,8 +69,8 @@ public class TraceContextPropagator : TextMapPropagator
             }
 
             string? tracestate = null;
-            TryExtractTracestate(getter(carrier, TraceState), out var extractedTracestate, out var hasTraceState);
-            if (hasTraceState)
+            var extracted = TryExtractTracestate(getter(carrier, TraceState), out var extractedTracestate, out var hasTraceState);
+            if (hasTraceState && (!extracted || extractedTracestate.Length > 0))
             {
                 tracestate = extractedTracestate;
             }
