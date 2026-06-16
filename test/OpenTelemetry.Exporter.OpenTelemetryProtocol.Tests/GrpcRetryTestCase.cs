@@ -45,6 +45,10 @@ public class GrpcRetryTestCase
 
         new("Expired deadline", [new(StatusCode.Unavailable, deadlineExceeded: true, expectedSuccess: false)]),
 
+        // A throttle delay that would push the retry past the configured deadline must
+        // fail fast and drop the data rather than blocking for the throttle duration.
+        new("Throttle delay exceeds deadline", [new(StatusCode.ResourceExhausted, throttleDelay: GetThrottleDelayString(Duration.FromTimeSpan(TimeSpan.FromSeconds(30))), deadlineFromNow: TimeSpan.FromSeconds(1), expectedSuccess: false)]),
+
         new(
             "Exponential backoff",
             [
@@ -113,12 +117,15 @@ public class GrpcRetryTestCase
             bool deadlineExceeded = false,
             string? throttleDelay = null,
             int expectedNextRetryDelayMilliseconds = 1500,
-            bool expectedSuccess = true)
+            bool expectedSuccess = true,
+            TimeSpan? deadlineFromNow = null)
         {
             var status = new Status(statusCode, "Error");
 
-            // Using arbitrary +1 hr for deadline for test purposes.
-            var deadlineUtc = deadlineExceeded ? DateTime.UtcNow.AddSeconds(-1) : DateTime.UtcNow.AddHours(1);
+            // Using arbitrary +1 hr for deadline for test purposes, unless a deadline is specified.
+            var deadlineUtc = deadlineExceeded
+                ? DateTime.UtcNow.AddSeconds(-1)
+                : DateTime.UtcNow.Add(deadlineFromNow ?? TimeSpan.FromHours(1));
 
             this.ThrottleDelay = throttleDelay;
 
