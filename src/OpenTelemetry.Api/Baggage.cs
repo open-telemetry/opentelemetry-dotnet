@@ -138,27 +138,6 @@ public readonly struct Baggage : IEquatable<Baggage>
         => baggage == default ? Current.GetEnumerator() : baggage.GetEnumerator();
 
     /// <summary>
-    /// Returns the name/<see cref="BaggageEntry"/> pairs in the
-    /// <see cref="Baggage"/>, including any W3C properties (metadata) that
-    /// were present when the baggage was extracted from a propagation header.
-    /// </summary>
-    /// <returns>
-    /// An <see cref="IReadOnlyDictionary{TKey,TValue}"/> of baggage entries,
-    /// or an empty dictionary if no metadata-aware extraction has been
-    /// performed.
-    /// </returns>
-    /// <remarks>
-    /// When baggage is constructed programmatically via
-    /// <see cref="SetBaggage(string, string?)"/>, the returned dictionary
-    /// will be empty because no wire metadata exists for those entries.
-    /// Use <see cref="GetBaggage()"/> in that case.
-    /// </remarks>
-    [SuppressMessage("Design", "CA1024", Justification = "Method form required to match OpenTelemetry specification patterns.")]
-    public IReadOnlyDictionary<string, BaggageEntry> GetBaggageWithMetadata()
-        => (IReadOnlyDictionary<string, BaggageEntry>?)this.baggageWithMetadata
-        ?? EmptyBaggageWithMetadata;
-
-    /// <summary>
     /// Returns the value associated with the given name, or <see langword="null"/> if the given name is not present.
     /// </summary>
     /// <param name="name">Baggage item name.</param>
@@ -241,6 +220,27 @@ public readonly struct Baggage : IEquatable<Baggage>
                 : baggage.ClearBaggage();
         }
     }
+
+    /// <summary>
+    /// Returns the name/<see cref="BaggageEntry"/> pairs in the
+    /// <see cref="Baggage"/>, including any W3C properties (metadata) that
+    /// were present when the baggage was extracted from a propagation header.
+    /// </summary>
+    /// <returns>
+    /// An <see cref="IReadOnlyDictionary{TKey,TValue}"/> of baggage entries,
+    /// or an empty dictionary if no metadata-aware extraction has been
+    /// performed.
+    /// </returns>
+    /// <remarks>
+    /// When baggage is constructed programmatically via
+    /// <see cref="SetBaggage(string, string?)"/>, the returned dictionary
+    /// will be empty because no wire metadata exists for those entries.
+    /// Use <see cref="GetBaggage()"/> in that case.
+    /// </remarks>
+    [SuppressMessage("Design", "CA1024", Justification = "Method form required to match OpenTelemetry specification patterns.")]
+    public IReadOnlyDictionary<string, BaggageEntry> GetBaggageWithMetadata()
+        => (IReadOnlyDictionary<string, BaggageEntry>?)this.baggageWithMetadata
+        ?? EmptyBaggageWithMetadata;
 
     /// <summary>
     /// Returns the name/value pairs in the <see cref="Baggage"/>.

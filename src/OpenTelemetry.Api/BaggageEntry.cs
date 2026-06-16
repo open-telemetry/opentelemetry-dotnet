@@ -86,8 +86,13 @@ public readonly struct BaggageEntry : IEquatable<BaggageEntry>
         var hash = 17;
         unchecked
         {
+#if NET
             hash = (hash * 23) + (this.Value?.GetHashCode(StringComparison.Ordinal) ?? 0);
             hash = (hash * 23) + (this.Metadata?.GetHashCode(StringComparison.Ordinal) ?? 0);
+#else
+            hash = (hash * 23) + (this.Value?.GetHashCode() ?? 0);
+            hash = (hash * 23) + (this.Metadata?.GetHashCode() ?? 0);
+#endif
         }
 
         return hash;
