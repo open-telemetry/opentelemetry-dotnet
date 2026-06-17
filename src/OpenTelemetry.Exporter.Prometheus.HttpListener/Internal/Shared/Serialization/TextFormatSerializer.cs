@@ -599,8 +599,9 @@ internal abstract class TextFormatSerializer
             buffer[cursor++] = unchecked((byte)'{');
         }
 
-        if (TryWriteScopeLabels() &&
-            TryWritePointTags())
+        WriteScopeLabels();
+
+        if (TryWritePointTags())
         {
             if (writeEnclosingBraces)
             {
@@ -629,17 +630,16 @@ internal abstract class TextFormatSerializer
 
         return WriteLabels(buffer, cursor, labels, writeEnclosingBraces);
 
-        bool TryWriteScopeLabels()
+        void WriteScopeLabels()
         {
+            // Scope labels are de-duplicated by output key in CreateScopeLabels, so unlike
+            // point tags they can never collide with an already-written label. They only need
+            // to be written (which also records their output keys so point tags can detect a
+            // collision with a scope label).
             foreach (var scopeLabel in CreateScopeLabels(metric))
             {
-                if (!TryWriteLabel(scopeLabel.Key, scopeLabel.Value))
-                {
-                    return false;
-                }
+                _ = TryWriteLabel(scopeLabel.Key, scopeLabel.Value);
             }
-
-            return true;
         }
 
         bool TryWritePointTags()
@@ -951,19 +951,10 @@ internal abstract class TextFormatSerializer
 
     private static string NormalizeLabelKey(string value)
     {
-        if (string.IsNullOrEmpty(value))
-        {
-            return "_";
-        }
-
+        // This is only ever called with an "otel_scope_"-prefixed key, so the value is never
+        // empty and never starts with a digit; those cases do not need to be handled here.
         var builder = new StringBuilder(value.Length + 1);
         var lastCharUnderscore = false;
-
-        if (char.IsAsciiDigit(value[0]))
-        {
-            builder.Append('_');
-            lastCharUnderscore = true;
-        }
 
         for (var i = 0; i < value.Length; i++)
         {
@@ -1259,22 +1250,23 @@ internal abstract class TextFormatSerializer
     private static string GetSanitizedLabelKey(string value)
     {
         var builder = new StringBuilder(value.Length + 1);
-        _ = WriteSanitizedLabelKey(null, 0, value, builder);
+        AppendSanitizedLabelKey(builder, value);
         return builder.ToString();
     }
 
-    private static int WriteSanitizedLabelKey(byte[]? buffer, int cursor, string value, StringBuilder? builder)
+    private static void AppendSanitizedLabelKey(StringBuilder builder, string value)
     {
         if (string.IsNullOrEmpty(value))
         {
-            return AppendSanitizedLabelKeyCharacter(buffer, cursor, builder, '_');
+            builder.Append('_');
+            return;
         }
 
         var lastCharUnderscore = false;
 
         if (char.IsAsciiDigit(value[0]))
         {
-            cursor = AppendSanitizedLabelKeyCharacter(buffer, cursor, builder, '_');
+            builder.Append('_');
             lastCharUnderscore = true;
         }
 
@@ -1286,33 +1278,16 @@ internal abstract class TextFormatSerializer
             {
                 if (!lastCharUnderscore)
                 {
-                    cursor = AppendSanitizedLabelKeyCharacter(buffer, cursor, builder, '_');
+                    builder.Append('_');
                     lastCharUnderscore = true;
                 }
 
                 continue;
             }
 
-            cursor = AppendSanitizedLabelKeyCharacter(buffer, cursor, builder, ch);
+            builder.Append(ch);
             lastCharUnderscore = ch == '_';
         }
-
-        return cursor;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int AppendSanitizedLabelKeyCharacter(byte[]? buffer, int cursor, StringBuilder? builder, char value)
-    {
-        if (buffer != null)
-        {
-            buffer[cursor++] = unchecked((byte)value);
-        }
-        else
-        {
-            builder!.Append(value);
-        }
-
-        return cursor;
     }
 
     private static void AddLabel(string originalKey, object? value, ref List<LabelData>? labels, IReadOnlyCollection<string>? reservedOutputKeys = null)
@@ -1536,11 +1511,6 @@ internal abstract class TextFormatSerializer
 
         static int WriteExponent(Span<byte> destination, int exponent)
         {
-            if (destination.Length < 4)
-            {
-                throw new ArgumentException("Destination buffer too small.");
-            }
-
             destination[0] = (byte)'e';
             destination[1] = exponent >= 0 ? (byte)'+' : (byte)'-';
 

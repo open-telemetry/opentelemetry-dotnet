@@ -152,11 +152,6 @@ internal abstract class OpenMetricsSerializer : TextFormatSerializer
         in MetricPoint metricPoint,
         IReadOnlyCollection<string>? reservedOutputKeys = null)
     {
-        if (metricPoint.StartTime == default)
-        {
-            return cursor;
-        }
-
         cursor = this.WriteMetricMetadataName(buffer, cursor, prometheusMetric);
 
         cursor = WriteAsciiStringNoEscape(buffer, cursor, "_created");
