@@ -96,6 +96,22 @@ public sealed class DeclarativeConfigurationReaderTests
     }
 
     [Fact]
+    public void Translate_NonScalarTopLevelKey_IsIgnoredWithoutThrowing()
+    {
+        // YAML supports non-scalar (e.g. sequence) keys via the explicit '? ...' syntax.
+        // Such a key can never be a valid OTel section name; it must be skipped without throwing.
+        const string yaml = """
+            file_format: "1.0"
+            ? [a, b]
+            : some_value
+            """;
+
+        var data = ReadConfiguration(yaml);
+
+        Assert.Empty(data);
+    }
+
+    [Fact]
     public void Translate_UnknownTopLevelSection_IsIgnoredWithoutThrowing()
     {
         const string yaml = """
@@ -728,6 +744,43 @@ public sealed class DeclarativeConfigurationReaderTests
               attributes:
                 - name: my.attr
                   value: {nullValue}
+                - name: service.name
+                  value: my-service
+            """;
+
+        var data = ReadConfiguration(yaml);
+
+        Assert.Equal("service.name=my-service", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
+    }
+
+    [Fact]
+    public void Translate_ResourceAttributeMissingValue_IsSkipped()
+    {
+        // The absent-value entry is skipped; a valid sibling must still be emitted.
+        const string yaml = """
+            file_format: "1.0"
+            resource:
+              attributes:
+                - name: my.attr
+                - name: service.name
+                  value: my-service
+            """;
+
+        var data = ReadConfiguration(yaml);
+
+        Assert.Equal("service.name=my-service", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
+    }
+
+    [Fact]
+    public void Translate_ResourceAttributeNonMappingSequenceItem_IsSkipped()
+    {
+        // A sequence item that is a scalar (not a mapping) cannot be parsed as an attribute
+        // entry and is skipped; a valid sibling must still be emitted.
+        const string yaml = """
+            file_format: "1.0"
+            resource:
+              attributes:
+                - not-a-mapping
                 - name: service.name
                   value: my-service
             """;

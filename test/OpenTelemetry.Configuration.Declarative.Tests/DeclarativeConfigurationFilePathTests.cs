@@ -83,6 +83,48 @@ public sealed class DeclarativeConfigurationFilePathTests
     }
 
     [Fact]
+    public void GetHashCode_EqualFilePaths_SameHashCode()
+    {
+        using var factory = new DeclarativeYamlTestFileFactory();
+        var absolutePath = factory.CreateDeclarativeYaml(disabled: true);
+        var originalDirectory = Directory.GetCurrentDirectory();
+
+        try
+        {
+            Directory.SetCurrentDirectory(factory.TempDirectory);
+            var relativePath = Path.GetFileName(absolutePath);
+
+            var a = new FilePath(absolutePath);
+            var b = new FilePath(relativePath);
+
+            Assert.Equal(a, b);
+            Assert.Equal(a.GetHashCode(), b.GetHashCode());
+        }
+        finally
+        {
+            Directory.SetCurrentDirectory(originalDirectory);
+        }
+    }
+
+    [Fact]
+    public void GetHashCode_DifferentPathCasingOnWindows_SameHashCode()
+    {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            return;
+        }
+
+        using var factory = new DeclarativeYamlTestFileFactory();
+        var absolutePath = factory.CreateDeclarativeYaml(disabled: true);
+
+        var a = new FilePath(absolutePath);
+        var b = new FilePath(absolutePath.ToUpperInvariant());
+
+        Assert.Equal(a, b);
+        Assert.Equal(a.GetHashCode(), b.GetHashCode());
+    }
+
+    [Fact]
     public void Path_RelativeInput_IsAbsolute()
     {
         // FilePath.Path must always hold the absolute path resolved at construction time,
