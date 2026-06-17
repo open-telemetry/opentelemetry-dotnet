@@ -75,7 +75,7 @@ internal
     internal sealed override void Initialize(AggregatorStore aggregatorStore)
     {
         var viewDefinedTagKeys = aggregatorStore.TagKeysInteresting;
-        var excludedTagKeys = aggregatorStore.ExcludedTagKeysInteresting;
+        var excludedTagKeys = aggregatorStore.ExcludedTagKeys;
 
         for (var i = 0; i < this.runningExemplars.Length; i++)
         {

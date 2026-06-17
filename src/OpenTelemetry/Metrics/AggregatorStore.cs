@@ -16,10 +16,10 @@ internal sealed class AggregatorStore
 {
 #if NET
     internal readonly FrozenSet<string>? TagKeysInteresting;
-    internal readonly FrozenSet<string>? ExcludedTagKeysInteresting;
+    internal readonly FrozenSet<string>? ExcludedTagKeys;
 #else
     internal readonly HashSet<string>? TagKeysInteresting;
-    internal readonly HashSet<string>? ExcludedTagKeysInteresting;
+    internal readonly HashSet<string>? ExcludedTagKeys;
 #endif
     internal readonly bool OutputDelta;
     internal readonly bool IsAsynchronous;
@@ -100,9 +100,9 @@ internal sealed class AggregatorStore
             this.updateLongCallback = this.UpdateLongExcludeTags;
             this.updateDoubleCallback = this.UpdateDoubleExcludeTags;
 #if NET
-            this.ExcludedTagKeysInteresting = FrozenSet.ToFrozenSet(metricStreamIdentity.ExcludedTagKeys, StringComparer.Ordinal);
+            this.ExcludedTagKeys = FrozenSet.ToFrozenSet(metricStreamIdentity.ExcludedTagKeys, StringComparer.Ordinal);
 #else
-            this.ExcludedTagKeysInteresting = new HashSet<string>(metricStreamIdentity.ExcludedTagKeys, StringComparer.Ordinal);
+            this.ExcludedTagKeys = new HashSet<string>(metricStreamIdentity.ExcludedTagKeys, StringComparer.Ordinal);
 #endif
         }
         else
@@ -1101,7 +1101,7 @@ internal sealed class AggregatorStore
         }
 
         var storage = ThreadStaticStorage.GetStorage();
-        storage.SplitToKeysAndValuesExclude(tags, tagLength, this.ExcludedTagKeysInteresting!, out var tagKeysAndValues, out var actualLength);
+        storage.SplitToKeysAndValuesExclude(tags, tagLength, this.ExcludedTagKeys!, out var tagKeysAndValues, out var actualLength);
 
         if (actualLength == 0)
         {
