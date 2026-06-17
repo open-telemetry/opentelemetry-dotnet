@@ -345,7 +345,7 @@ public class BaggagePropagatorMetadataTests
     }
 
     /// <summary>
-    /// Known limitation: <see cref="Baggage.Equals"/> and
+    /// Known limitation: <see cref="Baggage.Equals(Baggage)"/> and
     /// <see cref="Baggage.GetHashCode"/> only compare the plain baggage
     /// dictionary. Two <see cref="Baggage"/> instances that differ only in
     /// their <c>baggageWithMetadata</c> field compare as equal.
