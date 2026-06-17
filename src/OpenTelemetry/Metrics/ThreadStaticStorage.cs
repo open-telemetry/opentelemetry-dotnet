@@ -139,10 +139,10 @@ internal sealed class ThreadStaticStorage
         actualLength = 0;
         for (var n = 0; n < tagLength; n++)
         {
-            // Copy only tags NOT in the excluded set.
-            if (!excludedTagKeys.Contains(tags[n].Key))
+            var tag = tags[n];
+            if (!excludedTagKeys.Contains(tag.Key))
             {
-                tagKeysAndValues![actualLength] = tags[n];
+                tagKeysAndValues![actualLength] = tag;
                 actualLength++;
             }
         }
