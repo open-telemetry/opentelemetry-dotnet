@@ -1700,14 +1700,14 @@ public sealed partial class PrometheusSerializerTests
             .AddInMemoryExporter(metrics)
             .Build();
 
-        counter.Add(1, new("keep", "value"), new("rocket", "rkt:🚀"));
+        counter.Add(1, new("keep", "value"), new("rocket", "rkt:\U0001F680"));
 
         provider.ForceFlush();
 
         var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics: true);
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
 
-        Assert.Contains("rkt:🚀", output, StringComparison.Ordinal);
+        Assert.Contains("rkt:\U0001F680", output, StringComparison.Ordinal);
     }
 
 #if NET
