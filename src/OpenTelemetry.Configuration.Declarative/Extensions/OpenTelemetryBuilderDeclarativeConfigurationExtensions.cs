@@ -14,10 +14,15 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry;
 
+#if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
 /// Extension methods for wiring declarative configuration through <see cref="IOpenTelemetryBuilder"/>.
 /// </summary>
-public static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
+public
+#else
+internal
+#endif
+    static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
 {
     /// <summary>
     /// Adds the declarative configuration (YAML) source into DI, reading the path from <c>OTEL_CONFIG_FILE</c>.
