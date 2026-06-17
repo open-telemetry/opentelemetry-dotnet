@@ -11,7 +11,6 @@ using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
-using Xunit;
 
 namespace OpenTelemetry.Configuration.Declarative.Tests;
 
@@ -309,7 +308,7 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
             .UseDeclarativeConfiguration(yamlFile.Path);
 
         // Simulates host infrastructure registering IConfiguration after OTel setup.
-        var lateConfig = new ConfigurationManager();
+        using var lateConfig = new ConfigurationManager();
         services.AddSingleton<IConfiguration>(lateConfig);
 
         using var sp = services.BuildServiceProvider();

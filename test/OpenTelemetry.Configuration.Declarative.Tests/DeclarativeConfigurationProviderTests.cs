@@ -3,8 +3,6 @@
 
 #pragma warning disable OTEL1006
 
-using Xunit;
-
 namespace OpenTelemetry.Configuration.Declarative.Tests;
 
 public sealed class DeclarativeConfigurationProviderTests
@@ -135,5 +133,4 @@ public sealed class DeclarativeConfigurationProviderTests
         Assert.NotNull(ex.InnerException);
         Assert.IsType<YamlDotNet.Core.YamlException>(ex.InnerException, exactMatch: false);
     }
-
 }

@@ -3,8 +3,6 @@
 
 #pragma warning disable OTEL1006
 
-using Xunit;
-
 namespace OpenTelemetry.Configuration.Declarative.Tests;
 
 public sealed class EnvironmentSubstitutionTests
