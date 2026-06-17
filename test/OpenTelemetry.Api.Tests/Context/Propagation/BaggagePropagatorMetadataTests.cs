@@ -17,7 +17,7 @@ public class BaggagePropagatorMetadataTests
     private const int MaxBaggageItems = 180;
 
     // =========================================================================
-    // TryExtractBaggageWithMetadata — extraction logic
+    // TryExtractBaggageWithMetadata -- extraction logic
     // =========================================================================
 
     [Fact]
@@ -64,7 +64,7 @@ public class BaggagePropagatorMetadataTests
     [Fact]
     public void ExtractWithMetadata_TrailingSemicolonOnly_MetadataIsNull()
     {
-        // "key=value;" — semicolon present but nothing meaningful after it.
+        // "key=value;" -- semicolon present but nothing meaningful after it.
         var headers = new[] { "key=value;" };
 
         BaggagePropagator.TryExtractBaggageWithMetadata(
@@ -79,7 +79,7 @@ public class BaggagePropagatorMetadataTests
     [Fact]
     public void ExtractWithMetadata_SemicolonWithOnlyWhitespace_MetadataIsNull()
     {
-        // "key=value;   " — whitespace after semicolon trims to empty → null.
+        // "key=value;   " -- whitespace after semicolon trims to empty -> null.
         var headers = new[] { "key=value;   " };
 
         BaggagePropagator.TryExtractBaggageWithMetadata(
@@ -169,7 +169,7 @@ public class BaggagePropagatorMetadataTests
     [Fact]
     public void ExtractWithMetadata_AllEntriesInvalid_ReturnsFalse()
     {
-        // No valid key=value pairs — neither output should be populated.
+        // No valid key=value pairs -- neither output should be populated.
         var headers = new[] { "noequals,=orphanvalue" };
 
         var ok = BaggagePropagator.TryExtractBaggageWithMetadata(
@@ -204,7 +204,7 @@ public class BaggagePropagatorMetadataTests
     [Fact]
     public void ExtractWithMetadata_OWSBeforeSemicolon_TrimmedFromValue()
     {
-        // "key=SomeValue ; propertyKey=propertyValue" —
+        // "key=SomeValue ; propertyKey=propertyValue" --
         // the space before ';' is OWS that belongs to the value field, not the
         // metadata, so the stored value must be "SomeValue" (trimmed).
         var headers = new[] { "key=SomeValue ; propertyKey=propertyValue" };
@@ -274,7 +274,7 @@ public class BaggagePropagatorMetadataTests
     }
 
     // =========================================================================
-    // Baggage struct — GetBaggageWithMetadata surface
+    // Baggage struct -- GetBaggageWithMetadata surface
     // =========================================================================
 
     [Fact]
@@ -373,7 +373,7 @@ public class BaggagePropagatorMetadataTests
     }
 
     // =========================================================================
-    // BaggageEntry type — equality contract
+    // BaggageEntry type -- equality contract
     // =========================================================================
 
     [Fact]
