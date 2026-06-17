@@ -129,7 +129,7 @@ internal abstract class TextFormatSerializer
     {
         if (metric.MetricType == MetricType.ExponentialHistogram)
         {
-            // Exponential histograms are not yet support by Prometheus.
+            // Exponential histograms are not yet supported by Prometheus.
             // They are ignored for now.
             return false;
         }
