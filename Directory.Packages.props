@@ -76,7 +76,7 @@
         https://devblogs.microsoft.com/dotnet/system-text-json-in-dotnet-7/#breaking-changes.
     -->
     <PackageVersion Include="System.Text.Encodings.Web" Version="4.7.2" />
-    <PackageVersion Include="System.Text.Json" Version="4.7.2" />
+    <PackageVersion Include="System.Text.Json" Version="7.0.4" />
 
     <!-- Mitigate https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-43485. -->
     <!-- Newer NETCoreApp runtimes need to be redirected to safe versions. -->
