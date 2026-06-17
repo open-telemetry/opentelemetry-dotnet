@@ -3,7 +3,7 @@
     <LangVersion>latest</LangVersion>
     <SignAssembly>true</SignAssembly>
     <RepoRoot>$([System.IO.Directory]::GetParent($(MSBuildThisFileDirectory)).Parent.FullName)</RepoRoot>
-    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)debug.snk</AssemblyOriginatorKeyFile>
+    <StrongNameKeyBase64File>$(MSBuildThisFileDirectory)debug.snk.base64</StrongNameKeyBase64File>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Nullable>enable</Nullable>
@@ -23,6 +23,49 @@
   <PropertyGroup Label="BuildFlags">
     <RunningDotNetPack Condition="'$(RunningDotNetPack)' == ''">false</RunningDotNetPack>
   </PropertyGroup>
+
+  <UsingTask
+    TaskName="DecodeBase64File"
+    TaskFactory="RoslynCodeTaskFactory"
+    AssemblyFile="$([System.IO.Path]::Combine('$(MSBuildToolsPath)', 'Microsoft.Build.Tasks.Core.dll'))">
+    <ParameterGroup>
+      <SourceFile ParameterType="System.String" Required="true" />
+      <DestinationFile ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System" />
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.Text" />
+      <Code Type="Fragment" Language="cs"><![CDATA[
+var base64Text = File.ReadAllText(SourceFile);
+var builder = new StringBuilder(base64Text.Length);
+
+foreach (var ch in base64Text)
+{
+    if (!char.IsWhiteSpace(ch))
+    {
+        builder.Append(ch);
+    }
+}
+
+var directory = Path.GetDirectoryName(DestinationFile);
+if (!string.IsNullOrEmpty(directory))
+{
+    Directory.CreateDirectory(directory);
+}
+
+File.WriteAllBytes(DestinationFile, Convert.FromBase64String(builder.ToString()));
+      ]]></Code>
+    </Task>
+  </UsingTask>
+
+  <Target Name="GenerateAssemblyOriginatorKeyFile" BeforeTargets="ResolveKeySource" Condition="'$(SignAssembly)' == 'true'">
+    <PropertyGroup>
+      <AssemblyOriginatorKeyFile>$([System.IO.Path]::Combine('$(IntermediateOutputPath)', 'debug.snk'))</AssemblyOriginatorKeyFile>
+    </PropertyGroup>
+
+    <DecodeBase64File SourceFile="$(StrongNameKeyBase64File)" DestinationFile="$(AssemblyOriginatorKeyFile)" />
+  </Target>
 
   <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
   <PropertyGroup>

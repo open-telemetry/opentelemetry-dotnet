@@ -33,7 +33,7 @@
     <File Path="build/Common.prod.props" />
     <File Path="build/Common.props" />
     <File Path="build/Common.targets" />
-    <File Path="build/debug.snk" />
+    <File Path="build/debug.snk.base64" />
     <File Path="build/docfx.cmd" />
     <File Path="build/docker-compose.net10.0.yml" />
     <File Path="build/docker-compose.net8.0.yml" />
