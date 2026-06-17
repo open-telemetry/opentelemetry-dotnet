@@ -61,6 +61,7 @@ public sealed class DeclarativeConfigurationSdkIntegrationTests
         meterProvider.ForceFlush();
     }
 
+#if OPENTELEMETRY_EXPERIMENTAL_FEATURES_EXPOSED
     [Fact]
     public void DisabledTrue_YamlFile_ProducesNoopLoggerProvider()
     {
@@ -69,6 +70,7 @@ public sealed class DeclarativeConfigurationSdkIntegrationTests
 
         Assert.Equal("NoopLoggerProvider", loggerProvider.GetType().Name);
     }
+#endif
 
     [Fact]
     public void DisabledFalse_YamlOverridesInMemoryOtelSdkDisabled_ProducesRealTracerProvider()
@@ -255,6 +257,7 @@ public sealed class DeclarativeConfigurationSdkIntegrationTests
             .Build()!;
     }
 
+#if OPENTELEMETRY_EXPERIMENTAL_FEATURES_EXPOSED
     private static LoggerProvider BuildLoggerProvider(string yamlPath)
     {
         var config = new ConfigurationBuilder()
@@ -265,4 +268,5 @@ public sealed class DeclarativeConfigurationSdkIntegrationTests
             .ConfigureServices(s => s.AddSingleton<IConfiguration>(config))
             .Build()!;
     }
+#endif
 }

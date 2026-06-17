@@ -1,7 +1,8 @@
 # OpenTelemetry.Configuration.Declarative
 
-> [!WARNING] This is an experimental package. APIs may change or be removed in
-> future releases.
+> [!WARNING]
+> This is an experimental package. APIs may change or be removed in future
+> releases.
 
 A partial experimental implementation of the [OpenTelemetry
 declarative-configuration
@@ -57,8 +58,8 @@ services.AddOpenTelemetry()
     .WithTracing(...);
 ```
 
-> [!IMPORTANT] **Integration pitfalls**
->
+> [!IMPORTANT] 
+> **Integration pitfalls**
 > - **`UseDeclarativeConfiguration()` requires `IConfiguration` to exist** when
 >   it runs. If host infrastructure registers `IConfiguration` *after* your OTel
 >   setup, the YAML source will be unreachable. Prefer
@@ -120,7 +121,8 @@ declarative configuration **takes precedence over** environment variables,
 Sources you add **after** that call take precedence over YAML values (same as
 standard `IConfiguration` ordering).
 
-> [!NOTE] `services.Configure<T>()` / `PostConfigure<T>()` delegates run through
+> [!NOTE]
+> `services.Configure<T>()` / `PostConfigure<T>()` delegates run through
 > the .NET Options pipeline and can override values from `IConfiguration`
 > sources, but only when the SDK reads the relevant setting via `IOptions<T>`.
 > The two settings supported in this release (`OTEL_SDK_DISABLED`,
