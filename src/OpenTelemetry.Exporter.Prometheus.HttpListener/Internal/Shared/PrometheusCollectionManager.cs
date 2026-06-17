@@ -387,7 +387,7 @@ internal sealed class PrometheusCollectionManager
             {
                 try
                 {
-                    cursor = serializer.WriteEof(state.Buffer, cursor);
+                    cursor = TextFormatSerializer.WriteEof(state.Buffer, cursor);
                     break;
                 }
                 catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)

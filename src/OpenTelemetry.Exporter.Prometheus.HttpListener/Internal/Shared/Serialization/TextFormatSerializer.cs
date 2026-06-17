@@ -11,7 +11,6 @@ using System.Collections.Immutable;
 #endif
 #endif
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -39,11 +38,9 @@ internal abstract class TextFormatSerializer
     // from forcing unbounded scratch-buffer allocations during a scrape.
     internal const int MaxSerializedTagsBufferSize = 100 * 1024 * 1024;
 
-#pragma warning disable SA1310 // Field name should not contain an underscore
-    protected const byte ASCII_QUOTATION_MARK = 0x22; // '"'
-    protected const byte ASCII_REVERSE_SOLIDUS = 0x5C; // '\\'
-    protected const byte ASCII_LINEFEED = 0x0A; // `\n`
-#pragma warning restore SA1310 // Field name should not contain an underscore
+    protected const byte AsciiQuotationMark = 0x22; // '"'
+    protected const byte AsciiReverseSolidus = 0x5C; // '\\'
+    protected const byte AsciiLineFeed = 0x0A; // `\n`
 
     protected const int MaxExemplarLabelSetCharacters = 128;
 
@@ -140,6 +137,15 @@ internal abstract class TextFormatSerializer
         return true;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int WriteEof(byte[] buffer, int cursor)
+    {
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# EOF");
+        buffer[cursor++] = AsciiLineFeed;
+
+        return cursor;
+    }
+
     public int WriteMetric(
         byte[] buffer,
         int cursor,
@@ -193,7 +199,7 @@ internal abstract class TextFormatSerializer
 
                 cursor = this.WriteCounterExemplar(buffer, cursor, in metricPoint, prometheusMetric, isLongValue);
 
-                buffer[cursor++] = ASCII_LINEFEED;
+                buffer[cursor++] = AsciiLineFeed;
 
                 cursor = this.WriteCounterCreated(buffer, cursor, metric, prometheusMetric, in metricPoint);
             }
@@ -235,7 +241,7 @@ internal abstract class TextFormatSerializer
 
                     cursor = this.WriteHistogramBucketExemplar(buffer, cursor, in metricPoint, previousBound, histogramMeasurement.ExplicitBound);
 
-                    buffer[cursor++] = ASCII_LINEFEED;
+                    buffer[cursor++] = AsciiLineFeed;
                     previousBound = histogramMeasurement.ExplicitBound;
                 }
 
@@ -252,7 +258,7 @@ internal abstract class TextFormatSerializer
 
                     cursor = WriteDouble(buffer, cursor, metricPoint.GetHistogramSum());
 
-                    buffer[cursor++] = ASCII_LINEFEED;
+                    buffer[cursor++] = AsciiLineFeed;
 
                     // Histogram count
                     cursor = this.WriteMetricName(buffer, cursor, prometheusMetric);
@@ -262,22 +268,12 @@ internal abstract class TextFormatSerializer
                     buffer[cursor++] = unchecked((byte)' ');
 
                     cursor = WriteLong(buffer, cursor, metricPoint.GetHistogramCount());
-                    buffer[cursor++] = ASCII_LINEFEED;
+                    buffer[cursor++] = AsciiLineFeed;
                 }
 
                 cursor = this.WriteHistogramCreated(buffer, cursor, metric, prometheusMetric, in metricPoint);
             }
         }
-
-        return cursor;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Part of the polymorphic serializer surface invoked via a TextFormatSerializer instance.")]
-    public int WriteEof(byte[] buffer, int cursor)
-    {
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# EOF");
-        buffer[cursor++] = ASCII_LINEFEED;
 
         return cursor;
     }
@@ -303,12 +299,12 @@ internal abstract class TextFormatSerializer
         cursor = WriteAsciiStringNoEscape(buffer, cursor, this.TargetInfoTypeName);
         buffer[cursor++] = unchecked((byte)' ');
         cursor = WriteAsciiStringNoEscape(buffer, cursor, this.TargetInfoTypeValue);
-        buffer[cursor++] = ASCII_LINEFEED;
+        buffer[cursor++] = AsciiLineFeed;
 
         cursor = WriteAsciiStringNoEscape(buffer, cursor, "# HELP ");
         cursor = WriteAsciiStringNoEscape(buffer, cursor, this.TargetInfoTypeName);
         cursor = WriteAsciiStringNoEscape(buffer, cursor, " Target metadata");
-        buffer[cursor++] = ASCII_LINEFEED;
+        buffer[cursor++] = AsciiLineFeed;
 
         cursor = WriteAsciiStringNoEscape(buffer, cursor, "target_info");
         List<LabelData>? labels = null;
@@ -322,7 +318,7 @@ internal abstract class TextFormatSerializer
         cursor = WriteLabels(buffer, cursor, labels, writeEnclosingBraces: true);
         buffer[cursor++] = unchecked((byte)' ');
         buffer[cursor++] = unchecked((byte)'1');
-        buffer[cursor++] = ASCII_LINEFEED;
+        buffer[cursor++] = AsciiLineFeed;
 
         return cursor;
     }
@@ -792,7 +788,7 @@ internal abstract class TextFormatSerializer
             cursor = WriteUnicodeString(buffer, cursor, metricDescription);
         }
 
-        buffer[cursor++] = ASCII_LINEFEED;
+        buffer[cursor++] = AsciiLineFeed;
 
         return cursor;
     }
@@ -809,7 +805,7 @@ internal abstract class TextFormatSerializer
         buffer[cursor++] = unchecked((byte)' ');
         cursor = WriteAsciiStringNoEscape(buffer, cursor, metricType);
 
-        buffer[cursor++] = ASCII_LINEFEED;
+        buffer[cursor++] = AsciiLineFeed;
 
         return cursor;
     }
@@ -843,7 +839,7 @@ internal abstract class TextFormatSerializer
             }
         }
 
-        buffer[cursor++] = ASCII_LINEFEED;
+        buffer[cursor++] = AsciiLineFeed;
 
         return cursor;
     }
@@ -854,34 +850,83 @@ internal abstract class TextFormatSerializer
         PrometheusType.Counter => "counter",
         PrometheusType.Summary => "summary",
         PrometheusType.Histogram => "histogram",
-
-        // OpenMetrics 1.0 uses "unknown" while Prometheus text format 0.0.4 uses "untyped".
-        // See https://prometheus.io/docs/specs/om/open_metrics_spec/#unknown-1
         PrometheusType.Untyped or _ => this.UnknownMetricTypeName,
     };
 
-    // The bytes used when writing a metric's sample family name.
+    /// <summary>
+    /// Gets the bytes used when writing a metric's sample family name.
+    /// </summary>
+    /// <param name="metric">The metric.</param>
+    /// <returns>The bytes representing the metric's sample family name.</returns>
     protected abstract ReadOnlySpan<byte> GetMetricNameBytes(PrometheusMetric metric);
 
-    // The bytes used when writing a metric's metadata (TYPE/UNIT/HELP) name.
+    /// <summary>
+    /// Gets the bytes used when writing a metric's metadata (<c>TYPE</c>/<c>UNIT</c>/<c>HELP</c>) name.
+    /// </summary>
+    /// <param name="metric">The metric.</param>
+    /// <returns>The bytes representing the metric's metadata name.</returns>
     protected abstract ReadOnlySpan<byte> GetMetricMetadataNameBytes(PrometheusMetric metric);
 
-    // Writes the value of a histogram bucket's "le" upper bound.
+    /// <summary>
+    /// Writes the value of a histogram bucket's <c>le</c> upper bound.
+    /// </summary>
+    /// <param name="buffer">The buffer to write to.</param>
+    /// <param name="cursor">The current position in the buffer.</param>
+    /// <param name="explicitBound">The explicit upper bound value.</param>
+    /// <returns>The new cursor position after writing.</returns>
     protected abstract int WriteExplicitBound(byte[] buffer, int cursor, double explicitBound);
 
-    // Writes the exemplar (if any) that follows a counter or gauge sample value.
+    /// <summary>
+    /// Writes the exemplar (if any) that follows a counter or gauge sample value.
+    /// </summary>
+    /// <param name="buffer">The buffer to write to.</param>
+    /// <param name="cursor">The current position in the buffer.</param>
+    /// <param name="metricPoint">The metric point.</param>
+    /// <param name="prometheusMetric">The Prometheus metric.</param>
+    /// <param name="isLongValue">Indicates whether the value is a long.</param>
+    /// <returns>The new cursor position after writing.</returns>
     protected abstract int WriteCounterExemplar(byte[] buffer, int cursor, in MetricPoint metricPoint, PrometheusMetric prometheusMetric, bool isLongValue);
 
-    // Writes the "_created" series (if any) that follows a counter sample.
+    /// <summary>
+    /// Writes the <c>_created</c> series (if any) that follows a counter sample.
+    /// </summary>
+    /// <param name="buffer">The buffer to write to.</param>
+    /// <param name="cursor">The current position in the buffer.</param>
+    /// <param name="metric">The metric.</param>
+    /// <param name="prometheusMetric">The Prometheus metric.</param>
+    /// <param name="metricPoint">The metric point.</param>
+    /// <returns>The new cursor position after writing.</returns>
     protected abstract int WriteCounterCreated(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric, in MetricPoint metricPoint);
 
-    // Writes the exemplar (if any) that follows a histogram bucket sample value.
+    /// <summary>
+    /// Writes the exemplar (if any) that follows a histogram bucket sample value.
+    /// </summary>
+    /// <param name="buffer">The buffer to write to.</param>
+    /// <param name="cursor">The current position in the buffer.</param>
+    /// <param name="metricPoint">The metric point.</param>
+    /// <param name="lowerBoundExclusive">The exclusive lower bound of the histogram bucket.</param>
+    /// <param name="upperBoundInclusive">The inclusive upper bound of the histogram bucket.</param>
+    /// <returns>The new cursor position after writing.</returns>
     protected abstract int WriteHistogramBucketExemplar(byte[] buffer, int cursor, in MetricPoint metricPoint, double lowerBoundExclusive, double upperBoundInclusive);
 
-    // Determines whether the histogram "_sum" and "_count" series should be written.
+    /// <summary>
+    /// Determines whether the histogram <c>_sum</c> and <c>_count</c> series should be written.
+    /// </summary>
+    /// <param name="hasNegativeBucketBounds">Indicates whether the histogram has negative bucket bounds.</param>
+    /// <returns>
+    /// <see langword="true"/> if the <c>_sum</c> and <c>_count</c> series should be written; otherwise, <see langword="false"/>.
+    /// </returns>
     protected abstract bool ShouldWriteSumAndCount(bool hasNegativeBucketBounds);
 
-    // Writes the "_created" series (if any) that follows a histogram's samples.
+    /// <summary>
+    /// Writes the <c>_created</c> series (if any) that follows a histogram's samples.
+    /// </summary>
+    /// <param name="buffer">The buffer to write to.</param>
+    /// <param name="cursor">The current position in the buffer.</param>
+    /// <param name="metric">The metric.</param>
+    /// <param name="prometheusMetric">The Prometheus metric.</param>
+    /// <param name="metricPoint">The metric point.</param>
+    /// <returns>The new cursor position after writing.</returns>
     protected abstract int WriteHistogramCreated(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric, in MetricPoint metricPoint);
 
     private static string GetLabelValueString(object? labelValue) => labelValue switch
@@ -1082,17 +1127,17 @@ internal abstract class TextFormatSerializer
             switch (value[0])
             {
                 case '"':
-                    buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
-                    buffer[cursor++] = ASCII_QUOTATION_MARK;
+                    buffer[cursor++] = AsciiReverseSolidus;
+                    buffer[cursor++] = AsciiQuotationMark;
                     value = value[1..];
                     break;
                 case '\\':
-                    buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
-                    buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
+                    buffer[cursor++] = AsciiReverseSolidus;
+                    buffer[cursor++] = AsciiReverseSolidus;
                     value = value[1..];
                     break;
                 case '\n':
-                    buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
+                    buffer[cursor++] = AsciiReverseSolidus;
                     buffer[cursor++] = unchecked((byte)'n');
                     value = value[1..];
                     break;
@@ -1113,16 +1158,16 @@ internal abstract class TextFormatSerializer
             var ordinal = (ushort)value[i];
             switch (ordinal)
             {
-                case ASCII_QUOTATION_MARK when escapeQuotationMarks:
-                    buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
-                    buffer[cursor++] = ASCII_QUOTATION_MARK;
+                case AsciiQuotationMark when escapeQuotationMarks:
+                    buffer[cursor++] = AsciiReverseSolidus;
+                    buffer[cursor++] = AsciiQuotationMark;
                     break;
-                case ASCII_REVERSE_SOLIDUS:
-                    buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
-                    buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
+                case AsciiReverseSolidus:
+                    buffer[cursor++] = AsciiReverseSolidus;
+                    buffer[cursor++] = AsciiReverseSolidus;
                     break;
-                case ASCII_LINEFEED:
-                    buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
+                case AsciiLineFeed:
+                    buffer[cursor++] = AsciiReverseSolidus;
                     buffer[cursor++] = unchecked((byte)'n');
                     break;
                 default:

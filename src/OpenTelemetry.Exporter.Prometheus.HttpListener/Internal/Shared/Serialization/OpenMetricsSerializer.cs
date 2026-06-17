@@ -166,7 +166,7 @@ internal abstract class OpenMetricsSerializer : TextFormatSerializer
 
         cursor = WriteUnixTimeSeconds(buffer, cursor, metricPoint.StartTime);
 
-        buffer[cursor++] = ASCII_LINEFEED;
+        buffer[cursor++] = AsciiLineFeed;
 
         return cursor;
     }
