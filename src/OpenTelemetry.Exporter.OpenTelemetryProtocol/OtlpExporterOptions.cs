@@ -44,6 +44,8 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     private int? timeoutMilliseconds;
     private Func<HttpClient>? httpClientFactory;
     private OtlpExportCompression? compression;
+    private ExportProcessorType? exportProcessorType;
+    private BatchExportProcessorOptions<Activity>? batchExportProcessorOptions;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OtlpExporterOptions"/> class.
@@ -89,7 +91,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
             };
         };
 
-        this.BatchExportProcessorOptions = defaultBatchOptions;
+        this.batchExportProcessorOptions = new(defaultBatchOptions);
     }
 
     /// <inheritdoc/>
@@ -152,13 +154,21 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     /// Gets or sets the export processor type to be used with the OpenTelemetry Protocol Exporter. The default value is <see cref="ExportProcessorType.Batch"/>.
     /// </summary>
     /// <remarks>Note: This only applies when exporting traces.</remarks>
-    public ExportProcessorType ExportProcessorType { get; set; } = ExportProcessorType.Batch;
+    public ExportProcessorType ExportProcessorType
+    {
+        get => this.exportProcessorType ?? ExportProcessorType.Batch;
+        set => this.exportProcessorType = value;
+    }
 
     /// <summary>
     /// Gets or sets the BatchExportProcessor options. Ignored unless ExportProcessorType is Batch.
     /// </summary>
     /// <remarks>Note: This only applies when exporting traces.</remarks>
-    public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions { get; set; }
+    public BatchExportProcessorOptions<Activity> BatchExportProcessorOptions
+    {
+        get => this.batchExportProcessorOptions!;
+        set => this.batchExportProcessorOptions = value;
+    }
 
     /// <inheritdoc/>
     public Func<HttpClient> HttpClientFactory
@@ -197,6 +207,11 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         || this.timeoutMilliseconds.HasValue
         || this.httpClientFactory != null
         || this.compression.HasValue;
+
+    internal ExportProcessorType? ExportProcessorTypeValue => this.exportProcessorType;
+
+    internal BatchExportProcessorOptions<Activity>? BatchExportProcessorOptionsForFallback
+        => this.batchExportProcessorOptions;
 
     internal static bool TryParseCompression(string value, out OtlpExportCompression result)
     {

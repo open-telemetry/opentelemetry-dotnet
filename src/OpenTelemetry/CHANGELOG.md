@@ -9,6 +9,8 @@ Notes](../../RELEASENOTES.md).
 * Added the experimental
   `OTEL_DOTNET_EXPERIMENTAL_METRICS_ENABLE_LAZY_ALLOCATION` environment
   variable for enabling lazy metric point allocation.
+* Fixed a metric point reclaim data race on CPU ARM architectures.
+  ([#7401](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7401))
 
 ## 1.16.0
 
