@@ -75,8 +75,8 @@
         an upgrade might introduce breaking changes. For example see:
         https://devblogs.microsoft.com/dotnet/system-text-json-in-dotnet-7/#breaking-changes.
     -->
-    <PackageVersion Include="System.Text.Encodings.Web" Version="4.7.2" />
-    <PackageVersion Include="System.Text.Json" Version="4.7.2" />
+    <PackageVersion Include="System.Text.Encodings.Web" Version="[4.7.2,)" />
+    <PackageVersion Include="System.Text.Json" Version="[4.7.2,)" />
 
     <!-- Mitigate https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-43485. -->
     <!-- Newer NETCoreApp runtimes need to be redirected to safe versions. -->
@@ -97,7 +97,7 @@
     <PackageVersion Include="Grpc.AspNetCore" Version="2.67.0" />
     <PackageVersion Include="Grpc.AspNetCore.Server" Version="2.67.0" />
     <PackageVersion Include="Grpc.Tools" Version="2.68.1" />
-    <PackageVersion Include="Google.Protobuf" Version="3.35.0" />
+    <PackageVersion Include="Google.Protobuf" Version="3.35.1" />
     <PackageVersion Include="Grpc" Version="2.46.6" />
     <PackageVersion Include="Grpc.Net.Client" Version="2.67.0" />
     <PackageVersion Include="JunitXml.TestLogger" Version="8.0.0" />
