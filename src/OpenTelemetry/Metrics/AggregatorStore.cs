@@ -100,11 +100,10 @@ internal sealed class AggregatorStore
             this.updateLongCallback = this.UpdateLongExcludeTags;
             this.updateDoubleCallback = this.UpdateDoubleExcludeTags;
 #if NET
-            var hs = FrozenSet.ToFrozenSet(metricStreamIdentity.ExcludedTagKeys, StringComparer.Ordinal);
+            this.ExcludedTagKeysInteresting = FrozenSet.ToFrozenSet(metricStreamIdentity.ExcludedTagKeys, StringComparer.Ordinal);
 #else
-            var hs = new HashSet<string>(metricStreamIdentity.ExcludedTagKeys, StringComparer.Ordinal);
+            this.ExcludedTagKeysInteresting = new HashSet<string>(metricStreamIdentity.ExcludedTagKeys, StringComparer.Ordinal);
 #endif
-            this.ExcludedTagKeysInteresting = hs;
         }
         else
         {
