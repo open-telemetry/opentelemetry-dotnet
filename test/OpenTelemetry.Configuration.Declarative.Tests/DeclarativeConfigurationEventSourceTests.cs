@@ -8,6 +8,7 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics.Tracing;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Configuration.Declarative.Tests;
@@ -208,6 +209,28 @@ public sealed class DeclarativeConfigurationEventSourceTests
         Assert.DoesNotContain("missing", message, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public void ReadConfiguration_ResourceAttributeAbsentValue_EmitsMissingValueWarning()
+    {
+        // No 'value' key at all: distinct from value: ~ (NullScalar) and value: {mapping}.
+        // The warning must say "missing", not "null" or "mapping".
+        const string yaml = """
+            file_format: "1.0"
+            resource:
+              attributes:
+                - name: my.attr
+            """;
+
+        using var listener = CreateWarningListener();
+
+        _ = ReadConfiguration(yaml);
+
+        var warning = Assert.Single(listener.Messages, e => e.EventId == 3);
+        var message = warning.Payload![0] as string;
+        Assert.Contains("missing", message, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("null", message, StringComparison.OrdinalIgnoreCase);
+    }
+
     [Theory]
     [InlineData("bool", "yes")]
     [InlineData("bool", "no")]
@@ -387,6 +410,26 @@ public sealed class DeclarativeConfigurationEventSourceTests
         Assert.Single(listener.Messages, e => e.EventId == 17);
     }
 
+    [Fact]
+    public void UseDeclarativeConfiguration_FactoryDescriptorReturnsNull_EmitsPriorConfigurationResolutionFailedWarning()
+    {
+        // Register an IConfiguration factory that returns null to exercise the path where
+        // a descriptor was found but resolves to null at runtime (Event 19).
+        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: true);
+
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(_ => null!);
+
+        new TestEventSourceBuilder(services).UseDeclarativeConfiguration(yamlFile.Path);
+
+        using var listener = CreateWarningListener();
+
+        var config = services.BuildServiceProvider().GetRequiredService<IConfiguration>();
+
+        Assert.Single(listener.Messages, e => e.EventId == 19);
+        Assert.Equal("true", config[OtelEnvironmentVariables.SdkDisabled]);
+    }
+
     private static TestEventListener CreateVerboseListener()
     {
         var listener = new TestEventListener();
@@ -411,5 +454,15 @@ public sealed class DeclarativeConfigurationEventSourceTests
     {
         using var factory = new DeclarativeYamlTestFileFactory();
         return DeclarativeConfigurationReader.Read(new FilePath(factory.CreateYamlFile(yaml)));
+    }
+
+    private sealed class TestEventSourceBuilder : IOpenTelemetryBuilder
+    {
+        public TestEventSourceBuilder(IServiceCollection services)
+        {
+            this.Services = services;
+        }
+
+        public IServiceCollection Services { get; }
     }
 }
