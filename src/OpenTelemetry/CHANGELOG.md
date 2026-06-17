@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added the experimental
+  `OTEL_DOTNET_EXPERIMENTAL_METRICS_ENABLE_LAZY_ALLOCATION` environment
+  variable for enabling lazy metric point allocation.
+
 ## 1.16.0
 
 Released 2026-Jun-10

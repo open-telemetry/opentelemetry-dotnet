@@ -53,8 +53,6 @@ internal sealed partial class MeterProviderBuilderSdk : MeterProviderBuilder, IM
 
     public int CardinalityLimit { get; private set; } = DefaultCardinalityLimit;
 
-    public bool EnableLazyAllocation { get; private set; }
-
     /// <summary>
     /// Returns whether the given instrument name is valid according to the specification.
     /// </summary>
@@ -155,13 +153,6 @@ internal sealed partial class MeterProviderBuilderSdk : MeterProviderBuilder, IM
     public MeterProviderBuilder SetDefaultCardinalityLimit(int cardinalityLimit)
     {
         this.CardinalityLimit = cardinalityLimit;
-
-        return this;
-    }
-
-    public MeterProviderBuilder SetDefaultLazyAllocation(bool enabled)
-    {
-        this.EnableLazyAllocation = enabled;
 
         return this;
     }

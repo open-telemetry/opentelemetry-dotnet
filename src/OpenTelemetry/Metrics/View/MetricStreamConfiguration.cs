@@ -97,25 +97,6 @@ public class MetricStreamConfiguration
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
-    /// Gets or sets a value indicating whether metric point storage for the
-    /// metric managed by the view should be allocated lazily.
-    /// </summary>
-    /// <remarks>
-    /// <para>When <see langword="null"/>, the MeterProvider default is used.</para>
-    /// <para>When <see langword="true"/>, metric point storage is allocated on
-    /// demand up to the configured <see cref="CardinalityLimit"/>.</para>
-    /// <para>When <see langword="false"/>, metric point storage is allocated
-    /// eagerly for this metric stream even if the MeterProvider default enables
-    /// lazy allocation.</para>
-    /// </remarks>
-    [Experimental(DiagnosticDefinitions.LazyAllocationExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
-    public bool? EnableLazyAllocation { get; set; }
-#else
-    internal bool? EnableLazyAllocation { get; set; }
-#endif
-
-#if EXPOSE_EXPERIMENTAL_FEATURES
-    /// <summary>
     /// Gets or sets a factory function used to generate an <see
     /// cref="ExemplarReservoir"/> for the metric managed by the view to use
     /// when storing <see cref="Exemplar"/>s.

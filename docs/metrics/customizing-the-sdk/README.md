@@ -477,6 +477,21 @@ var meterProvider = Sdk.CreateMeterProviderBuilder()
     .Build();
 ```
 
+### Lazy metric point allocation
+
+By default the Metrics SDK eagerly allocates metric point storage for each metric
+stream. To opt in to lazy metric point storage for all metric streams, set the
+experimental environment variable
+`OTEL_DOTNET_EXPERIMENTAL_METRICS_ENABLE_LAZY_ALLOCATION=true` before creating
+the `MeterProvider`.
+
+| Environment variable | Description | Notes |
+| -------------------- | ----------- | ----- |
+| `OTEL_DOTNET_EXPERIMENTAL_METRICS_ENABLE_LAZY_ALLOCATION` | Sets whether metric point storage is allocated lazily by default for all metric streams. Allowed values are `true` and `false`. | Experimental key (may be removed or changed in the future). |
+
+Missing or invalid environment variable values preserve the default eager
+allocation behavior.
+
 ### Exemplars
 
 Exemplars are example data points for aggregated data. They provide access to

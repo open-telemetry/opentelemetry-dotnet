@@ -4,6 +4,8 @@
 using System.Diagnostics.Metrics;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Configs;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 
@@ -101,9 +103,9 @@ public class MetricPointAllocationBenchmarks
         var exportedItems = new List<Metric>();
 
         using var meter = new Meter(nameof(MetricPointAllocationBenchmarks));
-        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+        using var meterProvider = ConfigureLazyAllocation(Sdk.CreateMeterProviderBuilder(), enableLazyAllocation)
             .AddMeter(meter.Name)
-            .AddView(CounterName, this.CreateMetricStreamConfiguration(enableLazyAllocation))
+            .AddView(CounterName, this.CreateMetricStreamConfiguration())
             .AddInMemoryExporter(exportedItems)
             .Build();
 
@@ -119,9 +121,9 @@ public class MetricPointAllocationBenchmarks
         var exportedItems = new List<Metric>();
 
         using var meter = new Meter(nameof(MetricPointAllocationBenchmarks));
-        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+        using var meterProvider = ConfigureLazyAllocation(Sdk.CreateMeterProviderBuilder(), enableLazyAllocation)
             .AddMeter(meter.Name)
-            .AddView($"{ManyCountersNamePrefix}*", this.CreateMetricStreamConfiguration(enableLazyAllocation))
+            .AddView($"{ManyCountersNamePrefix}*", this.CreateMetricStreamConfiguration())
             .AddInMemoryExporter(exportedItems)
             .Build();
 
@@ -133,20 +135,21 @@ public class MetricPointAllocationBenchmarks
         }
     }
 
-    private MetricStreamConfiguration CreateMetricStreamConfiguration(bool enableLazyAllocation)
+    private static MeterProviderBuilder ConfigureLazyAllocation(MeterProviderBuilder builder, bool enableLazyAllocation)
     {
-        var configuration = new MetricStreamConfiguration
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                [MeterProviderSdk.EnableLazyAllocationConfigKey] = enableLazyAllocation.ToString(),
+            })
+            .Build();
+
+        return builder.ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration));
+    }
+
+    private MetricStreamConfiguration CreateMetricStreamConfiguration()
+        => new()
         {
             CardinalityLimit = this.CardinalityLimit,
         };
-
-        if (enableLazyAllocation)
-        {
-#pragma warning disable OTEL1006 // Experimental API
-            configuration.EnableLazyAllocation = true;
-#pragma warning restore OTEL1006 // Experimental API
-        }
-
-        return configuration;
-    }
 }

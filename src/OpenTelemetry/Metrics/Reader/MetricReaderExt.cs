@@ -167,17 +167,13 @@ public abstract partial class MetricReader
                 }
                 else
                 {
-#pragma warning disable OTEL1006 // Experimental API
-                    var enableLazyAllocation = metricStreamConfig?.EnableLazyAllocation ?? this.enableLazyAllocation;
-#pragma warning restore OTEL1006 // Experimental API
-
                     Metric metric = new(
                         metricStreamIdentity,
                         this.GetAggregationTemporality(metricStreamIdentity.InstrumentType),
                         metricStreamConfig?.CardinalityLimit ?? this.cardinalityLimit,
                         exemplarFilter,
                         metricStreamConfig?.ExemplarReservoirFactory,
-                        enableLazyAllocation);
+                        this.enableLazyAllocation);
 
                     this.instrumentIdentityToMetric[metricStreamIdentity] = metric;
                     this.metrics[index] = metric;

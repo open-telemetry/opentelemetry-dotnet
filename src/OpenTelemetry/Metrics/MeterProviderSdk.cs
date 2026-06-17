@@ -15,11 +15,13 @@ internal sealed class MeterProviderSdk : MeterProvider
 {
     internal const string ExemplarFilterConfigKey = "OTEL_METRICS_EXEMPLAR_FILTER";
     internal const string ExemplarFilterHistogramsConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_EXEMPLAR_FILTER_HISTOGRAMS";
+    internal const string EnableLazyAllocationConfigKey = "OTEL_DOTNET_EXPERIMENTAL_METRICS_ENABLE_LAZY_ALLOCATION";
 
     internal readonly IServiceProvider ServiceProvider;
     internal IDisposable? OwnedServiceProvider;
     internal int ShutdownCount;
     internal bool Disposed;
+    internal bool EnableLazyAllocation;
     internal ExemplarFilterType? ExemplarFilter;
     internal ExemplarFilterType? ExemplarFilterForHistograms;
     internal Action? OnCollectObservableInstruments;
@@ -67,7 +69,7 @@ internal sealed class MeterProviderSdk : MeterProvider
         this.viewConfigs = state.ViewConfigs;
 
         OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent(
-            $"MeterProvider configuration: {{MetricLimit={state.MetricLimit}, CardinalityLimit={state.CardinalityLimit}, EnableLazyAllocation={state.EnableLazyAllocation}, ExemplarFilter={this.ExemplarFilter}, ExemplarFilterForHistograms={this.ExemplarFilterForHistograms}}}.");
+            $"MeterProvider configuration: {{MetricLimit={state.MetricLimit}, CardinalityLimit={state.CardinalityLimit}, EnableLazyAllocation={this.EnableLazyAllocation}, ExemplarFilter={this.ExemplarFilter}, ExemplarFilterForHistograms={this.ExemplarFilterForHistograms}}}.");
 
         foreach (var reader in state.Readers)
         {
@@ -78,7 +80,7 @@ internal sealed class MeterProviderSdk : MeterProvider
             reader.ApplyParentProviderSettings(
                 state.MetricLimit,
                 state.CardinalityLimit,
-                state.EnableLazyAllocation,
+                this.EnableLazyAllocation,
                 this.ExemplarFilter,
                 this.ExemplarFilterForHistograms);
 
@@ -479,6 +481,13 @@ internal sealed class MeterProviderSdk : MeterProvider
     private void ApplySpecificationConfigurationKeys(IConfiguration configuration)
     {
         var hasProgrammaticExemplarFilterValue = this.ExemplarFilter.HasValue;
+
+        if (configuration.TryGetBoolValue(OpenTelemetrySdkEventSource.Log, EnableLazyAllocationConfigKey, out var enableLazyAllocation))
+        {
+            this.EnableLazyAllocation = enableLazyAllocation;
+
+            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Lazy metric point allocation set to '{enableLazyAllocation}' from configuration.");
+        }
 
         if (configuration.TryGetStringValue(ExemplarFilterConfigKey, out var configValue))
         {

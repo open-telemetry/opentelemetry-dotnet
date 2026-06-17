@@ -11,7 +11,6 @@ internal static class DiagnosticDefinitions
     public const string LogsBridgeExperimentalApi = "OTEL1001";
     public const string ExemplarReservoirExperimentalApi = "OTEL1004";
     public const string EnvironmentVariableContextPropagationExperimentalApi = "OTEL1005";
-    public const string LazyAllocationExperimentalApi = "OTEL1006";
 
     /* Definitions which have been released stable:
     public const string ExemplarExperimentalApi = "OTEL1002";
