@@ -161,11 +161,6 @@ internal static partial class EnvironmentSubstitution
     // starts with a letter or underscore, followed by letters, digits, or underscores.
     private static bool HasValidEnvName(string value, int start, int length)
     {
-        if (length <= 0)
-        {
-            return false;
-        }
-
         var first = value[start];
         if (!((first >= 'a' && first <= 'z') || (first >= 'A' && first <= 'Z') || first == '_'))
         {
