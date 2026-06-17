@@ -73,6 +73,9 @@ public sealed partial class PrometheusSerializerTests
         { decimal.MinValue, "-79228162514264337593543950335" },
         { 0m, "0" },
         { decimal.MaxValue, "79228162514264337593543950335" },
+        { 1.5d, "1.5" },
+        { new Guid("12345678-1234-1234-1234-1234567890ab"), "12345678-1234-1234-1234-1234567890ab" },
+        { new Version(1, 2, 3), "1.2.3" },
     };
 
     [Fact]
@@ -1570,6 +1573,141 @@ public sealed partial class PrometheusSerializerTests
         var expected = ToHexString(Encoding.UTF8.GetBytes(value), Encoding.UTF8.GetByteCount(value));
 
         Assert.Equal(expected, actual);
+    }
+
+    [Fact]
+    public void WriteUnicodeStringReplacesLoneLowSurrogate()
+    {
+        const string value = "rocket:\uDE80";
+        var buffer = new byte[128];
+
+        var cursor = TextFormatSerializer.WriteUnicodeString(buffer, 0, value);
+        var actual = ToHexString(buffer, cursor);
+        var expected = ToHexString(Encoding.UTF8.GetBytes(value), Encoding.UTF8.GetByteCount(value));
+
+        Assert.Equal(expected, actual);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void GetSerializerThrowsForUnsupportedProtocolVersion(bool isOpenMetrics)
+    {
+        var protocol = new PrometheusProtocol(
+            isOpenMetrics ? PrometheusProtocol.OpenMetricsMediaType : PrometheusProtocol.PrometheusTextMediaType,
+            escaping: null,
+            version: new Version(2, 0, 0),
+            isOpenMetrics: isOpenMetrics);
+
+        Assert.Throws<NotSupportedException>(() => TextFormatSerializer.GetSerializer(protocol));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void WriteTargetInfoSkipsSingletonEmptyResource(bool openMetricsRequested)
+    {
+        var buffer = new byte[128];
+        var serializer = openMetricsRequested ? (TextFormatSerializer)TextFormatSerializer.OpenMetricsV1 : TextFormatSerializer.PrometheusV1;
+
+        var cursor = serializer.WriteTargetInfo(buffer, 0, Resource.Empty);
+
+        Assert.Equal(0, cursor);
+    }
+
+    [Theory]
+#pragma warning disable xUnit1045 // Avoid using TheoryData type arguments that might not be serializable
+    [MemberData(nameof(LabelValueBoundaryCases))]
+#pragma warning restore xUnit1045 // Avoid using TheoryData type arguments that might not be serializable
+    public void WriteLabelValueFormatsTypedValues(object? labelValue, string expectedValue)
+    {
+        var buffer = new byte[128];
+
+        var cursor = TextFormatSerializer.WriteLabelValue(buffer, 0, labelValue);
+
+        Assert.Equal(expectedValue, Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Fact]
+    public void MapMetricTypeReturnsExpectedTypeName()
+    {
+        var serializer = TextFormatSerializer.PrometheusV1;
+
+        Assert.Equal("gauge", serializer.MapMetricType(PrometheusType.Gauge));
+        Assert.Equal("counter", serializer.MapMetricType(PrometheusType.Counter));
+        Assert.Equal("summary", serializer.MapMetricType(PrometheusType.Summary));
+        Assert.Equal("histogram", serializer.MapMetricType(PrometheusType.Histogram));
+    }
+
+    [Fact]
+    public void WriteUnitMetadataWritesUnitOverrideThatDiffersFromMetricUnit()
+    {
+        var buffer = new byte[64];
+        var metric = new PrometheusMetric("test", string.Empty, PrometheusType.Gauge, disableTotalNameSuffixForCounters: false);
+
+        var cursor = TextFormatSerializer.PrometheusV1.WriteUnitMetadata(buffer, 0, metric, "seconds");
+
+        Assert.Equal("# UNIT test seconds\n", Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Fact]
+    public void WriteSerializedTagValuesThrowsWhenBufferTooSmall()
+    {
+        var buffer = new byte[2];
+        var serializedTags = "abc"u8.ToArray();
+
+        var exception = Assert.Throws<ArgumentException>(
+            () => TextFormatSerializer.WriteSerializedTagValues(buffer, 0, serializedTags));
+
+        Assert.Equal("buffer", exception.ParamName);
+    }
+
+    [Fact]
+    public void WriteMetricNameThrowsWhenBufferTooSmall()
+    {
+        var buffer = new byte[2];
+        var metric = new PrometheusMetric("test_metric", string.Empty, PrometheusType.Gauge, disableTotalNameSuffixForCounters: false);
+
+        var exception = Assert.Throws<ArgumentException>(
+            () => TextFormatSerializer.PrometheusV1.WriteMetricName(buffer, 0, metric));
+
+        Assert.Equal("buffer", exception.ParamName);
+    }
+
+    [Fact]
+    public void IsHistogramBucketExemplarMatchReturnsFalseForNaN()
+        => Assert.False(OpenMetricsSerializer.IsHistogramBucketExemplarMatch(double.NaN, double.NegativeInfinity, double.PositiveInfinity));
+
+    [Fact]
+    public void ExemplarLabelWithSurrogatePairCountsUnicodeCodePoints()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        var counter = meter.CreateCounter<long>("test_counter");
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
+            .AddView(
+                counter.Name,
+                new MetricStreamConfiguration
+                {
+                    TagKeys = ["keep"],
+                    ExemplarReservoirFactory = () => new SimpleFixedSizeExemplarReservoir(3),
+                })
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        counter.Add(1, new("keep", "value"), new("rocket", "rkt:🚀"));
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics: true);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        Assert.Contains("rkt:🚀", output, StringComparison.Ordinal);
     }
 
 #if NET
