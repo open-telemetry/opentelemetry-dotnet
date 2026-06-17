@@ -145,6 +145,8 @@ public sealed class EnvironmentSubstitutionTests
     [InlineData("${1API_KEY}")] // name starts with a digit (not allowed)
     [InlineData("${VAR:?error}")] // :? is not valid syntax (only :- is)
     [InlineData("${}")] // empty name
+    [InlineData("${1VAR:-default}")] // invalid first char before :- (exercises HasValidEnvName -> false on first char)
+    [InlineData("${MY.VAR:-default}")] // dot in name before :- (exercises HasValidEnvName -> false on subsequent char)
     public void Substitute_InvalidReference_ThrowsDeclarativeConfigurationException(string input) =>
         Assert.Throws<DeclarativeConfigurationException>(
             () => EnvironmentSubstitution.Substitute(input, _ => null));
@@ -200,7 +202,7 @@ public sealed class EnvironmentSubstitutionTests
     public void Substitute_NonAsciiInDefaultValue_ThrowsWithDefaultValueMessage()
     {
         var ex = Assert.Throws<DeclarativeConfigurationException>(
-            () => EnvironmentSubstitution.Substitute("${VAR:-café}", _ => null));
+            () => EnvironmentSubstitution.Substitute("${VAR:-caf\u00e9}", _ => null));
 
         Assert.Contains("default value", ex.Message, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("ENV_NAME", ex.Message, StringComparison.Ordinal);

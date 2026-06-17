@@ -1302,7 +1302,7 @@ public sealed class DeclarativeConfigurationReaderTests
         Assert.Equal($"my.attr={value}", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
     }
 
-    // M4: plain ${VAR} resolving to a YAML null spelling (null/NULL/~) → present-null.
+    // M4: plain ${VAR} resolving to a YAML null spelling (null/NULL/~) -> present-null.
     // Distinct from unset ${VAR} (which resolves to empty): here the env var IS set,
     // but its value is a YAML 1.2 core schema null token.
 
@@ -1313,7 +1313,7 @@ public sealed class DeclarativeConfigurationReaderTests
     public void Translate_DisabledFromEnvVarSetToNullLiteral_DoesNotSetKey(string envVarValue)
     {
         // When an env var is set to a YAML null spelling, substitution produces a plain
-        // scalar with that value. IsPlainNullScalar treats it as present-null → no key emitted.
+        // scalar with that value. IsPlainNullScalar treats it as present-null -> no key emitted.
         const string envVarName = "OTEL_DECLARATIVE_TEST_DISABLED_NULL_LITERAL";
         const string yaml = """
             file_format: "1.0"

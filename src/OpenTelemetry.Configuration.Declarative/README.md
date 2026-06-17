@@ -58,8 +58,9 @@ services.AddOpenTelemetry()
     .WithTracing(...);
 ```
 
-> [!IMPORTANT] 
+> [!IMPORTANT]
 > **Integration pitfalls**
+>
 > - **`UseDeclarativeConfiguration()` requires `IConfiguration` to exist** when
 >   it runs. If host infrastructure registers `IConfiguration` *after* your OTel
 >   setup, the YAML source will be unreachable. Prefer
