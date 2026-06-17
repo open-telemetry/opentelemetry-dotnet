@@ -10,7 +10,6 @@ using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
-using Xunit;
 
 namespace OpenTelemetry.Configuration.Declarative.Tests;
 

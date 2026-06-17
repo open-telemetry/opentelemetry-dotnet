@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Runtime.InteropServices;
-using Xunit;
 
 namespace OpenTelemetry.Configuration.Declarative.Tests;
 
@@ -96,7 +95,7 @@ public sealed class DeclarativeConfigurationFilePathTests
         try
         {
             Directory.SetCurrentDirectory(factory.TempDirectory);
-            var relativeName = System.IO.Path.GetFileName(absolutePath);
+            var relativeName = Path.GetFileName(absolutePath);
             fp = new FilePath(relativeName);
 
             Assert.Equal(absolutePath, fp.Path);

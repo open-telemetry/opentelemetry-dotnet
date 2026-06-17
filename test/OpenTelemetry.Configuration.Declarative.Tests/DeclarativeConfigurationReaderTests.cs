@@ -4,7 +4,6 @@
 #pragma warning disable OTEL1006
 
 using System.Collections.ObjectModel;
-using Xunit;
 
 namespace OpenTelemetry.Configuration.Declarative.Tests;
 
@@ -345,7 +344,7 @@ public sealed class DeclarativeConfigurationReaderTests
 
     [Theory]
     [InlineData("1invalid")] // starts with digit
-    [InlineData("my key")]   // contains space
+    [InlineData("my key")] // contains space
     public void Translate_ResourceAttributeSoftNonConformingName_IsEmittedVerbatim(string name)
     {
         // Names that fail the naming convention but contain no ',' or '=' are emitted
@@ -405,9 +404,9 @@ public sealed class DeclarativeConfigurationReaderTests
     }
 
     [Theory]
-    [InlineData("TRUE",    "true")]
-    [InlineData("FALSE",   "false")]
-    [InlineData(" true ",  "true")]
+    [InlineData("TRUE", "true")]
+    [InlineData("FALSE", "false")]
+    [InlineData(" true ", "true")]
     [InlineData(" False ", "false")]
     public void Translate_DisabledFromEnvVarSubstitution_NormalizesToCanonicalLowercase(
         string envVarValue, string expected)

@@ -9,7 +9,6 @@ using System.Collections.ObjectModel;
 using System.Diagnostics.Tracing;
 using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Tests;
-using Xunit;
 
 namespace OpenTelemetry.Configuration.Declarative.Tests;
 

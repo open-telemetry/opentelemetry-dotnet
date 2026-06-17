@@ -6,7 +6,6 @@
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Xunit;
 
 namespace OpenTelemetry.Configuration.Declarative.Tests;
 
@@ -473,7 +472,7 @@ public sealed class DeclarativeConfigurationExtensionTests
         var absolutePath = factory.CreateDeclarativeYaml(disabled: true);
         var originalCwd = Directory.GetCurrentDirectory();
 
-        IConfigurationBuilder builder = new ConfigurationBuilder();
+        var builder = new ConfigurationBuilder();
         try
         {
             Directory.SetCurrentDirectory(factory.TempDirectory);
