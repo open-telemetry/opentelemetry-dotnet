@@ -21,7 +21,7 @@ internal enum ConfigPropertyState
     Absent,
 
     /// <summary>
-    /// The key appeared but selects nullBehavior (YAML null, empty plain scalar, or unusable value).
+    /// The key appeared but selects null behavior (YAML null, empty plain scalar, or unusable value).
     /// </summary>
     Null,
 
