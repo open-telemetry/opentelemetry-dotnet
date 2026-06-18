@@ -169,8 +169,8 @@ Maintainers (admins) are needed to merge PRs and for the push to NuGet.**
 
     4. Extract the artifacts from the archive (`.zip`) into a local folder.
 
-    5. Download latest [nuget.exe](https://www.nuget.org/downloads) into the
-       same folder from step 4.
+    5. Ensure the .NET SDK version specified in `global.json` (or newer) is
+       installed.
 
     6. Create or regenerate an API key from nuget.org (only maintainers have
        access). When creating API keys make sure it is set to expire in 1 day or
@@ -183,7 +183,10 @@ Maintainers (admins) are needed to merge PRs and for the push to NuGet.**
        $nugetApiKey = Read-Host -Prompt 'NuGet API key' -AsSecureString
        $env:NUGET_API_KEY = [System.Net.NetworkCredential]::new('', $nugetApiKey).Password
 
-       Get-ChildItem -Recurse | Where-Object { $_.Extension -eq ".nupkg" } | ForEach-Object { .\nuget.exe push $_.FullName -Source https://api.nuget.org/v3/index.json }
+       Get-ChildItem -Recurse -Filter "*.nupkg" | ForEach-Object {
+         dotnet nuget push $_.FullName `
+           --source https://api.nuget.org/v3/index.json
+       }
        ```
 
     8. Validate that the package(s) are uploaded. Packages are available
