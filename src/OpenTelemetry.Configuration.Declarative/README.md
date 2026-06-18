@@ -138,8 +138,8 @@ ignoring host environment variables and `appsettings.json` for OTel keys (see
 
 ## Known limitations
 
-- No file watching: the YAML file is read once at startup. Runtime reload is a
-  planned future workstream.
+- No file watching: the YAML file is read once at start-up. Runtime reload is
+  planned to be added in a future release.
 - `resource.attributes` values are percent-encoded per the OTel spec (`,`, `=`,
   `%`, and `+` are encoded; other characters pass through). Attribute **keys**
   are not encoded; keep them to `[a-z0-9._-]` per OTel semantic conventions.
