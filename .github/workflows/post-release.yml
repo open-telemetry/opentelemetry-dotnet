@@ -83,11 +83,11 @@ jobs:
         EXPECTED_COMMENT_AUTHOR_USER_NAME: ${{ needs.automation.outputs.application-login }}
         COMMENT_USER_NAME: ${{ github.event.comment.user.login }}
         ISSUE_NUMBER: ${{ github.event.issue.number }}
-        NUGET_TOKEN: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
+        NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
       run: |
         Import-Module .\build\scripts\post-release.psm1
 
-        $HasToken = -Not [string]::IsNullOrEmpty($env:NUGET_TOKEN)
+        $HasToken = -Not [string]::IsNullOrEmpty($env:NUGET_API_KEY)
         PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullRequest `
           -gitRepository ${env:GITHUB_REPOSITORY} `
           -pullRequestNumber ${env:ISSUE_NUMBER} `
