@@ -152,7 +152,7 @@ ignoring host environment variables and `appsettings.json` for OTel keys (see
   treated as entry separators and will corrupt parsing.
 - Schema validation is lenient: only sections this package handles are
   validated; unknown sections are logged and ignored rather than causing an
-  error. Full JSON schema validation is planned for complete Parse compliance.
+  error. Full JSON schema validation is planned in a future release.
 
 ## Further reading
 
