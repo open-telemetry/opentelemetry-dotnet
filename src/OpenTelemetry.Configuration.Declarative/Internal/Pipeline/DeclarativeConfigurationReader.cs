@@ -6,6 +6,9 @@
 #pragma warning disable OTEL1006
 
 using System.Collections.ObjectModel;
+#if NET
+using System.Collections.Frozen;
+#endif
 using Microsoft.Extensions.Configuration;
 using YamlDotNet.RepresentationModel;
 
@@ -14,12 +17,22 @@ namespace OpenTelemetry.Configuration.Declarative;
 internal static class DeclarativeConfigurationReader
 {
     // Top-level keys this package recognises. Anything else is logged and ignored.
+#if NET
+    private static readonly FrozenSet<string> KnownTopLevelKeys =
+        new HashSet<string>(StringComparer.Ordinal)
+        {
+            YamlKeys.FileFormat,
+            YamlKeys.Disabled,
+            YamlKeys.Resource,
+        }.ToFrozenSet(StringComparer.Ordinal);
+#else
     private static readonly HashSet<string> KnownTopLevelKeys = new(StringComparer.Ordinal)
     {
         YamlKeys.FileFormat,
         YamlKeys.Disabled,
         YamlKeys.Resource,
     };
+#endif
 
     /// <summary>
     /// Opens <paramref name="filePath"/>, validates <c>file_format</c>, parses the typed model,
@@ -49,7 +62,7 @@ internal static class DeclarativeConfigurationReader
         if (stream.Documents.Count == 0)
         {
             // Empty file is a no-op in overlay mode; informational event for diagnostics.
-            OpenTelemetryDeclarativeConfigurationEventSource.Log.EmptyConfigurationFile(filePath.ToString());
+            OpenTelemetryDeclarativeConfigurationEventSource.Log.EmptyConfigurationFile(filePath.DisplayPath);
             return new ReadOnlyDictionary<string, string?>(data);
         }
 

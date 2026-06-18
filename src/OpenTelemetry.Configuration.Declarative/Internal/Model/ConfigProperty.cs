@@ -97,15 +97,4 @@ internal readonly struct ConfigProperty<T>
         value = default;
         return false;
     }
-
-    /// <summary>
-    /// Deconstructs the property into its state and (possibly null) value.
-    /// </summary>
-    /// <param name="state">The <see cref="ConfigPropertyState"/> of the <see cref="ConfigProperty{T}"/>.</param>
-    /// <param name="value">The value, or <see langword="default"/> when not present.</param>
-    public void Deconstruct(out ConfigPropertyState state, out T? value)
-    {
-        state = this.State;
-        value = this.value;
-    }
 }

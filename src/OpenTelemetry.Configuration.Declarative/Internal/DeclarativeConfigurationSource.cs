@@ -9,14 +9,9 @@ namespace OpenTelemetry.Configuration.Declarative;
 /// An <see cref="IConfigurationSource"/> that creates <see cref="DeclarativeConfigurationProvider"/> instances to read OpenTelemetry
 /// configuration from a declarative configuration YAML file.
 /// </summary>
-internal sealed class DeclarativeConfigurationSource : IConfigurationSource
+internal sealed class DeclarativeConfigurationSource(FilePath filePath) : IConfigurationSource
 {
-    internal DeclarativeConfigurationSource(FilePath filePath)
-    {
-        this.FilePath = filePath;
-    }
-
-    public FilePath FilePath { get; }
+    public FilePath FilePath { get; } = filePath;
 
     /// <inheritdoc/>
     public IConfigurationProvider Build(IConfigurationBuilder builder) =>

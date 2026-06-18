@@ -17,7 +17,7 @@ internal sealed class OpenTelemetryDeclarativeConfigurationEventSource : EventSo
     [Event(1, Message = "Declarative config file_format warning: {0}", Level = EventLevel.Warning)]
     public void FileFormatWarning(string message) => this.WriteEvent(1, message);
 
-    [Event(2, Message = "Declarative config: unknown top-level section '{0}' is not supported in this version and will be ignored.", Level = EventLevel.Informational)]
+    [Event(2, Message = "Declarative config: unknown top-level section '{0}' is not supported in this version and will be ignored.", Level = EventLevel.Warning)]
     public void UnknownConfigurationSection(string sectionName) => this.WriteEvent(2, sectionName);
 
     [Event(3, Message = "Declarative config: invalid resource attribute - {0}", Level = EventLevel.Warning)]
@@ -62,7 +62,7 @@ internal sealed class OpenTelemetryDeclarativeConfigurationEventSource : EventSo
     [Event(13, Message = "Declarative config: successfully loaded {1} key(s) from '{0}'.", Level = EventLevel.Verbose)]
     public void ConfigurationLoadSucceeded(string filePath, int keyCount) => this.WriteEvent(13, filePath, keyCount);
 
-    [Event(14, Message = "Declarative config: 'disabled: true' is set in '{0}'; the SDK will produce no telemetry.", Level = EventLevel.Warning)]
+    [Event(14, Message = "Declarative config: 'disabled' is set in '{0}'; the SDK will produce no telemetry.", Level = EventLevel.Warning)]
     public void SdkDisabledDetected(string filePath) => this.WriteEvent(14, filePath);
 
     [Event(15, Message = "Declarative config: environment variable '{0}' is not set and has no default; substitution resolved to empty string.", Level = EventLevel.Verbose)]

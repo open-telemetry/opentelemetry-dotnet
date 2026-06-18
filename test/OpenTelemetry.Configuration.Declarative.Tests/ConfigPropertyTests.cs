@@ -44,29 +44,32 @@ public sealed class ConfigPropertyTests
         Assert.Throws<InvalidOperationException>(() => ConfigProperty<string>.Null.Value);
 
     [Fact]
-    public void Deconstruct_WhenPresent_YieldsStateAndValue()
+    public void TryGetValue_WhenPresent_ReturnsTrueAndValue()
     {
-        var (state, value) = ConfigProperty<string>.Create("hello");
+        var result = ConfigProperty<string>.Create("hello");
 
-        Assert.Equal(ConfigPropertyState.Present, state);
+        Assert.Equal(ConfigPropertyState.Present, result.State);
+        Assert.True(result.TryGetValue(out var value));
         Assert.Equal("hello", value);
     }
 
     [Fact]
-    public void Deconstruct_WhenAbsent_YieldsStateAndDefault()
+    public void TryGetValue_WhenAbsent_ReturnsFalse()
     {
-        var (state, value) = ConfigProperty<string>.Absent;
+        var result = ConfigProperty<string>.Absent;
 
-        Assert.Equal(ConfigPropertyState.Absent, state);
+        Assert.Equal(ConfigPropertyState.Absent, result.State);
+        Assert.False(result.TryGetValue(out var value));
         Assert.Null(value);
     }
 
     [Fact]
-    public void Deconstruct_WhenNull_YieldsStateAndDefault()
+    public void TryGetValue_WhenNull_ReturnsFalse()
     {
-        var (state, value) = ConfigProperty<string>.Null;
+        var result = ConfigProperty<string>.Null;
 
-        Assert.Equal(ConfigPropertyState.Null, state);
+        Assert.Equal(ConfigPropertyState.Null, result.State);
+        Assert.False(result.TryGetValue(out var value));
         Assert.Null(value);
     }
 }
