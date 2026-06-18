@@ -263,7 +263,7 @@ internal static partial class DeclarativeConfigurationConverter
         };
 
 #if NET8_0_OR_GREATER
-    [GeneratedRegex(AttributeNamePatternString, RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    [GeneratedRegex(AttributeNamePatternString, RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1_000)]
     private static partial Regex GetAttributeNamePattern();
 #else
     private static Regex GetAttributeNamePattern() => AttributeNamePatternInstance;
