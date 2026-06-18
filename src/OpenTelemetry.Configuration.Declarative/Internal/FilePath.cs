@@ -82,12 +82,10 @@ internal readonly record struct FilePath
     /// </returns>
     public override string ToString() => this.displayPath;
 
-    private static bool IsWindows()
-    {
+    private static bool IsWindows() =>
 #if NET
-        return OperatingSystem.IsWindows();
+        OperatingSystem.IsWindows();
 #else
-        return System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows);
+        System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows);
 #endif
-    }
 }
