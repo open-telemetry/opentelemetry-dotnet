@@ -10,6 +10,8 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.Internal;
 
+// TODO Temporary comment to validate this PR
+
 namespace OpenTelemetry.Logs;
 
 /// <summary>
