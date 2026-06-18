@@ -84,7 +84,7 @@ resource:
       value: "1.0.0"
 ```
 
-## Supported settings (this release)
+## Supported settings
 
 | YAML field | SDK effect |
 | --- | --- |
