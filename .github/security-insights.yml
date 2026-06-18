@@ -155,7 +155,7 @@ repository:
           ci: false
           release: false
         rulesets:
-          - https://docs.github.com/en/code-security/secret-scanning/introduction/supported-secret-scanning-patterns
+          - https://docs.github.com/code-security/secret-scanning/introduction/supported-secret-scanning-patterns
         type: secret-scanning
       - name: Renovate
         comment: |
