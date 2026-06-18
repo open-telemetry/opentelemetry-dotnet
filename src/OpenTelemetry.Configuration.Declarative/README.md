@@ -93,9 +93,8 @@ resource:
 | `resource.attributes_list` | `OTEL_RESOURCE_ATTRIBUTES` - resource attributes in pre-formatted `key=value` list form |
 
 All other top-level sections (e.g. `tracer_provider`, `propagator`) are logged
-and ignored. Full component support will require the factory contract to be
-implemented (see
-[#6380](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6380)).
+and ignored. You can track this issue for missing features:
+[#6380](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6380).
 
 ## Environment-variable substitution
 
