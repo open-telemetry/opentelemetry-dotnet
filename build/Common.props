@@ -4,7 +4,7 @@
     <LangVersion>preview</LangVersion>
     <SignAssembly>true</SignAssembly>
     <RepoRoot>$([System.IO.Directory]::GetParent($(MSBuildThisFileDirectory)).Parent.FullName)</RepoRoot>
-    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)debug.snk</AssemblyOriginatorKeyFile>
+    <StrongNameKeyBase64File>$(MSBuildThisFileDirectory)OpenTelemetry.snk.base64</StrongNameKeyBase64File>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Nullable>enable</Nullable>
@@ -24,6 +24,73 @@
   <PropertyGroup Label="BuildFlags">
     <RunningDotNetPack Condition="'$(RunningDotNetPack)' == ''">false</RunningDotNetPack>
   </PropertyGroup>
+
+  <UsingTask
+    TaskName="DecodeBase64File"
+    TaskFactory="RoslynCodeTaskFactory"
+    AssemblyFile="$([System.IO.Path]::Combine('$(MSBuildToolsPath)', 'Microsoft.Build.Tasks.Core.dll'))">
+    <ParameterGroup>
+      <SourceFile ParameterType="System.String" Required="true" />
+      <DestinationFile ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System" />
+      <Using Namespace="System.IO" />
+      <Code Type="Fragment" Language="cs"><![CDATA[
+var destinationInfo = new FileInfo(DestinationFile);
+if (destinationInfo.Exists && destinationInfo.Length > 0)
+{
+    return true;
+}
+
+var base64Text = string.Concat(File.ReadAllLines(SourceFile));
+
+var directory = Path.GetDirectoryName(DestinationFile);
+if (!string.IsNullOrEmpty(directory))
+{
+    Directory.CreateDirectory(directory);
+}
+
+var temporaryFile = DestinationFile + "." + Guid.NewGuid().ToString("N") + ".tmp";
+try
+{
+    File.WriteAllBytes(temporaryFile, Convert.FromBase64String(base64Text));
+
+    try
+    {
+        File.Move(temporaryFile, DestinationFile);
+    }
+    catch (IOException)
+    {
+        destinationInfo.Refresh();
+        if (!destinationInfo.Exists || destinationInfo.Length == 0)
+        {
+            throw;
+        }
+    }
+}
+finally
+{
+    if (File.Exists(temporaryFile))
+    {
+        File.Delete(temporaryFile);
+    }
+}
+      ]]></Code>
+    </Task>
+  </UsingTask>
+
+  <Target Name="GenerateAssemblyOriginatorKeyFile" BeforeTargets="ResolveKeySource" Condition="'$(SignAssembly)' == 'true'">
+    <PropertyGroup>
+      <AssemblyOriginatorKeyFile>$([System.IO.Path]::Combine('$(BaseIntermediateOutputPath)', 'OpenTelemetry.snk'))</AssemblyOriginatorKeyFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <FileWrites Include="$(AssemblyOriginatorKeyFile)" />
+    </ItemGroup>
+
+    <DecodeBase64File SourceFile="$(StrongNameKeyBase64File)" DestinationFile="$(AssemblyOriginatorKeyFile)" />
+  </Target>
 
   <!-- OmniSharp/VS Code requires TargetFrameworks to be in descending order for IntelliSense and analysis. -->
   <PropertyGroup>

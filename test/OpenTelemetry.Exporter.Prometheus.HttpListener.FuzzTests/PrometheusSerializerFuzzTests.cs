@@ -6,6 +6,7 @@ using System.Text;
 using FsCheck;
 using FsCheck.Fluent;
 using FsCheck.Xunit;
+using OpenTelemetry.Exporter.Prometheus.Serialization;
 
 namespace OpenTelemetry.Exporter.Prometheus.FuzzTests;
 
@@ -16,12 +17,12 @@ public class PrometheusSerializerFuzzTests
     [Property(MaxTest = MaxTests)]
     public Property WriteAsciiStringNoEscapeMatchesReferenceImplementation() => Prop.ForAll(
         Generators.AsciiStringArbitrary(),
-        static (value) => Serialize(value, PrometheusSerializer.WriteAsciiStringNoEscape).SequenceEqual(ReferenceWriteAsciiStringNoEscape(value)));
+        static (value) => Serialize(value, TextFormatSerializer.WriteAsciiStringNoEscape).SequenceEqual(ReferenceWriteAsciiStringNoEscape(value)));
 
     [Property(MaxTest = MaxTests)]
     public Property WritePrometheusLabelKeyMatchesReferenceImplementation() => Prop.ForAll(
         Generators.PrometheusStringArbitrary(),
-        static (value) => Serialize(value, static (buffer, cursor, text) => PrometheusSerializer.WriteLabelKey(buffer, cursor, text, openMetricsRequested: false)).SequenceEqual(ReferenceWriteLabelKey(value)));
+        static (value) => Serialize(value, static (buffer, cursor, text) => TextFormatSerializer.WriteLabelKey(buffer, cursor, text)).SequenceEqual(ReferenceWriteLabelKey(value)));
 
     [Property(MaxTest = MaxTests)]
     public Property WriteOpenMetricsLabelKeyMatchesReferenceImplementation() => Prop.ForAll(
@@ -31,12 +32,12 @@ public class PrometheusSerializerFuzzTests
     [Property(MaxTest = MaxTests)]
     public Property WriteLabelValueMatchesReferenceImplementation() => Prop.ForAll(
         Generators.PrometheusStringArbitrary(),
-        static (value) => Serialize(value, PrometheusSerializer.WriteLabelValue).SequenceEqual(ReferenceWriteLabelValue(value)));
+        static (value) => Serialize(value, TextFormatSerializer.WriteLabelValue).SequenceEqual(ReferenceWriteLabelValue(value)));
 
     [Property(MaxTest = MaxTests)]
     public Property WriteUnicodeStringMatchesReferenceImplementation() => Prop.ForAll(
         Generators.PrometheusStringArbitrary(),
-        static (value) => Serialize(value, PrometheusSerializer.WriteUnicodeString).SequenceEqual(ReferenceWriteUnicodeString(value)));
+        static (value) => Serialize(value, TextFormatSerializer.WriteUnicodeString).SequenceEqual(ReferenceWriteUnicodeString(value)));
 
     [Property(MaxTest = MaxTests)]
     public Property WriteLongMatchesReferenceImplementation() => Prop.ForAll(
@@ -58,21 +59,21 @@ public class PrometheusSerializerFuzzTests
     private static byte[] SerializeOpenMetricsLabelKey(string value)
     {
         var buffer = new byte[(value.Length * 8) + 16];
-        var cursor = PrometheusSerializer.WriteLabelKey(buffer, 0, value, openMetricsRequested: true);
+        var cursor = TextFormatSerializer.WriteLabelKey(buffer, 0, value);
         return buffer.AsSpan(0, cursor).ToArray();
     }
 
     private static byte[] SerializeLong(long value)
     {
         var buffer = new byte[64];
-        var cursor = PrometheusSerializer.WriteLong(buffer, 0, value);
+        var cursor = TextFormatSerializer.WriteLong(buffer, 0, value);
         return buffer.AsSpan(0, cursor).ToArray();
     }
 
     private static byte[] SerializeDouble(double value)
     {
         var buffer = new byte[64];
-        var cursor = PrometheusSerializer.WriteDouble(buffer, 0, value);
+        var cursor = TextFormatSerializer.WriteDouble(buffer, 0, value);
         return buffer.AsSpan(0, cursor).ToArray();
     }
 

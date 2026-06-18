@@ -98,19 +98,33 @@ public class EnvironmentVariableCarrierTests
     }
 
     [Fact]
-    public void Get_SupportsUnnormalizedCarrierKeys()
+    public void Get_NormalizesRequestedKeyBeforeReadingNormalizedCarrierKeys()
     {
         List<KeyValuePair<string, string?>> carrier =
         [
-            new("traceparent", "value1"),
-            new("otel.trace.id", "value2"),
-            new("Baggage", "value3"),
+            new("TRACEPARENT", "value1"),
+            new("OTEL_TRACE_ID", "value2"),
+            new("BAGGAGE", "value3"),
         ];
 
-        Assert.Equal("value1", EnvironmentVariableCarrier.Get(carrier, "TRACEPARENT")!.Single());
-        Assert.Equal("value2", EnvironmentVariableCarrier.Get(carrier, "OTEL_TRACE_ID")!.Single());
-        Assert.Equal("value3", EnvironmentVariableCarrier.Get(carrier, "baggage")!.Single());
+        Assert.Equal("value1", EnvironmentVariableCarrier.Get(carrier, "traceparent")!.Single());
+        Assert.Equal("value2", EnvironmentVariableCarrier.Get(carrier, "otel.trace.id")!.Single());
+        Assert.Equal("value3", EnvironmentVariableCarrier.Get(carrier, "Baggage")!.Single());
         Assert.Null(EnvironmentVariableCarrier.Get(carrier, "missing"));
+    }
+
+    [Fact]
+    public void Get_DoesNotReadNonNormalizedCarrierKeys()
+    {
+        List<KeyValuePair<string, string?>> carrier =
+        [
+            new("x-b3-traceid", "value1"),
+            new("traceparent", "value2"),
+        ];
+
+        Assert.Null(EnvironmentVariableCarrier.Get(carrier, "x-b3-traceid"));
+        Assert.Null(EnvironmentVariableCarrier.Get(carrier, "X_B3_TRACEID"));
+        Assert.Null(EnvironmentVariableCarrier.Get(carrier, "traceparent"));
     }
 
     [Fact]
@@ -118,8 +132,8 @@ public class EnvironmentVariableCarrierTests
     {
         List<KeyValuePair<string, string?>> carrier =
         [
-            new("empty-key", string.Empty),
-            new("opaque-key", "value with spaces\tand\u0000control\u0080"),
+            new("EMPTY_KEY", string.Empty),
+            new("OPAQUE_KEY", "value with spaces\tand\u0000control\u0080"),
         ];
 
         Assert.Equal(string.Empty, EnvironmentVariableCarrier.Get(carrier, "empty-key")!.Single());
@@ -131,22 +145,10 @@ public class EnvironmentVariableCarrierTests
     {
         List<KeyValuePair<string, string?>> carrier =
         [
-            new("123trace", "value"),
+            new("_123TRACE", "value"),
         ];
 
-        Assert.Equal("value", EnvironmentVariableCarrier.Get(carrier, "_123TRACE")!.Single());
-    }
-
-    [Fact]
-    public void Get_IgnoresLeadingDigitCarrierKeyForNonDigitLookupKey()
-    {
-        List<KeyValuePair<string, string?>> carrier =
-        [
-            new("123trace", "value1"),
-            new("traceparent", "value2"),
-        ];
-
-        Assert.Equal("value2", EnvironmentVariableCarrier.Get(carrier, "traceparent")!.Single());
+        Assert.Equal("value", EnvironmentVariableCarrier.Get(carrier, "123trace")!.Single());
     }
 
     [Fact]
