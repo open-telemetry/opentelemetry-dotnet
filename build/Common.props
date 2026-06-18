@@ -36,9 +36,8 @@
       <Using Namespace="System" />
       <Using Namespace="System.IO" />
       <Code Type="Fragment" Language="cs"><![CDATA[
-var sourceInfo = new FileInfo(SourceFile);
 var destinationInfo = new FileInfo(DestinationFile);
-if (destinationInfo.Exists && destinationInfo.Length > 0 && destinationInfo.LastWriteTimeUtc >= sourceInfo.LastWriteTimeUtc)
+if (destinationInfo.Exists && destinationInfo.Length > 0)
 {
     return true;
 }
@@ -51,7 +50,31 @@ if (!string.IsNullOrEmpty(directory))
     Directory.CreateDirectory(directory);
 }
 
-File.WriteAllBytes(DestinationFile, Convert.FromBase64String(base64Text));
+var temporaryFile = DestinationFile + "." + Guid.NewGuid().ToString("N") + ".tmp";
+try
+{
+    File.WriteAllBytes(temporaryFile, Convert.FromBase64String(base64Text));
+
+    try
+    {
+        File.Move(temporaryFile, DestinationFile);
+    }
+    catch (IOException)
+    {
+        destinationInfo.Refresh();
+        if (!destinationInfo.Exists || destinationInfo.Length == 0)
+        {
+            throw;
+        }
+    }
+}
+finally
+{
+    if (File.Exists(temporaryFile))
+    {
+        File.Delete(temporaryFile);
+    }
+}
       ]]></Code>
     </Task>
   </UsingTask>
