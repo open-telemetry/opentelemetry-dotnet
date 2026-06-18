@@ -32,8 +32,7 @@ internal static partial class EnvironmentSubstitution
     private const string SubstitutionPatternString =
         @"\$\$|\$\{(?:(env):)?([a-zA-Z_][a-zA-Z0-9_]*)(?::-([" + "\x09\x20" + @"-\x7C\x7E]*))?\}|\$\{[^}]*\}|\$\{";
 
-#if !NET8_0_OR_GREATER
-    // Pre-compiled fallback for older TFMs.
+#if !NET
     private static readonly Regex SubstitutionPatternInstance = new(
         SubstitutionPatternString,
         RegexOptions.Compiled | RegexOptions.CultureInvariant,
