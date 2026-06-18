@@ -35,18 +35,8 @@
     <Task>
       <Using Namespace="System" />
       <Using Namespace="System.IO" />
-      <Using Namespace="System.Text" />
       <Code Type="Fragment" Language="cs"><![CDATA[
-var base64Text = File.ReadAllText(SourceFile);
-var builder = new StringBuilder(base64Text.Length);
-
-foreach (var ch in base64Text)
-{
-    if (!char.IsWhiteSpace(ch))
-    {
-        builder.Append(ch);
-    }
-}
+var base64Text = string.Concat(File.ReadAllLines(SourceFile));
 
 var directory = Path.GetDirectoryName(DestinationFile);
 if (!string.IsNullOrEmpty(directory))
@@ -54,7 +44,7 @@ if (!string.IsNullOrEmpty(directory))
     Directory.CreateDirectory(directory);
 }
 
-File.WriteAllBytes(DestinationFile, Convert.FromBase64String(builder.ToString()));
+File.WriteAllBytes(DestinationFile, Convert.FromBase64String(base64Text));
       ]]></Code>
     </Task>
   </UsingTask>
