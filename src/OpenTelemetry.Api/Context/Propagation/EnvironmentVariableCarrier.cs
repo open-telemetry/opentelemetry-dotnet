@@ -17,7 +17,8 @@ namespace OpenTelemetry.Context.Propagation;
 /// normalization follows the OpenTelemetry environment carrier specification by
 /// uppercasing ASCII letters, replacing non-ASCII letters, non-digits, and
 /// non-underscore characters with underscores, prefixing an underscore when
-/// a normalized key would otherwise start with a digit.
+/// a normalized key would otherwise start with a digit, and replacing an empty
+/// key with a single underscore.
 /// </remarks>
 [System.Diagnostics.CodeAnalysis.Experimental(DiagnosticDefinitions.EnvironmentVariableContextPropagationExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
 public
@@ -167,9 +168,10 @@ static class EnvironmentVariableCarrier
 
     private static bool IsAlreadyNormalized(string key)
     {
+        // An empty key is non-normalized and normalizes to a single underscore.
         if (key.Length == 0 || char.IsAsciiDigit(key[0]))
         {
-            return key.Length == 0;
+            return false;
         }
 
         foreach (var ch in key)
@@ -185,6 +187,11 @@ static class EnvironmentVariableCarrier
 
     private static string CreateNormalizedKey(string key)
     {
+        if (key.Length == 0)
+        {
+            return "_";
+        }
+
         var prefixLength = char.IsAsciiDigit(key[0]) ? 1 : 0;
         int length = key.Length + prefixLength;
 

@@ -17,6 +17,10 @@ Notes](../../RELEASENOTES.md).
   normalize to the requested key.
   ([#7410](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7410))
 
+* **Experimental (pre-release builds only):** Updated `EnvironmentVariableCarrier`
+  key normalization to replace an empty key with a single underscore (`_`).
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.16.0
 
 Released 2026-Jun-10
