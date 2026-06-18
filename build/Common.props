@@ -3,7 +3,7 @@
     <LangVersion>latest</LangVersion>
     <SignAssembly>true</SignAssembly>
     <RepoRoot>$([System.IO.Directory]::GetParent($(MSBuildThisFileDirectory)).Parent.FullName)</RepoRoot>
-    <StrongNameKeyBase64File>$(MSBuildThisFileDirectory)debug.snk.base64</StrongNameKeyBase64File>
+    <StrongNameKeyBase64File>$(MSBuildThisFileDirectory)OpenTelemetry.snk.base64</StrongNameKeyBase64File>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Nullable>enable</Nullable>
@@ -58,7 +58,7 @@ File.WriteAllBytes(DestinationFile, Convert.FromBase64String(base64Text));
 
   <Target Name="GenerateAssemblyOriginatorKeyFile" BeforeTargets="ResolveKeySource" Condition="'$(SignAssembly)' == 'true'">
     <PropertyGroup>
-      <AssemblyOriginatorKeyFile>$([System.IO.Path]::Combine('$(BaseIntermediateOutputPath)', 'debug.snk'))</AssemblyOriginatorKeyFile>
+      <AssemblyOriginatorKeyFile>$([System.IO.Path]::Combine('$(BaseIntermediateOutputPath)', 'OpenTelemetry.snk'))</AssemblyOriginatorKeyFile>
     </PropertyGroup>
 
     <ItemGroup>
