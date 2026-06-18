@@ -9,6 +9,11 @@ Notes](../../RELEASENOTES.md).
 * Fixed a metric point reclaim data race on CPU ARM architectures.
   ([#7401](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7401))
 
+* Added a verbose `OpenTelemetry-Sdk` self-diagnostics event that is emitted
+  when an activity is dropped because its local (in-process) parent is not
+  recorded.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/issues/TODO))
+
 ## 1.16.0
 
 Released 2026-Jun-10

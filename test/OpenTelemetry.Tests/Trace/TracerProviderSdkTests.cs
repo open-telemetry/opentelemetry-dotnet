@@ -4,6 +4,7 @@
 using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Resources.Tests;
 using OpenTelemetry.Tests;
@@ -1347,6 +1348,77 @@ public sealed class TracerProviderSdkTests : IDisposable
         // verify that the links retain the order as they were added.
         Assert.Equal(link1.Context, exportedActivity.Links.ElementAt(0).Context);
         Assert.Equal(link2.Context, exportedActivity.Links.ElementAt(1).Context);
+    }
+
+    [Fact]
+    public void SdkEmitsDiagnosticEventWhenActivityDroppedDueToUnsampledLocalParent()
+    {
+        using var source = new ActivitySource(Utils.GetCurrentMethodName());
+
+        // Default sampler is ParentBased(AlwaysOn).
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(source.Name)
+            .Build();
+
+        // Simulate the framework-created in-process parent activity. Its source is
+        // not registered with the provider, so it is never sampled (Recorded == false)
+        // but it still becomes Activity.Current.
+        using var parent = new Activity("ParentNotRecorded");
+        parent.Start();
+
+        Assert.False(parent.Recorded);
+        Assert.False(parent.Context.IsRemote);
+
+        // Create the event listener after the parent has started so its thread
+        // activity id is the one stamped on the diagnostic event.
+        using var eventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log);
+
+        using (var child = source.StartActivity("Child"))
+        {
+            // The child is dropped because its local parent is not recorded.
+            Assert.Null(child);
+        }
+
+        parent.Stop();
+
+        var droppedEvents = eventListener.Messages.Where(
+            e => e.EventId == 58 &&
+                 (e.Payload?.Count ?? 0) >= 2 &&
+                 (e.Payload![0] as string) == "Child" &&
+                 (e.Payload![1] as string) == source.Name);
+
+        Assert.Single(droppedEvents);
+    }
+
+    [Fact]
+    public void SdkDoesNotEmitUnsampledLocalParentEventForRemoteParent()
+    {
+        // A remote parent's sampling decision is controlled by the caller and is
+        // expected to flow through, so the diagnostic event should not be emitted.
+        using var source = new ActivitySource(Utils.GetCurrentMethodName());
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(source.Name)
+            .Build();
+
+        using var eventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log);
+
+        var remoteParent = new ActivityContext(
+            ActivityTraceId.CreateRandom(),
+            ActivitySpanId.CreateRandom(),
+            ActivityTraceFlags.None,
+            isRemote: true);
+
+        using (var child = source.StartActivity("Child", ActivityKind.Internal, remoteParent))
+        {
+            // Dropped as PropagationData by the default ParentBased sampler.
+            Assert.False(child?.Recorded ?? false);
+        }
+
+        var droppedEvents = eventListener.Messages.Where(
+            e => e.EventId == 58 && (e.Payload?.Count ?? 0) >= 2 && (e.Payload![0] as string) == "Child");
+
+        Assert.Empty(droppedEvents);
     }
 
     public void Dispose()

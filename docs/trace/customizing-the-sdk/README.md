@@ -386,6 +386,72 @@ probability configured via the `OTEL_TRACES_SAMPLER_ARG` environment variable.
 Follow [this](../extending-the-sdk/README.md#sampler) document
 to learn about writing custom samplers.
 
+#### Troubleshooting: spans dropped due to an unsampled parent
+
+The default sampler is `ParentBased(root=AlwaysOn)`. As the name implies, when a
+span has a parent, the `ParentBased` sampler honors the parent's sampling
+decision: if the parent was **not** sampled (recorded), the child is dropped as
+well. This is the behavior required by the
+[specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#parentbased)
+and is usually what you want, but it can be surprising when the parent activity
+is one you did not create yourself.
+
+One scenario where this can occur is an ASP.NET Core application that emits custom
+spans **without** adding the ASP.NET Core instrumentation to your application:
+
+```csharp
+var activitySource = new ActivitySource("MyCompany.MyProduct");
+
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracing => tracing
+        .AddSource("MyCompany.MyProduct")
+        .AddConsoleExporter());
+
+app.MapGet("/hello", () =>
+{
+    using var activity = activitySource.StartActivity("Hello");
+    return "Hello, World!";
+});
+```
+
+ASP.NET Core creates a `Microsoft.AspNetCore.Hosting.HttpRequestIn` activity for
+every request (it is used for request logging and context propagation, even when
+no tracing is configured). Because the `Microsoft.AspNetCore.Hosting`
+`ActivitySource` has **not** been added to the `TracerProvider`, the SDK never
+samples that activity, so it is created with its `Recorded` flag set to `false`
+and becomes the parent (`Activity.Current`) of the custom `Hello` activity. The
+default `ParentBased` sampler then drops the custom activity because its parent
+was not recorded.
+
+You can confirm this is what is happening by enabling
+[self-diagnostics](../../../src/OpenTelemetry/README.md#self-diagnostics) at the
+`Verbose` level. The SDK emits an event explaining that the activity was dropped
+because its local parent is not recorded, together with the name of the
+`ActivitySource`.
+
+To resolve this, pick whichever option best suites your needs:
+
+* **Record the parent activity (recommended for ASP.NET Core apps).** Add the
+  [ASP.NET Core
+  instrumentation package](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Instrumentation.AspNetCore)
+  (`AddAspNetCoreInstrumentation()`), or at minimum register the source with
+  `AddSource("Microsoft.AspNetCore.Hosting")`. The request activity then becomes
+  a recorded root and the custom child is sampled normally.
+
+* **Use a sampler that does not depend on the parent.** For example
+  `SetSampler(new AlwaysOnSampler())` records every activity from the registered
+  sources regardless of the parent's sampling decision. Note this also disables
+  the honoring of upstream (remote) sampling decisions, so it is generally only
+  appropriate for development or simple scenarios.
+
+* **Make the custom activity a root span** by starting it with an explicit
+  default (empty) parent context so the parent-based decision does not apply:
+
+  ```csharp
+  using var activity = activitySource.StartActivity(
+      "Hello", ActivityKind.Internal, parentContext: default);
+  ```
+
 ## Context Propagation
 
 The OpenTelemetry API exposes a method to obtain the default propagator which is

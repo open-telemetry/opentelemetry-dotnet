@@ -481,6 +481,11 @@ internal sealed class TracerProviderSdk : TracerProvider
             SamplingDecision.Drop or _ => PropagateOrIgnoreData(ref options),
         };
 
+        if (samplingResult.Decision == SamplingDecision.Drop)
+        {
+            OpenTelemetrySdkEventSource.Log.ActivityDroppedDueToUnsampledLocalParent(options.Name, options.Source.Name, options.Parent);
+        }
+
         if (activitySamplingResult > ActivitySamplingResult.PropagationData)
         {
             if (samplingResult.AttributesOrNull is { } attributes)
@@ -567,6 +572,7 @@ internal sealed class TracerProviderSdk : TracerProvider
             case SamplingDecision.Drop:
                 activity.IsAllDataRequested = false;
                 activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
+                OpenTelemetrySdkEventSource.Log.ActivityDroppedDueToUnsampledLocalParent(activity.DisplayName, activity.Source.Name, parentContext);
                 break;
             case SamplingDecision.RecordOnly:
                 activity.IsAllDataRequested = true;

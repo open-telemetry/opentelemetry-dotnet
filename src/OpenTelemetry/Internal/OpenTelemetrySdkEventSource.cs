@@ -178,6 +178,21 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
         }
     }
 
+    [NonEvent]
+    public void ActivityDroppedDueToUnsampledLocalParent(string activityName, string activitySourceName, in ActivityContext parentContext)
+    {
+        // Only emit for an in-process (local) parent which was not recorded.
+        // A remote parent's sampling decision is controlled by the caller and is
+        // expected to flow through, so it is not reported here.
+        if (parentContext.TraceId != default &&
+            !parentContext.IsRemote &&
+            (parentContext.TraceFlags & ActivityTraceFlags.Recorded) == 0 &&
+            this.IsEnabled(EventLevel.Verbose, EventKeywords.All))
+        {
+            this.ActivityDroppedDueToUnsampledLocalParent(activityName, activitySourceName);
+        }
+    }
+
     [Event(4, Message = "Unknown error in SpanProcessor event '{0}': '{1}'.", Level = EventLevel.Error)]
     public void SpanProcessorException(string evnt, string ex)
         => this.WriteEvent(4, evnt, ex);
@@ -324,6 +339,10 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
     [Event(57, Message = "Exception thrown by user-supplied ExemplarReservoir.Offer implementation: '{0}'.", Level = EventLevel.Verbose)]
     public void ExemplarReservoirException(string ex)
         => this.WriteEvent(57, ex);
+
+    [Event(58, Message = "Activity '{0}' from source '{1}' was dropped because its local parent activity is not recorded (sampled). To record these activities, register the parent's instrumentation/ActivitySource or configure a non-parent-based sampler such as the AlwaysOnSampler.", Level = EventLevel.Verbose)]
+    public void ActivityDroppedDueToUnsampledLocalParent(string activityName, string activitySourceName)
+        => this.WriteEvent(58, activityName, activitySourceName);
 
     void IConfigurationExtensionsLogger.LogInvalidConfigurationValue(string key, string value)
         => this.InvalidConfigurationValue(key, value);
