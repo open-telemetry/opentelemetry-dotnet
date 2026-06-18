@@ -248,11 +248,7 @@ public readonly struct Baggage : IEquatable<Baggage>
         return new Baggage(
             new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.Ordinal)
             {
-#if NET
                 [name] = value,
-#else
-                [name] = value!,
-#endif
             });
     }
 
@@ -306,11 +302,7 @@ public readonly struct Baggage : IEquatable<Baggage>
                 }
 
                 newBaggage ??= new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.Ordinal);
-#if NET
                 newBaggage[item.Key] = item.Value;
-#else
-                newBaggage[item.Key] = item.Value!;
-#endif
             }
         }
         while (enumerator.MoveNext());
