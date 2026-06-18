@@ -12,7 +12,7 @@ Notes](../../RELEASENOTES.md).
 * Added a verbose `OpenTelemetry-Sdk` self-diagnostics event that is emitted
   when an activity is dropped because its local (in-process) parent is not
   recorded.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/issues/TODO))
+  ([#7427](https://github.com/open-telemetry/opentelemetry-dotnet/issues/7427))
 
 ## 1.16.0
 
