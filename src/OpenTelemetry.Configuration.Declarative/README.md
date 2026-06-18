@@ -156,6 +156,6 @@ ignoring host environment variables and `appsettings.json` for OTel keys (see
 
 ## Further reading
 
-Design and implementation details (IOptions vs `IConfiguration`, substitution
+Design and implementation details (`IOptions` vs `IConfiguration`, substitution
 ordering, null semantics, runtime disable behavior) are documented in
 [OTEL1006](../../docs/diagnostics/experimental-apis/OTEL1006.md#implementation-notes).
