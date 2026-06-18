@@ -185,6 +185,7 @@ Maintainers (admins) are needed to merge PRs and for the push to NuGet.**
 
        Get-ChildItem -Recurse -Filter "*.nupkg" | ForEach-Object {
          dotnet nuget push $_.FullName `
+           --skip-duplicate `
            --source https://api.nuget.org/v3/index.json
        }
        ```
