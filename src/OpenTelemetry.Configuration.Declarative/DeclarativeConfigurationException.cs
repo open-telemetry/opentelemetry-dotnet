@@ -19,6 +19,11 @@ namespace OpenTelemetry.Configuration.Declarative;
 /// substitution reference, malformed structure, etc.).
 /// </summary>
 [Experimental(DiagnosticDefinitions.DeclarativeConfigurationExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
+#endif
+#if NETFRAMEWORK
+[Serializable]
+#endif
+#if EXPOSE_EXPERIMENTAL_FEATURES
 public
 #else
 internal
@@ -50,4 +55,19 @@ internal
         : base(message, innerException)
     {
     }
+
+#if NETFRAMEWORK
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DeclarativeConfigurationException"/> class
+    /// with serialized data.
+    /// </summary>
+    /// <param name="info">The <see cref="System.Runtime.Serialization.SerializationInfo"/> that holds the serialized object data.</param>
+    /// <param name="context">The <see cref="System.Runtime.Serialization.StreamingContext"/> that contains contextual information about the source or destination.</param>
+    private DeclarativeConfigurationException(
+        System.Runtime.Serialization.SerializationInfo info,
+        System.Runtime.Serialization.StreamingContext context)
+        : base(info, context)
+    {
+    }
+#endif
 }

@@ -41,6 +41,10 @@ internal static class YamlPropertyReader
             return ConfigProperty<bool>.Null;
         }
 
+        // bool.TryParse accepts only "true"/"false" (case-insensitive). YAML 1.1 aliases such as
+        // "yes"/"no"/"on"/"off" are intentionally not handled: the spec requires YAML 1.2 core
+        // schema, which recognises only "true" and "false" as boolean values.
+        // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/data-model.md#yaml-file-format
         if (bool.TryParse(raw, out var boolValue))
         {
             return ConfigProperty<bool>.Create(boolValue);
@@ -75,7 +79,8 @@ internal static class YamlPropertyReader
             return ConfigProperty<string>.Null;
         }
 
-        // Present but resolving to empty (e.g. a quoted empty/whitespace scalar) is treated as present-null.
+        // Present but resolving to empty or whitespace-only is treated as present-null, consistent with ReadBoolean.
+        value = value.Trim();
         return value.Length == 0 ? ConfigProperty<string>.Null : ConfigProperty<string>.Create(value);
     }
 

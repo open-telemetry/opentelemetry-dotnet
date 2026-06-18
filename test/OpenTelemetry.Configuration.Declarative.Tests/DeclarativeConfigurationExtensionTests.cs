@@ -220,25 +220,17 @@ public sealed class DeclarativeConfigurationExtensionTests
     [Fact]
     public void AddOpenTelemetryDeclarativeConfiguration_RelativeAndAbsolutePath_InsertsSourceOnce()
     {
-        using var factory = new DeclarativeYamlTestFileFactory();
-        var absolutePath = factory.CreateDeclarativeYaml(disabled: true);
-        var originalDirectory = Directory.GetCurrentDirectory();
+        // Relative paths resolve against AppContext.BaseDirectory, so passing the relative name
+        // and the corresponding absolute path must deduplicate to a single source.
+        // No file needs to exist. Deduplication is path-based.
+        var relativeName = "otel-decl-test-dedup.yaml";
+        var absolutePath = Path.Combine(AppContext.BaseDirectory, relativeName);
 
-        try
-        {
-            Directory.SetCurrentDirectory(factory.TempDirectory);
-            var relativePath = Path.GetFileName(absolutePath);
+        var builder = new ConfigurationBuilder();
+        builder.AddOpenTelemetryDeclarativeConfiguration(absolutePath);
+        builder.AddOpenTelemetryDeclarativeConfiguration(relativeName);
 
-            var builder = new ConfigurationBuilder();
-            builder.AddOpenTelemetryDeclarativeConfiguration(absolutePath);
-            builder.AddOpenTelemetryDeclarativeConfiguration(relativePath);
-
-            Assert.Single(builder.Sources, s => s is DeclarativeConfigurationSource);
-        }
-        finally
-        {
-            Directory.SetCurrentDirectory(originalDirectory);
-        }
+        Assert.Single(builder.Sources, s => s is DeclarativeConfigurationSource);
     }
 
     [Fact]
@@ -466,64 +458,85 @@ public sealed class DeclarativeConfigurationExtensionTests
     [Fact]
     public void AddOpenTelemetryDeclarativeConfiguration_RelativePath_SurvivesCwdChange()
     {
-        // FilePath.Path stores the absolute path at construction time, so the IConfigurationProvider
-        // can still read the file even if the working directory changes before Load() is called.
-        using var factory = new DeclarativeYamlTestFileFactory();
-        var absolutePath = factory.CreateDeclarativeYaml(disabled: true);
+        // FilePath resolves relative paths against AppContext.BaseDirectory (not current working directory), so the
+        // IConfigurationProvider can still read the file even if the working directory changes
+        // before Load() is called.
+        var relativeName = $"otel-decl-test-{Guid.NewGuid():N}.yaml";
+        var absolutePath = Path.Combine(AppContext.BaseDirectory, relativeName);
         var originalCwd = Directory.GetCurrentDirectory();
 
-        var builder = new ConfigurationBuilder();
+        File.WriteAllText(absolutePath, "file_format: \"1.0\"\ndisabled: true\n");
         try
         {
-            Directory.SetCurrentDirectory(factory.TempDirectory);
-            builder.AddOpenTelemetryDeclarativeConfiguration(Path.GetFileName(absolutePath));
+            var builder = new ConfigurationBuilder();
+            Directory.SetCurrentDirectory(Path.GetTempPath());
+            try
+            {
+                builder.AddOpenTelemetryDeclarativeConfiguration(relativeName);
+            }
+            finally
+            {
+                Directory.SetCurrentDirectory(originalCwd);
+            }
+
+            // CWD has been restored; Load runs here. Must succeed because the absolute path was stored.
+            var config = builder.Build();
+            Assert.Equal("true", config[OtelEnvironmentVariables.SdkDisabled]);
         }
         finally
         {
-            Directory.SetCurrentDirectory(originalCwd);
+            if (File.Exists(absolutePath))
+            {
+                File.Delete(absolutePath);
+            }
         }
-
-        // cwd has been restored; Load runs here. Must succeed because the absolute path was stored.
-        var config = builder.Build();
-        Assert.Equal("true", config[OtelEnvironmentVariables.SdkDisabled]);
     }
 
     [Fact]
     public void UseDeclarativeConfiguration_RelativePath_SurvivesCwdChange()
     {
-        using var factory = new DeclarativeYamlTestFileFactory();
-        var absolutePath = factory.CreateDeclarativeYaml(disabled: true);
+        // FilePath resolves relative paths against AppContext.BaseDirectory (not CWD), so the
+        // IConfigurationProvider can still read the file even if the working directory changes
+        // before the service provider builds.
+        var relativeName = $"otel-decl-test-{Guid.NewGuid():N}.yaml";
+        var absolutePath = Path.Combine(AppContext.BaseDirectory, relativeName);
         var originalCwd = Directory.GetCurrentDirectory();
 
-        using var configManager = new ConfigurationManager();
-        var services = new ServiceCollection();
-        services.AddSingleton<IConfiguration>(configManager);
-
+        File.WriteAllText(absolutePath, "file_format: \"1.0\"\ndisabled: true\n");
         try
         {
-            Directory.SetCurrentDirectory(factory.TempDirectory);
-            new TestOpenTelemetryBuilder(services)
-                .UseDeclarativeConfiguration(Path.GetFileName(absolutePath));
+            using var configManager = new ConfigurationManager();
+            var services = new ServiceCollection();
+            services.AddSingleton<IConfiguration>(configManager);
+
+            Directory.SetCurrentDirectory(Path.GetTempPath());
+            try
+            {
+                new TestOpenTelemetryBuilder(services)
+                    .UseDeclarativeConfiguration(relativeName);
+            }
+            finally
+            {
+                Directory.SetCurrentDirectory(originalCwd);
+            }
+
+            var config = ResolveConfiguration(services);
+            Assert.Equal("true", config[OtelEnvironmentVariables.SdkDisabled]);
         }
         finally
         {
-            Directory.SetCurrentDirectory(originalCwd);
+            if (File.Exists(absolutePath))
+            {
+                File.Delete(absolutePath);
+            }
         }
-
-        var config = ResolveConfiguration(services);
-        Assert.Equal("true", config[OtelEnvironmentVariables.SdkDisabled]);
     }
 
     private static IConfiguration ResolveConfiguration(IServiceCollection services) =>
         services.BuildServiceProvider().GetRequiredService<IConfiguration>();
 
-    private sealed class TestOpenTelemetryBuilder : IOpenTelemetryBuilder
+    private sealed class TestOpenTelemetryBuilder(IServiceCollection services) : IOpenTelemetryBuilder
     {
-        public TestOpenTelemetryBuilder(IServiceCollection services)
-        {
-            this.Services = services;
-        }
-
-        public IServiceCollection Services { get; }
+        public IServiceCollection Services { get; } = services;
     }
 }

@@ -220,4 +220,12 @@ public sealed class EnvironmentSubstitutionTests
 
         Assert.Contains("unterminated", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
+
+    [Fact]
+    public void Substitute_NullValue_ThrowsArgumentNullException() =>
+        Assert.Throws<ArgumentNullException>(() => EnvironmentSubstitution.Substitute(null!, _ => null));
+
+    [Fact]
+    public void Substitute_NullResolver_ThrowsArgumentNullException() =>
+        Assert.Throws<ArgumentNullException>(() => EnvironmentSubstitution.Substitute("${VAR}", null!));
 }

@@ -26,8 +26,10 @@ internal readonly record struct FilePath
     /// Initializes a new instance of the <see cref="FilePath"/> struct.
     /// </summary>
     /// <param name="path">
-    /// The path to the YAML configuration file. May be relative or absolute; it is resolved to a
-    /// fully-qualified path.
+    /// The path to the YAML configuration file. May be relative or absolute; relative paths are
+    /// resolved against <see cref="AppContext.BaseDirectory"/> (the application directory) so
+    /// that resolution is correct under IIS hosting where <c>Environment.CurrentDirectory</c>
+    /// may point to the IIS worker process directory rather than the application directory.
     /// </param>
     /// <exception cref="ArgumentNullException"><paramref name="path"/> is <see langword="null"/>.</exception>
     /// <exception cref="ArgumentException">
@@ -38,15 +40,27 @@ internal readonly record struct FilePath
     {
         Guard.ThrowIfNullOrWhitespace(path);
 
-        if (!string.Equals(System.IO.Path.GetExtension(path), ".yaml", StringComparison.OrdinalIgnoreCase) &&
-            !string.Equals(System.IO.Path.GetExtension(path), ".yml", StringComparison.OrdinalIgnoreCase))
+        // Spec: YAML configuration files MUST use file extensions .yaml or .yml.
+        // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/data-model.md#yaml-file-format
+        var extension = System.IO.Path.GetExtension(path);
+        if (!string.Equals(extension, ".yaml", StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(extension, ".yml", StringComparison.OrdinalIgnoreCase))
         {
             throw new ArgumentException(
                 $"Declarative configuration file '{path}' must use a .yaml or .yml extension.",
                 nameof(path));
         }
 
-        var fullPath = System.IO.Path.GetFullPath(path);
+        // Resolve relative paths against AppContext.BaseDirectory, not Environment.CurrentDirectory:
+        // under IIS in-process hosting CurrentDirectory is the worker-process directory, not the app directory.
+        // The two-arg Path.GetFullPath(path, basePath) overload is unavailable on netstandard2.0/net462, so we combine manually.
+        // IsPathRooted is not sufficient on Windows: root-relative (\otel.yaml) and drive-relative (C:otel.yaml)
+        // paths return true but are not fully qualified, so they would resolve against ambient process state
+        // (current drive / current directory on that drive). Use IsPathFullyQualified on modern .NET and a
+        // manual equivalent on older TFMs so those paths are combined with AppContext.BaseDirectory instead.
+        var fullPath = IsFullyQualified(path)
+            ? System.IO.Path.GetFullPath(path)
+            : System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, path));
 
         this.displayPath = path;
         this.Path = fullPath;
@@ -57,6 +71,11 @@ internal readonly record struct FilePath
     /// Gets the fully-qualified absolute path to the configuration file.
     /// </summary>
     public string Path { get; }
+
+    /// <summary>
+    /// Gets the original caller-supplied path, for use in diagnostic messages.
+    /// </summary>
+    public string DisplayPath => this.displayPath;
 
     /// <summary>
     /// Returns <see langword="true"/> when <paramref name="other"/> resolves to the same file
@@ -72,7 +91,7 @@ internal readonly record struct FilePath
 
     /// <inheritdoc/>
     public override int GetHashCode() =>
-        StringComparer.Ordinal.GetHashCode(this.normalizedPath);
+        this.normalizedPath is null ? 0 : StringComparer.Ordinal.GetHashCode(this.normalizedPath);
 
     /// <summary>
     /// Returns the original caller-supplied path for use in diagnostic messages.
@@ -80,7 +99,36 @@ internal readonly record struct FilePath
     /// <returns>
     /// The original path string passed to the constructor.
     /// </returns>
-    public override string ToString() => this.displayPath;
+    public override string ToString() => this.DisplayPath;
+
+    // Returns true when path is fully qualified (no ambient state needed to resolve it).
+    // Path.IsPathRooted returns true for root-relative (\otel.yaml) and drive-relative (C:otel.yaml)
+    // paths on Windows, but those still depend on current-drive / current-directory state.
+    // Path.IsPathFullyQualified (net5+) handles this correctly; the #else branch replicates its
+    // Windows logic: require drive-letter + separator (C:\) or UNC prefix (\\).
+    private static bool IsFullyQualified(string path)
+    {
+#if NET
+        return System.IO.Path.IsPathFullyQualified(path);
+#else
+        if (!IsWindows())
+        {
+            return System.IO.Path.IsPathRooted(path);
+        }
+
+        // Windows: drive-letter + separator (C:\, C:/) or UNC (\\, //).
+        if (path.Length >= 3
+            && path[1] == ':'
+            && (path[2] == System.IO.Path.DirectorySeparatorChar || path[2] == System.IO.Path.AltDirectorySeparatorChar))
+        {
+            return true;
+        }
+
+        return path.Length >= 2
+            && (path[0] == System.IO.Path.DirectorySeparatorChar || path[0] == System.IO.Path.AltDirectorySeparatorChar)
+            && (path[1] == System.IO.Path.DirectorySeparatorChar || path[1] == System.IO.Path.AltDirectorySeparatorChar);
+#endif
+    }
 
     private static bool IsWindows() =>
 #if NET

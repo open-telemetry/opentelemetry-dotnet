@@ -9,6 +9,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Configuration.Declarative;
 using OpenTelemetry.Internal;
 
@@ -25,7 +26,7 @@ internal
     static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
 {
     /// <summary>
-    /// Adds the declarative configuration (YAML) source into DI, reading the path from <c>OTEL_CONFIG_FILE</c>.
+    /// Adds the declarative configuration (YAML) source into DI, reading the path from the <c>OTEL_CONFIG_FILE</c> environment variable.
     /// </summary>
     /// <remarks>
     /// Appends YAML after existing sources (YAML overrides earlier env/appsettings; sources added
@@ -84,14 +85,14 @@ internal
 
         if (existingMarker != null)
         {
-            OpenTelemetryDeclarativeConfigurationEventSource.Log.DeclarativeConfigurationAlreadyRegistered(existingMarker.FilePath.ToString(), filePath.ToString());
+            OpenTelemetryDeclarativeConfigurationEventSource.Log.DeclarativeConfigurationAlreadyRegistered(existingMarker.FilePath.DisplayPath, filePath.DisplayPath);
             return;
         }
 
         services.AddSingleton(new DeclarativeConfigurationOverlayMarker(filePath));
-        OpenTelemetryDeclarativeConfigurationEventSource.Log.OverlayRegistrationStarted(filePath.ToString());
+        OpenTelemetryDeclarativeConfigurationEventSource.Log.OverlayRegistrationStarted(filePath.DisplayPath);
 
-        // TODO(strict-mode): branch here on a future DeclarativeConfigurationMode (Default vs Strict). See #6380.
+        // TODO(strict-mode): branch here on a future DeclarativeConfigurationMode (Default vs Strict). See https://github.com/open-telemetry/opentelemetry-dotnet/issues/6380.
 
         // Last registered IConfiguration wins in DI.
         var descriptor = services.LastOrDefault(d => d.ServiceType == typeof(IConfiguration));
@@ -109,16 +110,14 @@ internal
         var existingType = descriptor?.ImplementationType;
         var lifetime = descriptor?.Lifetime ?? ServiceLifetime.Singleton;
 
-        if (descriptor != null)
+        if (descriptor == null)
         {
-            services.Remove(descriptor);
-        }
-        else
-        {
-            OpenTelemetryDeclarativeConfigurationEventSource.Log.NoExistingConfigurationRegistered(filePath.ToString());
+            OpenTelemetryDeclarativeConfigurationEventSource.Log.NoExistingConfigurationRegistered(filePath.DisplayPath);
         }
 
-        services.Add(ServiceDescriptor.Describe(
+        // Replace() targets the first IConfiguration descriptor, not the last one captured above.
+        // Equivalent to Remove+Add for single registrations; harmless for multiple (last-wins).
+        services.Replace(ServiceDescriptor.Describe(
             typeof(IConfiguration),
             sp =>
             {
@@ -130,7 +129,7 @@ internal
 
                 if (existing == null && descriptor != null)
                 {
-                    OpenTelemetryDeclarativeConfigurationEventSource.Log.PriorConfigurationResolutionFailed(filePath.ToString());
+                    OpenTelemetryDeclarativeConfigurationEventSource.Log.PriorConfigurationResolutionFailed(filePath.DisplayPath);
                 }
 
                 if (existing is IConfigurationBuilder existingAsBuilder)
@@ -157,7 +156,7 @@ internal
 
                 if (alreadyRegistered)
                 {
-                    OpenTelemetryDeclarativeConfigurationEventSource.Log.SourceAlreadyPresentInExistingConfiguration(filePath.ToString());
+                    OpenTelemetryDeclarativeConfigurationEventSource.Log.SourceAlreadyPresentInExistingConfiguration(filePath.DisplayPath);
                 }
                 else
                 {

@@ -1,8 +1,8 @@
 # OpenTelemetry.Configuration.Declarative
 
 > [!WARNING]
-> This is an experimental package. APIs may change or be removed in future
-> releases.
+> This is an experimental package. APIs may change or be removed in
+> future releases.
 
 A partial experimental implementation of the [OpenTelemetry
 declarative-configuration
@@ -58,18 +58,14 @@ services.AddOpenTelemetry()
     .WithTracing(...);
 ```
 
-> [!IMPORTANT]
-> **Integration pitfalls**
->
-> - **`UseDeclarativeConfiguration()` requires `IConfiguration` to exist** when
->   it runs. If host infrastructure registers `IConfiguration` *after* your OTel
->   setup, the YAML source will be unreachable. Prefer
->   `builder.Configuration.AddOpenTelemetryDeclarativeConfiguration()` on modern
->   hosts, or `ConfigureAppConfiguration` on classic `HostBuilder`.
-> - **Calling `UseDeclarativeConfiguration()` twice** on the same
->   `IServiceCollection` is a no-op after the first call. Only the **first**
->   file path applies; a second call with a different path is ignored (an
->   EventSource warning is emitted).
+`UseDeclarativeConfiguration()` works best on modern hosts
+(`WebApplicationBuilder`, `HostApplicationBuilder`) where `IConfiguration` is
+already registered before `AddOpenTelemetry()` is called. On classic
+`HostBuilder`, use the `ConfigureAppConfiguration` approach instead so the YAML
+source is added before DI configuration is built. Calling
+`UseDeclarativeConfiguration()` twice on the same `IServiceCollection` is a
+no-op - the first file path wins and a warning is emitted via EventSource.
+Calling it with a different path does not replace the first registration.
 
 ### 3. Write a YAML config file
 
@@ -91,6 +87,12 @@ resource:
 | `disabled: true` | `OTEL_SDK_DISABLED` - builds a no-op provider |
 | `resource.attributes` | `OTEL_RESOURCE_ATTRIBUTES` - resource attributes on all signals |
 | `resource.attributes_list` | `OTEL_RESOURCE_ATTRIBUTES` - resource attributes in pre-formatted `key=value` list form |
+
+`resource.attributes_list` is treated as a pre-percent-encoded
+`OTEL_RESOURCE_ATTRIBUTES` string and passed through without modification. In
+particular, literal `+` in a value must be written as `%2B`, otherwise the SDK
+will decode it as a space character. Use `resource.attributes` when you need the
+encoding to be handled automatically.
 
 All other top-level sections (e.g. `tracer_provider`, `propagator`) are logged
 and ignored. You can track this issue for missing features:
@@ -122,36 +124,22 @@ Sources you add **after** that call take precedence over YAML values (same as
 standard `IConfiguration` ordering).
 
 > [!NOTE]
-> `services.Configure<T>()` / `PostConfigure<T>()` delegates run through
-> the .NET Options pipeline and can override values from `IConfiguration`
-> sources, but only when the SDK reads the relevant setting via `IOptions<T>`.
-> The two settings supported in this release (`OTEL_SDK_DISABLED`,
-> `OTEL_RESOURCE_ATTRIBUTES`) are read by the SDK directly from
-> `IConfiguration`, so they are not affected by the Options pipeline. To
-> override them in code, add a higher-priority `IConfiguration` source after the
-> YAML source (e.g. `AddInMemoryCollection`) rather than using `Configure<T>`.
-
-A future **strict mode** will restrict the SDK to YAML-only OTel configuration,
-ignoring host environment variables and `appsettings.json` for OTel keys (see
-[#6380](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6380)).
+> `OTEL_SDK_DISABLED` and `OTEL_RESOURCE_ATTRIBUTES` are read directly
+> from `IConfiguration`, not via `IOptions<T>`, so `Configure<T>()` /
+> `PostConfigure<T>()` cannot override them. Use a higher-priority
+> `IConfiguration` source (e.g. `AddInMemoryCollection`) instead.
 
 ## Known limitations
 
-- No file watching: the YAML file is read once at start-up. Runtime reload is
-  planned to be added in a future release.
-- `resource.attributes` values are percent-encoded per the OTel spec (`,`, `=`,
-  `%`, and `+` are encoded; other characters pass through). Attribute **keys**
-  are not encoded; keep them to `[a-z0-9._-]` per OTel semantic conventions.
-  Duplicate attribute names: first occurrence wins; subsequent duplicates are
-  logged and skipped. `resource.attributes_list` values are passed through as-is
-  (they are already in `OTEL_RESOURCE_ATTRIBUTES` format). When both fields are
-  present, `attributes` entries take higher priority. `attributes_list` is
-  comma-split using the same naive delimiter rules as `OtelEnvResourceDetector`:
-  commas inside values must be percent-encoded as `%2C`; unencoded commas are
-  treated as entry separators and will corrupt parsing.
-- Schema validation is lenient: only sections this package handles are
-  validated; unknown sections are logged and ignored rather than causing an
-  error. Full JSON schema validation is planned in a future release.
+- File watching is not supported; the YAML file is read once at start-up.
+- `resource.attributes` values are percent-encoded per the OTel spec. Duplicate
+  attribute names: first occurrence wins.
+- Unknown YAML sections are logged and ignored rather than causing an error.
+- Plain (unquoted) YAML scalars that resolve to `null`, `Null`, `NULL`, or `~`
+  after environment variable substitution are treated as YAML null and the
+  setting is silently ignored. To preserve the string `"null"` as a value, use a
+  quoted scalar: `value: "null"`. This is consistent with YAML 1.2 Core Schema
+  semantics applied post-substitution as required by the OTel spec.
 
 ## Further reading
 

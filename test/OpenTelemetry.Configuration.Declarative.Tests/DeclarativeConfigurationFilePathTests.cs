@@ -42,21 +42,13 @@ public sealed class DeclarativeConfigurationFilePathTests
     [Fact]
     public void Equals_RelativeAndAbsoluteSameFile_AreEqual()
     {
-        using var factory = new DeclarativeYamlTestFileFactory();
-        var absolutePath = factory.CreateDeclarativeYaml(disabled: true);
-        var originalDirectory = Directory.GetCurrentDirectory();
+        // Relative paths resolve against AppContext.BaseDirectory, so the absolute form
+        // of a relative name is always Path.Combine(AppContext.BaseDirectory, name).
+        // No file needs to exist - FilePath only does path normalisation.
+        var relativeName = "otel-config-test.yaml";
+        var absolutePath = Path.Combine(AppContext.BaseDirectory, relativeName);
 
-        try
-        {
-            Directory.SetCurrentDirectory(factory.TempDirectory);
-            var relativePath = Path.GetFileName(absolutePath);
-
-            Assert.Equal(new FilePath(absolutePath), new FilePath(relativePath));
-        }
-        finally
-        {
-            Directory.SetCurrentDirectory(originalDirectory);
-        }
+        Assert.Equal(new FilePath(absolutePath), new FilePath(relativeName));
     }
 
     [Fact]
@@ -85,25 +77,14 @@ public sealed class DeclarativeConfigurationFilePathTests
     [Fact]
     public void GetHashCode_EqualFilePaths_SameHashCode()
     {
-        using var factory = new DeclarativeYamlTestFileFactory();
-        var absolutePath = factory.CreateDeclarativeYaml(disabled: true);
-        var originalDirectory = Directory.GetCurrentDirectory();
+        var relativeName = "otel-config-test.yaml";
+        var absolutePath = Path.Combine(AppContext.BaseDirectory, relativeName);
 
-        try
-        {
-            Directory.SetCurrentDirectory(factory.TempDirectory);
-            var relativePath = Path.GetFileName(absolutePath);
+        var a = new FilePath(absolutePath);
+        var b = new FilePath(relativeName);
 
-            var a = new FilePath(absolutePath);
-            var b = new FilePath(relativePath);
-
-            Assert.Equal(a, b);
-            Assert.Equal(a.GetHashCode(), b.GetHashCode());
-        }
-        finally
-        {
-            Directory.SetCurrentDirectory(originalDirectory);
-        }
+        Assert.Equal(a, b);
+        Assert.Equal(a.GetHashCode(), b.GetHashCode());
     }
 
     [Fact]
@@ -125,27 +106,54 @@ public sealed class DeclarativeConfigurationFilePathTests
     }
 
     [Fact]
-    public void Path_RelativeInput_IsAbsolute()
+    public void Path_RelativeInput_ResolvesAgainstAppBaseDirectory()
     {
-        // FilePath.Path must always hold the absolute path resolved at construction time,
-        // so that I/O calls succeed even if the working directory changes later.
-        using var factory = new DeclarativeYamlTestFileFactory();
-        var absolutePath = factory.CreateDeclarativeYaml(disabled: true);
+        var relativeName = "otel-config-test.yaml";
+        var expectedAbsolutePath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, relativeName));
+
+        var fp = new FilePath(relativeName);
+
+        Assert.Equal(expectedAbsolutePath, fp.Path);
+        Assert.Equal(relativeName, fp.ToString());
+    }
+
+    [Fact]
+    public void Path_RelativeInput_IgnoresCurrentDirectory()
+    {
+        // Regression test: under IIS in-process hosting, Environment.CurrentDirectory is the
+        // IIS worker-process directory, not the application directory. Relative paths must
+        // still resolve to the application directory.
+        var relativeName = "otel-config-test.yaml";
+        var expectedAbsolutePath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, relativeName));
         var originalCwd = Directory.GetCurrentDirectory();
 
-        FilePath fp;
         try
         {
-            Directory.SetCurrentDirectory(factory.TempDirectory);
-            var relativeName = Path.GetFileName(absolutePath);
-            fp = new FilePath(relativeName);
-
-            Assert.Equal(absolutePath, fp.Path);
-            Assert.Equal(relativeName, fp.ToString());
+            Directory.SetCurrentDirectory(Path.GetTempPath());
+            Assert.Equal(expectedAbsolutePath, new FilePath(relativeName).Path);
         }
         finally
         {
             Directory.SetCurrentDirectory(originalCwd);
         }
+    }
+
+    [Fact]
+    public void Path_RootRelativeOnWindows_UsesAppBaseDirectoryDrive()
+    {
+        // On Windows, a root-relative path (\otel.yaml) is rooted but NOT fully qualified:
+        // Path.IsPathRooted returns true but resolution still depends on the current drive.
+        // FilePath resolves it by combining with AppContext.BaseDirectory, so the drive
+        // letter comes from the application directory rather than the ambient current drive.
+        // Path.Combine("C:\App\", "\otel.yaml") -> "C:\otel.yaml" (drive from base preserved).
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            return;
+        }
+
+        var rootRelative = @"\otel-root-relative-test.yaml";
+        var expected = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, rootRelative));
+
+        Assert.Equal(expected, new FilePath(rootRelative).Path);
     }
 }

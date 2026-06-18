@@ -9,10 +9,15 @@ internal sealed class DeclarativeYamlTestFileFactory : IDisposable
 {
     public DeclarativeYamlTestFileFactory()
     {
+#if NET
+        this.TempDirectory = Directory.CreateTempSubdirectory("otel-decl-cfg-").FullName;
+#else
+        this.TempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(this.TempDirectory);
+#endif
     }
 
-    public string TempDirectory { get; } = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+    public string TempDirectory { get; }
 
     public string CreateYamlFile(string yaml)
     {
@@ -51,7 +56,12 @@ internal sealed class DeclarativeYamlTestFileFactory : IDisposable
 
     public void Dispose() => Directory.Delete(this.TempDirectory, recursive: true);
 
-#pragma warning disable CA1307 // Specify StringComparison for clarity
-    private static string EscapeYaml(string value) => value.Replace("\\", "\\\\").Replace("\"", "\\\"");
-#pragma warning restore CA1307 // Specify StringComparison for clarity
+    private static string EscapeYaml(string value) => value
+#if NET
+        .Replace("\\", "\\\\", StringComparison.OrdinalIgnoreCase)
+        .Replace("\"", "\\\"", StringComparison.OrdinalIgnoreCase);
+#else
+        .Replace("\\", "\\\\")
+        .Replace("\"", "\\\"");
+#endif
 }

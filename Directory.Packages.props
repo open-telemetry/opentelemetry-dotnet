@@ -93,7 +93,6 @@
       These packages are referenced as "PrivateAssets" or used in tests/examples.
   -->
   <ItemGroup>
-    <PackageVersion Include="YamlDotNet" Version="18.0.0" />
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
     <PackageVersion Include="CommandLineParser" Version="2.9.1" />
     <PackageVersion Include="FSharp.Core" Version="10.1.301" />
@@ -130,6 +129,7 @@
     <PackageVersion Include="Verify.Xunit" Version="31.12.5" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="[2.8.2,)" />
+    <PackageVersion Include="YamlDotNet" Version="18.0.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
