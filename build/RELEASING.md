@@ -182,7 +182,6 @@ Maintainers (admins) are needed to merge PRs and for the push to NuGet.**
        ```powershell
        $nugetApiKey = Read-Host -Prompt 'NuGet API key' -AsSecureString
        $env:NUGET_API_KEY = [System.Net.NetworkCredential]::new('', $nugetApiKey).Password
-       $env:NUGET_SYMBOL_API_KEY = $env:NUGET_API_KEY
 
        Get-ChildItem -Recurse | Where-Object { $_.Extension -eq ".nupkg" } | ForEach-Object { .\nuget.exe push $_.FullName -Source https://api.nuget.org/v3/index.json }
        ```
