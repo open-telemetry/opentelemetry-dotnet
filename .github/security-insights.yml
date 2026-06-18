@@ -115,6 +115,8 @@ repository:
         comment: OpenTelemetry.Extensions.Hosting NuGet package distributed from NuGet.org.
       - uri: https://www.nuget.org/packages/OpenTelemetry.Extensions.Propagators
         comment: OpenTelemetry.Extensions.Propagators NuGet package distributed from NuGet.org.
+      - uri: https://www.nuget.org/packages/OpenTelemetry.Configuration.Declarative
+        comment: OpenTelemetry.Configuration.Declarative NuGet package distributed from NuGet.org.
       - uri: https://www.nuget.org/packages/OpenTelemetry.Shims.OpenTracing
         comment: OpenTelemetry.Shims.OpenTracing NuGet package distributed from NuGet.org.
     attestations: []

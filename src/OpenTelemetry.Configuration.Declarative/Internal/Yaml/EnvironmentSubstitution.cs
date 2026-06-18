@@ -29,8 +29,10 @@ internal static partial class EnvironmentSubstitution
     // OTel substitution grammar: https://opentelemetry.io/docs/specs/otel/configuration/data-model/
     // Alternation order: $$ | ${env:NAME:-default} | invalid ${...} | unterminated ${
     // Groups: 1=env prefix, 2=name, 3=raw default (VCHAR-WSP-NO-RBRACE; $$ unescaped in evaluator).
+    // Character class [\x09\x20-\x7C\x7E]: TAB (U+0009), SPACE-PIPE (U+0020-U+007C), TILDE (U+007E).
+    // Written as a single verbatim string so the hex escapes are passed to the regex engine directly.
     private const string SubstitutionPatternString =
-        @"\$\$|\$\{(?:(env):)?([a-zA-Z_][a-zA-Z0-9_]*)(?::-([" + "\x09\x20" + @"-\x7C\x7E]*))?\}|\$\{[^}]*\}|\$\{";
+        @"\$\$|\$\{(?:(env):)?([a-zA-Z_][a-zA-Z0-9_]*)(?::-([" + @"\x09\x20-\x7C\x7E" + @"]*))?\}|\$\{[^}]*\}|\$\{";
 
 #if !NET
     private static readonly Regex SubstitutionPatternInstance = new(
@@ -51,6 +53,7 @@ internal static partial class EnvironmentSubstitution
     /// </exception>
     internal static string Substitute(string value, Func<string, string?> resolveVariable)
     {
+        Guard.ThrowIfNull(value);
         Guard.ThrowIfNull(resolveVariable);
 
         if (value.Length == 0)
@@ -161,7 +164,7 @@ internal static partial class EnvironmentSubstitution
     private static bool HasValidEnvName(string value, int start, int length)
     {
         var first = value[start];
-        if (!((first >= 'a' && first <= 'z') || (first >= 'A' && first <= 'Z') || first == '_'))
+        if (first is not ((>= 'a' and <= 'z') or (>= 'A' and <= 'Z') or '_'))
         {
             return false;
         }
@@ -169,7 +172,7 @@ internal static partial class EnvironmentSubstitution
         for (var i = start + 1; i < start + length; i++)
         {
             var c = value[i];
-            if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_'))
+            if (c is not ((>= 'a' and <= 'z') or (>= 'A' and <= 'Z') or (>= '0' and <= '9') or '_'))
             {
                 return false;
             }
@@ -178,8 +181,8 @@ internal static partial class EnvironmentSubstitution
         return true;
     }
 
-#if NET8_0_OR_GREATER
-    [GeneratedRegex(SubstitutionPatternString, RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+#if NET
+    [GeneratedRegex(SubstitutionPatternString, RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1_000)]
     private static partial Regex GetSubstitutionPattern();
 #else
     private static Regex GetSubstitutionPattern() => SubstitutionPatternInstance;

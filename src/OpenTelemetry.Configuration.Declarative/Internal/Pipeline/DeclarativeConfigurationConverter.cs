@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Globalization;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace OpenTelemetry.Configuration.Declarative;
@@ -36,7 +37,7 @@ internal static partial class DeclarativeConfigurationConverter
         "string_array", "bool_array", "int_array", "double_array",
     };
 
-#if !NET8_0_OR_GREATER
+#if !NET
     private static readonly Regex AttributeNamePatternInstance = new(
         AttributeNamePatternString,
         RegexOptions.Compiled | RegexOptions.CultureInvariant,
@@ -207,22 +208,18 @@ internal static partial class DeclarativeConfigurationConverter
         }
     }
 
-    // Encode ',' and '=' per spec; '%' first to avoid double-encoding; '+' because UrlDecode maps it to space.
+    // Percent-encode attribute values for OTEL_RESOURCE_ATTRIBUTES per the OTel resource spec:
+    // https://opentelemetry.io/docs/specs/otel/resource/sdk/#specifying-resource-information-via-an-environment-variable
+    // Encoding order: '%' first to prevent double-encoding, then structural chars ',' and '=',
+    // then '+' because the .NET SDK reads the env var via WebUtility.UrlDecode which maps '+' to space.
     private static string EncodeAttributeValue(string value)
     {
-#if NETFRAMEWORK || NETSTANDARD2_0
-        return value
-            .Replace("%", "%25")
-            .Replace(",", "%2C")
-            .Replace("=", "%3D")
-            .Replace("+", "%2B");
-#else
-        return value
-            .Replace("%", "%25", StringComparison.Ordinal)
-            .Replace(",", "%2C", StringComparison.Ordinal)
-            .Replace("=", "%3D", StringComparison.Ordinal)
-            .Replace("+", "%2B", StringComparison.Ordinal);
-#endif
+        var sb = new StringBuilder(value);
+        sb.Replace("%", "%25");
+        sb.Replace(",", "%2C");
+        sb.Replace("=", "%3D");
+        sb.Replace("+", "%2B");
+        return sb.ToString();
     }
 
     // Drop attributes_list keys shadowed by structured attributes. Naive comma split (matches OtelEnvResourceDetector).
@@ -238,12 +235,12 @@ internal static partial class DeclarativeConfigurationConverter
             }
 
 #if NETFRAMEWORK || NETSTANDARD2_0
-            var eqIdx = trimmed.IndexOf('=');
+            var equalsIndex = trimmed.IndexOf('=');
 #else
-            var eqIdx = trimmed.IndexOf('=', StringComparison.Ordinal);
+            var equalsIndex = trimmed.IndexOf('=', StringComparison.Ordinal);
 #endif
-            var key = eqIdx >= 0 ? trimmed.Substring(0, eqIdx).Trim() : trimmed;
-            if (!attributeKeys.Contains(key))
+            var index = equalsIndex >= 0 ? trimmed.Substring(0, equalsIndex).Trim() : trimmed;
+            if (!attributeKeys.Contains(index))
             {
                 filtered.Add(trimmed);
             }
@@ -262,7 +259,7 @@ internal static partial class DeclarativeConfigurationConverter
             _ => true, // "string": any value is valid.
         };
 
-#if NET8_0_OR_GREATER
+#if NET
     [GeneratedRegex(AttributeNamePatternString, RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1_000)]
     private static partial Regex GetAttributeNamePattern();
 #else

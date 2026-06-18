@@ -19,7 +19,7 @@ internal
     static class DeclarativeConfigurationBuilderExtensions
 {
     /// <summary>
-    /// Adds the declarative YAML source, reading the file path from <c>OTEL_CONFIG_FILE</c>.
+    /// Adds the declarative YAML source, reading the file path from the <c>OTEL_CONFIG_FILE</c> environment variable.
     /// </summary>
     /// <remarks>
     /// Appends the source after existing ones (YAML overrides earlier sources; sources added
@@ -76,12 +76,12 @@ internal
 
         if (builder.Sources.OfType<DeclarativeConfigurationSource>().Any(s => s.FilePath == path))
         {
-            OpenTelemetryDeclarativeConfigurationEventSource.Log.SourceAlreadyRegisteredInBuilder(path.ToString());
+            OpenTelemetryDeclarativeConfigurationEventSource.Log.SourceAlreadyRegisteredInBuilder(path.DisplayPath);
             return builder;
         }
 
         builder.Sources.Add(new DeclarativeConfigurationSource(path));
-        OpenTelemetryDeclarativeConfigurationEventSource.Log.SourceRegistered(path.ToString());
+        OpenTelemetryDeclarativeConfigurationEventSource.Log.SourceRegistered(path.DisplayPath);
         return builder;
     }
 }

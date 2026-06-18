@@ -11,9 +11,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="YamlDotNet" VersionOverride="[18.0.0,)" />
     <PackageReference Include="Microsoft.Extensions.Configuration" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="YamlDotNet" VersionOverride="[18.0.0,)" />
   </ItemGroup>
 
   <ItemGroup>
@@ -31,6 +31,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="OpenTelemetry.Configuration.Declarative.Tests" PublicKey="$(StrongNamePublicKey)" />
+    <InternalsVisibleTo Include="OpenTelemetry.Configuration.Declarative.FuzzTests" PublicKey="$(StrongNamePublicKey)" />
   </ItemGroup>
 
 </Project>

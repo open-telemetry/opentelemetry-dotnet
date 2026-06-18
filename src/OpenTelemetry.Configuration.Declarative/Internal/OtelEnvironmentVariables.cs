@@ -12,7 +12,8 @@ namespace OpenTelemetry.Configuration.Declarative;
 /// These are duplicated here because the core SDK's internal types are not accessible
 /// from this package without an <c>InternalsVisibleTo</c> entry. Once the declarative config
 /// API stabilises, the core SDK could expose these as public constants, or they could be moved
-/// to the shared directory and this file should be removed.
+/// to the shared directory and this file should be removed. See
+/// <see href="https://github.com/open-telemetry/opentelemetry-dotnet/issues/6380">#6380</see>.
 /// </remarks>
 internal static class OtelEnvironmentVariables
 {
