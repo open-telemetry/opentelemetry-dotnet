@@ -7,6 +7,11 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed `OtlpLogExporter` so `OtlpExporterOptions.ExportProcessorType` and
+  `OtlpExporterOptions.BatchExportProcessorOptions` are respected when
+  `LogRecordExportProcessorOptions` are not configured.
+  ([#7399](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7399))
+
 * Cached pre-serialized metric metadata (`Name` / `Description` / `Unit`) to avoid
   re-encoding on every OTLP metric export.
   ([#7307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7307))

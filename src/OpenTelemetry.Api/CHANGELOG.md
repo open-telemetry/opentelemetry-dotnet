@@ -6,6 +6,17 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed `TraceContextPropagator` to normalize empty `tracestate` header values
+  to `null` when extracting trace context.
+  ([#7407](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7407))
+
+* **Experimental (pre-release builds only):** Updated `EnvironmentVariableCarrier.Get`
+  to read only the normalized environment variable name, following the updated
+  [environment variable carrier specification](https://github.com/open-telemetry/opentelemetry-specification/pull/5144).
+  Non-normalized carrier keys are no longer matched, even when they would
+  normalize to the requested key.
+  ([#7410](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7410))
+
 ## 1.16.0
 
 Released 2026-Jun-10

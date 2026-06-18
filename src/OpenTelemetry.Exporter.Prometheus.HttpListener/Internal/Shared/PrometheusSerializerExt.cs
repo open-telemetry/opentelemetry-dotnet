@@ -247,7 +247,7 @@ internal static partial class PrometheusSerializer
         // the scrape immediately rather than repeatedly re-entering this allocation.
         var newBufferSize = currentBufferSize * 2;
 
-        return newBufferSize <= 0 || newBufferSize > MaxSerializedTagsBufferSize
+        return newBufferSize is <= 0 or > MaxSerializedTagsBufferSize
             ? throw new InvalidOperationException("The serialized Prometheus tag set exceeded the maximum supported size.")
             : newBufferSize;
     }

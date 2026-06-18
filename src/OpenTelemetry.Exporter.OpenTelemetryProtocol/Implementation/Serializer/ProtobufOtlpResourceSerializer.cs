@@ -12,7 +12,11 @@ internal static class ProtobufOtlpResourceSerializer
     private const int ReserveSizeForLength = 4;
     private const int InitialBufferSize = 2048;
 
+#if NETFRAMEWORK || NETSTANDARD2_0
     private static readonly ConditionalWeakTable<Resource, byte[]> CachedResourceBytes = new();
+#else
+    private static readonly ConditionalWeakTable<Resource, byte[]> CachedResourceBytes = [];
+#endif
 
     private static ReadOnlySpan<byte> EmptyResourceBytes => [0x0A, 0x80, 0x80, 0x80, 0x00];
 
