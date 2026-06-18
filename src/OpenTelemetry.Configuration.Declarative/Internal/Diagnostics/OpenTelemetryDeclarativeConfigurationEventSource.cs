@@ -74,7 +74,7 @@ internal sealed class OpenTelemetryDeclarativeConfigurationEventSource : EventSo
     [Event(17, Message = "Declarative config: OTEL_CONFIG_FILE is not set; the registration is a no-op. Set OTEL_CONFIG_FILE to the path of your YAML configuration file to activate declarative configuration.", Level = EventLevel.Warning)]
     public void OtelConfigFileNotSet() => this.WriteEvent(17);
 
-    [Event(18, Message = "Declarative config: resource.attributes contains a duplicate name '{0}'; the first occurrence is used and this entry will be skipped.", Level = EventLevel.Warning)]
+    [Event(18, Message = "Declarative config: resource.attributes contains a duplicate name '{0}'; only the first occurrence is used and this entry will be skipped.", Level = EventLevel.Warning)]
     public void DuplicateResourceAttributeName(string name) => this.WriteEvent(18, name);
 
     [Event(19, Message = "Declarative config: the existing IConfiguration descriptor could not be resolved to an IConfiguration instance when registering '{0}'; prior configuration will not be carried forward into the declarative configuration overlay.", Level = EventLevel.Warning)]
