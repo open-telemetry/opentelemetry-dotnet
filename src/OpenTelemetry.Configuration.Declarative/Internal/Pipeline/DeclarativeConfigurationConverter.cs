@@ -211,7 +211,6 @@ internal static partial class DeclarativeConfigurationConverter
     private static string EncodeAttributeValue(string value)
     {
 #if NETFRAMEWORK || NETSTANDARD2_0
-        // string.Replace(string, string, StringComparison) is not available on .NET Framework or netstandard2.0.
         return value
             .Replace("%", "%25")
             .Replace(",", "%2C")
