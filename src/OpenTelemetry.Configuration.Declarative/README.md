@@ -109,7 +109,7 @@ syntax, per the OTel spec:
 | `${MY_VAR:-default}` | Value of `MY_VAR`, or `default` if undefined/empty |
 | `$$` | Literal `$` (escape) - so `$${MY_VAR}` yields literal `${MY_VAR}` |
 
-Undefined variables without a default resolve to empty string.
+Undefined variables without a default resolve to an empty string.
 
 ## Precedence
 
