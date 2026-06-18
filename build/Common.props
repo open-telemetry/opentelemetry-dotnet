@@ -36,6 +36,13 @@
       <Using Namespace="System" />
       <Using Namespace="System.IO" />
       <Code Type="Fragment" Language="cs"><![CDATA[
+var sourceInfo = new FileInfo(SourceFile);
+var destinationInfo = new FileInfo(DestinationFile);
+if (destinationInfo.Exists && destinationInfo.Length > 0 && destinationInfo.LastWriteTimeUtc >= sourceInfo.LastWriteTimeUtc)
+{
+    return true;
+}
+
 var base64Text = string.Concat(File.ReadAllLines(SourceFile));
 
 var directory = Path.GetDirectoryName(DestinationFile);
@@ -51,8 +58,12 @@ File.WriteAllBytes(DestinationFile, Convert.FromBase64String(base64Text));
 
   <Target Name="GenerateAssemblyOriginatorKeyFile" BeforeTargets="ResolveKeySource" Condition="'$(SignAssembly)' == 'true'">
     <PropertyGroup>
-      <AssemblyOriginatorKeyFile>$([System.IO.Path]::Combine('$(IntermediateOutputPath)', 'debug.snk'))</AssemblyOriginatorKeyFile>
+      <AssemblyOriginatorKeyFile>$([System.IO.Path]::Combine('$(BaseIntermediateOutputPath)', 'debug.snk'))</AssemblyOriginatorKeyFile>
     </PropertyGroup>
+
+    <ItemGroup>
+      <FileWrites Include="$(AssemblyOriginatorKeyFile)" />
+    </ItemGroup>
 
     <DecodeBase64File SourceFile="$(StrongNameKeyBase64File)" DestinationFile="$(AssemblyOriginatorKeyFile)" />
   </Target>
