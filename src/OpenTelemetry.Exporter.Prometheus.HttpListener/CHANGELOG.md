@@ -8,7 +8,7 @@ Notes](../../RELEASENOTES.md).
 ## Unreleased
 
 * Added a verbose-level diagnostic event for ignored metrics.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7429](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7429))
 
 ## 1.16.0-beta.1
 
