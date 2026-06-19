@@ -5,6 +5,7 @@ using System.Diagnostics.Metrics;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry;
 using OpenTelemetry.Exporter.Prometheus;
+using OpenTelemetry.Exporter.Prometheus.Serialization;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 
@@ -66,12 +67,11 @@ public class PrometheusSerializerBenchmarks
             var cursor = 0;
             foreach (var metric in this.metrics)
             {
-                cursor = PrometheusSerializer.WriteMetric(
+                cursor = TextFormatSerializer.PrometheusV1.WriteMetric(
                     this.buffer,
                     cursor,
                     metric,
                     this.GetPrometheusMetric(metric),
-                    openMetricsRequested: false,
                     writeType: true,
                     writeUnit: true,
                     writeHelp: true,
@@ -86,12 +86,11 @@ public class PrometheusSerializerBenchmarks
     {
         for (var i = 0; i < this.NumberOfSerializeCalls; i++)
         {
-            _ = PrometheusSerializer.WriteMetric(
+            _ = TextFormatSerializer.PrometheusV1.WriteMetric(
                 this.buffer,
                 0,
                 this.histogramMetric!,
                 this.GetPrometheusMetric(this.histogramMetric!),
-                openMetricsRequested: false,
                 writeType: true,
                 writeUnit: true,
                 writeHelp: true,
@@ -105,12 +104,11 @@ public class PrometheusSerializerBenchmarks
     {
         for (var i = 0; i < this.NumberOfSerializeCalls; i++)
         {
-            _ = PrometheusSerializer.WriteMetric(
+            _ = TextFormatSerializer.PrometheusV1.WriteMetric(
                 this.buffer,
                 0,
                 this.typedLabelsMetric!,
                 this.GetPrometheusMetric(this.typedLabelsMetric!),
-                openMetricsRequested: false,
                 writeType: true,
                 writeUnit: true,
                 writeHelp: true,

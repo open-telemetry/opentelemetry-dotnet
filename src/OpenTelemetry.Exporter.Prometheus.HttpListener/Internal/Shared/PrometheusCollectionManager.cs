@@ -4,6 +4,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using OpenTelemetry.Exporter.Prometheus.Serialization;
 using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Exporter.Prometheus;
@@ -348,8 +349,10 @@ internal sealed class PrometheusCollectionManager
     {
         try
         {
-            var cursor = this.WriteTargetInfo(protocol, state);
-            var metricStates = this.GetMetricStates(metrics, protocol.IsOpenMetrics);
+            var serializer = TextFormatSerializer.GetSerializer(protocol);
+
+            var cursor = this.WriteTargetInfo(serializer, state);
+            var metricStates = this.GetMetricStates(serializer, metrics);
 
             foreach (var metricState in metricStates)
             {
@@ -357,12 +360,11 @@ internal sealed class PrometheusCollectionManager
                 {
                     try
                     {
-                        cursor = PrometheusSerializer.WriteMetric(
+                        cursor = serializer.WriteMetric(
                             state.Buffer,
                             cursor,
                             metricState.Metric,
                             metricState.PrometheusMetric,
-                            protocol.IsOpenMetrics,
                             metricState.WriteType,
                             metricState.WriteUnit,
                             metricState.WriteHelp,
@@ -385,7 +387,7 @@ internal sealed class PrometheusCollectionManager
             {
                 try
                 {
-                    cursor = PrometheusSerializer.WriteEof(state.Buffer, cursor);
+                    cursor = TextFormatSerializer.WriteEof(state.Buffer, cursor);
                     break;
                 }
                 catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
@@ -469,13 +471,13 @@ internal sealed class PrometheusCollectionManager
     private PrometheusProtocolState GetProtocolState(PrometheusProtocol protocol)
         => this.protocolStates.GetOrAdd(protocol, static _ => new());
 
-    private int WriteTargetInfo(PrometheusProtocol protocol, PrometheusProtocolState state)
+    private int WriteTargetInfo(TextFormatSerializer serializer, PrometheusProtocolState state)
     {
         while (true)
         {
             try
             {
-                return PrometheusSerializer.WriteTargetInfo(state.Buffer, 0, this.exporter.Resource, protocol.IsOpenMetrics);
+                return serializer.WriteTargetInfo(state.Buffer, 0, this.exporter.Resource);
             }
             catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
             {
@@ -505,7 +507,7 @@ internal sealed class PrometheusCollectionManager
         return prometheusMetric;
     }
 
-    private List<MetricState> GetMetricStates(in Batch<Metric> metrics, bool openMetricsRequested)
+    private List<MetricState> GetMetricStates(TextFormatSerializer serializer, in Batch<Metric> metrics)
     {
         var precomputedMetricStates = new List<PrecomputedMetricState>();
         var metadataStates = new Dictionary<string, MetadataState>(StringComparer.Ordinal);
@@ -513,13 +515,15 @@ internal sealed class PrometheusCollectionManager
 
         foreach (var metric in metrics)
         {
-            if (!PrometheusSerializer.CanWriteMetric(metric))
+            if (metric.MetricType == MetricType.ExponentialHistogram)
             {
+                // Exponential histograms are not yet supported by Prometheus.
+                PrometheusExporterEventSource.Log.MetricIgnored(metric);
                 continue;
             }
 
             var prometheusMetric = this.GetPrometheusMetric(metric);
-            var metadataName = openMetricsRequested ? prometheusMetric.OpenMetricsMetadataName : prometheusMetric.Name;
+            var metadataName = serializer.GetMetadataName(prometheusMetric);
             precomputedMetricStates.Add(new PrecomputedMetricState(metric, prometheusMetric, metadataName));
 
             if (!metadataStates.TryGetValue(metadataName, out var metadataState))

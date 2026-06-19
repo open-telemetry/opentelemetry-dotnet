@@ -1,6 +1,6 @@
 header:
-  last-reviewed: '2026-04-24'
-  last-updated: '2026-04-24'
+  last-reviewed: '2026-06-18'
+  last-updated: '2026-06-18'
   schema-version: 2.0.0
   url: https://raw.githubusercontent.com/open-telemetry/opentelemetry-dotnet/main/.github/security-insights.yml
   comment: |
@@ -146,6 +146,17 @@ repository:
         rulesets:
           - default
         type: fuzzing
+      - name: GitHub Secret Scanning
+        comment: |
+          GitHub native Secret Scanning and Push Protection are enabled for
+          the repository via the OpenTelemetry admin Terraform configuration.
+        integration:
+          adhoc: true
+          ci: false
+          release: false
+        rulesets:
+          - https://docs.github.com/code-security/secret-scanning/introduction/supported-secret-scanning-patterns
+        type: secret-scanning
       - name: Renovate
         comment: |
           Automated dependency updates.
