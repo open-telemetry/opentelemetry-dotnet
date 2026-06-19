@@ -90,4 +90,17 @@ internal sealed class PrometheusExporterEventSource : EventSource, IConfiguratio
     [Event(9, Message = "Metrics scrape request timed out after {0} seconds.", Level = EventLevel.Warning)]
     public void ScrapeTimedOut(double scrapeTimeoutSeconds)
         => this.WriteEvent(9, scrapeTimeoutSeconds);
+
+    [NonEvent]
+    public void MetricIgnored(OpenTelemetry.Metrics.Metric metric)
+    {
+        if (this.IsEnabled(EventLevel.Verbose, EventKeywords.All))
+        {
+            this.MetricIgnored(metric.Name, metric.MetricType.ToString());
+        }
+    }
+
+    [Event(10, Message = "Metric '{0}' ignored as metrics of type '{1}' are not supported by Prometheus.", Level = EventLevel.Verbose)]
+    public void MetricIgnored(string metricName, string metricType)
+        => this.WriteEvent(10, metricName, metricType);
 }
