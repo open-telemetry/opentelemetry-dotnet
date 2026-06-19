@@ -92,7 +92,7 @@ internal sealed class PrometheusExporterEventSource : EventSource, IConfiguratio
         => this.WriteEvent(9, scrapeTimeoutSeconds);
 
     [NonEvent]
-    public void MetricIgnored(OpenTelemetry.Metrics.Metric metric)
+    public void MetricIgnored(Metrics.Metric metric)
     {
         if (this.IsEnabled(EventLevel.Verbose, EventKeywords.All))
         {
