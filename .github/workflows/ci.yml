@@ -96,6 +96,15 @@ jobs:
       || contains(needs.detect-changes.outputs.changes, 'build')
     uses: ./.github/workflows/dotnet-format.yml
 
+  test-pwsh:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'pwsh')
+      || contains(needs.detect-changes.outputs.changes, 'build')
+    uses: ./.github/workflows/pwsh-test.yml
+    permissions:
+      contents: read # To checkout the code
+
   build-test-solution:
     needs: detect-changes
     if: |
@@ -285,6 +294,7 @@ jobs:
       lint-md,
       lint-pwsh,
       lint-dotnet-format,
+      test-pwsh,
       build-test-solution,
       build-test-project-stable,
       build-test-project-experimental,
