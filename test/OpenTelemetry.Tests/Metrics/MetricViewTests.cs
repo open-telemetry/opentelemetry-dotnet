@@ -1009,7 +1009,7 @@ public class MetricViewTests : MetricTestsBase
             })
             .AddView("FruitCounter", new MetricStreamConfiguration()
             {
-                ExcludedTagKeys = ["name", "color", "size"],
+                TagKeys = [],
                 Name = "NoTags",
             })
             .AddInMemoryExporter(exportedItems));

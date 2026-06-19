@@ -95,7 +95,7 @@ internal sealed class AggregatorStore
             this.TagKeysInteresting = hs;
             this.tagsKeysInterestingCount = hs.Count;
         }
-        else if (metricStreamIdentity.ExcludedTagKeys != null)
+        else if (metricStreamIdentity.ExcludedTagKeys is { Length: > 0 })
         {
             this.updateLongCallback = this.UpdateLongExcludeTags;
             this.updateDoubleCallback = this.UpdateDoubleExcludeTags;
