@@ -7,6 +7,9 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added a verbose-level diagnostic event for ignored metrics.
+  ([#7429](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7429))
+
 ## 1.16.0-beta.1
 
 Released 2026-Jun-10
