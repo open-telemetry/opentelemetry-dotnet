@@ -115,6 +115,9 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
 
     public string MetricStreamName { get; }
 
+    // Note: TagKeys uses element-wise (order-sensitive) comparison via
+    // StringArrayEqualityComparer. ["a","b"] and ["b","a"] produce different
+    // stream identities even though they select the same set of tags.
     public string[]? TagKeys { get; }
 
     // Note: ExcludedTagKeys uses element-wise comparison (same as TagKeys).
