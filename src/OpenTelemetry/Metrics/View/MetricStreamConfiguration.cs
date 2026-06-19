@@ -106,8 +106,8 @@ public class MetricStreamConfiguration
     /// while reporting measurements will be used for aggregation.
     /// If provided, only those tags not in this list will be used
     /// for aggregation. Providing an empty array will result in no tags
-    /// being excluded (same effect as default behavior
-    /// all attributes are preserved).
+    /// being excluded (same effect as the default behavior: all attributesetricv
+    /// are preserved).
     /// </item>
     /// <item>A copy is made of the provided array.</item>
     /// <item>This is mutually exclusive with <see cref="TagKeys"/>
