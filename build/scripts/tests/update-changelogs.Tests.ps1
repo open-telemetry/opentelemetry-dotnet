@@ -30,7 +30,7 @@ Describe "update-changelogs.ps1" {
             -Path (Join-Path -Path $otherProject -ChildPath "CHANGELOG.md") `
             -Value "# Changelog`n`nUnreleased`n`n* Other change`n"
 
-        Push-Location -Path $work
+        Push-Location -Path $work -ErrorAction Stop
         try {
             # 6> redirects the Information stream so the test output stays quiet.
             & $scriptPath -minVerTagPrefix "core-" -version "1.2.3" 6>$null

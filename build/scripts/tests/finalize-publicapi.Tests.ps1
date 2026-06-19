@@ -25,7 +25,7 @@ Describe "finalize-publicapi.ps1" {
         Set-Content -Path $shippedPath -Value "B`nA`n"
         Set-Content -Path $unshippedPath -Value "C`nA`n"
 
-        Push-Location -Path $work
+        Push-Location -Path $work -ErrorAction Stop
         try {
             & $scriptPath -minVerTagPrefix "core-" 6>$null
         }
@@ -54,7 +54,7 @@ Describe "finalize-publicapi.ps1" {
         $unshippedPath = Join-Path -Path $apiDirectory -ChildPath "PublicAPI.Unshipped.txt"
         Set-Content -Path $unshippedPath -Value "ShouldRemain"
 
-        Push-Location -Path $work
+        Push-Location -Path $work -ErrorAction Stop
         try {
             & $scriptPath -minVerTagPrefix "core-" 6>$null
         }

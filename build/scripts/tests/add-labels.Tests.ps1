@@ -99,4 +99,36 @@ Describe "AddLabelsOnPullRequestsBasedOnFilesChanged" {
             $args -contains "edit" -and $args -contains "--remove-label" -and $args -contains "infra"
         } -Because "the existing infra label no longer applies and should be removed"
     }
+
+    It "adds perf and dependencies labels and does not re-add an existing label" {
+        Mock -CommandName "gh" -ModuleName "add-labels" -MockWith {
+            if (($args -contains "label") -and ($args -contains "list")) {
+                return '[{"name":"pkg:OpenTelemetry.Api","id":"1"},{"name":"infra","id":"2"}]'
+            }
+            if ($args -contains "diff") {
+                return @(
+                    "src/OpenTelemetry.Api/Foo.cs",
+                    "test/OpenTelemetry.Foo.Benchmarks/Bench.cs",
+                    "test/benchmarks/Suite.cs",
+                    "Directory.Packages.props"
+                )
+            }
+            if ($args -contains "view") {
+                return '{"labels":[{"name":"pkg:OpenTelemetry.Api"}]}'
+            }
+            return $null
+        }
+
+        AddLabelsOnPullRequestsBasedOnFilesChanged -pullRequestNumber 456 -labelPackagePrefix "pkg:"
+
+        Should -Invoke -CommandName "gh" -ModuleName "add-labels" -Exactly -Times 1 -ParameterFilter {
+            $args -contains "edit" -and $args -contains "--add-label" -and $args -contains "perf"
+        } -Because "benchmark and stress projects should add the perf label"
+        Should -Invoke -CommandName "gh" -ModuleName "add-labels" -Exactly -Times 1 -ParameterFilter {
+            $args -contains "edit" -and $args -contains "--add-label" -and $args -contains "dependencies"
+        } -Because "changes to Directory.Packages.props should add the dependencies label"
+        Should -Invoke -CommandName "gh" -ModuleName "add-labels" -Times 0 -ParameterFilter {
+            $args -contains "--add-label" -and $args -contains "pkg:OpenTelemetry.Api"
+        } -Because "a label already present on the pull request should not be added again"
+    }
 }

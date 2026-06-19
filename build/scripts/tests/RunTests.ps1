@@ -23,7 +23,7 @@ Runs the tests using the default pinned version of Pester.
 param(
     # renovate: datasource=nuget depName=Pester
     [string]$PesterVersion = "5.7.1",
-    [int]$MinimumCoveragePercent = 35
+    [int]$MinimumCoveragePercent = 80
 )
 
 $ErrorActionPreference = "Stop"
