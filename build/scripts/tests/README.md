@@ -1,7 +1,7 @@
 # Build script tests
 
 This directory contains [Pester](https://pester.dev/) tests for the PowerShell
-scripts in [`build/scripts`](../). These scripts are mostly used by the release
+scripts in `build/scripts`. These scripts are mostly used by the release
 automation workflows and are not otherwise exercised by the build, so the tests
 guard against changes that would only break later when other GitHub events occur.
 
