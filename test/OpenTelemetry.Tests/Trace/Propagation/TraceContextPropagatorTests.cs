@@ -337,6 +337,27 @@ public class TraceContextPropagatorTests
     }
 
     [Fact]
+    public void ExtractHandlesNullValue()
+    {
+        var headers = new Dictionary<string, string>
+        {
+            { TraceParent, $"00-{TraceId}-{SpanId}-01" },
+        };
+
+        var propagator = new TraceContextPropagator();
+        var context = propagator.Extract(default, headers, (_, name) => headers.TryGetValue(name, out var value) ? [value] : [null!]);
+
+        Assert.Equal(ActivityTraceId.CreateFromString(TraceId.AsSpan()), context.ActivityContext.TraceId);
+        Assert.Equal(ActivitySpanId.CreateFromString(SpanId.AsSpan()), context.ActivityContext.SpanId);
+
+        Assert.True(context.ActivityContext.IsRemote);
+        Assert.True(context.ActivityContext.IsValid());
+        Assert.NotEqual(0, (int)(context.ActivityContext.TraceFlags & ActivityTraceFlags.Recorded));
+
+        Assert.Null(context.ActivityContext.TraceState);
+    }
+
+    [Fact]
     public void Inject_NoTracestate()
     {
         var traceId = ActivityTraceId.CreateRandom();

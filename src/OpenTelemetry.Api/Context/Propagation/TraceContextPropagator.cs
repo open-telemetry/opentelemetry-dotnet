@@ -469,7 +469,7 @@ public class TraceContextPropagator : TextMapPropagator
     {
         tracestateResult = string.Empty;
 
-        if (tracestate.Length == 0)
+        if (tracestate is not { Length: > 0 })
         {
             return true;
         }
