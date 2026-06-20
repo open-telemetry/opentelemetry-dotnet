@@ -20,7 +20,7 @@ public class PrometheusHttpListenerTests
 
     private const string UriPrefixesObsoleteMessage = "Tests the obsolete UriPrefixes property.";
 
-    private static readonly string MeterName = Utils.GetCurrentMethodName();
+    private const string MeterName = nameof(PrometheusHttpListenerTests);
 
     private static readonly ConcurrentDictionary<int, int> ConsumedPorts = [];
 
@@ -57,7 +57,11 @@ public class PrometheusHttpListenerTests
 
     [Fact]
     public async Task RunHttpServerWithDefaultOptions()
-        => await RunPrometheusExporterHttpServerIntegrationTest();
+    {
+        var output = await RunPrometheusExporterHttpServerIntegrationTest();
+
+        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+    }
 
     [Theory]
     [InlineData(true)]
@@ -77,17 +81,29 @@ public class PrometheusHttpListenerTests
 
     [Fact]
     public async Task RunHttpServerWithNoMetrics()
-        => await RunPrometheusExporterHttpServerIntegrationTest(skipMetrics: true);
+    {
+        var output = await RunPrometheusExporterHttpServerIntegrationTest(skipMetrics: true);
+
+        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+    }
 
     [Fact]
     public async Task RunHttpServerWithNoAcceptHeader()
-        => await RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: string.Empty);
+    {
+        var output = await RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: string.Empty);
+
+        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+    }
 
     [Fact]
     public async Task RunHttpServerWithOpenMetricsVersionHeader()
-        => await RunPrometheusExporterHttpServerIntegrationTest(
+    {
+        var output = await RunPrometheusExporterHttpServerIntegrationTest(
             acceptHeader: "application/openmetrics-text; version=1.0.0",
             contentType: "application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores");
+
+        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+    }
 
     [Fact]
     public async Task RunHttpServerWithNoAcceptHeaderAndMeterTags()
@@ -98,9 +114,11 @@ public class PrometheusHttpListenerTests
             new("meter2", "value2"),
         };
 
-        await RunPrometheusExporterHttpServerIntegrationTest(
+        var output = await RunPrometheusExporterHttpServerIntegrationTest(
             acceptHeader: string.Empty,
             meterTags: tags);
+
+        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -112,10 +130,12 @@ public class PrometheusHttpListenerTests
             new("meter2", "value2"),
         };
 
-        await RunPrometheusExporterHttpServerIntegrationTest(
+        var output = await RunPrometheusExporterHttpServerIntegrationTest(
             acceptHeader: "application/openmetrics-text; version=1.0.0",
             contentType: "application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores",
             meterTags: tags);
+
+        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -176,10 +196,10 @@ public class PrometheusHttpListenerTests
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var content = await response.Content.ReadAsStringAsync();
+        var output = await response.Content.ReadAsStringAsync();
 
-        Assert.Contains("counter_double_999", content, StringComparison.Ordinal);
-        Assert.DoesNotContain('\0', content);
+        Assert.Contains("counter_double_999", output, StringComparison.Ordinal);
+        Assert.DoesNotContain('\0', output);
     }
 
     [Fact]
