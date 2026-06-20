@@ -4,6 +4,8 @@ OpenTelemetry.Exporter.PrometheusAspNetCoreOptions
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.DisableTotalNameSuffixForCounters.get -> bool
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.DisableTotalNameSuffixForCounters.set -> void
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.PrometheusAspNetCoreOptions() -> void
+OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.ScopeInfoEnabled.get -> bool
+OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.ScopeInfoEnabled.set -> void
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.ScrapeEndpointPath.get -> string?
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.ScrapeEndpointPath.set -> void
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.ScrapeResponseCacheDurationMilliseconds.get -> int

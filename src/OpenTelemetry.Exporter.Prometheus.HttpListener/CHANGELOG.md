@@ -10,6 +10,10 @@ Notes](../../RELEASENOTES.md).
 * Added a verbose-level diagnostic event for ignored metrics.
   ([#7429](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7429))
 
+* Add `PrometheusHttpListenerOptions.ScopeInfoEnabled` property to enable or
+  disable scope labels in Prometheus metrics. Defaults to `true`.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.16.0-beta.1
 
 Released 2026-Jun-10

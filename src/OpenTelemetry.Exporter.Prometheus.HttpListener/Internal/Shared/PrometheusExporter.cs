@@ -23,6 +23,7 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
     {
         Guard.ThrowIfNull(options);
 
+        this.ScopeInfoEnabled = options.ScopeInfoEnabled;
         this.ScrapeResponseCacheDurationMilliseconds = options.ScrapeResponseCacheDurationMilliseconds;
         this.DisableTotalNameSuffixForCounters = options.DisableTotalNameSuffixForCounters;
 
@@ -41,6 +42,8 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
     internal Action? OnDispose { get; set; }
 
     internal PrometheusCollectionManager CollectionManager { get; }
+
+    internal bool ScopeInfoEnabled { get; }
 
     internal int ScrapeResponseCacheDurationMilliseconds { get; }
 

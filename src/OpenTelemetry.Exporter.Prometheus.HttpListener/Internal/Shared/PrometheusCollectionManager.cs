@@ -16,6 +16,7 @@ internal sealed class PrometheusCollectionManager
     private readonly ConcurrentDictionary<PrometheusProtocol, PrometheusProtocolState> protocolStates = new();
 
     private readonly PrometheusExporter exporter;
+    private readonly bool scopeInfoEnabled;
     private readonly TimeSpan scrapeResponseCacheDuration;
     private readonly long baseTimestamp = Stopwatch.GetTimestamp();
     private readonly PrometheusExporter.ExportFunc onCollectRef;
@@ -29,6 +30,7 @@ internal sealed class PrometheusCollectionManager
     public PrometheusCollectionManager(PrometheusExporter exporter)
     {
         this.exporter = exporter;
+        this.scopeInfoEnabled = this.exporter.ScopeInfoEnabled;
         this.scrapeResponseCacheDuration = TimeSpan.FromMilliseconds(this.exporter.ScrapeResponseCacheDurationMilliseconds);
         this.onCollectRef = this.OnCollect;
         this.metricsCache = [];
@@ -353,6 +355,7 @@ internal sealed class PrometheusCollectionManager
 
             var cursor = this.WriteTargetInfo(serializer, state);
             var metricStates = this.GetMetricStates(serializer, metrics);
+            var options = new TextFormatSerializerOptions(suppressScopeInfo: !this.scopeInfoEnabled);
 
             foreach (var metricState in metricStates)
             {
@@ -369,7 +372,8 @@ internal sealed class PrometheusCollectionManager
                             metricState.WriteUnit,
                             metricState.WriteHelp,
                             metricState.Unit,
-                            metricState.Help);
+                            metricState.Help,
+                            options);
 
                         break;
                     }

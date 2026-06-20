@@ -34,6 +34,20 @@ public sealed class PrometheusExporterMiddlewareTests
         await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task RunWithScopeInfoEnabledConfigured(bool scopeInfoEnabled)
+    {
+        var output = await RunPrometheusExporterMiddlewareIntegrationTest(
+            "/metrics",
+            app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
+            services => services.Configure<PrometheusAspNetCoreOptions>(o => o.ScopeInfoEnabled = scopeInfoEnabled),
+            assertResponseContent: false);
+
+        await Verify(output, "text", PrometheusSerializerTests.VerifySettings).UseParameters(scopeInfoEnabled);
+    }
+
     [Fact]
     public async Task RunWithCustomScrapeEndpointPath()
     {
@@ -562,7 +576,8 @@ public sealed class PrometheusExporterMiddlewareTests
         bool skipMetrics = false,
         string acceptHeader = "application/openmetrics-text",
         string? contentType = null,
-        KeyValuePair<string, object?>[]? meterTags = null)
+        KeyValuePair<string, object?>[]? meterTags = null,
+        bool assertResponseContent = true)
     {
         var requestOpenMetrics = acceptHeader.StartsWith("application/openmetrics-text", StringComparison.Ordinal);
 
@@ -607,7 +622,8 @@ public sealed class PrometheusExporterMiddlewareTests
                 response,
                 requestOpenMetrics,
                 meterTags,
-                contentType);
+                contentType,
+                assertResponseContent);
         }
         else
         {
@@ -625,7 +641,8 @@ public sealed class PrometheusExporterMiddlewareTests
         HttpResponseMessage response,
         bool requestOpenMetrics,
         KeyValuePair<string, object?>[]? meterTags,
-        string? contentType)
+        string? contentType,
+        bool assertResponseContent = true)
     {
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.True(response.Content.Headers.Contains("Last-Modified"));
@@ -638,18 +655,21 @@ public sealed class PrometheusExporterMiddlewareTests
         Assert.Equal(contentType, response.Content.Headers.ContentType!.ToString());
         Assert.Equal(["Accept-Encoding"], response.Headers.Vary);
 
-        var additionalTags = meterTags is { Length: > 0 }
-            ? $"{string.Join(",", meterTags.Select(x => $"otel_scope_{x.Key}=\"{x.Value}\""))},"
-            : string.Empty;
-        var createdMetricSample = requestOpenMetrics
-            ? $"counter_double_bytes_created{{otel_scope_name=\"{MeterName}\",otel_scope_version=\"{MeterVersion}\",{additionalTags}key1=\"value1\",key2=\"value2\"}} [0-9]+(?:\\.[0-9]+)?"
-            : string.Empty;
-
         var content = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings();
-        var normalizedContent = content.ReplaceLineEndings();
 
-        var expected = requestOpenMetrics
-            ? $$"""
+        if (assertResponseContent)
+        {
+            var additionalTags = meterTags is { Length: > 0 }
+                ? $"{string.Join(",", meterTags.Select(x => $"otel_scope_{x.Key}=\"{x.Value}\""))},"
+                : string.Empty;
+            var createdMetricSample = requestOpenMetrics
+                ? $"counter_double_bytes_created{{otel_scope_name=\"{MeterName}\",otel_scope_version=\"{MeterVersion}\",{additionalTags}key1=\"value1\",key2=\"value2\"}} [0-9]+(?:\\.[0-9]+)?"
+                : string.Empty;
+
+            var normalizedContent = content.ReplaceLineEndings();
+
+            var expected = requestOpenMetrics
+                ? $$"""
                     # TYPE target info
                     # HELP target Target metadata
                     target_info{service_name="my_service",service_instance_id="id1"} 1
@@ -660,7 +680,7 @@ public sealed class PrometheusExporterMiddlewareTests
                     # EOF
 
                     """.ReplaceLineEndings()
-            : $$"""
+                : $$"""
                     # TYPE target_info gauge
                     # HELP target_info Target metadata
                     target_info{service_name="my_service",service_instance_id="id1"} 1
@@ -671,9 +691,10 @@ public sealed class PrometheusExporterMiddlewareTests
 
                     """.ReplaceLineEndings();
 
-        var matches = Regex.Matches(normalizedContent, "^" + expected + "$");
+            var matches = Regex.Matches(normalizedContent, "^" + expected + "$");
 
-        Assert.True(matches.Count == 1, normalizedContent);
+            Assert.True(matches.Count == 1, normalizedContent);
+        }
 
         return content;
     }

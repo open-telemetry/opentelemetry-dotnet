@@ -1295,6 +1295,38 @@ public sealed partial class PrometheusSerializerTests
         }
     }
 
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task WriteMetricSupportsScopeInfoEnabledOptionForCounters(bool useOpenMetrics, bool suppressScopeInfo)
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter("test_meter");
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        var counter = meter.CreateCounter<double>("test_counter");
+        counter.Add(1, [new("key", "value1")]);
+        counter.Add(2, [new("key", "value2")]);
+
+        var histogram = meter.CreateHistogram<double>("test_histogram");
+        histogram.Record(1, [new("key", "value1")]);
+        histogram.Record(2, [new("key", "value2")]);
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics, suppressScopeInfo);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        await Verify(output, "txt", VerifySettings).UseParameters(useOpenMetrics, suppressScopeInfo);
+    }
+
     [Fact]
     public void WriteLabelFormatsTypedValues()
     {
@@ -1755,18 +1787,24 @@ public sealed partial class PrometheusSerializerTests
         }
     }
 
-    private static int WriteMetric(byte[] buffer, int cursor, Metric metric, bool useOpenMetrics) =>
-        (useOpenMetrics ? (TextFormatSerializer)TextFormatSerializer.OpenMetricsV1 : TextFormatSerializer.PrometheusV1)
-        .WriteMetric(
+    private static int WriteMetric(byte[] buffer, int cursor, Metric metric, bool useOpenMetrics, bool suppressScopeInfo = false)
+    {
+        TextFormatSerializer serializer = useOpenMetrics ? TextFormatSerializer.OpenMetricsV1 : TextFormatSerializer.PrometheusV1;
+        var prometheusMetric = PrometheusMetric.Create(metric, disableTotalNameSuffixForCounters: false);
+        var options = new TextFormatSerializerOptions(suppressScopeInfo);
+
+        return serializer.WriteMetric(
             buffer,
             cursor,
             metric,
-            PrometheusMetric.Create(metric, false),
+            prometheusMetric,
             writeType: true,
             writeUnit: true,
             writeHelp: true,
             unitOverride: null,
-            helpOverride: null);
+            helpOverride: null,
+            options);
+    }
 
     private static void WaitForNextExemplarTimestamp()
     {
