@@ -12,7 +12,7 @@ Notes](../../RELEASENOTES.md).
 
 * Add `PrometheusHttpListenerOptions.ScopeInfoEnabled` property to enable or
   disable scope labels in Prometheus metrics. Defaults to `true`.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7436](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7436))
 
 ## 1.16.0-beta.1
 
