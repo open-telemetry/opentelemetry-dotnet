@@ -10,8 +10,7 @@
     <EnablePackageValidation Condition="'$(EnablePackageValidation)' == ''">false</EnablePackageValidation>
   </PropertyGroup>
 
-  <PropertyGroup Label="TrimAndAotCompatibility"
-                 Condition="'$(IsAotCompatible)' == '' AND $([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">
+  <PropertyGroup Label="TrimAndAotCompatibility" Condition="'$(IsAotCompatible)' == '' AND $([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">
     <IsAotCompatible>true</IsAotCompatible>
   </PropertyGroup>
 
