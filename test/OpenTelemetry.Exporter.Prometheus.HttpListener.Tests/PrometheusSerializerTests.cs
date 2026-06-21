@@ -1734,6 +1734,99 @@ public sealed partial class PrometheusSerializerTests
         await Verify(output, "txt", VerifySettings).UseParameters(escaping);
     }
 
+    [Fact]
+    public async Task WriteMetric_AllowUtf8_EscapesQuoteBackslashAndLineFeedInQuotedName()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        var counter = meter.CreateCounter<long>("original_name");
+
+        // The Meter API rejects instrument names containing characters such as '"', '\' and '\n',
+        // but the OpenTelemetry specification does not subject a View-provided stream name to the
+        // instrument name syntax, so a renamed metric can contain them. Such a name is not a valid
+        // legacy name, so the allow-utf-8 format writes it as a quoted string in which those
+        // characters must themselves be escaped.
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("original_name", "a\"b\\c\nd")
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        counter.Add(1);
+
+        provider.ForceFlush();
+
+        var protocol = new PrometheusProtocol(
+            PrometheusProtocol.OpenMetricsMediaType,
+            PrometheusProtocol.AllowUtf8Escaping,
+            PrometheusProtocol.OpenMetricsV1,
+            isOpenMetrics: true);
+
+        var serializer = TextFormatSerializer.GetSerializer(protocol);
+
+        var cursor = serializer.WriteMetric(
+            buffer,
+            0,
+            metrics[0],
+            PrometheusMetric.Create(metrics[0], false),
+            writeType: true,
+            writeUnit: false,
+            writeHelp: false,
+            unitOverride: null,
+            helpOverride: null);
+
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        await Verify(output, "txt", VerifySettings);
+    }
+
+    [Fact]
+    public async Task WriteMetric_AllowUtf8_EmbedsQuotedNameWhenLabelKeyCollidesWithScopeLabel()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        var counter = meter.CreateCounter<long>("http.server.requests");
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        // A point tag whose output key collides with the emitted otel_scope_name scope label forces
+        // the slow label-writing path, which must still embed the quoted metric name as the first
+        // element inside the braces.
+        counter.Add(1, new KeyValuePair<string, object?>("otel_scope_name", "collision"));
+
+        provider.ForceFlush();
+
+        var protocol = new PrometheusProtocol(
+            PrometheusProtocol.OpenMetricsMediaType,
+            PrometheusProtocol.AllowUtf8Escaping,
+            PrometheusProtocol.OpenMetricsV1,
+            isOpenMetrics: true);
+
+        var serializer = TextFormatSerializer.GetSerializer(protocol);
+
+        var cursor = serializer.WriteMetric(
+            buffer,
+            0,
+            metrics[0],
+            PrometheusMetric.Create(metrics[0], false),
+            writeType: false,
+            writeUnit: false,
+            writeHelp: false,
+            unitOverride: null,
+            helpOverride: null);
+
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        await Verify(output, "txt", VerifySettings);
+    }
+
 #if NET
     [Fact]
     public async Task WriteHistogramMetricSerializesStaticTagsWithoutPreSerializedTags()

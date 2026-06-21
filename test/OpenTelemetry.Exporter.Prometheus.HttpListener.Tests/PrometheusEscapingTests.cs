@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Text;
+
 namespace OpenTelemetry.Exporter.Prometheus.Tests;
 
 public static class PrometheusEscapingTests
@@ -60,6 +62,16 @@ public static class PrometheusEscapingTests
         Assert.Equal(
             "U___FFFD_",
             PrometheusEscaping.EscapeName(name, EscapingScheme.Values));
+    }
+
+    [Fact]
+    public static void EscapeName_ToBuffer_Values_WithLegacyValidName_WritesNameUnchanged()
+    {
+        var buffer = new byte[32];
+
+        var cursor = PrometheusEscaping.EscapeName(buffer, 0, "no:escaping_required", EscapingScheme.Values);
+
+        Assert.Equal("no:escaping_required", Encoding.ASCII.GetString(buffer, 0, cursor));
     }
 
     [Theory]

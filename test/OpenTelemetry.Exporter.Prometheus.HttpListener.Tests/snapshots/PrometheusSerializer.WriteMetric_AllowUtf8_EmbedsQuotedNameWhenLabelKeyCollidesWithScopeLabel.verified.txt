@@ -1,0 +1,2 @@
+﻿{"http.server.requests_total",otel_scope_name="WriteMetric_AllowUtf8_EmbedsQuotedNameWhenLabelKeyCollidesWithScopeLabel;collision"} 1
+{"http.server.requests_created",otel_scope_name="WriteMetric_AllowUtf8_EmbedsQuotedNameWhenLabelKeyCollidesWithScopeLabel;collision"} <TIMESTAMP>

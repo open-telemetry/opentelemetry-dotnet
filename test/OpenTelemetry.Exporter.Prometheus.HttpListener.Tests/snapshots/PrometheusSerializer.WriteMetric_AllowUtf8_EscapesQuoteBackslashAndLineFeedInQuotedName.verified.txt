@@ -1,0 +1,3 @@
+﻿# TYPE "a\"b\\c\nd" counter
+{"a\"b\\c\nd_total",otel_scope_name="WriteMetric_AllowUtf8_EscapesQuoteBackslashAndLineFeedInQuotedName"} 1
+{"a\"b\\c\nd_created",otel_scope_name="WriteMetric_AllowUtf8_EscapesQuoteBackslashAndLineFeedInQuotedName"} <TIMESTAMP>
