@@ -65,7 +65,7 @@ internal readonly struct PrometheusProtocol : IEquatable<PrometheusProtocol>
 
     public readonly Version Version { get; }
 
-    public static string GetContentType(PrometheusProtocol protocol)
+    public static string GetContentType(in PrometheusProtocol protocol)
     {
         var builder = new StringBuilder()
             .Append(protocol.MediaType)
