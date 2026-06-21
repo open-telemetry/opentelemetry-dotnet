@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #if NET
-using System.Buffers;
 using System.Buffers.Text;
 #if NET9_0_OR_GREATER
 using System.Collections.Frozen;
@@ -10,6 +9,7 @@ using System.Collections.Frozen;
 using System.Collections.Immutable;
 #endif
 #endif
+using System.Buffers;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -1481,42 +1481,6 @@ internal abstract class TextFormatSerializer
         return cursor;
     }
 
-    private static void AppendSanitizedLabelKey(StringBuilder builder, string value)
-    {
-        if (string.IsNullOrEmpty(value))
-        {
-            builder.Append('_');
-            return;
-        }
-
-        var lastCharUnderscore = false;
-
-        if (char.IsAsciiDigit(value[0]))
-        {
-            builder.Append('_');
-            lastCharUnderscore = true;
-        }
-
-        for (var i = 0; i < value.Length; i++)
-        {
-            var ch = value[i];
-
-            if (!IsAllowedMetricsLabelCharacter(ch))
-            {
-                if (!lastCharUnderscore)
-                {
-                    builder.Append('_');
-                    lastCharUnderscore = true;
-                }
-
-                continue;
-            }
-
-            builder.Append(ch);
-            lastCharUnderscore = ch == '_';
-        }
-    }
-
     private static void AddLabel(string originalKey, string outputKey, object? value, ref List<LabelData>? labels, IReadOnlyCollection<string>? reservedOutputKeys = null)
     {
         if (reservedOutputKeys?.Contains(outputKey) == true)
@@ -1526,6 +1490,65 @@ internal abstract class TextFormatSerializer
 
         labels ??= [];
         labels.Add(new LabelData(originalKey, outputKey, GetLabelValueString(value)));
+    }
+
+    private static bool IsValidLabelKey(string value)
+    {
+        if (char.IsAsciiDigit(value[0]))
+        {
+            return false;
+        }
+
+        foreach (var character in value)
+        {
+            if (!IsAllowedMetricsLabelCharacter(character))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static string SanitizeLabelKey(string value)
+    {
+        // The only growth is a single leading underscore added before a leading digit
+        var buffer = ArrayPool<char>.Shared.Rent(value.Length + 1);
+
+        try
+        {
+            var length = 0;
+            var lastCharUnderscore = false;
+
+            if (char.IsAsciiDigit(value[0]))
+            {
+                buffer[length++] = '_';
+                lastCharUnderscore = true;
+            }
+
+            foreach (var character in value)
+            {
+                if (!IsAllowedMetricsLabelCharacter(character))
+                {
+                    if (!lastCharUnderscore)
+                    {
+                        buffer[length++] = '_';
+                        lastCharUnderscore = true;
+                    }
+
+                    continue;
+                }
+
+                buffer[length++] = character;
+                lastCharUnderscore = character == '_';
+            }
+
+            return new string(buffer, 0, length);
+        }
+        finally
+        {
+            ArrayPool<char>.Shared.Return(buffer);
+        }
     }
 
     private static int WriteLabels(
@@ -1857,9 +1880,14 @@ internal abstract class TextFormatSerializer
             return string.IsNullOrEmpty(value) ? "_" : PrometheusEscaping.EscapeName(value, this.Escaping);
         }
 
-        var builder = new StringBuilder(value.Length + 1);
-        AppendSanitizedLabelKey(builder, value);
-        return builder.ToString();
+        if (string.IsNullOrEmpty(value))
+        {
+            return "_";
+        }
+
+        // Check for validity first, since the vast majority of label
+        // keys are already valid, to avoid allocating to sanitize it.
+        return IsValidLabelKey(value) ? value : SanitizeLabelKey(value);
     }
 
     private void AddLabel(string originalKey, object? value, ref List<LabelData>? labels, IReadOnlyCollection<string>? reservedOutputKeys = null)
