@@ -16,7 +16,7 @@ Notes](../../RELEASENOTES.md).
 
 * Add `PrometheusHttpListenerOptions.TargetInfoEnabled` property to enable or
   disable the `target_info` metric in Prometheus metrics. Defaults to `true`.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7438](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7438))
 
 ## 1.16.0-beta.1
 
