@@ -1690,8 +1690,8 @@ public sealed partial class PrometheusSerializerTests
 
     [Theory]
     [InlineData(PrometheusProtocol.DotsEscaping)]
-    [InlineData(PrometheusProtocol.ValuesEscaping)]
     [InlineData(PrometheusProtocol.UnderscoresEscaping)]
+    [InlineData(PrometheusProtocol.ValuesEscaping)]
     public async Task WriteMetric_EscapesMetricAndLabelNamesUsingNegotiatedScheme(string escaping)
     {
         var buffer = new byte[85000];
