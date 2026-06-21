@@ -66,6 +66,21 @@ public class PrometheusSerializerFuzzTests
             SerializeEscapeName(value, EscapingScheme.Dots).SequenceEqual(Encoding.ASCII.GetBytes(PrometheusEscaping.EscapeName(value, EscapingScheme.Dots))) &&
             SerializeEscapeName(value, EscapingScheme.Values).SequenceEqual(Encoding.ASCII.GetBytes(PrometheusEscaping.EscapeName(value, EscapingScheme.Values))));
 
+    [Property(MaxTest = MaxTests)]
+    public Property IsValidLegacyNameMatchesReferenceImplementation() => Prop.ForAll(
+        Generators.PrometheusStringArbitrary(),
+        static (value) => PrometheusEscaping.IsValidLegacyName(value) == ReferenceIsValidLegacyName(value, allowColon: true));
+
+    [Property(MaxTest = MaxTests)]
+    public Property IsValidLegacyLabelNameMatchesReferenceImplementation() => Prop.ForAll(
+        Generators.PrometheusStringArbitrary(),
+        static (value) => PrometheusEscaping.IsValidLegacyLabelName(value) == ReferenceIsValidLegacyName(value, allowColon: false));
+
+    [Property(MaxTest = MaxTests)]
+    public Property WriteLabelNameMatchesReferenceImplementation() => Prop.ForAll(
+        Generators.PrometheusStringArbitrary(),
+        static (value) => Serialize(value, static (buffer, cursor, text) => TextFormatSerializer.WriteLabelName(buffer, cursor, text)).SequenceEqual(ReferenceWriteLabelName(value)));
+
     private static byte[] Serialize(string value, Func<byte[], int, string, int> writer)
     {
         var buffer = new byte[(value.Length * 8) + 16];
@@ -180,7 +195,7 @@ public class PrometheusSerializerFuzzTests
             return value;
         }
 
-        if (scheme == EscapingScheme.Values && ReferenceIsValidLegacyName(value))
+        if (scheme == EscapingScheme.Values && ReferenceIsValidLegacyName(value, allowColon: true))
         {
             return value;
         }
@@ -229,15 +244,20 @@ public class PrometheusSerializerFuzzTests
         return text.ToString();
     }
 
-    private static bool ReferenceIsValidLegacyName(string value)
+    private static bool ReferenceIsValidLegacyName(string value, bool allowColon)
     {
+        if (value.Length == 0)
+        {
+            return false;
+        }
+
         var index = 0;
 
         while (index < value.Length)
         {
             var codePoint = ReferenceGetCodePoint(value, index, out var charsConsumed, out _);
 
-            if (!ReferenceIsValidLegacyRune(codePoint, index == 0))
+            if (!ReferenceIsValidLegacyRune(codePoint, index == 0) || (codePoint == ':' && !allowColon))
             {
                 return false;
             }
@@ -246,6 +266,21 @@ public class PrometheusSerializerFuzzTests
         }
 
         return true;
+    }
+
+    // An independent re-implementation of TextFormatSerializer.WriteLabelName: a non-legacy label
+    // name is emitted as a double-quoted UTF-8 string (escaping '"', '\' and '\n'); a legacy name is
+    // written verbatim as ASCII bytes.
+    private static byte[] ReferenceWriteLabelName(string value)
+    {
+        if (ReferenceIsValidLegacyName(value, allowColon: false))
+        {
+            return ReferenceWriteAsciiStringNoEscape(value);
+        }
+
+        var escaped = ReferenceWriteEscapedString(value, escapeQuotationMarks: true);
+
+        return [(byte)'"', .. escaped, (byte)'"'];
     }
 
     private static bool ReferenceIsValidLegacyRune(int codePoint, bool isFirst) =>

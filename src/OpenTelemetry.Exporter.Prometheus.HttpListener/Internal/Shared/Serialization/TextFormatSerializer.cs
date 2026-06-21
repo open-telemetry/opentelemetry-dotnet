@@ -177,8 +177,7 @@ internal abstract class TextFormatSerializer
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
                 // Counter and Gauge
-                cursor = this.WriteMetricName(buffer, cursor, prometheusMetric);
-                cursor = this.WriteTags(buffer, cursor, metric, metricPoint.Tags);
+                cursor = this.WriteSeriesAndTags(buffer, cursor, metric, prometheusMetric, metricPoint.Tags, suffix: null, reservedOutputKeys: null);
 
                 buffer[cursor++] = unchecked((byte)' ');
 
@@ -218,8 +217,8 @@ internal abstract class TextFormatSerializer
 
                     totalCount += histogramMeasurement.BucketCount;
 
-                    cursor = this.WriteMetricNameWithSuffix(buffer, cursor, prometheusMetric, "_bucket");
-                    buffer[cursor++] = unchecked((byte)'{');
+                    cursor = this.WriteHistogramBucketName(buffer, cursor, prometheusMetric);
+
                     cursor = WriteSerializedTagValues(buffer, cursor, serializedTags, appendTrailingComma: true);
 
                     cursor = WriteAsciiStringNoEscape(buffer, cursor, "le=\"");
@@ -248,8 +247,7 @@ internal abstract class TextFormatSerializer
                     // OpenMetrics histograms with negative bucket thresholds MUST NOT expose
                     // _sum and therefore MUST NOT expose _count.
                     // See https://prometheus.io/docs/specs/om/open_metrics_spec/#histogram-1
-                    cursor = this.WriteMetricNameWithSuffix(buffer, cursor, prometheusMetric, "_sum");
-                    cursor = WriteSerializedTags(buffer, cursor, serializedTags);
+                    cursor = this.WriteSeriesNameAndSerializedTags(buffer, cursor, prometheusMetric, "_sum", serializedTags);
 
                     buffer[cursor++] = unchecked((byte)' ');
 
@@ -258,8 +256,7 @@ internal abstract class TextFormatSerializer
                     buffer[cursor++] = AsciiLineFeed;
 
                     // Histogram count
-                    cursor = this.WriteMetricNameWithSuffix(buffer, cursor, prometheusMetric, "_count");
-                    cursor = WriteSerializedTags(buffer, cursor, serializedTags);
+                    cursor = this.WriteSeriesNameAndSerializedTags(buffer, cursor, prometheusMetric, "_count", serializedTags);
 
                     buffer[cursor++] = unchecked((byte)' ');
 
@@ -311,7 +308,7 @@ internal abstract class TextFormatSerializer
         }
         while (attributes.MoveNext());
 
-        cursor = WriteLabels(buffer, cursor, labels, writeEnclosingBraces: true);
+        cursor = WriteLabels(buffer, cursor, labels, writeEnclosingBraces: true, default, null);
         buffer[cursor++] = unchecked((byte)' ');
         buffer[cursor++] = unchecked((byte)'1');
         buffer[cursor++] = AsciiLineFeed;
@@ -578,12 +575,123 @@ internal abstract class TextFormatSerializer
         return cursor;
     }
 
+    internal static int WriteQuotedName(byte[] buffer, int cursor, ReadOnlySpan<byte> nameBytes, string? suffix)
+    {
+        // Writes a metric name as a double-quoted string ("name<suffix>") with the backslash, quote
+        // and line-feed characters escaped. The (legacy) suffix, if any, is written inside the quotes.
+        buffer[cursor++] = AsciiQuotationMark;
+
+        foreach (var value in nameBytes)
+        {
+            switch (value)
+            {
+                case AsciiQuotationMark:
+                    buffer[cursor++] = AsciiReverseSolidus;
+                    buffer[cursor++] = AsciiQuotationMark;
+                    break;
+
+                case AsciiReverseSolidus:
+                    buffer[cursor++] = AsciiReverseSolidus;
+                    buffer[cursor++] = AsciiReverseSolidus;
+                    break;
+
+                case AsciiLineFeed:
+                    buffer[cursor++] = AsciiReverseSolidus;
+                    buffer[cursor++] = unchecked((byte)'n');
+                    break;
+
+                default:
+                    buffer[cursor++] = value;
+                    break;
+            }
+        }
+
+        if (suffix is { Length: > 0 })
+        {
+            cursor = WriteAsciiStringNoEscape(buffer, cursor, suffix);
+        }
+
+        buffer[cursor++] = AsciiQuotationMark;
+
+        return cursor;
+    }
+
+    /// <summary>
+    /// Writes a label output key, quoting it (as a double-quoted UTF-8 string) when it is not a
+    /// valid legacy label name. Only the allow-utf-8 scheme can produce a non-legacy output key; the
+    /// underscores, dots and values schemes (and all v0 formats) always produce legacy ASCII names,
+    /// which are written verbatim. The quoting therefore needs no knowledge of the negotiated scheme.
+    /// </summary>
+    /// <param name="buffer">The buffer to write to.</param>
+    /// <param name="cursor">The current position in the buffer.</param>
+    /// <param name="outputKey">The label output key to write.</param>
+    /// <returns>The new cursor position.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int WriteLabelName(byte[] buffer, int cursor, string outputKey)
+    {
+        if (PrometheusEscaping.IsValidLegacyLabelName(outputKey))
+        {
+            return WriteAsciiStringNoEscape(buffer, cursor, outputKey);
+        }
+
+        buffer[cursor++] = AsciiQuotationMark;
+        cursor = WriteLabelValue(buffer, cursor, outputKey);
+        buffer[cursor++] = AsciiQuotationMark;
+
+        return cursor;
+    }
+
+    internal static int WriteQuotedMetadataName(byte[] buffer, int cursor, ReadOnlySpan<byte> nameBytes)
+    {
+        // Writes a metadata-line (# TYPE/# HELP/# UNIT) metric family name in the quoted exposition
+        // form, e.g. '# TYPE "my.metric" gauge'. Unlike a sample line the name is not wrapped in
+        // braces. Shared by the v1.0.0 serializers; the base flow never emits the quoted form.
+        cursor = WriteQuotedName(buffer, cursor, nameBytes, suffix: null);
+
+        return cursor;
+    }
+
+    internal static int WriteQuotedBucketName(byte[] buffer, int cursor, ReadOnlySpan<byte> nameBytes)
+    {
+        // Writes a histogram '_bucket' series name in the quoted exposition form and opens the label
+        // set ('{"name_bucket",'), leaving the cursor positioned for the first tag.
+        buffer[cursor++] = unchecked((byte)'{');
+        cursor = WriteQuotedName(buffer, cursor, nameBytes, "_bucket");
+        buffer[cursor++] = unchecked((byte)',');
+
+        return cursor;
+    }
+
+    internal static int WriteQuotedSeriesNameAndSerializedTags(
+        byte[] buffer,
+        int cursor,
+        ReadOnlySpan<byte> nameBytes,
+        string suffix,
+        ReadOnlySpan<byte> serializedTags)
+    {
+        // Writes a histogram '_sum'/'_count' series name and its pre-serialized tags in the quoted
+        // exposition form ('{"name<suffix>",tags}').
+        buffer[cursor++] = unchecked((byte)'{');
+        cursor = WriteQuotedName(buffer, cursor, nameBytes, suffix);
+
+        if (!serializedTags.IsEmpty)
+        {
+            buffer[cursor++] = unchecked((byte)',');
+            cursor = WriteSerializedTagValues(buffer, cursor, serializedTags);
+        }
+
+        buffer[cursor++] = unchecked((byte)'}');
+
+        return cursor;
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal int WriteExemplar(byte[] buffer, int cursor, in Exemplar exemplar, bool isLongValue)
     {
         buffer[cursor++] = unchecked((byte)' ');
         buffer[cursor++] = unchecked((byte)'#');
         buffer[cursor++] = unchecked((byte)' ');
+
         List<LabelData>? labels = null;
 
         if (exemplar.TraceId != default)
@@ -606,6 +714,8 @@ internal abstract class TextFormatSerializer
             cursor,
             labels,
             writeEnclosingBraces: true,
+            default,
+            null,
             maxLabelSetCharacters: MaxExemplarLabelSetCharacters);
 
         buffer[cursor++] = unchecked((byte)' ');
@@ -631,7 +741,21 @@ internal abstract class TextFormatSerializer
         ReadOnlyTagCollection tags,
         bool writeEnclosingBraces = true,
         IReadOnlyCollection<string>? reservedOutputKeys = null)
+        => this.WriteTags(buffer, cursor, metric, tags, default, null, writeEnclosingBraces, reservedOutputKeys);
+
+    internal int WriteTags(
+        byte[] buffer,
+        int cursor,
+        Metric metric,
+        ReadOnlyTagCollection tags,
+        ReadOnlySpan<byte> quotedNameBytes,
+        string? quotedNameSuffix,
+        bool writeEnclosingBraces,
+        IReadOnlyCollection<string>? reservedOutputKeys)
     {
+        // When quotedNameBytes is non-empty the metric name is embedded as a double-quoted string
+        // as the first element inside the braces, e.g. {"my.metric",label="value"}. This is the
+        // allow-utf-8 exposition format used when the metric name is not a valid legacy name.
         var startCursor = cursor;
         List<string>? writtenOutputKeys = null;
         var wroteLabel = false;
@@ -639,6 +763,12 @@ internal abstract class TextFormatSerializer
         if (writeEnclosingBraces)
         {
             buffer[cursor++] = unchecked((byte)'{');
+        }
+
+        if (!quotedNameBytes.IsEmpty)
+        {
+            cursor = WriteQuotedName(buffer, cursor, quotedNameBytes, quotedNameSuffix);
+            wroteLabel = true;
         }
 
         WriteScopeLabels();
@@ -670,7 +800,7 @@ internal abstract class TextFormatSerializer
             this.AddLabel(tag.Key, tag.Value, ref labels, reservedOutputKeys);
         }
 
-        return WriteLabels(buffer, cursor, labels, writeEnclosingBraces);
+        return WriteLabels(buffer, cursor, labels, writeEnclosingBraces, quotedNameBytes, quotedNameSuffix);
 
         void WriteScopeLabels()
         {
@@ -724,7 +854,7 @@ internal abstract class TextFormatSerializer
                 buffer[cursor++] = unchecked((byte)',');
             }
 
-            cursor = WriteAsciiStringNoEscape(buffer, cursor, outputKey);
+            cursor = WriteLabelName(buffer, cursor, outputKey);
             cursor = WriteSanitizedLabel(buffer, cursor, value);
             wroteLabel = true;
 
@@ -769,9 +899,21 @@ internal abstract class TextFormatSerializer
     internal int WriteMetricName(byte[] buffer, int cursor, PrometheusMetric metric)
         => WriteUtf8NoEscape(buffer, cursor, this.GetMetricNameBytes(metric));
 
+    // Writes a metric family name for a metadata (# TYPE/# HELP/# UNIT) line. The base writes the
+    // legacy name verbatim; the v1.0.0 formats override this to write a non-legacy allow-utf-8 name
+    // as a quoted string, e.g. '# TYPE "my.metric" gauge'.
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal int WriteMetricMetadataName(byte[] buffer, int cursor, PrometheusMetric metric)
+    internal virtual int WriteMetricMetadataName(byte[] buffer, int cursor, PrometheusMetric metric)
         => WriteUtf8NoEscape(buffer, cursor, this.GetMetricMetadataNameBytes(metric));
+
+    /// <summary>
+    /// Indicates whether the metric name must be written using the quoted exposition format.
+    /// </summary>
+    /// <param name="metric">The metric to check.</param>
+    /// <returns><see langword="true"/> if the metric name requires quoting; otherwise, <see langword="false"/>.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal bool RequiresQuotedName(PrometheusMetric metric)
+        => !metric.GetNameSet(this.Escaping).IsLegacyValid;
 
     /// <summary>
     /// Writes a metric family name followed by a serialization-time suffix (e.g. "_bucket",
@@ -793,6 +935,74 @@ internal abstract class TextFormatSerializer
         // (already escaped) family name regardless of the escaping scheme.
         cursor = this.WriteMetricMetadataName(buffer, cursor, metric);
         return WriteAsciiStringNoEscape(buffer, cursor, suffix);
+    }
+
+    internal virtual int WriteSeriesAndTags(
+        byte[] buffer,
+        int cursor,
+        Metric metric,
+        PrometheusMetric prometheusMetric,
+        ReadOnlyTagCollection tags,
+        string? suffix,
+        IReadOnlyCollection<string>? reservedOutputKeys)
+    {
+        // Writes a sample series name (optionally with a structural suffix) followed by its live tags.
+        // The base writes the legacy form 'name<suffix>{tags}'; the v1.0.0 formats override this to
+        // emit the quoted form '{"name<suffix>",tags}' for a non-legacy allow-utf-8 name.
+        cursor = suffix is null
+            ? this.WriteMetricName(buffer, cursor, prometheusMetric)
+            : this.WriteMetricNameWithSuffix(buffer, cursor, prometheusMetric, suffix);
+
+        return this.WriteTags(buffer, cursor, metric, tags, writeEnclosingBraces: true, reservedOutputKeys: reservedOutputKeys);
+    }
+
+    internal int WriteQuotedSeriesAndTags(
+        byte[] buffer,
+        int cursor,
+        Metric metric,
+        PrometheusMetric prometheusMetric,
+        ReadOnlyTagCollection tags,
+        string? suffix,
+        IReadOnlyCollection<string>? reservedOutputKeys)
+    {
+        // Emits a sample series in the quoted exposition form, embedding the (non-legacy) metric name
+        // as the first quoted element inside the label braces.
+
+        // Counter and gauge samples embed the full name (with any '_total' baked in); a suffixed
+        // series (e.g. '_created') embeds the metadata family name plus the literal suffix.
+        var nameBytes = suffix is null
+            ? this.GetMetricNameBytes(prometheusMetric)
+            : this.GetMetricMetadataNameBytes(prometheusMetric);
+
+        return this.WriteTags(
+            buffer,
+            cursor,
+            metric,
+            tags,
+            nameBytes,
+            suffix,
+            writeEnclosingBraces: true,
+            reservedOutputKeys: reservedOutputKeys);
+    }
+
+    internal virtual int WriteHistogramBucketName(byte[] buffer, int cursor, PrometheusMetric metric)
+    {
+        // Writes a histogram '_bucket' series name and opens the label set, leaving the cursor
+        // positioned for the first tag. The base writes the legacy form 'name_bucket{'; the v1.0.0
+        // formats override this to emit the quoted form '{"name_bucket",' for a non-legacy name.
+        cursor = this.WriteMetricNameWithSuffix(buffer, cursor, metric, "_bucket");
+        buffer[cursor++] = unchecked((byte)'{');
+
+        return cursor;
+    }
+
+    // Writes a histogram '_sum'/'_count' series name followed by its (pre-serialized) tags. The
+    // base writes the legacy form 'name<suffix>{tags}'; the v1.0.0 formats override this to emit
+    // the quoted form '{"name<suffix>",tags}' for a non-legacy allow-utf-8 name.
+    internal virtual int WriteSeriesNameAndSerializedTags(byte[] buffer, int cursor, PrometheusMetric metric, string suffix, ReadOnlySpan<byte> serializedTags)
+    {
+        cursor = this.WriteMetricNameWithSuffix(buffer, cursor, metric, suffix);
+        return WriteSerializedTags(buffer, cursor, serializedTags);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1323,6 +1533,8 @@ internal abstract class TextFormatSerializer
         int cursor,
         IReadOnlyList<LabelData>? labels,
         bool writeEnclosingBraces,
+        ReadOnlySpan<byte> quotedNameBytes,
+        string? quotedNameSuffix,
         int? maxLabelSetCharacters = null)
     {
         if (writeEnclosingBraces)
@@ -1332,6 +1544,14 @@ internal abstract class TextFormatSerializer
 
         var wroteLabel = false;
         var labelSetCharacters = 0;
+
+        if (!quotedNameBytes.IsEmpty)
+        {
+            // Embed the metric name as the first (quoted) element inside the braces.
+            cursor = WriteQuotedName(buffer, cursor, quotedNameBytes, quotedNameSuffix);
+            buffer[cursor++] = unchecked((byte)',');
+            wroteLabel = true;
+        }
 
         if (labels != null && labels.Count > 0)
         {
@@ -1376,9 +1596,9 @@ internal abstract class TextFormatSerializer
                     labelSetCharacters += labelCharacters;
                 }
 
-                // The grouped key is already the final (escaped) output key, so it is written
-                // verbatim rather than being escaped again.
-                cursor = WriteAsciiStringNoEscape(buffer, cursor, key);
+                // The grouped key is already the final output key; it is written verbatim, or
+                // quoted when the allow-utf-8 scheme produced a non-legacy label name.
+                cursor = WriteLabelName(buffer, cursor, key);
                 cursor = WriteSanitizedLabel(buffer, cursor, value);
                 buffer[cursor++] = unchecked((byte)',');
                 wroteLabel = true;

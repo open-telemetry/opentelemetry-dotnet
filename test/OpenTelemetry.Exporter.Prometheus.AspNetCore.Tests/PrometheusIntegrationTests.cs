@@ -208,23 +208,48 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
 
             await WaitForServiceDiscoveryAsync(prometheusBaseAddress, outputHelper, cts.Token);
 
-            HashSet<string> expectedSeries =
-            [
+            // Prometheus negotiates the allow-utf-8 escaping scheme for the v1.0.0 text formats, so
+            // the OpenTelemetry instrument names (which contain '.') are exposed and stored verbatim
+            // using the quoted exposition format rather than being sanitized to '_'. When no scrape
+            // protocol is pinned Prometheus defaults to the v1.0.0 formats, so UTF-8 names are used
+            // unless a v0 protocol is explicitly negotiated.
+            var usesUtf8Names = !scrapeProtocol.Contains("0.0.", StringComparison.Ordinal);
+
+            HashSet<string> expectedSeries = usesUtf8Names
+                ?
+                [
 #if NET10_0_OR_GREATER
-                "aspnetcore_memory_pool_allocated_bytes_total",
+                    "aspnetcore.memory_pool.allocated_bytes_total",
 #endif
-                "http_server_active_requests",
-                "http_server_request_duration_seconds_bucket",
-                "http_server_request_duration_seconds_count",
-                "http_server_request_duration_seconds_sum",
-                "kestrel_active_connections",
-                "kestrel_connection_duration_seconds_bucket",
-                "kestrel_connection_duration_seconds_count",
-                "kestrel_connection_duration_seconds_sum",
-                "processed_bytes_total",
-                "queue_balance",
-                "temperature_celsius",
-            ];
+                    "http.server.active_requests",
+                    "http.server.request.duration_seconds_bucket",
+                    "http.server.request.duration_seconds_count",
+                    "http.server.request.duration_seconds_sum",
+                    "kestrel.active_connections",
+                    "kestrel.connection.duration_seconds_bucket",
+                    "kestrel.connection.duration_seconds_count",
+                    "kestrel.connection.duration_seconds_sum",
+                    "processed_bytes_total",
+                    "queue_balance",
+                    "temperature_celsius",
+                ]
+                :
+                [
+#if NET10_0_OR_GREATER
+                    "aspnetcore_memory_pool_allocated_bytes_total",
+#endif
+                    "http_server_active_requests",
+                    "http_server_request_duration_seconds_bucket",
+                    "http_server_request_duration_seconds_count",
+                    "http_server_request_duration_seconds_sum",
+                    "kestrel_active_connections",
+                    "kestrel_connection_duration_seconds_bucket",
+                    "kestrel_connection_duration_seconds_count",
+                    "kestrel_connection_duration_seconds_sum",
+                    "processed_bytes_total",
+                    "queue_balance",
+                    "temperature_celsius",
+                ];
 
             HashSet<string> actualSeries = [];
 
@@ -373,6 +398,7 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
     [InlineData("text/plain")]
     [InlineData("text/plain;version=0.0.4")]
     [InlineData("text/plain;version=1.0.0")]
+    [InlineData("text/plain;version=1.0.0;escaping=allow-utf-8", Skip = "https://github.com/prometheus/prometheus/issues/8932")]
     [InlineData("text/plain;version=1.0.0;escaping=dots")]
     [InlineData("text/plain;version=1.0.0;escaping=values")]
     [InlineData("application/openmetrics-text", Skip = "https://github.com/prometheus/prometheus/issues/8932")]

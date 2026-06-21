@@ -25,6 +25,7 @@ internal static class PrometheusEscaping
 
     public static EscapingScheme FromString(string? escaping) => escaping switch
     {
+        PrometheusProtocol.AllowUtf8Escaping => EscapingScheme.AllowUtf8,
         PrometheusProtocol.DotsEscaping => EscapingScheme.Dots,
         PrometheusProtocol.ValuesEscaping => EscapingScheme.Values,
         _ => EscapingScheme.Underscores,
@@ -41,7 +42,9 @@ internal static class PrometheusEscaping
     /// <returns>The escaped name. Always a valid legacy (ASCII) name for the dots and values schemes.</returns>
     public static string EscapeName(string name, EscapingScheme scheme)
     {
-        if (string.IsNullOrEmpty(name) || scheme == EscapingScheme.Underscores)
+        // The underscores scheme is handled by the OpenTelemetry sanitization, and the allow-utf-8
+        // scheme keeps the name unchanged, so neither is escaped here.
+        if (string.IsNullOrEmpty(name) || scheme is EscapingScheme.AllowUtf8 or EscapingScheme.Underscores)
         {
             return name;
         }
@@ -135,15 +138,38 @@ internal static class PrometheusEscaping
         return cursor;
     }
 
-    private static bool IsValidLegacyName(string name)
+    /// <summary>
+    /// Returns whether the specified metric name matches the legacy metric name pattern <c>[a-zA-Z_:][a-zA-Z0-9_:]*</c>.
+    /// </summary>
+    /// <param name="name">The metric name to validate.</param>
+    /// <returns>
+    /// <see langword="true"/> if the name is a valid legacy metric name; otherwise, <see langword="false"/>.
+    /// </returns>
+    internal static bool IsValidLegacyName(string name) => IsValidLegacyName(name, allowColon: true);
+
+    /// <summary>
+    /// Returns whether the specified label name matches the legacy label name pattern <c>[a-zA-Z_][a-zA-Z0-9_]*</c>.
+    /// </summary>
+    /// <param name="name">The label name to validate.</param>
+    /// <returns>
+    /// <see langword="true"/> if the name is a valid legacy label name; otherwise, <see langword="false"/>.
+    /// </returns>
+    internal static bool IsValidLegacyLabelName(string name) => name.Length > 0 && IsValidLegacyName(name, allowColon: false);
+
+    private static bool IsValidLegacyName(string name, bool allowColon)
     {
+        if (name.Length == 0)
+        {
+            return false;
+        }
+
         var index = 0;
 
         while (index < name.Length)
         {
             var codePoint = GetCodePoint(name, index, out var charsConsumed, out _);
 
-            if (!IsValidLegacyRune(codePoint, index == 0))
+            if (!IsValidLegacyRune(codePoint, index == 0) || (codePoint == ':' && !allowColon))
             {
                 return false;
             }

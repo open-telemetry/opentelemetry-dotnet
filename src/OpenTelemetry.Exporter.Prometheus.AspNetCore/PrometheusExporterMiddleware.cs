@@ -248,24 +248,11 @@ internal sealed class PrometheusExporterMiddleware
 
                 if (escapedValue == null || !supportedEscapingSchemes.Contains(escapedValue))
                 {
-                    // TODO Support other escaping schemes, including at least "allow-utf-8".
-                    // For now we treat "allow-utf-8" as if it were "underscores" to avoid fallback
-                    // to PrometheusText0.0.4 where it would previously match to OpenMetricsText1.0.0.
-                    // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/7246.
-                    if (string.Equals(escapedValue, PrometheusProtocol.AllowUtf8Escaping, StringComparison.Ordinal))
-                    {
-                        escaping = PrometheusProtocol.UnderscoresEscaping;
-                    }
-                    else
-                    {
-                        // Unsupported escaping scheme
-                        return false;
-                    }
+                    // Unsupported escaping scheme
+                    return false;
                 }
-                else
-                {
-                    escaping = escapedValue;
-                }
+
+                escaping = escapedValue;
             }
         }
 

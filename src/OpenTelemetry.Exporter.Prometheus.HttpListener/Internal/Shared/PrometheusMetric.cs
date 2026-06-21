@@ -12,6 +12,7 @@ internal sealed class PrometheusMetric
     private readonly string rawName;
     private readonly bool disableTotalNameSuffixForCounters;
     private readonly NameSet underscoreNames;
+    private NameSet? allowUtf8Names;
     private NameSet? dotsNames;
     private NameSet? valuesNames;
 
@@ -234,6 +235,7 @@ internal sealed class PrometheusMetric
     /// <returns>The metric name set for the requested escaping scheme.</returns>
     internal NameSet GetNameSet(EscapingScheme escaping) => escaping switch
     {
+        EscapingScheme.AllowUtf8 => this.allowUtf8Names ??= BuildAllowUtf8Names(this.rawName, this.Unit, this.Type, this.disableTotalNameSuffixForCounters),
         EscapingScheme.Dots => this.dotsNames ??= BuildEscapedNames(this.rawName, this.Unit, this.Type, this.disableTotalNameSuffixForCounters, EscapingScheme.Dots),
         EscapingScheme.Values => this.valuesNames ??= BuildEscapedNames(this.rawName, this.Unit, this.Type, this.disableTotalNameSuffixForCounters, EscapingScheme.Values),
         _ => this.underscoreNames,
@@ -346,6 +348,44 @@ internal sealed class PrometheusMetric
             : openMetricsMetadataName;
 
         return new(escapedName, openMetricsName, openMetricsMetadataName);
+    }
+
+    private static NameSet BuildAllowUtf8Names(string name, string? sanitizedUnit, PrometheusType type, bool disableTotalNameSuffixForCounters)
+    {
+        // The allow-utf-8 scheme does not escape the name; the original UTF-8 name is kept and only
+        // the unit and the structural '_total' suffix are appended. The family name determines
+        // whether the quoted exposition format is required (the structural suffixes are legacy
+        // characters and so do not affect the legacy validity of the family).
+        var nameFamily = name;
+        var openMetricsFamily = RemoveOpenMetricsCounterNameSuffix(name);
+
+        if (sanitizedUnit != null)
+        {
+            if (!nameFamily.EndsWith(sanitizedUnit, StringComparison.Ordinal))
+            {
+                nameFamily += $"_{sanitizedUnit}";
+            }
+
+            if (!openMetricsFamily.EndsWith(sanitizedUnit, StringComparison.Ordinal))
+            {
+                openMetricsFamily += $"_{sanitizedUnit}";
+            }
+        }
+
+        var metricName = nameFamily;
+
+        if (type == PrometheusType.Counter && !nameFamily.EndsWith("_total", StringComparison.Ordinal) && !disableTotalNameSuffixForCounters)
+        {
+            metricName += "_total";
+        }
+
+        var openMetricsName = type == PrometheusType.Counter && !openMetricsFamily.EndsWith("_total", StringComparison.Ordinal)
+            ? openMetricsFamily + "_total"
+            : openMetricsFamily;
+
+        var isLegacyValid = PrometheusEscaping.IsValidLegacyName(nameFamily);
+
+        return new(metricName, openMetricsName, openMetricsFamily, isLegacyValid, encodeUtf8: true);
     }
 
     private static string RemoveOpenMetricsCounterNameSuffix(string metricName)
@@ -463,14 +503,15 @@ internal sealed class PrometheusMetric
     /// </summary>
     internal sealed class NameSet
     {
-        public NameSet(string name, string openMetricsName, string openMetricsMetadataName)
+        public NameSet(string name, string openMetricsName, string openMetricsMetadataName, bool isLegacyValid = true, bool encodeUtf8 = false)
         {
             this.Name = name;
             this.OpenMetricsName = openMetricsName;
             this.OpenMetricsMetadataName = openMetricsMetadataName;
-            this.NameBytes = ConvertToBytes(name);
-            this.OpenMetricsNameBytes = ConvertToBytes(openMetricsName);
-            this.OpenMetricsMetadataNameBytes = ConvertToBytes(openMetricsMetadataName);
+            this.IsLegacyValid = isLegacyValid;
+            this.NameBytes = ToBytes(name, encodeUtf8);
+            this.OpenMetricsNameBytes = ToBytes(openMetricsName, encodeUtf8);
+            this.OpenMetricsMetadataNameBytes = ToBytes(openMetricsMetadataName, encodeUtf8);
         }
 
         public string Name { get; }
@@ -479,10 +520,22 @@ internal sealed class PrometheusMetric
 
         public string OpenMetricsMetadataName { get; }
 
+        /// <summary>
+        /// Gets a value indicating whether the metric name is a valid legacy name.
+        /// </summary>
+        /// <remarks>
+        /// When <see langword="false"/> (only possible for the <c>allow-utf-8 scheme</c>)
+        /// the quoted exposition format is required.
+        /// </remarks>
+        public bool IsLegacyValid { get; }
+
         public byte[] NameBytes { get; }
 
         public byte[] OpenMetricsNameBytes { get; }
 
         public byte[] OpenMetricsMetadataNameBytes { get; }
+
+        private static byte[] ToBytes(string value, bool encodeUtf8)
+            => encodeUtf8 ? Encoding.UTF8.GetBytes(value) : ConvertToBytes(value);
     }
 }

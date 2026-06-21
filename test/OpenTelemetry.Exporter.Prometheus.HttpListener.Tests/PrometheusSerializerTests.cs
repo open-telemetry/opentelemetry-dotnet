@@ -1689,6 +1689,7 @@ public sealed partial class PrometheusSerializerTests
     }
 
     [Theory]
+    [InlineData(PrometheusProtocol.AllowUtf8Escaping)]
     [InlineData(PrometheusProtocol.DotsEscaping)]
     [InlineData(PrometheusProtocol.UnderscoresEscaping)]
     [InlineData(PrometheusProtocol.ValuesEscaping)]
@@ -1869,7 +1870,7 @@ public sealed partial class PrometheusSerializerTests
     }
 
 #if NET
-    [GeneratedRegex("(?m)^([^\\s]*_created(?:\\{[^}]*\\})?\\s+)\\S+$")]
+    [GeneratedRegex("(?m)^((?:[^\\s{]*_created(?:\\{[^}]*\\})?|\\{[^}]*_created[^}]*\\})\\s+)\\S+$")]
     private static partial Regex CreatedMetric();
 
     [GeneratedRegex("(?m)^(.+?\\s#\\s\\{[^}]*\\}\\s+\\S+\\s+)\\S+$")]
@@ -1881,7 +1882,7 @@ public sealed partial class PrometheusSerializerTests
     [GeneratedRegex("telemetry_sdk_version=\"[^\"]*\"")]
     private static partial Regex SdkVersion();
 #else
-    private static Regex CreatedMetric() => new("(?m)^([^\\s]*_created(?:\\{[^}]*\\})?\\s+)\\S+$", RegexOptions.Compiled);
+    private static Regex CreatedMetric() => new("(?m)^((?:[^\\s{]*_created(?:\\{[^}]*\\})?|\\{[^}]*_created[^}]*\\})\\s+)\\S+$", RegexOptions.Compiled);
 
     private static Regex ExemplarTimestamp() => new("(?m)^(.+?\\s#\\s\\{[^}]*\\}\\s+\\S+\\s+)\\S+$", RegexOptions.Compiled);
 

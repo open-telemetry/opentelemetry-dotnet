@@ -63,11 +63,41 @@ public static class PrometheusEscapingTests
     }
 
     [Theory]
-    [InlineData("metric.name", "metric.name")]
-    [InlineData("a_b", "a_b")]
-    [InlineData("", "")]
-    public static void EscapeName_Underscores_IsHandledElsewhere(string name, string expected)
-        => Assert.Equal(expected, PrometheusEscaping.EscapeName(name, EscapingScheme.Underscores));
+    [InlineData(EscapingScheme.AllowUtf8, "metric.name", "metric.name")]
+    [InlineData(EscapingScheme.AllowUtf8, "a_b", "a_b")]
+    [InlineData(EscapingScheme.AllowUtf8, "", "")]
+    [InlineData(EscapingScheme.Underscores, "metric.name", "metric.name")]
+    [InlineData(EscapingScheme.Underscores, "a_b", "a_b")]
+    [InlineData(EscapingScheme.Underscores, "", "")]
+    internal static void EscapeName_LeavesNameUnchanged(EscapingScheme scheme, string name, string expected)
+        => Assert.Equal(expected, PrometheusEscaping.EscapeName(name, scheme));
+
+    [Theory]
+    [InlineData("metric_name", true)]
+    [InlineData("Avalid_23name", true)]
+    [InlineData("colon:in:the:middle", true)]
+    [InlineData("a\u00C5z", false)]
+    [InlineData("MetricName", true)]
+    [InlineData("_metric", true)]
+    [InlineData(":metric", true)]
+    [InlineData("http.server.requests", false)]
+    [InlineData("0metric", false)]
+    [InlineData("metric.name", false)]
+    [InlineData("metric name", false)]
+    [InlineData("", false)]
+    internal static void IsValidLegacyName_ValidatesMetricNames(string name, bool expected)
+        => Assert.Equal(expected, PrometheusEscaping.IsValidLegacyName(name));
+
+    [Theory]
+    [InlineData("label_name", true)]
+    [InlineData("LabelName", true)]
+    [InlineData("_label", true)]
+    [InlineData("la:bel", false)]
+    [InlineData("http.method", false)]
+    [InlineData("0label", false)]
+    [InlineData("", false)]
+    internal static void IsValidLegacyLabelName_DisallowsColons(string name, bool expected)
+        => Assert.Equal(expected, PrometheusEscaping.IsValidLegacyLabelName(name));
 
     [Theory]
     [InlineData(EscapingScheme.Dots)]
@@ -83,11 +113,12 @@ public static class PrometheusEscapingTests
 
     [Theory]
     [InlineData(null, EscapingScheme.Underscores)]
-    [InlineData("underscores", EscapingScheme.Underscores)]
-    [InlineData("dots", EscapingScheme.Dots)]
-    [InlineData("values", EscapingScheme.Values)]
-    [InlineData("allow-utf-8", EscapingScheme.Underscores)]
+    [InlineData("", EscapingScheme.Underscores)]
+    [InlineData("allow-utf-8", EscapingScheme.AllowUtf8)]
     [InlineData("anything-else", EscapingScheme.Underscores)]
+    [InlineData("dots", EscapingScheme.Dots)]
+    [InlineData("underscores", EscapingScheme.Underscores)]
+    [InlineData("values", EscapingScheme.Values)]
     internal static void FromString_MapsEscapingScheme(string? escaping, EscapingScheme expected)
         => Assert.Equal(expected, PrometheusEscaping.FromString(escaping));
 }

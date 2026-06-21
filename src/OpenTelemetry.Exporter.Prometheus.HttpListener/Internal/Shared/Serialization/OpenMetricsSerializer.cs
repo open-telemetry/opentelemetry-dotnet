@@ -152,8 +152,7 @@ internal abstract class OpenMetricsSerializer : TextFormatSerializer
         in MetricPoint metricPoint,
         IReadOnlyCollection<string>? reservedOutputKeys = null)
     {
-        cursor = this.WriteMetricNameWithSuffix(buffer, cursor, prometheusMetric, "_created");
-        cursor = this.WriteTags(buffer, cursor, metric, metricPoint.Tags, reservedOutputKeys: reservedOutputKeys);
+        cursor = this.WriteSeriesAndTags(buffer, cursor, metric, prometheusMetric, metricPoint.Tags, "_created", reservedOutputKeys);
 
         buffer[cursor++] = unchecked((byte)' ');
 
