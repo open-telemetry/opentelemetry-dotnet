@@ -11,6 +11,8 @@ public static class PrometheusEscapingTests
     [InlineData("mysystem.prod.west.cpu.load_total", "mysystem_dot_prod_dot_west_dot_cpu_dot_load__total")]
     [InlineData("http.status:sum", "http_dot_status:sum")]
     [InlineData("no:escaping_required", "no:escaping__required")]
+    [InlineData("label with \U0001F631", "label__with____")]
+    [InlineData("\u82B1\u706B", "____")]
     [InlineData("", "")]
     public static void EscapeName_Dots(string name, string expected)
         => Assert.Equal(expected, PrometheusEscaping.EscapeName(name, EscapingScheme.Dots));
@@ -21,6 +23,7 @@ public static class PrometheusEscapingTests
     [InlineData("mysystem.prod.west.cpu.load_total", "U__mysystem_2e_prod_2e_west_2e_cpu_2e_load__total")]
     [InlineData("http.status:sum", "U__http_2e_status:sum")]
     [InlineData("no:escaping_required", "no:escaping_required")]
+    [InlineData("label with \u0100", "U__label_20_with_20__100_")]
     [InlineData("", "")]
     public static void EscapeName_Values(string name, string expected)
         => Assert.Equal(expected, PrometheusEscaping.EscapeName(name, EscapingScheme.Values));
