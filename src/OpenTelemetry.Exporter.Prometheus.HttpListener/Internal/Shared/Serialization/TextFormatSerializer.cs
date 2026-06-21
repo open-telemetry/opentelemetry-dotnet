@@ -999,7 +999,12 @@ internal abstract class TextFormatSerializer
     // Writes a histogram '_sum'/'_count' series name followed by its (pre-serialized) tags. The
     // base writes the legacy form 'name<suffix>{tags}'; the v1.0.0 formats override this to emit
     // the quoted form '{"name<suffix>",tags}' for a non-legacy allow-utf-8 name.
-    internal virtual int WriteSeriesNameAndSerializedTags(byte[] buffer, int cursor, PrometheusMetric metric, string suffix, ReadOnlySpan<byte> serializedTags)
+    internal virtual int WriteSeriesNameAndSerializedTags(
+        byte[] buffer,
+        int cursor,
+        PrometheusMetric metric,
+        string suffix,
+        ReadOnlySpan<byte> serializedTags)
     {
         cursor = this.WriteMetricNameWithSuffix(buffer, cursor, metric, suffix);
         return WriteSerializedTags(buffer, cursor, serializedTags);
@@ -1481,7 +1486,12 @@ internal abstract class TextFormatSerializer
         return cursor;
     }
 
-    private static void AddLabel(string originalKey, string outputKey, object? value, ref List<LabelData>? labels, IReadOnlyCollection<string>? reservedOutputKeys = null)
+    private static void AddLabel(
+        string originalKey,
+        string outputKey,
+        object? value,
+        ref List<LabelData>? labels,
+        IReadOnlyCollection<string>? reservedOutputKeys = null)
     {
         if (reservedOutputKeys?.Contains(outputKey) == true)
         {
