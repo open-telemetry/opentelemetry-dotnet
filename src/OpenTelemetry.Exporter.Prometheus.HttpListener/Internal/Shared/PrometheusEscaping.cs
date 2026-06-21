@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Buffers;
+using System.Diagnostics;
 using System.Text;
 
 namespace OpenTelemetry.Exporter.Prometheus;
@@ -35,7 +36,7 @@ internal static class PrometheusEscaping
     /// so that the structural underscores introduced when building the name are doubled and
     /// can be reversed by a client.
     /// </summary>
-    /// <param name="name">The intended name to escape.</param>
+    /// <param name="name">The name to escape.</param>
     /// <param name="scheme">The escaping scheme to apply.</param>
     /// <returns>The escaped name. Always a valid legacy (ASCII) name for the dots and values schemes.</returns>
     public static string EscapeName(string name, EscapingScheme scheme)
@@ -75,11 +76,13 @@ internal static class PrometheusEscaping
     /// </summary>
     /// <param name="buffer">The buffer to write to.</param>
     /// <param name="cursor">The current position in the buffer.</param>
-    /// <param name="name">The intended name to escape.</param>
+    /// <param name="name">The name to escape.</param>
     /// <param name="scheme">The escaping scheme to apply.</param>
     /// <returns>The new cursor position after writing the (ASCII) escaped name.</returns>
     public static int EscapeName(byte[] buffer, int cursor, string name, EscapingScheme scheme)
     {
+        Debug.Assert(scheme is EscapingScheme.Dots or EscapingScheme.Values, $"Unexpected escaping scheme: {scheme}");
+
         if (string.IsNullOrEmpty(name))
         {
             return cursor;
