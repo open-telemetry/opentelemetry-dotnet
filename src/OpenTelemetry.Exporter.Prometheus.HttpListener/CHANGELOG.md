@@ -10,6 +10,10 @@ Notes](../../RELEASENOTES.md).
 * Added a verbose-level diagnostic event for ignored metrics.
   ([#7429](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7429))
 
+* Added support for the `dots` and `values` Prometheus UTF-8 name escaping
+  schemes when negotiated via the `Accept` header.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.16.0-beta.1
 
 Released 2026-Jun-10

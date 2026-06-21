@@ -49,6 +49,23 @@ public class PrometheusSerializerFuzzTests
         Generators.DoubleArbitrary(),
         static (value) => SerializeDouble(value).SequenceEqual(ReferenceWriteDouble(value)));
 
+    [Property(MaxTest = MaxTests)]
+    public Property EscapeNameWithDotsMatchesReferenceImplementation() => Prop.ForAll(
+        Generators.PrometheusStringArbitrary(),
+        static (value) => PrometheusEscaping.EscapeName(value, EscapingScheme.Dots) == ReferenceEscapeName(value, EscapingScheme.Dots));
+
+    [Property(MaxTest = MaxTests)]
+    public Property EscapeNameWithValuesMatchesReferenceImplementation() => Prop.ForAll(
+        Generators.PrometheusStringArbitrary(),
+        static (value) => PrometheusEscaping.EscapeName(value, EscapingScheme.Values) == ReferenceEscapeName(value, EscapingScheme.Values));
+
+    [Property(MaxTest = MaxTests)]
+    public Property EscapeNameToBufferMatchesStringOverload() => Prop.ForAll(
+        Generators.PrometheusStringArbitrary(),
+        static (value) =>
+            SerializeEscapeName(value, EscapingScheme.Dots).SequenceEqual(Encoding.ASCII.GetBytes(PrometheusEscaping.EscapeName(value, EscapingScheme.Dots))) &&
+            SerializeEscapeName(value, EscapingScheme.Values).SequenceEqual(Encoding.ASCII.GetBytes(PrometheusEscaping.EscapeName(value, EscapingScheme.Values))));
+
     private static byte[] Serialize(string value, Func<byte[], int, string, int> writer)
     {
         var buffer = new byte[(value.Length * 8) + 16];
@@ -60,6 +77,13 @@ public class PrometheusSerializerFuzzTests
     {
         var buffer = new byte[(value.Length * 8) + 16];
         var cursor = TextFormatSerializer.WriteLabelKey(buffer, 0, value);
+        return buffer.AsSpan(0, cursor).ToArray();
+    }
+
+    private static byte[] SerializeEscapeName(string value, EscapingScheme scheme)
+    {
+        var buffer = new byte[(value.Length * 8) + 16];
+        var cursor = PrometheusEscaping.EscapeName(buffer, 0, value, scheme);
         return buffer.AsSpan(0, cursor).ToArray();
     }
 
@@ -145,6 +169,113 @@ public class PrometheusSerializerFuzzTests
         var doubleValue when double.IsNaN(doubleValue) => Encoding.UTF8.GetBytes("NaN"),
         _ => Encoding.UTF8.GetBytes(value.ToString("G17", CultureInfo.InvariantCulture)),
     };
+
+    // An independent re-implementation of the dots and values escaping schemes used to validate
+    // PrometheusEscaping.EscapeName. It deliberately uses different mechanisms (manual surrogate
+    // decoding, a StringBuilder, and int.ToString("x")) than the production code.
+    private static string ReferenceEscapeName(string value, EscapingScheme scheme)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return value;
+        }
+
+        if (scheme == EscapingScheme.Values && ReferenceIsValidLegacyName(value))
+        {
+            return value;
+        }
+
+        var text = new StringBuilder(value.Length + 8);
+
+        if (scheme == EscapingScheme.Values)
+        {
+            text.Append("U__");
+        }
+
+        var index = 0;
+
+        while (index < value.Length)
+        {
+            var codePoint = ReferenceGetCodePoint(value, index, out var charsConsumed, out var isValidRune);
+
+            if (codePoint == '_')
+            {
+                text.Append("__");
+            }
+            else if (scheme == EscapingScheme.Dots && codePoint == '.')
+            {
+                text.Append("_dot_");
+            }
+            else if (ReferenceIsValidLegacyRune(codePoint, index == 0))
+            {
+                text.Append((char)codePoint);
+            }
+            else if (scheme == EscapingScheme.Dots)
+            {
+                text.Append("__");
+            }
+            else if (!isValidRune)
+            {
+                text.Append("_FFFD_");
+            }
+            else
+            {
+                text.Append('_').Append(codePoint.ToString("x", CultureInfo.InvariantCulture)).Append('_');
+            }
+
+            index += charsConsumed;
+        }
+
+        return text.ToString();
+    }
+
+    private static bool ReferenceIsValidLegacyName(string value)
+    {
+        var index = 0;
+
+        while (index < value.Length)
+        {
+            var codePoint = ReferenceGetCodePoint(value, index, out var charsConsumed, out _);
+
+            if (!ReferenceIsValidLegacyRune(codePoint, index == 0))
+            {
+                return false;
+            }
+
+            index += charsConsumed;
+        }
+
+        return true;
+    }
+
+    private static bool ReferenceIsValidLegacyRune(int codePoint, bool isFirst) =>
+        codePoint is (>= 'a' and <= 'z') or (>= 'A' and <= 'Z') or '_' or ':' ||
+        (!isFirst && codePoint is >= '0' and <= '9');
+
+    private static int ReferenceGetCodePoint(string value, int index, out int charsConsumed, out bool isValidRune)
+    {
+        var character = value[index];
+
+        if (char.IsHighSurrogate(character) &&
+            index + 1 < value.Length &&
+            char.IsLowSurrogate(value[index + 1]))
+        {
+            charsConsumed = 2;
+            isValidRune = true;
+            return char.ConvertToUtf32(character, value[index + 1]);
+        }
+
+        if (char.IsSurrogate(character))
+        {
+            charsConsumed = 1;
+            isValidRune = false;
+            return 0xFFFD;
+        }
+
+        charsConsumed = 1;
+        isValidRune = true;
+        return character;
+    }
 
     private static byte[] ReferenceWriteEscapedString(string value, bool escapeQuotationMarks)
     {

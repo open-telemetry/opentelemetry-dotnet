@@ -21,13 +21,13 @@ internal abstract class PrometheusTextSerializer : TextFormatSerializer
     protected override string TargetInfoTypeValue => "gauge";
 
     public override string GetMetadataName(PrometheusMetric metric)
-        => metric.Name;
+        => metric.GetNameSet(this.Escaping).Name;
 
     protected override ReadOnlySpan<byte> GetMetricNameBytes(PrometheusMetric metric)
-        => metric.NameBytes;
+        => metric.GetNameSet(this.Escaping).NameBytes;
 
     protected override ReadOnlySpan<byte> GetMetricMetadataNameBytes(PrometheusMetric metric)
-        => metric.NameBytes;
+        => metric.GetNameSet(this.Escaping).NameBytes;
 
     protected override int WriteExplicitBound(byte[] buffer, int cursor, double explicitBound)
         => WriteDouble(buffer, cursor, explicitBound);

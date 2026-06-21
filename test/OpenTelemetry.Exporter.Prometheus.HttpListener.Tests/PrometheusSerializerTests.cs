@@ -1688,6 +1688,51 @@ public sealed partial class PrometheusSerializerTests
         Assert.Contains("rkt:\U0001F680", output, StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData(PrometheusProtocol.DotsEscaping)]
+    [InlineData(PrometheusProtocol.ValuesEscaping)]
+    [InlineData(PrometheusProtocol.UnderscoresEscaping)]
+    public async Task WriteMetric_EscapesMetricAndLabelNamesUsingNegotiatedScheme(string escaping)
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        var counter = meter.CreateCounter<long>("http.server.requests");
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        counter.Add(1, new KeyValuePair<string, object?>("http.method", "GET"));
+
+        provider.ForceFlush();
+
+        var protocol = new PrometheusProtocol(
+            PrometheusProtocol.OpenMetricsMediaType,
+            escaping,
+            PrometheusProtocol.OpenMetricsV1,
+            isOpenMetrics: true);
+
+        var serializer = TextFormatSerializer.GetSerializer(protocol);
+
+        var cursor = serializer.WriteMetric(
+            buffer,
+            0,
+            metrics[0],
+            PrometheusMetric.Create(metrics[0], false),
+            writeType: true,
+            writeUnit: true,
+            writeHelp: true,
+            unitOverride: null,
+            helpOverride: null);
+
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        await Verify(output, "txt", VerifySettings).UseParameters(escaping);
+    }
+
 #if NET
     [Fact]
     public async Task WriteHistogramMetricSerializesStaticTagsWithoutPreSerializedTags()

@@ -1,0 +1,3 @@
+﻿# TYPE U__http_2e_server_2e_requests counter
+U__http_2e_server_2e_requests_total{otel_scope_name="WriteMetric_EscapesMetricAndLabelNamesUsingNegotiatedScheme",U__http_2e_method="GET"} 1
+U__http_2e_server_2e_requests_created{otel_scope_name="WriteMetric_EscapesMetricAndLabelNamesUsingNegotiatedScheme",U__http_2e_method="GET"} <TIMESTAMP>

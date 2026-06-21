@@ -373,6 +373,8 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
     [InlineData("text/plain")]
     [InlineData("text/plain;version=0.0.4")]
     [InlineData("text/plain;version=1.0.0")]
+    [InlineData("text/plain;version=1.0.0;escaping=dots")]
+    [InlineData("text/plain;version=1.0.0;escaping=values")]
     [InlineData("application/openmetrics-text", Skip = "https://github.com/prometheus/prometheus/issues/8932")]
     [InlineData("application/openmetrics-text;version=0.0.4")]
     [InlineData("application/openmetrics-text;version=1.0.0", Skip = "https://github.com/prometheus/prometheus/issues/8932")]

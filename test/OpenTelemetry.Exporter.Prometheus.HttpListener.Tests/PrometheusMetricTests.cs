@@ -433,6 +433,41 @@ public sealed class PrometheusMetricTests
     public void Name_UnitWithSpecialChars_Sanitized()
         => AssertName("metric", "req!", PrometheusType.Gauge, false, "metric_req");
 
+    [Fact]
+    public void GetNames_Dots_EscapesFamilyNameAndAppendsTotalSuffixLiterally()
+    {
+        var metric = new PrometheusMetric("http.server.duration", "s", PrometheusType.Counter, false);
+        var names = metric.GetNameSet(EscapingScheme.Dots);
+
+        // The family name (including the unit) is escaped, so the '.' characters become '_dot_' and
+        // the structural underscore before the unit is doubled. The '_total' suffix is a structural
+        // suffix appended literally to the escaped family name.
+        Assert.Equal("http_dot_server_dot_duration__seconds_total", names.Name);
+        Assert.Equal("http_dot_server_dot_duration__seconds_total", names.OpenMetricsName);
+        Assert.Equal("http_dot_server_dot_duration__seconds", names.OpenMetricsMetadataName);
+    }
+
+    [Fact]
+    public void GetNames_Values_EscapesFamilyNameAndAppendsTotalSuffixLiterally()
+    {
+        var metric = new PrometheusMetric("http.server.duration", "s", PrometheusType.Counter, false);
+        var names = metric.GetNameSet(EscapingScheme.Values);
+
+        Assert.Equal("U__http_2e_server_2e_duration__seconds_total", names.Name);
+        Assert.Equal("U__http_2e_server_2e_duration__seconds_total", names.OpenMetricsName);
+        Assert.Equal("U__http_2e_server_2e_duration__seconds", names.OpenMetricsMetadataName);
+    }
+
+    [Fact]
+    public void GetNames_Underscores_MatchesDefaultProperties()
+    {
+        var metric = new PrometheusMetric("http.server.duration", "s", PrometheusType.Counter, false);
+        var names = metric.GetNameSet(EscapingScheme.Underscores);
+
+        Assert.Equal("http_server_duration_seconds_total", names.Name);
+        Assert.Equal(metric.Name, names.Name);
+    }
+
     [Theory]
     [InlineData(PrometheusType.Counter)]
     [InlineData(PrometheusType.Gauge)]

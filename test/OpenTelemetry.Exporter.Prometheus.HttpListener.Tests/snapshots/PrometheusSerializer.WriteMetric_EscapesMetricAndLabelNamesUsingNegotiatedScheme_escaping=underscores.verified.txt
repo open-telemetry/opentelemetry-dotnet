@@ -1,0 +1,3 @@
+﻿# TYPE http_server_requests counter
+http_server_requests_total{otel_scope_name="WriteMetric_EscapesMetricAndLabelNamesUsingNegotiatedScheme",http_method="GET"} 1
+http_server_requests_created{otel_scope_name="WriteMetric_EscapesMetricAndLabelNamesUsingNegotiatedScheme",http_method="GET"} <TIMESTAMP>
