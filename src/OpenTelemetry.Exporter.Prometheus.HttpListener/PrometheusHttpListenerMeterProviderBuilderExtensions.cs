@@ -69,6 +69,7 @@ public static class PrometheusHttpListenerMeterProviderBuilderExtensions
         {
             ScopeInfoEnabled = options.ScopeInfoEnabled,
             ScrapeResponseCacheDurationMilliseconds = options.ScrapeResponseCacheDurationMilliseconds,
+            TargetInfoEnabled = options.TargetInfoEnabled,
             DisableTotalNameSuffixForCounters = options.DisableTotalNameSuffixForCounters,
         });
 

@@ -79,6 +79,22 @@ public class PrometheusHttpListenerTests
         await Verify(output, "text", PrometheusSerializerTests.VerifySettings).UseParameters(scopeInfoEnabled);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task RunHttpServerWithTargetInfoEnabledConfigured(bool targetInfoEnabled)
+    {
+        var output = await RunPrometheusExporterHttpServerIntegrationTest(
+            configureListener: (options) =>
+            {
+                options.TargetInfoEnabled = targetInfoEnabled;
+                return options.Port;
+            },
+            assertResponseContent: false);
+
+        await Verify(output, "text", PrometheusSerializerTests.VerifySettings).UseParameters(targetInfoEnabled);
+    }
+
     [Fact]
     public async Task RunHttpServerWithNoMetrics()
     {

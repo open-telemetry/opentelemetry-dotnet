@@ -1,0 +1,8 @@
+﻿# TYPE target info
+# HELP target Target metadata
+target_info{service_name="my_service",service_instance_id="id1"} 1
+# TYPE counter_double_bytes counter
+# UNIT counter_double_bytes bytes
+counter_double_bytes_total{otel_scope_name="PrometheusHttpListenerTests",otel_scope_version="1.0.1",key1="value1",key2="value2"} 101.17
+counter_double_bytes_created{otel_scope_name="PrometheusHttpListenerTests",otel_scope_version="1.0.1",key1="value1",key2="value2"} <TIMESTAMP>
+# EOF

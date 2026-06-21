@@ -63,6 +63,7 @@ variables.
 * `ScopeInfoEnabled`: Whether to include scope labels in metrics (default `true`).
 * `ScrapeEndpointPath`: Defines the Prometheus scrape endpoint path.
   (default `"/metrics"`).
+* `TargetInfoEnabled`: Whether to produce a `target_info` metric (default `true`).
 * `DisableTotalNameSuffixForCounters`: Whether to disable the `_total` suffix for
   counter metrics (default `false`).
 * `DisableTimestamp`: Whether to disable the timestamp for metrics (default `false`).
@@ -107,6 +108,12 @@ Default value: `true`. Set to `false` to disable scope labels.
 Configures scrape endpoint response caching. Multiple scrape requests within the
 cache duration time period will receive the same previously generated response.
 The default value is `300`. Set to `0` to disable response caching.
+
+### TargetInfoEnabled
+
+Specifies whether to produce a
+[`target_info`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/compatibility/prometheus_and_openmetrics.md#resource-attributes-1)
+metric. Default value: `true`. Set to `false` to disable the `target_info` metric.
 
 ## Troubleshooting
 

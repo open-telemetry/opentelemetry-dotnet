@@ -25,6 +25,7 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
 
         this.ScopeInfoEnabled = options.ScopeInfoEnabled;
         this.ScrapeResponseCacheDurationMilliseconds = options.ScrapeResponseCacheDurationMilliseconds;
+        this.TargetInfoEnabled = options.TargetInfoEnabled;
         this.DisableTotalNameSuffixForCounters = options.DisableTotalNameSuffixForCounters;
 
         this.CollectionManager = new PrometheusCollectionManager(this);
@@ -44,6 +45,8 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
     internal PrometheusCollectionManager CollectionManager { get; }
 
     internal bool ScopeInfoEnabled { get; }
+
+    internal bool TargetInfoEnabled { get; }
 
     internal int ScrapeResponseCacheDurationMilliseconds { get; }
 

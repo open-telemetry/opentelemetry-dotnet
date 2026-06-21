@@ -17,6 +17,7 @@ internal sealed class PrometheusCollectionManager
 
     private readonly PrometheusExporter exporter;
     private readonly bool scopeInfoEnabled;
+    private readonly bool targetInfoEnabled;
     private readonly TimeSpan scrapeResponseCacheDuration;
     private readonly long baseTimestamp = Stopwatch.GetTimestamp();
     private readonly PrometheusExporter.ExportFunc onCollectRef;
@@ -31,6 +32,7 @@ internal sealed class PrometheusCollectionManager
     {
         this.exporter = exporter;
         this.scopeInfoEnabled = this.exporter.ScopeInfoEnabled;
+        this.targetInfoEnabled = this.exporter.TargetInfoEnabled;
         this.scrapeResponseCacheDuration = TimeSpan.FromMilliseconds(this.exporter.ScrapeResponseCacheDurationMilliseconds);
         this.onCollectRef = this.OnCollect;
         this.metricsCache = [];
@@ -353,7 +355,7 @@ internal sealed class PrometheusCollectionManager
         {
             var serializer = TextFormatSerializer.GetSerializer(protocol);
 
-            var cursor = this.WriteTargetInfo(serializer, state);
+            var cursor = this.targetInfoEnabled ? this.WriteTargetInfo(serializer, state) : 0;
             var metricStates = this.GetMetricStates(serializer, metrics);
             var options = new TextFormatSerializerOptions(suppressScopeInfo: !this.scopeInfoEnabled);
 
