@@ -584,28 +584,6 @@ public sealed partial class PrometheusSerializerTests
     }
 
     [Fact]
-    public void ExponentialHistogramIsIgnoredForNow()
-    {
-        var buffer = new byte[85000];
-        var metrics = new List<Metric>();
-
-        using var meter = CreateMeter();
-        using var provider = Sdk.CreateMeterProviderBuilder()
-            .AddMeter(meter.Name)
-            .AddView(instrument => new Base2ExponentialBucketHistogramConfiguration())
-            .AddInMemoryExporter(metrics)
-            .Build();
-
-        var histogram = meter.CreateHistogram<double>("test_histogram");
-        histogram.Record(18);
-        histogram.Record(100);
-
-        provider.ForceFlush();
-
-        Assert.False(TextFormatSerializer.CanWriteMetric(metrics[0]));
-    }
-
-    [Fact]
     public async Task SumWithOpenMetricsFormat()
     {
         var buffer = new byte[85000];
