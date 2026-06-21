@@ -16,7 +16,7 @@ Notes](../../RELEASENOTES.md).
 
 * Added support for the `allow-utf-8` Prometheus UTF-8 name escaping scheme
   when negotiated via the `Accept` header.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7440](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7440))
 
 ## 1.16.0-beta.1
 
