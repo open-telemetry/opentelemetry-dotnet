@@ -757,7 +757,11 @@ internal abstract class TextFormatSerializer
         // as the first element inside the braces, e.g. {"my.metric",label="value"}. This is the
         // allow-utf-8 exposition format used when the metric name is not a valid legacy name.
         var startCursor = cursor;
-        List<string>? writtenOutputKeys = null;
+
+        // The fast path writes each output label name directly into the buffer and detects reserved
+        // names and collisions by comparing the written bytes, so no per-label key string is
+        // allocated. Each entry is the (start, length) of an already-written key within the buffer.
+        List<(int Start, int Length)>? writtenKeyRanges = null;
         var wroteLabel = false;
 
         if (writeEnclosingBraces)
@@ -831,30 +835,47 @@ internal abstract class TextFormatSerializer
 
         bool TryWriteLabel(string key, object? value, bool isScopeLabel = false)
         {
-            // Scope labels arrive already in their final (output) form; point tags are escaped
-            // using the negotiated scheme. The resulting output key is always a legacy-valid
-            // ASCII name, so it is both used for de-duplication and written verbatim.
-            var outputKey = isScopeLabel ? key : this.GetOutputLabelKey(key);
-
-            if (reservedOutputKeys?.Contains(outputKey) == true)
-            {
-                return true;
-            }
-
-            if (writtenOutputKeys?.Contains(outputKey) == true)
-            {
-                return false;
-            }
-
-            writtenOutputKeys ??= [];
-            writtenOutputKeys.Add(outputKey);
+            // The output label name is written directly into the buffer (scope labels arrive already
+            // in their final form; point tags are escaped using the negotiated scheme). The written
+            // bytes are then used to detect reserved names and collisions, so no key string is
+            // allocated. On a reserved name or a collision the write is rolled back by rewinding the
+            // cursor; a collision additionally aborts the fast path so the slow path can merge.
+            var rewindCursor = cursor;
 
             if (wroteLabel)
             {
                 buffer[cursor++] = unchecked((byte)',');
             }
 
-            cursor = WriteLabelName(buffer, cursor, outputKey);
+            var keyStart = cursor;
+
+            cursor = isScopeLabel
+                ? WriteLabelName(buffer, cursor, key)
+                : this.WriteOutputLabelKey(buffer, cursor, key);
+
+            var writtenKey = new ReadOnlySpan<byte>(buffer, keyStart, cursor - keyStart);
+
+            if (IsReservedOutputKey(reservedOutputKeys, writtenKey))
+            {
+                cursor = rewindCursor;
+                return true;
+            }
+
+            if (writtenKeyRanges != null)
+            {
+                foreach (var (start, length) in writtenKeyRanges)
+                {
+                    if (new ReadOnlySpan<byte>(buffer, start, length).SequenceEqual(writtenKey))
+                    {
+                        cursor = rewindCursor;
+                        return false;
+                    }
+                }
+            }
+
+            writtenKeyRanges ??= [];
+            writtenKeyRanges.Add((keyStart, writtenKey.Length));
+
             cursor = WriteSanitizedLabel(buffer, cursor, value);
             wroteLabel = true;
 
@@ -1561,6 +1582,92 @@ internal abstract class TextFormatSerializer
         }
     }
 
+    private static int WriteEscapedLabelKey(byte[] buffer, int cursor, string key, EscapingScheme escaping)
+    {
+        // Writes a dots or values escaped label name directly to the buffer. The escaped form is a valid
+        // legacy metric name but may contain a colon, which is not permitted in a legacy label name, so
+        // it is quoted in that case exactly as WriteLabelName would quote the equivalent string.
+        var scratch = ArrayPool<byte>.Shared.Rent((key.Length * 8) + 16);
+
+        try
+        {
+            var length = PrometheusEscaping.EscapeName(scratch, 0, key, escaping);
+            var escaped = new ReadOnlySpan<byte>(scratch, 0, length);
+
+            if (IsValidLegacyLabelName(escaped))
+            {
+                escaped.CopyTo(new Span<byte>(buffer, cursor, length));
+                return cursor + length;
+            }
+
+            return WriteQuotedName(buffer, cursor, escaped, suffix: null);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(scratch);
+        }
+    }
+
+    private static bool IsReservedOutputKey(IReadOnlyCollection<string>? reservedOutputKeys, ReadOnlySpan<byte> writtenKey)
+    {
+        if (reservedOutputKeys == null)
+        {
+            return false;
+        }
+
+        foreach (var reserved in reservedOutputKeys)
+        {
+            if (SpanEqualsAscii(writtenKey, reserved))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool SpanEqualsAscii(ReadOnlySpan<byte> span, string value)
+    {
+        if (span.Length != value.Length)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < span.Length; i++)
+        {
+            if (span[i] != unchecked((byte)value[i]))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool IsValidLegacyLabelName(ReadOnlySpan<byte> name)
+    {
+        if (name.IsEmpty)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < name.Length; i++)
+        {
+            var ch = name[i];
+
+            var valid =
+                ch is (>= (byte)'a' and <= (byte)'z') or (>= (byte)'A' and <= (byte)'Z') or (byte)'_' ||
+                (i > 0 && ch is >= (byte)'0' and <= (byte)'9');
+
+            if (!valid)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private static int WriteLabels(
         byte[] buffer,
         int cursor,
@@ -1898,6 +2005,30 @@ internal abstract class TextFormatSerializer
         // Check for validity first, since the vast majority of label
         // keys are already valid, to avoid allocating to sanitize it.
         return IsValidLabelKey(value) ? value : SanitizeLabelKey(value);
+    }
+
+    private int WriteOutputLabelKey(byte[] buffer, int cursor, string key)
+    {
+        // Writes a point tag's output label name directly to the buffer using the negotiated escaping
+        // scheme, without allocating an intermediate string. This is the buffer-writing counterpart of
+        // GetOutputLabelKey followed by WriteLabelName, used by the fast label-writing path.
+        if (string.IsNullOrEmpty(key))
+        {
+            buffer[cursor++] = unchecked((byte)'_');
+            return cursor;
+        }
+
+        return this.Escaping switch
+        {
+            // The underscores scheme always produces a valid legacy label name (no quoting needed).
+            EscapingScheme.Underscores => WriteNormalizedLabelKey(buffer, cursor, key),
+
+            // The allow-utf-8 scheme keeps the name as-is, quoting it when it is not a legacy name.
+            EscapingScheme.AllowUtf8 => WriteLabelName(buffer, cursor, key),
+
+            // The dots and values schemes escape the name and quote it only if a colon survives.
+            _ => WriteEscapedLabelKey(buffer, cursor, key, this.Escaping),
+        };
     }
 
     private void AddLabel(string originalKey, object? value, ref List<LabelData>? labels, IReadOnlyCollection<string>? reservedOutputKeys = null)
