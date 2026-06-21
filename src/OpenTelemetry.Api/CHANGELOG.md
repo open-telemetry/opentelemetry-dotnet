@@ -6,6 +6,9 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* The library is now marked as trim and AOT compatible.
+  ([#7441](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7441))
+
 * Fixed `TraceContextPropagator` to normalize empty `tracestate` header values
   to `null` when extracting trace context.
   ([#7407](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7407))

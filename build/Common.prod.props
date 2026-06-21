@@ -12,9 +12,6 @@
 
   <PropertyGroup Label="TrimAndAotCompatibility"
                  Condition="'$(IsAotCompatible)' == '' AND $([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">
-    <!-- Note: Production libraries are marked AOT (and trim) compatible for .NET
-    targets greater than net7.0. This enables the trim, AOT, and single-file
-    analyzers for those targets. -->
     <IsAotCompatible>true</IsAotCompatible>
   </PropertyGroup>
 

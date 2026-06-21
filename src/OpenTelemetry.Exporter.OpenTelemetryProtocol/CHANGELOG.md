@@ -7,6 +7,9 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* The library is now marked as trim and AOT compatible.
+  ([#7441](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7441))
+
 * Fixed `OtlpLogExporter` so `OtlpExporterOptions.ExportProcessorType` and
   `OtlpExporterOptions.BatchExportProcessorOptions` are respected when
   `LogRecordExportProcessorOptions` are not configured.
