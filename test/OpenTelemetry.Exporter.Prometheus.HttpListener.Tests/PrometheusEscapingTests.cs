@@ -67,6 +67,18 @@ public static class PrometheusEscapingTests
         => Assert.Equal(expected, PrometheusEscaping.EscapeName(name, EscapingScheme.Underscores));
 
     [Theory]
+    [InlineData(EscapingScheme.Dots)]
+    [InlineData(EscapingScheme.Values)]
+    internal static void EscapeName_ToBuffer_WithEmptyName_LeavesCursorUnchanged(EscapingScheme scheme)
+    {
+        var buffer = new byte[16];
+
+        var cursor = PrometheusEscaping.EscapeName(buffer, 5, string.Empty, scheme);
+
+        Assert.Equal(5, cursor);
+    }
+
+    [Theory]
     [InlineData(null, EscapingScheme.Underscores)]
     [InlineData("underscores", EscapingScheme.Underscores)]
     [InlineData("dots", EscapingScheme.Dots)]

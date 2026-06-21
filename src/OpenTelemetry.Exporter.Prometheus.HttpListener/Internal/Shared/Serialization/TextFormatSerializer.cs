@@ -450,7 +450,7 @@ internal abstract class TextFormatSerializer
         => WriteEscapedString(buffer, cursor, value, escapeQuotationMarks: false);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int WriteLabelKey(byte[] buffer, int cursor, string value, EscapingScheme escaping = EscapingScheme.Underscores)
+    internal static int WriteLabelKey(byte[] buffer, int cursor, string value)
     {
         if (string.IsNullOrEmpty(value))
         {
@@ -458,11 +458,7 @@ internal abstract class TextFormatSerializer
             return cursor;
         }
 
-        return escaping switch
-        {
-            EscapingScheme.Underscores => WriteNormalizedLabelKey(buffer, cursor, value),
-            _ => WriteAsciiStringNoEscape(buffer, cursor, PrometheusEscaping.EscapeName(value, escaping)),
-        };
+        return WriteNormalizedLabelKey(buffer, cursor, value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -530,9 +526,9 @@ internal abstract class TextFormatSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int WriteLabel(byte[] buffer, int cursor, string labelKey, object? labelValue, EscapingScheme escaping = EscapingScheme.Underscores)
+    internal static int WriteLabel(byte[] buffer, int cursor, string labelKey, object? labelValue)
     {
-        cursor = WriteLabelKey(buffer, cursor, labelKey, escaping);
+        cursor = WriteLabelKey(buffer, cursor, labelKey);
         return WriteSanitizedLabel(buffer, cursor, labelValue);
     }
 

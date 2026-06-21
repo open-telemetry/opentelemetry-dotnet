@@ -42,12 +42,6 @@ internal sealed class PrometheusMetric
 
     public PrometheusType Type { get; }
 
-    internal byte[] NameBytes => this.underscoreNames.NameBytes;
-
-    internal byte[] OpenMetricsNameBytes => this.underscoreNames.OpenMetricsNameBytes;
-
-    internal byte[] OpenMetricsMetadataNameBytes => this.underscoreNames.OpenMetricsMetadataNameBytes;
-
     internal byte[]? UnitBytes { get; }
 
     public static PrometheusMetric Create(Metric metric, bool disableTotalNameSuffixForCounters)
