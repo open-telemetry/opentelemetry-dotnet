@@ -221,6 +221,44 @@ public sealed class EnvironmentSubstitutionTests
         Assert.Contains("unterminated", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
+    // Substitution is a single pass: Regex.Replace never re-scans replacement text for further
+    // ${...} tokens. If A's value is "${B}", expanding ${A} yields the literal string "${B}" -
+    // B is never evaluated and there is no second pass or risk of infinite recursion.
+    [Fact]
+    public void Substitute_CircularReference_SinglePassOnly()
+    {
+        // A resolves to "${B}" and B resolves to "${A}". Only A is evaluated; the literal
+        // string "${B}" is the final output.
+        var result = EnvironmentSubstitution.Substitute(
+            "${A}",
+            name => name switch
+            {
+                "A" => "${B}",
+                "B" => "${A}",
+                _ => null,
+            });
+
+        Assert.Equal("${B}", result);
+    }
+
+    [Fact]
+    public void Substitute_ChainedReference_SinglePassOnly()
+    {
+        // Both ${A} and ${B} are expanded exactly once; their replacement values are never
+        // re-scanned for embedded ${...} tokens.
+        var result = EnvironmentSubstitution.Substitute(
+            "${A} and ${B}",
+            name => name switch
+            {
+                "A" => "${B}",
+                "B" => "${C}",
+                "C" => "${A}",
+                _ => null,
+            });
+
+        Assert.Equal("${B} and ${C}", result);
+    }
+
     [Fact]
     public void Substitute_NullValue_ThrowsArgumentNullException() =>
         Assert.Throws<ArgumentNullException>(() => EnvironmentSubstitution.Substitute(null!, _ => null));

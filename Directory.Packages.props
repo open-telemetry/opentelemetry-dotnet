@@ -98,12 +98,12 @@
     <PackageVersion Include="FSharp.Core" Version="10.1.301" />
     <PackageVersion Include="FsCheck.Xunit" Version="3.3.3" />
     <PackageVersion Include="GitHubActionsTestLogger" Version="3.0.4" />
-    <PackageVersion Include="Grpc.AspNetCore" Version="2.67.0" />
-    <PackageVersion Include="Grpc.AspNetCore.Server" Version="2.67.0" />
-    <PackageVersion Include="Grpc.Tools" Version="2.68.1" />
     <PackageVersion Include="Google.Protobuf" Version="3.35.1" />
     <PackageVersion Include="Grpc" Version="2.46.6" />
+    <PackageVersion Include="Grpc.AspNetCore" Version="2.67.0" />
+    <PackageVersion Include="Grpc.AspNetCore.Server" Version="2.67.0" />
     <PackageVersion Include="Grpc.Net.Client" Version="2.67.0" />
+    <PackageVersion Include="Grpc.Tools" Version="2.68.1" />
     <PackageVersion Include="JunitXml.TestLogger" Version="8.0.0" />
     <PackageVersion Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="3.12.0-beta1.25218.8" />
@@ -114,8 +114,8 @@
     <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.9" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.9" />
     <PackageVersion Include="Microsoft.Extensions.Telemetry.Abstractions" Version="9.10.0" />
-    <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" Condition="$(OS) != 'Windows_NT'" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.6.0" />
+    <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" Condition="$(OS) != 'Windows_NT'" />
     <PackageVersion Include="MinVer" Version="7.0.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.2" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.GrpcNetClient" Version="1.15.1-beta.1" />

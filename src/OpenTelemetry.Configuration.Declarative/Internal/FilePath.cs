@@ -1,7 +1,11 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if !NET
+using System.Runtime.InteropServices;
+#endif
 using OpenTelemetry.Internal;
+using static System.IO.Path;
 
 namespace OpenTelemetry.Configuration.Declarative;
 
@@ -42,7 +46,7 @@ internal readonly record struct FilePath
 
         // Spec: YAML configuration files MUST use file extensions .yaml or .yml.
         // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/data-model.md#yaml-file-format
-        var extension = System.IO.Path.GetExtension(path);
+        var extension = GetExtension(path);
         if (!string.Equals(extension, ".yaml", StringComparison.OrdinalIgnoreCase) &&
             !string.Equals(extension, ".yml", StringComparison.OrdinalIgnoreCase))
         {
@@ -59,8 +63,8 @@ internal readonly record struct FilePath
         // (current drive / current directory on that drive). Use IsPathFullyQualified on modern .NET and a
         // manual equivalent on older TFMs so those paths are combined with AppContext.BaseDirectory instead.
         var fullPath = IsFullyQualified(path)
-            ? System.IO.Path.GetFullPath(path)
-            : System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, path));
+            ? GetFullPath(path)
+            : GetFullPath(Combine(AppContext.BaseDirectory, path));
 
         this.displayPath = path;
         this.Path = fullPath;
@@ -109,24 +113,24 @@ internal readonly record struct FilePath
     private static bool IsFullyQualified(string path)
     {
 #if NET
-        return System.IO.Path.IsPathFullyQualified(path);
+        return IsPathFullyQualified(path);
 #else
         if (!IsWindows())
         {
-            return System.IO.Path.IsPathRooted(path);
+            return IsPathRooted(path);
         }
 
         // Windows: drive-letter + separator (C:\, C:/) or UNC (\\, //).
         if (path.Length >= 3
             && path[1] == ':'
-            && (path[2] == System.IO.Path.DirectorySeparatorChar || path[2] == System.IO.Path.AltDirectorySeparatorChar))
+            && (path[2] == DirectorySeparatorChar || path[2] == AltDirectorySeparatorChar))
         {
             return true;
         }
 
         return path.Length >= 2
-            && (path[0] == System.IO.Path.DirectorySeparatorChar || path[0] == System.IO.Path.AltDirectorySeparatorChar)
-            && (path[1] == System.IO.Path.DirectorySeparatorChar || path[1] == System.IO.Path.AltDirectorySeparatorChar);
+            && (path[0] == DirectorySeparatorChar || path[0] == AltDirectorySeparatorChar)
+            && (path[1] == DirectorySeparatorChar || path[1] == AltDirectorySeparatorChar);
 #endif
     }
 
@@ -134,6 +138,6 @@ internal readonly record struct FilePath
 #if NET
         OperatingSystem.IsWindows();
 #else
-        System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows);
+        RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
 #endif
 }
