@@ -87,10 +87,18 @@ public class SdkSelfObservabilityShutdownEventTests
         var exporterRecord = selfObsRecords[0];
         var processorRecord = selfObsRecords[1];
 
+        // On NETFRAMEWORK/NETSTANDARD2_0, default protocol is HttpProtobuf;
+        // on modern .NET, default is Grpc. The component type string follows.
+#if NETFRAMEWORK || NETSTANDARD2_0
+        var expectedExporterType = "otlp_http_log_exporter";
+#else
+        var expectedExporterType = "otlp_grpc_log_exporter";
+#endif
+
         AssertShutdownEventShape(
             exporterRecord,
-            expectedComponentType: "otlp_grpc_log_exporter",
-            expectedComponentNamePrefix: "otlp_grpc_log_exporter/",
+            expectedComponentType: expectedExporterType,
+            expectedComponentNamePrefix: expectedExporterType + "/",
             expectedResult: "success",
             expectedLevel: LogLevel.Information);
 
