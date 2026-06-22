@@ -56,6 +56,7 @@ public class OtlpExporterOptionsExtensionsTests
     [InlineData("key1=", "key1=")]
     [InlineData("key1=value1%2Ckey2=value2", "key1=value1,key2=value2")]
     [InlineData("key1=value1%2Ckey2=value2%2Ckey3=value3", "key1=value1,key2=value2,key3=value3")]
+    [InlineData("Authorization=Basic Zm9vOmJhcg==", "Authorization=Basic Zm9vOmJhcg==")]
     public void GetHeaders_ValidAndUrlEncodedHeaders_ReturnsCorrectHeaders(string inputOptionHeaders, string expectedNormalizedOptional)
         => VerifyHeaders(inputOptionHeaders, expectedNormalizedOptional);
 
