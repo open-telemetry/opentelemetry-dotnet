@@ -93,26 +93,5 @@ public class PrometheusHttpListenerOptions
         }
     }
 
-    /// <summary>
-    /// Gets or sets the URI (Uniform Resource Identifier) prefixes to use for the http listener.
-    /// Default value: <c>["http://localhost:9464/"]</c>.
-    /// </summary>
-    [Obsolete("UriPrefixes is deprecated. Use Host and Port. This will be removed in a future stable release.")]
-    public IReadOnlyCollection<string> UriPrefixes
-    {
-        get => field ?? ["http://localhost:9464/"];
-        set
-        {
-            Guard.ThrowIfNull(value);
-            if (value.Count == 0)
-            {
-                throw new ArgumentException("Empty list provided.", nameof(value));
-            }
-
-            field = value;
-            this.UriPrefixesExplicitlySet = true;
-        }
-    }
-
-    internal bool UriPrefixesExplicitlySet { get; private set; }
+    internal Action<PrometheusHttpListenerOptions, System.Net.HttpListener>? ConfigureHttpListener { get; set; }
 }

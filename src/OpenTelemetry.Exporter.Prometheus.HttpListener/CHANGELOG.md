@@ -13,6 +13,9 @@ Notes](../../RELEASENOTES.md).
 * The library is now marked as trim and AOT compatible.
   ([#7441](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7441))
 
+* Removed the `PrometheusHttpListenerOptions.UriPrefixes` option.
+  ([#7435](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7435))
+
 * Add `PrometheusHttpListenerOptions.ScopeInfoEnabled` property to enable or
   disable scope labels in Prometheus metrics. Defaults to `true`.
   ([#7436](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7436))

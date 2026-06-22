@@ -18,42 +18,9 @@ public class PrometheusHttpListenerTests
 {
     private const string MeterVersion = "1.0.1";
 
-    private const string UriPrefixesObsoleteMessage = "Tests the obsolete UriPrefixes property.";
-
     private const string MeterName = nameof(PrometheusHttpListenerTests);
 
     private static readonly ConcurrentDictionary<int, int> ConsumedPorts = [];
-
-    [Theory]
-    [InlineData("http://+:9464")]
-    [InlineData("http://*:9464")]
-    [InlineData("http://+:9464/")]
-    [InlineData("http://*:9464/")]
-    [InlineData("https://example.com")]
-    [InlineData("http://127.0.0.1")]
-    [InlineData("http://example.com", "https://example.com", "http://127.0.0.1")]
-    [InlineData("http://example.com")]
-    [Obsolete(UriPrefixesObsoleteMessage)]
-    public void UriPrefixesPositiveTest(params string[] uriPrefixes)
-    {
-        var options = TestPrometheusHttpListenerUriPrefixOptions(uriPrefixes);
-        Assert.Equivalent(uriPrefixes, options.UriPrefixes);
-    }
-
-    [Fact]
-    [Obsolete(UriPrefixesObsoleteMessage)]
-    public void UriPrefixesNull() =>
-        Assert.Throws<ArgumentNullException>(() => TestPrometheusHttpListenerUriPrefixOptions(null!));
-
-    [Fact]
-    [Obsolete(UriPrefixesObsoleteMessage)]
-    public void UriPrefixesEmptyList() =>
-        Assert.Throws<ArgumentException>(() => TestPrometheusHttpListenerUriPrefixOptions([]));
-
-    [Fact]
-    [Obsolete(UriPrefixesObsoleteMessage)]
-    public void UriPrefixesInvalid() =>
-        Assert.Throws<ArgumentException>(() => TestPrometheusHttpListenerUriPrefixOptions(["ftp://example.com"]));
 
     [Fact]
     public async Task RunHttpServerWithDefaultOptions()
@@ -203,31 +170,6 @@ public class PrometheusHttpListenerTests
     }
 
     [Fact]
-    public async Task HostAndPort_Used_When_UriPrefixesNotSet()
-    {
-        using var meter = new Meter(MeterName, MeterVersion);
-
-        var host = "localhost";
-        var port = GetRandomPort();
-
-        using var context = CreateMeterProvider(meter, configureListener: (options) =>
-        {
-            options.Host = host;
-            options.Port = port;
-
-            return port;
-        });
-
-        Assert.Equal(host, context.BaseAddress.Host);
-        Assert.Equal(port, context.Port);
-
-        using var client = new HttpClient { BaseAddress = context.BaseAddress };
-        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative));
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-    }
-
-    [Fact]
     public async Task PortOnly_Set_HostDefaultsToLocalhost()
     {
         using var meter = new Meter(MeterName, MeterVersion);
@@ -271,35 +213,6 @@ public class PrometheusHttpListenerTests
         });
 
         Assert.Equal(9464, context.Port);
-
-        using var client = new HttpClient { BaseAddress = context.BaseAddress };
-        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative));
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-    }
-
-    [Fact]
-    [Obsolete(UriPrefixesObsoleteMessage)]
-    public async Task ExplicitUriPrefixes_TakePrecedence_Over_HostPort()
-    {
-        using var meter = new Meter(MeterName, MeterVersion);
-
-        var port = 0;
-
-        using var context = CreateMeterProvider(meter, configureListener: (options) =>
-        {
-            options.Host = "prometheus.local";
-            options.Port = 9999;
-
-            port = GetRandomPort();
-
-            options.UriPrefixes = [$"http://localhost:{port}"];
-
-            return port;
-        });
-
-        Assert.Equal(port, context.Port);
-        Assert.Equal($"http://localhost:{port}/", context.BaseAddress.ToString());
 
         using var client = new HttpClient { BaseAddress = context.BaseAddress };
         using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative));
@@ -754,22 +667,6 @@ public class PrometheusHttpListenerTests
             exporter.Dispose();
             throw;
         }
-    }
-
-    [Obsolete("Supports tests for the obsolete UriPrefixes property.")]
-    private static PrometheusHttpListenerOptions TestPrometheusHttpListenerUriPrefixOptions(string[] uriPrefixes)
-    {
-        var options = new PrometheusHttpListenerOptions
-        {
-            UriPrefixes = uriPrefixes,
-        };
-
-        using var exporter = new PrometheusExporter(new());
-        using var listener = new PrometheusHttpListener(
-            exporter,
-            options);
-
-        return options;
     }
 
     internal sealed class MeterProviderTestContext(MeterProvider provider, int port) : IDisposable
