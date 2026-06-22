@@ -21,7 +21,7 @@ public sealed class OtlpExporterOptionsTests : IDisposable
     {
         var options = new OtlpExporterOptions();
 
-#if NETFRAMEWORK || NETSTANDARD2_0
+#if NETFRAMEWORK
         Assert.Equal(new Uri(OtlpExporterOptions.DefaultHttpEndpoint), options.Endpoint);
 #else
         Assert.Equal(new Uri(OtlpExporterOptions.DefaultGrpcEndpoint), options.Endpoint);
@@ -115,7 +115,7 @@ public sealed class OtlpExporterOptionsTests : IDisposable
             "TimeoutWithInvalidValue",
             "CompressionWithInvalidValue");
 
-#if NETFRAMEWORK || NETSTANDARD2_0
+#if NETFRAMEWORK
         Assert.Equal(new Uri(OtlpExporterOptions.DefaultHttpEndpoint), options.Endpoint);
 #else
         Assert.Equal(new Uri(OtlpExporterOptions.DefaultGrpcEndpoint), options.Endpoint);
@@ -206,7 +206,7 @@ public sealed class OtlpExporterOptionsTests : IDisposable
     {
         var options = new OtlpExporterOptions();
 
-#if NETFRAMEWORK || NETSTANDARD2_0
+#if NETFRAMEWORK
         Assert.Equal(new Uri(OtlpExporterOptions.DefaultHttpEndpoint), options.Endpoint);
 #else
         Assert.Equal(new Uri(OtlpExporterOptions.DefaultGrpcEndpoint), options.Endpoint);

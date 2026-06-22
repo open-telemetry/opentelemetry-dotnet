@@ -35,7 +35,7 @@ public sealed class UseOtlpExporterExtensionTests : IDisposable
 
         var exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterBuilderOptions>>().CurrentValue;
 
-#if NETFRAMEWORK || NETSTANDARD2_0
+#if NETFRAMEWORK
         Assert.Equal(new Uri(OtlpExporterOptions.DefaultHttpEndpoint), exporterOptions.DefaultOptions.Endpoint);
 #else
         Assert.Equal(new Uri(OtlpExporterOptions.DefaultGrpcEndpoint), exporterOptions.DefaultOptions.Endpoint);
@@ -381,7 +381,5 @@ public sealed class UseOtlpExporterExtensionTests : IDisposable
         Assert.Equal(1002, activityProcessorOptions.BatchExportProcessorOptions.ScheduledDelayMilliseconds);
     }
 
-    private sealed class TestLogRecordProcessor : BaseProcessor<LogRecord>
-    {
-    }
+    private sealed class TestLogRecordProcessor : BaseProcessor<LogRecord>;
 }
