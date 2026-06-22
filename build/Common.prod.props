@@ -12,7 +12,7 @@
 
   <PropertyGroup Label="TrimAndAotCompatibility" Condition="'$(IsAotCompatible)' == '' AND $([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">
     <IsAotCompatible>true</IsAotCompatible>
-    <VerifyReferenceAotCompatibility>true</VerifyReferenceAotCompatibility>
+    <VerifyReferenceAotCompatibility Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net10.0'))">true</VerifyReferenceAotCompatibility>
   </PropertyGroup>
 
   <PropertyGroup Label="PackageProperties">
