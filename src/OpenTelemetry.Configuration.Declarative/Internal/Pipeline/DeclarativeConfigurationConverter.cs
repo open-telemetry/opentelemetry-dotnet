@@ -4,6 +4,9 @@
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
+#if NET
+using System.Collections.Frozen;
+#endif
 
 namespace OpenTelemetry.Configuration.Declarative;
 
@@ -27,6 +30,19 @@ internal static partial class DeclarativeConfigurationConverter
 
     // OTel declarative config spec type field values. Scalar types project to a flat string value;
     // array types cannot be represented in OTEL_RESOURCE_ATTRIBUTES and must be skipped.
+#if NET
+    private static readonly FrozenSet<string> KnownScalarTypes =
+        new HashSet<string>(StringComparer.Ordinal)
+        {
+            "string", "bool", "int", "double",
+        }.ToFrozenSet(StringComparer.Ordinal);
+
+    private static readonly FrozenSet<string> KnownArrayTypes =
+        new HashSet<string>(StringComparer.Ordinal)
+        {
+            "string_array", "bool_array", "int_array", "double_array",
+        }.ToFrozenSet(StringComparer.Ordinal);
+#else
     private static readonly HashSet<string> KnownScalarTypes = new(StringComparer.Ordinal)
     {
         "string", "bool", "int", "double",
@@ -36,6 +52,7 @@ internal static partial class DeclarativeConfigurationConverter
     {
         "string_array", "bool_array", "int_array", "double_array",
     };
+#endif
 
 #if !NET
     private static readonly Regex AttributeNamePatternInstance = new(
@@ -190,12 +207,12 @@ internal static partial class DeclarativeConfigurationConverter
         {
             var filtered = FilterAttributesList(list, attributeKeys);
             result = filtered.Length > 0
-                ? $"{filtered},{string.Join(",", pairs)}"
-                : string.Join(",", pairs);
+                ? $"{filtered},{JoinWithComma(pairs)}"
+                : JoinWithComma(pairs);
         }
         else if (pairs.Count > 0)
         {
-            result = string.Join(",", pairs);
+            result = JoinWithComma(pairs);
         }
         else
         {
@@ -212,15 +229,13 @@ internal static partial class DeclarativeConfigurationConverter
     // https://opentelemetry.io/docs/specs/otel/resource/sdk/#specifying-resource-information-via-an-environment-variable
     // Encoding order: '%' first to prevent double-encoding, then structural chars ',' and '=',
     // then '+' because the .NET SDK reads the env var via WebUtility.UrlDecode which maps '+' to space.
-    private static string EncodeAttributeValue(string value)
-    {
-        var sb = new StringBuilder(value);
-        sb.Replace("%", "%25");
-        sb.Replace(",", "%2C");
-        sb.Replace("=", "%3D");
-        sb.Replace("+", "%2B");
-        return sb.ToString();
-    }
+    private static string EncodeAttributeValue(string value) =>
+        new StringBuilder(value)
+            .Replace("%", "%25")
+            .Replace(",", "%2C")
+            .Replace("=", "%3D")
+            .Replace("+", "%2B")
+            .ToString();
 
     // Drop attributes_list keys shadowed by structured attributes. Naive comma split (matches OtelEnvResourceDetector).
     private static string FilterAttributesList(string list, HashSet<string> attributeKeys)
@@ -246,7 +261,7 @@ internal static partial class DeclarativeConfigurationConverter
             }
         }
 
-        return string.Join(",", filtered);
+        return JoinWithComma(filtered);
     }
 
     // Type field is informational: mismatch logs a warning but does not skip the entry.
@@ -264,5 +279,11 @@ internal static partial class DeclarativeConfigurationConverter
     private static partial Regex GetAttributeNamePattern();
 #else
     private static Regex GetAttributeNamePattern() => AttributeNamePatternInstance;
+#endif
+
+#if NETFRAMEWORK || NETSTANDARD2_0
+    private static string JoinWithComma(List<string> values) => string.Join(",", values);
+#else
+    private static string JoinWithComma(List<string> values) => string.Join(',', values);
 #endif
 }

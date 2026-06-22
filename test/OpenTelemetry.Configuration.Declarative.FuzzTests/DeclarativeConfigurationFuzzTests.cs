@@ -41,8 +41,6 @@ public class DeclarativeConfigurationFuzzTests
                     {
                         // Expected: malformed YAML, unsupported file_format, invalid substitution, etc.
                     }
-
-                    return true;
                 }
                 finally
                 {
