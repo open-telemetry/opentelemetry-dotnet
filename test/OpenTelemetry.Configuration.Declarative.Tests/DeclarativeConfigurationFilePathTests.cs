@@ -114,7 +114,7 @@ public sealed class DeclarativeConfigurationFilePathTests
         var fp = new FilePath(relativeName);
 
         Assert.Equal(expectedAbsolutePath, fp.Path);
-        Assert.Equal(relativeName, fp.ToString());
+        Assert.Equal(relativeName, fp.DisplayPath);
     }
 
     [Fact]

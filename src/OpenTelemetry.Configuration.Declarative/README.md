@@ -32,7 +32,7 @@ builder.Services.AddOpenTelemetry()
     .WithTracing(b => b.AddSource("MyApp.*").AddConsoleExporter());
 ```
 
-**On classic `HostBuilder`**, add the source inside `ConfigureAppConfiguration`:
+**With `HostBuilder`**, add the source inside `ConfigureAppConfiguration`:
 
 ```csharp
 hostBuilder.ConfigureAppConfiguration(b =>
@@ -60,12 +60,12 @@ services.AddOpenTelemetry()
 
 `UseDeclarativeConfiguration()` works best on modern hosts
 (`WebApplicationBuilder`, `HostApplicationBuilder`) where `IConfiguration` is
-already registered before `AddOpenTelemetry()` is called. On classic
-`HostBuilder`, use the `ConfigureAppConfiguration` approach instead so the YAML
-source is added before DI configuration is built. Calling
-`UseDeclarativeConfiguration()` twice on the same `IServiceCollection` is a
-no-op - the first file path wins and a warning is emitted via EventSource.
-Calling it with a different path does not replace the first registration.
+already registered before `AddOpenTelemetry()` is called. With `HostBuilder`,
+use the `ConfigureAppConfiguration` approach instead so the YAML source is added
+before DI configuration is built. Calling `UseDeclarativeConfiguration()` twice
+on the same `IServiceCollection` is a no-op - the first file path wins and a
+warning is emitted via EventSource. Calling it with a different path does not
+replace the first registration.
 
 ### 3. Write a YAML config file
 
@@ -88,11 +88,11 @@ resource:
 | `resource.attributes` | `OTEL_RESOURCE_ATTRIBUTES` - resource attributes on all signals |
 | `resource.attributes_list` | `OTEL_RESOURCE_ATTRIBUTES` - resource attributes in pre-formatted `key=value` list form |
 
-`resource.attributes_list` is treated as a pre-percent-encoded
-`OTEL_RESOURCE_ATTRIBUTES` string and passed through without modification. In
-particular, literal `+` in a value must be written as `%2B`, otherwise the SDK
-will decode it as a space character. Use `resource.attributes` when you need the
-encoding to be handled automatically.
+`resource.attributes_list` is treated as containing a `OTEL_RESOURCE_ATTRIBUTES`
+string that has not been percent-encoded and is passed through without
+modification. In particular, literal `+` in a value must be written as `%2B`,
+otherwise the SDK will decode it as a space character. Use `resource.attributes`
+when you need the encoding to be handled automatically.
 
 All other top-level sections (e.g. `tracer_provider`, `propagator`) are logged
 and ignored. You can track this issue for missing features:
@@ -132,14 +132,14 @@ standard `IConfiguration` ordering).
 ## Known limitations
 
 - File watching is not supported; the YAML file is read once at start-up.
-- `resource.attributes` values are percent-encoded per the OTel spec. Duplicate
-  attribute names: first occurrence wins.
+- `resource.attributes` values are percent-encoded per the OTel specification.
+  For duplicate attribute names the first occurrence wins.
 - Unknown YAML sections are logged and ignored rather than causing an error.
 - Plain (unquoted) YAML scalars that resolve to `null`, `Null`, `NULL`, or `~`
   after environment variable substitution are treated as YAML null and the
   setting is silently ignored. To preserve the string `"null"` as a value, use a
   quoted scalar: `value: "null"`. This is consistent with YAML 1.2 Core Schema
-  semantics applied post-substitution as required by the OTel spec.
+  semantics applied post-substitution as required by the OTel specification.
 
 ## Further reading
 
