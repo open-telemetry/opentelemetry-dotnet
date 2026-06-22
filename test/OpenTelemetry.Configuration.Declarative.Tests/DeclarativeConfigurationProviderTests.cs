@@ -109,7 +109,7 @@ public sealed class DeclarativeConfigurationProviderTests
     }
 
     [Fact]
-    public void Load_FileFormat04_DoesNotThrow()
+    public void Load_FileFormat04_ThrowsDeclarativeConfigurationException()
     {
         const string yaml = """
             file_format: "0.4"
@@ -118,7 +118,7 @@ public sealed class DeclarativeConfigurationProviderTests
         using var yamlFile = DeclarativeYamlTestFile.CreateYamlFile(yaml);
         var provider = new DeclarativeConfigurationProvider(new FilePath(yamlFile.Path));
 
-        provider.Load(); // must not throw
+        Assert.Throws<DeclarativeConfigurationException>(() => provider.Load());
     }
 
     [Fact]

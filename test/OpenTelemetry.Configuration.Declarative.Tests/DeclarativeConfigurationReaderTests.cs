@@ -472,7 +472,8 @@ public sealed class DeclarativeConfigurationReaderTests
 
         var ex = Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
         Assert.Contains("file_format", ex.Message, StringComparison.Ordinal);
-        Assert.Contains("1.0", ex.Message, StringComparison.Ordinal);
+        Assert.Contains($"{FileFormatValidator.SupportedMajorVersion}.0", ex.Message, StringComparison.Ordinal);
+        Assert.Contains($"{FileFormatValidator.SupportedMajorVersion}.{FileFormatValidator.MaxSupportedMinorVersion}", ex.Message, StringComparison.Ordinal);
     }
 
     // Round-trip tests: verify that values survive the full encode-then-decode path used by

@@ -35,7 +35,8 @@ public class EnvironmentSubstitutionFuzzTests
                     _ = EnvironmentSubstitution.Substitute(value, _ => null);
                 }
                 catch (DeclarativeConfigurationException)
-                { }
+                {
+                }
             });
 
     [Property(MaxTest = MaxTests)]

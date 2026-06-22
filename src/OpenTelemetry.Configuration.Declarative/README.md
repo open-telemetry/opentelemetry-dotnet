@@ -11,8 +11,9 @@ for the OpenTelemetry .NET SDK.
 
 Declarative configuration allows you to configure the OpenTelemetry SDK using a
 YAML file instead of (or in addition to) environment variables and code-based
-setup. This package implements a subset of the stable OTel spec v1.0
-(`file_format: "1.0"`).
+setup. This package implements a subset of the stable OTel declarative
+configuration specification. It accepts any `file_format: "1.x"` document and
+has been built against schema v1.1.
 
 ## Getting started
 
@@ -70,7 +71,7 @@ replace the first registration.
 ### 3. Write a YAML config file
 
 ```yaml
-file_format: "1.0"
+file_format: "1.1"
 
 resource:
   attributes:
