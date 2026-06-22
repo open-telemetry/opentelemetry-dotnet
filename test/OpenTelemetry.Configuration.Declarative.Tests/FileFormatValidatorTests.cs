@@ -7,21 +7,38 @@ namespace OpenTelemetry.Configuration.Declarative.Tests;
 
 public sealed class FileFormatValidatorTests
 {
-    [Fact]
-    public void Validate_ExactExpectedVersion_AcceptsWithNoWarning()
+    // All 1.x versions at or below MaxSupportedMinorVersion must be accepted without warning.
+    [Theory]
+    [InlineData("1.0")]
+    [InlineData("1.0-rc.1")]
+    [InlineData("1.0-rc.99")]
+    [InlineData("1.1")]
+    [InlineData("1.1-rc.1")]
+    public void Validate_KnownVersions_AcceptWithNoWarning(string format)
     {
         var warnings = new List<string>();
 
-        FileFormatValidator.Validate("1.0", warnings.Add);
+        FileFormatValidator.Validate(format, warnings.Add);
 
         Assert.Empty(warnings);
     }
 
+    [Fact]
+    public void Validate_VersionWithWhitespace_TrimsAndAcceptsWithNoWarning()
+    {
+        var warnings = new List<string>();
+
+        FileFormatValidator.Validate($" {FileFormatValidator.SupportedMajorVersion}.{FileFormatValidator.MaxSupportedMinorVersion} ", warnings.Add);
+
+        Assert.Empty(warnings);
+    }
+
+    // Minor versions newer than MaxSupportedMinorVersion are accepted but warn (some features may not take effect).
     [Theory]
-    [InlineData("0.4")]
-    [InlineData("1.0-rc.1")]
-    [InlineData("1.0-rc.99")]
-    public void Validate_SupportedButInexactVersion_AcceptsWithWarning(string format)
+    [InlineData("1.2")]
+    [InlineData("1.2-rc.1")]
+    [InlineData("1.99")]
+    public void Validate_FutureMinorVersion_AcceptsWithWarning(string format)
     {
         var warnings = new List<string>();
 
@@ -29,17 +46,7 @@ public sealed class FileFormatValidatorTests
 
         var warning = Assert.Single(warnings);
         Assert.Contains(format, warning, StringComparison.Ordinal);
-        Assert.Contains(FileFormatValidator.ExpectedFileFormat, warning, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void Validate_ExpectedVersionWithWhitespace_TrimsAndAcceptsWithNoWarning()
-    {
-        var warnings = new List<string>();
-
-        FileFormatValidator.Validate(" 1.0 ", warnings.Add);
-
-        Assert.Empty(warnings);
+        Assert.Contains($"{FileFormatValidator.SupportedMajorVersion}.{FileFormatValidator.MaxSupportedMinorVersion}", warning, StringComparison.Ordinal);
     }
 
     [Theory]
@@ -52,24 +59,37 @@ public sealed class FileFormatValidatorTests
             () => FileFormatValidator.Validate(format, _ => { }));
 
         Assert.Contains("file_format", ex.Message, StringComparison.Ordinal);
-        Assert.Contains("1.0", ex.Message, StringComparison.Ordinal);
+        Assert.Contains($"{FileFormatValidator.SupportedMajorVersion}.{FileFormatValidator.MaxSupportedMinorVersion}", ex.Message, StringComparison.Ordinal);
     }
 
+    // Structurally invalid strings (cannot be parsed as major.minor).
     [Theory]
-    [InlineData("2.0")]
-    [InlineData("0.3")]
     [InlineData("banana")]
     [InlineData("1")]
     [InlineData("1.0.0")]
     [InlineData("1.0-rc.")]
     [InlineData("1.0-rc.-1")]
-    public void Validate_UnsupportedVersion_ThrowsWithVersionInMessage(string format)
+    public void Validate_InvalidFormatString_ThrowsWithInputInMessage(string format)
     {
         var ex = Assert.Throws<DeclarativeConfigurationException>(
             () => FileFormatValidator.Validate(format, _ => { }));
 
         Assert.Contains(format, ex.Message, StringComparison.Ordinal);
-        Assert.Contains("Supported formats", ex.Message, StringComparison.Ordinal);
+    }
+
+    // Structurally valid but unsupported major version.
+    [Theory]
+    [InlineData("0.3")]
+    [InlineData("0.4")]
+    [InlineData("2.0")]
+    [InlineData("3.5")]
+    public void Validate_UnsupportedMajorVersion_ThrowsWithInputInMessage(string format)
+    {
+        var ex = Assert.Throws<DeclarativeConfigurationException>(
+            () => FileFormatValidator.Validate(format, _ => { }));
+
+        Assert.Contains(format, ex.Message, StringComparison.Ordinal);
+        Assert.Contains("major version", ex.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -85,5 +105,5 @@ public sealed class FileFormatValidatorTests
 
     [Fact]
     public void Validate_NullWarn_ThrowsArgumentNullException() =>
-        Assert.Throws<ArgumentNullException>(() => FileFormatValidator.Validate("1.0", null!));
+        Assert.Throws<ArgumentNullException>(() => FileFormatValidator.Validate("1.1", null!));
 }

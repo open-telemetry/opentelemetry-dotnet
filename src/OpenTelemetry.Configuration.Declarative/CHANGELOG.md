@@ -8,6 +8,6 @@ Notes](../../RELEASENOTES.md).
 
 * Initial implementation of the `OpenTelemetry.Configuration.Declarative` package.
   Adds declarative configuration (YAML) support for the OpenTelemetry .NET SDK,
-  implementing `file_format: "1.0"` with support for `disabled` and
-  `resource.attributes` / `resource.attributes_list`.
+  accepting any `file_format: "1.x"` document (built against schema v1.1), with
+  support for `disabled` and `resource.attributes` / `resource.attributes_list`.
   ([#7413](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7413))
