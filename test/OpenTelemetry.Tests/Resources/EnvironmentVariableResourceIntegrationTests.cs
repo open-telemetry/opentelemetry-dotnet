@@ -1,13 +1,10 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
-using Xunit;
 
 namespace OpenTelemetry.Resources.Tests;
 
-[Collection(EnvVarsCollectionDefinition.Name)]
 public sealed class EnvironmentVariableResourceIntegrationTests
 {
     [Fact]
@@ -18,8 +15,9 @@ public sealed class EnvironmentVariableResourceIntegrationTests
         // spec variables through ResourceBuilder.CreateDefault and reads the live
         // Resource off the built TracerProvider. Catches any regression that breaks
         // the pipeline between Environment and the SDK's exported resource.
-        using (new EnvironmentVariableScope("OTEL_SERVICE_NAME", "e2e-env-var-service"))
-        using (new EnvironmentVariableScope("OTEL_RESOURCE_ATTRIBUTES", "deployment.environment=test,region=eu-west"))
+        using (EnvironmentVariableScope.Create([
+            ("OTEL_SERVICE_NAME", "e2e-env-var-service"),
+            ("OTEL_RESOURCE_ATTRIBUTES", "deployment.environment=test,region=eu-west")]))
         {
             using var tracerProvider = Sdk.CreateTracerProviderBuilder().Build();
 
