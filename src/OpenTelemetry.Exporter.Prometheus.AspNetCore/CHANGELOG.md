@@ -10,6 +10,9 @@ Notes](../../RELEASENOTES.md).
 * Added a verbose-level diagnostic event for ignored metrics.
   ([#7429](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7429))
 
+* The library is now marked as trim and AOT compatible.
+  ([#7441](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7441))
+
 ## 1.16.0-beta.1
 
 Released 2026-Jun-10
