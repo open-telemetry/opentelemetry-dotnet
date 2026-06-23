@@ -713,7 +713,7 @@ public class PrometheusProtocolTests
     }
 
     [Fact]
-    public void GetContentType_PrometheusTextV0_IncludesCharset()
+    public void GetContentType_PrometheusTextV0_IsCorrect()
     {
         var protocol = new PrometheusProtocol(
             PrometheusProtocol.PrometheusTextMediaType,
@@ -725,7 +725,7 @@ public class PrometheusProtocolTests
     }
 
     [Fact]
-    public void GetContentType_PrometheusTextV1_IncludesCharset()
+    public void GetContentType_PrometheusTextV1_IsCorrect()
     {
         var protocol = new PrometheusProtocol(
             PrometheusProtocol.PrometheusTextMediaType,
@@ -737,7 +737,7 @@ public class PrometheusProtocolTests
     }
 
     [Fact]
-    public void GetContentType_OpenMetricsV0_IncludesCharset()
+    public void GetContentType_OpenMetricsV0_IsCorrect()
     {
         var protocol = new PrometheusProtocol(
             PrometheusProtocol.OpenMetricsMediaType,
@@ -749,7 +749,7 @@ public class PrometheusProtocolTests
     }
 
     [Fact]
-    public void GetContentType_OpenMetricsV1_IncludesCharset()
+    public void GetContentType_OpenMetricsV1_IsCorrect()
     {
         var protocol = new PrometheusProtocol(
             PrometheusProtocol.OpenMetricsMediaType,
@@ -761,7 +761,7 @@ public class PrometheusProtocolTests
     }
 
     [Fact]
-    public void GetContentType_FallbackProtocol_IncludesCharset() =>
+    public void GetContentType_FallbackProtocol_IsCorrect() =>
         Assert.Equal("text/plain; version=0.0.4; charset=utf-8", PrometheusProtocol.GetContentType(PrometheusProtocol.Fallback));
 
     [Fact]
