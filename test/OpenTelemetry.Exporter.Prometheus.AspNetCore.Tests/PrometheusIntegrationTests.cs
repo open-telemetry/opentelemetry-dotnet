@@ -109,7 +109,7 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
         Assert.Equal<string>(["gzip"], response.Content.Headers.ContentEncoding);
         Assert.Equal(["Accept-Encoding"], response.Headers.Vary);
         Assert.NotNull(response.Content.Headers.ContentType);
-        Assert.Equal("text/plain; version=0.0.4; charset=utf-8", response.Content.Headers.ContentType.ToString());
+        Assert.Equal("text/plain; version=0.0.4", response.Content.Headers.ContentType.ToString());
 
         using var compressed = await response.Content.ReadAsStreamAsync();
         using var decompressed = new GZipStream(compressed, CompressionMode.Decompress);

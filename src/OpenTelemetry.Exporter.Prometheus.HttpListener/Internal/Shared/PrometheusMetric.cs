@@ -28,9 +28,16 @@ internal sealed class PrometheusMetric
             // [OpenMetrics UNIT metadata](https://github.com/prometheus/OpenMetrics/blob/v1.0.0/specification/OpenMetrics.md#metricfamily)
             // and as a suffix to the metric name. The unit suffix comes before any type-specific suffixes.
             // https://github.com/open-telemetry/opentelemetry-specification/blob/3dfb383fe583e3b74a2365c5a1d90256b273ee76/specification/compatibility/prometheus_and_openmetrics.md#metric-metadata-1
+            // Each name is checked independently: openMetricsName has the _total counter suffix stripped
+            // (by RemoveOpenMetricsCounterNameSuffix above), so it may already end with the unit even
+            // when sanitizedName (which still carries _total) does not.
             if (!sanitizedName.EndsWith(sanitizedUnit, StringComparison.Ordinal))
             {
                 sanitizedName += $"_{sanitizedUnit}";
+            }
+
+            if (!openMetricsName.EndsWith(sanitizedUnit, StringComparison.Ordinal))
+            {
                 openMetricsName += $"_{sanitizedUnit}";
             }
         }
@@ -189,6 +196,7 @@ internal sealed class PrometheusMetric
                 sb ??= CreateStringBuilder(metricName);
                 sb.Append('_');
                 lastCharUnderscore = true;
+                continue;
             }
 
             if (!char.IsAsciiLetterOrDigit(c) && c != ':')

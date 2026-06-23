@@ -547,7 +547,7 @@ public sealed class PrometheusExporterMiddlewareTests
         contentType ??=
             requestOpenMetrics ?
             "application/openmetrics-text; version=0.0.1; charset=utf-8" :
-            "text/plain; version=0.0.4; charset=utf-8";
+            "text/plain; version=0.0.4";
 
         Assert.Equal(contentType, response.Content.Headers.ContentType!.ToString());
         Assert.Equal(["Accept-Encoding"], response.Headers.Vary);

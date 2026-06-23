@@ -164,8 +164,16 @@ public sealed class PrometheusMetricTests
         => AssertOpenMetricsName("cpu_sp__d_hertz", string.Empty, PrometheusType.Gauge, false, "cpu_sp_d_hertz");
 
     [Fact]
-    public void OpenMetricsName_PreserveLeadingNumber()
-        => AssertOpenMetricsName("2_metric_name", "By", PrometheusType.Gauge, false, "_2_metric_name_bytes");
+    public void OpenMetricsName_ReplacesLeadingNumber()
+        => AssertOpenMetricsName("2_metric_name", "By", PrometheusType.Gauge, false, "_metric_name_bytes");
+
+    [Fact]
+    public void OpenMetricsName_CounterWithUnitPrecedingTotal_UnitNotDuplicated()
+        => AssertOpenMetricsName("db_bytes_total", "By", PrometheusType.Counter, false, "db_bytes_total");
+
+    [Fact]
+    public void OpenMetricsMetadataName_CounterWithUnitPrecedingTotal_UnitNotDuplicated()
+        => AssertOpenMetricsMetadataName("db_bytes_total", "By", PrometheusType.Counter, false, "db_bytes");
 
     [Fact]
     public void OpenMetricsName_UnitStartingWithNumber_DoesNotAddExtraSeparator()

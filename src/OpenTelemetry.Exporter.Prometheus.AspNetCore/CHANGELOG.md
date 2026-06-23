@@ -13,6 +13,15 @@ Notes](../../RELEASENOTES.md).
 * The library is now marked as trim and AOT compatible.
   ([#7441](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7441))
 
+* Fix double unit suffixes in metric names when using OpenMetrics.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
+* Fix incorrect handling of leading digits in metric names for OpenMetrics.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
+* Fix incorrect `Content-Type` for PrometheusText exposition formats.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.16.0-beta.1
 
 Released 2026-Jun-10
