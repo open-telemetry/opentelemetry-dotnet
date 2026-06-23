@@ -300,6 +300,7 @@ jobs:
     - automation
     - build-pack
     - publish
+    - validate
 
     if: needs.automation.outputs.enabled && github.event_name == 'push'
 
