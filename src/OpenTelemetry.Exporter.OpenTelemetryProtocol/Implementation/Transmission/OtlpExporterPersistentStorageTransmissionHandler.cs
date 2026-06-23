@@ -51,7 +51,11 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler : OtlpExp
     {
         Debug.Assert(contentLength >= 0 && contentLength <= request.Length, "contentLength was invalid");
 
-        if (!RetryHelper.ShouldRetryRequest(response, OtlpRetry.InitialBackoffMilliseconds, out _))
+        // Note: The deadline is intentionally ignored here. The deadline governs
+        // the in-memory retry loop; for persistent storage the request is saved to
+        // disk and retried later on a background thread, so an exceeded deadline
+        // must not cause otherwise-retryable data to be dropped.
+        if (!RetryHelper.ShouldRetryRequest(response))
         {
             return false;
         }
@@ -128,7 +132,13 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler : OtlpExp
                     if (blob.TryLease((int)this.TimeoutMilliseconds) && blob.TryRead(out var data))
                     {
                         var deadlineUtc = DateTime.UtcNow.AddMilliseconds(this.TimeoutMilliseconds);
-                        if (this.TryRetryRequest(data, data.Length, deadlineUtc, out var response) || !RetryHelper.ShouldRetryRequest(response, OtlpRetry.InitialBackoffMilliseconds, out var retryInfo))
+
+                        // Note: The deadline is intentionally ignored when deciding whether to keep
+                        // the blob. A retry attempt that exhausts the deadline should not cause the
+                        // stored data to be deleted if the failure is otherwise retryable; it should
+                        // remain on disk to be retried again later.
+                        if (this.TryRetryRequest(data, data.Length, deadlineUtc, out var response) ||
+                            !RetryHelper.ShouldRetryRequest(response))
                         {
                             blob.TryDelete();
                         }

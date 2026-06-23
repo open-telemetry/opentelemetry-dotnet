@@ -59,14 +59,11 @@ internal static class OtlpRetry
         }
         else
         {
-            if (ShouldHandleHttpRequestException(response.Exception))
+            var delay = TimeSpan.FromMilliseconds(GetRandomNumber(0, retryDelayInMilliSeconds));
+            if (!WouldExceedDeadline(response.DeadlineUtc, delay))
             {
-                var delay = TimeSpan.FromMilliseconds(GetRandomNumber(0, retryDelayInMilliSeconds));
-                if (!WouldExceedDeadline(response.DeadlineUtc, delay))
-                {
-                    retryResult = new RetryResult(false, delay, CalculateNextRetryDelay(retryDelayInMilliSeconds));
-                    return true;
-                }
+                retryResult = new RetryResult(false, delay, CalculateNextRetryDelay(retryDelayInMilliSeconds));
+                return true;
             }
 
             retryResult = default;
@@ -74,9 +71,44 @@ internal static class OtlpRetry
         }
     }
 
-#pragma warning disable IDE0060 // Remove unused parameter
-    public static bool ShouldHandleHttpRequestException(Exception? exception) => true; // TODO: Handle specific exceptions.
-#pragma warning restore IDE0060 // Remove unused parameter
+    /// <summary>
+    /// Determines whether a failed gRPC export response represents a transient
+    /// failure that is eligible to be retried, ignoring any deadline.
+    /// </summary>
+    /// <param name="response">The <see cref="ExportClientGrpcResponse" /> to check.</param>
+    /// <returns>
+    /// <returns>
+    /// <see langword="true" /> if the failure is retryable; otherwise, <see langword="false" />.
+    /// </returns>
+    public static bool IsRetryable(ExportClientGrpcResponse response)
+    {
+        if (response.Status == null)
+        {
+            return false;
+        }
+
+        var throttleDelay = GrpcStatusDeserializer.TryGetGrpcRetryDelay(response.GrpcStatusDetailsHeader);
+        return IsGrpcStatusCodeRetryable(response.Status.Value.StatusCode, throttleDelay.HasValue);
+    }
+
+    /// <summary>
+    /// Determines whether a failed HTTP export response represents a transient
+    /// failure that is eligible to be retried, ignoring any deadline.
+    /// </summary>
+    /// <param name="response">The <see cref="ExportClientHttpResponse" /> to check.</param>
+    /// <returns>
+    /// <see langword="true" /> if the failure is retryable; otherwise, <see langword="false" />.
+    /// </returns>
+    public static bool IsRetryable(ExportClientHttpResponse response)
+    {
+        if (response.StatusCode is { } statusCode)
+        {
+            var throttleDelay = TryGetHttpRetryDelay(statusCode, response.Headers);
+            return IsHttpStatusCodeRetryable(statusCode, throttleDelay.HasValue);
+        }
+
+        return true;
+    }
 
     public static bool TryGetGrpcRetryResult(ExportClientGrpcResponse response, int retryDelayMilliseconds, out RetryResult retryResult)
     {
