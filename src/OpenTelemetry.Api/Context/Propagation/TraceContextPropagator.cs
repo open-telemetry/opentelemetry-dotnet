@@ -395,7 +395,7 @@ public class TraceContextPropagator : TextMapPropagator
                 else
                 {
                     listMember = tracestate.Trim();
-                    tracestate = tracestate.Slice(tracestate.Length);
+                    tracestate = [];
                 }
 
                 // https://github.com/w3c/trace-context/blob/master/spec/20-http_request_header_format.md#tracestate-header-field-values
