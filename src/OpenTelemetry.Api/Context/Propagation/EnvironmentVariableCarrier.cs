@@ -17,7 +17,7 @@ namespace OpenTelemetry.Context.Propagation;
 /// normalization follows the OpenTelemetry environment carrier specification by
 /// uppercasing ASCII letters, replacing non-ASCII letters, non-digits, and
 /// non-underscore characters with underscores, prefixing an underscore when
-/// a normalized key would otherwise start with a digit, and replacing an empty
+/// a key would otherwise start with a digit, and replacing an empty
 /// key with a single underscore.
 /// </remarks>
 [System.Diagnostics.CodeAnalysis.Experimental(DiagnosticDefinitions.EnvironmentVariableContextPropagationExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
