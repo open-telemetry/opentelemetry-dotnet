@@ -270,7 +270,8 @@ try {
             "--"
         ) + $additionalArgs
 
-        $p = Start-Process -FilePath "dotnet" -ArgumentList $dotnetArgs -NoNewWindow -Wait -PassThru
+        $p = Start-Process -FilePath "dotnet" -ArgumentList $dotnetArgs -NoNewWindow -PassThru
+        $p.WaitForExit()
 
         if ($p.ExitCode -ne 0) {
             throw "Benchmarks failed with exit code $($p.ExitCode)."

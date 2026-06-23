@@ -18,12 +18,18 @@ using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 
-namespace OpenTelemetry.Exporter.Prometheus;
+namespace OpenTelemetry.Exporter.Prometheus.Serialization;
 
 /// <summary>
-/// Basic PrometheusSerializer which has no OpenTelemetry dependency.
+/// Base class for serializing metrics in one of the Prometheus exposition text formats.
 /// </summary>
-internal static partial class PrometheusSerializer
+/// <remarks>
+/// This type carries all of the format-independent serialization logic. The points where the
+/// Prometheus text format and the OpenMetrics format diverge are expressed as abstract members
+/// so that the concrete format is selected once (via <see cref="GetSerializer"/>) and the rest
+/// of the serialization uses dynamic dispatch.
+/// </remarks>
+internal abstract class TextFormatSerializer
 {
     // Matches the 100 MiB cap applied to the main scrape response buffer in
     // PrometheusCollectionManager. The serialized tags are ultimately copied into
@@ -32,13 +38,13 @@ internal static partial class PrometheusSerializer
     // from forcing unbounded scratch-buffer allocations during a scrape.
     internal const int MaxSerializedTagsBufferSize = 100 * 1024 * 1024;
 
-#pragma warning disable SA1310 // Field name should not contain an underscore
-    private const byte ASCII_QUOTATION_MARK = 0x22; // '"'
-    private const byte ASCII_REVERSE_SOLIDUS = 0x5C; // '\\'
-    private const byte ASCII_LINEFEED = 0x0A; // `\n`
-#pragma warning restore SA1310 // Field name should not contain an underscore
+    protected const byte AsciiQuotationMark = 0x22; // '"'
+    protected const byte AsciiReverseSolidus = 0x5C; // '\\'
+    protected const byte AsciiLineFeed = 0x0A; // `\n`
 
-    private const int MaxExemplarLabelSetCharacters = 128;
+    protected const int MaxExemplarLabelSetCharacters = 128;
+
+    protected static readonly string[] ReservedHistogramLabelNames = ["le"];
 
 #if NET
     private static readonly SearchValues<char> UnicodeEscapeChars = SearchValues.Create("\\\n");
@@ -55,7 +61,6 @@ internal static partial class PrometheusSerializer
 #endif
 
     private static readonly string[] ReservedExemplarLabelNames = ["trace_id", "span_id"];
-    private static readonly string[] ReservedHistogramLabelNames = ["le"];
     private static readonly double[] ExactPowersOfTen =
     [
         1e-10d,
@@ -81,8 +86,253 @@ internal static partial class PrometheusSerializer
         1e10d,
     ];
 
+    public static OpenMetricsV0Serializer OpenMetricsV0 => field ??= new();
+
+    public static OpenMetricsV1Serializer OpenMetricsV1 => field ??= new();
+
+    public static PrometheusTextV0Serializer PrometheusV0 => field ??= new();
+
+    public static PrometheusTextV1Serializer PrometheusV1 => field ??= new();
+
+    /// <summary>
+    /// Gets the type metadata value written for metrics that have no dedicated Prometheus type.
+    /// </summary>
+    protected abstract string UnknownMetricTypeName { get; }
+
+    /// <summary>
+    /// Gets the metric family name written for the target information metric.
+    /// </summary>
+    protected abstract string TargetInfoTypeName { get; }
+
+    /// <summary>
+    /// Gets the metric type written for the target information metric.
+    /// </summary>
+    protected abstract string TargetInfoTypeValue { get; }
+
+    public static TextFormatSerializer GetSerializer(PrometheusProtocol protocol) => protocol switch
+    {
+        { IsOpenMetrics: true } => protocol.Version.Major switch
+        {
+            0 => OpenMetricsV0,
+            1 => OpenMetricsV1,
+            _ => throw new NotSupportedException($"Unsupported OpenMetrics version: {protocol.Version}."),
+        },
+        { IsOpenMetrics: false } => protocol.Version.Major switch
+        {
+            0 => PrometheusV0,
+            1 => PrometheusV1,
+            _ => throw new NotSupportedException($"Unsupported Prometheus version: {protocol.Version}."),
+        },
+    };
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteDouble(byte[] buffer, int cursor, double value)
+    public static int WriteEof(byte[] buffer, int cursor)
+    {
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# EOF");
+        buffer[cursor++] = AsciiLineFeed;
+
+        return cursor;
+    }
+
+    public int WriteMetric(
+        byte[] buffer,
+        int cursor,
+        Metric metric,
+        PrometheusMetric prometheusMetric,
+        bool writeType,
+        bool writeUnit,
+        bool writeHelp,
+        string? unitOverride,
+        string? helpOverride)
+    {
+        if (writeType)
+        {
+            cursor = this.WriteTypeMetadata(buffer, cursor, prometheusMetric);
+        }
+
+        if (writeUnit)
+        {
+            cursor = this.WriteUnitMetadata(buffer, cursor, prometheusMetric, unitOverride ?? prometheusMetric.Unit);
+        }
+
+        if (writeHelp)
+        {
+            cursor = this.WriteHelpMetadata(buffer, cursor, prometheusMetric, helpOverride ?? metric.Description);
+        }
+
+        if (!metric.MetricType.IsHistogram())
+        {
+            var isLongValue = ((int)metric.MetricType & 0b_0000_1111) == 0x0a; // I8
+
+            foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+            {
+                // Counter and Gauge
+                cursor = this.WriteMetricName(buffer, cursor, prometheusMetric);
+                cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags);
+
+                buffer[cursor++] = unchecked((byte)' ');
+
+                if (isLongValue)
+                {
+                    cursor = metric.MetricType.IsSum()
+                        ? WriteLong(buffer, cursor, metricPoint.GetSumLong())
+                        : WriteLong(buffer, cursor, metricPoint.GetGaugeLastValueLong());
+                }
+                else
+                {
+                    cursor = metric.MetricType.IsSum()
+                        ? WriteDouble(buffer, cursor, metricPoint.GetSumDouble())
+                        : WriteDouble(buffer, cursor, metricPoint.GetGaugeLastValueDouble());
+                }
+
+                cursor = this.WriteCounterExemplar(buffer, cursor, in metricPoint, prometheusMetric, isLongValue);
+
+                buffer[cursor++] = AsciiLineFeed;
+
+                cursor = this.WriteCounterCreated(buffer, cursor, metric, prometheusMetric, in metricPoint);
+            }
+        }
+        else
+        {
+            foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+            {
+                var tags = metricPoint.Tags;
+                var serializedTags = SerializeTags(metric, tags, ReservedHistogramLabelNames);
+                var hasNegativeBucketBounds = false;
+                var previousBound = double.NegativeInfinity;
+
+                long totalCount = 0;
+                foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
+                {
+                    hasNegativeBucketBounds |= histogramMeasurement.ExplicitBound < 0;
+
+                    totalCount += histogramMeasurement.BucketCount;
+
+                    cursor = this.WriteMetricName(buffer, cursor, prometheusMetric);
+                    cursor = WriteAsciiStringNoEscape(buffer, cursor, "_bucket{");
+                    cursor = WriteSerializedTagValues(buffer, cursor, serializedTags, appendTrailingComma: true);
+
+                    cursor = WriteAsciiStringNoEscape(buffer, cursor, "le=\"");
+
+                    if (histogramMeasurement.ExplicitBound != double.PositiveInfinity)
+                    {
+                        cursor = this.WriteExplicitBound(buffer, cursor, histogramMeasurement.ExplicitBound);
+                    }
+                    else
+                    {
+                        cursor = WriteAsciiStringNoEscape(buffer, cursor, "+Inf");
+                    }
+
+                    cursor = WriteAsciiStringNoEscape(buffer, cursor, "\"} ");
+
+                    cursor = WriteLong(buffer, cursor, totalCount);
+
+                    cursor = this.WriteHistogramBucketExemplar(buffer, cursor, in metricPoint, previousBound, histogramMeasurement.ExplicitBound);
+
+                    buffer[cursor++] = AsciiLineFeed;
+                    previousBound = histogramMeasurement.ExplicitBound;
+                }
+
+                if (this.ShouldWriteSumAndCount(hasNegativeBucketBounds))
+                {
+                    // OpenMetrics histograms with negative bucket thresholds MUST NOT expose
+                    // _sum and therefore MUST NOT expose _count.
+                    // See https://prometheus.io/docs/specs/om/open_metrics_spec/#histogram-1
+                    cursor = this.WriteMetricName(buffer, cursor, prometheusMetric);
+                    cursor = WriteAsciiStringNoEscape(buffer, cursor, "_sum");
+                    cursor = WriteSerializedTags(buffer, cursor, serializedTags);
+
+                    buffer[cursor++] = unchecked((byte)' ');
+
+                    cursor = WriteDouble(buffer, cursor, metricPoint.GetHistogramSum());
+
+                    buffer[cursor++] = AsciiLineFeed;
+
+                    // Histogram count
+                    cursor = this.WriteMetricName(buffer, cursor, prometheusMetric);
+                    cursor = WriteAsciiStringNoEscape(buffer, cursor, "_count");
+                    cursor = WriteSerializedTags(buffer, cursor, serializedTags);
+
+                    buffer[cursor++] = unchecked((byte)' ');
+
+                    cursor = WriteLong(buffer, cursor, metricPoint.GetHistogramCount());
+                    buffer[cursor++] = AsciiLineFeed;
+                }
+
+                cursor = this.WriteHistogramCreated(buffer, cursor, metric, prometheusMetric, in metricPoint);
+            }
+        }
+
+        return cursor;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public int WriteTargetInfo(byte[] buffer, int cursor, Resource resource)
+    {
+        if (resource == Resource.Empty)
+        {
+            return cursor;
+        }
+
+        using var attributes = resource.Attributes.GetEnumerator();
+        if (!attributes.MoveNext())
+        {
+            return cursor;
+        }
+
+        // "If info-typed metric families are not yet supported...a gauge-typed metric
+        // family named target_info with a constant value of 1 MUST be used instead.".
+        // See https://opentelemetry.io/docs/specs/otel/compatibility/prometheus_and_openmetrics/#resource-attributes-1
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# TYPE ");
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, this.TargetInfoTypeName);
+        buffer[cursor++] = unchecked((byte)' ');
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, this.TargetInfoTypeValue);
+        buffer[cursor++] = AsciiLineFeed;
+
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# HELP ");
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, this.TargetInfoTypeName);
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, " Target metadata");
+        buffer[cursor++] = AsciiLineFeed;
+
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "target_info");
+        List<LabelData>? labels = null;
+        do
+        {
+            var attribute = attributes.Current;
+            AddLabel(attribute.Key, attribute.Value, ref labels);
+        }
+        while (attributes.MoveNext());
+
+        cursor = WriteLabels(buffer, cursor, labels, writeEnclosingBraces: true);
+        buffer[cursor++] = unchecked((byte)' ');
+        buffer[cursor++] = unchecked((byte)'1');
+        buffer[cursor++] = AsciiLineFeed;
+
+        return cursor;
+    }
+
+    // The metadata family name (used for grouping and deduplicating metric metadata) for the
+    // format being written. OpenMetrics drops the "_total" suffix from counters; the Prometheus
+    // text format uses the sanitized name verbatim.
+    public abstract string GetMetadataName(PrometheusMetric metric);
+
+    internal static int GetNextSerializedTagsBufferSize(int currentBufferSize)
+    {
+        // Doubles the supplied buffer size, throwing once growth would exceed
+        // MaxSerializedTagsBufferSize so that serializing an oversized tag set fails
+        // fast instead of allocating without bound. An InvalidOperationException is
+        // used deliberately: the buffer-growth retry loops in PrometheusCollectionManager
+        // only retry on IndexOutOfRangeException/ArgumentException, so this terminates
+        // the scrape immediately rather than repeatedly re-entering this allocation.
+        var newBufferSize = currentBufferSize * 2;
+
+        return newBufferSize <= 0 || newBufferSize > MaxSerializedTagsBufferSize
+            ? throw new InvalidOperationException("The serialized Prometheus tag set exceeded the maximum supported size.")
+            : newBufferSize;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int WriteDouble(byte[] buffer, int cursor, double value)
     {
         if (MathHelper.IsFinite(value))
         {
@@ -116,7 +366,7 @@ internal static partial class PrometheusSerializer
     // Histogram "le" and summary "quantile" label values use OpenMetrics canonical numbers.
     // See https://prometheus.io/docs/specs/om/open_metrics_spec/#considerations-canonical-numbers
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteCanonicalLabelValue(byte[] buffer, int cursor, double value) =>
+    internal static int WriteCanonicalLabelValue(byte[] buffer, int cursor, double value) =>
 #if NET
         cursor + FormatCanonicalLabelValue(buffer.AsSpan(cursor), value);
 #else
@@ -124,7 +374,7 @@ internal static partial class PrometheusSerializer
 #endif
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteLong(byte[] buffer, int cursor, long value)
+    internal static int WriteLong(byte[] buffer, int cursor, long value)
     {
 #if NET
         var result = Utf8Formatter.TryFormat(value, buffer.AsSpan(cursor), out var bytesWritten);
@@ -135,7 +385,7 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteUnsignedLong(byte[] buffer, int cursor, ulong value)
+    internal static int WriteUnsignedLong(byte[] buffer, int cursor, ulong value)
     {
 #if NET
         var result = Utf8Formatter.TryFormat(value, buffer.AsSpan(cursor), out var bytesWritten);
@@ -146,7 +396,7 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteAsciiStringNoEscape(byte[] buffer, int cursor, string value)
+    internal static int WriteAsciiStringNoEscape(byte[] buffer, int cursor, string value)
     {
         for (var i = 0; i < value.Length; i++)
         {
@@ -157,7 +407,7 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteUnicodeNoEscape(byte[] buffer, int cursor, int ordinal)
+    internal static int WriteUnicodeNoEscape(byte[] buffer, int cursor, int ordinal)
     {
         // Strings MUST only consist of valid UTF-8 characters.
         // See https://prometheus.io/docs/specs/om/open_metrics_spec/#strings.
@@ -188,11 +438,11 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteUnicodeString(byte[] buffer, int cursor, string value)
+    internal static int WriteUnicodeString(byte[] buffer, int cursor, string value)
         => WriteEscapedString(buffer, cursor, value, escapeQuotationMarks: false);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteLabelKey(byte[] buffer, int cursor, string value, bool openMetricsRequested)
+    internal static int WriteLabelKey(byte[] buffer, int cursor, string value)
     {
         if (string.IsNullOrEmpty(value))
         {
@@ -200,17 +450,15 @@ internal static partial class PrometheusSerializer
             return cursor;
         }
 
-        return openMetricsRequested ?
-               WriteOpenMetricsLabelKey(buffer, cursor, value) :
-               WritePrometheusLabelKey(buffer, cursor, value);
+        return WriteNormalizedLabelKey(buffer, cursor, value);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteLabelValue(byte[] buffer, int cursor, string value)
+    internal static int WriteLabelValue(byte[] buffer, int cursor, string value)
         => WriteEscapedString(buffer, cursor, value, escapeQuotationMarks: true);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteLabelValue(byte[] buffer, int cursor, object? value)
+    internal static int WriteLabelValue(byte[] buffer, int cursor, object? value)
     {
         switch (value)
         {
@@ -270,31 +518,14 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteLabel(byte[] buffer, int cursor, string labelKey, object? labelValue, bool openMetricsRequested)
+    internal static int WriteLabel(byte[] buffer, int cursor, string labelKey, object? labelValue)
     {
-        cursor = WriteLabelKey(buffer, cursor, labelKey, openMetricsRequested);
+        cursor = WriteLabelKey(buffer, cursor, labelKey);
         return WriteSanitizedLabel(buffer, cursor, labelValue);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteMetricName(byte[] buffer, int cursor, PrometheusMetric metric, bool openMetricsRequested)
-        => WriteUtf8NoEscape(buffer, cursor, openMetricsRequested ? metric.OpenMetricsNameBytes : metric.NameBytes);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteMetricMetadataName(byte[] buffer, int cursor, PrometheusMetric metric, bool openMetricsRequested)
-        => WriteUtf8NoEscape(buffer, cursor, openMetricsRequested ? metric.OpenMetricsMetadataNameBytes : metric.NameBytes);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteEof(byte[] buffer, int cursor)
-    {
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# EOF");
-        buffer[cursor++] = ASCII_LINEFEED;
-
-        return cursor;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteExemplar(byte[] buffer, int cursor, in Exemplar exemplar, bool isLongValue, bool openMetricsRequested)
+    internal static int WriteExemplar(byte[] buffer, int cursor, in Exemplar exemplar, bool isLongValue)
     {
         buffer[cursor++] = unchecked((byte)' ');
         buffer[cursor++] = unchecked((byte)'#');
@@ -321,7 +552,6 @@ internal static partial class PrometheusSerializer
             cursor,
             labels,
             writeEnclosingBraces: true,
-            openMetricsRequested,
             maxLabelSetCharacters: MaxExemplarLabelSetCharacters);
 
         buffer[cursor++] = unchecked((byte)' ');
@@ -340,85 +570,11 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteHelpMetadata(byte[] buffer, int cursor, PrometheusMetric metric, string metricDescription, bool openMetricsRequested)
-    {
-        if (string.IsNullOrEmpty(metricDescription))
-        {
-            return cursor;
-        }
-
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# HELP ");
-        cursor = WriteMetricMetadataName(buffer, cursor, metric, openMetricsRequested);
-
-        if (!string.IsNullOrEmpty(metricDescription))
-        {
-            buffer[cursor++] = unchecked((byte)' ');
-            cursor = WriteUnicodeString(buffer, cursor, metricDescription);
-        }
-
-        buffer[cursor++] = ASCII_LINEFEED;
-
-        return cursor;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteTypeMetadata(byte[] buffer, int cursor, PrometheusMetric metric, bool openMetricsRequested)
-    {
-        var metricType = MapPrometheusType(metric.Type, openMetricsRequested);
-
-        Debug.Assert(!string.IsNullOrEmpty(metricType), $"{nameof(metricType)} should not be null or empty.");
-
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# TYPE ");
-        cursor = WriteMetricMetadataName(buffer, cursor, metric, openMetricsRequested);
-        buffer[cursor++] = unchecked((byte)' ');
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, metricType);
-
-        buffer[cursor++] = ASCII_LINEFEED;
-
-        return cursor;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteUnitMetadata(byte[] buffer, int cursor, PrometheusMetric metric, string? unit, bool openMetricsRequested)
-    {
-        if (string.IsNullOrEmpty(unit))
-        {
-            return cursor;
-        }
-
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# UNIT ");
-        cursor = WriteMetricMetadataName(buffer, cursor, metric, openMetricsRequested);
-
-        buffer[cursor++] = unchecked((byte)' ');
-
-        // Unit name has already been escaped.
-        if (string.Equals(unit, metric.Unit, StringComparison.Ordinal) && metric.UnitBytes != null)
-        {
-            cursor = WriteUtf8NoEscape(buffer, cursor, metric.UnitBytes);
-        }
-        else
-        {
-#pragma warning disable IDE0370 // Remove unnecessary suppression
-            for (var i = 0; i < unit!.Length; i++)
-#pragma warning restore IDE0370 // Remove unnecessary suppression
-            {
-                var ordinal = (ushort)unit[i];
-                buffer[cursor++] = unchecked((byte)ordinal);
-            }
-        }
-
-        buffer[cursor++] = ASCII_LINEFEED;
-
-        return cursor;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteTags(
+    internal static int WriteTags(
         byte[] buffer,
         int cursor,
         Metric metric,
         ReadOnlyTagCollection tags,
-        bool openMetricsRequested,
         bool writeEnclosingBraces = true,
         IReadOnlyCollection<string>? reservedOutputKeys = null)
     {
@@ -431,8 +587,9 @@ internal static partial class PrometheusSerializer
             buffer[cursor++] = unchecked((byte)'{');
         }
 
-        if (TryWriteScopeLabels() &&
-            TryWritePointTags())
+        WriteScopeLabels();
+
+        if (TryWritePointTags())
         {
             if (writeEnclosingBraces)
             {
@@ -459,19 +616,18 @@ internal static partial class PrometheusSerializer
             AddLabel(tag.Key, tag.Value, ref labels, reservedOutputKeys);
         }
 
-        return WriteLabels(buffer, cursor, labels, writeEnclosingBraces, openMetricsRequested);
+        return WriteLabels(buffer, cursor, labels, writeEnclosingBraces);
 
-        bool TryWriteScopeLabels()
+        void WriteScopeLabels()
         {
+            // Scope labels are de-duplicated by output key in CreateScopeLabels, so unlike
+            // point tags they can never collide with an already-written label. They only need
+            // to be written (which also records their output keys so point tags can detect a
+            // collision with a scope label).
             foreach (var scopeLabel in CreateScopeLabels(metric))
             {
-                if (!TryWriteLabel(scopeLabel.Key, scopeLabel.Value))
-                {
-                    return false;
-                }
+                _ = TryWriteLabel(scopeLabel.Key, scopeLabel.Value);
             }
-
-            return true;
         }
 
         bool TryWritePointTags()
@@ -509,7 +665,7 @@ internal static partial class PrometheusSerializer
                 buffer[cursor++] = unchecked((byte)',');
             }
 
-            cursor = WriteLabel(buffer, cursor, key, value, openMetricsRequested);
+            cursor = WriteLabel(buffer, cursor, key, value);
             wroteLabel = true;
 
             return true;
@@ -517,49 +673,249 @@ internal static partial class PrometheusSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteTargetInfo(byte[] buffer, int cursor, Resource resource, bool openMetricsRequested)
+    internal static int WriteUnixTimeSeconds(byte[] buffer, int cursor, DateTimeOffset value) =>
+#if NET
+        WriteDouble(buffer, cursor, (value.UtcDateTime.Ticks - DateTimeOffset.UnixEpoch.Ticks) / (double)TimeSpan.TicksPerSecond);
+#else
+        WriteDouble(buffer, cursor, (value.UtcDateTime.Ticks - UnixEpochTicks) / (double)TimeSpan.TicksPerSecond);
+#endif
+
+    internal static byte[] SerializeTags(
+        Metric metric,
+        ReadOnlyTagCollection tags,
+        IReadOnlyCollection<string>? reservedOutputKeys = null)
     {
-        if (resource == Resource.Empty)
+        var buffer = new byte[128];
+
+        while (true)
         {
-            return cursor;
-        }
+            try
+            {
+                var cursor = WriteTags(
+                    buffer,
+                    0,
+                    metric,
+                    tags,
+                    writeEnclosingBraces: false,
+                    reservedOutputKeys: reservedOutputKeys);
 
-        using var attributes = resource.Attributes.GetEnumerator();
-        if (!attributes.MoveNext())
+                if (cursor > 0 && buffer[cursor - 1] == unchecked((byte)','))
+                {
+                    cursor--;
+                }
+
+                return buffer.AsSpan(0, cursor).ToArray();
+            }
+            catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
+            {
+                buffer = new byte[GetNextSerializedTagsBufferSize(buffer.Length)];
+            }
+        }
+    }
+
+    internal static int WriteSerializedTagValues(
+        byte[] buffer,
+        int cursor,
+        ReadOnlySpan<byte> serializedTags,
+        bool appendTrailingComma = false)
+    {
+        if (!serializedTags.IsEmpty)
         {
-            return cursor;
+            if (serializedTags.Length > buffer.Length - cursor)
+            {
+                throw new ArgumentException("Destination buffer too small.", nameof(buffer));
+            }
+
+            serializedTags.CopyTo(buffer.AsSpan(cursor));
+            cursor += serializedTags.Length;
+
+            if (appendTrailingComma)
+            {
+                buffer[cursor++] = unchecked((byte)',');
+            }
         }
-
-        // "If info-typed metric families are not yet supported...a gauge-typed metric
-        // family named target_info with a constant value of 1 MUST be used instead.".
-        // See https://opentelemetry.io/docs/specs/otel/compatibility/prometheus_and_openmetrics/#resource-attributes-1
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# TYPE ");
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, openMetricsRequested ? "target" : "target_info");
-        buffer[cursor++] = unchecked((byte)' ');
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, openMetricsRequested ? "info" : "gauge");
-        buffer[cursor++] = ASCII_LINEFEED;
-
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# HELP ");
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, openMetricsRequested ? "target" : "target_info");
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, " Target metadata");
-        buffer[cursor++] = ASCII_LINEFEED;
-
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, "target_info");
-        List<LabelData>? labels = null;
-        do
-        {
-            var attribute = attributes.Current;
-            AddLabel(attribute.Key, attribute.Value, ref labels);
-        }
-        while (attributes.MoveNext());
-
-        cursor = WriteLabels(buffer, cursor, labels, writeEnclosingBraces: true, openMetricsRequested);
-        buffer[cursor++] = unchecked((byte)' ');
-        buffer[cursor++] = unchecked((byte)'1');
-        buffer[cursor++] = ASCII_LINEFEED;
 
         return cursor;
     }
+
+    internal static int WriteSerializedTags(
+        byte[] buffer,
+        int cursor,
+        ReadOnlySpan<byte> serializedTags,
+        bool appendTrailingComma = false)
+    {
+        buffer[cursor++] = unchecked((byte)'{');
+        cursor = WriteSerializedTagValues(buffer, cursor, serializedTags, appendTrailingComma);
+
+        buffer[cursor++] = unchecked((byte)'}');
+        return cursor;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal int WriteMetricName(byte[] buffer, int cursor, PrometheusMetric metric)
+        => WriteUtf8NoEscape(buffer, cursor, this.GetMetricNameBytes(metric));
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal int WriteMetricMetadataName(byte[] buffer, int cursor, PrometheusMetric metric)
+        => WriteUtf8NoEscape(buffer, cursor, this.GetMetricMetadataNameBytes(metric));
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal int WriteHelpMetadata(byte[] buffer, int cursor, PrometheusMetric metric, string metricDescription)
+    {
+        if (string.IsNullOrEmpty(metricDescription))
+        {
+            return cursor;
+        }
+
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# HELP ");
+        cursor = this.WriteMetricMetadataName(buffer, cursor, metric);
+
+        if (!string.IsNullOrEmpty(metricDescription))
+        {
+            buffer[cursor++] = unchecked((byte)' ');
+            cursor = WriteUnicodeString(buffer, cursor, metricDescription);
+        }
+
+        buffer[cursor++] = AsciiLineFeed;
+
+        return cursor;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal int WriteTypeMetadata(byte[] buffer, int cursor, PrometheusMetric metric)
+    {
+        var metricType = this.MapMetricType(metric.Type);
+
+        Debug.Assert(!string.IsNullOrEmpty(metricType), $"{nameof(metricType)} should not be null or empty.");
+
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# TYPE ");
+        cursor = this.WriteMetricMetadataName(buffer, cursor, metric);
+        buffer[cursor++] = unchecked((byte)' ');
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, metricType);
+
+        buffer[cursor++] = AsciiLineFeed;
+
+        return cursor;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal int WriteUnitMetadata(byte[] buffer, int cursor, PrometheusMetric metric, string? unit)
+    {
+        if (string.IsNullOrEmpty(unit))
+        {
+            return cursor;
+        }
+
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# UNIT ");
+        cursor = this.WriteMetricMetadataName(buffer, cursor, metric);
+
+        buffer[cursor++] = unchecked((byte)' ');
+
+        // Unit name has already been escaped.
+        if (string.Equals(unit, metric.Unit, StringComparison.Ordinal) && metric.UnitBytes != null)
+        {
+            cursor = WriteUtf8NoEscape(buffer, cursor, metric.UnitBytes);
+        }
+        else
+        {
+#pragma warning disable IDE0370 // Remove unnecessary suppression
+            for (var i = 0; i < unit!.Length; i++)
+#pragma warning restore IDE0370 // Remove unnecessary suppression
+            {
+                var ordinal = (ushort)unit[i];
+                buffer[cursor++] = unchecked((byte)ordinal);
+            }
+        }
+
+        buffer[cursor++] = AsciiLineFeed;
+
+        return cursor;
+    }
+
+    internal string MapMetricType(PrometheusType type) => type switch
+    {
+        PrometheusType.Gauge => "gauge",
+        PrometheusType.Counter => "counter",
+        PrometheusType.Summary => "summary",
+        PrometheusType.Histogram => "histogram",
+        PrometheusType.Untyped or _ => this.UnknownMetricTypeName,
+    };
+
+    /// <summary>
+    /// Gets the bytes used when writing a metric's sample family name.
+    /// </summary>
+    /// <param name="metric">The metric.</param>
+    /// <returns>The bytes representing the metric's sample family name.</returns>
+    protected abstract ReadOnlySpan<byte> GetMetricNameBytes(PrometheusMetric metric);
+
+    /// <summary>
+    /// Gets the bytes used when writing a metric's metadata (<c>TYPE</c>/<c>UNIT</c>/<c>HELP</c>) name.
+    /// </summary>
+    /// <param name="metric">The metric.</param>
+    /// <returns>The bytes representing the metric's metadata name.</returns>
+    protected abstract ReadOnlySpan<byte> GetMetricMetadataNameBytes(PrometheusMetric metric);
+
+    /// <summary>
+    /// Writes the value of a histogram bucket's <c>le</c> upper bound.
+    /// </summary>
+    /// <param name="buffer">The buffer to write to.</param>
+    /// <param name="cursor">The current position in the buffer.</param>
+    /// <param name="explicitBound">The explicit upper bound value.</param>
+    /// <returns>The new cursor position after writing.</returns>
+    protected abstract int WriteExplicitBound(byte[] buffer, int cursor, double explicitBound);
+
+    /// <summary>
+    /// Writes the exemplar (if any) that follows a counter or gauge sample value.
+    /// </summary>
+    /// <param name="buffer">The buffer to write to.</param>
+    /// <param name="cursor">The current position in the buffer.</param>
+    /// <param name="metricPoint">The metric point.</param>
+    /// <param name="prometheusMetric">The Prometheus metric.</param>
+    /// <param name="isLongValue">Indicates whether the value is a long.</param>
+    /// <returns>The new cursor position after writing.</returns>
+    protected abstract int WriteCounterExemplar(byte[] buffer, int cursor, in MetricPoint metricPoint, PrometheusMetric prometheusMetric, bool isLongValue);
+
+    /// <summary>
+    /// Writes the <c>_created</c> series (if any) that follows a counter sample.
+    /// </summary>
+    /// <param name="buffer">The buffer to write to.</param>
+    /// <param name="cursor">The current position in the buffer.</param>
+    /// <param name="metric">The metric.</param>
+    /// <param name="prometheusMetric">The Prometheus metric.</param>
+    /// <param name="metricPoint">The metric point.</param>
+    /// <returns>The new cursor position after writing.</returns>
+    protected abstract int WriteCounterCreated(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric, in MetricPoint metricPoint);
+
+    /// <summary>
+    /// Writes the exemplar (if any) that follows a histogram bucket sample value.
+    /// </summary>
+    /// <param name="buffer">The buffer to write to.</param>
+    /// <param name="cursor">The current position in the buffer.</param>
+    /// <param name="metricPoint">The metric point.</param>
+    /// <param name="lowerBoundExclusive">The exclusive lower bound of the histogram bucket.</param>
+    /// <param name="upperBoundInclusive">The inclusive upper bound of the histogram bucket.</param>
+    /// <returns>The new cursor position after writing.</returns>
+    protected abstract int WriteHistogramBucketExemplar(byte[] buffer, int cursor, in MetricPoint metricPoint, double lowerBoundExclusive, double upperBoundInclusive);
+
+    /// <summary>
+    /// Determines whether the histogram <c>_sum</c> and <c>_count</c> series should be written.
+    /// </summary>
+    /// <param name="hasNegativeBucketBounds">Indicates whether the histogram has negative bucket bounds.</param>
+    /// <returns>
+    /// <see langword="true"/> if the <c>_sum</c> and <c>_count</c> series should be written; otherwise, <see langword="false"/>.
+    /// </returns>
+    protected abstract bool ShouldWriteSumAndCount(bool hasNegativeBucketBounds);
+
+    /// <summary>
+    /// Writes the <c>_created</c> series (if any) that follows a histogram's samples.
+    /// </summary>
+    /// <param name="buffer">The buffer to write to.</param>
+    /// <param name="cursor">The current position in the buffer.</param>
+    /// <param name="metric">The metric.</param>
+    /// <param name="prometheusMetric">The Prometheus metric.</param>
+    /// <param name="metricPoint">The metric point.</param>
+    /// <returns>The new cursor position after writing.</returns>
+    protected abstract int WriteHistogramCreated(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric, in MetricPoint metricPoint);
 
     private static string GetLabelValueString(object? labelValue) => labelValue switch
     {
@@ -583,19 +939,10 @@ internal static partial class PrometheusSerializer
 
     private static string NormalizeLabelKey(string value)
     {
-        if (string.IsNullOrEmpty(value))
-        {
-            return "_";
-        }
-
+        // This is only ever called with an "otel_scope_"-prefixed key, so the value is never
+        // empty and never starts with a digit; those cases do not need to be handled here.
         var builder = new StringBuilder(value.Length + 1);
         var lastCharUnderscore = false;
-
-        if (char.IsAsciiDigit(value[0]))
-        {
-            builder.Append('_');
-            lastCharUnderscore = true;
-        }
 
         for (var i = 0; i < value.Length; i++)
         {
@@ -682,12 +1029,6 @@ internal static partial class PrometheusSerializer
         return scopeLabels;
     }
 
-    private static int WritePrometheusLabelKey(byte[] buffer, int cursor, string value)
-        => WriteNormalizedLabelKey(buffer, cursor, value);
-
-    private static int WriteOpenMetricsLabelKey(byte[] buffer, int cursor, string value)
-        => WriteNormalizedLabelKey(buffer, cursor, value);
-
     private static int WriteNormalizedLabelKey(byte[] buffer, int cursor, string value)
     {
         var lastCharUnderscore = false;
@@ -765,17 +1106,17 @@ internal static partial class PrometheusSerializer
             switch (value[0])
             {
                 case '"':
-                    buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
-                    buffer[cursor++] = ASCII_QUOTATION_MARK;
+                    buffer[cursor++] = AsciiReverseSolidus;
+                    buffer[cursor++] = AsciiQuotationMark;
                     value = value[1..];
                     break;
                 case '\\':
-                    buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
-                    buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
+                    buffer[cursor++] = AsciiReverseSolidus;
+                    buffer[cursor++] = AsciiReverseSolidus;
                     value = value[1..];
                     break;
                 case '\n':
-                    buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
+                    buffer[cursor++] = AsciiReverseSolidus;
                     buffer[cursor++] = unchecked((byte)'n');
                     value = value[1..];
                     break;
@@ -796,16 +1137,16 @@ internal static partial class PrometheusSerializer
             var ordinal = (ushort)value[i];
             switch (ordinal)
             {
-                case ASCII_QUOTATION_MARK when escapeQuotationMarks:
-                    buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
-                    buffer[cursor++] = ASCII_QUOTATION_MARK;
+                case AsciiQuotationMark when escapeQuotationMarks:
+                    buffer[cursor++] = AsciiReverseSolidus;
+                    buffer[cursor++] = AsciiQuotationMark;
                     break;
-                case ASCII_REVERSE_SOLIDUS:
-                    buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
-                    buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
+                case AsciiReverseSolidus:
+                    buffer[cursor++] = AsciiReverseSolidus;
+                    buffer[cursor++] = AsciiReverseSolidus;
                     break;
-                case ASCII_LINEFEED:
-                    buffer[cursor++] = ASCII_REVERSE_SOLIDUS;
+                case AsciiLineFeed:
+                    buffer[cursor++] = AsciiReverseSolidus;
                     buffer[cursor++] = unchecked((byte)'n');
                     break;
                 default:
@@ -897,22 +1238,23 @@ internal static partial class PrometheusSerializer
     private static string GetSanitizedLabelKey(string value)
     {
         var builder = new StringBuilder(value.Length + 1);
-        _ = WriteSanitizedLabelKey(null, 0, value, builder);
+        AppendSanitizedLabelKey(builder, value);
         return builder.ToString();
     }
 
-    private static int WriteSanitizedLabelKey(byte[]? buffer, int cursor, string value, StringBuilder? builder)
+    private static void AppendSanitizedLabelKey(StringBuilder builder, string value)
     {
         if (string.IsNullOrEmpty(value))
         {
-            return AppendSanitizedLabelKeyCharacter(buffer, cursor, builder, '_');
+            builder.Append('_');
+            return;
         }
 
         var lastCharUnderscore = false;
 
         if (char.IsAsciiDigit(value[0]))
         {
-            cursor = AppendSanitizedLabelKeyCharacter(buffer, cursor, builder, '_');
+            builder.Append('_');
             lastCharUnderscore = true;
         }
 
@@ -924,33 +1266,16 @@ internal static partial class PrometheusSerializer
             {
                 if (!lastCharUnderscore)
                 {
-                    cursor = AppendSanitizedLabelKeyCharacter(buffer, cursor, builder, '_');
+                    builder.Append('_');
                     lastCharUnderscore = true;
                 }
 
                 continue;
             }
 
-            cursor = AppendSanitizedLabelKeyCharacter(buffer, cursor, builder, ch);
+            builder.Append(ch);
             lastCharUnderscore = ch == '_';
         }
-
-        return cursor;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int AppendSanitizedLabelKeyCharacter(byte[]? buffer, int cursor, StringBuilder? builder, char value)
-    {
-        if (buffer != null)
-        {
-            buffer[cursor++] = unchecked((byte)value);
-        }
-        else
-        {
-            builder!.Append(value);
-        }
-
-        return cursor;
     }
 
     private static void AddLabel(string originalKey, object? value, ref List<LabelData>? labels, IReadOnlyCollection<string>? reservedOutputKeys = null)
@@ -972,7 +1297,6 @@ internal static partial class PrometheusSerializer
         int cursor,
         IReadOnlyList<LabelData>? labels,
         bool writeEnclosingBraces,
-        bool openMetricsRequested,
         int? maxLabelSetCharacters = null)
     {
         if (writeEnclosingBraces)
@@ -1026,7 +1350,7 @@ internal static partial class PrometheusSerializer
                     labelSetCharacters += labelCharacters;
                 }
 
-                cursor = WriteLabel(buffer, cursor, key, value, openMetricsRequested);
+                cursor = WriteLabel(buffer, cursor, key, value);
                 buffer[cursor++] = unchecked((byte)',');
                 wroteLabel = true;
             }
@@ -1093,26 +1417,6 @@ internal static partial class PrometheusSerializer
 
         return builder.ToString();
     }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int WriteUnixTimeSeconds(byte[] buffer, int cursor, DateTimeOffset value) =>
-#if NET
-        WriteDouble(buffer, cursor, (value.UtcDateTime.Ticks - DateTimeOffset.UnixEpoch.Ticks) / (double)TimeSpan.TicksPerSecond);
-#else
-        WriteDouble(buffer, cursor, (value.UtcDateTime.Ticks - UnixEpochTicks) / (double)TimeSpan.TicksPerSecond);
-#endif
-
-    private static string MapPrometheusType(PrometheusType type, bool openMetricsRequested) => type switch
-    {
-        PrometheusType.Gauge => "gauge",
-        PrometheusType.Counter => "counter",
-        PrometheusType.Summary => "summary",
-        PrometheusType.Histogram => "histogram",
-
-        // OpenMetrics 1.0 uses "unknown" while Prometheus text format 0.0.4 uses "untyped".
-        // See https://prometheus.io/docs/specs/om/open_metrics_spec/#unknown-1
-        PrometheusType.Untyped or _ => openMetricsRequested ? "unknown" : "untyped",
-    };
 
 #if NET
     private static int FormatCanonicalLabelValue(Span<byte> destination, double value)
@@ -1195,11 +1499,6 @@ internal static partial class PrometheusSerializer
 
         static int WriteExponent(Span<byte> destination, int exponent)
         {
-            if (destination.Length < 4)
-            {
-                throw new ArgumentException("Destination buffer too small.");
-            }
-
             destination[0] = (byte)'e';
             destination[1] = exponent >= 0 ? (byte)'+' : (byte)'-';
 
