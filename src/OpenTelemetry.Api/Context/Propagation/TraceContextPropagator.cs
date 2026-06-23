@@ -381,6 +381,11 @@ public class TraceContextPropagator : TextMapPropagator
 
         foreach (var tracestateEntry in tracestateCollection)
         {
+            if (tracestateEntry is not { Length: > 0 })
+            {
+                continue;
+            }
+
             var tracestate = tracestateEntry.AsSpan();
             var begin = 0;
             while (begin < tracestate.Length)
