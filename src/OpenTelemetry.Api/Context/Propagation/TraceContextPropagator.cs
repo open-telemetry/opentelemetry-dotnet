@@ -381,6 +381,11 @@ public class TraceContextPropagator : TextMapPropagator
 
         foreach (var tracestateEntry in tracestateCollection)
         {
+            if (tracestateEntry is not { Length: > 0 })
+            {
+                continue;
+            }
+
             var tracestate = tracestateEntry.AsSpan();
             while (!tracestate.IsEmpty)
             {
@@ -464,11 +469,11 @@ public class TraceContextPropagator : TextMapPropagator
         return true;
     }
 
-    private static bool TryExtractSingleTracestate(string tracestate, out string tracestateResult)
+    private static bool TryExtractSingleTracestate(string? tracestate, out string tracestateResult)
     {
         tracestateResult = string.Empty;
 
-        if (tracestate.Length == 0)
+        if (tracestate is not { Length: > 0 })
         {
             return true;
         }
