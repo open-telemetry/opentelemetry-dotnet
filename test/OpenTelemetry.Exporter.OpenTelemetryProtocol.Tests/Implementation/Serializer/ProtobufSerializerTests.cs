@@ -438,12 +438,14 @@ public class ProtobufSerializerTests
     }
 
     [Fact]
-    public void ReturnBuffer_Throws_ForBufferNotRentedFromPool()
+    public void ReturnBuffer_Throws_ForBufferWhoseLengthIsNotAPoolBucketSize()
     {
-        // The pool only accepts buffers whose length matches one of its bucket
-        // sizes. Returning a buffer that was never rented from the pool (123 is not
-        // a pool bucket size) indicates a bug and must fail fast rather than being
-        // silently accepted.
+        // The pool validates returned buffers by length: only lengths matching one
+        // of its bucket sizes are accepted, and anything else (123 is not a bucket
+        // size) throws. This guards against handing back a buffer that did not come
+        // from the pool, which would indicate a bug in the serializer. Note this is
+        // a length check, not an identity check: a foreign array that happens to
+        // have a valid bucket-size length would still be accepted.
         var foreign = new byte[123];
 
         Assert.Throws<ArgumentException>(() => ProtobufSerializer.ReturnBuffer(foreign));

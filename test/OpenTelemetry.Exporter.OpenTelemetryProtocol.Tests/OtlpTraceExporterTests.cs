@@ -716,25 +716,34 @@ public sealed class OtlpTraceExporterTests : IDisposable
         static void RunTest(SdkLimitOptions sdkOptions, Batch<Activity> batch)
         {
             var buffer = ProtobufSerializer.RentBuffer(50);
-            var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, ResourceBuilder.CreateEmpty().Build(), batch);
-            using var stream = new MemoryStream(buffer, 0, writePosition);
-            var tracesData = OtlpTrace.TracesData.Parser.ParseFrom(stream);
-            var request = new OtlpCollector.ExportTraceServiceRequest();
-            request.ResourceSpans.Add(tracesData.ResourceSpans);
+            try
+            {
+                var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, ResourceBuilder.CreateEmpty().Build(), batch);
+                using var stream = new MemoryStream(buffer, 0, writePosition);
+                var tracesData = OtlpTrace.TracesData.Parser.ParseFrom(stream);
+                var request = new OtlpCollector.ExportTraceServiceRequest();
+                request.ResourceSpans.Add(tracesData.ResourceSpans);
 
-            // Buffer should be expanded to accommodate the large array.
-            Assert.True(buffer.Length > 50);
+                // Buffer should be expanded to accommodate the large array.
+                Assert.True(buffer.Length > 50);
 
-            Assert.Single(request.ResourceSpans);
-            var scopeSpans = request.ResourceSpans.First().ScopeSpans;
-            Assert.Single(scopeSpans);
-            var otlpSpan = scopeSpans.First().Spans.First();
-            Assert.NotNull(otlpSpan);
+                Assert.Single(request.ResourceSpans);
+                var scopeSpans = request.ResourceSpans.First().ScopeSpans;
+                Assert.Single(scopeSpans);
+                var otlpSpan = scopeSpans.First().Spans.First();
+                Assert.NotNull(otlpSpan);
 
-            // The string is too large, hence not evaluating the content.
-            var keyValue = otlpSpan.Attributes.FirstOrDefault(kvp => kvp.Key == "Tagkey");
-            Assert.NotNull(keyValue);
-            Assert.Equal("Tagvalue", keyValue.Value.StringValue);
+                // The string is too large, hence not evaluating the content.
+                var keyValue = otlpSpan.Attributes.FirstOrDefault(kvp => kvp.Key == "Tagkey");
+                Assert.NotNull(keyValue);
+                Assert.Equal("Tagvalue", keyValue.Value.StringValue);
+            }
+            finally
+            {
+                // The serializer may have grown (and swapped) the buffer, so return
+                // whatever buffer it ended up with to the pool.
+                ProtobufSerializer.ReturnBuffer(buffer);
+            }
         }
     }
 
