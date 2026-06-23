@@ -517,7 +517,7 @@ public class PrometheusHttpListenerTests
             contentType ??=
                 requestOpenMetrics ?
                 "application/openmetrics-text; version=0.0.1; charset=utf-8" :
-                "text/plain; version=0.0.4";
+                "text/plain; version=0.0.4; charset=utf-8";
 
             Assert.NotNull(response.Content);
             Assert.NotNull(response.Content.Headers.ContentType);

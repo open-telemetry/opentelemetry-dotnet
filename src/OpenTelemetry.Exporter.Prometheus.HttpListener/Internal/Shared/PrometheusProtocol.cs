@@ -70,15 +70,8 @@ internal readonly struct PrometheusProtocol : IEquatable<PrometheusProtocol>
         var builder = new StringBuilder()
             .Append(protocol.MediaType)
             .Append("; version=")
-            .Append(protocol.Version.ToString(3));
-
-        // The charset=utf-8 parameter is required by the OpenMetrics specification
-        // (https://prometheus.io/docs/specs/om/open_metrics_spec/#overall-structure)
-        // but is not part of the Prometheus text format specification.
-        if (protocol.IsOpenMetrics)
-        {
-            builder.Append("; charset=utf-8");
-        }
+            .Append(protocol.Version.ToString(3))
+            .Append("; charset=utf-8");
 
         if (protocol.Escaping is not null)
         {

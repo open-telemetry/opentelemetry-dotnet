@@ -713,7 +713,7 @@ public class PrometheusProtocolTests
     }
 
     [Fact]
-    public void GetContentType_PrometheusTextV0_DoesNotIncludeCharset()
+    public void GetContentType_PrometheusTextV0_IncludesCharset()
     {
         var protocol = new PrometheusProtocol(
             PrometheusProtocol.PrometheusTextMediaType,
@@ -721,11 +721,11 @@ public class PrometheusProtocolTests
             PrometheusProtocol.PrometheusV0,
             false);
 
-        Assert.Equal("text/plain; version=0.0.4", PrometheusProtocol.GetContentType(protocol));
+        Assert.Equal("text/plain; version=0.0.4; charset=utf-8", PrometheusProtocol.GetContentType(protocol));
     }
 
     [Fact]
-    public void GetContentType_PrometheusTextV1_DoesNotIncludeCharset()
+    public void GetContentType_PrometheusTextV1_IncludesCharset()
     {
         var protocol = new PrometheusProtocol(
             PrometheusProtocol.PrometheusTextMediaType,
@@ -733,7 +733,7 @@ public class PrometheusProtocolTests
             PrometheusProtocol.PrometheusV1,
             false);
 
-        Assert.Equal("text/plain; version=1.0.0; escaping=underscores", PrometheusProtocol.GetContentType(protocol));
+        Assert.Equal("text/plain; version=1.0.0; charset=utf-8; escaping=underscores", PrometheusProtocol.GetContentType(protocol));
     }
 
     [Fact]
@@ -761,8 +761,8 @@ public class PrometheusProtocolTests
     }
 
     [Fact]
-    public void GetContentType_FallbackProtocol_DoesNotIncludeCharset() =>
-        Assert.Equal("text/plain; version=0.0.4", PrometheusProtocol.GetContentType(PrometheusProtocol.Fallback));
+    public void GetContentType_FallbackProtocol_IncludesCharset() =>
+        Assert.Equal("text/plain; version=0.0.4; charset=utf-8", PrometheusProtocol.GetContentType(PrometheusProtocol.Fallback));
 
     [Fact]
     public void GetContentType_ToStringDelegatesToGetContentType()
