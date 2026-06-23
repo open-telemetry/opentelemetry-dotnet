@@ -19,7 +19,7 @@ Notes](../../RELEASENOTES.md).
 
 * **Experimental (pre-release builds only):** Updated `EnvironmentVariableCarrier`
   key normalization to replace an empty key with a single underscore (`_`).
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7424](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7424))
 
 ## 1.16.0
 
