@@ -17,13 +17,13 @@ Notes](../../RELEASENOTES.md).
   ([#7435](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7435))
 
 * Fix double unit suffixes in metric names when using OpenMetrics.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7454](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7454))
 
 * Fix incorrect handling of leading digits in metric names for OpenMetrics.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7454](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7454))
 
 * Fix incorrect `Content-Type` for PrometheusText exposition formats.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7454](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7454))
 
 ## 1.16.0-beta.1
 
