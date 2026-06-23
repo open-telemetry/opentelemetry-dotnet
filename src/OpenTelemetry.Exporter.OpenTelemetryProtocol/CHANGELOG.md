@@ -18,7 +18,7 @@ Notes](../../RELEASENOTES.md).
 * Fixed the OTLP exporter dropping retryable data instead of saving it to disk
   when persistent storage retry is enabled and an export exceeds the configured
   timeout.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7447](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7447))
 
 ## 1.16.0
 
