@@ -77,8 +77,7 @@ internal static class OtlpRetry
     /// </summary>
     /// <param name="response">The <see cref="ExportClientGrpcResponse" /> to check.</param>
     /// <returns>
-    /// <returns>
-    /// <see langword="true" /> if the failure is retryable; otherwise, <see langword="false" />.
+    /// <see langword="true"/> if the failure is retryable; otherwise, <see langword="false"/>.
     /// </returns>
     public static bool IsRetryable(ExportClientGrpcResponse response)
     {
@@ -95,9 +94,9 @@ internal static class OtlpRetry
     /// Determines whether a failed HTTP export response represents a transient
     /// failure that is eligible to be retried, ignoring any deadline.
     /// </summary>
-    /// <param name="response">The <see cref="ExportClientHttpResponse" /> to check.</param>
+    /// <param name="response">The <see cref="ExportClientHttpResponse"/> to check.</param>
     /// <returns>
-    /// <see langword="true" /> if the failure is retryable; otherwise, <see langword="false" />.
+    /// <see langword="true"/> if the failure is retryable; otherwise, <see langword="false"/>.
     /// </returns>
     public static bool IsRetryable(ExportClientHttpResponse response)
     {
