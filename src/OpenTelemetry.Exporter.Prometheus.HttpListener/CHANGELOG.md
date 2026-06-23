@@ -16,6 +16,10 @@ Notes](../../RELEASENOTES.md).
 * Removed the `PrometheusHttpListenerOptions.UriPrefixes` option.
   ([#7435](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7435))
 
+* Added the `PrometheusHttpListenerOptions.ConfigureHttpListener` option.
+  This can be used as a replacement for the removed `UriPrefixes` option.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.16.0-beta.1
 
 Released 2026-Jun-10

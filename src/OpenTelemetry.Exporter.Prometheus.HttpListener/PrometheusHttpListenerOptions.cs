@@ -87,5 +87,9 @@ public class PrometheusHttpListenerOptions
         }
     }
 
-    internal Action<PrometheusHttpListenerOptions, System.Net.HttpListener>? ConfigureHttpListener { get; set; }
+    /// <summary>
+    /// Gets or sets an optional callback to apply custom configuration for the
+    /// <see cref="System.Net.HttpListener"/> instance used by the exporter.
+    /// </summary>
+    public Action<PrometheusHttpListenerOptions, System.Net.HttpListener>? ConfigureHttpListener { get; set; }
 }
