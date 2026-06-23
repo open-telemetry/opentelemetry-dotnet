@@ -470,7 +470,7 @@ public class TraceContextPropagator : TextMapPropagator
         return true;
     }
 
-    private static bool TryExtractSingleTracestate(string tracestate, out string tracestateResult)
+    private static bool TryExtractSingleTracestate(string? tracestate, out string tracestateResult)
     {
         tracestateResult = string.Empty;
 
