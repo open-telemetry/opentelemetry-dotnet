@@ -42,9 +42,9 @@ public class ProtobufOtlpTraceSerializationBenchmarks
 
         this.batchCount = this.SpanCount;
 
-        // Pre-grow a buffer to the final size so the steady-state benchmark
+        // Pre-grow a pooled buffer to the final size so the steady-state benchmark
         // never hits the growth path (mirrors a warmed-up exporter instance).
-        this.steadyStateBuffer = new byte[InitialBufferSize];
+        this.steadyStateBuffer = ProtobufSerializer.RentBuffer(InitialBufferSize);
         var batch = new Batch<Activity>(this.activities, this.batchCount);
         ProtobufOtlpTraceSerializer.WriteTraceData(ref this.steadyStateBuffer, 0, this.sdkLimitOptions, this.resource, batch);
     }
@@ -58,15 +58,23 @@ public class ProtobufOtlpTraceSerializationBenchmarks
         return ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, this.sdkLimitOptions, this.resource, batch);
     }
 
-    // Cold start: begins from a freshly allocated initial-size buffer (matching a
-    // brand-new exporter instance). For payloads larger than the initial size this
-    // exercises the exception-driven resize + full re-serialization path.
+    // Cold start: every iteration begins from a freshly rented initial-size buffer
+    // and does not remember the grown size (modelling a brand-new exporter on each
+    // call). For payloads larger than the initial size this exercises the resize +
+    // full re-serialization path on every iteration.
     [Benchmark]
     public int ColdStartWithGrowth()
     {
-        var buffer = new byte[InitialBufferSize];
-        var batch = new Batch<Activity>(this.activities, this.batchCount);
-        return ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, this.sdkLimitOptions, this.resource, batch);
+        var buffer = ProtobufSerializer.RentBuffer(InitialBufferSize);
+        try
+        {
+            var batch = new Batch<Activity>(this.activities, this.batchCount);
+            return ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, this.sdkLimitOptions, this.resource, batch);
+        }
+        finally
+        {
+            ProtobufSerializer.ReturnBuffer(buffer);
+        }
     }
 
     // Models the exporter's rent-per-export path: rent a right-sized buffer from
