@@ -30,8 +30,10 @@ internal sealed class PrometheusMetric
             // https://github.com/open-telemetry/opentelemetry-specification/blob/3dfb383fe583e3b74a2365c5a1d90256b273ee76/specification/compatibility/prometheus_and_openmetrics.md#metric-metadata-1
             // Each name is checked independently: openMetricsName has the _total counter suffix stripped
             // (by RemoveOpenMetricsCounterNameSuffix above), so it may already end with the unit even
-            // when sanitizedName (which still carries _total) does not.
-            if (!sanitizedName.EndsWith(sanitizedUnit, StringComparison.Ordinal))
+            // when sanitizedName (which still carries _total) does not. For sanitizedName, also check
+            // for the unit immediately before _total (e.g. "db_bytes_total" with unit "bytes").
+            if (!sanitizedName.EndsWith(sanitizedUnit, StringComparison.Ordinal) &&
+                !sanitizedName.EndsWith($"{sanitizedUnit}_total", StringComparison.Ordinal))
             {
                 sanitizedName += $"_{sanitizedUnit}";
             }

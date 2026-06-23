@@ -148,6 +148,10 @@ public sealed class PrometheusMetricTests
         => AssertName("metric_hertz_total", "hertz_total", PrometheusType.Counter, false, "metric_hertz_total");
 
     [Fact]
+    public void Name_CounterWithUnitPrecedingTotal_UnitNotDuplicated()
+        => AssertName("db_bytes_total", "By", PrometheusType.Counter, false, "db_bytes_total");
+
+    [Fact]
     public void Name_UnitAlreadyPresentInName_OrderMatters_Appended()
         => AssertName("metric_total_hertz", "hertz_total", PrometheusType.Counter, false, "metric_total_hertz_hertz_total");
 
