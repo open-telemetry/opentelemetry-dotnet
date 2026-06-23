@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Buffers;
 using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -22,6 +23,11 @@ internal static class ProtobufSerializer
 #endif
 
     private static readonly Encoding Utf8Encoding = Encoding.UTF8;
+
+    // The shared ArrayPool caps pooled arrays at 1 MB so use a dedicated
+    // pool that can pool the larger (and resized) buffers. A small
+    // per-bucket limit keeps the amount of retained memory bounded.
+    private static readonly ArrayPool<byte> BufferPool = ArrayPool<byte>.Create(MaxBufferSize, maxArraysPerBucket: 4);
 #if NETFRAMEWORK || NETSTANDARD2_0
     [ThreadStatic]
     private static char[]? threadCharBuffer;
@@ -349,6 +355,23 @@ internal static class ProtobufSerializer
         return writePosition;
     }
 
+    /// <summary>
+    /// Rents a serialization buffer of at least <paramref name="minimumSize"/>
+    /// bytes from the pool. The returned array may be larger than requested and
+    /// its contents are not cleared.
+    /// </summary>
+    /// <param name="minimumSize">The minimum required buffer size in bytes.</param>
+    /// <returns>A pooled buffer that must be handed back via <see cref="ReturnBuffer"/>.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static byte[] RentBuffer(int minimumSize) => BufferPool.Rent(minimumSize);
+
+    /// <summary>
+    /// Returns a buffer previously obtained from <see cref="RentBuffer"/> or
+    /// grown by <see cref="IncreaseBufferSize"/> back to the pool.
+    /// </summary>
+    /// <param name="buffer">The buffer to return.</param>
+    internal static void ReturnBuffer(byte[] buffer) => BufferPool.Return(buffer);
+
     internal static bool IncreaseBufferSize(ref byte[] buffer, OtlpSignalType otlpSignalType)
     {
         if (buffer.Length >= MaxBufferSize)
@@ -357,17 +380,24 @@ internal static class ProtobufSerializer
             return false;
         }
 
+        byte[] largerBuffer;
         try
         {
-            var newBufferSize = buffer.Length * 2;
-            buffer = new byte[newBufferSize];
-            return true;
+            largerBuffer = BufferPool.Rent(buffer.Length * 2);
         }
         catch (OutOfMemoryException)
         {
             OpenTelemetryProtocolExporterEventSource.Log.BufferResizeFailedDueToMemory(otlpSignalType.ToString());
             return false;
         }
+
+        // Swap in the larger buffer first so growth always succeeds, then return
+        // the smaller buffer for reuse. The serializer restarts from the
+        // beginning after a resize, so the existing contents need not be copied.
+        var smallerBuffer = buffer;
+        buffer = largerBuffer;
+        ReturnBuffer(smallerBuffer);
+        return true;
     }
 
 #if NETFRAMEWORK || NETSTANDARD2_0

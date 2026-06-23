@@ -17,15 +17,20 @@ namespace OpenTelemetry.Exporter;
 public sealed class OtlpLogExporter : BaseExporter<LogRecord>
 {
     private const int GrpcStartWritePosition = 5;
+
+    // Initial buffer size set to ~732KB.
+    // This choice allows us to gradually grow the buffer while targeting a final capacity of around 100 MB,
+    // by the 7th doubling to maintain efficient allocation without frequent resizing.
+    private const int InitialBufferSize = 750_000;
+
     private readonly SdkLimitOptions sdkLimitOptions;
     private readonly ExperimentalOptions experimentalOptions;
     private readonly OtlpExporterTransmissionHandler transmissionHandler;
     private readonly int startWritePosition;
 
-    // Initial buffer size set to ~732KB.
-    // This choice allows us to gradually grow the buffer while targeting a final capacity of around 100 MB,
-    // by the 7th doubling to maintain efficient allocation without frequent resizing.
-    private byte[] buffer = new byte[750000];
+    // Tracks the buffer size required by the most recent export so the next
+    // export can rent a right-sized buffer from the pool and avoid resizing.
+    private int bufferSize = InitialBufferSize;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OtlpLogExporter"/> class.
@@ -71,9 +76,14 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
         // Prevents the exporter's gRPC and HTTP operations from being instrumented.
         using var scope = SuppressInstrumentationScope.Begin();
 
+        var buffer = ProtobufSerializer.RentBuffer(this.bufferSize);
         try
         {
-            var writePosition = ProtobufOtlpLogSerializer.WriteLogsData(ref this.buffer, this.startWritePosition, this.sdkLimitOptions, this.experimentalOptions, this.Resource, logRecordBatch);
+            var writePosition = ProtobufOtlpLogSerializer.WriteLogsData(ref buffer, this.startWritePosition, this.sdkLimitOptions, this.experimentalOptions, this.Resource, logRecordBatch);
+
+            // Remember the (possibly grown) capacity so the next export can rent a
+            // buffer large enough to avoid resizing.
+            this.bufferSize = buffer.Length;
 
             if (this.startWritePosition == GrpcStartWritePosition)
             {
@@ -81,12 +91,14 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
                 // byte 0 - Specifying if the payload is compressed.
                 // 1-4 byte - Specifies the length of payload in big endian format.
                 // 5 and above -  Protobuf serialized data.
-                var data = new Span<byte>(this.buffer, 1, 4);
+                // Note: byte 0 must be explicitly cleared because the rented buffer is not zeroed.
+                buffer[0] = 0;
+                var data = new Span<byte>(buffer, 1, 4);
                 var dataLength = writePosition - GrpcStartWritePosition;
                 BinaryPrimitives.WriteUInt32BigEndian(data, (uint)dataLength);
             }
 
-            if (!this.transmissionHandler.TrySubmitRequest(this.buffer, writePosition))
+            if (!this.transmissionHandler.TrySubmitRequest(buffer, writePosition))
             {
                 return ExportResult.Failure;
             }
@@ -95,6 +107,10 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
         {
             OpenTelemetryProtocolExporterEventSource.Log.ExportMethodException(ex);
             return ExportResult.Failure;
+        }
+        finally
+        {
+            ProtobufSerializer.ReturnBuffer(buffer);
         }
 
         return ExportResult.Success;

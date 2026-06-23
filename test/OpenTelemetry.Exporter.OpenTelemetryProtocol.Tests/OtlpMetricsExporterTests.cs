@@ -939,7 +939,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
 
         var batch = new Batch<Metric>([.. metrics], metrics.Count);
 
-        var buffer = new byte[50];
+        var buffer = ProtobufSerializer.RentBuffer(50);
         var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, ResourceBuilder.CreateEmpty().Build(), in batch);
         using var stream = new MemoryStream(buffer, 0, writePosition);
 
@@ -1158,7 +1158,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
 
     private static OtlpCollector.ExportMetricsServiceRequest CreateMetricExportRequest(in Batch<Metric> batch, Resource resource)
     {
-        var buffer = new byte[4096];
+        var buffer = ProtobufSerializer.RentBuffer(4096);
         var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, resource, in batch);
         using var stream = new MemoryStream(buffer, 0, writePosition);
 

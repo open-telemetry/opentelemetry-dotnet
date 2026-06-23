@@ -715,7 +715,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
 
         static void RunTest(SdkLimitOptions sdkOptions, Batch<Activity> batch)
         {
-            var buffer = new byte[50];
+            var buffer = ProtobufSerializer.RentBuffer(50);
             var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, ResourceBuilder.CreateEmpty().Build(), batch);
             using var stream = new MemoryStream(buffer, 0, writePosition);
             var tracesData = OtlpTrace.TracesData.Parser.ParseFrom(stream);

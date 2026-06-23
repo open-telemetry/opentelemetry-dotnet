@@ -86,6 +86,11 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, value.WritePosition, ProtobufOtlpCommonFieldNumberConstants.AnyValue_Array_Value, ProtobufWireType.LEN);
         Buffer.BlockCopy(value.Buffer, 0, state.Buffer, state.WritePosition, value.WritePosition);
         state.WritePosition += value.WritePosition;
+
+        // The scratch buffer contents have now been copied into the main buffer,
+        // so return it to the pool. A fresh buffer is rented on the next array.
+        ProtobufSerializer.ReturnBuffer(value.Buffer);
+        OtlpArrayTagWriter.ThreadBuffer = null;
     }
 
     protected override void OnUnsupportedTagDropped(
@@ -133,11 +138,12 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
     {
         [ThreadStatic]
         internal static byte[]? ThreadBuffer;
+        private const int DefaultBufferSize = 2048;
         private const int MaxBufferSize = 2 * 1024 * 1024;
 
         public override OtlpTagWriterArrayState BeginWriteArray()
         {
-            ThreadBuffer ??= new byte[2048];
+            ThreadBuffer ??= ProtobufSerializer.RentBuffer(DefaultBufferSize);
 
             return new OtlpTagWriterArrayState
             {
@@ -196,24 +202,29 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
 
         public override bool TryResize()
         {
-            var buffer = ThreadBuffer;
+            var smallerBuffer = ThreadBuffer!;
 
-            if (buffer!.Length >= MaxBufferSize)
+            if (smallerBuffer.Length >= MaxBufferSize)
             {
                 OpenTelemetryProtocolExporterEventSource.Log.ArrayBufferExceededMaxSize();
                 return false;
             }
 
+            byte[] largerBuffer;
             try
             {
-                ThreadBuffer = new byte[buffer.Length * 2];
-                return true;
+                largerBuffer = ProtobufSerializer.RentBuffer(smallerBuffer.Length * 2);
             }
             catch (OutOfMemoryException)
             {
                 OpenTelemetryProtocolExporterEventSource.Log.BufferResizeFailedDueToMemory(nameof(OtlpArrayTagWriter));
                 return false;
             }
+
+            // Swap in the larger buffer first, then return the smaller one for reuse.
+            ThreadBuffer = largerBuffer;
+            ProtobufSerializer.ReturnBuffer(smallerBuffer);
+            return true;
         }
     }
 }

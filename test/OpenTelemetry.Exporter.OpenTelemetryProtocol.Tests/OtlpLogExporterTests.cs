@@ -1840,7 +1840,7 @@ public class OtlpLogExporterTests
 
         var batch = new Batch<LogRecord>([logRecords[0]], 1);
 
-        var buffer = new byte[50];
+        var buffer = ProtobufSerializer.RentBuffer(50);
         var writePosition = ProtobufOtlpLogSerializer.WriteLogsData(ref buffer, 0, DefaultSdkLimitOptions, new(), ResourceBuilder.CreateEmpty().Build(), batch);
         using var stream = new MemoryStream(buffer, 0, writePosition);
         var logsData = OtlpLogs.LogsData.Parser.ParseFrom(stream);

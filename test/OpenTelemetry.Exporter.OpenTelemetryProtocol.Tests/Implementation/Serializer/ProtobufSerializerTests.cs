@@ -372,4 +372,80 @@ public class ProtobufSerializerTests
         Array.Copy(buffer, 2, actualContent, 0, 3);
         Assert.True(expectedContent.SequenceEqual(actualContent));
     }
+
+    [Fact]
+    public void RentBuffer_ReturnsBufferOfAtLeastRequestedSize()
+    {
+        var buffer = ProtobufSerializer.RentBuffer(1000);
+
+        try
+        {
+            Assert.NotNull(buffer);
+            Assert.True(buffer.Length >= 1000);
+        }
+        finally
+        {
+            ProtobufSerializer.ReturnBuffer(buffer);
+        }
+    }
+
+    [Fact]
+    public void RentBuffer_ReusesReturnedBuffer()
+    {
+        // Use an uncommon bucket size to minimize interference from buffers rented
+        // by other serialization paths while this test runs.
+        var first = ProtobufSerializer.RentBuffer(1024);
+        ProtobufSerializer.ReturnBuffer(first);
+
+        var second = ProtobufSerializer.RentBuffer(1024);
+
+        try
+        {
+            // The returned buffer should be handed back out on the next rent of the
+            // same size, proving it was pooled rather than discarded.
+            Assert.Same(first, second);
+        }
+        finally
+        {
+            ProtobufSerializer.ReturnBuffer(second);
+        }
+    }
+
+    [Fact]
+    public void IncreaseBufferSize_GrowsBufferAndReturnsOldBufferToPool()
+    {
+        var buffer = ProtobufSerializer.RentBuffer(1024);
+        var original = buffer;
+        var originalLength = buffer.Length;
+
+        var increased = ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Traces);
+
+        try
+        {
+            Assert.True(increased);
+            Assert.NotSame(original, buffer);
+            Assert.True(buffer.Length >= originalLength * 2);
+
+            // The previous (smaller) buffer should have been returned to the pool.
+            var reRented = ProtobufSerializer.RentBuffer(originalLength);
+            Assert.Same(original, reRented);
+            ProtobufSerializer.ReturnBuffer(reRented);
+        }
+        finally
+        {
+            ProtobufSerializer.ReturnBuffer(buffer);
+        }
+    }
+
+    [Fact]
+    public void ReturnBuffer_Throws_ForBufferNotRentedFromPool()
+    {
+        // The pool only accepts buffers whose length matches one of its bucket
+        // sizes. Returning a buffer that was never rented from the pool (123 is not
+        // a pool bucket size) indicates a bug and must fail fast rather than being
+        // silently accepted.
+        var foreign = new byte[123];
+
+        Assert.Throws<ArgumentException>(() => ProtobufSerializer.ReturnBuffer(foreign));
+    }
 }
