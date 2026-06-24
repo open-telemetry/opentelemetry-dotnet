@@ -23,6 +23,9 @@ Notes](../../RELEASENOTES.md).
 * Fixed the OTLP/HTTP exporter silently dropping data when an export timed out.
   ([#7455](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7455))
 
+* Fixed the OTLP/gRPC exporter logging incorrectly when an export timed out.
+  ([#7455](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7455))
+
 ## 1.16.0
 
 Released 2026-Jun-10
