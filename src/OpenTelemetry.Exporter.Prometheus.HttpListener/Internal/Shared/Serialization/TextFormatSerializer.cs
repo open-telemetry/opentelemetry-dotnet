@@ -774,11 +774,9 @@ internal abstract class TextFormatSerializer
         => WriteUtf8NoEscape(buffer, cursor, this.GetMetricMetadataNameBytes(metric));
 
     /// <summary>
-    /// Writes a metric family name followed by a serialization-time suffix (e.g. "_bucket",
-    /// "_sum", "_count", "_created"). For the underscores scheme the pre-computed metadata name
-    /// bytes are written verbatim followed by the literal suffix. For the dots and values
-    /// schemes the suffix is part of the (unescaped) intended name, so the intended name and
-    /// suffix are escaped together as a single unit to keep the structural underscores reversible.
+    /// Writes the (already escaped) metric metadata/family name followed by a structural suffix
+    /// (e.g. "_bucket", "_sum", "_count", "_created"). The suffix is appended literally for all
+    /// escaping schemes so Prometheus can recognize and strip it when determining the family name.
     /// </summary>
     /// <param name="buffer">The buffer to write to.</param>
     /// <param name="cursor">The current position in the buffer.</param>

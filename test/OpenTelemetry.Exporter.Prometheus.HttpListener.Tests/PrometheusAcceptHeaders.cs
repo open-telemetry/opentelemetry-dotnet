@@ -77,7 +77,7 @@ public static class PrometheusAcceptHeaders
             testCases.Add(accept, "application/openmetrics-text", true, "1.0.0", "underscores");
         }
 
-        // The dots and values escaping schemes are negotiated for the only the v1 formats.
+        // The `dots` and `values` escaping schemes are only negotiated for the v1 formats
         testCases.Add("application/openmetrics-text; version=1.0.0; escaping=dots", "application/openmetrics-text", true, "1.0.0", "dots");
         testCases.Add("application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=dots", "application/openmetrics-text", true, "1.0.0", "dots");
         testCases.Add("application/openmetrics-text; version=1.0.0; escaping=values", "application/openmetrics-text", true, "1.0.0", "values");
