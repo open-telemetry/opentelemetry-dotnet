@@ -429,7 +429,7 @@ You can confirm this is what is happening by enabling
 because its local parent is not recorded, together with the name of the
 `ActivitySource`.
 
-To resolve this, pick whichever option best suites your needs:
+To resolve this, pick whichever option best suits your needs:
 
 * **Record the parent activity (recommended for ASP.NET Core apps).** Add the
   [ASP.NET Core

@@ -481,7 +481,7 @@ internal sealed class TracerProviderSdk : TracerProvider
             SamplingDecision.Drop or _ => PropagateOrIgnoreData(ref options),
         };
 
-        if (samplingResult.Decision == SamplingDecision.Drop)
+        if (samplingResult.Decision == SamplingDecision.Drop && sampler is ParentBasedSampler)
         {
             OpenTelemetrySdkEventSource.Log.ActivityDroppedDueToUnsampledLocalParent(options.Name, options.Source.Name, options.Parent);
         }
@@ -572,7 +572,12 @@ internal sealed class TracerProviderSdk : TracerProvider
             case SamplingDecision.Drop:
                 activity.IsAllDataRequested = false;
                 activity.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
-                OpenTelemetrySdkEventSource.Log.ActivityDroppedDueToUnsampledLocalParent(activity.DisplayName, activity.Source.Name, parentContext);
+
+                if (this.Sampler is ParentBasedSampler)
+                {
+                    OpenTelemetrySdkEventSource.Log.ActivityDroppedDueToUnsampledLocalParent(activity.DisplayName, activity.Source.Name, parentContext);
+                }
+
                 break;
             case SamplingDecision.RecordOnly:
                 activity.IsAllDataRequested = true;

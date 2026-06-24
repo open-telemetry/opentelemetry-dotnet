@@ -1421,6 +1421,42 @@ public sealed class TracerProviderSdkTests : IDisposable
         Assert.Empty(droppedEvents);
     }
 
+    [Fact]
+    public void SdkDoesNotEmitUnsampledLocalParentEventForNonParentBasedSampler()
+    {
+        using var source = new ActivitySource(Utils.GetCurrentMethodName());
+
+        var sampler = new TestSampler
+        {
+            SamplingAction = _ => new SamplingResult(SamplingDecision.Drop),
+        };
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(source.Name)
+            .SetSampler(sampler)
+            .Build();
+
+        using var parent = new Activity("ParentNotRecorded");
+        parent.Start();
+
+        Assert.False(parent.Recorded);
+        Assert.False(parent.Context.IsRemote);
+
+        using var eventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log);
+
+        using (var child = source.StartActivity("Child"))
+        {
+            Assert.Null(child);
+        }
+
+        parent.Stop();
+
+        var droppedEvents = eventListener.Messages.Where(
+            e => e.EventId == 58 && (e.Payload?.Count ?? 0) >= 2 && (e.Payload![0] as string) == "Child");
+
+        Assert.Empty(droppedEvents);
+    }
+
     public void Dispose()
         => GC.SuppressFinalize(this);
 
