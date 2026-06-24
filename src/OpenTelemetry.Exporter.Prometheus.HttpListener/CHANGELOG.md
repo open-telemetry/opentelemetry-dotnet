@@ -20,6 +20,12 @@ Notes](../../RELEASENOTES.md).
   schemes when negotiated via the `Accept` header.
   ([#7439](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7439))
 
+* Fix double unit suffixes in metric names when using OpenMetrics.
+  ([#7454](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7454))
+
+* Fix incorrect handling of leading digits in metric names for OpenMetrics.
+  ([#7454](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7454))
+
 ## 1.16.0-beta.1
 
 Released 2026-Jun-10
