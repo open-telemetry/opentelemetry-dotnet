@@ -5,17 +5,73 @@ name: Lint - dotnet format
 on:
   workflow_call:
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
-  run-dotnet-format-stable:
-    name: Run dotnet format (stable)
-    runs-on: windows-2025
+  check-dotnet-format:
+    name: Check for changes
+    runs-on: ubuntu-24.04
+
+    outputs:
+      include-args: ${{ steps.check.outputs.include-args }}
+      run-format: ${{ steps.check.outputs.run-format }}
+
+    permissions:
+      contents: read
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+        show-progress: false
+
+    - name: Check changed files
+      id: check
+      shell: pwsh
+      run: |
+        $baseRef = if (${env:GITHUB_BASE_REF}) { "origin/${env:GITHUB_BASE_REF}" } else { "HEAD~1" }
+        $changedFiles = git diff --name-only "$baseRef...HEAD"
+
+        if ($changedFiles -contains 'global.json') {
+          Write-Output "global.json was changed - checking all files."
+          "run-format=true" >> ${env:GITHUB_OUTPUT}
+          "include-args=" >> ${env:GITHUB_OUTPUT}
+        } else {
+          $csFiles = $changedFiles | Where-Object { $_ -match '\.cs$' }
+
+          if (-not $csFiles) {
+            Write-Output "No C# files changed."
+            "run-format=false" >> ${env:GITHUB_OUTPUT}
+          } else {
+            Write-Output "Checking: $csFiles"
+            "run-format=true" >> ${env:GITHUB_OUTPUT}
+            "include-args=$($csFiles -join ' ')" >> ${env:GITHUB_OUTPUT}
+          }
+        }
+
+  run-dotnet-format:
+    name: 'Run dotnet format (${{ matrix.name }})'
+    needs: [check-dotnet-format]
+    runs-on: windows-2025
+    if: ${{ needs.check-dotnet-format.outputs.run-format == 'true' }}
+
+    permissions:
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: stable
+            expose-experimental-features: false
+          - name: unstable
+            expose-experimental-features: true
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       with:
         filter: 'tree:0'
         persist-credentials: false
@@ -28,29 +84,20 @@ jobs:
       run: dotnet restore OpenTelemetry.slnx
 
     - name: dotnet format
-      run: dotnet format OpenTelemetry.slnx --no-restore --verify-no-changes # Note: .proj files are currently not supported by dotnet format
+      shell: pwsh
       env:
-        ExposeExperimentalFeatures: false
+        ExposeExperimentalFeatures: ${{ matrix.expose-experimental-features }}
+        INCLUDE_FILES: ${{ needs.check-dotnet-format.outputs.include-args }}
+      run: |
+        # Note: .proj files are currently not supported by dotnet format
+        $formatArgs = @(
+          'OpenTelemetry.slnx',
+          '--no-restore',
+          '--verify-no-changes'
+        )
 
-  run-dotnet-format-experimental:
-    name: Run dotnet format (experimental)
-    runs-on: windows-2025
+        if (${env:INCLUDE_FILES}) {
+          $formatArgs += @('--include') + ${env:INCLUDE_FILES}.Split(' ')
+        }
 
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-      with:
-        filter: 'tree:0'
-        persist-credentials: false
-        show-progress: false
-
-    - name: Setup .NET
-      uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5.3.0
-
-    - name: dotnet restore
-      run: dotnet restore OpenTelemetry.slnx
-
-    - name: dotnet format
-      run: dotnet format OpenTelemetry.slnx --no-restore --verify-no-changes # Note: .proj files are currently not supported by dotnet format
-      env:
-        ExposeExperimentalFeatures: true
+        dotnet format $formatArgs

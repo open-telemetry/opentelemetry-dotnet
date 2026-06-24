@@ -121,6 +121,63 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
         Assert.EndsWith("# EOF\n", content, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task ExponentialHistogramsAreIgnored()
+    {
+        // Arrange
+        using var meter = new Meter(nameof(this.ExponentialHistogramsAreIgnored));
+
+        var builder = WebApplication.CreateBuilder();
+
+        // Listen on any available port
+        builder.WebHost.UseUrls("http://127.0.0.1:0");
+
+        builder.Services
+            .AddOpenTelemetry()
+            .ConfigureResource((p) => p.AddAttributes([new("service.name", "prometheus")]))
+            .WithMetrics((builder) =>
+            {
+                builder.AddMeter(meter.Name)
+                       .AddView(instrument => new Base2ExponentialBucketHistogramConfiguration())
+                       .AddPrometheusExporter();
+            });
+
+        using var app = builder.Build();
+
+        app.MapPrometheusScrapingEndpoint();
+
+        await app.StartAsync();
+
+        var counter = meter.CreateCounter<double>("test_counter");
+        counter.Add(1);
+        counter.Add(42);
+
+        var histogram = meter.CreateHistogram<double>("test_histogram");
+        histogram.Record(18);
+        histogram.Record(100);
+
+        var provider = app.Services.GetRequiredService<MeterProvider>();
+        provider.ForceFlush();
+
+        var server = app.Services.GetRequiredService<IServer>();
+        var addresses = server.Features.Get<IServerAddressesFeature>();
+
+        var baseAddress = addresses!.Addresses
+            .Select((p) => new Uri(p))
+            .Last();
+
+        using var httpClient = new HttpClient();
+        using var response = await httpClient.GetAsync(new Uri(baseAddress, "metrics"));
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.NotNull(response.Content);
+
+        var output = await response.Content.ReadAsStringAsync();
+
+        await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
+    }
+
     [EnabledOnDockerPlatformTheory(DockerPlatform.Linux)]
     [InlineData("")]
     [InlineData("OpenMetricsText0.0.1")]
