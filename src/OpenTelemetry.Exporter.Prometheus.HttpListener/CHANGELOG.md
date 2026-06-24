@@ -16,6 +16,12 @@ Notes](../../RELEASENOTES.md).
 * Removed the `PrometheusHttpListenerOptions.UriPrefixes` option.
   ([#7435](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7435))
 
+* Fix double unit suffixes in metric names when using OpenMetrics.
+  ([#7454](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7454))
+
+* Fix incorrect handling of leading digits in metric names for OpenMetrics.
+  ([#7454](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7454))
+
 * Added support for the `dots` and `values` Prometheus UTF-8 name escaping
   schemes when negotiated via the `Accept` header.
   ([#7439](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7439))

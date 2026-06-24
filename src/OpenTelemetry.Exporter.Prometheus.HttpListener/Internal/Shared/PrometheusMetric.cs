@@ -133,6 +133,7 @@ internal sealed class PrometheusMetric
                 sb ??= CreateStringBuilder(metricName);
                 sb.Append('_');
                 lastCharUnderscore = true;
+                continue;
             }
 
             if (!char.IsAsciiLetterOrDigit(c) && c != ':')
@@ -262,7 +263,9 @@ internal sealed class PrometheusMetric
         // consecutive `_` characters MUST be replaced with a single `_` character.
         // https://github.com/open-telemetry/opentelemetry-specification/blob/b2f923fb1650dde1f061507908b834035506a796/specification/compatibility/prometheus_and_openmetrics.md#L230-L233
         var sanitizedName = SanitizeMetricName(name);
-        var openMetricsName = RemoveOpenMetricsCounterNameSuffix(name);
+        var openMetricsName = type == PrometheusType.Counter
+            ? RemoveOpenMetricsCounterNameSuffix(name)
+            : name;
 
         if (sanitizedUnit != null)
         {
@@ -270,9 +273,18 @@ internal sealed class PrometheusMetric
             // [OpenMetrics UNIT metadata](https://github.com/prometheus/OpenMetrics/blob/v1.0.0/specification/OpenMetrics.md#metricfamily)
             // and as a suffix to the metric name. The unit suffix comes before any type-specific suffixes.
             // https://github.com/open-telemetry/opentelemetry-specification/blob/3dfb383fe583e3b74a2365c5a1d90256b273ee76/specification/compatibility/prometheus_and_openmetrics.md#metric-metadata-1
-            if (!sanitizedName.EndsWith(sanitizedUnit, StringComparison.Ordinal))
+            // Each name is checked independently: openMetricsName has the _total counter suffix stripped
+            // (by RemoveOpenMetricsCounterNameSuffix above), so it may already end with the unit even
+            // when sanitizedName (which still carries _total) does not. For counter sanitizedName, also
+            // check for the unit immediately before _total (e.g. "db_bytes_total" with unit "bytes").
+            if (!sanitizedName.EndsWith(sanitizedUnit, StringComparison.Ordinal) &&
+                (type != PrometheusType.Counter || !sanitizedName.EndsWith($"{sanitizedUnit}_total", StringComparison.Ordinal)))
             {
                 sanitizedName += $"_{sanitizedUnit}";
+            }
+
+            if (!openMetricsName.EndsWith(sanitizedUnit, StringComparison.Ordinal))
+            {
                 openMetricsName += $"_{sanitizedUnit}";
             }
         }
@@ -317,11 +329,18 @@ internal sealed class PrometheusMetric
         // serialization), so it is appended literally to the escaped family name rather than
         // escaped with it.
         var nameFamily = name;
-        var openMetricsFamily = RemoveOpenMetricsCounterNameSuffix(name);
+        var openMetricsFamily = type == PrometheusType.Counter
+            ? RemoveOpenMetricsCounterNameSuffix(name)
+            : name;
 
         if (sanitizedUnit != null)
         {
-            if (!nameFamily.EndsWith(sanitizedUnit, StringComparison.Ordinal))
+            // Each name is checked independently: openMetricsFamily has the _total counter suffix stripped
+            // (by RemoveOpenMetricsCounterNameSuffix above), so it may already end with the unit even
+            // when nameFamily (which still carries _total) does not. For counter nameFamily, also
+            // check for the unit immediately before _total (e.g. "db_bytes_total" with unit "bytes").
+            if (!nameFamily.EndsWith(sanitizedUnit, StringComparison.Ordinal) &&
+                (type != PrometheusType.Counter || !nameFamily.EndsWith($"{sanitizedUnit}_total", StringComparison.Ordinal)))
             {
                 nameFamily += $"_{sanitizedUnit}";
             }
