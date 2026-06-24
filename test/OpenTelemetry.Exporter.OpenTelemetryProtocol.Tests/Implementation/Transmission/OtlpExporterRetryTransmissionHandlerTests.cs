@@ -8,6 +8,36 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmissi
 
 public class OtlpExporterRetryTransmissionHandlerTests
 {
+    [Fact]
+    public void TrySubmitRequest_HttpTimeoutWithExpiredDeadline_Retries()
+    {
+        // Reproduces the production path for issue #7453:
+        // When HttpClient.Timeout fires, deadlineUtc is already expired by the time the
+        // response is returned. The retry handler must still retry in this case by using
+        // a fresh deadline for each no-status attempt.
+        var exportClient = new TimeoutThenSuccessExportClient();
+        using var transmissionHandler = new OtlpExporterRetryTransmissionHandler(exportClient, timeoutMilliseconds: 100_000);
+
+        var result = transmissionHandler.TrySubmitRequest([1, 2, 3], 3);
+
+        Assert.True(result, "Should succeed after retrying the timed-out request.");
+        Assert.Equal(2, exportClient.SendCount);
+    }
+
+    [Fact]
+    public void TrySubmitRequest_ExceedsMaxNoStatusRetryAttempts_StopsRetrying()
+    {
+        // After MaxNoStatusRetryAttempts consecutive no-status failures with expired
+        // deadlines the handler must give up rather than retrying indefinitely.
+        var exportClient = new PersistentTimeoutExportClient();
+        using var transmissionHandler = new OtlpExporterRetryTransmissionHandler(exportClient, timeoutMilliseconds: 100_000);
+
+        var result = transmissionHandler.TrySubmitRequest([1, 2, 3], 3);
+
+        Assert.False(result);
+        Assert.Equal(OtlpRetry.MaxNoStatusRetryAttempts + 1, exportClient.SendCount);
+    }
+
     [Theory]
     [InlineData(int.MaxValue / 2)]
     [InlineData(int.MaxValue - 1024)]
@@ -94,6 +124,56 @@ public class OtlpExporterRetryTransmissionHandlerTests
                 exception: null,
                 status: new Status(retryable ? StatusCode.Unavailable : StatusCode.Internal, retryable ? "retryable" : "non-retryable"),
                 grpcStatusDetailsHeader: maliciousHeader);
+        }
+
+        public bool Shutdown(int timeoutMilliseconds) => true;
+    }
+
+    /// <summary>
+    /// Simulates a server that times out on the first request (returning an already-expired
+    /// deadline as HttpClient.Timeout would) and succeeds on the second.
+    /// </summary>
+    private sealed class TimeoutThenSuccessExportClient : IExportClient
+    {
+        public int SendCount { get; private set; }
+
+        public ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default)
+        {
+            this.SendCount++;
+
+            if (this.SendCount == 1)
+            {
+                // Simulate HttpClient.Timeout: the deadline was set to now+timeout before the
+                // request, and is now expired because the timeout consumed the full budget.
+                return new ExportClientHttpResponse(
+                    success: false,
+                    deadlineUtc: DateTime.UtcNow.AddMilliseconds(-1),
+                    response: null,
+                    exception: new TaskCanceledException("The request timed out.", new TimeoutException()));
+            }
+
+            return new ExportClientHttpResponse(success: true, deadlineUtc: deadlineUtc, response: null, exception: null);
+        }
+
+        public bool Shutdown(int timeoutMilliseconds) => true;
+    }
+
+    /// <summary>
+    /// Simulates a server that always times out, used to verify the retry cap.
+    /// </summary>
+    private sealed class PersistentTimeoutExportClient : IExportClient
+    {
+        public int SendCount { get; private set; }
+
+        public ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default)
+        {
+            this.SendCount++;
+
+            return new ExportClientHttpResponse(
+                success: false,
+                deadlineUtc: DateTime.UtcNow.AddMilliseconds(-1),
+                response: null,
+                exception: new TaskCanceledException("The request timed out.", new TimeoutException()));
         }
 
         public bool Shutdown(int timeoutMilliseconds) => true;
