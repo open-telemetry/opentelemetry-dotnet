@@ -152,6 +152,10 @@ public sealed class PrometheusMetricTests
         => AssertName("db_bytes_total", "By", PrometheusType.Counter, false, "db_bytes_total");
 
     [Fact]
+    public void Name_NonCounterWithUnitPrecedingTotal_UnitAppended()
+        => AssertName("db_bytes_total", "By", PrometheusType.Gauge, false, "db_bytes_total_bytes");
+
+    [Fact]
     public void Name_UnitAlreadyPresentInName_OrderMatters_Appended()
         => AssertName("metric_total_hertz", "hertz_total", PrometheusType.Counter, false, "metric_total_hertz_hertz_total");
 
@@ -178,6 +182,14 @@ public sealed class PrometheusMetricTests
     [Fact]
     public void OpenMetricsMetadataName_CounterWithUnitPrecedingTotal_UnitNotDuplicated()
         => AssertOpenMetricsMetadataName("db_bytes_total", "By", PrometheusType.Counter, false, "db_bytes");
+
+    [Fact]
+    public void OpenMetricsName_NonCounterWithUnitPrecedingTotal_UnitAppended()
+        => AssertOpenMetricsName("db_bytes_total", "By", PrometheusType.Gauge, false, "db_bytes_total_bytes");
+
+    [Fact]
+    public void OpenMetricsMetadataName_NonCounterWithUnitPrecedingTotal_UnitAppended()
+        => AssertOpenMetricsMetadataName("db_bytes_total", "By", PrometheusType.Gauge, false, "db_bytes_total_bytes");
 
     [Fact]
     public void OpenMetricsName_UnitStartingWithNumber_DoesNotAddExtraSeparator()
