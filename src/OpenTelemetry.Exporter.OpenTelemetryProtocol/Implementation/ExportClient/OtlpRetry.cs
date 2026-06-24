@@ -45,12 +45,6 @@ internal static class OtlpRetry
 {
     public const int InitialBackoffMilliseconds = 1000;
 
-    // Maximum number of retries for no-status failures (e.g. HttpClient.Timeout,
-    // network errors). Unlike status-code failures, which are bounded by the deadline,
-    // each no-status retry gets a fresh per-request timeout window, so a separate
-    // cap is needed to prevent indefinite looping when the server is unreachable.
-    internal const int MaxNoStatusRetryAttempts = 5;
-
     private const int MaxBackoffMilliseconds = 5000;
     private const double BackoffMultiplier = 1.5;
 
@@ -66,11 +60,22 @@ internal static class OtlpRetry
         }
         else
         {
-            // No HTTP status code means the request failed without a response (e.g. a timeout
-            // or network failure). The per-request HttpClient.Timeout already bounded the attempt
-            // duration, so skip the deadline check here. The caller is responsible for limiting
-            // the total number of no-status retries via MaxNoStatusRetryAttempts.
+            // No HTTP status code means the request failed without a response
+            // (e.g. a timeout or network failure). Honor the deadline so that
+            // total batch export time does not exceed the configured timeout.
+            if (IsDeadlineExceeded(response.DeadlineUtc))
+            {
+                retryResult = default;
+                return false;
+            }
+
             var delay = TimeSpan.FromMilliseconds(GetRandomNumber(0, retryDelayInMilliSeconds));
+            if (WouldExceedDeadline(response.DeadlineUtc, delay))
+            {
+                retryResult = default;
+                return false;
+            }
+
             retryResult = new RetryResult(false, delay, CalculateNextRetryDelay(retryDelayInMilliSeconds));
             return true;
         }

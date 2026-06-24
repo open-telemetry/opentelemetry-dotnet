@@ -30,7 +30,7 @@ public class HttpRetryTestCase
     public static TheoryData<HttpRetryTestCase> GetHttpTestCases() =>
     [
         new("NetworkError", [new(statusCode: null)]),
-        new("NetworkError with expired deadline", [new(statusCode: null, isDeadlineExceeded: true)]),
+        new("NetworkError with expired deadline", [new(statusCode: null, isDeadlineExceeded: true, expectedSuccess: false)]),
         new("GatewayTimeout", [new(statusCode: HttpStatusCode.GatewayTimeout, throttleDelay: TimeSpan.FromSeconds(1))]),
         new("ServiceUnavailable", [new(statusCode: HttpStatusCode.ServiceUnavailable, throttleDelay: TimeSpan.FromSeconds(1), expectedThrottled: true)]),
 

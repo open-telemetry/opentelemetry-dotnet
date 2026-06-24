@@ -9,33 +9,46 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmissi
 public class OtlpExporterRetryTransmissionHandlerTests
 {
     [Fact]
-    public void TrySubmitRequest_HttpTimeoutWithExpiredDeadline_Retries()
+    public void TrySubmitRequest_HttpTimeoutWithExpiredDeadline_DoesNotRetry()
     {
-        // Reproduces the production path for issue #7453:
-        // When HttpClient.Timeout fires, deadlineUtc is already expired by the time the
-        // response is returned. The retry handler must still retry in this case by using
-        // a fresh deadline for each no-status attempt.
+        // When HttpClient.Timeout fires, deadlineUtc is already expired. To stay within the
+        // OTLP Timeout contract (max wait per batch export), the handler must not retry when
+        // the deadline is exhausted.
         var exportClient = new TimeoutThenSuccessExportClient();
         using var transmissionHandler = new OtlpExporterRetryTransmissionHandler(exportClient, timeoutMilliseconds: 100_000);
 
         var result = transmissionHandler.TrySubmitRequest([1, 2, 3], 3);
 
-        Assert.True(result, "Should succeed after retrying the timed-out request.");
+        Assert.False(result, "Should not retry when the deadline is already expired.");
+        Assert.Equal(1, exportClient.SendCount);
+    }
+
+    [Fact]
+    public void TrySubmitRequest_HttpNoStatusFailureWithRemainingDeadline_Retries()
+    {
+        // When a no-status failure occurs before the deadline is exhausted (e.g. a fast
+        // connection reset), the handler should retry within the remaining deadline budget.
+        var exportClient = new EarlyFailureThenSuccessExportClient();
+        using var transmissionHandler = new OtlpExporterRetryTransmissionHandler(exportClient, timeoutMilliseconds: 100_000);
+
+        var result = transmissionHandler.TrySubmitRequest([1, 2, 3], 3);
+
+        Assert.True(result, "Should succeed after retrying the no-status failure.");
         Assert.Equal(2, exportClient.SendCount);
     }
 
     [Fact]
-    public void TrySubmitRequest_ExceedsMaxNoStatusRetryAttempts_StopsRetrying()
+    public void TrySubmitRequest_PersistentHttpNoStatusFailureWithExpiredDeadline_StopsAfterFirstAttempt()
     {
-        // After MaxNoStatusRetryAttempts consecutive no-status failures with expired
-        // deadlines the handler must give up rather than retrying indefinitely.
+        // When every attempt returns a no-status failure with an already-expired deadline,
+        // the handler must give up immediately rather than retrying indefinitely.
         var exportClient = new PersistentTimeoutExportClient();
         using var transmissionHandler = new OtlpExporterRetryTransmissionHandler(exportClient, timeoutMilliseconds: 100_000);
 
         var result = transmissionHandler.TrySubmitRequest([1, 2, 3], 3);
 
         Assert.False(result);
-        Assert.Equal(OtlpRetry.MaxNoStatusRetryAttempts + 1, exportClient.SendCount);
+        Assert.Equal(1, exportClient.SendCount);
     }
 
     [Theory]
@@ -132,6 +145,7 @@ public class OtlpExporterRetryTransmissionHandlerTests
     /// <summary>
     /// Simulates a server that times out on the first request (returning an already-expired
     /// deadline as HttpClient.Timeout would) and succeeds on the second.
+    /// The retry handler must not retry since the deadline is exhausted.
     /// </summary>
     private sealed class TimeoutThenSuccessExportClient : IExportClient
     {
@@ -159,7 +173,37 @@ public class OtlpExporterRetryTransmissionHandlerTests
     }
 
     /// <summary>
-    /// Simulates a server that always times out, used to verify the retry cap.
+    /// Simulates a server that returns a fast no-status failure (with remaining deadline budget)
+    /// on the first request and succeeds on the second. Used to verify that retries happen when
+    /// there is still time remaining in the overall batch deadline.
+    /// </summary>
+    private sealed class EarlyFailureThenSuccessExportClient : IExportClient
+    {
+        public int SendCount { get; private set; }
+
+        public ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default)
+        {
+            this.SendCount++;
+
+            if (this.SendCount == 1)
+            {
+                // Simulate a fast no-status failure (e.g. connection refused) with time still
+                // remaining in the overall deadline.
+                return new ExportClientHttpResponse(
+                    success: false,
+                    deadlineUtc: deadlineUtc,
+                    response: null,
+                    exception: new HttpRequestException("Connection refused."));
+            }
+
+            return new ExportClientHttpResponse(success: true, deadlineUtc: deadlineUtc, response: null, exception: null);
+        }
+
+        public bool Shutdown(int timeoutMilliseconds) => true;
+    }
+
+    /// <summary>
+    /// Simulates a server that always returns a no-status failure with an already-expired deadline.
     /// </summary>
     private sealed class PersistentTimeoutExportClient : IExportClient
     {
