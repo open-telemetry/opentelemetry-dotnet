@@ -44,7 +44,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 internal static class OtlpRetry
 {
     public const int InitialBackoffMilliseconds = 1000;
-
     private const int MaxBackoffMilliseconds = 5000;
     private const double BackoffMultiplier = 1.5;
 
@@ -70,14 +69,14 @@ internal static class OtlpRetry
             }
 
             var delay = TimeSpan.FromMilliseconds(GetRandomNumber(0, retryDelayInMilliSeconds));
-            if (WouldExceedDeadline(response.DeadlineUtc, delay))
+            if (!WouldExceedDeadline(response.DeadlineUtc, delay))
             {
-                retryResult = default;
-                return false;
+                retryResult = new RetryResult(false, delay, CalculateNextRetryDelay(retryDelayInMilliSeconds));
+                return true;
             }
 
-            retryResult = new RetryResult(false, delay, CalculateNextRetryDelay(retryDelayInMilliSeconds));
-            return true;
+            retryResult = default;
+            return false;
         }
     }
 

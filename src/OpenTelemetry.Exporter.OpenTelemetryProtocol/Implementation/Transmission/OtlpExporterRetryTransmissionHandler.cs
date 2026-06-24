@@ -15,7 +15,6 @@ internal sealed class OtlpExporterRetryTransmissionHandler : OtlpExporterTransmi
     protected override bool OnSubmitRequestFailure(byte[] request, int contentLength, ExportClientResponse response)
     {
         var nextRetryDelayMilliseconds = OtlpRetry.InitialBackoffMilliseconds;
-
         while (RetryHelper.ShouldRetryRequest(response, nextRetryDelayMilliseconds, out var retryResult))
         {
             // Note: This delay cannot exceed the configured timeout period for otlp exporter.
