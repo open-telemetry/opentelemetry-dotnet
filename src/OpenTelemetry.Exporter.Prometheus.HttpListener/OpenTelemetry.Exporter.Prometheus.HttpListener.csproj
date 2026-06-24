@@ -12,6 +12,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(RunningDotNetPack)' == 'true'">
+    <!-- TODO remove reference to Microsoft.Extensions.Configuration.EnvironmentVariables when OpenTelemetry 1.16.1+ is released -->
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
     <PackageReference Include="OpenTelemetry" />
   </ItemGroup>
