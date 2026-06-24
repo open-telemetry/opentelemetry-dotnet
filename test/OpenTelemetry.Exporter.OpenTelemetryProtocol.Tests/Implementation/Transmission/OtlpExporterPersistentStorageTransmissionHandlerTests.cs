@@ -18,11 +18,7 @@ public class OtlpExporterPersistentStorageTransmissionHandlerTests
         var exportClient = new FailingExportClient();
         var persistentBlobProvider = new CapturingBlobProvider();
 
-        // The timeout must be comfortably larger than OtlpRetry.InitialBackoffMilliseconds (1000ms).
-        // Otherwise the random retry backoff (drawn from [0, InitialBackoffMilliseconds)) can exceed
-        // the remaining deadline budget, in which case the failure is treated as non-retryable, the
-        // request is not persisted, and the test flakes with Assert.True(result) returning False.
-        using var transmissionHandler = new OtlpExporterPersistentStorageTransmissionHandler(persistentBlobProvider, exportClient, timeoutMilliseconds: 100_000);
+        using var transmissionHandler = new OtlpExporterPersistentStorageTransmissionHandler(persistentBlobProvider, exportClient, timeoutMilliseconds: 10_000);
 
         byte[] request = [1, 2, 3, 4, 9, 9, 9];
         var result = transmissionHandler.TrySubmitRequest(request, contentLength: 4);
@@ -32,14 +28,58 @@ public class OtlpExporterPersistentStorageTransmissionHandlerTests
         Assert.Equal([1, 2, 3, 4], persistentBlobProvider.LastBuffer);
     }
 
+    [Fact]
+    public void TrySubmitRequest_PersistsWhenDeadlineAlreadyExceeded()
+    {
+        // Regression test for https://github.com/open-telemetry/opentelemetry-dotnet/issues/7444.
+        // A retryable failure must still be persisted to disk even when the export deadline
+        // has already been exceeded by the time the request fails. Otherwise the data is
+        // dropped instead of being saved for a later retry.
+        var exportClient = new FailingExportClient(deadlineExceeded: true);
+        var persistentBlobProvider = new CapturingBlobProvider();
+
+        using var transmissionHandler = new OtlpExporterPersistentStorageTransmissionHandler(persistentBlobProvider, exportClient, timeoutMilliseconds: 10_000);
+
+        byte[] request = [1, 2, 3, 4, 9, 9, 9];
+        var result = transmissionHandler.TrySubmitRequest(request, contentLength: 4);
+
+        Assert.True(result);
+        Assert.NotNull(persistentBlobProvider.LastBuffer);
+        Assert.Equal([1, 2, 3, 4], persistentBlobProvider.LastBuffer);
+    }
+
+    [Fact]
+    public void TrySubmitRequest_DoesNotPersistNonRetryableFailure()
+    {
+        var exportClient = new FailingExportClient(statusCode: HttpStatusCode.BadRequest);
+        var persistentBlobProvider = new CapturingBlobProvider();
+
+        using var transmissionHandler = new OtlpExporterPersistentStorageTransmissionHandler(persistentBlobProvider, exportClient, timeoutMilliseconds: 10_000);
+
+        byte[] request = [1, 2, 3, 4, 9, 9, 9];
+        var result = transmissionHandler.TrySubmitRequest(request, contentLength: 4);
+
+        Assert.False(result);
+        Assert.Null(persistentBlobProvider.LastBuffer);
+    }
+
     private sealed class FailingExportClient : IExportClient
     {
+        private readonly HttpStatusCode statusCode;
+        private readonly bool deadlineExceeded;
+
+        public FailingExportClient(HttpStatusCode statusCode = HttpStatusCode.ServiceUnavailable, bool deadlineExceeded = false)
+        {
+            this.statusCode = statusCode;
+            this.deadlineExceeded = deadlineExceeded;
+        }
+
         public ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default) =>
             new ExportClientHttpResponse(
                 success: false,
-                deadlineUtc: deadlineUtc,
+                deadlineUtc: this.deadlineExceeded ? DateTime.UtcNow.AddMilliseconds(-1) : deadlineUtc,
 #pragma warning disable CA2000 //  Dispose objects before losing scope
-                response: new HttpResponseMessage(HttpStatusCode.ServiceUnavailable),
+                response: new HttpResponseMessage(this.statusCode),
 #pragma warning restore CA2000 //  Dispose objects before losing scope
                 exception: null);
 

@@ -125,18 +125,6 @@ internal abstract class TextFormatSerializer
         },
     };
 
-    public static bool CanWriteMetric(Metric metric)
-    {
-        if (metric.MetricType == MetricType.ExponentialHistogram)
-        {
-            // Exponential histograms are not yet supported by Prometheus.
-            // They are ignored for now.
-            return false;
-        }
-
-        return true;
-    }
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int WriteEof(byte[] buffer, int cursor)
     {

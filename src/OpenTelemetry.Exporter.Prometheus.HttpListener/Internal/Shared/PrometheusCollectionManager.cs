@@ -515,8 +515,10 @@ internal sealed class PrometheusCollectionManager
 
         foreach (var metric in metrics)
         {
-            if (!TextFormatSerializer.CanWriteMetric(metric))
+            if (metric.MetricType == MetricType.ExponentialHistogram)
             {
+                // Exponential histograms are not yet supported by Prometheus.
+                PrometheusExporterEventSource.Log.MetricIgnored(metric);
                 continue;
             }
 
