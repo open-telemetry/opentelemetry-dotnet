@@ -435,7 +435,7 @@ To resolve this, pick whichever option best suits your needs:
   [ASP.NET Core
   instrumentation package](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.Instrumentation.AspNetCore)
   (`AddAspNetCoreInstrumentation()`), or at minimum register the source with
-  `AddSource("Microsoft.AspNetCore.Hosting")`. The request activity then becomes
+  `AddSource("Microsoft.AspNetCore")`. The request activity then becomes
   a recorded root and the custom child is sampled normally.
 
 * **Use a sampler that does not depend on the parent.** For example
