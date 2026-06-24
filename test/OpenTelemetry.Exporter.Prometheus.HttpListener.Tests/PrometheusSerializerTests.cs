@@ -338,6 +338,38 @@ public sealed partial class PrometheusSerializerTests
         await Verify(output, "txt", VerifySettings).UseParameters(snapshotName, useOpenMetrics);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task WriteMetricSuppressesScopeLabelsWhenPointTagsCollide(bool useOpenMetrics)
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter(
+            nameof(this.WriteMetricSuppressesScopeLabelsWhenPointTagsCollide),
+            "1.0.0",
+            [new("meter_tag", "scope")],
+            scope: null);
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        meter.CreateCounter<int>("test_counter").Add(
+            1,
+            new KeyValuePair<string, object?>("a.b", "value1"),
+            new KeyValuePair<string, object?>("a/b", "value2"));
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics.Single(), useOpenMetrics, suppressScopeInfo: true);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        await Verify(output, "txt", VerifySettings).UseParameters(useOpenMetrics);
+    }
+
     [Fact]
     public void WriteMetricNameSanitizesNonAsciiCharacters()
     {
@@ -1321,7 +1353,9 @@ public sealed partial class PrometheusSerializerTests
 
         provider.ForceFlush();
 
-        var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics, suppressScopeInfo);
+        var counterMetric = metrics.Single(m => m.Name == "test_counter");
+
+        var cursor = WriteMetric(buffer, 0, counterMetric, useOpenMetrics, suppressScopeInfo);
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
 
         await Verify(output, "txt", VerifySettings).UseParameters(useOpenMetrics, suppressScopeInfo);

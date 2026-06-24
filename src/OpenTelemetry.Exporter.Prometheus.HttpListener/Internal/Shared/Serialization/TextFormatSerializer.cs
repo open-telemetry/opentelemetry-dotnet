@@ -611,9 +611,12 @@ internal abstract class TextFormatSerializer
         cursor = startCursor;
         List<LabelData>? labels = null;
 
-        foreach (var scopeLabel in CreateScopeLabelData(metric))
+        if (!options.SuppressScopeInfo)
         {
-            AddLabel(scopeLabel.OriginalKey, scopeLabel.OutputKey, scopeLabel.Value, ref labels, reservedOutputKeys);
+            foreach (var scopeLabel in CreateScopeLabelData(metric))
+            {
+                AddLabel(scopeLabel.OriginalKey, scopeLabel.OutputKey, scopeLabel.Value, ref labels, reservedOutputKeys);
+            }
         }
 
         foreach (var tag in tags)

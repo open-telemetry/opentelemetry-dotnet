@@ -106,7 +106,7 @@ public class PrometheusHttpListenerTests
     }
 
     [Fact]
-    public void PrometheusHttpListenerThrowsOnStartifPortAlreadyInUse()
+    public void PrometheusHttpListenerThrowsOnStartIfPortAlreadyInUse()
     {
         // Step 1: Start a listener on a random port.
         using var context = CreateListener();
