@@ -60,6 +60,7 @@ $coveragePaths = @(
     "finalize-publicapi.ps1",
     "post-release.psm1",
     "prepare-release.psm1",
+    "report-unreleased-changes.ps1",
     "update-changelogs.ps1"
 ) | ForEach-Object { Join-Path -Path $scriptsDirectory -ChildPath $_ }
 
