@@ -353,5 +353,9 @@ rewrite.coyote.json
 # Test results
 TestResults/
 
+# Pester coverage results
+build/scripts/tests/coverage.xml
+build/scripts/tests/testResults.xml
+
 # Verify snapshots
 *.received.*
