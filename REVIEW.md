@@ -20,7 +20,7 @@ repository. It also helps guide AI coding and review agents to make them more ef
     ([#NNNN](https://github.com/open-telemetry/opentelemetry-dotnet/pull/NNNN))
   ```
 
-- Use the pull request URL  not the issue URL, in the link.
+- Use the pull request URL, not the issue URL, in the link.
 - Keep the description concise and in line with the style of existing entries.
   Overly verbose entries should be shortened. Users do not usually need to know
   the implementation details, only the effect of the change.
