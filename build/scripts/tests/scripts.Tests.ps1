@@ -22,7 +22,13 @@ Describe "PowerShell scripts" {
     Context "the module <Name>" -ForEach $moduleFiles {
 
         It "can be imported without error" {
-            { Import-Module -Name $Path -Force -ErrorAction Stop } | Should -Not -Throw
+            $module = Import-Module -Name $Path -Force -PassThru -ErrorAction Stop
+            try {
+                $module | Should -Not -BeNullOrEmpty -Because "importing the module should succeed"
+            }
+            finally {
+                Remove-Module -Name $module.Name -Force -ErrorAction SilentlyContinue
+            }
         }
 
         It "exports at least one function" {

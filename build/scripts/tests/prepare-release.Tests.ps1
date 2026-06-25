@@ -281,20 +281,34 @@ Released 0000-00-00
             return $null
         }
 
-        Push-Location -Path $work -ErrorAction Stop
+        # The invariant date does not depend on the current culture, so it is
+        # safe to compute it up front.
+        $expectedReleaseDate = [System.DateTime]::Now.ToString('yyyy-MMM-dd', [System.Globalization.CultureInfo]::InvariantCulture)
+
+        $originalCulture = [System.Globalization.CultureInfo]::CurrentCulture
         try {
-            UpdateChangelogReleaseDatesAndPostNoticeOnPullRequest `
-                -gitRepository "open-telemetry/opentelemetry-dotnet" `
-                -pullRequestNumber "789" `
-                -expectedPrAuthorUserName "otelbot" `
-                -commentUserName "maintainer" 6>$null
+            # Run under a non-English culture; the date must still be formatted
+            # invariantly (e.g. "Jun", not the localized "juin").
+            [System.Globalization.CultureInfo]::CurrentCulture = [System.Globalization.CultureInfo]::GetCultureInfo('fr-FR')
+
+            Push-Location -Path $work -ErrorAction Stop
+            try {
+                UpdateChangelogReleaseDatesAndPostNoticeOnPullRequest `
+                    -gitRepository "open-telemetry/opentelemetry-dotnet" `
+                    -pullRequestNumber "789" `
+                    -expectedPrAuthorUserName "otelbot" `
+                    -commentUserName "maintainer" 6>$null
+            }
+            finally {
+                Pop-Location
+            }
         }
         finally {
-            Pop-Location
+            [System.Globalization.CultureInfo]::CurrentCulture = $originalCulture
         }
 
         $changelog = Get-Content -Path (Join-Path -Path $project -ChildPath "CHANGELOG.md") -Raw
-        $changelog | Should -Match "Released \d{4}-\w{3}-\d{2}" -Because "the placeholder release date should be replaced with today's date"
+        $changelog | Should -BeLike "*Released $expectedReleaseDate*" -Because "the release date should use invariant (en-US) formatting even under a non-English culture"
         $changelog | Should -Not -Match "0000-00-00" -Because "the placeholder date should no longer be present"
 
         Should -Invoke -CommandName "gh" -ModuleName "prepare-release" -Exactly -Times 1 -ParameterFilter {
