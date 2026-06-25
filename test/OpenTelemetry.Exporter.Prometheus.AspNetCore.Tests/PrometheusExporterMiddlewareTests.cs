@@ -481,6 +481,15 @@ public sealed class PrometheusExporterMiddlewareTests
     [InlineData("1")]
     public async Task InvokeAsync_WhenRequestDeadlineExceeded_Returns408(string value)
     {
+        // The scrape timeout is enforced via CancellationTokenSource.CancelAfter, whose
+        // cancellation callback is dispatched on the thread pool. The Collect callback below
+        // blocks a worker thread synchronously, and the middleware only checks the token once
+        // Collect returns. If the pool is saturated (e.g. by sibling tests in CI) the timer
+        // callback can be delayed past that point, leaving the token un-cancelled and producing
+        // a 200 instead of a 408. Guarantee a worker thread is available to run the timer
+        // callback promptly so the timeout is observed deterministically.
+        EnsureThreadPoolWorkerThreadsAvailable();
+
         using var exporter = new PrometheusExporter(new PrometheusExporterOptions());
 
         exporter.Collect = _ =>
@@ -525,6 +534,18 @@ public sealed class PrometheusExporterMiddlewareTests
         await middleware.InvokeAsync(context);
 
         Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
+    }
+
+    private static void EnsureThreadPoolWorkerThreadsAvailable()
+    {
+        ThreadPool.GetMinThreads(out var workerThreads, out var completionPortThreads);
+
+        var desiredWorkerThreads = Math.Max(workerThreads, Environment.ProcessorCount * 2);
+
+        if (desiredWorkerThreads > workerThreads)
+        {
+            ThreadPool.SetMinThreads(desiredWorkerThreads, completionPortThreads);
+        }
     }
 
     private static async Task RunPrometheusExporterMiddlewareIntegrationTestWithMultipleContentTypes(
