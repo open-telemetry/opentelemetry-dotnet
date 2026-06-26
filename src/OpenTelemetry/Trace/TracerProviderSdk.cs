@@ -23,6 +23,8 @@ internal sealed class TracerProviderSdk : TracerProvider
     internal int ShutdownCount;
     internal bool Disposed;
 
+    private static int instanceCounter = -1;
+    private readonly string componentName;
     private readonly ActivityListener listener;
     private readonly Action<Activity> getRequestedDataAction;
     private readonly bool supportLegacyActivity;
@@ -37,6 +39,7 @@ internal sealed class TracerProviderSdk : TracerProvider
         state.RegisterProvider(this);
 
         this.ServiceProvider = serviceProvider!;
+        this.componentName = "tracer_provider/" + Interlocked.Increment(ref instanceCounter).ToString(System.Globalization.CultureInfo.InvariantCulture);
 
         if (ownsServiceProvider)
         {
@@ -337,6 +340,8 @@ internal sealed class TracerProviderSdk : TracerProvider
     /// </remarks>
     internal bool OnShutdown(int timeoutMilliseconds)
     {
+        var startTimestamp = System.Diagnostics.Stopwatch.GetTimestamp();
+
         // TODO Put OnShutdown logic in a task to run within the user provider timeoutMilliseconds
         foreach (var item in this.Instrumentations)
         {
@@ -345,9 +350,18 @@ internal sealed class TracerProviderSdk : TracerProvider
 
         this.Instrumentations.Clear();
 
-        var result = this.Processor?.Shutdown(timeoutMilliseconds);
+        var success = this.Processor?.Shutdown(timeoutMilliseconds) ?? true;
         this.listener?.Dispose();
-        return result ?? true;
+
+        var elapsed = System.Diagnostics.Stopwatch.GetElapsedTime(startTimestamp);
+        Internal.SdkSelfObservability.EmitProviderShutdownEvent(
+            componentType: "tracer_provider",
+            componentName: this.componentName,
+            success: success,
+            timeoutMilliseconds: timeoutMilliseconds,
+            elapsedMilliseconds: elapsed.TotalMilliseconds,
+            durationSeconds: elapsed.TotalSeconds);
+        return success;
     }
 
     protected override void Dispose(bool disposing)

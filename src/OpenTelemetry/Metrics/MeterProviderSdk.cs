@@ -24,6 +24,8 @@ internal sealed class MeterProviderSdk : MeterProvider
     internal ExemplarFilterType? ExemplarFilterForHistograms;
     internal Action? OnCollectObservableInstruments;
 
+    private static int instanceCounter = -1;
+    private readonly string componentName;
     private readonly List<Func<Instrument, MetricStreamConfiguration?>> viewConfigs;
     private readonly Lock collectLock = new();
     private readonly MeterListener listener;
@@ -38,6 +40,7 @@ internal sealed class MeterProviderSdk : MeterProvider
         state.RegisterProvider(this);
 
         this.ServiceProvider = serviceProvider;
+        this.componentName = "meter_provider/" + Interlocked.Increment(ref instanceCounter).ToString(System.Globalization.CultureInfo.InvariantCulture);
 
         if (ownsServiceProvider)
         {
@@ -437,7 +440,17 @@ internal sealed class MeterProviderSdk : MeterProvider
     internal bool OnShutdown(int timeoutMilliseconds)
     {
         OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"{nameof(MeterProviderSdk)}.{nameof(this.OnShutdown)} called with {nameof(timeoutMilliseconds)} = {timeoutMilliseconds}.");
-        return this.Reader?.Shutdown(timeoutMilliseconds) ?? true;
+        var startTimestamp = System.Diagnostics.Stopwatch.GetTimestamp();
+        var success = this.Reader?.Shutdown(timeoutMilliseconds) ?? true;
+        var elapsed = System.Diagnostics.Stopwatch.GetElapsedTime(startTimestamp);
+        Internal.SdkSelfObservability.EmitProviderShutdownEvent(
+            componentType: "meter_provider",
+            componentName: this.componentName,
+            success: success,
+            timeoutMilliseconds: timeoutMilliseconds,
+            elapsedMilliseconds: elapsed.TotalMilliseconds,
+            durationSeconds: elapsed.TotalSeconds);
+        return success;
     }
 
     protected override void Dispose(bool disposing)
