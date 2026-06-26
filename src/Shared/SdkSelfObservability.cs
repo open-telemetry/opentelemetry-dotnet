@@ -47,12 +47,14 @@ internal static class SdkSelfObservability
     /// canonical semconv pattern.
     /// </summary>
     /// <param name="componentType">Provider type (e.g. <c>logger_provider</c>).</param>
+    /// <param name="componentName">Instance name (e.g. <c>logger_provider/0</c>).</param>
     /// <param name="success">Whether all child components shut down successfully.</param>
     /// <param name="timeoutMilliseconds">The configured shutdown timeout.</param>
     /// <param name="elapsedMilliseconds">Elapsed time in milliseconds (for timeout classification).</param>
     /// <param name="durationSeconds">Elapsed time in seconds (for the duration attribute).</param>
     public static void EmitProviderShutdownEvent(
         string componentType,
+        string componentName,
         bool success,
         int timeoutMilliseconds,
         double elapsedMilliseconds,
@@ -70,6 +72,7 @@ internal static class SdkSelfObservability
         var state = new List<KeyValuePair<string, object?>>(4)
         {
             new("otel.component.type", componentType),
+            new("otel.component.name", componentName),
             new("otel.component.shutdown.duration", durationSeconds),
         };
 

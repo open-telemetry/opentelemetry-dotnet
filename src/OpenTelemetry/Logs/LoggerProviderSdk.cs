@@ -19,6 +19,8 @@ internal sealed class LoggerProviderSdk : LoggerProvider
     internal IDisposable? OwnedServiceProvider;
     internal bool Disposed;
     internal int ShutdownCount;
+    private static int instanceCounter = -1;
+    private readonly string componentName;
     private ILogRecordPool? threadStaticPool = LogRecordThreadStaticPool.Instance;
 
     public LoggerProviderSdk(
@@ -29,6 +31,7 @@ internal sealed class LoggerProviderSdk : LoggerProvider
         state.RegisterProvider(this);
 
         this.ServiceProvider = serviceProvider;
+        this.componentName = "logger_provider/" + Interlocked.Increment(ref instanceCounter).ToString(System.Globalization.CultureInfo.InvariantCulture);
 
         if (ownsServiceProvider)
         {
@@ -191,6 +194,7 @@ internal sealed class LoggerProviderSdk : LoggerProvider
         var elapsed = Stopwatch.GetElapsedTime(startTimestamp);
         SdkSelfObservability.EmitProviderShutdownEvent(
             componentType: "logger_provider",
+            componentName: this.componentName,
             success: success,
             timeoutMilliseconds: timeoutMilliseconds,
             elapsedMilliseconds: elapsed.TotalMilliseconds,
