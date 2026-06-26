@@ -26,8 +26,9 @@ internal class OtlpExporterTransmissionHandler : IDisposable
     /// </summary>
     /// <param name="request">The request to send to the server.</param>
     /// <param name="contentLength">length of content.</param>
-    /// <returns> <see langword="true" /> if the request is sent successfully; otherwise, <see
-    /// langword="false" />.
+    /// <returns>
+    /// <see langword="true"/> if the request is sent successfully;
+    /// otherwise, <see langword="false"/>.
     /// </returns>
     public bool TrySubmitRequest(byte[] request, int contentLength)
     {
@@ -51,11 +52,10 @@ internal class OtlpExporterTransmissionHandler : IDisposable
     /// </summary>
     /// <param name="timeoutMilliseconds">
     /// The number (non-negative) of milliseconds to wait, or
-    /// <c>Timeout.Infinite</c> to wait indefinitely.
+    /// <see cref="Timeout.Infinite"/> to wait indefinitely.
     /// </param>
     /// <returns>
-    /// Returns <see langword="true" /> if shutdown succeeded; otherwise, <see
-    /// langword="false" />.
+    /// Returns <see langword="true"/> if shutdown succeeded; otherwise, <see langword="false"/>.
     /// </returns>
     public bool Shutdown(int timeoutMilliseconds)
     {
@@ -97,8 +97,9 @@ internal class OtlpExporterTransmissionHandler : IDisposable
     /// <param name="request">The request that was attempted to send to the server.</param>
     /// <param name="contentLength">Length of content.</param>
     /// <param name="response"><see cref="ExportClientResponse" />.</param>
-    /// <returns><see langword="true" /> If the request is resubmitted and succeeds; otherwise, <see
-    /// langword="false" />.</returns>
+    /// <returns>
+    /// <see langword="true"/> If the request is resubmitted and succeeds; otherwise, <see langword="false"/>.
+    /// </returns>
     protected virtual bool OnSubmitRequestFailure(byte[] request, int contentLength, ExportClientResponse response) => false;
 
     /// <summary>
@@ -108,8 +109,9 @@ internal class OtlpExporterTransmissionHandler : IDisposable
     /// <param name="contentLength">Length of content.</param>
     /// <param name="deadlineUtc">The deadline time in utc for export request to finish.</param>
     /// <param name="response"><see cref="ExportClientResponse" />.</param>
-    /// <returns><see langword="true" /> If the retry succeeds; otherwise, <see
-    /// langword="false" />.</returns>
+    /// <returns>
+    /// <see langword="true"/> If the retry succeeds; otherwise, <see langword="false"/>.
+    /// </returns>
     protected bool TryRetryRequest(byte[] request, int contentLength, DateTime deadlineUtc, out ExportClientResponse response)
     {
         response = this.ExportClient.SendExportRequest(request, contentLength, deadlineUtc);
