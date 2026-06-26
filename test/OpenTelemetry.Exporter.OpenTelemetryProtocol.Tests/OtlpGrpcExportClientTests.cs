@@ -7,6 +7,8 @@ using System.Net.Http;
 using System.Buffers.Binary;
 using System.IO.Compression;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Grpc;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Implementation.ExportClient;
 
@@ -110,6 +112,57 @@ public class OtlpGrpcExportClientTests
             h => h.Key == "grpc-encoding" && h.Value.Contains("gzip"));
     }
 
+    [Fact]
+    public void SendExportRequest_Timeout_ReturnsRetryableDeadlineExceededResponse()
+    {
+        var exception = new TaskCanceledException("The request timed out.", new TimeoutException());
+
+        var response = SendExportRequestThatThrows(exception);
+
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.NotNull(response.Exception);
+        Assert.NotNull(response.Status);
+        Assert.Equal(StatusCode.DeadlineExceeded, response.Status.Value.StatusCode);
+        Assert.True(RetryHelper.ShouldRetryRequest(response), "A timeout should be retryable.");
+    }
+
+    [Fact]
+    public void SendExportRequest_UnexpectedCancellation_ReturnsRetryableCancelledResponse()
+    {
+        var exception = new OperationCanceledException("The operation was canceled.");
+
+        var response = SendExportRequestThatThrows(exception);
+
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.NotNull(response.Exception);
+        Assert.NotNull(response.Status);
+        Assert.Equal(StatusCode.Cancelled, response.Status.Value.StatusCode);
+        Assert.True(RetryHelper.ShouldRetryRequest(response), "An unexpected cancellation should be retryable.");
+    }
+
+    private static ExportClientGrpcResponse SendExportRequestThatThrows(Exception exception)
+    {
+        var buffer = BuildGrpcFrame("grpc test payload"u8.ToArray());
+
+        using var testHandler = new ThrowingHttpMessageHandler(exception);
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false);
+
+        var exportClient = new OtlpGrpcExportClient(
+            new OtlpExporterOptions
+            {
+                Endpoint = new Uri("http://localhost:4317"),
+                Compression = OtlpExportCompression.None,
+            },
+            httpClient,
+            string.Empty);
+
+        var response = exportClient.SendExportRequest(buffer, buffer.Length, DateTime.UtcNow.AddSeconds(10));
+
+        return Assert.IsType<ExportClientGrpcResponse>(response);
+    }
+
     private static byte[] BuildGrpcFrame(byte[] protobufPayload)
     {
         var frame = new byte[GrpcHeaderSize + protobufPayload.Length];
@@ -131,6 +184,24 @@ public class OtlpGrpcExportClientTests
         gzip.CopyTo(output);
 
         return output.ToArray();
+    }
+
+    private sealed class ThrowingHttpMessageHandler : HttpMessageHandler
+    {
+        private readonly Exception exception;
+
+        public ThrowingHttpMessageHandler(Exception exception)
+        {
+            this.exception = exception;
+        }
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            => throw this.exception;
+
+#if NET
+        protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
+            => throw this.exception;
+#endif
     }
 
     private sealed class TestGrpcMessageHandler : HttpMessageHandler

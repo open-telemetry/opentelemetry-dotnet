@@ -164,17 +164,6 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
                 status: null,
                 grpcStatusDetailsHeader: null);
         }
-        catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
-        {
-            // Handle unexpected cancellation.
-            OpenTelemetryProtocolExporterEventSource.Log.OperationUnexpectedlyCanceled(this.Endpoint, ex);
-            return new ExportClientGrpcResponse(
-                success: false,
-                deadlineUtc: deadlineUtc,
-                exception: ex,
-                status: new Status(StatusCode.Cancelled, "Operation was canceled unexpectedly."),
-                grpcStatusDetailsHeader: null);
-        }
         catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
         {
             // Handle TaskCanceledException caused by TimeoutException.
@@ -184,6 +173,17 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
                 deadlineUtc: deadlineUtc,
                 exception: ex,
                 status: new Status(StatusCode.DeadlineExceeded, "Request timed out."),
+                grpcStatusDetailsHeader: null);
+        }
+        catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+        {
+            // Handle unexpected cancellation.
+            OpenTelemetryProtocolExporterEventSource.Log.OperationUnexpectedlyCanceled(this.Endpoint, ex);
+            return new ExportClientGrpcResponse(
+                success: false,
+                deadlineUtc: deadlineUtc,
+                exception: ex,
+                status: new Status(StatusCode.Cancelled, "Operation was canceled unexpectedly."),
                 grpcStatusDetailsHeader: null);
         }
         catch (Exception ex)
