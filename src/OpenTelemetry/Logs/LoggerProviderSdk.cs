@@ -176,15 +176,26 @@ internal sealed class LoggerProviderSdk : LoggerProvider
             return false; // shutdown already called
         }
 
+        var startTimestamp = Stopwatch.GetTimestamp();
+        bool success;
         try
         {
-            return this.Processor?.Shutdown(timeoutMilliseconds) ?? true;
+            success = this.Processor?.Shutdown(timeoutMilliseconds) ?? true;
         }
         catch (Exception ex)
         {
             OpenTelemetrySdkEventSource.Log.LoggerProviderException(nameof(this.Shutdown), ex);
-            return false;
+            success = false;
         }
+
+        var elapsed = Stopwatch.GetElapsedTime(startTimestamp);
+        SdkSelfObservability.EmitProviderShutdownEvent(
+            componentType: "logger_provider",
+            success: success,
+            timeoutMilliseconds: timeoutMilliseconds,
+            elapsedMilliseconds: elapsed.TotalMilliseconds,
+            durationSeconds: elapsed.TotalSeconds);
+        return success;
     }
 
 #if EXPOSE_EXPERIMENTAL_FEATURES

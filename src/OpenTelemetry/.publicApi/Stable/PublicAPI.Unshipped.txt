@@ -1,1 +1,0 @@
-override OpenTelemetry.BatchLogRecordExportProcessor.OnShutdown(int timeoutMilliseconds) -> bool

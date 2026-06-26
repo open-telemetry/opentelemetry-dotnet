@@ -42,8 +42,59 @@ internal static class SdkSelfObservability
     }
 
     /// <summary>
-    /// Emits an <c>otel.sdk.component.shutdown</c> event with the spec-
-    /// mandated attributes. No-op when no logger is configured.
+    /// Emits an <c>otel.sdk.component.shutdown</c> event for a provider.
+    /// Uses <c>error.type</c> (absent on success, present on failure) per the
+    /// canonical semconv pattern.
+    /// </summary>
+    /// <param name="componentType">Provider type (e.g. <c>logger_provider</c>).</param>
+    /// <param name="success">Whether all child components shut down successfully.</param>
+    /// <param name="timeoutMilliseconds">The configured shutdown timeout.</param>
+    /// <param name="elapsedMilliseconds">Elapsed time in milliseconds (for timeout classification).</param>
+    /// <param name="durationSeconds">Elapsed time in seconds (for the duration attribute).</param>
+    public static void EmitProviderShutdownEvent(
+        string componentType,
+        bool success,
+        int timeoutMilliseconds,
+        double elapsedMilliseconds,
+        double durationSeconds)
+    {
+        var sink = Volatile.Read(ref logger);
+        if (sink is null)
+        {
+            return;
+        }
+
+        var level = success ? LogLevel.Information : LogLevel.Warning;
+        var eventId = new EventId(0, "otel.sdk.component.shutdown");
+
+        var state = new List<KeyValuePair<string, object?>>(4)
+        {
+            new("otel.component.type", componentType),
+            new("otel.component.shutdown.duration", durationSeconds),
+        };
+
+        if (!success)
+        {
+            // Classify: timeout takes precedence over generic failure
+            var errorType = (timeoutMilliseconds != Timeout.Infinite
+                && timeoutMilliseconds > 0
+                && elapsedMilliseconds >= timeoutMilliseconds)
+                ? "timeout"
+                : "failed";
+            state.Add(new("error.type", errorType));
+        }
+
+        sink.Log(
+            level,
+            eventId,
+            state,
+            exception: null,
+            formatter: static (_, _) => string.Empty);
+    }
+
+    /// <summary>
+    /// Emits an <c>otel.sdk.component.shutdown</c> event (legacy per-component
+    /// overload, kept for test compatibility). No-op when no logger is configured.
     /// </summary>
     /// <param name="componentType">Value for <c>otel.component.type</c>
     /// (e.g. <c>batching_log_processor</c>).</param>
