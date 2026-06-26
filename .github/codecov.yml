@@ -26,7 +26,7 @@ ignore:
   - "**.md"
   - ".github"
   - ".vscode"
-  - "build"
+  - "build/OpenTelemetry.proj"
   - "docs"
   - "examples"
   - "src/Shared"
@@ -52,3 +52,8 @@ flags:
     carryforward: true
     paths:
       - src
+
+  unittests-PowerShellScripts:
+    carryforward: true
+    paths:
+      - build/scripts

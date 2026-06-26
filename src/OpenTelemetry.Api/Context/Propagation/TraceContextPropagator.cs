@@ -381,22 +381,26 @@ public class TraceContextPropagator : TextMapPropagator
 
         foreach (var tracestateEntry in tracestateCollection)
         {
+            if (tracestateEntry is not { Length: > 0 })
+            {
+                continue;
+            }
+
             var tracestate = tracestateEntry.AsSpan();
-            var begin = 0;
-            while (begin < tracestate.Length)
+            while (!tracestate.IsEmpty)
             {
                 ReadOnlySpan<char> listMember;
 
-                var length = tracestate.Slice(begin).IndexOf(',');
+                var length = tracestate.IndexOf(',');
                 if (length != -1)
                 {
-                    listMember = tracestate.Slice(begin, length).Trim();
-                    begin += length + 1;
+                    listMember = tracestate.Slice(0, length).Trim();
+                    tracestate = tracestate.Slice(length + 1);
                 }
                 else
                 {
-                    listMember = tracestate.Slice(begin).Trim();
-                    begin = tracestate.Length;
+                    listMember = tracestate.Trim();
+                    tracestate = [];
                 }
 
                 // https://github.com/w3c/trace-context/blob/master/spec/20-http_request_header_format.md#tracestate-header-field-values
@@ -465,11 +469,11 @@ public class TraceContextPropagator : TextMapPropagator
         return true;
     }
 
-    private static bool TryExtractSingleTracestate(string tracestate, out string tracestateResult)
+    private static bool TryExtractSingleTracestate(string? tracestate, out string tracestateResult)
     {
         tracestateResult = string.Empty;
 
-        if (tracestate.Length == 0)
+        if (tracestate is not { Length: > 0 })
         {
             return true;
         }

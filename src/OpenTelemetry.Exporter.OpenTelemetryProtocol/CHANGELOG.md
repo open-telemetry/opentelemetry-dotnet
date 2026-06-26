@@ -12,6 +12,14 @@ Notes](../../RELEASENOTES.md).
   `LogRecordExportProcessorOptions` are not configured.
   ([#7399](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7399))
 
+* The library is now marked as trim and AOT compatible.
+  ([#7441](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7441))
+
+* Fixed the OTLP exporter dropping retryable data instead of saving it to disk
+  when persistent storage retry is enabled and an export exceeds the configured
+  timeout.
+  ([#7447](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7447))
+
 * Cached pre-serialized metric metadata (`Name` / `Description` / `Unit`) to avoid
   re-encoding on every OTLP metric export.
   ([#7307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7307))

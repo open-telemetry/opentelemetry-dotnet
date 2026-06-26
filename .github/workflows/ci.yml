@@ -38,7 +38,7 @@ jobs:
       changes: ${{ steps.changes.outputs.changes }}
     steps:
     - name: Checkout code
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       with:
         filter: 'tree:0'
         persist-credentials: false
@@ -95,6 +95,15 @@ jobs:
       contains(needs.detect-changes.outputs.changes, 'code')
       || contains(needs.detect-changes.outputs.changes, 'build')
     uses: ./.github/workflows/dotnet-format.yml
+
+  test-pwsh:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'pwsh')
+      || contains(needs.detect-changes.outputs.changes, 'build')
+    uses: ./.github/workflows/pwsh-test.yml
+    permissions:
+      contents: read # To checkout the code
 
   build-test-solution:
     needs: detect-changes
@@ -166,7 +175,7 @@ jobs:
       FRAMEWORK_VERSION: ${{ matrix.version }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           filter: 'tree:0'
           persist-credentials: false
@@ -192,7 +201,7 @@ jobs:
         version: [ net8.0, net9.0, net10.0 ]
     steps:
       - name: Checkout code
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           filter: 'tree:0'
           persist-credentials: false
@@ -221,7 +230,7 @@ jobs:
     timeout-minutes: 20
     steps:
     - name: Checkout code
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       with:
         fetch-depth: 0
         persist-credentials: false
@@ -285,6 +294,7 @@ jobs:
       lint-md,
       lint-pwsh,
       lint-dotnet-format,
+      test-pwsh,
       build-test-solution,
       build-test-project-stable,
       build-test-project-experimental,
