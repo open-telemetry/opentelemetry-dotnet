@@ -4,6 +4,9 @@
 using System.Buffers;
 using System.Buffers.Binary;
 using System.Diagnostics;
+#if NETFRAMEWORK || NETSTANDARD2_0
+using System.Diagnostics.CodeAnalysis;
+#endif
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -305,9 +308,7 @@ internal static class ProtobufSerializer
         {
             // Note: Validate there is enough space in the buffer to hold the
             // string otherwise throw to trigger a resize of the buffer.
-#pragma warning disable CA2201 // Do not raise reserved exception types
-            throw new IndexOutOfRangeException();
-#pragma warning restore CA2201 // Do not raise reserved exception types
+            ThrowBufferTooSmallException(nameof(buffer));
         }
 
         var bytesWritten = Utf8Encoding.GetBytes(value, 0, value.Length, buffer, writePosition);
@@ -337,9 +338,7 @@ internal static class ProtobufSerializer
         {
             // Note: Validate there is enough space in the buffer to hold the
             // string otherwise throw to trigger a resize of the buffer.
-#pragma warning disable CA2201 // Do not raise reserved exception types
-            throw new IndexOutOfRangeException();
-#pragma warning restore CA2201 // Do not raise reserved exception types
+            ThrowBufferTooSmallException(nameof(buffer));
         }
 
         var charBuffer = GetCharBuffer(value.Length);
@@ -417,5 +416,9 @@ internal static class ProtobufSerializer
 
         return buffer;
     }
+
+    [DoesNotReturn]
+    private static void ThrowBufferTooSmallException(string paramName)
+        => throw new ArgumentException("The buffer is too small to hold the data being written.", paramName);
 #endif
 }

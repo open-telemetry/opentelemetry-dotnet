@@ -360,6 +360,6 @@ project:
   notices](./THIRD-PARTY-NOTICES.TXT) file in the repository, as needed.
 
 See
-[EnvironmentVariablesExtensions.cs](./src/Shared/EnvironmentVariables/EnvironmentVariablesExtensions.cs)
+[NullableAttributes.cs](./src/Shared/Shims/NullableAttributes.cs)
 for an example of a file copied from another project and attributed in the [3rd
 party notices](./THIRD-PARTY-NOTICES.TXT) file.
