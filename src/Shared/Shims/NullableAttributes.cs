@@ -43,6 +43,12 @@ namespace System.Diagnostics.CodeAnalysis
 
         public string ParameterName { get; }
     }
+
+    /// <summary>Applied to a method that will never return under any circumstance.</summary>
+    [AttributeUsage(AttributeTargets.Method, Inherited = false)]
+    internal sealed class DoesNotReturnAttribute : Attribute
+    {
+    }
 #endif
 
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Property, Inherited = false, AllowMultiple = true)]
