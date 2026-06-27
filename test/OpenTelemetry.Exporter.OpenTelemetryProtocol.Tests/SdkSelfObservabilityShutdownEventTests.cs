@@ -33,6 +33,10 @@ public class SdkSelfObservabilityShutdownEventTests
                 .Build();
 
             userProvider.Shutdown();
+
+            // Clear the sink BEFORE disposing selfObsLoggerFactory, otherwise
+            // the self-obs LoggerProvider's own shutdown event gets captured.
+            SdkSelfObservability.SetLogger(null);
             selfObsLoggerFactory.Dispose();
         }
         finally
@@ -84,6 +88,7 @@ public class SdkSelfObservabilityShutdownEventTests
             Assert.True(provider.Shutdown());
             Assert.False(provider.Shutdown());
 
+            SdkSelfObservability.SetLogger(null);
             selfObsLoggerFactory.Dispose();
         }
         finally

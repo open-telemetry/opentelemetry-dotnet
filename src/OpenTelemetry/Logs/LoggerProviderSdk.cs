@@ -231,8 +231,10 @@ internal sealed class LoggerProviderSdk : LoggerProvider
 
                 this.Instrumentations.Clear();
 
-                // Wait for up to 5 seconds grace period
-                this.Processor?.Shutdown(5000);
+                // Route through Shutdown() so the shutdown event is emitted.
+                // The Interlocked guard ensures this is a no-op if Shutdown()
+                // was already called explicitly by the user.
+                this.Shutdown(5000);
                 this.Processor?.Dispose();
                 this.Processor = null;
 

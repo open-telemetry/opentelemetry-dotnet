@@ -460,23 +460,26 @@ internal sealed class MeterProviderSdk : MeterProvider
         {
             if (disposing)
             {
-                foreach (var item in this.Instrumentations)
+                // Route through OnShutdown (guarded by ShutdownCount) so the
+                // shutdown event is emitted and the reader is drained.
+                if (Interlocked.Increment(ref this.ShutdownCount) <= 1)
                 {
-                    (item as IDisposable)?.Dispose();
+                    try
+                    {
+                        this.OnShutdown(5000);
+                    }
+                    catch (Exception ex)
+                    {
+                        OpenTelemetrySdkEventSource.Log.MeterProviderException(nameof(this.OnShutdown), ex);
+                    }
                 }
 
-                this.Instrumentations.Clear();
-
-                // Wait for up to 5 seconds grace period
-                this.Reader?.Shutdown(5000);
+                // Dispose-only cleanup
                 this.Reader?.Dispose();
                 this.Reader = null;
-
                 this.compositeMetricReader?.Dispose();
                 this.compositeMetricReader = null;
-
                 this.listener?.Dispose();
-
                 this.OwnedServiceProvider?.Dispose();
                 this.OwnedServiceProvider = null;
             }

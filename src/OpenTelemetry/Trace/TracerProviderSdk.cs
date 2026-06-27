@@ -370,25 +370,24 @@ internal sealed class TracerProviderSdk : TracerProvider
         {
             if (disposing)
             {
-                foreach (var item in this.Instrumentations)
+                // Route through OnShutdown (guarded by ShutdownCount) so the
+                // shutdown event is emitted and the processor is drained.
+                if (Interlocked.Increment(ref this.ShutdownCount) <= 1)
                 {
-                    (item as IDisposable)?.Dispose();
+                    try
+                    {
+                        this.OnShutdown(5000);
+                    }
+                    catch (Exception ex)
+                    {
+                        OpenTelemetrySdkEventSource.Log.TracerProviderException(nameof(this.OnShutdown), ex);
+                    }
                 }
 
-                this.Instrumentations.Clear();
-
+                // Dispose-only cleanup (not part of shutdown)
                 (this.Sampler as IDisposable)?.Dispose();
-
-                // Wait for up to 5 seconds grace period
-                this.Processor?.Shutdown(5000);
                 this.Processor?.Dispose();
                 this.Processor = null;
-
-                // Shutdown the listener last so that anything created while instrumentation cleans up will still be processed.
-                // Redis instrumentation, for example, flushes during dispose which creates Activity objects for any profiling
-                // sessions that were open.
-                this.listener?.Dispose();
-
                 this.OwnedServiceProvider?.Dispose();
                 this.OwnedServiceProvider = null;
             }
