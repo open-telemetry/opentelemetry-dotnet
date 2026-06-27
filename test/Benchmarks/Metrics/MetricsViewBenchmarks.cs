@@ -9,20 +9,21 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 
 /*
-BenchmarkDotNet v0.13.10, Windows 11 (10.0.23424.1000)
-Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
-.NET SDK 8.0.100
-  [Host]     : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
-  DefaultJob : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
+BenchmarkDotNet v0.15.8, Windows 11 (10.0.26200.8655/25H2/2025Update/HudsonValley2)
+AMD Ryzen 7 5800H with Radeon Graphics 3.20GHz, 1 CPU, 16 logical and 8 physical cores
+.NET SDK 10.0.301
+  [Host]     : .NET 10.0.9 (10.0.9, 10.0.926.27113), X64 RyuJIT x86-64-v3
+  DefaultJob : .NET 10.0.9 (10.0.9, 10.0.926.27113), X64 RyuJIT x86-64-v3
 
 
-| Method         | ViewConfig   | Mean      | Error    | StdDev   | Allocated |
-|--------------- |------------- |----------:|---------:|---------:|----------:|
-| CounterHotPath | NoView       | 217.94 ns | 3.950 ns | 3.502 ns |         - |
-| CounterHotPath | ViewNA       | 206.09 ns | 1.634 ns | 1.364 ns |         - |
-| CounterHotPath | ViewApplied  | 210.63 ns | 4.116 ns | 5.904 ns |         - |
-| CounterHotPath | ViewToRename | 207.05 ns | 1.592 ns | 1.329 ns |         - |
-| CounterHotPath | ViewZeroTag  |  68.67 ns | 0.613 ns | 0.573 ns |         - |
+| Method         | ViewConfig              | Mean      | Error    | StdDev   |
+|--------------- |------------------------ |----------:|---------:|---------:|
+| CounterHotPath | NoView                  | 240.39 ns | 2.585 ns | 2.292 ns |
+| CounterHotPath | ViewNA                  | 237.82 ns | 3.095 ns | 2.895 ns |
+| CounterHotPath | ViewApplied             | 171.97 ns | 2.295 ns | 1.792 ns |
+| CounterHotPath | ViewToRename            | 244.03 ns | 3.004 ns | 2.810 ns |
+| CounterHotPath | ViewZeroTag             |  45.36 ns | 0.913 ns | 0.937 ns |
+| CounterHotPath | ViewWithExcludedTagKeys | 166.62 ns | 1.982 ns | 1.757 ns |
 */
 
 namespace Benchmarks.Metrics;
@@ -69,6 +70,11 @@ public class MetricsViewBenchmarks
         /// and drops every tag.
         /// </summary>
         ViewZeroTag,
+
+        /// <summary>
+        /// Provider has view registered with keys that have been excluded.
+        /// </summary>
+        ViewWithExcludedTagKeys,
     }
 
     [Params(
@@ -76,7 +82,8 @@ public class MetricsViewBenchmarks
         ViewConfiguration.ViewNA,
         ViewConfiguration.ViewApplied,
         ViewConfiguration.ViewToRename,
-        ViewConfiguration.ViewZeroTag)]
+        ViewConfiguration.ViewZeroTag,
+        ViewConfiguration.ViewWithExcludedTagKeys)]
     public ViewConfiguration ViewConfig { get; set; }
 
     [GlobalSetup]
@@ -122,6 +129,14 @@ public class MetricsViewBenchmarks
             this.meterProvider = Sdk.CreateMeterProviderBuilder()
                 .AddMeter(this.meter.Name)
                 .AddView(this.counter.Name, new MetricStreamConfiguration() { TagKeys = [] })
+                .AddInMemoryExporter(this.metrics)
+                .Build();
+        }
+        else if (this.ViewConfig == ViewConfiguration.ViewWithExcludedTagKeys)
+        {
+            this.meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(this.meter.Name)
+                .AddView(this.counter.Name, new MetricStreamConfiguration() { ExcludedTagKeys = ["DimName4", "DimName5"] })
                 .AddInMemoryExporter(this.metrics)
                 .Build();
         }
