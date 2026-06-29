@@ -26,6 +26,8 @@ jobs:
   automation:
     if: github.event_name != 'schedule' || (github.event_name == 'schedule' && github.event.repository.fork == false)
     uses: ./.github/workflows/automation.yml
+    permissions:
+      contents: read
     secrets:
       OTELBOT_DOTNET_PRIVATE_KEY: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
 
