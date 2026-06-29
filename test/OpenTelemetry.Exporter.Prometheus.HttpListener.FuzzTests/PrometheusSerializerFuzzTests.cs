@@ -212,7 +212,7 @@ public class PrometheusSerializerFuzzTests
             }
             else if (scheme == EscapingScheme.Dots)
             {
-                text.Append("__");
+                text.Append('_');
             }
             else if (!isValidRune)
             {

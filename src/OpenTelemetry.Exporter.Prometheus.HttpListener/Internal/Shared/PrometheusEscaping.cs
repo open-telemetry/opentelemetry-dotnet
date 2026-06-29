@@ -11,9 +11,8 @@ namespace OpenTelemetry.Exporter.Prometheus;
 /// Implements the Prometheus name escaping schemes.
 /// </summary>
 /// <remarks>
-/// The transformations are faithful to <c>EscapeName</c> in
-/// https://github.com/prometheus/common/blob/43de10cc658055c6b5e4d619edc917d5af493409/model/metric.go
-/// so that a Prometheus client can reverse them.
+/// The transformations implement the schemes documented at
+/// https://prometheus.io/docs/instrumenting/escaping_schemes/.
 /// </remarks>
 internal static class PrometheusEscaping
 {
@@ -126,7 +125,7 @@ internal static class PrometheusEscaping
             }
             else if (scheme == EscapingScheme.Dots)
             {
-                cursor = WriteAscii(buffer, cursor, "__");
+                buffer[cursor++] = unchecked((byte)'_');
             }
             else if (!isValidRune)
             {
