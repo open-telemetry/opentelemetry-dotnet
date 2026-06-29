@@ -300,11 +300,17 @@ function UpdateChangelogReleaseDatesAndPostNoticeOnPullRequest {
   }
 
   $updatedFiles = 0
+
+  # Format the release date using the invariant culture so the month
+  # abbreviation is always en-US (e.g. "Jun") regardless of the culture of the
+  # machine running the script.
+  $releaseDate = [System.DateTime]::Now.ToString('yyyy-MMM-dd', [System.Globalization.CultureInfo]::InvariantCulture)
+
   $newHeader =
 @"
 ## $version
 
-Released $(Get-Date -UFormat '%Y-%b-%d')
+Released $releaseDate
 "@
 
   $projectDirs = Get-ChildItem -Path src/**/*.csproj | Select-String "<MinVerTagPrefix>$tagPrefix</MinVerTagPrefix>" -List | Select-Object -ExpandProperty Path | Split-Path -Parent

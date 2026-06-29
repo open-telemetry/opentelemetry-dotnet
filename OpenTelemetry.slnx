@@ -33,7 +33,7 @@
     <File Path="build/Common.prod.props" />
     <File Path="build/Common.props" />
     <File Path="build/Common.targets" />
-    <File Path="build/debug.snk" />
+    <File Path="build/OpenTelemetry.snk.base64" />
     <File Path="build/docfx.cmd" />
     <File Path="build/docker-compose.net10.0.yml" />
     <File Path="build/docker-compose.net8.0.yml" />
@@ -164,11 +164,6 @@
   <Folder Name="/Shared/Configuration/">
     <File Path="src/Shared/Configuration/IConfigurationExtensionsLogger.cs" />
     <File Path="src/Shared/Configuration/OpenTelemetryConfigurationExtensions.cs" />
-  </Folder>
-  <Folder Name="/Shared/EnvironmentVariables/">
-    <File Path="src/Shared/EnvironmentVariables/EnvironmentVariablesConfigurationProvider.cs" />
-    <File Path="src/Shared/EnvironmentVariables/EnvironmentVariablesConfigurationSource.cs" />
-    <File Path="src/Shared/EnvironmentVariables/EnvironmentVariablesExtensions.cs" />
   </Folder>
   <Folder Name="/Shared/Metrics/">
     <File Path="src/Shared/Metrics/Base2ExponentialBucketHistogramHelper.cs" />

@@ -59,7 +59,7 @@ jobs:
         permission-pull-requests: write
 
     - name: Checkout code
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       with:
         persist-credentials: true # zizmor: ignore[artipacked] Needed to push commits
         token: ${{ steps.otelbot-token.outputs.token }}
@@ -83,11 +83,11 @@ jobs:
         EXPECTED_COMMENT_AUTHOR_USER_NAME: ${{ needs.automation.outputs.application-login }}
         COMMENT_USER_NAME: ${{ github.event.comment.user.login }}
         ISSUE_NUMBER: ${{ github.event.issue.number }}
-        NUGET_TOKEN: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
+        NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
       run: |
         Import-Module .\build\scripts\post-release.psm1
 
-        $HasToken = -Not [string]::IsNullOrEmpty($env:NUGET_TOKEN)
+        $HasToken = -Not [string]::IsNullOrEmpty($env:NUGET_API_KEY)
         PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullRequest `
           -gitRepository ${env:GITHUB_REPOSITORY} `
           -pullRequestNumber ${env:ISSUE_NUMBER} `
@@ -119,7 +119,7 @@ jobs:
         permission-pull-requests: write
 
     - name: Checkout code
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       with:
         # Note: By default GitHub only fetches 1 commit. MinVer needs to find
         # the version tag which is typically NOT on the first commit so we

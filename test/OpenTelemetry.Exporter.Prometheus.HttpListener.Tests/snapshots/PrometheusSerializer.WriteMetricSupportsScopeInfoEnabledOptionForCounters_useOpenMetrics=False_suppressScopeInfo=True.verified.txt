@@ -1,0 +1,3 @@
+﻿# TYPE test_counter_total counter
+test_counter_total{key="value1"} 1
+test_counter_total{key="value2"} 2

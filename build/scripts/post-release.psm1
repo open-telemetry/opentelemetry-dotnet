@@ -245,7 +245,7 @@ function PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullReques
       --body "I am uploading the packages for ``$tag`` to NuGet and then I will publish the release."
     gh pr lock $pullRequestNumber
 
-    dotnet nuget push "$artifactDownloadPath/**/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key "$env:NUGET_TOKEN" --symbol-api-key "$env:NUGET_TOKEN"
+    dotnet nuget push "$artifactDownloadPath/**/*.nupkg" --source https://api.nuget.org/v3/index.json
 
     if ($LASTEXITCODE -gt 0)
     {
