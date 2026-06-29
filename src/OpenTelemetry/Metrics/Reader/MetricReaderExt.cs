@@ -16,6 +16,8 @@ public abstract partial class MetricReader
     private readonly HashSet<string> metricStreamNames = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<MetricStreamIdentity, Metric?> instrumentIdentityToMetric = new();
     private readonly Lock instrumentCreationLock = new();
+    private readonly ConcurrentQueue<int> availableMetricIndices = new();
+
     private int metricLimit;
     private int cardinalityLimit;
     private Metric?[] metrics = [];
@@ -28,11 +30,11 @@ public abstract partial class MetricReader
     {
         if (metric.Active)
         {
-            // TODO: This will cause the metric to be removed from the storage
-            // array during the next collect/export. If this happens often we
-            // will run out of storage. Would it be better instead to set the
-            // end time on the metric and keep it around so it can be
-            // reactivated?
+            // Note: This causes the metric to be removed from the storage array
+            // during the next collect/export. The freed storage slot is then
+            // reused for a subsequently published instrument (see
+            // TryReserveMetricIndex), so repeatedly creating and disposing
+            // meters/instruments does not exhaust the metric storage.
             metric.Active = false;
 
             OpenTelemetrySdkEventSource.Log.MetricInstrumentDeactivated(
@@ -67,8 +69,7 @@ public abstract partial class MetricReader
                 return [existingMetric];
             }
 
-            var index = ++this.metricIndex;
-            if (index >= this.metricLimit)
+            if (!this.TryReserveMetricIndex(out var index))
             {
                 OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricStreamIdentity.InstrumentName, metricStreamIdentity.MeterName, "Maximum allowed Metric streams for the provider exceeded.", "Use MeterProviderBuilder.AddView to drop unused instruments. Or use MeterProviderBuilder.SetMaxMetricStreams to configure MeterProvider to allow higher limit.");
                 return [];
@@ -86,6 +87,9 @@ public abstract partial class MetricReader
                 }
                 catch (NotSupportedException nse)
                 {
+                    // The reserved slot was never populated, so return it for reuse.
+                    this.availableMetricIndices.Enqueue(index);
+
                     // TODO: This allocates string even if none listening.
                     // Could be improved with separate Event.
                     // Also the message could call out what Instruments
@@ -158,8 +162,7 @@ public abstract partial class MetricReader
                     continue;
                 }
 
-                var index = ++this.metricIndex;
-                if (index >= this.metricLimit)
+                if (!this.TryReserveMetricIndex(out var index))
                 {
                     OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(metricStreamIdentity.InstrumentName, metricStreamIdentity.MeterName, "Maximum allowed Metric streams for the provider exceeded.", "Use MeterProviderBuilder.AddView to drop unused instruments. Or use MeterProviderBuilder.SetMaxMetricStreams to configure MeterProvider to allow higher limit.");
                 }
@@ -254,7 +257,7 @@ public abstract partial class MetricReader
 
                     if (!metric.Active)
                     {
-                        this.RemoveMetric(ref metric);
+                        this.RemoveMetric(ref metric, i);
                     }
                 }
             }
@@ -268,26 +271,57 @@ public abstract partial class MetricReader
         }
     }
 
-    private void RemoveMetric(ref Metric? metric)
+    private void RemoveMetric(ref Metric? metric, int index)
     {
-        // TODO: This logic removes the metric. If the same
-        // metric is published again we will create a new metric
-        // for it. If this happens often we will run out of
-        // storage. Instead, should we keep the metric around
-        // and set a new start time + reset its data if it comes
-        // back?
-
         OpenTelemetrySdkEventSource.Log.MetricInstrumentRemoved(metric!.Name, metric.MeterName);
 
-        // Note: This is using TryUpdate and NOT TryRemove because there is a
-        // race condition. If a metric is deactivated and then reactivated in
-        // the same collection cycle
-        // instrumentIdentityToMetric[metric.InstrumentIdentity] may already
-        // point to the new activated metric and not the old deactivated one.
-        this.instrumentIdentityToMetric.TryUpdate(metric.InstrumentIdentity, null, metric);
+        // Note: This removes the entry (key and value) so the dictionary does
+        // not grow without bound as instruments are repeatedly created and
+        // disposed. A value-matching removal is used to guard against a race
+        // condition: if a metric is deactivated and then reactivated in the
+        // same collection cycle, instrumentIdentityToMetric[metric.InstrumentIdentity]
+        // may already point to the new (active) metric. In that case the entry's
+        // value no longer equals the old metric, the removal is a no-op, and the
+        // new metric is retained.
+        var item = new KeyValuePair<MetricStreamIdentity, Metric?>(metric.InstrumentIdentity, metric);
+#if NET
+        this.instrumentIdentityToMetric.TryRemove(item);
+#else
+        ICollection<KeyValuePair<MetricStreamIdentity, Metric?>> instrumentIdentityToMetric = this.instrumentIdentityToMetric;
+        instrumentIdentityToMetric.Remove(item);
+#endif
 
         // Note: metric is a reference to the array storage so
         // this clears the metric out of the array.
         metric = null;
+
+        // Make the freed slot available for reuse by a future instrument. This
+        // must happen after the slot has been cleared above so that a concurrent
+        // AddMetricWith*Views call observes a null slot before writing to it.
+        this.availableMetricIndices.Enqueue(index);
+    }
+
+    private bool TryReserveMetricIndex(out int index)
+    {
+        // Note: This is always called while holding instrumentCreationLock, so
+        // access to metricIndex does not need additional synchronization.
+
+        // Reuse a slot freed by a previously removed (deactivated) metric, if
+        // one is available, before consuming a brand new slot.
+        if (this.availableMetricIndices.TryDequeue(out index))
+        {
+            return true;
+        }
+
+        var newIndex = this.metricIndex + 1;
+        if (newIndex >= this.metricLimit)
+        {
+            index = -1;
+            return false;
+        }
+
+        this.metricIndex = newIndex;
+        index = newIndex;
+        return true;
     }
 }

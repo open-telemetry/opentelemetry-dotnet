@@ -24,6 +24,10 @@ Notes](../../RELEASENOTES.md).
   recorded.
   ([#7427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7427))
 
+* Fixed a metric storage leak that occurred when meters and instruments were
+  repeatedly created and disposed.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.16.0
 
 Released 2026-Jun-10
