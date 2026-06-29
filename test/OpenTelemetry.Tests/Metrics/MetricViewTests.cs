@@ -1576,5 +1576,4 @@ public class MetricViewTests : MetricTestsBase
         Assert.Equal("othername", exportedItems[0].Name);
         Assert.Equal(10, GetLongSum(metric1));
     }
-
 }

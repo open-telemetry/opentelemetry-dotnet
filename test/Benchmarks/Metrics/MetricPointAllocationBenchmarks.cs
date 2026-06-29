@@ -98,6 +98,18 @@ public class MetricPointAllocationBenchmarks
         this.RunManyMetrics(enableLazyAllocation: true);
     }
 
+    private static MeterProviderBuilder ConfigureLazyAllocation(MeterProviderBuilder builder, bool enableLazyAllocation)
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                [MeterProviderSdk.EnableLazyAllocationConfigKey] = enableLazyAllocation.ToString(),
+            })
+            .Build();
+
+        return builder.ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration));
+    }
+
     private void Run(bool enableLazyAllocation, int emittedTimeSeries)
     {
         var exportedItems = new List<Metric>();
@@ -133,18 +145,6 @@ public class MetricPointAllocationBenchmarks
             counters[i] = meter.CreateCounter<long>($"{ManyCountersNamePrefix}{i}");
             counters[i].Add(1, LowCardinalityTags[0]);
         }
-    }
-
-    private static MeterProviderBuilder ConfigureLazyAllocation(MeterProviderBuilder builder, bool enableLazyAllocation)
-    {
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                [MeterProviderSdk.EnableLazyAllocationConfigKey] = enableLazyAllocation.ToString(),
-            })
-            .Build();
-
-        return builder.ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration));
     }
 
     private MetricStreamConfiguration CreateMetricStreamConfiguration()
