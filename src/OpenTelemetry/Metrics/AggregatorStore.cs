@@ -37,7 +37,18 @@ internal sealed class AggregatorStore
     private readonly Queue<int>? availableMetricPoints;
 
     private readonly ConcurrentDictionary<Tags, int> tagsToMetricPointIndexDictionary =
+#if NET9_0_OR_GREATER
+        new(TagsComparer.Instance);
+#else
         new();
+#endif
+
+#if NET9_0_OR_GREATER
+    // Alternate lookup that resolves a MetricPoint directly from the incoming
+    // tags span, avoiding the copy of the tags into thread-static storage.
+    // Only used for cumulative aggregation (the non-reclaim lookup path).
+    private readonly ConcurrentDictionary<Tags, int>.AlternateLookup<ReadOnlySpan<KeyValuePair<string, object?>>> tagsToMetricPointIndexLookup;
+#endif
 
     private readonly string name;
     private readonly MetricPoint[] metricPoints;
@@ -107,6 +118,11 @@ internal sealed class AggregatorStore
         // Setting metricPointIndex to 1 as we would reserve the metricPoints[1] for overflow attribute.
         // Newer attributes should be added starting at the index: 2
         this.metricPointIndex = 1;
+
+#if NET9_0_OR_GREATER
+        this.tagsToMetricPointIndexLookup =
+            this.tagsToMetricPointIndexDictionary.GetAlternateLookup<ReadOnlySpan<KeyValuePair<string, object?>>>();
+#endif
 
         // Always reclaim unused MetricPoints for Delta aggregation temporality
         if (this.OutputDelta)
@@ -1032,6 +1048,20 @@ internal sealed class AggregatorStore
             this.InitializeZeroTagPointIfNotInitialized();
             return 0;
         }
+
+#if NET9_0_OR_GREATER
+        // Fast path: for cumulative aggregation, look up an existing MetricPoint
+        // directly from the incoming tags span. The dictionary stores keys in the
+        // given (unsorted) order too, so a previously-seen tag set in its original
+        // order resolves here without copying the tags into thread-static storage,
+        // constructing a Tags key, or sorting. Misses (new tag sets) and the
+        // delta-with-reclaim path fall through to the slower copy-and-add path below.
+        if (!this.OutputDelta
+            && this.tagsToMetricPointIndexLookup.TryGetValue(tags, out var existingIndex))
+        {
+            return existingIndex;
+        }
+#endif
 
         var storage = ThreadStaticStorage.GetStorage();
 
