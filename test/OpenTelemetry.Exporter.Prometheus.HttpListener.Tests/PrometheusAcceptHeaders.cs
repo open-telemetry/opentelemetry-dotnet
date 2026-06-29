@@ -22,6 +22,8 @@ public static class PrometheusAcceptHeaders
             "text/plain; q=0.9, application/openmetrics-text; version=1.0.0; q=0.1",
             "TEXT/PLAIN; q=0.9, Application/OpenMetrics-Text; version=1.0.0; q=0.1",
             "*/*;q=0.8,text/plain; charset=utf-8; version=0.0.4",
+            "text/plain; escaping=dots",
+            "text/plain; escaping=values",
         ];
 
         foreach (var accept in prometheusV0)
@@ -46,6 +48,8 @@ public static class PrometheusAcceptHeaders
             "application/openmetrics-text; version=0.0.1",
             "application/openmetrics-text; version=0.0.1; charset=utf-8",
             "application/openmetrics-text; version=\"0.0.1\"",
+            "application/openmetrics-text; escaping=dots",
+            "application/openmetrics-text; escaping=values",
         ];
 
         foreach (var accept in openMetricsV0)
