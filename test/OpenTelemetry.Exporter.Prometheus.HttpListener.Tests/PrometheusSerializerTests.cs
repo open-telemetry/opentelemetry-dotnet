@@ -1799,6 +1799,70 @@ public sealed partial class PrometheusSerializerTests
         await Verify(output, "txt", VerifySettings).UseParameters(escaping);
     }
 
+    [Fact]
+    public async Task WriteMetricEscapesScopeLabelKeysUsingNegotiatedDotsScheme()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter(
+            nameof(this.WriteMetricEscapesScopeLabelKeysUsingNegotiatedDotsScheme),
+            "1.0.0",
+            [new("dot_name", "value")],
+            scope: null);
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        meter.CreateCounter<int>("test_counter").Add(1);
+
+        provider.ForceFlush();
+
+        var output = WriteMetricWithDotsEscaping(buffer, metrics[0]);
+
+        await Verify(output, "txt", VerifySettings);
+    }
+
+    [Fact]
+    public async Task WriteExemplarEscapesReservedTraceIdKeyToPreventCollisionWithFilteredTag()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        var counter = meter.CreateCounter<long>("test_counter");
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
+            .AddView(
+                counter.Name,
+                new MetricStreamConfiguration
+                {
+                    TagKeys = ["keep"],
+                    ExemplarReservoirFactory = () => new SimpleFixedSizeExemplarReservoir(3),
+                })
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        using var activity = new Activity("test");
+        activity.Start();
+
+        // The filtered tag is literally named "trace_id"; under the dots scheme both it and the
+        // built-in trace_id escape to the same output key "trace__id". The built-in trace ID MUST
+        // take precedence so its value is emitted intact rather than having the filtered tag's
+        // value concatenated onto it.
+        counter.Add(2, new("keep", "value"), new("trace_id", "drop-me"));
+
+        provider.ForceFlush();
+
+        var output = WriteMetricWithDotsEscaping(buffer, metrics[0]);
+
+        await Verify(output, "txt", VerifySettings);
+    }
+
 #if NET
     [Fact]
     public async Task WriteHistogramMetricSerializesStaticTagsWithoutPreSerializedTags()
@@ -1885,6 +1949,30 @@ public sealed partial class PrometheusSerializerTests
             options);
     }
 
+    private static string WriteMetricWithDotsEscaping(byte[] buffer, Metric metric)
+    {
+        var protocol = new PrometheusProtocol(
+            PrometheusProtocol.OpenMetricsMediaType,
+            PrometheusProtocol.DotsEscaping,
+            PrometheusProtocol.OpenMetricsV1,
+            isOpenMetrics: true);
+
+        var serializer = TextFormatSerializer.GetSerializer(protocol);
+
+        var cursor = serializer.WriteMetric(
+            buffer,
+            0,
+            metric,
+            PrometheusMetric.Create(metric, false),
+            writeType: true,
+            writeUnit: true,
+            writeHelp: true,
+            unitOverride: null,
+            helpOverride: null);
+
+        return Encoding.UTF8.GetString(buffer, 0, cursor);
+    }
+
     private static void WaitForNextExemplarTimestamp()
     {
         var timestamp = DateTimeOffset.UtcNow;
@@ -1947,7 +2035,7 @@ public sealed partial class PrometheusSerializerTests
     [GeneratedRegex("(?m)^(.+?\\s#\\s\\{[^}]*\\}\\s+\\S+\\s+)\\S+$")]
     private static partial Regex ExemplarTimestamp();
 
-    [GeneratedRegex("(?m)(trace_id|span_id)=\"[^\"]*\"")]
+    [GeneratedRegex("(?m)(trace_{1,2}id|span_{1,2}id)=\"[^\"]*\"")]
     private static partial Regex SpanOrTraceIds();
 
     [GeneratedRegex("telemetry_sdk_version=\"[^\"]*\"")]
@@ -1957,7 +2045,7 @@ public sealed partial class PrometheusSerializerTests
 
     private static Regex ExemplarTimestamp() => new("(?m)^(.+?\\s#\\s\\{[^}]*\\}\\s+\\S+\\s+)\\S+$", RegexOptions.Compiled);
 
-    private static Regex SpanOrTraceIds() => new("(?m)(trace_id|span_id)=\"[^\"]*\"", RegexOptions.Compiled);
+    private static Regex SpanOrTraceIds() => new("(?m)(trace_{1,2}id|span_{1,2}id)=\"[^\"]*\"", RegexOptions.Compiled);
 
     private static Regex SdkVersion() => new("telemetry_sdk_version=\"[^\"]*\"", RegexOptions.Compiled);
 #endif

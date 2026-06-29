@@ -86,6 +86,8 @@ internal abstract class TextFormatSerializer
         1e10d,
     ];
 
+    private string[]? reservedExemplarOutputKeys;
+
     public static OpenMetricsV0Serializer OpenMetricsV0 => field ??= new();
 
     public static OpenMetricsV1Serializer OpenMetricsV1 => field ??= new();
@@ -597,9 +599,11 @@ internal abstract class TextFormatSerializer
             this.AddLabel("span_id", exemplar.SpanId.ToHexString(), ref labels);
         }
 
+        var reservedOutputKeys = this.GetReservedExemplarOutputKeys();
+
         foreach (var tag in exemplar.FilteredTags)
         {
-            this.AddLabel(tag.Key, tag.Value, ref labels, ReservedExemplarLabelNames);
+            this.AddLabel(tag.Key, tag.Value, ref labels, reservedOutputKeys);
         }
 
         cursor = WriteLabels(
@@ -669,7 +673,7 @@ internal abstract class TextFormatSerializer
         {
             foreach (var scopeLabel in CreateScopeLabelData(metric))
             {
-                AddLabel(scopeLabel.OriginalKey, scopeLabel.OutputKey, scopeLabel.Value, ref labels, reservedOutputKeys);
+                AddLabel(scopeLabel.OriginalKey, this.GetScopeOutputKey(scopeLabel.OutputKey), scopeLabel.Value, ref labels, reservedOutputKeys);
             }
         }
 
@@ -709,10 +713,11 @@ internal abstract class TextFormatSerializer
 
         bool TryWriteLabel(string key, object? value, bool isScopeLabel = false)
         {
-            // Scope labels arrive already in their final (output) form; point tags are escaped
-            // using the negotiated scheme. The resulting output key is always a legacy-valid
-            // ASCII name, so it is both used for de-duplication and written verbatim.
-            var outputKey = isScopeLabel ? key : this.GetOutputLabelKey(key);
+            // Scope labels arrive in their underscore-normalized (otel_scope_*) form and are then
+            // escaped using the negotiated scheme, exactly as point tags are. The resulting output
+            // key is always a legacy-valid ASCII name, so it is both used for de-duplication and
+            // written verbatim.
+            var outputKey = isScopeLabel ? this.GetScopeOutputKey(key) : this.GetOutputLabelKey(key);
 
             if (reservedOutputKeys?.Contains(outputKey) == true)
             {
@@ -1660,13 +1665,43 @@ internal abstract class TextFormatSerializer
         return true;
     }
 
+    private string[] GetReservedExemplarOutputKeys()
+    {
+        // The built-in trace_id/span_id exemplar labels are added under their escaped output keys,
+        // so the reserved set used to drop colliding filtered tags must hold those same escaped
+        // keys. Otherwise, for example, the dots scheme escapes the built-in "trace_id" to
+        // "trace__id" while the reserved set still held "trace_id"; a filtered "trace_id" tag
+        // (also escaped to "trace__id") would not be dropped and its value would be concatenated
+        // onto the real trace ID. The built-in trace/span IDs MUST take precedence in a collision.
+        if (this.Escaping == EscapingScheme.Underscores)
+        {
+            return ReservedExemplarLabelNames;
+        }
+
+        return this.reservedExemplarOutputKeys ??=
+        [
+            this.GetOutputLabelKey("trace_id"),
+            this.GetOutputLabelKey("span_id"),
+        ];
+    }
+
+    // Scope labels (otel_scope_*) are produced in their underscore-normalized Prometheus form.
+    // Under the dots and values schemes that form must still be escaped so a client decoding
+    // the negotiated scheme reverses it correctly; for example "otel_scope_dot_name" would
+    // otherwise be mis-decoded under the dots scheme into "otel_scope.name", losing the
+    // required "otel_scope_" prefix. The underscores scheme leaves the key unchanged.
+    private string GetScopeOutputKey(string outputKey) =>
+        this.Escaping == EscapingScheme.Underscores
+            ? outputKey
+            : PrometheusEscaping.EscapeName(outputKey, this.Escaping, isMetricName: false);
+
     private string GetOutputLabelKey(string value)
     {
         // The dots and values schemes produce a reversible, legacy-valid ASCII label name. The
         // underscores scheme replaces discouraged characters and collapses consecutive ones.
         if (this.Escaping != EscapingScheme.Underscores)
         {
-            return string.IsNullOrEmpty(value) ? "_" : PrometheusEscaping.EscapeName(value, this.Escaping);
+            return string.IsNullOrEmpty(value) ? "_" : PrometheusEscaping.EscapeName(value, this.Escaping, isMetricName: false);
         }
 
         var builder = new StringBuilder(value.Length + 1);
