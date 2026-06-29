@@ -153,7 +153,8 @@ internal abstract class TextFormatSerializer
         bool writeUnit,
         bool writeHelp,
         string? unitOverride,
-        string? helpOverride)
+        string? helpOverride,
+        in TextFormatSerializerOptions options = default)
     {
         if (writeType)
         {
@@ -178,7 +179,7 @@ internal abstract class TextFormatSerializer
             {
                 // Counter and Gauge
                 cursor = this.WriteMetricName(buffer, cursor, prometheusMetric);
-                cursor = this.WriteTags(buffer, cursor, metric, metricPoint.Tags);
+                cursor = this.WriteTags(buffer, cursor, metric, metricPoint.Tags, options);
 
                 buffer[cursor++] = unchecked((byte)' ');
 
@@ -199,7 +200,7 @@ internal abstract class TextFormatSerializer
 
                 buffer[cursor++] = AsciiLineFeed;
 
-                cursor = this.WriteCounterCreated(buffer, cursor, metric, prometheusMetric, in metricPoint);
+                cursor = this.WriteCounterCreated(buffer, cursor, metric, prometheusMetric, in metricPoint, in options);
             }
         }
         else
@@ -207,7 +208,7 @@ internal abstract class TextFormatSerializer
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
                 var tags = metricPoint.Tags;
-                var serializedTags = this.SerializeTags(metric, tags, ReservedHistogramLabelNames);
+                var serializedTags = this.SerializeTags(metric, tags, options, ReservedHistogramLabelNames);
                 var hasNegativeBucketBounds = false;
                 var previousBound = double.NegativeInfinity;
 
@@ -267,7 +268,7 @@ internal abstract class TextFormatSerializer
                     buffer[cursor++] = AsciiLineFeed;
                 }
 
-                cursor = this.WriteHistogramCreated(buffer, cursor, metric, prometheusMetric, in metricPoint);
+                cursor = this.WriteHistogramCreated(buffer, cursor, metric, prometheusMetric, in metricPoint, in options);
             }
         }
 
@@ -629,6 +630,7 @@ internal abstract class TextFormatSerializer
         int cursor,
         Metric metric,
         ReadOnlyTagCollection tags,
+        in TextFormatSerializerOptions options,
         bool writeEnclosingBraces = true,
         IReadOnlyCollection<string>? reservedOutputKeys = null)
     {
@@ -641,7 +643,10 @@ internal abstract class TextFormatSerializer
             buffer[cursor++] = unchecked((byte)'{');
         }
 
-        WriteScopeLabels();
+        if (!options.SuppressScopeInfo)
+        {
+            WriteScopeLabels();
+        }
 
         if (TryWritePointTags())
         {
@@ -660,9 +665,12 @@ internal abstract class TextFormatSerializer
         cursor = startCursor;
         List<LabelData>? labels = null;
 
-        foreach (var scopeLabel in CreateScopeLabelData(metric))
+        if (!options.SuppressScopeInfo)
         {
-            AddLabel(scopeLabel.OriginalKey, scopeLabel.OutputKey, scopeLabel.Value, ref labels, reservedOutputKeys);
+            foreach (var scopeLabel in CreateScopeLabelData(metric))
+            {
+                AddLabel(scopeLabel.OriginalKey, scopeLabel.OutputKey, scopeLabel.Value, ref labels, reservedOutputKeys);
+            }
         }
 
         foreach (var tag in tags)
@@ -735,6 +743,7 @@ internal abstract class TextFormatSerializer
     internal byte[] SerializeTags(
         Metric metric,
         ReadOnlyTagCollection tags,
+        in TextFormatSerializerOptions options,
         IReadOnlyCollection<string>? reservedOutputKeys = null)
     {
         var buffer = new byte[128];
@@ -748,6 +757,7 @@ internal abstract class TextFormatSerializer
                     0,
                     metric,
                     tags,
+                    options,
                     writeEnclosingBraces: false,
                     reservedOutputKeys: reservedOutputKeys);
 
@@ -907,7 +917,12 @@ internal abstract class TextFormatSerializer
     /// <param name="prometheusMetric">The Prometheus metric.</param>
     /// <param name="isLongValue">Indicates whether the value is a long.</param>
     /// <returns>The new cursor position after writing.</returns>
-    protected abstract int WriteCounterExemplar(byte[] buffer, int cursor, in MetricPoint metricPoint, PrometheusMetric prometheusMetric, bool isLongValue);
+    protected abstract int WriteCounterExemplar(
+        byte[] buffer,
+        int cursor,
+        in MetricPoint metricPoint,
+        PrometheusMetric prometheusMetric,
+        bool isLongValue);
 
     /// <summary>
     /// Writes the <c>_created</c> series (if any) that follows a counter sample.
@@ -917,8 +932,15 @@ internal abstract class TextFormatSerializer
     /// <param name="metric">The metric.</param>
     /// <param name="prometheusMetric">The Prometheus metric.</param>
     /// <param name="metricPoint">The metric point.</param>
+    /// <param name="options">The serializer options.</param>
     /// <returns>The new cursor position after writing.</returns>
-    protected abstract int WriteCounterCreated(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric, in MetricPoint metricPoint);
+    protected abstract int WriteCounterCreated(
+        byte[] buffer,
+        int cursor,
+        Metric metric,
+        PrometheusMetric prometheusMetric,
+        in MetricPoint metricPoint,
+        in TextFormatSerializerOptions options);
 
     /// <summary>
     /// Writes the exemplar (if any) that follows a histogram bucket sample value.
@@ -929,7 +951,12 @@ internal abstract class TextFormatSerializer
     /// <param name="lowerBoundExclusive">The exclusive lower bound of the histogram bucket.</param>
     /// <param name="upperBoundInclusive">The inclusive upper bound of the histogram bucket.</param>
     /// <returns>The new cursor position after writing.</returns>
-    protected abstract int WriteHistogramBucketExemplar(byte[] buffer, int cursor, in MetricPoint metricPoint, double lowerBoundExclusive, double upperBoundInclusive);
+    protected abstract int WriteHistogramBucketExemplar(
+        byte[] buffer,
+        int cursor,
+        in MetricPoint metricPoint,
+        double lowerBoundExclusive,
+        double upperBoundInclusive);
 
     /// <summary>
     /// Determines whether the histogram <c>_sum</c> and <c>_count</c> series should be written.
@@ -948,8 +975,15 @@ internal abstract class TextFormatSerializer
     /// <param name="metric">The metric.</param>
     /// <param name="prometheusMetric">The Prometheus metric.</param>
     /// <param name="metricPoint">The metric point.</param>
+    /// <param name="options">The serializer options.</param>
     /// <returns>The new cursor position after writing.</returns>
-    protected abstract int WriteHistogramCreated(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric, in MetricPoint metricPoint);
+    protected abstract int WriteHistogramCreated(
+        byte[] buffer,
+        int cursor,
+        Metric metric,
+        PrometheusMetric prometheusMetric,
+        in MetricPoint metricPoint,
+        in TextFormatSerializerOptions options);
 
     private static string GetLabelValueString(object? labelValue) => labelValue switch
     {

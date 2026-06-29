@@ -338,6 +338,38 @@ public sealed partial class PrometheusSerializerTests
         await Verify(output, "txt", VerifySettings).UseParameters(snapshotName, useOpenMetrics);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task WriteMetricSuppressesScopeLabelsWhenPointTagsCollide(bool useOpenMetrics)
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter(
+            nameof(this.WriteMetricSuppressesScopeLabelsWhenPointTagsCollide),
+            "1.0.0",
+            [new("meter_tag", "scope")],
+            scope: null);
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        meter.CreateCounter<int>("test_counter").Add(
+            1,
+            new KeyValuePair<string, object?>("a.b", "value1"),
+            new KeyValuePair<string, object?>("a/b", "value2"));
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics.Single(), useOpenMetrics, suppressScopeInfo: true);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        await Verify(output, "txt", VerifySettings).UseParameters(useOpenMetrics);
+    }
+
     [Fact]
     public void WriteMetricNameSanitizesNonAsciiCharacters()
     {
@@ -1295,6 +1327,40 @@ public sealed partial class PrometheusSerializerTests
         }
     }
 
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task WriteMetricSupportsScopeInfoEnabledOptionForCounters(bool useOpenMetrics, bool suppressScopeInfo)
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter("test_meter");
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        var counter = meter.CreateCounter<double>("test_counter");
+        counter.Add(1, [new("key", "value1")]);
+        counter.Add(2, [new("key", "value2")]);
+
+        var histogram = meter.CreateHistogram<double>("test_histogram");
+        histogram.Record(1, [new("key", "value1")]);
+        histogram.Record(2, [new("key", "value2")]);
+
+        provider.ForceFlush();
+
+        var counterMetric = metrics.Single(m => m.Name == "test_counter");
+
+        var cursor = WriteMetric(buffer, 0, counterMetric, useOpenMetrics, suppressScopeInfo);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        await Verify(output, "txt", VerifySettings).UseParameters(useOpenMetrics, suppressScopeInfo);
+    }
+
     [Fact]
     public void WriteLabelFormatsTypedValues()
     {
@@ -1800,18 +1866,24 @@ public sealed partial class PrometheusSerializerTests
         }
     }
 
-    private static int WriteMetric(byte[] buffer, int cursor, Metric metric, bool useOpenMetrics) =>
-        (useOpenMetrics ? (TextFormatSerializer)TextFormatSerializer.OpenMetricsV1 : TextFormatSerializer.PrometheusV1)
-        .WriteMetric(
+    private static int WriteMetric(byte[] buffer, int cursor, Metric metric, bool useOpenMetrics, bool suppressScopeInfo = false)
+    {
+        TextFormatSerializer serializer = useOpenMetrics ? TextFormatSerializer.OpenMetricsV1 : TextFormatSerializer.PrometheusV1;
+        var prometheusMetric = PrometheusMetric.Create(metric, disableTotalNameSuffixForCounters: false);
+        var options = new TextFormatSerializerOptions(suppressScopeInfo);
+
+        return serializer.WriteMetric(
             buffer,
             cursor,
             metric,
-            PrometheusMetric.Create(metric, false),
+            prometheusMetric,
             writeType: true,
             writeUnit: true,
             writeHelp: true,
             unitOverride: null,
-            helpOverride: null);
+            helpOverride: null,
+            options);
+    }
 
     private static void WaitForNextExemplarTimestamp()
     {
