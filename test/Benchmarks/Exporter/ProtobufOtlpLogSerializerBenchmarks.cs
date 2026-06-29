@@ -9,30 +9,6 @@ using OpenTelemetry.Logs;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 
-/*
-BenchmarkDotNet v0.15.8, Windows 11 (10.0.26200.8457/25H2/2025Update/HudsonValley2)
-AMD Ryzen 7 9800X3D 4.70GHz, 1 CPU, 16 logical and 8 physical cores
-.NET SDK 10.0.301
-  [Host]     : .NET 10.0.9 (10.0.9, 10.0.926.27113), X64 RyuJIT x86-64-v4
-  DefaultJob : .NET 10.0.9 (10.0.9, 10.0.926.27113), X64 RyuJIT x86-64-v4
-
-
-| Method         | AttributeCount | KvListAttributeCount | Mean     | Error    | StdDev   | Median   | Allocated |
-|--------------- |--------------- |--------------------- |---------:|---------:|---------:|---------:|----------:|
-| WriteLogRecord | 4              | 0                    | 113.8 ns |  1.87 ns |  1.57 ns | 113.9 ns |      32 B |
-| WriteLogRecord | 4              | 2                    | 168.9 ns |  3.15 ns |  8.31 ns | 166.4 ns |      32 B |
-| WriteLogRecord | 4              | 4                    | 224.2 ns |  4.55 ns | 12.84 ns | 219.1 ns |      32 B |
-| WriteLogRecord | 4              | 8                    | 254.4 ns |  5.11 ns | 10.99 ns | 252.6 ns |      32 B |
-| WriteLogRecord | 8              | 0                    | 193.0 ns |  3.88 ns |  9.58 ns | 188.7 ns |      32 B |
-| WriteLogRecord | 8              | 2                    | 239.4 ns |  2.89 ns |  2.26 ns | 239.3 ns |      32 B |
-| WriteLogRecord | 8              | 4                    | 297.5 ns |  5.87 ns | 10.58 ns | 294.2 ns |      32 B |
-| WriteLogRecord | 8              | 8                    | 340.9 ns |  8.21 ns | 23.03 ns | 332.2 ns |      32 B |
-| WriteLogRecord | 16             | 0                    | 365.1 ns |  7.95 ns | 22.16 ns | 357.4 ns |      32 B |
-| WriteLogRecord | 16             | 2                    | 427.9 ns | 11.96 ns | 34.70 ns | 417.5 ns |      32 B |
-| WriteLogRecord | 16             | 4                    | 476.7 ns | 15.13 ns | 44.62 ns | 480.0 ns |      32 B |
-| WriteLogRecord | 16             | 8                    | 471.3 ns |  9.11 ns | 12.16 ns | 466.0 ns |      32 B |
- */
-
 namespace Benchmarks.Exporter;
 
 [MemoryDiagnoser(false)]
