@@ -7,6 +7,12 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added support for serializing attribute values that are key/value lists
+  (`IEnumerable<KeyValuePair<string, object?>>`) as nested OTLP `kvlist` values.
+  Nesting is limited to a maximum recursion depth of 3; deeper values fall back
+  to their string representation.
+  ([#7015](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7015))
+
 * Fixed `OtlpLogExporter` so `OtlpExporterOptions.ExportProcessorType` and
   `OtlpExporterOptions.BatchExportProcessorOptions` are respected when
   `LogRecordExportProcessorOptions` are not configured.
