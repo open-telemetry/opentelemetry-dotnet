@@ -66,10 +66,15 @@ internal static class TestHttpServer
                     catch (Exception ex)
                     {
                         if (ex is ObjectDisposedException
-                            || (ex is HttpListenerException httpEx && httpEx.ErrorCode == 995))
+                            || (ex is HttpListenerException httpEx && httpEx.ErrorCode == 995)
+                            || (ex is InvalidOperationException && !this.listener.IsListening))
                         {
                             // Listener was closed before we got into GetContextAsync or
-                            // Listener was closed while we were in GetContextAsync.
+                            // Listener was closed while we were in GetContextAsync. The
+                            // InvalidOperationException case covers the race where the
+                            // listener is closed by Dispose between handling a request and
+                            // re-entering GetContextAsync (which then throws because the
+                            // listener is no longer in the started state).
                             break;
                         }
 

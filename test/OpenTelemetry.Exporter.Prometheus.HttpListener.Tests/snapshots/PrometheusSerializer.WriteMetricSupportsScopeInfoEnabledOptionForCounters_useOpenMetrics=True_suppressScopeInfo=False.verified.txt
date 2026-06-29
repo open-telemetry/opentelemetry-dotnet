@@ -1,0 +1,5 @@
+﻿# TYPE test_counter counter
+test_counter_total{otel_scope_name="test_meter",key="value1"} 1
+test_counter_created{otel_scope_name="test_meter",key="value1"} <TIMESTAMP>
+test_counter_total{otel_scope_name="test_meter",key="value2"} 2
+test_counter_created{otel_scope_name="test_meter",key="value2"} <TIMESTAMP>

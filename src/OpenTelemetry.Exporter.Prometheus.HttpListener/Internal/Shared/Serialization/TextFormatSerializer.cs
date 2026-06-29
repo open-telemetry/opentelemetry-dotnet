@@ -99,6 +99,8 @@ internal abstract class TextFormatSerializer
         1e10d,
     ];
 
+    private string[]? reservedExemplarOutputKeys;
+
     public static OpenMetricsV0Serializer OpenMetricsV0 => field ??= new();
 
     public static OpenMetricsV1Serializer OpenMetricsV1 => field ??= new();
@@ -166,7 +168,8 @@ internal abstract class TextFormatSerializer
         bool writeUnit,
         bool writeHelp,
         string? unitOverride,
-        string? helpOverride)
+        string? helpOverride,
+        in TextFormatSerializerOptions options = default)
     {
         if (writeType)
         {
@@ -189,8 +192,15 @@ internal abstract class TextFormatSerializer
 
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
-                // Counter and Gauge
-                cursor = this.WriteSeriesAndTags(buffer, cursor, metric, prometheusMetric, metricPoint.Tags, suffix: null, reservedOutputKeys: null);
+                cursor = this.WriteSeriesAndTags(
+                    buffer,
+                    cursor,
+                    metric,
+                    prometheusMetric,
+                    metricPoint.Tags,
+                    options,
+                    suffix: null,
+                    reservedOutputKeys: null);
 
                 buffer[cursor++] = unchecked((byte)' ');
 
@@ -211,7 +221,7 @@ internal abstract class TextFormatSerializer
 
                 buffer[cursor++] = AsciiLineFeed;
 
-                cursor = this.WriteCounterCreated(buffer, cursor, metric, prometheusMetric, in metricPoint);
+                cursor = this.WriteCounterCreated(buffer, cursor, metric, prometheusMetric, in metricPoint, in options);
             }
         }
         else
@@ -219,7 +229,7 @@ internal abstract class TextFormatSerializer
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
                 var tags = metricPoint.Tags;
-                var serializedTags = this.SerializeTags(metric, tags, ReservedHistogramLabelNames);
+                var serializedTags = this.SerializeTags(metric, tags, options, ReservedHistogramLabelNames);
                 var hasNegativeBucketBounds = false;
                 var previousBound = double.NegativeInfinity;
 
@@ -277,7 +287,7 @@ internal abstract class TextFormatSerializer
                     buffer[cursor++] = AsciiLineFeed;
                 }
 
-                cursor = this.WriteHistogramCreated(buffer, cursor, metric, prometheusMetric, in metricPoint);
+                cursor = this.WriteHistogramCreated(buffer, cursor, metric, prometheusMetric, in metricPoint, in options);
             }
         }
 
@@ -717,9 +727,11 @@ internal abstract class TextFormatSerializer
             this.AddLabel("span_id", exemplar.SpanId.ToHexString(), ref labels);
         }
 
+        var reservedOutputKeys = this.GetReservedExemplarOutputKeys();
+
         foreach (var tag in exemplar.FilteredTags)
         {
-            this.AddLabel(tag.Key, tag.Value, ref labels, ReservedExemplarLabelNames);
+            this.AddLabel(tag.Key, tag.Value, ref labels, reservedOutputKeys);
         }
 
         cursor = WriteLabels(
@@ -752,15 +764,17 @@ internal abstract class TextFormatSerializer
         int cursor,
         Metric metric,
         ReadOnlyTagCollection tags,
+        in TextFormatSerializerOptions options,
         bool writeEnclosingBraces = true,
         IReadOnlyCollection<string>? reservedOutputKeys = null)
-        => this.WriteTags(buffer, cursor, metric, tags, default, null, writeEnclosingBraces, reservedOutputKeys);
+        => this.WriteTags(buffer, cursor, metric, tags, options, default, null, writeEnclosingBraces, reservedOutputKeys);
 
     internal int WriteTags(
         byte[] buffer,
         int cursor,
         Metric metric,
         ReadOnlyTagCollection tags,
+        in TextFormatSerializerOptions options,
         ReadOnlySpan<byte> quotedNameBytes,
         string? quotedNameSuffix,
         bool writeEnclosingBraces,
@@ -777,6 +791,8 @@ internal abstract class TextFormatSerializer
         List<(int Start, int Length)>? writtenKeyRanges = null;
         var wroteLabel = false;
 
+        List<string>? writtenOutputKeys = null;
+
         if (writeEnclosingBraces)
         {
             buffer[cursor++] = unchecked((byte)'{');
@@ -788,7 +804,10 @@ internal abstract class TextFormatSerializer
             wroteLabel = true;
         }
 
-        WriteScopeLabels();
+        if (!options.SuppressScopeInfo)
+        {
+            WriteScopeLabels();
+        }
 
         if (TryWritePointTags())
         {
@@ -807,9 +826,12 @@ internal abstract class TextFormatSerializer
         cursor = startCursor;
         List<LabelData>? labels = null;
 
-        foreach (var scopeLabel in GetScopeLabelData(metric))
+        if (!options.SuppressScopeInfo)
         {
-            AddLabel(scopeLabel.OriginalKey, scopeLabel.OutputKey, scopeLabel.Value, ref labels, reservedOutputKeys);
+            foreach (var scopeLabel in GetScopeLabelData(metric))
+            {
+                AddLabel(scopeLabel.OriginalKey, this.GetScopeOutputKey(scopeLabel.OutputKey), scopeLabel.Value, ref labels, reservedOutputKeys);
+            }
         }
 
         foreach (var tag in tags)
@@ -855,6 +877,25 @@ internal abstract class TextFormatSerializer
             // cursor; a collision additionally aborts the fast path so the slow path can merge.
             var rewindCursor = cursor;
 
+            // Scope labels arrive in their underscore-normalized (otel_scope_*) form and are then
+            // escaped using the negotiated scheme, exactly as point tags are. The resulting output
+            // key is always a legacy-valid ASCII name, so it is both used for de-duplication and
+            // written verbatim.
+            var outputKey = isScopeLabel ? this.GetScopeOutputKey(key) : this.GetOutputLabelKey(key);
+
+            if (reservedOutputKeys?.Contains(outputKey) == true)
+            {
+                return true;
+            }
+
+            if (writtenOutputKeys?.Contains(outputKey) == true)
+            {
+                return false;
+            }
+
+            writtenOutputKeys ??= [];
+            writtenOutputKeys.Add(outputKey);
+
             if (wroteLabel)
             {
                 buffer[cursor++] = unchecked((byte)',');
@@ -899,6 +940,7 @@ internal abstract class TextFormatSerializer
     internal byte[] SerializeTags(
         Metric metric,
         ReadOnlyTagCollection tags,
+        in TextFormatSerializerOptions options,
         IReadOnlyCollection<string>? reservedOutputKeys = null)
     {
         var buffer = new byte[128];
@@ -912,6 +954,7 @@ internal abstract class TextFormatSerializer
                     0,
                     metric,
                     tags,
+                    options,
                     writeEnclosingBraces: false,
                     reservedOutputKeys: reservedOutputKeys);
 
@@ -977,6 +1020,7 @@ internal abstract class TextFormatSerializer
         Metric metric,
         PrometheusMetric prometheusMetric,
         ReadOnlyTagCollection tags,
+        in TextFormatSerializerOptions options,
         string? suffix,
         IReadOnlyCollection<string>? reservedOutputKeys)
     {
@@ -987,7 +1031,7 @@ internal abstract class TextFormatSerializer
             ? this.WriteMetricName(buffer, cursor, prometheusMetric)
             : this.WriteMetricNameWithSuffix(buffer, cursor, prometheusMetric, suffix);
 
-        return this.WriteTags(buffer, cursor, metric, tags, writeEnclosingBraces: true, reservedOutputKeys: reservedOutputKeys);
+        return this.WriteTags(buffer, cursor, metric, tags, options, writeEnclosingBraces: true, reservedOutputKeys: reservedOutputKeys);
     }
 
     internal int WriteQuotedSeriesAndTags(
@@ -996,6 +1040,7 @@ internal abstract class TextFormatSerializer
         Metric metric,
         PrometheusMetric prometheusMetric,
         ReadOnlyTagCollection tags,
+        in TextFormatSerializerOptions options,
         string? suffix,
         IReadOnlyCollection<string>? reservedOutputKeys)
     {
@@ -1013,6 +1058,7 @@ internal abstract class TextFormatSerializer
             cursor,
             metric,
             tags,
+            options,
             nameBytes,
             suffix,
             writeEnclosingBraces: true,
@@ -1158,7 +1204,12 @@ internal abstract class TextFormatSerializer
     /// <param name="prometheusMetric">The Prometheus metric.</param>
     /// <param name="isLongValue">Indicates whether the value is a long.</param>
     /// <returns>The new cursor position after writing.</returns>
-    protected abstract int WriteCounterExemplar(byte[] buffer, int cursor, in MetricPoint metricPoint, PrometheusMetric prometheusMetric, bool isLongValue);
+    protected abstract int WriteCounterExemplar(
+        byte[] buffer,
+        int cursor,
+        in MetricPoint metricPoint,
+        PrometheusMetric prometheusMetric,
+        bool isLongValue);
 
     /// <summary>
     /// Writes the <c>_created</c> series (if any) that follows a counter sample.
@@ -1168,8 +1219,15 @@ internal abstract class TextFormatSerializer
     /// <param name="metric">The metric.</param>
     /// <param name="prometheusMetric">The Prometheus metric.</param>
     /// <param name="metricPoint">The metric point.</param>
+    /// <param name="options">The serializer options.</param>
     /// <returns>The new cursor position after writing.</returns>
-    protected abstract int WriteCounterCreated(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric, in MetricPoint metricPoint);
+    protected abstract int WriteCounterCreated(
+        byte[] buffer,
+        int cursor,
+        Metric metric,
+        PrometheusMetric prometheusMetric,
+        in MetricPoint metricPoint,
+        in TextFormatSerializerOptions options);
 
     /// <summary>
     /// Writes the exemplar (if any) that follows a histogram bucket sample value.
@@ -1180,7 +1238,12 @@ internal abstract class TextFormatSerializer
     /// <param name="lowerBoundExclusive">The exclusive lower bound of the histogram bucket.</param>
     /// <param name="upperBoundInclusive">The inclusive upper bound of the histogram bucket.</param>
     /// <returns>The new cursor position after writing.</returns>
-    protected abstract int WriteHistogramBucketExemplar(byte[] buffer, int cursor, in MetricPoint metricPoint, double lowerBoundExclusive, double upperBoundInclusive);
+    protected abstract int WriteHistogramBucketExemplar(
+        byte[] buffer,
+        int cursor,
+        in MetricPoint metricPoint,
+        double lowerBoundExclusive,
+        double upperBoundInclusive);
 
     /// <summary>
     /// Determines whether the histogram <c>_sum</c> and <c>_count</c> series should be written.
@@ -1199,8 +1262,15 @@ internal abstract class TextFormatSerializer
     /// <param name="metric">The metric.</param>
     /// <param name="prometheusMetric">The Prometheus metric.</param>
     /// <param name="metricPoint">The metric point.</param>
+    /// <param name="options">The serializer options.</param>
     /// <returns>The new cursor position after writing.</returns>
-    protected abstract int WriteHistogramCreated(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric, in MetricPoint metricPoint);
+    protected abstract int WriteHistogramCreated(
+        byte[] buffer,
+        int cursor,
+        Metric metric,
+        PrometheusMetric prometheusMetric,
+        in MetricPoint metricPoint,
+        in TextFormatSerializerOptions options);
 
     private static string GetLabelValueString(object? labelValue) => labelValue switch
     {
@@ -2007,13 +2077,43 @@ internal abstract class TextFormatSerializer
         return true;
     }
 
+    private string[] GetReservedExemplarOutputKeys()
+    {
+        // The built-in trace_id/span_id exemplar labels are added under their escaped output keys,
+        // so the reserved set used to drop colliding filtered tags must hold those same escaped
+        // keys. Otherwise, for example, the dots scheme escapes the built-in "trace_id" to
+        // "trace__id" while the reserved set still held "trace_id"; a filtered "trace_id" tag
+        // (also escaped to "trace__id") would not be dropped and its value would be concatenated
+        // onto the real trace ID. The built-in trace/span IDs MUST take precedence in a collision.
+        if (this.Escaping == EscapingScheme.Underscores)
+        {
+            return ReservedExemplarLabelNames;
+        }
+
+        return this.reservedExemplarOutputKeys ??=
+        [
+            this.GetOutputLabelKey("trace_id"),
+            this.GetOutputLabelKey("span_id"),
+        ];
+    }
+
+    // Scope labels (otel_scope_*) are produced in their underscore-normalized Prometheus form.
+    // Under the dots and values schemes that form must still be escaped so a client decoding
+    // the negotiated scheme reverses it correctly; for example "otel_scope_dot_name" would
+    // otherwise be incorrectly decoded under the dots scheme into "otel_scope.name", losing
+    // the required "otel_scope_" prefix. The underscores scheme leaves the key unchanged.
+    private string GetScopeOutputKey(string outputKey) =>
+        this.Escaping == EscapingScheme.Underscores
+            ? outputKey
+            : PrometheusEscaping.EscapeName(outputKey, this.Escaping, isMetricName: false);
+
     private string GetOutputLabelKey(string value)
     {
         // The dots and values schemes produce a reversible, legacy-valid ASCII label name. The
         // underscores scheme replaces discouraged characters and collapses consecutive ones.
         if (this.Escaping != EscapingScheme.Underscores)
         {
-            return string.IsNullOrEmpty(value) ? "_" : PrometheusEscaping.EscapeName(value, this.Escaping);
+            return string.IsNullOrEmpty(value) ? "_" : PrometheusEscaping.EscapeName(value, this.Escaping, isMetricName: false);
         }
 
         if (string.IsNullOrEmpty(value))

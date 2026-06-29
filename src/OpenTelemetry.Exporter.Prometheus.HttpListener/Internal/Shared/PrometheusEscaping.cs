@@ -39,8 +39,12 @@ internal static class PrometheusEscaping
     /// </summary>
     /// <param name="name">The name to escape.</param>
     /// <param name="scheme">The escaping scheme to apply.</param>
+    /// <param name="isMetricName">
+    /// <see langword="true"/> when escaping a metric name (where a colon is a valid legacy
+    /// character); <see langword="false"/> when escaping a label name (where a colon is not).
+    /// </param>
     /// <returns>The escaped name. Always a valid legacy (ASCII) name for the dots and values schemes.</returns>
-    public static string EscapeName(string name, EscapingScheme scheme)
+    public static string EscapeName(string name, EscapingScheme scheme, bool isMetricName = true)
     {
         // The underscores scheme is handled by the OpenTelemetry sanitization, and the allow-utf-8
         // scheme keeps the name unchanged, so neither is escaped here.
@@ -49,7 +53,7 @@ internal static class PrometheusEscaping
             return name;
         }
 
-        if (scheme == EscapingScheme.Values && IsValidLegacyName(name))
+        if (scheme == EscapingScheme.Values && IsValidLegacyName(name, isMetricName))
         {
             return name;
         }
@@ -58,7 +62,7 @@ internal static class PrometheusEscaping
 
         try
         {
-            var length = EscapeName(rented, 0, name, scheme);
+            var length = EscapeName(rented, 0, name, scheme, isMetricName);
 #if NET
             return Encoding.ASCII.GetString(rented.AsSpan(0, length));
 #else
@@ -81,8 +85,12 @@ internal static class PrometheusEscaping
     /// <param name="cursor">The current position in the buffer.</param>
     /// <param name="name">The name to escape.</param>
     /// <param name="scheme">The escaping scheme to apply.</param>
+    /// <param name="isMetricName">
+    /// <see langword="true"/> when escaping a metric name (where a colon is a valid legacy
+    /// character); <see langword="false"/> when escaping a label name (where a colon is not).
+    /// </param>
     /// <returns>The new cursor position after writing the (ASCII) escaped name.</returns>
-    public static int EscapeName(byte[] buffer, int cursor, string name, EscapingScheme scheme)
+    public static int EscapeName(byte[] buffer, int cursor, string name, EscapingScheme scheme, bool isMetricName = true)
     {
         Debug.Assert(scheme is EscapingScheme.Dots or EscapingScheme.Values, $"Unexpected escaping scheme: {scheme}");
 
@@ -91,7 +99,7 @@ internal static class PrometheusEscaping
             return cursor;
         }
 
-        if (scheme == EscapingScheme.Values && IsValidLegacyName(name))
+        if (scheme == EscapingScheme.Values && IsValidLegacyName(name, isMetricName))
         {
             return WriteAscii(buffer, cursor, name);
         }
@@ -115,7 +123,7 @@ internal static class PrometheusEscaping
             {
                 cursor = WriteAscii(buffer, cursor, "_dot_");
             }
-            else if (IsValidLegacyRune(codePoint, index == 0))
+            else if (IsValidLegacyRune(codePoint, index == 0, isMetricName))
             {
                 buffer[cursor++] = unchecked((byte)codePoint);
             }
@@ -145,7 +153,7 @@ internal static class PrometheusEscaping
     /// <returns>
     /// <see langword="true"/> if the name is a valid legacy metric name; otherwise, <see langword="false"/>.
     /// </returns>
-    internal static bool IsValidLegacyName(string name) => IsValidLegacyName(name, allowColon: true);
+    internal static bool IsValidLegacyName(string name) => IsValidLegacyName(name, isMetricName: true);
 
     /// <summary>
     /// Returns whether the specified label name matches the legacy label name pattern <c>[a-zA-Z_][a-zA-Z0-9_]*</c>.
@@ -154,9 +162,9 @@ internal static class PrometheusEscaping
     /// <returns>
     /// <see langword="true"/> if the name is a valid legacy label name; otherwise, <see langword="false"/>.
     /// </returns>
-    internal static bool IsValidLegacyLabelName(string name) => name.Length > 0 && IsValidLegacyName(name, allowColon: false);
+    internal static bool IsValidLegacyLabelName(string name) => name.Length > 0 && IsValidLegacyName(name, isMetricName: false);
 
-    private static bool IsValidLegacyName(string name, bool allowColon)
+    private static bool IsValidLegacyName(string name, bool isMetricName)
     {
         if (name.Length == 0)
         {
@@ -169,7 +177,7 @@ internal static class PrometheusEscaping
         {
             var codePoint = GetCodePoint(name, index, out var charsConsumed, out _);
 
-            if (!IsValidLegacyRune(codePoint, index == 0) || (codePoint == ':' && !allowColon))
+            if (!IsValidLegacyRune(codePoint, index == 0, isMetricName))
             {
                 return false;
             }
@@ -180,8 +188,12 @@ internal static class PrometheusEscaping
         return true;
     }
 
-    private static bool IsValidLegacyRune(int codePoint, bool isFirst) =>
-        codePoint is (>= 'a' and <= 'z') or (>= 'A' and <= 'Z') or '_' or ':' ||
+    // A colon is a valid legacy character in a metric name but not in a label name, so it is only
+    // treated as a valid rune when escaping a metric name. See the legacy name grammars at
+    // https://prometheus.io/docs/concepts/data_model/ and the OpenMetrics label-name grammar.
+    private static bool IsValidLegacyRune(int codePoint, bool isFirst, bool isMetricName) =>
+        codePoint is (>= 'a' and <= 'z') or (>= 'A' and <= 'Z') or '_' ||
+        (isMetricName && codePoint == ':') ||
         (!isFirst && codePoint is >= '0' and <= '9');
 
     private static int GetCodePoint(string value, int index, out int charsConsumed, out bool isValidRune)
