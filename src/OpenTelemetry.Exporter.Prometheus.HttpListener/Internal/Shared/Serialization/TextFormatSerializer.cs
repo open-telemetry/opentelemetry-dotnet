@@ -1688,8 +1688,8 @@ internal abstract class TextFormatSerializer
     // Scope labels (otel_scope_*) are produced in their underscore-normalized Prometheus form.
     // Under the dots and values schemes that form must still be escaped so a client decoding
     // the negotiated scheme reverses it correctly; for example "otel_scope_dot_name" would
-    // otherwise be mis-decoded under the dots scheme into "otel_scope.name", losing the
-    // required "otel_scope_" prefix. The underscores scheme leaves the key unchanged.
+    // otherwise be incorrectly decoded under the dots scheme into "otel_scope.name", losing
+    // the required "otel_scope_" prefix. The underscores scheme leaves the key unchanged.
     private string GetScopeOutputKey(string outputKey) =>
         this.Escaping == EscapingScheme.Underscores
             ? outputKey
