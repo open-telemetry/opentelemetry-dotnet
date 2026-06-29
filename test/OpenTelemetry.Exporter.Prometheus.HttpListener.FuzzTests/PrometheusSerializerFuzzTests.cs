@@ -180,7 +180,9 @@ public class PrometheusSerializerFuzzTests
             return value;
         }
 
-        if (scheme == EscapingScheme.Values && ReferenceIsValidLegacyName(value))
+        if (scheme == EscapingScheme.Values &&
+            ReferenceIsValidLegacyName(value) &&
+            !value.StartsWith("U__", StringComparison.Ordinal))
         {
             return value;
         }
@@ -192,6 +194,7 @@ public class PrometheusSerializerFuzzTests
             text.Append("U__");
         }
 
+        var escapeValuesPrefix = scheme == EscapingScheme.Values && value.StartsWith("U__", StringComparison.Ordinal);
         var index = 0;
 
         while (index < value.Length)
@@ -205,6 +208,10 @@ public class PrometheusSerializerFuzzTests
             else if (scheme == EscapingScheme.Dots && codePoint == '.')
             {
                 text.Append("_dot_");
+            }
+            else if (escapeValuesPrefix && index == 0)
+            {
+                text.Append('_').Append(codePoint.ToString("x", CultureInfo.InvariantCulture)).Append('_');
             }
             else if (ReferenceIsValidLegacyRune(codePoint, index == 0))
             {

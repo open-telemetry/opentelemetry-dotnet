@@ -21,6 +21,7 @@ internal static class PrometheusEscaping
     // or "_xxxx_") is at most six bytes; a surrogate pair expands to at most eight bytes across
     // two characters, so six per character remains a safe bound.
     private const int MaxBytesPerCharacter = 6;
+    private const string ValuesPrefix = "U__";
 
     public static EscapingScheme FromString(string? escaping) => escaping switch
     {
@@ -49,7 +50,7 @@ internal static class PrometheusEscaping
             return name;
         }
 
-        if (scheme == EscapingScheme.Values && IsValidLegacyName(name, isMetricName))
+        if (scheme == EscapingScheme.Values && CanWriteValuesNameUnchanged(name, isMetricName))
         {
             return name;
         }
@@ -95,16 +96,17 @@ internal static class PrometheusEscaping
             return cursor;
         }
 
-        if (scheme == EscapingScheme.Values && IsValidLegacyName(name, isMetricName))
+        if (scheme == EscapingScheme.Values && CanWriteValuesNameUnchanged(name, isMetricName))
         {
             return WriteAscii(buffer, cursor, name);
         }
 
         if (scheme == EscapingScheme.Values)
         {
-            cursor = WriteAscii(buffer, cursor, "U__");
+            cursor = WriteAscii(buffer, cursor, ValuesPrefix);
         }
 
+        var escapeValuesPrefix = scheme == EscapingScheme.Values && name.StartsWith(ValuesPrefix, StringComparison.Ordinal);
         var index = 0;
 
         while (index < name.Length)
@@ -118,6 +120,10 @@ internal static class PrometheusEscaping
             else if (scheme == EscapingScheme.Dots && codePoint == '.')
             {
                 cursor = WriteAscii(buffer, cursor, "_dot_");
+            }
+            else if (escapeValuesPrefix && index == 0)
+            {
+                cursor = WriteHexCodePoint(buffer, cursor, codePoint);
             }
             else if (IsValidLegacyRune(codePoint, index == 0, isMetricName))
             {
@@ -140,6 +146,13 @@ internal static class PrometheusEscaping
         }
 
         return cursor;
+    }
+
+    private static bool CanWriteValuesNameUnchanged(string name, bool isMetricName)
+    {
+        // A pre-existing "U__" prefix must itself be encoded; otherwise a name such as
+        // "U__foo_2e_bar" collides with the values encoding of "foo.bar".
+        return IsValidLegacyName(name, isMetricName) && !name.StartsWith(ValuesPrefix, StringComparison.Ordinal);
     }
 
     private static bool IsValidLegacyName(string name, bool isMetricName)

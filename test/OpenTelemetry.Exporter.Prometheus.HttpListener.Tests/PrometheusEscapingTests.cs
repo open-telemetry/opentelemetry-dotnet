@@ -25,6 +25,8 @@ public static class PrometheusEscapingTests
     [InlineData("mysystem.prod.west.cpu.load_total", "U__mysystem_2e_prod_2e_west_2e_cpu_2e_load__total")]
     [InlineData("http.status:sum", "U__http_2e_status:sum")]
     [InlineData("no:escaping_required", "no:escaping_required")]
+    [InlineData("foo.bar", "U__foo_2e_bar")]
+    [InlineData("U__foo_2e_bar", "U___55_____foo__2e__bar")]
     [InlineData("label with \u0100", "U__label_20_with_20__100_")]
     [InlineData("", "")]
     public static void EscapeName_Values(string name, string expected)
