@@ -27,6 +27,16 @@ public class PrometheusAspNetCoreOptions
     }
 
     /// <summary>
+    /// Gets or sets a value indicating whether the scope information (name, version, schema URL) is added to the scrape response.
+    /// Default value: <see langword="true"/>.
+    /// </summary>
+    public bool ScopeInfoEnabled
+    {
+        get => this.ExporterOptions.ScopeInfoEnabled;
+        set => this.ExporterOptions.ScopeInfoEnabled = value;
+    }
+
+    /// <summary>
     /// Gets or sets the cache duration in milliseconds for scrape responses. Default value: 300.
     /// </summary>
     /// <remarks>

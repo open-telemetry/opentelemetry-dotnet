@@ -1,0 +1,2 @@
+﻿# TYPE test_counter_total counter
+test_counter_total{a_b="value1;value2"} 1

@@ -124,6 +124,12 @@ to expose the scraping endpoint on a different port.
 The `PrometheusExporter` can be configured using the `PrometheusAspNetCoreOptions`
 properties.
 
+### ScopeInfoEnabled
+
+Specifies whether metrics include
+[scope labels](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/compatibility/prometheus_and_openmetrics.md#instrumentation-scope-1).
+Default value: `true`. Set to `false` to disable scope labels.
+
 ### ScrapeEndpointPath
 
 Defines the path for the Prometheus scrape endpoint for the middleware
