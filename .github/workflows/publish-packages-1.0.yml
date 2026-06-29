@@ -135,7 +135,7 @@ jobs:
   validate:
     name: Validate NuGet packages
     needs: [build-pack]
-    runs-on: ubuntu-24.04
+    runs-on: windows-2025
 
     permissions:
       attestations: read # Verify GitHub attestations for the build outputs
@@ -206,6 +206,7 @@ jobs:
       env:
         CERTIFICATE_IDENTITY: "${{ github.server_url }}/${{ github.repository }}/.github/workflows/publish-packages-1.0.yml@${{ github.ref }}"
         CERTIFICATE_OIDC_ISSUER: "https://token.actions.githubusercontent.com"
+        COSIGN_YES: "yes"
       run: |
         $nupkgFiles = Get-ChildItem -Path "./artifacts/*.nupkg" -File
 
@@ -223,7 +224,7 @@ jobs:
         foreach ($dllFile in $dllFiles) {
             $dllFilePath = $dllFile.FullName
             Write-Output "Verifying $dllFilePath"
-            cosign verify-blob `
+            cosign.exe verify-blob `
               --bundle "$dllFilePath.sigstore.json" `
               --certificate-identity ${env:CERTIFICATE_IDENTITY} `
               --certificate-oidc-issuer ${env:CERTIFICATE_OIDC_ISSUER} `
