@@ -75,16 +75,6 @@ public static class PrometheusEscapingTests
     }
 
     [Theory]
-    [InlineData(EscapingScheme.AllowUtf8, "metric.name", "metric.name")]
-    [InlineData(EscapingScheme.AllowUtf8, "a_b", "a_b")]
-    [InlineData(EscapingScheme.AllowUtf8, "", "")]
-    [InlineData(EscapingScheme.Underscores, "metric.name", "metric.name")]
-    [InlineData(EscapingScheme.Underscores, "a_b", "a_b")]
-    [InlineData(EscapingScheme.Underscores, "", "")]
-    internal static void EscapeName_LeavesNameUnchanged(EscapingScheme scheme, string name, string expected)
-        => Assert.Equal(expected, PrometheusEscaping.EscapeName(name, scheme));
-
-    [Theory]
     [InlineData("metric_name", true)]
     [InlineData("Avalid_23name", true)]
     [InlineData("colon:in:the:middle", true)]
@@ -97,7 +87,7 @@ public static class PrometheusEscapingTests
     [InlineData("metric.name", false)]
     [InlineData("metric name", false)]
     [InlineData("", false)]
-    internal static void IsValidLegacyName_ValidatesMetricNames(string name, bool expected)
+    public static void IsValidLegacyName_ValidatesMetricNames(string name, bool expected)
         => Assert.Equal(expected, PrometheusEscaping.IsValidLegacyName(name));
 
     [Theory]
@@ -108,7 +98,7 @@ public static class PrometheusEscapingTests
     [InlineData("http.method", false)]
     [InlineData("0label", false)]
     [InlineData("", false)]
-    internal static void IsValidLegacyLabelName_DisallowsColons(string name, bool expected)
+    public static void IsValidLegacyLabelName_DisallowsColons(string name, bool expected)
         => Assert.Equal(expected, PrometheusEscaping.IsValidLegacyLabelName(name));
 
     [Theory]
@@ -122,6 +112,16 @@ public static class PrometheusEscapingTests
     [InlineData("http.method:value", "U__http_2e_method_3a_value")]
     public static void EscapeName_Values_LabelNameEncodesColon(string name, string expected)
         => Assert.Equal(expected, PrometheusEscaping.EscapeName(name, EscapingScheme.Values, isMetricName: false));
+
+    [Theory]
+    [InlineData(EscapingScheme.AllowUtf8, "metric.name", "metric.name")]
+    [InlineData(EscapingScheme.AllowUtf8, "a_b", "a_b")]
+    [InlineData(EscapingScheme.AllowUtf8, "", "")]
+    [InlineData(EscapingScheme.Underscores, "metric.name", "metric.name")]
+    [InlineData(EscapingScheme.Underscores, "a_b", "a_b")]
+    [InlineData(EscapingScheme.Underscores, "", "")]
+    internal static void EscapeName_LeavesNameUnchanged(EscapingScheme scheme, string name, string expected)
+        => Assert.Equal(expected, PrometheusEscaping.EscapeName(name, scheme));
 
     [Theory]
     [InlineData(EscapingScheme.Dots, "http:method", "http:method")]
