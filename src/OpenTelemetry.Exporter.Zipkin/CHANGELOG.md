@@ -6,6 +6,15 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* The library is now marked as trim and AOT compatible.
+  ([#7441](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7441))
+
+* Dropped the vendored `EnvironmentVariablesConfigurationProvider` copy; the
+  provider is now sourced transitively from the
+  `Microsoft.Extensions.Configuration.EnvironmentVariables` package referenced
+  by `OpenTelemetry`. No public API or behavioural change.
+  ([#7146](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7146))
+
 ## 1.16.0
 
 Released 2026-Jun-10

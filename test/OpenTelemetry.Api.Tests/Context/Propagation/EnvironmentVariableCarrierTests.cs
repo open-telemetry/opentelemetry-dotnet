@@ -15,6 +15,7 @@ public class EnvironmentVariableCarrierTests
     [InlineData("otel-baggage-key", "OTEL_BAGGAGE_KEY")]
     [InlineData("123trace", "_123TRACE")]
     [InlineData("M\u00f6j Baga\u017c", "M_J_BAGA_")]
+    [InlineData("", "_")]
     public void NormalizeKey_CompliesWithSpecification(string key, string expected)
         => Assert.Equal(expected, EnvironmentVariableCarrier.NormalizeKey(key));
 
