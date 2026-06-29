@@ -112,6 +112,24 @@ public static class PrometheusEscapingTests
         => Assert.Equal(expected, PrometheusEscaping.IsValidLegacyLabelName(name));
 
     [Theory]
+    [InlineData("http:method", "http__method")]
+    [InlineData("http.method:value", "http_dot_method__value")]
+    public static void EscapeName_Dots_LabelNameEncodesColon(string name, string expected)
+        => Assert.Equal(expected, PrometheusEscaping.EscapeName(name, EscapingScheme.Dots, isMetricName: false));
+
+    [Theory]
+    [InlineData("http:method", "U__http_3a_method")]
+    [InlineData("http.method:value", "U__http_2e_method_3a_value")]
+    public static void EscapeName_Values_LabelNameEncodesColon(string name, string expected)
+        => Assert.Equal(expected, PrometheusEscaping.EscapeName(name, EscapingScheme.Values, isMetricName: false));
+
+    [Theory]
+    [InlineData(EscapingScheme.Dots, "http:method", "http:method")]
+    [InlineData(EscapingScheme.Values, "http:method", "http:method")]
+    internal static void EscapeName_MetricNameKeepsColon(EscapingScheme scheme, string name, string expected)
+        => Assert.Equal(expected, PrometheusEscaping.EscapeName(name, scheme, isMetricName: true));
+
+    [Theory]
     [InlineData(EscapingScheme.Dots)]
     [InlineData(EscapingScheme.Values)]
     internal static void EscapeName_ToBuffer_WithEmptyName_LeavesCursorUnchanged(EscapingScheme scheme)

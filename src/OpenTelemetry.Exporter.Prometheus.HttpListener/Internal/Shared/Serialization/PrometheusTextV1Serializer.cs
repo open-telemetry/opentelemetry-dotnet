@@ -12,10 +12,18 @@ internal sealed class PrometheusTextV1Serializer : PrometheusTextSerializer
             ? WriteQuotedMetadataName(buffer, cursor, this.GetMetricMetadataNameBytes(metric))
             : base.WriteMetricMetadataName(buffer, cursor, metric);
 
-    internal override int WriteSeriesAndTags(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric, ReadOnlyTagCollection tags, string? suffix, IReadOnlyCollection<string>? reservedOutputKeys) =>
+    internal override int WriteSeriesAndTags(
+        byte[] buffer,
+        int cursor,
+        Metric metric,
+        PrometheusMetric prometheusMetric,
+        ReadOnlyTagCollection tags,
+        in TextFormatSerializerOptions options,
+        string? suffix,
+        IReadOnlyCollection<string>? reservedOutputKeys) =>
         this.RequiresQuotedName(prometheusMetric)
-            ? this.WriteQuotedSeriesAndTags(buffer, cursor, metric, prometheusMetric, tags, suffix, reservedOutputKeys)
-            : base.WriteSeriesAndTags(buffer, cursor, metric, prometheusMetric, tags, suffix, reservedOutputKeys);
+            ? this.WriteQuotedSeriesAndTags(buffer, cursor, metric, prometheusMetric, tags, options, suffix, reservedOutputKeys)
+            : base.WriteSeriesAndTags(buffer, cursor, metric, prometheusMetric, tags, options, suffix, reservedOutputKeys);
 
     internal override int WriteHistogramBucketName(byte[] buffer, int cursor, PrometheusMetric metric) =>
         this.RequiresQuotedName(metric)

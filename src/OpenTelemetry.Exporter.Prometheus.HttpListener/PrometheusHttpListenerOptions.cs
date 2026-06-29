@@ -72,6 +72,12 @@ public class PrometheusHttpListenerOptions
     public bool DisableTotalNameSuffixForCounters { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether the scope information (name, version, schema URL) is added to the scrape response.
+    /// Default value: <see langword="true"/>.
+    /// </summary>
+    public bool ScopeInfoEnabled { get; set; } = true;
+
+    /// <summary>
     /// Gets or sets the cache duration in milliseconds for scrape responses. Default value: 300.
     /// </summary>
     /// <remarks>
