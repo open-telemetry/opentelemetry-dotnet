@@ -22,6 +22,10 @@ Notes](../../RELEASENOTES.md).
 * Fix incorrect handling of leading digits in metric names for OpenMetrics.
   ([#7454](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7454))
 
+* Add `PrometheusHttpListenerOptions.ScopeInfoEnabled` property to enable or
+  disable scope labels in Prometheus metrics. Defaults to `true`.
+  ([#7436](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7436))
+
 * Added the `PrometheusHttpListenerOptions.ConfigureHttpListener` option.
   This can be used as a replacement for the removed `UriPrefixes` option.
   ([#7448](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7448))

@@ -59,6 +59,15 @@ internal static class OtlpRetry
         }
         else
         {
+            // No HTTP status code means the request failed without a response
+            // (e.g. a timeout or network failure). Honor the deadline so that
+            // total batch export time does not exceed the configured timeout.
+            if (IsDeadlineExceeded(response.DeadlineUtc))
+            {
+                retryResult = default;
+                return false;
+            }
+
             var delay = TimeSpan.FromMilliseconds(GetRandomNumber(0, retryDelayInMilliSeconds));
             if (!WouldExceedDeadline(response.DeadlineUtc, delay))
             {
