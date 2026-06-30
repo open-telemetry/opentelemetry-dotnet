@@ -1,0 +1,115 @@
+// Copyright The OpenTelemetry Authors
+// SPDX-License-Identifier: Apache-2.0
+
+namespace OpenTelemetry.Exporter.Prometheus.Tests;
+
+public static class PrometheusEscapingTests
+{
+    [Theory]
+    [InlineData("metric.name.with.dots", "metric_dot_name_dot_with_dot_dots")]
+    [InlineData("mysystem.prod.west.cpu.load", "mysystem_dot_prod_dot_west_dot_cpu_dot_load")]
+    [InlineData("mysystem.prod.west.cpu.load_total", "mysystem_dot_prod_dot_west_dot_cpu_dot_load__total")]
+    [InlineData("http.status:sum", "http_dot_status:sum")]
+    [InlineData("no:escaping_required", "no:escaping__required")]
+    [InlineData("a_b", "a__b")]
+    [InlineData("a b", "a_b")]
+    [InlineData("label with \U0001F631", "label_with__")]
+    [InlineData("\u82B1\u706B", "__")]
+    [InlineData("", "")]
+    public static void EscapeName_Dots(string name, string expected)
+        => Assert.Equal(expected, PrometheusEscaping.EscapeName(name, EscapingScheme.Dots));
+
+    [Theory]
+    [InlineData("metric.name", "U__metric_2e_name")]
+    [InlineData("mysystem.prod.west.cpu.load", "U__mysystem_2e_prod_2e_west_2e_cpu_2e_load")]
+    [InlineData("mysystem.prod.west.cpu.load_total", "U__mysystem_2e_prod_2e_west_2e_cpu_2e_load__total")]
+    [InlineData("http.status:sum", "U__http_2e_status:sum")]
+    [InlineData("no:escaping_required", "no:escaping_required")]
+    [InlineData("foo.bar", "U__foo_2e_bar")]
+    [InlineData("U__foo_2e_bar", "U___55_____foo__2e__bar")]
+    [InlineData("label with \u0100", "U__label_20_with_20__100_")]
+    [InlineData("", "")]
+    public static void EscapeName_Values(string name, string expected)
+        => Assert.Equal(expected, PrometheusEscaping.EscapeName(name, EscapingScheme.Values));
+
+    [Fact]
+    public static void EscapeName_Values_EncodesSpacesAndAstralCharacters()
+    {
+        // Input "label with \U0001F631" -> spaces become _20_ and the astral character its code point.
+        string name = "label with \U0001F631";
+
+        Assert.Equal(
+            "U__label_20_with_20__1f631_",
+            PrometheusEscaping.EscapeName(name, EscapingScheme.Values));
+    }
+
+    [Fact]
+    public static void EscapeName_Values_EncodesNonAsciiCharacters()
+    {
+        // Input is the two characters U+82B1 and U+706B.
+        string name = "\u82B1\u706B";
+
+        Assert.Equal(
+            "U___82b1__706b_",
+            PrometheusEscaping.EscapeName(name, EscapingScheme.Values));
+    }
+
+    [Fact]
+    public static void EscapeName_Values_EncodesUnpairedSurrogateAsReplacementCharacter()
+    {
+        // A lone high surrogate is not a valid Unicode scalar value and is encoded as
+        // the literal _FFFD_ replacement marker used by the reference implementation.
+        string name = "\uD800";
+
+        Assert.Equal(
+            "U___FFFD_",
+            PrometheusEscaping.EscapeName(name, EscapingScheme.Values));
+    }
+
+    [Theory]
+    [InlineData("metric.name", "metric.name")]
+    [InlineData("a_b", "a_b")]
+    [InlineData("", "")]
+    public static void EscapeName_Underscores_IsHandledElsewhere(string name, string expected)
+        => Assert.Equal(expected, PrometheusEscaping.EscapeName(name, EscapingScheme.Underscores));
+
+    [Theory]
+    [InlineData("http:method", "http_method")]
+    [InlineData("http.method:value", "http_dot_method_value")]
+    public static void EscapeName_Dots_LabelNameEncodesColon(string name, string expected)
+        => Assert.Equal(expected, PrometheusEscaping.EscapeName(name, EscapingScheme.Dots, isMetricName: false));
+
+    [Theory]
+    [InlineData("http:method", "U__http_3a_method")]
+    [InlineData("http.method:value", "U__http_2e_method_3a_value")]
+    public static void EscapeName_Values_LabelNameEncodesColon(string name, string expected)
+        => Assert.Equal(expected, PrometheusEscaping.EscapeName(name, EscapingScheme.Values, isMetricName: false));
+
+    [Theory]
+    [InlineData(EscapingScheme.Dots, "http:method", "http:method")]
+    [InlineData(EscapingScheme.Values, "http:method", "http:method")]
+    internal static void EscapeName_MetricNameKeepsColon(EscapingScheme scheme, string name, string expected)
+        => Assert.Equal(expected, PrometheusEscaping.EscapeName(name, scheme, isMetricName: true));
+
+    [Theory]
+    [InlineData(EscapingScheme.Dots)]
+    [InlineData(EscapingScheme.Values)]
+    internal static void EscapeName_ToBuffer_WithEmptyName_LeavesCursorUnchanged(EscapingScheme scheme)
+    {
+        var buffer = new byte[16];
+
+        var cursor = PrometheusEscaping.EscapeName(buffer, 5, string.Empty, scheme);
+
+        Assert.Equal(5, cursor);
+    }
+
+    [Theory]
+    [InlineData(null, EscapingScheme.Underscores)]
+    [InlineData("underscores", EscapingScheme.Underscores)]
+    [InlineData("dots", EscapingScheme.Dots)]
+    [InlineData("values", EscapingScheme.Values)]
+    [InlineData("allow-utf-8", EscapingScheme.Underscores)]
+    [InlineData("anything-else", EscapingScheme.Underscores)]
+    internal static void FromString_MapsEscapingScheme(string? escaping, EscapingScheme expected)
+        => Assert.Equal(expected, PrometheusEscaping.FromString(escaping));
+}
