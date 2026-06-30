@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Context.Propagation;
@@ -216,9 +217,11 @@ internal static class TraceStateUtils
 
         return true;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static bool IsValidFirstCharacter(char c)
             => char.IsAsciiLetterLower(c) || char.IsAsciiDigit(c);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static bool IsValidCharacter(char c)
             => IsValidFirstCharacter(c) || c is '_' or '-' or '*' or '/' or '@';
     }
