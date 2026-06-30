@@ -37,7 +37,7 @@ Notes](../../RELEASENOTES.md).
 * Add `PrometheusHttpListenerOptions.ResourceConstantLabels` property to select
   resource attributes to add to each metric as constant labels. Defaults to
   `null` (no resource attributes are added as metric labels).
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7471](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7471))
 
 ## 1.16.0-beta.1
 
