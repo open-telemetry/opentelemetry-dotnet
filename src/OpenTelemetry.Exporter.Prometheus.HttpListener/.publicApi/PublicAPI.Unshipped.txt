@@ -1,4 +1,6 @@
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions
+OpenTelemetry.Exporter.PrometheusHttpListenerOptions.ConfigureHttpListener.get -> System.Action<OpenTelemetry.Exporter.PrometheusHttpListenerOptions!, System.Net.HttpListener!>?
+OpenTelemetry.Exporter.PrometheusHttpListenerOptions.ConfigureHttpListener.set -> void
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions.Host.get -> string!
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions.Host.set -> void
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions.Port.get -> int
