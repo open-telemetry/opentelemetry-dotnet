@@ -67,6 +67,8 @@ variables.
 * `DisableTotalNameSuffixForCounters`: Whether to disable the `_total` suffix for
   counter metrics (default `false`).
 * `DisableTimestamp`: Whether to disable the timestamp for metrics (default `false`).
+* `ConfigureHttpListener`: A delegate that can be used to apply custom configuration
+  to the `HttpListener` instance used by the exporter before use.
 
 ### Configuration using Dependency Injection
 

@@ -34,6 +34,9 @@ Notes](../../RELEASENOTES.md).
   disable the `target_info` metric in Prometheus metrics. Defaults to `true`.
   ([#7438](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7438))
 
+* Added the `PrometheusHttpListenerOptions.ConfigureHttpListener` option.
+  ([#7448](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7448))
+
 ## 1.16.0-beta.1
 
 Released 2026-Jun-10
