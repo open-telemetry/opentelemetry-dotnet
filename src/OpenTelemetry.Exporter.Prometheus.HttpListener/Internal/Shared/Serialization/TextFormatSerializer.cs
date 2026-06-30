@@ -778,8 +778,6 @@ internal abstract class TextFormatSerializer
         List<(int Start, int Length)>? writtenKeyRanges = null;
         var wroteLabel = false;
 
-        List<string>? writtenOutputKeys = null;
-
         if (writeEnclosingBraces)
         {
             buffer[cursor++] = unchecked((byte)'{');
@@ -817,7 +815,10 @@ internal abstract class TextFormatSerializer
         {
             foreach (var scopeLabel in CreateScopeLabelData(metric))
             {
-                AddLabel(scopeLabel.OriginalKey, this.GetScopeOutputKey(scopeLabel.OutputKey), scopeLabel.Value, ref labels, reservedOutputKeys);
+                // Scope labels (otel_scope_*) are already in their target Prometheus form, so they
+                // are written verbatim and not re-escaped by the negotiated scheme, exactly as the
+                // fast path does.
+                AddLabel(scopeLabel.OriginalKey, scopeLabel.OutputKey, scopeLabel.Value, ref labels, reservedOutputKeys);
             }
         }
 
@@ -858,30 +859,12 @@ internal abstract class TextFormatSerializer
         bool TryWriteLabel(string key, object? value, bool isScopeLabel = false)
         {
             // The output label name is written directly into the buffer (scope labels arrive already
-            // in their final form; point tags are escaped using the negotiated scheme). The written
-            // bytes are then used to detect reserved names and collisions, so no key string is
-            // allocated. On a reserved name or a collision the write is rolled back by rewinding the
-            // cursor; a collision additionally aborts the fast path so the slow path can merge.
+            // in their final form and are written verbatim; point tags are escaped using the
+            // negotiated scheme). The written bytes are then used to detect reserved names and
+            // collisions, so no per-label key string is allocated. On a reserved name or a collision
+            // the write is rolled back by rewinding the cursor; a collision additionally aborts the
+            // fast path so the slow path can merge.
             var rewindCursor = cursor;
-
-            // Scope labels arrive in their underscore-normalized (otel_scope_*) form and are then
-            // escaped using the negotiated scheme, exactly as point tags are. The resulting output
-            // key is always a legacy-valid ASCII name, so it is both used for de-duplication and
-            // written verbatim.
-            var outputKey = isScopeLabel ? this.GetScopeOutputKey(key) : this.GetOutputLabelKey(key);
-
-            if (reservedOutputKeys?.Contains(outputKey) == true)
-            {
-                return true;
-            }
-
-            if (writtenOutputKeys?.Contains(outputKey) == true)
-            {
-                return false;
-            }
-
-            writtenOutputKeys ??= [];
-            writtenOutputKeys.Add(outputKey);
 
             if (wroteLabel)
             {
@@ -2083,11 +2066,6 @@ internal abstract class TextFormatSerializer
     // the negotiated scheme reverses it correctly; for example "otel_scope_dot_name" would
     // otherwise be incorrectly decoded under the dots scheme into "otel_scope.name", losing
     // the required "otel_scope_" prefix. The underscores scheme leaves the key unchanged.
-    private string GetScopeOutputKey(string outputKey) =>
-        this.Escaping == EscapingScheme.Underscores
-            ? outputKey
-            : PrometheusEscaping.EscapeName(outputKey, this.Escaping, isMetricName: false);
-
     private string GetOutputLabelKey(string value)
     {
         // The dots and values schemes produce a reversible, legacy-valid ASCII label name. The

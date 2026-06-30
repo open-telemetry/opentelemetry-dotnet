@@ -1,0 +1,3 @@
+﻿# TYPE test_counter counter
+test_counter_total{otel_scope_name="WriteMetricWritesScopeLabelsVerbatim;point",otel_scope_version="1.0.0"} 1
+test_counter_created{otel_scope_name="WriteMetricWritesScopeLabelsVerbatim;point",otel_scope_version="1.0.0"} <TIMESTAMP>

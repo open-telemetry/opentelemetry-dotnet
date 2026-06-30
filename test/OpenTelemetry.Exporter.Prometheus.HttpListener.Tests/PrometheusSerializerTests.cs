@@ -1826,6 +1826,38 @@ public sealed partial class PrometheusSerializerTests
         await Verify(output, "txt", VerifySettings);
     }
 
+    [Theory]
+    [InlineData(PrometheusProtocol.AllowUtf8Escaping, "otel_scope_name")]
+    [InlineData(PrometheusProtocol.DotsEscaping, "otel/scope/name")]
+    [InlineData(PrometheusProtocol.UnderscoresEscaping, "otel_scope_name")]
+    [InlineData(PrometheusProtocol.ValuesEscaping, "otel_scope_name")]
+    public async Task WriteMetricWritesScopeLabelsVerbatim(string escaping, string collidingPointTagKey)
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter(
+            nameof(this.WriteMetricWritesScopeLabelsVerbatim),
+            "1.0.0",
+            tags: null,
+            scope: null);
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        meter.CreateCounter<int>("test_counter").Add(
+            1,
+            new KeyValuePair<string, object?>(collidingPointTagKey, "point"));
+
+        provider.ForceFlush();
+
+        var output = WriteMetricWithEscaping(buffer, metrics[0], escaping);
+
+        await Verify(output, "txt", VerifySettings).UseParameters(escaping);
+    }
+
     [Fact]
     public async Task WriteExemplarEscapesReservedTraceIdKeyToPreventCollisionWithFilteredTag()
     {
@@ -2044,10 +2076,13 @@ public sealed partial class PrometheusSerializerTests
     }
 
     private static string WriteMetricWithDotsEscaping(byte[] buffer, Metric metric)
+        => WriteMetricWithEscaping(buffer, metric, PrometheusProtocol.DotsEscaping);
+
+    private static string WriteMetricWithEscaping(byte[] buffer, Metric metric, string escaping)
     {
         var protocol = new PrometheusProtocol(
             PrometheusProtocol.OpenMetricsMediaType,
-            PrometheusProtocol.DotsEscaping,
+            escaping,
             PrometheusProtocol.OpenMetricsV1,
             isOpenMetrics: true);
 
