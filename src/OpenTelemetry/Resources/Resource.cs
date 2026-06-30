@@ -20,7 +20,21 @@ public class Resource
     /// </summary>
     /// <param name="attributes">An <see cref="IEnumerable{T}"/> of attributes that describe the resource.</param>
     public Resource(IEnumerable<KeyValuePair<string, object>> attributes)
+        : this(attributes, schemaUrl: null)
     {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Resource"/> class.
+    /// </summary>
+    /// <param name="attributes">An <see cref="IEnumerable{T}"/> of attributes that describe the resource.</param>
+    /// <param name="schemaUrl">The Schema URL (semantic conventions URL) that applies to the resource, or <see langword="null"/> if the resource has no Schema URL.</param>
+#pragma warning disable CA1054 // Change the type of parameter from 'string' to 'System.Uri'
+    public Resource(IEnumerable<KeyValuePair<string, object>> attributes, string? schemaUrl)
+#pragma warning restore CA1054 // Change the type of parameter from 'string' to 'System.Uri'
+    {
+        this.SchemaUrl = string.IsNullOrEmpty(schemaUrl) ? null : schemaUrl;
+
         if (attributes == null)
         {
             OpenTelemetrySdkEventSource.Log.InvalidArgument("Create resource", "attributes", "are null");
@@ -41,6 +55,13 @@ public class Resource
     /// Gets the collection of key-value pairs describing the resource.
     /// </summary>
     public IEnumerable<KeyValuePair<string, object>> Attributes { get; }
+
+#pragma warning disable CA1056 // Change the type of property from 'string' to 'System.Uri'
+    /// <summary>
+    /// Gets the Schema URL (semantic conventions URL) that applies to the resource, or <see langword="null"/> if the resource has no Schema URL.
+    /// </summary>
+    public string? SchemaUrl { get; }
+#pragma warning restore CA1056 // Change the type of property from 'string' to 'System.Uri'
 
     /// <summary>
     /// Returns a new, merged <see cref="Resource"/> by merging the old <see cref="Resource"/> with the
@@ -71,7 +92,38 @@ public class Resource
             }
         }
 
-        return new Resource(newAttributes);
+        return new Resource(newAttributes, MergeSchemaUrl(this.SchemaUrl, other?.SchemaUrl));
+    }
+
+    // Implements the Schema URL merge logic from
+    // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md#merge
+    // where "this" is the old resource and "other" is the updating resource.
+    private static string? MergeSchemaUrl(string? oldSchemaUrl, string? updatingSchemaUrl)
+    {
+        // If the old resource's Schema URL is empty then the result is the updating resource's Schema URL.
+        if (oldSchemaUrl is not { Length: > 0 })
+        {
+            return updatingSchemaUrl;
+        }
+
+        // Else if the updating resource's Schema URL is empty then the result is the old resource's Schema URL.
+        if (updatingSchemaUrl is not { Length: > 0 })
+        {
+            return oldSchemaUrl;
+        }
+
+        // Else if the Schema URLs are the same then that is the result.
+        if (string.Equals(oldSchemaUrl, updatingSchemaUrl, StringComparison.Ordinal))
+        {
+            return oldSchemaUrl;
+        }
+
+        // Else this is a merging error: the Schema URLs are both non-empty and different. The spec leaves the
+        // result undefined; we log a warning and use the updating resource's Schema URL, consistent with the
+        // attribute merge precedence where the updating ("other") resource takes precedence.
+        OpenTelemetrySdkEventSource.Log.ResourceSchemaUrlMergeConflict(oldSchemaUrl, updatingSchemaUrl);
+
+        return updatingSchemaUrl;
     }
 
     private static KeyValuePair<string, object> SanitizeAttribute(KeyValuePair<string, object> attribute)

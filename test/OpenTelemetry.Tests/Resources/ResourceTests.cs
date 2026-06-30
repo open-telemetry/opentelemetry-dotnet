@@ -1,7 +1,10 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics.Tracing;
 using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Internal;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Resources.Tests;
 
@@ -377,6 +380,130 @@ public sealed class ResourceTests : IDisposable
         // Assert
         Assert.Single(newResource.Attributes);
         Assert.Contains(new KeyValuePair<string, object>("value", "updatedValue"), newResource.Attributes);
+    }
+
+    [Fact]
+    public void CreateResource_DefaultSchemaUrlIsNull()
+    {
+        var resource = new Resource(new Dictionary<string, object> { { KeyName, ValueName } });
+
+        Assert.Null(resource.SchemaUrl);
+    }
+
+    [Fact]
+    public void CreateResource_WithSchemaUrl()
+    {
+        const string SchemaUrl = "https://opentelemetry.io/schemas/1.0.0";
+
+        var resource = new Resource(new Dictionary<string, object> { { KeyName, ValueName } }, SchemaUrl);
+
+        Assert.Equal(SchemaUrl, resource.SchemaUrl);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+#pragma warning disable CA1054 // Url parameters should not be strings
+    public void CreateResource_EmptySchemaUrlIsNormalizedToNull(string? schemaUrl)
+#pragma warning restore CA1054 // Url parameters should not be strings
+    {
+        var resource = new Resource(new Dictionary<string, object> { { KeyName, ValueName } }, schemaUrl);
+
+        Assert.Null(resource.SchemaUrl);
+    }
+
+    [Fact]
+    public void MergeResource_SchemaUrl_OldEmptyUsesUpdating()
+    {
+        const string SchemaUrl = "https://opentelemetry.io/schemas/1.0.0";
+        var current = new Resource([], schemaUrl: null);
+        var updating = new Resource([], SchemaUrl);
+
+        var merged = current.Merge(updating);
+
+        Assert.Equal(SchemaUrl, merged.SchemaUrl);
+    }
+
+    [Fact]
+    public void MergeResource_SchemaUrl_UpdatingEmptyUsesOld()
+    {
+        const string SchemaUrl = "https://opentelemetry.io/schemas/1.0.0";
+        var current = new Resource([], SchemaUrl);
+        var updating = new Resource([], schemaUrl: null);
+
+        var merged = current.Merge(updating);
+
+        Assert.Equal(SchemaUrl, merged.SchemaUrl);
+    }
+
+    [Fact]
+    public void MergeResource_SchemaUrl_BothEmptyResultIsNull()
+    {
+        var current = new Resource([], schemaUrl: null);
+        var updating = new Resource([], schemaUrl: null);
+
+        var merged = current.Merge(updating);
+
+        Assert.Null(merged.SchemaUrl);
+    }
+
+    [Fact]
+    public void MergeResource_SchemaUrl_BothEqualUsesValue()
+    {
+        const string SchemaUrl = "https://opentelemetry.io/schemas/1.0.0";
+        var current = new Resource([], SchemaUrl);
+        var updating = new Resource([], SchemaUrl);
+
+        var merged = current.Merge(updating);
+
+        Assert.Equal(SchemaUrl, merged.SchemaUrl);
+    }
+
+    [Fact]
+    public void MergeResource_SchemaUrl_ConflictUsesUpdatingAndLogsWarning()
+    {
+        const string OldSchemaUrl = "https://opentelemetry.io/schemas/1.0.0";
+        const string UpdatingSchemaUrl = "https://opentelemetry.io/schemas/1.1.0";
+
+        using var listener = new TestEventListener(OpenTelemetrySdkEventSource.Log, EventLevel.Warning);
+
+        var current = new Resource([], OldSchemaUrl);
+        var updating = new Resource([], UpdatingSchemaUrl);
+
+        var merged = current.Merge(updating);
+
+        // On conflict the updating (other) Schema URL wins, consistent with attribute merge precedence.
+        Assert.Equal(UpdatingSchemaUrl, merged.SchemaUrl);
+
+        var conflictEvent = Assert.Single(listener.Messages, e => e.EventId == 59);
+        Assert.Equal(OldSchemaUrl, conflictEvent.Payload![0]);
+        Assert.Equal(UpdatingSchemaUrl, conflictEvent.Payload![1]);
+    }
+
+    [Fact]
+    public void ResourceBuilder_AddAttributes_WithSchemaUrl_IsPropagatedByBuild()
+    {
+        const string SchemaUrl = "https://opentelemetry.io/schemas/1.36.0";
+
+        var resource = ResourceBuilder.CreateEmpty()
+            .AddAttributes([new KeyValuePair<string, object>(KeyName, ValueName)], SchemaUrl)
+            .Build();
+
+        Assert.Equal(SchemaUrl, resource.SchemaUrl);
+        Assert.Contains(new KeyValuePair<string, object>(KeyName, ValueName), resource.Attributes);
+    }
+
+    [Fact]
+    public void ResourceBuilder_Build_PropagatesSchemaUrlFromSingleContributor()
+    {
+        const string SchemaUrl = "https://opentelemetry.io/schemas/1.36.0";
+
+        // A detector contributes a Schema URL; other contributors leave it empty.
+        var resource = ResourceBuilder.CreateDefault()
+            .AddAttributes([new KeyValuePair<string, object>(KeyName, ValueName)], SchemaUrl)
+            .Build();
+
+        Assert.Equal(SchemaUrl, resource.SchemaUrl);
     }
 
     [Fact]

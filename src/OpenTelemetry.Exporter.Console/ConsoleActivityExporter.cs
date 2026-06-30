@@ -146,6 +146,11 @@ public class ConsoleActivityExporter : ConsoleExporter<Activity>
                         this.WriteLine($"    {result.Key}: {result.Value}");
                     }
                 }
+
+                if (!string.IsNullOrEmpty(resource.SchemaUrl))
+                {
+                    this.WriteLine($"    Schema URL: {resource.SchemaUrl}");
+                }
             }
 
             this.WriteLine(string.Empty);
