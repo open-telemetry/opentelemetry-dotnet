@@ -14,7 +14,7 @@ ARG PUBLISH_CONFIGURATION=Release
 ARG PUBLISH_FRAMEWORK=net10.0
 
 # renovate: datasource=github-digest depName=w3c/trace-context packageName=w3c/trace-context currentValue=main
-ENV W3C_TRACE_CONTEXT_SHA="34b10ac5af7f0caeb28efe35fe51cd4763ec5771"
+ENV W3C_TRACE_CONTEXT_SHA="acab820be9db7b3433668baa5cdd43f57f4c4be0"
 
 WORKDIR /repo
 COPY . ./
