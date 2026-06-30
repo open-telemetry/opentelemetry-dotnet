@@ -110,6 +110,7 @@ public class PrometheusHttpListenerOptions
     /// </remarks>
     public Func<string, bool>? ResourceConstantLabels { get; set; }
 
+    /// <summary>
     /// Gets or sets an optional callback to apply custom configuration for the
     /// <see cref="System.Net.HttpListener"/> instance used by the exporter.
     /// </summary>
