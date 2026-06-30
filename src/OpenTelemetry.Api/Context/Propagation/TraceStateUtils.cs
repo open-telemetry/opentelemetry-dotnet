@@ -196,67 +196,31 @@ internal static class TraceStateUtils
 
     private static bool ValidateKey(ReadOnlySpan<char> key)
     {
-        // Key is opaque string up to 256 characters printable. It MUST begin with a lowercase letter, and
-        // can only contain lowercase letters a-z, digits 0-9, underscores _, dashes -, asterisks *,
-        // forward slashes / and @
-
-        var i = 0;
-
+        // https://www.w3.org/TR/trace-context-2/#key
+        // key = (lcalpha / DIGIT) 0*255(keychar)
+        // keychar = lcalpha / DIGIT / "_" / "-" / "*" / "/" / "@"
         if (key.IsEmpty
             || key.Length > KeyMaxSize
-            || !char.IsAsciiLetterLower(key[i]))
+            || !IsValidFirstCharacter(key[0]))
         {
             return false;
         }
 
-        // before
-        for (i = 1; i < key.Length; i++)
+        for (var i = 1; i < key.Length; i++)
         {
-            var c = key[i];
-
-            if (c == '@')
-            {
-                // vendor follows
-                break;
-            }
-
-            if (!IsValidCharacter(c))
+            if (!IsValidCharacter(key[i]))
             {
                 return false;
             }
         }
 
-        i++; // skip @ or increment further than key.Length
+        return true;
 
-        var vendorLength = key.Length - i;
-        if (vendorLength is not 0 and <= 14)
-        {
-            if (vendorLength > 0 && i > 242)
-            {
-                // tenant section should be less than 241 characters long
-                return false;
-            }
-
-            for (; i < key.Length; i++)
-            {
-                var c = key[i];
-
-                if (!IsValidCharacter(c))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        // vendor name should be at least 1 to 14 character long
-        return false;
+        static bool IsValidFirstCharacter(char c)
+            => char.IsAsciiLetterLower(c) || char.IsAsciiDigit(c);
 
         static bool IsValidCharacter(char c)
-        {
-            return char.IsAsciiLetterLower(c) || char.IsAsciiDigit(c) || c is '_' or '-' or '*' or '/';
-        }
+            => IsValidFirstCharacter(c) || c is '_' or '-' or '*' or '/' or '@';
     }
 
     private static bool ValidateValue(ReadOnlySpan<char> value)
