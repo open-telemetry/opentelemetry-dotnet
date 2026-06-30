@@ -27,6 +27,10 @@ Notes](../../RELEASENOTES.md).
   schemes when negotiated via the `Accept` header.
   ([#7439](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7439))
 
+* Add `PrometheusAspNetCoreOptions.TargetInfoEnabled` property to enable or
+  disable the `target_info` metric in Prometheus metrics. Defaults to `true`.
+  ([#7438](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7438))
+
 ## 1.16.0-beta.1
 
 Released 2026-Jun-10
