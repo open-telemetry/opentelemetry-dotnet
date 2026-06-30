@@ -74,7 +74,7 @@ public class PrometheusSerializerFuzzTests
     [Property(MaxTest = MaxTests)]
     public Property IsValidLegacyLabelNameMatchesReferenceImplementation() => Prop.ForAll(
         Generators.PrometheusStringArbitrary(),
-        static (value) => PrometheusEscaping.IsValidLegacyLabelName(value) == ReferenceIsValidLegacyName(value));
+        static (value) => PrometheusEscaping.IsValidLegacyLabelName(value) == ReferenceIsValidLegacyLabelName(value));
 
     [Property(MaxTest = MaxTests)]
     public Property WriteLabelNameMatchesReferenceImplementation() => Prop.ForAll(
@@ -228,7 +228,7 @@ public class PrometheusSerializerFuzzTests
             {
                 text.Append('_').Append(codePoint.ToString("x", CultureInfo.InvariantCulture)).Append('_');
             }
-            else if (ReferenceIsValidLegacyRune(codePoint, index == 0))
+            else if (ReferenceIsValidLegacyRune(codePoint, index == 0, isMetricName: true))
             {
                 text.Append((char)codePoint);
             }
@@ -251,7 +251,11 @@ public class PrometheusSerializerFuzzTests
         return text.ToString();
     }
 
-    private static bool ReferenceIsValidLegacyName(string value)
+    private static bool ReferenceIsValidLegacyName(string value) => ReferenceIsValidLegacyName(value, isMetricName: true);
+
+    private static bool ReferenceIsValidLegacyLabelName(string value) => ReferenceIsValidLegacyName(value, isMetricName: false);
+
+    private static bool ReferenceIsValidLegacyName(string value, bool isMetricName)
     {
         if (value.Length == 0)
         {
@@ -264,7 +268,7 @@ public class PrometheusSerializerFuzzTests
         {
             var codePoint = ReferenceGetCodePoint(value, index, out var charsConsumed, out _);
 
-            if (!ReferenceIsValidLegacyRune(codePoint, index == 0))
+            if (!ReferenceIsValidLegacyRune(codePoint, index == 0, isMetricName))
             {
                 return false;
             }
@@ -280,7 +284,7 @@ public class PrometheusSerializerFuzzTests
     // written verbatim as ASCII bytes.
     private static byte[] ReferenceWriteLabelName(string value)
     {
-        if (ReferenceIsValidLegacyName(value))
+        if (ReferenceIsValidLegacyLabelName(value))
         {
             return ReferenceWriteAsciiStringNoEscape(value);
         }
@@ -290,8 +294,9 @@ public class PrometheusSerializerFuzzTests
         return [(byte)'"', .. escaped, (byte)'"'];
     }
 
-    private static bool ReferenceIsValidLegacyRune(int codePoint, bool isFirst) =>
-        codePoint is (>= 'a' and <= 'z') or (>= 'A' and <= 'Z') or '_' or ':' ||
+    private static bool ReferenceIsValidLegacyRune(int codePoint, bool isFirst, bool isMetricName) =>
+        codePoint is (>= 'a' and <= 'z') or (>= 'A' and <= 'Z') or '_' ||
+        (isMetricName && codePoint == ':') ||
         (!isFirst && codePoint is >= '0' and <= '9');
 
     private static int ReferenceGetCodePoint(string value, int index, out int charsConsumed, out bool isValidRune)
