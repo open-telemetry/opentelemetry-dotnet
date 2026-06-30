@@ -894,7 +894,7 @@ public struct MetricPoint
     /// running value read here reflects all completed updates: the <c>CompareExchange</c> that set
     /// the claim provides acquire ordering, but because that ordering is weak on some platforms
     /// (e.g. Arm/.NET Framework) the caller additionally issues an explicit full fence
-    /// (<see cref="System.Threading.Thread.MemoryBarrier"/>) before invoking this method.
+    /// (<see cref="Thread.MemoryBarrier"/>) before invoking this method.
     /// The decision is derived from the authoritative running value rather than the
     /// <see cref="MetricPointStatus"/> flag: that flag is written by both <c>Update</c> and
     /// <c>Snapshot</c> without a common lock, so on weak memory models (e.g. Arm/.NET Framework)
