@@ -23,6 +23,10 @@ Notes](../../RELEASENOTES.md).
   disable scope labels in Prometheus metrics. Defaults to `true`.
   ([#7436](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7436))
 
+* Added support for the `dots` and `values` Prometheus UTF-8 name escaping
+  schemes when negotiated via the `Accept` header.
+  ([#7439](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7439))
+
 * Add `PrometheusAspNetCoreOptions.TargetInfoEnabled` property to enable or
   disable the `target_info` metric in Prometheus metrics. Defaults to `true`.
   ([#7438](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7438))

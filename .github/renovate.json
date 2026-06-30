@@ -15,6 +15,16 @@
       "matchStrings": [
         "# renovate:\\s*datasource=(?<datasource>github-runners)(?:\\s+[A-Za-z][A-Za-z0-9_-]*=[^\\s]+)*?(?:\\s+versioning=(?<versioning>[^\\s]+))?(?:\\s+[A-Za-z][A-Za-z0-9_-]*=[^\\s]+)*\\s*\\r?\\n\\s*(?:-\\s*)?(?:[A-Za-z0-9_-]+:\\s*)?['\"]?(?<depName>[a-zA-Z]+)-(?<currentValue>[A-Za-z0-9._-]+)['\"]?"
       ]
+    },
+    {
+      "customType": "regex",
+      "description": ["Update the W3C Trace Context test suite commit"],
+      "managerFilePatterns": [
+        "/^test/OpenTelemetry\\.Instrumentation\\.W3cTraceContext\\.Tests/Dockerfile$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>github-digest) depName=(?<depName>[^\\s]+) packageName=(?<packageName>[^\\s]+) currentValue=(?<currentValue>[^\\s]+)\\s+ENV W3C_TRACE_CONTEXT_SHA=['\"]?(?<currentDigest>[a-f0-9]{40})['\"]?"
+      ]
     }
   ],
   "dependencyDashboard": false,

@@ -44,9 +44,9 @@ internal sealed class PrometheusCollectionManager
     internal Func<TimeSpan> GetElapsedTime { get; set; }
 
 #if NET
-    public ValueTask<CollectionResponse> EnterCollect(PrometheusProtocol protocol)
+    public ValueTask<CollectionResponse> EnterCollect(in PrometheusProtocol protocol)
 #else
-    public Task<CollectionResponse> EnterCollect(PrometheusProtocol protocol)
+    public Task<CollectionResponse> EnterCollect(in PrometheusProtocol protocol)
 #endif
     {
         CollectionResponse? cachedResponse = null;
@@ -215,7 +215,7 @@ internal sealed class PrometheusCollectionManager
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void ExitCollect(PrometheusProtocol protocol)
+    public void ExitCollect(in PrometheusProtocol protocol)
         => this.GetProtocolState(protocol).DecrementReaderCount();
 
 #if NET
@@ -261,15 +261,15 @@ internal sealed class PrometheusCollectionManager
         => Interlocked.Exchange(ref this.globalLockState, 0);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void IncrementReaderCount(PrometheusProtocol protocol)
+    private void IncrementReaderCount(in PrometheusProtocol protocol)
         => this.GetProtocolState(protocol).IncrementReaderCount();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool HasActiveReaders(PrometheusProtocol protocol)
+    private bool HasActiveReaders(in PrometheusProtocol protocol)
         => this.protocolStates.TryGetValue(protocol, out var state) && state.HasActiveReaders();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool WaitForReadersToComplete(PrometheusProtocol protocol)
+    private bool WaitForReadersToComplete(in PrometheusProtocol protocol)
     {
         var state = this.GetProtocolState(protocol);
         var didSpin = false;
@@ -349,7 +349,7 @@ internal sealed class PrometheusCollectionManager
             : ExportResult.Failure;
     }
 
-    private bool TryWriteResponse(PrometheusProtocol protocol, PrometheusProtocolState state, in Batch<Metric> metrics)
+    private bool TryWriteResponse(in PrometheusProtocol protocol, PrometheusProtocolState state, in Batch<Metric> metrics)
     {
         try
         {
@@ -457,7 +457,7 @@ internal sealed class PrometheusCollectionManager
         return new CollectionResult(responses);
     }
 
-    private bool TryGetCachedResponse(PrometheusProtocol protocol, out CollectionResponse response)
+    private bool TryGetCachedResponse(in PrometheusProtocol protocol, out CollectionResponse response)
     {
         if (this.protocolStates.TryGetValue(protocol, out var state) &&
             state.GeneratedAt is { } generatedAt &&
@@ -474,7 +474,7 @@ internal sealed class PrometheusCollectionManager
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private PrometheusProtocolState GetProtocolState(PrometheusProtocol protocol)
+    private PrometheusProtocolState GetProtocolState(in PrometheusProtocol protocol)
         => this.protocolStates.GetOrAdd(protocol, static _ => new());
 
     private int WriteTargetInfo(TextFormatSerializer serializer, PrometheusProtocolState state)
@@ -639,7 +639,7 @@ internal sealed class PrometheusCollectionManager
             this.responses = responses;
         }
 
-        public bool TryGetResponse(PrometheusProtocol protocol, out CollectionResponse response)
+        public bool TryGetResponse(in PrometheusProtocol protocol, out CollectionResponse response)
         {
             if (this.responses?.TryGetValue(protocol, out response) == true)
             {
@@ -738,7 +738,7 @@ internal sealed class PrometheusCollectionManager
         private readonly TaskCompletionSource<CollectionResult> tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
         private bool frozen;
 
-        public CollectionContext(PrometheusProtocol protocol)
+        public CollectionContext(in PrometheusProtocol protocol)
         {
             this.protocols.Add(protocol);
         }
@@ -757,7 +757,7 @@ internal sealed class PrometheusCollectionManager
         public void SetResult(CollectionResult result)
             => this.tcs.SetResult(result);
 
-        public bool TryRegisterProtocol(PrometheusProtocol protocol, bool hasActiveReaders)
+        public bool TryRegisterProtocol(in PrometheusProtocol protocol, bool hasActiveReaders)
         {
             lock (this.gate)
             {
