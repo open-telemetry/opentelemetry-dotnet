@@ -642,28 +642,37 @@ internal abstract class TextFormatSerializer
         List<string>? writtenOutputKeys = null;
         var wroteLabel = false;
 
+        var resourceConstantLabels = options.ResourceConstantLabels;
+        var hasResourceConstantLabels = resourceConstantLabels is { Count: > 0 };
+
         if (writeEnclosingBraces)
         {
             buffer[cursor++] = unchecked((byte)'{');
         }
 
-        if (!options.SuppressScopeInfo)
+        // The fast path writes scope labels and point tags directly to the buffer. It cannot
+        // account for resource constant labels (which may collide with, and therefore need to be
+        // merged with, point tags), so it is skipped whenever any are present.
+        if (!hasResourceConstantLabels)
         {
-            WriteScopeLabels();
-        }
-
-        if (TryWritePointTags())
-        {
-            if (writeEnclosingBraces)
+            if (!options.SuppressScopeInfo)
             {
-                buffer[cursor++] = unchecked((byte)'}');
-            }
-            else if (wroteLabel)
-            {
-                buffer[cursor++] = unchecked((byte)',');
+                WriteScopeLabels();
             }
 
-            return cursor;
+            if (TryWritePointTags())
+            {
+                if (writeEnclosingBraces)
+                {
+                    buffer[cursor++] = unchecked((byte)'}');
+                }
+                else if (wroteLabel)
+                {
+                    buffer[cursor++] = unchecked((byte)',');
+                }
+
+                return cursor;
+            }
         }
 
         cursor = startCursor;
@@ -680,6 +689,14 @@ internal abstract class TextFormatSerializer
         foreach (var tag in tags)
         {
             this.AddLabel(tag.Key, tag.Value, ref labels, reservedOutputKeys);
+        }
+
+        if (hasResourceConstantLabels)
+        {
+            foreach (var resourceLabel in resourceConstantLabels!)
+            {
+                this.AddLabel(resourceLabel.Key, resourceLabel.Value, ref labels, reservedOutputKeys);
+            }
         }
 
         return WriteLabels(buffer, cursor, labels, writeEnclosingBraces);
