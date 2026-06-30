@@ -25,7 +25,7 @@ Notes](../../RELEASENOTES.md).
   ([#7427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7427))
 
 * Added support for a Schema URL on `Resource` instances.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7472](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7472))
 
 ## 1.16.0
 

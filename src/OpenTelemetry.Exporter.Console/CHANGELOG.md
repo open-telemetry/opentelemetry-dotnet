@@ -10,7 +10,7 @@ Notes](../../RELEASENOTES.md).
   ([#7441](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7441))
 
 * The `Resource` Schema URL is now printed alongside the resource attributes.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7472](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7472))
 
 ## 1.16.0
 

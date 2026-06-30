@@ -32,7 +32,7 @@ Notes](../../RELEASENOTES.md).
 
 * The `Resource` Schema URL is now exported on the OTLP `ResourceSpans`,
   `ResourceMetrics`, and `ResourceLogs` messages.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7472](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7472))
 
 ## 1.16.0
 
