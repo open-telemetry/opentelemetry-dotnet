@@ -22,6 +22,8 @@ public class TaskWorkerTests
     [Fact]
     public async Task BatchExportTaskWorker_TriggerExportAfterIdleCycles_DoesNotWaitForScheduledDelay()
     {
+        EnsureThreadPoolWorkerThreadsAvailable();
+
         // Arrange
         var circularBuffer = new CircularBuffer<Activity>(capacity: CircularBufferCapacity);
         using var exporter = new TestActivityExporter();
@@ -51,6 +53,8 @@ public class TaskWorkerTests
     [Fact]
     public async Task PeriodicExportingMetricReaderTaskWorker_TriggerExportAfterIdleCycles_DoesNotWaitForExportInterval()
     {
+        EnsureThreadPoolWorkerThreadsAvailable();
+
         // Arrange
         using var reader = new TestMetricReader();
         using var worker = new PeriodicExportingMetricReaderTaskWorker(
@@ -94,6 +98,18 @@ public class TaskWorkerTests
 
     private static int GetIdleWaitDuration()
         => (IdleCyclesBeforeTrigger * WorkerDelayMilliseconds) + (WorkerDelayMilliseconds / 5);
+
+    private static void EnsureThreadPoolWorkerThreadsAvailable()
+    {
+        ThreadPool.GetMinThreads(out var workerThreads, out var completionPortThreads);
+
+        var desiredWorkerThreads = Math.Max(workerThreads, Environment.ProcessorCount * 2);
+
+        if (desiredWorkerThreads > workerThreads)
+        {
+            ThreadPool.SetMinThreads(desiredWorkerThreads, completionPortThreads);
+        }
+    }
 
     private sealed class TestActivityExporter : BaseExporter<Activity>
     {

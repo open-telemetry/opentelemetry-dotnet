@@ -245,6 +245,14 @@ internal sealed class AggregatorStore
                     // MetricPointStatus flag. The status flag is written by both Update and Snapshot without a common lock; on weak memory models
                     // (e.g. Arm/.NET Framework) an Update's `CollectPending` write can be lost against the snapshot's `NoCollectPending` write, which
                     // would otherwise let a MetricPoint that still holds an unexported measurement be reclaimed (losing the measurement).
+                    //
+                    // The reclaim decision relies on the running value written by a just-completed Update (Interlocked.Add) being visible to the read in
+                    // HasUnexportedData. The exclusive claim above (Interlocked.CompareExchange observing ReferenceCount == 0) establishes that the
+                    // Update's matching Interlocked.Decrement has completed, which by release/acquire ordering implies its earlier Add is visible. To
+                    // ensure that ordering is honoured even where the platform's interlocked acquire semantics are weak (observed on Arm/.NET Framework),
+                    // issue an explicit full fence before reading the running value so the read cannot be hoisted ahead of the claim.
+                    Thread.MemoryBarrier();
+
                     if (!metricPoint.HasUnexportedData())
                     {
                         this.ReclaimMetricPoint(ref metricPoint, i);

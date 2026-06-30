@@ -7,7 +7,8 @@ Notes](../../RELEASENOTES.md).
 ## Unreleased
 
 * Fixed a metric point reclaim data race on CPU ARM architectures.
-  ([#7401](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7401))
+  ([#7401](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7401),
+  [#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
 
 * The library is now marked as trim and AOT compatible.
   ([#7441](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7441))
@@ -17,7 +18,7 @@ Notes](../../RELEASENOTES.md).
   `Microsoft.Extensions.Configuration.EnvironmentVariables` package dependency.
   Consumers gain automatic pickup of upstream bug fixes and security patches;
   no public API or behavioural change.
-  ([#7146](hhttps://github.com/open-telemetry/opentelemetry-dotnet/pull/7146))
+  ([#7146](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7146))
 
 * Added a verbose `OpenTelemetry-Sdk` self-diagnostics event that is emitted
   when an activity is dropped because its local (in-process) parent is not
