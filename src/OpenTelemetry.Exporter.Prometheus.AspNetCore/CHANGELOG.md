@@ -27,6 +27,10 @@ Notes](../../RELEASENOTES.md).
   schemes when negotiated via the `Accept` header.
   ([#7439](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7439))
 
+* Add `PrometheusAspNetCoreOptions.TargetInfoEnabled` property to enable or
+  disable the `target_info` metric in Prometheus metrics. Defaults to `true`.
+  ([#7438](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7438))
+
 * Added support for the `allow-utf-8` Prometheus UTF-8 name escaping scheme
   when negotiated via the `Accept` header.
   ([#7440](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7440))

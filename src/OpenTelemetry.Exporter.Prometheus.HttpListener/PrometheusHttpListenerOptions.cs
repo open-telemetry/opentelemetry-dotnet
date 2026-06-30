@@ -93,5 +93,11 @@ public class PrometheusHttpListenerOptions
         }
     }
 
+    /// <summary>
+    /// Gets or sets a value indicating whether to include a <c>target_info</c> metric in the scrape response.
+    /// Default value: <see langword="true"/>.
+    /// </summary>
+    public bool TargetInfoEnabled { get; set; } = true;
+
     internal Action<PrometheusHttpListenerOptions, System.Net.HttpListener>? ConfigureHttpListener { get; set; }
 }
