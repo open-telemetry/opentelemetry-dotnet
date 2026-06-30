@@ -11,9 +11,8 @@ namespace OpenTelemetry.Exporter.Prometheus;
 /// Implements the Prometheus name escaping schemes.
 /// </summary>
 /// <remarks>
-/// The transformations are faithful to <c>EscapeName</c> in
-/// https://github.com/prometheus/common/blob/43de10cc658055c6b5e4d619edc917d5af493409/model/metric.go
-/// so that a Prometheus client can reverse them.
+/// The transformations implement the schemes documented at
+/// https://prometheus.io/docs/instrumenting/escaping_schemes/.
 /// </remarks>
 internal static class PrometheusEscaping
 {
@@ -22,6 +21,7 @@ internal static class PrometheusEscaping
     // or "_xxxx_") is at most six bytes; a surrogate pair expands to at most eight bytes across
     // two characters, so six per character remains a safe bound.
     private const int MaxBytesPerCharacter = 6;
+    private const string ValuesPrefix = "U__";
 
     public static EscapingScheme FromString(string? escaping) => escaping switch
     {
@@ -53,7 +53,7 @@ internal static class PrometheusEscaping
             return name;
         }
 
-        if (scheme == EscapingScheme.Values && IsValidLegacyName(name, isMetricName))
+        if (scheme == EscapingScheme.Values && CanWriteValuesNameUnchanged(name, isMetricName))
         {
             return name;
         }
@@ -99,16 +99,17 @@ internal static class PrometheusEscaping
             return cursor;
         }
 
-        if (scheme == EscapingScheme.Values && IsValidLegacyName(name, isMetricName))
+        if (scheme == EscapingScheme.Values && CanWriteValuesNameUnchanged(name, isMetricName))
         {
             return WriteAscii(buffer, cursor, name);
         }
 
         if (scheme == EscapingScheme.Values)
         {
-            cursor = WriteAscii(buffer, cursor, "U__");
+            cursor = WriteAscii(buffer, cursor, ValuesPrefix);
         }
 
+        var escapeValuesPrefix = scheme == EscapingScheme.Values && name.StartsWith(ValuesPrefix, StringComparison.Ordinal);
         var index = 0;
 
         while (index < name.Length)
@@ -123,13 +124,17 @@ internal static class PrometheusEscaping
             {
                 cursor = WriteAscii(buffer, cursor, "_dot_");
             }
+            else if (escapeValuesPrefix && index == 0)
+            {
+                cursor = WriteHexCodePoint(buffer, cursor, codePoint);
+            }
             else if (IsValidLegacyRune(codePoint, index == 0, isMetricName))
             {
                 buffer[cursor++] = unchecked((byte)codePoint);
             }
             else if (scheme == EscapingScheme.Dots)
             {
-                cursor = WriteAscii(buffer, cursor, "__");
+                buffer[cursor++] = unchecked((byte)'_');
             }
             else if (!isValidRune)
             {
@@ -162,7 +167,7 @@ internal static class PrometheusEscaping
     /// <returns>
     /// <see langword="true"/> if the name is a valid legacy label name; otherwise, <see langword="false"/>.
     /// </returns>
-    internal static bool IsValidLegacyLabelName(string name) => name.Length > 0 && IsValidLegacyName(name, isMetricName: false);
+    internal static bool IsValidLegacyLabelName(string name) => IsValidLegacyName(name, isMetricName: false);
 
     private static bool IsValidLegacyName(string name, bool isMetricName)
     {
@@ -232,6 +237,11 @@ internal static class PrometheusEscaping
         return character;
 #endif
     }
+
+    // A pre-existing "U__" prefix must itself be encoded; otherwise a name such as
+    // "U__foo_2e_bar" collides with the values encoding of "foo.bar".
+    private static bool CanWriteValuesNameUnchanged(string name, bool isMetricName)
+        => IsValidLegacyName(name, isMetricName) && !name.StartsWith(ValuesPrefix, StringComparison.Ordinal);
 
     private static int WriteAscii(byte[] buffer, int cursor, string value)
     {

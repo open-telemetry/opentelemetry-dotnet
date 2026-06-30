@@ -69,12 +69,12 @@ public class PrometheusSerializerFuzzTests
     [Property(MaxTest = MaxTests)]
     public Property IsValidLegacyNameMatchesReferenceImplementation() => Prop.ForAll(
         Generators.PrometheusStringArbitrary(),
-        static (value) => PrometheusEscaping.IsValidLegacyName(value) == ReferenceIsValidLegacyName(value, allowColon: true));
+        static (value) => PrometheusEscaping.IsValidLegacyName(value) == ReferenceIsValidLegacyName(value));
 
     [Property(MaxTest = MaxTests)]
     public Property IsValidLegacyLabelNameMatchesReferenceImplementation() => Prop.ForAll(
         Generators.PrometheusStringArbitrary(),
-        static (value) => PrometheusEscaping.IsValidLegacyLabelName(value) == ReferenceIsValidLegacyName(value, allowColon: false));
+        static (value) => PrometheusEscaping.IsValidLegacyLabelName(value) == ReferenceIsValidLegacyName(value));
 
     [Property(MaxTest = MaxTests)]
     public Property WriteLabelNameMatchesReferenceImplementation() => Prop.ForAll(
@@ -195,7 +195,9 @@ public class PrometheusSerializerFuzzTests
             return value;
         }
 
-        if (scheme == EscapingScheme.Values && ReferenceIsValidLegacyName(value, allowColon: true))
+        if (scheme == EscapingScheme.Values &&
+            ReferenceIsValidLegacyName(value) &&
+            !value.StartsWith("U__", StringComparison.Ordinal))
         {
             return value;
         }
@@ -207,6 +209,7 @@ public class PrometheusSerializerFuzzTests
             text.Append("U__");
         }
 
+        var escapeValuesPrefix = scheme == EscapingScheme.Values && value.StartsWith("U__", StringComparison.Ordinal);
         var index = 0;
 
         while (index < value.Length)
@@ -221,13 +224,17 @@ public class PrometheusSerializerFuzzTests
             {
                 text.Append("_dot_");
             }
+            else if (escapeValuesPrefix && index == 0)
+            {
+                text.Append('_').Append(codePoint.ToString("x", CultureInfo.InvariantCulture)).Append('_');
+            }
             else if (ReferenceIsValidLegacyRune(codePoint, index == 0))
             {
                 text.Append((char)codePoint);
             }
             else if (scheme == EscapingScheme.Dots)
             {
-                text.Append("__");
+                text.Append('_');
             }
             else if (!isValidRune)
             {
@@ -244,7 +251,7 @@ public class PrometheusSerializerFuzzTests
         return text.ToString();
     }
 
-    private static bool ReferenceIsValidLegacyName(string value, bool allowColon)
+    private static bool ReferenceIsValidLegacyName(string value)
     {
         if (value.Length == 0)
         {
@@ -257,7 +264,7 @@ public class PrometheusSerializerFuzzTests
         {
             var codePoint = ReferenceGetCodePoint(value, index, out var charsConsumed, out _);
 
-            if (!ReferenceIsValidLegacyRune(codePoint, index == 0) || (codePoint == ':' && !allowColon))
+            if (!ReferenceIsValidLegacyRune(codePoint, index == 0))
             {
                 return false;
             }
@@ -273,7 +280,7 @@ public class PrometheusSerializerFuzzTests
     // written verbatim as ASCII bytes.
     private static byte[] ReferenceWriteLabelName(string value)
     {
-        if (ReferenceIsValidLegacyName(value, allowColon: false))
+        if (ReferenceIsValidLegacyName(value))
         {
             return ReferenceWriteAsciiStringNoEscape(value);
         }
