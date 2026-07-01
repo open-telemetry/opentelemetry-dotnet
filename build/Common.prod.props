@@ -113,6 +113,7 @@
       Command="git rev-parse HEAD"
       ConsoleToMsBuild="True"
       IgnoreExitCode="True"
+      IgnoreStandardErrorWarningFormat="True"
       StandardOutputImportance="low">
       <Output PropertyName="GitCommitConsoleOutput" TaskParameter="ConsoleOutput"/>
       <Output PropertyName="GitCommitExitCode" TaskParameter="ExitCode"/>
@@ -122,6 +123,7 @@
       Command="git remote get-url origin"
       ConsoleToMsBuild="True"
       IgnoreExitCode="True"
+      IgnoreStandardErrorWarningFormat="True"
       StandardOutputImportance="low">
       <Output PropertyName="GitOriginConsoleOutput" TaskParameter="ConsoleOutput"/>
       <Output PropertyName="GitOriginExitCode" TaskParameter="ExitCode"/>
@@ -129,7 +131,7 @@
 
     <PropertyGroup>
       <MarkdownCommentRegex>\[([^]]+?)\]\(\.(.+?)\)</MarkdownCommentRegex>
-      <GitHubRepoUrl>$(GitOriginConsoleOutput.Replace('.git',''))</GitHubRepoUrl>
+      <GitHubRepoUrl Condition="'$(GitOriginExitCode)' == '0'">$(GitOriginConsoleOutput.Replace('.git',''))</GitHubRepoUrl>
       <GitHubPermalinkUrl Condition="'$(PackTag)' != ''">$(GitHubRepoUrl)/blob/$(PackTag)</GitHubPermalinkUrl>
       <GitHubPermalinkUrl Condition="'$(PackTag)' == ''">$(GitHubRepoUrl)/blob/$(GitCommitConsoleOutput)</GitHubPermalinkUrl>
     </PropertyGroup>
