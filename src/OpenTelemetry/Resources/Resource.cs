@@ -119,11 +119,10 @@ public class Resource
         }
 
         // Else this is a merging error: the Schema URLs are both non-empty and different. The spec leaves the
-        // result undefined; we log a warning and use the updating resource's Schema URL, consistent with the
-        // attribute merge precedence where the updating ("other") resource takes precedence.
+        // result undefined; we log a warning and return null consistent with the Go, Java, JavaScript, and Rust SDKs.
         OpenTelemetrySdkEventSource.Log.ResourceSchemaUrlMergeConflict(oldSchemaUrl, updatingSchemaUrl);
 
-        return updatingSchemaUrl;
+        return null;
     }
 
     private static KeyValuePair<string, object> SanitizeAttribute(KeyValuePair<string, object> attribute)

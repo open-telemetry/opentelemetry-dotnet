@@ -13,14 +13,15 @@ public sealed class ResourceTests : IDisposable
     private const string KeyName = "key";
     private const string ValueName = "value";
 
-    public ResourceTests()
-    {
-        ClearEnvVars();
-    }
+    private readonly IDisposable scope = EnvironmentVariableScope.Create(
+    [
+        new(OtelEnvResourceDetector.EnvVarKey, null),
+        new(OtelServiceNameEnvVarDetector.EnvVarKey, null),
+    ]);
 
     public void Dispose()
     {
-        ClearEnvVars();
+        this.scope?.Dispose();
         GC.SuppressFinalize(this);
     }
 
@@ -472,8 +473,7 @@ public sealed class ResourceTests : IDisposable
 
         var merged = current.Merge(updating);
 
-        // On conflict the updating (other) Schema URL wins, consistent with attribute merge precedence.
-        Assert.Equal(UpdatingSchemaUrl, merged.SchemaUrl);
+        Assert.Null(merged.SchemaUrl);
 
         var conflictEvent = Assert.Single(listener.Messages, e => e.EventId == 59);
         Assert.Equal(OldSchemaUrl, conflictEvent.Payload![0]);
@@ -703,12 +703,6 @@ public sealed class ResourceTests : IDisposable
         var serviceName = attributes.Where(pair => pair.Key.Equals("service.name", StringComparison.Ordinal));
         Assert.Single(serviceName);
         Assert.Contains("unknown_service", serviceName.FirstOrDefault().Value as string, StringComparison.Ordinal);
-    }
-
-    private static void ClearEnvVars()
-    {
-        Environment.SetEnvironmentVariable(OtelEnvResourceDetector.EnvVarKey, null);
-        Environment.SetEnvironmentVariable(OtelServiceNameEnvVarDetector.EnvVarKey, null);
     }
 
     private static void AddAttributes(Dictionary<string, object> attributes, int attributeCount, int startIndex = 0)
