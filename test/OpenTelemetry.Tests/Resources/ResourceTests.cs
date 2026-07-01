@@ -481,6 +481,22 @@ public sealed class ResourceTests : IDisposable
     }
 
     [Fact]
+    public void MergeResource_SchemaUrl_ChainedConflictThenMergeUsesLastSchemaUrl()
+    {
+        const string OldSchemaUrl = "https://opentelemetry.io/schemas/1.0.0";
+        const string UpdatingSchemaUrl1 = "https://opentelemetry.io/schemas/1.1.0";
+        const string UpdatingSchemaUrl2 = "https://opentelemetry.io/schemas/1.2.0";
+
+        var current = new Resource([], OldSchemaUrl);
+        var updating1 = new Resource([], UpdatingSchemaUrl1);
+        var updating2 = new Resource([], UpdatingSchemaUrl2);
+
+        var merged = current.Merge(updating1).Merge(updating2);
+
+        Assert.Equal(UpdatingSchemaUrl2, merged.SchemaUrl);
+    }
+
+    [Fact]
     public void ResourceBuilder_AddAttributes_WithSchemaUrl_IsPropagatedByBuild()
     {
         const string SchemaUrl = "https://opentelemetry.io/schemas/1.36.0";
