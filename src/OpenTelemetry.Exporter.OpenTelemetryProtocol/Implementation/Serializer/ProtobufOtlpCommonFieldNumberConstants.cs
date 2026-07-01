@@ -29,4 +29,6 @@ internal static class ProtobufOtlpCommonFieldNumberConstants
     internal const int AnyValue_Bytes_Value = 7;
 
     internal const int ArrayValue_Value = 1;
+
+    internal const int KeyValueList_Values = 1;
 }
