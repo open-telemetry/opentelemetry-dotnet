@@ -344,7 +344,7 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
     public void ActivityDroppedDueToUnsampledLocalParent(string activityName, string activitySourceName)
         => this.WriteEvent(58, activityName, activitySourceName);
 
-    [Event(59, Message = "Resource merge encountered conflicting Schema URLs: old = '{0}', updating = '{1}'. The updating Schema URL will be used for the merged resource.", Level = EventLevel.Warning)]
+    [Event(59, Message = "Resource merge encountered conflicting Schema URLs: old = '{0}', updating = '{1}'. No Schema URL will be used for the merged resource.", Level = EventLevel.Warning)]
     public void ResourceSchemaUrlMergeConflict(string oldSchemaUrl, string updatingSchemaUrl)
         => this.WriteEvent(59, oldSchemaUrl, updatingSchemaUrl);
 
