@@ -461,7 +461,7 @@ public sealed class ResourceTests : IDisposable
     }
 
     [Fact]
-    public void MergeResource_SchemaUrl_ConflictUsesUpdatingAndLogsWarning()
+    public void MergeResource_SchemaUrl_ConflictClearsSchemaUrlAndLogsWarning()
     {
         const string OldSchemaUrl = "https://opentelemetry.io/schemas/1.0.0";
         const string UpdatingSchemaUrl = "https://opentelemetry.io/schemas/1.1.0";
@@ -481,19 +481,27 @@ public sealed class ResourceTests : IDisposable
     }
 
     [Fact]
-    public void MergeResource_SchemaUrl_ChainedConflictThenMergeUsesLastSchemaUrl()
+    public void MergeResource_SchemaUrl_ChainedConflictIsStickyAndReportedOnce()
     {
         const string OldSchemaUrl = "https://opentelemetry.io/schemas/1.0.0";
         const string UpdatingSchemaUrl1 = "https://opentelemetry.io/schemas/1.1.0";
         const string UpdatingSchemaUrl2 = "https://opentelemetry.io/schemas/1.2.0";
 
+        using var listener = new TestEventListener(OpenTelemetrySdkEventSource.Log, EventLevel.Warning);
+
         var current = new Resource([], OldSchemaUrl);
         var updating1 = new Resource([], UpdatingSchemaUrl1);
         var updating2 = new Resource([], UpdatingSchemaUrl2);
 
+        // The first merge conflicts (1.0.0 vs 1.1.0) and clears the Schema URL. The conflict is sticky,
+        // so merging a further Schema URL (1.2.0) cannot recover a value and no second warning is logged.
         var merged = current.Merge(updating1).Merge(updating2);
 
-        Assert.Equal(UpdatingSchemaUrl2, merged.SchemaUrl);
+        Assert.Null(merged.SchemaUrl);
+
+        var conflictEvent = Assert.Single(listener.Messages, e => e.EventId == 59);
+        Assert.Equal(OldSchemaUrl, conflictEvent.Payload![0]);
+        Assert.Equal(UpdatingSchemaUrl1, conflictEvent.Payload![1]);
     }
 
     [Fact]

@@ -32,8 +32,14 @@ public class Resource
 #pragma warning disable CA1054 // Change the type of parameter from 'string' to 'System.Uri'
     public Resource(IEnumerable<KeyValuePair<string, object>> attributes, string? schemaUrl)
 #pragma warning restore CA1054 // Change the type of parameter from 'string' to 'System.Uri'
+        : this(attributes, schemaUrl, schemaUrlConflict: false)
+    {
+    }
+
+    private Resource(IEnumerable<KeyValuePair<string, object>> attributes, string? schemaUrl, bool schemaUrlConflict)
     {
         this.SchemaUrl = string.IsNullOrEmpty(schemaUrl) ? null : schemaUrl;
+        this.HasSchemaUrlConflict = schemaUrlConflict;
 
         if (attributes == null)
         {
@@ -64,6 +70,16 @@ public class Resource
 #pragma warning restore CA1056 // Change the type of property from 'string' to 'System.Uri'
 
     /// <summary>
+    /// Gets a value indicating whether a Schema URL conflict has occurred during a chain of merges.
+    /// </summary>
+    /// <remarks>
+    /// Once a conflict occurs the merged resource keeps an empty Schema URL, and the conflict is
+    /// "sticky" so that subsequent merges cannot recover a Schema URL. This keeps Build() deterministic
+    /// regardless of the number and order of detectors that contribute conflicting Schema URLs.
+    /// </remarks>
+    internal bool HasSchemaUrlConflict { get; }
+
+    /// <summary>
     /// Returns a new, merged <see cref="Resource"/> by merging the old <see cref="Resource"/> with the
     /// <c>other</c> <see cref="Resource"/>. In case of a collision the other <see cref="Resource"/> takes precedence.
     /// </summary>
@@ -92,14 +108,27 @@ public class Resource
             }
         }
 
-        return new Resource(newAttributes, MergeSchemaUrl(this.SchemaUrl, other?.SchemaUrl));
+        // A Schema URL conflict is sticky: if either resource in the chain already had a conflict the
+        // merged resource keeps an empty Schema URL, regardless of the other resource's Schema URL.
+        var conflict = this.HasSchemaUrlConflict || (other?.HasSchemaUrlConflict ?? false);
+
+        var mergedSchemaUrl = MergeSchemaUrl(this.SchemaUrl, other?.SchemaUrl, ref conflict);
+
+        return new Resource(newAttributes, mergedSchemaUrl, conflict);
     }
 
     // Implements the Schema URL merge logic from
     // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md#merge
     // where "this" is the old resource and "other" is the updating resource.
-    private static string? MergeSchemaUrl(string? oldSchemaUrl, string? updatingSchemaUrl)
+    private static string? MergeSchemaUrl(string? oldSchemaUrl, string? updatingSchemaUrl, ref bool conflict)
     {
+        // If a previous merge in the chain already conflicted then the conflict is sticky: the merged
+        // resource keeps an empty Schema URL and no further Schema URL can be recovered.
+        if (conflict)
+        {
+            return null;
+        }
+
         // If the old resource's Schema URL is empty then the result is the updating resource's Schema URL.
         if (oldSchemaUrl is not { Length: > 0 })
         {
@@ -121,6 +150,8 @@ public class Resource
         // Else this is a merging error: the Schema URLs are both non-empty and different. The spec leaves the
         // result undefined; we log a warning and return null consistent with the Go, Java, JavaScript, and Rust SDKs.
         OpenTelemetrySdkEventSource.Log.ResourceSchemaUrlMergeConflict(oldSchemaUrl, updatingSchemaUrl);
+
+        conflict = true;
 
         return null;
     }
