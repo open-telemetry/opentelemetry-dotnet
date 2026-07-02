@@ -113,7 +113,6 @@
       Command="git rev-parse HEAD"
       ConsoleToMsBuild="True"
       IgnoreExitCode="True"
-      IgnoreStandardErrorWarningFormat="True"
       StandardOutputImportance="low">
       <Output PropertyName="GitCommitConsoleOutput" TaskParameter="ConsoleOutput"/>
       <Output PropertyName="GitCommitExitCode" TaskParameter="ExitCode"/>
