@@ -18,6 +18,16 @@ public sealed partial class PrometheusSerializerTests
 {
     internal static readonly VerifySettings VerifySettings = CreateVerifySettings();
 
+#pragma warning disable CA1825 // Workaround for https://github.com/dotnet/sdk/issues/54275
+    public static TheoryData<string> EscapingSchemes =>
+    [
+        PrometheusProtocol.AllowUtf8Escaping,
+        PrometheusProtocol.DotsEscaping,
+        PrometheusProtocol.UnderscoresEscaping,
+        PrometheusProtocol.ValuesEscaping,
+    ];
+#pragma warning restore CA1825
+
     public static TheoryData<object?, string> LabelValueBoundaryCases => new()
     {
         { false, "false" },
@@ -1755,10 +1765,7 @@ public sealed partial class PrometheusSerializerTests
     }
 
     [Theory]
-    [InlineData(PrometheusProtocol.AllowUtf8Escaping)]
-    [InlineData(PrometheusProtocol.DotsEscaping)]
-    [InlineData(PrometheusProtocol.UnderscoresEscaping)]
-    [InlineData(PrometheusProtocol.ValuesEscaping)]
+    [MemberData(nameof(EscapingSchemes))]
     public async Task WriteMetric_EscapesMetricAndLabelNamesUsingNegotiatedScheme(string escaping)
     {
         var buffer = new byte[85000];
@@ -1801,10 +1808,7 @@ public sealed partial class PrometheusSerializerTests
     }
 
     [Theory]
-    [InlineData(PrometheusProtocol.AllowUtf8Escaping)]
-    [InlineData(PrometheusProtocol.DotsEscaping)]
-    [InlineData(PrometheusProtocol.UnderscoresEscaping)]
-    [InlineData(PrometheusProtocol.ValuesEscaping)]
+    [MemberData(nameof(EscapingSchemes))]
     public async Task WriteMetric_EscapesColonInPointTagKeyUsingLabelNameRules(string escaping)
     {
         var buffer = new byte[85000];
