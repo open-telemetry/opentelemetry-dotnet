@@ -95,6 +95,11 @@ internal static class ProtobufOtlpMetricSerializer
         writePosition = ProtobufOtlpResourceSerializer.WriteResource(buffer, writePosition, resource);
         writePosition = WriteScopeMetrics(buffer, writePosition, scopeMetrics);
 
+        if (resource?.SchemaUrl is { Length: > 0 } schemaUrl)
+        {
+            writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ResourceMetrics_Schema_Url, schemaUrl);
+        }
+
         return writePosition;
     }
 

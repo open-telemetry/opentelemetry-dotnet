@@ -98,6 +98,11 @@ internal static class ProtobufOtlpTraceSerializer
         writePosition = ProtobufOtlpResourceSerializer.WriteResource(buffer, writePosition, resource);
         writePosition = WriteScopeSpans(buffer, writePosition, sdkLimitOptions);
 
+        if (resource?.SchemaUrl is { Length: > 0 } schemaUrl)
+        {
+            writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpTraceFieldNumberConstants.ResourceSpans_Schema_Url, schemaUrl);
+        }
+
         return writePosition;
     }
 

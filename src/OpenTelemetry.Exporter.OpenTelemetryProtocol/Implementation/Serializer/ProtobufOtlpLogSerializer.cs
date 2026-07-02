@@ -120,6 +120,12 @@ internal static class ProtobufOtlpLogSerializer
     {
         writePosition = ProtobufOtlpResourceSerializer.WriteResource(buffer, writePosition, resource);
         writePosition = WriteScopeLogs(buffer, writePosition, sdkLimitOptions, experimentalOptions, scopeLogs);
+
+        if (resource?.SchemaUrl is { Length: > 0 } schemaUrl)
+        {
+            writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpLogFieldNumberConstants.ResourceLogs_Schema_Url, schemaUrl);
+        }
+
         return writePosition;
     }
 

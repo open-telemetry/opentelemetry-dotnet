@@ -1,0 +1,3 @@
+﻿# TYPE test__counter counter
+test__counter_total{otel__scope__name="WriteExemplarEscapesReservedTraceIdKeyToPreventCollisionWithFilteredTag",keep="value"} 2 # {trace__id="<ID>",span__id="<ID>"} 2 <TIMESTAMP>
+test__counter_created{otel__scope__name="WriteExemplarEscapesReservedTraceIdKeyToPreventCollisionWithFilteredTag",keep="value"} <TIMESTAMP>
