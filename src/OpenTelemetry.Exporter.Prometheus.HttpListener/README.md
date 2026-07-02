@@ -60,11 +60,15 @@ variables.
 
 * `Host`: The host used by the Prometheus exporter (default `localhost`).
 * `Port`: The port used by the Prometheus exporter (default `9464`).
+* `ScopeInfoEnabled`: Whether to include scope labels in metrics (default `true`).
 * `ScrapeEndpointPath`: Defines the Prometheus scrape endpoint path.
   (default `"/metrics"`).
+* `TargetInfoEnabled`: Whether to produce a `target_info` metric (default `true`).
 * `DisableTotalNameSuffixForCounters`: Whether to disable the `_total` suffix for
   counter metrics (default `false`).
 * `DisableTimestamp`: Whether to disable the timestamp for metrics (default `false`).
+* `ConfigureHttpListener`: A delegate that can be used to apply custom configuration
+  to the `HttpListener` instance used by the exporter before use.
 
 ### Configuration using Dependency Injection
 
@@ -95,11 +99,23 @@ values of the `PrometheusHttpListenerOptions`.
 | `OTEL_EXPORTER_PROMETHEUS_HOST` | `Host`                                   |
 | `OTEL_EXPORTER_PROMETHEUS_PORT` | `Port`                                   |
 
+### ScopeInfoEnabled
+
+Specifies whether metrics include
+[scope labels](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/compatibility/prometheus_and_openmetrics.md#instrumentation-scope-1).
+Default value: `true`. Set to `false` to disable scope labels.
+
 ### ScrapeResponseCacheDurationMilliseconds
 
 Configures scrape endpoint response caching. Multiple scrape requests within the
 cache duration time period will receive the same previously generated response.
 The default value is `300`. Set to `0` to disable response caching.
+
+### TargetInfoEnabled
+
+Specifies whether to produce a
+[`target_info`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/compatibility/prometheus_and_openmetrics.md#resource-attributes-1)
+metric. Default value: `true`. Set to `false` to disable the `target_info` metric.
 
 ## Troubleshooting
 

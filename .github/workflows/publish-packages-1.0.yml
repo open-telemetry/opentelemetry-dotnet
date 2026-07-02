@@ -63,7 +63,7 @@ jobs:
         show-progress: false
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5.3.0
+      uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
       id: setup-dotnet
 
     - name: Install Cosign
@@ -93,7 +93,7 @@ jobs:
         }
 
     - name: Create GitHub attestations for DLLs
-      uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+      uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4.1.1
       with:
         subject-path: |
           ./artifacts/bin/*/release_*/OpenTelemetry*.dll
@@ -264,7 +264,7 @@ jobs:
     steps:
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5.3.0
+      uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
       with:
         dotnet-version: ${{ needs.build-pack.outputs.dotnet-sdk-version }}
 

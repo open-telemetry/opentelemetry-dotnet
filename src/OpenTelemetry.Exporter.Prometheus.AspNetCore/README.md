@@ -124,6 +124,12 @@ to expose the scraping endpoint on a different port.
 The `PrometheusExporter` can be configured using the `PrometheusAspNetCoreOptions`
 properties.
 
+### ScopeInfoEnabled
+
+Specifies whether metrics include
+[scope labels](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/compatibility/prometheus_and_openmetrics.md#instrumentation-scope-1).
+Default value: `true`. Set to `false` to disable scope labels.
+
 ### ScrapeEndpointPath
 
 Defines the path for the Prometheus scrape endpoint for the middleware
@@ -135,6 +141,12 @@ registered by `MapPrometheusScrapingEndpoint` and
 Configures scrape endpoint response caching. Multiple scrape requests within the
 cache duration time period will receive the same previously generated response.
 The default value is `300`. Set to `0` to disable response caching.
+
+### TargetInfoEnabled
+
+Specifies whether to produce a
+[`target_info`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/compatibility/prometheus_and_openmetrics.md#resource-attributes-1)
+metric. Default value: `true`. Set to `false` to disable the `target_info` metric.
 
 ## Troubleshooting
 

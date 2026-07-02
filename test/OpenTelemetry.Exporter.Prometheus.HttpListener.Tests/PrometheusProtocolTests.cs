@@ -711,4 +711,68 @@ public class PrometheusProtocolTests
         Assert.True(boxed1.Equals(boxed2));
         Assert.True(boxed2.Equals(boxed1));
     }
+
+    [Fact]
+    public void GetContentType_PrometheusTextV0_IsCorrect()
+    {
+        var protocol = new PrometheusProtocol(
+            PrometheusProtocol.PrometheusTextMediaType,
+            null,
+            PrometheusProtocol.PrometheusV0,
+            false);
+
+        Assert.Equal("text/plain; version=0.0.4; charset=utf-8", PrometheusProtocol.GetContentType(protocol));
+    }
+
+    [Fact]
+    public void GetContentType_PrometheusTextV1_IsCorrect()
+    {
+        var protocol = new PrometheusProtocol(
+            PrometheusProtocol.PrometheusTextMediaType,
+            PrometheusProtocol.UnderscoresEscaping,
+            PrometheusProtocol.PrometheusV1,
+            false);
+
+        Assert.Equal("text/plain; version=1.0.0; charset=utf-8; escaping=underscores", PrometheusProtocol.GetContentType(protocol));
+    }
+
+    [Fact]
+    public void GetContentType_OpenMetricsV0_IsCorrect()
+    {
+        var protocol = new PrometheusProtocol(
+            PrometheusProtocol.OpenMetricsMediaType,
+            null,
+            PrometheusProtocol.OpenMetricsV0,
+            true);
+
+        Assert.Equal("application/openmetrics-text; version=0.0.1; charset=utf-8", PrometheusProtocol.GetContentType(protocol));
+    }
+
+    [Fact]
+    public void GetContentType_OpenMetricsV1_IsCorrect()
+    {
+        var protocol = new PrometheusProtocol(
+            PrometheusProtocol.OpenMetricsMediaType,
+            PrometheusProtocol.UnderscoresEscaping,
+            PrometheusProtocol.OpenMetricsV1,
+            true);
+
+        Assert.Equal("application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores", PrometheusProtocol.GetContentType(protocol));
+    }
+
+    [Fact]
+    public void GetContentType_FallbackProtocol_IsCorrect() =>
+        Assert.Equal("text/plain; version=0.0.4; charset=utf-8", PrometheusProtocol.GetContentType(PrometheusProtocol.Fallback));
+
+    [Fact]
+    public void GetContentType_ToStringDelegatesToGetContentType()
+    {
+        var protocol = new PrometheusProtocol(
+            PrometheusProtocol.OpenMetricsMediaType,
+            null,
+            PrometheusProtocol.OpenMetricsV1,
+            true);
+
+        Assert.Equal(PrometheusProtocol.GetContentType(protocol), protocol.ToString());
+    }
 }

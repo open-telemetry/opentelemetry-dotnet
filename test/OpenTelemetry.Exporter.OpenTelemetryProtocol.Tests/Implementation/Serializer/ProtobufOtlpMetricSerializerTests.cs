@@ -3,17 +3,55 @@
 
 using System.Diagnostics.Metrics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
+using OtlpCollector = OpenTelemetry.Proto.Collector.Metrics.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Implementation.Serializer;
 
 public static class ProtobufOtlpMetricSerializerTests
 {
     private const string HistogramName = "histogram";
+
+    [Theory]
+    [InlineData(700)]
+    [InlineData(2000)]
+    public static void WriteMetricsData_Serializes_Metrics_With_OversizedMetadata(int descriptionLength)
+    {
+        var description = new string('a', descriptionLength);
+        var metrics = GenerateMetricWithDescription(description);
+
+        var buffer = new byte[16 * 1024];
+        var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(
+            ref buffer,
+            0,
+            Resource.Empty,
+            metrics);
+
+        Assert.True(writePosition > 0);
+        Assert.True(writePosition <= buffer.Length);
+
+        using var stream = new MemoryStream(buffer, 0, writePosition);
+        var request = OtlpCollector.ExportMetricsServiceRequest.Parser.ParseFrom(stream);
+        var parsedMetric = request.ResourceMetrics[0].ScopeMetrics[0].Metrics[0];
+        Assert.Equal(description, parsedMetric.Description);
+    }
+
+    [Fact]
+    public static void WriteMetricsDataDoesNotKeepMetricAlive()
+    {
+        var reference = CreateSerializedMetricWeakReference();
+
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+
+        Assert.False(reference.TryGetTarget(out _), "Metric should not be kept alive after serialization.");
+    }
 
     [Fact]
     public static async Task WriteMetricsData_Serializes_Metrics_Correctly()
@@ -171,5 +209,74 @@ public static class ProtobufOtlpMetricSerializerTests
         }
 
         return metrics;
+    }
+
+    private static Batch<Metric> GenerateMetricWithDescription(string description)
+    {
+        Batch<Metric> metrics = default;
+
+        using (var exported = new ManualResetEvent(false))
+        {
+            using var exporter = new DelegatingExporter<Metric>()
+            {
+                OnExportFunc = (batch) =>
+                {
+                    metrics = batch;
+                    exported.Set();
+                    return ExportResult.Success;
+                },
+            };
+
+            var meterName = "otlp.protobuf.large-metadata";
+
+            var experimentalOptions = new ExperimentalOptions();
+            var exporterOptions = new OtlpExporterOptions()
+            {
+                Endpoint = new($"http://localhost:4318/v1/"),
+                Protocol = OtlpExportProtocol.HttpProtobuf,
+            };
+
+            var metricReaderOptions = new MetricReaderOptions();
+            metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = Timeout.Infinite;
+
+            using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meterName)
+                .AddReader(
+                    (serviceProvider) => OtlpMetricExporterExtensions.BuildOtlpExporterMetricReader(
+                        serviceProvider,
+                        exporterOptions,
+                        metricReaderOptions,
+                        experimentalOptions,
+                        configureExporterInstance: (_) => exporter))
+                .Build();
+
+            using var meter = new Meter(meterName);
+
+            var counter = meter.CreateCounter<long>(name: "test.counter", unit: "1", description: description);
+            counter.Add(1);
+
+            Assert.True(meterProvider.ForceFlush());
+            Assert.NotEqual(0, metrics.Count);
+        }
+
+        return metrics;
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static WeakReference<Metric> CreateSerializedMetricWeakReference()
+    {
+        var metrics = GenerateMetrics();
+
+        Metric capturedMetric = null!;
+        foreach (var metric in metrics)
+        {
+            capturedMetric = metric;
+            break;
+        }
+
+        var buffer = new byte[16 * 1024];
+        _ = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, Resource.Empty, metrics);
+
+        return new WeakReference<Metric>(capturedMetric);
     }
 }
