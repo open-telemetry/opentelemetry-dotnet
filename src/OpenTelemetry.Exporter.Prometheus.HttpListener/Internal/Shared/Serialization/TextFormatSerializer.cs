@@ -1644,7 +1644,7 @@ internal abstract class TextFormatSerializer
 
         try
         {
-            var length = PrometheusEscaping.EscapeName(scratch, 0, key, escaping);
+            var length = PrometheusEscaping.EscapeName(scratch, 0, key, escaping, isMetricName: false);
             var escaped = new ReadOnlySpan<byte>(scratch, 0, length);
 
             if (IsValidLegacyLabelName(escaped))

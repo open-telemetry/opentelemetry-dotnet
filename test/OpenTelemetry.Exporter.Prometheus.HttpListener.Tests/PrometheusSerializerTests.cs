@@ -1800,6 +1800,33 @@ public sealed partial class PrometheusSerializerTests
         await Verify(output, "txt", VerifySettings).UseParameters(escaping);
     }
 
+    [Theory]
+    [InlineData(PrometheusProtocol.AllowUtf8Escaping)]
+    [InlineData(PrometheusProtocol.DotsEscaping)]
+    [InlineData(PrometheusProtocol.UnderscoresEscaping)]
+    [InlineData(PrometheusProtocol.ValuesEscaping)]
+    public async Task WriteMetric_EscapesColonInPointTagKeyUsingLabelNameRules(string escaping)
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        var counter = meter.CreateCounter<long>("test_counter");
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        counter.Add(1, new KeyValuePair<string, object?>("http:method", "GET"));
+
+        provider.ForceFlush();
+
+        var output = WriteMetricWithEscaping(buffer, metrics[0], escaping);
+
+        await Verify(output, "txt", VerifySettings).UseParameters(escaping);
+    }
+
     [Fact]
     public async Task WriteMetricEscapesScopeLabelKeysUsingNegotiatedDotsScheme()
     {
