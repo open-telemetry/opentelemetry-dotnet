@@ -18,7 +18,7 @@ public class TaskWorkerTests
     private const int WorkerTimeoutMilliseconds = 1_000;
     private const int ShutdownTimeoutMilliseconds = 10_000;
     private const int BaselineWaitTimeoutMilliseconds = 10_000;
-    private const int TriggerCompletionTimeoutMilliseconds = 800;
+    private const int TriggerCompletionTimeoutMilliseconds = 600;
 
     [Fact]
     public async Task BatchExportTaskWorker_TriggerExportAfterIdleCycles_DoesNotWaitForScheduledDelay()
