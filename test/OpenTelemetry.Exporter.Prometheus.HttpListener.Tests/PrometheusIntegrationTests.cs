@@ -17,6 +17,8 @@ public class PrometheusIntegrationTests(PromToolFixture fixture, ITestOutputHelp
     [InlineData("text/plain")]
     [InlineData("text/plain;version=0.0.4")]
     [InlineData("text/plain;version=1.0.0")]
+    [InlineData("text/plain;version=1.0.0;escaping=dots")]
+    [InlineData("text/plain;version=1.0.0;escaping=values")]
     [InlineData("application/openmetrics-text", Skip = "https://github.com/prometheus/prometheus/issues/8932")]
     [InlineData("application/openmetrics-text;version=0.0.4")]
     [InlineData("application/openmetrics-text;version=1.0.0", Skip = "https://github.com/prometheus/prometheus/issues/8932")]
@@ -65,17 +67,13 @@ public class PrometheusIntegrationTests(PromToolFixture fixture, ITestOutputHelp
             {
                 int port = TcpPortProvider.GetOpenPort();
 
+                options.Port = port;
+
                 // On Linux we need to bind to all available hosts to reach the
                 // Prometheus listener from promtool using Docker's internal host.
                 if (OperatingSystem.IsLinux())
                 {
-#pragma warning disable CS0618 // Type or member is obsolete
-                    options.UriPrefixes = [$"http://*:{port}/"];
-#pragma warning restore CS0618 // Type or member is obsolete
-                }
-                else
-                {
-                    options.Port = port;
+                    options.ConfigureHttpListener = static (options, listener) => listener.Prefixes.Add($"http://*:{options.Port}/");
                 }
 
                 return port;

@@ -10,6 +10,27 @@ Notes](../../RELEASENOTES.md).
 * Added a verbose-level diagnostic event for ignored metrics.
   ([#7429](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7429))
 
+* The library is now marked as trim and AOT compatible.
+  ([#7441](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7441))
+
+* Fix double unit suffixes in metric names when using OpenMetrics.
+  ([#7454](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7454))
+
+* Fix incorrect handling of leading digits in metric names for OpenMetrics.
+  ([#7454](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7454))
+
+* Add `PrometheusAspNetCoreOptions.ScopeInfoEnabled` property to enable or
+  disable scope labels in Prometheus metrics. Defaults to `true`.
+  ([#7436](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7436))
+
+* Added support for the `dots` and `values` Prometheus UTF-8 name escaping
+  schemes when negotiated via the `Accept` header.
+  ([#7439](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7439))
+
+* Add `PrometheusAspNetCoreOptions.TargetInfoEnabled` property to enable or
+  disable the `target_info` metric in Prometheus metrics. Defaults to `true`.
+  ([#7438](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7438))
+
 ## 1.16.0-beta.1
 
 Released 2026-Jun-10

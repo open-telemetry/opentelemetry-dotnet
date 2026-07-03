@@ -16,10 +16,8 @@ public class TraceContextPropagator : TextMapPropagator
     private const string TraceParent = "traceparent";
     private const string TraceState = "tracestate";
 
-    // The following length limits are from Trace Context v1 https://www.w3.org/TR/trace-context-1/#key
+    // The following length limits are from Trace Context Level 2 https://www.w3.org/TR/trace-context-2/#key
     private const int TraceStateKeyMaxLength = 256;
-    private const int TraceStateKeyTenantMaxLength = 241;
-    private const int TraceStateKeyVendorMaxLength = 14;
     private const int TraceStateValueMaxLength = 256;
 
     private static readonly int VersionPrefixIdLength = "00-".Length;
@@ -381,22 +379,26 @@ public class TraceContextPropagator : TextMapPropagator
 
         foreach (var tracestateEntry in tracestateCollection)
         {
+            if (tracestateEntry is not { Length: > 0 })
+            {
+                continue;
+            }
+
             var tracestate = tracestateEntry.AsSpan();
-            var begin = 0;
-            while (begin < tracestate.Length)
+            while (!tracestate.IsEmpty)
             {
                 ReadOnlySpan<char> listMember;
 
-                var length = tracestate.Slice(begin).IndexOf(',');
+                var length = tracestate.IndexOf(',');
                 if (length != -1)
                 {
-                    listMember = tracestate.Slice(begin, length).Trim();
-                    begin += length + 1;
+                    listMember = tracestate.Slice(0, length).Trim();
+                    tracestate = tracestate.Slice(length + 1);
                 }
                 else
                 {
-                    listMember = tracestate.Slice(begin).Trim();
-                    begin = tracestate.Length;
+                    listMember = tracestate.Trim();
+                    tracestate = [];
                 }
 
                 // https://github.com/w3c/trace-context/blob/master/spec/20-http_request_header_format.md#tracestate-header-field-values
@@ -465,11 +467,11 @@ public class TraceContextPropagator : TextMapPropagator
         return true;
     }
 
-    private static bool TryExtractSingleTracestate(string tracestate, out string tracestateResult)
+    private static bool TryExtractSingleTracestate(string? tracestate, out string tracestateResult)
     {
         tracestateResult = string.Empty;
 
-        if (tracestate.Length == 0)
+        if (tracestate is not { Length: > 0 })
         {
             return true;
         }
@@ -702,74 +704,28 @@ public class TraceContextPropagator : TextMapPropagator
 
     private static bool ValidateKey(ReadOnlySpan<char> key)
     {
-        // This implementation follows Trace Context v1 which has W3C Recommendation.
-        // https://www.w3.org/TR/trace-context-1/#key
-        // It will be slightly differently from the next version of specification in GitHub repository.
-
-        // There are two format for the key. The length rule applies to both.
+        // https://www.w3.org/TR/trace-context-2/#key
+        // key = (lcalpha / DIGIT) 0*255(keychar)
+        // keychar = lcalpha / DIGIT / "_" / "-" / "*" / "/" / "@"
         if (key.Length is <= 0 or > TraceStateKeyMaxLength)
         {
             return false;
         }
 
-        // The first format:
-        // key = lcalpha 0*255( lcalpha / DIGIT / "_" / "-"/ "*" / "/" )
-        // lcalpha = % x61 - 7A; a - z
-        // (There is an inconsistency in the expression above and the description in note.
-        // Here is following the description in note:
-        // "Identifiers MUST begin with a lowercase letter or a digit.")
         if (!IsAsciiLetterOrDigitLower(key[0]))
         {
             return false;
         }
 
-        var tenantLength = -1;
         for (var i = 1; i < key.Length; ++i)
         {
             var ch = key[i];
-            if (ch == '@')
-            {
-                tenantLength = i;
-                break;
-            }
-
             if (!(IsAsciiLetterOrDigitLower(ch)
                 || ch == '_'
                 || ch == '-'
                 || ch == '*'
-                || ch == '/'))
-            {
-                return false;
-            }
-        }
-
-        if (tenantLength == -1)
-        {
-            // There is no "@" sign. The key follow the first format.
-            return true;
-        }
-
-        // The second format:
-        // key = (lcalpha / DIGIT) 0 * 240(lcalpha / DIGIT / "_" / "-" / "*" / "/") "@" lcalpha 0 * 13(lcalpha / DIGIT / "_" / "-" / "*" / "/")
-        if (tenantLength is 0 or > TraceStateKeyTenantMaxLength)
-        {
-            return false;
-        }
-
-        var vendorLength = key.Length - tenantLength - 1;
-        if (vendorLength is 0 or > TraceStateKeyVendorMaxLength)
-        {
-            return false;
-        }
-
-        for (var i = tenantLength + 1; i < key.Length; ++i)
-        {
-            var ch = key[i];
-            if (!(IsAsciiLetterOrDigitLower(ch)
-                || ch == '_'
-                || ch == '-'
-                || ch == '*'
-                || ch == '/'))
+                || ch == '/'
+                || ch == '@'))
             {
                 return false;
             }

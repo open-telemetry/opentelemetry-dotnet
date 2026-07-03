@@ -148,6 +148,14 @@ public sealed class PrometheusMetricTests
         => AssertName("metric_hertz_total", "hertz_total", PrometheusType.Counter, false, "metric_hertz_total");
 
     [Fact]
+    public void Name_CounterWithUnitPrecedingTotal_UnitNotDuplicated()
+        => AssertName("db_bytes_total", "By", PrometheusType.Counter, false, "db_bytes_total");
+
+    [Fact]
+    public void Name_NonCounterWithUnitPrecedingTotal_UnitAppended()
+        => AssertName("db_bytes_total", "By", PrometheusType.Gauge, false, "db_bytes_total_bytes");
+
+    [Fact]
     public void Name_UnitAlreadyPresentInName_OrderMatters_Appended()
         => AssertName("metric_total_hertz", "hertz_total", PrometheusType.Counter, false, "metric_total_hertz_hertz_total");
 
@@ -164,8 +172,24 @@ public sealed class PrometheusMetricTests
         => AssertOpenMetricsName("cpu_sp__d_hertz", string.Empty, PrometheusType.Gauge, false, "cpu_sp_d_hertz");
 
     [Fact]
-    public void OpenMetricsName_PreserveLeadingNumber()
-        => AssertOpenMetricsName("2_metric_name", "By", PrometheusType.Gauge, false, "_2_metric_name_bytes");
+    public void OpenMetricsName_ReplacesLeadingNumber()
+        => AssertOpenMetricsName("2_metric_name", "By", PrometheusType.Gauge, false, "_metric_name_bytes");
+
+    [Fact]
+    public void OpenMetricsName_CounterWithUnitPrecedingTotal_UnitNotDuplicated()
+        => AssertOpenMetricsName("db_bytes_total", "By", PrometheusType.Counter, false, "db_bytes_total");
+
+    [Fact]
+    public void OpenMetricsMetadataName_CounterWithUnitPrecedingTotal_UnitNotDuplicated()
+        => AssertOpenMetricsMetadataName("db_bytes_total", "By", PrometheusType.Counter, false, "db_bytes");
+
+    [Fact]
+    public void OpenMetricsName_NonCounterWithUnitPrecedingTotal_UnitAppended()
+        => AssertOpenMetricsName("db_bytes_total", "By", PrometheusType.Gauge, false, "db_bytes_total_bytes");
+
+    [Fact]
+    public void OpenMetricsMetadataName_NonCounterWithUnitPrecedingTotal_UnitAppended()
+        => AssertOpenMetricsMetadataName("db_bytes_total", "By", PrometheusType.Gauge, false, "db_bytes_total_bytes");
 
     [Fact]
     public void OpenMetricsName_UnitStartingWithNumber_DoesNotAddExtraSeparator()
@@ -432,6 +456,41 @@ public sealed class PrometheusMetricTests
     [Fact]
     public void Name_UnitWithSpecialChars_Sanitized()
         => AssertName("metric", "req!", PrometheusType.Gauge, false, "metric_req");
+
+    [Fact]
+    public void GetNames_Dots_EscapesFamilyNameAndAppendsTotalSuffixLiterally()
+    {
+        var metric = new PrometheusMetric("http.server.duration", "s", PrometheusType.Counter, false);
+        var names = metric.GetNameSet(EscapingScheme.Dots);
+
+        // The family name (including the unit) is escaped, so the '.' characters become '_dot_' and
+        // the structural underscore before the unit is doubled. The '_total' suffix is a structural
+        // suffix appended literally to the escaped family name.
+        Assert.Equal("http_dot_server_dot_duration__seconds_total", names.Name);
+        Assert.Equal("http_dot_server_dot_duration__seconds_total", names.OpenMetricsName);
+        Assert.Equal("http_dot_server_dot_duration__seconds", names.OpenMetricsMetadataName);
+    }
+
+    [Fact]
+    public void GetNames_Values_EscapesFamilyNameAndAppendsTotalSuffixLiterally()
+    {
+        var metric = new PrometheusMetric("http.server.duration", "s", PrometheusType.Counter, false);
+        var names = metric.GetNameSet(EscapingScheme.Values);
+
+        Assert.Equal("U__http_2e_server_2e_duration__seconds_total", names.Name);
+        Assert.Equal("U__http_2e_server_2e_duration__seconds_total", names.OpenMetricsName);
+        Assert.Equal("U__http_2e_server_2e_duration__seconds", names.OpenMetricsMetadataName);
+    }
+
+    [Fact]
+    public void GetNames_Underscores_MatchesDefaultProperties()
+    {
+        var metric = new PrometheusMetric("http.server.duration", "s", PrometheusType.Counter, false);
+        var names = metric.GetNameSet(EscapingScheme.Underscores);
+
+        Assert.Equal("http_server_duration_seconds_total", names.Name);
+        Assert.Equal(metric.Name, names.Name);
+    }
 
     [Theory]
     [InlineData(PrometheusType.Counter)]

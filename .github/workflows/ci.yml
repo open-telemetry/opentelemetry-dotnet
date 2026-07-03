@@ -96,6 +96,15 @@ jobs:
       || contains(needs.detect-changes.outputs.changes, 'build')
     uses: ./.github/workflows/dotnet-format.yml
 
+  test-pwsh:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'pwsh')
+      || contains(needs.detect-changes.outputs.changes, 'build')
+    uses: ./.github/workflows/pwsh-test.yml
+    permissions:
+      contents: read # To checkout the code
+
   build-test-solution:
     needs: detect-changes
     if: |
@@ -227,7 +236,7 @@ jobs:
         persist-credentials: false
         show-progress: false
     - name: Setup .NET
-      uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5.3.0
+      uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
     - name: Run benchmarks
       shell: pwsh
       run: |
@@ -285,6 +294,7 @@ jobs:
       lint-md,
       lint-pwsh,
       lint-dotnet-format,
+      test-pwsh,
       build-test-solution,
       build-test-project-stable,
       build-test-project-experimental,

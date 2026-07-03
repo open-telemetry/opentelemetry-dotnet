@@ -72,6 +72,12 @@ public class PrometheusHttpListenerOptions
     public bool DisableTotalNameSuffixForCounters { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether the scope information (name, version, schema URL) is added to the scrape response.
+    /// Default value: <see langword="true"/>.
+    /// </summary>
+    public bool ScopeInfoEnabled { get; set; } = true;
+
+    /// <summary>
     /// Gets or sets the cache duration in milliseconds for scrape responses. Default value: 300.
     /// </summary>
     /// <remarks>
@@ -88,25 +94,19 @@ public class PrometheusHttpListenerOptions
     }
 
     /// <summary>
-    /// Gets or sets the URI (Uniform Resource Identifier) prefixes to use for the http listener.
-    /// Default value: <c>["http://localhost:9464/"]</c>.
+    /// Gets or sets a value indicating whether to include a <c>target_info</c> metric in the scrape response.
+    /// Default value: <see langword="true"/>.
     /// </summary>
-    [Obsolete("UriPrefixes is deprecated. Use Host and Port. This will be removed in a future stable release.")]
-    public IReadOnlyCollection<string> UriPrefixes
-    {
-        get => field ?? ["http://localhost:9464/"];
-        set
-        {
-            Guard.ThrowIfNull(value);
-            if (value.Count == 0)
-            {
-                throw new ArgumentException("Empty list provided.", nameof(value));
-            }
+    public bool TargetInfoEnabled { get; set; } = true;
 
-            field = value;
-            this.UriPrefixesExplicitlySet = true;
-        }
-    }
-
-    internal bool UriPrefixesExplicitlySet { get; private set; }
+    /// <summary>
+    /// Gets or sets an optional callback to apply custom configuration for the
+    /// <see cref="System.Net.HttpListener"/> instance used by the exporter.
+    /// </summary>
+    /// <remarks>
+    /// This callback is invoked after an <see cref="System.Net.HttpListener"/>
+    /// instance has been created and other configuration options have already
+    /// been applied to it.
+    /// </remarks>
+    public Action<PrometheusHttpListenerOptions, System.Net.HttpListener>? ConfigureHttpListener { get; set; }
 }

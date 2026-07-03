@@ -337,6 +337,48 @@ public class TraceContextPropagatorTests
     }
 
     [Fact]
+    public void Extract_HandlesNullTracestateValue()
+    {
+        var headers = new Dictionary<string, string>
+        {
+            { TraceParent, $"00-{TraceId}-{SpanId}-01" },
+        };
+
+        var propagator = new TraceContextPropagator();
+        var context = propagator.Extract(default, headers, (_, name) => headers.TryGetValue(name, out var value) ? [value] : [null!]);
+
+        Assert.Equal(ActivityTraceId.CreateFromString(TraceId.AsSpan()), context.ActivityContext.TraceId);
+        Assert.Equal(ActivitySpanId.CreateFromString(SpanId.AsSpan()), context.ActivityContext.SpanId);
+
+        Assert.True(context.ActivityContext.IsRemote);
+        Assert.True(context.ActivityContext.IsValid());
+        Assert.NotEqual(0, (int)(context.ActivityContext.TraceFlags & ActivityTraceFlags.Recorded));
+
+        Assert.Null(context.ActivityContext.TraceState);
+    }
+
+    [Fact]
+    public void Extract_HandlesNullTracestateValues()
+    {
+        var headers = new Dictionary<string, string>
+        {
+            { TraceParent, $"00-{TraceId}-{SpanId}-01" },
+        };
+
+        var propagator = new TraceContextPropagator();
+        var context = propagator.Extract(default, headers, (_, name) => headers.TryGetValue(name, out var value) ? [value] : [string.Empty, null!]);
+
+        Assert.Equal(ActivityTraceId.CreateFromString(TraceId.AsSpan()), context.ActivityContext.TraceId);
+        Assert.Equal(ActivitySpanId.CreateFromString(SpanId.AsSpan()), context.ActivityContext.SpanId);
+
+        Assert.True(context.ActivityContext.IsRemote);
+        Assert.True(context.ActivityContext.IsValid());
+        Assert.NotEqual(0, (int)(context.ActivityContext.TraceFlags & ActivityTraceFlags.Recorded));
+
+        Assert.Null(context.ActivityContext.TraceState);
+    }
+
+    [Fact]
     public void Inject_NoTracestate()
     {
         var traceId = ActivityTraceId.CreateRandom();
@@ -445,13 +487,13 @@ public class TraceContextPropagatorTests
     }
 
     [Fact]
-    public void Key_IllegalVendorFormat()
+    public void Key_AtSignGrammar()
     {
         // test_tracestate_key_illegal_vendor_format
-        Assert.Empty(CallTraceContextPropagator("foo@=1,bar=2"));
+        Assert.Equal("foo@=1,bar=2", CallTraceContextPropagator("foo@=1,bar=2"));
         Assert.Empty(CallTraceContextPropagator("@foo=1,bar=2"));
-        Assert.Empty(CallTraceContextPropagator("foo@@bar=1,bar=2"));
-        Assert.Empty(CallTraceContextPropagator("foo@bar@baz=1,bar=2"));
+        Assert.Equal("foo@@bar=1,bar=2", CallTraceContextPropagator("foo@@bar=1,bar=2"));
+        Assert.Equal("foo@bar@baz=1,bar=2", CallTraceContextPropagator("foo@bar@baz=1,bar=2"));
     }
 
     [Fact]
@@ -491,8 +533,10 @@ public class TraceContextPropagatorTests
         Assert.Empty(CallTraceContextPropagator(new string('z', 257) + "=1"));
         var input2 = new string('t', 241) + "@" + new string('v', 14) + "=1";
         Assert.Equal(input2, CallTraceContextPropagator(input2));
-        Assert.Empty(CallTraceContextPropagator(new string('t', 242) + "@v=1"));
-        Assert.Empty(CallTraceContextPropagator("t@" + new string('v', 15) + "=1"));
+        var input3 = new string('t', 242) + "@v=1";
+        Assert.Equal(input3, CallTraceContextPropagator(input3));
+        var input4 = "t@" + new string('v', 15) + "=1";
+        Assert.Equal(input4, CallTraceContextPropagator(input4));
     }
 
     [Fact]
