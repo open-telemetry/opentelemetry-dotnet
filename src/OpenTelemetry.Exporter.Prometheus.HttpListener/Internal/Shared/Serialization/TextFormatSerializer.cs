@@ -60,6 +60,19 @@ internal abstract class TextFormatSerializer
     private static readonly long UnixEpochTicks = new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero).Ticks;
 #endif
 
+    // Scope labels (otel_scope_*) depend only on the Metric's invariant
+    // scope (meter name/version/schema-url/tags) and are not affected by
+    // the negotiated escaping scheme, so the built label collections can
+    // be computed once per Metric and reused across every serialization
+    // call instead of being rebuilt for each call to WriteMetric.
+#if NET
+    private static readonly ConditionalWeakTable<Metric, List<KeyValuePair<string, string>>> ScopeLabelsCache = [];
+    private static readonly ConditionalWeakTable<Metric, List<LabelData>> ScopeLabelDataCache = [];
+#else
+    private static readonly ConditionalWeakTable<Metric, List<KeyValuePair<string, string>>> ScopeLabelsCache = new();
+    private static readonly ConditionalWeakTable<Metric, List<LabelData>> ScopeLabelDataCache = new();
+#endif
+
     private static readonly string[] ReservedExemplarLabelNames = ["trace_id", "span_id"];
     private static readonly double[] ExactPowersOfTen =
     [
@@ -813,7 +826,7 @@ internal abstract class TextFormatSerializer
 
         if (!options.SuppressScopeInfo)
         {
-            foreach (var scopeLabel in CreateScopeLabelData(metric))
+            foreach (var scopeLabel in GetScopeLabelData(metric))
             {
                 // Scope labels (otel_scope_*) are already in their target Prometheus form, so they
                 // are written verbatim and not re-escaped by the negotiated scheme, exactly as the
@@ -837,7 +850,7 @@ internal abstract class TextFormatSerializer
             // tags they can never collide with an already-written label. They only need to be
             // written (which also records their output keys so point tags can detect a collision
             // with a scope label).
-            foreach (var scopeLabel in CreateScopeLabels(metric))
+            foreach (var scopeLabel in GetScopeLabels(metric))
             {
                 _ = TryWriteLabel(scopeLabel.Key, scopeLabel.Value, isScopeLabel: true);
             }
@@ -1290,12 +1303,15 @@ internal abstract class TextFormatSerializer
         return builder.ToString();
     }
 
+    private static List<KeyValuePair<string, string>> GetScopeLabels(Metric metric)
+        => ScopeLabelsCache.GetValue(metric, CreateScopeLabels);
+
     private static List<KeyValuePair<string, string>> CreateScopeLabels(Metric metric)
     {
         var orderedKeys = new List<string>();
         var labelsByOutputKey = new Dictionary<string, List<LabelData>>(StringComparer.Ordinal);
 
-        foreach (var label in CreateScopeLabelData(metric))
+        foreach (var label in GetScopeLabelData(metric))
         {
             if (!labelsByOutputKey.TryGetValue(label.OutputKey, out var bucket))
             {
@@ -1316,6 +1332,9 @@ internal abstract class TextFormatSerializer
 
         return scopeLabels;
     }
+
+    private static List<LabelData> GetScopeLabelData(Metric metric)
+        => ScopeLabelDataCache.GetValue(metric, CreateScopeLabelData);
 
     private static List<LabelData> CreateScopeLabelData(Metric metric)
     {
