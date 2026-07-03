@@ -75,13 +75,13 @@ These metrics follow the [OpenTelemetry SDK Self-Observability Semantic
 Conventions](https://opentelemetry.io/docs/specs/semconv/otel/sdk-metrics/).
 
 | Metric Name | Instrument | Unit | Description |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `otel.sdk.processor.log.processed` | Counter | `{log_record}` | Number of log records processed by the SDK, tagged with outcome. |
 
 ### Attributes
 
 | Attribute | Description | Example |
-|---|---|---|
+| --- | --- | --- |
 | `otel.component.type` | The processor type. | `batching_log_processor`, `simple_log_processor` |
 | `otel.component.name` | Unique instance identifier. | `batching_log_processor/0` |
 | `error.type` | Present only on failure. | `queue_full`, `already_shutdown` |
@@ -89,9 +89,9 @@ Conventions](https://opentelemetry.io/docs/specs/semconv/otel/sdk-metrics/).
 When `error.type` is absent, the log record was successfully accepted by the
 processor. When present:
 
-* `queue_full` — The batch processor's internal queue was full; the log record
+* `queue_full` - The batch processor's internal queue was full; the log record
   was dropped.
-* `already_shutdown` — The processor had already been shut down; the log record
+* `already_shutdown` - The processor had already been shut down; the log record
   was lost.
 
 ## Troubleshooting

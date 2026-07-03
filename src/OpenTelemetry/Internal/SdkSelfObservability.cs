@@ -10,7 +10,7 @@ namespace OpenTelemetry;
 /// </summary>
 internal static class SdkSelfObservability
 {
-#pragma warning disable SA1202 // internal before private — but initialization order requires Meter first
+#pragma warning disable SA1202 // internal before private - initialization order requires Meter first
     private static readonly Meter Meter = new(new MeterOptions("otel.sdk.experimental")
     {
         Version = typeof(SdkSelfObservability).Assembly.GetName().Version?.ToString(),

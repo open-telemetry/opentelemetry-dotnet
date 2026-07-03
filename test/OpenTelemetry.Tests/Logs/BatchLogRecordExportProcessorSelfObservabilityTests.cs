@@ -197,7 +197,7 @@ public class BatchLogRecordExportProcessorSelfObservabilityTests
     [Fact]
     public void NoListener_NoException()
     {
-        // No MeterProvider subscribing to "otel.sdk.experimental" — verifying no crashes.
+        // No MeterProvider subscribing to "otel.sdk.experimental" - verifying no crashes.
         using var exporter = new InMemoryExporter<LogRecord>(new List<LogRecord>());
         using var processor = new BatchLogRecordExportProcessor(exporter);
         using var loggerProvider = Sdk.CreateLoggerProviderBuilder()
