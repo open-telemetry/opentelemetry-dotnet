@@ -13,7 +13,7 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 public abstract partial class MetricReader
 {
-    private readonly HashSet<string> metricStreamNames = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, int> metricStreamNames = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<MetricStreamIdentity, Metric?> instrumentIdentityToMetric = new();
     private readonly Lock instrumentCreationLock = new();
     private readonly ConcurrentQueue<int> availableMetricIndices = new();
@@ -224,15 +224,25 @@ public abstract partial class MetricReader
 
     private void CreateOrUpdateMetricStreamRegistration(in MetricStreamIdentity metricStreamIdentity)
     {
-        if (!this.metricStreamNames.Add(metricStreamIdentity.MetricStreamName))
+        if (this.metricStreamNames.TryGetValue(metricStreamIdentity.MetricStreamName, out var count))
         {
-            // TODO: If a metric is deactivated and then reactivated we log the
-            // same warning as if it was a duplicate.
+            // TODO: This can be a false positive. The registration is only
+            // released when the metric is removed during a collection cycle.
+            // If an instrument is deactivated and an instrument with the same
+            // stream name is re-created before the next collect, the stale
+            // registration is still present and this logs a duplicate/conflict
+            // warning even though there is no actual conflict.
             OpenTelemetrySdkEventSource.Log.DuplicateMetricInstrument(
                 metricStreamIdentity.InstrumentName,
                 metricStreamIdentity.MeterName,
                 "Metric instrument has the same name as an existing one but differs by description, unit, or instrument type. Measurements from this instrument will still be exported but may result in conflicts.",
                 "Either change the name of the instrument or use MeterProviderBuilder.AddView to resolve the conflict.");
+
+            this.metricStreamNames[metricStreamIdentity.MetricStreamName] = count + 1;
+        }
+        else
+        {
+            this.metricStreamNames[metricStreamIdentity.MetricStreamName] = 1;
         }
     }
 
@@ -290,6 +300,26 @@ public abstract partial class MetricReader
         ICollection<KeyValuePair<MetricStreamIdentity, Metric?>> instrumentIdentityToMetric = this.instrumentIdentityToMetric;
         instrumentIdentityToMetric.Remove(item);
 #endif
+
+        // Release the stream-name registration for this metric. When the last
+        // metric using the name is removed the entry is dropped so the
+        // dictionary does not grow without bound as instruments are repeatedly
+        // created and disposed with recycled storage slots.
+        var metricStreamName = metric.InstrumentIdentity.MetricStreamName;
+        lock (this.instrumentCreationLock)
+        {
+            if (this.metricStreamNames.TryGetValue(metricStreamName, out var count))
+            {
+                if (count <= 1)
+                {
+                    this.metricStreamNames.Remove(metricStreamName);
+                }
+                else
+                {
+                    this.metricStreamNames[metricStreamName] = count - 1;
+                }
+            }
+        }
 
         // Note: metric is a reference to the array storage so
         // this clears the metric out of the array.

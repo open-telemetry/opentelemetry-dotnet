@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Metrics;
+using System.Reflection;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
 
@@ -158,5 +159,57 @@ public class MeterProviderSdkTests
         var metricInstrumentIgnoredEvents = eventListener.Messages.Where((e) => e.EventId == 33 && (e.Payload?.Count ?? 0) >= 2 && (e.Payload![1] as string) == meterName);
 
         Assert.Empty(metricInstrumentIgnoredEvents);
+    }
+
+    [Fact]
+    public void TransientMetricStreamNameRegistrationsAreReleasedTest()
+    {
+        var meterName = Utils.GetCurrentMethodName();
+        var exportedItems = new List<Metric>();
+
+        const int MaxMetricStreams = 2;
+        const int Iterations = MaxMetricStreams * 10;
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .SetMaxMetricStreams(MaxMetricStreams)
+            .AddMeter(meterName)
+            .AddInMemoryExporter(exportedItems)
+            .Build() as MeterProviderSdk;
+
+        Assert.NotNull(meterProvider);
+
+        // Create and dispose many distinctly-named instruments than the metric
+        // stream limit, collecting after each one so the deactivated metric's
+        // slot (and its stream-name registration) is reclaimed. Distinct names
+        // are important: a leak in the stream-name bookkeeping would only show
+        // up when the names differ between iterations.
+        for (var i = 0; i < Iterations; i++)
+        {
+            exportedItems.Clear();
+
+            using (var meter = new Meter(meterName))
+            {
+                var counter = meter.CreateCounter<int>($"Counter{i}");
+                counter.Add(1);
+            }
+
+            meterProvider.ForceFlush();
+
+            Assert.Single(exportedItems);
+            Assert.Equal($"Counter{i}", exportedItems[0].Name);
+        }
+
+        // The stream-name registrations must be released as metrics are removed,
+        // otherwise the reader retains an entry for every distinct name ever seen.
+        var reader = meterProvider.Reader;
+        Assert.NotNull(reader);
+
+        var metricStreamNamesField = typeof(MetricReader).GetField("metricStreamNames", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(metricStreamNamesField);
+
+        var metricStreamNames = Assert.IsType<System.Collections.ICollection>(metricStreamNamesField.GetValue(reader), exactMatch: false);
+
+        // Every instrument was disposed and collected, so no registration should remain.
+        Assert.Empty(metricStreamNames);
     }
 }
