@@ -204,7 +204,7 @@ To verify the integrity of a DLL inside a NuGet package use the
 These versions are using bundle format known from cosign 3.0+.
 
 ```bash
-$TAG="core-1.14.0"
+TAG="core-1.16.0"
 cosign verify-blob \
     --bundle OpenTelemetry.dll.sigstore.json \
     --certificate-identity "https://github.com/open-telemetry/opentelemetry-dotnet/.github/workflows/publish-packages-1.0.yml@refs/tags/$TAG" \
@@ -213,13 +213,16 @@ cosign verify-blob \
     OpenTelemetry.dll
 ```
 
+> [!NOTE]
+> A successful verification outputs `Verified OK`.
+
 #### Versions 1.10.0 - 1.14.0-rc.1
 
 These versions are using separate signature and certificate files format known
 from cosign 2.x.
 
 ```bash
-$TAG="core-1.12.0"
+TAG="core-1.12.0"
 cosign verify-blob \
     --signature OpenTelemetry.dll-keyless.sig \
     --certificate OpenTelemetry.dll-keyless.pem \

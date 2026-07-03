@@ -1,0 +1,3 @@
+# TYPE "http.server.requests" counter
+{"http.server.requests_total",otel_scope_name="WriteMetric_EscapesMetricAndLabelNamesUsingNegotiatedScheme","http.method"="GET"} 1
+{"http.server.requests_created",otel_scope_name="WriteMetric_EscapesMetricAndLabelNamesUsingNegotiatedScheme","http.method"="GET"} <TIMESTAMP>

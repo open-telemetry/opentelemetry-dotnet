@@ -1,0 +1,8 @@
+# TYPE http_requests_seconds histogram
+# UNIT http_requests_seconds seconds
+# HELP http_requests_seconds Duration of HTTP server requests.
+http_requests_seconds_bucket{otel_scope_name="WriteMetric_SerializesMultibyteUtf8MetricNameProvidedByView",http_method="GET",le="5"} 1
+http_requests_seconds_bucket{otel_scope_name="WriteMetric_SerializesMultibyteUtf8MetricNameProvidedByView",http_method="GET",le="10"} 2
+http_requests_seconds_bucket{otel_scope_name="WriteMetric_SerializesMultibyteUtf8MetricNameProvidedByView",http_method="GET",le="+Inf"} 2
+http_requests_seconds_sum{otel_scope_name="WriteMetric_SerializesMultibyteUtf8MetricNameProvidedByView",http_method="GET"} 12
+http_requests_seconds_count{otel_scope_name="WriteMetric_SerializesMultibyteUtf8MetricNameProvidedByView",http_method="GET"} 2
