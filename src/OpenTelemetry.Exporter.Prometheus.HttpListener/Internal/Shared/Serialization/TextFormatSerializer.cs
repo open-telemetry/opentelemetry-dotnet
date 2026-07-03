@@ -354,7 +354,7 @@ internal abstract class TextFormatSerializer
         // the scrape immediately rather than repeatedly re-entering this allocation.
         var newBufferSize = currentBufferSize * 2;
 
-        return newBufferSize <= 0 || newBufferSize > MaxSerializedTagsBufferSize
+        return newBufferSize is <= 0 or > MaxSerializedTagsBufferSize
             ? throw new InvalidOperationException("The serialized Prometheus tag set exceeded the maximum supported size.")
             : newBufferSize;
     }
@@ -2124,7 +2124,7 @@ internal abstract class TextFormatSerializer
             EscapingScheme.AllowUtf8 => WriteLabelName(buffer, cursor, key),
 
             // The dots and values schemes escape the name and quote it only if a colon survives.
-            _ => WriteEscapedLabelKey(buffer, cursor, key, this.Escaping),
+            EscapingScheme.Dots or EscapingScheme.Values or _ => WriteEscapedLabelKey(buffer, cursor, key, this.Escaping),
         };
     }
 
