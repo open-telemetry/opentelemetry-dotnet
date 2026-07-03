@@ -29,7 +29,10 @@ internal static class ProtobufSerializer
 
     // The shared ArrayPool caps pooled arrays at 1 MB so use a dedicated
     // pool that can pool the larger (and resized) buffers. A small
-    // per-bucket limit keeps the amount of retained memory bounded.
+    // per-bucket limit keeps the amount of retained memory bounded. Only
+    // final, right-sized buffers are returned to the pool; intermediate
+    // buffers created while growing are dropped (see IncreaseBufferSize) so a
+    // single large export does not permanently retain an array in every bucket.
     private static readonly ArrayPool<byte> BufferPool = ArrayPool<byte>.Create(MaxBufferSize, maxArraysPerBucket: 4);
 #if NETFRAMEWORK || NETSTANDARD2_0
     [ThreadStatic]
@@ -390,12 +393,16 @@ internal static class ProtobufSerializer
             return false;
         }
 
-        // Swap in the larger buffer first so growth always succeeds, then return
-        // the smaller buffer for reuse. The serializer restarts from the
-        // beginning after a resize, so the existing contents need not be copied.
-        var smallerBuffer = buffer;
+        // Swap in the larger buffer. The serializer restarts from the beginning
+        // after a resize, so the existing contents need not be copied.
+        //
+        // The smaller (intermediate) buffer is intentionally not returned
+        // to the pool. The pool never trims, so returning every intermediate
+        // buffer produced while growing would let a single large export
+        // permanently retain one array in every bucket it passed through.
+        // Dropping intermediates lets the GC reclaim them and keeps only the
+        // final right-sized buffer pooled (returned by the caller once export complete).
         buffer = largerBuffer;
-        ReturnBuffer(smallerBuffer);
         return true;
     }
 

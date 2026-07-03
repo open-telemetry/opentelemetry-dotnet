@@ -76,10 +76,19 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
         // Prevents the exporter's gRPC and HTTP operations from being instrumented.
         using var scope = SuppressInstrumentationScope.Begin();
 
-        var buffer = ProtobufSerializer.RentBuffer(this.bufferSize);
+        byte[]? buffer = null;
+
         try
         {
-            var writePosition = ProtobufOtlpLogSerializer.WriteLogsData(ref buffer, this.startWritePosition, this.sdkLimitOptions, this.experimentalOptions, this.Resource, logRecordBatch);
+            buffer = ProtobufSerializer.RentBuffer(this.bufferSize);
+
+            var writePosition = ProtobufOtlpLogSerializer.WriteLogsData(
+                ref buffer,
+                this.startWritePosition,
+                this.sdkLimitOptions,
+                this.experimentalOptions,
+                this.Resource,
+                logRecordBatch);
 
             // Remember the (possibly grown) capacity so the next export can rent a
             // buffer large enough to avoid resizing.
@@ -110,7 +119,10 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
         }
         finally
         {
-            ProtobufSerializer.ReturnBuffer(buffer);
+            if (buffer != null)
+            {
+                ProtobufSerializer.ReturnBuffer(buffer);
+            }
         }
 
         return ExportResult.Success;

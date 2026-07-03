@@ -70,9 +70,12 @@ public class OtlpMetricExporter : BaseExporter<Metric>
         // Prevents the exporter's gRPC and HTTP operations from being instrumented.
         using var scope = SuppressInstrumentationScope.Begin();
 
-        var buffer = ProtobufSerializer.RentBuffer(this.bufferSize);
+        byte[]? buffer = null;
+
         try
         {
+            buffer = ProtobufSerializer.RentBuffer(this.bufferSize);
+
             var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, this.startWritePosition, this.Resource, metrics);
 
             // Remember the (possibly grown) capacity so the next export can rent a
@@ -104,7 +107,10 @@ public class OtlpMetricExporter : BaseExporter<Metric>
         }
         finally
         {
-            ProtobufSerializer.ReturnBuffer(buffer);
+            if (buffer != null)
+            {
+                ProtobufSerializer.ReturnBuffer(buffer);
+            }
         }
 
         return ExportResult.Success;

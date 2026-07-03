@@ -207,6 +207,14 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
             if (smallerBuffer.Length >= MaxBufferSize)
             {
                 OpenTelemetryProtocolExporterEventSource.Log.ArrayBufferExceededMaxSize();
+
+                // Resize failed, so the array will be truncated and this buffer
+                // will never be copied into the main buffer via WriteArrayTag.
+                // Return it to the pool and clear the thread slot so it is not
+                // retained for the lifetime of the thread.
+                ProtobufSerializer.ReturnBuffer(smallerBuffer);
+                ThreadBuffer = null;
+
                 return false;
             }
 
@@ -218,12 +226,19 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
             catch (OutOfMemoryException)
             {
                 OpenTelemetryProtocolExporterEventSource.Log.BufferResizeFailedDueToMemory(nameof(OtlpArrayTagWriter));
+
+                // As above, the array will be truncated; return the buffer and
+                // clear the thread slot so it is not retained.
+                ProtobufSerializer.ReturnBuffer(smallerBuffer);
+                ThreadBuffer = null;
+
                 return false;
             }
 
             // Swap in the larger buffer first, then return the smaller one for reuse.
             ThreadBuffer = largerBuffer;
             ProtobufSerializer.ReturnBuffer(smallerBuffer);
+
             return true;
         }
     }

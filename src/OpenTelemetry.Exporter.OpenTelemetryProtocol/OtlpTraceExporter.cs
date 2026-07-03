@@ -74,10 +74,18 @@ public class OtlpTraceExporter : BaseExporter<Activity>
         // Prevents the exporter's gRPC and HTTP operations from being instrumented.
         using var scope = SuppressInstrumentationScope.Begin();
 
-        var buffer = ProtobufSerializer.RentBuffer(this.bufferSize);
+        byte[]? buffer = null;
+
         try
         {
-            var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, this.startWritePosition, this.sdkLimitOptions, this.Resource, activityBatch);
+            buffer = ProtobufSerializer.RentBuffer(this.bufferSize);
+
+            var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(
+                ref buffer,
+                this.startWritePosition,
+                this.sdkLimitOptions,
+                this.Resource,
+                activityBatch);
 
             // Remember the (possibly grown) capacity so the next export can rent a
             // buffer large enough to avoid resizing.
@@ -108,7 +116,10 @@ public class OtlpTraceExporter : BaseExporter<Activity>
         }
         finally
         {
-            ProtobufSerializer.ReturnBuffer(buffer);
+            if (buffer != null)
+            {
+                ProtobufSerializer.ReturnBuffer(buffer);
+            }
         }
 
         return ExportResult.Success;

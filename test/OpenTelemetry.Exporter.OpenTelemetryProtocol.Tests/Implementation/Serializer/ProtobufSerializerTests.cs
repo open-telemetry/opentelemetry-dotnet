@@ -412,7 +412,7 @@ public class ProtobufSerializerTests
     }
 
     [Fact]
-    public void IncreaseBufferSize_GrowsBufferAndReturnsOldBufferToPool()
+    public void IncreaseBufferSize_GrowsBufferAndDropsIntermediateBuffer()
     {
         var buffer = ProtobufSerializer.RentBuffer(1024);
         var original = buffer;
@@ -426,10 +426,10 @@ public class ProtobufSerializerTests
             Assert.NotSame(original, buffer);
             Assert.True(buffer.Length >= originalLength * 2);
 
-            // The previous (smaller) buffer should have been returned to the pool.
-            var reRented = ProtobufSerializer.RentBuffer(originalLength);
-            Assert.Same(original, reRented);
-            ProtobufSerializer.ReturnBuffer(reRented);
+            var next = ProtobufSerializer.RentBuffer(originalLength);
+
+            Assert.NotSame(original, next);
+            ProtobufSerializer.ReturnBuffer(next);
         }
         finally
         {
