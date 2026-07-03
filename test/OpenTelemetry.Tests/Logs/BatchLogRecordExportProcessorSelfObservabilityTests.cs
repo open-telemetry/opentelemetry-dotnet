@@ -51,21 +51,43 @@ public class BatchLogRecordExportProcessorSelfObservabilityTests
             .AddInMemoryExporter(exportedMetrics)
             .Build();
 
-        using var exporter = new InMemoryExporter<LogRecord>(new List<LogRecord>());
+        // Use a blocking exporter so the worker thread holds the queue slot
+        // while we overflow it, guaranteeing drops.
+        using var exportStarted = new ManualResetEventSlim(false);
+        using var allowExport = new ManualResetEventSlim(false);
+        using var exporter = new DelegatingExporter<LogRecord>
+        {
+            OnExportFunc = batch =>
+            {
+                exportStarted.Set();
+                allowExport.Wait();
+                return ExportResult.Success;
+            },
+        };
         using var processor = new BatchLogRecordExportProcessor(
             exporter,
             maxQueueSize: 1,
-            scheduledDelayMilliseconds: 60000,
+            scheduledDelayMilliseconds: 1,
             maxExportBatchSize: 1);
         using var loggerProvider = Sdk.CreateLoggerProviderBuilder()
             .AddProcessor(processor)
             .Build();
 
         var logger = loggerProvider.GetLogger("test");
-        for (int i = 0; i < 10; i++)
+
+        // First log triggers the worker; wait for it to block in Export
+        logger.EmitLog(new LogRecordData());
+        exportStarted.Wait();
+
+        // Now the queue is being drained but the worker is blocked.
+        // Subsequent logs will overflow the queue (size=1).
+        for (int i = 0; i < 5; i++)
         {
             logger.EmitLog(new LogRecordData());
         }
+
+        // Release the exporter so shutdown can complete
+        allowExport.Set();
 
         meterProvider.ForceFlush();
 
@@ -74,7 +96,7 @@ public class BatchLogRecordExportProcessorSelfObservabilityTests
         var queueFullPoint = points.Single(p => HasTagValue(p, "error.type", "queue_full"));
 
         Assert.True(queueFullPoint.GetSumLong() > 0);
-        Assert.Equal(10, points.Sum(p => p.GetSumLong()));
+        Assert.Equal(6, points.Sum(p => p.GetSumLong()));
     }
 
     [Fact]
