@@ -239,7 +239,7 @@ internal sealed class PrometheusMetric
         EscapingScheme.AllowUtf8 => this.allowUtf8Names ??= BuildAllowUtf8Names(this.rawName, this.Unit, this.Type, this.disableTotalNameSuffixForCounters),
         EscapingScheme.Dots => this.dotsNames ??= BuildEscapedNames(this.rawName, this.Unit, this.Type, this.disableTotalNameSuffixForCounters, EscapingScheme.Dots),
         EscapingScheme.Values => this.valuesNames ??= BuildEscapedNames(this.rawName, this.Unit, this.Type, this.disableTotalNameSuffixForCounters, EscapingScheme.Values),
-        _ => this.underscoreNames,
+        EscapingScheme.Underscores or _ => this.underscoreNames,
     };
 
     private static byte[] ConvertToBytes(string value)
