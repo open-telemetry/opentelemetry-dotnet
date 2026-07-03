@@ -1,0 +1,3 @@
+﻿# TYPE test_counter counter
+test_counter_total{otel_scope_name="WriteMetric_EscapesColonInPointTagKeyUsingLabelNameRules","http:method"="GET"} 1
+test_counter_created{otel_scope_name="WriteMetric_EscapesColonInPointTagKeyUsingLabelNameRules","http:method"="GET"} <TIMESTAMP>

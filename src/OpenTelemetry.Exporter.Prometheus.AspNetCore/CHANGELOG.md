@@ -31,6 +31,10 @@ Notes](../../RELEASENOTES.md).
   disable the `target_info` metric in Prometheus metrics. Defaults to `true`.
   ([#7438](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7438))
 
+* Added support for the `allow-utf-8` Prometheus UTF-8 name escaping scheme
+  when negotiated via the `Accept` header.
+  ([#7440](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7440))
+
 * Add `PrometheusAspNetCoreOptions.ResourceConstantLabels` property to select
   resource attributes to add to each metric as constant labels. Defaults to
   `null` (no resource attributes are added as metric labels).

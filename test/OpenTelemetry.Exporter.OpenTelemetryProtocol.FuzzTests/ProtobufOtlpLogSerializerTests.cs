@@ -234,6 +234,60 @@ public class ProtobufOtlpLogSerializerTests
             }
         });
 
+    [Property(MaxTest = 100)]
+    public Property ResourceSchemaUrlRoundTrips() => Prop.ForAll(
+        Generators.SdkLimitOptionsArbitrary(),
+        Generators.ResourceArbitrary(),
+        Generators.LogRecordSeverityArbitrary(),
+        (sdkLimits, resource, severity) =>
+        {
+            var logRecords = CreateLogRecords(severity);
+
+            try
+            {
+                var buffer = new byte[10 * 1024 * 1024];
+                var batch = new Batch<LogRecord>(logRecords, logRecords.Length);
+                var experimentalOptions = new ExperimentalOptions();
+
+                var writePos = ProtobufOtlpLogSerializer.WriteLogsData(
+                    ref buffer,
+                    0,
+                    sdkLimits,
+                    experimentalOptions,
+                    resource,
+                    batch);
+
+                if (writePos <= 0)
+                {
+                    return true;
+                }
+
+                using var stream = new MemoryStream(buffer, 0, writePos);
+                var request = OtlpCollector.ExportLogsServiceRequest.Parser.ParseFrom(stream);
+
+                if (request == null || request.ResourceLogs.Count == 0)
+                {
+                    return true;
+                }
+
+                var expected = resource.SchemaUrl ?? string.Empty;
+
+                foreach (var resourceLogs in request.ResourceLogs)
+                {
+                    if (resourceLogs.SchemaUrl != expected)
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex) when (IsAllowedException(ex))
+            {
+                return true;
+            }
+        });
+
     private static LogRecord[] CreateLogRecords(LogRecordSeverity severity)
         => Generators.LogRecordArbitrary(severity).Generator.ArrayOf().Sample(1, 10).First();
 

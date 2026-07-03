@@ -32,10 +32,9 @@ internal readonly struct PrometheusProtocol : IEquatable<PrometheusProtocol>
 
     public static readonly PrometheusProtocol Fallback = new(PrometheusTextMediaType, null, PrometheusV0, false);
 
-    // TODO Support the "allow-utf-8" escaping scheme.
-    // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/7246.
     internal static readonly SupportedEscapingSchemes SupportedEscapingSchemes =
     [
+        AllowUtf8Escaping,
         DotsEscaping,
         UnderscoresEscaping,
         ValuesEscaping,

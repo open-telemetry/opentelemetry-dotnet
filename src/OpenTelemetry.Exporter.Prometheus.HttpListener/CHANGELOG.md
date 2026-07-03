@@ -37,6 +37,10 @@ Notes](../../RELEASENOTES.md).
 * Added the `PrometheusHttpListenerOptions.ConfigureHttpListener` option.
   ([#7448](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7448))
 
+* Added support for the `allow-utf-8` Prometheus UTF-8 name escaping scheme
+  when negotiated via the `Accept` header.
+  ([#7440](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7440))
+
 * Add `PrometheusHttpListenerOptions.ResourceConstantLabels` property to select
   resource attributes to add to each metric as constant labels. Defaults to
   `null` (no resource attributes are added as metric labels).

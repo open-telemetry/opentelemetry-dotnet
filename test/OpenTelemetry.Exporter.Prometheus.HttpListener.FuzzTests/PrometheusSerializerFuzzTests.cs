@@ -66,6 +66,21 @@ public class PrometheusSerializerFuzzTests
             SerializeEscapeName(value, EscapingScheme.Dots).SequenceEqual(Encoding.ASCII.GetBytes(PrometheusEscaping.EscapeName(value, EscapingScheme.Dots))) &&
             SerializeEscapeName(value, EscapingScheme.Values).SequenceEqual(Encoding.ASCII.GetBytes(PrometheusEscaping.EscapeName(value, EscapingScheme.Values))));
 
+    [Property(MaxTest = MaxTests)]
+    public Property IsValidLegacyNameMatchesReferenceImplementation() => Prop.ForAll(
+        Generators.PrometheusStringArbitrary(),
+        static (value) => PrometheusEscaping.IsValidLegacyName(value) == ReferenceIsValidLegacyName(value));
+
+    [Property(MaxTest = MaxTests)]
+    public Property IsValidLegacyLabelNameMatchesReferenceImplementation() => Prop.ForAll(
+        Generators.PrometheusStringArbitrary(),
+        static (value) => PrometheusEscaping.IsValidLegacyLabelName(value) == ReferenceIsValidLegacyLabelName(value));
+
+    [Property(MaxTest = MaxTests)]
+    public Property WriteLabelNameMatchesReferenceImplementation() => Prop.ForAll(
+        Generators.PrometheusStringArbitrary(),
+        static (value) => Serialize(value, static (buffer, cursor, text) => TextFormatSerializer.WriteLabelName(buffer, cursor, text)).SequenceEqual(ReferenceWriteLabelName(value)));
+
     private static byte[] Serialize(string value, Func<byte[], int, string, int> writer)
     {
         var buffer = new byte[(value.Length * 8) + 16];
@@ -213,7 +228,7 @@ public class PrometheusSerializerFuzzTests
             {
                 text.Append('_').Append(codePoint.ToString("x", CultureInfo.InvariantCulture)).Append('_');
             }
-            else if (ReferenceIsValidLegacyRune(codePoint, index == 0))
+            else if (ReferenceIsValidLegacyRune(codePoint, index == 0, isMetricName: true))
             {
                 text.Append((char)codePoint);
             }
@@ -236,15 +251,24 @@ public class PrometheusSerializerFuzzTests
         return text.ToString();
     }
 
-    private static bool ReferenceIsValidLegacyName(string value)
+    private static bool ReferenceIsValidLegacyName(string value) => ReferenceIsValidLegacyName(value, isMetricName: true);
+
+    private static bool ReferenceIsValidLegacyLabelName(string value) => ReferenceIsValidLegacyName(value, isMetricName: false);
+
+    private static bool ReferenceIsValidLegacyName(string value, bool isMetricName)
     {
+        if (value.Length == 0)
+        {
+            return false;
+        }
+
         var index = 0;
 
         while (index < value.Length)
         {
             var codePoint = ReferenceGetCodePoint(value, index, out var charsConsumed, out _);
 
-            if (!ReferenceIsValidLegacyRune(codePoint, index == 0))
+            if (!ReferenceIsValidLegacyRune(codePoint, index == 0, isMetricName))
             {
                 return false;
             }
@@ -255,8 +279,24 @@ public class PrometheusSerializerFuzzTests
         return true;
     }
 
-    private static bool ReferenceIsValidLegacyRune(int codePoint, bool isFirst) =>
-        codePoint is (>= 'a' and <= 'z') or (>= 'A' and <= 'Z') or '_' or ':' ||
+    // An independent re-implementation of TextFormatSerializer.WriteLabelName: a non-legacy label
+    // name is emitted as a double-quoted UTF-8 string (escaping '"', '\' and '\n'); a legacy name is
+    // written verbatim as ASCII bytes.
+    private static byte[] ReferenceWriteLabelName(string value)
+    {
+        if (ReferenceIsValidLegacyLabelName(value))
+        {
+            return ReferenceWriteAsciiStringNoEscape(value);
+        }
+
+        var escaped = ReferenceWriteEscapedString(value, escapeQuotationMarks: true);
+
+        return [(byte)'"', .. escaped, (byte)'"'];
+    }
+
+    private static bool ReferenceIsValidLegacyRune(int codePoint, bool isFirst, bool isMetricName) =>
+        codePoint is (>= 'a' and <= 'z') or (>= 'A' and <= 'Z') or '_' ||
+        (isMetricName && codePoint == ':') ||
         (!isFirst && codePoint is >= '0' and <= '9');
 
     private static int ReferenceGetCodePoint(string value, int index, out int charsConsumed, out bool isValidRune)

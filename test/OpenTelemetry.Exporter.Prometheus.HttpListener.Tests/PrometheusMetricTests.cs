@@ -492,6 +492,39 @@ public sealed class PrometheusMetricTests
         Assert.Equal(metric.Name, names.Name);
     }
 
+    [Fact]
+    public void GetNames_AllowUtf8_CounterWithUnitBeforeTotalSuffix_DoesNotDuplicateUnit()
+    {
+        var metric = new PrometheusMetric("db_bytes_total", "By", PrometheusType.Counter, false);
+        var names = metric.GetNameSet(EscapingScheme.AllowUtf8);
+
+        Assert.Equal("db_bytes_total", names.Name);
+        Assert.Equal("db_bytes_total", names.OpenMetricsName);
+        Assert.Equal("db_bytes", names.OpenMetricsMetadataName);
+    }
+
+    [Fact]
+    public void GetNames_AllowUtf8_GaugeNamedWithTotalSuffix_KeepsSuffix()
+    {
+        var metric = new PrometheusMetric("requests_total", string.Empty, PrometheusType.Gauge, false);
+        var names = metric.GetNameSet(EscapingScheme.AllowUtf8);
+
+        Assert.Equal("requests_total", names.Name);
+        Assert.Equal("requests_total", names.OpenMetricsName);
+        Assert.Equal("requests_total", names.OpenMetricsMetadataName);
+    }
+
+    [Fact]
+    public void GetNames_AllowUtf8_GaugeNamedExactlyTotal_IsNotEmptied()
+    {
+        var metric = new PrometheusMetric("_total", string.Empty, PrometheusType.Gauge, false);
+        var names = metric.GetNameSet(EscapingScheme.AllowUtf8);
+
+        Assert.Equal("_total", names.Name);
+        Assert.Equal("_total", names.OpenMetricsName);
+        Assert.Equal("_total", names.OpenMetricsMetadataName);
+    }
+
     [Theory]
     [InlineData(PrometheusType.Counter)]
     [InlineData(PrometheusType.Gauge)]
