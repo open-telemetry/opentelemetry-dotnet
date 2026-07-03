@@ -48,5 +48,15 @@ public class PrometheusAspNetCoreOptions
         set => this.ExporterOptions.ScrapeResponseCacheDurationMilliseconds = value;
     }
 
+    /// <summary>
+    /// Gets or sets a value indicating whether to include a <c>target_info</c> metric in the scrape response.
+    /// Default value: <see langword="true"/>.
+    /// </summary>
+    public bool TargetInfoEnabled
+    {
+        get => this.ExporterOptions.TargetInfoEnabled;
+        set => this.ExporterOptions.TargetInfoEnabled = value;
+    }
+
     internal PrometheusExporterOptions ExporterOptions { get; } = new();
 }

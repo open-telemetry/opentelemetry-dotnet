@@ -69,12 +69,12 @@ public class PrometheusSerializerFuzzTests
     [Property(MaxTest = MaxTests)]
     public Property IsValidLegacyNameMatchesReferenceImplementation() => Prop.ForAll(
         Generators.PrometheusStringArbitrary(),
-        static (value) => PrometheusEscaping.IsValidLegacyName(value) == ReferenceIsValidLegacyName(value, allowColon: true));
+        static (value) => PrometheusEscaping.IsValidLegacyName(value) == ReferenceIsValidLegacyName(value));
 
     [Property(MaxTest = MaxTests)]
     public Property IsValidLegacyLabelNameMatchesReferenceImplementation() => Prop.ForAll(
         Generators.PrometheusStringArbitrary(),
-        static (value) => PrometheusEscaping.IsValidLegacyLabelName(value) == ReferenceIsValidLegacyName(value, allowColon: false));
+        static (value) => PrometheusEscaping.IsValidLegacyLabelName(value) == ReferenceIsValidLegacyLabelName(value));
 
     [Property(MaxTest = MaxTests)]
     public Property WriteLabelNameMatchesReferenceImplementation() => Prop.ForAll(
@@ -195,7 +195,9 @@ public class PrometheusSerializerFuzzTests
             return value;
         }
 
-        if (scheme == EscapingScheme.Values && ReferenceIsValidLegacyName(value, allowColon: true))
+        if (scheme == EscapingScheme.Values &&
+            ReferenceIsValidLegacyName(value) &&
+            !value.StartsWith("U__", StringComparison.Ordinal))
         {
             return value;
         }
@@ -207,6 +209,7 @@ public class PrometheusSerializerFuzzTests
             text.Append("U__");
         }
 
+        var escapeValuesPrefix = scheme == EscapingScheme.Values && value.StartsWith("U__", StringComparison.Ordinal);
         var index = 0;
 
         while (index < value.Length)
@@ -221,13 +224,17 @@ public class PrometheusSerializerFuzzTests
             {
                 text.Append("_dot_");
             }
-            else if (ReferenceIsValidLegacyRune(codePoint, index == 0))
+            else if (escapeValuesPrefix && index == 0)
+            {
+                text.Append('_').Append(codePoint.ToString("x", CultureInfo.InvariantCulture)).Append('_');
+            }
+            else if (ReferenceIsValidLegacyRune(codePoint, index == 0, isMetricName: true))
             {
                 text.Append((char)codePoint);
             }
             else if (scheme == EscapingScheme.Dots)
             {
-                text.Append("__");
+                text.Append('_');
             }
             else if (!isValidRune)
             {
@@ -244,7 +251,11 @@ public class PrometheusSerializerFuzzTests
         return text.ToString();
     }
 
-    private static bool ReferenceIsValidLegacyName(string value, bool allowColon)
+    private static bool ReferenceIsValidLegacyName(string value) => ReferenceIsValidLegacyName(value, isMetricName: true);
+
+    private static bool ReferenceIsValidLegacyLabelName(string value) => ReferenceIsValidLegacyName(value, isMetricName: false);
+
+    private static bool ReferenceIsValidLegacyName(string value, bool isMetricName)
     {
         if (value.Length == 0)
         {
@@ -257,7 +268,7 @@ public class PrometheusSerializerFuzzTests
         {
             var codePoint = ReferenceGetCodePoint(value, index, out var charsConsumed, out _);
 
-            if (!ReferenceIsValidLegacyRune(codePoint, index == 0) || (codePoint == ':' && !allowColon))
+            if (!ReferenceIsValidLegacyRune(codePoint, index == 0, isMetricName))
             {
                 return false;
             }
@@ -273,7 +284,7 @@ public class PrometheusSerializerFuzzTests
     // written verbatim as ASCII bytes.
     private static byte[] ReferenceWriteLabelName(string value)
     {
-        if (ReferenceIsValidLegacyName(value, allowColon: false))
+        if (ReferenceIsValidLegacyLabelName(value))
         {
             return ReferenceWriteAsciiStringNoEscape(value);
         }
@@ -283,8 +294,9 @@ public class PrometheusSerializerFuzzTests
         return [(byte)'"', .. escaped, (byte)'"'];
     }
 
-    private static bool ReferenceIsValidLegacyRune(int codePoint, bool isFirst) =>
-        codePoint is (>= 'a' and <= 'z') or (>= 'A' and <= 'Z') or '_' or ':' ||
+    private static bool ReferenceIsValidLegacyRune(int codePoint, bool isFirst, bool isMetricName) =>
+        codePoint is (>= 'a' and <= 'z') or (>= 'A' and <= 'Z') or '_' ||
+        (isMetricName && codePoint == ':') ||
         (!isFirst && codePoint is >= '0' and <= '9');
 
     private static int ReferenceGetCodePoint(string value, int index, out int charsConsumed, out bool isValidRune)

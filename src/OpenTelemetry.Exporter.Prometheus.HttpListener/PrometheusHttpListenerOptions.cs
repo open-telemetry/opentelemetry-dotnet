@@ -93,5 +93,20 @@ public class PrometheusHttpListenerOptions
         }
     }
 
-    internal Action<PrometheusHttpListenerOptions, System.Net.HttpListener>? ConfigureHttpListener { get; set; }
+    /// <summary>
+    /// Gets or sets a value indicating whether to include a <c>target_info</c> metric in the scrape response.
+    /// Default value: <see langword="true"/>.
+    /// </summary>
+    public bool TargetInfoEnabled { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets an optional callback to apply custom configuration for the
+    /// <see cref="System.Net.HttpListener"/> instance used by the exporter.
+    /// </summary>
+    /// <remarks>
+    /// This callback is invoked after an <see cref="System.Net.HttpListener"/>
+    /// instance has been created and other configuration options have already
+    /// been applied to it.
+    /// </remarks>
+    public Action<PrometheusHttpListenerOptions, System.Net.HttpListener>? ConfigureHttpListener { get; set; }
 }

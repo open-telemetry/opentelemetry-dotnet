@@ -376,11 +376,18 @@ internal sealed class PrometheusMetric
         // whether the quoted exposition format is required (the structural suffixes are legacy
         // characters and so do not affect the legacy validity of the family).
         var nameFamily = name;
-        var openMetricsFamily = RemoveOpenMetricsCounterNameSuffix(name);
+        var openMetricsFamily = type == PrometheusType.Counter
+            ? RemoveOpenMetricsCounterNameSuffix(name)
+            : name;
 
         if (sanitizedUnit != null)
         {
-            if (!nameFamily.EndsWith(sanitizedUnit, StringComparison.Ordinal))
+            // Each name is checked independently: openMetricsFamily has the _total counter
+            // suffix stripped, so it may already end with the unit even when nameFamily
+            // (which still carries _total) does not. For counter nameFamily, also check for
+            // the unit immediately before _total (e.g. "db_bytes_total" with unit "bytes").
+            if (!nameFamily.EndsWith(sanitizedUnit, StringComparison.Ordinal) &&
+                (type != PrometheusType.Counter || !nameFamily.EndsWith($"{sanitizedUnit}_total", StringComparison.Ordinal)))
             {
                 nameFamily += $"_{sanitizedUnit}";
             }

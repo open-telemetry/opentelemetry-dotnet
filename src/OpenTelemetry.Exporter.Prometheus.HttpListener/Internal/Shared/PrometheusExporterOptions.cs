@@ -14,6 +14,7 @@ internal sealed class PrometheusExporterOptions
     {
         this.ScopeInfoEnabled = true;
         this.ScrapeResponseCacheDurationMilliseconds = 300;
+        this.TargetInfoEnabled = true;
     }
 
     /// <summary>
@@ -37,6 +38,12 @@ internal sealed class PrometheusExporterOptions
             field = value;
         }
     }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to include a <c>target_info</c> metric in the scrape response.
+    /// Default value: <see langword="true"/>.
+    /// </summary>
+    public bool TargetInfoEnabled { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether addition of _total suffix for counter metric names is disabled. Default value: <see langword="false"/>.

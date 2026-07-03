@@ -25,13 +25,7 @@ internal static class PrometheusHeadersParser
         const int SupportedProtocols = 4;
         var preferences = new List<(PrometheusProtocol Protocol, double Quality)>(SupportedProtocols);
 
-        var supportedEscapingSchemes = PrometheusProtocol.SupportedEscapingSchemes;
-
-#if NET8_0_OR_GREATER
         SupportedVersions supportedVersions;
-#else
-        SupportedVersions supportedVersions;
-#endif
 
         while (value.Length > 0)
         {
@@ -120,6 +114,7 @@ internal static class PrometheusHeadersParser
             {
                 // Use the oldest version if no version preference was specified
                 version = isOpenMetrics ? PrometheusProtocol.OpenMetricsV0 : PrometheusProtocol.PrometheusV0;
+                escaping = null;
             }
             else if (version.Major is not > 0)
             {
