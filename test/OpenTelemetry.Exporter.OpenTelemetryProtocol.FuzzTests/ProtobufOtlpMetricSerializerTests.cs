@@ -142,6 +142,53 @@ public class ProtobufOtlpMetricSerializerTests
             }
         });
 
+    [Property(MaxTest = 100)]
+    public Property ResourceSchemaUrlRoundTrips() => Prop.ForAll(
+        Generators.BatchMetricArbitrary(),
+        Generators.ResourceArbitrary(),
+        (metrics, resource) =>
+        {
+            try
+            {
+                var buffer = new byte[10 * 1024 * 1024];
+
+                var writePos = ProtobufOtlpMetricSerializer.WriteMetricsData(
+                    ref buffer,
+                    0,
+                    resource,
+                    metrics);
+
+                if (writePos <= 0)
+                {
+                    return true;
+                }
+
+                using var stream = new MemoryStream(buffer, 0, writePos);
+                var request = ExportMetricsServiceRequest.Parser.ParseFrom(stream);
+
+                if (request == null || request.ResourceMetrics.Count == 0)
+                {
+                    return true;
+                }
+
+                var expected = resource.SchemaUrl ?? string.Empty;
+
+                foreach (var resourceMetrics in request.ResourceMetrics)
+                {
+                    if (resourceMetrics.SchemaUrl != expected)
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex) when (IsAllowedException(ex))
+            {
+                return true;
+            }
+        });
+
     private static bool IsAllowedException(Exception ex)
         => ex is IndexOutOfRangeException or ArgumentException;
 }

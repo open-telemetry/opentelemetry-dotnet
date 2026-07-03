@@ -286,6 +286,68 @@ public class ProtobufOtlpTraceSerializerTests
             }
         });
 
+    [Property(MaxTest = 100)]
+    public Property ResourceSchemaUrlRoundTrips() => Prop.ForAll(
+        Generators.ActivityBatchArbitrary(),
+        Generators.SdkLimitOptionsArbitrary(),
+        Generators.ResourceArbitrary(),
+        (activities, sdkLimits, resource) =>
+        {
+            if (activities == null || activities.Length == 0)
+            {
+                return true;
+            }
+
+            try
+            {
+                var buffer = new byte[10 * 1024 * 1024];
+                var batch = new Batch<Activity>(activities, activities.Length);
+
+                var writePos = ProtobufOtlpTraceSerializer.WriteTraceData(
+                    ref buffer,
+                    0,
+                    sdkLimits,
+                    resource,
+                    batch);
+
+                if (writePos <= 0)
+                {
+                    return true;
+                }
+
+                using var stream = new MemoryStream(buffer, 0, writePos);
+                var request = OtlpCollector.ExportTraceServiceRequest.Parser.ParseFrom(stream);
+
+                if (request == null || request.ResourceSpans.Count == 0)
+                {
+                    return true;
+                }
+
+                var expected = resource.SchemaUrl ?? string.Empty;
+
+                foreach (var resourceSpans in request.ResourceSpans)
+                {
+                    if (resourceSpans.SchemaUrl != expected)
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex) when (IsAllowedException(ex))
+            {
+                return true;
+            }
+            finally
+            {
+                foreach (var activity in activities)
+                {
+                    activity?.Dispose();
+                }
+            }
+        });
+
     private static bool IsAllowedException(Exception ex)
         => ex is IndexOutOfRangeException or ArgumentException;
 }
