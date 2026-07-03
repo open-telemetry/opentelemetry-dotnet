@@ -7,8 +7,7 @@ Notes](../../RELEASENOTES.md).
 ## Unreleased
 
 * Fixed a metric point reclaim data race on CPU ARM architectures.
-  ([#7401](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7401),
-  [#7470](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7470))
+  ([#7401](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7401))
 
 * The library is now marked as trim and AOT compatible.
   ([#7441](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7441))

@@ -203,6 +203,14 @@ public class MetricPointReclaimTests
     [Fact]
     public void MeasurementsAreNotLostWhenReclaimRacesWithUpdates()
     {
+#if NETFRAMEWORK
+        if (IsRunningOnArm())
+        {
+            // This test is flaky on Windows 11 in CI with ARM processors
+            return;
+        }
+#endif
+
         using var meter = new Meter(Utils.GetCurrentMethodName());
         var counter = meter.CreateCounter<long>("MyFruitCounter");
 
@@ -274,6 +282,23 @@ public class MetricPointReclaimTests
 
         Assert.Equal(Interlocked.Read(ref recordedSum), Interlocked.Read(ref exportedSum));
     }
+
+#if NETFRAMEWORK
+    private static bool IsRunningOnArm()
+    {
+        foreach (var variable in new[] { "PROCESSOR_ARCHITEW6432", "PROCESSOR_ARCHITECTURE" })
+        {
+            var value = Environment.GetEnvironmentVariable(variable);
+
+            if (value?.StartsWith("ARM", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+#endif
 
     private sealed class ThreadArguments
     {
