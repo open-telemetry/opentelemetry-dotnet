@@ -202,8 +202,10 @@ Maintainers (admins) are needed to merge PRs and for the push to NuGet.**
        draft Release and click `Publish release`.
     </details>
 
- 7. If a new stable version of the core packages was released, a PR should have
-    been automatically created by the [Complete
+ 7. If a new stable version of the core packages was released, the
+    [check-for-new-sdk-releases](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/blob/main/.github/workflows/check-for-new-sdk-releases.yml)
+    workflow in the opentelemetry-dotnet-contrib repository should detect it
+    within an hour and a PR should be automatically created by the [Complete
     release](https://github.com/open-telemetry/opentelemetry-dotnet/actions/workflows/post-release.yml)
     workflow to update the `OTelLatestStableVer` property in
     `Directory.Packages.props` to the just released stable version. Merge that

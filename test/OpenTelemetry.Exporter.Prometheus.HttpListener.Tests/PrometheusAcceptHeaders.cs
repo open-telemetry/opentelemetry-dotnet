@@ -22,21 +22,13 @@ public static class PrometheusAcceptHeaders
             "text/plain; q=0.9, application/openmetrics-text; version=1.0.0; q=0.1",
             "TEXT/PLAIN; q=0.9, Application/OpenMetrics-Text; version=1.0.0; q=0.1",
             "*/*;q=0.8,text/plain; charset=utf-8; version=0.0.4",
+            "text/plain; escaping=dots",
+            "text/plain; escaping=values",
         ];
 
         foreach (var accept in prometheusV0)
         {
             testCases.Add(accept, "text/plain", false, "0.0.4", null);
-        }
-
-        string[] prometheusV1 =
-        [
-            "text/plain;version=1.0.0;escaping=allow-utf-8;q=0.6,*/*;q=0.5",
-        ];
-
-        foreach (var accept in prometheusV1)
-        {
-            testCases.Add(accept, "text/plain", false, "1.0.0", "underscores");
         }
 
         string[] openMetricsV0 =
@@ -46,6 +38,8 @@ public static class PrometheusAcceptHeaders
             "application/openmetrics-text; version=0.0.1",
             "application/openmetrics-text; version=0.0.1; charset=utf-8",
             "application/openmetrics-text; version=\"0.0.1\"",
+            "application/openmetrics-text; escaping=dots",
+            "application/openmetrics-text; escaping=values",
         ];
 
         foreach (var accept in openMetricsV0)
@@ -57,17 +51,13 @@ public static class PrometheusAcceptHeaders
         [
             "application/openmetrics-text; version=1.0.0",
             "application/openmetrics-text; version=\"1.0.0\"",
-            "application/openmetrics-text; version=1.0.0; escaping=allow-utf-8",
             "application/openmetrics-text; version=1.0.0; escaping=underscores",
             "application/openmetrics-text; version=\"1.0.0\"; escaping=\"underscores\"",
             "application/openmetrics-text; version=1.0.0; charset=utf-8",
             "Application/OpenMetrics-Text; version=1.0.0",
             "application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores",
-            "application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=allow-utf-8",
             "text/plain; q=0.3, application/openmetrics-text; version=1.0.0; q=0.9",
             "TEXT/PLAIN; q=0.3, Application/OpenMetrics-Text; version=1.0.0; q=0.9",
-            "application/openmetrics-text;version=1.0.0;escaping=allow-utf-8;q=0.6,*/*;q=0.5",
-            "application/openmetrics-text;version=1.0.0;escaping=allow-utf-8;q=0.6,application/openmetrics-text;version=0.0.1;q=0.5,text/plain;version=1.0.0;escaping=allow-utf-8;q=0.4,text/plain;version=0.0.4;q=0.3,*/*;q=0.2",
             "application/openmetrics-text;version=1.0.0;escaping=underscores;q=0.6,*/*;q=0.5",
             "application/openmetrics-text;version=1.0.0;escaping=underscores;q=0.6,application/openmetrics-text;version=0.0.1;q=0.5,text/plain;version=1.0.0;escaping=allow-utf-8;q=0.4,text/plain;version=0.0.4;q=0.3,*/*;q=0.2",
         ];
@@ -76,6 +66,19 @@ public static class PrometheusAcceptHeaders
         {
             testCases.Add(accept, "application/openmetrics-text", true, "1.0.0", "underscores");
         }
+
+        // The allow-utf-8, dots and values escaping schemes are negotiated for only the v1 formats.
+        testCases.Add("text/plain;version=1.0.0;escaping=allow-utf-8;q=0.6,*/*;q=0.5", "text/plain", false, "1.0.0", "allow-utf-8");
+        testCases.Add("application/openmetrics-text; version=1.0.0; escaping=allow-utf-8", "application/openmetrics-text", true, "1.0.0", "allow-utf-8");
+        testCases.Add("application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=allow-utf-8", "application/openmetrics-text", true, "1.0.0", "allow-utf-8");
+        testCases.Add("application/openmetrics-text;version=1.0.0;escaping=allow-utf-8;q=0.6,*/*;q=0.5", "application/openmetrics-text", true, "1.0.0", "allow-utf-8");
+        testCases.Add("application/openmetrics-text;version=1.0.0;escaping=allow-utf-8;q=0.6,application/openmetrics-text;version=0.0.1;q=0.5,text/plain;version=1.0.0;escaping=allow-utf-8;q=0.4,text/plain;version=0.0.4;q=0.3,*/*;q=0.2", "application/openmetrics-text", true, "1.0.0", "allow-utf-8");
+        testCases.Add("application/openmetrics-text; version=1.0.0; escaping=dots", "application/openmetrics-text", true, "1.0.0", "dots");
+        testCases.Add("application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=dots", "application/openmetrics-text", true, "1.0.0", "dots");
+        testCases.Add("application/openmetrics-text; version=1.0.0; escaping=values", "application/openmetrics-text", true, "1.0.0", "values");
+        testCases.Add("application/openmetrics-text; version=\"1.0.0\"; escaping=\"values\"", "application/openmetrics-text", true, "1.0.0", "values");
+        testCases.Add("text/plain; version=1.0.0; escaping=dots", "text/plain", false, "1.0.0", "dots");
+        testCases.Add("text/plain; version=1.0.0; escaping=values", "text/plain", false, "1.0.0", "values");
 
         return testCases;
     }
@@ -89,9 +92,7 @@ public static class PrometheusAcceptHeaders
         "application/openmetrics-text; version=0.0.5",
         "application/openmetrics-text; version=foo",
         "application/openmetrics-text; version=1.0.0; q=0",
-        "application/openmetrics-text; version=1.0.0; escaping=dots",
         "application/openmetrics-text; version=1.0.0; escaping=foo",
-        "application/openmetrics-text; version=1.0.0; escaping=values",
         "application/openmetrics-text; version=2.0.0",
         "text/plain; q=0, application/openmetrics-text; version=1.0.0; q=0",
     ];

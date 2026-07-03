@@ -24,6 +24,16 @@ Notes](../../RELEASENOTES.md).
   re-encoding on every OTLP metric export.
   ([#7307](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7307))
 
+* Fixed the OTLP/HTTP exporter silently dropping data when an export timed out.
+  ([#7455](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7455))
+
+* Fixed the OTLP/gRPC exporter logging incorrectly when an export timed out.
+  ([#7455](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7455))
+
+* The `Resource` Schema URL is now exported on the OTLP `ResourceSpans`,
+  `ResourceMetrics`, and `ResourceLogs` messages.
+  ([#7472](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7472))
+
 ## 1.16.0
 
 Released 2026-Jun-10

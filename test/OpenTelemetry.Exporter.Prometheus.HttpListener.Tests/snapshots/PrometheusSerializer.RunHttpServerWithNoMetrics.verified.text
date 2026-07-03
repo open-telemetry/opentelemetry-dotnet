@@ -1,0 +1,4 @@
+﻿# TYPE target info
+# HELP target Target metadata
+target_info{service_name="my_service",service_instance_id="id1"} 1
+# EOF
