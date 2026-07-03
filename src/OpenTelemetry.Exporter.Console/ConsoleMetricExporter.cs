@@ -29,6 +29,11 @@ public class ConsoleMetricExporter : ConsoleExporter<Metric>
                     this.WriteLine($"\t{result.Key}: {result.Value}");
                 }
             }
+
+            if (!string.IsNullOrEmpty(resource.SchemaUrl))
+            {
+                this.WriteLine($"\tSchema URL: {resource.SchemaUrl}");
+            }
         }
 
         foreach (var metric in batch)

@@ -273,6 +273,7 @@ internal sealed class PrometheusExporterMiddleware
         {
             // Use the oldest version if no version preference was specified
             version = isOpenMetrics ? PrometheusProtocol.OpenMetricsV0 : PrometheusProtocol.PrometheusV0;
+            escaping = null;
         }
         else if (version.Major is not > 0)
         {

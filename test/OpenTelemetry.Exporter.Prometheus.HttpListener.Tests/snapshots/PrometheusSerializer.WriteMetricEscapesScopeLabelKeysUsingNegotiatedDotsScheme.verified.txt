@@ -1,0 +1,3 @@
+﻿# TYPE test__counter counter
+test__counter_total{otel__scope__name="WriteMetricEscapesScopeLabelKeysUsingNegotiatedDotsScheme",otel__scope__version="1.0.0",otel__scope__dot__name="value"} 1
+test__counter_created{otel__scope__name="WriteMetricEscapesScopeLabelKeysUsingNegotiatedDotsScheme",otel__scope__version="1.0.0",otel__scope__dot__name="value"} <TIMESTAMP>

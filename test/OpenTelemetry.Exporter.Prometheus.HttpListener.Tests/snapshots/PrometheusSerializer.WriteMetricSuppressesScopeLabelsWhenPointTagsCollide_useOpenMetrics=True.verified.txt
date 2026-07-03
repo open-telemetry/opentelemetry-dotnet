@@ -1,0 +1,3 @@
+﻿# TYPE test_counter counter
+test_counter_total{a_b="value1;value2"} 1
+test_counter_created{a_b="value1;value2"} <TIMESTAMP>
