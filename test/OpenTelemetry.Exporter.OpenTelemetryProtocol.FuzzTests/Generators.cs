@@ -34,6 +34,14 @@ internal static class Generators
         LogRecordSeverity.Warn,
     ]);
 
+    private static readonly Gen<string?> SchemaUrls = Gen.Elements(
+    [
+        null,
+        string.Empty,
+        "https://opentelemetry.io/schemas/1.0.0",
+        "https://opentelemetry.io/schemas/1.36.0",
+    ]);
+
     public static Arbitrary<SdkLimitOptions> SdkLimitOptionsArbitrary()
     {
         var gen = from spanAttributesLimit in Gen.Choose(0, 1000).Select(x => (int?)x)
@@ -132,7 +140,9 @@ internal static class Generators
                 attributes[$"resource.attr.{i}"] = $"value_{i}";
             }
 
-            return Gen.Constant(Resource.Empty.Merge(new Resource(attributes)));
+            var schemaUrl = SchemaUrls.Sample(size, 1).First();
+
+            return Gen.Constant(Resource.Empty.Merge(new Resource(attributes, schemaUrl)));
         });
 
         return gen.ToArbitrary();

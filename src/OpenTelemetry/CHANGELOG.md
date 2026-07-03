@@ -19,6 +19,14 @@ Notes](../../RELEASENOTES.md).
   no public API or behavioural change.
   ([#7146](hhttps://github.com/open-telemetry/opentelemetry-dotnet/pull/7146))
 
+* Added a verbose `OpenTelemetry-Sdk` self-diagnostics event that is emitted
+  when an activity is dropped because its local (in-process) parent is not
+  recorded.
+  ([#7427](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7427))
+
+* Added support for a Schema URL on `Resource` instances.
+  ([#7472](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7472))
+
 ## 1.16.0
 
 Released 2026-Jun-10

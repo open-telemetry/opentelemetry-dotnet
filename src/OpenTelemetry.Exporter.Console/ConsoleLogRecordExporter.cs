@@ -148,6 +148,11 @@ public class ConsoleLogRecordExporter : ConsoleExporter<LogRecord>
                         this.WriteLine($"{result.Key}: {result.Value}");
                     }
                 }
+
+                if (!string.IsNullOrEmpty(resource.SchemaUrl))
+                {
+                    this.WriteLine($"Schema URL: {resource.SchemaUrl}");
+                }
             }
 
             this.WriteLine(string.Empty);

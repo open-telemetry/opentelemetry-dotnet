@@ -122,6 +122,7 @@
       Command="git remote get-url origin"
       ConsoleToMsBuild="True"
       IgnoreExitCode="True"
+      IgnoreStandardErrorWarningFormat="True"
       StandardOutputImportance="low">
       <Output PropertyName="GitOriginConsoleOutput" TaskParameter="ConsoleOutput"/>
       <Output PropertyName="GitOriginExitCode" TaskParameter="ExitCode"/>
@@ -129,7 +130,8 @@
 
     <PropertyGroup>
       <MarkdownCommentRegex>\[([^]]+?)\]\(\.(.+?)\)</MarkdownCommentRegex>
-      <GitHubRepoUrl>$(GitOriginConsoleOutput.Replace('.git',''))</GitHubRepoUrl>
+      <GitHubRepoUrl Condition="'$(GitOriginExitCode)' == '0'">$(GitOriginConsoleOutput.Replace('.git',''))</GitHubRepoUrl>
+      <GitHubRepoUrl Condition="'$(GitOriginExitCode)' != '0' AND '$(GITHUB_SERVER_URL)' != '' AND '$(GITHUB_REPOSITORY)' != ''">$(GITHUB_SERVER_URL)/$(GITHUB_REPOSITORY)</GitHubRepoUrl>
       <GitHubPermalinkUrl Condition="'$(PackTag)' != ''">$(GitHubRepoUrl)/blob/$(PackTag)</GitHubPermalinkUrl>
       <GitHubPermalinkUrl Condition="'$(PackTag)' == ''">$(GitHubRepoUrl)/blob/$(GitCommitConsoleOutput)</GitHubPermalinkUrl>
     </PropertyGroup>
@@ -145,12 +147,13 @@
     </ItemGroup>
 
     <WriteLinesToFile
+        Condition="'$(GitHubPermalinkUrl)' != ''"
         File="$(IntermediateOutputPath)%(PackageMarkdownFiles.Filename)%(PackageMarkdownFiles.Extension)"
         Lines="$([System.Text.RegularExpressions.Regex]::Replace($([System.IO.File]::ReadAllText(%(PackageMarkdownFiles.FullPath))), '$(MarkdownCommentRegex)', '[$1]($(GitHubPermalinkUrl)%(PackageMarkdownFiles.Path).$2)').Replace('\', '/'))"
         Overwrite="true"
         Encoding="UTF-8"/>
 
-    <PropertyGroup>
+    <PropertyGroup Condition="'$(GitHubPermalinkUrl)' != ''">
       <_PackageReleaseNotesFilePath>$([System.IO.Path]::GetFullPath('$(PackageReleaseNotesFile)').Replace('$(RepoRoot)', '').Replace('\', '/'))</_PackageReleaseNotesFilePath>
       <_PackageChangelogFilePath>$([System.IO.Path]::GetFullPath('$(PackageChangelogFile)').Replace('$(RepoRoot)', '').Replace('\', '/'))</_PackageChangelogFilePath>
       <PackageReleaseNotes>
