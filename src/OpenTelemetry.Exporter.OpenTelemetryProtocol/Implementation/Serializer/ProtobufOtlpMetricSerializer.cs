@@ -12,7 +12,12 @@ internal static class ProtobufOtlpMetricSerializer
     private const int ReserveSizeForLength = 4;
     private const int TraceIdSize = 16;
     private const int SpanIdSize = 8;
+
+#if NET
+    private static readonly ConditionalWeakTable<Metric, byte[]> CachedMetricMetadata = [];
+#else
     private static readonly ConditionalWeakTable<Metric, byte[]> CachedMetricMetadata = new();
+#endif
 
     [ThreadStatic]
     private static Stack<List<Metric>>? metricListPool;

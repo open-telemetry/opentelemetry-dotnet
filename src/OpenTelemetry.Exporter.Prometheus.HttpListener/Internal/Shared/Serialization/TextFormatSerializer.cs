@@ -2105,7 +2105,7 @@ internal abstract class TextFormatSerializer
             EscapingScheme.AllowUtf8 => WriteLabelName(buffer, cursor, key),
 
             // The dots and values schemes escape the name and quote it only if a colon survives.
-            _ => WriteEscapedLabelKey(buffer, cursor, key, this.Escaping),
+            EscapingScheme.Dots or EscapingScheme.Values or _ => WriteEscapedLabelKey(buffer, cursor, key, this.Escaping),
         };
     }
 
