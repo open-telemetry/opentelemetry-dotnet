@@ -13,10 +13,10 @@ internal static class ProtobufOtlpMetricSerializer
     private const int TraceIdSize = 16;
     private const int SpanIdSize = 8;
 
-#if NET
-    private static readonly ConditionalWeakTable<Metric, byte[]> CachedMetricMetadata = [];
-#else
+#if NETFRAMEWORK || NETSTANDARD2_0
     private static readonly ConditionalWeakTable<Metric, byte[]> CachedMetricMetadata = new();
+#else
+    private static readonly ConditionalWeakTable<Metric, byte[]> CachedMetricMetadata = [];
 #endif
 
     [ThreadStatic]
