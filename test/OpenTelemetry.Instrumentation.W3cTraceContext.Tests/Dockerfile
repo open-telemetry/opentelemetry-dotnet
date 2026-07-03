@@ -1,18 +1,18 @@
-# Create a container for running the OpenTelemetry W3C Trace Context tests https://github.com/w3c/trace-context/tree/master/test.
+# Create a container for running the OpenTelemetry W3C Trace Context tests https://github.com/w3c/trace-context/tree/main/test.
 # This should be run from the root of the repo:
 # docker build --file test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/Dockerfile .
 
 ARG BUILD_SDK_VERSION=11.0
 ARG TEST_SDK_VERSION=11.0
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0.301-azurelinux3.0@sha256:b9ba3498cd0ea65e665bbc921f91215309d007a5c2e407a79ba61aa627975b5e AS dotnet-sdk-10.0
+FROM mcr.microsoft.com/dotnet/sdk:10.0.301-azurelinux3.0@sha256:a996dc54d5ad919926fa00fce172fdd980c2312d2f7a800beade5cfc3a828e75 AS dotnet-sdk-10.0
 FROM mcr.microsoft.com/dotnet/sdk:11.0.100-preview.5-azurelinux3.0@sha256:9e2543d8246f5530a1d17d9fa46d266826a8f6b7a402daaf56e2b9d084a53d8b AS dotnet-sdk-11.0
 FROM dotnet-sdk-${BUILD_SDK_VERSION} AS build
 ARG PUBLISH_CONFIGURATION=Release
 ARG PUBLISH_FRAMEWORK=net11.0
 
-# renovate: datasource=github-digest depName=w3c/trace-context packageName=w3c/trace-context
-ENV W3C_TRACE_CONTEXT_SHA="e37efba66396bff25b737b33bce3c117cc6eb287"
+# renovate: datasource=github-digest depName=w3c/trace-context packageName=w3c/trace-context currentValue=main
+ENV W3C_TRACE_CONTEXT_SHA="acab820be9db7b3433668baa5cdd43f57f4c4be0"
 
 WORKDIR /repo
 COPY . ./

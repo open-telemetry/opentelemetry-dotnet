@@ -17,7 +17,7 @@ internal abstract class OpenMetricsSerializer : TextFormatSerializer
     protected override string TargetInfoTypeValue => "info";
 
     public override string GetMetadataName(PrometheusMetric metric)
-        => metric.OpenMetricsMetadataName;
+        => metric.GetNameSet(this.Escaping).OpenMetricsMetadataName;
 
     internal static bool ShouldPreferExemplar(DateTimeOffset currentTimestamp, DateTimeOffset candidateTimestamp)
         => currentTimestamp <= candidateTimestamp;
@@ -41,10 +41,10 @@ internal abstract class OpenMetricsSerializer : TextFormatSerializer
     }
 
     protected override ReadOnlySpan<byte> GetMetricNameBytes(PrometheusMetric metric)
-        => metric.OpenMetricsNameBytes;
+        => metric.GetNameSet(this.Escaping).OpenMetricsNameBytes;
 
     protected override ReadOnlySpan<byte> GetMetricMetadataNameBytes(PrometheusMetric metric)
-        => metric.OpenMetricsMetadataNameBytes;
+        => metric.GetNameSet(this.Escaping).OpenMetricsMetadataNameBytes;
 
     protected override int WriteExplicitBound(byte[] buffer, int cursor, double explicitBound)
         => WriteCanonicalLabelValue(buffer, cursor, explicitBound);
@@ -52,22 +52,33 @@ internal abstract class OpenMetricsSerializer : TextFormatSerializer
     protected override bool ShouldWriteSumAndCount(bool hasNegativeBucketBounds)
         => !hasNegativeBucketBounds;
 
-    protected override int WriteCounterExemplar(byte[] buffer, int cursor, in MetricPoint metricPoint, PrometheusMetric prometheusMetric, bool isLongValue)
+    protected override int WriteCounterExemplar(
+        byte[] buffer,
+        int cursor,
+        in MetricPoint metricPoint,
+        PrometheusMetric prometheusMetric,
+        bool isLongValue)
     {
         if (prometheusMetric.Type == PrometheusType.Counter &&
             TryGetLatestExemplar(metricPoint, out var exemplar))
         {
-            cursor = WriteExemplar(buffer, cursor, in exemplar, isLongValue);
+            cursor = this.WriteExemplar(buffer, cursor, in exemplar, isLongValue);
         }
 
         return cursor;
     }
 
-    protected override int WriteCounterCreated(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric, in MetricPoint metricPoint)
+    protected override int WriteCounterCreated(
+        byte[] buffer,
+        int cursor,
+        Metric metric,
+        PrometheusMetric prometheusMetric,
+        in MetricPoint metricPoint,
+        in TextFormatSerializerOptions options)
     {
         if (prometheusMetric.Type == PrometheusType.Counter)
         {
-            cursor = this.WriteCreatedMetric(buffer, cursor, metric, prometheusMetric, metricPoint);
+            cursor = this.WriteCreatedMetric(buffer, cursor, metric, prometheusMetric, metricPoint, options);
         }
 
         return cursor;
@@ -77,14 +88,14 @@ internal abstract class OpenMetricsSerializer : TextFormatSerializer
     {
         if (TryGetLatestHistogramBucketExemplar(metricPoint, lowerBoundExclusive, upperBoundInclusive, out var exemplar))
         {
-            cursor = WriteExemplar(buffer, cursor, in exemplar, isLongValue: false);
+            cursor = this.WriteExemplar(buffer, cursor, in exemplar, isLongValue: false);
         }
 
         return cursor;
     }
 
-    protected override int WriteHistogramCreated(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric, in MetricPoint metricPoint)
-        => this.WriteCreatedMetric(buffer, cursor, metric, prometheusMetric, metricPoint, ReservedHistogramLabelNames);
+    protected override int WriteHistogramCreated(byte[] buffer, int cursor, Metric metric, PrometheusMetric prometheusMetric, in MetricPoint metricPoint, in TextFormatSerializerOptions options)
+        => this.WriteCreatedMetric(buffer, cursor, metric, prometheusMetric, metricPoint, options, ReservedHistogramLabelNames);
 
     private static bool TryGetLatestExemplar(in MetricPoint metricPoint, out Exemplar exemplar)
     {
@@ -150,12 +161,10 @@ internal abstract class OpenMetricsSerializer : TextFormatSerializer
         Metric metric,
         PrometheusMetric prometheusMetric,
         in MetricPoint metricPoint,
+        in TextFormatSerializerOptions options,
         IReadOnlyCollection<string>? reservedOutputKeys = null)
     {
-        cursor = this.WriteMetricMetadataName(buffer, cursor, prometheusMetric);
-
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, "_created");
-        cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags, reservedOutputKeys: reservedOutputKeys);
+        cursor = this.WriteSeriesAndTags(buffer, cursor, metric, prometheusMetric, metricPoint.Tags, options, "_created", reservedOutputKeys);
 
         buffer[cursor++] = unchecked((byte)' ');
 

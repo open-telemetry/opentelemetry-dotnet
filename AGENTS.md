@@ -245,3 +245,61 @@ activity?.SetTag("key", "value");
 - Use `InMemoryExporter<T>` for verifying telemetry output in unit tests.
 - Build the provider inside the test, not in a shared constructor/fixture, to keep
   tests isolated.
+
+---
+
+## CHANGELOG Entries
+
+Every behavioural change needs a CHANGELOG entry in the affected component's
+`CHANGELOG.md` (under `src/<Component>/CHANGELOG.md`) in the `## Unreleased`
+section. Format:
+
+```markdown
+* Description of the change (sentence case, ends with a period).
+  ([#NNNN](https://github.com/open-telemetry/opentelemetry-dotnet/pull/NNNN))
+```
+
+- New entries go at the **end** of `## Unreleased`, not the top.
+- Use the pull request URL - not the issue URL - in the link.
+- Do **not** add a new version header - that is added automatically during release.
+- No CHANGELOG entry is needed for pure infrastructure changes (CI workflows,
+  Renovate config, editor config, test-only changes).
+- When a PR touches multiple components, add an entry to each component's
+  `CHANGELOG.md`.
+
+## Banned APIs
+
+Several APIs are banned via `build/BannedSymbols.txt` and will cause a build
+error if used:
+
+- Use `string.Equals(a, b, StringComparison)` (**static**), not the instance
+  method `a.Equals(b, StringComparison)`.
+- All `TryParse` overloads on numeric/date types must pass
+  `CultureInfo.InvariantCulture`.
+- Do **not** use `Task<T>.Result` - use `await` or `GetAwaiter().GetResult()`.
+- Do **not** use `System.Runtime.CompilerServices.Unsafe` or
+  `System.Runtime.InteropServices.MemoryMarshal` - unsafe code is banned.
+- Use `ActivitySource(ActivitySourceOptions)` not the other `ActivitySource`
+  constructors.
+- Use `Meter(MeterOptions)` not the other `Meter` constructors.
+- Use `HttpClientHelpers` methods instead of `HttpClient.GetByteArrayAsync`,
+  `HttpClient.GetStringAsync`, `HttpContent.ReadAsByteArrayAsync`, or
+  `HttpContent.ReadAsStringAsync`.
+
+## XML Documentation
+
+- Use `<para/>` as the paragraph break inside `///` XML doc comments - not a
+  blank line.
+- For property setters, the `paramName` in any `ArgumentException` should be
+  `nameof(value)`, not the property name.
+
+## Tests
+
+- Use `[Obsolete("...")]` on a test method that exercises an obsolete API rather
+  than suppressing the compiler warning with `#pragma`.
+- New bug fixes should include a regression test.
+
+## Code Review Instructions
+
+See [`REVIEW.md`](./REVIEW.md) for guidance used by automated code review agents
+when reviewing pull requests in this repository.

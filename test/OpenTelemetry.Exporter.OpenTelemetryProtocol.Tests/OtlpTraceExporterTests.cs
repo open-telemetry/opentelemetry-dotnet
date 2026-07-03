@@ -352,6 +352,44 @@ public sealed class OtlpTraceExporterTests : IDisposable
         Assert.Equal(expectedScopeSpanScehamUrl, scopeSpans.SchemaUrl);
     }
 
+    [Theory]
+    [InlineData("https://opentelemetry.io/schemas/1.0.0", "https://opentelemetry.io/schemas/1.0.0")]
+    [InlineData(null, "")]
+    [InlineData("", "")]
+#pragma warning disable CA1054 // Url parameters should not be strings
+    public void ResourceSpansSchemaUrlTest(string? schemaUrl, string expectedResourceSpansSchemaUrl)
+#pragma warning restore CA1054 // Url parameters should not be strings
+    {
+        using var activitySource = new ActivitySource(nameof(this.ResourceSpansSchemaUrlTest));
+
+        var exportedItems = new List<Activity>();
+
+        // Set the Schema URL via the public ResourceBuilder API and resolve it through the
+        // provider's GetResource() so the full Build() -> GetResource() -> serializer path is exercised.
+        var builder = Sdk.CreateTracerProviderBuilder()
+            .SetResourceBuilder(ResourceBuilder.CreateEmpty().AddAttributes([], schemaUrl))
+            .AddSource(activitySource.Name)
+#pragma warning disable CA2000 // Dispose objects before losing scope
+            .AddProcessor(new SimpleActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems)));
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        using var openTelemetrySdk = builder.Build();
+
+        using var activity = activitySource.StartActivity("test-activity");
+        activity?.Stop();
+
+        var item = Assert.Single(exportedItems);
+        var batch = new Batch<Activity>([item], 1);
+
+        var resource = openTelemetrySdk.GetResource();
+
+        var request = CreateTraceExportRequest(DefaultSdkLimitOptions, batch, resource);
+
+        var resourceSpans = Assert.Single(request.ResourceSpans);
+
+        Assert.Equal(expectedResourceSpansSchemaUrl, resourceSpans.SchemaUrl);
+    }
+
     [Fact]
     public void ScopeAttributesLimitsTest()
     {

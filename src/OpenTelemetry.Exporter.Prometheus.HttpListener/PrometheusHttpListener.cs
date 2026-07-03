@@ -59,7 +59,6 @@ internal sealed class PrometheusHttpListener : IDisposable
         var uriBuilder = new UriBuilder(Uri.UriSchemeHttp, options.Host, options.Port) { Path = path };
         this.httpListener.Prefixes.Add(uriBuilder.Uri.AbsoluteUri);
 
-        // Hook for testing
         options.ConfigureHttpListener?.Invoke(options, this.httpListener);
     }
 

@@ -479,13 +479,13 @@ public class TraceContextPropagatorTests
     }
 
     [Fact]
-    public void Key_IllegalVendorFormat()
+    public void Key_AtSignGrammar()
     {
         // test_tracestate_key_illegal_vendor_format
-        Assert.Empty(CallTraceContextPropagator("foo@=1,bar=2"));
+        Assert.Equal("foo@=1,bar=2", CallTraceContextPropagator("foo@=1,bar=2"));
         Assert.Empty(CallTraceContextPropagator("@foo=1,bar=2"));
-        Assert.Empty(CallTraceContextPropagator("foo@@bar=1,bar=2"));
-        Assert.Empty(CallTraceContextPropagator("foo@bar@baz=1,bar=2"));
+        Assert.Equal("foo@@bar=1,bar=2", CallTraceContextPropagator("foo@@bar=1,bar=2"));
+        Assert.Equal("foo@bar@baz=1,bar=2", CallTraceContextPropagator("foo@bar@baz=1,bar=2"));
     }
 
     [Fact]
@@ -525,8 +525,10 @@ public class TraceContextPropagatorTests
         Assert.Empty(CallTraceContextPropagator(new string('z', 257) + "=1"));
         var input2 = new string('t', 241) + "@" + new string('v', 14) + "=1";
         Assert.Equal(input2, CallTraceContextPropagator(input2));
-        Assert.Empty(CallTraceContextPropagator(new string('t', 242) + "@v=1"));
-        Assert.Empty(CallTraceContextPropagator("t@" + new string('v', 15) + "=1"));
+        var input3 = new string('t', 242) + "@v=1";
+        Assert.Equal(input3, CallTraceContextPropagator(input3));
+        var input4 = "t@" + new string('v', 15) + "=1";
+        Assert.Equal(input4, CallTraceContextPropagator(input4));
     }
 
     [Fact]

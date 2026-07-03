@@ -25,13 +25,7 @@ internal static class PrometheusHeadersParser
         const int SupportedProtocols = 4;
         var preferences = new List<(PrometheusProtocol Protocol, double Quality)>(SupportedProtocols);
 
-        var supportedEscapingSchemes = PrometheusProtocol.SupportedEscapingSchemes;
-
-#if NET8_0_OR_GREATER
         SupportedVersions supportedVersions;
-#else
-        SupportedVersions supportedVersions;
-#endif
 
         while (value.Length > 0)
         {
@@ -120,6 +114,7 @@ internal static class PrometheusHeadersParser
             {
                 // Use the oldest version if no version preference was specified
                 version = isOpenMetrics ? PrometheusProtocol.OpenMetricsV0 : PrometheusProtocol.PrometheusV0;
+                escaping = null;
             }
             else if (version.Major is not > 0)
             {
@@ -165,18 +160,7 @@ internal static class PrometheusHeadersParser
         var trimmed = TrimQuotes(value);
         var escaping = trimmed.ToString();
 
-        if (PrometheusProtocol.SupportedEscapingSchemes.Contains(escaping))
-        {
-            return escaping;
-        }
-
-        // TODO Support other escaping schemes, including at least "allow-utf-8".
-        // For now we treat "allow-utf-8" as if it were "underscores" to avoid fallback
-        // to PrometheusText0.0.4 where it would previously match to OpenMetricsText1.0.0.
-        // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/7246.
-        return string.Equals(escaping, PrometheusProtocol.AllowUtf8Escaping, StringComparison.Ordinal)
-            ? PrometheusProtocol.UnderscoresEscaping
-            : null;
+        return PrometheusProtocol.SupportedEscapingSchemes.Contains(escaping) ? escaping : null;
     }
 
     private static ReadOnlySpan<char> SplitNext(ref ReadOnlySpan<char> span, char character)
