@@ -95,6 +95,10 @@ public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
                 break;
         }
 
+        // TODO: Consider switching to an ObservableCounter that piggybacks on
+        // CircularBuffer.AddedCount and DroppedCount to eliminate per-item
+        // Counter.Add() overhead. This would require a registry pattern for
+        // multiple instances but avoids any hot-path cost when a listener is active.
         if (this.isShutdown)
         {
             SdkSelfObservability.LogProcessedCounter.Add(1, this.alreadyShutdownTags);
