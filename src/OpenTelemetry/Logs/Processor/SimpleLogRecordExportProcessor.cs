@@ -25,17 +25,13 @@ public class SimpleLogRecordExportProcessor : SimpleExportProcessor<LogRecord>
     {
         var index = Interlocked.Increment(ref instanceCounter);
         var componentName = "simple_log_processor/" + index.ToString(System.Globalization.CultureInfo.InvariantCulture);
-        this.successTags =
-        [
+        var baseTags = new KeyValuePair<string, object?>[]
+        {
             new("otel.component.type", "simple_log_processor"),
             new("otel.component.name", componentName),
-        ];
-        this.alreadyShutdownTags =
-        [
-            new("otel.component.type", "simple_log_processor"),
-            new("otel.component.name", componentName),
-            new("error.type", "already_shutdown"),
-        ];
+        };
+        this.successTags = baseTags;
+        this.alreadyShutdownTags = [.. baseTags, new("error.type", "already_shutdown")];
     }
 
     /// <inheritdoc/>

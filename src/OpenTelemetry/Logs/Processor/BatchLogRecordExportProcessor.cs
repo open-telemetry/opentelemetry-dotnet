@@ -41,23 +41,14 @@ public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
     {
         var index = Interlocked.Increment(ref instanceCounter);
         var componentName = "batching_log_processor/" + index.ToString(System.Globalization.CultureInfo.InvariantCulture);
-        this.successTags =
-        [
+        var baseTags = new KeyValuePair<string, object?>[]
+        {
             new("otel.component.type", "batching_log_processor"),
             new("otel.component.name", componentName),
-        ];
-        this.queueFullTags =
-        [
-            new("otel.component.type", "batching_log_processor"),
-            new("otel.component.name", componentName),
-            new("error.type", "queue_full"),
-        ];
-        this.alreadyShutdownTags =
-        [
-            new("otel.component.type", "batching_log_processor"),
-            new("otel.component.name", componentName),
-            new("error.type", "already_shutdown"),
-        ];
+        };
+        this.successTags = baseTags;
+        this.queueFullTags = [.. baseTags, new("error.type", "queue_full")];
+        this.alreadyShutdownTags = [.. baseTags, new("error.type", "already_shutdown")];
     }
 
     /// <inheritdoc/>
@@ -99,18 +90,22 @@ public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
         // CircularBuffer.AddedCount and DroppedCount to eliminate per-item
         // Counter.Add() overhead. This would require a registry pattern for
         // multiple instances but avoids any hot-path cost when a listener is active.
+        KeyValuePair<string, object?>[] tags;
+
         if (this.isShutdown)
         {
-            SdkSelfObservability.LogProcessedCounter.Add(1, this.alreadyShutdownTags);
+            tags = this.alreadyShutdownTags;
         }
         else if (!enqueued)
         {
-            SdkSelfObservability.LogProcessedCounter.Add(1, this.queueFullTags);
+            tags = this.queueFullTags;
         }
         else
         {
-            SdkSelfObservability.LogProcessedCounter.Add(1, this.successTags);
+            tags = this.successTags;
         }
+
+        SdkSelfObservability.LogProcessedCounter.Add(1, tags);
     }
 
     /// <inheritdoc/>

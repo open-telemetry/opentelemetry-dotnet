@@ -59,8 +59,8 @@ records due to queue overflow).
 ### Opt-in
 
 Self-observability metrics are only collected when a `MeterProvider` explicitly
-subscribes to the `otel.sdk.experimental` meter. Without this, the overhead is
-effectively zero (no-op).
+subscribes to the `otel.sdk.experimental` meter. Zero overhead without a
+listener.
 
 ```csharp
 var meterProvider = Sdk.CreateMeterProviderBuilder()
