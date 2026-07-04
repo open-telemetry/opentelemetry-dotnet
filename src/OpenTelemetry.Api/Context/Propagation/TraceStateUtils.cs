@@ -219,11 +219,15 @@ internal static class TraceStateUtils
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static bool IsValidFirstCharacter(char c)
-            => char.IsAsciiLetterLower(c) || char.IsAsciiDigit(c);
+        {
+            return char.IsAsciiLetterLower(c) || char.IsAsciiDigit(c);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static bool IsValidCharacter(char c)
-            => IsValidFirstCharacter(c) || c is '_' or '-' or '*' or '/' or '@';
+        {
+            return IsValidFirstCharacter(c) || c is '_' or '-' or '*' or '/' or '@';
+        }
     }
 
     private static bool ValidateValue(ReadOnlySpan<char> value)
