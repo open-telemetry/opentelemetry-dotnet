@@ -35,6 +35,14 @@ Notes](../../RELEASENOTES.md).
   when negotiated via the `Accept` header.
   ([#7440](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7440))
 
+* Add `PrometheusAspNetCoreOptions.MaxScrapeResponseSizeBytes` to configure
+  the maximum size of a scrape response. The default is now ~166 MiB.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
+* A scrape whose serialized output exceeds the maximum scrape response size
+  limit now responds with HTTP 500.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+
 ## 1.16.0-beta.1
 
 Released 2026-Jun-10

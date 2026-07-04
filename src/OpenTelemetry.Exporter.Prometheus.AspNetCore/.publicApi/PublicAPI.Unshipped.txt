@@ -3,6 +3,8 @@ Microsoft.AspNetCore.Builder.PrometheusExporterEndpointRouteBuilderExtensions
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.DisableTotalNameSuffixForCounters.get -> bool
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.DisableTotalNameSuffixForCounters.set -> void
+OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.MaxScrapeResponseSizeBytes.get -> int
+OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.MaxScrapeResponseSizeBytes.set -> void
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.PrometheusAspNetCoreOptions() -> void
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.ScopeInfoEnabled.get -> bool
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.ScopeInfoEnabled.set -> void

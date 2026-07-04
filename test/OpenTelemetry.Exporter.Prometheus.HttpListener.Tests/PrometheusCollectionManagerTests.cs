@@ -877,6 +877,70 @@ public sealed class PrometheusCollectionManagerTests
         }
     }
 
+    [Theory]
+    [InlineData(85_000, false)] // The buffer cannot grow beyond its initial size, so the large scrape is dropped.
+    [InlineData(64 * 1024 * 1024, true)] // Ample budget, so the large scrape is served in full.
+    public async Task MaxScrapeResponseSizeBytesBoundsTheResponseBuffer(int maxScrapeResponseSizeBytes, bool expectNonEmpty)
+    {
+        using var meter = CreateMeter();
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+#if PROMETHEUS_HTTP_LISTENER
+            .AddPrometheusHttpListener(options =>
+            {
+                options.MaxScrapeResponseSizeBytes = maxScrapeResponseSizeBytes;
+                options.ScrapeResponseCacheDurationMilliseconds = 0;
+            })
+#elif PROMETHEUS_ASPNETCORE
+            .AddPrometheusExporter(options =>
+            {
+                options.MaxScrapeResponseSizeBytes = maxScrapeResponseSizeBytes;
+                options.ScrapeResponseCacheDurationMilliseconds = 0;
+            })
+#endif
+            .Build();
+
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        Assert.True(provider.TryFindExporter(out PrometheusExporter? exporter));
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        // Emit enough unique time series that the serialized output is far larger than the
+        // 85,000-byte initial scrape buffer, so serving the scrape requires the buffer to grow.
+        var counter = meter.CreateCounter<long>("test_counter", description: "Help text.");
+        const int SeriesCount = 4_000;
+        for (var i = 0; i < SeriesCount; i++)
+        {
+            counter.Add(
+                1234567890123456789L,
+                new KeyValuePair<string, object?>("index", $"series-value-{i:D8}-padding-padding-padding"));
+        }
+
+        var protocol = GetProtocol(openMetricsRequested: false);
+        var response = await exporter!.CollectionManager.EnterCollect(protocol);
+
+        try
+        {
+            if (expectNonEmpty)
+            {
+                // The configured budget is large enough for the buffer to grow and serve the scrape.
+                Assert.True(response.Succeeded, "Expected the collection to succeed.");
+                Assert.True(response.View.Count > 85_000, $"Expected a complete response, but only {response.View.Count} bytes were written.");
+            }
+            else
+            {
+                // The buffer cannot grow past the configured maximum, so the scrape is dropped and a
+                // failed (empty) response is returned rather than allocating without bound.
+                Assert.False(response.Succeeded, "Expected the collection to fail.");
+                Assert.Equal(0, response.View.Count);
+            }
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect(protocol);
+        }
+    }
+
     private static int CountOccurrences(string value, string substring)
     {
         var count = 0;
