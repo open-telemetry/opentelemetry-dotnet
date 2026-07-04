@@ -101,6 +101,8 @@ internal abstract class TextFormatSerializer
 
     private string[]? reservedExemplarOutputKeys;
 
+    private int serializedTagsBufferHint = 256;
+
     public static OpenMetricsV0Serializer OpenMetricsV0 => field ??= new();
 
     public static OpenMetricsV1Serializer OpenMetricsV1 => field ??= new();
@@ -987,7 +989,7 @@ internal abstract class TextFormatSerializer
         out int length)
     {
         var pool = ArrayPool<byte>.Shared;
-        var buffer = pool.Rent(128);
+        var buffer = pool.Rent(Volatile.Read(ref this.serializedTagsBufferHint));
 
         while (true)
         {
@@ -1008,6 +1010,11 @@ internal abstract class TextFormatSerializer
                 }
 
                 length = cursor;
+
+                if (buffer.Length > Volatile.Read(ref this.serializedTagsBufferHint))
+                {
+                    Volatile.Write(ref this.serializedTagsBufferHint, buffer.Length);
+                }
 
                 return buffer;
             }
