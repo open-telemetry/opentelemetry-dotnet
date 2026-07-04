@@ -229,65 +229,80 @@ internal abstract class TextFormatSerializer
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
                 var tags = metricPoint.Tags;
-                var serializedTags = this.SerializeTags(metric, tags, options, ReservedHistogramLabelNames);
-                var hasNegativeBucketBounds = false;
-                var previousBound = double.NegativeInfinity;
 
-                long totalCount = 0;
-                foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
+                var serializedTagsBuffer = this.SerializeTagsToPooledBuffer(
+                    metric,
+                    tags,
+                    options,
+                    ReservedHistogramLabelNames,
+                    out var serializedTagsLength);
+
+                try
                 {
-                    hasNegativeBucketBounds |= histogramMeasurement.ExplicitBound < 0;
+                    var serializedTags = new ReadOnlySpan<byte>(serializedTagsBuffer, 0, serializedTagsLength);
+                    var hasNegativeBucketBounds = false;
+                    var previousBound = double.NegativeInfinity;
 
-                    totalCount += histogramMeasurement.BucketCount;
-
-                    cursor = this.WriteHistogramBucketName(buffer, cursor, prometheusMetric);
-
-                    cursor = WriteSerializedTagValues(buffer, cursor, serializedTags, appendTrailingComma: true);
-
-                    cursor = WriteAsciiStringNoEscape(buffer, cursor, "le=\"");
-
-                    if (histogramMeasurement.ExplicitBound != double.PositiveInfinity)
+                    long totalCount = 0;
+                    foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
                     {
-                        cursor = this.WriteExplicitBound(buffer, cursor, histogramMeasurement.ExplicitBound);
+                        hasNegativeBucketBounds |= histogramMeasurement.ExplicitBound < 0;
+
+                        totalCount += histogramMeasurement.BucketCount;
+
+                        cursor = this.WriteHistogramBucketName(buffer, cursor, prometheusMetric);
+
+                        cursor = WriteSerializedTagValues(buffer, cursor, serializedTags, appendTrailingComma: true);
+
+                        cursor = WriteAsciiStringNoEscape(buffer, cursor, "le=\"");
+
+                        if (histogramMeasurement.ExplicitBound != double.PositiveInfinity)
+                        {
+                            cursor = this.WriteExplicitBound(buffer, cursor, histogramMeasurement.ExplicitBound);
+                        }
+                        else
+                        {
+                            cursor = WriteAsciiStringNoEscape(buffer, cursor, "+Inf");
+                        }
+
+                        cursor = WriteAsciiStringNoEscape(buffer, cursor, "\"} ");
+
+                        cursor = WriteLong(buffer, cursor, totalCount);
+
+                        cursor = this.WriteHistogramBucketExemplar(buffer, cursor, in metricPoint, previousBound, histogramMeasurement.ExplicitBound);
+
+                        buffer[cursor++] = AsciiLineFeed;
+                        previousBound = histogramMeasurement.ExplicitBound;
                     }
-                    else
+
+                    if (this.ShouldWriteSumAndCount(hasNegativeBucketBounds))
                     {
-                        cursor = WriteAsciiStringNoEscape(buffer, cursor, "+Inf");
+                        // OpenMetrics histograms with negative bucket thresholds MUST NOT expose
+                        // _sum and therefore MUST NOT expose _count.
+                        // See https://prometheus.io/docs/specs/om/open_metrics_spec/#histogram-1
+                        cursor = this.WriteSeriesNameAndSerializedTags(buffer, cursor, prometheusMetric, "_sum", serializedTags);
+
+                        buffer[cursor++] = unchecked((byte)' ');
+
+                        cursor = WriteDouble(buffer, cursor, metricPoint.GetHistogramSum());
+
+                        buffer[cursor++] = AsciiLineFeed;
+
+                        // Histogram count
+                        cursor = this.WriteSeriesNameAndSerializedTags(buffer, cursor, prometheusMetric, "_count", serializedTags);
+
+                        buffer[cursor++] = unchecked((byte)' ');
+
+                        cursor = WriteLong(buffer, cursor, metricPoint.GetHistogramCount());
+                        buffer[cursor++] = AsciiLineFeed;
                     }
 
-                    cursor = WriteAsciiStringNoEscape(buffer, cursor, "\"} ");
-
-                    cursor = WriteLong(buffer, cursor, totalCount);
-
-                    cursor = this.WriteHistogramBucketExemplar(buffer, cursor, in metricPoint, previousBound, histogramMeasurement.ExplicitBound);
-
-                    buffer[cursor++] = AsciiLineFeed;
-                    previousBound = histogramMeasurement.ExplicitBound;
+                    cursor = this.WriteHistogramCreated(buffer, cursor, metric, prometheusMetric, in metricPoint, in options);
                 }
-
-                if (this.ShouldWriteSumAndCount(hasNegativeBucketBounds))
+                finally
                 {
-                    // OpenMetrics histograms with negative bucket thresholds MUST NOT expose
-                    // _sum and therefore MUST NOT expose _count.
-                    // See https://prometheus.io/docs/specs/om/open_metrics_spec/#histogram-1
-                    cursor = this.WriteSeriesNameAndSerializedTags(buffer, cursor, prometheusMetric, "_sum", serializedTags);
-
-                    buffer[cursor++] = unchecked((byte)' ');
-
-                    cursor = WriteDouble(buffer, cursor, metricPoint.GetHistogramSum());
-
-                    buffer[cursor++] = AsciiLineFeed;
-
-                    // Histogram count
-                    cursor = this.WriteSeriesNameAndSerializedTags(buffer, cursor, prometheusMetric, "_count", serializedTags);
-
-                    buffer[cursor++] = unchecked((byte)' ');
-
-                    cursor = WriteLong(buffer, cursor, metricPoint.GetHistogramCount());
-                    buffer[cursor++] = AsciiLineFeed;
+                    ArrayPool<byte>.Shared.Return(serializedTagsBuffer);
                 }
-
-                cursor = this.WriteHistogramCreated(buffer, cursor, metric, prometheusMetric, in metricPoint, in options);
             }
         }
 
@@ -788,79 +803,90 @@ internal abstract class TextFormatSerializer
         // The fast path writes each output label name directly into the buffer and detects reserved
         // names and collisions by comparing the written bytes, so no per-label key string is
         // allocated. Each entry is the (start, length) of an already-written key within the buffer.
-        List<(int Start, int Length)>? writtenKeyRanges = null;
+        (int Start, int Length)[]? writtenKeyRanges = null;
+        var writtenKeyRangeCount = 0;
         var wroteLabel = false;
 
         var resourceConstantLabels = options.ResourceConstantLabels;
         var hasResourceConstantLabels = resourceConstantLabels is { Count: > 0 };
 
-        if (writeEnclosingBraces)
+        try
         {
-            buffer[cursor++] = unchecked((byte)'{');
-        }
-
-        // The fast path writes scope labels and point tags directly to the buffer. It cannot
-        // account for resource constant labels (which may collide with, and therefore need to be
-        // merged with, point tags), so it is skipped whenever any are present.
-        if (!hasResourceConstantLabels)
-        {
-            if (!quotedNameBytes.IsEmpty)
+            if (writeEnclosingBraces)
             {
-                cursor = WriteQuotedName(buffer, cursor, quotedNameBytes, quotedNameSuffix);
-                wroteLabel = true;
+                buffer[cursor++] = unchecked((byte)'{');
             }
+
+            // The fast path writes scope labels and point tags directly to the buffer. It cannot
+            // account for resource constant labels (which may collide with, and therefore need to be
+            // merged with, point tags), so it is skipped whenever any are present.
+            if (!hasResourceConstantLabels)
+            {
+                if (!quotedNameBytes.IsEmpty)
+                {
+                    cursor = WriteQuotedName(buffer, cursor, quotedNameBytes, quotedNameSuffix);
+                    wroteLabel = true;
+                }
+
+                if (!options.SuppressScopeInfo)
+                {
+                    if (!options.SuppressScopeInfo)
+                    {
+                        WriteScopeLabels();
+                    }
+
+                    if (TryWritePointTags())
+                    {
+                        if (writeEnclosingBraces)
+                        {
+                            buffer[cursor++] = unchecked((byte)'}');
+                        }
+                        else if (wroteLabel)
+                        {
+                            buffer[cursor++] = unchecked((byte)',');
+                        }
+
+                        return cursor;
+                    }
+                }
+            }
+
+            cursor = startCursor;
+            List<LabelData>? labels = null;
 
             if (!options.SuppressScopeInfo)
             {
-                if (!options.SuppressScopeInfo)
+                foreach (var scopeLabel in GetScopeLabelData(metric))
                 {
-                    WriteScopeLabels();
-                }
-
-                if (TryWritePointTags())
-                {
-                    if (writeEnclosingBraces)
-                    {
-                        buffer[cursor++] = unchecked((byte)'}');
-                    }
-                    else if (wroteLabel)
-                    {
-                        buffer[cursor++] = unchecked((byte)',');
-                    }
-
-                    return cursor;
+                    // Scope labels (otel_scope_*) are already in their target Prometheus form, so they
+                    // are written verbatim and not re-escaped by the negotiated scheme, exactly as the
+                    // fast path does.
+                    AddLabel(scopeLabel.OriginalKey, scopeLabel.OutputKey, scopeLabel.Value, ref labels, reservedOutputKeys);
                 }
             }
-        }
 
-        cursor = startCursor;
-        List<LabelData>? labels = null;
-
-        if (!options.SuppressScopeInfo)
-        {
-            foreach (var scopeLabel in GetScopeLabelData(metric))
+            foreach (var tag in tags)
             {
-                // Scope labels (otel_scope_*) are already in their target Prometheus form, so they
-                // are written verbatim and not re-escaped by the negotiated scheme, exactly as the
-                // fast path does.
-                AddLabel(scopeLabel.OriginalKey, scopeLabel.OutputKey, scopeLabel.Value, ref labels, reservedOutputKeys);
+                this.AddLabel(tag.Key, tag.Value, ref labels, reservedOutputKeys);
+            }
+
+            if (hasResourceConstantLabels)
+            {
+                foreach (var resourceLabel in resourceConstantLabels!)
+                {
+                    this.AddLabel(resourceLabel.Key, resourceLabel.Value, ref labels, reservedOutputKeys);
+                }
+            }
+
+            return WriteLabels(buffer, cursor, labels, writeEnclosingBraces, quotedNameBytes, quotedNameSuffix);
+        }
+        finally
+        {
+            if (writtenKeyRanges != null)
+            {
+                ArrayPool<(int, int)>.Shared.Return(writtenKeyRanges);
             }
         }
-
-        foreach (var tag in tags)
-        {
-            this.AddLabel(tag.Key, tag.Value, ref labels, reservedOutputKeys);
-        }
-
-        if (hasResourceConstantLabels)
-        {
-            foreach (var resourceLabel in resourceConstantLabels!)
-            {
-                this.AddLabel(resourceLabel.Key, resourceLabel.Value, ref labels, reservedOutputKeys);
-            }
-        }
-
-        return WriteLabels(buffer, cursor, labels, writeEnclosingBraces, quotedNameBytes, quotedNameSuffix);
 
         void WriteScopeLabels()
         {
@@ -918,20 +944,33 @@ internal abstract class TextFormatSerializer
                 return true;
             }
 
-            if (writtenKeyRanges != null)
+            for (var i = 0; i < writtenKeyRangeCount; i++)
             {
-                foreach (var (start, length) in writtenKeyRanges)
+                var (start, length) = writtenKeyRanges![i];
+                if (new ReadOnlySpan<byte>(buffer, start, length).SequenceEqual(writtenKey))
                 {
-                    if (new ReadOnlySpan<byte>(buffer, start, length).SequenceEqual(writtenKey))
-                    {
-                        cursor = rewindCursor;
-                        return false;
-                    }
+                    cursor = rewindCursor;
+                    return false;
                 }
             }
 
-            writtenKeyRanges ??= [];
-            writtenKeyRanges.Add((keyStart, writtenKey.Length));
+            var pool = ArrayPool<(int, int)>.Shared;
+
+            if (writtenKeyRanges == null)
+            {
+                writtenKeyRanges = pool.Rent(8);
+            }
+            else if (writtenKeyRangeCount == writtenKeyRanges.Length)
+            {
+                var grown = pool.Rent(writtenKeyRanges.Length * 2);
+
+                Array.Copy(writtenKeyRanges, grown, writtenKeyRangeCount);
+                pool.Return(writtenKeyRanges);
+
+                writtenKeyRanges = grown;
+            }
+
+            writtenKeyRanges[writtenKeyRangeCount++] = (keyStart, writtenKey.Length);
 
             cursor = WriteSanitizedLabel(buffer, cursor, value);
             wroteLabel = true;
@@ -940,13 +979,15 @@ internal abstract class TextFormatSerializer
         }
     }
 
-    internal byte[] SerializeTags(
+    internal byte[] SerializeTagsToPooledBuffer(
         Metric metric,
         ReadOnlyTagCollection tags,
         in TextFormatSerializerOptions options,
-        IReadOnlyCollection<string>? reservedOutputKeys = null)
+        IReadOnlyCollection<string>? reservedOutputKeys,
+        out int length)
     {
-        var buffer = new byte[128];
+        var pool = ArrayPool<byte>.Shared;
+        var buffer = pool.Rent(128);
 
         while (true)
         {
@@ -966,11 +1007,16 @@ internal abstract class TextFormatSerializer
                     cursor--;
                 }
 
-                return buffer.AsSpan(0, cursor).ToArray();
+                length = cursor;
+
+                return buffer;
             }
             catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
             {
-                buffer = new byte[GetNextSerializedTagsBufferSize(buffer.Length)];
+                var nextBufferSize = GetNextSerializedTagsBufferSize(buffer.Length);
+
+                pool.Return(buffer);
+                buffer = pool.Rent(nextBufferSize);
             }
         }
     }
