@@ -72,6 +72,7 @@ public static class PrometheusHttpListenerMeterProviderBuilderExtensions
             TargetInfoEnabled = options.TargetInfoEnabled,
             DisableTotalNameSuffixForCounters = options.DisableTotalNameSuffixForCounters,
             MaxScrapeResponseSizeBytes = options.MaxScrapeResponseSizeBytes,
+            ResourceConstantLabels = options.ResourceConstantLabels,
         });
 
         var reader = new BaseExportingMetricReader(exporter)

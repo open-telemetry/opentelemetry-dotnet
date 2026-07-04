@@ -86,4 +86,11 @@ internal sealed class PrometheusExporterOptions
             field = value;
         }
     }
+
+    /// <summary>
+    /// Gets or sets a predicate used to select which resource attributes are added to each metric as constant labels.
+    /// The predicate is invoked with the resource attribute key and should return <see langword="true"/> to include the
+    /// attribute. Default value: <see langword="null"/> (no resource attributes are added as metric labels).
+    /// </summary>
+    public Func<string, bool>? ResourceConstantLabels { get; set; }
 }

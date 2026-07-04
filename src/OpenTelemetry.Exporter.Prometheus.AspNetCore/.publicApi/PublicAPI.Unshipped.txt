@@ -6,6 +6,8 @@ OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.DisableTotalNameSuffixForCoun
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.MaxScrapeResponseSizeBytes.get -> int
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.MaxScrapeResponseSizeBytes.set -> void
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.PrometheusAspNetCoreOptions() -> void
+OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.ResourceConstantLabels.get -> System.Func<string!, bool>?
+OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.ResourceConstantLabels.set -> void
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.ScopeInfoEnabled.get -> bool
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.ScopeInfoEnabled.set -> void
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.ScrapeEndpointPath.get -> string?
