@@ -200,17 +200,9 @@ public class MetricPointReclaimTests
     //
     // This is a stress test: it asserts that the total exported value always equals the total
     // recorded value (no measurement is ever lost).
-    [Fact]
+    [SkipOnNetFrameworkArmFact]
     public void MeasurementsAreNotLostWhenReclaimRacesWithUpdates()
     {
-#if NETFRAMEWORK
-        if (IsRunningOnArm())
-        {
-            // This test is flaky on Windows 11 in CI with ARM processors
-            return;
-        }
-#endif
-
         using var meter = new Meter(Utils.GetCurrentMethodName());
         var counter = meter.CreateCounter<long>("MyFruitCounter");
 
@@ -282,23 +274,6 @@ public class MetricPointReclaimTests
 
         Assert.Equal(Interlocked.Read(ref recordedSum), Interlocked.Read(ref exportedSum));
     }
-
-#if NETFRAMEWORK
-    private static bool IsRunningOnArm()
-    {
-        foreach (var variable in new[] { "PROCESSOR_ARCHITEW6432", "PROCESSOR_ARCHITECTURE" })
-        {
-            var value = Environment.GetEnvironmentVariable(variable);
-
-            if (value?.StartsWith("ARM", StringComparison.OrdinalIgnoreCase) == true)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-#endif
 
     private sealed class ThreadArguments
     {
@@ -379,6 +354,25 @@ public class MetricPointReclaimTests
             }
 
             return ExportResult.Success;
+        }
+    }
+
+    private sealed class SkipOnNetFrameworkArmFactAttribute : FactAttribute
+    {
+        public SkipOnNetFrameworkArmFactAttribute()
+        {
+#if NETFRAMEWORK
+            foreach (var variable in new[] { "PROCESSOR_ARCHITEW6432", "PROCESSOR_ARCHITECTURE" })
+            {
+                var value = Environment.GetEnvironmentVariable(variable);
+
+                if (value?.StartsWith("ARM", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    this.Skip = "Flaky on Windows 11 ARM: https://github.com/open-telemetry/opentelemetry-dotnet/pull/7470";
+                    return;
+                }
+            }
+#endif
         }
     }
 }
