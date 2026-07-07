@@ -55,16 +55,16 @@ Notes](../../RELEASENOTES.md).
   ([#7487](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7487))
 
 * Fixed the Prometheus text exposition format emitting redundant comments.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7491](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7491))
 
 * Fixed `# HELP` metadata not escaping double-quote characters for the
   OpenMetrics text format.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7491](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7491))
 
 * Fixed content negotiation defaulting to OpenMetrics 0.0.1 instead of 1.0.0
   when an `application/openmetrics-text` `Accept` header entry does not
   specify a `version` parameter.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7491](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7491))
 
 ## 1.16.0-beta.1
 
