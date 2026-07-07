@@ -58,7 +58,7 @@ Describe "CreatePullRequestToUpdateChangelogsAndPublicApis" {
                 -minVerTagPrefix "core-" `
                 -version $Version `
                 -requestedByUserName "someone"
-        } | Should -Throw "*did not match expected format*" -Because "'$Version' is not a valid release version"
+        } | Should-Throw -ExceptionMessage "*did not match expected format*" -Because "'$Version' is not a valid release version"
     }
 
     It "opens a pull request to prepare a stable release" {
@@ -74,11 +74,11 @@ Describe "CreatePullRequestToUpdateChangelogsAndPublicApis" {
             Pop-Location
         }
 
-        Should -Invoke -CommandName "git" -ModuleName "prepare-release" -ParameterFilter {
+        Should-Invoke -CommandName "git" -ModuleName "prepare-release" -ParameterFilter {
             $args -contains "switch" -and $args -contains "--create" -and ($args -join " ") -match "otelbot/prepare-core-1\.2\.3-release"
         } -Because "a release branch should be created for the version"
 
-        Should -Invoke -CommandName "gh" -ModuleName "prepare-release" -Exactly -Times 1 -ParameterFilter {
+        Should-Invoke -CommandName "gh" -ModuleName "prepare-release" -Exactly -Times 1 -ParameterFilter {
             $args -contains "pr" -and
             $args -contains "create" -and
             $args -contains "--label" -and
@@ -102,10 +102,10 @@ Describe "CreatePullRequestToUpdateChangelogsAndPublicApis" {
             Pop-Location
         }
 
-        Should -Invoke -CommandName "git" -ModuleName "prepare-release" -ParameterFilter {
+        Should-Invoke -CommandName "git" -ModuleName "prepare-release" -ParameterFilter {
             $args -contains "config" -and $args -contains "user.name" -and $args -contains "otelbot"
         } -Because "the git user name should be configured when provided"
-        Should -Invoke -CommandName "git" -ModuleName "prepare-release" -ParameterFilter {
+        Should-Invoke -CommandName "git" -ModuleName "prepare-release" -ParameterFilter {
             $args -contains "config" -and $args -contains "user.email" -and $args -contains "otelbot@example.com"
         } -Because "the git user email should be configured when provided"
     }
@@ -125,7 +125,7 @@ Describe "CreatePullRequestToUpdateChangelogsAndPublicApis" {
             Pop-Location
         }
 
-        Should -Invoke -CommandName "gh" -ModuleName "prepare-release" -Exactly -Times 1 -ParameterFilter {
+        Should-Invoke -CommandName "gh" -ModuleName "prepare-release" -Exactly -Times 1 -ParameterFilter {
             $args -contains "comment" -and (($args -join " ") -match "RELEASENOTES")
         } -Because "the author should be prompted to add release notes when they are missing"
     }
@@ -143,7 +143,7 @@ Describe "CreatePullRequestToUpdateChangelogsAndPublicApis" {
             Pop-Location
         }
 
-        Should -Invoke -CommandName "gh" -ModuleName "prepare-release" -Exactly -Times 1 -ParameterFilter {
+        Should-Invoke -CommandName "gh" -ModuleName "prepare-release" -Exactly -Times 1 -ParameterFilter {
             $args -contains "create" -and (($args -join " ") -match "Prepare release core-1\.2\.3-alpha\.1")
         } -Because "a prerelease pull request should still be opened"
     }
@@ -159,7 +159,7 @@ Describe "CreatePullRequestToUpdateChangelogsAndPublicApis" {
                     -minVerTagPrefix "core-" `
                     -version "1.2.3" `
                     -requestedByUserName "someone" 6>$null
-            } | Should -Throw "*git switch failure*" -Because "a failure to create the branch should stop the release"
+            } | Should-Throw -ExceptionMessage "*git switch failure*" -Because "a failure to create the branch should stop the release"
         }
         finally {
             Pop-Location
@@ -177,7 +177,7 @@ Describe "CreatePullRequestToUpdateChangelogsAndPublicApis" {
                     -minVerTagPrefix "core-" `
                     -version "1.2.3" `
                     -requestedByUserName "someone" 6>$null
-            } | Should -Throw "*Could not parse pull request number*" -Because "the PR URL is required to continue"
+            } | Should-Throw -ExceptionMessage "*Could not parse pull request number*" -Because "the PR URL is required to continue"
         }
         finally {
             Pop-Location
@@ -200,10 +200,10 @@ Describe "LockPullRequestAndPostNoticeToCreateReleaseTag" {
             -pullRequestNumber "789" `
             -expectedPrAuthorUserName "otelbot"
 
-        Should -Invoke -CommandName "gh" -ModuleName "prepare-release" -Exactly -Times 1 -ParameterFilter {
+        Should-Invoke -CommandName "gh" -ModuleName "prepare-release" -Exactly -Times 1 -ParameterFilter {
             $args -contains "comment" -and (($args -join " ") -match "/CreateReleaseTag")
         } -Because "a comment offering to create the release tag should be posted"
-        Should -Invoke -CommandName "gh" -ModuleName "prepare-release" -Exactly -Times 1 -ParameterFilter {
+        Should-Invoke -CommandName "gh" -ModuleName "prepare-release" -Exactly -Times 1 -ParameterFilter {
             $args -contains "lock"
         } -Because "the pull request should be locked after posting the notice"
     }
@@ -218,7 +218,7 @@ Describe "LockPullRequestAndPostNoticeToCreateReleaseTag" {
                 -gitRepository "open-telemetry/opentelemetry-dotnet" `
                 -pullRequestNumber "789" `
                 -expectedPrAuthorUserName "otelbot"
-        } | Should -Throw "*PR author was unexpected*" -Because "only pull requests opened by the expected bot should be processed"
+        } | Should-Throw -ExceptionMessage "*PR author was unexpected*" -Because "only pull requests opened by the expected bot should be processed"
     }
 }
 
@@ -238,10 +238,10 @@ Describe "CreateReleaseTagAndPostNoticeOnPullRequest" {
             -pullRequestNumber "789" `
             -expectedPrAuthorUserName "otelbot" 6>$null
 
-        Should -Invoke -CommandName "git" -ModuleName "prepare-release" -ParameterFilter {
+        Should-Invoke -CommandName "git" -ModuleName "prepare-release" -ParameterFilter {
             $args -contains "tag" -and $args -contains "core-1.2.3" -and $args -contains "abc123"
         } -Because "the release tag should be created on the merge commit"
-        Should -Invoke -CommandName "gh" -ModuleName "prepare-release" -ParameterFilter {
+        Should-Invoke -CommandName "gh" -ModuleName "prepare-release" -ParameterFilter {
             $args -contains "comment" -and (($args -join " ") -match "core-1\.2\.3")
         } -Because "a notice about the pushed tag should be posted on the pull request"
     }
@@ -308,10 +308,10 @@ Released 0000-00-00
         }
 
         $changelog = Get-Content -Path (Join-Path -Path $project -ChildPath "CHANGELOG.md") -Raw
-        $changelog | Should -BeLike "*Released $expectedReleaseDate*" -Because "the release date should use invariant (en-US) formatting even under a non-English culture"
-        $changelog | Should -Not -Match "0000-00-00" -Because "the placeholder date should no longer be present"
+        $changelog | Should-BeLikeString "*Released $expectedReleaseDate*" -Because "the release date should use invariant (en-US) formatting even under a non-English culture"
+        $changelog | Should-NotMatchString "0000-00-00" -Because "the placeholder date should no longer be present"
 
-        Should -Invoke -CommandName "gh" -ModuleName "prepare-release" -Exactly -Times 1 -ParameterFilter {
+        Should-Invoke -CommandName "gh" -ModuleName "prepare-release" -Exactly -Times 1 -ParameterFilter {
             $args -contains "comment" -and (($args -join " ") -match "I updated the CHANGELOG release dates")
         } -Because "a notice should confirm the dates were updated"
     }
@@ -347,7 +347,7 @@ Released 2020-01-01
             Pop-Location
         }
 
-        Should -Invoke -CommandName "gh" -ModuleName "prepare-release" -Exactly -Times 1 -ParameterFilter {
+        Should-Invoke -CommandName "gh" -ModuleName "prepare-release" -Exactly -Times 1 -ParameterFilter {
             $args -contains "comment" -and (($args -join " ") -match "valid release dates")
         } -Because "the function reports when no CHANGELOG needed updating"
     }
@@ -375,7 +375,7 @@ Released 2020-01-01
             Pop-Location
         }
 
-        Should -Invoke -CommandName "gh" -ModuleName "prepare-release" -Exactly -Times 1 -ParameterFilter {
+        Should-Invoke -CommandName "gh" -ModuleName "prepare-release" -Exactly -Times 1 -ParameterFilter {
             $args -contains "comment" -and (($args -join " ") -match "don't have permission")
         } -Because "only maintainers and approvers may update the PR"
     }
@@ -415,10 +415,10 @@ Describe "UpdateReleaseNotesAndPostNoticeOnPullRequest" {
         }
 
         $releaseNotes = Get-Content -Path (Join-Path -Path $work -ChildPath "RELEASENOTES.md") -Raw
-        $releaseNotes | Should -Match "## 1\.2\.3" -Because "a section for the released version should be added"
-        $releaseNotes | Should -Match "These are the new release notes\." -Because "the supplied notes should be inserted"
+        $releaseNotes | Should-MatchString "## 1\.2\.3" -Because "a section for the released version should be added"
+        $releaseNotes | Should-MatchString "These are the new release notes\." -Because "the supplied notes should be inserted"
 
-        Should -Invoke -CommandName "gh" -ModuleName "prepare-release" -Exactly -Times 1 -ParameterFilter {
+        Should-Invoke -CommandName "gh" -ModuleName "prepare-release" -Exactly -Times 1 -ParameterFilter {
             $args -contains "comment" -and (($args -join " ") -match "RELEASENOTES")
         } -Because "a notice should confirm the release notes were updated"
     }
@@ -447,7 +447,7 @@ Describe "UpdateReleaseNotesAndPostNoticeOnPullRequest" {
             Pop-Location
         }
 
-        Should -Invoke -CommandName "gh" -ModuleName "prepare-release" -Exactly -Times 1 -ParameterFilter {
+        Should-Invoke -CommandName "gh" -ModuleName "prepare-release" -Exactly -Times 1 -ParameterFilter {
             $args -contains "comment" -and (($args -join " ") -match "prereleases")
         } -Because "release notes are not added for prereleases or unstable packages"
     }
@@ -476,7 +476,7 @@ Describe "UpdateReleaseNotesAndPostNoticeOnPullRequest" {
             Pop-Location
         }
 
-        Should -Invoke -CommandName "gh" -ModuleName "prepare-release" -Exactly -Times 1 -ParameterFilter {
+        Should-Invoke -CommandName "gh" -ModuleName "prepare-release" -Exactly -Times 1 -ParameterFilter {
             $args -contains "comment" -and (($args -join " ") -match "don't have permission")
         } -Because "only maintainers and approvers may update the PR"
     }
