@@ -433,6 +433,14 @@ internal sealed class PrometheusCollectionManager
         var protocols = executionResult.Protocols ?? collectionContext.FreezeProtocols();
         var responses = new Dictionary<PrometheusProtocol, CollectionResponse>(protocols.Length);
 
+        if (!succeeded && executionResult.Protocols is not null)
+        {
+            foreach (var protocol in protocols)
+            {
+                responses[protocol] = default;
+            }
+        }
+
         if (succeeded)
         {
             var generatedAt = this.UtcNow();
@@ -444,6 +452,7 @@ internal sealed class PrometheusCollectionManager
                 if (successfulProtocols is not null &&
                     !successfulProtocols.Contains(protocol))
                 {
+                    responses[protocol] = default;
                     continue;
                 }
 

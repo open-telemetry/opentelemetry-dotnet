@@ -495,6 +495,99 @@ public sealed class PrometheusCollectionManagerTests
     }
 
     [Fact]
+    public async Task EnterCollectSharesFailedSerializationResult()
+    {
+        using var meter = CreateMeter();
+#if PROMETHEUS_HTTP_LISTENER
+        using var provider = CreateMeterProviderWithRandomPort(
+            meter,
+            options => options.MaxScrapeResponseSizeBytes = PrometheusExporterOptions.InitialScrapeResponseSizeBytes);
+#elif PROMETHEUS_ASPNETCORE
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddPrometheusExporter(options =>
+            {
+                options.MaxScrapeResponseSizeBytes = PrometheusExporterOptions.InitialScrapeResponseSizeBytes;
+                options.ScrapeResponseCacheDurationMilliseconds = 0;
+            })
+            .Build();
+#endif
+
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        Assert.True(provider.TryFindExporter(out PrometheusExporter? exporter));
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        var collectCount = 0;
+        var firstCollectStarted = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var allowFirstCollectToComplete = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var originalCollect = exporter!.Collect;
+        exporter.Collect = (timeout) =>
+        {
+            var currentCollectCount = Interlocked.Increment(ref collectCount);
+
+            if (currentCollectCount == 1)
+            {
+                firstCollectStarted.SetResult(true);
+                Assert.True(allowFirstCollectToComplete.Task.Wait(TimeSpan.FromSeconds(5)), "First collection did not resume.");
+            }
+
+            return originalCollect!(timeout);
+        };
+
+        var counter = meter.CreateCounter<long>("test_counter", description: "Help text.");
+        const int SeriesCount = 4_000;
+        for (var i = 0; i < SeriesCount; i++)
+        {
+            counter.Add(
+                1234567890123456789L,
+                new KeyValuePair<string, object?>("index", $"series-value-{i:D8}-padding-padding-padding"));
+        }
+
+        var protocol = GetProtocol(openMetricsRequested: false);
+
+        async Task<PrometheusCollectionManager.CollectionResponse> CollectAsync()
+        {
+            var response = await EnterCollectAsync(exporter, protocol);
+            try
+            {
+                return response;
+            }
+            finally
+            {
+                exporter.CollectionManager.ExitCollect(protocol);
+            }
+        }
+
+        var firstCollectTask = Task.Run(CollectAsync);
+
+        await firstCollectStarted.Task;
+
+        var secondCollectTask = CollectAsync();
+
+        Assert.False(secondCollectTask.IsCompleted, "Second collection did not join the active collection.");
+
+        allowFirstCollectToComplete.SetResult(true);
+
+        var timeout = TimeSpan.FromSeconds(5);
+        var all = Task.WhenAll(firstCollectTask, secondCollectTask);
+
+        using (var cts = new CancellationTokenSource(timeout))
+        {
+            var completion = await Task.WhenAny(all, Task.Delay(timeout, cts.Token));
+            Assert.Same(all, completion);
+        }
+
+        var responses = await all;
+
+        Assert.Equal(1, collectCount);
+        Assert.All(responses, response =>
+        {
+            Assert.False(response.Succeeded, "Expected the collection to fail.");
+            Assert.Equal(0, response.View.Count);
+        });
+    }
+
+    [Fact]
     public async Task OpenMetricsDoesNotEmitScopeInfoMetricFamily()
     {
         using var meter = new Meter("test_meter", "1.0.0", [new("library.mascot", "dotnetbot")], scope: null);
@@ -971,7 +1064,9 @@ public sealed class PrometheusCollectionManagerTests
     private static Meter CreateMeter([CallerMemberName] string name = "") => new(name);
 
 #if PROMETHEUS_HTTP_LISTENER
-    private static MeterProvider CreateMeterProviderWithRandomPort(Meter meter)
+    private static MeterProvider CreateMeterProviderWithRandomPort(
+        Meter meter,
+        Action<PrometheusHttpListenerOptions>? configure = null)
     {
         var retryAttempts = 5;
 
@@ -987,6 +1082,7 @@ public sealed class PrometheusCollectionManagerTests
                     {
                         options.Port = port;
                         options.ScrapeResponseCacheDurationMilliseconds = 0;
+                        configure?.Invoke(options);
                     })
                     .Build();
             }

@@ -59,18 +59,6 @@ public class PrometheusAspNetCoreOptions
     }
 
     /// <summary>
-    /// Gets or sets the maximum size in bytes that a single scrape response is allowed to grow to. Default value: ~166 MiB.
-    /// </summary>
-    /// <remarks>
-    /// Increase this value when exposing a very large number of time series.
-    /// </remarks>
-    public int MaxScrapeResponseSizeBytes
-    {
-        get => this.ExporterOptions.MaxScrapeResponseSizeBytes;
-        set => this.ExporterOptions.MaxScrapeResponseSizeBytes = value;
-    }
-
-    /// <summary>
     /// Gets or sets a predicate used to select which resource attributes are added to each metric as constant labels.
     /// The predicate is invoked with the resource attribute key and should return <see langword="true"/> to include the
     /// attribute. Default value: <see langword="null"/> (no resource attributes are added as metric labels).
@@ -83,6 +71,18 @@ public class PrometheusAspNetCoreOptions
     {
         get => this.ExporterOptions.ResourceConstantLabels;
         set => this.ExporterOptions.ResourceConstantLabels = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the maximum size in bytes that a single scrape response is allowed to grow to. Default value: ~166 MiB.
+    /// </summary>
+    /// <remarks>
+    /// Increase this value when exposing a very large number of time series.
+    /// </remarks>
+    public int MaxScrapeResponseSizeBytes
+    {
+        get => this.ExporterOptions.MaxScrapeResponseSizeBytes;
+        set => this.ExporterOptions.MaxScrapeResponseSizeBytes = value;
     }
 
     internal PrometheusExporterOptions ExporterOptions { get; } = new();
