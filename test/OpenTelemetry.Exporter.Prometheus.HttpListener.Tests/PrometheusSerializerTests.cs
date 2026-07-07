@@ -2160,7 +2160,7 @@ public sealed partial class PrometheusSerializerTests
     {
         TextFormatSerializer serializer = useOpenMetrics ? TextFormatSerializer.OpenMetricsV1 : TextFormatSerializer.PrometheusV1;
         var prometheusMetric = PrometheusMetric.Create(metric, disableTotalNameSuffixForCounters: false);
-        var options = new TextFormatSerializerOptions(suppressScopeInfo);
+        var options = new TextFormatSerializerOptions(suppressScopeInfo, null);
 
         return serializer.WriteMetric(
             buffer,
