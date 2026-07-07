@@ -3,10 +3,10 @@ OpenTelemetry.Exporter.PrometheusHttpListenerOptions.ConfigureHttpListener.get -
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions.ConfigureHttpListener.set -> void
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions.DisableTotalNameSuffixForCounters.get -> bool
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions.DisableTotalNameSuffixForCounters.set -> void
-OpenTelemetry.Exporter.PrometheusHttpListenerOptions.MaxScrapeResponseSizeBytes.get -> int
-OpenTelemetry.Exporter.PrometheusHttpListenerOptions.MaxScrapeResponseSizeBytes.set -> void
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions.Host.get -> string!
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions.Host.set -> void
+OpenTelemetry.Exporter.PrometheusHttpListenerOptions.MaxScrapeResponseSizeBytes.get -> int
+OpenTelemetry.Exporter.PrometheusHttpListenerOptions.MaxScrapeResponseSizeBytes.set -> void
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions.Port.get -> int
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions.Port.set -> void
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions.PrometheusHttpListenerOptions() -> void
