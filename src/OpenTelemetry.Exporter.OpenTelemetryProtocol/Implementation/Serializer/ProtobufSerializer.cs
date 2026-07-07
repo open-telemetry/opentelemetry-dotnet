@@ -27,13 +27,6 @@ internal static class ProtobufSerializer
 
     private static readonly Encoding Utf8Encoding = Encoding.UTF8;
 
-    // The shared ArrayPool caps pooled arrays at 1 MB so use a dedicated
-    // pool that can pool the larger (and resized) buffers. A small
-    // per-bucket limit keeps the amount of retained memory bounded. Only
-    // final, right-sized buffers are returned to the pool; intermediate
-    // buffers created while growing are dropped (see IncreaseBufferSize) so a
-    // single large export does not permanently retain an array in every bucket.
-    private static readonly ArrayPool<byte> BufferPool = ArrayPool<byte>.Create(MaxBufferSize, maxArraysPerBucket: 4);
 #if NETFRAMEWORK || NETSTANDARD2_0
     [ThreadStatic]
     private static char[]? threadCharBuffer;
@@ -365,14 +358,14 @@ internal static class ProtobufSerializer
     /// <param name="minimumSize">The minimum required buffer size in bytes.</param>
     /// <returns>A pooled buffer that must be handed back via <see cref="ReturnBuffer"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static byte[] RentBuffer(int minimumSize) => BufferPool.Rent(minimumSize);
+    internal static byte[] RentBuffer(int minimumSize) => ArrayPool<byte>.Shared.Rent(minimumSize);
 
     /// <summary>
     /// Returns a buffer previously obtained from <see cref="RentBuffer"/> or
     /// grown by <see cref="IncreaseBufferSize"/> back to the pool.
     /// </summary>
     /// <param name="buffer">The buffer to return.</param>
-    internal static void ReturnBuffer(byte[] buffer) => BufferPool.Return(buffer);
+    internal static void ReturnBuffer(byte[] buffer) => ArrayPool<byte>.Shared.Return(buffer);
 
     internal static bool IncreaseBufferSize(ref byte[] buffer, OtlpSignalType otlpSignalType)
     {
@@ -382,10 +375,12 @@ internal static class ProtobufSerializer
             return false;
         }
 
+        var pool = ArrayPool<byte>.Shared;
+
         byte[] largerBuffer;
         try
         {
-            largerBuffer = BufferPool.Rent(buffer.Length * 2);
+            largerBuffer = pool.Rent(buffer.Length * 2);
         }
         catch (OutOfMemoryException)
         {
@@ -393,16 +388,14 @@ internal static class ProtobufSerializer
             return false;
         }
 
-        // Swap in the larger buffer. The serializer restarts from the beginning
-        // after a resize, so the existing contents need not be copied.
-        //
-        // The smaller (intermediate) buffer is intentionally not returned
-        // to the pool. The pool never trims, so returning every intermediate
-        // buffer produced while growing would let a single large export
-        // permanently retain one array in every bucket it passed through.
-        // Dropping intermediates lets the GC reclaim them and keeps only the
-        // final right-sized buffer pooled (returned by the caller once export complete).
+        // Swap in the larger buffer first, then return the smaller one to the
+        // pool for reuse. The serializer restarts from the beginning after a
+        // resize, so the existing contents need not be copied.
+        var smallerBuffer = buffer;
         buffer = largerBuffer;
+
+        pool.Return(smallerBuffer);
+
         return true;
     }
 

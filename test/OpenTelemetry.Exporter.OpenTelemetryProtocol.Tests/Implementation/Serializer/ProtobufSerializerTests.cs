@@ -390,29 +390,7 @@ public class ProtobufSerializerTests
     }
 
     [Fact]
-    public void RentBuffer_ReusesReturnedBuffer()
-    {
-        // Use an uncommon bucket size to minimize interference from buffers rented
-        // by other serialization paths while this test runs.
-        var first = ProtobufSerializer.RentBuffer(1024);
-        ProtobufSerializer.ReturnBuffer(first);
-
-        var second = ProtobufSerializer.RentBuffer(1024);
-
-        try
-        {
-            // The returned buffer should be handed back out on the next rent of the
-            // same size, proving it was pooled rather than discarded.
-            Assert.Same(first, second);
-        }
-        finally
-        {
-            ProtobufSerializer.ReturnBuffer(second);
-        }
-    }
-
-    [Fact]
-    public void IncreaseBufferSize_GrowsBufferAndDropsIntermediateBuffer()
+    public void IncreaseBufferSize_GrowsBuffer()
     {
         var buffer = ProtobufSerializer.RentBuffer(1024);
         var original = buffer;
@@ -425,29 +403,10 @@ public class ProtobufSerializerTests
             Assert.True(increased);
             Assert.NotSame(original, buffer);
             Assert.True(buffer.Length >= originalLength * 2);
-
-            var next = ProtobufSerializer.RentBuffer(originalLength);
-
-            Assert.NotSame(original, next);
-            ProtobufSerializer.ReturnBuffer(next);
         }
         finally
         {
             ProtobufSerializer.ReturnBuffer(buffer);
         }
-    }
-
-    [Fact]
-    public void ReturnBuffer_Throws_ForBufferWhoseLengthIsNotAPoolBucketSize()
-    {
-        // The pool validates returned buffers by length: only lengths matching one
-        // of its bucket sizes are accepted, and anything else (123 is not a bucket
-        // size) throws. This guards against handing back a buffer that did not come
-        // from the pool, which would indicate a bug in the serializer. Note this is
-        // a length check, not an identity check: a foreign array that happens to
-        // have a valid bucket-size length would still be accepted.
-        var foreign = new byte[123];
-
-        Assert.Throws<ArgumentException>(() => ProtobufSerializer.ReturnBuffer(foreign));
     }
 }
