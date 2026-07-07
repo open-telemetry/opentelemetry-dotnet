@@ -129,6 +129,11 @@ internal abstract class TextFormatSerializer
     /// </summary>
     protected abstract string TargetInfoTypeValue { get; }
 
+    /// <summary>
+    /// Gets a value indicating whether double-quote characters in <c>HELP</c> text must be escaped.
+    /// </summary>
+    protected abstract bool EscapeHelpQuotationMarks { get; }
+
     public static TextFormatSerializer GetSerializer(in PrometheusProtocol protocol)
     {
         var escaping = protocol.EscapingScheme;
@@ -1097,7 +1102,7 @@ internal abstract class TextFormatSerializer
         if (!string.IsNullOrEmpty(metricDescription))
         {
             buffer[cursor++] = unchecked((byte)' ');
-            cursor = WriteUnicodeString(buffer, cursor, metricDescription);
+            cursor = WriteEscapedString(buffer, cursor, metricDescription, this.EscapeHelpQuotationMarks);
         }
 
         buffer[cursor++] = AsciiLineFeed;

@@ -1664,6 +1664,35 @@ public sealed partial class PrometheusSerializerTests
         Assert.Equal(expected, actual);
     }
 
+    [Fact]
+    public void WriteHelpMetadataDoesNotEscapeQuotationMarksForPrometheusText()
+    {
+        var buffer = new byte[128];
+        var metric = new PrometheusMetric("test_metric", string.Empty, PrometheusType.Gauge, disableTotalNameSuffixForCounters: false);
+
+        var cursor = TextFormatSerializer.PrometheusV1.WriteHelpMetadata(buffer, 0, metric, "A \"quoted\" description");
+        var actual = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        // The Prometheus text exposition format only requires escaping the backslash and line feed
+        // characters in HELP text, so double quotes are written unescaped.
+        Assert.Equal("# HELP test_metric A \"quoted\" description\n", actual);
+    }
+
+    [Fact]
+    public void WriteHelpMetadataEscapesQuotationMarksForOpenMetrics()
+    {
+        var buffer = new byte[128];
+        var metric = new PrometheusMetric("test_metric", string.Empty, PrometheusType.Gauge, disableTotalNameSuffixForCounters: false);
+
+        var cursor = TextFormatSerializer.OpenMetricsV1.WriteHelpMetadata(buffer, 0, metric, "A \"quoted\" description");
+        var actual = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        // Per the OpenMetrics 1.0.0 ABNF, double quotes are excluded from "normal-char" and MUST be
+        // escaped as \" within an "escaped-string" (which HELP text is), unlike the classic Prometheus
+        // text format. See https://prometheus.io/docs/specs/om/open_metrics_spec/#escaping.
+        Assert.Equal("# HELP test_metric A \\\"quoted\\\" description\n", actual);
+    }
+
     [Theory]
     [InlineData(true)]
     [InlineData(false)]

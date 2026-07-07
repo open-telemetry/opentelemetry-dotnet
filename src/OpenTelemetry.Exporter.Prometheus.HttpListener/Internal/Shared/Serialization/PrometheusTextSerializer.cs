@@ -20,6 +20,8 @@ internal abstract class PrometheusTextSerializer : TextFormatSerializer
 
     protected override string TargetInfoTypeValue => "gauge";
 
+    protected override bool EscapeHelpQuotationMarks => false;
+
     public override string GetMetadataName(PrometheusMetric metric)
         => metric.GetNameSet(this.Escaping).Name;
 

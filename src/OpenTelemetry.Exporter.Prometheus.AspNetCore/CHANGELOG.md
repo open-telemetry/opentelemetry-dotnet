@@ -55,6 +55,15 @@ Notes](../../RELEASENOTES.md).
   `PrometheusHttpListener` endpoint.
   ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
 
+* Fixed `# HELP` metadata not escaping double-quote characters for the
+  OpenMetrics text format.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
+* Fixed content negotiation defaulting to OpenMetrics 0.0.1 instead of 1.0.0
+  when an `application/openmetrics-text` `Accept` header entry does not
+  specify a `version` parameter.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.16.0-beta.1
 
 Released 2026-Jun-10
