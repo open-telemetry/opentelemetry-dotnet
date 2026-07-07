@@ -150,14 +150,7 @@ internal abstract class TextFormatSerializer
         };
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteEof(byte[] buffer, int cursor)
-    {
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# EOF");
-        buffer[cursor++] = AsciiLineFeed;
-
-        return cursor;
-    }
+    public virtual int WriteEof(byte[] buffer, int cursor) => cursor;
 
     public int WriteMetric(
         byte[] buffer,
@@ -1129,8 +1122,7 @@ internal abstract class TextFormatSerializer
         return cursor;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal int WriteUnitMetadata(byte[] buffer, int cursor, PrometheusMetric metric, string? unit)
+    internal virtual int WriteUnitMetadata(byte[] buffer, int cursor, PrometheusMetric metric, string? unit)
     {
         if (string.IsNullOrEmpty(unit))
         {

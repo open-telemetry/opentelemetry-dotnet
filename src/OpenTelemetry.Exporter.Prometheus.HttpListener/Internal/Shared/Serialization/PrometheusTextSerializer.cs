@@ -23,6 +23,9 @@ internal abstract class PrometheusTextSerializer : TextFormatSerializer
     public override string GetMetadataName(PrometheusMetric metric)
         => metric.GetNameSet(this.Escaping).Name;
 
+    internal override int WriteUnitMetadata(byte[] buffer, int cursor, PrometheusMetric metric, string? unit)
+        => cursor;
+
     protected override ReadOnlySpan<byte> GetMetricNameBytes(PrometheusMetric metric)
         => metric.GetNameSet(this.Escaping).NameBytes;
 

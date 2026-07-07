@@ -1721,9 +1721,20 @@ public sealed partial class PrometheusSerializerTests
         var buffer = new byte[64];
         var metric = new PrometheusMetric("test", string.Empty, PrometheusType.Gauge, disableTotalNameSuffixForCounters: false);
 
-        var cursor = TextFormatSerializer.PrometheusV1.WriteUnitMetadata(buffer, 0, metric, "seconds");
+        var cursor = TextFormatSerializer.OpenMetricsV1.WriteUnitMetadata(buffer, 0, metric, "seconds");
 
         Assert.Equal("# UNIT test seconds\n", Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Fact]
+    public void WriteUnitMetadataIsNotWrittenForPrometheusTextFormat()
+    {
+        var buffer = new byte[64];
+        var metric = new PrometheusMetric("test", string.Empty, PrometheusType.Gauge, disableTotalNameSuffixForCounters: false);
+
+        var cursor = TextFormatSerializer.PrometheusV1.WriteUnitMetadata(buffer, 0, metric, "seconds");
+
+        Assert.Equal(0, cursor);
     }
 
     [Fact]

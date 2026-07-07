@@ -54,6 +54,9 @@ Notes](../../RELEASENOTES.md).
   limit now responds with HTTP 500.
   ([#7487](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7487))
 
+* Fixed the Prometheus text exposition format emitting redundant comments.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.16.0-beta.1
 
 Released 2026-Jun-10
