@@ -62,6 +62,28 @@ public class PrometheusHttpListenerTests
         await Verify(output, "text", PrometheusSerializerTests.VerifySettings).UseParameters(targetInfoEnabled);
     }
 
+    [Theory]
+    [InlineData("all")]
+    [InlineData("service_name")]
+    [InlineData("none")]
+    public async Task RunHttpServerWithResourceConstantLabelsConfigured(string filter)
+    {
+        var output = await RunPrometheusExporterHttpServerIntegrationTest(
+            configureListener: (options) =>
+            {
+                options.ResourceConstantLabels = filter switch
+                {
+                    "all" => static _ => true,
+                    "service_name" => static key => key == "service.name",
+                    _ => static _ => false,
+                };
+                return options.Port;
+            },
+            assertResponseContent: false);
+
+        await Verify(output, "text", PrometheusSerializerTests.VerifySettings).UseParameters(filter);
+    }
+
     [Fact]
     public async Task RunHttpServerWithNoMetrics()
     {

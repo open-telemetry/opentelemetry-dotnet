@@ -18,6 +18,7 @@ internal sealed class PrometheusCollectionManager
     private readonly PrometheusExporter exporter;
     private readonly bool scopeInfoEnabled;
     private readonly bool targetInfoEnabled;
+    private readonly Func<string, bool>? resourceConstantLabelsFilter;
     private readonly TimeSpan scrapeResponseCacheDuration;
     private readonly long baseTimestamp = Stopwatch.GetTimestamp();
     private readonly PrometheusExporter.ExportFunc onCollectRef;
@@ -25,6 +26,8 @@ internal sealed class PrometheusCollectionManager
     private readonly int maxBufferSize;
 
     private int metricsCacheCount;
+    private IReadOnlyList<KeyValuePair<string, object>>? resourceConstantLabels;
+    private bool resourceConstantLabelsComputed;
     private int globalLockState;
     private CollectionContext? collectionContext;
     private CollectionContext? onCollectContext;
@@ -35,6 +38,7 @@ internal sealed class PrometheusCollectionManager
         this.exporter = exporter;
         this.scopeInfoEnabled = this.exporter.ScopeInfoEnabled;
         this.targetInfoEnabled = this.exporter.TargetInfoEnabled;
+        this.resourceConstantLabelsFilter = this.exporter.ResourceConstantLabels;
         this.scrapeResponseCacheDuration = TimeSpan.FromMilliseconds(this.exporter.ScrapeResponseCacheDurationMilliseconds);
         this.onCollectRef = this.OnCollect;
         this.metricsCache = [];
@@ -360,7 +364,9 @@ internal sealed class PrometheusCollectionManager
 
             var cursor = this.targetInfoEnabled ? this.WriteTargetInfo(serializer, state) : 0;
             var metricStates = this.GetMetricStates(serializer, metrics);
-            var options = new TextFormatSerializerOptions(suppressScopeInfo: !this.scopeInfoEnabled);
+            var options = new TextFormatSerializerOptions(
+                suppressScopeInfo: !this.scopeInfoEnabled,
+                resourceConstantLabels: this.GetResourceConstantLabels());
 
             foreach (var metricState in metricStates)
             {
@@ -492,6 +498,32 @@ internal sealed class PrometheusCollectionManager
 #else
         this.protocolStates.GetOrAdd(protocol, (_) => new(this.maxBufferSize));
 #endif
+
+    private IReadOnlyList<KeyValuePair<string, object>>? GetResourceConstantLabels()
+    {
+        if (!this.resourceConstantLabelsComputed)
+        {
+            if (this.resourceConstantLabelsFilter is { } filter)
+            {
+                List<KeyValuePair<string, object>>? labels = null;
+
+                foreach (var attribute in this.exporter.Resource.Attributes)
+                {
+                    if (filter(attribute.Key))
+                    {
+                        labels ??= [];
+                        labels.Add(attribute);
+                    }
+                }
+
+                this.resourceConstantLabels = labels;
+            }
+
+            this.resourceConstantLabelsComputed = true;
+        }
+
+        return this.resourceConstantLabels;
+    }
 
     private int WriteTargetInfo(TextFormatSerializer serializer, PrometheusProtocolState state)
     {

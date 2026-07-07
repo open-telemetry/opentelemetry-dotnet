@@ -10,6 +10,8 @@ OpenTelemetry.Exporter.PrometheusHttpListenerOptions.Host.set -> void
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions.Port.get -> int
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions.Port.set -> void
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions.PrometheusHttpListenerOptions() -> void
+OpenTelemetry.Exporter.PrometheusHttpListenerOptions.ResourceConstantLabels.get -> System.Func<string!, bool>?
+OpenTelemetry.Exporter.PrometheusHttpListenerOptions.ResourceConstantLabels.set -> void
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions.ScopeInfoEnabled.get -> bool
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions.ScopeInfoEnabled.set -> void
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions.ScrapeEndpointPath.get -> string?

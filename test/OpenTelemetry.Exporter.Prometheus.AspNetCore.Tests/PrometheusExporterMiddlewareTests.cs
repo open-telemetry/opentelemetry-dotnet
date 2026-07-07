@@ -62,6 +62,26 @@ public sealed class PrometheusExporterMiddlewareTests
         await Verify(output, "text", PrometheusSerializerTests.VerifySettings).UseParameters(targetInfoEnabled);
     }
 
+    [Theory]
+    [InlineData("all")]
+    [InlineData("service_name")]
+    [InlineData("none")]
+    public async Task RunWithResourceConstantLabelsConfigured(string filter)
+    {
+        var output = await RunPrometheusExporterMiddlewareIntegrationTest(
+            "/metrics",
+            app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
+            services => services.Configure<PrometheusAspNetCoreOptions>(o => o.ResourceConstantLabels = filter switch
+            {
+                "all" => static _ => true,
+                "service_name" => static key => key == "service.name",
+                _ => static _ => false,
+            }),
+            assertResponseContent: false);
+
+        await Verify(output, "text", PrometheusSerializerTests.VerifySettings).UseParameters(filter);
+    }
+
     [Fact]
     public async Task RunWithCustomScrapeEndpointPath()
     {
