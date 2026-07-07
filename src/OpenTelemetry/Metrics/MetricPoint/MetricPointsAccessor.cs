@@ -9,13 +9,23 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 public readonly struct MetricPointsAccessor
 {
-    private readonly MetricPoint[] metricsPoints;
+    private readonly MetricPoint[]? metricsPoints;
+    private readonly SegmentedMetricPointStorage? segmentedMetricPoints;
     private readonly int[] metricPointsToProcess;
     private readonly int targetCount;
 
     internal MetricPointsAccessor(MetricPoint[] metricsPoints, int[] metricPointsToProcess, int targetCount)
     {
         this.metricsPoints = metricsPoints;
+        this.segmentedMetricPoints = null;
+        this.metricPointsToProcess = metricPointsToProcess;
+        this.targetCount = targetCount;
+    }
+
+    internal MetricPointsAccessor(SegmentedMetricPointStorage segmentedMetricPoints, int[] metricPointsToProcess, int targetCount)
+    {
+        this.metricsPoints = null;
+        this.segmentedMetricPoints = segmentedMetricPoints;
         this.metricPointsToProcess = metricPointsToProcess;
         this.targetCount = targetCount;
     }
@@ -25,7 +35,7 @@ public readonly struct MetricPointsAccessor
     /// </summary>
     /// <returns><see cref="Enumerator"/>.</returns>
     public Enumerator GetEnumerator()
-        => new(this.metricsPoints, this.metricPointsToProcess, this.targetCount);
+        => new(this.metricsPoints, this.segmentedMetricPoints, this.metricPointsToProcess, this.targetCount);
 
 #pragma warning disable CA1034 // Nested types should not be visible - already part of public API
     /// <summary>
@@ -34,14 +44,16 @@ public readonly struct MetricPointsAccessor
     public struct Enumerator
 #pragma warning restore CA1034 // Nested types should not be visible - already part of public API
     {
-        private readonly MetricPoint[] metricsPoints;
+        private readonly MetricPoint[]? metricsPoints;
+        private readonly SegmentedMetricPointStorage? segmentedMetricPoints;
         private readonly int[] metricPointsToProcess;
         private readonly int targetCount;
         private int index;
 
-        internal Enumerator(MetricPoint[] metricsPoints, int[] metricPointsToProcess, int targetCount)
+        internal Enumerator(MetricPoint[]? metricsPoints, SegmentedMetricPointStorage? segmentedMetricPoints, int[] metricPointsToProcess, int targetCount)
         {
             this.metricsPoints = metricsPoints;
+            this.segmentedMetricPoints = segmentedMetricPoints;
             this.metricPointsToProcess = metricPointsToProcess;
             this.targetCount = targetCount;
             this.index = -1;
@@ -51,7 +63,18 @@ public readonly struct MetricPointsAccessor
         /// Gets the <see cref="MetricPoint"/> at the current position of the enumerator.
         /// </summary>
         public readonly ref readonly MetricPoint Current
-            => ref this.metricsPoints[this.metricPointsToProcess[this.index]];
+        {
+            get
+            {
+                var metricPointIndex = this.metricPointsToProcess[this.index];
+                if (this.segmentedMetricPoints != null)
+                {
+                    return ref this.segmentedMetricPoints.GetMetricPoint(metricPointIndex);
+                }
+
+                return ref this.metricsPoints![metricPointIndex];
+            }
+        }
 
         /// <summary>
         /// Advances the enumerator to the next element of the <see
