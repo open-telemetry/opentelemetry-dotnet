@@ -6,9 +6,6 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* Added the experimental
-  `OTEL_DOTNET_EXPERIMENTAL_METRICS_ENABLE_LAZY_ALLOCATION` environment
-  variable for enabling lazy metric point allocation.
 * Fixed a metric point reclaim data race on CPU ARM architectures.
   ([#7401](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7401))
 
@@ -29,6 +26,11 @@ Notes](../../RELEASENOTES.md).
 
 * Added support for a Schema URL on `Resource` instances.
   ([#7472](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7472))
+
+* Added the experimental
+  `OTEL_DOTNET_EXPERIMENTAL_METRICS_ENABLE_LAZY_ALLOCATION` environment
+  variable for enabling lazy metric point allocation.
+  ([#7346](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7346))
 
 ## 1.16.0
 
