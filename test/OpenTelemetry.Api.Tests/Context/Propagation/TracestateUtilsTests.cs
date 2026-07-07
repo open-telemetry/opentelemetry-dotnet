@@ -32,7 +32,6 @@ public class TracestateUtilsTests
     [InlineData("k\t=v")]
     [InlineData("k=v,k=v")]
     [InlineData("k1=v1,,,k2=v2")]
-    [InlineData("1k=v")]
     [InlineData("k=morethan256......................................................................................................................................................................................................................................................")]
     [InlineData("v=morethan256......................................................................................................................................................................................................................................................")]
     public void InvalidTracestate(string tracestate)
@@ -74,6 +73,10 @@ public class TracestateUtilsTests
     [InlineData(", k= v, ", "k", "v")]
     [InlineData("k=\tv", "k", "v")]
     [InlineData("k=v\t", "k", "v")]
+    [InlineData("1k=v", "1k", "v")]
+    [InlineData("k@=v", "k@", "v")]
+    [InlineData("k@@vendor=v", "k@@vendor", "v")]
+    [InlineData("k@vendor@tenant=v", "k@vendor@tenant", "v")]
     public void ValidPair(string pair, string expectedKey, string expectedValue)
     {
         var tracestateEntries = new List<KeyValuePair<string, string>>();

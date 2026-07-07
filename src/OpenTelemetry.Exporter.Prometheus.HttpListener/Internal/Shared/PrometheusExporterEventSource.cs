@@ -103,4 +103,8 @@ internal sealed class PrometheusExporterEventSource : EventSource, IConfiguratio
     [Event(10, Message = "Metric '{0}' ignored as metrics of type '{1}' are not supported by Prometheus.", Level = EventLevel.Verbose)]
     public void MetricIgnored(string metricName, string metricType)
         => this.WriteEvent(10, metricName, metricType);
+
+    [Event(11, Message = "Failed to collect metrics for a scrape request; the response may have exceeded the configured maximum size.", Level = EventLevel.Error)]
+    public void ScrapeFailed()
+        => this.WriteEvent(11);
 }

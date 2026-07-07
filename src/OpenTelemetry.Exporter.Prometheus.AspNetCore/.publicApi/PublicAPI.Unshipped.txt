@@ -3,13 +3,19 @@ Microsoft.AspNetCore.Builder.PrometheusExporterEndpointRouteBuilderExtensions
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.DisableTotalNameSuffixForCounters.get -> bool
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.DisableTotalNameSuffixForCounters.set -> void
+OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.MaxScrapeResponseSizeBytes.get -> int
+OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.MaxScrapeResponseSizeBytes.set -> void
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.PrometheusAspNetCoreOptions() -> void
+OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.ResourceConstantLabels.get -> System.Func<string!, bool>?
+OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.ResourceConstantLabels.set -> void
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.ScopeInfoEnabled.get -> bool
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.ScopeInfoEnabled.set -> void
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.ScrapeEndpointPath.get -> string?
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.ScrapeEndpointPath.set -> void
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.ScrapeResponseCacheDurationMilliseconds.get -> int
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.ScrapeResponseCacheDurationMilliseconds.set -> void
+OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.TargetInfoEnabled.get -> bool
+OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.TargetInfoEnabled.set -> void
 OpenTelemetry.Metrics.PrometheusExporterMeterProviderBuilderExtensions
 static Microsoft.AspNetCore.Builder.PrometheusExporterApplicationBuilderExtensions.UseOpenTelemetryPrometheusScrapingEndpoint(this Microsoft.AspNetCore.Builder.IApplicationBuilder! app) -> Microsoft.AspNetCore.Builder.IApplicationBuilder!
 static Microsoft.AspNetCore.Builder.PrometheusExporterApplicationBuilderExtensions.UseOpenTelemetryPrometheusScrapingEndpoint(this Microsoft.AspNetCore.Builder.IApplicationBuilder! app, OpenTelemetry.Metrics.MeterProvider? meterProvider, System.Func<Microsoft.AspNetCore.Http.HttpContext!, bool>? predicate, string? path, System.Action<Microsoft.AspNetCore.Builder.IApplicationBuilder!>? configureBranchedPipeline, string? optionsName) -> Microsoft.AspNetCore.Builder.IApplicationBuilder!

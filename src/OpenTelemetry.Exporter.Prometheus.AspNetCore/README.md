@@ -142,6 +142,32 @@ Configures scrape endpoint response caching. Multiple scrape requests within the
 cache duration time period will receive the same previously generated response.
 The default value is `300`. Set to `0` to disable response caching.
 
+### TargetInfoEnabled
+
+Specifies whether to produce a
+[`target_info`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/compatibility/prometheus_and_openmetrics.md#resource-attributes-1)
+metric. Default value: `true`. Set to `false` to disable the `target_info` metric.
+
+### ResourceConstantLabels
+
+A predicate used to select which
+[resource attributes](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk_exporters/prometheus.md#resource-attributes-as-metric-labels)
+are added to each metric as constant labels. The predicate is invoked with the
+resource attribute key and should return `true` to include the attribute.
+Default value: `null` (no resource attributes are added as metric labels).
+Resource attributes copied as metric labels are always included in the
+`target_info` metric regardless of this predicate.
+
+```csharp
+services.AddOpenTelemetry()
+    .WithMetrics(builder => builder
+        .AddPrometheusExporter(options =>
+        {
+            // Add all resource attributes as metric labels.
+            options.ResourceConstantLabels = static _ => true;
+        }));
+```
+
 ## Troubleshooting
 
 This component uses an

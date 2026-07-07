@@ -23,6 +23,31 @@ Notes](../../RELEASENOTES.md).
   disable scope labels in Prometheus metrics. Defaults to `true`.
   ([#7436](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7436))
 
+* Added support for the `dots` and `values` Prometheus UTF-8 name escaping
+  schemes when negotiated via the `Accept` header.
+  ([#7439](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7439))
+
+* Add `PrometheusAspNetCoreOptions.TargetInfoEnabled` property to enable or
+  disable the `target_info` metric in Prometheus metrics. Defaults to `true`.
+  ([#7438](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7438))
+
+* Added support for the `allow-utf-8` Prometheus UTF-8 name escaping scheme
+  when negotiated via the `Accept` header.
+  ([#7440](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7440))
+
+* Add `PrometheusAspNetCoreOptions.ResourceConstantLabels` property to select
+  resource attributes to add to each metric as constant labels. Defaults to
+  `null` (no resource attributes are added as metric labels).
+  ([#7471](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7471))
+
+* Add `PrometheusAspNetCoreOptions.MaxScrapeResponseSizeBytes` to configure
+  the maximum size of a scrape response. The default is now ~166 MiB.
+  ([#7487](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7487))
+
+* A scrape whose serialized output exceeds the maximum scrape response size
+  limit now responds with HTTP 500.
+  ([#7487](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7487))
+
 ## 1.16.0-beta.1
 
 Released 2026-Jun-10

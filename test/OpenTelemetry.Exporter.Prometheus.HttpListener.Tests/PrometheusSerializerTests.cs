@@ -18,6 +18,38 @@ public sealed partial class PrometheusSerializerTests
 {
     internal static readonly VerifySettings VerifySettings = CreateVerifySettings();
 
+#pragma warning disable CA1825 // Workaround for https://github.com/dotnet/sdk/issues/54275
+    public static TheoryData<string> EscapingSchemes =>
+    [
+        PrometheusProtocol.AllowUtf8Escaping,
+        PrometheusProtocol.DotsEscaping,
+        PrometheusProtocol.UnderscoresEscaping,
+        PrometheusProtocol.ValuesEscaping,
+    ];
+#pragma warning restore CA1825
+
+    public static TheoryData<string, bool> EscapingSchemesAndFormats
+    {
+        get
+        {
+            var data = new TheoryData<string, bool>();
+
+            foreach (var escaping in new[]
+            {
+                PrometheusProtocol.AllowUtf8Escaping,
+                PrometheusProtocol.DotsEscaping,
+                PrometheusProtocol.UnderscoresEscaping,
+                PrometheusProtocol.ValuesEscaping,
+            })
+            {
+                data.Add(escaping, false);
+                data.Add(escaping, true);
+            }
+
+            return data;
+        }
+    }
+
     public static TheoryData<object?, string> LabelValueBoundaryCases => new()
     {
         { false, "false" },
@@ -1754,6 +1786,309 @@ public sealed partial class PrometheusSerializerTests
         Assert.Contains("rkt:\U0001F680", output, StringComparison.Ordinal);
     }
 
+    [Theory]
+    [MemberData(nameof(EscapingSchemes))]
+    public async Task WriteMetric_EscapesMetricAndLabelNamesUsingNegotiatedScheme(string escaping)
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        var counter = meter.CreateCounter<long>("http.server.requests");
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        counter.Add(1, new KeyValuePair<string, object?>("http.method", "GET"));
+
+        provider.ForceFlush();
+
+        var protocol = new PrometheusProtocol(
+            PrometheusProtocol.OpenMetricsMediaType,
+            escaping,
+            PrometheusProtocol.OpenMetricsV1,
+            isOpenMetrics: true);
+
+        var serializer = TextFormatSerializer.GetSerializer(protocol);
+
+        var cursor = serializer.WriteMetric(
+            buffer,
+            0,
+            metrics[0],
+            PrometheusMetric.Create(metrics[0], false),
+            writeType: true,
+            writeUnit: true,
+            writeHelp: true,
+            unitOverride: null,
+            helpOverride: null);
+
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        await Verify(output, "txt", VerifySettings).UseParameters(escaping);
+    }
+
+    [Theory]
+    [MemberData(nameof(EscapingSchemes))]
+    public async Task WriteMetric_EscapesColonInPointTagKeyUsingLabelNameRules(string escaping)
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        var counter = meter.CreateCounter<long>("test_counter");
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        counter.Add(1, new KeyValuePair<string, object?>("http:method", "GET"));
+
+        provider.ForceFlush();
+
+        var output = WriteMetricWithEscaping(buffer, metrics[0], escaping);
+
+        await Verify(output, "txt", VerifySettings).UseParameters(escaping);
+    }
+
+    [Fact]
+    public async Task WriteMetricEscapesScopeLabelKeysUsingNegotiatedDotsScheme()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter(
+            nameof(this.WriteMetricEscapesScopeLabelKeysUsingNegotiatedDotsScheme),
+            "1.0.0",
+            [new("dot_name", "value")],
+            scope: null);
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        meter.CreateCounter<int>("test_counter").Add(1);
+
+        provider.ForceFlush();
+
+        var output = WriteMetricWithDotsEscaping(buffer, metrics[0]);
+
+        await Verify(output, "txt", VerifySettings);
+    }
+
+    [Theory]
+    [InlineData(PrometheusProtocol.AllowUtf8Escaping, "otel_scope_name")]
+    [InlineData(PrometheusProtocol.DotsEscaping, "otel/scope/name")]
+    [InlineData(PrometheusProtocol.UnderscoresEscaping, "otel_scope_name")]
+    [InlineData(PrometheusProtocol.ValuesEscaping, "otel_scope_name")]
+    public async Task WriteMetricWritesScopeLabelsVerbatim(string escaping, string collidingPointTagKey)
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter(
+            nameof(this.WriteMetricWritesScopeLabelsVerbatim),
+            "1.0.0",
+            tags: null,
+            scope: null);
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        meter.CreateCounter<int>("test_counter").Add(
+            1,
+            new KeyValuePair<string, object?>(collidingPointTagKey, "point"));
+
+        provider.ForceFlush();
+
+        var output = WriteMetricWithEscaping(buffer, metrics[0], escaping);
+
+        await Verify(output, "txt", VerifySettings).UseParameters(escaping);
+    }
+
+    [Fact]
+    public async Task WriteExemplarEscapesReservedTraceIdKeyToPreventCollisionWithFilteredTag()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        var counter = meter.CreateCounter<long>("test_counter");
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
+            .AddView(
+                counter.Name,
+                new MetricStreamConfiguration
+                {
+                    TagKeys = ["keep"],
+                    ExemplarReservoirFactory = () => new SimpleFixedSizeExemplarReservoir(3),
+                })
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        using var activity = new Activity("test");
+        activity.Start();
+
+        // The filtered tag is literally named "trace_id"; under the dots scheme both it and the
+        // built-in trace_id escape to the same output key "trace__id". The built-in trace ID MUST
+        // take precedence so its value is emitted intact rather than having the filtered tag's
+        // value concatenated onto it.
+        counter.Add(2, new("keep", "value"), new("trace_id", "drop-me"));
+
+        provider.ForceFlush();
+
+        var output = WriteMetricWithDotsEscaping(buffer, metrics[0]);
+
+        await Verify(output, "txt", VerifySettings);
+    }
+
+    [Fact]
+    public async Task WriteMetric_AllowUtf8_EscapesQuoteBackslashAndLineFeedInQuotedName()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        var counter = meter.CreateCounter<long>("original_name");
+
+        // The Meter API rejects instrument names containing characters such as '"', '\' and '\n',
+        // but the OpenTelemetry specification does not subject a View-provided stream name to the
+        // instrument name syntax, so a renamed metric can contain them. Such a name is not a valid
+        // legacy name, so the allow-utf-8 format writes it as a quoted string in which those
+        // characters must themselves be escaped.
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("original_name", "a\"b\\c\nd")
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        counter.Add(1);
+
+        provider.ForceFlush();
+
+        var protocol = new PrometheusProtocol(
+            PrometheusProtocol.OpenMetricsMediaType,
+            PrometheusProtocol.AllowUtf8Escaping,
+            PrometheusProtocol.OpenMetricsV1,
+            isOpenMetrics: true);
+
+        var serializer = TextFormatSerializer.GetSerializer(protocol);
+
+        var cursor = serializer.WriteMetric(
+            buffer,
+            0,
+            metrics[0],
+            PrometheusMetric.Create(metrics[0], false),
+            writeType: true,
+            writeUnit: false,
+            writeHelp: false,
+            unitOverride: null,
+            helpOverride: null);
+
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        await Verify(output, "txt", VerifySettings);
+    }
+
+    [Fact]
+    public async Task WriteMetric_AllowUtf8_EmbedsQuotedNameWhenLabelKeyCollidesWithScopeLabel()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        var counter = meter.CreateCounter<long>("http.server.requests");
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        // A point tag whose output key collides with the emitted otel_scope_name scope label forces
+        // the slow label-writing path, which must still embed the quoted metric name as the first
+        // element inside the braces.
+        counter.Add(1, new KeyValuePair<string, object?>("otel_scope_name", "collision"));
+
+        provider.ForceFlush();
+
+        var protocol = new PrometheusProtocol(
+            PrometheusProtocol.OpenMetricsMediaType,
+            PrometheusProtocol.AllowUtf8Escaping,
+            PrometheusProtocol.OpenMetricsV1,
+            isOpenMetrics: true);
+
+        var serializer = TextFormatSerializer.GetSerializer(protocol);
+
+        var cursor = serializer.WriteMetric(
+            buffer,
+            0,
+            metrics[0],
+            PrometheusMetric.Create(metrics[0], false),
+            writeType: false,
+            writeUnit: false,
+            writeHelp: false,
+            unitOverride: null,
+            helpOverride: null);
+
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        await Verify(output, "txt", VerifySettings);
+    }
+
+    [Theory]
+    [MemberData(nameof(EscapingSchemesAndFormats))]
+    public async Task WriteMetric_SerializesMultibyteUtf8MetricNameProvidedByView(string escaping, bool useOpenMetrics)
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        var histogram = meter.CreateHistogram<double>(
+            "original_name",
+            unit: "s",
+            description: "Duration of HTTP server requests.");
+
+        // A View-provided metric stream name is not subject to the OpenTelemetry instrument name
+        // syntax (https://opentelemetry.io/docs/specs/otel/metrics/sdk/#stream-configuration), so it
+        // may contain multibyte UTF-8 characters that the Meter API would otherwise reject. Renaming
+        // to a name containing the multibyte characters U+82B1 U+706B (CJK) and U+1F680 (a rocket,
+        // outside the Basic Multilingual Plane) exercises BuildAllowUtf8Names, the UTF-8 byte encoding
+        // in NameSet, and the quoted/escaped TYPE, UNIT and HELP metadata together with the _bucket,
+        // _sum, _count and _created series end-to-end. It is parameterized over all four escaping
+        // schemes and both v1 serializers, and each response remains UTF-8:
+        //   * allow-utf-8 preserves the multibyte characters using the quoted exposition form,
+        //   * underscores replaces the unsupported characters with underscores,
+        //   * dots encodes '.' and replaces the unsupported characters, and
+        //   * values reversibly encodes the Unicode code points.
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView(
+                "original_name",
+                new ExplicitBucketHistogramConfiguration
+                {
+                    Name = "http.\u82B1\u706B.\U0001F680.requests",
+                    Boundaries = [5, 10],
+                })
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        histogram.Record(4, new KeyValuePair<string, object?>("http.method", "GET"));
+        histogram.Record(8, new KeyValuePair<string, object?>("http.method", "GET"));
+
+        provider.ForceFlush();
+
+        var output = WriteMetricWithEscaping(buffer, metrics[0], escaping, useOpenMetrics);
+
+        await Verify(output, "txt", VerifySettings).UseParameters(escaping, useOpenMetrics);
+    }
+
 #if NET
     [Fact]
     public async Task WriteHistogramMetricSerializesStaticTagsWithoutPreSerializedTags()
@@ -1825,7 +2160,7 @@ public sealed partial class PrometheusSerializerTests
     {
         TextFormatSerializer serializer = useOpenMetrics ? TextFormatSerializer.OpenMetricsV1 : TextFormatSerializer.PrometheusV1;
         var prometheusMetric = PrometheusMetric.Create(metric, disableTotalNameSuffixForCounters: false);
-        var options = new TextFormatSerializerOptions(suppressScopeInfo);
+        var options = new TextFormatSerializerOptions(suppressScopeInfo, null);
 
         return serializer.WriteMetric(
             buffer,
@@ -1838,6 +2173,36 @@ public sealed partial class PrometheusSerializerTests
             unitOverride: null,
             helpOverride: null,
             options);
+    }
+
+    private static string WriteMetricWithDotsEscaping(byte[] buffer, Metric metric)
+        => WriteMetricWithEscaping(buffer, metric, PrometheusProtocol.DotsEscaping);
+
+    private static string WriteMetricWithEscaping(byte[] buffer, Metric metric, string escaping)
+        => WriteMetricWithEscaping(buffer, metric, escaping, useOpenMetrics: true);
+
+    private static string WriteMetricWithEscaping(byte[] buffer, Metric metric, string escaping, bool useOpenMetrics)
+    {
+        var protocol = new PrometheusProtocol(
+            useOpenMetrics ? PrometheusProtocol.OpenMetricsMediaType : PrometheusProtocol.PrometheusTextMediaType,
+            escaping,
+            useOpenMetrics ? PrometheusProtocol.OpenMetricsV1 : PrometheusProtocol.PrometheusV1,
+            isOpenMetrics: useOpenMetrics);
+
+        var serializer = TextFormatSerializer.GetSerializer(protocol);
+
+        var cursor = serializer.WriteMetric(
+            buffer,
+            0,
+            metric,
+            PrometheusMetric.Create(metric, false),
+            writeType: true,
+            writeUnit: true,
+            writeHelp: true,
+            unitOverride: null,
+            helpOverride: null);
+
+        return Encoding.UTF8.GetString(buffer, 0, cursor);
     }
 
     private static void WaitForNextExemplarTimestamp()
@@ -1896,23 +2261,23 @@ public sealed partial class PrometheusSerializerTests
     }
 
 #if NET
-    [GeneratedRegex("(?m)^([^\\s]*_created(?:\\{[^}]*\\})?\\s+)\\S+$")]
+    [GeneratedRegex("(?m)^((?:[^\\s{]*_created(?:\\{[^}]*\\})?|\\{[^}]*_created[^}]*\\})\\s+)\\S+$")]
     private static partial Regex CreatedMetric();
 
     [GeneratedRegex("(?m)^(.+?\\s#\\s\\{[^}]*\\}\\s+\\S+\\s+)\\S+$")]
     private static partial Regex ExemplarTimestamp();
 
-    [GeneratedRegex("(?m)(trace_id|span_id)=\"[^\"]*\"")]
+    [GeneratedRegex("(?m)(trace_{1,2}id|span_{1,2}id)=\"[^\"]*\"")]
     private static partial Regex SpanOrTraceIds();
 
     [GeneratedRegex("telemetry_sdk_version=\"[^\"]*\"")]
     private static partial Regex SdkVersion();
 #else
-    private static Regex CreatedMetric() => new("(?m)^([^\\s]*_created(?:\\{[^}]*\\})?\\s+)\\S+$", RegexOptions.Compiled);
+    private static Regex CreatedMetric() => new("(?m)^((?:[^\\s{]*_created(?:\\{[^}]*\\})?|\\{[^}]*_created[^}]*\\})\\s+)\\S+$", RegexOptions.Compiled);
 
     private static Regex ExemplarTimestamp() => new("(?m)^(.+?\\s#\\s\\{[^}]*\\}\\s+\\S+\\s+)\\S+$", RegexOptions.Compiled);
 
-    private static Regex SpanOrTraceIds() => new("(?m)(trace_id|span_id)=\"[^\"]*\"", RegexOptions.Compiled);
+    private static Regex SpanOrTraceIds() => new("(?m)(trace_{1,2}id|span_{1,2}id)=\"[^\"]*\"", RegexOptions.Compiled);
 
     private static Regex SdkVersion() => new("telemetry_sdk_version=\"[^\"]*\"", RegexOptions.Compiled);
 #endif

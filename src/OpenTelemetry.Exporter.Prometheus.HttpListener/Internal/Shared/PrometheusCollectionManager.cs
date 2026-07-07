@@ -17,11 +17,17 @@ internal sealed class PrometheusCollectionManager
 
     private readonly PrometheusExporter exporter;
     private readonly bool scopeInfoEnabled;
+    private readonly bool targetInfoEnabled;
+    private readonly Func<string, bool>? resourceConstantLabelsFilter;
     private readonly TimeSpan scrapeResponseCacheDuration;
     private readonly long baseTimestamp = Stopwatch.GetTimestamp();
     private readonly PrometheusExporter.ExportFunc onCollectRef;
     private readonly Dictionary<Metric, PrometheusMetric> metricsCache;
+    private readonly int maxBufferSize;
+
     private int metricsCacheCount;
+    private IReadOnlyList<KeyValuePair<string, object>>? resourceConstantLabels;
+    private bool resourceConstantLabelsComputed;
     private int globalLockState;
     private CollectionContext? collectionContext;
     private CollectionContext? onCollectContext;
@@ -31,10 +37,13 @@ internal sealed class PrometheusCollectionManager
     {
         this.exporter = exporter;
         this.scopeInfoEnabled = this.exporter.ScopeInfoEnabled;
+        this.targetInfoEnabled = this.exporter.TargetInfoEnabled;
+        this.resourceConstantLabelsFilter = this.exporter.ResourceConstantLabels;
         this.scrapeResponseCacheDuration = TimeSpan.FromMilliseconds(this.exporter.ScrapeResponseCacheDurationMilliseconds);
         this.onCollectRef = this.OnCollect;
         this.metricsCache = [];
         this.GetElapsedTime = () => Stopwatch.GetElapsedTime(this.baseTimestamp);
+        this.maxBufferSize = this.exporter.MaxScrapeResponseSizeBytes;
     }
 
     internal Func<DateTime> UtcNow { get; set; } = static () => DateTime.UtcNow;
@@ -42,9 +51,9 @@ internal sealed class PrometheusCollectionManager
     internal Func<TimeSpan> GetElapsedTime { get; set; }
 
 #if NET
-    public ValueTask<CollectionResponse> EnterCollect(PrometheusProtocol protocol)
+    public ValueTask<CollectionResponse> EnterCollect(in PrometheusProtocol protocol)
 #else
-    public Task<CollectionResponse> EnterCollect(PrometheusProtocol protocol)
+    public Task<CollectionResponse> EnterCollect(in PrometheusProtocol protocol)
 #endif
     {
         CollectionResponse? cachedResponse = null;
@@ -213,7 +222,7 @@ internal sealed class PrometheusCollectionManager
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void ExitCollect(PrometheusProtocol protocol)
+    public void ExitCollect(in PrometheusProtocol protocol)
         => this.GetProtocolState(protocol).DecrementReaderCount();
 
 #if NET
@@ -259,15 +268,15 @@ internal sealed class PrometheusCollectionManager
         => Interlocked.Exchange(ref this.globalLockState, 0);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void IncrementReaderCount(PrometheusProtocol protocol)
+    private void IncrementReaderCount(in PrometheusProtocol protocol)
         => this.GetProtocolState(protocol).IncrementReaderCount();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool HasActiveReaders(PrometheusProtocol protocol)
+    private bool HasActiveReaders(in PrometheusProtocol protocol)
         => this.protocolStates.TryGetValue(protocol, out var state) && state.HasActiveReaders();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool WaitForReadersToComplete(PrometheusProtocol protocol)
+    private bool WaitForReadersToComplete(in PrometheusProtocol protocol)
     {
         var state = this.GetProtocolState(protocol);
         var didSpin = false;
@@ -347,15 +356,17 @@ internal sealed class PrometheusCollectionManager
             : ExportResult.Failure;
     }
 
-    private bool TryWriteResponse(PrometheusProtocol protocol, PrometheusProtocolState state, in Batch<Metric> metrics)
+    private bool TryWriteResponse(in PrometheusProtocol protocol, PrometheusProtocolState state, in Batch<Metric> metrics)
     {
         try
         {
             var serializer = TextFormatSerializer.GetSerializer(protocol);
 
-            var cursor = this.WriteTargetInfo(serializer, state);
+            var cursor = this.targetInfoEnabled ? this.WriteTargetInfo(serializer, state) : 0;
             var metricStates = this.GetMetricStates(serializer, metrics);
-            var options = new TextFormatSerializerOptions(suppressScopeInfo: !this.scopeInfoEnabled);
+            var options = new TextFormatSerializerOptions(
+                suppressScopeInfo: !this.scopeInfoEnabled,
+                resourceConstantLabels: this.GetResourceConstantLabels());
 
             foreach (var metricState in metricStates)
             {
@@ -422,6 +433,14 @@ internal sealed class PrometheusCollectionManager
         var protocols = executionResult.Protocols ?? collectionContext.FreezeProtocols();
         var responses = new Dictionary<PrometheusProtocol, CollectionResponse>(protocols.Length);
 
+        if (!succeeded && executionResult.Protocols is not null)
+        {
+            foreach (var protocol in protocols)
+            {
+                responses[protocol] = default;
+            }
+        }
+
         if (succeeded)
         {
             var generatedAt = this.UtcNow();
@@ -433,6 +452,7 @@ internal sealed class PrometheusCollectionManager
                 if (successfulProtocols is not null &&
                     !successfulProtocols.Contains(protocol))
                 {
+                    responses[protocol] = default;
                     continue;
                 }
 
@@ -455,7 +475,7 @@ internal sealed class PrometheusCollectionManager
         return new CollectionResult(responses);
     }
 
-    private bool TryGetCachedResponse(PrometheusProtocol protocol, out CollectionResponse response)
+    private bool TryGetCachedResponse(in PrometheusProtocol protocol, out CollectionResponse response)
     {
         if (this.protocolStates.TryGetValue(protocol, out var state) &&
             state.GeneratedAt is { } generatedAt &&
@@ -472,8 +492,38 @@ internal sealed class PrometheusCollectionManager
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private PrometheusProtocolState GetProtocolState(PrometheusProtocol protocol)
-        => this.protocolStates.GetOrAdd(protocol, static _ => new());
+    private PrometheusProtocolState GetProtocolState(in PrometheusProtocol protocol) =>
+#if NET
+        this.protocolStates.GetOrAdd(protocol, static (_, maxBufferSize) => new(maxBufferSize), this.maxBufferSize);
+#else
+        this.protocolStates.GetOrAdd(protocol, (_) => new(this.maxBufferSize));
+#endif
+
+    private IReadOnlyList<KeyValuePair<string, object>>? GetResourceConstantLabels()
+    {
+        if (!this.resourceConstantLabelsComputed)
+        {
+            if (this.resourceConstantLabelsFilter is { } filter)
+            {
+                List<KeyValuePair<string, object>>? labels = null;
+
+                foreach (var attribute in this.exporter.Resource.Attributes)
+                {
+                    if (filter(attribute.Key))
+                    {
+                        labels ??= [];
+                        labels.Add(attribute);
+                    }
+                }
+
+                this.resourceConstantLabels = labels;
+            }
+
+            this.resourceConstantLabelsComputed = true;
+        }
+
+        return this.resourceConstantLabels;
+    }
 
     private int WriteTargetInfo(TextFormatSerializer serializer, PrometheusProtocolState state)
     {
@@ -619,6 +669,7 @@ internal sealed class PrometheusCollectionManager
             this.View = view;
             this.GeneratedAtUtc = generatedAtUtc;
             this.FromCache = fromCache;
+            this.Succeeded = true;
         }
 
         public readonly ArraySegment<byte> View { get; }
@@ -626,6 +677,15 @@ internal sealed class PrometheusCollectionManager
         public readonly DateTime GeneratedAtUtc { get; }
 
         public readonly bool FromCache { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether the collection that produced this response succeeded.
+        /// </summary>
+        /// <remarks>
+        /// Used to distinguish between a successful collection that produced an empty response
+        /// and a failed collection that produced no response.
+        /// </remarks>
+        public readonly bool Succeeded { get; }
     }
 
     private readonly struct CollectionResult
@@ -637,7 +697,7 @@ internal sealed class PrometheusCollectionManager
             this.responses = responses;
         }
 
-        public bool TryGetResponse(PrometheusProtocol protocol, out CollectionResponse response)
+        public bool TryGetResponse(in PrometheusProtocol protocol, out CollectionResponse response)
         {
             if (this.responses?.TryGetValue(protocol, out response) == true)
             {
@@ -736,7 +796,7 @@ internal sealed class PrometheusCollectionManager
         private readonly TaskCompletionSource<CollectionResult> tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
         private bool frozen;
 
-        public CollectionContext(PrometheusProtocol protocol)
+        public CollectionContext(in PrometheusProtocol protocol)
         {
             this.protocols.Add(protocol);
         }
@@ -755,7 +815,7 @@ internal sealed class PrometheusCollectionManager
         public void SetResult(CollectionResult result)
             => this.tcs.SetResult(result);
 
-        public bool TryRegisterProtocol(PrometheusProtocol protocol, bool hasActiveReaders)
+        public bool TryRegisterProtocol(in PrometheusProtocol protocol, bool hasActiveReaders)
         {
             lock (this.gate)
             {
@@ -782,10 +842,15 @@ internal sealed class PrometheusCollectionManager
 
     private sealed class PrometheusProtocolState
     {
-        private const int InitialBufferSize = 85_000; // Encourage the object to live in Large Object Heap (LOH)
-        private const int MaxBufferSize = 100 * 1024 * 1024; // 100 MB
+        private const int InitialBufferSize = PrometheusExporterOptions.InitialScrapeResponseSizeBytes;
+        private readonly int maxBufferSize;
 
         private int readerCount;
+
+        public PrometheusProtocolState(int maxBufferSize)
+        {
+            this.maxBufferSize = Math.Max(maxBufferSize, InitialBufferSize);
+        }
 
         public static ArraySegment<byte> EmptyView { get; } =
 #if NET
@@ -813,12 +878,16 @@ internal sealed class PrometheusCollectionManager
 
         public bool TryExpandBuffer()
         {
-            var newBufferSize = this.Buffer.Length * 2;
-
-            if (newBufferSize > MaxBufferSize)
+            if (this.Buffer.Length >= this.maxBufferSize)
             {
                 return false;
             }
+
+            // Grow by doubling, but never past the configured maximum. Clamping
+            // to the maximum (rather than refusing the grow outright when the
+            // doubled size would overshoot) means the entire configured budget
+            // is usable, with no unreachable remainder.
+            var newBufferSize = (int)Math.Min((long)this.Buffer.Length * 2, this.maxBufferSize);
 
             var expanded = new byte[newBufferSize];
             this.Buffer.CopyTo(expanded, 0);

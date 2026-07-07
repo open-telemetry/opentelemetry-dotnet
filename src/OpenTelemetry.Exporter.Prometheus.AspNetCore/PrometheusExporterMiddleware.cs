@@ -85,21 +85,29 @@ internal sealed class PrometheusExporterMiddleware
             {
                 linkedCts.Token.ThrowIfCancellationRequested();
 
-                var dataView = collectionResponse.View;
-
-                response.StatusCode = StatusCodes.Status200OK;
-
-                if (dataView.Count > 0)
+                if (!collectionResponse.Succeeded)
                 {
-                    response.Headers.Append("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
-                    response.ContentType = PrometheusProtocol.GetContentType(protocol);
-
-                    await WriteResponseAsync(response, dataView.Array.AsMemory(0, dataView.Count), AcceptsGZip(requestHeaders), linkedCts.Token);
+                    PrometheusExporterEventSource.Log.ScrapeFailed();
+                    response.StatusCode = StatusCodes.Status500InternalServerError;
                 }
                 else
                 {
-                    // It's not expected to have no metrics to collect, but it's not necessarily a failure, either.
-                    PrometheusExporterEventSource.Log.NoMetrics();
+                    var dataView = collectionResponse.View;
+
+                    response.StatusCode = StatusCodes.Status200OK;
+
+                    if (dataView.Count > 0)
+                    {
+                        response.Headers.Append("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
+                        response.ContentType = PrometheusProtocol.GetContentType(protocol);
+
+                        await WriteResponseAsync(response, dataView.Array.AsMemory(0, dataView.Count), AcceptsGZip(requestHeaders), linkedCts.Token);
+                    }
+                    else
+                    {
+                        // It's not expected to have no metrics to collect, but it's not necessarily a failure, either.
+                        PrometheusExporterEventSource.Log.NoMetrics();
+                    }
                 }
             }
             catch (OperationCanceledException ex) when (ex.CancellationToken == linkedCts.Token)
@@ -248,24 +256,11 @@ internal sealed class PrometheusExporterMiddleware
 
                 if (escapedValue == null || !supportedEscapingSchemes.Contains(escapedValue))
                 {
-                    // TODO Support other escaping schemes, including at least "allow-utf-8".
-                    // For now we treat "allow-utf-8" as if it were "underscores" to avoid fallback
-                    // to PrometheusText0.0.4 where it would previously match to OpenMetricsText1.0.0.
-                    // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/7246.
-                    if (string.Equals(escapedValue, PrometheusProtocol.AllowUtf8Escaping, StringComparison.Ordinal))
-                    {
-                        escaping = PrometheusProtocol.UnderscoresEscaping;
-                    }
-                    else
-                    {
-                        // Unsupported escaping scheme
-                        return false;
-                    }
+                    // Unsupported escaping scheme
+                    return false;
                 }
-                else
-                {
-                    escaping = escapedValue;
-                }
+
+                escaping = escapedValue;
             }
         }
 
@@ -273,6 +268,7 @@ internal sealed class PrometheusExporterMiddleware
         {
             // Use the oldest version if no version preference was specified
             version = isOpenMetrics ? PrometheusProtocol.OpenMetricsV0 : PrometheusProtocol.PrometheusV0;
+            escaping = null;
         }
         else if (version.Major is not > 0)
         {
