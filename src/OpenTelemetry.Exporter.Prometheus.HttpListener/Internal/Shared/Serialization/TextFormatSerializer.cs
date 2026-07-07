@@ -799,24 +799,21 @@ internal abstract class TextFormatSerializer
 
             if (!options.SuppressScopeInfo)
             {
-                if (!options.SuppressScopeInfo)
+                WriteScopeLabels();
+            }
+
+            if (TryWritePointTags())
+            {
+                if (writeEnclosingBraces)
                 {
-                    WriteScopeLabels();
+                    buffer[cursor++] = unchecked((byte)'}');
+                }
+                else if (wroteLabel)
+                {
+                    buffer[cursor++] = unchecked((byte)',');
                 }
 
-                if (TryWritePointTags())
-                {
-                    if (writeEnclosingBraces)
-                    {
-                        buffer[cursor++] = unchecked((byte)'}');
-                    }
-                    else if (wroteLabel)
-                    {
-                        buffer[cursor++] = unchecked((byte)',');
-                    }
-
-                    return cursor;
-                }
+                return cursor;
             }
         }
 
