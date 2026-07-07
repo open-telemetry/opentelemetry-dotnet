@@ -46,6 +46,14 @@ Notes](../../RELEASENOTES.md).
   `null` (no resource attributes are added as metric labels).
   ([#7471](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7471))
 
+* Add `PrometheusHttpListenerOptions.MaxScrapeResponseSizeBytes` to configure
+  the maximum size of a scrape response. The default is now ~166 MiB.
+  ([#7487](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7487))
+
+* A scrape whose serialized output exceeds the maximum scrape response size
+  limit now responds with HTTP 500.
+  ([#7487](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7487))
+
 ## 1.16.0-beta.1
 
 Released 2026-Jun-10

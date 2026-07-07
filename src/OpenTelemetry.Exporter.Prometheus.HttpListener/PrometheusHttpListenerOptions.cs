@@ -49,6 +49,7 @@ public class PrometheusHttpListenerOptions
         this.Host = host;
         this.Port = port;
         this.ScrapeResponseCacheDurationMilliseconds = 300;
+        this.MaxScrapeResponseSizeBytes = PrometheusExporterOptions.DefaultMaxScrapeResponseSizeBytes;
     }
 
     /// <summary>
@@ -109,6 +110,22 @@ public class PrometheusHttpListenerOptions
     /// regardless of this predicate.
     /// </remarks>
     public Func<string, bool>? ResourceConstantLabels { get; set; }
+
+    /// <summary>
+    /// Gets or sets the maximum size in bytes that a single scrape response is allowed to grow to. Default value: ~166 MiB.
+    /// </summary>
+    /// <remarks>
+    /// Increase this value when exposing a very large number of time series.
+    /// </remarks>
+    public int MaxScrapeResponseSizeBytes
+    {
+        get;
+        set
+        {
+            Guard.ThrowIfOutOfRange(value, min: PrometheusExporterOptions.InitialScrapeResponseSizeBytes);
+            field = value;
+        }
+    }
 
     /// <summary>
     /// Gets or sets an optional callback to apply custom configuration for the

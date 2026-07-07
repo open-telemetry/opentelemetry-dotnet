@@ -449,6 +449,34 @@ public sealed class PrometheusExporterMiddlewareTests
     }
 
     [Fact]
+    public async Task ScrapeExceedingMaxResponseSizeReturns500()
+    {
+        using var host = await StartTestHostAsync(
+            app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
+            configureOptions: o => o.MaxScrapeResponseSizeBytes = PrometheusExporterOptions.InitialScrapeResponseSizeBytes);
+
+        using var meter = new Meter(MeterName, MeterVersion);
+
+        // Emit enough series that the serialized response far exceeds the configured maximum, so
+        // the response buffer cannot grow to hold it and the scrape fails rather than returning a
+        // misleading empty 200 response.
+        for (var x = 0; x < 2_000; x++)
+        {
+            meter.CreateCounter<double>("counter_double_" + x, unit: "By").Add(1);
+        }
+
+        host.Services.GetRequiredService<MeterProvider>().ForceFlush();
+
+        using var client = host.GetTestClient();
+
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
+
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+
+        await host.StopAsync();
+    }
+
+    [Fact]
     public async Task InvokeAsync_WhenNoData_Returns200()
     {
         using var exporter = new PrometheusExporter(new PrometheusExporterOptions());

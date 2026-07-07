@@ -73,5 +73,17 @@ public class PrometheusAspNetCoreOptions
         set => this.ExporterOptions.ResourceConstantLabels = value;
     }
 
+    /// <summary>
+    /// Gets or sets the maximum size in bytes that a single scrape response is allowed to grow to. Default value: ~166 MiB.
+    /// </summary>
+    /// <remarks>
+    /// Increase this value when exposing a very large number of time series.
+    /// </remarks>
+    public int MaxScrapeResponseSizeBytes
+    {
+        get => this.ExporterOptions.MaxScrapeResponseSizeBytes;
+        set => this.ExporterOptions.MaxScrapeResponseSizeBytes = value;
+    }
+
     internal PrometheusExporterOptions ExporterOptions { get; } = new();
 }
