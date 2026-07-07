@@ -1008,9 +1008,10 @@ internal abstract class TextFormatSerializer
 
                 length = cursor;
 
-                if (buffer.Length > Volatile.Read(ref this.serializedTagsBufferHint))
+                var hint = Math.Min(buffer.Length, MaxSerializedTagsBufferSize);
+                if (hint > Volatile.Read(ref this.serializedTagsBufferHint))
                 {
-                    Volatile.Write(ref this.serializedTagsBufferHint, buffer.Length);
+                    Volatile.Write(ref this.serializedTagsBufferHint, hint);
                 }
 
                 return buffer;
