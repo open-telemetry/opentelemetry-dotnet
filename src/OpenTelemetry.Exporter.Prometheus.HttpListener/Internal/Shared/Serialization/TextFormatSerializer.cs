@@ -354,7 +354,7 @@ internal abstract class TextFormatSerializer
         // the scrape immediately rather than repeatedly re-entering this allocation.
         var newBufferSize = currentBufferSize * 2;
 
-        return newBufferSize <= 0 || newBufferSize > MaxSerializedTagsBufferSize
+        return newBufferSize is <= 0 or > MaxSerializedTagsBufferSize
             ? throw new InvalidOperationException("The serialized Prometheus tag set exceeded the maximum supported size.")
             : newBufferSize;
     }
@@ -791,34 +791,43 @@ internal abstract class TextFormatSerializer
         List<(int Start, int Length)>? writtenKeyRanges = null;
         var wroteLabel = false;
 
+        var resourceConstantLabels = options.ResourceConstantLabels;
+        var hasResourceConstantLabels = resourceConstantLabels is { Count: > 0 };
+
         if (writeEnclosingBraces)
         {
             buffer[cursor++] = unchecked((byte)'{');
         }
 
-        if (!quotedNameBytes.IsEmpty)
+        // The fast path writes scope labels and point tags directly to the buffer. It cannot
+        // account for resource constant labels (which may collide with, and therefore need to be
+        // merged with, point tags), so it is skipped whenever any are present.
+        if (!hasResourceConstantLabels)
         {
-            cursor = WriteQuotedName(buffer, cursor, quotedNameBytes, quotedNameSuffix);
-            wroteLabel = true;
-        }
-
-        if (!options.SuppressScopeInfo)
-        {
-            WriteScopeLabels();
-        }
-
-        if (TryWritePointTags())
-        {
-            if (writeEnclosingBraces)
+            if (!quotedNameBytes.IsEmpty)
             {
-                buffer[cursor++] = unchecked((byte)'}');
-            }
-            else if (wroteLabel)
-            {
-                buffer[cursor++] = unchecked((byte)',');
+                cursor = WriteQuotedName(buffer, cursor, quotedNameBytes, quotedNameSuffix);
+                wroteLabel = true;
             }
 
-            return cursor;
+            if (!options.SuppressScopeInfo)
+            {
+                WriteScopeLabels();
+            }
+
+            if (TryWritePointTags())
+            {
+                if (writeEnclosingBraces)
+                {
+                    buffer[cursor++] = unchecked((byte)'}');
+                }
+                else if (wroteLabel)
+                {
+                    buffer[cursor++] = unchecked((byte)',');
+                }
+
+                return cursor;
+            }
         }
 
         cursor = startCursor;
@@ -838,6 +847,14 @@ internal abstract class TextFormatSerializer
         foreach (var tag in tags)
         {
             this.AddLabel(tag.Key, tag.Value, ref labels, reservedOutputKeys);
+        }
+
+        if (hasResourceConstantLabels)
+        {
+            foreach (var resourceLabel in resourceConstantLabels!)
+            {
+                this.AddLabel(resourceLabel.Key, resourceLabel.Value, ref labels, reservedOutputKeys);
+            }
         }
 
         return WriteLabels(buffer, cursor, labels, writeEnclosingBraces, quotedNameBytes, quotedNameSuffix);
@@ -2124,7 +2141,7 @@ internal abstract class TextFormatSerializer
             EscapingScheme.AllowUtf8 => WriteLabelName(buffer, cursor, key),
 
             // The dots and values schemes escape the name and quote it only if a colon survives.
-            _ => WriteEscapedLabelKey(buffer, cursor, key, this.Escaping),
+            EscapingScheme.Dots or EscapingScheme.Values or _ => WriteEscapedLabelKey(buffer, cursor, key, this.Escaping),
         };
     }
 

@@ -902,7 +902,9 @@ public struct MetricPoint
     /// <returns><see langword="true"/> if there is unexported data; otherwise, <see langword="false"/>.</returns>
     internal bool HasUnexportedData()
     {
+#pragma warning disable IDE0066 // Convert switch statement to expression
         switch (this.aggType)
+#pragma warning restore IDE0066 // Convert switch statement to expression
         {
             case AggregationType.LongSumIncomingDelta:
             case AggregationType.LongSumIncomingCumulative:
@@ -918,6 +920,13 @@ public struct MetricPoint
             case AggregationType.DoubleGauge:
                 return InterlockedHelper.Read(ref this.runningValue.AsDouble) != this.snapshotValue.AsDouble;
 
+            case AggregationType.Base2ExponentialHistogram:
+            case AggregationType.Base2ExponentialHistogramWithMinMax:
+            case AggregationType.Histogram:
+            case AggregationType.HistogramWithBuckets:
+            case AggregationType.HistogramWithMinMax:
+            case AggregationType.HistogramWithMinMaxBuckets:
+            case AggregationType.Invalid:
             default:
                 // Histogram aggregations reset the running count to zero on each delta snapshot, so
                 // a non-zero running count means measurements have been recorded since the last

@@ -53,7 +53,7 @@ public class ProtobufOtlpMetricSerializerBenchmarks
 
         this.meterProvider.ForceFlush();
 
-        this.capturedMetrics = collected.ToArray();
+        this.capturedMetrics = [.. collected];
         this.batch = new Batch<Metric>(this.capturedMetrics, this.capturedMetrics.Length);
     }
 

@@ -49,6 +49,7 @@ public class PrometheusHttpListenerOptions
         this.Host = host;
         this.Port = port;
         this.ScrapeResponseCacheDurationMilliseconds = 300;
+        this.MaxScrapeResponseSizeBytes = PrometheusExporterOptions.DefaultMaxScrapeResponseSizeBytes;
     }
 
     /// <summary>
@@ -98,6 +99,33 @@ public class PrometheusHttpListenerOptions
     /// Default value: <see langword="true"/>.
     /// </summary>
     public bool TargetInfoEnabled { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets a predicate used to select which resource attributes are added to each metric as constant labels.
+    /// The predicate is invoked with the resource attribute key and should return <see langword="true"/> to include the
+    /// attribute. Default value: <see langword="null"/> (no resource attributes are added as metric labels).
+    /// </summary>
+    /// <remarks>
+    /// Note: Resource attributes copied as metric labels are always included in the <c>target_info</c> metric
+    /// regardless of this predicate.
+    /// </remarks>
+    public Func<string, bool>? ResourceConstantLabels { get; set; }
+
+    /// <summary>
+    /// Gets or sets the maximum size in bytes that a single scrape response is allowed to grow to. Default value: ~166 MiB.
+    /// </summary>
+    /// <remarks>
+    /// Increase this value when exposing a very large number of time series.
+    /// </remarks>
+    public int MaxScrapeResponseSizeBytes
+    {
+        get;
+        set
+        {
+            Guard.ThrowIfOutOfRange(value, min: PrometheusExporterOptions.InitialScrapeResponseSizeBytes);
+            field = value;
+        }
+    }
 
     /// <summary>
     /// Gets or sets an optional callback to apply custom configuration for the

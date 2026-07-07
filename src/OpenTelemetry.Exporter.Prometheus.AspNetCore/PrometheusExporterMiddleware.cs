@@ -85,21 +85,29 @@ internal sealed class PrometheusExporterMiddleware
             {
                 linkedCts.Token.ThrowIfCancellationRequested();
 
-                var dataView = collectionResponse.View;
-
-                response.StatusCode = StatusCodes.Status200OK;
-
-                if (dataView.Count > 0)
+                if (!collectionResponse.Succeeded)
                 {
-                    response.Headers.Append("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
-                    response.ContentType = PrometheusProtocol.GetContentType(protocol);
-
-                    await WriteResponseAsync(response, dataView.Array.AsMemory(0, dataView.Count), AcceptsGZip(requestHeaders), linkedCts.Token);
+                    PrometheusExporterEventSource.Log.ScrapeFailed();
+                    response.StatusCode = StatusCodes.Status500InternalServerError;
                 }
                 else
                 {
-                    // It's not expected to have no metrics to collect, but it's not necessarily a failure, either.
-                    PrometheusExporterEventSource.Log.NoMetrics();
+                    var dataView = collectionResponse.View;
+
+                    response.StatusCode = StatusCodes.Status200OK;
+
+                    if (dataView.Count > 0)
+                    {
+                        response.Headers.Append("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
+                        response.ContentType = PrometheusProtocol.GetContentType(protocol);
+
+                        await WriteResponseAsync(response, dataView.Array.AsMemory(0, dataView.Count), AcceptsGZip(requestHeaders), linkedCts.Token);
+                    }
+                    else
+                    {
+                        // It's not expected to have no metrics to collect, but it's not necessarily a failure, either.
+                        PrometheusExporterEventSource.Log.NoMetrics();
+                    }
                 }
             }
             catch (OperationCanceledException ex) when (ex.CancellationToken == linkedCts.Token)
