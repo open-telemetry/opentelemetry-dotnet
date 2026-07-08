@@ -9,5 +9,5 @@ permissions: {}
 jobs:
   welcome:
     permissions:
-      contents: write # To post the welcome comment
+      pull-requests: write # To post the welcome comment
     uses: open-telemetry/shared-workflows/.github/workflows/first-time-pr.yml@2192ef0cade1b727dafcc3ebba58713281059653 # v0.1.0
