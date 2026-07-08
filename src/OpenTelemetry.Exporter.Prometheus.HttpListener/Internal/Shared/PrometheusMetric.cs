@@ -269,11 +269,12 @@ internal sealed class PrometheusMetric
         if (!appendSuffixes)
         {
             // The suffix axis is disabled, so no unit suffix and no '_total' counter suffix are
-            // appended. Only the escaping axis (underscore sanitization) is applied. Because the
-            // three names differ only in the suffixes they carry, they collapse to the escaped
-            // name. Note that even OpenMetrics counters do not receive the '_total' suffix that
-            // the format would otherwise mandate; this is the caller's explicit choice not to
-            // translate names.
+            // appended; only the escaping axis (underscore sanitization) is applied. As in the
+            // with-suffixes path below, the classic name is sanitized with SanitizeMetricName and
+            // the OpenMetrics names with EscapeOpenMetricsName; without suffixes to distinguish
+            // them the OpenMetrics name and its metadata name are the same. Note that even
+            // OpenMetrics counters do not receive the '_total' suffix that the format would
+            // otherwise mandate; this is the caller's explicit choice not to translate names.
             var escapedName = EscapeOpenMetricsName(name);
             return new(sanitizedName, escapedName, escapedName);
         }
