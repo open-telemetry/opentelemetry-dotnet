@@ -35,6 +35,7 @@ internal sealed class PrometheusExporterOptions
         this.ScrapeResponseCacheDurationMilliseconds = 300;
         this.TargetInfoEnabled = true;
         this.MaxScrapeResponseSizeBytes = DefaultMaxScrapeResponseSizeBytes;
+        this.TranslationStrategy = PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes;
     }
 
     /// <summary>
@@ -66,9 +67,16 @@ internal sealed class PrometheusExporterOptions
     public bool TargetInfoEnabled { get; set; }
 
     /// <summary>
-    /// Gets or sets a value indicating whether addition of _total suffix for counter metric names is disabled. Default value: <see langword="false"/>.
+    /// Gets or sets a value indicating whether addition of <c>_total</c> suffix for
+    /// counter metric names is disabled. Default value: <see langword="false"/>.
     /// </summary>
     public bool DisableTotalNameSuffixForCounters { get; set; }
+
+    /// <summary>
+    /// Gets or sets the strategy used to translate OpenTelemetry metric and label names into
+    /// Prometheus names. Default value: <see cref="PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes"/>.
+    /// </summary>
+    public PrometheusTranslationStrategy TranslationStrategy { get; set; }
 
     /// <summary>
     /// Gets or sets a predicate used to select which resource attributes are added to each metric as constant labels.
