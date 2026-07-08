@@ -1,0 +1,13 @@
+name: First time contributor
+
+on:
+  pull_request_target: # zizmor: ignore[dangerous-triggers] Only code from the main branch is executed
+    types: [opened]
+
+permissions: {}
+
+jobs:
+  welcome:
+    permissions:
+      pull-requests: write # To post the welcome comment
+    uses: open-telemetry/shared-workflows/.github/workflows/first-time-pr.yml@2192ef0cade1b727dafcc3ebba58713281059653 # v0.1.0
