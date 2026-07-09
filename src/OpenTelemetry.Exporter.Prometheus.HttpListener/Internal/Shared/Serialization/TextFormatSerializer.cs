@@ -38,6 +38,19 @@ internal abstract class TextFormatSerializer
     // from forcing unbounded scratch-buffer allocations during a scrape.
     internal const int MaxSerializedTagsBufferSize = 100 * 1024 * 1024;
 
+    // The remembered starting size (serializedTagsBufferHint) is capped far below the
+    // 100 MiB safety limit so that a single transient oversized tag set cannot permanently
+    // inflate the buffer that every subsequent histogram point rents. 1 MiB matches the
+    // largest array ArrayPool<byte>.Shared pools by default, so the remembered hint is always
+    // served from the pool rather than freshly allocating a large array on each scrape.
+    internal const int MaxSerializedTagsBufferHint = 1024 * 1024;
+
+    // Upper bound on the number of times the tag serialization buffer is grown before giving up.
+    // Each retry at least doubles the buffer, which is itself capped at MaxSerializedTagsBufferSize
+    // (100 MiB, ~27 doublings from a single byte), so this is a safety backstop that guarantees
+    // the growth loop terminates and never triggers under legitimate input.
+    internal const int MaxSerializedTagsBufferGrowthAttempts = 32;
+
     protected const byte AsciiQuotationMark = 0x22; // '"'
     protected const byte AsciiReverseSolidus = 0x5C; // '\\'
     protected const byte AsciiLineFeed = 0x0A; // `\n`
@@ -986,40 +999,69 @@ internal abstract class TextFormatSerializer
         var pool = ArrayPool<byte>.Shared;
         var buffer = pool.Rent(Volatile.Read(ref this.serializedTagsBufferHint));
 
-        while (true)
+        // Ownership of the rented buffer transfers to the caller only on the successful return
+        // path; until then this method is responsible for returning it to the pool. Without this,
+        // a non-retryable exception from WriteTags, or GetNextSerializedTagsBufferSize throwing at
+        // the cap, would leak the current (potentially oversized) array and churn the large-object
+        // heap on every repeated oversized tag set.
+        var ownsBuffer = true;
+
+        try
         {
-            try
+            // The buffer at least doubles on each retry and GetNextSerializedTagsBufferSize
+            // throws once growth would exceed the 100 MiB cap, so the loop is already bounded.
+            // This explicit attempt cap is a guard that guarantees termination even if WriteTags
+            // were to keep faulting without the buffer actually being too small.
+            for (var attempt = 0; attempt < MaxSerializedTagsBufferGrowthAttempts; attempt++)
             {
-                var cursor = this.WriteTags(
-                    buffer,
-                    0,
-                    metric,
-                    tags,
-                    options,
-                    writeEnclosingBraces: false,
-                    reservedOutputKeys: reservedOutputKeys);
-
-                if (cursor > 0 && buffer[cursor - 1] == unchecked((byte)','))
+                try
                 {
-                    cursor--;
+                    var cursor = this.WriteTags(
+                        buffer,
+                        0,
+                        metric,
+                        tags,
+                        options,
+                        writeEnclosingBraces: false,
+                        reservedOutputKeys: reservedOutputKeys);
+
+                    if (cursor > 0 && buffer[cursor - 1] == unchecked((byte)','))
+                    {
+                        cursor--;
+                    }
+
+                    length = cursor;
+
+                    // The remembered hint is capped well below the 100 MiB safety limit so that a
+                    // single oversized tag set cannot force every later point to rent a huge buffer.
+                    var hint = Math.Min(buffer.Length, MaxSerializedTagsBufferHint);
+                    if (hint > Volatile.Read(ref this.serializedTagsBufferHint))
+                    {
+                        Volatile.Write(ref this.serializedTagsBufferHint, hint);
+                    }
+
+                    ownsBuffer = false;
+                    return buffer;
                 }
-
-                length = cursor;
-
-                var hint = Math.Min(buffer.Length, MaxSerializedTagsBufferSize);
-                if (hint > Volatile.Read(ref this.serializedTagsBufferHint))
+                catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
                 {
-                    Volatile.Write(ref this.serializedTagsBufferHint, hint);
-                }
+                    // Rent the larger buffer before returning the current one so that a throw from
+                    // GetNextSerializedTagsBufferSize (at the cap) leaves the current buffer owned
+                    // and returned exactly once by the outer finally.
+                    var next = pool.Rent(GetNextSerializedTagsBufferSize(buffer.Length));
 
-                return buffer;
+                    pool.Return(buffer);
+                    buffer = next;
+                }
             }
-            catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
-            {
-                var nextBufferSize = GetNextSerializedTagsBufferSize(buffer.Length);
 
+            throw new InvalidOperationException("The serialized Prometheus tag set could not be written within the maximum number of buffer-growth attempts.");
+        }
+        finally
+        {
+            if (ownsBuffer)
+            {
                 pool.Return(buffer);
-                buffer = pool.Rent(nextBufferSize);
             }
         }
     }
