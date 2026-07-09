@@ -24,7 +24,7 @@ internal sealed class PrometheusMetric
         this.appendSuffixes = appendSuffixes;
         this.Type = type;
 
-        var sanitizedUnit = string.IsNullOrEmpty(unit) ? null : GetUnit(unit);
+        var sanitizedUnit = appendSuffixes && !string.IsNullOrEmpty(unit) ? GetUnit(unit) : null;
         this.Unit = sanitizedUnit;
         this.UnitBytes = sanitizedUnit == null ? null : ConvertToBytes(sanitizedUnit);
 

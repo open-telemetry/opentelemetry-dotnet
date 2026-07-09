@@ -543,6 +543,20 @@ public sealed class PrometheusMetricTests
     }
 
     [Fact]
+    public void AppendSuffixes_False_DropsUnitMetadata()
+    {
+        var metric = new PrometheusMetric(
+            "http.server.duration",
+            "s",
+            PrometheusType.Counter,
+            disableTotalNameSuffixForCounters: false,
+            appendSuffixes: false);
+
+        Assert.Null(metric.Unit);
+        Assert.Null(metric.UnitBytes);
+    }
+
+    [Fact]
     public void AppendSuffixes_False_Underscores_PreservesUserAuthoredTotalSuffix()
     {
         // "without suffixes" means suffixes are not added; a '_total' the user authored is not removed.
