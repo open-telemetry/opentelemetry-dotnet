@@ -129,6 +129,11 @@ internal abstract class TextFormatSerializer
     /// </summary>
     protected abstract string TargetInfoTypeValue { get; }
 
+    /// <summary>
+    /// Gets a value indicating whether double-quote characters in <c>HELP</c> text must be escaped.
+    /// </summary>
+    protected abstract bool EscapeHelpQuotationMarks { get; }
+
     public static TextFormatSerializer GetSerializer(in PrometheusProtocol protocol)
     {
         var escaping = protocol.EscapingScheme;
@@ -150,14 +155,7 @@ internal abstract class TextFormatSerializer
         };
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteEof(byte[] buffer, int cursor)
-    {
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# EOF");
-        buffer[cursor++] = AsciiLineFeed;
-
-        return cursor;
-    }
+    public virtual int WriteEof(byte[] buffer, int cursor) => cursor;
 
     public int WriteMetric(
         byte[] buffer,
@@ -1104,7 +1102,7 @@ internal abstract class TextFormatSerializer
         if (!string.IsNullOrEmpty(metricDescription))
         {
             buffer[cursor++] = unchecked((byte)' ');
-            cursor = WriteUnicodeString(buffer, cursor, metricDescription);
+            cursor = WriteEscapedString(buffer, cursor, metricDescription, this.EscapeHelpQuotationMarks);
         }
 
         buffer[cursor++] = AsciiLineFeed;
@@ -1129,8 +1127,7 @@ internal abstract class TextFormatSerializer
         return cursor;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal int WriteUnitMetadata(byte[] buffer, int cursor, PrometheusMetric metric, string? unit)
+    internal virtual int WriteUnitMetadata(byte[] buffer, int cursor, PrometheusMetric metric, string? unit)
     {
         if (string.IsNullOrEmpty(unit))
         {

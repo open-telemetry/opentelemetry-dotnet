@@ -48,6 +48,22 @@ Notes](../../RELEASENOTES.md).
   limit now responds with HTTP 500.
   ([#7487](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7487))
 
+* Fixed the Prometheus text exposition format emitting redundant comments.
+  ([#7491](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7491))
+
+* Made `Accept` header content negotiation consistent with the
+  `PrometheusHttpListener` endpoint.
+  ([#7491](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7491))
+
+* Fixed `# HELP` metadata not escaping double-quote characters for the
+  OpenMetrics text format.
+  ([#7491](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7491))
+
+* Fixed content negotiation defaulting to OpenMetrics 0.0.1 instead of 1.0.0
+  when an `application/openmetrics-text` `Accept` header entry does not
+  specify a `version` parameter.
+  ([#7491](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7491))
+
 ## 1.16.0-beta.1
 
 Released 2026-Jun-10
