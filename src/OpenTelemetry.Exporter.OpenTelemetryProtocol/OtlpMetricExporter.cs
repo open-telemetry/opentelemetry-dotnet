@@ -25,10 +25,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
 
     private readonly OtlpExporterTransmissionHandler transmissionHandler;
     private readonly int startWritePosition;
-
-    // Tracks the buffer size required by the most recent export so the next
-    // export can rent a right-sized buffer from the pool and avoid resizing.
-    private int bufferSize = InitialBufferSize;
+    private readonly SerializationBuffer serializationBuffer = new(InitialBufferSize);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OtlpMetricExporter"/> class.
@@ -74,13 +71,9 @@ public class OtlpMetricExporter : BaseExporter<Metric>
 
         try
         {
-            buffer = ProtobufSerializer.RentBuffer(this.bufferSize);
+            buffer = this.serializationBuffer.Rent();
 
             var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, this.startWritePosition, this.Resource, metrics);
-
-            // Remember the (possibly grown) capacity so the next export can rent a
-            // buffer large enough to avoid resizing.
-            this.bufferSize = buffer.Length;
 
             if (this.startWritePosition == GrpcStartWritePosition)
             {
@@ -109,7 +102,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
         {
             if (buffer != null)
             {
-                ProtobufSerializer.ReturnBuffer(buffer);
+                this.serializationBuffer.Return(buffer);
             }
         }
 

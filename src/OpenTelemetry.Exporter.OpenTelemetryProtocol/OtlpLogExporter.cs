@@ -27,10 +27,7 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
     private readonly ExperimentalOptions experimentalOptions;
     private readonly OtlpExporterTransmissionHandler transmissionHandler;
     private readonly int startWritePosition;
-
-    // Tracks the buffer size required by the most recent export so the next
-    // export can rent a right-sized buffer from the pool and avoid resizing.
-    private int bufferSize = InitialBufferSize;
+    private readonly SerializationBuffer serializationBuffer = new(InitialBufferSize);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OtlpLogExporter"/> class.
@@ -80,7 +77,7 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
 
         try
         {
-            buffer = ProtobufSerializer.RentBuffer(this.bufferSize);
+            buffer = this.serializationBuffer.Rent();
 
             var writePosition = ProtobufOtlpLogSerializer.WriteLogsData(
                 ref buffer,
@@ -89,10 +86,6 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
                 this.experimentalOptions,
                 this.Resource,
                 logRecordBatch);
-
-            // Remember the (possibly grown) capacity so the next export can rent a
-            // buffer large enough to avoid resizing.
-            this.bufferSize = buffer.Length;
 
             if (this.startWritePosition == GrpcStartWritePosition)
             {
@@ -121,7 +114,7 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
         {
             if (buffer != null)
             {
-                ProtobufSerializer.ReturnBuffer(buffer);
+                this.serializationBuffer.Return(buffer);
             }
         }
 

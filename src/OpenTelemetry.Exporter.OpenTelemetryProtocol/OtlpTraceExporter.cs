@@ -26,10 +26,7 @@ public class OtlpTraceExporter : BaseExporter<Activity>
     private readonly SdkLimitOptions sdkLimitOptions;
     private readonly OtlpExporterTransmissionHandler transmissionHandler;
     private readonly int startWritePosition;
-
-    // Tracks the buffer size required by the most recent export so the next
-    // export can rent a right-sized buffer from the pool and avoid resizing.
-    private int bufferSize = InitialBufferSize;
+    private readonly SerializationBuffer serializationBuffer = new(InitialBufferSize);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OtlpTraceExporter"/> class.
@@ -78,7 +75,7 @@ public class OtlpTraceExporter : BaseExporter<Activity>
 
         try
         {
-            buffer = ProtobufSerializer.RentBuffer(this.bufferSize);
+            buffer = this.serializationBuffer.Rent();
 
             var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(
                 ref buffer,
@@ -86,10 +83,6 @@ public class OtlpTraceExporter : BaseExporter<Activity>
                 this.sdkLimitOptions,
                 this.Resource,
                 activityBatch);
-
-            // Remember the (possibly grown) capacity so the next export can rent a
-            // buffer large enough to avoid resizing.
-            this.bufferSize = buffer.Length;
 
             if (this.startWritePosition == GrpcStartWritePosition)
             {
@@ -118,7 +111,7 @@ public class OtlpTraceExporter : BaseExporter<Activity>
         {
             if (buffer != null)
             {
-                ProtobufSerializer.ReturnBuffer(buffer);
+                this.serializationBuffer.Return(buffer);
             }
         }
 
