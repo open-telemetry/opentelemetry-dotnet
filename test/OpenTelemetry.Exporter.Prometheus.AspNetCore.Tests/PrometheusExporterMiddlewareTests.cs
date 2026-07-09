@@ -556,6 +556,84 @@ public sealed class PrometheusExporterMiddlewareTests
     }
 
     [Fact]
+    public async Task RunWithNoTranslationStrategyAndNegotiatedUnderscoreEscaping()
+    {
+        using var host = await StartTestHostAsync(
+            app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
+            configureOptions: o =>
+            {
+                o.TranslationStrategy = PrometheusTranslationStrategy.NoTranslation;
+                o.ScopeInfoEnabled = false;
+                o.TargetInfoEnabled = false;
+            });
+
+        using var meter = new Meter(MeterName, MeterVersion);
+        meter.CreateCounter<long>("http.server.requests", unit: "By")
+            .Add(5, new KeyValuePair<string, object?>("http.host", "localhost"));
+
+        host.Services.GetRequiredService<MeterProvider>().ForceFlush();
+
+        using var client = host.GetTestClient();
+
+        // The exporter is configured with NoTranslation (UTF-8 passthrough), but the client
+        // negotiates escaping=underscores. Content negotiation must take precedence for the
+        // rendered escaping, so the metric and label names are underscore-escaped even though the
+        // configured strategy would otherwise pass them through as UTF-8. The suffix axis is not
+        // negotiated, so no unit or '_total' suffixes are added.
+        client.DefaultRequestHeaders.Add("Accept", "text/plain; version=1.0.0; escaping=underscores");
+
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
+        var output = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings();
+
+        await host.StopAsync();
+
+        Assert.Equal(
+            "text/plain; version=1.0.0; charset=utf-8; escaping=underscores",
+            response.Content.Headers.ContentType!.ToString());
+
+        await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
+    }
+
+    [Fact]
+    public async Task RunWithUnderscoreEscapingWithSuffixesStrategyAndNegotiatedAllowUtf8Escaping()
+    {
+        using var host = await StartTestHostAsync(
+            app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
+            configureOptions: o =>
+            {
+                o.TranslationStrategy = PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes;
+                o.ScopeInfoEnabled = false;
+                o.TargetInfoEnabled = false;
+            });
+
+        using var meter = new Meter(MeterName, MeterVersion);
+        meter.CreateCounter<long>("http.server.requests", unit: "By")
+            .Add(5, new KeyValuePair<string, object?>("http.host", "localhost"));
+
+        host.Services.GetRequiredService<MeterProvider>().ForceFlush();
+
+        using var client = host.GetTestClient();
+
+        // The exporter is configured with UnderscoreEscapingWithSuffixes, but the client negotiates
+        // escaping=allow-utf-8. Content negotiation must take precedence for the rendered escaping,
+        // so the names pass through as UTF-8 even though the configured strategy would otherwise
+        // underscore-escape them. The suffix axis is not negotiated, so the unit and '_total'
+        // suffixes (the configured translation) are retained.
+        client.DefaultRequestHeaders.Add("Accept", "text/plain; version=1.0.0; escaping=allow-utf-8");
+
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
+        var output = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings();
+
+        await host.StopAsync();
+
+        Assert.Equal(
+            "text/plain; version=1.0.0; charset=utf-8; escaping=allow-utf-8",
+            response.Content.Headers.ContentType!.ToString());
+
+        await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
+    }
+
+    [Fact]
     public async Task BufferSizeIncreasesWithLotOfMetrics()
     {
         using var host = await StartTestHostAsync(
