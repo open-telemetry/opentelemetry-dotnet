@@ -1,5 +1,4 @@
 # TYPE "http.花火.🚀.requests_seconds" histogram
-# UNIT "http.花火.🚀.requests_seconds" seconds
 # HELP "http.花火.🚀.requests_seconds" Duration of HTTP server requests.
 {"http.花火.🚀.requests_seconds_bucket",otel_scope_name="WriteMetric_SerializesMultibyteUtf8MetricNameProvidedByView","http.method"="GET",le="5"} 1
 {"http.花火.🚀.requests_seconds_bucket",otel_scope_name="WriteMetric_SerializesMultibyteUtf8MetricNameProvidedByView","http.method"="GET",le="10"} 2
