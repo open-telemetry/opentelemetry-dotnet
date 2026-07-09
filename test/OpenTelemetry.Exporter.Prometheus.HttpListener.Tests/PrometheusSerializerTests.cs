@@ -199,6 +199,34 @@ public sealed partial class PrometheusSerializerTests
     }
 
     [Fact]
+    public async Task CounterWithUnitAndSuffixesDisabled()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        meter.CreateCounter<long>("http.server.duration", unit: "s").Add(1);
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(
+            buffer,
+            0,
+            metrics[0],
+            useOpenMetrics: true,
+            suppressScopeInfo: true,
+            appendSuffixes: false);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        await Verify(output, "txt", VerifySettings);
+    }
+
+    [Fact]
     public async Task GaugeOneDimension()
     {
         var buffer = new byte[85000];
@@ -2196,10 +2224,16 @@ public sealed partial class PrometheusSerializerTests
         }
     }
 
-    private static int WriteMetric(byte[] buffer, int cursor, Metric metric, bool useOpenMetrics, bool suppressScopeInfo = false)
+    private static int WriteMetric(
+        byte[] buffer,
+        int cursor,
+        Metric metric,
+        bool useOpenMetrics,
+        bool suppressScopeInfo = false,
+        bool appendSuffixes = true)
     {
         TextFormatSerializer serializer = useOpenMetrics ? TextFormatSerializer.OpenMetricsV1 : TextFormatSerializer.PrometheusV1;
-        var prometheusMetric = PrometheusMetric.Create(metric, disableTotalNameSuffixForCounters: false);
+        var prometheusMetric = PrometheusMetric.Create(metric, disableTotalNameSuffixForCounters: false, appendSuffixes);
         var options = new TextFormatSerializerOptions(suppressScopeInfo, null);
 
         return serializer.WriteMetric(
