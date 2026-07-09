@@ -291,7 +291,7 @@ jobs:
         }
 
     - name: Publish MyGet
-      working-directory: ./artifacts/package/release
+      working-directory: ./artifacts
       env:
         MYGET_TOKEN_EXISTS: ${{ secrets.MYGET_TOKEN != '' }}
         NUGET_API_KEY: ${{ secrets.MYGET_TOKEN }}
