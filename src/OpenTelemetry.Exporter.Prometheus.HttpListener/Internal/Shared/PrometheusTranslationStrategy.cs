@@ -7,7 +7,7 @@ namespace OpenTelemetry.Exporter;
 /// Controls how OpenTelemetry metric and label names are translated into Prometheus names.
 /// </summary>
 /// <remarks>
-/// This models the OpenTelemetry specification's <c>translation_strategy</c> option as a 2×2 matrix
+/// This models the OpenTelemetry specification's <c>translation_strategy</c> option as a 2x2 matrix
 /// over an escaping axis (escape discouraged characters to <c>_</c> versus pass UTF-8 through
 /// unaltered) and a suffix axis (append unit and type suffixes versus not).
 /// </remarks>
