@@ -66,6 +66,10 @@ Notes](../../RELEASENOTES.md).
   specify a `version` parameter.
   ([#7491](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7491))
 
+* Added `PrometheusAspNetCoreOptions.TranslationStrategy` to control how
+  OpenTelemetry metric and label names are translated into Prometheus names.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.16.0-beta.1
 
 Released 2026-Jun-10
