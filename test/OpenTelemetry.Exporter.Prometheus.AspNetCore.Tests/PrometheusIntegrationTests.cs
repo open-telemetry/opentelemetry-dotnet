@@ -120,7 +120,8 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
         var content = await reader.ReadToEndAsync();
 
         Assert.NotEmpty(content);
-        Assert.EndsWith("# EOF\n", content, StringComparison.Ordinal);
+        Assert.DoesNotContain("# EOF", content, StringComparison.Ordinal);
+        Assert.EndsWith("\n", content, StringComparison.Ordinal);
     }
 
     [Fact]
