@@ -273,7 +273,7 @@ internal sealed class PrometheusExporterMiddleware
         // "the standard" begins at 1.0.0 (0.0.1 predates the standard being ratified), so servers
         // MUST default to OpenMetrics 1.0.0 for an unversioned "application/openmetrics-text" entry.
         // The Prometheus text media type is unaffected by that rule and still falls back to 0.0.4.
-        version = isOpenMetrics ? PrometheusProtocol.OpenMetricsV1 : PrometheusProtocol.PrometheusV0;
+        version ??= isOpenMetrics ? PrometheusProtocol.OpenMetricsV1 : PrometheusProtocol.PrometheusV0;
 
         if (version.Major is not > 0)
         {
