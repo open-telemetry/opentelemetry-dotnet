@@ -5,4 +5,3 @@ target_info{service_name="prometheus",telemetry_sdk_name="opentelemetry",telemet
 # HELP test_metric_total Test help
 test_metric_total{otel_scope_name="MetricMetadataDiscoveredLaterIsWrittenBeforeSamples",source="b"} 2
 test_metric_total{otel_scope_name="MetricMetadataDiscoveredLaterIsWrittenBeforeSamples",source="a"} 1
-# EOF

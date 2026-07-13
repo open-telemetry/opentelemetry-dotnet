@@ -199,6 +199,34 @@ public sealed partial class PrometheusSerializerTests
     }
 
     [Fact]
+    public async Task CounterWithUnitAndSuffixesDisabled()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        meter.CreateCounter<long>("http.server.duration", unit: "s").Add(1);
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(
+            buffer,
+            0,
+            metrics[0],
+            useOpenMetrics: true,
+            suppressScopeInfo: true,
+            appendSuffixes: false);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        await Verify(output, "txt", VerifySettings);
+    }
+
+    [Fact]
     public async Task GaugeOneDimension()
     {
         var buffer = new byte[85000];
@@ -1664,6 +1692,35 @@ public sealed partial class PrometheusSerializerTests
         Assert.Equal(expected, actual);
     }
 
+    [Fact]
+    public void WriteHelpMetadataDoesNotEscapeQuotationMarksForPrometheusText()
+    {
+        var buffer = new byte[128];
+        var metric = new PrometheusMetric("test_metric", string.Empty, PrometheusType.Gauge, disableTotalNameSuffixForCounters: false);
+
+        var cursor = TextFormatSerializer.PrometheusV1.WriteHelpMetadata(buffer, 0, metric, "A \"quoted\" description");
+        var actual = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        // The Prometheus text exposition format only requires escaping the backslash and line feed
+        // characters in HELP text, so double quotes are written unescaped.
+        Assert.Equal("# HELP test_metric A \"quoted\" description\n", actual);
+    }
+
+    [Fact]
+    public void WriteHelpMetadataEscapesQuotationMarksForOpenMetrics()
+    {
+        var buffer = new byte[128];
+        var metric = new PrometheusMetric("test_metric", string.Empty, PrometheusType.Gauge, disableTotalNameSuffixForCounters: false);
+
+        var cursor = TextFormatSerializer.OpenMetricsV1.WriteHelpMetadata(buffer, 0, metric, "A \"quoted\" description");
+        var actual = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        // Per the OpenMetrics 1.0.0 ABNF, double quotes are excluded from "normal-char" and MUST be
+        // escaped as \" within an "escaped-string" (which HELP text is), unlike the classic Prometheus
+        // text format. See https://prometheus.io/docs/specs/om/open_metrics_spec/#escaping.
+        Assert.Equal("# HELP test_metric A \\\"quoted\\\" description\n", actual);
+    }
+
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
@@ -1721,9 +1778,20 @@ public sealed partial class PrometheusSerializerTests
         var buffer = new byte[64];
         var metric = new PrometheusMetric("test", string.Empty, PrometheusType.Gauge, disableTotalNameSuffixForCounters: false);
 
-        var cursor = TextFormatSerializer.PrometheusV1.WriteUnitMetadata(buffer, 0, metric, "seconds");
+        var cursor = TextFormatSerializer.OpenMetricsV1.WriteUnitMetadata(buffer, 0, metric, "seconds");
 
         Assert.Equal("# UNIT test seconds\n", Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Fact]
+    public void WriteUnitMetadataIsNotWrittenForPrometheusTextFormat()
+    {
+        var buffer = new byte[64];
+        var metric = new PrometheusMetric("test", string.Empty, PrometheusType.Gauge, disableTotalNameSuffixForCounters: false);
+
+        var cursor = TextFormatSerializer.PrometheusV1.WriteUnitMetadata(buffer, 0, metric, "seconds");
+
+        Assert.Equal(0, cursor);
     }
 
     [Fact]
@@ -2156,10 +2224,16 @@ public sealed partial class PrometheusSerializerTests
         }
     }
 
-    private static int WriteMetric(byte[] buffer, int cursor, Metric metric, bool useOpenMetrics, bool suppressScopeInfo = false)
+    private static int WriteMetric(
+        byte[] buffer,
+        int cursor,
+        Metric metric,
+        bool useOpenMetrics,
+        bool suppressScopeInfo = false,
+        bool appendSuffixes = true)
     {
         TextFormatSerializer serializer = useOpenMetrics ? TextFormatSerializer.OpenMetricsV1 : TextFormatSerializer.PrometheusV1;
-        var prometheusMetric = PrometheusMetric.Create(metric, disableTotalNameSuffixForCounters: false);
+        var prometheusMetric = PrometheusMetric.Create(metric, disableTotalNameSuffixForCounters: false, appendSuffixes);
         var options = new TextFormatSerializerOptions(suppressScopeInfo, null);
 
         return serializer.WriteMetric(

@@ -27,7 +27,7 @@ Describe "AddLabelsOnIssuesForPackageFoundInBody" {
             -issueNumber 123 `
             -issueBody "## Package`n`nOpenTelemetry.Exporter.Console"
 
-        Should -Invoke -CommandName "gh" -ModuleName "add-labels" -Exactly -Times 1 -ParameterFilter {
+        Should-Invoke -CommandName "gh" -ModuleName "add-labels" -Exactly -Times 1 -ParameterFilter {
             $args -contains "issue" -and
             $args -contains "edit" -and
             $args -contains "--add-label" -and
@@ -42,7 +42,7 @@ Describe "AddLabelsOnIssuesForPackageFoundInBody" {
             -issueNumber 123 `
             -issueBody "This issue does not mention a package."
 
-        Should -Invoke -CommandName "gh" -ModuleName "add-labels" -Exactly -Times 0 -Because "no label should be changed when no package is referenced"
+        Should-NotInvoke -CommandName "gh" -ModuleName "add-labels" -Because "no label should be changed when no package is referenced"
     }
 }
 
@@ -68,10 +68,10 @@ Describe "AddLabelsOnPullRequestsBasedOnFilesChanged" {
 
         AddLabelsOnPullRequestsBasedOnFilesChanged -pullRequestNumber 456 -labelPackagePrefix "pkg:"
 
-        Should -Invoke -CommandName "gh" -ModuleName "add-labels" -Exactly -Times 1 -ParameterFilter {
+        Should-Invoke -CommandName "gh" -ModuleName "add-labels" -Exactly -Times 1 -ParameterFilter {
             $args -contains "edit" -and $args -contains "--add-label" -and $args -contains "pkg:OpenTelemetry.Api"
         } -Because "a change under src/OpenTelemetry.Api should add the matching package label"
-        Should -Invoke -CommandName "gh" -ModuleName "add-labels" -Exactly -Times 1 -ParameterFilter {
+        Should-Invoke -CommandName "gh" -ModuleName "add-labels" -Exactly -Times 1 -ParameterFilter {
             $args -contains "edit" -and $args -contains "--add-label" -and $args -contains "infra"
         } -Because "a change under build/ should add the infra label"
     }
@@ -92,10 +92,10 @@ Describe "AddLabelsOnPullRequestsBasedOnFilesChanged" {
 
         AddLabelsOnPullRequestsBasedOnFilesChanged -pullRequestNumber 456 -labelPackagePrefix "pkg:"
 
-        Should -Invoke -CommandName "gh" -ModuleName "add-labels" -Exactly -Times 1 -ParameterFilter {
+        Should-Invoke -CommandName "gh" -ModuleName "add-labels" -Exactly -Times 1 -ParameterFilter {
             $args -contains "edit" -and $args -contains "--add-label" -and $args -contains "documentation"
         } -Because "README.md is a documentation file so the documentation label should be added"
-        Should -Invoke -CommandName "gh" -ModuleName "add-labels" -Exactly -Times 1 -ParameterFilter {
+        Should-Invoke -CommandName "gh" -ModuleName "add-labels" -Exactly -Times 1 -ParameterFilter {
             $args -contains "edit" -and $args -contains "--remove-label" -and $args -contains "infra"
         } -Because "the existing infra label no longer applies and should be removed"
     }
@@ -121,13 +121,13 @@ Describe "AddLabelsOnPullRequestsBasedOnFilesChanged" {
 
         AddLabelsOnPullRequestsBasedOnFilesChanged -pullRequestNumber 456 -labelPackagePrefix "pkg:"
 
-        Should -Invoke -CommandName "gh" -ModuleName "add-labels" -Exactly -Times 1 -ParameterFilter {
+        Should-Invoke -CommandName "gh" -ModuleName "add-labels" -Exactly -Times 1 -ParameterFilter {
             $args -contains "edit" -and $args -contains "--add-label" -and $args -contains "perf"
         } -Because "benchmark and stress projects should add the perf label"
-        Should -Invoke -CommandName "gh" -ModuleName "add-labels" -Exactly -Times 1 -ParameterFilter {
+        Should-Invoke -CommandName "gh" -ModuleName "add-labels" -Exactly -Times 1 -ParameterFilter {
             $args -contains "edit" -and $args -contains "--add-label" -and $args -contains "dependencies"
         } -Because "changes to Directory.Packages.props should add the dependencies label"
-        Should -Invoke -CommandName "gh" -ModuleName "add-labels" -Times 0 -ParameterFilter {
+        Should-NotInvoke -CommandName "gh" -ModuleName "add-labels" -ParameterFilter {
             $args -contains "--add-label" -and $args -contains "pkg:OpenTelemetry.Api"
         } -Because "a label already present on the pull request should not be added again"
     }

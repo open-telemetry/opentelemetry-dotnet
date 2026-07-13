@@ -24,7 +24,7 @@ Describe "PowerShell scripts" {
         It "can be imported without error" {
             $module = Import-Module -Name $Path -Force -PassThru -ErrorAction Stop
             try {
-                $module | Should -Not -BeNullOrEmpty -Because "importing the module should succeed"
+                $module | Should-NotBeNull -Because "importing the module should succeed"
             }
             finally {
                 Remove-Module -Name $module.Name -Force -ErrorAction SilentlyContinue
@@ -34,7 +34,7 @@ Describe "PowerShell scripts" {
         It "exports at least one function" {
             $module = Import-Module -Name $Path -Force -PassThru
             try {
-                $module.ExportedFunctions.Count | Should -BeGreaterThan 0
+                $module.ExportedFunctions.Count | Should-BeGreaterThan 0
             }
             finally {
                 Remove-Module -Name $module.Name -Force -ErrorAction SilentlyContinue
@@ -47,7 +47,7 @@ Describe "PowerShell scripts" {
         It "has valid PowerShell syntax" {
             $errors = $null
             $null = [System.Management.Automation.Language.Parser]::ParseFile($Path, [ref]$null, [ref]$errors)
-            $errors | Should -BeNullOrEmpty
+            $errors | Should-BeFalsy
         }
     }
 }

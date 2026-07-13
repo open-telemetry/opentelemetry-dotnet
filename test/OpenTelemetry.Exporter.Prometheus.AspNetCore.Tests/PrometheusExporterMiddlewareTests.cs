@@ -732,7 +732,7 @@ public sealed class PrometheusExporterMiddlewareTests
 
         contentType ??=
             requestOpenMetrics ?
-            "application/openmetrics-text; version=0.0.1; charset=utf-8" :
+            "application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores" :
             "text/plain; version=0.0.4; charset=utf-8";
 
         Assert.Equal(contentType, response.Content.Headers.ContentType!.ToString());
@@ -768,9 +768,7 @@ public sealed class PrometheusExporterMiddlewareTests
                     # HELP target_info Target metadata
                     target_info{service_name="my_service",service_instance_id="id1"} 1
                     # TYPE counter_double_bytes_total counter
-                    # UNIT counter_double_bytes_total bytes
                     counter_double_bytes_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",{{additionalTags}}key1="value1",key2="value2"} 101.17
-                    # EOF
 
                     """.ReplaceLineEndings();
 

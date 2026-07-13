@@ -402,7 +402,7 @@ internal sealed class PrometheusCollectionManager
             {
                 try
                 {
-                    cursor = TextFormatSerializer.WriteEof(state.Buffer, cursor);
+                    cursor = serializer.WriteEof(state.Buffer, cursor);
                     break;
                 }
                 catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
@@ -548,7 +548,7 @@ internal sealed class PrometheusCollectionManager
         // Optimize writing metrics with bounded cache that has pre-calculated Prometheus names.
         if (!this.metricsCache.TryGetValue(metric, out var prometheusMetric))
         {
-            prometheusMetric = PrometheusMetric.Create(metric, this.exporter.DisableTotalNameSuffixForCounters);
+            prometheusMetric = PrometheusMetric.Create(metric, this.exporter.DisableTotalNameSuffixForCounters, this.exporter.AppendSuffixes);
 
             // Add to the cache if there is space.
             if (this.metricsCacheCount < MaxCachedMetrics)
