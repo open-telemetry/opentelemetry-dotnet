@@ -112,13 +112,13 @@ public class MetricStreamConfiguration
     /// <item>A copy is made of the provided array.</item>
     /// <item>This is mutually exclusive with <see cref="TagKeys"/>
     /// setting both will cause the view to be ignored.</item>
-    /// </list>
     /// <item>Tags excluded from the metric stream by this setting may still
     /// be exported on <see cref="Exemplar"/>s as <see
     /// cref="Exemplar.FilteredTags"/>. To avoid this, disable exemplars by
     /// configuring <see cref="ExemplarFilterType.AlwaysOff"/> on the meter
     /// provider, or use <see cref="ExemplarReservoirFactory"/> to control
     /// which measurements are sampled as exemplars.</item>
+    /// </list>
     /// </remarks>
     public string[]? ExcludedTagKeys
 #pragma warning restore CA1819 // Properties should not return arrays

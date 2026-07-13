@@ -9,10 +9,6 @@ Notes](../../RELEASENOTES.md).
 * Fixed a metric point reclaim data race on CPU ARM architectures.
   ([#7401](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7401))
 
-* Added `ExcludedTagKeys` property to `MetricStreamConfiguration` to support
-  excluding specific tag keys from metric streams.
-  ([#7373](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7373))
-
 * The library is now marked as trim and AOT compatible.
   ([#7441](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7441))
 
@@ -30,6 +26,10 @@ Notes](../../RELEASENOTES.md).
 
 * Added support for a Schema URL on `Resource` instances.
   ([#7472](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7472))
+
+* Added `ExcludedTagKeys` property to `MetricStreamConfiguration` to support
+  excluding specific tag keys from metric streams.
+  ([#7373](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7373))
 
 ## 1.16.0
 
