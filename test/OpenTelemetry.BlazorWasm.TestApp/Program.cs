@@ -30,7 +30,7 @@ builder.Services.AddScoped(_ => new HttpClient { BaseAddress = baseAddress });
 var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .SetResourceBuilder(resourceBuilder)
     .AddSource(InstrumentationSource.ActivitySourceName)
-    .AddHttpClientInstrumentation()
+    .AddSource("System.Net.Http")
     .SetSampler(new AlwaysOnSampler())
     .AddOtlpExporter(options =>
     {
@@ -44,7 +44,7 @@ builder.Services.AddSingleton(tracerProvider);
 var meterProvider = Sdk.CreateMeterProviderBuilder()
     .SetResourceBuilder(resourceBuilder)
     .AddMeter(InstrumentationSource.MeterName)
-    .AddHttpClientInstrumentation()
+    .AddMeter("System.Net.Http")
     .AddOtlpExporter((exporterOptions, metricReaderOptions) =>
     {
         exporterOptions.Protocol = OtlpExportProtocol.HttpProtobuf;
