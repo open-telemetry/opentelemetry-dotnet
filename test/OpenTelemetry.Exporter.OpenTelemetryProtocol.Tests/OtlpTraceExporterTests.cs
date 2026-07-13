@@ -953,6 +953,38 @@ public sealed class OtlpTraceExporterTests : IDisposable
     }
 
     [Fact]
+    public void Shutdown_ClientShutdownThrows_ReleasesSerializationBuffer()
+    {
+        var exportClientMock = new TestExportClient
+        {
+            ThrowExceptionOnShutdown = true,
+        };
+
+        var exporterOptions = new OtlpExporterOptions();
+        using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClientMock, exporterOptions.TimeoutMilliseconds);
+        using var exporter = new OtlpTraceExporter(exporterOptions, DefaultSdkLimitOptions, DefaultExperimentalOptions, transmissionHandler);
+
+#if NETFRAMEWORK
+        var serializationBufferField = typeof(OtlpTraceExporter).GetField(
+            "serializationBuffer",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        var serializationBuffer = Assert.IsType<SerializationBuffer>(serializationBufferField?.GetValue(exporter));
+        var retainedBuffer = ProtobufSerializer.RentBuffer(2 * 1024 * 1024);
+        serializationBuffer.Return(retainedBuffer);
+#endif
+
+        Assert.False(exporter.Shutdown());
+        Assert.True(exportClientMock.ShutdownCalled);
+
+#if NETFRAMEWORK
+        var nextBuffer = serializationBuffer.Rent();
+        Assert.NotSame(retainedBuffer, nextBuffer);
+        serializationBuffer.Return(nextBuffer);
+        serializationBuffer.Release();
+#endif
+    }
+
+    [Fact]
     public void Null_BatchExportProcessorOptions_SupportedTest() =>
         Sdk.CreateTracerProviderBuilder()
             .AddOtlpExporter(

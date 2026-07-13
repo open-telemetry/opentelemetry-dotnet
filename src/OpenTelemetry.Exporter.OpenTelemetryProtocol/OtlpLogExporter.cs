@@ -124,12 +124,13 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
     /// <inheritdoc />
     protected override bool OnShutdown(int timeoutMilliseconds)
     {
-        var result = this.transmissionHandler?.Shutdown(timeoutMilliseconds) ?? true;
-
-#if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER
-        this.serializationBuffer.Release();
-#endif
-
-        return result;
+        try
+        {
+            return this.transmissionHandler?.Shutdown(timeoutMilliseconds) ?? true;
+        }
+        finally
+        {
+            this.serializationBuffer.Release();
+        }
     }
 }

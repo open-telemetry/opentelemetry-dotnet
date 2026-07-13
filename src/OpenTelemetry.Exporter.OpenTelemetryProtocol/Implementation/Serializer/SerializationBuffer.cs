@@ -28,6 +28,7 @@ internal sealed class SerializationBuffer(int initialSize)
     private const int MaxPooledArrayLength = 1024 * 1024;
 #endif
 
+    private readonly int initialSize = initialSize;
     private int nextSize = initialSize;
 #if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER
     private byte[]? retained;
@@ -77,18 +78,20 @@ internal sealed class SerializationBuffer(int initialSize)
 #endif
     }
 
-#if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER
     /// <summary>
     /// Releases any oversized buffer retained for reuse. Called when the exporter shuts down.
     /// </summary>
     public void Release()
     {
+        this.nextSize = this.initialSize;
+
+#if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER
         var buffer = this.retained;
         if (buffer != null)
         {
             this.retained = null;
             ProtobufSerializer.ReturnBuffer(buffer);
         }
-    }
 #endif
+    }
 }

@@ -13,6 +13,8 @@ internal sealed class TestExportClient(bool throwException = false) : IExportCli
 
     public bool ThrowException { get; set; } = throwException;
 
+    public bool ThrowExceptionOnShutdown { get; set; }
+
     public ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default)
     {
         if (this.ThrowException)
@@ -27,6 +29,12 @@ internal sealed class TestExportClient(bool throwException = false) : IExportCli
     public bool Shutdown(int timeoutMilliseconds)
     {
         this.ShutdownCalled = true;
+
+        if (this.ThrowExceptionOnShutdown)
+        {
+            throw new InvalidOperationException("Exception thrown from Shutdown");
+        }
+
         return true;
     }
 

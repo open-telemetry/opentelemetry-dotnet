@@ -121,12 +121,13 @@ public class OtlpTraceExporter : BaseExporter<Activity>
     /// <inheritdoc />
     protected override bool OnShutdown(int timeoutMilliseconds)
     {
-        var result = this.transmissionHandler.Shutdown(timeoutMilliseconds);
-
-#if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER
-        this.serializationBuffer.Release();
-#endif
-
-        return result;
+        try
+        {
+            return this.transmissionHandler.Shutdown(timeoutMilliseconds);
+        }
+        finally
+        {
+            this.serializationBuffer.Release();
+        }
     }
 }
