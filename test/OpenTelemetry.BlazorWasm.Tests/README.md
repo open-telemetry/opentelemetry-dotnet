@@ -5,10 +5,9 @@ Core Blazor WebAssembly application running under the browser WASM runtime.
 
 ## What is covered
 
-[`OpenTelemetry.BlazorWasm.TestApp`](../OpenTelemetry.BlazorWasm.TestApp) is a
-Blazor WebAssembly app that wires up the SDK (logs, metrics and traces) with the
-real OTLP/HTTP exporter and exercises each signal, including HTTP client
-instrumentation.
+`OpenTelemetry.BlazorWasm.TestApp` is a Blazor WebAssembly app that wires up the
+SDK (logs, metrics and traces) with the real OTLP/HTTP exporter and exercises
+each signal, including HTTP client instrumentation.
 
 The test:
 
@@ -21,8 +20,8 @@ The test:
 ## Required runtime feature switches
 
 Blazor WebAssembly disables several runtime features by default to reduce the
-download size. For OpenTelemetry to work these must be enabled in the app project
-(see [`OpenTelemetry.BlazorWasm.TestApp.csproj`](../OpenTelemetry.BlazorWasm.TestApp/OpenTelemetry.BlazorWasm.TestApp.csproj)):
+download size. For OpenTelemetry to work these must be enabled in the
+`OpenTelemetry.BlazorWasm.TestApp.csproj` project file:
 
 ```xml
 <EventSourceSupport>true</EventSourceSupport>
