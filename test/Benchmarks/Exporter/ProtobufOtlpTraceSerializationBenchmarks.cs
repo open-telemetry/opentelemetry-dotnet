@@ -34,6 +34,7 @@ public class ProtobufOtlpTraceSerializationBenchmarks
     [GlobalSetup]
     public void Setup()
     {
+        this.bufferSize = InitialBufferSize;
         this.activities = new Activity[this.SpanCount];
         for (var i = 0; i < this.SpanCount; i++)
         {
@@ -49,6 +50,16 @@ public class ProtobufOtlpTraceSerializationBenchmarks
         ProtobufOtlpTraceSerializer.WriteTraceData(ref this.steadyStateBuffer, 0, this.sdkLimitOptions, this.resource, batch);
     }
 
+    [GlobalCleanup]
+    public void Cleanup()
+    {
+        if (this.steadyStateBuffer != null)
+        {
+            ProtobufSerializer.ReturnBuffer(this.steadyStateBuffer);
+            this.steadyStateBuffer = null!;
+        }
+    }
+
     // Warmed-up exporter: the instance buffer is already large enough, so no growth occurs.
     [Benchmark(Baseline = true)]
     public int SteadyState()
@@ -58,12 +69,12 @@ public class ProtobufOtlpTraceSerializationBenchmarks
         return ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, this.sdkLimitOptions, this.resource, batch);
     }
 
-    // Cold start: every iteration begins from a freshly rented initial-size buffer
-    // and does not remember the grown size (modelling a brand-new exporter on each
-    // call). For payloads larger than the initial size this exercises the resize +
-    // full re-serialization path on every iteration.
+    // Every iteration begins from an initial-size rental and exercises resize plus
+    // full re-serialization for larger payloads. BenchmarkDotNet warmup populates
+    // the shared pool, so this measures retry cost with a warm pool rather than
+    // first-process allocation.
     [Benchmark]
-    public int ColdStartWithGrowth()
+    public int ResizeWithWarmPool()
     {
         var buffer = ProtobufSerializer.RentBuffer(InitialBufferSize);
         try
@@ -78,8 +89,8 @@ public class ProtobufOtlpTraceSerializationBenchmarks
     }
 
     // Models the exporter's rent-per-export path: rent a right-sized buffer from
-    // the pool, serialize (growing via the pool if needed), remember the grown
-    // size as the next hint, and return the buffer for reuse.
+    // the pool, serialize (growing via the pool if needed), remember the serialized
+    // length as the next hint, and return the buffer for reuse.
     [Benchmark]
     public int PooledExport()
     {
@@ -88,7 +99,7 @@ public class ProtobufOtlpTraceSerializationBenchmarks
         {
             var batch = new Batch<Activity>(this.activities, this.batchCount);
             var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, this.sdkLimitOptions, this.resource, batch);
-            this.bufferSize = buffer.Length;
+            this.bufferSize = Math.Max(InitialBufferSize, writePosition);
             return writePosition;
         }
         finally
