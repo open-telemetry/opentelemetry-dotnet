@@ -970,7 +970,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
             System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
         var serializationBuffer = Assert.IsType<SerializationBuffer>(serializationBufferField?.GetValue(exporter));
         var retainedBuffer = ProtobufSerializer.RentBuffer(2 * 1024 * 1024);
-        serializationBuffer.Return(retainedBuffer);
+        serializationBuffer.Return(retainedBuffer, retainedBuffer.Length);
 #endif
 
         Assert.False(exporter.Shutdown());
@@ -979,7 +979,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
 #if NETFRAMEWORK
         var nextBuffer = serializationBuffer.Rent();
         Assert.NotSame(retainedBuffer, nextBuffer);
-        serializationBuffer.Return(nextBuffer);
+        serializationBuffer.Return(nextBuffer, nextBuffer.Length);
         serializationBuffer.Release();
 #endif
     }

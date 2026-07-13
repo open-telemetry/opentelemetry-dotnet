@@ -72,17 +72,20 @@ public class OtlpTraceExporter : BaseExporter<Activity>
         using var scope = SuppressInstrumentationScope.Begin();
 
         byte[]? buffer = null;
+        var serializationSucceeded = false;
+        var writePosition = 0;
 
         try
         {
             buffer = this.serializationBuffer.Rent();
 
-            var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(
+            writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(
                 ref buffer,
                 this.startWritePosition,
                 this.sdkLimitOptions,
                 this.Resource,
                 activityBatch);
+            serializationSucceeded = true;
 
             if (this.startWritePosition == GrpcStartWritePosition)
             {
@@ -111,7 +114,14 @@ public class OtlpTraceExporter : BaseExporter<Activity>
         {
             if (buffer != null)
             {
-                this.serializationBuffer.Return(buffer);
+                if (serializationSucceeded)
+                {
+                    this.serializationBuffer.Return(buffer, writePosition);
+                }
+                else
+                {
+                    this.serializationBuffer.Discard(buffer);
+                }
             }
         }
 

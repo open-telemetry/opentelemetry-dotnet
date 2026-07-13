@@ -68,12 +68,15 @@ public class OtlpMetricExporter : BaseExporter<Metric>
         using var scope = SuppressInstrumentationScope.Begin();
 
         byte[]? buffer = null;
+        var serializationSucceeded = false;
+        var writePosition = 0;
 
         try
         {
             buffer = this.serializationBuffer.Rent();
 
-            var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, this.startWritePosition, this.Resource, metrics);
+            writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, this.startWritePosition, this.Resource, metrics);
+            serializationSucceeded = true;
 
             if (this.startWritePosition == GrpcStartWritePosition)
             {
@@ -102,7 +105,14 @@ public class OtlpMetricExporter : BaseExporter<Metric>
         {
             if (buffer != null)
             {
-                this.serializationBuffer.Return(buffer);
+                if (serializationSucceeded)
+                {
+                    this.serializationBuffer.Return(buffer, writePosition);
+                }
+                else
+                {
+                    this.serializationBuffer.Discard(buffer);
+                }
             }
         }
 
