@@ -29,8 +29,9 @@ public sealed class InstrumentationSource : IDisposable
 
     public InstrumentationSource()
     {
-        this.activitySource = new ActivitySource(ActivitySourceName);
-        this.meter = new Meter(MeterName);
+        var version = typeof(InstrumentationSource).Assembly.GetName().Version?.ToString();
+        this.activitySource = new(new ActivitySourceOptions(ActivitySourceName) { Version = version });
+        this.meter = new(new MeterOptions(MeterName) { Version = version });
         this.Counter = this.meter.CreateCounter<long>(CounterName);
         this.Histogram = this.meter.CreateHistogram<double>(HistogramName);
     }
