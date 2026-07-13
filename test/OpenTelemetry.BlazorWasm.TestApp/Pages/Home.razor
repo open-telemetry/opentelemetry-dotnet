@@ -1,0 +1,110 @@
+@* Copyright The OpenTelemetry Authors *@
+@* SPDX-License-Identifier: Apache-2.0 *@
+
+@using System.Collections.Generic
+@using System.Net.Http
+
+@inject InstrumentationSource Instrumentation
+@inject TracerProvider TracerProvider
+@inject MeterProvider MeterProvider
+@inject HttpClient HttpClient
+@inject ILogger<Home> Logger
+
+<h1>OpenTelemetry Blazor WebAssembly end-to-end test</h1>
+
+<p>
+    This page emits a trace, a metric and a log through the OpenTelemetry SDK
+    running under the browser WebAssembly runtime.
+</p>
+
+<p>Status: <span id="status">@this.status</span></p>
+
+<button id="increment-counter" @onclick="this.IncrementCounter">Increment counter</button>
+<p>Counter clicks: <span id="counter-value">@this.counterClicks</span></p>
+
+<button id="call-http" @onclick="this.FetchAsync">Call HTTP endpoint</button>
+<p>HTTP status: <span id="http-status">@this.httpStatus</span></p>
+<p>HTTP done: <span id="http-done">@this.httpDone</span></p>
+
+<pre id="error">@this.error</pre>
+
+@code {
+    private string status = "running";
+    private string error = string.Empty;
+    private int counterClicks;
+    private string httpStatus = string.Empty;
+    private bool httpDone;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        try
+        {
+            using (var activity = this.Instrumentation.ActivitySource.StartActivity(InstrumentationSource.ActivityName))
+            {
+                activity?.SetTag(InstrumentationSource.ActivityTagKey, InstrumentationSource.ActivityTagValue);
+            }
+
+            this.Instrumentation.Counter.Add(1, new KeyValuePair<string, object?>("signal", "metric"));
+            this.Instrumentation.Histogram.Record(42d);
+
+            this.Logger.LogInformation("Blazor WASM end-to-end {Signal}", "log");
+
+            this.MeterProvider.ForceFlush();
+            this.TracerProvider.ForceFlush();
+
+            this.status = "completed";
+        }
+        catch (Exception ex)
+        {
+            this.error = ex.ToString();
+            this.status = "failed";
+        }
+
+        this.StateHasChanged();
+    }
+
+    private void IncrementCounter()
+    {
+        try
+        {
+            this.counterClicks++;
+
+            this.Instrumentation.Counter.Add(1, new KeyValuePair<string, object?>("signal", "button"));
+            this.Logger.LogInformation("Counter button clicked {Count} time(s)", this.counterClicks);
+
+            this.MeterProvider.ForceFlush();
+        }
+        catch (Exception ex)
+        {
+            this.error = ex.ToString();
+            this.status = "failed";
+        }
+    }
+
+    private async Task FetchAsync()
+    {
+        try
+        {
+            using var response = await this.HttpClient.GetAsync("api/ping");
+
+            this.httpStatus = ((int)response.StatusCode).ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+            this.MeterProvider.ForceFlush();
+            this.TracerProvider.ForceFlush();
+        }
+        catch (Exception ex)
+        {
+            this.error = ex.ToString();
+            this.status = "failed";
+        }
+        finally
+        {
+            this.httpDone = true;
+        }
+    }
+}

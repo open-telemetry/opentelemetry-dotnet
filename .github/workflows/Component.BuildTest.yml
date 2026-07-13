@@ -30,6 +30,10 @@ on:
       trigger:
         required: true
         type: string
+      install-wasm-tools:
+        default: false
+        required: false
+        type: boolean
 
 permissions:
   contents: read
@@ -80,6 +84,11 @@ jobs:
 
     - name: Setup .NET
       uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
+
+    - name: Install wasm-tools workload
+      if: ${{ inputs.install-wasm-tools }}
+      shell: pwsh
+      run: dotnet workload install wasm-tools
 
     - name: dotnet restore ${{ inputs.project-name }}
       shell: pwsh
