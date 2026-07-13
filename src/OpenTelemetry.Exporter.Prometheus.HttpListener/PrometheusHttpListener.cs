@@ -262,25 +262,34 @@ internal sealed class PrometheusHttpListener : IDisposable
 
                 context.Response.Headers.Add("Server", string.Empty);
 
-                var dataView = collectionResponse.View;
-
-                if (dataView.Count > 0)
+                if (!collectionResponse.Succeeded)
                 {
-                    context.Response.StatusCode = 200;
-                    context.Response.Headers.Add("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
-                    context.Response.ContentType = PrometheusProtocol.GetContentType(protocol);
-
-#if NET
-                    await context.Response.OutputStream.WriteAsync(dataView.Array.AsMemory(0, dataView.Count), linkedCts.Token).ConfigureAwait(false);
-#else
-                    await context.Response.OutputStream.WriteAsync(dataView.Array, 0, dataView.Count, linkedCts.Token).ConfigureAwait(false);
-#endif
+                    PrometheusExporterEventSource.Log.ScrapeFailed();
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentLength64 = 0;
                 }
                 else
                 {
-                    // It's not expected to have no metrics to collect, but it's not necessarily a failure, either.
-                    context.Response.StatusCode = 200;
-                    PrometheusExporterEventSource.Log.NoMetrics();
+                    var dataView = collectionResponse.View;
+
+                    if (dataView.Count > 0)
+                    {
+                        context.Response.StatusCode = 200;
+                        context.Response.Headers.Add("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
+                        context.Response.ContentType = PrometheusProtocol.GetContentType(protocol);
+
+#if NET
+                        await context.Response.OutputStream.WriteAsync(dataView.Array.AsMemory(0, dataView.Count), linkedCts.Token).ConfigureAwait(false);
+#else
+                        await context.Response.OutputStream.WriteAsync(dataView.Array, 0, dataView.Count, linkedCts.Token).ConfigureAwait(false);
+#endif
+                    }
+                    else
+                    {
+                        // It's not expected to have no metrics to collect, but it's not necessarily a failure, either.
+                        context.Response.StatusCode = 200;
+                        PrometheusExporterEventSource.Log.NoMetrics();
+                    }
                 }
             }
             catch (OperationCanceledException ex) when (ex.CancellationToken == requestCancelled.Token)

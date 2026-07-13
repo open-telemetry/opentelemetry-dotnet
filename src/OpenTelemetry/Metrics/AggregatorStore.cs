@@ -39,7 +39,22 @@ internal sealed class AggregatorStore
     private readonly Queue<int>? availableMetricPoints;
 
     private readonly ConcurrentDictionary<Tags, int> tagsToMetricPointIndexDictionary =
+#if NET9_0_OR_GREATER
+        new(TagsComparer.Instance);
+#else
         new();
+#endif
+
+#if NET9_0_OR_GREATER
+    // Alternate lookup that resolves a MetricPoint directly from the incoming
+    // tags span, avoiding the copy of the tags into thread-static storage.
+    // Only used for cumulative aggregation (the non-reclaim lookup path).
+    private readonly ConcurrentDictionary<Tags, int>.AlternateLookup<ReadOnlySpan<KeyValuePair<string, object?>>> tagsToMetricPointIndexLookup;
+
+    // Alternate lookup over the delta-with-reclaim dictionary. Only valid (and
+    // only initialized) when OutputDelta is true.
+    private readonly ConcurrentDictionary<Tags, LookupData>.AlternateLookup<ReadOnlySpan<KeyValuePair<string, object?>>> tagsToMetricPointIndexLookupDelta;
+#endif
 
     private readonly string name;
     private readonly MetricPoint[] metricPoints;
@@ -120,16 +135,30 @@ internal sealed class AggregatorStore
         // Newer attributes should be added starting at the index: 2
         this.metricPointIndex = 1;
 
+#if NET9_0_OR_GREATER
+        this.tagsToMetricPointIndexLookup =
+            this.tagsToMetricPointIndexDictionary.GetAlternateLookup<ReadOnlySpan<KeyValuePair<string, object?>>>();
+#endif
+
         // Always reclaim unused MetricPoints for Delta aggregation temporality
         if (this.OutputDelta)
         {
             this.availableMetricPoints = new Queue<int>(cardinalityLimit);
 
             // There is no overload which only takes capacity as the parameter
-            // Using the DefaultConcurrencyLevel defined in the ConcurrentDictionary class: https://github.com/dotnet/runtime/blob/v7.0.5/src/libraries/System.Collections.Concurrent/src/System/Collections/Concurrent/ConcurrentDictionary.cs#L2020
+            // Using the DefaultConcurrencyLevel defined in the ConcurrentDictionary class: https://github.com/dotnet/runtime/blob/v10.0.0/src/libraries/System.Collections.Concurrent/src/System/Collections/Concurrent/ConcurrentDictionary.cs#L2054
             // We expect at the most (user provided cardinality limit) * 2 entries- one for sorted and one for unsorted input
-            this.TagsToMetricPointIndexDictionaryDelta =
-                new ConcurrentDictionary<Tags, LookupData>(concurrencyLevel: Environment.ProcessorCount, capacity: cardinalityLimit * 2);
+            var concurrencyLevel = Environment.ProcessorCount;
+            var capacity = cardinalityLimit * 2;
+
+#if NET9_0_OR_GREATER
+            this.TagsToMetricPointIndexDictionaryDelta = new(concurrencyLevel, capacity, comparer: TagsComparer.Instance);
+
+            this.tagsToMetricPointIndexLookupDelta =
+                this.TagsToMetricPointIndexDictionaryDelta.GetAlternateLookup<ReadOnlySpan<KeyValuePair<string, object?>>>();
+#else
+            this.TagsToMetricPointIndexDictionaryDelta = new(concurrencyLevel, capacity);
+#endif
 
             // Add all the indices except for the reserved ones to the queue so that threads have
             // readily available access to these MetricPoints for their use.
@@ -697,57 +726,69 @@ internal sealed class AggregatorStore
 
         // If the running thread created a new MetricPoint, then the Snapshot method cannot reclaim that MetricPoint because MetricPoint is initialized with a ReferenceCount of 1.
         // It can simply return the index.
-
         if (!newMetricPointCreated)
         {
-            // If the running thread did not create the MetricPoint, it could be working on an index that has been reclaimed by Snapshot method.
-            // This could happen if the thread get switched out by CPU after it retrieves the index but the Snapshot method reclaims it before the thread wakes up again.
+            index = this.ResolveExistingDeltaMetricPoint(lookupData, length);
+        }
 
-            ref var metricPointAtIndex = ref this.metricPoints[index];
-            var referenceCount = Interlocked.Increment(ref metricPointAtIndex.ReferenceCount);
+        return index;
+    }
 
-            if (referenceCount < 0)
-            {
-                // Rare case: Snapshot method had already marked the MetricPoint available for reuse as it has not been updated in last collect cycle.
+    // Increments the ReferenceCount for an existing (not newly created) delta MetricPoint
+    // resolved from the dictionary and validates that it is still the right one, retrying
+    // via the rare path if the Snapshot method reclaimed it in the meantime.
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private int ResolveExistingDeltaMetricPoint(LookupData lookupData, int length)
+    {
+        var index = lookupData.Index;
 
-                // Example scenario:
-                // Thread T1 wants to record a measurement for (k1,v1).
-                // Thread T1 creates a new MetricPoint at index 100 and adds an entry for (k1,v1) in the dictionary with the relevant LookupData value; ReferenceCount of the MetricPoint is 1 at this point.
-                // Thread T1 completes the update and decrements the ReferenceCount to 0.
-                // Later, another update thread (could be T1 as well) wants to record a measurement for (k1,v1)
-                // It looks up the dictionary and retrieves the index as 100. ReferenceCount for the MetricPoint is 0 at this point.
-                // This update thread gets switched out by the CPU.
-                // With the reclaim behavior, Snapshot method reclaims the index 100 as the MetricPoint for the index has NoCollectPending and has a ReferenceCount of 0.
-                // Snapshot thread sets the ReferenceCount to int.MinValue.
-                // The update thread wakes up and increments the ReferenceCount but finds the value to be negative.
+        // If the running thread did not create the MetricPoint, it could be working on an index that has been reclaimed by Snapshot method.
+        // This could happen if the thread get switched out by CPU after it retrieves the index but the Snapshot method reclaims it before the thread wakes up again.
 
-                // Retry attempt to get a MetricPoint.
-                index = this.RemoveStaleEntriesAndGetAvailableMetricPointRare(lookupData, length);
-            }
-            else if (metricPointAtIndex.LookupData != lookupData)
-            {
-                // Rare case: Another thread with different input tags could have reclaimed this MetricPoint if it was freed up by Snapshot method.
+        ref var metricPointAtIndex = ref this.metricPoints[index];
+        var referenceCount = Interlocked.Increment(ref metricPointAtIndex.ReferenceCount);
 
-                // Example scenario:
-                // Thread T1 wants to record a measurement for (k1,v1).
-                // Thread T1 creates a new MetricPoint at index 100 and adds an entry for (k1,v1) in the dictionary with the relevant LookupData value; ReferenceCount of the MetricPoint is 1 at this point.
-                // Thread T1 completes the update and decrements the ReferenceCount to 0.
-                // Later, another update thread T2 (could be T1 as well) wants to record a measurement for (k1,v1)
-                // It looks up the dictionary and retrieves the index as 100. ReferenceCount for the MetricPoint is 0 at this point.
-                // This update thread T2 gets switched out by the CPU.
-                // With the reclaim behavior, Snapshot method reclaims the index 100 as the MetricPoint for the index has NoCollectPending and has a ReferenceCount of 0.
-                // Snapshot thread sets the ReferenceCount to int.MinValue.
-                // An update thread T3 wants to record a measurement for (k2,v2).
-                // Thread T3 looks for an available index from the queue and finds index 100.
-                // Thread T3 creates a new MetricPoint at index 100 and adds an entry for (k2,v2) in the dictionary with the LookupData value for (k2,v2). ReferenceCount of the MetricPoint is 1 at this point.
-                // The update thread T2 wakes up and increments the ReferenceCount and finds the value to be positive but the LookupData value does not match the one for (k1,v1).
+        if (referenceCount < 0)
+        {
+            // Rare case: Snapshot method had already marked the MetricPoint available for reuse as it has not been updated in last collect cycle.
 
-                // Remove reference since its not the right MetricPoint.
-                Interlocked.Decrement(ref metricPointAtIndex.ReferenceCount);
+            // Example scenario:
+            // Thread T1 wants to record a measurement for (k1,v1).
+            // Thread T1 creates a new MetricPoint at index 100 and adds an entry for (k1,v1) in the dictionary with the relevant LookupData value; ReferenceCount of the MetricPoint is 1 at this point.
+            // Thread T1 completes the update and decrements the ReferenceCount to 0.
+            // Later, another update thread (could be T1 as well) wants to record a measurement for (k1,v1)
+            // It looks up the dictionary and retrieves the index as 100. ReferenceCount for the MetricPoint is 0 at this point.
+            // This update thread gets switched out by the CPU.
+            // With the reclaim behavior, Snapshot method reclaims the index 100 as the MetricPoint for the index has NoCollectPending and has a ReferenceCount of 0.
+            // Snapshot thread sets the ReferenceCount to int.MinValue.
+            // The update thread wakes up and increments the ReferenceCount but finds the value to be negative.
 
-                // Retry attempt to get a MetricPoint.
-                index = this.RemoveStaleEntriesAndGetAvailableMetricPointRare(lookupData, length);
-            }
+            // Retry attempt to get a MetricPoint.
+            index = this.RemoveStaleEntriesAndGetAvailableMetricPointRare(lookupData, length);
+        }
+        else if (metricPointAtIndex.LookupData != lookupData)
+        {
+            // Rare case: Another thread with different input tags could have reclaimed this MetricPoint if it was freed up by Snapshot method.
+
+            // Example scenario:
+            // Thread T1 wants to record a measurement for (k1,v1).
+            // Thread T1 creates a new MetricPoint at index 100 and adds an entry for (k1,v1) in the dictionary with the relevant LookupData value; ReferenceCount of the MetricPoint is 1 at this point.
+            // Thread T1 completes the update and decrements the ReferenceCount to 0.
+            // Later, another update thread T2 (could be T1 as well) wants to record a measurement for (k1,v1)
+            // It looks up the dictionary and retrieves the index as 100. ReferenceCount for the MetricPoint is 0 at this point.
+            // This update thread T2 gets switched out by the CPU.
+            // With the reclaim behavior, Snapshot method reclaims the index 100 as the MetricPoint for the index has NoCollectPending and has a ReferenceCount of 0.
+            // Snapshot thread sets the ReferenceCount to int.MinValue.
+            // An update thread T3 wants to record a measurement for (k2,v2).
+            // Thread T3 looks for an available index from the queue and finds index 100.
+            // Thread T3 creates a new MetricPoint at index 100 and adds an entry for (k2,v2) in the dictionary with the LookupData value for (k2,v2). ReferenceCount of the MetricPoint is 1 at this point.
+            // The update thread T2 wakes up and increments the ReferenceCount and finds the value to be positive but the LookupData value does not match the one for (k1,v1).
+
+            // Remove reference since its not the right MetricPoint.
+            Interlocked.Decrement(ref metricPointAtIndex.ReferenceCount);
+
+            // Retry attempt to get a MetricPoint.
+            index = this.RemoveStaleEntriesAndGetAvailableMetricPointRare(lookupData, length);
         }
 
         return index;
@@ -1058,6 +1099,29 @@ internal sealed class AggregatorStore
             this.InitializeZeroTagPointIfNotInitialized();
             return 0;
         }
+
+#if NET9_0_OR_GREATER
+        // Fast path: look up an existing MetricPoint directly from the incoming
+        // tags span. The dictionary stores keys in the given (unsorted) order too,
+        // so a previously-seen tag set in its original order resolves here without
+        // copying the tags into thread-static storage, constructing a Tags key, or
+        // sorting. Misses (new tag sets) fall through to the slower copy-and-add
+        // path below.
+        if (this.OutputDelta)
+        {
+            // For delta-with-reclaim a hit must still run the ReferenceCount
+            // bookkeeping (and possible reclaim retry), so resolve via the shared
+            // helper rather than returning the index directly.
+            if (this.tagsToMetricPointIndexLookupDelta.TryGetValue(tags, out var lookupData))
+            {
+                return this.ResolveExistingDeltaMetricPoint(lookupData, tagLength);
+            }
+        }
+        else if (this.tagsToMetricPointIndexLookup.TryGetValue(tags, out var existingIndex))
+        {
+            return existingIndex;
+        }
+#endif
 
         var storage = ThreadStaticStorage.GetStorage();
 

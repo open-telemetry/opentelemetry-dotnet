@@ -1048,8 +1048,15 @@ public class MetricExemplarTests : MetricTestsBase
 #pragma warning disable CA5394 // Do not use insecure randomness
             var nextValue = random.NextDouble() * 100_000;
 #pragma warning restore CA5394 // Do not use insecure randomness
-            if (values.Any(m => m.Item1 == nextValue || m.Item1 == (long)nextValue)
-                || previousValues?.Any(m => m.Value == nextValue || m.Value == (long)nextValue) == true)
+
+            // Values are recorded both as doubles and as (long) truncations, and exemplars are
+            // matched back to measurements by either representation. Ensure the truncated values are
+            // also unique (which guarantees the doubles are unique too) so a measurement recorded with
+            // an Activity cannot be confused with one recorded without it, which would otherwise cause
+            // flaky TraceId assertions for the long-valued instruments.
+            var nextValueAsLong = (long)nextValue;
+            if (values.Any(m => (long)m.Item1 == nextValueAsLong)
+                || previousValues?.Any(m => (long)m.Value == nextValueAsLong) == true)
             {
                 i--;
                 continue;

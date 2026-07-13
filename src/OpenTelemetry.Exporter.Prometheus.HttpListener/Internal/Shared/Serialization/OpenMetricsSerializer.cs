@@ -16,6 +16,18 @@ internal abstract class OpenMetricsSerializer : TextFormatSerializer
 
     protected override string TargetInfoTypeValue => "info";
 
+    protected override bool EscapeHelpQuotationMarks => true;
+
+    public override int WriteEof(byte[] buffer, int cursor)
+    {
+        // OpenMetrics expositions MUST be terminated with "# EOF".
+        // See https://prometheus.io/docs/specs/om/open_metrics_spec/#overall-structure.
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# EOF");
+        buffer[cursor++] = AsciiLineFeed;
+
+        return cursor;
+    }
+
     public override string GetMetadataName(PrometheusMetric metric)
         => metric.GetNameSet(this.Escaping).OpenMetricsMetadataName;
 
@@ -164,8 +176,7 @@ internal abstract class OpenMetricsSerializer : TextFormatSerializer
         in TextFormatSerializerOptions options,
         IReadOnlyCollection<string>? reservedOutputKeys = null)
     {
-        cursor = this.WriteMetricNameWithSuffix(buffer, cursor, prometheusMetric, "_created");
-        cursor = this.WriteTags(buffer, cursor, metric, metricPoint.Tags, options, reservedOutputKeys: reservedOutputKeys);
+        cursor = this.WriteSeriesAndTags(buffer, cursor, metric, prometheusMetric, metricPoint.Tags, options, "_created", reservedOutputKeys);
 
         buffer[cursor++] = unchecked((byte)' ');
 
