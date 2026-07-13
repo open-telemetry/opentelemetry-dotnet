@@ -9,27 +9,27 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer
 /// shared array pool via <see cref="ProtobufSerializer"/>.
 /// </summary>
 /// <remarks>
-/// On .NET Framework and netstandard2.0 the shared array pool does not pool arrays
-/// larger than 1 MiB, so returning a grown export buffer larger than that would
-/// discard it and force a fresh allocation on every subsequent export. Only those
-/// oversized buffers are retained on this instance and reused across exports (and
-/// released when the exporter shuts down); buffers the pool can reuse (1 MiB or
-/// smaller) are returned so nothing is retained per exporter for the common case.
-/// On modern runtimes the shared pool serves arbitrarily large arrays and trims
-/// them under memory pressure, so each export simply rents and returns without
-/// retaining anything.
+/// On .NET Framework and .NET Standard builds the shared array pool may not pool
+/// arrays larger than 1 MiB, so returning a grown export buffer larger than that
+/// could discard it and force a fresh allocation on every subsequent export. Only
+/// those oversized buffers are retained on this instance and reused across exports
+/// (and released when the exporter shuts down); buffers the pool can reuse (1 MiB
+/// or smaller) are returned so nothing is retained per exporter for the common case.
+/// On modern .NET target builds the shared pool serves arbitrarily large arrays
+/// and trims them under memory pressure, so each export simply rents and returns
+/// without retaining anything.
 /// </remarks>
 internal sealed class SerializationBuffer(int initialSize)
 {
-#if NETFRAMEWORK || NETSTANDARD2_0
-    // The largest array the .NET Framework / netstandard2.0 shared array pool will
-    // pool and hand back out. Arrays larger than this are neither pooled on rent nor
-    // stored on return, so they must be retained here to avoid per-export allocation.
+#if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER
+    // The largest array guaranteed to be pooled by the legacy shared array pool.
+    // Arrays larger than this may not be stored on return, so retain them here to
+    // avoid per-export allocation.
     private const int MaxPooledArrayLength = 1024 * 1024;
 #endif
 
     private int nextSize = initialSize;
-#if NETFRAMEWORK || NETSTANDARD2_0
+#if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER
     private byte[]? retained;
 #endif
 
@@ -40,7 +40,7 @@ internal sealed class SerializationBuffer(int initialSize)
     /// <returns>A buffer that must be handed back via <see cref="Return"/>.</returns>
     public byte[] Rent()
     {
-#if NETFRAMEWORK || NETSTANDARD2_0
+#if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER
         var buffer = this.retained;
         this.retained = null;
         return buffer ?? ProtobufSerializer.RentBuffer(this.nextSize);
@@ -59,11 +59,11 @@ internal sealed class SerializationBuffer(int initialSize)
         // Remember the (possibly grown) capacity so the next export starts from a
         // buffer large enough to avoid resizing.
         this.nextSize = buffer.Length;
-#if NETFRAMEWORK || NETSTANDARD2_0
+#if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER
         if (buffer.Length > MaxPooledArrayLength)
         {
-            // The pool cannot reuse a buffer this large, so keep it for the next
-            // export instead of letting the pool discard it.
+            // The pool may not reuse a buffer this large, so keep it for the next
+            // export instead of risking the pool discarding it.
             this.retained = buffer;
         }
         else
@@ -77,7 +77,7 @@ internal sealed class SerializationBuffer(int initialSize)
 #endif
     }
 
-#if NETFRAMEWORK || NETSTANDARD2_0
+#if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER
     /// <summary>
     /// Releases any oversized buffer retained for reuse. Called when the exporter shuts down.
     /// </summary>

@@ -126,7 +126,7 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
     {
         var result = this.transmissionHandler?.Shutdown(timeoutMilliseconds) ?? true;
 
-#if NETFRAMEWORK || NETSTANDARD2_0
+#if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER
         this.serializationBuffer.Release();
 #endif
 

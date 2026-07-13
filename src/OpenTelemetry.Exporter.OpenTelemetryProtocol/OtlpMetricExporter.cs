@@ -114,7 +114,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
     {
         var result = this.transmissionHandler.Shutdown(timeoutMilliseconds);
 
-#if NETFRAMEWORK || NETSTANDARD2_0
+#if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER
         this.serializationBuffer.Release();
 #endif
 
