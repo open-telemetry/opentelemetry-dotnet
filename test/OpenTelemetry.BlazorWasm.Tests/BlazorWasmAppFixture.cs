@@ -10,6 +10,8 @@ namespace OpenTelemetry.BlazorWasm.Tests;
 
 public sealed class BlazorWasmAppFixture : IAsyncLifetime
 {
+    private static readonly TimeSpan PublishTimeout = TimeSpan.FromMinutes(5);
+
     private string? publishDirectory;
 
     internal OtlpHttpCollector Collector { get; private set; } = null!;
@@ -109,10 +111,19 @@ public sealed class BlazorWasmAppFixture : IAsyncLifetime
             WorkingDirectory = repoRoot,
         };
 
+        // Disable the persistent .NET build servers and MSBuild node reuse for
+        // this invocation. Otherwise, on a cold machine (e.g. CI) 'dotnet publish'
+        // spawns a build server child that inherits the redirected stdout/stderr
+        // handles, so WaitForExit would block until that server idle-times-out
+        // (~15 minutes) even though the publish itself finished.
+        startInfo.Environment["DOTNET_CLI_USE_MSBUILD_SERVER"] = "0";
+        startInfo.Environment["MSBUILDDISABLENODEREUSE"] = "1";
+
         startInfo.ArgumentList.Add("publish");
         startInfo.ArgumentList.Add(project);
         startInfo.ArgumentList.Add("--configuration");
         startInfo.ArgumentList.Add(Configuration);
+        startInfo.ArgumentList.Add("--disable-build-servers");
 
         // Publish the client for the same target framework the test is running
         // under so the suite works unchanged when run against multiple TFMs.
@@ -146,6 +157,14 @@ public sealed class BlazorWasmAppFixture : IAsyncLifetime
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
 
+        if (!process.WaitForExit(PublishTimeout))
+        {
+            process.Kill(entireProcessTree: true);
+            throw new InvalidOperationException(
+                $"'dotnet publish' timed out after {PublishTimeout}.{Environment.NewLine}{stdout}{Environment.NewLine}{stderr}");
+        }
+
+        // Wait (again, with no timeout) for the async output handlers to flush.
         process.WaitForExit();
 
         if (process.ExitCode != 0)
