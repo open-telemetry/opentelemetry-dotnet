@@ -24,7 +24,10 @@ public sealed class BlazorWasmAppFixture : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        await this.Collector.DisposeAsync();
+        if (this.Collector is not null)
+        {
+            await this.Collector.DisposeAsync();
+        }
 
         if (this.publishDirectory is not null && Directory.Exists(this.publishDirectory))
         {
