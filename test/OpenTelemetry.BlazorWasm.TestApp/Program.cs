@@ -14,6 +14,10 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
 builder.RootComponents.Add<App>("#app");
 
+Environment.SetEnvironmentVariable("OTEL_BSP_SCHEDULE_DELAY", "1000");
+Environment.SetEnvironmentVariable("OTEL_BLRP_SCHEDULE_DELAY", "1000");
+Environment.SetEnvironmentVariable("OTEL_METRIC_EXPORT_INTERVAL", "1000");
+
 // The OTLP receiver is served from the same origin as the application, so the
 // export endpoints are resolved relative to the host base address. This keeps
 // the export a genuine cross-process HTTP/protobuf call while avoiding CORS.
@@ -32,7 +36,7 @@ var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .AddSource(InstrumentationSource.ActivitySourceName)
     .AddSource("System.Net.Http")
     .SetSampler(new AlwaysOnSampler())
-    .AddOtlpExporter(options =>
+    .AddOtlpExporter((options) =>
     {
         options.Protocol = OtlpExportProtocol.HttpProtobuf;
         options.Endpoint = new Uri(baseAddress, "v1/traces");
@@ -45,22 +49,21 @@ var meterProvider = Sdk.CreateMeterProviderBuilder()
     .SetResourceBuilder(resourceBuilder)
     .AddMeter(InstrumentationSource.MeterName)
     .AddMeter("System.Net.Http")
-    .AddOtlpExporter((exporterOptions, metricReaderOptions) =>
+    .AddOtlpExporter((options) =>
     {
-        exporterOptions.Protocol = OtlpExportProtocol.HttpProtobuf;
-        exporterOptions.Endpoint = new Uri(baseAddress, "v1/metrics");
-        metricReaderOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 1000;
+        options.Protocol = OtlpExportProtocol.HttpProtobuf;
+        options.Endpoint = new Uri(baseAddress, "v1/metrics");
     })
     .Build();
 
 builder.Services.AddSingleton(meterProvider);
 
-builder.Logging.AddOpenTelemetry(options =>
+builder.Logging.AddOpenTelemetry((options) =>
 {
     options.SetResourceBuilder(resourceBuilder);
     options.IncludeFormattedMessage = true;
 
-    options.AddOtlpExporter(exporterOptions =>
+    options.AddOtlpExporter((exporterOptions) =>
     {
         exporterOptions.Protocol = OtlpExportProtocol.HttpProtobuf;
         exporterOptions.Endpoint = new Uri(baseAddress, "v1/logs");

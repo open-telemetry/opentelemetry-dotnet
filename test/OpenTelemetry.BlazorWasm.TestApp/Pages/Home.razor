@@ -5,8 +5,6 @@
 @using System.Net.Http
 
 @inject InstrumentationSource Instrumentation
-@inject TracerProvider TracerProvider
-@inject MeterProvider MeterProvider
 @inject HttpClient HttpClient
 @inject ILogger<Home> Logger
 
@@ -54,9 +52,6 @@
 
             this.Logger.LogInformation("Blazor WASM end-to-end {Signal}", "log");
 
-            this.MeterProvider.ForceFlush();
-            this.TracerProvider.ForceFlush();
-
             this.status = "completed";
         }
         catch (Exception ex)
@@ -76,8 +71,6 @@
 
             this.Instrumentation.Counter.Add(1, new KeyValuePair<string, object?>("signal", "button"));
             this.Logger.LogInformation("Counter button clicked {Count} time(s)", this.counterClicks);
-
-            this.MeterProvider.ForceFlush();
         }
         catch (Exception ex)
         {
@@ -93,9 +86,6 @@
             using var response = await this.HttpClient.GetAsync("api/ping");
 
             this.httpStatus = ((int)response.StatusCode).ToString(System.Globalization.CultureInfo.InvariantCulture);
-
-            this.MeterProvider.ForceFlush();
-            this.TracerProvider.ForceFlush();
         }
         catch (Exception ex)
         {
