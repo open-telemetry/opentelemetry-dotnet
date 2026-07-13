@@ -22,6 +22,11 @@ public sealed class BlazorWasmEndToEndTests : IClassFixture<BlazorWasmAppFixture
 
     private const int TestTimeoutMilliseconds = 90_000;
 
+    // Number of cold-boot attempts. The Blazor client fetches many framework
+    // assets on first load, and a transient browser network error can abort
+    // those downloads and leave the app stuck loading, so some retries are allowed.
+    private const int StartupAttempts = 3;
+
     private static readonly TimeSpan CollectTimeout = TimeSpan.FromSeconds(60);
 
     private readonly BlazorWasmAppFixture wasmFixture;
@@ -41,8 +46,7 @@ public sealed class BlazorWasmEndToEndTests : IClassFixture<BlazorWasmAppFixture
 
         await this.browserFixture.WithPageAsync(async page =>
         {
-            await page.GotoAsync(collector.BaseUrl, new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle });
-            await Assertions.Expect(page.Locator("#status")).ToHaveTextAsync("completed", new() { Timeout = 30_000 });
+            await NavigateAndWaitForStartupAsync(page, collector.BaseUrl);
 
             // Act
             await page.Locator("#increment-counter").ClickAsync();
@@ -72,8 +76,7 @@ public sealed class BlazorWasmEndToEndTests : IClassFixture<BlazorWasmAppFixture
 
         await this.browserFixture.WithPageAsync(async page =>
         {
-            await page.GotoAsync(collector.BaseUrl, new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle });
-            await Assertions.Expect(page.Locator("#status")).ToHaveTextAsync("completed", new() { Timeout = 30_000 });
+            await NavigateAndWaitForStartupAsync(page, collector.BaseUrl);
 
             // Act
             await page.Locator("#increment-counter").ClickAsync();
@@ -98,11 +101,9 @@ public sealed class BlazorWasmEndToEndTests : IClassFixture<BlazorWasmAppFixture
         await this.browserFixture.WithPageAsync(async (page) =>
         {
             // Act
-            await page.GotoAsync(collector.BaseUrl, new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle });
+            await NavigateAndWaitForStartupAsync(page, collector.BaseUrl);
 
             // Assert
-            await Assertions.Expect(page.Locator("#status")).ToHaveTextAsync("completed", new() { Timeout = 30_000 });
-
             AssertNoAppErrors(await GetErrorAsync(page));
 
             await WaitForAsync(() => HasScenarioTrace(collector), () => Detail(collector));
@@ -119,8 +120,7 @@ public sealed class BlazorWasmEndToEndTests : IClassFixture<BlazorWasmAppFixture
 
         await this.browserFixture.WithPageAsync(async page =>
         {
-            await page.GotoAsync(collector.BaseUrl, new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle });
-            await Assertions.Expect(page.Locator("#status")).ToHaveTextAsync("completed", new() { Timeout = 30_000 });
+            await NavigateAndWaitForStartupAsync(page, collector.BaseUrl);
 
             // Act
             await page.Locator("#call-http").ClickAsync();
@@ -135,6 +135,28 @@ public sealed class BlazorWasmEndToEndTests : IClassFixture<BlazorWasmAppFixture
                 () => HasHttpClientSpan(collector) && HasMetric(collector, HttpClientDurationMetric),
                 () => Detail(collector));
         });
+    }
+
+    private static async Task NavigateAndWaitForStartupAsync(IPage page, string url)
+    {
+        for (var attempt = 0; attempt <= StartupAttempts; attempt++)
+        {
+            try
+            {
+                await page.GotoAsync(url, new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle });
+                await Assertions.Expect(page.Locator("#status")).ToHaveTextAsync("completed", new() { Timeout = 30_000 });
+                return;
+            }
+            catch (PlaywrightException) when (attempt < StartupAttempts)
+            {
+                // A transient network error (e.g. ERR_NETWORK_CHANGED) can abort the
+                // WASM asset downloads on a cold boot, leaving the app stuck loading.
+                // Reload and try again.
+                await Task.Delay(1_000);
+            }
+        }
+
+        throw new InvalidOperationException("Failed to navigate to the page after multiple attempts.");
     }
 
     private static async Task<string> GetErrorAsync(IPage page)
