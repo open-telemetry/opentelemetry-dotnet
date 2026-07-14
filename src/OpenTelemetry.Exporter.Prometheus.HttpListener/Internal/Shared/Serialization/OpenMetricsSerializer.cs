@@ -16,8 +16,20 @@ internal abstract class OpenMetricsSerializer : TextFormatSerializer
 
     protected override string TargetInfoTypeValue => "info";
 
+    protected override bool EscapeHelpQuotationMarks => true;
+
+    public override int WriteEof(byte[] buffer, int cursor)
+    {
+        // OpenMetrics expositions MUST be terminated with "# EOF".
+        // See https://prometheus.io/docs/specs/om/open_metrics_spec/#overall-structure.
+        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# EOF");
+        buffer[cursor++] = AsciiLineFeed;
+
+        return cursor;
+    }
+
     public override string GetMetadataName(PrometheusMetric metric)
-        => metric.OpenMetricsMetadataName;
+        => metric.GetNameSet(this.Escaping).OpenMetricsMetadataName;
 
     internal static bool ShouldPreferExemplar(DateTimeOffset currentTimestamp, DateTimeOffset candidateTimestamp)
         => currentTimestamp <= candidateTimestamp;
@@ -41,10 +53,10 @@ internal abstract class OpenMetricsSerializer : TextFormatSerializer
     }
 
     protected override ReadOnlySpan<byte> GetMetricNameBytes(PrometheusMetric metric)
-        => metric.OpenMetricsNameBytes;
+        => metric.GetNameSet(this.Escaping).OpenMetricsNameBytes;
 
     protected override ReadOnlySpan<byte> GetMetricMetadataNameBytes(PrometheusMetric metric)
-        => metric.OpenMetricsMetadataNameBytes;
+        => metric.GetNameSet(this.Escaping).OpenMetricsMetadataNameBytes;
 
     protected override int WriteExplicitBound(byte[] buffer, int cursor, double explicitBound)
         => WriteCanonicalLabelValue(buffer, cursor, explicitBound);
@@ -62,7 +74,7 @@ internal abstract class OpenMetricsSerializer : TextFormatSerializer
         if (prometheusMetric.Type == PrometheusType.Counter &&
             TryGetLatestExemplar(metricPoint, out var exemplar))
         {
-            cursor = WriteExemplar(buffer, cursor, in exemplar, isLongValue);
+            cursor = this.WriteExemplar(buffer, cursor, in exemplar, isLongValue);
         }
 
         return cursor;
@@ -88,7 +100,7 @@ internal abstract class OpenMetricsSerializer : TextFormatSerializer
     {
         if (TryGetLatestHistogramBucketExemplar(metricPoint, lowerBoundExclusive, upperBoundInclusive, out var exemplar))
         {
-            cursor = WriteExemplar(buffer, cursor, in exemplar, isLongValue: false);
+            cursor = this.WriteExemplar(buffer, cursor, in exemplar, isLongValue: false);
         }
 
         return cursor;
@@ -164,10 +176,7 @@ internal abstract class OpenMetricsSerializer : TextFormatSerializer
         in TextFormatSerializerOptions options,
         IReadOnlyCollection<string>? reservedOutputKeys = null)
     {
-        cursor = this.WriteMetricMetadataName(buffer, cursor, prometheusMetric);
-
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, "_created");
-        cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags, options, reservedOutputKeys: reservedOutputKeys);
+        cursor = this.WriteSeriesAndTags(buffer, cursor, metric, prometheusMetric, metricPoint.Tags, options, "_created", reservedOutputKeys);
 
         buffer[cursor++] = unchecked((byte)' ');
 

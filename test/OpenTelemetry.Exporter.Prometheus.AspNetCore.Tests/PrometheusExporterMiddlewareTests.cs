@@ -48,6 +48,40 @@ public sealed class PrometheusExporterMiddlewareTests
         await Verify(output, "text", PrometheusSerializerTests.VerifySettings).UseParameters(scopeInfoEnabled);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task RunWithTargetInfoEnabledConfigured(bool targetInfoEnabled)
+    {
+        var output = await RunPrometheusExporterMiddlewareIntegrationTest(
+            "/metrics",
+            app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
+            services => services.Configure<PrometheusAspNetCoreOptions>(o => o.TargetInfoEnabled = targetInfoEnabled),
+            assertResponseContent: false);
+
+        await Verify(output, "text", PrometheusSerializerTests.VerifySettings).UseParameters(targetInfoEnabled);
+    }
+
+    [Theory]
+    [InlineData("all")]
+    [InlineData("service_name")]
+    [InlineData("none")]
+    public async Task RunWithResourceConstantLabelsConfigured(string filter)
+    {
+        var output = await RunPrometheusExporterMiddlewareIntegrationTest(
+            "/metrics",
+            app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
+            services => services.Configure<PrometheusAspNetCoreOptions>(o => o.ResourceConstantLabels = filter switch
+            {
+                "all" => static _ => true,
+                "service_name" => static key => key == "service.name",
+                _ => static _ => false,
+            }),
+            assertResponseContent: false);
+
+        await Verify(output, "text", PrometheusSerializerTests.VerifySettings).UseParameters(filter);
+    }
+
     [Fact]
     public async Task RunWithCustomScrapeEndpointPath()
     {
@@ -415,6 +449,34 @@ public sealed class PrometheusExporterMiddlewareTests
     }
 
     [Fact]
+    public async Task ScrapeExceedingMaxResponseSizeReturns500()
+    {
+        using var host = await StartTestHostAsync(
+            app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
+            configureOptions: o => o.MaxScrapeResponseSizeBytes = PrometheusExporterOptions.InitialScrapeResponseSizeBytes);
+
+        using var meter = new Meter(MeterName, MeterVersion);
+
+        // Emit enough series that the serialized response far exceeds the configured maximum, so
+        // the response buffer cannot grow to hold it and the scrape fails rather than returning a
+        // misleading empty 200 response.
+        for (var x = 0; x < 2_000; x++)
+        {
+            meter.CreateCounter<double>("counter_double_" + x, unit: "By").Add(1);
+        }
+
+        host.Services.GetRequiredService<MeterProvider>().ForceFlush();
+
+        using var client = host.GetTestClient();
+
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
+
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+
+        await host.StopAsync();
+    }
+
+    [Fact]
     public async Task InvokeAsync_WhenNoData_Returns200()
     {
         using var exporter = new PrometheusExporter(new PrometheusExporterOptions());
@@ -670,7 +732,7 @@ public sealed class PrometheusExporterMiddlewareTests
 
         contentType ??=
             requestOpenMetrics ?
-            "application/openmetrics-text; version=0.0.1; charset=utf-8" :
+            "application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores" :
             "text/plain; version=0.0.4; charset=utf-8";
 
         Assert.Equal(contentType, response.Content.Headers.ContentType!.ToString());
@@ -706,9 +768,7 @@ public sealed class PrometheusExporterMiddlewareTests
                     # HELP target_info Target metadata
                     target_info{service_name="my_service",service_instance_id="id1"} 1
                     # TYPE counter_double_bytes_total counter
-                    # UNIT counter_double_bytes_total bytes
                     counter_double_bytes_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",{{additionalTags}}key1="value1",key2="value2"} 101.17
-                    # EOF
 
                     """.ReplaceLineEndings();
 

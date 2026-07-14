@@ -46,6 +46,44 @@ public class PrometheusHttpListenerTests
         await Verify(output, "text", PrometheusSerializerTests.VerifySettings).UseParameters(scopeInfoEnabled);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task RunHttpServerWithTargetInfoEnabledConfigured(bool targetInfoEnabled)
+    {
+        var output = await RunPrometheusExporterHttpServerIntegrationTest(
+            configureListener: (options) =>
+            {
+                options.TargetInfoEnabled = targetInfoEnabled;
+                return options.Port;
+            },
+            assertResponseContent: false);
+
+        await Verify(output, "text", PrometheusSerializerTests.VerifySettings).UseParameters(targetInfoEnabled);
+    }
+
+    [Theory]
+    [InlineData("all")]
+    [InlineData("service_name")]
+    [InlineData("none")]
+    public async Task RunHttpServerWithResourceConstantLabelsConfigured(string filter)
+    {
+        var output = await RunPrometheusExporterHttpServerIntegrationTest(
+            configureListener: (options) =>
+            {
+                options.ResourceConstantLabels = filter switch
+                {
+                    "all" => static _ => true,
+                    "service_name" => static key => key == "service.name",
+                    _ => static _ => false,
+                };
+                return options.Port;
+            },
+            assertResponseContent: false);
+
+        await Verify(output, "text", PrometheusSerializerTests.VerifySettings).UseParameters(filter);
+    }
+
     [Fact]
     public async Task RunHttpServerWithNoMetrics()
     {
@@ -474,6 +512,35 @@ public class PrometheusHttpListenerTests
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
+    [Fact]
+    public async Task WhenResponseExceedsMaxScrapeResponseSize_Returns500()
+    {
+        using var meter = new Meter(MeterName, MeterVersion);
+
+        using var context = CreateMeterProvider(
+            meter,
+            configureListener: options =>
+            {
+                options.Port = GetRandomPort();
+                options.MaxScrapeResponseSizeBytes = PrometheusExporterOptions.InitialScrapeResponseSizeBytes;
+                return options.Port;
+            });
+
+        // Emit enough series that the serialized response far exceeds the configured maximum, so
+        // the response buffer cannot grow to hold it and the scrape fails rather than returning a
+        // misleading empty 200 response.
+        for (var x = 0; x < 2_000; x++)
+        {
+            meter.CreateCounter<double>("counter_double_" + x, unit: "By").Add(1);
+        }
+
+        using var client = new HttpClient { BaseAddress = context.BaseAddress };
+
+        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative));
+
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+    }
+
     internal static MeterProviderTestContext CreateMeterProvider(
         Meter meter,
         Func<PrometheusHttpListenerOptions, int>? configureListener = null,
@@ -578,7 +645,7 @@ public class PrometheusHttpListenerTests
 
             contentType ??=
                 requestOpenMetrics ?
-                "application/openmetrics-text; version=0.0.1; charset=utf-8" :
+                "application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores" :
                 "text/plain; version=0.0.4; charset=utf-8";
 
             Assert.NotNull(response.Content);
@@ -605,9 +672,7 @@ public class PrometheusHttpListenerTests
                   + "# HELP target_info Target metadata\n"
                   + "target_info{service_name='my_service',service_instance_id='id1'} 1\n"
                   + "# TYPE counter_double_bytes_total counter\n"
-                  + "# UNIT counter_double_bytes_total bytes\n"
-                  + $"counter_double_bytes_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',{additionalTags}key1='value1',key2='value2'}} 101.17\n"
-                  + "# EOF\n";
+                  + $"counter_double_bytes_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',{additionalTags}key1='value1',key2='value2'}} 101.17\n";
 
             Assert.Matches(("^" + expected + "$").Replace('\'', '"'), content);
         }

@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #if NET
-using System.Buffers;
 using System.Buffers.Text;
 #if NET9_0_OR_GREATER
 using System.Collections.Frozen;
@@ -10,6 +9,7 @@ using System.Collections.Frozen;
 using System.Collections.Immutable;
 #endif
 #endif
+using System.Buffers;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -38,6 +38,19 @@ internal abstract class TextFormatSerializer
     // from forcing unbounded scratch-buffer allocations during a scrape.
     internal const int MaxSerializedTagsBufferSize = 100 * 1024 * 1024;
 
+    // The remembered starting size (serializedTagsBufferHint) is capped far below the
+    // 100 MiB safety limit so that a single transient oversized tag set cannot permanently
+    // inflate the buffer that every subsequent histogram point rents. 1 MiB matches the
+    // largest array ArrayPool<byte>.Shared pools by default, so the remembered hint is always
+    // served from the pool rather than freshly allocating a large array on each scrape.
+    internal const int MaxSerializedTagsBufferHint = 1024 * 1024;
+
+    // Upper bound on the number of times the tag serialization buffer is grown before giving up.
+    // Each retry at least doubles the buffer, which is itself capped at MaxSerializedTagsBufferSize
+    // (100 MiB, ~27 doublings from a single byte), so this is a safety backstop that guarantees
+    // the growth loop terminates and never triggers under legitimate input.
+    internal const int MaxSerializedTagsBufferGrowthAttempts = 32;
+
     protected const byte AsciiQuotationMark = 0x22; // '"'
     protected const byte AsciiReverseSolidus = 0x5C; // '\\'
     protected const byte AsciiLineFeed = 0x0A; // `\n`
@@ -58,6 +71,19 @@ internal abstract class TextFormatSerializer
 #else
     private static readonly HashSet<string> ReservedScopeLabelNames = ["otel_scope_name", "otel_scope_schema_url", "otel_scope_version"];
     private static readonly long UnixEpochTicks = new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero).Ticks;
+#endif
+
+    // Scope labels (otel_scope_*) depend only on the Metric's invariant
+    // scope (meter name/version/schema-url/tags) and are not affected by
+    // the negotiated escaping scheme, so the built label collections can
+    // be computed once per Metric and reused across every serialization
+    // call instead of being rebuilt for each call to WriteMetric.
+#if NET
+    private static readonly ConditionalWeakTable<Metric, List<KeyValuePair<string, string>>> ScopeLabelsCache = [];
+    private static readonly ConditionalWeakTable<Metric, List<LabelData>> ScopeLabelDataCache = [];
+#else
+    private static readonly ConditionalWeakTable<Metric, List<KeyValuePair<string, string>>> ScopeLabelsCache = new();
+    private static readonly ConditionalWeakTable<Metric, List<LabelData>> ScopeLabelDataCache = new();
 #endif
 
     private static readonly string[] ReservedExemplarLabelNames = ["trace_id", "span_id"];
@@ -86,6 +112,10 @@ internal abstract class TextFormatSerializer
         1e10d,
     ];
 
+    private string[]? reservedExemplarOutputKeys;
+
+    private int serializedTagsBufferHint = 256;
+
     public static OpenMetricsV0Serializer OpenMetricsV0 => field ??= new();
 
     public static OpenMetricsV1Serializer OpenMetricsV1 => field ??= new();
@@ -93,6 +123,11 @@ internal abstract class TextFormatSerializer
     public static PrometheusTextV0Serializer PrometheusV0 => field ??= new();
 
     public static PrometheusTextV1Serializer PrometheusV1 => field ??= new();
+
+    /// <summary>
+    /// Gets the name escaping scheme to use for serialization.
+    /// </summary>
+    public EscapingScheme Escaping { get; private init; } = EscapingScheme.Underscores;
 
     /// <summary>
     /// Gets the type metadata value written for metrics that have no dedicated Prometheus type.
@@ -109,30 +144,33 @@ internal abstract class TextFormatSerializer
     /// </summary>
     protected abstract string TargetInfoTypeValue { get; }
 
-    public static TextFormatSerializer GetSerializer(PrometheusProtocol protocol) => protocol switch
-    {
-        { IsOpenMetrics: true } => protocol.Version.Major switch
-        {
-            0 => OpenMetricsV0,
-            1 => OpenMetricsV1,
-            _ => throw new NotSupportedException($"Unsupported OpenMetrics version: {protocol.Version}."),
-        },
-        { IsOpenMetrics: false } => protocol.Version.Major switch
-        {
-            0 => PrometheusV0,
-            1 => PrometheusV1,
-            _ => throw new NotSupportedException($"Unsupported Prometheus version: {protocol.Version}."),
-        },
-    };
+    /// <summary>
+    /// Gets a value indicating whether double-quote characters in <c>HELP</c> text must be escaped.
+    /// </summary>
+    protected abstract bool EscapeHelpQuotationMarks { get; }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int WriteEof(byte[] buffer, int cursor)
+    public static TextFormatSerializer GetSerializer(in PrometheusProtocol protocol)
     {
-        cursor = WriteAsciiStringNoEscape(buffer, cursor, "# EOF");
-        buffer[cursor++] = AsciiLineFeed;
+        var escaping = protocol.EscapingScheme;
 
-        return cursor;
+        return protocol switch
+        {
+            { IsOpenMetrics: true } => protocol.Version.Major switch
+            {
+                0 => OpenMetricsV0,
+                1 => escaping == EscapingScheme.Underscores ? OpenMetricsV1 : new OpenMetricsV1Serializer() { Escaping = escaping },
+                _ => throw new NotSupportedException($"Unsupported OpenMetrics version: {protocol.Version}."),
+            },
+            { IsOpenMetrics: false } => protocol.Version.Major switch
+            {
+                0 => PrometheusV0,
+                1 => escaping == EscapingScheme.Underscores ? PrometheusV1 : new PrometheusTextV1Serializer() { Escaping = escaping },
+                _ => throw new NotSupportedException($"Unsupported Prometheus version: {protocol.Version}."),
+            },
+        };
     }
+
+    public virtual int WriteEof(byte[] buffer, int cursor) => cursor;
 
     public int WriteMetric(
         byte[] buffer,
@@ -167,9 +205,15 @@ internal abstract class TextFormatSerializer
 
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
-                // Counter and Gauge
-                cursor = this.WriteMetricName(buffer, cursor, prometheusMetric);
-                cursor = WriteTags(buffer, cursor, metric, metricPoint.Tags, options);
+                cursor = this.WriteSeriesAndTags(
+                    buffer,
+                    cursor,
+                    metric,
+                    prometheusMetric,
+                    metricPoint.Tags,
+                    options,
+                    suffix: null,
+                    reservedOutputKeys: null);
 
                 buffer[cursor++] = unchecked((byte)' ');
 
@@ -198,69 +242,80 @@ internal abstract class TextFormatSerializer
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
                 var tags = metricPoint.Tags;
-                var serializedTags = SerializeTags(metric, tags, options, ReservedHistogramLabelNames);
-                var hasNegativeBucketBounds = false;
-                var previousBound = double.NegativeInfinity;
 
-                long totalCount = 0;
-                foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
+                var serializedTagsBuffer = this.SerializeTagsToPooledBuffer(
+                    metric,
+                    tags,
+                    options,
+                    ReservedHistogramLabelNames,
+                    out var serializedTagsLength);
+
+                try
                 {
-                    hasNegativeBucketBounds |= histogramMeasurement.ExplicitBound < 0;
+                    var serializedTags = new ReadOnlySpan<byte>(serializedTagsBuffer, 0, serializedTagsLength);
+                    var hasNegativeBucketBounds = false;
+                    var previousBound = double.NegativeInfinity;
 
-                    totalCount += histogramMeasurement.BucketCount;
-
-                    cursor = this.WriteMetricName(buffer, cursor, prometheusMetric);
-                    cursor = WriteAsciiStringNoEscape(buffer, cursor, "_bucket{");
-                    cursor = WriteSerializedTagValues(buffer, cursor, serializedTags, appendTrailingComma: true);
-
-                    cursor = WriteAsciiStringNoEscape(buffer, cursor, "le=\"");
-
-                    if (histogramMeasurement.ExplicitBound != double.PositiveInfinity)
+                    long totalCount = 0;
+                    foreach (var histogramMeasurement in metricPoint.GetHistogramBuckets())
                     {
-                        cursor = this.WriteExplicitBound(buffer, cursor, histogramMeasurement.ExplicitBound);
+                        hasNegativeBucketBounds |= histogramMeasurement.ExplicitBound < 0;
+
+                        totalCount += histogramMeasurement.BucketCount;
+
+                        cursor = this.WriteHistogramBucketName(buffer, cursor, prometheusMetric);
+
+                        cursor = WriteSerializedTagValues(buffer, cursor, serializedTags, appendTrailingComma: true);
+
+                        cursor = WriteAsciiStringNoEscape(buffer, cursor, "le=\"");
+
+                        if (histogramMeasurement.ExplicitBound != double.PositiveInfinity)
+                        {
+                            cursor = this.WriteExplicitBound(buffer, cursor, histogramMeasurement.ExplicitBound);
+                        }
+                        else
+                        {
+                            cursor = WriteAsciiStringNoEscape(buffer, cursor, "+Inf");
+                        }
+
+                        cursor = WriteAsciiStringNoEscape(buffer, cursor, "\"} ");
+
+                        cursor = WriteLong(buffer, cursor, totalCount);
+
+                        cursor = this.WriteHistogramBucketExemplar(buffer, cursor, in metricPoint, previousBound, histogramMeasurement.ExplicitBound);
+
+                        buffer[cursor++] = AsciiLineFeed;
+                        previousBound = histogramMeasurement.ExplicitBound;
                     }
-                    else
+
+                    if (this.ShouldWriteSumAndCount(hasNegativeBucketBounds))
                     {
-                        cursor = WriteAsciiStringNoEscape(buffer, cursor, "+Inf");
+                        // OpenMetrics histograms with negative bucket thresholds MUST NOT expose
+                        // _sum and therefore MUST NOT expose _count.
+                        // See https://prometheus.io/docs/specs/om/open_metrics_spec/#histogram-1
+                        cursor = this.WriteSeriesNameAndSerializedTags(buffer, cursor, prometheusMetric, "_sum", serializedTags);
+
+                        buffer[cursor++] = unchecked((byte)' ');
+
+                        cursor = WriteDouble(buffer, cursor, metricPoint.GetHistogramSum());
+
+                        buffer[cursor++] = AsciiLineFeed;
+
+                        // Histogram count
+                        cursor = this.WriteSeriesNameAndSerializedTags(buffer, cursor, prometheusMetric, "_count", serializedTags);
+
+                        buffer[cursor++] = unchecked((byte)' ');
+
+                        cursor = WriteLong(buffer, cursor, metricPoint.GetHistogramCount());
+                        buffer[cursor++] = AsciiLineFeed;
                     }
 
-                    cursor = WriteAsciiStringNoEscape(buffer, cursor, "\"} ");
-
-                    cursor = WriteLong(buffer, cursor, totalCount);
-
-                    cursor = this.WriteHistogramBucketExemplar(buffer, cursor, in metricPoint, previousBound, histogramMeasurement.ExplicitBound);
-
-                    buffer[cursor++] = AsciiLineFeed;
-                    previousBound = histogramMeasurement.ExplicitBound;
+                    cursor = this.WriteHistogramCreated(buffer, cursor, metric, prometheusMetric, in metricPoint, in options);
                 }
-
-                if (this.ShouldWriteSumAndCount(hasNegativeBucketBounds))
+                finally
                 {
-                    // OpenMetrics histograms with negative bucket thresholds MUST NOT expose
-                    // _sum and therefore MUST NOT expose _count.
-                    // See https://prometheus.io/docs/specs/om/open_metrics_spec/#histogram-1
-                    cursor = this.WriteMetricName(buffer, cursor, prometheusMetric);
-                    cursor = WriteAsciiStringNoEscape(buffer, cursor, "_sum");
-                    cursor = WriteSerializedTags(buffer, cursor, serializedTags);
-
-                    buffer[cursor++] = unchecked((byte)' ');
-
-                    cursor = WriteDouble(buffer, cursor, metricPoint.GetHistogramSum());
-
-                    buffer[cursor++] = AsciiLineFeed;
-
-                    // Histogram count
-                    cursor = this.WriteMetricName(buffer, cursor, prometheusMetric);
-                    cursor = WriteAsciiStringNoEscape(buffer, cursor, "_count");
-                    cursor = WriteSerializedTags(buffer, cursor, serializedTags);
-
-                    buffer[cursor++] = unchecked((byte)' ');
-
-                    cursor = WriteLong(buffer, cursor, metricPoint.GetHistogramCount());
-                    buffer[cursor++] = AsciiLineFeed;
+                    ArrayPool<byte>.Shared.Return(serializedTagsBuffer);
                 }
-
-                cursor = this.WriteHistogramCreated(buffer, cursor, metric, prometheusMetric, in metricPoint, in options);
             }
         }
 
@@ -300,11 +355,11 @@ internal abstract class TextFormatSerializer
         do
         {
             var attribute = attributes.Current;
-            AddLabel(attribute.Key, attribute.Value, ref labels);
+            this.AddLabel(attribute.Key, attribute.Value, ref labels);
         }
         while (attributes.MoveNext());
 
-        cursor = WriteLabels(buffer, cursor, labels, writeEnclosingBraces: true);
+        cursor = WriteLabels(buffer, cursor, labels, writeEnclosingBraces: true, default, null);
         buffer[cursor++] = unchecked((byte)' ');
         buffer[cursor++] = unchecked((byte)'1');
         buffer[cursor++] = AsciiLineFeed;
@@ -327,7 +382,7 @@ internal abstract class TextFormatSerializer
         // the scrape immediately rather than repeatedly re-entering this allocation.
         var newBufferSize = currentBufferSize * 2;
 
-        return newBufferSize <= 0 || newBufferSize > MaxSerializedTagsBufferSize
+        return newBufferSize is <= 0 or > MaxSerializedTagsBufferSize
             ? throw new InvalidOperationException("The serialized Prometheus tag set exceeded the maximum supported size.")
             : newBufferSize;
     }
@@ -526,202 +581,12 @@ internal abstract class TextFormatSerializer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int WriteExemplar(byte[] buffer, int cursor, in Exemplar exemplar, bool isLongValue)
-    {
-        buffer[cursor++] = unchecked((byte)' ');
-        buffer[cursor++] = unchecked((byte)'#');
-        buffer[cursor++] = unchecked((byte)' ');
-        List<LabelData>? labels = null;
-
-        if (exemplar.TraceId != default)
-        {
-            AddLabel("trace_id", exemplar.TraceId.ToHexString(), ref labels);
-        }
-
-        if (exemplar.SpanId != default)
-        {
-            AddLabel("span_id", exemplar.SpanId.ToHexString(), ref labels);
-        }
-
-        foreach (var tag in exemplar.FilteredTags)
-        {
-            AddLabel(tag.Key, tag.Value, ref labels, ReservedExemplarLabelNames);
-        }
-
-        cursor = WriteLabels(
-            buffer,
-            cursor,
-            labels,
-            writeEnclosingBraces: true,
-            maxLabelSetCharacters: MaxExemplarLabelSetCharacters);
-
-        buffer[cursor++] = unchecked((byte)' ');
-
-        cursor = isLongValue
-            ? WriteLong(buffer, cursor, exemplar.LongValue)
-            : WriteDouble(buffer, cursor, exemplar.DoubleValue);
-
-        if (exemplar.Timestamp != default)
-        {
-            buffer[cursor++] = unchecked((byte)' ');
-            cursor = WriteUnixTimeSeconds(buffer, cursor, exemplar.Timestamp);
-        }
-
-        return cursor;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int WriteTags(
-        byte[] buffer,
-        int cursor,
-        Metric metric,
-        ReadOnlyTagCollection tags,
-        in TextFormatSerializerOptions options,
-        bool writeEnclosingBraces = true,
-        IReadOnlyCollection<string>? reservedOutputKeys = null)
-    {
-        var startCursor = cursor;
-        List<string>? writtenOutputKeys = null;
-        var wroteLabel = false;
-
-        if (writeEnclosingBraces)
-        {
-            buffer[cursor++] = unchecked((byte)'{');
-        }
-
-        if (!options.SuppressScopeInfo)
-        {
-            WriteScopeLabels();
-        }
-
-        if (TryWritePointTags())
-        {
-            if (writeEnclosingBraces)
-            {
-                buffer[cursor++] = unchecked((byte)'}');
-            }
-            else if (wroteLabel)
-            {
-                buffer[cursor++] = unchecked((byte)',');
-            }
-
-            return cursor;
-        }
-
-        cursor = startCursor;
-        List<LabelData>? labels = null;
-
-        if (!options.SuppressScopeInfo)
-        {
-            foreach (var scopeLabel in CreateScopeLabelData(metric))
-            {
-                AddLabel(scopeLabel.OriginalKey, scopeLabel.OutputKey, scopeLabel.Value, ref labels, reservedOutputKeys);
-            }
-        }
-
-        foreach (var tag in tags)
-        {
-            AddLabel(tag.Key, tag.Value, ref labels, reservedOutputKeys);
-        }
-
-        return WriteLabels(buffer, cursor, labels, writeEnclosingBraces);
-
-        void WriteScopeLabels()
-        {
-            // Scope labels are de-duplicated by output key in CreateScopeLabels, so unlike
-            // point tags they can never collide with an already-written label. They only need
-            // to be written (which also records their output keys so point tags can detect a
-            // collision with a scope label).
-            foreach (var scopeLabel in CreateScopeLabels(metric))
-            {
-                _ = TryWriteLabel(scopeLabel.Key, scopeLabel.Value);
-            }
-        }
-
-        bool TryWritePointTags()
-        {
-            foreach (var tag in tags)
-            {
-                if (!TryWriteLabel(tag.Key, tag.Value))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        bool TryWriteLabel(string key, object? value)
-        {
-            var outputKey = GetSanitizedLabelKey(key);
-
-            if (reservedOutputKeys?.Contains(outputKey) == true)
-            {
-                return true;
-            }
-
-            if (writtenOutputKeys?.Contains(outputKey) == true)
-            {
-                return false;
-            }
-
-            writtenOutputKeys ??= [];
-            writtenOutputKeys.Add(outputKey);
-
-            if (wroteLabel)
-            {
-                buffer[cursor++] = unchecked((byte)',');
-            }
-
-            cursor = WriteLabel(buffer, cursor, key, value);
-            wroteLabel = true;
-
-            return true;
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteUnixTimeSeconds(byte[] buffer, int cursor, DateTimeOffset value) =>
 #if NET
         WriteDouble(buffer, cursor, (value.UtcDateTime.Ticks - DateTimeOffset.UnixEpoch.Ticks) / (double)TimeSpan.TicksPerSecond);
 #else
         WriteDouble(buffer, cursor, (value.UtcDateTime.Ticks - UnixEpochTicks) / (double)TimeSpan.TicksPerSecond);
 #endif
-
-    internal static byte[] SerializeTags(
-        Metric metric,
-        ReadOnlyTagCollection tags,
-        in TextFormatSerializerOptions options,
-        IReadOnlyCollection<string>? reservedOutputKeys = null)
-    {
-        var buffer = new byte[128];
-
-        while (true)
-        {
-            try
-            {
-                var cursor = WriteTags(
-                    buffer,
-                    0,
-                    metric,
-                    tags,
-                    options,
-                    writeEnclosingBraces: false,
-                    reservedOutputKeys: reservedOutputKeys);
-
-                if (cursor > 0 && buffer[cursor - 1] == unchecked((byte)','))
-                {
-                    cursor--;
-                }
-
-                return buffer.AsSpan(0, cursor).ToArray();
-            }
-            catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
-            {
-                buffer = new byte[GetNextSerializedTagsBufferSize(buffer.Length)];
-            }
-        }
-    }
 
     internal static int WriteSerializedTagValues(
         byte[] buffer,
@@ -761,13 +626,563 @@ internal abstract class TextFormatSerializer
         return cursor;
     }
 
+    internal static int WriteQuotedName(byte[] buffer, int cursor, ReadOnlySpan<byte> nameBytes, string? suffix)
+    {
+        // Writes a metric name as a double-quoted string ("name<suffix>") with the backslash, quote
+        // and line-feed characters escaped. The (legacy) suffix, if any, is written inside the quotes.
+        buffer[cursor++] = AsciiQuotationMark;
+
+        foreach (var value in nameBytes)
+        {
+            switch (value)
+            {
+                case AsciiQuotationMark:
+                    buffer[cursor++] = AsciiReverseSolidus;
+                    buffer[cursor++] = AsciiQuotationMark;
+                    break;
+
+                case AsciiReverseSolidus:
+                    buffer[cursor++] = AsciiReverseSolidus;
+                    buffer[cursor++] = AsciiReverseSolidus;
+                    break;
+
+                case AsciiLineFeed:
+                    buffer[cursor++] = AsciiReverseSolidus;
+                    buffer[cursor++] = unchecked((byte)'n');
+                    break;
+
+                default:
+                    buffer[cursor++] = value;
+                    break;
+            }
+        }
+
+        if (suffix is { Length: > 0 })
+        {
+            cursor = WriteAsciiStringNoEscape(buffer, cursor, suffix);
+        }
+
+        buffer[cursor++] = AsciiQuotationMark;
+
+        return cursor;
+    }
+
+    /// <summary>
+    /// Writes a label output key, quoting it (as a double-quoted UTF-8 string) when it is not a
+    /// valid legacy label name. Only the allow-utf-8 scheme can produce a non-legacy output key; the
+    /// underscores, dots and values schemes (and all v0 formats) always produce legacy ASCII names,
+    /// which are written verbatim. The quoting therefore needs no knowledge of the negotiated scheme.
+    /// </summary>
+    /// <param name="buffer">The buffer to write to.</param>
+    /// <param name="cursor">The current position in the buffer.</param>
+    /// <param name="outputKey">The label output key to write.</param>
+    /// <returns>The new cursor position.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int WriteLabelName(byte[] buffer, int cursor, string outputKey)
+    {
+        if (PrometheusEscaping.IsValidLegacyLabelName(outputKey))
+        {
+            return WriteAsciiStringNoEscape(buffer, cursor, outputKey);
+        }
+
+        buffer[cursor++] = AsciiQuotationMark;
+        cursor = WriteLabelValue(buffer, cursor, outputKey);
+        buffer[cursor++] = AsciiQuotationMark;
+
+        return cursor;
+    }
+
+    internal static int WriteQuotedMetadataName(byte[] buffer, int cursor, ReadOnlySpan<byte> nameBytes)
+    {
+        // Writes a metadata-line (# TYPE/# HELP/# UNIT) metric family name in the quoted exposition
+        // form, e.g. '# TYPE "my.metric" gauge'. Unlike a sample line the name is not wrapped in
+        // braces. Shared by the v1.0.0 serializers; the base flow never emits the quoted form.
+        cursor = WriteQuotedName(buffer, cursor, nameBytes, suffix: null);
+
+        return cursor;
+    }
+
+    internal static int WriteQuotedBucketName(byte[] buffer, int cursor, ReadOnlySpan<byte> nameBytes)
+    {
+        // Writes a histogram '_bucket' series name in the quoted exposition form and opens the label
+        // set ('{"name_bucket",'), leaving the cursor positioned for the first tag.
+        buffer[cursor++] = unchecked((byte)'{');
+        cursor = WriteQuotedName(buffer, cursor, nameBytes, "_bucket");
+        buffer[cursor++] = unchecked((byte)',');
+
+        return cursor;
+    }
+
+    internal static int WriteQuotedSeriesNameAndSerializedTags(
+        byte[] buffer,
+        int cursor,
+        ReadOnlySpan<byte> nameBytes,
+        string suffix,
+        ReadOnlySpan<byte> serializedTags)
+    {
+        // Writes a histogram '_sum'/'_count' series name and its pre-serialized tags in the quoted
+        // exposition form ('{"name<suffix>",tags}').
+        buffer[cursor++] = unchecked((byte)'{');
+        cursor = WriteQuotedName(buffer, cursor, nameBytes, suffix);
+
+        if (!serializedTags.IsEmpty)
+        {
+            buffer[cursor++] = unchecked((byte)',');
+            cursor = WriteSerializedTagValues(buffer, cursor, serializedTags);
+        }
+
+        buffer[cursor++] = unchecked((byte)'}');
+
+        return cursor;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal int WriteExemplar(byte[] buffer, int cursor, in Exemplar exemplar, bool isLongValue)
+    {
+        buffer[cursor++] = unchecked((byte)' ');
+        buffer[cursor++] = unchecked((byte)'#');
+        buffer[cursor++] = unchecked((byte)' ');
+
+        List<LabelData>? labels = null;
+
+        if (exemplar.TraceId != default)
+        {
+            this.AddLabel("trace_id", exemplar.TraceId.ToHexString(), ref labels);
+        }
+
+        if (exemplar.SpanId != default)
+        {
+            this.AddLabel("span_id", exemplar.SpanId.ToHexString(), ref labels);
+        }
+
+        var reservedOutputKeys = this.GetReservedExemplarOutputKeys();
+
+        foreach (var tag in exemplar.FilteredTags)
+        {
+            this.AddLabel(tag.Key, tag.Value, ref labels, reservedOutputKeys);
+        }
+
+        cursor = WriteLabels(
+            buffer,
+            cursor,
+            labels,
+            writeEnclosingBraces: true,
+            default,
+            null,
+            maxLabelSetCharacters: MaxExemplarLabelSetCharacters);
+
+        buffer[cursor++] = unchecked((byte)' ');
+
+        cursor = isLongValue
+            ? WriteLong(buffer, cursor, exemplar.LongValue)
+            : WriteDouble(buffer, cursor, exemplar.DoubleValue);
+
+        if (exemplar.Timestamp != default)
+        {
+            buffer[cursor++] = unchecked((byte)' ');
+            cursor = WriteUnixTimeSeconds(buffer, cursor, exemplar.Timestamp);
+        }
+
+        return cursor;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal int WriteTags(
+        byte[] buffer,
+        int cursor,
+        Metric metric,
+        ReadOnlyTagCollection tags,
+        in TextFormatSerializerOptions options,
+        bool writeEnclosingBraces = true,
+        IReadOnlyCollection<string>? reservedOutputKeys = null)
+        => this.WriteTags(buffer, cursor, metric, tags, options, default, null, writeEnclosingBraces, reservedOutputKeys);
+
+    internal int WriteTags(
+        byte[] buffer,
+        int cursor,
+        Metric metric,
+        ReadOnlyTagCollection tags,
+        in TextFormatSerializerOptions options,
+        ReadOnlySpan<byte> quotedNameBytes,
+        string? quotedNameSuffix,
+        bool writeEnclosingBraces,
+        IReadOnlyCollection<string>? reservedOutputKeys)
+    {
+        // When quotedNameBytes is non-empty the metric name is embedded as a double-quoted string
+        // as the first element inside the braces, e.g. {"my.metric",label="value"}. This is the
+        // allow-utf-8 exposition format used when the metric name is not a valid legacy name.
+        var startCursor = cursor;
+
+        // The fast path writes each output label name directly into the buffer and detects reserved
+        // names and collisions by comparing the written bytes, so no per-label key string is
+        // allocated. Each entry is the (start, length) of an already-written key within the buffer.
+        (int Start, int Length)[]? writtenKeyRanges = null;
+        var writtenKeyRangeCount = 0;
+        var wroteLabel = false;
+
+        var resourceConstantLabels = options.ResourceConstantLabels;
+        var hasResourceConstantLabels = resourceConstantLabels is { Count: > 0 };
+
+        try
+        {
+            if (writeEnclosingBraces)
+            {
+                buffer[cursor++] = unchecked((byte)'{');
+            }
+
+            // The fast path writes scope labels and point tags directly to the buffer. It cannot
+            // account for resource constant labels (which may collide with, and therefore need to be
+            // merged with, point tags), so it is skipped whenever any are present.
+            if (!hasResourceConstantLabels)
+            {
+                if (!quotedNameBytes.IsEmpty)
+                {
+                    cursor = WriteQuotedName(buffer, cursor, quotedNameBytes, quotedNameSuffix);
+                    wroteLabel = true;
+                }
+
+                if (!options.SuppressScopeInfo)
+                {
+                    WriteScopeLabels();
+                }
+
+                if (TryWritePointTags())
+                {
+                    if (writeEnclosingBraces)
+                    {
+                        buffer[cursor++] = unchecked((byte)'}');
+                    }
+                    else if (wroteLabel)
+                    {
+                        buffer[cursor++] = unchecked((byte)',');
+                    }
+
+                    return cursor;
+                }
+            }
+
+            cursor = startCursor;
+            List<LabelData>? labels = null;
+
+            if (!options.SuppressScopeInfo)
+            {
+                foreach (var scopeLabel in GetScopeLabelData(metric))
+                {
+                    // Scope labels (otel_scope_*) are already in their target Prometheus form, so they
+                    // are written verbatim and not re-escaped by the negotiated scheme, exactly as the
+                    // fast path does.
+                    AddLabel(scopeLabel.OriginalKey, scopeLabel.OutputKey, scopeLabel.Value, ref labels, reservedOutputKeys);
+                }
+            }
+
+            foreach (var tag in tags)
+            {
+                this.AddLabel(tag.Key, tag.Value, ref labels, reservedOutputKeys);
+            }
+
+            if (hasResourceConstantLabels)
+            {
+                foreach (var resourceLabel in resourceConstantLabels!)
+                {
+                    this.AddLabel(resourceLabel.Key, resourceLabel.Value, ref labels, reservedOutputKeys);
+                }
+            }
+
+            return WriteLabels(buffer, cursor, labels, writeEnclosingBraces, quotedNameBytes, quotedNameSuffix);
+        }
+        finally
+        {
+            if (writtenKeyRanges != null)
+            {
+                ArrayPool<(int, int)>.Shared.Return(writtenKeyRanges);
+            }
+        }
+
+        void WriteScopeLabels()
+        {
+            // Scope labels (otel_scope_*) are OpenTelemetry naming conventions that are already
+            // in their target Prometheus form, so they are not re-escaped by the negotiated
+            // scheme. They are de-duplicated by output key in CreateScopeLabels, so unlike point
+            // tags they can never collide with an already-written label. They only need to be
+            // written (which also records their output keys so point tags can detect a collision
+            // with a scope label).
+            foreach (var scopeLabel in GetScopeLabels(metric))
+            {
+                _ = TryWriteLabel(scopeLabel.Key, scopeLabel.Value, isScopeLabel: true);
+            }
+        }
+
+        bool TryWritePointTags()
+        {
+            foreach (var tag in tags)
+            {
+                if (!TryWriteLabel(tag.Key, tag.Value))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        bool TryWriteLabel(string key, object? value, bool isScopeLabel = false)
+        {
+            // The output label name is written directly into the buffer (scope labels arrive already
+            // in their final form and are written verbatim; point tags are escaped using the
+            // negotiated scheme). The written bytes are then used to detect reserved names and
+            // collisions, so no per-label key string is allocated. On a reserved name or a collision
+            // the write is rolled back by rewinding the cursor; a collision additionally aborts the
+            // fast path so the slow path can merge.
+            var rewindCursor = cursor;
+
+            if (wroteLabel)
+            {
+                buffer[cursor++] = unchecked((byte)',');
+            }
+
+            var keyStart = cursor;
+
+            cursor = isScopeLabel
+                ? WriteLabelName(buffer, cursor, key)
+                : this.WriteOutputLabelKey(buffer, cursor, key);
+
+            var writtenKey = new ReadOnlySpan<byte>(buffer, keyStart, cursor - keyStart);
+
+            if (IsReservedOutputKey(reservedOutputKeys, writtenKey))
+            {
+                cursor = rewindCursor;
+                return true;
+            }
+
+            for (var i = 0; i < writtenKeyRangeCount; i++)
+            {
+                var (start, length) = writtenKeyRanges![i];
+                if (new ReadOnlySpan<byte>(buffer, start, length).SequenceEqual(writtenKey))
+                {
+                    cursor = rewindCursor;
+                    return false;
+                }
+            }
+
+            var pool = ArrayPool<(int, int)>.Shared;
+
+            if (writtenKeyRanges == null)
+            {
+                writtenKeyRanges = pool.Rent(8);
+            }
+            else if (writtenKeyRangeCount == writtenKeyRanges.Length)
+            {
+                var grown = pool.Rent(writtenKeyRanges.Length * 2);
+
+                Array.Copy(writtenKeyRanges, grown, writtenKeyRangeCount);
+                pool.Return(writtenKeyRanges);
+
+                writtenKeyRanges = grown;
+            }
+
+            writtenKeyRanges[writtenKeyRangeCount++] = (keyStart, writtenKey.Length);
+
+            cursor = WriteSanitizedLabel(buffer, cursor, value);
+            wroteLabel = true;
+
+            return true;
+        }
+    }
+
+    internal byte[] SerializeTagsToPooledBuffer(
+        Metric metric,
+        ReadOnlyTagCollection tags,
+        in TextFormatSerializerOptions options,
+        IReadOnlyCollection<string>? reservedOutputKeys,
+        out int length)
+    {
+        var pool = ArrayPool<byte>.Shared;
+        var buffer = pool.Rent(Volatile.Read(ref this.serializedTagsBufferHint));
+
+        // Ownership of the rented buffer transfers to the caller only on the successful return
+        // path; until then this method is responsible for returning it to the pool. Without this,
+        // a non-retryable exception from WriteTags, or GetNextSerializedTagsBufferSize throwing at
+        // the cap, would leak the current (potentially oversized) array and churn the large-object
+        // heap on every repeated oversized tag set.
+        var ownsBuffer = true;
+
+        try
+        {
+            // The buffer at least doubles on each retry and GetNextSerializedTagsBufferSize
+            // throws once growth would exceed the 100 MiB cap, so the loop is already bounded.
+            // This explicit attempt cap is a guard that guarantees termination even if WriteTags
+            // were to keep faulting without the buffer actually being too small.
+            for (var attempt = 0; attempt < MaxSerializedTagsBufferGrowthAttempts; attempt++)
+            {
+                try
+                {
+                    var cursor = this.WriteTags(
+                        buffer,
+                        0,
+                        metric,
+                        tags,
+                        options,
+                        writeEnclosingBraces: false,
+                        reservedOutputKeys: reservedOutputKeys);
+
+                    if (cursor > 0 && buffer[cursor - 1] == unchecked((byte)','))
+                    {
+                        cursor--;
+                    }
+
+                    length = cursor;
+
+                    // The remembered hint is capped well below the 100 MiB safety limit so that a
+                    // single oversized tag set cannot force every later point to rent a huge buffer.
+                    var hint = Math.Min(buffer.Length, MaxSerializedTagsBufferHint);
+                    if (hint > Volatile.Read(ref this.serializedTagsBufferHint))
+                    {
+                        Volatile.Write(ref this.serializedTagsBufferHint, hint);
+                    }
+
+                    ownsBuffer = false;
+                    return buffer;
+                }
+                catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
+                {
+                    // Rent the larger buffer before returning the current one so that a throw from
+                    // GetNextSerializedTagsBufferSize (at the cap) leaves the current buffer owned
+                    // and returned exactly once by the outer finally.
+                    var next = pool.Rent(GetNextSerializedTagsBufferSize(buffer.Length));
+
+                    pool.Return(buffer);
+                    buffer = next;
+                }
+            }
+
+            throw new InvalidOperationException("The serialized Prometheus tag set could not be written within the maximum number of buffer-growth attempts.");
+        }
+        finally
+        {
+            if (ownsBuffer)
+            {
+                pool.Return(buffer);
+            }
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal int WriteMetricName(byte[] buffer, int cursor, PrometheusMetric metric)
         => WriteUtf8NoEscape(buffer, cursor, this.GetMetricNameBytes(metric));
 
+    // Writes a metric family name for a metadata (# TYPE/# HELP/# UNIT) line. The base writes the
+    // legacy name verbatim; the v1.0.0 formats override this to write a non-legacy allow-utf-8 name
+    // as a quoted string, e.g. '# TYPE "my.metric" gauge'.
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal int WriteMetricMetadataName(byte[] buffer, int cursor, PrometheusMetric metric)
+    internal virtual int WriteMetricMetadataName(byte[] buffer, int cursor, PrometheusMetric metric)
         => WriteUtf8NoEscape(buffer, cursor, this.GetMetricMetadataNameBytes(metric));
+
+    /// <summary>
+    /// Indicates whether the metric name must be written using the quoted exposition format.
+    /// </summary>
+    /// <param name="metric">The metric to check.</param>
+    /// <returns><see langword="true"/> if the metric name requires quoting; otherwise, <see langword="false"/>.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal bool RequiresQuotedName(PrometheusMetric metric)
+        => !metric.GetNameSet(this.Escaping).IsLegacyValid;
+
+    /// <summary>
+    /// Writes a metric family name followed by a serialization-time suffix (e.g. "_bucket",
+    /// "_sum", "_count", "_created"). For the underscores scheme the pre-computed metadata name
+    /// bytes are written verbatim followed by the literal suffix. For the dots and values
+    /// schemes the suffix is part of the (unescaped) intended name, so the intended name and
+    /// suffix are escaped together as a single unit to keep the structural underscores reversible.
+    /// </summary>
+    /// <param name="buffer">The buffer to write to.</param>
+    /// <param name="cursor">The current position in the buffer.</param>
+    /// <param name="metric">The metric to write.</param>
+    /// <param name="suffix">The suffix to append to the metric name.</param>
+    /// <returns>The new cursor position in the buffer.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal int WriteMetricNameWithSuffix(byte[] buffer, int cursor, PrometheusMetric metric, string suffix)
+    {
+        // The '_total'/'_bucket'/'_sum'/'_count'/'_created' suffixes are structural suffixes that
+        // Prometheus strips to find the metric family, so they are appended literally to the
+        // (already escaped) family name regardless of the escaping scheme.
+        cursor = this.WriteMetricMetadataName(buffer, cursor, metric);
+        return WriteAsciiStringNoEscape(buffer, cursor, suffix);
+    }
+
+    internal virtual int WriteSeriesAndTags(
+        byte[] buffer,
+        int cursor,
+        Metric metric,
+        PrometheusMetric prometheusMetric,
+        ReadOnlyTagCollection tags,
+        in TextFormatSerializerOptions options,
+        string? suffix,
+        IReadOnlyCollection<string>? reservedOutputKeys)
+    {
+        // Writes a sample series name (optionally with a structural suffix) followed by its live tags.
+        // The base writes the legacy form 'name<suffix>{tags}'; the v1.0.0 formats override this to
+        // emit the quoted form '{"name<suffix>",tags}' for a non-legacy allow-utf-8 name.
+        cursor = suffix is null
+            ? this.WriteMetricName(buffer, cursor, prometheusMetric)
+            : this.WriteMetricNameWithSuffix(buffer, cursor, prometheusMetric, suffix);
+
+        return this.WriteTags(buffer, cursor, metric, tags, options, writeEnclosingBraces: true, reservedOutputKeys: reservedOutputKeys);
+    }
+
+    internal int WriteQuotedSeriesAndTags(
+        byte[] buffer,
+        int cursor,
+        Metric metric,
+        PrometheusMetric prometheusMetric,
+        ReadOnlyTagCollection tags,
+        in TextFormatSerializerOptions options,
+        string? suffix,
+        IReadOnlyCollection<string>? reservedOutputKeys)
+    {
+        // Emits a sample series in the quoted exposition form, embedding the (non-legacy) metric name
+        // as the first quoted element inside the label braces.
+
+        // Counter and gauge samples embed the full name (with any '_total' baked in); a suffixed
+        // series (e.g. '_created') embeds the metadata family name plus the literal suffix.
+        var nameBytes = suffix is null
+            ? this.GetMetricNameBytes(prometheusMetric)
+            : this.GetMetricMetadataNameBytes(prometheusMetric);
+
+        return this.WriteTags(
+            buffer,
+            cursor,
+            metric,
+            tags,
+            options,
+            nameBytes,
+            suffix,
+            writeEnclosingBraces: true,
+            reservedOutputKeys: reservedOutputKeys);
+    }
+
+    internal virtual int WriteHistogramBucketName(byte[] buffer, int cursor, PrometheusMetric metric)
+    {
+        // Writes a histogram '_bucket' series name and opens the label set, leaving the cursor
+        // positioned for the first tag. The base writes the legacy form 'name_bucket{'; the v1.0.0
+        // formats override this to emit the quoted form '{"name_bucket",' for a non-legacy name.
+        cursor = this.WriteMetricNameWithSuffix(buffer, cursor, metric, "_bucket");
+        buffer[cursor++] = unchecked((byte)'{');
+
+        return cursor;
+    }
+
+    // Writes a histogram '_sum'/'_count' series name followed by its (pre-serialized) tags. The
+    // base writes the legacy form 'name<suffix>{tags}'; the v1.0.0 formats override this to emit
+    // the quoted form '{"name<suffix>",tags}' for a non-legacy allow-utf-8 name.
+    internal virtual int WriteSeriesNameAndSerializedTags(
+        byte[] buffer,
+        int cursor,
+        PrometheusMetric metric,
+        string suffix,
+        ReadOnlySpan<byte> serializedTags)
+    {
+        cursor = this.WriteMetricNameWithSuffix(buffer, cursor, metric, suffix);
+        return WriteSerializedTags(buffer, cursor, serializedTags);
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal int WriteHelpMetadata(byte[] buffer, int cursor, PrometheusMetric metric, string metricDescription)
@@ -783,7 +1198,7 @@ internal abstract class TextFormatSerializer
         if (!string.IsNullOrEmpty(metricDescription))
         {
             buffer[cursor++] = unchecked((byte)' ');
-            cursor = WriteUnicodeString(buffer, cursor, metricDescription);
+            cursor = WriteEscapedString(buffer, cursor, metricDescription, this.EscapeHelpQuotationMarks);
         }
 
         buffer[cursor++] = AsciiLineFeed;
@@ -808,8 +1223,7 @@ internal abstract class TextFormatSerializer
         return cursor;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal int WriteUnitMetadata(byte[] buffer, int cursor, PrometheusMetric metric, string? unit)
+    internal virtual int WriteUnitMetadata(byte[] buffer, int cursor, PrometheusMetric metric, string? unit)
     {
         if (string.IsNullOrEmpty(unit))
         {
@@ -999,12 +1413,15 @@ internal abstract class TextFormatSerializer
         return builder.ToString();
     }
 
+    private static List<KeyValuePair<string, string>> GetScopeLabels(Metric metric)
+        => ScopeLabelsCache.GetValue(metric, CreateScopeLabels);
+
     private static List<KeyValuePair<string, string>> CreateScopeLabels(Metric metric)
     {
         var orderedKeys = new List<string>();
         var labelsByOutputKey = new Dictionary<string, List<LabelData>>(StringComparer.Ordinal);
 
-        foreach (var label in CreateScopeLabelData(metric))
+        foreach (var label in GetScopeLabelData(metric))
         {
             if (!labelsByOutputKey.TryGetValue(label.OutputKey, out var bucket))
             {
@@ -1025,6 +1442,9 @@ internal abstract class TextFormatSerializer
 
         return scopeLabels;
     }
+
+    private static List<LabelData> GetScopeLabelData(Metric metric)
+        => ScopeLabelDataCache.GetValue(metric, CreateScopeLabelData);
 
     private static List<LabelData> CreateScopeLabelData(Metric metric)
     {
@@ -1269,53 +1689,12 @@ internal abstract class TextFormatSerializer
         return cursor;
     }
 
-    private static string GetSanitizedLabelKey(string value)
-    {
-        var builder = new StringBuilder(value.Length + 1);
-        AppendSanitizedLabelKey(builder, value);
-        return builder.ToString();
-    }
-
-    private static void AppendSanitizedLabelKey(StringBuilder builder, string value)
-    {
-        if (string.IsNullOrEmpty(value))
-        {
-            builder.Append('_');
-            return;
-        }
-
-        var lastCharUnderscore = false;
-
-        if (char.IsAsciiDigit(value[0]))
-        {
-            builder.Append('_');
-            lastCharUnderscore = true;
-        }
-
-        for (var i = 0; i < value.Length; i++)
-        {
-            var ch = value[i];
-
-            if (!IsAllowedMetricsLabelCharacter(ch))
-            {
-                if (!lastCharUnderscore)
-                {
-                    builder.Append('_');
-                    lastCharUnderscore = true;
-                }
-
-                continue;
-            }
-
-            builder.Append(ch);
-            lastCharUnderscore = ch == '_';
-        }
-    }
-
-    private static void AddLabel(string originalKey, object? value, ref List<LabelData>? labels, IReadOnlyCollection<string>? reservedOutputKeys = null)
-        => AddLabel(originalKey, GetSanitizedLabelKey(originalKey), value, ref labels, reservedOutputKeys);
-
-    private static void AddLabel(string originalKey, string outputKey, object? value, ref List<LabelData>? labels, IReadOnlyCollection<string>? reservedOutputKeys = null)
+    private static void AddLabel(
+        string originalKey,
+        string outputKey,
+        object? value,
+        ref List<LabelData>? labels,
+        IReadOnlyCollection<string>? reservedOutputKeys = null)
     {
         if (reservedOutputKeys?.Contains(outputKey) == true)
         {
@@ -1326,11 +1705,158 @@ internal abstract class TextFormatSerializer
         labels.Add(new LabelData(originalKey, outputKey, GetLabelValueString(value)));
     }
 
+    private static bool IsValidLabelKey(string value)
+    {
+        if (char.IsAsciiDigit(value[0]))
+        {
+            return false;
+        }
+
+        foreach (var character in value)
+        {
+            if (!IsAllowedMetricsLabelCharacter(character))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static string SanitizeLabelKey(string value)
+    {
+        // The only growth is a single leading underscore added before a leading digit
+        var buffer = ArrayPool<char>.Shared.Rent(value.Length + 1);
+
+        try
+        {
+            var length = 0;
+            var lastCharUnderscore = false;
+
+            if (char.IsAsciiDigit(value[0]))
+            {
+                buffer[length++] = '_';
+                lastCharUnderscore = true;
+            }
+
+            foreach (var character in value)
+            {
+                if (!IsAllowedMetricsLabelCharacter(character))
+                {
+                    if (!lastCharUnderscore)
+                    {
+                        buffer[length++] = '_';
+                        lastCharUnderscore = true;
+                    }
+
+                    continue;
+                }
+
+                buffer[length++] = character;
+                lastCharUnderscore = character == '_';
+            }
+
+            return new string(buffer, 0, length);
+        }
+        finally
+        {
+            ArrayPool<char>.Shared.Return(buffer);
+        }
+    }
+
+    private static int WriteEscapedLabelKey(byte[] buffer, int cursor, string key, EscapingScheme escaping)
+    {
+        // Writes a dots or values escaped label name directly to the buffer. The escaped form is a valid
+        // legacy metric name but may contain a colon, which is not permitted in a legacy label name, so
+        // it is quoted in that case exactly as WriteLabelName would quote the equivalent string.
+        var scratch = ArrayPool<byte>.Shared.Rent((key.Length * 8) + 16);
+
+        try
+        {
+            var length = PrometheusEscaping.EscapeName(scratch, 0, key, escaping, isMetricName: false);
+            var escaped = new ReadOnlySpan<byte>(scratch, 0, length);
+
+            if (IsValidLegacyLabelName(escaped))
+            {
+                escaped.CopyTo(new Span<byte>(buffer, cursor, length));
+                return cursor + length;
+            }
+
+            return WriteQuotedName(buffer, cursor, escaped, suffix: null);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(scratch);
+        }
+    }
+
+    private static bool IsReservedOutputKey(IReadOnlyCollection<string>? reservedOutputKeys, ReadOnlySpan<byte> writtenKey)
+    {
+        if (reservedOutputKeys == null)
+        {
+            return false;
+        }
+
+        foreach (var reserved in reservedOutputKeys)
+        {
+            if (SpanEqualsAscii(writtenKey, reserved))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool SpanEqualsAscii(ReadOnlySpan<byte> span, string value)
+    {
+        if (span.Length != value.Length)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < span.Length; i++)
+        {
+            if (span[i] != unchecked((byte)value[i]))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool IsValidLegacyLabelName(ReadOnlySpan<byte> name)
+    {
+        if (name.IsEmpty)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < name.Length; i++)
+        {
+            var ch = name[i];
+
+            var valid =
+                ch is (>= (byte)'a' and <= (byte)'z') or (>= (byte)'A' and <= (byte)'Z') or (byte)'_' ||
+                (i > 0 && ch is >= (byte)'0' and <= (byte)'9');
+
+            if (!valid)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private static int WriteLabels(
         byte[] buffer,
         int cursor,
         IReadOnlyList<LabelData>? labels,
         bool writeEnclosingBraces,
+        ReadOnlySpan<byte> quotedNameBytes,
+        string? quotedNameSuffix,
         int? maxLabelSetCharacters = null)
     {
         if (writeEnclosingBraces)
@@ -1340,6 +1866,14 @@ internal abstract class TextFormatSerializer
 
         var wroteLabel = false;
         var labelSetCharacters = 0;
+
+        if (!quotedNameBytes.IsEmpty)
+        {
+            // Embed the metric name as the first (quoted) element inside the braces.
+            cursor = WriteQuotedName(buffer, cursor, quotedNameBytes, quotedNameSuffix);
+            buffer[cursor++] = unchecked((byte)',');
+            wroteLabel = true;
+        }
 
         if (labels != null && labels.Count > 0)
         {
@@ -1384,7 +1918,10 @@ internal abstract class TextFormatSerializer
                     labelSetCharacters += labelCharacters;
                 }
 
-                cursor = WriteLabel(buffer, cursor, key, value);
+                // The grouped key is already the final output key; it is written verbatim, or
+                // quoted when the allow-utf-8 scheme produced a non-legacy label name.
+                cursor = WriteLabelName(buffer, cursor, key);
+                cursor = WriteSanitizedLabel(buffer, cursor, value);
                 buffer[cursor++] = unchecked((byte)',');
                 wroteLabel = true;
             }
@@ -1632,6 +2169,77 @@ internal abstract class TextFormatSerializer
         exponent = index - 10;
         return true;
     }
+
+    private string[] GetReservedExemplarOutputKeys()
+    {
+        // The built-in trace_id/span_id exemplar labels are added under their escaped output keys,
+        // so the reserved set used to drop colliding filtered tags must hold those same escaped
+        // keys. Otherwise, for example, the dots scheme escapes the built-in "trace_id" to
+        // "trace__id" while the reserved set still held "trace_id"; a filtered "trace_id" tag
+        // (also escaped to "trace__id") would not be dropped and its value would be concatenated
+        // onto the real trace ID. The built-in trace/span IDs MUST take precedence in a collision.
+        if (this.Escaping == EscapingScheme.Underscores)
+        {
+            return ReservedExemplarLabelNames;
+        }
+
+        return this.reservedExemplarOutputKeys ??=
+        [
+            this.GetOutputLabelKey("trace_id"),
+            this.GetOutputLabelKey("span_id"),
+        ];
+    }
+
+    // Scope labels (otel_scope_*) are produced in their underscore-normalized Prometheus form.
+    // Under the dots and values schemes that form must still be escaped so a client decoding
+    // the negotiated scheme reverses it correctly; for example "otel_scope_dot_name" would
+    // otherwise be incorrectly decoded under the dots scheme into "otel_scope.name", losing
+    // the required "otel_scope_" prefix. The underscores scheme leaves the key unchanged.
+    private string GetOutputLabelKey(string value)
+    {
+        // The dots and values schemes produce a reversible, legacy-valid ASCII label name. The
+        // underscores scheme replaces discouraged characters and collapses consecutive ones.
+        if (this.Escaping != EscapingScheme.Underscores)
+        {
+            return string.IsNullOrEmpty(value) ? "_" : PrometheusEscaping.EscapeName(value, this.Escaping, isMetricName: false);
+        }
+
+        if (string.IsNullOrEmpty(value))
+        {
+            return "_";
+        }
+
+        // Check for validity first, since the vast majority of label
+        // keys are already valid, to avoid allocating to sanitize it.
+        return IsValidLabelKey(value) ? value : SanitizeLabelKey(value);
+    }
+
+    private int WriteOutputLabelKey(byte[] buffer, int cursor, string key)
+    {
+        // Writes a point tag's output label name directly to the buffer using the negotiated escaping
+        // scheme, without allocating an intermediate string. This is the buffer-writing counterpart of
+        // GetOutputLabelKey followed by WriteLabelName, used by the fast label-writing path.
+        if (string.IsNullOrEmpty(key))
+        {
+            buffer[cursor++] = unchecked((byte)'_');
+            return cursor;
+        }
+
+        return this.Escaping switch
+        {
+            // The underscores scheme always produces a valid legacy label name (no quoting needed).
+            EscapingScheme.Underscores => WriteNormalizedLabelKey(buffer, cursor, key),
+
+            // The allow-utf-8 scheme keeps the name as-is, quoting it when it is not a legacy name.
+            EscapingScheme.AllowUtf8 => WriteLabelName(buffer, cursor, key),
+
+            // The dots and values schemes escape the name and quote it only if a colon survives.
+            EscapingScheme.Dots or EscapingScheme.Values or _ => WriteEscapedLabelKey(buffer, cursor, key, this.Escaping),
+        };
+    }
+
+    private void AddLabel(string originalKey, object? value, ref List<LabelData>? labels, IReadOnlyCollection<string>? reservedOutputKeys = null)
+        => AddLabel(originalKey, this.GetOutputLabelKey(originalKey), value, ref labels, reservedOutputKeys);
 
     private readonly struct LabelData(string originalKey, string outputKey, string value)
     {

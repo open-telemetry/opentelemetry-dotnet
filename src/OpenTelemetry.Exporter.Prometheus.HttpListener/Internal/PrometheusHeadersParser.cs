@@ -25,13 +25,7 @@ internal static class PrometheusHeadersParser
         const int SupportedProtocols = 4;
         var preferences = new List<(PrometheusProtocol Protocol, double Quality)>(SupportedProtocols);
 
-        var supportedEscapingSchemes = PrometheusProtocol.SupportedEscapingSchemes;
-
-#if NET8_0_OR_GREATER
         SupportedVersions supportedVersions;
-#else
-        SupportedVersions supportedVersions;
-#endif
 
         while (value.Length > 0)
         {
@@ -116,12 +110,13 @@ internal static class PrometheusHeadersParser
                 continue;
             }
 
-            if (version is null)
-            {
-                // Use the oldest version if no version preference was specified
-                version = isOpenMetrics ? PrometheusProtocol.OpenMetricsV0 : PrometheusProtocol.PrometheusV0;
-            }
-            else if (version.Major is not > 0)
+            // Use the oldest version if no version preference was specified. Per the OpenMetrics
+            // specification's negotiation rules (https://prometheus.io/docs/specs/om/open_metrics_spec/#protocol-negotiation),
+            // "the standard" begins at 1.0.0 (0.0.1 predates the standard being ratified), so servers
+            // MUST default to OpenMetrics 1.0.0 for an unversioned "application/openmetrics-text" entry.
+            version ??= isOpenMetrics ? PrometheusProtocol.OpenMetricsV1 : PrometheusProtocol.PrometheusV0;
+
+            if (version.Major is not > 0)
             {
                 // From https://prometheus.io/docs/instrumenting/content_negotiation/#content-type-response:
                 // "The Content-Type header MUST include [...] For text formats version 1.0.0 and above, the escaping scheme parameter."
@@ -165,18 +160,7 @@ internal static class PrometheusHeadersParser
         var trimmed = TrimQuotes(value);
         var escaping = trimmed.ToString();
 
-        if (PrometheusProtocol.SupportedEscapingSchemes.Contains(escaping))
-        {
-            return escaping;
-        }
-
-        // TODO Support other escaping schemes, including at least "allow-utf-8".
-        // For now we treat "allow-utf-8" as if it were "underscores" to avoid fallback
-        // to PrometheusText0.0.4 where it would previously match to OpenMetricsText1.0.0.
-        // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/7246.
-        return string.Equals(escaping, PrometheusProtocol.AllowUtf8Escaping, StringComparison.Ordinal)
-            ? PrometheusProtocol.UnderscoresEscaping
-            : null;
+        return PrometheusProtocol.SupportedEscapingSchemes.Contains(escaping) ? escaping : null;
     }
 
     private static ReadOnlySpan<char> SplitNext(ref ReadOnlySpan<char> span, char character)

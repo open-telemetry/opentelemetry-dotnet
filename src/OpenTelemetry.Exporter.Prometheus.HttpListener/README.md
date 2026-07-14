@@ -63,9 +63,14 @@ variables.
 * `ScopeInfoEnabled`: Whether to include scope labels in metrics (default `true`).
 * `ScrapeEndpointPath`: Defines the Prometheus scrape endpoint path.
   (default `"/metrics"`).
+* `TargetInfoEnabled`: Whether to produce a `target_info` metric (default `true`).
+* `ResourceConstantLabels`: A predicate selecting which resource attributes are
+  added to each metric as constant labels (default `null`).
 * `DisableTotalNameSuffixForCounters`: Whether to disable the `_total` suffix for
   counter metrics (default `false`).
 * `DisableTimestamp`: Whether to disable the timestamp for metrics (default `false`).
+* `ConfigureHttpListener`: A delegate that can be used to apply custom configuration
+  to the `HttpListener` instance used by the exporter before use.
 
 ### Configuration using Dependency Injection
 
@@ -107,6 +112,33 @@ Default value: `true`. Set to `false` to disable scope labels.
 Configures scrape endpoint response caching. Multiple scrape requests within the
 cache duration time period will receive the same previously generated response.
 The default value is `300`. Set to `0` to disable response caching.
+
+### TargetInfoEnabled
+
+Specifies whether to produce a
+[`target_info`](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/compatibility/prometheus_and_openmetrics.md#resource-attributes-1)
+metric. Default value: `true`. Set to `false` to disable the `target_info` metric.
+
+### ResourceConstantLabels
+
+A predicate used to select which
+[resource attributes](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk_exporters/prometheus.md#resource-attributes-as-metric-labels)
+are added to each metric as constant labels. The predicate is invoked with the
+resource attribute key and should return `true` to include the attribute.
+Default value: `null` (no resource attributes are added as metric labels).
+Resource attributes copied as metric labels are always included in the
+`target_info` metric regardless of this predicate.
+
+```csharp
+var meterProvider = Sdk.CreateMeterProviderBuilder()
+    .AddMeter(MyMeter.Name)
+    .AddPrometheusHttpListener(options =>
+    {
+        // Add all resource attributes as metric labels.
+        options.ResourceConstantLabels = static _ => true;
+    })
+    .Build();
+```
 
 ## Troubleshooting
 

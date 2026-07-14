@@ -114,7 +114,24 @@ public static class ResourceBuilderExtensions
     }
 
     /// <summary>
-    /// Adds resource attributes parsed from OTEL_RESOURCE_ATTRIBUTES, OTEL_SERVICE_NAME environment variables
+    /// Adds attributes and a Schema URL to a <see cref="ResourceBuilder"/>.
+    /// </summary>
+    /// <param name="resourceBuilder"><see cref="ResourceBuilder"/>.</param>
+    /// <param name="attributes">An <see cref="IEnumerable{T}"/> of attributes that describe the resource.</param>
+    /// <param name="schemaUrl">The Schema URL (semantic conventions URL) that applies to the resource, or <see langword="null"/> if the resource has no Schema URL. See <see cref="Resource.Merge(Resource)"/> for how Schema URLs are combined.</param>
+    /// <returns>Returns <see cref="ResourceBuilder"/> for chaining.</returns>
+#pragma warning disable CA1054 // Change the type of parameter from 'string' to 'System.Uri'
+    public static ResourceBuilder AddAttributes(this ResourceBuilder resourceBuilder, IEnumerable<KeyValuePair<string, object>> attributes, string? schemaUrl)
+#pragma warning restore CA1054 // Change the type of parameter from 'string' to 'System.Uri'
+    {
+        Guard.ThrowIfNull(resourceBuilder);
+#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
+        return resourceBuilder.AddResource(new Resource(attributes, schemaUrl));
+#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
+    }
+
+    /// <summary>
+    /// Adds resource attributes parsed from the <c>OTEL_RESOURCE_ATTRIBUTES</c> and <c>OTEL_SERVICE_NAME</c> environment variables
     /// to a <see cref="ResourceBuilder"/> following the <a
     /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md#specifying-resource-information-via-an-environment-variable">Resource
     /// SDK</a>.

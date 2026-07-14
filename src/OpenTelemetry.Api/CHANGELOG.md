@@ -25,6 +25,10 @@ Notes](../../RELEASENOTES.md).
   key normalization to replace an empty key with a single underscore (`_`).
   ([#7424](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7424))
 
+* Updated `tracestate` key validation to comply with the W3C Trace Context
+  Level 2 grammar.
+  ([#7469](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7469))
+
 ## 1.16.0
 
 Released 2026-Jun-10

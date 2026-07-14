@@ -10,9 +10,11 @@ namespace OpenTelemetry.Shims.OpenTracing;
 
 internal sealed class ScopeManagerShim : IScopeManager
 {
-#pragma warning disable IDE0028 // Simplify collection initialization
+#if NETFRAMEWORK || NETSTANDARD2_0
     private static readonly ConditionalWeakTable<TelemetrySpan, IScope> SpanScopeTable = new();
-#pragma warning restore IDE0028 // Simplify collection initialization
+#else
+    private static readonly ConditionalWeakTable<TelemetrySpan, IScope> SpanScopeTable = [];
+#endif
 
 #if DEBUG
     private int spanScopeTableCount;
