@@ -612,6 +612,32 @@ public class OtlpLogExporterTests
         Assert.Equal((uint)logRecord.TraceFlags, otlpLogRecord.Flags);
     }
 
+    [Fact]
+    public void CheckToOtlpLogRecordMasksReservedTraceFlagBits()
+    {
+        var logRecords = new List<LogRecord>();
+        using var loggerFactory = LoggerFactory.Create(builder =>
+        {
+            builder.UseOpenTelemetry(logging => logging.AddInMemoryExporter(logRecords));
+        });
+
+        var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
+
+        using (var activity = new Activity(Utils.GetCurrentMethodName()))
+        {
+            activity.Start();
+            logger.LogWithinAnActivity();
+        }
+
+        var logRecord = Assert.Single(logRecords);
+        logRecord.TraceFlags = (ActivityTraceFlags)0x00000103;
+
+        var otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecord);
+
+        Assert.NotNull(otlpLogRecord);
+        Assert.Equal(0x00000003u, otlpLogRecord.Flags);
+    }
+
     [Theory]
     [InlineData(LogLevel.Trace)]
     [InlineData(LogLevel.Debug)]

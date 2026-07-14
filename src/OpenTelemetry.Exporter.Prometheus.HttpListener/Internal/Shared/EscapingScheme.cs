@@ -27,4 +27,11 @@ internal enum EscapingScheme
     /// characters are encoded as their hexadecimal Unicode code point.
     /// </summary>
     Values,
+
+    /// <summary>
+    /// Names are not escaped and are emitted as UTF-8. Names that are not valid legacy
+    /// names are written using the quoted exposition format (the name is moved inside
+    /// the label braces as a double-quoted string and non-legacy label names are quoted).
+    /// </summary>
+    AllowUtf8,
 }

@@ -66,6 +66,38 @@ public class PrometheusSerializerFuzzTests
             SerializeEscapeName(value, EscapingScheme.Dots).SequenceEqual(Encoding.ASCII.GetBytes(PrometheusEscaping.EscapeName(value, EscapingScheme.Dots))) &&
             SerializeEscapeName(value, EscapingScheme.Values).SequenceEqual(Encoding.ASCII.GetBytes(PrometheusEscaping.EscapeName(value, EscapingScheme.Values))));
 
+    [Property(MaxTest = MaxTests)]
+    public Property EscapeNameWithMalformedUtf16DotsMatchesReferenceImplementation() => Prop.ForAll(
+        Generators.SurrogateHeavyStringArbitrary(),
+        static (value) => PrometheusEscaping.EscapeName(value, EscapingScheme.Dots) == ReferenceEscapeName(value, EscapingScheme.Dots));
+
+    [Property(MaxTest = MaxTests)]
+    public Property EscapeNameWithMalformedUtf16ValuesMatchesReferenceImplementation() => Prop.ForAll(
+        Generators.SurrogateHeavyStringArbitrary(),
+        static (value) => PrometheusEscaping.EscapeName(value, EscapingScheme.Values) == ReferenceEscapeName(value, EscapingScheme.Values));
+
+    [Property(MaxTest = MaxTests)]
+    public Property EscapeNameToBufferWithMalformedUtf16DoesNotOverrunProductionBuffer() => Prop.ForAll(
+        Generators.SurrogateHeavyStringArbitrary(),
+        static (value) =>
+            EscapeIntoProductionSizedBuffer(value, EscapingScheme.Dots) &&
+            EscapeIntoProductionSizedBuffer(value, EscapingScheme.Values));
+
+    [Property(MaxTest = MaxTests)]
+    public Property IsValidLegacyNameMatchesReferenceImplementation() => Prop.ForAll(
+        Generators.PrometheusStringArbitrary(),
+        static (value) => PrometheusEscaping.IsValidLegacyName(value) == ReferenceIsValidLegacyName(value));
+
+    [Property(MaxTest = MaxTests)]
+    public Property IsValidLegacyLabelNameMatchesReferenceImplementation() => Prop.ForAll(
+        Generators.PrometheusStringArbitrary(),
+        static (value) => PrometheusEscaping.IsValidLegacyLabelName(value) == ReferenceIsValidLegacyLabelName(value));
+
+    [Property(MaxTest = MaxTests)]
+    public Property WriteLabelNameMatchesReferenceImplementation() => Prop.ForAll(
+        Generators.PrometheusStringArbitrary(),
+        static (value) => Serialize(value, static (buffer, cursor, text) => TextFormatSerializer.WriteLabelName(buffer, cursor, text)).SequenceEqual(ReferenceWriteLabelName(value)));
+
     private static byte[] Serialize(string value, Func<byte[], int, string, int> writer)
     {
         var buffer = new byte[(value.Length * 8) + 16];
@@ -85,6 +117,19 @@ public class PrometheusSerializerFuzzTests
         var buffer = new byte[(value.Length * 8) + 16];
         var cursor = PrometheusEscaping.EscapeName(buffer, 0, value, scheme);
         return buffer.AsSpan(0, cursor).ToArray();
+    }
+
+    private static bool EscapeIntoProductionSizedBuffer(string value, EscapingScheme scheme)
+    {
+        // The buffer is sized exactly for an upper bound of six bytes per character,
+        // plus the three-byte "U__" values prefix. A non-advancing decoder would write
+        // past the end and throw IndexOutOfRangeException.
+        const int MaxBytesPerCharacter = 6;
+
+        var buffer = new byte[(scheme == EscapingScheme.Values ? 3 : 0) + (value.Length * MaxBytesPerCharacter)];
+        var cursor = PrometheusEscaping.EscapeName(buffer, 0, value, scheme);
+
+        return cursor >= 0 && cursor <= buffer.Length;
     }
 
     private static byte[] SerializeLong(long value)
@@ -213,7 +258,7 @@ public class PrometheusSerializerFuzzTests
             {
                 text.Append('_').Append(codePoint.ToString("x", CultureInfo.InvariantCulture)).Append('_');
             }
-            else if (ReferenceIsValidLegacyRune(codePoint, index == 0))
+            else if (ReferenceIsValidLegacyRune(codePoint, index == 0, isMetricName: true))
             {
                 text.Append((char)codePoint);
             }
@@ -236,15 +281,24 @@ public class PrometheusSerializerFuzzTests
         return text.ToString();
     }
 
-    private static bool ReferenceIsValidLegacyName(string value)
+    private static bool ReferenceIsValidLegacyName(string value) => ReferenceIsValidLegacyName(value, isMetricName: true);
+
+    private static bool ReferenceIsValidLegacyLabelName(string value) => ReferenceIsValidLegacyName(value, isMetricName: false);
+
+    private static bool ReferenceIsValidLegacyName(string value, bool isMetricName)
     {
+        if (value.Length == 0)
+        {
+            return false;
+        }
+
         var index = 0;
 
         while (index < value.Length)
         {
             var codePoint = ReferenceGetCodePoint(value, index, out var charsConsumed, out _);
 
-            if (!ReferenceIsValidLegacyRune(codePoint, index == 0))
+            if (!ReferenceIsValidLegacyRune(codePoint, index == 0, isMetricName))
             {
                 return false;
             }
@@ -255,8 +309,24 @@ public class PrometheusSerializerFuzzTests
         return true;
     }
 
-    private static bool ReferenceIsValidLegacyRune(int codePoint, bool isFirst) =>
-        codePoint is (>= 'a' and <= 'z') or (>= 'A' and <= 'Z') or '_' or ':' ||
+    // An independent re-implementation of TextFormatSerializer.WriteLabelName: a non-legacy label
+    // name is emitted as a double-quoted UTF-8 string (escaping '"', '\' and '\n'); a legacy name is
+    // written verbatim as ASCII bytes.
+    private static byte[] ReferenceWriteLabelName(string value)
+    {
+        if (ReferenceIsValidLegacyLabelName(value))
+        {
+            return ReferenceWriteAsciiStringNoEscape(value);
+        }
+
+        var escaped = ReferenceWriteEscapedString(value, escapeQuotationMarks: true);
+
+        return [(byte)'"', .. escaped, (byte)'"'];
+    }
+
+    private static bool ReferenceIsValidLegacyRune(int codePoint, bool isFirst, bool isMetricName) =>
+        codePoint is (>= 'a' and <= 'z') or (>= 'A' and <= 'Z') or '_' ||
+        (isMetricName && codePoint == ':') ||
         (!isFirst && codePoint is >= '0' and <= '9');
 
     private static int ReferenceGetCodePoint(string value, int index, out int charsConsumed, out bool isValidRune)
@@ -322,6 +392,21 @@ public class PrometheusSerializerFuzzTests
         {
             var charGen = Gen.Choose(0, 0xFFFF).Select(static c => (char)c);
             return CreateString(charGen, maxLength: 128).ToArbitrary();
+        }
+
+        public static Arbitrary<string> SurrogateHeavyStringArbitrary()
+        {
+            var surrogate = Gen.Choose(0xD800, 0xDFFF).Select(static c => (char)c);
+            var ascii = Gen.Choose(0, 0x7F).Select(static c => (char)c);
+            var anyBmp = Gen.Choose(0, 0xFFFF).Select(static c => (char)c);
+
+            // Including the surrogate generator twice weights code units in the 0xD800-0xDFFF range
+            // heavily, so lone and reversed (low-then-high) surrogates are common in the generated body.
+            var charGen = Gen.OneOf(surrogate, surrogate, ascii, anyBmp);
+            var body = CreateString(charGen, maxLength: 128);
+
+            // Frequently append a trailing lone high surrogate
+            return Gen.OneOf(body, body.Select(static value => value + "\uD800")).ToArbitrary();
         }
 
         public static Arbitrary<double> DoubleArbitrary()

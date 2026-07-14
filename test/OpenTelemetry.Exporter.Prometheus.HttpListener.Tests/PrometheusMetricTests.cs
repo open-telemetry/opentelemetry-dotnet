@@ -492,6 +492,170 @@ public sealed class PrometheusMetricTests
         Assert.Equal(metric.Name, names.Name);
     }
 
+    [Fact]
+    public void GetNames_AllowUtf8_CounterWithUnitBeforeTotalSuffix_DoesNotDuplicateUnit()
+    {
+        var metric = new PrometheusMetric("db_bytes_total", "By", PrometheusType.Counter, false);
+        var names = metric.GetNameSet(EscapingScheme.AllowUtf8);
+
+        Assert.Equal("db_bytes_total", names.Name);
+        Assert.Equal("db_bytes_total", names.OpenMetricsName);
+        Assert.Equal("db_bytes", names.OpenMetricsMetadataName);
+    }
+
+    [Fact]
+    public void GetNames_AllowUtf8_GaugeNamedWithTotalSuffix_KeepsSuffix()
+    {
+        var metric = new PrometheusMetric("requests_total", string.Empty, PrometheusType.Gauge, false);
+        var names = metric.GetNameSet(EscapingScheme.AllowUtf8);
+
+        Assert.Equal("requests_total", names.Name);
+        Assert.Equal("requests_total", names.OpenMetricsName);
+        Assert.Equal("requests_total", names.OpenMetricsMetadataName);
+    }
+
+    [Fact]
+    public void GetNames_AllowUtf8_GaugeNamedExactlyTotal_IsNotEmptied()
+    {
+        var metric = new PrometheusMetric("_total", string.Empty, PrometheusType.Gauge, false);
+        var names = metric.GetNameSet(EscapingScheme.AllowUtf8);
+
+        Assert.Equal("_total", names.Name);
+        Assert.Equal("_total", names.OpenMetricsName);
+        Assert.Equal("_total", names.OpenMetricsMetadataName);
+    }
+
+    [Fact]
+    public void AppendSuffixes_False_Underscores_DropsUnitAndTotalAndCollapsesNames()
+    {
+        var metric = new PrometheusMetric(
+            "http.server.duration",
+            "s",
+            PrometheusType.Counter,
+            disableTotalNameSuffixForCounters: false,
+            appendSuffixes: false);
+
+        // The escaping axis (underscore sanitization) still applies, but no unit suffix and no
+        // '_total' counter suffix are appended, so all three names collapse to the escaped name.
+        Assert.Equal("http_server_duration", metric.Name);
+        Assert.Equal("http_server_duration", metric.OpenMetricsName);
+        Assert.Equal("http_server_duration", metric.OpenMetricsMetadataName);
+    }
+
+    [Fact]
+    public void AppendSuffixes_False_DropsUnitMetadata()
+    {
+        var metric = new PrometheusMetric(
+            "http.server.duration",
+            "s",
+            PrometheusType.Counter,
+            disableTotalNameSuffixForCounters: false,
+            appendSuffixes: false);
+
+        Assert.Null(metric.Unit);
+        Assert.Null(metric.UnitBytes);
+    }
+
+    [Fact]
+    public void AppendSuffixes_False_Underscores_PreservesUserAuthoredTotalSuffix()
+    {
+        // "without suffixes" means suffixes are not added; a '_total' the user authored is not removed.
+        var metric = new PrometheusMetric(
+            "db_bytes_total",
+            "By",
+            PrometheusType.Counter,
+            disableTotalNameSuffixForCounters: false,
+            appendSuffixes: false);
+
+        Assert.Equal("db_bytes_total", metric.Name);
+        Assert.Equal("db_bytes_total", metric.OpenMetricsName);
+        Assert.Equal("db_bytes_total", metric.OpenMetricsMetadataName);
+    }
+
+    [Fact]
+    public void AppendSuffixes_False_Counter_IgnoresDisableTotalNameSuffixForCounters()
+    {
+        // When suffixes are disabled the '_total' suffix is never added regardless of the value of
+        // disableTotalNameSuffixForCounters.
+        var enabled = new PrometheusMetric("requests", "1", PrometheusType.Counter, disableTotalNameSuffixForCounters: false, appendSuffixes: false);
+        var disabled = new PrometheusMetric("requests", "1", PrometheusType.Counter, disableTotalNameSuffixForCounters: true, appendSuffixes: false);
+
+        Assert.Equal("requests", enabled.Name);
+        Assert.Equal("requests", disabled.Name);
+        Assert.Equal("requests", enabled.OpenMetricsName);
+        Assert.Equal("requests", disabled.OpenMetricsName);
+    }
+
+    [Fact]
+    public void AppendSuffixes_False_Dots_EscapesNameButAppendsNoSuffixes()
+    {
+        var metric = new PrometheusMetric(
+            "http.server.duration",
+            "s",
+            PrometheusType.Counter,
+            disableTotalNameSuffixForCounters: false,
+            appendSuffixes: false);
+
+        var names = metric.GetNameSet(EscapingScheme.Dots);
+
+        Assert.Equal("http_dot_server_dot_duration", names.Name);
+        Assert.Equal("http_dot_server_dot_duration", names.OpenMetricsName);
+        Assert.Equal("http_dot_server_dot_duration", names.OpenMetricsMetadataName);
+    }
+
+    [Fact]
+    public void AppendSuffixes_False_Values_EscapesNameButAppendsNoSuffixes()
+    {
+        var metric = new PrometheusMetric(
+            "http.server.duration",
+            "s",
+            PrometheusType.Counter,
+            disableTotalNameSuffixForCounters: false,
+            appendSuffixes: false);
+
+        var names = metric.GetNameSet(EscapingScheme.Values);
+
+        Assert.Equal("U__http_2e_server_2e_duration", names.Name);
+        Assert.Equal("U__http_2e_server_2e_duration", names.OpenMetricsName);
+        Assert.Equal("U__http_2e_server_2e_duration", names.OpenMetricsMetadataName);
+    }
+
+    [Fact]
+    public void AppendSuffixes_False_AllowUtf8_PassesNameThroughUnalteredAndFlagsNonLegacyName()
+    {
+        var metric = new PrometheusMetric(
+            "http.server.duration",
+            "s",
+            PrometheusType.Counter,
+            disableTotalNameSuffixForCounters: false,
+            appendSuffixes: false);
+
+        var names = metric.GetNameSet(EscapingScheme.AllowUtf8);
+
+        // The allow-utf-8 scheme with suffixes disabled is the "no translation" case: the name is
+        // completely unaltered and its (non-)legacy validity drives the quoted exposition format.
+        Assert.Equal("http.server.duration", names.Name);
+        Assert.Equal("http.server.duration", names.OpenMetricsName);
+        Assert.Equal("http.server.duration", names.OpenMetricsMetadataName);
+        Assert.False(names.IsLegacyValid);
+    }
+
+    [Fact]
+    public void AppendSuffixes_False_AllowUtf8_LegacyNameIsFlaggedValid()
+    {
+        var metric = new PrometheusMetric(
+            "http_server_requests",
+            "By",
+            PrometheusType.Counter,
+            disableTotalNameSuffixForCounters: false,
+            appendSuffixes: false);
+
+        var names = metric.GetNameSet(EscapingScheme.AllowUtf8);
+
+        Assert.Equal("http_server_requests", names.Name);
+        Assert.True(names.IsLegacyValid);
+    }
+
     [Theory]
     [InlineData(PrometheusType.Counter)]
     [InlineData(PrometheusType.Gauge)]

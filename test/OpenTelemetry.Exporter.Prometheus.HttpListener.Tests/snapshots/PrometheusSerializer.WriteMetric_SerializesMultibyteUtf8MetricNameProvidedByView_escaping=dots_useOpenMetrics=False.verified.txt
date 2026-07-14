@@ -1,0 +1,7 @@
+# TYPE http_dot____dot___dot_requests__seconds histogram
+# HELP http_dot____dot___dot_requests__seconds Duration of HTTP server requests.
+http_dot____dot___dot_requests__seconds_bucket{otel_scope_name="WriteMetric_SerializesMultibyteUtf8MetricNameProvidedByView",http_dot_method="GET",le="5"} 1
+http_dot____dot___dot_requests__seconds_bucket{otel_scope_name="WriteMetric_SerializesMultibyteUtf8MetricNameProvidedByView",http_dot_method="GET",le="10"} 2
+http_dot____dot___dot_requests__seconds_bucket{otel_scope_name="WriteMetric_SerializesMultibyteUtf8MetricNameProvidedByView",http_dot_method="GET",le="+Inf"} 2
+http_dot____dot___dot_requests__seconds_sum{otel_scope_name="WriteMetric_SerializesMultibyteUtf8MetricNameProvidedByView",http_dot_method="GET"} 12
+http_dot____dot___dot_requests__seconds_count{otel_scope_name="WriteMetric_SerializesMultibyteUtf8MetricNameProvidedByView",http_dot_method="GET"} 2

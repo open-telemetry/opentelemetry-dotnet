@@ -11,17 +11,20 @@ internal sealed class PrometheusMetric
 {
     private readonly string rawName;
     private readonly bool disableTotalNameSuffixForCounters;
+    private readonly bool appendSuffixes;
     private readonly NameSet underscoreNames;
+    private NameSet? allowUtf8Names;
     private NameSet? dotsNames;
     private NameSet? valuesNames;
 
-    public PrometheusMetric(string name, string unit, PrometheusType type, bool disableTotalNameSuffixForCounters)
+    public PrometheusMetric(string name, string unit, PrometheusType type, bool disableTotalNameSuffixForCounters, bool appendSuffixes = true)
     {
         this.rawName = name;
         this.disableTotalNameSuffixForCounters = disableTotalNameSuffixForCounters;
+        this.appendSuffixes = appendSuffixes;
         this.Type = type;
 
-        var sanitizedUnit = string.IsNullOrEmpty(unit) ? null : GetUnit(unit);
+        var sanitizedUnit = appendSuffixes && !string.IsNullOrEmpty(unit) ? GetUnit(unit) : null;
         this.Unit = sanitizedUnit;
         this.UnitBytes = sanitizedUnit == null ? null : ConvertToBytes(sanitizedUnit);
 
@@ -29,7 +32,7 @@ internal sealed class PrometheusMetric
         // formats, which have no negotiated escaping) so they are computed eagerly. Other
         // escapings' name sets are computed lazily on first use, so the overhead of an
         // escaping scheme is only paid when that scheme is actually scraped from the server.
-        this.underscoreNames = BuildUnderscoreNames(name, sanitizedUnit, type, disableTotalNameSuffixForCounters);
+        this.underscoreNames = BuildUnderscoreNames(name, sanitizedUnit, type, disableTotalNameSuffixForCounters, appendSuffixes);
     }
 
     public string Name => this.underscoreNames.Name;
@@ -44,8 +47,8 @@ internal sealed class PrometheusMetric
 
     internal byte[]? UnitBytes { get; }
 
-    public static PrometheusMetric Create(Metric metric, bool disableTotalNameSuffixForCounters)
-        => new(metric.Name, metric.Unit, GetPrometheusType(metric.MetricType), disableTotalNameSuffixForCounters);
+    public static PrometheusMetric Create(Metric metric, bool disableTotalNameSuffixForCounters, bool appendSuffixes = true)
+        => new(metric.Name, metric.Unit, GetPrometheusType(metric.MetricType), disableTotalNameSuffixForCounters, appendSuffixes);
 
     internal static string SanitizeMetricUnit(string metricUnit)
     {
@@ -235,9 +238,10 @@ internal sealed class PrometheusMetric
     /// <returns>The metric name set for the requested escaping scheme.</returns>
     internal NameSet GetNameSet(EscapingScheme escaping) => escaping switch
     {
-        EscapingScheme.Dots => this.dotsNames ??= BuildEscapedNames(this.rawName, this.Unit, this.Type, this.disableTotalNameSuffixForCounters, EscapingScheme.Dots),
-        EscapingScheme.Values => this.valuesNames ??= BuildEscapedNames(this.rawName, this.Unit, this.Type, this.disableTotalNameSuffixForCounters, EscapingScheme.Values),
-        _ => this.underscoreNames,
+        EscapingScheme.AllowUtf8 => this.allowUtf8Names ??= BuildAllowUtf8Names(this.rawName, this.Unit, this.Type, this.disableTotalNameSuffixForCounters, this.appendSuffixes),
+        EscapingScheme.Dots => this.dotsNames ??= BuildEscapedNames(this.rawName, this.Unit, this.Type, this.disableTotalNameSuffixForCounters, this.appendSuffixes, EscapingScheme.Dots),
+        EscapingScheme.Values => this.valuesNames ??= BuildEscapedNames(this.rawName, this.Unit, this.Type, this.disableTotalNameSuffixForCounters, this.appendSuffixes, EscapingScheme.Values),
+        EscapingScheme.Underscores or _ => this.underscoreNames,
     };
 
     private static byte[] ConvertToBytes(string value)
@@ -253,7 +257,7 @@ internal sealed class PrometheusMetric
         return bytes;
     }
 
-    private static NameSet BuildUnderscoreNames(string name, string? sanitizedUnit, PrometheusType type, bool disableTotalNameSuffixForCounters)
+    private static NameSet BuildUnderscoreNames(string name, string? sanitizedUnit, PrometheusType type, bool disableTotalNameSuffixForCounters, bool appendSuffixes)
     {
         // The metric name is
         // required to match the regex: `[a-zA-Z_:]([a-zA-Z0-9_:])*`. Invalid characters
@@ -261,6 +265,20 @@ internal sealed class PrometheusMetric
         // consecutive `_` characters MUST be replaced with a single `_` character.
         // https://github.com/open-telemetry/opentelemetry-specification/blob/b2f923fb1650dde1f061507908b834035506a796/specification/compatibility/prometheus_and_openmetrics.md#L230-L233
         var sanitizedName = SanitizeMetricName(name);
+
+        if (!appendSuffixes)
+        {
+            // The suffix axis is disabled, so no unit suffix and no '_total' counter suffix are
+            // appended; only the escaping axis (underscore sanitization) is applied. As in the
+            // with-suffixes path below, the classic name is sanitized with SanitizeMetricName and
+            // the OpenMetrics names with EscapeOpenMetricsName; without suffixes to distinguish
+            // them the OpenMetrics name and its metadata name are the same. Note that even
+            // OpenMetrics counters do not receive the '_total' suffix that the format would
+            // otherwise mandate; this is the caller's explicit choice not to translate names.
+            var escapedName = EscapeOpenMetricsName(name);
+            return new(sanitizedName, escapedName, escapedName);
+        }
+
         var openMetricsName = type == PrometheusType.Counter
             ? RemoveOpenMetricsCounterNameSuffix(name)
             : name;
@@ -319,8 +337,17 @@ internal sealed class PrometheusMetric
         string? sanitizedUnit,
         PrometheusType type,
         bool disableTotalNameSuffixForCounters,
+        bool appendSuffixes,
         EscapingScheme escaping)
     {
+        if (!appendSuffixes)
+        {
+            // The suffix axis is disabled, so the escaped name carries neither a unit suffix nor a
+            // '_total' counter suffix and the three names collapse to the escaped original name.
+            var escapedNameWithoutSuffixes = PrometheusEscaping.EscapeName(name, escaping);
+            return new(escapedNameWithoutSuffixes, escapedNameWithoutSuffixes, escapedNameWithoutSuffixes);
+        }
+
         // The escaping scheme is applied to the metric family name (the original name plus any
         // unit suffix). The type-specific '_total' suffix is a structural suffix that Prometheus
         // strips to find the family (like the '_bucket'/'_sum'/'_count' suffixes added during
@@ -365,6 +392,61 @@ internal sealed class PrometheusMetric
             : openMetricsMetadataName;
 
         return new(escapedName, openMetricsName, openMetricsMetadataName);
+    }
+
+    private static NameSet BuildAllowUtf8Names(string name, string? sanitizedUnit, PrometheusType type, bool disableTotalNameSuffixForCounters, bool appendSuffixes)
+    {
+        if (!appendSuffixes)
+        {
+            // The suffix axis is disabled and the allow-utf-8 scheme does not escape the name, so the
+            // name passes through completely unaltered (the "no translation" case). The three names
+            // are identical; only whether the original name is a valid legacy name determines whether
+            // the quoted exposition format is required.
+            var isLegacyValidWithoutSuffixes = PrometheusEscaping.IsValidLegacyName(name);
+            return new(name, name, name, isLegacyValidWithoutSuffixes, encodeUtf8: true);
+        }
+
+        // The allow-utf-8 scheme does not escape the name; the original UTF-8 name is kept and only
+        // the unit and the structural '_total' suffix are appended. The family name determines
+        // whether the quoted exposition format is required (the structural suffixes are legacy
+        // characters and so do not affect the legacy validity of the family).
+        var nameFamily = name;
+        var openMetricsFamily = type == PrometheusType.Counter
+            ? RemoveOpenMetricsCounterNameSuffix(name)
+            : name;
+
+        if (sanitizedUnit != null)
+        {
+            // Each name is checked independently: openMetricsFamily has the _total counter
+            // suffix stripped, so it may already end with the unit even when nameFamily
+            // (which still carries _total) does not. For counter nameFamily, also check for
+            // the unit immediately before _total (e.g. "db_bytes_total" with unit "bytes").
+            if (!nameFamily.EndsWith(sanitizedUnit, StringComparison.Ordinal) &&
+                (type != PrometheusType.Counter || !nameFamily.EndsWith($"{sanitizedUnit}_total", StringComparison.Ordinal)))
+            {
+                nameFamily += $"_{sanitizedUnit}";
+            }
+
+            if (!openMetricsFamily.EndsWith(sanitizedUnit, StringComparison.Ordinal))
+            {
+                openMetricsFamily += $"_{sanitizedUnit}";
+            }
+        }
+
+        var metricName = nameFamily;
+
+        if (type == PrometheusType.Counter && !nameFamily.EndsWith("_total", StringComparison.Ordinal) && !disableTotalNameSuffixForCounters)
+        {
+            metricName += "_total";
+        }
+
+        var openMetricsName = type == PrometheusType.Counter && !openMetricsFamily.EndsWith("_total", StringComparison.Ordinal)
+            ? openMetricsFamily + "_total"
+            : openMetricsFamily;
+
+        var isLegacyValid = PrometheusEscaping.IsValidLegacyName(nameFamily);
+
+        return new(metricName, openMetricsName, openMetricsFamily, isLegacyValid, encodeUtf8: true);
     }
 
     private static string RemoveOpenMetricsCounterNameSuffix(string metricName)
@@ -482,14 +564,15 @@ internal sealed class PrometheusMetric
     /// </summary>
     internal sealed class NameSet
     {
-        public NameSet(string name, string openMetricsName, string openMetricsMetadataName)
+        public NameSet(string name, string openMetricsName, string openMetricsMetadataName, bool isLegacyValid = true, bool encodeUtf8 = false)
         {
             this.Name = name;
             this.OpenMetricsName = openMetricsName;
             this.OpenMetricsMetadataName = openMetricsMetadataName;
-            this.NameBytes = ConvertToBytes(name);
-            this.OpenMetricsNameBytes = ConvertToBytes(openMetricsName);
-            this.OpenMetricsMetadataNameBytes = ConvertToBytes(openMetricsMetadataName);
+            this.IsLegacyValid = isLegacyValid;
+            this.NameBytes = ToBytes(name, encodeUtf8);
+            this.OpenMetricsNameBytes = ToBytes(openMetricsName, encodeUtf8);
+            this.OpenMetricsMetadataNameBytes = ToBytes(openMetricsMetadataName, encodeUtf8);
         }
 
         public string Name { get; }
@@ -498,10 +581,22 @@ internal sealed class PrometheusMetric
 
         public string OpenMetricsMetadataName { get; }
 
+        /// <summary>
+        /// Gets a value indicating whether the metric name is a valid legacy name.
+        /// </summary>
+        /// <remarks>
+        /// When <see langword="false"/> (only possible for the <c>allow-utf-8 scheme</c>)
+        /// the quoted exposition format is required.
+        /// </remarks>
+        public bool IsLegacyValid { get; }
+
         public byte[] NameBytes { get; }
 
         public byte[] OpenMetricsNameBytes { get; }
 
         public byte[] OpenMetricsMetadataNameBytes { get; }
+
+        private static byte[] ToBytes(string value, bool encodeUtf8)
+            => encodeUtf8 ? Encoding.UTF8.GetBytes(value) : ConvertToBytes(value);
     }
 }
