@@ -1,11 +1,13 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Buffers;
 using System.Diagnostics;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using OpenTelemetry.Resources;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
+using OtlpCommon = OpenTelemetry.Proto.Common.V1;
 using OtlpTrace = OpenTelemetry.Proto.Trace.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Implementation.Serializer;
@@ -40,9 +42,16 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
         var arrayState = this.arrayTagWriter.BeginWriteArray();
 
         // Assert
-        Assert.NotNull(arrayState.Buffer);
-        Assert.Equal(0, arrayState.WritePosition);
-        Assert.Equal(2048, arrayState.Buffer.Length);
+        try
+        {
+            Assert.NotNull(arrayState.Buffer);
+            Assert.Equal(0, arrayState.WritePosition);
+            Assert.Equal(2048, arrayState.Buffer.Length);
+        }
+        finally
+        {
+            this.arrayTagWriter.AbortWriteArray(ref arrayState);
+        }
     }
 
     [Fact]
@@ -51,12 +60,19 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
         // Arrange
         var arrayState = this.arrayTagWriter.BeginWriteArray();
 
-        // Act
-        this.arrayTagWriter.WriteNullValue(ref arrayState);
+        try
+        {
+            // Act
+            this.arrayTagWriter.WriteNullValue(ref arrayState);
 
-        // Assert
-        // Check that the buffer contains the correct tag and length for a null value
-        Assert.True(arrayState.WritePosition > 0);
+            // Assert
+            // Check that the buffer contains the correct tag and length for a null value
+            Assert.True(arrayState.WritePosition > 0);
+        }
+        finally
+        {
+            this.arrayTagWriter.AbortWriteArray(ref arrayState);
+        }
     }
 
     [Theory]
@@ -68,11 +84,18 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
         // Arrange
         var arrayState = this.arrayTagWriter.BeginWriteArray();
 
-        // Act
-        this.arrayTagWriter.WriteIntegralValue(ref arrayState, value);
+        try
+        {
+            // Act
+            this.arrayTagWriter.WriteIntegralValue(ref arrayState, value);
 
-        // Assert
-        Assert.True(arrayState.WritePosition > 0);
+            // Assert
+            Assert.True(arrayState.WritePosition > 0);
+        }
+        finally
+        {
+            this.arrayTagWriter.AbortWriteArray(ref arrayState);
+        }
     }
 
     [Theory]
@@ -84,11 +107,18 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
         // Arrange
         var arrayState = this.arrayTagWriter.BeginWriteArray();
 
-        // Act
-        this.arrayTagWriter.WriteFloatingPointValue(ref arrayState, value);
+        try
+        {
+            // Act
+            this.arrayTagWriter.WriteFloatingPointValue(ref arrayState, value);
 
-        // Assert
-        Assert.True(arrayState.WritePosition > 0);
+            // Assert
+            Assert.True(arrayState.WritePosition > 0);
+        }
+        finally
+        {
+            this.arrayTagWriter.AbortWriteArray(ref arrayState);
+        }
     }
 
     [Theory]
@@ -99,11 +129,18 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
         // Arrange
         var arrayState = this.arrayTagWriter.BeginWriteArray();
 
-        // Act
-        this.arrayTagWriter.WriteBooleanValue(ref arrayState, value);
+        try
+        {
+            // Act
+            this.arrayTagWriter.WriteBooleanValue(ref arrayState, value);
 
-        // Assert
-        Assert.True(arrayState.WritePosition > 0);
+            // Assert
+            Assert.True(arrayState.WritePosition > 0);
+        }
+        finally
+        {
+            this.arrayTagWriter.AbortWriteArray(ref arrayState);
+        }
     }
 
     [Theory]
@@ -114,39 +151,61 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
         // Arrange
         var arrayState = this.arrayTagWriter.BeginWriteArray();
 
-        // Act
-        this.arrayTagWriter.WriteStringValue(ref arrayState, value.AsSpan());
+        try
+        {
+            // Act
+            this.arrayTagWriter.WriteStringValue(ref arrayState, value.AsSpan());
 
-        // Assert
-        Assert.True(arrayState.WritePosition > 0);
+            // Assert
+            Assert.True(arrayState.WritePosition > 0);
+        }
+        finally
+        {
+            this.arrayTagWriter.AbortWriteArray(ref arrayState);
+        }
     }
 
     [Fact]
     public void TryResize_SucceedsInitially()
     {
-        // Act
-        this.arrayTagWriter.BeginWriteArray();
-        var result = this.arrayTagWriter.TryResize();
+        var arrayState = this.arrayTagWriter.BeginWriteArray();
 
-        // Assert
-        Assert.True(result);
+        try
+        {
+            // Act
+            var result = this.arrayTagWriter.TryResize(ref arrayState);
+
+            // Assert
+            Assert.True(result);
+        }
+        finally
+        {
+            this.arrayTagWriter.AbortWriteArray(ref arrayState);
+        }
     }
 
     [Fact]
     public void TryResize_RepeatedResizingStopsAtMaxBufferSize()
     {
         // Arrange
-        _ = this.arrayTagWriter.BeginWriteArray();
+        var arrayState = this.arrayTagWriter.BeginWriteArray();
         var resizeResult = true;
 
-        // Act: Repeatedly attempt to resize until reaching maximum buffer size
-        while (resizeResult)
+        try
         {
-            resizeResult = this.arrayTagWriter.TryResize();
-        }
+            // Act: Repeatedly attempt to resize until reaching maximum buffer size
+            while (resizeResult)
+            {
+                resizeResult = this.arrayTagWriter.TryResize(ref arrayState);
+            }
 
-        // Assert
-        Assert.False(resizeResult, "Buffer should not resize beyond the maximum allowed size.");
+            // Assert
+            Assert.False(resizeResult, "Buffer should not resize beyond the maximum allowed size.");
+        }
+        finally
+        {
+            this.arrayTagWriter.AbortWriteArray(ref arrayState);
+        }
     }
 
     [Fact]
@@ -214,24 +273,71 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
 
         Assert.NotNull(activity);
         Assert.Throws<ArgumentException>(() => ToOtlpSpan(new SdkLimitOptions(), activity));
-        Assert.Null(ProtobufOtlpTagWriter.OtlpArrayTagWriter.ThreadBuffer);
     }
 
     [Fact]
     public void ArrayElementToStringThrows_ReleasesScratchBuffer()
     {
+        var pool = new TrackingArrayPool();
+        var tagWriter = new ProtobufOtlpTagWriter(new(pool));
         var state = new ProtobufOtlpTagWriter.OtlpTagWriterState
         {
             Buffer = new byte[4096],
         };
 
-        var result = ProtobufOtlpTagWriter.Instance.TryWriteTag(
+        var result = tagWriter.TryWriteTag(
             ref state,
             "key",
             new object[] { new ThrowingToString() });
 
         Assert.False(result);
-        Assert.Null(ProtobufOtlpTagWriter.OtlpArrayTagWriter.ThreadBuffer);
+        Assert.Equal(0, pool.OutstandingRentals);
+    }
+
+    [Fact]
+    public void DestinationWriteThrows_ReleasesScratchBuffer()
+    {
+        var pool = new TrackingArrayPool();
+        var tagWriter = new ProtobufOtlpTagWriter(new(pool));
+        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState
+        {
+            Buffer = new byte[1],
+        };
+        string[] values = ["value"];
+
+        Assert.Throws<IndexOutOfRangeException>(() => tagWriter.TryWriteTag(
+            ref state,
+            "key",
+            values));
+        Assert.Equal(0, pool.OutstandingRentals);
+    }
+
+    [Fact]
+    public void ReentrantArrayWrite_UsesIndependentScratchBuffers()
+    {
+        var pool = new TrackingArrayPool();
+        var tagWriter = new ProtobufOtlpTagWriter(new(pool));
+        var reentrantValue = new ReentrantToString(tagWriter);
+        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState
+        {
+            Buffer = new byte[4096],
+        };
+
+        var result = tagWriter.TryWriteTag(
+            ref state,
+            "key",
+            new object[] { "before", reentrantValue, "after" });
+
+        Assert.True(result);
+        Assert.True(reentrantValue.NestedWriteSucceeded);
+        Assert.Equal(2, pool.MaximumOutstandingRentals);
+        Assert.Equal(0, pool.OutstandingRentals);
+
+        using var stream = new MemoryStream(state.Buffer, 0, state.WritePosition);
+        var keyValue = OtlpCommon.KeyValue.Parser.ParseFrom(stream);
+        Assert.Equal(
+            ["before", "reentrant", "after"],
+            keyValue.Value.ArrayValue.Values.Select(value => value.StringValue));
     }
 
     [Fact]
@@ -288,7 +394,6 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
 
     public void Dispose()
     {
-        ProtobufOtlpTagWriter.OtlpArrayTagWriter.ReleaseThreadBuffer();
         this.activityListener.Dispose();
     }
 
@@ -313,5 +418,49 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
     private sealed class ThrowingToString
     {
         public override string ToString() => throw new InvalidOperationException();
+    }
+
+    private sealed class ReentrantToString(ProtobufOtlpTagWriter tagWriter)
+    {
+        private static readonly string[] NestedArray = ["value"];
+
+        public bool NestedWriteSucceeded { get; private set; }
+
+        public override string ToString()
+        {
+            var state = new ProtobufOtlpTagWriter.OtlpTagWriterState
+            {
+                Buffer = new byte[4096],
+            };
+
+            this.NestedWriteSucceeded = tagWriter.TryWriteTag(
+                ref state,
+                "nested",
+                NestedArray);
+
+            return "reentrant";
+        }
+    }
+
+    private sealed class TrackingArrayPool : ArrayPool<byte>
+    {
+        private readonly ArrayPool<byte> innerPool = ArrayPool<byte>.Shared;
+
+        public int MaximumOutstandingRentals { get; private set; }
+
+        public int OutstandingRentals { get; private set; }
+
+        public override byte[] Rent(int minimumLength)
+        {
+            this.OutstandingRentals++;
+            this.MaximumOutstandingRentals = Math.Max(this.MaximumOutstandingRentals, this.OutstandingRentals);
+            return this.innerPool.Rent(minimumLength);
+        }
+
+        public override void Return(byte[] array, bool clearArray = false)
+        {
+            this.OutstandingRentals--;
+            this.innerPool.Return(array, clearArray);
+        }
     }
 }

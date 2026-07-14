@@ -27,5 +27,5 @@ internal abstract class ArrayTagWriter<TArrayState>
     {
     }
 
-    public virtual bool TryResize() => false;
+    public virtual bool TryResize(ref TArrayState state) => false;
 }

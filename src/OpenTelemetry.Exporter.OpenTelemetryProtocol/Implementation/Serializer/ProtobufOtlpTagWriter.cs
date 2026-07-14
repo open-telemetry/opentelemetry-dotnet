@@ -1,14 +1,23 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Buffers;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 
 internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.OtlpTagWriterState, ProtobufOtlpTagWriter.OtlpTagWriterArrayState>
 {
+    private readonly OtlpArrayTagWriter arrayTagWriter;
+
+    internal ProtobufOtlpTagWriter(OtlpArrayTagWriter arrayTagWriter)
+        : base(arrayTagWriter)
+    {
+        this.arrayTagWriter = arrayTagWriter;
+    }
+
     private ProtobufOtlpTagWriter()
-        : base(new OtlpArrayTagWriter())
+        : this(new OtlpArrayTagWriter())
     {
     }
 
@@ -89,7 +98,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
 
         // The scratch buffer contents have now been copied into the main buffer,
         // so return it to the pool. A fresh buffer is rented on the next array.
-        OtlpArrayTagWriter.ReleaseThreadBuffer();
+        this.arrayTagWriter.ReleaseBuffer(ref value);
     }
 
     protected override void OnUnsupportedTagDropped(
@@ -135,21 +144,28 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
 
     internal sealed class OtlpArrayTagWriter : ArrayTagWriter<OtlpTagWriterArrayState>
     {
-        [ThreadStatic]
-        internal static byte[]? ThreadBuffer;
         private const int DefaultBufferSize = 2048;
         private const int MaxBufferSize = 2 * 1024 * 1024;
 
-        public override OtlpTagWriterArrayState BeginWriteArray()
-        {
-            ThreadBuffer ??= ProtobufSerializer.RentBuffer(DefaultBufferSize);
+        private readonly ArrayPool<byte> pool;
 
-            return new OtlpTagWriterArrayState
+        public OtlpArrayTagWriter()
+            : this(ArrayPool<byte>.Shared)
+        {
+        }
+
+        internal OtlpArrayTagWriter(ArrayPool<byte> pool)
+        {
+            Guard.ThrowIfNull(pool);
+            this.pool = pool;
+        }
+
+        public override OtlpTagWriterArrayState BeginWriteArray()
+            => new()
             {
-                Buffer = ThreadBuffer,
+                Buffer = this.pool.Rent(DefaultBufferSize),
                 WritePosition = 0,
             };
-        }
 
         public override void WriteNullValue(ref OtlpTagWriterArrayState state)
             => state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, 0, ProtobufOtlpCommonFieldNumberConstants.ArrayValue_Value, ProtobufWireType.LEN);
@@ -200,55 +216,45 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         }
 
         public override void AbortWriteArray(ref OtlpTagWriterArrayState state)
-            => ReleaseThreadBuffer();
+            => this.ReleaseBuffer(ref state);
 
-        public override bool TryResize()
+        public override bool TryResize(ref OtlpTagWriterArrayState state)
         {
-            var smallerBuffer = ThreadBuffer!;
+            var smallerBuffer = state.Buffer;
 
             if (smallerBuffer.Length >= MaxBufferSize)
             {
                 OpenTelemetryProtocolExporterEventSource.Log.ArrayBufferExceededMaxSize();
-
-                // Resize failed, so the array will be truncated and this buffer
-                // will never be copied into the main buffer via WriteArrayTag.
-                // Return it to the pool and clear the thread slot so it is not
-                // retained for the lifetime of the thread.
-                ReleaseThreadBuffer();
-
                 return false;
             }
 
             byte[] largerBuffer;
             try
             {
-                largerBuffer = ProtobufSerializer.RentBuffer(smallerBuffer.Length * 2);
+                largerBuffer = this.pool.Rent(smallerBuffer.Length * 2);
             }
             catch (OutOfMemoryException)
             {
                 OpenTelemetryProtocolExporterEventSource.Log.BufferResizeFailedDueToMemory(nameof(OtlpArrayTagWriter));
-
-                // As above, the array will be truncated; return the buffer and
-                // clear the thread slot so it is not retained.
-                ReleaseThreadBuffer();
-
                 return false;
             }
 
             // Swap in the larger buffer first, then return the smaller one for reuse.
-            ThreadBuffer = largerBuffer;
-            ProtobufSerializer.ReturnBuffer(smallerBuffer);
+            state.Buffer = largerBuffer;
+            state.WritePosition = 0;
+            this.pool.Return(smallerBuffer);
 
             return true;
         }
 
-        internal static void ReleaseThreadBuffer()
+        internal void ReleaseBuffer(ref OtlpTagWriterArrayState state)
         {
-            var buffer = ThreadBuffer;
+            var buffer = state.Buffer;
+            state = default;
+
             if (buffer != null)
             {
-                ThreadBuffer = null;
-                ProtobufSerializer.ReturnBuffer(buffer);
+                this.pool.Return(buffer);
             }
         }
     }
