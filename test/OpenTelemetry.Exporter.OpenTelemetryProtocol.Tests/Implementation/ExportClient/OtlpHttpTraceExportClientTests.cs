@@ -145,7 +145,15 @@ public sealed class OtlpHttpTraceExportClientTests : IDisposable
             var (buffer, contentLength) = CreateTraceExportRequest(DefaultSdkLimitOptions, batch, resourceBuilder.Build());
 
             // Act
-            var result = exportClient.SendExportRequest(buffer, contentLength, deadlineUtc);
+            ExportClientResponse result;
+            try
+            {
+                result = exportClient.SendExportRequest(buffer, contentLength, deadlineUtc);
+            }
+            finally
+            {
+                ProtobufSerializer.ReturnBuffer(buffer);
+            }
 
             var httpRequest = testHttpHandler.HttpRequestMessage;
 
@@ -190,8 +198,16 @@ public sealed class OtlpHttpTraceExportClientTests : IDisposable
 
     private static (byte[] Buffer, int ContentLength) CreateTraceExportRequest(SdkLimitOptions sdkOptions, in Batch<Activity> batch, Resource resource)
     {
-        var buffer = new byte[4096];
-        var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, resource, batch);
-        return (buffer, writePosition);
+        var buffer = ProtobufSerializer.RentBuffer(4096);
+        try
+        {
+            var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, resource, batch);
+            return (buffer, writePosition);
+        }
+        catch
+        {
+            ProtobufSerializer.ReturnBuffer(buffer);
+            throw;
+        }
     }
 }

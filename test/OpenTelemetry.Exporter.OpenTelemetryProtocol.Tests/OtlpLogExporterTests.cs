@@ -2031,13 +2031,20 @@ public class OtlpLogExporterTests
 
     private static OtlpCollector.ExportLogsServiceRequest CreateLogsExportRequest(SdkLimitOptions sdkOptions, ExperimentalOptions experimentalOptions, in Batch<LogRecord> batch, Resource resource)
     {
-        var buffer = new byte[4096];
-        var writePosition = ProtobufOtlpLogSerializer.WriteLogsData(ref buffer, 0, sdkOptions, experimentalOptions, resource, batch);
-        using var stream = new MemoryStream(buffer, 0, writePosition);
-        var logsData = OtlpLogs.LogsData.Parser.ParseFrom(stream);
-        var request = new OtlpCollector.ExportLogsServiceRequest();
-        request.ResourceLogs.Add(logsData.ResourceLogs);
-        return request;
+        var buffer = ProtobufSerializer.RentBuffer(4096);
+        try
+        {
+            var writePosition = ProtobufOtlpLogSerializer.WriteLogsData(ref buffer, 0, sdkOptions, experimentalOptions, resource, batch);
+            using var stream = new MemoryStream(buffer, 0, writePosition);
+            var logsData = OtlpLogs.LogsData.Parser.ParseFrom(stream);
+            var request = new OtlpCollector.ExportLogsServiceRequest();
+            request.ResourceLogs.Add(logsData.ResourceLogs);
+            return request;
+        }
+        finally
+        {
+            ProtobufSerializer.ReturnBuffer(buffer);
+        }
     }
 
     private static OtlpLogs.LogRecord? ToOtlpLogs(SdkLimitOptions sdkOptions, ExperimentalOptions experimentalOptions, LogRecord logRecord)

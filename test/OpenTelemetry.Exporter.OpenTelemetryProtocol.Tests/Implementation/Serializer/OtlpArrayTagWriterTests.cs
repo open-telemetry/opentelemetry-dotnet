@@ -257,32 +257,38 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
 
         static void RunTest(SdkLimitOptions sdkOptions, Batch<Activity> batch)
         {
-            var buffer = new byte[4096];
-            var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, ResourceBuilder.CreateEmpty().Build(), batch);
-            using var stream = new MemoryStream(buffer, 0, writePosition);
-            var tracesData = OtlpTrace.TracesData.Parser.ParseFrom(stream);
-            var request = new OtlpCollector.ExportTraceServiceRequest();
-            request.ResourceSpans.Add(tracesData.ResourceSpans);
+            var buffer = ProtobufSerializer.RentBuffer(4096);
+            try
+            {
+                var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, ResourceBuilder.CreateEmpty().Build(), batch);
+                using var stream = new MemoryStream(buffer, 0, writePosition);
+                var tracesData = OtlpTrace.TracesData.Parser.ParseFrom(stream);
+                var request = new OtlpCollector.ExportTraceServiceRequest();
+                request.ResourceSpans.Add(tracesData.ResourceSpans);
 
-            // Buffer should be expanded to accommodate the large array.
-            Assert.True(buffer.Length > 4096);
+                // Buffer should be expanded to accommodate the large array.
+                Assert.True(buffer.Length > 4096);
 
-            Assert.Single(request.ResourceSpans);
-            var scopeSpans = request.ResourceSpans.First().ScopeSpans;
-            Assert.Single(scopeSpans);
-            var otlpSpan = scopeSpans.First().Spans.First();
-            Assert.NotNull(otlpSpan);
+                Assert.Single(request.ResourceSpans);
+                var scopeSpans = request.ResourceSpans.First().ScopeSpans;
+                Assert.Single(scopeSpans);
+                var otlpSpan = scopeSpans.First().Spans.First();
+                Assert.NotNull(otlpSpan);
 
-            // The string is too large, hence not evaluating the content.
-            var keyValue = otlpSpan.Attributes.FirstOrDefault(kvp => kvp.Key == "lessthat1MBArray");
-            Assert.NotNull(keyValue);
+                // The string is too large, hence not evaluating the content.
+                var keyValue = otlpSpan.Attributes.FirstOrDefault(kvp => kvp.Key == "lessthat1MBArray");
+                Assert.NotNull(keyValue);
+            }
+            finally
+            {
+                ProtobufSerializer.ReturnBuffer(buffer);
+            }
         }
     }
 
     public void Dispose()
     {
-        // Clean up the thread buffer after each test
-        ProtobufOtlpTagWriter.OtlpArrayTagWriter.ThreadBuffer = null;
+        ProtobufOtlpTagWriter.OtlpArrayTagWriter.ReleaseThreadBuffer();
         this.activityListener.Dispose();
     }
 

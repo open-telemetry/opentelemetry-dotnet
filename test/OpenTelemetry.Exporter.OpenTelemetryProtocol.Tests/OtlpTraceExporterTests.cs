@@ -1197,13 +1197,20 @@ public sealed class OtlpTraceExporterTests : IDisposable
 
     private static OtlpCollector.ExportTraceServiceRequest CreateTraceExportRequest(SdkLimitOptions sdkOptions, in Batch<Activity> batch, Resource resource)
     {
-        var buffer = new byte[4096];
-        var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, resource, batch);
-        using var stream = new MemoryStream(buffer, 0, writePosition);
-        var tracesData = OtlpTrace.TracesData.Parser.ParseFrom(stream);
-        var request = new OtlpCollector.ExportTraceServiceRequest();
-        request.ResourceSpans.Add(tracesData.ResourceSpans);
-        return request;
+        var buffer = ProtobufSerializer.RentBuffer(4096);
+        try
+        {
+            var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, resource, batch);
+            using var stream = new MemoryStream(buffer, 0, writePosition);
+            var tracesData = OtlpTrace.TracesData.Parser.ParseFrom(stream);
+            var request = new OtlpCollector.ExportTraceServiceRequest();
+            request.ResourceSpans.Add(tracesData.ResourceSpans);
+            return request;
+        }
+        finally
+        {
+            ProtobufSerializer.ReturnBuffer(buffer);
+        }
     }
 
     private static void ArrayValueAsserts(RepeatedField<OtlpCommon.AnyValue> values)
