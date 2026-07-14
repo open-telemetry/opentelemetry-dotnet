@@ -242,7 +242,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
             // Swap in the larger buffer first, then return the smaller one for reuse.
             state.Buffer = largerBuffer;
             state.WritePosition = 0;
-            this.pool.Return(smallerBuffer);
+            ProtobufSerializer.ReturnBuffer(this.pool, smallerBuffer);
 
             return true;
         }
@@ -254,7 +254,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
 
             if (buffer != null)
             {
-                this.pool.Return(buffer);
+                ProtobufSerializer.ReturnBuffer(this.pool, buffer);
             }
         }
     }

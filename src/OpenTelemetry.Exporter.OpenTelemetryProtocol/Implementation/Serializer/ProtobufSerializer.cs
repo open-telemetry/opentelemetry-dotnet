@@ -356,16 +356,19 @@ internal static class ProtobufSerializer
     /// its contents are not cleared.
     /// </summary>
     /// <param name="minimumSize">The minimum required buffer size in bytes.</param>
-    /// <returns>A pooled buffer that must be handed back via <see cref="ReturnBuffer"/>.</returns>
+    /// <returns>A pooled buffer that must be handed back via <see cref="ReturnBuffer(byte[])"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static byte[] RentBuffer(int minimumSize) => ArrayPool<byte>.Shared.Rent(minimumSize);
 
     /// <summary>
     /// Returns a buffer previously obtained from <see cref="RentBuffer"/> or
-    /// grown by <see cref="IncreaseBufferSize"/> back to the pool.
+    /// grown by <see cref="IncreaseBufferSize"/> back to the pool after clearing
+    /// its contents.
     /// </summary>
     /// <param name="buffer">The buffer to return.</param>
-    internal static void ReturnBuffer(byte[] buffer) => ArrayPool<byte>.Shared.Return(buffer);
+    internal static void ReturnBuffer(byte[] buffer) => ReturnBuffer(ArrayPool<byte>.Shared, buffer);
+
+    internal static void ReturnBuffer(ArrayPool<byte> pool, byte[] buffer) => pool.Return(buffer, clearArray: true);
 
     internal static bool IncreaseBufferSize(ref byte[] buffer, OtlpSignalType otlpSignalType)
     {
@@ -394,7 +397,7 @@ internal static class ProtobufSerializer
         var smallerBuffer = buffer;
         buffer = largerBuffer;
 
-        pool.Return(smallerBuffer);
+        ReturnBuffer(pool, smallerBuffer);
 
         return true;
     }
