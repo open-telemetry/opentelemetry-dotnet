@@ -4,9 +4,7 @@
 > This is an experimental package. APIs may change or be removed in
 > future releases.
 
-A partial experimental implementation of the [OpenTelemetry
-declarative-configuration
-specification](https://opentelemetry.io/docs/languages/sdk-configuration/declarative-configuration/)
+A partial experimental implementation of the [OpenTelemetry declarative-configuration specification](https://opentelemetry.io/docs/languages/sdk-configuration/declarative-configuration/)
 for the OpenTelemetry .NET SDK.
 
 Declarative configuration allows you to configure the OpenTelemetry SDK using a
@@ -145,10 +143,10 @@ standard `IConfiguration` ordering).
 ### Pitfalls to avoid
 
 - `UseDeclarativeConfiguration()` requires `IConfiguration` to already be
-  registered** when it runs. If the host registers `IConfiguration` later, the
+  registered when it runs. If the host registers `IConfiguration` later, the
   YAML source will not be visible to the SDK.
 - A second call to `UseDeclarativeConfiguration()` on the same
-  `IServiceCollection` is ignored.** Only the first file path applies; a later
+  `IServiceCollection` is ignored. Only the first file path applies; a later
   call with a different path does not replace it (an EventSource warning is
   emitted).
 
@@ -189,22 +187,22 @@ exporter timeouts, bounded batch queues, and process restart.
 
 ### Environment-variable substitution ordering
 
-The OTel spec states that node types must be interpreted *after* environment
-variable substitution.
+The OTel specification states that node types must be interpreted *after*
+environment variable substitution.
 
 This implementation parses YAML first (YamlDotNet RepresentationModel preserves
 scalar literals without type conversion), applies substitution to those strings,
 then interprets types explicitly (for example `bool.TryParse` for `disabled`).
 Outcomes are semantically equivalent for supported scalar fields today, with a
-stronger guarantee that env vars cannot inject YAML structure because
-substitution runs on already-tokenised scalar nodes.
+stronger guarantee that environment variables cannot inject YAML structure
+because substitution runs on already-tokenized scalar nodes.
 
 ### Empty-string and null semantics
 
-When an environment variable is unset and has no default, the spec replaces the
-reference with an empty string, then applies YAML 1.2 Core Schema type
-resolution - a plain empty scalar becomes `null`. Quoted empty strings remain
-`""`.
+When an environment variable is unset and has no default, the specification
+replaces the reference with an empty string, then applies YAML 1.2 Core Schema
+type resolution - a plain empty scalar becomes `null`. Quoted empty strings
+remain `""`.
 
 All YAML 1.2 core schema null spellings - plain empty, `~`, `null`, `Null`, and
 `NULL` - are treated as **present-null**. Quoted variants (e.g. `"null"`) remain
@@ -215,8 +213,8 @@ node type, invalid parse), the parser selects **present-null** rather than
 **absent**, because the key appeared in the document and `nullBehavior` applies
 at Create time.
 
-**Post-substitution null resolution:** because the spec requires that YAML type
-resolution runs *after* substitution, a plain (unquoted) scalar whose
+**Post-substitution null resolution:** because the specification requires that
+YAML type resolution runs *after* substitution, a plain (unquoted) scalar whose
 environment variable resolves to one of the null spellings (`null`, `Null`,
 `NULL`, `~`) is treated as YAML null. For example:
 
@@ -227,8 +225,8 @@ resource:
       value: ${MY_VAR}   # plain scalar
 ```
 
-If `MY_VAR=null` the attribute is skipped (same as writing `value: null`).
-If you need the literal string `"null"`, use a quoted scalar: `value: "${MY_VAR}"`.
+If `MY_VAR=null` the attribute is skipped (same as writing `value: null`). If
+you need the literal string `"null"`, use a quoted scalar: `value: "${MY_VAR}"`.
 The `InvalidResourceAttribute` EventSource event (Event ID 3) is emitted when an
 attribute is skipped for this reason.
 
