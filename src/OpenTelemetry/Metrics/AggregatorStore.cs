@@ -975,18 +975,28 @@ internal sealed class AggregatorStore
     {
         var index = this.FindMetricAggregatorsDefault(tags);
 
-        this.UpdateLongMetricPoint(index, value, tags);
+        this.UpdateLongMetricPoint(index, value, value, tags);
     }
 
     private void UpdateLongCustomTags(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         var index = this.FindMetricAggregatorsCustomTag(tags);
+        var exemplarValue = value;
 
-        this.UpdateLongMetricPoint(index, value, tags);
+        if (index >= 0 && this.IsAsynchronous && this.aggType == AggregationType.LongSumIncomingCumulative)
+        {
+            ref var metricPoint = ref this.metricPoints[index];
+            if (metricPoint.MetricPointStatus == MetricPointStatus.CollectPending)
+            {
+                value += metricPoint.GetRunningValueLong();
+            }
+        }
+
+        this.UpdateLongMetricPoint(index, value, exemplarValue, tags);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void UpdateLongMetricPoint(int metricPointIndex, long value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
+    private void UpdateLongMetricPoint(int metricPointIndex, long value, long exemplarValue, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         if (metricPointIndex < 0)
         {
@@ -1006,6 +1016,7 @@ internal sealed class AggregatorStore
         {
             this.metricPoints[metricPointIndex].UpdateWithExemplar(
                 value,
+                exemplarValue,
                 tags,
                 offerExemplar: true);
         }
@@ -1013,6 +1024,7 @@ internal sealed class AggregatorStore
         {
             this.metricPoints[metricPointIndex].UpdateWithExemplar(
                 value,
+                exemplarValue,
                 tags,
                 offerExemplar: Activity.Current?.Recorded ?? false);
         }
@@ -1022,18 +1034,28 @@ internal sealed class AggregatorStore
     {
         var index = this.FindMetricAggregatorsDefault(tags);
 
-        this.UpdateDoubleMetricPoint(index, value, tags);
+        this.UpdateDoubleMetricPoint(index, value, value, tags);
     }
 
     private void UpdateDoubleCustomTags(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         var index = this.FindMetricAggregatorsCustomTag(tags);
+        var exemplarValue = value;
 
-        this.UpdateDoubleMetricPoint(index, value, tags);
+        if (index >= 0 && this.IsAsynchronous && this.aggType == AggregationType.DoubleSumIncomingCumulative)
+        {
+            ref var metricPoint = ref this.metricPoints[index];
+            if (metricPoint.MetricPointStatus == MetricPointStatus.CollectPending)
+            {
+                value += metricPoint.GetRunningValueDouble();
+            }
+        }
+
+        this.UpdateDoubleMetricPoint(index, value, exemplarValue, tags);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void UpdateDoubleMetricPoint(int metricPointIndex, double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
+    private void UpdateDoubleMetricPoint(int metricPointIndex, double value, double exemplarValue, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         if (metricPointIndex < 0)
         {
@@ -1053,6 +1075,7 @@ internal sealed class AggregatorStore
         {
             this.metricPoints[metricPointIndex].UpdateWithExemplar(
                 value,
+                exemplarValue,
                 tags,
                 offerExemplar: true);
         }
@@ -1060,6 +1083,7 @@ internal sealed class AggregatorStore
         {
             this.metricPoints[metricPointIndex].UpdateWithExemplar(
                 value,
+                exemplarValue,
                 tags,
                 offerExemplar: Activity.Current?.Recorded ?? false);
         }
