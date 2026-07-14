@@ -4,7 +4,8 @@
 > This is an experimental package. APIs may change or be removed in
 > future releases.
 
-A partial experimental implementation of the [OpenTelemetry declarative-configuration specification](https://opentelemetry.io/docs/languages/sdk-configuration/declarative-configuration/)
+A partial experimental implementation of the
+[OpenTelemetry declarative-configuration specification](https://opentelemetry.io/docs/languages/sdk-configuration/declarative-configuration/)
 for the OpenTelemetry .NET SDK.
 
 Declarative configuration allows you to configure the OpenTelemetry SDK using a
