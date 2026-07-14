@@ -1,0 +1,2 @@
+﻿# TYPE "http.server.requests" counter
+{"http.server.requests","http.host"="localhost"} 5

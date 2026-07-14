@@ -85,5 +85,15 @@ public class PrometheusAspNetCoreOptions
         set => this.ExporterOptions.MaxScrapeResponseSizeBytes = value;
     }
 
+    /// <summary>
+    /// Gets or sets the strategy used to translate OpenTelemetry metric and label names into
+    /// Prometheus names. Default value: <see cref="PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes"/>.
+    /// </summary>
+    public PrometheusTranslationStrategy TranslationStrategy
+    {
+        get => this.ExporterOptions.TranslationStrategy;
+        set => this.ExporterOptions.TranslationStrategy = value;
+    }
+
     internal PrometheusExporterOptions ExporterOptions { get; } = new();
 }
