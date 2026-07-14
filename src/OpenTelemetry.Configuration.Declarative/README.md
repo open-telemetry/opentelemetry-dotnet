@@ -142,12 +142,12 @@ standard `IConfiguration` ordering).
   quoted scalar: `value: "null"`. This is consistent with YAML 1.2 Core Schema
   semantics applied post-substitution as required by the OTel specification.
 
-### *Pitfalls to avoid:
+### Pitfalls to avoid
 
-* `UseDeclarativeConfiguration()` requires `IConfiguration` to already be
+- `UseDeclarativeConfiguration()` requires `IConfiguration` to already be
   registered** when it runs. If the host registers `IConfiguration` later, the
   YAML source will not be visible to the SDK.
-* A second call to `UseDeclarativeConfiguration()` on the same
+- A second call to `UseDeclarativeConfiguration()` on the same
   `IServiceCollection` is ignored.** Only the first file path applies; a later
   call with a different path does not replace it (an EventSource warning is
   emitted).
@@ -160,9 +160,9 @@ The two settings currently supported (`OTEL_SDK_DISABLED`,
 `OTEL_RESOURCE_ATTRIBUTES`) are consumed by the SDK via direct `IConfiguration`
 reads rather than the .NET `IOptions<T>` pipeline:
 
-* `OTEL_SDK_DISABLED` is read before the provider is constructed to decide
+- `OTEL_SDK_DISABLED` is read before the provider is constructed to decide
   whether to return a real provider or a no-op.
-* `OTEL_RESOURCE_ATTRIBUTES` is read by the resource detector.
+- `OTEL_RESOURCE_ATTRIBUTES` is read by the resource detector.
 
 Using `IOptions<T>` would add startup validation and make code-level
 `Configure<T>` / `PostConfigure<T>` overrides work at the Options layer, but the
