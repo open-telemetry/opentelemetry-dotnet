@@ -37,10 +37,7 @@ public sealed class OtlpHttpTraceExportClientTests : IDisposable
         ActivitySource.AddActivityListener(this.activityListener);
     }
 
-    public void Dispose()
-    {
-        this.activityListener.Dispose();
-    }
+    public void Dispose() => this.activityListener.Dispose();
 
     [Fact]
     public void NewOtlpHttpTraceExportClient_OtlpExporterOptions_ExporterHasCorrectProperties()

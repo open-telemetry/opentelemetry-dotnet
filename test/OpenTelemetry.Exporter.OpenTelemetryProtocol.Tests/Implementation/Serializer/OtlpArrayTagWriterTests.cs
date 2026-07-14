@@ -392,10 +392,7 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
         }
     }
 
-    public void Dispose()
-    {
-        this.activityListener.Dispose();
-    }
+    public void Dispose() => this.activityListener.Dispose();
 
     private static OtlpTrace.Span? ToOtlpSpan(SdkLimitOptions sdkOptions, Activity activity)
     {
@@ -444,7 +441,7 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
 
     private sealed class TrackingArrayPool : ArrayPool<byte>
     {
-        private readonly ArrayPool<byte> innerPool = ArrayPool<byte>.Shared;
+        private readonly ArrayPool<byte> innerPool = Shared;
 
         public int MaximumOutstandingRentals { get; private set; }
 
