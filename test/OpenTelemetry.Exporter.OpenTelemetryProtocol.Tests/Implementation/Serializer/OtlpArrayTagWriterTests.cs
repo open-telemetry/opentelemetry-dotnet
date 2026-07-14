@@ -214,6 +214,24 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
 
         Assert.NotNull(activity);
         Assert.Throws<ArgumentException>(() => ToOtlpSpan(new SdkLimitOptions(), activity));
+        Assert.Null(ProtobufOtlpTagWriter.OtlpArrayTagWriter.ThreadBuffer);
+    }
+
+    [Fact]
+    public void ArrayElementToStringThrows_ReleasesScratchBuffer()
+    {
+        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState
+        {
+            Buffer = new byte[4096],
+        };
+
+        var result = ProtobufOtlpTagWriter.Instance.TryWriteTag(
+            ref state,
+            "key",
+            new object[] { new ThrowingToString() });
+
+        Assert.False(result);
+        Assert.Null(ProtobufOtlpTagWriter.OtlpArrayTagWriter.ThreadBuffer);
     }
 
     [Fact]
@@ -284,5 +302,10 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
         using var stream = new MemoryStream(buffer, 0, writePosition);
         var scopeSpans = OtlpTrace.ScopeSpans.Parser.ParseFrom(stream);
         return scopeSpans.Spans.FirstOrDefault();
+    }
+
+    private sealed class ThrowingToString
+    {
+        public override string ToString() => throw new InvalidOperationException();
     }
 }

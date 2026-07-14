@@ -89,8 +89,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
 
         // The scratch buffer contents have now been copied into the main buffer,
         // so return it to the pool. A fresh buffer is rented on the next array.
-        ProtobufSerializer.ReturnBuffer(value.Buffer);
-        OtlpArrayTagWriter.ThreadBuffer = null;
+        OtlpArrayTagWriter.ReleaseThreadBuffer();
     }
 
     protected override void OnUnsupportedTagDropped(
@@ -200,6 +199,9 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         {
         }
 
+        public override void AbortWriteArray(ref OtlpTagWriterArrayState state)
+            => ReleaseThreadBuffer();
+
         public override bool TryResize()
         {
             var smallerBuffer = ThreadBuffer!;
@@ -212,8 +214,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
                 // will never be copied into the main buffer via WriteArrayTag.
                 // Return it to the pool and clear the thread slot so it is not
                 // retained for the lifetime of the thread.
-                ProtobufSerializer.ReturnBuffer(smallerBuffer);
-                ThreadBuffer = null;
+                ReleaseThreadBuffer();
 
                 return false;
             }
@@ -229,8 +230,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
 
                 // As above, the array will be truncated; return the buffer and
                 // clear the thread slot so it is not retained.
-                ProtobufSerializer.ReturnBuffer(smallerBuffer);
-                ThreadBuffer = null;
+                ReleaseThreadBuffer();
 
                 return false;
             }
@@ -240,6 +240,16 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
             ProtobufSerializer.ReturnBuffer(smallerBuffer);
 
             return true;
+        }
+
+        internal static void ReleaseThreadBuffer()
+        {
+            var buffer = ThreadBuffer;
+            if (buffer != null)
+            {
+                ThreadBuffer = null;
+                ProtobufSerializer.ReturnBuffer(buffer);
+            }
         }
     }
 }
