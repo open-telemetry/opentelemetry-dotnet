@@ -1,10 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-// AddOpenTelemetryDeclarativeConfiguration carries the OTEL1006 experimental attribute.
-// Suppress once here rather than at each call site.
-#pragma warning disable OTEL1006
-
 using System.Collections.ObjectModel;
 using System.Diagnostics.Tracing;
 using Microsoft.Extensions.Configuration;

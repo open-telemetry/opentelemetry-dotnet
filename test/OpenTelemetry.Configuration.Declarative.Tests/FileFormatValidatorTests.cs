@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#pragma warning disable OTEL1006
-
 namespace OpenTelemetry.Configuration.Declarative.Tests;
 
 public sealed class FileFormatValidatorTests
