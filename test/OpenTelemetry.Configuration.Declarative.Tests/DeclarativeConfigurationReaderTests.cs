@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#pragma warning disable OTEL1006
-
 using System.Collections.ObjectModel;
 
 namespace OpenTelemetry.Configuration.Declarative.Tests;

@@ -1,12 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-// This file calls AddOpenTelemetryDeclarativeConfiguration, which carries the
-// same experimental attribute as the public API. Suppress once here rather than
-// at every call site.
-#pragma warning disable OTEL1006
-
-using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -32,14 +26,11 @@ internal
     /// Appends YAML after existing sources (YAML overrides earlier env/appsettings; sources added
     /// later override YAML). Inserts in-place on <see cref="ConfigurationManager"/> when
     /// possible; otherwise wraps the existing root. No-op when <c>OTEL_CONFIG_FILE</c> is unset,
-    /// empty, or whitespace. See
-    /// <see href="https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/docs/diagnostics/experimental-apis/OTEL1006.md">OTEL1006</see>
-    /// for call-order pitfalls.
+    /// empty, or whitespace.
     /// </remarks>
     /// <param name="builder">The <see cref="IOpenTelemetryBuilder"/> builder.</param>
     /// <returns>The original <see cref="IOpenTelemetryBuilder"/> for chaining.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="builder"/> is null.</exception>
-    [Experimental(DiagnosticDefinitions.DeclarativeConfigurationExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
     public static IOpenTelemetryBuilder UseDeclarativeConfiguration(
         this IOpenTelemetryBuilder builder)
     {
@@ -64,7 +55,6 @@ internal
     /// <returns>The original <see cref="IOpenTelemetryBuilder"/> for chaining.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="builder"/> is null.</exception>
     /// <exception cref="ArgumentException"><paramref name="filePath"/> is null, empty, or whitespace.</exception>
-    [Experimental(DiagnosticDefinitions.DeclarativeConfigurationExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
     public static IOpenTelemetryBuilder UseDeclarativeConfiguration(
         this IOpenTelemetryBuilder builder,
         string filePath)

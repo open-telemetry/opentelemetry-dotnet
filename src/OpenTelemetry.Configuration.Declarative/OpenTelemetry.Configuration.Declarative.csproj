@@ -7,7 +7,7 @@
       Implements the OpenTelemetry declarative-configuration specification
       as an IConfigurationSource/IConfigurationProvider.</Description>
     <PackageTags>$(PackageTags);configuration;declarative;yaml</PackageTags>
-    <MinVerTagPrefix>coreunstable-</MinVerTagPrefix>
+    <MinVerTagPrefix>declarativeconfig-</MinVerTagPrefix>
   </PropertyGroup>
 
   <ItemGroup>

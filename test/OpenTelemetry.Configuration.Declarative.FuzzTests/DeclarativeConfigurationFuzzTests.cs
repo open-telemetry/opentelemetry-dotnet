@@ -1,10 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-// AddOpenTelemetryDeclarativeConfiguration and DeclarativeConfigurationException are experimental.
-// Suppress once here rather than at every call/catch site.
-#pragma warning disable OTEL1006
-
 using FsCheck;
 using FsCheck.Fluent;
 using FsCheck.Xunit;
