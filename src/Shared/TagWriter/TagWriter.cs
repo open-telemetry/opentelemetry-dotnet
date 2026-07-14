@@ -178,11 +178,20 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
     private void WriteArrayTagInternal(ref TTagState state, string key, Array array, int? tagValueMaxLength)
     {
+        // Upper bound on the number of times the array serialization buffer is grown before giving up. Each
+        // retry at least doubles the buffer, which is itself capped by the ArrayTagWriter's own  maximum size.
+        const int MaxArrayTagBufferGrowthAttempts = 32;
+
         var arrayState = this.arrayWriter.BeginWriteArray();
 
         try
         {
-            while (true)
+            // The buffer at least doubles on each retry and TryResize returns false once it hits
+            // its own maximum size, so the loop is already bounded. This explicit attempt cap is a
+            // guard that guarantees termination even if a write were to keep faulting without the
+            // buffer actually being too small.
+            var written = false;
+            for (var attempt = 0; attempt < MaxArrayTagBufferGrowthAttempts; attempt++)
             {
                 try
                 {
@@ -207,6 +216,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
                     }
 
                     this.arrayWriter.EndWriteArray(ref arrayState);
+                    written = true;
                     break;
                 }
                 catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
@@ -231,12 +241,23 @@ internal abstract class TagWriter<TTagState, TArrayState>
                 }
             }
 
+            if (!written)
+            {
+                ThrowIfTooManyRetries();
+            }
+
             this.WriteArrayTag(ref state, key, ref arrayState);
         }
         catch
         {
             this.arrayWriter.AbortWriteArray(ref arrayState);
             throw;
+        }
+
+        [System.Diagnostics.CodeAnalysis.DoesNotReturn]
+        static void ThrowIfTooManyRetries()
+        {
+            throw new InvalidOperationException("The array-valued tag could not be written within the maximum number of buffer-growth attempts.");
         }
     }
 
