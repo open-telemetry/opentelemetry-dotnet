@@ -16,8 +16,10 @@ internal sealed class AggregatorStore
 {
 #if NET
     internal readonly FrozenSet<string>? TagKeysInteresting;
+    internal readonly FrozenSet<string>? ExcludedTagKeys;
 #else
     internal readonly HashSet<string>? TagKeysInteresting;
+    internal readonly HashSet<string>? ExcludedTagKeys;
 #endif
     internal readonly bool OutputDelta;
     internal readonly bool IsAsynchronous;
@@ -96,12 +98,7 @@ internal sealed class AggregatorStore
         this.exponentialHistogramMaxScale = metricStreamIdentity.ExponentialHistogramMaxScale;
         this.StartTimeExclusive = DateTimeOffset.UtcNow;
         this.ExemplarReservoirFactory = exemplarReservoirFactory;
-        if (metricStreamIdentity.TagKeys == null)
-        {
-            this.updateLongCallback = this.UpdateLong;
-            this.updateDoubleCallback = this.UpdateDouble;
-        }
-        else
+        if (metricStreamIdentity.TagKeys != null)
         {
             this.updateLongCallback = this.UpdateLongCustomTags;
             this.updateDoubleCallback = this.UpdateDoubleCustomTags;
@@ -112,6 +109,21 @@ internal sealed class AggregatorStore
 #endif
             this.TagKeysInteresting = hs;
             this.tagsKeysInterestingCount = hs.Count;
+        }
+        else if (metricStreamIdentity.ExcludedTagKeys is { Length: > 0 })
+        {
+            this.updateLongCallback = this.UpdateLongExcludeTags;
+            this.updateDoubleCallback = this.UpdateDoubleExcludeTags;
+#if NET
+            this.ExcludedTagKeys = FrozenSet.ToFrozenSet(metricStreamIdentity.ExcludedTagKeys, StringComparer.Ordinal);
+#else
+            this.ExcludedTagKeys = new HashSet<string>(metricStreamIdentity.ExcludedTagKeys, StringComparer.Ordinal);
+#endif
+        }
+        else
+        {
+            this.updateLongCallback = this.UpdateLong;
+            this.updateDoubleCallback = this.UpdateDouble;
         }
 
         this.exemplarFilter = exemplarFilter ?? DefaultExemplarFilter;
@@ -1032,6 +1044,20 @@ internal sealed class AggregatorStore
         this.UpdateDoubleMetricPoint(index, value, tags);
     }
 
+    private void UpdateLongExcludeTags(long value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
+    {
+        var index = this.FindMetricAggregatorsExcludeTag(tags);
+
+        this.UpdateLongMetricPoint(index, value, tags);
+    }
+
+    private void UpdateDoubleExcludeTags(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
+    {
+        var index = this.FindMetricAggregatorsExcludeTag(tags);
+
+        this.UpdateDoubleMetricPoint(index, value, tags);
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void UpdateDoubleMetricPoint(int metricPointIndex, double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
@@ -1120,6 +1146,27 @@ internal sealed class AggregatorStore
         // Actual number of tags depend on how many
         // of the incoming tags has user opted to
         // select.
+        if (actualLength == 0)
+        {
+            this.InitializeZeroTagPointIfNotInitialized();
+            return 0;
+        }
+
+        return this.lookupAggregatorStore(tagKeysAndValues!, actualLength);
+    }
+
+    private int FindMetricAggregatorsExcludeTag(ReadOnlySpan<KeyValuePair<string, object?>> tags)
+    {
+        var tagLength = tags.Length;
+        if (tagLength == 0)
+        {
+            this.InitializeZeroTagPointIfNotInitialized();
+            return 0;
+        }
+
+        var storage = ThreadStaticStorage.GetStorage();
+        storage.SplitToKeysAndValuesExclude(tags, tagLength, this.ExcludedTagKeys!, out var tagKeysAndValues, out var actualLength);
+
         if (actualLength == 0)
         {
             this.InitializeZeroTagPointIfNotInitialized();

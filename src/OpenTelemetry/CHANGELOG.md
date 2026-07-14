@@ -31,6 +31,10 @@ Notes](../../RELEASENOTES.md).
   repeatedly created and disposed.
   ([#7466](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7466))
 
+* Added `ExcludedTagKeys` property to `MetricStreamConfiguration` to support
+  excluding specific tag keys from metric streams.
+  ([#7373](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7373))
+
 ## 1.16.0
 
 Released 2026-Jun-10
