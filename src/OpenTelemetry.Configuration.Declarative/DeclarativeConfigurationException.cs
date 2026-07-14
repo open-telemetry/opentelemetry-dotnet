@@ -5,11 +5,6 @@
 #pragma warning disable CA1064 // Exceptions should be public - intentionally internal in stable builds
 #endif
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
-using System.Diagnostics.CodeAnalysis;
-using OpenTelemetry.Internal;
-#endif
-
 namespace OpenTelemetry.Configuration.Declarative;
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
@@ -18,7 +13,6 @@ namespace OpenTelemetry.Configuration.Declarative;
 /// loaded or contains a semantic error (unsupported <c>file_format</c>, invalid
 /// substitution reference, malformed structure, etc.).
 /// </summary>
-[Experimental(DiagnosticDefinitions.DeclarativeConfigurationExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
 #endif
 #if NETFRAMEWORK
 [Serializable]
