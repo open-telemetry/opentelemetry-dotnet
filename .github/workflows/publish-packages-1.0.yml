@@ -112,7 +112,7 @@ jobs:
       run: dotnet pack ./build/OpenTelemetry.proj --configuration Release --no-restore --no-build -p:"PackTag=${env:PACK_TAG}"
 
     - name: Create GitHub attestations for NuGet packages
-      uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+      uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4.1.1
       with:
         subject-path: |
           ./artifacts/package/release/OpenTelemetry*.*nupkg
@@ -126,7 +126,7 @@ jobs:
         upload-release-assets: false
 
     - name: Create GitHub attestation for SBOM
-      uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+      uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4.1.1
       with:
         subject-path: |
           ./artifacts/package/release/sbom.spdx.json
