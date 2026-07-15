@@ -95,6 +95,9 @@ jobs:
                 Write-Output "Signing $fileFullPath"
 
                 cosign.exe sign-blob --yes --bundle "$fileFullPath.sigstore.json" $fileFullPath
+                if ($LASTEXITCODE -ne 0) {
+                    throw "cosign failed to sign $fileFullPath (exit code $LASTEXITCODE)."
+                }
             }
         }
 
