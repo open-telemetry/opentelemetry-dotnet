@@ -75,7 +75,7 @@ internal sealed class PrometheusCollectionManager
 #endif
         }
 
-        return this.WaitForCollectionResponseAsync(protocol, step.PendingCollectionTask, step.ProtocolWasRegistered);
+        return this.WaitForCollectionResponseAsync(protocol, step.PendingCollectionTask, step.JoinedActiveCollection);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -259,22 +259,22 @@ internal sealed class PrometheusCollectionManager
     }
 
 #if NET
-    private async ValueTask<CollectionResponse> WaitForCollectionResponseAsync(PrometheusProtocol protocol, Task<CollectionResult> pendingCollectionTask, bool protocolWasRegistered)
+    private async ValueTask<CollectionResponse> WaitForCollectionResponseAsync(PrometheusProtocol protocol, Task<CollectionResult> pendingCollectionTask, bool joinedActiveCollection)
 #else
-    private async Task<CollectionResponse> WaitForCollectionResponseAsync(PrometheusProtocol protocol, Task<CollectionResult> pendingCollectionTask, bool protocolWasRegistered)
+    private async Task<CollectionResponse> WaitForCollectionResponseAsync(PrometheusProtocol protocol, Task<CollectionResult> pendingCollectionTask, bool joinedActiveCollection)
 #endif
     {
         for (var attempt = 0; attempt < MaxCollectAttempts; attempt++)
         {
             var collectionResult = await pendingCollectionTask.ConfigureAwait(false);
 
-            if (protocolWasRegistered &&
+            if (joinedActiveCollection &&
                 collectionResult.TryGetResponse(protocol, out var response))
             {
                 return response;
             }
 
-            if (protocolWasRegistered)
+            if (joinedActiveCollection)
             {
                 this.ExitCollect(protocol);
             }
@@ -293,13 +293,19 @@ internal sealed class PrometheusCollectionManager
             }
 
             pendingCollectionTask = step.PendingCollectionTask;
-            protocolWasRegistered = step.ProtocolWasRegistered;
+            joinedActiveCollection = step.JoinedActiveCollection;
         }
 
         // The retry budget was exhausted while contending with concurrent scrapes;
         // give up on this pending collection and degrade to a failed (empty)
         // response instead of awaiting/retrying indefinitely.
-        if (!protocolWasRegistered)
+        //
+        // Leave exactly one reader slot outstanding for the caller's ExitCollect to
+        // release: when the last step joined the active collection, TryEnterCollect
+        // already took that slot, so take one only otherwise - taking a second here
+        // would leak, taking none would drive the count negative and hang every
+        // later scrape.
+        if (!joinedActiveCollection)
         {
             this.IncrementReaderCount(protocol);
         }
@@ -750,11 +756,11 @@ internal sealed class PrometheusCollectionManager
 
     private readonly struct CollectStep
     {
-        private CollectStep(CollectionResponse response, Task<CollectionResult>? pendingCollectionTask, bool protocolWasRegistered)
+        private CollectStep(CollectionResponse response, Task<CollectionResult>? pendingCollectionTask, bool joinedActiveCollection)
         {
             this.Response = response;
             this.PendingCollectionTask = pendingCollectionTask;
-            this.ProtocolWasRegistered = protocolWasRegistered;
+            this.JoinedActiveCollection = joinedActiveCollection;
         }
 
         // A non-null task means the caller must await the in-flight collection;
@@ -763,13 +769,17 @@ internal sealed class PrometheusCollectionManager
 
         public CollectionResponse Response { get; }
 
-        public bool ProtocolWasRegistered { get; }
+        // True when this scrape registered the protocol with the in-flight
+        // collection and took a reader slot for it (so the awaiting caller owns a
+        // reader count that must be released), false when it is only observing a
+        // collection it could not join.
+        public bool JoinedActiveCollection { get; }
 
         public static CollectStep Completed(CollectionResponse response)
-            => new(response, pendingCollectionTask: null, protocolWasRegistered: false);
+            => new(response, pendingCollectionTask: null, joinedActiveCollection: false);
 
-        public static CollectStep Pending(Task<CollectionResult> pendingCollectionTask, bool protocolWasRegistered)
-            => new(default, pendingCollectionTask, protocolWasRegistered);
+        public static CollectStep Pending(Task<CollectionResult> pendingCollectionTask, bool joinedActiveCollection)
+            => new(default, pendingCollectionTask, joinedActiveCollection);
     }
 
     private readonly struct CollectionResult

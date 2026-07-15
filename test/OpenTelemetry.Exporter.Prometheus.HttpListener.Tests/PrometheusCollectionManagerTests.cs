@@ -528,7 +528,9 @@ public sealed class PrometheusCollectionManagerTests
 
         var protocol = GetProtocol(openMetricsRequested: false);
 
-        var workerCount = Math.Max(Environment.ProcessorCount * 2, 8);
+        // Enough concurrency to reliably drive the contended retry path, but capped so the
+        // test does not spawn an unreasonable number of hot tasks on high-core CI agents.
+        var workerCount = Math.Min(Math.Max(Environment.ProcessorCount * 2, 8), 32);
 
         async Task ScrapeUntilStoppedAsync()
         {
@@ -536,10 +538,16 @@ public sealed class PrometheusCollectionManagerTests
             {
                 cts.Token.ThrowIfCancellationRequested();
 
-                // The collection fails, so the response is empty; we only care that
-                // the (possibly heavily retried) call returns without overflowing.
-                _ = await EnterCollectAsync(exporter, protocol);
-                exporter.CollectionManager.ExitCollect(protocol);
+                var response = await EnterCollectAsync(exporter, protocol);
+
+                try
+                {
+                    Assert.False(response.Succeeded, "Expected the forced-failure collection to report failure.");
+                }
+                finally
+                {
+                    exporter.CollectionManager.ExitCollect(protocol);
+                }
             }
         }
 
