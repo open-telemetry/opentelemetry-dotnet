@@ -178,53 +178,87 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
     private void WriteArrayTagInternal(ref TTagState state, string key, Array array, int? tagValueMaxLength)
     {
+        // Upper bound on the number of times the array serialization buffer is grown before giving up. Each
+        // retry at least doubles the buffer, which is itself capped by the ArrayTagWriter's own  maximum size.
+        const int MaxArrayTagBufferGrowthAttempts = 32;
+
         var arrayState = this.arrayWriter.BeginWriteArray();
 
         try
         {
-            // This switch ensures the values of the resultant array-valued tag are of the same type.
-            switch (array)
+            // The buffer at least doubles on each retry and TryResize returns false once it hits
+            // its own maximum size, so the loop is already bounded. This explicit attempt cap is a
+            // guard that guarantees termination even if a write were to keep faulting without the
+            // buffer actually being too small.
+            var written = false;
+            for (var attempt = 0; attempt < MaxArrayTagBufferGrowthAttempts; attempt++)
             {
-                case char[] charArray: this.WriteStructToArray(ref arrayState, charArray); break;
-                case string?[] stringArray: this.WriteStringsToArray(ref arrayState, stringArray, tagValueMaxLength); break;
-                case bool[] boolArray: this.WriteStructToArray(ref arrayState, boolArray); break;
-                case byte[] byteArray: this.WriteToArrayCovariant(ref arrayState, byteArray); break;
-                case short[] shortArray: this.WriteToArrayCovariant(ref arrayState, shortArray); break;
+                try
+                {
+                    // This switch ensures the values of the resultant array-valued tag are of the same type.
+                    switch (array)
+                    {
+                        case char[] charArray: this.WriteStructToArray(ref arrayState, charArray); break;
+                        case string?[] stringArray: this.WriteStringsToArray(ref arrayState, stringArray, tagValueMaxLength); break;
+                        case bool[] boolArray: this.WriteStructToArray(ref arrayState, boolArray); break;
+                        case byte[] byteArray: this.WriteToArrayCovariant(ref arrayState, byteArray); break;
+                        case short[] shortArray: this.WriteToArrayCovariant(ref arrayState, shortArray); break;
 #if NETFRAMEWORK
-                case int[]: this.WriteArrayTagIntNetFramework(ref arrayState, array, tagValueMaxLength); break;
-                case long[]: this.WriteArrayTagLongNetFramework(ref arrayState, array, tagValueMaxLength); break;
+                        case int[]: this.WriteArrayTagIntNetFramework(ref arrayState, array, tagValueMaxLength); break;
+                        case long[]: this.WriteArrayTagLongNetFramework(ref arrayState, array, tagValueMaxLength); break;
 #else
-                case int[] intArray: this.WriteToArrayCovariant(ref arrayState, intArray); break;
-                case long[] longArray: this.WriteToArrayCovariant(ref arrayState, longArray); break;
+                        case int[] intArray: this.WriteToArrayCovariant(ref arrayState, intArray); break;
+                        case long[] longArray: this.WriteToArrayCovariant(ref arrayState, longArray); break;
 #endif
-                case float[] floatArray: this.WriteStructToArray(ref arrayState, floatArray); break;
-                case double[] doubleArray: this.WriteStructToArray(ref arrayState, doubleArray); break;
-                default: this.WriteToArrayTypeChecked(ref arrayState, array, tagValueMaxLength); break;
+                        case float[] floatArray: this.WriteStructToArray(ref arrayState, floatArray); break;
+                        case double[] doubleArray: this.WriteStructToArray(ref arrayState, doubleArray); break;
+                        default: this.WriteToArrayTypeChecked(ref arrayState, array, tagValueMaxLength); break;
+                    }
+
+                    this.arrayWriter.EndWriteArray(ref arrayState);
+                    written = true;
+                    break;
+                }
+                catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
+                {
+                    // If the array writer cannot be resized, TryResize should log a message to the event source, return false.
+                    if (this.arrayWriter.TryResize(ref arrayState))
+                    {
+                        continue;
+                    }
+
+                    this.arrayWriter.AbortWriteArray(ref arrayState);
+
+                    // Drop the array value and set "TRUNCATED" as value for easier isolation.
+                    // This is a best effort to avoid dropping the entire tag.
+                    this.WriteStringTag(
+                        ref state,
+                        key,
+                        "TRUNCATED".AsSpan());
+
+                    this.LogUnsupportedTagTypeAndReturnFalse(key, array.GetType().ToString());
+                    return;
+                }
             }
 
-            this.arrayWriter.EndWriteArray(ref arrayState);
-        }
-        catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
-        {
-            // If the array writer cannot be resized, TryResize should log a message to the event source, return false.
-            if (this.arrayWriter.TryResize())
+            if (!written)
             {
-                this.WriteArrayTagInternal(ref state, key, array, tagValueMaxLength);
-                return;
+                ThrowIfTooManyRetries();
             }
 
-            // Drop the array value and set "TRUNCATED" as value for easier isolation.
-            // This is a best effort to avoid dropping the entire tag.
-            this.WriteStringTag(
-                ref state,
-                key,
-                "TRUNCATED".AsSpan());
-
-            this.LogUnsupportedTagTypeAndReturnFalse(key, array.GetType().ToString());
-            return;
+            this.WriteArrayTag(ref state, key, ref arrayState);
+        }
+        catch
+        {
+            this.arrayWriter.AbortWriteArray(ref arrayState);
+            throw;
         }
 
-        this.WriteArrayTag(ref state, key, ref arrayState);
+        [System.Diagnostics.CodeAnalysis.DoesNotReturn]
+        static void ThrowIfTooManyRetries()
+        {
+            throw new InvalidOperationException("The array-valued tag could not be written within the maximum number of buffer-growth attempts.");
+        }
     }
 
 #if NETFRAMEWORK

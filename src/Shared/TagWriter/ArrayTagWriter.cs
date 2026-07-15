@@ -23,5 +23,9 @@ internal abstract class ArrayTagWriter<TArrayState>
 
     public abstract void EndWriteArray(ref TArrayState state);
 
-    public virtual bool TryResize() => false;
+    public virtual void AbortWriteArray(ref TArrayState state)
+    {
+    }
+
+    public virtual bool TryResize(ref TArrayState state) => false;
 }

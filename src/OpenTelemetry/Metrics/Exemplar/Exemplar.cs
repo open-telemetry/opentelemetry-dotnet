@@ -20,11 +20,13 @@ public struct Exemplar
 {
 #if NET
     internal FrozenSet<string>? ViewDefinedTagKeys;
+    internal FrozenSet<string>? ExcludedTagKeys;
 #else
     internal HashSet<string>? ViewDefinedTagKeys;
+    internal HashSet<string>? ExcludedTagKeys;
 #endif
 
-    private static readonly ReadOnlyFilteredTagCollection Empty = new(excludedKeys: null, [], count: 0);
+    private static readonly ReadOnlyFilteredTagCollection Empty = new(includeKeys: null, excludeKeys: null, [], count: 0);
     private int tagCount;
     private KeyValuePair<string, object?>[]? tagStorage;
     private MetricPointValueStorage valueStorage;
@@ -69,10 +71,11 @@ public struct Exemplar
     /// <remarks>
     /// Note: <see cref="FilteredTags"/> represents the set of tags which were
     /// supplied at measurement but dropped due to filtering configured by a
-    /// view (<see cref="MetricStreamConfiguration.TagKeys"/>). If view tag
+    /// view (<see cref="MetricStreamConfiguration.TagKeys"/> or
+    /// <see cref="MetricStreamConfiguration.ExcludedTagKeys"/>). If view tag
     /// filtering is not configured <see cref="FilteredTags"/> will be empty.
     /// </remarks>
-    public readonly ReadOnlyFilteredTagCollection FilteredTags => this.tagCount == 0 ? Empty : new(this.ViewDefinedTagKeys, this.tagStorage!, this.tagCount);
+    public readonly ReadOnlyFilteredTagCollection FilteredTags => this.tagCount == 0 ? Empty : new(this.ViewDefinedTagKeys, this.ExcludedTagKeys, this.tagStorage!, this.tagCount);
 
     internal void Update<T>(in ExemplarMeasurement<T> measurement)
         where T : struct
@@ -116,7 +119,7 @@ public struct Exemplar
             this.SpanId = default;
         }
 
-        if (this.ViewDefinedTagKeys != null)
+        if (this.ViewDefinedTagKeys != null || this.ExcludedTagKeys != null)
         {
             this.StoreRawTags(measurement.Tags);
         }
@@ -160,6 +163,7 @@ public struct Exemplar
         destination.SpanId = this.SpanId;
         destination.valueStorage = this.valueStorage;
         destination.ViewDefinedTagKeys = this.ViewDefinedTagKeys;
+        destination.ExcludedTagKeys = this.ExcludedTagKeys;
         destination.tagCount = this.tagCount;
         if (destination.tagCount > 0)
         {

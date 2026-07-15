@@ -73,6 +73,12 @@ public class PrometheusHttpListenerOptions
     public bool DisableTotalNameSuffixForCounters { get; set; }
 
     /// <summary>
+    /// Gets or sets the strategy used to translate OpenTelemetry metric and label names into
+    /// Prometheus names. Default value: <see cref="PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes"/>.
+    /// </summary>
+    public PrometheusTranslationStrategy TranslationStrategy { get; set; } = PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes;
+
+    /// <summary>
     /// Gets or sets a value indicating whether the scope information (name, version, schema URL) is added to the scrape response.
     /// Default value: <see langword="true"/>.
     /// </summary>
