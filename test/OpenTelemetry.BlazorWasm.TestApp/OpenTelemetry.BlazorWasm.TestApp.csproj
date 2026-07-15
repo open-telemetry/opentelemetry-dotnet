@@ -4,6 +4,10 @@
     <TargetFrameworks>net10.0</TargetFrameworks>
     <Description>Blazor WebAssembly application used to validate that the OpenTelemetry SDK works end-to-end under the browser WASM runtime.</Description>
     <NoWarn>$(NoWarn);CA1515</NoWarn>
+    <!--
+      Because we use project references to projects that multi-target to TFMs
+      that do not support trimming we cannot publish the application as trimmed.
+    -->
     <PublishTrimmed>false</PublishTrimmed>
   </PropertyGroup>
 

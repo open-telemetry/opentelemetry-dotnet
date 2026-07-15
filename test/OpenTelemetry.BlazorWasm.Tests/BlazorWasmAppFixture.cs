@@ -37,7 +37,7 @@ public sealed class BlazorWasmAppFixture : IAsyncLifetime
             {
                 Directory.Delete(this.publishDirectory, recursive: true);
             }
-            catch (IOException)
+            catch (Exception)
             {
                 // Best effort cleanup of the temporary publish output.
             }

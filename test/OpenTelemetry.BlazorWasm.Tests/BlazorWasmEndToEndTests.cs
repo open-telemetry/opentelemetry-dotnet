@@ -134,12 +134,14 @@ public sealed class BlazorWasmEndToEndTests : IClassFixture<BlazorWasmAppFixture
             await WaitForAsync(
                 () => HasHttpClientSpan(collector) && HasMetric(collector, HttpClientDurationMetric),
                 () => Detail(collector));
+
+            Assert.True(HasServiceName(collector), $"Expected resource attribute service.name='{ServiceName}'.");
         });
     }
 
     private static async Task NavigateAndWaitForStartupAsync(IPage page, string url)
     {
-        for (var attempt = 0; attempt <= StartupAttempts; attempt++)
+        for (var attempt = 0; attempt < StartupAttempts; attempt++)
         {
             try
             {
