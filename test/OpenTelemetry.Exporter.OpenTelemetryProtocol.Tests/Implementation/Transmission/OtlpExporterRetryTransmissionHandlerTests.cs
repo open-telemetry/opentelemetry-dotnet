@@ -229,20 +229,11 @@ public class OtlpExporterRetryTransmissionHandlerTests
 #if NET
     private sealed class AllocationAssertion : IDisposable
     {
-        private readonly long before;
-
-        public AllocationAssertion()
-        {
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            GC.Collect();
-
-            this.before = GC.GetTotalAllocatedBytes();
-        }
+        private readonly long before = GC.GetAllocatedBytesForCurrentThread();
 
         public void Dispose()
         {
-            var allocatedBytes = GC.GetTotalAllocatedBytes() - this.before;
+            var allocatedBytes = GC.GetAllocatedBytesForCurrentThread() - this.before;
 
             const int Limit = 2_000_000;
             Assert.False(

@@ -130,10 +130,10 @@ internal sealed class PrometheusHttpListener : IDisposable
         }
     }
 
-    private static PrometheusProtocol Negotiate(HttpListenerRequest request)
+    private static PrometheusProtocol Negotiate(HttpListenerRequest request, EscapingScheme defaultEscaping)
     {
         var acceptHeader = request.Headers["Accept"];
-        return PrometheusHeadersParser.Negotiate(acceptHeader);
+        return PrometheusHeadersParser.Negotiate(acceptHeader, defaultEscaping);
     }
 
     /// <summary>
@@ -256,7 +256,7 @@ internal sealed class PrometheusHttpListener : IDisposable
 
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(requestCancelled.Token, cancellationToken);
 
-            var protocol = Negotiate(context.Request);
+            var protocol = Negotiate(context.Request, this.exporter.DefaultEscapingScheme);
 
             var collectionResponse = await this.exporter.CollectionManager.EnterCollect(protocol).ConfigureAwait(false);
 

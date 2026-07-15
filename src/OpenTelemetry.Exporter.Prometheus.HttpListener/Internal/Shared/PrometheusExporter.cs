@@ -59,6 +59,8 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
 
     internal bool AppendSuffixes => this.TranslationStrategy.AppendSuffixes();
 
+    internal EscapingScheme DefaultEscapingScheme => this.TranslationStrategy.GetDefaultEscapingScheme();
+
     internal Func<string, bool>? ResourceConstantLabels { get; }
 
     internal int MaxScrapeResponseSizeBytes { get; }

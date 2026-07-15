@@ -112,7 +112,7 @@ jobs:
       run: dotnet pack ./build/OpenTelemetry.proj --configuration Release --no-restore --no-build -p:"PackTag=${env:PACK_TAG}"
 
     - name: Create GitHub attestations for NuGet packages
-      uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+      uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4.1.1
       with:
         subject-path: |
           ./artifacts/package/release/OpenTelemetry*.*nupkg
@@ -126,7 +126,7 @@ jobs:
         upload-release-assets: false
 
     - name: Create GitHub attestation for SBOM
-      uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+      uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4.1.1
       with:
         subject-path: |
           ./artifacts/package/release/sbom.spdx.json
@@ -151,7 +151,7 @@ jobs:
     steps:
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5.3.0
+      uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
       with:
         dotnet-version: ${{ needs.build-pack.outputs.dotnet-sdk-version }}
 
@@ -327,7 +327,7 @@ jobs:
       uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
       id: otelbot-token
       with:
-        client-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
+        client-id: ${{ vars.OTELBOT_DOTNET_CLIENT_ID }}
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
         permission-contents: write
         permission-pull-requests: write

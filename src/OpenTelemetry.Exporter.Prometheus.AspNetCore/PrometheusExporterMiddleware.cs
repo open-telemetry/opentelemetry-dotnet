@@ -77,7 +77,7 @@ internal sealed class PrometheusExporterMiddleware
 
             var requestHeaders = httpContext.Request.GetTypedHeaders();
 
-            var protocol = Negotiate(requestHeaders);
+            var protocol = Negotiate(requestHeaders, this.exporter.DefaultEscapingScheme);
 
             var collectionResponse = await this.exporter.CollectionManager.EnterCollect(protocol);
 
@@ -156,7 +156,7 @@ internal sealed class PrometheusExporterMiddleware
         }
     }
 
-    internal static PrometheusProtocol Negotiate(RequestHeaders headers)
+    internal static PrometheusProtocol Negotiate(RequestHeaders headers, EscapingScheme defaultEscaping = EscapingScheme.Underscores)
     {
         var acceptHeader = headers.Accept;
 
@@ -173,7 +173,7 @@ internal sealed class PrometheusExporterMiddleware
 
         foreach (var mediaType in acceptHeader)
         {
-            if (TryParse(mediaType, out var protocol, out var quality) &&
+            if (TryParse(mediaType, defaultEscaping, out var protocol, out var quality) &&
                 (preferred is null || quality > preferredQuality))
             {
                 preferred = protocol;
@@ -186,6 +186,7 @@ internal sealed class PrometheusExporterMiddleware
 
     private static bool TryParse(
         MediaTypeHeaderValue value,
+        EscapingScheme defaultEscaping,
         [NotNullWhen(true)] out PrometheusProtocol? protocol,
         out double quality)
     {
@@ -282,7 +283,10 @@ internal sealed class PrometheusExporterMiddleware
         }
         else
         {
-            escaping ??= PrometheusProtocol.UnderscoresEscaping;
+            // When the client does not negotiate an escaping scheme, fall back to the exporter's
+            // configured default (from its translation strategy) rather than always underscores.
+            // Any client-specified escaping value takes precedence.
+            escaping ??= PrometheusEscaping.GetName(defaultEscaping);
         }
 
         protocol = new(mediaType, escaping, version, isOpenMetrics);

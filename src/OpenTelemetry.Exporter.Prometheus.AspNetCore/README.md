@@ -168,6 +168,28 @@ services.AddOpenTelemetry()
         }));
 ```
 
+### TranslationStrategy
+
+Controls how OpenTelemetry metric and label names are translated into Prometheus
+names, following the OpenTelemetry specification's `translation_strategy` option.
+The strategy combines two independent choices: whether discouraged characters are
+escaped to `_` or UTF-8 names are passed through unaltered, and whether unit and
+type (e.g. `_total`) suffixes are appended.
+
+| Strategy | Escaping | Suffixes |
+| -------- | -------- | -------- |
+| `UnderscoreEscapingWithSuffixes` (default) | Escape to `_` | Appended |
+| `UnderscoreEscapingWithoutSuffixes` | Escape to `_` | Not appended |
+| `NoUTF8EscapingWithSuffixes` | UTF-8 passthrough | Appended |
+| `NoTranslation` | UTF-8 passthrough | Not appended |
+
+The escaping choice only sets the default escaping scheme. A scrape request that
+negotiates an escaping scheme (via the `escaping` parameter of the `Accept` header,
+supported by the version 1.0.0 and later text formats) always takes precedence over
+the configured strategy. The classic (pre-1.0.0) text formats do not support
+escaping negotiation and are always emitted using underscore escaping; the suffix
+choice applies to every format.
+
 ## Troubleshooting
 
 This component uses an

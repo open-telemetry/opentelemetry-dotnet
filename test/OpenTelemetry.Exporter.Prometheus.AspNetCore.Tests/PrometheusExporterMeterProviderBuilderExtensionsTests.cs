@@ -28,4 +28,19 @@ public sealed class PrometheusExporterMeterProviderBuilderExtensionsTests
         Assert.Equal(1, defaultExporterOptionsConfigureOptionsInvocations);
         Assert.Equal(1, namedExporterOptionsConfigureOptionsInvocations);
     }
+
+    [Fact]
+    public void TranslationStrategy_DefaultsToUnderscoreEscapingWithSuffixes()
+        => Assert.Equal(PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes, new PrometheusAspNetCoreOptions().TranslationStrategy);
+
+    [Fact]
+    public void TranslationStrategy_DelegatesToExporterOptions()
+    {
+        var options = new PrometheusAspNetCoreOptions
+        {
+            TranslationStrategy = PrometheusTranslationStrategy.NoTranslation,
+        };
+
+        Assert.Equal(PrometheusTranslationStrategy.NoTranslation, options.ExporterOptions.TranslationStrategy);
+    }
 }

@@ -274,8 +274,15 @@ public static class ProtobufOtlpMetricSerializerTests
             break;
         }
 
-        var buffer = new byte[16 * 1024];
-        _ = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, Resource.Empty, metrics);
+        var buffer = ProtobufSerializer.RentBuffer(16 * 1024);
+        try
+        {
+            _ = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, Resource.Empty, metrics);
+        }
+        finally
+        {
+            ProtobufSerializer.ReturnBuffer(buffer);
+        }
 
         return new WeakReference<Metric>(capturedMetric);
     }
