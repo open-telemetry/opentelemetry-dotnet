@@ -70,6 +70,9 @@ Notes](../../RELEASENOTES.md).
   OpenTelemetry metric and label names are translated into Prometheus names.
   ([#7507](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7507))
 
+* Fix stack overflow during metric collection when under load.
+  ([#7524](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7524))
+
 ## 1.16.0-beta.1
 
 Released 2026-Jun-10
