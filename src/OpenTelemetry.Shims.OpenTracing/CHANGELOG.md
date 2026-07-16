@@ -9,6 +9,9 @@ Notes](../../RELEASENOTES.md).
 * The library is now marked as trim and AOT compatible.
   ([#7441](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7441))
 
+* Updated OpenTelemetry core component version(s) to `1.17.0`.
+  ([#7530](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7530))
+
 ## 1.16.0-beta.1
 
 Released 2026-Jun-10

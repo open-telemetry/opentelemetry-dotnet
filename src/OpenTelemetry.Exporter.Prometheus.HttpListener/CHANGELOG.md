@@ -73,6 +73,9 @@ Notes](../../RELEASENOTES.md).
 * Fix stack overflow during metric collection when under load.
   ([#7524](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7524))
 
+* Updated OpenTelemetry core component version(s) to `1.17.0`.
+  ([#7530](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7530))
+
 ## 1.16.0-beta.1
 
 Released 2026-Jun-10
