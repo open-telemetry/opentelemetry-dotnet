@@ -222,6 +222,8 @@ internal sealed class PrometheusCollectionManager
             // scrapes. Degrade to a failed (empty) response rather than spinning
             // forever - this mirrors how an unsuccessful collection is reported.
             this.IncrementReaderCount(protocol);
+            PrometheusExporterEventSource.Log.CollectFailed();
+
             return CollectStep.Completed(default);
         }
 
@@ -308,6 +310,7 @@ internal sealed class PrometheusCollectionManager
         if (!joinedActiveCollection)
         {
             this.IncrementReaderCount(protocol);
+            PrometheusExporterEventSource.Log.CollectFailed();
         }
 
         return default;
