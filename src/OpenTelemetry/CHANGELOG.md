@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.17.0-rc.1
+
+Released 2026-Jul-16
+
 * Fixed a metric point reclaim data race on CPU ARM architectures.
   ([#7401](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7401))
 
