@@ -27,6 +27,9 @@ Notes](../../RELEASENOTES.md).
 * Added support for a Schema URL on `Resource` instances.
   ([#7472](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7472))
 
+* Added the `otel.sdk.processor.log.processed` SDK self-observability metric.
+  ([#7486](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7486))
+
 ## 1.16.0
 
 Released 2026-Jun-10

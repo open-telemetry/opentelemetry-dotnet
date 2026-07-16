@@ -16,7 +16,8 @@ public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
     private readonly KeyValuePair<string, object?>[] successTags;
     private readonly KeyValuePair<string, object?>[] queueFullTags;
     private readonly KeyValuePair<string, object?>[] alreadyShutdownTags;
-    private volatile bool isShutdown;
+    private int activeOnEndCount;
+    private int isShutdown;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BatchLogRecordExportProcessor"/> class.
@@ -49,69 +50,84 @@ public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
         this.successTags = baseTags;
         this.queueFullTags = [.. baseTags, new("error.type", "queue_full")];
         this.alreadyShutdownTags = [.. baseTags, new("error.type", "already_shutdown")];
+        this.ExportStarted = this.RecordSuccessfulProcessing;
     }
 
     /// <inheritdoc/>
     public override void OnEnd(LogRecord data)
     {
-        bool enqueued;
+        if (Volatile.Read(ref this.isShutdown) != 0)
+        {
+            SdkSelfObservability.LogProcessedCounter.Add(1, this.alreadyShutdownTags);
+            return;
+        }
 
-        // Note: Intentionally not using Guard.ThrowIfNull to save prod cycles
+        Interlocked.Increment(ref this.activeOnEndCount);
+        try
+        {
+            if (Volatile.Read(ref this.isShutdown) != 0)
+            {
+                SdkSelfObservability.LogProcessedCounter.Add(1, this.alreadyShutdownTags);
+                return;
+            }
+
+            bool enqueued;
+
+            // Note: Intentionally not using Guard.ThrowIfNull to save prod cycles
 #pragma warning disable CA1062 // Validate arguments of public methods
-        switch (data.Source)
+            switch (data.Source)
 #pragma warning restore CA1062 // Validate arguments of public methods
-        {
-            case LogRecord.LogRecordSource.FromSharedPool:
-                data.Buffer();
-                data.AddReference();
-                enqueued = this.TryExport(data);
-                if (!enqueued)
-                {
-                    LogRecordSharedPool.Current.Return(data);
-                }
+            {
+                case LogRecord.LogRecordSource.FromSharedPool:
+                    data.Buffer();
+                    data.AddReference();
+                    enqueued = this.TryExport(data);
+                    if (!enqueued)
+                    {
+                        LogRecordSharedPool.Current.Return(data);
+                    }
 
-                break;
+                    break;
 
-            case LogRecord.LogRecordSource.CreatedManually:
-                data.Buffer();
-                enqueued = this.TryExport(data);
-                break;
+                case LogRecord.LogRecordSource.CreatedManually:
+                    data.Buffer();
+                    enqueued = this.TryExport(data);
+                    break;
 
-            case LogRecord.LogRecordSource.FromThreadStaticPool:
-            default:
-                Debug.Assert(data.Source == LogRecord.LogRecordSource.FromThreadStaticPool, "LogRecord source was something unexpected");
+                case LogRecord.LogRecordSource.FromThreadStaticPool:
+                default:
+                    Debug.Assert(data.Source == LogRecord.LogRecordSource.FromThreadStaticPool, "LogRecord source was something unexpected");
 
-                // Note: If we are using ThreadStatic pool we make a copy of the record.
-                enqueued = this.TryExport(data.Copy());
-                break;
+                    // Note: If we are using ThreadStatic pool we make a copy of the record.
+                    enqueued = this.TryExport(data.Copy());
+                    break;
+            }
+
+            if (!enqueued)
+            {
+                SdkSelfObservability.LogProcessedCounter.Add(1, this.queueFullTags);
+            }
         }
-
-        // TODO: Consider switching to an ObservableCounter that piggybacks on
-        // CircularBuffer.AddedCount and DroppedCount to eliminate per-item
-        // Counter.Add() overhead. This would require a registry pattern for
-        // multiple instances but avoids any hot-path cost when a listener is active.
-        KeyValuePair<string, object?>[] tags;
-
-        if (this.isShutdown)
+        finally
         {
-            tags = this.alreadyShutdownTags;
+            Interlocked.Decrement(ref this.activeOnEndCount);
         }
-        else if (!enqueued)
-        {
-            tags = this.queueFullTags;
-        }
-        else
-        {
-            tags = this.successTags;
-        }
-
-        SdkSelfObservability.LogProcessedCounter.Add(1, tags);
     }
 
     /// <inheritdoc/>
     protected override bool OnShutdown(int timeoutMilliseconds)
     {
-        this.isShutdown = true;
+        Interlocked.Exchange(ref this.isShutdown, 1);
+
+        SpinWait spinner = default;
+        while (Volatile.Read(ref this.activeOnEndCount) != 0)
+        {
+            spinner.SpinOnce();
+        }
+
         return base.OnShutdown(timeoutMilliseconds);
     }
+
+    private void RecordSuccessfulProcessing(long count)
+        => SdkSelfObservability.LogProcessedCounter.Add(count, this.successTags);
 }

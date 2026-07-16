@@ -26,13 +26,15 @@ internal sealed class BatchExportThreadWorker<T> : BatchExportWorker<T>
     /// <param name="maxExportBatchSize">The maximum batch size for exports.</param>
     /// <param name="scheduledDelayMilliseconds">The delay between exports in milliseconds.</param>
     /// <param name="exporterTimeoutMilliseconds">The timeout for export operations in milliseconds.</param>
+    /// <param name="exportStarted">Callback invoked when a batch is submitted to the exporter.</param>
     public BatchExportThreadWorker(
         CircularBuffer<T> circularBuffer,
         BaseExporter<T> exporter,
         int maxExportBatchSize,
         int scheduledDelayMilliseconds,
-        int exporterTimeoutMilliseconds)
-        : base(circularBuffer, exporter, maxExportBatchSize, scheduledDelayMilliseconds, exporterTimeoutMilliseconds)
+        int exporterTimeoutMilliseconds,
+        Action<long>? exportStarted = null)
+        : base(circularBuffer, exporter, maxExportBatchSize, scheduledDelayMilliseconds, exporterTimeoutMilliseconds, exportStarted)
     {
         this.exporterThread = new Thread(this.ExporterProc)
         {

@@ -12,7 +12,7 @@ namespace OpenTelemetry.Tests.Logs;
 public class BatchLogRecordExportProcessorSelfObservabilityTests
 {
     [Fact]
-    public void BatchProcessor_SuccessfulEnqueue()
+    public async Task BatchProcessor_CountsSuccessWhenSubmittedToExporter()
     {
         var exportedMetrics = new List<Metric>();
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
@@ -20,8 +20,20 @@ public class BatchLogRecordExportProcessorSelfObservabilityTests
             .AddInMemoryExporter(exportedMetrics)
             .Build();
 
-        using var exporter = new InMemoryExporter<LogRecord>(new List<LogRecord>());
-        using var processor = new BatchLogRecordExportProcessor(exporter);
+        using var exportStarted = new ManualResetEventSlim(false);
+        using var allowExport = new ManualResetEventSlim(false);
+        using var exporter = new DelegatingExporter<LogRecord>
+        {
+            OnExportFunc = batch =>
+            {
+                exportStarted.Set();
+                allowExport.Wait();
+                return ExportResult.Success;
+            },
+        };
+        using var processor = new BatchLogRecordExportProcessor(
+            exporter,
+            scheduledDelayMilliseconds: int.MaxValue);
         using var loggerProvider = Sdk.CreateLoggerProviderBuilder()
             .AddProcessor(processor)
             .Build();
@@ -32,14 +44,28 @@ public class BatchLogRecordExportProcessorSelfObservabilityTests
         logger.EmitLog(new LogRecordData());
 
         meterProvider.ForceFlush();
+        Assert.DoesNotContain(exportedMetrics, m => m.Name == "otel.sdk.processor.log.processed");
 
-        var metric = exportedMetrics.Single(m => m.Name == "otel.sdk.processor.log.processed");
-        var points = GetMetricPoints(metric);
-        var successPoint = points.Single(p => !HasTag(p, "error.type"));
+        var flushTask = Task.Run(() => processor.ForceFlush());
+        try
+        {
+            Assert.True(exportStarted.Wait(TimeSpan.FromSeconds(5)));
+            meterProvider.ForceFlush();
 
-        Assert.Equal(3, successPoint.GetSumLong());
-        AssertTag(successPoint, "otel.component.type", "batching_log_processor");
-        AssertTagStartsWith(successPoint, "otel.component.name", "batching_log_processor/");
+            var metric = exportedMetrics.Single(m => m.Name == "otel.sdk.processor.log.processed");
+            var points = GetMetricPoints(metric);
+            var successPoint = points.Single(p => !HasTag(p, "error.type"));
+
+            Assert.Equal(3, successPoint.GetSumLong());
+            AssertTag(successPoint, "otel.component.type", "batching_log_processor");
+            AssertTagStartsWith(successPoint, "otel.component.name", "batching_log_processor/");
+        }
+        finally
+        {
+            allowExport.Set();
+        }
+
+        Assert.True(await flushTask);
     }
 
     [Fact]
@@ -88,6 +114,7 @@ public class BatchLogRecordExportProcessorSelfObservabilityTests
 
         // Release the exporter so shutdown can complete
         allowExport.Set();
+        processor.ForceFlush();
 
         meterProvider.ForceFlush();
 
@@ -108,7 +135,8 @@ public class BatchLogRecordExportProcessorSelfObservabilityTests
             .AddInMemoryExporter(exportedMetrics)
             .Build();
 
-        using var exporter = new InMemoryExporter<LogRecord>(new List<LogRecord>());
+        var exportedLogs = new List<LogRecord>();
+        using var exporter = new InMemoryExporter<LogRecord>(exportedLogs);
         var processor = new BatchLogRecordExportProcessor(exporter);
         using var loggerProvider = Sdk.CreateLoggerProviderBuilder()
             .AddProcessor(processor)
@@ -130,6 +158,7 @@ public class BatchLogRecordExportProcessorSelfObservabilityTests
 
         Assert.Equal(1, shutdownPoint.GetSumLong());
         Assert.Equal(2, successPoint.GetSumLong());
+        Assert.Equal(2, exportedLogs.Count);
     }
 
     [Fact]
@@ -156,6 +185,8 @@ public class BatchLogRecordExportProcessorSelfObservabilityTests
         logger.EmitLog(new LogRecordData());
         logger.EmitLog(new LogRecordData());
 
+        batch1.ForceFlush();
+        batch2.ForceFlush();
         meterProvider.ForceFlush();
 
         var metric = exportedMetrics.Single(m => m.Name == "otel.sdk.processor.log.processed");
@@ -189,7 +220,8 @@ public class BatchLogRecordExportProcessorSelfObservabilityTests
             .AddInMemoryExporter(exportedMetrics)
             .Build();
 
-        using var exporter = new InMemoryExporter<LogRecord>(new List<LogRecord>());
+        var exportedLogs = new List<LogRecord>();
+        using var exporter = new InMemoryExporter<LogRecord>(exportedLogs);
         var processor = new SimpleLogRecordExportProcessor(exporter);
         using var loggerProvider = Sdk.CreateLoggerProviderBuilder()
             .AddProcessor(processor)
@@ -214,6 +246,7 @@ public class BatchLogRecordExportProcessorSelfObservabilityTests
 
         Assert.Equal(2, successPoint.GetSumLong());
         Assert.Equal(1, shutdownPoint.GetSumLong());
+        Assert.Equal(2, exportedLogs.Count);
     }
 
     [Fact]

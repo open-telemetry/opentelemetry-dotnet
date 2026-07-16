@@ -57,6 +57,8 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
         this.worker.Start();
     }
 
+    internal Action<long>? ExportStarted { get; set; }
+
     /// <summary>
     /// Gets the number of telemetry objects dropped by the processor.
     /// </summary>
@@ -153,7 +155,8 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
                 this.exporter,
                 this.MaxExportBatchSize,
                 this.ScheduledDelayMilliseconds,
-                this.ExporterTimeoutMilliseconds);
+                this.ExporterTimeoutMilliseconds,
+                this.OnExportStarted);
         }
 #endif
 
@@ -163,6 +166,10 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
             this.exporter,
             this.MaxExportBatchSize,
             this.ScheduledDelayMilliseconds,
-            this.ExporterTimeoutMilliseconds);
+            this.ExporterTimeoutMilliseconds,
+            this.OnExportStarted);
     }
+
+    private void OnExportStarted(long count)
+        => this.ExportStarted?.Invoke(count);
 }

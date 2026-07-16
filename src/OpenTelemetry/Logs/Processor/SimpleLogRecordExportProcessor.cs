@@ -14,7 +14,8 @@ public class SimpleLogRecordExportProcessor : SimpleExportProcessor<LogRecord>
 
     private readonly KeyValuePair<string, object?>[] successTags;
     private readonly KeyValuePair<string, object?>[] alreadyShutdownTags;
-    private volatile bool isShutdown;
+    private int activeOnEndCount;
+    private int isShutdown;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SimpleLogRecordExportProcessor"/> class.
@@ -37,15 +38,41 @@ public class SimpleLogRecordExportProcessor : SimpleExportProcessor<LogRecord>
     /// <inheritdoc/>
     public override void OnEnd(LogRecord data)
     {
-        base.OnEnd(data);
-        SdkSelfObservability.LogProcessedCounter.Add(
-            1, this.isShutdown ? this.alreadyShutdownTags : this.successTags);
+        if (Volatile.Read(ref this.isShutdown) != 0)
+        {
+            SdkSelfObservability.LogProcessedCounter.Add(1, this.alreadyShutdownTags);
+            return;
+        }
+
+        Interlocked.Increment(ref this.activeOnEndCount);
+        try
+        {
+            if (Volatile.Read(ref this.isShutdown) != 0)
+            {
+                SdkSelfObservability.LogProcessedCounter.Add(1, this.alreadyShutdownTags);
+                return;
+            }
+
+            SdkSelfObservability.LogProcessedCounter.Add(1, this.successTags);
+            base.OnEnd(data);
+        }
+        finally
+        {
+            Interlocked.Decrement(ref this.activeOnEndCount);
+        }
     }
 
     /// <inheritdoc/>
     protected override bool OnShutdown(int timeoutMilliseconds)
     {
-        this.isShutdown = true;
+        Interlocked.Exchange(ref this.isShutdown, 1);
+
+        SpinWait spinner = default;
+        while (Volatile.Read(ref this.activeOnEndCount) != 0)
+        {
+            spinner.SpinOnce();
+        }
+
         return base.OnShutdown(timeoutMilliseconds);
     }
 }
