@@ -69,7 +69,7 @@ jobs:
         "epoch=$(git log -1 --pretty=%ct)" >> ${env:GITHUB_OUTPUT}
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
+      uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
       id: setup-dotnet
 
     - name: Install Cosign
@@ -151,7 +151,7 @@ jobs:
     steps:
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
+      uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
       with:
         dotnet-version: ${{ needs.build-pack.outputs.dotnet-sdk-version }}
 
@@ -271,7 +271,7 @@ jobs:
     steps:
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
+      uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
       with:
         dotnet-version: ${{ needs.build-pack.outputs.dotnet-sdk-version }}
 
