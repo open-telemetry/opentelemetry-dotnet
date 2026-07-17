@@ -7,6 +7,14 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.17.0
+
+Released 2026-Jul-16
+
+## 1.17.0-rc.1
+
+Released 2026-Jul-16
+
 * Fixed `OtlpLogExporter` so `OtlpExporterOptions.ExportProcessorType` and
   `OtlpExporterOptions.BatchExportProcessorOptions` are respected when
   `LogRecordExportProcessorOptions` are not configured.

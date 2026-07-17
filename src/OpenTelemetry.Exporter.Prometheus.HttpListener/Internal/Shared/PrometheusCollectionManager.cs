@@ -13,6 +13,14 @@ internal sealed class PrometheusCollectionManager
 {
     private const int MaxCachedMetrics = 1024;
 
+    // Upper bound on how many times entering a collection will retry while
+    // resolving races with concurrent scrapes (a collection completing, active
+    // readers draining, or a shared collection that did not serve this protocol).
+    // In practice only a couple of iterations ever run; the cap exists purely so
+    // a pathological interleaving of concurrent scrapes cannot starve one into
+    // looping forever.
+    private const int MaxCollectAttempts = 1024;
+
     private readonly ConcurrentDictionary<PrometheusProtocol, PrometheusProtocolState> protocolStates = new();
 
     private readonly PrometheusExporter exporter;
@@ -56,12 +64,43 @@ internal sealed class PrometheusCollectionManager
     public Task<CollectionResponse> EnterCollect(in PrometheusProtocol protocol)
 #endif
     {
+        var step = this.TryEnterCollect(protocol);
+
+        if (step.PendingCollectionTask is null)
+        {
+#if NET
+            return new ValueTask<CollectionResponse>(step.Response);
+#else
+            return Task.FromResult(step.Response);
+#endif
+        }
+
+        return this.WaitForCollectionResponseAsync(protocol, step.PendingCollectionTask, step.JoinedActiveCollection);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void ExitCollect(in PrometheusProtocol protocol)
+        => this.GetProtocolState(protocol).DecrementReaderCount();
+
+    /// <summary>
+    /// Performs a single synchronous attempt to enter a collection. Returns a
+    /// completed response when one is immediately available (served from the
+    /// cache, or produced by a collection executed on this thread), otherwise
+    /// returns the in-flight collection task the caller must await.
+    /// </summary>
+    /// <param name="protocol">The protocol for which the collection is being attempted.</param>
+    /// <returns>
+    /// The <see cref="CollectStep"/> result of the attempt.
+    /// </returns>
+    private CollectStep TryEnterCollect(in PrometheusProtocol protocol)
+    {
         CollectionResponse? cachedResponse = null;
         Task<CollectionResult>? pendingCollectionTask = null;
         CollectionContext? activeCollectionContext = null;
         var joinedActiveCollection = false;
+        var resolved = false;
 
-        while (true)
+        for (var attempt = 0; attempt < MaxCollectAttempts; attempt++)
         {
             pendingCollectionTask = null;
             joinedActiveCollection = false;
@@ -77,6 +116,7 @@ internal sealed class PrometheusCollectionManager
                 {
                     cachedResponse = response;
                     this.IncrementReaderCount(protocol);
+                    resolved = true;
                     break;
                 }
 
@@ -88,6 +128,7 @@ internal sealed class PrometheusCollectionManager
                     if (joinedActiveCollection)
                     {
                         this.IncrementReaderCount(protocol);
+                        resolved = true;
                         break;
                     }
 
@@ -103,6 +144,7 @@ internal sealed class PrometheusCollectionManager
                     }
                     else
                     {
+                        resolved = true;
                         break;
                     }
                 }
@@ -130,6 +172,7 @@ internal sealed class PrometheusCollectionManager
                 {
                     cachedResponse = response;
                     this.IncrementReaderCount(protocol);
+                    resolved = true;
                     break;
                 }
 
@@ -141,6 +184,7 @@ internal sealed class PrometheusCollectionManager
                     if (joinedActiveCollection)
                     {
                         this.IncrementReaderCount(protocol);
+                        resolved = true;
                         break;
                     }
 
@@ -151,9 +195,11 @@ internal sealed class PrometheusCollectionManager
                             this.collectionContext = null;
                         }
 
+                        pendingCollectionTask = null;
                         continue;
                     }
 
+                    resolved = true;
                     break;
                 }
 
@@ -161,6 +207,7 @@ internal sealed class PrometheusCollectionManager
                 this.collectionContext = activeCollectionContext;
 
                 this.IncrementReaderCount(protocol);
+                resolved = true;
                 break;
             }
             finally
@@ -169,22 +216,25 @@ internal sealed class PrometheusCollectionManager
             }
         }
 
+        if (!resolved)
+        {
+            // The attempt budget was exhausted while contending with concurrent
+            // scrapes. Degrade to a failed (empty) response rather than spinning
+            // forever - this mirrors how an unsuccessful collection is reported.
+            this.IncrementReaderCount(protocol);
+            PrometheusExporterEventSource.Log.CollectFailed();
+
+            return CollectStep.Completed(default);
+        }
+
         if (cachedResponse is { } collectionResponse)
         {
-#if NET
-            return new ValueTask<CollectionResponse>(collectionResponse);
-#else
-            return Task.FromResult(collectionResponse);
-#endif
+            return CollectStep.Completed(collectionResponse);
         }
 
         if (pendingCollectionTask is not null)
         {
-#if NET
-            return this.WaitForCollectionResponseAsync(protocol, pendingCollectionTask, joinedActiveCollection);
-#else
-            return this.WaitForCollectionResponseAsync(protocol, pendingCollectionTask, joinedActiveCollection);
-#endif
+            return CollectStep.Pending(pendingCollectionTask, joinedActiveCollection);
         }
 
         var result = this.ExecuteCollect(activeCollectionContext!);
@@ -205,46 +255,65 @@ internal sealed class PrometheusCollectionManager
             this.ExitGlobalLock();
         }
 
-        if (result.TryGetResponse(protocol, out collectionResponse))
-        {
-#if NET
-            return new ValueTask<CollectionResponse>(collectionResponse);
-#else
-            return Task.FromResult(collectionResponse);
-#endif
-        }
-
-#if NET
-        return new ValueTask<CollectionResponse>(default(CollectionResponse));
-#else
-        return Task.FromResult(default(CollectionResponse));
-#endif
+        return result.TryGetResponse(protocol, out var collectedResponse)
+            ? CollectStep.Completed(collectedResponse)
+            : CollectStep.Completed(default);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void ExitCollect(in PrometheusProtocol protocol)
-        => this.GetProtocolState(protocol).DecrementReaderCount();
-
 #if NET
-    private async ValueTask<CollectionResponse> WaitForCollectionResponseAsync(PrometheusProtocol protocol, Task<CollectionResult> pendingCollectionTask, bool protocolWasRegistered)
+    private async ValueTask<CollectionResponse> WaitForCollectionResponseAsync(PrometheusProtocol protocol, Task<CollectionResult> pendingCollectionTask, bool joinedActiveCollection)
 #else
-    private async Task<CollectionResponse> WaitForCollectionResponseAsync(PrometheusProtocol protocol, Task<CollectionResult> pendingCollectionTask, bool protocolWasRegistered)
+    private async Task<CollectionResponse> WaitForCollectionResponseAsync(PrometheusProtocol protocol, Task<CollectionResult> pendingCollectionTask, bool joinedActiveCollection)
 #endif
     {
-        var collectionResult = await pendingCollectionTask.ConfigureAwait(false);
-
-        if (protocolWasRegistered &&
-            collectionResult.TryGetResponse(protocol, out var response))
+        for (var attempt = 0; attempt < MaxCollectAttempts; attempt++)
         {
-            return response;
+            var collectionResult = await pendingCollectionTask.ConfigureAwait(false);
+
+            if (joinedActiveCollection &&
+                collectionResult.TryGetResponse(protocol, out var response))
+            {
+                return response;
+            }
+
+            if (joinedActiveCollection)
+            {
+                this.ExitCollect(protocol);
+            }
+
+            // The shared collection did not produce a response for this protocol,
+            // so make another attempt. Loop here (bounded by MaxCollectAttempts)
+            // rather than recursing back into EnterCollect: when the awaited
+            // collection completes synchronously the continuation runs inline,
+            // so a recursive retry would grow the stack on every iteration
+            // and eventually overflow under contention.
+            var step = this.TryEnterCollect(protocol);
+
+            if (step.PendingCollectionTask is null)
+            {
+                return step.Response;
+            }
+
+            pendingCollectionTask = step.PendingCollectionTask;
+            joinedActiveCollection = step.JoinedActiveCollection;
         }
 
-        if (protocolWasRegistered)
+        // The retry budget was exhausted while contending with concurrent scrapes;
+        // give up on this pending collection and degrade to a failed (empty)
+        // response instead of awaiting/retrying indefinitely.
+        //
+        // Leave exactly one reader slot outstanding for the caller's ExitCollect to
+        // release: when the last step joined the active collection, TryEnterCollect
+        // already took that slot, so take one only otherwise - taking a second here
+        // would leak, taking none would drive the count negative and hang every
+        // later scrape.
+        if (!joinedActiveCollection)
         {
-            this.ExitCollect(protocol);
+            this.IncrementReaderCount(protocol);
+            PrometheusExporterEventSource.Log.CollectFailed();
         }
 
-        return await this.EnterCollect(protocol).ConfigureAwait(false);
+        return default;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -686,6 +755,34 @@ internal sealed class PrometheusCollectionManager
         /// and a failed collection that produced no response.
         /// </remarks>
         public readonly bool Succeeded { get; }
+    }
+
+    private readonly struct CollectStep
+    {
+        private CollectStep(CollectionResponse response, Task<CollectionResult>? pendingCollectionTask, bool joinedActiveCollection)
+        {
+            this.Response = response;
+            this.PendingCollectionTask = pendingCollectionTask;
+            this.JoinedActiveCollection = joinedActiveCollection;
+        }
+
+        // A non-null task means the caller must await the in-flight collection;
+        // a null task means Response already holds the answer.
+        public Task<CollectionResult>? PendingCollectionTask { get; }
+
+        public CollectionResponse Response { get; }
+
+        // True when this scrape registered the protocol with the in-flight
+        // collection and took a reader slot for it (so the awaiting caller owns a
+        // reader count that must be released), false when it is only observing a
+        // collection it could not join.
+        public bool JoinedActiveCollection { get; }
+
+        public static CollectStep Completed(CollectionResponse response)
+            => new(response, pendingCollectionTask: null, joinedActiveCollection: false);
+
+        public static CollectStep Pending(Task<CollectionResult> pendingCollectionTask, bool joinedActiveCollection)
+            => new(default, pendingCollectionTask, joinedActiveCollection);
     }
 
     private readonly struct CollectionResult
