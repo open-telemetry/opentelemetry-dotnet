@@ -1,33 +1,16 @@
 name: Survey on Merged PR by Non-Member
 
 on:
-  pull_request_target: # zizmor: ignore[dangerous-triggers] This usage is safe as no user code is executed
-    branches: [main]
+  pull_request_target: # zizmor: ignore[dangerous-triggers] This workflow only calls the reusable shared workflow; no PR code is checked out or executed.
     types: [closed]
+    branches: [main]
 
 permissions: {}
 
 jobs:
-  comment-on-pr:
-    name: Add survey to PR if author is not a member
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-      cancel-in-progress: false
-    permissions:
-      pull-requests: write # To add comment to the PR
-    runs-on: ubuntu-24.04
-    # Only run for merged pull requests by non-members users (i.e. not bots or opentelemetrybot)
-    if: |
-      github.event.pull_request.merged &&
-      github.event.pull_request.user.type == 'User' &&
-      github.event.pull_request.user.id != 107717825 &&
-      contains(fromJson('["CONTRIBUTOR", "FIRST_TIME_CONTRIBUTOR", "FIRST_TIMER"]'), github.event.pull_request.author_association)
-    steps:
-      - name: Add comment
-        run: |
-          gh pr comment "${PR_NUMBER}" --repo "${GITHUB_REPOSITORY}" --body "Thank you for your contribution @${USERNAME}! :tada: We would like to hear from you about your experience contributing to OpenTelemetry by taking a few minutes to fill out this [survey](${SURVEY_URL})."
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          SURVEY_URL: https://docs.google.com/forms/d/e/1FAIpQLSf2FfCsW-DimeWzdQgfl0KDzT2UEAqu69_f7F2BVPSxVae1cQ/viewform?entry.1540511742=${{ github.repository }}
-          USERNAME: ${{ github.event.pull_request.user.login }}
+  survey:
+    uses: open-telemetry/shared-workflows/.github/workflows/survey-on-merged-pr.yml@62d5939b47144252763c5ff9fffe8c20d76cd806 # v0.4.0
+    with:
+      client_id: ${{ vars.OTELBOT_CLIENT_ID }}
+    secrets:
+      private_key: ${{ secrets.OTELBOT_PRIVATE_KEY }}

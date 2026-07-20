@@ -6,6 +6,14 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.17.0
+
+Released 2026-Jul-16
+
+## 1.17.0-rc.1
+
+Released 2026-Jul-16
+
 * Fixed a metric point reclaim data race on CPU ARM architectures.
   ([#7401](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7401))
 
@@ -26,6 +34,14 @@ Notes](../../RELEASENOTES.md).
 
 * Added support for a Schema URL on `Resource` instances.
   ([#7472](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7472))
+
+* Fixed a metric storage leak that occurred when meters and instruments were
+  repeatedly created and disposed.
+  ([#7466](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7466))
+
+* Added `ExcludedTagKeys` property to `MetricStreamConfiguration` to support
+  excluding specific tag keys from metric streams.
+  ([#7373](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7373))
 
 ## 1.16.0
 

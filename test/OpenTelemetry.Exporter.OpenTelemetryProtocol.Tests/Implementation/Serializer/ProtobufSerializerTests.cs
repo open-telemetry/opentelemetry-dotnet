@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Buffers;
 using System.Text;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 
@@ -371,5 +372,62 @@ public class ProtobufSerializerTests
         var actualContent = new byte[3];
         Array.Copy(buffer, 2, actualContent, 0, 3);
         Assert.True(expectedContent.SequenceEqual(actualContent));
+    }
+
+    [Fact]
+    public void RentBuffer_ReturnsBufferOfAtLeastRequestedSize()
+    {
+        var buffer = ProtobufSerializer.RentBuffer(1000);
+
+        try
+        {
+            Assert.NotNull(buffer);
+            Assert.True(buffer.Length >= 1000);
+        }
+        finally
+        {
+            ProtobufSerializer.ReturnBuffer(buffer);
+        }
+    }
+
+    [Fact]
+    public void ReturnBuffer_ClearsReturnedBuffer()
+    {
+        var pool = new TrackingArrayPool();
+        var buffer = pool.Rent(16);
+
+        ProtobufSerializer.ReturnBuffer(pool, buffer);
+
+        Assert.True(pool.ClearArray);
+    }
+
+    [Fact]
+    public void IncreaseBufferSize_GrowsBuffer()
+    {
+        var buffer = ProtobufSerializer.RentBuffer(1024);
+        var original = buffer;
+        var originalLength = buffer.Length;
+
+        var increased = ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Traces);
+
+        try
+        {
+            Assert.True(increased);
+            Assert.NotSame(original, buffer);
+            Assert.True(buffer.Length >= originalLength * 2);
+        }
+        finally
+        {
+            ProtobufSerializer.ReturnBuffer(buffer);
+        }
+    }
+
+    private sealed class TrackingArrayPool : ArrayPool<byte>
+    {
+        public bool ClearArray { get; private set; }
+
+        public override byte[] Rent(int minimumLength) => new byte[minimumLength];
+
+        public override void Return(byte[] array, bool clearArray = false) => this.ClearArray = clearArray;
     }
 }

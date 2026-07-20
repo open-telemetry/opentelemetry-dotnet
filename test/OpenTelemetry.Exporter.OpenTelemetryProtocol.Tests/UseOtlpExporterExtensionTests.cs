@@ -49,6 +49,30 @@ public sealed class UseOtlpExporterExtensionTests : IDisposable
         Assert.False(((OtlpExporterOptions)exporterOptions.TracingOptions).HasData);
     }
 
+    [Fact]
+    public void UseOtlpExporterRespectsConfiguredOtlpExporterOptionsTest()
+    {
+        var services = new ServiceCollection();
+        var configuredEndpoint = new Uri("http://configured_endpoint/");
+
+        services.Configure<OtlpExporterOptions>(options => options.Endpoint = configuredEndpoint);
+        services.AddOpenTelemetry()
+            .UseOtlpExporter();
+
+        using var sp = services.BuildServiceProvider();
+
+        Assert.NotNull(sp.GetRequiredService<LoggerProvider>());
+        Assert.NotNull(sp.GetRequiredService<MeterProvider>());
+        Assert.NotNull(sp.GetRequiredService<TracerProvider>());
+
+        var exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterBuilderOptions>>().CurrentValue;
+
+        Assert.Equal(configuredEndpoint, exporterOptions.DefaultOptions.Endpoint);
+        Assert.Equal(configuredEndpoint, exporterOptions.LoggingOptions.Endpoint);
+        Assert.Equal(configuredEndpoint, exporterOptions.MetricsOptions.Endpoint);
+        Assert.Equal(configuredEndpoint, exporterOptions.TracingOptions.Endpoint);
+    }
+
     [Theory]
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
     [InlineData(OtlpExportProtocol.Grpc)]

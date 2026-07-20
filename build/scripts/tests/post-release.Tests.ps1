@@ -190,7 +190,7 @@ Describe "InvokeCoreVersionUpdateWorkflowInRemoteRepository" {
 
 Describe "TryPostReleasePublishedNoticeOnPrepareReleasePullRequest" {
 
-    It "posts a published notice on the matching prepare release pull request" {
+    It "posts a published notice on the matching prepare release pull request and returns its number" {
         Mock -CommandName "git" -ModuleName "post-release" -MockWith {
             $global:LASTEXITCODE = 0
             return "abc123"
@@ -199,21 +199,27 @@ Describe "TryPostReleasePublishedNoticeOnPrepareReleasePullRequest" {
             if ($args -contains "list") {
                 return '[{"number":42,"author":{"login":"otelbot"},"title":"[release] Prepare release core-1.2.3","comments":[{"author":{"login":"otelbot-comment"},"body":"The packages for [core-1.2.3](https://github.com/open-telemetry/opentelemetry-dotnet/releases/tag/core-1.2.3) are now available: [Download](https://example.com)."}]}]'
             }
+            if ($args -contains "comment") {
+                return "https://github.com/open-telemetry/opentelemetry-dotnet/pull/42#issuecomment-1"
+            }
             return $null
         }
 
-        TryPostReleasePublishedNoticeOnPrepareReleasePullRequest `
+        $result = TryPostReleasePublishedNoticeOnPrepareReleasePullRequest `
             -gitRepository "open-telemetry/opentelemetry-dotnet" `
             -expectedPrAuthorUserName "otelbot" `
             -expectedCommentAuthorUserName "otelbot-comment" `
             -tag "core-1.2.3" 6>$null
+
+        @($result).Count | Should-Be 1 -Because "the GitHub CLI output must be piped to Out-Null so it does not leak into the return value"
+        $result | Should-Be 42 -Because "the function should return the number of the pull request the notice was posted on"
 
         Should-Invoke -CommandName "gh" -ModuleName "post-release" -Exactly -Times 1 -ParameterFilter {
             $args -contains "comment" -and (($args -join " ") -match "has been published")
         } -Because "a published notice should be posted on the matching prepare release PR"
     }
 
-    It "does nothing when no prepare release pull request is found" {
+    It "does nothing and returns null when no prepare release pull request is found" {
         Mock -CommandName "git" -ModuleName "post-release" -MockWith {
             $global:LASTEXITCODE = 0
             return "abc123"
@@ -223,18 +229,20 @@ Describe "TryPostReleasePublishedNoticeOnPrepareReleasePullRequest" {
             return $null
         }
 
-        TryPostReleasePublishedNoticeOnPrepareReleasePullRequest `
+        $result = TryPostReleasePublishedNoticeOnPrepareReleasePullRequest `
             -gitRepository "open-telemetry/opentelemetry-dotnet" `
             -expectedPrAuthorUserName "otelbot" `
             -expectedCommentAuthorUserName "otelbot-comment" `
             -tag "core-1.2.3" 6>$null
+
+        $result | Should-BeNull -Because "the function should return null when the search finds no pull requests"
 
         Should-NotInvoke -CommandName "gh" -ModuleName "post-release" -ParameterFilter {
             $args -contains "comment"
         } -Because "no notice should be posted when there is no matching pull request"
     }
 
-    It "does nothing when the matching pull request has no packages-ready comment" {
+    It "does nothing and returns null when the matching pull request has no packages-ready comment" {
         Mock -CommandName "git" -ModuleName "post-release" -MockWith {
             $global:LASTEXITCODE = 0
             return "abc123"
@@ -246,11 +254,13 @@ Describe "TryPostReleasePublishedNoticeOnPrepareReleasePullRequest" {
             return $null
         }
 
-        TryPostReleasePublishedNoticeOnPrepareReleasePullRequest `
+        $result = TryPostReleasePublishedNoticeOnPrepareReleasePullRequest `
             -gitRepository "open-telemetry/opentelemetry-dotnet" `
             -expectedPrAuthorUserName "otelbot" `
             -expectedCommentAuthorUserName "otelbot-comment" `
             -tag "core-1.2.3" 6>$null
+
+        $result | Should-BeNull -Because "the function should return null when no matching pull request has a packages-ready comment"
 
         Should-NotInvoke -CommandName "gh" -ModuleName "post-release" -ParameterFilter {
             $args -contains "comment"

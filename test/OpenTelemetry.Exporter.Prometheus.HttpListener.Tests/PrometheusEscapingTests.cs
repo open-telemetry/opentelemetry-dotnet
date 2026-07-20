@@ -155,4 +155,30 @@ public static class PrometheusEscapingTests
     [InlineData("values", EscapingScheme.Values)]
     internal static void FromString_MapsEscapingScheme(string? escaping, EscapingScheme expected)
         => Assert.Equal(expected, PrometheusEscaping.FromString(escaping));
+
+    // The malformed inputs are built in code rather than passed via [InlineData]
+    // because xUnit's theory-data serialization does not round-trip lone surrogates
+    // (they are replaced with the U+FFFD replacement character).
+
+    [Fact]
+    internal static void EscapeName_Dots_EncodesUnpairedSurrogatesWithoutOverrun()
+    {
+        Assert.Equal("_", PrometheusEscaping.EscapeName("\uD800", EscapingScheme.Dots));
+        Assert.Equal("abc_", PrometheusEscaping.EscapeName("abc\uD800", EscapingScheme.Dots));
+        Assert.Equal("abc_", PrometheusEscaping.EscapeName("abc\uDC00", EscapingScheme.Dots));
+        Assert.Equal("_abc", PrometheusEscaping.EscapeName("\uD800abc", EscapingScheme.Dots));
+        Assert.Equal("___", PrometheusEscaping.EscapeName("\uD800\uD800\uD800", EscapingScheme.Dots));
+    }
+
+    [Fact]
+    internal static void EscapeName_Values_EncodesUnpairedSurrogatesWithoutOverrun()
+    {
+        Assert.Equal("U___FFFD_", PrometheusEscaping.EscapeName("\uD800", EscapingScheme.Values));
+        Assert.Equal("U__abc_FFFD_", PrometheusEscaping.EscapeName("abc\uD800", EscapingScheme.Values));
+        Assert.Equal("U__abc_FFFD_", PrometheusEscaping.EscapeName("abc\uDC00", EscapingScheme.Values));
+        Assert.Equal("U___FFFD_abc", PrometheusEscaping.EscapeName("\uD800abc", EscapingScheme.Values));
+
+        // A valid astral pair (U+10000) followed by a trailing lone high surrogate.
+        Assert.Equal("U___10000__FFFD_", PrometheusEscaping.EscapeName("\U00010000\uD800", EscapingScheme.Values));
+    }
 }
