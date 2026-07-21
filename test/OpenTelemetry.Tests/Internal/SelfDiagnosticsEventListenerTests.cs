@@ -19,6 +19,10 @@ public class SelfDiagnosticsEventListenerTests
     // code unit. Declared as an escape sequence to keep the source ASCII-only.
     private const char ThreeByteChar = '\u4E2D';
 
+    // U+1F600 is a surrogate pair (2 UTF-16 code units) that encodes to 4 UTF-8
+    // bytes. Declared as escape sequences to keep the source ASCII-only.
+    private const string FourByteChar = "\uD83D\uDE00";
+
     [Fact]
     public void SelfDiagnosticsEventListener_constructor_Invalid_Input()
         => Assert.Throws<ArgumentNullException>(() => new SelfDiagnosticsEventListener(EventLevel.Error, null!));
@@ -305,6 +309,24 @@ public class SelfDiagnosticsEventListenerTests
 
         var written = Encoding.UTF8.GetString(buffer, 0, endPos);
         Assert.Equal(str, written);
+    }
+
+    [Fact]
+    public void SelfDiagnosticsEventListener_EncodeInBuffer_SurrogatePairAtTruncationBoundary_IsNotSplit()
+    {
+        // With a 19-byte buffer the character estimate lands mid-way through a
+        // surrogate pair. The pair must be dropped whole (not split into a U+FFFD
+        // replacement character): the output should be the whole pairs that fit
+        // followed by "...", and must never contain U+FFFD.
+        var buffer = new byte[19];
+        var str = FourByteChar + FourByteChar + FourByteChar + FourByteChar; // 4 pairs, 16 bytes
+
+        var endPos = SelfDiagnosticsEventListener.EncodeInBuffer(str, false, buffer, 0);
+
+        var written = Encoding.UTF8.GetString(buffer, 0, endPos);
+        Assert.DoesNotContain('\uFFFD', written);
+        Assert.Equal(FourByteChar + FourByteChar + FourByteChar + "...", written);
+        Assert.True(endPos + 1 <= buffer.Length);
     }
 
     private static void AssertFileOutput(string filePath, string eventMessage)

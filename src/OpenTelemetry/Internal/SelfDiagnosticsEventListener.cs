@@ -120,9 +120,13 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
                 characterBytes = 2;
             }
             else if (char.IsHighSurrogate(c) &&
-                     charactersThatFit + 1 < charCount &&
+                     charactersThatFit + 1 < str.Length &&
                      char.IsLowSurrogate(str[charactersThatFit + 1]))
             {
+                // Look ahead into the full string (not just charCount): a pair that
+                // straddles the estimate boundary is either taken whole here (if it
+                // fits) or excluded entirely by the byte check below - never split
+                // into a U+FFFD replacement character.
                 characterBytes = 4;
                 step = 2;
             }
