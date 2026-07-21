@@ -277,33 +277,31 @@ public class JaegerPropagator : TextMapPropagator
             scanOffset = delimiterIndex + 1;
         }
 #else
-        var colonIndex = header.IndexOf(JaegerDelimiter, position, StringComparison.Ordinal);
-        var encodedIndex = header.IndexOf(JaegerDelimiterEncoded, position, StringComparison.Ordinal);
-
-        var nextIndex = -1;
-        var delimiterLength = 0;
-
-        if (colonIndex >= 0 && (encodedIndex < 0 || colonIndex < encodedIndex))
+        for (var i = position; i < header.Length; i++)
         {
-            nextIndex = colonIndex;
-            delimiterLength = JaegerDelimiter.Length;
-        }
-        else if (encodedIndex >= 0)
-        {
-            nextIndex = encodedIndex;
-            delimiterLength = JaegerDelimiterEncoded.Length;
-        }
+            var current = header[i];
 
-        if (nextIndex < 0)
-        {
-            var result = header.AsSpan(position);
-            position = header.Length;
-            return result;
+            if (current == ':')
+            {
+                var component = header.AsSpan(position, i - position);
+                position = i + 1;
+                return component;
+            }
+
+            if (current == '%' &&
+                i + JaegerDelimiterEncoded.Length <= header.Length &&
+                header[i + 1] == '3' &&
+                header[i + 2] == 'A')
+            {
+                var component = header.AsSpan(position, i - position);
+                position = i + JaegerDelimiterEncoded.Length;
+                return component;
+            }
         }
 
-        var component = header.AsSpan(position, nextIndex - position);
-        position = nextIndex + delimiterLength;
-        return component;
+        var result = header.AsSpan(position);
+        position = header.Length;
+        return result;
 #endif
     }
 }
