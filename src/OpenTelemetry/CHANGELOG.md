@@ -9,7 +9,7 @@ Notes](../../RELEASENOTES.md).
 * Fixed self-diagnostics log lines being silently dropped when an event message
   or parameter contained enough 3-byte UTF-8 characters to overflow the internal
   buffer estimate. Such content is now truncated.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7543](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7543))
 
 ## 1.17.0
 
