@@ -11,6 +11,11 @@ Notes](../../RELEASENOTES.md).
   `services.Configure<OtlpExporterOptions>(...)`.
   ([#7540](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7540))
 
+* Clamped the server-supplied OTLP/gRPC retry delay (`RetryInfo.retry_delay`) to
+  a non-negative value. A negative delay previously causing the telemetry batch
+  to be dropped.
+  ([#7544](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7544))
+
 ## 1.17.0
 
 Released 2026-Jul-16

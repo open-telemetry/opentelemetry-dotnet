@@ -287,6 +287,34 @@ public class GrpcStatusDeserializerTests
         Assert.Equal(TimeSpan.FromSeconds(5), result);
     }
 
+    [Theory]
+    [InlineData(-1, 0)]
+    [InlineData(0, -1)]
+    [InlineData(-5, -500000000)]
+    public void TryGetGrpcRetryDelay_NegativeDuration_ClampedToZero(long seconds, int nanos)
+    {
+        var status = new Google.Rpc.Status
+        {
+            Code = 8, // ResourceExhausted
+            Message = "Negative retry delay",
+            Details =
+            {
+                Any.Pack(new Google.Rpc.RetryInfo
+                {
+                    RetryDelay = new Duration { Seconds = seconds, Nanos = nanos },
+                }),
+            },
+        };
+
+        var grpcStatusDetailsBin = Convert.ToBase64String(status.ToByteArray());
+
+        var result = GrpcStatusDeserializer.TryGetGrpcRetryDelay(grpcStatusDetailsBin);
+
+        Assert.NotNull(result);
+        Assert.Equal(TimeSpan.Zero, result);
+        Assert.Null(Record.Exception(() => Thread.Sleep(result!.Value)));
+    }
+
     [Fact]
     public void TryGetGrpcRetryDelay_OnlyNanos_ReturnsExpected()
     {
@@ -296,12 +324,12 @@ public class GrpcStatusDeserializerTests
             Code = 4,
             Message = "Only nanos",
             Details =
-        {
-            Any.Pack(new Google.Rpc.RetryInfo
             {
-                RetryDelay = new Duration { Nanos = 500000000 }, // 0.5 seconds
-            }),
-        },
+                Any.Pack(new Google.Rpc.RetryInfo
+                {
+                    RetryDelay = new Duration { Nanos = 500000000 }, // 0.5 seconds
+                }),
+            },
         };
 
         var grpcStatusDetailsBin = Convert.ToBase64String(status.ToByteArray());

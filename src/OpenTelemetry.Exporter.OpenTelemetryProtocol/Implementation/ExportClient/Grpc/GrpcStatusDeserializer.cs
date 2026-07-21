@@ -24,8 +24,14 @@ internal static class GrpcStatusDeserializer
             var retryInfo = ExtractRetryInfo(grpcStatusDetailsHeader);
             if (retryInfo?.RetryDelay != null)
             {
-                return TimeSpan.FromSeconds(retryInfo.Value.RetryDelay.Value.Seconds) +
+                var retryDelay = TimeSpan.FromSeconds(retryInfo.Value.RetryDelay.Value.Seconds) +
                        TimeSpan.FromTicks(retryInfo.Value.RetryDelay.Value.Nanos / 100); // Convert nanos to ticks
+
+                // The retry delay is supplied by the server and cannot be trusted. A
+                // negative value is nonsensical and would otherwise flow into
+                // Thread.Sleep (see OtlpExporterRetryTransmissionHandler) and throw,
+                // dropping the batch. Clamp it to a non-negative duration.
+                return retryDelay < TimeSpan.Zero ? TimeSpan.Zero : retryDelay;
             }
         }
         catch (Exception ex)
