@@ -288,9 +288,9 @@ public class GrpcStatusDeserializerTests
     }
 
     [Theory]
-    [InlineData(-1, 0)]
-    [InlineData(0, -1)]
-    [InlineData(-5, -500000000)]
+    [InlineData(-1, 0)] // -1s
+    [InlineData(0, -1_000_000)] // -1ms, which is also Timeout.InfiniteTimeSpan
+    [InlineData(-5, -500_000_000)] // -5.5s
     public void TryGetGrpcRetryDelay_NegativeDuration_ClampedToZero(long seconds, int nanos)
     {
         var status = new Google.Rpc.Status

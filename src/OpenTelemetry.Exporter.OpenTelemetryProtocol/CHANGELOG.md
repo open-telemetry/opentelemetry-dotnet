@@ -12,7 +12,7 @@ Notes](../../RELEASENOTES.md).
   ([#7540](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7540))
 
 * Clamped the server-supplied OTLP/gRPC retry delay (`RetryInfo.retry_delay`) to
-  a non-negative value. A negative delay previously causing the telemetry batch
+  a non-negative value. A negative delay previously caused the telemetry batch
   to be dropped.
   ([#7544](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7544))
 
