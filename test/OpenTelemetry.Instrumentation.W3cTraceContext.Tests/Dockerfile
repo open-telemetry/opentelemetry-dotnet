@@ -6,7 +6,7 @@ ARG BUILD_SDK_VERSION=11.0
 ARG TEST_SDK_VERSION=11.0
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0.302-azurelinux3.0@sha256:675817acabaae7140642e228aa4c795dfa30c960c4daa3776b2e749305ffd3bb AS dotnet-sdk-10.0
-FROM mcr.microsoft.com/dotnet/sdk:11.0.100-preview.6-azurelinux3.0@sha256:a3dc851a4b82d071bbd7c093153f2ee5dedb0044a0c557706ca615b62657b001 AS dotnet-sdk-11.0
+FROM mcr.microsoft.com/dotnet/sdk:11.0.100-preview.6-azurelinux4.0@sha256:4fae6b560baea20005499293fcb98ce6cdfd682cf3121e6f618d4a52666454d0 AS dotnet-sdk-11.0
 
 FROM dotnet-sdk-${BUILD_SDK_VERSION} AS build
 ARG PUBLISH_CONFIGURATION=Release
