@@ -15,15 +15,13 @@ public class SelfDiagnosticsEventListenerTests
     private const string Ellipses = "...\n";
     private const string EllipsesWithBrackets = "{...}\n";
 
+    // U+4E2D is a CJK ideograph that encodes to 3 UTF-8 bytes for a single UTF-16
+    // code unit. Declared as an escape sequence to keep the source ASCII-only.
+    private const char ThreeByteChar = '\u4E2D';
+
     [Fact]
     public void SelfDiagnosticsEventListener_constructor_Invalid_Input()
-    {
-        // no configRefresher object
-        Assert.Throws<ArgumentNullException>(() =>
-        {
-            _ = new SelfDiagnosticsEventListener(EventLevel.Error, null!);
-        });
-    }
+        => Assert.Throws<ArgumentNullException>(() => new SelfDiagnosticsEventListener(EventLevel.Error, null!));
 
     [Fact]
     public void SelfDiagnosticsEventListener_EventSourceSetup_LowerSeverity()
@@ -264,6 +262,49 @@ public class SelfDiagnosticsEventListenerTests
         var startPos = buffer.Length - EllipsesWithBrackets.Length + 1;  // Not enough space for "{...}\n".
         var endPos = SelfDiagnosticsEventListener.EncodeInBuffer("abc", true, buffer, startPos);
         Assert.Equal(startPos, endPos);
+    }
+
+    [Fact]
+    public void SelfDiagnosticsEventListener_EncodeInBuffer_ThreeByteUtf8_TruncatesWithoutThrowing()
+    {
+        var buffer = new byte[20];
+        var str = new string(ThreeByteChar, 8); // 8 * 3 = 24 bytes, does not fit in 20.
+
+        var endPos = SelfDiagnosticsEventListener.EncodeInBuffer(str, false, buffer, 0);
+
+        var written = Encoding.UTF8.GetString(buffer, 0, endPos);
+        Assert.StartsWith(ThreeByteChar.ToString(), written, StringComparison.Ordinal);
+        Assert.EndsWith("...", written, StringComparison.Ordinal);
+
+        // The result, plus the '\n' the caller appends, must stay within the buffer.
+        Assert.True(endPos + 1 <= buffer.Length, $"endPos + 1 ({endPos + 1}) must be <= buffer.Length ({buffer.Length})");
+    }
+
+    [Fact]
+    public void SelfDiagnosticsEventListener_EncodeInBuffer_ThreeByteUtf8_IsParameter_TruncatesWithoutThrowing()
+    {
+        var buffer = new byte[20];
+        var str = new string(ThreeByteChar, 8);
+
+        var endPos = SelfDiagnosticsEventListener.EncodeInBuffer(str, true, buffer, 0);
+
+        var written = Encoding.UTF8.GetString(buffer, 0, endPos);
+        Assert.StartsWith("{" + ThreeByteChar, written, StringComparison.Ordinal);
+        Assert.EndsWith("...}", written, StringComparison.Ordinal);
+        Assert.True(endPos + 1 <= buffer.Length);
+    }
+
+    [Fact]
+    public void SelfDiagnosticsEventListener_EncodeInBuffer_ThreeByteUtf8_ThatFits_IsWrittenInFull()
+    {
+        // A short 3-byte-character string that fits must not be truncated.
+        var buffer = new byte[20];
+        var str = new string(ThreeByteChar, 3); // 3 * 3 = 9 bytes, fits.
+
+        var endPos = SelfDiagnosticsEventListener.EncodeInBuffer(str, false, buffer, 0);
+
+        var written = Encoding.UTF8.GetString(buffer, 0, endPos);
+        Assert.Equal(str, written);
     }
 
     private static void AssertFileOutput(string filePath, string eventMessage)

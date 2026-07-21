@@ -95,6 +95,53 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
             charCount = estimateOfCharacters;
         }
 
+        // The estimate above assumes at most 2 UTF-8 bytes per UTF-16 code unit.
+        // That holds for ASCII, 2-byte characters, and surrogate pairs (4 bytes
+        // for 2 code units), but a character in U+0800..U+FFFF encodes to 3 bytes
+        // for a single code unit. Without the walk below, Encoding.UTF8.GetBytes
+        // could be asked to write more bytes than the buffer has room for and
+        // throw, which WriteEvent swallows, dropping the entire log line. Reduce
+        // charCount to what actually fits (surrogate pairs are kept intact).
+        var availableBytes = buffer.Length - position - ellipses;
+        var utf8ByteCount = 0;
+        var charactersThatFit = 0;
+
+        while (charactersThatFit < charCount)
+        {
+            var c = str[charactersThatFit];
+            int characterBytes;
+            var step = 1;
+            if (c <= 0x7F)
+            {
+                characterBytes = 1;
+            }
+            else if (c <= 0x7FF)
+            {
+                characterBytes = 2;
+            }
+            else if (char.IsHighSurrogate(c) &&
+                     charactersThatFit + 1 < charCount &&
+                     char.IsLowSurrogate(str[charactersThatFit + 1]))
+            {
+                characterBytes = 4;
+                step = 2;
+            }
+            else
+            {
+                characterBytes = 3;
+            }
+
+            if (utf8ByteCount + characterBytes > availableBytes)
+            {
+                break;
+            }
+
+            utf8ByteCount += characterBytes;
+            charactersThatFit += step;
+        }
+
+        charCount = charactersThatFit;
+
         if (isParameter)
         {
             buffer[position++] = (byte)'{';
