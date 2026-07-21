@@ -7,7 +7,7 @@ covering all components see: [Release Notes](../../RELEASENOTES.md).
 ## Unreleased
 
 * Fixed inefficient parsing of the Jaeger `uber-trace-id` header when targeting
-  `net462` or`netstandard2.0` build.
+  `net462` or`netstandard2.0`.
   ([#7545](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7545))
 
 ## 1.17.0
