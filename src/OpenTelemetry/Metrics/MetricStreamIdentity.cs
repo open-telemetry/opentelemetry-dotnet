@@ -30,6 +30,7 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
         this.ExponentialHistogramMaxSize = (metricStreamConfiguration as Base2ExponentialBucketHistogramConfiguration)?.MaxSize ?? 0;
         this.ExponentialHistogramMaxScale = (metricStreamConfiguration as Base2ExponentialBucketHistogramConfiguration)?.MaxScale ?? 0;
         this.HistogramRecordMinMax = (metricStreamConfiguration as HistogramConfiguration)?.RecordMinMax ?? true;
+        this.AggregationKind = metricStreamConfiguration?.AggregationKind;
 
 #if NET || NETSTANDARD2_1_OR_GREATER
         HashCode hashCode = default;
@@ -135,6 +136,8 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
     public int ExponentialHistogramMaxScale { get; }
 
     public bool HistogramRecordMinMax { get; }
+
+    public AggregationKind? AggregationKind { get; }
 
     public bool IsHistogram =>
         this.InstrumentType == typeof(Histogram<long>)
