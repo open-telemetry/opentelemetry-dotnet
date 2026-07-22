@@ -10,3 +10,5 @@ services:
     command: --TestCaseFilter:CategoryName=W3CTraceContextTests
     environment:
       - OTEL_W3CTRACECONTEXT=enabled
+      # HACK Workaround for https://github.com/dotnet/dotnet-docker/issues/7296
+      - PublicSign=true
