@@ -69,6 +69,7 @@ internal static class AggregationCompatibility
     /// </returns>
     public static bool IsCompatible(AggregationKind aggregationType, Type instrumentType)
     {
+        // All instruments support the Default and Drop AggregationKind
         if (aggregationType == AggregationKind.Default || aggregationType == AggregationKind.Drop)
         {
             return true;
@@ -128,5 +129,30 @@ internal static class AggregationCompatibility
         }
 
         return true;
+    }
+
+    public static AggregationKind GetDefaultAggregation(Type instrumentType)
+    {
+        if (!InstrumentTypeInspector.TryClassify(instrumentType, out var kind, out var numeric))
+        {
+            // throw error?
+            return AggregationKind.Drop;
+        }
+
+        switch (kind)
+        {
+            case InstrumentKind.Counter:
+            case InstrumentKind.ObservableCounter:
+            case InstrumentKind.UpDownCounter:
+            case InstrumentKind.ObservableUpDownCounter:
+                return AggregationKind.Sum;
+            case InstrumentKind.Histogram:
+                return AggregationKind.Histogram;
+            case InstrumentKind.Gauge:
+            case InstrumentKind.ObservableGauge:
+                return AggregationKind.Gauge;
+        }
+
+        return AggregationKind.Drop;
     }
 }
