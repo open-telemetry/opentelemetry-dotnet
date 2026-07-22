@@ -33,14 +33,14 @@ namespace OpenTelemetry.Metrics;
 /// |---------------------------|:-----------------:|:-----------------------:|
 /// | LongSumIncomingCumulative |      Y (i)        |         Y (i)           |
 /// | DoubleSumIncomingCumulative|      Y (f)       |         Y (f)           |
-/// | Histogram and variants[1] |        Y          |           Y             |
+/// | Histogram and variants    |        N          |           N             |
 ///
 /// Gauge / ObservableGauge:
 ///
 /// | AggregationType | Gauge | ObservableGauge |
 /// |-----------------|:-----:|:---------------:|
 /// | LongGauge       | Y (i) |     Y (i)       |
-/// | DoubleGauge     | Y (f) |     Y (f)       |
+/// | DoubleGauge     | Y (f) |     Y (f)       |.
 ///
 /// </summary>
 internal static class AggregationCompatibility
@@ -67,8 +67,6 @@ internal static class AggregationCompatibility
     /// </returns>
     public static bool IsCompatible(AggregationType aggregationType, Type instrumentType)
     {
-        ArgumentNullException.ThrowIfNull(instrumentType);
-
         if (!InstrumentTypeInspector.TryClassify(instrumentType, out var kind, out var numeric))
         {
             return false;
@@ -122,13 +120,11 @@ internal static class AggregationCompatibility
                     return numeric == NumericKind.Integral;
                 case AggregationType.DoubleSumIncomingCumulative:
                     return numeric == NumericKind.Floating;
-                case AggregationType.Histogram:
-                case AggregationType.HistogramWithBuckets:
-                case AggregationType.HistogramWithMinMax:
-                case AggregationType.HistogramWithMinMaxBuckets:
-                case AggregationType.Base2ExponentialHistogram:
-                case AggregationType.Base2ExponentialHistogramWithMinMax:
-                    return true;
+
+                // Explicit/Exponential Histogram is not compatible with either
+                // ObservableCounter or ObservableUpDownCounter per the #2618
+                // compatibility matrix unlike the synchronous Counter row,
+                // this was not part of the agreed relaxation.
                 default:
                     return false;
             }

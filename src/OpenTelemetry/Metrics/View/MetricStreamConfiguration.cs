@@ -153,6 +153,8 @@ public class MetricStreamConfiguration
 
     internal int? ViewId { get; set; }
 
+    internal AggregationKind? AggregationType { get; set; }
+
     internal void Validate()
     {
         if (this.CopiedTagKeys != null && this.CopiedExcludedTagKeys != null)
