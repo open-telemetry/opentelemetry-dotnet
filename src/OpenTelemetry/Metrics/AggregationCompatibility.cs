@@ -1,5 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
+using System.Diagnostics.Metrics;
+
 namespace OpenTelemetry.Metrics;
 
 /// <summary>
@@ -65,8 +67,13 @@ internal static class AggregationCompatibility
     /// <paramref name="instrumentType"/> is not a recognized
     /// System.Diagnostics.Metrics instrument type.
     /// </returns>
-    public static bool IsCompatible(AggregationType aggregationType, Type instrumentType)
+    public static bool IsCompatible(AggregationKind aggregationType, Type instrumentType)
     {
+        if (aggregationType == AggregationKind.Default || aggregationType == AggregationKind.Drop)
+        {
+            return true;
+        }
+
         if (!InstrumentTypeInspector.TryClassify(instrumentType, out var kind, out var numeric))
         {
             return false;
@@ -76,16 +83,9 @@ internal static class AggregationCompatibility
         {
             switch (aggregationType)
             {
-                case AggregationType.LongSumIncomingDelta:
-                    return numeric == NumericKind.Integral;
-                case AggregationType.DoubleSumIncomingDelta:
-                    return numeric == NumericKind.Floating;
-                case AggregationType.Histogram:
-                case AggregationType.HistogramWithBuckets:
-                case AggregationType.HistogramWithMinMax:
-                case AggregationType.HistogramWithMinMaxBuckets:
-                case AggregationType.Base2ExponentialHistogram:
-                case AggregationType.Base2ExponentialHistogramWithMinMax:
+                case AggregationKind.Sum:
+                case AggregationKind.Histogram:
+                case AggregationKind.ExponentialHistogram:
                     return true;
                 default:
                     return false;
@@ -96,16 +96,9 @@ internal static class AggregationCompatibility
         {
             switch (aggregationType)
             {
-                case AggregationType.LongSumIncomingDelta:
-                    return numeric == NumericKind.Integral;
-                case AggregationType.DoubleSumIncomingDelta:
-                    return numeric == NumericKind.Floating;
-                case AggregationType.Histogram:
-                case AggregationType.HistogramWithBuckets:
-                case AggregationType.HistogramWithMinMax:
-                case AggregationType.HistogramWithMinMaxBuckets:
-                case AggregationType.Base2ExponentialHistogram:
-                case AggregationType.Base2ExponentialHistogramWithMinMax:
+                case AggregationKind.Sum:
+                case AggregationKind.Histogram:
+                case AggregationKind.ExponentialHistogram:
                     return true;
                 default:
                     return false;
@@ -116,15 +109,8 @@ internal static class AggregationCompatibility
         {
             switch (aggregationType)
             {
-                case AggregationType.LongSumIncomingCumulative:
-                    return numeric == NumericKind.Integral;
-                case AggregationType.DoubleSumIncomingCumulative:
-                    return numeric == NumericKind.Floating;
-
-                // Explicit/Exponential Histogram is not compatible with either
-                // ObservableCounter or ObservableUpDownCounter per the #2618
-                // compatibility matrix unlike the synchronous Counter row,
-                // this was not part of the agreed relaxation.
+                case AggregationKind.Sum:
+                    return true;
                 default:
                     return false;
             }
@@ -134,17 +120,13 @@ internal static class AggregationCompatibility
         {
             switch (aggregationType)
             {
-                case AggregationType.LongGauge:
-                    return numeric == NumericKind.Integral;
-                case AggregationType.DoubleGauge:
-                    return numeric == NumericKind.Floating;
+                case AggregationKind.Gauge:
+                    return true;
                 default:
                     return false;
             }
         }
 
-        throw new NotSupportedException(
-            $"InstrumentKind '{kind}' is not recognized by {nameof(AggregationCompatibility)}. " +
-            "This table must be updated whenever a new InstrumentKind is added.");
+        return true;
     }
 }
