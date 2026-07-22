@@ -153,7 +153,7 @@ public class MetricStreamConfiguration
 
     internal int? ViewId { get; set; }
 
-    internal AggregationKind? AggregationType { get; set; }
+    internal AggregationKind? AggregationKind { get; set; }
 
     internal void Validate()
     {
