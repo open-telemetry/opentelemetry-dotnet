@@ -16,7 +16,7 @@ ARG PUBLISH_FRAMEWORK=net11.0
 ENV W3C_TRACE_CONTEXT_SHA="acab820be9db7b3433668baa5cdd43f57f4c4be0"
 
 # HACK Workaround for https://github.com/dotnet/dotnet-docker/issues/7296
-ENV PublicSign=true
+ENV OPENSSL_ENABLE_SHA1_SIGNATURES=1
 
 WORKDIR /repo
 COPY . ./
