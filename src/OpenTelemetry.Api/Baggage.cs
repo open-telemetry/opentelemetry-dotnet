@@ -17,8 +17,12 @@ public readonly struct Baggage : IEquatable<Baggage>
 {
     private static readonly RuntimeContextSlot<BaggageHolder> RuntimeContextSlot = RuntimeContext.RegisterSlot<BaggageHolder>("otel.baggage");
     private static readonly Dictionary<string, string> EmptyBaggage = [];
+    private static readonly Dictionary<string, BaggageEntry> EmptyBaggageWithMetadata = [];
 
     private readonly Dictionary<string, string> baggage;
+
+    // Populated only when baggage was extracted via TryExtractBaggageWithMetadata.
+    private readonly Dictionary<string, BaggageEntry>? baggageWithMetadata;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Baggage"/> struct.
@@ -27,6 +31,13 @@ public readonly struct Baggage : IEquatable<Baggage>
     internal Baggage(Dictionary<string, string> baggage)
     {
         this.baggage = baggage;
+        this.baggageWithMetadata = null;
+    }
+
+    internal Baggage(Dictionary<string, string> baggage, Dictionary<string, BaggageEntry> baggageWithMetadata)
+    {
+        this.baggage = baggage;
+        this.baggageWithMetadata = baggageWithMetadata;
     }
 
     /// <summary>
@@ -209,6 +220,27 @@ public readonly struct Baggage : IEquatable<Baggage>
                 : baggage.ClearBaggage();
         }
     }
+
+    /// <summary>
+    /// Returns the name/<see cref="BaggageEntry"/> pairs in the
+    /// <see cref="Baggage"/>, including any W3C properties (metadata) that
+    /// were present when the baggage was extracted from a propagation header.
+    /// </summary>
+    /// <returns>
+    /// An <see cref="IReadOnlyDictionary{TKey,TValue}"/> of baggage entries,
+    /// or an empty dictionary if no metadata-aware extraction has been
+    /// performed.
+    /// </returns>
+    /// <remarks>
+    /// When baggage is constructed programmatically via
+    /// <see cref="SetBaggage(string, string?)"/>, the returned dictionary
+    /// will be empty because no wire metadata exists for those entries.
+    /// Use <see cref="GetBaggage()"/> in that case.
+    /// </remarks>
+    [SuppressMessage("Design", "CA1024", Justification = "Method form required to match OpenTelemetry specification patterns.")]
+    public IReadOnlyDictionary<string, BaggageEntry> GetBaggageWithMetadata()
+        => (IReadOnlyDictionary<string, BaggageEntry>?)this.baggageWithMetadata
+        ?? EmptyBaggageWithMetadata;
 
     /// <summary>
     /// Returns the name/value pairs in the <see cref="Baggage"/>.
