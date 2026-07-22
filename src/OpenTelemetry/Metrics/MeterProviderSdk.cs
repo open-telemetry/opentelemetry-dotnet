@@ -303,7 +303,7 @@ internal sealed class MeterProviderSdk : MeterProvider
                             metricStreamConfig.ViewId = i;
                         }
 
-                        if (metricStreamConfig?.AggregationKind is AggregationKind aggregationKind && AggregationCompatibility.IsCompatible(aggregationKind, instrument.GetType()))
+                        if (metricStreamConfig?.AggregationKind is AggregationKind aggregationKind && !AggregationCompatibility.IsCompatible(aggregationKind, instrument.GetType()))
                         {
                             metricStreamConfig = null;
 

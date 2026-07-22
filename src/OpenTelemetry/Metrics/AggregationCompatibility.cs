@@ -69,12 +69,6 @@ internal static class AggregationCompatibility
     /// </returns>
     public static bool IsCompatible(AggregationKind aggregationType, Type instrumentType)
     {
-        // All instruments support the Default and Drop AggregationKind
-        if (aggregationType == AggregationKind.Default || aggregationType == AggregationKind.Drop)
-        {
-            return true;
-        }
-
         if (!InstrumentTypeInspector.TryClassify(instrumentType, out var kind, out var numeric))
         {
             return false;
