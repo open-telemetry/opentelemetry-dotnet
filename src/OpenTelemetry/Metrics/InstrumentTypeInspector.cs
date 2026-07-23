@@ -29,12 +29,11 @@ internal static class InstrumentTypeInspector
     /// System.Diagnostics.Metrics instrument type; otherwise
     /// <see langword="false"/>.
     /// </returns>
-    public static bool TryClassify(Type instrumentType, out InstrumentKind kind, out NumericKind numeric)
+    public static bool TryClassify(Type instrumentType, out InstrumentKind kind)
     {
         ArgumentNullException.ThrowIfNull(instrumentType);
 
         kind = default;
-        numeric = NumericKind.Unknown;
 
         if (!instrumentType.IsGenericType)
         {
@@ -77,19 +76,6 @@ internal static class InstrumentTypeInspector
         }
 
         var valueType = instrumentType.GetGenericArguments()[0];
-
-        if (valueType == typeof(long) || valueType == typeof(int) || valueType == typeof(short) || valueType == typeof(byte))
-        {
-            numeric = NumericKind.Integral;
-        }
-        else if (valueType == typeof(double) || valueType == typeof(float))
-        {
-            numeric = NumericKind.Floating;
-        }
-        else
-        {
-            numeric = NumericKind.Unknown;
-        }
 
         return true;
     }

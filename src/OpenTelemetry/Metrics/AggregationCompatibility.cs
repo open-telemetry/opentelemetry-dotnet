@@ -69,7 +69,7 @@ internal static class AggregationCompatibility
     /// </returns>
     public static bool IsCompatible(AggregationKind aggregationType, Type instrumentType)
     {
-        if (!InstrumentTypeInspector.TryClassify(instrumentType, out var kind, out var numeric))
+        if (!InstrumentTypeInspector.TryClassify(instrumentType, out var kind))
         {
             return false;
         }
