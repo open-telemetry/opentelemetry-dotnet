@@ -10,13 +10,6 @@ namespace OpenTelemetry.Metrics;
 public enum AggregationKind
 {
     /// <summary>
-    /// The Default Aggregation informs the SDK to use the instrument kind to
-    /// select an aggregation and advisory parameters to influence aggregation
-    /// configuration parameters.
-    /// </summary>
-    Default = -1,
-
-    /// <summary>
     /// The Sum Aggregation informs the SDK to collect data for the Sum Metric
     /// Point.
     /// </summary>
