@@ -947,6 +947,12 @@ public struct MetricPoint
 
     private void UpdateHistogram(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool offerExemplar = false)
     {
+        if (number < 0)
+        {
+            this.CompleteUpdateWithoutMeasurement();
+            return;
+        }
+
         var histogramBuckets = this.mpComponents!.HistogramBuckets!;
 
         this.mpComponents.AcquireLock();
@@ -966,6 +972,12 @@ public struct MetricPoint
 
     private void UpdateHistogramWithMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool offerExemplar = false)
     {
+        if (number < 0)
+        {
+            this.CompleteUpdateWithoutMeasurement();
+            return;
+        }
+
         var histogramBuckets = this.mpComponents!.HistogramBuckets!;
 
         this.mpComponents.AcquireLock();
@@ -988,6 +1000,12 @@ public struct MetricPoint
 
     private void UpdateHistogramWithBuckets(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool offerExemplar = false)
     {
+        if (number < 0)
+        {
+            this.CompleteUpdateWithoutMeasurement();
+            return;
+        }
+
         var histogramBuckets = this.mpComponents!.HistogramBuckets!;
 
         var bucketIndex = histogramBuckets.FindBucketIndex(number);
@@ -1010,6 +1028,12 @@ public struct MetricPoint
 
     private void UpdateHistogramWithBucketsAndMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool offerExemplar = false)
     {
+        if (number < 0)
+        {
+            this.CompleteUpdateWithoutMeasurement();
+            return;
+        }
+
         var histogramBuckets = this.mpComponents!.HistogramBuckets!;
 
         var bucketIndex = histogramBuckets.FindBucketIndex(number);
