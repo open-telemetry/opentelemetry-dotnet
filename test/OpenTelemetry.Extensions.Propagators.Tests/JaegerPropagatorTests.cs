@@ -264,4 +264,18 @@ public class JaegerPropagatorTests
 
         Assert.Equal(default, result);
     }
+
+    [Theory]
+    [InlineData(JaegerDelimiter)]
+    [InlineData(JaegerDelimiterEncoded)]
+    public void ExtractHeaderOfOnlyDelimitersReturnsDefault(string delimiter)
+    {
+        // A header consisting solely of delimiters yields only empty components.
+        var formattedHeader = string.Concat(Enumerable.Repeat(delimiter, 50_000));
+        var headers = new Dictionary<string, string[]> { [JaegerHeader] = [formattedHeader] };
+
+        var result = new JaegerPropagator().Extract(default, headers, Getter);
+
+        Assert.Equal(default, result);
+    }
 }
