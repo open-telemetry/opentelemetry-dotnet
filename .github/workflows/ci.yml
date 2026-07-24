@@ -170,7 +170,7 @@ jobs:
     strategy:
       fail-fast: ${{ github.event_name == 'merge_group' }}
       matrix:
-        version: [ net8.0, net9.0, net10.0 ]
+        version: [ net10.0, net11.0 ]
     env:
       FRAMEWORK_VERSION: ${{ matrix.version }}
     steps:
@@ -198,7 +198,7 @@ jobs:
     strategy:
       fail-fast: ${{ github.event_name == 'merge_group' }}
       matrix:
-        version: [ net8.0, net9.0, net10.0 ]
+        version: [ net10.0, net11.0 ]
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -240,7 +240,7 @@ jobs:
     - name: Run benchmarks
       shell: pwsh
       run: |
-        $runtimes = @("net10.0")
+        $runtimes = @("net11.0")
         if ($IsWindows) {
           $runtimes += "net462"
         }

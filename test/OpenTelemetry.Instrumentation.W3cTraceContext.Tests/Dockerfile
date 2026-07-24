@@ -2,19 +2,21 @@
 # This should be run from the root of the repo:
 # docker build --file test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/Dockerfile .
 
-ARG BUILD_SDK_VERSION=10.0
-ARG TEST_SDK_VERSION=10.0
+ARG BUILD_SDK_VERSION=11.0
+ARG TEST_SDK_VERSION=11.0
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0.423-azurelinux3.0@sha256:daacd6373eb1057871c96650027b7caf5a47ef13c7bbd1a14ff0604d1e3255fe AS dotnet-sdk-8.0
-FROM mcr.microsoft.com/dotnet/sdk:9.0.316-azurelinux3.0@sha256:4120019aebbe3c4a14de067a917812ea919276ee9bba90d995cd94266ec93a12 AS dotnet-sdk-9.0
 FROM mcr.microsoft.com/dotnet/sdk:10.0.302-azurelinux3.0@sha256:75de0c7f206f64085c8020f84f35fbf17bfc47768c5bae78d84ab10c2fbc018f AS dotnet-sdk-10.0
+FROM mcr.microsoft.com/dotnet/sdk:11.0.100-preview.6-azurelinux4.0@sha256:4fae6b560baea20005499293fcb98ce6cdfd682cf3121e6f618d4a52666454d0 AS dotnet-sdk-11.0
 
 FROM dotnet-sdk-${BUILD_SDK_VERSION} AS build
 ARG PUBLISH_CONFIGURATION=Release
-ARG PUBLISH_FRAMEWORK=net10.0
+ARG PUBLISH_FRAMEWORK=net11.0
 
 # renovate: datasource=github-digest depName=w3c/trace-context packageName=w3c/trace-context currentValue=main
 ENV W3C_TRACE_CONTEXT_SHA="acab820be9db7b3433668baa5cdd43f57f4c4be0"
+
+# HACK Workaround for https://github.com/dotnet/dotnet-docker/issues/7296
+ENV OPENSSL_ENABLE_SHA1_SIGNATURES=1
 
 WORKDIR /repo
 COPY . ./
