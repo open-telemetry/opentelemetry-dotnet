@@ -63,6 +63,7 @@ jobs:
           sdk-package: ['src/OpenTelemetry/**', '!**/*.md']
           unstable-core-packages: ['src/OpenTelemetry.Exporter.Prometheus.AspNetCore/**', 'src/OpenTelemetry.Exporter.Prometheus.HttpListener/**', 'src/OpenTelemetry.Shims.OpenTracing/**', '!**/*.md']
           otlp: ['*/OpenTelemetry.Exporter.OpenTelemetryProtocol*/**', '!**/*.md']
+          blazor: ['test/OpenTelemetry.BlazorWasm.*/**', '.github/workflows/blazor-wasm-integration-test.yml']
 
   lint-actions:
     needs: detect-changes
@@ -116,6 +117,7 @@ jobs:
       project-name: 'OpenTelemetry.slnx'
       code-cov-name: 'Solution'
       trigger: ${{ github.event_name }}
+      install-wasm-tools: true
 
   build-test-project-stable:
     needs: detect-changes
@@ -184,6 +186,18 @@ jobs:
         run: docker compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/docker-compose.yml "--file=build/docker-compose.${FRAMEWORK_VERSION}.yml" --project-directory=. --profile build build build-image
       - name: Run OTLP Exporter docker compose
         run: docker compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/docker-compose.yml "--file=build/docker-compose.${FRAMEWORK_VERSION}.yml" --project-directory=. up --exit-code-from=tests --no-build
+
+  blazor-wasm-integration-test:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'blazor')
+      || contains(needs.detect-changes.outputs.changes, 'sdk-package')
+      || contains(needs.detect-changes.outputs.changes, 'otlp')
+      || contains(needs.detect-changes.outputs.changes, 'build')
+      || contains(needs.detect-changes.outputs.changes, 'shared')
+    uses: ./.github/workflows/blazor-wasm-integration-test.yml
+    with:
+      trigger: ${{ github.event_name }}
 
   w3c-trace-context-integration-test:
     name: W3C Trace Context integration tests
@@ -299,6 +313,7 @@ jobs:
       build-test-project-stable,
       build-test-project-experimental,
       build-test-unstable-core,
+      blazor-wasm-integration-test,
       otlp-integration-test,
       w3c-trace-context-integration-test,
       validate-benchmarks,
