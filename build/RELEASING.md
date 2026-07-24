@@ -34,6 +34,8 @@ Maintainers (admins) are needed to merge PRs and for the push to NuGet.**
            of the `1.9.0` release cycle they may only be released as `alpha` or
            `beta`.
 
+           * `OpenTelemetry.Configuration.Declarative` - Declarative
+             configuration (experimental)
            * `OpenTelemetry.Exporter.Prometheus.AspNetCore` - Defined by spec
              (experimental)
            * `OpenTelemetry.Exporter.Prometheus.HttpListener` - Defined by spec
