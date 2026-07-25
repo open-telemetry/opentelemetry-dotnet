@@ -48,26 +48,36 @@ public sealed class AndroidAppFixture : IAsyncLifetime
         var project = Path.Combine(repoRoot, "test", "OpenTelemetry.Android.TestApp", "OpenTelemetry.Android.TestApp.csproj");
 
         // Build the APK and install it on the connected emulator.
-        var install = RunProcess("dotnet", ["build", project, "--configuration", Configuration, "-t:Install"], repoRoot, BuildAndInstallTimeout);
-        if (install.ExitCode != 0)
+        var (installExitCode, installOutput) = RunProcess(
+            "dotnet",
+            ["build", project, "--configuration", Configuration, "-t:Install"],
+            repoRoot,
+            BuildAndInstallTimeout);
+
+        if (installExitCode != 0)
         {
-            this.DeviceRunExitCode = install.ExitCode;
-            this.DeviceRunOutput = "APK build/install failed." + Environment.NewLine + install.Output;
+            this.DeviceRunExitCode = installExitCode;
+            this.DeviceRunOutput = "APK build/install failed." + Environment.NewLine + installOutput;
             return;
         }
 
         // Run the on-device instrumentation synchronously. It executes the tests via
         // Microsoft.Testing.Platform on the device, which export OTLP to the collector.
-        var run = RunProcess("adb", ["shell", "am", "instrument", "-w", InstrumentationComponent], repoRoot, InstrumentationTimeout);
+        var (runExitCode, runOutput) = RunProcess(
+            "adb",
+            ["shell", "am", "instrument", "-w", InstrumentationComponent],
+            repoRoot,
+            InstrumentationTimeout);
 
         // 'am instrument' exits 0 even when tests fail; success is signalled by the
         // instrumentation result: Result.Ok (INSTRUMENTATION_CODE: -1) with failed=0.
-        var succeeded = run.ExitCode == 0
-            && run.Output.Contains("INSTRUMENTATION_CODE: -1", StringComparison.Ordinal)
-            && run.Output.Contains("failed=0", StringComparison.Ordinal);
+        var succeeded =
+            runExitCode == 0 &&
+            runOutput.Contains("INSTRUMENTATION_CODE: -1", StringComparison.Ordinal) &&
+            runOutput.Contains("failed=0", StringComparison.Ordinal);
 
         this.DeviceRunExitCode = succeeded ? 0 : 1;
-        this.DeviceRunOutput = install.Output + Environment.NewLine + run.Output;
+        this.DeviceRunOutput = installOutput + Environment.NewLine + runOutput;
     }
 
     public async Task DisposeAsync()

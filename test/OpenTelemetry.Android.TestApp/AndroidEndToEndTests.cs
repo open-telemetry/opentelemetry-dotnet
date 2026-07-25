@@ -20,50 +20,8 @@ public sealed class AndroidEndToEndTests
     private static readonly TimeSpan FlushTimeout = TimeSpan.FromSeconds(10);
 
     [TestMethod]
-    public void ReallyRunningOnAndroid()
+    public void IsRunningOnAndroid()
         => Assert.IsTrue(OperatingSystem.IsAndroid(), "Expected the test to run on the Android runtime.");
-
-    [TestMethod]
-    public void TracesAreExported()
-    {
-        using var instrumentation = new InstrumentationSource();
-
-        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .SetResourceBuilder(CreateResourceBuilder())
-            .AddSource(InstrumentationSource.ActivitySourceName)
-            .SetSampler(new AlwaysOnSampler())
-            .AddOtlpExporter((options) => ConfigureOtlp(options, "v1/traces"))
-            .Build();
-
-        Assert.IsNotNull(tracerProvider, "TracerProvider failed to build on Android.");
-
-        using (var activity = instrumentation.ActivitySource.StartActivity(InstrumentationSource.ActivityName))
-        {
-            Assert.IsNotNull(activity, "ActivitySource produced no Activity - the SDK did not subscribe on Android.");
-            activity!.SetTag(InstrumentationSource.ActivityTagKey, InstrumentationSource.ActivityTagValue);
-        }
-
-        tracerProvider!.ForceFlush((int)FlushTimeout.TotalMilliseconds);
-    }
-
-    [TestMethod]
-    public void MetricsAreExported()
-    {
-        using var instrumentation = new InstrumentationSource();
-
-        using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .SetResourceBuilder(CreateResourceBuilder())
-            .AddMeter(InstrumentationSource.MeterName)
-            .AddOtlpExporter((options) => ConfigureOtlp(options, "v1/metrics"))
-            .Build();
-
-        Assert.IsNotNull(meterProvider, "MeterProvider failed to build on Android.");
-
-        instrumentation.Counter.Add(1);
-        instrumentation.Histogram.Record(123.45);
-
-        meterProvider!.ForceFlush((int)FlushTimeout.TotalMilliseconds);
-    }
 
     [TestMethod]
     public void LogsAreExported()
@@ -84,6 +42,48 @@ public sealed class AndroidEndToEndTests
         {
             logger.LogInformation("{Message}", InstrumentationSource.LogBody);
         }
+    }
+
+    [TestMethod]
+    public void MetricsAreExported()
+    {
+        using var instrumentation = new InstrumentationSource();
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .SetResourceBuilder(CreateResourceBuilder())
+            .AddMeter(InstrumentationSource.MeterName)
+            .AddOtlpExporter((options) => ConfigureOtlp(options, "v1/metrics"))
+            .Build();
+
+        Assert.IsNotNull(meterProvider, "MeterProvider failed to build on Android.");
+
+        instrumentation.Counter.Add(1);
+        instrumentation.Histogram.Record(123.45);
+
+        meterProvider.ForceFlush((int)FlushTimeout.TotalMilliseconds);
+    }
+
+    [TestMethod]
+    public void TracesAreExported()
+    {
+        using var instrumentation = new InstrumentationSource();
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .SetResourceBuilder(CreateResourceBuilder())
+            .AddSource(InstrumentationSource.ActivitySourceName)
+            .SetSampler(new AlwaysOnSampler())
+            .AddOtlpExporter((options) => ConfigureOtlp(options, "v1/traces"))
+            .Build();
+
+        Assert.IsNotNull(tracerProvider, "TracerProvider failed to build on Android.");
+
+        using (var activity = instrumentation.ActivitySource.StartActivity(InstrumentationSource.ActivityName))
+        {
+            Assert.IsNotNull(activity, "ActivitySource produced no Activity - the SDK did not subscribe on Android.");
+            activity.SetTag(InstrumentationSource.ActivityTagKey, InstrumentationSource.ActivityTagValue);
+        }
+
+        tracerProvider.ForceFlush((int)FlushTimeout.TotalMilliseconds);
     }
 
     private static ResourceBuilder CreateResourceBuilder()

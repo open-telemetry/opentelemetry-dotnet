@@ -2,27 +2,33 @@
 
   <PropertyGroup>
     <Description>Android test app validating the OpenTelemetry SDK runs end-to-end under the Android runtime.</Description>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net10.0-android</TargetFramework>
-
     <EnableMSTestRunner>true</EnableMSTestRunner>
-    <SupportedOSPlatformVersion>24</SupportedOSPlatformVersion>
+    <NoWarn>$(NoWarn);CA1515;CA1707;CA1848;CA2007;XA0101</NoWarn>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net10.0-android</TargetFrameworks>
+  </PropertyGroup>
 
+  <!--
+    Because we use project references to projects that multi-target to TFMs
+    that do not support trimming we cannot publish the application as trimmed.
+  -->
+  <PropertyGroup>
+    <PublishTrimmed>false</PublishTrimmed>
+    <RunAOTCompilation>false</RunAOTCompilation>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <AndroidLinkMode>None</AndroidLinkMode>
     <ApplicationId>io.opentelemetry.dotnet.android</ApplicationId>
     <ApplicationVersion>1</ApplicationVersion>
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <SupportedOSPlatformVersion>24</SupportedOSPlatformVersion>
+  </PropertyGroup>
 
-    <AndroidLinkMode>None</AndroidLinkMode>
-    <RunAOTCompilation>false</RunAOTCompilation>
-    <PublishTrimmed>false</PublishTrimmed>
-
+  <PropertyGroup>
     <EventSourceSupport>true</EventSourceSupport>
     <HttpActivityPropagationSupport>true</HttpActivityPropagationSupport>
     <MetricsSupport>true</MetricsSupport>
-
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    <NoWarn>$(NoWarn);CA1515;CA1707;CA1848;CA2007</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

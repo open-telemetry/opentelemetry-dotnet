@@ -27,13 +27,15 @@ public sealed class AndroidEndToEndTests(AndroidAppFixture fixture) : IClassFixt
             $"On-device test run failed with exit code {this.fixture.DeviceRunExitCode}.{Environment.NewLine}{this.fixture.DeviceRunOutput}");
 
     [Fact]
-    public async Task TracesAreExported()
+    public async Task LogsAreExported()
     {
         var collector = this.fixture.Collector;
 
-        await WaitForAsync(() => HasScenarioTrace(collector), () => Detail(collector));
+        await WaitForAsync(() => HasLog(collector, LogBody), () => Detail(collector));
 
-        Assert.True(HasScenarioTrace(collector), "Expected a scenario span with the contract name and tag.");
+        var scenarioLog = GetLogRecords(collector).First((p) => Body(p).Contains(LogBody, StringComparison.Ordinal));
+
+        Assert.Equal((int)SeverityNumber.Info, (int)scenarioLog.SeverityNumber);
         Assert.True(HasServiceName(collector), $"Expected resource attribute service.name='{ServiceName}'.");
     }
 
@@ -52,15 +54,13 @@ public sealed class AndroidEndToEndTests(AndroidAppFixture fixture) : IClassFixt
     }
 
     [Fact]
-    public async Task LogsAreExported()
+    public async Task TracesAreExported()
     {
         var collector = this.fixture.Collector;
 
-        await WaitForAsync(() => HasLog(collector, LogBody), () => Detail(collector));
+        await WaitForAsync(() => HasScenarioTrace(collector), () => Detail(collector));
 
-        var scenarioLog = GetLogRecords(collector).First(l => Body(l).Contains(LogBody, StringComparison.Ordinal));
-
-        Assert.Equal((int)SeverityNumber.Info, (int)scenarioLog.SeverityNumber);
+        Assert.True(HasScenarioTrace(collector), "Expected a scenario span with the contract name and tag.");
         Assert.True(HasServiceName(collector), $"Expected resource attribute service.name='{ServiceName}'.");
     }
 

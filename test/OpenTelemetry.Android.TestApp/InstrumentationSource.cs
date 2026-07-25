@@ -28,19 +28,18 @@ public sealed class InstrumentationSource : IDisposable
     public const string LoggerName = "OpenTelemetry.Android.TestApp.Logs";
     public const string LogBody = "Android end-to-end scenario executed";
 
-    private readonly ActivitySource activitySource;
     private readonly Meter meter;
 
     public InstrumentationSource()
     {
         var version = typeof(InstrumentationSource).Assembly.GetName().Version?.ToString();
-        this.activitySource = new(new ActivitySourceOptions(ActivitySourceName) { Version = version });
+        this.ActivitySource = new(new ActivitySourceOptions(ActivitySourceName) { Version = version });
         this.meter = new(new MeterOptions(MeterName) { Version = version });
         this.Counter = this.meter.CreateCounter<long>(CounterName);
         this.Histogram = this.meter.CreateHistogram<double>(HistogramName);
     }
 
-    public ActivitySource ActivitySource => this.activitySource;
+    public ActivitySource ActivitySource { get; }
 
     public Counter<long> Counter { get; }
 
@@ -49,6 +48,6 @@ public sealed class InstrumentationSource : IDisposable
     public void Dispose()
     {
         this.meter.Dispose();
-        this.activitySource.Dispose();
+        this.ActivitySource.Dispose();
     }
 }

@@ -5,6 +5,10 @@ runs the OpenTelemetry SDK on an Android emulator and exercises logs, metrics
 and traces with the real OTLP/HTTP exporter. It is the device half of the Android
 end-to-end tests; the assertions are in `OpenTelemetry.Android.Tests`.
 
+> [!NOTE]
+> You must [install .NET for Android dependencies](https://aka.ms/dotnet-android-install-sdk)
+> to build and run this project.
+
 ## How it works
 
 - Tests run on the device via [Microsoft.Testing.Platform](https://learn.microsoft.com/dotnet/core/testing/microsoft-testing-platform-intro)

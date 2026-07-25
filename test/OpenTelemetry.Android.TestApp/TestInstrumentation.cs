@@ -31,14 +31,18 @@ public class TestInstrumentation : Instrumentation
 
         var consumer = new ResultConsumer(this);
         using var bundle = new Bundle();
+
         try
         {
             var writablePath = Application.Context.GetExternalFilesDir(null)?.AbsolutePath ?? Path.GetTempPath();
             var resultsPath = Path.Combine(writablePath, "TestResults");
-            var builder = await TestApplication.CreateBuilderAsync([
-                "--results-directory", resultsPath,
-                "--report-trx"
-            ]);
+
+            var builder = await TestApplication.CreateBuilderAsync(
+                [
+                    "--results-directory", resultsPath,
+                    "--report-trx"
+                ]);
+
             builder.AddMSTest(() => [this.GetType().Assembly]);
             builder.AddTrxReportProvider();
             builder.TestHost.AddDataConsumer(_ => consumer);
@@ -50,6 +54,7 @@ public class TestInstrumentation : Instrumentation
             bundle.PutInt("failed", consumer.Failed);
             bundle.PutInt("skipped", consumer.Skipped);
             bundle.PutString("resultsPath", consumer.TrxReportPath);
+
             this.Finish(Result.Ok, bundle);
         }
         catch (Exception ex)
@@ -94,6 +99,7 @@ public class TestInstrumentation : Instrumentation
             else if (value is TestNodeUpdateMessage { TestNode: var node })
             {
                 var state = node.Properties.SingleOrDefault<TestNodeStateProperty>();
+
                 string? outcome = state switch
                 {
                     PassedTestNodeStateProperty => "passed",
@@ -102,6 +108,7 @@ public class TestInstrumentation : Instrumentation
                     SkippedTestNodeStateProperty => "skipped",
                     _ => null,
                 };
+
                 if (outcome is null)
                 {
                     return Task.CompletedTask;
@@ -116,8 +123,10 @@ public class TestInstrumentation : Instrumentation
 
                 var id = node.Properties.SingleOrDefault<TestMethodIdentifierProperty>();
                 using var b = new Bundle();
+
                 b.PutString("test", id is not null ? $"{id.Namespace}.{id.TypeName}.{id.MethodName}" : node.DisplayName);
                 b.PutString("outcome", outcome);
+
                 instrumentation.SendStatus(0, b);
             }
 

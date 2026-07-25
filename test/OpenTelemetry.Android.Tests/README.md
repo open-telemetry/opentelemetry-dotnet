@@ -3,6 +3,10 @@
 These tests validate that the OpenTelemetry SDK works end-to-end when running under
 the Android runtime.
 
+> [!NOTE]
+> You must [install .NET for Android dependencies](https://aka.ms/dotnet-android-install-sdk)
+> to build and run this project.
+
 ## What is covered
 
 `OpenTelemetry.Android.TestApp` is a `net10.0-android` app that wires up the SDK
