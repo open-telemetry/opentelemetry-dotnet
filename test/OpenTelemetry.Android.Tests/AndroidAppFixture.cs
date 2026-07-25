@@ -46,11 +46,12 @@ public sealed class AndroidAppFixture : IAsyncLifetime
 
         var repoRoot = RepoRoot();
         var project = Path.Combine(repoRoot, "test", "OpenTelemetry.Android.TestApp", "OpenTelemetry.Android.TestApp.csproj");
+        var tfm = $"net{Environment.Version.ToString(2)}-android";
 
         // Build the APK and install it on the connected emulator.
         var (installExitCode, installOutput) = RunProcess(
             "dotnet",
-            ["build", project, "--configuration", Configuration, "-t:Install"],
+            ["build", project, "--configuration", Configuration, "--framework", tfm, "-t:Install"],
             repoRoot,
             BuildAndInstallTimeout);
 
