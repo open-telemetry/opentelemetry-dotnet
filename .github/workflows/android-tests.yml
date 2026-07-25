@@ -65,7 +65,7 @@ jobs:
         script: >
           dotnet test test/OpenTelemetry.Android.Tests/OpenTelemetry.Android.Tests.csproj
           --configuration Debug
-          --framework ${env:TARGET_FRAMEWORK}
+          --framework "${TARGET_FRAMEWORK}"
           --logger:"GitHubActions;report-warnings=false"
 
     - name: Upload test result artifacts
