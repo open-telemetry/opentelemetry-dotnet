@@ -350,6 +350,36 @@ public class PrometheusHttpListenerTests
     }
 
     [Fact]
+    public void StartIsIdempotentWhenAlreadyStarted()
+    {
+        using var context = CreateListener();
+
+        var exception = Record.Exception(() => context.Listener.Start());
+
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public async Task ScrapeEndpointPathWithoutLeadingSlashIsNormalized()
+    {
+        using var meter = new Meter(MeterName, MeterVersion);
+
+        using var context = CreateMeterProvider(meter, configureListener: (options) =>
+        {
+            options.Port = GetRandomPort();
+            options.ScrapeEndpointPath = "custom-metrics";
+            return options.Port;
+        });
+
+        meter.CreateCounter<int>("test_counter").Add(1);
+
+        using var client = new HttpClient { BaseAddress = context.BaseAddress };
+        using var response = await client.GetAsync(new Uri("custom-metrics", UriKind.Relative));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
     public void Host_DefaultValue_Is_Localhost()
         => Assert.Equal("localhost", new PrometheusHttpListenerOptions().Host);
 
