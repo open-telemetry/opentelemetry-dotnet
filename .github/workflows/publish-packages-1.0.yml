@@ -53,7 +53,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         # Note: By default GitHub only fetches 1 commit. MinVer needs to find
         # the version tag which is typically NOT on the first commit so we
@@ -69,7 +69,7 @@ jobs:
         "epoch=$(git log -1 --pretty=%ct)" >> ${env:GITHUB_OUTPUT}
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
+      uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
       id: setup-dotnet
 
     - name: Install Cosign
@@ -103,7 +103,7 @@ jobs:
         }
 
     - name: Create GitHub attestations for DLLs
-      uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4.1.1
+      uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
       with:
         subject-path: |
           ./artifacts/bin/*/release_*/OpenTelemetry*.dll
@@ -116,7 +116,7 @@ jobs:
       run: dotnet pack ./build/OpenTelemetry.proj --configuration Release --no-restore --no-build -p:"PackTag=${env:PACK_TAG}"
 
     - name: Create GitHub attestations for NuGet packages
-      uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4.1.1
+      uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
       with:
         subject-path: |
           ./artifacts/package/release/OpenTelemetry*.*nupkg
@@ -130,7 +130,7 @@ jobs:
         upload-release-assets: false
 
     - name: Create GitHub attestation for SBOM
-      uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4.1.1
+      uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
       with:
         subject-path: |
           ./artifacts/package/release/sbom.spdx.json
@@ -155,7 +155,7 @@ jobs:
     steps:
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
+      uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
       with:
         dotnet-version: ${{ needs.build-pack.outputs.dotnet-sdk-version }}
 
@@ -275,7 +275,7 @@ jobs:
     steps:
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
+      uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
       with:
         dotnet-version: ${{ needs.build-pack.outputs.dotnet-sdk-version }}
 
@@ -337,7 +337,7 @@ jobs:
         permission-pull-requests: write
 
     - name: Checkout code
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         persist-credentials: true # zizmor: ignore[artipacked] Needed to push commits
         show-progress: false

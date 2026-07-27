@@ -4,6 +4,35 @@ This file contains highlights and announcements covering all components.
 For more details see `CHANGELOG.md` files maintained in the root source
 directory of each individual package.
 
+## 1.17.0
+
+Release details: [1.17.0](https://github.com/open-telemetry/opentelemetry-dotnet/releases/tag/core-1.17.0)
+
+* Added support for a Schema URL on Resource instances.
+* The Resource Schema URL is now printed alongside the resource attributes
+  when using the Console and OTLP exporters.
+* Added `ExcludedTagKeys` property to `MetricStreamConfiguration` to support
+  excluding specific tag keys from metric streams.
+* Updated `tracestate` key validation to comply with the W3C Trace Context
+  Level 2 grammar.
+* The SDK now depends on Microsoft.Extensions.Configuration.EnvironmentVariables
+  instead of using a vendored implementation.
+* All libraries are now marked as trim and AOT compatible.
+* Fixed a metric storage leak that occurred when meters and instruments were
+  repeatedly created and disposed.
+* Fixed `TraceContextPropagator` to normalize empty `tracestate` header values
+  to `null` when extracting trace context.
+* Fixed `OtlpLogExporter` so `OtlpExporterOptions.ExportProcessorType` and
+  `OtlpExporterOptions.BatchExportProcessorOptions` are respected when
+  `LogRecordExportProcessorOptions` are not configured.
+* Fixed the OTLP exporter dropping retryable data instead of saving it to disk
+  when persistent storage retry is enabled and an export exceeds the configured
+  timeout.
+* Fixed the OTLP/HTTP exporter silently dropping data when an export timed out.
+* Fixed the OTLP/gRPC exporter logging incorrectly when an export timed out.
+* Performance and memory improvements for the OTLP exporter when exporting logs
+  and metrics.
+
 ## 1.16.0
 
 Release details: [1.16.0](https://github.com/open-telemetry/opentelemetry-dotnet/releases/tag/core-1.16.0)

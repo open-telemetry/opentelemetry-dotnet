@@ -7,6 +7,18 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed `UseOtlpExporter` to respect options configured through
+  `services.Configure<OtlpExporterOptions>(...)`.
+  ([#7540](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7540))
+
+## 1.17.0
+
+Released 2026-Jul-16
+
+## 1.17.0-rc.1
+
+Released 2026-Jul-16
+
 * Fixed `OtlpLogExporter` so `OtlpExporterOptions.ExportProcessorType` and
   `OtlpExporterOptions.BatchExportProcessorOptions` are respected when
   `LogRecordExportProcessorOptions` are not configured.

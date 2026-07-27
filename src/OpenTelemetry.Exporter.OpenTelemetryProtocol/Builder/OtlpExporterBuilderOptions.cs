@@ -25,6 +25,7 @@ internal sealed class OtlpExporterBuilderOptions
 
     internal OtlpExporterBuilderOptions(
         IConfiguration configuration,
+        OtlpExporterOptions defaultOptions,
         SdkLimitOptions sdkLimitOptions,
         ExperimentalOptions experimentalOptions,
         LogRecordExportProcessorOptions? logRecordExportProcessorOptions,
@@ -32,6 +33,7 @@ internal sealed class OtlpExporterBuilderOptions
         ActivityExportProcessorOptions? activityExportProcessorOptions)
     {
         Debug.Assert(configuration != null, "configuration was null");
+        Debug.Assert(defaultOptions != null, "defaultOptions was null");
         Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
         Debug.Assert(experimentalOptions != null, "experimentalOptions was null");
 
@@ -43,7 +45,7 @@ internal sealed class OtlpExporterBuilderOptions
 
         var defaultBatchOptions = this.ActivityExportProcessorOptions!.BatchExportProcessorOptions;
 
-        this.DefaultOptionsInstance = new OtlpExporterOptions(configuration!, OtlpExporterOptionsConfigurationType.Default, defaultBatchOptions);
+        this.DefaultOptionsInstance = defaultOptions!;
 
         this.LoggingOptionsInstance = new OtlpExporterOptions(configuration!, OtlpExporterOptionsConfigurationType.Logs, defaultBatchOptions);
 

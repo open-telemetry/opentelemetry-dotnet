@@ -1,5 +1,0 @@
-OpenTelemetry.Metrics.MetricStreamConfiguration.ExcludedTagKeys.get -> string![]?
-OpenTelemetry.Metrics.MetricStreamConfiguration.ExcludedTagKeys.set -> void
-OpenTelemetry.Resources.Resource.Resource(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object!>>! attributes, string? schemaUrl) -> void
-OpenTelemetry.Resources.Resource.SchemaUrl.get -> string?
-static OpenTelemetry.Resources.ResourceBuilderExtensions.AddAttributes(this OpenTelemetry.Resources.ResourceBuilder! resourceBuilder, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object!>>! attributes, string? schemaUrl) -> OpenTelemetry.Resources.ResourceBuilder!

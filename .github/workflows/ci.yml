@@ -38,7 +38,7 @@ jobs:
       changes: ${{ steps.changes.outputs.changes }}
     steps:
     - name: Checkout code
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         filter: 'tree:0'
         persist-credentials: false
@@ -175,7 +175,7 @@ jobs:
       FRAMEWORK_VERSION: ${{ matrix.version }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           filter: 'tree:0'
           persist-credentials: false
@@ -201,7 +201,7 @@ jobs:
         version: [ net8.0, net9.0, net10.0 ]
     steps:
       - name: Checkout code
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           filter: 'tree:0'
           persist-credentials: false
@@ -230,13 +230,13 @@ jobs:
     timeout-minutes: 20
     steps:
     - name: Checkout code
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         fetch-depth: 0
         persist-credentials: false
         show-progress: false
     - name: Setup .NET
-      uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
+      uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
     - name: Run benchmarks
       shell: pwsh
       run: |

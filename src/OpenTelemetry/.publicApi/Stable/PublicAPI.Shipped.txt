@@ -244,6 +244,8 @@ OpenTelemetry.Metrics.MetricStreamConfiguration.CardinalityLimit.get -> int?
 OpenTelemetry.Metrics.MetricStreamConfiguration.CardinalityLimit.set -> void
 OpenTelemetry.Metrics.MetricStreamConfiguration.Description.get -> string?
 OpenTelemetry.Metrics.MetricStreamConfiguration.Description.set -> void
+OpenTelemetry.Metrics.MetricStreamConfiguration.ExcludedTagKeys.get -> string![]?
+OpenTelemetry.Metrics.MetricStreamConfiguration.ExcludedTagKeys.set -> void
 OpenTelemetry.Metrics.MetricStreamConfiguration.MetricStreamConfiguration() -> void
 OpenTelemetry.Metrics.MetricStreamConfiguration.Name.get -> string?
 OpenTelemetry.Metrics.MetricStreamConfiguration.Name.set -> void
@@ -302,7 +304,9 @@ OpenTelemetry.Resources.IResourceDetector.Detect() -> OpenTelemetry.Resources.Re
 OpenTelemetry.Resources.Resource
 OpenTelemetry.Resources.Resource.Attributes.get -> System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object!>>!
 OpenTelemetry.Resources.Resource.Merge(OpenTelemetry.Resources.Resource! other) -> OpenTelemetry.Resources.Resource!
+OpenTelemetry.Resources.Resource.Resource(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object!>>! attributes, string? schemaUrl) -> void
 OpenTelemetry.Resources.Resource.Resource(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object!>>! attributes) -> void
+OpenTelemetry.Resources.Resource.SchemaUrl.get -> string?
 OpenTelemetry.Resources.ResourceBuilder
 OpenTelemetry.Resources.ResourceBuilder.AddDetector(OpenTelemetry.Resources.IResourceDetector! resourceDetector) -> OpenTelemetry.Resources.ResourceBuilder!
 OpenTelemetry.Resources.ResourceBuilder.AddDetector(System.Func<System.IServiceProvider!, OpenTelemetry.Resources.IResourceDetector!>! resourceDetectorFactory) -> OpenTelemetry.Resources.ResourceBuilder!
@@ -454,6 +458,7 @@ static OpenTelemetry.ProviderExtensions.GetResource(this OpenTelemetry.BaseProvi
 static OpenTelemetry.Resources.Resource.Empty.get -> OpenTelemetry.Resources.Resource!
 static OpenTelemetry.Resources.ResourceBuilder.CreateDefault() -> OpenTelemetry.Resources.ResourceBuilder!
 static OpenTelemetry.Resources.ResourceBuilder.CreateEmpty() -> OpenTelemetry.Resources.ResourceBuilder!
+static OpenTelemetry.Resources.ResourceBuilderExtensions.AddAttributes(this OpenTelemetry.Resources.ResourceBuilder! resourceBuilder, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object!>>! attributes, string? schemaUrl) -> OpenTelemetry.Resources.ResourceBuilder!
 static OpenTelemetry.Resources.ResourceBuilderExtensions.AddAttributes(this OpenTelemetry.Resources.ResourceBuilder! resourceBuilder, System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, object!>>! attributes) -> OpenTelemetry.Resources.ResourceBuilder!
 static OpenTelemetry.Resources.ResourceBuilderExtensions.AddEnvironmentVariableDetector(this OpenTelemetry.Resources.ResourceBuilder! resourceBuilder) -> OpenTelemetry.Resources.ResourceBuilder!
 static OpenTelemetry.Resources.ResourceBuilderExtensions.AddService(this OpenTelemetry.Resources.ResourceBuilder! resourceBuilder, string! serviceName, string? serviceNamespace = null, string? serviceVersion = null, bool autoGenerateServiceInstanceId = true, string? serviceInstanceId = null) -> OpenTelemetry.Resources.ResourceBuilder!
