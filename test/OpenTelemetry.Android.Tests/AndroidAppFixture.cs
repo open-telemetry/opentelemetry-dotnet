@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using System.Reflection;
+using System.Runtime.Versioning;
 using System.Text;
 
 namespace OpenTelemetry.Android.Tests;
@@ -31,8 +33,8 @@ public sealed class AndroidAppFixture : IAsyncLifetime
     private const string InstrumentationComponent =
         "io.opentelemetry.dotnet.android/io.opentelemetry.dotnet.android.TestInstrumentation";
 
-    private static readonly TimeSpan BuildAndInstallTimeout = TimeSpan.FromMinutes(20);
-    private static readonly TimeSpan InstrumentationTimeout = TimeSpan.FromMinutes(10);
+    private static readonly TimeSpan BuildAndInstallTimeout = TimeSpan.FromMinutes(10);
+    private static readonly TimeSpan InstrumentationTimeout = TimeSpan.FromMinutes(5);
 
     internal OtlpHttpCollector Collector { get; private set; } = null!;
 
@@ -46,7 +48,7 @@ public sealed class AndroidAppFixture : IAsyncLifetime
 
         var repoRoot = RepoRoot();
         var project = Path.Combine(repoRoot, "test", "OpenTelemetry.Android.TestApp", "OpenTelemetry.Android.TestApp.csproj");
-        var tfm = $"net{Environment.Version.ToString(2)}-android";
+        var tfm = AndroidTargetFramework();
 
         // Build the APK and install it on the connected emulator.
         var (installExitCode, installOutput) = RunProcess(
@@ -87,6 +89,24 @@ public sealed class AndroidAppFixture : IAsyncLifetime
         {
             await this.Collector.DisposeAsync();
         }
+    }
+
+    private static string AndroidTargetFramework()
+    {
+        var frameworkName = Assembly.GetExecutingAssembly()
+            .GetCustomAttribute<TargetFrameworkAttribute>()?.FrameworkName;
+
+        if (frameworkName is not null)
+        {
+            const string Marker = "Version=v";
+            var index = frameworkName.IndexOf(Marker, StringComparison.Ordinal);
+            if (index >= 0)
+            {
+                return $"net{frameworkName[(index + Marker.Length)..]}-android";
+            }
+        }
+
+        return $"net{Environment.Version.ToString(2)}-android";
     }
 
     private static string RepoRoot()
@@ -155,7 +175,22 @@ public sealed class AndroidAppFixture : IAsyncLifetime
 
         if (!process.WaitForExit(timeout))
         {
-            process.Kill(entireProcessTree: true);
+            try
+            {
+                if (!process.HasExited)
+                {
+                    process.Kill(entireProcessTree: true);
+                }
+            }
+            catch (InvalidOperationException)
+            {
+                // Race shutting down the process
+            }
+            catch (System.ComponentModel.Win32Exception)
+            {
+                // Kill failed for some reason
+            }
+
             throw new InvalidOperationException(
                 $"'{fileName}' timed out after {timeout}.{Environment.NewLine}{output}");
         }

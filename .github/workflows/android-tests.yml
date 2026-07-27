@@ -62,11 +62,15 @@ jobs:
         disable-animations: true
         emulator-boot-timeout: 900
         target: google_apis
-        script: >
-          dotnet test test/OpenTelemetry.Android.Tests/OpenTelemetry.Android.Tests.csproj
-          --configuration Debug
-          --framework "${TARGET_FRAMEWORK}"
-          --logger:"GitHubActions;report-warnings=false"
+        script: |
+          set +e
+          dotnet test test/OpenTelemetry.Android.Tests/OpenTelemetry.Android.Tests.csproj \
+            --configuration Debug \
+            --framework "${TARGET_FRAMEWORK}" \
+            --logger:"GitHubActions;report-warnings=false"
+          exit_code=$?
+          adb pull /storage/emulated/0/Android/data/io.opentelemetry.dotnet.android/files/TestResults ./TestResults || true
+          exit $exit_code
 
     - name: Upload test result artifacts
       if: ${{ failure() }}

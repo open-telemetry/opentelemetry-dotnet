@@ -21,14 +21,13 @@ public sealed class AndroidEndToEndTests(AndroidAppFixture fixture) : IClassFixt
     private readonly AndroidAppFixture fixture = fixture;
 
     [Fact]
-    public void DeviceTestRunSucceeded() =>
-        Assert.True(
-            this.fixture.DeviceRunExitCode == 0,
-            $"On-device test run failed with exit code {this.fixture.DeviceRunExitCode}.{Environment.NewLine}{this.fixture.DeviceRunOutput}");
+    public void DeviceTestRunSucceeded() => EnsureDeviceRunSucceeded(this.fixture);
 
     [Fact]
     public async Task LogsAreExported()
     {
+        EnsureDeviceRunSucceeded(this.fixture);
+
         var collector = this.fixture.Collector;
 
         await WaitForAsync(() => HasLog(collector, LogBody), () => Detail(collector));
@@ -42,6 +41,8 @@ public sealed class AndroidEndToEndTests(AndroidAppFixture fixture) : IClassFixt
     [Fact]
     public async Task MetricsAreExported()
     {
+        EnsureDeviceRunSucceeded(this.fixture);
+
         var collector = this.fixture.Collector;
 
         await WaitForAsync(
@@ -56,6 +57,8 @@ public sealed class AndroidEndToEndTests(AndroidAppFixture fixture) : IClassFixt
     [Fact]
     public async Task TracesAreExported()
     {
+        EnsureDeviceRunSucceeded(this.fixture);
+
         var collector = this.fixture.Collector;
 
         await WaitForAsync(() => HasScenarioTrace(collector), () => Detail(collector));
@@ -63,6 +66,11 @@ public sealed class AndroidEndToEndTests(AndroidAppFixture fixture) : IClassFixt
         Assert.True(HasScenarioTrace(collector), "Expected a scenario span with the contract name and tag.");
         Assert.True(HasServiceName(collector), $"Expected resource attribute service.name='{ServiceName}'.");
     }
+
+    private static void EnsureDeviceRunSucceeded(AndroidAppFixture fixture) =>
+        Assert.True(
+            fixture.DeviceRunExitCode == 0,
+            $"On-device test run failed with exit code {fixture.DeviceRunExitCode}.{Environment.NewLine}{fixture.DeviceRunOutput}");
 
     private static async Task WaitForAsync(Func<bool> condition, Func<string> failureDetail)
     {
