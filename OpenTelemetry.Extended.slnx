@@ -36,7 +36,8 @@
     <File Path="build/OpenTelemetry.snk.base64" />
     <File Path="build/docfx.cmd" />
     <File Path="build/docker-compose.net10.0.yml" />
-    <File Path="build/docker-compose.net11.0.yml" />
+    <File Path="build/docker-compose.net8.0.yml" />
+    <File Path="build/docker-compose.net9.0.yml" />
     <File Path="build/GlobalAttrExclusions.txt" />
     <File Path="build/opentelemetry-icon-color.png" />
     <File Path="build/OpenTelemetry.prod.loose.ruleset" />
@@ -217,10 +218,14 @@
   <Project Path="src/OpenTelemetry.Shims.OpenTracing/OpenTelemetry.Shims.OpenTracing.csproj" />
   <Project Path="src/OpenTelemetry/OpenTelemetry.csproj" />
   <Project Path="test/Benchmarks/Benchmarks.csproj" />
+  <Project Path="test/OpenTelemetry.Android.TestApp/OpenTelemetry.Android.TestApp.csproj" />
+  <Project Path="test/OpenTelemetry.Android.Tests/OpenTelemetry.Android.Tests.csproj" />
   <Project Path="test/OpenTelemetry.AotCompatibility.TestApp/OpenTelemetry.AotCompatibility.TestApp.csproj" />
   <Project Path="test/OpenTelemetry.Api.FuzzTests/OpenTelemetry.Api.FuzzTests.csproj" />
   <Project Path="test/OpenTelemetry.Api.ProviderBuilderExtensions.Tests/OpenTelemetry.Api.ProviderBuilderExtensions.Tests.csproj" />
   <Project Path="test/OpenTelemetry.Api.Tests/OpenTelemetry.Api.Tests.csproj" />
+  <Project Path="test/OpenTelemetry.BlazorWasm.TestApp/OpenTelemetry.BlazorWasm.TestApp.csproj" />
+  <Project Path="test/OpenTelemetry.BlazorWasm.Tests/OpenTelemetry.BlazorWasm.Tests.csproj" />
   <Project Path="test/OpenTelemetry.Exporter.Console.Tests/OpenTelemetry.Exporter.Console.Tests.csproj" />
   <Project Path="test/OpenTelemetry.Exporter.OpenTelemetryProtocol.FuzzTests/OpenTelemetry.Exporter.OpenTelemetryProtocol.FuzzTests.csproj" />
   <Project Path="test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.csproj" />

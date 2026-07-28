@@ -62,8 +62,9 @@ jobs:
           sdk-code: ['src/OpenTelemetry/**', 'test/OpenTelemetry.Tests/**', '!**/*.md']
           sdk-package: ['src/OpenTelemetry/**', '!**/*.md']
           unstable-core-packages: ['src/OpenTelemetry.Exporter.Prometheus.AspNetCore/**', 'src/OpenTelemetry.Exporter.Prometheus.HttpListener/**', 'src/OpenTelemetry.Shims.OpenTracing/**', '!**/*.md']
-          otlp: ['*/OpenTelemetry.Exporter.OpenTelemetryProtocol*/**', '!**/*.md']
+          android: ['test/OpenTelemetry.Android.*/**', '.github/workflows/android-tests.yml']
           blazor: ['test/OpenTelemetry.BlazorWasm.*/**', '.github/workflows/blazor-wasm-integration-test.yml']
+          otlp: ['*/OpenTelemetry.Exporter.OpenTelemetryProtocol*/**', '!**/*.md']
 
   lint-actions:
     needs: detect-changes
@@ -186,6 +187,18 @@ jobs:
         run: docker compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/docker-compose.yml "--file=build/docker-compose.${FRAMEWORK_VERSION}.yml" --project-directory=. --profile build build build-image
       - name: Run OTLP Exporter docker compose
         run: docker compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/docker-compose.yml "--file=build/docker-compose.${FRAMEWORK_VERSION}.yml" --project-directory=. up --exit-code-from=tests --no-build
+
+  android-integration-test:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'android')
+      || contains(needs.detect-changes.outputs.changes, 'sdk-package')
+      || contains(needs.detect-changes.outputs.changes, 'otlp')
+      || contains(needs.detect-changes.outputs.changes, 'build')
+      || contains(needs.detect-changes.outputs.changes, 'shared')
+    uses: ./.github/workflows/android-tests.yml
+    with:
+      trigger: ${{ github.event_name }}
 
   blazor-wasm-integration-test:
     needs: detect-changes
@@ -313,6 +326,7 @@ jobs:
       build-test-project-stable,
       build-test-project-experimental,
       build-test-unstable-core,
+      android-integration-test,
       blazor-wasm-integration-test,
       otlp-integration-test,
       w3c-trace-context-integration-test,
