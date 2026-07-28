@@ -612,6 +612,32 @@ public class OtlpLogExporterTests
         Assert.Equal((uint)logRecord.TraceFlags, otlpLogRecord.Flags);
     }
 
+    [Fact]
+    public void CheckToOtlpLogRecordMasksReservedTraceFlagBits()
+    {
+        var logRecords = new List<LogRecord>();
+        using var loggerFactory = LoggerFactory.Create(builder =>
+        {
+            builder.UseOpenTelemetry(logging => logging.AddInMemoryExporter(logRecords));
+        });
+
+        var logger = loggerFactory.CreateLogger("OtlpLogExporterTests");
+
+        using (var activity = new Activity(Utils.GetCurrentMethodName()))
+        {
+            activity.Start();
+            logger.LogWithinAnActivity();
+        }
+
+        var logRecord = Assert.Single(logRecords);
+        logRecord.TraceFlags = (ActivityTraceFlags)0x00000103;
+
+        var otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecord);
+
+        Assert.NotNull(otlpLogRecord);
+        Assert.Equal(0x00000003u, otlpLogRecord.Flags);
+    }
+
     [Theory]
     [InlineData(LogLevel.Trace)]
     [InlineData(LogLevel.Debug)]
@@ -1840,19 +1866,28 @@ public class OtlpLogExporterTests
 
         var batch = new Batch<LogRecord>([logRecords[0]], 1);
 
-        var buffer = new byte[50];
-        var writePosition = ProtobufOtlpLogSerializer.WriteLogsData(ref buffer, 0, DefaultSdkLimitOptions, new(), ResourceBuilder.CreateEmpty().Build(), batch);
-        using var stream = new MemoryStream(buffer, 0, writePosition);
-        var logsData = OtlpLogs.LogsData.Parser.ParseFrom(stream);
-        var request = new OtlpCollector.ExportLogsServiceRequest();
-        request.ResourceLogs.Add(logsData.ResourceLogs);
+        var buffer = ProtobufSerializer.RentBuffer(50);
+        try
+        {
+            var writePosition = ProtobufOtlpLogSerializer.WriteLogsData(ref buffer, 0, DefaultSdkLimitOptions, new(), ResourceBuilder.CreateEmpty().Build(), batch);
+            using var stream = new MemoryStream(buffer, 0, writePosition);
+            var logsData = OtlpLogs.LogsData.Parser.ParseFrom(stream);
+            var request = new OtlpCollector.ExportLogsServiceRequest();
+            request.ResourceLogs.Add(logsData.ResourceLogs);
 
-        Assert.True(buffer.Length > 50);
-        Assert.NotNull(request);
-        Assert.Single(request.ResourceLogs);
-        Assert.Single(request.ResourceLogs[0].ScopeLogs);
+            Assert.True(buffer.Length > 50);
+            Assert.NotNull(request);
+            Assert.Single(request.ResourceLogs);
+            Assert.Single(request.ResourceLogs[0].ScopeLogs);
 
-        Assert.Equal("MyLogger", request.ResourceLogs[0].ScopeLogs[0].Scope?.Name);
+            Assert.Equal("MyLogger", request.ResourceLogs[0].ScopeLogs[0].Scope?.Name);
+        }
+        finally
+        {
+            // The serializer may have grown (and swapped) the buffer, so return
+            // whatever buffer it ended up with to the pool.
+            ProtobufSerializer.ReturnBuffer(buffer);
+        }
     }
 
     private static void RunVerifyEnvironmentVariablesTakenFromIConfigurationTest(
@@ -1996,13 +2031,20 @@ public class OtlpLogExporterTests
 
     private static OtlpCollector.ExportLogsServiceRequest CreateLogsExportRequest(SdkLimitOptions sdkOptions, ExperimentalOptions experimentalOptions, in Batch<LogRecord> batch, Resource resource)
     {
-        var buffer = new byte[4096];
-        var writePosition = ProtobufOtlpLogSerializer.WriteLogsData(ref buffer, 0, sdkOptions, experimentalOptions, resource, batch);
-        using var stream = new MemoryStream(buffer, 0, writePosition);
-        var logsData = OtlpLogs.LogsData.Parser.ParseFrom(stream);
-        var request = new OtlpCollector.ExportLogsServiceRequest();
-        request.ResourceLogs.Add(logsData.ResourceLogs);
-        return request;
+        var buffer = ProtobufSerializer.RentBuffer(4096);
+        try
+        {
+            var writePosition = ProtobufOtlpLogSerializer.WriteLogsData(ref buffer, 0, sdkOptions, experimentalOptions, resource, batch);
+            using var stream = new MemoryStream(buffer, 0, writePosition);
+            var logsData = OtlpLogs.LogsData.Parser.ParseFrom(stream);
+            var request = new OtlpCollector.ExportLogsServiceRequest();
+            request.ResourceLogs.Add(logsData.ResourceLogs);
+            return request;
+        }
+        finally
+        {
+            ProtobufSerializer.ReturnBuffer(buffer);
+        }
     }
 
     private static OtlpLogs.LogRecord? ToOtlpLogs(SdkLimitOptions sdkOptions, ExperimentalOptions experimentalOptions, LogRecord logRecord)

@@ -13,7 +13,7 @@ namespace OpenTelemetry.Exporter.Prometheus;
 
 internal static class PrometheusHeadersParser
 {
-    internal static PrometheusProtocol Negotiate(string? contentType)
+    internal static PrometheusProtocol Negotiate(string? contentType, EscapingScheme defaultEscaping = EscapingScheme.Underscores)
     {
         if (string.IsNullOrWhiteSpace(contentType))
         {
@@ -110,13 +110,13 @@ internal static class PrometheusHeadersParser
                 continue;
             }
 
-            if (version is null)
-            {
-                // Use the oldest version if no version preference was specified
-                version = isOpenMetrics ? PrometheusProtocol.OpenMetricsV0 : PrometheusProtocol.PrometheusV0;
-                escaping = null;
-            }
-            else if (version.Major is not > 0)
+            // Use the oldest version if no version preference was specified. Per the OpenMetrics
+            // specification's negotiation rules (https://prometheus.io/docs/specs/om/open_metrics_spec/#protocol-negotiation),
+            // "the standard" begins at 1.0.0 (0.0.1 predates the standard being ratified), so servers
+            // MUST default to OpenMetrics 1.0.0 for an unversioned "application/openmetrics-text" entry.
+            version ??= isOpenMetrics ? PrometheusProtocol.OpenMetricsV1 : PrometheusProtocol.PrometheusV0;
+
+            if (version.Major is not > 0)
             {
                 // From https://prometheus.io/docs/instrumenting/content_negotiation/#content-type-response:
                 // "The Content-Type header MUST include [...] For text formats version 1.0.0 and above, the escaping scheme parameter."
@@ -124,7 +124,10 @@ internal static class PrometheusHeadersParser
             }
             else
             {
-                escaping ??= PrometheusProtocol.UnderscoresEscaping;
+                // When the client does not negotiate an escaping scheme, fall back to the
+                // exporter's configured default (from its translation strategy) rather than
+                // always underscores. Any client-specified escaping value takes precedence.
+                escaping ??= PrometheusEscaping.GetName(defaultEscaping);
             }
 
             var protocol = new PrometheusProtocol(

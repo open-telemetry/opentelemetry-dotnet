@@ -270,7 +270,9 @@ internal static class ProtobufOtlpLogSerializer
             otlpTagWriterState.WritePosition = ProtobufSerializer.WriteTagAndLength(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, SpanIdSize, ProtobufOtlpLogFieldNumberConstants.LogRecord_Span_Id, ProtobufWireType.LEN);
             otlpTagWriterState.WritePosition = ProtobufOtlpTraceSerializer.WriteSpanId(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, logRecord.SpanId);
 
-            otlpTagWriterState.WritePosition = ProtobufSerializer.WriteFixed32WithTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpLogFieldNumberConstants.LogRecord_Flags, (uint)logRecord.TraceFlags);
+            var traceFlags = (uint)logRecord.TraceFlags
+                & ProtobufOtlpLogFieldNumberConstants.LogRecord_Flags_Trace_Flags_Mask;
+            otlpTagWriterState.WritePosition = ProtobufSerializer.WriteFixed32WithTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpLogFieldNumberConstants.LogRecord_Flags, traceFlags);
         }
 
         if (logRecord.EventId.Name != null)

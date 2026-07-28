@@ -33,11 +33,11 @@ Released 2024-01-01
 
         $output = (& $scriptPath -repoRoot $work) -join "`n"
 
-        $output | Should -Match "# Unreleased Changes" -Because "the report should have a top-level heading"
-        $output | Should -Match '## `core` packages' -Because "packages should be grouped by their (trimmed) tag prefix"
-        $output | Should -Match ':package: OpenTelemetry' -Because "the package should be listed in the summary table"
-        $output | Should -Match '### OpenTelemetry' -Because "the package should have a changes section"
-        $output | Should -Match '\* Added the thing\.' -Because "the unreleased changes should be included"
+        $output | Should-MatchString "# Unreleased Changes" -Because "the report should have a top-level heading"
+        $output | Should-MatchString '## `core` packages' -Because "packages should be grouped by their (trimmed) tag prefix"
+        $output | Should-MatchString ':package: OpenTelemetry' -Because "the package should be listed in the summary table"
+        $output | Should-MatchString '### OpenTelemetry' -Because "the package should have a changes section"
+        $output | Should-MatchString '\* Added the thing\.' -Because "the unreleased changes should be included"
     }
 
     It "reports that there are no unreleased changes when none are present" {
@@ -60,8 +60,8 @@ Released 2024-01-01
 
         $output = (& $scriptPath -repoRoot $work) -join "`n"
 
-        $output | Should -Match "No packages have any unreleased changes" -Because "an empty unreleased section should be treated as no changes"
-        $output | Should -Not -Match "# Unreleased Changes" -Because "the full report should not be produced when there is nothing to report"
+        $output | Should-MatchString "No packages have any unreleased changes" -Because "an empty unreleased section should be treated as no changes"
+        $output | Should-NotMatchString "# Unreleased Changes" -Because "the full report should not be produced when there is nothing to report"
     }
 
     It "ignores changelogs that have no unreleased section" {
@@ -82,7 +82,7 @@ Released 2024-01-01
 
         $output = (& $scriptPath -repoRoot $work) -join "`n"
 
-        $output | Should -Match "No packages have any unreleased changes" -Because "a changelog without an Unreleased heading contributes nothing"
+        $output | Should-MatchString "No packages have any unreleased changes" -Because "a changelog without an Unreleased heading contributes nothing"
     }
 
     It "omits packages whose unreleased section is empty" {
@@ -116,8 +116,8 @@ Released 2024-01-01
 
         $output = (& $scriptPath -repoRoot $work) -join "`n"
 
-        $output | Should -Match ':package: OpenTelemetry \|' -Because "the package with changes should be listed"
-        $output | Should -Not -Match "OpenTelemetry.Exporter.Empty" -Because "the package without changes should be omitted"
+        $output | Should-MatchString ':package: OpenTelemetry \|' -Because "the package with changes should be listed"
+        $output | Should-NotMatchString "OpenTelemetry.Exporter.Empty" -Because "the package without changes should be omitted"
     }
 
     It "groups packages without a resolvable tag prefix under 'unknown'" {
@@ -150,9 +150,9 @@ Released 2024-01-01
 
         $output = (& $scriptPath -repoRoot $work) -join "`n"
 
-        $output | Should -Match '## `unknown` packages' -Because "packages without a tag prefix should be grouped under 'unknown'"
-        $output | Should -Match ':package: OpenTelemetry.NoPrefix' -Because "a package whose csproj has no MinVerTagPrefix should still be reported"
-        $output | Should -Match ':package: OpenTelemetry.NoProject' -Because "a package with no csproj should still be reported"
+        $output | Should-MatchString '## `unknown` packages' -Because "packages without a tag prefix should be grouped under 'unknown'"
+        $output | Should-MatchString ':package: OpenTelemetry.NoPrefix' -Because "a package whose csproj has no MinVerTagPrefix should still be reported"
+        $output | Should-MatchString ':package: OpenTelemetry.NoProject' -Because "a package with no csproj should still be reported"
     }
 
     It "does not modify the working tree" {
@@ -175,6 +175,6 @@ Released 2024-01-01
 
         & $scriptPath -repoRoot $work | Out-Null
 
-        Get-Content -Path $changelogPath -Raw | Should -Be $before -Because "the report script must only read, never modify, the changelog files"
+        Get-Content -Path $changelogPath -Raw | Should-Be $before -Because "the report script must only read, never modify, the changelog files"
     }
 }

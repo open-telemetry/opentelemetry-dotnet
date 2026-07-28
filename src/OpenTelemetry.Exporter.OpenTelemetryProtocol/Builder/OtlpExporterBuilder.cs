@@ -175,6 +175,7 @@ internal sealed class OtlpExporterBuilder
 
         services.RegisterOptionsFactory((sp, configuration, name) => new OtlpExporterBuilderOptions(
             configuration,
+            sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(name),
             /* Note: We don't use name for SdkLimitOptions. There should only be
             one provider for a given service collection so SdkLimitOptions is
             treated as a single default instance. */

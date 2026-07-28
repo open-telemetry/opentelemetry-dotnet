@@ -13,16 +13,29 @@ internal sealed class PrometheusCollectionManager
 {
     private const int MaxCachedMetrics = 1024;
 
+    // Upper bound on how many times entering a collection will retry while
+    // resolving races with concurrent scrapes (a collection completing, active
+    // readers draining, or a shared collection that did not serve this protocol).
+    // In practice only a couple of iterations ever run; the cap exists purely so
+    // a pathological interleaving of concurrent scrapes cannot starve one into
+    // looping forever.
+    private const int MaxCollectAttempts = 1024;
+
     private readonly ConcurrentDictionary<PrometheusProtocol, PrometheusProtocolState> protocolStates = new();
 
     private readonly PrometheusExporter exporter;
     private readonly bool scopeInfoEnabled;
     private readonly bool targetInfoEnabled;
+    private readonly Func<string, bool>? resourceConstantLabelsFilter;
     private readonly TimeSpan scrapeResponseCacheDuration;
     private readonly long baseTimestamp = Stopwatch.GetTimestamp();
     private readonly PrometheusExporter.ExportFunc onCollectRef;
     private readonly Dictionary<Metric, PrometheusMetric> metricsCache;
+    private readonly int maxBufferSize;
+
     private int metricsCacheCount;
+    private IReadOnlyList<KeyValuePair<string, object>>? resourceConstantLabels;
+    private bool resourceConstantLabelsComputed;
     private int globalLockState;
     private CollectionContext? collectionContext;
     private CollectionContext? onCollectContext;
@@ -33,10 +46,12 @@ internal sealed class PrometheusCollectionManager
         this.exporter = exporter;
         this.scopeInfoEnabled = this.exporter.ScopeInfoEnabled;
         this.targetInfoEnabled = this.exporter.TargetInfoEnabled;
+        this.resourceConstantLabelsFilter = this.exporter.ResourceConstantLabels;
         this.scrapeResponseCacheDuration = TimeSpan.FromMilliseconds(this.exporter.ScrapeResponseCacheDurationMilliseconds);
         this.onCollectRef = this.OnCollect;
         this.metricsCache = [];
         this.GetElapsedTime = () => Stopwatch.GetElapsedTime(this.baseTimestamp);
+        this.maxBufferSize = this.exporter.MaxScrapeResponseSizeBytes;
     }
 
     internal Func<DateTime> UtcNow { get; set; } = static () => DateTime.UtcNow;
@@ -49,12 +64,43 @@ internal sealed class PrometheusCollectionManager
     public Task<CollectionResponse> EnterCollect(in PrometheusProtocol protocol)
 #endif
     {
+        var step = this.TryEnterCollect(protocol);
+
+        if (step.PendingCollectionTask is null)
+        {
+#if NET
+            return new ValueTask<CollectionResponse>(step.Response);
+#else
+            return Task.FromResult(step.Response);
+#endif
+        }
+
+        return this.WaitForCollectionResponseAsync(protocol, step.PendingCollectionTask, step.JoinedActiveCollection);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void ExitCollect(in PrometheusProtocol protocol)
+        => this.GetProtocolState(protocol).DecrementReaderCount();
+
+    /// <summary>
+    /// Performs a single synchronous attempt to enter a collection. Returns a
+    /// completed response when one is immediately available (served from the
+    /// cache, or produced by a collection executed on this thread), otherwise
+    /// returns the in-flight collection task the caller must await.
+    /// </summary>
+    /// <param name="protocol">The protocol for which the collection is being attempted.</param>
+    /// <returns>
+    /// The <see cref="CollectStep"/> result of the attempt.
+    /// </returns>
+    private CollectStep TryEnterCollect(in PrometheusProtocol protocol)
+    {
         CollectionResponse? cachedResponse = null;
         Task<CollectionResult>? pendingCollectionTask = null;
         CollectionContext? activeCollectionContext = null;
         var joinedActiveCollection = false;
+        var resolved = false;
 
-        while (true)
+        for (var attempt = 0; attempt < MaxCollectAttempts; attempt++)
         {
             pendingCollectionTask = null;
             joinedActiveCollection = false;
@@ -70,6 +116,7 @@ internal sealed class PrometheusCollectionManager
                 {
                     cachedResponse = response;
                     this.IncrementReaderCount(protocol);
+                    resolved = true;
                     break;
                 }
 
@@ -81,6 +128,7 @@ internal sealed class PrometheusCollectionManager
                     if (joinedActiveCollection)
                     {
                         this.IncrementReaderCount(protocol);
+                        resolved = true;
                         break;
                     }
 
@@ -96,6 +144,7 @@ internal sealed class PrometheusCollectionManager
                     }
                     else
                     {
+                        resolved = true;
                         break;
                     }
                 }
@@ -123,6 +172,7 @@ internal sealed class PrometheusCollectionManager
                 {
                     cachedResponse = response;
                     this.IncrementReaderCount(protocol);
+                    resolved = true;
                     break;
                 }
 
@@ -134,6 +184,7 @@ internal sealed class PrometheusCollectionManager
                     if (joinedActiveCollection)
                     {
                         this.IncrementReaderCount(protocol);
+                        resolved = true;
                         break;
                     }
 
@@ -144,9 +195,11 @@ internal sealed class PrometheusCollectionManager
                             this.collectionContext = null;
                         }
 
+                        pendingCollectionTask = null;
                         continue;
                     }
 
+                    resolved = true;
                     break;
                 }
 
@@ -154,6 +207,7 @@ internal sealed class PrometheusCollectionManager
                 this.collectionContext = activeCollectionContext;
 
                 this.IncrementReaderCount(protocol);
+                resolved = true;
                 break;
             }
             finally
@@ -162,22 +216,25 @@ internal sealed class PrometheusCollectionManager
             }
         }
 
+        if (!resolved)
+        {
+            // The attempt budget was exhausted while contending with concurrent
+            // scrapes. Degrade to a failed (empty) response rather than spinning
+            // forever - this mirrors how an unsuccessful collection is reported.
+            this.IncrementReaderCount(protocol);
+            PrometheusExporterEventSource.Log.CollectFailed();
+
+            return CollectStep.Completed(default);
+        }
+
         if (cachedResponse is { } collectionResponse)
         {
-#if NET
-            return new ValueTask<CollectionResponse>(collectionResponse);
-#else
-            return Task.FromResult(collectionResponse);
-#endif
+            return CollectStep.Completed(collectionResponse);
         }
 
         if (pendingCollectionTask is not null)
         {
-#if NET
-            return this.WaitForCollectionResponseAsync(protocol, pendingCollectionTask, joinedActiveCollection);
-#else
-            return this.WaitForCollectionResponseAsync(protocol, pendingCollectionTask, joinedActiveCollection);
-#endif
+            return CollectStep.Pending(pendingCollectionTask, joinedActiveCollection);
         }
 
         var result = this.ExecuteCollect(activeCollectionContext!);
@@ -198,46 +255,65 @@ internal sealed class PrometheusCollectionManager
             this.ExitGlobalLock();
         }
 
-        if (result.TryGetResponse(protocol, out collectionResponse))
-        {
-#if NET
-            return new ValueTask<CollectionResponse>(collectionResponse);
-#else
-            return Task.FromResult(collectionResponse);
-#endif
-        }
-
-#if NET
-        return new ValueTask<CollectionResponse>(default(CollectionResponse));
-#else
-        return Task.FromResult(default(CollectionResponse));
-#endif
+        return result.TryGetResponse(protocol, out var collectedResponse)
+            ? CollectStep.Completed(collectedResponse)
+            : CollectStep.Completed(default);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void ExitCollect(in PrometheusProtocol protocol)
-        => this.GetProtocolState(protocol).DecrementReaderCount();
-
 #if NET
-    private async ValueTask<CollectionResponse> WaitForCollectionResponseAsync(PrometheusProtocol protocol, Task<CollectionResult> pendingCollectionTask, bool protocolWasRegistered)
+    private async ValueTask<CollectionResponse> WaitForCollectionResponseAsync(PrometheusProtocol protocol, Task<CollectionResult> pendingCollectionTask, bool joinedActiveCollection)
 #else
-    private async Task<CollectionResponse> WaitForCollectionResponseAsync(PrometheusProtocol protocol, Task<CollectionResult> pendingCollectionTask, bool protocolWasRegistered)
+    private async Task<CollectionResponse> WaitForCollectionResponseAsync(PrometheusProtocol protocol, Task<CollectionResult> pendingCollectionTask, bool joinedActiveCollection)
 #endif
     {
-        var collectionResult = await pendingCollectionTask.ConfigureAwait(false);
-
-        if (protocolWasRegistered &&
-            collectionResult.TryGetResponse(protocol, out var response))
+        for (var attempt = 0; attempt < MaxCollectAttempts; attempt++)
         {
-            return response;
+            var collectionResult = await pendingCollectionTask.ConfigureAwait(false);
+
+            if (joinedActiveCollection &&
+                collectionResult.TryGetResponse(protocol, out var response))
+            {
+                return response;
+            }
+
+            if (joinedActiveCollection)
+            {
+                this.ExitCollect(protocol);
+            }
+
+            // The shared collection did not produce a response for this protocol,
+            // so make another attempt. Loop here (bounded by MaxCollectAttempts)
+            // rather than recursing back into EnterCollect: when the awaited
+            // collection completes synchronously the continuation runs inline,
+            // so a recursive retry would grow the stack on every iteration
+            // and eventually overflow under contention.
+            var step = this.TryEnterCollect(protocol);
+
+            if (step.PendingCollectionTask is null)
+            {
+                return step.Response;
+            }
+
+            pendingCollectionTask = step.PendingCollectionTask;
+            joinedActiveCollection = step.JoinedActiveCollection;
         }
 
-        if (protocolWasRegistered)
+        // The retry budget was exhausted while contending with concurrent scrapes;
+        // give up on this pending collection and degrade to a failed (empty)
+        // response instead of awaiting/retrying indefinitely.
+        //
+        // Leave exactly one reader slot outstanding for the caller's ExitCollect to
+        // release: when the last step joined the active collection, TryEnterCollect
+        // already took that slot, so take one only otherwise - taking a second here
+        // would leak, taking none would drive the count negative and hang every
+        // later scrape.
+        if (!joinedActiveCollection)
         {
-            this.ExitCollect(protocol);
+            this.IncrementReaderCount(protocol);
+            PrometheusExporterEventSource.Log.CollectFailed();
         }
 
-        return await this.EnterCollect(protocol).ConfigureAwait(false);
+        return default;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -357,7 +433,9 @@ internal sealed class PrometheusCollectionManager
 
             var cursor = this.targetInfoEnabled ? this.WriteTargetInfo(serializer, state) : 0;
             var metricStates = this.GetMetricStates(serializer, metrics);
-            var options = new TextFormatSerializerOptions(suppressScopeInfo: !this.scopeInfoEnabled);
+            var options = new TextFormatSerializerOptions(
+                suppressScopeInfo: !this.scopeInfoEnabled,
+                resourceConstantLabels: this.GetResourceConstantLabels());
 
             foreach (var metricState in metricStates)
             {
@@ -393,7 +471,7 @@ internal sealed class PrometheusCollectionManager
             {
                 try
                 {
-                    cursor = TextFormatSerializer.WriteEof(state.Buffer, cursor);
+                    cursor = serializer.WriteEof(state.Buffer, cursor);
                     break;
                 }
                 catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
@@ -424,6 +502,14 @@ internal sealed class PrometheusCollectionManager
         var protocols = executionResult.Protocols ?? collectionContext.FreezeProtocols();
         var responses = new Dictionary<PrometheusProtocol, CollectionResponse>(protocols.Length);
 
+        if (!succeeded && executionResult.Protocols is not null)
+        {
+            foreach (var protocol in protocols)
+            {
+                responses[protocol] = default;
+            }
+        }
+
         if (succeeded)
         {
             var generatedAt = this.UtcNow();
@@ -435,6 +521,7 @@ internal sealed class PrometheusCollectionManager
                 if (successfulProtocols is not null &&
                     !successfulProtocols.Contains(protocol))
                 {
+                    responses[protocol] = default;
                     continue;
                 }
 
@@ -474,8 +561,38 @@ internal sealed class PrometheusCollectionManager
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private PrometheusProtocolState GetProtocolState(in PrometheusProtocol protocol)
-        => this.protocolStates.GetOrAdd(protocol, static _ => new());
+    private PrometheusProtocolState GetProtocolState(in PrometheusProtocol protocol) =>
+#if NET
+        this.protocolStates.GetOrAdd(protocol, static (_, maxBufferSize) => new(maxBufferSize), this.maxBufferSize);
+#else
+        this.protocolStates.GetOrAdd(protocol, (_) => new(this.maxBufferSize));
+#endif
+
+    private IReadOnlyList<KeyValuePair<string, object>>? GetResourceConstantLabels()
+    {
+        if (!this.resourceConstantLabelsComputed)
+        {
+            if (this.resourceConstantLabelsFilter is { } filter)
+            {
+                List<KeyValuePair<string, object>>? labels = null;
+
+                foreach (var attribute in this.exporter.Resource.Attributes)
+                {
+                    if (filter(attribute.Key))
+                    {
+                        labels ??= [];
+                        labels.Add(attribute);
+                    }
+                }
+
+                this.resourceConstantLabels = labels;
+            }
+
+            this.resourceConstantLabelsComputed = true;
+        }
+
+        return this.resourceConstantLabels;
+    }
 
     private int WriteTargetInfo(TextFormatSerializer serializer, PrometheusProtocolState state)
     {
@@ -500,7 +617,7 @@ internal sealed class PrometheusCollectionManager
         // Optimize writing metrics with bounded cache that has pre-calculated Prometheus names.
         if (!this.metricsCache.TryGetValue(metric, out var prometheusMetric))
         {
-            prometheusMetric = PrometheusMetric.Create(metric, this.exporter.DisableTotalNameSuffixForCounters);
+            prometheusMetric = PrometheusMetric.Create(metric, this.exporter.DisableTotalNameSuffixForCounters, this.exporter.AppendSuffixes);
 
             // Add to the cache if there is space.
             if (this.metricsCacheCount < MaxCachedMetrics)
@@ -621,6 +738,7 @@ internal sealed class PrometheusCollectionManager
             this.View = view;
             this.GeneratedAtUtc = generatedAtUtc;
             this.FromCache = fromCache;
+            this.Succeeded = true;
         }
 
         public readonly ArraySegment<byte> View { get; }
@@ -628,6 +746,43 @@ internal sealed class PrometheusCollectionManager
         public readonly DateTime GeneratedAtUtc { get; }
 
         public readonly bool FromCache { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether the collection that produced this response succeeded.
+        /// </summary>
+        /// <remarks>
+        /// Used to distinguish between a successful collection that produced an empty response
+        /// and a failed collection that produced no response.
+        /// </remarks>
+        public readonly bool Succeeded { get; }
+    }
+
+    private readonly struct CollectStep
+    {
+        private CollectStep(CollectionResponse response, Task<CollectionResult>? pendingCollectionTask, bool joinedActiveCollection)
+        {
+            this.Response = response;
+            this.PendingCollectionTask = pendingCollectionTask;
+            this.JoinedActiveCollection = joinedActiveCollection;
+        }
+
+        // A non-null task means the caller must await the in-flight collection;
+        // a null task means Response already holds the answer.
+        public Task<CollectionResult>? PendingCollectionTask { get; }
+
+        public CollectionResponse Response { get; }
+
+        // True when this scrape registered the protocol with the in-flight
+        // collection and took a reader slot for it (so the awaiting caller owns a
+        // reader count that must be released), false when it is only observing a
+        // collection it could not join.
+        public bool JoinedActiveCollection { get; }
+
+        public static CollectStep Completed(CollectionResponse response)
+            => new(response, pendingCollectionTask: null, joinedActiveCollection: false);
+
+        public static CollectStep Pending(Task<CollectionResult> pendingCollectionTask, bool joinedActiveCollection)
+            => new(default, pendingCollectionTask, joinedActiveCollection);
     }
 
     private readonly struct CollectionResult
@@ -784,10 +939,15 @@ internal sealed class PrometheusCollectionManager
 
     private sealed class PrometheusProtocolState
     {
-        private const int InitialBufferSize = 85_000; // Encourage the object to live in Large Object Heap (LOH)
-        private const int MaxBufferSize = 100 * 1024 * 1024; // 100 MB
+        private const int InitialBufferSize = PrometheusExporterOptions.InitialScrapeResponseSizeBytes;
+        private readonly int maxBufferSize;
 
         private int readerCount;
+
+        public PrometheusProtocolState(int maxBufferSize)
+        {
+            this.maxBufferSize = Math.Max(maxBufferSize, InitialBufferSize);
+        }
 
         public static ArraySegment<byte> EmptyView { get; } =
 #if NET
@@ -815,12 +975,16 @@ internal sealed class PrometheusCollectionManager
 
         public bool TryExpandBuffer()
         {
-            var newBufferSize = this.Buffer.Length * 2;
-
-            if (newBufferSize > MaxBufferSize)
+            if (this.Buffer.Length >= this.maxBufferSize)
             {
                 return false;
             }
+
+            // Grow by doubling, but never past the configured maximum. Clamping
+            // to the maximum (rather than refusing the grow outright when the
+            // doubled size would overshoot) means the entire configured budget
+            // is usable, with no unreachable remainder.
+            var newBufferSize = (int)Math.Min((long)this.Buffer.Length * 2, this.maxBufferSize);
 
             var expanded = new byte[newBufferSize];
             this.Buffer.CopyTo(expanded, 0);

@@ -56,5 +56,6 @@
     "vishwesh",
     "xunit",
     "zipkin"
-  ]
+  ],
+  "dotnet.defaultSolution": "OpenTelemetry.slnx"
 }

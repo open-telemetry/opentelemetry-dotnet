@@ -200,7 +200,7 @@ public class MetricPointReclaimTests
     //
     // This is a stress test: it asserts that the total exported value always equals the total
     // recorded value (no measurement is ever lost).
-    [Fact]
+    [SkipOnNetFrameworkArmFact]
     public void MeasurementsAreNotLostWhenReclaimRacesWithUpdates()
     {
         using var meter = new Meter(Utils.GetCurrentMethodName());
@@ -354,6 +354,25 @@ public class MetricPointReclaimTests
             }
 
             return ExportResult.Success;
+        }
+    }
+
+    private sealed class SkipOnNetFrameworkArmFactAttribute : FactAttribute
+    {
+        public SkipOnNetFrameworkArmFactAttribute()
+        {
+#if NETFRAMEWORK
+            foreach (var variable in new[] { "PROCESSOR_ARCHITEW6432", "PROCESSOR_ARCHITECTURE" })
+            {
+                var value = Environment.GetEnvironmentVariable(variable);
+
+                if (value?.StartsWith("ARM", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    this.Skip = "Flaky on Windows 11 ARM: https://github.com/open-telemetry/opentelemetry-dotnet/pull/7470";
+                    return;
+                }
+            }
+#endif
         }
     }
 }

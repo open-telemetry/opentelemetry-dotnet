@@ -14,11 +14,20 @@ internal readonly struct TextFormatSerializerOptions
     public readonly bool SuppressScopeInfo; // Inverted so the default struct is the default value (false = included).
 
     /// <summary>
+    /// The resource attributes to add to each metric as constant labels, or <see langword="null"/> if none.
+    /// </summary>
+    public readonly IReadOnlyList<KeyValuePair<string, object>>? ResourceConstantLabels;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="TextFormatSerializerOptions"/> struct.
     /// </summary>
     /// <param name="suppressScopeInfo">Whether the scope information is suppressed from the scrape response.</param>
-    public TextFormatSerializerOptions(bool suppressScopeInfo)
+    /// <param name="resourceConstantLabels">The resource attributes to add to each metric as constant labels, or <see langword="null"/> if none.</param>
+    public TextFormatSerializerOptions(
+        bool suppressScopeInfo,
+        IReadOnlyList<KeyValuePair<string, object>>? resourceConstantLabels)
     {
         this.SuppressScopeInfo = suppressScopeInfo;
+        this.ResourceConstantLabels = resourceConstantLabels;
     }
 }

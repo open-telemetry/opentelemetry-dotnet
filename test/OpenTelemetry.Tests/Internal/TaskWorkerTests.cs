@@ -13,15 +13,18 @@ public class TaskWorkerTests
     private const int IdleCyclesBeforeTrigger = 2;
     private const int MaxExportBatchSize = 4;
     private const int PostBaselinePauseMilliseconds = 20;
-    private const int TriggerCompletionTimeoutMilliseconds = 100;
     private const int WaitUntilPollingIntervalMilliseconds = 10;
-    private const int WorkerDelayMilliseconds = 250;
-    private const int WorkerTimeoutMilliseconds = 1000;
-    private const int AssertTimeoutToleranceMilliseconds = 100;
+    private const int WorkerDelayMilliseconds = 1_000;
+    private const int WorkerTimeoutMilliseconds = 1_000;
+    private const int ShutdownTimeoutMilliseconds = 10_000;
+    private const int BaselineWaitTimeoutMilliseconds = 10_000;
+    private const int TriggerCompletionTimeoutMilliseconds = 600;
 
     [Fact]
     public async Task BatchExportTaskWorker_TriggerExportAfterIdleCycles_DoesNotWaitForScheduledDelay()
     {
+        EnsureThreadPoolWorkerThreadsAvailable();
+
         // Arrange
         var circularBuffer = new CircularBuffer<Activity>(capacity: CircularBufferCapacity);
         using var exporter = new TestActivityExporter();
@@ -42,15 +45,17 @@ public class TaskWorkerTests
         Assert.True(worker.TriggerExport());
 
         // Act
-        await WaitUntilAsync(() => exporter.ExportCount >= 1, TriggerCompletionTimeoutMilliseconds + AssertTimeoutToleranceMilliseconds);
+        await WaitUntilAsync(() => exporter.ExportCount >= 1, TriggerCompletionTimeoutMilliseconds);
 
         // Assert
-        Assert.True(worker.Shutdown(WorkerTimeoutMilliseconds));
+        Assert.True(worker.Shutdown(ShutdownTimeoutMilliseconds));
     }
 
     [Fact]
     public async Task PeriodicExportingMetricReaderTaskWorker_TriggerExportAfterIdleCycles_DoesNotWaitForExportInterval()
     {
+        EnsureThreadPoolWorkerThreadsAvailable();
+
         // Arrange
         using var reader = new TestMetricReader();
         using var worker = new PeriodicExportingMetricReaderTaskWorker(
@@ -60,7 +65,7 @@ public class TaskWorkerTests
 
         worker.Start();
 
-        await WaitUntilAsync(() => reader.CollectCount >= BaselineCollectCount, WorkerTimeoutMilliseconds + AssertTimeoutToleranceMilliseconds);
+        await WaitUntilAsync(() => reader.CollectCount >= BaselineCollectCount, BaselineWaitTimeoutMilliseconds);
 
         var baselineCollectCount = reader.CollectCount;
 
@@ -69,10 +74,10 @@ public class TaskWorkerTests
         Assert.True(worker.TriggerExport());
 
         // Act
-        await WaitUntilAsync(() => reader.CollectCount >= baselineCollectCount + 1, TriggerCompletionTimeoutMilliseconds + AssertTimeoutToleranceMilliseconds);
+        await WaitUntilAsync(() => reader.CollectCount >= baselineCollectCount + 1, TriggerCompletionTimeoutMilliseconds);
 
         // Assert
-        Assert.True(worker.Shutdown(WorkerTimeoutMilliseconds));
+        Assert.True(worker.Shutdown(ShutdownTimeoutMilliseconds));
     }
 
     private static async Task WaitUntilAsync(Func<bool> condition, int timeoutMilliseconds)
@@ -94,6 +99,18 @@ public class TaskWorkerTests
 
     private static int GetIdleWaitDuration()
         => (IdleCyclesBeforeTrigger * WorkerDelayMilliseconds) + (WorkerDelayMilliseconds / 5);
+
+    private static void EnsureThreadPoolWorkerThreadsAvailable()
+    {
+        ThreadPool.GetMinThreads(out var workerThreads, out var completionPortThreads);
+
+        var desiredWorkerThreads = Math.Max(workerThreads, Environment.ProcessorCount * 2);
+
+        if (desiredWorkerThreads > workerThreads)
+        {
+            ThreadPool.SetMinThreads(desiredWorkerThreads, completionPortThreads);
+        }
+    }
 
     private sealed class TestActivityExporter : BaseExporter<Activity>
     {

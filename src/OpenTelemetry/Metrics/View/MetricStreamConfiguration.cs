@@ -95,6 +95,38 @@ public class MetricStreamConfiguration
         }
     }
 
+#pragma warning disable CA1819 // Properties should not return arrays
+    /// <summary>
+    /// Gets or sets the optional tag keys to exclude from the metric stream.
+    /// </summary>
+    /// <remarks>
+    /// Notes:
+    /// <list type="bullet">
+    /// <item>If not provided, all the tags provided by the instrument
+    /// while reporting measurements will be used for aggregation.
+    /// If provided, only those tags not in this list will be used
+    /// for aggregation. Providing an empty array will result in no tags
+    /// being excluded (same effect as the default behavior: all attributes
+    /// are preserved).
+    /// </item>
+    /// <item>A copy is made of the provided array.</item>
+    /// <item>This is mutually exclusive with <see cref="TagKeys"/>
+    /// setting both will cause the view to be ignored.</item>
+    /// <item>Tags excluded from the metric stream by this setting may still
+    /// be exported on <see cref="Exemplar"/>s as <see
+    /// cref="Exemplar.FilteredTags"/>. To avoid this, disable exemplars by
+    /// configuring <see cref="ExemplarFilterType.AlwaysOff"/> on the meter
+    /// provider, or use <see cref="ExemplarReservoirFactory"/> to control
+    /// which measurements are sampled as exemplars.</item>
+    /// </list>
+    /// </remarks>
+    public string[]? ExcludedTagKeys
+#pragma warning restore CA1819 // Properties should not return arrays
+    {
+        get => this.CopiedExcludedTagKeys?.ToArray();
+        set => this.CopiedExcludedTagKeys = value?.ToArray();
+    }
+
 #if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
     /// Gets or sets a factory function used to generate an <see
@@ -117,5 +149,18 @@ public class MetricStreamConfiguration
 
     internal string[]? CopiedTagKeys { get; private set; }
 
+    internal string[]? CopiedExcludedTagKeys { get; private set; }
+
     internal int? ViewId { get; set; }
+
+    internal void Validate()
+    {
+        if (this.CopiedTagKeys != null && this.CopiedExcludedTagKeys != null)
+        {
+            throw new InvalidOperationException(
+                "TagKeys and ExcludedTagKeys cannot both be set. They are mutually exclusive. " +
+                "Use only one filtering strategy per view. For combined behavior, use the " +
+                "Func<Instrument, MetricStreamConfiguration> overload of AddView with custom logic.");
+        }
+    }
 }

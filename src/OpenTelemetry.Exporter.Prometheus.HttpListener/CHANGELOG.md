@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.17.0-beta.1
+
+Released 2026-Jul-16
+
 * Added a verbose-level diagnostic event for ignored metrics.
   ([#7429](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7429))
 
@@ -40,6 +44,41 @@ Notes](../../RELEASENOTES.md).
 * Added support for the `allow-utf-8` Prometheus UTF-8 name escaping scheme
   when negotiated via the `Accept` header.
   ([#7440](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7440))
+
+* Add `PrometheusHttpListenerOptions.ResourceConstantLabels` property to select
+  resource attributes to add to each metric as constant labels. Defaults to
+  `null` (no resource attributes are added as metric labels).
+  ([#7471](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7471))
+
+* Add `PrometheusHttpListenerOptions.MaxScrapeResponseSizeBytes` to configure
+  the maximum size of a scrape response. The default is now ~166 MiB.
+  ([#7487](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7487))
+
+* A scrape whose serialized output exceeds the maximum scrape response size
+  limit now responds with HTTP 500.
+  ([#7487](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7487))
+
+* Fixed the Prometheus text exposition format emitting redundant comments.
+  ([#7491](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7491))
+
+* Fixed `# HELP` metadata not escaping double-quote characters for the
+  OpenMetrics text format.
+  ([#7491](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7491))
+
+* Fixed content negotiation defaulting to OpenMetrics 0.0.1 instead of 1.0.0
+  when an `application/openmetrics-text` `Accept` header entry does not
+  specify a `version` parameter.
+  ([#7491](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7491))
+
+* Added `PrometheusHttpListenerOptions.TranslationStrategy` to control how
+  OpenTelemetry metric and label names are translated into Prometheus names.
+  ([#7507](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7507))
+
+* Fix stack overflow during metric collection when under load.
+  ([#7524](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7524))
+
+* Updated OpenTelemetry core component version(s) to `1.17.0`.
+  ([#7530](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7530))
 
 ## 1.16.0-beta.1
 

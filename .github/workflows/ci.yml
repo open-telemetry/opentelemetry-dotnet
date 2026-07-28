@@ -38,7 +38,7 @@ jobs:
       changes: ${{ steps.changes.outputs.changes }}
     steps:
     - name: Checkout code
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         filter: 'tree:0'
         persist-credentials: false
@@ -62,6 +62,8 @@ jobs:
           sdk-code: ['src/OpenTelemetry/**', 'test/OpenTelemetry.Tests/**', '!**/*.md']
           sdk-package: ['src/OpenTelemetry/**', '!**/*.md']
           unstable-core-packages: ['src/OpenTelemetry.Exporter.Prometheus.AspNetCore/**', 'src/OpenTelemetry.Exporter.Prometheus.HttpListener/**', 'src/OpenTelemetry.Shims.OpenTracing/**', '!**/*.md']
+          android: ['test/OpenTelemetry.Android.*/**', '.github/workflows/android-tests.yml']
+          blazor: ['test/OpenTelemetry.BlazorWasm.*/**', '.github/workflows/blazor-wasm-integration-test.yml']
           otlp: ['*/OpenTelemetry.Exporter.OpenTelemetryProtocol*/**', '!**/*.md']
 
   lint-actions:
@@ -116,6 +118,7 @@ jobs:
       project-name: 'OpenTelemetry.slnx'
       code-cov-name: 'Solution'
       trigger: ${{ github.event_name }}
+      install-wasm-tools: true
 
   build-test-project-stable:
     needs: detect-changes
@@ -175,7 +178,7 @@ jobs:
       FRAMEWORK_VERSION: ${{ matrix.version }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           filter: 'tree:0'
           persist-credentials: false
@@ -184,6 +187,30 @@ jobs:
         run: docker compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/docker-compose.yml "--file=build/docker-compose.${FRAMEWORK_VERSION}.yml" --project-directory=. --profile build build build-image
       - name: Run OTLP Exporter docker compose
         run: docker compose --file=test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/IntegrationTest/docker-compose.yml "--file=build/docker-compose.${FRAMEWORK_VERSION}.yml" --project-directory=. up --exit-code-from=tests --no-build
+
+  android-integration-test:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'android')
+      || contains(needs.detect-changes.outputs.changes, 'sdk-package')
+      || contains(needs.detect-changes.outputs.changes, 'otlp')
+      || contains(needs.detect-changes.outputs.changes, 'build')
+      || contains(needs.detect-changes.outputs.changes, 'shared')
+    uses: ./.github/workflows/android-tests.yml
+    with:
+      trigger: ${{ github.event_name }}
+
+  blazor-wasm-integration-test:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'blazor')
+      || contains(needs.detect-changes.outputs.changes, 'sdk-package')
+      || contains(needs.detect-changes.outputs.changes, 'otlp')
+      || contains(needs.detect-changes.outputs.changes, 'build')
+      || contains(needs.detect-changes.outputs.changes, 'shared')
+    uses: ./.github/workflows/blazor-wasm-integration-test.yml
+    with:
+      trigger: ${{ github.event_name }}
 
   w3c-trace-context-integration-test:
     name: W3C Trace Context integration tests
@@ -201,7 +228,7 @@ jobs:
         version: [ net8.0, net9.0, net10.0 ]
     steps:
       - name: Checkout code
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           filter: 'tree:0'
           persist-credentials: false
@@ -230,13 +257,13 @@ jobs:
     timeout-minutes: 20
     steps:
     - name: Checkout code
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         fetch-depth: 0
         persist-credentials: false
         show-progress: false
     - name: Setup .NET
-      uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
+      uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
     - name: Run benchmarks
       shell: pwsh
       run: |
@@ -299,6 +326,8 @@ jobs:
       build-test-project-stable,
       build-test-project-experimental,
       build-test-unstable-core,
+      android-integration-test,
+      blazor-wasm-integration-test,
       otlp-integration-test,
       w3c-trace-context-integration-test,
       validate-benchmarks,

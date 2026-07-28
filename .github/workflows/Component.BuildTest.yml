@@ -30,6 +30,10 @@ on:
       trigger:
         required: true
         type: string
+      install-wasm-tools:
+        default: false
+        required: false
+        type: boolean
 
 permissions:
   contents: read
@@ -62,7 +66,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         # Note: By default GitHub only fetches 1 commit. MinVer needs to find
         # the version tag which is typically NOT on the first commit so we
@@ -72,14 +76,19 @@ jobs:
         show-progress: false
 
     - name: Setup previous .NET runtimes
-      uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
+      uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
       with:
         dotnet-version: |
           8.0.x
           9.0.x
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
+      uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+
+    - name: Install wasm-tools workload
+      if: ${{ inputs.install-wasm-tools }}
+      shell: pwsh
+      run: dotnet workload install wasm-tools
 
     - name: dotnet restore ${{ inputs.project-name }}
       shell: pwsh

@@ -17,13 +17,15 @@ namespace OpenTelemetry.Exporter;
 public class OtlpMetricExporter : BaseExporter<Metric>
 {
     private const int GrpcStartWritePosition = 5;
-    private readonly OtlpExporterTransmissionHandler transmissionHandler;
-    private readonly int startWritePosition;
 
     // Initial buffer size set to ~732KB.
     // This choice allows us to gradually grow the buffer while targeting a final capacity of around 100 MB,
     // by the 7th doubling to maintain efficient allocation without frequent resizing.
-    private byte[] buffer = new byte[750000];
+    private const int InitialBufferSize = 750_000;
+
+    private readonly OtlpExporterTransmissionHandler transmissionHandler;
+    private readonly int startWritePosition;
+    private readonly SerializationBuffer serializationBuffer = new(InitialBufferSize);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OtlpMetricExporter"/> class.
@@ -65,9 +67,16 @@ public class OtlpMetricExporter : BaseExporter<Metric>
         // Prevents the exporter's gRPC and HTTP operations from being instrumented.
         using var scope = SuppressInstrumentationScope.Begin();
 
+        byte[]? buffer = null;
+        var serializationSucceeded = false;
+        var writePosition = 0;
+
         try
         {
-            var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref this.buffer, this.startWritePosition, this.Resource, metrics);
+            buffer = this.serializationBuffer.Rent();
+
+            writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, this.startWritePosition, this.Resource, metrics);
+            serializationSucceeded = true;
 
             if (this.startWritePosition == GrpcStartWritePosition)
             {
@@ -75,12 +84,14 @@ public class OtlpMetricExporter : BaseExporter<Metric>
                 // byte 0 - Specifying if the payload is compressed.
                 // 1-4 byte - Specifies the length of payload in big endian format.
                 // 5 and above -  Protobuf serialized data.
-                var data = new Span<byte>(this.buffer, 1, 4);
+                // Note: byte 0 must be explicitly cleared because the rented buffer is not zeroed.
+                buffer[0] = 0;
+                var data = new Span<byte>(buffer, 1, 4);
                 var dataLength = writePosition - GrpcStartWritePosition;
                 BinaryPrimitives.WriteUInt32BigEndian(data, (uint)dataLength);
             }
 
-            if (!this.transmissionHandler.TrySubmitRequest(this.buffer, writePosition))
+            if (!this.transmissionHandler.TrySubmitRequest(buffer, writePosition))
             {
                 return ExportResult.Failure;
             }
@@ -90,10 +101,34 @@ public class OtlpMetricExporter : BaseExporter<Metric>
             OpenTelemetryProtocolExporterEventSource.Log.ExportMethodException(ex);
             return ExportResult.Failure;
         }
+        finally
+        {
+            if (buffer != null)
+            {
+                if (serializationSucceeded)
+                {
+                    this.serializationBuffer.Return(buffer, writePosition);
+                }
+                else
+                {
+                    this.serializationBuffer.Discard(buffer);
+                }
+            }
+        }
 
         return ExportResult.Success;
     }
 
     /// <inheritdoc />
-    protected override bool OnShutdown(int timeoutMilliseconds) => this.transmissionHandler.Shutdown(timeoutMilliseconds);
+    protected override bool OnShutdown(int timeoutMilliseconds)
+    {
+        try
+        {
+            return this.transmissionHandler.Shutdown(timeoutMilliseconds);
+        }
+        finally
+        {
+            this.serializationBuffer.Release();
+        }
+    }
 }

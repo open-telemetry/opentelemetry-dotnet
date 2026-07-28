@@ -63,12 +63,12 @@ Describe "GetCoreDependenciesForProjects" {
             }
         }
 
-        @($result).Count | Should -Be 1 -Because "'dotnet restore' output must be piped to Out-Null so it does not leak into the return value"
-        $result | Should -BeOfType [hashtable] -Because "the function should return only the dependency map"
+        @($result).Count | Should-Be 1 -Because "'dotnet restore' output must be piped to Out-Null so it does not leak into the return value"
+        $result | Should-HaveType ([hashtable]) -Because "the function should return only the dependency map"
 
         $dependencies = $result.Values | Select-Object -First 1
-        $dependencies["OpenTelemetry"] | Should -Be "1.9.0" -Because "the version should be parsed from project.assets.json"
-        $dependencies.ContainsKey("Newtonsoft.Json") | Should -BeFalse -Because "only OpenTelemetry core packages should be tracked"
+        $dependencies["OpenTelemetry"] | Should-Be "1.9.0" -Because "the version should be parsed from project.assets.json"
+        $dependencies.ContainsKey("Newtonsoft.Json") | Should-BeFalse -Because "only OpenTelemetry core packages should be tracked"
     }
 }
 
@@ -106,7 +106,7 @@ Released 2024-01-01
             Pop-Location
         }
 
-        Should -Invoke -CommandName "gh" -ModuleName "post-release" -Exactly -Times 1 -ParameterFilter {
+        Should-Invoke -CommandName "gh" -ModuleName "post-release" -Exactly -Times 1 -ParameterFilter {
             $args -contains "release" -and
             $args -contains "create" -and
             $args -contains "foo-1.9.0" -and
@@ -140,7 +140,7 @@ Released 2024-01-01
             Pop-Location
         }
 
-        Should -Invoke -CommandName "gh" -ModuleName "post-release" -Exactly -Times 1 -ParameterFilter {
+        Should-Invoke -CommandName "gh" -ModuleName "post-release" -Exactly -Times 1 -ParameterFilter {
             $args -contains "create" -and
             $args -contains "foo-1.9.0-alpha.1" -and
             $args -contains "--prerelease" -and
@@ -152,7 +152,7 @@ Released 2024-01-01
         Push-Location -Path $work -ErrorAction Stop
         try {
             { CreateDraftRelease -gitRepository "open-telemetry/opentelemetry-dotnet" -tag "missing-1.0.0" 6>$null } |
-                Should -Throw "*No projects found*" -Because "no project uses the 'missing-' tag prefix"
+                Should-Throw -ExceptionMessage "*No projects found*" -Because "no project uses the 'missing-' tag prefix"
         }
         finally {
             Pop-Location
@@ -169,7 +169,7 @@ Describe "InvokeCoreVersionUpdateWorkflowInRemoteRepository" {
             -remoteGitRepository "open-telemetry/opentelemetry-dotnet-contrib" `
             -tag "core-1.2.3"
 
-        Should -Invoke -CommandName "gh" -ModuleName "post-release" -Exactly -Times 1 -ParameterFilter {
+        Should-Invoke -CommandName "gh" -ModuleName "post-release" -Exactly -Times 1 -ParameterFilter {
             $args -contains "workflow" -and
             $args -contains "run" -and
             $args -contains "core-version-update.yml" -and
@@ -184,13 +184,13 @@ Describe "InvokeCoreVersionUpdateWorkflowInRemoteRepository" {
             InvokeCoreVersionUpdateWorkflowInRemoteRepository `
                 -remoteGitRepository "open-telemetry/opentelemetry-dotnet-contrib" `
                 -tag "1.2.3"
-        } | Should -Throw "*Could not parse prefix or version*" -Because "a tag without a prefix cannot be parsed"
+        } | Should-Throw -ExceptionMessage "*Could not parse prefix or version*" -Because "a tag without a prefix cannot be parsed"
     }
 }
 
 Describe "TryPostReleasePublishedNoticeOnPrepareReleasePullRequest" {
 
-    It "posts a published notice on the matching prepare release pull request" {
+    It "posts a published notice on the matching prepare release pull request and returns its number" {
         Mock -CommandName "git" -ModuleName "post-release" -MockWith {
             $global:LASTEXITCODE = 0
             return "abc123"
@@ -199,21 +199,27 @@ Describe "TryPostReleasePublishedNoticeOnPrepareReleasePullRequest" {
             if ($args -contains "list") {
                 return '[{"number":42,"author":{"login":"otelbot"},"title":"[release] Prepare release core-1.2.3","comments":[{"author":{"login":"otelbot-comment"},"body":"The packages for [core-1.2.3](https://github.com/open-telemetry/opentelemetry-dotnet/releases/tag/core-1.2.3) are now available: [Download](https://example.com)."}]}]'
             }
+            if ($args -contains "comment") {
+                return "https://github.com/open-telemetry/opentelemetry-dotnet/pull/42#issuecomment-1"
+            }
             return $null
         }
 
-        TryPostReleasePublishedNoticeOnPrepareReleasePullRequest `
+        $result = TryPostReleasePublishedNoticeOnPrepareReleasePullRequest `
             -gitRepository "open-telemetry/opentelemetry-dotnet" `
             -expectedPrAuthorUserName "otelbot" `
             -expectedCommentAuthorUserName "otelbot-comment" `
             -tag "core-1.2.3" 6>$null
 
-        Should -Invoke -CommandName "gh" -ModuleName "post-release" -Exactly -Times 1 -ParameterFilter {
+        @($result).Count | Should-Be 1 -Because "the GitHub CLI output must be piped to Out-Null so it does not leak into the return value"
+        $result | Should-Be 42 -Because "the function should return the number of the pull request the notice was posted on"
+
+        Should-Invoke -CommandName "gh" -ModuleName "post-release" -Exactly -Times 1 -ParameterFilter {
             $args -contains "comment" -and (($args -join " ") -match "has been published")
         } -Because "a published notice should be posted on the matching prepare release PR"
     }
 
-    It "does nothing when no prepare release pull request is found" {
+    It "does nothing and returns null when no prepare release pull request is found" {
         Mock -CommandName "git" -ModuleName "post-release" -MockWith {
             $global:LASTEXITCODE = 0
             return "abc123"
@@ -223,18 +229,20 @@ Describe "TryPostReleasePublishedNoticeOnPrepareReleasePullRequest" {
             return $null
         }
 
-        TryPostReleasePublishedNoticeOnPrepareReleasePullRequest `
+        $result = TryPostReleasePublishedNoticeOnPrepareReleasePullRequest `
             -gitRepository "open-telemetry/opentelemetry-dotnet" `
             -expectedPrAuthorUserName "otelbot" `
             -expectedCommentAuthorUserName "otelbot-comment" `
             -tag "core-1.2.3" 6>$null
 
-        Should -Invoke -CommandName "gh" -ModuleName "post-release" -Times 0 -ParameterFilter {
+        $result | Should-BeNull -Because "the function should return null when the search finds no pull requests"
+
+        Should-NotInvoke -CommandName "gh" -ModuleName "post-release" -ParameterFilter {
             $args -contains "comment"
         } -Because "no notice should be posted when there is no matching pull request"
     }
 
-    It "does nothing when the matching pull request has no packages-ready comment" {
+    It "does nothing and returns null when the matching pull request has no packages-ready comment" {
         Mock -CommandName "git" -ModuleName "post-release" -MockWith {
             $global:LASTEXITCODE = 0
             return "abc123"
@@ -246,13 +254,15 @@ Describe "TryPostReleasePublishedNoticeOnPrepareReleasePullRequest" {
             return $null
         }
 
-        TryPostReleasePublishedNoticeOnPrepareReleasePullRequest `
+        $result = TryPostReleasePublishedNoticeOnPrepareReleasePullRequest `
             -gitRepository "open-telemetry/opentelemetry-dotnet" `
             -expectedPrAuthorUserName "otelbot" `
             -expectedCommentAuthorUserName "otelbot-comment" `
             -tag "core-1.2.3" 6>$null
 
-        Should -Invoke -CommandName "gh" -ModuleName "post-release" -Times 0 -ParameterFilter {
+        $result | Should-BeNull -Because "the function should return null when no matching pull request has a packages-ready comment"
+
+        Should-NotInvoke -CommandName "gh" -ModuleName "post-release" -ParameterFilter {
             $args -contains "comment"
         } -Because "a notice is only posted when the packages-ready comment is present"
     }
@@ -276,13 +286,13 @@ Describe "TryPostPackagesReadyNoticeOnPrepareReleasePullRequest" {
             -expectedPrAuthorUserName "otelbot" `
             -expectedCommentAuthorUserName "otelbot-comment" 6>$null
 
-        Should -Invoke -CommandName "gh" -ModuleName "post-release" -Exactly -Times 1 -ParameterFilter {
+        Should-Invoke -CommandName "gh" -ModuleName "post-release" -Exactly -Times 1 -ParameterFilter {
             $args -contains "comment" -and (($args -join " ") -match "are now available")
         } -Because "a packages-ready notice should be posted on the matching prepare release PR"
-        Should -Invoke -CommandName "gh" -ModuleName "post-release" -Exactly -Times 1 -ParameterFilter {
+        Should-Invoke -CommandName "gh" -ModuleName "post-release" -Exactly -Times 1 -ParameterFilter {
             $args -contains "unlock"
         } -Because "the PR is unlocked to allow the comment"
-        Should -Invoke -CommandName "gh" -ModuleName "post-release" -Exactly -Times 1 -ParameterFilter {
+        Should-Invoke -CommandName "gh" -ModuleName "post-release" -Exactly -Times 1 -ParameterFilter {
             $args -contains "lock"
         } -Because "the PR is locked again after commenting"
     }
@@ -303,7 +313,7 @@ Describe "TryPostPackagesReadyNoticeOnPrepareReleasePullRequest" {
             -expectedPrAuthorUserName "otelbot" `
             -expectedCommentAuthorUserName "otelbot-comment" 6>$null
 
-        Should -Invoke -CommandName "gh" -ModuleName "post-release" -Times 0 -ParameterFilter {
+        Should-NotInvoke -CommandName "gh" -ModuleName "post-release" -ParameterFilter {
             $args -contains "comment"
         } -Because "no notice should be posted when no pull request matches"
     }
@@ -331,7 +341,7 @@ Describe "PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullReque
             -artifactDownloadPath "$TestDrive/artifacts" `
             -pushToNuget $false 6>$null
 
-        Should -Invoke -CommandName "gh" -ModuleName "post-release" -Exactly -Times 1 -ParameterFilter {
+        Should-Invoke -CommandName "gh" -ModuleName "post-release" -Exactly -Times 1 -ParameterFilter {
             $args -contains "release" -and $args -contains "edit" -and $args -contains "--draft=false"
         } -Because "the release should be published by clearing the draft flag"
     }
@@ -357,7 +367,7 @@ Describe "PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullReque
             -artifactDownloadPath "$TestDrive/artifacts" `
             -pushToNuget $true 6>$null
 
-        Should -Invoke -CommandName "dotnet" -ModuleName "post-release" -Exactly -Times 1 -ParameterFilter {
+        Should-Invoke -CommandName "dotnet" -ModuleName "post-release" -Exactly -Times 1 -ParameterFilter {
             $args -contains "nuget" -and $args -contains "push"
         } -Because "packages should be pushed to NuGet when requested"
     }
@@ -382,10 +392,10 @@ Describe "PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullReque
             -artifactDownloadPath "$TestDrive/artifacts" `
             -pushToNuget $false 6>$null
 
-        Should -Invoke -CommandName "gh" -ModuleName "post-release" -Exactly -Times 1 -ParameterFilter {
+        Should-Invoke -CommandName "gh" -ModuleName "post-release" -Exactly -Times 1 -ParameterFilter {
             $args -contains "comment" -and (($args -join " ") -match "don't have permission to push packages")
         } -Because "non-maintainers should be told they cannot push packages"
-        Should -Invoke -CommandName "gh" -ModuleName "post-release" -Times 0 -ParameterFilter {
+        Should-NotInvoke -CommandName "gh" -ModuleName "post-release" -ParameterFilter {
             $args -contains "release" -and $args -contains "edit"
         } -Because "the release should not be published when permission is denied"
     }
@@ -410,7 +420,7 @@ Describe "PushPackagesPublishReleaseUnlockAndPostNoticeOnPrepareReleasePullReque
                 -commentUserName "maintainer" `
                 -artifactDownloadPath "$TestDrive/artifacts" `
                 -pushToNuget $false 6>$null
-        } | Should -Throw "*Could not find package push comment*" -Because "the packages-ready comment must exist before publishing"
+        } | Should-Throw -ExceptionMessage "*Could not find package push comment*" -Because "the packages-ready comment must exist before publishing"
     }
 }
 
@@ -418,7 +428,7 @@ Describe "CreateStableVersionUpdatePullRequest" {
 
     It "throws when the version cannot be parsed from the tag" {
         { CreateStableVersionUpdatePullRequest -gitRepository "open-telemetry/opentelemetry-dotnet" -tag "noprefix" 6>$null } |
-            Should -Throw "*Could not parse version from tag*" -Because "a tag without a prefix has no version to extract"
+            Should-Throw -ExceptionMessage "*Could not parse version from tag*" -Because "a tag without a prefix has no version to extract"
     }
 
     It "updates the stable version, opens a PR and updates affected CHANGELOGs" {
@@ -466,13 +476,13 @@ Released 2024-01-01
         }
 
         (Get-Content -Path (Join-Path -Path $work -ChildPath "Directory.Packages.props") -Raw) |
-            Should -Match "<OTelLatestStableVer>1\.2\.3</OTelLatestStableVer>" -Because "the stable version should be bumped in Directory.Packages.props"
+            Should-MatchString "<OTelLatestStableVer>1\.2\.3</OTelLatestStableVer>" -Because "the stable version should be bumped in Directory.Packages.props"
 
-        Should -Invoke -CommandName "gh" -ModuleName "post-release" -Exactly -Times 1 -ParameterFilter {
+        Should-Invoke -CommandName "gh" -ModuleName "post-release" -Exactly -Times 1 -ParameterFilter {
             $args -contains "pr" -and $args -contains "create" -and $args -contains "--label" -and $args -contains "release"
         } -Because "a labelled pull request should be opened for the stable update"
 
         (Get-Content -Path (Join-Path -Path $project -ChildPath "CHANGELOG.md") -Raw) |
-            Should -Match "Updated OpenTelemetry core component version\(s\) to ``1\.2\.3``" -Because "the CHANGELOG of an affected project should be updated"
+            Should-MatchString "Updated OpenTelemetry core component version\(s\) to ``1\.2\.3``" -Because "the CHANGELOG of an affected project should be updated"
     }
 }

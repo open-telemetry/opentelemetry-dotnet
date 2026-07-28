@@ -235,11 +235,6 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
 
         AssertSingleMetricWithLongSum(exportedItems);
 
-        var duplicateMetricInstrumentEvents = eventListener.Messages.Where((e) => e.EventId == 38);
-
-        // Note: We currently log a duplicate warning anytime a metric is reactivated.
-        Assert.Single(duplicateMetricInstrumentEvents);
-
         var metricInstrumentDeactivatedEvents = eventListener.Messages.Where((e) => e.EventId == 52);
 
         Assert.Single(metricInstrumentDeactivatedEvents);

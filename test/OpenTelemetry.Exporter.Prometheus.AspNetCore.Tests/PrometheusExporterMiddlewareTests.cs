@@ -62,6 +62,26 @@ public sealed class PrometheusExporterMiddlewareTests
         await Verify(output, "text", PrometheusSerializerTests.VerifySettings).UseParameters(targetInfoEnabled);
     }
 
+    [Theory]
+    [InlineData("all")]
+    [InlineData("service_name")]
+    [InlineData("none")]
+    public async Task RunWithResourceConstantLabelsConfigured(string filter)
+    {
+        var output = await RunPrometheusExporterMiddlewareIntegrationTest(
+            "/metrics",
+            app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
+            services => services.Configure<PrometheusAspNetCoreOptions>(o => o.ResourceConstantLabels = filter switch
+            {
+                "all" => static _ => true,
+                "service_name" => static key => key == "service.name",
+                _ => static _ => false,
+            }),
+            assertResponseContent: false);
+
+        await Verify(output, "text", PrometheusSerializerTests.VerifySettings).UseParameters(filter);
+    }
+
     [Fact]
     public async Task RunWithCustomScrapeEndpointPath()
     {
@@ -347,6 +367,41 @@ public sealed class PrometheusExporterMiddlewareTests
         Assert.Equivalent(PrometheusProtocol.Fallback, actual);
     }
 
+    [Theory]
+    [InlineData("text/plain; version=1.0.0")]
+    [InlineData("application/openmetrics-text; version=1.0.0")]
+    public void Negotiate_UsesDefaultEscaping_ForV1_WhenClientDoesNotNegotiateOne(string accept)
+    {
+        var context = new DefaultHttpContext();
+        context.Request.Headers.Accept = accept;
+
+        var actual = PrometheusExporterMiddleware.Negotiate(context.Request.GetTypedHeaders(), EscapingScheme.AllowUtf8);
+
+        Assert.Equal(PrometheusProtocol.AllowUtf8Escaping, actual.Escaping);
+    }
+
+    [Fact]
+    public void Negotiate_ClientEscaping_TakesPrecedence_OverDefault()
+    {
+        var context = new DefaultHttpContext();
+        context.Request.Headers.Accept = "text/plain; version=1.0.0; escaping=underscores";
+
+        var actual = PrometheusExporterMiddleware.Negotiate(context.Request.GetTypedHeaders(), EscapingScheme.AllowUtf8);
+
+        Assert.Equal(PrometheusProtocol.UnderscoresEscaping, actual.Escaping);
+    }
+
+    [Fact]
+    public void Negotiate_DefaultEscaping_IsIgnored_ForV0()
+    {
+        var context = new DefaultHttpContext();
+        context.Request.Headers.Accept = "text/plain; version=0.0.4";
+
+        var actual = PrometheusExporterMiddleware.Negotiate(context.Request.GetTypedHeaders(), EscapingScheme.AllowUtf8);
+
+        Assert.Null(actual.Escaping);
+    }
+
     [Fact]
     public async Task RunWithTextPlainResponseAndMeterTags()
     {
@@ -401,6 +456,184 @@ public sealed class PrometheusExporterMiddlewareTests
     }
 
     [Fact]
+    public async Task RunWithNoTranslationStrategy()
+    {
+        using var host = await StartTestHostAsync(
+            app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
+            configureOptions: o =>
+            {
+                o.TranslationStrategy = PrometheusTranslationStrategy.NoTranslation;
+
+                // Disabled to keep the snapshot focused on name translation.
+                o.ScopeInfoEnabled = false;
+                o.TargetInfoEnabled = false;
+            });
+
+        using var meter = new Meter(MeterName, MeterVersion);
+
+        // A dotted (non-legacy) metric name, a dotted label key and a unit together exercise
+        // both axes: with NoTranslation the names pass through as UTF-8 (written in the quoted
+        // exposition format) and no unit or '_total' suffixes are appended.
+        meter.CreateCounter<long>("http.server.requests", unit: "By")
+            .Add(5, new KeyValuePair<string, object?>("http.host", "localhost"));
+
+        host.Services.GetRequiredService<MeterProvider>().ForceFlush();
+
+        using var client = host.GetTestClient();
+
+        // version=1.0.0 with no escaping negotiated, so the strategy's default (UTF-8 passthrough)
+        // escaping applies.
+        client.DefaultRequestHeaders.Add("Accept", "text/plain; version=1.0.0");
+
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
+        var output = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings();
+
+        await host.StopAsync();
+
+        Assert.Equal(
+            "text/plain; version=1.0.0; charset=utf-8; escaping=allow-utf-8",
+            response.Content.Headers.ContentType!.ToString());
+
+        await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
+    }
+
+    [Fact]
+    public async Task RunWithUnderscoreEscapingWithoutSuffixesStrategy_OmitsUnitAndTotalSuffixes()
+    {
+        using var host = await StartTestHostAsync(
+            app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
+            configureOptions: o =>
+            {
+                o.TranslationStrategy = PrometheusTranslationStrategy.UnderscoreEscapingWithoutSuffixes;
+                o.ScopeInfoEnabled = false;
+                o.TargetInfoEnabled = false;
+            });
+
+        using var meter = new Meter(MeterName, MeterVersion);
+        meter.CreateCounter<long>("http.server.requests", unit: "By")
+            .Add(5, new KeyValuePair<string, object?>("host", "localhost"));
+
+        host.Services.GetRequiredService<MeterProvider>().ForceFlush();
+
+        using var client = host.GetTestClient();
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
+        var output = await response.Content.ReadAsStringAsync();
+
+        await host.StopAsync();
+
+        await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
+    }
+
+    [Fact]
+    public async Task RunWithNoUtf8EscapingWithSuffixesStrategy_KeepsUtf8NameWithSuffixes()
+    {
+        using var host = await StartTestHostAsync(
+            app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
+            configureOptions: o =>
+            {
+                o.TranslationStrategy = PrometheusTranslationStrategy.NoUTF8EscapingWithSuffixes;
+                o.ScopeInfoEnabled = false;
+                o.TargetInfoEnabled = false;
+            });
+
+        using var meter = new Meter(MeterName, MeterVersion);
+        meter.CreateCounter<long>("http.server.requests", unit: "By").Add(5);
+
+        host.Services.GetRequiredService<MeterProvider>().ForceFlush();
+
+        using var client = host.GetTestClient();
+
+        // version=1.0.0 with no escaping negotiated, so the strategy's default (UTF-8 passthrough)
+        // escaping applies.
+        client.DefaultRequestHeaders.Add("Accept", "text/plain; version=1.0.0");
+
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
+        var output = await response.Content.ReadAsStringAsync();
+
+        await host.StopAsync();
+
+        await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
+    }
+
+    [Fact]
+    public async Task RunWithNoTranslationStrategyAndNegotiatedUnderscoreEscaping()
+    {
+        using var host = await StartTestHostAsync(
+            app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
+            configureOptions: o =>
+            {
+                o.TranslationStrategy = PrometheusTranslationStrategy.NoTranslation;
+                o.ScopeInfoEnabled = false;
+                o.TargetInfoEnabled = false;
+            });
+
+        using var meter = new Meter(MeterName, MeterVersion);
+        meter.CreateCounter<long>("http.server.requests", unit: "By")
+            .Add(5, new KeyValuePair<string, object?>("http.host", "localhost"));
+
+        host.Services.GetRequiredService<MeterProvider>().ForceFlush();
+
+        using var client = host.GetTestClient();
+
+        // The exporter is configured with NoTranslation (UTF-8 passthrough), but the client
+        // negotiates escaping=underscores. Content negotiation must take precedence for the
+        // rendered escaping, so the metric and label names are underscore-escaped even though the
+        // configured strategy would otherwise pass them through as UTF-8. The suffix axis is not
+        // negotiated, so no unit or '_total' suffixes are added.
+        client.DefaultRequestHeaders.Add("Accept", "text/plain; version=1.0.0; escaping=underscores");
+
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
+        var output = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings();
+
+        await host.StopAsync();
+
+        Assert.Equal(
+            "text/plain; version=1.0.0; charset=utf-8; escaping=underscores",
+            response.Content.Headers.ContentType!.ToString());
+
+        await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
+    }
+
+    [Fact]
+    public async Task RunWithUnderscoreEscapingWithSuffixesStrategyAndNegotiatedAllowUtf8Escaping()
+    {
+        using var host = await StartTestHostAsync(
+            app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
+            configureOptions: o =>
+            {
+                o.TranslationStrategy = PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes;
+                o.ScopeInfoEnabled = false;
+                o.TargetInfoEnabled = false;
+            });
+
+        using var meter = new Meter(MeterName, MeterVersion);
+        meter.CreateCounter<long>("http.server.requests", unit: "By")
+            .Add(5, new KeyValuePair<string, object?>("http.host", "localhost"));
+
+        host.Services.GetRequiredService<MeterProvider>().ForceFlush();
+
+        using var client = host.GetTestClient();
+
+        // The exporter is configured with UnderscoreEscapingWithSuffixes, but the client negotiates
+        // escaping=allow-utf-8. Content negotiation must take precedence for the rendered escaping,
+        // so the names pass through as UTF-8 even though the configured strategy would otherwise
+        // underscore-escape them. The suffix axis is not negotiated, so the unit and '_total'
+        // suffixes (the configured translation) are retained.
+        client.DefaultRequestHeaders.Add("Accept", "text/plain; version=1.0.0; escaping=allow-utf-8");
+
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
+        var output = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings();
+
+        await host.StopAsync();
+
+        Assert.Equal(
+            "text/plain; version=1.0.0; charset=utf-8; escaping=allow-utf-8",
+            response.Content.Headers.ContentType!.ToString());
+
+        await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
+    }
+
+    [Fact]
     public async Task BufferSizeIncreasesWithLotOfMetrics()
     {
         using var host = await StartTestHostAsync(
@@ -426,6 +659,34 @@ public sealed class PrometheusExporterMiddlewareTests
         await host.StopAsync();
 
         await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+    }
+
+    [Fact]
+    public async Task ScrapeExceedingMaxResponseSizeReturns500()
+    {
+        using var host = await StartTestHostAsync(
+            app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
+            configureOptions: o => o.MaxScrapeResponseSizeBytes = PrometheusExporterOptions.InitialScrapeResponseSizeBytes);
+
+        using var meter = new Meter(MeterName, MeterVersion);
+
+        // Emit enough series that the serialized response far exceeds the configured maximum, so
+        // the response buffer cannot grow to hold it and the scrape fails rather than returning a
+        // misleading empty 200 response.
+        for (var x = 0; x < 2_000; x++)
+        {
+            meter.CreateCounter<double>("counter_double_" + x, unit: "By").Add(1);
+        }
+
+        host.Services.GetRequiredService<MeterProvider>().ForceFlush();
+
+        using var client = host.GetTestClient();
+
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
+
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+
+        await host.StopAsync();
     }
 
     [Fact]
@@ -684,7 +945,7 @@ public sealed class PrometheusExporterMiddlewareTests
 
         contentType ??=
             requestOpenMetrics ?
-            "application/openmetrics-text; version=0.0.1; charset=utf-8" :
+            "application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores" :
             "text/plain; version=0.0.4; charset=utf-8";
 
         Assert.Equal(contentType, response.Content.Headers.ContentType!.ToString());
@@ -720,9 +981,7 @@ public sealed class PrometheusExporterMiddlewareTests
                     # HELP target_info Target metadata
                     target_info{service_name="my_service",service_instance_id="id1"} 1
                     # TYPE counter_double_bytes_total counter
-                    # UNIT counter_double_bytes_total bytes
                     counter_double_bytes_total{otel_scope_name="{{MeterName}}",otel_scope_version="{{MeterVersion}}",{{additionalTags}}key1="value1",key2="value2"} 101.17
-                    # EOF
 
                     """.ReplaceLineEndings();
 

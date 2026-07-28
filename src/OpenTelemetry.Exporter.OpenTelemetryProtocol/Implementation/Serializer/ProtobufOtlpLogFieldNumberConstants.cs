@@ -67,6 +67,6 @@ internal static class ProtobufOtlpLogFieldNumberConstants
 
     // LogRecordFlags
     internal const int LogRecord_Flags_Do_Not_Use = 0;
-    internal const int LogRecord_Flags_Trace_Flags_Mask = 0x000000FF;
+    internal const uint LogRecord_Flags_Trace_Flags_Mask = 0x000000FF;
 }
 
