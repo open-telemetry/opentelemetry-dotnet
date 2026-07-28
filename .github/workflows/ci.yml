@@ -62,8 +62,9 @@ jobs:
           sdk-code: ['src/OpenTelemetry/**', 'test/OpenTelemetry.Tests/**', '!**/*.md']
           sdk-package: ['src/OpenTelemetry/**', '!**/*.md']
           unstable-core-packages: ['src/OpenTelemetry.Exporter.Prometheus.AspNetCore/**', 'src/OpenTelemetry.Exporter.Prometheus.HttpListener/**', 'src/OpenTelemetry.Shims.OpenTracing/**', '!**/*.md']
-          otlp: ['*/OpenTelemetry.Exporter.OpenTelemetryProtocol*/**', '!**/*.md']
           android: ['test/OpenTelemetry.Android.*/**', '.github/workflows/android-tests.yml']
+          blazor: ['test/OpenTelemetry.BlazorWasm.*/**', '.github/workflows/blazor-wasm-integration-test.yml']
+          otlp: ['*/OpenTelemetry.Exporter.OpenTelemetryProtocol*/**', '!**/*.md']
 
   lint-actions:
     needs: detect-changes
@@ -117,6 +118,7 @@ jobs:
       project-name: 'OpenTelemetry.slnx'
       code-cov-name: 'Solution'
       trigger: ${{ github.event_name }}
+      install-wasm-tools: true
 
   build-test-project-stable:
     needs: detect-changes
@@ -195,6 +197,18 @@ jobs:
       || contains(needs.detect-changes.outputs.changes, 'build')
       || contains(needs.detect-changes.outputs.changes, 'shared')
     uses: ./.github/workflows/android-tests.yml
+    with:
+      trigger: ${{ github.event_name }}
+
+  blazor-wasm-integration-test:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'blazor')
+      || contains(needs.detect-changes.outputs.changes, 'sdk-package')
+      || contains(needs.detect-changes.outputs.changes, 'otlp')
+      || contains(needs.detect-changes.outputs.changes, 'build')
+      || contains(needs.detect-changes.outputs.changes, 'shared')
+    uses: ./.github/workflows/blazor-wasm-integration-test.yml
     with:
       trigger: ${{ github.event_name }}
 
@@ -312,8 +326,9 @@ jobs:
       build-test-project-stable,
       build-test-project-experimental,
       build-test-unstable-core,
-      otlp-integration-test,
       android-integration-test,
+      blazor-wasm-integration-test,
+      otlp-integration-test,
       w3c-trace-context-integration-test,
       validate-benchmarks,
       validate-packages,
