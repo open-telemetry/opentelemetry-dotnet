@@ -41,7 +41,10 @@ internal sealed class BrowserFixture(ITestOutputHelper outputHelper)
             Title = name,
         });
 
-        var page = await context.NewPageAsync();
+        var page = await browser.NewPageAsync(new()
+        {
+            Locale = "en-US",
+        });
 
         page.Console += (_, e) => this.outputHelper.WriteLine(e.Text);
         page.PageError += (_, e) => this.outputHelper.WriteLine(e);
