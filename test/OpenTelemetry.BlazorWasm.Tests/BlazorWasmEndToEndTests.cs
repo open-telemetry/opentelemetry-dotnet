@@ -204,8 +204,10 @@ public sealed class BlazorWasmEndToEndTests : IClassFixture<BlazorWasmAppFixture
 
     private static bool HasServiceName(OtlpHttpCollector collector)
     {
-        static bool Matches(IEnumerable<KeyValue> attributes) =>
-            attributes.Any((p) => p.Key == "service.name" && p.Value?.StringValue == ServiceName);
+        static bool Matches(IEnumerable<KeyValue> attributes)
+        {
+            return attributes.Any((p) => p.Key == "service.name" && p.Value?.StringValue == ServiceName);
+        }
 
         return
             collector.GetLogsRequests().SelectMany((p) => p.ResourceLogs).Any((r) => Matches(r.Resource.Attributes)) ||
