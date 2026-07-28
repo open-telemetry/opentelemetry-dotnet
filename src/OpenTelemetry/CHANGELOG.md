@@ -13,6 +13,7 @@ Notes](../../RELEASENOTES.md).
 
 * Fixed activity creation throwing when multiple tracer providers return a
   sampler attribute with the same key.
+  ([#7558](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7558))
 
 ## 1.17.0
 
