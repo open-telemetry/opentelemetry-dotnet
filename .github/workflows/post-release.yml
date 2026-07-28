@@ -43,9 +43,6 @@ jobs:
 
     needs: automation
 
-    outputs:
-      dotnet-sdk-version: ${{ steps.setup-dotnet.outputs.dotnet-version }}
-
     permissions:
       id-token: write # Publish NuGet packages with trusted GitHub OIDC
 
@@ -79,7 +76,6 @@ jobs:
 
     - name: Setup .NET
       uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
-      id: setup-dotnet
 
     - name: NuGet log in
       uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
@@ -117,6 +113,7 @@ jobs:
     - automation
 
     outputs:
+      dotnet-sdk-version: ${{ steps.setup-dotnet.outputs.dotnet-version }}
       pr-number: ${{ steps.post-notice.outputs.pr-number }}
 
     if: |
@@ -147,6 +144,7 @@ jobs:
 
     - name: Setup .NET
       uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+      id: setup-dotnet
 
     - name: Create GitHub Pull Request to update stable build version in props
       if: |
@@ -190,7 +188,7 @@ jobs:
 
   wait-nuget:
     name: Wait for NuGet package publishing
-    needs: [automation, push-packages-and-publish-release, post-release-published]
+    needs: [automation, post-release-published]
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     if: needs.post-release-published.outputs.pr-number != ''
@@ -202,7 +200,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          dotnet-version: ${{ needs.push-packages-and-publish-release.outputs.dotnet-sdk-version }}
+          dotnet-version: ${{ needs.post-release-published.outputs.dotnet-sdk-version }}
 
       - name: Install WaitForNuGetPackage tool
         shell: pwsh

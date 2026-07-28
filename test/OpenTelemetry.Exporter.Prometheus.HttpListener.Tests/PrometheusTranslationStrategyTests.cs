@@ -27,6 +27,7 @@ public sealed class PrometheusTranslationStrategyTests
     [InlineData(PrometheusTranslationStrategy.NoUTF8EscapingWithSuffixes, EscapingScheme.AllowUtf8)]
     [InlineData(PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes, EscapingScheme.Underscores)]
     [InlineData(PrometheusTranslationStrategy.UnderscoreEscapingWithoutSuffixes, EscapingScheme.Underscores)]
+    [InlineData((PrometheusTranslationStrategy)int.MaxValue, EscapingScheme.Underscores)] // Unknown strategy falls back to underscores.
     internal void GetDefaultEscapingScheme_MapsEscapingAxis(PrometheusTranslationStrategy strategy, EscapingScheme expected)
         => Assert.Equal(expected, strategy.GetDefaultEscapingScheme());
 
@@ -35,6 +36,7 @@ public sealed class PrometheusTranslationStrategyTests
     [InlineData(PrometheusTranslationStrategy.NoUTF8EscapingWithSuffixes, true)]
     [InlineData(PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes, true)]
     [InlineData(PrometheusTranslationStrategy.UnderscoreEscapingWithoutSuffixes, false)]
+    [InlineData((PrometheusTranslationStrategy)int.MaxValue, true)] // Unknown strategy falls back to appending suffixes.
     internal void AppendSuffixes_MapsSuffixAxis(PrometheusTranslationStrategy strategy, bool expected)
         => Assert.Equal(expected, strategy.AppendSuffixes());
 
