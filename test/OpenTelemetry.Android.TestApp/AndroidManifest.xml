@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright The OpenTelemetry Authors -->
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!--
+        usesCleartextTraffic is required because the OTLP export targets plain HTTP
+        (http://10.0.2.2:4318); Android blocks cleartext traffic by default since
+        API 28, which would otherwise silently fail the export.
+    -->
+    <application android:label="OpenTelemetry.Android.TestApp" android:usesCleartextTraffic="true" />
+    <!-- Required to export over OTLP/HTTP to the host via the 10.0.2.2 loopback alias. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+</manifest>

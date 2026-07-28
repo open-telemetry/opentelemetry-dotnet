@@ -9,12 +9,14 @@
     <TestProjects Include="$(RepoRoot)\test\**\*.csproj" />
 
     <!--
-      The Blazor WebAssembly test app and its end-to-end tests require the
-      wasm-tools workload (and a browser) and are covered by the dedicated
-      blazor-wasm-integration-test workflow, so exclude them from the general
+      The Android and Blazor WebAssembly test infrastructure require
+      additional .NET workloads and are covered by the dedicated CI
+      integration test workflows, so exclude them from the general
       build/test to avoid imposing that on every contributor and CI job.
     -->
+    <SolutionProjects Remove="$(RepoRoot)\test\OpenTelemetry.Android.*\**\*.csproj" />
     <SolutionProjects Remove="$(RepoRoot)\test\OpenTelemetry.BlazorWasm.*\**\*.csproj" />
+    <TestProjects Remove="$(RepoRoot)\test\OpenTelemetry.Android.*\**\*.csproj" />
     <TestProjects Remove="$(RepoRoot)\test\OpenTelemetry.BlazorWasm.*\**\*.csproj" />
   </ItemGroup>
 

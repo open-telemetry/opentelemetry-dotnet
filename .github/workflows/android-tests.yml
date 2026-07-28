@@ -1,0 +1,81 @@
+name: Android Tests
+
+on:
+  workflow_call:
+    inputs:
+      trigger:
+        required: false
+        default: ''
+        type: string
+
+permissions: {}
+
+jobs:
+  android-tests:
+    name: Android end-to-end tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    permissions:
+      contents: read
+
+    strategy:
+      fail-fast: ${{ inputs.trigger == 'merge_group' }}
+      matrix:
+        version: [ net10.0 ]
+
+    steps:
+    - name: Setup JDK 17
+      uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+      with:
+        distribution: temurin
+        java-version: 17
+
+    - name: Checkout code
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+        show-progress: false
+
+    - name: Enable KVM
+      shell: bash
+      run: |
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+          | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger --name-match=kvm
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+
+    - name: Install android workload
+      shell: bash
+      run: dotnet workload install android
+
+    - name: Run Android end-to-end tests on the emulator
+      uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+      env:
+        TARGET_FRAMEWORK: ${{ matrix.version }}
+      with:
+        api-level: 34
+        arch: x86_64
+        disable-animations: true
+        emulator-boot-timeout: 900
+        target: google_apis
+        script: |
+          set +e
+          dotnet test test/OpenTelemetry.Android.Tests/OpenTelemetry.Android.Tests.csproj --configuration Debug --framework "${TARGET_FRAMEWORK}" --logger:"GitHubActions;report-warnings=false"
+          exit_code=$?
+          adb pull /storage/emulated/0/Android/data/io.opentelemetry.dotnet.android/files/TestResults ./TestResults || true
+          exit $exit_code
+
+    - name: Upload test result artifacts
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        name: android-artifacts
+        if-no-files-found: ignore
+        retention-days: 7
+        path: |
+          **/TestResults/**
+          **/*.trx
