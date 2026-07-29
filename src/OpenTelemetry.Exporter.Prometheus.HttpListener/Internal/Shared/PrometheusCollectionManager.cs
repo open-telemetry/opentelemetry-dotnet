@@ -15,7 +15,7 @@ internal sealed class PrometheusCollectionManager
 
     // Upper bound on how many times entering a collection will retry while
     // resolving races with concurrent scrapes (a collection completing, active
-    // readers draining, or a shared collection that did not serve this protocol).
+    // readers draining, or a collection this scrape could not register with).
     // In practice only a couple of iterations ever run; the cap exists purely so
     // a pathological interleaving of concurrent scrapes cannot starve one into
     // looping forever.
@@ -270,31 +270,36 @@ internal sealed class PrometheusCollectionManager
         {
             var collectionResult = await pendingCollectionTask.ConfigureAwait(false);
 
-            if (joinedActiveCollection &&
-                collectionResult.TryGetResponse(protocol, out var response))
+            if (joinedActiveCollection)
             {
+                // This scrape shared the collection, so the collection's outcome is
+                // this scrape's outcome. When it produced no response for this
+                // protocol it failed, and this scrape reports that failure rather
+                // than collecting again: a retry cannot reuse the collection it just
+                // shared, so it would have to start a new one, which cannot begin
+                // until every active reader of this protocol has drained. Under
+                // concurrent scrapes that wait can spin for an unbounded time while
+                // holding a thread, so retrying here risks starving the scrapes whose
+                // completion it is waiting on.
+                if (!collectionResult.TryGetResponse(protocol, out var response))
+                {
+                    PrometheusExporterEventSource.Log.CollectFailed();
+
+                    // The reader slot taken when joining is left outstanding for the
+                    // caller's ExitCollect to release.
+                    return default;
+                }
+
                 return response;
             }
 
-            if (joinedActiveCollection)
-            {
-                this.ExitCollect(protocol);
-            }
-
-            // Retire the collection that just completed. The thread which ran it
-            // publishes the result before clearing collectionContext, so without
-            // this a retry can observe - and re-join - the very same completed
-            // collection (TryRegisterProtocol accepts a protocol that is already
-            // registered, and a collection which failed before exporting never
-            // froze its protocol set) and spin without ever collecting again.
-            this.RetireCollection(pendingCollectionTask);
-
-            // The shared collection did not produce a response for this protocol,
-            // so make another attempt. Loop here (bounded by MaxCollectAttempts)
-            // rather than recursing back into EnterCollect: when the awaited
-            // collection completes synchronously the continuation runs inline,
-            // so a recursive retry would grow the stack on every iteration
-            // and eventually overflow under contention.
+            // This scrape never registered with the collection it observed, so that
+            // collection was never going to produce a response for it: make another
+            // attempt. Loop here (bounded by MaxCollectAttempts) rather than recursing
+            // back into EnterCollect: when the awaited collection completes
+            // synchronously the continuation runs inline, so a recursive retry would
+            // grow the stack on every iteration and eventually overflow under
+            // contention.
             var step = this.TryEnterCollect(protocol);
 
             if (step.PendingCollectionTask is null)
@@ -322,30 +327,6 @@ internal sealed class PrometheusCollectionManager
         }
 
         return default;
-    }
-
-    /// <summary>
-    /// Clears the active collection if it is still the one which produced
-    /// <paramref name="completedCollectionTask"/>, so that the next attempt to
-    /// enter a collection starts a new one instead of joining a finished one.
-    /// </summary>
-    /// <param name="completedCollectionTask">The task of the collection which has completed.</param>
-    private void RetireCollection(Task<CollectionResult> completedCollectionTask)
-    {
-        this.EnterGlobalLock();
-
-        try
-        {
-            if (this.collectionContext is { } currentCollectionContext &&
-                ReferenceEquals(currentCollectionContext.Task, completedCollectionTask))
-            {
-                this.collectionContext = null;
-            }
-        }
-        finally
-        {
-            this.ExitGlobalLock();
-        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

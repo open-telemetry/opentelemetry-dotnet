@@ -406,8 +406,11 @@ public sealed class PrometheusCollectionManagerTests
     }
 
     [Fact]
-    public async Task EnterCollectRetriesAfterFailedSharedCollection()
+    public async Task EnterCollectFailsScrapesWhichSharedAFailedCollection()
     {
+        var testTimeout = TimeSpan.FromSeconds(30);
+        using var cts = new CancellationTokenSource(testTimeout);
+
         using var meter = CreateMeter();
 #if PROMETHEUS_HTTP_LISTENER
         using var provider = CreateMeterProviderWithRandomPort(meter);
@@ -447,7 +450,7 @@ public sealed class PrometheusCollectionManagerTests
 
         var protocol = GetProtocol(openMetricsRequested: false);
 
-        var firstCollectTask = Task.Run(async () =>
+        var collectingScrape = Task.Run(async () =>
         {
             var response = await EnterCollectAsync(exporter, protocol);
             try
@@ -462,36 +465,42 @@ public sealed class PrometheusCollectionManagerTests
 
         await firstCollectStarted.Task;
 
-        var secondCollectTask = Task.Run(async () =>
-        {
-            var response = await EnterCollectAsync(exporter, protocol);
-            try
-            {
-                return response;
-            }
-            finally
-            {
-                exporter.CollectionManager.ExitCollect(protocol);
-            }
-        });
+        // Share the collection which is about to be failed. EnterCollect registers this
+        // scrape with the in-flight collection before it returns the task to wait on, so
+        // by the time this call returns the collection is being shared and releasing it
+        // below cannot race with joining it.
+#pragma warning disable CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
+        var sharingScrape = EnterCollectAsync(exporter, protocol);
+#pragma warning restore CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
 
         allowFirstCollectToComplete.SetResult(true);
 
-        var timeout = TimeSpan.FromSeconds(5);
+        var all = Task.WhenAll(collectingScrape, sharingScrape);
+        var completion = await Task.WhenAny(all, Task.Delay(testTimeout, cts.Token));
 
-        using (var cts = new CancellationTokenSource(timeout))
+        Assert.Same(all, completion);
+
+        var collectingResponse = await collectingScrape;
+
+        PrometheusCollectionManager.CollectionResponse sharingResponse;
+        try
         {
-            var all = Task.WhenAll(firstCollectTask, secondCollectTask);
-            var completion = await Task.WhenAny(all, Task.Delay(timeout, cts.Token));
-            Assert.Same(all, completion);
+            sharingResponse = await sharingScrape;
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect(protocol);
         }
 
-        var firstResponse = await firstCollectTask;
-        var secondResponse = await secondCollectTask;
+        // A failed collection is reported to every scrape which shared it, and is not
+        // collected again on their behalf.
+        Assert.Equal(1, collectCount);
 
-        Assert.Equal(2, collectCount);
-        Assert.Equal(0, firstResponse.View.Count);
-        Assert.True(secondResponse.View.Count > 0);
+        Assert.False(collectingResponse.Succeeded, "The scrape which ran the failed collection did not report failure.");
+        Assert.Equal(0, collectingResponse.View.Count);
+
+        Assert.False(sharingResponse.Succeeded, "The scrape which shared the failed collection did not report failure.");
+        Assert.Equal(0, sharingResponse.View.Count);
     }
 
     [Fact]

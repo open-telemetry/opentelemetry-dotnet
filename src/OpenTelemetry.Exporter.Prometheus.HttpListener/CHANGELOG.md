@@ -7,8 +7,7 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* Fix concurrent scrapes returning an empty response when they retried after
-  sharing a metric collection which failed.
+* Fix concurrent scrapes returning an empty response under contention.
   ([#7571](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7571))
 
 ## 1.17.0-beta.1
