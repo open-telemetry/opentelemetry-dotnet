@@ -251,6 +251,40 @@ public sealed class TracerProviderSdkTests : IDisposable
     }
 
     [Fact]
+    public void TracerProviderSdkDuplicateSamplerAttributesUseLastValue()
+    {
+        const string attributeKey = "duplicate-sampler-attribute";
+        var firstSampler = new TestSampler
+        {
+            SamplingAction = _ => new SamplingResult(
+                SamplingDecision.RecordAndSample,
+                [new(attributeKey, "first")]),
+        };
+        var secondSampler = new TestSampler
+        {
+            SamplingAction = _ => new SamplingResult(
+                SamplingDecision.RecordAndSample,
+                [new(attributeKey, "second")]),
+        };
+
+        var activitySourceName = Utils.GetCurrentMethodName();
+        using var activitySource = new ActivitySource(activitySourceName);
+        using var firstProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(activitySourceName)
+            .SetSampler(firstSampler)
+            .Build();
+        using var secondProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(activitySourceName)
+            .SetSampler(secondSampler)
+            .Build();
+
+        using var activity = activitySource.StartActivity("root");
+
+        Assert.NotNull(activity);
+        Assert.Equal("second", activity.GetTagItem(attributeKey));
+    }
+
+    [Fact]
     public void TracerSdkSetsActivitySamplingResultAsPropagationWhenParentIsRemote()
     {
         var activitySourceName = Utils.GetCurrentMethodName();

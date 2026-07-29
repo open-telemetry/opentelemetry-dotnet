@@ -85,11 +85,11 @@
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
     <PackageVersion Include="CommandLineParser" Version="2.9.1" />
     <PackageVersion Include="FSharp.Core" Version="10.1.302" />
-    <PackageVersion Include="FsCheck.Xunit" Version="3.3.3" />
-    <PackageVersion Include="GitHubActionsTestLogger" Version="3.0.4" />
+    <PackageVersion Include="FsCheck.Xunit" Version="3.3.4" />
+    <PackageVersion Include="GitHubActionsTestLogger" Version="3.0.5" />
     <PackageVersion Include="Grpc.AspNetCore" Version="2.67.0" />
     <PackageVersion Include="Grpc.AspNetCore.Server" Version="2.67.0" />
-    <PackageVersion Include="Grpc.Tools" Version="2.68.1" />
+    <PackageVersion Include="Grpc.Tools" Version="2.83.0" />
     <PackageVersion Include="Google.Protobuf" Version="3.35.1" />
     <PackageVersion Include="Grpc" Version="2.46.6" />
     <PackageVersion Include="Grpc.Net.Client" Version="2.67.0" />
