@@ -281,6 +281,14 @@ internal sealed class PrometheusCollectionManager
                 this.ExitCollect(protocol);
             }
 
+            // Retire the collection that just completed. The thread which ran it
+            // publishes the result before clearing collectionContext, so without
+            // this a retry can observe - and re-join - the very same completed
+            // collection (TryRegisterProtocol accepts a protocol that is already
+            // registered, and a collection which failed before exporting never
+            // froze its protocol set) and spin without ever collecting again.
+            this.RetireCollection(pendingCollectionTask);
+
             // The shared collection did not produce a response for this protocol,
             // so make another attempt. Loop here (bounded by MaxCollectAttempts)
             // rather than recursing back into EnterCollect: when the awaited
@@ -314,6 +322,30 @@ internal sealed class PrometheusCollectionManager
         }
 
         return default;
+    }
+
+    /// <summary>
+    /// Clears the active collection if it is still the one which produced
+    /// <paramref name="completedCollectionTask"/>, so that the next attempt to
+    /// enter a collection starts a new one instead of joining a finished one.
+    /// </summary>
+    /// <param name="completedCollectionTask">The task of the collection which has completed.</param>
+    private void RetireCollection(Task<CollectionResult> completedCollectionTask)
+    {
+        this.EnterGlobalLock();
+
+        try
+        {
+            if (this.collectionContext is { } currentCollectionContext &&
+                ReferenceEquals(currentCollectionContext.Task, completedCollectionTask))
+            {
+                this.collectionContext = null;
+            }
+        }
+        finally
+        {
+            this.ExitGlobalLock();
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fix concurrent scrapes returning an empty response when they retried after
+  sharing a metric collection which failed.
+  ([#7571](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7571))
+
 ## 1.17.0-beta.1
 
 Released 2026-Jul-16
