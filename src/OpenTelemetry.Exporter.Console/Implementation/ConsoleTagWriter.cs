@@ -85,6 +85,113 @@ internal sealed class ConsoleTagWriter : JsonStringArrayTagWriter<ConsoleTagWrit
         return true;
     }
 
+    protected override void WriteKvListTag(ref ConsoleTag state, string key, IEnumerable<KeyValuePair<string, object?>> kvList, int? tagValueMaxLength)
+    {
+        var sb = new StringBuilder();
+        sb.Append('{');
+        var first = true;
+        foreach (var kvp in kvList)
+        {
+            ConsoleTag nestedTag = default;
+            if (this.TryWriteTag(ref nestedTag, kvp.Key, kvp.Value, tagValueMaxLength))
+            {
+                if (!first)
+                {
+                    sb.Append(',');
+                }
+
+                first = false;
+                sb.Append('"');
+                AppendJsonEscaped(sb, kvp.Key);
+                sb.Append("\":");
+
+                var tagValue = nestedTag.Value;
+                if (tagValue == null)
+                {
+                    sb.Append("null");
+                }
+                else if (IsRawJsonValue(kvp.Value, tagValue))
+                {
+                    sb.Append(tagValue);
+                }
+                else
+                {
+                    sb.Append('"');
+                    AppendJsonEscaped(sb, tagValue);
+                    sb.Append('"');
+                }
+            }
+        }
+
+        sb.Append('}');
+        state.Key = key;
+        state.Value = sb.ToString();
+    }
+
+    /// <summary>
+    /// Determines whether tagValue is already a valid JSON literal
+    /// that should be embedded without surrounding quotes.
+    /// </summary>
+    private static bool IsRawJsonValue(object? originalValue, string tagValue)
+    {
+        if (originalValue is bool
+            or byte or sbyte or short or ushort or int or uint or long
+            or float or double)
+        {
+            return true;
+        }
+
+        // KV lists and arrays produce JSON objects/arrays via TryWriteTag.
+        // However, when the recursion depth limit is reached, TryWriteTag
+        // falls back to a plain string (the type name). Detect this by
+        // checking whether the output starts with '{' or '['.
+        if ((originalValue is IEnumerable<KeyValuePair<string, object?>> or Array)
+            && tagValue.Length > 0
+            && (tagValue[0] == '{' || tagValue[0] == '['))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private static void AppendJsonEscaped(StringBuilder sb, string value)
+    {
+        foreach (var c in value)
+        {
+            switch (c)
+            {
+                case '"':
+                    sb.Append("\\\"");
+                    break;
+                case '\\':
+                    sb.Append("\\\\");
+                    break;
+                case '\n':
+                    sb.Append("\\n");
+                    break;
+                case '\r':
+                    sb.Append("\\r");
+                    break;
+                case '\t':
+                    sb.Append("\\t");
+                    break;
+                default:
+                    if (c < ' ')
+                    {
+                        sb.Append("\\u");
+                        sb.Append(((int)c).ToString("x4", CultureInfo.InvariantCulture));
+                    }
+                    else
+                    {
+                        sb.Append(c);
+                    }
+
+                    break;
+            }
+        }
+    }
+
     internal struct ConsoleTag
     {
         public string? Key;
