@@ -24,6 +24,19 @@
         <integer>2</integer>
     </array>
     <!--
+        The app has no user interface, but the supported orientations must still
+        be declared for both device families otherwise the build warns that they
+        have not been set.
+    -->
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+    </array>
+    <key>UISupportedInterfaceOrientations~ipad</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+    </array>
+    <!--
         NSAllowsLocalNetworking is required because the OTLP export targets plain
         HTTP on the host loopback (http://localhost:<port>); App Transport
         Security blocks cleartext HTTP by default, which would otherwise silently

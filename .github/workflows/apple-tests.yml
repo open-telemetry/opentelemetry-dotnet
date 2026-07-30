@@ -37,7 +37,7 @@ jobs:
     - name: Select the latest version of Xcode
       shell: bash
       run: |
-        version=$(find /Applications -maxdepth 1 -name 'Xcode_*.app' | sed -e 's|.*/Xcode_||' -e 's|\.app$||' | sort -t. -k1,1n -k2,2n -k3,3n | tail -1)
+        version=$(find /Applications -maxdepth 1 -name 'Xcode_*.app' -type d | sed -e 's|.*/Xcode_||' -e 's|\.app$||' | sort -t. -k1,1n -k2,2n -k3,3n | tail -1)
         if [ -z "${version}" ]; then
           echo "::error::No Xcode installation was found in /Applications."
           exit 1
