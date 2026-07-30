@@ -1,0 +1,56 @@
+name: Apple Tests
+
+on:
+  workflow_call:
+    inputs:
+      trigger:
+        required: false
+        default: ''
+        type: string
+
+permissions: {}
+
+jobs:
+  apple-tests:
+    name: Apple (iOS) end-to-end tests
+    runs-on: macos-26
+    timeout-minutes: 30
+
+    permissions:
+      contents: read
+
+    strategy:
+      fail-fast: ${{ inputs.trigger == 'merge_group' }}
+      matrix:
+        version: [ net10.0 ]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+        show-progress: false
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+
+    - name: Install ios workload
+      shell: bash
+      run: dotnet workload install ios
+
+    - name: Run Apple end-to-end tests on the simulator
+      shell: bash
+      env:
+        TARGET_FRAMEWORK: ${{ matrix.version }}
+      run: dotnet test test/OpenTelemetry.Apple.Tests/OpenTelemetry.Apple.Tests.csproj --configuration Debug --framework "${TARGET_FRAMEWORK}" --logger:"GitHubActions;report-warnings=false"
+
+    - name: Upload test result artifacts
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        name: apple-artifacts
+        if-no-files-found: ignore
+        retention-days: 7
+        path: |
+          **/TestResults/**
+          **/*.trx
