@@ -9,7 +9,6 @@ using Microsoft.Extensions.Logging;
 using OpenTelemetry.Proto.Collector.Logs.V1;
 using OpenTelemetry.Proto.Collector.Metrics.V1;
 using OpenTelemetry.Proto.Collector.Trace.V1;
-using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Apple.Tests;
 
@@ -23,6 +22,8 @@ namespace OpenTelemetry.Apple.Tests;
 /// </summary>
 internal sealed class OtlpHttpCollector : IAsyncDisposable
 {
+    internal const int Port = 4318;
+
     private readonly Lock lockObject = new();
     private readonly List<ExportLogsServiceRequest> logsRequests = [];
     private readonly List<ExportMetricsServiceRequest> metricsRequests = [];
@@ -42,13 +43,11 @@ internal sealed class OtlpHttpCollector : IAsyncDisposable
 
     public static async Task<OtlpHttpCollector> StartAsync()
     {
-        var port = TcpPortProvider.GetOpenPort();
-
         // Binding to 'localhost' (rather than a specific address) makes Kestrel
         // listen on both loopback addresses, and matches the unqualified host
         // name the app is allowed to reach over cleartext HTTP by the App
         // Transport Security policy declared in the app's Info.plist.
-        var baseUrl = $"http://localhost:{port}";
+        var baseUrl = $"http://localhost:{Port}";
 
         var builder = WebApplication.CreateBuilder();
 

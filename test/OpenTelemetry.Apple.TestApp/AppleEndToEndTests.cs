@@ -15,8 +15,7 @@ namespace OpenTelemetry.Apple.TestApp;
 [TestClass]
 public sealed class AppleEndToEndTests
 {
-    private static readonly Uri OtlpBaseAddress = new(
-        Environment.GetEnvironmentVariable("OTEL_TEST_OTLP_ENDPOINT") ?? "http://localhost:4318");
+    private static readonly Uri OtlpBaseAddress = new(InstrumentationSource.OtlpEndpoint);
 
     private static readonly TimeSpan FlushTimeout = TimeSpan.FromSeconds(10);
 

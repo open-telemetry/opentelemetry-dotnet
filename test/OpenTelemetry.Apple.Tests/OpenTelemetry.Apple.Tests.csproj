@@ -13,10 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="$(RepoRoot)\test\OpenTelemetry.Tests\Shared\TcpPortProvider.cs" Link="Includes\TcpPortProvider.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Protobuf Include="$(RepoRoot)\src\Shared\Proto\**\*.proto" Link="Proto\%(RecursiveDir)%(Filename)%(Extension)" Access="internal" GrpcServices="None">
       <ProtoRoot>$(RepoRoot)\src\Shared\Proto</ProtoRoot>
     </Protobuf>

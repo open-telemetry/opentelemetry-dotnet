@@ -30,7 +30,7 @@ public sealed class AppleEndToEndTests(AppleAppFixture fixture) : IClassFixture<
 
         var collector = this.fixture.Collector;
 
-        await WaitForAsync(() => HasLog(collector, LogBody), () => Detail(collector));
+        await WaitForAsync(() => HasLog(collector, LogBody), () => this.Detail(collector));
 
         var scenarioLog = GetLogRecords(collector).First((p) => Body(p).Contains(LogBody, StringComparison.Ordinal));
 
@@ -47,7 +47,7 @@ public sealed class AppleEndToEndTests(AppleAppFixture fixture) : IClassFixture<
 
         await WaitForAsync(
             () => HasMetric(collector, CounterName) && HasMetric(collector, HistogramName),
-            () => Detail(collector));
+            () => this.Detail(collector));
 
         Assert.True(HasMetric(collector, CounterName), $"Expected metric '{CounterName}'.");
         Assert.True(HasMetric(collector, HistogramName), $"Expected metric '{HistogramName}'.");
@@ -61,7 +61,7 @@ public sealed class AppleEndToEndTests(AppleAppFixture fixture) : IClassFixture<
 
         var collector = this.fixture.Collector;
 
-        await WaitForAsync(() => HasScenarioTrace(collector), () => Detail(collector));
+        await WaitForAsync(() => HasScenarioTrace(collector), () => this.Detail(collector));
 
         Assert.True(HasScenarioTrace(collector), "Expected a scenario span with the contract name and tag.");
         Assert.True(HasServiceName(collector), $"Expected resource attribute service.name='{ServiceName}'.");
@@ -136,9 +136,10 @@ public sealed class AppleEndToEndTests(AppleAppFixture fixture) : IClassFixture<
             .SelectMany((p) => p.ScopeLogs)
             .SelectMany((p) => p.LogRecords)];
 
-    private static string Detail(OtlpHttpCollector collector) =>
+    private string Detail(OtlpHttpCollector collector) =>
         $"Spans seen: {string.Join(", ", GetSpans(collector).Select(t => $"{t.Scope}/{t.Span.Name}"))}." +
         $"{Environment.NewLine}Metrics seen: {string.Join(", ", GetMetricNames(collector))}." +
         $"{Environment.NewLine}Logs seen: {GetLogRecords(collector).Count}." +
-        $"{Environment.NewLine}{collector.GetRawHitSummary()}";
+        $"{Environment.NewLine}{collector.GetRawHitSummary()}" +
+        $"{Environment.NewLine}On-device run output:{Environment.NewLine}{this.fixture.DeviceRunOutput}";
 }

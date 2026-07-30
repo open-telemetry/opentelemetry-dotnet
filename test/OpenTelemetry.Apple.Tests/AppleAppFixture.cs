@@ -429,14 +429,6 @@ public sealed class AppleAppFixture : IAsyncLifetime
             return;
         }
 
-        // Environment variables prefixed with SIMCTL_CHILD_ are passed through to
-        // the launched app with the prefix removed. This is how the app is told
-        // which port the collector on the host is listening on.
-        var environment = new Dictionary<string, string>(StringComparer.Ordinal)
-        {
-            ["SIMCTL_CHILD_OTEL_TEST_OTLP_ENDPOINT"] = this.Collector.BaseUrl,
-        };
-
         var resultsDirectory = this.ResultsDirectory(simulator);
 
         // '--console-pty' streams the app's stdout and stderr, which is captured for
@@ -448,8 +440,7 @@ public sealed class AppleAppFixture : IAsyncLifetime
             ["simctl", "launch", "--console-pty", "--terminate-running-process", simulator, BundleIdentifier],
             repoRoot,
             TestRunTimeout,
-            environment,
-            () => resultsDirectory is not null && TryReadResults(resultsDirectory) is not null);
+            completed: () => resultsDirectory is not null && TryReadResults(resultsDirectory) is not null);
 
         // Make sure the app is not left running in the simulator.
         this.Run("xcrun", ["simctl", "terminate", simulator, BundleIdentifier], repoRoot, SimulatorCommandTimeout);

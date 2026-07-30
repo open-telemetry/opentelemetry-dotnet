@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics.Tracing;
 using System.Globalization;
 using Microsoft.Testing.Extensions;
 using Microsoft.Testing.Platform.Builder;
@@ -26,6 +27,13 @@ internal static class TestRunner
         var resultsDirectory = Path.Combine(DocumentsDirectory(), ResultsDirectoryName);
 
         Directory.CreateDirectory(resultsDirectory);
+
+        // The test platform replaces Console.Out while the tests run and only
+        // reports the output it captures for tests that fail, so the real one is
+        // held on to here to keep the diagnostics visible in the streamed output.
+        using var diagnostics = new SelfDiagnosticsListener(Console.Out);
+
+        await Console.Out.WriteLineAsync("Exporting OTLP to " + InstrumentationSource.OtlpEndpoint).ConfigureAwait(false);
 
         var consumer = new ResultConsumer();
         var exitCode = -1;
@@ -91,6 +99,36 @@ internal static class TestRunner
     private static string DocumentsDirectory()
         => NSSearchPath.GetDirectories(NSSearchPathDirectory.DocumentDirectory, NSSearchPathDomain.User).FirstOrDefault()
             ?? Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+
+    private sealed class SelfDiagnosticsListener : EventListener
+    {
+        // This is static because the base constructor can call
+        // OnEventSourceCreated - and so start writing events - before
+        // the fields of this class would have been assigned.
+        private static TextWriter? output;
+
+        internal SelfDiagnosticsListener(TextWriter writer)
+        {
+            output = TextWriter.Synchronized(writer);
+        }
+
+        protected override void OnEventSourceCreated(EventSource eventSource)
+        {
+            if (eventSource.Name.StartsWith("OpenTelemetry", StringComparison.Ordinal))
+            {
+                this.EnableEvents(eventSource, EventLevel.Error, EventKeywords.All);
+            }
+        }
+
+        protected override void OnEventWritten(EventWrittenEventArgs eventData)
+        {
+            var payload = eventData.Payload is null
+                ? string.Empty
+                : string.Join(", ", eventData.Payload);
+
+            output?.WriteLine($"{eventData.EventSource?.Name}: {eventData.EventName}: {payload}");
+        }
+    }
 
     private sealed class ResultConsumer : IDataConsumer
     {
