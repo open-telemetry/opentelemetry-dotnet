@@ -16,7 +16,7 @@ namespace Benchmarks.Exporter;
 public class ProtobufOtlpMetricSerializerBenchmarks
 #pragma warning restore CA1001 // Types that own disposable fields should be disposable - handled by GlobalCleanup
 {
-    private readonly byte[] buffer = new byte[256 * 1024];
+    private byte[] buffer = null!;
     private Meter? meter;
     private MeterProvider? meterProvider;
     private Metric[]? capturedMetrics;
@@ -28,6 +28,8 @@ public class ProtobufOtlpMetricSerializerBenchmarks
     [GlobalSetup]
     public void Setup()
     {
+        this.buffer = ProtobufSerializer.RentBuffer(256 * 1024);
+
         var meterName = "benchmark.metric-serializer." + Guid.NewGuid().ToString("N");
         this.meter = new Meter(meterName);
 
@@ -59,14 +61,13 @@ public class ProtobufOtlpMetricSerializerBenchmarks
 
     [Benchmark]
     public int WriteMetricsData()
-    {
-        var buf = this.buffer;
-        return ProtobufOtlpMetricSerializer.WriteMetricsData(ref buf, 0, Resource.Empty, in this.batch);
-    }
+        => ProtobufOtlpMetricSerializer.WriteMetricsData(ref this.buffer, 0, Resource.Empty, in this.batch);
 
     [GlobalCleanup]
     public void Cleanup()
     {
+        ProtobufSerializer.ReturnBuffer(this.buffer);
+        this.buffer = null!;
         this.meterProvider?.Dispose();
         this.meter?.Dispose();
     }

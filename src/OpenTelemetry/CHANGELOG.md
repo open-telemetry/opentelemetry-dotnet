@@ -6,6 +6,23 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed self-diagnostics log lines being silently dropped when an event message
+  or parameter contained enough 3-byte UTF-8 characters to overflow the internal
+  buffer estimate. Such content is now truncated.
+  ([#7543](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7543))
+
+* Fixed activity creation throwing when multiple tracer providers return a
+  sampler attribute with the same key.
+  ([#7558](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7558))
+
+## 1.17.0
+
+Released 2026-Jul-16
+
+## 1.17.0-rc.1
+
+Released 2026-Jul-16
+
 * Fixed a metric point reclaim data race on CPU ARM architectures.
   ([#7401](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7401))
 
@@ -30,6 +47,10 @@ Notes](../../RELEASENOTES.md).
 * Fixed a metric storage leak that occurred when meters and instruments were
   repeatedly created and disposed.
   ([#7466](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7466))
+
+* Added `ExcludedTagKeys` property to `MetricStreamConfiguration` to support
+  excluding specific tag keys from metric streams.
+  ([#7373](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7373))
 
 ## 1.16.0
 

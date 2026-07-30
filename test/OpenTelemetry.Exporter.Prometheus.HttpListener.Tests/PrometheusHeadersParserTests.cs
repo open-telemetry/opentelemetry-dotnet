@@ -31,4 +31,38 @@ public class PrometheusHeadersParserTests
 
         Assert.Equal(PrometheusProtocol.Fallback, actual);
     }
+
+    [Theory]
+    [InlineData("text/plain; version=1.0.0")]
+    [InlineData("application/openmetrics-text; version=1.0.0")]
+    public void Negotiate_UsesDefaultEscaping_ForV1_WhenClientDoesNotNegotiateOne(string accept)
+    {
+        var actual = PrometheusHeadersParser.Negotiate(accept, EscapingScheme.AllowUtf8);
+
+        Assert.Equal(PrometheusProtocol.AllowUtf8Escaping, actual.Escaping);
+    }
+
+    [Fact]
+    public void Negotiate_ClientEscaping_TakesPrecedence_OverDefault()
+    {
+        var actual = PrometheusHeadersParser.Negotiate("text/plain; version=1.0.0; escaping=underscores", EscapingScheme.AllowUtf8);
+
+        Assert.Equal(PrometheusProtocol.UnderscoresEscaping, actual.Escaping);
+    }
+
+    [Fact]
+    public void Negotiate_DefaultEscaping_IsIgnored_ForV0()
+    {
+        var actual = PrometheusHeadersParser.Negotiate("text/plain; version=0.0.4", EscapingScheme.AllowUtf8);
+
+        Assert.Null(actual.Escaping);
+    }
+
+    [Fact]
+    public void Negotiate_DefaultEscaping_DoesNotAffectFallback_WhenNoAcceptHeader()
+    {
+        var actual = PrometheusHeadersParser.Negotiate(contentType: null, EscapingScheme.AllowUtf8);
+
+        Assert.Equal(PrometheusProtocol.Fallback, actual);
+    }
 }

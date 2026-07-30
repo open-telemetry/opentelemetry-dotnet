@@ -753,26 +753,35 @@ public sealed class OtlpTraceExporterTests : IDisposable
 
         static void RunTest(SdkLimitOptions sdkOptions, Batch<Activity> batch)
         {
-            var buffer = new byte[50];
-            var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, ResourceBuilder.CreateEmpty().Build(), batch);
-            using var stream = new MemoryStream(buffer, 0, writePosition);
-            var tracesData = OtlpTrace.TracesData.Parser.ParseFrom(stream);
-            var request = new OtlpCollector.ExportTraceServiceRequest();
-            request.ResourceSpans.Add(tracesData.ResourceSpans);
+            var buffer = ProtobufSerializer.RentBuffer(50);
+            try
+            {
+                var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, ResourceBuilder.CreateEmpty().Build(), batch);
+                using var stream = new MemoryStream(buffer, 0, writePosition);
+                var tracesData = OtlpTrace.TracesData.Parser.ParseFrom(stream);
+                var request = new OtlpCollector.ExportTraceServiceRequest();
+                request.ResourceSpans.Add(tracesData.ResourceSpans);
 
-            // Buffer should be expanded to accommodate the large array.
-            Assert.True(buffer.Length > 50);
+                // Buffer should be expanded to accommodate the large array.
+                Assert.True(buffer.Length > 50);
 
-            Assert.Single(request.ResourceSpans);
-            var scopeSpans = request.ResourceSpans.First().ScopeSpans;
-            Assert.Single(scopeSpans);
-            var otlpSpan = scopeSpans.First().Spans.First();
-            Assert.NotNull(otlpSpan);
+                Assert.Single(request.ResourceSpans);
+                var scopeSpans = request.ResourceSpans.First().ScopeSpans;
+                Assert.Single(scopeSpans);
+                var otlpSpan = scopeSpans.First().Spans.First();
+                Assert.NotNull(otlpSpan);
 
-            // The string is too large, hence not evaluating the content.
-            var keyValue = otlpSpan.Attributes.FirstOrDefault(kvp => kvp.Key == "Tagkey");
-            Assert.NotNull(keyValue);
-            Assert.Equal("Tagvalue", keyValue.Value.StringValue);
+                // The string is too large, hence not evaluating the content.
+                var keyValue = otlpSpan.Attributes.FirstOrDefault(kvp => kvp.Key == "Tagkey");
+                Assert.NotNull(keyValue);
+                Assert.Equal("Tagvalue", keyValue.Value.StringValue);
+            }
+            finally
+            {
+                // The serializer may have grown (and swapped) the buffer, so return
+                // whatever buffer it ended up with to the pool.
+                ProtobufSerializer.ReturnBuffer(buffer);
+            }
         }
     }
 
@@ -941,6 +950,38 @@ public sealed class OtlpTraceExporterTests : IDisposable
         exporter.Shutdown();
 
         Assert.True(exportClientMock.ShutdownCalled);
+    }
+
+    [Fact]
+    public void Shutdown_ClientShutdownThrows_ReleasesSerializationBuffer()
+    {
+        var exportClientMock = new TestExportClient
+        {
+            ThrowExceptionOnShutdown = true,
+        };
+
+        var exporterOptions = new OtlpExporterOptions();
+        using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClientMock, exporterOptions.TimeoutMilliseconds);
+        using var exporter = new OtlpTraceExporter(exporterOptions, DefaultSdkLimitOptions, DefaultExperimentalOptions, transmissionHandler);
+
+#if NETFRAMEWORK
+        var serializationBufferField = typeof(OtlpTraceExporter).GetField(
+            "serializationBuffer",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        var serializationBuffer = Assert.IsType<SerializationBuffer>(serializationBufferField?.GetValue(exporter));
+        var retainedBuffer = ProtobufSerializer.RentBuffer(2 * 1024 * 1024);
+        serializationBuffer.Return(retainedBuffer, retainedBuffer.Length);
+#endif
+
+        Assert.False(exporter.Shutdown());
+        Assert.True(exportClientMock.ShutdownCalled);
+
+#if NETFRAMEWORK
+        var nextBuffer = serializationBuffer.Rent();
+        Assert.NotSame(retainedBuffer, nextBuffer);
+        serializationBuffer.Return(nextBuffer, nextBuffer.Length);
+        serializationBuffer.Release();
+#endif
     }
 
     [Fact]
@@ -1156,13 +1197,20 @@ public sealed class OtlpTraceExporterTests : IDisposable
 
     private static OtlpCollector.ExportTraceServiceRequest CreateTraceExportRequest(SdkLimitOptions sdkOptions, in Batch<Activity> batch, Resource resource)
     {
-        var buffer = new byte[4096];
-        var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, resource, batch);
-        using var stream = new MemoryStream(buffer, 0, writePosition);
-        var tracesData = OtlpTrace.TracesData.Parser.ParseFrom(stream);
-        var request = new OtlpCollector.ExportTraceServiceRequest();
-        request.ResourceSpans.Add(tracesData.ResourceSpans);
-        return request;
+        var buffer = ProtobufSerializer.RentBuffer(4096);
+        try
+        {
+            var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, resource, batch);
+            using var stream = new MemoryStream(buffer, 0, writePosition);
+            var tracesData = OtlpTrace.TracesData.Parser.ParseFrom(stream);
+            var request = new OtlpCollector.ExportTraceServiceRequest();
+            request.ResourceSpans.Add(tracesData.ResourceSpans);
+            return request;
+        }
+        finally
+        {
+            ProtobufSerializer.ReturnBuffer(buffer);
+        }
     }
 
     private static void ArrayValueAsserts(RepeatedField<OtlpCommon.AnyValue> values)

@@ -49,14 +49,14 @@ internal static class ProtobufOtlpResourceSerializer
                 }
                 catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
                 {
-                    pool.Return(buffer);
+                    ProtobufSerializer.ReturnBuffer(pool, buffer);
                     buffer = pool.Rent(buffer.Length * 2);
                 }
             }
         }
         finally
         {
-            pool.Return(buffer);
+            ProtobufSerializer.ReturnBuffer(pool, buffer);
         }
     }
 

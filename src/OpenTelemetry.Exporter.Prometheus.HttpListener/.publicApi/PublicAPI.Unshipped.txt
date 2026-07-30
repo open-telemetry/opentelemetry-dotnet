@@ -20,6 +20,13 @@ OpenTelemetry.Exporter.PrometheusHttpListenerOptions.ScrapeResponseCacheDuration
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions.ScrapeResponseCacheDurationMilliseconds.set -> void
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions.TargetInfoEnabled.get -> bool
 OpenTelemetry.Exporter.PrometheusHttpListenerOptions.TargetInfoEnabled.set -> void
+OpenTelemetry.Exporter.PrometheusHttpListenerOptions.TranslationStrategy.get -> OpenTelemetry.Exporter.PrometheusTranslationStrategy
+OpenTelemetry.Exporter.PrometheusHttpListenerOptions.TranslationStrategy.set -> void
+OpenTelemetry.Exporter.PrometheusTranslationStrategy
+OpenTelemetry.Exporter.PrometheusTranslationStrategy.NoTranslation = 3 -> OpenTelemetry.Exporter.PrometheusTranslationStrategy
+OpenTelemetry.Exporter.PrometheusTranslationStrategy.NoUTF8EscapingWithSuffixes = 2 -> OpenTelemetry.Exporter.PrometheusTranslationStrategy
+OpenTelemetry.Exporter.PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes = 0 -> OpenTelemetry.Exporter.PrometheusTranslationStrategy
+OpenTelemetry.Exporter.PrometheusTranslationStrategy.UnderscoreEscapingWithoutSuffixes = 1 -> OpenTelemetry.Exporter.PrometheusTranslationStrategy
 OpenTelemetry.Metrics.PrometheusHttpListenerMeterProviderBuilderExtensions
 static OpenTelemetry.Metrics.PrometheusHttpListenerMeterProviderBuilderExtensions.AddPrometheusHttpListener(this OpenTelemetry.Metrics.MeterProviderBuilder! builder) -> OpenTelemetry.Metrics.MeterProviderBuilder!
 static OpenTelemetry.Metrics.PrometheusHttpListenerMeterProviderBuilderExtensions.AddPrometheusHttpListener(this OpenTelemetry.Metrics.MeterProviderBuilder! builder, string? name, System.Action<OpenTelemetry.Exporter.PrometheusHttpListenerOptions!>? configure) -> OpenTelemetry.Metrics.MeterProviderBuilder!

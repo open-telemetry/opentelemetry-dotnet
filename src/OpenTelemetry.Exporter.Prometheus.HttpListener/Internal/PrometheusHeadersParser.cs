@@ -13,7 +13,7 @@ namespace OpenTelemetry.Exporter.Prometheus;
 
 internal static class PrometheusHeadersParser
 {
-    internal static PrometheusProtocol Negotiate(string? contentType)
+    internal static PrometheusProtocol Negotiate(string? contentType, EscapingScheme defaultEscaping = EscapingScheme.Underscores)
     {
         if (string.IsNullOrWhiteSpace(contentType))
         {
@@ -124,7 +124,10 @@ internal static class PrometheusHeadersParser
             }
             else
             {
-                escaping ??= PrometheusProtocol.UnderscoresEscaping;
+                // When the client does not negotiate an escaping scheme, fall back to the
+                // exporter's configured default (from its translation strategy) rather than
+                // always underscores. Any client-specified escaping value takes precedence.
+                escaping ??= PrometheusEscaping.GetName(defaultEscaping);
             }
 
             var protocol = new PrometheusProtocol(

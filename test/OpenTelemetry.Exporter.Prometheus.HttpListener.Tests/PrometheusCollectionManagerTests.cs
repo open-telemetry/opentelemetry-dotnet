@@ -495,6 +495,78 @@ public sealed class PrometheusCollectionManagerTests
     }
 
     [Fact]
+    public async Task EnterCollectRetryPathDoesNotOverflowStackUnderContention()
+    {
+        var testTimeout = TimeSpan.FromMinutes(2);
+        using var cts = new CancellationTokenSource(testTimeout);
+        using var stopScraping = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+
+        using var meter = CreateMeter();
+#if PROMETHEUS_HTTP_LISTENER
+        using var provider = CreateMeterProviderWithRandomPort(meter);
+#elif PROMETHEUS_ASPNETCORE
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddPrometheusExporter(options => options.ScrapeResponseCacheDurationMilliseconds = 0)
+            .Build();
+#endif
+
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        if (!provider.TryFindExporter(out PrometheusExporter? exporter))
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+        {
+            throw new InvalidOperationException("PrometheusExporter could not be found on MeterProvider.");
+        }
+
+        meter.CreateCounter<int>("counter_int").Add(100);
+
+        // Make every collection fail immediately, without invoking the real collect
+        // pipeline. A failed collection produces no response for any waiting scrape,
+        // so joiners are always unsatisfied and must retry, and because it returns
+        // synchronously the awaited collection is already complete when the retry resumes.
+        exporter.Collect = _ => false;
+
+        var protocol = GetProtocol(openMetricsRequested: false);
+
+        // Enough concurrency to reliably drive the contended retry path, but capped so the
+        // test does not spawn an unreasonable number of hot tasks on high-core CI agents.
+        var workerCount = Math.Min(Math.Max(Environment.ProcessorCount * 2, 8), 32);
+
+        async Task ScrapeUntilStoppedAsync()
+        {
+            while (!stopScraping.IsCancellationRequested)
+            {
+                cts.Token.ThrowIfCancellationRequested();
+
+                var response = await EnterCollectAsync(exporter, protocol);
+
+                try
+                {
+                    Assert.False(response.Succeeded, "Expected the forced-failure collection to report failure.");
+                }
+                finally
+                {
+                    exporter.CollectionManager.ExitCollect(protocol);
+                }
+            }
+        }
+
+        var workers = new Task[workerCount];
+        for (var i = 0; i < workers.Length; i++)
+        {
+            workers[i] = Task.Run(ScrapeUntilStoppedAsync, cts.Token);
+        }
+
+        var all = Task.WhenAll(workers);
+        var completion = await Task.WhenAny(all, Task.Delay(testTimeout, cts.Token));
+
+        Assert.Same(all, completion);
+
+        // Observe any faults from the workers.
+        await all;
+    }
+
+    [Fact]
     public async Task EnterCollectSharesFailedSerializationResult()
     {
         using var meter = CreateMeter();

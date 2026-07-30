@@ -18,11 +18,16 @@ public sealed class PrometheusTranslationStrategyTests
         Assert.True(exporter.AppendSuffixes);
     }
 
+    [Fact]
+    public void HttpListenerOptions_DefaultTranslationStrategy_IsUnderscoreEscapingWithSuffixes()
+        => Assert.Equal(PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes, new PrometheusHttpListenerOptions().TranslationStrategy);
+
     [Theory]
     [InlineData(PrometheusTranslationStrategy.NoTranslation, EscapingScheme.AllowUtf8)]
     [InlineData(PrometheusTranslationStrategy.NoUTF8EscapingWithSuffixes, EscapingScheme.AllowUtf8)]
     [InlineData(PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes, EscapingScheme.Underscores)]
     [InlineData(PrometheusTranslationStrategy.UnderscoreEscapingWithoutSuffixes, EscapingScheme.Underscores)]
+    [InlineData((PrometheusTranslationStrategy)int.MaxValue, EscapingScheme.Underscores)] // Unknown strategy falls back to underscores.
     internal void GetDefaultEscapingScheme_MapsEscapingAxis(PrometheusTranslationStrategy strategy, EscapingScheme expected)
         => Assert.Equal(expected, strategy.GetDefaultEscapingScheme());
 
@@ -31,6 +36,7 @@ public sealed class PrometheusTranslationStrategyTests
     [InlineData(PrometheusTranslationStrategy.NoUTF8EscapingWithSuffixes, true)]
     [InlineData(PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes, true)]
     [InlineData(PrometheusTranslationStrategy.UnderscoreEscapingWithoutSuffixes, false)]
+    [InlineData((PrometheusTranslationStrategy)int.MaxValue, true)] // Unknown strategy falls back to appending suffixes.
     internal void AppendSuffixes_MapsSuffixAxis(PrometheusTranslationStrategy strategy, bool expected)
         => Assert.Equal(expected, strategy.AppendSuffixes());
 
@@ -45,5 +51,17 @@ public sealed class PrometheusTranslationStrategyTests
 
         Assert.Equal(strategy, exporter.TranslationStrategy);
         Assert.Equal(expected, exporter.AppendSuffixes);
+    }
+
+    [Theory]
+    [InlineData(PrometheusTranslationStrategy.NoTranslation, EscapingScheme.AllowUtf8)]
+    [InlineData(PrometheusTranslationStrategy.NoUTF8EscapingWithSuffixes, EscapingScheme.AllowUtf8)]
+    [InlineData(PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes, EscapingScheme.Underscores)]
+    [InlineData(PrometheusTranslationStrategy.UnderscoreEscapingWithoutSuffixes, EscapingScheme.Underscores)]
+    internal void Exporter_DefaultEscapingScheme_ReflectsConfiguredStrategy(PrometheusTranslationStrategy strategy, EscapingScheme expected)
+    {
+        using var exporter = new PrometheusExporter(new() { TranslationStrategy = strategy });
+
+        Assert.Equal(expected, exporter.DefaultEscapingScheme);
     }
 }

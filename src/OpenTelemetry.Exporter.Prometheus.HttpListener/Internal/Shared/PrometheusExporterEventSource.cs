@@ -107,4 +107,8 @@ internal sealed class PrometheusExporterEventSource : EventSource, IConfiguratio
     [Event(11, Message = "Failed to collect metrics for a scrape request; the response may have exceeded the configured maximum size.", Level = EventLevel.Error)]
     public void ScrapeFailed()
         => this.WriteEvent(11);
+
+    [Event(12, Message = "Failed to collect metrics for a scrape request; the scrape endpoint may be under heavy load.", Level = EventLevel.Error)]
+    public void CollectFailed()
+        => this.WriteEvent(12);
 }
