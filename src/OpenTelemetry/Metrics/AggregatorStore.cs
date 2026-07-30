@@ -1070,14 +1070,14 @@ internal sealed class AggregatorStore
     {
         var index = this.FindMetricAggregatorsExcludeTag(tags);
 
-        this.UpdateLongMetricPoint(index, value, tags);
+        this.UpdateLongMetricPoint(index, value, value, tags);
     }
 
     private void UpdateDoubleExcludeTags(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         var index = this.FindMetricAggregatorsExcludeTag(tags);
 
-        this.UpdateDoubleMetricPoint(index, value, tags);
+        this.UpdateDoubleMetricPoint(index, value, value, tags);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

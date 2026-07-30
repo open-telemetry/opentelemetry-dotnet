@@ -835,7 +835,7 @@ public class MetricExemplarTests : MetricTestsBase
             }
         }
     }
-    
+
     [Fact]
     public void ViewToExcludeTagKeys_ExemplarFilteredTagsAreCorrect()
     {
@@ -883,7 +883,7 @@ public class MetricExemplarTests : MetricTestsBase
         Assert.Contains(new("color", "red"), filteredTags);
         Assert.DoesNotContain(new("name", "apple"), filteredTags);
     }
-    
+
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
