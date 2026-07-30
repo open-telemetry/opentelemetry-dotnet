@@ -8,6 +8,8 @@ using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text;
 using System.Text.Json;
+using System.Xml;
+using System.Xml.Linq;
 
 namespace OpenTelemetry.Apple.Tests;
 
@@ -35,7 +37,6 @@ public sealed class AppleAppFixture : IAsyncLifetime
 
     private const string BundleIdentifier = "io.opentelemetry.dotnet.apple";
     private const string ResultsDirectoryName = "TestResults";
-    private const string SummaryFileName = "summary.txt";
 
     private static readonly TimeSpan BuildTimeout = TimeSpan.FromMinutes(10);
     private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(500);
@@ -162,42 +163,57 @@ public sealed class AppleAppFixture : IAsyncLifetime
             $"Could not find a built '{projectName}' app bundle for '{runtimeIdentifier}' below: {string.Join(", ", roots)}.");
     }
 
-    private static (int Passed, int Failed, int Skipped)? TryReadResults(string summaryFile)
+    private static (int Passed, int Failed, int Skipped)? TryReadResults(string resultsDirectory)
     {
-        string summary;
+        string[] reports;
 
         try
         {
-            summary = File.ReadAllText(summaryFile);
+            reports = Directory.GetFiles(resultsDirectory, "*.trx");
         }
-        catch (IOException)
+        catch (DirectoryNotFoundException)
         {
-            // The file does not exist yet, or is being written to.
+            // The app has not created its results directory yet.
             return null;
         }
 
-        var passed = ReadCount(summary, "passed");
-        var failed = ReadCount(summary, "failed");
-
-        // Treat a partially written summary as not written yet.
-        return passed < 0 || failed < 0 ? null : (passed, failed, ReadCount(summary, "skipped"));
-    }
-
-    private static int ReadCount(string summary, string key)
-    {
-        foreach (var line in summary.Split('\n'))
+        foreach (var report in reports)
         {
-            var value = line.Trim();
+            XDocument document;
 
-            if (value.StartsWith(key + "=", StringComparison.Ordinal) &&
-                int.TryParse(value[(key.Length + 1)..], CultureInfo.InvariantCulture, out var count))
+            try
             {
-                return count;
+                document = XDocument.Load(report);
             }
+            catch (Exception ex) when (ex is IOException or XmlException)
+            {
+                // The report is still being written.
+                continue;
+            }
+
+            var counters = document.Descendants()
+                .FirstOrDefault((p) => string.Equals(p.Name.LocalName, "Counters", StringComparison.Ordinal));
+
+            if (counters is null)
+            {
+                continue;
+            }
+
+            // A test can fail in more than one way, all of which are failures here.
+            var failed =
+                ReadCount(counters, "failed") +
+                ReadCount(counters, "error") +
+                ReadCount(counters, "timeout") +
+                ReadCount(counters, "aborted");
+
+            return (ReadCount(counters, "passed"), failed, ReadCount(counters, "notExecuted"));
         }
 
-        return -1;
+        return null;
     }
+
+    private static int ReadCount(XElement counters, string name) =>
+        int.TryParse((string?)counters.Attribute(name), CultureInfo.InvariantCulture, out var count) ? count : 0;
 
     private static void TryCopyDirectory(string source, string destination)
     {
@@ -421,19 +437,19 @@ public sealed class AppleAppFixture : IAsyncLifetime
             ["SIMCTL_CHILD_OTEL_TEST_OTLP_ENDPOINT"] = this.Collector.BaseUrl,
         };
 
-        var summaryFile = this.SummaryFile(simulator);
+        var resultsDirectory = this.ResultsDirectory(simulator);
 
         // '--console-pty' streams the app's stdout and stderr, which is captured for
-        // diagnostics. The run is treated as finished once the app has written its
-        // results rather than once it exits, because 'simctl launch' is not
-        // guaranteed to return promptly when the app terminates.
+        // diagnostics. The run is treated as finished once the results have been
+        // written rather than once the app exits, because the app is not guaranteed
+        // to exit, nor 'simctl launch' to return promptly when it does.
         this.Run(
             "xcrun",
             ["simctl", "launch", "--console-pty", "--terminate-running-process", simulator, BundleIdentifier],
             repoRoot,
             TestRunTimeout,
             environment,
-            () => summaryFile is not null && TryReadResults(summaryFile) is not null);
+            () => resultsDirectory is not null && TryReadResults(resultsDirectory) is not null);
 
         // Make sure the app is not left running in the simulator.
         this.Run("xcrun", ["simctl", "terminate", simulator, BundleIdentifier], repoRoot, SimulatorCommandTimeout);
@@ -535,13 +551,6 @@ public sealed class AppleAppFixture : IAsyncLifetime
             : null;
     }
 
-    private string? SummaryFile(string simulator)
-    {
-        var resultsDirectory = this.ResultsDirectory(simulator);
-
-        return resultsDirectory is null ? null : Path.Combine(resultsDirectory, SummaryFileName);
-    }
-
     private (int Passed, int Failed, int Skipped)? CollectResults(string simulator)
     {
         var resultsDirectory = this.ResultsDirectory(simulator);
@@ -555,7 +564,7 @@ public sealed class AppleAppFixture : IAsyncLifetime
         // details) to the host so that CI can upload them as artifacts.
         TryCopyDirectory(resultsDirectory, Path.Combine(AppContext.BaseDirectory, ResultsDirectoryName, "apple-device"));
 
-        var results = TryReadResults(Path.Combine(resultsDirectory, SummaryFileName));
+        var results = TryReadResults(resultsDirectory);
 
         if (results is not null)
         {

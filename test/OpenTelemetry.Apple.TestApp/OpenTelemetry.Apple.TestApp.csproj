@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Description>iOS test app validating the OpenTelemetry SDK runs end-to-end under the iOS runtime.</Description>
     <EnableMSTestRunner>true</EnableMSTestRunner>
-    <NoWarn>$(NoWarn);CA1515;CA1707;CA1848;CA2007</NoWarn>
+    <NoWarn>$(NoWarn);CA1515;CA1707;CA1848</NoWarn>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>net10.0-ios</TargetFrameworks>
   </PropertyGroup>

@@ -14,9 +14,12 @@ tests; the assertions are in `OpenTelemetry.Apple.Tests`.
 - Tests run on the device via [Microsoft.Testing.Platform](https://learn.microsoft.com/dotnet/core/testing/microsoft-testing-platform-intro)
   (`EnableMSTestRunner`), bootstrapped by the app's own entry point in
   `TestRunner.cs`.
-- The app has no user interface. When the run finishes it writes a summary and a
-  TRX report to its `Documents/TestResults` directory and then exits, so the host
-  test project can read the outcome back out of the simulator.
+- The app has no user interface, and nothing pumps its main run loop, so it is
+  not guaranteed to get any further than running the tests. The outcome is
+  taken from the TRX report the test platform writes to the app's
+  `Documents/TestResults` directory as the run finishes, which the host test
+  project reads back out of the simulator. The summary the app writes afterwards
+  is only used for diagnostics.
 - The app exports over OTLP/HTTP to `http://localhost:<port>`. The iOS simulator
   shares the host's network stack, so the collector running on the host is
   reachable over the loopback interface; the port is passed in through the

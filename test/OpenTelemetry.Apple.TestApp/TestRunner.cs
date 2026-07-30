@@ -38,7 +38,7 @@ internal static class TestRunner
                     .. args,
                     "--results-directory", resultsDirectory,
                     "--report-trx"
-                ]);
+                ]).ConfigureAwait(false);
 
             builder.AddMSTest(() => [typeof(TestRunner).Assembly]);
             builder.AddTrxReportProvider();
@@ -48,9 +48,9 @@ internal static class TestRunner
             // process is terminated as soon as the results have been written,
             // and disposing it can block, which would stop the results from
             // being written at all.
-            var app = await builder.BuildAsync();
+            var app = await builder.BuildAsync().ConfigureAwait(false);
 
-            exitCode = await app.RunAsync();
+            exitCode = await app.RunAsync().ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -72,15 +72,15 @@ internal static class TestRunner
 
         var summary = string.Join(Environment.NewLine, lines) + Environment.NewLine;
 
-        await File.WriteAllTextAsync(Path.Combine(resultsDirectory, SummaryFileName), summary);
+        await File.WriteAllTextAsync(Path.Combine(resultsDirectory, SummaryFileName), summary).ConfigureAwait(false);
 
         if (failure is not null)
         {
-            await File.WriteAllTextAsync(Path.Combine(resultsDirectory, ErrorFileName), failure.ToString());
+            await File.WriteAllTextAsync(Path.Combine(resultsDirectory, ErrorFileName), failure.ToString()).ConfigureAwait(false);
         }
 
-        await Console.Out.WriteAsync(summary);
-        await Console.Out.FlushAsync();
+        await Console.Out.WriteAsync(summary).ConfigureAwait(false);
+        await Console.Out.FlushAsync().ConfigureAwait(false);
 
         // Terminate explicitly so that 'xcrun simctl launch --console-pty'
         // returns as soon as the run finishes instead of waiting on any threads
@@ -151,7 +151,8 @@ internal static class TestRunner
             // Echoed to stdout so the progress of the run is visible in the
             // output streamed by 'xcrun simctl launch --console-pty'.
             await Console.Out.WriteLineAsync(
-                outcome + ": " + (id is not null ? $"{id.Namespace}.{id.TypeName}.{id.MethodName}" : node.DisplayName));
+                outcome + ": " + (id is not null ? $"{id.Namespace}.{id.TypeName}.{id.MethodName}" : node.DisplayName))
+                .ConfigureAwait(false);
         }
     }
 }

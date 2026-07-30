@@ -21,9 +21,10 @@ This host project:
    it (`xcrun simctl launch --console-pty`) in `AppleAppFixture`. The app exports
    to the collector over the host loopback - the simulator shares the host's
    network stack - so the export is a real cross-process HTTP/protobuf call.
-3. Reads the results the app wrote on the device back out of its data container
-   (`xcrun simctl get_app_container`) to check the on-device run passed, and
-   copies them to the host output so CI can upload them as artifacts.
+3. Waits for the TRX report written on the device to appear in the app's data
+   container (`xcrun simctl get_app_container`) rather than for the app to exit,
+   reads it to check the on-device run passed, and copies the results to the host
+   output so CI can upload them as artifacts.
 4. Asserts the receiver decoded the expected traces, metrics and logs.
 
 ## Requirements
