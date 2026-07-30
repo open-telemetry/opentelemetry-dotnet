@@ -40,8 +40,32 @@
     <MetricsSupport>true</MetricsSupport>
   </PropertyGroup>
 
+  <!--
+    The app runs its tests on the device with Microsoft.Testing.Platform rather
+    than VSTest, so reference the MSTest packages it needs directly instead of
+    using the MSTest meta-package, which brings in the VSTest test host as a
+    transitive dependency. This matters because the arm64 iOS simulator does not
+    allow JIT, so everything in the app bundle has to be AOT compiled, and the
+    VSTest test host assemblies fail to AOT compile.
+  -->
   <ItemGroup>
-    <PackageReference Include="MSTest" />
+    <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
+    <PackageReference Include="MSTest.Analyzers" />
+    <PackageReference Include="MSTest.TestAdapter" />
+    <PackageReference Include="MSTest.TestFramework" />
+  </ItemGroup>
+
+  <!--
+    Remove the packages that are referenced by default for test projects for the
+    same reason: they are not used by the on-device run and the app bundle only
+    needs to contain what the tests actually require.
+  -->
+  <ItemGroup>
+    <PackageReference Remove="GitHubActionsTestLogger" />
+    <PackageReference Remove="JunitXml.TestLogger" />
+    <PackageReference Remove="Microsoft.NET.Test.Sdk" />
+    <PackageReference Remove="xunit" />
+    <PackageReference Remove="xunit.runner.visualstudio" />
   </ItemGroup>
 
   <ItemGroup>
@@ -56,5 +80,21 @@
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.OpenTelemetryProtocol\OpenTelemetry.Exporter.OpenTelemetryProtocol.csproj" />
   </ItemGroup>
+
+  <!--
+    Each project referenced by the app copies a <Project>.BuildFlags.txt file to
+    the output directory. The Apple SDK cannot determine how to treat these files
+    when it computes the contents of the app bundle, so it warns about each one.
+    They are not needed on the device, so remove them from the publish items.
+  -->
+  <Target Name="RemoveBuildFlagsFilesFromAppBundle"
+          AfterTargets="ComputeResolvedFilesToPublishList"
+          BeforeTargets="_ComputePublishLocation">
+    <ItemGroup>
+      <ResolvedFileToPublish
+        Remove="@(ResolvedFileToPublish)"
+        Condition="$([System.String]::new('%(ResolvedFileToPublish.Filename)').EndsWith('.BuildFlags'))" />
+    </ItemGroup>
+  </Target>
 
 </Project>

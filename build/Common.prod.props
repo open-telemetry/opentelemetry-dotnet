@@ -55,7 +55,6 @@
     <None Include="$(IntermediateOutputPath)$(ProjectName).BuildFlags.txt"
           Link="$(ProjectName).BuildFlags.txt"
           CopyToOutputDirectory="PreserveNewest"
-          PublishFolderType="None"
           Visible="false" />
     <!-- Note: This includes all the PublicApiAnalyzers files in projects to make editing easier in the IDE -->
     <None Include=".publicApi\**\PublicAPI.*.txt" />
