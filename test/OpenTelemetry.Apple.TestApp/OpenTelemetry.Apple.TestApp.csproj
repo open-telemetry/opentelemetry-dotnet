@@ -20,9 +20,11 @@
   <!--
     Because we use project references to projects that multi-target to TFMs
     that do not support trimming we cannot publish the application as trimmed.
+    iOS projects cannot set PublishTrimmed=false, so MtouchLink is used instead
+    to disable trimming for all assemblies.
   -->
   <PropertyGroup>
-    <PublishTrimmed>false</PublishTrimmed>
+    <MtouchLink>None</MtouchLink>
   </PropertyGroup>
 
   <PropertyGroup>
