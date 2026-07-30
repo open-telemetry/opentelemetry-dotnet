@@ -301,6 +301,79 @@ public sealed class PrometheusCollectionManagerTests
         }
     }
 
+    [Fact]
+    public async Task EnterCollectDoesNotBlockWaitingForActiveReadersToExit()
+    {
+        var testTimeout = TimeSpan.FromSeconds(30);
+        using var cts = new CancellationTokenSource(testTimeout);
+
+        using var meter = CreateMeter();
+#if PROMETHEUS_HTTP_LISTENER
+        using var provider = CreateMeterProviderWithRandomPort(meter);
+#elif PROMETHEUS_ASPNETCORE
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddPrometheusExporter(options => options.ScrapeResponseCacheDurationMilliseconds = 0)
+            .Build();
+#endif
+
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        if (!provider.TryFindExporter(out PrometheusExporter? exporter))
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+        {
+            throw new InvalidOperationException("PrometheusExporter could not be found on MeterProvider.");
+        }
+
+        var collectCount = 0;
+        var originalCollect = exporter.Collect;
+
+        exporter.Collect = (timeout) =>
+        {
+            Interlocked.Increment(ref collectCount);
+            return originalCollect!(timeout);
+        };
+
+        meter.CreateCounter<int>("counter_int").Add(100);
+
+        var protocol = GetProtocol(openMetricsRequested: false);
+
+        // Hold a reader on this thread, so the next scrape cannot start
+        // a collection until it exits.
+        var firstResponse = await EnterCollectAsync(exporter, protocol);
+
+        Assert.True(firstResponse.Succeeded);
+        Assert.Equal(1, collectCount);
+
+        // The waiting is asynchronous: entering hands back an incomplete task rather
+        // than blocking this thread until the readers drain. Blocking here would never
+        // resolve, because the reader being waited on is held by this thread.
+#pragma warning disable CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
+        var waitingScrape = EnterCollectAsync(exporter, protocol);
+#pragma warning restore CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
+
+        Assert.False(waitingScrape.IsCompleted, "Entering a collection did not wait for the active reader.");
+        Assert.Equal(1, collectCount);
+
+        exporter.CollectionManager.ExitCollect(protocol);
+
+        var completion = await Task.WhenAny(waitingScrape, Task.Delay(testTimeout, cts.Token));
+
+        Assert.Same(waitingScrape, completion);
+
+        var secondResponse = await waitingScrape;
+
+        try
+        {
+            Assert.True(secondResponse.Succeeded, "The scrape which waited for the active reader did not succeed.");
+            Assert.True(secondResponse.View.Count > 0, "The view is empty.");
+            Assert.Equal(2, collectCount);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect(protocol);
+        }
+    }
+
     [Theory]
     [InlineData(true)]
     [InlineData(false)]

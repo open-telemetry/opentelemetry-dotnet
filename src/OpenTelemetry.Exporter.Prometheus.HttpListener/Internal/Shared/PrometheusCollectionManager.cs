@@ -66,7 +66,7 @@ internal sealed class PrometheusCollectionManager
     {
         var step = this.TryEnterCollect(protocol);
 
-        if (step.PendingCollectionTask is null)
+        if (step.IsCompleted)
         {
 #if NET
             return new ValueTask<CollectionResponse>(step.Response);
@@ -75,7 +75,7 @@ internal sealed class PrometheusCollectionManager
 #endif
         }
 
-        return this.WaitForCollectionResponseAsync(protocol, step.PendingCollectionTask, step.JoinedActiveCollection);
+        return this.WaitForCollectionResponseAsync(protocol, step);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -159,11 +159,6 @@ internal sealed class PrometheusCollectionManager
                 continue;
             }
 
-            if (this.WaitForReadersToComplete(protocol))
-            {
-                continue;
-            }
-
             this.EnterGlobalLock();
 
             try
@@ -201,6 +196,12 @@ internal sealed class PrometheusCollectionManager
 
                     resolved = true;
                     break;
+                }
+
+                // No collection is in flight, so this scrape has to start one
+                if (this.GetReadersDrainedTask(protocol) is { } readersDrainedTask)
+                {
+                    return CollectStep.WaitingForReaders(readersDrainedTask);
                 }
 
                 activeCollectionContext = new CollectionContext(protocol);
@@ -261,66 +262,72 @@ internal sealed class PrometheusCollectionManager
     }
 
 #if NET
-    private async ValueTask<CollectionResponse> WaitForCollectionResponseAsync(PrometheusProtocol protocol, Task<CollectionResult> pendingCollectionTask, bool joinedActiveCollection)
+    private async ValueTask<CollectionResponse> WaitForCollectionResponseAsync(PrometheusProtocol protocol, CollectStep step)
 #else
-    private async Task<CollectionResponse> WaitForCollectionResponseAsync(PrometheusProtocol protocol, Task<CollectionResult> pendingCollectionTask, bool joinedActiveCollection)
+    private async Task<CollectionResponse> WaitForCollectionResponseAsync(PrometheusProtocol protocol, CollectStep step)
 #endif
     {
         for (var attempt = 0; attempt < MaxCollectAttempts; attempt++)
         {
-            var collectionResult = await pendingCollectionTask.ConfigureAwait(false);
-
-            if (joinedActiveCollection)
+            if (step.PendingCollectionTask is { } pendingCollectionTask)
             {
-                // This scrape shared the collection, so the collection's outcome is
-                // this scrape's outcome. When it produced no response for this
-                // protocol it failed, and this scrape reports that failure rather
-                // than collecting again: a retry cannot reuse the collection it just
-                // shared, so it would have to start a new one, which cannot begin
-                // until every active reader of this protocol has drained. Under
-                // concurrent scrapes that wait can spin for an unbounded time while
-                // holding a thread, so retrying here risks starving the scrapes whose
-                // completion it is waiting on.
-                if (!collectionResult.TryGetResponse(protocol, out var response))
-                {
-                    PrometheusExporterEventSource.Log.CollectFailed();
+                var collectionResult = await pendingCollectionTask.ConfigureAwait(false);
 
-                    // The reader slot taken when joining is left outstanding for the
-                    // caller's ExitCollect to release.
-                    return default;
+                if (step.JoinedActiveCollection)
+                {
+                    // This scrape shared the collection, so the collection's outcome is
+                    // this scrape's outcome. When it produced no response for this
+                    // protocol it failed, and this scrape reports that failure rather
+                    // than collecting again: a retry cannot reuse the collection it just
+                    // shared, so it would have to start a new one, and every scrape
+                    // sharing the failure would queue up behind the active readers to do so.
+                    if (!collectionResult.TryGetResponse(protocol, out var response))
+                    {
+                        PrometheusExporterEventSource.Log.CollectFailed();
+
+                        // The reader slot taken when joining is left outstanding for the
+                        // caller's ExitCollect to release.
+                        return default;
+                    }
+
+                    return response;
                 }
 
-                return response;
+                // This scrape never registered with the collection it observed, so that
+                // collection was never going to produce a response for it: make another
+                // attempt. Loop here (bounded by MaxCollectAttempts) rather than
+                // recursing back into EnterCollect: when the awaited collection
+                // completes synchronously the continuation runs inline, so a recursive
+                // retry would grow the stack on every iteration and eventually overflow
+                // under contention.
+            }
+            else if (step.ReadersDrainedTask is { } readersDrainedTask)
+            {
+                // Awaiting the readers releases this thread while they finish. Spinning
+                // until they drain would instead hold it, and holding it can starve the
+                // very scrapes being waited on: each of them needs a thread to resume on
+                // before it can release its reader slot.
+                await readersDrainedTask.ConfigureAwait(false);
             }
 
-            // This scrape never registered with the collection it observed, so that
-            // collection was never going to produce a response for it: make another
-            // attempt. Loop here (bounded by MaxCollectAttempts) rather than recursing
-            // back into EnterCollect: when the awaited collection completes
-            // synchronously the continuation runs inline, so a recursive retry would
-            // grow the stack on every iteration and eventually overflow under
-            // contention.
-            var step = this.TryEnterCollect(protocol);
+            step = this.TryEnterCollect(protocol);
 
-            if (step.PendingCollectionTask is null)
+            if (step.IsCompleted)
             {
                 return step.Response;
             }
-
-            pendingCollectionTask = step.PendingCollectionTask;
-            joinedActiveCollection = step.JoinedActiveCollection;
         }
 
         // The retry budget was exhausted while contending with concurrent scrapes;
-        // give up on this pending collection and degrade to a failed (empty)
-        // response instead of awaiting/retrying indefinitely.
+        // give up and degrade to a failed (empty) response instead of
+        // awaiting/retrying indefinitely.
         //
         // Leave exactly one reader slot outstanding for the caller's ExitCollect to
         // release: when the last step joined the active collection, TryEnterCollect
         // already took that slot, so take one only otherwise - taking a second here
         // would leak, taking none would drive the count negative and hang every
         // later scrape.
-        if (!joinedActiveCollection)
+        if (!step.JoinedActiveCollection)
         {
             this.IncrementReaderCount(protocol);
             PrometheusExporterEventSource.Log.CollectFailed();
@@ -358,38 +365,8 @@ internal sealed class PrometheusCollectionManager
         => this.protocolStates.TryGetValue(protocol, out var state) && state.HasActiveReaders();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool WaitForReadersToComplete(in PrometheusProtocol protocol)
-    {
-        var state = this.GetProtocolState(protocol);
-        var didSpin = false;
-        SpinWait readWait = default;
-        while (true)
-        {
-            if (!state.HasActiveReaders())
-            {
-                break;
-            }
-
-            this.EnterGlobalLock();
-
-            try
-            {
-                if (this.collectionContext is not null)
-                {
-                    return true;
-                }
-            }
-            finally
-            {
-                this.ExitGlobalLock();
-            }
-
-            didSpin = true;
-            readWait.SpinOnce();
-        }
-
-        return didSpin;
-    }
+    private Task<bool>? GetReadersDrainedTask(in PrometheusProtocol protocol)
+        => this.GetProtocolState(protocol).GetReadersDrainedTask();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private CollectionResult ExecuteCollect(CollectionContext collectionContext)
@@ -772,18 +749,30 @@ internal sealed class PrometheusCollectionManager
 
     private readonly struct CollectStep
     {
-        private CollectStep(CollectionResponse response, Task<CollectionResult>? pendingCollectionTask, bool joinedActiveCollection)
+        private CollectStep(
+            CollectionResponse response,
+            Task<CollectionResult>? pendingCollectionTask,
+            Task<bool>? readersDrainedTask,
+            bool joinedActiveCollection)
         {
             this.Response = response;
             this.PendingCollectionTask = pendingCollectionTask;
+            this.ReadersDrainedTask = readersDrainedTask;
             this.JoinedActiveCollection = joinedActiveCollection;
         }
 
-        // A non-null task means the caller must await the in-flight collection;
-        // a null task means Response already holds the answer.
+        // A non-null task means the caller must await the in-flight collection.
         public Task<CollectionResult>? PendingCollectionTask { get; }
 
+        // A non-null task means a collection could not be started because this
+        // protocol still has active readers, and the caller must await them
+        // draining before attempting to enter a collection again.
+        public Task<bool>? ReadersDrainedTask { get; }
+
         public CollectionResponse Response { get; }
+
+        // True when there is nothing to await because Response already holds the answer.
+        public bool IsCompleted => this.PendingCollectionTask is null && this.ReadersDrainedTask is null;
 
         // True when this scrape registered the protocol with the in-flight
         // collection and took a reader slot for it (so the awaiting caller owns a
@@ -792,10 +781,13 @@ internal sealed class PrometheusCollectionManager
         public bool JoinedActiveCollection { get; }
 
         public static CollectStep Completed(CollectionResponse response)
-            => new(response, pendingCollectionTask: null, joinedActiveCollection: false);
+            => new(response, pendingCollectionTask: null, readersDrainedTask: null, joinedActiveCollection: false);
 
         public static CollectStep Pending(Task<CollectionResult> pendingCollectionTask, bool joinedActiveCollection)
-            => new(default, pendingCollectionTask, joinedActiveCollection);
+            => new(default, pendingCollectionTask, readersDrainedTask: null, joinedActiveCollection);
+
+        public static CollectStep WaitingForReaders(Task<bool> readersDrainedTask)
+            => new(default, pendingCollectionTask: null, readersDrainedTask, joinedActiveCollection: false);
     }
 
     private readonly struct CollectionResult
@@ -954,7 +946,9 @@ internal sealed class PrometheusCollectionManager
     {
         private const int InitialBufferSize = PrometheusExporterOptions.InitialScrapeResponseSizeBytes;
         private readonly int maxBufferSize;
+        private readonly Lock readersDrainedGate = new();
 
+        private TaskCompletionSource<bool>? readersDrained;
         private int readerCount;
 
         public PrometheusProtocolState(int maxBufferSize)
@@ -978,13 +972,56 @@ internal sealed class PrometheusCollectionManager
         public TimeSpan? GeneratedAtElapsed { get; private set; }
 
         public int DecrementReaderCount()
-            => Interlocked.Decrement(ref this.readerCount);
+        {
+            var readerCount = Interlocked.Decrement(ref this.readerCount);
+
+            if (readerCount < 1)
+            {
+                TaskCompletionSource<bool>? readersDrained;
+
+                lock (this.readersDrainedGate)
+                {
+                    readersDrained = this.readersDrained;
+                    this.readersDrained = null;
+                }
+
+                // Signalled outside the gate so that no continuation runs while it is held.
+                readersDrained?.TrySetResult(true);
+            }
+
+            return readerCount;
+        }
 
         public bool HasActiveReaders()
             => Interlocked.CompareExchange(ref this.readerCount, 0, 0) != 0;
 
         public void IncrementReaderCount()
             => Interlocked.Increment(ref this.readerCount);
+
+        /// <summary>
+        /// Gets a task which completes once this protocol has no active readers, or
+        /// <see langword="null"/> when it has none right now.
+        /// </summary>
+        /// <returns>
+        /// The task to wait on, or <see langword="null"/> when there is nothing to wait for.
+        /// </returns>
+        public Task<bool>? GetReadersDrainedTask()
+        {
+            lock (this.readersDrainedGate)
+            {
+                // The reader count is published before DecrementReaderCount takes the
+                // gate, so a reader which has already drained is seen here and reported
+                // as nothing to wait for. Anything still active is guaranteed to signal.
+                if (!this.HasActiveReaders())
+                {
+                    return null;
+                }
+
+                this.readersDrained ??= new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+                return this.readersDrained.Task;
+            }
+        }
 
         public bool TryExpandBuffer()
         {
