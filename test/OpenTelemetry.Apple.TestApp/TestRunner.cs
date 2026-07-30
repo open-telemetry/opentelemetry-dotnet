@@ -44,7 +44,11 @@ internal static class TestRunner
             builder.AddTrxReportProvider();
             builder.TestHost.AddDataConsumer(_ => consumer);
 
-            using var app = await builder.BuildAsync();
+            // The test application is deliberately not disposed of here. The
+            // process is terminated as soon as the results have been written,
+            // and disposing it can block, which would stop the results from
+            // being written at all.
+            var app = await builder.BuildAsync();
 
             exitCode = await app.RunAsync();
         }

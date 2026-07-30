@@ -38,6 +38,7 @@ public sealed class AppleAppFixture : IAsyncLifetime
     private const string SummaryFileName = "summary.txt";
 
     private static readonly TimeSpan BuildTimeout = TimeSpan.FromMinutes(10);
+    private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(500);
     private static readonly TimeSpan SimulatorBootTimeout = TimeSpan.FromMinutes(5);
     private static readonly TimeSpan SimulatorCommandTimeout = TimeSpan.FromMinutes(2);
     private static readonly TimeSpan TestRunTimeout = TimeSpan.FromMinutes(5);
@@ -161,6 +162,27 @@ public sealed class AppleAppFixture : IAsyncLifetime
             $"Could not find a built '{projectName}' app bundle for '{runtimeIdentifier}' below: {string.Join(", ", roots)}.");
     }
 
+    private static (int Passed, int Failed, int Skipped)? TryReadResults(string summaryFile)
+    {
+        string summary;
+
+        try
+        {
+            summary = File.ReadAllText(summaryFile);
+        }
+        catch (IOException)
+        {
+            // The file does not exist yet, or is being written to.
+            return null;
+        }
+
+        var passed = ReadCount(summary, "passed");
+        var failed = ReadCount(summary, "failed");
+
+        // Treat a partially written summary as not written yet.
+        return passed < 0 || failed < 0 ? null : (passed, failed, ReadCount(summary, "skipped"));
+    }
+
     private static int ReadCount(string summary, string key)
     {
         foreach (var line in summary.Split('\n'))
@@ -201,7 +223,8 @@ public sealed class AppleAppFixture : IAsyncLifetime
         string[] arguments,
         string? workingDirectory,
         TimeSpan timeout,
-        IReadOnlyDictionary<string, string>? environment = null)
+        IReadOnlyDictionary<string, string>? environment = null,
+        Func<bool>? completed = null)
     {
         var startInfo = new ProcessStartInfo(fileName)
         {
@@ -265,27 +288,17 @@ public sealed class AppleAppFixture : IAsyncLifetime
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
 
-        if (!process.WaitForExit(timeout))
+        if (!WaitForCompletion(process, timeout, completed))
         {
-            try
-            {
-                if (!process.HasExited)
-                {
-                    process.Kill(entireProcessTree: true);
-                }
-            }
-            catch (InvalidOperationException)
-            {
-                // Race shutting down the process
-            }
-            catch (System.ComponentModel.Win32Exception)
-            {
-                // Kill failed for some reason
-            }
+            TryKill(process);
 
             throw new InvalidOperationException(
                 $"'{fileName}' timed out after {timeout}.{Environment.NewLine}{standardOutput}{standardError}");
         }
+
+        // The process is still running if the completion condition was met before it
+        // exited, so stop it now that no more of its output is needed.
+        TryKill(process);
 
         // Wait (again, with no timeout) for the async output handlers to flush.
         process.WaitForExit();
@@ -296,6 +309,45 @@ public sealed class AppleAppFixture : IAsyncLifetime
             {
                 return (process.ExitCode, standardOutput.ToString(), standardError.ToString());
             }
+        }
+    }
+
+    private static bool WaitForCompletion(Process process, TimeSpan timeout, Func<bool>? completed)
+    {
+        if (completed is null)
+        {
+            return process.WaitForExit(timeout);
+        }
+
+        var deadline = DateTime.UtcNow + timeout;
+
+        while (DateTime.UtcNow < deadline)
+        {
+            if (process.WaitForExit(PollInterval) || completed())
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static void TryKill(Process process)
+    {
+        try
+        {
+            if (!process.HasExited)
+            {
+                process.Kill(entireProcessTree: true);
+            }
+        }
+        catch (InvalidOperationException)
+        {
+            // Race shutting down the process
+        }
+        catch (System.ComponentModel.Win32Exception)
+        {
+            // Kill failed for some reason
         }
     }
 
@@ -369,22 +421,28 @@ public sealed class AppleAppFixture : IAsyncLifetime
             ["SIMCTL_CHILD_OTEL_TEST_OTLP_ENDPOINT"] = this.Collector.BaseUrl,
         };
 
-        // '--console-pty' streams the app's stdout and stderr and blocks until the
-        // app exits, which is when the on-device test run has finished.
-        var (runExitCode, _, _) = this.Run(
+        var summaryFile = this.SummaryFile(simulator);
+
+        // '--console-pty' streams the app's stdout and stderr, which is captured for
+        // diagnostics. The run is treated as finished once the app has written its
+        // results rather than once it exits, because 'simctl launch' is not
+        // guaranteed to return promptly when the app terminates.
+        this.Run(
             "xcrun",
             ["simctl", "launch", "--console-pty", "--terminate-running-process", simulator, BundleIdentifier],
             repoRoot,
             TestRunTimeout,
-            environment);
+            environment,
+            () => summaryFile is not null && TryReadResults(summaryFile) is not null);
+
+        // Make sure the app is not left running in the simulator.
+        this.Run("xcrun", ["simctl", "terminate", simulator, BundleIdentifier], repoRoot, SimulatorCommandTimeout);
 
         var results = this.CollectResults(simulator);
 
         if (results is null)
         {
-            // 'simctl launch' reports its own success, not the app's exit code, so
-            // a missing summary means the app failed to start or crashed.
-            this.Fail($"The on-device test run did not write a results summary ('simctl launch' exited with code {runExitCode}).");
+            this.Fail("The on-device test run did not write a results summary, so it failed to start or crashed.");
             return;
         }
 
@@ -464,7 +522,7 @@ public sealed class AppleAppFixture : IAsyncLifetime
         return (candidate.Value.Udid, candidate.Value.Booted);
     }
 
-    private (int Passed, int Failed, int Skipped)? CollectResults(string simulator)
+    private string? ResultsDirectory(string simulator)
     {
         var (exitCode, standardOutput, _) = this.Run(
             "xcrun",
@@ -472,14 +530,23 @@ public sealed class AppleAppFixture : IAsyncLifetime
             null,
             SimulatorCommandTimeout);
 
-        if (exitCode != 0)
-        {
-            return null;
-        }
+        return exitCode == 0
+            ? Path.Combine(standardOutput.Trim(), "Documents", ResultsDirectoryName)
+            : null;
+    }
 
-        var resultsDirectory = Path.Combine(standardOutput.Trim(), "Documents", ResultsDirectoryName);
+    private string? SummaryFile(string simulator)
+    {
+        var resultsDirectory = this.ResultsDirectory(simulator);
 
-        if (!Directory.Exists(resultsDirectory))
+        return resultsDirectory is null ? null : Path.Combine(resultsDirectory, SummaryFileName);
+    }
+
+    private (int Passed, int Failed, int Skipped)? CollectResults(string simulator)
+    {
+        var resultsDirectory = this.ResultsDirectory(simulator);
+
+        if (resultsDirectory is null || !Directory.Exists(resultsDirectory))
         {
             return null;
         }
@@ -488,18 +555,17 @@ public sealed class AppleAppFixture : IAsyncLifetime
         // details) to the host so that CI can upload them as artifacts.
         TryCopyDirectory(resultsDirectory, Path.Combine(AppContext.BaseDirectory, ResultsDirectoryName, "apple-device"));
 
-        var summaryFile = Path.Combine(resultsDirectory, SummaryFileName);
+        var results = TryReadResults(Path.Combine(resultsDirectory, SummaryFileName));
 
-        if (!File.Exists(summaryFile))
+        if (results is not null)
         {
-            return null;
+            var (passed, failed, skipped) = results.Value;
+            this.log.AppendLine(
+                CultureInfo.InvariantCulture,
+                $"On-device results: passed={passed}, failed={failed}, skipped={skipped}.");
         }
 
-        var summary = File.ReadAllText(summaryFile);
-
-        this.log.AppendLine(summary);
-
-        return (ReadCount(summary, "passed"), ReadCount(summary, "failed"), ReadCount(summary, "skipped"));
+        return results;
     }
 
     private (int ExitCode, string StandardOutput, string StandardError) Run(
@@ -507,11 +573,12 @@ public sealed class AppleAppFixture : IAsyncLifetime
         string[] arguments,
         string? workingDirectory,
         TimeSpan timeout,
-        IReadOnlyDictionary<string, string>? environment = null)
+        IReadOnlyDictionary<string, string>? environment = null,
+        Func<bool>? completed = null)
     {
         this.log.AppendLine("$ " + fileName + " " + string.Join(' ', arguments));
 
-        var result = RunProcess(fileName, arguments, workingDirectory, timeout, environment);
+        var result = RunProcess(fileName, arguments, workingDirectory, timeout, environment, completed);
 
         this.log.Append(result.StandardOutput).Append(result.StandardError);
 
