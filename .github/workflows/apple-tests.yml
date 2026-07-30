@@ -34,6 +34,15 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
 
+    - name: Select the latest version of Xcode
+      shell: bash
+      run: |
+        version=$(ls -d /Applications/Xcode_*.app | sed -e 's|.*/Xcode_||' -e 's|\.app$||' | sort -t. -k1,1n -k2,2n -k3,3n | tail -1)
+        developer_dir="/Applications/Xcode_${version}.app/Contents/Developer"
+        sudo xcode-select --switch "${developer_dir}"
+        echo "DEVELOPER_DIR=${developer_dir}" >> "${GITHUB_ENV}"
+        xcodebuild -version
+
     - name: Install ios workload
       shell: bash
       run: dotnet workload install ios
