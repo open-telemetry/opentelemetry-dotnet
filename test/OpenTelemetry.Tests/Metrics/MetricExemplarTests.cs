@@ -1012,7 +1012,6 @@ public class MetricExemplarTests : MetricTestsBase
                 new(callbackValue2, tags2),
             });
 
-
         using var container = BuildMeterProvider(out var meterProvider, builder => builder
             .AddMeter(meter.Name)
             .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
