@@ -45,14 +45,16 @@ public sealed class AppleAppFixture : IAsyncLifetime
     private readonly StringBuilder log = new();
 
     private string? simulatorBootedByFixture;
-    private string? failureReason;
 
     internal OtlpHttpCollector Collector { get; private set; } = null!;
 
     internal int DeviceRunExitCode { get; private set; }
 
-    internal string DeviceRunOutput =>
-        (this.failureReason is null ? string.Empty : this.failureReason + Environment.NewLine) + this.log.ToString();
+    internal string DeviceRunOutput
+    {
+        get => (field is null ? string.Empty : field + Environment.NewLine) + this.log.ToString();
+        private set;
+    }
 
     public async Task InitializeAsync()
     {
@@ -310,7 +312,7 @@ public sealed class AppleAppFixture : IAsyncLifetime
         var runtimeIdentifier = SimulatorRuntimeIdentifier();
 
         // Build the app bundle for the simulator matching the host architecture.
-        var build = this.Run(
+        var (buildExitCode, _, _) = this.Run(
             "dotnet",
             [
                 "build",
@@ -324,9 +326,9 @@ public sealed class AppleAppFixture : IAsyncLifetime
             repoRoot,
             BuildTimeout);
 
-        if (build.ExitCode != 0)
+        if (buildExitCode != 0)
         {
-            this.Fail($"The iOS app failed to build with exit code {build.ExitCode}.");
+            this.Fail($"The iOS app failed to build with exit code {buildExitCode}.");
             return;
         }
 
@@ -335,13 +337,12 @@ public sealed class AppleAppFixture : IAsyncLifetime
 
         if (!alreadyBooted)
         {
-            // 'bootstatus -b' boots the simulator if required, then waits for the
-            // boot to complete.
-            var boot = this.Run("xcrun", ["simctl", "bootstatus", simulator, "-b"], repoRoot, SimulatorBootTimeout);
+            // 'bootstatus -b' boots the simulator if required, then waits for the boot to complete
+            var (bootExitCode, _, _) = this.Run("xcrun", ["simctl", "bootstatus", simulator, "-b"], repoRoot, SimulatorBootTimeout);
 
-            if (boot.ExitCode != 0)
+            if (bootExitCode != 0)
             {
-                this.Fail($"Failed to boot the iOS simulator '{simulator}' with exit code {boot.ExitCode}.");
+                this.Fail($"Failed to boot the iOS simulator '{simulator}' with exit code {bootExitCode}.");
                 return;
             }
 
@@ -352,11 +353,11 @@ public sealed class AppleAppFixture : IAsyncLifetime
         // where the on-device run writes its results - starts out empty.
         this.Run("xcrun", ["simctl", "uninstall", simulator, BundleIdentifier], repoRoot, SimulatorCommandTimeout);
 
-        var install = this.Run("xcrun", ["simctl", "install", simulator, appBundle], repoRoot, SimulatorCommandTimeout);
+        var (installExitCode, _, _) = this.Run("xcrun", ["simctl", "install", simulator, appBundle], repoRoot, SimulatorCommandTimeout);
 
-        if (install.ExitCode != 0)
+        if (installExitCode != 0)
         {
-            this.Fail($"Failed to install the iOS app on the simulator with exit code {install.ExitCode}.");
+            this.Fail($"Failed to install the iOS app on the simulator with exit code {installExitCode}.");
             return;
         }
 
@@ -370,7 +371,7 @@ public sealed class AppleAppFixture : IAsyncLifetime
 
         // '--console-pty' streams the app's stdout and stderr and blocks until the
         // app exits, which is when the on-device test run has finished.
-        var run = this.Run(
+        var (runExitCode, _, _) = this.Run(
             "xcrun",
             ["simctl", "launch", "--console-pty", "--terminate-running-process", simulator, BundleIdentifier],
             repoRoot,
@@ -383,7 +384,7 @@ public sealed class AppleAppFixture : IAsyncLifetime
         {
             // 'simctl launch' reports its own success, not the app's exit code, so
             // a missing summary means the app failed to start or crashed.
-            this.Fail($"The on-device test run did not write a results summary ('simctl launch' exited with code {run.ExitCode}).");
+            this.Fail($"The on-device test run did not write a results summary ('simctl launch' exited with code {runExitCode}).");
             return;
         }
 
@@ -400,12 +401,12 @@ public sealed class AppleAppFixture : IAsyncLifetime
 
     private (string Simulator, bool AlreadyBooted) ResolveSimulator()
     {
-        var result = this.Run("xcrun", ["simctl", "list", "devices", "available", "--json"], null, SimulatorCommandTimeout);
+        var (exitCode, listOutput, _) = this.Run("xcrun", ["simctl", "list", "devices", "available", "--json"], null, SimulatorCommandTimeout);
 
-        if (result.ExitCode != 0)
+        if (exitCode != 0)
         {
             throw new InvalidOperationException(
-                $"'xcrun simctl list devices' failed with exit code {result.ExitCode}.");
+                $"'xcrun simctl list devices' failed with exit code {exitCode}.");
         }
 
         // Runtime keys look like 'com.apple.CoreSimulator.SimRuntime.iOS-18-2'.
@@ -413,7 +414,7 @@ public sealed class AppleAppFixture : IAsyncLifetime
 
         (Version Runtime, string Udid, bool Booted)? candidate = null;
 
-        using var document = JsonDocument.Parse(result.StandardOutput);
+        using var document = JsonDocument.Parse(listOutput);
 
         foreach (var runtime in document.RootElement.GetProperty("devices").EnumerateObject())
         {
@@ -465,18 +466,18 @@ public sealed class AppleAppFixture : IAsyncLifetime
 
     private (int Passed, int Failed, int Skipped)? CollectResults(string simulator)
     {
-        var container = this.Run(
+        var (exitCode, standardOutput, _) = this.Run(
             "xcrun",
             ["simctl", "get_app_container", simulator, BundleIdentifier, "data"],
             null,
             SimulatorCommandTimeout);
 
-        if (container.ExitCode != 0)
+        if (exitCode != 0)
         {
             return null;
         }
 
-        var resultsDirectory = Path.Combine(container.StandardOutput.Trim(), "Documents", ResultsDirectoryName);
+        var resultsDirectory = Path.Combine(standardOutput.Trim(), "Documents", ResultsDirectoryName);
 
         if (!Directory.Exists(resultsDirectory))
         {
@@ -520,6 +521,6 @@ public sealed class AppleAppFixture : IAsyncLifetime
     private void Fail(string reason)
     {
         this.DeviceRunExitCode = 1;
-        this.failureReason = reason;
+        this.DeviceRunOutput = reason;
     }
 }
