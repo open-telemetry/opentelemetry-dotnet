@@ -32,6 +32,7 @@
     "config:best-practices",
     "customManagers:dockerfileVersions",
     "customManagers:githubActionsVersions",
+    "helpers:pinGitHubActionDigestsToSemver",
     ":automergeRequireAllStatusChecks",
     ":disableRateLimiting",
     ":enableVulnerabilityAlerts",
