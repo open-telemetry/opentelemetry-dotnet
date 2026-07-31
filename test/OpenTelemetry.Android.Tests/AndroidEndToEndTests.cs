@@ -3,6 +3,7 @@
 
 using OpenTelemetry.Proto.Common.V1;
 using OpenTelemetry.Proto.Logs.V1;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Android.Tests;
 

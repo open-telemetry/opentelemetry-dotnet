@@ -5,6 +5,8 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.Versioning;
 using System.Text;
+using Microsoft.AspNetCore.Builder;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.BlazorWasm.Tests;
 
@@ -21,7 +23,30 @@ public sealed class BlazorWasmAppFixture : IAsyncLifetime
         InstallPlaywright();
 
         this.publishDirectory = PublishClient();
-        this.Collector = await OtlpHttpCollector.StartAsync(Path.Combine(this.publishDirectory, "wwwroot"));
+
+        var port = TcpPortProvider.GetOpenPort();
+        var baseUrl = $"http://localhost:{port}";
+
+        var options = new WebApplicationOptions()
+        {
+            ContentRootPath = this.publishDirectory,
+            WebRootPath = Path.Combine(this.publishDirectory, "wwwroot"),
+        };
+
+        this.Collector = await OtlpHttpCollector.StartAsync(
+            baseUrl,
+            options,
+            (app) =>
+            {
+                // A simple endpoint the app's "Call HTTP endpoint" button targets so
+                // that HTTP client instrumentation can be exercised from the browser.
+                app.MapGet("/api/ping", () => Microsoft.AspNetCore.Http.Results.Text("pong"));
+
+                // Serve the published Blazor WebAssembly client.
+                app.UseBlazorFrameworkFiles();
+                app.UseStaticFiles();
+                app.MapFallbackToFile("index.html");
+            });
     }
 
     public async Task DisposeAsync()

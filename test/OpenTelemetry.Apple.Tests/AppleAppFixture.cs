@@ -10,6 +10,7 @@ using System.Text;
 using System.Text.Json;
 using System.Xml;
 using System.Xml.Linq;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Apple.Tests;
 
@@ -60,7 +61,11 @@ public sealed class AppleAppFixture : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        this.Collector = await OtlpHttpCollector.StartAsync();
+        // Binding to 'localhost' (rather than a specific address) makes Kestrel
+        // listen on both loopback addresses, and matches the unqualified host
+        // name the app is allowed to reach over cleartext HTTP by the App
+        // Transport Security policy declared in the app's Info.plist.
+        this.Collector = await OtlpHttpCollector.StartAsync("http://localhost:4318");
 
         try
         {

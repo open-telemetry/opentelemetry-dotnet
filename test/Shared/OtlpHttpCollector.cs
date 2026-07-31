@@ -10,20 +10,14 @@ using OpenTelemetry.Proto.Collector.Logs.V1;
 using OpenTelemetry.Proto.Collector.Metrics.V1;
 using OpenTelemetry.Proto.Collector.Trace.V1;
 
-namespace OpenTelemetry.Apple.Tests;
+namespace OpenTelemetry.Tests;
 
 /// <summary>
-/// An in-process OTLP/HTTP receiver run on the test host. The iOS test app,
-/// running in the simulator, exports to this collector over the host loopback -
-/// the simulator shares the host's network stack, so no port forwarding is
-/// required. Decoded OTLP requests are captured so the test can assert that
-/// traces, metrics and logs were exported by the SDK running under the iOS
-/// runtime.
+/// An in-process OTLP/HTTP receiver. Decoded OTLP requests are captured
+/// so tests can assert that traces, metrics and logs were exported by the SDK.
 /// </summary>
 internal sealed class OtlpHttpCollector : IAsyncDisposable
 {
-    internal const int Port = 4318;
-
     private readonly Lock lockObject = new();
     private readonly List<ExportLogsServiceRequest> logsRequests = [];
     private readonly List<ExportMetricsServiceRequest> metricsRequests = [];
@@ -41,15 +35,12 @@ internal sealed class OtlpHttpCollector : IAsyncDisposable
 
     public string BaseUrl { get; }
 
-    public static async Task<OtlpHttpCollector> StartAsync()
+    public static async Task<OtlpHttpCollector> StartAsync(
+        string baseUrl,
+        WebApplicationOptions? options = null,
+        Action<WebApplication>? configure = null)
     {
-        // Binding to 'localhost' (rather than a specific address) makes Kestrel
-        // listen on both loopback addresses, and matches the unqualified host
-        // name the app is allowed to reach over cleartext HTTP by the App
-        // Transport Security policy declared in the app's Info.plist.
-        var baseUrl = $"http://localhost:{Port}";
-
-        var builder = WebApplication.CreateBuilder();
+        var builder = WebApplication.CreateBuilder(options ?? new());
 
         builder.Logging.ClearProviders();
         builder.WebHost.UseUrls(baseUrl);
@@ -61,6 +52,8 @@ internal sealed class OtlpHttpCollector : IAsyncDisposable
         app.MapPost("/v1/logs", collector.HandleLogsAsync);
         app.MapPost("/v1/metrics", collector.HandleMetricsAsync);
         app.MapPost("/v1/traces", collector.HandleTracesAsync);
+
+        configure?.Invoke(app);
 
         await app.StartAsync();
 
@@ -91,20 +84,20 @@ internal sealed class OtlpHttpCollector : IAsyncDisposable
         }
     }
 
-    public string GetRawHitSummary()
-    {
-        lock (this.lockObject)
-        {
-            return $"Raw endpoint hits: /v1/traces={this.rawTraceHits}, /v1/metrics={this.rawMetricHits}, /v1/logs={this.rawLogHits}.";
-        }
-    }
-
     public async ValueTask DisposeAsync()
     {
         if (this.app is not null)
         {
             await this.app.StopAsync();
             await this.app.DisposeAsync();
+        }
+    }
+
+    public string GetRawHitSummary()
+    {
+        lock (this.lockObject)
+        {
+            return $"Raw endpoint hits: /v1/traces={this.rawTraceHits}, /v1/metrics={this.rawMetricHits}, /v1/logs={this.rawLogHits}.";
         }
     }
 
@@ -141,7 +134,6 @@ internal sealed class OtlpHttpCollector : IAsyncDisposable
     {
         var body = await ReadBodyAsync(context.Request);
         var request = ExportMetricsServiceRequest.Parser.ParseFrom(body);
-
         lock (this.lockObject)
         {
             this.rawMetricHits++;
