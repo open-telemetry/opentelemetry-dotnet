@@ -33,11 +33,7 @@ public sealed class AppleEndToEndTests
             {
                 options.SetResourceBuilder(CreateResourceBuilder());
                 options.IncludeFormattedMessage = true;
-                options.AddOtlpExporter((exporterOptions) =>
-                {
-                    ConfigureOtlp(exporterOptions, "v1/logs");
-                    exporterOptions.ExportProcessorType = ExportProcessorType.Simple;
-                });
+                options.AddOtlpExporter((exporterOptions) => ConfigureOtlp(exporterOptions, "v1/logs"));
             });
         });
 
