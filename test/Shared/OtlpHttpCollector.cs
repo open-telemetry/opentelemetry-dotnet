@@ -16,24 +16,18 @@ namespace OpenTelemetry.Tests;
 /// An in-process OTLP/HTTP receiver. Decoded OTLP requests are captured
 /// so tests can assert that traces, metrics and logs were exported by the SDK.
 /// </summary>
-internal sealed class OtlpHttpCollector : IAsyncDisposable
+internal sealed class OtlpHttpCollector(WebApplication app, string baseUrl) : IAsyncDisposable
 {
     private readonly Lock lockObject = new();
     private readonly List<ExportLogsServiceRequest> logsRequests = [];
     private readonly List<ExportMetricsServiceRequest> metricsRequests = [];
     private readonly List<ExportTraceServiceRequest> traceRequests = [];
-    private readonly WebApplication app;
+    private readonly WebApplication app = app;
     private int rawLogHits;
     private int rawMetricHits;
     private int rawTraceHits;
 
-    private OtlpHttpCollector(WebApplication app, string baseUrl)
-    {
-        this.app = app;
-        this.BaseUrl = baseUrl;
-    }
-
-    public string BaseUrl { get; }
+    public string BaseUrl { get; } = baseUrl;
 
     public static async Task<OtlpHttpCollector> StartAsync(
         string baseUrl,
@@ -84,20 +78,20 @@ internal sealed class OtlpHttpCollector : IAsyncDisposable
         }
     }
 
+    public string GetRawHitSummary()
+    {
+        lock (this.lockObject)
+        {
+            return $"Raw endpoint hits: /v1/traces={this.rawTraceHits}, /v1/metrics={this.rawMetricHits}, /v1/logs={this.rawLogHits}.";
+        }
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (this.app is not null)
         {
             await this.app.StopAsync();
             await this.app.DisposeAsync();
-        }
-    }
-
-    public string GetRawHitSummary()
-    {
-        lock (this.lockObject)
-        {
-            return $"Raw endpoint hits: /v1/traces={this.rawTraceHits}, /v1/metrics={this.rawMetricHits}, /v1/logs={this.rawLogHits}.";
         }
     }
 
@@ -134,6 +128,7 @@ internal sealed class OtlpHttpCollector : IAsyncDisposable
     {
         var body = await ReadBodyAsync(context.Request);
         var request = ExportMetricsServiceRequest.Parser.ParseFrom(body);
+
         lock (this.lockObject)
         {
             this.rawMetricHits++;
