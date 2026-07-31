@@ -116,12 +116,18 @@ internal static class TestRunner
         {
             if (eventSource.Name.StartsWith("OpenTelemetry", StringComparison.Ordinal))
             {
-                this.EnableEvents(eventSource, EventLevel.Error, EventKeywords.All);
+                this.EnableEvents(eventSource, EventLevel.Warning, EventKeywords.All);
             }
         }
 
         protected override void OnEventWritten(EventWrittenEventArgs eventData)
         {
+            if (string.Equals(eventData.EventName, "MetricInstrumentIgnored", StringComparison.Ordinal))
+            {
+                // Noise we do not care about for these tests
+                return;
+            }
+
             var payload = eventData.Payload is null
                 ? string.Empty
                 : string.Join(", ", eventData.Payload);

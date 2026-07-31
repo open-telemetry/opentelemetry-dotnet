@@ -17,7 +17,8 @@ public sealed class AppleEndToEndTests
 {
     private static readonly Uri OtlpBaseAddress = new(InstrumentationSource.OtlpEndpoint);
 
-    private static readonly TimeSpan FlushTimeout = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan FlushTimeout = TimeSpan.FromSeconds(60);
+    private static readonly TimeSpan ExportTimeout = TimeSpan.FromSeconds(30);
 
     [TestMethod]
     public void IsRunningOnApplePlatform()
@@ -32,11 +33,17 @@ public sealed class AppleEndToEndTests
             {
                 options.SetResourceBuilder(CreateResourceBuilder());
                 options.IncludeFormattedMessage = true;
-                options.AddOtlpExporter((exporterOptions) => ConfigureOtlp(exporterOptions, "v1/logs"));
+                options.AddOtlpExporter((exporterOptions) =>
+                {
+                    ConfigureOtlp(exporterOptions, "v1/logs");
+                    exporterOptions.ExportProcessorType = ExportProcessorType.Simple;
+                });
             });
         });
 
         var logger = loggerFactory.CreateLogger(InstrumentationSource.LoggerName);
+
+        Assert.IsTrue(logger.IsEnabled(LogLevel.Information), "Information logs are not enabled.");
 
         if (logger.IsEnabled(LogLevel.Information))
         {
@@ -60,7 +67,9 @@ public sealed class AppleEndToEndTests
         instrumentation.Counter.Add(1);
         instrumentation.Histogram.Record(123.45);
 
-        meterProvider.ForceFlush((int)FlushTimeout.TotalMilliseconds);
+        Assert.IsTrue(
+            meterProvider.ForceFlush((int)FlushTimeout.TotalMilliseconds),
+            $"Metrics were not exported within {FlushTimeout}.");
     }
 
     [TestMethod]
@@ -83,7 +92,9 @@ public sealed class AppleEndToEndTests
             activity.SetTag(InstrumentationSource.ActivityTagKey, InstrumentationSource.ActivityTagValue);
         }
 
-        tracerProvider.ForceFlush((int)FlushTimeout.TotalMilliseconds);
+        Assert.IsTrue(
+            tracerProvider.ForceFlush((int)FlushTimeout.TotalMilliseconds),
+            $"Traces were not exported within {FlushTimeout}.");
     }
 
     private static ResourceBuilder CreateResourceBuilder()
@@ -93,5 +104,6 @@ public sealed class AppleEndToEndTests
     {
         options.Protocol = OtlpExportProtocol.HttpProtobuf;
         options.Endpoint = new(OtlpBaseAddress, signalPath);
+        options.TimeoutMilliseconds = (int)ExportTimeout.TotalMilliseconds;
     }
 }
