@@ -3,7 +3,7 @@ name: zizmor scan
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [ 'main*' ]
   workflow_dispatch:
 
 permissions: {}
