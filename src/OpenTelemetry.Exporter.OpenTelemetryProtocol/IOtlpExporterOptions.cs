@@ -94,11 +94,18 @@ internal interface IOtlpExporterOptions
     /// cref="IServiceProvider"/> then an <see cref="HttpClient"/> will be
     /// created through the factory with the name "OtlpMetricExporter" otherwise
     /// an <see cref="HttpClient"/> will be instantiated directly.</item>
-    /// <item>
-    /// The default behavior when using logging registration extensions is an
-    /// <see cref="HttpClient"/> will be instantiated directly. <a
+    /// <item>The default behavior when using logging registration extensions is
+    /// if an <a
     /// href="https://docs.microsoft.com/dotnet/api/system.net.http.ihttpclientfactory">IHttpClientFactory</a>
-    /// is not currently supported for logging.
+    /// instance can be resolved through the application <see
+    /// cref="IServiceProvider"/> then an <see cref="HttpClient"/> will be
+    /// created through the factory with the name "OtlpLogExporter" otherwise
+    /// an <see cref="HttpClient"/> will be instantiated directly.</item>
+    /// <item>
+    /// Applications that use custom classes derived from <see cref="DelegatingHandler"/>
+    /// in .NET 5 or later must override both the asynchronous
+    /// <see cref="DelegatingHandler.SendAsync(HttpRequestMessage, CancellationToken)"/>
+    /// and synchronous <c>Send(HttpRequestMessage, CancellationToken)</c> methods.
     /// </item>
     /// </list>
     /// </remarks>
