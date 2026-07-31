@@ -697,14 +697,11 @@ seeing these internal logs.
 
 If a batch cannot be serialized the export fails and every item in the batch is
 dropped. `BatchDroppedDueToSerializationFailure` (event ID 39) reports the
-signal, how many items were lost, and the exception which ended serialization.
+signal, how many items were lost, and the exception which caused the failure.
 
 The most likely cause is a batch which is too large for the serialization
-buffer. `BufferExceededMaxSize` (event ID 14) is written before event 39 when
-the size limit is reached, or `BufferResizeFailedDueToMemory` (event ID 15) if
-the buffer could not be grown. Any other exception raised while serializing an
-item, such as one thrown by a custom attribute value, drops the batch in the
-same way.
+buffer. Any other exception raised while serializing an item, such as one
+thrown by a custom attribute value, drops the batch in the same way.
 
 For traces and logs, keep batches within the limit by reducing the number of
 items in each batch with `MaxExportBatchSize` (see [Environment

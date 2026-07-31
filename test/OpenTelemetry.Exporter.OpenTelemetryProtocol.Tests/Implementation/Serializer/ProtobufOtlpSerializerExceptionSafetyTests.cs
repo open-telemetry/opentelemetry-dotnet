@@ -17,36 +17,10 @@ using OtlpTrace = OpenTelemetry.Proto.Trace.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Implementation.Serializer;
 
-/// <summary>
-/// Tests covering the exception-safety of the <c>[ThreadStatic]</c> batch state
-/// held by the OTLP serializers.
-/// </summary>
-/// <remarks>
-/// <para><c>WriteTraceData</c>/<c>WriteLogsData</c>/<c>WriteMetricsData</c> group the
-/// batch into thread-static dictionaries, serialize, then release that state in a
-/// <c>finally</c>. Serialization deliberately rethrows when
-/// <c>ProtobufSerializer.IncreaseBufferSize</c> refuses to grow past its 100 MiB
-/// cap, and any other escaped exception takes the same path. These tests assert
-/// that after such a failure the thread-static dictionaries are empty, pooled
-/// <see cref="LogRecord"/> references are balanced, serialization buffers are not
-/// retained, and the next export on the same thread serializes only its own batch -
-/// the contract that prevents one
-/// failed export from permanently poisoning the batch processor's dedicated
-/// thread.</para>
-/// <para>Reporting the dropped batch is the exporter's job, so it is covered by
-/// the exporter tests rather than here.</para>
-/// <para>Each test runs on its own thread so that any thread-static state left
-/// behind cannot leak into unrelated tests.</para>
-/// </remarks>
-public class ProtobufOtlpSerializerExceptionSafetyTests
+public class ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBufferFixture maxSizeBuffer)
     : IClassFixture<MaxSizeSerializationBufferFixture>
 {
-    private readonly MaxSizeSerializationBufferFixture maxSizeBuffer;
-
-    public ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBufferFixture maxSizeBuffer)
-    {
-        this.maxSizeBuffer = maxSizeBuffer;
-    }
+    private readonly MaxSizeSerializationBufferFixture maxSizeBuffer = maxSizeBuffer;
 
     [Fact]
     public void WriteTraceData_AfterFailedSerialization_DoesNotCarryStaleBatchIntoNextExport()

@@ -94,9 +94,6 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
             }
             catch (Exception ex)
             {
-                // Note: The batch cannot be recovered, so report what it cost
-                // rather than letting the catch below log it as an unknown
-                // error. The buffer is discarded by the finally block below.
                 OpenTelemetryProtocolExporterEventSource.Log.BatchDroppedDueToSerializationFailure(
                     OtlpSignalType.Logs,
                     logRecordBatch.Count,

@@ -940,8 +940,8 @@ public class OtlpLogExporterTests
     [Fact]
     public void Export_WhenSerializationFails_ReportsDroppedBatchAndDoesNotSubmitRequest()
     {
-        const int batchDroppedEventId = 39;
-        const int exportMethodExceptionEventId = 4;
+        const int BatchDroppedEventId = 39;
+        const int ExportMethodExceptionEventId = 4;
 
         // Arrange.
         using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Error);
@@ -955,7 +955,7 @@ public class OtlpLogExporterTests
             new ExperimentalOptions(),
             transmissionHandler);
 
-        // Note: A null item is a stand-in for any exception escaping the
+        // A null item is a stand-in for any exception escaping the
         // serializer. The failures which can reach here in practice, and the
         // serializer state left behind by them, are covered by
         // ProtobufOtlpSerializerExceptionSafetyTests.
@@ -968,7 +968,7 @@ public class OtlpLogExporterTests
         Assert.Equal(ExportResult.Failure, result);
         Assert.False(testExportClient.SendExportRequestCalled);
 
-        var droppedEvent = Assert.Single(listener.Messages, e => e.EventId == batchDroppedEventId);
+        var droppedEvent = Assert.Single(listener.Messages, e => e.EventId == BatchDroppedEventId);
         Assert.NotNull(droppedEvent.Payload);
         Assert.Equal("Logs", droppedEvent.Payload[0]);
         Assert.Equal(1L, droppedEvent.Payload[1]);
@@ -976,7 +976,7 @@ public class OtlpLogExporterTests
 
         // The batch has been attributed to a signal and an item count, so it must
         // not also be reported as an unknown export error.
-        Assert.DoesNotContain(listener.Messages, e => e.EventId == exportMethodExceptionEventId);
+        Assert.DoesNotContain(listener.Messages, e => e.EventId == ExportMethodExceptionEventId);
     }
 
     [Fact]
