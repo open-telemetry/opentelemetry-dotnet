@@ -20,10 +20,9 @@ tests; the assertions are in `OpenTelemetry.Apple.Tests`.
   `Documents/TestResults` directory as the run finishes, which the host test
   project reads back out of the simulator. The summary the app writes afterwards
   is only used for diagnostics.
-- The app exports over OTLP/HTTP to `http://localhost:<port>`. The iOS simulator
+- The app exports over OTLP/HTTP to `http://localhost:4318`. The iOS simulator
   shares the host's network stack, so the collector running on the host is
-  reachable over the loopback interface; the port is passed in through the
-  `OTEL_TEST_OTLP_ENDPOINT` environment variable.
+  reachable over the loopback interface.
 - `Info.plist` opts in to cleartext HTTP for local network destinations
   (`NSAllowsLocalNetworking`), which App Transport Security blocks by default.
 
