@@ -3,6 +3,7 @@
 
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Diagnostics.Tracing;
 using System.Globalization;
 #if NETFRAMEWORK
 using System.Net.Http;
@@ -934,6 +935,48 @@ public class OtlpLogExporterTests
 
         // Assert.
         Assert.Equal(ExportResult.Failure, result);
+    }
+
+    [Fact]
+    public void Export_WhenSerializationFails_ReportsDroppedBatchAndDoesNotSubmitRequest()
+    {
+        const int batchDroppedEventId = 39;
+        const int exportMethodExceptionEventId = 4;
+
+        // Arrange.
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Error);
+
+        var testExportClient = new TestExportClient();
+        var exporterOptions = new OtlpExporterOptions();
+        using var transmissionHandler = new OtlpExporterTransmissionHandler(testExportClient, exporterOptions.TimeoutMilliseconds);
+        using var sut = new OtlpLogExporter(
+            exporterOptions,
+            new SdkLimitOptions(),
+            new ExperimentalOptions(),
+            transmissionHandler);
+
+        // Note: A null item is a stand-in for any exception escaping the
+        // serializer. The failures which can reach here in practice, and the
+        // serializer state left behind by them, are covered by
+        // ProtobufOtlpSerializerExceptionSafetyTests.
+        var batch = new Batch<LogRecord>([null!], 1);
+
+        // Act.
+        var result = sut.Export(batch);
+
+        // Assert.
+        Assert.Equal(ExportResult.Failure, result);
+        Assert.False(testExportClient.SendExportRequestCalled);
+
+        var droppedEvent = Assert.Single(listener.Messages, e => e.EventId == batchDroppedEventId);
+        Assert.NotNull(droppedEvent.Payload);
+        Assert.Equal("Logs", droppedEvent.Payload[0]);
+        Assert.Equal(1L, droppedEvent.Payload[1]);
+        Assert.Contains(nameof(NullReferenceException), Assert.IsType<string>(droppedEvent.Payload[2]), StringComparison.Ordinal);
+
+        // The batch has been attributed to a signal and an item count, so it must
+        // not also be reported as an unknown export error.
+        Assert.DoesNotContain(listener.Messages, e => e.EventId == exportMethodExceptionEventId);
     }
 
     [Fact]

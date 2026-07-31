@@ -75,8 +75,22 @@ public class OtlpMetricExporter : BaseExporter<Metric>
         {
             buffer = this.serializationBuffer.Rent();
 
-            writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, this.startWritePosition, this.Resource, metrics);
-            serializationSucceeded = true;
+            try
+            {
+                writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, this.startWritePosition, this.Resource, metrics);
+                serializationSucceeded = true;
+            }
+            catch (Exception ex)
+            {
+                // Note: The batch cannot be recovered, so report what it cost
+                // rather than letting the catch below log it as an unknown
+                // error. The buffer is discarded by the finally block below.
+                OpenTelemetryProtocolExporterEventSource.Log.BatchDroppedDueToSerializationFailure(
+                    OtlpSignalType.Metrics,
+                    metrics.Count,
+                    ex);
+                return ExportResult.Failure;
+            }
 
             if (this.startWritePosition == GrpcStartWritePosition)
             {

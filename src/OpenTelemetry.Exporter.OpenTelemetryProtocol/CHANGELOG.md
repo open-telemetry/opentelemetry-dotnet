@@ -16,6 +16,14 @@ Notes](../../RELEASENOTES.md).
   to be dropped.
   ([#7544](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7544))
 
+* Fixed a serialization failure leaving the failed batch in the serializer's
+  per-thread state, which merged it into subsequent exports on the same thread
+  and leaked pooled `LogRecord` instances. The dropped batch is now reported
+  through a new `BatchDroppedDueToSerializationFailure` log event
+  (event ID 39) naming the signal, the number of items lost, and the exception,
+  rather than as an unknown export error.
+  ([#NNNN](https://github.com/open-telemetry/opentelemetry-dotnet/pull/NNNN))
+
 ## 1.17.0
 
 Released 2026-Jul-16

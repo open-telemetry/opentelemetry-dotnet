@@ -693,6 +693,29 @@ logging. Please refer to [SDK
 troubleshooting](../OpenTelemetry/README.md#troubleshooting) for instructions on
 seeing these internal logs.
 
+### Dropped batches
+
+If a batch cannot be serialized the export fails and every item in the batch is
+dropped. `BatchDroppedDueToSerializationFailure` (event ID 39) reports the
+signal, how many items were lost, and the exception which ended serialization.
+
+The most likely cause is a batch which is too large for the serialization
+buffer. `BufferExceededMaxSize` (event ID 14) is written before event 39 when
+the size limit is reached, or `BufferResizeFailedDueToMemory` (event ID 15) if
+the buffer could not be grown. Any other exception raised while serializing an
+item, such as one thrown by a custom attribute value, drops the batch in the
+same way.
+
+For traces and logs, keep batches within the limit by reducing the number of
+items in each batch with `MaxExportBatchSize` (see [Environment
+Variables](#environment-variables)), and the size of individual items with the
+[attribute limits](#attribute-limits).
+
+A metrics batch contains every metric collected by the reader and there is no
+batch size to lower, so reduce the size of the payload instead: drop
+instruments or attribute keys using views, or lower the cardinality of the
+attributes being recorded.
+
 ## References
 
 * [OpenTelemetry
