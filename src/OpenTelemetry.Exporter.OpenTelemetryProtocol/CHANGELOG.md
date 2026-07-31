@@ -22,7 +22,7 @@ Notes](../../RELEASENOTES.md).
   through a new `BatchDroppedDueToSerializationFailure` log event
   (event ID 39) naming the signal, the number of items lost, and the exception,
   rather than as an unknown export error.
-  ([#NNNN](https://github.com/open-telemetry/opentelemetry-dotnet/pull/NNNN))
+  ([#7579](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7579))
 
 ## 1.17.0
 
