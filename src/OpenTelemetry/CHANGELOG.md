@@ -11,6 +11,10 @@ Notes](../../RELEASENOTES.md).
   buffer estimate. Such content is now truncated.
   ([#7543](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7543))
 
+* Fixed activity creation throwing when multiple tracer providers return a
+  sampler attribute with the same key.
+  ([#7558](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7558))
+
 * Added the `otel.sdk.processor.log.processed` SDK self-observability metric.
   ([#7486](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7486))
 

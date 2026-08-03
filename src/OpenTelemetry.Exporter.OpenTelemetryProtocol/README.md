@@ -619,8 +619,9 @@ services.AddOpenTelemetry()
 
 For users using
 [IHttpClientFactory](https://docs.microsoft.com/dotnet/architecture/microservices/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests)
-you may also customize the named "OtlpTraceExporter" and/or "OtlpMetricExporter"
-`HttpClient` using the built-in `AddHttpClient` extension:
+you may also customize the named "OtlpTraceExporter", "OtlpMetricExporter",
+and/or "OtlpLogExporter" `HttpClient` using the built-in `AddHttpClient`
+extension:
 
 ```csharp
 services.AddHttpClient(
@@ -629,8 +630,14 @@ services.AddHttpClient(
         client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value"));
 ```
 
-> [!NOTE]
-> `IHttpClientFactory` is NOT currently supported by `OtlpLogExporter`.
+> [!IMPORTANT]
+> Applications that use custom [`DelegatingHandler`](https://learn.microsoft.com/dotnet/api/system.net.http.delegatinghandler)
+> implementations when targeting .NET 5 or later must override both the
+> [SendAsync()](https://learn.microsoft.com/dotnet/api/system.net.http.delegatinghandler.sendasync)
+> and
+> [Send()](https://learn.microsoft.com/dotnet/api/system.net.http.delegatinghandler.send)
+> methods to ensure that their custom logic is executed for all HTTP requests
+> made by the OTLP exporter.
 
 ## Experimental features
 

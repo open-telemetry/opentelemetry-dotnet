@@ -492,7 +492,7 @@ internal sealed class TracerProviderSdk : TracerProvider
             {
                 foreach (var att in attributes)
                 {
-                    options.SamplingTags.Add(att.Key, att.Value);
+                    options.SamplingTags[att.Key] = att.Value;
                 }
             }
         }
