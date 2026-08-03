@@ -224,6 +224,8 @@
   <Project Path="test/OpenTelemetry.Api.FuzzTests/OpenTelemetry.Api.FuzzTests.csproj" />
   <Project Path="test/OpenTelemetry.Api.ProviderBuilderExtensions.Tests/OpenTelemetry.Api.ProviderBuilderExtensions.Tests.csproj" />
   <Project Path="test/OpenTelemetry.Api.Tests/OpenTelemetry.Api.Tests.csproj" />
+  <Project Path="test/OpenTelemetry.Apple.TestApp/OpenTelemetry.Apple.TestApp.csproj" />
+  <Project Path="test/OpenTelemetry.Apple.Tests/OpenTelemetry.Apple.Tests.csproj" />
   <Project Path="test/OpenTelemetry.BlazorWasm.TestApp/OpenTelemetry.BlazorWasm.TestApp.csproj" />
   <Project Path="test/OpenTelemetry.BlazorWasm.Tests/OpenTelemetry.BlazorWasm.Tests.csproj" />
   <Project Path="test/OpenTelemetry.Exporter.Console.Tests/OpenTelemetry.Exporter.Console.Tests.csproj" />

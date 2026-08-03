@@ -11,3 +11,5 @@ Delt = "Delt"
 Alway = "Alway"
 # "Enumerables" is the valid plural of "Enumerable" used in a method name
 Enumerables = "Enumerables"
+# "Udid" is Apple's acronym for the unique identifier of a device or simulator
+Udid = "Udid"

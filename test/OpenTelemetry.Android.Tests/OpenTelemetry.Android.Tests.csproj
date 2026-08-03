@@ -13,6 +13,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="$(RepoRoot)\test\Shared\OtlpHttpCollector.cs" Link="Includes\OtlpHttpCollector.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Protobuf Include="$(RepoRoot)\src\Shared\Proto\**\*.proto" Link="Proto\%(RecursiveDir)%(Filename)%(Extension)" Access="internal" GrpcServices="None">
       <ProtoRoot>$(RepoRoot)\src\Shared\Proto</ProtoRoot>
     </Protobuf>
