@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.Versioning;
 using System.Text;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Android.Tests;
 
@@ -44,7 +45,10 @@ public sealed class AndroidAppFixture : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        this.Collector = await OtlpHttpCollector.StartAsync();
+        // Bind on all interfaces so the emulator can reach the collector via
+        // 10.0.2.2 (the alias for the host loopback).
+        var baseUrl = $"http://0.0.0.0:4318";
+        this.Collector = await OtlpHttpCollector.StartAsync(baseUrl);
 
         var repoRoot = RepoRoot();
         var project = Path.Combine(repoRoot, "test", "OpenTelemetry.Android.TestApp", "OpenTelemetry.Android.TestApp.csproj");

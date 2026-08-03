@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Description>End-to-end tests that drive the Android test app on an emulator and validate the OpenTelemetry SDK under the Android runtime by decoding the OTLP it exports.</Description>
+    <Description>End-to-end tests that drive the iOS test app on a simulator and validate the OpenTelemetry SDK under the iOS runtime by decoding the OTLP it exports.</Description>
     <NoWarn>$(NoWarn);CA1515;CA2007</NoWarn>
-    <TargetFrameworks>net11.0;net10.0</TargetFrameworks>
+    <TargetFrameworks>net10.0</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>

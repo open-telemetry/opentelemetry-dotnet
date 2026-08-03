@@ -10,7 +10,8 @@ namespace OpenTelemetry.Internal.Tests;
 public class SelfDiagnosticsConfigRefresherTests
 {
     private const string ConfigFilePath = SelfDiagnosticsConfigParser.ConfigFileName;
-    private static readonly byte[] MessageOnNewFile = SelfDiagnosticsConfigRefresher.MessageOnNewFile;
+    private const int CaptureAttempts = 5;
+
     private static readonly string MessageOnNewFileString = Encoding.UTF8.GetString(SelfDiagnosticsConfigRefresher.MessageOnNewFile);
 
     private readonly ITestOutputHelper output;
@@ -23,23 +24,63 @@ public class SelfDiagnosticsConfigRefresherTests
     [Fact]
     public void SelfDiagnosticsConfigRefresher_OmitAsConfigured()
     {
+        var logDirectory = Utils.GetCurrentMethodName();
+        using var configRefresher = CreateRefresher(logDirectory);
+
+        // Emitting event of EventLevel.Warning
+        var omittedEvent = "omitted event sample";
+        OpenTelemetrySdkEventSource.Log.ObservableInstrumentCallbackException(omittedEvent);
+
+        var logText = ReadLogFile(logDirectory);
+        this.output.WriteLine(logText);  // for debugging in case the test fails
+        Assert.StartsWith(MessageOnNewFileString, logText, StringComparison.Ordinal);
+
+        // The event was omitted. Error level events emitted elsewhere in the process can end up
+        // in this file, so assert on the absence of this event rather than on the file holding
+        // nothing but the header.
+        Assert.DoesNotContain(omittedEvent, logText, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void SelfDiagnosticsConfigRefresher_CaptureAsConfigured()
+    {
+        var logDirectory = Utils.GetCurrentMethodName();
+        using var configRefresher = CreateRefresher(logDirectory);
+
+        var expectedMessage = "Unknown error in TracerProvider '{0}': '{1}'.{Event string sample}{Exception string sample}";
+
+        string? logText = null;
+        string? logLine = null;
+
+        for (var attempt = 0; attempt < CaptureAttempts && logLine == null; attempt++)
+        {
+            // Emitting event of EventLevel.Error
+            OpenTelemetrySdkEventSource.Log.TracerProviderException("Event string sample", "Exception string sample");
+
+            logText = ReadLogFile(logDirectory);
+            logLine = FindLogLine(logText, expectedMessage);
+        }
+
+        this.output.WriteLine(logText);  // for debugging in case the test fails
+        Assert.StartsWith(MessageOnNewFileString, logText!, StringComparison.Ordinal);
+
+        // The event was captured
+        Assert.NotNull(logLine);
+        var logMessage = ParseLogMessage(logLine);
+        Assert.StartsWith(expectedMessage, logMessage, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Creates a refresher configured to write to <paramref name="logDirectory"/> and removes
+    /// the configuration file again as soon as it has been read.
+    /// </summary>
+    private static SelfDiagnosticsConfigRefresher CreateRefresher(string logDirectory)
+    {
+        CreateConfigFile(logDirectory);
+
         try
         {
-            var logDirectory = Utils.GetCurrentMethodName();
-            CreateConfigFile(logDirectory);
-            using var configRefresher = new SelfDiagnosticsConfigRefresher();
-
-            // Emitting event of EventLevel.Warning
-            OpenTelemetrySdkEventSource.Log.ObservableInstrumentCallbackException("exception");
-
-            var bufferSize = 512;
-            var actualBytes = ReadFile(logDirectory, bufferSize);
-            var logText = Encoding.UTF8.GetString(actualBytes);
-            this.output.WriteLine(logText);  // for debugging in case the test fails
-            Assert.StartsWith(MessageOnNewFileString, logText, StringComparison.Ordinal);
-
-            // The event was omitted
-            Assert.Equal('\0', (char)actualBytes[MessageOnNewFile.Length]);
+            return new SelfDiagnosticsConfigRefresher();
         }
         finally
         {
@@ -47,33 +88,24 @@ public class SelfDiagnosticsConfigRefresherTests
         }
     }
 
-    [Fact]
-    public void SelfDiagnosticsConfigRefresher_CaptureAsConfigured()
+    private static string? FindLogLine(string logText, string expectedMessage)
     {
-        try
+        if (logText.Length <= MessageOnNewFileString.Length)
         {
-            var logDirectory = Utils.GetCurrentMethodName();
-            CreateConfigFile(logDirectory);
-            using var configRefresher = new SelfDiagnosticsConfigRefresher();
-
-            // Emitting event of EventLevel.Error
-            OpenTelemetrySdkEventSource.Log.TracerProviderException("Event string sample", "Exception string sample");
-            var expectedMessage = "Unknown error in TracerProvider '{0}': '{1}'.{Event string sample}{Exception string sample}";
-
-            var bufferSize = 2 * (MessageOnNewFileString.Length + expectedMessage.Length);
-            var actualBytes = ReadFile(logDirectory, bufferSize);
-            var logText = Encoding.UTF8.GetString(actualBytes);
-            Assert.StartsWith(MessageOnNewFileString, logText, StringComparison.Ordinal);
-
-            // The event was captured
-            var logLine = logText.Substring(MessageOnNewFileString.Length);
-            var logMessage = ParseLogMessage(logLine);
-            Assert.StartsWith(expectedMessage, logMessage, StringComparison.Ordinal);
+            return null;
         }
-        finally
+
+        var lines = logText.Substring(MessageOnNewFileString.Length).Split('\n');
+
+        foreach (var line in lines)
         {
-            CleanupConfigFile();
+            if (line.Contains(expectedMessage, StringComparison.Ordinal))
+            {
+                return line;
+            }
         }
+
+        return null;
     }
 
     private static string ParseLogMessage(string logLine)
@@ -83,7 +115,7 @@ public class SelfDiagnosticsConfigRefresherTests
         return logLine.Substring(timestampPrefixLength);
     }
 
-    private static byte[] ReadFile(string logDirectory, int byteCount)
+    private static string ReadLogFile(string logDirectory)
     {
         var outputFileName = Path.GetFileName(Process.GetCurrentProcess().MainModule?.FileName) + "."
 #if NET
@@ -93,9 +125,20 @@ public class SelfDiagnosticsConfigRefresherTests
 #endif
         var outputFilePath = Path.Combine(logDirectory, outputFileName);
         using var file = File.Open(outputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-        var actualBytes = new byte[byteCount];
-        _ = file.Read(actualBytes, 0, byteCount);
-        return actualBytes;
+
+        var actualBytes = new byte[file.Length];
+
+        var totalBytesRead = 0;
+        int bytesRead;
+
+        while (totalBytesRead < actualBytes.Length &&
+               (bytesRead = file.Read(actualBytes, totalBytesRead, actualBytes.Length - totalBytesRead)) > 0)
+        {
+            totalBytesRead += bytesRead;
+        }
+
+        // The log file is a fixed size circular buffer, so trim the unwritten remainder.
+        return Encoding.UTF8.GetString(actualBytes, 0, totalBytesRead).TrimEnd('\0');
     }
 
     private static void CreateConfigFile(string logDirectory)
