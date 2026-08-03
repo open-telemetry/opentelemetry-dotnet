@@ -255,7 +255,7 @@ internal static class OtlpRetry
         var nextMilliseconds = nextRetryDelayMilliseconds * BackoffMultiplier;
         nextMilliseconds = Math.Min(nextMilliseconds, MaxBackoffMilliseconds);
 
-        // Floor the sequence so that it can never collapse to zero and strip the jittered backoff
+        // Clamp to a non-zero minimum so the backoff cannot collapse to zero
         return Math.Max(Convert.ToInt32(nextMilliseconds), MinThrottleDelayMilliseconds);
     }
 
