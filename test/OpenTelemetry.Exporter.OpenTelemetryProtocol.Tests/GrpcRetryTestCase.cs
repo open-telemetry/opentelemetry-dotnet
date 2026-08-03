@@ -11,6 +11,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 public class GrpcRetryTestCase
 #pragma warning restore CA1515 // Consider making public types internal
 {
+    private static readonly TimeSpan MinThrottleDelay = TimeSpan.FromMilliseconds(100);
+
     private readonly string testRunnerName;
 
     private GrpcRetryTestCase(string testRunnerName, GrpcRetryAttempt[] retryAttempts, int expectedRetryAttempts = 1)
@@ -40,6 +42,8 @@ public class GrpcRetryTestCase
 
         new("ResourceExhausted w/o RetryInfo", [new(StatusCode.ResourceExhausted, expectedSuccess: false)]),
         new("ResourceExhausted w/ RetryInfo", [new(StatusCode.ResourceExhausted, throttleDelay: GetThrottleDelayString(new Duration { Seconds = 2 }), expectedNextRetryDelayMilliseconds: 3000)]),
+        new("ResourceExhausted w/ zero RetryInfo", [new(StatusCode.ResourceExhausted, throttleDelay: GetThrottleDelayString(new Duration()), expectedRetryDelay: MinThrottleDelay, expectedNextRetryDelayMilliseconds: 150)]),
+        new("ResourceExhausted w/ sub-millisecond RetryInfo", [new(StatusCode.ResourceExhausted, throttleDelay: GetThrottleDelayString(new Duration { Nanos = 1 }), expectedRetryDelay: MinThrottleDelay, expectedNextRetryDelayMilliseconds: 150)]),
 
         new("Unavailable w/ RetryInfo", [new(StatusCode.Unavailable, throttleDelay: GetThrottleDelayString(Duration.FromTimeSpan(TimeSpan.FromMilliseconds(2000))), expectedNextRetryDelayMilliseconds: 3000)]),
 
@@ -92,7 +96,7 @@ public class GrpcRetryTestCase
     public override string ToString()
         => this.testRunnerName;
 
-    private static string GetThrottleDelayString(Duration throttleDelay)
+    internal static string GetThrottleDelayString(Duration throttleDelay)
     {
         var status = new Google.Rpc.Status
         {
@@ -118,7 +122,8 @@ public class GrpcRetryTestCase
             string? throttleDelay = null,
             int expectedNextRetryDelayMilliseconds = 1500,
             bool expectedSuccess = true,
-            TimeSpan? deadlineFromNow = null)
+            TimeSpan? deadlineFromNow = null,
+            TimeSpan? expectedRetryDelay = null)
         {
             var status = new Status(statusCode, "Error");
 
@@ -133,10 +138,14 @@ public class GrpcRetryTestCase
 
             this.ExpectedNextRetryDelayMilliseconds = expectedNextRetryDelayMilliseconds;
 
+            this.ExpectedRetryDelay = expectedRetryDelay ?? GrpcStatusDeserializer.TryGetGrpcRetryDelay(throttleDelay);
+
             this.ExpectedSuccess = expectedSuccess;
         }
 
         public string? ThrottleDelay { get; }
+
+        public TimeSpan? ExpectedRetryDelay { get; }
 
         public int? ExpectedNextRetryDelayMilliseconds { get; }
 

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Grpc;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Tests;
 
@@ -45,7 +46,7 @@ public class OtlpRetryTests
 
             if (retryResult.Throttled)
             {
-                Assert.Equal(GrpcStatusDeserializer.TryGetGrpcRetryDelay(retryAttempt.ThrottleDelay), retryResult.RetryDelay);
+                Assert.Equal(retryAttempt.ExpectedRetryDelay, retryResult.RetryDelay);
             }
             else
             {
@@ -96,7 +97,7 @@ public class OtlpRetryTests
 
             if (retryResult.Throttled)
             {
-                Assert.Equal(retryAttempt.ThrottleDelay!.Value.TotalSeconds, retryResult.RetryDelay.TotalSeconds, retryAttempt.TimestampTolerance.TotalSeconds);
+                Assert.Equal(retryAttempt.ExpectedRetryDelay!.Value.TotalSeconds, retryResult.RetryDelay.TotalSeconds, retryAttempt.TimestampTolerance.TotalSeconds);
             }
             else
             {
@@ -110,5 +111,55 @@ public class OtlpRetryTests
         }
 
         Assert.Equal(testCase.ExpectedRetryAttempts, attempts);
+    }
+
+    [Fact]
+    public void ZeroThrottleDelayDoesNotCauseAnUnthrottledRetryStorm()
+    {
+        const double TimeoutMilliseconds = 250;
+
+        var exportClient = new AlwaysThrottledExportClient(
+            GrpcRetryTestCase.GetThrottleDelayString(new Google.Protobuf.WellKnownTypes.Duration()));
+
+        using var handler = new OtlpExporterRetryTransmissionHandler(exportClient, TimeoutMilliseconds);
+
+        Assert.False(handler.TrySubmitRequest([1, 2, 3], 3));
+
+        Assert.True(
+            exportClient.SendCount <= 10,
+            $"Expected the retry rate to be throttled but saw {exportClient.SendCount} attempts in {TimeoutMilliseconds}ms.");
+    }
+
+    [Fact]
+    public void RetryableStatusWithoutThrottleDelayDoesNotThrowOnAZeroBackoff()
+    {
+        var response = new ExportClientGrpcResponse(
+            success: false,
+            deadlineUtc: DateTime.UtcNow.AddHours(1),
+            exception: null,
+            status: new Status(StatusCode.Unavailable, "Error"),
+            grpcStatusDetailsHeader: null);
+
+        Assert.Null(Record.Exception(
+            () => OtlpRetry.TryGetGrpcRetryResult(response, retryDelayMilliseconds: 0, out _)));
+    }
+
+    private sealed class AlwaysThrottledExportClient(string grpcStatusDetailsHeader) : IExportClient
+    {
+        public int SendCount { get; private set; }
+
+        public ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default)
+        {
+            this.SendCount++;
+
+            return new ExportClientGrpcResponse(
+                success: false,
+                deadlineUtc: deadlineUtc,
+                exception: null,
+                status: new Status(StatusCode.ResourceExhausted, "Throttled"),
+                grpcStatusDetailsHeader: grpcStatusDetailsHeader);
+        }
+
+        public bool Shutdown(int timeoutMilliseconds) => true;
     }
 }

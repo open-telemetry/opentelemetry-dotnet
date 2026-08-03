@@ -142,6 +142,43 @@ public class OtlpGrpcExportClientTests
         Assert.True(RetryHelper.ShouldRetryRequest(response), "An unexpected cancellation should be retryable.");
     }
 
+    [Fact]
+    public void SendExportRequest_OversizedResponseBody_IsNotFullyBufferedIntoMemory()
+    {
+        const long OversizedResponseBytes = 16 * 1024 * 1024;
+
+        long configuredLimit;
+        using (var defaultClient = new OtlpExporterOptions().HttpClientFactory())
+        {
+            configuredLimit = defaultClient.MaxResponseContentBufferSize;
+        }
+
+        Assert.True(
+            configuredLimit < OversizedResponseBytes,
+            $"The exporter's client does not cap response buffering ({configuredLimit} bytes).");
+
+        var buffer = BuildGrpcFrame("grpc test payload"u8.ToArray());
+
+        using var testHandler = new OversizedResponseHandler(OversizedResponseBytes);
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false)
+        {
+            MaxResponseContentBufferSize = configuredLimit,
+        };
+
+        var exportClient = new OtlpGrpcExportClient(
+            new OtlpExporterOptions { Endpoint = new Uri("http://localhost:4317") },
+            httpClient,
+            string.Empty);
+
+        var response = exportClient.SendExportRequest(buffer, buffer.Length, DateTime.UtcNow.AddMinutes(5));
+
+        Assert.True(
+            testHandler.BytesProduced <= configuredLimit + (256 * 1024),
+            $"Expected buffering to stop near the {configuredLimit} byte cap but {testHandler.BytesProduced} bytes were read.");
+
+        Assert.False(response.Success);
+    }
+
     private static ExportClientGrpcResponse SendExportRequestThatThrows(Exception exception)
     {
         var buffer = BuildGrpcFrame("grpc test payload"u8.ToArray());
@@ -202,6 +239,89 @@ public class OtlpGrpcExportClientTests
         protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
             => throw this.exception;
 #endif
+    }
+
+    private sealed class OversizedResponseHandler(long totalBytes) : HttpMessageHandler
+    {
+        private readonly GeneratedStream stream = new(totalBytes);
+
+        public long BytesProduced => this.stream.BytesProduced;
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            => Task.FromResult(this.CreateResponse(request));
+
+#if NET
+        protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
+            => this.CreateResponse(request);
+#endif
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                this.stream.Dispose();
+            }
+
+            base.Dispose(disposing);
+        }
+
+        private HttpResponseMessage CreateResponse(HttpRequestMessage request)
+        {
+            var response = new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+            {
+                RequestMessage = request,
+                Content = new StreamContent(this.stream),
+            };
+
+            response.Content.Headers.TryAddWithoutValidation("Content-Type", "application/grpc");
+
+            return response;
+        }
+
+        private sealed class GeneratedStream(long totalBytes) : Stream
+        {
+            public long BytesProduced { get; private set; }
+
+            public override bool CanRead => true;
+
+            public override bool CanSeek => false;
+
+            public override bool CanWrite => false;
+
+            public override long Length => throw new NotSupportedException();
+
+            public override long Position
+            {
+                get => throw new NotSupportedException();
+                set => throw new NotSupportedException();
+            }
+
+            public override int Read(byte[] buffer, int offset, int count)
+            {
+                var remaining = totalBytes - this.BytesProduced;
+                if (remaining <= 0)
+                {
+                    return 0;
+                }
+
+                var read = (int)Math.Min(count, remaining);
+                Array.Clear(buffer, offset, read);
+                this.BytesProduced += read;
+
+                return read;
+            }
+
+            public override void Flush()
+            {
+                // No-op
+            }
+
+            public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+            public override void SetLength(long value) => throw new NotSupportedException();
+
+            public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+        }
     }
 
     private sealed class TestGrpcMessageHandler : HttpMessageHandler
