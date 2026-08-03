@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using OpenTelemetry.Proto.Common.V1;
 using OpenTelemetry.Proto.Logs.V1;
 using OpenTelemetry.Tests;
 
@@ -38,7 +37,7 @@ public sealed class MauiEndToEndTests(MauiAppFixture fixture) : IClassFixture<Ma
         var scenarioLog = GetLogRecords(collector).First((p) => Body(p).Contains(LogBody, StringComparison.Ordinal));
 
         Assert.Equal((int)SeverityNumber.Info, (int)scenarioLog.SeverityNumber);
-        Assert.True(HasServiceName(collector), $"Expected resource attribute service.name='{ServiceName}'.");
+        Assert.True(LogsHaveServiceName(collector), $"Expected resource attribute service.name='{ServiceName}' on the exported logs.");
     }
 
     [Fact]
@@ -55,7 +54,7 @@ public sealed class MauiEndToEndTests(MauiAppFixture fixture) : IClassFixture<Ma
         Assert.True(HasMetric(collector, CounterName), $"Expected metric '{CounterName}'.");
         Assert.True(HasMetric(collector, HistogramName), $"Expected metric '{HistogramName}'.");
         Assert.True(HasMetricScope(collector, MeterScope), $"Expected instrumentation scope '{MeterScope}'.");
-        Assert.True(HasServiceName(collector), $"Expected resource attribute service.name='{ServiceName}'.");
+        Assert.True(MetricsHaveServiceName(collector), $"Expected resource attribute service.name='{ServiceName}' on the exported metrics.");
     }
 
     [Fact]
@@ -68,7 +67,7 @@ public sealed class MauiEndToEndTests(MauiAppFixture fixture) : IClassFixture<Ma
         await WaitForAsync(() => HasScenarioTrace(collector), () => this.Detail(collector));
 
         Assert.True(HasScenarioTrace(collector), "Expected a scenario span with the contract name, scope and tag.");
-        Assert.True(HasServiceName(collector), $"Expected resource attribute service.name='{ServiceName}'.");
+        Assert.True(TracesHaveServiceName(collector), $"Expected resource attribute service.name='{ServiceName}' on the exported traces.");
     }
 
     private static void EnsureDeviceRunSucceeded(MauiAppFixture fixture) =>
@@ -114,18 +113,24 @@ public sealed class MauiEndToEndTests(MauiAppFixture fixture) : IClassFixture<Ma
             .SelectMany((p) => p.ScopeMetrics)
             .Any((p) => p.Scope?.Name == scope);
 
-    private static bool HasServiceName(OtlpHttpCollector collector)
-    {
-        static bool Matches(IEnumerable<KeyValue> attributes)
-        {
-            return attributes.Any((p) => p.Key == "service.name" && p.Value?.StringValue == ServiceName);
-        }
+    private static bool LogsHaveServiceName(OtlpHttpCollector collector) =>
+        collector.GetLogsRequests()
+            .SelectMany((p) => p.ResourceLogs)
+            .Any((p) => HasServiceName(p.Resource));
 
-        return
-            collector.GetLogsRequests().SelectMany((p) => p.ResourceLogs).Any((r) => Matches(r.Resource.Attributes)) ||
-            collector.GetMetricsRequests().SelectMany((p) => p.ResourceMetrics).Any((r) => Matches(r.Resource.Attributes)) ||
-            collector.GetTraceRequests().SelectMany((p) => p.ResourceSpans).Any((r) => Matches(r.Resource.Attributes));
-    }
+    private static bool MetricsHaveServiceName(OtlpHttpCollector collector) =>
+        collector.GetMetricsRequests()
+            .SelectMany((p) => p.ResourceMetrics)
+            .Any((p) => HasServiceName(p.Resource));
+
+    private static bool TracesHaveServiceName(OtlpHttpCollector collector) =>
+        collector.GetTraceRequests()
+            .SelectMany((p) => p.ResourceSpans)
+            .Any((p) => HasServiceName(p.Resource));
+
+    private static bool HasServiceName(Proto.Resource.V1.Resource? resource) =>
+        resource is not null &&
+        resource.Attributes.Any((p) => p.Key == "service.name" && p.Value?.StringValue == ServiceName);
 
     private static List<(string Scope, Proto.Trace.V1.Span Span)> GetSpans(OtlpHttpCollector collector) =>
         [.. collector.GetTraceRequests()
