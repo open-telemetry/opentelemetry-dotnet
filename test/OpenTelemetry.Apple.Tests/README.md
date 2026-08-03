@@ -16,7 +16,7 @@ running on an iOS simulator.
 This host project:
 
 1. Starts an in-process OTLP/HTTP receiver (`OtlpHttpCollector`) on the host,
-   bound to `localhost` on a free port.
+   bound to `localhost:4318`.
 2. Builds the app, installs it on a simulator (`xcrun simctl install`) and runs
    it (`xcrun simctl launch --console-pty`) in `AppleAppFixture`. The app exports
    to the collector over the host loopback - the simulator shares the host's

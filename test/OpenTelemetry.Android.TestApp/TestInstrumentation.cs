@@ -29,6 +29,11 @@ public class TestInstrumentation : Instrumentation
     {
         base.OnStart();
 
+        // Use short export defaults to avoid waiting too long for the test results to be exported
+        Environment.SetEnvironmentVariable("OTEL_BSP_SCHEDULE_DELAY", "1000");
+        Environment.SetEnvironmentVariable("OTEL_BLRP_SCHEDULE_DELAY", "1000");
+        Environment.SetEnvironmentVariable("OTEL_METRIC_EXPORT_INTERVAL", "1000");
+
         var consumer = new ResultConsumer(this);
         using var bundle = new Bundle();
 

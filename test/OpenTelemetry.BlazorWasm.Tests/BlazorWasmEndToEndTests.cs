@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using Microsoft.Playwright;
-using OpenTelemetry.Proto.Common.V1;
 using OpenTelemetry.Proto.Logs.V1;
 using OpenTelemetry.Tests;
 
@@ -61,7 +60,7 @@ public sealed class BlazorWasmEndToEndTests : IClassFixture<BlazorWasmAppFixture
                 () => HasLog(collector, "Blazor WASM end-to-end") && HasLog(collector, "Counter button clicked"),
                 () => Detail(collector));
 
-            Assert.True(HasServiceName(collector), $"Expected resource attribute service.name='{ServiceName}'.");
+            Assert.True(LogsHaveServiceName(collector), $"Expected resource attribute service.name='{ServiceName}' on the exported logs.");
 
             var scenarioLog = GetLogRecords(collector).First(l => Body(l).Contains("Blazor WASM end-to-end", StringComparison.Ordinal));
 
@@ -89,7 +88,7 @@ public sealed class BlazorWasmEndToEndTests : IClassFixture<BlazorWasmAppFixture
                 () => HasMetric(collector, CounterName) && HasMetric(collector, HistogramName),
                 () => Detail(collector));
 
-            Assert.True(HasServiceName(collector), $"Expected resource attribute service.name='{ServiceName}'.");
+            Assert.True(MetricsHaveServiceName(collector), $"Expected resource attribute service.name='{ServiceName}' on the exported metrics.");
         });
     }
 
@@ -109,7 +108,7 @@ public sealed class BlazorWasmEndToEndTests : IClassFixture<BlazorWasmAppFixture
 
             await WaitForAsync(() => HasScenarioTrace(collector), () => Detail(collector));
 
-            Assert.True(HasServiceName(collector), $"Expected resource attribute service.name='{ServiceName}'.");
+            Assert.True(TracesHaveServiceName(collector), $"Expected resource attribute service.name='{ServiceName}' on the exported traces.");
         });
     }
 
@@ -136,7 +135,8 @@ public sealed class BlazorWasmEndToEndTests : IClassFixture<BlazorWasmAppFixture
                 () => HasHttpClientSpan(collector) && HasMetric(collector, HttpClientDurationMetric),
                 () => Detail(collector));
 
-            Assert.True(HasServiceName(collector), $"Expected resource attribute service.name='{ServiceName}'.");
+            Assert.True(TracesHaveServiceName(collector), $"Expected resource attribute service.name='{ServiceName}' on the exported traces.");
+            Assert.True(MetricsHaveServiceName(collector), $"Expected resource attribute service.name='{ServiceName}' on the exported metrics.");
         });
     }
 
@@ -203,18 +203,24 @@ public sealed class BlazorWasmEndToEndTests : IClassFixture<BlazorWasmAppFixture
     private static bool HasMetric(OtlpHttpCollector collector, string name) =>
         GetMetricNames(collector).Contains(name);
 
-    private static bool HasServiceName(OtlpHttpCollector collector)
-    {
-        static bool Matches(IEnumerable<KeyValue> attributes)
-        {
-            return attributes.Any((p) => p.Key == "service.name" && p.Value?.StringValue == ServiceName);
-        }
+    private static bool LogsHaveServiceName(OtlpHttpCollector collector) =>
+        collector.GetLogsRequests()
+            .SelectMany((p) => p.ResourceLogs)
+            .Any((p) => HasServiceName(p.Resource));
 
-        return
-            collector.GetLogsRequests().SelectMany((p) => p.ResourceLogs).Any((r) => Matches(r.Resource.Attributes)) ||
-            collector.GetMetricsRequests().SelectMany((p) => p.ResourceMetrics).Any((r) => Matches(r.Resource.Attributes)) ||
-            collector.GetTraceRequests().SelectMany((p) => p.ResourceSpans).Any((r) => Matches(r.Resource.Attributes));
-    }
+    private static bool MetricsHaveServiceName(OtlpHttpCollector collector) =>
+        collector.GetMetricsRequests()
+            .SelectMany((p) => p.ResourceMetrics)
+            .Any((p) => HasServiceName(p.Resource));
+
+    private static bool TracesHaveServiceName(OtlpHttpCollector collector) =>
+        collector.GetTraceRequests()
+            .SelectMany((p) => p.ResourceSpans)
+            .Any((p) => HasServiceName(p.Resource));
+
+    private static bool HasServiceName(Proto.Resource.V1.Resource? resource) =>
+        resource is not null &&
+        resource.Attributes.Any((p) => p.Key == "service.name" && p.Value?.StringValue == ServiceName);
 
     private static List<(string Scope, Proto.Trace.V1.Span Span)> GetSpans(OtlpHttpCollector collector) =>
         [.. collector.GetTraceRequests()
