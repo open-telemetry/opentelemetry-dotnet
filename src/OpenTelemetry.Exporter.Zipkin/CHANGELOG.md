@@ -10,7 +10,7 @@ Notes](../../RELEASENOTES.md).
   `HttpCompletionOption.ResponseHeadersRead` for the .NET Framework and
   .NET Standard targets, matching the behavior on .NET to avoid buffering
   the response body in memory when it is not actually used.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7582](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7582))
 
 ## 1.17.0
 
