@@ -18,11 +18,11 @@ Notes](../../RELEASENOTES.md).
 
 * A server-supplied throttle delay (OTLP/gRPC `RetryInfo.retry_delay` or
   OTLP/HTTP `Retry-After`) is now clamped to a minimum of 100 milliseconds.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7583](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7583))
 
 * The `HttpClient` created by the exporter now sets
   `MaxResponseContentBufferSize` to the 4 MiB OTLP message size limit.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7583](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7583))
 
 ## 1.17.0
 
