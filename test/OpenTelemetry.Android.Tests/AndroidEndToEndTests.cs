@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using OpenTelemetry.Proto.Common.V1;
 using OpenTelemetry.Proto.Logs.V1;
 using OpenTelemetry.Tests;
 
@@ -36,7 +35,7 @@ public sealed class AndroidEndToEndTests(AndroidAppFixture fixture) : IClassFixt
         var scenarioLog = GetLogRecords(collector).First((p) => Body(p).Contains(LogBody, StringComparison.Ordinal));
 
         Assert.Equal((int)SeverityNumber.Info, (int)scenarioLog.SeverityNumber);
-        Assert.True(HasServiceName(collector), $"Expected resource attribute service.name='{ServiceName}'.");
+        Assert.True(LogsHaveServiceName(collector), $"Expected resource attribute service.name='{ServiceName}' on the exported logs.");
     }
 
     [Fact]
@@ -52,7 +51,7 @@ public sealed class AndroidEndToEndTests(AndroidAppFixture fixture) : IClassFixt
 
         Assert.True(HasMetric(collector, CounterName), $"Expected metric '{CounterName}'.");
         Assert.True(HasMetric(collector, HistogramName), $"Expected metric '{HistogramName}'.");
-        Assert.True(HasServiceName(collector), $"Expected resource attribute service.name='{ServiceName}'.");
+        Assert.True(MetricsHaveServiceName(collector), $"Expected resource attribute service.name='{ServiceName}' on the exported metrics.");
     }
 
     [Fact]
@@ -65,7 +64,7 @@ public sealed class AndroidEndToEndTests(AndroidAppFixture fixture) : IClassFixt
         await WaitForAsync(() => HasScenarioTrace(collector), () => Detail(collector));
 
         Assert.True(HasScenarioTrace(collector), "Expected a scenario span with the contract name and tag.");
-        Assert.True(HasServiceName(collector), $"Expected resource attribute service.name='{ServiceName}'.");
+        Assert.True(TracesHaveServiceName(collector), $"Expected resource attribute service.name='{ServiceName}' on the exported traces.");
     }
 
     private static void EnsureDeviceRunSucceeded(AndroidAppFixture fixture) =>
@@ -104,18 +103,24 @@ public sealed class AndroidEndToEndTests(AndroidAppFixture fixture) : IClassFixt
     private static bool HasMetric(OtlpHttpCollector collector, string name) =>
         GetMetricNames(collector).Contains(name);
 
-    private static bool HasServiceName(OtlpHttpCollector collector)
-    {
-        static bool Matches(IEnumerable<KeyValue> attributes)
-        {
-            return attributes.Any((p) => p.Key == "service.name" && p.Value?.StringValue == ServiceName);
-        }
+    private static bool LogsHaveServiceName(OtlpHttpCollector collector) =>
+        collector.GetLogsRequests()
+            .SelectMany((p) => p.ResourceLogs)
+            .Any((p) => HasServiceName(p.Resource));
 
-        return
-            collector.GetLogsRequests().SelectMany((p) => p.ResourceLogs).Any((r) => Matches(r.Resource.Attributes)) ||
-            collector.GetMetricsRequests().SelectMany((p) => p.ResourceMetrics).Any((r) => Matches(r.Resource.Attributes)) ||
-            collector.GetTraceRequests().SelectMany((p) => p.ResourceSpans).Any((r) => Matches(r.Resource.Attributes));
-    }
+    private static bool MetricsHaveServiceName(OtlpHttpCollector collector) =>
+        collector.GetMetricsRequests()
+            .SelectMany((p) => p.ResourceMetrics)
+            .Any((p) => HasServiceName(p.Resource));
+
+    private static bool TracesHaveServiceName(OtlpHttpCollector collector) =>
+        collector.GetTraceRequests()
+            .SelectMany((p) => p.ResourceSpans)
+            .Any((p) => HasServiceName(p.Resource));
+
+    private static bool HasServiceName(Proto.Resource.V1.Resource? resource) =>
+        resource is not null &&
+        resource.Attributes.Any((p) => p.Key == "service.name" && p.Value?.StringValue == ServiceName);
 
     private static List<(string Scope, Proto.Trace.V1.Span Span)> GetSpans(OtlpHttpCollector collector) =>
         [.. collector.GetTraceRequests()
