@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Diagnostics;
 using OpenTelemetry.Logs;
 
 namespace OpenTelemetry;
@@ -16,10 +15,6 @@ public class SimpleLogRecordExportProcessor : SimpleExportProcessor<LogRecord>
     private readonly KeyValuePair<string, object?>[] successTags;
     private readonly KeyValuePair<string, object?>[] alreadyShutdownTags;
 
-    // Number of OnEnd calls currently in-flight (past the shutdown check).
-    // OnShutdown waits for this to reach zero so those records finish enqueueing
-    // before teardown, keeping the processed vs. already_shutdown counting race-free.
-    private int activeOnEndCount;
     private int isShutdown;
 
     /// <summary>
@@ -43,54 +38,27 @@ public class SimpleLogRecordExportProcessor : SimpleExportProcessor<LogRecord>
     /// <inheritdoc/>
     public override void OnEnd(LogRecord data)
     {
+        // SimpleLogRecordExportProcessor exports synchronously per record and is
+        // not intended for production use. We accept a benign shutdown race here:
+        // a record whose OnEnd runs concurrently with OnShutdown may be exported
+        // and counted as processed, or counted as already_shutdown, depending on
+        // timing. Exporters are required to be safe against concurrent and
+        // post-shutdown Export calls, so this is harmless; we keep the processor
+        // simple rather than add barrier synchronization.
         if (Volatile.Read(ref this.isShutdown) != 0)
         {
             SdkSelfObservability.LogProcessedCounter.Add(1, this.alreadyShutdownTags);
             return;
         }
 
-        Interlocked.Increment(ref this.activeOnEndCount);
-        try
-        {
-            if (Volatile.Read(ref this.isShutdown) != 0)
-            {
-                SdkSelfObservability.LogProcessedCounter.Add(1, this.alreadyShutdownTags);
-                return;
-            }
-
-            SdkSelfObservability.LogProcessedCounter.Add(1, this.successTags);
-            base.OnEnd(data);
-        }
-        finally
-        {
-            Interlocked.Decrement(ref this.activeOnEndCount);
-        }
+        SdkSelfObservability.LogProcessedCounter.Add(1, this.successTags);
+        base.OnEnd(data);
     }
 
     /// <inheritdoc/>
     protected override bool OnShutdown(int timeoutMilliseconds)
     {
         Interlocked.Exchange(ref this.isShutdown, 1);
-
-        // Wait for in-flight OnEnd calls to finish so teardown is consistent,
-        // without exceeding the caller's shutdown budget.
-        var stopwatch = timeoutMilliseconds == Timeout.Infinite ? null : Stopwatch.StartNew();
-
-        SpinWait spinner = default;
-        while (Volatile.Read(ref this.activeOnEndCount) != 0)
-        {
-            if (stopwatch != null && stopwatch.ElapsedMilliseconds >= timeoutMilliseconds)
-            {
-                break;
-            }
-
-            spinner.SpinOnce();
-        }
-
-        var remainingTimeoutMilliseconds = stopwatch == null
-            ? Timeout.Infinite
-            : (int)Math.Max(0, timeoutMilliseconds - stopwatch.ElapsedMilliseconds);
-
-        return base.OnShutdown(remainingTimeoutMilliseconds);
+        return base.OnShutdown(timeoutMilliseconds);
     }
 }
