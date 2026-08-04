@@ -7,7 +7,7 @@ namespace OpenTelemetry.Metrics;
 
 /// <summary>
 /// Mechanical (non-subjective) mapping from a closed generic instrument Type
-/// to an  <see cref="InstrumentKind"/> + <see cref="NumericKind"/> pair.
+/// to an <see cref="InstrumentKind"/>.
 /// Kept separate from  <see cref="AggregationCompatibility"/> so a
 /// reviewer's attention is  drawn to the actual policy table, not to
 /// this reflection plumbing.
