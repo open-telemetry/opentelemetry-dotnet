@@ -103,6 +103,23 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
                 return ExportResult.Failure;
             }
 
+            // The serialization buffer is rented from a pool that may hand back more
+            // than was asked for, so serialization can overrun the configured maximum.
+            // Enforce the limit against the payload itself rather than the capacity.
+            var payloadSize = writePosition - this.startWritePosition;
+            if (payloadSize > this.maxExportPayloadSizeBytes)
+            {
+                OpenTelemetryProtocolExporterEventSource.Log.BatchDroppedDueToPayloadSizeLimit(
+                    OtlpSignalType.Logs,
+                    logRecordBatch.Count,
+                    payloadSize,
+                    this.maxExportPayloadSizeBytes);
+
+                // Discard the oversized buffer rather than keeping it as the size hint.
+                serializationSucceeded = false;
+                return ExportResult.Failure;
+            }
+
             if (this.startWritePosition == GrpcStartWritePosition)
             {
                 // Grpc payload consists of 3 parts

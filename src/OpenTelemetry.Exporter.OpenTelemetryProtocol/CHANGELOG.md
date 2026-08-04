@@ -22,8 +22,10 @@ Notes](../../RELEASENOTES.md).
 
 * Added `OtlpExporterOptions.MaxExportPayloadSizeBytes` to configure the maximum
   size for the serialized payload of a single export. Raise it when exporting
-  very large batches, such as metrics with very high cardinality. The default
-  value is 128 MiB.
+  very large batches, such as metrics with very high cardinality. A batch whose
+  serialized payload exceeds the limit is dropped in its entirety rather than
+  submitted, so the value can be used to stay within a receiver's own request
+  size limit. The default value is 128 MiB.
   ([#7584](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7584))
 
 ## 1.17.0

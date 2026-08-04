@@ -157,9 +157,11 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     /// metrics with very high cardinality. A batch whose serialized payload does
     /// not fit is dropped in its entirety.</item>
     /// <item>This bounds the serialized payload, before any compression selected
-    /// by <see cref="Compression"/> is applied.</item>
-    /// <item>The buffer is grown on demand, so raising this value does not by
-    /// itself increase memory use.</item>
+    /// by <see cref="Compression"/> is applied. A payload larger than this is
+    /// never submitted to the endpoint, so the value can be used to stay within
+    /// a receiver's own request size limit.</item>
+    /// <item>The buffer used to serialize is grown on demand, so raising this
+    /// value does not by itself increase memory use.</item>
     /// <item>The maximum accepted value is <c>268435455</c> (256 MiB minus one
     /// byte), which is the largest payload the protocol serializer can describe.</item>
     /// </list>

@@ -331,6 +331,22 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     internal void BatchDroppedDueToSerializationFailure(string signalType, long itemCount, string exception)
         => this.WriteEvent(39, signalType, itemCount, exception);
 
+    [NonEvent]
+    internal void BatchDroppedDueToPayloadSizeLimit(OtlpSignalType signalType, long itemCount, int payloadSizeBytes, int maxPayloadSizeBytes)
+    {
+        if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.BatchDroppedDueToPayloadSizeLimit(signalType.ToString(), itemCount, payloadSizeBytes, maxPayloadSizeBytes);
+        }
+    }
+
+    [Event(
+        40,
+        Message = "{0} batch containing {1} item(s) was dropped because its serialized payload of {2} bytes exceeds the configured maximum of {3} bytes.",
+        Level = EventLevel.Error)]
+    internal void BatchDroppedDueToPayloadSizeLimit(string signalType, long itemCount, int payloadSizeBytes, int maxPayloadSizeBytes)
+        => this.WriteEvent(40, signalType, itemCount, payloadSizeBytes, maxPayloadSizeBytes);
+
     private static string RedactEndpointUri(Uri endpoint)
         => endpoint.GetComponents(UriComponents.SchemeAndServer | UriComponents.Path, UriFormat.UriEscaped);
 }

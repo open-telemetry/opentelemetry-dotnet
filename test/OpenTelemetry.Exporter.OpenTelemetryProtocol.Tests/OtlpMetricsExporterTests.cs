@@ -1009,6 +1009,86 @@ public sealed class OtlpMetricsExporterTests : IDisposable
         Assert.Single(listener.Messages, e => e.EventId == BatchDroppedEventId);
     }
 
+    [Fact]
+    public void Export_PayloadExceedingMaxExportPayloadSizeBytes_IsNotSubmitted()
+    {
+        const int BufferExceededMaxSizeEventId = 14;
+        const int BatchDroppedDueToPayloadSizeLimitEventId = 40;
+        const int Cardinality = 50_000;
+
+        var probeClient = new TestExportClient();
+        var probeOptions = new OtlpExporterOptions
+        {
+            Protocol = OtlpExportProtocol.HttpProtobuf,
+            MaxExportPayloadSizeBytes = 64 * 1024 * 1024,
+        };
+
+        using (var probeHandler = new OtlpExporterTransmissionHandler(probeClient, probeOptions.TimeoutMilliseconds))
+        using (var probeExporter = new OtlpMetricExporter(probeOptions, new ExperimentalOptions(), probeHandler))
+        {
+            Assert.Equal(ExportResult.Success, probeExporter.Export(GenerateHighCardinalityMetricBatch(Cardinality)));
+        }
+
+        var payloadSize = probeClient.LastContentLength;
+        Assert.True(payloadSize > ProtobufSerializer.InitialBufferSize, $"Payload of {payloadSize} bytes was too small for this test.");
+
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Error);
+
+        var exportClient = new TestExportClient();
+        var exporterOptions = new OtlpExporterOptions
+        {
+            Protocol = OtlpExportProtocol.HttpProtobuf,
+            MaxExportPayloadSizeBytes = payloadSize - 1,
+        };
+
+        using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClient, exporterOptions.TimeoutMilliseconds);
+        using var exporter = new OtlpMetricExporter(exporterOptions, new ExperimentalOptions(), transmissionHandler);
+
+        Assert.Equal(ExportResult.Failure, exporter.Export(GenerateHighCardinalityMetricBatch(Cardinality)));
+        Assert.False(exportClient.SendExportRequestCalled);
+        Assert.Equal(0, exportClient.LastContentLength);
+
+        // .NET Framework behaves differently to .NET, so we check for either of the two events
+        // which indicate the batch was dropped due to exceeding the payload size limit.
+        Assert.Contains(
+            listener.Messages,
+            e => e.EventId == BatchDroppedDueToPayloadSizeLimitEventId || e.EventId == BufferExceededMaxSizeEventId);
+    }
+
+    [Fact]
+    public void Export_PayloadExactlyAtMaxExportPayloadSizeBytes_IsSubmitted()
+    {
+        const int Cardinality = 50_000;
+
+        var probeClient = new TestExportClient();
+        var probeOptions = new OtlpExporterOptions
+        {
+            Protocol = OtlpExportProtocol.HttpProtobuf,
+            MaxExportPayloadSizeBytes = 64 * 1024 * 1024,
+        };
+
+        using (var probeHandler = new OtlpExporterTransmissionHandler(probeClient, probeOptions.TimeoutMilliseconds))
+        using (var probeExporter = new OtlpMetricExporter(probeOptions, new ExperimentalOptions(), probeHandler))
+        {
+            Assert.Equal(ExportResult.Success, probeExporter.Export(GenerateHighCardinalityMetricBatch(Cardinality)));
+        }
+
+        var payloadSize = probeClient.LastContentLength;
+
+        var exportClient = new TestExportClient();
+        var exporterOptions = new OtlpExporterOptions
+        {
+            Protocol = OtlpExportProtocol.HttpProtobuf,
+            MaxExportPayloadSizeBytes = payloadSize,
+        };
+
+        using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClient, exporterOptions.TimeoutMilliseconds);
+        using var exporter = new OtlpMetricExporter(exporterOptions, new ExperimentalOptions(), transmissionHandler);
+
+        Assert.Equal(ExportResult.Success, exporter.Export(GenerateHighCardinalityMetricBatch(Cardinality)));
+        Assert.Equal(payloadSize, exportClient.LastContentLength);
+    }
+
     [Theory]
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
     [InlineData(OtlpExportProtocol.Grpc)]
