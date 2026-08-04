@@ -1,3 +1,24 @@
+OpenTelemetry.EnvironmentVariableLogMode
+OpenTelemetry.EnvironmentVariableLogMode.AllValues = 3 -> OpenTelemetry.EnvironmentVariableLogMode
+OpenTelemetry.EnvironmentVariableLogMode.KnownSafeValues = 2 -> OpenTelemetry.EnvironmentVariableLogMode
+OpenTelemetry.EnvironmentVariableLogMode.Names = 1 -> OpenTelemetry.EnvironmentVariableLogMode
+OpenTelemetry.EnvironmentVariableLogMode.None = 0 -> OpenTelemetry.EnvironmentVariableLogMode
+OpenTelemetry.SelfDiagnosticsOptions
+OpenTelemetry.SelfDiagnosticsOptions.EnvironmentVariables.get -> OpenTelemetry.EnvironmentVariableLogMode
+OpenTelemetry.SelfDiagnosticsOptions.EnvironmentVariables.set -> void
+OpenTelemetry.SelfDiagnosticsOptions.FileSizeLimitKilobytes.get -> int
+OpenTelemetry.SelfDiagnosticsOptions.FileSizeLimitKilobytes.set -> void
+OpenTelemetry.SelfDiagnosticsOptions.LogDirectory.get -> string?
+OpenTelemetry.SelfDiagnosticsOptions.LogDirectory.set -> void
+OpenTelemetry.SelfDiagnosticsOptions.LogToStderr.get -> bool
+OpenTelemetry.SelfDiagnosticsOptions.LogToStderr.set -> void
+OpenTelemetry.SelfDiagnosticsOptions.LogToStdout.get -> bool
+OpenTelemetry.SelfDiagnosticsOptions.LogToStdout.set -> void
+OpenTelemetry.SelfDiagnosticsOptions.MaxRetainedFiles.get -> int
+OpenTelemetry.SelfDiagnosticsOptions.MaxRetainedFiles.set -> void
+OpenTelemetry.SelfDiagnosticsOptions.MinimumLevel.get -> Microsoft.Extensions.Logging.LogLevel
+OpenTelemetry.SelfDiagnosticsOptions.MinimumLevel.set -> void
+OpenTelemetry.SelfDiagnosticsOptions.SelfDiagnosticsOptions() -> void
 override OpenTelemetry.SimpleActivityExportProcessor.OnShutdown(int timeoutMilliseconds) -> bool
 override OpenTelemetry.SimpleLogRecordExportProcessor.OnEnd(OpenTelemetry.Logs.LogRecord! data) -> void
 override OpenTelemetry.SimpleLogRecordExportProcessor.OnShutdown(int timeoutMilliseconds) -> bool

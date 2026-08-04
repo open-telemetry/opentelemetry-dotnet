@@ -21,10 +21,15 @@ internal sealed class LoggerProviderSdk : LoggerProvider
     internal int ShutdownCount;
     private ILogRecordPool? threadStaticPool = LogRecordThreadStaticPool.Instance;
 
+    private IDisposable? selfDiagnosticsRegistration;
+
     public LoggerProviderSdk(
         IServiceProvider serviceProvider,
-        bool ownsServiceProvider)
+        bool ownsServiceProvider,
+        IDisposable selfDiagnosticsRegistration)
     {
+        this.selfDiagnosticsRegistration = selfDiagnosticsRegistration;
+
         var state = serviceProvider.GetRequiredService<LoggerProviderBuilderSdk>();
         state.RegisterProvider(this);
 
@@ -227,6 +232,8 @@ internal sealed class LoggerProviderSdk : LoggerProvider
 
             this.Disposed = true;
             OpenTelemetrySdkEventSource.Log.ProviderDisposed(nameof(LoggerProviderSdk));
+            this.selfDiagnosticsRegistration?.Dispose();
+            this.selfDiagnosticsRegistration = null;
         }
 
         base.Dispose(disposing);

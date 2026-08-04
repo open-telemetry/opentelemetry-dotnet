@@ -4,6 +4,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
 using static OpenTelemetry.OpenTelemetrySdk;
 
@@ -50,7 +51,22 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
                     return noopTracerProvider;
                 }
 
-                return new TracerProviderSdk(sp, ownsServiceProvider: false);
+                // Register this provider as the current SDK self-diagnostics configuration owner.
+                var selfDiagnosticsRegistration = SelfDiagnostics.Initialize(
+                    sp.GetRequiredService<IOptionsMonitor<SelfDiagnosticsOptions>>());
+
+                try
+                {
+                    return new TracerProviderSdk(
+                        sp,
+                        ownsServiceProvider: false,
+                        selfDiagnosticsRegistration: selfDiagnosticsRegistration);
+                }
+                catch
+                {
+                    selfDiagnosticsRegistration.Dispose();
+                    throw;
+                }
             });
 
         this.innerBuilder = new TracerProviderServiceCollectionBuilder(services);
@@ -166,7 +182,22 @@ public class TracerProviderBuilderBase : TracerProviderBuilder, ITracerProviderB
             return new NoopTracerProvider();
         }
 
-        return new TracerProviderSdk(serviceProvider, ownsServiceProvider: true);
+        // Register this provider as the current SDK self-diagnostics configuration owner.
+        var selfDiagnosticsRegistration = SelfDiagnostics.Initialize(
+            serviceProvider.GetRequiredService<IOptionsMonitor<SelfDiagnosticsOptions>>());
+
+        try
+        {
+            return new TracerProviderSdk(
+                serviceProvider,
+                ownsServiceProvider: true,
+                selfDiagnosticsRegistration: selfDiagnosticsRegistration);
+        }
+        catch
+        {
+            selfDiagnosticsRegistration.Dispose();
+            throw;
+        }
     }
 
     private static bool IsOtelSdkDisabled(IConfiguration configuration)

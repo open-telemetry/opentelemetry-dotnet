@@ -378,7 +378,11 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
         {
             if (eventSource.Name.StartsWith("OpenTelemetry", StringComparison.OrdinalIgnoreCase))
             {
-                this.eventSources.Add(eventSource.Name, eventSource);
+                // Indexer, not Add: two sources can share a name (a source recreated after
+                // disposal, or a test fixture). Add would throw, and because this runs inside
+                // EventSource.Initialize the exception would leave the new source permanently
+                // disabled with every WriteEvent a silent no-op.
+                this.eventSources[eventSource.Name] = eventSource;
                 this.EnableEvents(eventSource, EventLevel.Verbose, EventKeywords.All);
             }
 
@@ -392,9 +396,21 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
                 return;
             }
 
-            var message = e.Message != null && e.Payload != null && e.Payload.Count > 0
-                ? string.Format(CultureInfo.CurrentCulture, e.Message, [.. e.Payload])
-                : e.Message;
+            var message = e.Message;
+
+            if (message != null && e.Payload != null && e.Payload.Count > 0)
+            {
+                try
+                {
+                    message = string.Format(CultureInfo.CurrentCulture, message, [.. e.Payload]);
+                }
+                catch (FormatException)
+                {
+                    // The manifest message and its payload disagree. Left unguarded this escapes
+                    // OnEventWritten, and on .NET Framework the runtime rethrows it as an
+                    // EventSourceException at the SDK's own WriteEvent call site.
+                }
+            }
 
             Debug.WriteLine($"{e.EventSource.Name} - Level: [{e.Level}], EventId: [{e.EventId}], EventName: [{e.EventName}], Message: [{message}]");
         }

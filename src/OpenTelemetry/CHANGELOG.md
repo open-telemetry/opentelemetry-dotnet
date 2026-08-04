@@ -18,6 +18,11 @@ Notes](../../RELEASENOTES.md).
 * Added the `otel.sdk.processor.log.processed` SDK self-observability metric.
   ([#7486](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7486))
 
+* Added improved self-diagnostics logging to improve the support experience.
+  The new `SelfDiagnosticsOptions` class configures a rolling file sink and a
+  console sink through the standard options pipeline. Sinks are off by default.
+  ([#7588](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7588))
+
 * Added the `otel.sdk.processor.span.processed` SDK self-observability metric.
   ([#7598](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7598))
 
