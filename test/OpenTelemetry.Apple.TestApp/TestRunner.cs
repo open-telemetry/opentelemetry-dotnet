@@ -200,8 +200,8 @@ internal static class TestRunner
             // Echoed to stdout so the progress of the run is visible in the
             // output streamed by 'xcrun simctl launch --console-pty'.
             await Console.Out.WriteLineAsync(
-                outcome + ": " + (id is not null ? $"{id.Namespace}.{id.TypeName}.{id.MethodName}" : node.DisplayName))
-                .ConfigureAwait(false);
+                outcome + ": " + (id is not null ? $"{id.Namespace}.{id.TypeName}.{id.MethodName}" : node.DisplayName),
+                cancellationToken).ConfigureAwait(false);
         }
     }
 }
