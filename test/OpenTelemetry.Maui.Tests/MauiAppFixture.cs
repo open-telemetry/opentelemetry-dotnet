@@ -86,7 +86,7 @@ public sealed class MauiAppFixture : IAsyncLifetime
         var succeeded =
             runExitCode == 0 &&
             runOutput.Contains("INSTRUMENTATION_CODE: -1", StringComparison.Ordinal) &&
-            runOutput.Contains("failed=0", StringComparison.Ordinal) &&
+            ReportedCount(runOutput, "failed") == 0 &&
             ReportedCount(runOutput, "passed") > 0;
 
         this.DeviceRunExitCode = succeeded ? 0 : 1;
