@@ -17,11 +17,11 @@ Notes](../../RELEASENOTES.md).
 
 * Fixed metric values and histogram bucket bounds being written with 17
   significant digits instead of their shortest round-trippable representation.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7589](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7589))
 
 * Fixed the canonical representation used for histogram `le` and summary
   `quantile` label values falling back to 17 significant digits incorrectly.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7589](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7589))
 
 ## 1.17.0-beta.1
 
