@@ -1,5 +1,4 @@
 OpenTelemetry.Metrics.AggregationKind
-OpenTelemetry.Metrics.AggregationKind.Default = -1 -> OpenTelemetry.Metrics.AggregationKind
 OpenTelemetry.Metrics.AggregationKind.Drop = 4 -> OpenTelemetry.Metrics.AggregationKind
 OpenTelemetry.Metrics.AggregationKind.ExponentialHistogram = 3 -> OpenTelemetry.Metrics.AggregationKind
 OpenTelemetry.Metrics.AggregationKind.Gauge = 1 -> OpenTelemetry.Metrics.AggregationKind
