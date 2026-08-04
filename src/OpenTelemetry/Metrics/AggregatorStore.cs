@@ -7,6 +7,7 @@ using System.Collections.Frozen;
 #endif
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Net;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 
@@ -26,6 +27,7 @@ internal sealed class AggregatorStore
     internal readonly int NumberOfMetricPoints;
     internal readonly ConcurrentDictionary<Tags, LookupData>? TagsToMetricPointIndexDictionaryDelta;
     internal readonly Func<ExemplarReservoir?>? ExemplarReservoirFactory;
+    internal readonly bool RecordSum;
     internal long DroppedMeasurements;
 
     private const ExemplarFilterType DefaultExemplarFilter = ExemplarFilterType.AlwaysOff;
@@ -79,7 +81,8 @@ internal sealed class AggregatorStore
         AggregationTemporality temporality,
         int cardinalityLimit,
         ExemplarFilterType? exemplarFilter = null,
-        Func<ExemplarReservoir?>? exemplarReservoirFactory = null)
+        Func<ExemplarReservoir?>? exemplarReservoirFactory = null,
+        bool recordSum = true)
     {
         this.name = metricStreamIdentity.InstrumentName;
 
@@ -87,6 +90,7 @@ internal sealed class AggregatorStore
         // This adjustment accounts for overflow attribute and a case where zero tags are provided.
         // Previously, these were included within the original cardinalityLimit, but now they are explicitly added to enhance clarity.
         this.NumberOfMetricPoints = cardinalityLimit + 2;
+        this.RecordSum = recordSum;
 
         this.metricPoints = new MetricPoint[this.NumberOfMetricPoints];
         this.currentMetricPointBatch = new int[this.NumberOfMetricPoints];

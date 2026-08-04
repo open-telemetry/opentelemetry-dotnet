@@ -82,6 +82,7 @@ public sealed class Metric
         Func<ExemplarReservoir?>? exemplarReservoirFactory = null)
     {
         this.InstrumentIdentity = instrumentIdentity;
+        bool recordSum = true;
 
         AggregationType aggType;
         if (instrumentIdentity.InstrumentType == typeof(ObservableCounter<long>)
@@ -156,10 +157,12 @@ public sealed class Metric
                 case AggregationKind.Histogram:
                     aggType = AggregationType.Histogram;
                     this.MetricType = MetricType.Histogram;
+                    recordSum = false;
                     break;
                 case AggregationKind.ExponentialHistogram:
                     aggType = AggregationType.Base2ExponentialHistogram;
                     this.MetricType = MetricType.ExponentialHistogram;
+                    recordSum = false;
                     break;
                 default:
                     aggType = AggregationType.LongSumIncomingDelta;
@@ -175,10 +178,12 @@ public sealed class Metric
                 case AggregationKind.Histogram:
                     aggType = AggregationType.Histogram;
                     this.MetricType = MetricType.Histogram;
+                    recordSum = false;
                     break;
                 case AggregationKind.ExponentialHistogram:
                     aggType = AggregationType.Base2ExponentialHistogram;
                     this.MetricType = MetricType.ExponentialHistogram;
+                    recordSum = false;
                     break;
                 default:
                     aggType = AggregationType.DoubleSumIncomingDelta;
@@ -252,7 +257,8 @@ public sealed class Metric
             temporality,
             cardinalityLimit,
             exemplarFilter,
-            exemplarReservoirFactory);
+            exemplarReservoirFactory,
+            recordSum);
         this.Temporality = temporality;
     }
 

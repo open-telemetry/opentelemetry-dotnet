@@ -1,0 +1,1 @@
+OpenTelemetry.Metrics.MetricPoint.TryGetHistogramSum(out double sum) -> bool

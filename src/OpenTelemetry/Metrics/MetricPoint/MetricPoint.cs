@@ -267,7 +267,8 @@ public struct MetricPoint
                             not AggregationType.HistogramWithMinMaxBuckets and
                             not AggregationType.HistogramWithMinMax and
                             not AggregationType.Base2ExponentialHistogram and
-                            not AggregationType.Base2ExponentialHistogramWithMinMax)
+                            not AggregationType.Base2ExponentialHistogramWithMinMax
+                            || !this.aggregatorStore.RecordSum)
         {
             this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramSum));
         }
@@ -275,6 +276,19 @@ public struct MetricPoint
         return this.mpComponents!.HistogramBuckets != null
             ? this.mpComponents.HistogramBuckets.SnapshotSum
             : this.mpComponents.Base2ExponentialBucketHistogram!.SnapshotSum;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly bool TryGetHistogramSum(out double sum)
+    {
+        if (!this.aggregatorStore.RecordSum)
+        {
+            sum = 0;
+            return false;
+        }
+
+        sum = this.GetHistogramSum();
+        return true;
     }
 
     /// <summary>
@@ -300,7 +314,7 @@ public struct MetricPoint
 
     /// <summary>
     /// Gets the exponential histogram data associated with the metric point.
-    /// </summary>
+        /// </summary>
     /// <remarks>
     /// Applies to <see cref="MetricType.Histogram"/> metric type.
     /// </remarks>
@@ -955,6 +969,10 @@ public struct MetricPoint
         {
             this.runningValue.AsLong++;
             histogramBuckets.RunningSum += number;
+            if (this.aggregatorStore.RecordSum)
+            {
+                histogramBuckets.RunningSum += number;
+            }
         }
 
         this.mpComponents.ReleaseLock();
