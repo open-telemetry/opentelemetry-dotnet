@@ -345,11 +345,33 @@ public sealed class PrometheusCollectionManagerTests
         Assert.Equal(1, collectCount);
 
         // The waiting is asynchronous: entering hands back an incomplete task rather
-        // than blocking this thread until the readers drain. Blocking here would never
-        // resolve, because the reader being waited on is held by this thread.
+        // than blocking the caller until the readers drain. Entering is done on a worker
+        // thread and time-boxed here, because if entering blocks (as it did before the fix)
+        // it never returns at all, as the reader being waited on is held by this thread.
+        // Doing it this way makes such a regression fail the test rather than hang CI.
+        var enteringScrape = new TaskCompletionSource<Task<PrometheusCollectionManager.CollectionResponse>>(TaskCreationOptions.RunContinuationsAsynchronously);
+
 #pragma warning disable CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
-        var waitingScrape = EnterCollectAsync(exporter, protocol);
+        _ = Task.Run(() =>
+        {
+            try
+            {
+                enteringScrape.SetResult(EnterCollectAsync(exporter, protocol));
+            }
+            catch (Exception ex)
+            {
+                enteringScrape.SetException(ex);
+            }
+        });
 #pragma warning restore CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
+
+        var entered = await Task.WhenAny(enteringScrape.Task, Task.Delay(testTimeout, cts.Token));
+
+        Assert.Same(enteringScrape.Task, entered);
+
+        // The reader held by this thread has not exited yet, so the scrape cannot have
+        // completed unless entering a collection stopped waiting for the active reader.
+        var waitingScrape = await enteringScrape.Task;
 
         Assert.False(waitingScrape.IsCompleted, "Entering a collection did not wait for the active reader.");
         Assert.Equal(1, collectCount);
