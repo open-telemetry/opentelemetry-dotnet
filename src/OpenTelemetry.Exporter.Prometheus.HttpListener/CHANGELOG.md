@@ -15,6 +15,14 @@ Notes](../../RELEASENOTES.md).
   blocks, which could stall concurrent scrapes being waited on.
   ([#7571](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7571))
 
+* A scrape which is still collecting when the listener is disposed now returns
+  an HTTP 503 response.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
+* Shutting down the listener no longer waits indefinitely for its request
+  processing loop to stop, and no longer throws if the loop faulted.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.17.0-beta.1
 
 Released 2026-Jul-16
