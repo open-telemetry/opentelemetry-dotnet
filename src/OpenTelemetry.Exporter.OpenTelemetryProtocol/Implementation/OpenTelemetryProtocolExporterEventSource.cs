@@ -315,6 +315,22 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
 
     // Event 38 was removed
 
+    [NonEvent]
+    internal void BatchDroppedDueToSerializationFailure(OtlpSignalType signalType, long itemCount, Exception ex)
+    {
+        if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.BatchDroppedDueToSerializationFailure(signalType.ToString(), itemCount, ex.ToInvariantString());
+        }
+    }
+
+    [Event(
+        39,
+        Message = "{0} batch containing {1} item(s) was dropped because it could not be serialized. Exception: {2}",
+        Level = EventLevel.Error)]
+    internal void BatchDroppedDueToSerializationFailure(string signalType, long itemCount, string exception)
+        => this.WriteEvent(39, signalType, itemCount, exception);
+
     private static string RedactEndpointUri(Uri endpoint)
         => endpoint.GetComponents(UriComponents.SchemeAndServer | UriComponents.Path, UriFormat.UriEscaped);
 }

@@ -25,20 +25,30 @@ internal static class ProtobufOtlpTraceSerializer
         activityListPool ??= [];
         scopeTracesList ??= [];
 
-        foreach (var activity in batch)
+        // Note: The grouped batch is held in thread-static state, so it has to be
+        // released even when serialization fails. TryWriteResourceSpans rethrows
+        // once the buffer cannot be grown any further; leaving the batch behind
+        // would merge it into the next export on this thread.
+        try
         {
-            var sourceName = activity.Source.Name;
-            if (!scopeTracesList.TryGetValue(sourceName, out var activities))
+            foreach (var activity in batch)
             {
-                activities = activityListPool.Count > 0 ? activityListPool.Pop() : [];
-                scopeTracesList[sourceName] = activities;
+                var sourceName = activity.Source.Name;
+                if (!scopeTracesList.TryGetValue(sourceName, out var activities))
+                {
+                    activities = activityListPool.Count > 0 ? activityListPool.Pop() : [];
+                    scopeTracesList[sourceName] = activities;
+                }
+
+                activities.Add(activity);
             }
 
-            activities.Add(activity);
+            writePosition = TryWriteResourceSpans(ref buffer, writePosition, sdkLimitOptions, resource);
         }
-
-        writePosition = TryWriteResourceSpans(ref buffer, writePosition, sdkLimitOptions, resource);
-        ReturnActivityListToPool();
+        finally
+        {
+            ReturnActivityListToPool();
+        }
 
         return writePosition;
     }
@@ -81,9 +91,9 @@ internal static class ProtobufOtlpTraceSerializer
 
     internal static void ReturnActivityListToPool()
     {
-        if (scopeTracesList?.Count != 0)
+        if (scopeTracesList is { Count: > 0 })
         {
-            foreach (var entry in scopeTracesList!)
+            foreach (var entry in scopeTracesList)
             {
                 entry.Value.Clear();
                 activityListPool?.Push(entry.Value);
