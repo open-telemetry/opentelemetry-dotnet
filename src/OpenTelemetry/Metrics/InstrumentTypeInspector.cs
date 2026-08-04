@@ -28,8 +28,6 @@ internal static class InstrumentTypeInspector
     /// </returns>
     public static bool TryClassify(Type instrumentType, out InstrumentKind kind)
     {
-        ArgumentNullException.ThrowIfNull(instrumentType);
-
         kind = default;
 
         if (!instrumentType.IsGenericType)
