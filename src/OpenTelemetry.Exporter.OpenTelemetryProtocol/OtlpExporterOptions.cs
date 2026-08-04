@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
@@ -46,6 +47,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     private OtlpExportCompression? compression;
     private ExportProcessorType? exportProcessorType;
     private BatchExportProcessorOptions<Activity>? batchExportProcessorOptions;
+    private int? maxExportPayloadSizeBytes;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OtlpExporterOptions"/> class.
@@ -145,6 +147,38 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     }
 
     /// <summary>
+    /// Gets or sets the maximum size in bytes that the serialized payload of a
+    /// single export is allowed to grow to. Default value: 128 MiB.
+    /// </summary>
+    /// <remarks>
+    /// Notes:
+    /// <list type="bullet">
+    /// <item>Increase this value when exporting very large batches, for example
+    /// metrics with very high cardinality. A batch whose serialized payload does
+    /// not fit is dropped in its entirety.</item>
+    /// <item>This bounds the serialized payload, before any compression selected
+    /// by <see cref="Compression"/> is applied.</item>
+    /// <item>The buffer is grown on demand, so raising this value does not by
+    /// itself increase memory use.</item>
+    /// <item>The maximum accepted value is <c>268435455</c> (256 MiB minus one
+    /// byte), which is the largest payload the protocol serializer can describe.</item>
+    /// </list>
+    /// </remarks>
+    public int MaxExportPayloadSizeBytes
+    {
+        get => this.maxExportPayloadSizeBytes ?? ProtobufSerializer.DefaultMaxBufferSize;
+        set
+        {
+            Guard.ThrowIfOutOfRange(
+                value,
+                min: ProtobufSerializer.InitialBufferSize,
+                max: ProtobufSerializer.AbsoluteMaxBufferSize);
+
+            this.maxExportPayloadSizeBytes = value;
+        }
+    }
+
+    /// <summary>
     /// Gets or sets a custom user agent identifier.
     /// This will be prepended to the default user agent string.
     /// </summary>
@@ -206,7 +240,8 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         || this.endpoint != null
         || this.timeoutMilliseconds.HasValue
         || this.httpClientFactory != null
-        || this.compression.HasValue;
+        || this.compression.HasValue
+        || this.maxExportPayloadSizeBytes.HasValue;
 
     internal ExportProcessorType? ExportProcessorTypeValue => this.exportProcessorType;
 
@@ -300,6 +335,8 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         this.httpClientFactory ??= defaultExporterOptions.httpClientFactory;
 
         this.compression ??= defaultExporterOptions.compression;
+
+        this.maxExportPayloadSizeBytes ??= defaultExporterOptions.maxExportPayloadSizeBytes;
 
         return this;
     }

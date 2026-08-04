@@ -14,7 +14,42 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer
 
 internal static class ProtobufSerializer
 {
-    private const int MaxBufferSize = 100 * 1024 * 1024;
+    /// <summary>
+    /// The size in bytes a serialization buffer is initially requested at.
+    /// The buffer is always at least this large, so it is also the smallest
+    /// meaningful maximum size.
+    /// </summary>
+    /// <remarks>
+    /// Note: <see cref="ArrayPool{T}"/> rounds a request of this size up to
+    /// 1 MiB, so the growth sequence is in fact 1 MiB, 2 MiB, 4 MiB, and so on.
+    /// </remarks>
+    internal const int InitialBufferSize = 750_000;
+
+    /// <summary>
+    /// The default maximum size in bytes a serialization buffer is allowed to
+    /// grow to (128 MiB).
+    /// </summary>
+    /// <remarks>
+    /// The buffer starts at <see cref="InitialBufferSize"/> and grows on demand
+    /// by doubling. This default is a power of two, so it is reached exactly by
+    /// that sequence, and it matches the ceiling that applied before the maximum
+    /// became configurable.
+    /// </remarks>
+    internal const int DefaultMaxBufferSize = 128 * 1024 * 1024;
+
+    /// <summary>
+    /// The largest size in bytes a serialization buffer may be configured to
+    /// grow to (256 MiB minus one byte).
+    /// </summary>
+    /// <remarks>
+    /// Nested message lengths are back-filled by <see
+    /// cref="WriteReservedLength"/> into a fixed four byte varint, which can
+    /// only represent lengths up to <c>2^28 - 1</c>. Since the outermost
+    /// message spans nearly the whole payload, a larger buffer could otherwise
+    /// produce a length that silently truncates.
+    /// </remarks>
+    internal const int AbsoluteMaxBufferSize = (1 << 28) - 1;
+
     private const uint UInt128 = 0x80;
     private const ulong ULong128 = 0x80;
     private const int Fixed32Size = 4;
@@ -370,20 +405,27 @@ internal static class ProtobufSerializer
 
     internal static void ReturnBuffer(ArrayPool<byte> pool, byte[] buffer) => pool.Return(buffer, clearArray: true);
 
-    internal static bool IncreaseBufferSize(ref byte[] buffer, OtlpSignalType otlpSignalType)
+    internal static bool IncreaseBufferSize(ref byte[] buffer, OtlpSignalType otlpSignalType, int maxBufferSize)
     {
-        if (buffer.Length >= MaxBufferSize)
+        if (buffer.Length >= maxBufferSize)
         {
             OpenTelemetryProtocolExporterEventSource.Log.BufferExceededMaxSize(otlpSignalType.ToString(), buffer.Length);
             return false;
         }
+
+        // Grow by doubling, but never ask for more than the configured maximum.
+        // Clamping to the maximum (rather than refusing the grow outright when
+        // the doubled size would overshoot) means the entire configured budget
+        // is usable, with no unreachable remainder. The pool rounds the request
+        // up to its next size class, so the buffer still ends up at least this big.
+        var nextBufferSize = (int)Math.Min((long)buffer.Length * 2, maxBufferSize);
 
         var pool = ArrayPool<byte>.Shared;
 
         byte[] largerBuffer;
         try
         {
-            largerBuffer = pool.Rent(buffer.Length * 2);
+            largerBuffer = pool.Rent(nextBufferSize);
         }
         catch (OutOfMemoryException)
         {

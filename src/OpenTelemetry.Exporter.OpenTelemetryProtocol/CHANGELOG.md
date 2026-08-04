@@ -20,6 +20,12 @@ Notes](../../RELEASENOTES.md).
   the serializer's per-thread state. For logs, this also leaked pooled instances.
   ([#7579](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7579))
 
+* Added `OtlpExporterOptions.MaxExportPayloadSizeBytes` to configure the maximum
+  size for the serialized payload of a single export. Raise it when exporting
+  very large batches, such as metrics with very high cardinality. The default
+  value is 128 MiB.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.17.0
 
 Released 2026-Jul-16

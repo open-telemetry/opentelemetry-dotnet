@@ -20,7 +20,13 @@ internal static class ProtobufOtlpTraceSerializer
     [ThreadStatic]
     private static Dictionary<string, List<Activity>>? scopeTracesList;
 
-    internal static int WriteTraceData(ref byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, Resources.Resource? resource, in Batch<Activity> batch)
+    internal static int WriteTraceData(
+        ref byte[] buffer,
+        int writePosition,
+        SdkLimitOptions sdkLimitOptions,
+        Resources.Resource? resource,
+        in Batch<Activity> batch,
+        int maxBufferSize = ProtobufSerializer.DefaultMaxBufferSize)
     {
         activityListPool ??= [];
         scopeTracesList ??= [];
@@ -43,7 +49,7 @@ internal static class ProtobufOtlpTraceSerializer
                 activities.Add(activity);
             }
 
-            writePosition = TryWriteResourceSpans(ref buffer, writePosition, sdkLimitOptions, resource);
+            writePosition = TryWriteResourceSpans(ref buffer, writePosition, sdkLimitOptions, resource, maxBufferSize);
         }
         finally
         {
@@ -53,7 +59,12 @@ internal static class ProtobufOtlpTraceSerializer
         return writePosition;
     }
 
-    internal static int TryWriteResourceSpans(ref byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, Resources.Resource? resource)
+    internal static int TryWriteResourceSpans(
+        ref byte[] buffer,
+        int writePosition,
+        SdkLimitOptions sdkLimitOptions,
+        Resources.Resource? resource,
+        int maxBufferSize)
     {
         while (true)
         {
@@ -77,14 +88,14 @@ internal static class ProtobufOtlpTraceSerializer
                 // Reset write position and attempt to increase the buffer size
                 writePosition = entryWritePosition;
 
-                if (!ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Traces))
+                if (!ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Traces, maxBufferSize))
                 {
                     throw;
                 }
 
-                // Continue the loop to retry serialization with the larger buffer
-                // The loop is limited by the buffer size expansion logic in IncreaseBufferSize,
-                // which stops at a maximum of 100 MB, ensuring this doesn't become an infinite loop
+                // Continue the loop to retry serialization with the larger buffer.
+                // The loop is bounded by IncreaseBufferSize, which refuses to grow
+                // beyond maxBufferSize, so this cannot become an infinite loop.
             }
         }
     }

@@ -18,13 +18,13 @@ public class OtlpMetricExporter : BaseExporter<Metric>
 {
     private const int GrpcStartWritePosition = 5;
 
-    // Initial buffer size set to ~732KB.
-    // This choice allows us to gradually grow the buffer while targeting a final capacity of around 100 MB,
-    // by the 7th doubling to maintain efficient allocation without frequent resizing.
-    private const int InitialBufferSize = 750_000;
+    // Initial buffer size set to ~732KB, so the buffer can be grown by doubling
+    // towards OtlpExporterOptions.MaxExportPayloadSizeBytes without resizing often.
+    private const int InitialBufferSize = ProtobufSerializer.InitialBufferSize;
 
     private readonly OtlpExporterTransmissionHandler transmissionHandler;
     private readonly int startWritePosition;
+    private readonly int maxExportPayloadSizeBytes;
     private readonly SerializationBuffer serializationBuffer = new(InitialBufferSize);
 
     /// <summary>
@@ -50,6 +50,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
         this.startWritePosition = exporterOptions.Protocol == OtlpExportProtocol.Grpc ? GrpcStartWritePosition : 0;
 #pragma warning restore CS0618 // Suppressing gRPC obsolete warning
+        this.maxExportPayloadSizeBytes = exporterOptions.MaxExportPayloadSizeBytes;
         this.transmissionHandler = transmissionHandler ?? exporterOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Metrics);
     }
 
@@ -77,7 +78,12 @@ public class OtlpMetricExporter : BaseExporter<Metric>
 
             try
             {
-                writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, this.startWritePosition, this.Resource, metrics);
+                writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(
+                    ref buffer,
+                    this.startWritePosition,
+                    this.Resource,
+                    metrics,
+                    this.maxExportPayloadSizeBytes);
                 serializationSucceeded = true;
             }
             catch (Exception ex)

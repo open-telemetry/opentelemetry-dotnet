@@ -93,6 +93,101 @@ public static class ProtobufOtlpMetricSerializerTests
         await WriteMetricsAndAssertSnapshot(metrics);
     }
 
+    [Fact]
+    public static void WriteMetricsData_BatchTooLargeForMaxBufferSize_Throws()
+    {
+        var metrics = GenerateHighCardinalityMetrics(cardinality: 20_000);
+
+        var buffer = ProtobufSerializer.RentBuffer(1024);
+        try
+        {
+            // 1 MiB cannot hold 20,000 metric points, and the serializer is not
+            // allowed to grow past it, so the batch cannot be serialized.
+            Assert.ThrowsAny<Exception>(() => ProtobufOtlpMetricSerializer.WriteMetricsData(
+                ref buffer,
+                0,
+                Resource.Empty,
+                metrics,
+                maxBufferSize: 1024 * 1024));
+        }
+        finally
+        {
+            ProtobufSerializer.ReturnBuffer(buffer);
+        }
+    }
+
+    [Fact]
+    public static void WriteMetricsData_LargerMaxBufferSizeAllowsLargerBatch()
+    {
+        var metrics = GenerateHighCardinalityMetrics(cardinality: 20_000);
+
+        var buffer = ProtobufSerializer.RentBuffer(1024);
+        try
+        {
+            // The same batch that does not fit within 1 MiB is serialized when
+            // the serializer is allowed to grow further.
+            var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(
+                ref buffer,
+                0,
+                Resource.Empty,
+                metrics,
+                maxBufferSize: 16 * 1024 * 1024);
+
+            Assert.True(writePosition > 1024 * 1024, $"Expected a payload larger than 1 MiB but was {writePosition}.");
+
+            using var stream = new MemoryStream(buffer, 0, writePosition);
+            var request = OtlpCollector.ExportMetricsServiceRequest.Parser.ParseFrom(stream);
+
+            var resourceMetrics = Assert.Single(request.ResourceMetrics);
+            var scopeMetrics = Assert.Single(resourceMetrics.ScopeMetrics);
+            var metric = Assert.Single(scopeMetrics.Metrics);
+
+            Assert.Equal(20_000, metric.Sum.DataPoints.Count);
+        }
+        finally
+        {
+            ProtobufSerializer.ReturnBuffer(buffer);
+        }
+    }
+
+    [Theory]
+    [InlineData(2 * 1024 * 1024)]
+    [InlineData(3 * 1024 * 1024)] // Not a power of two, so not a size doubling reaches exactly.
+    [InlineData(ProtobufSerializer.DefaultMaxBufferSize)]
+    [InlineData(ProtobufSerializer.AbsoluteMaxBufferSize)]
+    public static void IncreaseBufferSize_GrowsToMaxBufferSizeThenStops(int maxBufferSize)
+    {
+        var buffer = ProtobufSerializer.RentBuffer(ProtobufSerializer.InitialBufferSize);
+        try
+        {
+            var growths = 0;
+
+            while (ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Metrics, maxBufferSize))
+            {
+                Assert.True(++growths < 64, "Growth did not terminate.");
+            }
+
+            // The whole budget is usable: growth only stops once the buffer has
+            // reached the maximum, leaving no unreachable remainder.
+            Assert.True(
+                buffer.Length >= maxBufferSize,
+                $"Buffer stopped growing at {buffer.Length}, short of the maximum of {maxBufferSize}.");
+
+            // How much the array pool hands back over what was asked for is up to
+            // the runtime, but it is never more than a further doubling.
+            Assert.True(
+                buffer.Length <= 2L * maxBufferSize,
+                $"Buffer grew to {buffer.Length}, more than double the maximum of {maxBufferSize}.");
+
+            // Growth stays refused once the maximum has been reached.
+            Assert.False(ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Metrics, maxBufferSize));
+        }
+        finally
+        {
+            ProtobufSerializer.ReturnBuffer(buffer);
+        }
+    }
+
     private static async Task WriteMetricsAndAssertSnapshot(Batch<Metric> metrics)
     {
         // Arrange
@@ -285,5 +380,35 @@ public static class ProtobufOtlpMetricSerializerTests
         }
 
         return new WeakReference<Metric>(capturedMetric);
+    }
+
+    private static Batch<Metric> GenerateHighCardinalityMetrics(int cardinality)
+    {
+        var exported = new List<Metric>();
+        var meterName = Utils.GetCurrentMethodName() + Guid.NewGuid().ToString("N");
+
+        int count;
+
+        using (var meter = new Meter(meterName))
+        using (var meterProvider = Sdk.CreateMeterProviderBuilder()
+                                      .AddMeter(meterName)
+                                      .AddView("*", new MetricStreamConfiguration { CardinalityLimit = cardinality + 10 })
+                                      .AddInMemoryExporter(exported)
+                                      .Build())
+        {
+            var counter = meter.CreateCounter<long>("test.counter");
+            for (var i = 0; i < cardinality; i++)
+            {
+                counter.Add(1, new KeyValuePair<string, object?>("tag", $"value-{i}"));
+            }
+
+            Assert.True(meterProvider.ForceFlush());
+
+            count = exported.Count;
+        }
+
+        Assert.Equal(1, count);
+
+        return new Batch<Metric>([.. exported], count);
     }
 }
