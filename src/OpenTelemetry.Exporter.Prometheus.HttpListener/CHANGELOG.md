@@ -15,6 +15,14 @@ Notes](../../RELEASENOTES.md).
   blocks, which could stall concurrent scrapes being waited on.
   ([#7571](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7571))
 
+* A scrape which is still collecting when the listener is disposed now returns
+  an HTTP 503 response.
+  ([#7587](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7587))
+
+* Shutting down the listener no longer waits indefinitely for its request
+  processing loop to stop, and no longer throws if the loop faulted.
+  ([#7587](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7587))
+
 * Fixed metric values and histogram bucket bounds being written with 17
   significant digits instead of their shortest round-trippable representation.
   ([#7589](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7589))
