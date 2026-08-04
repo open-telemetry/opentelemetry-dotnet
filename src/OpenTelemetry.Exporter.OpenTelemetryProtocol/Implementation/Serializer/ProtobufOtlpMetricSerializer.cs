@@ -31,20 +31,30 @@ internal static class ProtobufOtlpMetricSerializer
         metricListPool ??= [];
         scopeMetricsList ??= [];
 
-        foreach (var metric in batch)
+        // Note: The grouped batch is held in thread-static state, so it has to be
+        // released even when serialization fails. TryWriteResourceMetrics rethrows
+        // once the buffer cannot be grown any further; leaving the batch behind
+        // would merge it into the next export on this thread.
+        try
         {
-            var metricName = metric.MeterName;
-            if (!scopeMetricsList.TryGetValue(metricName, out var metrics))
+            foreach (var metric in batch)
             {
-                metrics = metricListPool.Count > 0 ? metricListPool.Pop() : [];
-                scopeMetricsList[metricName] = metrics;
+                var metricName = metric.MeterName;
+                if (!scopeMetricsList.TryGetValue(metricName, out var metrics))
+                {
+                    metrics = metricListPool.Count > 0 ? metricListPool.Pop() : [];
+                    scopeMetricsList[metricName] = metrics;
+                }
+
+                metrics.Add(metric);
             }
 
-            metrics.Add(metric);
+            writePosition = TryWriteResourceMetrics(ref buffer, writePosition, resource, scopeMetricsList);
         }
-
-        writePosition = TryWriteResourceMetrics(ref buffer, writePosition, resource, scopeMetricsList);
-        ReturnMetricListToPool();
+        finally
+        {
+            ReturnMetricListToPool();
+        }
 
         return writePosition;
     }
@@ -83,9 +93,9 @@ internal static class ProtobufOtlpMetricSerializer
 
     private static void ReturnMetricListToPool()
     {
-        if (scopeMetricsList?.Count != 0)
+        if (scopeMetricsList is { Count: > 0 })
         {
-            foreach (var entry in scopeMetricsList!)
+            foreach (var entry in scopeMetricsList)
             {
                 entry.Value.Clear();
                 metricListPool?.Push(entry.Value);

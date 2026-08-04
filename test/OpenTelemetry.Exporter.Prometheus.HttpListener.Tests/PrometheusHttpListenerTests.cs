@@ -407,6 +407,8 @@ public class PrometheusHttpListenerTests
     [Fact]
     public async Task HttpListenerHandlesConcurrentScrapes()
     {
+        EnsureThreadPoolWorkerThreadsAvailable();
+
         var timeout = TimeSpan.FromSeconds(5);
 
         using var firstCollectStarted = new ManualResetEventSlim();

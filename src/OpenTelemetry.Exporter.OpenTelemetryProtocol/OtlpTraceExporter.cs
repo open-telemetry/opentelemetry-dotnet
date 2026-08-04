@@ -79,13 +79,24 @@ public class OtlpTraceExporter : BaseExporter<Activity>
         {
             buffer = this.serializationBuffer.Rent();
 
-            writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(
-                ref buffer,
-                this.startWritePosition,
-                this.sdkLimitOptions,
-                this.Resource,
-                activityBatch);
-            serializationSucceeded = true;
+            try
+            {
+                writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(
+                    ref buffer,
+                    this.startWritePosition,
+                    this.sdkLimitOptions,
+                    this.Resource,
+                    activityBatch);
+                serializationSucceeded = true;
+            }
+            catch (Exception ex)
+            {
+                OpenTelemetryProtocolExporterEventSource.Log.BatchDroppedDueToSerializationFailure(
+                    OtlpSignalType.Traces,
+                    activityBatch.Count,
+                    ex);
+                return ExportResult.Failure;
+            }
 
             if (this.startWritePosition == GrpcStartWritePosition)
             {
