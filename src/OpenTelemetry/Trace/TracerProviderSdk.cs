@@ -27,10 +27,14 @@ internal sealed class TracerProviderSdk : TracerProvider
     private readonly Action<Activity> getRequestedDataAction;
     private readonly bool supportLegacyActivity;
 
+    private IDisposable? selfDiagnosticsRegistration;
+
     internal TracerProviderSdk(
         IServiceProvider serviceProvider,
-        bool ownsServiceProvider)
+        bool ownsServiceProvider,
+        IDisposable selfDiagnosticsRegistration)
     {
+        this.selfDiagnosticsRegistration = selfDiagnosticsRegistration;
         Debug.Assert(serviceProvider != null, "serviceProvider was null");
 
         var state = serviceProvider!.GetRequiredService<TracerProviderBuilderSdk>();
@@ -392,6 +396,8 @@ internal sealed class TracerProviderSdk : TracerProvider
 
             this.Disposed = true;
             OpenTelemetrySdkEventSource.Log.ProviderDisposed(nameof(TracerProvider));
+            this.selfDiagnosticsRegistration?.Dispose();
+            this.selfDiagnosticsRegistration = null;
         }
 
         base.Dispose(disposing);
