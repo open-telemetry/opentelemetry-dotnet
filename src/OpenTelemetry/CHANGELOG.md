@@ -6,6 +6,15 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed self-diagnostics log lines being silently dropped when an event message
+  or parameter contained enough 3-byte UTF-8 characters to overflow the internal
+  buffer estimate. Such content is now truncated.
+  ([#7543](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7543))
+
+* Fixed activity creation throwing when multiple tracer providers return a
+  sampler attribute with the same key.
+  ([#7558](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7558))
+
 ## 1.17.0
 
 Released 2026-Jul-16

@@ -14,28 +14,10 @@ env:
 
 jobs:
   zizmor:
-    name: zizmor
-    runs-on: ubuntu-24.04
-
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-      cancel-in-progress: false
-
+    name: Zizmor Security Analysis
     permissions:
-      actions: read # Scan GitHub Actions workflows
-      contents: read # Checkout the repository
-      security-events: write # Store results in the Security tab
-
-    steps:
-
-      - name: Checkout code
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          filter: 'tree:0'
-          persist-credentials: false
-          show-progress: false
-
-      - name: Scan workflows with zizmor
-        uses: zizmorcore/zizmor-action@6599ee8b7a49aef6a770f63d261d214911a7ce02 # v0.6.0
-        with:
-          persona: pedantic
+      contents: read # for actions/checkout
+      security-events: write # for zizmor to upload SARIF results
+    uses: open-telemetry/shared-workflows/.github/workflows/zizmor.yml@62d5939b47144252763c5ff9fffe8c20d76cd806 # v0.4.0
+    with:
+      persona: pedantic

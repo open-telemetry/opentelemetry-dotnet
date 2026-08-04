@@ -1,0 +1,151 @@
+// Copyright The OpenTelemetry Authors
+// SPDX-License-Identifier: Apache-2.0
+
+using OpenTelemetry.Proto.Logs.V1;
+using OpenTelemetry.Tests;
+
+namespace OpenTelemetry.Apple.Tests;
+
+public sealed class AppleEndToEndTests(AppleAppFixture fixture) : IClassFixture<AppleAppFixture>
+{
+    private const string ServiceName = "otel-apple-testapp";
+    private const string ActivityName = "AppleScenario";
+    private const string ActivityTagKey = "otel.apple.scenario";
+    private const string ActivityTagValue = "end-to-end";
+    private const string CounterName = "apple.scenario.count";
+    private const string HistogramName = "apple.scenario.duration";
+    private const string LogBody = "Apple end-to-end scenario executed";
+
+    private static readonly TimeSpan CollectTimeout = TimeSpan.FromSeconds(30);
+
+    private readonly AppleAppFixture fixture = fixture;
+
+    [Fact]
+    public void DeviceTestRunSucceeded() => EnsureDeviceRunSucceeded(this.fixture);
+
+    [Fact]
+    public async Task LogsAreExported()
+    {
+        EnsureDeviceRunSucceeded(this.fixture);
+
+        var collector = this.fixture.Collector;
+
+        await WaitForAsync(() => HasLog(collector, LogBody), () => this.Detail(collector));
+
+        var scenarioLog = GetLogRecords(collector).First((p) => Body(p).Contains(LogBody, StringComparison.Ordinal));
+
+        Assert.Equal((int)SeverityNumber.Info, (int)scenarioLog.SeverityNumber);
+        Assert.True(LogsHaveServiceName(collector), $"Expected resource attribute service.name='{ServiceName}' on the exported logs.");
+    }
+
+    [Fact]
+    public async Task MetricsAreExported()
+    {
+        EnsureDeviceRunSucceeded(this.fixture);
+
+        var collector = this.fixture.Collector;
+
+        await WaitForAsync(
+            () => HasMetric(collector, CounterName) && HasMetric(collector, HistogramName),
+            () => this.Detail(collector));
+
+        Assert.True(HasMetric(collector, CounterName), $"Expected metric '{CounterName}'.");
+        Assert.True(HasMetric(collector, HistogramName), $"Expected metric '{HistogramName}'.");
+        Assert.True(MetricsHaveServiceName(collector), $"Expected resource attribute service.name='{ServiceName}' on the exported metrics.");
+    }
+
+    [Fact]
+    public async Task TracesAreExported()
+    {
+        EnsureDeviceRunSucceeded(this.fixture);
+
+        var collector = this.fixture.Collector;
+
+        await WaitForAsync(() => HasScenarioTrace(collector), () => this.Detail(collector));
+
+        Assert.True(HasScenarioTrace(collector), "Expected a scenario span with the contract name and tag.");
+        Assert.True(TracesHaveServiceName(collector), $"Expected resource attribute service.name='{ServiceName}' on the exported traces.");
+    }
+
+    private static void EnsureDeviceRunSucceeded(AppleAppFixture fixture) =>
+        Assert.True(
+            fixture.DeviceRunExitCode == 0,
+            $"On-device test run failed with exit code {fixture.DeviceRunExitCode}.{Environment.NewLine}{fixture.DeviceRunOutput}");
+
+    private static async Task WaitForAsync(Func<bool> condition, Func<string> failureDetail)
+    {
+        var deadline = DateTime.UtcNow + CollectTimeout;
+
+        while (DateTime.UtcNow < deadline)
+        {
+            if (condition())
+            {
+                return;
+            }
+
+            await Task.Delay(500);
+        }
+
+        Assert.True(condition(), "Timed out waiting for telemetry to be exported. " + failureDetail());
+    }
+
+    private static string Body(LogRecord logRecord) => logRecord.Body?.StringValue ?? string.Empty;
+
+    private static bool HasScenarioTrace(OtlpHttpCollector collector) =>
+        GetSpans(collector)
+            .Any((p) => p.Span.Name == ActivityName &&
+                        p.Span.Attributes.Any((r) => r.Key == ActivityTagKey && r.Value?.StringValue == ActivityTagValue));
+
+    private static bool HasLog(OtlpHttpCollector collector, string bodyContains) =>
+        GetLogRecords(collector)
+            .Any((p) => Body(p).Contains(bodyContains, StringComparison.Ordinal));
+
+    private static bool HasMetric(OtlpHttpCollector collector, string name) =>
+        GetMetricNames(collector).Contains(name);
+
+    private static bool LogsHaveServiceName(OtlpHttpCollector collector) =>
+        collector.GetLogsRequests()
+            .SelectMany((p) => p.ResourceLogs)
+            .Any((p) => HasServiceName(p.Resource));
+
+    private static bool MetricsHaveServiceName(OtlpHttpCollector collector) =>
+        collector.GetMetricsRequests()
+            .SelectMany((p) => p.ResourceMetrics)
+            .Any((p) => HasServiceName(p.Resource));
+
+    private static bool TracesHaveServiceName(OtlpHttpCollector collector) =>
+        collector.GetTraceRequests()
+            .SelectMany((p) => p.ResourceSpans)
+            .Any((p) => HasServiceName(p.Resource));
+
+    private static bool HasServiceName(Proto.Resource.V1.Resource? resource) =>
+        resource is not null &&
+        resource.Attributes.Any((p) => p.Key == "service.name" && p.Value?.StringValue == ServiceName);
+
+    private static List<(string Scope, Proto.Trace.V1.Span Span)> GetSpans(OtlpHttpCollector collector) =>
+        [.. collector.GetTraceRequests()
+            .SelectMany((p) => p.ResourceSpans)
+            .SelectMany((p) => p.ScopeSpans)
+            .SelectMany((p) => p.Spans.Select((r) => (p.Scope?.Name ?? string.Empty, r)))];
+
+    private static HashSet<string> GetMetricNames(OtlpHttpCollector collector) =>
+        collector.GetMetricsRequests()
+            .SelectMany((p) => p.ResourceMetrics)
+            .SelectMany((p) => p.ScopeMetrics)
+            .SelectMany((p) => p.Metrics)
+            .Select((p) => p.Name)
+            .ToHashSet(StringComparer.Ordinal);
+
+    private static List<LogRecord> GetLogRecords(OtlpHttpCollector collector) =>
+        [.. collector.GetLogsRequests()
+            .SelectMany((p) => p.ResourceLogs)
+            .SelectMany((p) => p.ScopeLogs)
+            .SelectMany((p) => p.LogRecords)];
+
+    private string Detail(OtlpHttpCollector collector) =>
+        $"Spans seen: {string.Join(", ", GetSpans(collector).Select(t => $"{t.Scope}/{t.Span.Name}"))}." +
+        $"{Environment.NewLine}Metrics seen: {string.Join(", ", GetMetricNames(collector))}." +
+        $"{Environment.NewLine}Logs seen: {GetLogRecords(collector).Count}." +
+        $"{Environment.NewLine}{collector.GetRawHitSummary()}" +
+        $"{Environment.NewLine}On-device run output:{Environment.NewLine}{this.fixture.DeviceRunOutput}";
+}

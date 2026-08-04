@@ -11,6 +11,11 @@
     <DefaultTargetFrameworkForExampleApps>net10.0</DefaultTargetFrameworkForExampleApps>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <SolutionDir Condition="'$(SolutionDir)' == ''">$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)/..'))</SolutionDir>
+    <SolutionName Condition="'$(SolutionName)' == ''">OpenTelemetry.slnx</SolutionName>
+  </PropertyGroup>
+
   <PropertyGroup Condition="$(MSBuildProjectName.EndsWith('.Tests')) OR $(MSBuildProjectName.EndsWith('.FuzzTests'))">
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
