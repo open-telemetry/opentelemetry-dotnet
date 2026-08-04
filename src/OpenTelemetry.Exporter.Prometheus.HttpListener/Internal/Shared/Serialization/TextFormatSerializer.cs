@@ -2058,6 +2058,10 @@ internal abstract class TextFormatSerializer
             }
         }
 
+        // Copy out the digits, discarding the decimal point but remembering how many digits
+        // preceded it. A rendering such as "100000" has no decimal point at all, in which case
+        // every digit is an integer digit, so the count defaults to the length and is only
+        // replaced if a decimal point is found.
         Span<char> digits = stackalloc char[MaxFormattedDoubleCharacters];
         var digitCount = 0;
         var integerDigits = shortest.Length;
