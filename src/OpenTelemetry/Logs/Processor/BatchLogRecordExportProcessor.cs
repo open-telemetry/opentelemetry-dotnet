@@ -16,6 +16,10 @@ public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
     private readonly KeyValuePair<string, object?>[] successTags;
     private readonly KeyValuePair<string, object?>[] queueFullTags;
     private readonly KeyValuePair<string, object?>[] alreadyShutdownTags;
+
+    // Number of OnEnd calls currently in-flight (past the shutdown check).
+    // OnShutdown waits for this to reach zero so those records finish enqueueing
+    // before teardown, keeping the processed vs. already_shutdown counting race-free.
     private int activeOnEndCount;
     private int isShutdown;
 
