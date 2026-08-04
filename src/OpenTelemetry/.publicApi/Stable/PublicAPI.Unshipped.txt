@@ -1,6 +1,1 @@
 OpenTelemetry.Metrics.MetricPoint.TryGetHistogramSum(out double sum) -> bool
-[OTEL1004]abstract OpenTelemetry.Metrics.ExemplarReservoir.Collect() -> OpenTelemetry.Metrics.ReadOnlyExemplarCollection
-[OTEL1004]abstract OpenTelemetry.Metrics.ExemplarReservoir.Offer(in OpenTelemetry.Metrics.ExemplarMeasurement<double> measurement) -> void
-[OTEL1004]abstract OpenTelemetry.Metrics.ExemplarReservoir.Offer(in OpenTelemetry.Metrics.ExemplarMeasurement<long> measurement) -> void
-[OTEL1004]override sealed OpenTelemetry.Metrics.FixedSizeExemplarReservoir.Collect() -> OpenTelemetry.Metrics.ReadOnlyExemplarCollection
-[OTEL1004]virtual OpenTelemetry.Metrics.FixedSizeExemplarReservoir.OnCollected() -> void
