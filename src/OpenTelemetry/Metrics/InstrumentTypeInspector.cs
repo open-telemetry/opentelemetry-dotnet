@@ -16,17 +16,14 @@ internal static class InstrumentTypeInspector
 {
     /// <summary>
     /// Attempts to classify <paramref name="instrumentType"/> into an
-    /// <see cref="InstrumentKind"/> and <see cref="NumericKind"/>.
+    /// <see cref="InstrumentKind"/>.
     /// </summary>
     /// <param name="instrumentType">The closed generic instrument type.</param>
     /// <param name="kind">The classified instrument kind,
     /// if successful.</param>
-    /// <param name="numeric">The classified numeric kind,
-    /// if successful.</param>
     /// <returns>
     /// <see langword="true"/> if <paramref name="instrumentType"/> is
-    /// a recognized
-    /// System.Diagnostics.Metrics instrument type; otherwise
+    /// a recognized System.Diagnostics.Metrics instrument type; otherwise
     /// <see langword="false"/>.
     /// </returns>
     public static bool TryClassify(Type instrumentType, out InstrumentKind kind)

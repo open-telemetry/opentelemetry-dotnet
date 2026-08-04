@@ -7,7 +7,6 @@ using System.Collections.Frozen;
 #endif
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Net;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 
