@@ -4,21 +4,21 @@
 using OpenTelemetry.Proto.Logs.V1;
 using OpenTelemetry.Tests;
 
-namespace OpenTelemetry.Android.Tests;
+namespace OpenTelemetry.Apple.Tests;
 
-public sealed class AndroidEndToEndTests(AndroidAppFixture fixture) : IClassFixture<AndroidAppFixture>
+public sealed class AppleEndToEndTests(AppleAppFixture fixture) : IClassFixture<AppleAppFixture>
 {
-    private const string ServiceName = "otel-android-testapp";
-    private const string ActivityName = "AndroidScenario";
-    private const string ActivityTagKey = "otel.android.scenario";
+    private const string ServiceName = "otel-apple-testapp";
+    private const string ActivityName = "AppleScenario";
+    private const string ActivityTagKey = "otel.apple.scenario";
     private const string ActivityTagValue = "end-to-end";
-    private const string CounterName = "android.scenario.count";
-    private const string HistogramName = "android.scenario.duration";
-    private const string LogBody = "Android end-to-end scenario executed";
+    private const string CounterName = "apple.scenario.count";
+    private const string HistogramName = "apple.scenario.duration";
+    private const string LogBody = "Apple end-to-end scenario executed";
 
     private static readonly TimeSpan CollectTimeout = TimeSpan.FromSeconds(30);
 
-    private readonly AndroidAppFixture fixture = fixture;
+    private readonly AppleAppFixture fixture = fixture;
 
     [Fact]
     public void DeviceTestRunSucceeded() => EnsureDeviceRunSucceeded(this.fixture);
@@ -30,7 +30,7 @@ public sealed class AndroidEndToEndTests(AndroidAppFixture fixture) : IClassFixt
 
         var collector = this.fixture.Collector;
 
-        await WaitForAsync(() => HasLog(collector, LogBody), () => Detail(collector));
+        await WaitForAsync(() => HasLog(collector, LogBody), () => this.Detail(collector));
 
         var scenarioLog = GetLogRecords(collector).First((p) => Body(p).Contains(LogBody, StringComparison.Ordinal));
 
@@ -47,7 +47,7 @@ public sealed class AndroidEndToEndTests(AndroidAppFixture fixture) : IClassFixt
 
         await WaitForAsync(
             () => HasMetric(collector, CounterName) && HasMetric(collector, HistogramName),
-            () => Detail(collector));
+            () => this.Detail(collector));
 
         Assert.True(HasMetric(collector, CounterName), $"Expected metric '{CounterName}'.");
         Assert.True(HasMetric(collector, HistogramName), $"Expected metric '{HistogramName}'.");
@@ -61,13 +61,13 @@ public sealed class AndroidEndToEndTests(AndroidAppFixture fixture) : IClassFixt
 
         var collector = this.fixture.Collector;
 
-        await WaitForAsync(() => HasScenarioTrace(collector), () => Detail(collector));
+        await WaitForAsync(() => HasScenarioTrace(collector), () => this.Detail(collector));
 
         Assert.True(HasScenarioTrace(collector), "Expected a scenario span with the contract name and tag.");
         Assert.True(TracesHaveServiceName(collector), $"Expected resource attribute service.name='{ServiceName}' on the exported traces.");
     }
 
-    private static void EnsureDeviceRunSucceeded(AndroidAppFixture fixture) =>
+    private static void EnsureDeviceRunSucceeded(AppleAppFixture fixture) =>
         Assert.True(
             fixture.DeviceRunExitCode == 0,
             $"On-device test run failed with exit code {fixture.DeviceRunExitCode}.{Environment.NewLine}{fixture.DeviceRunOutput}");
@@ -142,9 +142,10 @@ public sealed class AndroidEndToEndTests(AndroidAppFixture fixture) : IClassFixt
             .SelectMany((p) => p.ScopeLogs)
             .SelectMany((p) => p.LogRecords)];
 
-    private static string Detail(OtlpHttpCollector collector) =>
+    private string Detail(OtlpHttpCollector collector) =>
         $"Spans seen: {string.Join(", ", GetSpans(collector).Select(t => $"{t.Scope}/{t.Span.Name}"))}." +
         $"{Environment.NewLine}Metrics seen: {string.Join(", ", GetMetricNames(collector))}." +
         $"{Environment.NewLine}Logs seen: {GetLogRecords(collector).Count}." +
-        $"{Environment.NewLine}{collector.GetRawHitSummary()}";
+        $"{Environment.NewLine}{collector.GetRawHitSummary()}" +
+        $"{Environment.NewLine}On-device run output:{Environment.NewLine}{this.fixture.DeviceRunOutput}";
 }

@@ -16,6 +16,10 @@ Notes](../../RELEASENOTES.md).
   to be dropped.
   ([#7544](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7544))
 
+* Fixed serialization failures leaving failed trace, metric, and log batches in
+  the serializer's per-thread state. For logs, this also leaked pooled instances.
+  ([#7579](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7579))
+
 * A server-supplied throttle delay (OTLP/gRPC `RetryInfo.retry_delay` or
   OTLP/HTTP `Retry-After`) is now clamped to a minimum of 100 milliseconds.
   ([#7583](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7583))

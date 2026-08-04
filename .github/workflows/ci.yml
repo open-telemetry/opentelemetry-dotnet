@@ -62,8 +62,9 @@ jobs:
           sdk-code: ['src/OpenTelemetry/**', 'test/OpenTelemetry.Tests/**', '!**/*.md']
           sdk-package: ['src/OpenTelemetry/**', '!**/*.md']
           unstable-core-packages: ['src/OpenTelemetry.Exporter.Prometheus.AspNetCore/**', 'src/OpenTelemetry.Exporter.Prometheus.HttpListener/**', 'src/OpenTelemetry.Shims.OpenTracing/**', '!**/*.md']
-          android: ['test/OpenTelemetry.Android.*/**', '.github/workflows/android-tests.yml']
-          blazor: ['test/OpenTelemetry.BlazorWasm.*/**', '.github/workflows/blazor-wasm-integration-test.yml']
+          android: ['test/OpenTelemetry.Android.*/**', 'test/Shared/OtlpHttpCollector.cs', '.github/workflows/android-tests.yml']
+          apple: ['test/OpenTelemetry.Apple.*/**', 'test/Shared/OtlpHttpCollector.cs', '.github/workflows/apple-tests.yml']
+          blazor: ['test/OpenTelemetry.BlazorWasm.*/**', 'test/Shared/OtlpHttpCollector.cs', '.github/workflows/blazor-wasm-integration-test.yml']
           otlp: ['*/OpenTelemetry.Exporter.OpenTelemetryProtocol*/**', '!**/*.md']
 
   lint-actions:
@@ -200,6 +201,18 @@ jobs:
     with:
       trigger: ${{ github.event_name }}
 
+  apple-integration-test:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'apple')
+      || contains(needs.detect-changes.outputs.changes, 'sdk-package')
+      || contains(needs.detect-changes.outputs.changes, 'otlp')
+      || contains(needs.detect-changes.outputs.changes, 'build')
+      || contains(needs.detect-changes.outputs.changes, 'shared')
+    uses: ./.github/workflows/apple-tests.yml
+    with:
+      trigger: ${{ github.event_name }}
+
   blazor-wasm-integration-test:
     needs: detect-changes
     if: |
@@ -327,6 +340,7 @@ jobs:
       build-test-project-experimental,
       build-test-unstable-core,
       android-integration-test,
+      apple-integration-test,
       blazor-wasm-integration-test,
       otlp-integration-test,
       w3c-trace-context-integration-test,
