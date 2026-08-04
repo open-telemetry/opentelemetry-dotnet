@@ -24,7 +24,7 @@ Notes](../../RELEASENOTES.md).
   size for the serialized payload of a single export. Raise it when exporting
   very large batches, such as metrics with very high cardinality. The default
   value is 128 MiB.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7584](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7584))
 
 ## 1.17.0
 
