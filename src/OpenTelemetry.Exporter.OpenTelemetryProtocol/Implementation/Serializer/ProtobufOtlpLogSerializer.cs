@@ -27,29 +27,44 @@ internal static class ProtobufOtlpLogSerializer
         logsListPool ??= [];
         scopeLogsList ??= [];
 
-        foreach (var logRecord in logRecordBatch)
+        // Note: The grouped batch is held in thread-static state, so it has to be
+        // released even when serialization fails. TryWriteResourceLogs rethrows
+        // once the buffer cannot be grown any further; leaving the batch behind
+        // would merge it into the next export on this thread and leak the pooled
+        // LogRecord references taken below.
+        try
         {
-            var scopeName = logRecord.Logger.Name;
-            if (!scopeLogsList.TryGetValue(scopeName, out var logRecords))
+            foreach (var logRecord in logRecordBatch)
             {
-                logRecords = logsListPool.Count > 0 ? logsListPool.Pop() : [];
-                scopeLogsList[scopeName] = logRecords;
+                var scopeName = logRecord.Logger.Name;
+                if (!scopeLogsList.TryGetValue(scopeName, out var logRecords))
+                {
+                    logRecords = logsListPool.Count > 0 ? logsListPool.Pop() : [];
+                    scopeLogsList[scopeName] = logRecords;
+                }
+
+                if (logRecord.Source == LogRecord.LogRecordSource.FromSharedPool)
+                {
+                    Debug.Assert(logRecord.PoolReferenceCount > 0, "logRecord PoolReferenceCount value was unexpected");
+
+                    // Note: AddReference call here prevents the LogRecord from
+                    // being given back to the pool by Batch<LogRecord>.
+                    logRecord.AddReference();
+                }
+
+                logRecords.Add(logRecord);
             }
 
-            if (logRecord.Source == LogRecord.LogRecordSource.FromSharedPool)
-            {
-                Debug.Assert(logRecord.PoolReferenceCount > 0, "logRecord PoolReferenceCount value was unexpected");
-
-                // Note: AddReference call here prevents the LogRecord from
-                // being given back to the pool by Batch<LogRecord>.
-                logRecord.AddReference();
-            }
-
-            logRecords.Add(logRecord);
+            writePosition = TryWriteResourceLogs(ref buffer, writePosition, sdkLimitOptions, experimentalOptions, resource, scopeLogsList);
         }
+        finally
+        {
+            // Keep the reusable state object, but release its reference to
+            // the exporter-owned buffer.
+            threadSerializationState?.TagWriterState = default;
 
-        writePosition = TryWriteResourceLogs(ref buffer, writePosition, sdkLimitOptions, experimentalOptions, resource, scopeLogsList);
-        ReturnLogRecordListToPool();
+            ReturnLogRecordListToPool();
+        }
 
         return writePosition;
     }
@@ -92,9 +107,9 @@ internal static class ProtobufOtlpLogSerializer
 
     internal static void ReturnLogRecordListToPool()
     {
-        if (scopeLogsList?.Count != 0)
+        if (scopeLogsList is { Count: > 0 })
         {
-            foreach (var entry in scopeLogsList!)
+            foreach (var entry in scopeLogsList)
             {
                 foreach (var logRecord in entry.Value)
                 {

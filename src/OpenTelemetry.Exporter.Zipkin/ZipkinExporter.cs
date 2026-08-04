@@ -84,7 +84,7 @@ public class ZipkinExporter : BaseExporter<Activity>
             ? this.httpClient.Send(request, HttpCompletionOption.ResponseHeadersRead, CancellationToken.None)
             : this.httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, CancellationToken.None).GetAwaiter().GetResult();
 #else
-            using var response = this.httpClient.SendAsync(request, CancellationToken.None).GetAwaiter().GetResult();
+            using var response = this.httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, CancellationToken.None).GetAwaiter().GetResult();
 #endif
 #pragma warning restore CA2025 // Do not pass 'IDisposable' instances into unawaited tasks
 

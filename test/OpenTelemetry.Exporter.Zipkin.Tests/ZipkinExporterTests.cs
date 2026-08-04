@@ -309,6 +309,26 @@ public sealed class ZipkinExporterTests : IDisposable
         Assert.Equal("myservicename", zipkinExporter.LocalEndpoint!.ServiceName);
     }
 
+    [Fact]
+    public void ResponseBodyIsNeverReadRegardlessOfSize()
+    {
+        const long OversizedResponseBytes = 16 * 1024 * 1024;
+
+        using var testHandler = new OversizedResponseHandler(OversizedResponseBytes);
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false);
+
+        using var exporter = new ZipkinExporter(
+            new ZipkinExporterOptions { Endpoint = new Uri("http://localhost:9411/api/v2/spans") },
+            httpClient);
+
+        using var activity = ZipkinActivitySource.CreateTestActivity();
+
+        var result = exporter.Export(new Batch<Activity>([activity], 1));
+
+        Assert.Equal(ExportResult.Success, result);
+        Assert.Equal(0, testHandler.BytesProduced);
+    }
+
     [Theory]
     [InlineData(true, false, false)]
     [InlineData(false, false, false)]
@@ -444,5 +464,82 @@ public sealed class ZipkinExporterTests : IDisposable
                 + @"""otel.library.name"":""ZipkinActivitySource"""
             + "}}]",
             Responses[requestId]);
+    }
+
+    private sealed class OversizedResponseHandler(long totalBytes) : HttpMessageHandler
+    {
+        private readonly GeneratedStream stream = new(totalBytes);
+
+        public long BytesProduced => this.stream.BytesProduced;
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            => Task.FromResult(this.CreateResponse(request));
+
+#if NET
+        protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
+            => this.CreateResponse(request);
+#endif
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                this.stream.Dispose();
+            }
+
+            base.Dispose(disposing);
+        }
+
+        private HttpResponseMessage CreateResponse(HttpRequestMessage request) =>
+            new(HttpStatusCode.OK)
+            {
+                RequestMessage = request,
+                Content = new StreamContent(this.stream),
+            };
+
+        private sealed class GeneratedStream(long totalBytes) : Stream
+        {
+            public long BytesProduced { get; private set; }
+
+            public override bool CanRead => true;
+
+            public override bool CanSeek => false;
+
+            public override bool CanWrite => false;
+
+            public override long Length => throw new NotSupportedException();
+
+            public override long Position
+            {
+                get => throw new NotSupportedException();
+                set => throw new NotSupportedException();
+            }
+
+            public override int Read(byte[] buffer, int offset, int count)
+            {
+                var remaining = totalBytes - this.BytesProduced;
+                if (remaining <= 0)
+                {
+                    return 0;
+                }
+
+                var read = (int)Math.Min(count, remaining);
+                Array.Clear(buffer, offset, read);
+                this.BytesProduced += read;
+
+                return read;
+            }
+
+            public override void Flush()
+            {
+                // No-op
+            }
+
+            public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+            public override void SetLength(long value) => throw new NotSupportedException();
+
+            public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+        }
     }
 }

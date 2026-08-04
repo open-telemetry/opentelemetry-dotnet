@@ -6,6 +6,12 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed the exporter to read responses with
+  `HttpCompletionOption.ResponseHeadersRead` for the .NET Framework and
+  .NET Standard targets, matching the behavior on .NET to avoid buffering
+  the response body in memory when it is not actually used.
+  ([#7582](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7582))
+
 ## 1.17.0
 
 Released 2026-Jul-16
