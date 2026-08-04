@@ -306,7 +306,7 @@ internal static class ProtobufOtlpMetricSerializer
 
                         if (metricPoint.TryGetHistogramSum(out var sum))
                         {
-                           writePosition = ProtobufSerializer.WriteDoubleWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Sum, sum);
+                            writePosition = ProtobufSerializer.WriteDoubleWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Sum, sum);
                         }
 
                         if (metricPoint.TryGetHistogramMinMaxValues(out var min, out var max))
