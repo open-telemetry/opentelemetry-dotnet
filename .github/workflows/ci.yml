@@ -54,7 +54,7 @@ jobs:
           pwsh: [ '**.ps1', '**.psm1', '**.psd1' ]
           shared: ['src/Shared/**']
           code: ['**.cs', '**.csproj', '.editorconfig']
-          solution: ['OpenTelemetry.slnx']
+          solution: ['OpenTelemetry.slnx', 'OpenTelemetry.Extended.slnx']
           packaged-code: ['src/**', '!**/*.md']
           api-code: ['*/OpenTelemetry.Api*/**', '!**/*.md']
           api-packages: ['src/OpenTelemetry.Api*/**', '!**/*.md']
