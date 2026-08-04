@@ -11,7 +11,7 @@ namespace OpenTelemetry;
 /// </summary>
 public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
 {
-    private static int instanceCounter = -1;
+    private static long instanceCounter = -1;
 
     private readonly KeyValuePair<string, object?>[] successTags;
     private readonly KeyValuePair<string, object?>[] queueFullTags;
@@ -103,6 +103,7 @@ public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
                     break;
             }
 
+            // TODO(#7586): Consider an ObservableCounter instead of per-item Counter.Add(). See #7486.
             if (!enqueued)
             {
                 SdkSelfObservability.LogProcessedCounter.Add(1, this.queueFullTags);
@@ -119,13 +120,26 @@ public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
     {
         Interlocked.Exchange(ref this.isShutdown, 1);
 
+        // Wait for in-flight OnEnd calls to finish so teardown is consistent,
+        // without exceeding the caller's shutdown budget.
+        var stopwatch = timeoutMilliseconds == Timeout.Infinite ? null : Stopwatch.StartNew();
+
         SpinWait spinner = default;
         while (Volatile.Read(ref this.activeOnEndCount) != 0)
         {
+            if (stopwatch != null && stopwatch.ElapsedMilliseconds >= timeoutMilliseconds)
+            {
+                break;
+            }
+
             spinner.SpinOnce();
         }
 
-        return base.OnShutdown(timeoutMilliseconds);
+        var remainingTimeoutMilliseconds = stopwatch == null
+            ? Timeout.Infinite
+            : (int)Math.Max(0, timeoutMilliseconds - stopwatch.ElapsedMilliseconds);
+
+        return base.OnShutdown(remainingTimeoutMilliseconds);
     }
 
     private void RecordSuccessfulProcessing(long count)
