@@ -322,7 +322,7 @@ public struct MetricPoint
 
     /// <summary>
     /// Gets the exponential histogram data associated with the metric point.
-        /// </summary>
+    /// </summary>
     /// <remarks>
     /// Applies to <see cref="MetricType.Histogram"/> metric type.
     /// </remarks>
