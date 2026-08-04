@@ -256,7 +256,8 @@ public sealed class OtlpExporterOptionsTests : IDisposable
     {
         using var httpClient = new OtlpExporterOptions(OtlpExporterOptionsConfigurationType.Default).HttpClientFactory();
 
-        Assert.Equal(4 * 1024 * 1024, httpClient.MaxResponseContentBufferSize);
+        const int DefaultMessageSizeLimit = 4 * 1024 * 1024; // 4 MiB
+        Assert.Equal(DefaultMessageSizeLimit, httpClient.MaxResponseContentBufferSize);
     }
 
     [Fact]
