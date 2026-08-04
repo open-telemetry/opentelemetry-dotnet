@@ -1,28 +1,17 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#if !EXPOSE_EXPERIMENTAL_FEATURES
-#pragma warning disable CA1064 // Exceptions should be public - intentionally internal in stable builds
-#endif
-
 namespace OpenTelemetry.Configuration.Declarative;
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
 /// The exception thrown when a declarative configuration document cannot be
 /// loaded or contains a semantic error (unsupported <c>file_format</c>, invalid
 /// substitution reference, malformed structure, etc.).
 /// </summary>
-#endif
 #if NETFRAMEWORK
 [Serializable]
 #endif
-#if EXPOSE_EXPERIMENTAL_FEATURES
-public
-#else
-internal
-#endif
-    sealed class DeclarativeConfigurationException : Exception
+public sealed class DeclarativeConfigurationException : Exception
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="DeclarativeConfigurationException"/> class.

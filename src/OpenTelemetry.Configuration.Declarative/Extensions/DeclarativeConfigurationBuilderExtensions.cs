@@ -6,16 +6,11 @@ using OpenTelemetry.Internal;
 
 namespace Microsoft.Extensions.Configuration;
 
-#if EXPOSE_EXPERIMENTAL_FEATURES
 /// <summary>
 /// Extension methods for adding the OpenTelemetry declarative configuration source to
 /// an <see cref="IConfigurationBuilder"/>.
 /// </summary>
-public
-#else
-internal
-#endif
-    static class DeclarativeConfigurationBuilderExtensions
+public static class DeclarativeConfigurationBuilderExtensions
 {
     /// <summary>
     /// Adds the declarative YAML source, reading the file path from the <c>OTEL_CONFIG_FILE</c> environment variable.
