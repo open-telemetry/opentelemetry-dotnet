@@ -11,6 +11,9 @@ namespace OpenTelemetry.Exporter;
 
 internal sealed class PrometheusHttpListener : IDisposable
 {
+    private static readonly TimeSpan RequestDrainTimeout = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan WorkerShutdownTimeout = TimeSpan.FromSeconds(5);
+
     private readonly PrometheusExporter exporter;
     private readonly HttpListener httpListener = new();
     private readonly Lock syncObject = new();
@@ -118,7 +121,7 @@ internal sealed class PrometheusHttpListener : IDisposable
         // Wait for in-flight requests to finish (they will observe the
         // cancelled token and return 503 quickly). Use a timeout to avoid
         // blocking indefinitely if a request is unexpectedly stuck.
-        SpinWait.SpinUntil(() => Volatile.Read(ref this.activeRequestCount) == 0, TimeSpan.FromSeconds(5));
+        SpinWait.SpinUntil(() => Volatile.Read(ref this.activeRequestCount) == 0, RequestDrainTimeout);
 
         try
         {
@@ -161,7 +164,19 @@ internal sealed class PrometheusHttpListener : IDisposable
         try
         {
             tokenSource.Cancel();
-            workerThread?.Wait();
+
+            // Bounded so that a processing loop which does not observe cancellation
+            // promptly cannot block Dispose and the caller's shutdown indefinitely.
+            if (workerThread != null &&
+                !workerThread.Wait(WorkerShutdownTimeout))
+            {
+                PrometheusExporterEventSource.Log.FailedShutdown(
+                    new TimeoutException($"The {nameof(PrometheusHttpListener)} processing loop did not stop within {WorkerShutdownTimeout.TotalSeconds} seconds."));
+            }
+        }
+        catch (Exception ex)
+        {
+            PrometheusExporterEventSource.Log.FailedShutdown(ex);
         }
         finally
         {
@@ -264,6 +279,13 @@ internal sealed class PrometheusHttpListener : IDisposable
             {
                 requestCancelled.Token.ThrowIfCancellationRequested();
 
+                // Disposal can start while this scrape is collecting, which can take
+                // arbitrarily long. Bail out before composing a response.
+                if (this.disposed || cancellationToken.IsCancellationRequested)
+                {
+                    throw new OperationCanceledException(cancellationToken);
+                }
+
                 context.Response.Headers.Add("Server", string.Empty);
 
                 if (!collectionResponse.Succeeded)
@@ -311,7 +333,7 @@ internal sealed class PrometheusHttpListener : IDisposable
                 this.exporter.CollectionManager.ExitCollect(protocol);
             }
         }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException) when (this.disposed || cancellationToken.IsCancellationRequested)
         {
             context.Response.StatusCode = 503;
             context.Response.ContentLength64 = 0;
