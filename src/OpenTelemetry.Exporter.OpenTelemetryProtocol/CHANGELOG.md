@@ -24,7 +24,7 @@ Notes](../../RELEASENOTES.md).
   unexpected exception, which silently disabled `disk` retry for the remaining
   process lifetime while stored telemetry continued to accumulate and then
   expire.
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#7597](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7597))
 
 ## 1.17.0
 
