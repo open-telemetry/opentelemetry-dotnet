@@ -129,21 +129,31 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler : OtlpExp
                         break;
                     }
 
-                    if (blob.TryLease((int)this.TimeoutMilliseconds) && blob.TryRead(out var data))
+                    try
                     {
-                        var deadlineUtc = DateTime.UtcNow.AddMilliseconds(this.TimeoutMilliseconds);
-
-                        // Note: The deadline is intentionally ignored when deciding whether to keep
-                        // the blob. A retry attempt that exhausts the deadline should not cause the
-                        // stored data to be deleted if the failure is otherwise retryable; it should
-                        // remain on disk to be retried again later.
-                        if (this.TryRetryRequest(data, data.Length, deadlineUtc, out var response) ||
-                            !RetryHelper.ShouldRetryRequest(response))
+                        if (blob.TryLease((int)this.TimeoutMilliseconds) && blob.TryRead(out var data))
                         {
-                            blob.TryDelete();
-                        }
+                            var deadlineUtc = DateTime.UtcNow.AddMilliseconds(this.TimeoutMilliseconds);
 
-                        // TODO: extend the lease period based on the response from server on retryAfter.
+                            // Note: The deadline is intentionally ignored when deciding whether to keep
+                            // the blob. A retry attempt that exhausts the deadline should not cause the
+                            // stored data to be deleted if the failure is otherwise retryable; it should
+                            // remain on disk to be retried again later.
+                            if (this.TryRetryRequest(data, data.Length, deadlineUtc, out var response) ||
+                                !RetryHelper.ShouldRetryRequest(response))
+                            {
+                                blob.TryDelete();
+                            }
+
+                            // TODO: extend the lease period based on the response from server on retryAfter. See https://github.com/open-telemetry/opentelemetry-dotnet/issues/4115
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // An unexpected failure transmitting one blob must not terminate this
+                        // thread. Leave the blob on disk; its lease will expire and it will be
+                        // retried on a later pass.
+                        OpenTelemetryProtocolExporterEventSource.Log.RetryStoredRequestException(ex);
                     }
 
                     fileCount++;
@@ -156,6 +166,8 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler : OtlpExp
             }
             catch (Exception ex)
             {
+                // The wait handles are gone, most likely because Dispose was called without
+                // Shutdown. There is nothing left to wait on.
                 OpenTelemetryProtocolExporterEventSource.Log.RetryStoredRequestException(ex);
                 return;
             }
