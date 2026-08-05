@@ -91,9 +91,9 @@ internal static class ProtobufOtlpTraceSerializer
                     throw;
                 }
 
-                // Continue the loop to retry serialization with the larger buffer.
-                // The loop is bounded by IncreaseBufferSize, which refuses to grow
-                // beyond maxBufferSize, so this cannot become an infinite loop.
+                // Continue the loop to retry serialization with the larger buffer. The loop
+                // is bounded by IncreaseBufferSize, which refuses to grow beyond beyond
+                // ProtobufSerializer.MaxBufferSize, so this cannot become an infinite loop.
             }
         }
     }

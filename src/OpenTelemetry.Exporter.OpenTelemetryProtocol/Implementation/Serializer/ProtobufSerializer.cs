@@ -26,12 +26,6 @@ internal static class ProtobufSerializer
     internal const int InitialBufferSize = 750_000;
 
     /// <summary>
-    /// The maximum size in bytes a serialization buffer is allowed to
-    /// grow to (256 MiB).
-    /// </summary>
-    internal const int MaxBufferSize = 256 * 1024 * 1024;
-
-    /// <summary>
     /// The largest size in bytes a serialization buffer may be configured to
     /// grow to (256 MiB minus one byte).
     /// </summary>
@@ -42,7 +36,7 @@ internal static class ProtobufSerializer
     /// message spans nearly the whole payload, a larger buffer could otherwise
     /// produce a length that silently truncates.
     /// </remarks>
-    internal const int AbsoluteMaxBufferSize = (1 << 28) - 1;
+    internal const int MaxBufferSize = (1 << 28) - 1;
 
     private const uint UInt128 = 0x80;
     private const ulong ULong128 = 0x80;

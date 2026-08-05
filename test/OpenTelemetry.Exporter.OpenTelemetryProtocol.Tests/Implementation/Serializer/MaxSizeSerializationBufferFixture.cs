@@ -19,7 +19,7 @@ public sealed class MaxSizeSerializationBufferFixture
     /// gives up immediately, making <c>TryWriteResource*</c> rethrow the
     /// underlying serialization failure. Any size works, so this is kept small.
     /// </summary>
-    internal const int MaxBufferSize = 256 * 1024 * 1024;
+    internal const int MaxBufferSize = (256 * 1024 * 1024) - 1;
 
     private readonly byte[] buffer = new byte[MaxBufferSize];
 
