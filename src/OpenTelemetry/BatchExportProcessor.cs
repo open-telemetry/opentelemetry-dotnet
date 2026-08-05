@@ -25,6 +25,12 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
 
     private readonly CircularBuffer<T> circularBuffer;
     private readonly BatchExportWorker<T> worker;
+
+    // Number of OnEnd calls currently in-flight (past the shutdown check).
+    // OnShutdown waits for this to reach zero so those items finish enqueueing
+    // before teardown, keeping the processed vs. already_shutdown counting race-free.
+    private int activeOnEndCount;
+    private int isShutdown;
     private bool disposed;
 
     /// <summary>
@@ -74,6 +80,47 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
     /// </summary>
     internal long ProcessedCount => this.circularBuffer.RemovedCount;
 
+    /// <summary>
+    /// Gets a value indicating whether <see cref="OnShutdown(int)"/> has been invoked.
+    /// </summary>
+    private bool IsShutdown => Volatile.Read(ref this.isShutdown) != 0;
+
+    /// <summary>
+    /// Marks the beginning of an <see cref="BaseProcessor{T}.OnEnd(T)"/> call which may enqueue data.
+    /// </summary>
+    /// <remarks>
+    /// When this returns <see langword="true"/> the caller MUST invoke <see
+    /// cref="ExitOnEnd"/> once it is done enqueueing. When it returns <see
+    /// langword="false"/> the processor has already been shut down and the
+    /// caller MUST NOT enqueue.
+    /// </remarks>
+    /// <returns><see langword="true"/> if the caller may proceed to enqueue data.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal bool TryEnterOnEnd()
+    {
+        if (this.IsShutdown)
+        {
+            return false;
+        }
+
+        Interlocked.Increment(ref this.activeOnEndCount);
+
+        if (this.IsShutdown)
+        {
+            Interlocked.Decrement(ref this.activeOnEndCount);
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Marks the end of an <see cref="BaseProcessor{T}.OnEnd(T)"/> call started by <see cref="TryEnterOnEnd"/>.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void ExitOnEnd()
+        => Interlocked.Decrement(ref this.activeOnEndCount);
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool TryExport(T data)
     {
@@ -89,8 +136,16 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
 
         // either the queue is full or exceeded the spin limit, drop the item on the floor
         this.worker.IncrementDroppedCount();
+        this.OnItemDropped();
 
         return false;
+    }
+
+    /// <summary>
+    /// Invoked when an item could not be enqueued and was dropped.
+    /// </summary>
+    internal virtual void OnItemDropped()
+    {
     }
 
     /// <inheritdoc/>
@@ -104,6 +159,13 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
     /// <inheritdoc/>
     protected override bool OnShutdown(int timeoutMilliseconds)
     {
+        // Note: BaseProcessor.Shutdown guarantees OnShutdown is invoked at most once, so
+        // the previous value is discarded. Interlocked is used instead of Volatile.Write
+        // for the full fence it provides, which TryEnterOnEnd relies on.
+        _ = Interlocked.Exchange(ref this.isShutdown, 1);
+
+        timeoutMilliseconds = this.WaitForActiveOnEndCalls(timeoutMilliseconds);
+
         long? timestamp = timeoutMilliseconds == Timeout.Infinite ? null : Stopwatch.GetTimestamp();
 
         var result = this.worker.Shutdown(timeoutMilliseconds);
@@ -172,4 +234,41 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
 
     private void OnExportStarted(long count)
         => this.ExportStarted?.Invoke(count);
+
+    /// <summary>
+    /// Waits for in-flight <see cref="BaseProcessor{T}.OnEnd(T)"/> calls to finish enqueueing so
+    /// teardown is consistent, without exceeding the caller's shutdown budget.
+    /// </summary>
+    /// <param name="timeoutMilliseconds">The shutdown timeout supplied by the caller.</param>
+    /// <returns>The remaining timeout available for the rest of the shutdown sequence.</returns>
+    private int WaitForActiveOnEndCalls(int timeoutMilliseconds)
+    {
+        if (Volatile.Read(ref this.activeOnEndCount) == 0)
+        {
+            return timeoutMilliseconds;
+        }
+
+        SpinWait spinner = default;
+
+        if (timeoutMilliseconds == Timeout.Infinite)
+        {
+            while (Volatile.Read(ref this.activeOnEndCount) != 0)
+            {
+                spinner.SpinOnce();
+            }
+
+            return Timeout.Infinite;
+        }
+
+        var startedAt = Stopwatch.GetTimestamp();
+        int remainingMilliseconds;
+
+        while ((remainingMilliseconds = Stopwatch.Remaining(timeoutMilliseconds, startedAt)) > 0
+            && Volatile.Read(ref this.activeOnEndCount) != 0)
+        {
+            spinner.SpinOnce();
+        }
+
+        return remainingMilliseconds;
+    }
 }
