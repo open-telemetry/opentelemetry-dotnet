@@ -26,17 +26,19 @@ internal static class ProtobufSerializer
     internal const int InitialBufferSize = 750_000;
 
     /// <summary>
-    /// The largest size in bytes a serialization buffer may be configured to
-    /// grow to (256 MiB minus one byte).
+    /// The largest size in bytes a serialization buffer may grow to (256 MiB).
     /// </summary>
     /// <remarks>
     /// Nested message lengths are back-filled by <see
-    /// cref="WriteReservedLength"/> into a fixed four byte varint, which can
-    /// only represent lengths up to <c>2^28 - 1</c>. Since the outermost
-    /// message spans nearly the whole payload, a larger buffer could otherwise
-    /// produce a length that silently truncates.
+    /// cref="WriteReservedLength"/> into a fixed four byte varint, which can only
+    /// represent lengths up to <c>2^28 - 1</c>. The outermost message is always
+    /// preceded by its own tag and reserved length, so its content is at least
+    /// five bytes shorter than the buffer and a buffer of exactly <c>2^28</c>
+    /// still encodes correctly. Keeping this a power of two also means <see
+    /// cref="ArrayPool{T}"/> returns it exactly rather than rounding up, so the
+    /// buffer never exceeds this size.
     /// </remarks>
-    internal const int MaxBufferSize = (1 << 28) - 1;
+    internal const int MaxBufferSize = 256 * 1024 * 1024;
 
     private const uint UInt128 = 0x80;
     private const ulong ULong128 = 0x80;

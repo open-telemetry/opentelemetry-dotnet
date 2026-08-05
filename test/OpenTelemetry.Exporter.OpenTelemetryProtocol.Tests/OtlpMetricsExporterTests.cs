@@ -1006,7 +1006,6 @@ public sealed class OtlpMetricsExporterTests : IDisposable
     public void Export_PayloadExceedingMaxExportPayloadSizeBytes_IsNotSubmitted()
     {
         const int BufferExceededMaxSizeEventId = 14;
-        const int BatchDroppedDueToPayloadSizeLimitEventId = 40;
 
         var probeClient = new TestExportClient();
         var probeOptions = new OtlpExporterOptions
@@ -1040,11 +1039,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
         Assert.False(exportClient.SendExportRequestCalled);
         Assert.Equal(0, exportClient.LastContentLength);
 
-        // .NET Framework behaves differently to .NET, so we check for either of the two events
-        // which indicate the batch was dropped due to exceeding the payload size limit.
-        Assert.Contains(
-            listener.Messages,
-            e => e.EventId == BatchDroppedDueToPayloadSizeLimitEventId || e.EventId == BufferExceededMaxSizeEventId);
+        Assert.Contains(listener.Messages, e => e.EventId == BufferExceededMaxSizeEventId);
     }
 
     [Fact]
