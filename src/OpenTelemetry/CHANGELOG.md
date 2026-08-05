@@ -52,6 +52,11 @@ Released 2026-Jul-16
   excluding specific tag keys from metric streams.
   ([#7373](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7373))
 
+* Added improved self-diagnostics logging functionality to improve the support
+  experience. Provides a simpler mechanism for file logging as well as support
+  for console logging.
+  ([#TODO-PR](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO-PR))
+
 ## 1.16.0
 
 Released 2026-Jun-10

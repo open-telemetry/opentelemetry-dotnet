@@ -1,0 +1,14 @@
+OpenTelemetry.Diagnostics.SelfDiagnosticsOptions
+OpenTelemetry.Diagnostics.SelfDiagnosticsOptions.FileSizeLimitKilobytes.get -> int
+OpenTelemetry.Diagnostics.SelfDiagnosticsOptions.FileSizeLimitKilobytes.set -> void
+OpenTelemetry.Diagnostics.SelfDiagnosticsOptions.LogDirectory.get -> string?
+OpenTelemetry.Diagnostics.SelfDiagnosticsOptions.LogDirectory.set -> void
+OpenTelemetry.Diagnostics.SelfDiagnosticsOptions.LogToStderr.get -> bool
+OpenTelemetry.Diagnostics.SelfDiagnosticsOptions.LogToStderr.set -> void
+OpenTelemetry.Diagnostics.SelfDiagnosticsOptions.LogToStdout.get -> bool
+OpenTelemetry.Diagnostics.SelfDiagnosticsOptions.LogToStdout.set -> void
+OpenTelemetry.Diagnostics.SelfDiagnosticsOptions.MaxRetainedFiles.get -> int
+OpenTelemetry.Diagnostics.SelfDiagnosticsOptions.MaxRetainedFiles.set -> void
+OpenTelemetry.Diagnostics.SelfDiagnosticsOptions.MinimumLevel.get -> Microsoft.Extensions.Logging.LogLevel
+OpenTelemetry.Diagnostics.SelfDiagnosticsOptions.MinimumLevel.set -> void
+OpenTelemetry.Diagnostics.SelfDiagnosticsOptions.SelfDiagnosticsOptions() -> void
