@@ -1,2 +1,0 @@
-OpenTelemetry.Exporter.OtlpExporterOptions.MaxExportPayloadSizeBytes.get -> int
-OpenTelemetry.Exporter.OtlpExporterOptions.MaxExportPayloadSizeBytes.set -> void

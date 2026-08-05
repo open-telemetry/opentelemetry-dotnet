@@ -26,7 +26,6 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
     private readonly ExperimentalOptions experimentalOptions;
     private readonly OtlpExporterTransmissionHandler transmissionHandler;
     private readonly int startWritePosition;
-    private readonly int maxExportPayloadSizeBytes;
     private readonly SerializationBuffer serializationBuffer = new(InitialBufferSize);
 
     /// <summary>
@@ -56,7 +55,6 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
         this.startWritePosition = exporterOptions.Protocol == OtlpExportProtocol.Grpc ? GrpcStartWritePosition : 0;
 #pragma warning restore CS0618 // Suppressing gRPC obsolete warning
-        this.maxExportPayloadSizeBytes = exporterOptions.MaxExportPayloadSizeBytes;
         this.transmissionHandler = transmissionHandler ?? exporterOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Logs);
     }
 
@@ -90,8 +88,7 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
                     this.sdkLimitOptions,
                     this.experimentalOptions,
                     this.Resource,
-                    logRecordBatch,
-                    this.maxExportPayloadSizeBytes);
+                    logRecordBatch);
                 serializationSucceeded = true;
             }
             catch (Exception ex)
@@ -107,13 +104,13 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
             // than was asked for, so serialization can overrun the configured maximum.
             // Enforce the limit against the payload itself rather than the capacity.
             var payloadSize = writePosition - this.startWritePosition;
-            if (payloadSize > this.maxExportPayloadSizeBytes)
+            if (payloadSize > ProtobufSerializer.MaxBufferSize)
             {
                 OpenTelemetryProtocolExporterEventSource.Log.BatchDroppedDueToPayloadSizeLimit(
                     OtlpSignalType.Logs,
                     logRecordBatch.Count,
                     payloadSize,
-                    this.maxExportPayloadSizeBytes);
+                    ProtobufSerializer.MaxBufferSize);
 
                 // Discard the oversized buffer rather than keeping it as the size hint.
                 serializationSucceeded = false;

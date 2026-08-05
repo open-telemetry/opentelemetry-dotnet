@@ -26,16 +26,10 @@ internal static class ProtobufSerializer
     internal const int InitialBufferSize = 750_000;
 
     /// <summary>
-    /// The default maximum size in bytes a serialization buffer is allowed to
-    /// grow to (128 MiB).
+    /// The maximum size in bytes a serialization buffer is allowed to
+    /// grow to (256 MiB).
     /// </summary>
-    /// <remarks>
-    /// The buffer starts at <see cref="InitialBufferSize"/> and grows on demand
-    /// by doubling. This default is a power of two, so it is reached exactly by
-    /// that sequence, and it matches the ceiling that applied before the maximum
-    /// became configurable.
-    /// </remarks>
-    internal const int DefaultMaxBufferSize = 128 * 1024 * 1024;
+    internal const int MaxBufferSize = 256 * 1024 * 1024;
 
     /// <summary>
     /// The largest size in bytes a serialization buffer may be configured to
@@ -405,9 +399,9 @@ internal static class ProtobufSerializer
 
     internal static void ReturnBuffer(ArrayPool<byte> pool, byte[] buffer) => pool.Return(buffer, clearArray: true);
 
-    internal static bool IncreaseBufferSize(ref byte[] buffer, OtlpSignalType otlpSignalType, int maxBufferSize)
+    internal static bool IncreaseBufferSize(ref byte[] buffer, OtlpSignalType otlpSignalType)
     {
-        if (buffer.Length >= maxBufferSize)
+        if (buffer.Length >= MaxBufferSize)
         {
             OpenTelemetryProtocolExporterEventSource.Log.BufferExceededMaxSize(otlpSignalType.ToString(), buffer.Length);
             return false;
@@ -418,7 +412,7 @@ internal static class ProtobufSerializer
         // the doubled size would overshoot) means the entire configured budget
         // is usable, with no unreachable remainder. The pool rounds the request
         // up to its next size class, so the buffer still ends up at least this big.
-        var nextBufferSize = (int)Math.Min((long)buffer.Length * 2, maxBufferSize);
+        var nextBufferSize = (int)Math.Min((long)buffer.Length * 2, MaxBufferSize);
 
         var pool = ArrayPool<byte>.Shared;
 

@@ -404,12 +404,11 @@ public class ProtobufSerializerTests
     [Fact]
     public void IncreaseBufferSize_GrowsBuffer()
     {
-        var maxBufferSize = 128 * 1024 * 1024; // 128 MB
         var buffer = ProtobufSerializer.RentBuffer(1024);
         var original = buffer;
         var originalLength = buffer.Length;
 
-        var increased = ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Traces, maxBufferSize);
+        var increased = ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Traces);
 
         try
         {

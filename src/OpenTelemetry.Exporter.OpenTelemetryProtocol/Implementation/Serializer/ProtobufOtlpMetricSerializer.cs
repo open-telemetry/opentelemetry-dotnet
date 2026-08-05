@@ -30,8 +30,7 @@ internal static class ProtobufOtlpMetricSerializer
         ref byte[] buffer,
         int writePosition,
         Resources.Resource? resource,
-        in Batch<Metric> batch,
-        int maxBufferSize = ProtobufSerializer.DefaultMaxBufferSize)
+        in Batch<Metric> batch)
     {
         metricListPool ??= [];
         scopeMetricsList ??= [];
@@ -54,7 +53,7 @@ internal static class ProtobufOtlpMetricSerializer
                 metrics.Add(metric);
             }
 
-            writePosition = TryWriteResourceMetrics(ref buffer, writePosition, resource, scopeMetricsList, maxBufferSize);
+            writePosition = TryWriteResourceMetrics(ref buffer, writePosition, resource, scopeMetricsList);
         }
         finally
         {
@@ -68,8 +67,7 @@ internal static class ProtobufOtlpMetricSerializer
         ref byte[] buffer,
         int writePosition,
         Resources.Resource? resource,
-        Dictionary<string, List<Metric>> scopeMetrics,
-        int maxBufferSize)
+        Dictionary<string, List<Metric>> scopeMetrics)
     {
         while (true)
         {
@@ -93,7 +91,7 @@ internal static class ProtobufOtlpMetricSerializer
                 // Reset write position and attempt to increase the buffer size
                 writePosition = entryWritePosition;
 
-                if (!ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Metrics, maxBufferSize))
+                if (!ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Metrics))
                 {
                     throw;
                 }

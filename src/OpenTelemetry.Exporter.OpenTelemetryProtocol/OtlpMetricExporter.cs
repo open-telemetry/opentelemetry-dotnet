@@ -24,7 +24,6 @@ public class OtlpMetricExporter : BaseExporter<Metric>
 
     private readonly OtlpExporterTransmissionHandler transmissionHandler;
     private readonly int startWritePosition;
-    private readonly int maxExportPayloadSizeBytes;
     private readonly SerializationBuffer serializationBuffer = new(InitialBufferSize);
 
     /// <summary>
@@ -50,7 +49,6 @@ public class OtlpMetricExporter : BaseExporter<Metric>
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
         this.startWritePosition = exporterOptions.Protocol == OtlpExportProtocol.Grpc ? GrpcStartWritePosition : 0;
 #pragma warning restore CS0618 // Suppressing gRPC obsolete warning
-        this.maxExportPayloadSizeBytes = exporterOptions.MaxExportPayloadSizeBytes;
         this.transmissionHandler = transmissionHandler ?? exporterOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Metrics);
     }
 
@@ -82,8 +80,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
                     ref buffer,
                     this.startWritePosition,
                     this.Resource,
-                    metrics,
-                    this.maxExportPayloadSizeBytes);
+                    metrics);
                 serializationSucceeded = true;
             }
             catch (Exception ex)
@@ -99,13 +96,13 @@ public class OtlpMetricExporter : BaseExporter<Metric>
             // than was asked for, so serialization can overrun the configured maximum.
             // Enforce the limit against the payload itself rather than the capacity.
             var payloadSize = writePosition - this.startWritePosition;
-            if (payloadSize > this.maxExportPayloadSizeBytes)
+            if (payloadSize > ProtobufSerializer.MaxBufferSize)
             {
                 OpenTelemetryProtocolExporterEventSource.Log.BatchDroppedDueToPayloadSizeLimit(
                     OtlpSignalType.Metrics,
                     metrics.Count,
                     payloadSize,
-                    this.maxExportPayloadSizeBytes);
+                    ProtobufSerializer.MaxBufferSize);
 
                 // Discard the oversized buffer rather than keeping it as the size hint.
                 serializationSucceeded = false;

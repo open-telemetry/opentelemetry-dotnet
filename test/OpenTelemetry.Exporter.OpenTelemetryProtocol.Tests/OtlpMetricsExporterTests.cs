@@ -976,12 +976,8 @@ public sealed class OtlpMetricsExporterTests : IDisposable
         }
     }
 
-    [Theory]
-#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
-    [InlineData(OtlpExportProtocol.Grpc)]
-#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
-    [InlineData(OtlpExportProtocol.HttpProtobuf)]
-    public void Export_BatchExceedingMaxExportPayloadSizeBytes_IsDropped(OtlpExportProtocol protocol)
+    [Fact]
+    public void Export_BatchExceedingMaxExportPayloadSizeBytes_IsDropped()
     {
         const int BufferExceededMaxSizeEventId = 14;
         const int BatchDroppedEventId = 39;
@@ -991,16 +987,13 @@ public sealed class OtlpMetricsExporterTests : IDisposable
         var exportClient = new TestExportClient();
         var exporterOptions = new OtlpExporterOptions
         {
-            Protocol = protocol,
-
-            // The smallest limit the option accepts, which cannot hold the batch below.
-            MaxExportPayloadSizeBytes = ProtobufSerializer.InitialBufferSize,
+            Protocol = OtlpExportProtocol.HttpProtobuf,
         };
 
         using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClient, exporterOptions.TimeoutMilliseconds);
         using var exporter = new OtlpMetricExporter(exporterOptions, new ExperimentalOptions(), transmissionHandler);
 
-        var batch = GenerateHighCardinalityMetricBatch(cardinality: 50_000);
+        var batch = GenerateHighCardinalityMetricBatch(cardinality: 5_000_000);
 
         Assert.Equal(ExportResult.Failure, exporter.Export(batch));
         Assert.False(exportClient.SendExportRequestCalled);
@@ -1014,19 +1007,17 @@ public sealed class OtlpMetricsExporterTests : IDisposable
     {
         const int BufferExceededMaxSizeEventId = 14;
         const int BatchDroppedDueToPayloadSizeLimitEventId = 40;
-        const int Cardinality = 50_000;
 
         var probeClient = new TestExportClient();
         var probeOptions = new OtlpExporterOptions
         {
             Protocol = OtlpExportProtocol.HttpProtobuf,
-            MaxExportPayloadSizeBytes = 64 * 1024 * 1024,
         };
 
         using (var probeHandler = new OtlpExporterTransmissionHandler(probeClient, probeOptions.TimeoutMilliseconds))
         using (var probeExporter = new OtlpMetricExporter(probeOptions, new ExperimentalOptions(), probeHandler))
         {
-            Assert.Equal(ExportResult.Success, probeExporter.Export(GenerateHighCardinalityMetricBatch(Cardinality)));
+            Assert.Equal(ExportResult.Success, probeExporter.Export(GenerateHighCardinalityMetricBatch(cardinality: 50_000)));
         }
 
         var payloadSize = probeClient.LastContentLength;
@@ -1038,13 +1029,14 @@ public sealed class OtlpMetricsExporterTests : IDisposable
         var exporterOptions = new OtlpExporterOptions
         {
             Protocol = OtlpExportProtocol.HttpProtobuf,
-            MaxExportPayloadSizeBytes = payloadSize - 1,
         };
 
         using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClient, exporterOptions.TimeoutMilliseconds);
         using var exporter = new OtlpMetricExporter(exporterOptions, new ExperimentalOptions(), transmissionHandler);
 
-        Assert.Equal(ExportResult.Failure, exporter.Export(GenerateHighCardinalityMetricBatch(Cardinality)));
+        var batch = GenerateHighCardinalityMetricBatch(cardinality: 5_000_000);
+
+        Assert.Equal(ExportResult.Failure, exporter.Export(batch));
         Assert.False(exportClient.SendExportRequestCalled);
         Assert.Equal(0, exportClient.LastContentLength);
 
@@ -1064,7 +1056,6 @@ public sealed class OtlpMetricsExporterTests : IDisposable
         var probeOptions = new OtlpExporterOptions
         {
             Protocol = OtlpExportProtocol.HttpProtobuf,
-            MaxExportPayloadSizeBytes = 64 * 1024 * 1024,
         };
 
         using (var probeHandler = new OtlpExporterTransmissionHandler(probeClient, probeOptions.TimeoutMilliseconds))
@@ -1079,7 +1070,6 @@ public sealed class OtlpMetricsExporterTests : IDisposable
         var exporterOptions = new OtlpExporterOptions
         {
             Protocol = OtlpExportProtocol.HttpProtobuf,
-            MaxExportPayloadSizeBytes = payloadSize,
         };
 
         using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClient, exporterOptions.TimeoutMilliseconds);
@@ -1100,7 +1090,6 @@ public sealed class OtlpMetricsExporterTests : IDisposable
         var exporterOptions = new OtlpExporterOptions
         {
             Protocol = protocol,
-            MaxExportPayloadSizeBytes = 16 * 1024 * 1024,
         };
 
         using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClient, exporterOptions.TimeoutMilliseconds);
