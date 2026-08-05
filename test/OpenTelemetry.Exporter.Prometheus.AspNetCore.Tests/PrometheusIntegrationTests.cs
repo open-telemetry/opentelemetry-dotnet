@@ -303,10 +303,20 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
         }
         finally
         {
-            (var stdout, var stderr) = await prometheus.TypedContainer.GetLogsAsync();
+            using (var logs = new CancellationTokenSource(TimeSpan.FromSeconds(30)))
+            {
+                try
+                {
+                    (var stdout, var stderr) = await prometheus.TypedContainer.GetLogsAsync(ct: logs.Token);
 
-            outputHelper.WriteLine($"[prometheus] [stdout]: {stdout}");
-            outputHelper.WriteLine($"[prometheus] [stderr]: {stderr}");
+                    outputHelper.WriteLine($"[prometheus] [stdout]: {stdout}");
+                    outputHelper.WriteLine($"[prometheus] [stderr]: {stderr}");
+                }
+                catch (Exception ex)
+                {
+                    outputHelper.WriteLine($"[prometheus] Exception while fetching the container logs: {ex}");
+                }
+            }
 
             await prometheus.DisposeAsync();
         }
