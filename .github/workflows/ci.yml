@@ -54,10 +54,11 @@ jobs:
           pwsh: [ '**.ps1', '**.psm1', '**.psd1' ]
           shared: ['src/Shared/**']
           code: ['**.cs', '**.csproj', '.editorconfig']
-          solution: ['OpenTelemetry.slnx']
+          solution: ['OpenTelemetry.slnx', 'OpenTelemetry.Extended.slnx']
           packaged-code: ['src/**', '!**/*.md']
           api-code: ['*/OpenTelemetry.Api*/**', '!**/*.md']
           api-packages: ['src/OpenTelemetry.Api*/**', '!**/*.md']
+          hosting: ['src/OpenTelemetry.Extensions.Hosting/**', '!**/*.md']
           instrumentation: ['*/OpenTelemetry.Instrumentation*/**', 'test/TestApp.AspNetCore/**', '!**/*.md']
           sdk-code: ['src/OpenTelemetry/**', 'test/OpenTelemetry.Tests/**', '!**/*.md']
           sdk-package: ['src/OpenTelemetry/**', '!**/*.md']
@@ -65,6 +66,7 @@ jobs:
           android: ['test/OpenTelemetry.Android.*/**', 'test/Shared/OtlpHttpCollector.cs', '.github/workflows/android-tests.yml']
           apple: ['test/OpenTelemetry.Apple.*/**', 'test/Shared/OtlpHttpCollector.cs', '.github/workflows/apple-tests.yml']
           blazor: ['test/OpenTelemetry.BlazorWasm.*/**', 'test/Shared/OtlpHttpCollector.cs', '.github/workflows/blazor-wasm-integration-test.yml']
+          maui: ['test/OpenTelemetry.Maui.*/**', 'test/Shared/OtlpHttpCollector.cs', '.github/workflows/maui-tests.yml']
           otlp: ['*/OpenTelemetry.Exporter.OpenTelemetryProtocol*/**', '!**/*.md']
 
   lint-actions:
@@ -225,6 +227,19 @@ jobs:
     with:
       trigger: ${{ github.event_name }}
 
+  maui-integration-test:
+    needs: detect-changes
+    if: |
+      contains(needs.detect-changes.outputs.changes, 'maui')
+      || contains(needs.detect-changes.outputs.changes, 'hosting')
+      || contains(needs.detect-changes.outputs.changes, 'sdk-package')
+      || contains(needs.detect-changes.outputs.changes, 'otlp')
+      || contains(needs.detect-changes.outputs.changes, 'build')
+      || contains(needs.detect-changes.outputs.changes, 'shared')
+    uses: ./.github/workflows/maui-tests.yml
+    with:
+      trigger: ${{ github.event_name }}
+
   w3c-trace-context-integration-test:
     name: W3C Trace Context integration tests
     needs: detect-changes
@@ -342,6 +357,7 @@ jobs:
       android-integration-test,
       apple-integration-test,
       blazor-wasm-integration-test,
+      maui-integration-test,
       otlp-integration-test,
       w3c-trace-context-integration-test,
       validate-benchmarks,
