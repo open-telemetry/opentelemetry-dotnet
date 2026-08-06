@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
@@ -27,17 +28,22 @@ public sealed class AppleEndToEndTests
     [TestMethod]
     public void LogsAreExported()
     {
-        using var loggerFactory = LoggerFactory.Create((builder) =>
+        // Access logs through LoggerProvider to allow for explicit flushing
+        var services = new ServiceCollection();
+
+        services.AddLogging((builder) =>
         {
-            builder.AddOpenTelemetry((options) =>
-            {
-                options.SetResourceBuilder(CreateResourceBuilder());
-                options.IncludeFormattedMessage = true;
-                options.AddOtlpExporter((exporterOptions) => ConfigureOtlp(exporterOptions, "v1/logs"));
-            });
+            builder.UseOpenTelemetry(
+                (loggerProviderBuilder) => loggerProviderBuilder
+                    .SetResourceBuilder(CreateResourceBuilder())
+                    .AddOtlpExporter((exporterOptions) => ConfigureOtlp(exporterOptions, "v1/logs")),
+                (options) => options.IncludeFormattedMessage = true);
         });
 
-        var logger = loggerFactory.CreateLogger(InstrumentationSource.LoggerName);
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var loggerProvider = serviceProvider.GetRequiredService<LoggerProvider>();
+        var logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger(InstrumentationSource.LoggerName);
 
         Assert.IsTrue(logger.IsEnabled(LogLevel.Information), "Information logs are not enabled.");
 
@@ -45,6 +51,10 @@ public sealed class AppleEndToEndTests
         {
             logger.LogInformation("{Message}", InstrumentationSource.LogBody);
         }
+
+        Assert.IsTrue(
+            loggerProvider.ForceFlush((int)FlushTimeout.TotalMilliseconds),
+            $"Logs were not exported within {FlushTimeout}.");
     }
 
     [TestMethod]

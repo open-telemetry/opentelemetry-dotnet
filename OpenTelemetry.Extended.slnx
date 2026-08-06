@@ -240,6 +240,8 @@
   <Project Path="test/OpenTelemetry.Extensions.Propagators.Tests/OpenTelemetry.Extensions.Propagators.Tests.csproj" />
   <Project Path="test/OpenTelemetry.FuzzTests/OpenTelemetry.FuzzTests.csproj" />
   <Project Path="test/OpenTelemetry.Instrumentation.W3cTraceContext.Tests/OpenTelemetry.Instrumentation.W3cTraceContext.Tests.csproj" />
+  <Project Path="test/OpenTelemetry.Maui.TestApp/OpenTelemetry.Maui.TestApp.csproj" />
+  <Project Path="test/OpenTelemetry.Maui.Tests/OpenTelemetry.Maui.Tests.csproj" />
   <Project Path="test/OpenTelemetry.Shims.OpenTracing.Tests/OpenTelemetry.Shims.OpenTracing.Tests.csproj" />
   <Project Path="test/OpenTelemetry.Tests.Stress.Logs/OpenTelemetry.Tests.Stress.Logs.csproj" />
   <Project Path="test/OpenTelemetry.Tests.Stress.Metrics/OpenTelemetry.Tests.Stress.Metrics.csproj" />

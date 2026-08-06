@@ -11,6 +11,18 @@ namespace OpenTelemetry;
 /// </summary>
 public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
 {
+    private static long instanceCounter = -1;
+
+    private readonly KeyValuePair<string, object?>[] successTags;
+    private readonly KeyValuePair<string, object?>[] queueFullTags;
+    private readonly KeyValuePair<string, object?>[] alreadyShutdownTags;
+
+    // Number of OnEnd calls currently in-flight (past the shutdown check).
+    // OnShutdown waits for this to reach zero so those records finish enqueueing
+    // before teardown, keeping the processed vs. already_shutdown counting race-free.
+    private int activeOnEndCount;
+    private int isShutdown;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="BatchLogRecordExportProcessor"/> class.
     /// </summary>
@@ -32,38 +44,108 @@ public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
             exporterTimeoutMilliseconds,
             maxExportBatchSize)
     {
+        var index = Interlocked.Increment(ref instanceCounter);
+        var componentName = "batching_log_processor/" + index.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        var baseTags = new KeyValuePair<string, object?>[]
+        {
+            new("otel.component.type", "batching_log_processor"),
+            new("otel.component.name", componentName),
+        };
+        this.successTags = baseTags;
+        this.queueFullTags = [.. baseTags, new("error.type", "queue_full")];
+        this.alreadyShutdownTags = [.. baseTags, new("error.type", "already_shutdown")];
+        this.ExportStarted = this.RecordSuccessfulProcessing;
     }
 
     /// <inheritdoc/>
     public override void OnEnd(LogRecord data)
     {
-        // Note: Intentionally not using Guard.ThrowIfNull to save prod cycles
-#pragma warning disable CA1062 // Validate arguments of public methods
-        switch (data.Source)
-#pragma warning restore CA1062 // Validate arguments of public methods
+        if (Volatile.Read(ref this.isShutdown) != 0)
         {
-            case LogRecord.LogRecordSource.FromSharedPool:
-                data.Buffer();
-                data.AddReference();
-                if (!this.TryExport(data))
-                {
-                    LogRecordSharedPool.Current.Return(data);
-                }
+            SdkSelfObservability.LogProcessedCounter.Add(1, this.alreadyShutdownTags);
+            return;
+        }
 
-                break;
+        Interlocked.Increment(ref this.activeOnEndCount);
+        try
+        {
+            if (Volatile.Read(ref this.isShutdown) != 0)
+            {
+                SdkSelfObservability.LogProcessedCounter.Add(1, this.alreadyShutdownTags);
+                return;
+            }
 
-            case LogRecord.LogRecordSource.CreatedManually:
-                data.Buffer();
-                this.TryExport(data);
-                break;
+            bool enqueued;
 
-            case LogRecord.LogRecordSource.FromThreadStaticPool:
-            default:
-                Debug.Assert(data.Source == LogRecord.LogRecordSource.FromThreadStaticPool, "LogRecord source was something unexpected");
+            // Note: Intentionally not using Guard.ThrowIfNull to save prod cycles
+#pragma warning disable CA1062 // Validate arguments of public methods
+            switch (data.Source)
+#pragma warning restore CA1062 // Validate arguments of public methods
+            {
+                case LogRecord.LogRecordSource.FromSharedPool:
+                    data.Buffer();
+                    data.AddReference();
+                    enqueued = this.TryExport(data);
+                    if (!enqueued)
+                    {
+                        LogRecordSharedPool.Current.Return(data);
+                    }
 
-                // Note: If we are using ThreadStatic pool we make a copy of the record.
-                this.TryExport(data.Copy());
-                break;
+                    break;
+
+                case LogRecord.LogRecordSource.CreatedManually:
+                    data.Buffer();
+                    enqueued = this.TryExport(data);
+                    break;
+
+                case LogRecord.LogRecordSource.FromThreadStaticPool:
+                default:
+                    Debug.Assert(data.Source == LogRecord.LogRecordSource.FromThreadStaticPool, "LogRecord source was something unexpected");
+
+                    // Note: If we are using ThreadStatic pool we make a copy of the record.
+                    enqueued = this.TryExport(data.Copy());
+                    break;
+            }
+
+            // TODO(#7586): Consider an ObservableCounter instead of per-item Counter.Add(). See #7486.
+            if (!enqueued)
+            {
+                SdkSelfObservability.LogProcessedCounter.Add(1, this.queueFullTags);
+            }
+        }
+        finally
+        {
+            Interlocked.Decrement(ref this.activeOnEndCount);
         }
     }
+
+    /// <inheritdoc/>
+    protected override bool OnShutdown(int timeoutMilliseconds)
+    {
+        Interlocked.Exchange(ref this.isShutdown, 1);
+
+        // Wait for in-flight OnEnd calls to finish so teardown is consistent,
+        // without exceeding the caller's shutdown budget.
+        var stopwatch = timeoutMilliseconds == Timeout.Infinite ? null : Stopwatch.StartNew();
+
+        SpinWait spinner = default;
+        while (Volatile.Read(ref this.activeOnEndCount) != 0)
+        {
+            if (stopwatch != null && stopwatch.ElapsedMilliseconds >= timeoutMilliseconds)
+            {
+                break;
+            }
+
+            spinner.SpinOnce();
+        }
+
+        var remainingTimeoutMilliseconds = stopwatch == null
+            ? Timeout.Infinite
+            : (int)Math.Max(0, timeoutMilliseconds - stopwatch.ElapsedMilliseconds);
+
+        return base.OnShutdown(remainingTimeoutMilliseconds);
+    }
+
+    private void RecordSuccessfulProcessing(long count)
+        => SdkSelfObservability.LogProcessedCounter.Add(count, this.successTags);
 }
