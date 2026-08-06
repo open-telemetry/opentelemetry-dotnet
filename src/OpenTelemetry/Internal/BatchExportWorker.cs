@@ -10,6 +10,7 @@ namespace OpenTelemetry.Internal;
 internal abstract class BatchExportWorker<T> : IDisposable
     where T : class
 {
+    private readonly Action<long>? exportStarted;
     private long shutdownDrainTarget = long.MaxValue;
     private long droppedCount;
 
@@ -21,18 +22,21 @@ internal abstract class BatchExportWorker<T> : IDisposable
     /// <param name="maxExportBatchSize">The maximum batch size for exports.</param>
     /// <param name="scheduledDelayMilliseconds">The delay between exports in milliseconds.</param>
     /// <param name="exporterTimeoutMilliseconds">The timeout for export operations in milliseconds.</param>
+    /// <param name="exportStarted">Callback invoked when a batch is submitted to the exporter.</param>
     protected BatchExportWorker(
         CircularBuffer<T> circularBuffer,
         BaseExporter<T> exporter,
         int maxExportBatchSize,
         int scheduledDelayMilliseconds,
-        int exporterTimeoutMilliseconds)
+        int exporterTimeoutMilliseconds,
+        Action<long>? exportStarted = null)
     {
         this.CircularBuffer = circularBuffer;
         this.Exporter = exporter;
         this.MaxExportBatchSize = maxExportBatchSize;
         this.ScheduledDelayMilliseconds = scheduledDelayMilliseconds;
         this.ExporterTimeoutMilliseconds = exporterTimeoutMilliseconds;
+        this.exportStarted = exportStarted;
     }
 
     ~BatchExportWorker()
@@ -134,6 +138,7 @@ internal abstract class BatchExportWorker<T> : IDisposable
         {
             using (var batch = new Batch<T>(this.CircularBuffer, this.MaxExportBatchSize))
             {
+                this.exportStarted?.Invoke(batch.Count);
                 this.Exporter.Export(batch);
             }
         }

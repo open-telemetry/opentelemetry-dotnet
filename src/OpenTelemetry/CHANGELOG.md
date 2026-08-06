@@ -15,6 +15,9 @@ Notes](../../RELEASENOTES.md).
   sampler attribute with the same key.
   ([#7558](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7558))
 
+* Added the `otel.sdk.processor.log.processed` SDK self-observability metric.
+  ([#7486](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7486))
+
 ## 1.17.0
 
 Released 2026-Jul-16
