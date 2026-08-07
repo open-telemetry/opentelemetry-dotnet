@@ -4,19 +4,22 @@
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Implementation.Serializer;
 
 /// <summary>
-/// Owns the single maximum-size serialization buffer shared by the tests that need
-/// <c>ProtobufSerializer.IncreaseBufferSize</c> to refuse to grow. Allocating it
-/// once per test class - rather than once per test - keeps the cost to one 100 MiB
-/// array per target framework, released when the class finishes.
+/// Owns the serialization buffer shared by the tests that need
+/// <c>ProtobufSerializer.IncreaseBufferSize</c> to refuse to grow, together with
+/// the maximum size those tests must pass to the serializer for the refusal to
+/// happen.
 /// </summary>
 #pragma warning disable CA1515 // Consider making public types internal - required by xunit
 public sealed class MaxSizeSerializationBufferFixture
 #pragma warning restore CA1515 // Consider making public types internal - required by xunit
 {
-    // Mirrors the private ProtobufSerializer.MaxBufferSize. A buffer of this
-    // length is the documented point at which IncreaseBufferSize gives up and
-    // TryWriteResource* rethrows the underlying serialization failure.
-    private const int MaxBufferSize = 100 * 1024 * 1024;
+    /// <summary>
+    /// The buffer is handed to the serializer along with this as the maximum
+    /// size, so the buffer is already at its limit and <c>IncreaseBufferSize</c>
+    /// gives up immediately, making <c>TryWriteResource*</c> rethrow the
+    /// underlying serialization failure. Any size works, so this is kept small.
+    /// </summary>
+    internal const int MaxBufferSize = 256 * 1024 * 1024;
 
     private readonly byte[] buffer = new byte[MaxBufferSize];
 

@@ -20,6 +20,13 @@ Notes](../../RELEASENOTES.md).
   the serializer's per-thread state. For logs, this also leaked pooled instances.
   ([#7579](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7579))
 
+* Increase the maximum buffer size used for when exporting very large batches
+  of telemetry, such as metrics with very high cardinality, to 256MiB. A batch
+  whose serialized payload exceeds the limit is dropped in its entirety rather
+  than submitted, so the value can be used to stay within a receiver's own request
+  size limits.
+  ([#7584](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7584))
+
 ## 1.17.0
 
 Released 2026-Jul-16

@@ -26,7 +26,11 @@ internal static class ProtobufOtlpMetricSerializer
 
     private delegate int WriteExemplarFunc(byte[] buffer, int writePosition, in Exemplar exemplar);
 
-    internal static int WriteMetricsData(ref byte[] buffer, int writePosition, Resources.Resource? resource, in Batch<Metric> batch)
+    internal static int WriteMetricsData(
+        ref byte[] buffer,
+        int writePosition,
+        Resources.Resource? resource,
+        in Batch<Metric> batch)
     {
         metricListPool ??= [];
         scopeMetricsList ??= [];
@@ -59,7 +63,11 @@ internal static class ProtobufOtlpMetricSerializer
         return writePosition;
     }
 
-    internal static int TryWriteResourceMetrics(ref byte[] buffer, int writePosition, Resources.Resource? resource, Dictionary<string, List<Metric>> scopeMetrics)
+    internal static int TryWriteResourceMetrics(
+        ref byte[] buffer,
+        int writePosition,
+        Resources.Resource? resource,
+        Dictionary<string, List<Metric>> scopeMetrics)
     {
         while (true)
         {

@@ -18,10 +18,9 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
 {
     private const int GrpcStartWritePosition = 5;
 
-    // Initial buffer size set to ~732KB.
-    // This choice allows us to gradually grow the buffer while targeting a final capacity of around 100 MB,
-    // by the 7th doubling to maintain efficient allocation without frequent resizing.
-    private const int InitialBufferSize = 750_000;
+    // Initial buffer size set to ~732KB, so the buffer can be grown by doubling
+    // towards OtlpExporterOptions.MaxExportPayloadSizeBytes without resizing often.
+    private const int InitialBufferSize = ProtobufSerializer.InitialBufferSize;
 
     private readonly SdkLimitOptions sdkLimitOptions;
     private readonly ExperimentalOptions experimentalOptions;

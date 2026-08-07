@@ -22,7 +22,13 @@ internal static class ProtobufOtlpLogSerializer
     [ThreadStatic]
     private static SerializationState? threadSerializationState;
 
-    internal static int WriteLogsData(ref byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, Resources.Resource? resource, in Batch<LogRecord> logRecordBatch)
+    internal static int WriteLogsData(
+        ref byte[] buffer,
+        int writePosition,
+        SdkLimitOptions sdkLimitOptions,
+        ExperimentalOptions experimentalOptions,
+        Resources.Resource? resource,
+        in Batch<LogRecord> logRecordBatch)
     {
         logsListPool ??= [];
         scopeLogsList ??= [];
@@ -55,7 +61,13 @@ internal static class ProtobufOtlpLogSerializer
                 logRecords.Add(logRecord);
             }
 
-            writePosition = TryWriteResourceLogs(ref buffer, writePosition, sdkLimitOptions, experimentalOptions, resource, scopeLogsList);
+            writePosition = TryWriteResourceLogs(
+                ref buffer,
+                writePosition,
+                sdkLimitOptions,
+                experimentalOptions,
+                resource,
+                scopeLogsList);
         }
         finally
         {
@@ -69,7 +81,13 @@ internal static class ProtobufOtlpLogSerializer
         return writePosition;
     }
 
-    internal static int TryWriteResourceLogs(ref byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, Resources.Resource? resource, Dictionary<string, List<LogRecord>> scopeLogs)
+    internal static int TryWriteResourceLogs(
+        ref byte[] buffer,
+        int writePosition,
+        SdkLimitOptions sdkLimitOptions,
+        ExperimentalOptions experimentalOptions,
+        Resources.Resource? resource,
+        Dictionary<string, List<LogRecord>> scopeLogs)
     {
         while (true)
         {
@@ -98,9 +116,9 @@ internal static class ProtobufOtlpLogSerializer
                     throw;
                 }
 
-                // Continue the loop to retry serialization with the larger buffer
-                // The loop is limited by the buffer size expansion logic in IncreaseBufferSize,
-                // which stops at a maximum of 100 MB, ensuring this doesn't become an infinite loop
+                // Continue the loop to retry serialization with the larger buffer. The loop
+                // is bounded by IncreaseBufferSize, which refuses to grow beyond beyond
+                // ProtobufSerializer.MaxBufferSize, so this cannot become an infinite loop.
             }
         }
     }

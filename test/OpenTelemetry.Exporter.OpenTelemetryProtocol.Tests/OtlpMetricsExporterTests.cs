@@ -977,6 +977,130 @@ public sealed class OtlpMetricsExporterTests : IDisposable
     }
 
     [Fact]
+    public void Export_BatchExceedingMaxExportPayloadSizeBytes_IsDropped()
+    {
+        const int BufferExceededMaxSizeEventId = 14;
+        const int BatchDroppedEventId = 39;
+
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Error);
+
+        var exportClient = new TestExportClient();
+        var exporterOptions = new OtlpExporterOptions
+        {
+            Protocol = OtlpExportProtocol.HttpProtobuf,
+        };
+
+        using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClient, exporterOptions.TimeoutMilliseconds);
+        using var exporter = new OtlpMetricExporter(exporterOptions, new ExperimentalOptions(), transmissionHandler);
+
+        var batch = GenerateHighCardinalityMetricBatch(cardinality: 5_000_000);
+
+        Assert.Equal(ExportResult.Failure, exporter.Export(batch));
+        Assert.False(exportClient.SendExportRequestCalled);
+
+        Assert.Single(listener.Messages, e => e.EventId == BufferExceededMaxSizeEventId);
+        Assert.Single(listener.Messages, e => e.EventId == BatchDroppedEventId);
+    }
+
+    [Fact]
+    public void Export_PayloadExceedingMaxExportPayloadSizeBytes_IsNotSubmitted()
+    {
+        const int BufferExceededMaxSizeEventId = 14;
+
+        var probeClient = new TestExportClient();
+        var probeOptions = new OtlpExporterOptions
+        {
+            Protocol = OtlpExportProtocol.HttpProtobuf,
+        };
+
+        using (var probeHandler = new OtlpExporterTransmissionHandler(probeClient, probeOptions.TimeoutMilliseconds))
+        using (var probeExporter = new OtlpMetricExporter(probeOptions, new ExperimentalOptions(), probeHandler))
+        {
+            Assert.Equal(ExportResult.Success, probeExporter.Export(GenerateHighCardinalityMetricBatch(cardinality: 50_000)));
+        }
+
+        var payloadSize = probeClient.LastContentLength;
+        Assert.True(payloadSize > ProtobufSerializer.InitialBufferSize, $"Payload of {payloadSize} bytes was too small for this test.");
+
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Error);
+
+        var exportClient = new TestExportClient();
+        var exporterOptions = new OtlpExporterOptions
+        {
+            Protocol = OtlpExportProtocol.HttpProtobuf,
+        };
+
+        using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClient, exporterOptions.TimeoutMilliseconds);
+        using var exporter = new OtlpMetricExporter(exporterOptions, new ExperimentalOptions(), transmissionHandler);
+
+        var batch = GenerateHighCardinalityMetricBatch(cardinality: 5_000_000);
+
+        Assert.Equal(ExportResult.Failure, exporter.Export(batch));
+        Assert.False(exportClient.SendExportRequestCalled);
+        Assert.Equal(0, exportClient.LastContentLength);
+
+        Assert.Contains(listener.Messages, e => e.EventId == BufferExceededMaxSizeEventId);
+    }
+
+    [Fact]
+    public void Export_PayloadExactlyAtMaxExportPayloadSizeBytes_IsSubmitted()
+    {
+        const int Cardinality = 50_000;
+
+        var probeClient = new TestExportClient();
+        var probeOptions = new OtlpExporterOptions
+        {
+            Protocol = OtlpExportProtocol.HttpProtobuf,
+        };
+
+        using (var probeHandler = new OtlpExporterTransmissionHandler(probeClient, probeOptions.TimeoutMilliseconds))
+        using (var probeExporter = new OtlpMetricExporter(probeOptions, new ExperimentalOptions(), probeHandler))
+        {
+            Assert.Equal(ExportResult.Success, probeExporter.Export(GenerateHighCardinalityMetricBatch(Cardinality)));
+        }
+
+        var payloadSize = probeClient.LastContentLength;
+
+        var exportClient = new TestExportClient();
+        var exporterOptions = new OtlpExporterOptions
+        {
+            Protocol = OtlpExportProtocol.HttpProtobuf,
+        };
+
+        using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClient, exporterOptions.TimeoutMilliseconds);
+        using var exporter = new OtlpMetricExporter(exporterOptions, new ExperimentalOptions(), transmissionHandler);
+
+        Assert.Equal(ExportResult.Success, exporter.Export(GenerateHighCardinalityMetricBatch(Cardinality)));
+        Assert.Equal(payloadSize, exportClient.LastContentLength);
+    }
+
+    [Theory]
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
+    [InlineData(OtlpExportProtocol.Grpc)]
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
+    [InlineData(OtlpExportProtocol.HttpProtobuf)]
+    public void Export_RaisingMaxExportPayloadSizeBytes_AllowsLargerBatch(OtlpExportProtocol protocol)
+    {
+        var exportClient = new TestExportClient();
+        var exporterOptions = new OtlpExporterOptions
+        {
+            Protocol = protocol,
+        };
+
+        using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClient, exporterOptions.TimeoutMilliseconds);
+        using var exporter = new OtlpMetricExporter(exporterOptions, new ExperimentalOptions(), transmissionHandler);
+
+        // The same batch the test above drops at the smallest limit.
+        var batch = GenerateHighCardinalityMetricBatch(cardinality: 50_000);
+
+        Assert.Equal(ExportResult.Success, exporter.Export(batch));
+        Assert.True(exportClient.SendExportRequestCalled);
+        Assert.True(
+            exportClient.LastContentLength > ProtobufSerializer.InitialBufferSize,
+            $"Expected a payload larger than the smallest limit but was {exportClient.LastContentLength}.");
+    }
+
+    [Fact]
     public void Export_WhenSerializationFails_ReportsDroppedBatchAndDoesNotSubmitRequest()
     {
         const int BatchDroppedEventId = 39;
@@ -1175,6 +1299,34 @@ public sealed class OtlpMetricsExporterTests : IDisposable
 
         // Should use exponential histogram from default (views configured but didn't match)
         Assert.Equal(MetricType.ExponentialHistogram, metric.MetricType);
+    }
+
+    private static Batch<Metric> GenerateHighCardinalityMetricBatch(int cardinality)
+    {
+        var exported = new List<Metric>();
+        var meterName = $"{nameof(GenerateHighCardinalityMetricBatch)}.{Guid.NewGuid():N}";
+
+        int count;
+
+        using (var meter = new Meter(meterName))
+        using (var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meterName)
+            .AddView("*", new MetricStreamConfiguration { CardinalityLimit = cardinality + 10 })
+            .AddInMemoryExporter(exported)
+            .Build())
+        {
+            var counter = meter.CreateCounter<long>("test.counter");
+            for (var i = 0; i < cardinality; i++)
+            {
+                counter.Add(1, new KeyValuePair<string, object?>("tag", $"value-{i}"));
+            }
+
+            Assert.True(meterProvider.ForceFlush());
+
+            count = exported.Count;
+        }
+
+        return new Batch<Metric>([.. exported], count);
     }
 
     private static void VerifyExemplars<T>(long? longValue, double? doubleValue, bool enableExemplars, Func<T, OtlpMetrics.Exemplar?> getExemplarFunc, T state)

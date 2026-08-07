@@ -20,7 +20,12 @@ internal static class ProtobufOtlpTraceSerializer
     [ThreadStatic]
     private static Dictionary<string, List<Activity>>? scopeTracesList;
 
-    internal static int WriteTraceData(ref byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, Resources.Resource? resource, in Batch<Activity> batch)
+    internal static int WriteTraceData(
+        ref byte[] buffer,
+        int writePosition,
+        SdkLimitOptions sdkLimitOptions,
+        Resources.Resource? resource,
+        in Batch<Activity> batch)
     {
         activityListPool ??= [];
         scopeTracesList ??= [];
@@ -53,7 +58,11 @@ internal static class ProtobufOtlpTraceSerializer
         return writePosition;
     }
 
-    internal static int TryWriteResourceSpans(ref byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, Resources.Resource? resource)
+    internal static int TryWriteResourceSpans(
+        ref byte[] buffer,
+        int writePosition,
+        SdkLimitOptions sdkLimitOptions,
+        Resources.Resource? resource)
     {
         while (true)
         {
@@ -82,9 +91,9 @@ internal static class ProtobufOtlpTraceSerializer
                     throw;
                 }
 
-                // Continue the loop to retry serialization with the larger buffer
-                // The loop is limited by the buffer size expansion logic in IncreaseBufferSize,
-                // which stops at a maximum of 100 MB, ensuring this doesn't become an infinite loop
+                // Continue the loop to retry serialization with the larger buffer. The loop
+                // is bounded by IncreaseBufferSize, which refuses to grow beyond beyond
+                // ProtobufSerializer.MaxBufferSize, so this cannot become an infinite loop.
             }
         }
     }
