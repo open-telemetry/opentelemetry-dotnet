@@ -182,8 +182,6 @@ public class OtlpGrpcExportClientTests
             httpClient,
             string.Empty);
 
-        // Use ThrowsAny to accept TaskCanceledException (a subtype of OperationCanceledException),
-        // which HttpClient may produce when wrapping a timeout that coincides with caller cancellation.
         Assert.ThrowsAny<OperationCanceledException>(() =>
             exportClient.SendExportRequest(buffer, buffer.Length, DateTime.UtcNow.AddSeconds(10), cts.Token));
     }
@@ -191,8 +189,6 @@ public class OtlpGrpcExportClientTests
     [Fact]
     public void SendExportRequest_CallerCancellationRequested_Propagates()
     {
-        // OperationCanceledException thrown when the caller's token is signaled must propagate
-        // rather than being swallowed and converted into an Unavailable response.
         using var cts = new CancellationTokenSource();
         cts.Cancel();
 
