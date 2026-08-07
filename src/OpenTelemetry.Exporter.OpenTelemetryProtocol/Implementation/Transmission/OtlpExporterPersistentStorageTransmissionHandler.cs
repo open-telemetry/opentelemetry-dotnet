@@ -42,6 +42,7 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler : OtlpExp
     // Used for test.
     internal bool InitiateAndWaitForRetryProcess(int timeOutMilliseconds)
     {
+        this.dataExportNotification.Reset();
         this.exportEvent.Set();
 
         return this.dataExportNotification.WaitOne(timeOutMilliseconds);
@@ -159,10 +160,7 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler : OtlpExp
                     fileCount++;
                 }
 
-                // Set and reset the handle to notify export and wait for next signal.
-                // This is used for InitiateAndWaitForRetryProcess.
                 this.dataExportNotification.Set();
-                this.dataExportNotification.Reset();
             }
             catch (Exception ex)
             {
