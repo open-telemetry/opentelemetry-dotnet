@@ -15,6 +15,14 @@ Notes](../../RELEASENOTES.md).
   blocks, which could stall concurrent scrapes being waited on.
   ([#7571](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7571))
 
+* Fixed metric values and histogram bucket bounds being written with 17
+  significant digits instead of their shortest round-trippable representation.
+  ([#7589](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7589))
+
+* Fixed the canonical representation used for histogram `le` and summary
+  `quantile` label values falling back to 17 significant digits incorrectly.
+  ([#7589](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7589))
+
 ## 1.17.0-beta.1
 
 Released 2026-Jul-16
