@@ -82,6 +82,7 @@ public sealed class Metric
         Func<ExemplarReservoir?>? exemplarReservoirFactory = null)
     {
         this.InstrumentIdentity = instrumentIdentity;
+        bool recordSum = true;
 
         AggregationType aggType;
         if (instrumentIdentity.InstrumentType == typeof(ObservableCounter<long>)
@@ -97,14 +98,40 @@ public sealed class Metric
             || instrumentIdentity.InstrumentType == typeof(Counter<short>)
             || instrumentIdentity.InstrumentType == typeof(Counter<byte>))
         {
-            aggType = AggregationType.LongSumIncomingDelta;
-            this.MetricType = MetricType.LongSum;
+            switch (instrumentIdentity.AggregationKind)
+            {
+                case AggregationKind.Histogram:
+                    aggType = AggregationType.Histogram;
+                    this.MetricType = MetricType.Histogram;
+                    break;
+                case AggregationKind.ExponentialHistogram:
+                    aggType = AggregationType.Base2ExponentialHistogram;
+                    this.MetricType = MetricType.ExponentialHistogram;
+                    break;
+                default:
+                    aggType = AggregationType.LongSumIncomingDelta;
+                    this.MetricType = MetricType.LongSum;
+                    break;
+            }
         }
         else if (instrumentIdentity.InstrumentType == typeof(Counter<double>)
             || instrumentIdentity.InstrumentType == typeof(Counter<float>))
         {
-            aggType = AggregationType.DoubleSumIncomingDelta;
-            this.MetricType = MetricType.DoubleSum;
+            switch (instrumentIdentity.AggregationKind)
+            {
+                case AggregationKind.Histogram:
+                    aggType = AggregationType.Histogram;
+                    this.MetricType = MetricType.Histogram;
+                    break;
+                case AggregationKind.ExponentialHistogram:
+                    aggType = AggregationType.Base2ExponentialHistogram;
+                    this.MetricType = MetricType.ExponentialHistogram;
+                    break;
+                default:
+                    aggType = AggregationType.DoubleSumIncomingDelta;
+                    this.MetricType = MetricType.DoubleSum;
+                    break;
+            }
         }
         else if (instrumentIdentity.InstrumentType == typeof(ObservableCounter<double>)
             || instrumentIdentity.InstrumentType == typeof(ObservableCounter<float>))
@@ -125,14 +152,44 @@ public sealed class Metric
             || instrumentIdentity.InstrumentType == typeof(UpDownCounter<short>)
             || instrumentIdentity.InstrumentType == typeof(UpDownCounter<byte>))
         {
-            aggType = AggregationType.LongSumIncomingDelta;
-            this.MetricType = MetricType.LongSumNonMonotonic;
+            switch (instrumentIdentity.AggregationKind)
+            {
+                case AggregationKind.Histogram:
+                    aggType = AggregationType.Histogram;
+                    this.MetricType = MetricType.Histogram;
+                    recordSum = false;
+                    break;
+                case AggregationKind.ExponentialHistogram:
+                    aggType = AggregationType.Base2ExponentialHistogram;
+                    this.MetricType = MetricType.ExponentialHistogram;
+                    recordSum = false;
+                    break;
+                default:
+                    aggType = AggregationType.LongSumIncomingDelta;
+                    this.MetricType = MetricType.LongSumNonMonotonic;
+                    break;
+            }
         }
         else if (instrumentIdentity.InstrumentType == typeof(UpDownCounter<double>)
             || instrumentIdentity.InstrumentType == typeof(UpDownCounter<float>))
         {
-            aggType = AggregationType.DoubleSumIncomingDelta;
-            this.MetricType = MetricType.DoubleSumNonMonotonic;
+            switch (instrumentIdentity.AggregationKind)
+            {
+                case AggregationKind.Histogram:
+                    aggType = AggregationType.Histogram;
+                    this.MetricType = MetricType.Histogram;
+                    recordSum = false;
+                    break;
+                case AggregationKind.ExponentialHistogram:
+                    aggType = AggregationType.Base2ExponentialHistogram;
+                    this.MetricType = MetricType.ExponentialHistogram;
+                    recordSum = false;
+                    break;
+                default:
+                    aggType = AggregationType.DoubleSumIncomingDelta;
+                    this.MetricType = MetricType.DoubleSumNonMonotonic;
+                    break;
+            }
         }
         else if (instrumentIdentity.InstrumentType == typeof(ObservableUpDownCounter<double>)
             || instrumentIdentity.InstrumentType == typeof(ObservableUpDownCounter<float>))
@@ -168,7 +225,7 @@ public sealed class Metric
             aggType = AggregationType.LongGauge;
             this.MetricType = MetricType.LongGauge;
         }
-        else if (instrumentIdentity.IsHistogram)
+        else if (instrumentIdentity.IsHistogram && (instrumentIdentity.AggregationKind is null || instrumentIdentity.AggregationKind == AggregationKind.Histogram || instrumentIdentity.AggregationKind == AggregationKind.ExponentialHistogram))
         {
             var explicitBucketBounds = instrumentIdentity.HistogramBucketBounds;
             var exponentialMaxSize = instrumentIdentity.ExponentialHistogramMaxSize;
@@ -184,6 +241,11 @@ public sealed class Metric
                     : (histogramRecordMinMax ? AggregationType.HistogramWithMinMaxBuckets : AggregationType.HistogramWithBuckets)
                 : histogramRecordMinMax ? AggregationType.Base2ExponentialHistogramWithMinMax : AggregationType.Base2ExponentialHistogram;
         }
+        else if (instrumentIdentity.IsHistogram && instrumentIdentity.AggregationKind == AggregationKind.Sum)
+        {
+            aggType = AggregationType.DoubleSumIncomingCumulative;
+            this.MetricType = MetricType.DoubleSum;
+        }
         else
         {
             throw new NotSupportedException($"Unsupported Instrument Type: {instrumentIdentity.InstrumentType.FullName}");
@@ -195,7 +257,8 @@ public sealed class Metric
             temporality,
             cardinalityLimit,
             exemplarFilter,
-            exemplarReservoirFactory);
+            exemplarReservoirFactory,
+            recordSum);
         this.Temporality = temporality;
     }
 

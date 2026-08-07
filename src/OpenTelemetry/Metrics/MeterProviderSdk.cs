@@ -310,15 +310,14 @@ internal sealed class MeterProviderSdk : MeterProvider
                             metricStreamConfig.ViewId = i;
                         }
 
-                        if (metricStreamConfig is HistogramConfiguration
-                            && instrument.GetType().GetGenericTypeDefinition() != typeof(Histogram<>))
+                        if (metricStreamConfig?.AggregationKind is AggregationKind aggregationKind && !AggregationCompatibility.IsCompatible(aggregationKind, instrument.GetType()))
                         {
                             metricStreamConfig = null;
 
                             OpenTelemetrySdkEventSource.Log.MetricViewIgnored(
                                 instrument.Name,
                                 instrument.Meter.Name,
-                                "The current SDK does not allow aggregating non-Histogram instruments as Histograms.",
+                                "The current SDK does not allow the requested AggregationType x InstrumentType combination.",
                                 "Fix the view configuration.");
                         }
                     }
