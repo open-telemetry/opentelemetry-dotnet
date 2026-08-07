@@ -92,7 +92,7 @@ public class AggregatorTests
         histogramPoint.TakeSnapshot(true);
 
         var count = histogramPoint.GetHistogramCount();
-        var sum = histogramPoint.GetHistogramSum();
+        histogramPoint.TryGetHistogramSum(out var sum);
 
         // Sum of all recordings
         Assert.Equal(40, sum);
@@ -265,7 +265,7 @@ public class AggregatorTests
         histogramPoint.TakeSnapshot(true);
 
         var count = histogramPoint.GetHistogramCount();
-        var sum = histogramPoint.GetHistogramSum();
+        histogramPoint.TryGetHistogramSum(out var sum);
 
         // Sum of all recordings
         Assert.Equal(40, sum);
@@ -306,7 +306,7 @@ public class AggregatorTests
         // last snapshot
         histogramPoint.TakeSnapshot(outputDelta: true);
 
-        var lastDelta = histogramPoint.GetHistogramSum();
+        histogramPoint.TryGetHistogramSum(out var lastDelta);
         Assert.Equal(200, argsToThread.SumOfDelta + lastDelta);
     }
 
@@ -444,7 +444,7 @@ public class AggregatorTests
         var metricPoint = metricPoints[0];
 
         var count = metricPoint.GetHistogramCount();
-        var sum = metricPoint.GetHistogramSum();
+        metricPoint.TryGetHistogramSum(out var sum);
         var hasMinMax = metricPoint.TryGetHistogramMinMaxValues(out var min, out var max);
         var firstScale = metricPoint.GetExponentialHistogramData().Scale;
 
@@ -467,7 +467,7 @@ public class AggregatorTests
         metricPoint.TakeSnapshot(aggregationTemporality == AggregationTemporality.Delta);
 
         count = metricPoint.GetHistogramCount();
-        sum = metricPoint.GetHistogramSum();
+        metricPoint.TryGetHistogramSum(out sum);
         hasMinMax = metricPoint.TryGetHistogramMinMaxValues(out min, out max);
         var secondScale = metricPoint.GetExponentialHistogramData().Scale;
 
@@ -604,7 +604,7 @@ public class AggregatorTests
         while (Interlocked.Read(ref args.ThreadsFinishedAllUpdatesCount) != 2)
         {
             args.HistogramPoint.TakeSnapshot(outputDelta: true);
-            curSnapshotDelta = args.HistogramPoint.GetHistogramSum();
+            args.HistogramPoint.TryGetHistogramSum(out curSnapshotDelta);
             args.SumOfDelta += curSnapshotDelta;
         }
     }
