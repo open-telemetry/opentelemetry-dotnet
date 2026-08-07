@@ -7,7 +7,6 @@ OpenTelemetry.Metrics.AggregationKind.Gauge = 1 -> OpenTelemetry.Metrics.Aggrega
 OpenTelemetry.Metrics.AggregationKind.Histogram = 2 -> OpenTelemetry.Metrics.AggregationKind
 OpenTelemetry.Metrics.AggregationKind.Sum = 0 -> OpenTelemetry.Metrics.AggregationKind
 OpenTelemetry.Metrics.MetricPoint.TryGetHistogramSum(out double sum) -> bool
-override OpenTelemetry.BatchLogRecordExportProcessor.OnShutdown(int timeoutMilliseconds) -> bool
 override OpenTelemetry.SimpleActivityExportProcessor.OnShutdown(int timeoutMilliseconds) -> bool
 override OpenTelemetry.SimpleLogRecordExportProcessor.OnEnd(OpenTelemetry.Logs.LogRecord! data) -> void
 override OpenTelemetry.SimpleLogRecordExportProcessor.OnShutdown(int timeoutMilliseconds) -> bool
