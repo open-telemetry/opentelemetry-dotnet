@@ -17,12 +17,6 @@ public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
     private readonly KeyValuePair<string, object?>[] queueFullTags;
     private readonly KeyValuePair<string, object?>[] alreadyShutdownTags;
 
-    // Number of OnEnd calls currently in-flight (past the shutdown check).
-    // OnShutdown waits for this to reach zero so those records finish enqueueing
-    // before teardown, keeping the processed vs. already_shutdown counting race-free.
-    private int activeOnEndCount;
-    private int isShutdown;
-
     /// <summary>
     /// Initializes a new instance of the <see cref="BatchLogRecordExportProcessor"/> class.
     /// </summary>
@@ -60,23 +54,14 @@ public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
     /// <inheritdoc/>
     public override void OnEnd(LogRecord data)
     {
-        if (Volatile.Read(ref this.isShutdown) != 0)
+        if (!this.TryEnterOnEnd())
         {
             SdkSelfObservability.LogProcessedCounter.Add(1, this.alreadyShutdownTags);
             return;
         }
 
-        Interlocked.Increment(ref this.activeOnEndCount);
         try
         {
-            if (Volatile.Read(ref this.isShutdown) != 0)
-            {
-                SdkSelfObservability.LogProcessedCounter.Add(1, this.alreadyShutdownTags);
-                return;
-            }
-
-            bool enqueued;
-
             // Note: Intentionally not using Guard.ThrowIfNull to save prod cycles
 #pragma warning disable CA1062 // Validate arguments of public methods
             switch (data.Source)
@@ -85,8 +70,7 @@ public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
                 case LogRecord.LogRecordSource.FromSharedPool:
                     data.Buffer();
                     data.AddReference();
-                    enqueued = this.TryExport(data);
-                    if (!enqueued)
+                    if (!this.TryExport(data))
                     {
                         LogRecordSharedPool.Current.Return(data);
                     }
@@ -95,7 +79,7 @@ public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
 
                 case LogRecord.LogRecordSource.CreatedManually:
                     data.Buffer();
-                    enqueued = this.TryExport(data);
+                    this.TryExport(data);
                     break;
 
                 case LogRecord.LogRecordSource.FromThreadStaticPool:
@@ -103,48 +87,20 @@ public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
                     Debug.Assert(data.Source == LogRecord.LogRecordSource.FromThreadStaticPool, "LogRecord source was something unexpected");
 
                     // Note: If we are using ThreadStatic pool we make a copy of the record.
-                    enqueued = this.TryExport(data.Copy());
+                    this.TryExport(data.Copy());
                     break;
-            }
-
-            // TODO(#7586): Consider an ObservableCounter instead of per-item Counter.Add(). See #7486.
-            if (!enqueued)
-            {
-                SdkSelfObservability.LogProcessedCounter.Add(1, this.queueFullTags);
             }
         }
         finally
         {
-            Interlocked.Decrement(ref this.activeOnEndCount);
+            this.ExitOnEnd();
         }
     }
 
-    /// <inheritdoc/>
-    protected override bool OnShutdown(int timeoutMilliseconds)
-    {
-        Interlocked.Exchange(ref this.isShutdown, 1);
-
-        // Wait for in-flight OnEnd calls to finish so teardown is consistent,
-        // without exceeding the caller's shutdown budget.
-        var stopwatch = timeoutMilliseconds == Timeout.Infinite ? null : Stopwatch.StartNew();
-
-        SpinWait spinner = default;
-        while (Volatile.Read(ref this.activeOnEndCount) != 0)
-        {
-            if (stopwatch != null && stopwatch.ElapsedMilliseconds >= timeoutMilliseconds)
-            {
-                break;
-            }
-
-            spinner.SpinOnce();
-        }
-
-        var remainingTimeoutMilliseconds = stopwatch == null
-            ? Timeout.Infinite
-            : (int)Math.Max(0, timeoutMilliseconds - stopwatch.ElapsedMilliseconds);
-
-        return base.OnShutdown(remainingTimeoutMilliseconds);
-    }
+    // TODO: https://github.com/open-telemetry/opentelemetry-dotnet/issues/7586
+    // Consider an ObservableCounter instead of per-item Counter.Add().
+    internal override void OnItemDropped()
+        => SdkSelfObservability.LogProcessedCounter.Add(1, this.queueFullTags);
 
     private void RecordSuccessfulProcessing(long count)
         => SdkSelfObservability.LogProcessedCounter.Add(count, this.successTags);
