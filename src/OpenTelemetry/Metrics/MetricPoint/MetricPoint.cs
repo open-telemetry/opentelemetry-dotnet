@@ -976,7 +976,6 @@ public struct MetricPoint
         unchecked
         {
             this.runningValue.AsLong++;
-            histogramBuckets.RunningSum += number;
             if (this.aggregatorStore.RecordSum)
             {
                 histogramBuckets.RunningSum += number;
@@ -999,7 +998,10 @@ public struct MetricPoint
         unchecked
         {
             this.runningValue.AsLong++;
-            histogramBuckets.RunningSum += number;
+            if (this.aggregatorStore.RecordSum)
+            {
+                histogramBuckets.RunningSum += number;
+            }
         }
 
         histogramBuckets.RunningMin = Math.Min(histogramBuckets.RunningMin, number);
@@ -1023,7 +1025,10 @@ public struct MetricPoint
         unchecked
         {
             this.runningValue.AsLong++;
-            histogramBuckets.RunningSum += number;
+            if (this.aggregatorStore.RecordSum)
+            {
+                histogramBuckets.RunningSum += number;
+            }
             histogramBuckets.BucketCounts[bucketIndex].RunningValue++;
         }
 
@@ -1045,7 +1050,10 @@ public struct MetricPoint
         unchecked
         {
             this.runningValue.AsLong++;
-            histogramBuckets.RunningSum += number;
+            if (this.aggregatorStore.RecordSum)
+            {
+                histogramBuckets.RunningSum += number;
+            }
             histogramBuckets.BucketCounts[bucketIndex].RunningValue++;
         }
 
@@ -1074,7 +1082,10 @@ public struct MetricPoint
         unchecked
         {
             this.runningValue.AsLong++;
-            histogram.RunningSum += number;
+            if (this.aggregatorStore.RecordSum)
+            {
+                histogram.RunningSum += number;
+            }
             histogram.Record(number);
         }
 
@@ -1100,7 +1111,10 @@ public struct MetricPoint
         unchecked
         {
             this.runningValue.AsLong++;
-            histogram.RunningSum += number;
+            if (this.aggregatorStore.RecordSum)
+            {
+                histogram.RunningSum += number;
+            }
             histogram.Record(number);
         }
 
