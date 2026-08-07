@@ -1029,6 +1029,7 @@ public struct MetricPoint
             {
                 histogramBuckets.RunningSum += number;
             }
+
             histogramBuckets.BucketCounts[bucketIndex].RunningValue++;
         }
 
@@ -1054,6 +1055,7 @@ public struct MetricPoint
             {
                 histogramBuckets.RunningSum += number;
             }
+
             histogramBuckets.BucketCounts[bucketIndex].RunningValue++;
         }
 
@@ -1086,6 +1088,7 @@ public struct MetricPoint
             {
                 histogram.RunningSum += number;
             }
+
             histogram.Record(number);
         }
 
@@ -1115,6 +1118,7 @@ public struct MetricPoint
             {
                 histogram.RunningSum += number;
             }
+
             histogram.Record(number);
         }
 
