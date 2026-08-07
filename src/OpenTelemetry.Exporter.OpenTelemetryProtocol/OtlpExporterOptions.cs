@@ -87,6 +87,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 
             return new HttpClient
             {
+                MaxResponseContentBufferSize = HttpClientHelpers.DefaultMessageSizeLimit,
                 Timeout = timeout,
             };
         };

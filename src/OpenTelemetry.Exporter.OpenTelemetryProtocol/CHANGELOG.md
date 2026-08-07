@@ -20,6 +20,14 @@ Notes](../../RELEASENOTES.md).
   the serializer's per-thread state. For logs, this also leaked pooled instances.
   ([#7579](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7579))
 
+* A server-supplied throttle delay (OTLP/gRPC `RetryInfo.retry_delay` or
+  OTLP/HTTP `Retry-After`) is now clamped to a minimum of 100 milliseconds.
+  ([#7583](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7583))
+
+* The `HttpClient` created by the exporter now sets
+  `MaxResponseContentBufferSize` to the 4 MiB OTLP message size limit.
+  ([#7583](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7583))
+
 ## 1.17.0
 
 Released 2026-Jul-16

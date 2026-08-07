@@ -252,6 +252,15 @@ public sealed class OtlpExporterOptionsTests : IDisposable
     }
 
     [Fact]
+    public void OtlpExporterOptions_DefaultHttpClientCapsResponseContentBuffering()
+    {
+        using var httpClient = new OtlpExporterOptions(OtlpExporterOptionsConfigurationType.Default).HttpClientFactory();
+
+        const int DefaultMessageSizeLimit = 4 * 1024 * 1024; // 4 MiB
+        Assert.Equal(DefaultMessageSizeLimit, httpClient.MaxResponseContentBufferSize);
+    }
+
+    [Fact]
     public void OtlpExporterOptions_ApplyDefaultsTest()
     {
         var defaultOptionsWithData = new OtlpExporterOptions

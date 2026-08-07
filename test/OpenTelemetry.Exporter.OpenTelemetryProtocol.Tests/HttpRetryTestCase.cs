@@ -13,6 +13,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 public class HttpRetryTestCase
 #pragma warning restore CA1515 // Consider making public types internal
 {
+    private static readonly TimeSpan MinThrottleDelay = TimeSpan.FromMilliseconds(100);
+
     private readonly string testRunnerName;
 
     private HttpRetryTestCase(string testRunnerName, HttpRetryAttempt[] retryAttempts, int expectedRetryAttempts = 1)
@@ -33,6 +35,9 @@ public class HttpRetryTestCase
         new("NetworkError with expired deadline", [new(statusCode: null, isDeadlineExceeded: true, expectedSuccess: false)]),
         new("GatewayTimeout", [new(statusCode: HttpStatusCode.GatewayTimeout, throttleDelay: TimeSpan.FromSeconds(1))]),
         new("ServiceUnavailable", [new(statusCode: HttpStatusCode.ServiceUnavailable, throttleDelay: TimeSpan.FromSeconds(1), expectedThrottled: true)]),
+
+        // A "Retry-After: 0" is clamped to a non-zero minimum
+        new("ServiceUnavailable w/ zero Retry-After", [new(statusCode: HttpStatusCode.ServiceUnavailable, throttleDelay: TimeSpan.Zero, expectedThrottled: true, expectedRetryDelay: MinThrottleDelay, expectedNextRetryDelayMilliseconds: 150)]),
 
         // A throttle delay that would push the retry past the configured deadline must
         // fail fast and drop the data rather than blocking for the throttle duration.
@@ -85,6 +90,7 @@ public class HttpRetryTestCase
     {
         public ExportClientHttpResponse Response;
         public TimeSpan? ThrottleDelay;
+        public TimeSpan? ExpectedRetryDelay;
         public TimeSpan TimestampTolerance;
         public int? ExpectedNextRetryDelayMilliseconds;
         public bool ExpectedSuccess;
@@ -98,9 +104,11 @@ public class HttpRetryTestCase
             bool expectedSuccess = true,
             bool expectedThrottled = false,
             bool useDateForRetryCondition = false,
-            TimeSpan? deadlineFromNow = null)
+            TimeSpan? deadlineFromNow = null,
+            TimeSpan? expectedRetryDelay = null)
         {
             this.ThrottleDelay = throttleDelay;
+            this.ExpectedRetryDelay = expectedRetryDelay ?? throttleDelay;
             this.TimestampTolerance = useDateForRetryCondition ? TimeSpan.FromMilliseconds(expectedNextRetryDelayMilliseconds) : TimeSpan.Zero;
 
             HttpResponseMessage? responseMessage = null;
