@@ -255,8 +255,9 @@ internal static class ProtobufOtlpTraceSerializer
         writePosition = WriteTraceFlags(buffer, writePosition, activity.ActivityTraceFlags, activity.HasRemoteParent, ProtobufOtlpTraceFieldNumberConstants.Span_Flags);
         writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpTraceFieldNumberConstants.Span_Name, activity.DisplayName);
         writePosition = ProtobufSerializer.WriteEnumWithTag(buffer, writePosition, ProtobufOtlpTraceFieldNumberConstants.Span_Kind, (int)activity.Kind + 1);
-        writePosition = ProtobufSerializer.WriteFixed64WithTag(buffer, writePosition, ProtobufOtlpTraceFieldNumberConstants.Span_Start_Time_Unix_Nano, (ulong)activity.StartTimeUtc.ToUnixTimeNanoseconds());
-        writePosition = ProtobufSerializer.WriteFixed64WithTag(buffer, writePosition, ProtobufOtlpTraceFieldNumberConstants.Span_End_Time_Unix_Nano, (ulong)(activity.StartTimeUtc.ToUnixTimeNanoseconds() + activity.Duration.ToNanoseconds()));
+        var startTimeUnixNano = activity.StartTimeUtc.ToUnixTimeNanoseconds();
+        writePosition = ProtobufSerializer.WriteFixed64WithTag(buffer, writePosition, ProtobufOtlpTraceFieldNumberConstants.Span_Start_Time_Unix_Nano, (ulong)startTimeUnixNano);
+        writePosition = ProtobufSerializer.WriteFixed64WithTag(buffer, writePosition, ProtobufOtlpTraceFieldNumberConstants.Span_End_Time_Unix_Nano, (ulong)(startTimeUnixNano + activity.Duration.ToNanoseconds()));
 
         (writePosition, var statusCode, var statusMessage) = WriteActivityTags(buffer, writePosition, sdkLimitOptions, activity);
         writePosition = WriteSpanEvents(buffer, writePosition, sdkLimitOptions, activity);
