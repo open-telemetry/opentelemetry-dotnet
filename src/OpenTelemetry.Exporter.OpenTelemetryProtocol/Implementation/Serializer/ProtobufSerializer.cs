@@ -21,6 +21,12 @@ internal static class ProtobufSerializer
     private const int Fixed64Size = 8;
     private const int MaskBitsLow = 0b_0111_1111;
     private const int MaskBitHigh = 0b_1000_0000;
+
+    // A UTF-16 character encodes to at most 3 UTF-8 bytes (a surrogate pair encodes to 4
+    // bytes across 2 characters, so 3 is the per-character worst case), so any string of
+    // this length or shorter encodes to at most MaskBitsLow bytes and its protobuf length
+    // prefix therefore always fits in a single varint byte.
+    private const int MaxCharsWithSingleByteUtf8Length = MaskBitsLow / 3;
 #if NETFRAMEWORK || NETSTANDARD2_0
     private const int MaxThreadStaticCharBufferSize = 1024;
 #endif
@@ -258,6 +264,34 @@ internal static class ProtobufSerializer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteStringWithTag(byte[] buffer, int writePosition, int fieldNumber, string value)
     {
+        // A string this short cannot encode to more than MaskBitsLow bytes, so its length
+        // prefix is always a single varint byte. Reserving that byte and filling it in once
+        // the characters have been encoded removes the separate GetByteCount pass, roughly
+        // halving the cost of writing a short string. Attribute keys and span names go
+        // through here, so this runs many times per exported item.
+        if (value.Length <= MaxCharsWithSingleByteUtf8Length)
+        {
+            writePosition = WriteTag(buffer, writePosition, fieldNumber, ProtobufWireType.LEN);
+
+            var lengthPosition = writePosition++;
+
+            // Claim the reserved byte before encoding. It keeps the out-of-space
+            // failure as IndexOutOfRangeException the same as the slower path.
+            buffer[lengthPosition] = 0;
+
+#if NETFRAMEWORK || NETSTANDARD2_0
+            var bytesWritten = Utf8Encoding.GetBytes(value, 0, value.Length, buffer, writePosition);
+#else
+            var bytesWritten = Utf8Encoding.GetBytes(value.AsSpan(), buffer.AsSpan(writePosition));
+#endif
+
+            Debug.Assert(bytesWritten <= MaskBitsLow, "bytesWritten did not fit in a single byte varint");
+
+            buffer[lengthPosition] = (byte)bytesWritten;
+
+            return writePosition + bytesWritten;
+        }
+
         var numberOfUtf8CharsInString = GetNumberOfUtf8CharsInString(value);
         return WriteStringWithTag(buffer, writePosition, fieldNumber, numberOfUtf8CharsInString, value);
     }
