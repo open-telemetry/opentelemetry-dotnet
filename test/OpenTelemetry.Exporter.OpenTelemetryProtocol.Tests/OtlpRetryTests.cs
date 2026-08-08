@@ -11,6 +11,18 @@ public class OtlpRetryTests
 
     public static TheoryData<HttpRetryTestCase> HttpRetryTestData => HttpRetryTestCase.GetHttpTestCases();
 
+#if NET
+    [Theory]
+    [InlineData(HttpRequestError.ConnectionError, true)]
+    [InlineData(HttpRequestError.UserAuthenticationError, false)]
+    public void IsRetryableHttpRequestErrorTest(HttpRequestError error, bool expected)
+    {
+        var response = new ExportClientHttpResponse(false, default, null, new HttpRequestException(error));
+
+        Assert.Equal(expected, OtlpRetry.IsRetryable(response));
+    }
+#endif
+
     [Theory]
     [MemberData(nameof(GrpcRetryTestData))]
     public void TryGetGrpcRetryResultTest(GrpcRetryTestCase testCase)
