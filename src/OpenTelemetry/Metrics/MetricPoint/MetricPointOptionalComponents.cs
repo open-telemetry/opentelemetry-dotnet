@@ -47,9 +47,7 @@ internal sealed class MetricPointOptionalComponents
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void ReleaseLock()
-    {
-        Interlocked.Exchange(ref this.isCriticalSectionOccupied, 0);
-    }
+        => Volatile.Write(ref this.isCriticalSectionOccupied, 0);
 
     // Note: This method is marked as NoInlining because the whole point of it
     // is to avoid the initialization of SpinWait unless it is needed.
