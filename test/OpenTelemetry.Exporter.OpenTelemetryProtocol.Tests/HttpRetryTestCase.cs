@@ -31,7 +31,7 @@ public class HttpRetryTestCase
     [
         new("NetworkError", [new(statusCode: null)]),
         new("NetworkError with expired deadline", [new(statusCode: null, isDeadlineExceeded: true, expectedSuccess: false)]),
-#if NET8_0_OR_GREATER
+#if NET
         new("Unknown HttpRequestError", [new(statusCode: null, httpRequestException: new(HttpRequestError.Unknown))]),
         new("NameResolutionError HttpRequestError", [new(statusCode: null, httpRequestException: new(HttpRequestError.NameResolutionError))]),
         new("ConnectionError HttpRequestError", [new(statusCode: null, httpRequestException: new(HttpRequestError.ConnectionError))]),

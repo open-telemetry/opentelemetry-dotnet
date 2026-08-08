@@ -307,7 +307,7 @@ internal static class OtlpRetry
     };
 
     private static bool IsHttpRequestExceptionRetryable(Exception? exception) =>
-#if NET8_0_OR_GREATER
+#if NET
     exception is not HttpRequestException
     {
         HttpRequestError:

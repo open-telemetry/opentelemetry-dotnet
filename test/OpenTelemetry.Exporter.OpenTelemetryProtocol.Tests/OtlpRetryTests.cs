@@ -11,7 +11,7 @@ public class OtlpRetryTests
 
     public static TheoryData<HttpRetryTestCase> HttpRetryTestData => HttpRetryTestCase.GetHttpTestCases();
 
-#if NET8_0_OR_GREATER
+#if NET
     [Theory]
     [InlineData(HttpRequestError.ConnectionError, true)]
     [InlineData(HttpRequestError.UserAuthenticationError, false)]
