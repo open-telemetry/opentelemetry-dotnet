@@ -32,9 +32,11 @@ public class JaegerPropagator : TextMapPropagator
     private static readonly SearchValues<char> DelimiterHintChars = SearchValues.Create(":%");
 #endif
 
+    private static readonly HashSet<string> AllFields = [JaegerHeader];
+
     /// <inheritdoc/>
 #pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
-    public override ISet<string> Fields => new HashSet<string> { JaegerHeader };
+    public override ISet<string> Fields => AllFields;
 #pragma warning restore CS0809 // Obsolete member overrides non-obsolete member
 
     /// <inheritdoc/>

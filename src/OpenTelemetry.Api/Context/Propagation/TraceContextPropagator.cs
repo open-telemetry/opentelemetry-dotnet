@@ -28,8 +28,10 @@ public class TraceContextPropagator : TextMapPropagator
     private static readonly int OptionsLength = "00".Length;
     private static readonly int TraceparentLengthV0 = "00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-00".Length;
 
+    private static readonly HashSet<string> AllFields = [TraceState, TraceParent];
+
     /// <inheritdoc/>
-    public override ISet<string> Fields => new HashSet<string> { TraceState, TraceParent };
+    public override ISet<string> Fields => AllFields;
 
     /// <inheritdoc/>
     public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>?> getter)
