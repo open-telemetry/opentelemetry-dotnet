@@ -370,6 +370,31 @@ internal static class ProtobufSerializer
 
     internal static void ReturnBuffer(ArrayPool<byte> pool, byte[] buffer) => pool.Return(buffer, clearArray: true);
 
+    /// <summary>
+    /// Returns a buffer previously obtained from <see cref="RentBuffer"/> back to the
+    /// pool, scrubbing only the leading <paramref name="writtenLength"/> bytes.
+    /// </summary>
+    /// <param name="buffer">The buffer to return.</param>
+    /// <param name="writtenLength">The number of leading bytes that may contain data.</param>
+    internal static void ReturnBuffer(byte[] buffer, int writtenLength)
+        => ReturnBuffer(ArrayPool<byte>.Shared, buffer, writtenLength);
+
+    /// <inheritdoc cref="ReturnBuffer(byte[], int)"/>
+    /// <param name="pool">The pool to return the buffer to.</param>
+    /// <param name="buffer">The buffer to return.</param>
+    /// <param name="writtenLength">The number of leading bytes that may contain data.</param>
+    internal static void ReturnBuffer(ArrayPool<byte> pool, byte[] buffer, int writtenLength)
+    {
+        Debug.Assert((uint)writtenLength <= (uint)buffer.Length, "writtenLength was out of range");
+
+        if (writtenLength > 0)
+        {
+            buffer.AsSpan(0, writtenLength).Clear();
+        }
+
+        pool.Return(buffer, clearArray: false);
+    }
+
     internal static bool IncreaseBufferSize(ref byte[] buffer, OtlpSignalType otlpSignalType)
     {
         if (buffer.Length >= MaxBufferSize)

@@ -31,6 +31,14 @@ internal sealed class SerializationBuffer(int initialSize)
 
     private readonly int initialSize = initialSize;
     private int nextSize = initialSize;
+
+    // High-water mark of the number of leading bytes of the buffer currently held by
+    // the caller that may contain serialized telemetry. Only this prefix has to be
+    // scrubbed before the buffer goes back to the shared pool; the bytes beyond it
+    // were never written by this instance. A retained buffer (legacy target
+    // frameworks only) keeps its contents across exports, so the mark has to persist
+    // rather than being derived from a single export's serialized length.
+    private int dirtyLength;
 #if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER
     private byte[]? retained;
 #endif
@@ -44,9 +52,18 @@ internal sealed class SerializationBuffer(int initialSize)
     {
 #if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER
         var buffer = this.retained;
-        this.retained = null;
-        return buffer ?? ProtobufSerializer.RentBuffer(this.nextSize);
+        if (buffer != null)
+        {
+            // The retained buffer still holds the previous export's payload, so its
+            // existing dirty prefix carries over.
+            this.retained = null;
+            return buffer;
+        }
+
+        this.dirtyLength = 0;
+        return ProtobufSerializer.RentBuffer(this.nextSize);
 #else
+        this.dirtyLength = 0;
         return ProtobufSerializer.RentBuffer(this.nextSize);
 #endif
     }
@@ -64,6 +81,9 @@ internal sealed class SerializationBuffer(int initialSize)
         // Use the actual payload length rather than the rented capacity so a single
         // large export does not force every subsequent export to rent the same size.
         this.nextSize = Math.Max(this.initialSize, serializedLength);
+
+        var dirtyLength = Math.Max(this.dirtyLength, serializedLength);
+
 #if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER
         if (buffer.Length > MaxPooledArrayLength &&
             serializedLength > MaxPooledArrayLength &&
@@ -71,17 +91,18 @@ internal sealed class SerializationBuffer(int initialSize)
         {
             // The pool may not reuse a buffer this large. Keep it only while it is
             // well utilized so a transient spike does not remain the steady size.
+            // The payload is left in place for the next export to overwrite, so the
+            // dirty prefix has to be carried over.
             this.retained = buffer;
+            this.dirtyLength = dirtyLength;
+            return;
         }
-        else
-        {
-            // Return pool-reusable buffers and buffers whose excess capacity should
-            // not be retained by this exporter.
-            ProtobufSerializer.ReturnBuffer(buffer);
-        }
-#else
-        ProtobufSerializer.ReturnBuffer(buffer);
 #endif
+
+        // Return pool-reusable buffers and buffers whose excess capacity should
+        // not be retained by this exporter.
+        this.dirtyLength = 0;
+        ProtobufSerializer.ReturnBuffer(buffer, dirtyLength);
     }
 
     /// <summary>
@@ -96,7 +117,9 @@ internal sealed class SerializationBuffer(int initialSize)
         if (buffer != null)
         {
             this.retained = null;
-            ProtobufSerializer.ReturnBuffer(buffer);
+            var dirtyLength = this.dirtyLength;
+            this.dirtyLength = 0;
+            ProtobufSerializer.ReturnBuffer(buffer, dirtyLength);
         }
 #endif
     }
@@ -109,6 +132,10 @@ internal sealed class SerializationBuffer(int initialSize)
     public void Discard(byte[] buffer)
     {
         this.nextSize = this.initialSize;
+        this.dirtyLength = 0;
+
+        // Serialization failed, so how far into the buffer the writer got is unknown.
+        // Fall back to clearing the whole array.
         ProtobufSerializer.ReturnBuffer(buffer);
     }
 }
