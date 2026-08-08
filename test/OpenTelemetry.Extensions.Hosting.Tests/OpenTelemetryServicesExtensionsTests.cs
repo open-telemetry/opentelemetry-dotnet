@@ -186,7 +186,11 @@ public class OpenTelemetryServicesExtensionsTests
                 deferredTracerProviderBuilder.Configure((sp, builder) =>
                 {
                     innerTestExecuted = true;
+#if NET10_0
                     Assert.Throws<NotSupportedException>(() => sp.GetService<TracerProvider>());
+#else
+                    Assert.Throws<InvalidOperationException>(() => sp.GetService<TracerProvider>());
+#endif
                 });
             }
         });
@@ -309,7 +313,11 @@ public class OpenTelemetryServicesExtensionsTests
                 deferredMeterProviderBuilder.Configure((sp, builder) =>
                 {
                     innerTestExecuted = true;
+#if NET10_0
                     Assert.Throws<NotSupportedException>(() => sp.GetService<MeterProvider>());
+#else
+                    Assert.Throws<InvalidOperationException>(() => sp.GetService<MeterProvider>());
+#endif
                 });
             }
         });
@@ -426,7 +434,11 @@ public class OpenTelemetryServicesExtensionsTests
                 deferredLoggerProviderBuilder.Configure((sp, builder) =>
                 {
                     innerTestExecuted = true;
+#if NET10_0
                     Assert.Throws<NotSupportedException>(() => sp.GetService<LoggerProvider>());
+#else
+                    Assert.Throws<InvalidOperationException>(() => sp.GetService<LoggerProvider>());
+#endif
                 });
             }
         });

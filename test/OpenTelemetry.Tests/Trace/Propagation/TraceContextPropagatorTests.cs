@@ -78,10 +78,7 @@ public class TraceContextPropagatorTests
 
         Assert.Equal(ActivityTraceId.CreateFromString(TraceId.AsSpan()), context.ActivityContext.TraceId);
         Assert.Equal(ActivitySpanId.CreateFromString(SpanId.AsSpan()), context.ActivityContext.SpanId);
-
-        // https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899
-        // will change this to use ActivityTraceFlags.RandomTraceId instead.
-        Assert.Equal((ActivityTraceFlags)2, context.ActivityContext.TraceFlags);
+        Assert.Equal(ActivityTraceFlags.RandomTraceId, context.ActivityContext.TraceFlags);
 
         Assert.True(context.ActivityContext.IsValid());
     }
@@ -101,10 +98,7 @@ public class TraceContextPropagatorTests
         Assert.Equal(ActivitySpanId.CreateFromString(SpanId.AsSpan()), context.ActivityContext.SpanId);
 
         Assert.True(context.ActivityContext.TraceFlags.HasFlag(ActivityTraceFlags.Recorded));
-
-        // https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899
-        // will change this to use ActivityTraceFlags.RandomTraceId instead.
-        Assert.True(context.ActivityContext.TraceFlags.HasFlag((ActivityTraceFlags)2));
+        Assert.True(context.ActivityContext.TraceFlags.HasFlag(ActivityTraceFlags.RandomTraceId));
 
         Assert.True(context.ActivityContext.IsValid());
     }
@@ -428,9 +422,7 @@ public class TraceContextPropagatorTests
             { TraceState, $"congo=lZWRzIHRoNhcm5hbCBwbGVhc3VyZS4,rojo=00-{traceId}-00f067aa0ba902b7-02" },
         };
 
-        // https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899
-        // will change this to use ActivityTraceFlags.RandomTraceId instead.
-        var activityContext = new ActivityContext(traceId, spanId, (ActivityTraceFlags)2, expectedHeaders[TraceState]);
+        var activityContext = new ActivityContext(traceId, spanId, ActivityTraceFlags.RandomTraceId, expectedHeaders[TraceState]);
         var propagationContext = new PropagationContext(activityContext, default);
         var carrier = new Dictionary<string, string>();
         var propagator = new TraceContextPropagator();

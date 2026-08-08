@@ -308,7 +308,7 @@ public class ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBuff
         var listener = new ActivityListener
         {
             ShouldListenTo = source => Array.IndexOf(sources, source) >= 0,
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
+            Sample = (ref _) => ActivitySamplingResult.AllDataAndRecorded,
         };
 
         ActivitySource.AddActivityListener(listener);
