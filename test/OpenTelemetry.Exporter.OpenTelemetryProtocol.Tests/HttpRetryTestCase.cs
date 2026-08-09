@@ -41,7 +41,7 @@ public class HttpRetryTestCase
         new("VersionNegotiationError HttpRequestError", [new(statusCode: null, expectedSuccess: false, httpRequestException: new(HttpRequestError.VersionNegotiationError))]),
         new("UserAuthenticationError HttpRequestError", [new(statusCode: null, expectedSuccess: false, httpRequestException: new(HttpRequestError.UserAuthenticationError))]),
         new("ProxyTunnelError HttpRequestError", [new(statusCode: null, httpRequestException: new(HttpRequestError.ProxyTunnelError))]),
-        new("InvalidResponse HttpRequestError", [new(statusCode: null, httpRequestException: new(HttpRequestError.InvalidResponse))]),
+        new("InvalidResponse HttpRequestError", [new(statusCode: null, expectedSuccess: false, httpRequestException: new(HttpRequestError.InvalidResponse))]),
         new("ResponseEnded HttpRequestError", [new(statusCode: null, httpRequestException: new(HttpRequestError.ResponseEnded))]),
         new("ConfigurationLimitExceeded HttpRequestError", [new(statusCode: null, expectedSuccess: false, httpRequestException: new(HttpRequestError.ConfigurationLimitExceeded))]),
 #endif
