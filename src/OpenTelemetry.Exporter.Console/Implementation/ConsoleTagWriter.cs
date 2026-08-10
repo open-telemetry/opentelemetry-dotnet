@@ -4,6 +4,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Text;
+using System.Text.Json;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter;
@@ -87,45 +88,43 @@ internal sealed class ConsoleTagWriter : JsonStringArrayTagWriter<ConsoleTagWrit
 
     protected override void WriteKvListTag(ref ConsoleTag state, string key, IEnumerable<KeyValuePair<string, object?>> kvList, int? tagValueMaxLength)
     {
-        var sb = new StringBuilder();
-        sb.Append('{');
-        var first = true;
+        using var stream = new MemoryStream();
+        using var writer = new Utf8JsonWriter(stream);
+
+        writer.WriteStartObject();
         foreach (var kvp in kvList)
         {
             ConsoleTag nestedTag = default;
             if (this.TryWriteTag(ref nestedTag, kvp.Key, kvp.Value, tagValueMaxLength))
             {
-                if (!first)
-                {
-                    sb.Append(',');
-                }
-
-                first = false;
-                sb.Append('"');
-                AppendJsonEscaped(sb, kvp.Key);
-                sb.Append("\":");
+                writer.WritePropertyName(kvp.Key);
 
                 var tagValue = nestedTag.Value;
                 if (tagValue == null)
                 {
-                    sb.Append("null");
+                    writer.WriteNullValue();
                 }
                 else if (IsRawJsonValue(kvp.Value, tagValue))
                 {
-                    sb.Append(tagValue);
+#if NET
+                    writer.WriteRawValue(tagValue);
+#else
+                    using var doc = JsonDocument.Parse(tagValue);
+                    doc.RootElement.WriteTo(writer);
+#endif
                 }
                 else
                 {
-                    sb.Append('"');
-                    AppendJsonEscaped(sb, tagValue);
-                    sb.Append('"');
+                    writer.WriteStringValue(tagValue);
                 }
             }
         }
 
-        sb.Append('}');
+        writer.WriteEndObject();
+        writer.Flush();
+
         state.Key = key;
-        state.Value = sb.ToString();
+        state.Value = Encoding.UTF8.GetString(stream.GetBuffer(), 0, (int)stream.Length);
     }
 
     /// <summary>
@@ -134,9 +133,13 @@ internal sealed class ConsoleTagWriter : JsonStringArrayTagWriter<ConsoleTagWrit
     /// </summary>
     private static bool IsRawJsonValue(object? originalValue, string tagValue)
     {
+        if (originalValue is float or double)
+        {
+            return tagValue is not ("NaN" or "Infinity" or "-Infinity");
+        }
+
         if (originalValue is bool
-            or byte or sbyte or short or ushort or int or uint or long
-            or float or double)
+            or byte or sbyte or short or ushort or int or uint or long)
         {
             return true;
         }
@@ -153,43 +156,6 @@ internal sealed class ConsoleTagWriter : JsonStringArrayTagWriter<ConsoleTagWrit
         }
 
         return false;
-    }
-
-    private static void AppendJsonEscaped(StringBuilder sb, string value)
-    {
-        foreach (var c in value)
-        {
-            switch (c)
-            {
-                case '"':
-                    sb.Append("\\\"");
-                    break;
-                case '\\':
-                    sb.Append("\\\\");
-                    break;
-                case '\n':
-                    sb.Append("\\n");
-                    break;
-                case '\r':
-                    sb.Append("\\r");
-                    break;
-                case '\t':
-                    sb.Append("\\t");
-                    break;
-                default:
-                    if (c < ' ')
-                    {
-                        sb.Append("\\u");
-                        sb.Append(((int)c).ToString("x4", CultureInfo.InvariantCulture));
-                    }
-                    else
-                    {
-                        sb.Append(c);
-                    }
-
-                    break;
-            }
-        }
     }
 
     internal struct ConsoleTag
