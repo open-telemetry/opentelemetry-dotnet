@@ -70,8 +70,6 @@ internal static class InstrumentTypeInspector
             return false;
         }
 
-        var valueType = instrumentType.GetGenericArguments()[0];
-
         return true;
     }
 }
