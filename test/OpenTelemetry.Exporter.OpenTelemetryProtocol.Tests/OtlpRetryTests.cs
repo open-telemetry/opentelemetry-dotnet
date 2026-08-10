@@ -22,6 +22,22 @@ public class OtlpRetryTests
         Assert.Equal(expected, OtlpRetry.IsRetryable(response));
     }
 #endif
+  
+    [Fact]
+    public void IsRetryable_GrpcUnexpectedExceptionResponse_ReturnsTrue()
+    {
+        // OtlpGrpcExportClient catches unexpected exceptions and returns a response with
+        // StatusCode.Unavailable so that any blob written to persistent storage is retained
+        // rather than deleted. Guard that the classification stays retryable.
+        var response = new ExportClientGrpcResponse(
+            success: false,
+            deadlineUtc: DateTime.UtcNow.AddSeconds(10),
+            exception: new InvalidOperationException("unexpected"),
+            status: new Status(StatusCode.Unavailable, "Unexpected error - retryable"),
+            grpcStatusDetailsHeader: null);
+
+        Assert.True(OtlpRetry.IsRetryable(response));
+    }
 
     [Theory]
     [MemberData(nameof(GrpcRetryTestData))]

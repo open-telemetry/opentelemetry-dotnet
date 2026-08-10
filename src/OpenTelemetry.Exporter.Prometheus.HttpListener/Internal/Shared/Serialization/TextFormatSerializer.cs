@@ -14,7 +14,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
-using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 
@@ -390,7 +389,7 @@ internal abstract class TextFormatSerializer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteDouble(byte[] buffer, int cursor, double value)
     {
-        if (MathHelper.IsFinite(value))
+        if (double.IsFinite(value))
         {
             // From https://prometheus.io/docs/specs/om/open_metrics_spec/#considerations-canonical-numbers:
             // A warning to implementers in C and other languages that share its printf implementation:
