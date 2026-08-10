@@ -36,7 +36,7 @@ internal static class PrometheusTranslationStrategyExtensions
     /// <para>
     /// The specification requires the translation strategy to be applied first, with content
     /// negotiation then applying a second translation of the resulting names:
-    /// https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk_exporters/prometheus.md#interaction-with-translation-strategy.
+    /// https://github.com/open-telemetry/opentelemetry-specification/blob/51700bd58c79c057468b66c3fd8d075444d6140c/specification/metrics/sdk_exporters/prometheus.md#interaction-with-translation-strategy.
     /// The two passes compose, so negotiation can escape names further but can never revert the
     /// escaping the strategy has already applied.
     /// </para>

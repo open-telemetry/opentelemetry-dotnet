@@ -126,7 +126,7 @@ internal static class PrometheusHeadersParser
             {
                 // A request that does not negotiate an escaping scheme is treated the same as one
                 // negotiating "underscores", as required by the specification's table at
-                // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk_exporters/prometheus.md#interaction-with-translation-strategy.
+                // https://github.com/open-telemetry/opentelemetry-specification/blob/51700bd58c79c057468b66c3fd8d075444d6140c/specification/metrics/sdk_exporters/prometheus.md#interaction-with-translation-strategy.
                 // The exporter's translation strategy does not change what is negotiated here; it
                 // is applied when names are constructed, before this scheme is layered on top.
                 escaping ??= PrometheusProtocol.UnderscoresEscaping;
