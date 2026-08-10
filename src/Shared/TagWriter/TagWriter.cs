@@ -92,9 +92,6 @@ internal abstract class TagWriter<TTagState, TArrayState>
             case float f:
                 this.WriteFloatingPointTag(ref state, key, f);
                 break;
-            case double d:
-                this.WriteFloatingPointTag(ref state, key, d);
-                break;
             case IEnumerable<KeyValuePair<string, object?>> kvList:
                 try
                 {
