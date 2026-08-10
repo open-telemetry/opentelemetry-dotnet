@@ -11,6 +11,12 @@ namespace OpenTelemetry;
 /// </summary>
 public class BatchActivityExportProcessor : BatchExportProcessor<Activity>
 {
+    private static long instanceCounter = -1;
+
+    private readonly KeyValuePair<string, object?>[] successTags;
+    private readonly KeyValuePair<string, object?>[] queueFullTags;
+    private readonly KeyValuePair<string, object?>[] alreadyShutdownTags;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="BatchActivityExportProcessor"/> class.
     /// </summary>
@@ -32,6 +38,17 @@ public class BatchActivityExportProcessor : BatchExportProcessor<Activity>
             exporterTimeoutMilliseconds,
             maxExportBatchSize)
     {
+        var index = Interlocked.Increment(ref instanceCounter);
+        var componentName = "batching_span_processor/" + index.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        var baseTags = new KeyValuePair<string, object?>[]
+        {
+            new("otel.component.type", "batching_span_processor"),
+            new("otel.component.name", componentName),
+        };
+        this.successTags = baseTags;
+        this.queueFullTags = [.. baseTags, new("error.type", "queue_full")];
+        this.alreadyShutdownTags = [.. baseTags, new("error.type", "already_shutdown")];
+        this.ExportStarted = this.RecordSuccessfulProcessing;
     }
 
     /// <inheritdoc />
@@ -42,9 +59,40 @@ public class BatchActivityExportProcessor : BatchExportProcessor<Activity>
         if (!data.Recorded)
 #pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
         {
+            if (data.IsAllDataRequested)
+            {
+                // RECORD_ONLY: the span reaches the processor but by design is never
+                // handed to an exporter, so its processing is complete and successful.
+                SdkSelfObservability.SpanProcessedCounter.Add(1, this.successTags);
+            }
+
+            // Note: TracerProviderSdk does not invoke processors for activities with
+            // IsAllDataRequested set to false (spans the sampler dropped), so that case is
+            // only reachable when OnEnd is called directly. Such spans are not counted.
             return;
         }
 
-        this.OnExport(data);
+        if (!this.TryEnterOnEnd())
+        {
+            SdkSelfObservability.SpanProcessedCounter.Add(1, this.alreadyShutdownTags);
+            return;
+        }
+
+        try
+        {
+            this.OnExport(data);
+        }
+        finally
+        {
+            this.ExitOnEnd();
+        }
     }
+
+    // TODO: https://github.com/open-telemetry/opentelemetry-dotnet/issues/7586
+    // Consider an ObservableCounter instead of per-item Counter.Add().
+    internal override void OnItemDropped()
+        => SdkSelfObservability.SpanProcessedCounter.Add(1, this.queueFullTags);
+
+    private void RecordSuccessfulProcessing(long count)
+        => SdkSelfObservability.SpanProcessedCounter.Add(count, this.successTags);
 }

@@ -115,6 +115,24 @@ public class OtlpHttpExportClientTests
     }
 
     [Fact]
+    public void SendExportRequest_UnexpectedException_ReturnsRetryableFailureResponse()
+    {
+        // A non-HTTP exception from a user-supplied DelegatingHandler (e.g. an auth handler
+        // that throws InvalidOperationException on a failed token refresh) must be caught and
+        // returned as a retryable failure rather than propagating out of SendExportRequest,
+        // which would kill the persistent-storage retry thread.
+        var exception = new InvalidOperationException("Auth handler failure.");
+
+        var response = SendExportRequestThatThrows(exception);
+
+        Assert.NotNull(response);
+        Assert.False(response.Success);
+        Assert.NotNull(response.Exception);
+        var httpResponse = Assert.IsType<ExportClientHttpResponse>(response);
+        Assert.True(OtlpRetry.IsRetryable(httpResponse), "An unexpected exception must produce a retryable failure response.");
+    }
+
+    [Fact]
     public void SendExportRequest_Timeout_ReturnsRetryableFailureResponse()
     {
         // A TaskCanceledException whose InnerException is a TimeoutException is
@@ -145,6 +163,64 @@ public class OtlpHttpExportClientTests
         Assert.False(response.Success);
         Assert.NotNull(response.Exception);
         Assert.True(RetryHelper.ShouldRetryRequest(response), "An unexpected cancellation should be retryable.");
+    }
+
+    [Fact]
+    public void SendExportRequest_TimeoutWithCallerCancellationRequested_Propagates()
+    {
+        // A TaskCanceledException with an inner TimeoutException must still propagate when
+        // the caller's token is also signaled. Without the cancellationToken guard in the
+        // when clause, the timeout catch fires first and swallows the caller cancellation.
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        var payload = "hello world"u8.ToArray();
+
+        using var testHandler = new ThrowingHttpMessageHandler(
+            new TaskCanceledException("The request timed out.", new TimeoutException()));
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false);
+
+        var exportClient = new OtlpHttpExportClient(
+            new OtlpExporterOptions
+            {
+                Endpoint = new Uri("http://localhost:4318"),
+                Protocol = OtlpExportProtocol.HttpProtobuf,
+                Compression = OtlpExportCompression.None,
+            },
+            httpClient,
+            string.Empty);
+
+        // Use ThrowsAny to accept TaskCanceledException (a subtype of OperationCanceledException),
+        // which HttpClient may produce when wrapping a timeout that coincides with caller cancellation.
+        Assert.ThrowsAny<OperationCanceledException>(() =>
+            exportClient.SendExportRequest(payload, payload.Length, DateTime.UtcNow.AddSeconds(10), cts.Token));
+    }
+
+    [Fact]
+    public void SendExportRequest_CallerCancellationRequested_Propagates()
+    {
+        // OperationCanceledException thrown when the caller's token is signaled must propagate
+        // rather than being swallowed and converted into a retryable response.
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        var payload = "hello world"u8.ToArray();
+
+        using var testHandler = new ThrowingHttpMessageHandler(new OperationCanceledException(cts.Token));
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false);
+
+        var exportClient = new OtlpHttpExportClient(
+            new OtlpExporterOptions
+            {
+                Endpoint = new Uri("http://localhost:4318"),
+                Protocol = OtlpExportProtocol.HttpProtobuf,
+                Compression = OtlpExportCompression.None,
+            },
+            httpClient,
+            string.Empty);
+
+        Assert.Throws<OperationCanceledException>(() =>
+            exportClient.SendExportRequest(payload, payload.Length, DateTime.UtcNow.AddSeconds(10), cts.Token));
     }
 
     private static ExportClientResponse SendExportRequestThatThrows(Exception exception)

@@ -20,6 +20,12 @@ Notes](../../RELEASENOTES.md).
   the serializer's per-thread state. For logs, this also leaked pooled instances.
   ([#7579](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7579))
 
+* Fixed the persistent-storage retry thread terminating permanently on an
+  unexpected exception, which silently disabled `disk` retry for the remaining
+  process lifetime while stored telemetry continued to accumulate and then
+  expire.
+  ([#7597](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7597))
+
 * Increase the maximum buffer size used for when exporting very large batches
   of telemetry, such as metrics with very high cardinality, to 256MiB. A batch
   whose serialized payload exceeds the limit is dropped in its entirety rather

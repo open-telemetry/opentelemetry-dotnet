@@ -11,6 +11,12 @@ namespace OpenTelemetry;
 /// </summary>
 public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
 {
+    private static long instanceCounter = -1;
+
+    private readonly KeyValuePair<string, object?>[] successTags;
+    private readonly KeyValuePair<string, object?>[] queueFullTags;
+    private readonly KeyValuePair<string, object?>[] alreadyShutdownTags;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="BatchLogRecordExportProcessor"/> class.
     /// </summary>
@@ -32,38 +38,70 @@ public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
             exporterTimeoutMilliseconds,
             maxExportBatchSize)
     {
+        var index = Interlocked.Increment(ref instanceCounter);
+        var componentName = "batching_log_processor/" + index.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        var baseTags = new KeyValuePair<string, object?>[]
+        {
+            new("otel.component.type", "batching_log_processor"),
+            new("otel.component.name", componentName),
+        };
+        this.successTags = baseTags;
+        this.queueFullTags = [.. baseTags, new("error.type", "queue_full")];
+        this.alreadyShutdownTags = [.. baseTags, new("error.type", "already_shutdown")];
+        this.ExportStarted = this.RecordSuccessfulProcessing;
     }
 
     /// <inheritdoc/>
     public override void OnEnd(LogRecord data)
     {
-        // Note: Intentionally not using Guard.ThrowIfNull to save prod cycles
-#pragma warning disable CA1062 // Validate arguments of public methods
-        switch (data.Source)
-#pragma warning restore CA1062 // Validate arguments of public methods
+        if (!this.TryEnterOnEnd())
         {
-            case LogRecord.LogRecordSource.FromSharedPool:
-                data.Buffer();
-                data.AddReference();
-                if (!this.TryExport(data))
-                {
-                    LogRecordSharedPool.Current.Return(data);
-                }
+            SdkSelfObservability.LogProcessedCounter.Add(1, this.alreadyShutdownTags);
+            return;
+        }
 
-                break;
+        try
+        {
+            // Note: Intentionally not using Guard.ThrowIfNull to save prod cycles
+#pragma warning disable CA1062 // Validate arguments of public methods
+            switch (data.Source)
+#pragma warning restore CA1062 // Validate arguments of public methods
+            {
+                case LogRecord.LogRecordSource.FromSharedPool:
+                    data.Buffer();
+                    data.AddReference();
+                    if (!this.TryExport(data))
+                    {
+                        LogRecordSharedPool.Current.Return(data);
+                    }
 
-            case LogRecord.LogRecordSource.CreatedManually:
-                data.Buffer();
-                this.TryExport(data);
-                break;
+                    break;
 
-            case LogRecord.LogRecordSource.FromThreadStaticPool:
-            default:
-                Debug.Assert(data.Source == LogRecord.LogRecordSource.FromThreadStaticPool, "LogRecord source was something unexpected");
+                case LogRecord.LogRecordSource.CreatedManually:
+                    data.Buffer();
+                    this.TryExport(data);
+                    break;
 
-                // Note: If we are using ThreadStatic pool we make a copy of the record.
-                this.TryExport(data.Copy());
-                break;
+                case LogRecord.LogRecordSource.FromThreadStaticPool:
+                default:
+                    Debug.Assert(data.Source == LogRecord.LogRecordSource.FromThreadStaticPool, "LogRecord source was something unexpected");
+
+                    // Note: If we are using ThreadStatic pool we make a copy of the record.
+                    this.TryExport(data.Copy());
+                    break;
+            }
+        }
+        finally
+        {
+            this.ExitOnEnd();
         }
     }
+
+    // TODO: https://github.com/open-telemetry/opentelemetry-dotnet/issues/7586
+    // Consider an ObservableCounter instead of per-item Counter.Add().
+    internal override void OnItemDropped()
+        => SdkSelfObservability.LogProcessedCounter.Add(1, this.queueFullTags);
+
+    private void RecordSuccessfulProcessing(long count)
+        => SdkSelfObservability.LogProcessedCounter.Add(count, this.successTags);
 }
