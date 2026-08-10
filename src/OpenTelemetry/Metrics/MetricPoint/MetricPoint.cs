@@ -282,20 +282,29 @@ public struct MetricPoint
     /// Attempts to retrieve the sum value of the histogram associated with the metric point.
     /// </summary>
     /// <remarks>
-    /// Applies to <see cref="MetricType.Histogram"/> metric type.
+    /// Applies to <see cref="MetricType.Histogram"/> and <see cref="MetricType.ExponentialHistogram"/> metric types.
     /// </remarks>
     /// <param name="sum">The histogram sum value if available.</param>
     /// <returns><see langword="true"/> if sum is available; <see langword="false"/> otherwise.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly bool TryGetHistogramSum(out double sum)
     {
-        if (!this.aggregatorStore.RecordSum)
+        if (!this.aggregatorStore.RecordSum ||
+            this.aggType is not AggregationType.HistogramWithBuckets and
+                not AggregationType.Histogram and
+                not AggregationType.HistogramWithMinMaxBuckets and
+                not AggregationType.HistogramWithMinMax and
+                not AggregationType.Base2ExponentialHistogram and
+                not AggregationType.Base2ExponentialHistogramWithMinMax)
         {
             sum = 0;
             return false;
         }
 
-        sum = this.GetHistogramSum();
+        sum = this.mpComponents!.HistogramBuckets != null
+            ? this.mpComponents.HistogramBuckets.SnapshotSum
+            : this.mpComponents.Base2ExponentialBucketHistogram!.SnapshotSum;
+
         return true;
     }
 
