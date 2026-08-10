@@ -22,7 +22,7 @@ public class OtlpRetryTests
         Assert.Equal(expected, OtlpRetry.IsRetryable(response));
     }
 #endif
-  
+
     [Fact]
     public void IsRetryable_GrpcUnexpectedExceptionResponse_ReturnsTrue()
     {
