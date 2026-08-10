@@ -15,6 +15,12 @@ Notes](../../RELEASENOTES.md).
   blocks, which could stall concurrent scrapes being waited on.
   ([#7571](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7571))
 
+* Fixed the interaction between `PrometheusAspNetCoreOptions.TranslationStrategy`
+  and content negotiation. The configured strategy is now applied before content
+  negotiation, which can only escape names further, instead of the negotiated
+  escaping scheme replacing the strategy's.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.17.0-beta.1
 
 Released 2026-Jul-16

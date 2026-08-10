@@ -32,6 +32,7 @@ internal sealed class PrometheusCollectionManager
     private readonly PrometheusExporter.ExportFunc onCollectRef;
     private readonly Dictionary<Metric, PrometheusMetric> metricsCache;
     private readonly int maxBufferSize;
+    private readonly PrometheusTranslationStrategy translationStrategy;
 
     private int metricsCacheCount;
     private IReadOnlyList<KeyValuePair<string, object>>? resourceConstantLabels;
@@ -52,6 +53,7 @@ internal sealed class PrometheusCollectionManager
         this.metricsCache = [];
         this.GetElapsedTime = () => Stopwatch.GetElapsedTime(this.baseTimestamp);
         this.maxBufferSize = this.exporter.MaxScrapeResponseSizeBytes;
+        this.translationStrategy = this.exporter.TranslationStrategy;
     }
 
     internal Func<DateTime> UtcNow { get; set; } = static () => DateTime.UtcNow;
@@ -419,7 +421,11 @@ internal sealed class PrometheusCollectionManager
     {
         try
         {
-            var serializer = TextFormatSerializer.GetSerializer(protocol);
+            // The configured translation strategy escapes names first and content negotiation then
+            // applies a second escaping pass on top of the result, so the two are combined here.
+            var serializer = TextFormatSerializer.GetSerializer(
+                protocol,
+                this.translationStrategy.GetEffectiveEscapingScheme(protocol.EscapingScheme));
 
             var cursor = this.targetInfoEnabled ? this.WriteTargetInfo(serializer, state) : 0;
             var metricStates = this.GetMetricStates(serializer, metrics);

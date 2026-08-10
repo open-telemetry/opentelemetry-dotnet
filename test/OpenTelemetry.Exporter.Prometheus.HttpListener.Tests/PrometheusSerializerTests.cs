@@ -1732,7 +1732,7 @@ public sealed partial class PrometheusSerializerTests
             version: new Version(2, 0, 0),
             isOpenMetrics: isOpenMetrics);
 
-        Assert.Throws<NotSupportedException>(() => TextFormatSerializer.GetSerializer(protocol));
+        Assert.Throws<NotSupportedException>(() => TextFormatSerializer.GetSerializer(protocol, protocol.EscapingScheme));
     }
 
     [Theory]
@@ -1879,7 +1879,7 @@ public sealed partial class PrometheusSerializerTests
             PrometheusProtocol.OpenMetricsV1,
             isOpenMetrics: true);
 
-        var serializer = TextFormatSerializer.GetSerializer(protocol);
+        var serializer = TextFormatSerializer.GetSerializer(protocol, protocol.EscapingScheme);
 
         var cursor = serializer.WriteMetric(
             buffer,
@@ -2047,7 +2047,7 @@ public sealed partial class PrometheusSerializerTests
             PrometheusProtocol.OpenMetricsV1,
             isOpenMetrics: true);
 
-        var serializer = TextFormatSerializer.GetSerializer(protocol);
+        var serializer = TextFormatSerializer.GetSerializer(protocol, protocol.EscapingScheme);
 
         var cursor = serializer.WriteMetric(
             buffer,
@@ -2092,7 +2092,7 @@ public sealed partial class PrometheusSerializerTests
             PrometheusProtocol.OpenMetricsV1,
             isOpenMetrics: true);
 
-        var serializer = TextFormatSerializer.GetSerializer(protocol);
+        var serializer = TextFormatSerializer.GetSerializer(protocol, protocol.EscapingScheme);
 
         var cursor = serializer.WriteMetric(
             buffer,
@@ -2263,7 +2263,7 @@ public sealed partial class PrometheusSerializerTests
             useOpenMetrics ? PrometheusProtocol.OpenMetricsV1 : PrometheusProtocol.PrometheusV1,
             isOpenMetrics: useOpenMetrics);
 
-        var serializer = TextFormatSerializer.GetSerializer(protocol);
+        var serializer = TextFormatSerializer.GetSerializer(protocol, protocol.EscapingScheme);
 
         var cursor = serializer.WriteMetric(
             buffer,

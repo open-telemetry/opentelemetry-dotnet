@@ -87,7 +87,7 @@ public class PrometheusSerializerEscapingBenchmarks
 
         var protocol = new PrometheusProtocol(mediaType, this.Escaping, version, isOpenMetrics);
 
-        this.serializer = TextFormatSerializer.GetSerializer(protocol);
+        this.serializer = TextFormatSerializer.GetSerializer(protocol, protocol.EscapingScheme);
 
         // Warm the per-scheme name cache so the benchmark measures steady-state serialization, which
         // is what a long-running scrape endpoint experiences (the escaped name sets are computed
