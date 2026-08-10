@@ -179,6 +179,7 @@ public class OtlpGrpcExportClientTests
         Assert.False(response.Success);
     }
 
+    [Fact]
     public void SendExportRequest_UnexpectedException_ReturnsRetryableUnavailableResponse()
     {
         // A non-HTTP exception from a user-supplied DelegatingHandler (e.g. an auth handler
