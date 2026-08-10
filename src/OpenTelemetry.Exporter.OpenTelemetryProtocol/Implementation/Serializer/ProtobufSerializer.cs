@@ -358,10 +358,16 @@ internal static class ProtobufSerializer
     /// <param name="minimumSize">The minimum required buffer size in bytes.</param>
     /// <returns>A pooled buffer that must be handed back via <see cref="ReturnBuffer(byte[])"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static byte[] RentBuffer(int minimumSize) => ArrayPool<byte>.Shared.Rent(minimumSize);
+    internal static byte[] RentBuffer(int minimumSize) => RentBuffer(ArrayPool<byte>.Shared, minimumSize);
+
+    /// <inheritdoc cref="RentBuffer(int)"/>
+    /// <param name="pool">The pool to rent the buffer from.</param>
+    /// <param name="minimumSize">The minimum required buffer size in bytes.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static byte[] RentBuffer(ArrayPool<byte> pool, int minimumSize) => pool.Rent(minimumSize);
 
     /// <summary>
-    /// Returns a buffer previously obtained from <see cref="RentBuffer"/> or
+    /// Returns a buffer previously obtained from <see cref="RentBuffer(int)"/> or
     /// grown by <see cref="IncreaseBufferSize"/> back to the pool after clearing
     /// its contents.
     /// </summary>
@@ -371,7 +377,7 @@ internal static class ProtobufSerializer
     internal static void ReturnBuffer(ArrayPool<byte> pool, byte[] buffer) => pool.Return(buffer, clearArray: true);
 
     /// <summary>
-    /// Returns a buffer previously obtained from <see cref="RentBuffer"/> back to the
+    /// Returns a buffer previously obtained from <see cref="RentBuffer(int)"/> back to the
     /// pool, scrubbing only the leading <paramref name="writtenLength"/> bytes.
     /// </summary>
     /// <param name="buffer">The buffer to return.</param>

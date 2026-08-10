@@ -1,13 +1,15 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Buffers;
+
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 
 /// <summary>
 /// Manages the buffer used to serialize a single OTLP export request. The buffer
 /// is sized from the previous export's serialized length (to avoid resizing without
-/// preserving excess capacity) and is sourced from the shared array pool via
-/// <see cref="ProtobufSerializer"/>.
+/// preserving excess capacity) and is sourced via <see cref="ProtobufSerializer"/>
+/// from an array pool, the shared pool unless one is supplied.
 /// </summary>
 /// <remarks>
 /// On .NET Framework and .NET Standard builds the shared array pool may not pool
@@ -20,7 +22,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer
 /// and trims them under memory pressure, so each export simply rents and returns
 /// without retaining anything.
 /// </remarks>
-internal sealed class SerializationBuffer(int initialSize)
+internal sealed class SerializationBuffer(int initialSize, ArrayPool<byte>? pool = null)
 {
 #if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER
     // The largest array guaranteed to be pooled by the legacy shared array pool.
@@ -29,6 +31,7 @@ internal sealed class SerializationBuffer(int initialSize)
     private const int MaxPooledArrayLength = 1024 * 1024;
 #endif
 
+    private readonly ArrayPool<byte> pool = pool ?? ArrayPool<byte>.Shared;
     private readonly int initialSize = initialSize;
     private int nextSize = initialSize;
 
@@ -61,10 +64,10 @@ internal sealed class SerializationBuffer(int initialSize)
         }
 
         this.dirtyLength = 0;
-        return ProtobufSerializer.RentBuffer(this.nextSize);
+        return ProtobufSerializer.RentBuffer(this.pool, this.nextSize);
 #else
         this.dirtyLength = 0;
-        return ProtobufSerializer.RentBuffer(this.nextSize);
+        return ProtobufSerializer.RentBuffer(this.pool, this.nextSize);
 #endif
     }
 
@@ -102,7 +105,7 @@ internal sealed class SerializationBuffer(int initialSize)
         // Return pool-reusable buffers and buffers whose excess capacity should
         // not be retained by this exporter.
         this.dirtyLength = 0;
-        ProtobufSerializer.ReturnBuffer(buffer, dirtyLength);
+        ProtobufSerializer.ReturnBuffer(this.pool, buffer, dirtyLength);
     }
 
     /// <summary>
@@ -119,7 +122,7 @@ internal sealed class SerializationBuffer(int initialSize)
             this.retained = null;
             var dirtyLength = this.dirtyLength;
             this.dirtyLength = 0;
-            ProtobufSerializer.ReturnBuffer(buffer, dirtyLength);
+            ProtobufSerializer.ReturnBuffer(this.pool, buffer, dirtyLength);
         }
 #endif
     }
@@ -136,6 +139,6 @@ internal sealed class SerializationBuffer(int initialSize)
 
         // Serialization failed, so how far into the buffer the writer got is unknown.
         // Fall back to clearing the whole array.
-        ProtobufSerializer.ReturnBuffer(buffer);
+        ProtobufSerializer.ReturnBuffer(this.pool, buffer);
     }
 }
