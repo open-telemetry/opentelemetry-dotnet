@@ -27,7 +27,7 @@ Notes](../../RELEASENOTES.md).
   and content negotiation. The configured strategy is now applied before content
   negotiation, which can only escape names further, instead of the negotiated
   escaping scheme replacing the strategy's.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7610](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7610))
 
 ## 1.17.0-beta.1
 
