@@ -302,6 +302,11 @@ internal sealed class MeterProviderSdk : MeterProvider
                     {
                         metricStreamConfig = viewConfig(instrument);
 
+                        if (metricStreamConfig != null && metricStreamConfig.AggregationKind == AggregationKind.Drop)
+                        {
+                            metricStreamConfig = MetricStreamConfiguration.Drop;
+                        }
+
                         // The SDK provides some static MetricStreamConfigurations.
                         // For example, the Drop configuration. The static ViewId
                         // should not be changed for these configurations.
@@ -317,7 +322,7 @@ internal sealed class MeterProviderSdk : MeterProvider
                             OpenTelemetrySdkEventSource.Log.MetricViewIgnored(
                                 instrument.Name,
                                 instrument.Meter.Name,
-                                "The current SDK does not allow the requested AggregationType x InstrumentType combination.",
+                                $"The current SDK does not allow the requested AggregationKind {aggregationKind} x InstrumentType {instrument.GetType()} combination.",
                                 "Fix the view configuration.");
                         }
                     }

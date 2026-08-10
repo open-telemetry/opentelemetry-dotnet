@@ -57,7 +57,7 @@ internal static class AggregationCompatibility
     /// <c>typeof(Counter)</c> or
     /// <c>typeof(ObservableGauge)</c>. Note:
     /// MetricStreamConfiguration.Drop is a view-level construct, not
-    /// an AggregationType, and is out of scope here. allers should
+    /// an AggregationType, and is out of scope here. callers should
     /// short-circuit on Drop before reaching this method.
     /// </param>
     /// <returns>
@@ -71,6 +71,11 @@ internal static class AggregationCompatibility
         if (!InstrumentTypeInspector.TryClassify(instrumentType, out var kind))
         {
             return false;
+        }
+
+        if (aggregationType == AggregationKind.Drop)
+        {
+            return true;
         }
 
         if (kind == InstrumentKind.Counter || kind == InstrumentKind.UpDownCounter)
