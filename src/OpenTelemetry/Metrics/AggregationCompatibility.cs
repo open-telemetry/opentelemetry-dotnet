@@ -4,16 +4,13 @@
 namespace OpenTelemetry.Metrics;
 
 /// <summary>
-/// Isolates the compatibility matrix between <see cref="AggregationType"/> and
+/// Isolates the compatibility matrix between <see cref="AggregationKind"/> and
 /// System.Diagnostics.Metrics instrument kinds.
 ///
 /// Modeled on OTel Go's `isAggregatorCompatible` (sdk/metric/pipeline.go),
-/// for .NET's AggregationType enum, which (unlike Go's Aggregation interface)
-/// already bakes numeric width into the type name (Long*/Double*), and
-/// .NET's Gauge synchronous instrument kind, which Go's SDK does not have.
+/// adapted for .NET's view-level <see cref="AggregationKind"/> enum.
 ///
-/// This type is NOT referenced by Metric.cs or MeterProviderSdk.cs.
-///
+/// Used by <see cref="MeterProviderSdk"/> when validating view configurations.
 ///
 /// (i) = integral value type only (long/int/short/byte)
 /// (f) = floating value type only (double/float)
