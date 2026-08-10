@@ -247,15 +247,15 @@ public sealed class Metric
                 || instrumentIdentity.InstrumentType == typeof(Histogram<int>)
                 || instrumentIdentity.InstrumentType == typeof(Histogram<short>)
                 || instrumentIdentity.InstrumentType == typeof(Histogram<byte>))
-             {
+            {
                 aggType = AggregationType.LongSumIncomingDelta;
                 this.MetricType = MetricType.LongSumNonMonotonic;
-             }
-             else
-             {
+            }
+            else
+            {
                 aggType = AggregationType.DoubleSumIncomingDelta;
                 this.MetricType = MetricType.DoubleSumNonMonotonic;
-             }
+            }
         }
         else
         {
