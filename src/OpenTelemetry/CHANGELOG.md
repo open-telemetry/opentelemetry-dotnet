@@ -7,8 +7,8 @@ Notes](../../RELEASENOTES.md).
 ## Unreleased
 
 * Added `AggregationKind` support to `MetricStreamConfiguration`, allowing a
-  View to configure the Aggregation used where the instrument/aggregation pairing is
-  compatible.
+  View to configure the Aggregation used where the instrument/aggregation 
+  pairing is compatible.
   ([#2618](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2618))
 
 * Added `MetricPoint.TryGetHistogramSum(out double sum)`. `Histogram.Sum` is
