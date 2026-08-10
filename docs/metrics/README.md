@@ -495,10 +495,9 @@ dimensions can come from different sources:
   Prometheus.
 
 > [!NOTE]
-> Instrument level tags support is not yet implemented in OpenTelemetry .NET
-  since the [OpenTelemetry
-  Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#instrument)
-  does not support it.
+> Instrument-level tags on `Counter<T>` are applied to every measurement and
+> are pre-bound by the OpenTelemetry .NET SDK to avoid repeated attribute
+> lookups. Support for other instrument types is not yet implemented.
 
 Here is the rule of thumb when modeling the dimensions:
 

@@ -62,6 +62,7 @@ public class MetricsBenchmarks
 {
     private readonly Random random = new();
     private readonly string[] dimensionValues = ["DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10"];
+    private Counter<long>? boundCounter;
     private Counter<long>? counter;
     private MeterProvider? meterProvider;
     private Meter? meter;
@@ -85,6 +86,18 @@ public class MetricsBenchmarks
             .Build();
 
         this.counter = this.meter.CreateCounter<long>("counter");
+        this.boundCounter = this.meter.CreateCounter<long>(
+            "bound-counter",
+            unit: null,
+            description: null,
+            tags:
+            [
+                new("DimName1", "DimVal1"),
+                new("DimName2", "DimVal2"),
+                new("DimName3", "DimVal3"),
+                new("DimName4", "DimVal4"),
+                new("DimName5", "DimVal5"),
+            ]);
     }
 
     [GlobalCleanup]
@@ -98,6 +111,24 @@ public class MetricsBenchmarks
     public void CounterHotPath()
     {
         this.counter!.Add(100);
+    }
+
+    [Benchmark]
+    public void CounterWith5FixedLabelsHotPath()
+    {
+        this.counter!.Add(
+            100,
+            new("DimName1", "DimVal1"),
+            new("DimName2", "DimVal2"),
+            new("DimName3", "DimVal3"),
+            new("DimName4", "DimVal4"),
+            new("DimName5", "DimVal5"));
+    }
+
+    [Benchmark]
+    public void CounterWith5BoundLabelsHotPath()
+    {
+        this.boundCounter!.Add(100);
     }
 
     [Benchmark]

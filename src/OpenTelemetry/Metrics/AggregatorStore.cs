@@ -203,6 +203,46 @@ internal sealed class AggregatorStore
         }
     }
 
+    internal MetricPointUpdateHandle Bind(ReadOnlySpan<KeyValuePair<string, object?>> tags)
+        => new(this, tags.ToArray());
+
+    internal int ResolveBoundMetricPoint(ReadOnlySpan<KeyValuePair<string, object?>> tags)
+        => this.TagKeysInteresting != null
+            ? this.FindMetricAggregatorsCustomTag(tags)
+            : this.ExcludedTagKeys != null
+                ? this.FindMetricAggregatorsExcludeTag(tags)
+                : this.FindMetricAggregatorsDefault(tags);
+
+    internal void UpdateBound(MetricPointUpdateHandle handle, long value)
+    {
+        try
+        {
+            var metricPointIndex = handle.GetMetricPointIndex();
+            this.PrepareBoundUpdate(metricPointIndex);
+            this.UpdateLongMetricPoint(metricPointIndex, value, handle.Tags);
+        }
+        catch (Exception)
+        {
+            Interlocked.Increment(ref this.DroppedMeasurements);
+            OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, "SDK internal error occurred.", "Contact SDK owners.");
+        }
+    }
+
+    internal void UpdateBound(MetricPointUpdateHandle handle, double value)
+    {
+        try
+        {
+            var metricPointIndex = handle.GetMetricPointIndex();
+            this.PrepareBoundUpdate(metricPointIndex);
+            this.UpdateDoubleMetricPoint(metricPointIndex, value, handle.Tags);
+        }
+        catch (Exception)
+        {
+            Interlocked.Increment(ref this.DroppedMeasurements);
+            OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, "SDK internal error occurred.", "Contact SDK owners.");
+        }
+    }
+
     internal void Update(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         try
@@ -365,6 +405,18 @@ internal sealed class AggregatorStore
         }
 
         return Metric.DefaultHistogramBounds;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void PrepareBoundUpdate(int metricPointIndex)
+    {
+        // Binding retains the reference acquired during delta lookup so the
+        // resolved point cannot be reclaimed. Each update takes a transient
+        // reference which MetricPoint releases when the update completes.
+        if (this.OutputDelta && metricPointIndex >= 2)
+        {
+            Interlocked.Increment(ref this.metricPoints[metricPointIndex].ReferenceCount);
+        }
     }
 
     private void TakeMetricPointSnapshot(ref MetricPoint metricPoint, bool outputDelta)
