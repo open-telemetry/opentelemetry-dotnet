@@ -1,0 +1,95 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>MAUI test app validating the OpenTelemetry SDK runs end-to-end inside a .NET MAUI application host under the Android runtime.</Description>
+    <EnableMSTestRunner>true</EnableMSTestRunner>
+    <NoWarn>$(NoWarn);CA1515;CA1707;CA1724;CA1848;CA2007;XA0101;XA0141</NoWarn>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net10.0-android</TargetFrameworks>
+  </PropertyGroup>
+
+  <!--
+    The app is a real MAUI app: it uses the MAUI single project layout so that
+    MAUI's own Android startup (MainApplication) builds the application host
+    from MauiProgram, which is what the on-device tests assert against.
+  -->
+  <PropertyGroup>
+    <SingleProject>true</SingleProject>
+    <UseMaui>true</UseMaui>
+  </PropertyGroup>
+
+  <!--
+    Because we use project references to projects that multi-target to TFMs
+    that do not support trimming we cannot publish the application as trimmed.
+  -->
+  <PropertyGroup>
+    <PublishTrimmed>false</PublishTrimmed>
+    <RunAOTCompilation>false</RunAOTCompilation>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <AndroidLinkMode>None</AndroidLinkMode>
+    <ApplicationId>io.opentelemetry.dotnet.maui</ApplicationId>
+    <ApplicationTitle>OpenTelemetry.Maui.TestApp</ApplicationTitle>
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <SupportedOSPlatformVersion>24</SupportedOSPlatformVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <EventSourceSupport>true</EventSourceSupport>
+    <HttpActivityPropagationSupport>true</HttpActivityPropagationSupport>
+    <MetricsSupport>true</MetricsSupport>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      MAUI is not referenced by the workload, so the version has to come from the
+      workload's MauiVersion property to keep the package and the MAUI build tasks
+      in lockstep, which central package management cannot express.
+    -->
+    <PackageReference Include="Microsoft.Maui.Controls" VersionOverride="$(MauiVersion)" />
+  </ItemGroup>
+
+  <!--
+    The app runs its tests on the device with Microsoft.Testing.Platform rather
+    than VSTest, so reference the MSTest packages it needs directly instead of
+    using the MSTest meta-package, which brings in the VSTest test host as a
+    transitive dependency. That host and its code coverage assemblies are not
+    used on the device and only bloat the app bundle.
+  -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
+    <PackageReference Include="MSTest.Analyzers" />
+    <PackageReference Include="MSTest.TestAdapter" />
+    <PackageReference Include="MSTest.TestFramework" />
+  </ItemGroup>
+
+  <!--
+    Remove the packages that are referenced by default for test projects for the
+    same reason: they are not used by the on-device run and the app bundle only
+    needs to contain what the tests actually require.
+  -->
+  <ItemGroup>
+    <PackageReference Remove="GitHubActionsTestLogger" />
+    <PackageReference Remove="JunitXml.TestLogger" />
+    <PackageReference Remove="Microsoft.NET.Test.Sdk" />
+    <PackageReference Remove="xunit" />
+    <PackageReference Remove="xunit.runner.visualstudio" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="$(RepoRoot)\test\Shared\StrongNameTests.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Exporter.OpenTelemetryProtocol\OpenTelemetry.Exporter.OpenTelemetryProtocol.csproj" />
+    <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry.Extensions.Hosting\OpenTelemetry.Extensions.Hosting.csproj" />
+  </ItemGroup>
+
+</Project>

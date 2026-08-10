@@ -20,6 +20,12 @@ Notes](../../RELEASENOTES.md).
   the serializer's per-thread state. For logs, this also leaked pooled instances.
   ([#7579](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7579))
 
+* Fixed the persistent-storage retry thread terminating permanently on an
+  unexpected exception, which silently disabled `disk` retry for the remaining
+  process lifetime while stored telemetry continued to accumulate and then
+  expire.
+  ([#7597](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7597))
+
 * A server-supplied throttle delay (OTLP/gRPC `RetryInfo.retry_delay` or
   OTLP/HTTP `Retry-After`) is now clamped to a minimum of 100 milliseconds.
   ([#7583](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7583))

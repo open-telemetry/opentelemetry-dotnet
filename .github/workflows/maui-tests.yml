@@ -1,4 +1,4 @@
-name: Android Tests
+name: MAUI Tests
 
 on:
   workflow_call:
@@ -11,10 +11,10 @@ on:
 permissions: {}
 
 jobs:
-  android-tests:
-    name: Android end-to-end tests
+  maui-tests:
+    name: MAUI (Android) end-to-end tests
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     permissions:
       contents: read
@@ -48,11 +48,11 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
 
-    - name: Install android workload
+    - name: Install maui-android workload
       shell: bash
-      run: dotnet workload install android
+      run: dotnet workload install maui-android
 
-    - name: Run Android end-to-end tests on the emulator
+    - name: Run MAUI end-to-end tests on the emulator
       uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
       env:
         TARGET_FRAMEWORK: ${{ matrix.version }}
@@ -64,16 +64,16 @@ jobs:
         target: google_apis
         script: |
           set +e
-          dotnet test test/OpenTelemetry.Android.Tests/OpenTelemetry.Android.Tests.csproj --configuration Debug --framework "${TARGET_FRAMEWORK}" --logger:"GitHubActions;report-warnings=false"
+          dotnet test test/OpenTelemetry.Maui.Tests/OpenTelemetry.Maui.Tests.csproj --configuration Debug --framework "${TARGET_FRAMEWORK}" --logger:"GitHubActions;report-warnings=false"
           exit_code=$?
-          adb pull /storage/emulated/0/Android/data/io.opentelemetry.dotnet.android/files/TestResults ./TestResults || true
+          adb pull /storage/emulated/0/Android/data/io.opentelemetry.dotnet.maui/files/TestResults ./TestResults || true
           exit $exit_code
 
     - name: Upload test result artifacts
       if: ${{ failure() }}
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
-        name: android-artifacts
+        name: maui-artifacts
         if-no-files-found: ignore
         retention-days: 7
         path: |

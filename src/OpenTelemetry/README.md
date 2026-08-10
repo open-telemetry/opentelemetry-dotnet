@@ -8,6 +8,7 @@
 
 * [Installation](#installation)
 * [Introduction](#introduction)
+* [Self-Observability (Experimental)](#self-observability-experimental)
 * [Troubleshooting](#troubleshooting)
   * [Self-diagnostics](#self-diagnostics)
     * [Configuration Parameters](#configuration-parameters)
@@ -44,6 +45,66 @@ To learn how to set up and configure the OpenTelemetry SDK see: [Getting
 started](../../README.md#getting-started). For additional details about
 initialization patterns see: [Initialize the
 SDK](../../docs/README.md#initialize-the-sdk).
+
+## Self-Observability (Experimental)
+
+The SDK can emit metrics about its own internal operations, enabling operators to
+monitor the health of the telemetry pipeline itself (e.g., detecting dropped
+telemetry due to queue overflow).
+
+> [!NOTE]
+> Self-observability metrics are **experimental** and may change in future
+> releases. They are emitted under the meter name `otel.sdk.experimental`.
+
+### Opt-in
+
+Self-observability metrics are only emitted when explicitly enabled by
+subscribing to the `otel.sdk.experimental` meter. There is no performance cost
+unless enabled.
+
+```csharp
+var meterProvider = Sdk.CreateMeterProviderBuilder()
+    .AddMeter("otel.sdk.experimental")
+    .AddOtlpExporter() // or any exporter
+    .Build();
+```
+
+### Available Metrics
+
+These metrics follow the [OpenTelemetry SDK Self-Observability Semantic
+Conventions](https://opentelemetry.io/docs/specs/semconv/otel/sdk-metrics/).
+
+| Metric Name | Instrument | Unit | Description |
+| --- | --- | --- | --- |
+| `otel.sdk.processor.log.processed` | Counter | `{log_record}` | Number of log records processed by the SDK, tagged with outcome. |
+| `otel.sdk.processor.span.processed` | Counter | `{span}` | Number of spans processed by the SDK, tagged with outcome. |
+
+### Attributes
+
+| Attribute | Description | Example |
+| --- | --- | --- |
+| `otel.component.type` | The processor type. | `batching_log_processor`, `simple_log_processor`, `batching_span_processor`, `simple_span_processor` |
+| `otel.component.name` | Unique instance identifier. | `batching_log_processor/0`, `batching_span_processor/0` |
+| `error.type` | Present only on failure. | `queue_full`, `already_shutdown` |
+
+When `error.type` is absent, the item was successfully accepted by the
+processor. This means the processor completed its intended handling of the
+item; for the Simple and Batching processors it is recorded when the item is
+handed to the exporter, and it does **not** indicate that the export itself
+succeeded or that the item reached the backend. Export failures are not
+reflected in this metric. When present:
+
+* `queue_full` - The batch processor's internal queue was full; the item was
+  dropped.
+* `already_shutdown` - The processor had already been shut down; the item was
+  lost.
+
+> [!NOTE]
+> Sampling affects `otel.sdk.processor.span.processed` as follows. Spans dropped
+> by the sampler (`DROP`) are not counted, because span processors are not
+> invoked for them at all. Spans sampled as `RECORD_ONLY` are counted as
+> successfully processed because they do reach the processor and by design are
+> never handed to an exporter.
 
 ## Troubleshooting
 

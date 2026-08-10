@@ -10,6 +10,9 @@ public sealed class PromToolFixture : PrometheusFixture
 {
     private const string DockerInternalHost = "host.docker.internal";
 
+    private static readonly TimeSpan CheckMetricsTimeout = TimeSpan.FromMinutes(1);
+    private static readonly TimeSpan ScrapeTimeout = TimeSpan.FromSeconds(30);
+
     public async Task<ExecResult> CheckMetricsAsync(
         Uri targetUri,
         string accept,
@@ -31,14 +34,25 @@ public sealed class PromToolFixture : PrometheusFixture
             "-c",
             $"set -eu;" +
             $"tmp=/tmp/metrics.$$;" +
-            $"wget -qO \"$tmp\" --header=\"Accept: {accept}\" --header=\"Host: {targetUri.Host}\" \"{metricsUri}\"; " +
+            $"wget -qO \"$tmp\" -T {ScrapeTimeout.TotalSeconds:F0} --header=\"Accept: {accept}\" --header=\"Host: {targetUri.Host}\" \"{metricsUri}\"; " +
             $"cat \"$tmp\"; " +
             $"promtool check metrics --lint=all < \"$tmp\"",
         ];
 
-        return await this.Container
-            .ExecAsync(command, cancellationToken)
-            .ConfigureAwait(false);
+        using var timeout = new CancellationTokenSource(CheckMetricsTimeout);
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeout.Token);
+
+        try
+        {
+            return await this.Container
+                .ExecAsync(command, linked.Token)
+                .ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (timeout.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+        {
+            throw new TimeoutException(
+                $"promtool did not finish checking the metrics from {targetUri} within {CheckMetricsTimeout.TotalSeconds} seconds.");
+        }
     }
 
     protected override IContainer CreateContainer() =>

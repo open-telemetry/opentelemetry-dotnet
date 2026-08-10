@@ -179,6 +179,73 @@ public class OtlpGrpcExportClientTests
         Assert.False(response.Success);
     }
 
+    public void SendExportRequest_UnexpectedException_ReturnsRetryableUnavailableResponse()
+    {
+        // A non-HTTP exception from a user-supplied DelegatingHandler (e.g. an auth handler
+        // that throws InvalidOperationException on a failed token refresh) must be returned as
+        // Unavailable so that any blob written to persistent storage is retained for retry.
+        var exception = new InvalidOperationException("Custom handler failure.");
+
+        var response = SendExportRequestThatThrows(exception);
+
+        Assert.False(response.Success);
+        Assert.NotNull(response.Status);
+        Assert.Equal(StatusCode.Unavailable, response.Status.Value.StatusCode);
+        Assert.True(OtlpRetry.IsRetryable(response), "An unexpected exception must produce a retryable failure response.");
+    }
+
+    [Fact]
+    public void SendExportRequest_TimeoutWithCallerCancellationRequested_Propagates()
+    {
+        // A TaskCanceledException with an inner TimeoutException must still propagate when
+        // the caller's token is also signaled. Without the cancellationToken guard in the
+        // when clause, the timeout catch fires first and swallows the caller cancellation.
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        var buffer = BuildGrpcFrame("grpc test payload"u8.ToArray());
+
+        using var testHandler = new ThrowingHttpMessageHandler(
+            new TaskCanceledException("The request timed out.", new TimeoutException()));
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false);
+
+        var exportClient = new OtlpGrpcExportClient(
+            new OtlpExporterOptions
+            {
+                Endpoint = new Uri("http://localhost:4317"),
+                Compression = OtlpExportCompression.None,
+            },
+            httpClient,
+            string.Empty);
+
+        Assert.ThrowsAny<OperationCanceledException>(() =>
+            exportClient.SendExportRequest(buffer, buffer.Length, DateTime.UtcNow.AddSeconds(10), cts.Token));
+    }
+
+    [Fact]
+    public void SendExportRequest_CallerCancellationRequested_Propagates()
+    {
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        var buffer = BuildGrpcFrame("grpc test payload"u8.ToArray());
+
+        using var testHandler = new ThrowingHttpMessageHandler(new OperationCanceledException(cts.Token));
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false);
+
+        var exportClient = new OtlpGrpcExportClient(
+            new OtlpExporterOptions
+            {
+                Endpoint = new Uri("http://localhost:4317"),
+                Compression = OtlpExportCompression.None,
+            },
+            httpClient,
+            string.Empty);
+
+        Assert.Throws<OperationCanceledException>(() =>
+            exportClient.SendExportRequest(buffer, buffer.Length, DateTime.UtcNow.AddSeconds(10), cts.Token));
+    }
+
     private static ExportClientGrpcResponse SendExportRequestThatThrows(Exception exception)
     {
         var buffer = BuildGrpcFrame("grpc test payload"u8.ToArray());
