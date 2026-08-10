@@ -126,6 +126,6 @@ internal static class AggregationCompatibility
             }
         }
 
-        return true;
+        return false;
     }
 }
