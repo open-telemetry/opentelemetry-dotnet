@@ -184,10 +184,9 @@ type (e.g. `_total`) suffixes are appended.
 | `NoTranslation` | UTF-8 passthrough | Not appended |
 
 The strategy is applied first, when names are constructed. Content negotiation is
-then applied on top of the result, which may escape the names a second time using
-the scheme requested by the `escaping` parameter of the `Accept` header (supported
-by the version 1.0.0 and later text formats). Negotiation can therefore escape a
-name further, but it can never revert escaping the strategy has already applied,
+then applied on top of the result, using the scheme requested by the `escaping`
+parameter of the `Accept` header (supported by the version 1.0.0 and later text
+formats). Negotiation can never revert escaping the strategy has already applied,
 and a request which does not negotiate an escaping scheme is treated the same as
 one requesting `underscores`. For a counter named `foo.bar` with unit `By`:
 

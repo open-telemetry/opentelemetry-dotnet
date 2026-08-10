@@ -37,15 +37,19 @@ internal static class PrometheusTranslationStrategyExtensions
     /// The specification requires the translation strategy to be applied first, with content
     /// negotiation then applying a second translation of the resulting names:
     /// https://github.com/open-telemetry/opentelemetry-specification/blob/51700bd58c79c057468b66c3fd8d075444d6140c/specification/metrics/sdk_exporters/prometheus.md#interaction-with-translation-strategy.
-    /// The two passes compose, so negotiation can escape names further but can never revert the
-    /// escaping the strategy has already applied.
+    /// The second translation can therefore never revert the escaping the strategy has already
+    /// applied, which is what this resolves to a single scheme to render the names with.
     /// </para>
     /// <para>
-    /// A strategy that escapes to <c>_</c> therefore always renders underscore-escaped names, even
-    /// when a request negotiates <c>allow-utf-8</c>: the original characters are already gone by
-    /// the time negotiation is applied, and every other scheme leaves an underscore-escaped name
-    /// unchanged. A strategy that passes UTF-8 names through, on the other hand, defers entirely
-    /// to the negotiated scheme.
+    /// A strategy that escapes to <c>_</c> therefore always renders underscore-escaped names: the
+    /// characters a scheme such as <c>allow-utf-8</c> would have preserved are already gone by the
+    /// time negotiation is applied. The remaining schemes are not applied a second time either,
+    /// because escaping an already escaped name is lossy rather than additive: the <c>dots</c>
+    /// scheme, for example, would double the structural underscores the strategy introduced. The
+    /// response reports the scheme returned here rather than the one that was negotiated, so it
+    /// always describes the names that were written. A strategy that passes UTF-8 names through,
+    /// on the other hand, has not escaped anything yet and so defers entirely to the negotiated
+    /// scheme.
     /// </para>
     /// </remarks>
     public static EscapingScheme GetEffectiveEscapingScheme(this PrometheusTranslationStrategy strategy, EscapingScheme negotiated)

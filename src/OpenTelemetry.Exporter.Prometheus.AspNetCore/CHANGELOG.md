@@ -17,8 +17,9 @@ Notes](../../RELEASENOTES.md).
 
 * Fixed the interaction between `PrometheusAspNetCoreOptions.TranslationStrategy`
   and content negotiation. The configured strategy is now applied before content
-  negotiation, which can only escape names further, instead of the negotiated
-  escaping scheme replacing the strategy's.
+  negotiation, instead of the negotiated escaping scheme replacing the strategy's,
+  and the `Content-Type` header now reports the escaping scheme that was applied
+  rather than the one that was negotiated.
   ([#7610](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7610))
 
 ## 1.17.0-beta.1

@@ -605,8 +605,8 @@ public sealed class PrometheusExporterMiddlewareTests
 
         // The exporter is configured with UnderscoreEscapingWithSuffixes, but the client negotiates
         // escaping=allow-utf-8. The strategy is applied first, so the names are already
-        // underscore-escaped by the time content negotiation applies its second pass, and
-        // allow-utf-8 cannot revert them. The response still reports the negotiated escaping.
+        // underscore-escaped by the time content negotiation is applied and allow-utf-8 cannot
+        // revert them. The response reports the escaping that was applied, not the one negotiated.
         client.DefaultRequestHeaders.Add("Accept", "text/plain; version=1.0.0; escaping=allow-utf-8");
 
         using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
@@ -615,10 +615,52 @@ public sealed class PrometheusExporterMiddlewareTests
         await host.StopAsync();
 
         Assert.Equal(
-            "text/plain; version=1.0.0; charset=utf-8; escaping=allow-utf-8",
+            "text/plain; version=1.0.0; charset=utf-8; escaping=underscores",
             response.Content.Headers.ContentType!.ToString());
 
         await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
+    }
+
+    [Theory]
+    [InlineData("dots")]
+    [InlineData("values")]
+    public async Task RunWithUnderscoreEscapingStrategyAndNegotiatedReversibleEscaping_ReportsEscapingApplied(string escaping)
+    {
+        using var host = await StartTestHostAsync(
+            app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
+            configureOptions: o =>
+            {
+                o.TranslationStrategy = PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes;
+                o.ScopeInfoEnabled = false;
+                o.TargetInfoEnabled = false;
+            });
+
+        using var meter = new Meter(MeterName, MeterVersion);
+        meter.CreateCounter<long>("http.server.requests", unit: "By")
+            .Add(5, new KeyValuePair<string, object?>("http.host", "localhost"));
+
+        host.Services.GetRequiredService<MeterProvider>().ForceFlush();
+
+        using var client = host.GetTestClient();
+
+        // The dots and values schemes are reversible encodings of the name they are given, so
+        // applying one to a name the strategy has already escaped would encode the escaping rather
+        // than the original name (dots, for example, doubles every '_' it finds). The strategy has
+        // already discarded what those schemes exist to preserve, so the names stay underscore
+        // escaped and the response reports the escaping that was applied instead.
+        client.DefaultRequestHeaders.Add("Accept", $"text/plain; version=1.0.0; escaping={escaping}");
+
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
+        var output = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings("\n");
+
+        await host.StopAsync();
+
+        Assert.Equal(
+            "text/plain; version=1.0.0; charset=utf-8; escaping=underscores",
+            response.Content.Headers.ContentType!.ToString());
+
+        Assert.Contains("# TYPE http_server_requests_bytes_total counter\n", output, StringComparison.Ordinal);
+        Assert.Contains("http_server_requests_bytes_total{http_host=\"localhost\"} 5\n", output, StringComparison.Ordinal);
     }
 
     // See https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk_exporters/prometheus.md#interaction-with-translation-strategy

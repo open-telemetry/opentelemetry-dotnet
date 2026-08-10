@@ -149,31 +149,34 @@ internal abstract class TextFormatSerializer
     protected abstract bool EscapeHelpQuotationMarks { get; }
 
     /// <summary>
-    /// Gets the serializer for the negotiated protocol, rendering names with the supplied escaping
-    /// scheme.
+    /// Gets the serializer for the specified protocol.
     /// </summary>
-    /// <param name="protocol">The negotiated protocol.</param>
-    /// <param name="escaping">
-    /// The escaping scheme to render names with. This is the negotiated scheme combined with the
-    /// escaping the exporter's translation strategy has already applied, so it is not necessarily
-    /// the scheme the protocol negotiated.
+    /// <param name="protocol">
+    /// The protocol the response is written with. Its escaping scheme is the one the exporter
+    /// actually applies (see <see cref="PrometheusProtocol.ApplyTranslationStrategy"/>), which is
+    /// not necessarily the scheme the scrape request negotiated.
     /// </param>
     /// <returns>The serializer to use.</returns>
-    public static TextFormatSerializer GetSerializer(in PrometheusProtocol protocol, EscapingScheme escaping) => protocol switch
+    public static TextFormatSerializer GetSerializer(in PrometheusProtocol protocol)
     {
-        { IsOpenMetrics: true } => protocol.Version.Major switch
+        var escaping = protocol.EscapingScheme;
+
+        return protocol switch
         {
-            0 => OpenMetricsV0,
-            1 => escaping == EscapingScheme.Underscores ? OpenMetricsV1 : new OpenMetricsV1Serializer() { Escaping = escaping },
-            _ => throw new NotSupportedException($"Unsupported OpenMetrics version: {protocol.Version}."),
-        },
-        { IsOpenMetrics: false } => protocol.Version.Major switch
-        {
-            0 => PrometheusV0,
-            1 => escaping == EscapingScheme.Underscores ? PrometheusV1 : new PrometheusTextV1Serializer() { Escaping = escaping },
-            _ => throw new NotSupportedException($"Unsupported Prometheus version: {protocol.Version}."),
-        },
-    };
+            { IsOpenMetrics: true } => protocol.Version.Major switch
+            {
+                0 => OpenMetricsV0,
+                1 => escaping == EscapingScheme.Underscores ? OpenMetricsV1 : new OpenMetricsV1Serializer() { Escaping = escaping },
+                _ => throw new NotSupportedException($"Unsupported OpenMetrics version: {protocol.Version}."),
+            },
+            { IsOpenMetrics: false } => protocol.Version.Major switch
+            {
+                0 => PrometheusV0,
+                1 => escaping == EscapingScheme.Underscores ? PrometheusV1 : new PrometheusTextV1Serializer() { Escaping = escaping },
+                _ => throw new NotSupportedException($"Unsupported Prometheus version: {protocol.Version}."),
+            },
+        };
+    }
 
     public virtual int WriteEof(byte[] buffer, int cursor) => cursor;
 

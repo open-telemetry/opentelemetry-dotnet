@@ -267,7 +267,9 @@ internal sealed class PrometheusHttpListener : IDisposable
 
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(requestCancelled.Token, cancellationToken);
 
-            var protocol = Negotiate(context.Request);
+            var protocol = PrometheusProtocol.ApplyTranslationStrategy(
+                Negotiate(context.Request),
+                this.exporter.TranslationStrategy);
 
             var collectionResponse = await this.exporter.CollectionManager.EnterCollect(protocol).ConfigureAwait(false);
 

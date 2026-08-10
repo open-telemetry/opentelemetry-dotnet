@@ -31,6 +31,14 @@ internal static class PrometheusEscaping
         _ => EscapingScheme.Underscores,
     };
 
+    public static string GetName(EscapingScheme escaping) => escaping switch
+    {
+        EscapingScheme.AllowUtf8 => PrometheusProtocol.AllowUtf8Escaping,
+        EscapingScheme.Dots => PrometheusProtocol.DotsEscaping,
+        EscapingScheme.Values => PrometheusProtocol.ValuesEscaping,
+        EscapingScheme.Underscores or _ => PrometheusProtocol.UnderscoresEscaping,
+    };
+
     /// <summary>
     /// Escapes a fully-constructed metric or label name (including any unit and type-specific
     /// suffixes) according to the supplied scheme. The name MUST be escaped as a single unit

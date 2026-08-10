@@ -77,7 +77,9 @@ internal sealed class PrometheusExporterMiddleware
 
             var requestHeaders = httpContext.Request.GetTypedHeaders();
 
-            var protocol = Negotiate(requestHeaders);
+            var protocol = PrometheusProtocol.ApplyTranslationStrategy(
+                Negotiate(requestHeaders),
+                this.exporter.TranslationStrategy);
 
             var collectionResponse = await this.exporter.CollectionManager.EnterCollect(protocol);
 
