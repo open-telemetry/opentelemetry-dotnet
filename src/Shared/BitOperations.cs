@@ -1,15 +1,12 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Diagnostics;
-#if NET
-using System.Numerics;
-#endif
+#if !NET
 using System.Runtime.CompilerServices;
 
-namespace OpenTelemetry.Internal;
+namespace System.Numerics;
 
-internal static class MathHelper
+internal static class BitOperations
 {
     // https://en.wikipedia.org/wiki/Leading_zero
     private static readonly byte[] LeadingZeroLookupTable =
@@ -29,17 +26,31 @@ internal static class MathHelper
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     ];
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int LeadingZero8(byte value)
+    public static int LeadingZeroCount(ulong value)
     {
-        return LeadingZeroLookupTable[value];
+        unchecked
+        {
+            var high32 = (int)(value >> 32);
+
+            if (high32 != 0)
+            {
+                return LeadingZero32(high32);
+            }
+
+            return LeadingZero32((int)value) + 32;
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int LeadingZero16(short value)
+    internal static int LeadingZero8(byte value)
+        => LeadingZeroLookupTable[value];
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int LeadingZero16(short value)
     {
         unchecked
         {
@@ -55,7 +66,7 @@ internal static class MathHelper
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int LeadingZero32(int value)
+    internal static int LeadingZero32(int value)
     {
         unchecked
         {
@@ -69,64 +80,6 @@ internal static class MathHelper
             return LeadingZero16((short)value) + 16;
         }
     }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int LeadingZero64(long value)
-    {
-#if NET
-        return BitOperations.LeadingZeroCount((ulong)value);
-#else
-        unchecked
-        {
-            var high32 = (int)(value >> 32);
-
-            if (high32 != 0)
-            {
-                return LeadingZero32(high32);
-            }
-
-            return LeadingZero32((int)value) + 32;
-        }
-#endif
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int PositiveModulo32(int value, int divisor)
-    {
-        Debug.Assert(divisor > 0, $"{nameof(divisor)} must be a positive integer.");
-
-        value %= divisor;
-
-        if (value < 0)
-        {
-            value += divisor;
-        }
-
-        return value;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static long PositiveModulo64(long value, long divisor)
-    {
-        Debug.Assert(divisor > 0, $"{nameof(divisor)} must be a positive integer.");
-
-        value %= divisor;
-
-        if (value < 0)
-        {
-            value += divisor;
-        }
-
-        return value;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsFinite(double value)
-    {
-#if NET
-        return double.IsFinite(value);
-#else
-        return !double.IsInfinity(value) && !double.IsNaN(value);
-#endif
-    }
 }
+
+#endif

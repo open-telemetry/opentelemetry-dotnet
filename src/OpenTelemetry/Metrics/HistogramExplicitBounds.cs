@@ -2,14 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
-#if NET
 using System.Numerics;
+#if NET
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.Arm;
 using System.Runtime.Intrinsics.X86;
 #endif
 using System.Runtime.CompilerServices;
-using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics;
 
@@ -260,7 +259,7 @@ internal sealed class HistogramExplicitBounds
 
             var firstKey = ToSortableBits(bounds[0]);
             var lastKey = ToSortableBits(bounds[bounds.Length - 1]);
-            var commonPrefixLength = MathHelper.LeadingZero64((long)(firstKey ^ lastKey));
+            var commonPrefixLength = BitOperations.LeadingZeroCount(firstKey ^ lastKey);
             var radixBits = Math.Min(RadixLookupBitCount, 64 - commonPrefixLength);
 
             if (radixBits == 0)
