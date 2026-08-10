@@ -243,8 +243,19 @@ public sealed class Metric
         }
         else if (instrumentIdentity.IsHistogram && instrumentIdentity.AggregationKind == AggregationKind.Sum)
         {
-            aggType = AggregationType.DoubleSumIncomingCumulative;
-            this.MetricType = MetricType.DoubleSum;
+            if (instrumentIdentity.InstrumentType == typeof(Histogram<long>)
+                || instrumentIdentity.InstrumentType == typeof(Histogram<int>)
+                || instrumentIdentity.InstrumentType == typeof(Histogram<short>)
+                || instrumentIdentity.InstrumentType == typeof(Histogram<byte>))
+             {
+                aggType = AggregationType.LongSumIncomingDelta;
+                this.MetricType = MetricType.LongSumNonMonotonic;
+             }
+             else
+             {
+                aggType = AggregationType.DoubleSumIncomingDelta;
+                this.MetricType = MetricType.DoubleSumNonMonotonic;
+             }
         }
         else
         {
