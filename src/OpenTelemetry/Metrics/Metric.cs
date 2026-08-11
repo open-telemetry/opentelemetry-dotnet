@@ -13,16 +13,6 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 public sealed class Metric
 {
-    private static AggregationType SelectHistogramAggregationType(double[]? explicitBucketBounds, bool histogramRecordMinMax) =>
-    explicitBucketBounds != null && explicitBucketBounds.Length == 0
-        ? (histogramRecordMinMax ? AggregationType.HistogramWithMinMax : AggregationType.Histogram)
-        : (histogramRecordMinMax ? AggregationType.HistogramWithMinMaxBuckets : AggregationType.HistogramWithBuckets);
-
-    private static AggregationType SelectExponentialHistogramAggregationType(bool histogramRecordMinMax) =>
-    histogramRecordMinMax
-        ? AggregationType.Base2ExponentialHistogramWithMinMax
-        : AggregationType.Base2ExponentialHistogram;
-
     internal const int DefaultExponentialHistogramMaxBuckets = 160;
 
     internal const int DefaultExponentialHistogramMaxScale = 20;
@@ -83,6 +73,16 @@ public sealed class Metric
     ;
 
     internal readonly AggregatorStore AggregatorStore;
+
+    private static AggregationType SelectHistogramAggregationType(double[]? explicitBucketBounds, bool histogramRecordMinMax) =>
+    explicitBucketBounds != null && explicitBucketBounds.Length == 0
+        ? (histogramRecordMinMax ? AggregationType.HistogramWithMinMax : AggregationType.Histogram)
+        : (histogramRecordMinMax ? AggregationType.HistogramWithMinMaxBuckets : AggregationType.HistogramWithBuckets);
+
+    private static AggregationType SelectExponentialHistogramAggregationType(bool histogramRecordMinMax) =>
+    histogramRecordMinMax
+        ? AggregationType.Base2ExponentialHistogramWithMinMax
+        : AggregationType.Base2ExponentialHistogram;
 
     internal Metric(
         MetricStreamIdentity instrumentIdentity,
