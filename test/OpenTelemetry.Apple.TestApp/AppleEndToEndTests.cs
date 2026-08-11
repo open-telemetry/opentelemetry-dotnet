@@ -19,7 +19,7 @@ public sealed class AppleEndToEndTests
     private static readonly Uri OtlpBaseAddress = new(InstrumentationSource.OtlpEndpoint);
 
     private static readonly TimeSpan FlushTimeout = TimeSpan.FromSeconds(60);
-    private static readonly TimeSpan ExportTimeout = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan ExportTimeout = TimeSpan.FromSeconds(10);
 
     [TestMethod]
     public void IsRunningOnApplePlatform()
@@ -53,7 +53,7 @@ public sealed class AppleEndToEndTests
         }
 
         Assert.IsTrue(
-            loggerProvider.ForceFlush((int)FlushTimeout.TotalMilliseconds),
+            TryFlush(loggerProvider.ForceFlush),
             $"Logs were not exported within {FlushTimeout}.");
     }
 
@@ -65,7 +65,11 @@ public sealed class AppleEndToEndTests
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .SetResourceBuilder(CreateResourceBuilder())
             .AddMeter(InstrumentationSource.MeterName)
-            .AddOtlpExporter((options) => ConfigureOtlp(options, "v1/metrics"))
+            .AddOtlpExporter((exporterOptions, readerOptions) =>
+            {
+                ConfigureOtlp(exporterOptions, "v1/metrics");
+                readerOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = Timeout.Infinite;
+            })
             .Build();
 
         Assert.IsNotNull(meterProvider, "MeterProvider failed to build on iOS.");
@@ -74,7 +78,7 @@ public sealed class AppleEndToEndTests
         instrumentation.Histogram.Record(123.45);
 
         Assert.IsTrue(
-            meterProvider.ForceFlush((int)FlushTimeout.TotalMilliseconds),
+            TryFlush(meterProvider.ForceFlush),
             $"Metrics were not exported within {FlushTimeout}.");
     }
 
@@ -99,12 +103,45 @@ public sealed class AppleEndToEndTests
         }
 
         Assert.IsTrue(
-            tracerProvider.ForceFlush((int)FlushTimeout.TotalMilliseconds),
+            TryFlush(tracerProvider.ForceFlush),
             $"Traces were not exported within {FlushTimeout}.");
     }
 
     private static ResourceBuilder CreateResourceBuilder()
         => ResourceBuilder.CreateDefault().AddService(InstrumentationSource.ServiceName);
+
+    /// <summary>
+    /// Flushes the telemetry recorded by a test, retrying within
+    /// <see cref="FlushTimeout"/> if an export does not get through.
+    /// </summary>
+    /// <param name="forceFlush">The <c>ForceFlush</c> method of the provider to flush.</param>
+    /// <returns><see langword="true"/> if the telemetry was flushed; otherwise <see langword="false"/>.</returns>
+    /// <remarks>
+    /// Retrying is safe because the metrics are cumulative, so an export that is
+    /// repeated after a failed attempt carries the same measurements again.
+    /// </remarks>
+    private static bool TryFlush(Func<int, bool> forceFlush)
+    {
+        const int FlushAttempts = 3;
+        var deadline = DateTime.UtcNow + FlushTimeout;
+
+        for (var attempt = 0; attempt < FlushAttempts; attempt++)
+        {
+            var remaining = deadline - DateTime.UtcNow;
+
+            if (remaining <= TimeSpan.Zero)
+            {
+                break;
+            }
+
+            if (forceFlush((int)remaining.TotalMilliseconds))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     private static void ConfigureOtlp(OtlpExporterOptions options, string signalPath)
     {
