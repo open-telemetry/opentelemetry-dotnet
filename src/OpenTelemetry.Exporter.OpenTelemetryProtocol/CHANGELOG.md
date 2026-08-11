@@ -10,7 +10,7 @@ Notes](../../RELEASENOTES.md).
 * The OTLP exporter now omits `HistogramDataPoint.sum` on the wire (rather
   than serializing `0`) for histograms that do not record a sum, per
   `metrics.proto`'s field semantics.
-  ([#2618](https://github.com/open-telemetry/opentelemetry-dotnet/issues/2618))
+  ([#7557](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7557))
 
 * Fixed `UseOtlpExporter` to respect options configured through
   `services.Configure<OtlpExporterOptions>(...)`.
