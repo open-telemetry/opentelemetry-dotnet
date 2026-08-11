@@ -76,7 +76,7 @@ internal static class ProtobufSerializer
     /// redundant continuation bits. That costs nothing to write, but it puts up to three
     /// wasted bytes on the wire for every nested message, which is a large share of the
     /// payload for messages that are individually small - and attributes, span events and
-    /// span links are both small and numerous.
+    /// span links are small and numerous.
     /// </para>
     /// <para>
     /// This reserves a single byte instead, which is correct without any further work for
