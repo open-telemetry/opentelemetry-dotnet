@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using System.Numerics;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics;
@@ -128,7 +129,7 @@ internal sealed partial class Base2ExponentialBucketHistogram
     /// </returns>
     public int MapToIndex(double value)
     {
-        Debug.Assert(MathHelper.IsFinite(value), "IEEE-754 +Inf, -Inf and NaN should be filtered out before calling this method.");
+        Debug.Assert(double.IsFinite(value), "IEEE-754 +Inf, -Inf and NaN should be filtered out before calling this method.");
         Debug.Assert(value != 0, "IEEE-754 zero values should be handled by ZeroCount.");
         Debug.Assert(value > 0, "IEEE-754 negative values should be normalized before calling this method.");
 
@@ -155,7 +156,7 @@ internal sealed partial class Base2ExponentialBucketHistogram
 
             if (exp == 0)
             {
-                exp -= MathHelper.LeadingZero64(fraction - 1) - 12 /* 64 - fraction width */;
+                exp -= BitOperations.LeadingZeroCount((ulong)fraction - 1) - 12 /* 64 - fraction width */;
             }
             else if (fraction == 0)
             {
@@ -168,7 +169,7 @@ internal sealed partial class Base2ExponentialBucketHistogram
 
     public void Record(double value)
     {
-        if (!MathHelper.IsFinite(value))
+        if (!double.IsFinite(value))
         {
             return;
         }
@@ -221,9 +222,7 @@ internal sealed partial class Base2ExponentialBucketHistogram
     }
 
     internal ExponentialHistogramData GetExponentialHistogramData()
-    {
-        return this.SnapshotExponentialHistogramData;
-    }
+        => this.SnapshotExponentialHistogramData;
 
     internal Base2ExponentialBucketHistogram Copy()
     {
