@@ -102,8 +102,7 @@ public class MetricStreamConfiguration
     /// <para>Note: If not provided the default aggregation for the
     /// instrument type will be used.</para>
     /// <para>If the specified aggregation is not compatible with the
-    /// instrument type, the view will be ignored (and an event will be
-    /// logged).</para>
+    /// instrument type, the view will be ignored.</para>
     /// </remarks>
     public AggregationKind? AggregationKind { get; set; }
 
