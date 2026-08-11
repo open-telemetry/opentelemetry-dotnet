@@ -27,10 +27,20 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
         this.ExcludedTagKeys = metricStreamConfiguration?.CopiedExcludedTagKeys;
         this.HistogramBucketBounds = GetExplicitBucketHistogramBounds(instrument, metricStreamConfiguration);
         this.HistogramBucketDisplayBounds = GetExplicitBucketHistogramDisplayBounds(instrument, this.HistogramBucketBounds);
-        this.ExponentialHistogramMaxSize = (metricStreamConfiguration as Base2ExponentialBucketHistogramConfiguration)?.MaxSize ?? 0;
-        this.ExponentialHistogramMaxScale = (metricStreamConfiguration as Base2ExponentialBucketHistogramConfiguration)?.MaxScale ?? 0;
-        this.HistogramRecordMinMax = (metricStreamConfiguration as HistogramConfiguration)?.RecordMinMax ?? true;
+
+        if (metricStreamConfiguration?.AggregationKind == Metrics.AggregationKind.ExponentialHistogram && metricStreamConfiguration is not Base2ExponentialBucketHistogramConfiguration)
+        {
+            this.ExponentialHistogramMaxSize = Metric.DefaultExponentialHistogramMaxBuckets;
+            this.ExponentialHistogramMaxScale = Metric.DefaultExponentialHistogramMaxScale;
+        }
+        else
+        {
+            this.ExponentialHistogramMaxSize = (metricStreamConfiguration as Base2ExponentialBucketHistogramConfiguration)?.MaxSize ?? 0;
+            this.ExponentialHistogramMaxScale = (metricStreamConfiguration as Base2ExponentialBucketHistogramConfiguration)?.MaxScale ?? 0;
+        }
+
         this.AggregationKind = metricStreamConfiguration?.AggregationKind;
+        this.HistogramRecordMinMax = (metricStreamConfiguration as HistogramConfiguration)?.RecordMinMax ?? true;
 
 #if NET || NETSTANDARD2_1_OR_GREATER
         HashCode hashCode = default;
