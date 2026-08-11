@@ -74,16 +74,6 @@ public sealed class Metric
 
     internal readonly AggregatorStore AggregatorStore;
 
-    private static AggregationType SelectHistogramAggregationType(double[]? explicitBucketBounds, bool histogramRecordMinMax) =>
-    explicitBucketBounds != null && explicitBucketBounds.Length == 0
-        ? (histogramRecordMinMax ? AggregationType.HistogramWithMinMax : AggregationType.Histogram)
-        : (histogramRecordMinMax ? AggregationType.HistogramWithMinMaxBuckets : AggregationType.HistogramWithBuckets);
-
-    private static AggregationType SelectExponentialHistogramAggregationType(bool histogramRecordMinMax) =>
-    histogramRecordMinMax
-        ? AggregationType.Base2ExponentialHistogramWithMinMax
-        : AggregationType.Base2ExponentialHistogram;
-
     internal Metric(
         MetricStreamIdentity instrumentIdentity,
         AggregationTemporality temporality,
@@ -167,10 +157,12 @@ public sealed class Metric
                 case AggregationKind.Histogram:
                     aggType = SelectHistogramAggregationType(instrumentIdentity.HistogramBucketBounds, instrumentIdentity.HistogramRecordMinMax);
                     this.MetricType = MetricType.Histogram;
+                    recordSum = false;
                     break;
                 case AggregationKind.ExponentialHistogram:
                     aggType = SelectExponentialHistogramAggregationType(instrumentIdentity.HistogramRecordMinMax);
                     this.MetricType = MetricType.ExponentialHistogram;
+                    recordSum = false;
                     break;
                 default:
                     aggType = AggregationType.LongSumIncomingDelta;
@@ -186,10 +178,12 @@ public sealed class Metric
                 case AggregationKind.Histogram:
                     aggType = SelectHistogramAggregationType(instrumentIdentity.HistogramBucketBounds, instrumentIdentity.HistogramRecordMinMax);
                     this.MetricType = MetricType.Histogram;
+                    recordSum = false;
                     break;
                 case AggregationKind.ExponentialHistogram:
                     aggType = SelectExponentialHistogramAggregationType(instrumentIdentity.HistogramRecordMinMax);
                     this.MetricType = MetricType.ExponentialHistogram;
+                    recordSum = false;
                     break;
                 default:
                     aggType = AggregationType.DoubleSumIncomingDelta;
@@ -348,4 +342,14 @@ public sealed class Metric
 
     internal int Snapshot()
         => this.AggregatorStore.Snapshot();
+
+    private static AggregationType SelectHistogramAggregationType(double[]? explicitBucketBounds, bool histogramRecordMinMax) =>
+    explicitBucketBounds != null && explicitBucketBounds.Length == 0
+        ? (histogramRecordMinMax ? AggregationType.HistogramWithMinMax : AggregationType.Histogram)
+        : (histogramRecordMinMax ? AggregationType.HistogramWithMinMaxBuckets : AggregationType.HistogramWithBuckets);
+
+    private static AggregationType SelectExponentialHistogramAggregationType(bool histogramRecordMinMax) =>
+    histogramRecordMinMax
+        ? AggregationType.Base2ExponentialHistogramWithMinMax
+        : AggregationType.Base2ExponentialHistogram;
 }
