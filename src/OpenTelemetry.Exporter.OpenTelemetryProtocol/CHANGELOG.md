@@ -7,12 +7,6 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* Added support for serializing attribute values that are key/value lists
-  (`IEnumerable<KeyValuePair<string, object?>>`) as nested OTLP `kvlist` values.
-  Nesting is limited to a maximum recursion depth of 3; deeper values fall back
-  to their string representation.
-  ([#7015](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7015))
-
 * Fixed `UseOtlpExporter` to respect options configured through
   `services.Configure<OtlpExporterOptions>(...)`.
   ([#7540](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7540))
@@ -34,6 +28,12 @@ Notes](../../RELEASENOTES.md).
 
 * Fixed the OTLP exporter from retrying certain non-transient HTTP failures.
   ([#7600](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7600))
+
+* Added support for serializing attribute values that are key/value lists
+  (`IEnumerable<KeyValuePair<string, object?>>`) as nested OTLP `kvlist` values.
+  Nesting is limited to a maximum recursion depth of 3; deeper values fall back
+  to their string representation.
+  ([#7015](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7015))
 
 ## 1.17.0
 

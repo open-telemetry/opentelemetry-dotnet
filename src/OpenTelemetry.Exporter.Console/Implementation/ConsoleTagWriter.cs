@@ -138,8 +138,7 @@ internal sealed class ConsoleTagWriter : JsonStringArrayTagWriter<ConsoleTagWrit
             return tagValue is not ("NaN" or "Infinity" or "-Infinity");
         }
 
-        if (originalValue is bool
-            or byte or sbyte or short or ushort or int or uint or long)
+        if (originalValue is bool or byte or sbyte or short or ushort or int or uint or long)
         {
             return true;
         }
@@ -150,7 +149,7 @@ internal sealed class ConsoleTagWriter : JsonStringArrayTagWriter<ConsoleTagWrit
         // checking whether the output starts with '{' or '['.
         if ((originalValue is IEnumerable<KeyValuePair<string, object?>> or Array)
             && tagValue.Length > 0
-            && (tagValue[0] == '{' || tagValue[0] == '['))
+            && (tagValue[0] is '{' or '['))
         {
             return true;
         }

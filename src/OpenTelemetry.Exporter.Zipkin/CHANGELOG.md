@@ -13,7 +13,7 @@ Notes](../../RELEASENOTES.md).
   ([#7582](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7582))
 
 * Added support for serializing attribute values that are key/value lists
-  (`IEnumerable<KeyValuePair<string, object?>>`). No change to existing behavior.
+  (`IEnumerable<KeyValuePair<string, object?>>`).
   ([#7015](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7015))
 
 ## 1.17.0
