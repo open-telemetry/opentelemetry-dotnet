@@ -127,6 +127,15 @@ public class TraceContextPropagatorTests
     [InlineData($"00-{TraceId}-xyz7c989f97918e1-01")]
     [InlineData($"00-{TraceId}-{SpanId}-x1")]
     [InlineData($"00-{TraceId}-{SpanId}-1x")]
+    //// Non-hex character in the version.
+    [InlineData($"x0-{TraceId}-{SpanId}-01")]
+    [InlineData($"0x-{TraceId}-{SpanId}-01")]
+    //// Upper-case hex is not accepted for either id.
+    [InlineData($"00-0AF7651916CD43DD8448EB211C80319C-{SpanId}-01")]
+    [InlineData($"00-{TraceId}-B9C7C989F97918E1-01")]
+    //// An all-zero trace id or span id is invalid.
+    [InlineData($"00-00000000000000000000000000000000-{SpanId}-01")]
+    [InlineData($"00-{TraceId}-0000000000000000-01")]
     public void IsBlankIfInvalid(string invalidTraceParent)
     {
         var headers = new Dictionary<string, string>
