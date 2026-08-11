@@ -180,12 +180,17 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
     }
 
     [EnabledOnDockerPlatformTheory(DockerPlatform.Linux)]
-    [InlineData("")]
-    [InlineData("OpenMetricsText0.0.1")]
-    [InlineData("OpenMetricsText1.0.0")]
-    [InlineData("PrometheusText0.0.4")]
-    [InlineData("PrometheusText1.0.0")]
-    public async Task Prometheus_Can_Scrape_Metrics(string scrapeProtocol) => await GenerateMetricsAsync(async (baseAddress) =>
+    [InlineData("", PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes)]
+    [InlineData("OpenMetricsText0.0.1", PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes)]
+    [InlineData("OpenMetricsText1.0.0", PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes)]
+    [InlineData("PrometheusText0.0.4", PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes)]
+    [InlineData("PrometheusText1.0.0", PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes)]
+    [InlineData("PrometheusText1.0.0", PrometheusTranslationStrategy.NoUTF8EscapingWithSuffixes)]
+    [InlineData("PrometheusText0.0.4", PrometheusTranslationStrategy.NoUTF8EscapingWithSuffixes)]
+    public async Task Prometheus_Can_Scrape_Metrics(
+        string scrapeProtocol,
+        PrometheusTranslationStrategy translationStrategy) => await GenerateMetricsAsync(
+        async (baseAddress) =>
     {
         // Arrange
         var prometheus = new PrometheusFixture()
@@ -209,12 +214,15 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
 
             await WaitForServiceDiscoveryAsync(prometheusBaseAddress, outputHelper, cts.Token);
 
-            // Prometheus negotiates the allow-utf-8 escaping scheme for the v1.0.0 text formats, so
-            // the OpenTelemetry instrument names (which contain '.') are exposed and stored verbatim
-            // using the quoted exposition format rather than being sanitized to '_'. When no scrape
-            // protocol is pinned Prometheus defaults to the v1.0.0 formats, so UTF-8 names are used
-            // unless a v0 protocol is explicitly negotiated.
-            var usesUtf8Names = !scrapeProtocol.Contains("0.0.", StringComparison.Ordinal);
+            // Prometheus negotiates the allow-utf-8 escaping scheme for the v1.0.0 text formats
+            // (and defaults to those formats when no scrape protocol is pinned), but negotiation is
+            // only ever applied on top of the configured translation strategy. UTF-8 names are
+            // therefore exposed and stored verbatim using the quoted exposition format only when
+            // the strategy does not escape them to '_' in the first place, and even then only if a
+            // v0 protocol is not explicitly negotiated.
+            var usesUtf8Names =
+                translationStrategy is PrometheusTranslationStrategy.NoUTF8EscapingWithSuffixes &&
+                !scrapeProtocol.Contains("0.0.", StringComparison.Ordinal);
 
             HashSet<string> expectedSeries = usesUtf8Names
                 ?
@@ -494,7 +502,8 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
 
             Assert.Fail($"Timed out waiting for service discovery active targets.");
         }
-    });
+    },
+        translationStrategy);
 
     [EnabledOnDockerPlatformTheory(DockerPlatform.Linux)]
     [InlineData("")]
@@ -533,7 +542,8 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
     });
 
     private static async Task GenerateMetricsAsync(
-        Func<Uri, Task> actAndAssert)
+        Func<Uri, Task> actAndAssert,
+        PrometheusTranslationStrategy translationStrategy = PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes)
     {
         // Arrange
         const string meterName = "prometheus.integration.tests";
@@ -584,7 +594,7 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
             {
                 builder.AddAspNetCoreInstrumentation()
                        .AddMeter(meter.Name)
-                       .AddPrometheusExporter()
+                       .AddPrometheusExporter((options) => options.TranslationStrategy = translationStrategy)
                        .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
                        .AddView(
                            counter.Name,

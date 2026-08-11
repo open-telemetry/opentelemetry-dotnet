@@ -239,11 +239,18 @@ internal sealed class MeterProviderSdk : MeterProvider
         }
         else if (!listenToInstrumentUsingSdkConfiguration && !listeningIsManagedExternally)
         {
-            OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(
-                instrument.Name,
-                instrument.Meter.Name,
-                "Instrument belongs to a Meter not subscribed by this provider. If another MeterProvider is configured to listen to this Meter, this warning can be ignored.",
-                "Use AddMeter to add the Meter to the provider.");
+            // Note: The SDK always creates its self-observability instruments, but they are
+            // opt-in. Warning that they are ignored would be noise for users who never asked
+            // for them, so it is suppressed here.
+            if (!string.Equals(instrument.Meter.Name, SdkSelfObservability.MeterName, StringComparison.Ordinal))
+            {
+                OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(
+                    instrument.Name,
+                    instrument.Meter.Name,
+                    "Instrument belongs to a Meter not subscribed by this provider. If another MeterProvider is configured to listen to this Meter, this warning can be ignored.",
+                    "Use AddMeter to add the Meter to the provider.");
+            }
+
             return null;
         }
 
