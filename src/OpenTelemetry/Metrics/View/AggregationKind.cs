@@ -4,8 +4,7 @@
 namespace OpenTelemetry.Metrics;
 
 /// <summary>
-/// Enumeration used to define the aggregation type for a <see
-/// cref="Metric"/> stream.
+/// Enumeration used to define the aggregation type for a <see cref="Metric"/> stream.
 /// </summary>
 public enum AggregationKind
 {
