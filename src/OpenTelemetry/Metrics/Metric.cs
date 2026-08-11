@@ -243,10 +243,10 @@ public sealed class Metric
         }
         else if (instrumentIdentity.IsHistogram && instrumentIdentity.AggregationKind == AggregationKind.Sum)
         {
-            if (instrumentIdentity.InstrumentType == typeof(Histogram<long>)
-                || instrumentIdentity.InstrumentType == typeof(Histogram<int>)
-                || instrumentIdentity.InstrumentType == typeof(Histogram<short>)
-                || instrumentIdentity.InstrumentType == typeof(Histogram<byte>))
+            if (instrumentIdentity.InstrumentType == typeof(Histogram<long>) ||
+                instrumentIdentity.InstrumentType == typeof(Histogram<int>) ||
+                instrumentIdentity.InstrumentType == typeof(Histogram<short>) ||
+                instrumentIdentity.InstrumentType == typeof(Histogram<byte>))
             {
                 aggType = AggregationType.LongSumIncomingDelta;
                 this.MetricType = MetricType.LongSumNonMonotonic;
