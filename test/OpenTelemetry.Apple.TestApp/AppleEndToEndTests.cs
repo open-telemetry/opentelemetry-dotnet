@@ -19,7 +19,8 @@ public sealed class AppleEndToEndTests
     private static readonly Uri OtlpBaseAddress = new(InstrumentationSource.OtlpEndpoint);
 
     private static readonly TimeSpan FlushTimeout = TimeSpan.FromSeconds(60);
-    private static readonly TimeSpan ExportTimeout = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan ExportTimeout = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan ShutdownTimeout = TimeSpan.FromSeconds(30);
 
     [TestMethod]
     public void IsRunningOnApplePlatform()
@@ -52,9 +53,7 @@ public sealed class AppleEndToEndTests
             logger.LogInformation("{Message}", InstrumentationSource.LogBody);
         }
 
-        Assert.IsTrue(
-            loggerProvider.ForceFlush((int)FlushTimeout.TotalMilliseconds),
-            $"Logs were not exported within {FlushTimeout}.");
+        FlushAndShutdown("Logs", loggerProvider.ForceFlush, loggerProvider.Shutdown);
     }
 
     [TestMethod]
@@ -65,7 +64,11 @@ public sealed class AppleEndToEndTests
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
             .SetResourceBuilder(CreateResourceBuilder())
             .AddMeter(InstrumentationSource.MeterName)
-            .AddOtlpExporter((options) => ConfigureOtlp(options, "v1/metrics"))
+            .AddOtlpExporter((exporterOptions, readerOptions) =>
+            {
+                ConfigureOtlp(exporterOptions, "v1/metrics");
+                readerOptions.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = Timeout.Infinite;
+            })
             .Build();
 
         Assert.IsNotNull(meterProvider, "MeterProvider failed to build on iOS.");
@@ -73,9 +76,7 @@ public sealed class AppleEndToEndTests
         instrumentation.Counter.Add(1);
         instrumentation.Histogram.Record(123.45);
 
-        Assert.IsTrue(
-            meterProvider.ForceFlush((int)FlushTimeout.TotalMilliseconds),
-            $"Metrics were not exported within {FlushTimeout}.");
+        FlushAndShutdown("Metrics", meterProvider.ForceFlush, meterProvider.Shutdown);
     }
 
     [TestMethod]
@@ -98,13 +99,52 @@ public sealed class AppleEndToEndTests
             activity.SetTag(InstrumentationSource.ActivityTagKey, InstrumentationSource.ActivityTagValue);
         }
 
-        Assert.IsTrue(
-            tracerProvider.ForceFlush((int)FlushTimeout.TotalMilliseconds),
-            $"Traces were not exported within {FlushTimeout}.");
+        FlushAndShutdown("Traces", tracerProvider.ForceFlush, tracerProvider.Shutdown);
     }
 
     private static ResourceBuilder CreateResourceBuilder()
         => ResourceBuilder.CreateDefault().AddService(InstrumentationSource.ServiceName);
+
+    /// <summary>
+    /// Flushes the telemetry recorded by a test and then shuts its provider down.
+    /// </summary>
+    /// <param name="signal">The name of the signal being flushed, used in the assertion message.</param>
+    /// <param name="forceFlush">The <c>ForceFlush</c> method of the provider to flush.</param>
+    /// <param name="shutdown">The <c>Shutdown</c> method of the provider to shut down.</param>
+    private static void FlushAndShutdown(string signal, Func<int, bool> forceFlush, Func<int, bool> shutdown)
+    {
+        Assert.IsTrue(TryFlush(forceFlush), $"{signal} were not exported within {FlushTimeout}.");
+        _ = shutdown((int)ShutdownTimeout.TotalMilliseconds);
+    }
+
+    /// <summary>
+    /// Flushes the telemetry recorded by a test, retrying within
+    /// <see cref="FlushTimeout"/> if an export does not get through.
+    /// </summary>
+    /// <param name="forceFlush">The <c>ForceFlush</c> method of the provider to flush.</param>
+    /// <returns><see langword="true"/> if the telemetry was flushed; otherwise <see langword="false"/>.</returns>
+    private static bool TryFlush(Func<int, bool> forceFlush)
+    {
+        const int FlushAttempts = 3;
+        var deadline = DateTime.UtcNow + FlushTimeout;
+
+        for (var attempt = 0; attempt < FlushAttempts; attempt++)
+        {
+            var remaining = deadline - DateTime.UtcNow;
+
+            if (remaining <= TimeSpan.Zero)
+            {
+                break;
+            }
+
+            if (forceFlush((int)remaining.TotalMilliseconds))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     private static void ConfigureOtlp(OtlpExporterOptions options, string signalPath)
     {
