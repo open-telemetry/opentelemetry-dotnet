@@ -8,7 +8,7 @@ Notes](../../RELEASENOTES.md).
 
 * Added support for serializing attribute values that are key/value lists
   (`IEnumerable<KeyValuePair<string, object?>>`). These attributes will be
-  serialized as JSON arrays of objects.
+  serialized as JSON objects.
   ([#7015](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7015))
 
 ## 1.17.0
