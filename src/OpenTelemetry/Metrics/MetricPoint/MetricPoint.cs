@@ -267,8 +267,7 @@ public struct MetricPoint
                             not AggregationType.HistogramWithMinMaxBuckets and
                             not AggregationType.HistogramWithMinMax and
                             not AggregationType.Base2ExponentialHistogram and
-                            not AggregationType.Base2ExponentialHistogramWithMinMax
-                            || !this.aggregatorStore.RecordSum)
+                            not AggregationType.Base2ExponentialHistogramWithMinMax)
         {
             this.ThrowNotSupportedMetricTypeException(nameof(this.GetHistogramSum));
         }
