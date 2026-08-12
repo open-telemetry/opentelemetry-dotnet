@@ -184,7 +184,7 @@ public sealed class AppleEndToEndTests
         options.Endpoint = new(OtlpBaseAddress, signalPath);
 
         // Export over the connection the entry point has already opened to the
-        // host rather than over one of this exporter's own
+        // host rather than over one of this exporter's own HttpClient.
         options.HttpClientFactory = static () => TestRunner.OtlpHttpClient;
         options.TimeoutMilliseconds = (int)TestRunner.ExportTimeout.TotalMilliseconds;
     }

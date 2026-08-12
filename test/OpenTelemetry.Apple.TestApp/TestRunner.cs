@@ -33,7 +33,7 @@ internal static class TestRunner
     /// Gets the <see cref="HttpClient"/> used to reach the collector on the host.
     /// </summary>
     /// <remarks>
-    /// Shared client used to avoid timeouts while establishing connections in the emulator.
+    /// Shared client used to avoid timeouts while establishing connections in the simulator.
     /// </remarks>
     internal static HttpClient OtlpHttpClient { get; } = new() { Timeout = ExportTimeout };
 
