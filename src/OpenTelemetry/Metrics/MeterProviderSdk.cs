@@ -302,7 +302,7 @@ internal sealed class MeterProviderSdk : MeterProvider
                     {
                         metricStreamConfig = viewConfig(instrument);
 
-                        if (metricStreamConfig != null && metricStreamConfig.AggregationKind == AggregationKind.Drop)
+                        if (metricStreamConfig?.AggregationKind == AggregationKind.Drop)
                         {
                             metricStreamConfig = MetricStreamConfiguration.Drop;
                         }
