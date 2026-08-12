@@ -16,6 +16,10 @@ internal static class CharExtensions
             value is >= '0' and <= '9';
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static bool IsAsciiLetter(char value) =>
+            value is (>= 'A' and <= 'Z') or (>= 'a' and <= 'z');
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static bool IsAsciiLetterOrDigit(char value) =>
             value is (>= 'A' and <= 'Z') or (>= 'a' and <= 'z') or (>= '0' and <= '9');
 

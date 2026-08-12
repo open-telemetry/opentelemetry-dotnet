@@ -249,7 +249,7 @@ internal static class EnvironmentSubstitution
             "letter or underscore and contains only letters, digits, and underscores.");
 
     private static bool IsEnvNameStart(char c)
-        => c is (>= 'a' and <= 'z') or (>= 'A' and <= 'Z') or '_';
+        => char.IsAsciiLetter(c) || c == '_';
 
     private static bool IsEnvNameContinue(char c)
         => char.IsAsciiLetterOrDigit(c) || c == '_';
