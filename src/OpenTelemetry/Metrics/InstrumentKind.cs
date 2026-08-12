@@ -5,7 +5,6 @@ namespace OpenTelemetry.Metrics;
 
 /// <summary>
 /// The instrument kinds recognized by <see cref="AggregationCompatibility"/>.
-/// Mirrors the seven instrument kinds in the #2618 compatibility table.
 /// </summary>
 internal enum InstrumentKind
 {

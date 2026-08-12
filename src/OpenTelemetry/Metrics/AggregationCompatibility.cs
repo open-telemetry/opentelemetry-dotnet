@@ -7,7 +7,8 @@ namespace OpenTelemetry.Metrics;
 /// Isolates the compatibility matrix between <see cref="AggregationKind"/> and
 /// System.Diagnostics.Metrics instrument kinds.
 ///
-/// Modeled on OTel Go's `isAggregatorCompatible` (sdk/metric/pipeline.go),
+/// Modeled on OTel Go's `isAggregatorCompatible`
+/// (https://github.com/open-telemetry/opentelemetry-go/blob/e2543cb309cbae573994de025448806c401baf2a/sdk/metric/pipeline.go#L581),
 /// adapted for .NET's view-level <see cref="AggregationKind"/> enum.
 ///
 /// Used by <see cref="MeterProviderSdk"/> when validating view configurations.
@@ -27,11 +28,11 @@ namespace OpenTelemetry.Metrics;
 ///
 /// ObservableCounter / ObservableUpDownCounter:
 ///
-/// | AggregationType           | ObservableCounter | ObservableUpDownCounter |
-/// |---------------------------|:-----------------:|:-----------------------:|
-/// | LongSumIncomingCumulative |      Y (i)        |         Y (i)           |
-/// | DoubleSumIncomingCumulative|      Y (f)       |         Y (f)           |
-/// | Histogram and variants    |        N          |           N             |
+/// | AggregationType            | ObservableCounter | ObservableUpDownCounter |
+/// |----------------------------|:-----------------:|:-----------------------:|
+/// | LongSumIncomingCumulative  |      Y (i)        |         Y (i)           |
+/// | DoubleSumIncomingCumulative|      Y (f)        |         Y (f)           |
+/// | Histogram and variants     |        N          |           N             |
 ///
 /// Gauge / ObservableGauge:
 ///
@@ -54,7 +55,7 @@ internal static class AggregationCompatibility
     /// <c>typeof(Counter)</c> or
     /// <c>typeof(ObservableGauge)</c>. Note:
     /// MetricStreamConfiguration.Drop is a view-level construct, not
-    /// an AggregationType, and is out of scope here. callers should
+    /// an AggregationType, and is out of scope here. Callers should
     /// short-circuit on Drop before reaching this method.
     /// </param>
     /// <returns>
@@ -75,7 +76,7 @@ internal static class AggregationCompatibility
             return true;
         }
 
-        if (kind == InstrumentKind.Counter || kind == InstrumentKind.UpDownCounter)
+        if (kind is InstrumentKind.Counter or InstrumentKind.UpDownCounter)
         {
             switch (aggregationType)
             {
@@ -88,7 +89,7 @@ internal static class AggregationCompatibility
             }
         }
 
-        if (kind == InstrumentKind.Histogram)
+        if (kind is InstrumentKind.Histogram)
         {
             switch (aggregationType)
             {
@@ -101,7 +102,7 @@ internal static class AggregationCompatibility
             }
         }
 
-        if (kind == InstrumentKind.ObservableCounter || kind == InstrumentKind.ObservableUpDownCounter)
+        if (kind is InstrumentKind.ObservableCounter or InstrumentKind.ObservableUpDownCounter)
         {
             switch (aggregationType)
             {
@@ -112,7 +113,7 @@ internal static class AggregationCompatibility
             }
         }
 
-        if (kind == InstrumentKind.Gauge || kind == InstrumentKind.ObservableGauge)
+        if (kind is InstrumentKind.Gauge or InstrumentKind.ObservableGauge)
         {
             switch (aggregationType)
             {

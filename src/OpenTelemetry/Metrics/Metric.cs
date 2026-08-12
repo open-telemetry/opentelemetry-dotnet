@@ -225,7 +225,7 @@ public sealed class Metric
             aggType = AggregationType.LongGauge;
             this.MetricType = MetricType.LongGauge;
         }
-        else if (instrumentIdentity.IsHistogram && (instrumentIdentity.AggregationKind is null || instrumentIdentity.AggregationKind == AggregationKind.Histogram || instrumentIdentity.AggregationKind == AggregationKind.ExponentialHistogram))
+        else if (instrumentIdentity.IsHistogram && (instrumentIdentity.AggregationKind is null or AggregationKind.Histogram or AggregationKind.ExponentialHistogram))
         {
             var explicitBucketBounds = instrumentIdentity.HistogramBucketBounds;
             var exponentialMaxSize = instrumentIdentity.ExponentialHistogramMaxSize;
