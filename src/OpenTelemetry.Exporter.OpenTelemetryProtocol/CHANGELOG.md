@@ -26,6 +26,9 @@ Notes](../../RELEASENOTES.md).
   expire.
   ([#7597](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7597))
 
+* Fixed the OTLP exporter from retrying certain non-transient HTTP failures.
+  ([#7600](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7600))
+
 ## 1.17.0
 
 Released 2026-Jul-16
