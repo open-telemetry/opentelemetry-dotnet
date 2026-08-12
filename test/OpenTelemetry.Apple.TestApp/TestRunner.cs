@@ -23,9 +23,19 @@ internal static class TestRunner
     internal const string SummaryFileName = "summary.txt";
     internal const string ErrorFileName = "error.txt";
 
+    internal static readonly TimeSpan ExportTimeout = TimeSpan.FromSeconds(10);
+
     private static readonly TimeSpan ProbeTimeout = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan ProbeInterval = TimeSpan.FromSeconds(1);
     private static readonly TimeSpan ProbeDeadline = TimeSpan.FromSeconds(60);
+
+    /// <summary>
+    /// Gets the <see cref="HttpClient"/> used to reach the collector on the host.
+    /// </summary>
+    /// <remarks>
+    /// Shared client used to avoid timeouts while establishing connections in the emulator.
+    /// </remarks>
+    internal static HttpClient OtlpHttpClient { get; } = new() { Timeout = ExportTimeout };
 
     private static async Task Main(string[] args)
     {
@@ -126,8 +136,6 @@ internal static class TestRunner
         // reachable without adding to the requests the host asserts against.
         var probe = new Uri(new Uri(InstrumentationSource.OtlpEndpoint), "ready");
 
-        using var client = new HttpClient { Timeout = ProbeTimeout };
-
         var startedAt = Stopwatch.GetTimestamp();
         var deadline = DateTime.UtcNow + ProbeDeadline;
 
@@ -135,7 +143,8 @@ internal static class TestRunner
         {
             try
             {
-                using var response = await client.GetAsync(probe).ConfigureAwait(false);
+                using var timeout = new CancellationTokenSource(ProbeTimeout);
+                using var response = await OtlpHttpClient.GetAsync(probe, timeout.Token).ConfigureAwait(false);
 
                 await Console.Out.WriteLineAsync(
                     FormattableString.Invariant(
