@@ -46,7 +46,6 @@ internal static class ProtobufSerializer
     /// </summary>
     internal const int ReserveSizeForCompactLength = 1;
 
-    private const int MaxBufferSize = 100 * 1024 * 1024;
     private const uint UInt128 = 0x80;
     private const ulong ULong128 = 0x80;
     private const int Fixed32Size = 4;
