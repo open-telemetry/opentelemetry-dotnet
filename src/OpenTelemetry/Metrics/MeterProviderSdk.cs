@@ -302,7 +302,7 @@ internal sealed class MeterProviderSdk : MeterProvider
                     {
                         metricStreamConfig = viewConfig(instrument);
 
-                        if (metricStreamConfig != null && metricStreamConfig.AggregationKind == AggregationKind.Drop)
+                        if (metricStreamConfig?.AggregationKind == AggregationKind.Drop)
                         {
                             metricStreamConfig = MetricStreamConfiguration.Drop;
                         }
@@ -315,7 +315,8 @@ internal sealed class MeterProviderSdk : MeterProvider
                             metricStreamConfig.ViewId = i;
                         }
 
-                        if (metricStreamConfig?.AggregationKind is AggregationKind aggregationKind && !AggregationCompatibility.IsCompatible(aggregationKind, instrument.GetType()))
+                        if (metricStreamConfig?.AggregationKind is AggregationKind aggregationKind &&
+                            !AggregationCompatibility.IsCompatible(aggregationKind, instrument.GetType()))
                         {
                             metricStreamConfig = null;
 
