@@ -35,6 +35,41 @@ public class EnvironmentSubstitutionFuzzTests
                 }
             });
 
+    // Escaping every '$' must round-trip exactly: after doubling, every '$' in the input belongs to
+    // a '$$' pair, so no region can contain a '${' and nothing is substituted or rejected. This is
+    // the core invariant of the escape-region model - if region splitting ever undercounts a run of
+    // dollars, this property fails.
+    [Property(MaxTest = MaxTests)]
+    public Property EscapingEveryDollarRoundTrips() =>
+        Prop.ForAll(
+            SubstitutionStringArbitrary,
+            value =>
+            {
+#pragma warning disable CA1307 // Specify StringComparison for clarity - the 3-arg overload is not available on all TFMs
+                var escaped = value.Replace("$", "$$");
+#pragma warning restore CA1307 // Specify StringComparison for clarity
+                return EnvironmentSubstitution.Substitute(escaped, _ => "unused") == value;
+            });
+
+    // Resolved values are never rescanned, so a resolver that returns substitution syntax can never
+    // cause a second expansion, an error, or unbounded recursion.
+    [Property(MaxTest = MaxTests)]
+    public Property ResolvedValuesAreNeverRescanned() =>
+        Prop.ForAll(
+            SubstitutionStringArbitrary,
+            value =>
+            {
+                try
+                {
+                    var result = EnvironmentSubstitution.Substitute("${VAR}", _ => value);
+                    return result == (value.Length == 0 ? string.Empty : value);
+                }
+                catch (DeclarativeConfigurationException)
+                {
+                    return false;
+                }
+            });
+
     [Property(MaxTest = MaxTests)]
     public Property SubstituteIsDeterministicForArbitraryInputs() =>
         Prop.ForAll(

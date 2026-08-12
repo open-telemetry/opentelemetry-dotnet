@@ -11,11 +11,6 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Configuration.Declarative.Tests;
 
-/// <summary>
-/// End-to-end tests proving that YAML > IConfiguration > OTel SDK produces
-/// the expected observable effects. Each test covers one full path through the
-/// pipeline so regressions at any layer are caught here.
-/// </summary>
 public sealed class DeclarativeConfigurationSdkIntegrationTests
 {
     [Fact]

@@ -11,21 +11,8 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Configuration.Declarative.Tests;
 
-/// <summary>
-/// End-to-end tests verifying that YAML configuration flows through real IHost
-/// infrastructure to the OTel SDK. Covers both the modern HostApplicationBuilder
-/// (ConfigurationManager, in-place insert) and the classic HostBuilder
-/// (ConfigurationRoot, chain-and-replace) paths.
-/// </summary>
 public sealed class DeclarativeConfigurationHostIntegrationTests
 {
-    // --------------------------------------------------------------------------
-    // HostApplicationBuilder (modern hosting)
-    // IConfiguration is backed by a ConfigurationManager. Sources can be
-    // added directly on builder.Configuration, or via UseDeclarativeConfiguration
-    // which resolves the ConfigurationManager and inserts the source in-place.
-    // --------------------------------------------------------------------------
-
     [Fact]
     public void ModernHost_BuilderConfigurationExtension_ResourceAttributesFlowToSdk()
     {
@@ -124,8 +111,6 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
     [Fact]
     public void ModernHost_SourceAddedAfterYaml_OverridesYaml()
     {
-        // Prove overlay ordering: a source added to the ConfigurationManager after YAML
-        // occupies a higher position in the chain and takes precedence over YAML values.
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(
             resourceAttributes: new Dictionary<string, string> { ["service.name"] = "from-yaml" });
 
@@ -151,9 +136,6 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
     [Fact]
     public void ModernHost_YamlOverridesSourceAddedBeforeIt()
     {
-        // Prove overlay ordering: YAML beats sources that were already in the
-        // ConfigurationManager when AddOpenTelemetryDeclarativeConfiguration was called,
-        // because YAML is appended last (highest position at that point).
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(
             resourceAttributes: new Dictionary<string, string> { ["service.name"] = "from-yaml" });
 
@@ -175,13 +157,6 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
             resource.Attributes,
             a => a.Key == "service.name" && (string)a.Value == "from-yaml");
     }
-
-    // --------------------------------------------------------------------------
-    // HostBuilder (classic hosting)
-    // IConfiguration is a built ConfigurationRoot. Sources can be added via
-    // ConfigureAppConfiguration, or via UseDeclarativeConfiguration which
-    // wraps the root in a new ConfigurationManager and chains the original.
-    // --------------------------------------------------------------------------
 
     [Fact]
     public void ClassicHost_ConfigureAppConfiguration_ResourceAttributesFlowToSdk()
@@ -208,9 +183,6 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
     [Fact]
     public void ClassicHost_UseDeclarativeConfiguration_ResourceAttributesFlowToSdk()
     {
-        // UseDeclarativeConfiguration on IOpenTelemetryBuilder for HostBuilder:
-        // the overlay detects the factory-registered ConfigurationRoot, wraps it
-        // in a new ConfigurationManager, and chains the original so all keys resolve.
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(
             resourceAttributes: new Dictionary<string, string> { ["service.name"] = "classic-host-svc-via-otel" });
 
@@ -233,7 +205,6 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
     [Fact]
     public void ClassicHost_DisabledTrue_ProducesNoopTracerProvider()
     {
-        // Mirror of ModernHost_DisabledTrue_ProducesNoopTracerProvider for the classic host path.
         using var yamlFile = new DeclarativeYamlTestFileFactory();
         var yamlPath = yamlFile.CreateDeclarativeYaml(disabled: true);
 
@@ -268,9 +239,6 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
     [Fact]
     public void ModernHost_YamlOverridesOtelEnvVar_WhenEnvRegisteredFirst()
     {
-        // Demonstrates the canonical precedence model: YAML is appended after the host's
-        // environment-variable source (added during HostApplicationBuilder construction),
-        // so YAML takes precedence over OTel env vars already in the process environment.
         const string envVarName = "OTEL_RESOURCE_ATTRIBUTES";
         using var envScope = EnvironmentVariableScope.Create(envVarName, "service.name=from-env");
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(
@@ -291,12 +259,6 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
     [Fact]
     public void BareServiceCollection_DeclarativeConfigRegisteredBeforeIConfiguration_YamlUnreachable()
     {
-        // Call-order hazard: UseDeclarativeConfiguration is called when no IConfiguration
-        // is present in the service collection. A fresh ConfigurationManager with only the
-        // YAML source is registered. Any IConfiguration added AFTER takes the last-registered
-        // slot; DI resolves that one instead and the YAML-backed instance is shadowed.
-        // Prefer builder.Configuration.AddOpenTelemetryDeclarativeConfiguration on
-        // HostApplicationBuilder, or ConfigureAppConfiguration on HostBuilder.
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(
             resourceAttributes: new Dictionary<string, string> { ["service.name"] = "from-yaml" });
 

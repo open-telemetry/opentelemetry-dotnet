@@ -94,19 +94,15 @@ public sealed class DeclarativeConfigurationReaderTests
     }
 
     [Fact]
-    public void Translate_NonScalarTopLevelKey_IsIgnoredWithoutThrowing()
+    public void Translate_NonScalarTopLevelKey_Throws()
     {
-        // YAML supports non-scalar (e.g. sequence) keys via the explicit '? ...' syntax.
-        // Such a key can never be a valid OTel section name; it must be skipped without throwing.
         const string yaml = """
             file_format: "1.0"
             ? [a, b]
             : some_value
             """;
 
-        var data = ReadConfiguration(yaml);
-
-        Assert.Empty(data);
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
     }
 
     [Fact]
@@ -169,6 +165,107 @@ public sealed class DeclarativeConfigurationReaderTests
     }
 
     [Fact]
+    public void Translate_DoubleQuotedDefaultWithYamlNewlineEscape_IsRejected()
+    {
+        // Substitution runs on the decoded scalar, so YamlDotNet has already turned \n into a real
+        // newline by the time DEFAULT-VALUE is validated. A newline is outside VCHAR-WSP-NO-RBRACE,
+        // so this must fail: a YAML escape cannot smuggle an illegal character into a default. Only
+        // '$$' hides a reference.
+        const string yaml = """
+            file_format: "1.0"
+            resource:
+              attributes:
+                - name: note
+                  value: "${OTEL_DECLARATIVE_TEST_DQ_NEWLINE_DEFAULT:-a\nb}"
+            """;
+
+        var ex = Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+
+        Assert.Contains("U+000A", ex.Message, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("caf\u00E9")] // non-ASCII (U+00E9)
+    [InlineData(@"a\Nb")] // NEL (U+0085)
+    [InlineData(@"a\_b")] // NBSP (U+00A0)
+    [InlineData(@"a\x7Fb")] // DEL
+    [InlineData(@"a\rb")] // carriage return
+    [InlineData(@"a\0b")] // NUL
+    public void Translate_DoubleQuotedDefaultWithEscapeOutsideDefaultAlphabet_IsRejected(string defaultValue)
+    {
+        // Every escape form is rejected consistently, because validation always sees decoded text.
+        var yaml = $$"""
+            file_format: "1.0"
+            resource:
+              attributes:
+                - name: note
+                  value: "${OTEL_DECLARATIVE_TEST_DQ_ESCAPE_DEFAULT:-{{defaultValue}}}"
+            """;
+
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+    }
+
+    [Fact]
+    public void Translate_DoubleQuotedDefaultWithTabEscape_IsAccepted()
+    {
+        // TAB is WSP and therefore a legal DEFAULT-VALUE character, so \t decodes and survives.
+        const string yaml = """
+            file_format: "1.0"
+            resource:
+              attributes:
+                - name: note
+                  value: "${OTEL_DECLARATIVE_TEST_DQ_TAB_DEFAULT:-a\tb}"
+            """;
+
+        var data = ReadConfiguration(yaml);
+
+        Assert.Equal("note=a\tb", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
+    }
+
+    [Fact]
+    public void Translate_DoubleQuotedDollarHexEscape_StillFormsAReference()
+    {
+        // "\x24" decodes to '$' before substitution, so a YAML escape cannot hide a reference.
+        const string envVarName = "OTEL_DECLARATIVE_TEST_DQ_DOLLAR_ESCAPE";
+        const string yaml = """
+            file_format: "1.0"
+            resource:
+              attributes:
+                - name: note
+                  value: "\x24{OTEL_DECLARATIVE_TEST_DQ_DOLLAR_ESCAPE}"
+            """;
+
+        using var environment = EnvironmentVariableScope.Create(envVarName, "resolved");
+
+        var data = ReadConfiguration(yaml);
+
+        Assert.Equal("note=resolved", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
+    }
+
+    [Fact]
+    public void Translate_DoubleQuotedEnvValueWithLiteralBackslashN_IsNotYamlUnescaped()
+    {
+        // Env values are inserted verbatim and the result is never re-parsed as YAML, so a value
+        // containing the characters '\' and 'n' stays those two characters.
+        const string envVarName = "OTEL_DECLARATIVE_TEST_LITERAL_SLASH_N";
+        const string yaml = """
+            file_format: "1.0"
+            resource:
+              attributes:
+                - name: note
+                  value: "${OTEL_DECLARATIVE_TEST_LITERAL_SLASH_N}"
+            """;
+
+        using var envScope = EnvironmentVariableScope.Create(envVarName, "a\\nb");
+
+        var data = ReadConfiguration(yaml);
+
+        Assert.Equal(
+            "note=a\\nb",
+            data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
+    }
+
+    [Fact]
     public void Translate_MissingFileFormat_Throws()
     {
         const string yaml = """
@@ -189,7 +286,7 @@ public sealed class DeclarativeConfigurationReaderTests
     }
 
     [Fact]
-    public void Translate_ResourceWithNoAttributes_ProducesNoResourceKey()
+    public void Translate_ResourceWithUnknownProperty_Throws()
     {
         const string yaml = """
             file_format: "1.0"
@@ -197,29 +294,22 @@ public sealed class DeclarativeConfigurationReaderTests
               some_future_key: value
             """;
 
-        var data = ReadConfiguration(yaml);
-
-        Assert.DoesNotContain(DeclarativeConfigurationConverter.ResourceAttributesKey, data.Keys);
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
     }
 
     [Fact]
-    public void Translate_ResourceIsScalar_DoesNotThrowAndProducesNoResourceKey()
+    public void Translate_ResourceIsScalar_ThrowsTypeError()
     {
-        // Malformed: resource: is a scalar value instead of a mapping.
-        // The translator must log a warning (EventSource) and return without throwing or
-        // emitting resource attributes.
         const string yaml = """
             file_format: "1.0"
             resource: scalar-value
             """;
 
-        var data = ReadConfiguration(yaml);
-
-        Assert.DoesNotContain(DeclarativeConfigurationConverter.ResourceAttributesKey, data.Keys);
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
     }
 
     [Fact]
-    public void Translate_ResourceIsSequence_DoesNotThrowAndProducesNoResourceKey()
+    public void Translate_ResourceIsSequence_ThrowsTypeError()
     {
         // Malformed: resource: is a YAML sequence instead of a mapping.
         const string yaml = """
@@ -229,32 +319,25 @@ public sealed class DeclarativeConfigurationReaderTests
               - bar
             """;
 
-        var data = ReadConfiguration(yaml);
-
-        Assert.DoesNotContain(DeclarativeConfigurationConverter.ResourceAttributesKey, data.Keys);
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
     }
 
     [Fact]
-    public void Translate_UnquotedFileFormat_IsAcceptedIdenticallyToQuoted()
+    public void Translate_UnquotedFileFormat_ThrowsTypeError()
     {
-        // Unquoted YAML scalars. YamlDotNet's RepresentationModel returns the raw
-        // text for all scalars regardless of YAML type inference (float 1.0, bool true etc.),
-        // so unquoted values should be accepted identically to their quoted equivalents.
-
+        // YAML 1.2: plain (unquoted) '1.0' is a float, not a string. file_format must be quoted.
         const string yaml = """
             file_format: 1.0
             """;
 
-        var data = ReadConfiguration(yaml);
-
-        Assert.Empty(data);
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
     }
 
     [Fact]
     public void Translate_UnquotedBooleanDisabled_IsRecognized()
     {
         const string yaml = """
-            file_format: 1.0
+            file_format: "1.0"
             disabled: true
             """;
 
@@ -268,19 +351,14 @@ public sealed class DeclarativeConfigurationReaderTests
     [InlineData("no")]
     [InlineData("1")]
     [InlineData("on")]
-    public void Translate_NonBooleanDisabled_DoesNotEmitKey(string value)
+    public void Translate_NonBooleanDisabled_ThrowsTypeError(string value)
     {
-        // Non-boolean values for disabled must be ignored with an EventSource warning.
-        // "yes" / "no" / "1" are not valid OTel boolean values even though some YAML parsers accept them.
-
         var yaml = $"""
             file_format: "1.0"
             disabled: {value}
             """;
 
-        var data = ReadConfiguration(yaml);
-
-        Assert.DoesNotContain(DeclarativeConfigurationConverter.DisabledKey, data.Keys);
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
     }
 
     [Fact]
@@ -420,13 +498,10 @@ public sealed class DeclarativeConfigurationReaderTests
     [Theory]
     [InlineData("TRUE", "true")]
     [InlineData("FALSE", "false")]
-    [InlineData(" true ", "true")]
-    [InlineData(" False ", "false")]
     public void Translate_DisabledFromEnvVarSubstitution_NormalizesToCanonicalLowercase(
         string envVarValue, string expected)
     {
-        // Disabled value arriving via env-var substitution: the translator must normalize to
-        // canonical lowercase "true"/"false" regardless of env-var casing or surrounding whitespace.
+        // Disabled value arriving via env-var substitution is resolved using the YAML core schema.
 
         const string envVarName = "OTEL_DECLARATIVE_TEST_DISABLED_CASE";
         const string yaml = """
@@ -441,21 +516,32 @@ public sealed class DeclarativeConfigurationReaderTests
     }
 
     [Fact]
-    public void Translate_FileFormatFromSetEnvVar_ValidatesResolvedValue()
+    public void Translate_QuotedFileFormatFromSetEnvVar_ValidatesResolvedValue()
     {
-        // env-var substitution is applied to file_format (per spec).
-        // When the env var resolves to a valid format the document is accepted. When it
-        // resolves to empty (unset, no default) the validator throws with an unsupported-format error.
+        // Quoting forces string interpretation after environment-variable substitution.
 
         const string envVarName = "OTEL_DECLARATIVE_TEST_FORMAT_VERSION";
         const string yaml = """
-            file_format: ${OTEL_DECLARATIVE_TEST_FORMAT_VERSION}
+            file_format: "${OTEL_DECLARATIVE_TEST_FORMAT_VERSION}"
             """;
 
         using var envScope = EnvironmentVariableScope.Create(envVarName, "1.0");
 
         var data = ReadConfiguration(yaml);
         Assert.Empty(data);
+    }
+
+    [Fact]
+    public void Translate_UnquotedNumericFileFormatFromSetEnvVar_ThrowsTypeError()
+    {
+        const string envVarName = "OTEL_DECLARATIVE_TEST_NUMERIC_FORMAT_VERSION";
+        const string yaml = """
+            file_format: ${OTEL_DECLARATIVE_TEST_NUMERIC_FORMAT_VERSION}
+            """;
+
+        using var envScope = EnvironmentVariableScope.Create(envVarName, "1.0");
+
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
     }
 
     [Fact]
@@ -611,7 +697,7 @@ public sealed class DeclarativeConfigurationReaderTests
     }
 
     [Fact]
-    public void Translate_DisabledIsMapping_DoesNotThrowAndDoesNotSetKey()
+    public void Translate_DisabledIsMapping_ThrowsTypeError()
     {
         const string yaml = """
             file_format: "1.0"
@@ -619,13 +705,11 @@ public sealed class DeclarativeConfigurationReaderTests
               some_key: some_value
             """;
 
-        var data = ReadConfiguration(yaml);
-
-        Assert.DoesNotContain(DeclarativeConfigurationConverter.DisabledKey, data.Keys);
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
     }
 
     [Fact]
-    public void Translate_DisabledIsSequence_DoesNotThrowAndDoesNotSetKey()
+    public void Translate_DisabledIsSequence_ThrowsTypeError()
     {
         const string yaml = """
             file_format: "1.0"
@@ -634,9 +718,7 @@ public sealed class DeclarativeConfigurationReaderTests
               - false
             """;
 
-        var data = ReadConfiguration(yaml);
-
-        Assert.DoesNotContain(DeclarativeConfigurationConverter.DisabledKey, data.Keys);
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
     }
 
     [Fact]
@@ -696,24 +778,19 @@ public sealed class DeclarativeConfigurationReaderTests
     }
 
     [Fact]
-    public void Translate_NullTopLevelKey_DoesNotThrow()
+    public void Translate_NullTopLevelKey_Throws()
     {
-        // YAML null key (~). Must not throw; no output should be produced for it.
         const string yaml = """
             file_format: "1.0"
             ~: some_value
             """;
 
-        var data = ReadConfiguration(yaml);
-
-        Assert.Empty(data);
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
     }
 
     [Fact]
-    public void Translate_ResourceAttributeNonScalarValue_IsSkipped()
+    public void Translate_ResourceAttributeMappingValue_Throws()
     {
-        // 'value' is a YAML mapping. Mapping values cannot be represented in OTEL_RESOURCE_ATTRIBUTES
-        // and the entry is skipped with a "mapping value" diagnostic (not "missing value").
         const string yaml = """
             file_format: "1.0"
             resource:
@@ -723,9 +800,7 @@ public sealed class DeclarativeConfigurationReaderTests
                     nested: not-a-scalar
             """;
 
-        var data = ReadConfiguration(yaml);
-
-        Assert.DoesNotContain(DeclarativeConfigurationConverter.ResourceAttributesKey, data.Keys);
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
     }
 
     [Theory]
@@ -753,9 +828,8 @@ public sealed class DeclarativeConfigurationReaderTests
     }
 
     [Fact]
-    public void Translate_ResourceAttributeMissingValue_IsSkipped()
+    public void Translate_ResourceAttributeMissingValue_ThrowsWithoutPartialResult()
     {
-        // The absent-value entry is skipped; a valid sibling must still be emitted.
         const string yaml = """
             file_format: "1.0"
             resource:
@@ -765,16 +839,12 @@ public sealed class DeclarativeConfigurationReaderTests
                   value: my-service
             """;
 
-        var data = ReadConfiguration(yaml);
-
-        Assert.Equal("service.name=my-service", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
     }
 
     [Fact]
-    public void Translate_ResourceAttributeNonMappingSequenceItem_IsSkipped()
+    public void Translate_ResourceAttributeNonMappingSequenceItem_ThrowsWithoutPartialResult()
     {
-        // A sequence item that is a scalar (not a mapping) cannot be parsed as an attribute
-        // entry and is skipped; a valid sibling must still be emitted.
         const string yaml = """
             file_format: "1.0"
             resource:
@@ -784,9 +854,7 @@ public sealed class DeclarativeConfigurationReaderTests
                   value: my-service
             """;
 
-        var data = ReadConfiguration(yaml);
-
-        Assert.Equal("service.name=my-service", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
     }
 
     [Theory]
@@ -795,7 +863,7 @@ public sealed class DeclarativeConfigurationReaderTests
     [InlineData("Null")]
     [InlineData("NULL")]
     [InlineData("")]
-    public void Translate_ResourceAttributeNullName_IsSkipped(string nullName)
+    public void Translate_ResourceAttributeNullName_Throws(string nullName)
     {
         var yaml = $"""
             file_format: "1.0"
@@ -805,9 +873,22 @@ public sealed class DeclarativeConfigurationReaderTests
                   value: my-service
             """;
 
-        var data = ReadConfiguration(yaml);
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+    }
 
-        Assert.DoesNotContain(DeclarativeConfigurationConverter.ResourceAttributesKey, data.Keys);
+    [Fact]
+    public void Translate_ResourceAttributeAbsentName_ThrowsWithoutPartialResult()
+    {
+        const string yaml = """
+            file_format: "1.0"
+            resource:
+              attributes:
+                - value: orphaned-value
+                - name: service.name
+                  value: my-service
+            """;
+
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
     }
 
     [Fact]
@@ -823,6 +904,20 @@ public sealed class DeclarativeConfigurationReaderTests
             """;
 
         Assert.Throws<YamlDotNet.Core.YamlException>(() => ReadConfiguration(yaml));
+    }
+
+    [Theory]
+    [InlineData("!!str disabled")]
+    [InlineData("! disabled")]
+    public void Translate_TagEquivalentDuplicateTopLevelKeys_Throws(string duplicateKey)
+    {
+        var yaml = $"""
+            file_format: "1.0"
+            disabled: false
+            {duplicateKey}: true
+            """;
+
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
     }
 
     [Fact]
@@ -929,7 +1024,7 @@ public sealed class DeclarativeConfigurationReaderTests
     }
 
     [Fact]
-    public void Translate_ResourceAttributesList_NonScalar_DoesNotThrowAndProducesNoResourceKey()
+    public void Translate_ResourceAttributesList_NonScalar_ThrowsTypeError()
     {
         const string yaml = """
             file_format: "1.0"
@@ -938,9 +1033,7 @@ public sealed class DeclarativeConfigurationReaderTests
                 - service.name=my-service
             """;
 
-        var data = ReadConfiguration(yaml);
-
-        Assert.DoesNotContain(DeclarativeConfigurationConverter.ResourceAttributesKey, data.Keys);
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
     }
 
     [Fact]
@@ -966,6 +1059,27 @@ public sealed class DeclarativeConfigurationReaderTests
     }
 
     [Fact]
+    public void Translate_ResourceAttributesAndAttributesList_WhitespaceInAttributeNameStillShadowsList()
+    {
+        // OtelEnvResourceDetector trims flat-format keys. The precedence comparison must therefore
+        // use the same normalization, otherwise the lower-priority list entry survives and wins.
+        const string yaml = """
+            file_format: "1.0"
+            resource:
+              attributes_list: region=from-list
+              attributes:
+                - name: "region "
+                  value: from-attributes
+            """;
+
+        var data = ReadConfiguration(yaml);
+
+        Assert.Equal(
+            "region =from-attributes",
+            data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
+    }
+
+    [Fact]
     public void Translate_ResourceAttributesAndAttributesList_AllListKeysOverridden_EmitsOnlyAttributes()
     {
         // When every key in attributes_list is also present in attributes, the filtered
@@ -984,6 +1098,147 @@ public sealed class DeclarativeConfigurationReaderTests
         Assert.Equal(
             "service.name=from-attributes",
             data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
+    }
+
+    [Theory]
+    [InlineData("int", "3")]
+    [InlineData("bool", "true")]
+    [InlineData("double", "1.5")]
+    public void Translate_UnsupportedScalarTypeInAttributes_StillShadowsAttributesList(
+        string type, string value)
+    {
+        // resource.attributes outranks resource.attributes_list, so a declared name must suppress
+        // the list entry even when this projection cannot carry the higher-priority value. Falling
+        // back to the list value would silently emit the lower-priority string "5".
+        var yaml = $"""
+            file_format: "1.1"
+            resource:
+              attributes_list: retry.count=5
+              attributes:
+                - name: retry.count
+                  type: {type}
+                  value: {value}
+            """;
+
+        var data = ReadConfiguration(yaml);
+
+        Assert.DoesNotContain(DeclarativeConfigurationConverter.ResourceAttributesKey, data.Keys);
+    }
+
+    [Fact]
+    public void Translate_UnsupportedArrayTypeInAttributes_StillShadowsAttributesList()
+    {
+        const string yaml = """
+            file_format: "1.1"
+            resource:
+              attributes_list: tags=from-list
+              attributes:
+                - name: tags
+                  type: string_array
+                  value: [a, b]
+            """;
+
+        var data = ReadConfiguration(yaml);
+
+        Assert.DoesNotContain(DeclarativeConfigurationConverter.ResourceAttributesKey, data.Keys);
+    }
+
+    [Fact]
+    public void Translate_UnsupportedTypeShadowing_AppliesWhenAnotherAttributeProjects()
+    {
+        const string yaml = """
+            file_format: "1.1"
+            resource:
+              attributes_list: "retry.count=5,region=us-east-1"
+              attributes:
+                - name: retry.count
+                  type: int
+                  value: 3
+                - name: keep
+                  value: kept
+            """;
+
+        var data = ReadConfiguration(yaml);
+
+        Assert.Equal(
+            "region=us-east-1,keep=kept",
+            data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
+    }
+
+    [Fact]
+    public void Translate_NullAttributeValue_DoesNotShadowAttributesList()
+    {
+        // Schema v1.1: "Property must be present, but if null the entry is ignored." An ignored
+        // entry declares nothing, so the lower-priority attributes_list value stands.
+        const string yaml = """
+            file_format: "1.1"
+            resource:
+              attributes_list: note=from-list
+              attributes:
+                - name: note
+                  value: null
+            """;
+
+        var data = ReadConfiguration(yaml);
+
+        Assert.Equal("note=from-list", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
+    }
+
+    [Fact]
+    public void Translate_UnsupportedTypeThenSameNameString_ProjectsTheStringEntry()
+    {
+        // The shadowing set and the first-wins duplicate set must stay separate: reserving the name
+        // for the skipped int entry must not make the later projectable entry look like a duplicate.
+        const string yaml = """
+            file_format: "1.1"
+            resource:
+              attributes:
+                - name: x
+                  type: int
+                  value: 3
+                - name: x
+                  value: str
+            """;
+
+        var data = ReadConfiguration(yaml);
+
+        Assert.Equal("x=str", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
+    }
+
+    [Fact]
+    public void Translate_NullValueThenSameNameString_ProjectsTheStringEntry()
+    {
+        const string yaml = """
+            file_format: "1.1"
+            resource:
+              attributes:
+                - name: x
+                  value: null
+                - name: x
+                  value: str
+            """;
+
+        var data = ReadConfiguration(yaml);
+
+        Assert.Equal("x=str", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
+    }
+
+    [Fact]
+    public void Translate_DuplicateStringAttributeNames_FirstStillWins()
+    {
+        const string yaml = """
+            file_format: "1.1"
+            resource:
+              attributes:
+                - name: x
+                  value: first
+                - name: x
+                  value: second
+            """;
+
+        var data = ReadConfiguration(yaml);
+
+        Assert.Equal("x=first", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
     }
 
     [Fact]
@@ -1140,11 +1395,8 @@ public sealed class DeclarativeConfigurationReaderTests
     }
 
     [Fact]
-    public void Translate_DisabledFromQuotedUnsetEnvVarNoDefault_DoesNotSetKey()
+    public void Translate_DisabledFromQuotedUnsetEnvVarNoDefault_ThrowsTypeError()
     {
-        // A quoted '${VAR}' with no default: GetScalarString returns "" (non-null, because the
-        // DoubleQuoted style suppresses YAML-null inference). The ReadBoolean empty check must
-        // still treat this as present-null rather than logging a spurious invalid-boolean warning.
         const string envVarName = "OTEL_DECLARATIVE_TEST_DISABLED_QUOTED_UNSET";
         const string yaml = """
             file_format: "1.0"
@@ -1153,42 +1405,31 @@ public sealed class DeclarativeConfigurationReaderTests
 
         using var envScope = EnvironmentVariableScope.Create(envVarName, null);
 
-        var data = ReadConfiguration(yaml);
-
-        Assert.DoesNotContain(DeclarativeConfigurationConverter.DisabledKey, data.Keys);
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
     }
 
     [Fact]
-    public void Translate_ResourcePresentNull_DoesNotThrowAndProducesNoResourceKey()
+    public void Translate_ResourcePresentNull_ThrowsSchemaError()
     {
-        // 'resource: ~' is present-but-null: distinct from a malformed non-null scalar. No resource
-        // attributes are emitted and the document is processed without error.
         const string yaml = """
             file_format: "1.0"
             resource: ~
             """;
 
-        var data = ReadConfiguration(yaml);
-
-        Assert.DoesNotContain(DeclarativeConfigurationConverter.ResourceAttributesKey, data.Keys);
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
     }
 
     // type field handling (fix 2.3)
 
-    [Theory]
-    [InlineData("string")]
-    [InlineData("bool")]
-    [InlineData("int")]
-    [InlineData("double")]
-    public void Translate_ResourceAttributeKnownScalarType_EmitsAttribute(string type)
+    [Fact]
+    public void Translate_ResourceAttributeStringType_EmitsAttribute()
     {
-        // Scalar type hints are informational; the value is still projected to the flat format.
-        var yaml = $"""
+        const string yaml = """
             file_format: "1.0"
             resource:
               attributes:
                 - name: my.attr
-                  type: {type}
+                  type: string
                   value: some-value
             """;
 
@@ -1202,10 +1443,8 @@ public sealed class DeclarativeConfigurationReaderTests
     [InlineData("bool_array")]
     [InlineData("int_array")]
     [InlineData("double_array")]
-    public void Translate_ResourceAttributeArrayTypeWithScalarValue_IsSkipped(string arrayType)
+    public void Translate_ResourceAttributeArrayTypeWithScalarValue_Throws(string arrayType)
     {
-        // An array type hint means the attribute cannot be projected to the flat format,
-        // even if the YAML value node is a scalar.
         var yaml = $"""
             file_format: "1.0"
             resource:
@@ -1215,16 +1454,12 @@ public sealed class DeclarativeConfigurationReaderTests
                   value: scalar-value
             """;
 
-        var data = ReadConfiguration(yaml);
-
-        Assert.DoesNotContain(DeclarativeConfigurationConverter.ResourceAttributesKey, data.Keys);
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
     }
 
     [Fact]
-    public void Translate_ResourceAttributeUnknownType_IsSkipped()
+    public void Translate_ResourceAttributeUnknownType_Throws()
     {
-        // An unrecognized type hint is an authoring error; the entry is skipped
-        // rather than emitting a potentially incorrect value.
         const string yaml = """
             file_format: "1.0"
             resource:
@@ -1234,13 +1469,11 @@ public sealed class DeclarativeConfigurationReaderTests
                   value: my-service
             """;
 
-        var data = ReadConfiguration(yaml);
-
-        Assert.DoesNotContain(DeclarativeConfigurationConverter.ResourceAttributesKey, data.Keys);
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
     }
 
     [Fact]
-    public void Translate_ResourceAttributeUnknownTypeWithValidSibling_EmitsSiblingOnly()
+    public void Translate_ResourceAttributeUnknownTypeWithValidSibling_ThrowsWithoutPartialResult()
     {
         const string yaml = """
             file_format: "1.0"
@@ -1253,16 +1486,12 @@ public sealed class DeclarativeConfigurationReaderTests
                   value: skipped
             """;
 
-        var data = ReadConfiguration(yaml);
-
-        Assert.Equal("service.name=my-service", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
     }
 
     [Fact]
-    public void Translate_ResourceAttributeMappingValue_IsSkippedWithDistinctDiagnostic()
+    public void Translate_ResourceAttributeNestedMappingValue_Throws()
     {
-        // A mapping-typed 'value' is neither "missing" nor an "array". The bridge must
-        // emit a diagnostic that mentions "mapping", not "missing required 'value' field".
         const string yaml = """
             file_format: "1.0"
             resource:
@@ -1272,19 +1501,14 @@ public sealed class DeclarativeConfigurationReaderTests
                     nested: not-a-scalar
             """;
 
-        var data = ReadConfiguration(yaml);
-
-        Assert.DoesNotContain(DeclarativeConfigurationConverter.ResourceAttributesKey, data.Keys);
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
     }
 
-    // Sequence value without type field (finding 7)
+    // Sequence value without type field
 
     [Fact]
-    public void Translate_ResourceAttributeSequenceValueNoType_IsSkipped()
+    public void Translate_ResourceAttributeSequenceValueNoType_ThrowsWithoutPartialResult()
     {
-        // A YAML sequence value with no 'type' field: guard (b) entry.ValueNodeKind == Sequence
-        // catches this independently of the array-type guard (a) KnownArrayTypes.Contains(RawType).
-        // Without this test, removing guard (b) while keeping guard (a) would be undetected.
         const string yaml = """
             file_format: "1.0"
             resource:
@@ -1297,22 +1521,18 @@ public sealed class DeclarativeConfigurationReaderTests
                   value: my-service
             """;
 
-        var data = ReadConfiguration(yaml);
-
-        Assert.Equal("service.name=my-service", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
     }
 
-    // Type-value consistency (finding 4)
+    // Type-value consistency
 
     [Theory]
     [InlineData("bool", "yes")]
     [InlineData("bool", "no")]
     [InlineData("int", "3.14")]
     [InlineData("double", "not-a-number")]
-    public void Translate_ResourceAttributeValueTypeMismatch_StillEmitsAttribute(string type, string value)
+    public void Translate_ResourceAttributeValueTypeMismatch_Throws(string type, string value)
     {
-        // The type field is informational per spec; the bridge emits the attribute as-is even when
-        // the value is inconsistent with the declared type (a warning is logged separately).
         var yaml = $"""
             file_format: "1.0"
             resource:
@@ -1322,9 +1542,40 @@ public sealed class DeclarativeConfigurationReaderTests
                   value: {value}
             """;
 
-        var data = ReadConfiguration(yaml);
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+    }
 
-        Assert.Equal($"my.attr={value}", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
+    [Fact]
+    public void Translate_ResourceAttributeNullType_Throws()
+    {
+        // AttributeType's enum excludes null, so null cannot select the default string type.
+        const string yaml = """
+            file_format: "1.0"
+            resource:
+              attributes:
+                - name: my.attr
+                  type: ~
+                  value: my-value
+            """;
+
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+    }
+
+    [Fact]
+    public void Translate_ResourceAttributeMappingValueWithValidSibling_ThrowsWithoutPartialResult()
+    {
+        const string yaml = """
+            file_format: "1.0"
+            resource:
+              attributes:
+                - name: bad.attr
+                  value:
+                    nested: not-a-scalar
+                - name: service.name
+                  value: my-service
+            """;
+
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
     }
 
     [Theory]
@@ -1336,10 +1587,8 @@ public sealed class DeclarativeConfigurationReaderTests
     [InlineData("double", "3.14")]
     [InlineData("double", "1e5")]
     [InlineData("double", "-0.5")]
-    public void Translate_ResourceAttributeValueMatchesType_EmitsAttributeWithoutWarning(string type, string value)
+    public void Translate_ResourceAttributeValidNonStringScalar_IsNotProjectedAsString(string type, string value)
     {
-        // Values consistent with their declared type must emit without triggering Event 21.
-        // This is the "happy path" for typed attributes.
         var yaml = $"""
             file_format: "1.0"
             resource:
@@ -1351,7 +1600,7 @@ public sealed class DeclarativeConfigurationReaderTests
 
         var data = ReadConfiguration(yaml);
 
-        Assert.Equal($"my.attr={value}", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
+        Assert.DoesNotContain(DeclarativeConfigurationConverter.ResourceAttributesKey, data.Keys);
     }
 
     // M4: plain ${VAR} resolving to a YAML null spelling (null/NULL/~) -> present-null.
@@ -1365,7 +1614,8 @@ public sealed class DeclarativeConfigurationReaderTests
     public void Translate_DisabledFromEnvVarSetToNullLiteral_DoesNotSetKey(string envVarValue)
     {
         // When an env var is set to a YAML null spelling, substitution produces a plain
-        // scalar with that value. IsPlainNullScalar treats it as present-null -> no key emitted.
+        // scalar with that value. Yaml12ScalarResolver.ResolvesToNull treats it as
+        // present-null -> no key emitted.
         const string envVarName = "OTEL_DECLARATIVE_TEST_DISABLED_NULL_LITERAL";
         const string yaml = """
             file_format: "1.0"
@@ -1400,6 +1650,350 @@ public sealed class DeclarativeConfigurationReaderTests
         var data = ReadConfiguration(yaml);
 
         Assert.DoesNotContain(DeclarativeConfigurationConverter.ResourceAttributesKey, data.Keys);
+    }
+
+    // YAML 1.2: a quoted scalar is a string, so it cannot satisfy the boolean 'disabled' field.
+    [Theory]
+    [InlineData("\"true\"")]
+    [InlineData("'true'")]
+    [InlineData("\"false\"")]
+    public void Translate_QuotedBooleanDisabled_ThrowsTypeError(string value)
+    {
+        var yaml = $"""
+            file_format: "1.0"
+            disabled: {value}
+            """;
+
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+    }
+
+    [Theory]
+    [InlineData("tRue")]
+    [InlineData("TrUe")]
+    [InlineData("truE")]
+    [InlineData("fALSE")]
+    public void Translate_MixedCaseBooleanDisabled_ThrowsTypeError(string value)
+    {
+        var yaml = $"""
+            file_format: "1.0"
+            disabled: {value}
+            """;
+
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+    }
+
+    [Theory]
+    [InlineData("true")]
+    [InlineData("True")]
+    [InlineData("TRUE")]
+    public void Translate_Yaml12BooleanSpellings_AreRecognized(string value)
+    {
+        var yaml = $"""
+            file_format: "1.0"
+            disabled: {value}
+            """;
+
+        var data = ReadConfiguration(yaml);
+
+        Assert.Equal("true", data[DeclarativeConfigurationConverter.DisabledKey]);
+    }
+
+    // An explicit YAML tag overrides core schema resolution (YAML 1.2 section 3.2.1.2).
+    [Fact]
+    public void Translate_ExplicitStringTagOnUnquotedFileFormat_IsAccepted()
+    {
+        const string yaml = """
+            file_format: !!str 1.0
+            """;
+
+        var data = ReadConfiguration(yaml);
+
+        Assert.Empty(data);
+    }
+
+    [Fact]
+    public void Translate_ExplicitBooleanTagOnQuotedDisabled_IsRecognized()
+    {
+        const string yaml = """
+            file_format: "1.0"
+            disabled: !!bool "true"
+            """;
+
+        var data = ReadConfiguration(yaml);
+
+        Assert.Equal("true", data[DeclarativeConfigurationConverter.DisabledKey]);
+    }
+
+    // Aliases are resolved by YamlDotNet to the anchored node itself, so the anchored node's style
+    // is what the readers see. A quoted anchor must not become a boolean via an alias, and a plain
+    // anchor must still work.
+    [Fact]
+    public void Translate_AliasToQuotedBoolean_ThrowsTypeErrorLikeTheAnchor()
+    {
+        const string yaml = """
+            file_format: "1.0"
+            anchors:
+              quoted: &q "true"
+            disabled: *q
+            """;
+
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+    }
+
+    [Fact]
+    public void Translate_AliasToPlainBoolean_IsRecognizedLikeTheAnchor()
+    {
+        const string yaml = """
+            file_format: "1.0"
+            anchors:
+              plain: &p true
+            disabled: *p
+            """;
+
+        var data = ReadConfiguration(yaml);
+
+        Assert.Equal("true", data[DeclarativeConfigurationConverter.DisabledKey]);
+    }
+
+    [Fact]
+    public void Translate_AliasToPlainNumericFileFormat_ThrowsTypeErrorLikeTheAnchor()
+    {
+        // The alias must not launder a plain float into a string.
+        const string yaml = """
+            anchors:
+              version: &v 1.0
+            file_format: *v
+            """;
+
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+    }
+
+    [Fact]
+    public void Translate_UndefinedAlias_FailsToLoad()
+    {
+        const string yaml = """
+            file_format: "1.0"
+            disabled: *nope
+            """;
+
+        // YamlDotNet raises AnchorNotFoundException during Load; it is a YamlException, which the
+        // provider wraps. The reader surfaces it directly.
+        Assert.ThrowsAny<Exception>(() => ReadConfiguration(yaml));
+    }
+
+    // Under the YAML 1.2 core schema, << is an ordinary string key. At the extension-permitting
+    // root it is ignored; it is not expanded as a YAML 1.1 merge key.
+    [Fact]
+    public void Translate_MergeLikeKeyAtRoot_IsIgnored()
+    {
+        const string yaml = """
+            defaults: &d
+              disabled: true
+            file_format: "1.0"
+            <<: *d
+            """;
+
+        Assert.Empty(ReadConfiguration(yaml));
+    }
+
+    [Fact]
+    public void Translate_MergeLikeKeyInResource_ThrowsUnknownPropertyError()
+    {
+        const string yaml = """
+            defaults: &d
+              attributes:
+                - name: from.merge
+                  value: nope
+            file_format: "1.0"
+            resource:
+              <<: *d
+            """;
+
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+    }
+
+    [Fact]
+    public void Translate_UnquotedNumericAttributesList_ThrowsTypeError()
+    {
+        const string yaml = """
+            file_format: "1.0"
+            resource:
+              attributes_list: 1.5
+            """;
+
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+    }
+
+    [Fact]
+    public void Translate_QuotedNumericAttributesList_IsAccepted()
+    {
+        const string yaml = """
+            file_format: "1.0"
+            resource:
+              attributes_list: "service.version=1.5"
+            """;
+
+        var data = ReadConfiguration(yaml);
+
+        Assert.Equal("service.version=1.5", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
+    }
+
+    // Type resolution happens after substitution: an unquoted reference takes the type of whatever
+    // the variable resolved to. '1.0' and '0xdeadbeef' are numbers, 'true' is a boolean.
+    [Theory]
+    [InlineData("1.0")]
+    [InlineData("true")]
+    [InlineData("0xdeadbeef")]
+    public void Translate_SubstitutedUnquotedFileFormat_ResolvingToNonString_ThrowsTypeError(string envValue)
+    {
+        const string envVarName = "OTEL_DECLARATIVE_TEST_SUBST_TYPE";
+        const string yaml = """
+            file_format: ${OTEL_DECLARATIVE_TEST_SUBST_TYPE}
+            """;
+
+        using var envScope = EnvironmentVariableScope.Create(envVarName, envValue);
+
+        var ex = Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+
+        Assert.Contains("must resolve to string or null", ex.Message, StringComparison.Ordinal);
+    }
+
+    // '1.x' is not a YAML 1.2 number, so it stays a string and reaches format validation instead.
+    // This separates "wrong type" from "wrong value" and pins that the two diagnostics differ.
+    [Fact]
+    public void Translate_SubstitutedUnquotedFileFormat_ResolvingToString_ReachesFormatValidation()
+    {
+        const string envVarName = "OTEL_DECLARATIVE_TEST_SUBST_TYPE_STR";
+        const string yaml = """
+            file_format: ${OTEL_DECLARATIVE_TEST_SUBST_TYPE_STR}
+            """;
+
+        using var envScope = EnvironmentVariableScope.Create(envVarName, "1.x");
+
+        var ex = Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+
+        Assert.Contains("Unsupported file_format '1.x'", ex.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("must resolve to string or null", ex.Message, StringComparison.Ordinal);
+    }
+
+    // Quoting forces a string on every path, so the same variable value that fails unquoted works.
+    [Fact]
+    public void Translate_SubstitutedQuotedFileFormat_ResolvingToNumber_IsAccepted()
+    {
+        const string envVarName = "OTEL_DECLARATIVE_TEST_SUBST_TYPE_QUOTED";
+        const string yaml = """
+            file_format: "${OTEL_DECLARATIVE_TEST_SUBST_TYPE_QUOTED}"
+            """;
+
+        using var envScope = EnvironmentVariableScope.Create(envVarName, "1.0");
+
+        Assert.Empty(ReadConfiguration(yaml));
+    }
+
+    [Theory]
+    [InlineData("true", "true")]
+    [InlineData("TRUE", "true")]
+    [InlineData("false", "false")]
+    public void Translate_SubstitutedDisabled_ResolvesBooleanAfterSubstitution(string envValue, string expected)
+    {
+        const string envVarName = "OTEL_DECLARATIVE_TEST_SUBST_DISABLED";
+        const string yaml = """
+            file_format: "1.0"
+            disabled: ${OTEL_DECLARATIVE_TEST_SUBST_DISABLED}
+            """;
+
+        using var envScope = EnvironmentVariableScope.Create(envVarName, envValue);
+
+        var data = ReadConfiguration(yaml);
+
+        Assert.Equal(expected, data[DeclarativeConfigurationConverter.DisabledKey]);
+    }
+
+    [Theory]
+    [InlineData("tRue")]
+    [InlineData("yes")]
+    [InlineData("1")]
+    public void Translate_SubstitutedDisabledWithNonYaml12Boolean_ThrowsTypeError(string envValue)
+    {
+        const string envVarName = "OTEL_DECLARATIVE_TEST_SUBST_DISABLED_BAD";
+        const string yaml = """
+            file_format: "1.0"
+            disabled: ${OTEL_DECLARATIVE_TEST_SUBST_DISABLED_BAD}
+            """;
+
+        using var envScope = EnvironmentVariableScope.Create(envVarName, envValue);
+
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+    }
+
+    // A quoted reference is a string on every path, so it can never become a boolean.
+    [Fact]
+    public void Translate_QuotedSubstitutedDisabled_ThrowsTypeError()
+    {
+        const string envVarName = "OTEL_DECLARATIVE_TEST_SUBST_DISABLED_QUOTED";
+        const string yaml = """
+            file_format: "1.0"
+            disabled: "${OTEL_DECLARATIVE_TEST_SUBST_DISABLED_QUOTED}"
+            """;
+
+        using var envScope = EnvironmentVariableScope.Create(envVarName, "true");
+
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+    }
+
+    // Substitution cannot inject YAML syntax. Surrounding whitespace therefore remains part of a
+    // plain string instead of being trimmed into a null or numeric token.
+    [Fact]
+    public void Translate_SubstitutedValueWithSurroundingWhitespace_RemainsString()
+    {
+        const string envVarName = "OTEL_DECLARATIVE_TEST_PADDED_NULL";
+        const string yaml = """
+            file_format: "1.0"
+            resource:
+              attributes:
+                - name: my.attr
+                  value: ${OTEL_DECLARATIVE_TEST_PADDED_NULL}
+            """;
+
+        using var envScope = EnvironmentVariableScope.Create(envVarName, "  null  ");
+
+        var data = ReadConfiguration(yaml);
+
+        Assert.Equal("my.attr=  null  ", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
+    }
+
+    [Fact]
+    public void Translate_SubstitutedFileFormatWithSurroundingWhitespace_RemainsInvalidString()
+    {
+        const string envVarName = "OTEL_DECLARATIVE_TEST_PADDED_NUMBER";
+        const string yaml = """
+            file_format: ${OTEL_DECLARATIVE_TEST_PADDED_NUMBER}
+            """;
+
+        using var envScope = EnvironmentVariableScope.Create(envVarName, "  1.0  ");
+
+        var exception = Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+
+        Assert.Contains("Unsupported file_format '  1.0  '", exception.Message, StringComparison.Ordinal);
+    }
+
+    // An unterminated '${' is literal text, not an error, so a document containing one still loads.
+    [Fact]
+    public void Translate_UnterminatedSubstitutionInAttributeValue_IsLiteralText()
+    {
+        const string yaml = """
+            file_format: "1.0"
+            resource:
+              attributes:
+                - name: my.attr
+                  value: "${UNTERMINATED"
+            """;
+
+        var data = ReadConfiguration(yaml);
+
+        Assert.Equal(
+            "my.attr=${UNTERMINATED",
+            data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
     }
 
     private static ReadOnlyDictionary<string, string?> ReadConfiguration(string yaml)

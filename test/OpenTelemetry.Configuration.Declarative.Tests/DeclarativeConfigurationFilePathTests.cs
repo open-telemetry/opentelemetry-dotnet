@@ -44,7 +44,7 @@ public sealed class DeclarativeConfigurationFilePathTests
     {
         // Relative paths resolve against AppContext.BaseDirectory, so the absolute form
         // of a relative name is always Path.Combine(AppContext.BaseDirectory, name).
-        // No file needs to exist - FilePath only does path normalisation.
+        // No file needs to exist - FilePath only does path normalization.
         var relativeName = "otel-config-test.yaml";
         var absolutePath = Path.Combine(AppContext.BaseDirectory, relativeName);
 
@@ -120,9 +120,6 @@ public sealed class DeclarativeConfigurationFilePathTests
     [Fact]
     public void Path_RelativeInput_IgnoresCurrentDirectory()
     {
-        // Regression test: under IIS in-process hosting, Environment.CurrentDirectory is the
-        // IIS worker-process directory, not the application directory. Relative paths must
-        // still resolve to the application directory.
         var relativeName = "otel-config-test.yaml";
         var expectedAbsolutePath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, relativeName));
         var originalCwd = Directory.GetCurrentDirectory();
@@ -141,11 +138,10 @@ public sealed class DeclarativeConfigurationFilePathTests
     [Fact]
     public void Path_RootRelativeOnWindows_UsesAppBaseDirectoryDrive()
     {
-        // On Windows, a root-relative path (\otel.yaml) is rooted but NOT fully qualified:
+        // On Windows, a root-relative path (\otel.yaml) is rooted but NOT fully qualified.
         // Path.IsPathRooted returns true but resolution still depends on the current drive.
         // FilePath resolves it by combining with AppContext.BaseDirectory, so the drive
         // letter comes from the application directory rather than the ambient current drive.
-        // Path.Combine("C:\App\", "\otel.yaml") -> "C:\otel.yaml" (drive from base preserved).
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             return;

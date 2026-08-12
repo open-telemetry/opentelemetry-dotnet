@@ -11,6 +11,10 @@ internal enum AttributeValueNodeKind
     /// <summary>
     /// The <c>value</c> key was absent from the mapping.
     /// </summary>
+    /// <remarks>
+    /// The spec requires Parse to differentiate absent from present-null. Entries with this kind
+    /// are never added to the parsed model; the value is set when logging the skip diagnostic.
+    /// </remarks>
     Absent,
 
     /// <summary>
@@ -31,5 +35,9 @@ internal enum AttributeValueNodeKind
     /// <summary>
     /// The <c>value</c> key was present with a YAML mapping (object) node.
     /// </summary>
+    /// <remarks>
+    /// Mapping values are not permitted by the schema. Entries with this kind are never added to
+    /// the parsed model; the value is set when logging the skip diagnostic.
+    /// </remarks>
     Mapping,
 }

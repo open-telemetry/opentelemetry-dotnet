@@ -83,12 +83,17 @@ internal sealed class OpenTelemetryDeclarativeConfigurationEventSource : EventSo
     [Event(20, Message = "Declarative config: no IConfiguration was registered at the time UseDeclarativeConfiguration was called for '{0}'. If host infrastructure registers IConfiguration after this call, it will take precedence and the declarative configuration source will be unreachable.", Level = EventLevel.Warning)]
     public void NoExistingConfigurationRegistered(string filePath) => this.WriteEvent(20, filePath);
 
-    [Event(21, Message = "Declarative config: resource attribute '{0}' has type '{1}' but value '{2}' cannot be parsed as {1}; the attribute will still be emitted and the SDK may be unable to interpret it correctly.", Level = EventLevel.Warning)]
-    public void ResourceAttributeValueTypeMismatch(string name, string type, string value) => this.WriteEvent(21, name, type, value);
-
     [Event(22, Message = "Declarative config: resource attribute name '{0}' does not follow the OTel attribute naming convention ([a-zA-Z_][-a-zA-Z0-9_.]*); it will be emitted as-is.", Level = EventLevel.Warning)]
     public void ResourceAttributeNameNotCompliant(string name) => this.WriteEvent(22, name);
 
     [Event(23, Message = "Declarative config: configuration file '{0}' is empty; no keys were produced and the SDK will use defaults.", Level = EventLevel.Informational)]
     public void EmptyConfigurationFile(string filePath) => this.WriteEvent(23, filePath);
+
+    // The message deliberately avoids literal braces: EventSource manifest messages treat them as
+    // format placeholders.
+    [Event(24, Message = "Declarative config: '{0}' is not a complete environment variable substitution reference - there is no closing brace before the end of the value or the next '$$' escape - so it is left as literal text.", Level = EventLevel.Verbose)]
+    public void UnresolvedSubstitutionExpression(string expression) => this.WriteEvent(24, expression);
+
+    [Event(25, Message = "Declarative config: property '{0}' is not supported by this declarative configuration implementation. The configuration is invalid; check for a misspelling.", Level = EventLevel.Warning)]
+    public void UnknownConfigurationProperty(string propertyPath) => this.WriteEvent(25, propertyPath);
 }

@@ -2,9 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Collections.ObjectModel;
-#if NET
-using System.Collections.Frozen;
-#endif
 using Microsoft.Extensions.Configuration;
 using YamlDotNet.RepresentationModel;
 
@@ -13,22 +10,12 @@ namespace OpenTelemetry.Configuration.Declarative;
 internal static class DeclarativeConfigurationReader
 {
     // Top-level keys this package recognises. Anything else is logged and ignored.
-#if NET
-    private static readonly FrozenSet<string> KnownTopLevelKeys =
-        new HashSet<string>(StringComparer.Ordinal)
-        {
-            YamlKeys.FileFormat,
-            YamlKeys.Disabled,
-            YamlKeys.Resource,
-        }.ToFrozenSet(StringComparer.Ordinal);
-#else
     private static readonly HashSet<string> KnownTopLevelKeys = new(StringComparer.Ordinal)
     {
         YamlKeys.FileFormat,
         YamlKeys.Disabled,
         YamlKeys.Resource,
     };
-#endif
 
     /// <summary>
     /// Opens <paramref name="filePath"/>, validates <c>file_format</c>, parses the typed model,
@@ -73,8 +60,16 @@ internal static class DeclarativeConfigurationReader
                 "The declarative configuration document root must be a YAML mapping node.");
         }
 
+        root.EnsureCoreCollectionTag("<root>");
+        root.EnsureUniqueStringKeys("<root>");
+
         // Phase 1: validate file_format.
-        var rawFileFormat = root.GetScalarString(YamlKeys.FileFormat);
+        // Throw (rather than warn) on a type mismatch: file_format decides how the rest of the
+        // document is interpreted, so `file_format: 1.0` - a YAML 1.2 float - must fail fast rather
+        // than fall through to the generic "missing file_format" message.
+        var rawFileFormat = root
+            .ReadString(YamlKeys.FileFormat)
+            .TryGetValue(out var fmt) ? fmt : null;
         var fileFormat = FileFormatValidator.Validate(
             rawFileFormat,
             OpenTelemetryDeclarativeConfigurationEventSource.Log.FileFormatWarning);
@@ -91,6 +86,9 @@ internal static class DeclarativeConfigurationReader
     }
 
     // Logs each top-level section that this package does not recognise (lenient validation).
+    // The top-level schema object sets additionalProperties=true, so an unknown section here is a
+    // legal forward-compatible extension rather than a schema violation - unlike the nested objects
+    // handled by YamlNodeReader.EnsureNoUnrecognizedProperties.
     private static void LogUnknownTopLevelSections(YamlMappingNode root)
     {
         foreach (var entry in root.Children)

@@ -16,7 +16,7 @@ public sealed class DeclarativeConfigurationEventSourceTests
         EventSourceTestHelper.ValidateEventSourceIds<OpenTelemetryDeclarativeConfigurationEventSource>();
 
     [Fact]
-    public void ReadConfiguration_InvalidDisabledValue_EmitsInvalidBooleanValueWarning()
+    public void ReadConfiguration_InvalidDisabledValue_ThrowsTypeErrorWithoutWarning()
     {
         const string yaml = """
             file_format: "1.0"
@@ -25,15 +25,12 @@ public sealed class DeclarativeConfigurationEventSourceTests
 
         using var listener = CreateWarningListener();
 
-        _ = ReadConfiguration(yaml);
-
-        var warning = Assert.Single(listener.Messages, e => e.EventId == 4);
-        Assert.Equal("disabled", warning.Payload![0]);
-        Assert.Equal("yes", warning.Payload[1]);
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+        Assert.Empty(listener.Messages);
     }
 
     [Fact]
-    public void ReadConfiguration_MalformedAttributesList_EmitsMalformedSectionWarning()
+    public void ReadConfiguration_MalformedAttributesList_ThrowsTypeErrorWithoutWarning()
     {
         const string yaml = """
             file_format: "1.0"
@@ -44,11 +41,8 @@ public sealed class DeclarativeConfigurationEventSourceTests
 
         using var listener = CreateWarningListener();
 
-        _ = ReadConfiguration(yaml);
-
-        var warning = Assert.Single(listener.Messages, e => e.EventId == 6);
-        Assert.Equal(YamlKeys.AttributesList, warning.Payload![0]);
-        Assert.Contains("scalar", warning.Payload[1] as string, StringComparison.OrdinalIgnoreCase);
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+        Assert.Empty(listener.Messages);
     }
 
     [Fact]
@@ -115,10 +109,8 @@ public sealed class DeclarativeConfigurationEventSourceTests
     }
 
     [Fact]
-    public void ReadConfiguration_ResourceAttributeMappingValue_EmitsMappingNotRepresentableWarning()
+    public void ReadConfiguration_ResourceAttributeMappingValue_EmitsInvalidAttributeEvent()
     {
-        // A 'value' that is a YAML mapping cannot be represented in OTEL_RESOURCE_ATTRIBUTES.
-        // The warning must NOT say "missing required 'value' field" (which is wrong for this case).
         const string yaml = """
             file_format: "1.0"
             resource:
@@ -130,21 +122,17 @@ public sealed class DeclarativeConfigurationEventSourceTests
 
         using var listener = CreateWarningListener();
 
-        _ = ReadConfiguration(yaml);
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
 
         var warning = Assert.Single(listener.Messages, e => e.EventId == 3);
-        var message = warning.Payload![0] as string;
-        Assert.Contains("mapping", message, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("missing", message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("mapping", warning.Payload![0] as string, StringComparison.OrdinalIgnoreCase);
     }
 
     [Theory]
     [InlineData("scalar-string")] // scalar where a sequence is expected
     [InlineData("{ nested: value }")] // mapping where a sequence is expected
-    public void ReadConfiguration_MalformedResourceAttributes_EmitsMalformedSectionWarning(string attributesValue)
+    public void ReadConfiguration_MalformedResourceAttributes_ThrowsTypeErrorWithoutWarning(string attributesValue)
     {
-        // resource.attributes present but not a YAML sequence should emit MalformedSection (Event 6),
-        // not silently return Absent.
         var yaml = $"""
             file_format: "1.0"
             resource:
@@ -153,15 +141,12 @@ public sealed class DeclarativeConfigurationEventSourceTests
 
         using var listener = CreateWarningListener();
 
-        _ = ReadConfiguration(yaml);
-
-        var warning = Assert.Single(listener.Messages, e => e.EventId == 6);
-        Assert.Equal(YamlKeys.Attributes, warning.Payload![0]);
-        Assert.Contains("sequence", warning.Payload[1] as string, StringComparison.OrdinalIgnoreCase);
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+        Assert.Empty(listener.Messages);
     }
 
     [Fact]
-    public void ReadConfiguration_ResourceAttributeUnknownType_EmitsUnknownTypeWarning()
+    public void ReadConfiguration_ResourceAttributeUnknownType_EmitsInvalidAttributeEvent()
     {
         const string yaml = """
             file_format: "1.0"
@@ -174,12 +159,10 @@ public sealed class DeclarativeConfigurationEventSourceTests
 
         using var listener = CreateWarningListener();
 
-        _ = ReadConfiguration(yaml);
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
 
         var warning = Assert.Single(listener.Messages, e => e.EventId == 3);
-        var message = warning.Payload![0] as string;
-        Assert.Contains("unrecognized", message, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("matrix", message, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("matrix", warning.Payload![0] as string, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -206,10 +189,31 @@ public sealed class DeclarativeConfigurationEventSourceTests
     }
 
     [Fact]
-    public void ReadConfiguration_ResourceAttributeAbsentValue_EmitsMissingValueWarning()
+    public void ReadConfiguration_NonStringResourceAttribute_EmitsLosslessProjectionWarning()
     {
-        // No 'value' key at all: distinct from value: ~ (NullScalar) and value: {mapping}.
-        // The warning must say "missing", not "null" or "mapping".
+        const string yaml = """
+            file_format: "1.0"
+            resource:
+              attributes:
+                - name: integer.attribute
+                  type: int
+                  value: 42
+            """;
+
+        using var listener = CreateWarningListener();
+
+        _ = ReadConfiguration(yaml);
+
+        var warning = Assert.Single(listener.Messages, e => e.EventId == 3);
+        var message = warning.Payload![0] as string;
+        Assert.Contains("int", message, StringComparison.Ordinal);
+        Assert.Contains("without losing its type", message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ReadConfiguration_ResourceAttributeAbsentValue_EmitsInvalidAttributeEvent()
+    {
+        // Absent 'value' is distinct from present-null. The diagnostic must say "missing" not "null".
         const string yaml = """
             file_format: "1.0"
             resource:
@@ -219,7 +223,7 @@ public sealed class DeclarativeConfigurationEventSourceTests
 
         using var listener = CreateWarningListener();
 
-        _ = ReadConfiguration(yaml);
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
 
         var warning = Assert.Single(listener.Messages, e => e.EventId == 3);
         var message = warning.Payload![0] as string;
@@ -232,7 +236,7 @@ public sealed class DeclarativeConfigurationEventSourceTests
     [InlineData("bool", "no")]
     [InlineData("int", "3.14")]
     [InlineData("double", "not-a-number")]
-    public void ReadConfiguration_ResourceAttributeValueTypeMismatch_EmitsValueTypeMismatchWarning(string type, string value)
+    public void ReadConfiguration_ResourceAttributeValueTypeMismatch_EmitsInvalidAttributeEvent(string type, string value)
     {
         var yaml = $"""
             file_format: "1.0"
@@ -245,44 +249,11 @@ public sealed class DeclarativeConfigurationEventSourceTests
 
         using var listener = CreateWarningListener();
 
-        _ = ReadConfiguration(yaml);
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
 
-        var warning = Assert.Single(listener.Messages, e => e.EventId == 21);
-        Assert.Equal("my.attr", warning.Payload![0]);
-        Assert.Equal(type, warning.Payload[1]);
-        Assert.Equal(value, warning.Payload[2]);
+        var warning = Assert.Single(listener.Messages, e => e.EventId == 3);
+        Assert.Contains(type, warning.Payload![0] as string, StringComparison.Ordinal);
     }
-
-    [Theory]
-    [InlineData("bool", "true")]
-    [InlineData("bool", "false")]
-    [InlineData("bool", "True")]
-    [InlineData("int", "42")]
-    [InlineData("int", "-5")]
-    [InlineData("double", "3.14")]
-    [InlineData("double", "1e5")]
-    [InlineData("string", "anything-goes")]
-    public void ReadConfiguration_ResourceAttributeValueMatchesType_DoesNotEmitTypeMismatchWarning(string type, string value)
-    {
-        // Valid type/value pairs must not fire Event 21. Without this assertion a bug that always
-        // fires Event 21 regardless of consistency would not be caught by the "should fire" theory.
-        var yaml = $"""
-            file_format: "1.0"
-            resource:
-              attributes:
-                - name: my.attr
-                  type: {type}
-                  value: {value}
-            """;
-
-        using var listener = CreateWarningListener();
-
-        _ = ReadConfiguration(yaml);
-
-        Assert.DoesNotContain(listener.Messages, e => e.EventId == 21);
-    }
-
-    // B1: tiered name validation - hard-reject (Event 3) vs soft-warn (Event 22)
 
     [Theory]
     [InlineData("my=key")]
@@ -350,8 +321,6 @@ public sealed class DeclarativeConfigurationEventSourceTests
         Assert.DoesNotContain(listener.Messages, e => e.EventId == 22);
     }
 
-    // B2: empty file emits Event 23 at informational level
-
     [Fact]
     public void ReadConfiguration_EmptyFile_EmitsEmptyConfigurationFileEvent()
     {
@@ -373,8 +342,6 @@ public sealed class DeclarativeConfigurationEventSourceTests
 
         Assert.DoesNotContain(listener.Messages, e => e.EventId == 23);
     }
-
-    // P3-F: verify Event 5 (MultipleDocumentsDetected) and Event 17 (OtelConfigFileNotSet) fire
 
     [Fact]
     public void ReadConfiguration_MultipleDocuments_EmitsMultipleDocumentsDetectedWarning()
@@ -424,6 +391,257 @@ public sealed class DeclarativeConfigurationEventSourceTests
 
         Assert.Single(listener.Messages, e => e.EventId == 19);
         Assert.Equal("true", config[OtelEnvironmentVariables.SdkDisabled]);
+    }
+
+    [Fact]
+    public void ReadConfiguration_QuotedDisabledValue_ThrowsTypeErrorWithoutWarning()
+    {
+        const string yaml = """
+            file_format: "1.0"
+            disabled: "true"
+            """;
+
+        using var listener = CreateWarningListener();
+
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+        Assert.Empty(listener.Messages);
+    }
+
+    // Mixed-case spellings are strings under the YAML 1.2 core schema, so they take the generic
+    // invalid-boolean diagnostic rather than the quoting one.
+    [Fact]
+    public void ReadConfiguration_MixedCaseDisabledValue_ThrowsTypeErrorWithoutWarning()
+    {
+        const string yaml = """
+            file_format: "1.0"
+            disabled: tRue
+            """;
+
+        using var listener = CreateWarningListener();
+
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+        Assert.Empty(listener.Messages);
+    }
+
+    [Fact]
+    public void ReadConfiguration_QuotedDisabledFromUnsetEnvVar_ThrowsTypeErrorWithoutWarning()
+    {
+        const string envVarName = "OTEL_DECLARATIVE_TEST_EVENT_DISABLED_UNSET";
+        const string yaml = """
+            file_format: "1.0"
+            disabled: "${OTEL_DECLARATIVE_TEST_EVENT_DISABLED_UNSET}"
+            """;
+
+        using var envScope = EnvironmentVariableScope.Create(envVarName, null);
+        using var listener = CreateWarningListener();
+
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+        Assert.Empty(listener.Messages);
+    }
+
+    [Fact]
+    public void ReadConfiguration_UnquotedNumericAttributesList_ThrowsTypeErrorWithoutWarning()
+    {
+        const string yaml = """
+            file_format: "1.0"
+            resource:
+              attributes_list: 1.5
+            """;
+
+        using var listener = CreateWarningListener();
+
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+        Assert.Empty(listener.Messages);
+    }
+
+    [Fact]
+    public void ReadConfiguration_MergeLikeKeyAtRoot_IsIgnoredAsUnknownSection()
+    {
+        const string yaml = """
+            defaults: &d
+              disabled: true
+            file_format: "1.0"
+            <<: *d
+            """;
+
+        using var listener = CreateWarningListener();
+
+        var data = ReadConfiguration(yaml);
+
+        Assert.Empty(data);
+        var events = listener.Messages.Where(e => e.EventId == 2).ToArray();
+        Assert.Equal(2, events.Length);
+        Assert.Contains(events, e => Equals(e.Payload![0], "defaults"));
+        Assert.Contains(events, e => Equals(e.Payload![0], "<<"));
+    }
+
+    [Fact]
+    public void ReadConfiguration_MergeLikeKeyInResource_ThrowsSchemaErrorAndEmitsUnknownPropertyEvent()
+    {
+        const string yaml = """
+            defaults: &d
+              attributes_list: service.name=from-merge
+            file_format: "1.0"
+            resource:
+              <<: *d
+            """;
+
+        using var listener = CreateWarningListener();
+
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+
+        var evt = Assert.Single(listener.Messages, e => e.EventId == 25);
+        Assert.Equal("resource.<<", evt.Payload![0]);
+    }
+
+    [Fact]
+    public void ReadConfiguration_UnterminatedSubstitution_EmitsVerboseUnresolvedExpressionEvent()
+    {
+        const string yaml = """
+            file_format: "1.0"
+            resource:
+              attributes_list: "service.name=${UNTERMINATED"
+            """;
+
+        using var listener = CreateVerboseListener();
+
+        _ = ReadConfiguration(yaml);
+
+        var evt = Assert.Single(listener.Messages, e => e.EventId == 24);
+        Assert.Equal("${UNTERMINATED", evt.Payload![0]);
+    }
+
+    [Theory]
+    [InlineData("attributes_lsit", "resource.attributes_lsit")]
+    public void ReadConfiguration_MisspelledResourceProperty_EmitsUnknownPropertyEvent(
+        string misspelledKey, string expectedPath)
+    {
+        // The schema sets additionalProperties=false on Resource, so an unknown property key is a
+        // schema violation and the parse must fail after reporting it.
+        var yaml = $"""
+            file_format: "1.1"
+            resource:
+              {misspelledKey}: "service.name=test"
+            """;
+
+        using var listener = CreateWarningListener();
+
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+
+        var evt = Assert.Single(listener.Messages, e => e.EventId == 25);
+        Assert.Equal(expectedPath, evt.Payload![0]);
+    }
+
+    [Theory]
+    [InlineData("vlaue", "resource.attributes[1].vlaue")]
+    public void ReadConfiguration_MisspelledAttributeEntryProperty_EmitsUnknownPropertyEventWithIndex(
+        string misspelledKey, string expectedPath)
+    {
+        var yaml = $"""
+            file_format: "1.1"
+            resource:
+              attributes:
+                - name: a
+                  value: text
+                - name: b
+                  value: text
+                  {misspelledKey}: typo
+            """;
+
+        using var listener = CreateWarningListener();
+
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+
+        var evt = Assert.Single(listener.Messages, e => e.EventId == 25);
+        Assert.Equal(expectedPath, evt.Payload![0]);
+    }
+
+    [Fact]
+    public void ReadConfiguration_SupportedResourceProperties_EmitNoPropertyDiagnostics()
+    {
+        const string yaml = """
+            file_format: "1.1"
+            resource:
+              attributes_list: "region=us-east-1"
+              attributes:
+                - name: a
+                  type: string
+                  value: text
+            """;
+
+        using var listener = CreateWarningListener();
+
+        _ = ReadConfiguration(yaml);
+
+        Assert.DoesNotContain(listener.Messages, e => e.EventId is 25 or 26);
+    }
+
+    [Fact]
+    public void ReadConfiguration_QuotedMergeLikeKeyAtRoot_IsLoggedAsUnknownSectionNotRejected()
+    {
+        // Under the YAML 1.2 core schema "<<" is an ordinary string key, and the top-level schema
+        // object sets additionalProperties=true, so this document is legal.
+        const string yaml = """
+            file_format: "1.1"
+            "<<": some-extension-value
+            """;
+
+        using var listener = CreateWarningListener();
+
+        var data = ReadConfiguration(yaml);
+
+        var evt = Assert.Single(listener.Messages, e => e.EventId == 2);
+        Assert.Equal("<<", evt.Payload![0]);
+        Assert.Empty(data);
+    }
+
+    [Fact]
+    public void ReadConfiguration_StrTaggedMergeLikeKeyAtRoot_IsAccepted()
+    {
+        const string yaml = """
+            file_format: "1.1"
+            !!str << : some-extension-value
+            """;
+
+        using var listener = CreateWarningListener();
+
+        _ = ReadConfiguration(yaml);
+
+        Assert.Single(listener.Messages, e => e.EventId == 2);
+    }
+
+    [Fact]
+    public void ReadConfiguration_PlainMergeLikeKeyAtRoot_IsLoggedAsUnknownSection()
+    {
+        const string yaml = """
+            file_format: "1.1"
+            <<: {x: 1}
+            """;
+
+        using var listener = CreateWarningListener();
+
+        var data = ReadConfiguration(yaml);
+
+        Assert.Empty(data);
+        var evt = Assert.Single(listener.Messages, e => e.EventId == 2);
+        Assert.Equal("<<", evt.Payload![0]);
+    }
+
+    [Fact]
+    public void ReadConfiguration_PlainMergeLikeKeyInResource_IsRejectedAsUnknownProperty()
+    {
+        const string yaml = """
+            file_format: "1.1"
+            resource:
+              <<: {x: 1}
+            """;
+
+        using var listener = CreateWarningListener();
+
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+
+        var evt = Assert.Single(listener.Messages, e => e.EventId == 25);
+        Assert.Equal("resource.<<", evt.Payload![0]);
     }
 
     private static TestEventListener CreateVerboseListener()

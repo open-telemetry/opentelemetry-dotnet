@@ -8,6 +8,11 @@ namespace OpenTelemetry.Configuration.Declarative;
 /// <summary>
 /// Extension methods that read typed values from a <see cref="YamlMappingNode"/> into <see cref="ConfigProperty{T}"/> results.
 /// </summary>
+/// <remarks>
+/// All type resolution here is delegated to <see cref="Yaml12ScalarResolver"/> so that the two
+/// readers cannot disagree about what a given piece of text means. Substitution always runs before
+/// core-schema type resolution.
+/// </remarks>
 internal static class YamlPropertyReader
 {
     internal static ConfigProperty<bool> ReadBoolean(this YamlMappingNode node, string key)
@@ -18,45 +23,31 @@ internal static class YamlPropertyReader
             return ConfigProperty<bool>.Absent;
         }
 
-        if (valueNode is not YamlScalarNode scalar)
-        {
-            OpenTelemetryDeclarativeConfigurationEventSource.Log.MalformedSection(
-                key,
-                $"Expected a scalar node but found {valueNode.NodeType}; the '{key}' setting will be ignored.");
-            return ConfigProperty<bool>.Absent;
-        }
-
-        // A YAML null scalar (e.g. 'disabled: ~') is present-null, not invalid.
-        var raw = scalar.GetScalarString();
-        if (raw is null)
+        var scalar = RequireScalar(valueNode, key);
+        var resolved = scalar.ResolveScalar();
+        if (resolved.Kind == YamlScalarKind.Null)
         {
             return ConfigProperty<bool>.Null;
         }
 
-        raw = raw.Trim();
-
-        // Present but resolving to empty (e.g. a quoted empty/whitespace scalar) is treated as present-null.
-        if (raw.Length == 0)
+        if (resolved.Kind != YamlScalarKind.Boolean ||
+            !Yaml12ScalarResolver.TryGetBoolean(resolved.Value, out var boolValue))
         {
-            return ConfigProperty<bool>.Null;
+            throw CreateTypeMismatch(key, "boolean or null", resolved.Kind);
         }
 
-        // bool.TryParse accepts only "true"/"false" (case-insensitive). YAML 1.1 aliases such as
-        // "yes"/"no"/"on"/"off" are intentionally not handled: the spec requires YAML 1.2 core
-        // schema, which recognises only "true" and "false" as boolean values.
-        // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/data-model.md#yaml-file-format
-        if (bool.TryParse(raw, out var boolValue))
-        {
-            return ConfigProperty<bool>.Create(boolValue);
-        }
-
-        // The key is present but the value cannot be parsed as a boolean. Return Null (not Absent) because
-        // the key was present in the document: the invalid value is logged and the field falls back to its
-        // null behaviour (same as if it were absent), but Null is semantically more accurate than Absent.
-        OpenTelemetryDeclarativeConfigurationEventSource.Log.InvalidBooleanValue(key, raw);
-        return ConfigProperty<bool>.Null;
+        return ConfigProperty<bool>.Create(boolValue);
     }
 
+    /// <summary>
+    /// Reads a string-valued property.
+    /// </summary>
+    /// <param name="node">The mapping to read from.</param>
+    /// <param name="key">The key to read.</param>
+    /// <returns>The property value.</returns>
+    /// <exception cref="DeclarativeConfigurationException">
+    /// Thrown when the value does not resolve to a string or null.
+    /// </exception>
     internal static ConfigProperty<string> ReadString(this YamlMappingNode node, string key)
     {
         var valueNode = node.GetValueNode(key);
@@ -65,23 +56,18 @@ internal static class YamlPropertyReader
             return ConfigProperty<string>.Absent;
         }
 
-        if (valueNode is not YamlScalarNode scalar)
-        {
-            OpenTelemetryDeclarativeConfigurationEventSource.Log.MalformedSection(
-                key,
-                $"Expected a scalar node but found {valueNode.NodeType}; the '{key}' setting will be ignored.");
-            return ConfigProperty<string>.Absent;
-        }
-
-        var value = scalar.GetScalarString();
-        if (value is null)
+        var resolved = RequireScalar(valueNode, key).ResolveScalar();
+        if (resolved.Kind == YamlScalarKind.Null)
         {
             return ConfigProperty<string>.Null;
         }
 
-        // Present but resolving to empty or whitespace-only is treated as present-null, consistent with ReadBoolean.
-        value = value.Trim();
-        return value.Length == 0 ? ConfigProperty<string>.Null : ConfigProperty<string>.Create(value);
+        if (resolved.Kind != YamlScalarKind.String)
+        {
+            throw CreateTypeMismatch(key, "string or null", resolved.Kind);
+        }
+
+        return ConfigProperty<string>.Create(resolved.Value);
     }
 
     internal static ConfigProperty<T> ReadMapping<T>(this YamlMappingNode node, string key, Func<YamlMappingNode, T> factory)
@@ -95,18 +81,32 @@ internal static class YamlPropertyReader
 
         if (valueNode is YamlMappingNode mapping)
         {
+            mapping.EnsureCoreCollectionTag(key);
+            mapping.EnsureUniqueStringKeys(key);
             return ConfigProperty<T>.Create(factory(mapping));
         }
 
-        // A YAML null scalar (e.g. 'resource: ~') is present-null, not malformed.
-        if (valueNode is YamlScalarNode scalar && scalar.GetScalarString() is null)
-        {
-            return ConfigProperty<T>.Null;
-        }
-
-        OpenTelemetryDeclarativeConfigurationEventSource.Log.MalformedSection(
-            key,
-            $"Expected a mapping node but found {valueNode.NodeType}; the '{key}' section will be ignored.");
-        return ConfigProperty<T>.Absent;
+        throw new DeclarativeConfigurationException(
+            $"Field '{key}' must be a non-null YAML mapping but resolved to {valueNode.NodeType}.");
     }
+
+    private static YamlScalarNode RequireScalar(YamlNode valueNode, string key) =>
+        valueNode as YamlScalarNode ?? throw new DeclarativeConfigurationException(
+            $"Field '{key}' must be a YAML scalar but resolved to {valueNode.NodeType}.");
+
+    private static DeclarativeConfigurationException CreateTypeMismatch(
+        string key,
+        string expected,
+        YamlScalarKind actual) =>
+        new($"Field '{key}' must resolve to {expected} but resolved to YAML {GetYamlKindName(actual)}.");
+
+    private static string GetYamlKindName(YamlScalarKind kind) =>
+        kind switch
+        {
+            YamlScalarKind.Boolean => "boolean",
+            YamlScalarKind.Integer => "integer",
+            YamlScalarKind.Float => "float",
+            YamlScalarKind.Null => "null",
+            _ => "string",
+        };
 }

@@ -34,11 +34,11 @@ internal static partial class FileFormatValidator
 #endif
 
     /// <summary>
-    /// Validates <paramref name="fileFormat"/> and returns the trimmed, accepted value.
+    /// Validates <paramref name="fileFormat"/> and returns the accepted value.
     /// </summary>
     /// <param name="fileFormat">The value of the <c>file_format</c> YAML field.</param>
     /// <param name="warn">Called with a warning message when the format is accepted but has a compatibility concern.</param>
-    /// <returns>The trimmed, validated <c>file_format</c> value.</returns>
+    /// <returns>The validated <c>file_format</c> value.</returns>
     /// <exception cref="DeclarativeConfigurationException">
     /// Thrown when <paramref name="fileFormat"/> is null, whitespace, structurally invalid,
     /// or has an unsupported major version.
@@ -55,15 +55,14 @@ internal static partial class FileFormatValidator
                 $"(for example: file_format: \"{SupportedMajorVersion}.0\").");
         }
 
-        fileFormat = fileFormat!.Trim();
-
-        var match = GetFormatPattern().Match(fileFormat);
+        var validatedFileFormat = fileFormat!;
+        var match = GetFormatPattern().Match(validatedFileFormat);
         if (!match.Success
             || !int.TryParse(match.Groups[1].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var major)
             || !int.TryParse(match.Groups[2].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var minor))
         {
             throw new DeclarativeConfigurationException(
-                $"Unsupported file_format '{fileFormat}'. " +
+                $"Unsupported file_format '{validatedFileFormat}'. " +
                 $"Expected a version of the form '{SupportedMajorVersion}.minor' " +
                 $"(for example: \"{SupportedMajorVersion}.{MaxSupportedMinorVersion}\").");
         }
@@ -71,19 +70,19 @@ internal static partial class FileFormatValidator
         if (major != SupportedMajorVersion)
         {
             throw new DeclarativeConfigurationException(
-                $"Unsupported file_format '{fileFormat}': major version {major} is not supported " +
+                $"Unsupported file_format '{validatedFileFormat}': major version {major} is not supported " +
                 $"(this implementation supports major version {SupportedMajorVersion}).");
         }
 
         // Minor is newer than this SDK knows about: accept but warn (some features may not take effect).
         if (minor > MaxSupportedMinorVersion)
         {
-            warn($"Configuration file_format '{fileFormat}' is newer than the maximum version " +
+            warn($"Configuration file_format '{validatedFileFormat}' is newer than the maximum version " +
                  $"supported by this SDK implementation ({SupportedMajorVersion}.{MaxSupportedMinorVersion}). " +
                  $"Features introduced in newer minor versions may not take effect.");
         }
 
-        return fileFormat;
+        return validatedFileFormat;
     }
 
 #if NET

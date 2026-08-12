@@ -12,7 +12,7 @@ Declarative configuration allows you to configure the OpenTelemetry SDK using a
 YAML file instead of (or in addition to) environment variables and code-based
 setup. This package implements a subset of the stable OTel declarative
 configuration specification. It accepts any `file_format: "1.x"` document and
-has been built against schema v1.1.
+has been built against the OpenTelemetry configuration schema v1.1.
 
 ## Getting started
 
@@ -82,17 +82,21 @@ resource:
 
 ## Supported settings
 
-| YAML field | SDK effect |
+| YAML field | Effect |
 | --- | --- |
-| `disabled: true` | `OTEL_SDK_DISABLED` - builds a no-op provider |
-| `resource.attributes` | `OTEL_RESOURCE_ATTRIBUTES` - resource attributes on all signals |
-| `resource.attributes_list` | `OTEL_RESOURCE_ATTRIBUTES` - resource attributes in pre-formatted `key=value` list form |
+| `disabled` | Disables the OpenTelemetry SDK when `true` |
+| `resource.attributes` | Adds structured resource attributes to all signals |
+| `resource.attributes_list` | Adds resource attributes from a pre-formatted `key=value` list |
 
 `resource.attributes_list` is treated as containing a `OTEL_RESOURCE_ATTRIBUTES`
 string that has not been percent-encoded and is passed through without
 modification. In particular, literal `+` in a value must be written as `%2B`,
 otherwise the SDK will decode it as a space character. Use `resource.attributes`
 when you need the encoding to be handled automatically.
+
+Only string-valued `resource.attributes` are currently supported. Boolean,
+integer, double, and array attributes are reported and skipped rather than
+silently converted to strings.
 
 All other top-level sections (e.g. `tracer_provider`, `propagator`) are logged
 and ignored. You can track this issue for missing features:
@@ -112,6 +116,21 @@ syntax, per the OTel spec:
 
 Undefined variables without a default resolve to an empty string.
 
+YAML escape sequences are decoded before environment-variable substitution.
+Consequently, defaults cannot contain characters, such as newlines, that the
+OpenTelemetry substitution grammar excludes.
+
+Quoting remains significant after substitution:
+
+```yaml
+file_format: "1.1"       # string - accepted
+file_format: 1.1         # number - rejected
+disabled: true           # boolean - accepted
+disabled: "true"         # string - rejected
+value: ${PORT}           # may resolve to a number
+value: "${PORT}"         # always resolves to a string
+```
+
 ## Precedence
 
 When you call `UseDeclarativeConfiguration()` or
@@ -123,23 +142,28 @@ declarative configuration **takes precedence over** environment variables,
 Sources you add **after** that call take precedence over YAML values (same as
 standard `IConfiguration` ordering).
 
-> [!NOTE]
-> `OTEL_SDK_DISABLED` and `OTEL_RESOURCE_ATTRIBUTES` are read directly
-> from `IConfiguration`, not via `IOptions<T>`, so `Configure<T>()` /
-> `PostConfigure<T>()` cannot override them. Use a higher-priority
-> `IConfiguration` source (e.g. `AddInMemoryCollection`) instead.
-
 ## Known limitations
 
+- Only the settings listed above are supported.
 - File watching is not supported; the YAML file is read once at start-up.
-- `resource.attributes` values are percent-encoded per the OTel specification.
-  For duplicate attribute names the first occurrence wins.
-- Unknown YAML sections are logged and ignored rather than causing an error.
+- The package uses standard `IConfiguration` source ordering. It does not yet
+  provide the specification's strict mode that ignores other SDK environment
+  variables when `OTEL_CONFIG_FILE` is set.
+- Only string-valued structured resource attributes are emitted. Unsupported
+  typed attributes are skipped and reported.
+- For duplicate structured resource attribute names, the first occurrence wins.
+  A structured attribute also takes precedence over the same name in
+  `resource.attributes_list`, even when its type is not currently supported.
+- Unknown top-level sections are logged and ignored. Unknown fields within
+  `resource` or a resource attribute are schema errors and fail the load.
+- YAML merge keys (`<<: *defaults`) are rejected. Merge keys are a YAML 1.1
+  feature and are not part of the required YAML 1.2 core schema.
 - Plain (unquoted) YAML scalars that resolve to `null`, `Null`, `NULL`, or `~`
-  after environment variable substitution are treated as YAML null and the
-  setting is silently ignored. To preserve the string `"null"` as a value, use a
-  quoted scalar: `value: "null"`. This is consistent with YAML 1.2 Core Schema
-  semantics applied post-substitution as required by the OTel specification.
+  after environment variable substitution are treated as YAML null. Nullable
+  fields apply their specified null behaviour; non-nullable fields fail schema
+  validation. To preserve the string `"null"` as a value, use a quoted scalar:
+  `value: "null"`. This is consistent with YAML 1.2 core schema semantics
+  applied post-substitution as required by the OTel specification.
 
 ### Pitfalls to avoid
 
@@ -148,106 +172,7 @@ standard `IConfiguration` ordering).
   YAML source will not be visible to the SDK.
 - A second call to `UseDeclarativeConfiguration()` on the same
   `IServiceCollection` is ignored. Only the first file path applies; a later
-  call with a different path does not replace it (an EventSource warning is
-  emitted).
-
-## Implementation notes
-
-### `IOptions` vs direct `IConfiguration` reads
-
-The two settings currently supported (`OTEL_SDK_DISABLED`,
-`OTEL_RESOURCE_ATTRIBUTES`) are consumed by the SDK via direct `IConfiguration`
-reads rather than the .NET `IOptions<T>` pipeline:
-
-- `OTEL_SDK_DISABLED` is read before the provider is constructed to decide
-  whether to return a real provider or a no-op.
-- `OTEL_RESOURCE_ATTRIBUTES` is read by the resource detector.
-
-Using `IOptions<T>` would add startup validation and make code-level
-`Configure<T>` / `PostConfigure<T>` overrides work at the Options layer, but the
-practical benefit is small for these settings: values are consumed once at
-startup and cannot change an already-constructed provider. The code-override
-story is already covered by `IConfiguration` source ordering (adding a
-higher-priority source after the YAML source).
-
-If future settings use `IOptions<T>` internally, `PostConfigure<T>` would then
-take precedence over YAML-supplied values, which is the expected .NET idiom
-(code beats configuration).
-
-### Runtime (dynamic) disabling
-
-The `disabled` flag is evaluated once, when the provider is constructed. There
-is no mechanism to flip a live provider from a real implementation to a no-op at
-runtime. This matches the OTel specification (`OTEL_SDK_DISABLED` is read at
-initialization only).
-
-Once a real provider is built, its listener wiring is fixed. The closest
-approximation is replacing the sampler with `AlwaysOff` at runtime, which still
-leaves processors and exporters running. For runaway instrumentation, prefer
-exporter timeouts, bounded batch queues, and process restart.
-
-### Environment-variable substitution ordering
-
-The OTel specification states that node types must be interpreted *after*
-environment variable substitution.
-
-This implementation parses YAML first (YamlDotNet RepresentationModel preserves
-scalar literals without type conversion), applies substitution to those strings,
-then interprets types explicitly (for example `bool.TryParse` for `disabled`).
-Outcomes are semantically equivalent for supported scalar fields today, with a
-stronger guarantee that environment variables cannot inject YAML structure
-because substitution runs on already-tokenized scalar nodes.
-
-### Empty-string and null semantics
-
-When an environment variable is unset and has no default, the specification
-replaces the reference with an empty string, then applies YAML 1.2 Core Schema
-type resolution - a plain empty scalar becomes `null`. Quoted empty strings
-remain `""`.
-
-All YAML 1.2 core schema null spellings - plain empty, `~`, `null`, `Null`, and
-`NULL` - are treated as **present-null**. Quoted variants (e.g. `"null"`) remain
-strings.
-
-For scalar fields where the key is present but the value is unusable (malformed
-node type, invalid parse), the parser selects **present-null** rather than
-**absent**, because the key appeared in the document and `nullBehavior` applies
-at Create time.
-
-**Post-substitution null resolution:** because the specification requires that
-YAML type resolution runs *after* substitution, a plain (unquoted) scalar whose
-environment variable resolves to one of the null spellings (`null`, `Null`,
-`NULL`, `~`) is treated as YAML null. For example:
-
-```yaml
-resource:
-  attributes:
-    - name: my.attr
-      value: ${MY_VAR}   # plain scalar
-```
-
-If `MY_VAR=null` the attribute is skipped (same as writing `value: null`). If
-you need the literal string `"null"`, use a quoted scalar: `value: "${MY_VAR}"`.
-The `InvalidResourceAttribute` EventSource event (Event ID 3) is emitted when an
-attribute is skipped for this reason.
-
-### Resource attribute name validation
-
-Names containing `,` or `=` are skipped and Event 3 is emitted; these characters
-would corrupt the `key=value,key=value` flat format consumed by
-`OtelEnvResourceDetector`. All other names that do not follow the OTel attribute
-naming convention (`[a-zA-Z_][-a-zA-Z0-9_.]*`) are emitted verbatim and Event 22
-(`ResourceAttributeNameNotCompliant`) is emitted as a warning. This is a
-.NET-projection constraint: the specification accepts attribute names verbatim
-because they build typed resource objects rather than serializing to the env-var
-format.
-
-### Empty configuration file
-
-A file containing zero YAML documents is a no-op in overlay mode and does not
-require a `file_format` field (unlike a non-empty document, which still
-validates `file_format`). Event 23 (`EmptyConfigurationFile`) is emitted at
-informational level so listeners can observe the intentional no-op.
+  call with a different path does not replace it.
 
 ## Provide feedback
 

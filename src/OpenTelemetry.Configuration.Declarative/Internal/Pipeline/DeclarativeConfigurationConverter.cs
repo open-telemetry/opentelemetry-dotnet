@@ -1,12 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
-#if NET
-using System.Collections.Frozen;
-#endif
 
 namespace OpenTelemetry.Configuration.Declarative;
 
@@ -27,32 +23,6 @@ internal static partial class DeclarativeConfigurationConverter
     // Per OTel attribute naming spec: starts with a letter or underscore,
     // followed by letters, digits, underscores, hyphens, or dots.
     private const string AttributeNamePatternString = @"^[a-zA-Z_][-a-zA-Z0-9_.]*$";
-
-    // OTel declarative config spec type field values. Scalar types project to a flat string value;
-    // array types cannot be represented in OTEL_RESOURCE_ATTRIBUTES and must be skipped.
-#if NET
-    private static readonly FrozenSet<string> KnownScalarTypes =
-        new HashSet<string>(StringComparer.Ordinal)
-        {
-            "string", "bool", "int", "double",
-        }.ToFrozenSet(StringComparer.Ordinal);
-
-    private static readonly FrozenSet<string> KnownArrayTypes =
-        new HashSet<string>(StringComparer.Ordinal)
-        {
-            "string_array", "bool_array", "int_array", "double_array",
-        }.ToFrozenSet(StringComparer.Ordinal);
-#else
-    private static readonly HashSet<string> KnownScalarTypes = new(StringComparer.Ordinal)
-    {
-        "string", "bool", "int", "double",
-    };
-
-    private static readonly HashSet<string> KnownArrayTypes = new(StringComparer.Ordinal)
-    {
-        "string_array", "bool_array", "int_array", "double_array",
-    };
-#endif
 
 #if !NET
     private static readonly Regex AttributeNamePatternInstance = new(
@@ -103,49 +73,24 @@ internal static partial class DeclarativeConfigurationConverter
 
         // attributes: structured entries; attributes_list is pre-encoded passthrough (lower priority).
         var pairs = new List<string>();
-        var attributeKeys = new HashSet<string>(StringComparer.Ordinal);
+
+        // Two distinct sets, deliberately. Names are normalized as OtelEnvResourceDetector does
+        // when parsing OTEL_RESOURCE_ATTRIBUTES. declaredNames records every name the author
+        // declared in resource.attributes, including entries this projection cannot carry; it
+        // drives the attributes_list shadowing below, because resource.attributes outranks
+        // resource.attributes_list whether or not the higher-priority value survives projection.
+        // projectedNames records only names actually emitted, and drives the first-wins duplicate
+        // policy. Conflating the two makes a skipped entry suppress a later projectable one with
+        // the same name.
+        var declaredNames = new HashSet<string>(StringComparer.Ordinal);
+        var projectedNames = new HashSet<string>(StringComparer.Ordinal);
         if (resourceConfig.Attributes.TryGetValue(out var entries))
         {
             foreach (var entry in entries)
             {
-                if (entry.Name is null)
-                {
-                    OpenTelemetryDeclarativeConfigurationEventSource.Log.InvalidResourceAttribute(
-                        "A resource.attributes entry is missing the required 'name' field and will be skipped.");
-                    continue;
-                }
-
-                // Unrecognized type: skip (authoring error).
-                if (entry.RawType is not null &&
-                    !KnownScalarTypes.Contains(entry.RawType) &&
-                    !KnownArrayTypes.Contains(entry.RawType))
-                {
-                    OpenTelemetryDeclarativeConfigurationEventSource.Log.InvalidResourceAttribute(
-                        $"A resource.attributes entry for '{entry.Name}' has an unrecognized type '{entry.RawType}' " +
-                        "and will be skipped. Valid types: string, bool, int, double, string_array, bool_array, int_array, double_array.");
-                    continue;
-                }
-
-                // Array/sequence: not representable in OTEL_RESOURCE_ATTRIBUTES.
-                if ((entry.RawType is not null && KnownArrayTypes.Contains(entry.RawType)) ||
-                    entry.ValueNodeKind == AttributeValueNodeKind.Sequence)
-                {
-                    OpenTelemetryDeclarativeConfigurationEventSource.Log.InvalidResourceAttribute(
-                        $"A resource.attributes entry for '{entry.Name}' has an array value which cannot be " +
-                        "represented in OTEL_RESOURCE_ATTRIBUTES format and will be skipped.");
-                    continue;
-                }
-
-                // Mapping value: not representable in flat format.
-                if (entry.ValueNodeKind == AttributeValueNodeKind.Mapping)
-                {
-                    OpenTelemetryDeclarativeConfigurationEventSource.Log.InvalidResourceAttribute(
-                        $"A resource.attributes entry for '{entry.Name}' has a mapping value which cannot be " +
-                        "represented in OTEL_RESOURCE_ATTRIBUTES format and will be skipped.");
-                    continue;
-                }
-
-                // NullScalar: key present, no usable value.
+                // NullScalar: schema v1.1 says a present-but-null value means the entry is ignored,
+                // so it declares nothing and must not shadow an attributes_list entry of the same
+                // name. Checked before the name reservation below for exactly that reason.
                 if (entry.ValueNodeKind == AttributeValueNodeKind.NullScalar)
                 {
                     OpenTelemetryDeclarativeConfigurationEventSource.Log.InvalidResourceAttribute(
@@ -153,16 +98,9 @@ internal static partial class DeclarativeConfigurationConverter
                     continue;
                 }
 
-                // Value key is absent from the entry - the attribute is incomplete.
-                if (!entry.TryGetScalarValue(out var scalarValue))
-                {
-                    OpenTelemetryDeclarativeConfigurationEventSource.Log.InvalidResourceAttribute(
-                        $"A resource.attributes entry for '{entry.Name}' is missing the required 'value' field and will be skipped.");
-                    continue;
-                }
-
                 // Hard reject: ',' or '=' in the name would corrupt the OTEL_RESOURCE_ATTRIBUTES flat
-                // key=value,key=value format consumed by OtelEnvResourceDetector.
+                // key=value,key=value format consumed by OtelEnvResourceDetector. Such a name can
+                // never equal a comma-split attributes_list key either, so it reserves nothing.
 #if NETFRAMEWORK || NETSTANDARD2_0
                 if (entry.Name.IndexOf(',') >= 0 || entry.Name.IndexOf('=') >= 0)
 #else
@@ -175,6 +113,41 @@ internal static partial class DeclarativeConfigurationConverter
                     continue;
                 }
 
+                // Everything from here on is a validly declared attribute, so reserve the name
+                // before the representability checks. Without this, a declared-but-unprojectable
+                // attribute lets the lower-priority attributes_list value through in its place.
+                // The SDK trims keys in the flat format, so use the normalized name whenever
+                // resolving attributes_list precedence or projected-name duplicates.
+                var normalizedName = entry.Name.Trim();
+                declaredNames.Add(normalizedName);
+
+                // Array/sequence: not representable in OTEL_RESOURCE_ATTRIBUTES.
+                if (entry.ValueNodeKind == AttributeValueNodeKind.Sequence)
+                {
+                    OpenTelemetryDeclarativeConfigurationEventSource.Log.InvalidResourceAttribute(
+                        $"A resource.attributes entry for '{entry.Name}' has an array value which cannot be " +
+                        "represented in OTEL_RESOURCE_ATTRIBUTES format and will be skipped.");
+                    continue;
+                }
+
+                // The IConfiguration bridge feeds OTEL_RESOURCE_ATTRIBUTES, whose .NET reader
+                // creates string-valued attributes. Emitting a valid bool/int/double here would
+                // silently change its type, so unsupported non-string values must be skipped.
+                if (entry.Type != ResourceAttributeType.String)
+                {
+                    OpenTelemetryDeclarativeConfigurationEventSource.Log.InvalidResourceAttribute(
+                        $"A resource.attributes entry for '{entry.Name}' has type " +
+                        $"'{entry.Type.GetSchemaName()}', which cannot be represented by the " +
+                        "OTEL_RESOURCE_ATTRIBUTES bridge without losing its type, and will be skipped.");
+                    continue;
+                }
+
+                if (!entry.TryGetScalarValue(out var scalarValue))
+                {
+                    throw new InvalidOperationException(
+                        $"Resource attribute '{entry.Name}' has an inconsistent internal value representation.");
+                }
+
                 // Soft warn: other non-convention names are emitted verbatim. The naming spec
                 // ([a-zA-Z_][-a-zA-Z0-9_.]*) is advisory for the SDK; only ',' and '=' are
                 // structurally prohibited by the flat-format projection.
@@ -183,15 +156,8 @@ internal static partial class DeclarativeConfigurationConverter
                     OpenTelemetryDeclarativeConfigurationEventSource.Log.ResourceAttributeNameNotCompliant(entry.Name);
                 }
 
-                // Type mismatch: warn only (type is informational per spec).
-                if (entry.RawType is not null && !IsValueConsistentWithType(entry.RawType, scalarValue))
-                {
-                    OpenTelemetryDeclarativeConfigurationEventSource.Log.ResourceAttributeValueTypeMismatch(
-                        entry.Name, entry.RawType, scalarValue);
-                }
-
                 // Duplicate name: first wins.
-                if (!attributeKeys.Add(entry.Name))
+                if (!projectedNames.Add(normalizedName))
                 {
                     OpenTelemetryDeclarativeConfigurationEventSource.Log.DuplicateResourceAttributeName(entry.Name);
                     continue;
@@ -201,14 +167,23 @@ internal static partial class DeclarativeConfigurationConverter
             }
         }
 
+        // Drop attributes_list entries shadowed by a declared name. This runs whenever any name was
+        // declared, not only when one was projected: the schema states that resource.attributes
+        // entries "have higher priority than entries from .resource.attributes_list", so a declared
+        // name must suppress the list entry rather than silently fall back to it.
+        if (list is not null && declaredNames.Count > 0)
+        {
+            var filtered = FilterAttributesList(list, declaredNames);
+            list = filtered.Length > 0 ? filtered : null;
+        }
+
         // Merge attributes_list (filtered) with attributes; attributes win on key collision.
+        // When nothing survives on either side the key is left unset, so lower-priority
+        // IConfiguration sources stay in effect rather than being overridden with an empty value.
         string? result;
         if (list is not null && pairs.Count > 0)
         {
-            var filtered = FilterAttributesList(list, attributeKeys);
-            result = filtered.Length > 0
-                ? $"{filtered},{JoinWithComma(pairs)}"
-                : JoinWithComma(pairs);
+            result = $"{list},{JoinWithComma(pairs)}";
         }
         else if (pairs.Count > 0)
         {
@@ -237,8 +212,9 @@ internal static partial class DeclarativeConfigurationConverter
             .Replace("+", "%2B")
             .ToString();
 
-    // Drop attributes_list keys shadowed by structured attributes. Naive comma split (matches OtelEnvResourceDetector).
-    private static string FilterAttributesList(string list, HashSet<string> attributeKeys)
+    // Drop attributes_list keys shadowed by structured attributes. Naive comma split, and the key
+    // is trimmed before comparison, both matching how OtelEnvResourceDetector parses the flat value.
+    private static string FilterAttributesList(string list, HashSet<string> declaredNames)
     {
         var filtered = new List<string>();
         foreach (var part in list.Split(','))
@@ -255,7 +231,7 @@ internal static partial class DeclarativeConfigurationConverter
             var equalsIndex = trimmed.IndexOf('=', StringComparison.Ordinal);
 #endif
             var index = equalsIndex >= 0 ? trimmed.Substring(0, equalsIndex).Trim() : trimmed;
-            if (!attributeKeys.Contains(index))
+            if (!declaredNames.Contains(index))
             {
                 filtered.Add(trimmed);
             }
@@ -263,16 +239,6 @@ internal static partial class DeclarativeConfigurationConverter
 
         return JoinWithComma(filtered);
     }
-
-    // Type field is informational: mismatch logs a warning but does not skip the entry.
-    private static bool IsValueConsistentWithType(string type, string value) =>
-        type switch
-        {
-            "bool" => bool.TryParse(value, out _),
-            "int" => long.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out _),
-            "double" => double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out _),
-            _ => true, // "string": any value is valid.
-        };
 
 #if NET
     [GeneratedRegex(AttributeNamePatternString, RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1_000)]

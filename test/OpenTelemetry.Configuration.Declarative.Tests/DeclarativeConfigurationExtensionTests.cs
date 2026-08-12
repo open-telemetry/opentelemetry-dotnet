@@ -253,8 +253,7 @@ public sealed class DeclarativeConfigurationExtensionTests
     {
         // Verify that calling the IConfigurationBuilder extension directly and then
         // UseDeclarativeConfiguration on the same ConfigurationManager does not insert
-        // the source twice. The source-level idempotency guard in the builder extension
-        // prevents the second insert regardless of which API was used first.
+        // the source twice.
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: true);
 
         using var configManager = new ConfigurationManager();
@@ -274,7 +273,7 @@ public sealed class DeclarativeConfigurationExtensionTests
     [Fact]
     public void UseDeclarativeConfiguration_WithImplementationFactory_ReadsYamlAndChainsExistingConfig()
     {
-        // Exercises the ImplementationFactory path: IConfiguration registered via a factory
+        // Exercises the ImplementationFactory path. IConfiguration registered via a factory
         // delegate (not an instance) resolving to a ConfigurationRoot. UseDeclarativeConfiguration
         // must wrap it in a new ConfigurationManager that chains the original.
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: true);
@@ -337,7 +336,7 @@ public sealed class DeclarativeConfigurationExtensionTests
     [Fact]
     public void UseDeclarativeConfiguration_CalledTwiceOnFactoryPath_IsIdempotent()
     {
-        // Factory (classic ConfigurationRoot) path: second call must not double-wrap.
+        // Factory (classic ConfigurationRoot) path. Second call must not double-wrap.
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: true);
 
         var existingConfig = new ConfigurationBuilder()

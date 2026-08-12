@@ -22,11 +22,14 @@ public sealed class FileFormatValidatorTests
     }
 
     [Fact]
-    public void Validate_VersionWithWhitespace_TrimsAndAcceptsWithNoWarning()
+    public void Validate_VersionWithWhitespace_Throws()
     {
         var warnings = new List<string>();
 
-        FileFormatValidator.Validate($" {FileFormatValidator.SupportedMajorVersion}.{FileFormatValidator.MaxSupportedMinorVersion} ", warnings.Add);
+        Assert.Throws<DeclarativeConfigurationException>(() =>
+            FileFormatValidator.Validate(
+                $" {FileFormatValidator.SupportedMajorVersion}.{FileFormatValidator.MaxSupportedMinorVersion} ",
+                warnings.Add));
 
         Assert.Empty(warnings);
     }
