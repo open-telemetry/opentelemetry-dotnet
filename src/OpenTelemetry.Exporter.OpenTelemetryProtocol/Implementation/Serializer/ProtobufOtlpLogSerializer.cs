@@ -381,14 +381,13 @@ internal static class ProtobufOtlpLogSerializer
         }
         else
         {
-            state.TagWriterState.WritePosition = ProtobufSerializer.WriteTag(state.TagWriterState.Buffer, state.TagWriterState.WritePosition, ProtobufOtlpLogFieldNumberConstants.LogRecord_Attributes, ProtobufWireType.LEN);
-            var logAttributesLengthPosition = state.TagWriterState.WritePosition;
-            state.TagWriterState.WritePosition += ReserveSizeForLength;
+            ProtobufOtlpTagWriter.WriteKeyValue(
+                ref state.TagWriterState,
+                ProtobufOtlpLogFieldNumberConstants.LogRecord_Attributes,
+                key,
+                value,
+                state.AttributeValueLengthLimit);
 
-            ProtobufOtlpTagWriter.Instance.TryWriteTag(ref state.TagWriterState, key, value, state.AttributeValueLengthLimit);
-
-            var logAttributesLength = state.TagWriterState.WritePosition - (logAttributesLengthPosition + ReserveSizeForLength);
-            ProtobufSerializer.WriteReservedLength(state.TagWriterState.Buffer, logAttributesLengthPosition, logAttributesLength);
             state.TagWriterState.TagCount++;
         }
     }

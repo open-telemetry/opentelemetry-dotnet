@@ -183,12 +183,23 @@ type (e.g. `_total`) suffixes are appended.
 | `NoUTF8EscapingWithSuffixes` | UTF-8 passthrough | Appended |
 | `NoTranslation` | UTF-8 passthrough | Not appended |
 
-The escaping choice only sets the default escaping scheme. A scrape request that
-negotiates an escaping scheme (via the `escaping` parameter of the `Accept` header,
-supported by the version 1.0.0 and later text formats) always takes precedence over
-the configured strategy. The classic (pre-1.0.0) text formats do not support
-escaping negotiation and are always emitted using underscore escaping; the suffix
-choice applies to every format.
+The strategy is applied first, when names are constructed. Content negotiation is
+then applied on top of the result, using the scheme requested by the `escaping`
+parameter of the `Accept` header (supported by the version 1.0.0 and later text
+formats). Negotiation can never revert escaping the strategy has already applied,
+and a request which does not negotiate an escaping scheme is treated the same as
+one requesting `underscores`. For a counter named `foo.bar` with unit `By`:
+
+| Strategy | No `escaping` parameter, or `escaping=underscores` | `escaping=allow-utf-8` |
+| -------- | -------- | -------- |
+| `UnderscoreEscapingWithSuffixes` | `foo_bar_bytes_total` | `foo_bar_bytes_total` |
+| `UnderscoreEscapingWithoutSuffixes` | `foo_bar` | `foo_bar` |
+| `NoUTF8EscapingWithSuffixes` | `foo_bar_bytes_total` | `foo.bar_bytes_total` |
+| `NoTranslation` | `foo_bar` | `foo.bar` |
+
+The classic (pre-1.0.0) text formats do not support escaping negotiation and are
+always emitted using underscore escaping; the suffix choice applies to every
+format.
 
 ## Troubleshooting
 

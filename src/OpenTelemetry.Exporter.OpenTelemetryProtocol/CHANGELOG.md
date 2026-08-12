@@ -26,6 +26,9 @@ Notes](../../RELEASENOTES.md).
   expire.
   ([#7597](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7597))
 
+* Fixed the OTLP exporter from retrying certain non-transient HTTP failures.
+  ([#7600](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7600))
+
 * Increase the maximum buffer size used for when exporting very large batches
   of telemetry, such as metrics with very high cardinality, to 256MiB. A batch
   whose serialized payload exceeds the limit is dropped in its entirety rather

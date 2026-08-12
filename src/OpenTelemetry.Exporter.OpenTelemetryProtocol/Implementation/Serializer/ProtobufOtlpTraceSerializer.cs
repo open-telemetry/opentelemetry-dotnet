@@ -173,14 +173,13 @@ internal static class ProtobufOtlpTraceSerializer
                 {
                     if (otlpTagWriterState.TagCount < maxAttributeCount)
                     {
-                        otlpTagWriterState.WritePosition = ProtobufSerializer.WriteTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Attributes, ProtobufWireType.LEN);
-                        var instrumentationScopeAttributesLengthPosition = otlpTagWriterState.WritePosition;
-                        otlpTagWriterState.WritePosition += ReserveSizeForLength;
+                        ProtobufOtlpTagWriter.WriteKeyValue(
+                            ref otlpTagWriterState,
+                            ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Attributes,
+                            activitySourceTagsList[i].Key,
+                            activitySourceTagsList[i].Value,
+                            maxAttributeValueLength);
 
-                        ProtobufOtlpTagWriter.Instance.TryWriteTag(ref otlpTagWriterState, activitySourceTagsList[i].Key, activitySourceTagsList[i].Value, maxAttributeValueLength);
-
-                        var instrumentationScopeAttributesLength = otlpTagWriterState.WritePosition - (instrumentationScopeAttributesLengthPosition + ReserveSizeForLength);
-                        ProtobufSerializer.WriteReservedLength(otlpTagWriterState.Buffer, instrumentationScopeAttributesLengthPosition, instrumentationScopeAttributesLength);
                         otlpTagWriterState.TagCount++;
                     }
                     else
@@ -195,14 +194,13 @@ internal static class ProtobufOtlpTraceSerializer
                 {
                     if (otlpTagWriterState.TagCount < maxAttributeCount)
                     {
-                        otlpTagWriterState.WritePosition = ProtobufSerializer.WriteTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Attributes, ProtobufWireType.LEN);
-                        var instrumentationScopeAttributesLengthPosition = otlpTagWriterState.WritePosition;
-                        otlpTagWriterState.WritePosition += ReserveSizeForLength;
+                        ProtobufOtlpTagWriter.WriteKeyValue(
+                            ref otlpTagWriterState,
+                            ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Attributes,
+                            tag.Key,
+                            tag.Value,
+                            maxAttributeValueLength);
 
-                        ProtobufOtlpTagWriter.Instance.TryWriteTag(ref otlpTagWriterState, tag.Key, tag.Value, maxAttributeValueLength);
-
-                        var instrumentationScopeAttributesLength = otlpTagWriterState.WritePosition - (instrumentationScopeAttributesLengthPosition + ReserveSizeForLength);
-                        ProtobufSerializer.WriteReservedLength(otlpTagWriterState.Buffer, instrumentationScopeAttributesLengthPosition, instrumentationScopeAttributesLength);
                         otlpTagWriterState.TagCount++;
                     }
                     else
@@ -348,13 +346,13 @@ internal static class ProtobufOtlpTraceSerializer
 
             if (otlpTagWriterState.TagCount < maxAttributeCount)
             {
-                otlpTagWriterState.WritePosition = ProtobufSerializer.WriteTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, ProtobufWireType.LEN);
-                var spanAttributesLengthPosition = otlpTagWriterState.WritePosition;
-                otlpTagWriterState.WritePosition += ReserveSizeForLength;
+                ProtobufOtlpTagWriter.WriteKeyValue(
+                    ref otlpTagWriterState,
+                    ProtobufOtlpTraceFieldNumberConstants.Span_Attributes,
+                    tag.Key,
+                    tag.Value,
+                    maxAttributeValueLength);
 
-                ProtobufOtlpTagWriter.Instance.TryWriteTag(ref otlpTagWriterState, tag.Key, tag.Value, maxAttributeValueLength);
-
-                ProtobufSerializer.WriteReservedLength(buffer, spanAttributesLengthPosition, otlpTagWriterState.WritePosition - (spanAttributesLengthPosition + 4));
                 otlpTagWriterState.TagCount++;
             }
             else
@@ -424,11 +422,13 @@ internal static class ProtobufOtlpTraceSerializer
         {
             if (otlpTagWriterState.TagCount < maxAttributeCount)
             {
-                otlpTagWriterState.WritePosition = ProtobufSerializer.WriteTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpTraceFieldNumberConstants.Event_Attributes, ProtobufWireType.LEN);
-                var eventAttributesLengthPosition = otlpTagWriterState.WritePosition;
-                otlpTagWriterState.WritePosition += ReserveSizeForLength;
-                ProtobufOtlpTagWriter.Instance.TryWriteTag(ref otlpTagWriterState, tag.Key, tag.Value, maxAttributeValueLength);
-                ProtobufSerializer.WriteReservedLength(buffer, eventAttributesLengthPosition, otlpTagWriterState.WritePosition - (eventAttributesLengthPosition + ReserveSizeForLength));
+                ProtobufOtlpTagWriter.WriteKeyValue(
+                    ref otlpTagWriterState,
+                    ProtobufOtlpTraceFieldNumberConstants.Event_Attributes,
+                    tag.Key,
+                    tag.Value,
+                    maxAttributeValueLength);
+
                 otlpTagWriterState.TagCount++;
             }
             else
@@ -506,11 +506,13 @@ internal static class ProtobufOtlpTraceSerializer
         {
             if (otlpTagWriterState.TagCount < maxAttributeCount)
             {
-                otlpTagWriterState.WritePosition = ProtobufSerializer.WriteTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpTraceFieldNumberConstants.Link_Attributes, ProtobufWireType.LEN);
-                var linkAttributesLengthPosition = otlpTagWriterState.WritePosition;
-                otlpTagWriterState.WritePosition += ReserveSizeForLength;
-                ProtobufOtlpTagWriter.Instance.TryWriteTag(ref otlpTagWriterState, tag.Key, tag.Value, maxAttributeValueLength);
-                ProtobufSerializer.WriteReservedLength(buffer, linkAttributesLengthPosition, otlpTagWriterState.WritePosition - (linkAttributesLengthPosition + ReserveSizeForLength));
+                ProtobufOtlpTagWriter.WriteKeyValue(
+                    ref otlpTagWriterState,
+                    ProtobufOtlpTraceFieldNumberConstants.Link_Attributes,
+                    tag.Key,
+                    tag.Value,
+                    maxAttributeValueLength);
+
                 otlpTagWriterState.TagCount++;
             }
             else
