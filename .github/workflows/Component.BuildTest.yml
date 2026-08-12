@@ -100,6 +100,7 @@ jobs:
 
     - name: dotnet test ${{ inputs.project-name }}
       shell: pwsh
+      timeout-minutes: 20
       run: >
         dotnet test ${env:PROJECT_NAME}
         --blame-hang-dump-type full
@@ -112,7 +113,9 @@ jobs:
         --no-build
         --logger:"GitHubActions;report-warnings=false"
         --logger:"junit;LogFilePath=${env:GITHUB_WORKSPACE}/TestResults/junit.xml"
-        -- RunConfiguration.DisableAppDomain=${env:DISABLE_APP_DOMAIN}
+        --
+        RunConfiguration.DisableAppDomain=${env:DISABLE_APP_DOMAIN}
+        RunConfiguration.TestSessionTimeout=900000
 
     - name: Upload hang dumps
       if: ${{ failure() || cancelled() }}
