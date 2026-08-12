@@ -28,11 +28,27 @@ public class HttpRetryTestCase
 
     internal HttpRetryAttempt[] RetryAttempts { get; }
 
-#pragma warning disable CA1825 // Workaround for https://github.com/dotnet/sdk/issues/54275
     public static TheoryData<HttpRetryTestCase> GetHttpTestCases() =>
     [
         new("NetworkError", [new(statusCode: null)]),
         new("NetworkError with expired deadline", [new(statusCode: null, isDeadlineExceeded: true, expectedSuccess: false)]),
+#if NET
+        new("Unknown HttpRequestError", [new(statusCode: null, httpRequestException: new(HttpRequestError.Unknown))]),
+        new("NameResolutionError HttpRequestError", [new(statusCode: null, httpRequestException: new(HttpRequestError.NameResolutionError))]),
+        new("ConnectionError HttpRequestError", [new(statusCode: null, httpRequestException: new(HttpRequestError.ConnectionError))]),
+        new("SecureConnectionError HttpRequestError", [new(statusCode: null, httpRequestException: new(HttpRequestError.SecureConnectionError))]),
+        new("HttpProtocolError HttpRequestError", [new(statusCode: null, httpRequestException: new(HttpRequestError.HttpProtocolError))]),
+        new("ExtendedConnectNotSupported HttpRequestError", [new(statusCode: null, expectedSuccess: false, httpRequestException: new(HttpRequestError.ExtendedConnectNotSupported))]),
+        new("VersionNegotiationError HttpRequestError", [new(statusCode: null, expectedSuccess: false, httpRequestException: new(HttpRequestError.VersionNegotiationError))]),
+        new("UserAuthenticationError HttpRequestError", [new(statusCode: null, expectedSuccess: false, httpRequestException: new(HttpRequestError.UserAuthenticationError))]),
+        new("ProxyTunnelError HttpRequestError without status code", [new(statusCode: null, httpRequestException: new(HttpRequestError.ProxyTunnelError))]),
+        new("ProxyTunnelError HttpRequestError with ProxyAuthenticationRequired status code", [new(statusCode: null, expectedSuccess: false, httpRequestException: new(HttpRequestError.ProxyTunnelError, statusCode: HttpStatusCode.ProxyAuthenticationRequired))]),
+        new("ProxyTunnelError HttpRequestError with BadGateway status code", [new(statusCode: null, httpRequestException: new(HttpRequestError.ProxyTunnelError, statusCode: HttpStatusCode.BadGateway))]),
+        new("ProxyTunnelError HttpRequestError with ServiceUnavailable status code", [new(statusCode: null, httpRequestException: new(HttpRequestError.ProxyTunnelError, statusCode: HttpStatusCode.ServiceUnavailable))]),
+        new("InvalidResponse HttpRequestError", [new(statusCode: null, expectedSuccess: false, httpRequestException: new(HttpRequestError.InvalidResponse))]),
+        new("ResponseEnded HttpRequestError", [new(statusCode: null, httpRequestException: new(HttpRequestError.ResponseEnded))]),
+        new("ConfigurationLimitExceeded HttpRequestError", [new(statusCode: null, expectedSuccess: false, httpRequestException: new(HttpRequestError.ConfigurationLimitExceeded))]),
+#endif
         new("GatewayTimeout", [new(statusCode: HttpStatusCode.GatewayTimeout, throttleDelay: TimeSpan.FromSeconds(1))]),
         new("ServiceUnavailable", [new(statusCode: HttpStatusCode.ServiceUnavailable, throttleDelay: TimeSpan.FromSeconds(1), expectedThrottled: true)]),
 
@@ -82,7 +98,6 @@ public class HttpRetryTestCase
                 new(statusCode: HttpStatusCode.ServiceUnavailable, isDeadlineExceeded: true, expectedSuccess: false)
             ]),
     ];
-#pragma warning restore CA1825 // Workaround for https://github.com/dotnet/sdk/issues/54275
 
     public override string ToString() => this.testRunnerName;
 
@@ -105,7 +120,8 @@ public class HttpRetryTestCase
             bool expectedThrottled = false,
             bool useDateForRetryCondition = false,
             TimeSpan? deadlineFromNow = null,
-            TimeSpan? expectedRetryDelay = null)
+            TimeSpan? expectedRetryDelay = null,
+            HttpRequestException? httpRequestException = null)
         {
             this.ThrottleDelay = throttleDelay;
             this.ExpectedRetryDelay = expectedRetryDelay ?? throttleDelay;
@@ -133,7 +149,7 @@ public class HttpRetryTestCase
                 ? DateTime.UtcNow.AddMilliseconds(-1)
                 : DateTime.UtcNow.Add(deadlineFromNow ?? TimeSpan.FromHours(1));
 
-            this.Response = new ExportClientHttpResponse(expectedSuccess, deadlineUtc, responseMessage, new HttpRequestException());
+            this.Response = new ExportClientHttpResponse(expectedSuccess, deadlineUtc, responseMessage, httpRequestException ?? new HttpRequestException());
             this.ExpectedNextRetryDelayMilliseconds = expectedNextRetryDelayMilliseconds;
             this.ExpectedSuccess = expectedSuccess;
             this.ExpectedThrottled = expectedThrottled;

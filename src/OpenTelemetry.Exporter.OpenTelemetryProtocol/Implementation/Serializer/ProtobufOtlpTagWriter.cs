@@ -23,6 +23,38 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
 
     public static ProtobufOtlpTagWriter Instance { get; } = new();
 
+    /// <summary>
+    /// Writes a tag as a length-delimited <c>KeyValue</c> message under the given field
+    /// number.
+    /// </summary>
+    /// <remarks>
+    /// A <c>KeyValue</c> holding a single attribute is almost always well under 128 bytes,
+    /// so its length prefix is reserved as a single byte rather than padded out to four.
+    /// Attributes are by far the most numerous nested message in a payload, so the three
+    /// bytes each would otherwise waste add up to a significant share of it.
+    /// </remarks>
+    /// <param name="state">The writer state, whose write position is advanced.</param>
+    /// <param name="fieldNumber">The field number to write the <c>KeyValue</c> under.</param>
+    /// <param name="key">The attribute key.</param>
+    /// <param name="value">The attribute value.</param>
+    /// <param name="tagValueMaxLength">The maximum length to write a string value as, if any.</param>
+    public static void WriteKeyValue(
+        ref OtlpTagWriterState state,
+        int fieldNumber,
+        string key,
+        object? value,
+        int? tagValueMaxLength = null)
+    {
+        state.WritePosition = ProtobufSerializer.WriteTag(state.Buffer, state.WritePosition, fieldNumber, ProtobufWireType.LEN);
+
+        var lengthPosition = state.WritePosition;
+        state.WritePosition += ProtobufSerializer.ReserveSizeForCompactLength;
+
+        _ = Instance.TryWriteTag(ref state, key, value, tagValueMaxLength);
+
+        state.WritePosition = ProtobufSerializer.WriteCompactLength(state.Buffer, lengthPosition, state.WritePosition);
+    }
+
     protected override void WriteIntegralTag(ref OtlpTagWriterState state, string key, long value)
     {
         // Write KeyValue tag

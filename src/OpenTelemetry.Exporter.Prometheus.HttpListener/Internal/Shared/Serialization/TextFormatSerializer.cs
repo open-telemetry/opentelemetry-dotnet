@@ -14,7 +14,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
-using OpenTelemetry.Internal;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 
@@ -149,6 +148,15 @@ internal abstract class TextFormatSerializer
     /// </summary>
     protected abstract bool EscapeHelpQuotationMarks { get; }
 
+    /// <summary>
+    /// Gets the serializer for the specified protocol.
+    /// </summary>
+    /// <param name="protocol">
+    /// The protocol the response is written with. Its escaping scheme is the one the exporter
+    /// actually applies (see <see cref="PrometheusProtocol.ApplyTranslationStrategy"/>), which is
+    /// not necessarily the scheme the scrape request negotiated.
+    /// </param>
+    /// <returns>The serializer to use.</returns>
     public static TextFormatSerializer GetSerializer(in PrometheusProtocol protocol)
     {
         var escaping = protocol.EscapingScheme;
@@ -390,7 +398,7 @@ internal abstract class TextFormatSerializer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteDouble(byte[] buffer, int cursor, double value)
     {
-        if (MathHelper.IsFinite(value))
+        if (double.IsFinite(value))
         {
             // From https://prometheus.io/docs/specs/om/open_metrics_spec/#considerations-canonical-numbers:
             // A warning to implementers in C and other languages that share its printf implementation:

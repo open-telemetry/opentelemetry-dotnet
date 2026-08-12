@@ -20,6 +20,8 @@ public class JaegerPropagatorTests
     private const string ParentSpanId = "0";
     private const string FlagSampled = "1";
     private const string FlagNotSampled = "0";
+    private const string AllZeroesTraceId = "00000000000000000000000000000000";
+    private const string AllZeroesSpanId = "0000000000000000";
 
     private static readonly Func<IDictionary<string, string[]>, string, IEnumerable<string>> Getter =
         static (headers, name) => headers.TryGetValue(name, out var value) ? value : [];
@@ -102,6 +104,47 @@ public class JaegerPropagatorTests
 
         // assert
         Assert.Equal(propagationContext, result);
+    }
+
+    [Theory]
+    [InlineData("invalid trace id")]
+    [InlineData("zzz7651916cd43dd8448eb211c803177")] // Right length, but not hexadecimal
+    [InlineData("0007651916CD43DD8448EB211C803177")] // Right length, but upper case
+    [InlineData("0")] // Padded to all zeroes
+    [InlineData(AllZeroesTraceId)]
+    public void TryExtractTraceContextReturnsFalseIfTraceIdIsMalformed(string traceId)
+    {
+        // arrange
+        var formattedHeader = string.Join(JaegerDelimiter, traceId, SpanId, ParentSpanId, FlagSampled);
+
+        // act
+        var result = JaegerPropagator.TryExtractTraceContext(formattedHeader, out var extractedTraceId, out var extractedSpanId, out var traceOptions);
+
+        // assert
+        Assert.False(result);
+        Assert.Equal(default, extractedTraceId);
+        Assert.Equal(default, extractedSpanId);
+        Assert.Equal(ActivityTraceFlags.None, traceOptions);
+    }
+
+    [Theory]
+    [InlineData("invalid span id")]
+    [InlineData("zzzc989f9791877")] // Right length once padded, but not hexadecimal
+    [InlineData("0007C989F9791877")] // Right length, but upper case
+    [InlineData("0")] // Padded to all zeroes
+    [InlineData(AllZeroesSpanId)]
+    public void TryExtractTraceContextReturnsFalseIfSpanIdIsMalformed(string spanId)
+    {
+        // arrange
+        var formattedHeader = string.Join(JaegerDelimiter, TraceId, spanId, ParentSpanId, FlagSampled);
+
+        // act
+        var result = JaegerPropagator.TryExtractTraceContext(formattedHeader, out _, out var extractedSpanId, out var traceOptions);
+
+        // assert
+        Assert.False(result);
+        Assert.Equal(default, extractedSpanId);
+        Assert.Equal(ActivityTraceFlags.None, traceOptions);
     }
 
     [Theory]

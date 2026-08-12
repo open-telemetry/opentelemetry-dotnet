@@ -26,6 +26,9 @@ Notes](../../RELEASENOTES.md).
   expire.
   ([#7597](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7597))
 
+* Fixed the OTLP exporter from retrying certain non-transient HTTP failures.
+  ([#7600](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7600))
+
 * A server-supplied throttle delay (OTLP/gRPC `RetryInfo.retry_delay` or
   OTLP/HTTP `Retry-After`) is now clamped to a minimum of 100 milliseconds.
   ([#7583](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7583))

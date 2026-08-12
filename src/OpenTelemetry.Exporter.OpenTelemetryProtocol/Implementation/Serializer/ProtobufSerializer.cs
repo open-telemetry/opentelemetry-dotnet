@@ -14,6 +14,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer
 
 internal static class ProtobufSerializer
 {
+    /// <summary>
+    /// The number of bytes to reserve for a length prefix that will be filled in by
+    /// <see cref="WriteCompactLength"/>.
+    /// </summary>
+    internal const int ReserveSizeForCompactLength = 1;
+
     private const int MaxBufferSize = 100 * 1024 * 1024;
     private const uint UInt128 = 0x80;
     private const ulong ULong128 = 0x80;
@@ -58,6 +64,68 @@ internal static class ProtobufSerializer
         slice[1] = (byte)(((length >> 7) & MaskBitsLow) | MaskBitHigh);
         slice[2] = (byte)(((length >> 14) & MaskBitsLow) | MaskBitHigh);
         slice[3] = (byte)((length >> 21) & MaskBitsLow);
+    }
+
+    /// <summary>
+    /// Fills in the length of a nested message whose length prefix was reserved with
+    /// <see cref="ReserveSizeForCompactLength"/>, using the smallest varint that fits.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <see cref="WriteReservedLength"/> always emits four bytes, padding the varint with
+    /// redundant continuation bits. That costs nothing to write, but it puts up to three
+    /// wasted bytes on the wire for every nested message, which is a large share of the
+    /// payload for messages that are individually small - and attributes, span events and
+    /// span links are small and numerous.
+    /// </para>
+    /// <para>
+    /// This reserves a single byte instead, which is correct without any further work for
+    /// content under 128 bytes. Longer content has to be moved to make room for a wider
+    /// prefix, so this should only be used where the content is normally short.
+    /// </para>
+    /// </remarks>
+    /// <param name="buffer">The buffer being written to.</param>
+    /// <param name="lengthPosition">The position reserved for the length prefix.</param>
+    /// <param name="writePosition">The position just past the message content.</param>
+    /// <returns>The new write position, which moves when the content had to be shifted.</returns>
+    internal static int WriteCompactLength(byte[] buffer, int lengthPosition, int writePosition)
+    {
+        var contentLength = writePosition - (lengthPosition + ReserveSizeForCompactLength);
+
+        Debug.Assert(contentLength >= 0, "contentLength was negative");
+
+        if (contentLength <= MaskBitsLow)
+        {
+            buffer[lengthPosition] = (byte)contentLength;
+            return writePosition;
+        }
+
+        // The reserved byte is not enough. Shift the content along to make room for the
+        // full varint. Span.CopyTo handles the overlap, and throws when the buffer is too
+        // small, which the callers turn into a resize and a retry.
+        var shift = ComputeVarInt32Size((uint)contentLength) - ReserveSizeForCompactLength;
+        var contentPosition = lengthPosition + ReserveSizeForCompactLength;
+
+        buffer.AsSpan(contentPosition, contentLength).CopyTo(buffer.AsSpan(contentPosition + shift));
+
+        var endOfLength = WriteVarInt32(buffer, lengthPosition, (uint)contentLength);
+
+        Debug.Assert(endOfLength == contentPosition + shift, "The length prefix did not end where the content starts");
+
+        return writePosition + shift;
+    }
+
+    internal static int ComputeVarInt32Size(uint value)
+    {
+        var size = 1;
+
+        while (value >= 0x80)
+        {
+            size++;
+            value >>= 7;
+        }
+
+        return size;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
