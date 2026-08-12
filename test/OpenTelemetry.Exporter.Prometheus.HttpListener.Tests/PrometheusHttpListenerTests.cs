@@ -22,6 +22,9 @@ public class PrometheusHttpListenerTests
 
     private static readonly ConcurrentDictionary<int, int> ConsumedPorts = [];
 
+    private static readonly TimeSpan DeadlineMargin = TimeSpan.FromSeconds(1);
+    private static readonly TimeSpan MaxCollectWait = TimeSpan.FromSeconds(30);
+
     [Fact]
     public async Task RunHttpServerWithDefaultOptions()
     {
@@ -512,19 +515,26 @@ public class PrometheusHttpListenerTests
     public async Task WhenRequestDeadlineExceeded_Returns408(string value)
     {
         // The scrape timeout is enforced via CancellationTokenSource.CancelAfter, whose
-        // cancellation callback is dispatched on the thread pool. The Collect callback below
-        // blocks a worker thread synchronously, and the listener only checks the token once
-        // Collect returns. If the pool is saturated (e.g. by sibling tests in CI) the timer
-        // callback can be delayed past that point, leaving the token un-cancelled and producing
-        // a 200 instead of a 408. Guarantee a worker thread is available to run the timer
-        // callback promptly so the timeout is observed deterministically.
+        // cancellation callback is dispatched on the thread pool, and the listener only
+        // checks the token once Collect has returned. Blocking Collect for a fixed time
+        // assumes that callback will have run by then, which is not so when the pool is
+        // saturated (as it is when sibling test assemblies run alongside this one in CI):
+        // the callback is delayed past the sleep, the token is still un-cancelled, and the
+        // response is a 200. So wait on a timer of this test's own instead, scheduled to
+        // fire after the listener's. That ties the wait to the pool actually dispatching
+        // timer callbacks rather than to the clock: the listener's callback is queued
+        // first, for an earlier time, so it has run by the time this one does, and while
+        // the pool is dispatching nothing the collection simply keeps waiting.
         EnsureThreadPoolWorkerThreadsAvailable();
 
+        var scrapeTimeout = TimeSpan.FromSeconds(double.Parse(value, CultureInfo.InvariantCulture));
+
         using var context = CreateListener();
+        using var deadlinePassed = new CancellationTokenSource(scrapeTimeout + DeadlineMargin);
 
         context.Exporter.Collect = _ =>
         {
-            Thread.Sleep(TimeSpan.FromSeconds(2));
+            deadlinePassed.Token.WaitHandle.WaitOne(MaxCollectWait);
             return true;
         };
 
