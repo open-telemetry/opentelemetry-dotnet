@@ -157,7 +157,37 @@ internal sealed class MetricState
     {
         var combinedTags = new KeyValuePair<string, object?>[instrumentTags.Length + measurementTags.Length];
         instrumentTags.CopyTo(combinedTags, 0);
-        measurementTags.CopyTo(combinedTags.AsSpan(instrumentTags.Length));
+
+        var combinedTagCount = instrumentTags.Length;
+        for (var i = 0; i < measurementTags.Length; i++)
+        {
+            var measurementTag = measurementTags[i];
+            if (!ContainsTagKey(instrumentTags, measurementTag.Key))
+            {
+                combinedTags[combinedTagCount++] = measurementTag;
+            }
+        }
+
+        if (combinedTagCount != combinedTags.Length)
+        {
+            Array.Resize(ref combinedTags, combinedTagCount);
+        }
+
         return combinedTags;
+    }
+
+    private static bool ContainsTagKey(
+        ReadOnlySpan<KeyValuePair<string, object?>> tags,
+        string key)
+    {
+        for (var i = 0; i < tags.Length; i++)
+        {
+            if (string.Equals(tags[i].Key, key, StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

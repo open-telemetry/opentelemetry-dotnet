@@ -377,6 +377,12 @@ internal sealed class MeterProviderSdk : MeterProvider
 
             if (state != null)
             {
+                if (instrumentTags is { Length: > 0 })
+                {
+                    OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent(
+                        $"Instrument-level tags will be attached to every measurement for Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\". Tag count = {instrumentTags.Length}.");
+                }
+
                 OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Measurements for Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\" will be processed and aggregated by the SDK.");
                 return state;
             }

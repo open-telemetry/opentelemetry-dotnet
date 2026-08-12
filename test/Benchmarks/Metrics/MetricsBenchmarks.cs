@@ -62,7 +62,15 @@ public class MetricsBenchmarks
 {
     private readonly Random random = new();
     private readonly string[] dimensionValues = ["DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10"];
-    private Counter<long>? boundCounter;
+    private Counter<long>? boundCounter1;
+    private Counter<long>? boundCounter2;
+    private Counter<long>? boundCounter3;
+    private Counter<long>? boundCounter4;
+    private Counter<long>? boundCounter5;
+    private Counter<long>? boundCounter6;
+    private Counter<long>? boundCounter7;
+    private Counter<long>? boundCounter8;
+    private Counter<long>? boundCounter9;
     private Counter<long>? counter;
     private MeterProvider? meterProvider;
     private Meter? meter;
@@ -86,18 +94,30 @@ public class MetricsBenchmarks
             .Build();
 
         this.counter = this.meter.CreateCounter<long>("counter");
-        this.boundCounter = this.meter.CreateCounter<long>(
-            "bound-counter",
-            unit: null,
-            description: null,
-            tags:
-            [
-                new("DimName1", "DimVal1"),
-                new("DimName2", "DimVal2"),
-                new("DimName3", "DimVal3"),
-                new("DimName4", "DimVal4"),
-                new("DimName5", "DimVal5"),
-            ]);
+        this.boundCounter1 = CreateBoundCounter(1);
+        this.boundCounter2 = CreateBoundCounter(2);
+        this.boundCounter3 = CreateBoundCounter(3);
+        this.boundCounter4 = CreateBoundCounter(4);
+        this.boundCounter5 = CreateBoundCounter(5);
+        this.boundCounter6 = CreateBoundCounter(6);
+        this.boundCounter7 = CreateBoundCounter(7);
+        this.boundCounter8 = CreateBoundCounter(8);
+        this.boundCounter9 = CreateBoundCounter(9);
+
+        Counter<long> CreateBoundCounter(int tagCount)
+        {
+            var tags = new KeyValuePair<string, object?>[tagCount];
+            for (var i = 0; i < tagCount; i++)
+            {
+                tags[i] = new($"DimName{i + 1}", $"DimVal{i + 1}");
+            }
+
+            return this.meter.CreateCounter<long>(
+                $"bound-counter-{tagCount}",
+                unit: null,
+                description: null,
+                tags: tags);
+        }
     }
 
     [GlobalCleanup]
@@ -114,21 +134,57 @@ public class MetricsBenchmarks
     }
 
     [Benchmark]
-    public void CounterWith5FixedLabelsHotPath()
+    public void CounterWith1BoundLabelHotPath()
     {
-        this.counter!.Add(
-            100,
-            new("DimName1", "DimVal1"),
-            new("DimName2", "DimVal2"),
-            new("DimName3", "DimVal3"),
-            new("DimName4", "DimVal4"),
-            new("DimName5", "DimVal5"));
+        this.boundCounter1!.Add(100);
+    }
+
+    [Benchmark]
+    public void CounterWith2BoundLabelsHotPath()
+    {
+        this.boundCounter2!.Add(100);
+    }
+
+    [Benchmark]
+    public void CounterWith3BoundLabelsHotPath()
+    {
+        this.boundCounter3!.Add(100);
+    }
+
+    [Benchmark]
+    public void CounterWith4BoundLabelsHotPath()
+    {
+        this.boundCounter4!.Add(100);
     }
 
     [Benchmark]
     public void CounterWith5BoundLabelsHotPath()
     {
-        this.boundCounter!.Add(100);
+        this.boundCounter5!.Add(100);
+    }
+
+    [Benchmark]
+    public void CounterWith6BoundLabelsHotPath()
+    {
+        this.boundCounter6!.Add(100);
+    }
+
+    [Benchmark]
+    public void CounterWith7BoundLabelsHotPath()
+    {
+        this.boundCounter7!.Add(100);
+    }
+
+    [Benchmark]
+    public void CounterWith8BoundLabelsHotPath()
+    {
+        this.boundCounter8!.Add(100);
+    }
+
+    [Benchmark]
+    public void CounterWith9BoundLabelsHotPath()
+    {
+        this.boundCounter9!.Add(100);
     }
 
     [Benchmark]
