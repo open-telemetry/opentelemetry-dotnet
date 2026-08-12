@@ -179,8 +179,7 @@ internal static class DeclarativeConfigurationParser
             if (!ScalarMatchesAttributeType(type, resolved.Kind))
             {
                 throw CreateInvalidResourceAttributeException(
-                    $"A resource.attributes entry for '{entryName}' has a YAML {GetYamlKindName(resolved.Kind)} value " +
-                    $"but its declared type is '{type.GetSchemaName()}'.");
+                    $"A resource.attributes entry for '{entryName}' has a YAML {GetYamlKindName(resolved.Kind)} value but its declared type is '{type.GetSchemaName()}'.");
             }
 
             return new(
@@ -208,8 +207,7 @@ internal static class DeclarativeConfigurationParser
 
         // YamlMappingNode or any other node type - not permitted by the schema.
         throw CreateInvalidResourceAttributeException(
-            $"A resource.attributes entry for '{entryName}' has a YAML mapping as its 'value', " +
-            "which is not permitted by the schema.");
+            $"A resource.attributes entry for '{entryName}' has a YAML mapping as its 'value', which is not permitted by the schema.");
     }
 
     private static bool ScalarMatchesAttributeType(ResourceAttributeType type, YamlScalarKind kind) =>
@@ -236,15 +234,13 @@ internal static class DeclarativeConfigurationParser
             case ResourceAttributeType.DoubleArray: expectedKind = YamlScalarKind.Float; break;
             default:
                 throw CreateInvalidResourceAttributeException(
-                    $"A resource.attributes entry for '{entryName}' has a sequence value " +
-                    $"but its declared type is '{type.GetSchemaName()}'.");
+                    $"A resource.attributes entry for '{entryName}' has a sequence value but its declared type is '{type.GetSchemaName()}'.");
         }
 
         if (sequence.Children.Count == 0)
         {
             throw CreateInvalidResourceAttributeException(
-                $"A resource.attributes entry for '{entryName}' has an empty sequence value; " +
-                "the schema requires at least one item.");
+                $"A resource.attributes entry for '{entryName}' has an empty sequence value; the schema requires at least one item.");
         }
 
         var values = new List<ResolvedYamlScalar>();
@@ -253,8 +249,7 @@ internal static class DeclarativeConfigurationParser
             if (item is not YamlScalarNode scalar)
             {
                 throw CreateInvalidResourceAttributeException(
-                    $"A resource.attributes entry for '{entryName}' has a sequence containing a non-scalar item; " +
-                    "the configuration does not conform to the schema.");
+                    $"A resource.attributes entry for '{entryName}' has a sequence containing a non-scalar item; the configuration does not conform to the schema.");
             }
 
             var resolved = scalar.ResolveScalar();
@@ -263,8 +258,7 @@ internal static class DeclarativeConfigurationParser
             if (!matches)
             {
                 throw CreateInvalidResourceAttributeException(
-                    $"A resource.attributes entry for '{entryName}' has a sequence with a " +
-                    $"{GetYamlKindName(resolved.Kind)} item but declared type is '{type.GetSchemaName()}'.");
+                    $"A resource.attributes entry for '{entryName}' has a sequence with a {GetYamlKindName(resolved.Kind)} item but declared type is '{type.GetSchemaName()}'.");
             }
 
             values.Add(resolved);

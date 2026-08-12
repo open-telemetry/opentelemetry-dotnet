@@ -153,8 +153,7 @@ internal static class EnvironmentSubstitution
 
         // Consume the optional 'env:' prefix. 'e', 'n', 'v' and ':' are never '}', so this can
         // never step past closingBrace.
-        if (closingBrace - i >= 4
-            && value[i] == 'e' && value[i + 1] == 'n' && value[i + 2] == 'v' && value[i + 3] == ':')
+        if (closingBrace - i >= 4 && value.AsSpan(i, 4).SequenceEqual("env:"))
         {
             i += 4;
         }
@@ -250,10 +249,10 @@ internal static class EnvironmentSubstitution
             "letter or underscore and contains only letters, digits, and underscores.");
 
     private static bool IsEnvNameStart(char c)
-        => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
+        => c is (>= 'a' and <= 'z') or (>= 'A' and <= 'Z') or '_';
 
     private static bool IsEnvNameContinue(char c)
-        => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_';
+        => char.IsAsciiLetterOrDigit(c) || c == '_';
 
     // OTel VCHAR-WSP-NO-RBRACE = %x21-7C / "~" / WSP. WSP contributes TAB (U+0009) and SPACE
     // (U+0020); the range covers U+0021-U+007C. '}' (U+007D) and DEL (U+007F) are excluded.

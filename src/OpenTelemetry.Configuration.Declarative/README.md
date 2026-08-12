@@ -95,8 +95,7 @@ otherwise the SDK will decode it as a space character. Use `resource.attributes`
 when you need the encoding to be handled automatically.
 
 Only string-valued `resource.attributes` are currently supported. Boolean,
-integer, double, and array attributes are reported and skipped rather than
-silently converted to strings.
+integer, double, and array attributes are reported and skipped.
 
 All other top-level sections (e.g. `tracer_provider`, `propagator`) are logged
 and ignored. You can track this issue for missing features:

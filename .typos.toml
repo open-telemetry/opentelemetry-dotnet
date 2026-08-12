@@ -16,7 +16,6 @@ Udid = "Udid"
 
 # Test files that use intentionally misspelled strings to exercise schema-validation and
 # diagnostic-path logic are excluded so those misspellings do not require global exceptions.
-# All other files, including production C# code, retain full typo checking.
 [files]
 extend-exclude = [
   "test/OpenTelemetry.Configuration.Declarative.Tests/DeclarativeConfigurationReaderTests.cs",

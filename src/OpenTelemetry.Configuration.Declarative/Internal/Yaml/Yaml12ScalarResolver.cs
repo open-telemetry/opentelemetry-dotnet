@@ -110,7 +110,7 @@ internal static class Yaml12ScalarResolver
         return value[1] switch
         {
             'o' => IsDigitRun(value, 2, static c => c is >= '0' and <= '7'),
-            'x' => IsDigitRun(value, 2, static c => c is (>= '0' and <= '9') or (>= 'a' and <= 'f') or (>= 'A' and <= 'F')),
+            'x' => IsDigitRun(value, 2, char.IsAsciiHexDigit),
             _ => false,
         };
     }
@@ -255,7 +255,7 @@ internal static class Yaml12ScalarResolver
 
         for (; i < value.Length; i++)
         {
-            if (value[i] is not (>= '0' and <= '9'))
+            if (!char.IsAsciiDigit(value[i]))
             {
                 return false;
             }
@@ -267,11 +267,13 @@ internal static class Yaml12ScalarResolver
     private static bool IsInfinity(string value)
     {
         var i = HasSign(value) ? 1 : 0;
-        return (value.Length - i) == 4
-            && value[i] == '.'
-            && ((value[i + 1] == 'i' && value[i + 2] == 'n' && value[i + 3] == 'f')
-                || (value[i + 1] == 'I' && value[i + 2] == 'n' && value[i + 3] == 'f')
-                || (value[i + 1] == 'I' && value[i + 2] == 'N' && value[i + 3] == 'F'));
+        if ((value.Length - i) != 4 || value[i] != '.')
+        {
+            return false;
+        }
+
+        var suffix = value.AsSpan(i + 1);
+        return suffix.SequenceEqual("inf") || suffix.SequenceEqual("Inf") || suffix.SequenceEqual("INF");
     }
 
     private static bool HasSign(string value) =>
@@ -297,7 +299,7 @@ internal static class Yaml12ScalarResolver
 
     private static void ConsumeDecimalDigits(string value, ref int i)
     {
-        while (i < value.Length && value[i] is >= '0' and <= '9')
+        while (i < value.Length && char.IsAsciiDigit(value[i]))
         {
             i++;
         }

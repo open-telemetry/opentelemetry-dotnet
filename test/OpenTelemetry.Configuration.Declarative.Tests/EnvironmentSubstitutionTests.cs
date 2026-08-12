@@ -209,9 +209,6 @@ public sealed class EnvironmentSubstitutionTests
     // the spec it is literal text rather than an error. The spec's own
     // '${UNDEFINED_KEY:-$${UNDEFINED_KEY}}' row depends on this: it outputs a dangling
     // '${UNDEFINED_KEY:-' and is explicitly NOT an error.
-    //
-    // Regression guard: this used to throw at the end of the value but stay literal before a '$$',
-    // so the same text behaved differently depending on what followed it.
     [Theory]
     [InlineData("${VAR", "${VAR")] // missing closing brace
     [InlineData("prefix ${VAR", "prefix ${VAR")] // missing closing brace mid-string
@@ -279,8 +276,6 @@ public sealed class EnvironmentSubstitutionTests
     public void Substitute_DefaultValueBoundaryCharacters_AreAccepted(string input, string expected) =>
         Assert.Equal(expected, EnvironmentSubstitution.Substitute(input, _ => null));
 
-    // Regression: the default-value diagnostic used to identify neither the expression nor its
-    // position, so a document with several references gave nothing to search for.
     [Fact]
     public void Substitute_InvalidDefaultValue_ThrowsWithDefaultValueMessageNamingTheExpression()
     {
@@ -386,9 +381,11 @@ public sealed class EnvironmentSubstitutionTests
         }
 #endif
 
-#pragma warning disable CA1307 // Specify StringComparison for clarity - the 3-arg overload is not available on all TFMs
+#if NET
+        var escaped = original.Replace("$", "$$", StringComparison.Ordinal);
+#else
         var escaped = original.Replace("$", "$$");
-#pragma warning restore CA1307 // Specify StringComparison for clarity
+#endif
 
         Assert.Equal(original, EnvironmentSubstitution.Substitute(escaped, _ => "unused"));
     }

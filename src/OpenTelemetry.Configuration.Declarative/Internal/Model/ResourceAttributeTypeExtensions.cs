@@ -8,6 +8,7 @@ internal static class ResourceAttributeTypeExtensions
     internal static string GetSchemaName(this ResourceAttributeType type) =>
         type switch
         {
+            ResourceAttributeType.String => "string",
             ResourceAttributeType.Boolean => "bool",
             ResourceAttributeType.Integer => "int",
             ResourceAttributeType.Double => "double",
@@ -15,6 +16,6 @@ internal static class ResourceAttributeTypeExtensions
             ResourceAttributeType.BooleanArray => "bool_array",
             ResourceAttributeType.IntegerArray => "int_array",
             ResourceAttributeType.DoubleArray => "double_array",
-            _ => "string",
+            _ => throw new ArgumentOutOfRangeException(nameof(type), type, null),
         };
 }

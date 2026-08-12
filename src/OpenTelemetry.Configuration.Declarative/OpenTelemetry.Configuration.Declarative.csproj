@@ -19,10 +19,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Configuration" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
-    <!-- YamlDotNet does not publish security advisories, so hardening fixes are only visible in the
-    release notes - review https://github.com/aaubry/YamlDotNet/releases before changing the floor,
-    and raise it when a release fixes a parser robustness issue. The open upper bound is deliberate.
-    It lets consumers resolve a newer YamlDotNet without a package update from us. -->
     <PackageReference Include="YamlDotNet" VersionOverride="[18.1.0,)" />
   </ItemGroup>
 
@@ -31,6 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="$(RepoRoot)\src\Shared\CharExtensions.cs" Link="Includes\CharExtensions.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\DiagnosticDefinitions.cs" Link="Includes\DiagnosticDefinitions.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\ExceptionExtensions.cs" Link="Includes\ExceptionExtensions.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\Guard.cs" Link="Includes\Guard.cs" />
