@@ -12,11 +12,11 @@
   -->
   <ItemGroup>
     <!-- Default to latest versions for all TFMs -->
-    <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="[11.0.0-preview.6.26359.118,)" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[11.0.0-preview.6.26359.118,)" />
-    <PackageVersion Include="Microsoft.Extensions.Diagnostics.Abstractions" Version="[11.0.0-preview.6.26359.118,)" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="[11.0.0-preview.6.26359.118,)" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="[11.0.0-preview.6.26359.118,)" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="[11.0.0-preview.7.26381.103,)" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[11.0.0-preview.7.26381.103,)" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.Abstractions" Version="[11.0.0-preview.7.26381.103,)" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="[11.0.0-preview.7.26381.103,)" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="[11.0.0-preview.7.26381.103,)" />
   </ItemGroup>
   <!-- Version overrides for specific netX.0 TFMs -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
@@ -27,11 +27,11 @@
     <PackageVersion Update="Microsoft.Extensions.Logging.Configuration" Version="[10.0.0,)" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net11.0'">
-    <PackageVersion Update="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="[11.0.0-preview.6.26359.118,)" />
-    <PackageVersion Update="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[11.0.0-preview.6.26359.118,)" />
-    <PackageVersion Update="Microsoft.Extensions.Diagnostics.Abstractions" Version="[11.0.0-preview.6.26359.118,)" />
-    <PackageVersion Update="Microsoft.Extensions.Hosting.Abstractions" Version="[11.0.0-preview.6.26359.118,)" />
-    <PackageVersion Update="Microsoft.Extensions.Logging.Configuration" Version="[11.0.0-preview.6.26359.118,)" />
+    <PackageVersion Update="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="[11.0.0-preview.7.26381.103,)" />
+    <PackageVersion Update="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[11.0.0-preview.7.26381.103,)" />
+    <PackageVersion Update="Microsoft.Extensions.Diagnostics.Abstractions" Version="[11.0.0-preview.7.26381.103,)" />
+    <PackageVersion Update="Microsoft.Extensions.Hosting.Abstractions" Version="[11.0.0-preview.7.26381.103,)" />
+    <PackageVersion Update="Microsoft.Extensions.Logging.Configuration" Version="[11.0.0-preview.7.26381.103,)" />
   </ItemGroup>
 
   <!--
@@ -40,7 +40,7 @@
       See https://github.com/open-telemetry/opentelemetry-dotnet/issues/5973 for more details.
   -->
   <ItemGroup>
-    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="[11.0.0-preview.6.26359.118,)" />
+    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="[11.0.0-preview.7.26381.103,)" />
   </ItemGroup>
 
   <!--
@@ -134,10 +134,10 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net11.0'">
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="11.0.0-preview.6.26359.118" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="11.0.0-preview.6.26359.118" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="11.0.0-preview.6.26359.118" />
-    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="11.0.0-preview.6.26359.118" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="11.0.0-preview.7.26381.103" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="11.0.0-preview.7.26381.103" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="11.0.0-preview.7.26381.103" />
+    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="11.0.0-preview.7.26381.103" />
   </ItemGroup>
 
 </Project>
