@@ -17,6 +17,7 @@ public class OtlpRetryTests
 #if NET
     [Theory]
     [InlineData(HttpRequestError.ConnectionError, null, true)]
+    [InlineData(HttpRequestError.InvalidResponse, null, false)]
     [InlineData(HttpRequestError.UserAuthenticationError, null, false)]
     [InlineData(HttpRequestError.ProxyTunnelError, HttpStatusCode.ProxyAuthenticationRequired, false)]
     [InlineData(HttpRequestError.ProxyTunnelError, HttpStatusCode.BadGateway, true)]
@@ -27,6 +28,24 @@ public class OtlpRetryTests
         var response = new ExportClientHttpResponse(false, default, null, exception);
 
         Assert.Equal(expected, OtlpRetry.IsRetryable(response));
+    }
+
+    [Fact]
+    public void InvalidResponseCausedByResponseEndedIsRetryableTest()
+    {
+        var exception = new HttpRequestException(
+            HttpRequestError.InvalidResponse,
+            inner: new HttpIOException(
+                HttpRequestError.InvalidResponse,
+                innerException: new HttpIOException(HttpRequestError.ResponseEnded)));
+        var response = new ExportClientHttpResponse(
+            success: false,
+            deadlineUtc: DateTime.UtcNow.AddMinutes(1),
+            response: null,
+            exception: exception);
+
+        Assert.True(OtlpRetry.TryGetHttpRetryResult(response, OtlpRetry.InitialBackoffMilliseconds, out _));
+        Assert.True(OtlpRetry.IsRetryable(response));
     }
 #endif
 

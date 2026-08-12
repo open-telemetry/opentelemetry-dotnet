@@ -306,22 +306,35 @@ internal static class OtlpRetry
         _ => false,
     };
 
-    private static bool IsHttpRequestExceptionRetryable(Exception? exception) =>
+    private static bool IsHttpRequestExceptionRetryable(Exception? exception)
+    {
 #if NET
-        exception is HttpRequestException { StatusCode: { } statusCode }
-            ? IsHttpStatusCodeRetryable(statusCode, false)
-            : exception is not HttpRequestException
-            {
-                HttpRequestError:
-                    HttpRequestError.ConfigurationLimitExceeded or
-                    HttpRequestError.ExtendedConnectNotSupported or
-                    HttpRequestError.InvalidResponse or
-                    HttpRequestError.UserAuthenticationError or
-                    HttpRequestError.VersionNegotiationError
-            };
+        if (exception is not HttpRequestException httpRequestException)
+        {
+            return true;
+        }
+
+        if (httpRequestException.StatusCode is { } statusCode)
+        {
+            return IsHttpStatusCodeRetryable(statusCode, false);
+        }
+
+        var httpRequestError = httpRequestException.HttpRequestError;
+        if (httpRequestError == HttpRequestError.InvalidResponse)
+        {
+            var baseException = httpRequestException.GetBaseException();
+            return baseException is HttpIOException { HttpRequestError: HttpRequestError.ResponseEnded };
+        }
+
+        return httpRequestError is not (
+            HttpRequestError.ConfigurationLimitExceeded or
+            HttpRequestError.ExtendedConnectNotSupported or
+            HttpRequestError.UserAuthenticationError or
+            HttpRequestError.VersionNegotiationError);
 #else
-        true;
+        return true;
 #endif
+    }
 
     private static int GetRandomNumber(int min, int max)
     {
