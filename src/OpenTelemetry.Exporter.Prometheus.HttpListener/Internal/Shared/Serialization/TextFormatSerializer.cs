@@ -58,6 +58,12 @@ internal abstract class TextFormatSerializer
 
     protected static readonly string[] ReservedHistogramLabelNames = ["le"];
 
+    // A double never requires more than 17 significant digits to round-trip, so the longest
+    // rendering the runtime can produce is a sign, 17 digits, a decimal point and an exponent
+    // such as "E-308". The same bound covers every canonical number, the longest of which is
+    // a value such as -1.2345678901234567e-308.
+    private const int MaxFormattedDoubleCharacters = 32;
+
 #if NET
     private static readonly SearchValues<char> UnicodeEscapeChars = SearchValues.Create("\\\n");
     private static readonly SearchValues<char> LabelValueEscapeChars = SearchValues.Create("\"\\\n");
@@ -86,30 +92,6 @@ internal abstract class TextFormatSerializer
 #endif
 
     private static readonly string[] ReservedExemplarLabelNames = ["trace_id", "span_id"];
-    private static readonly double[] ExactPowersOfTen =
-    [
-        1e-10d,
-        1e-09d,
-        1e-08d,
-        1e-07d,
-        1e-06d,
-        1e-05d,
-        1e-04d,
-        1e-03d,
-        1e-02d,
-        1e-01d,
-        1e00d,
-        1e01d,
-        1e02d,
-        1e03d,
-        1e04d,
-        1e05d,
-        1e06d,
-        1e07d,
-        1e08d,
-        1e09d,
-        1e10d,
-    ];
 
     private string[]? reservedExemplarOutputKeys;
 
@@ -400,15 +382,16 @@ internal abstract class TextFormatSerializer
     {
         if (double.IsFinite(value))
         {
-            // From https://prometheus.io/docs/specs/om/open_metrics_spec/#considerations-canonical-numbers:
-            // A warning to implementers in C and other languages that share its printf implementation:
-            // The standard precision of %f, %e and %g is only six significant digits. 17 significant
-            // digits are required for full precision, e.g. printf("%.17g", d).
+            // The shortest round-trippable representation is used, which is what the reference
+            // Prometheus client libraries emit (Go's strconv.FormatFloat with a precision of -1).
+            // Formatting with 17 significant digits also round-trips, but pads shorter values out
+            // to their full precision, rendering a bucket bound of 0.005 as 0.0050000000000000001.
 #if NET
-            var result = Utf8Formatter.TryFormat(value, buffer.AsSpan(cursor), out var bytesWritten, new StandardFormat('G', 17));
+            // The default format specifier produces the shortest round-trippable representation.
+            var result = Utf8Formatter.TryFormat(value, buffer.AsSpan(cursor), out var bytesWritten);
             return AdvanceCursorOrThrow(result, cursor, bytesWritten);
 #else
-            return WriteAsciiStringNoEscape(buffer, cursor, value.ToString("G17", CultureInfo.InvariantCulture));
+            return WriteAsciiStringNoEscape(buffer, cursor, GetShortestRoundTrippableString(value));
 #endif
         }
         else if (double.IsPositiveInfinity(value))
@@ -429,13 +412,24 @@ internal abstract class TextFormatSerializer
 
     // Histogram "le" and summary "quantile" label values use OpenMetrics canonical numbers.
     // See https://prometheus.io/docs/specs/om/open_metrics_spec/#considerations-canonical-numbers
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int WriteCanonicalLabelValue(byte[] buffer, int cursor, double value) =>
-#if NET
-        cursor + FormatCanonicalLabelValue(buffer.AsSpan(cursor), value);
-#else
-        WriteAsciiStringNoEscape(buffer, cursor, GetCanonicalLabelValueString(value));
-#endif
+    internal static int WriteCanonicalLabelValue(byte[] buffer, int cursor, double value)
+    {
+        Span<char> canonical = stackalloc char[MaxFormattedDoubleCharacters];
+        var length = FormatCanonicalNumber(canonical, value);
+
+        if (buffer.Length - cursor < length)
+        {
+            throw new ArgumentException("Destination buffer too small.");
+        }
+
+        // Canonical numbers only ever contain ASCII characters.
+        for (var i = 0; i < length; i++)
+        {
+            buffer[cursor++] = unchecked((byte)canonical[i]);
+        }
+
+        return cursor;
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteLong(byte[] buffer, int cursor, long value)
@@ -1998,102 +1992,6 @@ internal abstract class TextFormatSerializer
     }
 
 #if NET
-    private static int FormatCanonicalLabelValue(Span<byte> destination, double value)
-    {
-        if (double.IsPositiveInfinity(value))
-        {
-            return GetBytesWrittenOrThrow("+Inf"u8.TryCopyTo(destination), 4);
-        }
-        else if (double.IsNegativeInfinity(value))
-        {
-            return GetBytesWrittenOrThrow("-Inf"u8.TryCopyTo(destination), 4);
-        }
-        else if (double.IsNaN(value))
-        {
-            return GetBytesWrittenOrThrow("NaN"u8.TryCopyTo(destination), 3);
-        }
-        else if (value == 0)
-        {
-            return GetBytesWrittenOrThrow("0.0"u8.TryCopyTo(destination), 3);
-        }
-
-        var absoluteValue = Math.Abs(value);
-        if (absoluteValue <= 10 && value == Math.Round(value, 3))
-        {
-            return FormatFixedAndTrim(destination, value, 3);
-        }
-
-        if (absoluteValue < 1e6 && value == Math.Round(value))
-        {
-            return FormatFixedAndTrim(destination, value, 1);
-        }
-
-        if (TryGetPowerOfTenExponent(absoluteValue, out var exponent))
-        {
-            return exponent is >= 6 or <= -5
-                ? FormatPowerOfTenScientific(destination, value < 0, exponent)
-                : FormatFixedAndTrim(destination, value, Math.Max(1, -exponent));
-        }
-
-        var symbol = absoluteValue is >= 1e6 or < 1e-4 ? 'e' : 'G';
-
-        return TryFormat(destination, value, new(symbol, 17));
-
-        static int FormatFixedAndTrim(Span<byte> destination, double value, int decimalPlaces)
-        {
-            var bytesWritten = TryFormat(destination, value, new StandardFormat('F', (byte)decimalPlaces));
-            var decimalIndex = destination.Slice(0, bytesWritten).IndexOf((byte)'.');
-            Debug.Assert(decimalIndex >= 0, $"{nameof(decimalIndex)} should be non-negative.");
-
-            while (bytesWritten > decimalIndex + 2 && destination[bytesWritten - 1] == (byte)'0')
-            {
-                bytesWritten--;
-            }
-
-            return bytesWritten;
-        }
-
-        static int FormatPowerOfTenScientific(Span<byte> destination, bool isNegative, int exponent)
-        {
-            if (destination.Length < (isNegative ? 6 : 5))
-            {
-                throw new ArgumentException("Destination buffer too small.");
-            }
-
-            var bytesWritten = 0;
-            if (isNegative)
-            {
-                destination[bytesWritten++] = (byte)'-';
-            }
-
-            destination[bytesWritten++] = (byte)'1';
-            return bytesWritten + WriteExponent(destination.Slice(bytesWritten), exponent);
-        }
-
-        static int TryFormat(Span<byte> destination, double value, StandardFormat format)
-        {
-            var result = Utf8Formatter.TryFormat(value, destination, out var bytesWritten, format);
-            return GetBytesWrittenOrThrow(result, bytesWritten);
-        }
-
-        static int WriteExponent(Span<byte> destination, int exponent)
-        {
-            destination[0] = (byte)'e';
-            destination[1] = exponent >= 0 ? (byte)'+' : (byte)'-';
-
-            var absoluteExponent = Math.Abs(exponent);
-            (var quotient, var remainder) = Math.DivRem(absoluteExponent, 10);
-
-            destination[2] = unchecked((byte)('0' + quotient));
-            destination[3] = unchecked((byte)('0' + remainder));
-            return 4;
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int GetBytesWrittenOrThrow(bool result, int bytesWritten) =>
-        result ? bytesWritten : throw new ArgumentException("Destination buffer too small.");
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int AdvanceCursorOrThrow(bool result, int cursor, int bytesWritten) =>
         result ? cursor + bytesWritten : throw new ArgumentException("Destination buffer too small.");
@@ -2101,81 +1999,303 @@ internal abstract class TextFormatSerializer
 
     private static string GetCanonicalLabelValueString(double value)
     {
+        Span<char> canonical = stackalloc char[MaxFormattedDoubleCharacters];
+        var length = FormatCanonicalNumber(canonical, value);
+
+        return canonical.Slice(0, length).ToString();
+    }
+
+    // Renders a value using the canonical numbers the OpenMetrics specification requires for the
+    // "le" label values of histograms and the "quantile" label values of summaries, whose "target
+    // rendering is equivalent to the default Go rendering of float64 values (i.e. %g), with a .0
+    // appended in case there is no decimal point or exponent to make clear that they are floats".
+    // See https://prometheus.io/docs/specs/om/open_metrics_spec/#considerations-canonical-numbers
+    //
+    // That rendering uses the shortest round-trippable significant digits, switches from
+    // fixed-point to scientific notation when the decimal exponent is less than -4 or at
+    // least 6, and writes the exponent with a sign and at least two digits.
+    private static int FormatCanonicalNumber(Span<char> destination, double value)
+    {
+        Debug.Assert(destination.Length >= MaxFormattedDoubleCharacters, $"{nameof(destination)} should be large enough.");
+
         if (double.IsPositiveInfinity(value))
         {
-            return "+Inf";
+            return Copy(destination, "+Inf");
         }
         else if (double.IsNegativeInfinity(value))
         {
-            return "-Inf";
+            return Copy(destination, "-Inf");
         }
         else if (double.IsNaN(value))
         {
-            return "NaN";
+            return Copy(destination, "NaN");
         }
         else if (value == 0)
         {
-            return "0.0";
+            // Negative zero is rendered the same way as positive zero.
+            return Copy(destination, "0.0");
         }
 
-        var absoluteValue = Math.Abs(value);
-        if (absoluteValue <= 10 && value == Math.Round(value, 3))
-        {
-            return FormatFixedAndTrim(value, 3);
-        }
+        Span<char> shortest = stackalloc char[MaxFormattedDoubleCharacters];
+        var length = FormatShortestRoundTrippable(shortest, value);
 
-        if (absoluteValue < 1e6 && value == Math.Round(value))
-        {
-            return FormatFixedAndTrim(value, 1);
-        }
-
-        if (TryGetPowerOfTenExponent(absoluteValue, out var exponent))
-        {
-            return exponent is >= 6 or <= -5
-                ? string.Concat(value < 0 ? "-1" : "1", FormatExponent(exponent))
-                : FormatFixedAndTrim(value, Math.Max(1, -exponent));
-        }
-
-        return value.ToString(absoluteValue is >= 1e6 or < 1e-4 ? "e17" : "G17", CultureInfo.InvariantCulture);
-
-        static string FormatFixedAndTrim(double value, int decimalPlaces)
-        {
-            var formattedValue = value.ToString($"F{decimalPlaces}", CultureInfo.InvariantCulture);
-#if NET
-            var minimumLength = formattedValue.IndexOf('.', StringComparison.Ordinal) + 2;
-#else
-            var minimumLength = formattedValue.IndexOf('.') + 2;
-#endif
-            while (formattedValue.Length > minimumLength && formattedValue[formattedValue.Length - 1] == '0')
-            {
-                formattedValue = formattedValue.Substring(0, formattedValue.Length - 1);
-            }
-
-            return formattedValue;
-        }
-
-        static string FormatExponent(int exponent)
-        {
-            return string.Concat(
-                "e",
-                exponent >= 0 ? "+" : "-",
-                Math.Abs(exponent).ToString("00", CultureInfo.InvariantCulture));
-        }
+        return RenderCanonicalNumber(destination, shortest.Slice(0, length));
     }
 
-    private static bool TryGetPowerOfTenExponent(double absoluteValue, out int exponent)
+    private static int RenderCanonicalNumber(Span<char> destination, ReadOnlySpan<char> shortest)
     {
-        exponent = 0;
-        Debug.Assert(absoluteValue > 0, $"{nameof(absoluteValue)} should be positive.");
-
-        var index = Array.IndexOf(ExactPowersOfTen, absoluteValue);
-        if (index < 0)
+        // The runtime renders the shortest round-trippable form in either fixed-point ("0.005") or
+        // scientific ("1.5E-05") notation, choosing between the two with thresholds that differ
+        // from the ones canonical numbers use. It is therefore decomposed into its significant
+        // digits and the decimal exponent of the first of those digits, and then re-rendered.
+        var isNegative = shortest[0] == '-';
+        if (isNegative)
         {
-            return false;
+            shortest = shortest.Slice(1);
         }
 
-        exponent = index - 10;
-        return true;
+        var exponent = 0;
+
+        for (var i = 0; i < shortest.Length; i++)
+        {
+            if (shortest[i] is 'E' or 'e')
+            {
+                exponent = ParseExponent(shortest.Slice(i + 1));
+                shortest = shortest.Slice(0, i);
+                break;
+            }
+        }
+
+        // Copy out the digits, discarding the decimal point but remembering how many digits
+        // preceded it. A rendering such as "100000" has no decimal point at all, in which case
+        // every digit is an integer digit, so the count defaults to the length and is only
+        // replaced if a decimal point is found.
+        Span<char> digits = stackalloc char[MaxFormattedDoubleCharacters];
+        var digitCount = 0;
+        var integerDigits = shortest.Length;
+
+        for (var i = 0; i < shortest.Length; i++)
+        {
+            if (shortest[i] == '.')
+            {
+                integerDigits = i;
+                continue;
+            }
+
+            digits[digitCount++] = shortest[i];
+        }
+
+        // Restate the value in the "d.ddd times ten to the power of the exponent" form the
+        // rendering rules are expressed in terms of, dropping any insignificant zeros.
+        exponent += integerDigits - 1;
+
+        var start = 0;
+
+        while (start < digitCount - 1 && digits[start] == '0')
+        {
+            start++;
+            exponent--;
+        }
+
+        while (digitCount - start > 1 && digits[digitCount - 1] == '0')
+        {
+            digitCount--;
+        }
+
+        var significand = digits.Slice(start, digitCount - start);
+
+        return exponent is < -4 or >= 6
+            ? WriteScientificNotation(destination, isNegative, significand, exponent)
+            : WriteFixedPointNotation(destination, isNegative, significand, exponent);
+    }
+
+    private static int WriteScientificNotation(Span<char> destination, bool isNegative, ReadOnlySpan<char> significand, int exponent)
+    {
+        var absoluteExponent = Math.Abs(exponent);
+        var exponentDigits = absoluteExponent >= 100 ? 3 : 2;
+        var length =
+            (isNegative ? 1 : 0)
+            + significand.Length
+            + (significand.Length > 1 ? 1 : 0) // The decimal point, if there is a fractional part.
+            + 2 // The "e" and the sign of the exponent.
+            + exponentDigits;
+
+        Debug.Assert(destination.Length >= length, $"{nameof(destination)} should be large enough.");
+
+        var index = 0;
+
+        if (isNegative)
+        {
+            destination[index++] = '-';
+        }
+
+        destination[index++] = significand[0];
+
+        if (significand.Length > 1)
+        {
+            destination[index++] = '.';
+            significand.Slice(1).CopyTo(destination.Slice(index));
+            index += significand.Length - 1;
+        }
+
+        destination[index++] = 'e';
+        destination[index++] = exponent < 0 ? '-' : '+';
+
+        if (exponentDigits > 2)
+        {
+            destination[index++] = unchecked((char)('0' + (absoluteExponent / 100)));
+        }
+
+        destination[index++] = unchecked((char)('0' + ((absoluteExponent / 10) % 10)));
+        destination[index++] = unchecked((char)('0' + (absoluteExponent % 10)));
+
+        Debug.Assert(index == length, $"{nameof(index)} should equal {nameof(length)}.");
+
+        return length;
+    }
+
+    private static int WriteFixedPointNotation(Span<char> destination, bool isNegative, ReadOnlySpan<char> significand, int exponent)
+    {
+        Debug.Assert(exponent is >= -4 and < 6, $"{nameof(exponent)} should use fixed-point notation.");
+
+        // Values below one are written as a zero and the digits preceded by any zeros needed to
+        // place them, otherwise the digits are padded out to the exponent and then split by the
+        // decimal point, with a trailing zero if there is nothing left for the fractional part.
+        var leadingZeros = exponent < 0 ? -exponent - 1 : 0;
+        var integerDigits = Math.Max(exponent + 1, 1);
+        var fractionDigits = exponent < 0
+            ? leadingZeros + significand.Length
+            : Math.Max(significand.Length - integerDigits, 1);
+
+        var length = (isNegative ? 1 : 0) + integerDigits + 1 + fractionDigits;
+
+        Debug.Assert(destination.Length >= length, $"{nameof(destination)} should be large enough.");
+
+        var index = 0;
+
+        if (isNegative)
+        {
+            destination[index++] = '-';
+        }
+
+        if (exponent < 0)
+        {
+            destination[index++] = '0';
+            destination[index++] = '.';
+
+            for (var i = 0; i < leadingZeros; i++)
+            {
+                destination[index++] = '0';
+            }
+
+            significand.CopyTo(destination.Slice(index));
+            index += significand.Length;
+        }
+        else
+        {
+            for (var i = 0; i < integerDigits; i++)
+            {
+                destination[index++] = i < significand.Length ? significand[i] : '0';
+            }
+
+            destination[index++] = '.';
+
+            if (significand.Length > integerDigits)
+            {
+                significand.Slice(integerDigits).CopyTo(destination.Slice(index));
+                index += significand.Length - integerDigits;
+            }
+            else
+            {
+                // A canonical number always has a decimal point or
+                // an exponent so that it is unambiguously a float.
+                destination[index++] = '0';
+            }
+        }
+
+        Debug.Assert(index == length, $"{nameof(index)} should equal {nameof(length)}.");
+
+        return length;
+    }
+
+    private static int ParseExponent(ReadOnlySpan<char> value)
+    {
+        Debug.Assert(value.Length > 0, $"{nameof(value)} should not be empty.");
+
+        var isNegative = value[0] == '-';
+
+        if (isNegative || value[0] == '+')
+        {
+            value = value.Slice(1);
+        }
+
+        var exponent = 0;
+
+        for (var i = 0; i < value.Length; i++)
+        {
+            exponent = (exponent * 10) + (value[i] - '0');
+        }
+
+        return isNegative ? -exponent : exponent;
+    }
+
+    private static int FormatShortestRoundTrippable(Span<char> destination, double value)
+    {
+#if NET
+        // The default format specifier produces the shortest round-trippable representation.
+        var result = value.TryFormat(destination, out var charsWritten, default, CultureInfo.InvariantCulture);
+        Debug.Assert(result, $"{nameof(result)} should be true.");
+
+        return charsWritten;
+#else
+        var text = GetShortestRoundTrippableString(value);
+        Debug.Assert(text.Length <= destination.Length, $"{nameof(destination)} should be large enough.");
+
+        text.AsSpan().CopyTo(destination);
+
+        return text.Length;
+#endif
+    }
+
+#if !NET
+    // Neither the default format specifier nor "R" produce the shortest round-trippable
+    // representation on .NET Framework: the former only uses 15 significant digits, which loses
+    // precision, and the latter falls back to 17 whenever 15 do not round-trip, never trying 16.
+    // See https://learn.microsoft.com/dotnet/standard/base-types/standard-numeric-format-strings#RFormatString
+    //
+    // The fewest of 15, 16 and 17 significant digits that round-trips is therefore used, which
+    // agrees with what .NET renders except for a handful of values, such as subnormals, that
+    // .NET Framework cannot render as accurately.
+    private static string GetShortestRoundTrippableString(double value)
+    {
+        if (value == 0)
+        {
+            // .NET Framework renders negative zero without its sign.
+            return BitConverter.DoubleToInt64Bits(value) < 0 ? "-0" : "0";
+        }
+
+        var candidate = value.ToString("G15", CultureInfo.InvariantCulture);
+
+        if (RoundTrips(candidate, value))
+        {
+            return candidate;
+        }
+
+        candidate = value.ToString("G16", CultureInfo.InvariantCulture);
+
+        return RoundTrips(candidate, value) ? candidate : value.ToString("G17", CultureInfo.InvariantCulture);
+
+        static bool RoundTrips(string candidate, double value) =>
+            double.TryParse(candidate, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed)
+            && parsed.Equals(value);
+    }
+#endif
+
+    private static int Copy(Span<char> destination, string value)
+    {
+        value.AsSpan().CopyTo(destination);
+
+        return value.Length;
     }
 
     private string[] GetReservedExemplarOutputKeys()
