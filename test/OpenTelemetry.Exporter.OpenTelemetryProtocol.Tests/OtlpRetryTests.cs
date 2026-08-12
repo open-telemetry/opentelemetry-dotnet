@@ -1,6 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if NET
+using System.Net;
+#endif
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Grpc;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Tests;
@@ -13,11 +16,15 @@ public class OtlpRetryTests
 
 #if NET
     [Theory]
-    [InlineData(HttpRequestError.ConnectionError, true)]
-    [InlineData(HttpRequestError.UserAuthenticationError, false)]
-    public void IsRetryableHttpRequestErrorTest(HttpRequestError error, bool expected)
+    [InlineData(HttpRequestError.ConnectionError, null, true)]
+    [InlineData(HttpRequestError.UserAuthenticationError, null, false)]
+    [InlineData(HttpRequestError.ProxyTunnelError, HttpStatusCode.ProxyAuthenticationRequired, false)]
+    [InlineData(HttpRequestError.ProxyTunnelError, HttpStatusCode.BadGateway, true)]
+    [InlineData(HttpRequestError.ProxyTunnelError, HttpStatusCode.ServiceUnavailable, true)]
+    public void IsRetryableHttpRequestErrorTest(HttpRequestError error, HttpStatusCode? statusCode, bool expected)
     {
-        var response = new ExportClientHttpResponse(false, default, null, new HttpRequestException(error));
+        var exception = new HttpRequestException(error, statusCode: statusCode);
+        var response = new ExportClientHttpResponse(false, default, null, exception);
 
         Assert.Equal(expected, OtlpRetry.IsRetryable(response));
     }

@@ -308,15 +308,17 @@ internal static class OtlpRetry
 
     private static bool IsHttpRequestExceptionRetryable(Exception? exception) =>
 #if NET
-        exception is not HttpRequestException
-        {
-            HttpRequestError:
-                HttpRequestError.ConfigurationLimitExceeded or
-                HttpRequestError.ExtendedConnectNotSupported or
-                HttpRequestError.InvalidResponse or
-                HttpRequestError.UserAuthenticationError or
-                HttpRequestError.VersionNegotiationError
-        };
+        exception is HttpRequestException { StatusCode: { } statusCode }
+            ? IsHttpStatusCodeRetryable(statusCode, false)
+            : exception is not HttpRequestException
+            {
+                HttpRequestError:
+                    HttpRequestError.ConfigurationLimitExceeded or
+                    HttpRequestError.ExtendedConnectNotSupported or
+                    HttpRequestError.InvalidResponse or
+                    HttpRequestError.UserAuthenticationError or
+                    HttpRequestError.VersionNegotiationError
+            };
 #else
         true;
 #endif
