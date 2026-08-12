@@ -23,6 +23,13 @@ Notes](../../RELEASENOTES.md).
   processing loop to stop, and no longer throws if the loop faulted.
   ([#7587](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7587))
 
+* Fixed the interaction between `PrometheusHttpListenerOptions.TranslationStrategy`
+  and content negotiation. The configured strategy is now applied before content
+  negotiation, instead of the negotiated escaping scheme replacing the strategy's,
+  and the `Content-Type` header now reports the escaping scheme that was applied
+  rather than the one that was negotiated.
+  ([#7610](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7610))
+
 ## 1.17.0-beta.1
 
 Released 2026-Jul-16

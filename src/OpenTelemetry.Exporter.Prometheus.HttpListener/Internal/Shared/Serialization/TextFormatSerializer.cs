@@ -148,6 +148,15 @@ internal abstract class TextFormatSerializer
     /// </summary>
     protected abstract bool EscapeHelpQuotationMarks { get; }
 
+    /// <summary>
+    /// Gets the serializer for the specified protocol.
+    /// </summary>
+    /// <param name="protocol">
+    /// The protocol the response is written with. Its escaping scheme is the one the exporter
+    /// actually applies (see <see cref="PrometheusProtocol.ApplyTranslationStrategy"/>), which is
+    /// not necessarily the scheme the scrape request negotiated.
+    /// </param>
+    /// <returns>The serializer to use.</returns>
     public static TextFormatSerializer GetSerializer(in PrometheusProtocol protocol)
     {
         var escaping = protocol.EscapingScheme;

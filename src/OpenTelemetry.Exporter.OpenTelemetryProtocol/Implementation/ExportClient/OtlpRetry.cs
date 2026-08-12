@@ -59,6 +59,12 @@ internal static class OtlpRetry
         }
         else
         {
+            if (!IsHttpRequestExceptionRetryable(response.Exception))
+            {
+                retryResult = default;
+                return false;
+            }
+
             // No HTTP status code means the request failed without a response
             // (e.g. a timeout or network failure). Honor the deadline so that
             // total batch export time does not exceed the configured timeout.
@@ -115,7 +121,7 @@ internal static class OtlpRetry
             return IsHttpStatusCodeRetryable(statusCode, throttleDelay.HasValue);
         }
 
-        return true;
+        return IsHttpRequestExceptionRetryable(response.Exception);
     }
 
     public static bool TryGetGrpcRetryResult(ExportClientGrpcResponse response, int retryDelayMilliseconds, out RetryResult retryResult)
@@ -299,6 +305,36 @@ internal static class OtlpRetry
         HttpStatusCode.GatewayTimeout => true,
         _ => false,
     };
+
+    private static bool IsHttpRequestExceptionRetryable(Exception? exception)
+    {
+#if NET
+        if (exception is not HttpRequestException httpRequestException)
+        {
+            return true;
+        }
+
+        if (httpRequestException.StatusCode is { } statusCode)
+        {
+            return IsHttpStatusCodeRetryable(statusCode, false);
+        }
+
+        var httpRequestError = httpRequestException.HttpRequestError;
+        if (httpRequestError == HttpRequestError.InvalidResponse)
+        {
+            var baseException = httpRequestException.GetBaseException();
+            return baseException is HttpIOException { HttpRequestError: HttpRequestError.ResponseEnded };
+        }
+
+        return httpRequestError is not (
+            HttpRequestError.ConfigurationLimitExceeded or
+            HttpRequestError.ExtendedConnectNotSupported or
+            HttpRequestError.UserAuthenticationError or
+            HttpRequestError.VersionNegotiationError);
+#else
+        return true;
+#endif
+    }
 
     private static int GetRandomNumber(int min, int max)
     {

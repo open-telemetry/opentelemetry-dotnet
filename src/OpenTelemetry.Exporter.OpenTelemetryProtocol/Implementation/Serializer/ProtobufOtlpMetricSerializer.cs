@@ -470,13 +470,8 @@ internal static class ProtobufOtlpMetricSerializer
             WritePosition = writePosition,
         };
 
-        otlpTagWriterState.WritePosition = ProtobufSerializer.WriteTag(buffer, otlpTagWriterState.WritePosition, fieldNumber, ProtobufWireType.LEN);
-        var fieldLengthPosition = otlpTagWriterState.WritePosition;
-        otlpTagWriterState.WritePosition += ReserveSizeForLength;
+        ProtobufOtlpTagWriter.WriteKeyValue(ref otlpTagWriterState, fieldNumber, tag.Key, tag.Value);
 
-        ProtobufOtlpTagWriter.Instance.TryWriteTag(ref otlpTagWriterState, tag.Key, tag.Value);
-
-        ProtobufSerializer.WriteReservedLength(buffer, fieldLengthPosition, otlpTagWriterState.WritePosition - (fieldLengthPosition + ReserveSizeForLength));
         return otlpTagWriterState.WritePosition;
     }
 
@@ -646,19 +641,7 @@ internal static class ProtobufOtlpMetricSerializer
     }
 
     private static int ComputeStringWithTagSize(int fieldNumber, int numberOfUtf8Chars) =>
-        ComputeVarInt32Size(ProtobufSerializer.GetTagValue(fieldNumber, ProtobufWireType.LEN))
-        + ComputeVarInt32Size((uint)numberOfUtf8Chars)
-        + numberOfUtf8Chars;
-
-    private static int ComputeVarInt32Size(uint value)
-    {
-        var size = 1;
-        while (value >= 0x80)
-        {
-            size++;
-            value >>= 7;
-        }
-
-        return size;
-    }
+        ProtobufSerializer.ComputeVarInt32Size(ProtobufSerializer.GetTagValue(fieldNumber, ProtobufWireType.LEN)) +
+        ProtobufSerializer.ComputeVarInt32Size((uint)numberOfUtf8Chars) +
+        numberOfUtf8Chars;
 }
