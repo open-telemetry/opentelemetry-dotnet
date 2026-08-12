@@ -281,6 +281,78 @@ public class OtlpAttributeTests
         Assert.False(TryTransformTag(kvp, out _));
     }
 
+    [Theory]
+    [InlineData(1)]
+    [InlineData(100)]
+    [InlineData(118)]
+    [InlineData(119)]
+    [InlineData(1000)]
+    [InlineData(20000)]
+    public void WriteKeyValue_RoundTripsWithAMinimalLengthPrefix(int valueLength)
+    {
+        // Around the point where the single reserved length byte stops being enough, so
+        // both the untouched and the shifted path are covered.
+        const string Key = "key";
+        var value = new string('v', valueLength);
+
+        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState
+        {
+            Buffer = new byte[64 * 1024],
+            WritePosition = 0,
+        };
+
+        // Field 1 with wire type LEN, matching how attributes are written.
+        ProtobufOtlpTagWriter.WriteKeyValue(ref state, 1, Key, value);
+
+        // The message parses and carries the right content, whether or not the content
+        // had to be shifted to make room for a wider length prefix.
+        using var stream = new MemoryStream(state.Buffer, 0, state.WritePosition);
+        var field = OtlpCommon.KeyValue.Parser.ParseFrom(ReadLengthDelimitedField(stream));
+
+        Assert.Equal(Key, field.Key);
+        Assert.Equal(value, field.Value.StringValue);
+
+        // And the length prefix is minimal, which is the point of the change: the whole
+        // field is no longer than protobuf's own encoding of it.
+        Assert.Equal(state.WritePosition, 1 + ComputeVarIntSize((uint)field.CalculateSize()) + field.CalculateSize());
+
+        static byte[] ReadLengthDelimitedField(MemoryStream stream)
+        {
+            Assert.Equal(0x0A, stream.ReadByte()); // field 1, LEN
+
+            var length = 0;
+            var shift = 0;
+            while (true)
+            {
+                var b = stream.ReadByte();
+                Assert.True(b >= 0);
+                length |= (b & 0x7F) << shift;
+                if ((b & 0x80) == 0)
+                {
+                    break;
+                }
+
+                shift += 7;
+            }
+
+            var content = new byte[length];
+            Assert.Equal(length, stream.Read(content, 0, length));
+            return content;
+        }
+
+        static int ComputeVarIntSize(uint value)
+        {
+            var size = 1;
+            while (value >= 0x80)
+            {
+                size++;
+                value >>= 7;
+            }
+
+            return size;
+        }
+    }
+
     private static bool TryTransformTag(KeyValuePair<string, object?> tag, [NotNullWhen(true)] out OtlpCommon.KeyValue? attribute)
     {
         var otlpTagWriterState = new ProtobufOtlpTagWriter.OtlpTagWriterState
@@ -292,12 +364,11 @@ public class OtlpAttributeTests
         if (ProtobufOtlpTagWriter.Instance.TryWriteTag(ref otlpTagWriterState, tag))
         {
             // Deserialize the ResourceSpans and validate the attributes.
-            using (var stream = new MemoryStream(otlpTagWriterState.Buffer, 0, otlpTagWriterState.WritePosition))
-            {
-                var keyValue = OtlpCommon.KeyValue.Parser.ParseFrom(stream);
-                Assert.NotNull(keyValue);
-                attribute = keyValue;
-            }
+            using var stream = new MemoryStream(otlpTagWriterState.Buffer, 0, otlpTagWriterState.WritePosition);
+            var keyValue = OtlpCommon.KeyValue.Parser.ParseFrom(stream);
+
+            Assert.NotNull(keyValue);
+            attribute = keyValue;
 
             return true;
         }
@@ -309,8 +380,6 @@ public class OtlpAttributeTests
     private sealed class MyToStringMethodThrowsAnException
     {
         public override string ToString()
-        {
-            throw new InvalidOperationException("Nope.");
-        }
+            => throw new InvalidOperationException("Nope.");
     }
 }

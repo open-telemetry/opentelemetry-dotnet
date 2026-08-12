@@ -26,6 +26,70 @@ public class ProtobufSerializerTests
         Assert.Equal(8, buffer[0]);
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(126)]
+    [InlineData(127)]
+    public void WriteCompactLength_ShortContentIsNotMoved(int contentLength)
+    {
+        var buffer = new byte[512];
+        const int LengthPosition = 3;
+
+        var contentPosition = LengthPosition + ProtobufSerializer.ReserveSizeForCompactLength;
+        FillContent(buffer, contentPosition, contentLength);
+
+        var writePosition = ProtobufSerializer.WriteCompactLength(buffer, LengthPosition, contentPosition + contentLength);
+
+        // The single reserved byte is enough, so nothing shifts.
+        Assert.Equal(contentPosition + contentLength, writePosition);
+        Assert.Equal(contentLength, buffer[LengthPosition]);
+        AssertContent(buffer, contentPosition, contentLength);
+    }
+
+    [Theory]
+    [InlineData(128, 2)]
+    [InlineData(1000, 2)]
+    [InlineData(16383, 2)]
+    [InlineData(16384, 3)]
+    [InlineData(100000, 3)]
+    public void WriteCompactLength_LongContentIsShiftedToMakeRoom(int contentLength, int expectedLengthSize)
+    {
+        var buffer = new byte[contentLength + 64];
+        const int LengthPosition = 3;
+
+        var contentPosition = LengthPosition + ProtobufSerializer.ReserveSizeForCompactLength;
+        FillContent(buffer, contentPosition, contentLength);
+
+        var writePosition = ProtobufSerializer.WriteCompactLength(buffer, LengthPosition, contentPosition + contentLength);
+
+        var shift = expectedLengthSize - ProtobufSerializer.ReserveSizeForCompactLength;
+
+        Assert.Equal(contentPosition + contentLength + shift, writePosition);
+
+        // The length prefix occupies exactly the bytes ahead of the content...
+        Assert.Equal((uint)contentLength, ReadVarInt32(buffer, LengthPosition, out var lengthSize));
+        Assert.Equal(expectedLengthSize, lengthSize);
+
+        // ...and the content survived the move intact.
+        AssertContent(buffer, LengthPosition + expectedLengthSize, contentLength);
+    }
+
+    [Fact]
+    public void WriteCompactLength_ThrowsWhenBufferCannotHoldTheShiftedContent()
+    {
+        // One byte short of what the wider length prefix needs.
+        const int ContentLength = 200;
+        const int LengthPosition = 0;
+
+        var buffer = new byte[LengthPosition + ProtobufSerializer.ReserveSizeForCompactLength + ContentLength];
+        var contentPosition = LengthPosition + ProtobufSerializer.ReserveSizeForCompactLength;
+
+        // The serializers translate this into a buffer resize and a retry.
+        Assert.Throws<ArgumentException>(
+            () => ProtobufSerializer.WriteCompactLength(buffer, LengthPosition, contentPosition + ContentLength));
+    }
+
     [Fact]
     public void WriteLength_WritesCorrectly()
     {
@@ -419,6 +483,44 @@ public class ProtobufSerializerTests
         finally
         {
             ProtobufSerializer.ReturnBuffer(buffer);
+        }
+    }
+
+    private static void FillContent(byte[] buffer, int position, int length)
+    {
+        for (var i = 0; i < length; i++)
+        {
+            // A recognisable, position dependent pattern, so a bad move is visible.
+            buffer[position + i] = (byte)((i % 251) + 1);
+        }
+    }
+
+    private static void AssertContent(byte[] buffer, int position, int length)
+    {
+        for (var i = 0; i < length; i++)
+        {
+            Assert.Equal((byte)((i % 251) + 1), buffer[position + i]);
+        }
+    }
+
+    private static uint ReadVarInt32(byte[] buffer, int position, out int size)
+    {
+        uint result = 0;
+        var shift = 0;
+        size = 0;
+
+        while (true)
+        {
+            var b = buffer[position + size];
+            size++;
+            result |= (uint)(b & 0x7F) << shift;
+
+            if ((b & 0x80) == 0)
+            {
+                return result;
+            }
+
+            shift += 7;
         }
     }
 
