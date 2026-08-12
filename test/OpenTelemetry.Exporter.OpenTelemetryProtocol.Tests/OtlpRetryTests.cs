@@ -1,6 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if NET
+using System.Net;
+#endif
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Grpc;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Tests;
@@ -10,6 +13,41 @@ public class OtlpRetryTests
     public static TheoryData<GrpcRetryTestCase> GrpcRetryTestData => GrpcRetryTestCase.GetGrpcTestCases();
 
     public static TheoryData<HttpRetryTestCase> HttpRetryTestData => HttpRetryTestCase.GetHttpTestCases();
+
+#if NET
+    [Theory]
+    [InlineData(HttpRequestError.ConnectionError, null, true)]
+    [InlineData(HttpRequestError.InvalidResponse, null, false)]
+    [InlineData(HttpRequestError.UserAuthenticationError, null, false)]
+    [InlineData(HttpRequestError.ProxyTunnelError, HttpStatusCode.ProxyAuthenticationRequired, false)]
+    [InlineData(HttpRequestError.ProxyTunnelError, HttpStatusCode.BadGateway, true)]
+    [InlineData(HttpRequestError.ProxyTunnelError, HttpStatusCode.ServiceUnavailable, true)]
+    public void IsRetryableHttpRequestErrorTest(HttpRequestError error, HttpStatusCode? statusCode, bool expected)
+    {
+        var exception = new HttpRequestException(error, statusCode: statusCode);
+        var response = new ExportClientHttpResponse(false, default, null, exception);
+
+        Assert.Equal(expected, OtlpRetry.IsRetryable(response));
+    }
+
+    [Fact]
+    public void InvalidResponseCausedByResponseEndedIsRetryableTest()
+    {
+        var exception = new HttpRequestException(
+            HttpRequestError.InvalidResponse,
+            inner: new HttpIOException(
+                HttpRequestError.InvalidResponse,
+                innerException: new HttpIOException(HttpRequestError.ResponseEnded)));
+        var response = new ExportClientHttpResponse(
+            success: false,
+            deadlineUtc: DateTime.UtcNow.AddMinutes(1),
+            response: null,
+            exception: exception);
+
+        Assert.True(OtlpRetry.TryGetHttpRetryResult(response, OtlpRetry.InitialBackoffMilliseconds, out _));
+        Assert.True(OtlpRetry.IsRetryable(response));
+    }
+#endif
 
     [Fact]
     public void IsRetryable_GrpcUnexpectedExceptionResponse_ReturnsTrue()

@@ -14,7 +14,7 @@ namespace OpenTelemetry.Apple.TestApp;
 /// </summary>
 public sealed class InstrumentationSource : IDisposable
 {
-    public const string OtlpEndpoint = "http://localhost:4318";
+    public const string OtlpEndpoint = "http://127.0.0.1:4318";
 
     public const string ServiceName = "otel-apple-testapp";
 
