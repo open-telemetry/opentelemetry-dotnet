@@ -93,15 +93,10 @@ internal static class ProtobufOtlpResourceSerializer
         return otlpTagWriterState.WritePosition;
     }
 
-    private static void ProcessResourceAttribute(ref ProtobufOtlpTagWriter.OtlpTagWriterState otlpTagWriterState, KeyValuePair<string, object> attribute)
-    {
-        otlpTagWriterState.WritePosition = ProtobufSerializer.WriteTag(otlpTagWriterState.Buffer, otlpTagWriterState.WritePosition, ProtobufOtlpTraceFieldNumberConstants.Resource_Attributes, ProtobufWireType.LEN);
-        var resourceAttributesLengthPosition = otlpTagWriterState.WritePosition;
-        otlpTagWriterState.WritePosition += ReserveSizeForLength;
-
-        ProtobufOtlpTagWriter.Instance.TryWriteTag(ref otlpTagWriterState, attribute.Key, attribute.Value);
-
-        var resourceAttributesLength = otlpTagWriterState.WritePosition - (resourceAttributesLengthPosition + ReserveSizeForLength);
-        ProtobufSerializer.WriteReservedLength(otlpTagWriterState.Buffer, resourceAttributesLengthPosition, resourceAttributesLength);
-    }
+    private static void ProcessResourceAttribute(ref ProtobufOtlpTagWriter.OtlpTagWriterState otlpTagWriterState, KeyValuePair<string, object> attribute) =>
+        ProtobufOtlpTagWriter.WriteKeyValue(
+            ref otlpTagWriterState,
+            ProtobufOtlpTraceFieldNumberConstants.Resource_Attributes,
+            attribute.Key,
+            attribute.Value);
 }
