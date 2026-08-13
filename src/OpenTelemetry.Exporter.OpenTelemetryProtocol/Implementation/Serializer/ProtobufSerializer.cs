@@ -460,10 +460,16 @@ internal static class ProtobufSerializer
     /// <param name="minimumSize">The minimum required buffer size in bytes.</param>
     /// <returns>A pooled buffer that must be handed back via <see cref="ReturnBuffer(byte[])"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static byte[] RentBuffer(int minimumSize) => ArrayPool<byte>.Shared.Rent(minimumSize);
+    internal static byte[] RentBuffer(int minimumSize) => RentBuffer(ArrayPool<byte>.Shared, minimumSize);
+
+    /// <inheritdoc cref="RentBuffer(int)"/>
+    /// <param name="pool">The pool to rent the buffer from.</param>
+    /// <param name="minimumSize">The minimum required buffer size in bytes.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static byte[] RentBuffer(ArrayPool<byte> pool, int minimumSize) => pool.Rent(minimumSize);
 
     /// <summary>
-    /// Returns a buffer previously obtained from <see cref="RentBuffer"/> or
+    /// Returns a buffer previously obtained from <see cref="RentBuffer(int)"/> or
     /// grown by <see cref="IncreaseBufferSize"/> back to the pool after clearing
     /// its contents.
     /// </summary>
@@ -471,6 +477,31 @@ internal static class ProtobufSerializer
     internal static void ReturnBuffer(byte[] buffer) => ReturnBuffer(ArrayPool<byte>.Shared, buffer);
 
     internal static void ReturnBuffer(ArrayPool<byte> pool, byte[] buffer) => pool.Return(buffer, clearArray: true);
+
+    /// <summary>
+    /// Returns a buffer previously obtained from <see cref="RentBuffer(int)"/> back to the
+    /// pool, scrubbing only the leading <paramref name="writtenLength"/> bytes.
+    /// </summary>
+    /// <param name="buffer">The buffer to return.</param>
+    /// <param name="writtenLength">The number of leading bytes that may contain data.</param>
+    internal static void ReturnBuffer(byte[] buffer, int writtenLength)
+        => ReturnBuffer(ArrayPool<byte>.Shared, buffer, writtenLength);
+
+    /// <inheritdoc cref="ReturnBuffer(byte[], int)"/>
+    /// <param name="pool">The pool to return the buffer to.</param>
+    /// <param name="buffer">The buffer to return.</param>
+    /// <param name="writtenLength">The number of leading bytes that may contain data.</param>
+    internal static void ReturnBuffer(ArrayPool<byte> pool, byte[] buffer, int writtenLength)
+    {
+        Debug.Assert((uint)writtenLength <= (uint)buffer.Length, "writtenLength was out of range");
+
+        if (writtenLength > 0)
+        {
+            buffer.AsSpan(0, writtenLength).Clear();
+        }
+
+        pool.Return(buffer, clearArray: false);
+    }
 
     internal static bool IncreaseBufferSize(ref byte[] buffer, OtlpSignalType otlpSignalType)
     {
