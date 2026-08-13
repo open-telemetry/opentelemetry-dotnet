@@ -129,6 +129,96 @@ public static class ProtobufOtlpMetricSerializerTests
         }
     }
 
+    [Fact]
+    public static void WriteMetricsData_Reuses_Cached_DataPoint_Attributes()
+    {
+        var metrics = GenerateMetricsWithTags();
+
+        var first = new byte[64 * 1024];
+        var firstLength = ProtobufOtlpMetricSerializer.WriteMetricsData(ref first, 0, Resource.Empty, metrics);
+
+        var second = new byte[64 * 1024];
+        var secondLength = ProtobufOtlpMetricSerializer.WriteMetricsData(ref second, 0, Resource.Empty, metrics);
+
+        Assert.True(firstLength > 0);
+        Assert.Equal(firstLength, secondLength);
+        Assert.Equal(first.AsSpan(0, firstLength).ToArray(), second.AsSpan(0, secondLength).ToArray());
+
+        using var stream = new MemoryStream(second, 0, secondLength);
+        var request = OtlpCollector.ExportMetricsServiceRequest.Parser.ParseFrom(stream);
+        var dataPoints = request.ResourceMetrics[0].ScopeMetrics[0].Metrics[0].Sum.DataPoints;
+
+        Assert.Equal(2, dataPoints.Count);
+        Assert.All(dataPoints, static point => Assert.Equal(2, point.Attributes.Count));
+    }
+
+    [Fact]
+    public static void WriteMetricsData_Serializes_Distinct_Attributes_Per_DataPoint()
+    {
+        var metrics = GenerateMetricsWithTags();
+
+        var buffer = new byte[64 * 1024];
+        var length = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, Resource.Empty, metrics);
+
+        using var stream = new MemoryStream(buffer, 0, length);
+        var request = OtlpCollector.ExportMetricsServiceRequest.Parser.ParseFrom(stream);
+        var dataPoints = request.ResourceMetrics[0].ScopeMetrics[0].Metrics[0].Sum.DataPoints;
+
+        var routes = dataPoints
+            .Select(static point => point.Attributes.Single(static a => a.Key == "route").Value.StringValue)
+            .OrderBy(static value => value, StringComparer.Ordinal)
+            .ToArray();
+
+        Assert.Equal(["/a", "/b"], routes);
+    }
+
+    private static Batch<Metric> GenerateMetricsWithTags()
+    {
+        Batch<Metric> metrics = default;
+
+        using (var exported = new ManualResetEvent(false))
+        {
+            using var exporter = new DelegatingExporter<Metric>()
+            {
+                OnExportFunc = (batch) =>
+                {
+                    metrics = batch;
+                    exported.Set();
+                    return ExportResult.Success;
+                },
+            };
+
+            var meterName = Utils.GetCurrentMethodName() + Guid.NewGuid().ToString("N");
+            using var meter = new Meter(meterName);
+
+#pragma warning disable CA2000 // Ownership is transferred to the MeterProvider via AddReader.
+            var reader = new BaseExportingMetricReader(exporter);
+#pragma warning restore CA2000
+
+            using var provider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(meterName)
+                .AddReader(reader)
+                .Build();
+
+            var counter = meter.CreateCounter<long>("requests");
+
+            counter.Add(
+                1,
+                new KeyValuePair<string, object?>("route", "/a"),
+                new KeyValuePair<string, object?>("status", 200));
+
+            counter.Add(
+                2,
+                new KeyValuePair<string, object?>("route", "/b"),
+                new KeyValuePair<string, object?>("status", 500));
+
+            provider.ForceFlush();
+            exported.WaitOne(TimeSpan.FromSeconds(30));
+        }
+
+        return metrics;
+    }
+
     private static async Task WriteMetricsAndAssertSnapshot(Batch<Metric> metrics)
     {
         // Arrange
