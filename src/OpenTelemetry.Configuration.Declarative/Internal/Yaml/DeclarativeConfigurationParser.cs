@@ -279,8 +279,8 @@ internal static class DeclarativeConfigurationParser
     private static string GetYamlKindName(YamlScalarKind kind) => kind switch
     {
         YamlScalarKind.Boolean => "boolean",
-        YamlScalarKind.Integer => "integer",
         YamlScalarKind.Float => "float",
+        YamlScalarKind.Integer => "integer",
         YamlScalarKind.Null => "null",
         YamlScalarKind.String or _ => "string",
     };
