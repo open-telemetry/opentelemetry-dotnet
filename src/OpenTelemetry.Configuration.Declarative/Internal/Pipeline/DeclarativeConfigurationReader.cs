@@ -11,12 +11,13 @@ namespace OpenTelemetry.Configuration.Declarative;
 internal static class DeclarativeConfigurationReader
 {
     // Top-level keys this package recognises. Anything else is logged and ignored.
-    private static readonly HashSet<string> KnownTopLevelKeys = new(StringComparer.Ordinal)
-    {
+    private static readonly HashSet<string> KnownTopLevelKeys =
+    [
+        with(StringComparer.Ordinal),
         YamlKeys.FileFormat,
         YamlKeys.Disabled,
         YamlKeys.Resource,
-    };
+    ];
 
     /// <summary>
     /// Opens <paramref name="filePath"/>, validates <c>file_format</c>, parses the typed model,
@@ -141,6 +142,7 @@ internal static class DeclarativeConfigurationReader
             case YamlScalarNode scalar when scalar.Value is not null:
                 EnvironmentSubstitution.ValidateReferences(scalar.Value);
                 break;
+
             case YamlMappingNode mapping:
                 foreach (var child in mapping.Children)
                 {
@@ -148,12 +150,16 @@ internal static class DeclarativeConfigurationReader
                 }
 
                 break;
+
             case YamlSequenceNode sequence:
                 foreach (var item in sequence.Children)
                 {
                     ValidateSubstitutionInNode(item, visitedNodes);
                 }
 
+                break;
+
+            default:
                 break;
         }
     }

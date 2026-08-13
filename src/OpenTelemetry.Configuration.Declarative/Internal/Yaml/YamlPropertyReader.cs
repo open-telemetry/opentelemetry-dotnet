@@ -100,13 +100,12 @@ internal static class YamlPropertyReader
         YamlScalarKind actual) =>
         new($"Field '{key}' must resolve to {expected} but resolved to YAML {GetYamlKindName(actual)}.");
 
-    private static string GetYamlKindName(YamlScalarKind kind) =>
-        kind switch
-        {
-            YamlScalarKind.Boolean => "boolean",
-            YamlScalarKind.Integer => "integer",
-            YamlScalarKind.Float => "float",
-            YamlScalarKind.Null => "null",
-            _ => "string",
-        };
+    private static string GetYamlKindName(YamlScalarKind kind) => kind switch
+    {
+        YamlScalarKind.Boolean => "boolean",
+        YamlScalarKind.Float => "float",
+        YamlScalarKind.Integer => "integer",
+        YamlScalarKind.Null => "null",
+        YamlScalarKind.String or _ => "string",
+    };
 }
