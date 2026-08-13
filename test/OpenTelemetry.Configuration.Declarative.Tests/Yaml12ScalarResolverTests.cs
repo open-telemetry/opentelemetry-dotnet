@@ -1,0 +1,171 @@
+// Copyright The OpenTelemetry Authors
+// SPDX-License-Identifier: Apache-2.0
+
+using YamlDotNet.Core;
+using YamlDotNet.RepresentationModel;
+
+namespace OpenTelemetry.Configuration.Declarative.Tests;
+
+public sealed class Yaml12ScalarResolverTests
+{
+    public static TheoryData<string, string> CoreSchemaExamples =>
+        new()
+        {
+            { string.Empty, "Null" },
+            { "~", "Null" },
+            { "null", "Null" },
+            { "Null", "Null" },
+            { "NULL", "Null" },
+            { "true", "Boolean" },
+            { "True", "Boolean" },
+            { "TRUE", "Boolean" },
+            { "false", "Boolean" },
+            { "False", "Boolean" },
+            { "FALSE", "Boolean" },
+            { "0", "Integer" },
+            { "+42", "Integer" },
+            { "-19", "Integer" },
+            { "007", "Integer" },
+            { "0o7", "Integer" },
+            { "0x3A", "Integer" },
+            { "0xdeadbeef", "Integer" },
+            { "-0o7", "String" },
+            { "+0x3A", "String" },
+            { "+0o7", "String" },
+            { "-0x3A", "String" },
+            { "0.", "Float" },
+            { "-0.0", "Float" },
+            { ".5", "Float" },
+            { "+12e03", "Float" },
+            { "-2E+05", "Float" },
+            { ".inf", "Float" },
+            { "-.Inf", "Float" },
+            { "+.INF", "Float" },
+            { ".nan", "Float" },
+            { ".NaN", "Float" },
+            { ".NAN", "Float" },
+        };
+
+    public static TheoryData<string> CoreSchemaStrings =>
+        new()
+        {
+            "yes",
+            "no",
+            "on",
+            "off",
+            "tRue",
+            "FaLsE",
+            "1_000",
+            "0O7",
+            "0X3A",
+            "0b1010",
+            "0xhello",
+            "1e",
+            "+.",
+            ".",
+            "-",
+            "+.NAN",
+            "Infinity",
+            "1.2.3",
+            " 1.0 ",
+            "\ttrue\t",
+            "value\nkey:value",
+        };
+
+    [Theory]
+    [MemberData(nameof(CoreSchemaExamples))]
+    public void Resolve_ImplicitPlainScalar_MatchesYaml12CoreSchema(string value, string expected)
+    {
+        var resolved = Yaml12ScalarResolver.Resolve(Scalar(value, ScalarStyle.Plain), value);
+
+        Assert.Equal(expected, resolved.Kind.ToString());
+        Assert.Equal(value, resolved.Value);
+    }
+
+    [Theory]
+    [MemberData(nameof(CoreSchemaStrings))]
+    public void Resolve_ImplicitPlainString_MatchesYaml12CoreSchemaFallback(string value) =>
+        Assert.Equal(YamlScalarKind.String, Yaml12ScalarResolver.Resolve(Scalar(value), value).Kind);
+
+    [Theory]
+    [InlineData(ScalarStyle.SingleQuoted)]
+    [InlineData(ScalarStyle.DoubleQuoted)]
+    [InlineData(ScalarStyle.Literal)]
+    [InlineData(ScalarStyle.Folded)]
+    public void Resolve_NonPlainScalar_IsAlwaysString(ScalarStyle style)
+    {
+        foreach (var value in new[] { "null", "true", "42", "1.5", "value" })
+        {
+            Assert.Equal(YamlScalarKind.String, Yaml12ScalarResolver.Resolve(Scalar(value, style), value).Kind);
+        }
+    }
+
+    [Theory]
+    [InlineData("true", true)]
+    [InlineData("True", true)]
+    [InlineData("TRUE", true)]
+    [InlineData("false", false)]
+    [InlineData("False", false)]
+    [InlineData("FALSE", false)]
+    public void TryGetBoolean_CoreSchemaRepresentation_ReturnsValue(string value, bool expected)
+    {
+        Assert.True(Yaml12ScalarResolver.TryGetBoolean(value, out var actual));
+        Assert.Equal(expected, actual);
+    }
+
+    [Theory]
+    [InlineData(Yaml12ScalarResolver.StringTag, "1.0", "String")]
+    [InlineData(Yaml12ScalarResolver.NullTag, "null", "Null")]
+    [InlineData(Yaml12ScalarResolver.BooleanTag, "true", "Boolean")]
+    [InlineData(Yaml12ScalarResolver.IntegerTag, "0x3A", "Integer")]
+    [InlineData(Yaml12ScalarResolver.FloatTag, "1", "Float")]
+    [InlineData(Yaml12ScalarResolver.FloatTag, "1.5", "Float")]
+    public void Resolve_ValidExplicitCoreTag_OverridesStyle(string tag, string value, string expected)
+    {
+        var resolved = Yaml12ScalarResolver.Resolve(Tagged(value, tag, ScalarStyle.DoubleQuoted), value);
+
+        Assert.Equal(expected, resolved.Kind.ToString());
+    }
+
+    [Theory]
+    [InlineData(Yaml12ScalarResolver.NullTag, "nil")]
+    [InlineData(Yaml12ScalarResolver.BooleanTag, "yes")]
+    [InlineData(Yaml12ScalarResolver.IntegerTag, "1.5")]
+    [InlineData(Yaml12ScalarResolver.FloatTag, "number")]
+    public void Resolve_InvalidExplicitCoreTagRepresentation_Throws(string tag, string value) =>
+        Assert.Throws<DeclarativeConfigurationException>(() =>
+            Yaml12ScalarResolver.Resolve(Tagged(value, tag), value));
+
+    [Fact]
+    public void Resolve_UnsupportedExplicitTag_Throws() =>
+        Assert.Throws<DeclarativeConfigurationException>(() =>
+            Yaml12ScalarResolver.Resolve(Tagged("value", "!custom"), "value"));
+
+    [Theory]
+    [InlineData("1.0")]
+    [InlineData("true")]
+    [InlineData("null")]
+    public void Resolve_BareNonSpecificTag_ForcesString(string value)
+    {
+        var scalar = Tagged(value, "!");
+
+        Assert.Equal(YamlScalarKind.String, Yaml12ScalarResolver.Resolve(scalar, value).Kind);
+    }
+
+    [Theory]
+    [InlineData("1.0", "Float")]
+    [InlineData("true", "Boolean")]
+    [InlineData("null", "Null")]
+    public void Resolve_QuestionNonSpecificTag_UsesCoreResolution(string value, string expected)
+    {
+        var scalar = Tagged(value, "?");
+
+        Assert.Equal(expected, Yaml12ScalarResolver.Resolve(scalar, value).Kind.ToString());
+    }
+
+    private static YamlScalarNode Scalar(string value, ScalarStyle style = ScalarStyle.Plain) =>
+        new(value) { Style = style };
+
+    private static YamlScalarNode Tagged(string value, string tag, ScalarStyle style = ScalarStyle.Plain) =>
+        new(value) { Style = style, Tag = new TagName(tag) };
+}
