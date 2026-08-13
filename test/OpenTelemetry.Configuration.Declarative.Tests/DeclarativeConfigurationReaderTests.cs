@@ -563,11 +563,11 @@ public sealed class DeclarativeConfigurationReaderTests
     }
 
     // Round-trip tests: mirror OtelEnvResourceDetector (trim the value segment, then UrlDecode).
-    // The encoder percent-encodes '%', ',', '=', '+', and whitespace so surrounding whitespace
-    // survives that trim; all other characters pass through as-is.
+    // The encoder percent-encodes '%', ',', '=', '+', and leading/trailing whitespace so surrounding
+    // whitespace survives that trim; interior whitespace and all other characters pass through as-is.
     [Theory]
     [InlineData("a+b")] // + is encoded as %2B, decoded back to +
-    [InlineData("foo bar")] // internal whitespace is encoded and decoded back to space
+    [InlineData("foo bar")] // internal space passes through unencoded; Trim only strips edges
     [InlineData(" leading")] // leading whitespace must survive detector Trim
     [InlineData("trailing ")] // trailing whitespace must survive detector Trim
     [InlineData(" both ")]

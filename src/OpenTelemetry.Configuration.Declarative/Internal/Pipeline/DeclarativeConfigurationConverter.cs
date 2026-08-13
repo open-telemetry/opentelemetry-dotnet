@@ -204,13 +204,28 @@ internal static partial class DeclarativeConfigurationConverter
     // https://opentelemetry.io/docs/specs/otel/resource/sdk/#specifying-resource-information-via-an-environment-variable
     // Percent-encode structural characters, '%' to prevent unintended decoding, and '+' because
     // WebUtility.UrlDecode maps it to space. OtelEnvResourceDetector trims values before decoding,
-    // so every whitespace character must also be encoded to survive that trim.
+    // so only leading/trailing whitespace needs encoding to survive that trim; interior whitespace
+    // passes through as a literal and round-trips correctly through UrlDecode unchanged.
     private static string EncodeAttributeValue(string value)
     {
+        // Locate the interior (non-trimmed) span so that only boundary whitespace is encoded.
+        int innerStart = 0;
+        while (innerStart < value.Length && char.IsWhiteSpace(value[innerStart]))
+        {
+            innerStart++;
+        }
+
+        int innerEnd = value.Length - 1;
+        while (innerEnd >= innerStart && char.IsWhiteSpace(value[innerEnd]))
+        {
+            innerEnd--;
+        }
+
         var encoded = new StringBuilder(value.Length);
 
-        foreach (var c in value)
+        for (int i = 0; i < value.Length; i++)
         {
+            var c = value[i];
             switch (c)
             {
                 case '%':
@@ -226,7 +241,7 @@ internal static partial class DeclarativeConfigurationConverter
                     encoded.Append("%2B");
                     break;
                 default:
-                    if (char.IsWhiteSpace(c))
+                    if (char.IsWhiteSpace(c) && (i < innerStart || i > innerEnd))
                     {
                         encoded.Append(Uri.EscapeDataString(c.ToString()));
                     }

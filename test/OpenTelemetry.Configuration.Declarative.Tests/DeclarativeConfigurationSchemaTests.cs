@@ -310,7 +310,7 @@ public sealed class DeclarativeConfigurationSchemaTests
         var configuration = ReadConfiguration(yaml);
 
         Assert.Equal(
-            "attribute=value%0Ainjected:%20true",
+            "attribute=value\ninjected: true",
             configuration[DeclarativeConfigurationConverter.ResourceAttributesKey]);
         Assert.DoesNotContain(DeclarativeConfigurationConverter.DisabledKey, configuration.Keys);
     }
