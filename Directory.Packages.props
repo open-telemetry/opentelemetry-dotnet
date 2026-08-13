@@ -12,6 +12,7 @@
   -->
   <ItemGroup>
     <!-- Default to latest versions for all TFMs -->
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="[11.0.0-preview.7.26381.103,)" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="[11.0.0-preview.7.26381.103,)" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[11.0.0-preview.7.26381.103,)" />
     <PackageVersion Include="Microsoft.Extensions.Diagnostics.Abstractions" Version="[11.0.0-preview.7.26381.103,)" />
@@ -20,6 +21,7 @@
   </ItemGroup>
   <!-- Version overrides for specific netX.0 TFMs -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <PackageVersion Update="Microsoft.Extensions.Configuration" Version="[10.0.0,)" />
     <PackageVersion Update="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="[10.0.0,)" />
     <PackageVersion Update="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[10.0.0,)" />
     <PackageVersion Update="Microsoft.Extensions.Diagnostics.Abstractions" Version="[10.0.0,)" />
@@ -27,6 +29,7 @@
     <PackageVersion Update="Microsoft.Extensions.Logging.Configuration" Version="[10.0.0,)" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net11.0'">
+    <PackageVersion Update="Microsoft.Extensions.Configuration" Version="[11.0.0-preview.7.26381.103,)" />
     <PackageVersion Update="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="[11.0.0-preview.7.26381.103,)" />
     <PackageVersion Update="Microsoft.Extensions.DependencyInjection.Abstractions" Version="[11.0.0-preview.7.26381.103,)" />
     <PackageVersion Update="Microsoft.Extensions.Diagnostics.Abstractions" Version="[11.0.0-preview.7.26381.103,)" />
@@ -87,12 +90,12 @@
     <PackageVersion Include="FSharp.Core" Version="10.1.400" />
     <PackageVersion Include="FsCheck.Xunit" Version="3.3.4" />
     <PackageVersion Include="GitHubActionsTestLogger" Version="3.0.5" />
-    <PackageVersion Include="Grpc.AspNetCore" Version="2.83.0" />
-    <PackageVersion Include="Grpc.AspNetCore.Server" Version="2.83.0" />
-    <PackageVersion Include="Grpc.Tools" Version="2.83.0" />
     <PackageVersion Include="Google.Protobuf" Version="3.35.1" />
     <PackageVersion Include="Grpc" Version="2.46.6" />
+    <PackageVersion Include="Grpc.AspNetCore" Version="2.83.0" />
+    <PackageVersion Include="Grpc.AspNetCore.Server" Version="2.83.0" />
     <PackageVersion Include="Grpc.Net.Client" Version="2.83.0" />
+    <PackageVersion Include="Grpc.Tools" Version="2.83.0" />
     <PackageVersion Include="JunitXml.TestLogger" Version="8.0.0" />
     <PackageVersion Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="3.12.0-beta1.25218.8" />
@@ -125,6 +128,7 @@
     <PackageVersion Include="Verify.Xunit" Version="31.12.5" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="[2.8.2,)" />
+    <PackageVersion Include="YamlDotNet" Version="18.1.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
