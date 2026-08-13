@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-// Aliased so XML doc crefs resolve: net462's mscorlib declares an internal System.LogLevel.
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace OpenTelemetry.Internal;

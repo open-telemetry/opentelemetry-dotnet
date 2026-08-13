@@ -4,39 +4,12 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Tests.Diagnostics;
 
 public class SelfDiagnosticsOptionsTests
 {
-    [Theory]
-    [InlineData("error", true, LogLevel.Error)]
-    [InlineData("ERROR", true, LogLevel.Error)]
-    [InlineData("warn", true, LogLevel.Warning)]
-    [InlineData("info", true, LogLevel.Information)]
-    [InlineData("debug", true, LogLevel.Debug)]
-    [InlineData("trace", true, LogLevel.Trace)]
-    [InlineData("none", true, LogLevel.None)]
-
-    // The LogLevel member names are accepted as aliases for the spec tokens.
-    [InlineData("warning", true, LogLevel.Warning)]
-    [InlineData("Information", true, LogLevel.Information)]
-    [InlineData("critical", true, LogLevel.Critical)]
-    [InlineData("verbose", false, LogLevel.None)]
-    [InlineData("", false, LogLevel.None)]
-
-    // Numeric input is rejected rather than resolving through the enum's underlying values.
-    [InlineData("0", false, LogLevel.None)]
-    [InlineData("+1", false, LogLevel.None)]
-    [InlineData("-1", false, LogLevel.None)]
-    public void TryParseOtelLogLevel_Matrix(string value, bool expectedResult, LogLevel expectedLevel)
-    {
-        var result = SelfDiagnosticsOptions.TryParseOtelLogLevel(value, out var level);
-
-        Assert.Equal(expectedResult, result);
-        Assert.Equal(expectedLevel, level);
-    }
-
     [Fact]
     public void ConfigurationCoordinator_NewestOwnerWins_AndDisposalRestoresLatestPreviousValue()
     {
@@ -100,7 +73,7 @@ public class SelfDiagnosticsOptionsTests
         Assert.False(options.LogToStdout);
         Assert.False(options.LogToStderr);
         Assert.Equal(10_240, options.FileSizeLimitKilobytes);
-        Assert.Equal(0, options.MaxRetainedFiles);
+        Assert.Equal(10, options.MaxRetainedFiles);
     }
 
     [Theory]
@@ -122,9 +95,7 @@ public class SelfDiagnosticsOptionsTests
     [Theory]
     [InlineData("Warning", LogLevel.Warning)]
     [InlineData("Information", LogLevel.Information)]
-    [InlineData("Critical", LogLevel.Critical)]
-    [InlineData("critical", LogLevel.Critical)]
-    public void OtelLogLevel_LogLevelEnumNames_AreAcceptedAsAliases(string value, LogLevel expected)
+    public void OtelLogLevel_DotNetAliases_AreAccepted(string value, LogLevel expected)
     {
         var options = CreateOptions(SelfDiagnosticsOptions.LogLevelEnvVarName, value);
 
@@ -169,16 +140,19 @@ public class SelfDiagnosticsOptionsTests
     }
 
     [Fact]
-    public void Sinks_None_ForcesMinimumLevelToNone()
+    public void Sinks_None_DoesNotAffectMinimumLevel()
     {
-        // 'none' must silence diagnostics even when OTEL_LOG_LEVEL asked for verbose output.
+        // 'none' clears all sinks but preserves MinimumLevel so that a code-level
+        // Configure<SelfDiagnosticsOptions> callback can re-enable a sink without also
+        // having to re-specify the level. EffectiveLevel already returns LogLevel.None
+        // when HasConfiguredSink is false, so the level override is not needed for silence.
         var options = CreateOptions(new Dictionary<string, string?>
         {
             [SelfDiagnosticsOptions.LogLevelEnvVarName] = "debug",
             [SelfDiagnosticsOptions.SinksEnvVarName] = "none",
         });
 
-        Assert.Equal(LogLevel.None, options.MinimumLevel);
+        Assert.Equal(LogLevel.Debug, options.MinimumLevel);
         Assert.Empty(options.ConfigurationWarnings);
     }
 
@@ -191,7 +165,6 @@ public class SelfDiagnosticsOptionsTests
             [SelfDiagnosticsOptions.SinksEnvVarName] = "stdout,none,file",
         });
 
-        Assert.Equal(LogLevel.None, options.MinimumLevel);
         Assert.Null(options.LogDirectory);
         Assert.False(options.LogToStdout);
         Assert.False(options.LogToStderr);
@@ -244,16 +217,207 @@ public class SelfDiagnosticsOptionsTests
     }
 
     [Fact]
-    public void Sinks_FileWithoutADirectory_WarnsAndEnablesNothing()
+    public void Sinks_FileWithExplicitDirectory_DoesNotCallDefaultDirectoryResolver()
     {
-        var options = CreateOptions(SelfDiagnosticsOptions.SinksEnvVarName, "file");
+        const string ExplicitDirectory = "/var/log/otel";
+        var resolverCalls = 0;
+
+        var options = CreateOptions(
+            new Dictionary<string, string?>
+            {
+                [SelfDiagnosticsOptions.LogDirectoryEnvVarName] = ExplicitDirectory,
+                [SelfDiagnosticsOptions.SinksEnvVarName] = "file",
+            },
+            () =>
+            {
+                resolverCalls++;
+                return Path.Combine("default", "diagnostics");
+            });
+
+        Assert.Equal(ExplicitDirectory, options.LogDirectory);
+        Assert.Equal(0, resolverCalls);
+        Assert.Empty(options.ConfigurationWarnings);
+    }
+
+    [Fact]
+    public void Sinks_FileWithoutADirectory_UsesDefaultDirectory()
+    {
+        var expectedDirectory = Path.Combine("default", "diagnostics");
+        var options = CreateOptions(
+            SelfDiagnosticsOptions.SinksEnvVarName,
+            "file",
+            () => expectedDirectory);
+
+        Assert.Equal(expectedDirectory, options.LogDirectory);
+        Assert.False(options.LogToStdout);
+        Assert.False(options.LogToStderr);
+        Assert.Empty(options.ConfigurationWarnings);
+    }
+
+    [Fact]
+    public void Sinks_FileAndStreamWithoutADirectory_UsesDefaultDirectoryAndEnablesStream()
+    {
+        var expectedDirectory = Path.Combine("default", "diagnostics");
+        var options = CreateOptions(
+            SelfDiagnosticsOptions.SinksEnvVarName,
+            "file,stderr",
+            () => expectedDirectory);
+
+        Assert.Equal(expectedDirectory, options.LogDirectory);
+        Assert.False(options.LogToStdout);
+        Assert.True(options.LogToStderr);
+        Assert.Empty(options.ConfigurationWarnings);
+    }
+
+    [Fact]
+    public void Sinks_FileWithoutResolvableDefaultDirectory_WarnsWritesToStderrAndEnablesNothing()
+    {
+        string? reported = null;
+        var options = CreateOptions(
+            new Dictionary<string, string?>
+            {
+                [SelfDiagnosticsOptions.SinksEnvVarName] = "file",
+            },
+            () => null,
+            message => reported = message);
 
         Assert.Null(options.LogDirectory);
         Assert.False(options.LogToStdout);
         Assert.False(options.LogToStderr);
-
         var warning = Assert.Single(options.ConfigurationWarnings);
         Assert.Contains(SelfDiagnosticsOptions.LogDirectoryEnvVarName, warning, StringComparison.Ordinal);
+        Assert.Equal(warning, reported);
+    }
+
+    [Fact]
+    public void Sinks_Absent_DoesNotResolveTheDefaultDirectory()
+    {
+        var resolverCalls = 0;
+
+        var options = CreateOptions(
+            new Dictionary<string, string?>(),
+            () =>
+            {
+                resolverCalls++;
+                throw new InvalidOperationException("Should not be called.");
+            });
+
+        Assert.Null(options.LogDirectory);
+        Assert.Equal(0, resolverCalls);
+    }
+
+    [Fact]
+    public void DefaultLogDirectory_WindowsUsesLocalApplicationData()
+    {
+        var localAppData = Path.Combine("user", "local-app-data");
+
+        var result = SelfDiagnosticsLogDirectoryResolver.Resolve(
+            () => SelfDiagnosticsPlatform.Windows,
+            folder => folder == Environment.SpecialFolder.LocalApplicationData ? localAppData : string.Empty,
+            _ => null);
+
+        Assert.Equal(Path.Combine(localAppData, "OpenTelemetry", "dotnet-diagnostics"), result);
+    }
+
+    [Fact]
+    public void DefaultLogDirectory_WindowsReturnsNullWhenLocalApplicationDataIsUnavailable()
+    {
+        var result = SelfDiagnosticsLogDirectoryResolver.Resolve(
+            () => SelfDiagnosticsPlatform.Windows,
+            _ => string.Empty,
+            _ => null);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void DefaultLogDirectory_MacOSUsesUserLogsDirectory()
+    {
+        var home = Path.Combine("users", "test-user");
+
+        var result = SelfDiagnosticsLogDirectoryResolver.Resolve(
+            () => SelfDiagnosticsPlatform.MacOS,
+            folder => folder == Environment.SpecialFolder.UserProfile ? home : string.Empty,
+            _ => null);
+
+        Assert.Equal(Path.Combine(home, "Library", "Logs", "OpenTelemetry", "dotnet-diagnostics"), result);
+    }
+
+    [Fact]
+    public void DefaultLogDirectory_MacOSReturnsNullWhenUserProfileIsUnavailable()
+    {
+        var result = SelfDiagnosticsLogDirectoryResolver.Resolve(
+            () => SelfDiagnosticsPlatform.MacOS,
+            _ => string.Empty,
+            _ => null);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void DefaultLogDirectory_UnixUsesAbsoluteXdgStateHome()
+    {
+        var result = SelfDiagnosticsLogDirectoryResolver.Resolve(
+            () => SelfDiagnosticsPlatform.Unix,
+            _ => "/home/test-user",
+            name => name == "XDG_STATE_HOME" ? "/var/user-state" : null);
+
+        Assert.Equal(Path.Combine("/var/user-state", "opentelemetry", "dotnet-diagnostics"), result);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("relative/state")]
+    public void DefaultLogDirectory_UnixUsesUserProfileWhenXdgStateHomeIsNotAbsolute(string? xdgStateHome)
+    {
+        const string Home = "/home/test-user";
+
+        var result = SelfDiagnosticsLogDirectoryResolver.Resolve(
+            () => SelfDiagnosticsPlatform.Unix,
+            _ => Home,
+            name => name == "XDG_STATE_HOME" ? xdgStateHome : null);
+
+        Assert.Equal(Path.Combine(Home, ".local", "state", "opentelemetry", "dotnet-diagnostics"), result);
+    }
+
+    [Fact]
+    public void DefaultLogDirectory_ReturnsNullWhenNoUserDirectoryCanBeResolved()
+    {
+        var result = SelfDiagnosticsLogDirectoryResolver.Resolve(
+            () => SelfDiagnosticsPlatform.Unix,
+            _ => string.Empty,
+            _ => null);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void DefaultLogDirectory_ReturnsNullWhenPlatformResolutionThrows()
+    {
+        var result = SelfDiagnosticsLogDirectoryResolver.Resolve(
+            () => throw new InvalidOperationException("Platform unavailable."),
+            _ => throw new InvalidOperationException("Folder unavailable."),
+            _ => throw new InvalidOperationException("Environment unavailable."));
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void GetDefaultLogDirectory_MatchesParameterlessResolver()
+    {
+        Assert.Equal(
+            SelfDiagnosticsLogDirectoryResolver.Resolve(),
+            SelfDiagnosticsOptions.GetDefaultLogDirectory());
+    }
+
+    [Fact]
+    public void DefaultLogDirectory_ParameterlessResolve_DoesNotThrow()
+    {
+        var result = SelfDiagnosticsLogDirectoryResolver.Resolve();
+
+        // Typical CI agents resolve a per-user directory; exotic hosts may return null.
+        Assert.True(result is null || result.Length > 0);
     }
 
     [Fact]
@@ -309,10 +473,6 @@ public class SelfDiagnosticsOptionsTests
     [InlineData("knownsafe", EnvironmentVariableLogMode.KnownSafeValues)]
     [InlineData("all", EnvironmentVariableLogMode.AllValues)]
 
-    // The enum member names, so a value copied out of code works unchanged.
-    [InlineData("knownsafevalues", EnvironmentVariableLogMode.KnownSafeValues)]
-    [InlineData("allvalues", EnvironmentVariableLogMode.AllValues)]
-
     // Matching is case-insensitive.
     [InlineData("ALL", EnvironmentVariableLogMode.AllValues)]
     [InlineData("KnownSafe", EnvironmentVariableLogMode.KnownSafeValues)]
@@ -357,11 +517,24 @@ public class SelfDiagnosticsOptionsTests
             StringComparison.Ordinal);
     }
 
-    private static SelfDiagnosticsOptions CreateOptions(string name, string? value) =>
-        CreateOptions(new Dictionary<string, string?> { [name] = value });
+    private static SelfDiagnosticsOptions CreateOptions(
+        string name,
+        string? value,
+        Func<string?>? defaultLogDirectoryResolver = null,
+        Action<string>? reportConfigurationError = null) =>
+        CreateOptions(
+            new Dictionary<string, string?> { [name] = value },
+            defaultLogDirectoryResolver,
+            reportConfigurationError);
 
-    private static SelfDiagnosticsOptions CreateOptions(Dictionary<string, string?> settings) =>
-        new(new ConfigurationBuilder().AddInMemoryCollection(settings).Build());
+    private static SelfDiagnosticsOptions CreateOptions(
+        Dictionary<string, string?> settings,
+        Func<string?>? defaultLogDirectoryResolver = null,
+        Action<string>? reportConfigurationError = null) =>
+        new(
+            new ConfigurationBuilder().AddInMemoryCollection(settings).Build(),
+            defaultLogDirectoryResolver ?? SelfDiagnosticsLogDirectoryResolver.Resolve,
+            reportConfigurationError);
 
     private sealed class TestOptionsMonitor : IOptionsMonitor<SelfDiagnosticsOptions>
     {

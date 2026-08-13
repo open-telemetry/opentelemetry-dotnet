@@ -68,6 +68,7 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
     private bool retentionSeeded;
     private DateTime nextOpenAttemptUtc = DateTime.MinValue;
     private bool failureReported;
+    private bool startupMessageEmitted;
     private volatile bool disposed;
 
     internal SelfDiagnosticsFileSink(
@@ -321,6 +322,19 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
             }
 
             this.WriteFilePrologue();
+
+            if (!this.startupMessageEmitted)
+            {
+                this.startupMessageEmitted = true;
+                try
+                {
+                    Console.Error.WriteLine($"OpenTelemetry SDK self-diagnostics: logging to {this.CurrentFilePath}");
+                }
+                catch
+                {
+                    // stderr may be unavailable or closed.
+                }
+            }
 
             return true;
         }
