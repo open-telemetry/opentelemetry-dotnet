@@ -235,7 +235,7 @@ output](#reading-the-output) for the full format.
 | Property | Type | Default | Description |
 | -------- | ---- | ------- | ----------- |
 | `MinimumLevel` | `Microsoft.Extensions.Logging.LogLevel` | `Warning` | Entries below this level are discarded. `LogLevel.None` discards everything. The default diverges from the OpenTelemetry specification; see [Log levels](#log-levels). |
-| `LogDirectory` | `string?` | `null` | Folder for the rolling log files. Set it to turn file logging on; leave it empty to keep file logging off. The folder is created if needed. When `OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS` asks for `file` without a folder, the SDK tries the [default log directory](#default-log-directory). From code, use `SelfDiagnosticsOptions.GetDefaultLogDirectory()` for the same path. |
+| `LogDirectory` | `string?` | `null` | Directory for the rolling log files. Set it to turn file logging on; leave it empty to keep file logging off. The directory is created if needed. When `OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS` asks for `file` without a directory, the SDK tries the [default log directory](#default-log-directory). From code, use `SelfDiagnosticsOptions.GetDefaultLogDirectory()` for the same path. |
 | `FileSizeLimitKilobytes` | `int` | `10240` (10 MiB) | Size at which the current file is closed and a new one opened. Files are never truncated. A value less than or equal to `0` disables size-based rollover (unlimited). Positive values are not clamped to a minimum; a file may exceed the limit by its preamble and the entry that crosses the boundary. |
 | `MaxRetainedFiles` | `int` | `10` | Number of log files kept. The oldest is pruned when opening a new file would exceed a positive limit. Values less than or equal to `0` disable automatic pruning and retain every rolled file indefinitely. |
 | `LogToStdout` | `bool` | `false` | Enables the console sink, writing to standard output. |
@@ -285,7 +285,7 @@ The following table summarises all combinations of the two variables and their
 effect on file output:
 
 | `OTEL_DOTNET_SELF_DIAGNOSTICS_LOG_DIRECTORY` | `OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS` | File output |
-| --------------------------------------------- | ------------------------------------- | ----------- |
+| -------------------------------------------- | ------------------------------------ | ----------- |
 | set | absent | active at the specified path |
 | set | includes `file` | active at the specified path |
 | set | present, `file` absent | **off** - `SINKS` is the explicit override |
@@ -294,10 +294,10 @@ effect on file output:
 | absent | present, `file` absent | off |
 | any | `none` | **off** - overrides all other tokens |
 
-The third row is the intentional escape hatch: if a deployment sets a log
-directory globally across many services, an individual service can suppress file
-output by setting `OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS` to a list that does not
-include `file` (for example `stdout`).
+The third row lets an individual service opt out when a deployment sets a log
+directory globally across many services. Set
+`OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS` to a list that does not include `file` (for
+example `stdout`) and no file is written, even though the directory is set.
 
 Invalid values are ignored and the default is kept. An unrecognised sink token
 is likewise ignored while any valid tokens in the same list still apply. All
@@ -410,7 +410,7 @@ Dynamic code         : True
 GC heap committed    : 42 MiB
 GC memory limit      : 8192 MiB
 
-Runtime env vars:
+Runtime environment variables:
 (none set)
 
 Environment Variables (mode: KnownSafeValues):
@@ -431,10 +431,10 @@ Three things in that snapshot are worth pointing out:
   *every* `OTEL_*` variable that is set, recognised or not, so a misspelled or
   invented variable name - one of the most common misconfigurations these files
   exist to find - is visible at a glance.
-* `Runtime env vars:` lists a fixed set of CLR profiler and startup variables
-  (`CORECLR_ENABLE_PROFILING`, `DOTNET_STARTUP_HOOKS`,
+* `Runtime environment variables:` lists a fixed set of CLR profiler and
+  startup variables (`CORECLR_ENABLE_PROFILING`, `DOTNET_STARTUP_HOOKS`,
   `ASPNETCORE_HOSTINGSTARTUPASSEMBLIES`, and others). They appear regardless of
-  whether any of them is set. If an auto-instrumentation agent is attached, the
+  whether any of them are set. If an auto-instrumentation agent is attached, the
   profiler GUID and path show up here, confirming which agent version is active.
 * On Windows each line in the `Environment Variables` section is annotated with
   `(source: process | user | system)`, identifying which scope supplied the
@@ -512,9 +512,9 @@ single unbounded file.
 
 ## What to include in a bug report
 
-When reporting an issue, alongside a full reproduction steps, a self-diagnostics
-log collected at `Debug` level is extremely useful to aid diagnosis. Collect one
-by running the reproduction with:
+When reporting an issue, alongside any full reproduction steps, a
+self-diagnostics log collected at `Debug` level is extremely useful to aid
+diagnosis. Collect one by running the reproduction with:
 
 ```sh
 export OTEL_LOG_LEVEL=debug
@@ -666,7 +666,7 @@ file and opens a new one, with a fresh preamble, in the new location.
 
 Before the mechanism described on this page was added, the SDK was configured by
 dropping an `OTEL_DIAGNOSTICS.json` file into the working directory of the
-process. The SDK re-read it every ten seconds and wrote to a fixed-size file
+process. The SDK re-read it periodically and wrote to a fixed-size file
 named `ExecutableName.ProcessId.log`:
 
 ```json

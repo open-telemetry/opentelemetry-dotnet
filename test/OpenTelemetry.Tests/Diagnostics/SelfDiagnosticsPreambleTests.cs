@@ -35,7 +35,7 @@ public class SelfDiagnosticsPreambleTests
         var preamble = Build(EnvironmentVariableLogMode.None);
 
         Assert.DoesNotContain("Environment Variables", preamble, StringComparison.Ordinal);
-        Assert.DoesNotContain("Runtime env vars:", preamble, StringComparison.Ordinal);
+        Assert.DoesNotContain("Runtime environment variables:", preamble, StringComparison.Ordinal);
         Assert.DoesNotContain(SafeVar, preamble, StringComparison.Ordinal);
     }
 
@@ -204,7 +204,7 @@ public class SelfDiagnosticsPreambleTests
     public void RuntimeEnvVarsSection_PresentWhenModeIsNotNone()
     {
         var preamble = Build(EnvironmentVariableLogMode.KnownSafeValues);
-        Assert.Contains("Runtime env vars:", preamble, StringComparison.Ordinal);
+        Assert.Contains("Runtime environment variables:", preamble, StringComparison.Ordinal);
     }
 
     [Fact]
