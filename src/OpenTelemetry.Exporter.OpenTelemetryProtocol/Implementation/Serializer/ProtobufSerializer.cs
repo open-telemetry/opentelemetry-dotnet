@@ -14,6 +14,12 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer
 
 internal static class ProtobufSerializer
 {
+    /// <summary>
+    /// The number of bytes to reserve for a length prefix that will be filled in by
+    /// <see cref="WriteCompactLength"/>.
+    /// </summary>
+    internal const int ReserveSizeForCompactLength = 1;
+
     private const int MaxBufferSize = 100 * 1024 * 1024;
     private const uint UInt128 = 0x80;
     private const ulong ULong128 = 0x80;
@@ -21,6 +27,12 @@ internal static class ProtobufSerializer
     private const int Fixed64Size = 8;
     private const int MaskBitsLow = 0b_0111_1111;
     private const int MaskBitHigh = 0b_1000_0000;
+
+    // A UTF-16 character encodes to at most 3 UTF-8 bytes (a surrogate pair encodes to 4
+    // bytes across 2 characters, so 3 is the per-character worst case), so any string of
+    // this length or shorter encodes to at most MaskBitsLow bytes and its protobuf length
+    // prefix therefore always fits in a single varint byte.
+    private const int MaxCharsWithSingleByteUtf8Length = MaskBitsLow / 3;
 #if NETFRAMEWORK || NETSTANDARD2_0
     private const int MaxThreadStaticCharBufferSize = 1024;
 #endif
@@ -58,6 +70,68 @@ internal static class ProtobufSerializer
         slice[1] = (byte)(((length >> 7) & MaskBitsLow) | MaskBitHigh);
         slice[2] = (byte)(((length >> 14) & MaskBitsLow) | MaskBitHigh);
         slice[3] = (byte)((length >> 21) & MaskBitsLow);
+    }
+
+    /// <summary>
+    /// Fills in the length of a nested message whose length prefix was reserved with
+    /// <see cref="ReserveSizeForCompactLength"/>, using the smallest varint that fits.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <see cref="WriteReservedLength"/> always emits four bytes, padding the varint with
+    /// redundant continuation bits. That costs nothing to write, but it puts up to three
+    /// wasted bytes on the wire for every nested message, which is a large share of the
+    /// payload for messages that are individually small - and attributes, span events and
+    /// span links are small and numerous.
+    /// </para>
+    /// <para>
+    /// This reserves a single byte instead, which is correct without any further work for
+    /// content under 128 bytes. Longer content has to be moved to make room for a wider
+    /// prefix, so this should only be used where the content is normally short.
+    /// </para>
+    /// </remarks>
+    /// <param name="buffer">The buffer being written to.</param>
+    /// <param name="lengthPosition">The position reserved for the length prefix.</param>
+    /// <param name="writePosition">The position just past the message content.</param>
+    /// <returns>The new write position, which moves when the content had to be shifted.</returns>
+    internal static int WriteCompactLength(byte[] buffer, int lengthPosition, int writePosition)
+    {
+        var contentLength = writePosition - (lengthPosition + ReserveSizeForCompactLength);
+
+        Debug.Assert(contentLength >= 0, "contentLength was negative");
+
+        if (contentLength <= MaskBitsLow)
+        {
+            buffer[lengthPosition] = (byte)contentLength;
+            return writePosition;
+        }
+
+        // The reserved byte is not enough. Shift the content along to make room for the
+        // full varint. Span.CopyTo handles the overlap, and throws when the buffer is too
+        // small, which the callers turn into a resize and a retry.
+        var shift = ComputeVarInt32Size((uint)contentLength) - ReserveSizeForCompactLength;
+        var contentPosition = lengthPosition + ReserveSizeForCompactLength;
+
+        buffer.AsSpan(contentPosition, contentLength).CopyTo(buffer.AsSpan(contentPosition + shift));
+
+        var endOfLength = WriteVarInt32(buffer, lengthPosition, (uint)contentLength);
+
+        Debug.Assert(endOfLength == contentPosition + shift, "The length prefix did not end where the content starts");
+
+        return writePosition + shift;
+    }
+
+    internal static int ComputeVarInt32Size(uint value)
+    {
+        var size = 1;
+
+        while (value >= 0x80)
+        {
+            size++;
+            value >>= 7;
+        }
+
+        return size;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -258,6 +332,34 @@ internal static class ProtobufSerializer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteStringWithTag(byte[] buffer, int writePosition, int fieldNumber, string value)
     {
+        // A string this short cannot encode to more than MaskBitsLow bytes, so its length
+        // prefix is always a single varint byte. Reserving that byte and filling it in once
+        // the characters have been encoded removes the separate GetByteCount pass, roughly
+        // halving the cost of writing a short string. Attribute keys and span names go
+        // through here, so this runs many times per exported item.
+        if (value.Length <= MaxCharsWithSingleByteUtf8Length)
+        {
+            writePosition = WriteTag(buffer, writePosition, fieldNumber, ProtobufWireType.LEN);
+
+            var lengthPosition = writePosition++;
+
+            // Claim the reserved byte before encoding. It keeps the out-of-space
+            // failure as IndexOutOfRangeException the same as the slower path.
+            buffer[lengthPosition] = 0;
+
+#if NETFRAMEWORK || NETSTANDARD2_0
+            var bytesWritten = Utf8Encoding.GetBytes(value, 0, value.Length, buffer, writePosition);
+#else
+            var bytesWritten = Utf8Encoding.GetBytes(value.AsSpan(), buffer.AsSpan(writePosition));
+#endif
+
+            Debug.Assert(bytesWritten <= MaskBitsLow, "bytesWritten did not fit in a single byte varint");
+
+            buffer[lengthPosition] = (byte)bytesWritten;
+
+            return writePosition + bytesWritten;
+        }
+
         var numberOfUtf8CharsInString = GetNumberOfUtf8CharsInString(value);
         return WriteStringWithTag(buffer, writePosition, fieldNumber, numberOfUtf8CharsInString, value);
     }
@@ -358,10 +460,16 @@ internal static class ProtobufSerializer
     /// <param name="minimumSize">The minimum required buffer size in bytes.</param>
     /// <returns>A pooled buffer that must be handed back via <see cref="ReturnBuffer(byte[])"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static byte[] RentBuffer(int minimumSize) => ArrayPool<byte>.Shared.Rent(minimumSize);
+    internal static byte[] RentBuffer(int minimumSize) => RentBuffer(ArrayPool<byte>.Shared, minimumSize);
+
+    /// <inheritdoc cref="RentBuffer(int)"/>
+    /// <param name="pool">The pool to rent the buffer from.</param>
+    /// <param name="minimumSize">The minimum required buffer size in bytes.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static byte[] RentBuffer(ArrayPool<byte> pool, int minimumSize) => pool.Rent(minimumSize);
 
     /// <summary>
-    /// Returns a buffer previously obtained from <see cref="RentBuffer"/> or
+    /// Returns a buffer previously obtained from <see cref="RentBuffer(int)"/> or
     /// grown by <see cref="IncreaseBufferSize"/> back to the pool after clearing
     /// its contents.
     /// </summary>
@@ -369,6 +477,31 @@ internal static class ProtobufSerializer
     internal static void ReturnBuffer(byte[] buffer) => ReturnBuffer(ArrayPool<byte>.Shared, buffer);
 
     internal static void ReturnBuffer(ArrayPool<byte> pool, byte[] buffer) => pool.Return(buffer, clearArray: true);
+
+    /// <summary>
+    /// Returns a buffer previously obtained from <see cref="RentBuffer(int)"/> back to the
+    /// pool, scrubbing only the leading <paramref name="writtenLength"/> bytes.
+    /// </summary>
+    /// <param name="buffer">The buffer to return.</param>
+    /// <param name="writtenLength">The number of leading bytes that may contain data.</param>
+    internal static void ReturnBuffer(byte[] buffer, int writtenLength)
+        => ReturnBuffer(ArrayPool<byte>.Shared, buffer, writtenLength);
+
+    /// <inheritdoc cref="ReturnBuffer(byte[], int)"/>
+    /// <param name="pool">The pool to return the buffer to.</param>
+    /// <param name="buffer">The buffer to return.</param>
+    /// <param name="writtenLength">The number of leading bytes that may contain data.</param>
+    internal static void ReturnBuffer(ArrayPool<byte> pool, byte[] buffer, int writtenLength)
+    {
+        Debug.Assert((uint)writtenLength <= (uint)buffer.Length, "writtenLength was out of range");
+
+        if (writtenLength > 0)
+        {
+            buffer.AsSpan(0, writtenLength).Clear();
+        }
+
+        pool.Return(buffer, clearArray: false);
+    }
 
     internal static bool IncreaseBufferSize(ref byte[] buffer, OtlpSignalType otlpSignalType)
     {

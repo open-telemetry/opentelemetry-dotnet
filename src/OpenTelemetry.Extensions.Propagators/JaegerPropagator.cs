@@ -168,14 +168,30 @@ public class JaegerPropagator : TextMapPropagator
             traceIdStr = traceIdStr.PadLeft(TraceId128BitLength, '0');
         }
 
-        traceId = ActivityTraceId.CreateFromString(traceIdStr.AsSpan());
+        try
+        {
+            traceId = ActivityTraceId.CreateFromString(traceIdStr.AsSpan());
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            // Invalid format
+            return false;
+        }
 
         if (spanIdStr.Length < SpanIdLength)
         {
             spanIdStr = spanIdStr.PadLeft(SpanIdLength, '0');
         }
 
-        spanId = ActivitySpanId.CreateFromString(spanIdStr.AsSpan());
+        try
+        {
+            spanId = ActivitySpanId.CreateFromString(spanIdStr.AsSpan());
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            // Invalid format
+            return false;
+        }
 
         if (string.Equals(SampledValue, traceFlagsStr, StringComparison.Ordinal))
         {

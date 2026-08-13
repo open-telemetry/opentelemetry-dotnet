@@ -95,7 +95,9 @@ public class PrometheusIntegrationTests(PromToolFixture fixture, ITestOutputHelp
                         histogram.Name,
                         new ExplicitBucketHistogramConfiguration
                         {
-                            Boundaries = [5, 10],
+                            // Boundaries which exercise every shape a bucket bound can be rendered
+                            // with: fixed-point, and both negative and positive scientific notation.
+                            Boundaries = [1.5e-05, 0.005, 5, 10, 1e6],
                             ExemplarReservoirFactory = () => new SimpleFixedSizeExemplarReservoir(3),
                             TagKeys = [KeepTag],
                         })

@@ -350,4 +350,14 @@ public class CircularBufferBucketsTests
         Assert.Equal(12, buckets[buckets.Offset + 1]);
         Assert.Equal(16, buckets[buckets.Offset + 2]);
     }
+
+    [Theory]
+    [InlineData(14, 10, 4)]
+    [InlineData(10, 10, 0)]
+    [InlineData(4, 10, 4)]
+    [InlineData(0, 10, 0)]
+    [InlineData(-1, 10, 9)]
+    [InlineData(-10, 10, 0)]
+    public void PositiveModulo32(int value, int divisor, int expected)
+        => Assert.Equal(expected, CircularBufferBuckets.PositiveModulo32(value, divisor));
 }
