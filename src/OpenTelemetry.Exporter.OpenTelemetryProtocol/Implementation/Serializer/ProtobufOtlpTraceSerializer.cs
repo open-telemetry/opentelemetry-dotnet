@@ -25,7 +25,8 @@ internal static class ProtobufOtlpTraceSerializer
         int writePosition,
         SdkLimitOptions sdkLimitOptions,
         Resources.Resource? resource,
-        in Batch<Activity> batch)
+        in Batch<Activity> batch,
+        int maxBufferSize = ProtobufSerializer.MaxBufferSize)
     {
         activityListPool ??= [];
         scopeTracesList ??= [];
@@ -48,7 +49,7 @@ internal static class ProtobufOtlpTraceSerializer
                 activities.Add(activity);
             }
 
-            writePosition = TryWriteResourceSpans(ref buffer, writePosition, sdkLimitOptions, resource);
+            writePosition = TryWriteResourceSpans(ref buffer, writePosition, sdkLimitOptions, resource, maxBufferSize);
         }
         finally
         {
@@ -62,7 +63,8 @@ internal static class ProtobufOtlpTraceSerializer
         ref byte[] buffer,
         int writePosition,
         SdkLimitOptions sdkLimitOptions,
-        Resources.Resource? resource)
+        Resources.Resource? resource,
+        int maxBufferSize = ProtobufSerializer.MaxBufferSize)
     {
         while (true)
         {
@@ -86,7 +88,7 @@ internal static class ProtobufOtlpTraceSerializer
                 // Reset write position and attempt to increase the buffer size
                 writePosition = entryWritePosition;
 
-                if (!ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Traces))
+                if (!ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Traces, maxBufferSize))
                 {
                     throw;
                 }

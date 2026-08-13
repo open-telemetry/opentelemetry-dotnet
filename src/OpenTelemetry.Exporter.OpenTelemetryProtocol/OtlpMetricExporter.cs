@@ -19,12 +19,13 @@ public class OtlpMetricExporter : BaseExporter<Metric>
     private const int GrpcStartWritePosition = 5;
 
     // Initial buffer size set to ~732KB, so the buffer can be grown by doubling
-    // towards OtlpExporterOptions.MaxExportPayloadSizeBytes without resizing often.
+    // towards OtlpExporterOptions.MaxRequestSizeBytes without resizing often.
     private const int InitialBufferSize = ProtobufSerializer.InitialBufferSize;
 
     private readonly OtlpExporterTransmissionHandler transmissionHandler;
     private readonly int startWritePosition;
-    private readonly SerializationBuffer serializationBuffer = new(InitialBufferSize);
+    private readonly int maxRequestSizeBytes;
+    private readonly SerializationBuffer serializationBuffer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OtlpMetricExporter"/> class.
@@ -49,6 +50,10 @@ public class OtlpMetricExporter : BaseExporter<Metric>
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
         this.startWritePosition = exporterOptions.Protocol == OtlpExportProtocol.Grpc ? GrpcStartWritePosition : 0;
 #pragma warning restore CS0618 // Suppressing gRPC obsolete warning
+
+        this.maxRequestSizeBytes = exporterOptions.MaxRequestSizeBytes;
+        this.serializationBuffer = new(InitialBufferSize);
+
         this.transmissionHandler = transmissionHandler ?? exporterOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Metrics);
     }
 
@@ -80,7 +85,8 @@ public class OtlpMetricExporter : BaseExporter<Metric>
                     ref buffer,
                     this.startWritePosition,
                     this.Resource,
-                    metrics);
+                    metrics,
+                    this.maxRequestSizeBytes);
                 serializationSucceeded = true;
             }
             catch (Exception ex)
@@ -89,6 +95,23 @@ public class OtlpMetricExporter : BaseExporter<Metric>
                     OtlpSignalType.Metrics,
                     metrics.Count,
                     ex);
+                return ExportResult.Failure;
+            }
+
+            // The serialization buffer is rented from a pool that can hand back more
+            // than was asked for, so the payload can overrun the configured limit.
+            // The specification requires that such a request is not made at all.
+            var requestSize = writePosition - this.startWritePosition;
+            if (requestSize > this.maxRequestSizeBytes)
+            {
+                OpenTelemetryProtocolExporterEventSource.Log.RequestDiscardedDueToSizeLimit(
+                    OtlpSignalType.Metrics,
+                    metrics.Count,
+                    requestSize,
+                    this.maxRequestSizeBytes);
+
+                // Discard the oversized buffer rather than keeping it as the size hint.
+                serializationSucceeded = false;
                 return ExportResult.Failure;
             }
 

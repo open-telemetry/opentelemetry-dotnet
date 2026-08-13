@@ -19,14 +19,15 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
     private const int GrpcStartWritePosition = 5;
 
     // Initial buffer size set to ~732KB, so the buffer can be grown by doubling
-    // towards OtlpExporterOptions.MaxExportPayloadSizeBytes without resizing often.
+    // towards OtlpExporterOptions.MaxRequestSizeBytes without resizing often.
     private const int InitialBufferSize = ProtobufSerializer.InitialBufferSize;
 
     private readonly SdkLimitOptions sdkLimitOptions;
     private readonly ExperimentalOptions experimentalOptions;
     private readonly OtlpExporterTransmissionHandler transmissionHandler;
     private readonly int startWritePosition;
-    private readonly SerializationBuffer serializationBuffer = new(InitialBufferSize);
+    private readonly int maxRequestSizeBytes;
+    private readonly SerializationBuffer serializationBuffer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OtlpLogExporter"/> class.
@@ -55,6 +56,10 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
         this.startWritePosition = exporterOptions.Protocol == OtlpExportProtocol.Grpc ? GrpcStartWritePosition : 0;
 #pragma warning restore CS0618 // Suppressing gRPC obsolete warning
+
+        this.maxRequestSizeBytes = exporterOptions.MaxRequestSizeBytes;
+        this.serializationBuffer = new(InitialBufferSize);
+
         this.transmissionHandler = transmissionHandler ?? exporterOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Logs);
     }
 
@@ -88,7 +93,8 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
                     this.sdkLimitOptions,
                     this.experimentalOptions,
                     this.Resource,
-                    logRecordBatch);
+                    logRecordBatch,
+                    this.maxRequestSizeBytes);
                 serializationSucceeded = true;
             }
             catch (Exception ex)
@@ -97,6 +103,23 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
                     OtlpSignalType.Logs,
                     logRecordBatch.Count,
                     ex);
+                return ExportResult.Failure;
+            }
+
+            // The serialization buffer is rented from a pool that can hand back more
+            // than was asked for, so the payload can overrun the configured limit.
+            // The specification requires that such a request is not made at all.
+            var requestSize = writePosition - this.startWritePosition;
+            if (requestSize > this.maxRequestSizeBytes)
+            {
+                OpenTelemetryProtocolExporterEventSource.Log.RequestDiscardedDueToSizeLimit(
+                    OtlpSignalType.Logs,
+                    logRecordBatch.Count,
+                    requestSize,
+                    this.maxRequestSizeBytes);
+
+                // Discard the oversized buffer rather than keeping it as the size hint.
+                serializationSucceeded = false;
                 return ExportResult.Failure;
             }
 

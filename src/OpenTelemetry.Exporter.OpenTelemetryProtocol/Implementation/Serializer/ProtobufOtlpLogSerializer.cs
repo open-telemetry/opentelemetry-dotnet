@@ -28,7 +28,8 @@ internal static class ProtobufOtlpLogSerializer
         SdkLimitOptions sdkLimitOptions,
         ExperimentalOptions experimentalOptions,
         Resources.Resource? resource,
-        in Batch<LogRecord> logRecordBatch)
+        in Batch<LogRecord> logRecordBatch,
+        int maxBufferSize = ProtobufSerializer.MaxBufferSize)
     {
         logsListPool ??= [];
         scopeLogsList ??= [];
@@ -67,7 +68,8 @@ internal static class ProtobufOtlpLogSerializer
                 sdkLimitOptions,
                 experimentalOptions,
                 resource,
-                scopeLogsList);
+                scopeLogsList,
+                maxBufferSize);
         }
         finally
         {
@@ -87,7 +89,8 @@ internal static class ProtobufOtlpLogSerializer
         SdkLimitOptions sdkLimitOptions,
         ExperimentalOptions experimentalOptions,
         Resources.Resource? resource,
-        Dictionary<string, List<LogRecord>> scopeLogs)
+        Dictionary<string, List<LogRecord>> scopeLogs,
+        int maxBufferSize = ProtobufSerializer.MaxBufferSize)
     {
         while (true)
         {
@@ -111,7 +114,7 @@ internal static class ProtobufOtlpLogSerializer
                 // Reset write position and attempt to increase the buffer size
                 writePosition = entryWritePosition;
 
-                if (!ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Logs))
+                if (!ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Logs, maxBufferSize))
                 {
                     throw;
                 }

@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
 
@@ -24,6 +25,21 @@ namespace OpenTelemetry.Exporter;
 /// </remarks>
 public class OtlpExporterOptions : IOtlpExporterOptions
 {
+    /// <summary>
+    /// The default value for <see cref="MaxRequestSizeBytes"/> (64 MiB), as
+    /// recommended by the OpenTelemetry specification.
+    /// </summary>
+    internal const int DefaultMaxRequestSizeBytes = 64 * 1024 * 1024;
+
+    /// <summary>
+    /// The smallest accepted value for <see cref="MaxRequestSizeBytes"/>.
+    /// </summary>
+    /// <remarks>
+    /// The serialization buffer is allocated at this size regardless, so a smaller
+    /// limit could not reduce memory use and would only discard telemetry.
+    /// </remarks>
+    internal const int MinimumMaxRequestSizeBytes = ProtobufSerializer.InitialBufferSize;
+
     internal const string DefaultGrpcEndpoint = "http://localhost:4317";
     internal const string DefaultHttpEndpoint = "http://localhost:4318";
 #if NETFRAMEWORK || NETSTANDARD2_0
@@ -40,6 +56,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     ];
 
     private OtlpExportProtocol? protocol;
+    private int? maxRequestSizeBytes;
     private Uri? endpoint;
     private int? timeoutMilliseconds;
     private Func<HttpClient>? httpClientFactory;
@@ -145,6 +162,35 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     }
 
     /// <summary>
+    /// Gets or sets the maximum size, in bytes, of a request message the
+    /// exporter will send. Default value: 67108864 (64 MiB).
+    /// </summary>
+    /// <remarks>
+    /// Notes:
+    /// <list type="bullet">
+    /// <item>The size is measured on the serialized payload before any
+    /// compression selected by <see cref="Compression"/> is applied.</item>
+    /// <item>A batch whose serialized payload exceeds this size is not sent, and
+    /// is dropped in its entirety. Set this to match the request size limit of
+    /// the receiver being exported to.</item>
+    /// <item>The buffer used to serialize is grown on demand, so raising this
+    /// value does not by itself increase memory use.</item>
+    /// <item>Accepted values run from <c>750000</c>, the size the serialization
+    /// buffer is allocated at, to <c>268435456</c> (256 MiB).</item>
+    /// </list>
+    /// </remarks>
+    public int MaxRequestSizeBytes
+    {
+        get => this.maxRequestSizeBytes ?? DefaultMaxRequestSizeBytes;
+        set
+        {
+            Guard.ThrowIfOutOfRange(value, min: MinimumMaxRequestSizeBytes, max: ProtobufSerializer.MaxBufferSize);
+
+            this.maxRequestSizeBytes = value;
+        }
+    }
+
+    /// <summary>
     /// Gets or sets a custom user agent identifier.
     /// This will be prepended to the default user agent string.
     /// </summary>
@@ -206,7 +252,8 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         || this.endpoint != null
         || this.timeoutMilliseconds.HasValue
         || this.httpClientFactory != null
-        || this.compression.HasValue;
+        || this.compression.HasValue
+        || this.maxRequestSizeBytes.HasValue;
 
     internal ExportProcessorType? ExportProcessorTypeValue => this.exportProcessorType;
 
@@ -300,6 +347,8 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         this.httpClientFactory ??= defaultExporterOptions.httpClientFactory;
 
         this.compression ??= defaultExporterOptions.compression;
+
+        this.maxRequestSizeBytes ??= defaultExporterOptions.maxRequestSizeBytes;
 
         return this;
     }

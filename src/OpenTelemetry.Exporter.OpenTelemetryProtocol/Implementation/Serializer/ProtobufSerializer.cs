@@ -528,9 +528,9 @@ internal static class ProtobufSerializer
         pool.Return(buffer, clearArray: false);
     }
 
-    internal static bool IncreaseBufferSize(ref byte[] buffer, OtlpSignalType otlpSignalType)
+    internal static bool IncreaseBufferSize(ref byte[] buffer, OtlpSignalType otlpSignalType, int maxBufferSize = MaxBufferSize)
     {
-        if (buffer.Length >= MaxBufferSize)
+        if (buffer.Length >= maxBufferSize)
         {
             OpenTelemetryProtocolExporterEventSource.Log.BufferExceededMaxSize(otlpSignalType.ToString(), buffer.Length);
             return false;
@@ -541,7 +541,7 @@ internal static class ProtobufSerializer
         // the doubled size would overshoot) means the entire configured budget
         // is usable, with no unreachable remainder. The pool rounds the request
         // up to its next size class, so the buffer still ends up at least this big.
-        var nextBufferSize = (int)Math.Min((long)buffer.Length * 2, MaxBufferSize);
+        var nextBufferSize = (int)Math.Min((long)buffer.Length * 2, maxBufferSize);
 
         var pool = ArrayPool<byte>.Shared;
 
