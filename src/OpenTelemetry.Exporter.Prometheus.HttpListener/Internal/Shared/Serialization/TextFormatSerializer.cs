@@ -2146,8 +2146,10 @@ internal abstract class TextFormatSerializer
             destination[index++] = unchecked((char)('0' + (absoluteExponent / 100)));
         }
 
+#pragma warning disable IDE0047
         destination[index++] = unchecked((char)('0' + ((absoluteExponent / 10) % 10)));
         destination[index++] = unchecked((char)('0' + (absoluteExponent % 10)));
+#pragma warning restore IDE0047
 
         Debug.Assert(index == length, $"{nameof(index)} should equal {nameof(length)}.");
 
@@ -2285,9 +2287,11 @@ internal abstract class TextFormatSerializer
 
         return RoundTrips(candidate, value) ? candidate : value.ToString("G17", CultureInfo.InvariantCulture);
 
-        static bool RoundTrips(string candidate, double value) =>
-            double.TryParse(candidate, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed)
-            && parsed.Equals(value);
+        static bool RoundTrips(string candidate, double value)
+        {
+            return double.TryParse(candidate, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed) &&
+                   parsed.Equals(value);
+        }
     }
 #endif
 
