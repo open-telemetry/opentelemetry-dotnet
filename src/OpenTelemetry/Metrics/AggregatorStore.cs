@@ -218,8 +218,7 @@ internal sealed class AggregatorStore
         try
         {
             var metricPointIndex = handle.GetMetricPointIndex();
-            this.PrepareBoundUpdate(metricPointIndex);
-            this.UpdateLongMetricPoint(metricPointIndex, value, handle.Tags);
+            this.UpdateBoundLongMetricPoint(metricPointIndex, value, handle.Tags);
         }
         catch (Exception)
         {
@@ -233,8 +232,7 @@ internal sealed class AggregatorStore
         try
         {
             var metricPointIndex = handle.GetMetricPointIndex();
-            this.PrepareBoundUpdate(metricPointIndex);
-            this.UpdateDoubleMetricPoint(metricPointIndex, value, handle.Tags);
+            this.UpdateBoundDoubleMetricPoint(metricPointIndex, value, handle.Tags);
         }
         catch (Exception)
         {
@@ -405,18 +403,6 @@ internal sealed class AggregatorStore
         }
 
         return Metric.DefaultHistogramBounds;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void PrepareBoundUpdate(int metricPointIndex)
-    {
-        // Binding retains the reference acquired during delta lookup so the
-        // resolved point cannot be reclaimed. Each update takes a transient
-        // reference which MetricPoint releases when the update completes.
-        if (this.OutputDelta && metricPointIndex >= 2)
-        {
-            Interlocked.Increment(ref this.metricPoints[metricPointIndex].ReferenceCount);
-        }
     }
 
     private void TakeMetricPointSnapshot(ref MetricPoint metricPoint, bool outputDelta)
@@ -1082,6 +1068,39 @@ internal sealed class AggregatorStore
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void UpdateBoundLongMetricPoint(int metricPointIndex, long value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
+    {
+        if (metricPointIndex < 0)
+        {
+            Interlocked.Increment(ref this.DroppedMeasurements);
+            this.InitializeOverflowTagPointIfNotInitialized();
+            this.metricPoints[1].Update(value);
+
+            return;
+        }
+
+        var exemplarFilterType = this.exemplarFilter;
+        if (exemplarFilterType == ExemplarFilterType.AlwaysOff)
+        {
+            this.metricPoints[metricPointIndex].UpdateBound(value);
+        }
+        else if (exemplarFilterType == ExemplarFilterType.AlwaysOn)
+        {
+            this.metricPoints[metricPointIndex].UpdateBoundWithExemplar(
+                value,
+                tags,
+                offerExemplar: true);
+        }
+        else
+        {
+            this.metricPoints[metricPointIndex].UpdateBoundWithExemplar(
+                value,
+                tags,
+                offerExemplar: Activity.Current?.Recorded ?? false);
+        }
+    }
+
     private void UpdateDouble(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         var index = this.FindMetricAggregatorsDefault(tags);
@@ -1137,6 +1156,39 @@ internal sealed class AggregatorStore
         else
         {
             this.metricPoints[metricPointIndex].UpdateWithExemplar(
+                value,
+                tags,
+                offerExemplar: Activity.Current?.Recorded ?? false);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void UpdateBoundDoubleMetricPoint(int metricPointIndex, double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
+    {
+        if (metricPointIndex < 0)
+        {
+            Interlocked.Increment(ref this.DroppedMeasurements);
+            this.InitializeOverflowTagPointIfNotInitialized();
+            this.metricPoints[1].Update(value);
+
+            return;
+        }
+
+        var exemplarFilterType = this.exemplarFilter;
+        if (exemplarFilterType == ExemplarFilterType.AlwaysOff)
+        {
+            this.metricPoints[metricPointIndex].UpdateBound(value);
+        }
+        else if (exemplarFilterType == ExemplarFilterType.AlwaysOn)
+        {
+            this.metricPoints[metricPointIndex].UpdateBoundWithExemplar(
+                value,
+                tags,
+                offerExemplar: true);
+        }
+        else
+        {
+            this.metricPoints[metricPointIndex].UpdateBoundWithExemplar(
                 value,
                 tags,
                 offerExemplar: Activity.Current?.Recorded ?? false);
