@@ -1,6 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if NET
+using System.Collections.Immutable;
+#endif
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -28,8 +31,17 @@ public class TraceContextPropagator : TextMapPropagator
     private static readonly int OptionsLength = "00".Length;
     private static readonly int TraceparentLengthV0 = "00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-00".Length;
 
+#if NET
+    private static readonly ImmutableHashSet<string> AllFields = [TraceState, TraceParent];
+#else
+    private static readonly HashSet<string> AllFields = [TraceState, TraceParent];
+#endif
+
     /// <inheritdoc/>
-    public override ISet<string> Fields => new HashSet<string> { TraceState, TraceParent };
+    /// <remarks>
+    /// Callers should not modify the returned set.
+    /// </remarks>
+    public override ISet<string> Fields => AllFields;
 
     /// <inheritdoc/>
     public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>?> getter)
