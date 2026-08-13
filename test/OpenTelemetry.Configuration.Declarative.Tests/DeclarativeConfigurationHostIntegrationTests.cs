@@ -233,7 +233,7 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
 
         // Classic HostBuilder composes a ConfigurationRoot during Build(); providers
         // load at that point rather than when the source is registered.
-        Assert.Throws<DeclarativeConfigurationException>(() => hostBuilder.Build());
+        Assert.Throws<DeclarativeConfigurationException>(hostBuilder.Build);
     }
 
     [Fact]

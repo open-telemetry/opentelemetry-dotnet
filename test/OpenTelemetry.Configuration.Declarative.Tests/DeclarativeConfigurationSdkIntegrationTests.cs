@@ -265,7 +265,7 @@ public sealed class DeclarativeConfigurationSdkIntegrationTests
             builder = builder.AddSource(sourceName);
         }
 
-        return builder.Build()!;
+        return builder.Build();
     }
 
     private static MeterProvider BuildMeterProvider(string yamlPath)
@@ -276,7 +276,7 @@ public sealed class DeclarativeConfigurationSdkIntegrationTests
 
         return Sdk.CreateMeterProviderBuilder()
             .ConfigureServices(s => s.AddSingleton<IConfiguration>(config))
-            .Build()!;
+            .Build();
     }
 
 #if OPENTELEMETRY_EXPERIMENTAL_FEATURES_EXPOSED

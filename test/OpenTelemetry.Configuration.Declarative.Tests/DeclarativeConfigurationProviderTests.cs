@@ -11,7 +11,7 @@ public sealed class DeclarativeConfigurationProviderTests
         using var yamlFile = new DeclarativeYamlTestFileFactory();
         var provider = new DeclarativeConfigurationProvider(new FilePath(Path.Combine(yamlFile.TempDirectory, "nonexistent.yaml")));
 
-        var ex = Assert.Throws<DeclarativeConfigurationException>(() => provider.Load());
+        var ex = Assert.Throws<DeclarativeConfigurationException>(provider.Load);
         Assert.IsType<FileNotFoundException>(ex.InnerException);
     }
 
@@ -67,7 +67,7 @@ public sealed class DeclarativeConfigurationProviderTests
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(fileFormat: "99.0");
         var provider = new DeclarativeConfigurationProvider(new FilePath(yamlFile.Path));
 
-        Assert.Throws<DeclarativeConfigurationException>(() => provider.Load());
+        Assert.Throws<DeclarativeConfigurationException>(provider.Load);
     }
 
     [Fact]
@@ -103,7 +103,7 @@ public sealed class DeclarativeConfigurationProviderTests
         using var yamlFile = DeclarativeYamlTestFile.CreateYamlFile(yaml);
         var provider = new DeclarativeConfigurationProvider(new FilePath(yamlFile.Path));
 
-        Assert.Throws<DeclarativeConfigurationException>(() => provider.Load());
+        Assert.Throws<DeclarativeConfigurationException>(provider.Load);
     }
 
     [Fact]
@@ -116,7 +116,7 @@ public sealed class DeclarativeConfigurationProviderTests
         using var yamlFile = DeclarativeYamlTestFile.CreateYamlFile(yaml);
         var provider = new DeclarativeConfigurationProvider(new FilePath(yamlFile.Path));
 
-        Assert.Throws<DeclarativeConfigurationException>(() => provider.Load());
+        Assert.Throws<DeclarativeConfigurationException>(provider.Load);
     }
 
     [Fact]
@@ -127,7 +127,7 @@ public sealed class DeclarativeConfigurationProviderTests
         using var yamlFile = DeclarativeYamlTestFile.CreateYamlFile(yaml);
         var provider = new DeclarativeConfigurationProvider(new FilePath(yamlFile.Path));
 
-        var ex = Assert.Throws<DeclarativeConfigurationException>(() => provider.Load());
+        var ex = Assert.Throws<DeclarativeConfigurationException>(provider.Load);
         Assert.NotNull(ex.InnerException);
         Assert.IsType<YamlDotNet.Core.YamlException>(ex.InnerException, exactMatch: false);
     }

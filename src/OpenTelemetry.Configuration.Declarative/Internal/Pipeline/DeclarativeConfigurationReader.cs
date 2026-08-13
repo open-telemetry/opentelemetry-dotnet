@@ -141,6 +141,7 @@ internal static class DeclarativeConfigurationReader
             case YamlScalarNode scalar when scalar.Value is not null:
                 EnvironmentSubstitution.ValidateReferences(scalar.Value);
                 break;
+
             case YamlMappingNode mapping:
                 foreach (var child in mapping.Children)
                 {
@@ -148,12 +149,16 @@ internal static class DeclarativeConfigurationReader
                 }
 
                 break;
+
             case YamlSequenceNode sequence:
                 foreach (var item in sequence.Children)
                 {
                     ValidateSubstitutionInNode(item, visitedNodes);
                 }
 
+                break;
+
+            default:
                 break;
         }
     }
