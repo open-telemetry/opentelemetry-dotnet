@@ -154,7 +154,15 @@ public sealed class B3Propagator : TextMapPropagator
                     traceIdStr = UpperTraceId + traceIdStr;
                 }
 
-                traceId = ActivityTraceId.CreateFromString(traceIdStr.AsSpan());
+                try
+                {
+                    traceId = ActivityTraceId.CreateFromString(traceIdStr.AsSpan());
+                }
+                catch (ArgumentOutOfRangeException)
+                {
+                    // Invalid format
+                    return context;
+                }
             }
             else
             {
@@ -165,7 +173,15 @@ public sealed class B3Propagator : TextMapPropagator
             var spanIdStr = getter(carrier, XB3SpanId)?.FirstOrDefault();
             if (spanIdStr != null)
             {
-                spanId = ActivitySpanId.CreateFromString(spanIdStr.AsSpan());
+                try
+                {
+                    spanId = ActivitySpanId.CreateFromString(spanIdStr.AsSpan());
+                }
+                catch (ArgumentOutOfRangeException)
+                {
+                    // Invalid format
+                    return context;
+                }
             }
             else
             {
@@ -256,8 +272,16 @@ public sealed class B3Propagator : TextMapPropagator
             }
         }
 
-        traceId = CreateTraceId(traceIdStr);
-        spanId = ActivitySpanId.CreateFromString(spanIdStr);
+        try
+        {
+            traceId = CreateTraceId(traceIdStr);
+            spanId = ActivitySpanId.CreateFromString(spanIdStr);
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            // Invalid format
+            return false;
+        }
 
         if (IsSampledValue(traceFlagsStr) ||
             traceFlagsStr.Equals(FlagsValue.AsSpan(), StringComparison.Ordinal))

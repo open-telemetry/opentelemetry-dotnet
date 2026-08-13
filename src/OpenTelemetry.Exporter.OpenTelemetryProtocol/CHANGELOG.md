@@ -26,6 +26,9 @@ Notes](../../RELEASENOTES.md).
   expire.
   ([#7597](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7597))
 
+* Fixed the OTLP exporter from retrying certain non-transient HTTP failures.
+  ([#7600](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7600))
+
 * The OTLP exporter now omits `HistogramDataPoint.sum` on the wire (rather
   than serializing `0`) for histograms that do not record a sum, per
   `metrics.proto`'s field semantics.
