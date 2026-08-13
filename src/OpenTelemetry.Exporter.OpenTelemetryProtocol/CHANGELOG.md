@@ -29,21 +29,14 @@ Notes](../../RELEASENOTES.md).
 * Fixed the OTLP exporter from retrying certain non-transient HTTP failures.
   ([#7600](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7600))
 
-* Increase the maximum buffer size used for when exporting very large batches
-  of telemetry, such as metrics with very high cardinality, to 256MiB. A batch
-  whose serialized payload exceeds the limit is dropped in its entirety rather
-  than submitted, so the value can be used to stay within a receiver's own request
-  size limits.
-  ([#7584](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7584))
-
 * Added `OtlpExporterOptions.MaxRequestSizeBytes` to configure the OTLP request
   size limit, as required by the OpenTelemetry specification. The default is the
   recommended 64 MiB. A batch whose serialized payload exceeds the limit is not
-  sent and is dropped in its entirety.
+  sent and is dropped in its entirety. The maximum supported value is 256MiB.
   ([#7584](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7584))
 
 * **Breaking:** The maximum size of a single export request is now 64 MiB by
-  default instead of 128MiB to conform with the OpenTelemetry specification.
+  default instead of 100MiB to conform with the OpenTelemetry specification.
   Raise the value of `OtlpExporterOptions.MaxRequestSizeBytes` property to
   increase the capacity.
   ([#7584](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7584))
