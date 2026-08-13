@@ -609,8 +609,6 @@ public class MetricViewTests : MetricTestsBase
         upDownCounter.Add(-2);
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
-        Console.WriteLine("assert here");
-
         Assert.Single(exportedItems);
         var metric = exportedItems[0];
         Assert.Equal(MetricType.Histogram, metric.MetricType);
