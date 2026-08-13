@@ -1,0 +1,20 @@
+﻿# TYPE test_histogram_seconds histogram
+# UNIT test_histogram_seconds seconds
+test_histogram_seconds_bucket{otel_scope_name="HistogramWithFractionalBoundaries",le="0.005"} 0
+test_histogram_seconds_bucket{otel_scope_name="HistogramWithFractionalBoundaries",le="0.01"} 0
+test_histogram_seconds_bucket{otel_scope_name="HistogramWithFractionalBoundaries",le="0.025"} 1
+test_histogram_seconds_bucket{otel_scope_name="HistogramWithFractionalBoundaries",le="0.05"} 1
+test_histogram_seconds_bucket{otel_scope_name="HistogramWithFractionalBoundaries",le="0.075"} 1
+test_histogram_seconds_bucket{otel_scope_name="HistogramWithFractionalBoundaries",le="0.1"} 1
+test_histogram_seconds_bucket{otel_scope_name="HistogramWithFractionalBoundaries",le="0.25"} 1
+test_histogram_seconds_bucket{otel_scope_name="HistogramWithFractionalBoundaries",le="0.5"} 1
+test_histogram_seconds_bucket{otel_scope_name="HistogramWithFractionalBoundaries",le="0.75"} 1
+test_histogram_seconds_bucket{otel_scope_name="HistogramWithFractionalBoundaries",le="1.0"} 1
+test_histogram_seconds_bucket{otel_scope_name="HistogramWithFractionalBoundaries",le="2.5"} 1
+test_histogram_seconds_bucket{otel_scope_name="HistogramWithFractionalBoundaries",le="5.0"} 1
+test_histogram_seconds_bucket{otel_scope_name="HistogramWithFractionalBoundaries",le="7.5"} 1
+test_histogram_seconds_bucket{otel_scope_name="HistogramWithFractionalBoundaries",le="10.0"} 1
+test_histogram_seconds_bucket{otel_scope_name="HistogramWithFractionalBoundaries",le="+Inf"} 1
+test_histogram_seconds_sum{otel_scope_name="HistogramWithFractionalBoundaries"} 0.0111996
+test_histogram_seconds_count{otel_scope_name="HistogramWithFractionalBoundaries"} 1
+test_histogram_seconds_created{otel_scope_name="HistogramWithFractionalBoundaries"} <TIMESTAMP>
