@@ -3,6 +3,7 @@
 
 #if NET
 using System.Buffers;
+using System.Collections.Immutable;
 #endif
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -41,10 +42,16 @@ public class TraceContextPropagator : TextMapPropagator
     private static readonly SearchValues<char> TraceStateKeyChars = SearchValues.Create("0123456789abcdefghijklmnopqrstuvwxyz_-*/@");
     private static readonly SearchValues<char> TraceStateValueChars = CreateTraceStateValueChars(0x20);
     private static readonly SearchValues<char> TraceStateValueLastChars = CreateTraceStateValueChars(0x21);
+    private static readonly ImmutableHashSet<string> AllFields = [TraceState, TraceParent];
+#else
+    private static readonly HashSet<string> AllFields = [TraceState, TraceParent];
 #endif
 
     /// <inheritdoc/>
-    public override ISet<string> Fields => new HashSet<string> { TraceState, TraceParent };
+    /// <remarks>
+    /// Callers should not modify the returned set.
+    /// </remarks>
+    public override ISet<string> Fields => AllFields;
 
     /// <inheritdoc/>
     public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>?> getter)
