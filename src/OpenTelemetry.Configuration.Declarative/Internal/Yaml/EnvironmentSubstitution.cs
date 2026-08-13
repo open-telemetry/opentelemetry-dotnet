@@ -348,10 +348,10 @@ internal static class EnvironmentSubstitution
             this.DefaultStart = defaultStart;
         }
 
-        public string Name { get; }
+        public readonly string Name { get; }
 
-        public bool HasDefault { get; }
+        public readonly bool HasDefault { get; }
 
-        public int DefaultStart { get; }
+        public readonly int DefaultStart { get; }
     }
 }
