@@ -153,13 +153,9 @@ internal static class DeclarativeConfigurationParser
         string entryName,
         ResourceAttributeType type)
     {
-        var valueNode = attributeNode.GetValueNode(YamlKeys.Value);
-
-        if (valueNode is null)
-        {
-            throw CreateInvalidResourceAttributeException(
+        var valueNode = attributeNode.GetValueNode(YamlKeys.Value)
+            ?? throw CreateInvalidResourceAttributeException(
                 $"A resource.attributes entry for '{entryName}' is missing the required 'value' field.");
-        }
 
         if (valueNode is YamlScalarNode scalar)
         {
@@ -210,32 +206,37 @@ internal static class DeclarativeConfigurationParser
             $"A resource.attributes entry for '{entryName}' has a YAML mapping as its 'value', which is not permitted by the schema.");
     }
 
-    private static bool ScalarMatchesAttributeType(ResourceAttributeType type, YamlScalarKind kind) =>
-        type switch
-        {
-            ResourceAttributeType.String => kind == YamlScalarKind.String,
-            ResourceAttributeType.Boolean => kind == YamlScalarKind.Boolean,
-            ResourceAttributeType.Integer => kind == YamlScalarKind.Integer,
-            ResourceAttributeType.Double => kind is YamlScalarKind.Integer or YamlScalarKind.Float,
-            _ => false,
-        };
+    private static bool ScalarMatchesAttributeType(ResourceAttributeType type, YamlScalarKind kind) => type switch
+    {
+        ResourceAttributeType.Boolean => kind == YamlScalarKind.Boolean,
+        ResourceAttributeType.Double => kind is YamlScalarKind.Integer or YamlScalarKind.Float,
+        ResourceAttributeType.Integer => kind == YamlScalarKind.Integer,
+        ResourceAttributeType.String => kind == YamlScalarKind.String,
+        ResourceAttributeType.BooleanArray or
+        ResourceAttributeType.DoubleArray or
+        ResourceAttributeType.IntegerArray or
+        ResourceAttributeType.StringArray or
+        _ => false,
+    };
 
     private static List<ResolvedYamlScalar> ReadAttributeSequence(
         ResourceAttributeType type,
         YamlSequenceNode sequence,
         string entryName)
     {
-        YamlScalarKind expectedKind;
-        switch (type)
+        var expectedKind = type switch
         {
-            case ResourceAttributeType.StringArray: expectedKind = YamlScalarKind.String; break;
-            case ResourceAttributeType.BooleanArray: expectedKind = YamlScalarKind.Boolean; break;
-            case ResourceAttributeType.IntegerArray: expectedKind = YamlScalarKind.Integer; break;
-            case ResourceAttributeType.DoubleArray: expectedKind = YamlScalarKind.Float; break;
-            default:
-                throw CreateInvalidResourceAttributeException(
-                    $"A resource.attributes entry for '{entryName}' has a sequence value but its declared type is '{type.GetSchemaName()}'.");
-        }
+            ResourceAttributeType.BooleanArray => YamlScalarKind.Boolean,
+            ResourceAttributeType.DoubleArray => YamlScalarKind.Float,
+            ResourceAttributeType.IntegerArray => YamlScalarKind.Integer,
+            ResourceAttributeType.StringArray => YamlScalarKind.String,
+            ResourceAttributeType.Boolean or
+            ResourceAttributeType.Double or
+            ResourceAttributeType.Integer or
+            ResourceAttributeType.String or
+            _ => throw CreateInvalidResourceAttributeException(
+                $"A resource.attributes entry for '{entryName}' has a sequence value but its declared type is '{type.GetSchemaName()}'."),
+        };
 
         if (sequence.Children.Count == 0)
         {
@@ -273,13 +274,12 @@ internal static class DeclarativeConfigurationParser
         return new DeclarativeConfigurationException(message);
     }
 
-    private static string GetYamlKindName(YamlScalarKind kind) =>
-        kind switch
-        {
-            YamlScalarKind.Boolean => "boolean",
-            YamlScalarKind.Integer => "integer",
-            YamlScalarKind.Float => "float",
-            YamlScalarKind.Null => "null",
-            _ => "string",
-        };
+    private static string GetYamlKindName(YamlScalarKind kind) => kind switch
+    {
+        YamlScalarKind.Boolean => "boolean",
+        YamlScalarKind.Float => "float",
+        YamlScalarKind.Integer => "integer",
+        YamlScalarKind.Null => "null",
+        YamlScalarKind.String or _ => "string",
+    };
 }
