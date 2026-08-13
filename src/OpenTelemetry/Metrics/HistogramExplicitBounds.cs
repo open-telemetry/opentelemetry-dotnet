@@ -112,7 +112,27 @@ internal sealed class HistogramExplicitBounds
     {
         var index = 0;
 
-        if (Avx.IsSupported && bounds.Length >= Vector256<double>.Count)
+        if (Vector512.IsHardwareAccelerated && bounds.Length >= Vector512<double>.Count)
+        {
+            var valueVector = Vector512.Create(value);
+            var lastStart = bounds.Length - Vector512<double>.Count;
+
+            while (index <= lastStart)
+            {
+                var boundsVector = Vector512.Create(bounds.Slice(index));
+                var compare = Vector512.LessThanOrEqual(valueVector, boundsVector);
+                var mask = Vector512.ExtractMostSignificantBits(compare);
+
+                if (mask != 0)
+                {
+                    return index + BitOperations.TrailingZeroCount(mask);
+                }
+
+                index += Vector512<double>.Count;
+            }
+        }
+
+        if (Avx.IsSupported && bounds.Length - index >= Vector256<double>.Count)
         {
             var valueVector = Vector256.Create(value);
             var lastStart = bounds.Length - Vector256<double>.Count;
@@ -131,7 +151,7 @@ internal sealed class HistogramExplicitBounds
                 index += Vector256<double>.Count;
             }
         }
-        else if (Sse2.IsSupported && bounds.Length >= Vector128<double>.Count)
+        else if (Sse2.IsSupported && bounds.Length - index >= Vector128<double>.Count)
         {
             var valueVector = Vector128.Create(value);
             var lastStart = bounds.Length - Vector128<double>.Count;
@@ -150,7 +170,7 @@ internal sealed class HistogramExplicitBounds
                 index += Vector128<double>.Count;
             }
         }
-        else if (AdvSimd.Arm64.IsSupported && bounds.Length >= Vector128<double>.Count)
+        else if (AdvSimd.Arm64.IsSupported && bounds.Length - index >= Vector128<double>.Count)
         {
             var valueVector = Vector128.Create(value);
             var lastStart = bounds.Length - Vector128<double>.Count;
