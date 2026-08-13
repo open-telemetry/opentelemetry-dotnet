@@ -123,7 +123,7 @@ jobs:
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         if-no-files-found: ignore
-        name: hang-dumps-${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}-${{ matrix.os }}-${{ matrix.version }}
+        name: hang-dumps-${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}-${{ matrix.os }}-${{ matrix.version }}-attempt-${{ github.run_attempt }}
         retention-days: 7
         path: |
           **/TestResults/**/*hangdump*.dmp
