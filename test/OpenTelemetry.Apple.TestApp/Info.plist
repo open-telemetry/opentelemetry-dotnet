@@ -38,9 +38,10 @@
     </array>
     <!--
         NSAllowsLocalNetworking is required because the OTLP export targets plain
-        HTTP on the host loopback (http://localhost:<port>); App Transport
+        HTTP on the host loopback (http://127.0.0.1:<port>); App Transport
         Security blocks cleartext HTTP by default, which would otherwise silently
-        fail the export.
+        fail the export. The exemption covers the loopback and link-local address
+        ranges as well as unqualified host names.
     -->
     <key>NSAppTransportSecurity</key>
     <dict>
