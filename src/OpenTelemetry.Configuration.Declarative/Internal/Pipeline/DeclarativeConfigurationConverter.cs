@@ -202,15 +202,45 @@ internal static partial class DeclarativeConfigurationConverter
 
     // Percent-encode attribute values for OTEL_RESOURCE_ATTRIBUTES per the OTel resource spec:
     // https://opentelemetry.io/docs/specs/otel/resource/sdk/#specifying-resource-information-via-an-environment-variable
-    // Encoding order: '%' first to prevent double-encoding, then structural chars ',' and '=',
-    // then '+' because the .NET SDK reads the env var via WebUtility.UrlDecode which maps '+' to space.
-    private static string EncodeAttributeValue(string value) =>
-        new StringBuilder(value)
-            .Replace("%", "%25")
-            .Replace(",", "%2C")
-            .Replace("=", "%3D")
-            .Replace("+", "%2B")
-            .ToString();
+    // Percent-encode structural characters, '%' to prevent unintended decoding, and '+' because
+    // WebUtility.UrlDecode maps it to space. OtelEnvResourceDetector trims values before decoding,
+    // so every whitespace character must also be encoded to survive that trim.
+    private static string EncodeAttributeValue(string value)
+    {
+        var encoded = new StringBuilder(value.Length);
+
+        foreach (var c in value)
+        {
+            switch (c)
+            {
+                case '%':
+                    encoded.Append("%25");
+                    break;
+                case ',':
+                    encoded.Append("%2C");
+                    break;
+                case '=':
+                    encoded.Append("%3D");
+                    break;
+                case '+':
+                    encoded.Append("%2B");
+                    break;
+                default:
+                    if (char.IsWhiteSpace(c))
+                    {
+                        encoded.Append(Uri.EscapeDataString(c.ToString()));
+                    }
+                    else
+                    {
+                        encoded.Append(c);
+                    }
+
+                    break;
+            }
+        }
+
+        return encoded.ToString();
+    }
 
     // Drop attributes_list keys shadowed by structured attributes. Naive comma split, and the key
     // is trimmed before comparison, both matching how OtelEnvResourceDetector parses the flat value.

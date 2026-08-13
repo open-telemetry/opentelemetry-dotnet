@@ -54,17 +54,7 @@ internal static class EnvironmentSubstitution
         Guard.ThrowIfNull(value);
         Guard.ThrowIfNull(resolveVariable);
 
-        if (value.Length == 0)
-        {
-            return value;
-        }
-
-        // Fast-path: skip scanning if there's no '$' in the string.
-#if NET
-        if (value.IndexOf('$', StringComparison.Ordinal) < 0)
-#else
-        if (value.IndexOf("$", StringComparison.Ordinal) < 0)
-#endif
+        if (!ContainsDollar(value))
         {
             return value;
         }
@@ -104,6 +94,61 @@ internal static class EnvironmentSubstitution
     internal static string Substitute(string value)
         => Substitute(value, name => Environment.GetEnvironmentVariable(name));
 
+    /// <summary>
+    /// Throws if <paramref name="value"/> contains a well-formed but invalid <c>${...}</c>
+    /// reference, without resolving variables or emitting diagnostics.
+    /// </summary>
+    /// <param name="value">The scalar string to validate.</param>
+    /// <remarks>
+    /// Used for scalar values in root sections this package does not apply: the spec still requires
+    /// invalid substitution syntax to fail the parse, but looking up environment variables or
+    /// logging unset/empty diagnostics would imply those values were being used.
+    /// </remarks>
+    /// <exception cref="DeclarativeConfigurationException">
+    /// Thrown when <paramref name="value"/> contains a well-formed <c>${...}</c> expression whose
+    /// content is not a valid environment variable reference.
+    /// </exception>
+    internal static void ValidateReferences(string value)
+    {
+        Guard.ThrowIfNull(value);
+
+        if (!ContainsDollar(value))
+        {
+            return;
+        }
+
+        var regionStart = 0;
+
+        while (true)
+        {
+            var escapeIndex = value.IndexOf("$$", regionStart, StringComparison.Ordinal);
+            var regionEnd = escapeIndex < 0 ? value.Length : escapeIndex;
+
+            ValidateRegion(value, regionStart, regionEnd);
+
+            if (escapeIndex < 0)
+            {
+                break;
+            }
+
+            regionStart = escapeIndex + 2;
+        }
+    }
+
+    private static bool ContainsDollar(string value)
+    {
+        if (value.Length == 0)
+        {
+            return false;
+        }
+
+#if NET
+        return value.Contains('$', StringComparison.Ordinal);
+#else
+        return value.IndexOf("$", StringComparison.Ordinal) >= 0;
+#endif
+    }
+
     // Substitutes every complete reference in value[start, end). The region boundaries are escape
     // boundaries, so a '}' outside them cannot close a '${' inside them.
     private static void AppendSubstitutedRegion(
@@ -141,6 +186,31 @@ internal static class EnvironmentSubstitution
         }
     }
 
+    // Same region walk as AppendSubstitutedRegion, but only validates complete references.
+    // Incomplete ${... forms are not errors and must not emit diagnostics.
+    private static void ValidateRegion(string value, int start, int end)
+    {
+        var i = start;
+        while (i < end)
+        {
+            if (value[i] != '$' || i + 1 >= end || value[i + 1] != '{')
+            {
+                i++;
+                continue;
+            }
+
+            var exprStart = i;
+            var closingBrace = value.IndexOf('}', exprStart + 2, end - (exprStart + 2));
+            if (closingBrace < 0)
+            {
+                return;
+            }
+
+            ParseSubstitutionReference(value, exprStart, closingBrace);
+            i = closingBrace + 1;
+        }
+    }
+
     // Resolves the complete expression value[exprStart..closingBrace]. exprStart points at '$' and
     // closingBrace at the matching '}'.
     private static string ResolveSubstitution(
@@ -148,6 +218,36 @@ internal static class EnvironmentSubstitution
         int exprStart,
         int closingBrace,
         Func<string, string?> resolveVariable)
+    {
+        var parsed = ParseSubstitutionReference(value, exprStart, closingBrace);
+        var envValue = resolveVariable(parsed.Name);
+
+        if (!parsed.HasDefault)
+        {
+            if (envValue is null)
+            {
+                OpenTelemetryDeclarativeConfigurationEventSource.Log.EnvironmentVariableNotSet(parsed.Name);
+            }
+            else if (envValue.Length == 0)
+            {
+                OpenTelemetryDeclarativeConfigurationEventSource.Log.EnvironmentVariableEmpty(parsed.Name);
+            }
+        }
+
+        if (envValue is not null && envValue.Length > 0)
+        {
+            return envValue;
+        }
+
+        // Materialise the default only when it is actually used.
+        return parsed.HasDefault
+            ? value.Substring(parsed.DefaultStart, closingBrace - parsed.DefaultStart)
+            : string.Empty;
+    }
+
+    // Parses and validates a complete ${...} reference. Throws on invalid syntax; does not resolve
+    // or emit diagnostics.
+    private static ParsedSubstitution ParseSubstitutionReference(string value, int exprStart, int closingBrace)
     {
         var i = exprStart + 2;
 
@@ -196,27 +296,7 @@ internal static class EnvironmentSubstitution
             throw CreateInvalidReferenceException(value, exprStart, closingBrace);
         }
 
-        var envValue = resolveVariable(name);
-
-        if (!hasDefault)
-        {
-            if (envValue is null)
-            {
-                OpenTelemetryDeclarativeConfigurationEventSource.Log.EnvironmentVariableNotSet(name);
-            }
-            else if (envValue.Length == 0)
-            {
-                OpenTelemetryDeclarativeConfigurationEventSource.Log.EnvironmentVariableEmpty(name);
-            }
-        }
-
-        if (envValue is not null && envValue.Length > 0)
-        {
-            return envValue;
-        }
-
-        // Materialise the default only when it is actually used.
-        return hasDefault ? value.Substring(defaultStart, closingBrace - defaultStart) : string.Empty;
+        return new ParsedSubstitution(name, hasDefault, defaultStart);
     }
 
     // The default value is always validated, whether or not it ends up being used: malformed input
@@ -258,4 +338,20 @@ internal static class EnvironmentSubstitution
     // (U+0020); the range covers U+0021-U+007C. '}' (U+007D) and DEL (U+007F) are excluded.
     private static bool IsValidDefaultChar(char c)
         => c == '\t' || (c >= '\x20' && c <= '\x7C') || c == '\x7E';
+
+    private readonly struct ParsedSubstitution
+    {
+        public ParsedSubstitution(string name, bool hasDefault, int defaultStart)
+        {
+            this.Name = name;
+            this.HasDefault = hasDefault;
+            this.DefaultStart = defaultStart;
+        }
+
+        public string Name { get; }
+
+        public bool HasDefault { get; }
+
+        public int DefaultStart { get; }
+    }
 }

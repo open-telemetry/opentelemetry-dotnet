@@ -118,6 +118,35 @@ public sealed class DeclarativeConfigurationSdkIntegrationTests
         Assert.Contains(resource.Attributes, a => a.Key == "deployment.environment" && (string)a.Value == "test");
     }
 
+    [Theory]
+    [InlineData(" leading", " leading")]
+    [InlineData("trailing ", "trailing ")]
+    [InlineData(" both ", " both ")]
+    [InlineData("\\tleading\\t", "\tleading\t")]
+    [InlineData("\\r\\nleading\\r\\n", "\r\nleading\r\n")]
+    [InlineData("\\u00A0leading\\u00A0", "\u00A0leading\u00A0")]
+    public void ResourceAttributes_StringWithSurroundingWhitespace_PreservesWhitespace(
+        string yamlValue,
+        string expected)
+    {
+        var yaml = $"""
+            file_format: "1.1"
+            resource:
+              attributes:
+                - name: review.whitespace
+                  value: "{yamlValue}"
+            """;
+
+        using var yamlFile = DeclarativeYamlTestFile.CreateYamlFile(yaml);
+        using var tracerProvider = BuildTracerProvider(yamlFile.Path);
+
+        var actual = tracerProvider.GetResource().Attributes
+            .Single(attribute => attribute.Key == "review.whitespace")
+            .Value;
+
+        Assert.Equal(expected, Assert.IsType<string>(actual));
+    }
+
     [Fact]
     public void EnvSubstitution_DefaultUsed_ResourceAttributeFlowsToSdk()
     {

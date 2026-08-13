@@ -310,9 +310,54 @@ public sealed class DeclarativeConfigurationSchemaTests
         var configuration = ReadConfiguration(yaml);
 
         Assert.Equal(
-            "attribute=value\ninjected: true",
+            "attribute=value%0Ainjected:%20true",
             configuration[DeclarativeConfigurationConverter.ResourceAttributesKey]);
         Assert.DoesNotContain(DeclarativeConfigurationConverter.DisabledKey, configuration.Keys);
+    }
+
+    [Fact]
+    public void EnvironmentSubstitution_InvalidReferenceInIgnoredTopLevelSection_Throws()
+    {
+        const string yaml = """
+            file_format: "1.1"
+            distribution:
+              vendor:
+                setting: ${VALUE:?error}
+            """;
+
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+    }
+
+    [Fact]
+    public void EnvironmentSubstitution_InvalidReferenceInIgnoredTopLevelSequence_Throws()
+    {
+        const string yaml = """
+            file_format: "1.1"
+            extension:
+              - ${VALUE:?error}
+            """;
+
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+    }
+
+    [Fact]
+    public void EnvironmentSubstitution_ValidReferenceInIgnoredTopLevelSection_DoesNotContributeConfiguration()
+    {
+        const string environmentVariable = "OTEL_DECLARATIVE_TEST_IGNORED_SECTION_UNSET";
+        const string yaml = """
+            file_format: "1.1"
+            distribution:
+              vendor:
+                setting: ${OTEL_DECLARATIVE_TEST_IGNORED_SECTION_UNSET}
+            """;
+
+        // Leave the variable unset: ignored sections must still accept valid references without
+        // requiring the variable to be present for this package to load the document.
+        using var environment = EnvironmentVariableScope.Create(environmentVariable, null);
+
+        var configuration = ReadConfiguration(yaml);
+
+        Assert.Empty(configuration);
     }
 
     private static ReadOnlyDictionary<string, string?> ReadConfiguration(string yaml)

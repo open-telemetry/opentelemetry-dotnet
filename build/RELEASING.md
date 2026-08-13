@@ -34,8 +34,6 @@ Maintainers (admins) are needed to merge PRs and for the push to NuGet.**
            of the `1.9.0` release cycle they may only be released as `alpha` or
            `beta`.
 
-           * `OpenTelemetry.Configuration.Declarative` - Declarative
-             configuration (experimental)
            * `OpenTelemetry.Exporter.Prometheus.AspNetCore` - Defined by spec
              (experimental)
            * `OpenTelemetry.Exporter.Prometheus.HttpListener` - Defined by spec
@@ -43,8 +41,17 @@ Maintainers (admins) are needed to merge PRs and for the push to NuGet.**
            * `OpenTelemetry.Shims.OpenTracing` - Defined by spec (stable but
              incomplete implementation)
 
-       * As of the `1.9.0` release cycle core unstable packages always depend on
-         the stable versions of core packages. Before releasing a non-core
+         * `declarativeconfig-`: Packages not yet ready for release.
+           These are intentionally excluded from the automated release
+           workflows. To enable automated releases, add `declarativeconfig-` to
+           `.github/workflows/prepare-release.yml` and
+           `.github/workflows/publish-packages-1.0.yml`.
+
+           * `OpenTelemetry.Configuration.Declarative` - Defined by spec
+             (experimental)
+
+       * As of the `1.17.0` release cycle core unstable packages always depend
+         on the stable versions of core packages. Before releasing a non-core
          component ensure the `OTelLatestStableVer` property in
          `Directory.Packages.props` has been updated to the latest stable core
          version.

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Collections.ObjectModel;
+using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Configuration;
 using YamlDotNet.RepresentationModel;
 
@@ -77,7 +78,7 @@ internal static class DeclarativeConfigurationReader
         // Phase 2: walk the AST into the typed model.
         var config = DeclarativeConfigurationParser.Parse(root, fileFormat);
 
-        LogUnknownTopLevelSections(root);
+        ProcessUnrecognizedTopLevelSections(root);
 
         // Phase 3: project the typed model into flat keys.
         DeclarativeConfigurationConverter.Convert(config, data);
@@ -85,28 +86,84 @@ internal static class DeclarativeConfigurationReader
         return new ReadOnlyDictionary<string, string?>(data);
     }
 
-    // Logs each top-level section that this package does not recognise (lenient validation).
-    // The top-level schema object sets additionalProperties=true, so an unknown section here is a
-    // legal forward-compatible extension rather than a schema violation - unlike the nested objects
-    // handled by YamlNodeReader.EnsureNoUnrecognizedProperties.
-    private static void LogUnknownTopLevelSections(YamlMappingNode root)
+    // Root additionalProperties=true: unrecognized top-level keys (schema extras or not-yet-
+    // implemented named properties) are legal and ignored. Nested objects under known sections
+    // remain strict via YamlNodeReader.EnsureNoUnrecognizedProperties.
+    // Spec still requires invalid ${...} syntax anywhere in the document to fail the parse, so each
+    // unrecognized section's scalar values are syntax-checked without resolving variables.
+    private static void ProcessUnrecognizedTopLevelSections(YamlMappingNode root)
     {
+        var visitedNodes = new HashSet<YamlNode>(YamlNodeReferenceEqualityComparer.Instance);
+
         foreach (var entry in root.Children)
         {
-            if (entry.Key is not YamlScalarNode keyNode)
-            {
-                OpenTelemetryDeclarativeConfigurationEventSource.Log.UnknownConfigurationSection("<non-scalar key>");
-                continue;
-            }
-
-            var key = keyNode.Value;
-            if (key is not null && KnownTopLevelKeys.Contains(key))
+            if (IsKnownTopLevelKey(entry.Key))
             {
                 continue;
             }
 
-            var display = key is null ? "<null>" : key.Length == 0 ? "<empty>" : key;
-            OpenTelemetryDeclarativeConfigurationEventSource.Log.UnknownConfigurationSection(display);
+            LogUnrecognizedTopLevelSection(entry.Key);
+            ValidateSubstitutionInNode(entry.Value, visitedNodes);
         }
+    }
+
+    private static bool IsKnownTopLevelKey(YamlNode key) =>
+        key is YamlScalarNode { Value: { } name } && KnownTopLevelKeys.Contains(name);
+
+    private static void LogUnrecognizedTopLevelSection(YamlNode key)
+    {
+        var display = key switch
+        {
+            YamlScalarNode { Value: null } => "<null>",
+            YamlScalarNode { Value.Length: 0 } => "<empty>",
+            YamlScalarNode { Value: { } name } => name,
+            _ => "<non-scalar key>",
+        };
+
+        OpenTelemetryDeclarativeConfigurationEventSource.Log.UnknownConfigurationSection(display);
+    }
+
+    // Recursively walks a YAML subtree, validating substitution syntax on every scalar VALUE
+    // (never on mapping keys, which the spec excludes from substitution). Uses ValidateReferences
+    // rather than Substitute so ignored sections do not resolve variables or emit unset/empty
+    // diagnostics for configuration this package does not apply.
+    private static void ValidateSubstitutionInNode(YamlNode node, HashSet<YamlNode> visitedNodes)
+    {
+        // YamlDotNet resolves aliases to the anchored node, so the representation is a graph and
+        // may contain cycles. Each scalar needs validation only once regardless of alias count.
+        if (!visitedNodes.Add(node))
+        {
+            return;
+        }
+
+        switch (node)
+        {
+            case YamlScalarNode scalar when scalar.Value is not null:
+                EnvironmentSubstitution.ValidateReferences(scalar.Value);
+                break;
+            case YamlMappingNode mapping:
+                foreach (var child in mapping.Children)
+                {
+                    ValidateSubstitutionInNode(child.Value, visitedNodes);
+                }
+
+                break;
+            case YamlSequenceNode sequence:
+                foreach (var item in sequence.Children)
+                {
+                    ValidateSubstitutionInNode(item, visitedNodes);
+                }
+
+                break;
+        }
+    }
+
+    private sealed class YamlNodeReferenceEqualityComparer : IEqualityComparer<YamlNode>
+    {
+        internal static readonly YamlNodeReferenceEqualityComparer Instance = new();
+
+        bool IEqualityComparer<YamlNode>.Equals(YamlNode? x, YamlNode? y) => ReferenceEquals(x, y);
+
+        int IEqualityComparer<YamlNode>.GetHashCode(YamlNode obj) => RuntimeHelpers.GetHashCode(obj);
     }
 }

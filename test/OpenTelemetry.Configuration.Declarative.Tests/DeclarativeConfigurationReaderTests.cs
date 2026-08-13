@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Collections.ObjectModel;
+using System.Text;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Configuration.Declarative.Tests;
 
@@ -560,33 +562,37 @@ public sealed class DeclarativeConfigurationReaderTests
         Assert.Contains($"{FileFormatValidator.SupportedMajorVersion}.{FileFormatValidator.MaxSupportedMinorVersion}", ex.Message, StringComparison.Ordinal);
     }
 
-    // Round-trip tests: verify that values survive the full encode-then-decode path used by
-    // OtelEnvResourceDetector. The encoder only percent-encodes '%', ',', '=', and '+';
-    // all other characters pass through as-is. WebUtility.UrlDecode handles %XX correctly
-    // and does not modify unencoded characters (except '+' which it treats as space - hence
-    // why '+' is one of the four encoded characters).
+    // Round-trip tests: mirror OtelEnvResourceDetector (trim the value segment, then UrlDecode).
+    // The encoder percent-encodes '%', ',', '=', '+', and whitespace so surrounding whitespace
+    // survives that trim; all other characters pass through as-is.
     [Theory]
     [InlineData("a+b")] // + is encoded as %2B, decoded back to +
-    [InlineData("foo bar")] // space passes through unencoded, decoded back to space
+    [InlineData("foo bar")] // internal whitespace is encoded and decoded back to space
+    [InlineData(" leading")] // leading whitespace must survive detector Trim
+    [InlineData("trailing ")] // trailing whitespace must survive detector Trim
+    [InlineData(" both ")]
+    [InlineData("\tleading\t")] // tab is whitespace and must be encoded
     [InlineData("50%")] // % is encoded as %25
     [InlineData("key=val")] // = is encoded as %3D
     [InlineData("a,b")] // , is encoded as %2C
     [InlineData("http://x:9090")] // other special chars pass through unencoded
     public void Translate_ResourceAttributeValue_RoundTripsThroughUrlDecode(string originalValue)
     {
+        Guard.ThrowIfNull(originalValue);
+
         var yaml = $"""
             file_format: "1.0"
             resource:
               attributes:
                 - name: my.attr
-                  value: {originalValue}
+                  value: "{EscapeYamlDoubleQuoted(originalValue)}"
             """;
 
         var data = ReadConfiguration(yaml);
 
         var flatValue = data[DeclarativeConfigurationConverter.ResourceAttributesKey];
         var encodedValue = flatValue!.Split(['='], 2)[1];
-        var decoded = System.Net.WebUtility.UrlDecode(encodedValue);
+        var decoded = DecodeResourceAttributeValue(encodedValue);
         Assert.Equal(originalValue, decoded);
     }
 
@@ -605,7 +611,7 @@ public sealed class DeclarativeConfigurationReaderTests
 
         var flatValue = data[DeclarativeConfigurationConverter.ResourceAttributesKey];
         var encodedValue = flatValue!.Split(['='], 2)[1];
-        var decoded = System.Net.WebUtility.UrlDecode(encodedValue);
+        var decoded = DecodeResourceAttributeValue(encodedValue);
         Assert.Equal(string.Empty, decoded);
     }
 
@@ -689,7 +695,7 @@ public sealed class DeclarativeConfigurationReaderTests
         Assert.Equal(3, pairs.Length);
 
         static string DecodeValue(string pair) =>
-            System.Net.WebUtility.UrlDecode(pair.Split(['='], 2)[1]);
+            DecodeResourceAttributeValue(pair.Split(['='], 2)[1]);
 
         Assert.Equal("my+service", DecodeValue(pairs[0]));
         Assert.Equal("prod,staging", DecodeValue(pairs[1]));
@@ -1781,6 +1787,18 @@ public sealed class DeclarativeConfigurationReaderTests
         Assert.ThrowsAny<Exception>(() => ReadConfiguration(yaml));
     }
 
+    [Fact]
+    public void Translate_CyclicAliasInUnknownSection_IsIgnoredWithoutRecursingIndefinitely()
+    {
+        const string yaml = """
+            file_format: "1.0"
+            extension: &cycle
+              self: *cycle
+            """;
+
+        Assert.Empty(ReadConfiguration(yaml));
+    }
+
     // Under the YAML 1.2 core schema, << is an ordinary string key. At the extension-permitting
     // root it is ignored; it is not expanded as a YAML 1.1 merge key.
     [Fact]
@@ -1959,7 +1977,7 @@ public sealed class DeclarativeConfigurationReaderTests
 
         var data = ReadConfiguration(yaml);
 
-        Assert.Equal("my.attr=  null  ", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
+        Assert.Equal("my.attr=%20%20null%20%20", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
     }
 
     [Fact]
@@ -1995,6 +2013,35 @@ public sealed class DeclarativeConfigurationReaderTests
             "my.attr=${UNTERMINATED",
             data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
     }
+
+    private static string EscapeYamlDoubleQuoted(string value)
+    {
+        var firstIndex = value.IndexOfAny(['\\', '"']);
+        if (firstIndex < 0)
+        {
+            return value;
+        }
+
+        var builder = new StringBuilder(value.Length + 4);
+        builder.Append(value, 0, firstIndex);
+
+        for (var i = firstIndex; i < value.Length; i++)
+        {
+            var ch = value[i];
+            if (ch is '\\' or '"')
+            {
+                builder.Append('\\');
+            }
+
+            builder.Append(ch);
+        }
+
+        return builder.ToString();
+    }
+
+    // Matches OtelEnvResourceDetector: trim the value segment, then URL-decode.
+    private static string DecodeResourceAttributeValue(string encodedValue) =>
+        System.Net.WebUtility.UrlDecode(encodedValue.Trim());
 
     private static ReadOnlyDictionary<string, string?> ReadConfiguration(string yaml)
     {

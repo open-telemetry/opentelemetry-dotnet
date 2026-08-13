@@ -109,6 +109,42 @@ public sealed class DeclarativeConfigurationEventSourceTests
     }
 
     [Fact]
+    public void ValidateReferences_DoesNotEmitEnvironmentVariableDiagnosticEvents()
+    {
+        using var listener = CreateVerboseListener();
+
+        EnvironmentSubstitution.ValidateReferences("${MY_NOTSET_VAR}");
+        EnvironmentSubstitution.ValidateReferences("${MY_NOTSET_VAR:-fallback}");
+        EnvironmentSubstitution.ValidateReferences("${UNCLOSED");
+
+        Assert.DoesNotContain(listener.Messages, e => e.EventId == 15);
+        Assert.DoesNotContain(listener.Messages, e => e.EventId == 16);
+        Assert.DoesNotContain(listener.Messages, e => e.EventId == 24);
+    }
+
+    [Fact]
+    public void ReadConfiguration_ValidReferenceInIgnoredTopLevelSection_DoesNotEmitEnvironmentVariableNotSet()
+    {
+        const string environmentVariable = "OTEL_DECLARATIVE_TEST_IGNORED_SECTION_EVENT";
+        const string yaml = """
+            file_format: "1.1"
+            distribution:
+              vendor:
+                setting: ${OTEL_DECLARATIVE_TEST_IGNORED_SECTION_EVENT}
+            """;
+
+        using var environment = EnvironmentVariableScope.Create(environmentVariable, null);
+        using var listener = CreateVerboseListener();
+
+        Assert.Empty(ReadConfiguration(yaml));
+
+        Assert.Single(listener.Messages, e => e.EventId == 2); // unknown section warning only
+        Assert.DoesNotContain(listener.Messages, e => e.EventId == 15);
+        Assert.DoesNotContain(listener.Messages, e => e.EventId == 16);
+        Assert.DoesNotContain(listener.Messages, e => e.EventId == 24);
+    }
+
+    [Fact]
     public void ReadConfiguration_ResourceAttributeMappingValue_EmitsInvalidAttributeEvent()
     {
         const string yaml = """
