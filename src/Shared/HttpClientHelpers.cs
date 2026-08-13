@@ -16,6 +16,9 @@ internal static class HttpClientHelpers
     internal static string? TryGetResponseBodyAsString(HttpResponseMessage? httpResponse, CancellationToken cancellationToken)
         => GetResponseBodyAsString(allowTruncation: true, DefaultMessageSizeLimit, httpResponse, cancellationToken);
 
+    internal static string? TryGetResponseBodyAsString(HttpResponseMessage? httpResponse, int limit, CancellationToken cancellationToken)
+        => GetResponseBodyAsString(allowTruncation: true, limit, httpResponse, cancellationToken);
+
     internal static string? GetResponseBodyAsString(HttpResponseMessage? httpResponse, CancellationToken cancellationToken)
         => GetResponseBodyAsString(allowTruncation: false, DefaultMessageSizeLimit, httpResponse, cancellationToken);
 

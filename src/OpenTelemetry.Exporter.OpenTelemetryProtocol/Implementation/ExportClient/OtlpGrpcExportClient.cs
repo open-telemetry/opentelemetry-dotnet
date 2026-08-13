@@ -68,6 +68,17 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
 
             httpResponse = this.SendHttpRequest(httpRequest, cancellationToken);
 
+            if (this.IsResponseTooLarge(httpResponse, out var responseTooLarge))
+            {
+                // Requests with responses that are too large must not be retried
+                return new ExportClientGrpcResponse(
+                    success: false,
+                    deadlineUtc: deadlineUtc,
+                    exception: responseTooLarge,
+                    status: null,
+                    grpcStatusDetailsHeader: null);
+            }
+
             httpResponse.EnsureSuccessStatusCode();
 
             var trailingHeaders = httpResponse.TrailingHeaders();
@@ -145,7 +156,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
             // Handle non-retryable HTTP errors.
             if (OpenTelemetryProtocolExporterEventSource.Log.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
-                var response = TryGetResponseBody(httpResponse, cancellationToken);
+                var response = TryGetResponseBody(httpResponse, this.MaxResponseSizeBytes, cancellationToken);
                 OpenTelemetryProtocolExporterEventSource.Log.HttpRequestFailed(this.Endpoint, response, ex);
             }
 

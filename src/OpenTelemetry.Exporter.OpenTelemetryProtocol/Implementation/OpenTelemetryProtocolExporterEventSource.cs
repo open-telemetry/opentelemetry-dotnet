@@ -331,6 +331,22 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     internal void BatchDroppedDueToSerializationFailure(string signalType, long itemCount, string exception)
         => this.WriteEvent(39, signalType, itemCount, exception);
 
+    [NonEvent]
+    internal void ResponseDiscardedDueToSizeLimit(Uri endpoint, long? responseSizeBytes, int maxResponseSizeBytes)
+    {
+        if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.ResponseDiscardedDueToSizeLimit(RedactEndpointUri(endpoint), responseSizeBytes ?? -1, maxResponseSizeBytes);
+        }
+    }
+
+    [Event(
+        40,
+        Message = "The response from {0} was discarded because its size of {1} bytes exceeds the maximum response size of {2} bytes. A size of -1 means the response did not declare one.",
+        Level = EventLevel.Error)]
+    internal void ResponseDiscardedDueToSizeLimit(string endpoint, long responseSizeBytes, int maxResponseSizeBytes)
+        => this.WriteEvent(40, endpoint, responseSizeBytes, maxResponseSizeBytes);
+
     private static string RedactEndpointUri(Uri endpoint)
         => endpoint.GetComponents(UriComponents.SchemeAndServer | UriComponents.Path, UriFormat.UriEscaped);
 }

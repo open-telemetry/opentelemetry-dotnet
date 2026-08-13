@@ -5,16 +5,51 @@
 using System.Net.Http;
 #endif
 using System.Buffers.Binary;
+using System.Diagnostics.Tracing;
 using System.IO.Compression;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient.Grpc;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.Implementation.ExportClient;
 
 public class OtlpGrpcExportClientTests
 {
     private const int GrpcHeaderSize = 5;
+
+    [Fact]
+    public void SendExportRequest_ResponseExceedingMaxResponseSizeBytes_IsDiscardedAndNotRetryable()
+    {
+        const int ResponseDiscardedEventId = 40;
+        const int MaxResponseSizeBytes = 4096;
+
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Error);
+
+        using var testHandler = new OversizedResponseHttpMessageHandler(MaxResponseSizeBytes + 1, "application/grpc");
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false);
+
+        var exportClient = new OtlpGrpcExportClient(
+            new OtlpExporterOptions
+            {
+                Endpoint = new Uri("http://localhost:4317"),
+                MaxResponseSizeBytes = MaxResponseSizeBytes,
+            },
+            httpClient,
+            string.Empty);
+
+        var payload = "payload"u8.ToArray();
+        var response = exportClient.SendExportRequest(BuildGrpcFrame(payload), GrpcHeaderSize + payload.Length, DateTime.MaxValue);
+
+        Assert.False(response.Success);
+        Assert.IsType<ResponseSizeLimitExceededException>(response.Exception);
+
+        // The specification requires an over-sized response to be not retryable.
+        Assert.False(OtlpRetry.IsRetryable(Assert.IsType<ExportClientGrpcResponse>(response)));
+
+        Assert.Single(listener.Messages, e => e.EventId == ResponseDiscardedEventId);
+    }
 
     [Fact]
     public void SendExportRequest_GrpcExport_NoCompression_ContentMatchesOriginalPayload()

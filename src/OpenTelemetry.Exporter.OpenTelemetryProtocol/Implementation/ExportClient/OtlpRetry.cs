@@ -323,6 +323,12 @@ internal static class OtlpRetry
 
     private static bool IsHttpRequestExceptionRetryable(Exception? exception)
     {
+        if (exception is ResponseSizeLimitExceededException)
+        {
+            // Requests with responses that are too large must not be retried
+            return false;
+        }
+
 #if NET
         if (exception is not HttpRequestException httpRequestException)
         {

@@ -33,8 +33,10 @@ Notes](../../RELEASENOTES.md).
   OTLP/HTTP `Retry-After`) is now clamped to a minimum of 100 milliseconds.
   ([#7583](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7583))
 
-* The `HttpClient` created by the exporter now sets
-  `MaxResponseContentBufferSize` to the 4 MiB OTLP message size limit.
+* Added `OtlpExporterOptions.MaxResponseSizeBytes` to configure the maximum size
+  of a response the exporter will accept, as required by the OpenTelemetry
+  specification. The default is the recommended 4 MiB. A response exceeding the
+  limit is discarded and treated as a non-retryable failure.
   ([#7583](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7583))
 
 ## 1.17.0
