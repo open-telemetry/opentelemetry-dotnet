@@ -1,6 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if NET
+using System.Collections.Immutable;
+#endif
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Context.Propagation;
@@ -39,7 +42,11 @@ public class CompositeTextMapPropagator : TextMapPropagator
         if (this.propagators.Count == 0)
         {
             // Use a new empty HashSet for each instance to avoid any potential mutation issues.
+#if NET
+            this.allFields = ImmutableHashSet<string>.Empty;
+#else
             this.allFields = new HashSet<string>();
+#endif
         }
         else
         {
@@ -58,11 +65,18 @@ public class CompositeTextMapPropagator : TextMapPropagator
                 }
             }
 
+#if NET
+            this.allFields = output.ToImmutableHashSet();
+#else
             this.allFields = output;
+#endif
         }
     }
 
     /// <inheritdoc/>
+    /// <remarks>
+    /// Callers should not modify the returned set.
+    /// </remarks>
     public override ISet<string> Fields => this.allFields;
 
     /// <inheritdoc/>

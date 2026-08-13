@@ -62,6 +62,9 @@ public sealed class B3Propagator : TextMapPropagator
     }
 
     /// <inheritdoc/>
+    /// <remarks>
+    /// Callers should not modify the returned set.
+    /// </remarks>
     public override ISet<string> Fields => AllFields;
 
     /// <inheritdoc/>
