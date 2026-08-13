@@ -3,6 +3,7 @@
 
 #if NET
 using System.Buffers;
+using System.Collections.Immutable;
 #endif
 using System.Diagnostics;
 using OpenTelemetry.Context.Propagation;
@@ -30,11 +31,15 @@ public class JaegerPropagator : TextMapPropagator
 
 #if NET
     private static readonly SearchValues<char> DelimiterHintChars = SearchValues.Create(":%");
+    private static readonly ImmutableHashSet<string> AllFields = [JaegerHeader];
+#else
+    private static readonly HashSet<string> AllFields = [JaegerHeader];
 #endif
 
-    private static readonly HashSet<string> AllFields = [JaegerHeader];
-
     /// <inheritdoc/>
+    /// <remarks>
+    /// Callers should not modify the returned set.
+    /// </remarks>
 #pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
     public override ISet<string> Fields => AllFields;
 #pragma warning restore CS0809 // Obsolete member overrides non-obsolete member

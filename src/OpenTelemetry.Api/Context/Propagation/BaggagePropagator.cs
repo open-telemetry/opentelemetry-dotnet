@@ -3,6 +3,7 @@
 
 #if NET
 using System.Buffers;
+using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 #endif
 using System.Text;
@@ -56,9 +57,16 @@ public class BaggagePropagator : TextMapPropagator
     ];
 #endif
 
+#if NET
+    private static readonly ImmutableHashSet<string> AllFields = [BaggageHeaderName];
+#else
     private static readonly HashSet<string> AllFields = [BaggageHeaderName];
+#endif
 
     /// <inheritdoc/>
+    /// <remarks>
+    /// Callers should not modify the returned set.
+    /// </remarks>
     public override ISet<string> Fields => AllFields;
 
     /// <inheritdoc/>
