@@ -45,9 +45,29 @@ public class PrometheusSerializerFuzzTests
         static (value) => SerializeLong(value).SequenceEqual(ReferenceWriteLong(value)));
 
     [Property(MaxTest = MaxTests)]
-    public Property WriteDoubleMatchesReferenceImplementation() => Prop.ForAll(
+    public Property WriteDoubleRoundTripsWithoutPadding() => Prop.ForAll(
         Generators.DoubleArbitrary(),
-        static (value) => SerializeDouble(value).SequenceEqual(ReferenceWriteDouble(value)));
+        static (value) =>
+        {
+            var written = Encoding.UTF8.GetString(SerializeDouble(value));
+
+            if (double.IsNaN(value))
+            {
+                return written == "NaN";
+            }
+            else if (double.IsPositiveInfinity(value))
+            {
+                return written == "+Inf";
+            }
+            else if (double.IsNegativeInfinity(value))
+            {
+                return written == "-Inf";
+            }
+
+            return double.TryParse(written, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed)
+                && parsed.Equals(value)
+                && written.Length <= value.ToString("G17", CultureInfo.InvariantCulture).Length;
+        });
 
     [Property(MaxTest = MaxTests)]
     public Property EscapeNameWithDotsMatchesReferenceImplementation() => Prop.ForAll(
@@ -206,14 +226,6 @@ public class PrometheusSerializerFuzzTests
     private static byte[] ReferenceWriteUnicodeString(string value) => ReferenceWriteEscapedString(value, escapeQuotationMarks: false);
 
     private static byte[] ReferenceWriteLong(long value) => Encoding.UTF8.GetBytes(value.ToString(CultureInfo.InvariantCulture));
-
-    private static byte[] ReferenceWriteDouble(double value) => value switch
-    {
-        var doubleValue when double.IsPositiveInfinity(doubleValue) => Encoding.UTF8.GetBytes("+Inf"),
-        var doubleValue when double.IsNegativeInfinity(doubleValue) => Encoding.UTF8.GetBytes("-Inf"),
-        var doubleValue when double.IsNaN(doubleValue) => Encoding.UTF8.GetBytes("NaN"),
-        _ => Encoding.UTF8.GetBytes(value.ToString("G17", CultureInfo.InvariantCulture)),
-    };
 
     // An independent re-implementation of the dots and values escaping schemes used to validate
     // PrometheusEscaping.EscapeName. It deliberately uses different mechanisms (manual surrogate
