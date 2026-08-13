@@ -512,6 +512,155 @@ public class MetricViewTests : MetricTestsBase
     }
 
     [Fact]
+    public void ViewRequestingIncompatibleAggregation_OnObservableCounter_IsIgnoredAndLogsMetricViewIgnored()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("obsCounter", new MetricStreamConfiguration { AggregationKind = AggregationKind.Histogram })
+            .AddInMemoryExporter(exportedItems));
+
+        using (var eventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log))
+        {
+            var observableCounter = meter.CreateObservableCounter<long>("obsCounter", () => 10);
+
+            var metricViewIgnoredEvents = eventListener.Messages.Where(e => e.EventId == 41).ToList();
+            Assert.Single(metricViewIgnoredEvents);
+
+            var reason = metricViewIgnoredEvents[0].Payload![2] as string;
+            Assert.Contains("AggregationKind Histogram", reason, StringComparison.Ordinal);
+        }
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        Assert.Single(exportedItems);
+        var metric = exportedItems[0];
+        Assert.Equal(MetricType.LongSum, metric.MetricType);
+
+        List<MetricPoint> metricPoints = [];
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        Assert.Equal(10, metricPoints[0].GetSumLong());
+    }
+
+    [Fact]
+    public void ViewRequestingCompatibleHistogramAggregation_OnCounter_ProducesHistogram()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("myCounter", new MetricStreamConfiguration { AggregationKind = AggregationKind.Histogram })
+            .AddInMemoryExporter(exportedItems));
+
+        var counter = meter.CreateCounter<long>("myCounter");
+        counter.Add(1);
+        counter.Add(2);
+        counter.Add(3);
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        Assert.Single(exportedItems);
+        var metric = exportedItems[0];
+        Assert.Equal(MetricType.Histogram, metric.MetricType);
+
+        List<MetricPoint> metricPoints = [];
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        var histogramPoint = metricPoints[0];
+
+        Assert.Equal(6, histogramPoint.GetHistogramSum());
+        Assert.Equal(3, histogramPoint.GetHistogramCount());
+        Assert.True(histogramPoint.TryGetHistogramSum(out var trySum));
+        Assert.Equal(6, trySum);
+
+        var bucketCount = 0;
+        foreach (var t in histogramPoint.GetHistogramBuckets())
+        {
+            bucketCount++;
+        }
+
+        Assert.Equal(Metric.DefaultHistogramBounds.Length + 1, bucketCount);
+    }
+
+    [Fact]
+    public void ViewRequestingHistogramAggregation_OnUpDownCounter_SuppressesSum()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("myUpDownCounter", new MetricStreamConfiguration { AggregationKind = AggregationKind.Histogram })
+            .AddInMemoryExporter(exportedItems));
+
+        var upDownCounter = meter.CreateUpDownCounter<long>("myUpDownCounter");
+        upDownCounter.Add(5);
+        upDownCounter.Add(-2);
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        Console.WriteLine("assert here");
+
+        Assert.Single(exportedItems);
+        var metric = exportedItems[0];
+        Assert.Equal(MetricType.Histogram, metric.MetricType);
+
+        List<MetricPoint> metricPoints = [];
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        var histogramPoint = metricPoints[0];
+
+        Assert.Equal(2, histogramPoint.GetHistogramCount());
+
+        Assert.False(histogramPoint.TryGetHistogramSum(out var sum));
+        Assert.Equal(0, sum);
+        Assert.Equal(0, histogramPoint.GetHistogramSum());
+    }
+
+    [Fact]
+    public void ViewRequestingHistogramAggregation_OnObservableGauge_DefaultGaugeBehaviorUnaffected()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("myObservableGauge", new MetricStreamConfiguration { AggregationKind = AggregationKind.Histogram })
+            .AddInMemoryExporter(exportedItems));
+
+        meter.CreateObservableGauge("myObservableGauge", () => 42L);
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        Assert.Single(exportedItems);
+        var metric = exportedItems[0];
+        Assert.Equal("myObservableGauge", metric.Name);
+        Assert.Equal(MetricType.LongGauge, metric.MetricType);
+
+        List<MetricPoint> metricPoints = [];
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        Assert.Equal(42, metricPoints[0].GetGaugeLastValueLong());
+    }
+
+    [Fact]
     public void ViewToProduceCustomHistogramBound()
     {
         using var meter = new Meter(Utils.GetCurrentMethodName());
@@ -551,7 +700,9 @@ public class MetricViewTests : MetricTestsBase
 
         var count = histogramPoint.GetHistogramCount();
         var sum = histogramPoint.GetHistogramSum();
+        histogramPoint.TryGetHistogramSum(out var trySum);
 
+        Assert.Equal(trySum, sum);
         Assert.Equal(40, sum);
         Assert.Equal(7, count);
 
@@ -578,7 +729,9 @@ public class MetricViewTests : MetricTestsBase
 
         count = histogramPoint.GetHistogramCount();
         sum = histogramPoint.GetHistogramSum();
+        histogramPoint.TryGetHistogramSum(out trySum);
 
+        Assert.Equal(trySum, sum);
         Assert.Equal(40, sum);
         Assert.Equal(7, count);
 
@@ -671,7 +824,9 @@ public class MetricViewTests : MetricTestsBase
 
             var count = histogramPoint.GetHistogramCount();
             var sum = histogramPoint.GetHistogramSum();
+            histogramPoint.TryGetHistogramSum(out var trySum);
 
+            Assert.Equal(trySum, sum);
             Assert.Equal(18, sum);
             Assert.Equal(3, count);
 
@@ -753,7 +908,9 @@ public class MetricViewTests : MetricTestsBase
 
         var count = histogramPoint.GetHistogramCount();
         var sum = histogramPoint.GetHistogramSum();
+        histogramPoint.TryGetHistogramSum(out var trySum);
 
+        Assert.Equal(trySum, sum);
         Assert.Equal(62, sum);
         Assert.Equal(8, count);
 
@@ -897,7 +1054,9 @@ public class MetricViewTests : MetricTestsBase
 
         var count = metricPoint.GetHistogramCount();
         var sum = metricPoint.GetHistogramSum();
+        metricPoint.TryGetHistogramSum(out var trySum);
 
+        Assert.Equal(trySum, sum);
         AggregatorTests.AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint.GetExponentialHistogramData());
         Assert.Equal(50, sum);
         Assert.Equal(6, count);
