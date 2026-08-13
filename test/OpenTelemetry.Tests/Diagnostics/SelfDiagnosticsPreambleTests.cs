@@ -171,6 +171,29 @@ public class SelfDiagnosticsPreambleTests
     }
 
     [Fact]
+    public void LogDirectory_IsReportedInThePreambleWhenConfigured()
+    {
+        const string Directory = "/var/log/otel";
+        var preamble = SelfDiagnosticsPreamble.Build(
+            SelfDiagnosticsOptions.SelfDiagnosticsConfiguration.Create(
+                new SelfDiagnosticsOptions
+                {
+                    LogDirectory = Directory,
+                    EnvironmentVariables = EnvironmentVariableLogMode.None,
+                }));
+
+        Assert.Contains($"Log directory        : {Directory}", preamble, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void LogDirectory_IsOmittedFromThePreambleWhenNotConfigured()
+    {
+        var preamble = Build(EnvironmentVariableLogMode.None);
+
+        Assert.DoesNotContain("Log directory", preamble, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void NoConfigurationWarnings_OmitsTheSection() =>
         Assert.DoesNotContain(
             "Configuration Warnings:",

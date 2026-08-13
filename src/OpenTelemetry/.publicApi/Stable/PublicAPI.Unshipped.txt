@@ -21,6 +21,7 @@ OpenTelemetry.SelfDiagnosticsOptions.MinimumLevel.set -> void
 OpenTelemetry.SelfDiagnosticsOptions.SelfDiagnosticsOptions() -> void
 OpenTelemetry.Trace.AlwaysRecordSampler
 OpenTelemetry.Trace.AlwaysRecordSampler.AlwaysRecordSampler(OpenTelemetry.Trace.Sampler! rootSampler) -> void
+static OpenTelemetry.SelfDiagnosticsOptions.GetDefaultLogDirectory() -> string?
 override OpenTelemetry.SimpleActivityExportProcessor.OnShutdown(int timeoutMilliseconds) -> bool
 override OpenTelemetry.SimpleLogRecordExportProcessor.OnEnd(OpenTelemetry.Logs.LogRecord! data) -> void
 override OpenTelemetry.SimpleLogRecordExportProcessor.OnShutdown(int timeoutMilliseconds) -> bool

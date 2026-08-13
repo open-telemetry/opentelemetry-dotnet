@@ -67,6 +67,65 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
     }
 
     [Fact]
+    public void FirstOpen_WritesStartupMessageToStderr()
+    {
+        using var captured = new StringWriter();
+        var previous = Console.Error;
+        Console.SetError(captured);
+
+        string? expectedPath;
+
+        try
+        {
+            using var sink = this.CreateSink();
+            expectedPath = sink.CurrentFilePath;
+        }
+        finally
+        {
+            Console.SetError(previous);
+        }
+
+        var output = captured.ToString();
+        Assert.NotNull(expectedPath);
+        Assert.Contains("OpenTelemetry SDK self-diagnostics: logging to", output, StringComparison.Ordinal);
+        Assert.Contains(expectedPath, output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void RollOver_DoesNotRepeatStartupMessage()
+    {
+        using var captured = new StringWriter();
+        var previous = Console.Error;
+        Console.SetError(captured);
+
+        try
+        {
+            using var sink = this.CreateSink(fileSizeLimitKilobytes: 1);
+            var line = new string('x', 600);
+            WriteLine(sink, line);
+            WriteLine(sink, line);
+            WriteLine(sink, line);
+            sink.Flush();
+        }
+        finally
+        {
+            Console.SetError(previous);
+        }
+
+        var output = captured.ToString();
+        const string marker = "OpenTelemetry SDK self-diagnostics: logging to";
+        var count = 0;
+        var pos = 0;
+        while ((pos = output.IndexOf(marker, pos, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            pos += marker.Length;
+        }
+
+        Assert.Equal(1, count);
+    }
+
+    [Fact]
     public void FileSizeLimit_CountsPreambleAndHeaderBytes()
     {
         using (var sink = this.CreateSink(

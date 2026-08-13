@@ -140,6 +140,10 @@ internal static class SelfDiagnosticsPreamble
             sb.Append("GC latency mode      : ").AppendLine(GCSettings.LatencyMode.ToString());
             sb.Append("App base directory   : ").AppendLine(AppDomain.CurrentDomain.BaseDirectory);
             sb.Append("Working directory    : ").AppendLine(Environment.CurrentDirectory);
+            if (!string.IsNullOrEmpty(configuration.LogDirectory))
+            {
+                sb.Append("Log directory        : ").AppendLine(configuration.LogDirectory);
+            }
 #if NET
             sb.Append("Dynamic code         : ").AppendLine(System.Runtime.CompilerServices.RuntimeFeature.IsDynamicCodeSupported.ToString());
 #endif

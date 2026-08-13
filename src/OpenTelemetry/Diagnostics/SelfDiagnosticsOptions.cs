@@ -24,8 +24,11 @@ namespace OpenTelemetry;
 /// callbacks, which always take precedence:
 /// <list type="bullet">
 ///   <item><c>OTEL_LOG_LEVEL</c> sets <see cref="MinimumLevel"/>.</item>
-///   <item><c>OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS</c> selects the sinks.</item>
-///   <item><c>OTEL_DOTNET_SELF_DIAGNOSTICS_LOG_DIRECTORY</c> sets <see cref="LogDirectory"/>.</item>
+///   <item><c>OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS</c> selects the sinks. When the list includes
+///   <c>file</c> and <c>OTEL_DOTNET_SELF_DIAGNOSTICS_LOG_DIRECTORY</c> is unset, the SDK tries
+///   <see cref="GetDefaultLogDirectory"/>.</item>
+///   <item><c>OTEL_DOTNET_SELF_DIAGNOSTICS_LOG_DIRECTORY</c> sets <see cref="LogDirectory"/> and
+///   takes precedence over the platform default.</item>
 ///   <item><c>OTEL_DOTNET_SELF_DIAGNOSTICS_ENV_VARS</c> sets <see cref="EnvironmentVariables"/>.</item>
 /// </list>
 /// </para>
@@ -59,50 +62,25 @@ public sealed class SelfDiagnosticsOptions
     /// </summary>
     /// <param name="configuration">The configuration source used to read OTEL_ environment variable defaults.</param>
     internal SelfDiagnosticsOptions(IConfiguration configuration)
+        : this(configuration, GetDefaultLogDirectory)
+    {
+    }
+
+    internal SelfDiagnosticsOptions(
+        IConfiguration configuration,
+        Func<string?> defaultLogDirectoryResolver,
+        Action<string>? reportConfigurationError = null)
     {
         Guard.ThrowIfNull(configuration);
+        Guard.ThrowIfNull(defaultLogDirectoryResolver);
 
-        List<string>? warnings = null;
+        var warnings = SelfDiagnosticsOptionsEnvironmentDefaults.ApplyEnvironmentVariables(
+            this,
+            configuration,
+            defaultLogDirectoryResolver,
+            reportConfigurationError);
 
-        if (configuration.TryGetStringValue(LogLevelEnvVarName, out var logLevelRaw))
-        {
-            if (TryParseOtelLogLevel(logLevelRaw, out var parsedLevel))
-            {
-                this.MinimumLevel = parsedLevel;
-            }
-            else
-            {
-                AddWarning(ref warnings, LogLevelEnvVarName, logLevelRaw, "error, warn, info, debug, trace, none");
-            }
-        }
-
-        if (configuration.TryGetStringValue(LogDirectoryEnvVarName, out var logDir))
-        {
-            this.LogDirectory = logDir;
-        }
-
-        if (configuration.TryGetStringValue(EnvironmentVariablesEnvVarName, out var envVarModeRaw))
-        {
-            if (TryParseEnvironmentVariableLogMode(envVarModeRaw, out var parsedMode))
-            {
-                this.EnvironmentVariables = parsedMode;
-            }
-            else
-            {
-                AddWarning(ref warnings, EnvironmentVariablesEnvVarName, envVarModeRaw, "none, names, knownsafe, all");
-            }
-        }
-
-        // Read after LogDirectory, because when present this variable is authoritative about
-        // which sinks exist: a directory that was set without 'file' being listed is dropped.
-        // When absent the sink set is inferred from LogDirectory alone, so setting only the
-        // directory is still enough to get file output.
-        if (configuration.TryGetStringValue(SinksEnvVarName, out var sinksRaw))
-        {
-            this.ApplySinks(sinksRaw, ref warnings);
-        }
-
-        this.ConfigurationWarnings = warnings is null ? NoWarnings : warnings.ToArray();
+        this.ConfigurationWarnings = warnings is null ? NoWarnings : [.. warnings];
     }
 
     /// <summary>
@@ -128,10 +106,21 @@ public sealed class SelfDiagnosticsOptions
     public LogLevel MinimumLevel { get; set; } = LogLevel.Warning;
 
     /// <summary>
-    /// Gets or sets the directory in which self-diagnostics log files are written.
-    /// Setting this property enables the file sink. <see langword="null"/> or empty
-    /// disables file logging.
+    /// Gets or sets the folder where self-diagnostics log files are written.
+    /// Set this to use a specific folder. Leave it <see langword="null"/> or empty to leave
+    /// file logging unset; if <c>OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS</c> requests <c>file</c>,
+    /// the SDK may still choose a default folder.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// When <c>OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS</c> includes <c>file</c> and
+    /// <c>OTEL_DOTNET_SELF_DIAGNOSTICS_LOG_DIRECTORY</c> is unset, the environment-variable
+    /// constructor tries to fill this property from <see cref="GetDefaultLogDirectory"/>.
+    /// From code, assign <see cref="GetDefaultLogDirectory"/> (or an explicit path) yourself;
+    /// a blank <see cref="SelfDiagnosticsOptions"/> instance does not pick a default folder
+    /// on its own.
+    /// </para>
+    /// </remarks>
     public string? LogDirectory { get; set; }
 
     /// <summary>
@@ -145,12 +134,20 @@ public sealed class SelfDiagnosticsOptions
     public int FileSizeLimitKilobytes { get; set; } = 10_240;
 
     /// <summary>
-    /// Gets or sets the maximum number of rolling log files to retain.
+    /// Gets or sets the maximum number of rolling log files to retain. Defaults to 10.
     /// When a new file is opened the oldest is deleted if this limit would be exceeded.
     /// Values less than or equal to zero disable automatic pruning, so files are retained
-    /// until they are removed externally. Defaults to zero.
+    /// until they are removed externally.
     /// </summary>
-    public int MaxRetainedFiles { get; set; }
+    /// <remarks>
+    /// <para>
+    /// The default retains a bounded history so long-running deployments and repeated
+    /// reproductions cannot fill the disk. Set a value less than or equal to zero to retain
+    /// every rolled file indefinitely instead, or a different positive value to change the
+    /// number retained.
+    /// </para>
+    /// </remarks>
+    public int MaxRetainedFiles { get; set; } = 10;
 
     /// <summary>
     /// Gets or sets a value indicating whether SDK diagnostics are written to standard output.
@@ -179,182 +176,41 @@ public sealed class SelfDiagnosticsOptions
 
     /// <summary>
     /// Gets messages describing environment variable values that could not be applied.
-    /// These are surfaced in the log file preamble because no logger exists at the point
-    /// options are constructed.
+    /// These are surfaced in the log file preamble when a file sink is active. When the file
+    /// sink cannot be enabled (for example because no default log directory could be resolved),
+    /// the same messages are also written to standard error so the failure is not silent.
     /// </summary>
     internal IReadOnlyList<string> ConfigurationWarnings { get; private set; } = NoWarnings;
 
     /// <summary>
-    /// Parses an OTEL_LOG_LEVEL string value into a <see cref="LogLevel"/>.
+    /// Resolves the platform-appropriate per-user directory used when the file sink is enabled
+    /// without an explicit <see cref="LogDirectory"/>.
     /// </summary>
+    /// <returns>
+    /// The default log directory for the current platform, or <see langword="null"/> when no
+    /// per-user folder can be resolved.
+    /// </returns>
     /// <remarks>
-    /// The OpenTelemetry specification tokens are recognised first. The
-    /// <see cref="LogLevel"/> member names are then accepted as an alias so that values a .NET
-    /// developer would reasonably write - <c>Warning</c>, <c>Information</c>, <c>Critical</c> -
-    /// are not silently ignored. Numeric input is rejected: <c>OTEL_LOG_LEVEL=0</c> resolving to
-    /// <see cref="LogLevel.Trace"/> would be a trap rather than a convenience.
+    /// <para>
+    /// Typical paths:
+    /// <list type="bullet">
+    ///   <item>Windows: <c>%LOCALAPPDATA%\OpenTelemetry\dotnet-diagnostics</c></item>
+    ///   <item>macOS: <c>~/Library/Logs/OpenTelemetry/dotnet-diagnostics</c></item>
+    ///   <item>Linux and other Unix-like systems: <c>$XDG_STATE_HOME/opentelemetry/dotnet-diagnostics</c>
+    ///   when <c>XDG_STATE_HOME</c> is an absolute path; otherwise
+    ///   <c>~/.local/state/opentelemetry/dotnet-diagnostics</c></item>
+    /// </list>
+    /// </para>
+    /// <para>
+    /// Prefer this helper from <c>Configure&lt;SelfDiagnosticsOptions&gt;</c> callbacks so code
+    /// configuration matches the environment-variable default used when
+    /// <c>OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS</c> includes <c>file</c> without a directory.
+    /// If no per-user folder can be found, file logging stays off and the SDK writes a warning
+    /// to standard error.
+    /// </para>
     /// </remarks>
-    /// <param name="value">The raw OTEL_LOG_LEVEL string (e.g. "warn", "debug").</param>
-    /// <param name="level">The parsed <see cref="LogLevel"/> when the return value is <see langword="true"/>.</param>
-    /// <returns><see langword="true"/> if <paramref name="value"/> is a recognized level string; otherwise <see langword="false"/>.</returns>
-    internal static bool TryParseOtelLogLevel(string value, out LogLevel level)
-    {
-        switch (value.Trim().ToUpperInvariant())
-        {
-            case "ERROR":
-                level = LogLevel.Error;
-                return true;
-            case "WARN":
-                level = LogLevel.Warning;
-                return true;
-            case "INFO":
-                level = LogLevel.Information;
-                return true;
-            case "DEBUG":
-                level = LogLevel.Debug;
-                return true;
-            case "TRACE":
-                level = LogLevel.Trace;
-                return true;
-            case "NONE":
-                level = LogLevel.None;
-                return true;
-        }
-
-        if (!StartsWithNumericSign(value)
-            && Enum.TryParse(value.Trim(), ignoreCase: true, out level))
-        {
-            return true;
-        }
-
-        level = LogLevel.None;
-        return false;
-    }
-
-    /// <summary>
-    /// Parses an <c>OTEL_DOTNET_SELF_DIAGNOSTICS_ENV_VARS</c> value.
-    /// </summary>
-    /// <param name="value">The raw value (e.g. "known", "all").</param>
-    /// <param name="mode">The parsed mode when the return value is <see langword="true"/>.</param>
-    /// <returns><see langword="true"/> if <paramref name="value"/> is recognised; otherwise <see langword="false"/>.</returns>
-    internal static bool TryParseEnvironmentVariableLogMode(string value, out EnvironmentVariableLogMode mode)
-    {
-        switch (value.Trim().ToUpperInvariant())
-        {
-            case "NONE":
-                mode = EnvironmentVariableLogMode.None;
-                return true;
-            case "NAMES":
-                mode = EnvironmentVariableLogMode.Names;
-                return true;
-
-            // Both the short token and the enum member name are accepted, so a value copied
-            // from code works in the environment variable and vice versa.
-            case "KNOWN":
-            case "KNOWNSAFE":
-            case "KNOWNSAFEVALUES":
-                mode = EnvironmentVariableLogMode.KnownSafeValues;
-                return true;
-            case "ALL":
-            case "ALLVALUES":
-                mode = EnvironmentVariableLogMode.AllValues;
-                return true;
-        }
-
-        mode = EnvironmentVariableLogMode.KnownSafeValues;
-        return false;
-    }
-
-    private static bool StartsWithNumericSign(string value)
-    {
-        var trimmed = value.Trim();
-        if (trimmed.Length == 0)
-        {
-            return false;
-        }
-
-        var first = trimmed[0];
-        return char.IsDigit(first) || first == '+' || first == '-';
-    }
-
-    private static void AddWarning(ref List<string>? warnings, string name, string value, string expected)
-    {
-        warnings ??= [];
-        warnings.Add($"{name}='{value}' is not a recognised value and was ignored. Expected one of: {expected}.");
-    }
-
-    /// <summary>
-    /// Applies a comma-separated sink selection, e.g. <c>file,stderr</c>.
-    /// </summary>
-    /// <remarks>
-    /// Unrecognised tokens are reported and skipped rather than invalidating the whole value, so
-    /// one typo does not silence the sinks that were spelled correctly. <c>none</c> overrides every
-    /// other token: silence is the safe reading of a contradictory value.
-    /// </remarks>
-    private void ApplySinks(string value, ref List<string>? warnings)
-    {
-        var silence = false;
-        var fileRequested = false;
-
-        foreach (var token in value.Split(','))
-        {
-            switch (token.Trim().ToUpperInvariant())
-            {
-                case "":
-                    // Tolerate empty entries from trailing or doubled separators.
-                    break;
-
-                case "NONE":
-                    silence = true;
-                    break;
-
-                case "FILE":
-                    fileRequested = true;
-                    break;
-
-                case "STDOUT":
-                    this.LogToStdout = true;
-                    break;
-
-                case "STDERR":
-                    this.LogToStderr = true;
-                    break;
-
-                case "CONSOLE":
-                    // Alias for 'stdout,stderr', for anyone arriving with the .NET
-                    // auto-instrumentation agent's vocabulary.
-                    this.LogToStdout = true;
-                    this.LogToStderr = true;
-                    break;
-
-                default:
-                    AddWarning(ref warnings, SinksEnvVarName, token.Trim(), SinksExpectedValues);
-                    break;
-            }
-        }
-
-        if (silence)
-        {
-            this.MinimumLevel = LogLevel.None;
-            this.LogToStdout = false;
-            this.LogToStderr = false;
-            this.LogDirectory = null;
-            return;
-        }
-
-        if (!fileRequested)
-        {
-            // The selection is authoritative: a directory not accompanied by 'file' is not a
-            // request for file output.
-            this.LogDirectory = null;
-        }
-        else if (string.IsNullOrEmpty(this.LogDirectory))
-        {
-            warnings ??= [];
-            warnings.Add(
-                $"{SinksEnvVarName} requested the 'file' sink but {LogDirectoryEnvVarName} is not set; no file will be written.");
-        }
-    }
+    public static string? GetDefaultLogDirectory()
+        => SelfDiagnosticsLogDirectoryResolver.Resolve();
 
     /// <summary>
     /// Immutable, internally-consistent snapshot of self-diagnostics options.
