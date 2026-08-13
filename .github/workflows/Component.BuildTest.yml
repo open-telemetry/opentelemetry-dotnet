@@ -112,7 +112,6 @@ jobs:
         --configuration Release
         --no-restore
         --no-build
-        --logger:"GitHubActions;report-warnings=false"
         --logger:"junit;LogFilePath=${env:GITHUB_WORKSPACE}/TestResults/junit.xml"
         --
         RunConfiguration.DisableAppDomain=${env:DISABLE_APP_DOMAIN}
