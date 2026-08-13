@@ -232,7 +232,7 @@ internal static class SelfDiagnosticsPreamble
     private static void AppendRuntimeEnvVars(StringBuilder sb)
     {
         sb.AppendLine();
-        sb.AppendLine("Runtime env vars:");
+        sb.AppendLine("Runtime environment variables:");
 
         var anySet = false;
         foreach (var name in RuntimeEnvVarNames)
