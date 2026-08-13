@@ -274,6 +274,40 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
             }
 
             Assert.ProperSuperset(expectedSeries, actualSeries);
+
+            // Verify that the histogram bucket boundaries round-trip correctly through the Prometheus text formats.
+            // See https://github.com/open-telemetry/opentelemetry-dotnet/discussions/7585.
+            var durationBuckets = usesUtf8Names
+                ? "http.server.request.duration_seconds_bucket"
+                : "http_server_request_duration_seconds_bucket";
+
+            string[] expectedBounds =
+            [
+                "+Inf",
+                "0.005",
+                "0.01",
+                "0.025",
+                "0.05",
+                "0.075",
+                "0.1",
+                "0.25",
+                "0.5",
+                "0.75",
+                "1.0",
+                "10.0",
+                "2.5",
+                "5.0",
+                "7.5",
+            ];
+
+            var actualBounds = await WaitForLabelValuesAsync(
+                prometheusBaseAddress,
+                durationBuckets,
+                "le",
+                outputHelper,
+                cts.Token);
+
+            Assert.Equal(expectedBounds, actualBounds);
         }
         finally
         {
@@ -359,6 +393,64 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
             }
 
             Assert.Fail($"Timed out waiting for metric series.");
+            return [];
+        }
+
+        static async Task<string[]> WaitForLabelValuesAsync(
+            Uri baseAddress,
+            string metricName,
+            string labelName,
+            ITestOutputHelper outputHelper,
+            CancellationToken cancellationToken)
+        {
+            // See https://prometheus.io/docs/prometheus/latest/querying/api/#querying-label-values
+            var valuesUrl = QueryHelpers.AddQueryString(
+                $"/api/v1/label/{labelName}/values",
+                [
+                    KeyValuePair.Create<string, string?>("limit", "0"),
+                    KeyValuePair.Create<string, string?>("match[]", $"{{__name__=\"{metricName}\"}}"),
+                ]);
+
+            var valuesUri = new Uri(valuesUrl, UriKind.Relative);
+
+            var frequency = TimeSpan.FromMilliseconds(250);
+
+            using var client = new HttpClient() { BaseAddress = baseAddress };
+
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                try
+                {
+                    using var values = await client.GetFromJsonAsync<JsonDocument>(valuesUri, cancellationToken);
+
+                    if (values!.RootElement.ValueKind is JsonValueKind.Object &&
+                        values.RootElement.TryGetProperty("status", out var status) &&
+                        status.GetString() == "success")
+                    {
+                        var data = values.RootElement.GetProperty("data");
+
+                        if (data.GetArrayLength() > 0)
+                        {
+                            return [.. data.EnumerateArray().Select((p) => p.GetString()!)];
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    outputHelper.WriteLine($"[prometheus] Exception while waiting for label values: {ex}");
+                }
+
+                try
+                {
+                    await Task.Delay(frequency, cancellationToken);
+                }
+                catch (TaskCanceledException)
+                {
+                    break;
+                }
+            }
+
+            Assert.Fail($"Timed out waiting for the '{labelName}' label values of the '{metricName}' metric.");
             return [];
         }
 
