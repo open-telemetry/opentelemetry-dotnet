@@ -307,7 +307,7 @@ public class ActivityExportProcessorSelfObservabilityTests
         using var listener = new ActivityListener
         {
             ShouldListenTo = s => s.Name == sourceName,
-            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.PropagationData,
+            Sample = (ref _) => ActivitySamplingResult.PropagationData,
         };
         ActivitySource.AddActivityListener(listener);
 
