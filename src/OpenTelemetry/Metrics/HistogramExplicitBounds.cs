@@ -12,7 +12,7 @@ namespace OpenTelemetry.Metrics;
 
 internal sealed class HistogramExplicitBounds
 {
-    internal const int DefaultBoundaryCountForBinarySearch = 50;
+    internal const int DefaultBoundaryCountForBinarySearch = 32;
 
     private const int RadixLookupBitCount = 12;
     private const int RadixLinearSearchThreshold = 32;
