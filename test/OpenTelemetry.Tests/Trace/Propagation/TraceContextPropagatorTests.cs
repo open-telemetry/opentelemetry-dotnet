@@ -141,7 +141,7 @@ public class TraceContextPropagatorTests
     public void Extract_IsBlankIfCarrierIsNull()
     {
         var propagator = new TraceContextPropagator();
-        var context = propagator.Extract(default, (IDictionary<string, string>)null!, Getter);
+        var context = propagator.Extract(default, null!, Getter);
 
         Assert.False(context.ActivityContext.IsValid());
     }
