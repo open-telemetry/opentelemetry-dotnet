@@ -45,6 +45,9 @@ Notes](../../RELEASENOTES.md).
   limit is discarded and treated as a non-retryable failure.
   ([#7583](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7583))
 
+* The OTLP exporter will now export logger version if it was specified.
+  ([#7636](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7636))
+
 ## 1.17.0
 
 Released 2026-Jul-16
