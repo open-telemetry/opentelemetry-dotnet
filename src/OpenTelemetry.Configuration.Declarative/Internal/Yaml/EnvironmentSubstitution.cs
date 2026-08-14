@@ -92,7 +92,7 @@ internal static class EnvironmentSubstitution
     /// content is not a valid environment variable reference.
     /// </exception>
     internal static string Substitute(string value)
-        => Substitute(value, name => Environment.GetEnvironmentVariable(name));
+        => Substitute(value, Environment.GetEnvironmentVariable);
 
     /// <summary>
     /// Throws if <paramref name="value"/> contains a well-formed but invalid <c>${...}</c>
@@ -337,7 +337,7 @@ internal static class EnvironmentSubstitution
     // OTel VCHAR-WSP-NO-RBRACE = %x21-7C / "~" / WSP. WSP contributes TAB (U+0009) and SPACE
     // (U+0020); the range covers U+0021-U+007C. '}' (U+007D) and DEL (U+007F) are excluded.
     private static bool IsValidDefaultChar(char c)
-        => c == '\t' || (c >= '\x20' && c <= '\x7C') || c == '\x7E';
+        => c is '\t' or (>= '\x20' and <= '\x7C') or '\x7E';
 
     private readonly struct ParsedSubstitution
     {
