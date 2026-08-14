@@ -101,6 +101,8 @@ jobs:
     - name: dotnet test ${{ inputs.project-name }}
       shell: pwsh
       timeout-minutes: 20
+      env:
+        VSTEST_CONNECTION_TIMEOUT: 180
       run: >
         dotnet test ${env:PROJECT_NAME}
         --blame-hang-dump-type full
