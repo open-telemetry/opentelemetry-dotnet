@@ -1,0 +1,129 @@
+// Copyright The OpenTelemetry Authors
+// SPDX-License-Identifier: Apache-2.0
+
+namespace OpenTelemetry.Metrics;
+
+/// <summary>
+/// Isolates the compatibility matrix between <see cref="AggregationKind"/> and
+/// System.Diagnostics.Metrics instrument kinds.
+///
+/// Modeled on OTel Go's `isAggregatorCompatible`
+/// (https://github.com/open-telemetry/opentelemetry-go/blob/e2543cb309cbae573994de025448806c401baf2a/sdk/metric/pipeline.go#L581),
+/// adapted for .NET's view-level <see cref="AggregationKind"/> enum.
+///
+/// Used by <see cref="MeterProviderSdk"/> when validating view configurations.
+///
+/// (i) = integral value type only (long/int/short/byte)
+/// (f) = floating value type only (double/float)
+/// See the OpenTelemetry metrics SDK specification for details:
+/// https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#aggregation
+///
+/// Counter / UpDownCounter / Histogram:
+///
+/// | AggregationType          | Counter | UpDownCounter | Histogram |
+/// |--------------------------|:-------:|:-------------:|:---------:|
+/// | LongSumIncomingDelta     | Y (i)   |    Y (i)      |  Y (i)    |
+/// | DoubleSumIncomingDelta   | Y (f)   |    Y (f)      |  Y (f)    |
+/// | Histogram and variants   |   Y     |      Y        |    Y      |
+///
+/// ObservableCounter / ObservableUpDownCounter:
+///
+/// | AggregationType            | ObservableCounter | ObservableUpDownCounter |
+/// |----------------------------|:-----------------:|:-----------------------:|
+/// | LongSumIncomingCumulative  |      Y (i)        |         Y (i)           |
+/// | DoubleSumIncomingCumulative|      Y (f)        |         Y (f)           |
+/// | Histogram and variants     |        N          |           N             |
+///
+/// Gauge / ObservableGauge:
+///
+/// | AggregationType | Gauge | ObservableGauge |
+/// |-----------------|:-----:|:---------------:|
+/// | LongGauge       | Y (i) |     Y (i)       |
+/// | DoubleGauge     | Y (f) |     Y (f)       |.
+///
+/// </summary>
+internal static class AggregationCompatibility
+{
+    /// <summary>
+    /// Determines whether <paramref name="aggregationType"/> may be used to
+    /// aggregate measurements from an instrument of the given CLR
+    /// <paramref name="instrumentType"/> (<c>typeof(Counter)</c>).
+    /// </summary>
+    /// <param name="aggregationType">The candidate aggregation.</param>
+    /// <param name="instrumentType">
+    /// The closed generic instrument type, e.g.
+    /// <c>typeof(Counter)</c> or
+    /// <c>typeof(ObservableGauge)</c>. Note:
+    /// MetricStreamConfiguration.Drop is a view-level construct, not
+    /// an AggregationType, and is out of scope here. Callers should
+    /// short-circuit on Drop before reaching this method.
+    /// </param>
+    /// <returns>
+    /// <see langword="true"/> if compatible; <see langword="false"/>
+    /// if the instrument kind or numeric type is not accepted, or if
+    /// <paramref name="instrumentType"/> is not a recognized
+    /// System.Diagnostics.Metrics instrument type.
+    /// </returns>
+    public static bool IsCompatible(AggregationKind aggregationType, Type instrumentType)
+    {
+        if (!InstrumentTypeInspector.TryClassify(instrumentType, out var kind))
+        {
+            return false;
+        }
+
+        if (aggregationType == AggregationKind.Drop)
+        {
+            return true;
+        }
+
+        if (kind is InstrumentKind.Counter or InstrumentKind.UpDownCounter)
+        {
+            switch (aggregationType)
+            {
+                case AggregationKind.Sum:
+                case AggregationKind.Histogram:
+                case AggregationKind.ExponentialHistogram:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        if (kind is InstrumentKind.Histogram)
+        {
+            switch (aggregationType)
+            {
+                case AggregationKind.Sum:
+                case AggregationKind.Histogram:
+                case AggregationKind.ExponentialHistogram:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        if (kind is InstrumentKind.ObservableCounter or InstrumentKind.ObservableUpDownCounter)
+        {
+            switch (aggregationType)
+            {
+                case AggregationKind.Sum:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        if (kind is InstrumentKind.Gauge or InstrumentKind.ObservableGauge)
+        {
+            switch (aggregationType)
+            {
+                case AggregationKind.Gauge:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        return false;
+    }
+}

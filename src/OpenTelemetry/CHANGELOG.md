@@ -27,6 +27,17 @@ Notes](../../RELEASENOTES.md).
   to finish enqueueing before flushing.
   ([#7598](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7598))
 
+* Added `AggregationKind` support to `MetricStreamConfiguration`, allowing a
+  View to configure the Aggregation used where the instrument/aggregation
+  pairing is compatible.
+  ([#7557](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7557))
+
+* Added `MetricPoint.TryGetHistogramSum(out double sum)`. `Histogram.Sum` is
+  now suppressed for streams aggregating a non-monotonic instrument
+  (`UpDownCounter`) as a Histogram, matching the `record_sum`/`noSum` behavior
+  in the Go and Rust SDKs and the OTLP `sum` field's `optional` semantics.
+  ([#7557](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7557))
+
 ## 1.17.0
 
 Released 2026-Jul-16
