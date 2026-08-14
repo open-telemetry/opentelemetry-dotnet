@@ -1815,11 +1815,6 @@ public class OtlpLogExporterTests
     [InlineData(null, "")]
     public void LogRecordLoggerNameIsExportedWhenUsingBridgeApi(string? loggerName, string expectedScopeName)
     {
-        LogRecordAttributeList attributes = default;
-        attributes.Add("name", "tomato");
-        attributes.Add("price", 2.99);
-        attributes.Add("{OriginalFormat}", "Hello from {name} {price}.");
-
         var logRecords = new List<LogRecord>();
 
         using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
@@ -1841,6 +1836,36 @@ public class OtlpLogExporterTests
         Assert.Single(request.ResourceLogs[0].ScopeLogs);
 
         Assert.Equal(expectedScopeName, request.ResourceLogs[0].ScopeLogs[0].Scope?.Name);
+    }
+
+    [Theory]
+    [InlineData("1.0.0", "1.0.0")]
+    [InlineData(null, "")]
+    [InlineData("", "")]
+    [InlineData("   ", "   ")]
+    public void LogRecordLoggerVersionIsExportedWhenUsingBridgeApi(string? version, string expectedVersion)
+    {
+        var logRecords = new List<LogRecord>();
+
+        using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+                   .AddInMemoryExporter(logRecords)
+                   .Build())
+        {
+            var logger = loggerProvider.GetLogger("MyLogger", version);
+
+            logger.EmitLog(new LogRecordData());
+        }
+
+        Assert.Single(logRecords);
+
+        var batch = new Batch<LogRecord>([logRecords[0]], 1);
+        var request = CreateLogsExportRequest(DefaultSdkLimitOptions, new ExperimentalOptions(), batch, ResourceBuilder.CreateEmpty().Build());
+
+        Assert.NotNull(request);
+        Assert.Single(request.ResourceLogs);
+        Assert.Single(request.ResourceLogs[0].ScopeLogs);
+
+        Assert.Equal(expectedVersion, request.ResourceLogs[0].ScopeLogs[0].Scope?.Version);
     }
 
     [Theory]
