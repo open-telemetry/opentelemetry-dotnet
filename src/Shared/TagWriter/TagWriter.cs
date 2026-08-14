@@ -223,8 +223,8 @@ internal abstract class TagWriter<TTagState, TArrayState>
         string tagValueTypeFullName);
 
     private static ReadOnlySpan<char> TruncateString(ReadOnlySpan<char> value, int? maxLength)
-        => maxLength.HasValue && value.Length > maxLength
-           ? value.Slice(0, maxLength.Value)
+        => maxLength is { } maxLengthValue && value.Length > maxLengthValue
+           ? value.Slice(0, maxLengthValue)
            : value;
 
     private void WriteCharTag(ref TTagState state, string key, char value)
