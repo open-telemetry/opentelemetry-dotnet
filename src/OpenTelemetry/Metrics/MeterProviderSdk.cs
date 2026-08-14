@@ -188,7 +188,7 @@ internal sealed class MeterProviderSdk : MeterProvider
         }
         catch (Exception)
         {
-            DisposeBuiltState(state);
+            this.DisposeBuiltState(state);
             throw;
         }
     }
@@ -506,7 +506,7 @@ internal sealed class MeterProviderSdk : MeterProvider
         base.Dispose(disposing);
     }
 
-    private static void DisposeBuiltState(MeterProviderBuilderSdk state)
+    private void DisposeBuiltState(MeterProviderBuilderSdk state)
     {
         foreach (var reader in state.Readers)
         {
@@ -522,6 +522,12 @@ internal sealed class MeterProviderSdk : MeterProvider
             }
         }
 
+        if (this.OwnedServiceProvider != null)
+        {
+            CleanUp(this.OwnedServiceProvider.Dispose);
+            this.OwnedServiceProvider = null;
+        }
+
         static void CleanUp(Action action)
         {
             try
@@ -530,7 +536,7 @@ internal sealed class MeterProviderSdk : MeterProvider
             }
             catch (Exception ex)
             {
-                OpenTelemetrySdkEventSource.Log.MeterProviderException(nameof(DisposeBuiltState), ex);
+                OpenTelemetrySdkEventSource.Log.MeterProviderException(nameof(this.DisposeBuiltState), ex);
             }
         }
     }

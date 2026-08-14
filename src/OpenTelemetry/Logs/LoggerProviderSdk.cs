@@ -79,7 +79,7 @@ internal sealed class LoggerProviderSdk : LoggerProvider
         }
         catch (Exception)
         {
-            DisposeBuiltState(state);
+            this.DisposeBuiltState(state);
             throw;
         }
     }
@@ -243,7 +243,7 @@ internal sealed class LoggerProviderSdk : LoggerProvider
         base.Dispose(disposing);
     }
 
-    private static void DisposeBuiltState(LoggerProviderBuilderSdk state)
+    private void DisposeBuiltState(LoggerProviderBuilderSdk state)
     {
         foreach (var processor in state.Processors)
         {
@@ -259,6 +259,12 @@ internal sealed class LoggerProviderSdk : LoggerProvider
             }
         }
 
+        if (this.OwnedServiceProvider != null)
+        {
+            CleanUp(this.OwnedServiceProvider.Dispose);
+            this.OwnedServiceProvider = null;
+        }
+
         static void CleanUp(Action action)
         {
             try
@@ -267,7 +273,7 @@ internal sealed class LoggerProviderSdk : LoggerProvider
             }
             catch (Exception ex)
             {
-                OpenTelemetrySdkEventSource.Log.LoggerProviderException(nameof(DisposeBuiltState), ex);
+                OpenTelemetrySdkEventSource.Log.LoggerProviderException(nameof(this.DisposeBuiltState), ex);
             }
         }
     }

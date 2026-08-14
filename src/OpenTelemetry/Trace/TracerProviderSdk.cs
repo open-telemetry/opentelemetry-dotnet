@@ -286,7 +286,7 @@ internal sealed class TracerProviderSdk : TracerProvider
         }
         catch (Exception)
         {
-            DisposeBuiltState(state);
+            this.DisposeBuiltState(state);
             throw;
         }
     }
@@ -395,35 +395,6 @@ internal sealed class TracerProviderSdk : TracerProvider
         }
 
         base.Dispose(disposing);
-    }
-
-    private static void DisposeBuiltState(TracerProviderBuilderSdk state)
-    {
-        foreach (var processor in state.Processors)
-        {
-            CleanUp(() => processor.Shutdown(0));
-            CleanUp(processor.Dispose);
-        }
-
-        foreach (var instrumentation in state.Instrumentation)
-        {
-            if (instrumentation.Instance is IDisposable disposable)
-            {
-                CleanUp(disposable.Dispose);
-            }
-        }
-
-        static void CleanUp(Action action)
-        {
-            try
-            {
-                action();
-            }
-            catch (Exception ex)
-            {
-                OpenTelemetrySdkEventSource.Log.TracerProviderException(nameof(DisposeBuiltState), ex);
-            }
-        }
     }
 
     private static Sampler GetSampler(IConfiguration configuration, Sampler? stateSampler)
@@ -568,6 +539,43 @@ internal sealed class TracerProviderSdk : TracerProvider
         return (isRootSpan || options.Parent.IsRemote)
             ? ActivitySamplingResult.PropagationData
             : ActivitySamplingResult.None;
+    }
+
+    private void DisposeBuiltState(TracerProviderBuilderSdk state)
+    {
+        foreach (var processor in state.Processors)
+        {
+            CleanUp(() => processor.Shutdown(0));
+            CleanUp(processor.Dispose);
+        }
+
+        foreach (var instrumentation in state.Instrumentation)
+        {
+            if (instrumentation.Instance is IDisposable disposable)
+            {
+                CleanUp(disposable.Dispose);
+            }
+        }
+
+        CleanUp(() => (this.Sampler as IDisposable)?.Dispose());
+
+        if (this.OwnedServiceProvider != null)
+        {
+            CleanUp(this.OwnedServiceProvider.Dispose);
+            this.OwnedServiceProvider = null;
+        }
+
+        static void CleanUp(Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception ex)
+            {
+                OpenTelemetrySdkEventSource.Log.TracerProviderException(nameof(this.DisposeBuiltState), ex);
+            }
+        }
     }
 
     private void RunGetRequestedDataAlwaysOnSampler(Activity activity)
