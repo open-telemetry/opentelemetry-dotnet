@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Collections;
 using System.Globalization;
 using System.Text.Json;
 
@@ -277,6 +278,33 @@ public class ConsoleKvListAttributeTests
         Assert.Equal("faulty", droppedTag.Key);
     }
 
+    [Theory]
+    [InlineData("{}")]
+    [InlineData("""{"fake":1}""")]
+    [InlineData("[1,2]")]
+    [InlineData("{oops")]
+    public void KvListBeyondTheDepthLimitWithJsonLikeToStringIsWrittenAsAString(string toStringValue)
+    {
+        // The depth limit fallback writes Convert.ToString of the value. A type
+        // whose ToString returns text which looks like JSON has to be quoted
+        // like any other fallback string instead of being embedded as JSON.
+        var fake = new KvListWithCustomToString(toStringValue);
+        var level3 = new List<KeyValuePair<string, object?>> { new("fake", fake) };
+        var level2 = new List<KeyValuePair<string, object?>> { new("level3", level3) };
+        var level1 = new List<KeyValuePair<string, object?>> { new("level2", level2) };
+
+        Assert.True(this.tagWriter.TryTransformTag("key", level1, out var result));
+
+        using var document = JsonDocument.Parse(result.Value);
+        var fakeElement = document.RootElement
+            .GetProperty("level2")
+            .GetProperty("level3")
+            .GetProperty("fake");
+
+        Assert.Equal(JsonValueKind.String, fakeElement.ValueKind);
+        Assert.Equal(toStringValue, fakeElement.GetString());
+    }
+
     private static IEnumerable<KeyValuePair<string, object?>> FaultyKvList()
     {
         yield return new KeyValuePair<string, object?>("key1", "value1");
@@ -289,5 +317,24 @@ public class ConsoleKvListAttributeTests
         list.Add(new("int", 1));
         list.Add(new("self", list));
         return list;
+    }
+
+    private sealed class KvListWithCustomToString : IEnumerable<KeyValuePair<string, object?>>
+    {
+        private readonly string toStringValue;
+
+        public KvListWithCustomToString(string toStringValue)
+        {
+            this.toStringValue = toStringValue;
+        }
+
+        public IEnumerator<KeyValuePair<string, object?>> GetEnumerator()
+        {
+            yield return new KeyValuePair<string, object?>("inner", "value");
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+
+        public override string ToString() => this.toStringValue;
     }
 }

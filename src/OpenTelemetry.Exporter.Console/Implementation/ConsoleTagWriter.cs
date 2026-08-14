@@ -44,24 +44,30 @@ internal sealed class ConsoleTagWriter : JsonStringArrayTagWriter<ConsoleTagWrit
     {
         consoleTag.Key = key;
         consoleTag.Value = value.ToString(CultureInfo.InvariantCulture);
+        consoleTag.IsJsonLiteral = true;
     }
 
     protected override void WriteFloatingPointTag(ref ConsoleTag consoleTag, string key, double value)
     {
         consoleTag.Key = key;
         consoleTag.Value = value.ToString(CultureInfo.InvariantCulture);
+
+        // JSON has no representation for NaN or infinity, so those are emitted as strings.
+        consoleTag.IsJsonLiteral = !double.IsNaN(value) && !double.IsInfinity(value);
     }
 
     protected override void WriteBooleanTag(ref ConsoleTag consoleTag, string key, bool value)
     {
         consoleTag.Key = key;
         consoleTag.Value = value ? "true" : "false";
+        consoleTag.IsJsonLiteral = true;
     }
 
     protected override void WriteStringTag(ref ConsoleTag consoleTag, string key, ReadOnlySpan<char> value)
     {
         consoleTag.Key = key;
         consoleTag.Value = value.ToString();
+        consoleTag.IsJsonLiteral = false;
     }
 
     protected override void WriteArrayTag(ref ConsoleTag consoleTag, string key, ArraySegment<byte> arrayUtf8JsonBytes)
@@ -72,6 +78,7 @@ internal sealed class ConsoleTagWriter : JsonStringArrayTagWriter<ConsoleTagWrit
 #else
         consoleTag.Value = Encoding.UTF8.GetString(arrayUtf8JsonBytes.Array, 0, arrayUtf8JsonBytes.Count);
 #endif
+        consoleTag.IsJsonLiteral = true;
     }
 
     protected override void OnUnsupportedTagDropped(
@@ -83,6 +90,7 @@ internal sealed class ConsoleTagWriter : JsonStringArrayTagWriter<ConsoleTagWrit
     {
         consoleTag.Key = key;
         consoleTag.Value = null;
+        consoleTag.IsJsonLiteral = false;
         return true;
     }
 
@@ -104,8 +112,11 @@ internal sealed class ConsoleTagWriter : JsonStringArrayTagWriter<ConsoleTagWrit
                 {
                     writer.WriteNullValue();
                 }
-                else if (IsRawJsonValue(kvp.Value, tagValue))
+                else if (nestedTag.IsJsonLiteral)
                 {
+                    // The nested write produced JSON (a number, a boolean, an
+                    // array or an object), so it is embedded as-is rather than
+                    // being quoted as a string.
 #if NET
                     writer.WriteRawValue(tagValue);
 #else
@@ -125,36 +136,7 @@ internal sealed class ConsoleTagWriter : JsonStringArrayTagWriter<ConsoleTagWrit
 
         state.Key = key;
         state.Value = Encoding.UTF8.GetString(stream.GetBuffer(), 0, (int)stream.Length);
-    }
-
-    /// <summary>
-    /// Determines whether tagValue is already a valid JSON literal
-    /// that should be embedded without surrounding quotes.
-    /// </summary>
-    private static bool IsRawJsonValue(object? originalValue, string tagValue)
-    {
-        if (originalValue is float or double)
-        {
-            return tagValue is not ("NaN" or "Infinity" or "-Infinity");
-        }
-
-        if (originalValue is bool or byte or sbyte or short or ushort or int or uint or long)
-        {
-            return true;
-        }
-
-        // KV lists and arrays produce JSON objects/arrays via TryWriteTag.
-        // However, when the recursion depth limit is reached, TryWriteTag
-        // falls back to a plain string (the type name). Detect this by
-        // checking whether the output starts with '{' or '['.
-        if ((originalValue is IEnumerable<KeyValuePair<string, object?>> or Array)
-            && tagValue.Length > 0
-            && (tagValue[0] is '{' or '['))
-        {
-            return true;
-        }
-
-        return false;
+        state.IsJsonLiteral = true;
     }
 
     internal struct ConsoleTag
@@ -162,5 +144,11 @@ internal sealed class ConsoleTagWriter : JsonStringArrayTagWriter<ConsoleTagWrit
         public string? Key;
 
         public string? Value;
+
+        // Set when Value is already a JSON literal (a number, a boolean, an
+        // array or an object) as opposed to text which has to be quoted when
+        // embedded in JSON. Written by the tag writing methods so that nested
+        // values do not have to be inferred from the serialized text.
+        public bool IsJsonLiteral;
     }
 }
