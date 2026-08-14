@@ -93,25 +93,39 @@ internal abstract class TagWriter<TTagState, TArrayState>
                 this.WriteFloatingPointTag(ref state, key, f);
                 break;
             case IEnumerable<KeyValuePair<string, object?>> kvList:
-                try
+                if (recursionDepth >= MaxRecursionDepth)
                 {
-                    if (recursionDepth >= MaxRecursionDepth)
+                    // Note: The nesting limit has been reached so the value is
+                    // written as a string instead of recursing any further.
+                    // This branch does not take part in the recursion so it
+                    // must not touch the depth.
+                    try
                     {
                         var stringValue = Convert.ToString(value, CultureInfo.InvariantCulture);
                         this.WriteStringTag(
                             ref state,
                             key,
                             TruncateString(stringValue.AsSpan(), tagValueMaxLength));
-
-                        break;
                     }
-                    else
+                    catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
                     {
-                        recursionDepth++;
+                        recursionDepth = 0;
+                        throw;
+                    }
+                    catch
+                    {
+                        // If ToString throws an exception then the tag is ignored.
+                        return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
                     }
 
+                    break;
+                }
+
+                recursionDepth++;
+
+                try
+                {
                     this.WriteKvListTag(ref state, key, kvList, tagValueMaxLength);
-                    recursionDepth--;
                 }
                 catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
                 {
@@ -123,6 +137,8 @@ internal abstract class TagWriter<TTagState, TArrayState>
                     recursionDepth--;
                     return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
                 }
+
+                recursionDepth--;
 
                 break;
 
