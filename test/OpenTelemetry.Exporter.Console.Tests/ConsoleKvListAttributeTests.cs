@@ -250,6 +250,34 @@ public class ConsoleKvListAttributeTests
     }
 
     [Fact]
+    public void KvListDepthIsNotCorruptedByAThrowingFallback()
+    {
+        // The value at the depth limit throws while it is being converted to a
+        // string. The frame it is written from never increased the recursion
+        // depth, so the failure must not decrease it either.
+        var throwing = new KvListWithCustomToString(toStringValue: null);
+        var level3 = new List<KeyValuePair<string, object?>> { new("throwing", throwing) };
+        var level2 = new List<KeyValuePair<string, object?>> { new("level3", level3) };
+        var level1 = new List<KeyValuePair<string, object?>> { new("level2", level2) };
+
+        Assert.True(this.tagWriter.TryTransformTag("key", level1, out var result));
+        Assert.Equal("""{"level2":{"level3":{}}}""", result.Value);
+
+        // A subsequent tag still stops recursing at the depth limit.
+        var kvList = SelfReferencingKvList();
+
+        Assert.True(this.tagWriter.TryTransformTag("key", kvList, out var afterFailure));
+
+        using var document = JsonDocument.Parse(afterFailure.Value);
+        var deepest = document.RootElement
+            .GetProperty("self")
+            .GetProperty("self")
+            .GetProperty("self");
+
+        Assert.Equal(JsonValueKind.String, deepest.ValueKind);
+    }
+
+    [Fact]
     public void KvListEnumerationFailureDropsTag()
     {
         Assert.False(this.tagWriter.TryTransformTag("key", FaultyKvList(), out var result));
@@ -321,9 +349,10 @@ public class ConsoleKvListAttributeTests
 
     private sealed class KvListWithCustomToString : IEnumerable<KeyValuePair<string, object?>>
     {
-        private readonly string toStringValue;
+        private readonly string? toStringValue;
 
-        public KvListWithCustomToString(string toStringValue)
+        // A null toStringValue makes ToString throw.
+        public KvListWithCustomToString(string? toStringValue)
         {
             this.toStringValue = toStringValue;
         }
@@ -335,6 +364,7 @@ public class ConsoleKvListAttributeTests
 
         IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 
-        public override string ToString() => this.toStringValue;
+        public override string ToString()
+            => this.toStringValue ?? throw new InvalidOperationException("simulated failure");
     }
 }
