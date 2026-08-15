@@ -164,7 +164,19 @@ internal static class ProtobufOtlpLogSerializer
 
     internal static int WriteScopeLog(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, Logger logger, List<LogRecord> logRecords)
     {
-        writePosition = WriteInstrumentationScope(buffer, writePosition, logger);
+        writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpLogFieldNumberConstants.ScopeLogs_Scope, ProtobufWireType.LEN);
+
+        var scopeLengthPosition = writePosition;
+        writePosition += ReserveSizeForLength;
+
+        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Name, logger.Name);
+
+        if (logger.Version != null)
+        {
+            writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Version, logger.Version);
+        }
+
+        ProtobufSerializer.WriteReservedLength(buffer, scopeLengthPosition, writePosition - (scopeLengthPosition + ReserveSizeForLength));
 
         for (var i = 0; i < logRecords.Count; i++)
         {
@@ -334,25 +346,6 @@ internal static class ProtobufOtlpLogSerializer
                 }
             }
         }
-    }
-
-    private static int WriteInstrumentationScope(byte[] buffer, int writePosition, Logger logger)
-    {
-        writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpLogFieldNumberConstants.ScopeLogs_Scope, ProtobufWireType.LEN);
-
-        var scopeLengthPosition = writePosition;
-        writePosition += ReserveSizeForLength;
-
-        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Name, logger.Name);
-
-        if (logger.Version != null)
-        {
-            writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Version, logger.Version);
-        }
-
-        ProtobufSerializer.WriteReservedLength(buffer, scopeLengthPosition, writePosition - (scopeLengthPosition + ReserveSizeForLength));
-
-        return writePosition;
     }
 
     private static int WriteLogRecordBody(byte[] buffer, int writePosition, string value)
