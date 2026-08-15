@@ -694,8 +694,10 @@ public sealed class DeclarativeConfigurationReaderTests
         var pairs = flat.Split(',');
         Assert.Equal(3, pairs.Length);
 
-        static string DecodeValue(string pair) =>
-            DecodeResourceAttributeValue(pair.Split(['='], 2)[1]);
+        static string DecodeValue(string pair)
+        {
+            return DecodeResourceAttributeValue(pair.Split(['='], 2)[1]);
+        }
 
         Assert.Equal("my+service", DecodeValue(pairs[0]));
         Assert.Equal("prod,staging", DecodeValue(pairs[1]));

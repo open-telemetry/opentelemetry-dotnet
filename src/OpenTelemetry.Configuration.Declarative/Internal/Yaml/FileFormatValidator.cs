@@ -47,7 +47,7 @@ internal static partial class FileFormatValidator
     {
         Guard.ThrowIfNull(warn);
 
-        if (string.IsNullOrWhiteSpace(fileFormat))
+        if (fileFormat is not { Length: > 0 } || string.IsNullOrWhiteSpace(fileFormat))
         {
             throw new DeclarativeConfigurationException(
                 $"Declarative configuration requires a 'file_format' field. " +
@@ -55,7 +55,7 @@ internal static partial class FileFormatValidator
                 $"(for example: file_format: \"{SupportedMajorVersion}.0\").");
         }
 
-        var validatedFileFormat = fileFormat!;
+        var validatedFileFormat = fileFormat;
         var match = GetFormatPattern().Match(validatedFileFormat);
         if (!match.Success
             || !int.TryParse(match.Groups[1].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var major)

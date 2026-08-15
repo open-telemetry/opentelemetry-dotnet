@@ -208,6 +208,7 @@
   </Folder>
   <Project Path="src/OpenTelemetry.Api.ProviderBuilderExtensions/OpenTelemetry.Api.ProviderBuilderExtensions.csproj" />
   <Project Path="src/OpenTelemetry.Api/OpenTelemetry.Api.csproj" />
+  <Project Path="src/OpenTelemetry.Configuration.Declarative/OpenTelemetry.Configuration.Declarative.csproj" />
   <Project Path="src/OpenTelemetry.Exporter.Console/OpenTelemetry.Exporter.Console.csproj" />
   <Project Path="src/OpenTelemetry.Exporter.InMemory/OpenTelemetry.Exporter.InMemory.csproj" />
   <Project Path="src/OpenTelemetry.Exporter.OpenTelemetryProtocol/OpenTelemetry.Exporter.OpenTelemetryProtocol.csproj" />
@@ -229,6 +230,8 @@
   <Project Path="test/OpenTelemetry.Apple.Tests/OpenTelemetry.Apple.Tests.csproj" />
   <Project Path="test/OpenTelemetry.BlazorWasm.TestApp/OpenTelemetry.BlazorWasm.TestApp.csproj" />
   <Project Path="test/OpenTelemetry.BlazorWasm.Tests/OpenTelemetry.BlazorWasm.Tests.csproj" />
+  <Project Path="test/OpenTelemetry.Configuration.Declarative.FuzzTests/OpenTelemetry.Configuration.Declarative.FuzzTests.csproj" />
+  <Project Path="test/OpenTelemetry.Configuration.Declarative.Tests/OpenTelemetry.Configuration.Declarative.Tests.csproj" />
   <Project Path="test/OpenTelemetry.Exporter.Console.Tests/OpenTelemetry.Exporter.Console.Tests.csproj" />
   <Project Path="test/OpenTelemetry.Exporter.OpenTelemetryProtocol.FuzzTests/OpenTelemetry.Exporter.OpenTelemetryProtocol.FuzzTests.csproj" />
   <Project Path="test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.csproj" />
