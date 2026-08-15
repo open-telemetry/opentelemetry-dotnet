@@ -853,20 +853,22 @@ public sealed class PrometheusExporterMiddlewareTests
         // assumes that callback will have run by then, which is not so when the pool is
         // saturated (as it is when sibling test assemblies run alongside this one in CI):
         // the callback is delayed past the sleep, the token is still un-cancelled, and the
-        // response is a 200. So wait on a timer of this test's own instead, scheduled to
-        // fire after the middleware's. That ties the wait to the pool actually dispatching
-        // timer callbacks rather than to the clock: the middleware's callback is queued
-        // first, for an earlier time, so it has run by the time this one does, and while
-        // the pool is dispatching nothing the collection simply keeps waiting.
+        // response is a 200. So wait on a timer of this test's own instead, which ties the
+        // wait to the pool actually dispatching timer callbacks rather than to the clock.
+        // It has to be armed here, on entry to the collection, rather than up front: the
+        // middleware arms its deadline only once it starts handling the request, so a timer
+        // started before that comes due first whenever the intervening work takes longer
+        // than the margin, and the collection then returns while the middleware's own token
+        // is still live.
         EnsureThreadPoolWorkerThreadsAvailable();
 
         var scrapeTimeout = TimeSpan.FromSeconds(double.Parse(value, CultureInfo.InvariantCulture));
 
-        using var deadlinePassed = new CancellationTokenSource(scrapeTimeout + DeadlineMargin);
         using var exporter = new PrometheusExporter(new PrometheusExporterOptions());
 
         exporter.Collect = _ =>
         {
+            using var deadlinePassed = new CancellationTokenSource(scrapeTimeout + DeadlineMargin);
             deadlinePassed.Token.WaitHandle.WaitOne(MaxCollectWait);
             return true;
         };
