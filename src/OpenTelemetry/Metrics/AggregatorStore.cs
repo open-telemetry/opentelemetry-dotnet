@@ -14,6 +14,8 @@ namespace OpenTelemetry.Metrics;
 
 internal sealed class AggregatorStore
 {
+    internal const int TransientMetricPointLookupFailure = -2;
+
 #if NET
     internal readonly FrozenSet<string>? TagKeysInteresting;
     internal readonly FrozenSet<string>? ExcludedTagKeys;
@@ -996,8 +998,8 @@ internal sealed class AggregatorStore
                     // Super rare case: Snapshot method had already marked the MetricPoint available for reuse as it has not been updated in last collect cycle even in the retry attempt.
                     // Example scenario mentioned in `LookupAggregatorStoreForDeltaWithReclaim` method.
 
-                    // Don't retry again and drop the measurement.
-                    return -1;
+                    // Don't retry again for this measurement.
+                    return TransientMetricPointLookupFailure;
                 }
                 else if (metricPointAtIndex.LookupData != lookupData)
                 {
@@ -1007,8 +1009,8 @@ internal sealed class AggregatorStore
                     // Remove reference since its not the right MetricPoint.
                     Interlocked.Decrement(ref metricPointAtIndex.ReferenceCount);
 
-                    // Don't retry again and drop the measurement.
-                    return -1;
+                    // Don't retry again for this measurement.
+                    return TransientMetricPointLookupFailure;
                 }
             }
 

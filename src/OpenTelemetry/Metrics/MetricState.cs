@@ -48,7 +48,9 @@ internal sealed class MetricState
                 }
                 else
                 {
-                    metric.UpdateLong(value, CombineTags(instrumentTags, tags));
+                    var storage = ThreadStaticStorage.GetStorage();
+                    storage.CombineTags(instrumentTags, tags, out var combinedTags, out var combinedTagCount);
+                    metric.UpdateLong(value, combinedTags.AsSpan(0, combinedTagCount));
                 }
             },
             recordMeasurementDouble: (value, tags) =>
@@ -59,7 +61,9 @@ internal sealed class MetricState
                 }
                 else
                 {
-                    metric.UpdateDouble(value, CombineTags(instrumentTags, tags));
+                    var storage = ThreadStaticStorage.GetStorage();
+                    storage.CombineTags(instrumentTags, tags, out var combinedTags, out var combinedTagCount);
+                    metric.UpdateDouble(value, combinedTags.AsSpan(0, combinedTagCount));
                 }
             });
     }
@@ -124,10 +128,12 @@ internal sealed class MetricState
                 }
                 else
                 {
-                    var combinedTags = CombineTags(instrumentTags, t);
+                    var storage = ThreadStaticStorage.GetStorage();
+                    storage.CombineTags(instrumentTags, t, out var combinedTags, out var combinedTagCount);
+                    var combinedTagsSpan = combinedTags.AsSpan(0, combinedTagCount);
                     for (var i = 0; i < metricsArray.Length; i++)
                     {
-                        metricsArray[i].UpdateLong(v, combinedTags);
+                        metricsArray[i].UpdateLong(v, combinedTagsSpan);
                     }
                 }
             },
@@ -142,52 +148,14 @@ internal sealed class MetricState
                 }
                 else
                 {
-                    var combinedTags = CombineTags(instrumentTags, t);
+                    var storage = ThreadStaticStorage.GetStorage();
+                    storage.CombineTags(instrumentTags, t, out var combinedTags, out var combinedTagCount);
+                    var combinedTagsSpan = combinedTags.AsSpan(0, combinedTagCount);
                     for (var i = 0; i < metricsArray.Length; i++)
                     {
-                        metricsArray[i].UpdateDouble(v, combinedTags);
+                        metricsArray[i].UpdateDouble(v, combinedTagsSpan);
                     }
                 }
             });
-    }
-
-    private static KeyValuePair<string, object?>[] CombineTags(
-        KeyValuePair<string, object?>[] instrumentTags,
-        ReadOnlySpan<KeyValuePair<string, object?>> measurementTags)
-    {
-        var combinedTags = new KeyValuePair<string, object?>[instrumentTags.Length + measurementTags.Length];
-        instrumentTags.CopyTo(combinedTags, 0);
-
-        var combinedTagCount = instrumentTags.Length;
-        for (var i = 0; i < measurementTags.Length; i++)
-        {
-            var measurementTag = measurementTags[i];
-            if (!ContainsTagKey(instrumentTags, measurementTag.Key))
-            {
-                combinedTags[combinedTagCount++] = measurementTag;
-            }
-        }
-
-        if (combinedTagCount != combinedTags.Length)
-        {
-            Array.Resize(ref combinedTags, combinedTagCount);
-        }
-
-        return combinedTags;
-    }
-
-    private static bool ContainsTagKey(
-        ReadOnlySpan<KeyValuePair<string, object?>> tags,
-        string key)
-    {
-        for (var i = 0; i < tags.Length; i++)
-        {
-            if (string.Equals(tags[i].Key, key, StringComparison.Ordinal))
-            {
-                return true;
-            }
-        }
-
-        return false;
     }
 }

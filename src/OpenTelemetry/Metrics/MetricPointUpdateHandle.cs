@@ -37,7 +37,6 @@ internal sealed class MetricPointUpdateHandle
     {
         var index = Volatile.Read(ref this.metricPointIndex);
         return index == UninitializedMetricPointIndex
-            || (index < 0 && this.aggregatorStore.OutputDelta)
             ? this.InitializeMetricPointIndex()
             : index;
     }
@@ -48,11 +47,13 @@ internal sealed class MetricPointUpdateHandle
         lock (this.initializationLock)
         {
             var index = this.metricPointIndex;
-            if (index == UninitializedMetricPointIndex
-                || (index < 0 && this.aggregatorStore.OutputDelta))
+            if (index == UninitializedMetricPointIndex)
             {
                 index = this.aggregatorStore.ResolveBoundMetricPoint(this.tags);
-                Volatile.Write(ref this.metricPointIndex, index);
+                if (index != AggregatorStore.TransientMetricPointLookupFailure)
+                {
+                    Volatile.Write(ref this.metricPointIndex, index);
+                }
             }
 
             return index;

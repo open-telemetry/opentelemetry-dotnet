@@ -433,7 +433,7 @@ public class MetricApiTests : MetricTestsBase
     }
 
     [Fact]
-    public void InstrumentTagsRetryBindingAfterDeltaCardinalityReclaim()
+    public void InstrumentTagsRemainBoundToOverflowAfterDeltaCardinalityReclaim()
     {
         using var meter = new Meter(Utils.GetCurrentMethodName());
         var exportedItems = new List<Metric>();
@@ -489,7 +489,7 @@ public class MetricApiTests : MetricTestsBase
         metricPoint = Assert.Single(metricPoints);
         Assert.Equal(3, metricPoint.GetSumLong());
         ValidateMetricPointTags(
-            [new("instrument-tag", "instrument-value")],
+            [new("otel.metric.overflow", true)],
             metricPoint.Tags);
     }
 

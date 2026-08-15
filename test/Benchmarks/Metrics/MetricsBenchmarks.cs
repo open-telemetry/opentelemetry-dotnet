@@ -62,6 +62,7 @@ public class MetricsBenchmarks
 {
     private readonly Random random = new();
     private readonly string[] dimensionValues = ["DimVal1", "DimVal2", "DimVal3", "DimVal4", "DimVal5", "DimVal6", "DimVal7", "DimVal8", "DimVal9", "DimVal10"];
+    private readonly KeyValuePair<string, object?> measurementTag = new("MeasurementTag", "MeasurementValue");
     private Counter<long>? boundCounter1;
     private Counter<long>? boundCounter2;
     private Counter<long>? boundCounter3;
@@ -137,6 +138,12 @@ public class MetricsBenchmarks
     public void CounterWith1BoundLabelHotPath()
     {
         this.boundCounter1!.Add(100);
+    }
+
+    [Benchmark]
+    public void CounterWith1BoundLabelAnd1MeasurementLabelHotPath()
+    {
+        this.boundCounter1!.Add(100, this.measurementTag);
     }
 
     [Benchmark]
