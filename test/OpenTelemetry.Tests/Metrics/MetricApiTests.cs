@@ -211,6 +211,36 @@ public class MetricApiTests : MetricTestsBase
     }
 
     [Fact]
+    public void InstrumentAndMeasurementTagsAreAppliedToDoubleCounter()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems));
+
+        var counter = meter.CreateCounter<double>(
+            "myCounter",
+            unit: null,
+            description: null,
+            tags: [new("instrument-tag", "instrument-value")]);
+
+        counter.Add(10.5, new KeyValuePair<string, object?>("measurement-tag", "measurement-value"));
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        var metricPoint = GetFirstMetricPoint(exportedItems);
+        Assert.NotNull(metricPoint);
+        Assert.Equal(10.5, metricPoint.Value.GetSumDouble());
+        ValidateMetricPointTags(
+            [
+                new("instrument-tag", "instrument-value"),
+                new("measurement-tag", "measurement-value"),
+            ],
+            metricPoint.Value.Tags);
+    }
+
+    [Fact]
     public void ViewFiltersInstrumentTags()
     {
         using var meter = new Meter(Utils.GetCurrentMethodName());
@@ -246,6 +276,37 @@ public class MetricApiTests : MetricTestsBase
     }
 
     [Fact]
+    public void ViewExcludesInstrumentTags()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("myCounter", new MetricStreamConfiguration { ExcludedTagKeys = ["excluded"] })
+            .AddInMemoryExporter(exportedItems));
+
+        var counter = meter.CreateCounter<long>(
+            "myCounter",
+            unit: null,
+            description: null,
+            tags:
+            [
+                new("included", "included-value"),
+                new("excluded", "excluded-value"),
+            ]);
+
+        counter.Add(10);
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        var metricPoint = GetFirstMetricPoint(exportedItems);
+        Assert.NotNull(metricPoint);
+        ValidateMetricPointTags(
+            [new("included", "included-value")],
+            metricPoint.Value.Tags);
+    }
+
+    [Fact]
     public void InstrumentTagsAreBoundForEachView()
     {
         using var meter = new Meter(Utils.GetCurrentMethodName());
@@ -258,14 +319,14 @@ public class MetricApiTests : MetricTestsBase
                 new MetricStreamConfiguration
                 {
                     Name = "first",
-                    TagKeys = ["first-tag"],
+                    TagKeys = ["first-tag", "measurement-tag"],
                 })
             .AddView(
                 "myCounter",
                 new MetricStreamConfiguration
                 {
                     Name = "second",
-                    TagKeys = ["second-tag"],
+                    TagKeys = ["second-tag", "measurement-tag"],
                 })
             .AddInMemoryExporter(exportedItems));
 
@@ -279,7 +340,7 @@ public class MetricApiTests : MetricTestsBase
                 new("second-tag", "second-value"),
             ]);
 
-        counter.Add(10);
+        counter.Add(10, new KeyValuePair<string, object?>("measurement-tag", "measurement-value"));
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
         Assert.Equal(2, exportedItems.Count);
@@ -287,13 +348,19 @@ public class MetricApiTests : MetricTestsBase
         var firstMetricPoint = GetFirstMetricPoint(exportedItems.Where(metric => metric.Name == "first"));
         Assert.NotNull(firstMetricPoint);
         ValidateMetricPointTags(
-            [new("first-tag", "first-value")],
+            [
+                new("first-tag", "first-value"),
+                new("measurement-tag", "measurement-value"),
+            ],
             firstMetricPoint.Value.Tags);
 
         var secondMetricPoint = GetFirstMetricPoint(exportedItems.Where(metric => metric.Name == "second"));
         Assert.NotNull(secondMetricPoint);
         ValidateMetricPointTags(
-            [new("second-tag", "second-value")],
+            [
+                new("measurement-tag", "measurement-value"),
+                new("second-tag", "second-value"),
+            ],
             secondMetricPoint.Value.Tags);
     }
 
@@ -366,6 +433,47 @@ public class MetricApiTests : MetricTestsBase
         var overflowMetricPoint = metricPoints.Single(metricPoint => metricPoint.Tags.Count == 1
             && metricPoint.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
         Assert.Equal(2, overflowMetricPoint.GetSumLong());
+    }
+
+    [Fact]
+    public void BoundDoubleCountersRespectCardinalityLimit()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("myCounter", new MetricStreamConfiguration { CardinalityLimit = 1 })
+            .AddInMemoryExporter(exportedItems));
+
+        var firstCounter = meter.CreateCounter<double>(
+            "myCounter",
+            unit: null,
+            description: null,
+            tags: [new("instrument-tag", "first")]);
+        var secondCounter = meter.CreateCounter<double>(
+            "myCounter",
+            unit: null,
+            description: null,
+            tags: [new("instrument-tag", "second")]);
+
+        firstCounter.Add(1.5);
+        secondCounter.Add(2.5);
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        var metricPoints = GetMetricPoints(exportedItems);
+        Assert.Equal(2, metricPoints.Count);
+
+        var firstMetricPoint = metricPoints.Single(metricPoint => metricPoint.Tags.Count == 1
+            && metricPoint.Tags.KeyAndValues[0].Key == "instrument-tag");
+        Assert.Equal(1.5, firstMetricPoint.GetSumDouble());
+        ValidateMetricPointTags(
+            [new("instrument-tag", "first")],
+            firstMetricPoint.Tags);
+
+        var overflowMetricPoint = metricPoints.Single(metricPoint => metricPoint.Tags.Count == 1
+            && metricPoint.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
+        Assert.Equal(2.5, overflowMetricPoint.GetSumDouble());
     }
 
     [Fact]
