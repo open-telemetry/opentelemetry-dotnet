@@ -110,6 +110,7 @@ jobs:
         --collect:"Code Coverage"
         --diag:"TestResults/diag/log.txt;tracelevel=info"
         --results-directory:TestResults
+        --settings:"${env:GITHUB_WORKSPACE}/build/CodeCoverage.runsettings"
         --framework ${env:TARGET_FRAMEWORK}
         --configuration Release
         --no-restore
