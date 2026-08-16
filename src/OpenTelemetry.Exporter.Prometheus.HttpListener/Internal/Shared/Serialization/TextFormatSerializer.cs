@@ -2285,9 +2285,11 @@ internal abstract class TextFormatSerializer
 
         return RoundTrips(candidate, value) ? candidate : value.ToString("G17", CultureInfo.InvariantCulture);
 
-        static bool RoundTrips(string candidate, double value) =>
-            double.TryParse(candidate, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed)
-            && parsed.Equals(value);
+        static bool RoundTrips(string candidate, double value)
+        {
+            return double.TryParse(candidate, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed) &&
+                   parsed.Equals(value);
+        }
     }
 #endif
 

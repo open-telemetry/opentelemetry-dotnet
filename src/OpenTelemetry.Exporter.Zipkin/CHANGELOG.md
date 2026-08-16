@@ -12,6 +12,10 @@ Notes](../../RELEASENOTES.md).
   the response body in memory when it is not actually used.
   ([#7582](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7582))
 
+* Added support for serializing attribute values that are key/value lists
+  (`IEnumerable<KeyValuePair<string, object?>>`).
+  ([#7015](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7015))
+
 ## 1.17.0
 
 Released 2026-Jul-16
