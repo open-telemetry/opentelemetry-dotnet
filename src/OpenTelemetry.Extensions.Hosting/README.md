@@ -85,7 +85,7 @@ A fully functional example can be found
 
 > [!IMPORTANT]
 > Applications that do not support hosted services, such as Blazor, should
-> resolve the `ITelemetryHostInitializer` service from the service collection
+> resolve the `ITelemetryHostInitializer` service from the service provider
 > to manually initialize the OpenTelemetry SDK as part of application startup.
 >
 > For example:
