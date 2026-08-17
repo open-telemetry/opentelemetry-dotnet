@@ -10,13 +10,13 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
-var builder = WebAssemblyHostBuilder.CreateDefault(args);
-
-builder.RootComponents.Add<App>("#app");
-
 Environment.SetEnvironmentVariable("OTEL_BSP_SCHEDULE_DELAY", "1000");
 Environment.SetEnvironmentVariable("OTEL_BLRP_SCHEDULE_DELAY", "1000");
 Environment.SetEnvironmentVariable("OTEL_METRIC_EXPORT_INTERVAL", "1000");
+
+var builder = WebAssemblyHostBuilder.CreateDefault(args);
+
+builder.RootComponents.Add<App>("#app");
 
 // The OTLP receiver is served from the same origin as the application, so the
 // export endpoints are resolved relative to the host base address. This keeps
