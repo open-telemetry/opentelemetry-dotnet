@@ -2146,8 +2146,10 @@ internal abstract class TextFormatSerializer
             destination[index++] = unchecked((char)('0' + (absoluteExponent / 100)));
         }
 
+#pragma warning disable IDE0047
         destination[index++] = unchecked((char)('0' + ((absoluteExponent / 10) % 10)));
         destination[index++] = unchecked((char)('0' + (absoluteExponent % 10)));
+#pragma warning restore IDE0047
 
         Debug.Assert(index == length, $"{nameof(index)} should equal {nameof(length)}.");
 

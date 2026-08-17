@@ -30,6 +30,9 @@ Notes](../../RELEASENOTES.md).
   `quantile` label values falling back to 17 significant digits incorrectly.
   ([#7589](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7589))
 
+* Fixed a race where a slow scrape could return an HTTP 200 instead of 408.
+  ([#7615](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7615))
+
 ## 1.17.0-beta.1
 
 Released 2026-Jul-16

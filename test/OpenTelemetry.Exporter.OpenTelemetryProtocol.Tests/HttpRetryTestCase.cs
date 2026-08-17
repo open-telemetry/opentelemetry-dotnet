@@ -103,13 +103,15 @@ public class HttpRetryTestCase
 
     internal sealed class HttpRetryAttempt
     {
-        public ExportClientHttpResponse Response;
         public TimeSpan? ThrottleDelay;
         public TimeSpan? ExpectedRetryDelay;
         public TimeSpan TimestampTolerance;
         public int? ExpectedNextRetryDelayMilliseconds;
         public bool ExpectedSuccess;
         public bool ExpectedThrottled;
+
+        private readonly Func<ExportClientHttpResponse> createResponse;
+        private ExportClientHttpResponse? response;
 
         internal HttpRetryAttempt(
             HttpStatusCode? statusCode,
@@ -127,32 +129,49 @@ public class HttpRetryTestCase
             this.ExpectedRetryDelay = expectedRetryDelay ?? throttleDelay;
             this.TimestampTolerance = useDateForRetryCondition ? TimeSpan.FromMilliseconds(expectedNextRetryDelayMilliseconds) : TimeSpan.Zero;
 
-            HttpResponseMessage? responseMessage = null;
-            if (statusCode != null)
+            this.createResponse = () =>
             {
+                HttpResponseMessage? responseMessage = null;
+                if (statusCode != null)
+                {
 #pragma warning disable CA2000 // Dispose objects before losing scope
-                responseMessage = new HttpResponseMessage();
+                    responseMessage = new HttpResponseMessage();
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
-                if (throttleDelay is { } value)
-                {
-                    responseMessage.Headers.RetryAfter = useDateForRetryCondition
-                        ? new RetryConditionHeaderValue(DateTimeOffset.UtcNow.Add(value))
-                        : new RetryConditionHeaderValue(value);
+                    if (throttleDelay is { } value)
+                    {
+                        responseMessage.Headers.RetryAfter = useDateForRetryCondition
+                            ? new RetryConditionHeaderValue(DateTimeOffset.UtcNow.Add(value))
+                            : new RetryConditionHeaderValue(value);
+                    }
+
+                    responseMessage.StatusCode = (HttpStatusCode)statusCode;
                 }
 
-                responseMessage.StatusCode = (HttpStatusCode)statusCode;
-            }
+                // Using arbitrary +1 hr for deadline for test purposes, unless a deadline is specified.
+                var deadlineUtc = isDeadlineExceeded
+                    ? DateTime.UtcNow.AddMilliseconds(-1)
+                    : DateTime.UtcNow.Add(deadlineFromNow ?? TimeSpan.FromHours(1));
 
-            // Using arbitrary +1 hr for deadline for test purposes, unless a deadline is specified.
-            var deadlineUtc = isDeadlineExceeded
-                ? DateTime.UtcNow.AddMilliseconds(-1)
-                : DateTime.UtcNow.Add(deadlineFromNow ?? TimeSpan.FromHours(1));
+                return new ExportClientHttpResponse(expectedSuccess, deadlineUtc, responseMessage, httpRequestException ?? new HttpRequestException());
+            };
 
-            this.Response = new ExportClientHttpResponse(expectedSuccess, deadlineUtc, responseMessage, httpRequestException ?? new HttpRequestException());
             this.ExpectedNextRetryDelayMilliseconds = expectedNextRetryDelayMilliseconds;
             this.ExpectedSuccess = expectedSuccess;
             this.ExpectedThrottled = expectedThrottled;
         }
+
+        /// <summary>
+        /// Gets the response for this attempt, built the first time it is asked for.
+        /// </summary>
+        /// <remarks>
+        /// A Retry-After carrying an HTTP-date has a resolution of one second, so the
+        /// header describes an instant less than a second after it was built and the
+        /// delay it asks for has elapsed once that second is out. Every case of a
+        /// theory is built together and the cases are then run one at a time, which
+        /// takes long enough for that to happen, so the response is built when a test
+        /// reaches it rather than when the case is created.
+        /// </remarks>
+        public ExportClientHttpResponse Response => this.response ??= this.createResponse();
     }
 }
