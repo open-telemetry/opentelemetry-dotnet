@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Net;
@@ -260,9 +261,12 @@ internal sealed class PrometheusHttpListener : IDisposable
         {
             using var requestCancelled = new CancellationTokenSource();
 
+            Stopwatch? scrapeStopwatch = null;
+
             if (TryGetScrapeTimeout(context.Request.Headers, out var scrapeTimeout))
             {
                 requestCancelled.CancelAfter(scrapeTimeout.GetValueOrDefault());
+                scrapeStopwatch = Stopwatch.StartNew();
             }
 
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(requestCancelled.Token, cancellationToken);
@@ -275,6 +279,20 @@ internal sealed class PrometheusHttpListener : IDisposable
 
             try
             {
+                if (!requestCancelled.IsCancellationRequested &&
+                    scrapeTimeout is { } configuredTimeout &&
+                    scrapeStopwatch!.Elapsed >= configuredTimeout)
+                {
+                    // The deadline has genuinely elapsed, but the CancelAfter callback may not
+                    // have been dispatched yet (for example, if the thread pool is saturated).
+                    // Force cancellation now so a slow collection is still reported as a timeout.
+#if NET
+                    await requestCancelled.CancelAsync().ConfigureAwait(false);
+#else
+                    requestCancelled.Cancel();
+#endif
+                }
+
                 requestCancelled.Token.ThrowIfCancellationRequested();
 
                 // Disposal can start while this scrape is collecting, which can take
