@@ -495,10 +495,33 @@ dimensions can come from different sources:
   Prometheus.
 
 > [!NOTE]
-> Instrument level tags support is not yet implemented in OpenTelemetry .NET
-  since the [OpenTelemetry
-  Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/api.md#instrument)
-  does not support it.
+> Instrument-level tags are currently a prototype supported only for
+> `Counter<T>`.
+
+Use instrument-level tags for attributes that are fixed for the lifetime of one
+counter and apply to every measurement from it. The SDK pre-binds the tag set to
+a metric point, avoiding repeated attribute lookup when measurements do not add
+tags:
+
+```csharp
+var requests = meter.CreateCounter<long>(
+    "http.server.requests",
+    tags:
+    [
+        new("service.instance.id", instanceId),
+        new("deployment.environment", environment),
+    ]);
+
+requests.Add(1);
+```
+
+Instrument-level tags participate in view filtering and cardinality limits just
+like measurement tags. Creating equivalent counters with different tag sets
+creates distinct time series until the cardinality limit is reached; additional
+series are aggregated into the overflow point. If a measurement supplies a key
+that is also fixed on the instrument, the instrument-level value takes
+precedence. Continue to report attributes whose values vary per operation on
+the measurement itself.
 
 Here is the rule of thumb when modeling the dimensions:
 

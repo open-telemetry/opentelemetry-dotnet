@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 
@@ -428,6 +429,25 @@ public struct MetricPoint
         this.CompleteUpdate();
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void UpdateBound(long number)
+    {
+        Debug.Assert(
+            this.aggType is AggregationType.LongSumIncomingDelta or AggregationType.LongSumIncomingCumulative,
+            "Bound updates are only supported for counters.");
+
+        if (this.aggType == AggregationType.LongSumIncomingDelta)
+        {
+            Interlocked.Add(ref this.runningValue.AsLong, number);
+        }
+        else
+        {
+            Interlocked.Exchange(ref this.runningValue.AsLong, number);
+        }
+
+        this.CompleteBoundUpdate();
+    }
+
     internal void UpdateWithExemplar(long number, ReadOnlySpan<KeyValuePair<string, object?>> tags, bool offerExemplar)
     {
         switch (this.aggType)
@@ -494,6 +514,26 @@ public struct MetricPoint
         this.CompleteUpdate();
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void UpdateBoundWithExemplar(long number, ReadOnlySpan<KeyValuePair<string, object?>> tags, bool offerExemplar)
+    {
+        Debug.Assert(
+            this.aggType is AggregationType.LongSumIncomingDelta or AggregationType.LongSumIncomingCumulative,
+            "Bound updates are only supported for counters.");
+
+        if (this.aggType == AggregationType.LongSumIncomingDelta)
+        {
+            Interlocked.Add(ref this.runningValue.AsLong, number);
+        }
+        else
+        {
+            Interlocked.Exchange(ref this.runningValue.AsLong, number);
+        }
+
+        this.UpdateExemplar(number, tags, offerExemplar);
+        this.CompleteBoundUpdate();
+    }
+
     internal void Update(double number)
     {
         switch (this.aggType)
@@ -556,6 +596,25 @@ public struct MetricPoint
         }
 
         this.CompleteUpdate();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void UpdateBound(double number)
+    {
+        Debug.Assert(
+            this.aggType is AggregationType.DoubleSumIncomingDelta or AggregationType.DoubleSumIncomingCumulative,
+            "Bound updates are only supported for counters.");
+
+        if (this.aggType == AggregationType.DoubleSumIncomingDelta)
+        {
+            InterlockedHelper.Add(ref this.runningValue.AsDouble, number);
+        }
+        else
+        {
+            Interlocked.Exchange(ref this.runningValue.AsDouble, number);
+        }
+
+        this.CompleteBoundUpdate();
     }
 
     internal void UpdateWithExemplar(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags, bool offerExemplar)
@@ -622,6 +681,26 @@ public struct MetricPoint
         this.UpdateExemplar(number, tags, offerExemplar);
 
         this.CompleteUpdate();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void UpdateBoundWithExemplar(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags, bool offerExemplar)
+    {
+        Debug.Assert(
+            this.aggType is AggregationType.DoubleSumIncomingDelta or AggregationType.DoubleSumIncomingCumulative,
+            "Bound updates are only supported for counters.");
+
+        if (this.aggType == AggregationType.DoubleSumIncomingDelta)
+        {
+            InterlockedHelper.Add(ref this.runningValue.AsDouble, number);
+        }
+        else
+        {
+            Interlocked.Exchange(ref this.runningValue.AsDouble, number);
+        }
+
+        this.UpdateExemplar(number, tags, offerExemplar);
+        this.CompleteBoundUpdate();
     }
 
     internal void TakeSnapshot(bool outputDelta)
@@ -1152,6 +1231,10 @@ public struct MetricPoint
 
         this.CompleteUpdateWithoutMeasurement();
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void CompleteBoundUpdate()
+        => this.MetricPointStatus = MetricPointStatus.CollectPending;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void CompleteUpdateWithoutMeasurement()

@@ -261,6 +261,11 @@ internal sealed class MeterProviderSdk : MeterProvider
         {
             OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Started publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
 
+            var instrumentTags = instrument.GetType().IsGenericType
+                && instrument.GetType().GetGenericTypeDefinition() == typeof(Counter<>)
+                    ? instrument.Tags?.ToArray()
+                    : null;
+
             if (viewConfigCount <= 0)
             {
                 if (!MeterProviderBuilderSdk.IsValidInstrumentName(instrument.Name))
@@ -278,11 +283,11 @@ internal sealed class MeterProviderSdk : MeterProvider
                     var metrics = this.Reader.AddMetricWithNoViews(instrument);
                     if (metrics.Count == 1)
                     {
-                        state = MetricState.BuildForSingleMetric(metrics[0]);
+                        state = MetricState.BuildForSingleMetric(metrics[0], instrumentTags);
                     }
                     else if (metrics.Count > 0)
                     {
-                        state = MetricState.BuildForMetricList(metrics);
+                        state = MetricState.BuildForMetricList(metrics, instrumentTags);
                     }
                 }
             }
@@ -361,17 +366,23 @@ internal sealed class MeterProviderSdk : MeterProvider
                     var metrics = this.Reader.AddMetricWithViews(instrument, metricStreamConfigs);
                     if (metrics.Count == 1)
                     {
-                        state = MetricState.BuildForSingleMetric(metrics[0]);
+                        state = MetricState.BuildForSingleMetric(metrics[0], instrumentTags);
                     }
                     else if (metrics.Count > 0)
                     {
-                        state = MetricState.BuildForMetricList(metrics);
+                        state = MetricState.BuildForMetricList(metrics, instrumentTags);
                     }
                 }
             }
 
             if (state != null)
             {
+                if (instrumentTags is { Length: > 0 })
+                {
+                    OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent(
+                        $"Instrument-level tags will be attached to every measurement for Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\". Tag count = {instrumentTags.Length}.");
+                }
+
                 OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Measurements for Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\" will be processed and aggregated by the SDK.");
                 return state;
             }

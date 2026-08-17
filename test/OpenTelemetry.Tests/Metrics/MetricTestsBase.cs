@@ -97,6 +97,20 @@ public abstract class MetricTestsBase
         Assert.Equal(expectedTags.Count, tagIndex);
     }
 
+    internal static List<MetricPoint> GetMetricPoints(IEnumerable<Metric> metrics)
+    {
+        List<MetricPoint> metricPoints = [];
+        foreach (var metric in metrics)
+        {
+            foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+            {
+                metricPoints.Add(metricPoint);
+            }
+        }
+
+        return metricPoints;
+    }
+
     internal static long GetLongSum(List<Metric> metrics)
     {
         long sum = 0;
