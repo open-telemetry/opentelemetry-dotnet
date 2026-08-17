@@ -83,6 +83,17 @@ app.Run();
 A fully functional example can be found
 [here](https://github.com/open-telemetry/opentelemetry-dotnet/tree/main/examples/AspNetCore).
 
+> [!IMPORTANT]
+> Applications that do not support hosted services, such as Blazor, should
+> resolve the `ITelemetryHostInitializer` service from the service collection
+> to manually initialize the OpenTelemetry SDK as part of application startup.
+>
+> For example:
+>
+> ```csharp
+> app.Services.GetRequiredService<ITelemetryHostInitializer>().Initialize();
+> ```
+
 ### Resources
 
 To dynamically add resources at startup from the dependency injection you can

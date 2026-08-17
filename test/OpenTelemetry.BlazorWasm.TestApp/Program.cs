@@ -23,44 +23,33 @@ Environment.SetEnvironmentVariable("OTEL_METRIC_EXPORT_INTERVAL", "1000");
 // the export a genuine cross-process HTTP/protobuf call while avoiding CORS.
 var baseAddress = new Uri(builder.HostEnvironment.BaseAddress);
 
-var resourceBuilder = ResourceBuilder.CreateDefault()
-    .AddService(InstrumentationSource.ServiceName);
-
 using var instrumentation = new InstrumentationSource();
 builder.Services.AddSingleton(instrumentation);
 
 builder.Services.AddScoped(_ => new HttpClient { BaseAddress = baseAddress });
 
-var tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .SetResourceBuilder(resourceBuilder)
-    .AddSource(InstrumentationSource.ActivitySourceName)
-    .AddSource("System.Net.Http")
-    .SetSampler(new AlwaysOnSampler())
-    .AddOtlpExporter((options) =>
-    {
-        options.Protocol = OtlpExportProtocol.HttpProtobuf;
-        options.Endpoint = new Uri(baseAddress, "v1/traces");
-    })
-    .Build();
-
-builder.Services.AddSingleton(tracerProvider);
-
-var meterProvider = Sdk.CreateMeterProviderBuilder()
-    .SetResourceBuilder(resourceBuilder)
-    .AddMeter(InstrumentationSource.MeterName)
-    .AddMeter("System.Net.Http")
-    .AddOtlpExporter((options) =>
-    {
-        options.Protocol = OtlpExportProtocol.HttpProtobuf;
-        options.Endpoint = new Uri(baseAddress, "v1/metrics");
-    })
-    .Build();
-
-builder.Services.AddSingleton(meterProvider);
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService(InstrumentationSource.ServiceName))
+    .WithTracing(tracing => tracing
+        .AddSource(InstrumentationSource.ActivitySourceName)
+        .AddSource("System.Net.Http")
+        .SetSampler(new AlwaysOnSampler())
+        .AddOtlpExporter(options =>
+        {
+            options.Protocol = OtlpExportProtocol.HttpProtobuf;
+            options.Endpoint = new Uri(baseAddress, "v1/traces");
+        }))
+    .WithMetrics(metrics => metrics
+        .AddMeter(InstrumentationSource.MeterName)
+        .AddMeter("System.Net.Http")
+        .AddOtlpExporter(options =>
+        {
+            options.Protocol = OtlpExportProtocol.HttpProtobuf;
+            options.Endpoint = new Uri(baseAddress, "v1/metrics");
+        }));
 
 builder.Logging.AddOpenTelemetry((options) =>
 {
-    options.SetResourceBuilder(resourceBuilder);
     options.IncludeFormattedMessage = true;
 
     options.AddOtlpExporter((exporterOptions) =>
@@ -71,5 +60,7 @@ builder.Logging.AddOpenTelemetry((options) =>
 });
 
 var app = builder.Build();
+
+app.Services.GetRequiredService<ITelemetryHostInitializer>().Initialize();
 
 await app.RunAsync().ConfigureAwait(false);

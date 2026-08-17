@@ -6,6 +6,11 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Add new `ITelemetryHostInitializer` interface for applications that do not
+  support hosted services, such as Blazor, to use to manually initialize the
+  OpenTelemetry SDK as part of application startup.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.17.0
 
 Released 2026-Jul-16
