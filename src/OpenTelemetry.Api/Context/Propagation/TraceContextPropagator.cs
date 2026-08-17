@@ -716,7 +716,7 @@ public class TraceContextPropagator : TextMapPropagator
             }
         }
 
-        var result = new StringBuilder();
+        var result = new StringBuilder(TraceStateMaxCombinedLength);
 
         foreach (var member in members)
         {
