@@ -366,13 +366,13 @@ jobs:
       verify-aot-compat,
       concurrency-tests
       ]
-    if: always() && !cancelled()
+    if: always()
     runs-on: ubuntu-24.04
     steps:
     - name: Report CI status
       shell: bash
       env:
-        CI_SUCCESS: ${{ !contains(needs.*.result, 'failure') }}
+        CI_SUCCESS: ${{ !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
       run: |
         if [ "${CI_SUCCESS}" == "true" ]
         then
