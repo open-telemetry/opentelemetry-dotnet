@@ -68,9 +68,12 @@ internal sealed class PrometheusExporterMiddleware
 
             using var requestCancelled = new CancellationTokenSource();
 
+            Stopwatch? scrapeStopwatch = null;
+
             if (TryGetScrapeTimeout(httpContext.Request.Headers, out var scrapeTimeout))
             {
                 requestCancelled.CancelAfter(scrapeTimeout.GetValueOrDefault());
+                scrapeStopwatch = Stopwatch.StartNew();
             }
 
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(requestCancelled.Token, httpContext.RequestAborted);
@@ -85,6 +88,20 @@ internal sealed class PrometheusExporterMiddleware
 
             try
             {
+                if (!requestCancelled.IsCancellationRequested &&
+                    scrapeTimeout is { } configuredTimeout &&
+                    scrapeStopwatch!.Elapsed >= configuredTimeout)
+                {
+                    // The deadline has genuinely elapsed, but the CancelAfter callback may not
+                    // have been dispatched yet (for example, if the thread pool is saturated).
+                    // Force cancellation now so a slow collection is still reported as a timeout.
+#if NET
+                    await requestCancelled.CancelAsync();
+#else
+                    requestCancelled.Cancel();
+#endif
+                }
+
                 linkedCts.Token.ThrowIfCancellationRequested();
 
                 if (!collectionResponse.Succeeded)

@@ -74,6 +74,7 @@
     <PackageReference Remove="GitHubActionsTestLogger" />
     <PackageReference Remove="JunitXml.TestLogger" />
     <PackageReference Remove="Microsoft.NET.Test.Sdk" />
+    <PackageReference Remove="Microsoft.Testing.Platform" />
     <PackageReference Remove="xunit" />
     <PackageReference Remove="xunit.runner.visualstudio" />
   </ItemGroup>

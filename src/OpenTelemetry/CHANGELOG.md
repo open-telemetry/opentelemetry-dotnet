@@ -27,6 +27,10 @@ Notes](../../RELEASENOTES.md).
   to finish enqueueing before flushing.
   ([#7598](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7598))
 
+* Fix logger, meter and tracer providers leaking background threads if an
+  exception is thrown by their constructor after resource creation.
+  ([#7615](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7615))
+
 ## 1.17.0
 
 Released 2026-Jul-16
