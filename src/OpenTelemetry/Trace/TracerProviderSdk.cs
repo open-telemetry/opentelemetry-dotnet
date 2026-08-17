@@ -544,8 +544,12 @@ internal sealed class TracerProviderSdk : TracerProvider
 
     private void RunGetRequestedDataOtherSampler(Activity activity)
     {
-        // Check activity.ParentId alone is sufficient to normally determine if a activity is root or not. But if one uses activity.SetParentId to override the TraceId (without intending to set an actual parent), then additional check of parentspanid being empty is required to confirm if an activity is root or not.
-        // This checker can be removed, once Activity exposes an API to customize ID Generation (https://github.com/dotnet/runtime/issues/46704) or issue https://github.com/dotnet/runtime/issues/46706 is addressed.
+        // Checking activity.ParentId alone is sufficient to normally determine if an activity
+        // is root or not. But if one uses activity.SetParentId to override the TraceId (without
+        // intending to set an actual parent), then an additional check of ParentSpanId being
+        // empty is required to confirm if an activity is root or not. This check can be removed
+        // once https://github.com/dotnet/runtime/issues/85198 is addressed. ToHexString() does
+        // not actually allocate a new string, so it is safe to use here without any overhead.
         var parentContext = string.IsNullOrEmpty(activity.ParentId) || activity.ParentSpanId.ToHexString() == "0000000000000000"
             ? default
             : activity.Parent != null ?
