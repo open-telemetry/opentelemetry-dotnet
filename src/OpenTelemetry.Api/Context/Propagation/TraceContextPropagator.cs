@@ -24,6 +24,9 @@ public class TraceContextPropagator : TextMapPropagator
     private const int TraceStateKeyMaxLength = 256;
     private const int TraceStateValueMaxLength = 256;
 
+    private const int TraceStateMaxCombinedLength = 512;
+    private const int TraceStateLargeEntryLength = 128;
+
 #if NET
     private const int TraceIdSizeInBytes = 16;
     private const int SpanIdSizeInBytes = 8;
@@ -140,16 +143,18 @@ public class TraceContextPropagator : TextMapPropagator
         setter(carrier, TraceParent, traceparent);
 
         var tracestateStr = context.ActivityContext.TraceState;
-        if (tracestateStr?.Length > 0)
+        if (tracestateStr?.Length > 0 &&
+            TryExtractSingleTracestate(tracestateStr, out var normalizedTraceState) &&
+            normalizedTraceState.Length > 0)
         {
-            var tracestateEntries = new List<KeyValuePair<string, string>>();
-            if (TraceStateUtils.AppendTraceState(tracestateStr, tracestateEntries))
+            if (normalizedTraceState.Length > TraceStateMaxCombinedLength)
             {
-                var normalizedTraceState = TraceStateUtils.GetString(tracestateEntries);
-                if (normalizedTraceState.Length > 0)
-                {
-                    setter(carrier, TraceState, normalizedTraceState);
-                }
+                normalizedTraceState = TruncateOversizedTracestate(normalizedTraceState);
+            }
+
+            if (normalizedTraceState.Length > 0)
+            {
+                setter(carrier, TraceState, normalizedTraceState);
             }
         }
 
@@ -683,6 +688,52 @@ public class TraceContextPropagator : TextMapPropagator
 
         tracestateResult = result.ToString();
         return true;
+    }
+
+    private static string TruncateOversizedTracestate(string tracestate)
+    {
+        // Rare, cold path: only reached when a validated/deduplicated tracestate still exceeds
+        // the combined length limit. Drop large (>128 char) members first, scanning from the end,
+        // then drop remaining members from the end until under the limit.
+        string?[] members = tracestate.Split(',');
+        var combinedLength = tracestate.Length;
+
+        for (var i = members.Length - 1; i >= 0 && combinedLength > TraceStateMaxCombinedLength; i--)
+        {
+            if (members[i] is { Length: > TraceStateLargeEntryLength } member)
+            {
+                combinedLength -= member.Length + 1;
+                members[i] = null;
+            }
+        }
+
+        for (var i = members.Length - 1; i >= 0 && combinedLength > TraceStateMaxCombinedLength; i--)
+        {
+            if (members[i] is { } member)
+            {
+                combinedLength -= member.Length + 1;
+                members[i] = null;
+            }
+        }
+
+        var result = new StringBuilder();
+
+        foreach (var member in members)
+        {
+            if (member == null)
+            {
+                continue;
+            }
+
+            if (result.Length > 0)
+            {
+                result.Append(',');
+            }
+
+            result.Append(member);
+        }
+
+        return result.ToString();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
