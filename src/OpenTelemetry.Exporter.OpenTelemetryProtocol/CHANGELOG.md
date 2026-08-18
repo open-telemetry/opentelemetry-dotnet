@@ -45,6 +45,10 @@ Notes](../../RELEASENOTES.md).
   limit is discarded and treated as a non-retryable failure.
   ([#7583](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7583))
 
+* Improved OTLP log attribute serialization performance by avoiding unnecessary
+  boxing.
+  ([#7645](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7645))
+
 ## 1.17.0
 
 Released 2026-Jul-16
