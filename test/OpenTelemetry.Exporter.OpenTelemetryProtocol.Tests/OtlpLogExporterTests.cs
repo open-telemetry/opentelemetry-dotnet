@@ -1868,6 +1868,43 @@ public class OtlpLogExporterTests
         Assert.Equal(expectedVersion, request.ResourceLogs[0].ScopeLogs[0].Scope?.Version);
     }
 
+    [Fact]
+    public void LogRecordsFromLoggersWithSameNameAndDifferentVersionsAreExportedAsSeparateScopes()
+    {
+        var logRecords = new List<LogRecord>();
+
+        using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+                   .AddInMemoryExporter(logRecords)
+                   .Build())
+        {
+            loggerProvider.GetLogger("MyLogger", "1.0.0").EmitLog(new LogRecordData());
+            loggerProvider.GetLogger("MyLogger", "2.0.0").EmitLog(new LogRecordData());
+            loggerProvider.GetLogger("MyLogger", "1.0.0").EmitLog(new LogRecordData());
+            loggerProvider.GetLogger("MyLogger", version: null).EmitLog(new LogRecordData());
+        }
+
+        Assert.Equal(4, logRecords.Count);
+
+        var batch = new Batch<LogRecord>([.. logRecords], logRecords.Count);
+        var request = CreateLogsExportRequest(DefaultSdkLimitOptions, new ExperimentalOptions(), batch, ResourceBuilder.CreateEmpty().Build());
+
+        Assert.NotNull(request);
+        Assert.Single(request.ResourceLogs);
+
+        var scopeLogs = request.ResourceLogs[0].ScopeLogs;
+        Assert.Equal(3, scopeLogs.Count);
+        Assert.All(scopeLogs, scopeLog => Assert.Equal("MyLogger", scopeLog.Scope?.Name));
+
+        var v1 = Assert.Single(scopeLogs, scopeLog => scopeLog.Scope?.Version == "1.0.0");
+        Assert.Equal(2, v1.LogRecords.Count);
+
+        var v2 = Assert.Single(scopeLogs, scopeLog => scopeLog.Scope?.Version == "2.0.0");
+        Assert.Single(v2.LogRecords);
+
+        var unversioned = Assert.Single(scopeLogs, scopeLog => scopeLog.Scope?.Version.Length == 0);
+        Assert.Single(unversioned.LogRecords);
+    }
+
     [Theory]
     [InlineData(true)]
     [InlineData(false)]

@@ -46,6 +46,10 @@ Notes](../../RELEASENOTES.md).
   ([#7583](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7583))
 
 * The OTLP exporter will now export logger version if it was specified.
+* The OTLP exporter will now export logger version if it was specified. Log
+  records are grouped into `ScopeLogs` by logger name and version, so loggers
+  sharing a name but reporting different versions are exported as separate
+  scopes.
   ([#7636](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7636))
 
 ## 1.17.0

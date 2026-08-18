@@ -17,7 +17,7 @@ internal static class ProtobufOtlpLogSerializer
     [ThreadStatic]
     private static Stack<List<LogRecord>>? logsListPool;
     [ThreadStatic]
-    private static Dictionary<string, List<LogRecord>>? scopeLogsList;
+    private static Dictionary<InstrumentationScope, List<LogRecord>>? scopeLogsList;
 
     [ThreadStatic]
     private static SerializationState? threadSerializationState;
@@ -36,11 +36,12 @@ internal static class ProtobufOtlpLogSerializer
         {
             foreach (var logRecord in logRecordBatch)
             {
-                var scopeName = logRecord.Logger.Name;
-                if (!scopeLogsList.TryGetValue(scopeName, out var logRecords))
+                var logger = logRecord.Logger;
+                var scope = new InstrumentationScope(logger.Name, logger.Version);
+                if (!scopeLogsList.TryGetValue(scope, out var logRecords))
                 {
                     logRecords = logsListPool.Count > 0 ? logsListPool.Pop() : [];
-                    scopeLogsList[scopeName] = logRecords;
+                    scopeLogsList[scope] = logRecords;
                 }
 
                 if (logRecord.Source == LogRecord.LogRecordSource.FromSharedPool)
@@ -69,7 +70,7 @@ internal static class ProtobufOtlpLogSerializer
         return writePosition;
     }
 
-    internal static int TryWriteResourceLogs(ref byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, Resources.Resource? resource, Dictionary<string, List<LogRecord>> scopeLogs)
+    internal static int TryWriteResourceLogs(ref byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, Resources.Resource? resource, Dictionary<InstrumentationScope, List<LogRecord>> scopeLogs)
     {
         while (true)
         {
@@ -131,7 +132,7 @@ internal static class ProtobufOtlpLogSerializer
         }
     }
 
-    internal static int WriteResourceLogs(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, Resources.Resource? resource, Dictionary<string, List<LogRecord>> scopeLogs)
+    internal static int WriteResourceLogs(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, Resources.Resource? resource, Dictionary<InstrumentationScope, List<LogRecord>> scopeLogs)
     {
         writePosition = ProtobufOtlpResourceSerializer.WriteResource(buffer, writePosition, resource);
         writePosition = WriteScopeLogs(buffer, writePosition, sdkLimitOptions, experimentalOptions, scopeLogs);
@@ -144,7 +145,7 @@ internal static class ProtobufOtlpLogSerializer
         return writePosition;
     }
 
-    internal static int WriteScopeLogs(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, Dictionary<string, List<LogRecord>> scopeLogs)
+    internal static int WriteScopeLogs(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, Dictionary<InstrumentationScope, List<LogRecord>> scopeLogs)
     {
         if (scopeLogs != null)
         {
@@ -154,7 +155,7 @@ internal static class ProtobufOtlpLogSerializer
                 var resourceLogsScopeLogsLengthPosition = writePosition;
                 writePosition += ReserveSizeForLength;
 
-                writePosition = WriteScopeLog(buffer, writePosition, sdkLimitOptions, experimentalOptions, entry.Value[0].Logger, entry.Value);
+                writePosition = WriteScopeLog(buffer, writePosition, sdkLimitOptions, experimentalOptions, entry.Key, entry.Value);
                 ProtobufSerializer.WriteReservedLength(buffer, resourceLogsScopeLogsLengthPosition, writePosition - (resourceLogsScopeLogsLengthPosition + ReserveSizeForLength));
             }
         }
@@ -162,18 +163,18 @@ internal static class ProtobufOtlpLogSerializer
         return writePosition;
     }
 
-    internal static int WriteScopeLog(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, Logger logger, List<LogRecord> logRecords)
+    internal static int WriteScopeLog(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, in InstrumentationScope scope, List<LogRecord> logRecords)
     {
         writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpLogFieldNumberConstants.ScopeLogs_Scope, ProtobufWireType.LEN);
 
         var scopeLengthPosition = writePosition;
         writePosition += ReserveSizeForLength;
 
-        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Name, logger.Name);
+        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Name, scope.Name);
 
-        if (logger.Version != null)
+        if (scope.Version != null)
         {
-            writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Version, logger.Version);
+            writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Version, scope.Version);
         }
 
         ProtobufSerializer.WriteReservedLength(buffer, scopeLengthPosition, writePosition - (scopeLengthPosition + ReserveSizeForLength));
@@ -378,6 +379,44 @@ internal static class ProtobufOtlpLogSerializer
                 state.AttributeValueLengthLimit);
 
             state.TagWriterState.TagCount++;
+        }
+    }
+
+    /// <summary>
+    /// Identifies the instrumentation scope log records are grouped by. Loggers
+    /// sharing a name but reporting different versions are distinct scopes and
+    /// must be emitted as separate ScopeLogs entries.
+    /// </summary>
+    internal readonly struct InstrumentationScope : IEquatable<InstrumentationScope>
+    {
+        public InstrumentationScope(string name, string? version)
+        {
+            this.Name = name;
+            this.Version = version;
+        }
+
+        public string Name { get; }
+
+        public string? Version { get; }
+
+        public bool Equals(InstrumentationScope other)
+            => string.Equals(this.Name, other.Name, StringComparison.Ordinal)
+            && string.Equals(this.Version, other.Version, StringComparison.Ordinal);
+
+        public override bool Equals(object? obj)
+            => obj is InstrumentationScope other && this.Equals(other);
+
+        public override int GetHashCode()
+        {
+            // Note: HashCode is not available on all the target frameworks, so
+            // the hash is combined manually here.
+            unchecked
+            {
+                var hash = 17;
+                hash = (hash * 31) + (this.Version is null ? 0 : StringComparer.Ordinal.GetHashCode(this.Name));
+                hash = (hash * 31) + (this.Version is null ? 0 : StringComparer.Ordinal.GetHashCode(this.Version));
+                return hash;
+            }
         }
     }
 
