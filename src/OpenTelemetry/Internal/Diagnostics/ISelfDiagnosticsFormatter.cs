@@ -6,9 +6,6 @@ namespace OpenTelemetry.Internal;
 /// <summary>
 /// Renders a <see cref="SelfDiagnosticsLogEntry"/> to text for a sink.
 /// </summary>
-/// <remarks>
-/// Formatters must be thread-safe with respect to concurrent <see cref="Format"/> calls.
-/// </remarks>
 internal interface ISelfDiagnosticsFormatter
 {
     /// <summary>

@@ -143,7 +143,7 @@ When using ASP.NET Core or a .NET Generic Host application:
 
 ```csharp
 using Microsoft.Extensions.Logging;
-using OpenTelemetry;
+using OpenTelemetry.SelfDiagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -167,6 +167,7 @@ AWS Lambda, etc.):
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
+using OpenTelemetry.SelfDiagnostics;
 
 using var sdk = OpenTelemetrySdk.Create(builder =>
 {
@@ -184,6 +185,9 @@ When using the individual provider builder APIs (`Sdk.Create*ProviderBuilder`),
 use `ConfigureServices`:
 
 ```csharp
+using OpenTelemetry;
+using OpenTelemetry.SelfDiagnostics;
+
 using var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .ConfigureServices(services => services.Configure<SelfDiagnosticsOptions>(
         options => options.LogToStdout = true))
@@ -230,7 +234,7 @@ output](#reading-the-output) for the full format.
 
 ### Options
 
-`OpenTelemetry.SelfDiagnosticsOptions`:
+`OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions`:
 
 | Property | Type | Default | Description |
 | -------- | ---- | ------- | ----------- |
@@ -240,7 +244,7 @@ output](#reading-the-output) for the full format.
 | `MaxRetainedFiles` | `int` | `10` | Number of log files kept. The oldest is pruned when opening a new file would exceed a positive limit. Values less than or equal to `0` disable automatic pruning and retain every rolled file indefinitely. |
 | `LogToStdout` | `bool` | `false` | Enables the console sink, writing to standard output. |
 | `LogToStderr` | `bool` | `false` | Enables the console sink, writing to standard error. |
-| `EnvironmentVariables` | `OpenTelemetry.EnvironmentVariableLogMode` | `KnownSafeValues` | How much of the `OTEL_*` environment variable snapshot is written into the file preamble. See [Environment variable disclosure](#environment-variable-disclosure). |
+| `EnvironmentVariables` | `OpenTelemetry.SelfDiagnostics.EnvironmentVariableLogMode` | `KnownSafeValues` | How much of the `OTEL_*` environment variable snapshot is written into the file preamble. See [Environment variable disclosure](#environment-variable-disclosure). |
 
 Console stream routing:
 
@@ -525,6 +529,9 @@ This writes to the [default log directory](#default-log-directory) for your
 platform. To control the location or the number of retained files:
 
 ```csharp
+using Microsoft.Extensions.Logging;
+using OpenTelemetry.SelfDiagnostics;
+
 builder.Services.Configure<SelfDiagnosticsOptions>(options =>
 {
     options.MinimumLevel = LogLevel.Debug;

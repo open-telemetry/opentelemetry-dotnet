@@ -7,10 +7,7 @@ using Microsoft.Extensions.Logging;
 namespace OpenTelemetry.Internal;
 
 /// <summary>
-/// A fully-captured self-diagnostics log entry. This is the single currency passed between
-/// the capture side (<see cref="SelfDiagnosticsLogger"/>, <see cref="SelfDiagnosticsLoggingEventListener"/>)
-/// and the sink side (<see cref="SelfDiagnosticsSinkDispatcher"/> and its
-/// <see cref="ISelfDiagnosticsSink"/>s).
+/// A fully-captured self-diagnostics log entry.
 /// </summary>
 /// <remarks>
 /// All contextual data (timestamp, thread, activity context) is captured at log time, never at

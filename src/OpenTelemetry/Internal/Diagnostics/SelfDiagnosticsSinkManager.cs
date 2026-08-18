@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.CodeAnalysis;
+using OpenTelemetry.SelfDiagnostics;
 
 namespace OpenTelemetry.Internal;
 
@@ -13,7 +14,7 @@ namespace OpenTelemetry.Internal;
 /// <para>
 /// Not thread-safe by design: <see cref="SelfDiagnosticsLogger"/> serializes all calls through
 /// its update lock. Disposal of replaced sinks is owned by
-/// <see cref="SelfDiagnosticsSinkDispatcher.UpdateSinks"/>, so this class only
+/// <see cref="SelfDiagnosticsSinkDispatcher"/>, so this class only
 /// decides identity, never lifetime.
 /// </para>
 /// <para>
@@ -32,7 +33,7 @@ namespace OpenTelemetry.Internal;
 [SuppressMessage(
     "Design",
     "CA1001:Types that own disposable fields should be disposable",
-    Justification = "Sink lifetime is owned by SelfDiagnosticsSinkDispatcher: replaced sinks are disposed by UpdateSinks (reference diff) and the live set by the dispatcher's Dispose. This type only tracks sink identity to decide recreate-versus-update.")]
+    Justification = "Sink lifetime is owned by SelfDiagnosticsSinkDispatcher: replaced sinks are disposed via reference diff and the live set by the dispatcher's Dispose. This type only tracks sink identity to decide recreate-versus-update.")]
 internal sealed class SelfDiagnosticsSinkManager
 {
     private readonly Func<SelfDiagnosticsOptions.SelfDiagnosticsConfiguration, string> preambleBuilder;

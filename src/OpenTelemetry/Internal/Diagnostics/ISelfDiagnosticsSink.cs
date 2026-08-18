@@ -33,7 +33,6 @@ internal interface ISelfDiagnosticsSink : IDisposable
 
     /// <summary>
     /// Called once after the sink has been installed and all outgoing sinks have been disposed.
-    /// Implementations that require no post-install work should no-op.
     /// </summary>
     void OnInstalled();
 

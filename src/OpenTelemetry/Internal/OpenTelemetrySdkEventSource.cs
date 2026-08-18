@@ -378,10 +378,8 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
         {
             if (eventSource.Name.StartsWith("OpenTelemetry", StringComparison.OrdinalIgnoreCase))
             {
-                // Indexer, not Add: two sources can share a name (a source recreated after
-                // disposal, or a test fixture). Add would throw, and because this runs inside
-                // EventSource.Initialize the exception would leave the new source permanently
-                // disabled with every WriteEvent a silent no-op.
+                // Indexer not Add: duplicate names are possible (recreated source, test fixture)
+                // and Add throws inside EventSource.Initialize, permanently disabling the source.
                 this.eventSources[eventSource.Name] = eventSource;
                 this.EnableEvents(eventSource, EventLevel.Verbose, EventKeywords.All);
             }

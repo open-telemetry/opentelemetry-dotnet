@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 using OpenTelemetry;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.SelfDiagnostics;
 using OpenTelemetry.Trace;
 
 namespace Microsoft.Extensions.DependencyInjection;

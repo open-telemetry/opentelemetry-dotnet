@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using Microsoft.Extensions.Configuration;
+using OpenTelemetry.SelfDiagnostics;
 
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
@@ -80,14 +81,14 @@ internal static class SelfDiagnosticsOptionsEnvironmentDefaults
     }
 
     /// <summary>
-    /// Parses an OTEL_LOG_LEVEL string value into a <see cref="LogLevel"/>.
+    /// Parses an <c>OTEL_LOG_LEVEL</c> string value into a <see cref="LogLevel"/>.
     /// </summary>
     /// <remarks>
     /// The OpenTelemetry specification tokens are recognised first. The
     /// <see cref="LogLevel"/> member names are then accepted as an alias so that values
     /// such as <c>Warning</c> and <c>Information</c> are not silently ignored.
     /// </remarks>
-    /// <param name="value">The raw OTEL_LOG_LEVEL string, for example <c>warn</c> or <c>debug</c>.</param>
+    /// <param name="value">The raw <c>OTEL_LOG_LEVEL</c> string, for example <c>warn</c> or <c>debug</c>.</param>
     /// <param name="level">The parsed log level when the return value is <see langword="true"/>.</param>
     /// <returns><see langword="true"/> if <paramref name="value"/> is recognised; otherwise <see langword="false"/>.</returns>
     internal static bool TryParseOtelLogLevel(string value, out LogLevel level)
@@ -97,20 +98,25 @@ internal static class SelfDiagnosticsOptionsEnvironmentDefaults
             case "ERROR":
                 level = LogLevel.Error;
                 return true;
+
             case "WARNING":
             case "WARN":
                 level = LogLevel.Warning;
                 return true;
+
             case "INFO":
             case "INFORMATION":
                 level = LogLevel.Information;
                 return true;
+
             case "DEBUG":
                 level = LogLevel.Debug;
                 return true;
+
             case "TRACE":
                 level = LogLevel.Trace;
                 return true;
+
             case "NONE":
                 level = LogLevel.None;
                 return true;
@@ -160,7 +166,7 @@ internal static class SelfDiagnosticsOptionsEnvironmentDefaults
     /// <remarks>
     /// Unrecognised tokens are reported and skipped rather than invalidating the whole value, so
     /// one typo does not silence the sinks that were spelled correctly. <c>none</c> overrides every
-    /// other token: silence is the safe reading of a contradictory value.
+    /// other token.
     /// </remarks>
     /// <returns>
     /// <see langword="true"/> when the file sink was requested and not overridden by <c>none</c>.

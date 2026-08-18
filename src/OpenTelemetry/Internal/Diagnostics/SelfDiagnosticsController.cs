@@ -4,6 +4,7 @@
 using System.Diagnostics.Tracing;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using OpenTelemetry.SelfDiagnostics;
 
 namespace OpenTelemetry.Internal;
 

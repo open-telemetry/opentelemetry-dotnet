@@ -35,6 +35,16 @@ internal sealed class SynchronizedStringWriter : StringWriter
         }
     }
 
+    // StringWriter.WriteLine(string?) appends directly to the underlying StringBuilder without
+    // going through Write(string?), so this override is needed to keep writes under the lock.
+    public override void WriteLine(string? value)
+    {
+        lock (this.gate)
+        {
+            base.WriteLine(value);
+        }
+    }
+
     public override string ToString()
     {
         lock (this.gate)

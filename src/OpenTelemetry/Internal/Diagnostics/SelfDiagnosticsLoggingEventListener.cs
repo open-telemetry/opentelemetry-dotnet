@@ -13,11 +13,12 @@ namespace OpenTelemetry.Internal;
 
 /// <summary>
 /// An <see cref="EventListener"/> that subscribes to all <c>OpenTelemetry-*</c>
-/// <see cref="EventSource"/>s and forwards their events to a <see cref="SelfDiagnosticsLogger"/>
-/// as pre-captured <see cref="SelfDiagnosticsLogEntry"/> values (event-time timestamp, OS
-/// thread id, and activity context are all taken here, so entries render correctly even when
-/// they sit in the dispatcher queue or deferred buffer).
+/// <see cref="EventSource"/>s and forwards their events to a <see cref="SelfDiagnosticsLogger"/>.
 /// </summary>
+/// <remarks>
+/// Contextual data (timestamp, thread, activity context) is captured at event time so entries
+/// remain accurate after spending time in the dispatcher queue or deferred buffer.
+/// </remarks>
 internal sealed class SelfDiagnosticsLoggingEventListener : EventListener
 {
     internal const string OpenTelemetryEventSourceNamePrefix = "OpenTelemetry-";
@@ -49,7 +50,6 @@ internal sealed class SelfDiagnosticsLoggingEventListener : EventListener
     // subsequent sources should be subscribed directly.
     private readonly List<EventSource>? preConstructorSources = [];
 
-    // The current subscription level. LogLevel.None means disabled (DisableEvents).
     private volatile LogLevel currentLevel;
     private volatile bool disposed;
 
@@ -151,15 +151,10 @@ internal sealed class SelfDiagnosticsLoggingEventListener : EventListener
         }
         catch
         {
-            // Diagnostics must never break the SDK. The runtime does catch exceptions thrown
-            // from OnEventWritten, but it then calls ReportOutOfBandMessage, which re-dispatches
-            // an EventSourceMessage into every listener (this one included) and writes to the
-            // attached debugger; and any source created with
-            // EventSourceSettings.ThrowOnEventWriteErrors rethrows as EventSourceException at
-            // the SDK's WriteEvent call site. Swallowing is deliberate: reporting the failure
-            // would re-enter the write path that just failed. There is no seam to force a
-            // failure here (payload values are runtime-serialized primitives), so this guard is
-            // untested by design.
+            // Swallowing is deliberate: the runtime re-dispatches OnEventWritten exceptions as
+            // EventSourceMessage events (looping back into this handler), and sources created
+            // with ThrowOnEventWriteErrors rethrow at the SDK's WriteEvent call site.
+            // Reporting the failure would re-enter the write path that just failed.
         }
     }
 

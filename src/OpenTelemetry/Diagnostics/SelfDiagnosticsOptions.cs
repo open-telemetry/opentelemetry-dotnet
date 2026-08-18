@@ -7,7 +7,7 @@ using OpenTelemetry.Internal;
 
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
-namespace OpenTelemetry;
+namespace OpenTelemetry.SelfDiagnostics;
 
 /// <summary>
 /// Options for configuring SDK self-diagnostics logging.
@@ -34,9 +34,7 @@ namespace OpenTelemetry;
 /// </para>
 /// <para>
 /// Only <c>OTEL_LOG_LEVEL</c> is shared with the wider ecosystem, and it activates nothing on its
-/// own: with no sink selected the SDK stays silent whatever level is set. The variables that do
-/// activate output are namespaced to this feature, so they cannot collide with the .NET
-/// auto-instrumentation agent's own logging configuration and no agent detection is needed.
+/// own: with no sink selected the SDK stays silent whatever level is set.
 /// </para>
 /// </remarks>
 public sealed class SelfDiagnosticsOptions
@@ -46,6 +44,8 @@ public sealed class SelfDiagnosticsOptions
     internal const string LogDirectoryEnvVarName = "OTEL_DOTNET_SELF_DIAGNOSTICS_LOG_DIRECTORY";
     internal const string EnvironmentVariablesEnvVarName = "OTEL_DOTNET_SELF_DIAGNOSTICS_ENV_VARS";
     internal const string SinksExpectedValues = "none, file, stdout, stderr, console";
+    internal const int DefaultFileSizeLimitKilobytes = 10_240;
+    internal const int DefaultMaxRetainedFiles = 10;
 
     private static readonly string[] NoWarnings = [];
 
@@ -60,7 +60,7 @@ public sealed class SelfDiagnosticsOptions
     /// Initializes a new instance of the <see cref="SelfDiagnosticsOptions"/> class,
     /// reading environment-variable defaults from the provided <paramref name="configuration"/>.
     /// </summary>
-    /// <param name="configuration">The configuration source used to read OTEL_ environment variable defaults.</param>
+    /// <param name="configuration">The configuration source used to read <c>OTEL_</c> environment variable defaults.</param>
     internal SelfDiagnosticsOptions(IConfiguration configuration)
         : this(configuration, GetDefaultLogDirectory)
     {
@@ -99,8 +99,6 @@ public sealed class SelfDiagnosticsOptions
     /// </para>
     /// <para>
     /// Set <c>OTEL_LOG_LEVEL=info</c>, or assign this property, to take the specification default.
-    /// The level only takes effect once a sink is enabled - with no sink configured the SDK is
-    /// silent at any level.
     /// </para>
     /// </remarks>
     public LogLevel MinimumLevel { get; set; } = LogLevel.Warning;
@@ -131,7 +129,7 @@ public sealed class SelfDiagnosticsOptions
     /// the limit by its preamble and by the entry that crosses the boundary, so very small
     /// values can cause a rollover after nearly every entry.
     /// </summary>
-    public int FileSizeLimitKilobytes { get; set; } = 10_240;
+    public int FileSizeLimitKilobytes { get; set; } = DefaultFileSizeLimitKilobytes;
 
     /// <summary>
     /// Gets or sets the maximum number of rolling log files to retain. Defaults to 10.
@@ -147,21 +145,21 @@ public sealed class SelfDiagnosticsOptions
     /// number retained.
     /// </para>
     /// </remarks>
-    public int MaxRetainedFiles { get; set; } = 10;
+    public int MaxRetainedFiles { get; set; } = DefaultMaxRetainedFiles;
 
     /// <summary>
     /// Gets or sets a value indicating whether SDK diagnostics are written to standard output.
-    /// When only this flag is set all entries go to standard output. When both this flag and
-    /// <see cref="LogToStderr"/> are set, entries at <see cref="LogLevel.Warning"/> and below go to
-    /// standard output and entries above <see cref="LogLevel.Warning"/> go to standard error.
+    /// When only this flag is set all entries are written to standard output. When both this flag and
+    /// <see cref="LogToStderr"/> are set, entries at <see cref="LogLevel.Warning"/> and below are written to
+    /// standard output and entries above <see cref="LogLevel.Warning"/> are written to standard error.
     /// </summary>
     public bool LogToStdout { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether SDK diagnostics are written to standard error.
-    /// When only this flag is set all entries go to standard error. When both this flag and
-    /// <see cref="LogToStdout"/> are set, entries above <see cref="LogLevel.Warning"/> go to standard
-    /// error and entries at <see cref="LogLevel.Warning"/> and below go to standard output.
+    /// When only this flag is set all entries are written to standard error. When both this flag and
+    /// <see cref="LogToStdout"/> are set, entries above <see cref="LogLevel.Warning"/> are written to standard
+    /// error and entries at <see cref="LogLevel.Warning"/> and below are written to standard output.
     /// </summary>
     public bool LogToStderr { get; set; }
 
@@ -220,8 +218,8 @@ public sealed class SelfDiagnosticsOptions
         internal static readonly SelfDiagnosticsConfiguration Disabled = new(
             LogLevel.None,
             null,
-            10_240,
-            3,
+            DefaultFileSizeLimitKilobytes,
+            DefaultMaxRetainedFiles,
             false,
             false,
             EnvironmentVariableLogMode.KnownSafeValues,
@@ -308,11 +306,7 @@ public sealed class SelfDiagnosticsOptions
         private readonly List<Registration> registrations = [];
         private readonly Action<SelfDiagnosticsConfiguration> applyConfiguration;
 
-        // Aliases an entry in `registrations`; the lease returned from Register owns its lifetime.
-#pragma warning disable CA2213 // Not owned here - disposing it would revoke the caller's lease.
-        private Registration? active;
-#pragma warning restore CA2213
-
+        private object? activeRegistrationIdentity;
         private bool disposed;
 
         internal SelfDiagnosticsConfigurationCoordinator(Action<SelfDiagnosticsConfiguration> applyConfiguration)
@@ -334,7 +328,7 @@ public sealed class SelfDiagnosticsOptions
                 this.disposed = true;
                 registrations = [.. this.registrations];
                 this.registrations.Clear();
-                this.active = null;
+                this.activeRegistrationIdentity = null;
 
                 foreach (var registration in registrations)
                 {
@@ -379,11 +373,14 @@ public sealed class SelfDiagnosticsOptions
         /// <param name="changed">The registration whose configuration just changed, if any.</param>
         private void ReevaluateActiveUnderLock(Registration? changed)
         {
-            var selected = this.SelectActiveUnderLock();
-            var ownerChanged = !ReferenceEquals(selected, this.active);
-            this.active = selected;
+            var selectedIndex = this.SelectActiveUnderLock();
+            var selectedIdentity = selectedIndex >= 0
+                ? this.registrations[selectedIndex].Identity
+                : null;
+            var ownerChanged = !ReferenceEquals(selectedIdentity, this.activeRegistrationIdentity);
+            this.activeRegistrationIdentity = selectedIdentity;
 
-            if (!ownerChanged && (changed is null || !ReferenceEquals(changed, selected)))
+            if (!ownerChanged && (changed is null || selectedIndex < 0 || !ReferenceEquals(changed, this.registrations[selectedIndex])))
             {
                 // The owner is unchanged and the change came from a registration that does not
                 // own the configuration. Re-applying an identical configuration would churn the
@@ -392,22 +389,24 @@ public sealed class SelfDiagnosticsOptions
             }
 
             this.applyConfiguration(
-                selected?.GetLatestConfiguration() ?? SelfDiagnosticsConfiguration.Disabled);
+                selectedIndex >= 0
+                    ? this.registrations[selectedIndex].GetLatestConfiguration()
+                    : SelfDiagnosticsConfiguration.Disabled);
         }
 
-        private Registration? SelectActiveUnderLock()
+        private int SelectActiveUnderLock()
         {
             for (var i = this.registrations.Count - 1; i >= 0; i--)
             {
                 if (this.registrations[i].GetLatestConfiguration().HasConfiguredSink)
                 {
-                    return this.registrations[i];
+                    return i;
                 }
             }
 
             return this.registrations.Count > 0
-                ? this.registrations[this.registrations.Count - 1]
-                : null;
+                ? this.registrations.Count - 1
+                : -1;
         }
 
         private void ConfigurationChanged(Registration registration)
@@ -461,6 +460,8 @@ public sealed class SelfDiagnosticsOptions
                 this.owner = owner;
                 this.monitor = monitor;
             }
+
+            internal object Identity { get; } = new();
 
             internal bool Registered { get; set; }
 

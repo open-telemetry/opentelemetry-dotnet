@@ -37,12 +37,17 @@ public class SelfDiagnosticsAssemblyLoggerTests
 
         using var assemblyLogger = new SelfDiagnosticsAssemblyLogger(recording);
         assemblyLogger.TryLogLoadedAssemblies();
-        var afterFirstScan = recording.Entries.Count;
-        Assert.True(afterFirstScan > 0);
+
+        var firstScanMessages = new HashSet<string>(recording.Entries.Select(e => e.Message), StringComparer.Ordinal);
+        Assert.NotEmpty(firstScanMessages);
 
         assemblyLogger.TryLogLoadedAssemblies();
 
-        Assert.Equal(afterFirstScan, recording.Entries.Count);
+        // Assemblies seen in the first scan must not be logged a second time. Assemblies loaded
+        // between the two calls (by the JIT or parallel tests) may legitimately appear in the
+        // second scan, so the count is not asserted to be exactly equal.
+        var secondScanEntries = recording.Entries.Skip(firstScanMessages.Count).ToList();
+        Assert.DoesNotContain(secondScanEntries, e => firstScanMessages.Contains(e.Message));
     }
 
     [Fact]

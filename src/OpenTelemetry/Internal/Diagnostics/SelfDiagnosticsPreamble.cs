@@ -10,6 +10,7 @@ using System.Runtime;
 using System.Runtime.InteropServices;
 #endif
 using System.Text;
+using OpenTelemetry.SelfDiagnostics;
 
 namespace OpenTelemetry.Internal;
 
