@@ -31,6 +31,10 @@ Notes](../../RELEASENOTES.md).
   exception is thrown by their constructor after resource creation.
   ([#7615](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7615))
 
+* Added SDK self-observability metrics for the current size and configured
+  capacity of the batching span and log processor queues.
+  ([#7642](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7642))
+
 ## 1.17.0
 
 Released 2026-Jul-16
