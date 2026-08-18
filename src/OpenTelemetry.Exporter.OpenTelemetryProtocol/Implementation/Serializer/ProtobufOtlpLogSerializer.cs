@@ -264,10 +264,13 @@ internal static class ProtobufOtlpLogSerializer
             isLogRecordBodySet = true;
         }
 
-        if (logRecord.Attributes != null)
+        var attributes = logRecord.Attributes;
+        if (attributes != null)
         {
-            foreach (var attribute in logRecord.Attributes)
+            for (var i = 0; i < attributes.Count; i++)
             {
+                var attribute = attributes[i];
+
                 // Special casing {OriginalFormat}
                 // See https://github.com/open-telemetry/opentelemetry-dotnet/pull/3182
                 // for explanation.
