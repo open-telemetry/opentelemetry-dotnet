@@ -120,6 +120,141 @@ public class TraceContextPropagatorTests
         Assert.False(context.ActivityContext.IsValid());
     }
 
+    [Fact]
+    public void Extract_ReturnsExistingContextIfAlreadyValid()
+    {
+        var existing = new ActivityContext(
+            ActivityTraceId.CreateFromString("11111111111111111111111111111111".AsSpan()),
+            ActivitySpanId.CreateFromString("2222222222222222".AsSpan()),
+            ActivityTraceFlags.Recorded,
+            traceState: "k1=v1");
+
+        var headers = new Dictionary<string, string>
+        {
+            { TraceParent, $"00-{TraceId}-{SpanId}-01" },
+        };
+
+        var propagator = new TraceContextPropagator();
+        var context = propagator.Extract(new PropagationContext(existing, default), headers, Getter);
+
+        // The carrier is not consulted at all when a valid context was already extracted.
+        Assert.Equal(existing.TraceId, context.ActivityContext.TraceId);
+        Assert.Equal(existing.SpanId, context.ActivityContext.SpanId);
+        Assert.Equal("k1=v1", context.ActivityContext.TraceState);
+    }
+
+    [Fact]
+    public void Extract_IsBlankIfCarrierIsNull()
+    {
+        var propagator = new TraceContextPropagator();
+        var context = propagator.Extract(default, (IDictionary<string, string>)null!, Getter);
+
+        Assert.False(context.ActivityContext.IsValid());
+    }
+
+    [Fact]
+    public void Extract_IsBlankIfGetterIsNull()
+    {
+        var headers = new Dictionary<string, string>
+        {
+            { TraceParent, $"00-{TraceId}-{SpanId}-01" },
+        };
+
+        var propagator = new TraceContextPropagator();
+        var context = propagator.Extract<IDictionary<string, string>>(default, headers, null!);
+
+        Assert.False(context.ActivityContext.IsValid());
+    }
+
+    [Fact]
+    public void Extract_IsBlankIfGetterThrows()
+    {
+        var headers = new Dictionary<string, string>
+        {
+            { TraceParent, $"00-{TraceId}-{SpanId}-01" },
+        };
+
+        var propagator = new TraceContextPropagator();
+        var context = propagator.Extract<IDictionary<string, string>>(
+            default,
+            headers,
+            static (_, _) => throw new InvalidOperationException("The carrier could not be read."));
+
+        Assert.False(context.ActivityContext.IsValid());
+    }
+
+    [Fact]
+    public void Extract_IsBlankIfTraceparentValuesAreNull()
+    {
+        var propagator = new TraceContextPropagator();
+        var context = propagator.Extract<IDictionary<string, string>>(default, new Dictionary<string, string>(), static (_, _) => null);
+
+        Assert.False(context.ActivityContext.IsValid());
+    }
+
+    [Fact]
+    public void Extract_IgnoresMultipleReadOnlyListTraceparentValues()
+    {
+        var headers = new Dictionary<string, ReadOnlyCarrierValues>
+        {
+            [TraceParent] = new([$"00-{TraceId}-{SpanId}-01", $"00-{TraceId}-{SpanId}-00"]),
+        };
+
+        var target = new TraceContextPropagator();
+        var context = target.Extract(default, headers, static (carrier, name) =>
+            carrier.TryGetValue(name, out var value) ? value : new ReadOnlyCarrierValues([]));
+
+        Assert.False(context.ActivityContext.IsValid());
+    }
+
+    [Fact]
+    public void Extract_IgnoresEmptyEnumerableTraceparentValues()
+    {
+        var headers = new Dictionary<string, EnumerableCarrierValues>
+        {
+            [TraceParent] = new([]),
+        };
+
+        var target = new TraceContextPropagator();
+        var context = target.Extract(default, headers, static (carrier, name) =>
+            carrier.TryGetValue(name, out var value) ? value : new EnumerableCarrierValues([]));
+
+        Assert.False(context.ActivityContext.IsValid());
+    }
+
+    [Fact]
+    public void Extract_IgnoresEmptyReadOnlyListTracestateValues()
+    {
+        var headers = new Dictionary<string, ReadOnlyCarrierValues>
+        {
+            [TraceParent] = new([$"00-{TraceId}-{SpanId}-01"]),
+            [TraceState] = new([]),
+        };
+
+        var target = new TraceContextPropagator();
+        var context = target.Extract(default, headers, static (carrier, name) =>
+            carrier.TryGetValue(name, out var value) ? value : new ReadOnlyCarrierValues([]));
+
+        Assert.Equal(ActivityTraceId.CreateFromString(TraceId.AsSpan()), context.ActivityContext.TraceId);
+        Assert.Null(context.ActivityContext.TraceState);
+    }
+
+    [Fact]
+    public void Extract_CombinesMultipleEnumerableTracestateValues()
+    {
+        var headers = new Dictionary<string, EnumerableCarrierValues>
+        {
+            [TraceParent] = new([$"00-{TraceId}-{SpanId}-01"]),
+            [TraceState] = new(["k1=v1", "k2=v2", "k3=v3"]),
+        };
+
+        var target = new TraceContextPropagator();
+        var context = target.Extract(default, headers, static (carrier, name) =>
+            carrier.TryGetValue(name, out var value) ? value : new EnumerableCarrierValues([]));
+
+        Assert.Equal("k1=v1,k2=v2,k3=v3", context.ActivityContext.TraceState);
+    }
+
     [Theory]
     [InlineData($"00-xyz7651916cd43dd8448eb211c80319c-{SpanId}-01")]
     [InlineData($"00-xyz7651916cd43dd8448eb211c80319c-{SpanId}-02")]
@@ -127,6 +262,19 @@ public class TraceContextPropagatorTests
     [InlineData($"00-{TraceId}-xyz7c989f97918e1-01")]
     [InlineData($"00-{TraceId}-{SpanId}-x1")]
     [InlineData($"00-{TraceId}-{SpanId}-1x")]
+    //// Non-hex character in the version.
+    [InlineData($"x0-{TraceId}-{SpanId}-01")]
+    [InlineData($"0x-{TraceId}-{SpanId}-01")]
+    //// Upper-case hex is not accepted for either id.
+    [InlineData($"00-0AF7651916CD43DD8448EB211C80319C-{SpanId}-01")]
+    [InlineData($"00-{TraceId}-B9C7C989F97918E1-01")]
+    //// An all-zero trace id or span id is invalid.
+    [InlineData($"00-00000000000000000000000000000000-{SpanId}-01")]
+    [InlineData($"00-{TraceId}-0000000000000000-01")]
+    [InlineData($"00-{TraceId}-{SpanId}-0")] // Too short to be a version 0 traceparent
+    [InlineData($"00x{TraceId}-{SpanId}-01")] // The delimiter after the version is not a dash
+    [InlineData($"00-{TraceId}x{SpanId}-01")] // The delimiter between the trace id and the span id is not a dash
+    [InlineData($"00-{TraceId}-{SpanId}x01")] // The delimiter between the span id and the trace flags is not a dash
     public void IsBlankIfInvalid(string invalidTraceParent)
     {
         var headers = new Dictionary<string, string>
@@ -439,6 +587,51 @@ public class TraceContextPropagatorTests
         Assert.Equal(expectedHeaders, carrier);
     }
 
+    [Theory]
+    [InlineData(4, "04")]
+    [InlineData(16, "10")]
+    [InlineData(255, "ff")]
+    public void Inject_WithUnknownTraceFlags(int traceFlags, string expectedFlags)
+    {
+        var traceId = ActivityTraceId.CreateRandom();
+        var spanId = ActivitySpanId.CreateRandom();
+
+        // Trace flags that none of the known values match are formatted as hex.
+        var activityContext = new ActivityContext(traceId, spanId, (ActivityTraceFlags)traceFlags, traceState: null);
+        var propagationContext = new PropagationContext(activityContext, default);
+        var carrier = new Dictionary<string, string>();
+        var propagator = new TraceContextPropagator();
+        propagator.Inject(propagationContext, carrier, Setter);
+
+        Assert.Equal($"00-{traceId}-{spanId}-{expectedFlags}", carrier[TraceParent]);
+    }
+
+    [Fact]
+    public void Inject_DoesNothingIfCarrierIsNull()
+    {
+        var activityContext = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, traceState: null);
+        var propagationContext = new PropagationContext(activityContext, default);
+
+        var invocations = 0;
+        var propagator = new TraceContextPropagator();
+        propagator.Inject(propagationContext, (IDictionary<string, string>)null!, (_, _, _) => invocations++);
+
+        Assert.Equal(0, invocations);
+    }
+
+    [Fact]
+    public void Inject_DoesNothingIfSetterIsNull()
+    {
+        var activityContext = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, traceState: null);
+        var propagationContext = new PropagationContext(activityContext, default);
+        var carrier = new Dictionary<string, string>();
+
+        var propagator = new TraceContextPropagator();
+        propagator.Inject<IDictionary<string, string>>(propagationContext, carrier, null!);
+
+        Assert.Empty(carrier);
+    }
+
     [Fact]
     public void Inject_TruncatesOversizedTracestate()
     {
@@ -455,6 +648,27 @@ public class TraceContextPropagatorTests
 
         Assert.Equal($"00-{traceId}-{spanId}-01", carrier[TraceParent]);
         Assert.Equal(expectedTraceState, carrier[TraceState]);
+    }
+
+    [Fact]
+    public void Inject_TruncatesOversizedTracestateWithoutLargeEntries()
+    {
+        var traceId = ActivityTraceId.CreateRandom();
+        var spanId = ActivitySpanId.CreateRandom();
+
+        var allEntries = Enumerable.Range(0, 30).Select(i => $"k{i:00}={new string('a', 15)}").ToList();
+        var oversizedTraceState = string.Join(",", allEntries);
+        var expectedTraceState = string.Join(",", allEntries.Take(25));
+
+        var activityContext = new ActivityContext(traceId, spanId, ActivityTraceFlags.Recorded, oversizedTraceState);
+        var propagationContext = new PropagationContext(activityContext, default);
+        var carrier = new Dictionary<string, string>();
+        var propagator = new TraceContextPropagator();
+        propagator.Inject(propagationContext, carrier, Setter);
+
+        Assert.Equal($"00-{traceId}-{spanId}-01", carrier[TraceParent]);
+        Assert.Equal(expectedTraceState, carrier[TraceState]);
+        Assert.True(carrier[TraceState].Length <= 512);
     }
 
     [Fact]
@@ -484,6 +698,18 @@ public class TraceContextPropagatorTests
         Assert.Empty(CallTraceContextPropagator("foo =1"));
         Assert.Empty(CallTraceContextPropagator("FOO =1"));
         Assert.Empty(CallTraceContextPropagator("foo.bar=1"));
+
+        // The same, but spread over multiple tracestate headers.
+        Assert.Empty(CallTraceContextPropagator(["bar=1", "foo =1"]));
+        Assert.Empty(CallTraceContextPropagator(["bar=1", "FOO =1"]));
+        Assert.Empty(CallTraceContextPropagator(["bar=1", "foo.bar=1"]));
+    }
+
+    [Fact]
+    public void Member_MissingKeyOrValue()
+    {
+        Assert.Empty(CallTraceContextPropagator("novalue"));
+        Assert.Empty(CallTraceContextPropagator(["bar=1", "novalue"]));
     }
 
     [Fact]
@@ -545,6 +771,10 @@ public class TraceContextPropagatorTests
         // test_tracestate_value_illegal_characters
         Assert.Empty(CallTraceContextPropagator("foo=bar=baz"));
         Assert.Empty(CallTraceContextPropagator("foo=,bar=3"));
+
+        // The same, but spread over multiple tracestate headers.
+        Assert.Empty(CallTraceContextPropagator(["bar=1", "foo=bar=baz"]));
+        Assert.Empty(CallTraceContextPropagator(["bar=1", "foo="]));
     }
 
     [Fact]

@@ -7,6 +7,40 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fix concurrent scrapes returning an empty response under contention.
+  Now the exporter will return an HTTP 500 error instead.
+  ([#7571](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7571))
+
+* Waiting for concurrent scrapes to finish before collecting no longer
+  blocks, which could stall concurrent scrapes being waited on.
+  ([#7571](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7571))
+
+* A scrape which is still collecting when the listener is disposed now returns
+  an HTTP 503 response.
+  ([#7587](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7587))
+
+* Shutting down the listener no longer waits indefinitely for its request
+  processing loop to stop, and no longer throws if the loop faulted.
+  ([#7587](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7587))
+
+* Fixed the interaction between `PrometheusHttpListenerOptions.TranslationStrategy`
+  and content negotiation. The configured strategy is now applied before content
+  negotiation, instead of the negotiated escaping scheme replacing the strategy's,
+  and the `Content-Type` header now reports the escaping scheme that was applied
+  rather than the one that was negotiated.
+  ([#7610](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7610))
+
+* Fixed metric values and histogram bucket bounds being written with 17
+  significant digits instead of their shortest round-trippable representation.
+  ([#7589](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7589))
+
+* Fixed the canonical representation used for histogram `le` and summary
+  `quantile` label values falling back to 17 significant digits incorrectly.
+  ([#7589](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7589))
+
+* Fixed a race where a slow scrape could return an HTTP 200 instead of 408.
+  ([#7615](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7615))
+
 ## 1.17.0-beta.1
 
 Released 2026-Jul-16

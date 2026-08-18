@@ -248,6 +248,21 @@ internal sealed class CircularBufferBuckets
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int PositiveModulo32(int value, int divisor)
+    {
+        Debug.Assert(divisor > 0, $"{nameof(divisor)} must be a positive integer.");
+
+        value %= divisor;
+
+        if (value < 0)
+        {
+            value += divisor;
+        }
+
+        return value;
+    }
+
     internal void Reset()
     {
         if (this.trait != null)
@@ -275,5 +290,5 @@ internal sealed class CircularBufferBuckets
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int ModuloIndex(int value)
-        => MathHelper.PositiveModulo32(value, this.Capacity);
+        => PositiveModulo32(value, this.Capacity);
 }

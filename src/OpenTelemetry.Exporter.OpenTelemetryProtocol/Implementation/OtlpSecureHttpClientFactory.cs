@@ -93,7 +93,10 @@ internal static class OtlpSecureHttpClientFactory
             clientCertificate = null;
 
 #pragma warning disable CA5399 // CheckCertificateRevocationList is set in ConfigureTls.
-            var client = new HttpClient(handler, disposeHandler: true);
+            var client = new HttpClient(handler, disposeHandler: true)
+            {
+                MaxResponseContentBufferSize = HttpClientHelpers.DefaultMessageSizeLimit,
+            };
 #pragma warning restore CA5399
 
             configureClient?.Invoke(client);

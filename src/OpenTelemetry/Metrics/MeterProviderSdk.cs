@@ -47,142 +47,150 @@ internal sealed class MeterProviderSdk : MeterProvider
 
         OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("Building MeterProvider.");
 
-        var configureProviderBuilders = serviceProvider.GetServices<IConfigureMeterProviderBuilder>();
-        foreach (var configureProviderBuilder in configureProviderBuilders)
+        try
         {
-            configureProviderBuilder.ConfigureBuilder(serviceProvider, state);
-        }
-
-        this.ExemplarFilter = state.ExemplarFilter;
-
-        this.ApplySpecificationConfigurationKeys(serviceProvider.GetRequiredService<IConfiguration>());
-
-        var exportersAdded = new StringBuilder();
-        var instrumentationFactoriesAdded = new StringBuilder();
-
-        var resourceBuilder = state.ResourceBuilder ?? ResourceBuilder.CreateDefault();
-        resourceBuilder.ServiceProvider = serviceProvider;
-        this.Resource = resourceBuilder.Build();
-
-        this.viewConfigs = state.ViewConfigs;
-
-        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent(
-            $"MeterProvider configuration: {{MetricLimit={state.MetricLimit}, CardinalityLimit={state.CardinalityLimit}, ExemplarFilter={this.ExemplarFilter}, ExemplarFilterForHistograms={this.ExemplarFilterForHistograms}}}.");
-
-        foreach (var reader in state.Readers)
-        {
-            Guard.ThrowIfNull(reader);
-
-            reader.SetParentProvider(this);
-
-            reader.ApplyParentProviderSettings(
-                state.MetricLimit,
-                state.CardinalityLimit,
-                this.ExemplarFilter,
-                this.ExemplarFilterForHistograms);
-
-            if (this.Reader == null)
+            var configureProviderBuilders = serviceProvider.GetServices<IConfigureMeterProviderBuilder>();
+            foreach (var configureProviderBuilder in configureProviderBuilders)
             {
-                this.Reader = reader;
-            }
-            else if (this.Reader is CompositeMetricReader compositeReader)
-            {
-                compositeReader.AddReader(reader);
-            }
-            else
-            {
-                this.Reader = new CompositeMetricReader([this.Reader, reader]);
+                configureProviderBuilder.ConfigureBuilder(serviceProvider, state);
             }
 
-            this.Reader.SetParentProvider(this);
+            this.ExemplarFilter = state.ExemplarFilter;
 
-            if (reader is PeriodicExportingMetricReader periodicExportingMetricReader)
+            this.ApplySpecificationConfigurationKeys(serviceProvider.GetRequiredService<IConfiguration>());
+
+            var exportersAdded = new StringBuilder();
+            var instrumentationFactoriesAdded = new StringBuilder();
+
+            var resourceBuilder = state.ResourceBuilder ?? ResourceBuilder.CreateDefault();
+            resourceBuilder.ServiceProvider = serviceProvider;
+            this.Resource = resourceBuilder.Build();
+
+            this.viewConfigs = state.ViewConfigs;
+
+            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent(
+                $"MeterProvider configuration: {{MetricLimit={state.MetricLimit}, CardinalityLimit={state.CardinalityLimit}, ExemplarFilter={this.ExemplarFilter}, ExemplarFilterForHistograms={this.ExemplarFilterForHistograms}}}.");
+
+            foreach (var reader in state.Readers)
             {
-                exportersAdded.Append(periodicExportingMetricReader.Exporter);
-                exportersAdded.Append(" (Paired with PeriodicExportingMetricReader exporting at ");
-                exportersAdded.Append(periodicExportingMetricReader.ExportIntervalMilliseconds);
-                exportersAdded.Append(" milliseconds intervals.)");
-                exportersAdded.Append(';');
-            }
-            else if (reader is BaseExportingMetricReader baseExportingMetricReader)
-            {
-                exportersAdded.Append(baseExportingMetricReader.Exporter);
-                exportersAdded.Append(" (Paired with a MetricReader requiring manual trigger to export.)");
-                exportersAdded.Append(';');
-            }
-        }
+                Guard.ThrowIfNull(reader);
 
-        if (exportersAdded.Length != 0)
-        {
-            exportersAdded.Remove(exportersAdded.Length - 1, 1);
-            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Exporters added = \"{exportersAdded}\".");
-        }
+                reader.SetParentProvider(this);
 
-        this.compositeMetricReader = this.Reader as CompositeMetricReader;
+                reader.ApplyParentProviderSettings(
+                    state.MetricLimit,
+                    state.CardinalityLimit,
+                    this.ExemplarFilter,
+                    this.ExemplarFilterForHistograms);
 
-        if (state.Instrumentation.Count > 0)
-        {
-            foreach (var instrumentation in state.Instrumentation)
-            {
-                if (instrumentation.Instance is not null)
+                if (this.Reader == null)
                 {
-                    this.Instrumentations.Add(instrumentation.Instance);
+                    this.Reader = reader;
+                }
+                else if (this.Reader is CompositeMetricReader compositeReader)
+                {
+                    compositeReader.AddReader(reader);
+                }
+                else
+                {
+                    this.Reader = new CompositeMetricReader([this.Reader, reader]);
                 }
 
-                instrumentationFactoriesAdded.Append(instrumentation.Name);
-                instrumentationFactoriesAdded.Append(';');
+                this.Reader.SetParentProvider(this);
+
+                if (reader is PeriodicExportingMetricReader periodicExportingMetricReader)
+                {
+                    exportersAdded.Append(periodicExportingMetricReader.Exporter);
+                    exportersAdded.Append(" (Paired with PeriodicExportingMetricReader exporting at ");
+                    exportersAdded.Append(periodicExportingMetricReader.ExportIntervalMilliseconds);
+                    exportersAdded.Append(" milliseconds intervals.)");
+                    exportersAdded.Append(';');
+                }
+                else if (reader is BaseExportingMetricReader baseExportingMetricReader)
+                {
+                    exportersAdded.Append(baseExportingMetricReader.Exporter);
+                    exportersAdded.Append(" (Paired with a MetricReader requiring manual trigger to export.)");
+                    exportersAdded.Append(';');
+                }
             }
-        }
 
-        if (instrumentationFactoriesAdded.Length != 0)
-        {
-            instrumentationFactoriesAdded.Remove(instrumentationFactoriesAdded.Length - 1, 1);
-            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Instrumentations added = \"{instrumentationFactoriesAdded}\".");
-        }
-
-        // Setup Listener
-        if (state.MeterSources.Exists(WildcardHelper.ContainsWildcard))
-        {
-            var regex = WildcardHelper.GetWildcardRegex(state.MeterSources);
-            this.shouldListenTo = instrument => regex.IsMatch(instrument.Meter.Name);
-        }
-        else if (state.MeterSources.Count > 0)
-        {
-            var meterSourcesToSubscribe = new HashSet<string>(state.MeterSources, StringComparer.OrdinalIgnoreCase);
-            this.shouldListenTo = instrument => meterSourcesToSubscribe.Contains(instrument.Meter.Name);
-        }
-
-        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Listening to following meters = \"{string.Join(";", state.MeterSources)}\".");
-
-        this.listener = new MeterListener();
-        var viewConfigCount = this.viewConfigs.Count;
-
-        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Number of views configured = {viewConfigCount}.");
-
-        this.listener.InstrumentPublished = (instrument, listener) =>
-        {
-            var state = this.InstrumentPublished(instrument, listeningIsManagedExternally: false);
-            if (state != null)
+            if (exportersAdded.Length != 0)
             {
-                listener.EnableMeasurementEvents(instrument, state);
+                exportersAdded.Remove(exportersAdded.Length - 1, 1);
+                OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Exporters added = \"{exportersAdded}\".");
             }
-        };
 
-        // Everything double
-        this.listener.SetMeasurementEventCallback<double>(MeasurementRecordedDouble);
-        this.listener.SetMeasurementEventCallback<float>(static (instrument, value, tags, state) => MeasurementRecordedDouble(instrument, value, tags, state));
+            this.compositeMetricReader = this.Reader as CompositeMetricReader;
 
-        // Everything long
-        this.listener.SetMeasurementEventCallback<long>(MeasurementRecordedLong);
-        this.listener.SetMeasurementEventCallback<int>(static (instrument, value, tags, state) => MeasurementRecordedLong(instrument, value, tags, state));
-        this.listener.SetMeasurementEventCallback<short>(static (instrument, value, tags, state) => MeasurementRecordedLong(instrument, value, tags, state));
-        this.listener.SetMeasurementEventCallback<byte>(static (instrument, value, tags, state) => MeasurementRecordedLong(instrument, value, tags, state));
+            if (state.Instrumentation.Count > 0)
+            {
+                foreach (var instrumentation in state.Instrumentation)
+                {
+                    if (instrumentation.Instance is not null)
+                    {
+                        this.Instrumentations.Add(instrumentation.Instance);
+                    }
 
-        this.listener.MeasurementsCompleted = MeasurementsCompleted;
+                    instrumentationFactoriesAdded.Append(instrumentation.Name);
+                    instrumentationFactoriesAdded.Append(';');
+                }
+            }
 
-        this.listener.Start();
+            if (instrumentationFactoriesAdded.Length != 0)
+            {
+                instrumentationFactoriesAdded.Remove(instrumentationFactoriesAdded.Length - 1, 1);
+                OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Instrumentations added = \"{instrumentationFactoriesAdded}\".");
+            }
 
-        OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("MeterProvider built successfully.");
+            // Setup Listener
+            if (state.MeterSources.Exists(WildcardHelper.ContainsWildcard))
+            {
+                var regex = WildcardHelper.GetWildcardRegex(state.MeterSources);
+                this.shouldListenTo = instrument => regex.IsMatch(instrument.Meter.Name);
+            }
+            else if (state.MeterSources.Count > 0)
+            {
+                var meterSourcesToSubscribe = new HashSet<string>(state.MeterSources, StringComparer.OrdinalIgnoreCase);
+                this.shouldListenTo = instrument => meterSourcesToSubscribe.Contains(instrument.Meter.Name);
+            }
+
+            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Listening to following meters = \"{string.Join(";", state.MeterSources)}\".");
+
+            this.listener = new MeterListener();
+            var viewConfigCount = this.viewConfigs.Count;
+
+            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Number of views configured = {viewConfigCount}.");
+
+            this.listener.InstrumentPublished = (instrument, listener) =>
+            {
+                var state = this.InstrumentPublished(instrument, listeningIsManagedExternally: false);
+                if (state != null)
+                {
+                    listener.EnableMeasurementEvents(instrument, state);
+                }
+            };
+
+            // Everything double
+            this.listener.SetMeasurementEventCallback<double>(MeasurementRecordedDouble);
+            this.listener.SetMeasurementEventCallback<float>(static (instrument, value, tags, state) => MeasurementRecordedDouble(instrument, value, tags, state));
+
+            // Everything long
+            this.listener.SetMeasurementEventCallback<long>(MeasurementRecordedLong);
+            this.listener.SetMeasurementEventCallback<int>(static (instrument, value, tags, state) => MeasurementRecordedLong(instrument, value, tags, state));
+            this.listener.SetMeasurementEventCallback<short>(static (instrument, value, tags, state) => MeasurementRecordedLong(instrument, value, tags, state));
+            this.listener.SetMeasurementEventCallback<byte>(static (instrument, value, tags, state) => MeasurementRecordedLong(instrument, value, tags, state));
+
+            this.listener.MeasurementsCompleted = MeasurementsCompleted;
+
+            this.listener.Start();
+
+            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent("MeterProvider built successfully.");
+        }
+        catch (Exception)
+        {
+            this.DisposeBuiltState(state);
+            throw;
+        }
     }
 
     internal Resource Resource { get; }
@@ -239,11 +247,18 @@ internal sealed class MeterProviderSdk : MeterProvider
         }
         else if (!listenToInstrumentUsingSdkConfiguration && !listeningIsManagedExternally)
         {
-            OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(
-                instrument.Name,
-                instrument.Meter.Name,
-                "Instrument belongs to a Meter not subscribed by this provider. If another MeterProvider is configured to listen to this Meter, this warning can be ignored.",
-                "Use AddMeter to add the Meter to the provider.");
+            // Note: The SDK always creates its self-observability instruments, but they are
+            // opt-in. Warning that they are ignored would be noise for users who never asked
+            // for them, so it is suppressed here.
+            if (!string.Equals(instrument.Meter.Name, SdkSelfObservability.MeterName, StringComparison.Ordinal))
+            {
+                OpenTelemetrySdkEventSource.Log.MetricInstrumentIgnored(
+                    instrument.Name,
+                    instrument.Meter.Name,
+                    "Instrument belongs to a Meter not subscribed by this provider. If another MeterProvider is configured to listen to this Meter, this warning can be ignored.",
+                    "Use AddMeter to add the Meter to the provider.");
+            }
+
             return null;
         }
 
@@ -467,10 +482,13 @@ internal sealed class MeterProviderSdk : MeterProvider
 
                 this.Instrumentations.Clear();
 
-                // Wait for up to 5 seconds grace period
-                this.Reader?.Shutdown(5000);
-                this.Reader?.Dispose();
-                this.Reader = null;
+                if (this.Reader != null)
+                {
+                    // Wait for up to 5 seconds grace period
+                    this.Reader.Shutdown(5_000);
+                    this.Reader.Dispose();
+                    this.Reader = null;
+                }
 
                 this.compositeMetricReader?.Dispose();
                 this.compositeMetricReader = null;
@@ -486,6 +504,41 @@ internal sealed class MeterProviderSdk : MeterProvider
         }
 
         base.Dispose(disposing);
+    }
+
+    private void DisposeBuiltState(MeterProviderBuilderSdk state)
+    {
+        foreach (var reader in state.Readers)
+        {
+            CleanUp(() => reader.Shutdown(0));
+            CleanUp(reader.Dispose);
+        }
+
+        foreach (var instrumentation in state.Instrumentation)
+        {
+            if (instrumentation.Instance is IDisposable disposable)
+            {
+                CleanUp(disposable.Dispose);
+            }
+        }
+
+        if (this.OwnedServiceProvider != null)
+        {
+            CleanUp(this.OwnedServiceProvider.Dispose);
+            this.OwnedServiceProvider = null;
+        }
+
+        static void CleanUp(Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception ex)
+            {
+                OpenTelemetrySdkEventSource.Log.MeterProviderException(nameof(this.DisposeBuiltState), ex);
+            }
+        }
     }
 
     private void ApplySpecificationConfigurationKeys(IConfiguration configuration)

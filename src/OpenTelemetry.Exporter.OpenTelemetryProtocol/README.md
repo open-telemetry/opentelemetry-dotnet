@@ -619,8 +619,9 @@ services.AddOpenTelemetry()
 
 For users using
 [IHttpClientFactory](https://docs.microsoft.com/dotnet/architecture/microservices/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests)
-you may also customize the named "OtlpTraceExporter" and/or "OtlpMetricExporter"
-`HttpClient` using the built-in `AddHttpClient` extension:
+you may also customize the named "OtlpTraceExporter", "OtlpMetricExporter",
+and/or "OtlpLogExporter" `HttpClient` using the built-in `AddHttpClient`
+extension:
 
 ```csharp
 services.AddHttpClient(
@@ -629,8 +630,14 @@ services.AddHttpClient(
         client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value"));
 ```
 
-> [!NOTE]
-> `IHttpClientFactory` is NOT currently supported by `OtlpLogExporter`.
+> [!IMPORTANT]
+> Applications that use custom [`DelegatingHandler`](https://learn.microsoft.com/dotnet/api/system.net.http.delegatinghandler)
+> implementations when targeting .NET 5 or later must override both the
+> [SendAsync()](https://learn.microsoft.com/dotnet/api/system.net.http.delegatinghandler.sendasync)
+> and
+> [Send()](https://learn.microsoft.com/dotnet/api/system.net.http.delegatinghandler.send)
+> methods to ensure that their custom logic is executed for all HTTP requests
+> made by the OTLP exporter.
 
 ## Experimental features
 
@@ -692,6 +699,26 @@ with the name "OpenTelemetry-Exporter-OpenTelemetryProtocol" for its internal
 logging. Please refer to [SDK
 troubleshooting](../OpenTelemetry/README.md#troubleshooting) for instructions on
 seeing these internal logs.
+
+### Dropped batches
+
+If a batch cannot be serialized the export fails and every item in the batch is
+dropped. `BatchDroppedDueToSerializationFailure` (event ID 39) reports the
+signal, how many items were lost, and the exception which caused the failure.
+
+The most likely cause is a batch which is too large for the serialization
+buffer. Any other exception raised while serializing an item, such as one
+thrown by a custom attribute value, drops the batch in the same way.
+
+For traces and logs, keep batches within the limit by reducing the number of
+items in each batch with `MaxExportBatchSize` (see [Environment
+Variables](#environment-variables)), and the size of individual items with the
+[attribute limits](#attribute-limits).
+
+A metrics batch contains every metric collected by the reader and there is no
+batch size to lower, so reduce the size of the payload instead: drop
+instruments or attribute keys using views, or lower the cardinality of the
+attributes being recorded.
 
 ## References
 

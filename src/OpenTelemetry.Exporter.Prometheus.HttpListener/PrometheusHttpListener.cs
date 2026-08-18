@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Net;
@@ -11,6 +12,9 @@ namespace OpenTelemetry.Exporter;
 
 internal sealed class PrometheusHttpListener : IDisposable
 {
+    private static readonly TimeSpan RequestDrainTimeout = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan WorkerShutdownTimeout = TimeSpan.FromSeconds(5);
+
     private readonly PrometheusExporter exporter;
     private readonly HttpListener httpListener = new();
     private readonly Lock syncObject = new();
@@ -114,7 +118,7 @@ internal sealed class PrometheusHttpListener : IDisposable
         // Wait for in-flight requests to finish (they will observe the
         // cancelled token and return 503 quickly). Use a timeout to avoid
         // blocking indefinitely if a request is unexpectedly stuck.
-        SpinWait.SpinUntil(() => Volatile.Read(ref this.activeRequestCount) == 0, TimeSpan.FromSeconds(5));
+        SpinWait.SpinUntil(() => Volatile.Read(ref this.activeRequestCount) == 0, RequestDrainTimeout);
 
         try
         {
@@ -126,10 +130,10 @@ internal sealed class PrometheusHttpListener : IDisposable
         }
     }
 
-    private static PrometheusProtocol Negotiate(HttpListenerRequest request, EscapingScheme defaultEscaping)
+    private static PrometheusProtocol Negotiate(HttpListenerRequest request)
     {
         var acceptHeader = request.Headers["Accept"];
-        return PrometheusHeadersParser.Negotiate(acceptHeader, defaultEscaping);
+        return PrometheusHeadersParser.Negotiate(acceptHeader);
     }
 
     /// <summary>
@@ -157,7 +161,19 @@ internal sealed class PrometheusHttpListener : IDisposable
         try
         {
             tokenSource.Cancel();
-            workerThread?.Wait();
+
+            // Bounded so that a processing loop which does not observe cancellation
+            // promptly cannot block Dispose and the caller's shutdown indefinitely.
+            if (workerThread != null &&
+                !workerThread.Wait(WorkerShutdownTimeout))
+            {
+                PrometheusExporterEventSource.Log.FailedShutdown(
+                    new TimeoutException($"The {nameof(PrometheusHttpListener)} processing loop did not stop within {WorkerShutdownTimeout.TotalSeconds} seconds."));
+            }
+        }
+        catch (Exception ex)
+        {
+            PrometheusExporterEventSource.Log.FailedShutdown(ex);
         }
         finally
         {
@@ -245,20 +261,46 @@ internal sealed class PrometheusHttpListener : IDisposable
         {
             using var requestCancelled = new CancellationTokenSource();
 
+            Stopwatch? scrapeStopwatch = null;
+
             if (TryGetScrapeTimeout(context.Request.Headers, out var scrapeTimeout))
             {
                 requestCancelled.CancelAfter(scrapeTimeout.GetValueOrDefault());
+                scrapeStopwatch = Stopwatch.StartNew();
             }
 
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(requestCancelled.Token, cancellationToken);
 
-            var protocol = Negotiate(context.Request, this.exporter.DefaultEscapingScheme);
+            var protocol = PrometheusProtocol.ApplyTranslationStrategy(
+                Negotiate(context.Request),
+                this.exporter.TranslationStrategy);
 
             var collectionResponse = await this.exporter.CollectionManager.EnterCollect(protocol).ConfigureAwait(false);
 
             try
             {
+                if (!requestCancelled.IsCancellationRequested &&
+                    scrapeTimeout is { } configuredTimeout &&
+                    scrapeStopwatch!.Elapsed >= configuredTimeout)
+                {
+                    // The deadline has genuinely elapsed, but the CancelAfter callback may not
+                    // have been dispatched yet (for example, if the thread pool is saturated).
+                    // Force cancellation now so a slow collection is still reported as a timeout.
+#if NET
+                    await requestCancelled.CancelAsync().ConfigureAwait(false);
+#else
+                    requestCancelled.Cancel();
+#endif
+                }
+
                 requestCancelled.Token.ThrowIfCancellationRequested();
+
+                // Disposal can start while this scrape is collecting, which can take
+                // arbitrarily long. Bail out before composing a response.
+                if (this.disposed || cancellationToken.IsCancellationRequested)
+                {
+                    throw new OperationCanceledException(cancellationToken);
+                }
 
                 context.Response.Headers.Add("Server", string.Empty);
 
@@ -307,7 +349,7 @@ internal sealed class PrometheusHttpListener : IDisposable
                 this.exporter.CollectionManager.ExitCollect(protocol);
             }
         }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException) when (this.disposed || cancellationToken.IsCancellationRequested)
         {
             context.Response.StatusCode = 503;
             context.Response.ContentLength64 = 0;

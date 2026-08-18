@@ -148,11 +148,12 @@
   <Folder Name="/Shared/">
     <File Path="src/Shared/ActivityHelperExtensions.cs" />
     <File Path="src/Shared/AssemblyVersionExtensions.cs" />
+    <File Path="src/Shared/BitOperations.cs" />
     <File Path="src/Shared/CharExtensions.cs" />
     <File Path="src/Shared/DiagnosticDefinitions.cs" />
+    <File Path="src/Shared/DoubleExtensions.cs" />
     <File Path="src/Shared/ExceptionExtensions.cs" />
     <File Path="src/Shared/Guard.cs" />
-    <File Path="src/Shared/MathHelper.cs" />
     <File Path="src/Shared/PeriodicExportingMetricReaderHelper.cs" />
     <File Path="src/Shared/ResourceSemanticConventions.cs" />
     <File Path="src/Shared/SemanticConventions.cs" />
@@ -207,6 +208,7 @@
   </Folder>
   <Project Path="src/OpenTelemetry.Api.ProviderBuilderExtensions/OpenTelemetry.Api.ProviderBuilderExtensions.csproj" />
   <Project Path="src/OpenTelemetry.Api/OpenTelemetry.Api.csproj" />
+  <Project Path="src/OpenTelemetry.Configuration.Declarative/OpenTelemetry.Configuration.Declarative.csproj" />
   <Project Path="src/OpenTelemetry.Exporter.Console/OpenTelemetry.Exporter.Console.csproj" />
   <Project Path="src/OpenTelemetry.Exporter.InMemory/OpenTelemetry.Exporter.InMemory.csproj" />
   <Project Path="src/OpenTelemetry.Exporter.OpenTelemetryProtocol/OpenTelemetry.Exporter.OpenTelemetryProtocol.csproj" />
@@ -222,6 +224,8 @@
   <Project Path="test/OpenTelemetry.Api.FuzzTests/OpenTelemetry.Api.FuzzTests.csproj" />
   <Project Path="test/OpenTelemetry.Api.ProviderBuilderExtensions.Tests/OpenTelemetry.Api.ProviderBuilderExtensions.Tests.csproj" />
   <Project Path="test/OpenTelemetry.Api.Tests/OpenTelemetry.Api.Tests.csproj" />
+  <Project Path="test/OpenTelemetry.Configuration.Declarative.FuzzTests/OpenTelemetry.Configuration.Declarative.FuzzTests.csproj" />
+  <Project Path="test/OpenTelemetry.Configuration.Declarative.Tests/OpenTelemetry.Configuration.Declarative.Tests.csproj" />
   <Project Path="test/OpenTelemetry.Exporter.Console.Tests/OpenTelemetry.Exporter.Console.Tests.csproj" />
   <Project Path="test/OpenTelemetry.Exporter.OpenTelemetryProtocol.FuzzTests/OpenTelemetry.Exporter.OpenTelemetryProtocol.FuzzTests.csproj" />
   <Project Path="test/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests/OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.csproj" />

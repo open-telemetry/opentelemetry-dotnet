@@ -10,6 +10,11 @@ internal abstract class TagWriter<TTagState, TArrayState>
     where TTagState : notnull
     where TArrayState : notnull
 {
+    internal const int MaxRecursionDepth = 3; // TODO https://github.com/open-telemetry/semantic-conventions/issues/3648
+
+    [ThreadStatic]
+    private static int recursionDepth;
+
     private readonly ArrayTagWriter<TArrayState> arrayWriter;
 
     protected TagWriter(
@@ -39,9 +44,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
         switch (value)
         {
-            case char c:
-                this.WriteCharTag(ref state, key, c);
-                break;
+            // Ordered by how often each type is likely to appear for performance
             case string s:
                 if (tagValueMaxLength is { } length && s.Length > length)
                 {
@@ -56,8 +59,20 @@ internal abstract class TagWriter<TTagState, TArrayState>
                 }
 
                 break;
+            case int i:
+                this.WriteIntegralTag(ref state, key, i);
+                break;
+            case long l:
+                this.WriteIntegralTag(ref state, key, l);
+                break;
             case bool b:
                 this.WriteBooleanTag(ref state, key, b);
+                break;
+            case double d:
+                this.WriteFloatingPointTag(ref state, key, d);
+                break;
+            case char c:
+                this.WriteCharTag(ref state, key, c);
                 break;
             case byte b:
                 this.WriteIntegralTag(ref state, key, b);
@@ -71,21 +86,62 @@ internal abstract class TagWriter<TTagState, TArrayState>
             case ushort us:
                 this.WriteIntegralTag(ref state, key, us);
                 break;
-            case int i:
-                this.WriteIntegralTag(ref state, key, i);
-                break;
             case uint ui:
                 this.WriteIntegralTag(ref state, key, ui);
-                break;
-            case long l:
-                this.WriteIntegralTag(ref state, key, l);
                 break;
             case float f:
                 this.WriteFloatingPointTag(ref state, key, f);
                 break;
-            case double d:
-                this.WriteFloatingPointTag(ref state, key, d);
+            case IEnumerable<KeyValuePair<string, object?>> kvList:
+                if (recursionDepth >= MaxRecursionDepth)
+                {
+                    // Note: The nesting limit has been reached so the value is
+                    // written as a string instead of recursing any further.
+                    // This branch does not take part in the recursion so it
+                    // must not touch the depth.
+                    try
+                    {
+                        var stringValue = Convert.ToString(value, CultureInfo.InvariantCulture);
+                        this.WriteStringTag(
+                            ref state,
+                            key,
+                            TruncateString(stringValue.AsSpan(), tagValueMaxLength));
+                    }
+                    catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
+                    {
+                        recursionDepth = 0;
+                        throw;
+                    }
+                    catch
+                    {
+                        // If ToString throws an exception then the tag is ignored.
+                        return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
+                    }
+
+                    break;
+                }
+
+                recursionDepth++;
+
+                try
+                {
+                    this.WriteKvListTag(ref state, key, kvList, tagValueMaxLength);
+                }
+                catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
+                {
+                    recursionDepth = 0;
+                    throw;
+                }
+                catch
+                {
+                    recursionDepth--;
+                    return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
+                }
+
+                recursionDepth--;
+
                 break;
+
             case Array array:
                 if (value.GetType() == typeof(byte[]) && this.TryWriteByteArrayTag(ref state, key, ((byte[])value).AsSpan()))
                 {
@@ -160,9 +216,16 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
     protected abstract void WriteArrayTag(ref TTagState state, string key, ref TArrayState value);
 
+    protected abstract void WriteKvListTag(ref TTagState state, string key, IEnumerable<KeyValuePair<string, object?>> kvList, int? tagValueMaxLength);
+
     protected abstract void OnUnsupportedTagDropped(
         string tagKey,
         string tagValueTypeFullName);
+
+    private static ReadOnlySpan<char> TruncateString(ReadOnlySpan<char> value, int? maxLength)
+        => maxLength is { } maxLengthValue && value.Length > maxLengthValue
+           ? value.Slice(0, maxLengthValue)
+           : value;
 
     private void WriteCharTag(ref TTagState state, string key, char value)
     {
@@ -304,19 +367,29 @@ internal abstract class TagWriter<TTagState, TArrayState>
                 continue;
             }
 
+            // Ordered by how often each type is likely to appear for performance
             switch (item)
             {
-                case char c:
-                    this.WriteCharValue(ref arrayState, c);
-                    break;
                 case string s:
                     this.WriteStringValue(
                         ref arrayState,
                         s,
                         tagValueMaxLength);
                     break;
+                case int intValue:
+                    this.arrayWriter.WriteIntegralValue(ref arrayState, intValue);
+                    break;
+                case long l:
+                    this.arrayWriter.WriteIntegralValue(ref arrayState, l);
+                    break;
                 case bool b:
                     this.arrayWriter.WriteBooleanValue(ref arrayState, b);
+                    break;
+                case double d:
+                    this.arrayWriter.WriteFloatingPointValue(ref arrayState, d);
+                    break;
+                case char c:
+                    this.WriteCharValue(ref arrayState, c);
                     break;
                 case byte b:
                     this.arrayWriter.WriteIntegralValue(ref arrayState, b);
@@ -330,20 +403,11 @@ internal abstract class TagWriter<TTagState, TArrayState>
                 case ushort us:
                     this.arrayWriter.WriteIntegralValue(ref arrayState, us);
                     break;
-                case int intValue:
-                    this.arrayWriter.WriteIntegralValue(ref arrayState, intValue);
-                    break;
                 case uint ui:
                     this.arrayWriter.WriteIntegralValue(ref arrayState, ui);
                     break;
-                case long l:
-                    this.arrayWriter.WriteIntegralValue(ref arrayState, l);
-                    break;
                 case float f:
                     this.arrayWriter.WriteFloatingPointValue(ref arrayState, f);
-                    break;
-                case double d:
-                    this.arrayWriter.WriteFloatingPointValue(ref arrayState, d);
                     break;
 
                 // All other types are converted to strings including the following

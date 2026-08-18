@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using OpenTelemetry.Tests;
-
 namespace OpenTelemetry.Metrics.Tests;
 
 public class Base2ExponentialBucketHistogramHelperTests
@@ -16,9 +14,7 @@ public class Base2ExponentialBucketHistogramHelperTests
 
     public static TheoryData<int> GetNonPositiveScales()
     {
-#pragma warning disable CA1825 // Workaround for https://github.com/dotnet/sdk/issues/54275
         TheoryData<int> theoryData = [];
-#pragma warning restore CA1825 // Workaround for https://github.com/dotnet/sdk/issues/54275
         for (var i = -11; i <= 0; ++i)
         {
             theoryData.Add(i);
@@ -29,9 +25,7 @@ public class Base2ExponentialBucketHistogramHelperTests
 
     public static TheoryData<int> GetPositiveScales()
     {
-#pragma warning disable CA1825 // Workaround for https://github.com/dotnet/sdk/issues/54275
         TheoryData<int> theoryData = [];
-#pragma warning restore CA1825 // Workaround for https://github.com/dotnet/sdk/issues/54275
         for (var i = 1; i <= 20; ++i)
         {
             theoryData.Add(i);
@@ -82,7 +76,7 @@ public class Base2ExponentialBucketHistogramHelperTests
                 // is exclusive. That is:
                 //     MapToIndex(LowerBoundary(index)) == index - 1
                 Assert.Equal(index - 1, roundTrip);
-                roundTrip = histogram.MapToIndex(MathHelper.BitIncrement(lowerBound));
+                roundTrip = histogram.MapToIndex(Math.BitIncrement(lowerBound));
                 Assert.Equal(index, roundTrip);
             }
         }
@@ -208,7 +202,7 @@ public class Base2ExponentialBucketHistogramHelperTests
         {
             for (; newRoundTrip != index - 1;)
             {
-                preciseLowerBound = MathHelper.BitDecrement(preciseLowerBound);
+                preciseLowerBound = Math.BitDecrement(preciseLowerBound);
                 newRoundTrip = histogram.MapToIndex(preciseLowerBound);
                 ++increments;
             }
@@ -217,7 +211,7 @@ public class Base2ExponentialBucketHistogramHelperTests
         {
             for (; newRoundTrip < index;)
             {
-                var newLowerBound = MathHelper.BitIncrement(preciseLowerBound);
+                var newLowerBound = Math.BitIncrement(preciseLowerBound);
                 newRoundTrip = histogram.MapToIndex(newLowerBound);
 
                 if (newRoundTrip < index)

@@ -68,21 +68,40 @@ internal sealed class PrometheusExporterMiddleware
 
             using var requestCancelled = new CancellationTokenSource();
 
+            Stopwatch? scrapeStopwatch = null;
+
             if (TryGetScrapeTimeout(httpContext.Request.Headers, out var scrapeTimeout))
             {
                 requestCancelled.CancelAfter(scrapeTimeout.GetValueOrDefault());
+                scrapeStopwatch = Stopwatch.StartNew();
             }
 
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(requestCancelled.Token, httpContext.RequestAborted);
 
             var requestHeaders = httpContext.Request.GetTypedHeaders();
 
-            var protocol = Negotiate(requestHeaders, this.exporter.DefaultEscapingScheme);
+            var protocol = PrometheusProtocol.ApplyTranslationStrategy(
+                Negotiate(requestHeaders),
+                this.exporter.TranslationStrategy);
 
             var collectionResponse = await this.exporter.CollectionManager.EnterCollect(protocol);
 
             try
             {
+                if (!requestCancelled.IsCancellationRequested &&
+                    scrapeTimeout is { } configuredTimeout &&
+                    scrapeStopwatch!.Elapsed >= configuredTimeout)
+                {
+                    // The deadline has genuinely elapsed, but the CancelAfter callback may not
+                    // have been dispatched yet (for example, if the thread pool is saturated).
+                    // Force cancellation now so a slow collection is still reported as a timeout.
+#if NET
+                    await requestCancelled.CancelAsync();
+#else
+                    requestCancelled.Cancel();
+#endif
+                }
+
                 linkedCts.Token.ThrowIfCancellationRequested();
 
                 if (!collectionResponse.Succeeded)
@@ -156,7 +175,7 @@ internal sealed class PrometheusExporterMiddleware
         }
     }
 
-    internal static PrometheusProtocol Negotiate(RequestHeaders headers, EscapingScheme defaultEscaping = EscapingScheme.Underscores)
+    internal static PrometheusProtocol Negotiate(RequestHeaders headers)
     {
         var acceptHeader = headers.Accept;
 
@@ -173,7 +192,7 @@ internal sealed class PrometheusExporterMiddleware
 
         foreach (var mediaType in acceptHeader)
         {
-            if (TryParse(mediaType, defaultEscaping, out var protocol, out var quality) &&
+            if (TryParse(mediaType, out var protocol, out var quality) &&
                 (preferred is null || quality > preferredQuality))
             {
                 preferred = protocol;
@@ -186,7 +205,6 @@ internal sealed class PrometheusExporterMiddleware
 
     private static bool TryParse(
         MediaTypeHeaderValue value,
-        EscapingScheme defaultEscaping,
         [NotNullWhen(true)] out PrometheusProtocol? protocol,
         out double quality)
     {
@@ -283,10 +301,12 @@ internal sealed class PrometheusExporterMiddleware
         }
         else
         {
-            // When the client does not negotiate an escaping scheme, fall back to the exporter's
-            // configured default (from its translation strategy) rather than always underscores.
-            // Any client-specified escaping value takes precedence.
-            escaping ??= PrometheusEscaping.GetName(defaultEscaping);
+            // A request that does not negotiate an escaping scheme is treated the same as one
+            // negotiating "underscores", as required by the specification's table at
+            // https://github.com/open-telemetry/opentelemetry-specification/blob/51700bd58c79c057468b66c3fd8d075444d6140c/specification/metrics/sdk_exporters/prometheus.md#interaction-with-translation-strategy.
+            // The exporter's translation strategy does not change what is negotiated here; it is
+            // applied when names are constructed, before this scheme is layered on top.
+            escaping ??= PrometheusProtocol.UnderscoresEscaping;
         }
 
         protocol = new(mediaType, escaping, version, isOpenMetrics);

@@ -1,0 +1,3 @@
+override OpenTelemetry.SimpleActivityExportProcessor.OnShutdown(int timeoutMilliseconds) -> bool
+override OpenTelemetry.SimpleLogRecordExportProcessor.OnEnd(OpenTelemetry.Logs.LogRecord! data) -> void
+override OpenTelemetry.SimpleLogRecordExportProcessor.OnShutdown(int timeoutMilliseconds) -> bool
