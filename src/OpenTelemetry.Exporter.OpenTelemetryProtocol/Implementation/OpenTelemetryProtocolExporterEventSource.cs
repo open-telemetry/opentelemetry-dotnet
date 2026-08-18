@@ -332,6 +332,22 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
         => this.WriteEvent(39, signalType, itemCount, exception);
 
     [NonEvent]
+    internal void ResponseDiscardedDueToSizeLimit(Uri endpoint, long? responseSizeBytes, int maxResponseSizeBytes)
+    {
+        if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.ResponseDiscardedDueToSizeLimit(RedactEndpointUri(endpoint), responseSizeBytes ?? -1, maxResponseSizeBytes);
+        }
+    }
+
+    [Event(
+        40,
+        Message = "The response from {0} was discarded because its size of {1} bytes exceeds the maximum response size of {2} bytes. A size of -1 means the response did not declare one.",
+        Level = EventLevel.Error)]
+    internal void ResponseDiscardedDueToSizeLimit(string endpoint, long responseSizeBytes, int maxResponseSizeBytes)
+        => this.WriteEvent(40, endpoint, responseSizeBytes, maxResponseSizeBytes);
+
+    [NonEvent]
     internal void RequestDiscardedDueToSizeLimit(OtlpSignalType signalType, long itemCount, int requestSizeBytes, int maxRequestSizeBytes)
     {
         if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
@@ -341,11 +357,11 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     }
 
     [Event(
-        40,
+        41,
         Message = "{0} request containing {1} item(s) was discarded because its size of {2} bytes exceeds the maximum request size of {3} bytes.",
         Level = EventLevel.Error)]
     internal void RequestDiscardedDueToSizeLimit(string signalType, long itemCount, int requestSizeBytes, int maxRequestSizeBytes)
-        => this.WriteEvent(40, signalType, itemCount, requestSizeBytes, maxRequestSizeBytes);
+        => this.WriteEvent(41, signalType, itemCount, requestSizeBytes, maxRequestSizeBytes);
 
     private static string RedactEndpointUri(Uri endpoint)
         => endpoint.GetComponents(UriComponents.SchemeAndServer | UriComponents.Path, UriFormat.UriEscaped);

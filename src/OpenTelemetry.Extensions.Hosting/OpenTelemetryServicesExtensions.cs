@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using OpenTelemetry;
 using OpenTelemetry.Extensions.Hosting.Implementation;
@@ -42,6 +43,9 @@ public static class OpenTelemetryServicesExtensions
 
         if (!services.Any(d => d.ServiceType == typeof(IHostedService) && d.ImplementationType == typeof(TelemetryHostedService)))
         {
+            // TryAdd is used to allow any consuming application's customization not be overridden
+            services.TryAddSingleton<ITelemetryHostInitializer, TelemetryHostInitializer>();
+
             services.Insert(0, ServiceDescriptor.Singleton<IHostedService, TelemetryHostedService>());
         }
 

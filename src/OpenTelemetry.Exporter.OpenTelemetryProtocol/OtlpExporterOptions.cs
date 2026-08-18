@@ -32,6 +32,12 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     internal const int DefaultMaxRequestSizeBytes = 64 * 1024 * 1024;
 
     /// <summary>
+    /// The default value for <see cref="MaxResponseSizeBytes"/> (4 MiB), as
+    /// recommended by the OpenTelemetry specification.
+    /// </summary>
+    internal const int DefaultMaxResponseSizeBytes = HttpClientHelpers.DefaultMessageSizeLimit;
+
+    /// <summary>
     /// The smallest accepted value for <see cref="MaxRequestSizeBytes"/>.
     /// </summary>
     /// <remarks>
@@ -39,6 +45,15 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     /// limit could not reduce memory use and would only discard telemetry.
     /// </remarks>
     internal const int MinimumMaxRequestSizeBytes = ProtobufSerializer.InitialBufferSize;
+
+    /// <summary>
+    /// The smallest accepted value for <see cref="MaxResponseSizeBytes"/> (1 KiB).
+    /// </summary>
+    /// <remarks>
+    /// A successful or partial-success OTLP response comfortably fits in this, so a
+    /// smaller limit could only reject responses the exporter needs to read.
+    /// </remarks>
+    internal const int MinimumMaxResponseSizeBytes = 1024;
 
     internal const string DefaultGrpcEndpoint = "http://localhost:4317";
     internal const string DefaultHttpEndpoint = "http://localhost:4318";
@@ -57,6 +72,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
 
     private OtlpExportProtocol? protocol;
     private int? maxRequestSizeBytes;
+    private int? maxResponseSizeBytes;
     private Uri? endpoint;
     private int? timeoutMilliseconds;
     private Func<HttpClient>? httpClientFactory;
@@ -98,12 +114,17 @@ public class OtlpExporterOptions : IOtlpExporterOptions
             {
                 return OtlpSecureHttpClientFactory.CreateSecureHttpClient(
                     this.MtlsOptions,
-                    client => client.Timeout = timeout);
+                    client =>
+                    {
+                        client.MaxResponseContentBufferSize = this.MaxResponseSizeBytes;
+                        client.Timeout = timeout;
+                    });
             }
 #endif
 
             return new HttpClient
             {
+                MaxResponseContentBufferSize = this.MaxResponseSizeBytes,
                 Timeout = timeout,
             };
         };
@@ -191,6 +212,36 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     }
 
     /// <summary>
+    /// Gets or sets the maximum size, in bytes, of a response message the
+    /// exporter will accept. Default value: 4194304 (4 MiB).
+    /// </summary>
+    /// <remarks>
+    /// Notes:
+    /// <list type="bullet">
+    /// <item>The the limit is applied to the raw number bytes received,
+    /// regardless of any compression that might be configured.</item>
+    /// <item>A response exceeding this size is discarded and treated as a
+    /// non-retryable failure, bounding the memory a misconfigured or malicious
+    /// server can cause the exporter to use.</item>
+    /// <item>This is applied to the <see cref="HttpClient"/> the exporter creates
+    /// for itself. When <see cref="HttpClientFactory"/> is used to supply a
+    /// client, that client is responsible for its own limits.</item>
+    /// <item>The smallest accepted value is <c>1024</c>, which any successful or
+    /// partial-success OTLP response fits within.</item>
+    /// </list>
+    /// </remarks>
+    public int MaxResponseSizeBytes
+    {
+        get => this.maxResponseSizeBytes ?? DefaultMaxResponseSizeBytes;
+        set
+        {
+            Guard.ThrowIfOutOfRange(value, min: MinimumMaxResponseSizeBytes);
+
+            this.maxResponseSizeBytes = value;
+        }
+    }
+
+    /// <summary>
     /// Gets or sets a custom user agent identifier.
     /// This will be prepended to the default user agent string.
     /// </summary>
@@ -253,7 +304,8 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         || this.timeoutMilliseconds.HasValue
         || this.httpClientFactory != null
         || this.compression.HasValue
-        || this.maxRequestSizeBytes.HasValue;
+        || this.maxRequestSizeBytes.HasValue
+        || this.maxResponseSizeBytes.HasValue;
 
     internal ExportProcessorType? ExportProcessorTypeValue => this.exportProcessorType;
 
@@ -349,6 +401,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
         this.compression ??= defaultExporterOptions.compression;
 
         this.maxRequestSizeBytes ??= defaultExporterOptions.maxRequestSizeBytes;
+        this.maxResponseSizeBytes ??= defaultExporterOptions.maxResponseSizeBytes;
 
         return this;
     }
