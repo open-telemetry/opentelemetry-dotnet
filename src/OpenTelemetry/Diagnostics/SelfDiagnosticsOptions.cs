@@ -374,13 +374,12 @@ public sealed class SelfDiagnosticsOptions
         private void ReevaluateActiveUnderLock(Registration? changed)
         {
             var selectedIndex = this.SelectActiveUnderLock();
-            var selectedIdentity = selectedIndex >= 0
-                ? this.registrations[selectedIndex].Identity
-                : null;
+            var selectedRegistration = selectedIndex >= 0 ? this.registrations[selectedIndex] : null;
+            var selectedIdentity = selectedRegistration?.Identity;
             var ownerChanged = !ReferenceEquals(selectedIdentity, this.activeRegistrationIdentity);
             this.activeRegistrationIdentity = selectedIdentity;
 
-            if (!ownerChanged && (changed is null || selectedIndex < 0 || !ReferenceEquals(changed, this.registrations[selectedIndex])))
+            if (!ownerChanged && (changed is null || !ReferenceEquals(changed, selectedRegistration)))
             {
                 // The owner is unchanged and the change came from a registration that does not
                 // own the configuration. Re-applying an identical configuration would churn the
@@ -389,9 +388,7 @@ public sealed class SelfDiagnosticsOptions
             }
 
             this.applyConfiguration(
-                selectedIndex >= 0
-                    ? this.registrations[selectedIndex].GetLatestConfiguration()
-                    : SelfDiagnosticsConfiguration.Disabled);
+                selectedRegistration?.GetLatestConfiguration() ?? SelfDiagnosticsConfiguration.Disabled);
         }
 
         private int SelectActiveUnderLock()
@@ -461,6 +458,9 @@ public sealed class SelfDiagnosticsOptions
                 this.monitor = monitor;
             }
 
+            // Stable sentinel token used by the coordinator to track the active owner via
+            // ReferenceEquals. Separate from the Registration reference itself so the
+            // coordinator field can be typed as object? without a circular dependency.
             internal object Identity { get; } = new();
 
             internal bool Registered { get; set; }

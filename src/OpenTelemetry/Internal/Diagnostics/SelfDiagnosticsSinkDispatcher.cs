@@ -651,14 +651,14 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
                         }
                     }
 
-                    if (existing.HasValue)
+                    if (existing is { } existingValue)
                     {
-                        if (!existing.Value.Succeeded)
+                        if (!existingValue.Succeeded)
                         {
                             continue;
                         }
 
-                        text = existing.Value.Formatted;
+                        text = existingValue.Formatted;
                     }
                     else
                     {
