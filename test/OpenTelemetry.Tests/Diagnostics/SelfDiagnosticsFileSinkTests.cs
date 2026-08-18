@@ -7,6 +7,7 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Tests.Diagnostics;
 
+[Collection(ConsoleErrorCollectionDefinition.Name)]
 public sealed class SelfDiagnosticsFileSinkTests : IDisposable
 {
     private readonly string tempDirectory = Path.Combine(Path.GetTempPath(), "otel-selfdiag-tests-" + Guid.NewGuid().ToString("N"));

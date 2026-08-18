@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
+using OpenTelemetry.SelfDiagnostics;
 
 namespace OpenTelemetry.Tests.Diagnostics;
 
@@ -32,6 +33,26 @@ public class SelfDiagnosticsOptionsTests
         Assert.Equal("latest-first", applied[applied.Count - 1].LogDirectory);
         firstRegistration.Dispose();
         Assert.Same(SelfDiagnosticsOptions.SelfDiagnosticsConfiguration.Disabled, applied[applied.Count - 1]);
+    }
+
+    [Fact]
+    public void ConfigurationCoordinator_DisposingMiddleActiveOwner_AppliesNewestRemainingRegistration()
+    {
+        var applied = new List<SelfDiagnosticsOptions.SelfDiagnosticsConfiguration>();
+        using var coordinator = new SelfDiagnosticsOptions.SelfDiagnosticsConfigurationCoordinator(applied.Add);
+
+        using var firstSilentRegistration = coordinator.Register(
+            new TestOptionsMonitor(new SelfDiagnosticsOptions()));
+        using var activeRegistration = coordinator.Register(
+            new TestOptionsMonitor(new SelfDiagnosticsOptions { LogToStdout = true }));
+        using var latestSilentRegistration = coordinator.Register(
+            new TestOptionsMonitor(new SelfDiagnosticsOptions()));
+
+        Assert.True(applied[applied.Count - 1].LogToStdout);
+
+        activeRegistration.Dispose();
+
+        Assert.False(applied[applied.Count - 1].HasConfiguredSink);
     }
 
     [Fact]

@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using Microsoft.Extensions.Logging;
@@ -60,7 +59,7 @@ internal sealed class SelfDiagnosticsTextFormatter : ISelfDiagnosticsFormatter
                    .Append('-')
                    .Append(ctx.SpanId.ToHexString())
                    .Append('-')
-                   .Append(ctx.TraceFlags.HasFlag(ActivityTraceFlags.Recorded) ? "01" : "00")
+                   .Append(((byte)ctx.TraceFlags).ToString("x2", CultureInfo.InvariantCulture))
                    .Append('>');
         }
 

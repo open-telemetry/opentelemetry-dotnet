@@ -3,6 +3,7 @@
 
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
+using OpenTelemetry.SelfDiagnostics;
 
 namespace OpenTelemetry.Tests.Diagnostics;
 
@@ -11,8 +12,8 @@ public class SelfDiagnosticsSinkDispatcherTests
     [Fact]
     public void DeferredEntries_RetainCaptureTimeContext_AndDrainThroughLevelFilter()
     {
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher();
         using var sink = new TestSink();
+        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
 
         var captureTime = new DateTime(2020, 1, 2, 3, 4, 5, DateTimeKind.Utc);
         var debugEntry = new SelfDiagnosticsLogEntry(captureTime, 7, LogLevel.Debug, default, "debug entry", null, null);
@@ -22,7 +23,7 @@ public class SelfDiagnosticsSinkDispatcherTests
         dispatcher.Enqueue(in debugEntry);
         dispatcher.Enqueue(in warningEntry);
 
-        Assert.True(dispatcher.Activate([sink], LogLevel.Warning));
+        Assert.True(dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, null));
 
         Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => sink.Written.Count == 1));
         var written = Assert.Single(sink.Written);
@@ -34,8 +35,8 @@ public class SelfDiagnosticsSinkDispatcherTests
     [Fact]
     public void QueueAtCapacity_DropsNewest_AndReportsDropCount()
     {
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher(maxQueuedEntries: 3);
         using var sink = new TestSink();
+        using var dispatcher = new SelfDiagnosticsSinkDispatcher(maxQueuedEntries: 3, sinkResolver: _ => [sink]);
 
         for (var i = 0; i < 5; i++)
         {
@@ -45,7 +46,7 @@ public class SelfDiagnosticsSinkDispatcherTests
 
         Assert.Equal(2, dispatcher.DroppedCount);
 
-        Assert.True(dispatcher.Activate([sink], LogLevel.Warning));
+        Assert.True(dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, null));
 
         // The three oldest entries survive (drop-newest) plus one drop-summary warning.
         Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => sink.Written.Count == 4));
@@ -59,12 +60,12 @@ public class SelfDiagnosticsSinkDispatcherTests
     [Fact]
     public void SinksSharingFormatterInstance_FormatOncePerEntry()
     {
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher();
         var formatter = new CountingFormatter();
         using var sinkA = new TestSink(formatter);
         using var sinkB = new TestSink(formatter);
+        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sinkA, sinkB]);
 
-        Assert.True(dispatcher.Activate([sinkA, sinkB], LogLevel.Warning));
+        Assert.True(dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, null));
 
         var entry = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "shared", null);
         dispatcher.Enqueue(in entry);
@@ -78,14 +79,15 @@ public class SelfDiagnosticsSinkDispatcherTests
     [Fact]
     public void NonContiguousSinksSharingFormatterInstance_FormatOncePerEntry()
     {
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher();
         var sharedFormatter = new CountingFormatter();
         var otherFormatter = new CountingFormatter();
         using var firstSharedSink = new TestSink(sharedFormatter);
         using var otherSink = new TestSink(otherFormatter);
         using var secondSharedSink = new TestSink(sharedFormatter);
+        using var dispatcher = new SelfDiagnosticsSinkDispatcher(
+            sinkResolver: _ => [firstSharedSink, otherSink, secondSharedSink]);
 
-        Assert.True(dispatcher.Activate([firstSharedSink, otherSink, secondSharedSink], LogLevel.Warning));
+        Assert.True(dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, null));
 
         var entry = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "shared", null);
         dispatcher.Enqueue(in entry);
@@ -101,10 +103,10 @@ public class SelfDiagnosticsSinkDispatcherTests
     [Fact]
     public void NullFormatterSink_ReceivesRawEntryOnly()
     {
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher();
         using var sink = new TestSink(formatter: null);
+        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
 
-        Assert.True(dispatcher.Activate([sink], LogLevel.Warning));
+        Assert.True(dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, null));
 
         var entry = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "raw", null);
         dispatcher.Enqueue(in entry);
@@ -117,46 +119,46 @@ public class SelfDiagnosticsSinkDispatcherTests
     [Fact]
     public void UpdateSinks_DisposesRemovedSinksOnPump_AndKeepsRetained()
     {
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher();
         using var removed = new TestSink();
         using var retained = new TestSink();
 
-        Assert.True(dispatcher.Activate([removed, retained], LogLevel.Warning));
+        ISelfDiagnosticsSink[] currentSinks = [removed, retained];
+        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => currentSinks);
+        Assert.True(dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, null));
+
         var entry = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "before replacement", null);
         dispatcher.Enqueue(in entry);
         Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(
             () => removed.Written.Count == 1 && retained.Written.Count == 1));
 
-        Assert.True(dispatcher.UpdateSinks([retained]));
+        currentSinks = [retained];
+        Assert.True(dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 2, null));
 
         Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => removed.Disposed));
 
-        // The pump is a single logical consumer, not a pinned OS thread: each async wakeup may
-        // resume on a different pool thread. The contract to verify is that disposal ran on the
-        // pump, never synchronously on the UpdateSinks caller.
+        // Disposal belongs to the dedicated pump thread, never the QueueConfiguration caller.
         Assert.NotEqual(Environment.CurrentManagedThreadId, removed.DisposeThreadId);
         Assert.False(retained.Disposed);
     }
 
     [Fact]
-    public void ActivateAfterDispose_ReturnsFalse_AndInstallsNothing()
+    public void QueueConfiguration_AfterDispose_ReturnsFalse()
     {
-        var dispatcher = new SelfDiagnosticsSinkDispatcher();
+        using var sink = new TestSink();
+        var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
         dispatcher.Dispose();
 
-        using var sink = new TestSink();
-        Assert.False(dispatcher.Activate([sink], LogLevel.Warning));
-        Assert.False(dispatcher.UpdateSinks([sink]));
+        Assert.False(dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, null));
         Assert.False(dispatcher.IsEnabled(LogLevel.Critical));
     }
 
     [Fact]
     public void Dispose_DrainsPendingEntries_AndDisposesSinksOnPump()
     {
-        var dispatcher = new SelfDiagnosticsSinkDispatcher();
         using var sink = new TestSink();
+        var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
 
-        Assert.True(dispatcher.Activate([sink], LogLevel.Warning));
+        Assert.True(dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, null));
 
         for (var i = 0; i < 10; i++)
         {
@@ -169,7 +171,7 @@ public class SelfDiagnosticsSinkDispatcherTests
         Assert.Equal(10, sink.Written.Count);
         Assert.True(sink.Disposed);
 
-        // Writes and disposal both belong to the pump (any pool thread), never the caller.
+        // Writes and disposal both belong to the dedicated pump thread, never the caller.
         Assert.NotEqual(Environment.CurrentManagedThreadId, sink.WriteThreadId);
         Assert.NotEqual(Environment.CurrentManagedThreadId, sink.DisposeThreadId);
     }
@@ -177,10 +179,10 @@ public class SelfDiagnosticsSinkDispatcherTests
     [Fact]
     public void IsEnabled_RespectsLevelAndSinkGates()
     {
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher();
         using var sink = new TestSink();
+        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
 
-        Assert.True(dispatcher.Activate([sink], LogLevel.Warning));
+        Assert.True(dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, null));
         var entry = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "activation barrier", null);
         dispatcher.Enqueue(in entry);
         Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => sink.Written.Count == 1));
@@ -196,11 +198,11 @@ public class SelfDiagnosticsSinkDispatcherTests
     [Fact]
     public void UpdateLevel_TakesEffectForSubsequentEntries()
     {
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher();
         using var sink = new TestSink();
+        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
 
-        Assert.True(dispatcher.Activate([sink], LogLevel.Warning));
-        dispatcher.UpdateLevel(LogLevel.Debug);
+        Assert.True(dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, null));
+        Assert.True(dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Debug), 2, null));
 
         Assert.True(dispatcher.IsEnabled(LogLevel.Debug));
 
@@ -213,14 +215,22 @@ public class SelfDiagnosticsSinkDispatcherTests
     [Fact]
     public void LevelUpdate_DoesNotRetroactivelyFilterAcceptedEntries()
     {
-        var dispatcher = new SelfDiagnosticsSinkDispatcher();
         using var sink = new TestSink();
+        var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
 
-        Assert.True(dispatcher.Activate([sink], LogLevel.Warning));
+        using var firstApplied = new ManualResetEventSlim(false);
+        Assert.True(dispatcher.QueueConfiguration(
+            CreateConfiguration(LogLevel.Warning),
+            1,
+            (_, _, _) => firstApplied.Set()));
+        Assert.True(
+            firstApplied.Wait(TimeSpan.FromSeconds(5)),
+            "Configuration was not applied by the pump within the timeout");
+
         var warning = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "before level update", null);
         dispatcher.Enqueue(in warning);
 
-        dispatcher.UpdateLevel(LogLevel.Error);
+        Assert.True(dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Error), 2, null));
         var error = SelfDiagnosticsLogEntry.Capture(LogLevel.Error, default, "after level update", null);
         dispatcher.Enqueue(in error);
         dispatcher.Dispose();
@@ -323,10 +333,10 @@ public class SelfDiagnosticsSinkDispatcherTests
     [Fact]
     public void SinksFlushedAfterBurst()
     {
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher();
         using var sink = new TestSink();
+        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
 
-        Assert.True(dispatcher.Activate([sink], LogLevel.Warning));
+        Assert.True(dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, null));
 
         var entry = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "entry", null);
         dispatcher.Enqueue(in entry);
@@ -337,11 +347,11 @@ public class SelfDiagnosticsSinkDispatcherTests
     [Fact]
     public void SinkWriteThrows_OtherSinksStillReceiveTheEntry_AndThePumpSurvives()
     {
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher();
         using var broken = new ThrowingSink(throwOnWrite: true);
         using var healthy = new TestSink();
+        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [broken, healthy]);
 
-        Assert.True(dispatcher.Activate([broken, healthy], LogLevel.Warning));
+        Assert.True(dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, null));
 
         var first = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "first", null);
         dispatcher.Enqueue(in first);
@@ -365,13 +375,13 @@ public class SelfDiagnosticsSinkDispatcherTests
     [Fact]
     public void FormatterThrows_OtherSinksStillReceiveTheEntry_AndThePumpSurvives()
     {
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher();
         var brokenFormatter = new ThrowingFormatter();
         var workingFormatter = new CountingFormatter();
         using var brokenFormatSink = new TestSink(brokenFormatter);
         using var healthy = new TestSink(workingFormatter);
+        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [brokenFormatSink, healthy]);
 
-        Assert.True(dispatcher.Activate([brokenFormatSink, healthy], LogLevel.Warning));
+        Assert.True(dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, null));
 
         var first = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "first", null);
         dispatcher.Enqueue(in first);
@@ -393,13 +403,14 @@ public class SelfDiagnosticsSinkDispatcherTests
     [Fact]
     public void SinksSharingThrowingFormatter_AttemptFormattingOnlyOncePerEntry()
     {
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher();
         var formatter = new ThrowingFormatter();
         using var firstSink = new TestSink(formatter);
         using var secondSink = new TestSink(formatter);
         using var healthySink = new TestSink();
+        using var dispatcher = new SelfDiagnosticsSinkDispatcher(
+            sinkResolver: _ => [firstSink, healthySink, secondSink]);
 
-        Assert.True(dispatcher.Activate([firstSink, healthySink, secondSink], LogLevel.Warning));
+        Assert.True(dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, null));
 
         var entry = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "shared failure", null);
         dispatcher.Enqueue(in entry);
@@ -413,11 +424,11 @@ public class SelfDiagnosticsSinkDispatcherTests
     [Fact]
     public void SinkFlushThrows_DoesNotKillThePump_AndOtherSinksStillFlush()
     {
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher();
         using var broken = new ThrowingSink(throwOnFlush: true);
         using var healthy = new TestSink();
+        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [broken, healthy]);
 
-        Assert.True(dispatcher.Activate([broken, healthy], LogLevel.Warning));
+        Assert.True(dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, null));
 
         var first = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "first", null);
         dispatcher.Enqueue(in first);
@@ -434,14 +445,25 @@ public class SelfDiagnosticsSinkDispatcherTests
     }
 
     [Fact]
-    public void SinkDisposeThrows_DuringUpdateSinks_DoesNotKillThePump()
+    public void SinkDisposeThrows_DuringConfigurationUpdate_DoesNotKillThePump()
     {
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher();
         using var broken = new ThrowingSink(throwOnFirstDispose: true);
         using var replacement = new TestSink();
 
-        Assert.True(dispatcher.Activate([broken], LogLevel.Warning));
-        Assert.True(dispatcher.UpdateSinks([replacement]));
+        ISelfDiagnosticsSink[] currentSinks = [broken];
+        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => currentSinks);
+
+        using var firstApplied = new ManualResetEventSlim(false);
+        Assert.True(dispatcher.QueueConfiguration(
+            CreateConfiguration(LogLevel.Warning),
+            1,
+            (_, _, _) => firstApplied.Set()));
+        Assert.True(
+            firstApplied.Wait(TimeSpan.FromSeconds(5)),
+            "Configuration was not applied by the pump within the timeout");
+
+        currentSinks = [replacement];
+        Assert.True(dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 2, null));
 
         var entry = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "after replacement", null);
         dispatcher.Enqueue(in entry);
@@ -449,8 +471,8 @@ public class SelfDiagnosticsSinkDispatcherTests
         Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => replacement.Written.Count == 1));
         Assert.Equal(1, broken.DisposeAttempts);
 
-        // Both lifecycle items were queued before the entry, so the broken sink was already out
-        // of the set: it must never have been written to.
+        // Both configuration and entry were queued in order, so the broken sink was already out
+        // of the set before the entry was written: it must never have been written to.
         Assert.Equal(0, broken.WriteAttempts);
 
         var pump = dispatcher.PumpThread;
@@ -461,11 +483,11 @@ public class SelfDiagnosticsSinkDispatcherTests
     [Fact]
     public void SinkDisposeThrows_DuringDispatcherDispose_DoesNotAbortTheDrain()
     {
-        var dispatcher = new SelfDiagnosticsSinkDispatcher();
         using var broken = new ThrowingSink(throwOnFirstDispose: true);
         using var healthy = new TestSink();
 
-        Assert.True(dispatcher.Activate([broken, healthy], LogLevel.Warning));
+        var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [broken, healthy]);
+        Assert.True(dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, null));
 
         var entry = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "drained", null);
         dispatcher.Enqueue(in entry);
@@ -481,27 +503,22 @@ public class SelfDiagnosticsSinkDispatcherTests
     [Fact]
     public void SetSinkManager_AfterActivation_Throws()
     {
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher();
         using var sink = new TestSink();
+        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
 
-        Assert.True(dispatcher.Activate([sink], LogLevel.Warning));
+        Assert.True(dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, null));
 
         var manager = new SelfDiagnosticsSinkManager(static _ => string.Empty, static _ => { });
         Assert.Throws<InvalidOperationException>(() => dispatcher.SetSinkManager(manager));
     }
 
     [Fact]
-    public void LifecycleMutations_BeforeActivation_AreRejectedWithoutThrowing()
+    public void DeferredMode_BuffersEntries_UntilConfigurationArrives()
     {
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher();
         using var sink = new TestSink();
+        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
 
-        Assert.False(dispatcher.UpdateSinks([sink]));
-        dispatcher.UpdateLevel(LogLevel.None);
-
-        // No pump was started, and the rejected level update did not take hold: LogLevel.None
-        // would have closed the buffering gate and discarded everything captured before
-        // configuration arrives.
+        // Before QueueConfiguration: no pump thread, deferred mode admits everything.
         Assert.Null(dispatcher.PumpThread);
         Assert.True(dispatcher.IsEnabled(LogLevel.Trace));
 
@@ -509,7 +526,7 @@ public class SelfDiagnosticsSinkDispatcherTests
         dispatcher.Enqueue(in entry);
         Assert.Empty(sink.Written);
 
-        Assert.True(dispatcher.Activate([sink], LogLevel.Warning));
+        Assert.True(dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, null));
         Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => sink.Written.Count == 1));
         Assert.Equal("buffered", sink.Written[0].Entry.Message);
     }
@@ -540,10 +557,10 @@ public class SelfDiagnosticsSinkDispatcherTests
     [Fact]
     public void ReportInternalError_EnqueuesAnErrorEntryForTheSinks()
     {
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher();
         using var sink = new TestSink();
+        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
 
-        Assert.True(dispatcher.Activate([sink], LogLevel.Warning));
+        Assert.True(dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, null));
 
         dispatcher.ReportInternalError("self-diagnostics machinery failed");
 
@@ -555,16 +572,16 @@ public class SelfDiagnosticsSinkDispatcherTests
     [Fact]
     public void ReportInternalError_WhenTheLevelIsNotAdmitted_QueuesNothing()
     {
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher();
         using var sink = new TestSink();
+        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
 
-        Assert.True(dispatcher.Activate([sink], LogLevel.Warning));
+        Assert.True(dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, null));
 
         var barrier = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "barrier", null);
         dispatcher.Enqueue(in barrier);
         Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => sink.Written.Count == 1));
 
-        dispatcher.UpdateLevel(LogLevel.Critical);
+        Assert.True(dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Critical), 2, null));
         Assert.False(dispatcher.IsEnabled(LogLevel.Error));
         dispatcher.ReportInternalError("suppressed machinery failure");
 
@@ -579,13 +596,13 @@ public class SelfDiagnosticsSinkDispatcherTests
     [Fact]
     public void DisabledSink_DoesNotCauseAFormat()
     {
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher();
         var disabledFormatter = new CountingFormatter();
         var enabledFormatter = new CountingFormatter();
         using var disabled = new TestSink(disabledFormatter) { Enabled = false };
         using var enabled = new TestSink(enabledFormatter);
+        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [disabled, enabled]);
 
-        Assert.True(dispatcher.Activate([disabled, enabled], LogLevel.Warning));
+        Assert.True(dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, null));
 
         var entry = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "single format", null);
         dispatcher.Enqueue(in entry);

@@ -1,7 +1,11 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if NET
+using System.Collections.Frozen;
+#endif
 using System.Text;
+using OpenTelemetry.SelfDiagnostics;
 
 namespace OpenTelemetry.Internal;
 
@@ -29,6 +33,7 @@ internal static class SelfDiagnosticsEnvironmentVariablePolicy
 
     private const string ResourceAttributesVarName = "OTEL_RESOURCE_ATTRIBUTES";
     private const string PemArmourPrefix = "-----BEGIN";
+    private const string JwtPrefix = "eyJ";
 
     private static readonly char[] NewLineChars = ['\r', '\n'];
     private static readonly char[] ResourceAttributeKeyValueSeparator = ['='];
@@ -36,8 +41,11 @@ internal static class SelfDiagnosticsEnvironmentVariablePolicy
     /// <summary>
     /// Variables whose values are safe to persist verbatim.
     /// </summary>
-    private static readonly HashSet<string> ValuesSafeToDisplay = new(StringComparer.OrdinalIgnoreCase)
-    {
+#if NET
+    private static readonly FrozenSet<string> ValuesSafeToDisplay = CreateOrdinalIgnoreCaseSet([
+#else
+    private static readonly HashSet<string> ValuesSafeToDisplay = CreateOrdinalIgnoreCaseSet([
+#endif
         "OTEL_ATTRIBUTE_COUNT_LIMIT",
         "OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT",
         "OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT",
@@ -149,17 +157,20 @@ internal static class SelfDiagnosticsEnvironmentVariablePolicy
         "OTEL_DOTNET_AUTO_TRACES_HTTP_INSTRUMENTATION_CAPTURE_REQUEST_HEADERS",
         "OTEL_DOTNET_AUTO_TRACES_HTTP_INSTRUMENTATION_CAPTURE_RESPONSE_HEADERS",
         "OTEL_DOTNET_AUTO_TRACES_INSTRUMENTATION_ENABLED",
-    };
+    ]);
 
-    private static readonly HashSet<string> SafeResourceAttributeKeys = new(StringComparer.OrdinalIgnoreCase)
-    {
+#if NET
+    private static readonly FrozenSet<string> SafeResourceAttributeKeys = CreateOrdinalIgnoreCaseSet([
+#else
+    private static readonly HashSet<string> SafeResourceAttributeKeys = CreateOrdinalIgnoreCaseSet([
+#endif
         "deployment.environment",
         "deployment.environment.name",
         "service.instance.id",
         "service.name",
         "service.namespace",
         "service.version",
-    };
+    ]);
 
     private static readonly string[] SafeResourceAttributeKeyPrefixes =
     [
@@ -173,14 +184,17 @@ internal static class SelfDiagnosticsEnvironmentVariablePolicy
         "telemetry.sdk.",
     ];
 
-    private static readonly HashSet<string> UriValueVars = new(StringComparer.OrdinalIgnoreCase)
-    {
+#if NET
+    private static readonly FrozenSet<string> UriValueVars = CreateOrdinalIgnoreCaseSet([
+#else
+    private static readonly HashSet<string> UriValueVars = CreateOrdinalIgnoreCaseSet([
+#endif
         "OTEL_EXPORTER_OTLP_ENDPOINT",
         "OTEL_EXPORTER_OTLP_LOGS_ENDPOINT",
         "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT",
         "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT",
         "OTEL_EXPORTER_ZIPKIN_ENDPOINT",
-    };
+    ]);
 
     /// <summary>
     /// Returns <see langword="true"/> when <paramref name="name"/>'s value may be shown verbatim
@@ -249,13 +263,11 @@ internal static class SelfDiagnosticsEnvironmentVariablePolicy
 
     private static bool ContainsInlineSecretMaterial(string value)
         => value.IndexOfAny(NewLineChars) >= 0
-            || value.TrimStart().StartsWith(PemArmourPrefix, StringComparison.Ordinal);
+            || value.TrimStart().StartsWith(PemArmourPrefix, StringComparison.Ordinal)
+            || value.TrimStart().StartsWith(JwtPrefix, StringComparison.Ordinal);
 
     /// <summary>
-    /// Redacts <c>OTEL_RESOURCE_ATTRIBUTES</c> per key=value pair rather than wholesale.
-    /// The variable is W3C Baggage-formatted and routinely carries <c>service.name</c>,
-    /// <c>service.version</c>, and deployment metadata - the highest-value fields in the
-    /// preamble - alongside arbitrary user-supplied keys that may not be safe to persist.
+    /// Redacts <c>OTEL_RESOURCE_ATTRIBUTES</c> per <c>key=value</c> pair rather than wholesale.
     /// </summary>
     /// <param name="value">The raw variable value.</param>
     /// <returns>The value with unrecognised keys' values replaced.</returns>
@@ -316,6 +328,14 @@ internal static class SelfDiagnosticsEnvironmentVariablePolicy
 
         return false;
     }
+
+#if NET
+    private static FrozenSet<string> CreateOrdinalIgnoreCaseSet(string[] values)
+        => values.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+#else
+    private static HashSet<string> CreateOrdinalIgnoreCaseSet(string[] values)
+        => new(values, StringComparer.OrdinalIgnoreCase);
+#endif
 
     // Auto-instrumentation resolves per-integration boolean vars at runtime using a format
     // string. Rather than enumerating every integration name in the safe list, we recognise the

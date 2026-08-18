@@ -6,6 +6,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
+using OpenTelemetry.SelfDiagnostics;
+using static OpenTelemetry.Internal.SelfDiagnostics;
 using static OpenTelemetry.OpenTelemetrySdk;
 
 namespace OpenTelemetry.Logs;
@@ -52,7 +54,7 @@ internal sealed class LoggerProviderBuilderBase : LoggerProviderBuilder, ILogger
                 }
 
                 // Register this provider as the current SDK self-diagnostics configuration owner.
-                var selfDiagnosticsRegistration = SelfDiagnostics.Initialize(
+                var selfDiagnosticsRegistration = Initialize(
                     sp.GetRequiredService<IOptionsMonitor<SelfDiagnosticsOptions>>());
 
                 try
@@ -128,7 +130,7 @@ internal sealed class LoggerProviderBuilderBase : LoggerProviderBuilder, ILogger
         }
 
         // Register this provider as the current SDK self-diagnostics configuration owner.
-        var selfDiagnosticsRegistration = SelfDiagnostics.Initialize(
+        var selfDiagnosticsRegistration = Initialize(
             serviceProvider.GetRequiredService<IOptionsMonitor<SelfDiagnosticsOptions>>());
 
         try

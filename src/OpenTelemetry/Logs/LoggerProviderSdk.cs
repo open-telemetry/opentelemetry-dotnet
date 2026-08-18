@@ -230,6 +230,8 @@ internal sealed class LoggerProviderSdk : LoggerProvider
                 this.OwnedServiceProvider = null;
             }
 
+            // Mark disposed before the synchronous EventSource callback to prevent re-entry,
+            // while keeping the self-diagnostics registration alive to capture the event.
             this.Disposed = true;
             OpenTelemetrySdkEventSource.Log.ProviderDisposed(nameof(LoggerProviderSdk));
             this.selfDiagnosticsRegistration?.Dispose();

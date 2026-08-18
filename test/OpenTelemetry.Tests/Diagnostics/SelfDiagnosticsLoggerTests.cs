@@ -5,6 +5,7 @@ using System.Diagnostics.Tracing;
 
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
+using OpenTelemetry.SelfDiagnostics;
 
 namespace OpenTelemetry.Tests.Diagnostics;
 
@@ -148,16 +149,21 @@ public class SelfDiagnosticsLoggerTests
     [Fact]
     public void EventListener_PreservesEventIdAndName()
     {
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher();
         using var sink = new TestSink();
+        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
         using var logger = new SelfDiagnosticsLogger(
             new SelfDiagnosticsOptions(),
             static _ => string.Empty,
             dispatcher: dispatcher,
             startImmediately: false);
-        Assert.True(dispatcher.Activate([sink], LogLevel.Warning));
-
+        using var applied = new ManualResetEventSlim(false);
+        dispatcher.QueueConfiguration(
+            SelfDiagnosticsOptions.SelfDiagnosticsConfiguration.Create(
+                new SelfDiagnosticsOptions { LogToStdout = true, MinimumLevel = LogLevel.Warning }),
+            1,
+            (_, _, _) => applied.Set());
         using var listener = new SelfDiagnosticsLoggingEventListener(logger, LogLevel.Warning);
+        Assert.True(applied.Wait(TimeSpan.FromSeconds(5)), "Configuration was not applied by the pump within the timeout");
         using var eventSource = new TestEventSource();
         eventSource.DiagnosticEvent("event payload");
 

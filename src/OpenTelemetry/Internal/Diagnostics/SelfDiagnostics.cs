@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using Microsoft.Extensions.Options;
+using OpenTelemetry.SelfDiagnostics;
 
 namespace OpenTelemetry.Internal;
 
@@ -40,6 +41,8 @@ internal sealed class SelfDiagnostics : IDisposable
     /// </summary>
     public static void EnsureInitialized()
     {
+        // Empty body; invoking this method forces type initialization of the process-wide
+        // singleton (static constructor, ProcessExit hook, and controller).
     }
 
     /// <inheritdoc/>
@@ -50,9 +53,9 @@ internal sealed class SelfDiagnostics : IDisposable
     }
 
     /// <summary>
-    /// Registers a provider's live self-diagnostics options. The most recently registered provider
-    /// that configured a sink owns the process-global configuration until its returned lease is
-    /// disposed.
+    /// Registers a provider's live self-diagnostics options. The most recently registered
+    /// provider that configured a sink owns the process-global configuration until its returned
+    /// lease is disposed.
     /// </summary>
     /// <param name="monitor">The provider's live self-diagnostics options.</param>
     /// <returns>A lease that relinquishes ownership when the provider is disposed.</returns>

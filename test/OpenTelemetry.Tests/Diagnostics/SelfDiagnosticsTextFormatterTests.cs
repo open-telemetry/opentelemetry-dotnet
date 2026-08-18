@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
 using System.Globalization;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
@@ -102,7 +103,7 @@ public class SelfDiagnosticsTextFormatterTests
     [Fact]
     public void Format_WithActivityContext_RendersTraceContextSuffix()
     {
-        using var activity = new System.Diagnostics.Activity("test");
+        using var activity = new Activity("test");
         activity.Start();
 
         var entry = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "message", null);
@@ -110,6 +111,34 @@ public class SelfDiagnosticsTextFormatterTests
         var line = SelfDiagnosticsTextFormatter.Instance.Format(in entry);
 
         Assert.Contains($"<00-{activity.TraceId.ToHexString()}-{activity.SpanId.ToHexString()}-", line, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(ActivityTraceFlags.None, "00")]
+    [InlineData(ActivityTraceFlags.Recorded, "01")]
+    [InlineData((ActivityTraceFlags)2, "02")]
+    [InlineData(ActivityTraceFlags.Recorded | (ActivityTraceFlags)2, "03")]
+    public void Format_WithActivityContext_PreservesAllTraceFlags(ActivityTraceFlags flags, string expectedFlags)
+    {
+        var context = new ActivityContext(
+            ActivityTraceId.CreateFromString("0af7651916cd43dd8448eb211c80319c"),
+            ActivitySpanId.CreateFromString("b9c7c989f97918e1"),
+            flags);
+        var entry = new SelfDiagnosticsLogEntry(
+            DateTime.UtcNow,
+            42,
+            LogLevel.Warning,
+            default,
+            "message",
+            null,
+            context);
+
+        var line = SelfDiagnosticsTextFormatter.Instance.Format(in entry);
+
+        Assert.Contains(
+            $"<00-{context.TraceId.ToHexString()}-{context.SpanId.ToHexString()}-{expectedFlags}>",
+            line,
+            StringComparison.Ordinal);
     }
 
     [Fact]

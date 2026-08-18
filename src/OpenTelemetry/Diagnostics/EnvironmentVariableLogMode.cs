@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-namespace OpenTelemetry;
+namespace OpenTelemetry.SelfDiagnostics;
 
 /// <summary>
 /// Controls how much of the environment variable snapshot is written to the
@@ -31,7 +31,7 @@ public enum EnvironmentVariableLogMode
     /// Names of all <c>OTEL_*</c> variables that are set are listed. Values are shown only for
     /// variables the SDK recognises as safe to disclose; all other values are redacted.
     /// Endpoint values are reduced to their authority and <c>OTEL_RESOURCE_ATTRIBUTES</c> is
-    /// redacted per key. This is the default.
+    /// redacted per key.
     /// </summary>
     KnownSafeValues = 2,
 

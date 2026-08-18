@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-// SOURCE: https://github.com/dotnet/runtime/blob/main/src/libraries/Common/src/System/Text/StringBuilderCache.cs
+// SOURCE: https://github.com/dotnet/runtime/blob/66b796a335cab4e638790d1af7ecd58a83d0d5ae/src/libraries/Common/src/System/Text/StringBuilderCache.cs
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
@@ -9,9 +9,6 @@ using System.Text;
 
 namespace OpenTelemetry.Internal;
 
-// TODO: A future phase could reduce per-log-line allocations further by switching
-// the hot path to Span<char> / String.Create / ArrayPool<byte> for the file writer.
-// StringBuilderCache is sufficient for the initial implementation.
 internal static class StringBuilderCache
 {
     // The value 360 was chosen in discussion with performance experts as a compromise

@@ -4,6 +4,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry.SelfDiagnostics;
 
 namespace OpenTelemetry.Internal;
 
@@ -15,9 +16,9 @@ namespace OpenTelemetry.Internal;
 /// <remarks>
 /// <para>
 /// <b>Lifecycle:</b> the dispatcher starts in <i>deferred</i> mode: entries are buffered (still
-/// bounded) and the pump is not running. <see cref="QueueConfiguration"/> (production) and
-/// <see cref="Activate"/> (tests) each start the pump, install the resolved sink set, and drain
-/// the buffer discarding entries below the resolved minimum level.
+/// bounded) and the pump is not running. <see cref="QueueConfiguration"/> starts the pump,
+/// installs the resolved sink set, and drains the buffer discarding entries below the resolved
+/// minimum level.
 /// </para>
 /// <para>
 /// <b>Backpressure:</b> the queue is capped at <see cref="DefaultMaxQueuedEntries"/> entries.
@@ -42,6 +43,8 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
     private readonly SemaphoreSlim signal = new(0);
     private readonly Lock stateLock = new();
     private readonly int maxQueuedEntries;
+    private readonly CancellationTokenSource pumpCts = new();
+    private readonly Func<SelfDiagnosticsOptions.SelfDiagnosticsConfiguration, ISelfDiagnosticsSink[]>? sinkResolver;
 
     private volatile ISelfDiagnosticsSink[] sinks = [];
     private volatile LogLevel minimumLevel = LogLevel.Trace;
@@ -49,7 +52,6 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
     private volatile bool configuredSinkExpected = true;
     private volatile bool useConfiguredSinkGate;
     private volatile bool disposed;
-
     private SelfDiagnosticsSinkManager? sinkManager;
     private Thread? pumpThread; // guarded by stateLock
     private bool activated; // guarded by stateLock
@@ -64,17 +66,18 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
     // resolved to. Live entries are never re-filtered - see the Entry case in PumpAsync.
     private LogLevel drainMinimumLevel = LogLevel.Trace;
 
-    internal SelfDiagnosticsSinkDispatcher(int maxQueuedEntries = DefaultMaxQueuedEntries)
+    internal SelfDiagnosticsSinkDispatcher(
+        int maxQueuedEntries = DefaultMaxQueuedEntries,
+        Func<SelfDiagnosticsOptions.SelfDiagnosticsConfiguration, ISelfDiagnosticsSink[]>? sinkResolver = null)
     {
         this.maxQueuedEntries = maxQueuedEntries;
+        this.sinkResolver = sinkResolver;
     }
 
     private enum WorkItemKind
     {
         Entry,
         Configuration,
-        ReplaceSinks,
-        Level,
         Shutdown,
     }
 
@@ -126,8 +129,7 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
         // already swallows, so the deadline is the safer trade.
         SpinWait spinner = default;
         var drainTimer = Stopwatch.StartNew();
-        while (Volatile.Read(ref this.enqueueWriters) != 0
-            && drainTimer.Elapsed < EnqueueQuiesceTimeout)
+        while (Volatile.Read(ref this.enqueueWriters) != 0 && drainTimer.Elapsed < EnqueueQuiesceTimeout)
         {
             spinner.SpinOnce();
         }
@@ -143,6 +145,7 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
             }
 
             this.signal.Dispose();
+            this.pumpCts.Dispose();
             return;
         }
 
@@ -153,6 +156,11 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
         // disposal. The pump body never lets an exception escape, so this cannot rethrow; a
         // timeout means the drain is abandoned and disposal falls back to best-effort.
         pump.Join(DisposeDrainTimeout);
+
+        // Safeguard: if the join timed out and the pump is still blocking on Wait (e.g. the
+        // signal permit was not delivered), cancel the token to wake it.
+        this.pumpCts.Cancel();
+        this.pumpCts.Dispose();
     }
 
     internal void SetSinkManager(SelfDiagnosticsSinkManager sinkManager)
@@ -251,7 +259,7 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
     {
         lock (this.stateLock)
         {
-            if (this.disposed || this.sinkManager is null)
+            if (this.disposed || (this.sinkManager is null && this.sinkResolver is null))
             {
                 return false;
             }
@@ -267,71 +275,6 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
         }
 
         return true;
-    }
-
-    /// <summary>
-    /// Transitions from deferred to active with a caller-provided sink set. This surface is used
-    /// by focused dispatcher tests; production configuration uses <see cref="QueueConfiguration"/>.
-    /// </summary>
-    /// <param name="sinks">The initial sinks.</param>
-    /// <param name="minimumLevel">The minimum captured level.</param>
-    /// <returns><see langword="true"/> when activation was queued.</returns>
-    internal bool Activate(ISelfDiagnosticsSink[] sinks, LogLevel minimumLevel)
-    {
-        lock (this.stateLock)
-        {
-            if (this.disposed || this.activated)
-            {
-                return false;
-            }
-
-            this.minimumLevel = minimumLevel;
-            this.configuredSinkExpected = sinks.Length > 0;
-            this.useConfiguredSinkGate = true;
-            this.queue.Enqueue(WorkItem.ForSinks(sinks, minimumLevel));
-            this.EnsurePumpStartedUnderLock();
-            this.SignalPump();
-        }
-
-        return true;
-    }
-
-    /// <summary>Queues a replacement caller-provided sink set.</summary>
-    /// <param name="newSinks">The replacement sinks.</param>
-    /// <returns><see langword="true"/> when replacement was queued.</returns>
-    internal bool UpdateSinks(ISelfDiagnosticsSink[] newSinks)
-    {
-        lock (this.stateLock)
-        {
-            if (this.disposed || !this.activated)
-            {
-                return false;
-            }
-
-            this.configuredSinkExpected = newSinks.Length > 0;
-            this.useConfiguredSinkGate = true;
-            this.queue.Enqueue(WorkItem.ForSinks(newSinks));
-            this.SignalPump();
-        }
-
-        return true;
-    }
-
-    /// <summary>Updates the minimum level applied to subsequently captured entries.</summary>
-    /// <param name="level">The new minimum level.</param>
-    internal void UpdateLevel(LogLevel level)
-    {
-        lock (this.stateLock)
-        {
-            if (this.disposed || !this.activated)
-            {
-                return;
-            }
-
-            this.minimumLevel = level;
-            this.queue.Enqueue(WorkItem.ForLevel(level));
-            this.SignalPump();
-        }
     }
 
     /// <summary>Reports a failure of the diagnostics machinery itself.</summary>
@@ -438,7 +381,14 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
             // waiting on this task; the loop has no other exit and needs no attempt budget.
             while (true)
             {
-                this.signal.Wait();
+                try
+                {
+                    this.signal.Wait(this.pumpCts.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    break; // Dispose cancelled the wait; exit so finally can clean up.
+                }
 
                 var wroteAny = false;
                 var shutdown = false;
@@ -456,19 +406,8 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
                             }
                             else if (entry.Level != LogLevel.None)
                             {
-                                // Admission is decided once, in Enqueue. Re-filtering here
-                                // against a level the pump has not applied yet would silently
-                                // discard entries accepted under a level that a concurrent
-                                // QueueConfiguration had already published - exactly the
-                                // entries a level raise during an incident is meant to capture.
-                                //
-                                // QueueConfiguration publishes minimumLevel before it enqueues
-                                // its work item and Enqueue takes no lock, so a producer
-                                // preempting it in between lands ahead of the configuration.
-                                // That interleaving needs a context switch at a specific
-                                // instruction boundary and is not reproducible from a test, so
-                                // this is guarded by construction rather than by a regression
-                                // test: the pump never second-guesses an accepted entry.
+                                // Admission is decided once in Enqueue; the pump never
+                                // re-filters an accepted entry against a later level update.
                                 wroteAny |= this.WriteToSinks(in entry);
                             }
 
@@ -481,22 +420,6 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
                                 wroteAny |= this.DrainDeferredEntries(deferredEntries);
                             }
 
-                            break;
-
-                        case WorkItemKind.ReplaceSinks:
-                            this.ReplaceSinks(workItem.Sinks!);
-                            if (workItem.MinimumLevel.HasValue)
-                            {
-                                this.drainMinimumLevel = workItem.MinimumLevel.GetValueOrDefault();
-                            }
-
-                            this.deferred = false;
-                            this.useConfiguredSinkGate = false;
-                            wroteAny |= this.DrainDeferredEntries(deferredEntries);
-                            break;
-
-                        case WorkItemKind.Level:
-                            this.drainMinimumLevel = workItem.MinimumLevel.GetValueOrDefault();
                             break;
 
                         case WorkItemKind.Shutdown:
@@ -551,7 +474,9 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
         // run, so the dispatcher cannot get stuck buffering in deferred mode.
         try
         {
-            var newSinks = this.sinkManager!.ApplyOptions(configuration);
+            var newSinks = this.sinkResolver is not null
+                ? this.sinkResolver(configuration)
+                : this.sinkManager!.ApplyOptions(configuration);
             this.ReplaceSinks(newSinks);
         }
         catch (Exception ex)
@@ -716,25 +641,24 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
                 if (formatter is not null)
                 {
                     formatterResults ??= [];
-                    var formatterResultIndex = -1;
-                    for (var index = 0; index < formatterResults.Count; index++)
+                    FormatterResult? existing = null;
+                    foreach (var fr in formatterResults)
                     {
-                        if (ReferenceEquals(formatterResults[index].Formatter, formatter))
+                        if (ReferenceEquals(fr.Formatter, formatter))
                         {
-                            formatterResultIndex = index;
+                            existing = fr;
                             break;
                         }
                     }
 
-                    if (formatterResultIndex >= 0)
+                    if (existing.HasValue)
                     {
-                        var formatterResult = formatterResults[formatterResultIndex];
-                        if (!formatterResult.Succeeded)
+                        if (!existing.Value.Succeeded)
                         {
                             continue;
                         }
 
-                        text = formatterResult.Formatted;
+                        text = existing.Value.Formatted;
                     }
                     else
                     {
@@ -767,18 +691,16 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
 
     private readonly struct FormatterResult
     {
+        internal readonly ISelfDiagnosticsFormatter Formatter;
+        internal readonly string? Formatted;
+        internal readonly bool Succeeded;
+
         internal FormatterResult(ISelfDiagnosticsFormatter formatter, string? formatted, bool succeeded)
         {
             this.Formatter = formatter;
             this.Formatted = formatted;
             this.Succeeded = succeeded;
         }
-
-        internal ISelfDiagnosticsFormatter Formatter { get; }
-
-        internal string? Formatted { get; }
-
-        internal bool Succeeded { get; }
     }
 
     private readonly struct WorkItem
@@ -788,16 +710,12 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
             SelfDiagnosticsLogEntry entry = default,
             SelfDiagnosticsOptions.SelfDiagnosticsConfiguration? configuration = null,
             long generation = 0,
-            ISelfDiagnosticsSink[]? sinks = null,
-            LogLevel? minimumLevel = null,
             Action<long, bool, SelfDiagnosticsOptions.SelfDiagnosticsConfiguration>? appliedCallback = null)
         {
             this.Kind = kind;
             this.Entry = entry;
             this.Configuration = configuration;
             this.Generation = generation;
-            this.Sinks = sinks;
-            this.MinimumLevel = minimumLevel;
             this.AppliedCallback = appliedCallback;
         }
 
@@ -808,10 +726,6 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
         internal SelfDiagnosticsOptions.SelfDiagnosticsConfiguration? Configuration { get; }
 
         internal long Generation { get; }
-
-        internal ISelfDiagnosticsSink[]? Sinks { get; }
-
-        internal LogLevel? MinimumLevel { get; }
 
         internal Action<long, bool, SelfDiagnosticsOptions.SelfDiagnosticsConfiguration>? AppliedCallback { get; }
 
@@ -827,12 +741,6 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
                 configuration: configuration,
                 generation: generation,
                 appliedCallback: appliedCallback);
-
-        internal static WorkItem ForSinks(ISelfDiagnosticsSink[] sinks, LogLevel? minimumLevel = null)
-            => new(WorkItemKind.ReplaceSinks, sinks: sinks, minimumLevel: minimumLevel);
-
-        internal static WorkItem ForLevel(LogLevel minimumLevel)
-            => new(WorkItemKind.Level, minimumLevel: minimumLevel);
 
         internal static WorkItem ForShutdown() => new(WorkItemKind.Shutdown);
     }

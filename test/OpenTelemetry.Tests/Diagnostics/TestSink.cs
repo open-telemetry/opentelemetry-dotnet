@@ -16,6 +16,7 @@ internal sealed class TestSink : ISelfDiagnosticsSink
     private int flushCount;
     private int writeThreadId;
     private int disposeThreadId;
+    private bool disposed;
 
     public TestSink(ISelfDiagnosticsFormatter? formatter = null)
     {
@@ -32,7 +33,7 @@ internal sealed class TestSink : ISelfDiagnosticsSink
 
     public int DisposeThreadId => Volatile.Read(ref this.disposeThreadId);
 
-    public bool Disposed { get; private set; }
+    public bool Disposed => Volatile.Read(ref this.disposed);
 
     public IReadOnlyList<(SelfDiagnosticsLogEntry Entry, string? Formatted)> Written => [.. this.written];
 
@@ -53,6 +54,6 @@ internal sealed class TestSink : ISelfDiagnosticsSink
     public void Dispose()
     {
         Volatile.Write(ref this.disposeThreadId, Environment.CurrentManagedThreadId);
-        this.Disposed = true;
+        Volatile.Write(ref this.disposed, true);
     }
 }

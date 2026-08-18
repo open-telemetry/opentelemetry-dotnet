@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using Microsoft.Extensions.Logging;
+using OpenTelemetry.SelfDiagnostics;
 
 namespace OpenTelemetry.Internal;
 
@@ -46,14 +47,14 @@ internal sealed class SelfDiagnosticsLogger : IDisposable, ILogger
         long initialGeneration = 0,
         bool startImmediately = true)
     {
-        this.Dispatcher = dispatcher ?? new SelfDiagnosticsSinkDispatcher();
-        sinkManager ??= new SelfDiagnosticsSinkManager(preambleBuilder, this.Dispatcher.ReportInternalError);
+        this.Dispatcher = dispatcher ?? new();
+        sinkManager ??= new(preambleBuilder, this.Dispatcher.ReportInternalError);
         this.Dispatcher.SetSinkManager(sinkManager);
 
         this.nextGeneration = initialGeneration;
         var generation = initialGeneration > 0
             ? initialGeneration
-            : Interlocked.Increment(ref this.nextGeneration);
+            : ++this.nextGeneration;
 
         if (startImmediately)
         {

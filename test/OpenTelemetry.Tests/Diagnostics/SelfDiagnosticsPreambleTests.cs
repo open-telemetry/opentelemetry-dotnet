@@ -3,6 +3,7 @@
 
 using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Internal;
+using OpenTelemetry.SelfDiagnostics;
 
 namespace OpenTelemetry.Tests.Diagnostics;
 

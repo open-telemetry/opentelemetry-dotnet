@@ -36,6 +36,16 @@ public class SelfDiagnosticsEnvironmentVariablePolicyTests
         Assert.Equal(Redacted, SelfDiagnosticsEnvironmentVariablePolicy.GetDisplayValue(name, Pem));
     }
 
+    [Theory]
+    [InlineData("OTEL_EXPORTER_OTLP_CLIENT_KEY")]
+    [InlineData("OTEL_SERVICE_NAME")]
+    public void InlineJwtMaterial_IsRedacted(string name)
+    {
+        // Compact JWT serialization always begins with base64url("{\"alg\":...") => "eyJ".
+        const string Jwt = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.signature";
+        Assert.Equal(Redacted, SelfDiagnosticsEnvironmentVariablePolicy.GetDisplayValue(name, Jwt));
+    }
+
     [Fact]
     public void MultiLineValue_IsRedacted() =>
         Assert.Equal(Redacted, SelfDiagnosticsEnvironmentVariablePolicy.GetDisplayValue("OTEL_SERVICE_NAME", "first\r\nsecond"));

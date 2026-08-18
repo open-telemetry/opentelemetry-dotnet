@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.SelfDiagnostics;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Tests.Diagnostics;
@@ -170,9 +171,10 @@ public sealed class SelfDiagnosticsControllerTests : IDisposable
             SelfDiagnosticsTestHelpers.WaitUntil(() => !controller.Logger!.IsEnabled(LogLevel.Warning)),
             "diagnostics remained enabled after the last registration was disposed");
 
+        // IsEnabled is false so Log() is a no-op at the logger level; the entry never enters the
+        // pump, so DoesNotContain is deterministic without any sleep.
         controller.Logger!.Log(LogLevel.Warning, default, "after dispose", null, static (m, _) => m);
 
-        Thread.Sleep(100);
         Assert.DoesNotContain("after dispose", ReadLogs(directory), StringComparison.Ordinal);
     }
 
@@ -255,7 +257,7 @@ public sealed class SelfDiagnosticsControllerTests : IDisposable
         await Task.WhenAll(reloadTask, disposeTask);
 
         Assert.True(
-            SelfDiagnosticsTestHelpers.WaitUntil(() => !controller.Logger!.IsEnabled(LogLevel.Warning)),
+            SelfDiagnosticsTestHelpers.WaitUntil(() => controller.Logger?.IsEnabled(LogLevel.Warning) != true),
             "a racing options callback re-enabled diagnostics after its registration was disposed");
     }
 
@@ -277,9 +279,11 @@ public sealed class SelfDiagnosticsControllerTests : IDisposable
                 $"the {providerKind} provider did not register its self-diagnostics options");
         }
 
+        // provider.Dispose() synchronously tears down the EventListener and joins the pump thread,
+        // so by the time control reaches here the subscription is gone and the event below fires
+        // into a disposed listener. DoesNotContain is deterministic without any sleep.
         var afterDispose = $"{providerKind} provider was disposed";
         ProviderIntegrationEventSource.Log.Warn(afterDispose);
-        Thread.Sleep(100);
 
         Assert.DoesNotContain(afterDispose, ReadLogs(directory), StringComparison.Ordinal);
     }
@@ -291,7 +295,7 @@ public sealed class SelfDiagnosticsControllerTests : IDisposable
         var secondDirectory = this.CreateDirectory();
 
         using var first = BuildProvider("traces", firstDirectory);
-        var second = BuildProvider("metrics", secondDirectory);
+        using var second = BuildProvider("metrics", secondDirectory);
 
         ProviderIntegrationEventSource.Log.Warn("owned by the second provider");
         Assert.True(

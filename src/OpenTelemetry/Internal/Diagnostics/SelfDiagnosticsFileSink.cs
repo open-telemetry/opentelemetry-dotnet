@@ -57,6 +57,7 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
     private readonly List<string> retainedFiles = [];
     private readonly Func<string>? preambleFactory;
     private readonly Action<string>? reportError;
+    private readonly Func<DateTime>? utcNow;
 
     // A file belonging to an outgoing sink that has not been disposed yet. Pruning it would
     // unlink a file still being written to.
@@ -78,13 +79,15 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
         Func<string>? preambleFactory,
         Action<string>? reportError = null,
         TimeSpan? retryInterval = null,
-        string? excludeFromPruning = null)
+        string? excludeFromPruning = null,
+        Func<DateTime>? utcNow = null)
     {
         this.logDirectory = logDirectory;
         this.preambleFactory = preambleFactory;
         this.reportError = reportError;
         this.retryInterval = retryInterval ?? DefaultRetryInterval;
         this.excludeFromPruning = excludeFromPruning;
+        this.utcNow = utcNow;
 
         // FileSizeLimitKilobytes <= 0 disables size-based rollover (treated as unlimited).
         this.fileSizeLimitBytes = (long)Math.Max(0, fileSizeLimitKilobytes) * 1024;
@@ -260,7 +263,7 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
     /// </summary>
     private bool TryOpenWriter()
     {
-        if (DateTime.UtcNow < this.nextOpenAttemptUtc)
+        if ((this.utcNow?.Invoke() ?? DateTime.UtcNow) < this.nextOpenAttemptUtc)
         {
             return false;
         }
@@ -474,7 +477,7 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
             this.writer = StreamWriter.Null;
         }
 
-        this.nextOpenAttemptUtc = DateTime.UtcNow + this.retryInterval;
+        this.nextOpenAttemptUtc = (this.utcNow?.Invoke() ?? DateTime.UtcNow) + this.retryInterval;
 
         if (!this.failureReported)
         {

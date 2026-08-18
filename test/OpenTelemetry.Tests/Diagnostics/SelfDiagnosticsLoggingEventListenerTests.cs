@@ -5,6 +5,7 @@ using System.Diagnostics.Tracing;
 using System.Reflection;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Internal;
+using OpenTelemetry.SelfDiagnostics;
 
 namespace OpenTelemetry.Tests.Diagnostics;
 
@@ -32,16 +33,18 @@ public class SelfDiagnosticsLoggingEventListenerTests
     [Fact]
     public void SelfDescribingEvent_RendersPayloadNamesAndValues()
     {
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher();
         using var sink = new TestSink();
+        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
         using var logger = new SelfDiagnosticsLogger(
             new SelfDiagnosticsOptions(),
             static _ => string.Empty,
             dispatcher: dispatcher,
             startImmediately: false);
-        Assert.True(dispatcher.Activate([sink], LogLevel.Warning));
-
+        using var applied = new ManualResetEventSlim(false);
+        dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, (_, _, _) => applied.Set());
         using var listener = new SelfDiagnosticsLoggingEventListener(logger, LogLevel.Warning);
+        Assert.True(applied.Wait(TimeSpan.FromSeconds(5)), "Configuration was not applied by the pump within the timeout");
+
         using var eventSource = new EventSource(
             SelfDescribingSourceName,
             EventSourceSettings.EtwSelfDescribingEventFormat);
@@ -60,16 +63,18 @@ public class SelfDiagnosticsLoggingEventListenerTests
     [Fact]
     public void EventLevelBelowSubscription_IsNotDelivered()
     {
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher();
         using var sink = new TestSink();
+        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
         using var logger = new SelfDiagnosticsLogger(
             new SelfDiagnosticsOptions(),
             static _ => string.Empty,
             dispatcher: dispatcher,
             startImmediately: false);
-        Assert.True(dispatcher.Activate([sink], LogLevel.Error));
-
+        using var applied = new ManualResetEventSlim(false);
+        dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Error), 1, (_, _, _) => applied.Set());
         using var listener = new SelfDiagnosticsLoggingEventListener(logger, LogLevel.Error);
+        Assert.True(applied.Wait(TimeSpan.FromSeconds(5)), "Configuration was not applied by the pump within the timeout");
+
         using var eventSource = new LevelTestEventSource();
 
         eventSource.WarningEvent("below the subscription level");
@@ -83,16 +88,18 @@ public class SelfDiagnosticsLoggingEventListenerTests
     [Fact]
     public void ManifestMessageWithPayload_HasPayloadSubstituted()
     {
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher();
         using var sink = new TestSink();
+        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
         using var logger = new SelfDiagnosticsLogger(
             new SelfDiagnosticsOptions(),
             static _ => string.Empty,
             dispatcher: dispatcher,
             startImmediately: false);
-        Assert.True(dispatcher.Activate([sink], LogLevel.Warning));
-
+        using var applied = new ManualResetEventSlim(false);
+        dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, (_, _, _) => applied.Set());
         using var listener = new SelfDiagnosticsLoggingEventListener(logger, LogLevel.Warning);
+        Assert.True(applied.Wait(TimeSpan.FromSeconds(5)), "Configuration was not applied by the pump within the timeout");
+
         using var eventSource = new SubstitutedMessageEventSource();
 
         eventSource.WidgetFailed("gizmo", 4);
@@ -106,16 +113,18 @@ public class SelfDiagnosticsLoggingEventListenerTests
     [Fact]
     public void ManifestMessageDisagreeingWithPayload_FallsBackToRawPayload()
     {
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher();
         using var sink = new TestSink();
+        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
         using var logger = new SelfDiagnosticsLogger(
             new SelfDiagnosticsOptions(),
             static _ => string.Empty,
             dispatcher: dispatcher,
             startImmediately: false);
-        Assert.True(dispatcher.Activate([sink], LogLevel.Warning));
-
+        using var applied = new ManualResetEventSlim(false);
+        dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, (_, _, _) => applied.Set());
         using var listener = new SelfDiagnosticsLoggingEventListener(logger, LogLevel.Warning);
+        Assert.True(applied.Wait(TimeSpan.FromSeconds(5)), "Configuration was not applied by the pump within the timeout");
+
         using var eventSource = new MismatchedMessageEventSource();
 
         try
@@ -140,16 +149,18 @@ public class SelfDiagnosticsLoggingEventListenerTests
     [Fact]
     public void EventLevels_AreMappedToLogLevels()
     {
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher();
         using var sink = new TestSink();
+        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
         using var logger = new SelfDiagnosticsLogger(
             new SelfDiagnosticsOptions(),
             static _ => string.Empty,
             dispatcher: dispatcher,
             startImmediately: false);
-        Assert.True(dispatcher.Activate([sink], LogLevel.Information));
-
+        using var applied = new ManualResetEventSlim(false);
+        dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Information), 1, (_, _, _) => applied.Set());
         using var listener = new SelfDiagnosticsLoggingEventListener(logger, LogLevel.Information);
+        Assert.True(applied.Wait(TimeSpan.FromSeconds(5)), "Configuration was not applied by the pump within the timeout");
+
         using var eventSource = new MappedLevelEventSource();
 
         eventSource.CriticalEvent("critical event");
@@ -169,8 +180,8 @@ public class SelfDiagnosticsLoggingEventListenerTests
     [Fact]
     public void UpdateLevel_ReSubscribesAlreadySubscribedSources()
     {
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher();
         using var sink = new TestSink();
+        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
         using var logger = new SelfDiagnosticsLogger(
             new SelfDiagnosticsOptions(),
             static _ => string.Empty,
@@ -179,9 +190,11 @@ public class SelfDiagnosticsLoggingEventListenerTests
 
         // The dispatcher stays at Debug throughout so that every observation below is attributable
         // to the listener's EventSource subscription rather than to the dispatcher's own filter.
-        Assert.True(dispatcher.Activate([sink], LogLevel.Debug));
-
+        using var applied = new ManualResetEventSlim(false);
+        dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Debug), 1, (_, _, _) => applied.Set());
         using var listener = new SelfDiagnosticsLoggingEventListener(logger, LogLevel.Warning);
+        Assert.True(applied.Wait(TimeSpan.FromSeconds(5)), "Configuration was not applied by the pump within the timeout");
+
         using var eventSource = new ResubscribeEventSource();
 
         // Subscribed at Warning: the Verbose event must not be delivered. The Warning event behind
@@ -221,16 +234,18 @@ public class SelfDiagnosticsLoggingEventListenerTests
         // delivery itself is simulated: a real EventWrittenEventArgs produced by a real
         // non-OpenTelemetry source is handed to the real (protected) callback from inside the
         // capturing callback, where the args are still valid.
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher();
         using var sink = new TestSink();
+        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
         using var logger = new SelfDiagnosticsLogger(
             new SelfDiagnosticsOptions(),
             static _ => string.Empty,
             dispatcher: dispatcher,
             startImmediately: false);
-        Assert.True(dispatcher.Activate([sink], LogLevel.Debug));
-
+        using var applied = new ManualResetEventSlim(false);
+        dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Debug), 1, (_, _, _) => applied.Set());
         using var listener = new SelfDiagnosticsLoggingEventListener(logger, LogLevel.Debug);
+        Assert.True(applied.Wait(TimeSpan.FromSeconds(5)), "Configuration was not applied by the pump within the timeout");
+
         using var eventSource = new ForeignEventSource();
         using var relay = new RelayEventListener(listener);
 
@@ -253,16 +268,18 @@ public class SelfDiagnosticsLoggingEventListenerTests
     [Fact]
     public void ManifestMessageWithNoPayload_MessageIsRenderedVerbatim()
     {
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher();
         using var sink = new TestSink();
+        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
         using var logger = new SelfDiagnosticsLogger(
             new SelfDiagnosticsOptions(),
             static _ => string.Empty,
             dispatcher: dispatcher,
             startImmediately: false);
-        Assert.True(dispatcher.Activate([sink], LogLevel.Warning));
-
+        using var applied = new ManualResetEventSlim(false);
+        dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, (_, _, _) => applied.Set());
         using var listener = new SelfDiagnosticsLoggingEventListener(logger, LogLevel.Warning);
+        Assert.True(applied.Wait(TimeSpan.FromSeconds(5)), "Configuration was not applied by the pump within the timeout");
+
         using var eventSource = new NoPayloadManifestEventSource();
 
         eventSource.NoPayloadEvent();
@@ -275,16 +292,18 @@ public class SelfDiagnosticsLoggingEventListenerTests
     [Fact]
     public void SelfDescribingEventWithNoPayload_EntryArrives()
     {
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher();
         using var sink = new TestSink();
+        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
         using var logger = new SelfDiagnosticsLogger(
             new SelfDiagnosticsOptions(),
             static _ => string.Empty,
             dispatcher: dispatcher,
             startImmediately: false);
-        Assert.True(dispatcher.Activate([sink], LogLevel.Warning));
-
+        using var applied = new ManualResetEventSlim(false);
+        dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, (_, _, _) => applied.Set());
         using var listener = new SelfDiagnosticsLoggingEventListener(logger, LogLevel.Warning);
+        Assert.True(applied.Wait(TimeSpan.FromSeconds(5)), "Configuration was not applied by the pump within the timeout");
+
         using var eventSource = new EventSource(
             EmptyPayloadSourceName,
             EventSourceSettings.EtwSelfDescribingEventFormat);
@@ -302,16 +321,18 @@ public class SelfDiagnosticsLoggingEventListenerTests
     [Fact]
     public void UpdateLevel_Critical_FiltersNonCriticalEvents()
     {
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher();
         using var sink = new TestSink();
+        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
         using var logger = new SelfDiagnosticsLogger(
             new SelfDiagnosticsOptions(),
             static _ => string.Empty,
             dispatcher: dispatcher,
             startImmediately: false);
-        Assert.True(dispatcher.Activate([sink], LogLevel.Critical));
-
+        using var applied = new ManualResetEventSlim(false);
+        dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Critical), 1, (_, _, _) => applied.Set());
         using var listener = new SelfDiagnosticsLoggingEventListener(logger, LogLevel.Warning);
+        Assert.True(applied.Wait(TimeSpan.FromSeconds(5)), "Configuration was not applied by the pump within the timeout");
+
         using var eventSource = new CriticalSubscriptionEventSource();
 
         listener.UpdateLevel(LogLevel.Critical);
@@ -330,14 +351,14 @@ public class SelfDiagnosticsLoggingEventListenerTests
     [Fact]
     public void UpdateLevel_AfterDispose_DoesNotThrow()
     {
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher();
         using var sink = new TestSink();
+        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
         using var logger = new SelfDiagnosticsLogger(
             new SelfDiagnosticsOptions(),
             static _ => string.Empty,
             dispatcher: dispatcher,
             startImmediately: false);
-        Assert.True(dispatcher.Activate([sink], LogLevel.Warning));
+        dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, null);
 
         // Create the listener before the EventSource so that OnEventSourceCreated runs and the
         // source is recorded in subscribedSources - giving UpdateLevel something to iterate over.
@@ -349,6 +370,10 @@ public class SelfDiagnosticsLoggingEventListenerTests
         var ex = Record.Exception(() => listener.UpdateLevel(LogLevel.Debug));
         Assert.Null(ex);
     }
+
+    private static SelfDiagnosticsOptions.SelfDiagnosticsConfiguration CreateConfiguration(LogLevel minimumLevel)
+        => SelfDiagnosticsOptions.SelfDiagnosticsConfiguration.Create(
+            new SelfDiagnosticsOptions { LogToStdout = true, MinimumLevel = minimumLevel });
 
     /// <summary>
     /// Waits for the entry whose rendered message ends with <paramref name="messageTail"/> and
