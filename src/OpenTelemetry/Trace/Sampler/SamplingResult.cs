@@ -110,12 +110,7 @@ public readonly struct SamplingResult : IEquatable<SamplingResult>
     public override int GetHashCode()
     {
 #if NET || NETSTANDARD2_1_OR_GREATER
-        HashCode hashCode = default;
-        hashCode.Add(this.Decision);
-        hashCode.Add(this.Attributes);
-        hashCode.Add(this.TraceStateString);
-
-        var hash = hashCode.ToHashCode();
+        return HashCode.Combine(this.Decision, this.Attributes, this.TraceStateString);
 #else
         var hash = 17;
         unchecked
@@ -124,15 +119,14 @@ public readonly struct SamplingResult : IEquatable<SamplingResult>
             hash = (31 * hash) + this.Attributes.GetHashCode();
             hash = (31 * hash) + (this.TraceStateString?.GetHashCode() ?? 0);
         }
-#endif
+
         return hash;
+#endif
     }
 
     /// <inheritdoc/>
-    public bool Equals(SamplingResult other)
-    {
-        return this.Decision == other.Decision
-            && this.Attributes.SequenceEqual(other.Attributes)
-            && this.TraceStateString == other.TraceStateString;
-    }
+    public bool Equals(SamplingResult other) =>
+        this.Decision == other.Decision &&
+        this.Attributes.SequenceEqual(other.Attributes) &&
+        this.TraceStateString == other.TraceStateString;
 }

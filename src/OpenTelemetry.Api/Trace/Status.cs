@@ -82,29 +82,27 @@ public readonly struct Status : IEquatable<Status>
     /// <inheritdoc/>
     public override int GetHashCode()
     {
+#if NET || NETSTANDARD2_1_OR_GREATER
+        return HashCode.Combine(this.StatusCode, this.Description);
+#else
         var hash = 17;
         unchecked
         {
             hash = (31 * hash) + this.StatusCode.GetHashCode();
-#if NET
-            hash = (31 * hash) + (this.Description?.GetHashCode(StringComparison.Ordinal) ?? 0);
-#else
             hash = (31 * hash) + (this.Description?.GetHashCode() ?? 0);
-#endif
         }
 
         return hash;
+#endif
     }
 
     /// <inheritdoc/>
-    public override string ToString()
-    {
-        return nameof(Status)
+    public override string ToString() =>
+        nameof(Status)
             + "{"
             + nameof(this.StatusCode) + "=" + this.StatusCode + ", "
             + nameof(this.Description) + "=" + this.Description
             + "}";
-    }
 
     /// <inheritdoc/>
     public bool Equals(Status other)
