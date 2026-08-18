@@ -16,6 +16,10 @@ Notes](../../RELEASENOTES.md).
   to be dropped.
   ([#7544](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7544))
 
+* Improved OTLP log attribute serialization performance by avoiding unnecessary
+  boxing.
+  ([#7645](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7645))
+
 ## 1.17.0
 
 Released 2026-Jul-16
