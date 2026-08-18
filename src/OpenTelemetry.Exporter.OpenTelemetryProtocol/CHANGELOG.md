@@ -45,6 +45,10 @@ Notes](../../RELEASENOTES.md).
   limit is discarded and treated as a non-retryable failure.
   ([#7583](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7583))
 
+* Fixed persistent storage allowing a blob write to exceed the configured
+  maximum storage size.
+  ([#7646](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7646))
+
 ## 1.17.0
 
 Released 2026-Jul-16
