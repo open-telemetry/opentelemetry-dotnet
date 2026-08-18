@@ -387,36 +387,43 @@ internal static class ProtobufOtlpLogSerializer
     /// sharing a name but reporting different versions are distinct scopes and
     /// must be emitted as separate ScopeLogs entries.
     /// </summary>
-    internal readonly struct InstrumentationScope : IEquatable<InstrumentationScope>
+    internal readonly record struct InstrumentationScope
     {
+        public readonly string Name;
+        public readonly string? Version;
+
         public InstrumentationScope(string name, string? version)
         {
             this.Name = name;
             this.Version = version;
         }
 
-        public string Name { get; }
-
-        public string? Version { get; }
-
         public bool Equals(InstrumentationScope other)
             => string.Equals(this.Name, other.Name, StringComparison.Ordinal)
             && string.Equals(this.Version, other.Version, StringComparison.Ordinal);
 
-        public override bool Equals(object? obj)
-            => obj is InstrumentationScope other && this.Equals(other);
-
         public override int GetHashCode()
         {
-            // Note: HashCode is not available on all the target frameworks, so
-            // the hash is combined manually here.
+#if NET || NETSTANDARD2_1_OR_GREATER
+            HashCode hashCode = default;
+            hashCode.Add(this.Name, StringComparer.Ordinal);
+            hashCode.Add(this.Version, StringComparer.Ordinal);
+            return hashCode.ToHashCode();
+#else
+            // Note: HashCode is not available on netstandard2.0 or .NET
+            // Framework, so the hash is combined manually there. Both members
+            // are null-checked because StringComparer.Ordinal.GetHashCode
+            // throws on null, whereas HashCode.Add above does not. Name is
+            // non-null for any scope built from a Logger, but this is a struct
+            // so a default instance carries a null Name.
             unchecked
             {
                 var hash = 17;
-                hash = (hash * 31) + (this.Version is null ? 0 : StringComparer.Ordinal.GetHashCode(this.Name));
+                hash = (hash * 31) + (this.Name is null ? 0 : StringComparer.Ordinal.GetHashCode(this.Name));
                 hash = (hash * 31) + (this.Version is null ? 0 : StringComparer.Ordinal.GetHashCode(this.Version));
                 return hash;
             }
+#endif
         }
     }
 
