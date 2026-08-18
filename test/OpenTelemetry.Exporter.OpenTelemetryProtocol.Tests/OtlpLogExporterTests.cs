@@ -369,6 +369,21 @@ public class OtlpLogExporterTests
         Assert.Equal("Hello from {Name} {Price}.", attribute.Value.StringValue);
     }
 
+    [Fact]
+    public void OtlpLogRecordSerializationDoesNotEnumerateAttributes()
+    {
+        var logRecord = new LogRecord
+        {
+            Attributes = new NonEnumerableReadOnlyList(
+                new KeyValuePair<string, object?>("key", "value")),
+        };
+
+        var otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecord);
+
+        Assert.NotNull(otlpLogRecord);
+        Assert.Equal("value", TryGetAttribute(otlpLogRecord, "key")?.Value.StringValue);
+    }
+
     [Theory]
     [InlineData("true")]
     [InlineData("false")]
@@ -2071,4 +2086,17 @@ public class OtlpLogExporterTests
     }
 
     private sealed class PassThroughDelegatingHandler : DelegatingHandler;
+
+    private sealed class NonEnumerableReadOnlyList(params KeyValuePair<string, object?>[] items) : IReadOnlyList<KeyValuePair<string, object?>>
+    {
+        public int Count => items.Length;
+
+        public KeyValuePair<string, object?> this[int index] => items[index];
+
+        public IEnumerator<KeyValuePair<string, object?>> GetEnumerator()
+            => throw new InvalidOperationException("Enumeration is not supported.");
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+            => throw new InvalidOperationException("Enumeration is not supported.");
+    }
 }
