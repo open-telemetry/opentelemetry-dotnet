@@ -199,9 +199,12 @@ public class B3PropagatorTests
             { B3Propagator.XB3TraceId, TraceIdBase16 }, { B3Propagator.XB3SpanId, SpanIdBase16 },
         };
 
-        Func<IDictionary<string, string>, string, IEnumerable<string>?> nullGetter = (_, _) => null;
+        Assert.Equal(default, this.b3propagator.Extract(default, headers, NullGetter));
 
-        Assert.Equal(default, this.b3propagator.Extract(default, headers, nullGetter));
+        static IEnumerable<string>? NullGetter(IDictionary<string, string> context, string carrier)
+        {
+            return null;
+        }
     }
 
     [Fact]
@@ -212,11 +215,13 @@ public class B3PropagatorTests
             { B3Propagator.XB3TraceId, TraceIdBase16 }, { B3Propagator.XB3SpanId, SpanIdBase16 },
         };
 
-        Func<IDictionary<string, string>, string, IEnumerable<string>?> readOnlyListGetter =
-            (d, k) => d.TryGetValue(k, out var v) ? new ReadOnlyListOnly<string>(v) : new ReadOnlyListOnly<string>();
-
         var spanContext = new ActivityContext(TraceId, SpanId, ActivityTraceFlags.None, isRemote: true);
-        Assert.Equal(new PropagationContext(spanContext, default), this.b3propagator.Extract(default, headers, readOnlyListGetter));
+        Assert.Equal(new PropagationContext(spanContext, default), this.b3propagator.Extract(default, headers, ReadOnlyListGetter));
+
+        static IEnumerable<string>? ReadOnlyListGetter(IDictionary<string, string> context, string carrier)
+        {
+            return context.TryGetValue(carrier, out var v) ? new ReadOnlyListOnly<string>(v) : new ReadOnlyListOnly<string>();
+        }
     }
 
     [Fact]
@@ -227,11 +232,13 @@ public class B3PropagatorTests
             { B3Propagator.XB3TraceId, TraceIdBase16 }, { B3Propagator.XB3SpanId, SpanIdBase16 },
         };
 
-        Func<IDictionary<string, string>, string, IEnumerable<string>?> plainEnumerableGetter =
-            (d, k) => d.TryGetValue(k, out var v) ? AsPlainEnumerable(v) : AsPlainEnumerable(null);
-
         var spanContext = new ActivityContext(TraceId, SpanId, ActivityTraceFlags.None, isRemote: true);
-        Assert.Equal(new PropagationContext(spanContext, default), this.b3propagator.Extract(default, headers, plainEnumerableGetter));
+        Assert.Equal(new PropagationContext(spanContext, default), this.b3propagator.Extract(default, headers, PlainEnumerableGetter));
+
+        static IEnumerable<string>? PlainEnumerableGetter(IDictionary<string, string> context, string carrier)
+        {
+            return context.TryGetValue(carrier, out var v) ? AsPlainEnumerable(v) : AsPlainEnumerable(null);
+        }
     }
 
     [Fact]
