@@ -1008,7 +1008,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
     public void Export_RequestExceedingMaxRequestSizeBytes_IsNotSubmitted()
     {
         const int BufferExceededMaxSizeEventId = 14;
-        const int RequestDiscardedEventId = 40;
+        const int RequestDiscardedEventId = 41;
         const int Cardinality = 50_000;
 
         var requestSize = MeasureRequestSize(Cardinality);
