@@ -56,6 +56,37 @@ public class BatchLogRecordExportProcessorSelfObservabilityTests
     }
 
     [Fact]
+    public void DisposedBatchProcessor_StopsReportingQueueMetrics()
+    {
+        var exportedMetrics = new List<Metric>();
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter("otel.sdk.experimental")
+            .AddInMemoryExporter(exportedMetrics)
+            .Build();
+
+        using var exporter1 = new InMemoryExporter<LogRecord>(new List<LogRecord>());
+        using var exporter2 = new InMemoryExporter<LogRecord>(new List<LogRecord>());
+        var disposedProcessor = new BatchLogRecordExportProcessor(
+            exporter1,
+            maxQueueSize: 3,
+            maxExportBatchSize: 3);
+        using var activeProcessor = new BatchLogRecordExportProcessor(
+            exporter2,
+            maxQueueSize: 7,
+            maxExportBatchSize: 7);
+
+        disposedProcessor.Dispose();
+        meterProvider.ForceFlush();
+
+        var capacityPoints = GetMetricPoints(exportedMetrics.Single(
+            m => m.Name == "otel.sdk.processor.log.queue.capacity"));
+
+        var capacityPoint = Assert.Single(capacityPoints);
+        Assert.Equal(7, capacityPoint.GetSumLong());
+        AssertTagStartsWith(capacityPoint, "otel.component.name", "batching_log_processor/");
+    }
+
+    [Fact]
     public async Task BatchProcessor_CountsSuccessWhenSubmittedToExporter()
     {
         var exportedMetrics = new List<Metric>();
