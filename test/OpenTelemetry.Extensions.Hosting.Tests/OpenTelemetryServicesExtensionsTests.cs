@@ -6,8 +6,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry.Extensions.Hosting.Implementation;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Tests;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Extensions.Hosting.Tests;
@@ -473,6 +475,68 @@ public class OpenTelemetryServicesExtensionsTests
         Assert.Equal("test", activity.DisplayName);
     }
 
+    [Fact]
+    public void AddOpenTelemetry_TelemetryHostInitializer_ResolvesConfiguredProviders()
+    {
+        var services = new ServiceCollection();
+
+        services.AddOpenTelemetry()
+            .WithTracing(builder => { })
+            .WithMetrics(builder => { })
+            .WithLogging(builder => { });
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var initializer = serviceProvider.GetRequiredService<ITelemetryHostInitializer>();
+        initializer.Initialize();
+
+        Assert.NotNull(serviceProvider.GetService<TracerProvider>());
+        Assert.NotNull(serviceProvider.GetService<MeterProvider>());
+        Assert.NotNull(serviceProvider.GetService<LoggerProvider>());
+    }
+
+    [Fact]
+    public void AddOpenTelemetry_TelemetryHostInitializer_WarnsWhenProvidersNotRegistered()
+    {
+        using var eventListener = new TestEventListener(HostingExtensionsEventSource.Log);
+
+        var services = new ServiceCollection();
+
+        services.AddOpenTelemetry();
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var initializer = serviceProvider.GetRequiredService<ITelemetryHostInitializer>();
+        initializer.Initialize();
+
+        Assert.Single(eventListener.Messages, e => e.EventId == 1);
+        Assert.Single(eventListener.Messages, e => e.EventId == 2);
+        Assert.Single(eventListener.Messages, e => e.EventId == 3);
+    }
+
+    [Fact]
+    public async Task AddOpenTelemetry_CustomTelemetryHostInitializer_InvokedByHostedServiceOnStart()
+    {
+        var customInitializer = new CustomTelemetryHostInitializer();
+
+        var builder = new HostBuilder().ConfigureServices(services =>
+        {
+            services.AddSingleton<ITelemetryHostInitializer>(customInitializer);
+            services.AddOpenTelemetry();
+        });
+
+        using var host = builder.Build();
+
+        Assert.Same(customInitializer, host.Services.GetRequiredService<ITelemetryHostInitializer>());
+        Assert.False(customInitializer.Initialized, "Custom initializer was invoked.");
+
+        await host.StartAsync();
+
+        Assert.True(customInitializer.Initialized, "Custom initializer was not invoked.");
+
+        await host.StopAsync();
+    }
+
 #pragma warning disable CA1812 // Avoid uninstantiated internal classes
     private sealed class MySampler : Sampler
 #pragma warning restore CA1812 // Avoid uninstantiated internal classes
@@ -501,5 +565,12 @@ public class OpenTelemetryServicesExtensionsTests
 
             return Task.CompletedTask;
         }
+    }
+
+    private sealed class CustomTelemetryHostInitializer : ITelemetryHostInitializer
+    {
+        public bool Initialized { get; private set; }
+
+        public void Initialize() => this.Initialized = true;
     }
 }
