@@ -46,11 +46,9 @@ public readonly struct PropagationContext : IEquatable<PropagationContext>
     public static bool operator !=(PropagationContext left, PropagationContext right) => !(left == right);
 
     /// <inheritdoc/>
-    public bool Equals(PropagationContext value)
-    {
-        return this.ActivityContext == value.ActivityContext
-            && this.Baggage == value.Baggage;
-    }
+    public bool Equals(PropagationContext value) =>
+        this.ActivityContext == value.ActivityContext &&
+        this.Baggage == value.Baggage;
 
     /// <inheritdoc/>
     public override bool Equals(object? obj) => (obj is PropagationContext context) && this.Equals(context);
@@ -58,6 +56,9 @@ public readonly struct PropagationContext : IEquatable<PropagationContext>
     /// <inheritdoc/>
     public override int GetHashCode()
     {
+#if NET || NETSTANDARD2_1_OR_GREATER
+        return HashCode.Combine(this.ActivityContext, this.Baggage);
+#else
         var hash = 323591981;
         unchecked
         {
@@ -66,5 +67,6 @@ public readonly struct PropagationContext : IEquatable<PropagationContext>
         }
 
         return hash;
+#endif
     }
 }
