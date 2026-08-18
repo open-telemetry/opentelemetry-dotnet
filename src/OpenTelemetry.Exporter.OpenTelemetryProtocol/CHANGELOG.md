@@ -49,6 +49,10 @@ Notes](../../RELEASENOTES.md).
   boxing.
   ([#7645](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7645))
 
+* Improved OTLP histogram serialization performance by avoiding a redundant
+  scan of explicit bucket bounds.
+  ([#7647](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7647))
+
 ## 1.17.0
 
 Released 2026-Jul-16
