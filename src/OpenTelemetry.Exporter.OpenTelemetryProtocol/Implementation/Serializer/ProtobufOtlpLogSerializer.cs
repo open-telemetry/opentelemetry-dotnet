@@ -410,12 +410,6 @@ internal static class ProtobufOtlpLogSerializer
             hashCode.Add(this.Version, StringComparer.Ordinal);
             return hashCode.ToHashCode();
 #else
-            // Note: HashCode is not available on netstandard2.0 or .NET
-            // Framework, so the hash is combined manually there. Both members
-            // are null-checked because StringComparer.Ordinal.GetHashCode
-            // throws on null, whereas HashCode.Add above does not. Name is
-            // non-null for any scope built from a Logger, but this is a struct
-            // so a default instance carries a null Name.
             unchecked
             {
                 var hash = 17;
