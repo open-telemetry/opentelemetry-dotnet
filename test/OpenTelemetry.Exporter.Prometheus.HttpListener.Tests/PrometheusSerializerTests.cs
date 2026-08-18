@@ -18,7 +18,6 @@ public sealed partial class PrometheusSerializerTests
 {
     internal static readonly VerifySettings VerifySettings = CreateVerifySettings();
 
-#pragma warning disable CA1825 // Workaround for https://github.com/dotnet/sdk/issues/54275
     public static TheoryData<string> EscapingSchemes =>
     [
         PrometheusProtocol.AllowUtf8Escaping,
@@ -26,7 +25,6 @@ public sealed partial class PrometheusSerializerTests
         PrometheusProtocol.UnderscoresEscaping,
         PrometheusProtocol.ValuesEscaping,
     ];
-#pragma warning restore CA1825
 
     public static TheoryData<string, bool> EscapingSchemesAndFormats
     {

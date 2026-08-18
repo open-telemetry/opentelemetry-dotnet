@@ -12,7 +12,7 @@ namespace OpenTelemetry.Metrics;
 
 internal sealed class HistogramExplicitBounds
 {
-    internal const int DefaultBoundaryCountForBinarySearch = 50;
+    internal const int DefaultBoundaryCountForBinarySearch = 32;
 
     private const int RadixLookupBitCount = 12;
     private const int RadixLinearSearchThreshold = 32;
@@ -218,13 +218,10 @@ internal sealed class HistogramExplicitBounds
     private int FindBucketIndexLinear(double value, int start, int end)
     {
 #if NET
-        if (!double.IsNaN(value))
+        var index = FindBucketIndexLinearSimd(this.Bounds.AsSpan(start, end - start), value);
+        if (index >= 0)
         {
-            var index = FindBucketIndexLinearSimd(this.Bounds.AsSpan(start, end - start), value);
-            if (index >= 0)
-            {
-                return start + index;
-            }
+            return start + index;
         }
 #endif
 
@@ -289,12 +286,6 @@ internal sealed class HistogramExplicitBounds
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public (int Start, int End) GetBucketSearchRange(double value)
         {
-            if (double.IsNaN(value))
-            {
-                var end = this.bucketSearchStarts[this.bucketSearchStarts.Length - 1];
-                return (end, end);
-            }
-
             var key = this.GetKey(ToSortableBits(value));
             return (this.bucketSearchStarts[key], this.bucketSearchStarts[key + 1]);
         }

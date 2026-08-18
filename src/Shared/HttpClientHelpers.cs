@@ -11,10 +11,13 @@ namespace System.Net.Http;
 internal static class HttpClientHelpers
 {
     // See https://github.com/open-telemetry/opentelemetry-proto/pull/781
-    private const int DefaultMessageSizeLimit = 4 * 1024 * 1024; // 4MiB
+    internal const int DefaultMessageSizeLimit = 4 * 1024 * 1024; // 4MiB
 
     internal static string? TryGetResponseBodyAsString(HttpResponseMessage? httpResponse, CancellationToken cancellationToken)
         => GetResponseBodyAsString(allowTruncation: true, DefaultMessageSizeLimit, httpResponse, cancellationToken);
+
+    internal static string? TryGetResponseBodyAsString(HttpResponseMessage? httpResponse, int limit, CancellationToken cancellationToken)
+        => GetResponseBodyAsString(allowTruncation: true, limit, httpResponse, cancellationToken);
 
     internal static string? GetResponseBodyAsString(HttpResponseMessage? httpResponse, CancellationToken cancellationToken)
         => GetResponseBodyAsString(allowTruncation: false, DefaultMessageSizeLimit, httpResponse, cancellationToken);

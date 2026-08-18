@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="Code Coverage">
+        <Configuration>
+          <CodeCoverage>
+            <ModulePaths>
+              <Exclude>
+                <ModulePath>.*[\\/]GitHubActionsTestLogger\.dll$</ModulePath>
+                <ModulePath>.*[\\/]Microsoft\.VisualStudio\.TestPlatform\.Extension\.JUnit\.Xml\.TestLogger\.dll$</ModulePath>
+                <ModulePath>.*[\\/]Spekt\.TestLogger\.dll$</ModulePath>
+              </Exclude>
+            </ModulePaths>
+          </CodeCoverage>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

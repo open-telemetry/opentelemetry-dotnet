@@ -643,6 +643,27 @@ public class TraceContextPropagatorTests
     }
 
     [Fact]
+    public void Inject_TruncatesOversizedTracestateWithoutLargeEntries()
+    {
+        var traceId = ActivityTraceId.CreateRandom();
+        var spanId = ActivitySpanId.CreateRandom();
+
+        var allEntries = Enumerable.Range(0, 30).Select(i => $"k{i:00}={new string('a', 15)}").ToList();
+        var oversizedTraceState = string.Join(",", allEntries);
+        var expectedTraceState = string.Join(",", allEntries.Take(25));
+
+        var activityContext = new ActivityContext(traceId, spanId, ActivityTraceFlags.Recorded, oversizedTraceState);
+        var propagationContext = new PropagationContext(activityContext, default);
+        var carrier = new Dictionary<string, string>();
+        var propagator = new TraceContextPropagator();
+        propagator.Inject(propagationContext, carrier, Setter);
+
+        Assert.Equal($"00-{traceId}-{spanId}-01", carrier[TraceParent]);
+        Assert.Equal(expectedTraceState, carrier[TraceState]);
+        Assert.True(carrier[TraceState].Length <= 512);
+    }
+
+    [Fact]
     public void DuplicateKeys()
     {
         // test_tracestate_duplicated_keys

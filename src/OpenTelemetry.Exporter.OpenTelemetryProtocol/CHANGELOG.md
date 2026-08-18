@@ -29,6 +29,26 @@ Notes](../../RELEASENOTES.md).
 * Fixed the OTLP exporter from retrying certain non-transient HTTP failures.
   ([#7600](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7600))
 
+* Added support for serializing attribute values that are key/value lists
+  (`IEnumerable<KeyValuePair<string, object?>>`) as nested OTLP `kvlist` values.
+  Nesting is limited to a maximum recursion depth of 3; deeper values fall back
+  to their string representation.
+  ([#7015](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7015))
+
+* A server-supplied throttle delay (OTLP/gRPC `RetryInfo.retry_delay` or
+  OTLP/HTTP `Retry-After`) is now clamped to a minimum of 100 milliseconds.
+  ([#7583](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7583))
+
+* Added `OtlpExporterOptions.MaxResponseSizeBytes` to configure the maximum size
+  of a response the exporter will accept, as required by the OpenTelemetry
+  specification. The default is the recommended 4 MiB. A response exceeding the
+  limit is discarded and treated as a non-retryable failure.
+  ([#7583](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7583))
+
+* Improved OTLP log attribute serialization performance by avoiding unnecessary
+  boxing.
+  ([#7645](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7645))
+
 ## 1.17.0
 
 Released 2026-Jul-16

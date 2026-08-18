@@ -30,6 +30,16 @@ internal sealed class OtlpHttpExportClient : OtlpExportClient
             using var httpRequest = this.CreateHttpRequest(buffer, contentLength);
             using var httpResponse = this.SendHttpRequest(httpRequest, cancellationToken);
 
+            if (this.IsResponseTooLarge(httpResponse, out var responseTooLarge))
+            {
+                // Requests with responses that are too large must not be retried
+                return new ExportClientHttpResponse(
+                    success: false,
+                    deadlineUtc: deadlineUtc,
+                    response: null,
+                    exception: responseTooLarge);
+            }
+
             try
             {
                 httpResponse.EnsureSuccessStatusCode();
@@ -38,7 +48,7 @@ internal sealed class OtlpHttpExportClient : OtlpExportClient
             {
                 if (OpenTelemetryProtocolExporterEventSource.Log.IsEnabled(EventLevel.Error, EventKeywords.All))
                 {
-                    var response = TryGetResponseBody(httpResponse, cancellationToken);
+                    var response = TryGetResponseBody(httpResponse, this.MaxResponseSizeBytes, cancellationToken);
                     OpenTelemetryProtocolExporterEventSource.Log.HttpRequestFailed(this.Endpoint, response, ex);
                 }
 
