@@ -412,34 +412,4 @@ public static class ProtobufOtlpMetricSerializerTests
 
         return new WeakReference<Metric>(capturedMetric);
     }
-
-    private static Batch<Metric> GenerateHighCardinalityMetrics(int cardinality)
-    {
-        var exported = new List<Metric>();
-        var meterName = Utils.GetCurrentMethodName() + Guid.NewGuid().ToString("N");
-
-        int count;
-
-        using (var meter = new Meter(meterName))
-        using (var meterProvider = Sdk.CreateMeterProviderBuilder()
-                                      .AddMeter(meterName)
-                                      .AddView("*", new MetricStreamConfiguration { CardinalityLimit = cardinality + 10 })
-                                      .AddInMemoryExporter(exported)
-                                      .Build())
-        {
-            var counter = meter.CreateCounter<long>("test.counter");
-            for (var i = 0; i < cardinality; i++)
-            {
-                counter.Add(1, new KeyValuePair<string, object?>("tag", $"value-{i}"));
-            }
-
-            Assert.True(meterProvider.ForceFlush());
-
-            count = exported.Count;
-        }
-
-        Assert.Equal(1, count);
-
-        return new Batch<Metric>([.. exported], count);
-    }
 }

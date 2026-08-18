@@ -94,7 +94,7 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
                     this.experimentalOptions,
                     this.Resource,
                     logRecordBatch,
-                    this.maxRequestSizeBytes);
+                    this.maxRequestSizeBytes + this.startWritePosition);
                 serializationSucceeded = true;
             }
             catch (Exception ex)

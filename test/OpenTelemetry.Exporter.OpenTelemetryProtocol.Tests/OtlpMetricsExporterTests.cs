@@ -1042,25 +1042,35 @@ public sealed class OtlpMetricsExporterTests : IDisposable
             e => e.EventId == RequestDiscardedEventId || e.EventId == BufferExceededMaxSizeEventId);
     }
 
-    [Fact]
-    public void Export_RequestExactlyAtMaxRequestSizeBytes_IsSubmitted()
+    [Theory]
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
+    [InlineData(OtlpExportProtocol.Grpc)]
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
+    [InlineData(OtlpExportProtocol.HttpProtobuf)]
+    public void Export_RequestExactlyAtMaxRequestSizeBytes_IsSubmitted(OtlpExportProtocol protocol)
     {
         const int Cardinality = 50_000;
+        const int GrpcHeaderSize = 5;
 
-        var requestSize = MeasureRequestSize(Cardinality);
+        var requestSize = MeasureRequestSize(Cardinality, protocol);
 
         var exportClient = new TestExportClient();
         var exporterOptions = new OtlpExporterOptions
         {
             MaxRequestSizeBytes = requestSize,
-            Protocol = OtlpExportProtocol.HttpProtobuf,
+            Protocol = protocol,
         };
 
         using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClient, exporterOptions.TimeoutMilliseconds);
         using var exporter = new OtlpMetricExporter(exporterOptions, new ExperimentalOptions(), transmissionHandler);
 
         Assert.Equal(ExportResult.Success, exporter.Export(GenerateHighCardinalityMetricBatch(Cardinality)));
-        Assert.Equal(requestSize, exportClient.LastContentLength);
+
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
+        var expectedContentLength = protocol == OtlpExportProtocol.Grpc ? requestSize + GrpcHeaderSize : requestSize;
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
+
+        Assert.Equal(expectedContentLength, exportClient.LastContentLength);
     }
 
     [Theory]
@@ -1290,9 +1300,15 @@ public sealed class OtlpMetricsExporterTests : IDisposable
     }
 
     private static int MeasureRequestSize(int cardinality)
+        => MeasureRequestSize(cardinality, OtlpExportProtocol.HttpProtobuf);
+
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
+    private static int MeasureRequestSize(int cardinality, OtlpExportProtocol protocol)
     {
+        const int GrpcHeaderSize = 5;
+
         var client = new TestExportClient();
-        var options = new OtlpExporterOptions { Protocol = OtlpExportProtocol.HttpProtobuf };
+        var options = new OtlpExporterOptions { Protocol = protocol };
 
         using (var handler = new OtlpExporterTransmissionHandler(client, options.TimeoutMilliseconds))
         using (var exporter = new OtlpMetricExporter(options, new ExperimentalOptions(), handler))
@@ -1302,8 +1318,11 @@ public sealed class OtlpMetricsExporterTests : IDisposable
 
         Assert.True(client.LastContentLength > 0, "The batch produced an empty payload.");
 
-        return client.LastContentLength;
+        return protocol == OtlpExportProtocol.Grpc
+            ? client.LastContentLength - GrpcHeaderSize
+            : client.LastContentLength;
     }
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
 
     private static Batch<Metric> GenerateHighCardinalityMetricBatch(int cardinality)
     {

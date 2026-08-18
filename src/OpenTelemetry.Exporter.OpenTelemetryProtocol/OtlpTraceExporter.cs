@@ -91,7 +91,7 @@ public class OtlpTraceExporter : BaseExporter<Activity>
                     this.sdkLimitOptions,
                     this.Resource,
                     activityBatch,
-                    this.maxRequestSizeBytes);
+                    this.maxRequestSizeBytes + this.startWritePosition);
                 serializationSucceeded = true;
             }
             catch (Exception ex)

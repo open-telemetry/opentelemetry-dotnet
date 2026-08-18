@@ -86,7 +86,7 @@ public class OtlpMetricExporter : BaseExporter<Metric>
                     this.startWritePosition,
                     this.Resource,
                     metrics,
-                    this.maxRequestSizeBytes);
+                    this.maxRequestSizeBytes + this.startWritePosition);
                 serializationSucceeded = true;
             }
             catch (Exception ex)

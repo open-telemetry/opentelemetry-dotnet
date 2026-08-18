@@ -56,7 +56,7 @@ Notes](../../RELEASENOTES.md).
   ([#7584](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7584))
 
 * **Breaking:** The maximum size of a single export request is now 64 MiB by
-  default instead of 100MiB to conform with the OpenTelemetry specification.
+  default instead of 128 MiB to conform with the OpenTelemetry specification.
   Raise the value of `OtlpExporterOptions.MaxRequestSizeBytes` property to
   increase the capacity.
   ([#7584](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7584))
