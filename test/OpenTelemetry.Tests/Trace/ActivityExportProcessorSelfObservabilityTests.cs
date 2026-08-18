@@ -18,6 +18,46 @@ public class ActivityExportProcessorSelfObservabilityTests
     private const string MetricName = "otel.sdk.processor.span.processed";
 
     [Fact]
+    public void BatchProcessor_ReportsQueueSizeAndCapacity()
+    {
+        var exportedMetrics = new List<Metric>();
+        using var meterProvider = CreateMeterProvider(exportedMetrics);
+
+        using var exporter = new InMemoryExporter<Activity>(new List<Activity>());
+        using var processor = new BatchActivityExportProcessor(
+            exporter,
+            maxQueueSize: 5,
+            scheduledDelayMilliseconds: int.MaxValue,
+            maxExportBatchSize: 5);
+
+        var sourceName = Utils.GetCurrentMethodName();
+        using var source = new ActivitySource(sourceName);
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(sourceName)
+            .SetSampler(new AlwaysOnSampler())
+            .AddProcessor(processor)
+            .Build();
+
+        StartAndStopActivities(source, 2);
+        meterProvider.ForceFlush();
+
+        var sizePoint = GetMetricPoints(exportedMetrics, "otel.sdk.processor.span.queue.size").Single();
+        var capacityPoint = GetMetricPoints(exportedMetrics, "otel.sdk.processor.span.queue.capacity").Single();
+
+        Assert.Equal(2, sizePoint.GetSumLong());
+        Assert.Equal(5, capacityPoint.GetSumLong());
+        AssertTag(sizePoint, "otel.component.type", "batching_span_processor");
+        AssertTagStartsWith(sizePoint, "otel.component.name", "batching_span_processor/");
+
+        Assert.True(processor.ForceFlush());
+        exportedMetrics.Clear();
+        meterProvider.ForceFlush();
+
+        sizePoint = GetMetricPoints(exportedMetrics, "otel.sdk.processor.span.queue.size").Single();
+        Assert.Equal(0, sizePoint.GetSumLong());
+    }
+
+    [Fact]
     public async Task BatchProcessor_CountsSuccessWhenSubmittedToExporter()
     {
         var exportedMetrics = new List<Metric>();
@@ -515,8 +555,11 @@ public class ActivityExportProcessorSelfObservabilityTests
     }
 
     private static List<MetricPoint> GetMetricPoints(List<Metric> exportedMetrics)
+        => GetMetricPoints(exportedMetrics, MetricName);
+
+    private static List<MetricPoint> GetMetricPoints(List<Metric> exportedMetrics, string metricName)
     {
-        var metric = exportedMetrics.Single(m => m.Name == MetricName);
+        var metric = exportedMetrics.Single(m => m.Name == metricName);
 
         var points = new List<MetricPoint>();
         foreach (ref readonly var mp in metric.GetMetricPoints())

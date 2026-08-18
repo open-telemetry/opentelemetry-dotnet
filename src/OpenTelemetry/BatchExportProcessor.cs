@@ -25,6 +25,7 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
 
     private readonly CircularBuffer<T> circularBuffer;
     private readonly BatchExportWorker<T> worker;
+    private IDisposable? queueMetricRegistration;
 
     // Number of OnEnd calls currently in-flight (past the shutdown check).
     // OnShutdown waits for this to reach zero so those items finish enqueueing
@@ -84,6 +85,17 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
     /// Gets a value indicating whether <see cref="OnShutdown(int)"/> has been invoked.
     /// </summary>
     private bool IsShutdown => Volatile.Read(ref this.isShutdown) != 0;
+
+    internal void RegisterQueueMetrics(
+        bool isLogProcessor,
+        KeyValuePair<string, object?>[] tags)
+    {
+        this.queueMetricRegistration = SdkSelfObservability.RegisterProcessorQueue(
+            isLogProcessor,
+            () => this.circularBuffer.Count,
+            this.circularBuffer.Capacity,
+            tags);
+    }
 
     /// <summary>
     /// Marks the beginning of an <see cref="BaseProcessor{T}.OnEnd(T)"/> call which may enqueue data.
@@ -197,6 +209,7 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
         {
             if (disposing)
             {
+                this.queueMetricRegistration?.Dispose();
                 this.worker?.Dispose();
             }
 

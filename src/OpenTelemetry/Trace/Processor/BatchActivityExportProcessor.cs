@@ -49,6 +49,7 @@ public class BatchActivityExportProcessor : BatchExportProcessor<Activity>
         this.queueFullTags = [.. baseTags, new("error.type", "queue_full")];
         this.alreadyShutdownTags = [.. baseTags, new("error.type", "already_shutdown")];
         this.ExportStarted = this.RecordSuccessfulProcessing;
+        this.RegisterQueueMetrics(isLogProcessor: false, baseTags);
     }
 
     /// <inheritdoc />

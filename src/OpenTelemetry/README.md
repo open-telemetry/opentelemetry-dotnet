@@ -76,7 +76,11 @@ Conventions](https://opentelemetry.io/docs/specs/semconv/otel/sdk-metrics/).
 
 | Metric Name | Instrument | Unit | Description |
 | --- | --- | --- | --- |
+| `otel.sdk.processor.log.queue.size` | ObservableUpDownCounter | `{log_record}` | Current number of log records queued by a batching processor. |
+| `otel.sdk.processor.log.queue.capacity` | ObservableUpDownCounter | `{log_record}` | Maximum number of log records that can be queued by a batching processor. |
 | `otel.sdk.processor.log.processed` | Counter | `{log_record}` | Number of log records processed by the SDK, tagged with outcome. |
+| `otel.sdk.processor.span.queue.size` | ObservableUpDownCounter | `{span}` | Current number of spans queued by a batching processor. |
+| `otel.sdk.processor.span.queue.capacity` | ObservableUpDownCounter | `{span}` | Maximum number of spans that can be queued by a batching processor. |
 | `otel.sdk.processor.span.processed` | Counter | `{span}` | Number of spans processed by the SDK, tagged with outcome. |
 
 ### Attributes

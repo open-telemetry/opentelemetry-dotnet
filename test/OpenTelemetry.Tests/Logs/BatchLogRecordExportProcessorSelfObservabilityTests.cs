@@ -12,6 +12,50 @@ namespace OpenTelemetry.Tests.Logs;
 public class BatchLogRecordExportProcessorSelfObservabilityTests
 {
     [Fact]
+    public void BatchProcessor_ReportsQueueSizeAndCapacity()
+    {
+        var exportedMetrics = new List<Metric>();
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter("otel.sdk.experimental")
+            .AddInMemoryExporter(exportedMetrics)
+            .Build();
+
+        using var exporter = new InMemoryExporter<LogRecord>(new List<LogRecord>());
+        using var processor = new BatchLogRecordExportProcessor(
+            exporter,
+            maxQueueSize: 5,
+            scheduledDelayMilliseconds: int.MaxValue,
+            maxExportBatchSize: 5);
+        using var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+            .AddProcessor(processor)
+            .Build();
+
+        var logger = loggerProvider.GetLogger("test");
+        logger.EmitLog(new LogRecordData());
+        logger.EmitLog(new LogRecordData());
+
+        meterProvider.ForceFlush();
+
+        var sizePoint = GetMetricPoints(exportedMetrics.Single(
+            m => m.Name == "otel.sdk.processor.log.queue.size")).Single();
+        var capacityPoint = GetMetricPoints(exportedMetrics.Single(
+            m => m.Name == "otel.sdk.processor.log.queue.capacity")).Single();
+
+        Assert.Equal(2, sizePoint.GetSumLong());
+        Assert.Equal(5, capacityPoint.GetSumLong());
+        AssertTag(sizePoint, "otel.component.type", "batching_log_processor");
+        AssertTagStartsWith(sizePoint, "otel.component.name", "batching_log_processor/");
+
+        Assert.True(processor.ForceFlush());
+        exportedMetrics.Clear();
+        meterProvider.ForceFlush();
+
+        sizePoint = GetMetricPoints(exportedMetrics.Single(
+            m => m.Name == "otel.sdk.processor.log.queue.size")).Single();
+        Assert.Equal(0, sizePoint.GetSumLong());
+    }
+
+    [Fact]
     public async Task BatchProcessor_CountsSuccessWhenSubmittedToExporter()
     {
         var exportedMetrics = new List<Metric>();
