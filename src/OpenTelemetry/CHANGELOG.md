@@ -21,6 +21,10 @@ Notes](../../RELEASENOTES.md).
 * Added the `otel.sdk.processor.span.processed` SDK self-observability metric.
   ([#7598](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7598))
 
+* Added SDK self-observability metrics for the current size and configured
+  capacity of the batching span and log processor queues.
+  ([#7642](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7642))
+
 * `BatchActivityExportProcessor` and `SimpleActivityExportProcessor` no longer
   forward spans to the exporter once `Shutdown` has been called, and
   `BatchActivityExportProcessor.Shutdown` now waits for in-flight `OnEnd` calls
@@ -30,10 +34,6 @@ Notes](../../RELEASENOTES.md).
 * Fix logger, meter and tracer providers leaking background threads if an
   exception is thrown by their constructor after resource creation.
   ([#7615](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7615))
-
-* Added SDK self-observability metrics for the current size and configured
-  capacity of the batching span and log processor queues.
-  ([#7642](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7642))
 
 ## 1.17.0
 
