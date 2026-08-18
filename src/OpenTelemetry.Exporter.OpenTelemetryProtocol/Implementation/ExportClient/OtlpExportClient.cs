@@ -63,6 +63,8 @@ internal abstract class OtlpExportClient : IExportClient
 
     internal abstract MediaTypeHeaderValue MediaTypeHeader { get; }
 
+    internal virtual long HeaderBytesSize => 0;
+
     internal virtual bool RequireHttp2 => false;
 
     internal virtual HttpCompletionOption CompletionOption => HttpCompletionOption.ResponseHeadersRead;
@@ -81,7 +83,8 @@ internal abstract class OtlpExportClient : IExportClient
 
     /// <summary>
     /// Determines whether a response declares more content than <see
-    /// cref="MaxResponseSizeBytes"/> allows, recording that it is being discarded.
+    /// cref="MaxResponseSizeBytes"/> (plus any <see cref="HeaderBytesSize"/>)
+    /// allows, recording that it is being discarded.
     /// </summary>
     /// <param name="httpResponse">The response to check.</param>
     /// <param name="exception">The failure to report when the response is too large.</param>
@@ -94,8 +97,9 @@ internal abstract class OtlpExportClient : IExportClient
         out ResponseSizeLimitExceededException? exception)
     {
         var contentLength = httpResponse.Content?.Headers.ContentLength;
+        var maxContentLength = this.MaxResponseSizeBytes + this.HeaderBytesSize;
 
-        if (contentLength > this.MaxResponseSizeBytes)
+        if (contentLength > maxContentLength)
         {
             OpenTelemetryProtocolExporterEventSource.Log.ResponseDiscardedDueToSizeLimit(this.Endpoint, contentLength, this.MaxResponseSizeBytes);
             exception = new ResponseSizeLimitExceededException(contentLength, this.MaxResponseSizeBytes);

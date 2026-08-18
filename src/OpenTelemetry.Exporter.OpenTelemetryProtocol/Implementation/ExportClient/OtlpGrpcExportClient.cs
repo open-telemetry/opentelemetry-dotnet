@@ -37,6 +37,8 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
 
     internal override MediaTypeHeaderValue MediaTypeHeader => MediaHeaderValue;
 
+    internal override long HeaderBytesSize => GrpcMessageHeaderSize;
+
     internal override bool RequireHttp2 => true;
 
     // We need the entire response content to ensure that the response trailers are received

@@ -27,7 +27,7 @@ public class OtlpGrpcExportClientTests
 
         using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Error);
 
-        using var testHandler = new OversizedResponseHttpMessageHandler(MaxResponseSizeBytes + 1, "application/grpc");
+        using var testHandler = new OversizedResponseHttpMessageHandler(MaxResponseSizeBytes + GrpcHeaderSize + 1, "application/grpc");
         using var httpClient = new HttpClient(testHandler, disposeHandler: false);
 
         var exportClient = new OtlpGrpcExportClient(
@@ -49,6 +49,29 @@ public class OtlpGrpcExportClientTests
         Assert.False(OtlpRetry.IsRetryable(Assert.IsType<ExportClientGrpcResponse>(response)));
 
         Assert.Single(listener.Messages, e => e.EventId == ResponseDiscardedEventId);
+    }
+
+    [Fact]
+    public void SendExportRequest_ResponseAtMaxResponseSizeBytesBoundary_IsNotDiscardedForSize()
+    {
+        const int MaxResponseSizeBytes = 4096;
+
+        using var testHandler = new OversizedResponseHttpMessageHandler(MaxResponseSizeBytes + GrpcHeaderSize, "application/grpc");
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false);
+
+        var exportClient = new OtlpGrpcExportClient(
+            new OtlpExporterOptions
+            {
+                Endpoint = new Uri("http://localhost:4317"),
+                MaxResponseSizeBytes = MaxResponseSizeBytes,
+            },
+            httpClient,
+            string.Empty);
+
+        var payload = "payload"u8.ToArray();
+        var response = exportClient.SendExportRequest(BuildGrpcFrame(payload), GrpcHeaderSize + payload.Length, DateTime.MaxValue);
+
+        Assert.IsNotType<ResponseSizeLimitExceededException>(response.Exception);
     }
 
     [Fact]

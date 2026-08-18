@@ -172,7 +172,8 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     /// <remarks>
     /// Notes:
     /// <list type="bullet">
-    /// <item>The size is measured after any decompression is applied.</item>
+    /// <item>The the limit is applied to the raw number bytes received,
+    /// regardless of any compression that might be configured.</item>
     /// <item>A response exceeding this size is discarded and treated as a
     /// non-retryable failure, bounding the memory a misconfigured or malicious
     /// server can cause the exporter to use.</item>
