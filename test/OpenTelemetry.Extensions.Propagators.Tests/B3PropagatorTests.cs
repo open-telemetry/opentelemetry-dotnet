@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Collections;
 using System.Diagnostics;
 using OpenTelemetry.Context.Propagation;
 
@@ -188,6 +189,49 @@ public class B3PropagatorTests
     {
         var invalidHeaders = new Dictionary<string, string> { { B3Propagator.XB3TraceId, TraceIdBase16 } };
         Assert.Equal(default, this.b3propagator.Extract(default, invalidHeaders, Getter));
+    }
+
+    [Fact]
+    public void ParseNullHeaderValuesReturnsDefault()
+    {
+        var headers = new Dictionary<string, string>
+        {
+            { B3Propagator.XB3TraceId, TraceIdBase16 }, { B3Propagator.XB3SpanId, SpanIdBase16 },
+        };
+
+        Func<IDictionary<string, string>, string, IEnumerable<string>?> nullGetter = (_, _) => null;
+
+        Assert.Equal(default, this.b3propagator.Extract(default, headers, nullGetter));
+    }
+
+    [Fact]
+    public void ParseHeaderValuesFromReadOnlyListReturnsContext()
+    {
+        var headers = new Dictionary<string, string>
+        {
+            { B3Propagator.XB3TraceId, TraceIdBase16 }, { B3Propagator.XB3SpanId, SpanIdBase16 },
+        };
+
+        Func<IDictionary<string, string>, string, IEnumerable<string>?> readOnlyListGetter =
+            (d, k) => d.TryGetValue(k, out var v) ? new ReadOnlyListOnly<string>(v) : new ReadOnlyListOnly<string>();
+
+        var spanContext = new ActivityContext(TraceId, SpanId, ActivityTraceFlags.None, isRemote: true);
+        Assert.Equal(new PropagationContext(spanContext, default), this.b3propagator.Extract(default, headers, readOnlyListGetter));
+    }
+
+    [Fact]
+    public void ParseHeaderValuesFromPlainEnumerableReturnsContext()
+    {
+        var headers = new Dictionary<string, string>
+        {
+            { B3Propagator.XB3TraceId, TraceIdBase16 }, { B3Propagator.XB3SpanId, SpanIdBase16 },
+        };
+
+        Func<IDictionary<string, string>, string, IEnumerable<string>?> plainEnumerableGetter =
+            (d, k) => d.TryGetValue(k, out var v) ? AsPlainEnumerable(v) : AsPlainEnumerable(null);
+
+        var spanContext = new ActivityContext(TraceId, SpanId, ActivityTraceFlags.None, isRemote: true);
+        Assert.Equal(new PropagationContext(spanContext, default), this.b3propagator.Extract(default, headers, plainEnumerableGetter));
     }
 
     [Fact]
@@ -416,6 +460,14 @@ public class B3PropagatorTests
         Assert.Equal(default, result);
     }
 
+    private static IEnumerable<string> AsPlainEnumerable(string? value)
+    {
+        if (value != null)
+        {
+            yield return value;
+        }
+    }
+
     private static void ContainsExactly(ISet<string> list, List<string> items)
     {
         Assert.Equal(items.Count, list.Count);
@@ -437,5 +489,16 @@ public class B3PropagatorTests
         {
             Assert.Contains(item, dict);
         }
+    }
+
+    private sealed class ReadOnlyListOnly<T>(params T[] items) : IReadOnlyList<T>
+    {
+        public int Count => items.Length;
+
+        public T this[int index] => items[index];
+
+        public IEnumerator<T> GetEnumerator() => ((IEnumerable<T>)items).GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
     }
 }

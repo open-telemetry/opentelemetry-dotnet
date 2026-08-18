@@ -1,6 +1,10 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if NET
+using System.Buffers;
+using System.Collections.Immutable;
+#endif
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -20,6 +24,14 @@ public class TraceContextPropagator : TextMapPropagator
     private const int TraceStateKeyMaxLength = 256;
     private const int TraceStateValueMaxLength = 256;
 
+    private const int TraceStateMaxCombinedLength = 512;
+    private const int TraceStateLargeEntryLength = 128;
+
+#if NET
+    private const int TraceIdSizeInBytes = 16;
+    private const int SpanIdSizeInBytes = 8;
+#endif
+
     private static readonly int VersionPrefixIdLength = "00-".Length;
     private static readonly int TraceIdLength = "0af7651916cd43dd8448eb211c80319c".Length;
     private static readonly int VersionAndTraceIdLength = "00-0af7651916cd43dd8448eb211c80319c-".Length;
@@ -28,8 +40,21 @@ public class TraceContextPropagator : TextMapPropagator
     private static readonly int OptionsLength = "00".Length;
     private static readonly int TraceparentLengthV0 = "00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-00".Length;
 
+#if NET
+    private static readonly SearchValues<char> TraceStateKeyFirstChars = SearchValues.Create("0123456789abcdefghijklmnopqrstuvwxyz");
+    private static readonly SearchValues<char> TraceStateKeyChars = SearchValues.Create("0123456789abcdefghijklmnopqrstuvwxyz_-*/@");
+    private static readonly SearchValues<char> TraceStateValueChars = CreateTraceStateValueChars(0x20);
+    private static readonly SearchValues<char> TraceStateValueLastChars = CreateTraceStateValueChars(0x21);
+    private static readonly ImmutableHashSet<string> AllFields = [TraceState, TraceParent];
+#else
+    private static readonly HashSet<string> AllFields = [TraceState, TraceParent];
+#endif
+
     /// <inheritdoc/>
-    public override ISet<string> Fields => new HashSet<string> { TraceState, TraceParent };
+    /// <remarks>
+    /// Callers should not modify the returned set.
+    /// </remarks>
+    public override ISet<string> Fields => AllFields;
 
     /// <inheritdoc/>
     public override PropagationContext Extract<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>?> getter)
@@ -118,16 +143,18 @@ public class TraceContextPropagator : TextMapPropagator
         setter(carrier, TraceParent, traceparent);
 
         var tracestateStr = context.ActivityContext.TraceState;
-        if (tracestateStr?.Length > 0)
+        if (tracestateStr?.Length > 0 &&
+            TryExtractSingleTracestate(tracestateStr, out var normalizedTraceState) &&
+            normalizedTraceState.Length > 0)
         {
-            var tracestateEntries = new List<KeyValuePair<string, string>>();
-            if (TraceStateUtils.AppendTraceState(tracestateStr, tracestateEntries))
+            if (normalizedTraceState.Length > TraceStateMaxCombinedLength)
             {
-                var normalizedTraceState = TraceStateUtils.GetString(tracestateEntries);
-                if (normalizedTraceState.Length > 0)
-                {
-                    setter(carrier, TraceState, normalizedTraceState);
-                }
+                normalizedTraceState = TruncateOversizedTracestate(normalizedTraceState);
+            }
+
+            if (normalizedTraceState.Length > 0)
+            {
+                setter(carrier, TraceState, normalizedTraceState);
             }
         }
 
@@ -225,9 +252,12 @@ public class TraceContextPropagator : TextMapPropagator
             return false;
         }
 
-        // or version is not a hex (will throw)
-        var version0 = HexCharToByte(traceparent[0]);
-        var version1 = HexCharToByte(traceparent[1]);
+        // or version is not hex
+        if (!TryHexCharToByte(traceparent[0], out var version0) ||
+            !TryHexCharToByte(traceparent[1], out var version1))
+        {
+            return false;
+        }
 
         if (version0 == 0xf && version1 == 0xf)
         {
@@ -246,6 +276,18 @@ public class TraceContextPropagator : TextMapPropagator
             return false;
         }
 
+#if NET
+        // Fast path for .NET that can benefit from SearchValues to avoid exceptions on invalid input
+        Span<byte> idBytes = stackalloc byte[TraceIdSizeInBytes];
+
+        if (!TryParseLowerCaseHex(traceparent.AsSpan(VersionPrefixIdLength, TraceIdLength), idBytes))
+        {
+            // it's ok to still parse tracestate
+            return false;
+        }
+
+        traceId = ActivityTraceId.CreateFromBytes(idBytes);
+#else
         try
         {
             traceId = ActivityTraceId.CreateFromString(traceparent.AsSpan(VersionPrefixIdLength, TraceIdLength));
@@ -255,20 +297,39 @@ public class TraceContextPropagator : TextMapPropagator
             // it's ok to still parse tracestate
             return false;
         }
+#endif
 
         if (traceparent[VersionAndTraceIdAndSpanIdLength - 1] != '-')
         {
             return false;
         }
 
-        byte optionsLowByte;
+#if NET
+        // Fast path for .NET that can benefit from SearchValues to avoid exceptions on invalid input
+        var spanIdBytes = idBytes.Slice(0, SpanIdSizeInBytes);
+
+        if (!TryParseLowerCaseHex(traceparent.AsSpan(VersionAndTraceIdLength, SpanIdLength), spanIdBytes))
+        {
+            // it's ok to still parse tracestate
+            return false;
+        }
+
+        spanId = ActivitySpanId.CreateFromBytes(spanIdBytes);
+#else
         try
         {
             spanId = ActivitySpanId.CreateFromString(traceparent.AsSpan(VersionAndTraceIdLength, SpanIdLength));
-            _ = HexCharToByte(traceparent[VersionAndTraceIdAndSpanIdLength]); // to verify if there is no bad chars on options position
-            optionsLowByte = HexCharToByte(traceparent[VersionAndTraceIdAndSpanIdLength + 1]);
         }
         catch (ArgumentOutOfRangeException)
+        {
+            // it's ok to still parse tracestate
+            return false;
+        }
+#endif
+
+        // The high nibble of the options is validated but not used
+        if (!TryHexCharToByte(traceparent[VersionAndTraceIdAndSpanIdLength], out _) ||
+            !TryHexCharToByte(traceparent[VersionAndTraceIdAndSpanIdLength + 1], out var optionsLowByte))
         {
             // it's ok to still parse tracestate
             return false;
@@ -629,12 +690,132 @@ public class TraceContextPropagator : TextMapPropagator
         return true;
     }
 
-    private static byte HexCharToByte(char c)
-        => char.IsAsciiDigit(c)
-           ? (byte)(c - '0')
-           : c is >= 'a' and <= 'f'
-           ? (byte)(c - 'a' + 10)
-           : throw new ArgumentOutOfRangeException(nameof(c), c, "Must be within: [0-9] or [a-f]");
+    private static string TruncateOversizedTracestate(string tracestate)
+    {
+        // Rare, cold path: only reached when a validated/deduplicated tracestate still exceeds
+        // the combined length limit. Drop large (>128 char) members first, scanning from the end,
+        // then drop remaining members from the end until under the limit.
+        string?[] members = tracestate.Split(',');
+        var combinedLength = tracestate.Length;
+
+        for (var i = members.Length - 1; i >= 0 && combinedLength > TraceStateMaxCombinedLength; i--)
+        {
+            if (members[i] is { Length: > TraceStateLargeEntryLength } member)
+            {
+                combinedLength -= member.Length + 1;
+                members[i] = null;
+            }
+        }
+
+        for (var i = members.Length - 1; i >= 0 && combinedLength > TraceStateMaxCombinedLength; i--)
+        {
+            if (members[i] is { } member)
+            {
+                combinedLength -= member.Length + 1;
+                members[i] = null;
+            }
+        }
+
+        var result = new StringBuilder(TraceStateMaxCombinedLength);
+
+        foreach (var member in members)
+        {
+            if (member == null)
+            {
+                continue;
+            }
+
+            if (result.Length > 0)
+            {
+                result.Append(',');
+            }
+
+            result.Append(member);
+        }
+
+        return result.ToString();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool TryHexCharToByte(char c, out byte value)
+    {
+        if (char.IsAsciiDigit(c))
+        {
+            value = (byte)(c - '0');
+            return true;
+        }
+
+        if (c is >= 'a' and <= 'f')
+        {
+            value = (byte)(c - 'a' + 10);
+            return true;
+        }
+
+        value = 0;
+        return false;
+    }
+
+#if NET
+    /// <summary>
+    /// Parses lower-case hexadecimal characters into bytes, rejecting any other character
+    /// and rejecting an all-zero result. These are the same constraints
+    /// <see cref="ActivityTraceId.CreateFromString"/> and
+    /// <see cref="ActivitySpanId.CreateFromString"/> enforce by throwing.
+    /// </summary>
+    /// <param name="source">The characters to parse. Must be twice the length of <paramref name="destination"/>.</param>
+    /// <param name="destination">Receives the parsed bytes.</param>
+    /// <returns><see langword="true"/> if the characters form a valid, non-zero id; otherwise, <see langword="false"/>.</returns>
+    private static bool TryParseLowerCaseHex(ReadOnlySpan<char> source, Span<byte> destination)
+    {
+        Debug.Assert(source.Length == destination.Length * 2, "source was not twice the length of destination");
+
+        var allZero = true;
+
+        for (var i = 0; i < destination.Length; i++)
+        {
+            var high = HexCharToNibble(source[i * 2]);
+            var low = HexCharToNibble(source[(i * 2) + 1]);
+
+            // A non-hex character yields -1, so the sign bit of either nibble marks failure.
+            if ((high | low) < 0)
+            {
+                return false;
+            }
+
+            var value = (byte)((high << 4) | low);
+
+            destination[i] = value;
+            allZero &= value == 0;
+        }
+
+        return !allZero;
+    }
+
+    /// <summary>
+    /// Converts a lower-case hexadecimal character to its value, or -1 when the character
+    /// is not lower-case hexadecimal.
+    /// </summary>
+    /// <param name="c">The character to convert.</param>
+    /// <returns>The value of the character, or -1.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int HexCharToNibble(char c)
+    {
+        var digit = (uint)(c - '0');
+
+        if (digit <= 9)
+        {
+            return (int)digit;
+        }
+
+        var letter = (uint)(c - 'a');
+
+        return letter <= 5 ? (int)letter + 10 : -1;
+    }
+#else
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool IsAsciiLetterOrDigitLower(char c)
+        => char.IsAsciiDigit(c) || char.IsAsciiLetterLower(c);
+#endif
 
     private static int GetKeyHashCode(ReadOnlySpan<char> key)
     {
@@ -660,6 +841,31 @@ public class TraceContextPropagator : TextMapPropagator
         }
 #endif
     }
+
+#if NET
+    private static SearchValues<char> CreateTraceStateValueChars(int firstCharacter)
+    {
+        // chr = %x20 / nblk-chr and nblk-chr = %x21-2B / %x2D-3C / %x3E-7E, so the set is the
+        // printable ASCII range excluding ',' and '='. The last character of a value may not
+        // be a space, which is expressed by starting at 0x21 instead of 0x20.
+        const int LastCharacter = 0x7E;
+        Span<char> characters = stackalloc char[LastCharacter - firstCharacter + 1];
+        var count = 0;
+
+        for (var c = firstCharacter; c <= LastCharacter; c++)
+        {
+            // Exclude ',' and '=' from the set of valid characters.
+            if (c is 0x2C or 0x3D)
+            {
+                continue;
+            }
+
+            characters[count++] = (char)c;
+        }
+
+        return SearchValues.Create(characters.Slice(0, count));
+    }
+#endif
 
     private static bool TryGetSingleValue(IEnumerable<string>? values, out string value)
     {
@@ -712,6 +918,10 @@ public class TraceContextPropagator : TextMapPropagator
             return false;
         }
 
+#if NET
+        return TraceStateKeyFirstChars.Contains(key[0]) &&
+               !key.Slice(1).ContainsAnyExcept(TraceStateKeyChars);
+#else
         if (!IsAsciiLetterOrDigitLower(key[0]))
         {
             return false;
@@ -732,6 +942,7 @@ public class TraceContextPropagator : TextMapPropagator
         }
 
         return true;
+#endif
     }
 
     private static bool ValidateValue(ReadOnlySpan<char> value)
@@ -745,6 +956,10 @@ public class TraceContextPropagator : TextMapPropagator
             return false;
         }
 
+#if NET
+        return !value.Slice(0, value.Length - 1).ContainsAnyExcept(TraceStateValueChars) &&
+               TraceStateValueLastChars.Contains(value[value.Length - 1]);
+#else
         for (var i = 0; i < value.Length - 1; ++i)
         {
             var c = value[i];
@@ -756,9 +971,6 @@ public class TraceContextPropagator : TextMapPropagator
 
         var last = value[value.Length - 1];
         return last is >= (char)0x21 and <= (char)0x7E and not (char)0x2C and not (char)0x3D;
+#endif
     }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool IsAsciiLetterOrDigitLower(char c)
-        => char.IsAsciiDigit(c) || char.IsAsciiLetterLower(c);
 }

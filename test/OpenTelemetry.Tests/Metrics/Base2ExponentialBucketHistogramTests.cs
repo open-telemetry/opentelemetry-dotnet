@@ -17,9 +17,11 @@ public class Base2ExponentialBucketHistogramTests
     [Fact]
     public void ScalingFactorCalculation()
     {
-        var histogram = new Base2ExponentialBucketHistogram();
+        var histogram = new Base2ExponentialBucketHistogram
+        {
+            Scale = 20,
+        };
 
-        histogram.Scale = 20;
         Assert.Equal("0 10000010011 0111000101010100011101100101001010111000001011111110", IEEE754Double.FromDouble(histogram.ScalingFactor).ToString());
 
         histogram.Scale = 19;
@@ -530,7 +532,7 @@ public class Base2ExponentialBucketHistogramTests
             // Knowing that MapToIndex is imprecise near bucket boundaries,
             // the following produces an analysis of the magnitude of imprecision.
 
-            var incremented = MathHelper.BitIncrement(lowerBound);
+            var incremented = Math.BitIncrement(lowerBound);
 
             if (index == histogram.MapToIndex(incremented))
             {
@@ -547,7 +549,7 @@ public class Base2ExponentialBucketHistogramTests
                 var increments = 1;
                 while (index != histogram.MapToIndex(incremented))
                 {
-                    incremented = MathHelper.BitIncrement(incremented);
+                    incremented = Math.BitIncrement(incremented);
                     increments++;
                 }
 

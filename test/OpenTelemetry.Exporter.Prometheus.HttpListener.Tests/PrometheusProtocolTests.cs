@@ -775,4 +775,44 @@ public class PrometheusProtocolTests
 
         Assert.Equal(PrometheusProtocol.GetContentType(protocol), protocol.ToString());
     }
+
+    [Theory]
+    //// A strategy which passes UTF-8 names through applies whatever was negotiated
+    [InlineData(PrometheusTranslationStrategy.NoTranslation, PrometheusProtocol.AllowUtf8Escaping, PrometheusProtocol.AllowUtf8Escaping)]
+    [InlineData(PrometheusTranslationStrategy.NoTranslation, PrometheusProtocol.UnderscoresEscaping, PrometheusProtocol.UnderscoresEscaping)]
+    [InlineData(PrometheusTranslationStrategy.NoTranslation, PrometheusProtocol.DotsEscaping, PrometheusProtocol.DotsEscaping)]
+    [InlineData(PrometheusTranslationStrategy.NoUTF8EscapingWithSuffixes, PrometheusProtocol.ValuesEscaping, PrometheusProtocol.ValuesEscaping)]
+    //// A strategy which escapes to '_' reports the escaping it applied, whatever was negotiated
+    [InlineData(PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes, PrometheusProtocol.AllowUtf8Escaping, PrometheusProtocol.UnderscoresEscaping)]
+    [InlineData(PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes, PrometheusProtocol.UnderscoresEscaping, PrometheusProtocol.UnderscoresEscaping)]
+    [InlineData(PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes, PrometheusProtocol.DotsEscaping, PrometheusProtocol.UnderscoresEscaping)]
+    [InlineData(PrometheusTranslationStrategy.UnderscoreEscapingWithoutSuffixes, PrometheusProtocol.ValuesEscaping, PrometheusProtocol.UnderscoresEscaping)]
+    public void ApplyTranslationStrategy_ReportsEscapingApplied(
+        PrometheusTranslationStrategy strategy,
+        string negotiated,
+        string expected)
+    {
+        var protocol = new PrometheusProtocol(
+            PrometheusProtocol.PrometheusTextMediaType,
+            negotiated,
+            PrometheusProtocol.PrometheusV1,
+            false);
+
+        var actual = PrometheusProtocol.ApplyTranslationStrategy(protocol, strategy);
+
+        Assert.Equal(expected, actual.Escaping);
+        Assert.Equal(PrometheusEscaping.FromString(expected), actual.EscapingScheme);
+        Assert.Equal($"text/plain; version=1.0.0; charset=utf-8; escaping={expected}", PrometheusProtocol.GetContentType(actual));
+    }
+
+    [Theory]
+    [InlineData(PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes)]
+    [InlineData(PrometheusTranslationStrategy.NoTranslation)]
+    public void ApplyTranslationStrategy_ClassicFormats_DoNotNegotiateEscaping(PrometheusTranslationStrategy strategy)
+    {
+        var actual = PrometheusProtocol.ApplyTranslationStrategy(PrometheusProtocol.Fallback, strategy);
+
+        Assert.Equal(PrometheusProtocol.Fallback, actual);
+        Assert.Null(actual.Escaping);
+    }
 }

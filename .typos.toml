@@ -11,3 +11,13 @@ Delt = "Delt"
 Alway = "Alway"
 # "Enumerables" is the valid plural of "Enumerable" used in a method name
 Enumerables = "Enumerables"
+# "Udid" is Apple's acronym for the unique identifier of a device or simulator
+Udid = "Udid"
+
+# Test files that use intentionally misspelled strings to exercise schema-validation and
+# diagnostic-path logic are excluded so those misspellings do not require global exceptions.
+[files]
+extend-exclude = [
+  "test/OpenTelemetry.Configuration.Declarative.Tests/DeclarativeConfigurationReaderTests.cs",
+  "test/OpenTelemetry.Configuration.Declarative.Tests/DeclarativeConfigurationEventSourceTests.cs",
+]

@@ -71,6 +71,36 @@ internal readonly struct PrometheusProtocol : IEquatable<PrometheusProtocol>
 
     public readonly Version Version { get; }
 
+    /// <summary>
+    /// Returns the protocol describing the response the exporter actually produces for
+    /// <paramref name="protocol"/>, which is the negotiated protocol with its escaping scheme
+    /// replaced by the one <paramref name="strategy"/> leaves it able to apply.
+    /// </summary>
+    /// <param name="protocol">The negotiated protocol.</param>
+    /// <param name="strategy">The configured translation strategy.</param>
+    /// <returns>The protocol the response is written with.</returns>
+    /// <remarks>
+    /// The escaping scheme reported by the <c>Content-Type</c> header MUST describe the names that
+    /// were written, so it is resolved once here rather than letting the negotiated and rendered
+    /// schemes diverge. Everything downstream (the buffer cache key, the serializer and the
+    /// response header) then agrees. Requests which negotiate different schemes but produce the
+    /// same names consequently share a single cached response.
+    /// </remarks>
+    public static PrometheusProtocol ApplyTranslationStrategy(in PrometheusProtocol protocol, PrometheusTranslationStrategy strategy)
+    {
+        // The classic (pre-1.0.0) text formats do not negotiate an escaping scheme at all.
+        if (protocol.Escaping is null)
+        {
+            return protocol;
+        }
+
+        var escaping = strategy.GetEffectiveEscapingScheme(protocol.EscapingScheme);
+
+        return escaping == protocol.EscapingScheme
+            ? protocol
+            : new(protocol.MediaType, PrometheusEscaping.GetName(escaping), protocol.Version, protocol.IsOpenMetrics);
+    }
+
     public static string GetContentType(in PrometheusProtocol protocol)
     {
         var builder = new StringBuilder()

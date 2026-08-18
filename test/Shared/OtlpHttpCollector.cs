@@ -9,45 +9,32 @@ using Microsoft.Extensions.Logging;
 using OpenTelemetry.Proto.Collector.Logs.V1;
 using OpenTelemetry.Proto.Collector.Metrics.V1;
 using OpenTelemetry.Proto.Collector.Trace.V1;
-using OpenTelemetry.Tests;
 
-namespace OpenTelemetry.BlazorWasm.Tests;
+namespace OpenTelemetry.Tests;
 
 /// <summary>
-/// An in-process OTLP/HTTP receiver that also serves the published Blazor
-/// WebAssembly client from the same origin. Decoded OTLP requests are captured
-/// so the test can assert that traces, metrics and logs were exported by the
-/// SDK running under the browser WASM runtime.
+/// An in-process OTLP/HTTP receiver. Decoded OTLP requests are captured
+/// so tests can assert that traces, metrics and logs were exported by the SDK.
 /// </summary>
-internal sealed class OtlpHttpCollector : IAsyncDisposable
+internal sealed class OtlpHttpCollector(WebApplication app, string baseUrl) : IAsyncDisposable
 {
     private readonly Lock lockObject = new();
     private readonly List<ExportLogsServiceRequest> logsRequests = [];
     private readonly List<ExportMetricsServiceRequest> metricsRequests = [];
     private readonly List<ExportTraceServiceRequest> traceRequests = [];
-    private readonly WebApplication app;
+    private readonly WebApplication app = app;
     private int rawLogHits;
     private int rawMetricHits;
     private int rawTraceHits;
 
-    private OtlpHttpCollector(WebApplication app, string baseUrl)
+    public string BaseUrl { get; } = baseUrl;
+
+    public static async Task<OtlpHttpCollector> StartAsync(
+        string baseUrl,
+        WebApplicationOptions? options = null,
+        Action<WebApplication>? configure = null)
     {
-        this.app = app;
-        this.BaseUrl = baseUrl;
-    }
-
-    public string BaseUrl { get; }
-
-    public static async Task<OtlpHttpCollector> StartAsync(string webRootPath)
-    {
-        var port = TcpPortProvider.GetOpenPort();
-        var baseUrl = $"http://localhost:{port}";
-
-        var builder = WebApplication.CreateBuilder(new WebApplicationOptions
-        {
-            ContentRootPath = Path.GetDirectoryName(webRootPath),
-            WebRootPath = webRootPath,
-        });
+        var builder = WebApplication.CreateBuilder(options ?? new());
 
         builder.Logging.ClearProviders();
         builder.WebHost.UseUrls(baseUrl);
@@ -56,20 +43,11 @@ internal sealed class OtlpHttpCollector : IAsyncDisposable
 
         var collector = new OtlpHttpCollector(app, baseUrl);
 
-        // OTLP receiver endpoints. These must be mapped before the Blazor
-        // fallback so the export requests are not served the index page.
         app.MapPost("/v1/logs", collector.HandleLogsAsync);
         app.MapPost("/v1/metrics", collector.HandleMetricsAsync);
         app.MapPost("/v1/traces", collector.HandleTracesAsync);
 
-        // A simple endpoint the app's "Call HTTP endpoint" button targets so
-        // that HTTP client instrumentation can be exercised from the browser.
-        app.MapGet("/api/ping", () => Results.Text("pong"));
-
-        // Serve the published Blazor WebAssembly client.
-        app.UseBlazorFrameworkFiles();
-        app.UseStaticFiles();
-        app.MapFallbackToFile("index.html");
+        configure?.Invoke(app);
 
         await app.StartAsync();
 
@@ -100,20 +78,20 @@ internal sealed class OtlpHttpCollector : IAsyncDisposable
         }
     }
 
+    public string GetRawHitSummary()
+    {
+        lock (this.lockObject)
+        {
+            return $"Raw endpoint hits: /v1/traces={this.rawTraceHits}, /v1/metrics={this.rawMetricHits}, /v1/logs={this.rawLogHits}.";
+        }
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (this.app is not null)
         {
             await this.app.StopAsync();
             await this.app.DisposeAsync();
-        }
-    }
-
-    public string GetRawHitSummary()
-    {
-        lock (this.lockObject)
-        {
-            return $"Raw endpoint hits: /v1/traces={this.rawTraceHits}, /v1/metrics={this.rawMetricHits}, /v1/logs={this.rawLogHits}.";
         }
     }
 
@@ -150,6 +128,7 @@ internal sealed class OtlpHttpCollector : IAsyncDisposable
     {
         var body = await ReadBodyAsync(context.Request);
         var request = ExportMetricsServiceRequest.Parser.ParseFrom(body);
+
         lock (this.lockObject)
         {
             this.rawMetricHits++;

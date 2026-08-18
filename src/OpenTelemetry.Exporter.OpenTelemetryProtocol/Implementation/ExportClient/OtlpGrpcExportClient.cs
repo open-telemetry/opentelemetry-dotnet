@@ -26,14 +26,6 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
     private static readonly ExportClientHttpResponse SuccessExportResponse = new(success: true, deadlineUtc: default, response: null, exception: null);
     private static readonly MediaTypeHeaderValue MediaHeaderValue = new("application/grpc");
 
-    private static readonly ExportClientGrpcResponse DefaultExceptionExportClientGrpcResponse
-        = new(
-            success: false,
-            deadlineUtc: default,
-            exception: null,
-            status: null,
-            grpcStatusDetailsHeader: null);
-
 #if !NET
     private static readonly byte[] GrpcFrameHeader = [0, 0, 0, 0, 0];
 #endif
@@ -44,6 +36,8 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
     }
 
     internal override MediaTypeHeaderValue MediaTypeHeader => MediaHeaderValue;
+
+    internal override long HeaderBytesSize => GrpcMessageHeaderSize;
 
     internal override bool RequireHttp2 => true;
 
@@ -75,6 +69,17 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
             }
 
             httpResponse = this.SendHttpRequest(httpRequest, cancellationToken);
+
+            if (this.IsResponseTooLarge(httpResponse, out var responseTooLarge))
+            {
+                // Requests with responses that are too large must not be retried
+                return new ExportClientGrpcResponse(
+                    success: false,
+                    deadlineUtc: deadlineUtc,
+                    exception: responseTooLarge,
+                    status: null,
+                    grpcStatusDetailsHeader: null);
+            }
 
             httpResponse.EnsureSuccessStatusCode();
 
@@ -153,7 +158,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
             // Handle non-retryable HTTP errors.
             if (OpenTelemetryProtocolExporterEventSource.Log.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
-                var response = TryGetResponseBody(httpResponse, cancellationToken);
+                var response = TryGetResponseBody(httpResponse, this.MaxResponseSizeBytes, cancellationToken);
                 OpenTelemetryProtocolExporterEventSource.Log.HttpRequestFailed(this.Endpoint, response, ex);
             }
 
@@ -164,7 +169,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
                 status: null,
                 grpcStatusDetailsHeader: null);
         }
-        catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
+        catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException && !cancellationToken.IsCancellationRequested)
         {
             // Handle TaskCanceledException caused by TimeoutException.
             OpenTelemetryProtocolExporterEventSource.Log.RequestTimedOut(this.Endpoint, ex);
@@ -186,10 +191,21 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
                 status: new Status(StatusCode.Cancelled, "Operation was canceled unexpectedly."),
                 grpcStatusDetailsHeader: null);
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
+            // Return Unavailable so the response is classified as retryable,
+            // preserving any blob written to persistent storage.
             OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, ex);
-            return DefaultExceptionExportClientGrpcResponse;
+            return new ExportClientGrpcResponse(
+                success: false,
+                deadlineUtc: deadlineUtc,
+                exception: ex,
+                status: new Status(StatusCode.Unavailable, "Unexpected error - retryable"),
+                grpcStatusDetailsHeader: null);
         }
         finally
         {

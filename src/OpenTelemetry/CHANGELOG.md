@@ -15,6 +15,22 @@ Notes](../../RELEASENOTES.md).
   sampler attribute with the same key.
   ([#7558](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7558))
 
+* Added the `otel.sdk.processor.log.processed` SDK self-observability metric.
+  ([#7486](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7486))
+
+* Added the `otel.sdk.processor.span.processed` SDK self-observability metric.
+  ([#7598](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7598))
+
+* `BatchActivityExportProcessor` and `SimpleActivityExportProcessor` no longer
+  forward spans to the exporter once `Shutdown` has been called, and
+  `BatchActivityExportProcessor.Shutdown` now waits for in-flight `OnEnd` calls
+  to finish enqueueing before flushing.
+  ([#7598](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7598))
+
+* Fix logger, meter and tracer providers leaking background threads if an
+  exception is thrown by their constructor after resource creation.
+  ([#7615](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7615))
+
 ## 1.17.0
 
 Released 2026-Jul-16

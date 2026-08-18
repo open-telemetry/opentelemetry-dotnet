@@ -81,14 +81,25 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
         {
             buffer = this.serializationBuffer.Rent();
 
-            writePosition = ProtobufOtlpLogSerializer.WriteLogsData(
-                ref buffer,
-                this.startWritePosition,
-                this.sdkLimitOptions,
-                this.experimentalOptions,
-                this.Resource,
-                logRecordBatch);
-            serializationSucceeded = true;
+            try
+            {
+                writePosition = ProtobufOtlpLogSerializer.WriteLogsData(
+                    ref buffer,
+                    this.startWritePosition,
+                    this.sdkLimitOptions,
+                    this.experimentalOptions,
+                    this.Resource,
+                    logRecordBatch);
+                serializationSucceeded = true;
+            }
+            catch (Exception ex)
+            {
+                OpenTelemetryProtocolExporterEventSource.Log.BatchDroppedDueToSerializationFailure(
+                    OtlpSignalType.Logs,
+                    logRecordBatch.Count,
+                    ex);
+                return ExportResult.Failure;
+            }
 
             if (this.startWritePosition == GrpcStartWritePosition)
             {
