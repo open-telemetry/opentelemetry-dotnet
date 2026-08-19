@@ -20,11 +20,7 @@ public class SelfDiagnosticsLoggingEventListenerTests
     private const string MismatchedMessageSourceName = "OpenTelemetry-SelfDiagnosticsListenerTests-Mismatched";
     private const string MappedLevelSourceName = "OpenTelemetry-SelfDiagnosticsListenerTests-MappedLevels";
     private const string ResubscribeSourceName = "OpenTelemetry-SelfDiagnosticsListenerTests-Resubscribe";
-
-    // Deliberately does *not* start with "OpenTelemetry-": this is the source the cross-source
-    // filter has to reject.
     private const string ForeignSourceName = "NotOpenTelemetry-SelfDiagnosticsListenerTests-Foreign";
-
     private const string NoPayloadManifestSourceName = "OpenTelemetry-SelfDiagnosticsListenerTests-NoPayloadManifest";
     private const string EmptyPayloadSourceName = "OpenTelemetry-SelfDiagnosticsListenerTests-EmptyPayload";
     private const string CriticalSubscriptionSourceName = "OpenTelemetry-SelfDiagnosticsListenerTests-CriticalSubscription";
@@ -33,17 +29,7 @@ public class SelfDiagnosticsLoggingEventListenerTests
     [Fact]
     public void SelfDescribingEvent_RendersPayloadNamesAndValues()
     {
-        using var sink = new TestSink();
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
-        using var logger = new SelfDiagnosticsLogger(
-            new SelfDiagnosticsOptions(),
-            static _ => string.Empty,
-            dispatcher: dispatcher,
-            startImmediately: false);
-        using var applied = new ManualResetEventSlim(false);
-        dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, (_, _, _) => applied.Set());
-        using var listener = new SelfDiagnosticsLoggingEventListener(logger, LogLevel.Warning);
-        Assert.True(applied.Wait(TimeSpan.FromSeconds(5)), "Configuration was not applied by the pump within the timeout");
+        using var context = ListenerTestContext.Create(LogLevel.Warning, LogLevel.Warning);
 
         using var eventSource = new EventSource(
             SelfDescribingSourceName,
@@ -54,7 +40,7 @@ public class SelfDiagnosticsLoggingEventListenerTests
             new EventSourceOptions { Level = EventLevel.Warning },
             new SelfDescribingPayload { Detail = "payload value", Attempt = 3 });
 
-        var message = WaitForEntryEndingWith(sink, "Attempt=3");
+        var message = WaitForEntryEndingWith(context.Sink, "Attempt=3");
 
         Assert.StartsWith(SelfDescribingSourceName + ": ", message, StringComparison.Ordinal);
         Assert.Contains("Detail=payload value", message, StringComparison.Ordinal);
@@ -63,67 +49,37 @@ public class SelfDiagnosticsLoggingEventListenerTests
     [Fact]
     public void EventLevelBelowSubscription_IsNotDelivered()
     {
-        using var sink = new TestSink();
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
-        using var logger = new SelfDiagnosticsLogger(
-            new SelfDiagnosticsOptions(),
-            static _ => string.Empty,
-            dispatcher: dispatcher,
-            startImmediately: false);
-        using var applied = new ManualResetEventSlim(false);
-        dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Error), 1, (_, _, _) => applied.Set());
-        using var listener = new SelfDiagnosticsLoggingEventListener(logger, LogLevel.Error);
-        Assert.True(applied.Wait(TimeSpan.FromSeconds(5)), "Configuration was not applied by the pump within the timeout");
+        using var context = ListenerTestContext.Create(LogLevel.Error, LogLevel.Error);
 
         using var eventSource = new LevelTestEventSource();
 
         eventSource.WarningEvent("below the subscription level");
         eventSource.ErrorEvent("at the subscription level");
 
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(
-            () => sink.Written.Any(item => item.Entry.EventId.Id == 2)));
-        Assert.DoesNotContain(sink.Written, item => item.Entry.EventId.Id == 1);
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(() => context.Sink.Written.Any(item => item.Entry.EventId.Id == 2)),
+            "expected the Error event (id 2) to be delivered");
+        Assert.DoesNotContain(context.Sink.Written, item => item.Entry.EventId.Id == 1);
     }
 
     [Fact]
     public void ManifestMessageWithPayload_HasPayloadSubstituted()
     {
-        using var sink = new TestSink();
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
-        using var logger = new SelfDiagnosticsLogger(
-            new SelfDiagnosticsOptions(),
-            static _ => string.Empty,
-            dispatcher: dispatcher,
-            startImmediately: false);
-        using var applied = new ManualResetEventSlim(false);
-        dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, (_, _, _) => applied.Set());
-        using var listener = new SelfDiagnosticsLoggingEventListener(logger, LogLevel.Warning);
-        Assert.True(applied.Wait(TimeSpan.FromSeconds(5)), "Configuration was not applied by the pump within the timeout");
+        using var context = ListenerTestContext.Create(LogLevel.Warning, LogLevel.Warning);
 
         using var eventSource = new SubstitutedMessageEventSource();
 
         eventSource.WidgetFailed("gizmo", 4);
 
-        var message = WaitForEntryEndingWith(sink, "Widget gizmo failed after 4 attempts");
+        var message = WaitForEntryEndingWith(context.Sink, "Widget gizmo failed after 4 attempts");
 
-        // Exact match: the placeholders are gone and the payload is not appended a second time.
         Assert.Equal(SubstitutedMessageSourceName + ": Widget gizmo failed after 4 attempts", message);
     }
 
     [Fact]
     public void ManifestMessageDisagreeingWithPayload_FallsBackToRawPayload()
     {
-        using var sink = new TestSink();
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
-        using var logger = new SelfDiagnosticsLogger(
-            new SelfDiagnosticsOptions(),
-            static _ => string.Empty,
-            dispatcher: dispatcher,
-            startImmediately: false);
-        using var applied = new ManualResetEventSlim(false);
-        dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, (_, _, _) => applied.Set());
-        using var listener = new SelfDiagnosticsLoggingEventListener(logger, LogLevel.Warning);
-        Assert.True(applied.Wait(TimeSpan.FromSeconds(5)), "Configuration was not applied by the pump within the timeout");
+        using var context = ListenerTestContext.Create(LogLevel.Warning, LogLevel.Warning);
 
         using var eventSource = new MismatchedMessageEventSource();
 
@@ -140,36 +96,27 @@ public class SelfDiagnosticsLoggingEventListenerTests
             // That is a failure of that helper, not of the listener under test.
         }
 
-        var message = WaitForEntryEndingWith(sink, "detail=only value");
+        var message = WaitForEntryEndingWith(context.Sink, "detail=only value");
 
-        // Exact match: no fragment of the unusable format string may leak into the entry.
         Assert.Equal(MismatchedMessageSourceName + ": detail=only value", message);
     }
 
     [Fact]
     public void EventLevels_AreMappedToLogLevels()
     {
-        using var sink = new TestSink();
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
-        using var logger = new SelfDiagnosticsLogger(
-            new SelfDiagnosticsOptions(),
-            static _ => string.Empty,
-            dispatcher: dispatcher,
-            startImmediately: false);
-        using var applied = new ManualResetEventSlim(false);
-        dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Information), 1, (_, _, _) => applied.Set());
-        using var listener = new SelfDiagnosticsLoggingEventListener(logger, LogLevel.Information);
-        Assert.True(applied.Wait(TimeSpan.FromSeconds(5)), "Configuration was not applied by the pump within the timeout");
+        using var context = ListenerTestContext.Create(LogLevel.Information, LogLevel.Information);
 
         using var eventSource = new MappedLevelEventSource();
 
         eventSource.CriticalEvent("critical event");
         eventSource.LogAlwaysEvent("log always event");
 
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(
-            () => EntriesFrom(sink, MappedLevelSourceName).Count >= 2));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(
+                () => EntriesFrom(context.Sink, MappedLevelSourceName).Count >= 2),
+            $"expected at least 2 entries from {MappedLevelSourceName}, found {EntriesFrom(context.Sink, MappedLevelSourceName).Count}");
 
-        var entries = EntriesFrom(sink, MappedLevelSourceName);
+        var entries = EntriesFrom(context.Sink, MappedLevelSourceName);
 
         Assert.Equal(LogLevel.Critical, entries.Single(entry => entry.EventId.Id == 1).Level);
 
@@ -180,52 +127,50 @@ public class SelfDiagnosticsLoggingEventListenerTests
     [Fact]
     public void UpdateLevel_ReSubscribesAlreadySubscribedSources()
     {
-        using var sink = new TestSink();
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
-        using var logger = new SelfDiagnosticsLogger(
-            new SelfDiagnosticsOptions(),
-            static _ => string.Empty,
-            dispatcher: dispatcher,
-            startImmediately: false);
-
-        // The dispatcher stays at Debug throughout so that every observation below is attributable
-        // to the listener's EventSource subscription rather than to the dispatcher's own filter.
-        using var applied = new ManualResetEventSlim(false);
-        dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Debug), 1, (_, _, _) => applied.Set());
-        using var listener = new SelfDiagnosticsLoggingEventListener(logger, LogLevel.Warning);
-        Assert.True(applied.Wait(TimeSpan.FromSeconds(5)), "Configuration was not applied by the pump within the timeout");
+        // The dispatcher stays at Debug throughout so observations reflect the listener subscription.
+        using var context = ListenerTestContext.Create(LogLevel.Debug, LogLevel.Warning);
 
         using var eventSource = new ResubscribeEventSource();
 
-        // Subscribed at Warning: the Verbose event must not be delivered. The Warning event behind
-        // it is the ordering marker - the dispatcher queue is FIFO, so once the marker has been
-        // written the Verbose event has already had its chance.
+        // Subscribed at Warning: the Verbose event must not be delivered. The Warning marker event
+        // follows it; the dispatcher queue is FIFO, so once the marker is written the Verbose event
+        // has already had its chance.
         eventSource.VerboseEvent("verbose before update");
         eventSource.WarningEvent("marker one");
 
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => WasWritten(sink, "marker one")));
-        Assert.False(WasWritten(sink, "verbose before update"));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(() => WasWritten(context.Sink, "marker one")),
+            "expected marker one to arrive before asserting verbose was suppressed");
+        Assert.False(
+            WasWritten(context.Sink, "verbose before update"),
+            $"expected Verbose event to be suppressed at Warning subscription; sink entries: {DescribeSinkMessages(context.Sink)}");
 
         // Re-subscribing an already-subscribed source at Debug maps to EventLevel.Verbose.
-        listener.UpdateLevel(LogLevel.Debug);
+        context.Listener.UpdateLevel(LogLevel.Debug);
         eventSource.VerboseEvent("verbose after update");
 
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => WasWritten(sink, "verbose after update")));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(() => WasWritten(context.Sink, "verbose after update")),
+            "expected verbose after update once the subscription level was lowered");
 
-        // None disables the subscription outright. The marker is written straight to the logger so
-        // that it still queues behind the suppressed event and keeps the assertion deterministic.
-        listener.UpdateLevel(LogLevel.None);
+        // None disables the subscription. The marker is written directly so it still queues behind
+        // the suppressed event and keeps the negative assertion deterministic.
+        context.Listener.UpdateLevel(LogLevel.None);
         eventSource.VerboseEvent("verbose after disable");
-        WriteMarker(logger, "marker two");
+        WriteMarker(context.Logger, "marker two");
 
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => WasWritten(sink, "marker two")));
-        Assert.False(WasWritten(sink, "verbose after disable"));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(() => WasWritten(context.Sink, "marker two")),
+            "expected marker two to arrive before asserting verbose was suppressed after disable");
+        Assert.False(
+            WasWritten(context.Sink, "verbose after disable"),
+            $"expected Verbose event to be suppressed after disabling subscription; sink entries: {DescribeSinkMessages(context.Sink)}");
     }
 
     [Fact]
     public void ForeignEventSourceEvent_IsIgnored()
     {
-        // Regression: dotnet/runtime#31927 - EventCounter payloads are published to every
+        // dotnet/runtime#31927 - EventCounter payloads are published to every
         // EventListener in the process regardless of which providers that listener enabled.
         // Without the name guard at the top of OnEventWritten the SDK's self-diagnostics file
         // fills up with counter events from unrelated components.
@@ -234,57 +179,40 @@ public class SelfDiagnosticsLoggingEventListenerTests
         // delivery itself is simulated: a real EventWrittenEventArgs produced by a real
         // non-OpenTelemetry source is handed to the real (protected) callback from inside the
         // capturing callback, where the args are still valid.
-        using var sink = new TestSink();
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
-        using var logger = new SelfDiagnosticsLogger(
-            new SelfDiagnosticsOptions(),
-            static _ => string.Empty,
-            dispatcher: dispatcher,
-            startImmediately: false);
-        using var applied = new ManualResetEventSlim(false);
-        dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Debug), 1, (_, _, _) => applied.Set());
-        using var listener = new SelfDiagnosticsLoggingEventListener(logger, LogLevel.Debug);
-        Assert.True(applied.Wait(TimeSpan.FromSeconds(5)), "Configuration was not applied by the pump within the timeout");
+        using var context = ListenerTestContext.Create(LogLevel.Debug, LogLevel.Debug);
 
         using var eventSource = new ForeignEventSource();
-        using var relay = new RelayEventListener(listener);
+        using var relay = new RelayEventListener(context.Listener);
 
         relay.EnableEvents(eventSource, EventLevel.Verbose, EventKeywords.All);
         eventSource.ForeignEvent("must not be logged");
 
         Assert.True(relay.Relayed, "the foreign event was never relayed into the listener");
 
-        // A marker written after the relayed event proves the pipeline is live, so the absence of
-        // the foreign event below is a rejection rather than a race.
-        WriteMarker(logger, "foreign marker");
+        // Marker after the relayed event: pipeline is live, so absence below is rejection not race.
+        WriteMarker(context.Logger, "foreign marker");
 
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => WasWritten(sink, "foreign marker")));
-        Assert.False(WasWritten(sink, "must not be logged"));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(() => WasWritten(context.Sink, "foreign marker")),
+            "expected foreign marker to arrive before asserting the foreign event was ignored");
+        Assert.False(
+            WasWritten(context.Sink, "must not be logged"),
+            $"expected foreign EventSource event to be ignored; sink entries: {DescribeSinkMessages(context.Sink)}");
         Assert.DoesNotContain(
-            sink.Written,
+            context.Sink.Written,
             item => item.Entry.Message.StartsWith(ForeignSourceName, StringComparison.Ordinal));
     }
 
     [Fact]
     public void ManifestMessageWithNoPayload_MessageIsRenderedVerbatim()
     {
-        using var sink = new TestSink();
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
-        using var logger = new SelfDiagnosticsLogger(
-            new SelfDiagnosticsOptions(),
-            static _ => string.Empty,
-            dispatcher: dispatcher,
-            startImmediately: false);
-        using var applied = new ManualResetEventSlim(false);
-        dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, (_, _, _) => applied.Set());
-        using var listener = new SelfDiagnosticsLoggingEventListener(logger, LogLevel.Warning);
-        Assert.True(applied.Wait(TimeSpan.FromSeconds(5)), "Configuration was not applied by the pump within the timeout");
+        using var context = ListenerTestContext.Create(LogLevel.Warning, LogLevel.Warning);
 
         using var eventSource = new NoPayloadManifestEventSource();
 
         eventSource.NoPayloadEvent();
 
-        var message = WaitForEntryEndingWith(sink, "Static manifest message");
+        var message = WaitForEntryEndingWith(context.Sink, "Static manifest message");
 
         Assert.Equal(NoPayloadManifestSourceName + ": Static manifest message", message);
     }
@@ -292,17 +220,7 @@ public class SelfDiagnosticsLoggingEventListenerTests
     [Fact]
     public void SelfDescribingEventWithNoPayload_EntryArrives()
     {
-        using var sink = new TestSink();
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
-        using var logger = new SelfDiagnosticsLogger(
-            new SelfDiagnosticsOptions(),
-            static _ => string.Empty,
-            dispatcher: dispatcher,
-            startImmediately: false);
-        using var applied = new ManualResetEventSlim(false);
-        dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, (_, _, _) => applied.Set());
-        using var listener = new SelfDiagnosticsLoggingEventListener(logger, LogLevel.Warning);
-        Assert.True(applied.Wait(TimeSpan.FromSeconds(5)), "Configuration was not applied by the pump within the timeout");
+        using var context = ListenerTestContext.Create(LogLevel.Warning, LogLevel.Warning);
 
         using var eventSource = new EventSource(
             EmptyPayloadSourceName,
@@ -310,41 +228,35 @@ public class SelfDiagnosticsLoggingEventListenerTests
 
         eventSource.Write("EmptyEvent", new EventSourceOptions { Level = EventLevel.Warning });
 
-        WriteMarker(logger, "empty payload marker");
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => WasWritten(sink, "empty payload marker")));
+        WriteMarker(context.Logger, "empty payload marker");
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(() => WasWritten(context.Sink, "empty payload marker")),
+            "expected empty payload marker to arrive before checking for the EventSource entry");
 
         Assert.True(
-            EntriesFrom(sink, EmptyPayloadSourceName).Count >= 1,
+            EntriesFrom(context.Sink, EmptyPayloadSourceName).Count >= 1,
             "expected an entry from the self-describing source with empty payload");
     }
 
     [Fact]
     public void UpdateLevel_Critical_FiltersNonCriticalEvents()
     {
-        using var sink = new TestSink();
-        using var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
-        using var logger = new SelfDiagnosticsLogger(
-            new SelfDiagnosticsOptions(),
-            static _ => string.Empty,
-            dispatcher: dispatcher,
-            startImmediately: false);
-        using var applied = new ManualResetEventSlim(false);
-        dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Critical), 1, (_, _, _) => applied.Set());
-        using var listener = new SelfDiagnosticsLoggingEventListener(logger, LogLevel.Warning);
-        Assert.True(applied.Wait(TimeSpan.FromSeconds(5)), "Configuration was not applied by the pump within the timeout");
+        using var context = ListenerTestContext.Create(LogLevel.Critical, LogLevel.Warning);
 
         using var eventSource = new CriticalSubscriptionEventSource();
 
-        listener.UpdateLevel(LogLevel.Critical);
+        context.Listener.UpdateLevel(LogLevel.Critical);
         eventSource.CriticalEvent("critical message");
         eventSource.ErrorEvent("error below critical");
 
         // Once the Critical entry has arrived the Error event has already been filtered by the
         // runtime (it is above EventLevel.Critical), so DoesNotContain is deterministic here.
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(
-            () => EntriesFrom(sink, CriticalSubscriptionSourceName).Any(e => e.EventId.Id == 1)));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(
+                () => EntriesFrom(context.Sink, CriticalSubscriptionSourceName).Any(e => e.EventId.Id == 1)),
+            $"expected a Critical event (id 1) from {CriticalSubscriptionSourceName}");
         Assert.DoesNotContain(
-            EntriesFrom(sink, CriticalSubscriptionSourceName),
+            EntriesFrom(context.Sink, CriticalSubscriptionSourceName),
             e => e.EventId.Id == 2);
     }
 
@@ -375,12 +287,6 @@ public class SelfDiagnosticsLoggingEventListenerTests
         => SelfDiagnosticsOptions.SelfDiagnosticsConfiguration.Create(
             new SelfDiagnosticsOptions { LogToStdout = true, MinimumLevel = minimumLevel });
 
-    /// <summary>
-    /// Waits for the entry whose rendered message ends with <paramref name="messageTail"/> and
-    /// returns it. Matching on the tail rather than on the source name alone keeps the assertion
-    /// stable when the runtime interleaves an out-of-band <c>EventSourceMessage</c> from the same
-    /// source (which it does whenever another listener in the process throws).
-    /// </summary>
     private static string WaitForEntryEndingWith(TestSink sink, string messageTail)
     {
         Assert.True(
@@ -397,18 +303,14 @@ public class SelfDiagnosticsLoggingEventListenerTests
             .Where(item => item.Entry.Message.StartsWith(sourceName, StringComparison.Ordinal))
             .Select(item => item.Entry)];
 
-    /// <summary>
-    /// Entries sourced from an <see cref="EventSource"/> are rendered as
-    /// <c>"{sourceName}: {body}"</c>, so matching on the tail identifies one specific event body
-    /// without hard-coding the prefix. Entries written straight to the logger are the body alone.
-    /// </summary>
     private static bool WasWritten(TestSink sink, string messageTail)
         => sink.Written.Any(item => item.Entry.Message.EndsWith(messageTail, StringComparison.Ordinal));
 
-    /// <summary>
-    /// Writes an entry directly to the logger, bypassing the EventSource plumbing. Used as an
-    /// ordering marker when the assertion is that an EventSource event was *not* delivered.
-    /// </summary>
+    private static string DescribeSinkMessages(TestSink sink)
+        => sink.Written.Count == 0
+            ? "(empty)"
+            : string.Join("; ", sink.Written.Select(item => item.Entry.Message));
+
     private static void WriteMarker(SelfDiagnosticsLogger logger, string text)
     {
         var entry = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, text, null);
@@ -524,6 +426,63 @@ public class SelfDiagnosticsLoggingEventListenerTests
 
             this.relayed = true;
             OnEventWrittenMethod.Invoke(this.target, [eventData]);
+        }
+    }
+
+    private sealed class ListenerTestContext : IDisposable
+    {
+        private readonly SelfDiagnosticsSinkDispatcher dispatcher;
+        private readonly SelfDiagnosticsLoggingEventListener listener;
+
+        private ListenerTestContext(
+            TestSink sink,
+            SelfDiagnosticsSinkDispatcher dispatcher,
+            SelfDiagnosticsLogger logger,
+            SelfDiagnosticsLoggingEventListener listener)
+        {
+            this.Sink = sink;
+            this.dispatcher = dispatcher;
+            this.Logger = logger;
+            this.listener = listener;
+        }
+
+        internal TestSink Sink { get; }
+
+        internal SelfDiagnosticsLogger Logger { get; }
+
+        internal SelfDiagnosticsLoggingEventListener Listener => this.listener;
+
+        public void Dispose()
+        {
+            this.listener.Dispose();
+            this.Logger.Dispose();
+            this.dispatcher.Dispose();
+            this.Sink.Dispose();
+        }
+
+        internal static ListenerTestContext Create(
+            LogLevel dispatcherLevel,
+            LogLevel listenerLevel,
+            int configurationGeneration = 1)
+        {
+            var sink = new TestSink();
+            var dispatcher = new SelfDiagnosticsSinkDispatcher(sinkResolver: _ => [sink]);
+            var logger = new SelfDiagnosticsLogger(
+                new SelfDiagnosticsOptions(),
+                static _ => string.Empty,
+                dispatcher: dispatcher,
+                startImmediately: false);
+            using var applied = new ManualResetEventSlim(false);
+            dispatcher.QueueConfiguration(
+                CreateConfiguration(dispatcherLevel),
+                configurationGeneration,
+                (_, _, _) => applied.Set());
+            var listener = new SelfDiagnosticsLoggingEventListener(logger, listenerLevel);
+            Assert.True(
+                applied.Wait(TimeSpan.FromSeconds(5)),
+                "Configuration was not applied by the pump within the timeout");
+
+            return new ListenerTestContext(sink, dispatcher, logger, listener);
         }
     }
 }

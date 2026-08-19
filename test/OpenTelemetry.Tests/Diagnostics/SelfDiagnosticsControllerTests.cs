@@ -15,23 +15,13 @@ namespace OpenTelemetry.Tests.Diagnostics;
 
 public sealed class SelfDiagnosticsControllerTests : IDisposable
 {
-    private readonly List<string> directories = [];
+    private readonly List<TemporaryDirectory> directories = [];
 
     public void Dispose()
     {
         foreach (var directory in this.directories)
         {
-            try
-            {
-                if (Directory.Exists(directory))
-                {
-                    Directory.Delete(directory, recursive: true);
-                }
-            }
-            catch
-            {
-                // Best-effort cleanup; a sink may still hold a handle on a failed test.
-            }
+            directory.Dispose();
         }
     }
 
@@ -405,13 +395,9 @@ public sealed class SelfDiagnosticsControllerTests : IDisposable
 
     private string CreateDirectory()
     {
-        var directory = Path.Combine(
-            Path.GetTempPath(),
-            $"otel-controller-{Guid.NewGuid():N}");
-
-        Directory.CreateDirectory(directory);
+        var directory = new TemporaryDirectory();
         this.directories.Add(directory);
-        return directory;
+        return directory.Path;
     }
 
     [EventSource(Name = "OpenTelemetry-SelfDiagnosticsProviderIntegrationTests")]
