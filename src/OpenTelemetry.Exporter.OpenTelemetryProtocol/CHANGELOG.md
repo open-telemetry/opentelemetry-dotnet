@@ -55,6 +55,10 @@ Notes](../../RELEASENOTES.md).
   scopes.
   ([#7636](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7636))
 
+* Fixed persistent storage allowing a blob write to exceed the configured
+  maximum storage size.
+  ([#7646](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7646))
+
 ## 1.17.0
 
 Released 2026-Jul-16
