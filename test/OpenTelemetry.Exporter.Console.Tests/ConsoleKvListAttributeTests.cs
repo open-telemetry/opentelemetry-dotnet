@@ -341,8 +341,7 @@ public class ConsoleKvListAttributeTests
 
     private static List<KeyValuePair<string, object?>> SelfReferencingKvList()
     {
-        var list = new List<KeyValuePair<string, object?>>();
-        list.Add(new("int", 1));
+        var list = new List<KeyValuePair<string, object?>> { new("int", 1) };
         list.Add(new("self", list));
         return list;
     }
