@@ -11,10 +11,7 @@ namespace OpenTelemetry.Internal;
 /// </summary>
 /// <remarks>
 /// All contextual data (timestamp, thread, activity context) is captured at log time, never at
-/// format time. This guarantees that entries which sit in the dispatcher queue - or in the
-/// deferred-activation buffer, potentially for many seconds - render with the context of the
-/// moment they were emitted rather than the context of the background thread that eventually
-/// writes them.
+/// format time.
 /// </remarks>
 internal readonly struct SelfDiagnosticsLogEntry
 {
@@ -49,16 +46,24 @@ internal readonly struct SelfDiagnosticsLogEntry
     /// </summary>
     public long ThreadId { get; }
 
-    /// <summary>Gets the level at which the entry was emitted. Never escalated or rewritten.</summary>
+    /// <summary>
+    /// Gets the level at which the entry was emitted.
+    /// </summary>
     public LogLevel Level { get; }
 
-    /// <summary>Gets the event id associated with the entry, if any.</summary>
+    /// <summary>
+    /// Gets the event id associated with the entry, if any.
+    /// </summary>
     public EventId EventId { get; }
 
-    /// <summary>Gets the pre-rendered message text.</summary>
+    /// <summary>
+    /// Gets the pre-rendered message text.
+    /// </summary>
     public string Message { get; }
 
-    /// <summary>Gets the exception associated with the entry, if any.</summary>
+    /// <summary>
+    /// Gets the exception associated with the entry, if any.
+    /// </summary>
     public Exception? Exception { get; }
 
     /// <summary>

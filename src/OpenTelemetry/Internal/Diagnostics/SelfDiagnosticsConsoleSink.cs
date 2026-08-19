@@ -98,11 +98,11 @@ internal sealed class SelfDiagnosticsConsoleSink : ISelfDiagnosticsSink
 
     private TextWriter SelectWriter(LogLevel level)
     {
-        if (this.logToStdout && this.logToStderr)
+        if (this.logToStderr && (!this.logToStdout || level > LogLevel.Warning))
         {
-            return level > LogLevel.Warning ? this.stderr() : this.stdout();
+            return this.stderr();
         }
 
-        return this.logToStderr ? this.stderr() : this.stdout();
+        return this.stdout();
     }
 }

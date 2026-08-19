@@ -116,29 +116,29 @@ internal sealed class SelfDiagnosticsLoggingEventListener : EventListener
 
     protected override void OnEventSourceCreated(EventSource eventSource)
     {
-        if (!eventSource.Name.StartsWith(OpenTelemetryEventSourceNamePrefix, StringComparison.Ordinal))
+        if (eventSource.Name.StartsWith(OpenTelemetryEventSourceNamePrefix, StringComparison.Ordinal))
         {
-            base.OnEventSourceCreated(eventSource);
-            return;
-        }
+            SourceSubscription? subscription = null;
 
-        SourceSubscription subscription;
-
-        lock (this.subscriptionLock)
-        {
-            if (this.preConstructorSources is not null)
+            lock (this.subscriptionLock)
             {
-                // Constructor hasn't finished yet - defer to the constructor's post-lock loop.
-                this.preConstructorSources.Add(eventSource);
-                base.OnEventSourceCreated(eventSource);
-                return;
+                if (this.preConstructorSources is not null)
+                {
+                    // Constructor hasn't finished yet - defer to the constructor's post-lock loop.
+                    this.preConstructorSources.Add(eventSource);
+                }
+                else
+                {
+                    subscription = new SourceSubscription(eventSource);
+                    this.subscribedSources.Add(subscription);
+                }
             }
 
-            subscription = new SourceSubscription(eventSource);
-            this.subscribedSources.Add(subscription);
+            if (subscription is not null)
+            {
+                this.ReconcileSource(subscription);
+            }
         }
-
-        this.ReconcileSource(subscription);
 
         base.OnEventSourceCreated(eventSource);
     }
@@ -158,12 +158,6 @@ internal sealed class SelfDiagnosticsLoggingEventListener : EventListener
         }
     }
 
-    /// <summary>
-    /// Renders the event body: the manifest message with its payload substituted when both are
-    /// present, otherwise the raw payload. Self-describing (TraceLogging) sources carry a
-    /// <see langword="null"/> <see cref="EventWrittenEventArgs.Message"/> and put everything in
-    /// the payload, so falling back to raw rendering is what keeps those events readable.
-    /// </summary>
     private static void AppendEventBody(StringBuilder builder, EventWrittenEventArgs eventData)
     {
         var payload = eventData.Payload;
