@@ -602,6 +602,37 @@ public sealed class ConfigPropertiesTests
     }
 
     [Fact]
+    public void GetScalarList_NonSequenceValue_ReturnsTypeMismatch() =>
+        Assert.Equal(ConfigValueOutcome.TypeMismatch, Build("k", ConfigValue.String("x")).GetScalarList<string>("k").Outcome);
+
+    [Fact]
+    public void ScalarList_Int64Type_FloatElementsWithNoFraction_Readable()
+    {
+        var seq = ConfigValue.Sequence([ConfigValue.Float(2.0), ConfigValue.Float(10.0)]);
+        var result = Build("k", seq).GetScalarList<long>("k");
+        Assert.Equal(ConfigValueOutcome.Present, result.Outcome);
+        Assert.Collection(result.Value!, v => Assert.Equal(2L, v), v => Assert.Equal(10L, v));
+    }
+
+    [Fact]
+    public void ScalarList_DoubleType_IntegerElements_Readable()
+    {
+        var seq = ConfigValue.Sequence([ConfigValue.Integer(3L), ConfigValue.Integer(7L)]);
+        var result = Build("k", seq).GetScalarList<double>("k");
+        Assert.Equal(ConfigValueOutcome.Present, result.Outcome);
+        Assert.Collection(result.Value!, v => Assert.Equal(3.0, v), v => Assert.Equal(7.0, v));
+    }
+
+    [Fact]
+    public void ScalarList_Int32Type_FloatElementsWithNoFraction_Readable()
+    {
+        var seq = ConfigValue.Sequence([ConfigValue.Float(4.0), ConfigValue.Float(9.0)]);
+        var result = Build("k", seq).GetScalarList<int>("k");
+        Assert.Equal(ConfigValueOutcome.Present, result.Outcome);
+        Assert.Collection(result.Value!, v => Assert.Equal(4, v), v => Assert.Equal(9, v));
+    }
+
+    [Fact]
     public void Keys_IncludesNullValuedKeys()
     {
         var properties = new ConfigPropertiesBuilder()
