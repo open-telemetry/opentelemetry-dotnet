@@ -19,8 +19,10 @@ public class SelfDiagnosticsLoggerTests
 
         logger.Log(LogLevel.Warning, default, "hello diagnostics", null, static (m, _) => m);
 
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(
-            () => stdout.ToString().Contains("hello diagnostics", StringComparison.Ordinal)));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(
+            () => stdout.ToString().Contains("hello diagnostics", StringComparison.Ordinal)),
+            "expected the log entry to reach the console sink");
         Assert.Contains("[Warning]", stdout.ToString(), StringComparison.Ordinal);
     }
 
@@ -37,8 +39,10 @@ public class SelfDiagnosticsLoggerTests
         logger.Log(LogLevel.Debug, default, "should not appear", null, static (m, _) => m);
         logger.Log(LogLevel.Warning, default, "should appear", null, static (m, _) => m);
 
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(
-            () => stdout.ToString().Contains("should appear", StringComparison.Ordinal)));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(
+            () => stdout.ToString().Contains("should appear", StringComparison.Ordinal)),
+            "expected the Warning entry to reach the console sink");
         Assert.DoesNotContain("should not appear", stdout.ToString(), StringComparison.Ordinal);
     }
 
@@ -65,8 +69,10 @@ public class SelfDiagnosticsLoggerTests
             MinimumLevel = LogLevel.Warning,
         });
 
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(
-            () => stdout.ToString().Contains("buffered warning", StringComparison.Ordinal)));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(
+            () => stdout.ToString().Contains("buffered warning", StringComparison.Ordinal)),
+            "expected the buffered Warning entry to drain after ApplyOptions");
         Assert.DoesNotContain("buffered debug", stdout.ToString(), StringComparison.Ordinal);
     }
 
@@ -81,9 +87,15 @@ public class SelfDiagnosticsLoggerTests
 
         logger.ApplyOptions(options);
 
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => callbackHasSinks.HasValue));
-        Assert.False(callbackHasSinks);
-        Assert.False(logger.IsEnabled(LogLevel.Critical)); // active with zero sinks: nothing is enabled
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(() => callbackHasSinks.HasValue),
+            "expected ConfigurationApplied to run after ApplyOptions");
+        Assert.False(
+            callbackHasSinks,
+            "expected ConfigurationApplied to report no configured sinks");
+        Assert.False(
+            logger.IsEnabled(LogLevel.Critical),
+            "expected logger to stay disabled when no sinks are configured");
     }
 
     [Fact]
@@ -115,8 +127,10 @@ public class SelfDiagnosticsLoggerTests
         logger.ApplyOptions(new SelfDiagnosticsOptions { LogToStdout = true });
         logger.Log(LogLevel.Warning, default, "after re-enable", null, static (m, _) => m);
 
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(
-            () => stdout.ToString().Contains("after re-enable", StringComparison.Ordinal)));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(
+            () => stdout.ToString().Contains("after re-enable", StringComparison.Ordinal)),
+            "expected logging to resume after the console sink was re-enabled");
     }
 
     [Fact]
@@ -141,8 +155,10 @@ public class SelfDiagnosticsLoggerTests
 
         logger.Log(LogLevel.Warning, default, "console only", null, static (m, _) => m);
 
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(
-            () => stdout.ToString().Contains("console only", StringComparison.Ordinal)));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(
+            () => stdout.ToString().Contains("console only", StringComparison.Ordinal)),
+            "expected the console entry to reach stdout without invoking the preamble factory");
         Assert.Equal(0, preambleCalls);
     }
 
@@ -167,8 +183,10 @@ public class SelfDiagnosticsLoggerTests
         using var eventSource = new TestEventSource();
         eventSource.DiagnosticEvent("event payload");
 
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(
-            () => sink.Written.Any(item => item.Entry.EventId.Id == 42)));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(
+                () => sink.Written.Any(item => item.Entry.EventId.Id == 42)),
+            "expected the EventSource event to reach the sink with EventId 42");
         var entry = Assert.Single(sink.Written, item => item.Entry.EventId.Id == 42).Entry;
         Assert.Equal("DiagnosticEvent", entry.EventId.Name);
     }
@@ -176,31 +194,25 @@ public class SelfDiagnosticsLoggerTests
     [Fact]
     public void ApplyOptions_CreatesFileSinkOffCallingThread()
     {
-        var directory = Path.Combine(Path.GetTempPath(), "otel-selfdiag-dispatcher-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(directory);
+        using var directory = new TemporaryDirectory();
 
-        try
+        var callingThreadId = Environment.CurrentManagedThreadId;
+        var preambleThreadId = 0;
+        string CapturePreambleThread(SelfDiagnosticsOptions.SelfDiagnosticsConfiguration configuration)
         {
-            var callingThreadId = Environment.CurrentManagedThreadId;
-            var preambleThreadId = 0;
-            string CapturePreambleThread(SelfDiagnosticsOptions.SelfDiagnosticsConfiguration configuration)
-            {
-                Volatile.Write(ref preambleThreadId, Environment.CurrentManagedThreadId);
-                return string.Empty;
-            }
-
-            var manager = new SelfDiagnosticsSinkManager(CapturePreambleThread, static _ => { });
-            using var logger = new SelfDiagnosticsLogger(new SelfDiagnosticsOptions(), CapturePreambleThread, manager);
-
-            logger.ApplyOptions(new SelfDiagnosticsOptions { LogDirectory = directory });
-
-            Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => Volatile.Read(ref preambleThreadId) != 0));
-            Assert.NotEqual(callingThreadId, Volatile.Read(ref preambleThreadId));
+            Volatile.Write(ref preambleThreadId, Environment.CurrentManagedThreadId);
+            return string.Empty;
         }
-        finally
-        {
-            Directory.Delete(directory, recursive: true);
-        }
+
+        var manager = new SelfDiagnosticsSinkManager(CapturePreambleThread, static _ => { });
+        using var logger = new SelfDiagnosticsLogger(new SelfDiagnosticsOptions(), CapturePreambleThread, manager);
+
+        logger.ApplyOptions(new SelfDiagnosticsOptions { LogDirectory = directory.Path });
+
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(() => Volatile.Read(ref preambleThreadId) != 0),
+            "preamble factory was never invoked on the dispatcher pump thread");
+        Assert.NotEqual(callingThreadId, Volatile.Read(ref preambleThreadId));
     }
 
     private static SelfDiagnosticsLogger CreateConsoleLogger(

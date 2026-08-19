@@ -116,6 +116,8 @@ public class SelfDiagnosticsTextFormatterTests
     [Theory]
     [InlineData(ActivityTraceFlags.None, "00")]
     [InlineData(ActivityTraceFlags.Recorded, "01")]
+    //// https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899
+    //// will change this to use ActivityTraceFlags.RandomTraceId instead.
     [InlineData((ActivityTraceFlags)2, "02")]
     [InlineData(ActivityTraceFlags.Recorded | (ActivityTraceFlags)2, "03")]
     public void Format_WithActivityContext_PreservesAllTraceFlags(ActivityTraceFlags flags, string expectedFlags)

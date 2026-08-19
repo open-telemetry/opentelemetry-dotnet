@@ -12,7 +12,6 @@ public class SelfDiagnosticsPreambleTests
 {
     private const string UnclassifiedVar = "OTEL_ZZ_PREAMBLE_TEST_UNCLASSIFIED";
     private const string UnclassifiedValue = "s3cr3t-payload";
-
     private const string SafeVar = "OTEL_TRACES_SAMPLER";
     private const string SafeValue = "parentbased_always_on";
 
@@ -49,11 +48,8 @@ public class SelfDiagnosticsPreambleTests
 
         var preamble = Build(EnvironmentVariableLogMode.Names);
 
-        // Both names are listed, because names are never filtered.
         Assert.Contains(SafeVar, preamble, StringComparison.Ordinal);
         Assert.Contains(UnclassifiedVar, preamble, StringComparison.Ordinal);
-
-        // No value is disclosed, not even for a variable the SDK considers safe.
         Assert.DoesNotContain(SafeValue, preamble, StringComparison.Ordinal);
         Assert.DoesNotContain(UnclassifiedValue, preamble, StringComparison.Ordinal);
     }
@@ -69,8 +65,6 @@ public class SelfDiagnosticsPreambleTests
 
         Assert.Contains($"{SafeVar} = {SafeValue}", preamble, StringComparison.Ordinal);
 
-        // The load-bearing property: an unrecognised variable keeps its name so a misspelling
-        // stays visible, but loses its value so a variable nobody classified cannot leak.
         Assert.Contains(UnclassifiedVar, preamble, StringComparison.Ordinal);
         Assert.DoesNotContain(UnclassifiedValue, preamble, StringComparison.Ordinal);
         Assert.Contains(
@@ -115,7 +109,6 @@ public class SelfDiagnosticsPreambleTests
 
         var preamble = Build(EnvironmentVariableLogMode.AllValues);
 
-        // The deliberate opt-in for support escalation: no redaction at all.
         Assert.Contains($"{UnclassifiedVar} = {UnclassifiedValue}", preamble, StringComparison.Ordinal);
         Assert.Contains("opt-in-token", preamble, StringComparison.Ordinal);
     }
@@ -211,7 +204,6 @@ public class SelfDiagnosticsPreambleTests
     [Fact]
     public void ProfilerSection_ShowsNoneSetWhenNoProfilerVarsPresent()
     {
-        // Temporarily clear any profiler vars that may be set in the test environment.
         var cleared = new Dictionary<string, string?>
         {
             ["COR_ENABLE_PROFILING"] = null,
@@ -245,7 +237,6 @@ public class SelfDiagnosticsPreambleTests
             ("CORECLR_ENABLE_PROFILING", "1"),
             ("CORECLR_PROFILER", guid));
 
-        // Names mode suppresses OTEL_* values but runtime vars still show verbatim.
         var preamble = Build(EnvironmentVariableLogMode.Names);
 
         Assert.Contains($"CORECLR_ENABLE_PROFILING = 1", preamble, StringComparison.Ordinal);
@@ -265,7 +256,6 @@ public class SelfDiagnosticsPreambleTests
     [Fact]
     public void ProfilerSection_OmitsUnsetVars()
     {
-        // Only set vars appear; unset ones are silently skipped.
         using var scope = EnvironmentVariableScope.Create(
             ("CORECLR_ENABLE_PROFILING", "1"),
             ("COR_ENABLE_PROFILING", (string?)null));

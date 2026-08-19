@@ -25,7 +25,9 @@ public class SelfDiagnosticsSinkDispatcherTests
 
         Assert.True(dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, null));
 
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => sink.Written.Count == 1));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(() => sink.Written.Count == 1),
+            $"expected 1 written entry, found {sink.Written.Count}");
         var written = Assert.Single(sink.Written);
         Assert.Equal("warning entry", written.Entry.Message);
         Assert.Equal(captureTime, written.Entry.TimestampUtc);
@@ -49,7 +51,9 @@ public class SelfDiagnosticsSinkDispatcherTests
         Assert.True(dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, null));
 
         // The three oldest entries survive (drop-newest) plus one drop-summary warning.
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => sink.Written.Count == 4));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(() => sink.Written.Count == 4),
+            $"expected 4 written entries (3 oldest plus drop summary), found {sink.Written.Count}");
         Assert.Equal("entry 0", sink.Written[0].Entry.Message);
         Assert.Equal("entry 1", sink.Written[1].Entry.Message);
         Assert.Equal("entry 2", sink.Written[2].Entry.Message);
@@ -70,7 +74,9 @@ public class SelfDiagnosticsSinkDispatcherTests
         var entry = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "shared", null);
         dispatcher.Enqueue(in entry);
 
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => sinkA.Written.Count == 1 && sinkB.Written.Count == 1));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(() => sinkA.Written.Count == 1 && sinkB.Written.Count == 1),
+            $"expected both sinks to receive an entry; counts: A={sinkA.Written.Count}, B={sinkB.Written.Count}");
         Assert.Equal(1, formatter.FormatCount);
         Assert.Equal("shared", sinkA.Written[0].Formatted);
         Assert.Equal("shared", sinkB.Written[0].Formatted);
@@ -92,10 +98,12 @@ public class SelfDiagnosticsSinkDispatcherTests
         var entry = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "shared", null);
         dispatcher.Enqueue(in entry);
 
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(
             () => firstSharedSink.Written.Count == 1
                 && otherSink.Written.Count == 1
-                && secondSharedSink.Written.Count == 1));
+                && secondSharedSink.Written.Count == 1),
+            $"expected all three sinks to receive an entry; counts: first={firstSharedSink.Written.Count}, other={otherSink.Written.Count}, second={secondSharedSink.Written.Count}");
         Assert.Equal(1, sharedFormatter.FormatCount);
         Assert.Equal(1, otherFormatter.FormatCount);
     }
@@ -111,7 +119,9 @@ public class SelfDiagnosticsSinkDispatcherTests
         var entry = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "raw", null);
         dispatcher.Enqueue(in entry);
 
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => sink.Written.Count == 1));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(() => sink.Written.Count == 1),
+            $"expected 1 written entry, found {sink.Written.Count}");
         Assert.Null(sink.Written[0].Formatted);
         Assert.Equal("raw", sink.Written[0].Entry.Message);
     }
@@ -128,17 +138,23 @@ public class SelfDiagnosticsSinkDispatcherTests
 
         var entry = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "before replacement", null);
         dispatcher.Enqueue(in entry);
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(
-            () => removed.Written.Count == 1 && retained.Written.Count == 1));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(
+            () => removed.Written.Count == 1 && retained.Written.Count == 1),
+            $"expected both sinks to receive the entry before replacement; counts: removed={removed.Written.Count}, retained={retained.Written.Count}");
 
         currentSinks = [retained];
         Assert.True(dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 2, null));
 
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => removed.Disposed));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(() => removed.Disposed),
+            "expected the removed sink to be disposed on the pump thread");
 
         // Disposal belongs to the dedicated pump thread, never the QueueConfiguration caller.
         Assert.NotEqual(Environment.CurrentManagedThreadId, removed.DisposeThreadId);
-        Assert.False(retained.Disposed);
+        Assert.False(
+            retained.Disposed,
+            "expected the retained sink to remain undisposed after the removed sink was disposed");
     }
 
     [Fact]
@@ -169,7 +185,7 @@ public class SelfDiagnosticsSinkDispatcherTests
         dispatcher.Dispose();
 
         Assert.Equal(10, sink.Written.Count);
-        Assert.True(sink.Disposed);
+        Assert.True(sink.Disposed, "expected the sink to be disposed when the dispatcher is disposed");
 
         // Writes and disposal both belong to the dedicated pump thread, never the caller.
         Assert.NotEqual(Environment.CurrentManagedThreadId, sink.WriteThreadId);
@@ -185,7 +201,9 @@ public class SelfDiagnosticsSinkDispatcherTests
         Assert.True(dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, null));
         var entry = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "activation barrier", null);
         dispatcher.Enqueue(in entry);
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => sink.Written.Count == 1));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(() => sink.Written.Count == 1),
+            $"expected 1 written entry, found {sink.Written.Count}");
 
         Assert.False(dispatcher.IsEnabled(LogLevel.Debug));
         Assert.False(dispatcher.IsEnabled(LogLevel.None));
@@ -209,7 +227,9 @@ public class SelfDiagnosticsSinkDispatcherTests
         var entry = SelfDiagnosticsLogEntry.Capture(LogLevel.Debug, default, "debug entry", null);
         dispatcher.Enqueue(in entry);
 
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => sink.Written.Count == 1));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(() => sink.Written.Count == 1),
+            $"expected 1 written entry, found {sink.Written.Count}");
     }
 
     [Fact]
@@ -258,8 +278,10 @@ public class SelfDiagnosticsSinkDispatcherTests
 
         var applied = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "after apply", null);
         dispatcher.Enqueue(in applied);
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(
-            () => stdout.ToString().Contains("after apply", StringComparison.Ordinal)));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(
+            () => stdout.ToString().Contains("after apply", StringComparison.Ordinal)),
+            "expected the first configuration to be applied before queuing a stale generation");
 
         // Re-enter the buffering state, then hand the pump a generation it has already applied.
         dispatcher.PreparePending(configuration);
@@ -268,15 +290,16 @@ public class SelfDiagnosticsSinkDispatcherTests
         var afterStale = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "after stale generation", null);
         dispatcher.Enqueue(in afterStale);
 
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(
-            () => stdout.ToString().Contains("after stale generation", StringComparison.Ordinal)));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(
+            () => stdout.ToString().Contains("after stale generation", StringComparison.Ordinal)),
+            "expected a stale configuration generation to clear the deferred gate");
     }
 
     [Fact]
     public void PendingNewerConfiguration_RetainsItsProducerGateWhileOlderConfigurationFinishes()
     {
-        var directory = Path.Combine(Path.GetTempPath(), $"otel-dispatcher-{Guid.NewGuid():N}");
-        Directory.CreateDirectory(directory);
+        using var directory = new TemporaryDirectory();
 
         using var firstConfigurationApplying = new ManualResetEventSlim();
         using var continueFirstConfiguration = new ManualResetEventSlim();
@@ -302,7 +325,7 @@ public class SelfDiagnosticsSinkDispatcherTests
         try
         {
             var firstConfiguration = SelfDiagnosticsOptions.SelfDiagnosticsConfiguration.Create(
-                new SelfDiagnosticsOptions { LogDirectory = directory, MinimumLevel = LogLevel.Debug });
+                new SelfDiagnosticsOptions { LogDirectory = directory.Path, MinimumLevel = LogLevel.Debug });
             var secondConfiguration = CreateConfiguration(LogLevel.Error);
 
             Assert.True(dispatcher.QueueConfiguration(
@@ -313,11 +336,17 @@ public class SelfDiagnosticsSinkDispatcherTests
                     firstConfigurationApplied.Set();
                     continueFirstCallback.Wait();
                 }));
-            Assert.True(firstConfigurationApplying.Wait(TimeSpan.FromSeconds(5)));
+            Assert.True(
+                firstConfigurationApplying.Wait(TimeSpan.FromSeconds(5)),
+                "expected the first configuration to begin applying on the pump thread");
 
-            Assert.True(dispatcher.QueueConfiguration(secondConfiguration, generation: 2, appliedCallback: null));
+            Assert.True(
+                dispatcher.QueueConfiguration(secondConfiguration, generation: 2, appliedCallback: null),
+                "expected the second configuration to queue while the first was still applying");
             continueFirstConfiguration.Set();
-            Assert.True(firstConfigurationApplied.Wait(TimeSpan.FromSeconds(5)));
+            Assert.True(
+                firstConfigurationApplied.Wait(TimeSpan.FromSeconds(5)),
+                "expected the first configuration applied callback to run");
 
             Assert.False(dispatcher.IsEnabled(LogLevel.Debug));
         }
@@ -326,7 +355,6 @@ public class SelfDiagnosticsSinkDispatcherTests
             continueFirstConfiguration.Set();
             continueFirstCallback.Set();
             dispatcher.Dispose();
-            Directory.Delete(directory, recursive: true);
         }
     }
 
@@ -341,7 +369,9 @@ public class SelfDiagnosticsSinkDispatcherTests
         var entry = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "entry", null);
         dispatcher.Enqueue(in entry);
 
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => sink.FlushCount > 0));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(() => sink.FlushCount > 0),
+            $"expected the sink to be flushed after a burst, flush count={sink.FlushCount}");
     }
 
     [Fact]
@@ -355,11 +385,15 @@ public class SelfDiagnosticsSinkDispatcherTests
 
         var first = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "first", null);
         dispatcher.Enqueue(in first);
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => healthy.Written.Count == 1));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(() => healthy.Written.Count == 1),
+            $"expected the healthy sink to receive the first entry, count={healthy.Written.Count}");
 
         var second = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "second", null);
         dispatcher.Enqueue(in second);
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => healthy.Written.Count == 2));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(() => healthy.Written.Count == 2),
+            $"expected the healthy sink to receive the second entry, count={healthy.Written.Count}");
 
         // The broken sink is first in the set, so both entries reached it before the healthy
         // sink recorded them: the failure was swallowed per sink, not per entry.
@@ -369,7 +403,7 @@ public class SelfDiagnosticsSinkDispatcherTests
 
         var pump = dispatcher.PumpThread;
         Assert.NotNull(pump);
-        Assert.True(pump!.IsAlive);
+        Assert.True(pump!.IsAlive, "expected the dispatcher pump thread to remain alive after a sink write failure");
     }
 
     [Fact]
@@ -385,11 +419,15 @@ public class SelfDiagnosticsSinkDispatcherTests
 
         var first = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "first", null);
         dispatcher.Enqueue(in first);
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => healthy.Written.Count == 1));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(() => healthy.Written.Count == 1),
+            $"expected the healthy sink to receive the first entry, count={healthy.Written.Count}");
 
         var second = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "second", null);
         dispatcher.Enqueue(in second);
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => healthy.Written.Count == 2));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(() => healthy.Written.Count == 2),
+            $"expected the healthy sink to receive the second entry, count={healthy.Written.Count}");
 
         Assert.Equal(2, brokenFormatter.FormatAttempts);
         Assert.Empty(brokenFormatSink.Written);
@@ -397,7 +435,7 @@ public class SelfDiagnosticsSinkDispatcherTests
 
         var pump = dispatcher.PumpThread;
         Assert.NotNull(pump);
-        Assert.True(pump!.IsAlive);
+        Assert.True(pump!.IsAlive, "expected the dispatcher pump thread to remain alive after a formatter failure");
     }
 
     [Fact]
@@ -415,7 +453,9 @@ public class SelfDiagnosticsSinkDispatcherTests
         var entry = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "shared failure", null);
         dispatcher.Enqueue(in entry);
 
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => healthySink.Written.Count == 1));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(() => healthySink.Written.Count == 1),
+            $"expected the healthy sink to receive the entry despite shared formatter failure, count={healthySink.Written.Count}");
         Assert.Equal(1, formatter.FormatAttempts);
         Assert.Empty(firstSink.Written);
         Assert.Empty(secondSink.Written);
@@ -432,16 +472,20 @@ public class SelfDiagnosticsSinkDispatcherTests
 
         var first = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "first", null);
         dispatcher.Enqueue(in first);
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => healthy.FlushCount > 0));
-        Assert.True(broken.FlushAttempts > 0);
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(() => healthy.FlushCount > 0),
+            $"expected the healthy sink to be flushed, flush count={healthy.FlushCount}");
+        Assert.True(broken.FlushAttempts > 0, "expected the broken sink flush to be attempted");
 
         var second = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "second", null);
         dispatcher.Enqueue(in second);
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => healthy.Written.Count == 2));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(() => healthy.Written.Count == 2),
+            $"expected the healthy sink to receive the second entry, count={healthy.Written.Count}");
 
         var pump = dispatcher.PumpThread;
         Assert.NotNull(pump);
-        Assert.True(pump!.IsAlive);
+        Assert.True(pump!.IsAlive, "expected the dispatcher pump thread to remain alive after a sink flush failure");
     }
 
     [Fact]
@@ -468,7 +512,9 @@ public class SelfDiagnosticsSinkDispatcherTests
         var entry = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "after replacement", null);
         dispatcher.Enqueue(in entry);
 
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => replacement.Written.Count == 1));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(() => replacement.Written.Count == 1),
+            $"expected the replacement sink to receive the entry after configuration update, count={replacement.Written.Count}");
         Assert.Equal(1, broken.DisposeAttempts);
 
         // Both configuration and entry were queued in order, so the broken sink was already out
@@ -477,7 +523,7 @@ public class SelfDiagnosticsSinkDispatcherTests
 
         var pump = dispatcher.PumpThread;
         Assert.NotNull(pump);
-        Assert.True(pump!.IsAlive);
+        Assert.True(pump!.IsAlive, "expected the dispatcher pump thread to remain alive after a sink dispose failure");
     }
 
     [Fact]
@@ -497,7 +543,7 @@ public class SelfDiagnosticsSinkDispatcherTests
         Assert.Equal(1, broken.WriteAttempts);
         Assert.Single(healthy.Written);
         Assert.Equal(1, broken.DisposeAttempts);
-        Assert.True(healthy.Disposed);
+        Assert.True(healthy.Disposed, "expected the healthy sink to be disposed when the dispatcher is disposed");
     }
 
     [Fact]
@@ -527,7 +573,9 @@ public class SelfDiagnosticsSinkDispatcherTests
         Assert.Empty(sink.Written);
 
         Assert.True(dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Warning), 1, null));
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => sink.Written.Count == 1));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(() => sink.Written.Count == 1),
+            $"expected 1 written entry, found {sink.Written.Count}");
         Assert.Equal("buffered", sink.Written[0].Entry.Message);
     }
 
@@ -564,7 +612,9 @@ public class SelfDiagnosticsSinkDispatcherTests
 
         dispatcher.ReportInternalError("self-diagnostics machinery failed");
 
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => sink.Written.Count == 1));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(() => sink.Written.Count == 1),
+            $"expected 1 written entry, found {sink.Written.Count}");
         Assert.Equal(LogLevel.Error, sink.Written[0].Entry.Level);
         Assert.Equal("self-diagnostics machinery failed", sink.Written[0].Entry.Message);
     }
@@ -579,7 +629,9 @@ public class SelfDiagnosticsSinkDispatcherTests
 
         var barrier = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "barrier", null);
         dispatcher.Enqueue(in barrier);
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => sink.Written.Count == 1));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(() => sink.Written.Count == 1),
+            $"expected 1 written entry, found {sink.Written.Count}");
 
         Assert.True(dispatcher.QueueConfiguration(CreateConfiguration(LogLevel.Critical), 2, null));
         Assert.False(dispatcher.IsEnabled(LogLevel.Error));
@@ -587,7 +639,9 @@ public class SelfDiagnosticsSinkDispatcherTests
 
         var after = SelfDiagnosticsLogEntry.Capture(LogLevel.Critical, default, "after", null);
         dispatcher.Enqueue(in after);
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => sink.Written.Count == 2));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(() => sink.Written.Count == 2),
+            $"expected two written entries after the level change, found {sink.Written.Count}");
 
         // The queue is FIFO: had the error been accepted it would occupy this slot.
         Assert.Equal("after", sink.Written[1].Entry.Message);
@@ -607,7 +661,9 @@ public class SelfDiagnosticsSinkDispatcherTests
         var entry = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "single format", null);
         dispatcher.Enqueue(in entry);
 
-        Assert.True(SelfDiagnosticsTestHelpers.WaitUntil(() => enabled.Written.Count == 1));
+        Assert.True(
+            SelfDiagnosticsTestHelpers.WaitUntil(() => enabled.Written.Count == 1),
+            $"expected the enabled sink to receive the entry, count={enabled.Written.Count}");
         Assert.Equal(0, disabledFormatter.FormatCount);
         Assert.Equal(1, enabledFormatter.FormatCount);
         Assert.Empty(disabled.Written);

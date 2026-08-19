@@ -10,21 +10,9 @@ namespace OpenTelemetry.Tests.Diagnostics;
 [Collection(ConsoleErrorCollectionDefinition.Name)]
 public sealed class SelfDiagnosticsFileSinkTests : IDisposable
 {
-    private readonly string tempDirectory = Path.Combine(Path.GetTempPath(), "otel-selfdiag-tests-" + Guid.NewGuid().ToString("N"));
+    private readonly TemporaryDirectory tempDirectory = new();
 
-    public void Dispose()
-    {
-        try
-        {
-            if (Directory.Exists(this.tempDirectory))
-            {
-                Directory.Delete(this.tempDirectory, recursive: true);
-            }
-        }
-        catch
-        {
-        }
-    }
+    public void Dispose() => this.tempDirectory.Dispose();
 
     [Fact]
     public void NewFile_ContainsPreambleAndHeader()
@@ -36,7 +24,7 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
             sink.Flush();
         }
 
-        var content = File.ReadAllText(Directory.GetFiles(this.tempDirectory).Single());
+        var content = File.ReadAllText(Directory.GetFiles(this.tempDirectory.Path).Single());
         Assert.Contains("=== test preamble ===", content, StringComparison.Ordinal);
         Assert.Contains("DateTime (UTC)", content, StringComparison.Ordinal);
         Assert.Contains("first entry", content, StringComparison.Ordinal);
@@ -49,7 +37,7 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
 
         using (var sink = this.CreateSink(preamble: () => $"=== preamble {++preambleCalls} ===", fileSizeLimitKilobytes: 1))
         {
-            // Each line is ~600 chars, so two lines exceed the 1 KiB limit and force a rollover.
+            // Each line is ~600 chars, so two lines exceed the 1 KiB limit and forces a rollover.
             var line = new string('x', 600);
             WriteLine(sink, line);
             WriteLine(sink, line);
@@ -57,7 +45,7 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
             sink.Flush();
         }
 
-        var files = Directory.GetFiles(this.tempDirectory);
+        var files = Directory.GetFiles(this.tempDirectory.Path);
         Assert.True(files.Length >= 2, $"expected a rollover, found {files.Length} file(s)");
         Assert.True(preambleCalls >= 2, "preamble should be regenerated per file");
 
@@ -137,7 +125,7 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
             sink.Flush();
         }
 
-        var files = Directory.GetFiles(this.tempDirectory, "*.log");
+        var files = Directory.GetFiles(this.tempDirectory.Path, "*.log");
         Assert.True(files.Length >= 2, $"expected a rollover, found {files.Length} file(s)");
         Assert.True(
             files.Any(file => new FileInfo(file).Length >= 1_024),
@@ -153,7 +141,7 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
             sink.Flush();
         }
 
-        var files = Directory.GetFiles(this.tempDirectory, "*.log");
+        var files = Directory.GetFiles(this.tempDirectory.Path, "*.log");
         Assert.True(files.Length >= 2, $"expected a rollover, found {files.Length} file(s)");
         Assert.True(
             files.Any(file => new FileInfo(file).Length >= 1_024),
@@ -166,7 +154,7 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
         var errors = new List<string>();
 
         using (var sink = new SelfDiagnosticsFileSink(
-            this.tempDirectory,
+            this.tempDirectory.Path,
             fileSizeLimitKilobytes: 10_240,
             maxRetainedFiles: 3,
             preambleFactory: static () => throw new InvalidOperationException("preamble boom"),
@@ -180,7 +168,7 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
 
         Assert.Empty(errors); // a broken preamble is not a sink failure
 
-        var content = File.ReadAllText(Directory.GetFiles(this.tempDirectory).Single());
+        var content = File.ReadAllText(Directory.GetFiles(this.tempDirectory.Path).Single());
         Assert.Contains("(preamble unavailable: preamble boom)", content, StringComparison.Ordinal);
         Assert.Contains("DateTime (UTC)", content, StringComparison.Ordinal);
         Assert.Contains("entry after a broken preamble", content, StringComparison.Ordinal);
@@ -200,7 +188,9 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
             sink.Flush();
         }
 
-        Assert.True(Directory.GetFiles(this.tempDirectory).Length <= 2);
+        Assert.True(
+            Directory.GetFiles(this.tempDirectory.Path).Length <= 2,
+            $"expected at most 2 retained files, found {Directory.GetFiles(this.tempDirectory.Path).Length}");
     }
 
     [Fact]
@@ -223,7 +213,9 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
             second.Flush();
         }
 
-        Assert.True(Directory.GetFiles(this.tempDirectory).Length <= 2);
+        Assert.True(
+            Directory.GetFiles(this.tempDirectory.Path).Length <= 2,
+            $"expected at most 2 retained files, found {Directory.GetFiles(this.tempDirectory.Path).Length}");
     }
 
     [Theory]
@@ -245,8 +237,10 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
             Assert.True(sink.IsActive);
             Assert.Empty(GetRetainedFiles(sink));
 
-            filesBeforeRecreation = [.. Directory.GetFiles(this.tempDirectory)];
-            Assert.True(filesBeforeRecreation.Count > 1);
+            filesBeforeRecreation = [.. Directory.GetFiles(this.tempDirectory.Path)];
+            Assert.True(
+                filesBeforeRecreation.Count > 1,
+                $"expected more than one file before recreation, found {filesBeforeRecreation.Count}");
         }
 
         using (var sink = this.CreateSink(fileSizeLimitKilobytes: 1, maxRetainedFiles: maxRetainedFiles))
@@ -258,8 +252,12 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
             Assert.Empty(GetRetainedFiles(sink));
         }
 
-        Assert.All(filesBeforeRecreation, file => Assert.True(File.Exists(file)));
-        Assert.True(Directory.GetFiles(this.tempDirectory).Length > filesBeforeRecreation.Count);
+        Assert.All(
+            filesBeforeRecreation,
+            file => Assert.True(File.Exists(file), $"expected seeded file to remain: {file}"));
+        Assert.True(
+            Directory.GetFiles(this.tempDirectory.Path).Length > filesBeforeRecreation.Count,
+            "expected additional files after recreation without pruning enabled");
     }
 
     [Theory]
@@ -278,14 +276,14 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
             sink.Flush();
         }
 
-        Assert.Single(Directory.GetFiles(this.tempDirectory));
+        Assert.Single(Directory.GetFiles(this.tempDirectory.Path));
     }
 
     [Fact]
     public void OpenFailure_ReportsOnce_AndRecoversAfterRetryInterval()
     {
-        var blockedPath = Path.Combine(this.tempDirectory, "blocked");
-        Directory.CreateDirectory(this.tempDirectory);
+        var blockedPath = Path.Combine(this.tempDirectory.Path, "blocked");
+        Directory.CreateDirectory(this.tempDirectory.Path);
         File.WriteAllText(blockedPath, string.Empty); // a file at the directory path forces CreateDirectory to fail
 
         var errors = new List<string>();
@@ -298,18 +296,18 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
             reportError: errors.Add,
             retryInterval: TimeSpan.Zero);
 
-        Assert.False(sink.IsActive);
+        Assert.False(sink.IsActive, "expected sink to stay inactive while the log directory path is blocked");
         Assert.Single(errors); // reported once per outage, not per entry
 
         WriteLine(sink, "dropped entry");
-        Assert.False(sink.IsActive);
+        Assert.False(sink.IsActive, "expected dropped entries to leave the sink inactive before recovery");
         Assert.Single(errors);
 
         // Clear the obstruction; the next write (retry interval is zero) must self-heal.
         File.Delete(blockedPath);
 
         WriteLine(sink, "recovered entry");
-        Assert.True(sink.IsActive);
+        Assert.True(sink.IsActive, "expected sink to recover after clearing the blocked log directory path");
         sink.Flush();
 
         // The sink still holds the file open, so read with a write-tolerant share mode.
@@ -323,14 +321,14 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
         var errors = new List<string>();
 
         using var sink = new SelfDiagnosticsFileSink(
-            this.tempDirectory,
+            this.tempDirectory.Path,
             fileSizeLimitKilobytes: 10_240,
             maxRetainedFiles: 3,
             preambleFactory: null,
             reportError: errors.Add,
             retryInterval: TimeSpan.FromHours(1));
 
-        Assert.True(sink.IsActive);
+        Assert.True(sink.IsActive, "expected sink to open successfully before simulating a write failure");
         WriteLine(sink, "before the failure");
 
         var filePath = sink.CurrentFilePath;
@@ -340,7 +338,7 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
 
         WriteLine(sink, "the entry that fails");
 
-        Assert.False(sink.IsActive);
+        Assert.False(sink.IsActive, "expected write failure to mark the sink inactive");
         Assert.Single(errors);
         Assert.Contains("write to", errors[0], StringComparison.Ordinal);
         Assert.Contains("Entries will be dropped", errors[0], StringComparison.Ordinal);
@@ -350,9 +348,9 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
         WriteLine(sink, "dropped entry one");
         WriteLine(sink, "dropped entry two");
 
-        Assert.False(sink.IsActive);
+        Assert.False(sink.IsActive, "expected sink to remain inactive until the retry interval elapses");
         Assert.Single(errors);
-        Assert.Single(Directory.GetFiles(this.tempDirectory));
+        Assert.Single(Directory.GetFiles(this.tempDirectory.Path));
 
         var content = File.ReadAllText(filePath);
         Assert.Contains("before the failure", content, StringComparison.Ordinal);
@@ -365,21 +363,21 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
         var errors = new List<string>();
 
         using var sink = new SelfDiagnosticsFileSink(
-            this.tempDirectory,
+            this.tempDirectory.Path,
             fileSizeLimitKilobytes: 10_240,
             maxRetainedFiles: 3,
             preambleFactory: null,
             reportError: errors.Add,
             retryInterval: TimeSpan.FromHours(1));
 
-        Assert.True(sink.IsActive);
+        Assert.True(sink.IsActive, "expected sink to open successfully before simulating a flush failure");
         WriteLine(sink, "an entry to flush");
 
         CloseUnderlyingWriter(sink);
 
         sink.Flush();
 
-        Assert.False(sink.IsActive);
+        Assert.False(sink.IsActive, "expected flush failure to mark the sink inactive");
         Assert.Single(errors);
         Assert.Contains("flush of", errors[0], StringComparison.Ordinal);
 
@@ -395,23 +393,23 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
         var errors = new List<string>();
 
         using var sink = new SelfDiagnosticsFileSink(
-            this.tempDirectory,
+            this.tempDirectory.Path,
             fileSizeLimitKilobytes: 1,
             maxRetainedFiles: 3,
             preambleFactory: null,
             reportError: errors.Add,
             retryInterval: TimeSpan.FromHours(1));
 
-        Assert.True(sink.IsActive);
+        Assert.True(sink.IsActive, "expected sink to open successfully before simulating a rollover flush failure");
         using var replacement = new StreamWriter(new FlushThrowingStream());
         ReplaceUnderlyingWriter(sink, replacement);
 
         WriteLine(sink, new string('x', 1_024));
 
-        Assert.False(sink.IsActive);
+        Assert.False(sink.IsActive, "expected rollover flush failure to mark the sink inactive");
         Assert.Single(errors);
         Assert.Contains("rollover of", errors[0], StringComparison.Ordinal);
-        Assert.Single(Directory.GetFiles(this.tempDirectory));
+        Assert.Single(Directory.GetFiles(this.tempDirectory.Path));
     }
 
     [Fact]
@@ -451,7 +449,7 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
             sink.Flush();
         }
 
-        foreach (var file in Directory.GetFiles(this.tempDirectory))
+        foreach (var file in Directory.GetFiles(this.tempDirectory.Path))
         {
             Assert.StartsWith("otel-dotnet-", Path.GetFileName(file), StringComparison.Ordinal);
             Assert.EndsWith(".log", file, StringComparison.Ordinal);
@@ -483,7 +481,7 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
 
         Assert.False(File.Exists(firstPath), "the closed outgoing file remained excluded from retention");
         Assert.True(File.Exists(secondPath), "the current file was pruned");
-        Assert.Single(Directory.GetFiles(this.tempDirectory, "*.log"));
+        Assert.Single(Directory.GetFiles(this.tempDirectory.Path, "*.log"));
     }
 
     [Fact]
@@ -499,8 +497,8 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
             // Deliberately no Flush() call: disposal is the only thing that can get this on disk.
             sink.Dispose();
 
-            Assert.False(sink.IsActive);
-            Assert.False(sink.IsEnabled(LogLevel.Error));
+            Assert.False(sink.IsActive, "expected disposed sink to report inactive");
+            Assert.False(sink.IsEnabled(LogLevel.Error), "expected disposed sink to reject further entries");
 
             WriteLine(sink, "after disposal");
         }
@@ -510,7 +508,7 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
         var content = File.ReadAllText(filePath);
         Assert.Contains("buffered until disposal", content, StringComparison.Ordinal);
         Assert.DoesNotContain("after disposal", content, StringComparison.Ordinal);
-        Assert.Single(Directory.GetFiles(this.tempDirectory));
+        Assert.Single(Directory.GetFiles(this.tempDirectory.Path));
     }
 
     private static void WriteLine(SelfDiagnosticsFileSink sink, string message)
@@ -563,7 +561,7 @@ public sealed class SelfDiagnosticsFileSinkTests : IDisposable
         int maxRetainedFiles = 3,
         string? excludeFromPruning = null)
         => new(
-            this.tempDirectory,
+            this.tempDirectory.Path,
             fileSizeLimitKilobytes,
             maxRetainedFiles,
             preamble,
