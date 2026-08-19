@@ -603,15 +603,9 @@ internal static class ProtobufOtlpMetricSerializer
 
         static int WriteExplicitBounds(byte[] buffer, int writePosition, double[] values)
         {
-            var length = 0;
+            Debug.Assert(!Array.Exists(values, static value => double.IsInfinity(value)), "Explicit bounds must not contain positive or negative infinity.");
 
-            for (var i = 0; i < values.Length; i++)
-            {
-                if (values[i] != double.PositiveInfinity)
-                {
-                    length++;
-                }
-            }
+            var length = values.Length;
 
             if (length > 0)
             {
@@ -623,11 +617,7 @@ internal static class ProtobufOtlpMetricSerializer
 
                 for (var i = 0; i < values.Length; i++)
                 {
-                    var value = values[i];
-                    if (value != double.PositiveInfinity)
-                    {
-                        writePosition = ProtobufSerializer.WriteDouble(buffer, writePosition, value);
-                    }
+                    writePosition = ProtobufSerializer.WriteDouble(buffer, writePosition, values[i]);
                 }
             }
 
