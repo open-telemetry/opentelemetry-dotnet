@@ -93,9 +93,6 @@ public sealed class SelfDiagnosticsOptions
     /// <c>OTEL_LOG_LEVEL</c> is <c>info</c>. <see cref="LogLevel.Information"/> and below are
     /// considerably more verbose, and that verbosity costs log volume, disk, and sink throughput
     /// without usually adding diagnostic value until something is actually being investigated.
-    /// Because this channel is intended to be safe to leave enabled in production, the more
-    /// economical level is the better default; a default that the documentation would immediately
-    /// tell readers to override is not a useful default.
     /// </para>
     /// <para>
     /// Set <c>OTEL_LOG_LEVEL=info</c>, or assign this property, to take the specification default.
@@ -491,10 +488,8 @@ public sealed class SelfDiagnosticsOptions
                 }
             }
 
-            internal void DisposeSubscription()
-            {
+            internal void DisposeSubscription() =>
                 Interlocked.Exchange(ref this.subscription, null)?.Dispose();
-            }
 
             private void Publish(SelfDiagnosticsOptions options)
             {
