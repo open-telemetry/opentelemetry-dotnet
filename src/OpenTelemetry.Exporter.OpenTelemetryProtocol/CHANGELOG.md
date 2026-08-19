@@ -45,6 +45,16 @@ Notes](../../RELEASENOTES.md).
   limit is discarded and treated as a non-retryable failure.
   ([#7583](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7583))
 
+* Improved OTLP log attribute serialization performance by avoiding unnecessary
+  boxing.
+  ([#7645](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7645))
+
+* The OTLP exporter will now export logger version if it was specified. Log
+  records are grouped into `ScopeLogs` by logger name and version, so loggers
+  sharing a name but reporting different versions are exported as separate
+  scopes.
+  ([#7636](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7636))
+
 * Fixed persistent storage allowing a blob write to exceed the configured
   maximum storage size.
   ([#7646](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7646))
