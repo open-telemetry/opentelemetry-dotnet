@@ -34,7 +34,15 @@ internal static class GrpcProtocolHelpers
     {
         try
         {
-            return trailingHeaders.Any()
+            // On modern .NET, use the non-validating collection to avoid enumerating
+            // and validating the headers just to determine whether any are present.
+#if NET
+            var hasTrailingHeaders = trailingHeaders.NonValidated.Count > 0;
+#else
+            var hasTrailingHeaders = trailingHeaders.Any();
+#endif
+
+            return hasTrailingHeaders
                 ? GetStatusCore(trailingHeaders)
                 : GetStatusCore(httpResponse.Headers);
         }
