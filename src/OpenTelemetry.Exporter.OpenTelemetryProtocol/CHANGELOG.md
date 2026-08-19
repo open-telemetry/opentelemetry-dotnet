@@ -63,6 +63,10 @@ Notes](../../RELEASENOTES.md).
   maximum storage size.
   ([#7646](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7646))
 
+* Improved OTLP/gRPC response status handling performance by avoiding unnecessary
+  header enumeration on .NET 8+.
+  ([#7659](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7659))
+
 * Added `OtlpExporterOptions.MaxRequestSizeBytes` to configure the OTLP request
   size limit, as required by the OpenTelemetry specification. The default is the
   recommended 64 MiB. A batch whose serialized payload exceeds the limit is not

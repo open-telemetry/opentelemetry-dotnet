@@ -149,7 +149,7 @@ public sealed class OtlpKvListAttributeTests : IDisposable
     public void KvListWithManyEntries()
     {
         var kvList = new List<KeyValuePair<string, object?>>();
-        for (int i = 0; i < 50; i++)
+        for (var i = 0; i < 50; i++)
         {
             kvList.Add(new($"key{i}", (long)i));
         }
@@ -162,10 +162,10 @@ public sealed class OtlpKvListAttributeTests : IDisposable
         var values = attribute.Value.KvlistValue.Values;
         Assert.Equal(50, values.Count);
 
-        for (int i = 0; i < 50; i++)
+        for (var i = 0; i < 50; i++)
         {
             Assert.Equal($"key{i}", values[i].Key);
-            Assert.Equal((long)i, values[i].Value.IntValue);
+            Assert.Equal(i, values[i].Value.IntValue);
         }
     }
 
@@ -355,9 +355,7 @@ public sealed class OtlpKvListAttributeTests : IDisposable
     }
 
     public void Dispose()
-    {
-        this.activityListener.Dispose();
-    }
+        => this.activityListener.Dispose();
 
     private static IEnumerable<KeyValuePair<string, object?>> FaultyKvList()
     {
@@ -367,15 +365,14 @@ public sealed class OtlpKvListAttributeTests : IDisposable
 
     private static List<KeyValuePair<string, object?>> SelfReferencingKvList()
     {
-        var list = new List<KeyValuePair<string, object?>>();
-        list.Add(new("int", 1));
+        var list = new List<KeyValuePair<string, object?>> { new("int", 1) };
         list.Add(new("self", list));
         return list;
     }
 
     private static bool TryTransformTag(KeyValuePair<string, object?> tag, [NotNullWhen(true)] out OtlpCommon.KeyValue? attribute)
     {
-        ProtobufOtlpTagWriter.OtlpTagWriterState otlpTagWriterState = new ProtobufOtlpTagWriter.OtlpTagWriterState
+        var otlpTagWriterState = new ProtobufOtlpTagWriter.OtlpTagWriterState
         {
             Buffer = new byte[4096],
             WritePosition = 0,

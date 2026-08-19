@@ -34,7 +34,13 @@ internal static class GrpcProtocolHelpers
     {
         try
         {
-            return trailingHeaders.Any()
+#if NET
+            var hasTrailingHeaders = trailingHeaders.NonValidated.Count > 0;
+#else
+            var hasTrailingHeaders = trailingHeaders.Any();
+#endif
+
+            return hasTrailingHeaders
                 ? GetStatusCore(trailingHeaders)
                 : GetStatusCore(httpResponse.Headers);
         }
