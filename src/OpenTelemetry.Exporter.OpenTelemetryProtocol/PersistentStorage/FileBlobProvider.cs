@@ -185,9 +185,9 @@ public class FileBlobProvider : PersistentBlobProvider, IDisposable
         this.directorySizeTracker.RecountCurrentSize();
     }
 
-    private bool CheckStorageSize()
+    private bool CheckStorageSize(int bufferLength)
     {
-        if (!this.directorySizeTracker.IsSpaceAvailable(out var size))
+        if (!this.directorySizeTracker.IsSpaceAvailable(bufferLength, out var size))
         {
             // TODO: check accuracy of size reporting.
             PersistentStorageEventSource.Log.PersistentStorageWarning(
@@ -201,7 +201,7 @@ public class FileBlobProvider : PersistentBlobProvider, IDisposable
 
     private FileBlob? CreateFileBlob(ReadOnlySpan<byte> buffer, int leasePeriodMilliseconds = 0)
     {
-        if (!this.CheckStorageSize())
+        if (!this.CheckStorageSize(buffer.Length))
         {
             return null;
         }
