@@ -34,8 +34,6 @@ internal static class GrpcProtocolHelpers
     {
         try
         {
-            // On modern .NET, use the non-validating collection to avoid enumerating
-            // and validating the headers just to determine whether any are present.
 #if NET
             var hasTrailingHeaders = trailingHeaders.NonValidated.Count > 0;
 #else
