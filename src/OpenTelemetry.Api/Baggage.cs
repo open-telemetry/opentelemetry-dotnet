@@ -249,6 +249,13 @@ public readonly struct Baggage : IEquatable<Baggage>
             return this.RemoveBaggage(name);
         }
 
+        if (this.baggage != null &&
+            this.baggage.TryGetValue(name, out var existingValue) &&
+            existingValue == value)
+        {
+            return this;
+        }
+
         return new Baggage(
             new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.Ordinal)
             {
