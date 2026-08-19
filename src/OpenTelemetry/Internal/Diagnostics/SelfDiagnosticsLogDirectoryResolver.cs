@@ -25,8 +25,10 @@ internal static class SelfDiagnosticsLogDirectoryResolver
             return platformProvider() switch
             {
                 SelfDiagnosticsPlatform.Windows => ResolveWindows(specialFolderProvider),
+#if !NETFRAMEWORK
                 SelfDiagnosticsPlatform.MacOS => ResolveMacOS(specialFolderProvider),
                 SelfDiagnosticsPlatform.Unix => ResolveUnix(specialFolderProvider, environmentVariableProvider),
+#endif
                 _ => null,
             };
         }
@@ -61,6 +63,7 @@ internal static class SelfDiagnosticsLogDirectoryResolver
             : Path.Combine(localAppData, "OpenTelemetry", "dotnet-diagnostics");
     }
 
+#if !NETFRAMEWORK
     private static string? ResolveMacOS(Func<Environment.SpecialFolder, string> specialFolderProvider)
     {
         var home = specialFolderProvider(Environment.SpecialFolder.UserProfile);
@@ -84,4 +87,5 @@ internal static class SelfDiagnosticsLogDirectoryResolver
             ? null
             : Path.Combine(home, ".local", "state", "opentelemetry", "dotnet-diagnostics");
     }
+#endif
 }

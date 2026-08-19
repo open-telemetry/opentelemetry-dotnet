@@ -43,6 +43,7 @@ public sealed class SelfDiagnosticsOptions
     internal const string SinksEnvVarName = "OTEL_DOTNET_SELF_DIAGNOSTICS_SINKS";
     internal const string LogDirectoryEnvVarName = "OTEL_DOTNET_SELF_DIAGNOSTICS_LOG_DIRECTORY";
     internal const string EnvironmentVariablesEnvVarName = "OTEL_DOTNET_SELF_DIAGNOSTICS_ENV_VARS";
+    internal const string LogLevelExpectedValues = "error, warn, info, debug, trace, none";
     internal const string SinksExpectedValues = "none, file, stdout, stderr, console";
     internal const int DefaultFileSizeLimitKilobytes = 10_240;
     internal const int DefaultMaxRetainedFiles = 10;
