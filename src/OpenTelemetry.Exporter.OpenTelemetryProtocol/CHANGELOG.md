@@ -63,6 +63,10 @@ Notes](../../RELEASENOTES.md).
   maximum storage size.
   ([#7646](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7646))
 
+* Improved OTLP/gRPC response status handling performance by avoiding unnecessary
+  header enumeration on .NET 8+.
+  ([#7659](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7659))
+
 ## 1.17.0
 
 Released 2026-Jul-16
