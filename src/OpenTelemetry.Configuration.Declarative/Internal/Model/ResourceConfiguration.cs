@@ -15,10 +15,10 @@ internal sealed record ResourceConfiguration
     /// <summary>
     /// Gets the pre-encoded <c>attributes_list</c> string (OTEL_RESOURCE_ATTRIBUTES format).
     /// </summary>
-    public ConfigProperty<string> AttributesList { get; init; }
+    public ModelProperty<string> AttributesList { get; init; }
 
     /// <summary>
     /// Gets the structured <c>attributes</c> entries, in document order.
     /// </summary>
-    public ConfigProperty<IReadOnlyList<ResourceAttributeEntry>> Attributes { get; init; }
+    public ModelProperty<IReadOnlyList<ResourceAttributeEntry>> Attributes { get; init; }
 }
