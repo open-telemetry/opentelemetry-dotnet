@@ -61,9 +61,8 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
     private long droppedCount;
     private long latestAppliedGeneration = -1;
 
-    // Applies only when draining the buffer captured before the first configuration was applied,
-    // where the level entries were admitted under can differ from the level that configuration
-    // resolved to. Live entries are never re-filtered - see the Entry case in PumpAsync.
+    // Level applied when draining buffered pre-configuration entries, which may have been
+    // admitted at a looser level than the resolved configuration.
     private LogLevel drainMinimumLevel = LogLevel.Trace;
 
     internal SelfDiagnosticsSinkDispatcher(
@@ -116,17 +115,12 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
             pump = this.pumpThread;
         }
 
-        // Full fence. The handshake with Enqueue is a store (disposed) followed by a load
-        // (enqueueWriters) on this side, and a store (enqueueWriters) followed by a load
-        // (disposed) on the producer side. Monitor.Exit is a release barrier and does not
-        // order a later load against the earlier store, so without this both sides can miss
-        // each other and a producer can reach the semaphore after the pump has disposed it.
+        // Full fence: Monitor.Exit above is a release-only barrier. Without a full fence
+        // here a producer can slip past the disposed check and reach a disposed semaphore.
         Interlocked.MemoryBarrier();
 
-        // Bounded: this runs from an AppDomain.ProcessExit handler, where a producer thread
-        // descheduled inside Enqueue must not be able to stall process exit indefinitely.
-        // Giving up early risks an ObjectDisposedException on the semaphore, which SignalPump
-        // already swallows, so the deadline is the safer trade.
+        // Bounded: runs from ProcessExit, where a stalled producer must not block
+        // indefinitely. SignalPump swallows ObjectDisposedException on timeout.
         SpinWait spinner = default;
         var drainTimer = Stopwatch.StartNew();
         while (Volatile.Read(ref this.enqueueWriters) != 0 && drainTimer.Elapsed < EnqueueQuiesceTimeout)
@@ -152,9 +146,7 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
         this.queue.Enqueue(WorkItem.ForShutdown());
         this.SignalPump();
 
-        // Join rather than abandon: the pump owns the final drain, the last flush, and sink
-        // disposal. The pump body never lets an exception escape, so this cannot rethrow; a
-        // timeout means the drain is abandoned and disposal falls back to best-effort.
+        // The pump owns final drain, flush, and sink disposal. Timeout = best-effort fallback.
         pump.Join(DisposeDrainTimeout);
 
         // Safeguard: if the join timed out and the pump is still blocking on Wait (e.g. the
@@ -227,9 +219,7 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
                 return;
             }
 
-            // LogLevel.None is rejected here as well as in IsEnabled. Without it a None entry
-            // would consume bounded queue capacity only to be discarded by the pump, so the two
-            // admission checks would disagree about what counts as an entry.
+            // Also guard None here to avoid consuming queue capacity for entries IsEnabled already rejected.
             if (entry.Level == LogLevel.None
                 || (!this.deferred && entry.Level < this.minimumLevel))
             {
@@ -277,7 +267,9 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
         return true;
     }
 
-    /// <summary>Reports a failure of the diagnostics machinery itself.</summary>
+    /// <summary>
+    /// Reports a failure of the diagnostics machinery itself.
+    /// </summary>
     /// <remarks>
     /// Deliberately reported twice: standard error guarantees the message escapes even when the
     /// pump is dead or every sink is broken, and the queued entry puts it in the log file where
@@ -308,11 +300,8 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
     /// Starts the pump on a dedicated background thread rather than the thread pool.
     /// </summary>
     /// <remarks>
-    /// Self-diagnostics exists to explain unhealthy processes, and thread-pool starvation is a
-    /// condition it may be switched on to investigate. A pump that needed a pool
-    /// thread in order to wake would stall exactly when its output matters most, so it gets a
-    /// thread of its own. The cost is paid only once a configuration with a sink arrives: a
-    /// silent SDK - the default - never creates it.
+    /// Thread-pool starvation is a condition self-diagnostics may be investigating;
+    /// a dedicated thread ensures the pump stays alive exactly when its output matters most.
     /// </remarks>
     private void EnsurePumpStartedUnderLock()
     {
@@ -334,31 +323,18 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
     {
         try
         {
-            // Each queued item releases the semaphore. Coalescing with a separate pending flag
-            // leaves a lost-wakeup window between publishing that flag and releasing the
-            // semaphore: if the publishing thread is suspended there, every other producer skips
-            // the release and the pump remains blocked. Extra permits can only cause bounded
-            // empty passes after a burst; a missing permit can stall the pump indefinitely.
+            // One release per item: coalescing via a flag risks a lost wakeup if a producer
+            // is suspended between setting the flag and releasing the semaphore.
             this.signal.Release();
         }
         catch (ObjectDisposedException)
         {
-            // The pump owns the semaphore and disposes it as it exits. A producer can slip past
-            // the disposed check, and Dispose can signal after a pump fault. Neither has anything
-            // left to wake, and Dispose runs from an AppDomain.ProcessExit handler where an
-            // escaping exception is not recoverable.
+            // The pump disposes the semaphore as it exits. A racing producer or Dispose
+            // call may arrive after that; neither has anything to wake.
         }
     }
 
-    /// <summary>
-    /// Hard exception boundary for the pump thread.
-    /// </summary>
-    /// <remarks>
-    /// An unhandled exception on a dedicated thread terminates the process, so nothing may
-    /// escape. Per-sink, per-formatter, and per-callback failures are already isolated inside
-    /// <see cref="PumpCore"/>, so reaching here means the dispatcher itself failed and diagnostics
-    /// stop for the rest of the process.
-    /// </remarks>
+    /// <summary>Hard exception boundary: an unhandled exception on a dedicated thread terminates the process.</summary>
     private void Pump()
     {
         try
@@ -377,9 +353,7 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
 
         try
         {
-            // Terminates on the Shutdown work item, which Dispose always enqueues before
-            // waiting on this task; the loop has no other exit and needs no attempt budget.
-            while (true)
+            while (!this.pumpCts.IsCancellationRequested)
             {
                 try
                 {
@@ -387,7 +361,7 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
                 }
                 catch (OperationCanceledException)
                 {
-                    break; // Dispose cancelled the wait; exit so finally can clean up.
+                    break;
                 }
 
                 var wroteAny = false;
@@ -456,10 +430,8 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
     {
         if (workItem.Generation <= this.latestAppliedGeneration)
         {
-            // A stale generation can only finalize a pending transition when it is still the
-            // most recently queued configuration. Callers queue monotonic generations today, but
-            // retaining this guard prevents a defensive stale-generation path from stranding the
-            // dispatcher in deferred mode.
+            // Stale generation: skip sink replacement but still finalize the transition
+            // if current, to avoid stranding the dispatcher in deferred mode.
             this.FinalizeConfigurationTransitionIfCurrent(workItem.Generation, default);
             return;
         }
@@ -467,11 +439,8 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
         this.latestAppliedGeneration = workItem.Generation;
         var configuration = workItem.Configuration!;
 
-        // Sink construction is designed not to throw, but the pump must survive if it ever
-        // does: a dead pump disposes the semaphore while the dispatcher is still accepting
-        // entries, surfacing ObjectDisposedException from Enqueue on application threads.
-        // On failure the current sink set is retained and the state transitions below still
-        // run, so the dispatcher cannot get stuck buffering in deferred mode.
+        // Sink construction must not kill the pump: a dead pump would dispose the semaphore
+        // while Enqueue is still running on application threads.
         try
         {
             var newSinks = this.sinkResolver is not null
@@ -570,7 +539,7 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
                 }
                 catch
                 {
-                    // Best-effort disposal. All sink lifecycle operations remain on this thread.
+                    // Best-effort disposal.
                 }
             }
         }
@@ -669,8 +638,7 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
                         }
                         catch
                         {
-                            // Record failures as well as results so a formatter is invoked at
-                            // most once per entry even when several sinks share the instance.
+                            // Record failure so this formatter is not retried for other sinks sharing the instance.
                             formatterResults.Add(new FormatterResult(formatter, null, succeeded: false));
                             continue;
                         }

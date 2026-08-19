@@ -139,12 +139,15 @@ internal static class SelfDiagnosticsOptionsEnvironmentDefaults
             case "NONE":
                 mode = EnvironmentVariableLogMode.None;
                 return true;
+
             case "NAMES":
                 mode = EnvironmentVariableLogMode.Names;
                 return true;
+
             case "KNOWNSAFE":
                 mode = EnvironmentVariableLogMode.KnownSafeValues;
                 return true;
+
             case "ALL":
                 mode = EnvironmentVariableLogMode.AllValues;
                 return true;
