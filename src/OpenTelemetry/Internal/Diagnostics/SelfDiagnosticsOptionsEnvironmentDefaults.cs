@@ -47,7 +47,7 @@ internal static class SelfDiagnosticsOptionsEnvironmentDefaults
             }
             else
             {
-                AddWarning(ref warnings, SelfDiagnosticsOptions.LogLevelEnvVarName, logLevelRaw, "error, warn, info, debug, trace, none");
+                AddWarning(ref warnings, SelfDiagnosticsOptions.LogLevelEnvVarName, logLevelRaw, SelfDiagnosticsOptions.LogLevelExpectedValues);
             }
         }
 

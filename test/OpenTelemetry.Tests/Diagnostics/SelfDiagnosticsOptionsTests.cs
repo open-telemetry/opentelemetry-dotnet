@@ -351,6 +351,7 @@ public class SelfDiagnosticsOptionsTests
         Assert.Null(result);
     }
 
+#if !NETFRAMEWORK
     [Fact]
     public void DefaultLogDirectory_MacOSUsesUserLogsDirectory()
     {
@@ -412,6 +413,7 @@ public class SelfDiagnosticsOptionsTests
 
         Assert.Null(result);
     }
+#endif
 
     [Fact]
     public void DefaultLogDirectory_ReturnsNullWhenPlatformResolutionThrows()
