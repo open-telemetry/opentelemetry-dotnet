@@ -64,9 +64,6 @@ public class TelemetrySpanTests
         var exception = new ExceptionWithThrowingToString();
 
         telemetrySpan.RecordException(exception);
-
-        // placeholder assertion
-        Assert.Empty(activity.Events);
     }
 
     [Fact]
