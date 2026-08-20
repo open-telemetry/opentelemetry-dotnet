@@ -346,7 +346,7 @@ public sealed class ConfigPropertiesTests
     public void Double_LongMaxValueAsDouble_IsMismatchForInt64()
     {
         // (double)long.MaxValue rounds up to 2^63, which is one past long.MaxValue and must be rejected.
-        var properties = Build("k", ConfigValue.Double((double)long.MaxValue));
+        var properties = Build("k", ConfigValue.Double(long.MaxValue));
         Assert.Equal(ConfigValueOutcome.TypeMismatch, properties.GetLong("k").Outcome);
     }
 
@@ -395,7 +395,7 @@ public sealed class ConfigPropertiesTests
     [Fact]
     public void EmptySequence_ReturnsEmptyList_PropertiesList()
     {
-        var seq = ConfigValue.Sequence(Array.Empty<ConfigValue>());
+        var seq = ConfigValue.Sequence([]);
         var result = Build("k", seq).GetPropertiesList("k");
         Assert.Equal(ConfigValueOutcome.Present, result.Outcome);
         Assert.Empty(result.Value!);
@@ -404,7 +404,7 @@ public sealed class ConfigPropertiesTests
     [Fact]
     public void EmptySequence_ReturnsEmptyList_ScalarList()
     {
-        var seq = ConfigValue.Sequence(Array.Empty<ConfigValue>());
+        var seq = ConfigValue.Sequence([]);
         var result = Build("k", seq).GetScalarList<string>("k");
         Assert.Equal(ConfigValueOutcome.Present, result.Outcome);
         Assert.Empty(result.Value!);
@@ -567,7 +567,7 @@ public sealed class ConfigPropertiesTests
         var seq = ConfigValue.Sequence([ConfigValue.Boolean(true), ConfigValue.Boolean(false)]);
         var result = Build("k", seq).GetScalarList<bool>("k");
         Assert.Equal(ConfigValueOutcome.Present, result.Outcome);
-        Assert.Collection(result.Value!, v => Assert.True(v), v => Assert.False(v));
+        Assert.Collection(result.Value!, Assert.True, Assert.False);
     }
 
     [Fact]
@@ -585,8 +585,8 @@ public sealed class ConfigPropertiesTests
         // The signature is IReadOnlyList<T>, not IReadOnlyList<T?>. With the null-element rule in place
         // the annotation is accurate for a value element type as well as a reference one, which it was
         // not while an unconstrained T? claimed to carry per-element nulls.
-        IReadOnlyList<long> longs = Build("k", ConfigValue.Sequence([ConfigValue.Integer(1L)])).GetScalarList<long>("k").Value!;
-        IReadOnlyList<string> strings = Build("k", ConfigValue.Sequence([ConfigValue.String("a")])).GetScalarList<string>("k").Value!;
+        var longs = Build("k", ConfigValue.Sequence([ConfigValue.Integer(1L)])).GetScalarList<long>("k").Value!;
+        var strings = Build("k", ConfigValue.Sequence([ConfigValue.String("a")])).GetScalarList<string>("k").Value!;
         Assert.Equal(1L, longs[0]);
         Assert.Equal("a", strings[0]);
     }
@@ -604,7 +604,7 @@ public sealed class ConfigPropertiesTests
     {
         // Without a guard, an empty sequence would return Present for any T because TryExtractScalar is
         // never called. The check must fire before the loop, not inside it.
-        var seq = ConfigValue.Sequence(Array.Empty<ConfigValue>());
+        var seq = ConfigValue.Sequence([]);
         Assert.Throws<NotSupportedException>(() => Build("k", seq).GetScalarList<DateTime>("k"));
     }
 
@@ -692,9 +692,7 @@ public sealed class ConfigPropertiesTests
 
     [Fact]
     public void Builder_Add_NullKey_Throws()
-    {
-        Assert.Throws<ArgumentNullException>(() => new ConfigPropertiesBuilder().Add(null!, ConfigValue.String("v")));
-    }
+        => Assert.Throws<ArgumentNullException>(() => new ConfigPropertiesBuilder().Add(null!, ConfigValue.String("v")));
 
     [Fact]
     public void BuilderMutatedAfterBuild_DoesNotAffectBuiltProperties()
@@ -751,7 +749,9 @@ public sealed class ConfigPropertiesTests
 
         var result = properties.GetScalarList<string>("k");
         Assert.Equal(ConfigValueOutcome.Present, result.Outcome);
-        Assert.Collection(result.Value!, v => Assert.Equal("a", v));
+
+        var expected = Assert.Single(result.Value!);
+        Assert.Equal("a", expected);
     }
 
     [Fact]
@@ -789,7 +789,7 @@ public sealed class ConfigPropertiesTests
     [Fact]
     public void Sequence_AsSequence_RejectsMutation()
     {
-        var seq = ConfigValue.Sequence(new List<ConfigValue> { ConfigValue.String("a") });
+        var seq = ConfigValue.Sequence([ConfigValue.String("a")]);
         var list = seq.AsSequence();
 
         Assert.Throws<NotSupportedException>(() => ((IList<ConfigValue>)list).Add(ConfigValue.String("b")));
@@ -815,7 +815,9 @@ public sealed class ConfigPropertiesTests
         var list = properties.GetScalarList<string>("k").Value!;
 
         Assert.Throws<NotSupportedException>(() => ((IList<string>)list).Add("b"));
-        Assert.Collection(list, v => Assert.Equal("a", v));
+
+        var expected = Assert.Single(list);
+        Assert.Equal("a", expected);
     }
 
     [Fact]
