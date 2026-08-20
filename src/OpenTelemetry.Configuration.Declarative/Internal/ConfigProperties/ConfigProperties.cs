@@ -216,8 +216,7 @@ internal sealed class ConfigProperties
             && typeof(T) != typeof(int))
         {
             throw new NotSupportedException(
-                $"'{typeof(T).Name}' is not a supported scalar element type. " +
-                "Supported types are string, bool, long, double, and int.");
+                $"'{typeof(T).Name}' is not a supported scalar element type. Supported types are string, bool, long, double, and int.");
         }
 
         if (!this.TryGetValue(key, out var value))
