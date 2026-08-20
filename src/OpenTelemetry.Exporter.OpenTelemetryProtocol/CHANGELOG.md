@@ -67,6 +67,18 @@ Notes](../../RELEASENOTES.md).
   header enumeration on .NET 8+.
   ([#7659](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7659))
 
+* Added `OtlpExporterOptions.MaxRequestSizeBytes` to configure the OTLP request
+  size limit, as required by the OpenTelemetry specification. The default is the
+  recommended 64 MiB. A batch whose serialized payload exceeds the limit is not
+  sent and is dropped in its entirety. The maximum supported value is 256 MiB.
+  ([#7584](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7584))
+
+* **Breaking:** The maximum size of a single export request is now 64 MiB by
+  default instead of 128 MiB to conform with the OpenTelemetry specification.
+  Raise the value of `OtlpExporterOptions.MaxRequestSizeBytes` property to
+  increase the capacity.
+  ([#7584](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7584))
+
 ## 1.17.0
 
 Released 2026-Jul-16
