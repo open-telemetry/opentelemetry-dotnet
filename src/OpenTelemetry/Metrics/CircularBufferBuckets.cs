@@ -281,9 +281,14 @@ internal sealed class CircularBufferBuckets
 
         if (this.trait != null)
         {
-            for (var i = 0; i < this.Size; ++i)
+            var size = this.Size;
+            var offset = this.ModuloIndex(this.Offset);
+            var first = Math.Min(size, this.Capacity - offset);
+            Array.Copy(this.trait, offset, dst, 0, first);
+
+            if (first < size)
             {
-                dst[i] = this[this.Offset + i];
+                Array.Copy(this.trait, 0, dst, first, size - first);
             }
         }
     }
