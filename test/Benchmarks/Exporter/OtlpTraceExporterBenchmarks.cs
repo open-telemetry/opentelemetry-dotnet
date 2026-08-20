@@ -18,20 +18,6 @@ using OpenTelemetry.Tests;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Trace.V1;
 
-/*
-BenchmarkDotNet v0.13.6, Windows 11 (10.0.22621.2134/22H2/2022Update/SunValley2) (Hyper-V)
-AMD EPYC 7763, 1 CPU, 16 logical and 8 physical cores
-.NET SDK 7.0.400
-  [Host]     : .NET 7.0.10 (7.0.1023.36312), X64 RyuJIT AVX2
-  DefaultJob : .NET 7.0.10 (7.0.1023.36312), X64 RyuJIT AVX2
-
-
-|                 Method |     Mean |   Error |  StdDev |   Gen0 |   Gen1 | Allocated |
-|----------------------- |---------:|--------:|--------:|-------:|-------:|----------:|
-| OtlpTraceExporter_Http | 139.4 us | 1.41 us | 1.32 us | 0.4883 | 0.2441 |    9.8 KB |
-| OtlpTraceExporter_Grpc | 263.0 us | 3.47 us | 3.24 us | 0.4883 |      - |   9.34 KB |
-*/
-
 namespace Benchmarks.Exporter;
 
 #pragma warning disable CA1001 // Types that own disposable fields should be disposable - handled by GlobalCleanup
@@ -46,6 +32,9 @@ public class OtlpTraceExporterBenchmarks
     private IDisposable? server;
     private string? serverHost;
     private int serverPort;
+
+    [Params(1, 512, 2048)]
+    public int BatchSize { get; set; }
 
     [GlobalSetup(Target = nameof(OtlpTraceExporter_Grpc))]
     public void GlobalSetupGrpc()
@@ -72,8 +61,11 @@ public class OtlpTraceExporterBenchmarks
         this.exporter = new OtlpTraceExporter(options);
 
         this.activity = ActivityHelper.CreateTestActivity();
-        this.activityBatch = new CircularBuffer<Activity>(1);
-        this.activityBatch.Add(this.activity);
+        this.activityBatch = new CircularBuffer<Activity>(this.BatchSize);
+        for (var i = 0; i < this.BatchSize; i++)
+        {
+            this.activityBatch.Add(this.activity);
+        }
     }
 
     [GlobalSetup(Target = nameof(OtlpTraceExporter_Http))]
@@ -96,8 +88,11 @@ public class OtlpTraceExporterBenchmarks
         this.exporter = new OtlpTraceExporter(options);
 
         this.activity = ActivityHelper.CreateTestActivity();
-        this.activityBatch = new CircularBuffer<Activity>(1);
-        this.activityBatch.Add(this.activity);
+        this.activityBatch = new CircularBuffer<Activity>(this.BatchSize);
+        for (var i = 0; i < this.BatchSize; i++)
+        {
+            this.activityBatch.Add(this.activity);
+        }
     }
 
     [GlobalCleanup(Target = nameof(OtlpTraceExporter_Grpc))]
@@ -121,13 +116,13 @@ public class OtlpTraceExporterBenchmarks
     [Benchmark]
     public void OtlpTraceExporter_Http()
     {
-        this.exporter!.Export(new Batch<Activity>(this.activityBatch!, 1));
+        this.exporter!.Export(new Batch<Activity>(this.activityBatch!, this.BatchSize));
     }
 
     [Benchmark]
     public void OtlpTraceExporter_Grpc()
     {
-        this.exporter!.Export(new Batch<Activity>(this.activityBatch!, 1));
+        this.exporter!.Export(new Batch<Activity>(this.activityBatch!, this.BatchSize));
     }
 
 #pragma warning disable CA1812 // Avoid uninstantiated internal classes
