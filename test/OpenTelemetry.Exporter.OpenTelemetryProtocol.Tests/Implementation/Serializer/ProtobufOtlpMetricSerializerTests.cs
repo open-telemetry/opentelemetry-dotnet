@@ -79,6 +79,19 @@ public static class ProtobufOtlpMetricSerializerTests
     }
 
     [Fact]
+    public static async Task WriteMetricsData_Serializes_Metrics_With_Infinite_Boundaries()
+    {
+        var metrics = GenerateMetrics((builder) =>
+        {
+            builder.AddView(
+                instrumentName: HistogramName,
+                new ExplicitBucketHistogramConfiguration { Boundaries = [double.NegativeInfinity, 1, 2, double.PositiveInfinity] });
+        });
+
+        await WriteMetricsAndAssertSnapshot(metrics);
+    }
+
+    [Fact]
     public static async Task WriteMetricsData_Serializes_Metrics_With_No_Boundaries()
     {
         // Arrange

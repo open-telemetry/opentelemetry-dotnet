@@ -38,6 +38,23 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
 
+    - name: Stop background apt services
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        set -x
+        sudo systemctl stop apt-daily.service apt-daily-upgrade.service apt-daily.timer apt-daily-upgrade.timer unattended-upgrades.service 2>/dev/null || true
+        sudo systemctl disable apt-daily.timer apt-daily-upgrade.timer 2>/dev/null || true
+        sudo killall apt.systemd.daily 2>/dev/null || true
+        for _ in $(seq 1 30); do
+          if sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || sudo fuser /var/lib/apt/lists/lock >/dev/null 2>&1; then
+            echo "Waiting for apt/dpkg lock to be released..."
+            sleep 2
+          else
+            break
+          fi
+        done
+
     - name: Install wasm-tools workload
       shell: pwsh
       run: dotnet workload install wasm-tools

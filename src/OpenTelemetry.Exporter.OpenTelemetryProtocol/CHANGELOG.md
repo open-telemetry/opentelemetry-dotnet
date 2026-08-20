@@ -49,6 +49,10 @@ Notes](../../RELEASENOTES.md).
   boxing.
   ([#7645](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7645))
 
+* Improved OTLP histogram serialization performance by avoiding a redundant
+  scan of explicit bucket bounds.
+  ([#7647](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7647))
+
 * The OTLP exporter will now export logger version if it was specified. Log
   records are grouped into `ScopeLogs` by logger name and version, so loggers
   sharing a name but reporting different versions are exported as separate
@@ -58,6 +62,10 @@ Notes](../../RELEASENOTES.md).
 * Fixed persistent storage allowing a blob write to exceed the configured
   maximum storage size.
   ([#7646](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7646))
+
+* Improved OTLP/gRPC response status handling performance by avoiding unnecessary
+  header enumeration on .NET 8+.
+  ([#7659](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7659))
 
 ## 1.17.0
 

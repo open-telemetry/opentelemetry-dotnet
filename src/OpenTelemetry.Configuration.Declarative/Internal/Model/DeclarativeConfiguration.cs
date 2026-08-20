@@ -19,10 +19,10 @@ internal sealed record DeclarativeConfiguration(string FileFormat)
     /// <summary>
     /// Gets the <c>disabled</c> flag.
     /// </summary>
-    public ConfigProperty<bool> Disabled { get; init; }
+    public ModelProperty<bool> Disabled { get; init; }
 
     /// <summary>
     /// Gets the <c>resource</c> section.
     /// </summary>
-    public ConfigProperty<ResourceConfiguration> Resource { get; init; }
+    public ModelProperty<ResourceConfiguration> Resource { get; init; }
 }
