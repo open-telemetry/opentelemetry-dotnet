@@ -75,6 +75,15 @@ public class BaggageTests
     }
 
     [Fact]
+    public void SetExistingValueNoOpTest()
+    {
+        var baggage = default(Baggage).SetBaggage(K1, V1);
+        var unchanged = baggage.SetBaggage(K1, V1);
+
+        Assert.Same(baggage.GetBaggage(), unchanged.GetBaggage());
+    }
+
+    [Fact]
     public void SetEmptyNameTest()
     {
         var baggage = Baggage.Current;

@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Improved `Baggage.SetBaggage` performance by avoiding a full copy when
+  the specified key already has the requested value.
+  ([#7660](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7660))
+
 ## 1.17.0
 
 Released 2026-Jul-16
