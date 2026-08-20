@@ -31,6 +31,9 @@ Notes](../../RELEASENOTES.md).
   exception is thrown by their constructor after resource creation.
   ([#7615](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7615))
 
+* `CircularBufferBuckets.Copy` optimized to use bulk array copies.
+  ([#7670](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7670))
+
 ## 1.17.0
 
 Released 2026-Jul-16
