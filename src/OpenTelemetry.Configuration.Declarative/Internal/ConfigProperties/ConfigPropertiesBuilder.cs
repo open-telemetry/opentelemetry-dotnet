@@ -1,8 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using OpenTelemetry.Internal;
-
 namespace OpenTelemetry.Configuration;
 
 /// <summary>
@@ -22,7 +20,6 @@ internal sealed class ConfigPropertiesBuilder
     /// <exception cref="ArgumentException">Thrown when <paramref name="key"/> already exists in this builder.</exception>
     public ConfigPropertiesBuilder Add(string key, ConfigValue value)
     {
-        Guard.ThrowIfNull(key);
         this.values.Add(key, value);
         return this;
     }

@@ -40,7 +40,7 @@ public sealed class ConfigPropertiesTests
     [Fact]
     public void GetString_PresentNull_ReturnsPresentNull()
     {
-        var properties = Build("k", ConfigValue.Null());
+        var properties = Build("k", ConfigValue.Null);
         var result = properties.GetString("k");
         Assert.Equal(ConfigValueOutcome.PresentNull, result.Outcome);
         Assert.Null(result.Value);
@@ -48,31 +48,31 @@ public sealed class ConfigPropertiesTests
 
     [Fact]
     public void GetBoolean_PresentNull_ReturnsPresentNull() =>
-        Assert.Equal(ConfigValueOutcome.PresentNull, Build("k", ConfigValue.Null()).GetBoolean("k").Outcome);
+        Assert.Equal(ConfigValueOutcome.PresentNull, Build("k", ConfigValue.Null).GetBoolean("k").Outcome);
 
     [Fact]
     public void GetLong_PresentNull_ReturnsPresentNull() =>
-        Assert.Equal(ConfigValueOutcome.PresentNull, Build("k", ConfigValue.Null()).GetLong("k").Outcome);
+        Assert.Equal(ConfigValueOutcome.PresentNull, Build("k", ConfigValue.Null).GetLong("k").Outcome);
 
     [Fact]
     public void GetDouble_PresentNull_ReturnsPresentNull() =>
-        Assert.Equal(ConfigValueOutcome.PresentNull, Build("k", ConfigValue.Null()).GetDouble("k").Outcome);
+        Assert.Equal(ConfigValueOutcome.PresentNull, Build("k", ConfigValue.Null).GetDouble("k").Outcome);
 
     [Fact]
     public void GetInt_PresentNull_ReturnsPresentNull() =>
-        Assert.Equal(ConfigValueOutcome.PresentNull, Build("k", ConfigValue.Null()).GetInt("k").Outcome);
+        Assert.Equal(ConfigValueOutcome.PresentNull, Build("k", ConfigValue.Null).GetInt("k").Outcome);
 
     [Fact]
     public void GetProperties_PresentNull_ReturnsPresentNull() =>
-        Assert.Equal(ConfigValueOutcome.PresentNull, Build("k", ConfigValue.Null()).GetProperties("k").Outcome);
+        Assert.Equal(ConfigValueOutcome.PresentNull, Build("k", ConfigValue.Null).GetProperties("k").Outcome);
 
     [Fact]
     public void GetPropertiesList_PresentNull_ReturnsPresentNull() =>
-        Assert.Equal(ConfigValueOutcome.PresentNull, Build("k", ConfigValue.Null()).GetPropertiesList("k").Outcome);
+        Assert.Equal(ConfigValueOutcome.PresentNull, Build("k", ConfigValue.Null).GetPropertiesList("k").Outcome);
 
     [Fact]
     public void GetScalarList_PresentNull_ReturnsPresentNull() =>
-        Assert.Equal(ConfigValueOutcome.PresentNull, Build("k", ConfigValue.Null()).GetScalarList<string>("k").Outcome);
+        Assert.Equal(ConfigValueOutcome.PresentNull, Build("k", ConfigValue.Null).GetScalarList<string>("k").Outcome);
 
     [Fact]
     public void GetString_Present_ReturnsPresentWithValue()
@@ -101,7 +101,7 @@ public sealed class ConfigPropertiesTests
     [Fact]
     public void GetDouble_Present_ReturnsPresentWithValue()
     {
-        var result = Build("k", ConfigValue.Float(3.14)).GetDouble("k");
+        var result = Build("k", ConfigValue.Double(3.14)).GetDouble("k");
         Assert.Equal(ConfigValueOutcome.Present, result.Outcome);
         Assert.Equal(3.14, result.Value);
     }
@@ -213,42 +213,42 @@ public sealed class ConfigPropertiesTests
     }
 
     [Fact]
-    public void Float_IntegralValue_ReadsAsInt64()
+    public void Double_IntegralValue_ReadsAsInt64()
     {
-        var properties = Build("k", ConfigValue.Float(5.0));
+        var properties = Build("k", ConfigValue.Double(5.0));
         var result = properties.GetLong("k");
         Assert.Equal(ConfigValueOutcome.Present, result.Outcome);
         Assert.Equal(5L, result.Value);
     }
 
     [Fact]
-    public void Float_IntegralValue_ReadsAsInt32()
+    public void Double_IntegralValue_ReadsAsInt32()
     {
-        var properties = Build("k", ConfigValue.Float(5.0));
+        var properties = Build("k", ConfigValue.Double(5.0));
         var result = properties.GetInt("k");
         Assert.Equal(ConfigValueOutcome.Present, result.Outcome);
         Assert.Equal(5, result.Value);
     }
 
     [Fact]
-    public void Float_FractionalValue_IsMismatchForInt64()
+    public void Double_FractionalValue_IsMismatchForInt64()
     {
-        var properties = Build("k", ConfigValue.Float(5.7));
+        var properties = Build("k", ConfigValue.Double(5.7));
         Assert.Equal(ConfigValueOutcome.TypeMismatch, properties.GetLong("k").Outcome);
     }
 
     [Fact]
-    public void Float_FractionalValue_IsMismatchForInt32()
+    public void Double_FractionalValue_IsMismatchForInt32()
     {
-        var properties = Build("k", ConfigValue.Float(5.7));
+        var properties = Build("k", ConfigValue.Double(5.7));
         Assert.Equal(ConfigValueOutcome.TypeMismatch, properties.GetInt("k").Outcome);
     }
 
     [Fact]
-    public void Float_OutsideLongRange_IsMismatchForInt64()
+    public void Double_OutsideLongRange_IsMismatchForInt64()
     {
         // 2^63 is one past long.MaxValue, not representable as long.
-        var properties = Build("k", ConfigValue.Float(9.3e18));
+        var properties = Build("k", ConfigValue.Double(9.3e18));
         Assert.Equal(ConfigValueOutcome.TypeMismatch, properties.GetLong("k").Outcome);
     }
 
@@ -281,29 +281,36 @@ public sealed class ConfigPropertiesTests
     }
 
     [Fact]
-    public void UnrepresentableInteger_HasKindInteger()
+    public void UnrepresentableInteger_RetainsIntegerKind()
     {
-        // Confirm it's retained as Integer-kind (not dropped) even though unrepresentable.
-        var properties = Build("k", ConfigValue.UnrepresentableInteger());
-
-        // It appears in Keys, meaning the key is present; mismatch on read confirms it's not dropped.
-        Assert.Equal(ConfigValueOutcome.TypeMismatch, properties.GetLong("k").Outcome);
-        Assert.Contains("k", properties.Keys);
+        var value = ConfigValue.UnrepresentableInteger();
+        Assert.Equal(ConfigValueKind.Integer, value.Kind);
+        Assert.True(value.IsUnrepresentable);
+        var ex = Assert.Throws<InvalidOperationException>(() => value.AsLong());
+        Assert.Equal("Cannot read an out-of-range integer value as long.", ex.Message);
     }
 
     [Fact]
-    public void Float_PositiveInfinity_IsReadableAsDouble()
+    public void Null_EqualsDefaultAndHasNullKind()
     {
-        var properties = Build("k", ConfigValue.Float(double.PositiveInfinity));
+        Assert.Equal(default, ConfigValue.Null);
+        Assert.Equal(ConfigValueKind.Null, ConfigValue.Null.Kind);
+        Assert.False(ConfigValue.Null.IsUnrepresentable);
+    }
+
+    [Fact]
+    public void Double_PositiveInfinity_IsReadableAsDouble()
+    {
+        var properties = Build("k", ConfigValue.Double(double.PositiveInfinity));
         var result = properties.GetDouble("k");
         Assert.Equal(ConfigValueOutcome.Present, result.Outcome);
         Assert.Equal(double.PositiveInfinity, result.Value);
     }
 
     [Fact]
-    public void Float_PositiveInfinity_IsMismatchForInt64()
+    public void Double_PositiveInfinity_IsMismatchForInt64()
     {
-        var properties = Build("k", ConfigValue.Float(double.PositiveInfinity));
+        var properties = Build("k", ConfigValue.Double(double.PositiveInfinity));
         Assert.Equal(ConfigValueOutcome.TypeMismatch, properties.GetLong("k").Outcome);
     }
 
@@ -317,29 +324,29 @@ public sealed class ConfigPropertiesTests
     }
 
     [Fact]
-    public void Float_FivePointZero_ReadsAsInt64()
+    public void Double_FivePointZero_ReadsAsInt64()
     {
-        var properties = Build("timeout", ConfigValue.Float(5.0));
+        var properties = Build("timeout", ConfigValue.Double(5.0));
         var result = properties.GetLong("timeout");
         Assert.Equal(ConfigValueOutcome.Present, result.Outcome);
         Assert.Equal(5L, result.Value);
     }
 
     [Fact]
-    public void Float_ExactLongMinValue_ReadsAsInt64()
+    public void Double_ExactLongMinValue_ReadsAsInt64()
     {
         // -2^63 is exactly representable as double; the boundary check must admit it.
-        var properties = Build("k", ConfigValue.Float(-9223372036854775808.0));
+        var properties = Build("k", ConfigValue.Double(-9223372036854775808.0));
         var result = properties.GetLong("k");
         Assert.Equal(ConfigValueOutcome.Present, result.Outcome);
         Assert.Equal(long.MinValue, result.Value);
     }
 
     [Fact]
-    public void Float_LongMaxValueAsDouble_IsMismatchForInt64()
+    public void Double_LongMaxValueAsDouble_IsMismatchForInt64()
     {
         // (double)long.MaxValue rounds up to 2^63, which is one past long.MaxValue and must be rejected.
-        var properties = Build("k", ConfigValue.Float((double)long.MaxValue));
+        var properties = Build("k", ConfigValue.Double((double)long.MaxValue));
         Assert.Equal(ConfigValueOutcome.TypeMismatch, properties.GetLong("k").Outcome);
     }
 
@@ -446,7 +453,7 @@ public sealed class ConfigPropertiesTests
     {
         // The spec's MUST example: drop: (present-null) must select the drop aggregation.
         // GetProperties on a null key must return PresentNull, not Absent, not a null ConfigProperties.
-        var properties = Build("drop", ConfigValue.Null());
+        var properties = Build("drop", ConfigValue.Null);
         var result = properties.GetProperties("drop");
         Assert.Equal(ConfigValueOutcome.PresentNull, result.Outcome);
         Assert.Null(result.Value);
@@ -455,7 +462,7 @@ public sealed class ConfigPropertiesTests
     [Fact]
     public void GetPropertiesList_NullValue_ReturnsPresentNull()
     {
-        var properties = Build("k", ConfigValue.Null());
+        var properties = Build("k", ConfigValue.Null);
         var result = properties.GetPropertiesList("k");
         Assert.Equal(ConfigValueOutcome.PresentNull, result.Outcome);
     }
@@ -466,7 +473,7 @@ public sealed class ConfigPropertiesTests
         // A null element is not a scalar of T, so the whole sequence mismatches - the same rule
         // GetPropertiesList applies. It holds for every element type, including the reference type:
         // present-null is an outcome for a property, not for an element within one.
-        var seq = ConfigValue.Sequence([ConfigValue.String("a"), ConfigValue.Null(), ConfigValue.String("b")]);
+        var seq = ConfigValue.Sequence([ConfigValue.String("a"), ConfigValue.Null, ConfigValue.String("b")]);
         var properties = Build("k", seq);
         var result = properties.GetScalarList<string>("k");
         Assert.Equal(ConfigValueOutcome.TypeMismatch, result.Outcome);
@@ -479,7 +486,7 @@ public sealed class ConfigPropertiesTests
     {
         // An unconstrained T? is a nullable annotation only, so before this rule the null element was
         // added as default(T) and the caller received Present with a fabricated false.
-        var seq = ConfigValue.Sequence([ConfigValue.Boolean(true), ConfigValue.Null()]);
+        var seq = ConfigValue.Sequence([ConfigValue.Boolean(true), ConfigValue.Null]);
         var result = Build("k", seq).GetScalarList<bool>("k");
         Assert.Equal(ConfigValueOutcome.TypeMismatch, result.Outcome);
         Assert.Null(result.Value);
@@ -488,7 +495,7 @@ public sealed class ConfigPropertiesTests
     [Fact]
     public void ScalarList_NullElement_IsMismatch_Int64Type()
     {
-        var seq = ConfigValue.Sequence([ConfigValue.Integer(1L), ConfigValue.Null()]);
+        var seq = ConfigValue.Sequence([ConfigValue.Integer(1L), ConfigValue.Null]);
         var result = Build("k", seq).GetScalarList<long>("k");
         Assert.Equal(ConfigValueOutcome.TypeMismatch, result.Outcome);
         Assert.Null(result.Value);
@@ -497,7 +504,7 @@ public sealed class ConfigPropertiesTests
     [Fact]
     public void ScalarList_NullElement_IsMismatch_DoubleType()
     {
-        var seq = ConfigValue.Sequence([ConfigValue.Float(1.5), ConfigValue.Null()]);
+        var seq = ConfigValue.Sequence([ConfigValue.Double(1.5), ConfigValue.Null]);
         var result = Build("k", seq).GetScalarList<double>("k");
         Assert.Equal(ConfigValueOutcome.TypeMismatch, result.Outcome);
         Assert.Null(result.Value);
@@ -506,7 +513,7 @@ public sealed class ConfigPropertiesTests
     [Fact]
     public void ScalarList_NullElement_IsMismatch_Int32Type()
     {
-        var seq = ConfigValue.Sequence([ConfigValue.Integer(1L), ConfigValue.Null()]);
+        var seq = ConfigValue.Sequence([ConfigValue.Integer(1L), ConfigValue.Null]);
         var result = Build("k", seq).GetScalarList<int>("k");
         Assert.Equal(ConfigValueOutcome.TypeMismatch, result.Outcome);
         Assert.Null(result.Value);
@@ -517,7 +524,7 @@ public sealed class ConfigPropertiesTests
     {
         // Java's accessor removes null and mismatched elements and reports the remainder; a sequence of
         // nothing but nulls must not read as an empty list here, which would hide the data error.
-        var seq = ConfigValue.Sequence([ConfigValue.Null(), ConfigValue.Null()]);
+        var seq = ConfigValue.Sequence([ConfigValue.Null, ConfigValue.Null]);
         Assert.Equal(ConfigValueOutcome.TypeMismatch, Build("k", seq).GetScalarList<long>("k").Outcome);
     }
 
@@ -529,7 +536,7 @@ public sealed class ConfigPropertiesTests
         var seq = ConfigValue.Sequence(
         [
             ConfigValue.Mapping(Build("x", ConfigValue.String("v"))),
-            ConfigValue.Null(),
+            ConfigValue.Null,
         ]);
         var properties = Build("k", seq);
         Assert.Equal(ConfigValueOutcome.TypeMismatch, properties.GetPropertiesList("k").Outcome);
@@ -546,9 +553,9 @@ public sealed class ConfigPropertiesTests
     }
 
     [Fact]
-    public void ScalarList_DoubleType_FloatElements_Readable()
+    public void ScalarList_DoubleType_DoubleElements_Readable()
     {
-        var seq = ConfigValue.Sequence([ConfigValue.Float(1.1), ConfigValue.Float(2.2)]);
+        var seq = ConfigValue.Sequence([ConfigValue.Double(1.1), ConfigValue.Double(2.2)]);
         var result = Build("k", seq).GetScalarList<double>("k");
         Assert.Equal(ConfigValueOutcome.Present, result.Outcome);
         Assert.Equal(2, result.Value!.Count);
@@ -606,9 +613,9 @@ public sealed class ConfigPropertiesTests
         Assert.Equal(ConfigValueOutcome.TypeMismatch, Build("k", ConfigValue.String("x")).GetScalarList<string>("k").Outcome);
 
     [Fact]
-    public void ScalarList_Int64Type_FloatElementsWithNoFraction_Readable()
+    public void ScalarList_Int64Type_DoubleElementsWithNoFraction_Readable()
     {
-        var seq = ConfigValue.Sequence([ConfigValue.Float(2.0), ConfigValue.Float(10.0)]);
+        var seq = ConfigValue.Sequence([ConfigValue.Double(2.0), ConfigValue.Double(10.0)]);
         var result = Build("k", seq).GetScalarList<long>("k");
         Assert.Equal(ConfigValueOutcome.Present, result.Outcome);
         Assert.Collection(result.Value!, v => Assert.Equal(2L, v), v => Assert.Equal(10L, v));
@@ -624,9 +631,9 @@ public sealed class ConfigPropertiesTests
     }
 
     [Fact]
-    public void ScalarList_Int32Type_FloatElementsWithNoFraction_Readable()
+    public void ScalarList_Int32Type_DoubleElementsWithNoFraction_Readable()
     {
-        var seq = ConfigValue.Sequence([ConfigValue.Float(4.0), ConfigValue.Float(9.0)]);
+        var seq = ConfigValue.Sequence([ConfigValue.Double(4.0), ConfigValue.Double(9.0)]);
         var result = Build("k", seq).GetScalarList<int>("k");
         Assert.Equal(ConfigValueOutcome.Present, result.Outcome);
         Assert.Collection(result.Value!, v => Assert.Equal(4, v), v => Assert.Equal(9, v));
@@ -637,7 +644,7 @@ public sealed class ConfigPropertiesTests
     {
         var properties = new ConfigPropertiesBuilder()
             .Add("present", ConfigValue.String("v"))
-            .Add("nulled", ConfigValue.Null())
+            .Add("nulled", ConfigValue.Null)
             .Build();
         var keys = properties.Keys.ToList();
         Assert.Contains("present", keys);
