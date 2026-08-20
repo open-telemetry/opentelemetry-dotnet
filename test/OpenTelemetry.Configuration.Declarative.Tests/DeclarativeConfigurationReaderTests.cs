@@ -1622,7 +1622,7 @@ public sealed class DeclarativeConfigurationReaderTests
     public void Translate_DisabledFromEnvVarSetToNullLiteral_DoesNotSetKey(string envVarValue)
     {
         // When an env var is set to a YAML null spelling, substitution produces a plain
-        // scalar with that value. Yaml12ScalarResolver.ResolvesToNull treats it as
+        // scalar with that value. YamlScalarResolver.ResolvesToNull treats it as
         // present-null -> no key emitted.
         const string envVarName = "OTEL_DECLARATIVE_TEST_DISABLED_NULL_LITERAL";
         const string yaml = """

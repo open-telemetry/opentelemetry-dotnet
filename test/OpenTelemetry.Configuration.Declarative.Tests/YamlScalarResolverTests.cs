@@ -6,7 +6,7 @@ using YamlDotNet.RepresentationModel;
 
 namespace OpenTelemetry.Configuration.Declarative.Tests;
 
-public sealed class Yaml12ScalarResolverTests
+public sealed class YamlScalarResolverTests
 {
     public static TheoryData<string, string> CoreSchemaExamples => new()
     {
@@ -74,7 +74,7 @@ public sealed class Yaml12ScalarResolverTests
     [MemberData(nameof(CoreSchemaExamples))]
     public void Resolve_ImplicitPlainScalar_MatchesYaml12CoreSchema(string value, string expected)
     {
-        var resolved = Yaml12ScalarResolver.Resolve(Scalar(value, ScalarStyle.Plain), value);
+        var resolved = YamlScalarResolver.Resolve(Scalar(value, ScalarStyle.Plain), value);
 
         Assert.Equal(expected, resolved.Kind.ToString());
         Assert.Equal(value, resolved.Value);
@@ -83,7 +83,7 @@ public sealed class Yaml12ScalarResolverTests
     [Theory]
     [MemberData(nameof(CoreSchemaStrings))]
     public void Resolve_ImplicitPlainString_MatchesYaml12CoreSchemaFallback(string value) =>
-        Assert.Equal(YamlScalarKind.String, Yaml12ScalarResolver.Resolve(Scalar(value), value).Kind);
+        Assert.Equal(YamlScalarKind.String, YamlScalarResolver.Resolve(Scalar(value), value).Kind);
 
     [Theory]
     [InlineData(ScalarStyle.SingleQuoted)]
@@ -94,7 +94,7 @@ public sealed class Yaml12ScalarResolverTests
     {
         foreach (var value in new[] { "null", "true", "42", "1.5", "value" })
         {
-            Assert.Equal(YamlScalarKind.String, Yaml12ScalarResolver.Resolve(Scalar(value, style), value).Kind);
+            Assert.Equal(YamlScalarKind.String, YamlScalarResolver.Resolve(Scalar(value, style), value).Kind);
         }
     }
 
@@ -107,37 +107,47 @@ public sealed class Yaml12ScalarResolverTests
     [InlineData("FALSE", false)]
     public void TryGetBoolean_CoreSchemaRepresentation_ReturnsValue(string value, bool expected)
     {
-        Assert.True(Yaml12ScalarResolver.TryGetBoolean(value, out var actual));
+        Assert.True(YamlScalarResolver.TryGetBoolean(value, out var actual));
         Assert.Equal(expected, actual);
     }
 
     [Theory]
-    [InlineData(Yaml12ScalarResolver.StringTag, "1.0", "String")]
-    [InlineData(Yaml12ScalarResolver.NullTag, "null", "Null")]
-    [InlineData(Yaml12ScalarResolver.BooleanTag, "true", "Boolean")]
-    [InlineData(Yaml12ScalarResolver.IntegerTag, "0x3A", "Integer")]
-    [InlineData(Yaml12ScalarResolver.FloatTag, "1", "Float")]
-    [InlineData(Yaml12ScalarResolver.FloatTag, "1.5", "Float")]
+    [InlineData(".inf", true)]
+    [InlineData("+.INF", true)]
+    [InlineData("-.Inf", true)]
+    [InlineData(".nan", false)]
+    [InlineData("Infinity", false)]
+    [InlineData("1.0", false)]
+    public void IsInfinity_CoreSchemaForms_ReturnsExpected(string value, bool expected) =>
+        Assert.Equal(expected, YamlScalarResolver.IsInfinity(value));
+
+    [Theory]
+    [InlineData(YamlScalarResolver.StringTag, "1.0", "String")]
+    [InlineData(YamlScalarResolver.NullTag, "null", "Null")]
+    [InlineData(YamlScalarResolver.BooleanTag, "true", "Boolean")]
+    [InlineData(YamlScalarResolver.IntegerTag, "0x3A", "Integer")]
+    [InlineData(YamlScalarResolver.FloatTag, "1", "Float")]
+    [InlineData(YamlScalarResolver.FloatTag, "1.5", "Float")]
     public void Resolve_ValidExplicitCoreTag_OverridesStyle(string tag, string value, string expected)
     {
-        var resolved = Yaml12ScalarResolver.Resolve(Tagged(value, tag, ScalarStyle.DoubleQuoted), value);
+        var resolved = YamlScalarResolver.Resolve(Tagged(value, tag, ScalarStyle.DoubleQuoted), value);
 
         Assert.Equal(expected, resolved.Kind.ToString());
     }
 
     [Theory]
-    [InlineData(Yaml12ScalarResolver.NullTag, "nil")]
-    [InlineData(Yaml12ScalarResolver.BooleanTag, "yes")]
-    [InlineData(Yaml12ScalarResolver.IntegerTag, "1.5")]
-    [InlineData(Yaml12ScalarResolver.FloatTag, "number")]
+    [InlineData(YamlScalarResolver.NullTag, "nil")]
+    [InlineData(YamlScalarResolver.BooleanTag, "yes")]
+    [InlineData(YamlScalarResolver.IntegerTag, "1.5")]
+    [InlineData(YamlScalarResolver.FloatTag, "number")]
     public void Resolve_InvalidExplicitCoreTagRepresentation_Throws(string tag, string value) =>
         Assert.Throws<DeclarativeConfigurationException>(() =>
-            Yaml12ScalarResolver.Resolve(Tagged(value, tag), value));
+            YamlScalarResolver.Resolve(Tagged(value, tag), value));
 
     [Fact]
     public void Resolve_UnsupportedExplicitTag_Throws() =>
         Assert.Throws<DeclarativeConfigurationException>(() =>
-            Yaml12ScalarResolver.Resolve(Tagged("value", "!custom"), "value"));
+            YamlScalarResolver.Resolve(Tagged("value", "!custom"), "value"));
 
     [Theory]
     [InlineData("1.0")]
@@ -147,7 +157,7 @@ public sealed class Yaml12ScalarResolverTests
     {
         var scalar = Tagged(value, "!");
 
-        Assert.Equal(YamlScalarKind.String, Yaml12ScalarResolver.Resolve(scalar, value).Kind);
+        Assert.Equal(YamlScalarKind.String, YamlScalarResolver.Resolve(scalar, value).Kind);
     }
 
     [Theory]
@@ -158,7 +168,7 @@ public sealed class Yaml12ScalarResolverTests
     {
         var scalar = Tagged(value, "?");
 
-        Assert.Equal(expected, Yaml12ScalarResolver.Resolve(scalar, value).Kind.ToString());
+        Assert.Equal(expected, YamlScalarResolver.Resolve(scalar, value).Kind.ToString());
     }
 
     private static YamlScalarNode Scalar(string value, ScalarStyle style = ScalarStyle.Plain) =>

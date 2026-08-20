@@ -9,7 +9,7 @@ namespace OpenTelemetry.Configuration.Declarative;
 /// <summary>
 /// Resolves scalar nodes according to the YAML 1.2 core schema.
 /// </summary>
-internal static class Yaml12ScalarResolver
+internal static class YamlScalarResolver
 {
     internal const string StringTag = "tag:yaml.org,2002:str";
     internal const string BooleanTag = "tag:yaml.org,2002:bool";
@@ -113,6 +113,24 @@ internal static class Yaml12ScalarResolver
             'x' => IsDigitRun(value, 2, char.IsAsciiHexDigit),
             _ => false,
         };
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> when <paramref name="value"/> is a YAML 1.2 core-schema
+    /// infinity form (<c>.inf</c>, <c>.Inf</c>, <c>.INF</c>, with an optional leading sign).
+    /// </summary>
+    /// <param name="value">The scalar value to test.</param>
+    /// <returns><see langword="true"/> for an infinity form.</returns>
+    internal static bool IsInfinity(string value)
+    {
+        var i = HasSign(value) ? 1 : 0;
+        if ((value.Length - i) != 4 || value[i] != '.')
+        {
+            return false;
+        }
+
+        var suffix = value.AsSpan(i + 1);
+        return suffix.SequenceEqual("inf") || suffix.SequenceEqual("Inf") || suffix.SequenceEqual("INF");
     }
 
     internal static bool IsFloat(string value)
@@ -262,18 +280,6 @@ internal static class Yaml12ScalarResolver
         }
 
         return true;
-    }
-
-    private static bool IsInfinity(string value)
-    {
-        var i = HasSign(value) ? 1 : 0;
-        if ((value.Length - i) != 4 || value[i] != '.')
-        {
-            return false;
-        }
-
-        var suffix = value.AsSpan(i + 1);
-        return suffix.SequenceEqual("inf") || suffix.SequenceEqual("Inf") || suffix.SequenceEqual("INF");
     }
 
     private static bool HasSign(string value) =>
