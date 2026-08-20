@@ -140,6 +140,8 @@ public sealed class YamlScalarConverterTests
     [InlineData("+.5", 0.5)]
     [InlineData("+12e03", 12000.0)]
     [InlineData("-2E+05", -200000.0)]
+    [InlineData("1.5", 1.5)]
+    [InlineData("3.14", 3.14)]
     [InlineData(".inf", double.PositiveInfinity)]
     [InlineData("+.INF", double.PositiveInfinity)]
     [InlineData("-.Inf", double.NegativeInfinity)]
