@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.18.0-beta.1
+
+Released 2026-Aug-21
+
 * Fix concurrent scrapes returning an empty response under contention.
   Now the exporter will return an HTTP 500 error instead.
   ([#7571](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7571))
@@ -40,6 +44,9 @@ Notes](../../RELEASENOTES.md).
 
 * Fixed a race where a slow scrape could return an HTTP 200 instead of 408.
   ([#7615](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7615))
+
+* Updated OpenTelemetry core component version(s) to `1.18.0`.
+  ([#7674](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7674))
 
 ## 1.17.0-beta.1
 

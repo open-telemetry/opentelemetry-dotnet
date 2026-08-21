@@ -7,6 +7,14 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.18.0
+
+Released 2026-Aug-21
+
+## 1.18.0-rc.1
+
+Released 2026-Aug-21
+
 * Fixed `UseOtlpExporter` to respect options configured through
   `services.Configure<OtlpExporterOptions>(...)`.
   ([#7540](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7540))
