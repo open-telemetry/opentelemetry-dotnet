@@ -169,8 +169,8 @@ Maintainers (admins) are needed to merge PRs and for the push to NuGet.**
        the workflow run.
 
     2. Validate locally everything works using the packages pushed to MyGet or
-       downloaded from the drop attached to the workflow run. Basic sanity
-       checks :)
+       downloaded from the drop attached to the workflow run. Only basic sanity
+       checks are required (e.g. expected version, expected packages).
 
     3. Download the artifacts from the drop attached to the workflow run. The
        artifacts archive (`.zip`) contains all the NuGet packages (`.nupkg`) and
@@ -220,13 +220,16 @@ Maintainers (admins) are needed to merge PRs and for the push to NuGet.**
     `Directory.Packages.props` to the just released stable version. Merge that
     PR once the build passes (this requires the packages be available on NuGet).
 
- 8. Manually run the [Core version update](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/actions/workflows/core-version-update.yml)
+ 8. If the check from the previous step has not already run, manually run the
+    [Core version update](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/actions/workflows/core-version-update.yml)
     workflow in the [opentelemetry-dotnet-contrib](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/)
     repository, which opens a PR to update dependencies. The tag that was created
     in step 5 should be used as the value of the `Release tag` input (for example
     `core-1.15.0` or `coreunstable-1.15.0-beta.1`). Verify this PR was opened successfully
     when the workflow completes.
 
- 9. For stable releases post an announcement in the [Slack
-    channel](https://cloud-native.slack.com/archives/C01N3BC2W7Q) announcing the
-    release and link to the release notes.
+ 9. Once the release was created, the GitHub Slack app should automatically create
+    post an annoucement about the release in the
+    [Slack channel](https://cloud-native.slack.com/archives/C01N3BC2W7Q). If the
+    announcement was not posted, post an announcement in the Slack channel
+    announcing the release and link to the release notes.
