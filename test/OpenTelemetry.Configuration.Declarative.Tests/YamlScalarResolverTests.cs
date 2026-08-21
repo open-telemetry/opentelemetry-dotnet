@@ -122,6 +122,17 @@ public sealed class YamlScalarResolverTests
         Assert.Equal(expected, YamlScalarResolver.IsInfinity(value));
 
     [Theory]
+    [InlineData(".nan", true)]
+    [InlineData(".NaN", true)]
+    [InlineData(".NAN", true)]
+    [InlineData("+.nan", false)]
+    [InlineData("-.NAN", false)]
+    [InlineData("NaN", false)]
+    [InlineData(".inf", false)]
+    public void IsNaN_CoreSchemaForms_ReturnsExpected(string value, bool expected) =>
+        Assert.Equal(expected, YamlScalarResolver.IsNaN(value));
+
+    [Theory]
     [InlineData(YamlScalarResolver.StringTag, "1.0", "String")]
     [InlineData(YamlScalarResolver.NullTag, "null", "Null")]
     [InlineData(YamlScalarResolver.BooleanTag, "true", "Boolean")]

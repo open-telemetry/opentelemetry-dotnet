@@ -29,11 +29,11 @@ internal static class YamlScalarConverter
     internal static ConfigValue Convert(ResolvedYamlScalar scalar) =>
         scalar.Kind switch
         {
+            YamlScalarKind.Boolean => ConvertBoolean(scalar.Value),
+            YamlScalarKind.Float => ConvertFloat(scalar.Value),
+            YamlScalarKind.Integer => ConvertInteger(scalar.Value),
             YamlScalarKind.Null => ConfigValue.Null,
             YamlScalarKind.String => ConfigValue.String(scalar.Value),
-            YamlScalarKind.Boolean => ConvertBoolean(scalar.Value),
-            YamlScalarKind.Integer => ConvertInteger(scalar.Value),
-            YamlScalarKind.Float => ConvertFloat(scalar.Value),
             _ => throw new InvalidOperationException($"Unhandled {nameof(YamlScalarKind)}: {scalar.Kind}."),
         };
 
@@ -47,9 +47,9 @@ internal static class YamlScalarConverter
         value switch
         {
             { Length: >= 3 } when value[0] == '0' && value[1] == 'x' =>
-                AccumulateUnsigned(value, start: 2, radix: 16),
+                AccumulateUnsigned(value, start: 2, numberBase: 16),
             { Length: >= 3 } when value[0] == '0' && value[1] == 'o' =>
-                AccumulateUnsigned(value, start: 2, radix: 8),
+                AccumulateUnsigned(value, start: 2, numberBase: 8),
 
             // A false return can only mean out of range; the resolver guarantees the decimal form is valid.
             _ when long.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var l) =>
@@ -65,25 +65,26 @@ internal static class YamlScalarConverter
         {
             _ when YamlScalarResolver.IsInfinity(value) =>
                 ConfigValue.Double(IsNegative(value) ? double.NegativeInfinity : double.PositiveInfinity),
-            ".nan" or ".NaN" or ".NAN" => ConfigValue.Double(double.NaN),
+            _ when YamlScalarResolver.IsNaN(value) => ConfigValue.Double(double.NaN),
             { Length: >= 3 } when value[0] == '0' && value[1] == 'x' =>
-                ConfigValue.Double(AccumulateDouble(value, start: 2, radix: 16)),
+                ConfigValue.Double(AccumulateDouble(value, start: 2, numberBase: 16)),
             { Length: >= 3 } when value[0] == '0' && value[1] == 'o' =>
-                ConfigValue.Double(AccumulateDouble(value, start: 2, radix: 8)),
+                ConfigValue.Double(AccumulateDouble(value, start: 2, numberBase: 8)),
             _ => ConvertDecimalFloat(value),
         };
 
-    // On .NET Framework, double.TryParse returns false for magnitude overflow (unlike .NET Core
-    // which saturates to +/-Infinity), and does not preserve negative zero for "-0.0" or negative
-    // underflow inputs. Apply the sign from the value when the parsed result is positive zero.
+    // Before .NET Core 3.0, double.TryParse fails instead of saturating to +/-Infinity on overflow,
+    // and does not preserve negative zero. The extra arms keep behavior consistent across TFMs.
     private static ConfigValue ConvertDecimalFloat(string value) =>
         double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var d) switch
         {
+#if !NET
             true when d == 0.0 && IsNegative(value) && BitConverter.DoubleToInt64Bits(d) >= 0 =>
                 ConfigValue.Double(-d),
+#endif
             true => ConfigValue.Double(d),
 
-            // A false return means overflow for resolver-validated forms; .NET Core never reaches here.
+            // Overflow on those frameworks, or text that is not a float at all.
             false when IsNegative(value) => ConfigValue.Double(double.NegativeInfinity),
             false => ConfigValue.Double(double.PositiveInfinity),
         };
@@ -91,18 +92,18 @@ internal static class YamlScalarConverter
     private static bool IsNegative(string value) =>
         value is { Length: > 0 } && value[0] == '-';
 
-    private static ConfigValue AccumulateUnsigned(string value, int start, int radix)
+    private static ConfigValue AccumulateUnsigned(string value, int start, ulong numberBase)
     {
         var accumulator = 0UL;
         for (var i = start; i < value.Length; i++)
         {
-            var digit = (ulong)DigitValue(value[i], radix);
-            if (accumulator > (ulong.MaxValue - digit) / (ulong)radix)
+            var digit = DigitValue(value[i], numberBase);
+            if (accumulator > (ulong.MaxValue - digit) / numberBase)
             {
                 return ConfigValue.UnrepresentableInteger();
             }
 
-            accumulator = (accumulator * (ulong)radix) + digit;
+            accumulator = (accumulator * numberBase) + digit;
         }
 
         return accumulator > (ulong)long.MaxValue
@@ -110,30 +111,30 @@ internal static class YamlScalarConverter
             : ConfigValue.Integer((long)accumulator);
     }
 
-    private static double AccumulateDouble(string value, int start, int radix)
+    private static double AccumulateDouble(string value, int start, ulong numberBase)
     {
         var accumulator = 0.0;
         for (var i = start; i < value.Length; i++)
         {
-            accumulator = (accumulator * radix) + DigitValue(value[i], radix);
+            accumulator = (accumulator * numberBase) + DigitValue(value[i], numberBase);
         }
 
         return accumulator;
     }
 
-    private static int DigitValue(char c, int radix)
+    private static ulong DigitValue(char c, ulong numberBase)
     {
-        var digit = c switch
+        var digit = (ulong)(c switch
         {
-            >= '0' and <= '9' => c - '0',
-            >= 'a' and <= 'f' => c - 'a' + 10,
-            >= 'A' and <= 'F' => c - 'A' + 10,
+            _ when char.IsAsciiDigit(c) => c - '0',
+            _ when char.IsAsciiLetterLower(c) && c <= 'f' => c - 'a' + 10,
+            _ when char.IsAsciiLetterUpper(c) && c <= 'F' => c - 'A' + 10,
             _ => throw new InvalidOperationException($"Not a valid digit: '{c}'."),
-        };
+        });
 
-        if (digit >= radix)
+        if (digit >= numberBase)
         {
-            var form = radix == 16 ? "hexadecimal" : "octal";
+            var form = numberBase == 16 ? "hexadecimal" : "octal";
             throw new InvalidOperationException($"Digit '{c}' is not valid in {form} integer text.");
         }
 

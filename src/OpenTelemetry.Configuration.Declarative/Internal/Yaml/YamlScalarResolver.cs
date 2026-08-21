@@ -133,9 +133,18 @@ internal static class YamlScalarResolver
         return suffix.SequenceEqual("inf") || suffix.SequenceEqual("Inf") || suffix.SequenceEqual("INF");
     }
 
+    /// <summary>
+    /// Returns <see langword="true"/> when <paramref name="value"/> is a YAML 1.2 core-schema
+    /// NaN form (<c>.nan</c>, <c>.NaN</c>, <c>.NAN</c>). No leading sign is permitted.
+    /// </summary>
+    /// <param name="value">The scalar value to test.</param>
+    /// <returns><see langword="true"/> for a NaN form.</returns>
+    internal static bool IsNaN(string value) =>
+        value is ".nan" or ".NaN" or ".NAN";
+
     internal static bool IsFloat(string value)
     {
-        if (IsInfinity(value) || value is ".nan" or ".NaN" or ".NAN")
+        if (IsInfinity(value) || IsNaN(value))
         {
             return true;
         }
