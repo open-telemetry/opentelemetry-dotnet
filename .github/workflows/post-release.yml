@@ -220,7 +220,7 @@ jobs:
           $downloadDirectory = Join-Path ${env:GITHUB_WORKSPACE} "packages"
           "download-path=${downloadDirectory}" >> ${env:GITHUB_OUTPUT}
 
-          gh release download ${env:RELEASE_TAG} --pattern "*.nupkg" --dir ${downloadDirectory}
+          gh release download ${env:RELEASE_TAG} --pattern "*.nupkg" --dir ${downloadDirectory} --repo ${env:GITHUB_REPOSITORY}
 
           if ($LASTEXITCODE -ne 0) {
             throw "Failed to download NuGet packages from release ${env:RELEASE_TAG}."
