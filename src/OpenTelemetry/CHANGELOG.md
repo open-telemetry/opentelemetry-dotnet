@@ -31,6 +31,9 @@ Notes](../../RELEASENOTES.md).
   exception is thrown by their constructor after resource creation.
   ([#7615](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7615))
 
+* Restored configured `MaxScale` after delta exponential histogram collection.
+  ([#7671](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7671))
+
 ## 1.17.0
 
 Released 2026-Jul-16
