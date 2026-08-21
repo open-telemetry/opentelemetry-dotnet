@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.18.0-rc.1
+
+Released 2026-Aug-21
+
 * Fixed self-diagnostics log lines being silently dropped when an event message
   or parameter contained enough 3-byte UTF-8 characters to overflow the internal
   buffer estimate. Such content is now truncated.
