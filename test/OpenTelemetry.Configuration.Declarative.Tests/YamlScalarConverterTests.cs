@@ -198,7 +198,7 @@ public sealed class YamlScalarConverterTests
 
         Assert.Equal(ConfigValueKind.Double, result.Kind);
         var d = result.AsDouble();
-        Assert.True(d > 4e21 && d < 5e21, $"Expected ~4.72e21 but got {d}.");
+        Assert.True(d is > 4e21 and < 5e21, $"Expected ~4.72e21 but got {d}.");
     }
 
     // Fails if a new YamlScalarKind member is added without a matching case in YamlScalarConverter.
