@@ -1039,7 +1039,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
         // Framework), the buffer is a byte short and growth is refused first.
         Assert.Contains(
             listener.Messages,
-            e => e.EventId == RequestDiscardedEventId || e.EventId == BufferExceededMaxSizeEventId);
+            e => e.EventId is RequestDiscardedEventId or BufferExceededMaxSizeEventId);
     }
 
     [Theory]
