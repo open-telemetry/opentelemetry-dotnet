@@ -46,6 +46,7 @@ public sealed class YamlNodeReaderTests
     [InlineData("~")]
     [InlineData("true")]
     [InlineData("42")]
+    [InlineData("3.14")]
     public void EnsureUniqueStringKeys_NonStringKey_Throws(string key)
     {
         var stream = new YamlStream();
@@ -54,5 +55,58 @@ public sealed class YamlNodeReaderTests
 
         Assert.Throws<DeclarativeConfigurationException>(() =>
             mapping.EnsureUniqueStringKeys("<root>"));
+    }
+
+    [Fact]
+    public void GetScalarString_Mapping_AbsentKey_ReturnsNull()
+    {
+        var mapping = new YamlMappingNode();
+        Assert.Null(mapping.GetScalarString("missing"));
+    }
+
+    [Fact]
+    public void GetScalarString_Mapping_NonScalarValue_ReturnsNull()
+    {
+        var stream = new YamlStream();
+        stream.Load(new StringReader("key:\n  nested: value"));
+        var mapping = Assert.IsType<YamlMappingNode>(stream.Documents[0].RootNode);
+        Assert.Null(mapping.GetScalarString("key"));
+    }
+
+    [Fact]
+    public void GetScalarString_Mapping_ScalarNullValue_ReturnsNull()
+    {
+        var stream = new YamlStream();
+        stream.Load(new StringReader("key: ~"));
+        var mapping = Assert.IsType<YamlMappingNode>(stream.Documents[0].RootNode);
+        Assert.Null(mapping.GetScalarString("key"));
+    }
+
+    [Fact]
+    public void GetScalarString_Mapping_StringValue_ReturnsString()
+    {
+        var stream = new YamlStream();
+        stream.Load(new StringReader("key: hello"));
+        var mapping = Assert.IsType<YamlMappingNode>(stream.Documents[0].RootNode);
+        Assert.Equal("hello", mapping.GetScalarString("key"));
+    }
+
+    [Fact]
+    public void EnsureCoreCollectionTag_ScalarNode_ThrowsArgumentException()
+    {
+        var scalar = new YamlScalarNode("value");
+        Assert.Throws<ArgumentException>(() => scalar.EnsureCoreCollectionTag("context"));
+    }
+
+    [Fact]
+    public void EnsureNoUnrecognizedProperties_NonScalarKey_Throws()
+    {
+        var mapping = new YamlMappingNode
+        {
+            { new YamlSequenceNode("a", "b"), new YamlScalarNode("value") },
+        };
+
+        Assert.Throws<DeclarativeConfigurationException>(() =>
+            mapping.EnsureNoUnrecognizedProperties("root", []));
     }
 }
