@@ -26,6 +26,7 @@ internal sealed partial class Base2ExponentialBucketHistogram
 
     internal ExponentialHistogramData SnapshotExponentialHistogramData = new();
 
+    private readonly int maxScale;
     private int scale;
     private double scalingFactor; // 2 ^ scale / log(2)
 
@@ -90,6 +91,7 @@ internal sealed partial class Base2ExponentialBucketHistogram
         */
         Guard.ThrowIfOutOfRange(maxBuckets, min: 2);
 
+        this.maxScale = scale;
         this.Scale = scale;
         this.PositiveBuckets = new CircularBufferBuckets(maxBuckets);
         this.NegativeBuckets = new CircularBufferBuckets(maxBuckets);
@@ -213,7 +215,7 @@ internal sealed partial class Base2ExponentialBucketHistogram
             this.RunningMax = double.NegativeInfinity;
         }
 
-        this.Scale = Metric.DefaultExponentialHistogramMaxScale;
+        this.Scale = this.maxScale;
         this.RunningSum = 0;
         this.ZeroCount = 0;
         this.PositiveBuckets.Reset();
@@ -235,8 +237,9 @@ internal sealed partial class Base2ExponentialBucketHistogram
     {
         Debug.Assert(this.PositiveBuckets.Capacity == this.NegativeBuckets.Capacity, "Capacity of positive and negative buckets are not equal.");
 
-        return new Base2ExponentialBucketHistogram(this.PositiveBuckets.Capacity, this.SnapshotExponentialHistogramData.Scale)
+        return new Base2ExponentialBucketHistogram(this.PositiveBuckets.Capacity, this.maxScale)
         {
+            Scale = this.SnapshotExponentialHistogramData.Scale,
             SnapshotSum = this.SnapshotSum,
             SnapshotMin = this.SnapshotMin,
             SnapshotMax = this.SnapshotMax,

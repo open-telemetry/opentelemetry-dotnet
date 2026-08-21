@@ -9,7 +9,7 @@ namespace OpenTelemetry.Configuration.Declarative;
 /// Extension methods that read typed values from a <see cref="YamlMappingNode"/> into <see cref="ModelProperty{T}"/> results.
 /// </summary>
 /// <remarks>
-/// All type resolution here is delegated to <see cref="Yaml12ScalarResolver"/> so that the two
+/// All type resolution here is delegated to <see cref="YamlScalarResolver"/> so that the two
 /// readers cannot disagree about what a given piece of text means. Substitution always runs before
 /// core-schema type resolution.
 /// </remarks>
@@ -40,7 +40,7 @@ internal static class YamlPropertyReader
         }
 
         if (resolved.Kind != YamlScalarKind.Boolean ||
-            !Yaml12ScalarResolver.TryGetBoolean(resolved.Value, out var boolValue))
+            !YamlScalarResolver.TryGetBoolean(resolved.Value, out var boolValue))
         {
             throw CreateTypeMismatch(key, "boolean or null", resolved.Kind);
         }

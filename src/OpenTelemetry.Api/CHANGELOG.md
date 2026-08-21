@@ -6,9 +6,9 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* Improved `Baggage.SetBaggage` performance by avoiding a full copy when
-  the specified key already has the requested value.
-  ([#7660](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7660))
+* Avoid formatting exceptions and creating exception attributes when
+  `RecordException` is called on a span that is not recorded.
+  ([#7669](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7669))
 
 ## 1.17.0
 
