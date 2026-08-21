@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.18.0-beta.1
+
+Released 2026-Aug-21
+
 * Fix concurrent scrapes returning an empty response under contention.
   Now the exporter will return an HTTP 500 error instead.
   ([#7571](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7571))
