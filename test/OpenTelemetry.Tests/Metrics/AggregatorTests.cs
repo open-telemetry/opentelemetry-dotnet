@@ -574,8 +574,7 @@ public class AggregatorTests
             metricPoints.Add(mp);
         }
 
-        Assert.Single(metricPoints);
-        var metricPoint = metricPoints[0];
+        var metricPoint = Assert.Single(metricPoints);
         Assert.Equal(maxScale, metricPoint.GetExponentialHistogramData().Scale);
 
         // A subsequent delta snapshot should retain the configured maximum scale.
