@@ -1,3 +1,25 @@
+OpenTelemetry.SelfDiagnostics.EnvironmentVariableLogMode
+OpenTelemetry.SelfDiagnostics.EnvironmentVariableLogMode.AllValues = 3 -> OpenTelemetry.SelfDiagnostics.EnvironmentVariableLogMode
+OpenTelemetry.SelfDiagnostics.EnvironmentVariableLogMode.KnownSafeValues = 2 -> OpenTelemetry.SelfDiagnostics.EnvironmentVariableLogMode
+OpenTelemetry.SelfDiagnostics.EnvironmentVariableLogMode.Names = 1 -> OpenTelemetry.SelfDiagnostics.EnvironmentVariableLogMode
+OpenTelemetry.SelfDiagnostics.EnvironmentVariableLogMode.None = 0 -> OpenTelemetry.SelfDiagnostics.EnvironmentVariableLogMode
+OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions
+OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.EnvironmentVariables.get -> OpenTelemetry.SelfDiagnostics.EnvironmentVariableLogMode
+OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.EnvironmentVariables.set -> void
+OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.FileSizeLimitKilobytes.get -> int
+OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.FileSizeLimitKilobytes.set -> void
+OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.LogDirectory.get -> string?
+OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.LogDirectory.set -> void
+OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.LogToStderr.get -> bool
+OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.LogToStderr.set -> void
+OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.LogToStdout.get -> bool
+OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.LogToStdout.set -> void
+OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.MaxRetainedFiles.get -> int
+OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.MaxRetainedFiles.set -> void
+OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.MinimumLevel.get -> Microsoft.Extensions.Logging.LogLevel
+OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.MinimumLevel.set -> void
+OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.SelfDiagnosticsOptions() -> void
 override OpenTelemetry.SimpleActivityExportProcessor.OnShutdown(int timeoutMilliseconds) -> bool
 override OpenTelemetry.SimpleLogRecordExportProcessor.OnEnd(OpenTelemetry.Logs.LogRecord! data) -> void
 override OpenTelemetry.SimpleLogRecordExportProcessor.OnShutdown(int timeoutMilliseconds) -> bool
+static OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.GetDefaultLogDirectory() -> string?
