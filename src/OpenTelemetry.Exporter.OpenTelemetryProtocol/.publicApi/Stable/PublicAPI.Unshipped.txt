@@ -1,4 +1,0 @@
-OpenTelemetry.Exporter.OtlpExporterOptions.MaxRequestSizeBytes.get -> int
-OpenTelemetry.Exporter.OtlpExporterOptions.MaxRequestSizeBytes.set -> void
-OpenTelemetry.Exporter.OtlpExporterOptions.MaxResponseSizeBytes.get -> int
-OpenTelemetry.Exporter.OtlpExporterOptions.MaxResponseSizeBytes.set -> void
