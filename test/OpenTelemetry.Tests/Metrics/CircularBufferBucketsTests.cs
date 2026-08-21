@@ -352,6 +352,31 @@ public class CircularBufferBucketsTests
     }
 
     [Theory]
+    [InlineData(5, 0, 4)] // Contiguous storage (first == size).
+    [InlineData(5, 3, 4)] // Wrapped storage (first < size).
+    [InlineData(5, 3, 5)] // Full-capacity wrapped storage.
+    public void CopyHandlesContiguousAndWrappedStorage(int capacity, int start, int count)
+    {
+        var buckets = new CircularBufferBuckets(capacity);
+
+        for (var i = 0; i < count; i++)
+        {
+            buckets.TryIncrement(start + i, i + 1);
+        }
+
+        var copy = new long[capacity];
+        buckets.Copy(copy);
+
+        var expected = new long[capacity];
+        for (var i = 0; i < count; i++)
+        {
+            expected[i] = i + 1;
+        }
+
+        Assert.Equal(expected, copy);
+    }
+
+    [Theory]
     [InlineData(14, 10, 4)]
     [InlineData(10, 10, 0)]
     [InlineData(4, 10, 4)]

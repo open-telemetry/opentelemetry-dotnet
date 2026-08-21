@@ -270,6 +270,7 @@ public sealed class OtlpExporterOptionsTests : IDisposable
             Headers = "key1=value1",
             TimeoutMilliseconds = 18,
             HttpClientFactory = () => null!,
+            MaxRequestSizeBytes = 4 * 1024 * 1024,
             MaxResponseSizeBytes = 8 * 1024,
         };
 
@@ -287,6 +288,7 @@ public sealed class OtlpExporterOptionsTests : IDisposable
         Assert.Equal(defaultOptionsWithData.Headers, targetOptionsWithoutData.Headers);
         Assert.Equal(defaultOptionsWithData.TimeoutMilliseconds, targetOptionsWithoutData.TimeoutMilliseconds);
         Assert.Equal(defaultOptionsWithData.HttpClientFactory, targetOptionsWithoutData.HttpClientFactory);
+        Assert.Equal(defaultOptionsWithData.MaxRequestSizeBytes, targetOptionsWithoutData.MaxRequestSizeBytes);
         Assert.Equal(defaultOptionsWithData.MaxResponseSizeBytes, targetOptionsWithoutData.MaxResponseSizeBytes);
 
         var targetOptionsWithData = new OtlpExporterOptions
@@ -298,6 +300,7 @@ public sealed class OtlpExporterOptionsTests : IDisposable
             Headers = "key2=value2",
             TimeoutMilliseconds = 1800,
             HttpClientFactory = () => throw new NotImplementedException(),
+            MaxRequestSizeBytes = 8 * 1024 * 1024,
             MaxResponseSizeBytes = 16 * 1024,
         };
 
@@ -311,7 +314,32 @@ public sealed class OtlpExporterOptionsTests : IDisposable
         Assert.NotEqual(defaultOptionsWithData.Headers, targetOptionsWithData.Headers);
         Assert.NotEqual(defaultOptionsWithData.TimeoutMilliseconds, targetOptionsWithData.TimeoutMilliseconds);
         Assert.NotEqual(defaultOptionsWithData.HttpClientFactory, targetOptionsWithData.HttpClientFactory);
+        Assert.NotEqual(defaultOptionsWithData.MaxRequestSizeBytes, targetOptionsWithData.MaxRequestSizeBytes);
         Assert.NotEqual(defaultOptionsWithData.MaxResponseSizeBytes, targetOptionsWithData.MaxResponseSizeBytes);
+    }
+
+    [Fact]
+    public void MaxRequestSizeBytes_DefaultsToSpecifiedValue()
+        => Assert.Equal(67_108_864, new OtlpExporterOptions().MaxRequestSizeBytes);
+
+    [Theory]
+    [InlineData(750_000)] // The smallest accepted value: the initial buffer size.
+    [InlineData(4 * 1024 * 1024)]
+    [InlineData(268_435_456)] // The largest payload the serializer can describe.
+    public void MaxRequestSizeBytes_AcceptsValuesWithinRange(int value)
+        => Assert.Equal(value, new OtlpExporterOptions { MaxRequestSizeBytes = value }.MaxRequestSizeBytes);
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(1)]
+    [InlineData(749_999)]
+    [InlineData(268_435_457)]
+    [InlineData(int.MaxValue)]
+    public void MaxRequestSizeBytes_RejectsValuesOutsideRange(int value)
+    {
+        var options = new OtlpExporterOptions();
+        Assert.Throws<ArgumentOutOfRangeException>(() => options.MaxRequestSizeBytes = value);
     }
 
     [Fact]

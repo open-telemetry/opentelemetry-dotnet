@@ -45,6 +45,11 @@ internal sealed class ConfigProperties
         {
             ConfigValueKind.Null => new(ConfigValueOutcome.PresentNull, default),
             ConfigValueKind.String => new(ConfigValueOutcome.Present, value.AsString()),
+            ConfigValueKind.Boolean or
+            ConfigValueKind.Double or
+            ConfigValueKind.Integer or
+            ConfigValueKind.Mapping or
+            ConfigValueKind.Sequence or
             _ => new(ConfigValueOutcome.TypeMismatch, default),
         };
     }
@@ -65,6 +70,11 @@ internal sealed class ConfigProperties
         {
             ConfigValueKind.Null => new(ConfigValueOutcome.PresentNull, default),
             ConfigValueKind.Boolean => new(ConfigValueOutcome.Present, value.AsBoolean()),
+            ConfigValueKind.Double or
+            ConfigValueKind.Integer or
+            ConfigValueKind.Mapping or
+            ConfigValueKind.Sequence or
+            ConfigValueKind.String or
             _ => new(ConfigValueOutcome.TypeMismatch, default),
         };
     }
@@ -88,6 +98,10 @@ internal sealed class ConfigProperties
                 => new(ConfigValueOutcome.Present, fromInteger),
             ConfigValueKind.Double when TryDoubleToInt(value.AsDouble(), out var fromDouble)
                 => new(ConfigValueOutcome.Present, fromDouble),
+            ConfigValueKind.Boolean or
+            ConfigValueKind.Mapping or
+            ConfigValueKind.Sequence or
+            ConfigValueKind.String or
             _ => new(ConfigValueOutcome.TypeMismatch, default),
         };
     }
@@ -110,6 +124,10 @@ internal sealed class ConfigProperties
             ConfigValueKind.Integer when !value.IsUnrepresentable => new(ConfigValueOutcome.Present, value.AsLong()),
             ConfigValueKind.Double when TryDoubleToLong(value.AsDouble(), out var fromDouble)
                 => new(ConfigValueOutcome.Present, fromDouble),
+            ConfigValueKind.Boolean or
+            ConfigValueKind.Mapping or
+            ConfigValueKind.Sequence or
+            ConfigValueKind.String or
             _ => new(ConfigValueOutcome.TypeMismatch, default),
         };
     }
@@ -130,7 +148,11 @@ internal sealed class ConfigProperties
         {
             ConfigValueKind.Null => new(ConfigValueOutcome.PresentNull, default),
             ConfigValueKind.Double => new(ConfigValueOutcome.Present, value.AsDouble()),
-            ConfigValueKind.Integer when !value.IsUnrepresentable => new(ConfigValueOutcome.Present, (double)value.AsLong()),
+            ConfigValueKind.Integer when !value.IsUnrepresentable => new(ConfigValueOutcome.Present, value.AsLong()),
+            ConfigValueKind.Boolean or
+            ConfigValueKind.Mapping or
+            ConfigValueKind.Sequence or
+            ConfigValueKind.String or
             _ => new(ConfigValueOutcome.TypeMismatch, default),
         };
     }
@@ -152,6 +174,11 @@ internal sealed class ConfigProperties
         {
             ConfigValueKind.Null => new(ConfigValueOutcome.PresentNull, default),
             ConfigValueKind.Mapping => new(ConfigValueOutcome.Present, value.AsMapping()),
+            ConfigValueKind.Boolean or
+            ConfigValueKind.Double or
+            ConfigValueKind.Integer or
+            ConfigValueKind.Sequence or
+            ConfigValueKind.String or
             _ => new(ConfigValueOutcome.TypeMismatch, default),
         };
     }
@@ -174,6 +201,11 @@ internal sealed class ConfigProperties
             ConfigValueKind.Null => new(ConfigValueOutcome.PresentNull, default),
             ConfigValueKind.Sequence when TryBuildPropertiesList(value.AsSequence(), out var list)
                 => new(ConfigValueOutcome.Present, list),
+            ConfigValueKind.Boolean or
+            ConfigValueKind.Double or
+            ConfigValueKind.Integer or
+            ConfigValueKind.Mapping or
+            ConfigValueKind.String or
             _ => new(ConfigValueOutcome.TypeMismatch, default),
         };
     }
@@ -229,6 +261,11 @@ internal sealed class ConfigProperties
             ConfigValueKind.Null => new(ConfigValueOutcome.PresentNull, default),
             ConfigValueKind.Sequence when TryBuildScalarList<T>(value.AsSequence(), out var list)
                 => new(ConfigValueOutcome.Present, list),
+            ConfigValueKind.Boolean or
+            ConfigValueKind.Double or
+            ConfigValueKind.Integer or
+            ConfigValueKind.Mapping or
+            ConfigValueKind.String or
             _ => new(ConfigValueOutcome.TypeMismatch, default),
         };
     }
@@ -340,6 +377,9 @@ internal sealed class ConfigProperties
                 && TryDoubleToLong(value.AsDouble(), out var longFromDouble) => longFromDouble,
             ConfigValueKind.Double when typeof(T) == typeof(int)
                 && TryDoubleToInt(value.AsDouble(), out var intFromDouble) => intFromDouble,
+            ConfigValueKind.Mapping or
+            ConfigValueKind.Null or
+            ConfigValueKind.Sequence or
             _ => null,
         };
 

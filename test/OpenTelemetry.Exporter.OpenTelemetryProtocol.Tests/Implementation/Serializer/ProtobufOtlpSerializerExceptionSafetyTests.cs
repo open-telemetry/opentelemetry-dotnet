@@ -48,7 +48,8 @@ public class ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBuff
                 failingBuffer.Length,
                 new SdkLimitOptions(),
                 Resource.Empty,
-                batchA));
+                batchA,
+                MaxSizeSerializationBufferFixture.MaxBufferSize));
 
             // The next export on the same thread must serialize only its own batch.
             var buffer = new byte[8 * 1024];
@@ -100,7 +101,8 @@ public class ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBuff
                 new SdkLimitOptions(),
                 new ExperimentalOptions(),
                 Resource.Empty,
-                batchA));
+                batchA,
+                MaxSizeSerializationBufferFixture.MaxBufferSize));
 
             AssertOnlySecondBatchIsSerialized(logRecords[1], "LoggerB");
         });
@@ -135,7 +137,8 @@ public class ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBuff
                 ref failingBuffer,
                 failingBuffer.Length,
                 Resource.Empty,
-                batch));
+                batch,
+                MaxSizeSerializationBufferFixture.MaxBufferSize));
 
             var buffer = new byte[8 * 1024];
             var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(
@@ -180,7 +183,8 @@ public class ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBuff
                     new SdkLimitOptions(),
                     new ExperimentalOptions(),
                     Resource.Empty,
-                    batch));
+                    batch,
+                    MaxSizeSerializationBufferFixture.MaxBufferSize));
 
                 Assert.Equal(referenceCountBefore, logRecord.PoolReferenceCount);
             }
