@@ -106,7 +106,7 @@ internal static class YamlScalarConverter
             accumulator = (accumulator * numberBase) + digit;
         }
 
-        return accumulator > (ulong)long.MaxValue
+        return accumulator > long.MaxValue
             ? ConfigValue.UnrepresentableInteger()
             : ConfigValue.Integer((long)accumulator);
     }
