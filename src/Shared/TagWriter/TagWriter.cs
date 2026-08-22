@@ -94,19 +94,19 @@ internal abstract class TagWriter<TTagState, TArrayState>
                 break;
 #if NET
             case DateTime dt:
-                this.WriteSpanFormattableTag(ref state, key, dt, stackalloc char[64]);
+                this.WriteSpanFormattableTag(ref state, key, dt, stackalloc char[64], tagValueMaxLength);
                 break;
             case DateTimeOffset dto:
-                this.WriteSpanFormattableTag(ref state, key, dto, stackalloc char[64]);
+                this.WriteSpanFormattableTag(ref state, key, dto, stackalloc char[64], tagValueMaxLength);
                 break;
             case TimeSpan ts:
-                this.WriteSpanFormattableTag(ref state, key, ts, stackalloc char[32]);
+                this.WriteSpanFormattableTag(ref state, key, ts, stackalloc char[32], tagValueMaxLength);
                 break;
             case Guid g:
-                this.WriteSpanFormattableTag(ref state, key, g, stackalloc char[36]);
+                this.WriteSpanFormattableTag(ref state, key, g, stackalloc char[36], tagValueMaxLength);
                 break;
             case decimal m:
-                this.WriteSpanFormattableTag(ref state, key, m, stackalloc char[32]);
+                this.WriteSpanFormattableTag(ref state, key, m, stackalloc char[32], tagValueMaxLength);
                 break;
 #endif
             case IEnumerable<KeyValuePair<string, object?>> kvList:
@@ -251,16 +251,17 @@ internal abstract class TagWriter<TTagState, TArrayState>
     }
 
 #if NET
-    private void WriteSpanFormattableTag<T>(ref TTagState state, string key, T value, Span<char> destination)
+    private void WriteSpanFormattableTag<T>(ref TTagState state, string key, T value, Span<char> destination, int? tagValueMaxLength)
         where T : ISpanFormattable
     {
         if (value.TryFormat(destination, out var charsWritten, format: default, CultureInfo.InvariantCulture))
         {
-            this.WriteStringTag(ref state, key, destination[..charsWritten]);
+            this.WriteStringTag(ref state, key, TruncateString(destination[..charsWritten], tagValueMaxLength));
         }
         else
         {
-            this.WriteStringTag(ref state, key, value.ToString(null, CultureInfo.InvariantCulture) ?? string.Empty);
+            var stringValue = value.ToString(null, CultureInfo.InvariantCulture) ?? string.Empty;
+            this.WriteStringTag(ref state, key, TruncateString(stringValue.AsSpan(), tagValueMaxLength));
         }
     }
 #endif
