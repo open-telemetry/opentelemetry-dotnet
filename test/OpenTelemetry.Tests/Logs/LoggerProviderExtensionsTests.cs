@@ -61,6 +61,30 @@ public class LoggerProviderExtensionsTests
     }
 
     [Fact]
+    public void CustomProcessorCanDropLogRecordTest()
+    {
+        List<LogRecord> exportedItems = [];
+
+        using var provider = Sdk.CreateLoggerProviderBuilder()
+            .AddProcessor(new DropLogRecordProcessor())
+            .AddProcessor(
+#pragma warning disable CA2000 // Dispose objects before losing scope
+                new SimpleLogRecordExportProcessor(new InMemoryExporter<LogRecord>(exportedItems)))
+#pragma warning restore CA2000 // Dispose objects before losing scope
+            .Build();
+
+        Assert.NotNull(provider);
+
+        var providerSdk = provider as LoggerProviderSdk;
+
+        Assert.NotNull(providerSdk);
+
+        providerSdk.GetLogger().EmitLog(new LogRecordData { Body = "Hello world" });
+
+        Assert.Empty(exportedItems);
+    }
+
+    [Fact]
     public void ShutdownTest()
     {
         using var provider = Sdk.CreateLoggerProviderBuilder()
@@ -81,5 +105,13 @@ public class LoggerProviderExtensionsTests
 
     private sealed class TestProcessor : BaseProcessor<LogRecord>
     {
+    }
+
+    private sealed class DropLogRecordProcessor : BaseProcessor<LogRecord>
+    {
+        public override void OnEnd(LogRecord data)
+        {
+            data.IsDropped = true;
+        }
     }
 }

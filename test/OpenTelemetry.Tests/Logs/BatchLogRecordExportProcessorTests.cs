@@ -156,6 +156,24 @@ public sealed class BatchLogRecordExportProcessorTests
         Assert.Same(logRecord, exportedItems[0]);
     }
 
+    [Fact]
+    public void DroppedLogRecordIsNotAddedToBatchTest()
+    {
+        List<LogRecord> exportedItems = [];
+
+        using var processor = new BatchLogRecordExportProcessor(
+#pragma warning disable CA2000 // Dispose objects before losing scope
+            new InMemoryExporter<LogRecord>(exportedItems));
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        var logRecord = new LogRecord { IsDropped = true };
+
+        processor.OnEnd(logRecord);
+        processor.Shutdown();
+
+        Assert.Empty(exportedItems);
+    }
+
     [Theory]
     [InlineData(true)]
     [InlineData(false)]

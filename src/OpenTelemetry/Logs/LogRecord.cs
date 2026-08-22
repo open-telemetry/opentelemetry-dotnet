@@ -175,6 +175,12 @@ public sealed class LogRecord
     }
 
     /// <summary>
+    /// Gets or sets a value indicating whether the log record should be dropped
+    /// by log record export processors.
+    /// </summary>
+    public bool IsDropped { get; set; }
+
+    /// <summary>
     /// Gets or sets the log category name.
     /// </summary>
     /// <remarks>

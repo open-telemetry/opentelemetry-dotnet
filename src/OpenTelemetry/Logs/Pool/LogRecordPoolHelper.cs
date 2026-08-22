@@ -10,6 +10,8 @@ internal static class LogRecordPoolHelper
 
     public static void Clear(LogRecord logRecord)
     {
+        logRecord.IsDropped = false;
+
         var attributeStorage = logRecord.AttributeStorage;
         if (attributeStorage != null)
         {

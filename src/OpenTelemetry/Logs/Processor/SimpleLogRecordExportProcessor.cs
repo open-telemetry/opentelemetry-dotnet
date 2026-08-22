@@ -38,6 +38,13 @@ public class SimpleLogRecordExportProcessor : SimpleExportProcessor<LogRecord>
     /// <inheritdoc/>
     public override void OnEnd(LogRecord data)
     {
+#pragma warning disable CA1062 // Validate arguments of public methods
+        if (data.IsDropped)
+#pragma warning restore CA1062 // Validate arguments of public methods
+        {
+            return;
+        }
+
         // SimpleLogRecordExportProcessor exports synchronously per record and is
         // not intended for production use. We accept a benign shutdown race here:
         // a record whose OnEnd runs concurrently with OnShutdown may be exported
