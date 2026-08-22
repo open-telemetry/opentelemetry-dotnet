@@ -120,18 +120,9 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
                 break;
 
-            // Note: This case is deliberately placed after the Array case so
-            // that array-valued tags do not pay for the extra type check. It
-            // covers dictionaries with typed string values, e.g.
-            // Dictionary<string, string>, which do not match the
-            // IEnumerable<KeyValuePair<string, object?>> case above because
-            // KeyValuePair<,> is not covariant.
             case IEnumerable<KeyValuePair<string, string?>> stringKvList:
                 return this.TryWriteKvListTagWithinDepthLimit(ref state, key, value, AdaptStringKvList(stringKvList), tagValueMaxLength);
 
-            // Note: Covers the remaining concrete dictionary shapes, e.g.
-            // Dictionary<string, int> or Hashtable, whose generic enumerators
-            // do not match either KeyValuePair case above.
             case IDictionary dictionary:
                 return this.TryWriteKvListTagWithinDepthLimit(ref state, key, value, AdaptDictionary(dictionary), tagValueMaxLength);
 
@@ -226,7 +217,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
     {
         if (recursionDepth >= MaxRecursionDepth)
         {
-            // Note: The nesting limit has been reached so the value is
+            // The nesting limit has been reached so the value is
             // written as a string instead of recursing any further.
             // This branch does not take part in the recursion so it
             // must not touch the depth.

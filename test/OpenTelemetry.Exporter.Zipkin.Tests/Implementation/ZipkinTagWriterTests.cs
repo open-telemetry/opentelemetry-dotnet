@@ -4,7 +4,6 @@
 using System.Text;
 using System.Text.Json;
 using OpenTelemetry.Exporter.Zipkin.Implementation;
-using Xunit;
 
 namespace OpenTelemetry.Exporter.Zipkin.Tests.Implementation;
 
@@ -31,11 +30,8 @@ public class ZipkinTagWriterTests
 
         Assert.Equal("acme", root.GetProperty("name").GetString());
 
-        // Zipkin tag values are strings so nested scalars are written as strings.
         Assert.Equal("2", root.GetProperty("tier").GetString());
 
-        // Nested key/value lists are embedded as JSON strings, mirroring the
-        // existing array handling.
         var nested = root.GetProperty("nested").GetString();
         Assert.NotNull(nested);
         using var nestedDocument = JsonDocument.Parse(nested);
