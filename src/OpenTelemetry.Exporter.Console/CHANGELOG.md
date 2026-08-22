@@ -6,6 +6,14 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Extended key/value list attribute handling to cover additional dictionary
+  shapes: attribute values implementing
+  `IEnumerable<KeyValuePair<string, string?>>` (for example
+  `Dictionary<string, string>`) or the non-generic `IDictionary` interface (for
+  example `Dictionary<string, int>` or `Hashtable`) are now rendered as JSON
+  objects instead of their string representation.
+  ([#7679](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7679))
+
 ## 1.18.0
 
 Released 2026-Aug-21

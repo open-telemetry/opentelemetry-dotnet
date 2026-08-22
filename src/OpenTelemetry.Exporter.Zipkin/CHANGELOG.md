@@ -6,6 +6,14 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Key/value list attribute values (for example `Dictionary<string, object?>`)
+  are now written as a JSON object embedded in a string, mirroring the existing
+  array handling, instead of their `ToString()` representation (which produced
+  values like ``"System.Collections.Generic.Dictionary`2[System.String,System.Object]"``).
+  This also covers additional dictionary shapes such as
+  `Dictionary<string, string>` and the non-generic `IDictionary` interface.
+  ([#7679](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7679))
+
 ## 1.18.0
 
 Released 2026-Aug-21
