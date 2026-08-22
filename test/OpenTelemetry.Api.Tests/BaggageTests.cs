@@ -185,6 +185,43 @@ public class BaggageTests
     }
 
     [Fact]
+    public async Task SetCurrentToDefaultInNewContextDoesNotThrowTest()
+    {
+        Task task;
+        using (ExecutionContext.SuppressFlow())
+        {
+            task = Task.Run(() =>
+            {
+                Baggage.Current = default;
+
+                Assert.Equal(default, Baggage.Current);
+            });
+        }
+
+        await task;
+    }
+
+    [Fact]
+    public async Task SetCurrentToDefaultClearsExistingBaggageTest()
+    {
+        Task task;
+        using (ExecutionContext.SuppressFlow())
+        {
+            task = Task.Run(() =>
+            {
+                Baggage.SetBaggage(K1, V1);
+                Assert.Equal(1, Baggage.Current.Count);
+
+                Baggage.Current = default;
+
+                Assert.Equal(0, Baggage.Current.Count);
+            });
+        }
+
+        await task;
+    }
+
+    [Fact]
     public void ContextFlowTest()
     {
         var baggage = Baggage.SetBaggage(K1, V1);

@@ -60,7 +60,23 @@ public readonly struct Baggage : IEquatable<Baggage>
     public static Baggage Current
     {
         get => RuntimeContextSlot.Get()?.Baggage ?? default;
-        set => EnsureBaggageHolder().Baggage = value;
+        set
+        {
+            if (value == default)
+            {
+                // Avoid allocating a new BaggageHolder if nothing is being set
+                var existingHolder = RuntimeContextSlot.Get();
+                if (existingHolder == null)
+                {
+                    return;
+                }
+
+                existingHolder.Baggage = value;
+                return;
+            }
+
+            EnsureBaggageHolder().Baggage = value;
+        }
     }
 
     /// <summary>
