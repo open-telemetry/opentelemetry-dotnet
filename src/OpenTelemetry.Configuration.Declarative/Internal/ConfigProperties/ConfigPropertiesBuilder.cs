@@ -8,7 +8,7 @@ namespace OpenTelemetry.Configuration;
 /// </summary>
 internal sealed class ConfigPropertiesBuilder
 {
-    private readonly Dictionary<string, ConfigValue> values = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, ConfigValue> values = [with(StringComparer.Ordinal)];
 
     /// <summary>
     /// Adds <paramref name="key"/> with <paramref name="value"/>.
