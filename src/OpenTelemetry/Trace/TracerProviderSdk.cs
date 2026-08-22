@@ -501,9 +501,20 @@ internal sealed class TracerProviderSdk : TracerProvider
         {
             if (samplingResult.AttributesOrNull is { } attributes)
             {
-                foreach (var att in attributes)
+                if (attributes is IReadOnlyList<KeyValuePair<string, object>> attributeList)
                 {
-                    options.SamplingTags[att.Key] = att.Value;
+                    for (var i = 0; i < attributeList.Count; i++)
+                    {
+                        var att = attributeList[i];
+                        options.SamplingTags[att.Key] = att.Value;
+                    }
+                }
+                else
+                {
+                    foreach (var att in attributes)
+                    {
+                        options.SamplingTags[att.Key] = att.Value;
+                    }
                 }
             }
         }
