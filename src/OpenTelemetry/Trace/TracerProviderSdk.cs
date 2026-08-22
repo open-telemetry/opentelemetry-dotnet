@@ -471,6 +471,28 @@ internal sealed class TracerProviderSdk : TracerProvider
         return 1.0;
     }
 
+    private static void ApplySamplingAttributes<TState>(
+        IEnumerable<KeyValuePair<string, object>> attributes,
+        TState state,
+        Action<TState, string, object> setTag)
+    {
+        if (attributes is IReadOnlyList<KeyValuePair<string, object>> attributeList)
+        {
+            for (var i = 0; i < attributeList.Count; i++)
+            {
+                var att = attributeList[i];
+                setTag(state, att.Key, att.Value);
+            }
+        }
+        else
+        {
+            foreach (var att in attributes)
+            {
+                setTag(state, att.Key, att.Value);
+            }
+        }
+    }
+
     private static ActivitySamplingResult ComputeActivitySamplingResult(
         ref ActivityCreationOptions<ActivityContext> options,
         Sampler sampler)
@@ -501,21 +523,8 @@ internal sealed class TracerProviderSdk : TracerProvider
         {
             if (samplingResult.AttributesOrNull is { } attributes)
             {
-                if (attributes is IReadOnlyList<KeyValuePair<string, object>> attributeList)
-                {
-                    for (var i = 0; i < attributeList.Count; i++)
-                    {
-                        var att = attributeList[i];
-                        options.SamplingTags[att.Key] = att.Value;
-                    }
-                }
-                else
-                {
-                    foreach (var att in attributes)
-                    {
-                        options.SamplingTags[att.Key] = att.Value;
-                    }
-                }
+                var tags = options.SamplingTags;
+                ApplySamplingAttributes(attributes, tags, static (tags, key, value) => tags[key] = value);
             }
         }
 
@@ -658,10 +667,7 @@ internal sealed class TracerProviderSdk : TracerProvider
         {
             if (samplingResult.AttributesOrNull is { } attributes)
             {
-                foreach (var att in attributes)
-                {
-                    activity.SetTag(att.Key, att.Value);
-                }
+                ApplySamplingAttributes(attributes, activity, static (activity, key, value) => activity.SetTag(key, value));
             }
         }
 
