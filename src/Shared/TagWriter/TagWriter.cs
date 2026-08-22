@@ -92,6 +92,23 @@ internal abstract class TagWriter<TTagState, TArrayState>
             case float f:
                 this.WriteFloatingPointTag(ref state, key, f);
                 break;
+#if NET
+            case DateTime dt:
+                this.WriteSpanFormattableTag(ref state, key, dt, stackalloc char[64]);
+                break;
+            case DateTimeOffset dto:
+                this.WriteSpanFormattableTag(ref state, key, dto, stackalloc char[64]);
+                break;
+            case TimeSpan ts:
+                this.WriteSpanFormattableTag(ref state, key, ts, stackalloc char[32]);
+                break;
+            case Guid g:
+                this.WriteSpanFormattableTag(ref state, key, g, stackalloc char[36]);
+                break;
+            case decimal m:
+                this.WriteSpanFormattableTag(ref state, key, m, stackalloc char[32]);
+                break;
+#endif
             case IEnumerable<KeyValuePair<string, object?>> kvList:
                 if (recursionDepth >= MaxRecursionDepth)
                 {
@@ -232,6 +249,21 @@ internal abstract class TagWriter<TTagState, TArrayState>
         Span<char> destination = [value];
         this.WriteStringTag(ref state, key, destination);
     }
+
+#if NET
+    private void WriteSpanFormattableTag<T>(ref TTagState state, string key, T value, Span<char> destination)
+        where T : ISpanFormattable
+    {
+        if (value.TryFormat(destination, out var charsWritten, format: default, CultureInfo.InvariantCulture))
+        {
+            this.WriteStringTag(ref state, key, destination[..charsWritten]);
+        }
+        else
+        {
+            this.WriteStringTag(ref state, key, value.ToString(null, CultureInfo.InvariantCulture) ?? string.Empty);
+        }
+    }
+#endif
 
     private void WriteCharValue(ref TArrayState state, char value)
     {
