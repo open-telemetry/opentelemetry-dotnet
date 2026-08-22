@@ -1,0 +1,2 @@
+OpenTelemetry.Logs.LogRecord.Dropped.get -> bool
+OpenTelemetry.Logs.LogRecord.Dropped.set -> void

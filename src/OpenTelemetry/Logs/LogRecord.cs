@@ -162,6 +162,12 @@ public sealed class LogRecord
     }
 
     /// <summary>
+    /// Gets or sets a value indicating whether the log record should be
+    /// dropped by log record export processors.
+    /// </summary>
+    public bool Dropped { get; set; }
+
+    /// <summary>
     /// Gets or sets the log trace state.
     /// </summary>
     /// <remarks>

@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added `LogRecord.Dropped` to allow log processors to prevent log records from
+  being exported.
+  ([#NNNN](https://github.com/open-telemetry/opentelemetry-dotnet/pull/NNNN))
+
 ## 1.18.0
 
 Released 2026-Aug-21

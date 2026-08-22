@@ -54,6 +54,14 @@ public class BatchLogRecordExportProcessor : BatchExportProcessor<LogRecord>
     /// <inheritdoc/>
     public override void OnEnd(LogRecord data)
     {
+        // Note: Intentionally not using Guard.ThrowIfNull to save prod cycles
+#pragma warning disable CA1062 // Validate arguments of public methods
+        if (data.Dropped)
+#pragma warning restore CA1062 // Validate arguments of public methods
+        {
+            return;
+        }
+
         if (!this.TryEnterOnEnd())
         {
             SdkSelfObservability.LogProcessedCounter.Add(1, this.alreadyShutdownTags);
