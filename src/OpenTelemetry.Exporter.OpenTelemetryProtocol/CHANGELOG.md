@@ -7,6 +7,12 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Extended key/value list attribute serialization to cover additional
+  dictionary shapes (`IEnumerable<KeyValuePair<string, string?>>` and
+  `IDictionary`). These attributes will be serialized as nested OTLP
+  `kvlist` values.
+  ([#7679](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7679))
+
 ## 1.18.0
 
 Released 2026-Aug-21
