@@ -452,6 +452,33 @@ public sealed class OtlpTraceExporterTests : IDisposable
     }
 
     [Fact]
+    public void SpanAttributeWithThrowingToStringIsDroppedTest()
+    {
+        // An attribute whose value cannot be serialized must be left out of the payload
+        // entirely and counted as dropped - not written as an empty KeyValue.
+        var tags = new ActivityTagsCollection
+        {
+            new("GoodTag", "value"),
+            new("ThrowingTag", new ToStringThrows()),
+        };
+
+        using var activitySource = new ActivitySource(nameof(this.SpanAttributeWithThrowingToStringIsDroppedTest));
+        using var activity = activitySource.StartActivity("root", ActivityKind.Server, default(ActivityContext), tags);
+
+        Assert.NotNull(activity);
+
+        var otlpSpan = ToOtlpSpan(new SdkLimitOptions(), activity);
+
+        Assert.NotNull(otlpSpan);
+        Assert.Equal(1u, otlpSpan.DroppedAttributesCount);
+
+        var attribute = Assert.Single(otlpSpan.Attributes);
+        Assert.Equal("GoodTag", attribute.Key);
+        Assert.Equal("value", attribute.Value.StringValue);
+        Assert.Equal(1u, otlpSpan.DroppedAttributesCount);
+    }
+
+    [Fact]
     public void SpanLimitsTest()
     {
         var sdkOptions = new SdkLimitOptions()
@@ -1264,5 +1291,10 @@ public sealed class OtlpTraceExporterTests : IDisposable
                 Assert.Equal(expectedValue, actual.StringValue);
             }
         }
+    }
+
+    private sealed class ToStringThrows
+    {
+        public override string ToString() => throw new InvalidOperationException("Nope.");
     }
 }

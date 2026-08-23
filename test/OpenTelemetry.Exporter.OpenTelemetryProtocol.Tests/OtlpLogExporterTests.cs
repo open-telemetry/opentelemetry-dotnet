@@ -868,6 +868,36 @@ public class OtlpLogExporterTests
     }
 
     [Fact]
+    public void CheckToOtlpLogRecordAttributeWithThrowingToStringIsDropped()
+    {
+        // An attribute whose value cannot be serialized must be left out of the payload
+        // entirely and counted as dropped - not written as an empty KeyValue.
+        LogRecordAttributeList attributes = default;
+        attributes.Add("GoodTag", "value");
+        attributes.Add("ThrowingTag", new ToStringThrows());
+
+        var logRecords = new List<LogRecord>();
+        using var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+            .AddInMemoryExporter(logRecords)
+            .Build();
+
+        var bridgeLogger = loggerProvider.GetLogger("OtlpLogExporterTests");
+        bridgeLogger.EmitLog(new LogRecordData(), attributes);
+
+        Assert.Single(logRecords);
+
+        var otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecords[0]);
+
+        Assert.NotNull(otlpLogRecord);
+        Assert.Equal(1u, otlpLogRecord.DroppedAttributesCount);
+
+        var attribute = Assert.Single(otlpLogRecord.Attributes);
+        Assert.Equal("GoodTag", attribute.Key);
+        Assert.Equal("value", attribute.Value.StringValue);
+        Assert.Equal(1u, otlpLogRecord.DroppedAttributesCount);
+    }
+
+    [Fact]
     public void CheckToOtlpLogRecordRespectsAttributeLimits()
     {
         var sdkLimitOptions = new SdkLimitOptions
@@ -2203,5 +2233,10 @@ public class OtlpLogExporterTests
 
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
             => throw new InvalidOperationException("Enumeration is not supported.");
+    }
+
+    private sealed class ToStringThrows
+    {
+        public override string ToString() => throw new InvalidOperationException("Nope.");
     }
 }

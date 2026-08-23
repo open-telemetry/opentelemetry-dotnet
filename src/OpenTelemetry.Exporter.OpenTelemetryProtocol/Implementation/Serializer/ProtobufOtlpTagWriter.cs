@@ -40,21 +40,30 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
     /// <param name="key">The attribute key.</param>
     /// <param name="value">The attribute value.</param>
     /// <param name="tagValueMaxLength">The maximum length to write a string value as, if any.</param>
-    public static void WriteKeyValue(
+    /// <returns>Returns bool indicating whether the key-value pair was successfully written.</returns>
+    public static bool WriteKeyValue(
         ref OtlpTagWriterState state,
         int fieldNumber,
         string key,
         object? value,
         int? tagValueMaxLength = null)
     {
+        var startPosition = state.WritePosition;
+
         state.WritePosition = ProtobufSerializer.WriteTag(state.Buffer, state.WritePosition, fieldNumber, ProtobufWireType.LEN);
 
         var lengthPosition = state.WritePosition;
         state.WritePosition += ProtobufSerializer.ReserveSizeForCompactLength;
 
-        _ = Instance.TryWriteTag(ref state, key, value, tagValueMaxLength);
+        if (!Instance.TryWriteTag(ref state, key, value, tagValueMaxLength))
+        {
+            state.WritePosition = startPosition;
+            return false;
+        }
 
         state.WritePosition = ProtobufSerializer.WriteCompactLength(state.Buffer, lengthPosition, state.WritePosition);
+
+        return true;
     }
 
     protected override void WriteIntegralTag(ref OtlpTagWriterState state, string key, long value)

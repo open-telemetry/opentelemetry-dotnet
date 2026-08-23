@@ -521,7 +521,7 @@ internal static class ProtobufOtlpMetricSerializer
             WritePosition = writePosition,
         };
 
-        ProtobufOtlpTagWriter.WriteKeyValue(ref otlpTagWriterState, fieldNumber, tag.Key, tag.Value);
+        _ = ProtobufOtlpTagWriter.WriteKeyValue(ref otlpTagWriterState, fieldNumber, tag.Key, tag.Value);
 
         return otlpTagWriterState.WritePosition;
     }
