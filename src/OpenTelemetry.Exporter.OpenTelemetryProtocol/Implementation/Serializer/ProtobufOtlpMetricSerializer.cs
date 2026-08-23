@@ -24,7 +24,7 @@ internal static class ProtobufOtlpMetricSerializer
     [ThreadStatic]
     private static Stack<List<Metric>>? metricListPool;
     [ThreadStatic]
-    private static Dictionary<string, List<Metric>>? scopeMetricsList;
+    private static Dictionary<InstrumentationScopeMetric, List<Metric>>? scopeMetricsList;
 
     private delegate int WriteExemplarFunc(byte[] buffer, int writePosition, in Exemplar exemplar);
 
@@ -36,7 +36,7 @@ internal static class ProtobufOtlpMetricSerializer
         int maxBufferSize = ProtobufSerializer.MaxBufferSize)
     {
         metricListPool ??= [];
-        scopeMetricsList ??= [];
+        scopeMetricsList ??= new(InstrumentationScopeMetricComparer.Instance);
 
         // Note: The grouped batch is held in thread-static state, so it has to be
         // released even when serialization fails. TryWriteResourceMetrics rethrows
@@ -46,11 +46,11 @@ internal static class ProtobufOtlpMetricSerializer
         {
             foreach (var metric in batch)
             {
-                var metricName = metric.MeterName;
-                if (!scopeMetricsList.TryGetValue(metricName, out var metrics))
+                var instrumentationScope = new InstrumentationScopeMetric(metric);
+                if (!scopeMetricsList.TryGetValue(instrumentationScope, out var metrics))
                 {
                     metrics = metricListPool.Count > 0 ? metricListPool.Pop() : [];
-                    scopeMetricsList[metricName] = metrics;
+                    scopeMetricsList[instrumentationScope] = metrics;
                 }
 
                 metrics.Add(metric);
@@ -66,11 +66,11 @@ internal static class ProtobufOtlpMetricSerializer
         return writePosition;
     }
 
-    internal static int TryWriteResourceMetrics(
+    private static int TryWriteResourceMetrics(
         ref byte[] buffer,
         int writePosition,
         Resources.Resource? resource,
-        Dictionary<string, List<Metric>> scopeMetrics,
+        Dictionary<InstrumentationScopeMetric, List<Metric>> scopeMetrics,
         int maxBufferSize = ProtobufSerializer.MaxBufferSize)
     {
         while (true)
@@ -117,7 +117,7 @@ internal static class ProtobufOtlpMetricSerializer
         }
     }
 
-    private static int WriteResourceMetrics(byte[] buffer, int writePosition, Resources.Resource? resource, Dictionary<string, List<Metric>> scopeMetrics)
+    private static int WriteResourceMetrics(byte[] buffer, int writePosition, Resources.Resource? resource, Dictionary<InstrumentationScopeMetric, List<Metric>> scopeMetrics)
     {
         writePosition = ProtobufOtlpResourceSerializer.WriteResource(buffer, writePosition, resource);
         writePosition = WriteScopeMetrics(buffer, writePosition, scopeMetrics);
@@ -130,7 +130,7 @@ internal static class ProtobufOtlpMetricSerializer
         return writePosition;
     }
 
-    private static int WriteScopeMetrics(byte[] buffer, int writePosition, Dictionary<string, List<Metric>> scopeMetrics)
+    private static int WriteScopeMetrics(byte[] buffer, int writePosition, Dictionary<InstrumentationScopeMetric, List<Metric>> scopeMetrics)
     {
         if (scopeMetrics != null)
         {
@@ -140,7 +140,7 @@ internal static class ProtobufOtlpMetricSerializer
                 var resourceMetricsScopeMetricsLengthPosition = writePosition;
                 writePosition += ReserveSizeForLength;
 
-                writePosition = WriteScopeMetric(buffer, writePosition, entry.Key, entry.Value);
+                writePosition = WriteScopeMetric(buffer, writePosition, entry.Key.Metric, entry.Value);
 
                 ProtobufSerializer.WriteReservedLength(buffer, resourceMetricsScopeMetricsLengthPosition, writePosition - (resourceMetricsScopeMetricsLengthPosition + ReserveSizeForLength));
             }
@@ -149,19 +149,18 @@ internal static class ProtobufOtlpMetricSerializer
         return writePosition;
     }
 
-    private static int WriteScopeMetric(byte[] buffer, int writePosition, string meterName, List<Metric> metrics)
+    private static int WriteScopeMetric(byte[] buffer, int writePosition, Metric scopeMetric, List<Metric> metrics)
     {
         writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ScopeMetrics_Scope, ProtobufWireType.LEN);
         var instrumentationScopeLengthPosition = writePosition;
         writePosition += ReserveSizeForLength;
 
         Debug.Assert(metrics.Count > 0, "Metrics collection is not expected to be empty.");
-        var metric = metrics[0];
-        var meterVersion = metric.MeterVersion;
-        var meterTags = metric.MeterTags;
-        var meterSchemaUrl = metric.MeterSchemaUrl;
+        var meterVersion = scopeMetric.MeterVersion;
+        var meterTags = scopeMetric.MeterTags;
+        var meterSchemaUrl = scopeMetric.MeterSchemaUrl;
 
-        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Name, meterName);
+        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Name, scopeMetric.MeterName);
         if (meterVersion != null)
         {
             writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Version, meterVersion);
@@ -685,6 +684,85 @@ internal static class ProtobufOtlpMetricSerializer
         ProtobufSerializer.ComputeVarInt32Size(ProtobufSerializer.GetTagValue(fieldNumber, ProtobufWireType.LEN)) +
         ProtobufSerializer.ComputeVarInt32Size((uint)numberOfUtf8Chars) +
         numberOfUtf8Chars;
+
+    private readonly struct InstrumentationScopeMetric
+    {
+        public InstrumentationScopeMetric(Metric metric)
+        {
+            this.Metric = metric;
+        }
+
+        public Metric Metric { get; }
+    }
+
+    private sealed class InstrumentationScopeMetricComparer : IEqualityComparer<InstrumentationScopeMetric>
+    {
+        public static readonly InstrumentationScopeMetricComparer Instance = new();
+
+        public bool Equals(InstrumentationScopeMetric x, InstrumentationScopeMetric y)
+        {
+            if (ReferenceEquals(x.Metric, y.Metric))
+            {
+                return true;
+            }
+
+            if (!string.Equals(x.Metric.MeterName, y.Metric.MeterName, StringComparison.Ordinal)
+                || !string.Equals(x.Metric.MeterVersion, y.Metric.MeterVersion, StringComparison.Ordinal)
+                || !string.Equals(x.Metric.MeterSchemaUrl, y.Metric.MeterSchemaUrl, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            return TagsEqual(x.Metric.MeterTags, y.Metric.MeterTags);
+        }
+
+        public int GetHashCode(InstrumentationScopeMetric obj)
+        {
+            var hash = 17;
+            unchecked
+            {
+                hash = (hash * 31) + StringComparer.Ordinal.GetHashCode(obj.Metric.MeterName);
+                hash = (hash * 31) + StringComparer.Ordinal.GetHashCode(obj.Metric.MeterVersion);
+                hash = (hash * 31) + StringComparer.Ordinal.GetHashCode(obj.Metric.MeterSchemaUrl);
+
+                if (obj.Metric.MeterTags != null)
+                {
+                    foreach (var tag in obj.Metric.MeterTags)
+                    {
+                        hash = (hash * 31) + StringComparer.Ordinal.GetHashCode(tag.Key);
+                        hash = (hash * 31) + (tag.Value?.GetHashCode() ?? 0);
+                    }
+                }
+            }
+
+            return hash;
+        }
+
+        private static bool TagsEqual(
+            IEnumerable<KeyValuePair<string, object?>>? x,
+            IEnumerable<KeyValuePair<string, object?>>? y)
+        {
+            if (x is null || y is null)
+            {
+                return x is null && y is null;
+            }
+
+            using var xEnumerator = x.GetEnumerator();
+            using var yEnumerator = y.GetEnumerator();
+
+            while (xEnumerator.MoveNext())
+            {
+                if (!yEnumerator.MoveNext()
+                    || !string.Equals(xEnumerator.Current.Key, yEnumerator.Current.Key, StringComparison.Ordinal)
+                    || !EqualityComparer<object?>.Default.Equals(xEnumerator.Current.Value, yEnumerator.Current.Value))
+                {
+                    return false;
+                }
+            }
+
+            return !yEnumerator.MoveNext();
+        }
+    }
 
     private sealed class CachedAttributes(int fieldNumber, byte[] bytes)
     {

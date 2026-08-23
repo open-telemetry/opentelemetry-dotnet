@@ -18,7 +18,7 @@ internal static class ProtobufOtlpTraceSerializer
     [ThreadStatic]
     private static Stack<List<Activity>>? activityListPool;
     [ThreadStatic]
-    private static Dictionary<string, List<Activity>>? scopeTracesList;
+    private static Dictionary<ActivitySource, List<Activity>>? scopeTracesList;
 
     internal static int WriteTraceData(
         ref byte[] buffer,
@@ -29,7 +29,7 @@ internal static class ProtobufOtlpTraceSerializer
         int maxBufferSize = ProtobufSerializer.MaxBufferSize)
     {
         activityListPool ??= [];
-        scopeTracesList ??= [];
+        scopeTracesList ??= new(InstrumentationScopeActivitySourceComparer.Instance);
 
         // Note: The grouped batch is held in thread-static state, so it has to be
         // released even when serialization fails. TryWriteResourceSpans rethrows
@@ -39,11 +39,11 @@ internal static class ProtobufOtlpTraceSerializer
         {
             foreach (var activity in batch)
             {
-                var sourceName = activity.Source.Name;
-                if (!scopeTracesList.TryGetValue(sourceName, out var activities))
+                var source = activity.Source;
+                if (!scopeTracesList.TryGetValue(source, out var activities))
                 {
                     activities = activityListPool.Count > 0 ? activityListPool.Pop() : [];
-                    scopeTracesList[sourceName] = activities;
+                    scopeTracesList[source] = activities;
                 }
 
                 activities.Add(activity);
@@ -137,7 +137,7 @@ internal static class ProtobufOtlpTraceSerializer
                 var resourceSpansScopeSpansLengthPosition = writePosition;
                 writePosition += ReserveSizeForLength;
 
-                writePosition = WriteScopeSpan(buffer, writePosition, sdkLimitOptions, entry.Value[0].Source, entry.Value);
+                writePosition = WriteScopeSpan(buffer, writePosition, sdkLimitOptions, entry.Key, entry.Value);
                 ProtobufSerializer.WriteReservedLength(buffer, resourceSpansScopeSpansLengthPosition, writePosition - (resourceSpansScopeSpansLengthPosition + ReserveSizeForLength));
             }
         }
@@ -586,5 +586,75 @@ internal static class ProtobufOtlpTraceSerializer
         position = ProtobufSerializer.WriteEnumWithTag(buffer, position, ProtobufOtlpTraceFieldNumberConstants.Status_Code, finalStatusCode);
 
         return position;
+    }
+
+    private sealed class InstrumentationScopeActivitySourceComparer : IEqualityComparer<ActivitySource>
+    {
+        public static readonly InstrumentationScopeActivitySourceComparer Instance = new();
+
+        public bool Equals(ActivitySource? x, ActivitySource? y)
+        {
+            if (ReferenceEquals(x, y))
+            {
+                return true;
+            }
+
+            if (x is null || y is null
+                || !string.Equals(x.Name, y.Name, StringComparison.Ordinal)
+                || !string.Equals(x.Version, y.Version, StringComparison.Ordinal)
+                || !string.Equals(x.TelemetrySchemaUrl, y.TelemetrySchemaUrl, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            return TagsEqual(x.Tags, y.Tags);
+        }
+
+        public int GetHashCode(ActivitySource obj)
+        {
+            var hash = 17;
+            unchecked
+            {
+                hash = (hash * 31) + StringComparer.Ordinal.GetHashCode(obj.Name);
+                hash = (hash * 31) + (obj.Version == null ? 0 : StringComparer.Ordinal.GetHashCode(obj.Version));
+                hash = (hash * 31) + (obj.TelemetrySchemaUrl == null ? 0 : StringComparer.Ordinal.GetHashCode(obj.TelemetrySchemaUrl));
+
+                if (obj.Tags != null)
+                {
+                    foreach (var tag in obj.Tags)
+                    {
+                        hash = (hash * 31) + StringComparer.Ordinal.GetHashCode(tag.Key);
+                        hash = (hash * 31) + (tag.Value?.GetHashCode() ?? 0);
+                    }
+                }
+            }
+
+            return hash;
+        }
+
+        private static bool TagsEqual(
+            IEnumerable<KeyValuePair<string, object?>>? x,
+            IEnumerable<KeyValuePair<string, object?>>? y)
+        {
+            if (x is null || y is null)
+            {
+                return x is null && y is null;
+            }
+
+            using var xEnumerator = x.GetEnumerator();
+            using var yEnumerator = y.GetEnumerator();
+
+            while (xEnumerator.MoveNext())
+            {
+                if (!yEnumerator.MoveNext()
+                    || !string.Equals(xEnumerator.Current.Key, yEnumerator.Current.Key, StringComparison.Ordinal)
+                    || !EqualityComparer<object?>.Default.Equals(xEnumerator.Current.Value, yEnumerator.Current.Value))
+                {
+                    return false;
+                }
+            }
+
+            return !yEnumerator.MoveNext();
+        }
     }
 }
