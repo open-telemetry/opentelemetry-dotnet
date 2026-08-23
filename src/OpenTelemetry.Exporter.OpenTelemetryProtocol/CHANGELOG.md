@@ -7,7 +7,7 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* If an exception is thrown when serializing an attribute, the attribute will 
+* If an exception is thrown when serializing an attribute, the attribute will
   now be dropped.
   ([#7688](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7688))
 
