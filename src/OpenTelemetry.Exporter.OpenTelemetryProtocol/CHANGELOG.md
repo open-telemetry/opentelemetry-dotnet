@@ -11,6 +11,11 @@ Notes](../../RELEASENOTES.md).
   now be dropped.
   ([#7688](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7688))
 
+* Fixed traces and metrics with the same instrumentation scope name but
+  different versions, schema URLs, or attributes being exported under the same
+  OTLP scope.
+  ([#7687](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7687))
+
 ## 1.18.0
 
 Released 2026-Aug-21
