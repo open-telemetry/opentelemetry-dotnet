@@ -267,8 +267,10 @@ public sealed class DeclarativeConfigurationExtensionTests
         configuration.AddOpenTelemetryDeclarativeConfiguration(missingSecondPath);
 
         Assert.Equal("true", configuration[OtelEnvironmentVariables.SdkDisabled]);
+
         var source = Assert.Single(configuration.Sources.OfType<DeclarativeConfigurationSource>());
         Assert.Equal(yamlFile.Path, source.FilePath.DisplayPath);
+
         var warning = Assert.Single(listener.Messages, e => e.EventId == 29);
         Assert.Equal(yamlFile.Path, warning.Payload![0]);
         Assert.Equal(missingSecondPath, warning.Payload[1]);
@@ -310,6 +312,7 @@ public sealed class DeclarativeConfigurationExtensionTests
 
         var configuration = ResolveConfiguration(services);
         Assert.Equal("true", configuration[OtelEnvironmentVariables.SdkDisabled]);
+
         var source = Assert.Single(configManager.Sources.OfType<DeclarativeConfigurationSource>());
         Assert.Equal(yamlFile1.Path, source.FilePath.DisplayPath);
     }
