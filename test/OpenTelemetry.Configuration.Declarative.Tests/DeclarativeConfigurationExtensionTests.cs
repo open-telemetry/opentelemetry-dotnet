@@ -1,9 +1,11 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics.Tracing;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Configuration.Declarative.Tests;
 
@@ -249,6 +251,30 @@ public sealed class DeclarativeConfigurationExtensionTests
     }
 
     [Fact]
+    public void AddOpenTelemetryDeclarativeConfiguration_DifferentPaths_FirstSourceWinsAndSecondIsNotLoaded()
+    {
+        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: true);
+        using var yamlFileFactory = new DeclarativeYamlTestFileFactory();
+        var missingSecondPath = Path.Combine(yamlFileFactory.TempDirectory, "missing.yaml");
+        using var listener = new TestEventListener();
+        listener.EnableEvents(
+            OpenTelemetryDeclarativeConfigurationEventSource.Log,
+            EventLevel.Warning,
+            EventKeywords.All);
+        using var configuration = new ConfigurationManager();
+
+        configuration.AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path);
+        configuration.AddOpenTelemetryDeclarativeConfiguration(missingSecondPath);
+
+        Assert.Equal("true", configuration[OtelEnvironmentVariables.SdkDisabled]);
+        var source = Assert.Single(configuration.Sources.OfType<DeclarativeConfigurationSource>());
+        Assert.Equal(yamlFile.Path, source.FilePath.DisplayPath);
+        var warning = Assert.Single(listener.Messages, e => e.EventId == 29);
+        Assert.Equal(yamlFile.Path, warning.Payload![0]);
+        Assert.Equal(missingSecondPath, warning.Payload[1]);
+    }
+
+    [Fact]
     public void AddOpenTelemetryDeclarativeConfiguration_AndUseDeclarativeConfiguration_DoesNotDoubleSource()
     {
         // Verify that calling the IConfigurationBuilder extension directly and then
@@ -268,6 +294,24 @@ public sealed class DeclarativeConfigurationExtensionTests
         _ = ResolveConfiguration(services);
 
         Assert.Single(configManager.Sources, s => s is DeclarativeConfigurationSource);
+    }
+
+    [Fact]
+    public void AddOpenTelemetryDeclarativeConfiguration_ThenUseDifferentPath_FirstSourceWins()
+    {
+        using var yamlFile1 = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: true);
+        using var yamlFile2 = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: false);
+        using var configManager = new ConfigurationManager();
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(configManager);
+        configManager.AddOpenTelemetryDeclarativeConfiguration(yamlFile1.Path);
+
+        new TestOpenTelemetryBuilder(services).UseDeclarativeConfiguration(yamlFile2.Path);
+
+        var configuration = ResolveConfiguration(services);
+        Assert.Equal("true", configuration[OtelEnvironmentVariables.SdkDisabled]);
+        var source = Assert.Single(configManager.Sources.OfType<DeclarativeConfigurationSource>());
+        Assert.Equal(yamlFile1.Path, source.FilePath.DisplayPath);
     }
 
     [Fact]

@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Configuration.Declarative.Tests;
@@ -251,6 +252,58 @@ public sealed class DeclarativeConfigurationSdkIntegrationTests
             a => a.Key == "service.name" && (string)a.Value == "from-yaml");
     }
 
+    [Fact]
+    public void PlainSdk_SharedConfigurationRoot_RepresentativeConsumersShareProviderAccessor()
+    {
+        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: false);
+        var configuration = new ConfigurationBuilder()
+            .AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path)
+            .Build();
+        var providerAccessor = configuration.Providers
+            .OfType<DeclarativeConfigurationProvider>()
+            .Single()
+            .Accessor;
+        RepresentativeDeclarativeConfigurationConsumer? tracerConsumer = null;
+        RepresentativeDeclarativeConfigurationConsumer? meterConsumer = null;
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .ConfigureServices(services =>
+            {
+                services.AddSingleton<IConfiguration>(configuration);
+                services.AddRepresentativeDeclarativeConfigurationConsumer();
+            })
+            .ConfigureResource(resource => resource.AddDetector(serviceProvider =>
+            {
+                tracerConsumer =
+                    serviceProvider.GetRequiredService<RepresentativeDeclarativeConfigurationConsumer>();
+                return new EmptyResourceDetector();
+            }))
+            .Build();
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .ConfigureServices(services =>
+            {
+                services.AddSingleton<IConfiguration>(configuration);
+                services.AddRepresentativeDeclarativeConfigurationConsumer();
+            })
+            .ConfigureResource(resource => resource.AddDetector(serviceProvider =>
+            {
+                meterConsumer =
+                    serviceProvider.GetRequiredService<RepresentativeDeclarativeConfigurationConsumer>();
+                return new EmptyResourceDetector();
+            }))
+            .Build();
+
+        var resolvedTracerConsumer =
+            Assert.IsType<RepresentativeDeclarativeConfigurationConsumer>(tracerConsumer);
+        var resolvedMeterConsumer =
+            Assert.IsType<RepresentativeDeclarativeConfigurationConsumer>(meterConsumer);
+
+        Assert.Same(providerAccessor, resolvedTracerConsumer.Accessor);
+        Assert.Same(providerAccessor, resolvedMeterConsumer.Accessor);
+        Assert.Same(resolvedTracerConsumer.Document, resolvedMeterConsumer.Document);
+    }
+
     private static TracerProvider BuildTracerProvider(string yamlPath, string? sourceName = null)
     {
         var config = new ConfigurationBuilder()
@@ -291,4 +344,9 @@ public sealed class DeclarativeConfigurationSdkIntegrationTests
             .Build()!;
     }
 #endif
+
+    private sealed class EmptyResourceDetector : IResourceDetector
+    {
+        public Resource Detect() => Resource.Empty;
+    }
 }

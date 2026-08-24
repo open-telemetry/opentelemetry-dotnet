@@ -67,6 +67,12 @@ on the same `IServiceCollection` is a no-op - the first file path wins and a
 warning is emitted via EventSource. Calling it with a different path does not
 replace the first registration.
 
+Only one declarative configuration file is supported per
+`IConfigurationBuilder`. Registering the same file again is a no-op. Registering
+a different file leaves the first one in effect. Declarative configuration files
+are not layered against each other: one YAML document is chosen, never a merge
+of two. See [Precedence](#precedence).
+
 ### 3. Write a YAML config file
 
 ```yaml
@@ -141,13 +147,29 @@ declarative configuration **takes precedence over** environment variables,
 Sources you add **after** that call take precedence over YAML values (same as
 standard `IConfiguration` ordering).
 
+This layering applies between YAML and other kinds of configuration source
+(environment variables, `appsettings.json`, in-memory values, etc.). It
+does not apply between two declarative configuration files. Flat keys can be
+merged per key; the typed YAML document cannot, so exactly one document is used.
+
 ## Known limitations
 
 - Only the settings listed above are supported.
 - File watching is not supported; the YAML file is read once at start-up.
+  Calling `IConfigurationRoot.Reload()` does not re-read the YAML file or change
+  the configuration in use. The reload is ignored and a warning is emitted via
+  EventSource.
 - The package uses standard `IConfiguration` source ordering. It does not yet
   provide the specification's strict mode that ignores other SDK environment
   variables when `OTEL_CONFIG_FILE` is set.
+- `UseDeclarativeConfiguration()` applies YAML values by extending the
+  `IConfiguration` registered at the time it is called. An application that
+  replaces its `IConfiguration` registration, or clears its configuration
+  sources, *after* that call detaches the YAML source: flat keys lose the YAML
+  values while typed consumers still read the document. Register declarative
+  configuration after your configuration sources are settled, or use
+  `builder.Configuration.AddOpenTelemetryDeclarativeConfiguration()`, which adds
+  the source directly and is not affected.
 - Only string-valued structured resource attributes are emitted. Unsupported
   typed attributes are skipped and reported.
 - For duplicate structured resource attribute names, the first occurrence wins.

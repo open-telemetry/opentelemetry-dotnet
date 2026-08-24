@@ -96,4 +96,27 @@ internal sealed class OpenTelemetryDeclarativeConfigurationEventSource : EventSo
 
     [Event(25, Message = "Declarative config: property '{0}' is not supported by this declarative configuration implementation. The configuration is invalid; check for a misspelling.", Level = EventLevel.Warning)]
     public void UnknownConfigurationProperty(string propertyPath) => this.WriteEvent(25, propertyPath);
+
+    [Event(26, Message = "Declarative config: '{0}' has already been loaded. Declarative configuration is read once at start-up, so this reload had no effect and the configuration in use is unchanged.", Level = EventLevel.Warning)]
+    public void ConfigurationReloadIgnored(string filePath) => this.WriteEvent(26, filePath);
+
+    [Event(27, Message = "Declarative config: '{0}' was parsed before the configuration provider's Load() ran, indicating a build-time consumer triggered the parse.", Level = EventLevel.Verbose)]
+    public void DocumentParsedOnDemand(string filePath) => this.WriteEvent(27, filePath);
+
+    [Event(28, Message = "Declarative config: no declarative configuration document is available.", Level = EventLevel.Verbose)]
+    public void DocumentAccessorNotAvailable() => this.WriteEvent(28);
+
+    [Event(
+        29,
+        Message = "Declarative config: source for '{0}' is already registered; the source for '{1}' will be ignored. Only the first declarative configuration file applies.",
+        Level = EventLevel.Warning)]
+    public void DifferentSourceAlreadyRegistered(string originalFilePath, string newFilePath) =>
+        this.WriteEvent(29, originalFilePath, newFilePath);
+
+    [Event(
+        30,
+        Message = "Declarative config: more than one declarative configuration file is reachable from the application's IConfiguration. Typed configuration consumers will use the document from '{0}', which is the highest-precedence file, and ignore '{1}'. Flat configuration values still follow standard IConfiguration ordering, so the two views can disagree. Use one declarative configuration file per application.",
+        Level = EventLevel.Warning)]
+    public void MultipleConfigurationDocumentsReachable(string selectedFilePath, string ignoredFilePath) =>
+        this.WriteEvent(30, selectedFilePath, ignoredFilePath);
 }
