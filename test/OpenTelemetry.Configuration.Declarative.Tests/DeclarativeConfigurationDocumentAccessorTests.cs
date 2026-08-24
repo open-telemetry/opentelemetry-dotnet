@@ -11,6 +11,12 @@ namespace OpenTelemetry.Configuration.Declarative.Tests;
 
 public sealed class DeclarativeConfigurationDocumentAccessorTests
 {
+    private const int FailedToLoadConfigurationEventId = 12;
+    private const int DocumentParsedOnDemandEventId = 27;
+    private const int DocumentAccessorNotAvailableEventId = 28;
+    private const int DifferentSourceAlreadyRegisteredEventId = 29;
+    private const int MultipleConfigurationDocumentsReachableEventId = 30;
+
     [Fact]
     public void GetDocument_BeforeAnyLoad_ParsesAndReturnsDocument()
     {
@@ -23,7 +29,7 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
         Assert.NotNull(document);
         Assert.NotNull(document.Model);
         Assert.NotNull(document.FlatKeys);
-        Assert.Single(listener.Messages, e => e.EventId == 27);
+        Assert.Single(listener.Messages, e => e.EventId == DocumentParsedOnDemandEventId);
     }
 
     [Fact]
@@ -32,7 +38,7 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: true);
         var accessor = new DeclarativeConfigurationDocumentAccessor(new FilePath(yamlFile.Path));
 
-        // Build-time consumer triggers the parse.
+        // A typed consumer triggers the parse.
         var documentFromAccessor = accessor.GetDocument();
 
         // Provider loads after; must not re-parse and must use the same document.
@@ -164,7 +170,7 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
         await Task.WhenAll(consumerTask, providerTask);
 
         Assert.Equal(1, parseCount);
-        Assert.Equal(1, listener.Count(27));
+        Assert.Equal(1, listener.GetEventIdCount(DocumentParsedOnDemandEventId));
     }
 
     [Fact]
@@ -193,7 +199,7 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
         await Task.WhenAll(providerTask, consumerTask);
 
         Assert.Equal(1, parseCount);
-        Assert.Equal(0, listener.Count(27));
+        Assert.Equal(0, listener.GetEventIdCount(DocumentParsedOnDemandEventId));
     }
 
     [Fact]
@@ -239,7 +245,7 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
         Assert.Equal(1, parseCount);
 
         // FailedToLoadConfiguration emitted exactly once, not on each re-throw.
-        Assert.Single(listener.Messages, e => e.EventId == 12);
+        Assert.Single(listener.Messages, e => e.EventId == FailedToLoadConfigurationEventId);
     }
 
     [Fact]
@@ -358,7 +364,7 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
 
         Assert.Same(providerAccessor, registeredAccessor);
         Assert.Equal("true", resolvedConfiguration[OtelEnvironmentVariables.SdkDisabled]);
-        var warning = Assert.Single(listener.Messages, e => e.EventId == 29);
+        var warning = Assert.Single(listener.Messages, e => e.EventId == DifferentSourceAlreadyRegisteredEventId);
         Assert.Equal(yamlFile1.Path, warning.Payload![0]);
         Assert.Equal(yamlFile2.Path, warning.Payload[1]);
     }
@@ -510,7 +516,7 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
             expectedFlatValue,
             resolved!.GetDocument().FlatKeys[OtelEnvironmentVariables.SdkDisabled]);
 
-        var warning = Assert.Single(listener.Messages, e => e.EventId == 30);
+        var warning = Assert.Single(listener.Messages, e => e.EventId == MultipleConfigurationDocumentsReachableEventId);
         Assert.Equal(expected.FilePath.DisplayPath, warning.Payload![0]);
         Assert.Equal(ignored.FilePath.DisplayPath, warning.Payload![1]);
     }
@@ -539,7 +545,7 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
         Assert.Same(
             providerAccessor,
             DeclarativeConfigurationDocumentAccessorResolver.FindInConfiguration(configuration));
-        Assert.DoesNotContain(listener.Messages, e => e.EventId == 30);
+        Assert.DoesNotContain(listener.Messages, e => e.EventId == MultipleConfigurationDocumentsReachableEventId);
     }
 
     [Fact]
@@ -552,7 +558,7 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
         using var sp = services.BuildServiceProvider();
 
         Assert.Null(DeclarativeConfigurationDocumentAccessorResolver.Find(sp));
-        Assert.Single(listener.Messages, e => e.EventId == 28);
+        Assert.Single(listener.Messages, e => e.EventId == DocumentAccessorNotAvailableEventId);
     }
 
     [Fact]
@@ -565,7 +571,7 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
         using var sp = services.BuildServiceProvider();
 
         Assert.Null(DeclarativeConfigurationDocumentAccessorResolver.Find(sp));
-        Assert.Single(listener.Messages, e => e.EventId == 28);
+        Assert.Single(listener.Messages, e => e.EventId == DocumentAccessorNotAvailableEventId);
     }
 
     [Fact]
@@ -689,7 +695,7 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
 
         Assert.Null(consumer.Accessor);
         Assert.Null(consumer.Document);
-        Assert.Single(listener.Messages, e => e.EventId == 28);
+        Assert.Single(listener.Messages, e => e.EventId == DocumentAccessorNotAvailableEventId);
     }
 
     [Fact]
@@ -698,15 +704,15 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: true);
         var accessor = new DeclarativeConfigurationDocumentAccessor(new FilePath(yamlFile.Path));
 
-        // Build-time consumer queries accessor before Load() runs.
+        // A typed consumer queries the accessor before Load() runs.
         using var listener = CreateVerboseListener();
         _ = accessor.GetDocument();
-        Assert.Single(listener.Messages, e => e.EventId == 27);
+        Assert.Single(listener.Messages, e => e.EventId == DocumentParsedOnDemandEventId);
 
         var provider = new DeclarativeConfigurationProvider(accessor);
         provider.Load();
 
-        Assert.Single(listener.Messages, e => e.EventId == 27);
+        Assert.Single(listener.Messages, e => e.EventId == DocumentParsedOnDemandEventId);
     }
 
     [Fact]
@@ -720,7 +726,7 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
         provider.Load();
         _ = accessor.GetDocument();
 
-        Assert.DoesNotContain(listener.Messages, e => e.EventId == 27);
+        Assert.DoesNotContain(listener.Messages, e => e.EventId == DocumentParsedOnDemandEventId);
     }
 
     [Fact]
@@ -735,7 +741,7 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
         firstProvider.Load();
         secondProvider.Load();
 
-        Assert.DoesNotContain(listener.Messages, e => e.EventId == 27);
+        Assert.DoesNotContain(listener.Messages, e => e.EventId == DocumentParsedOnDemandEventId);
     }
 
     private static TestEventListener CreateVerboseListener()
@@ -803,7 +809,7 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
                 EventKeywords.All);
         }
 
-        internal int Count(int eventId) => this.eventIds.Count(id => id == eventId);
+        internal int GetEventIdCount(int eventId) => this.eventIds.Count(id => id == eventId);
 
         protected override void OnEventWritten(EventWrittenEventArgs eventData) =>
             this.eventIds.Enqueue(eventData.EventId);

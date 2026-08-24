@@ -113,9 +113,10 @@ internal static class DeclarativeConfigurationParser
             entries.Add(ReadAttributeValue(attributeNode, name, type));
         }
 
-        // Frozen before it leaves the parser. The model outlives the parse, which makes this
-        // reference reachable by callers, and IReadOnlyList<T> over a live List<T> only hides the
-        // mutating members - it does not prevent a cast back to IList<T>.
+        // Made read-only before it leaves the parser. The model outlives the parse, which makes
+        // this reference reachable by callers, and IReadOnlyList<T> over a live List<T> only hides
+        // the mutating members - it does not prevent a cast back to IList<T>. AsReadOnly closes
+        // that because ReadOnlyCollection<T> throws from the IList<T> mutators.
         return ModelProperty<IReadOnlyList<ResourceAttributeEntry>>.Create(entries.AsReadOnly());
     }
 
@@ -269,7 +270,7 @@ internal static class DeclarativeConfigurationParser
             values.Add(resolved);
         }
 
-        // Frozen for the same reason as the attribute list above.
+        // Made read-only for the same reason as the attribute list above.
         return values.AsReadOnly();
     }
 
