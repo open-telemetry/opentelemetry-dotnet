@@ -40,7 +40,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
     /// <param name="key">The attribute key.</param>
     /// <param name="value">The attribute value.</param>
     /// <param name="tagValueMaxLength">The maximum length to write a string value as, if any.</param>
-    /// <returns>Returns bool indicating whether the key-value pair was successfully written.</returns>
+    /// <returns><see langword="true"/> if the key-value pair was successfully written; otherwise <see langword="false"/>.</returns>
     public static bool WriteKeyValue(
         ref OtlpTagWriterState state,
         int fieldNumber,
