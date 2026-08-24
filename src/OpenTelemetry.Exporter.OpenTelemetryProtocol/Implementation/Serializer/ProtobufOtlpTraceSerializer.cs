@@ -175,14 +175,19 @@ internal static class ProtobufOtlpTraceSerializer
                 {
                     if (otlpTagWriterState.TagCount < maxAttributeCount)
                     {
-                        ProtobufOtlpTagWriter.WriteKeyValue(
+                        if (ProtobufOtlpTagWriter.WriteKeyValue(
                             ref otlpTagWriterState,
                             ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Attributes,
                             activitySourceTagsList[i].Key,
                             activitySourceTagsList[i].Value,
-                            maxAttributeValueLength);
-
-                        otlpTagWriterState.TagCount++;
+                            maxAttributeValueLength))
+                        {
+                            otlpTagWriterState.TagCount++;
+                        }
+                        else
+                        {
+                            otlpTagWriterState.DroppedTagCount++;
+                        }
                     }
                     else
                     {
@@ -196,14 +201,19 @@ internal static class ProtobufOtlpTraceSerializer
                 {
                     if (otlpTagWriterState.TagCount < maxAttributeCount)
                     {
-                        ProtobufOtlpTagWriter.WriteKeyValue(
+                        if (ProtobufOtlpTagWriter.WriteKeyValue(
                             ref otlpTagWriterState,
                             ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Attributes,
                             tag.Key,
                             tag.Value,
-                            maxAttributeValueLength);
-
-                        otlpTagWriterState.TagCount++;
+                            maxAttributeValueLength))
+                        {
+                            otlpTagWriterState.TagCount++;
+                        }
+                        else
+                        {
+                            otlpTagWriterState.DroppedTagCount++;
+                        }
                     }
                     else
                     {
@@ -348,14 +358,19 @@ internal static class ProtobufOtlpTraceSerializer
 
             if (otlpTagWriterState.TagCount < maxAttributeCount)
             {
-                ProtobufOtlpTagWriter.WriteKeyValue(
+                if (ProtobufOtlpTagWriter.WriteKeyValue(
                     ref otlpTagWriterState,
                     ProtobufOtlpTraceFieldNumberConstants.Span_Attributes,
                     tag.Key,
                     tag.Value,
-                    maxAttributeValueLength);
-
-                otlpTagWriterState.TagCount++;
+                    maxAttributeValueLength))
+                {
+                    otlpTagWriterState.TagCount++;
+                }
+                else
+                {
+                    otlpTagWriterState.DroppedTagCount++;
+                }
             }
             else
             {
@@ -424,14 +439,19 @@ internal static class ProtobufOtlpTraceSerializer
         {
             if (otlpTagWriterState.TagCount < maxAttributeCount)
             {
-                ProtobufOtlpTagWriter.WriteKeyValue(
+                if (ProtobufOtlpTagWriter.WriteKeyValue(
                     ref otlpTagWriterState,
                     ProtobufOtlpTraceFieldNumberConstants.Event_Attributes,
                     tag.Key,
                     tag.Value,
-                    maxAttributeValueLength);
-
-                otlpTagWriterState.TagCount++;
+                    maxAttributeValueLength))
+                {
+                    otlpTagWriterState.TagCount++;
+                }
+                else
+                {
+                    otlpTagWriterState.DroppedTagCount++;
+                }
             }
             else
             {
@@ -508,14 +528,19 @@ internal static class ProtobufOtlpTraceSerializer
         {
             if (otlpTagWriterState.TagCount < maxAttributeCount)
             {
-                ProtobufOtlpTagWriter.WriteKeyValue(
+                if (ProtobufOtlpTagWriter.WriteKeyValue(
                     ref otlpTagWriterState,
                     ProtobufOtlpTraceFieldNumberConstants.Link_Attributes,
                     tag.Key,
                     tag.Value,
-                    maxAttributeValueLength);
-
-                otlpTagWriterState.TagCount++;
+                    maxAttributeValueLength))
+                {
+                    otlpTagWriterState.TagCount++;
+                }
+                else
+                {
+                    otlpTagWriterState.DroppedTagCount++;
+                }
             }
             else
             {
