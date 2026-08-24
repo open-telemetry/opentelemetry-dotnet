@@ -18,7 +18,7 @@ Notes](../../RELEASENOTES.md).
   sequences).
   ([#7657](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7657))
 
-* Introduced `DeclarativeConfigurationDocument` and 
+* Introduced `DeclarativeConfigurationDocument` and
   `DeclarativeConfigurationDocumentAccessor`. Each file is parsed at most once
   per application lifetime.
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#7690](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7690))
