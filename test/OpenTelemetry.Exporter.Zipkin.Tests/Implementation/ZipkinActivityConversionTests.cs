@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using System.Text;
+using System.Text.Json;
 using OpenTelemetry.Exporter.Zipkin.Tests;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Trace;
@@ -293,5 +295,29 @@ public class ZipkinActivityConversionTests
 
         // Ensure additional Activity tags were being converted.
         Assert.Contains(zipkinSpan.Tags, t => t.Key == "myCustomTag" && (string?)t.Value == "myCustomTagValue");
+    }
+
+    [Fact]
+    public void ToZipkinSpan_ByteArrayTag_IsBase64Encoded()
+    {
+        // Arrange
+        using var activity = new Activity(ZipkinSpanName);
+        activity.Start();
+        activity.SetTag("bytes", new byte[] { 1, 2, 3 });
+        activity.Stop();
+
+        var zipkinSpan = activity.ToZipkinSpan(DefaultZipkinEndpoint);
+
+        // Act
+        using var stream = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(stream))
+        {
+            zipkinSpan.Write(writer);
+        }
+
+        var json = Encoding.UTF8.GetString(stream.GetBuffer(), 0, (int)stream.Length);
+
+        // Assert
+        Assert.Contains(@"""bytes"":""AQID""", json, StringComparison.Ordinal);
     }
 }

@@ -17,6 +17,8 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests;
 public sealed partial class PrometheusSerializerTests
 {
     internal static readonly VerifySettings VerifySettings = CreateVerifySettings();
+    private static readonly int[] LabelValueArrayCase = [1, 2, 3];
+    private static readonly byte[] LabelValueByteArrayCase = [1, 2, 3];
 
     public static TheoryData<string> EscapingSchemes =>
     [
@@ -101,6 +103,10 @@ public sealed partial class PrometheusSerializerTests
         { new DateTime(2024, 5, 6, 7, 8, 9, DateTimeKind.Utc), "05/06/2024 07:08:09" },
         { new DateTimeOffset(2024, 5, 6, 7, 8, 9, TimeSpan.FromHours(2)), "05/06/2024 07:08:09 +02:00" },
         { TimeSpan.FromTicks(1234567890), "00:02:03.4567890" },
+        { LabelValueByteArrayCase, "AQID" },
+        { LabelValueArrayCase, "[1,2,3]" },
+        { new Dictionary<string, object?> { ["a"] = 1 }, """{\"a\":1}""" },
+        { new Dictionary<string, object?> { ["b"] = LabelValueByteArrayCase }, """{\"b\":\"AQID\"}""" },
     };
 
     [Fact]
