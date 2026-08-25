@@ -152,7 +152,10 @@ This layering applies between YAML and other kinds of configuration source
 does not apply between two declarative configuration files. Flat keys can be
 merged per key; the typed YAML document cannot, so exactly one document is used.
 
-## Known limitations
+## Known current limitations
+
+_NOTE: These represent limitations of the current implementation. They may be_
+_resolved as this project develops and prior to release._
 
 - Only the settings listed above are supported.
 - File watching is not supported; the YAML file is read once at start-up.
