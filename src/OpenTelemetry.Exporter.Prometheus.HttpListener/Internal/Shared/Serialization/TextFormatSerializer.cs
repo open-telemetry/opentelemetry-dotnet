@@ -515,6 +515,12 @@ internal abstract class TextFormatSerializer
     internal static int WriteLabelValue(byte[] buffer, int cursor, string value)
         => WriteEscapedString(buffer, cursor, value, escapeQuotationMarks: true);
 
+#if NET
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int WriteLabelValue(byte[] buffer, int cursor, ReadOnlySpan<char> value)
+        => WriteEscapedUtf8String(buffer, cursor, value, LabelValueEscapeChars);
+#endif
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteLabelValue(byte[] buffer, int cursor, object? value)
     {
@@ -565,6 +571,20 @@ internal abstract class TextFormatSerializer
                 return AdvanceCursorOrThrow(result, cursor, bytesWritten);
 #else
                 return WriteLabelValue(buffer, cursor, decimalValue.ToString(CultureInfo.InvariantCulture));
+#endif
+
+#if NET
+            case DateTime dateTimeValue:
+                return WriteSpanFormattableLabelValue(buffer, cursor, dateTimeValue, stackalloc char[64]);
+
+            case DateTimeOffset dateTimeOffsetValue:
+                return WriteSpanFormattableLabelValue(buffer, cursor, dateTimeOffsetValue, stackalloc char[64]);
+
+            case TimeSpan timeSpanValue:
+                return WriteSpanFormattableLabelValue(buffer, cursor, timeSpanValue, stackalloc char[32]);
+
+            case Guid guidValue:
+                return WriteSpanFormattableLabelValue(buffer, cursor, guidValue, stackalloc char[36]);
 #endif
 
             case IFormattable formattableValue:
@@ -1995,6 +2015,17 @@ internal abstract class TextFormatSerializer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int AdvanceCursorOrThrow(bool result, int cursor, int bytesWritten) =>
         result ? cursor + bytesWritten : throw new ArgumentException("Destination buffer too small.");
+
+    private static int WriteSpanFormattableLabelValue<T>(byte[] buffer, int cursor, T value, Span<char> destination)
+        where T : ISpanFormattable
+    {
+        if (value.TryFormat(destination, out var charsWritten, format: default, CultureInfo.InvariantCulture))
+        {
+            return WriteLabelValue(buffer, cursor, destination[..charsWritten]);
+        }
+
+        return WriteLabelValue(buffer, cursor, value.ToString(null, CultureInfo.InvariantCulture) ?? string.Empty);
+    }
 #endif
 
     private static string GetCanonicalLabelValueString(double value)
