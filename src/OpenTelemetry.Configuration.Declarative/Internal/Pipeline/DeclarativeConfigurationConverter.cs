@@ -43,7 +43,7 @@ internal static partial class DeclarativeConfigurationConverter
     }
 
     // disabled -> OTEL_SDK_DISABLED. Present emits canonical true/false; null/absent emit nothing.
-    private static void EmitDisabled(ConfigProperty<bool> disabled, IDictionary<string, string?> data)
+    private static void EmitDisabled(ModelProperty<bool> disabled, IDictionary<string, string?> data)
     {
         if (disabled.TryGetValue(out var value))
         {
@@ -52,7 +52,7 @@ internal static partial class DeclarativeConfigurationConverter
     }
 
     // resource.attributes / resource.attributes_list -> OTEL_RESOURCE_ATTRIBUTES.
-    private static void EmitResource(ConfigProperty<ResourceConfiguration> resource, IDictionary<string, string?> data)
+    private static void EmitResource(ModelProperty<ResourceConfiguration> resource, IDictionary<string, string?> data)
     {
         if (!resource.TryGetValue(out var resourceConfig))
         {

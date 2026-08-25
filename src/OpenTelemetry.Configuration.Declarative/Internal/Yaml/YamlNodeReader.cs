@@ -17,7 +17,7 @@ namespace OpenTelemetry.Configuration.Declarative;
 /// <b>Resolution order.</b> <see cref="ResolveScalar(YamlScalarNode)"/> is the single entry point
 /// through which every scalar in this package is read, and it establishes one deterministic order:
 /// YAML parse, then environment variable substitution on the decoded scalar content, then YAML 1.2
-/// type resolution (<see cref="Yaml12ScalarResolver"/>). The OTel spec limits substitution to
+/// type resolution (<see cref="YamlScalarResolver"/>). The OTel spec limits substitution to
 /// scalar values and requires it to happen before type interpretation. Consequently,
 /// <c>${PORT}</c> resolving to <c>4317</c> is an integer on every code path and
 /// <c>"${PORT}"</c> is a string on every code path.
@@ -68,7 +68,7 @@ internal static class YamlNodeReader
 
             // Mapping keys are not candidates for environment substitution. Resolve the authored
             // key directly so equivalent spellings such as `key` and `!!str key` compare equally.
-            var resolved = Yaml12ScalarResolver.Resolve(keyNode, keyNode.Value ?? string.Empty);
+            var resolved = YamlScalarResolver.Resolve(keyNode, keyNode.Value ?? string.Empty);
             if (resolved.Kind != YamlScalarKind.String)
             {
                 throw new DeclarativeConfigurationException(
@@ -110,11 +110,11 @@ internal static class YamlNodeReader
     /// </para>
     /// <para>
     /// The scalar's <see cref="YamlScalarNode.Style"/> still matters, but only to
-    /// <see cref="Yaml12ScalarResolver"/> for the type decision that follows.
+    /// <see cref="YamlScalarResolver"/> for the type decision that follows.
     /// </para>
     /// </remarks>
     public static ResolvedYamlScalar ResolveScalar(this YamlScalarNode scalar) =>
-        Yaml12ScalarResolver.Resolve(
+        YamlScalarResolver.Resolve(
             scalar,
             EnvironmentSubstitution.Substitute(scalar.Value ?? string.Empty));
 

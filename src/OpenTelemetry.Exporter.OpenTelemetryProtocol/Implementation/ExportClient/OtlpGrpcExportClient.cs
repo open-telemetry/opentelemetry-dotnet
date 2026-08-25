@@ -37,6 +37,8 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
 
     internal override MediaTypeHeaderValue MediaTypeHeader => MediaHeaderValue;
 
+    internal override long HeaderBytesSize => GrpcMessageHeaderSize;
+
     internal override bool RequireHttp2 => true;
 
     // We need the entire response content to ensure that the response trailers are received
@@ -67,6 +69,17 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
             }
 
             httpResponse = this.SendHttpRequest(httpRequest, cancellationToken);
+
+            if (this.IsResponseTooLarge(httpResponse, out var responseTooLarge))
+            {
+                // Requests with responses that are too large must not be retried
+                return new ExportClientGrpcResponse(
+                    success: false,
+                    deadlineUtc: deadlineUtc,
+                    exception: responseTooLarge,
+                    status: null,
+                    grpcStatusDetailsHeader: null);
+            }
 
             httpResponse.EnsureSuccessStatusCode();
 
@@ -145,7 +158,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
             // Handle non-retryable HTTP errors.
             if (OpenTelemetryProtocolExporterEventSource.Log.IsEnabled(EventLevel.Error, EventKeywords.All))
             {
-                var response = TryGetResponseBody(httpResponse, cancellationToken);
+                var response = TryGetResponseBody(httpResponse, this.MaxResponseSizeBytes, cancellationToken);
                 OpenTelemetryProtocolExporterEventSource.Log.HttpRequestFailed(this.Endpoint, response, ex);
             }
 

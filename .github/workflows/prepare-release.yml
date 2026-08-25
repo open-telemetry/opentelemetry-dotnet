@@ -8,6 +8,7 @@ on:
         options:
         - core-
         - coreunstable-
+        - declarativeconfig-
         description: 'Release tag prefix'
         required: true
       version:

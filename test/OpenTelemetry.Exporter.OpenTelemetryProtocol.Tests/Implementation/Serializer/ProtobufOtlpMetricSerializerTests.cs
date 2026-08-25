@@ -79,6 +79,19 @@ public static class ProtobufOtlpMetricSerializerTests
     }
 
     [Fact]
+    public static async Task WriteMetricsData_Serializes_Metrics_With_Infinite_Boundaries()
+    {
+        var metrics = GenerateMetrics((builder) =>
+        {
+            builder.AddView(
+                instrumentName: HistogramName,
+                new ExplicitBucketHistogramConfiguration { Boundaries = [double.NegativeInfinity, 1, 2, double.PositiveInfinity] });
+        });
+
+        await WriteMetricsAndAssertSnapshot(metrics);
+    }
+
+    [Fact]
     public static async Task WriteMetricsData_Serializes_Metrics_With_No_Boundaries()
     {
         // Arrange
@@ -91,6 +104,42 @@ public static class ProtobufOtlpMetricSerializerTests
 
         // Act and Assert
         await WriteMetricsAndAssertSnapshot(metrics);
+    }
+
+    [Fact]
+    public static void IncreaseBufferSize_GrowsToMaxBufferSizeThenStops()
+    {
+        var buffer = ProtobufSerializer.RentBuffer(ProtobufSerializer.InitialBufferSize);
+        var maxBufferSize = ProtobufSerializer.MaxBufferSize;
+
+        try
+        {
+            var growths = 0;
+
+            while (ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Metrics))
+            {
+                Assert.True(++growths < 64, "Growth did not terminate.");
+            }
+
+            // The whole budget is usable: growth only stops once the buffer has
+            // reached the maximum, leaving no unreachable remainder.
+            Assert.True(
+                buffer.Length >= maxBufferSize,
+                $"Buffer stopped growing at {buffer.Length}, short of the maximum of {maxBufferSize}.");
+
+            // How much the array pool hands back over what was asked for is up to
+            // the runtime, but it is never more than a further doubling.
+            Assert.True(
+                buffer.Length <= 2L * maxBufferSize,
+                $"Buffer grew to {buffer.Length}, more than double the maximum of {maxBufferSize}.");
+
+            // Growth stays refused once the maximum has been reached.
+            Assert.False(ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Metrics));
+        }
+        finally
+        {
+            ProtobufSerializer.ReturnBuffer(buffer);
+        }
     }
 
     [Fact]

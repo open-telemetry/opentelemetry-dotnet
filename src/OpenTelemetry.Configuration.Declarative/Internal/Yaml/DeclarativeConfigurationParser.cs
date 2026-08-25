@@ -41,10 +41,10 @@ internal static class DeclarativeConfigurationParser
             Resource = ReadResource(root),
         };
 
-    private static ConfigProperty<bool> ReadDisabled(YamlMappingNode node) =>
+    private static ModelProperty<bool> ReadDisabled(YamlMappingNode node) =>
         node.ReadBoolean(YamlKeys.Disabled);
 
-    private static ConfigProperty<ResourceConfiguration> ReadResource(YamlMappingNode node) =>
+    private static ModelProperty<ResourceConfiguration> ReadResource(YamlMappingNode node) =>
         node.ReadMapping(YamlKeys.Resource, ReadResourceConfiguration);
 
     private static ResourceConfiguration ReadResourceConfiguration(YamlMappingNode node)
@@ -60,15 +60,15 @@ internal static class DeclarativeConfigurationParser
         };
     }
 
-    private static ConfigProperty<string> ReadAttributesList(YamlMappingNode node) =>
+    private static ModelProperty<string> ReadAttributesList(YamlMappingNode node) =>
         node.ReadString(YamlKeys.AttributesList);
 
-    private static ConfigProperty<IReadOnlyList<ResourceAttributeEntry>> ReadAttributes(YamlMappingNode node)
+    private static ModelProperty<IReadOnlyList<ResourceAttributeEntry>> ReadAttributes(YamlMappingNode node)
     {
         var valueNode = node.GetValueNode(YamlKeys.Attributes);
         if (valueNode is null)
         {
-            return ConfigProperty<IReadOnlyList<ResourceAttributeEntry>>.Absent;
+            return ModelProperty<IReadOnlyList<ResourceAttributeEntry>>.Absent;
         }
 
         if (valueNode is not YamlSequenceNode sequence)
@@ -112,7 +112,7 @@ internal static class DeclarativeConfigurationParser
             entries.Add(ReadAttributeValue(attributeNode, name, type));
         }
 
-        return ConfigProperty<IReadOnlyList<ResourceAttributeEntry>>.Create(entries);
+        return ModelProperty<IReadOnlyList<ResourceAttributeEntry>>.Create(entries);
     }
 
     private static ResourceAttributeType ReadAttributeType(YamlMappingNode node, string entryName)

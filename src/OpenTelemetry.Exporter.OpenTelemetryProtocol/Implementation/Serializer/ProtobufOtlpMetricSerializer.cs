@@ -28,7 +28,12 @@ internal static class ProtobufOtlpMetricSerializer
 
     private delegate int WriteExemplarFunc(byte[] buffer, int writePosition, in Exemplar exemplar);
 
-    internal static int WriteMetricsData(ref byte[] buffer, int writePosition, Resources.Resource? resource, in Batch<Metric> batch)
+    internal static int WriteMetricsData(
+        ref byte[] buffer,
+        int writePosition,
+        Resources.Resource? resource,
+        in Batch<Metric> batch,
+        int maxBufferSize = ProtobufSerializer.MaxBufferSize)
     {
         metricListPool ??= [];
         scopeMetricsList ??= [];
@@ -51,7 +56,7 @@ internal static class ProtobufOtlpMetricSerializer
                 metrics.Add(metric);
             }
 
-            writePosition = TryWriteResourceMetrics(ref buffer, writePosition, resource, scopeMetricsList);
+            writePosition = TryWriteResourceMetrics(ref buffer, writePosition, resource, scopeMetricsList, maxBufferSize);
         }
         finally
         {
@@ -61,7 +66,12 @@ internal static class ProtobufOtlpMetricSerializer
         return writePosition;
     }
 
-    internal static int TryWriteResourceMetrics(ref byte[] buffer, int writePosition, Resources.Resource? resource, Dictionary<string, List<Metric>> scopeMetrics)
+    internal static int TryWriteResourceMetrics(
+        ref byte[] buffer,
+        int writePosition,
+        Resources.Resource? resource,
+        Dictionary<string, List<Metric>> scopeMetrics,
+        int maxBufferSize = ProtobufSerializer.MaxBufferSize)
     {
         while (true)
         {
@@ -85,7 +95,7 @@ internal static class ProtobufOtlpMetricSerializer
                 // Reset write position and attempt to increase the buffer size
                 writePosition = entryWritePosition;
 
-                if (!ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Metrics))
+                if (!ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Metrics, maxBufferSize))
                 {
                     throw;
                 }
@@ -511,7 +521,7 @@ internal static class ProtobufOtlpMetricSerializer
             WritePosition = writePosition,
         };
 
-        ProtobufOtlpTagWriter.WriteKeyValue(ref otlpTagWriterState, fieldNumber, tag.Key, tag.Value);
+        _ = ProtobufOtlpTagWriter.WriteKeyValue(ref otlpTagWriterState, fieldNumber, tag.Key, tag.Value);
 
         return otlpTagWriterState.WritePosition;
     }
@@ -603,15 +613,9 @@ internal static class ProtobufOtlpMetricSerializer
 
         static int WriteExplicitBounds(byte[] buffer, int writePosition, double[] values)
         {
-            var length = 0;
+            Debug.Assert(!Array.Exists(values, static value => double.IsInfinity(value)), "Explicit bounds must not contain positive or negative infinity.");
 
-            for (var i = 0; i < values.Length; i++)
-            {
-                if (values[i] != double.PositiveInfinity)
-                {
-                    length++;
-                }
-            }
+            var length = values.Length;
 
             if (length > 0)
             {
@@ -623,11 +627,7 @@ internal static class ProtobufOtlpMetricSerializer
 
                 for (var i = 0; i < values.Length; i++)
                 {
-                    var value = values[i];
-                    if (value != double.PositiveInfinity)
-                    {
-                        writePosition = ProtobufSerializer.WriteDouble(buffer, writePosition, value);
-                    }
+                    writePosition = ProtobufSerializer.WriteDouble(buffer, writePosition, values[i]);
                 }
             }
 

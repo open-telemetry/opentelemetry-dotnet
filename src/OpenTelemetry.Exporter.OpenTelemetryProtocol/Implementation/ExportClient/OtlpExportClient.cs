@@ -45,6 +45,7 @@ internal abstract class OtlpExportClient : IExportClient
         this.Headers = options.GetHeaders<Dictionary<string, string>>((d, k, v) => d.Add(k, v));
         this.HttpClient = httpClient;
         this.CompressionEnabled = options.Compression == OtlpExportCompression.GZip;
+        this.MaxResponseSizeBytes = options.MaxResponseSizeBytes;
     }
 
     internal HttpClient HttpClient { get; }
@@ -55,7 +56,14 @@ internal abstract class OtlpExportClient : IExportClient
 
     internal bool CompressionEnabled { get; }
 
+    /// <summary>
+    /// Gets the maximum size, in bytes, of a response the exporter will accept.
+    /// </summary>
+    internal int MaxResponseSizeBytes { get; }
+
     internal abstract MediaTypeHeaderValue MediaTypeHeader { get; }
+
+    internal virtual long HeaderBytesSize => 0;
 
     internal virtual bool RequireHttp2 => false;
 
@@ -70,8 +78,37 @@ internal abstract class OtlpExportClient : IExportClient
         return true;
     }
 
-    protected internal static string? TryGetResponseBody(HttpResponseMessage? httpResponse, CancellationToken cancellationToken) =>
-        HttpClientHelpers.TryGetResponseBodyAsString(httpResponse, cancellationToken);
+    protected internal static string? TryGetResponseBody(HttpResponseMessage? httpResponse, int maxResponseSizeBytes, CancellationToken cancellationToken) =>
+        HttpClientHelpers.TryGetResponseBodyAsString(httpResponse, maxResponseSizeBytes, cancellationToken);
+
+    /// <summary>
+    /// Determines whether a response declares more content than <see
+    /// cref="MaxResponseSizeBytes"/> (plus any <see cref="HeaderBytesSize"/>)
+    /// allows, recording that it is being discarded.
+    /// </summary>
+    /// <param name="httpResponse">The response to check.</param>
+    /// <param name="exception">The failure to report when the response is too large.</param>
+    /// <returns><see langword="true"/> when the response must be discarded.</returns>
+    protected bool IsResponseTooLarge(
+        HttpResponseMessage httpResponse,
+#if NET
+        [System.Diagnostics.CodeAnalysis.NotNullWhen(true)]
+#endif
+        out ResponseSizeLimitExceededException? exception)
+    {
+        var contentLength = httpResponse.Content?.Headers.ContentLength;
+        var maxContentLength = this.MaxResponseSizeBytes + this.HeaderBytesSize;
+
+        if (contentLength > maxContentLength)
+        {
+            OpenTelemetryProtocolExporterEventSource.Log.ResponseDiscardedDueToSizeLimit(this.Endpoint, contentLength, this.MaxResponseSizeBytes);
+            exception = new ResponseSizeLimitExceededException(contentLength, this.MaxResponseSizeBytes);
+            return true;
+        }
+
+        exception = null;
+        return false;
+    }
 
     protected HttpRequestMessage CreateHttpRequest(byte[] buffer, int contentLength)
     {

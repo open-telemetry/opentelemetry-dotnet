@@ -370,6 +370,21 @@ public class OtlpLogExporterTests
         Assert.Equal("Hello from {Name} {Price}.", attribute.Value.StringValue);
     }
 
+    [Fact]
+    public void OtlpLogRecordSerializationDoesNotEnumerateAttributes()
+    {
+        var logRecord = new LogRecord
+        {
+            Attributes = new NonEnumerableReadOnlyList(
+                new KeyValuePair<string, object?>("key", "value")),
+        };
+
+        var otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecord);
+
+        Assert.NotNull(otlpLogRecord);
+        Assert.Equal("value", TryGetAttribute(otlpLogRecord, "key")?.Value.StringValue);
+    }
+
     [Theory]
     [InlineData("true")]
     [InlineData("false")]
@@ -850,6 +865,36 @@ public class OtlpLogExporterTests
 
         Assert.Contains(SemanticConventions.AttributeExceptionStacktrace, otlpLogRecordAttributes, StringComparison.Ordinal);
         Assert.Contains(logRecord.Exception.ToInvariantString(), otlpLogRecordAttributes, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void CheckToOtlpLogRecordAttributeWithThrowingToStringIsDropped()
+    {
+        // An attribute whose value cannot be serialized must be left out of the payload
+        // entirely and counted as dropped - not written as an empty KeyValue.
+        LogRecordAttributeList attributes = default;
+        attributes.Add("GoodTag", "value");
+        attributes.Add("ThrowingTag", new ToStringThrows());
+
+        var logRecords = new List<LogRecord>();
+        using var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+            .AddInMemoryExporter(logRecords)
+            .Build();
+
+        var bridgeLogger = loggerProvider.GetLogger("OtlpLogExporterTests");
+        bridgeLogger.EmitLog(new LogRecordData(), attributes);
+
+        Assert.Single(logRecords);
+
+        var otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), logRecords[0]);
+
+        Assert.NotNull(otlpLogRecord);
+        Assert.Equal(1u, otlpLogRecord.DroppedAttributesCount);
+
+        var attribute = Assert.Single(otlpLogRecord.Attributes);
+        Assert.Equal("GoodTag", attribute.Key);
+        Assert.Equal("value", attribute.Value.StringValue);
+        Assert.Equal(1u, otlpLogRecord.DroppedAttributesCount);
     }
 
     [Fact]
@@ -1815,11 +1860,6 @@ public class OtlpLogExporterTests
     [InlineData(null, "")]
     public void LogRecordLoggerNameIsExportedWhenUsingBridgeApi(string? loggerName, string expectedScopeName)
     {
-        LogRecordAttributeList attributes = default;
-        attributes.Add("name", "tomato");
-        attributes.Add("price", 2.99);
-        attributes.Add("{OriginalFormat}", "Hello from {name} {price}.");
-
         var logRecords = new List<LogRecord>();
 
         using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
@@ -1841,6 +1881,73 @@ public class OtlpLogExporterTests
         Assert.Single(request.ResourceLogs[0].ScopeLogs);
 
         Assert.Equal(expectedScopeName, request.ResourceLogs[0].ScopeLogs[0].Scope?.Name);
+    }
+
+    [Theory]
+    [InlineData("1.0.0", "1.0.0")]
+    [InlineData(null, "")]
+    [InlineData("", "")]
+    [InlineData("   ", "   ")]
+    public void LogRecordLoggerVersionIsExportedWhenUsingBridgeApi(string? version, string expectedVersion)
+    {
+        var logRecords = new List<LogRecord>();
+
+        using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+                   .AddInMemoryExporter(logRecords)
+                   .Build())
+        {
+            var logger = loggerProvider.GetLogger("MyLogger", version);
+
+            logger.EmitLog(new LogRecordData());
+        }
+
+        Assert.Single(logRecords);
+
+        var batch = new Batch<LogRecord>([logRecords[0]], 1);
+        var request = CreateLogsExportRequest(DefaultSdkLimitOptions, new ExperimentalOptions(), batch, ResourceBuilder.CreateEmpty().Build());
+
+        Assert.NotNull(request);
+        Assert.Single(request.ResourceLogs);
+        Assert.Single(request.ResourceLogs[0].ScopeLogs);
+
+        Assert.Equal(expectedVersion, request.ResourceLogs[0].ScopeLogs[0].Scope?.Version);
+    }
+
+    [Fact]
+    public void LogRecordsFromLoggersWithSameNameAndDifferentVersionsAreExportedAsSeparateScopes()
+    {
+        var logRecords = new List<LogRecord>();
+
+        using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+                   .AddInMemoryExporter(logRecords)
+                   .Build())
+        {
+            loggerProvider.GetLogger("MyLogger", "1.0.0").EmitLog(new LogRecordData());
+            loggerProvider.GetLogger("MyLogger", "2.0.0").EmitLog(new LogRecordData());
+            loggerProvider.GetLogger("MyLogger", "1.0.0").EmitLog(new LogRecordData());
+            loggerProvider.GetLogger("MyLogger", version: null).EmitLog(new LogRecordData());
+        }
+
+        Assert.Equal(4, logRecords.Count);
+
+        var batch = new Batch<LogRecord>([.. logRecords], logRecords.Count);
+        var request = CreateLogsExportRequest(DefaultSdkLimitOptions, new ExperimentalOptions(), batch, ResourceBuilder.CreateEmpty().Build());
+
+        Assert.NotNull(request);
+        Assert.Single(request.ResourceLogs);
+
+        var scopeLogs = request.ResourceLogs[0].ScopeLogs;
+        Assert.Equal(3, scopeLogs.Count);
+        Assert.All(scopeLogs, scopeLog => Assert.Equal("MyLogger", scopeLog.Scope?.Name));
+
+        var v1 = Assert.Single(scopeLogs, scopeLog => scopeLog.Scope?.Version == "1.0.0");
+        Assert.Equal(2, v1.LogRecords.Count);
+
+        var v2 = Assert.Single(scopeLogs, scopeLog => scopeLog.Scope?.Version == "2.0.0");
+        Assert.Single(v2.LogRecords);
+
+        var unversioned = Assert.Single(scopeLogs, scopeLog => scopeLog.Scope?.Version.Length == 0);
+        Assert.Single(unversioned.LogRecords);
     }
 
     [Theory]
@@ -2114,4 +2221,22 @@ public class OtlpLogExporterTests
     }
 
     private sealed class PassThroughDelegatingHandler : DelegatingHandler;
+
+    private sealed class NonEnumerableReadOnlyList(params KeyValuePair<string, object?>[] items) : IReadOnlyList<KeyValuePair<string, object?>>
+    {
+        public int Count => items.Length;
+
+        public KeyValuePair<string, object?> this[int index] => items[index];
+
+        public IEnumerator<KeyValuePair<string, object?>> GetEnumerator()
+            => throw new InvalidOperationException("Enumeration is not supported.");
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+            => throw new InvalidOperationException("Enumeration is not supported.");
+    }
+
+    private sealed class ToStringThrows
+    {
+        public override string ToString() => throw new InvalidOperationException("Nope.");
+    }
 }

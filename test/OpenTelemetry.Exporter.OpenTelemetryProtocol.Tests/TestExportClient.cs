@@ -15,6 +15,8 @@ internal sealed class TestExportClient(bool throwException = false) : IExportCli
 
     public bool ThrowExceptionOnShutdown { get; set; }
 
+    public int LastContentLength { get; private set; }
+
     public ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default)
     {
         if (this.ThrowException)
@@ -23,6 +25,7 @@ internal sealed class TestExportClient(bool throwException = false) : IExportCli
         }
 
         this.SendExportRequestCalled = true;
+        this.LastContentLength = contentLength;
         return new TestExportClientResponse(true, deadlineUtc, null);
     }
 

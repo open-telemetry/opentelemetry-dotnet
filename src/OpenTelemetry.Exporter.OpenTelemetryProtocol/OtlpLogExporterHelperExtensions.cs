@@ -332,14 +332,15 @@ public static class OtlpLogExporterHelperExtensions
             }
             else
             {
-                var batchOptions = GetBatchExportProcessorOptions(exporterOptions, processorOptions);
+                var (maxQueueSize, scheduledDelayMilliseconds, exporterTimeoutMilliseconds, maxExportBatchSize)
+                    = GetBatchExportProcessorOptions(exporterOptions, processorOptions);
 
                 return new BatchLogRecordExportProcessor(
                     otlpExporter,
-                    batchOptions.MaxQueueSize,
-                    batchOptions.ScheduledDelayMilliseconds,
-                    batchOptions.ExporterTimeoutMilliseconds,
-                    batchOptions.MaxExportBatchSize);
+                    maxQueueSize,
+                    scheduledDelayMilliseconds,
+                    exporterTimeoutMilliseconds,
+                    maxExportBatchSize);
             }
         }
         catch

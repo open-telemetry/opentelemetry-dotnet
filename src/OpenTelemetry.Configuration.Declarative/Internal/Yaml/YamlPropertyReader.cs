@@ -6,37 +6,46 @@ using YamlDotNet.RepresentationModel;
 namespace OpenTelemetry.Configuration.Declarative;
 
 /// <summary>
-/// Extension methods that read typed values from a <see cref="YamlMappingNode"/> into <see cref="ConfigProperty{T}"/> results.
+/// Extension methods that read typed values from a <see cref="YamlMappingNode"/> into <see cref="ModelProperty{T}"/> results.
 /// </summary>
 /// <remarks>
-/// All type resolution here is delegated to <see cref="Yaml12ScalarResolver"/> so that the two
+/// All type resolution here is delegated to <see cref="YamlScalarResolver"/> so that the two
 /// readers cannot disagree about what a given piece of text means. Substitution always runs before
 /// core-schema type resolution.
 /// </remarks>
 internal static class YamlPropertyReader
 {
-    internal static ConfigProperty<bool> ReadBoolean(this YamlMappingNode node, string key)
+    /// <summary>
+    /// Reads a boolean-valued property.
+    /// </summary>
+    /// <param name="node">The mapping to read from.</param>
+    /// <param name="key">The key to read.</param>
+    /// <returns>The property value.</returns>
+    /// <exception cref="DeclarativeConfigurationException">
+    /// Thrown when the value does not resolve to a boolean or null.
+    /// </exception>
+    internal static ModelProperty<bool> ReadBoolean(this YamlMappingNode node, string key)
     {
         var valueNode = node.GetValueNode(key);
         if (valueNode is null)
         {
-            return ConfigProperty<bool>.Absent;
+            return ModelProperty<bool>.Absent;
         }
 
         var scalar = RequireScalar(valueNode, key);
         var resolved = scalar.ResolveScalar();
         if (resolved.Kind == YamlScalarKind.Null)
         {
-            return ConfigProperty<bool>.Null;
+            return ModelProperty<bool>.Null;
         }
 
         if (resolved.Kind != YamlScalarKind.Boolean ||
-            !Yaml12ScalarResolver.TryGetBoolean(resolved.Value, out var boolValue))
+            !YamlScalarResolver.TryGetBoolean(resolved.Value, out var boolValue))
         {
             throw CreateTypeMismatch(key, "boolean or null", resolved.Kind);
         }
 
-        return ConfigProperty<bool>.Create(boolValue);
+        return ModelProperty<bool>.Create(boolValue);
     }
 
     /// <summary>
@@ -48,18 +57,18 @@ internal static class YamlPropertyReader
     /// <exception cref="DeclarativeConfigurationException">
     /// Thrown when the value does not resolve to a string or null.
     /// </exception>
-    internal static ConfigProperty<string> ReadString(this YamlMappingNode node, string key)
+    internal static ModelProperty<string> ReadString(this YamlMappingNode node, string key)
     {
         var valueNode = node.GetValueNode(key);
         if (valueNode is null)
         {
-            return ConfigProperty<string>.Absent;
+            return ModelProperty<string>.Absent;
         }
 
         var resolved = RequireScalar(valueNode, key).ResolveScalar();
         if (resolved.Kind == YamlScalarKind.Null)
         {
-            return ConfigProperty<string>.Null;
+            return ModelProperty<string>.Null;
         }
 
         if (resolved.Kind != YamlScalarKind.String)
@@ -67,23 +76,39 @@ internal static class YamlPropertyReader
             throw CreateTypeMismatch(key, "string or null", resolved.Kind);
         }
 
-        return ConfigProperty<string>.Create(resolved.Value);
+        return ModelProperty<string>.Create(resolved.Value);
     }
 
-    internal static ConfigProperty<T> ReadMapping<T>(this YamlMappingNode node, string key, Func<YamlMappingNode, T> factory)
+    /// <summary>
+    /// Reads a nested mapping property, invoking <paramref name="factory"/> to construct the typed value.
+    /// </summary>
+    /// <remarks>
+    /// Unlike <see cref="ReadBoolean"/> and <see cref="ReadString"/>, a present null value is not
+    /// modelled as <see cref="ModelProperty{T}.Null"/> - it is rejected as a type mismatch. The
+    /// configuration schema does not define a null-mapping state, so a null value here is always an error.
+    /// </remarks>
+    /// <typeparam name="T">The typed model type produced by <paramref name="factory"/>.</typeparam>
+    /// <param name="node">The mapping to read from.</param>
+    /// <param name="key">The key to read.</param>
+    /// <param name="factory">A delegate that converts the child <see cref="YamlMappingNode"/> into a <typeparamref name="T"/>.</param>
+    /// <returns>The property value.</returns>
+    /// <exception cref="DeclarativeConfigurationException">
+    /// Thrown when the value is present but is not a non-null YAML mapping node.
+    /// </exception>
+    internal static ModelProperty<T> ReadMapping<T>(this YamlMappingNode node, string key, Func<YamlMappingNode, T> factory)
     {
         var valueNode = node.GetValueNode(key);
 
         if (valueNode is null)
         {
-            return ConfigProperty<T>.Absent;
+            return ModelProperty<T>.Absent;
         }
 
         if (valueNode is YamlMappingNode mapping)
         {
             mapping.EnsureCoreCollectionTag(key);
             mapping.EnsureUniqueStringKeys(key);
-            return ConfigProperty<T>.Create(factory(mapping));
+            return ModelProperty<T>.Create(factory(mapping));
         }
 
         throw new DeclarativeConfigurationException(

@@ -4,6 +4,11 @@
 extern alias OpenTelemetryProtocol;
 
 using System.Diagnostics;
+using System.Net;
+#if NETFRAMEWORK
+using System.Net.Http;
+using System.Net.Http.Headers;
+#endif
 using BenchmarkDotNet.Attributes;
 using Benchmarks.Helper;
 using OpenTelemetry;
@@ -32,7 +37,10 @@ public class OtlpGrpcExporterBenchmarks
     [GlobalSetup]
     public void GlobalSetup()
     {
-        var options = new OtlpExporterOptions();
+        var options = new OtlpExporterOptions
+        {
+            HttpClientFactory = () => new HttpClient(new StubHttpClientHandler(), true),
+        };
         this.exporter = new OtlpTraceExporter(
             options,
             new SdkLimitOptions(),
@@ -65,5 +73,35 @@ public class OtlpGrpcExporterBenchmarks
 
             this.exporter!.Export(new Batch<Activity>(this.activityBatch!, this.NumberOfSpans));
         }
+    }
+
+    private sealed class StubHttpClientHandler : DelegatingHandler
+    {
+#if NET
+        protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken) => CreateResponse();
+#endif
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            => Task.FromResult(CreateResponse());
+
+        private static HttpResponseMessage CreateResponse()
+        {
+            var response = new HttpResponseMessage(HttpStatusCode.OK);
+
+#if NET
+            response.TrailingHeaders.Add("grpc-status", "0");
+#else
+            response.RequestMessage.Properties.Add("__ResponseTrailers", new ResponseTrailers()
+            {
+                { "grpc-status", "0" },
+            });
+#endif
+
+            return response;
+        }
+
+#if NETFRAMEWORK
+        private sealed class ResponseTrailers : HttpHeaders;
+#endif
     }
 }
