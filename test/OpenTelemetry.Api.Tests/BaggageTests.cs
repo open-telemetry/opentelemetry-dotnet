@@ -90,6 +90,11 @@ public class BaggageTests
             new KeyValuePair<string, string?>(K1, V1),
             new KeyValuePair<string, string?>(K2, V2));
 
+        KeyValuePair<string, string?>[]? nullItems = null;
+        var unchangedFromNull = baggage.SetBaggage(nullItems!);
+
+        Assert.Same(baggage.GetBaggage(), unchangedFromNull.GetBaggage());
+
         var unchanged = baggage.SetBaggage(
             new KeyValuePair<string, string?>(string.Empty, V3),
             new KeyValuePair<string, string?>(K3, null),
