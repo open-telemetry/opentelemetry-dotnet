@@ -8,7 +8,7 @@ Notes](../../RELEASENOTES.md).
 
 * Fixed `byte[]`-valued tags being serialized as a JSON array of numbers
   (e.g. `[1,2,3]`) instead of being Base64-encoded as-per the specification.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7694](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7694))
 
 ## 1.18.0
 

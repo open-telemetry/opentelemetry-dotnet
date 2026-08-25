@@ -11,7 +11,7 @@ Notes](../../RELEASENOTES.md).
   (e.g. `[1,2,3]`) instead of being Base64-encoded as-per the specification.
   Other array- and map-valued attributes are now also JSON-encoded instead
   of falling back to the .NET type name (e.g. `System.Int32[]`).
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7694](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7694))
 
 ## 1.18.0-beta.1
 
