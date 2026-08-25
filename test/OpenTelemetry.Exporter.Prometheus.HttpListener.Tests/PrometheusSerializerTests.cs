@@ -107,6 +107,17 @@ public sealed partial class PrometheusSerializerTests
         { LabelValueArrayCase, "[1,2,3]" },
         { new Dictionary<string, object?> { ["a"] = 1 }, """{\"a\":1}""" },
         { new Dictionary<string, object?> { ["b"] = LabelValueByteArrayCase }, """{\"b\":\"AQID\"}""" },
+        {
+            new Dictionary<string, object?>
+            {
+                ["flag"] = true,
+                ["dbl"] = 1.5,
+                ["nan"] = double.NaN,
+                ["empty"] = null,
+                ["bad"] = new UnsupportedValue(),
+            },
+            """{\"flag\":true,\"dbl\":1.5,\"nan\":\"NaN\",\"empty\":null}"""
+        },
     };
 
     [Fact]
@@ -2462,4 +2473,9 @@ public sealed partial class PrometheusSerializerTests
 
     private static Regex SdkVersion() => new("telemetry_sdk_version=\"[^\"]*\"", RegexOptions.Compiled);
 #endif
+
+    private sealed class UnsupportedValue
+    {
+        public override string? ToString() => null;
+    }
 }
