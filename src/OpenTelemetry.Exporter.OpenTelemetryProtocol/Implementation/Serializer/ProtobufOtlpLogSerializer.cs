@@ -395,14 +395,19 @@ internal static class ProtobufOtlpLogSerializer
         }
         else
         {
-            ProtobufOtlpTagWriter.WriteKeyValue(
+            if (ProtobufOtlpTagWriter.WriteKeyValue(
                 ref state.TagWriterState,
                 ProtobufOtlpLogFieldNumberConstants.LogRecord_Attributes,
                 key,
                 value,
-                state.AttributeValueLengthLimit);
-
-            state.TagWriterState.TagCount++;
+                state.AttributeValueLengthLimit))
+            {
+                state.TagWriterState.TagCount++;
+            }
+            else
+            {
+                state.TagWriterState.DroppedTagCount++;
+            }
         }
     }
 

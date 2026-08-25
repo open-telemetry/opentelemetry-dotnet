@@ -1137,6 +1137,39 @@ public sealed class OtlpMetricsExporterTests : IDisposable
         GC.SuppressFinalize(this);
     }
 
+    [Fact]
+    public void TestDataPointAttributeWithThrowingToStringIsDropped()
+    {
+        // An attribute whose value cannot be serialized must be left out of the payload
+        // entirely - not written as an empty KeyValue. Metric data points carry no
+        // dropped-attribute count, so the attribute is simply absent.
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        var counter = meter.CreateCounter<long>("test_counter");
+        counter.Add(
+            123,
+            new KeyValuePair<string, object?>("GoodTag", "value"),
+            new KeyValuePair<string, object?>("ThrowingTag", new ToStringThrows()));
+
+        provider.ForceFlush();
+
+        var batch = new Batch<Metric>([.. metrics], metrics.Count);
+        var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
+
+        var actual = request.ResourceMetrics.Single().ScopeMetrics.Single().Metrics.Single();
+        var dataPoint = Assert.Single(actual.Sum.DataPoints);
+
+        var attribute = Assert.Single(dataPoint.Attributes);
+        Assert.Equal("GoodTag", attribute.Key);
+        Assert.Equal("value", attribute.Value.StringValue);
+    }
+
     [Theory]
     [InlineData("explicit_bucket_histogram", MetricReaderHistogramAggregation.ExplicitBucketHistogram)]
     [InlineData("base2_exponential_bucket_histogram", MetricReaderHistogramAggregation.Base2ExponentialBucketHistogram)]
@@ -1396,5 +1429,10 @@ public sealed class OtlpMetricsExporterTests : IDisposable
             // whatever buffer it ended up with to the pool.
             ProtobufSerializer.ReturnBuffer(buffer);
         }
+    }
+
+    private sealed class ToStringThrows
+    {
+        public override string ToString() => throw new InvalidOperationException("Nope.");
     }
 }

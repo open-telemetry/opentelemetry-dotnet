@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* If an exception is thrown when serializing an attribute, the attribute will
+  now be dropped.
+  ([#7688](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7688))
+
 * Extended key/value list attribute serialization to cover additional
   dictionary shapes (`IEnumerable<KeyValuePair<string, string?>>` and
   `IDictionary`). These attributes will be serialized as nested OTLP

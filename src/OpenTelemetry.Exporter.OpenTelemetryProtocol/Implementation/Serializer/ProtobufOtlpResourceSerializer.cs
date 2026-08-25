@@ -94,7 +94,7 @@ internal static class ProtobufOtlpResourceSerializer
     }
 
     private static void ProcessResourceAttribute(ref ProtobufOtlpTagWriter.OtlpTagWriterState otlpTagWriterState, KeyValuePair<string, object> attribute) =>
-        ProtobufOtlpTagWriter.WriteKeyValue(
+        _ = ProtobufOtlpTagWriter.WriteKeyValue(
             ref otlpTagWriterState,
             ProtobufOtlpTraceFieldNumberConstants.Resource_Attributes,
             attribute.Key,
