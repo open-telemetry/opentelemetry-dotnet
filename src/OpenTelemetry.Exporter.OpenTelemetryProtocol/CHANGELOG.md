@@ -13,7 +13,7 @@ Notes](../../RELEASENOTES.md).
 
 * Fixed CA certificate loading (e.g. using `OTEL_EXPORTER_OTLP_CERTIFICATE`)
   for PEM-encoded certificates that only contain a public key.
-  ([#7691](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7691))
+  ([#7693](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7693))
 
 ## 1.18.0
 
