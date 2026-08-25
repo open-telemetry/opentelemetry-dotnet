@@ -12,6 +12,17 @@ internal sealed class ZipkinTagWriter : JsonStringArrayTagWriter<Utf8JsonWriter>
 {
     public const int StackallocByteThreshold = 256;
 
+    private const int MaxThreadStaticStreamCapacity = 64 * 1024;
+
+    [ThreadStatic]
+    private static MemoryStream?[]? threadStreams;
+
+    [ThreadStatic]
+    private static Utf8JsonWriter?[]? threadWriters;
+
+    [ThreadStatic]
+    private static int threadNestingLevel;
+
     private ZipkinTagWriter()
     {
     }
@@ -67,26 +78,64 @@ internal sealed class ZipkinTagWriter : JsonStringArrayTagWriter<Utf8JsonWriter>
 
     protected override bool TryWriteEmptyTag(ref Utf8JsonWriter state, string key, object? value) => false;
 
-    protected override void WriteKvListTag(ref Utf8JsonWriter writer, string key, IEnumerable<KeyValuePair<string, object?>> value, int? tagValueMaxLength)
+    protected override void WriteKvListTag<TEnumerator>(ref Utf8JsonWriter writer, string key, ref TEnumerator kvList, int? tagValueMaxLength)
     {
-        using var stream = new MemoryStream();
-        using var kvListWriter = new Utf8JsonWriter(stream);
+        // A nested key/value list needs its own writer, so a writer is rented
+        // per level of nesting. The nesting is bounded by MaxRecursionDepth.
+        var nestingLevel = threadNestingLevel++;
 
-        // Utf8JsonWriter is a reference type so this alias refers to the
-        // same writer; a using local cannot be passed by ref directly.
-        var writerAlias = kvListWriter;
-
-        writerAlias.WriteStartObject();
-
-        foreach (var kvp in value)
+        try
         {
-            this.TryWriteTag(ref writerAlias, kvp.Key, kvp.Value, tagValueMaxLength);
+            var (stream, kvListWriter) = RentWriter(nestingLevel);
+
+            kvListWriter.WriteStartObject();
+
+            while (kvList.MoveNext())
+            {
+                this.TryWriteTag(ref kvListWriter, kvList.CurrentKey, kvList.CurrentValue, tagValueMaxLength);
+            }
+
+            kvListWriter.WriteEndObject();
+            kvListWriter.Flush();
+
+            writer.WritePropertyName(key);
+            writer.WriteStringValue(new ReadOnlySpan<byte>(stream.GetBuffer(), 0, (int)stream.Length));
+        }
+        finally
+        {
+            threadNestingLevel--;
+        }
+    }
+
+    private static (MemoryStream Stream, Utf8JsonWriter Writer) RentWriter(int nestingLevel)
+    {
+        var streams = threadStreams ??= new MemoryStream?[MaxRecursionDepth];
+        var writers = threadWriters ??= new Utf8JsonWriter?[MaxRecursionDepth];
+
+        if ((uint)nestingLevel >= (uint)streams.Length)
+        {
+            var unpooledStream = new MemoryStream();
+            return (unpooledStream, new Utf8JsonWriter(unpooledStream));
         }
 
-        writerAlias.WriteEndObject();
-        writerAlias.Flush();
+        var stream = streams[nestingLevel];
+        if (stream == null)
+        {
+            stream = new MemoryStream();
+            var writer = new Utf8JsonWriter(stream);
+            streams[nestingLevel] = stream;
+            writers[nestingLevel] = writer;
+            return (stream, writer);
+        }
 
-        writer.WritePropertyName(key);
-        writer.WriteStringValue(new ReadOnlySpan<byte>(stream.GetBuffer(), 0, (int)stream.Length));
+        stream.SetLength(0);
+        if (stream.Capacity > MaxThreadStaticStreamCapacity)
+        {
+            stream.Capacity = 0;
+        }
+
+        var pooledWriter = writers[nestingLevel]!;
+        pooledWriter.Reset(stream);
+        return (stream, pooledWriter);
     }
 }

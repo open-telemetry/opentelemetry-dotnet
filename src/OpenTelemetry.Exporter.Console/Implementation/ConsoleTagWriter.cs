@@ -94,18 +94,19 @@ internal sealed class ConsoleTagWriter : JsonStringArrayTagWriter<ConsoleTagWrit
         return true;
     }
 
-    protected override void WriteKvListTag(ref ConsoleTag state, string key, IEnumerable<KeyValuePair<string, object?>> kvList, int? tagValueMaxLength)
+    protected override void WriteKvListTag<TEnumerator>(ref ConsoleTag state, string key, ref TEnumerator kvList, int? tagValueMaxLength)
     {
         using var stream = new MemoryStream();
         using var writer = new Utf8JsonWriter(stream);
 
         writer.WriteStartObject();
-        foreach (var kvp in kvList)
+        while (kvList.MoveNext())
         {
+            var kvpKey = kvList.CurrentKey;
             ConsoleTag nestedTag = default;
-            if (this.TryWriteTag(ref nestedTag, kvp.Key, kvp.Value, tagValueMaxLength))
+            if (this.TryWriteTag(ref nestedTag, kvpKey, kvList.CurrentValue, tagValueMaxLength))
             {
-                writer.WritePropertyName(kvp.Key);
+                writer.WritePropertyName(kvpKey);
 
                 var tagValue = nestedTag.Value;
                 if (tagValue == null)

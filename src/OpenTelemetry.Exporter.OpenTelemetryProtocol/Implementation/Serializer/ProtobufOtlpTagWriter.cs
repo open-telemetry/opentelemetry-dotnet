@@ -171,7 +171,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         return true;
     }
 
-    protected override void WriteKvListTag(ref OtlpTagWriterState state, string key, IEnumerable<KeyValuePair<string, object?>> kvList, int? tagValueMaxLength)
+    protected override void WriteKvListTag<TEnumerator>(ref OtlpTagWriterState state, string key, ref TEnumerator kvList, int? tagValueMaxLength)
     {
         var startPosition = state.WritePosition;
 
@@ -189,7 +189,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
 
         try
         {
-            foreach (var kvp in kvList)
+            while (kvList.MoveNext())
             {
                 var startEntryPosition = state.WritePosition;
 
@@ -199,7 +199,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
                 state.WritePosition += ReserveSizeForLength;
 
                 // Drop a tag if we fail to write it, and reset the position to the start of the entry to overwrite the reserved tag and length for the next entry.
-                if (!this.TryWriteTag(ref state, kvp.Key, kvp.Value, tagValueMaxLength))
+                if (!this.TryWriteTag(ref state, kvList.CurrentKey, kvList.CurrentValue, tagValueMaxLength))
                 {
                     state.WritePosition = startEntryPosition;
                     continue;
