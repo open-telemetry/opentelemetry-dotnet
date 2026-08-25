@@ -7,7 +7,7 @@ Notes](../../RELEASENOTES.md).
 ## Unreleased
 
 * Added `AlwaysRecordSampler`.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7695](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7695))
 
 ## 1.18.0
 
