@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Reduced allocations when applying sampler attributes backed by arrays or
+  read-only lists.
+  ([#7696](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7696))
+
 ## 1.18.0
 
 Released 2026-Aug-21
