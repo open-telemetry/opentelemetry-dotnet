@@ -6,42 +6,39 @@ using Microsoft.Extensions.Configuration;
 namespace OpenTelemetry.Configuration.Declarative;
 
 /// <summary>
-/// An <see cref="IConfigurationProvider"/> that reads OpenTelemetry configuration from a declarative configuration YAML file.
-/// The file is parsed and loaded into the provider's data dictionary.
+/// An <see cref="IConfigurationProvider"/> that reads OpenTelemetry configuration from a
+/// declarative configuration YAML file. The file is read at most once; subsequent
+/// <see cref="Load"/> calls are ignored.
 /// </summary>
-internal sealed class DeclarativeConfigurationProvider(FilePath filePath) : ConfigurationProvider
+internal sealed class DeclarativeConfigurationProvider(DeclarativeConfigurationDocumentAccessor accessor) : ConfigurationProvider
 {
-    private readonly string fileDisplayPath = filePath.DisplayPath;
+    private bool loaded;
 
-    internal FilePath FilePath { get; } = filePath;
+    internal FilePath FilePath => accessor.FilePath;
+
+    internal DeclarativeConfigurationDocumentAccessor Accessor => accessor;
 
     /// <inheritdoc/>
     public override void Load()
     {
-        try
+        if (this.loaded)
         {
-            var data = DeclarativeConfigurationReader.Read(this.FilePath);
-
-            this.Data = data;
-
-            OpenTelemetryDeclarativeConfigurationEventSource.Log.ConfigurationLoadSucceeded(this.fileDisplayPath, data.Count);
-
-            if (data.TryGetValue(DeclarativeConfigurationConverter.DisabledKey, out var disabledValue) &&
-                bool.TryParse(disabledValue, out var disabled) && disabled)
-            {
-                OpenTelemetryDeclarativeConfigurationEventSource.Log.SdkDisabledDetected(this.fileDisplayPath);
-            }
+            OpenTelemetryDeclarativeConfigurationEventSource.Log.ConfigurationReloadIgnored(this.FilePath.DisplayPath);
+            return;
         }
-        catch (DeclarativeConfigurationException ex)
+
+        var document = accessor.GetDocumentForProvider(); // may throw; propagates as-is
+
+        this.Data = document.FlatKeys;
+        this.loaded = true;
+
+        OpenTelemetryDeclarativeConfigurationEventSource.Log.ConfigurationLoadSucceeded(
+            this.FilePath.DisplayPath, document.FlatKeys.Count);
+
+        if (document.FlatKeys.TryGetValue(DeclarativeConfigurationConverter.DisabledKey, out var disabledValue) &&
+            bool.TryParse(disabledValue, out var disabled) && disabled)
         {
-            OpenTelemetryDeclarativeConfigurationEventSource.Log.FailedToLoadConfiguration(this.fileDisplayPath, ex);
-            throw;
-        }
-        catch (Exception ex)
-        {
-            OpenTelemetryDeclarativeConfigurationEventSource.Log.FailedToLoadConfiguration(this.fileDisplayPath, ex);
-            throw new DeclarativeConfigurationException(
-                $"Failed to load declarative configuration from '{this.fileDisplayPath}': {ex.Message}", ex);
+            OpenTelemetryDeclarativeConfigurationEventSource.Log.SdkDisabledDetected(this.FilePath.DisplayPath);
         }
     }
 }

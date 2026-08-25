@@ -60,6 +60,28 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
     }
 
     [Fact]
+    public void ModernHost_BuilderConfiguration_RepresentativeConsumerUsesProviderAccessor()
+    {
+        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: true);
+        var builder = Host.CreateApplicationBuilder();
+        builder.Configuration.AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path);
+        builder.Services.AddRepresentativeDeclarativeConfigurationConsumer();
+
+        using var host = builder.Build();
+        var configuration = Assert.IsType<IConfigurationRoot>(
+            host.Services.GetRequiredService<IConfiguration>(), exactMatch: false);
+        var providerAccessor = configuration.Providers
+            .OfType<DeclarativeConfigurationProvider>()
+            .Single()
+            .Accessor;
+        var consumer =
+            host.Services.GetRequiredService<RepresentativeDeclarativeConfigurationConsumer>();
+
+        Assert.Same(providerAccessor, consumer.Accessor);
+        Assert.Same(providerAccessor.GetDocument(), consumer.Document);
+    }
+
+    [Fact]
     public void ModernHost_DisabledTrue_ProducesNoopTracerProvider()
     {
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: true);
@@ -200,6 +222,30 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
         Assert.Contains(
             resource.Attributes,
             a => a.Key == "service.name" && (string)a.Value == "classic-host-svc-via-otel");
+    }
+
+    [Fact]
+    public void ClassicHost_BuilderConfiguration_RepresentativeConsumerUsesProviderAccessor()
+    {
+        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: true);
+
+        using var host = new HostBuilder()
+            .ConfigureAppConfiguration(builder =>
+                builder.AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path))
+            .ConfigureServices(services =>
+                services.AddRepresentativeDeclarativeConfigurationConsumer())
+            .Build();
+        var configuration = Assert.IsType<IConfigurationRoot>(
+            host.Services.GetRequiredService<IConfiguration>(), exactMatch: false);
+        var providerAccessor = configuration.Providers
+            .OfType<DeclarativeConfigurationProvider>()
+            .Single()
+            .Accessor;
+        var consumer =
+            host.Services.GetRequiredService<RepresentativeDeclarativeConfigurationConsumer>();
+
+        Assert.Same(providerAccessor, consumer.Accessor);
+        Assert.Same(providerAccessor.GetDocument(), consumer.Document);
     }
 
     [Fact]
