@@ -84,6 +84,33 @@ public class BaggageTests
     }
 
     [Fact]
+    public void SetBaggageParamsTest()
+    {
+        var baggage = default(Baggage).SetBaggage(
+            new KeyValuePair<string, string?>(K1, V1),
+            new KeyValuePair<string, string?>(K2, V2));
+
+        var unchanged = baggage.SetBaggage(
+            new KeyValuePair<string, string?>(string.Empty, V3),
+            new KeyValuePair<string, string?>(K3, null),
+            new KeyValuePair<string, string?>(K1, V1));
+
+        Assert.Same(baggage.GetBaggage(), unchanged.GetBaggage());
+
+        var updated = baggage.SetBaggage(
+            new KeyValuePair<string, string?>(K1, null),
+            new KeyValuePair<string, string?>(K3, null),
+            new KeyValuePair<string, string?>(K2, V2),
+            new KeyValuePair<string, string?>(K3, V3));
+
+        Assert.Equal(2, updated.Count);
+        Assert.Null(updated.GetBaggage(K1));
+        Assert.Equal(V2, updated.GetBaggage(K2));
+        Assert.Equal(V3, updated.GetBaggage(K3));
+        Assert.Equal(V1, baggage.GetBaggage(K1));
+    }
+
+    [Fact]
     public void SetEmptyNameTest()
     {
         var baggage = Baggage.Current;
