@@ -363,7 +363,7 @@ public sealed class DeclarativeConfigurationSchemaTests
     private static ReadOnlyDictionary<string, string?> ReadConfiguration(string yaml)
     {
         using var factory = new DeclarativeYamlTestFileFactory();
-        return DeclarativeConfigurationReader.Read(new FilePath(factory.CreateYamlFile(yaml)));
+        return DeclarativeConfigurationReader.Read(new FilePath(factory.CreateYamlFile(yaml))).FlatKeys;
     }
 
     private static DeclarativeConfiguration ParseConfiguration(string yaml)
