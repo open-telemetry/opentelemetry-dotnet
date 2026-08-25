@@ -154,8 +154,9 @@ merged per key; the typed YAML document cannot, so exactly one document is used.
 
 ## Known current limitations
 
-_NOTE: These represent limitations of the current implementation. They may be_
-_resolved as this project develops and prior to release._
+> [!NOTE]
+> These represent limitations of the current implementation. They may be
+> resolved as this project develops and prior to release.
 
 - Only the settings listed above are supported.
 - File watching is not supported; the YAML file is read once at start-up.
