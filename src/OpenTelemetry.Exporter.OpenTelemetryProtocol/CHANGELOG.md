@@ -11,6 +11,10 @@ Notes](../../RELEASENOTES.md).
   now be dropped.
   ([#7688](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7688))
 
+* Fixed CA certificate loading (e.g. using `OTEL_EXPORTER_OTLP_CERTIFICATE`)
+  for PEM-encoded certificates that only contain a public key.
+  ([#7691](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7691))
+
 ## 1.18.0
 
 Released 2026-Aug-21
