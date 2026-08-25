@@ -29,9 +29,19 @@ public class SpanAttributes
     {
         Guard.ThrowIfNull(attributes);
 
-        foreach (var kvp in attributes)
+        if (attributes is KeyValuePair<string, object?>[] attributeArray)
         {
-            this.AddInternal(kvp.Key, kvp.Value);
+            foreach (ref readonly var kvp in attributeArray.AsSpan())
+            {
+                this.AddInternal(kvp.Key, kvp.Value);
+            }
+        }
+        else
+        {
+            foreach (var kvp in attributes)
+            {
+                this.AddInternal(kvp.Key, kvp.Value);
+            }
         }
     }
 
