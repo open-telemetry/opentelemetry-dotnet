@@ -24,7 +24,7 @@ internal static class ProtobufOtlpMetricSerializer
     [ThreadStatic]
     private static Stack<List<Metric>>? metricListPool;
     [ThreadStatic]
-    private static Dictionary<InstrumentationScopeMetric, List<Metric>>? scopeMetricsList;
+    private static Dictionary<InstrumentationScope, List<Metric>>? scopeMetricsList;
 
     private delegate int WriteExemplarFunc(byte[] buffer, int writePosition, in Exemplar exemplar);
 
@@ -36,7 +36,7 @@ internal static class ProtobufOtlpMetricSerializer
         int maxBufferSize = ProtobufSerializer.MaxBufferSize)
     {
         metricListPool ??= [];
-        scopeMetricsList ??= new(InstrumentationScopeMetricComparer.Instance);
+        scopeMetricsList ??= [];
 
         // Note: The grouped batch is held in thread-static state, so it has to be
         // released even when serialization fails. TryWriteResourceMetrics rethrows
@@ -46,7 +46,7 @@ internal static class ProtobufOtlpMetricSerializer
         {
             foreach (var metric in batch)
             {
-                var instrumentationScope = new InstrumentationScopeMetric(metric);
+                var instrumentationScope = new InstrumentationScope(metric);
                 if (!scopeMetricsList.TryGetValue(instrumentationScope, out var metrics))
                 {
                     metrics = metricListPool.Count > 0 ? metricListPool.Pop() : [];
@@ -70,7 +70,7 @@ internal static class ProtobufOtlpMetricSerializer
         ref byte[] buffer,
         int writePosition,
         Resources.Resource? resource,
-        Dictionary<InstrumentationScopeMetric, List<Metric>> scopeMetrics,
+        Dictionary<InstrumentationScope, List<Metric>> scopeMetrics,
         int maxBufferSize = ProtobufSerializer.MaxBufferSize)
     {
         while (true)
@@ -117,7 +117,7 @@ internal static class ProtobufOtlpMetricSerializer
         }
     }
 
-    private static int WriteResourceMetrics(byte[] buffer, int writePosition, Resources.Resource? resource, Dictionary<InstrumentationScopeMetric, List<Metric>> scopeMetrics)
+    private static int WriteResourceMetrics(byte[] buffer, int writePosition, Resources.Resource? resource, Dictionary<InstrumentationScope, List<Metric>> scopeMetrics)
     {
         writePosition = ProtobufOtlpResourceSerializer.WriteResource(buffer, writePosition, resource);
         writePosition = WriteScopeMetrics(buffer, writePosition, scopeMetrics);
@@ -130,7 +130,7 @@ internal static class ProtobufOtlpMetricSerializer
         return writePosition;
     }
 
-    private static int WriteScopeMetrics(byte[] buffer, int writePosition, Dictionary<InstrumentationScopeMetric, List<Metric>> scopeMetrics)
+    private static int WriteScopeMetrics(byte[] buffer, int writePosition, Dictionary<InstrumentationScope, List<Metric>> scopeMetrics)
     {
         if (scopeMetrics != null)
         {
@@ -140,7 +140,7 @@ internal static class ProtobufOtlpMetricSerializer
                 var resourceMetricsScopeMetricsLengthPosition = writePosition;
                 writePosition += ReserveSizeForLength;
 
-                writePosition = WriteScopeMetric(buffer, writePosition, entry.Key.Metric, entry.Value);
+                writePosition = WriteScopeMetric(buffer, writePosition, entry.Key, entry.Value);
 
                 ProtobufSerializer.WriteReservedLength(buffer, resourceMetricsScopeMetricsLengthPosition, writePosition - (resourceMetricsScopeMetricsLengthPosition + ReserveSizeForLength));
             }
@@ -149,18 +149,18 @@ internal static class ProtobufOtlpMetricSerializer
         return writePosition;
     }
 
-    private static int WriteScopeMetric(byte[] buffer, int writePosition, Metric scopeMetric, List<Metric> metrics)
+    private static int WriteScopeMetric(byte[] buffer, int writePosition, InstrumentationScope instrumentationScope, List<Metric> metrics)
     {
         writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ScopeMetrics_Scope, ProtobufWireType.LEN);
         var instrumentationScopeLengthPosition = writePosition;
         writePosition += ReserveSizeForLength;
 
         Debug.Assert(metrics.Count > 0, "Metrics collection is not expected to be empty.");
-        var meterVersion = scopeMetric.MeterVersion;
-        var meterTags = scopeMetric.MeterTags;
-        var meterSchemaUrl = scopeMetric.MeterSchemaUrl;
+        var meterVersion = instrumentationScope.Version;
+        var meterTags = instrumentationScope.Tags?.KeyValuePairs;
+        var meterSchemaUrl = instrumentationScope.SchemaUrl;
 
-        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Name, scopeMetric.MeterName);
+        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Name, instrumentationScope.Name);
         if (meterVersion != null)
         {
             writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.InstrumentationScope_Version, meterVersion);
@@ -685,83 +685,55 @@ internal static class ProtobufOtlpMetricSerializer
         ProtobufSerializer.ComputeVarInt32Size((uint)numberOfUtf8Chars) +
         numberOfUtf8Chars;
 
-    private readonly struct InstrumentationScopeMetric
+    private readonly struct InstrumentationScope : IEquatable<InstrumentationScope>
     {
-        public InstrumentationScopeMetric(Metric metric)
+        private readonly int hashCode;
+
+        public InstrumentationScope(Metric metric)
         {
-            this.Metric = metric;
-        }
+            var identity = metric.InstrumentIdentity;
+            this.Name = identity.MeterName;
+            this.Version = identity.MeterVersion;
+            this.SchemaUrl = identity.MeterSchemaUrl;
+            this.Tags = identity.MeterTags;
 
-        public Metric Metric { get; }
-    }
-
-    private sealed class InstrumentationScopeMetricComparer : IEqualityComparer<InstrumentationScopeMetric>
-    {
-        public static readonly InstrumentationScopeMetricComparer Instance = new();
-
-        public bool Equals(InstrumentationScopeMetric x, InstrumentationScopeMetric y)
-        {
-            if (ReferenceEquals(x.Metric, y.Metric))
-            {
-                return true;
-            }
-
-            if (!string.Equals(x.Metric.MeterName, y.Metric.MeterName, StringComparison.Ordinal)
-                || !string.Equals(x.Metric.MeterVersion, y.Metric.MeterVersion, StringComparison.Ordinal)
-                || !string.Equals(x.Metric.MeterSchemaUrl, y.Metric.MeterSchemaUrl, StringComparison.Ordinal))
-            {
-                return false;
-            }
-
-            return TagsEqual(x.Metric.MeterTags, y.Metric.MeterTags);
-        }
-
-        public int GetHashCode(InstrumentationScopeMetric obj)
-        {
-            var hash = 17;
+#if NET || NETSTANDARD2_1_OR_GREATER
+            HashCode hashCode = default;
+            hashCode.Add(this.Name, StringComparer.Ordinal);
+            hashCode.Add(this.Version, StringComparer.Ordinal);
+            hashCode.Add(this.SchemaUrl, StringComparer.Ordinal);
+            hashCode.Add(this.Tags);
+            this.hashCode = hashCode.ToHashCode();
+#else
             unchecked
             {
-                hash = (hash * 31) + StringComparer.Ordinal.GetHashCode(obj.Metric.MeterName);
-                hash = (hash * 31) + StringComparer.Ordinal.GetHashCode(obj.Metric.MeterVersion);
-                hash = (hash * 31) + StringComparer.Ordinal.GetHashCode(obj.Metric.MeterSchemaUrl);
-
-                if (obj.Metric.MeterTags != null)
-                {
-                    foreach (var tag in obj.Metric.MeterTags)
-                    {
-                        hash = (hash * 31) + StringComparer.Ordinal.GetHashCode(tag.Key);
-                        hash = (hash * 31) + (tag.Value?.GetHashCode() ?? 0);
-                    }
-                }
+                var hash = 17;
+                hash = (hash * 31) + this.Name.GetHashCode();
+                hash = (hash * 31) + this.Version.GetHashCode();
+                hash = (hash * 31) + this.SchemaUrl.GetHashCode();
+                hash = (hash * 31) + (this.Tags?.GetHashCode() ?? 0);
+                this.hashCode = hash;
             }
-
-            return hash;
+#endif
         }
 
-        private static bool TagsEqual(
-            IEnumerable<KeyValuePair<string, object?>>? x,
-            IEnumerable<KeyValuePair<string, object?>>? y)
-        {
-            if (x is null || y is null)
-            {
-                return x is null && y is null;
-            }
+        public string Name { get; }
 
-            using var xEnumerator = x.GetEnumerator();
-            using var yEnumerator = y.GetEnumerator();
+        public string Version { get; }
 
-            while (xEnumerator.MoveNext())
-            {
-                if (!yEnumerator.MoveNext()
-                    || !string.Equals(xEnumerator.Current.Key, yEnumerator.Current.Key, StringComparison.Ordinal)
-                    || !EqualityComparer<object?>.Default.Equals(xEnumerator.Current.Value, yEnumerator.Current.Value))
-                {
-                    return false;
-                }
-            }
+        public string SchemaUrl { get; }
 
-            return !yEnumerator.MoveNext();
-        }
+        public Tags? Tags { get; }
+
+        public bool Equals(InstrumentationScope other)
+            => string.Equals(this.Name, other.Name, StringComparison.Ordinal)
+            && string.Equals(this.Version, other.Version, StringComparison.Ordinal)
+            && string.Equals(this.SchemaUrl, other.SchemaUrl, StringComparison.Ordinal)
+            && Nullable.Equals(this.Tags, other.Tags);
+
+        public override bool Equals(object? obj) => obj is InstrumentationScope other && this.Equals(other);
+
+        public override int GetHashCode() => this.hashCode;
     }
 
     private sealed class CachedAttributes(int fieldNumber, byte[] bytes)
