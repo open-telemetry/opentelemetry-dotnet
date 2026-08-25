@@ -6,6 +6,9 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Reduced allocations when setting baggage through the `params` overload.
+  ([#7697](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7697))
+
 ## 1.18.0
 
 Released 2026-Aug-21
