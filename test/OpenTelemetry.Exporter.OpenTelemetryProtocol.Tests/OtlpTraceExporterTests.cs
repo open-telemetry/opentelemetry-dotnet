@@ -452,6 +452,110 @@ public sealed class OtlpTraceExporterTests : IDisposable
     }
 
     [Fact]
+    public void SpanAttributeWithThrowingToStringIsDroppedTest()
+    {
+        // An attribute whose value cannot be serialized must be left out of the payload
+        // entirely and counted as dropped - not written as an empty KeyValue.
+        var tags = new ActivityTagsCollection
+        {
+            new("GoodTag", "value"),
+            new("ThrowingTag", new ToStringThrows()),
+        };
+
+        using var activitySource = new ActivitySource(nameof(this.SpanAttributeWithThrowingToStringIsDroppedTest));
+        using var activity = activitySource.StartActivity("root", ActivityKind.Server, default(ActivityContext), tags);
+
+        Assert.NotNull(activity);
+
+        var otlpSpan = ToOtlpSpan(new SdkLimitOptions(), activity);
+
+        Assert.NotNull(otlpSpan);
+        Assert.Equal(1u, otlpSpan.DroppedAttributesCount);
+
+        var attribute = Assert.Single(otlpSpan.Attributes);
+        Assert.Equal("GoodTag", attribute.Key);
+        Assert.Equal("value", attribute.Value.StringValue);
+        Assert.Equal(1u, otlpSpan.DroppedAttributesCount);
+    }
+
+    [Fact]
+    public void SpanEventAndLinkAttributesWithThrowingToStringAreDroppedTest()
+    {
+        var tags = new ActivityTagsCollection
+        {
+            new("GoodTag", "value"),
+            new("ThrowingTag", new ToStringThrows()),
+        };
+
+        var links = new[] { new ActivityLink(default, tags) };
+
+        using var activitySource = new ActivitySource(nameof(this.SpanEventAndLinkAttributesWithThrowingToStringAreDroppedTest));
+        using var activity = activitySource.StartActivity("root", ActivityKind.Server, default(ActivityContext), tags: null, links);
+
+        Assert.NotNull(activity);
+
+        activity.AddEvent(new ActivityEvent("Event", DateTime.UtcNow, tags));
+
+        var otlpSpan = ToOtlpSpan(new SdkLimitOptions(), activity);
+
+        Assert.NotNull(otlpSpan);
+
+        var otlpEvent = Assert.Single(otlpSpan.Events);
+        var eventAttribute = Assert.Single(otlpEvent.Attributes);
+        Assert.Equal("GoodTag", eventAttribute.Key);
+        Assert.Equal("value", eventAttribute.Value.StringValue);
+        Assert.Equal(1u, otlpEvent.DroppedAttributesCount);
+
+        var otlpLink = Assert.Single(otlpSpan.Links);
+        var linkAttribute = Assert.Single(otlpLink.Attributes);
+        Assert.Equal("GoodTag", linkAttribute.Key);
+        Assert.Equal("value", linkAttribute.Value.StringValue);
+        Assert.Equal(1u, otlpLink.DroppedAttributesCount);
+    }
+
+    [Fact]
+    public void ScopeAttributeWithThrowingToStringIsDroppedTest()
+    {
+        var activitySourceTags = new TagList
+        {
+            new("GoodTag", "value"),
+            new("ThrowingTag", new ToStringThrows()),
+        };
+
+        using var activitySource = new ActivitySource(
+            nameof(this.ScopeAttributeWithThrowingToStringIsDroppedTest),
+            "1.0.0",
+            activitySourceTags);
+
+        var exportedItems = new List<Activity>();
+        var builder = Sdk.CreateTracerProviderBuilder()
+            .AddSource(activitySource.Name)
+#pragma warning disable CA2000 // Dispose objects before losing scope
+            .AddProcessor(new SimpleActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems)));
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        using var openTelemetrySdk = builder.Build();
+
+        using (var activity = activitySource.StartActivity("root", ActivityKind.Server, default(ActivityContext)))
+        {
+            Assert.NotNull(activity);
+        }
+
+        Assert.Single(exportedItems);
+        var batch = new Batch<Activity>([.. exportedItems], exportedItems.Count);
+        var request = CreateTraceExportRequest(DefaultSdkLimitOptions, batch, ResourceBuilder.CreateEmpty().Build());
+
+        var scope = Assert.Single(request.ResourceSpans).ScopeSpans.Single().Scope;
+
+        Assert.NotNull(scope);
+
+        var attribute = Assert.Single(scope.Attributes);
+        Assert.Equal("GoodTag", attribute.Key);
+        Assert.Equal("value", attribute.Value.StringValue);
+        Assert.Equal(1u, scope.DroppedAttributesCount);
+    }
+
+    [Fact]
     public void SpanLimitsTest()
     {
         var sdkOptions = new SdkLimitOptions()
@@ -1264,5 +1368,10 @@ public sealed class OtlpTraceExporterTests : IDisposable
                 Assert.Equal(expectedValue, actual.StringValue);
             }
         }
+    }
+
+    private sealed class ToStringThrows
+    {
+        public override string ToString() => throw new InvalidOperationException("Nope.");
     }
 }

@@ -140,9 +140,19 @@ internal
         Guard.ThrowIfNull(attributes);
 
         LogRecordAttributeList logRecordAttributes = default;
-        foreach (var attribute in attributes)
+        if (attributes is KeyValuePair<string, object?>[] attributeArray)
         {
-            logRecordAttributes.Add(attribute);
+            foreach (ref readonly var attribute in attributeArray.AsSpan())
+            {
+                logRecordAttributes.Add(attribute);
+            }
+        }
+        else
+        {
+            foreach (var attribute in attributes)
+            {
+                logRecordAttributes.Add(attribute);
+            }
         }
 
         return logRecordAttributes;
