@@ -102,7 +102,7 @@
     <PackageVersion Include="FSharp.Core" Version="10.1.400" />
     <PackageVersion Include="FsCheck.Xunit" Version="3.3.4" />
     <PackageVersion Include="GitHubActionsTestLogger" Version="3.0.5" />
-    <PackageVersion Include="Google.Protobuf" Version="3.35.1" />
+    <PackageVersion Include="Google.Protobuf" Version="3.36.0" />
     <PackageVersion Include="Grpc" Version="2.46.6" />
     <PackageVersion Include="Grpc.AspNetCore" Version="2.83.0" />
     <PackageVersion Include="Grpc.AspNetCore.Server" Version="2.83.0" />
