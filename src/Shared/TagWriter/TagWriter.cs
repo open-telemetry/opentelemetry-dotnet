@@ -92,23 +92,6 @@ internal abstract class TagWriter<TTagState, TArrayState>
             case float f:
                 this.WriteFloatingPointTag(ref state, key, f);
                 break;
-#if NET
-            case DateTime dt:
-                this.WriteSpanFormattableTag(ref state, key, dt, stackalloc char[64], tagValueMaxLength);
-                break;
-            case DateTimeOffset dto:
-                this.WriteSpanFormattableTag(ref state, key, dto, stackalloc char[64], tagValueMaxLength);
-                break;
-            case TimeSpan ts:
-                this.WriteSpanFormattableTag(ref state, key, ts, stackalloc char[32], tagValueMaxLength);
-                break;
-            case Guid g:
-                this.WriteSpanFormattableTag(ref state, key, g, stackalloc char[36], tagValueMaxLength);
-                break;
-            case decimal m:
-                this.WriteSpanFormattableTag(ref state, key, m, stackalloc char[32], tagValueMaxLength);
-                break;
-#endif
             case IEnumerable<KeyValuePair<string, object?>> kvList:
                 if (recursionDepth >= MaxRecursionDepth)
                 {
@@ -183,12 +166,31 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
                 break;
 
+#if NET
+            // Buffer lengths below are sized for the invariant-culture's default-format ("G") output
+            case DateTime dt:
+                this.WriteSpanFormattableTag(ref state, key, dt, bufferLength: 64, tagValueMaxLength);
+                break;
+            case DateTimeOffset dto:
+                this.WriteSpanFormattableTag(ref state, key, dto, bufferLength: 64, tagValueMaxLength);
+                break;
+            case TimeSpan ts:
+                this.WriteSpanFormattableTag(ref state, key, ts, bufferLength: 32, tagValueMaxLength);
+                break;
+            case Guid g:
+                this.WriteSpanFormattableTag(ref state, key, g, bufferLength: 36, tagValueMaxLength);
+                break;
+            case decimal m:
+                this.WriteSpanFormattableTag(ref state, key, m, bufferLength: 32, tagValueMaxLength);
+                break;
+#endif
+
             // All other types are converted to strings including the following
             // built-in value types:
             // case nint:    Pointer type.
             // case nuint:   Pointer type.
             // case ulong:   May throw an exception on overflow.
-            // case decimal: Converting to double produces rounding errors.
+            // case decimal: Converting to double produces rounding errors (where ISpanFormattable not available).
             default:
                 try
                 {
@@ -251,9 +253,10 @@ internal abstract class TagWriter<TTagState, TArrayState>
     }
 
 #if NET
-    private void WriteSpanFormattableTag<T>(ref TTagState state, string key, T value, Span<char> destination, int? tagValueMaxLength)
+    private void WriteSpanFormattableTag<T>(ref TTagState state, string key, T value, int bufferLength, int? tagValueMaxLength)
         where T : ISpanFormattable
     {
+        Span<char> destination = stackalloc char[bufferLength];
         if (value.TryFormat(destination, out var charsWritten, format: default, CultureInfo.InvariantCulture))
         {
             this.WriteStringTag(ref state, key, TruncateString(destination[..charsWritten], tagValueMaxLength));
