@@ -21,9 +21,6 @@ internal static class SamplerFactory
                 return sampler;
             }
 
-            // Normalizing once is cheaper to read than a case-insensitive comparison against
-            // each supported value. Every supported value is lowercase ASCII, so lowercasing is
-            // equivalent to an ordinal case-insensitive comparison here.
 #pragma warning disable CA1308 // Normalize strings to uppercase
             var normalizedType = samplerType.Trim().ToLowerInvariant();
 #pragma warning restore CA1308 // Normalize strings to uppercase
