@@ -144,6 +144,7 @@ public class OtlpAttributeTests
     [Theory]
     [InlineData(char.MaxValue)]
     [InlineData("string")]
+    [InlineData(ulong.MaxValue)]
     public void StringTypesSupported(object value)
     {
         var kvp = new KeyValuePair<string, object?>("key", value);
@@ -225,8 +226,13 @@ public class OtlpAttributeTests
     {
         var testValues = new object[]
         {
+#if NET
+            nint.MaxValue,
+            nuint.MaxValue,
+#else
             (nint)int.MaxValue,
             (nuint)uint.MaxValue,
+#endif
             decimal.MaxValue,
             new(),
         };
@@ -281,6 +287,7 @@ public class OtlpAttributeTests
         AssertTruncated(TimeSpan.FromMilliseconds(123456.789), tagValueMaxLength);
         AssertTruncated(Guid.NewGuid(), tagValueMaxLength);
         AssertTruncated(12345.6789m, tagValueMaxLength);
+        AssertTruncated(ulong.MaxValue, tagValueMaxLength);
 
         static void AssertTruncated<T>(T value, int tagValueMaxLength)
             where T : notnull

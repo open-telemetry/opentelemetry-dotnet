@@ -92,6 +92,11 @@ internal abstract class TagWriter<TTagState, TArrayState>
             case float f:
                 this.WriteFloatingPointTag(ref state, key, f);
                 break;
+#if NET
+            case ulong ul:
+                this.WriteSpanFormattableTag(ref state, key, ul, bufferLength: 20, tagValueMaxLength);
+                break;
+#endif
             case IEnumerable<KeyValuePair<string, object?>> kvList:
                 if (recursionDepth >= MaxRecursionDepth)
                 {
@@ -189,7 +194,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
             // built-in value types:
             // case nint:    Pointer type.
             // case nuint:   Pointer type.
-            // case ulong:   May throw an exception on overflow.
+            // case ulong:   May throw an exception on overflow (where ISpanFormattable not available).
             // case decimal: Converting to double produces rounding errors (where ISpanFormattable not available).
             default:
                 try
