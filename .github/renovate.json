@@ -93,6 +93,11 @@
       "enabled": false
     },
     {
+      "extends": ["monorepo:opentelemetry-dotnet-contrib"],
+      "description": ["Allow prerelease versions of .NET OpenTelemetry contrib packages"],
+      "ignoreUnstable": false
+    },
+    {
       "matchDepNames": ["xunit"],
       "description": ["Disable major version updates for xunit"],
       "matchUpdateTypes": ["major"],
