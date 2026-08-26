@@ -21,32 +21,31 @@ internal static class SamplerFactory
                 return sampler;
             }
 
-            switch (samplerType)
-            {
-                case var _ when string.Equals(samplerType, SamplerOptions.AlwaysOnType, StringComparison.OrdinalIgnoreCase):
-                    sampler = AlwaysOnSampler.Instance;
-                    break;
-                case var _ when string.Equals(samplerType, SamplerOptions.AlwaysOffType, StringComparison.OrdinalIgnoreCase):
-                    sampler = AlwaysOffSampler.Instance;
-                    break;
-                case var _ when string.Equals(samplerType, SamplerOptions.TraceIdRatioType, StringComparison.OrdinalIgnoreCase):
-                    sampler = new TraceIdRatioBasedSampler(ReadTraceIdRatio(options));
-                    break;
-                case var _ when string.Equals(samplerType, SamplerOptions.ParentBasedAlwaysOnType, StringComparison.OrdinalIgnoreCase):
-                    sampler = new ParentBasedSampler(AlwaysOnSampler.Instance);
-                    break;
-                case var _ when string.Equals(samplerType, SamplerOptions.ParentBasedAlwaysOffType, StringComparison.OrdinalIgnoreCase):
-                    sampler = new ParentBasedSampler(AlwaysOffSampler.Instance);
-                    break;
-                case var _ when string.Equals(samplerType, SamplerOptions.ParentBasedTraceIdRatioType, StringComparison.OrdinalIgnoreCase):
-                    sampler = new ParentBasedSampler(new TraceIdRatioBasedSampler(ReadTraceIdRatio(options)));
-                    break;
-                default:
-                    OpenTelemetrySdkEventSource.Log.TracesSamplerConfigInvalid(samplerType);
-                    break;
-            }
+            // Normalizing once is cheaper to read than a case-insensitive comparison against
+            // each supported value. Every supported value is lowercase ASCII, so lowercasing is
+            // equivalent to an ordinal case-insensitive comparison here.
+#pragma warning disable CA1308 // Normalize strings to uppercase
+            var normalizedType = samplerType.Trim().ToLowerInvariant();
+#pragma warning restore CA1308 // Normalize strings to uppercase
 
-            if (sampler != null)
+            sampler = normalizedType switch
+            {
+                SamplerOptions.AlwaysOnType => AlwaysOnSampler.Instance,
+                SamplerOptions.AlwaysOffType => AlwaysOffSampler.Instance,
+                SamplerOptions.TraceIdRatioType => new TraceIdRatioBasedSampler(ReadTraceIdRatio(options)),
+                SamplerOptions.ParentBasedAlwaysOnType => new ParentBasedSampler(AlwaysOnSampler.Instance),
+                SamplerOptions.ParentBasedAlwaysOffType => new ParentBasedSampler(AlwaysOffSampler.Instance),
+                SamplerOptions.ParentBasedTraceIdRatioType =>
+                    new ParentBasedSampler(new TraceIdRatioBasedSampler(ReadTraceIdRatio(options))),
+                _ => null,
+            };
+
+            if (sampler is null)
+            {
+                // The unrecognized value is reported exactly as it was configured.
+                OpenTelemetrySdkEventSource.Log.TracesSamplerConfigInvalid(samplerType);
+            }
+            else
             {
                 OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Trace sampler set to '{sampler.GetType().FullName}' from configuration.");
             }
@@ -65,34 +64,24 @@ internal static class SamplerFactory
             traceIdRatio = fromArg;
         }
 
-        if (traceIdRatio is double ratio
-            && !double.IsNaN(ratio)
-            && !double.IsInfinity(ratio)
-            && ratio >= 0.0
-            && ratio <= 1.0)
+        if (traceIdRatio is double ratio and >= 0.0 and <= 1.0)
         {
             return ratio;
         }
 
-        OpenTelemetrySdkEventSource.Log.TracesSamplerArgConfigInvalid(DescribeUnusableTraceIdRatio(options, traceIdRatio));
+        if (options.Argument != null || options.TraceIdRatio != null)
+        {
+            // Only report a diagnostic when a value was actually configured. The specification
+            // requires the default of 1.0 to be used when no argument is set.
+            OpenTelemetrySdkEventSource.Log.TracesSamplerArgConfigInvalid(DescribeUnusableTraceIdRatio(options));
+        }
 
         return 1.0;
     }
 
-    private static string DescribeUnusableTraceIdRatio(SamplerOptions options, double? effectiveRatio)
-    {
-        var argument = options.Argument;
-
-        if (effectiveRatio is not double ratio)
-        {
-            // The configuration string could not be parsed, so it is the only value to report.
-            return argument ?? string.Empty;
-        }
-
-        return argument != null
-            && SamplerOptions.TryParseTraceIdRatio(argument, out var parsed)
-            && parsed.Equals(ratio)
-                ? argument
-                : ratio.ToString(CultureInfo.InvariantCulture);
-    }
+    private static string DescribeUnusableTraceIdRatio(SamplerOptions options) =>
+        options.Argument is string argument
+            && options.TraceIdRatio.Equals(options.ConfiguredTraceIdRatio)
+                ? argument // verbatim configured string, including trailing zero or separator
+                : options.TraceIdRatio?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
 }

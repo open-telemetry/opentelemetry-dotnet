@@ -210,6 +210,36 @@ public sealed class SamplerOptionsTests
             e => e.EventId == TracesSamplerConfigInvalidEventId);
     }
 
+    [Theory]
+    [InlineData(" always_off ", "AlwaysOffSampler")]
+    [InlineData("	parentbased_always_off	", "ParentBased{AlwaysOffSampler}")]
+    public void PaddedSamplerType_TrimmedBeforeMatching(string samplerType, string expectedDescription)
+    {
+        using var eventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log);
+
+        using var tracerProvider = BuildTracerProvider(
+            configuration: BuildConfiguration((SamplerOptions.TracesSamplerConfigKey, samplerType)));
+
+        Assert.Equal(expectedDescription, tracerProvider.Sampler.Description);
+        Assert.DoesNotContain(
+            eventListener.Messages,
+            e => e.EventId == TracesSamplerConfigInvalidEventId);
+    }
+
+    [Fact]
+    public void PaddedRatioSamplerType_AppliesConfiguredArgument()
+    {
+        var configuration = BuildConfiguration(
+            (SamplerOptions.TracesSamplerConfigKey, " traceidratio "),
+            (SamplerOptions.TracesSamplerArgConfigKey, "0.25"));
+
+        Assert.Equal(0.25, new SamplerOptions(configuration).TraceIdRatio);
+
+        using var tracerProvider = BuildTracerProvider(configuration);
+
+        Assert.Equal("TraceIdRatioBasedSampler{0.250000}", tracerProvider.Sampler.Description);
+    }
+
     [Fact]
     public void UnknownSamplerType_LogsAndUsesDefault()
     {
@@ -241,17 +271,37 @@ public sealed class SamplerOptionsTests
             e => e.EventId == TracesSamplerArgConfigInvalidEventId);
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void NoArgWithRatioSampler_UsesDefaultRatioWithoutDiagnostics(string? argValue)
+    {
+        // The specification defines the default ratio as 1.0 when OTEL_TRACES_SAMPLER_ARG is not
+        // set, so there is no invalid value to report.
+        using var eventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log);
+
+        using var tracerProvider = BuildTracerProvider(
+            configuration: BuildConfiguration(
+                (SamplerOptions.TracesSamplerConfigKey, SamplerOptions.TraceIdRatioType),
+                (SamplerOptions.TracesSamplerArgConfigKey, argValue)));
+
+        Assert.Equal("TraceIdRatioBasedSampler{1.000000}", tracerProvider.Sampler.Description);
+        Assert.DoesNotContain(
+            eventListener.Messages,
+            e => e.EventId == TracesSamplerArgConfigInvalidEventId);
+    }
+
     // The configured value is always reported exactly as it was written, including a trailing
     // zero or a thousands separator which would be lost by formatting the parsed value.
     [Theory]
-    [InlineData(null, "")] // No arg configured at all.
     [InlineData("banana", "banana")] // Unparsable.
     [InlineData("1.5", "1.5")] // Parsable but out of range.
     [InlineData("2.0", "2.0")]
     [InlineData("1,5", "1,5")] // Thousands separators are permitted, so this parses to 15.
     [InlineData("-0.1", "-0.1")]
     [InlineData("NaN", "NaN")]
-    public void InvalidArgWithRatioSampler_LogsValueAndUsesDefaultRatio(string? argValue, string expectedPayload)
+    public void InvalidArgWithRatioSampler_LogsValueAndUsesDefaultRatio(string argValue, string expectedPayload)
     {
         using var eventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log);
 
