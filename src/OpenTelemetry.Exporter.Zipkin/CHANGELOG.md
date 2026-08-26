@@ -12,9 +12,6 @@ Notes](../../RELEASENOTES.md).
   (`IEnumerable<KeyValuePair<string, string?>>` and `IDictionary`).
   ([#7679](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7679))
 
-* Reduced allocations when writing key/value list attributes.
-  ([#7679](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7679))
-
 ## 1.18.0
 
 Released 2026-Aug-21

@@ -4,7 +4,6 @@
 using System.Collections;
 using System.Diagnostics;
 using System.Globalization;
-using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Internal;
 
@@ -95,7 +94,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
                 this.WriteFloatingPointTag(ref state, key, f);
                 break;
             case IEnumerable<KeyValuePair<string, object?>> kvList:
-                return this.TryWriteKvListTag(ref state, key, value, kvList, tagValueMaxLength);
+                return this.TryWriteKvListTagWithinDepthLimit(ref state, key, value, kvList, tagValueMaxLength);
 
             case Array array:
                 if (value.GetType() == typeof(byte[]) && this.TryWriteByteArrayTag(ref state, key, ((byte[])value).AsSpan()))
@@ -122,10 +121,10 @@ internal abstract class TagWriter<TTagState, TArrayState>
                 break;
 
             case IEnumerable<KeyValuePair<string, string?>> stringKvList:
-                return this.TryWriteKvListTag(ref state, key, value, stringKvList, tagValueMaxLength);
+                return this.TryWriteKvListTagWithinDepthLimit(ref state, key, value, AdaptStringKvList(stringKvList), tagValueMaxLength);
 
             case IDictionary dictionary:
-                return this.TryWriteKvListTag(ref state, key, value, dictionary, tagValueMaxLength);
+                return this.TryWriteKvListTagWithinDepthLimit(ref state, key, value, AdaptDictionary(dictionary), tagValueMaxLength);
 
             // All other types are converted to strings including the following
             // built-in value types:
@@ -177,8 +176,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
     protected abstract void WriteArrayTag(ref TTagState state, string key, ref TArrayState value);
 
-    protected abstract void WriteKvListTag<TEnumerator>(ref TTagState state, string key, ref TEnumerator kvList, int? tagValueMaxLength)
-        where TEnumerator : struct, IKeyValueListEnumerator;
+    protected abstract void WriteKvListTag(ref TTagState state, string key, IEnumerable<KeyValuePair<string, object?>> kvList, int? tagValueMaxLength);
 
     protected abstract void OnUnsupportedTagDropped(
         string tagKey,
@@ -189,85 +187,33 @@ internal abstract class TagWriter<TTagState, TArrayState>
            ? value.Slice(0, maxLengthValue)
            : value;
 
-    // Note: Enumerator selection is done here rather than in TryWriteTag to
-    // keep it out of the frame of the hot path which every tag goes through.
-    // The shapes which are seen most often get a specialized enumerator so
-    // that writing their entries does not allocate.
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private bool TryWriteKvListTag(
+    private static IEnumerable<KeyValuePair<string, object?>> AdaptStringKvList(IEnumerable<KeyValuePair<string, string?>> source)
+    {
+        foreach (var item in source)
+        {
+            yield return new(item.Key, item.Value);
+        }
+    }
+
+    private static IEnumerable<KeyValuePair<string, object?>> AdaptDictionary(IDictionary source)
+    {
+        foreach (DictionaryEntry entry in source)
+        {
+            var entryKey = entry.Key as string
+                ?? Convert.ToString(entry.Key, CultureInfo.InvariantCulture);
+            if (entryKey != null)
+            {
+                yield return new(entryKey, entry.Value);
+            }
+        }
+    }
+
+    private bool TryWriteKvListTagWithinDepthLimit(
         ref TTagState state,
         string key,
         object value,
         IEnumerable<KeyValuePair<string, object?>> kvList,
         int? tagValueMaxLength)
-    {
-        switch (kvList)
-        {
-            case Dictionary<string, object?> dictionary:
-            {
-                var enumerator = new ObjectDictionaryKeyValueListEnumerator(dictionary);
-                return this.TryWriteKvListTagWithinDepthLimit(ref state, key, value, ref enumerator, tagValueMaxLength);
-            }
-
-            case List<KeyValuePair<string, object?>> list:
-            {
-                var enumerator = new ListKeyValueListEnumerator(list);
-                return this.TryWriteKvListTagWithinDepthLimit(ref state, key, value, ref enumerator, tagValueMaxLength);
-            }
-
-            case KeyValuePair<string, object?>[] array:
-            {
-                var enumerator = new ArrayKeyValueListEnumerator(array);
-                return this.TryWriteKvListTagWithinDepthLimit(ref state, key, value, ref enumerator, tagValueMaxLength);
-            }
-
-            default:
-            {
-                var enumerator = new ObjectEnumerableKeyValueListEnumerator(kvList);
-                return this.TryWriteKvListTagWithinDepthLimit(ref state, key, value, ref enumerator, tagValueMaxLength);
-            }
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private bool TryWriteKvListTag(
-        ref TTagState state,
-        string key,
-        object value,
-        IEnumerable<KeyValuePair<string, string?>> kvList,
-        int? tagValueMaxLength)
-    {
-        if (kvList is Dictionary<string, string?> dictionary)
-        {
-            var enumerator = new StringDictionaryKeyValueListEnumerator(dictionary);
-            return this.TryWriteKvListTagWithinDepthLimit(ref state, key, value, ref enumerator, tagValueMaxLength);
-        }
-        else
-        {
-            var enumerator = new StringEnumerableKeyValueListEnumerator(kvList);
-            return this.TryWriteKvListTagWithinDepthLimit(ref state, key, value, ref enumerator, tagValueMaxLength);
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private bool TryWriteKvListTag(
-        ref TTagState state,
-        string key,
-        object value,
-        IDictionary kvList,
-        int? tagValueMaxLength)
-    {
-        var enumerator = new DictionaryKeyValueListEnumerator(kvList);
-        return this.TryWriteKvListTagWithinDepthLimit(ref state, key, value, ref enumerator, tagValueMaxLength);
-    }
-
-    private bool TryWriteKvListTagWithinDepthLimit<TEnumerator>(
-        ref TTagState state,
-        string key,
-        object value,
-        ref TEnumerator kvList,
-        int? tagValueMaxLength)
-        where TEnumerator : struct, IKeyValueListEnumerator
     {
         if (recursionDepth >= MaxRecursionDepth)
         {
@@ -286,17 +232,14 @@ internal abstract class TagWriter<TTagState, TArrayState>
             catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
             {
                 recursionDepth = 0;
-                kvList.Dispose();
                 throw;
             }
             catch
             {
                 // If ToString throws an exception then the tag is ignored.
-                kvList.Dispose();
                 return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
             }
 
-            kvList.Dispose();
             return true;
         }
 
@@ -304,23 +247,20 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
         try
         {
-            this.WriteKvListTag(ref state, key, ref kvList, tagValueMaxLength);
+            this.WriteKvListTag(ref state, key, kvList, tagValueMaxLength);
         }
         catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
         {
             recursionDepth = 0;
-            kvList.Dispose();
             throw;
         }
         catch
         {
             recursionDepth--;
-            kvList.Dispose();
             return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
         }
 
         recursionDepth--;
-        kvList.Dispose();
 
         return true;
     }
