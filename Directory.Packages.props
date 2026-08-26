@@ -128,10 +128,10 @@
     <PackageVersion Include="MSTest.Analyzers" Version="4.3.3" />
     <PackageVersion Include="MSTest.TestAdapter" Version="4.3.3" />
     <PackageVersion Include="MSTest.TestFramework" Version="4.3.3" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.17.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.18.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.GrpcNetClient" Version="1.17.0-beta.1" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.17.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.17.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.18.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.18.0" />
     <PackageVersion Include="RabbitMQ.Client" Version="7.2.2" />
     <PackageVersion Include="StyleCop.Analyzers" Version="1.2.0-beta.556" />
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="10.2.3" />
