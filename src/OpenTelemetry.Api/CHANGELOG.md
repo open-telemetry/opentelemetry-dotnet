@@ -6,6 +6,9 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Reduced allocations when creating log record attributes from an array.
+  ([#7699](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7699))
+
 ## 1.18.0
 
 Released 2026-Aug-21
