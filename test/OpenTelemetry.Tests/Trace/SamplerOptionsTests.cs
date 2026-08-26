@@ -19,6 +19,17 @@ public sealed class SamplerOptionsTests
     private const string IgnoredSamplerMessageFragment = "has been ignored because a value";
 
     [Fact]
+    public void SamplerTypeConstants_MatchSpecValues()
+    {
+        Assert.Equal("always_on", SamplerOptions.AlwaysOnType);
+        Assert.Equal("always_off", SamplerOptions.AlwaysOffType);
+        Assert.Equal("traceidratio", SamplerOptions.TraceIdRatioType);
+        Assert.Equal("parentbased_always_on", SamplerOptions.ParentBasedAlwaysOnType);
+        Assert.Equal("parentbased_always_off", SamplerOptions.ParentBasedAlwaysOffType);
+        Assert.Equal("parentbased_traceidratio", SamplerOptions.ParentBasedTraceIdRatioType);
+    }
+
+    [Fact]
     public void NoConfigurationKeys_PropertiesAreNull()
     {
         var options = CreateOptions();
@@ -31,9 +42,9 @@ public sealed class SamplerOptionsTests
     [Fact]
     public void TracesSampler_ReadFromConfiguration()
     {
-        var options = CreateOptions((SamplerOptions.TracesSamplerConfigKey, "always_on"));
+        var options = CreateOptions((SamplerOptions.TracesSamplerConfigKey, SamplerOptions.AlwaysOnType));
 
-        Assert.Equal("always_on", options.Type);
+        Assert.Equal(SamplerOptions.AlwaysOnType, options.Type);
     }
 
     [Theory]
@@ -41,18 +52,33 @@ public sealed class SamplerOptionsTests
     [InlineData("1", 1.0)]
     [InlineData("0", 0.0)]
     [InlineData("2.0", 2.0)] // Out of range values are parsed here and rejected when read.
-    public void TracesSamplerArg_ParsedIntoTraceIdRatio(string argValue, double expected)
+    public void TracesSamplerArg_WithRatioType_ParsedIntoTraceIdRatio(string argValue, double expected)
     {
-        var options = CreateOptions((SamplerOptions.TracesSamplerArgConfigKey, argValue));
+        var options = CreateOptions(
+            (SamplerOptions.TracesSamplerConfigKey, SamplerOptions.TraceIdRatioType),
+            (SamplerOptions.TracesSamplerArgConfigKey, argValue));
 
         Assert.Equal(expected, options.TraceIdRatio);
         Assert.Equal(argValue, options.Argument);
     }
 
     [Fact]
+    public void TracesSamplerArg_WithoutRatioType_TraceIdRatioNotParsed()
+    {
+        // OTEL_TRACES_SAMPLER_ARG is sampler-specific. The ratio interpretation only applies
+        // to traceidratio and parentbased_traceidratio, so parsing is skipped for other types.
+        var options = CreateOptions((SamplerOptions.TracesSamplerArgConfigKey, "0.5"));
+
+        Assert.Null(options.TraceIdRatio);
+        Assert.Equal("0.5", options.Argument);
+    }
+
+    [Fact]
     public void TracesSamplerArg_Unparsable_LeavesTraceIdRatioNullAndRetainsArgument()
     {
-        var options = CreateOptions((SamplerOptions.TracesSamplerArgConfigKey, "banana"));
+        var options = CreateOptions(
+            (SamplerOptions.TracesSamplerConfigKey, SamplerOptions.TraceIdRatioType),
+            (SamplerOptions.TracesSamplerArgConfigKey, "banana"));
 
         // TraceIdRatio is null because the value could not be parsed. Argument retains the
         // verbatim string so it can be reported if the configured sampler uses it.
@@ -65,13 +91,13 @@ public sealed class SamplerOptionsTests
     {
         using var environment = EnvironmentVariableScope.Create(
             [
-                (SamplerOptions.TracesSamplerConfigKey, "traceidratio"),
+                (SamplerOptions.TracesSamplerConfigKey, SamplerOptions.TraceIdRatioType),
                 (SamplerOptions.TracesSamplerArgConfigKey, "0.25"),
             ]);
 
         var options = new SamplerOptions();
 
-        Assert.Equal("traceidratio", options.Type);
+        Assert.Equal(SamplerOptions.TraceIdRatioType, options.Type);
         Assert.Equal(0.25, options.TraceIdRatio);
     }
 
@@ -82,12 +108,12 @@ public sealed class SamplerOptionsTests
         // requires a public parameterless constructor.
         var services = new ServiceCollection();
         services.AddOptions();
-        services.Configure<SamplerOptions>(o => o.Type = "always_on");
+        services.Configure<SamplerOptions>(o => o.Type = SamplerOptions.AlwaysOnType);
 
         using var serviceProvider = services.BuildServiceProvider();
 
         Assert.Equal(
-            "always_on",
+            SamplerOptions.AlwaysOnType,
             serviceProvider.GetRequiredService<IOptions<SamplerOptions>>().Value.Type);
     }
 
@@ -95,10 +121,10 @@ public sealed class SamplerOptionsTests
     public void Configure_OverridesEnvironmentVariableType()
     {
         using var environment = EnvironmentVariableScope.Create(
-            SamplerOptions.TracesSamplerConfigKey, "always_off");
+            SamplerOptions.TracesSamplerConfigKey, SamplerOptions.AlwaysOffType);
 
         using var tracerProvider = BuildTracerProvider(
-            configureServices: s => s.Configure<SamplerOptions>(o => o.Type = "always_on"));
+            configureServices: s => s.Configure<SamplerOptions>(o => o.Type = SamplerOptions.AlwaysOnType));
 
         Assert.Equal("AlwaysOnSampler", tracerProvider.Sampler.Description);
     }
@@ -108,7 +134,7 @@ public sealed class SamplerOptionsTests
     {
         using var environment = EnvironmentVariableScope.Create(
             [
-                (SamplerOptions.TracesSamplerConfigKey, "traceidratio"),
+                (SamplerOptions.TracesSamplerConfigKey, SamplerOptions.TraceIdRatioType),
                 (SamplerOptions.TracesSamplerArgConfigKey, "0.1"),
             ]);
 
@@ -122,7 +148,7 @@ public sealed class SamplerOptionsTests
     public void Configure_BindsFromConfigurationSection()
     {
         var configuration = BuildConfiguration(
-            ("Sampler:Type", "traceidratio"),
+            ("Sampler:Type", SamplerOptions.TraceIdRatioType),
             ("Sampler:TraceIdRatio", "0.4"));
 
         using var tracerProvider = BuildTracerProvider(
@@ -161,7 +187,7 @@ public sealed class SamplerOptionsTests
         using var eventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log);
 
         using var tracerProvider = BuildTracerProvider(
-            configuration: BuildConfiguration((SamplerOptions.TracesSamplerConfigKey, "always_on")),
+            configuration: BuildConfiguration((SamplerOptions.TracesSamplerConfigKey, SamplerOptions.AlwaysOnType)),
             configureBuilder: b => b.SetSampler(new AlwaysOffSampler()));
 
         Assert.Equal("AlwaysOffSampler", tracerProvider.Sampler.Description);
@@ -206,7 +232,7 @@ public sealed class SamplerOptionsTests
 
         using var tracerProvider = BuildTracerProvider(
             configuration: BuildConfiguration(
-                (SamplerOptions.TracesSamplerConfigKey, "always_on"),
+                (SamplerOptions.TracesSamplerConfigKey, SamplerOptions.AlwaysOnType),
                 (SamplerOptions.TracesSamplerArgConfigKey, "banana")));
 
         Assert.Equal("AlwaysOnSampler", tracerProvider.Sampler.Description);
@@ -231,7 +257,7 @@ public sealed class SamplerOptionsTests
 
         using var tracerProvider = BuildTracerProvider(
             configuration: BuildConfiguration(
-                (SamplerOptions.TracesSamplerConfigKey, "traceidratio"),
+                (SamplerOptions.TracesSamplerConfigKey, SamplerOptions.TraceIdRatioType),
                 (SamplerOptions.TracesSamplerArgConfigKey, argValue)));
 
         Assert.Equal("TraceIdRatioBasedSampler{1.000000}", tracerProvider.Sampler.Description);
@@ -258,7 +284,7 @@ public sealed class SamplerOptionsTests
             configuration: BuildConfiguration((SamplerOptions.TracesSamplerArgConfigKey, argValue)),
             configureServices: s => s.Configure<SamplerOptions>(o =>
             {
-                o.Type = "traceidratio";
+                o.Type = SamplerOptions.TraceIdRatioType;
                 o.TraceIdRatio = traceIdRatio;
             }));
 
@@ -275,7 +301,7 @@ public sealed class SamplerOptionsTests
             configuration: BuildConfiguration((SamplerOptions.TracesSamplerArgConfigKey, "banana")),
             configureServices: s => s.Configure<SamplerOptions>(o =>
             {
-                o.Type = "traceidratio";
+                o.Type = SamplerOptions.TraceIdRatioType;
                 o.TraceIdRatio = 0.25;
             }));
 
@@ -283,6 +309,34 @@ public sealed class SamplerOptionsTests
         Assert.DoesNotContain(
             eventListener.Messages,
             e => e.EventId == TracesSamplerArgConfigInvalidEventId);
+    }
+
+    [Fact]
+    public void ProgrammaticTypeWithConfiguredArg_FallsBackToArgument()
+    {
+        // When Type is set programmatically and OTEL_TRACES_SAMPLER_ARG is in config but
+        // OTEL_TRACES_SAMPLER is not, the constructor guard skips parsing. ReadTraceIdRatio
+        // falls back to Argument so the ratio still takes effect.
+        using var tracerProvider = BuildTracerProvider(
+            configuration: BuildConfiguration((SamplerOptions.TracesSamplerArgConfigKey, "0.5")),
+            configureServices: s => s.Configure<SamplerOptions>(o => o.Type = SamplerOptions.TraceIdRatioType));
+
+        Assert.Equal("TraceIdRatioBasedSampler{0.500000}", tracerProvider.Sampler.Description);
+    }
+
+    [Fact]
+    public void ProgrammaticTypeWithInvalidConfiguredArg_LogsAndUsesDefaultRatio()
+    {
+        // The fallback parse in ReadTraceIdRatio correctly reports the value that was
+        // tried and rejected, not a "could not parse" message.
+        using var eventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log);
+
+        using var tracerProvider = BuildTracerProvider(
+            configuration: BuildConfiguration((SamplerOptions.TracesSamplerArgConfigKey, "1.5")),
+            configureServices: s => s.Configure<SamplerOptions>(o => o.Type = SamplerOptions.TraceIdRatioType));
+
+        Assert.Equal("TraceIdRatioBasedSampler{1.000000}", tracerProvider.Sampler.Description);
+        AssertPayload(eventListener, TracesSamplerArgConfigInvalidEventId, "1.5");
     }
 
     private static SamplerOptions CreateOptions(params (string Key, string? Value)[] configuration)

@@ -16,6 +16,13 @@ public sealed class SamplerOptions
     internal const string TracesSamplerConfigKey = "OTEL_TRACES_SAMPLER";
     internal const string TracesSamplerArgConfigKey = "OTEL_TRACES_SAMPLER_ARG";
 
+    internal const string AlwaysOnType = "always_on";
+    internal const string AlwaysOffType = "always_off";
+    internal const string TraceIdRatioType = "traceidratio";
+    internal const string ParentBasedAlwaysOnType = "parentbased_always_on";
+    internal const string ParentBasedAlwaysOffType = "parentbased_always_off";
+    internal const string ParentBasedTraceIdRatioType = "parentbased_traceidratio";
+
     /// <summary>
     /// Initializes a new instance of the <see cref="SamplerOptions"/> class.
     /// </summary>
@@ -35,7 +42,8 @@ public sealed class SamplerOptions
         {
             this.Argument = argument;
 
-            if (TryParseTraceIdRatio(argument, out var traceIdRatio))
+            if (IsTraceIdRatioSampler(this.Type)
+                && TryParseTraceIdRatio(argument, out var traceIdRatio))
             {
                 this.TraceIdRatio = traceIdRatio;
             }
@@ -67,6 +75,10 @@ public sealed class SamplerOptions
     /// can be reported exactly as it was configured when the sampler uses it.
     /// </summary>
     internal string? Argument { get; }
+
+    internal static bool IsTraceIdRatioSampler(string? type)
+        => string.Equals(type, TraceIdRatioType, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(type, ParentBasedTraceIdRatioType, StringComparison.OrdinalIgnoreCase);
 
     internal static bool TryParseTraceIdRatio(string value, out double traceIdRatio)
         => double.TryParse(
