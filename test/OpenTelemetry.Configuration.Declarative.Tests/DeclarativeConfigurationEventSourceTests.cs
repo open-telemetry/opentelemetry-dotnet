@@ -680,6 +680,64 @@ public sealed class DeclarativeConfigurationEventSourceTests
         Assert.Equal("resource.<<", evt.Payload![0]);
     }
 
+    [Fact]
+    public void Create_UnknownName_EmitsComponentProviderNotFoundEvent()
+    {
+        var services = new ServiceCollection();
+        services.AddPluginComponentProvider("always_on", new TestComponentProvider());
+
+        using var serviceProvider = services.BuildServiceProvider();
+        var registry = new PluginComponentProviderRegistry(serviceProvider);
+
+        using var listener = CreateWarningListener();
+
+        Assert.Throws<DeclarativeConfigurationException>(
+            () => registry.Create<TestComponent>("always_upside_down", ConfigProperties.Empty));
+
+        var evt = Assert.Single(listener.Messages, e => e.EventId == 33);
+        Assert.Contains(nameof(TestComponent), evt.Payload![0] as string, StringComparison.Ordinal);
+        Assert.Equal("always_upside_down", evt.Payload[1]);
+        Assert.Contains("always_on", evt.Payload[2] as string, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AddPluginComponentProvider_Duplicate_EmitsDuplicateRejectedEvent()
+    {
+        var services = new ServiceCollection();
+        services.AddPluginComponentProvider("always_on", new TestComponentProvider());
+
+        using var listener = CreateWarningListener();
+
+        Assert.Throws<InvalidOperationException>(
+            () => services.AddPluginComponentProvider("always_on", new TestComponentProvider()));
+
+        var evt = Assert.Single(listener.Messages, e => e.EventId == 34);
+        Assert.Contains(nameof(TestComponent), evt.Payload![0] as string, StringComparison.Ordinal);
+        Assert.Equal("always_on", evt.Payload[1]);
+        Assert.Contains(nameof(TestComponentProvider), evt.Payload[2] as string, StringComparison.Ordinal);
+        Assert.Contains(nameof(TestComponentProvider), evt.Payload[3] as string, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void PluginComponentProvider_RegistrationAndCreation_EmitVerboseEvents()
+    {
+        using var listener = CreateVerboseListener();
+
+        var services = new ServiceCollection();
+        services.AddPluginComponentProvider("always_on", new TestComponentProvider());
+
+        using var serviceProvider = services.BuildServiceProvider();
+        new PluginComponentProviderRegistry(serviceProvider).Create<TestComponent>("always_on", ConfigProperties.Empty);
+
+        var registered = Assert.Single(listener.Messages, e => e.EventId == 31);
+        Assert.Equal("always_on", registered.Payload![1]);
+        Assert.Contains(nameof(TestComponentProvider), registered.Payload[2] as string, StringComparison.Ordinal);
+
+        var created = Assert.Single(listener.Messages, e => e.EventId == 32);
+        Assert.Contains(nameof(TestComponent), created.Payload![0] as string, StringComparison.Ordinal);
+        Assert.Equal("always_on", created.Payload[1]);
+    }
+
     private static TestEventListener CreateVerboseListener()
     {
         var listener = new TestEventListener();

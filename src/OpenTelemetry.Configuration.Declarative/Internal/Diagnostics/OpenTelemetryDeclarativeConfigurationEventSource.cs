@@ -119,4 +119,16 @@ internal sealed class OpenTelemetryDeclarativeConfigurationEventSource : EventSo
         Level = EventLevel.Warning)]
     public void MultipleConfigurationDocumentsReachable(string selectedFilePath, string ignoredFilePath) =>
         this.WriteEvent(30, selectedFilePath, ignoredFilePath);
+
+    [Event(31, Message = "Declarative config: component provider '{2}' registered for component type '{0}' with name '{1}'.", Level = EventLevel.Verbose)]
+    public void ComponentProviderRegistered(string componentType, string name, string providerType) => this.WriteEvent(31, componentType, name, providerType);
+
+    [Event(32, Message = "Declarative config: created a component of type '{0}' with name '{1}'.", Level = EventLevel.Verbose)]
+    public void ComponentCreated(string componentType, string name) => this.WriteEvent(32, componentType, name);
+
+    [Event(33, Message = "Declarative config: no component provider is registered for component type '{0}' with name '{1}'. {2}", Level = EventLevel.Error)]
+    public void ComponentProviderNotFound(string componentType, string name, string registeredNames) => this.WriteEvent(33, componentType, name, registeredNames);
+
+    [Event(34, Message = "Declarative config: component type '{0}' with name '{1}' is claimed by both '{2}' and '{3}'. Each component type and name combination must be unique.", Level = EventLevel.Error)]
+    public void DuplicateComponentProviderRejected(string componentType, string name, string existingProviderType, string duplicateProviderType) => this.WriteEvent(34, componentType, name, existingProviderType, duplicateProviderType);
 }

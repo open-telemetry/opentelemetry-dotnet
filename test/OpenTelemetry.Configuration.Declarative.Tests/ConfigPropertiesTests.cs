@@ -213,6 +213,26 @@ public sealed class ConfigPropertiesTests
     }
 
     [Fact]
+    public void IntegerNotExactlyRepresentableAsDouble_UsesClrWidening()
+    {
+        var properties = Build("k", ConfigValue.Integer(9007199254740993L));
+        var result = properties.GetDouble("k");
+
+        Assert.Equal(ConfigValueOutcome.Present, result.Outcome);
+        Assert.Equal(9007199254740992D, result.Value);
+    }
+
+    [Fact]
+    public void IntegerExactlyRepresentableAsDouble_IsReadable()
+    {
+        var properties = Build("k", ConfigValue.Integer(9007199254740992L));
+        var result = properties.GetDouble("k");
+
+        Assert.Equal(ConfigValueOutcome.Present, result.Outcome);
+        Assert.Equal(9007199254740992.0, result.Value);
+    }
+
+    [Fact]
     public void Double_IntegralValue_ReadsAsInt64()
     {
         var properties = Build("k", ConfigValue.Double(5.0));
@@ -631,6 +651,16 @@ public sealed class ConfigPropertiesTests
     }
 
     [Fact]
+    public void ScalarList_DoubleType_InexactIntegerElement_UsesClrWidening()
+    {
+        var seq = ConfigValue.Sequence([ConfigValue.Integer(9007199254740993L)]);
+        var result = Build("k", seq).GetScalarList<double>("k");
+
+        Assert.Equal(ConfigValueOutcome.Present, result.Outcome);
+        Assert.Equal(9007199254740992D, Assert.Single(result.Value!));
+    }
+
+    [Fact]
     public void ScalarList_Int32Type_DoubleElementsWithNoFraction_Readable()
     {
         var seq = ConfigValue.Sequence([ConfigValue.Double(4.0), ConfigValue.Double(9.0)]);
@@ -693,6 +723,35 @@ public sealed class ConfigPropertiesTests
     [Fact]
     public void Builder_Add_NullKey_Throws()
         => Assert.Throws<ArgumentNullException>(() => new ConfigPropertiesBuilder().Add(null!, ConfigValue.String("v")));
+
+    [Fact]
+    public void Builder_PublicTypedMethods_CreateReadableProperties()
+    {
+        var nested = new ConfigPropertiesBuilder().Add("child", "value").Build();
+        var scalarValues = new[] { "one", "two" };
+        var mappingValues = new[] { nested };
+        var properties = new ConfigPropertiesBuilder()
+            .AddNull("null")
+            .Add("string", "value")
+            .Add("boolean", true)
+            .Add("int", 1)
+            .Add("long", 2L)
+            .Add("double", 0.25)
+            .Add("mapping", nested)
+            .AddScalarList("scalars", scalarValues)
+            .AddPropertiesList("mappings", mappingValues)
+            .Build();
+
+        Assert.Equal(ConfigValueOutcome.PresentNull, properties.GetString("null").Outcome);
+        Assert.Equal("value", properties.GetString("string").Value);
+        Assert.True(properties.GetBoolean("boolean").Value);
+        Assert.Equal(1, properties.GetInt("int").Value);
+        Assert.Equal(2L, properties.GetLong("long").Value);
+        Assert.Equal(0.25, properties.GetDouble("double").Value);
+        Assert.Same(nested, properties.GetProperties("mapping").Value);
+        Assert.Equal(scalarValues, properties.GetScalarList<string>("scalars").Value);
+        Assert.Same(nested, Assert.Single(properties.GetPropertiesList("mappings").Value!));
+    }
 
     [Fact]
     public void BuilderMutatedAfterBuild_DoesNotAffectBuiltProperties()
