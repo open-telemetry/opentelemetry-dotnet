@@ -13,7 +13,7 @@ Notes](../../RELEASENOTES.md).
 
 * Disable HttpClientFactory integration for Android, Blazor, iOS and tvOS
   platforms to avoid stalled export requests when async HTTP handlers are used.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7709](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7709))
 
 ## 1.18.0
 
