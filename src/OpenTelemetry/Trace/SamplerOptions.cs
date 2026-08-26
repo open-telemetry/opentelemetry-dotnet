@@ -7,8 +7,8 @@ using Microsoft.Extensions.Configuration;
 namespace OpenTelemetry.Trace;
 
 /// <summary>
-/// Options for configuring the trace sampler.
-/// OTEL_TRACES_SAMPLER and OTEL_TRACES_SAMPLER_ARG environment variables
+/// Trace sampler options.
+/// <c>OTEL_TRACES_SAMPLER</c> and <c>OTEL_TRACES_SAMPLER_ARG</c> environment variables
 /// are parsed during object construction.
 /// </summary>
 public sealed class SamplerOptions
@@ -16,61 +16,62 @@ public sealed class SamplerOptions
     internal const string TracesSamplerConfigKey = "OTEL_TRACES_SAMPLER";
     internal const string TracesSamplerArgConfigKey = "OTEL_TRACES_SAMPLER_ARG";
 
-    // Unlike some other options classes, we don't have a public parameterless constructor.
-    // The internal-only constructor is the right long-term design for any new options class using
-    // DelegatingOptionsFactory. Consumers never instantiate SamplerOptions directly, so there's no
-    // need for a public constructor. The public constructor on BatchExportActivityProcessorOptions
-    // pre-dates this pattern and is a historical artefact, not a template to follow for new work.
-
-    private double? samplerArg;
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SamplerOptions"/> class.
+    /// </summary>
+    public SamplerOptions()
+        : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
+    {
+    }
 
     internal SamplerOptions(IConfiguration configuration)
     {
-        if (configuration.TryGetStringValue(TracesSamplerConfigKey, out var samplerType))
+        if (configuration.TryGetStringValue(TracesSamplerConfigKey, out var type))
         {
-            this.SamplerType = samplerType;
+            this.Type = type;
         }
 
-        if (configuration.TryGetStringValue(TracesSamplerArgConfigKey, out var samplerArgStr))
+        if (configuration.TryGetStringValue(TracesSamplerArgConfigKey, out var argument))
         {
-            this.SamplerArgRaw = samplerArgStr;
+            this.Argument = argument;
 
-            if (double.TryParse(
-                    samplerArgStr,
-                    NumberStyles.Float | NumberStyles.AllowThousands,
-                    CultureInfo.InvariantCulture,
-                    out var parsedArg))
+            if (TryParseTraceIdRatio(argument, out var traceIdRatio))
             {
-                // Bypass the public setter so that SamplerArgRaw is not cleared.
-                this.samplerArg = parsedArg;
+                this.TraceIdRatio = traceIdRatio;
             }
-
-            // If unparsable, samplerArg stays null; SamplerArgRaw carries the bad string
-            // for ReadTraceIdRatio to log when called for ratio-based samplers. This matches
-            // the behavior prior to introducing this options type.
         }
     }
 
     /// <summary>
-    /// Gets or sets the sampler type.
+    /// Gets or sets the sampler to use. When unset, the SDK falls back to
+    /// <c>parentbased_always_on</c>. Supported values are <c>always_on</c>, <c>always_off</c>, <c>traceidratio</c>,
+    /// <c>parentbased_always_on</c>, <c>parentbased_always_off</c>, and
+    /// <c>parentbased_traceidratio</c>.
     /// </summary>
-    public string? SamplerType { get; set; }
+    /// <remarks>
+    /// Note: A sampler set programmatically using
+    /// <see cref="TracerProviderBuilderExtensions.SetSampler(TracerProviderBuilder, Sampler)"/>
+    /// takes precedence over this value.
+    /// </remarks>
+    public string? Type { get; set; }
 
     /// <summary>
-    /// Gets or sets the sampler argument.
+    /// Gets or sets the sampling probability, a value in the <c>[0.0, 1.0]</c> range.
+    /// When unset or invalid, the SDK falls back to <c>1.0</c>. Only used when
+    /// <see cref="Type"/> is <c>traceidratio</c> or <c>parentbased_traceidratio</c>.
     /// </summary>
-    public double? SamplerArg
-    {
-        get => this.samplerArg;
-        set
-        {
-            this.samplerArg = value;
-            this.SamplerArgRaw = null; // no original config string when set programmatically
-        }
-    }
+    public double? TraceIdRatio { get; set; }
 
     /// <summary>
-    /// Gets the original configuration string so it can be logged.
+    /// Gets the verbatim <c>OTEL_TRACES_SAMPLER_ARG</c> value, retained so that an unusable value
+    /// can be reported exactly as it was configured when the sampler uses it.
     /// </summary>
-    internal string? SamplerArgRaw { get; private set; }
+    internal string? Argument { get; }
+
+    internal static bool TryParseTraceIdRatio(string value, out double traceIdRatio)
+        => double.TryParse(
+            value,
+            NumberStyles.Float | NumberStyles.AllowThousands,
+            CultureInfo.InvariantCulture,
+            out traceIdRatio);
 }

@@ -400,41 +400,37 @@ internal sealed class TracerProviderSdk : TracerProvider
     {
         var sampler = stateSampler;
 
-        if (!string.IsNullOrWhiteSpace(options.SamplerType))
+        if (options.Type is string samplerType && !string.IsNullOrWhiteSpace(samplerType))
         {
             if (sampler != null)
             {
                 OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent(
-                    $"Trace sampler configuration value '{options.SamplerType}' has been ignored because a value '{sampler.GetType().FullName}' was set programmatically.");
+                    $"Trace sampler configuration value '{samplerType}' has been ignored because a value '{sampler.GetType().FullName}' was set programmatically.");
                 return sampler;
             }
 
-            switch (options.SamplerType)
+            switch (samplerType)
             {
-                case var _ when string.Equals(options.SamplerType, "always_on", StringComparison.OrdinalIgnoreCase):
+                case var _ when string.Equals(samplerType, "always_on", StringComparison.OrdinalIgnoreCase):
                     sampler = AlwaysOnSampler.Instance;
                     break;
-                case var _ when string.Equals(options.SamplerType, "always_off", StringComparison.OrdinalIgnoreCase):
+                case var _ when string.Equals(samplerType, "always_off", StringComparison.OrdinalIgnoreCase):
                     sampler = AlwaysOffSampler.Instance;
                     break;
-                case var _ when string.Equals(options.SamplerType, "traceidratio", StringComparison.OrdinalIgnoreCase):
-                    {
-                        var traceIdRatio = ReadTraceIdRatio(options);
-                        sampler = new TraceIdRatioBasedSampler(traceIdRatio);
-                        break;
-                    }
-
-                case var _ when string.Equals(options.SamplerType, "parentbased_always_on", StringComparison.OrdinalIgnoreCase):
+                case var _ when string.Equals(samplerType, "traceidratio", StringComparison.OrdinalIgnoreCase):
+                    sampler = new TraceIdRatioBasedSampler(ReadTraceIdRatio(options));
+                    break;
+                case var _ when string.Equals(samplerType, "parentbased_always_on", StringComparison.OrdinalIgnoreCase):
                     sampler = new ParentBasedSampler(AlwaysOnSampler.Instance);
                     break;
-                case var _ when string.Equals(options.SamplerType, "parentbased_always_off", StringComparison.OrdinalIgnoreCase):
+                case var _ when string.Equals(samplerType, "parentbased_always_off", StringComparison.OrdinalIgnoreCase):
                     sampler = new ParentBasedSampler(AlwaysOffSampler.Instance);
                     break;
-                case var _ when string.Equals(options.SamplerType, "parentbased_traceidratio", StringComparison.OrdinalIgnoreCase):
+                case var _ when string.Equals(samplerType, "parentbased_traceidratio", StringComparison.OrdinalIgnoreCase):
                     sampler = new ParentBasedSampler(new TraceIdRatioBasedSampler(ReadTraceIdRatio(options)));
                     break;
                 default:
-                    OpenTelemetrySdkEventSource.Log.TracesSamplerConfigInvalid(options.SamplerType!);
+                    OpenTelemetrySdkEventSource.Log.TracesSamplerConfigInvalid(samplerType);
                     break;
             }
 
@@ -442,8 +438,6 @@ internal sealed class TracerProviderSdk : TracerProvider
             {
                 OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Trace sampler set to '{sampler.GetType().FullName}' from configuration.");
             }
-
-            return sampler ?? new ParentBasedSampler(AlwaysOnSampler.Instance);
         }
 
         return sampler ?? new ParentBasedSampler(AlwaysOnSampler.Instance);
@@ -451,24 +445,37 @@ internal sealed class TracerProviderSdk : TracerProvider
 
     private static double ReadTraceIdRatio(SamplerOptions options)
     {
-        var samplerArg = options.SamplerArg;
-        if (samplerArg.HasValue
-            && !double.IsNaN(samplerArg.Value)
-            && !double.IsInfinity(samplerArg.Value)
-            && samplerArg.Value >= 0.0
-            && samplerArg.Value <= 1.0)
+        var traceIdRatio = options.TraceIdRatio;
+
+        if (traceIdRatio is double ratio
+            && !double.IsNaN(ratio)
+            && !double.IsInfinity(ratio)
+            && ratio >= 0.0
+            && ratio <= 1.0)
         {
-            return samplerArg.Value;
+            return ratio;
         }
 
-        // No valid ratio. Log the original config string for diagnostic fidelity and fall back to 1.0.
-        OpenTelemetrySdkEventSource.Log.TracesSamplerArgConfigInvalid(
-            options.SamplerArgRaw
-            ?? (samplerArg.HasValue
-                ? samplerArg.Value.ToString(CultureInfo.InvariantCulture)
-                : string.Empty));
+        OpenTelemetrySdkEventSource.Log.TracesSamplerArgConfigInvalid(DescribeUnusableTraceIdRatio(options));
 
         return 1.0;
+    }
+
+    private static string DescribeUnusableTraceIdRatio(SamplerOptions options)
+    {
+        var argument = options.Argument;
+
+        if (options.TraceIdRatio is not double ratio)
+        {
+            // The configuration string could not be parsed, so it is the only value to report.
+            return argument ?? string.Empty;
+        }
+
+        return argument != null
+            && SamplerOptions.TryParseTraceIdRatio(argument, out var parsed)
+            && parsed.Equals(ratio)
+                ? argument
+                : ratio.ToString(CultureInfo.InvariantCulture);
     }
 
     private static ActivitySamplingResult ComputeActivitySamplingResult(

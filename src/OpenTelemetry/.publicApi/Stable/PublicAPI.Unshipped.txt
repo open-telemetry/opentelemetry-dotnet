@@ -1,5 +1,6 @@
 OpenTelemetry.Trace.SamplerOptions
-OpenTelemetry.Trace.SamplerOptions.SamplerArg.get -> double?
-OpenTelemetry.Trace.SamplerOptions.SamplerArg.set -> void
-OpenTelemetry.Trace.SamplerOptions.SamplerType.get -> string?
-OpenTelemetry.Trace.SamplerOptions.SamplerType.set -> void
+OpenTelemetry.Trace.SamplerOptions.SamplerOptions() -> void
+OpenTelemetry.Trace.SamplerOptions.TraceIdRatio.get -> double?
+OpenTelemetry.Trace.SamplerOptions.TraceIdRatio.set -> void
+OpenTelemetry.Trace.SamplerOptions.Type.get -> string?
+OpenTelemetry.Trace.SamplerOptions.Type.set -> void

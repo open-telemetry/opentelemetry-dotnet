@@ -177,8 +177,11 @@ public class OpenTelemetryServicesExtensionsTests
     [Fact]
     public void AddOpenTelemetry_WithTracing_SamplerResolvedFromHostConfigurationTest()
     {
-        using var clearSamplerEnv = EnvironmentVariableScope.Create(SamplerOptions.TracesSamplerConfigKey, null);
-        using var clearSamplerArgEnv = EnvironmentVariableScope.Create(SamplerOptions.TracesSamplerArgConfigKey, null);
+        using var environment = EnvironmentVariableScope.Create(
+            [
+                (SamplerOptions.TracesSamplerConfigKey, null),
+                (SamplerOptions.TracesSamplerArgConfigKey, null),
+            ]);
 
         var builder = new HostBuilder()
             .ConfigureAppConfiguration(configBuilder =>
@@ -205,8 +208,11 @@ public class OpenTelemetryServicesExtensionsTests
     [Fact]
     public void AddOpenTelemetry_WithTracing_ConfigureSamplerOptionsOverridesHostConfigurationTest()
     {
-        using var clearSamplerEnv = EnvironmentVariableScope.Create(SamplerOptions.TracesSamplerConfigKey, null);
-        using var clearSamplerArgEnv = EnvironmentVariableScope.Create(SamplerOptions.TracesSamplerArgConfigKey, null);
+        using var environment = EnvironmentVariableScope.Create(
+            [
+                (SamplerOptions.TracesSamplerConfigKey, null),
+                (SamplerOptions.TracesSamplerArgConfigKey, null),
+            ]);
 
         var builder = new HostBuilder()
             .ConfigureAppConfiguration(configBuilder =>
@@ -220,7 +226,7 @@ public class OpenTelemetryServicesExtensionsTests
             .ConfigureServices(services =>
             {
                 services.AddOpenTelemetry().WithTracing();
-                services.Configure<SamplerOptions>(o => o.SamplerArg = 0.9);
+                services.Configure<SamplerOptions>(o => o.TraceIdRatio = 0.9);
             });
 
         using var host = builder.Build();
