@@ -383,6 +383,26 @@ The supported values for `OTEL_TRACES_SAMPLER` are:
 The options `traceidratio` and `parentbased_traceidratio` may have the sampler
 probability configured via the `OTEL_TRACES_SAMPLER_ARG` environment variable.
 
+The same settings may be configured in code, or bound from a configuration
+source such as `appsettings.json`, using `SamplerOptions`:
+
+```csharp
+services.Configure<SamplerOptions>(options =>
+{
+    options.Type = "traceidratio";
+    options.TraceIdRatio = 0.25;
+});
+```
+
+```csharp
+services.Configure<SamplerOptions>(
+    configuration.GetSection("OpenTelemetry:Sampler"));
+```
+
+Values set using `SamplerOptions` take precedence over the environment
+variables. A sampler set using `SetSampler` takes precedence over both, in
+which case the configured values are ignored.
+
 Follow [this](../extending-the-sdk/README.md#sampler) document
 to learn about writing custom samplers.
 
