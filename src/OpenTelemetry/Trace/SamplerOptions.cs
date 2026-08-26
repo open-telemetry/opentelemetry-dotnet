@@ -46,6 +46,7 @@ public sealed class SamplerOptions
                 && TryParseTraceIdRatio(argument, out var traceIdRatio))
             {
                 this.TraceIdRatio = traceIdRatio;
+                this.ConfiguredTraceIdRatio = traceIdRatio;
             }
         }
     }
@@ -57,7 +58,7 @@ public sealed class SamplerOptions
     /// <c>parentbased_traceidratio</c>.
     /// </summary>
     /// <remarks>
-    /// Note: A sampler set programmatically using
+    /// A sampler set programmatically using
     /// <see cref="TracerProviderBuilderExtensions.SetSampler(TracerProviderBuilder, Sampler)"/>
     /// takes precedence over this value.
     /// </remarks>
@@ -76,9 +77,20 @@ public sealed class SamplerOptions
     /// </summary>
     internal string? Argument { get; }
 
+    /// <summary>
+    /// Gets the <see cref="TraceIdRatio"/> value parsed from <c>OTEL_TRACES_SAMPLER_ARG</c>,
+    /// retained so that a value later replaced by the options pipeline can be distinguished from
+    /// the configured one when reporting an unusable value.
+    /// </summary>
+    internal double? ConfiguredTraceIdRatio { get; }
+
     internal static bool IsTraceIdRatioSampler(string? type)
-        => string.Equals(type, TraceIdRatioType, StringComparison.OrdinalIgnoreCase)
-            || string.Equals(type, ParentBasedTraceIdRatioType, StringComparison.OrdinalIgnoreCase);
+    {
+        var trimmed = type?.Trim();
+
+        return string.Equals(trimmed, TraceIdRatioType, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(trimmed, ParentBasedTraceIdRatioType, StringComparison.OrdinalIgnoreCase);
+    }
 
     internal static bool TryParseTraceIdRatio(string value, out double traceIdRatio)
         => double.TryParse(
