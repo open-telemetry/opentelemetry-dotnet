@@ -11,15 +11,15 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 
 internal abstract class OtlpExportClient : IExportClient
 {
-    private static readonly Version Http2RequestVersion = new(2, 0);
-
 #if NET
     // See: https://github.com/dotnet/runtime/blob/280f2a0c60ce0378b8db49adc0eecc463d00fe5d/src/libraries/System.Net.Http/src/System/Net/Http/HttpClientHandler.AnyMobile.cs#L767
-    private static readonly bool SynchronousSendSupportedByCurrentPlatform = !OperatingSystem.IsAndroid()
+    internal static readonly bool SynchronousSendSupportedByCurrentPlatform = !OperatingSystem.IsAndroid()
             && !OperatingSystem.IsIOS()
             && !OperatingSystem.IsTvOS()
             && !OperatingSystem.IsBrowser();
 #endif
+
+    private static readonly Version Http2RequestVersion = new(2, 0);
 
     protected OtlpExportClient(OtlpExporterOptions options, HttpClient httpClient, string signalPath)
     {
