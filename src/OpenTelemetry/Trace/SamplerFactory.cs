@@ -61,6 +61,8 @@ internal static class SamplerFactory
             traceIdRatio = fromArg;
         }
 
+        // NaN fails both relational patterns, which is required because TraceIdRatio is a
+        // settable property and can be assigned NaN programmatically even though parsing rejects it.
         if (traceIdRatio is double ratio and >= 0.0 and <= 1.0)
         {
             return ratio;
@@ -78,7 +80,7 @@ internal static class SamplerFactory
 
     private static string DescribeUnusableTraceIdRatio(SamplerOptions options) =>
         options.Argument is string argument
-            && options.TraceIdRatio.Equals(options.ConfiguredTraceIdRatio)
+            && options.TraceIdRatio == options.ConfiguredTraceIdRatio
                 ? argument // verbatim configured string, including trailing zero or separator
                 : options.TraceIdRatio?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
 }
