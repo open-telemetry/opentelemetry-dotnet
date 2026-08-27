@@ -19,7 +19,4 @@ OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.MaxRetainedFiles.set -> voi
 OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.MinimumLevel.get -> Microsoft.Extensions.Logging.LogLevel
 OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.MinimumLevel.set -> void
 OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.SelfDiagnosticsOptions() -> void
-override OpenTelemetry.SimpleActivityExportProcessor.OnShutdown(int timeoutMilliseconds) -> bool
-override OpenTelemetry.SimpleLogRecordExportProcessor.OnEnd(OpenTelemetry.Logs.LogRecord! data) -> void
-override OpenTelemetry.SimpleLogRecordExportProcessor.OnShutdown(int timeoutMilliseconds) -> bool
 static OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.GetDefaultLogDirectory() -> string?

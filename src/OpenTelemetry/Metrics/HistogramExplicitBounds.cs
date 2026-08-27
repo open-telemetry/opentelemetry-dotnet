@@ -5,8 +5,6 @@ using System.Diagnostics;
 using System.Numerics;
 #if NET
 using System.Runtime.Intrinsics;
-using System.Runtime.Intrinsics.Arm;
-using System.Runtime.Intrinsics.X86;
 #endif
 using System.Runtime.CompilerServices;
 
@@ -14,7 +12,7 @@ namespace OpenTelemetry.Metrics;
 
 internal sealed class HistogramExplicitBounds
 {
-    internal const int DefaultBoundaryCountForBinarySearch = 50;
+    internal const int DefaultBoundaryCountForBinarySearch = 32;
 
     private const int RadixLookupBitCount = 12;
     private const int RadixLinearSearchThreshold = 32;
@@ -112,7 +110,27 @@ internal sealed class HistogramExplicitBounds
     {
         var index = 0;
 
-        if (Avx.IsSupported && bounds.Length >= Vector256<double>.Count)
+        if (Vector512.IsHardwareAccelerated && bounds.Length >= Vector512<double>.Count)
+        {
+            var valueVector = Vector512.Create(value);
+            var lastStart = bounds.Length - Vector512<double>.Count;
+
+            while (index <= lastStart)
+            {
+                var boundsVector = Vector512.Create(bounds.Slice(index));
+                var compare = Vector512.LessThanOrEqual(valueVector, boundsVector);
+                var mask = Vector512.ExtractMostSignificantBits(compare);
+
+                if (mask != 0)
+                {
+                    return index + BitOperations.TrailingZeroCount(mask);
+                }
+
+                index += Vector512<double>.Count;
+            }
+        }
+
+        if (Vector256.IsHardwareAccelerated && bounds.Length - index >= Vector256<double>.Count)
         {
             var valueVector = Vector256.Create(value);
             var lastStart = bounds.Length - Vector256<double>.Count;
@@ -120,18 +138,18 @@ internal sealed class HistogramExplicitBounds
             while (index <= lastStart)
             {
                 var boundsVector = Vector256.Create(bounds.Slice(index));
-                var compare = Avx.CompareLessThanOrEqual(valueVector, boundsVector);
-                var mask = Avx.MoveMask(compare);
+                var compare = Vector256.LessThanOrEqual(valueVector, boundsVector);
+                var mask = Vector256.ExtractMostSignificantBits(compare);
 
                 if (mask != 0)
                 {
-                    return index + BitOperations.TrailingZeroCount((uint)mask);
+                    return index + BitOperations.TrailingZeroCount(mask);
                 }
 
                 index += Vector256<double>.Count;
             }
         }
-        else if (Sse2.IsSupported && bounds.Length >= Vector128<double>.Count)
+        else if (Vector128.IsHardwareAccelerated && bounds.Length - index >= Vector128<double>.Count)
         {
             var valueVector = Vector128.Create(value);
             var lastStart = bounds.Length - Vector128<double>.Count;
@@ -139,35 +157,12 @@ internal sealed class HistogramExplicitBounds
             while (index <= lastStart)
             {
                 var boundsVector = Vector128.Create(bounds.Slice(index));
-                var compare = Sse2.CompareLessThanOrEqual(valueVector, boundsVector);
-                var mask = Sse2.MoveMask(compare);
+                var compare = Vector128.LessThanOrEqual(valueVector, boundsVector);
+                var mask = Vector128.ExtractMostSignificantBits(compare);
 
                 if (mask != 0)
                 {
-                    return index + BitOperations.TrailingZeroCount((uint)mask);
-                }
-
-                index += Vector128<double>.Count;
-            }
-        }
-        else if (AdvSimd.Arm64.IsSupported && bounds.Length >= Vector128<double>.Count)
-        {
-            var valueVector = Vector128.Create(value);
-            var lastStart = bounds.Length - Vector128<double>.Count;
-
-            while (index <= lastStart)
-            {
-                var boundsVector = Vector128.Create(bounds.Slice(index));
-                var compare = AdvSimd.Arm64.CompareLessThanOrEqual(valueVector, boundsVector).AsUInt64();
-
-                if (compare.GetElement(0) != 0)
-                {
-                    return index;
-                }
-
-                if (compare.GetElement(1) != 0)
-                {
-                    return index + 1;
+                    return index + BitOperations.TrailingZeroCount(mask);
                 }
 
                 index += Vector128<double>.Count;
@@ -223,13 +218,10 @@ internal sealed class HistogramExplicitBounds
     private int FindBucketIndexLinear(double value, int start, int end)
     {
 #if NET
-        if (!double.IsNaN(value))
+        var index = FindBucketIndexLinearSimd(this.Bounds.AsSpan(start, end - start), value);
+        if (index >= 0)
         {
-            var index = FindBucketIndexLinearSimd(this.Bounds.AsSpan(start, end - start), value);
-            if (index >= 0)
-            {
-                return start + index;
-            }
+            return start + index;
         }
 #endif
 
@@ -294,12 +286,6 @@ internal sealed class HistogramExplicitBounds
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public (int Start, int End) GetBucketSearchRange(double value)
         {
-            if (double.IsNaN(value))
-            {
-                var end = this.bucketSearchStarts[this.bucketSearchStarts.Length - 1];
-                return (end, end);
-            }
-
             var key = this.GetKey(ToSortableBits(value));
             return (this.bucketSearchStarts[key], this.bucketSearchStarts[key + 1]);
         }

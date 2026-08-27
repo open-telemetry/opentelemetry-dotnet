@@ -6,6 +6,19 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.18.0
+
+Released 2026-Aug-21
+
+## 1.18.0-rc.1
+
+Released 2026-Aug-21
+
+* Added support for serializing attribute values that are key/value lists
+  (`IEnumerable<KeyValuePair<string, object?>>`). These attributes will be
+  serialized as JSON objects.
+  ([#7015](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7015))
+
 ## 1.17.0
 
 Released 2026-Jul-16

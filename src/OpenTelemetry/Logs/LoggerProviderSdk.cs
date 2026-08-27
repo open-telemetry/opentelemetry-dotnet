@@ -43,42 +43,50 @@ internal sealed class LoggerProviderSdk : LoggerProvider
 
         OpenTelemetrySdkEventSource.Log.LoggerProviderSdkEvent("Building LoggerProvider.");
 
-        var configureProviderBuilders = serviceProvider.GetServices<IConfigureLoggerProviderBuilder>();
-        foreach (var configureProviderBuilder in configureProviderBuilders)
+        try
         {
-            configureProviderBuilder.ConfigureBuilder(serviceProvider, state);
-        }
-
-        var resourceBuilder = state.ResourceBuilder ?? ResourceBuilder.CreateDefault();
-        resourceBuilder.ServiceProvider = serviceProvider;
-        this.Resource = resourceBuilder.Build();
-
-        // Note: Linq OrderBy performs a stable sort, which is a requirement here
-        foreach (var processor in state.Processors.OrderBy(p => p.PipelineWeight))
-        {
-            this.AddProcessor(processor);
-        }
-
-        var instrumentationFactoriesAdded = new StringBuilder();
-
-        foreach (var instrumentation in state.Instrumentation)
-        {
-            if (instrumentation.Instance is not null)
+            var configureProviderBuilders = serviceProvider.GetServices<IConfigureLoggerProviderBuilder>();
+            foreach (var configureProviderBuilder in configureProviderBuilders)
             {
-                this.Instrumentations.Add(instrumentation.Instance);
+                configureProviderBuilder.ConfigureBuilder(serviceProvider, state);
             }
 
-            instrumentationFactoriesAdded.Append(instrumentation.Name);
-            instrumentationFactoriesAdded.Append(';');
-        }
+            var resourceBuilder = state.ResourceBuilder ?? ResourceBuilder.CreateDefault();
+            resourceBuilder.ServiceProvider = serviceProvider;
+            this.Resource = resourceBuilder.Build();
 
-        if (instrumentationFactoriesAdded.Length != 0)
+            // Note: Linq OrderBy performs a stable sort, which is a requirement here
+            foreach (var processor in state.Processors.OrderBy(p => p.PipelineWeight))
+            {
+                this.AddProcessor(processor);
+            }
+
+            var instrumentationFactoriesAdded = new StringBuilder();
+
+            foreach (var instrumentation in state.Instrumentation)
+            {
+                if (instrumentation.Instance is not null)
+                {
+                    this.Instrumentations.Add(instrumentation.Instance);
+                }
+
+                instrumentationFactoriesAdded.Append(instrumentation.Name);
+                instrumentationFactoriesAdded.Append(';');
+            }
+
+            if (instrumentationFactoriesAdded.Length != 0)
+            {
+                instrumentationFactoriesAdded.Remove(instrumentationFactoriesAdded.Length - 1, 1);
+                OpenTelemetrySdkEventSource.Log.LoggerProviderSdkEvent($"Instrumentations added = \"{instrumentationFactoriesAdded}\".");
+            }
+
+            OpenTelemetrySdkEventSource.Log.LoggerProviderSdkEvent("LoggerProviderSdk built successfully.");
+        }
+        catch (Exception)
         {
-            instrumentationFactoriesAdded.Remove(instrumentationFactoriesAdded.Length - 1, 1);
-            OpenTelemetrySdkEventSource.Log.LoggerProviderSdkEvent($"Instrumentations added = \"{instrumentationFactoriesAdded}\".");
+            this.DisposeBuiltState(state);
+            throw;
         }
-
-        OpenTelemetrySdkEventSource.Log.LoggerProviderSdkEvent("LoggerProviderSdk built successfully.");
     }
 
     public Resource Resource { get; }
@@ -221,10 +229,13 @@ internal sealed class LoggerProviderSdk : LoggerProvider
 
                 this.Instrumentations.Clear();
 
-                // Wait for up to 5 seconds grace period
-                this.Processor?.Shutdown(5000);
-                this.Processor?.Dispose();
-                this.Processor = null;
+                if (this.Processor != null)
+                {
+                    // Wait for up to 5 seconds grace period
+                    this.Processor.Shutdown(5_000);
+                    this.Processor.Dispose();
+                    this.Processor = null;
+                }
 
                 this.OwnedServiceProvider?.Dispose();
                 this.OwnedServiceProvider = null;
@@ -239,5 +250,40 @@ internal sealed class LoggerProviderSdk : LoggerProvider
         }
 
         base.Dispose(disposing);
+    }
+
+    private void DisposeBuiltState(LoggerProviderBuilderSdk state)
+    {
+        foreach (var processor in state.Processors)
+        {
+            CleanUp(() => processor.Shutdown(0));
+            CleanUp(processor.Dispose);
+        }
+
+        foreach (var instrumentation in state.Instrumentation)
+        {
+            if (instrumentation.Instance is IDisposable disposable)
+            {
+                CleanUp(disposable.Dispose);
+            }
+        }
+
+        if (this.OwnedServiceProvider != null)
+        {
+            CleanUp(this.OwnedServiceProvider.Dispose);
+            this.OwnedServiceProvider = null;
+        }
+
+        static void CleanUp(Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception ex)
+            {
+                OpenTelemetrySdkEventSource.Log.LoggerProviderException(nameof(this.DisposeBuiltState), ex);
+            }
+        }
     }
 }

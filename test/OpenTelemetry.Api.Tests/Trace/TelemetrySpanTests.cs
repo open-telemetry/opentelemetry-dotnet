@@ -55,6 +55,18 @@ public class TelemetrySpanTests
     }
 
     [Fact]
+    public void RecordExceptionDoesNotFormatExceptionWhenNotRecording()
+    {
+        using var activity = new Activity("exception-test");
+        activity.IsAllDataRequested = false;
+        using var telemetrySpan = new TelemetrySpan(activity);
+
+        var exception = new ExceptionWithThrowingToString();
+
+        telemetrySpan.RecordException(exception);
+    }
+
+    [Fact]
     public void ParentIds()
     {
         using var parentActivity = new Activity("parentOperation");
@@ -131,5 +143,26 @@ public class TelemetrySpanTests
         span.AddLink(context, null);
 
         Assert.Empty(activity.Links);
+    }
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1064", Justification = "The private exception type is test-only and verifies RecordException does not format unrecorded exceptions.")]
+    private sealed class ExceptionWithThrowingToString : Exception
+    {
+        public ExceptionWithThrowingToString()
+        {
+        }
+
+        public ExceptionWithThrowingToString(string message)
+            : base(message)
+        {
+        }
+
+        public ExceptionWithThrowingToString(string message, Exception innerException)
+            : base(message, innerException)
+        {
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1065", Justification = "The throwing override verifies RecordException does not format unrecorded exceptions.")]
+        public override string ToString() => throw new InvalidOperationException();
     }
 }

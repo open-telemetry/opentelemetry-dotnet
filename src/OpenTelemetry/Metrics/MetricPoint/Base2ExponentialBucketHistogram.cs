@@ -26,6 +26,7 @@ internal sealed partial class Base2ExponentialBucketHistogram
 
     internal ExponentialHistogramData SnapshotExponentialHistogramData = new();
 
+    private readonly int maxScale;
     private int scale;
     private double scalingFactor; // 2 ^ scale / log(2)
 
@@ -90,6 +91,7 @@ internal sealed partial class Base2ExponentialBucketHistogram
         */
         Guard.ThrowIfOutOfRange(maxBuckets, min: 2);
 
+        this.maxScale = scale;
         this.Scale = scale;
         this.PositiveBuckets = new CircularBufferBuckets(maxBuckets);
         this.NegativeBuckets = new CircularBufferBuckets(maxBuckets);
@@ -138,16 +140,23 @@ internal sealed partial class Base2ExponentialBucketHistogram
 
         if (this.Scale > 0)
         {
-            // TODO: do we really need this given the lookup table is needed for scale>0 anyways?
+            // Exact powers of two must be special-cased: computing the index via Math.Log below
+            // is not exact and would misassign a meaningful fraction of exact powers of two to the
+            // wrong bucket. This mirrors the OpenTelemetry specification, which requires an exact
+            // mapping for powers of two even when using the logarithm method for the general case.
+            // See "All Scales: Use the Logarithm Function" in
+            // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#all-scales-use-the-logarithm-function.
             if (fraction == 0)
             {
                 var exp = (int)((bits & 0x7FF0000000000000L /* exponent mask */) >> 52 /* fraction width */);
                 return ((exp - 1023 /* exponent bias */) << this.Scale) - 1;
             }
 
-            // TODO: due to precision issue, the values that are close to the bucket
-            // boundaries should be closely examined to avoid off-by-one.
-
+            // Math.Log is not guaranteed to be exactly correct near bucket boundaries, so values
+            // very close to a boundary can occasionally be mapped to the wrong bucket. This is a
+            // known, accepted limitation of the logarithm method: per the specification, "Defining
+            // an exact mapping function is out of scope" for scale > 0. See
+            // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#all-scales-use-the-logarithm-function.
             return (int)Math.Ceiling(Math.Log(value) * this.scalingFactor) - 1;
         }
         else
@@ -206,7 +215,7 @@ internal sealed partial class Base2ExponentialBucketHistogram
             this.RunningMax = double.NegativeInfinity;
         }
 
-        this.Scale = Metric.DefaultExponentialHistogramMaxScale;
+        this.Scale = this.maxScale;
         this.RunningSum = 0;
         this.ZeroCount = 0;
         this.PositiveBuckets.Reset();
@@ -228,8 +237,9 @@ internal sealed partial class Base2ExponentialBucketHistogram
     {
         Debug.Assert(this.PositiveBuckets.Capacity == this.NegativeBuckets.Capacity, "Capacity of positive and negative buckets are not equal.");
 
-        return new Base2ExponentialBucketHistogram(this.PositiveBuckets.Capacity, this.SnapshotExponentialHistogramData.Scale)
+        return new Base2ExponentialBucketHistogram(this.PositiveBuckets.Capacity, this.maxScale)
         {
+            Scale = this.SnapshotExponentialHistogramData.Scale,
             SnapshotSum = this.SnapshotSum,
             SnapshotMin = this.SnapshotMin,
             SnapshotMax = this.SnapshotMax,

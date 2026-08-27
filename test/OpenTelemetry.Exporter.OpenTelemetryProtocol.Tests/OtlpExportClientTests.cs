@@ -24,7 +24,7 @@ public class OtlpExportClientTests
         var cancellationToken = CancellationToken.None;
 
         // Act
-        var actual = OtlpExportClient.TryGetResponseBody(httpResponse, cancellationToken);
+        var actual = OtlpExportClient.TryGetResponseBody(httpResponse, OtlpExporterOptions.DefaultMaxResponseSizeBytes, cancellationToken);
 
         // Assert
         Assert.Null(actual);
@@ -38,7 +38,7 @@ public class OtlpExportClientTests
         var cancellationToken = CancellationToken.None;
 
         // Act
-        var actual = OtlpExportClient.TryGetResponseBody(httpResponse, cancellationToken);
+        var actual = OtlpExportClient.TryGetResponseBody(httpResponse, OtlpExporterOptions.DefaultMaxResponseSizeBytes, cancellationToken);
 
         // Assert
 #if NETFRAMEWORK
@@ -67,7 +67,7 @@ public class OtlpExportClientTests
         };
 
         // Act
-        var actual = OtlpExportClient.TryGetResponseBody(httpResponse, cancellationToken);
+        var actual = OtlpExportClient.TryGetResponseBody(httpResponse, OtlpExporterOptions.DefaultMaxResponseSizeBytes, cancellationToken);
 
         // Assert
         Assert.Equal(expected, actual);
@@ -89,7 +89,7 @@ public class OtlpExportClientTests
         };
 
         // Act
-        var actual = OtlpExportClient.TryGetResponseBody(httpResponse, cancellationToken);
+        var actual = OtlpExportClient.TryGetResponseBody(httpResponse, OtlpExporterOptions.DefaultMaxResponseSizeBytes, cancellationToken);
 
         // Assert
         Assert.NotNull(actual);
@@ -129,7 +129,7 @@ public class OtlpExportClientTests
         };
 
         // Act
-        var actual = OtlpExportClient.TryGetResponseBody(httpResponse, cancellationToken);
+        var actual = OtlpExportClient.TryGetResponseBody(httpResponse, OtlpExporterOptions.DefaultMaxResponseSizeBytes, cancellationToken);
 
         // Assert
         Assert.NotNull(actual);
@@ -149,7 +149,7 @@ public class OtlpExportClientTests
         };
 
         // Act
-        var actual = OtlpExportClient.TryGetResponseBody(httpResponse, cancellationToken);
+        var actual = OtlpExportClient.TryGetResponseBody(httpResponse, OtlpExporterOptions.DefaultMaxResponseSizeBytes, cancellationToken);
 
         // Assert
         Assert.Equal(string.Empty, actual);
@@ -167,7 +167,7 @@ public class OtlpExportClientTests
         };
 
         // Act
-        var actual = OtlpExportClient.TryGetResponseBody(httpResponse, cancellationToken);
+        var actual = OtlpExportClient.TryGetResponseBody(httpResponse, OtlpExporterOptions.DefaultMaxResponseSizeBytes, cancellationToken);
 
         // Assert
         Assert.Null(actual);
@@ -185,7 +185,7 @@ public class OtlpExportClientTests
         };
 
         // Act
-        var actual = OtlpExportClient.TryGetResponseBody(httpResponse, cancellationToken);
+        var actual = OtlpExportClient.TryGetResponseBody(httpResponse, OtlpExporterOptions.DefaultMaxResponseSizeBytes, cancellationToken);
 
         // Assert
         Assert.Null(actual);
@@ -204,7 +204,7 @@ public class OtlpExportClientTests
         };
 
         // Act
-        var actual = OtlpExportClient.TryGetResponseBody(httpResponse, cancellationToken);
+        var actual = OtlpExportClient.TryGetResponseBody(httpResponse, OtlpExporterOptions.DefaultMaxResponseSizeBytes, cancellationToken);
 
         // Assert
         Assert.Equal(expected, actual);
@@ -224,7 +224,7 @@ public class OtlpExportClientTests
         };
 
         // Act
-        var actual = OtlpExportClient.TryGetResponseBody(httpResponse, cancellationToken);
+        var actual = OtlpExportClient.TryGetResponseBody(httpResponse, OtlpExporterOptions.DefaultMaxResponseSizeBytes, cancellationToken);
 
         // Assert
         Assert.Equal(expected, actual);

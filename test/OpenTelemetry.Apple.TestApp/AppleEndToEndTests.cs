@@ -16,10 +16,11 @@ namespace OpenTelemetry.Apple.TestApp;
 [TestClass]
 public sealed class AppleEndToEndTests
 {
+    private const int FlushAttempts = 3;
+
     private static readonly Uri OtlpBaseAddress = new(InstrumentationSource.OtlpEndpoint);
 
     private static readonly TimeSpan FlushTimeout = TimeSpan.FromSeconds(60);
-    private static readonly TimeSpan ExportTimeout = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan ShutdownTimeout = TimeSpan.FromSeconds(30);
 
     [TestMethod]
@@ -48,12 +49,16 @@ public sealed class AppleEndToEndTests
 
         Assert.IsTrue(logger.IsEnabled(LogLevel.Information), "Information logs are not enabled.");
 
-        if (logger.IsEnabled(LogLevel.Information))
-        {
-            logger.LogInformation("{Message}", InstrumentationSource.LogBody);
-        }
-
-        FlushAndShutdown("Logs", loggerProvider.ForceFlush, loggerProvider.Shutdown);
+        RecordAndShutdown(
+            () =>
+            {
+                if (logger.IsEnabled(LogLevel.Information))
+                {
+                    logger.LogInformation("{Message}", InstrumentationSource.LogBody);
+                }
+            },
+            loggerProvider.ForceFlush,
+            loggerProvider.Shutdown);
     }
 
     [TestMethod]
@@ -93,17 +98,45 @@ public sealed class AppleEndToEndTests
 
         Assert.IsNotNull(tracerProvider, "TracerProvider failed to build on iOS.");
 
-        using (var activity = instrumentation.ActivitySource.StartActivity(InstrumentationSource.ActivityName))
-        {
-            Assert.IsNotNull(activity, "ActivitySource produced no Activity - the SDK did not subscribe on iOS.");
-            activity.SetTag(InstrumentationSource.ActivityTagKey, InstrumentationSource.ActivityTagValue);
-        }
+        RecordAndShutdown(
+            () =>
+            {
+                using var activity = instrumentation.ActivitySource.StartActivity(InstrumentationSource.ActivityName);
 
-        FlushAndShutdown("Traces", tracerProvider.ForceFlush, tracerProvider.Shutdown);
+                Assert.IsNotNull(activity, "ActivitySource produced no Activity - the SDK did not subscribe on iOS.");
+                activity.SetTag(InstrumentationSource.ActivityTagKey, InstrumentationSource.ActivityTagValue);
+            },
+            tracerProvider.ForceFlush,
+            tracerProvider.Shutdown);
     }
 
     private static ResourceBuilder CreateResourceBuilder()
         => ResourceBuilder.CreateDefault().AddService(InstrumentationSource.ServiceName);
+
+    private static void RecordAndShutdown(Action record, Func<int, bool> forceFlush, Func<int, bool> shutdown)
+    {
+        var flushed = false;
+        var deadline = DateTime.UtcNow + FlushTimeout;
+
+        for (var attempt = 0; attempt < FlushAttempts; attempt++)
+        {
+            var remaining = deadline - DateTime.UtcNow;
+
+            if (remaining <= TimeSpan.Zero)
+            {
+                break;
+            }
+
+            record();
+
+            // One attempt reaching the exporter is sufficient for the test to pass
+            flushed |= forceFlush((int)remaining.TotalMilliseconds);
+        }
+
+        Assert.IsTrue(flushed, $"The telemetry was not flushed within {FlushTimeout}.");
+
+        _ = shutdown((int)ShutdownTimeout.TotalMilliseconds);
+    }
 
     /// <summary>
     /// Flushes the telemetry recorded by a test and then shuts its provider down.
@@ -125,7 +158,6 @@ public sealed class AppleEndToEndTests
     /// <returns><see langword="true"/> if the telemetry was flushed; otherwise <see langword="false"/>.</returns>
     private static bool TryFlush(Func<int, bool> forceFlush)
     {
-        const int FlushAttempts = 3;
         var deadline = DateTime.UtcNow + FlushTimeout;
 
         for (var attempt = 0; attempt < FlushAttempts; attempt++)
@@ -150,6 +182,10 @@ public sealed class AppleEndToEndTests
     {
         options.Protocol = OtlpExportProtocol.HttpProtobuf;
         options.Endpoint = new(OtlpBaseAddress, signalPath);
-        options.TimeoutMilliseconds = (int)ExportTimeout.TotalMilliseconds;
+
+        // Export over the connection the entry point has already opened to the
+        // host rather than over one of this exporter's own HttpClient.
+        options.HttpClientFactory = static () => TestRunner.OtlpHttpClient;
+        options.TimeoutMilliseconds = (int)TestRunner.ExportTimeout.TotalMilliseconds;
     }
 }
