@@ -16,10 +16,9 @@ namespace OpenTelemetry.Trace;
 /// This ensures that all spans are recorded, without changing the sampling rate.
 /// </summary>
 /// <remarks>
-/// The intended use case of this sampler is to provide a means of sending all spans to a
-/// processor without having an impact on the sampling rate. This may be desirable if a user wishes
-/// to count or otherwise measure all spans produced in a service, without incurring the cost of 100%
-/// sampling.
+/// The intended use case of this sampler is to provide a means of sending all spans
+/// to a processor without incurring the cost of exporting 100% of spans. All spans
+/// will be created and processed locally.
 /// </remarks>
 public sealed class AlwaysRecordSampler : Sampler
 {
@@ -44,8 +43,11 @@ public sealed class AlwaysRecordSampler : Sampler
     {
         var result = this.rootSampler.ShouldSample(samplingParameters);
 
-        return result.Decision == SamplingDecision.Drop
-            ? new SamplingResult(SamplingDecision.RecordOnly, result.AttributesOrNull, result.TraceStateString)
-            : result;
+        return result.Decision switch
+        {
+            SamplingDecision.Drop => new(SamplingDecision.RecordOnly, result.AttributesOrNull, result.TraceStateString),
+            SamplingDecision.RecordOnly or SamplingDecision.RecordAndSample => result,
+            _ => result, // Undefined behaviour - invalid value
+        };
     }
 }
