@@ -16,6 +16,51 @@ public sealed class PluginComponentProviderRegistryTests
         Assert.Equal("serviceProvider", exception.ParamName);
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Constructor_RegistrationWithoutName_Throws(string? name)
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<IPluginComponentProviderRegistration>(
+            new UntrustedPluginComponentProviderRegistration(name, new object()));
+        services.AddSingleton<PluginComponentProviderRegistry>();
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var exception = Assert.Throws<InvalidOperationException>(
+            serviceProvider.GetRequiredService<PluginComponentProviderRegistry>);
+
+        Assert.Contains(nameof(UntrustedPluginComponentProviderRegistration), exception.Message, StringComparison.Ordinal);
+        Assert.Contains("has no name", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Constructor_DuplicateRegistration_Throws()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<IPluginComponentProviderRegistration>(
+            new UntrustedPluginComponentProviderRegistration(
+                "always_on",
+                new object(),
+                typeof(TestComponentProvider)));
+        services.AddSingleton<IPluginComponentProviderRegistration>(
+            new UntrustedPluginComponentProviderRegistration(
+                "always_on",
+                new object(),
+                typeof(FixedNameTestComponentProvider)));
+        services.AddSingleton<PluginComponentProviderRegistry>();
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var exception = Assert.Throws<InvalidOperationException>(
+            serviceProvider.GetRequiredService<PluginComponentProviderRegistry>);
+
+        Assert.Contains("always_on", exception.Message, StringComparison.Ordinal);
+        Assert.Contains(nameof(TestComponent), exception.Message, StringComparison.Ordinal);
+        Assert.Contains(nameof(TestComponentProvider), exception.Message, StringComparison.Ordinal);
+        Assert.Contains(nameof(FixedNameTestComponentProvider), exception.Message, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void Create_PassesPropertiesAndContainerToProvider()
     {
@@ -260,17 +305,21 @@ public sealed class PluginComponentProviderRegistryTests
     {
         private readonly object component;
 
-        public UntrustedPluginComponentProviderRegistration(string name, object component)
+        public UntrustedPluginComponentProviderRegistration(
+            string? name,
+            object component,
+            Type? providerType = null)
         {
-            this.Name = name;
+            this.Name = name!;
             this.component = component;
+            this.ProviderType = providerType ?? this.GetType();
         }
 
         public Type ComponentType => typeof(TestComponent);
 
         public string Name { get; }
 
-        public Type ProviderType => this.GetType();
+        public Type ProviderType { get; }
 
         public object Create(ConfigProperties properties, IServiceProvider serviceProvider) => this.component;
     }

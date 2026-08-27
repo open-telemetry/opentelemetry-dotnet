@@ -754,6 +754,36 @@ public sealed class ConfigPropertiesTests
     }
 
     [Fact]
+    public void Builder_AddScalarList_SupportsAllScalarTypes()
+    {
+        var booleans = new[] { true, false };
+        var ints = new[] { 1, 2 };
+        var longs = new[] { 3L, 4L };
+        var doubles = new[] { 0.25, 0.5 };
+        var properties = new ConfigPropertiesBuilder()
+            .AddScalarList("booleans", booleans)
+            .AddScalarList("ints", ints)
+            .AddScalarList("longs", longs)
+            .AddScalarList("doubles", doubles)
+            .Build();
+
+        Assert.Equal(booleans, properties.GetScalarList<bool>("booleans").Value);
+        Assert.Equal(ints, properties.GetScalarList<int>("ints").Value);
+        Assert.Equal(longs, properties.GetScalarList<long>("longs").Value);
+        Assert.Equal(doubles, properties.GetScalarList<double>("doubles").Value);
+    }
+
+    [Fact]
+    public void Builder_AddScalarList_UnsupportedType_Throws()
+    {
+        var dates = new[] { default(DateTime) };
+        var exception = Assert.Throws<NotSupportedException>(
+            () => new ConfigPropertiesBuilder().AddScalarList("dates", dates));
+
+        Assert.Contains(nameof(DateTime), exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void BuilderMutatedAfterBuild_DoesNotAffectBuiltProperties()
     {
         var builder = new ConfigPropertiesBuilder()
