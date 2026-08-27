@@ -14,9 +14,7 @@ namespace OpenTelemetry.Configuration.Declarative;
 /// from them.
 /// </summary>
 /// <remarks>
-/// The index is built once during construction and never mutated afterwards, so
-/// <see cref="Create{TComponent}(string, ConfigProperties)"/> is safe to call concurrently and
-/// re-entrantly.
+/// The index is built once and never mutated, so this class is safe for concurrent use.
 /// </remarks>
 internal sealed class PluginComponentProviderRegistry
 {
@@ -112,7 +110,7 @@ internal sealed class PluginComponentProviderRegistry
             if (string.IsNullOrWhiteSpace(registration.Name))
             {
                 throw new InvalidOperationException(
-                    $"Component provider registration '{registration.GetType()}' has no name. Name must return a non-empty value.");
+                    $"Component provider registration '{registration.GetType()}' has no name. {nameof(IPluginComponentProviderRegistration.Name)} must return a non-empty value.");
             }
 
             var key = new ComponentProviderKey(registration.ComponentType, registration.Name);

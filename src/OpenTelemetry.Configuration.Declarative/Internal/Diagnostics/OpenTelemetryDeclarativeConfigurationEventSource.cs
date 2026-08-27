@@ -120,8 +120,8 @@ internal sealed class OpenTelemetryDeclarativeConfigurationEventSource : EventSo
     public void MultipleConfigurationDocumentsReachable(string selectedFilePath, string ignoredFilePath) =>
         this.WriteEvent(30, selectedFilePath, ignoredFilePath);
 
-    [Event(31, Message = "Declarative config: component provider '{2}' registered for component type '{0}' with name '{1}'.", Level = EventLevel.Verbose)]
-    public void ComponentProviderRegistered(string componentType, string name, string providerType) => this.WriteEvent(31, componentType, name, providerType);
+    [Event(31, Message = "Declarative config: component provider '{0}' registered for component type '{1}' with name '{2}'.", Level = EventLevel.Verbose)]
+    public void ComponentProviderRegistered(string providerType, string componentType, string name) => this.WriteEvent(31, providerType, componentType, name);
 
     [Event(32, Message = "Declarative config: created a component of type '{0}' with name '{1}'.", Level = EventLevel.Verbose)]
     public void ComponentCreated(string componentType, string name) => this.WriteEvent(32, componentType, name);

@@ -103,13 +103,13 @@ internal static class PluginComponentProviderServiceCollectionExtensions
 
         registerProvider?.Invoke(services);
 
-        services.Add(ServiceDescriptor.Singleton(registration));
+        services.AddSingleton(registration);
         services.TryAddSingleton<PluginComponentProviderRegistry>();
 
         OpenTelemetryDeclarativeConfigurationEventSource.Log.ComponentProviderRegistered(
+            registration.ProviderType.ToString(),
             registration.ComponentType.ToString(),
-            registration.Name,
-            registration.ProviderType.ToString());
+            registration.Name);
 
         return services;
     }

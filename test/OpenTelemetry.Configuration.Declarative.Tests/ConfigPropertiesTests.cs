@@ -757,9 +757,21 @@ public sealed class ConfigPropertiesTests
     public void Builder_AddScalarList_SupportsAllScalarTypes()
     {
         var booleans = new[] { true, false };
-        var ints = new[] { 1, 2 };
-        var longs = new[] { 3L, 4L };
-        var doubles = new[] { 0.25, 0.5 };
+        var ints = new[] { 1, 2, 0, int.MinValue, int.MaxValue };
+        var longs = new[] { 3L, 4L, 0L, long.MinValue, long.MaxValue };
+        var doubles = new[]
+        {
+            0.25,
+            0.5,
+            0.0,
+            -0.0,
+            double.MinValue,
+            double.MaxValue,
+            double.Epsilon,
+            double.NaN,
+            double.PositiveInfinity,
+            double.NegativeInfinity,
+        };
         var properties = new ConfigPropertiesBuilder()
             .AddScalarList("booleans", booleans)
             .AddScalarList("ints", ints)
@@ -771,6 +783,43 @@ public sealed class ConfigPropertiesTests
         Assert.Equal(ints, properties.GetScalarList<int>("ints").Value);
         Assert.Equal(longs, properties.GetScalarList<long>("longs").Value);
         Assert.Equal(doubles, properties.GetScalarList<double>("doubles").Value);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(int.MinValue)]
+    [InlineData(int.MaxValue)]
+    public void Builder_Add_Int_RoundTripsBoundaryValues(int value)
+    {
+        var properties = new ConfigPropertiesBuilder().Add("k", value).Build();
+
+        Assert.Equal(value, properties.GetInt("k").Value);
+    }
+
+    [Theory]
+    [InlineData(0L)]
+    [InlineData(long.MinValue)]
+    [InlineData(long.MaxValue)]
+    public void Builder_Add_Long_RoundTripsBoundaryValues(long value)
+    {
+        var properties = new ConfigPropertiesBuilder().Add("k", value).Build();
+
+        Assert.Equal(value, properties.GetLong("k").Value);
+    }
+
+    [Theory]
+    [InlineData(0.0)]
+    [InlineData(double.MinValue)]
+    [InlineData(double.MaxValue)]
+    [InlineData(double.Epsilon)]
+    [InlineData(double.NaN)]
+    [InlineData(double.PositiveInfinity)]
+    [InlineData(double.NegativeInfinity)]
+    public void Builder_Add_Double_RoundTripsBoundaryValues(double value)
+    {
+        var properties = new ConfigPropertiesBuilder().Add("k", value).Build();
+
+        Assert.Equal(value, properties.GetDouble("k").Value);
     }
 
     [Fact]

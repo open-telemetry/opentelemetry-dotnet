@@ -19,7 +19,8 @@ internal abstract class PluginComponentProvider<TComponent>
     /// Creates a component from the supplied configuration properties and services.
     /// </summary>
     /// <remarks>
-    /// Returns a new component on every call; nothing caches the result. Throw a
+    /// Called for every component the configuration names; the registry does not cache results,
+    /// and providers should not cache the value they return. Throw a
     /// <see cref="Declarative.DeclarativeConfigurationException"/> when the supplied properties do
     /// not satisfy the component's configuration schema.
     /// </remarks>

@@ -730,8 +730,9 @@ public sealed class DeclarativeConfigurationEventSourceTests
         new PluginComponentProviderRegistry(serviceProvider).Create<TestComponent>("always_on", ConfigProperties.Empty);
 
         var registered = Assert.Single(listener.Messages, e => e.EventId == 31);
-        Assert.Equal("always_on", registered.Payload![1]);
-        Assert.Contains(nameof(TestComponentProvider), registered.Payload[2] as string, StringComparison.Ordinal);
+        Assert.Contains(nameof(TestComponentProvider), registered.Payload![0] as string, StringComparison.Ordinal);
+        Assert.Contains(nameof(TestComponent), registered.Payload[1] as string, StringComparison.Ordinal);
+        Assert.Equal("always_on", registered.Payload[2]);
 
         var created = Assert.Single(listener.Messages, e => e.EventId == 32);
         Assert.Contains(nameof(TestComponent), created.Payload![0] as string, StringComparison.Ordinal);
