@@ -92,10 +92,14 @@ public sealed class SamplerOptions
             || string.Equals(trimmed, ParentBasedTraceIdRatioType, StringComparison.OrdinalIgnoreCase);
     }
 
+    // A ratio must be a finite number. NaN and infinity parse successfully but are not
+    // usable values, so they are rejected here rather than being stored as a candidate ratio.
     internal static bool TryParseTraceIdRatio(string value, out double traceIdRatio)
         => double.TryParse(
             value,
             NumberStyles.Float | NumberStyles.AllowThousands,
             CultureInfo.InvariantCulture,
-            out traceIdRatio);
+            out traceIdRatio)
+            && !double.IsNaN(traceIdRatio)
+            && !double.IsInfinity(traceIdRatio);
 }

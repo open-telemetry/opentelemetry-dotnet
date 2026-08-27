@@ -73,17 +73,21 @@ public sealed class SamplerOptionsTests
         Assert.Equal("0.5", options.Argument);
     }
 
-    [Fact]
-    public void TracesSamplerArg_Unparsable_LeavesTraceIdRatioNullAndRetainsArgument()
+    [Theory]
+    [InlineData("banana")]
+    [InlineData("nan")] // Parses as a double, but is not a finite ratio.
+    [InlineData("Infinity")]
+    [InlineData("-Infinity")]
+    public void TracesSamplerArg_NotParsableAsRatio_LeavesTraceIdRatioNullAndRetainsArgument(string argValue)
     {
         var options = CreateOptions(
             (SamplerOptions.TracesSamplerConfigKey, SamplerOptions.TraceIdRatioType),
-            (SamplerOptions.TracesSamplerArgConfigKey, "banana"));
+            (SamplerOptions.TracesSamplerArgConfigKey, argValue));
 
-        // TraceIdRatio is null because the value could not be parsed. Argument retains the
-        // verbatim string so it can be reported if the configured sampler uses it.
+        // TraceIdRatio is null because the value could not be parsed as a finite ratio. Argument
+        // retains the verbatim string so it can be reported if the configured sampler uses it.
         Assert.Null(options.TraceIdRatio);
-        Assert.Equal("banana", options.Argument);
+        Assert.Equal(argValue, options.Argument);
     }
 
     [Fact]
@@ -301,6 +305,8 @@ public sealed class SamplerOptionsTests
     [InlineData("1,5", "1,5")] // Thousands separators are permitted, so this parses to 15.
     [InlineData("-0.1", "-0.1")]
     [InlineData("NaN", "NaN")]
+    [InlineData("nan", "nan")] // Casing is preserved, so the reported value is not a reformat.
+    [InlineData("Infinity", "Infinity")]
     public void InvalidArgWithRatioSampler_LogsValueAndUsesDefaultRatio(string argValue, string expectedPayload)
     {
         using var eventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log);
