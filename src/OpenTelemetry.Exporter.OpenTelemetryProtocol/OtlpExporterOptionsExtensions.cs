@@ -154,13 +154,13 @@ internal static class OtlpExporterOptionsExtensions
 #if NET
             && options.MtlsOptions?.IsEnabled != true
 
-            // On platforms where HttpClient cannot send requests synchronously,
-            // the exporter always sends asynchronously and then blocks on the result.
-            // If the IHttpClientFactory-resolved HttpClient pipeline contains a
-            // delegating handler that yields asynchronously that continuation may
-            // never run on a single-threaded runtime and stall the export indefinitely.
+            // On single-threaded browser WebAssembly environments, the exporter
+            // always sends asynchronously and then blocks on the result. If the
+            // IHttpClientFactory-resolved HttpClient pipeline contains a delegating
+            // handler that yields asynchronously, the continuation can never run
+            // because the only thread is blocked, stalling the export indefinitely.
             // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/7708.
-            && OtlpExportClient.SynchronousSendSupportedByCurrentPlatform
+            && !OperatingSystem.IsBrowser()
 #endif
             && options.HttpClientFactory == options.DefaultHttpClientFactory)
         {
