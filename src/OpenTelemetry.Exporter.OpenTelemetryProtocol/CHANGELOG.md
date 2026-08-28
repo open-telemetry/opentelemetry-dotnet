@@ -17,6 +17,10 @@ Notes](../../RELEASENOTES.md).
   `kvlist` values.
   ([#7679](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7679))
 
+* Disable HttpClientFactory integration on browser WebAssembly (e.g. Blazor)
+  environments to avoid stalled export requests when async HTTP handlers are used.
+  ([#7709](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7709))
+
 ## 1.18.0
 
 Released 2026-Aug-21

@@ -26,7 +26,12 @@ var baseAddress = new Uri(builder.HostEnvironment.BaseAddress);
 using var instrumentation = new InstrumentationSource();
 builder.Services.AddSingleton(instrumentation);
 
-builder.Services.AddScoped(_ => new HttpClient { BaseAddress = baseAddress });
+builder.Services.AddHttpClient();
+builder.Services.ConfigureHttpClientDefaults((http) =>
+{
+    http.ConfigureHttpClient((client) => client.BaseAddress = baseAddress);
+    http.AddHttpMessageHandler(() => new AsyncYieldingDelegatingHandler());
+});
 
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource.AddService(InstrumentationSource.ServiceName))
