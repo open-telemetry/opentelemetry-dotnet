@@ -1029,10 +1029,7 @@ public class MetricViewTests : MetricTestsBase
         {
             histogram.Record(value);
 
-            if (value >= 0)
-            {
-                expectedHistogram.Record(value);
-            }
+            expectedHistogram.Record(value);
         }
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
@@ -1056,8 +1053,8 @@ public class MetricViewTests : MetricTestsBase
 
         Assert.Equal(trySum, sum);
         AggregatorTests.AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint.GetExponentialHistogramData());
-        Assert.Equal(50, sum);
-        Assert.Equal(6, count);
+        Assert.Equal(40, sum);
+        Assert.Equal(7, count);
     }
 
     [Theory]

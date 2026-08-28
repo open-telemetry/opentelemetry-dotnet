@@ -1079,12 +1079,6 @@ public struct MetricPoint
 
     private void UpdateBase2ExponentialHistogram(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool offerExemplar = false)
     {
-        if (number < 0)
-        {
-            this.CompleteUpdateWithoutMeasurement();
-            return;
-        }
-
         var histogram = this.mpComponents!.Base2ExponentialBucketHistogram!;
 
         this.mpComponents.AcquireLock();
@@ -1109,12 +1103,6 @@ public struct MetricPoint
 
     private void UpdateBase2ExponentialHistogramWithMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool offerExemplar = false)
     {
-        if (number < 0)
-        {
-            this.CompleteUpdateWithoutMeasurement();
-            return;
-        }
-
         var histogram = this.mpComponents!.Base2ExponentialBucketHistogram!;
 
         this.mpComponents.AcquireLock();
