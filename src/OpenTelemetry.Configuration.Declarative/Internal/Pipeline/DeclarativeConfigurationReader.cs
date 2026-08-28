@@ -3,7 +3,6 @@
 
 using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
-using Microsoft.Extensions.Configuration;
 using YamlDotNet.RepresentationModel;
 
 namespace OpenTelemetry.Configuration.Declarative;
@@ -20,7 +19,7 @@ internal static class DeclarativeConfigurationReader
 
     /// <summary>
     /// Opens <paramref name="filePath"/>, validates <c>file_format</c>, parses the typed model,
-    /// and converts it into a <see cref="ReadOnlyDictionary{TKey, TValue}"/> as flat declarative configuration keys.
+    /// and returns a <see cref="DeclarativeConfigurationDocument"/>.
     /// </summary>
     /// <param name="filePath">The <see cref="FilePath"/> for the YAML file to be read.</param>
     /// <exception cref="DeclarativeConfigurationException">
@@ -29,11 +28,9 @@ internal static class DeclarativeConfigurationReader
     /// </exception>
     /// <exception cref="YamlDotNet.Core.YamlException">
     /// Thrown when the input is not valid YAML (propagates from <see cref="YamlStream.Load(TextReader)"/>).
-    /// Callers that surface this to end users (e.g. <see cref="IConfigurationProvider.Load"/>)
-    /// should catch and wrap it as a <see cref="DeclarativeConfigurationException"/>.
     /// </exception>
-    /// <returns>A <see cref="ReadOnlyDictionary{TKey, TValue}"/> containing the flat declarative configuration.</returns>
-    internal static ReadOnlyDictionary<string, string?> Read(FilePath filePath)
+    /// <returns>A <see cref="DeclarativeConfigurationDocument"/> containing the typed model and flat keys.</returns>
+    internal static DeclarativeConfigurationDocument Read(FilePath filePath)
     {
         var data = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
 
@@ -47,7 +44,12 @@ internal static class DeclarativeConfigurationReader
         {
             // Empty file is a no-op in overlay mode; informational event for diagnostics.
             OpenTelemetryDeclarativeConfigurationEventSource.Log.EmptyConfigurationFile(filePath.DisplayPath);
-            return new ReadOnlyDictionary<string, string?>(data);
+
+            // A document is returned rather than null so that a consumer never has to handle an
+            // absent model.
+            return new DeclarativeConfigurationDocument(
+                new DeclarativeConfiguration(string.Empty),
+                new ReadOnlyDictionary<string, string?>(data));
         }
 
         if (stream.Documents.Count > 1)
@@ -64,10 +66,9 @@ internal static class DeclarativeConfigurationReader
         root.EnsureCoreCollectionTag("<root>");
         root.EnsureUniqueStringKeys("<root>");
 
-        // Phase 1: validate file_format.
-        // Throw (rather than warn) on a type mismatch: file_format decides how the rest of the
-        // document is interpreted, so `file_format: 1.0` - a YAML 1.2 float - must fail fast rather
-        // than fall through to the generic "missing file_format" message.
+        // Validate file_format. Throw (rather than warn) on a type mismatch: file_format decides
+        // how the rest of the document is interpreted, so `file_format: 1.0` (a YAML 1.2 float)
+        // must fail fast rather than fall through to the generic "missing file_format" message.
         var rawFileFormat = root
             .ReadString(YamlKeys.FileFormat)
             .TryGetValue(out var fmt) ? fmt : null;
@@ -75,15 +76,11 @@ internal static class DeclarativeConfigurationReader
             rawFileFormat,
             OpenTelemetryDeclarativeConfigurationEventSource.Log.FileFormatWarning);
 
-        // Phase 2: walk the AST into the typed model.
         var config = DeclarativeConfigurationParser.Parse(root, fileFormat);
-
         ProcessUnrecognizedTopLevelSections(root);
-
-        // Phase 3: project the typed model into flat keys.
         DeclarativeConfigurationConverter.Convert(config, data);
 
-        return new ReadOnlyDictionary<string, string?>(data);
+        return new DeclarativeConfigurationDocument(config, new ReadOnlyDictionary<string, string?>(data));
     }
 
     // Root additionalProperties=true: unrecognized top-level keys (schema extras or not-yet-

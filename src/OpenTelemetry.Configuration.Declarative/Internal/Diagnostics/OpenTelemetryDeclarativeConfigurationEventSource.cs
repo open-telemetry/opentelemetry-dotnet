@@ -96,4 +96,39 @@ internal sealed class OpenTelemetryDeclarativeConfigurationEventSource : EventSo
 
     [Event(25, Message = "Declarative config: property '{0}' is not supported by this declarative configuration implementation. The configuration is invalid; check for a misspelling.", Level = EventLevel.Warning)]
     public void UnknownConfigurationProperty(string propertyPath) => this.WriteEvent(25, propertyPath);
+
+    [Event(26, Message = "Declarative config: '{0}' has already been loaded. Declarative configuration is read once at start-up, so this reload had no effect and the configuration in use is unchanged.", Level = EventLevel.Warning)]
+    public void ConfigurationReloadIgnored(string filePath) => this.WriteEvent(26, filePath);
+
+    [Event(27, Message = "Declarative config: '{0}' was parsed on demand by a typed configuration consumer rather than by the configuration provider. The file is still read only once.", Level = EventLevel.Verbose)]
+    public void DocumentParsedOnDemand(string filePath) => this.WriteEvent(27, filePath);
+
+    [Event(28, Message = "Declarative config: no declarative configuration document is available.", Level = EventLevel.Verbose)]
+    public void DocumentAccessorNotAvailable() => this.WriteEvent(28);
+
+    [Event(
+        29,
+        Message = "Declarative config: source for '{0}' is already registered; the source for '{1}' will be ignored. Only the first declarative configuration file applies.",
+        Level = EventLevel.Warning)]
+    public void DifferentSourceAlreadyRegistered(string originalFilePath, string newFilePath) =>
+        this.WriteEvent(29, originalFilePath, newFilePath);
+
+    [Event(
+        30,
+        Message = "Declarative config: more than one declarative configuration file is reachable from the application's IConfiguration. Typed configuration consumers will use the document from '{0}', which is the file with the highest precedence, and ignore '{1}'. Individual flat configuration keys still follow standard IConfiguration ordering, so a flat value may come from a file other than '{0}'. Use one declarative configuration file per application.",
+        Level = EventLevel.Warning)]
+    public void MultipleConfigurationDocumentsReachable(string selectedFilePath, string ignoredFilePath) =>
+        this.WriteEvent(30, selectedFilePath, ignoredFilePath);
+
+    [Event(31, Message = "Declarative config: component provider '{0}' registered for component type '{1}' with name '{2}'.", Level = EventLevel.Verbose)]
+    public void ComponentProviderRegistered(string providerType, string componentType, string name) => this.WriteEvent(31, providerType, componentType, name);
+
+    [Event(32, Message = "Declarative config: created a component of type '{0}' with name '{1}'.", Level = EventLevel.Verbose)]
+    public void ComponentCreated(string componentType, string name) => this.WriteEvent(32, componentType, name);
+
+    [Event(33, Message = "Declarative config: no component provider is registered for component type '{0}' with name '{1}'. {2}", Level = EventLevel.Error)]
+    public void ComponentProviderNotFound(string componentType, string name, string registeredNames) => this.WriteEvent(33, componentType, name, registeredNames);
+
+    [Event(34, Message = "Declarative config: component type '{0}' with name '{1}' is claimed by both '{2}' and '{3}'. Each component type and name combination must be unique.", Level = EventLevel.Error)]
+    public void DuplicateComponentProviderRejected(string componentType, string name, string existingProviderType, string duplicateProviderType) => this.WriteEvent(34, componentType, name, existingProviderType, duplicateProviderType);
 }
