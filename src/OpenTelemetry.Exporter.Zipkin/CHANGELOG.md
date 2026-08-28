@@ -6,6 +6,12 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Key/value list attribute values are now written as a JSON object embedded
+  in a string, mirroring the existing array handling, instead of their
+  `ToString()` representation. This also covers additional dictionary shapes
+  (`IEnumerable<KeyValuePair<string, string?>>` and `IDictionary`).
+  ([#7679](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7679))
+
 * Fixed `byte[]`-valued tags being serialized as a JSON array of numbers
   (e.g. `[1,2,3]`) instead of being Base64-encoded as-per the specification.
   ([#7694](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7694))

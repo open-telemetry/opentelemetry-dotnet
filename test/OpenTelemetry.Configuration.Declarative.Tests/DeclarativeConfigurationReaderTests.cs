@@ -2048,6 +2048,6 @@ public sealed class DeclarativeConfigurationReaderTests
     private static ReadOnlyDictionary<string, string?> ReadConfiguration(string yaml)
     {
         using var factory = new DeclarativeYamlTestFileFactory();
-        return DeclarativeConfigurationReader.Read(new FilePath(factory.CreateYamlFile(yaml)));
+        return DeclarativeConfigurationReader.Read(new FilePath(factory.CreateYamlFile(yaml))).FlatKeys;
     }
 }
