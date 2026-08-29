@@ -138,7 +138,12 @@ public class BaggagePropagator : TextMapPropagator
         if (e.MoveNext())
         {
             var itemCount = 0;
-            var baggage = new StringBuilder();
+
+            // Pre-size the builder to avoid repeated internal buffer growth. This
+            // value is a rough estimate (16 chars/item covers most "key=value" pairs).
+            var estimatedCapacity = Math.Min(MaxBaggageLength, context.Baggage.Count * 16);
+            var baggage = new StringBuilder(estimatedCapacity);
+
             do
             {
                 var item = e.Current;
