@@ -61,11 +61,13 @@ public sealed class AppleAppFixture : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        // Binding to 'localhost' (rather than a specific address) makes Kestrel
-        // listen on both loopback addresses, and matches the unqualified host
-        // name the app is allowed to reach over cleartext HTTP by the App
-        // Transport Security policy declared in the app's Info.plist.
-        this.Collector = await OtlpHttpCollector.StartAsync("http://localhost:4318");
+        // Bound to the IPv4 loopback address rather than to 'localhost', which
+        // would make Kestrel listen on both loopback addresses. The app addresses
+        // the collector by literal IP so that NSUrlSession is not left to choose
+        // between the two, and this must be the address it chose. Cleartext HTTP
+        // to the loopback range is allowed by the App Transport Security policy
+        // declared in the app's Info.plist.
+        this.Collector = await OtlpHttpCollector.StartAsync("http://127.0.0.1:4318");
 
         try
         {

@@ -6,6 +6,24 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Reduced allocations when creating log record attributes from an array.
+  ([#7699](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7699))
+
+* Reduced allocations when setting baggage through the `params` overload.
+  ([#7697](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7697))
+
+## 1.18.0
+
+Released 2026-Aug-21
+
+## 1.18.0-rc.1
+
+Released 2026-Aug-21
+
+* Avoid formatting exceptions and creating exception attributes when
+  `RecordException` is called on a span that is not recorded.
+  ([#7669](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7669))
+
 ## 1.17.0
 
 Released 2026-Jul-16

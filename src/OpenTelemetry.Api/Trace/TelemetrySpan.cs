@@ -288,6 +288,11 @@ public class TelemetrySpan : IDisposable
             return this;
         }
 
+        if (!this.IsRecording)
+        {
+            return this;
+        }
+
         return this.RecordException(ex.GetType().Name, ex.Message, ex.ToInvariantString());
     }
 
@@ -300,6 +305,11 @@ public class TelemetrySpan : IDisposable
     /// <returns>The <see cref="TelemetrySpan"/> instance for chaining.</returns>
     public TelemetrySpan RecordException(string? type, string? message, string? stacktrace)
     {
+        if (!this.IsRecording)
+        {
+            return this;
+        }
+
         var attributes = new SpanAttributes();
 
         if (!string.IsNullOrWhiteSpace(type))

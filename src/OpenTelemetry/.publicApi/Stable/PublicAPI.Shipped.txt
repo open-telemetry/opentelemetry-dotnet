@@ -399,7 +399,10 @@ override OpenTelemetry.Metrics.MeterProviderBuilderBase.AddMeter(params string![
 override OpenTelemetry.Metrics.PeriodicExportingMetricReader.Dispose(bool disposing) -> void
 override OpenTelemetry.Metrics.PeriodicExportingMetricReader.OnShutdown(int timeoutMilliseconds) -> bool
 override OpenTelemetry.SimpleActivityExportProcessor.OnEnd(System.Diagnostics.Activity! data) -> void
+override OpenTelemetry.SimpleActivityExportProcessor.OnShutdown(int timeoutMilliseconds) -> bool
 override OpenTelemetry.SimpleExportProcessor<T>.OnExport(T! data) -> void
+override OpenTelemetry.SimpleLogRecordExportProcessor.OnEnd(OpenTelemetry.Logs.LogRecord! data) -> void
+override OpenTelemetry.SimpleLogRecordExportProcessor.OnShutdown(int timeoutMilliseconds) -> bool
 override OpenTelemetry.Trace.AlwaysOffSampler.ShouldSample(in OpenTelemetry.Trace.SamplingParameters samplingParameters) -> OpenTelemetry.Trace.SamplingResult
 override OpenTelemetry.Trace.AlwaysOnSampler.ShouldSample(in OpenTelemetry.Trace.SamplingParameters samplingParameters) -> OpenTelemetry.Trace.SamplingResult
 override OpenTelemetry.Trace.ParentBasedSampler.ShouldSample(in OpenTelemetry.Trace.SamplingParameters samplingParameters) -> OpenTelemetry.Trace.SamplingResult

@@ -18,20 +18,6 @@ using OpenTelemetry.Tests;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter;
 using OtlpCollector = OpenTelemetry.Proto.Collector.Logs.V1;
 
-/*
-BenchmarkDotNet v0.13.6, Windows 11 (10.0.22621.2134/22H2/2022Update/SunValley2) (Hyper-V)
-AMD EPYC 7763, 1 CPU, 16 logical and 8 physical cores
-.NET SDK 7.0.400
-  [Host]     : .NET 7.0.10 (7.0.1023.36312), X64 RyuJIT AVX2
-  DefaultJob : .NET 7.0.10 (7.0.1023.36312), X64 RyuJIT AVX2
-
-
-|               Method |     Mean |   Error |  StdDev |   Gen0 |   Gen1 | Allocated |
-|--------------------- |---------:|--------:|--------:|-------:|-------:|----------:|
-| OtlpLogExporter_Http | 138.7 us | 2.08 us | 1.95 us | 0.4883 | 0.2441 |   9.85 KB |
-| OtlpLogExporter_Grpc | 268.3 us | 2.57 us | 2.28 us | 0.4883 |      - |   9.54 KB |
-*/
-
 namespace Benchmarks.Exporter;
 
 #pragma warning disable CA1001 // Types that own disposable fields should be disposable - handled by GlobalCleanup
@@ -46,6 +32,9 @@ public class OtlpLogExporterBenchmarks
     private IDisposable? server;
     private string? serverHost;
     private int serverPort;
+
+    [Params(1, 512, 2048)]
+    public int BatchSize { get; set; }
 
     [GlobalSetup(Target = nameof(OtlpLogExporter_Grpc))]
     public void GlobalSetupGrpc()
@@ -72,8 +61,11 @@ public class OtlpLogExporterBenchmarks
         this.exporter = new OtlpLogExporter(options);
 
         this.logRecord = LogRecordHelper.CreateTestLogRecord();
-        this.logRecordBatch = new CircularBuffer<LogRecord>(1);
-        this.logRecordBatch.Add(this.logRecord);
+        this.logRecordBatch = new CircularBuffer<LogRecord>(this.BatchSize);
+        for (var i = 0; i < this.BatchSize; i++)
+        {
+            this.logRecordBatch.Add(this.logRecord);
+        }
     }
 
     [GlobalSetup(Target = nameof(OtlpLogExporter_Http))]
@@ -96,8 +88,11 @@ public class OtlpLogExporterBenchmarks
         this.exporter = new OtlpLogExporter(options);
 
         this.logRecord = LogRecordHelper.CreateTestLogRecord();
-        this.logRecordBatch = new CircularBuffer<LogRecord>(1);
-        this.logRecordBatch.Add(this.logRecord);
+        this.logRecordBatch = new CircularBuffer<LogRecord>(this.BatchSize);
+        for (var i = 0; i < this.BatchSize; i++)
+        {
+            this.logRecordBatch.Add(this.logRecord);
+        }
     }
 
     [GlobalCleanup(Target = nameof(OtlpLogExporter_Grpc))]
@@ -119,13 +114,13 @@ public class OtlpLogExporterBenchmarks
     [Benchmark]
     public void OtlpLogExporter_Http()
     {
-        this.exporter!.Export(new Batch<LogRecord>(this.logRecordBatch!, 1));
+        this.exporter!.Export(new Batch<LogRecord>(this.logRecordBatch!, this.BatchSize));
     }
 
     [Benchmark]
     public void OtlpLogExporter_Grpc()
     {
-        this.exporter!.Export(new Batch<LogRecord>(this.logRecordBatch!, 1));
+        this.exporter!.Export(new Batch<LogRecord>(this.logRecordBatch!, this.BatchSize));
     }
 
 #pragma warning disable CA1812 // Avoid uninstantiated internal classes

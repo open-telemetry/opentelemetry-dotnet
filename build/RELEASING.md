@@ -41,8 +41,17 @@ Maintainers (admins) are needed to merge PRs and for the push to NuGet.**
            * `OpenTelemetry.Shims.OpenTracing` - Defined by spec (stable but
              incomplete implementation)
 
-       * As of the `1.9.0` release cycle core unstable packages always depend on
-         the stable versions of core packages. Before releasing a non-core
+         * `declarativeconfig-`: Packages not yet ready for release.
+           These are intentionally excluded from the automated release
+           workflows. To enable automated releases, add `declarativeconfig-` to
+           `.github/workflows/prepare-release.yml` and
+           `.github/workflows/publish-packages-1.0.yml`.
+
+           * `OpenTelemetry.Configuration.Declarative` - Defined by spec
+             (experimental)
+
+       * As of the `1.17.0` release cycle core unstable packages always depend
+         on the stable versions of core packages. Before releasing a non-core
          component ensure the `OTelLatestStableVer` property in
          `Directory.Packages.props` has been updated to the latest stable core
          version.
@@ -160,8 +169,8 @@ Maintainers (admins) are needed to merge PRs and for the push to NuGet.**
        the workflow run.
 
     2. Validate locally everything works using the packages pushed to MyGet or
-       downloaded from the drop attached to the workflow run. Basic sanity
-       checks :)
+       downloaded from the drop attached to the workflow run. Only basic sanity
+       checks are required (e.g. expected version, expected packages).
 
     3. Download the artifacts from the drop attached to the workflow run. The
        artifacts archive (`.zip`) contains all the NuGet packages (`.nupkg`) and
@@ -211,13 +220,16 @@ Maintainers (admins) are needed to merge PRs and for the push to NuGet.**
     `Directory.Packages.props` to the just released stable version. Merge that
     PR once the build passes (this requires the packages be available on NuGet).
 
- 8. Manually run the [Core version update](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/actions/workflows/core-version-update.yml)
+ 8. If the PR described in the step above was not created automatically, manually
+    run the [Core version update](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/actions/workflows/core-version-update.yml)
     workflow in the [opentelemetry-dotnet-contrib](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/)
     repository, which opens a PR to update dependencies. The tag that was created
     in step 5 should be used as the value of the `Release tag` input (for example
     `core-1.15.0` or `coreunstable-1.15.0-beta.1`). Verify this PR was opened successfully
     when the workflow completes.
 
- 9. For stable releases post an announcement in the [Slack
-    channel](https://cloud-native.slack.com/archives/C01N3BC2W7Q) announcing the
-    release and link to the release notes.
+ 9. Once the release was created, the GitHub Slack app should have automatically
+    posted an announcement about the release in the
+    [Slack channel](https://cloud-native.slack.com/archives/C01N3BC2W7Q). If the
+    announcement was not posted, post an announcement in the Slack channel
+    announcing the release and link to the release notes.

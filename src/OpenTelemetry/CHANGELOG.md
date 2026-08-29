@@ -6,6 +6,14 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.18.0
+
+Released 2026-Aug-21
+
+## 1.18.0-rc.1
+
+Released 2026-Aug-21
+
 * Fixed self-diagnostics log lines being silently dropped when an event message
   or parameter contained enough 3-byte UTF-8 characters to overflow the internal
   buffer estimate. Such content is now truncated.
@@ -17,6 +25,25 @@ Notes](../../RELEASENOTES.md).
 
 * Added the `otel.sdk.processor.log.processed` SDK self-observability metric.
   ([#7486](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7486))
+
+* Added the `otel.sdk.processor.span.processed` SDK self-observability metric.
+  ([#7598](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7598))
+
+* `BatchActivityExportProcessor` and `SimpleActivityExportProcessor` no longer
+  forward spans to the exporter once `Shutdown` has been called, and
+  `BatchActivityExportProcessor.Shutdown` now waits for in-flight `OnEnd` calls
+  to finish enqueueing before flushing.
+  ([#7598](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7598))
+
+* Fix logger, meter and tracer providers leaking background threads if an
+  exception is thrown by their constructor after resource creation.
+  ([#7615](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7615))
+
+* `CircularBufferBuckets.Copy` optimized to use bulk array copies.
+  ([#7670](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7670))
+
+* Restored configured `MaxScale` after delta exponential histogram collection.
+  ([#7671](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7671))
 
 ## 1.17.0
 

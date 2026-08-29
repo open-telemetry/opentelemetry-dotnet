@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
 using BenchmarkDotNet.Attributes;
 using OpenTelemetry.Context.Propagation;
 
@@ -19,6 +20,9 @@ public class TraceContextPropagatorBenchmarks
     private static readonly Func<IReadOnlyDictionary<string, string>, string, IEnumerable<string>> Getter =
         static (headers, name) => headers.TryGetValue(name, out var value) ? [value] : [];
 
+    private static readonly Action<Dictionary<string, string>, string, string> Setter =
+        static (carrier, name, value) => carrier[name] = value;
+
     [Params(true, false)]
     public bool LongListMember { get; set; }
 
@@ -26,6 +30,10 @@ public class TraceContextPropagatorBenchmarks
     public int MembersCount { get; set; }
 
     public Dictionary<string, string>? Headers { get; private set; }
+
+    public PropagationContext InjectContext { get; private set; }
+
+    public Dictionary<string, string> InjectCarrier { get; private set; } = [];
 
     [GlobalSetup]
     public void Setup()
@@ -58,8 +66,24 @@ public class TraceContextPropagatorBenchmarks
             { TraceParent, $"00-{TraceId}-{SpanId}-01" },
             { TraceState, traceState },
         };
+
+        var activityContext = new ActivityContext(
+            ActivityTraceId.CreateFromString(TraceId.AsSpan()),
+            ActivitySpanId.CreateFromString(SpanId.AsSpan()),
+            ActivityTraceFlags.Recorded,
+            traceState: traceState.Length > 0 ? traceState : null);
+
+        this.InjectContext = new PropagationContext(activityContext, default);
+        this.InjectCarrier = [];
     }
 
     [Benchmark(Baseline = true)]
     public void Extract() => _ = TraceContextPropagator.Extract(default, this.Headers!, Getter);
+
+    [Benchmark]
+    public void Inject()
+    {
+        this.InjectCarrier.Clear();
+        TraceContextPropagator.Inject(this.InjectContext, this.InjectCarrier, Setter);
+    }
 }

@@ -1,11 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using OpenTelemetry.Logs;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Trace;
 
 // Warning: Do not change the namespace or class name in this file! Azure
 // Functions has taken a dependency on the specific details:
@@ -13,45 +9,16 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Extensions.Hosting.Implementation;
 
-internal sealed class TelemetryHostedService : IHostedService
+internal sealed class TelemetryHostedService(ITelemetryHostInitializer initializer) : IHostedService
 {
-    private readonly IServiceProvider serviceProvider;
-
-    public TelemetryHostedService(IServiceProvider serviceProvider)
-    {
-        this.serviceProvider = serviceProvider;
-    }
-
     public Task StartAsync(CancellationToken cancellationToken)
     {
         // The sole purpose of this HostedService is to ensure all
         // instrumentations, exporters, etc., are created and started.
-        Initialize(this.serviceProvider);
-
+        initializer.Initialize();
         return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
         => Task.CompletedTask;
-
-    internal static void Initialize(IServiceProvider serviceProvider)
-    {
-        var meterProvider = serviceProvider.GetService<MeterProvider>();
-        if (meterProvider == null)
-        {
-            HostingExtensionsEventSource.Log.MeterProviderNotRegistered();
-        }
-
-        var tracerProvider = serviceProvider.GetService<TracerProvider>();
-        if (tracerProvider == null)
-        {
-            HostingExtensionsEventSource.Log.TracerProviderNotRegistered();
-        }
-
-        var loggerProvider = serviceProvider.GetService<LoggerProvider>();
-        if (loggerProvider == null)
-        {
-            HostingExtensionsEventSource.Log.LoggerProviderNotRegistered();
-        }
-    }
 }

@@ -161,7 +161,7 @@ public class OtlpExporterOptionsExtensionsTests
          .AddInMemoryCollection(new Dictionary<string, string?> { [ExperimentalOptions.OtlpRetryEnvVar] = retryStrategy })
          .Build();
 
-        var transmissionHandler = exporterOptions.GetExportTransmissionHandler(new ExperimentalOptions(configuration), OtlpSignalType.Traces);
+        using var transmissionHandler = exporterOptions.GetExportTransmissionHandler(new ExperimentalOptions(configuration), OtlpSignalType.Traces);
         AssertTransmissionHandler(transmissionHandler, exportClientType, expectedTimeoutMilliseconds, retryStrategy);
     }
 
@@ -191,7 +191,7 @@ public class OtlpExporterOptionsExtensionsTests
             })
             .Build();
 
-        var transmissionHandler = exporterOptions.GetExportTransmissionHandler(new ExperimentalOptions(configuration), OtlpSignalType.Traces);
+        using var transmissionHandler = exporterOptions.GetExportTransmissionHandler(new ExperimentalOptions(configuration), OtlpSignalType.Traces);
         AssertTransmissionHandler(transmissionHandler, exportClientType, expectedTimeoutMilliseconds, "disk");
     }
 
@@ -234,7 +234,7 @@ public class OtlpExporterOptionsExtensionsTests
                 })
                 .Build();
 
-            var transmissionHandler = exporterOptions.GetExportTransmissionHandler(new ExperimentalOptions(configuration), signalType);
+            using var transmissionHandler = exporterOptions.GetExportTransmissionHandler(new ExperimentalOptions(configuration), signalType);
             var persistentStorageTransmissionHandler = Assert.IsType<OtlpExporterPersistentStorageTransmissionHandler>(transmissionHandler);
 
             var fileBlobProviderField = typeof(OtlpExporterPersistentStorageTransmissionHandler).GetField("persistentBlobProvider", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
