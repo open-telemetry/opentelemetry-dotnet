@@ -12,6 +12,7 @@ namespace OpenTelemetry.BlazorWasm.Tests;
 
 public sealed class BlazorWasmAppFixture : IAsyncLifetime
 {
+    private static readonly TimeSpan PlaywrightInstallTimeout = TimeSpan.FromMinutes(5);
     private static readonly TimeSpan PublishTimeout = TimeSpan.FromMinutes(5);
 
     private string? publishDirectory;
@@ -75,12 +76,28 @@ public sealed class BlazorWasmAppFixture : IAsyncLifetime
             ? ["install", "chromium", "--with-deps"]
             : ["install", "chromium"];
 
-        var exitCode = Microsoft.Playwright.Program.Main(arguments);
+        var scriptPath = Path.Combine(AppContext.BaseDirectory, "playwright.ps1");
 
-        if (exitCode != 0)
+        var startInfo = new ProcessStartInfo("pwsh")
         {
-            throw new InvalidOperationException($"Playwright browser install exited with code {exitCode}.");
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+        };
+
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-File");
+        startInfo.ArgumentList.Add(scriptPath);
+
+        foreach (var argument in arguments)
+        {
+            startInfo.ArgumentList.Add(argument);
         }
+
+        using var process = Process.Start(startInfo)
+            ?? throw new InvalidOperationException("Failed to start the Playwright browser installer.");
+
+        WaitForProcess(process, PlaywrightInstallTimeout);
     }
 
     private static string CurrentTargetFramework()
@@ -160,6 +177,13 @@ public sealed class BlazorWasmAppFixture : IAsyncLifetime
         using var process = Process.Start(startInfo)
             ?? throw new InvalidOperationException("Failed to start 'dotnet publish' for the Blazor client.");
 
+        WaitForProcess(process, PublishTimeout);
+
+        return output;
+    }
+
+    private static void WaitForProcess(Process process, TimeSpan timeout)
+    {
         var stdout = new StringBuilder();
         var stderr = new StringBuilder();
 
@@ -182,22 +206,19 @@ public sealed class BlazorWasmAppFixture : IAsyncLifetime
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
 
-        if (!process.WaitForExit(PublishTimeout))
+        if (!process.WaitForExit(timeout))
         {
             process.Kill(entireProcessTree: true);
             throw new InvalidOperationException(
-                $"'dotnet publish' timed out after {PublishTimeout}.{Environment.NewLine}{stdout}{Environment.NewLine}{stderr}");
+                $"Process timed out after {timeout}.{Environment.NewLine}{stdout}{Environment.NewLine}{stderr}");
         }
 
-        // Wait (again, with no timeout) for the async output handlers to flush.
         process.WaitForExit();
 
         if (process.ExitCode != 0)
         {
             throw new InvalidOperationException(
-                $"'dotnet publish' failed with exit code {process.ExitCode}.{Environment.NewLine}{stdout}{Environment.NewLine}{stderr}");
+                $"Process exited with code {process.ExitCode}.{Environment.NewLine}{stdout}{Environment.NewLine}{stderr}");
         }
-
-        return output;
     }
 }

@@ -4,6 +4,65 @@ This file contains highlights and announcements covering all components.
 For more details see `CHANGELOG.md` files maintained in the root source
 directory of each individual package.
 
+## 1.18.0
+
+Release details: [1.18.0](https://github.com/open-telemetry/opentelemetry-dotnet/releases/tag/core-1.18.0)
+
+* **Breaking change:** The maximum size of a single OTLP export request is now
+  64 MiB by default instead of 128 MiB to conform with the OpenTelemetry specification.
+  Raise the value of the new `OtlpExporterOptions.MaxRequestSizeBytes` property
+  to increase the capacity.
+* Added `OtlpExporterOptions.MaxRequestSizeBytes` to configure the maximum OTLP
+  request size limit, as required by the OpenTelemetry specification. The default
+  is the recommended 64 MiB. A batch whose serialized payload exceeds the limit
+  is not sent and is dropped in its entirety. The maximum supported value is
+  256 MiB.
+* Added `OtlpExporterOptions.MaxResponseSizeBytes` to configure the maximum size
+  of a response the exporter will accept, as required by the OpenTelemetry
+  specification. The default is the recommended 4 MiB. A response exceeding the
+  limit is discarded and treated as a non-retryable failure.
+* Added the `otel.sdk.processor.log.processed` and  `otel.sdk.processor.span.processed`
+  SDK self-observability metrics.
+* Added support for serializing attribute values that are key/value lists in
+  the OTLP, console and Zipkin exporters.
+* The OTLP exporter will now export the logger version, if it was specified.
+* Add new `ITelemetryHostInitializer` interface for applications that do not
+  support hosted services, such as Blazor, to use to manually initialize the
+  OpenTelemetry SDK as part of application startup.
+* `BatchActivityExportProcessor` and `SimpleActivityExportProcessor` no longer
+  forward spans to the exporter once Shutdown has been called, and
+  `BatchActivityExportProcessor.Shutdown` now waits for in-flight `OnEnd` calls
+  to finish enqueueing before flushing.
+* Fixed self-diagnostics log lines being silently dropped when an event message
+  was too long to fit in the internal buffer. Such content is now truncated.
+* Fixed activity creation throwing when multiple tracer providers returned a
+  sampler attribute with the same key.
+* Fixed logger, meter and tracer providers leaking background threads if an
+  exception is thrown by their constructor after resource creation.
+* Avoid formatting exceptions and creating exception attributes when
+  `RecordException` is called on a span that is not recorded.
+* Fixed `UseOtlpExporter` to respect options configured with
+  `services.Configure<OtlpExporterOptions>(...)`.
+* Clamped the server-supplied OTLP/gRPC retry delay (`RetryInfo.retry_delay`) to
+  a minimum value of 100 milliseconds.
+* Fixed serialization failures leaving failed trace, metric, and log batches in
+  the serializer's per-thread state.
+* Fixed the persistent-storage retry thread terminating permanently on an
+  unexpected exception.
+* Fixed the OTLP exporter from retrying certain non-transient HTTP failures.
+* Improved OTLP log attribute serialization performance by avoiding unnecessary
+  boxing.
+* Improved OTLP histogram serialization performance by avoiding a redundant
+  scan of explicit bucket bounds.
+* Fixed persistent storage allowing a blob write to exceed the configured
+  maximum storage size.
+* Improved OTLP/gRPC response status handling performance by avoiding unnecessary
+  header enumeration on .NET 8+.
+* Fixed the Zipkin exporter to read responses with `HttpCompletionOption.ResponseHeadersRead`
+  for the .NET Framework and .NET Standard targets.
+* Fixed inefficient parsing of the Jaeger `uber-trace-id` header when targeting
+  `net462` or `netstandard2.0`.
+
 ## 1.17.0
 
 Release details: [1.17.0](https://github.com/open-telemetry/opentelemetry-dotnet/releases/tag/core-1.17.0)

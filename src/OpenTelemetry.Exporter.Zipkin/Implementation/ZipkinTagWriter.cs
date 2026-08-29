@@ -66,4 +66,27 @@ internal sealed class ZipkinTagWriter : JsonStringArrayTagWriter<Utf8JsonWriter>
     }
 
     protected override bool TryWriteEmptyTag(ref Utf8JsonWriter state, string key, object? value) => false;
+
+    protected override void WriteKvListTag(ref Utf8JsonWriter writer, string key, IEnumerable<KeyValuePair<string, object?>> value, int? tagValueMaxLength)
+    {
+        using var stream = new MemoryStream();
+        using var kvListWriter = new Utf8JsonWriter(stream);
+
+        // Utf8JsonWriter is a reference type so this alias refers to the
+        // same writer; a using local cannot be passed by ref directly.
+        var writerAlias = kvListWriter;
+
+        writerAlias.WriteStartObject();
+
+        foreach (var kvp in value)
+        {
+            this.TryWriteTag(ref writerAlias, kvp.Key, kvp.Value, tagValueMaxLength);
+        }
+
+        writerAlias.WriteEndObject();
+        writerAlias.Flush();
+
+        writer.WritePropertyName(key);
+        writer.WriteStringValue(new ReadOnlySpan<byte>(stream.GetBuffer(), 0, (int)stream.Length));
+    }
 }

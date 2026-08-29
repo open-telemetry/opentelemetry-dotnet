@@ -4,14 +4,71 @@
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
+using System.Diagnostics.Tracing;
 using System.IO.Compression;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
 public class OtlpHttpExportClientTests
 {
+    [Fact]
+    public void SendExportRequest_ResponseExceedingMaxResponseSizeBytes_IsDiscardedAndNotRetryable()
+    {
+        const int ResponseDiscardedEventId = 40;
+        const int MaxResponseSizeBytes = 4096;
+
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Error);
+
+        using var testHandler = new OversizedResponseHttpMessageHandler(MaxResponseSizeBytes + 1, "application/x-protobuf");
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false);
+
+        var exportClient = new OtlpHttpExportClient(
+            new OtlpExporterOptions
+            {
+                Endpoint = new Uri("http://localhost:4318"),
+                Protocol = OtlpExportProtocol.HttpProtobuf,
+                MaxResponseSizeBytes = MaxResponseSizeBytes,
+            },
+            httpClient,
+            string.Empty);
+
+        var response = exportClient.SendExportRequest("hello world"u8.ToArray(), 11, DateTime.MaxValue);
+
+        Assert.False(response.Success);
+        Assert.IsType<ResponseSizeLimitExceededException>(response.Exception);
+
+        // The specification requires an over-sized response to be not retryable.
+        Assert.False(OtlpRetry.IsRetryable(Assert.IsType<ExportClientHttpResponse>(response)));
+
+        Assert.Single(listener.Messages, e => e.EventId == ResponseDiscardedEventId);
+    }
+
+    [Fact]
+    public void SendExportRequest_ResponseAtMaxResponseSizeBytes_IsAccepted()
+    {
+        const int MaxResponseSizeBytes = 4096;
+
+        using var testHandler = new OversizedResponseHttpMessageHandler(MaxResponseSizeBytes, "application/x-protobuf");
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false);
+
+        var exportClient = new OtlpHttpExportClient(
+            new OtlpExporterOptions
+            {
+                Endpoint = new Uri("http://localhost:4318"),
+                Protocol = OtlpExportProtocol.HttpProtobuf,
+                MaxResponseSizeBytes = MaxResponseSizeBytes,
+            },
+            httpClient,
+            string.Empty);
+
+        // The limit is inclusive, so a response of exactly this size is accepted.
+        Assert.True(exportClient.SendExportRequest("hello world"u8.ToArray(), 11, DateTime.MaxValue).Success);
+    }
+
     [Theory]
     [InlineData(null, null, "http://localhost:4318/signal/path")]
     [InlineData(null, "http://from.otel.exporter.env.var", "http://from.otel.exporter.env.var/signal/path")]

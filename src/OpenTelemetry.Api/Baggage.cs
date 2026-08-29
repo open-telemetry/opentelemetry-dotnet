@@ -249,6 +249,13 @@ public readonly struct Baggage : IEquatable<Baggage>
             return this.RemoveBaggage(name);
         }
 
+        if (this.baggage != null &&
+            this.baggage.TryGetValue(name, out var existingValue) &&
+            existingValue == value)
+        {
+            return this;
+        }
+
         return new Baggage(
             new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.Ordinal)
             {
@@ -262,7 +269,7 @@ public readonly struct Baggage : IEquatable<Baggage>
     /// <param name="baggageItems">Baggage key/value pairs.</param>
     /// <returns>New <see cref="Baggage"/> containing the key/value pairs.</returns>
     public Baggage SetBaggage(params KeyValuePair<string, string?>[] baggageItems)
-        => this.SetBaggage((IEnumerable<KeyValuePair<string, string?>>)baggageItems);
+        => this.SetBaggage(baggageItems.AsSpan());
 
     /// <summary>
     /// Returns a new <see cref="Baggage"/> which contains the new key/value pairs.
@@ -405,6 +412,44 @@ public readonly struct Baggage : IEquatable<Baggage>
         }
 
         return baggageHolder;
+    }
+
+    private Baggage SetBaggage(ReadOnlySpan<KeyValuePair<string, string?>> baggageItems)
+    {
+        Dictionary<string, string>? newBaggage = null;
+        foreach (ref readonly var item in baggageItems)
+        {
+            if (string.IsNullOrEmpty(item.Key))
+            {
+                continue;
+            }
+            else if (item.Value == null)
+            {
+                var currentBaggage = newBaggage ?? this.baggage;
+                if (currentBaggage?.ContainsKey(item.Key) == true)
+                {
+                    newBaggage ??= new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.Ordinal);
+                    newBaggage.Remove(item.Key);
+                }
+            }
+            else
+            {
+                var currentBaggage = newBaggage ?? this.baggage;
+
+                if (currentBaggage != null &&
+                    currentBaggage.TryGetValue(item.Key, out var existingValue) &&
+                    existingValue == item.Value)
+                {
+                    continue;
+                }
+
+                newBaggage ??= new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.Ordinal);
+                newBaggage[item.Key] = item.Value;
+            }
+        }
+
+        // If nothing was changed return the current instance
+        return newBaggage == null ? this : new Baggage(newBaggage);
     }
 
     private sealed class BaggageHolder
