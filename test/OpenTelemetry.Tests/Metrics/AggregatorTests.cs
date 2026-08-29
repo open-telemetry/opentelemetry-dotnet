@@ -92,7 +92,7 @@ public class AggregatorTests
         histogramPoint.TakeSnapshot(true);
 
         var count = histogramPoint.GetHistogramCount();
-        histogramPoint.TryGetHistogramSum(out var sum);
+        var sum = histogramPoint.GetHistogramSum();
 
         // Sum of all recordings
         Assert.Equal(40, sum);
@@ -357,6 +357,142 @@ public class AggregatorTests
         Assert.Equal(expectedHistogramBuckets, actualHistogramBounds);
     }
 
+    [Fact]
+    public void TryGetHistogramSumWhenRecordSumTrueReturnsTrueWithCorrectSum()
+    {
+        var aggregatorStore = new AggregatorStore(
+            MetricStreamIdentity,
+            AggregationType.HistogramWithMinMaxBuckets,
+            AggregationTemporality.Cumulative,
+            cardinalityLimit: 1024,
+            recordSum: true);
+
+        aggregatorStore.Update(5, []);
+        aggregatorStore.Update(10, []);
+        aggregatorStore.Snapshot();
+
+        var metricPoint = GetSingleMetricPoint(aggregatorStore);
+
+        Assert.True(metricPoint.TryGetHistogramSum(out var sum));
+        Assert.Equal(15, sum);
+        Assert.Equal(2, metricPoint.GetHistogramCount());
+    }
+
+    [Fact]
+    public void TryGetHistogramSumWhenRecordSumFalseReturnsFalseAndZero()
+    {
+        var aggregatorStore = new AggregatorStore(
+            MetricStreamIdentity,
+            AggregationType.HistogramWithMinMaxBuckets,
+            AggregationTemporality.Cumulative,
+            cardinalityLimit: 1024,
+            recordSum: false);
+
+        aggregatorStore.Update(5, []);
+        aggregatorStore.Update(10, []);
+        aggregatorStore.Snapshot();
+
+        var metricPoint = GetSingleMetricPoint(aggregatorStore);
+
+        Assert.False(metricPoint.TryGetHistogramSum(out var sum));
+        Assert.Equal(0, sum);
+    }
+
+    [Fact]
+    public void GetHistogramSumWhenRecordSumFalseReturnsZeroRatherThanThrowing()
+    {
+        var aggregatorStore = new AggregatorStore(
+            MetricStreamIdentity,
+            AggregationType.HistogramWithMinMaxBuckets,
+            AggregationTemporality.Cumulative,
+            cardinalityLimit: 1024,
+            recordSum: false);
+
+        aggregatorStore.Update(5, []);
+        aggregatorStore.Snapshot();
+
+        var metricPoint = GetSingleMetricPoint(aggregatorStore);
+
+        Assert.Equal(0, metricPoint.GetHistogramSum());
+    }
+
+    [Fact]
+    public void RecordSumFalseCountAndBucketsStillAggregateNormally()
+    {
+        var boundaries = new HistogramExplicitBounds([10, 20]);
+        var aggregatorStore = new AggregatorStore(
+            MetricStreamIdentity,
+            AggregationType.HistogramWithMinMaxBuckets,
+            AggregationTemporality.Cumulative,
+            cardinalityLimit: 1024,
+            recordSum: false);
+
+        aggregatorStore.Update(0, []);
+        aggregatorStore.Update(9, []);
+        aggregatorStore.Update(10, []);
+        aggregatorStore.Update(11, []);
+        aggregatorStore.Update(19, []);
+        aggregatorStore.Snapshot();
+
+        var metricPoint = GetSingleMetricPoint(aggregatorStore);
+
+        Assert.Equal(5, metricPoint.GetHistogramCount());
+        Assert.False(metricPoint.TryGetHistogramSum(out _));
+
+        var bucketCounts = new List<long>();
+        foreach (var bucket in metricPoint.GetHistogramBuckets())
+        {
+            bucketCounts.Add(bucket.BucketCount);
+        }
+
+        Assert.Equal(Metric.DefaultHistogramBounds.Length + 1, bucketCounts.Count);
+    }
+
+    [Fact]
+    public void RecordSumFalseMinMaxStillTracked()
+    {
+        var aggregatorStore = new AggregatorStore(
+            MetricStreamIdentity,
+            AggregationType.HistogramWithMinMaxBuckets,
+            AggregationTemporality.Cumulative,
+            cardinalityLimit: 1024,
+            recordSum: false);
+
+        aggregatorStore.Update(-3, []);
+        aggregatorStore.Update(7, []);
+        aggregatorStore.Snapshot();
+
+        var metricPoint = GetSingleMetricPoint(aggregatorStore);
+
+        Assert.True(metricPoint.TryGetHistogramMinMaxValues(out var min, out var max));
+        Assert.Equal(-3, min);
+        Assert.Equal(7, max);
+        Assert.False(metricPoint.TryGetHistogramSum(out _));
+    }
+
+    [Fact]
+    public void RecordSumFalseExponentialHistogramNegativeValuesAreDroppedEntirelyNotJustFromSum()
+    {
+        var streamConfiguration = new Base2ExponentialBucketHistogramConfiguration();
+        var metricStreamIdentity = new MetricStreamIdentity(Instrument, streamConfiguration);
+
+        var aggregatorStore = new AggregatorStore(
+            metricStreamIdentity,
+            AggregationType.Base2ExponentialHistogram,
+            AggregationTemporality.Cumulative,
+            cardinalityLimit: 1024,
+            recordSum: false);
+
+        aggregatorStore.Update(-5, []);
+        aggregatorStore.Update(3, []);
+        aggregatorStore.Snapshot();
+
+        var metricPoint = GetSingleMetricPoint(aggregatorStore);
+
+        Assert.Equal(2, metricPoint.GetHistogramCount());
+        Assert.False(metricPoint.TryGetHistogramSum(out _));
+    }
+
     internal static void AssertExponentialBucketsAreCorrect(Base2ExponentialBucketHistogram expectedHistogram, ExponentialHistogramData data)
     {
         Assert.Equal(expectedHistogram.Scale, data.Scale);
@@ -425,10 +561,7 @@ public class AggregatorTests
         {
             aggregatorStore.Update(value, []);
 
-            if (value >= 0)
-            {
-                expectedHistogram.Record(value);
-            }
+            expectedHistogram.Record(value);
         }
 
         aggregatorStore.Snapshot();
@@ -449,14 +582,14 @@ public class AggregatorTests
         var firstScale = metricPoint.GetExponentialHistogramData().Scale;
 
         AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint.GetExponentialHistogramData());
-        Assert.Equal(50, sum);
-        Assert.Equal(6, count);
+        Assert.Equal(40, sum);
+        Assert.Equal(7, count);
         Assert.True(firstScale <= Metric.DefaultExponentialHistogramMaxScale, $"The first scale value, {firstScale}, is greater than Metric.DefaultExponentialHistogramMaxScale.");
 
         if (aggregationType == AggregationType.Base2ExponentialHistogramWithMinMax)
         {
             Assert.True(hasMinMax);
-            Assert.Equal(0, min);
+            Assert.Equal(-10, min);
             Assert.Equal(19, max);
         }
         else
@@ -474,14 +607,14 @@ public class AggregatorTests
         if (aggregationTemporality == AggregationTemporality.Cumulative)
         {
             AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint.GetExponentialHistogramData());
-            Assert.Equal(50, sum);
-            Assert.Equal(6, count);
+            Assert.Equal(40, sum);
+            Assert.Equal(7, count);
             Assert.Equal(firstScale, secondScale);
 
             if (aggregationType == AggregationType.Base2ExponentialHistogramWithMinMax)
             {
                 Assert.True(hasMinMax);
-                Assert.Equal(0, min);
+                Assert.Equal(-10, min);
                 Assert.Equal(19, max);
             }
             else
@@ -508,6 +641,18 @@ public class AggregatorTests
                 Assert.False(hasMinMax);
             }
         }
+    }
+
+    private static MetricPoint GetSingleMetricPoint(AggregatorStore aggregatorStore)
+    {
+        var metricPoints = new List<MetricPoint>();
+        foreach (ref readonly var mp in aggregatorStore.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        return metricPoints[0];
     }
 
     [Theory]
