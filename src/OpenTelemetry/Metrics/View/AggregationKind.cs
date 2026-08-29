@@ -15,7 +15,7 @@ public enum AggregationKind
     Sum = 0,
 
     /// <summary>
-    /// The Last Value Aggregation informs the SDK to collect data for the
+    /// The Gauge Aggregation informs the SDK to collect data for the
     /// Gauge Metric Point.
     /// </summary>
     Gauge = 1,
