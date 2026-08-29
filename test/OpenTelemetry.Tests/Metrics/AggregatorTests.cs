@@ -265,7 +265,7 @@ public class AggregatorTests
         histogramPoint.TakeSnapshot(true);
 
         var count = histogramPoint.GetHistogramCount();
-        histogramPoint.TryGetHistogramSum(out var sum);
+        Assert.True(histogramPoint.TryGetHistogramSum(out var sum));
 
         // Sum of all recordings
         Assert.Equal(40, sum);
@@ -306,7 +306,7 @@ public class AggregatorTests
         // last snapshot
         histogramPoint.TakeSnapshot(outputDelta: true);
 
-        histogramPoint.TryGetHistogramSum(out var lastDelta);
+        Assert.True(histogramPoint.TryGetHistogramSum(out var lastDelta));
         Assert.Equal(200, argsToThread.SumOfDelta + lastDelta);
     }
 
@@ -577,7 +577,7 @@ public class AggregatorTests
         var metricPoint = metricPoints[0];
 
         var count = metricPoint.GetHistogramCount();
-        metricPoint.TryGetHistogramSum(out var sum);
+        Assert.True(metricPoint.TryGetHistogramSum(out var sum));
         var hasMinMax = metricPoint.TryGetHistogramMinMaxValues(out var min, out var max);
         var firstScale = metricPoint.GetExponentialHistogramData().Scale;
 
@@ -600,7 +600,7 @@ public class AggregatorTests
         metricPoint.TakeSnapshot(aggregationTemporality == AggregationTemporality.Delta);
 
         count = metricPoint.GetHistogramCount();
-        metricPoint.TryGetHistogramSum(out sum);
+        Assert.True(metricPoint.TryGetHistogramSum(out sum));
         hasMinMax = metricPoint.TryGetHistogramMinMaxValues(out min, out max);
         var secondScale = metricPoint.GetExponentialHistogramData().Scale;
 
@@ -641,18 +641,6 @@ public class AggregatorTests
                 Assert.False(hasMinMax);
             }
         }
-    }
-
-    private static MetricPoint GetSingleMetricPoint(AggregatorStore aggregatorStore)
-    {
-        var metricPoints = new List<MetricPoint>();
-        foreach (ref readonly var mp in aggregatorStore.GetMetricPoints())
-        {
-            metricPoints.Add(mp);
-        }
-
-        Assert.Single(metricPoints);
-        return metricPoints[0];
     }
 
     [Theory]
@@ -731,6 +719,18 @@ public class AggregatorTests
         }
 
         Assert.Equal(expectedTotalBuckets, actualBucketCount);
+    }
+
+    private static MetricPoint GetSingleMetricPoint(AggregatorStore aggregatorStore)
+    {
+        var metricPoints = new List<MetricPoint>();
+        foreach (ref readonly var mp in aggregatorStore.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        return metricPoints[0];
     }
 
     private static void HistogramSnapshotThread(object? obj)
