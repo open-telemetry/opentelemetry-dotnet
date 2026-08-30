@@ -1,0 +1,2 @@
+﻿# TYPE http_server_requests_bytes_total counter
+http_server_requests_bytes_total{http_host="localhost"} 5

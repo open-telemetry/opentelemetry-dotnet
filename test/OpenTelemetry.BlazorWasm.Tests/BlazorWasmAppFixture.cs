@@ -1,0 +1,224 @@
+// Copyright The OpenTelemetry Authors
+// SPDX-License-Identifier: Apache-2.0
+
+using System.Diagnostics;
+using System.Reflection;
+using System.Runtime.Versioning;
+using System.Text;
+using Microsoft.AspNetCore.Builder;
+using OpenTelemetry.Tests;
+
+namespace OpenTelemetry.BlazorWasm.Tests;
+
+public sealed class BlazorWasmAppFixture : IAsyncLifetime
+{
+    private static readonly TimeSpan PlaywrightInstallTimeout = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan PublishTimeout = TimeSpan.FromMinutes(5);
+
+    private string? publishDirectory;
+
+    internal OtlpHttpCollector Collector { get; private set; } = null!;
+
+    public async Task InitializeAsync()
+    {
+        InstallPlaywright();
+
+        this.publishDirectory = PublishClient();
+
+        var port = TcpPortProvider.GetOpenPort();
+        var baseUrl = $"http://localhost:{port}";
+
+        var options = new WebApplicationOptions()
+        {
+            ContentRootPath = this.publishDirectory,
+            WebRootPath = Path.Combine(this.publishDirectory, "wwwroot"),
+        };
+
+        this.Collector = await OtlpHttpCollector.StartAsync(
+            baseUrl,
+            options,
+            (app) =>
+            {
+                // A simple endpoint the app's "Call HTTP endpoint" button targets so
+                // that HTTP client instrumentation can be exercised from the browser.
+                app.MapGet("/api/ping", () => Microsoft.AspNetCore.Http.Results.Text("pong"));
+
+                // Serve the published Blazor WebAssembly client.
+                app.UseBlazorFrameworkFiles();
+                app.UseStaticFiles();
+                app.MapFallbackToFile("index.html");
+            });
+    }
+
+    public async Task DisposeAsync()
+    {
+        if (this.Collector is not null)
+        {
+            await this.Collector.DisposeAsync();
+        }
+
+        if (this.publishDirectory is not null && Directory.Exists(this.publishDirectory))
+        {
+            try
+            {
+                Directory.Delete(this.publishDirectory, recursive: true);
+            }
+            catch (Exception)
+            {
+                // Best effort cleanup of the temporary publish output.
+            }
+        }
+    }
+
+    private static void InstallPlaywright()
+    {
+        string[] arguments = OperatingSystem.IsLinux()
+            ? ["install", "chromium", "--with-deps"]
+            : ["install", "chromium"];
+
+        var scriptPath = Path.Combine(AppContext.BaseDirectory, "playwright.ps1");
+
+        var startInfo = new ProcessStartInfo("pwsh")
+        {
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+        };
+
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-File");
+        startInfo.ArgumentList.Add(scriptPath);
+
+        foreach (var argument in arguments)
+        {
+            startInfo.ArgumentList.Add(argument);
+        }
+
+        using var process = Process.Start(startInfo)
+            ?? throw new InvalidOperationException("Failed to start the Playwright browser installer.");
+
+        WaitForProcess(process, PlaywrightInstallTimeout);
+    }
+
+    private static string CurrentTargetFramework()
+    {
+        // Derive the moniker (e.g. "net10.0") from the framework the tests were
+        // built against so the published client matches the current test TFM.
+        var frameworkName = Assembly.GetExecutingAssembly().GetCustomAttribute<TargetFrameworkAttribute>()?.FrameworkName;
+
+        if (frameworkName is not null)
+        {
+            const string Marker = "Version=v";
+            var index = frameworkName.IndexOf(Marker, StringComparison.Ordinal);
+            if (index >= 0)
+            {
+                return $"net{frameworkName[(index + Marker.Length)..]}";
+            }
+        }
+
+        var version = Environment.Version;
+        return $"net{version.Major}.{version.Minor}";
+    }
+
+    private static string RepoRoot()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "OpenTelemetry.slnx")))
+        {
+            directory = directory.Parent;
+        }
+
+        return directory?.FullName
+            ?? throw new InvalidOperationException("Could not locate the repository root (OpenTelemetry.slnx).");
+    }
+
+    private static string PublishClient()
+    {
+        var repoRoot = RepoRoot();
+        var project = Path.Combine(repoRoot, "test", "OpenTelemetry.BlazorWasm.TestApp", "OpenTelemetry.BlazorWasm.TestApp.csproj");
+        var output = Path.Combine(Path.GetTempPath(), "otel-blazor-wasm-" + Guid.NewGuid().ToString("N"));
+
+#if DEBUG
+        const string Configuration = "Debug";
+#else
+        const string Configuration = "Release";
+#endif
+
+        var startInfo = new ProcessStartInfo("dotnet")
+        {
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            WorkingDirectory = repoRoot,
+        };
+
+        // Disable the persistent .NET build servers and MSBuild node reuse for
+        // this invocation. Otherwise, on a cold machine (e.g. CI) 'dotnet publish'
+        // spawns a build server child that inherits the redirected stdout/stderr
+        // handles, so WaitForExit would block until that server idle-times-out
+        // (~15 minutes) even though the publish itself finished.
+        startInfo.Environment["DOTNET_CLI_USE_MSBUILD_SERVER"] = "0";
+        startInfo.Environment["MSBUILDDISABLENODEREUSE"] = "1";
+
+        startInfo.ArgumentList.Add("publish");
+        startInfo.ArgumentList.Add(project);
+        startInfo.ArgumentList.Add("--configuration");
+        startInfo.ArgumentList.Add(Configuration);
+        startInfo.ArgumentList.Add("--disable-build-servers");
+
+        // Publish the client for the same target framework the test is running
+        // under so the suite works unchanged when run against multiple TFMs.
+        startInfo.ArgumentList.Add("--framework");
+        startInfo.ArgumentList.Add(CurrentTargetFramework());
+        startInfo.ArgumentList.Add("--output");
+        startInfo.ArgumentList.Add(output);
+
+        using var process = Process.Start(startInfo)
+            ?? throw new InvalidOperationException("Failed to start 'dotnet publish' for the Blazor client.");
+
+        WaitForProcess(process, PublishTimeout);
+
+        return output;
+    }
+
+    private static void WaitForProcess(Process process, TimeSpan timeout)
+    {
+        var stdout = new StringBuilder();
+        var stderr = new StringBuilder();
+
+        process.OutputDataReceived += (_, e) =>
+        {
+            if (e.Data is not null)
+            {
+                stdout.AppendLine(e.Data);
+            }
+        };
+
+        process.ErrorDataReceived += (_, e) =>
+        {
+            if (e.Data is not null)
+            {
+                stderr.AppendLine(e.Data);
+            }
+        };
+
+        process.BeginOutputReadLine();
+        process.BeginErrorReadLine();
+
+        if (!process.WaitForExit(timeout))
+        {
+            process.Kill(entireProcessTree: true);
+            throw new InvalidOperationException(
+                $"Process timed out after {timeout}.{Environment.NewLine}{stdout}{Environment.NewLine}{stderr}");
+        }
+
+        process.WaitForExit();
+
+        if (process.ExitCode != 0)
+        {
+            throw new InvalidOperationException(
+                $"Process exited with code {process.ExitCode}.{Environment.NewLine}{stdout}{Environment.NewLine}{stderr}");
+        }
+    }
+}

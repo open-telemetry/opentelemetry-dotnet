@@ -315,6 +315,54 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
 
     // Event 38 was removed
 
+    [NonEvent]
+    internal void BatchDroppedDueToSerializationFailure(OtlpSignalType signalType, long itemCount, Exception ex)
+    {
+        if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.BatchDroppedDueToSerializationFailure(signalType.ToString(), itemCount, ex.ToInvariantString());
+        }
+    }
+
+    [Event(
+        39,
+        Message = "{0} batch containing {1} item(s) was dropped because it could not be serialized. Exception: {2}",
+        Level = EventLevel.Error)]
+    internal void BatchDroppedDueToSerializationFailure(string signalType, long itemCount, string exception)
+        => this.WriteEvent(39, signalType, itemCount, exception);
+
+    [NonEvent]
+    internal void ResponseDiscardedDueToSizeLimit(Uri endpoint, long? responseSizeBytes, int maxResponseSizeBytes)
+    {
+        if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.ResponseDiscardedDueToSizeLimit(RedactEndpointUri(endpoint), responseSizeBytes ?? -1, maxResponseSizeBytes);
+        }
+    }
+
+    [Event(
+        40,
+        Message = "The response from {0} was discarded because its size of {1} bytes exceeds the maximum response size of {2} bytes. A size of -1 means the response did not declare one.",
+        Level = EventLevel.Error)]
+    internal void ResponseDiscardedDueToSizeLimit(string endpoint, long responseSizeBytes, int maxResponseSizeBytes)
+        => this.WriteEvent(40, endpoint, responseSizeBytes, maxResponseSizeBytes);
+
+    [NonEvent]
+    internal void RequestDiscardedDueToSizeLimit(OtlpSignalType signalType, long itemCount, int requestSizeBytes, int maxRequestSizeBytes)
+    {
+        if (Log.IsEnabled(EventLevel.Error, EventKeywords.All))
+        {
+            this.RequestDiscardedDueToSizeLimit(signalType.ToString(), itemCount, requestSizeBytes, maxRequestSizeBytes);
+        }
+    }
+
+    [Event(
+        41,
+        Message = "{0} request containing {1} item(s) was discarded because its size of {2} bytes exceeds the maximum request size of {3} bytes.",
+        Level = EventLevel.Error)]
+    internal void RequestDiscardedDueToSizeLimit(string signalType, long itemCount, int requestSizeBytes, int maxRequestSizeBytes)
+        => this.WriteEvent(41, signalType, itemCount, requestSizeBytes, maxRequestSizeBytes);
+
     private static string RedactEndpointUri(Uri endpoint)
         => endpoint.GetComponents(UriComponents.SchemeAndServer | UriComponents.Path, UriFormat.UriEscaped);
 }

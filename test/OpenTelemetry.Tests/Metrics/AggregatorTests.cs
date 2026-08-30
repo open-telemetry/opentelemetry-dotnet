@@ -730,6 +730,38 @@ public class AggregatorTests
     }
 
     [Theory]
+    [InlineData(-5)]
+    [InlineData(5)]
+    internal void ExponentialMaxScaleConfigPersistsAfterDeltaSnapshot(int maxScale)
+    {
+        var streamConfiguration = new Base2ExponentialBucketHistogramConfiguration { MaxScale = maxScale };
+        var metricStreamIdentity = new MetricStreamIdentity(Instrument, streamConfiguration);
+
+        var aggregatorStore = new AggregatorStore(
+            metricStreamIdentity,
+            AggregationType.Base2ExponentialHistogram,
+            AggregationTemporality.Delta,
+            cardinalityLimit: 1024);
+
+        aggregatorStore.Update(10, []);
+        aggregatorStore.Snapshot();
+
+        var metricPoints = new List<MetricPoint>();
+        foreach (ref readonly var mp in aggregatorStore.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        var metricPoint = Assert.Single(metricPoints);
+        Assert.Equal(maxScale, metricPoint.GetExponentialHistogramData().Scale);
+
+        // A subsequent delta snapshot should retain the configured maximum scale.
+        metricPoint.TakeSnapshot(outputDelta: true);
+
+        Assert.Equal(maxScale, metricPoint.GetExponentialHistogramData().Scale);
+    }
+
+    [Theory]
 #pragma warning disable xUnit1045 // Avoid using TheoryData type arguments that might not be serializable
     [MemberData(nameof(HistogramBoundaryTestCase.HistogramInfinityBoundariesTestCases))]
 #pragma warning restore xUnit1045 // Avoid using TheoryData type arguments that might not be serializable

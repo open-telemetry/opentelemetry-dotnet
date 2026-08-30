@@ -4,6 +4,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.Prometheus.Tests;
 
@@ -179,5 +180,35 @@ public sealed class PrometheusHttpListenerMeterProviderBuilderExtensionsTests
         Assert.True(meterProvider.TryFindExporter(out PrometheusExporter? exporter));
 #pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
         Assert.Equal(123, exporter!.ScrapeResponseCacheDurationMilliseconds);
+    }
+
+    [Fact]
+    public void AddPrometheusHttpListener_WrapsListenerStartFailureInInvalidOperationException()
+    {
+        var port = TcpPortProvider.GetOpenPort();
+
+        using var first = Sdk.CreateMeterProviderBuilder()
+            .AddPrometheusHttpListener(options =>
+            {
+                options.Host = "localhost";
+                options.Port = port;
+            })
+            .Build();
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+        {
+            using var second = Sdk.CreateMeterProviderBuilder()
+                .AddPrometheusHttpListener(options =>
+                {
+                    options.Host = "localhost";
+                    options.Port = port;
+                })
+                .Build();
+        });
+
+        Assert.Contains(
+            "PrometheusExporter HttpListener could not be started.",
+            exception.ToString(),
+            StringComparison.Ordinal);
     }
 }

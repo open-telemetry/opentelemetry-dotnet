@@ -1,18 +1,70 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Buffers;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 
 internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.OtlpTagWriterState, ProtobufOtlpTagWriter.OtlpTagWriterArrayState>
 {
+    private const int ReserveSizeForLength = 4;
+
+    private readonly OtlpArrayTagWriter arrayTagWriter;
+
+    internal ProtobufOtlpTagWriter(OtlpArrayTagWriter arrayTagWriter)
+        : base(arrayTagWriter)
+    {
+        this.arrayTagWriter = arrayTagWriter;
+    }
+
     private ProtobufOtlpTagWriter()
-        : base(new OtlpArrayTagWriter())
+        : this(new OtlpArrayTagWriter())
     {
     }
 
     public static ProtobufOtlpTagWriter Instance { get; } = new();
+
+    /// <summary>
+    /// Writes a tag as a length-delimited <c>KeyValue</c> message under the given field
+    /// number.
+    /// </summary>
+    /// <remarks>
+    /// A <c>KeyValue</c> holding a single attribute is almost always well under 128 bytes,
+    /// so its length prefix is reserved as a single byte rather than padded out to four.
+    /// Attributes are by far the most numerous nested message in a payload, so the three
+    /// bytes each would otherwise waste add up to a significant share of it.
+    /// </remarks>
+    /// <param name="state">The writer state, whose write position is advanced.</param>
+    /// <param name="fieldNumber">The field number to write the <c>KeyValue</c> under.</param>
+    /// <param name="key">The attribute key.</param>
+    /// <param name="value">The attribute value.</param>
+    /// <param name="tagValueMaxLength">The maximum length to write a string value as, if any.</param>
+    /// <returns><see langword="true"/> if the key-value pair was successfully written; otherwise <see langword="false"/>.</returns>
+    public static bool WriteKeyValue(
+        ref OtlpTagWriterState state,
+        int fieldNumber,
+        string key,
+        object? value,
+        int? tagValueMaxLength = null)
+    {
+        var startPosition = state.WritePosition;
+
+        state.WritePosition = ProtobufSerializer.WriteTag(state.Buffer, state.WritePosition, fieldNumber, ProtobufWireType.LEN);
+
+        var lengthPosition = state.WritePosition;
+        state.WritePosition += ProtobufSerializer.ReserveSizeForCompactLength;
+
+        if (!Instance.TryWriteTag(ref state, key, value, tagValueMaxLength))
+        {
+            state.WritePosition = startPosition;
+            return false;
+        }
+
+        state.WritePosition = ProtobufSerializer.WriteCompactLength(state.Buffer, lengthPosition, state.WritePosition);
+
+        return true;
+    }
 
     protected override void WriteIntegralTag(ref OtlpTagWriterState state, string key, long value)
     {
@@ -86,6 +138,10 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, value.WritePosition, ProtobufOtlpCommonFieldNumberConstants.AnyValue_Array_Value, ProtobufWireType.LEN);
         Buffer.BlockCopy(value.Buffer, 0, state.Buffer, state.WritePosition, value.WritePosition);
         state.WritePosition += value.WritePosition;
+
+        // The scratch buffer contents have now been copied into the main buffer,
+        // so return it to the pool. A fresh buffer is rented on the next array.
+        this.arrayTagWriter.ReleaseBuffer(ref value);
     }
 
     protected override void OnUnsupportedTagDropped(
@@ -115,6 +171,55 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         return true;
     }
 
+    protected override void WriteKvListTag(ref OtlpTagWriterState state, string key, IEnumerable<KeyValuePair<string, object?>> kvList, int? tagValueMaxLength)
+    {
+        var startPosition = state.WritePosition;
+
+        state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Key, key);
+
+        // Reserve space for KeyValue.value (AnyValue wrapper)
+        state.WritePosition = ProtobufSerializer.WriteTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value, ProtobufWireType.LEN);
+        int anyValueLengthPos = state.WritePosition;
+        state.WritePosition += ReserveSizeForLength;
+
+        // Reserve space for AnyValue.kvlist_value (KeyValueList wrapper)
+        state.WritePosition = ProtobufSerializer.WriteTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.AnyValue_Kvlist_Value, ProtobufWireType.LEN);
+        int kvlistLengthPos = state.WritePosition;
+        state.WritePosition += ReserveSizeForLength;
+
+        try
+        {
+            foreach (var kvp in kvList)
+            {
+                var startEntryPosition = state.WritePosition;
+
+                // Write KeyValueList.values tag (field 1, LEN) + reserve length per entry
+                state.WritePosition = ProtobufSerializer.WriteTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValueList_Values, ProtobufWireType.LEN);
+                int entryLengthPos = state.WritePosition;
+                state.WritePosition += ReserveSizeForLength;
+
+                // Drop a tag if we fail to write it, and reset the position to the start of the entry to overwrite the reserved tag and length for the next entry.
+                if (!this.TryWriteTag(ref state, kvp.Key, kvp.Value, tagValueMaxLength))
+                {
+                    state.WritePosition = startEntryPosition;
+                    continue;
+                }
+
+                ProtobufSerializer.WriteReservedLength(state.Buffer, entryLengthPos, state.WritePosition - (entryLengthPos + ReserveSizeForLength));
+            }
+        }
+        catch (Exception)
+        {
+            state.WritePosition = startPosition;
+
+            throw;
+        }
+
+        // Fill in reserved lengths
+        ProtobufSerializer.WriteReservedLength(state.Buffer, kvlistLengthPos, state.WritePosition - (kvlistLengthPos + ReserveSizeForLength));
+        ProtobufSerializer.WriteReservedLength(state.Buffer, anyValueLengthPos, state.WritePosition - (anyValueLengthPos + ReserveSizeForLength));
+    }
+
     internal struct OtlpTagWriterState
     {
         public byte[] Buffer;
@@ -131,20 +236,28 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
 
     internal sealed class OtlpArrayTagWriter : ArrayTagWriter<OtlpTagWriterArrayState>
     {
-        [ThreadStatic]
-        internal static byte[]? ThreadBuffer;
+        private const int DefaultBufferSize = 2048;
         private const int MaxBufferSize = 2 * 1024 * 1024;
 
-        public override OtlpTagWriterArrayState BeginWriteArray()
-        {
-            ThreadBuffer ??= new byte[2048];
+        private readonly ArrayPool<byte> pool;
 
-            return new OtlpTagWriterArrayState
+        public OtlpArrayTagWriter()
+            : this(ArrayPool<byte>.Shared)
+        {
+        }
+
+        internal OtlpArrayTagWriter(ArrayPool<byte> pool)
+        {
+            Guard.ThrowIfNull(pool);
+            this.pool = pool;
+        }
+
+        public override OtlpTagWriterArrayState BeginWriteArray()
+            => new()
             {
-                Buffer = ThreadBuffer,
+                Buffer = this.pool.Rent(DefaultBufferSize),
                 WritePosition = 0,
             };
-        }
 
         public override void WriteNullValue(ref OtlpTagWriterArrayState state)
             => state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, 0, ProtobufOtlpCommonFieldNumberConstants.ArrayValue_Value, ProtobufWireType.LEN);
@@ -194,25 +307,46 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         {
         }
 
-        public override bool TryResize()
-        {
-            var buffer = ThreadBuffer;
+        public override void AbortWriteArray(ref OtlpTagWriterArrayState state)
+            => this.ReleaseBuffer(ref state);
 
-            if (buffer!.Length >= MaxBufferSize)
+        public override bool TryResize(ref OtlpTagWriterArrayState state)
+        {
+            var smallerBuffer = state.Buffer;
+
+            if (smallerBuffer.Length >= MaxBufferSize)
             {
                 OpenTelemetryProtocolExporterEventSource.Log.ArrayBufferExceededMaxSize();
                 return false;
             }
 
+            byte[] largerBuffer;
             try
             {
-                ThreadBuffer = new byte[buffer.Length * 2];
-                return true;
+                largerBuffer = this.pool.Rent(smallerBuffer.Length * 2);
             }
             catch (OutOfMemoryException)
             {
                 OpenTelemetryProtocolExporterEventSource.Log.BufferResizeFailedDueToMemory(nameof(OtlpArrayTagWriter));
                 return false;
+            }
+
+            // Swap in the larger buffer first, then return the smaller one for reuse.
+            state.Buffer = largerBuffer;
+            state.WritePosition = 0;
+            ProtobufSerializer.ReturnBuffer(this.pool, smallerBuffer);
+
+            return true;
+        }
+
+        internal void ReleaseBuffer(ref OtlpTagWriterArrayState state)
+        {
+            var buffer = state.Buffer;
+            state = default;
+
+            if (buffer != null)
+            {
+                ProtobufSerializer.ReturnBuffer(this.pool, buffer);
             }
         }
     }

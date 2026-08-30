@@ -1,7 +1,7 @@
 ARG SDK_VERSION=10.0
-FROM mcr.microsoft.com/dotnet/sdk:8.0.422@sha256:63ebabdcde24cc8134304a6f50719cf1e22bb4e9f7148ac4ef967c7680187356 AS dotnet-sdk-8.0
-FROM mcr.microsoft.com/dotnet/sdk:9.0.315@sha256:24fe7c00719afc72e2b67cace264dea2ee39ae45f5b553bd59493fe3ddfc920f AS dotnet-sdk-9.0
-FROM mcr.microsoft.com/dotnet/sdk:10.0.301@sha256:ea8bde36c11b6e7eec2656d0e59101d4462f6bd630730f2c8201ed0572b295d5 AS dotnet-sdk-10.0
+FROM mcr.microsoft.com/dotnet/sdk:8.0.424@sha256:bb32ba3ba3ea36e38572d9d8db76fa15f7cbf722f3f886e06bca6d528bd4fba8 AS dotnet-sdk-8.0
+FROM mcr.microsoft.com/dotnet/sdk:9.0.317@sha256:f190d2dd9eef2899c91ac323caa0bd2b39334a5400ba93013e5199da39dad940 AS dotnet-sdk-9.0
+FROM mcr.microsoft.com/dotnet/sdk:10.0.400@sha256:e1ffd2a92ae84c1291bc1b6887501f8af98e6331e7af6d4c8d37168c5e87a64c AS dotnet-sdk-10.0
 
 FROM dotnet-sdk-${SDK_VERSION} AS build
 ARG PUBLISH_CONFIGURATION=Release
@@ -10,9 +10,9 @@ WORKDIR /app
 COPY . ./
 RUN dotnet publish ./examples/MicroserviceExample/WebApi -c "${PUBLISH_CONFIGURATION}" -f "${PUBLISH_FRAMEWORK}" -o /out -p:IntegrationBuild=true
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0.28@sha256:e78fda31142e28746a6908e288e0d40346793f691ca99d8d150bcbe95c0ef035 AS dotnet-aspnet-8.0
-FROM mcr.microsoft.com/dotnet/aspnet:9.0.17@sha256:193650562ae3ccfcdbb00a6bccbef2ef5bd71d4ceb25e971475ae4c0a23271fd AS dotnet-aspnet-9.0
-FROM mcr.microsoft.com/dotnet/aspnet:10.0.9@sha256:7644f992230d35cf230017189d4038c0ae0f7388b13f4f7ae1900a155bafb597 AS dotnet-aspnet-10.0
+FROM mcr.microsoft.com/dotnet/aspnet:8.0.30@sha256:787c228ea85457bec43c8b084e6ac360b26ea43b5c2fcbe861f721f2e8670dd3 AS dotnet-aspnet-8.0
+FROM mcr.microsoft.com/dotnet/aspnet:9.0.19@sha256:b1201ee0ccf9a22c06844982296c1be40d5ff9c7685dc002729f204e63fb1730 AS dotnet-aspnet-9.0
+FROM mcr.microsoft.com/dotnet/aspnet:10.0.11@sha256:a4556ed033fa96f984bb7a8d348851cb2d36b1281dd2420070045f664fbb5f94 AS dotnet-aspnet-10.0
 
 FROM dotnet-aspnet-${SDK_VERSION} AS runtime
 WORKDIR /app

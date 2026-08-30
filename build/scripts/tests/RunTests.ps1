@@ -22,7 +22,7 @@ Runs the tests using the default pinned version of Pester.
 [CmdletBinding()]
 param(
     # renovate: datasource=nuget depName=Pester
-    [string]$PesterVersion = "5.7.1",
+    [string]$PesterVersion = "6.0.0",
     [int]$MinimumCoveragePercent = 80
 )
 
@@ -76,6 +76,10 @@ $configuration.CodeCoverage.CoveragePercentTarget = $MinimumCoveragePercent
 $configuration.TestResult.Enabled = $IsGitHubActions
 $configuration.TestResult.OutputPath = Join-Path -Path $testsDirectory -ChildPath "testResults.xml"
 $configuration.Output.Verbosity = $IsGitHubActionsDebug ? "Diagnostic" : "Detailed"
+
+# The tests use the Pester v6 'Should-*' assertions exclusively, so the legacy
+# 'Should -Be' style syntax is disabled to keep new tests consistent.
+$configuration.Should.DisableV5 = $true
 
 Write-Output "Running Pester tests..."
 

@@ -34,9 +34,9 @@ Describe "finalize-publicapi.ps1" {
         }
 
         $shipped = @(Get-Content -Path $shippedPath | Where-Object { $_ -ne "" })
-        $shipped | Should -Be @("A", "B", "C") -Because "shipped should be the sorted, de-duplicated union of both files"
+        $shipped | Should-BeCollection @("A", "B", "C") -Because "shipped should be the sorted, de-duplicated union of both files"
 
-        (Get-Content -Path $unshippedPath -Raw) | Should -BeNullOrEmpty -Because "the unshipped file should be emptied once merged"
+        (Get-Content -Path $unshippedPath -Raw) | Should-BeFalsy -Because "the unshipped file should be emptied once merged"
     }
 
     It "does not touch projects that do not match the tag prefix" {
@@ -62,6 +62,6 @@ Describe "finalize-publicapi.ps1" {
             Pop-Location
         }
 
-        (Get-Content -Path $unshippedPath -Raw).Trim() | Should -Be "ShouldRemain" -Because "projects that do not match the tag prefix should be left untouched"
+        (Get-Content -Path $unshippedPath -Raw).Trim() | Should-Be "ShouldRemain" -Because "projects that do not match the tag prefix should be left untouched"
     }
 }

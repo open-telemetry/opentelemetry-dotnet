@@ -11,6 +11,11 @@
     <DefaultTargetFrameworkForExampleApps>net10.0</DefaultTargetFrameworkForExampleApps>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <SolutionDir Condition="'$(SolutionDir)' == ''">$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)/..'))</SolutionDir>
+    <SolutionName Condition="'$(SolutionName)' == ''">OpenTelemetry.slnx</SolutionName>
+  </PropertyGroup>
+
   <PropertyGroup Condition="$(MSBuildProjectName.EndsWith('.Tests')) OR $(MSBuildProjectName.EndsWith('.FuzzTests'))">
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
@@ -25,6 +30,7 @@
     <PackageReference Include="GitHubActionsTestLogger" />
     <PackageReference Include="JunitXml.TestLogger" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.Testing.Platform" Condition="'$(EnableMSTestRunner)' != 'true'" ExcludeAssets="build;buildMultiTargeting;buildTransitive" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="All" />
   </ItemGroup>

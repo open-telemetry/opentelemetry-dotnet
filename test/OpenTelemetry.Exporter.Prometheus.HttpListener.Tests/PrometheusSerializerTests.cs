@@ -18,7 +18,6 @@ public sealed partial class PrometheusSerializerTests
 {
     internal static readonly VerifySettings VerifySettings = CreateVerifySettings();
 
-#pragma warning disable CA1825 // Workaround for https://github.com/dotnet/sdk/issues/54275
     public static TheoryData<string> EscapingSchemes =>
     [
         PrometheusProtocol.AllowUtf8Escaping,
@@ -26,7 +25,6 @@ public sealed partial class PrometheusSerializerTests
         PrometheusProtocol.UnderscoresEscaping,
         PrometheusProtocol.ValuesEscaping,
     ];
-#pragma warning restore CA1825
 
     public static TheoryData<string, bool> EscapingSchemesAndFormats
     {
@@ -82,32 +80,27 @@ public sealed partial class PrometheusSerializerTests
         { long.MaxValue, "9223372036854775807" },
         { ulong.MinValue, "0" },
         { ulong.MaxValue, "18446744073709551615" },
-        { float.MinValue, "-3.40282346638528860e+038" },
+        { float.MinValue, "-3.4028234663852886e+38" },
         { 0f, "0.0" },
         { float.NaN, "NaN" },
         { float.NegativeInfinity, "-Inf" },
         { float.PositiveInfinity, "+Inf" },
-        { float.MaxValue, "3.40282346638528860e+038" },
-#if NET
-        { double.MinValue, "-1.79769313486231571e+308" },
-#else
-        { double.MinValue, "-1.79769313486231570e+308" },
-#endif
+        { float.MaxValue, "3.4028234663852886e+38" },
+        { double.MinValue, "-1.7976931348623157e+308" },
         { 0d, "0.0" },
         { double.NegativeInfinity, "-Inf" },
         { double.PositiveInfinity, "+Inf" },
         { double.NaN, "NaN" },
-#if NET
-        { double.MaxValue, "1.79769313486231571e+308" },
-#else
-        { double.MaxValue, "1.79769313486231570e+308" },
-#endif
+        { double.MaxValue, "1.7976931348623157e+308" },
         { decimal.MinValue, "-79228162514264337593543950335" },
         { 0m, "0" },
         { decimal.MaxValue, "79228162514264337593543950335" },
         { 1.5d, "1.5" },
         { new Guid("12345678-1234-1234-1234-1234567890ab"), "12345678-1234-1234-1234-1234567890ab" },
         { new Version(1, 2, 3), "1.2.3" },
+        { new DateTime(2024, 5, 6, 7, 8, 9, DateTimeKind.Utc), "05/06/2024 07:08:09" },
+        { new DateTimeOffset(2024, 5, 6, 7, 8, 9, TimeSpan.FromHours(2)), "05/06/2024 07:08:09 +02:00" },
+        { TimeSpan.FromTicks(1234567890), "00:02:03.4567890" },
     };
 
     [Fact]
@@ -193,6 +186,34 @@ public sealed partial class PrometheusSerializerTests
         provider.ForceFlush();
 
         var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics: false);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        await Verify(output, "txt", VerifySettings);
+    }
+
+    [Fact]
+    public async Task CounterWithUnitAndSuffixesDisabled()
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        meter.CreateCounter<long>("http.server.duration", unit: "s").Add(1);
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(
+            buffer,
+            0,
+            metrics[0],
+            useOpenMetrics: true,
+            suppressScopeInfo: true,
+            appendSuffixes: false);
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
 
         await Verify(output, "txt", VerifySettings);
@@ -571,6 +592,37 @@ public sealed partial class PrometheusSerializerTests
         var output = Encoding.UTF8.GetString(buffer, 0, cursor);
 
         await Verify(output, "txt", VerifySettings);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task HistogramWithFractionalBoundaries(bool useOpenMetrics)
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = CreateMeter();
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("test_histogram", new ExplicitBucketHistogramConfiguration
+            {
+                // The bucket boundaries used by the ASP.NET Core duration histograms,
+                // none of which are exactly representable as a double.
+                Boundaries = [0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10],
+            })
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        var histogram = meter.CreateHistogram<double>("test_histogram", unit: "s");
+        histogram.Record(0.0111996);
+
+        provider.ForceFlush();
+
+        var cursor = WriteMetric(buffer, 0, metrics[0], useOpenMetrics);
+        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        await Verify(output, "txt", VerifySettings).UseParameters(useOpenMetrics);
     }
 
     [Fact]
@@ -1422,8 +1474,16 @@ public sealed partial class PrometheusSerializerTests
     [InlineData(double.NegativeInfinity, "-Inf")]
     [InlineData(-1234.5, "-1234.5")]
     [InlineData(0d, "0")]
+    [InlineData(-0d, "-0")]
     [InlineData(1234.5, "1234.5")]
     [InlineData(double.PositiveInfinity, "+Inf")]
+    //// Values are written using their shortest round-trippable representation, not padded out to
+    //// the 17 significant digits that are only needed to round-trip the least tractable values.
+    [InlineData(0.005d, "0.005")]
+    [InlineData(0.075d, "0.075")]
+    [InlineData(0.0111996d, "0.0111996")]
+    [InlineData(1e-07d, "1E-07")]
+    [InlineData(0.1d + 0.2d, "0.30000000000000004")]
     public void WriteDoubleMatchesInvariantFormatting(double value, string expected)
     {
         var buffer = new byte[64];
@@ -1441,6 +1501,39 @@ public sealed partial class PrometheusSerializerTests
         var cursor = TextFormatSerializer.WriteDouble(buffer, 0, double.NaN);
 
         Assert.Equal("NaN", Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Fact]
+    public void WriteDoubleDoesNotLosePrecision()
+    {
+        // Values whose shortest representation needs 16 or 17 significant digits, which the
+        // default formatting on .NET Framework would silently round to 15 digits.
+        double[] values =
+        [
+            double.Epsilon,
+            double.MinValue,
+            double.MaxValue,
+            0.1d + 0.2d,
+            1d / 3d,
+            Math.PI,
+            2.2250738585072014e-308,
+            7.793112545177861,
+            -6.186496929997836e+44,
+        ];
+
+        var buffer = new byte[64];
+
+        foreach (var value in values)
+        {
+            var cursor = TextFormatSerializer.WriteDouble(buffer, 0, value);
+            var written = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+            Assert.True(
+                double.TryParse(written, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed),
+                $"'{written}' could not be parsed.");
+
+            Assert.Equal(value, parsed);
+        }
     }
 
     [Theory]
@@ -1555,6 +1648,31 @@ public sealed partial class PrometheusSerializerTests
     [InlineData(1e6d, "1e+06")]
     [InlineData(1e10d, "1e+10")]
     [InlineData(double.PositiveInfinity, "+Inf")]
+    //// The bucket boundaries used by the HTTP metric duration histograms
+    [InlineData(0.005d, "0.005")]
+    [InlineData(0.025d, "0.025")]
+    [InlineData(0.05d, "0.05")]
+    [InlineData(0.075d, "0.075")]
+    [InlineData(0.25d, "0.25")]
+    [InlineData(0.5d, "0.5")]
+    [InlineData(0.75d, "0.75")]
+    [InlineData(2.5d, "2.5")]
+    [InlineData(7.5d, "7.5")]
+    //// Values that are neither a power of ten nor exactly representable, whose
+    //// shortest round-trippable representation has more than three decimal places.
+    [InlineData(0.0025d, "0.0025")]
+    [InlineData(0.0075d, "0.0075")]
+    [InlineData(0.00025d, "0.00025")]
+    [InlineData(1.5e-05d, "1.5e-05")]
+    [InlineData(33.333d, "33.333")]
+    [InlineData(12.5d, "12.5")]
+    [InlineData(1234567.89d, "1.23456789e+06")]
+    [InlineData(0.1d + 0.2d, "0.30000000000000004")]
+    //// Powers of ten outside the range the specification gives examples for
+    [InlineData(1e11d, "1e+11")]
+    [InlineData(1e100d, "1e+100")]
+    [InlineData(1e-100d, "1e-100")]
+    [InlineData(-1e11d, "-1e+11")]
     public void WriteCanonicalLabelValueUsesOpenMetricsCanonicalNumbers(double value, string expected)
     {
         var buffer = new byte[64];
@@ -1574,7 +1692,6 @@ public sealed partial class PrometheusSerializerTests
         Assert.Equal("NaN", Encoding.UTF8.GetString(buffer, 0, cursor));
     }
 
-#if NET
     [Theory]
     [InlineData(double.PositiveInfinity, 3)]
     [InlineData(0d, 2)]
@@ -1587,19 +1704,31 @@ public sealed partial class PrometheusSerializerTests
 
         Assert.Equal("Destination buffer too small.", exception.Message);
     }
-#endif
 
+    // The specification only requires consistency for the values it gives examples for, but
+    // every canonical number must still round-trip to the value it was rendered from.
     [Theory]
-    [InlineData(0.00011d, "0.00011")]
-    [InlineData(1e11d, "1.00000000000000000e+011")]
-    [InlineData(1234567.89d, "1.23456788999999990e+006")]
-    public void WriteCanonicalLabelValueUsesBuiltInFormattingForNonCanonicalNumbers(double value, string expected)
+    [InlineData(0.00011d)]
+    [InlineData(1e11d)]
+    [InlineData(1234567.89d)]
+    [InlineData(1000000.0000005d)]
+    [InlineData(double.Epsilon)]
+    [InlineData(double.MinValue)]
+    [InlineData(double.MaxValue)]
+    [InlineData(0.1d + 0.2d)]
+    [InlineData(Math.PI)]
+    public void WriteCanonicalLabelValueRoundTrips(double value)
     {
         var buffer = new byte[64];
 
         var cursor = TextFormatSerializer.WriteCanonicalLabelValue(buffer, 0, value);
+        var written = Encoding.UTF8.GetString(buffer, 0, cursor);
 
-        Assert.Equal(expected, Encoding.UTF8.GetString(buffer, 0, cursor));
+        Assert.True(
+            double.TryParse(written, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed),
+            $"'{written}' could not be parsed.");
+
+        Assert.Equal(value, parsed);
     }
 
     [Fact]
@@ -1612,7 +1741,7 @@ public sealed partial class PrometheusSerializerTests
         var near = WriteCanonicalLabelValueToString(NearPowerOfTen);
 
         Assert.Equal("1e+06", exact);
-        Assert.Equal(NearPowerOfTen.ToString("e17", CultureInfo.InvariantCulture), near);
+        Assert.Equal("1.0000000000005e+06", near);
         Assert.NotEqual(exact, near);
 
         static string WriteCanonicalLabelValueToString(double value)
@@ -1662,6 +1791,35 @@ public sealed partial class PrometheusSerializerTests
         var expected = ToHexString(Encoding.UTF8.GetBytes(value), Encoding.UTF8.GetByteCount(value));
 
         Assert.Equal(expected, actual);
+    }
+
+    [Fact]
+    public void WriteHelpMetadataDoesNotEscapeQuotationMarksForPrometheusText()
+    {
+        var buffer = new byte[128];
+        var metric = new PrometheusMetric("test_metric", string.Empty, PrometheusType.Gauge, disableTotalNameSuffixForCounters: false);
+
+        var cursor = TextFormatSerializer.PrometheusV1.WriteHelpMetadata(buffer, 0, metric, "A \"quoted\" description");
+        var actual = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        // The Prometheus text exposition format only requires escaping the backslash and line feed
+        // characters in HELP text, so double quotes are written unescaped.
+        Assert.Equal("# HELP test_metric A \"quoted\" description\n", actual);
+    }
+
+    [Fact]
+    public void WriteHelpMetadataEscapesQuotationMarksForOpenMetrics()
+    {
+        var buffer = new byte[128];
+        var metric = new PrometheusMetric("test_metric", string.Empty, PrometheusType.Gauge, disableTotalNameSuffixForCounters: false);
+
+        var cursor = TextFormatSerializer.OpenMetricsV1.WriteHelpMetadata(buffer, 0, metric, "A \"quoted\" description");
+        var actual = Encoding.UTF8.GetString(buffer, 0, cursor);
+
+        // Per the OpenMetrics 1.0.0 ABNF, double quotes are excluded from "normal-char" and MUST be
+        // escaped as \" within an "escaped-string" (which HELP text is), unlike the classic Prometheus
+        // text format. See https://prometheus.io/docs/specs/om/open_metrics_spec/#escaping.
+        Assert.Equal("# HELP test_metric A \\\"quoted\\\" description\n", actual);
     }
 
     [Theory]
@@ -1721,9 +1879,20 @@ public sealed partial class PrometheusSerializerTests
         var buffer = new byte[64];
         var metric = new PrometheusMetric("test", string.Empty, PrometheusType.Gauge, disableTotalNameSuffixForCounters: false);
 
-        var cursor = TextFormatSerializer.PrometheusV1.WriteUnitMetadata(buffer, 0, metric, "seconds");
+        var cursor = TextFormatSerializer.OpenMetricsV1.WriteUnitMetadata(buffer, 0, metric, "seconds");
 
         Assert.Equal("# UNIT test seconds\n", Encoding.UTF8.GetString(buffer, 0, cursor));
+    }
+
+    [Fact]
+    public void WriteUnitMetadataIsNotWrittenForPrometheusTextFormat()
+    {
+        var buffer = new byte[64];
+        var metric = new PrometheusMetric("test", string.Empty, PrometheusType.Gauge, disableTotalNameSuffixForCounters: false);
+
+        var cursor = TextFormatSerializer.PrometheusV1.WriteUnitMetadata(buffer, 0, metric, "seconds");
+
+        Assert.Equal(0, cursor);
     }
 
     [Fact]
@@ -2156,10 +2325,16 @@ public sealed partial class PrometheusSerializerTests
         }
     }
 
-    private static int WriteMetric(byte[] buffer, int cursor, Metric metric, bool useOpenMetrics, bool suppressScopeInfo = false)
+    private static int WriteMetric(
+        byte[] buffer,
+        int cursor,
+        Metric metric,
+        bool useOpenMetrics,
+        bool suppressScopeInfo = false,
+        bool appendSuffixes = true)
     {
         TextFormatSerializer serializer = useOpenMetrics ? TextFormatSerializer.OpenMetricsV1 : TextFormatSerializer.PrometheusV1;
-        var prometheusMetric = PrometheusMetric.Create(metric, disableTotalNameSuffixForCounters: false);
+        var prometheusMetric = PrometheusMetric.Create(metric, disableTotalNameSuffixForCounters: false, appendSuffixes);
         var options = new TextFormatSerializerOptions(suppressScopeInfo, null);
 
         return serializer.WriteMetric(

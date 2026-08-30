@@ -118,7 +118,8 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
         var content = await reader.ReadToEndAsync();
 
         Assert.NotEmpty(content);
-        Assert.EndsWith("# EOF\n", content, StringComparison.Ordinal);
+        Assert.DoesNotContain("# EOF", content, StringComparison.Ordinal);
+        Assert.EndsWith("\n", content, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -179,12 +180,17 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
     }
 
     [EnabledOnDockerPlatformTheory(DockerPlatform.Linux)]
-    [InlineData("")]
-    [InlineData("OpenMetricsText0.0.1")]
-    [InlineData("OpenMetricsText1.0.0")]
-    [InlineData("PrometheusText0.0.4")]
-    [InlineData("PrometheusText1.0.0")]
-    public async Task Prometheus_Can_Scrape_Metrics(string scrapeProtocol) => await GenerateMetricsAsync(async (baseAddress) =>
+    [InlineData("", PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes)]
+    [InlineData("OpenMetricsText0.0.1", PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes)]
+    [InlineData("OpenMetricsText1.0.0", PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes)]
+    [InlineData("PrometheusText0.0.4", PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes)]
+    [InlineData("PrometheusText1.0.0", PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes)]
+    [InlineData("PrometheusText1.0.0", PrometheusTranslationStrategy.NoUTF8EscapingWithSuffixes)]
+    [InlineData("PrometheusText0.0.4", PrometheusTranslationStrategy.NoUTF8EscapingWithSuffixes)]
+    public async Task Prometheus_Can_Scrape_Metrics(
+        string scrapeProtocol,
+        PrometheusTranslationStrategy translationStrategy) => await GenerateMetricsAsync(
+        async (baseAddress) =>
     {
         // Arrange
         var prometheus = new PrometheusFixture()
@@ -208,12 +214,15 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
 
             await WaitForServiceDiscoveryAsync(prometheusBaseAddress, outputHelper, cts.Token);
 
-            // Prometheus negotiates the allow-utf-8 escaping scheme for the v1.0.0 text formats, so
-            // the OpenTelemetry instrument names (which contain '.') are exposed and stored verbatim
-            // using the quoted exposition format rather than being sanitized to '_'. When no scrape
-            // protocol is pinned Prometheus defaults to the v1.0.0 formats, so UTF-8 names are used
-            // unless a v0 protocol is explicitly negotiated.
-            var usesUtf8Names = !scrapeProtocol.Contains("0.0.", StringComparison.Ordinal);
+            // Prometheus negotiates the allow-utf-8 escaping scheme for the v1.0.0 text formats
+            // (and defaults to those formats when no scrape protocol is pinned), but negotiation is
+            // only ever applied on top of the configured translation strategy. UTF-8 names are
+            // therefore exposed and stored verbatim using the quoted exposition format only when
+            // the strategy does not escape them to '_' in the first place, and even then only if a
+            // v0 protocol is not explicitly negotiated.
+            var usesUtf8Names =
+                translationStrategy is PrometheusTranslationStrategy.NoUTF8EscapingWithSuffixes &&
+                !scrapeProtocol.Contains("0.0.", StringComparison.Ordinal);
 
             HashSet<string> expectedSeries = usesUtf8Names
                 ?
@@ -265,13 +274,57 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
             }
 
             Assert.ProperSuperset(expectedSeries, actualSeries);
+
+            // Verify that the histogram bucket boundaries round-trip correctly through the Prometheus text formats.
+            // See https://github.com/open-telemetry/opentelemetry-dotnet/discussions/7585.
+            var durationBuckets = usesUtf8Names
+                ? "http.server.request.duration_seconds_bucket"
+                : "http_server_request_duration_seconds_bucket";
+
+            string[] expectedBounds =
+            [
+                "+Inf",
+                "0.005",
+                "0.01",
+                "0.025",
+                "0.05",
+                "0.075",
+                "0.1",
+                "0.25",
+                "0.5",
+                "0.75",
+                "1.0",
+                "10.0",
+                "2.5",
+                "5.0",
+                "7.5",
+            ];
+
+            var actualBounds = await WaitForLabelValuesAsync(
+                prometheusBaseAddress,
+                durationBuckets,
+                "le",
+                outputHelper,
+                cts.Token);
+
+            Assert.Equal(expectedBounds, actualBounds);
         }
         finally
         {
-            (var stdout, var stderr) = await prometheus.TypedContainer.GetLogsAsync();
+            using (var logs = new CancellationTokenSource(TimeSpan.FromSeconds(30)))
+            {
+                try
+                {
+                    (var stdout, var stderr) = await prometheus.TypedContainer.GetLogsAsync(ct: logs.Token);
 
-            outputHelper.WriteLine($"[prometheus] [stdout]: {stdout}");
-            outputHelper.WriteLine($"[prometheus] [stderr]: {stderr}");
+                    outputHelper.WriteLine($"[prometheus] [stdout]: {stdout}");
+                    outputHelper.WriteLine($"[prometheus] [stderr]: {stderr}");
+                }
+                catch (Exception ex)
+                {
+                    outputHelper.WriteLine($"[prometheus] Exception while fetching the container logs: {ex}");
+                }
+            }
 
             await prometheus.DisposeAsync();
         }
@@ -343,6 +396,64 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
             return [];
         }
 
+        static async Task<string[]> WaitForLabelValuesAsync(
+            Uri baseAddress,
+            string metricName,
+            string labelName,
+            ITestOutputHelper outputHelper,
+            CancellationToken cancellationToken)
+        {
+            // See https://prometheus.io/docs/prometheus/latest/querying/api/#querying-label-values
+            var valuesUrl = QueryHelpers.AddQueryString(
+                $"/api/v1/label/{labelName}/values",
+                [
+                    KeyValuePair.Create<string, string?>("limit", "0"),
+                    KeyValuePair.Create<string, string?>("match[]", $"{{__name__=\"{metricName}\"}}"),
+                ]);
+
+            var valuesUri = new Uri(valuesUrl, UriKind.Relative);
+
+            var frequency = TimeSpan.FromMilliseconds(250);
+
+            using var client = new HttpClient() { BaseAddress = baseAddress };
+
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                try
+                {
+                    using var values = await client.GetFromJsonAsync<JsonDocument>(valuesUri, cancellationToken);
+
+                    if (values!.RootElement.ValueKind is JsonValueKind.Object &&
+                        values.RootElement.TryGetProperty("status", out var status) &&
+                        status.GetString() == "success")
+                    {
+                        var data = values.RootElement.GetProperty("data");
+
+                        if (data.GetArrayLength() > 0)
+                        {
+                            return [.. data.EnumerateArray().Select((p) => p.GetString()!)];
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    outputHelper.WriteLine($"[prometheus] Exception while waiting for label values: {ex}");
+                }
+
+                try
+                {
+                    await Task.Delay(frequency, cancellationToken);
+                }
+                catch (TaskCanceledException)
+                {
+                    break;
+                }
+            }
+
+            Assert.Fail($"Timed out waiting for the '{labelName}' label values of the '{metricName}' metric.");
+            return [];
+        }
+
         static async Task WaitForServiceDiscoveryAsync(
             Uri baseAddress,
             ITestOutputHelper outputHelper,
@@ -391,7 +502,8 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
 
             Assert.Fail($"Timed out waiting for service discovery active targets.");
         }
-    });
+    },
+        translationStrategy);
 
     [EnabledOnDockerPlatformTheory(DockerPlatform.Linux)]
     [InlineData("")]
@@ -430,7 +542,8 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
     });
 
     private static async Task GenerateMetricsAsync(
-        Func<Uri, Task> actAndAssert)
+        Func<Uri, Task> actAndAssert,
+        PrometheusTranslationStrategy translationStrategy = PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes)
     {
         // Arrange
         const string meterName = "prometheus.integration.tests";
@@ -481,7 +594,7 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
             {
                 builder.AddAspNetCoreInstrumentation()
                        .AddMeter(meter.Name)
-                       .AddPrometheusExporter()
+                       .AddPrometheusExporter((options) => options.TranslationStrategy = translationStrategy)
                        .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
                        .AddView(
                            counter.Name,

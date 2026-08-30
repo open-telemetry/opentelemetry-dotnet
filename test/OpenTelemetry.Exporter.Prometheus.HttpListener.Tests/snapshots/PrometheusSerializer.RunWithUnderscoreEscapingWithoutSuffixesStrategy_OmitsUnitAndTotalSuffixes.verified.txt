@@ -1,0 +1,2 @@
+﻿# TYPE http_server_requests counter
+http_server_requests{host="localhost"} 5

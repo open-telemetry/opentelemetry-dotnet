@@ -27,6 +27,7 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
         this.ScrapeResponseCacheDurationMilliseconds = options.ScrapeResponseCacheDurationMilliseconds;
         this.TargetInfoEnabled = options.TargetInfoEnabled;
         this.DisableTotalNameSuffixForCounters = options.DisableTotalNameSuffixForCounters;
+        this.TranslationStrategy = options.TranslationStrategy;
         this.ResourceConstantLabels = options.ResourceConstantLabels;
         this.MaxScrapeResponseSizeBytes = options.MaxScrapeResponseSizeBytes;
 
@@ -53,6 +54,10 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
     internal int ScrapeResponseCacheDurationMilliseconds { get; }
 
     internal bool DisableTotalNameSuffixForCounters { get; }
+
+    internal PrometheusTranslationStrategy TranslationStrategy { get; }
+
+    internal bool AppendSuffixes => this.TranslationStrategy.AppendSuffixes();
 
     internal Func<string, bool>? ResourceConstantLabels { get; }
 

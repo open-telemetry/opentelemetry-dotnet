@@ -33,19 +33,23 @@ public static class PrometheusAcceptHeaders
 
         string[] openMetricsV0 =
         [
-            "application/openmetrics-text",
             "application/openmetrics-text;version=0.0.1;q=0.6,*/*;q=0.5",
             "application/openmetrics-text; version=0.0.1",
             "application/openmetrics-text; version=0.0.1; charset=utf-8",
             "application/openmetrics-text; version=\"0.0.1\"",
-            "application/openmetrics-text; escaping=dots",
-            "application/openmetrics-text; escaping=values",
         ];
 
         foreach (var accept in openMetricsV0)
         {
             testCases.Add(accept, "application/openmetrics-text", true, "0.0.1", null);
         }
+
+        // Per https://prometheus.io/docs/specs/om/open_metrics_spec/#protocol-negotiation, negotiation
+        // "MUST default to the oldest version of the standard (i.e. 1.0.0)" when no version is requested,
+        // so an "application/openmetrics-text" entry without a version parameter negotiates 1.0.0, not 0.0.1.
+        testCases.Add("application/openmetrics-text", "application/openmetrics-text", true, "1.0.0", "underscores");
+        testCases.Add("application/openmetrics-text; escaping=dots", "application/openmetrics-text", true, "1.0.0", "dots");
+        testCases.Add("application/openmetrics-text; escaping=values", "application/openmetrics-text", true, "1.0.0", "values");
 
         string[] openMetricsV1 =
         [

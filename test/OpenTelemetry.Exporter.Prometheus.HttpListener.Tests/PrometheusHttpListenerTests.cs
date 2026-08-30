@@ -22,6 +22,9 @@ public class PrometheusHttpListenerTests
 
     private static readonly ConcurrentDictionary<int, int> ConsumedPorts = [];
 
+    private static readonly TimeSpan DeadlineMargin = TimeSpan.FromSeconds(1);
+    private static readonly TimeSpan MaxCollectWait = TimeSpan.FromSeconds(30);
+
     [Fact]
     public async Task RunHttpServerWithDefaultOptions()
     {
@@ -278,6 +281,8 @@ public class PrometheusHttpListenerTests
     [Fact]
     public async Task ProcessRequest_Returns503_AfterDisposal()
     {
+        EnsureThreadPoolWorkerThreadsAvailable();
+
         using var meter = new Meter(MeterName, MeterVersion);
 
         var port = GetRandomPort();
@@ -324,10 +329,25 @@ public class PrometheusHttpListenerTests
         // Wait until the request is actually inside the Collect delegate.
         Assert.True(collectEntered.Wait(TimeSpan.FromSeconds(10)), "Request did not enter Collect in time.");
 
-        // Dispose the provider on a background thread. This sets disposed = true,
+        // Dispose the provider on a dedicated thread. This sets disposed = true,
         // cancels the CancellationToken, and then blocks on SpinWait waiting for
-        // the in-flight request to drain.
-        var disposeTask = Task.Run(provider.Dispose);
+        // the in-flight request to drain. A dedicated thread is used rather than a
+        // thread pool work item because the held request already owns a pool worker:
+        // on a busy agent a queued work item can sit unstarted for longer than the
+        // window below, and the scrape would then be released before disposal had
+        // cancelled anything, producing a 200 instead of a 503.
+        using var disposeStarted = new ManualResetEventSlim(false);
+        var disposeTask = Task.Factory.StartNew(
+            () =>
+            {
+                disposeStarted.Set();
+                provider.Dispose();
+            },
+            CancellationToken.None,
+            TaskCreationOptions.LongRunning,
+            TaskScheduler.Default);
+
+        Assert.True(disposeStarted.Wait(TimeSpan.FromSeconds(10)), "Disposal did not start in time.");
 
         // Confirm Dispose() is actually blocked (meaning it has cancelled the
         // token and is now waiting for activeRequestCount to reach 0). If
@@ -337,9 +357,9 @@ public class PrometheusHttpListenerTests
         var completed = await Task.WhenAny(disposeTask, Task.Delay(timeout, cts.Token));
         Assert.NotSame(disposeTask, completed);
 
-        // Release the blocker so EnterCollect can finish.
-        // After EnterCollect completes, ProcessRequestAsync will hit
-        // cancellationToken.ThrowIfCancellationRequested() and return 503.
+        // Release the blocker so EnterCollect can finish. Once it has,
+        // ProcessRequestAsync observes that disposal has started and returns 503
+        // instead of sending the collected response.
         collectBlocker.Set();
 
         // Wait for both the scrape response and disposal to complete.
@@ -347,6 +367,36 @@ public class PrometheusHttpListenerTests
         await disposeTask;
 
         Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+    }
+
+    [Fact]
+    public void StartIsIdempotentWhenAlreadyStarted()
+    {
+        using var context = CreateListener();
+
+        var exception = Record.Exception(() => context.Listener.Start());
+
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public async Task ScrapeEndpointPathWithoutLeadingSlashIsNormalized()
+    {
+        using var meter = new Meter(MeterName, MeterVersion);
+
+        using var context = CreateMeterProvider(meter, configureListener: (options) =>
+        {
+            options.Port = GetRandomPort();
+            options.ScrapeEndpointPath = "custom-metrics";
+            return options.Port;
+        });
+
+        meter.CreateCounter<int>("test_counter").Add(1);
+
+        using var client = new HttpClient { BaseAddress = context.BaseAddress };
+        using var response = await client.GetAsync(new Uri("custom-metrics", UriKind.Relative));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     [Fact]
@@ -377,6 +427,8 @@ public class PrometheusHttpListenerTests
     [Fact]
     public async Task HttpListenerHandlesConcurrentScrapes()
     {
+        EnsureThreadPoolWorkerThreadsAvailable();
+
         var timeout = TimeSpan.FromSeconds(5);
 
         using var firstCollectStarted = new ManualResetEventSlim();
@@ -463,19 +515,28 @@ public class PrometheusHttpListenerTests
     public async Task WhenRequestDeadlineExceeded_Returns408(string value)
     {
         // The scrape timeout is enforced via CancellationTokenSource.CancelAfter, whose
-        // cancellation callback is dispatched on the thread pool. The Collect callback below
-        // blocks a worker thread synchronously, and the listener only checks the token once
-        // Collect returns. If the pool is saturated (e.g. by sibling tests in CI) the timer
-        // callback can be delayed past that point, leaving the token un-cancelled and producing
-        // a 200 instead of a 408. Guarantee a worker thread is available to run the timer
-        // callback promptly so the timeout is observed deterministically.
+        // cancellation callback is dispatched on the thread pool, and the listener only
+        // checks the token once Collect has returned. Blocking Collect for a fixed time
+        // assumes that callback will have run by then, which is not so when the pool is
+        // saturated (as it is when sibling test assemblies run alongside this one in CI):
+        // the callback is delayed past the sleep, the token is still un-cancelled, and the
+        // response is a 200. So wait on a timer of this test's own instead, which ties the
+        // wait to the pool actually dispatching timer callbacks rather than to the clock.
+        // It has to be armed here, on entry to the collection, rather than up front: the
+        // listener arms its deadline only once the request reaches its handler, so a timer
+        // started before the request is sent comes due first whenever establishing the
+        // connection takes longer than the margin, and the collection then returns while
+        // the listener's own token is still live.
         EnsureThreadPoolWorkerThreadsAvailable();
+
+        var scrapeTimeout = TimeSpan.FromSeconds(double.Parse(value, CultureInfo.InvariantCulture));
 
         using var context = CreateListener();
 
         context.Exporter.Collect = _ =>
         {
-            Thread.Sleep(TimeSpan.FromSeconds(2));
+            using var deadlinePassed = new CancellationTokenSource(scrapeTimeout + DeadlineMargin);
+            deadlinePassed.Token.WaitHandle.WaitOne(MaxCollectWait);
             return true;
         };
 
@@ -645,7 +706,7 @@ public class PrometheusHttpListenerTests
 
             contentType ??=
                 requestOpenMetrics ?
-                "application/openmetrics-text; version=0.0.1; charset=utf-8" :
+                "application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores" :
                 "text/plain; version=0.0.4; charset=utf-8";
 
             Assert.NotNull(response.Content);
@@ -672,9 +733,7 @@ public class PrometheusHttpListenerTests
                   + "# HELP target_info Target metadata\n"
                   + "target_info{service_name='my_service',service_instance_id='id1'} 1\n"
                   + "# TYPE counter_double_bytes_total counter\n"
-                  + "# UNIT counter_double_bytes_total bytes\n"
-                  + $"counter_double_bytes_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',{additionalTags}key1='value1',key2='value2'}} 101.17\n"
-                  + "# EOF\n";
+                  + $"counter_double_bytes_total{{otel_scope_name='{MeterName}',otel_scope_version='{MeterVersion}',{additionalTags}key1='value1',key2='value2'}} 101.17\n";
 
             Assert.Matches(("^" + expected + "$").Replace('\'', '"'), content);
         }

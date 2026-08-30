@@ -8,6 +8,7 @@ on:
         options:
         - core-
         - coreunstable-
+        - declarativeconfig-
         description: 'Release tag prefix'
         required: true
       version:
@@ -49,13 +50,13 @@ jobs:
       uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
       id: otelbot-token
       with:
-        client-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
+        client-id: ${{ vars.OTELBOT_DOTNET_CLIENT_ID }}
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
         permission-contents: write
         permission-pull-requests: write
 
     - name: Checkout code
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         persist-credentials: true # zizmor: ignore[artipacked] Needed to push commits
         show-progress: false
@@ -101,13 +102,13 @@ jobs:
       uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
       id: otelbot-token
       with:
-        client-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
+        client-id: ${{ vars.OTELBOT_DOTNET_CLIENT_ID }}
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
         permission-contents: read
         permission-pull-requests: write
 
     - name: Checkout code
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         persist-credentials: true # zizmor: ignore[artipacked] Needed to push commits
         show-progress: false
@@ -148,13 +149,13 @@ jobs:
       uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
       id: otelbot-token
       with:
-        client-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
+        client-id: ${{ vars.OTELBOT_DOTNET_CLIENT_ID }}
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
         permission-contents: write
         permission-pull-requests: write
 
     - name: Checkout code
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         # Note: By default GitHub only fetches 1 commit which fails the git tag operation below
         fetch-depth: 0
@@ -202,13 +203,13 @@ jobs:
       uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
       id: otelbot-token
       with:
-        client-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
+        client-id: ${{ vars.OTELBOT_DOTNET_CLIENT_ID }}
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
         permission-contents: write
         permission-pull-requests: write
 
     - name: Checkout code
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         # Note: By default GitHub only fetches 1 commit which fails the git tag operation below
         fetch-depth: 0
@@ -257,13 +258,13 @@ jobs:
       uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
       id: otelbot-token
       with:
-        client-id: ${{ vars.OTELBOT_DOTNET_APP_ID }}
+        client-id: ${{ vars.OTELBOT_DOTNET_CLIENT_ID }}
         private-key: ${{ secrets.OTELBOT_DOTNET_PRIVATE_KEY }}
         permission-contents: write
         permission-pull-requests: write
 
     - name: Checkout code
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         # Note: By default GitHub only fetches 1 commit which fails the git tag operation below
         fetch-depth: 0

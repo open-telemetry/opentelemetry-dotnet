@@ -3,6 +3,7 @@
 
 #if NET
 using System.Buffers;
+using System.Collections.Immutable;
 #endif
 using System.Diagnostics;
 using OpenTelemetry.Context.Propagation;
@@ -30,11 +31,17 @@ public class JaegerPropagator : TextMapPropagator
 
 #if NET
     private static readonly SearchValues<char> DelimiterHintChars = SearchValues.Create(":%");
+    private static readonly ImmutableHashSet<string> AllFields = [JaegerHeader];
+#else
+    private static readonly HashSet<string> AllFields = [JaegerHeader];
 #endif
 
     /// <inheritdoc/>
+    /// <remarks>
+    /// Callers should not modify the returned set.
+    /// </remarks>
 #pragma warning disable CS0809 // Obsolete member overrides non-obsolete member
-    public override ISet<string> Fields => new HashSet<string> { JaegerHeader };
+    public override ISet<string> Fields => AllFields;
 #pragma warning restore CS0809 // Obsolete member overrides non-obsolete member
 
     /// <inheritdoc/>
@@ -166,14 +173,30 @@ public class JaegerPropagator : TextMapPropagator
             traceIdStr = traceIdStr.PadLeft(TraceId128BitLength, '0');
         }
 
-        traceId = ActivityTraceId.CreateFromString(traceIdStr.AsSpan());
+        try
+        {
+            traceId = ActivityTraceId.CreateFromString(traceIdStr.AsSpan());
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            // Invalid format
+            return false;
+        }
 
         if (spanIdStr.Length < SpanIdLength)
         {
             spanIdStr = spanIdStr.PadLeft(SpanIdLength, '0');
         }
 
-        spanId = ActivitySpanId.CreateFromString(spanIdStr.AsSpan());
+        try
+        {
+            spanId = ActivitySpanId.CreateFromString(spanIdStr.AsSpan());
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            // Invalid format
+            return false;
+        }
 
         if (string.Equals(SampledValue, traceFlagsStr, StringComparison.Ordinal))
         {
@@ -277,33 +300,31 @@ public class JaegerPropagator : TextMapPropagator
             scanOffset = delimiterIndex + 1;
         }
 #else
-        var colonIndex = header.IndexOf(JaegerDelimiter, position, StringComparison.Ordinal);
-        var encodedIndex = header.IndexOf(JaegerDelimiterEncoded, position, StringComparison.Ordinal);
-
-        var nextIndex = -1;
-        var delimiterLength = 0;
-
-        if (colonIndex >= 0 && (encodedIndex < 0 || colonIndex < encodedIndex))
+        for (var i = position; i < header.Length; i++)
         {
-            nextIndex = colonIndex;
-            delimiterLength = JaegerDelimiter.Length;
-        }
-        else if (encodedIndex >= 0)
-        {
-            nextIndex = encodedIndex;
-            delimiterLength = JaegerDelimiterEncoded.Length;
-        }
+            var current = header[i];
 
-        if (nextIndex < 0)
-        {
-            var result = header.AsSpan(position);
-            position = header.Length;
-            return result;
+            if (current == ':')
+            {
+                var component = header.AsSpan(position, i - position);
+                position = i + 1;
+                return component;
+            }
+
+            if (current == '%' &&
+                i + JaegerDelimiterEncoded.Length <= header.Length &&
+                header[i + 1] == '3' &&
+                header[i + 2] == 'A')
+            {
+                var component = header.AsSpan(position, i - position);
+                position = i + JaegerDelimiterEncoded.Length;
+                return component;
+            }
         }
 
-        var component = header.AsSpan(position, nextIndex - position);
-        position = nextIndex + delimiterLength;
-        return component;
+        var result = header.AsSpan(position);
+        position = header.Length;
+        return result;
 #endif
     }
 }

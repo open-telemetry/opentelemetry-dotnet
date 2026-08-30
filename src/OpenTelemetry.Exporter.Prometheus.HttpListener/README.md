@@ -68,6 +68,9 @@ variables.
   added to each metric as constant labels (default `null`).
 * `DisableTotalNameSuffixForCounters`: Whether to disable the `_total` suffix for
   counter metrics (default `false`).
+* `TranslationStrategy`: Controls how OpenTelemetry metric and label names are
+  translated into Prometheus names (default `UnderscoreEscapingWithSuffixes`).
+  See [TranslationStrategy](#translationstrategy) below.
 * `DisableTimestamp`: Whether to disable the timestamp for metrics (default `false`).
 * `ConfigureHttpListener`: A delegate that can be used to apply custom configuration
   to the `HttpListener` instance used by the exporter before use.
@@ -139,6 +142,39 @@ var meterProvider = Sdk.CreateMeterProviderBuilder()
     })
     .Build();
 ```
+
+### TranslationStrategy
+
+Controls how OpenTelemetry metric and label names are translated into Prometheus
+names, following the OpenTelemetry specification's `translation_strategy` option.
+The strategy combines two independent choices: whether discouraged characters are
+escaped to `_` or UTF-8 names are passed through unaltered, and whether unit and
+type (e.g. `_total`) suffixes are appended.
+
+| Strategy | Escaping | Suffixes |
+| -------- | -------- | -------- |
+| `UnderscoreEscapingWithSuffixes` (default) | Escape to `_` | Appended |
+| `UnderscoreEscapingWithoutSuffixes` | Escape to `_` | Not appended |
+| `NoUTF8EscapingWithSuffixes` | UTF-8 passthrough | Appended |
+| `NoTranslation` | UTF-8 passthrough | Not appended |
+
+The strategy is applied first, when names are constructed. Content negotiation is
+then applied on top of the result, using the scheme requested by the `escaping`
+parameter of the `Accept` header (supported by the version 1.0.0 and later text
+formats). Negotiation can never revert escaping the strategy has already applied,
+and a request which does not negotiate an escaping scheme is treated the same as
+one requesting `underscores`. For a counter named `foo.bar` with unit `By`:
+
+| Strategy | No `escaping` parameter, or `escaping=underscores` | `escaping=allow-utf-8` |
+| -------- | -------- | -------- |
+| `UnderscoreEscapingWithSuffixes` | `foo_bar_bytes_total` | `foo_bar_bytes_total` |
+| `UnderscoreEscapingWithoutSuffixes` | `foo_bar` | `foo_bar` |
+| `NoUTF8EscapingWithSuffixes` | `foo_bar_bytes_total` | `foo.bar_bytes_total` |
+| `NoTranslation` | `foo_bar` | `foo.bar` |
+
+The classic (pre-1.0.0) text formats do not support escaping negotiation and are
+always emitted using underscore escaping; the suffix choice applies to every
+format.
 
 ## Troubleshooting
 

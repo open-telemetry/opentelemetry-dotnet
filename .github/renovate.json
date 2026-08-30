@@ -32,6 +32,7 @@
     "config:best-practices",
     "customManagers:dockerfileVersions",
     "customManagers:githubActionsVersions",
+    "helpers:pinGitHubActionDigestsToSemver",
     ":automergeRequireAllStatusChecks",
     ":disableRateLimiting",
     ":enableVulnerabilityAlerts",
@@ -90,6 +91,11 @@
       "description": ["Disable major version updates for .NET"],
       "matchUpdateTypes": ["major"],
       "enabled": false
+    },
+    {
+      "extends": ["monorepo:opentelemetry-dotnet-contrib"],
+      "description": ["Allow prerelease versions of .NET OpenTelemetry contrib packages"],
+      "ignoreUnstable": false
     },
     {
       "matchDepNames": ["xunit"],

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using System.Numerics;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics;
@@ -25,6 +26,7 @@ internal sealed partial class Base2ExponentialBucketHistogram
 
     internal ExponentialHistogramData SnapshotExponentialHistogramData = new();
 
+    private readonly int maxScale;
     private int scale;
     private double scalingFactor; // 2 ^ scale / log(2)
 
@@ -89,6 +91,7 @@ internal sealed partial class Base2ExponentialBucketHistogram
         */
         Guard.ThrowIfOutOfRange(maxBuckets, min: 2);
 
+        this.maxScale = scale;
         this.Scale = scale;
         this.PositiveBuckets = new CircularBufferBuckets(maxBuckets);
         this.NegativeBuckets = new CircularBufferBuckets(maxBuckets);
@@ -128,7 +131,7 @@ internal sealed partial class Base2ExponentialBucketHistogram
     /// </returns>
     public int MapToIndex(double value)
     {
-        Debug.Assert(MathHelper.IsFinite(value), "IEEE-754 +Inf, -Inf and NaN should be filtered out before calling this method.");
+        Debug.Assert(double.IsFinite(value), "IEEE-754 +Inf, -Inf and NaN should be filtered out before calling this method.");
         Debug.Assert(value != 0, "IEEE-754 zero values should be handled by ZeroCount.");
         Debug.Assert(value > 0, "IEEE-754 negative values should be normalized before calling this method.");
 
@@ -137,16 +140,23 @@ internal sealed partial class Base2ExponentialBucketHistogram
 
         if (this.Scale > 0)
         {
-            // TODO: do we really need this given the lookup table is needed for scale>0 anyways?
+            // Exact powers of two must be special-cased: computing the index via Math.Log below
+            // is not exact and would misassign a meaningful fraction of exact powers of two to the
+            // wrong bucket. This mirrors the OpenTelemetry specification, which requires an exact
+            // mapping for powers of two even when using the logarithm method for the general case.
+            // See "All Scales: Use the Logarithm Function" in
+            // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#all-scales-use-the-logarithm-function.
             if (fraction == 0)
             {
                 var exp = (int)((bits & 0x7FF0000000000000L /* exponent mask */) >> 52 /* fraction width */);
                 return ((exp - 1023 /* exponent bias */) << this.Scale) - 1;
             }
 
-            // TODO: due to precision issue, the values that are close to the bucket
-            // boundaries should be closely examined to avoid off-by-one.
-
+            // Math.Log is not guaranteed to be exactly correct near bucket boundaries, so values
+            // very close to a boundary can occasionally be mapped to the wrong bucket. This is a
+            // known, accepted limitation of the logarithm method: per the specification, "Defining
+            // an exact mapping function is out of scope" for scale > 0. See
+            // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#all-scales-use-the-logarithm-function.
             return (int)Math.Ceiling(Math.Log(value) * this.scalingFactor) - 1;
         }
         else
@@ -155,7 +165,7 @@ internal sealed partial class Base2ExponentialBucketHistogram
 
             if (exp == 0)
             {
-                exp -= MathHelper.LeadingZero64(fraction - 1) - 12 /* 64 - fraction width */;
+                exp -= BitOperations.LeadingZeroCount((ulong)fraction - 1) - 12 /* 64 - fraction width */;
             }
             else if (fraction == 0)
             {
@@ -168,7 +178,7 @@ internal sealed partial class Base2ExponentialBucketHistogram
 
     public void Record(double value)
     {
-        if (!MathHelper.IsFinite(value))
+        if (!double.IsFinite(value))
         {
             return;
         }
@@ -205,7 +215,7 @@ internal sealed partial class Base2ExponentialBucketHistogram
             this.RunningMax = double.NegativeInfinity;
         }
 
-        this.Scale = Metric.DefaultExponentialHistogramMaxScale;
+        this.Scale = this.maxScale;
         this.RunningSum = 0;
         this.ZeroCount = 0;
         this.PositiveBuckets.Reset();
@@ -221,16 +231,15 @@ internal sealed partial class Base2ExponentialBucketHistogram
     }
 
     internal ExponentialHistogramData GetExponentialHistogramData()
-    {
-        return this.SnapshotExponentialHistogramData;
-    }
+        => this.SnapshotExponentialHistogramData;
 
     internal Base2ExponentialBucketHistogram Copy()
     {
         Debug.Assert(this.PositiveBuckets.Capacity == this.NegativeBuckets.Capacity, "Capacity of positive and negative buckets are not equal.");
 
-        return new Base2ExponentialBucketHistogram(this.PositiveBuckets.Capacity, this.SnapshotExponentialHistogramData.Scale)
+        return new Base2ExponentialBucketHistogram(this.PositiveBuckets.Capacity, this.maxScale)
         {
+            Scale = this.SnapshotExponentialHistogramData.Scale,
             SnapshotSum = this.SnapshotSum,
             SnapshotMin = this.SnapshotMin,
             SnapshotMax = this.SnapshotMax,

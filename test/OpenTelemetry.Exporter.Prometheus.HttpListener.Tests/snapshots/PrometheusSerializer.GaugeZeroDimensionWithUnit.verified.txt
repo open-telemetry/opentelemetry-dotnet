@@ -1,3 +1,2 @@
 ﻿# TYPE test_gauge_seconds gauge
-# UNIT test_gauge_seconds seconds
 test_gauge_seconds{otel_scope_name="GaugeZeroDimensionWithUnit"} 123

@@ -3,11 +3,14 @@
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using System.Diagnostics.Tracing;
 using System.Reflection;
 using Google.Protobuf;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
@@ -939,35 +942,232 @@ public sealed class OtlpMetricsExporterTests : IDisposable
 
         var batch = new Batch<Metric>([.. metrics], metrics.Count);
 
-        var buffer = new byte[50];
-        var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, ResourceBuilder.CreateEmpty().Build(), in batch);
-        using var stream = new MemoryStream(buffer, 0, writePosition);
+        var buffer = ProtobufSerializer.RentBuffer(50);
+        try
+        {
+            var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, ResourceBuilder.CreateEmpty().Build(), in batch);
+            using var stream = new MemoryStream(buffer, 0, writePosition);
 
-        var metricsData = OtlpMetrics.MetricsData.Parser.ParseFrom(stream);
+            var metricsData = OtlpMetrics.MetricsData.Parser.ParseFrom(stream);
 
-        var request = new OtlpCollector.ExportMetricsServiceRequest();
-        request.ResourceMetrics.Add(metricsData.ResourceMetrics);
+            var request = new OtlpCollector.ExportMetricsServiceRequest();
+            request.ResourceMetrics.Add(metricsData.ResourceMetrics);
 
-        Assert.True(buffer.Length > 50);
+            Assert.True(buffer.Length > 50);
 
-        Assert.Single(request.ResourceMetrics);
-        var resourceMetric = request.ResourceMetrics.First();
+            Assert.Single(request.ResourceMetrics);
+            var resourceMetric = request.ResourceMetrics.First();
 
-        Assert.Single(resourceMetric.ScopeMetrics);
-        var instrumentationLibraryMetrics = resourceMetric.ScopeMetrics.First();
-        Assert.Equal(string.Empty, instrumentationLibraryMetrics.SchemaUrl);
-        Assert.Equal(meter.Name, instrumentationLibraryMetrics.Scope.Name);
-        Assert.Equal("0.0.1", instrumentationLibraryMetrics.Scope.Version);
+            Assert.Single(resourceMetric.ScopeMetrics);
+            var instrumentationLibraryMetrics = resourceMetric.ScopeMetrics.First();
+            Assert.Equal(string.Empty, instrumentationLibraryMetrics.SchemaUrl);
+            Assert.Equal(meter.Name, instrumentationLibraryMetrics.Scope.Name);
+            Assert.Equal("0.0.1", instrumentationLibraryMetrics.Scope.Version);
 
-        Assert.Equal(2, instrumentationLibraryMetrics.Scope.Attributes.Count);
-        Assert.Contains(instrumentationLibraryMetrics.Scope.Attributes, (kvp) => kvp.Key == "key1" && kvp.Value.StringValue == "value1");
-        Assert.Contains(instrumentationLibraryMetrics.Scope.Attributes, (kvp) => kvp.Key == "key2" && kvp.Value.StringValue == "value2");
+            Assert.Equal(2, instrumentationLibraryMetrics.Scope.Attributes.Count);
+            Assert.Contains(instrumentationLibraryMetrics.Scope.Attributes, (kvp) => kvp.Key == "key1" && kvp.Value.StringValue == "value1");
+            Assert.Contains(instrumentationLibraryMetrics.Scope.Attributes, (kvp) => kvp.Key == "key2" && kvp.Value.StringValue == "value2");
+        }
+        finally
+        {
+            // The serializer may have grown (and swapped) the buffer, so return
+            // whatever buffer it ended up with to the pool.
+            ProtobufSerializer.ReturnBuffer(buffer);
+        }
+    }
+
+    [Fact]
+    public void Export_MaxRequestSizeBytesTooSmallToSerialize_DropsBatch()
+    {
+        const int BufferExceededMaxSizeEventId = 14;
+        const int BatchDroppedEventId = 39;
+
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Error);
+
+        var exportClient = new TestExportClient();
+        var exporterOptions = new OtlpExporterOptions
+        {
+            Protocol = OtlpExportProtocol.HttpProtobuf,
+
+            // The smallest limit allowed, which the batch below overruns by enough
+            // that the buffer cannot be grown to serialize it at all.
+            MaxRequestSizeBytes = OtlpExporterOptions.MinimumMaxRequestSizeBytes,
+        };
+
+        using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClient, exporterOptions.TimeoutMilliseconds);
+        using var exporter = new OtlpMetricExporter(exporterOptions, new ExperimentalOptions(), transmissionHandler);
+
+        Assert.Equal(ExportResult.Failure, exporter.Export(GenerateHighCardinalityMetricBatch(cardinality: 50_000)));
+        Assert.False(exportClient.SendExportRequestCalled);
+
+        Assert.Single(listener.Messages, e => e.EventId == BufferExceededMaxSizeEventId);
+        Assert.Single(listener.Messages, e => e.EventId == BatchDroppedEventId);
+    }
+
+    [Fact]
+    public void Export_RequestExceedingMaxRequestSizeBytes_IsNotSubmitted()
+    {
+        const int BufferExceededMaxSizeEventId = 14;
+        const int RequestDiscardedEventId = 41;
+        const int Cardinality = 50_000;
+
+        var requestSize = MeasureRequestSize(Cardinality);
+
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Error);
+
+        var exportClient = new TestExportClient();
+        var exporterOptions = new OtlpExporterOptions
+        {
+            Protocol = OtlpExportProtocol.HttpProtobuf,
+
+            // One byte under the payload. The array pool can still hand back a
+            // buffer large enough to serialize into, so only an explicit check on
+            // the serialized size can keep the request from being made.
+            MaxRequestSizeBytes = requestSize - 1,
+        };
+
+        using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClient, exporterOptions.TimeoutMilliseconds);
+        using var exporter = new OtlpMetricExporter(exporterOptions, new ExperimentalOptions(), transmissionHandler);
+
+        Assert.Equal(ExportResult.Failure, exporter.Export(GenerateHighCardinalityMetricBatch(Cardinality)));
+        Assert.False(exportClient.SendExportRequestCalled);
+        Assert.Equal(0, exportClient.LastContentLength);
+
+        // Which diagnostic fires depends on the array pool. Where it rounds the
+        // rented buffer up past the limit (.NET), serialization succeeds and the
+        // request is discarded; where it returns the exact size requested (.NET
+        // Framework), the buffer is a byte short and growth is refused first.
+        Assert.Contains(
+            listener.Messages,
+            e => e.EventId is RequestDiscardedEventId or BufferExceededMaxSizeEventId);
+    }
+
+    [Theory]
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
+    [InlineData(OtlpExportProtocol.Grpc)]
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
+    [InlineData(OtlpExportProtocol.HttpProtobuf)]
+    public void Export_RequestExactlyAtMaxRequestSizeBytes_IsSubmitted(OtlpExportProtocol protocol)
+    {
+        const int Cardinality = 50_000;
+        const int GrpcHeaderSize = 5;
+
+        var requestSize = MeasureRequestSize(Cardinality, protocol);
+
+        var exportClient = new TestExportClient();
+        var exporterOptions = new OtlpExporterOptions
+        {
+            MaxRequestSizeBytes = requestSize,
+            Protocol = protocol,
+        };
+
+        using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClient, exporterOptions.TimeoutMilliseconds);
+        using var exporter = new OtlpMetricExporter(exporterOptions, new ExperimentalOptions(), transmissionHandler);
+
+        Assert.Equal(ExportResult.Success, exporter.Export(GenerateHighCardinalityMetricBatch(Cardinality)));
+
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
+        var expectedContentLength = protocol == OtlpExportProtocol.Grpc ? requestSize + GrpcHeaderSize : requestSize;
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
+
+        Assert.Equal(expectedContentLength, exportClient.LastContentLength);
+    }
+
+    [Theory]
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
+    [InlineData(OtlpExportProtocol.Grpc)]
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
+    [InlineData(OtlpExportProtocol.HttpProtobuf)]
+    public void Export_RaisingMaxRequestSizeBytes_AllowsLargerBatch(OtlpExportProtocol protocol)
+    {
+        var exportClient = new TestExportClient();
+        var exporterOptions = new OtlpExporterOptions
+        {
+            MaxRequestSizeBytes = 16 * 1024 * 1024,
+            Protocol = protocol,
+        };
+
+        using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClient, exporterOptions.TimeoutMilliseconds);
+        using var exporter = new OtlpMetricExporter(exporterOptions, new ExperimentalOptions(), transmissionHandler);
+
+        // The same batch dropped by the smaller limits above.
+        Assert.Equal(ExportResult.Success, exporter.Export(GenerateHighCardinalityMetricBatch(cardinality: 50_000)));
+        Assert.True(exportClient.SendExportRequestCalled);
+        Assert.True(
+            exportClient.LastContentLength > OtlpExporterOptions.MinimumMaxRequestSizeBytes,
+            $"Expected a payload larger than the smallest limit but was {exportClient.LastContentLength}.");
+    }
+
+    [Fact]
+    public void Export_WhenSerializationFails_ReportsDroppedBatchAndDoesNotSubmitRequest()
+    {
+        const int BatchDroppedEventId = 39;
+        const int ExportMethodExceptionEventId = 4;
+
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Error);
+
+        var exportClientMock = new TestExportClient();
+        var exporterOptions = new OtlpExporterOptions();
+        using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClientMock, exporterOptions.TimeoutMilliseconds);
+        using var exporter = new OtlpMetricExporter(exporterOptions, new ExperimentalOptions(), transmissionHandler);
+
+        // A null item is a stand-in for any exception escaping the
+        // serializer. The failures which can reach here in practice, and the
+        // serializer state left behind by them, are covered by
+        // ProtobufOtlpSerializerExceptionSafetyTests.
+        var result = exporter.Export(new Batch<Metric>([null!], 1));
+
+        Assert.Equal(ExportResult.Failure, result);
+        Assert.False(exportClientMock.SendExportRequestCalled);
+
+        var droppedEvent = Assert.Single(listener.Messages, e => e.EventId == BatchDroppedEventId);
+        Assert.NotNull(droppedEvent.Payload);
+        Assert.Equal("Metrics", droppedEvent.Payload[0]);
+        Assert.Equal(1L, droppedEvent.Payload[1]);
+        Assert.Contains(nameof(NullReferenceException), Assert.IsType<string>(droppedEvent.Payload[2]), StringComparison.Ordinal);
+
+        // The batch has been attributed to a signal and an item count, so it must
+        // not also be reported as an unknown export error.
+        Assert.DoesNotContain(listener.Messages, e => e.EventId == ExportMethodExceptionEventId);
     }
 
     public void Dispose()
     {
         OtlpSpecConfigDefinitionTests.ClearEnvVars();
         GC.SuppressFinalize(this);
+    }
+
+    [Fact]
+    public void TestDataPointAttributeWithThrowingToStringIsDropped()
+    {
+        // An attribute whose value cannot be serialized must be left out of the payload
+        // entirely - not written as an empty KeyValue. Metric data points carry no
+        // dropped-attribute count, so the attribute is simply absent.
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        var counter = meter.CreateCounter<long>("test_counter");
+        counter.Add(
+            123,
+            new KeyValuePair<string, object?>("GoodTag", "value"),
+            new KeyValuePair<string, object?>("ThrowingTag", new ToStringThrows()));
+
+        provider.ForceFlush();
+
+        var batch = new Batch<Metric>([.. metrics], metrics.Count);
+        var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
+
+        var actual = request.ResourceMetrics.Single().ScopeMetrics.Single().Metrics.Single();
+        var dataPoint = Assert.Single(actual.Sum.DataPoints);
+
+        var attribute = Assert.Single(dataPoint.Attributes);
+        Assert.Equal("GoodTag", attribute.Key);
+        Assert.Equal("value", attribute.Value.StringValue);
     }
 
     [Theory]
@@ -1132,6 +1332,59 @@ public sealed class OtlpMetricsExporterTests : IDisposable
         Assert.Equal(MetricType.ExponentialHistogram, metric.MetricType);
     }
 
+    private static int MeasureRequestSize(int cardinality)
+        => MeasureRequestSize(cardinality, OtlpExportProtocol.HttpProtobuf);
+
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
+    private static int MeasureRequestSize(int cardinality, OtlpExportProtocol protocol)
+    {
+        const int GrpcHeaderSize = 5;
+
+        var client = new TestExportClient();
+        var options = new OtlpExporterOptions { Protocol = protocol };
+
+        using (var handler = new OtlpExporterTransmissionHandler(client, options.TimeoutMilliseconds))
+        using (var exporter = new OtlpMetricExporter(options, new ExperimentalOptions(), handler))
+        {
+            Assert.Equal(ExportResult.Success, exporter.Export(GenerateHighCardinalityMetricBatch(cardinality)));
+        }
+
+        Assert.True(client.LastContentLength > 0, "The batch produced an empty payload.");
+
+        return protocol == OtlpExportProtocol.Grpc
+            ? client.LastContentLength - GrpcHeaderSize
+            : client.LastContentLength;
+    }
+#pragma warning restore CS0618 // Suppressing gRPC obsolete warning
+
+    private static Batch<Metric> GenerateHighCardinalityMetricBatch(int cardinality)
+    {
+        var exported = new List<Metric>();
+        var meterName = $"{nameof(GenerateHighCardinalityMetricBatch)}.{Guid.NewGuid():N}";
+
+        int count;
+
+        using (var meter = new Meter(meterName))
+        using (var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meterName)
+            .AddView("*", new MetricStreamConfiguration { CardinalityLimit = cardinality + 10 })
+            .AddInMemoryExporter(exported)
+            .Build())
+        {
+            var counter = meter.CreateCounter<long>("test.counter");
+            for (var i = 0; i < cardinality; i++)
+            {
+                counter.Add(1, new KeyValuePair<string, object?>("tag", $"value-{i}"));
+            }
+
+            Assert.True(meterProvider.ForceFlush());
+
+            count = exported.Count;
+        }
+
+        return new Batch<Metric>([.. exported], count);
+    }
+
     private static void VerifyExemplars<T>(long? longValue, double? doubleValue, bool enableExemplars, Func<T, OtlpMetrics.Exemplar?> getExemplarFunc, T state)
     {
         var exemplar = getExemplarFunc(state);
@@ -1158,14 +1411,28 @@ public sealed class OtlpMetricsExporterTests : IDisposable
 
     private static OtlpCollector.ExportMetricsServiceRequest CreateMetricExportRequest(in Batch<Metric> batch, Resource resource)
     {
-        var buffer = new byte[4096];
-        var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, resource, in batch);
-        using var stream = new MemoryStream(buffer, 0, writePosition);
+        var buffer = ProtobufSerializer.RentBuffer(4096);
+        try
+        {
+            var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, resource, in batch);
+            using var stream = new MemoryStream(buffer, 0, writePosition);
 
-        var metricsData = OtlpMetrics.MetricsData.Parser.ParseFrom(stream);
+            var metricsData = OtlpMetrics.MetricsData.Parser.ParseFrom(stream);
 
-        var request = new OtlpCollector.ExportMetricsServiceRequest();
-        request.ResourceMetrics.Add(metricsData.ResourceMetrics);
-        return request;
+            var request = new OtlpCollector.ExportMetricsServiceRequest();
+            request.ResourceMetrics.Add(metricsData.ResourceMetrics);
+            return request;
+        }
+        finally
+        {
+            // The serializer may have grown (and swapped) the buffer, so return
+            // whatever buffer it ended up with to the pool.
+            ProtobufSerializer.ReturnBuffer(buffer);
+        }
+    }
+
+    private sealed class ToStringThrows
+    {
+        public override string ToString() => throw new InvalidOperationException("Nope.");
     }
 }

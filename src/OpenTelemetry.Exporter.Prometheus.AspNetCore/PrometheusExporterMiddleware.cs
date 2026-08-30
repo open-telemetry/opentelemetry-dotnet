@@ -68,21 +68,40 @@ internal sealed class PrometheusExporterMiddleware
 
             using var requestCancelled = new CancellationTokenSource();
 
+            Stopwatch? scrapeStopwatch = null;
+
             if (TryGetScrapeTimeout(httpContext.Request.Headers, out var scrapeTimeout))
             {
                 requestCancelled.CancelAfter(scrapeTimeout.GetValueOrDefault());
+                scrapeStopwatch = Stopwatch.StartNew();
             }
 
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(requestCancelled.Token, httpContext.RequestAborted);
 
             var requestHeaders = httpContext.Request.GetTypedHeaders();
 
-            var protocol = Negotiate(requestHeaders);
+            var protocol = PrometheusProtocol.ApplyTranslationStrategy(
+                Negotiate(requestHeaders),
+                this.exporter.TranslationStrategy);
 
             var collectionResponse = await this.exporter.CollectionManager.EnterCollect(protocol);
 
             try
             {
+                if (!requestCancelled.IsCancellationRequested &&
+                    scrapeTimeout is { } configuredTimeout &&
+                    scrapeStopwatch!.Elapsed >= configuredTimeout)
+                {
+                    // The deadline has genuinely elapsed, but the CancelAfter callback may not
+                    // have been dispatched yet (for example, if the thread pool is saturated).
+                    // Force cancellation now so a slow collection is still reported as a timeout.
+#if NET
+                    await requestCancelled.CancelAsync();
+#else
+                    requestCancelled.Cancel();
+#endif
+                }
+
                 linkedCts.Token.ThrowIfCancellationRequested();
 
                 if (!collectionResponse.Succeeded)
@@ -165,28 +184,23 @@ internal sealed class PrometheusExporterMiddleware
             return PrometheusProtocol.Fallback;
         }
 
-        if (acceptHeader is { Count: 1 })
-        {
-            return TryParse(acceptHeader[0], out var protocol, out _)
-                ? protocol.GetValueOrDefault(PrometheusProtocol.Fallback)
-                : PrometheusProtocol.Fallback;
-        }
-
-        const int SupportedProtocols = 4;
-        var preferences = new PriorityQueue<PrometheusProtocol, double>(SupportedProtocols);
+        // Select the acceptable protocol with the highest quality factor, preferring
+        // the one listed first on a tie. Only a strictly greater quality replaces
+        // the current best, so the selection is stable in document order.
+        PrometheusProtocol? preferred = null;
+        var preferredQuality = 0.0;
 
         foreach (var mediaType in acceptHeader)
         {
-            if (TryParse(mediaType, out var protocol, out var quality))
+            if (TryParse(mediaType, out var protocol, out var quality) &&
+                (preferred is null || quality > preferredQuality))
             {
-                preferences.Enqueue(protocol.Value, -quality);
+                preferred = protocol;
+                preferredQuality = quality;
             }
         }
 
-        // Use the first supported protocol that was parsed that has the highest quality factor
-        return preferences.TryDequeue(out var preferred, out _)
-            ? preferred
-            : PrometheusProtocol.Fallback;
+        return preferred ?? PrometheusProtocol.Fallback;
     }
 
     private static bool TryParse(
@@ -221,23 +235,31 @@ internal sealed class PrometheusExporterMiddleware
             return false;
         }
 
-        // Quality ignores values greater than one and returns null so we cannot
-        // distinguish between an invalid quality and the quality not be provided.
-        // Default to a value of 0.99 so that an invalid quality value will be treated
-        // as a lower preference than a valid quality value of 1.0.
-        quality = value.Quality ?? 0.99;
-
-        if (quality <= 0)
-        {
-            return false;
-        }
+        // Default to a quality of 1.0 when no "q" parameter is present (per HTTP semantics) and
+        // reject any quality outside the (0, 1] range. The "q" parameter is parsed directly from
+        // the parameter collection rather than via MediaTypeHeaderValue.Quality for consistent
+        // behaviour with the HttpListener implementation.
+        quality = 1.0;
 
         string? escaping = null;
         Version? version = null;
 
         foreach (var parameter in value.Parameters)
         {
-            if (string.Equals(parameter.Name.Value, "version", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(parameter.Name.Value, "q", StringComparison.OrdinalIgnoreCase))
+            {
+                if (double.TryParse(parameter.Value.Value, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var parsedQuality) &&
+                    parsedQuality is > 0 and <= 1)
+                {
+                    quality = parsedQuality;
+                }
+                else
+                {
+                    // Invalid quality
+                    return false;
+                }
+            }
+            else if (string.Equals(parameter.Name.Value, "version", StringComparison.OrdinalIgnoreCase))
             {
                 if (Version.TryParse(parameter.Value.Value?.Trim('"'), out var parsedVersion) &&
                     supportedVersions.Contains(parsedVersion))
@@ -264,13 +286,14 @@ internal sealed class PrometheusExporterMiddleware
             }
         }
 
-        if (version is null)
-        {
-            // Use the oldest version if no version preference was specified
-            version = isOpenMetrics ? PrometheusProtocol.OpenMetricsV0 : PrometheusProtocol.PrometheusV0;
-            escaping = null;
-        }
-        else if (version.Major is not > 0)
+        // Use the oldest version if no version preference was specified. Per the OpenMetrics
+        // specification's negotiation rules (https://prometheus.io/docs/specs/om/open_metrics_spec/#protocol-negotiation),
+        // "the standard" begins at 1.0.0 (0.0.1 predates the standard being ratified), so servers
+        // MUST default to OpenMetrics 1.0.0 for an unversioned "application/openmetrics-text" entry.
+        // The Prometheus text media type is unaffected by that rule and still falls back to 0.0.4.
+        version ??= isOpenMetrics ? PrometheusProtocol.OpenMetricsV1 : PrometheusProtocol.PrometheusV0;
+
+        if (version.Major is not > 0)
         {
             // From https://prometheus.io/docs/instrumenting/content_negotiation/#content-type-response:
             // "The Content-Type header MUST include [...] For text formats version 1.0.0 and above, the escaping scheme parameter."
@@ -278,6 +301,11 @@ internal sealed class PrometheusExporterMiddleware
         }
         else
         {
+            // A request that does not negotiate an escaping scheme is treated the same as one
+            // negotiating "underscores", as required by the specification's table at
+            // https://github.com/open-telemetry/opentelemetry-specification/blob/51700bd58c79c057468b66c3fd8d075444d6140c/specification/metrics/sdk_exporters/prometheus.md#interaction-with-translation-strategy.
+            // The exporter's translation strategy does not change what is negotiated here; it is
+            // applied when names are constructed, before this scheme is layered on top.
             escaping ??= PrometheusProtocol.UnderscoresEscaping;
         }
 

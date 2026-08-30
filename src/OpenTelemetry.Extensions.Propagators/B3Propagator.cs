@@ -60,6 +60,9 @@ public sealed class B3Propagator : TextMapPropagator
     }
 
     /// <inheritdoc/>
+    /// <remarks>
+    /// Callers should not modify the returned set.
+    /// </remarks>
     public override ISet<string> Fields => AllFields;
 
     /// <inheritdoc/>
@@ -132,12 +135,33 @@ public sealed class B3Propagator : TextMapPropagator
         }
     }
 
+    private static string? GetFirstOrDefault(IEnumerable<string>? values)
+    {
+        if (values == null)
+        {
+            return null;
+        }
+
+        if (values is IList<string> list)
+        {
+            return list.Count > 0 ? list[0] : null;
+        }
+
+        if (values is IReadOnlyList<string> readOnlyList)
+        {
+            return readOnlyList.Count > 0 ? readOnlyList[0] : null;
+        }
+
+        using var enumerator = values.GetEnumerator();
+        return enumerator.MoveNext() ? enumerator.Current : null;
+    }
+
     private static PropagationContext ExtractFromMultipleHeaders<T>(PropagationContext context, T carrier, Func<T, string, IEnumerable<string>?> getter)
     {
         try
         {
             ActivityTraceId traceId;
-            var traceIdStr = getter(carrier, XB3TraceId)?.FirstOrDefault();
+            var traceIdStr = GetFirstOrDefault(getter(carrier, XB3TraceId));
             if (traceIdStr != null)
             {
                 if (traceIdStr.Length == 16)
@@ -146,7 +170,15 @@ public sealed class B3Propagator : TextMapPropagator
                     traceIdStr = UpperTraceId + traceIdStr;
                 }
 
-                traceId = ActivityTraceId.CreateFromString(traceIdStr.AsSpan());
+                try
+                {
+                    traceId = ActivityTraceId.CreateFromString(traceIdStr.AsSpan());
+                }
+                catch (ArgumentOutOfRangeException)
+                {
+                    // Invalid format
+                    return context;
+                }
             }
             else
             {
@@ -154,10 +186,18 @@ public sealed class B3Propagator : TextMapPropagator
             }
 
             ActivitySpanId spanId;
-            var spanIdStr = getter(carrier, XB3SpanId)?.FirstOrDefault();
+            var spanIdStr = GetFirstOrDefault(getter(carrier, XB3SpanId));
             if (spanIdStr != null)
             {
-                spanId = ActivitySpanId.CreateFromString(spanIdStr.AsSpan());
+                try
+                {
+                    spanId = ActivitySpanId.CreateFromString(spanIdStr.AsSpan());
+                }
+                catch (ArgumentOutOfRangeException)
+                {
+                    // Invalid format
+                    return context;
+                }
             }
             else
             {
@@ -165,9 +205,9 @@ public sealed class B3Propagator : TextMapPropagator
             }
 
             var traceOptions = ActivityTraceFlags.None;
-            var xb3Sampled = getter(carrier, XB3Sampled)?.FirstOrDefault();
+            var xb3Sampled = GetFirstOrDefault(getter(carrier, XB3Sampled));
             if ((xb3Sampled != null && SampledValues.Contains(xb3Sampled))
-                || string.Equals(FlagsValue, getter(carrier, XB3Flags)?.FirstOrDefault(), StringComparison.Ordinal))
+                || string.Equals(FlagsValue, GetFirstOrDefault(getter(carrier, XB3Flags)), StringComparison.Ordinal))
             {
                 traceOptions |= ActivityTraceFlags.Recorded;
             }
@@ -193,9 +233,9 @@ public sealed class B3Propagator : TextMapPropagator
                 return context;
             }
 
-            var header = headers.FirstOrDefault();
+            var header = GetFirstOrDefault(headers);
 
-            return string.IsNullOrWhiteSpace(header)
+            return header is not { Length: > 0 } || string.IsNullOrWhiteSpace(header)
                 ? context
                 : !TryExtractSingleHeaderContext(header, out var traceId, out var spanId, out var traceOptions)
                 ? context
@@ -248,8 +288,16 @@ public sealed class B3Propagator : TextMapPropagator
             }
         }
 
-        traceId = CreateTraceId(traceIdStr);
-        spanId = ActivitySpanId.CreateFromString(spanIdStr);
+        try
+        {
+            traceId = CreateTraceId(traceIdStr);
+            spanId = ActivitySpanId.CreateFromString(spanIdStr);
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            // Invalid format
+            return false;
+        }
 
         if (IsSampledValue(traceFlagsStr) ||
             traceFlagsStr.Equals(FlagsValue.AsSpan(), StringComparison.Ordinal))

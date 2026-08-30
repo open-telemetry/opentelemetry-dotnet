@@ -44,13 +44,13 @@ Describe "update-changelogs.ps1" {
         $expectedReleaseDate = [System.DateTime]::Now.ToString('yyyy-MMM-dd', [System.Globalization.CultureInfo]::InvariantCulture)
 
         $matchingChangelog = Get-Content -Path (Join-Path -Path $matchingProject -ChildPath "CHANGELOG.md") -Raw
-        $matchingChangelog | Should -Match "## 1\.2\.3" -Because "the version heading should be added for a matching project"
-        $matchingChangelog | Should -BeLike "*Released $expectedReleaseDate*" -Because "a release date should be added for a matching project"
-        $matchingChangelog | Should -Match "\* Some change" -Because "existing changelog entries should be preserved"
+        $matchingChangelog | Should-MatchString "## 1\.2\.3" -Because "the version heading should be added for a matching project"
+        $matchingChangelog | Should-BeLikeString "*Released $expectedReleaseDate*" -Because "a release date should be added for a matching project"
+        $matchingChangelog | Should-MatchString "\* Some change" -Because "existing changelog entries should be preserved"
 
         $otherChangelog = Get-Content -Path (Join-Path -Path $otherProject -ChildPath "CHANGELOG.md") -Raw
-        $otherChangelog | Should -Not -Match "## 1\.2\.3" -Because "projects with a different tag prefix should not be updated"
-        $otherChangelog | Should -Match "Unreleased" -Because "the unreleased heading should be left untouched for non-matching projects"
+        $otherChangelog | Should-NotMatchString "## 1\.2\.3" -Because "projects with a different tag prefix should not be updated"
+        $otherChangelog | Should-MatchString "Unreleased" -Because "the unreleased heading should be left untouched for non-matching projects"
     }
 
     It "writes the release date using the invariant culture" {
@@ -89,6 +89,6 @@ Describe "update-changelogs.ps1" {
         }
 
         $changelog = Get-Content -Path (Join-Path -Path $project -ChildPath "CHANGELOG.md") -Raw
-        $changelog | Should -BeLike "*Released $expectedReleaseDate*" -Because "the release date should use invariant (en-US) formatting even under a non-English culture"
+        $changelog | Should-BeLikeString "*Released $expectedReleaseDate*" -Because "the release date should use invariant (en-US) formatting even under a non-English culture"
     }
 }

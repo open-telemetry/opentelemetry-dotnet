@@ -46,241 +46,249 @@ internal sealed class TracerProviderSdk : TracerProvider
 
         OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent("Building TracerProvider.");
 
-        var configureProviderBuilders = serviceProvider!.GetServices<IConfigureTracerProviderBuilder>();
-        foreach (var configureProviderBuilder in configureProviderBuilders)
+        try
         {
-            configureProviderBuilder.ConfigureBuilder(serviceProvider!, state);
-        }
-
-        var processorsAdded = new StringBuilder();
-        var instrumentationFactoriesAdded = new StringBuilder();
-
-        var resourceBuilder = state.ResourceBuilder ?? ResourceBuilder.CreateDefault();
-        resourceBuilder.ServiceProvider = serviceProvider;
-        this.Resource = resourceBuilder.Build();
-
-        this.Sampler = GetSampler(serviceProvider!.GetRequiredService<IConfiguration>(), state.Sampler);
-        OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Sampler added = \"{this.Sampler.GetType()}\".");
-
-        this.supportLegacyActivity = state.LegacyActivityOperationNames.Count > 0;
-
-        Regex? legacyActivityWildcardModeRegex = null;
-        foreach (var legacyName in state.LegacyActivityOperationNames)
-        {
-            if (WildcardHelper.ContainsWildcard(legacyName))
+            var configureProviderBuilders = serviceProvider!.GetServices<IConfigureTracerProviderBuilder>();
+            foreach (var configureProviderBuilder in configureProviderBuilders)
             {
-                legacyActivityWildcardModeRegex = WildcardHelper.GetWildcardRegex(state.LegacyActivityOperationNames);
-                break;
-            }
-        }
-
-        // Note: Linq OrderBy performs a stable sort, which is a requirement here
-        IEnumerable<BaseProcessor<Activity>> processors = state.Processors.OrderBy(p => p.PipelineWeight);
-
-        state.AddExceptionProcessorIfEnabled(ref processors);
-
-        foreach (var processor in processors)
-        {
-            this.AddProcessor(processor);
-            processorsAdded.Append(processor.GetType());
-            processorsAdded.Append(';');
-        }
-
-        foreach (var instrumentation in state.Instrumentation)
-        {
-            if (instrumentation.Instance is not null)
-            {
-                this.Instrumentations.Add(instrumentation.Instance);
+                configureProviderBuilder.ConfigureBuilder(serviceProvider!, state);
             }
 
-            instrumentationFactoriesAdded.Append(instrumentation.Name);
-            instrumentationFactoriesAdded.Append(';');
-        }
+            var processorsAdded = new StringBuilder();
+            var instrumentationFactoriesAdded = new StringBuilder();
 
-        if (processorsAdded.Length != 0)
-        {
-            processorsAdded.Remove(processorsAdded.Length - 1, 1);
-            OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Processors added = \"{processorsAdded}\".");
-        }
+            var resourceBuilder = state.ResourceBuilder ?? ResourceBuilder.CreateDefault();
+            resourceBuilder.ServiceProvider = serviceProvider;
+            this.Resource = resourceBuilder.Build();
 
-        if (instrumentationFactoriesAdded.Length != 0)
-        {
-            instrumentationFactoriesAdded.Remove(instrumentationFactoriesAdded.Length - 1, 1);
-            OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Instrumentations added = \"{instrumentationFactoriesAdded}\".");
-        }
+            this.Sampler = GetSampler(serviceProvider!.GetRequiredService<IConfiguration>(), state.Sampler);
+            OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Sampler added = \"{this.Sampler.GetType()}\".");
 
-        var activityListener = new ActivityListener();
+            this.supportLegacyActivity = state.LegacyActivityOperationNames.Count > 0;
 
-        if (this.supportLegacyActivity)
-        {
-            Func<Activity, bool>? legacyActivityPredicate = legacyActivityWildcardModeRegex != null
-                ? (activity => legacyActivityWildcardModeRegex.IsMatch(activity.OperationName))
-                : (activity => state.LegacyActivityOperationNames.Contains(activity.OperationName));
-
-            activityListener.ActivityStarted = activity =>
+            Regex? legacyActivityWildcardModeRegex = null;
+            foreach (var legacyName in state.LegacyActivityOperationNames)
             {
-                OpenTelemetrySdkEventSource.Log.ActivityStarted(activity);
-
-                if (string.IsNullOrEmpty(activity.Source.Name))
+                if (WildcardHelper.ContainsWildcard(legacyName))
                 {
-                    if (legacyActivityPredicate(activity))
+                    legacyActivityWildcardModeRegex = WildcardHelper.GetWildcardRegex(state.LegacyActivityOperationNames);
+                    break;
+                }
+            }
+
+            // Note: Linq OrderBy performs a stable sort, which is a requirement here
+            IEnumerable<BaseProcessor<Activity>> processors = state.Processors.OrderBy(p => p.PipelineWeight);
+
+            state.AddExceptionProcessorIfEnabled(ref processors);
+
+            foreach (var processor in processors)
+            {
+                this.AddProcessor(processor);
+                processorsAdded.Append(processor.GetType());
+                processorsAdded.Append(';');
+            }
+
+            foreach (var instrumentation in state.Instrumentation)
+            {
+                if (instrumentation.Instance is not null)
+                {
+                    this.Instrumentations.Add(instrumentation.Instance);
+                }
+
+                instrumentationFactoriesAdded.Append(instrumentation.Name);
+                instrumentationFactoriesAdded.Append(';');
+            }
+
+            if (processorsAdded.Length != 0)
+            {
+                processorsAdded.Remove(processorsAdded.Length - 1, 1);
+                OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Processors added = \"{processorsAdded}\".");
+            }
+
+            if (instrumentationFactoriesAdded.Length != 0)
+            {
+                instrumentationFactoriesAdded.Remove(instrumentationFactoriesAdded.Length - 1, 1);
+                OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Instrumentations added = \"{instrumentationFactoriesAdded}\".");
+            }
+
+            var activityListener = new ActivityListener();
+
+            if (this.supportLegacyActivity)
+            {
+                Func<Activity, bool>? legacyActivityPredicate = legacyActivityWildcardModeRegex != null
+                    ? (activity => legacyActivityWildcardModeRegex.IsMatch(activity.OperationName))
+                    : (activity => state.LegacyActivityOperationNames.Contains(activity.OperationName));
+
+                activityListener.ActivityStarted = activity =>
+                {
+                    OpenTelemetrySdkEventSource.Log.ActivityStarted(activity);
+
+                    if (string.IsNullOrEmpty(activity.Source.Name))
                     {
-                        // Legacy activity matches the user configured list.
-                        // Call sampler for the legacy activity
-                        // unless suppressed.
-                        if (!Sdk.SuppressInstrumentation)
+                        if (legacyActivityPredicate(activity))
                         {
-                            this.getRequestedDataAction!(activity);
+                            // Legacy activity matches the user configured list.
+                            // Call sampler for the legacy activity
+                            // unless suppressed.
+                            if (!Sdk.SuppressInstrumentation)
+                            {
+                                this.getRequestedDataAction!(activity);
+                            }
+                            else
+                            {
+                                activity.IsAllDataRequested = false;
+                            }
                         }
                         else
                         {
-                            activity.IsAllDataRequested = false;
+                            // Legacy activity doesn't match the user configured list. No need to proceed further.
+                            return;
                         }
                     }
-                    else
+
+                    if (!activity.IsAllDataRequested)
+                    {
+                        return;
+                    }
+
+                    if (SuppressInstrumentationScope.IncrementIfTriggered() == 0)
+                    {
+                        this.Processor?.OnStart(activity);
+                    }
+                };
+
+                activityListener.ActivityStopped = activity =>
+                {
+                    OpenTelemetrySdkEventSource.Log.ActivityStopped(activity);
+
+                    if (string.IsNullOrEmpty(activity.Source.Name) && !legacyActivityPredicate(activity))
                     {
                         // Legacy activity doesn't match the user configured list. No need to proceed further.
                         return;
                     }
-                }
 
-                if (!activity.IsAllDataRequested)
-                {
-                    return;
-                }
+                    if (!activity.IsAllDataRequested)
+                    {
+                        return;
+                    }
 
-                if (SuppressInstrumentationScope.IncrementIfTriggered() == 0)
-                {
-                    this.Processor?.OnStart(activity);
-                }
-            };
+                    // Spec says IsRecording must be false once span ends.
+                    // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#isrecording
+                    // However, Activity has slightly different semantic
+                    // than Span and we don't have strong reason to do this
+                    // now, as Activity anyway allows read/write always.
+                    // Intentionally commenting the following line.
+                    // activity.IsAllDataRequested = false;
 
-            activityListener.ActivityStopped = activity =>
-            {
-                OpenTelemetrySdkEventSource.Log.ActivityStopped(activity);
-
-                if (string.IsNullOrEmpty(activity.Source.Name) && !legacyActivityPredicate(activity))
-                {
-                    // Legacy activity doesn't match the user configured list. No need to proceed further.
-                    return;
-                }
-
-                if (!activity.IsAllDataRequested)
-                {
-                    return;
-                }
-
-                // Spec says IsRecording must be false once span ends.
-                // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#isrecording
-                // However, Activity has slightly different semantic
-                // than Span and we don't have strong reason to do this
-                // now, as Activity anyway allows read/write always.
-                // Intentionally commenting the following line.
-                // activity.IsAllDataRequested = false;
-
-                if (SuppressInstrumentationScope.DecrementIfTriggered() == 0)
-                {
-                    this.Processor?.OnEnd(activity);
-                }
-            };
-        }
-        else
-        {
-            activityListener.ActivityStarted = activity =>
-            {
-                OpenTelemetrySdkEventSource.Log.ActivityStarted(activity);
-
-                if (activity.IsAllDataRequested && SuppressInstrumentationScope.IncrementIfTriggered() == 0)
-                {
-                    this.Processor?.OnStart(activity);
-                }
-            };
-
-            activityListener.ActivityStopped = activity =>
-            {
-                OpenTelemetrySdkEventSource.Log.ActivityStopped(activity);
-
-                if (!activity.IsAllDataRequested)
-                {
-                    return;
-                }
-
-                // Spec says IsRecording must be false once span ends.
-                // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#isrecording
-                // However, Activity has slightly different semantic
-                // than Span and we don't have strong reason to do this
-                // now, as Activity anyway allows read/write always.
-                // Intentionally commenting the following line.
-                // activity.IsAllDataRequested = false;
-
-                if (SuppressInstrumentationScope.DecrementIfTriggered() == 0)
-                {
-                    this.Processor?.OnEnd(activity);
-                }
-            };
-        }
-
-        if (this.Sampler is AlwaysOnSampler)
-        {
-            activityListener.Sample = static (ref _) =>
-                !Sdk.SuppressInstrumentation ? ActivitySamplingResult.AllDataAndRecorded : ActivitySamplingResult.None;
-            this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOnSampler;
-        }
-        else if (this.Sampler is AlwaysOffSampler)
-        {
-            activityListener.Sample = (ref options) =>
-                !Sdk.SuppressInstrumentation ? PropagateOrIgnoreData(ref options) : ActivitySamplingResult.None;
-            this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOffSampler;
-        }
-        else
-        {
-            // This delegate informs ActivitySource about sampling decision when the parent context is an ActivityContext.
-            activityListener.Sample = (ref options) =>
-                !Sdk.SuppressInstrumentation ? ComputeActivitySamplingResult(ref options, this.Sampler) : ActivitySamplingResult.None;
-            this.getRequestedDataAction = this.RunGetRequestedDataOtherSampler;
-        }
-
-        // Sources can be null. This happens when user
-        // is only interested in InstrumentationLibraries
-        // which do not depend on ActivitySources.
-        if (state.Sources.Count > 0)
-        {
-            // Validation of source name is already done in builder.
-            if (state.Sources.Any(WildcardHelper.ContainsWildcard))
-            {
-                var regex = WildcardHelper.GetWildcardRegex(state.Sources);
-
-                // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
-                // or not.
-                activityListener.ShouldListenTo = this.supportLegacyActivity ?
-                    (activitySource) => string.IsNullOrEmpty(activitySource.Name) || regex.IsMatch(activitySource.Name) :
-                    (activitySource) => regex.IsMatch(activitySource.Name);
+                    if (SuppressInstrumentationScope.DecrementIfTriggered() == 0)
+                    {
+                        this.Processor?.OnEnd(activity);
+                    }
+                };
             }
             else
             {
-                var activitySources = new HashSet<string>(state.Sources, StringComparer.OrdinalIgnoreCase);
+                activityListener.ActivityStarted = activity =>
+                {
+                    OpenTelemetrySdkEventSource.Log.ActivityStarted(activity);
 
+                    if (activity.IsAllDataRequested && SuppressInstrumentationScope.IncrementIfTriggered() == 0)
+                    {
+                        this.Processor?.OnStart(activity);
+                    }
+                };
+
+                activityListener.ActivityStopped = activity =>
+                {
+                    OpenTelemetrySdkEventSource.Log.ActivityStopped(activity);
+
+                    if (!activity.IsAllDataRequested)
+                    {
+                        return;
+                    }
+
+                    // Spec says IsRecording must be false once span ends.
+                    // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#isrecording
+                    // However, Activity has slightly different semantic
+                    // than Span and we don't have strong reason to do this
+                    // now, as Activity anyway allows read/write always.
+                    // Intentionally commenting the following line.
+                    // activity.IsAllDataRequested = false;
+
+                    if (SuppressInstrumentationScope.DecrementIfTriggered() == 0)
+                    {
+                        this.Processor?.OnEnd(activity);
+                    }
+                };
+            }
+
+            if (this.Sampler is AlwaysOnSampler)
+            {
+                activityListener.Sample = static (ref _) =>
+                    !Sdk.SuppressInstrumentation ? ActivitySamplingResult.AllDataAndRecorded : ActivitySamplingResult.None;
+                this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOnSampler;
+            }
+            else if (this.Sampler is AlwaysOffSampler)
+            {
+                activityListener.Sample = (ref options) =>
+                    !Sdk.SuppressInstrumentation ? PropagateOrIgnoreData(ref options) : ActivitySamplingResult.None;
+                this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOffSampler;
+            }
+            else
+            {
+                // This delegate informs ActivitySource about sampling decision when the parent context is an ActivityContext.
+                activityListener.Sample = (ref options) =>
+                    !Sdk.SuppressInstrumentation ? ComputeActivitySamplingResult(ref options, this.Sampler) : ActivitySamplingResult.None;
+                this.getRequestedDataAction = this.RunGetRequestedDataOtherSampler;
+            }
+
+            // Sources can be null. This happens when user
+            // is only interested in InstrumentationLibraries
+            // which do not depend on ActivitySources.
+            if (state.Sources.Count > 0)
+            {
+                // Validation of source name is already done in builder.
+                if (state.Sources.Any(WildcardHelper.ContainsWildcard))
+                {
+                    var regex = WildcardHelper.GetWildcardRegex(state.Sources);
+
+                    // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
+                    // or not.
+                    activityListener.ShouldListenTo = this.supportLegacyActivity ?
+                        (activitySource) => string.IsNullOrEmpty(activitySource.Name) || regex.IsMatch(activitySource.Name) :
+                        (activitySource) => regex.IsMatch(activitySource.Name);
+                }
+                else
+                {
+                    var activitySources = new HashSet<string>(state.Sources, StringComparer.OrdinalIgnoreCase);
+
+                    if (this.supportLegacyActivity)
+                    {
+                        activitySources.Add(string.Empty);
+                    }
+
+                    // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
+                    // or not.
+                    activityListener.ShouldListenTo = activitySource => activitySources.Contains(activitySource.Name);
+                }
+            }
+            else
+            {
                 if (this.supportLegacyActivity)
                 {
-                    activitySources.Add(string.Empty);
+                    activityListener.ShouldListenTo = activitySource => string.IsNullOrEmpty(activitySource.Name);
                 }
-
-                // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
-                // or not.
-                activityListener.ShouldListenTo = activitySource => activitySources.Contains(activitySource.Name);
             }
+
+            ActivitySource.AddActivityListener(activityListener);
+            this.listener = activityListener;
+            OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent("TracerProvider built successfully.");
         }
-        else
+        catch (Exception)
         {
-            if (this.supportLegacyActivity)
-            {
-                activityListener.ShouldListenTo = activitySource => string.IsNullOrEmpty(activitySource.Name);
-            }
+            this.DisposeBuiltState(state);
+            throw;
         }
-
-        ActivitySource.AddActivityListener(activityListener);
-        this.listener = activityListener;
-        OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent("TracerProvider built successfully.");
     }
 
     internal Resource Resource { get; }
@@ -365,10 +373,13 @@ internal sealed class TracerProviderSdk : TracerProvider
 
                 (this.Sampler as IDisposable)?.Dispose();
 
-                // Wait for up to 5 seconds grace period
-                this.Processor?.Shutdown(5000);
-                this.Processor?.Dispose();
-                this.Processor = null;
+                if (this.Processor != null)
+                {
+                    // Wait for up to 5 seconds grace period
+                    this.Processor.Shutdown(5_000);
+                    this.Processor.Dispose();
+                    this.Processor = null;
+                }
 
                 // Shutdown the listener last so that anything created while instrumentation cleans up will still be processed.
                 // Redis instrumentation, for example, flushes during dispose which creates Activity objects for any profiling
@@ -492,7 +503,7 @@ internal sealed class TracerProviderSdk : TracerProvider
             {
                 foreach (var att in attributes)
                 {
-                    options.SamplingTags.Add(att.Key, att.Value);
+                    options.SamplingTags[att.Key] = att.Value;
                 }
             }
         }
@@ -530,6 +541,43 @@ internal sealed class TracerProviderSdk : TracerProvider
             : ActivitySamplingResult.None;
     }
 
+    private void DisposeBuiltState(TracerProviderBuilderSdk state)
+    {
+        foreach (var processor in state.Processors)
+        {
+            CleanUp(() => processor.Shutdown(0));
+            CleanUp(processor.Dispose);
+        }
+
+        foreach (var instrumentation in state.Instrumentation)
+        {
+            if (instrumentation.Instance is IDisposable disposable)
+            {
+                CleanUp(disposable.Dispose);
+            }
+        }
+
+        CleanUp(() => (this.Sampler as IDisposable)?.Dispose());
+
+        if (this.OwnedServiceProvider != null)
+        {
+            CleanUp(this.OwnedServiceProvider.Dispose);
+            this.OwnedServiceProvider = null;
+        }
+
+        static void CleanUp(Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception ex)
+            {
+                OpenTelemetrySdkEventSource.Log.TracerProviderException(nameof(this.DisposeBuiltState), ex);
+            }
+        }
+    }
+
     private void RunGetRequestedDataAlwaysOnSampler(Activity activity)
     {
         activity.IsAllDataRequested = true;
@@ -544,8 +592,12 @@ internal sealed class TracerProviderSdk : TracerProvider
 
     private void RunGetRequestedDataOtherSampler(Activity activity)
     {
-        // Check activity.ParentId alone is sufficient to normally determine if a activity is root or not. But if one uses activity.SetParentId to override the TraceId (without intending to set an actual parent), then additional check of parentspanid being empty is required to confirm if an activity is root or not.
-        // This checker can be removed, once Activity exposes an API to customize ID Generation (https://github.com/dotnet/runtime/issues/46704) or issue https://github.com/dotnet/runtime/issues/46706 is addressed.
+        // Checking activity.ParentId alone is sufficient to normally determine if an activity
+        // is root or not. But if one uses activity.SetParentId to override the TraceId (without
+        // intending to set an actual parent), then an additional check of ParentSpanId being
+        // empty is required to confirm if an activity is root or not. This check can be removed
+        // once https://github.com/dotnet/runtime/issues/85198 is addressed. ToHexString() does
+        // not actually allocate a new string, so it is safe to use here without any overhead.
         var parentContext = string.IsNullOrEmpty(activity.ParentId) || activity.ParentSpanId.ToHexString() == "0000000000000000"
             ? default
             : activity.Parent != null ?

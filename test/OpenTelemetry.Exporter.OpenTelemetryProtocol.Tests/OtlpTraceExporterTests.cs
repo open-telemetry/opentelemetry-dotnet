@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using System.Diagnostics.Tracing;
 using Google.Protobuf.Collections;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
@@ -451,6 +452,110 @@ public sealed class OtlpTraceExporterTests : IDisposable
     }
 
     [Fact]
+    public void SpanAttributeWithThrowingToStringIsDroppedTest()
+    {
+        // An attribute whose value cannot be serialized must be left out of the payload
+        // entirely and counted as dropped - not written as an empty KeyValue.
+        var tags = new ActivityTagsCollection
+        {
+            new("GoodTag", "value"),
+            new("ThrowingTag", new ToStringThrows()),
+        };
+
+        using var activitySource = new ActivitySource(nameof(this.SpanAttributeWithThrowingToStringIsDroppedTest));
+        using var activity = activitySource.StartActivity("root", ActivityKind.Server, default(ActivityContext), tags);
+
+        Assert.NotNull(activity);
+
+        var otlpSpan = ToOtlpSpan(new SdkLimitOptions(), activity);
+
+        Assert.NotNull(otlpSpan);
+        Assert.Equal(1u, otlpSpan.DroppedAttributesCount);
+
+        var attribute = Assert.Single(otlpSpan.Attributes);
+        Assert.Equal("GoodTag", attribute.Key);
+        Assert.Equal("value", attribute.Value.StringValue);
+        Assert.Equal(1u, otlpSpan.DroppedAttributesCount);
+    }
+
+    [Fact]
+    public void SpanEventAndLinkAttributesWithThrowingToStringAreDroppedTest()
+    {
+        var tags = new ActivityTagsCollection
+        {
+            new("GoodTag", "value"),
+            new("ThrowingTag", new ToStringThrows()),
+        };
+
+        var links = new[] { new ActivityLink(default, tags) };
+
+        using var activitySource = new ActivitySource(nameof(this.SpanEventAndLinkAttributesWithThrowingToStringAreDroppedTest));
+        using var activity = activitySource.StartActivity("root", ActivityKind.Server, default(ActivityContext), tags: null, links);
+
+        Assert.NotNull(activity);
+
+        activity.AddEvent(new ActivityEvent("Event", DateTime.UtcNow, tags));
+
+        var otlpSpan = ToOtlpSpan(new SdkLimitOptions(), activity);
+
+        Assert.NotNull(otlpSpan);
+
+        var otlpEvent = Assert.Single(otlpSpan.Events);
+        var eventAttribute = Assert.Single(otlpEvent.Attributes);
+        Assert.Equal("GoodTag", eventAttribute.Key);
+        Assert.Equal("value", eventAttribute.Value.StringValue);
+        Assert.Equal(1u, otlpEvent.DroppedAttributesCount);
+
+        var otlpLink = Assert.Single(otlpSpan.Links);
+        var linkAttribute = Assert.Single(otlpLink.Attributes);
+        Assert.Equal("GoodTag", linkAttribute.Key);
+        Assert.Equal("value", linkAttribute.Value.StringValue);
+        Assert.Equal(1u, otlpLink.DroppedAttributesCount);
+    }
+
+    [Fact]
+    public void ScopeAttributeWithThrowingToStringIsDroppedTest()
+    {
+        var activitySourceTags = new TagList
+        {
+            new("GoodTag", "value"),
+            new("ThrowingTag", new ToStringThrows()),
+        };
+
+        using var activitySource = new ActivitySource(
+            nameof(this.ScopeAttributeWithThrowingToStringIsDroppedTest),
+            "1.0.0",
+            activitySourceTags);
+
+        var exportedItems = new List<Activity>();
+        var builder = Sdk.CreateTracerProviderBuilder()
+            .AddSource(activitySource.Name)
+#pragma warning disable CA2000 // Dispose objects before losing scope
+            .AddProcessor(new SimpleActivityExportProcessor(new InMemoryExporter<Activity>(exportedItems)));
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        using var openTelemetrySdk = builder.Build();
+
+        using (var activity = activitySource.StartActivity("root", ActivityKind.Server, default(ActivityContext)))
+        {
+            Assert.NotNull(activity);
+        }
+
+        Assert.Single(exportedItems);
+        var batch = new Batch<Activity>([.. exportedItems], exportedItems.Count);
+        var request = CreateTraceExportRequest(DefaultSdkLimitOptions, batch, ResourceBuilder.CreateEmpty().Build());
+
+        var scope = Assert.Single(request.ResourceSpans).ScopeSpans.Single().Scope;
+
+        Assert.NotNull(scope);
+
+        var attribute = Assert.Single(scope.Attributes);
+        Assert.Equal("GoodTag", attribute.Key);
+        Assert.Equal("value", attribute.Value.StringValue);
+        Assert.Equal(1u, scope.DroppedAttributesCount);
+    }
+
+    [Fact]
     public void SpanLimitsTest()
     {
         var sdkOptions = new SdkLimitOptions()
@@ -753,26 +858,35 @@ public sealed class OtlpTraceExporterTests : IDisposable
 
         static void RunTest(SdkLimitOptions sdkOptions, Batch<Activity> batch)
         {
-            var buffer = new byte[50];
-            var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, ResourceBuilder.CreateEmpty().Build(), batch);
-            using var stream = new MemoryStream(buffer, 0, writePosition);
-            var tracesData = OtlpTrace.TracesData.Parser.ParseFrom(stream);
-            var request = new OtlpCollector.ExportTraceServiceRequest();
-            request.ResourceSpans.Add(tracesData.ResourceSpans);
+            var buffer = ProtobufSerializer.RentBuffer(50);
+            try
+            {
+                var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, ResourceBuilder.CreateEmpty().Build(), batch);
+                using var stream = new MemoryStream(buffer, 0, writePosition);
+                var tracesData = OtlpTrace.TracesData.Parser.ParseFrom(stream);
+                var request = new OtlpCollector.ExportTraceServiceRequest();
+                request.ResourceSpans.Add(tracesData.ResourceSpans);
 
-            // Buffer should be expanded to accommodate the large array.
-            Assert.True(buffer.Length > 50);
+                // Buffer should be expanded to accommodate the large array.
+                Assert.True(buffer.Length > 50);
 
-            Assert.Single(request.ResourceSpans);
-            var scopeSpans = request.ResourceSpans.First().ScopeSpans;
-            Assert.Single(scopeSpans);
-            var otlpSpan = scopeSpans.First().Spans.First();
-            Assert.NotNull(otlpSpan);
+                Assert.Single(request.ResourceSpans);
+                var scopeSpans = request.ResourceSpans.First().ScopeSpans;
+                Assert.Single(scopeSpans);
+                var otlpSpan = scopeSpans.First().Spans.First();
+                Assert.NotNull(otlpSpan);
 
-            // The string is too large, hence not evaluating the content.
-            var keyValue = otlpSpan.Attributes.FirstOrDefault(kvp => kvp.Key == "Tagkey");
-            Assert.NotNull(keyValue);
-            Assert.Equal("Tagvalue", keyValue.Value.StringValue);
+                // The string is too large, hence not evaluating the content.
+                var keyValue = otlpSpan.Attributes.FirstOrDefault(kvp => kvp.Key == "Tagkey");
+                Assert.NotNull(keyValue);
+                Assert.Equal("Tagvalue", keyValue.Value.StringValue);
+            }
+            finally
+            {
+                // The serializer may have grown (and swapped) the buffer, so return
+                // whatever buffer it ended up with to the pool.
+                ProtobufSerializer.ReturnBuffer(buffer);
+            }
         }
     }
 
@@ -930,6 +1044,39 @@ public sealed class OtlpTraceExporterTests : IDisposable
     }
 
     [Fact]
+    public void Export_WhenSerializationFails_ReportsDroppedBatchAndDoesNotSubmitRequest()
+    {
+        const int BatchDroppedEventId = 39;
+        const int ExportMethodExceptionEventId = 4;
+
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Error);
+
+        var exportClientMock = new TestExportClient();
+        var exporterOptions = new OtlpExporterOptions();
+        using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClientMock, exporterOptions.TimeoutMilliseconds);
+        using var exporter = new OtlpTraceExporter(exporterOptions, DefaultSdkLimitOptions, DefaultExperimentalOptions, transmissionHandler);
+
+        // A null item is a stand-in for any exception escaping the
+        // serializer. The failures which can reach here in practice, and the
+        // serializer state left behind by them, are covered by
+        // ProtobufOtlpSerializerExceptionSafetyTests.
+        var result = exporter.Export(new Batch<Activity>([null!], 1));
+
+        Assert.Equal(ExportResult.Failure, result);
+        Assert.False(exportClientMock.SendExportRequestCalled);
+
+        var droppedEvent = Assert.Single(listener.Messages, e => e.EventId == BatchDroppedEventId);
+        Assert.NotNull(droppedEvent.Payload);
+        Assert.Equal("Traces", droppedEvent.Payload[0]);
+        Assert.Equal(1L, droppedEvent.Payload[1]);
+        Assert.Contains(nameof(NullReferenceException), Assert.IsType<string>(droppedEvent.Payload[2]), StringComparison.Ordinal);
+
+        // The batch has been attributed to a signal and an item count, so it must
+        // not also be reported as an unknown export error.
+        Assert.DoesNotContain(listener.Messages, e => e.EventId == ExportMethodExceptionEventId);
+    }
+
+    [Fact]
     public void Shutdown_ClientShutdownIsCalled()
     {
         var exportClientMock = new TestExportClient();
@@ -941,6 +1088,38 @@ public sealed class OtlpTraceExporterTests : IDisposable
         exporter.Shutdown();
 
         Assert.True(exportClientMock.ShutdownCalled);
+    }
+
+    [Fact]
+    public void Shutdown_ClientShutdownThrows_ReleasesSerializationBuffer()
+    {
+        var exportClientMock = new TestExportClient
+        {
+            ThrowExceptionOnShutdown = true,
+        };
+
+        var exporterOptions = new OtlpExporterOptions();
+        using var transmissionHandler = new OtlpExporterTransmissionHandler(exportClientMock, exporterOptions.TimeoutMilliseconds);
+        using var exporter = new OtlpTraceExporter(exporterOptions, DefaultSdkLimitOptions, DefaultExperimentalOptions, transmissionHandler);
+
+#if NETFRAMEWORK
+        var serializationBufferField = typeof(OtlpTraceExporter).GetField(
+            "serializationBuffer",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        var serializationBuffer = Assert.IsType<SerializationBuffer>(serializationBufferField?.GetValue(exporter));
+        var retainedBuffer = ProtobufSerializer.RentBuffer(2 * 1024 * 1024);
+        serializationBuffer.Return(retainedBuffer, retainedBuffer.Length);
+#endif
+
+        Assert.False(exporter.Shutdown());
+        Assert.True(exportClientMock.ShutdownCalled);
+
+#if NETFRAMEWORK
+        var nextBuffer = serializationBuffer.Rent();
+        Assert.NotSame(retainedBuffer, nextBuffer);
+        serializationBuffer.Return(nextBuffer, nextBuffer.Length);
+        serializationBuffer.Release();
+#endif
     }
 
     [Fact]
@@ -1156,13 +1335,20 @@ public sealed class OtlpTraceExporterTests : IDisposable
 
     private static OtlpCollector.ExportTraceServiceRequest CreateTraceExportRequest(SdkLimitOptions sdkOptions, in Batch<Activity> batch, Resource resource)
     {
-        var buffer = new byte[4096];
-        var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, resource, batch);
-        using var stream = new MemoryStream(buffer, 0, writePosition);
-        var tracesData = OtlpTrace.TracesData.Parser.ParseFrom(stream);
-        var request = new OtlpCollector.ExportTraceServiceRequest();
-        request.ResourceSpans.Add(tracesData.ResourceSpans);
-        return request;
+        var buffer = ProtobufSerializer.RentBuffer(4096);
+        try
+        {
+            var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, resource, batch);
+            using var stream = new MemoryStream(buffer, 0, writePosition);
+            var tracesData = OtlpTrace.TracesData.Parser.ParseFrom(stream);
+            var request = new OtlpCollector.ExportTraceServiceRequest();
+            request.ResourceSpans.Add(tracesData.ResourceSpans);
+            return request;
+        }
+        finally
+        {
+            ProtobufSerializer.ReturnBuffer(buffer);
+        }
     }
 
     private static void ArrayValueAsserts(RepeatedField<OtlpCommon.AnyValue> values)
@@ -1182,5 +1368,10 @@ public sealed class OtlpTraceExporterTests : IDisposable
                 Assert.Equal(expectedValue, actual.StringValue);
             }
         }
+    }
+
+    private sealed class ToStringThrows
+    {
+        public override string ToString() => throw new InvalidOperationException("Nope.");
     }
 }

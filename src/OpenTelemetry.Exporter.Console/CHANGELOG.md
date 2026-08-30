@@ -6,6 +6,32 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Extended key/value list attribute handling to cover additional dictionary
+  shapes (`IEnumerable<KeyValuePair<string, string?>>` and `IDictionary`).
+  These attributes will be serialized as JSON objects.
+  ([#7679](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7679))
+
+## 1.18.0
+
+Released 2026-Aug-21
+
+## 1.18.0-rc.1
+
+Released 2026-Aug-21
+
+* Added support for serializing attribute values that are key/value lists
+  (`IEnumerable<KeyValuePair<string, object?>>`). These attributes will be
+  serialized as JSON objects.
+  ([#7015](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7015))
+
+## 1.17.0
+
+Released 2026-Jul-16
+
+## 1.17.0-rc.1
+
+Released 2026-Jul-16
+
 * The library is now marked as trim and AOT compatible.
   ([#7441](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7441))
 

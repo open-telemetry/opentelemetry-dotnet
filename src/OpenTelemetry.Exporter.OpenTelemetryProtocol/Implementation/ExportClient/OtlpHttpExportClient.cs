@@ -30,6 +30,16 @@ internal sealed class OtlpHttpExportClient : OtlpExportClient
             using var httpRequest = this.CreateHttpRequest(buffer, contentLength);
             using var httpResponse = this.SendHttpRequest(httpRequest, cancellationToken);
 
+            if (this.IsResponseTooLarge(httpResponse, out var responseTooLarge))
+            {
+                // Requests with responses that are too large must not be retried
+                return new ExportClientHttpResponse(
+                    success: false,
+                    deadlineUtc: deadlineUtc,
+                    response: null,
+                    exception: responseTooLarge);
+            }
+
             try
             {
                 httpResponse.EnsureSuccessStatusCode();
@@ -38,7 +48,7 @@ internal sealed class OtlpHttpExportClient : OtlpExportClient
             {
                 if (OpenTelemetryProtocolExporterEventSource.Log.IsEnabled(EventLevel.Error, EventKeywords.All))
                 {
-                    var response = TryGetResponseBody(httpResponse, cancellationToken);
+                    var response = TryGetResponseBody(httpResponse, this.MaxResponseSizeBytes, cancellationToken);
                     OpenTelemetryProtocolExporterEventSource.Log.HttpRequestFailed(this.Endpoint, response, ex);
                 }
 
@@ -53,7 +63,7 @@ internal sealed class OtlpHttpExportClient : OtlpExportClient
             OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, ex);
             return new ExportClientHttpResponse(success: false, deadlineUtc: deadlineUtc, response: null, exception: ex);
         }
-        catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
+        catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException && !cancellationToken.IsCancellationRequested)
         {
             // Handle TaskCanceledException caused by TimeoutException.
             OpenTelemetryProtocolExporterEventSource.Log.RequestTimedOut(this.Endpoint, ex);
@@ -63,6 +73,17 @@ internal sealed class OtlpHttpExportClient : OtlpExportClient
         {
             // Handle unexpected cancellation.
             OpenTelemetryProtocolExporterEventSource.Log.OperationUnexpectedlyCanceled(this.Endpoint, ex);
+            return new ExportClientHttpResponse(success: false, deadlineUtc: deadlineUtc, response: null, exception: ex);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            // Return a response with no status code. OtlpRetry.IsRetryable treats a missing
+            // status code as retryable, preserving any blob written to persistent storage.
+            OpenTelemetryProtocolExporterEventSource.Log.FailedToReachCollector(this.Endpoint, ex);
             return new ExportClientHttpResponse(success: false, deadlineUtc: deadlineUtc, response: null, exception: ex);
         }
     }

@@ -350,4 +350,39 @@ public class CircularBufferBucketsTests
         Assert.Equal(12, buckets[buckets.Offset + 1]);
         Assert.Equal(16, buckets[buckets.Offset + 2]);
     }
+
+    [Theory]
+    [InlineData(5, 0, 4)] // Contiguous storage (first == size).
+    [InlineData(5, 3, 4)] // Wrapped storage (first < size).
+    [InlineData(5, 3, 5)] // Full-capacity wrapped storage.
+    public void CopyHandlesContiguousAndWrappedStorage(int capacity, int start, int count)
+    {
+        var buckets = new CircularBufferBuckets(capacity);
+
+        for (var i = 0; i < count; i++)
+        {
+            buckets.TryIncrement(start + i, i + 1);
+        }
+
+        var copy = new long[capacity];
+        buckets.Copy(copy);
+
+        var expected = new long[capacity];
+        for (var i = 0; i < count; i++)
+        {
+            expected[i] = i + 1;
+        }
+
+        Assert.Equal(expected, copy);
+    }
+
+    [Theory]
+    [InlineData(14, 10, 4)]
+    [InlineData(10, 10, 0)]
+    [InlineData(4, 10, 4)]
+    [InlineData(0, 10, 0)]
+    [InlineData(-1, 10, 9)]
+    [InlineData(-10, 10, 0)]
+    public void PositiveModulo32(int value, int divisor, int expected)
+        => Assert.Equal(expected, CircularBufferBuckets.PositiveModulo32(value, divisor));
 }

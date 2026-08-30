@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace OpenTelemetry.Metrics;
@@ -37,14 +36,58 @@ internal readonly struct Tags : IEquatable<Tags>
             return true;
         }
 
-        var length = ourKvps.Length;
-
-        if (length != theirKvps.Length)
+        if (this.hashCode != other.hashCode)
         {
             return false;
         }
 
-        if (this.hashCode != other.hashCode)
+        return SequenceEqual(ourKvps, theirKvps);
+    }
+
+    public readonly bool Equals(ReadOnlySpan<KeyValuePair<string, object?>> other)
+        => SequenceEqual(this.KeyValuePairs, other);
+
+    public override readonly int GetHashCode() => this.hashCode;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int ComputeHashCode(ReadOnlySpan<KeyValuePair<string, object?>> keyValuePairs)
+    {
+#if NET || NETSTANDARD2_1_OR_GREATER
+        HashCode hashCode = default;
+
+        for (var i = 0; i < keyValuePairs.Length; i++)
+        {
+            ref readonly var item = ref keyValuePairs[i];
+            hashCode.Add(item.Key.GetHashCode(StringComparison.Ordinal));
+            hashCode.Add(item.Value);
+        }
+
+        return hashCode.ToHashCode();
+#else
+        var hash = 17;
+
+        for (var i = 0; i < keyValuePairs.Length; i++)
+        {
+            ref readonly var item = ref keyValuePairs[i];
+            unchecked
+            {
+                hash = (hash * 31) + item.Key.GetHashCode();
+                hash = (hash * 31) + (item.Value?.GetHashCode() ?? 0);
+            }
+        }
+
+        return hash;
+#endif
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool SequenceEqual(
+        ReadOnlySpan<KeyValuePair<string, object?>> ourKvps,
+        ReadOnlySpan<KeyValuePair<string, object?>> theirKvps)
+    {
+        var length = ourKvps.Length;
+
+        if (length != theirKvps.Length)
         {
             return false;
         }
@@ -118,41 +161,6 @@ internal readonly struct Tags : IEquatable<Tags>
 
                 return true;
         }
-    }
-
-    public override readonly int GetHashCode() => this.hashCode;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int ComputeHashCode(KeyValuePair<string, object?>[] keyValuePairs)
-    {
-        Debug.Assert(keyValuePairs != null, "keyValuePairs was null");
-
-#if NET || NETSTANDARD2_1_OR_GREATER
-        HashCode hashCode = default;
-
-        for (var i = 0; i < keyValuePairs.Length; i++)
-        {
-            ref var item = ref keyValuePairs[i];
-            hashCode.Add(item.Key.GetHashCode(StringComparison.Ordinal));
-            hashCode.Add(item.Value);
-        }
-
-        return hashCode.ToHashCode();
-#else
-        var hash = 17;
-
-        for (var i = 0; i < keyValuePairs!.Length; i++)
-        {
-            ref var item = ref keyValuePairs[i];
-            unchecked
-            {
-                hash = (hash * 31) + item.Key.GetHashCode();
-                hash = (hash * 31) + (item.Value?.GetHashCode() ?? 0);
-            }
-        }
-
-        return hash;
-#endif
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

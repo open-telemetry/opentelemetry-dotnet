@@ -17,15 +17,17 @@ namespace OpenTelemetry.Exporter;
 public sealed class OtlpLogExporter : BaseExporter<LogRecord>
 {
     private const int GrpcStartWritePosition = 5;
+
+    // Initial buffer size set to ~732KB, so the buffer can be grown by doubling
+    // towards OtlpExporterOptions.MaxRequestSizeBytes without resizing often.
+    private const int InitialBufferSize = ProtobufSerializer.InitialBufferSize;
+
     private readonly SdkLimitOptions sdkLimitOptions;
     private readonly ExperimentalOptions experimentalOptions;
     private readonly OtlpExporterTransmissionHandler transmissionHandler;
     private readonly int startWritePosition;
-
-    // Initial buffer size set to ~732KB.
-    // This choice allows us to gradually grow the buffer while targeting a final capacity of around 100 MB,
-    // by the 7th doubling to maintain efficient allocation without frequent resizing.
-    private byte[] buffer = new byte[750000];
+    private readonly int maxRequestSizeBytes;
+    private readonly SerializationBuffer serializationBuffer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="OtlpLogExporter"/> class.
@@ -54,6 +56,10 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
         this.startWritePosition = exporterOptions.Protocol == OtlpExportProtocol.Grpc ? GrpcStartWritePosition : 0;
 #pragma warning restore CS0618 // Suppressing gRPC obsolete warning
+
+        this.maxRequestSizeBytes = exporterOptions.MaxRequestSizeBytes;
+        this.serializationBuffer = new(InitialBufferSize);
+
         this.transmissionHandler = transmissionHandler ?? exporterOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Logs);
     }
 
@@ -71,9 +77,51 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
         // Prevents the exporter's gRPC and HTTP operations from being instrumented.
         using var scope = SuppressInstrumentationScope.Begin();
 
+        byte[]? buffer = null;
+        var serializationSucceeded = false;
+        var writePosition = 0;
+
         try
         {
-            var writePosition = ProtobufOtlpLogSerializer.WriteLogsData(ref this.buffer, this.startWritePosition, this.sdkLimitOptions, this.experimentalOptions, this.Resource, logRecordBatch);
+            buffer = this.serializationBuffer.Rent();
+
+            try
+            {
+                writePosition = ProtobufOtlpLogSerializer.WriteLogsData(
+                    ref buffer,
+                    this.startWritePosition,
+                    this.sdkLimitOptions,
+                    this.experimentalOptions,
+                    this.Resource,
+                    logRecordBatch,
+                    this.maxRequestSizeBytes + this.startWritePosition);
+                serializationSucceeded = true;
+            }
+            catch (Exception ex)
+            {
+                OpenTelemetryProtocolExporterEventSource.Log.BatchDroppedDueToSerializationFailure(
+                    OtlpSignalType.Logs,
+                    logRecordBatch.Count,
+                    ex);
+                return ExportResult.Failure;
+            }
+
+            // The serialization buffer is rented from a pool that can hand back more
+            // than was asked for, so the payload can overrun the configured limit.
+            // The specification requires that such a request is not made at all.
+            var requestSize = writePosition - this.startWritePosition;
+            if (requestSize > this.maxRequestSizeBytes)
+            {
+                OpenTelemetryProtocolExporterEventSource.Log.RequestDiscardedDueToSizeLimit(
+                    OtlpSignalType.Logs,
+                    logRecordBatch.Count,
+                    requestSize,
+                    this.maxRequestSizeBytes);
+
+                // Discard the oversized buffer rather than keeping it as the size hint.
+                serializationSucceeded = false;
+                return ExportResult.Failure;
+            }
 
             if (this.startWritePosition == GrpcStartWritePosition)
             {
@@ -81,12 +129,14 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
                 // byte 0 - Specifying if the payload is compressed.
                 // 1-4 byte - Specifies the length of payload in big endian format.
                 // 5 and above -  Protobuf serialized data.
-                var data = new Span<byte>(this.buffer, 1, 4);
+                // Note: byte 0 must be explicitly cleared because the rented buffer is not zeroed.
+                buffer[0] = 0;
+                var data = new Span<byte>(buffer, 1, 4);
                 var dataLength = writePosition - GrpcStartWritePosition;
                 BinaryPrimitives.WriteUInt32BigEndian(data, (uint)dataLength);
             }
 
-            if (!this.transmissionHandler.TrySubmitRequest(this.buffer, writePosition))
+            if (!this.transmissionHandler.TrySubmitRequest(buffer, writePosition))
             {
                 return ExportResult.Failure;
             }
@@ -96,10 +146,34 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
             OpenTelemetryProtocolExporterEventSource.Log.ExportMethodException(ex);
             return ExportResult.Failure;
         }
+        finally
+        {
+            if (buffer != null)
+            {
+                if (serializationSucceeded)
+                {
+                    this.serializationBuffer.Return(buffer, writePosition);
+                }
+                else
+                {
+                    this.serializationBuffer.Discard(buffer);
+                }
+            }
+        }
 
         return ExportResult.Success;
     }
 
     /// <inheritdoc />
-    protected override bool OnShutdown(int timeoutMilliseconds) => this.transmissionHandler?.Shutdown(timeoutMilliseconds) ?? true;
+    protected override bool OnShutdown(int timeoutMilliseconds)
+    {
+        try
+        {
+            return this.transmissionHandler?.Shutdown(timeoutMilliseconds) ?? true;
+        }
+        finally
+        {
+            this.serializationBuffer.Release();
+        }
+    }
 }
