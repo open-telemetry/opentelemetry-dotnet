@@ -351,6 +351,13 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         path: ./artifacts
 
+    - name: Generate checksums.txt for release assets
+      shell: pwsh
+      run: |
+        Import-Module .\build\scripts\post-release.psm1
+
+        CreateChecksumsFile -directory "${env:GITHUB_WORKSPACE}/artifacts"
+
     - name: Create GitHub Release draft
       shell: pwsh
       env:

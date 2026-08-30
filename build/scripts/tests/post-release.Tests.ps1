@@ -72,6 +72,30 @@ Describe "GetCoreDependenciesForProjects" {
     }
 }
 
+Describe "CreateChecksumsFile" {
+
+    It "writes a checksums.txt with SHA256 hashes for every file in the directory" {
+        $directory = Join-Path -Path $TestDrive -ChildPath (New-Guid)
+        New-Item -Path $directory -ItemType Directory -Force | Out-Null
+
+        Set-Content -Path (Join-Path -Path $directory -ChildPath "b.nupkg") -Value "second"
+        Set-Content -Path (Join-Path -Path $directory -ChildPath "a.nupkg") -Value "first"
+
+        CreateChecksumsFile -directory $directory
+
+        $checksumsPath = Join-Path -Path $directory -ChildPath "checksums.txt"
+        Test-Path -Path $checksumsPath | Should-BeTrue -Because "a checksums.txt file should be written to the directory"
+
+        $expectedHashA = (Get-FileHash -Path (Join-Path -Path $directory -ChildPath "a.nupkg") -Algorithm SHA256).Hash.ToLower()
+        $expectedHashB = (Get-FileHash -Path (Join-Path -Path $directory -ChildPath "b.nupkg") -Algorithm SHA256).Hash.ToLower()
+
+        $lines = Get-Content -Path $checksumsPath
+        @($lines).Count | Should-Be 2 -Because "one line should be written per file in the directory"
+        $lines[0] | Should-Be "$expectedHashA  a.nupkg" -Because "files should be listed in alphabetical order with their lowercase SHA256 hash"
+        $lines[1] | Should-Be "$expectedHashB  b.nupkg" -Because "files should be listed in alphabetical order with their lowercase SHA256 hash"
+    }
+}
+
 Describe "CreateDraftRelease" {
 
     BeforeEach {

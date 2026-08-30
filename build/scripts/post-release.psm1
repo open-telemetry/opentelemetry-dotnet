@@ -1,3 +1,22 @@
+function CreateChecksumsFile {
+  param(
+    [Parameter(Mandatory=$true)][string]$directory
+  )
+
+  $ErrorActionPreference = "Stop"
+
+  $files = Get-ChildItem -Path $directory -File | Sort-Object -Property Name
+
+  $lines = foreach ($file in $files) {
+    $hash = (Get-FileHash -Path $file.FullName -Algorithm SHA256).Hash.ToLower()
+    "$hash  $($file.Name)"
+  }
+
+  Set-Content -Path (Join-Path -Path $directory -ChildPath "checksums.txt") -Value $lines -Encoding utf8NoBOM
+}
+
+Export-ModuleMember -Function CreateChecksumsFile
+
 function CreateDraftRelease {
   param(
     [Parameter(Mandatory=$true)][string]$gitRepository,

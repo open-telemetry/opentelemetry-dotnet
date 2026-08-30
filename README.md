@@ -254,6 +254,22 @@ gh attestation verify --owner open-telemetry .\OpenTelemetry.dll
 For more verification options please refer to the [`gh attestation verify`
 documentation](https://cli.github.com/manual/gh_attestation_verify).
 
+### Checksums
+
+Every [release](https://github.com/open-telemetry/opentelemetry-dotnet/releases)
+published from this repo includes a `checksums.txt` file listing the SHA256
+checksum of every other file attached to the release, such as the NuGet
+packages, the symbol packages, and the SBOM.
+
+To verify a downloaded release asset against `checksums.txt`:
+
+```bash
+sha256sum --ignore-missing -c checksums.txt
+```
+
+> [!NOTE]
+> A successful verification outputs `OK` for each verified file.
+
 ## Contributing
 
 For information about contributing to the project see:
