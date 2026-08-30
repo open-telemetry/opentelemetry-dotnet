@@ -165,7 +165,7 @@ internal sealed class AggregatorStore
             // Using the DefaultConcurrencyLevel defined in the ConcurrentDictionary class: https://github.com/dotnet/runtime/blob/v10.0.0/src/libraries/System.Collections.Concurrent/src/System/Collections/Concurrent/ConcurrentDictionary.cs#L2054
             // We expect at the most (user provided cardinality limit) * 2 entries- one for sorted and one for unsorted input
             var concurrencyLevel = Environment.ProcessorCount;
-            var capacity = capacity: enableLazyAllocation ? Math.Min(cardinalityLimit, 128) : cardinalityLimit * 2;
+            var capacity = enableLazyAllocation ? Math.Min(cardinalityLimit, 128) : cardinalityLimit * 2;
 
 #if NET9_0_OR_GREATER
             this.TagsToMetricPointIndexDictionaryDelta = new(concurrencyLevel, capacity, comparer: TagsComparer.Instance);
