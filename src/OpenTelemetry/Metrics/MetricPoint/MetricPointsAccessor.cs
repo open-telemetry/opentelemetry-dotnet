@@ -9,23 +9,21 @@ namespace OpenTelemetry.Metrics;
 /// </summary>
 public readonly struct MetricPointsAccessor
 {
-    private readonly MetricPoint[]? metricsPoints;
-    private readonly SegmentedMetricPointStorage? segmentedMetricPoints;
+    // Holds either MetricPoint[] or SegmentedMetricPointStorage to preserve the public struct's layout.
+    private readonly object metricPointStorage;
     private readonly int[] metricPointsToProcess;
     private readonly int targetCount;
 
     internal MetricPointsAccessor(MetricPoint[] metricsPoints, int[] metricPointsToProcess, int targetCount)
     {
-        this.metricsPoints = metricsPoints;
-        this.segmentedMetricPoints = null;
+        this.metricPointStorage = metricsPoints;
         this.metricPointsToProcess = metricPointsToProcess;
         this.targetCount = targetCount;
     }
 
     internal MetricPointsAccessor(SegmentedMetricPointStorage segmentedMetricPoints, int[] metricPointsToProcess, int targetCount)
     {
-        this.metricsPoints = null;
-        this.segmentedMetricPoints = segmentedMetricPoints;
+        this.metricPointStorage = segmentedMetricPoints;
         this.metricPointsToProcess = metricPointsToProcess;
         this.targetCount = targetCount;
     }
@@ -35,7 +33,7 @@ public readonly struct MetricPointsAccessor
     /// </summary>
     /// <returns><see cref="Enumerator"/>.</returns>
     public Enumerator GetEnumerator()
-        => new(this.metricsPoints, this.segmentedMetricPoints, this.metricPointsToProcess, this.targetCount);
+        => new(this.metricPointStorage, this.metricPointsToProcess, this.targetCount);
 
 #pragma warning disable CA1034 // Nested types should not be visible - already part of public API
     /// <summary>
@@ -44,16 +42,15 @@ public readonly struct MetricPointsAccessor
     public struct Enumerator
 #pragma warning restore CA1034 // Nested types should not be visible - already part of public API
     {
-        private readonly MetricPoint[]? metricsPoints;
-        private readonly SegmentedMetricPointStorage? segmentedMetricPoints;
+        // Holds either MetricPoint[] or SegmentedMetricPointStorage to preserve the public struct's layout.
+        private readonly object metricPointStorage;
         private readonly int[] metricPointsToProcess;
         private readonly int targetCount;
         private int index;
 
-        internal Enumerator(MetricPoint[]? metricsPoints, SegmentedMetricPointStorage? segmentedMetricPoints, int[] metricPointsToProcess, int targetCount)
+        internal Enumerator(object metricPointStorage, int[] metricPointsToProcess, int targetCount)
         {
-            this.metricsPoints = metricsPoints;
-            this.segmentedMetricPoints = segmentedMetricPoints;
+            this.metricPointStorage = metricPointStorage;
             this.metricPointsToProcess = metricPointsToProcess;
             this.targetCount = targetCount;
             this.index = -1;
@@ -67,12 +64,12 @@ public readonly struct MetricPointsAccessor
             get
             {
                 var metricPointIndex = this.metricPointsToProcess[this.index];
-                if (this.segmentedMetricPoints != null)
+                if (this.metricPointStorage is MetricPoint[] metricsPoints)
                 {
-                    return ref this.segmentedMetricPoints.GetMetricPoint(metricPointIndex);
+                    return ref metricsPoints[metricPointIndex];
                 }
 
-                return ref this.metricsPoints![metricPointIndex];
+                return ref ((SegmentedMetricPointStorage)this.metricPointStorage).GetMetricPoint(metricPointIndex);
             }
         }
 
