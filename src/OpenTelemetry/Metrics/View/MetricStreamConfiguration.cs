@@ -158,6 +158,8 @@ public class MetricStreamConfiguration
     internal Func<ExemplarReservoir?>? ExemplarReservoirFactory { get; set; }
 #endif
 
+    internal virtual AggregationKind? ImpliedAggregationKind => null;
+
     internal string[]? CopiedTagKeys { get; private set; }
 
     internal string[]? CopiedExcludedTagKeys { get; private set; }
