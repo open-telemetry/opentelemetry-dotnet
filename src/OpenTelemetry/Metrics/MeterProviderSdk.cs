@@ -346,12 +346,6 @@ internal sealed class MeterProviderSdk : MeterProvider
                                 $"The current SDK does not allow the default aggregation kind of this configuration x InstrumentType {instrument.GetType()} combination.",
                                 "Fix the view configuration.");
                         }
-
-                        if (metricStreamConfig?.AggregationKind is null
-                            && metricStreamConfig?.ImpliedAggregationKind is not null)
-                        {
-                            metricStreamConfig.AggregationKind = metricStreamConfig.ImpliedAggregationKind;
-                        }
                     }
                     catch (Exception ex)
                     {

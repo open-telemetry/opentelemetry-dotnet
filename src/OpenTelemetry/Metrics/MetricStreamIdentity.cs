@@ -39,7 +39,8 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
             this.ExponentialHistogramMaxScale = (metricStreamConfiguration as Base2ExponentialBucketHistogramConfiguration)?.MaxScale ?? 0;
         }
 
-        this.AggregationKind = metricStreamConfiguration?.AggregationKind;
+        this.AggregationKind = metricStreamConfiguration?.AggregationKind
+        ?? metricStreamConfiguration?.ImpliedAggregationKind;
         this.HistogramRecordMinMax = (metricStreamConfiguration as HistogramConfiguration)?.RecordMinMax ?? true;
 
 #if NET || NETSTANDARD2_1_OR_GREATER
