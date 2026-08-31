@@ -139,7 +139,9 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
             .WithMetrics((builder) =>
             {
                 builder.AddMeter(meter.Name)
-                       .AddView(instrument => new Base2ExponentialBucketHistogramConfiguration())
+                       .AddView(instrument => string.Equals(instrument.Name, "test_histogram", StringComparison.OrdinalIgnoreCase)
+                           ? new Base2ExponentialBucketHistogramConfiguration()
+                           : null)
                        .AddPrometheusExporter();
             });
 
