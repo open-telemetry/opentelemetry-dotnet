@@ -35,7 +35,12 @@ internal static class OtlpCertificateManager
 
         try
         {
-            var caCertificate = X509Certificate2.CreateFromPemFile(caCertificatePath);
+#if NET9_0_OR_GREATER
+            var caCertificate = X509CertificateLoader.LoadCertificateFromFile(caCertificatePath);
+#else
+            var pemContents = File.ReadAllText(caCertificatePath);
+            var caCertificate = X509Certificate2.CreateFromPem(pemContents);
+#endif
 
             OpenTelemetryProtocolExporterEventSource.Log.MtlsCertificateLoaded(
                 CaCertificateType,
