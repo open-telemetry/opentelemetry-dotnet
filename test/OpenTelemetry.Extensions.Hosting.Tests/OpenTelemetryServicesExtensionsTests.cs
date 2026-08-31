@@ -175,6 +175,69 @@ public class OpenTelemetryServicesExtensionsTests
     }
 
     [Fact]
+    public void AddOpenTelemetry_WithTracing_SamplerResolvedFromHostConfigurationTest()
+    {
+        using var environment = EnvironmentVariableScope.Create(
+            [
+                (SamplerOptions.TracesSamplerConfigKey, null),
+                (SamplerOptions.TracesSamplerArgConfigKey, null),
+            ]);
+
+        var builder = new HostBuilder()
+            .ConfigureAppConfiguration(configBuilder =>
+            {
+                configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    [SamplerOptions.TracesSamplerConfigKey] = "traceidratio",
+                    [SamplerOptions.TracesSamplerArgConfigKey] = "0.25",
+                });
+            })
+            .ConfigureServices(services =>
+            {
+                services.AddOpenTelemetry().WithTracing();
+            });
+
+        using var host = builder.Build();
+
+        var tracerProvider = host.Services.GetRequiredService<TracerProvider>() as TracerProviderSdk;
+
+        Assert.NotNull(tracerProvider);
+        Assert.Equal("TraceIdRatioBasedSampler{0.250000}", tracerProvider.Sampler.Description);
+    }
+
+    [Fact]
+    public void AddOpenTelemetry_WithTracing_ConfigureSamplerOptionsOverridesHostConfigurationTest()
+    {
+        using var environment = EnvironmentVariableScope.Create(
+            [
+                (SamplerOptions.TracesSamplerConfigKey, null),
+                (SamplerOptions.TracesSamplerArgConfigKey, null),
+            ]);
+
+        var builder = new HostBuilder()
+            .ConfigureAppConfiguration(configBuilder =>
+            {
+                configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    [SamplerOptions.TracesSamplerConfigKey] = "traceidratio",
+                    [SamplerOptions.TracesSamplerArgConfigKey] = "0.1",
+                });
+            })
+            .ConfigureServices(services =>
+            {
+                services.AddOpenTelemetry().WithTracing();
+                services.Configure<SamplerOptions>(o => o.TraceIdRatio = 0.9);
+            });
+
+        using var host = builder.Build();
+
+        var tracerProvider = host.Services.GetRequiredService<TracerProvider>() as TracerProviderSdk;
+
+        Assert.NotNull(tracerProvider);
+        Assert.Equal("TraceIdRatioBasedSampler{0.900000}", tracerProvider.Sampler.Description);
+    }
+
+    [Fact]
     public void AddOpenTelemetry_WithTracing_NestedResolutionUsingConfigureTest()
     {
         var innerTestExecuted = false;
