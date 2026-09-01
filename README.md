@@ -303,7 +303,7 @@ For more information about the triager role, see the [community repository](http
 * [Liudmila Molkova](https://github.com/lmolkova), Approver
 * [Martin Thwaites](https://github.com/martinjt), Triager
 * [Mike Goldsmith](https://github.com/MikeGoldsmith), Maintainer
-* [Mikel Blanchard](https://github.com/CodeBlanch), Approver
+* [Mikel Blanchard](https://github.com/CodeBlanch), Maintainer
 * [Paulo Janotti](https://github.com/pjanotti), Approver
 * [Reiley Yang](https://github.com/reyang), Approver
 * [Robert Paj&#x105;k](https://github.com/pellared), Approver
