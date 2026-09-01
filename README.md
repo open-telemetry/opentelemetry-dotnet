@@ -289,7 +289,6 @@ For more information about the maintainer role, see the [community repository](h
 ### Approvers
 
 * [Cijo Thomas](https://github.com/cijothomas), Microsoft
-* [Mikel Blanchard](https://github.com/CodeBlanch), Microsoft
 
 For more information about the approver role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#approver).
 
@@ -304,6 +303,7 @@ For more information about the triager role, see the [community repository](http
 * [Liudmila Molkova](https://github.com/lmolkova), Approver
 * [Martin Thwaites](https://github.com/martinjt), Triager
 * [Mike Goldsmith](https://github.com/MikeGoldsmith), Maintainer
+* [Mikel Blanchard](https://github.com/CodeBlanch), Approver
 * [Paulo Janotti](https://github.com/pjanotti), Approver
 * [Reiley Yang](https://github.com/reyang), Approver
 * [Robert Paj&#x105;k](https://github.com/pellared), Approver
