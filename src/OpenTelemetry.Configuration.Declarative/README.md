@@ -24,7 +24,8 @@ OTEL_CONFIG_FILE=/path/to/otel-config.yaml
 
 ### 2. Wire it into your OTel setup
 
-**On `IHostApplicationBuilder` (`WebApplicationBuilder` / `HostApplicationBuilder`) - recommended:**
+**On `IHostApplicationBuilder` (`WebApplicationBuilder` /**
+**`HostApplicationBuilder`) - recommended:**
 
 ```csharp
 builder.AddOpenTelemetry()
@@ -40,7 +41,6 @@ hostBuilder.ConfigureAppConfiguration(b =>
 hostBuilder.ConfigureServices(services =>
     services.AddOpenTelemetry().WithTracing(...));
 ```
-
 
 **Without a host** (plain `IServiceCollection`), wire through
 `IOpenTelemetryBuilder` (reads `OTEL_CONFIG_FILE` when called without a path):
