@@ -1790,7 +1790,7 @@ public sealed class DeclarativeConfigurationReaderTests
     }
 
     [Fact]
-    public void Translate_CyclicAliasInUnknownSection_IsIgnoredWithoutRecursingIndefinitely()
+    public void Translate_CyclicAliasInUnknownSection_FailsToLoad()
     {
         const string yaml = """
             file_format: "1.0"
@@ -1798,38 +1798,90 @@ public sealed class DeclarativeConfigurationReaderTests
               self: *cycle
             """;
 
-        Assert.Empty(ReadConfiguration(yaml));
+        var exception = Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+
+        Assert.Contains("<root>.extension.self", exception.Message, StringComparison.Ordinal);
     }
 
-    // Under the YAML 1.2 core schema, << is an ordinary string key. At the extension-permitting
-    // root it is ignored; it is not expanded as a YAML 1.1 merge key.
     [Fact]
-    public void Translate_MergeLikeKeyAtRoot_IsIgnored()
+    public void Translate_MergeLikeKeyAtRoot_FailsBeforeConfigurationIsInterpreted()
     {
         const string yaml = """
             defaults: &d
               disabled: true
-            file_format: "1.0"
             <<: *d
             """;
 
-        Assert.Empty(ReadConfiguration(yaml));
+        var exception = Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+
+        Assert.Contains("<root>.<<", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("YAML 1.1 merge key", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("line", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void Translate_MergeLikeKeyInResource_ThrowsUnknownPropertyError()
+    public void Translate_MergeLikeKeyInResource_FailsBeforeSchemaValidation()
     {
         const string yaml = """
             defaults: &d
               attributes:
                 - name: from.merge
-                  value: nope
+                  value: yes-please
             file_format: "1.0"
             resource:
               <<: *d
             """;
 
-        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+        var exception = Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+
+        Assert.Contains("<root>.resource.<<", exception.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("not supported by this declarative configuration implementation", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Translate_MergeLikeKeyInUninterpretedSection_FailsToLoad()
+    {
+        const string yaml = """
+            file_format: "1.0"
+            vendor:
+              <<: value
+            """;
+
+        var exception = Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+
+        Assert.Contains("<root>.vendor.<<", exception.Message, StringComparison.Ordinal);
+    }
+
+    // Only YAML 1.1 merge syntax is rejected. Spellings that resolve to a YAML 1.2 string remain
+    // ordinary property names, which is the way to author a literal `<<` key.
+    [Theory]
+    [InlineData("\"<<\"")]
+    [InlineData("!!str <<")]
+    [InlineData("! <<")]
+    public void Translate_NonPlainMergeLikeKeyInResource_IsTreatedAsAnOrdinaryKey(string key)
+    {
+        var yaml = $$"""
+            file_format: "1.0"
+            resource:
+              {{key}} : {x: 1}
+            """;
+
+        var exception = Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+        Assert.Contains("resource.<<", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Translate_ExplicitlyTaggedMergeKey_FailsToLoad()
+    {
+        const string yaml = """
+            file_format: "1.0"
+            !!merge "<<": value
+            """;
+
+        var exception = Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+
+        Assert.Contains("<root>.<<", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("YAML 1.1 merge key", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]

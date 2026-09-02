@@ -10,11 +10,12 @@ namespace OpenTelemetry.Configuration.Declarative;
 /// Walks a declarative-configuration YAML AST and parses it into the typed <see cref="DeclarativeConfiguration"/> model.
 /// </summary>
 /// <remarks>
-/// This is the only place that depends on the YamlDotNet representation model and that applies the spec's
-/// absent / present-null / present distinction (alongside environment-variable substitution performed by
-/// <see cref="YamlNodeReader"/>).
+/// Applies the spec's absent / present-null / present distinction to the typed model. Scalars
+/// are read through the <see cref="YamlParseContext"/> supplied at construction, so a value the
+/// document-rooted walk also reads is substituted once for the whole parse.
 /// </remarks>
-internal static class DeclarativeConfigurationParser
+/// <param name="context">The context for the parse this parser belongs to.</param>
+internal sealed class DeclarativeConfigurationParser(YamlParseContext context)
 {
     private static readonly HashSet<string> KnownResourceKeys = new(StringComparer.Ordinal)
     {
@@ -29,26 +30,47 @@ internal static class DeclarativeConfigurationParser
         YamlKeys.Type,
     };
 
+    private readonly YamlPropertyReader reader = new(context);
+
     /// <summary>
     /// Builds the typed model from the (already validated) document root.
     /// </summary>
     /// <param name="root">The document root mapping <see cref="YamlMappingNode"/>.</param>
     /// <param name="fileFormat">The validated <c>file_format</c> value.</param>
     /// <returns>The typed <see cref="DeclarativeConfiguration"/>.</returns>
-    internal static DeclarativeConfiguration Parse(YamlMappingNode root, string fileFormat) =>
+    internal DeclarativeConfiguration Parse(YamlMappingNode root, string fileFormat) =>
         new(fileFormat)
         {
-            Disabled = ReadDisabled(root),
-            Resource = ReadResource(root),
+            Disabled = this.ReadDisabled(root),
+            Resource = this.ReadResource(root),
         };
 
-    private static ModelProperty<bool> ReadDisabled(YamlMappingNode node) =>
-        node.ReadBoolean(YamlKeys.Disabled);
+    private static bool ScalarMatchesAttributeType(ResourceAttributeType type, YamlScalarKind kind) => type switch
+    {
+        ResourceAttributeType.Boolean => kind == YamlScalarKind.Boolean,
+        ResourceAttributeType.Double => kind is YamlScalarKind.Integer or YamlScalarKind.Float,
+        ResourceAttributeType.Integer => kind == YamlScalarKind.Integer,
+        ResourceAttributeType.String => kind == YamlScalarKind.String,
+        ResourceAttributeType.BooleanArray or
+        ResourceAttributeType.DoubleArray or
+        ResourceAttributeType.IntegerArray or
+        ResourceAttributeType.StringArray or
+        _ => false,
+    };
 
-    private static ModelProperty<ResourceConfiguration> ReadResource(YamlMappingNode node) =>
-        node.ReadMapping(YamlKeys.Resource, ReadResourceConfiguration);
+    private static DeclarativeConfigurationException CreateInvalidResourceAttributeException(string message)
+    {
+        OpenTelemetryDeclarativeConfigurationEventSource.Log.InvalidResourceAttribute(message);
+        return new DeclarativeConfigurationException(message);
+    }
 
-    private static ResourceConfiguration ReadResourceConfiguration(YamlMappingNode node)
+    private ModelProperty<bool> ReadDisabled(YamlMappingNode node) =>
+        this.reader.ReadBoolean(node, YamlKeys.Disabled);
+
+    private ModelProperty<ResourceConfiguration> ReadResource(YamlMappingNode node) =>
+        this.reader.ReadMapping(node, YamlKeys.Resource, this.ReadResourceConfiguration);
+
+    private ResourceConfiguration ReadResourceConfiguration(YamlMappingNode node)
     {
         // Reported before the known fields are read so that a misspelling is still surfaced when a
         // sibling field goes on to fail validation - the misspelling is often the actual cause.
@@ -56,18 +78,17 @@ internal static class DeclarativeConfigurationParser
 
         return new()
         {
-            AttributesList = ReadAttributesList(node),
-            Attributes = ReadAttributes(node),
+            AttributesList = this.ReadAttributesList(node),
+            Attributes = this.ReadAttributes(node),
         };
     }
 
-    private static ModelProperty<string> ReadAttributesList(YamlMappingNode node) =>
-        node.ReadString(YamlKeys.AttributesList);
+    private ModelProperty<string> ReadAttributesList(YamlMappingNode node) =>
+        this.reader.ReadString(node, YamlKeys.AttributesList);
 
-    private static ModelProperty<IReadOnlyList<ResourceAttributeEntry>> ReadAttributes(YamlMappingNode node)
+    private ModelProperty<IReadOnlyList<ResourceAttributeEntry>> ReadAttributes(YamlMappingNode node)
     {
-        var valueNode = node.GetValueNode(YamlKeys.Attributes);
-        if (valueNode is null)
+        if (!node.TryGetValueNode(YamlKeys.Attributes, out var valueNode))
         {
             return ModelProperty<IReadOnlyList<ResourceAttributeEntry>>.Absent;
         }
@@ -95,12 +116,12 @@ internal static class DeclarativeConfigurationParser
                     $"resource.attributes[{i}] must be a YAML mapping but found {item.NodeType}.");
             }
 
-            var path = $"{YamlKeys.Resource}.{YamlKeys.Attributes}[{i}]";
+            var path = YamlPath.Index(YamlPath.Child(YamlKeys.Resource, YamlKeys.Attributes), i);
             attributeNode.EnsureCoreCollectionTag(path);
-            attributeNode.EnsureUniqueStringKeys(path);
+            _ = context.ResolveMappingKeys(attributeNode, path);
             attributeNode.EnsureNoUnrecognizedProperties(path, KnownAttributeKeys);
 
-            var nameProperty = attributeNode.ReadString(YamlKeys.Name);
+            var nameProperty = this.reader.ReadString(attributeNode, YamlKeys.Name);
             if (!nameProperty.TryGetValue(out var name))
             {
                 var reason = nameProperty.IsNull
@@ -109,8 +130,8 @@ internal static class DeclarativeConfigurationParser
                 throw CreateInvalidResourceAttributeException($"resource.attributes[{i}] {reason}.");
             }
 
-            var type = ReadAttributeType(attributeNode, name);
-            entries.Add(ReadAttributeValue(attributeNode, name, type));
+            var type = this.ReadAttributeType(attributeNode, name);
+            entries.Add(this.ReadAttributeValue(attributeNode, name, type));
         }
 
         // Made read-only before it leaves the parser. The model outlives the parse, which makes
@@ -120,9 +141,9 @@ internal static class DeclarativeConfigurationParser
         return ModelProperty<IReadOnlyList<ResourceAttributeEntry>>.Create(entries.AsReadOnly());
     }
 
-    private static ResourceAttributeType ReadAttributeType(YamlMappingNode node, string entryName)
+    private ResourceAttributeType ReadAttributeType(YamlMappingNode node, string entryName)
     {
-        var property = node.ReadString(YamlKeys.Type);
+        var property = this.reader.ReadString(node, YamlKeys.Type);
 
         // Only an absent type uses the schema default. AttributeType's enum excludes null, so a
         // present YAML null does not select the default string type.
@@ -153,7 +174,7 @@ internal static class DeclarativeConfigurationParser
         };
     }
 
-    private static ResourceAttributeEntry ReadAttributeValue(
+    private ResourceAttributeEntry ReadAttributeValue(
         YamlMappingNode attributeNode,
         string entryName,
         ResourceAttributeType type)
@@ -164,7 +185,7 @@ internal static class DeclarativeConfigurationParser
 
         if (valueNode is YamlScalarNode scalar)
         {
-            var resolved = scalar.ResolveScalar();
+            var resolved = context.ResolveScalar(scalar);
             if (resolved.Kind == YamlScalarKind.Null)
             {
                 // Present-null: schema nullBehavior is "the entry is ignored" (handled by the converter).
@@ -180,7 +201,7 @@ internal static class DeclarativeConfigurationParser
             if (!ScalarMatchesAttributeType(type, resolved.Kind))
             {
                 throw CreateInvalidResourceAttributeException(
-                    $"A resource.attributes entry for '{entryName}' has a YAML {GetYamlKindName(resolved.Kind)} value but its declared type is '{type.GetSchemaName()}'.");
+                    $"A resource.attributes entry for '{entryName}' has a YAML {resolved.Kind.GetYamlKindName()} value but its declared type is '{type.GetSchemaName()}'.");
             }
 
             return new(
@@ -200,7 +221,7 @@ internal static class DeclarativeConfigurationParser
             return new(
                 Name: entryName,
                 ScalarValue: null,
-                SequenceValues: ReadAttributeSequence(type, sequenceNode, entryName),
+                SequenceValues: this.ReadAttributeSequence(type, sequenceNode, entryName),
                 ValueNodeKind: AttributeValueNodeKind.Sequence,
                 ScalarKind: null,
                 Type: type);
@@ -211,20 +232,7 @@ internal static class DeclarativeConfigurationParser
             $"A resource.attributes entry for '{entryName}' has a YAML mapping as its 'value', which is not permitted by the schema.");
     }
 
-    private static bool ScalarMatchesAttributeType(ResourceAttributeType type, YamlScalarKind kind) => type switch
-    {
-        ResourceAttributeType.Boolean => kind == YamlScalarKind.Boolean,
-        ResourceAttributeType.Double => kind is YamlScalarKind.Integer or YamlScalarKind.Float,
-        ResourceAttributeType.Integer => kind == YamlScalarKind.Integer,
-        ResourceAttributeType.String => kind == YamlScalarKind.String,
-        ResourceAttributeType.BooleanArray or
-        ResourceAttributeType.DoubleArray or
-        ResourceAttributeType.IntegerArray or
-        ResourceAttributeType.StringArray or
-        _ => false,
-    };
-
-    private static ReadOnlyCollection<ResolvedYamlScalar> ReadAttributeSequence(
+    private ReadOnlyCollection<ResolvedYamlScalar> ReadAttributeSequence(
         ResourceAttributeType type,
         YamlSequenceNode sequence,
         string entryName)
@@ -258,13 +266,13 @@ internal static class DeclarativeConfigurationParser
                     $"A resource.attributes entry for '{entryName}' has a sequence containing a non-scalar item; the configuration does not conform to the schema.");
             }
 
-            var resolved = scalar.ResolveScalar();
+            var resolved = context.ResolveScalar(scalar);
             var matches = resolved.Kind == expectedKind ||
                 (type == ResourceAttributeType.DoubleArray && resolved.Kind == YamlScalarKind.Integer);
             if (!matches)
             {
                 throw CreateInvalidResourceAttributeException(
-                    $"A resource.attributes entry for '{entryName}' has a sequence with a {GetYamlKindName(resolved.Kind)} item but declared type is '{type.GetSchemaName()}'.");
+                    $"A resource.attributes entry for '{entryName}' has a sequence with a {resolved.Kind.GetYamlKindName()} item but declared type is '{type.GetSchemaName()}'.");
             }
 
             values.Add(resolved);
@@ -273,19 +281,4 @@ internal static class DeclarativeConfigurationParser
         // Made read-only for the same reason as the attribute list above.
         return values.AsReadOnly();
     }
-
-    private static DeclarativeConfigurationException CreateInvalidResourceAttributeException(string message)
-    {
-        OpenTelemetryDeclarativeConfigurationEventSource.Log.InvalidResourceAttribute(message);
-        return new DeclarativeConfigurationException(message);
-    }
-
-    private static string GetYamlKindName(YamlScalarKind kind) => kind switch
-    {
-        YamlScalarKind.Boolean => "boolean",
-        YamlScalarKind.Float => "float",
-        YamlScalarKind.Integer => "integer",
-        YamlScalarKind.Null => "null",
-        YamlScalarKind.String or _ => "string",
-    };
 }

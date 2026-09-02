@@ -1021,6 +1021,26 @@ public sealed class ConfigPropertiesTests
         Assert.Null(value);
     }
 
+    [Fact]
+    public void ConfigValueResult_Position_ReflectsReadProperty()
+    {
+        var presentNull = Build("null", ConfigValue.Null.WithPosition(new(3, 5))).GetString("null");
+        var typeMismatch = Build("mismatch", ConfigValue.Boolean(true).WithPosition(new(7, 2))).GetString("mismatch");
+        var absent = EmptyProperties().GetString("absent");
+
+        Assert.Equal(ConfigValueOutcome.PresentNull, presentNull.Outcome);
+        Assert.Equal(3, presentNull.Position.Line);
+        Assert.Equal(5, presentNull.Position.Column);
+
+        Assert.Equal(ConfigValueOutcome.TypeMismatch, typeMismatch.Outcome);
+        Assert.Equal(7, typeMismatch.Position.Line);
+        Assert.Equal(2, typeMismatch.Position.Column);
+
+        Assert.Equal(ConfigValueOutcome.Absent, absent.Outcome);
+        Assert.Equal(ConfigValuePosition.Unknown, absent.Position);
+        Assert.False(absent.Position.HasPosition);
+    }
+
     private static ConfigProperties EmptyProperties() => ConfigProperties.Empty;
 
     private static ConfigProperties Build(string key, ConfigValue value)
