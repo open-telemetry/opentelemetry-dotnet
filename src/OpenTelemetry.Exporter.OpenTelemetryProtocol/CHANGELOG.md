@@ -15,6 +15,19 @@ Notes](../../RELEASENOTES.md).
   different versions, schema URLs, or attributes being exported under the same
   OTLP scope.
   ([#7687](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7687))
+* Extended key/value list attribute serialization to cover additional
+  dictionary shapes (`IEnumerable<KeyValuePair<string, string?>>` and
+  `IDictionary`). These attributes will be serialized as nested OTLP
+  `kvlist` values.
+  ([#7679](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7679))
+
+* Disable HttpClientFactory integration on browser WebAssembly (e.g. Blazor)
+  environments to avoid stalled export requests when async HTTP handlers are used.
+  ([#7709](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7709))
+
+* Fixed CA certificate loading (e.g. using `OTEL_EXPORTER_OTLP_CERTIFICATE`)
+  for PEM-encoded certificates that only contain a public key.
+  ([#7693](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7693))
 
 ## 1.18.0
 

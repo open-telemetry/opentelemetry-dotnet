@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Collections;
 using System.Diagnostics;
 using System.Globalization;
 
@@ -92,55 +93,13 @@ internal abstract class TagWriter<TTagState, TArrayState>
             case float f:
                 this.WriteFloatingPointTag(ref state, key, f);
                 break;
-            case IEnumerable<KeyValuePair<string, object?>> kvList:
-                if (recursionDepth >= MaxRecursionDepth)
-                {
-                    // Note: The nesting limit has been reached so the value is
-                    // written as a string instead of recursing any further.
-                    // This branch does not take part in the recursion so it
-                    // must not touch the depth.
-                    try
-                    {
-                        var stringValue = Convert.ToString(value, CultureInfo.InvariantCulture);
-                        this.WriteStringTag(
-                            ref state,
-                            key,
-                            TruncateString(stringValue.AsSpan(), tagValueMaxLength));
-                    }
-                    catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
-                    {
-                        recursionDepth = 0;
-                        throw;
-                    }
-                    catch
-                    {
-                        // If ToString throws an exception then the tag is ignored.
-                        return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
-                    }
-
-                    break;
-                }
-
-                recursionDepth++;
-
-                try
-                {
-                    this.WriteKvListTag(ref state, key, kvList, tagValueMaxLength);
-                }
-                catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
-                {
-                    recursionDepth = 0;
-                    throw;
-                }
-                catch
-                {
-                    recursionDepth--;
-                    return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
-                }
-
-                recursionDepth--;
-
+#if NET
+            case ulong ul:
+                this.WriteSpanFormattableTag(ref state, key, ul, bufferLength: 20, tagValueMaxLength);
                 break;
+#endif
+            case IEnumerable<KeyValuePair<string, object?>> kvList:
+                return this.TryWriteKvListTagWithinDepthLimit(ref state, key, value, kvList, tagValueMaxLength);
 
             case Array array:
                 if (value.GetType() == typeof(byte[]) && this.TryWriteByteArrayTag(ref state, key, ((byte[])value).AsSpan()))
@@ -166,12 +125,37 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
                 break;
 
+#if NET
+            // Buffer lengths below are sized for the invariant-culture's default-format ("G") output
+            case DateTime dt:
+                this.WriteSpanFormattableTag(ref state, key, dt, bufferLength: 64, tagValueMaxLength);
+                break;
+            case DateTimeOffset dto:
+                this.WriteSpanFormattableTag(ref state, key, dto, bufferLength: 64, tagValueMaxLength);
+                break;
+            case TimeSpan ts:
+                this.WriteSpanFormattableTag(ref state, key, ts, bufferLength: 32, tagValueMaxLength);
+                break;
+            case Guid g:
+                this.WriteSpanFormattableTag(ref state, key, g, bufferLength: 36, tagValueMaxLength);
+                break;
+            case decimal m:
+                this.WriteSpanFormattableTag(ref state, key, m, bufferLength: 32, tagValueMaxLength);
+                break;
+#endif
+
+            case IEnumerable<KeyValuePair<string, string?>> stringKvList:
+                return this.TryWriteKvListTagWithinDepthLimit(ref state, key, value, AdaptStringKvList(stringKvList), tagValueMaxLength);
+
+            case IDictionary dictionary:
+                return this.TryWriteKvListTagWithinDepthLimit(ref state, key, value, AdaptDictionary(dictionary), tagValueMaxLength);
+
             // All other types are converted to strings including the following
             // built-in value types:
             // case nint:    Pointer type.
             // case nuint:   Pointer type.
-            // case ulong:   May throw an exception on overflow.
-            // case decimal: Converting to double produces rounding errors.
+            // case ulong:   May throw an exception on overflow (where ISpanFormattable not available).
+            // case decimal: Converting to double produces rounding errors (where ISpanFormattable not available).
             default:
                 try
                 {
@@ -227,11 +211,106 @@ internal abstract class TagWriter<TTagState, TArrayState>
            ? value.Slice(0, maxLengthValue)
            : value;
 
+    private static IEnumerable<KeyValuePair<string, object?>> AdaptStringKvList(IEnumerable<KeyValuePair<string, string?>> source)
+    {
+        foreach (var item in source)
+        {
+            yield return new(item.Key, item.Value);
+        }
+    }
+
+    private static IEnumerable<KeyValuePair<string, object?>> AdaptDictionary(IDictionary source)
+    {
+        foreach (DictionaryEntry entry in source)
+        {
+            var entryKey = entry.Key as string
+                ?? Convert.ToString(entry.Key, CultureInfo.InvariantCulture);
+            if (entryKey != null)
+            {
+                yield return new(entryKey, entry.Value);
+            }
+        }
+    }
+
+    private bool TryWriteKvListTagWithinDepthLimit(
+        ref TTagState state,
+        string key,
+        object value,
+        IEnumerable<KeyValuePair<string, object?>> kvList,
+        int? tagValueMaxLength)
+    {
+        if (recursionDepth >= MaxRecursionDepth)
+        {
+            // The nesting limit has been reached so the value is
+            // written as a string instead of recursing any further.
+            // This branch does not take part in the recursion so it
+            // must not touch the depth.
+            try
+            {
+                var stringValue = Convert.ToString(value, CultureInfo.InvariantCulture);
+                this.WriteStringTag(
+                    ref state,
+                    key,
+                    TruncateString(stringValue.AsSpan(), tagValueMaxLength));
+            }
+            catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
+            {
+                recursionDepth = 0;
+                throw;
+            }
+            catch
+            {
+                // If ToString throws an exception then the tag is ignored.
+                return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
+            }
+
+            return true;
+        }
+
+        recursionDepth++;
+
+        try
+        {
+            this.WriteKvListTag(ref state, key, kvList, tagValueMaxLength);
+        }
+        catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
+        {
+            recursionDepth = 0;
+            throw;
+        }
+        catch
+        {
+            recursionDepth--;
+            return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
+        }
+
+        recursionDepth--;
+
+        return true;
+    }
+
     private void WriteCharTag(ref TTagState state, string key, char value)
     {
         Span<char> destination = [value];
         this.WriteStringTag(ref state, key, destination);
     }
+
+#if NET
+    private void WriteSpanFormattableTag<T>(ref TTagState state, string key, T value, int bufferLength, int? tagValueMaxLength)
+        where T : ISpanFormattable
+    {
+        Span<char> destination = stackalloc char[bufferLength];
+        if (value.TryFormat(destination, out var charsWritten, format: default, CultureInfo.InvariantCulture))
+        {
+            this.WriteStringTag(ref state, key, TruncateString(destination[..charsWritten], tagValueMaxLength));
+        }
+        else
+        {
+            var stringValue = value.ToString(null, CultureInfo.InvariantCulture) ?? string.Empty;
+            this.WriteStringTag(ref state, key, TruncateString(stringValue.AsSpan(), tagValueMaxLength));
+        }
+    }
+#endif
 
     private void WriteCharValue(ref TArrayState state, char value)
     {

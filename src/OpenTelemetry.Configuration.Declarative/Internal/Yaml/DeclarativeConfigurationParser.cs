@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Collections.ObjectModel;
 using YamlDotNet.RepresentationModel;
 
 namespace OpenTelemetry.Configuration.Declarative;
@@ -112,7 +113,11 @@ internal static class DeclarativeConfigurationParser
             entries.Add(ReadAttributeValue(attributeNode, name, type));
         }
 
-        return ModelProperty<IReadOnlyList<ResourceAttributeEntry>>.Create(entries);
+        // Made read-only before it leaves the parser. The model outlives the parse, which makes
+        // this reference reachable by callers, and IReadOnlyList<T> over a live List<T> only hides
+        // the mutating members - it does not prevent a cast back to IList<T>. AsReadOnly closes
+        // that because ReadOnlyCollection<T> throws from the IList<T> mutators.
+        return ModelProperty<IReadOnlyList<ResourceAttributeEntry>>.Create(entries.AsReadOnly());
     }
 
     private static ResourceAttributeType ReadAttributeType(YamlMappingNode node, string entryName)
@@ -219,7 +224,7 @@ internal static class DeclarativeConfigurationParser
         _ => false,
     };
 
-    private static List<ResolvedYamlScalar> ReadAttributeSequence(
+    private static ReadOnlyCollection<ResolvedYamlScalar> ReadAttributeSequence(
         ResourceAttributeType type,
         YamlSequenceNode sequence,
         string entryName)
@@ -265,7 +270,8 @@ internal static class DeclarativeConfigurationParser
             values.Add(resolved);
         }
 
-        return values;
+        // Made read-only for the same reason as the attribute list above.
+        return values.AsReadOnly();
     }
 
     private static DeclarativeConfigurationException CreateInvalidResourceAttributeException(string message)

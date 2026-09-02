@@ -17,3 +17,13 @@ Notes](../../RELEASENOTES.md).
   for reading parsed YAML configuration values (scalars, nested mappings, and
   sequences).
   ([#7657](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7657))
+
+* Introduced `DeclarativeConfigurationDocument` and
+  `DeclarativeConfigurationDocumentAccessor`. Each file is parsed at most once
+  per application lifetime.
+  ([#7690](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7690))
+
+* Added a `PluginComponentProvider` abstraction and registry that allows SDK
+  components and plugins to register named factories for declarative-config
+  components which participate in YAML-driven configuration.
+  ([#7710](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7710))
