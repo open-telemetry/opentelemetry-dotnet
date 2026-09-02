@@ -64,7 +64,7 @@ Targeting `Microsoft.Extensions.Hosting.IHostApplicationBuilder`:
   [IHostApplicationBuilder.Services](https://learn.microsoft.com/dotnet/api/microsoft.extensions.hosting.ihostapplicationbuilder.services),
   and additionally:
 
-  - Seeds `service.name` from
+  * Seeds `service.name` from
     [`IHostEnvironment.ApplicationName`](https://learn.microsoft.com/dotnet/api/microsoft.extensions.hosting.ihostenvironment.applicationname)
     and `deployment.environment.name` from
     [`IHostEnvironment.EnvironmentName`](https://learn.microsoft.com/dotnet/api/microsoft.extensions.hosting.ihostenvironment.environmentname)
@@ -74,7 +74,7 @@ Targeting `Microsoft.Extensions.Hosting.IHostApplicationBuilder`:
     [`ConfigureResource`](https://learn.microsoft.com/dotnet/api/opentelemetry.opentelemetrybuildersdk-extensions.configureresource)
     call.
 
-  - Makes the host's
+  * Makes the host's
     [Configuration](https://learn.microsoft.com/dotnet/api/microsoft.extensions.hosting.ihostapplicationbuilder.configuration)
     available to OpenTelemetry extensions during setup. It also registers that
     configuration as an `IConfigurationManager` singleton when the application
