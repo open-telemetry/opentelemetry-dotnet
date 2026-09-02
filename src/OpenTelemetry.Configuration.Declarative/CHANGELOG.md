@@ -31,4 +31,4 @@ Notes](../../RELEASENOTES.md).
 * Parse the full configuration document, including top-level sections the
   package does not yet apply. Substitution and YAML structure validation is
   applied, so previously ignored errors are now reported.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7716](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7716))
