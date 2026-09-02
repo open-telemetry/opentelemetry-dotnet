@@ -239,28 +239,35 @@ public sealed class OtlpTraceExporterTests : IDisposable
         using var sourceV2 = new ActivitySource(sourceName, "2.0");
         using var sourceWithSchema = new ActivitySource(new ActivitySourceOptions(sourceName) { Version = "1.0", TelemetrySchemaUrl = "https://opentelemetry.io/schemas/1.0.0" });
         using var sourceWithTags = new ActivitySource(new ActivitySourceOptions(sourceName) { Version = "1.0", Tags = [new("scope-key", "scope-value")] });
+        using var equivalentSourceWithTags = new ActivitySource(new ActivitySourceOptions(sourceName) { Version = "1.0", Tags = [new("scope-key", "scope-value")] });
+        using var sourceWithDifferentTags = new ActivitySource(new ActivitySourceOptions(sourceName) { Version = "1.0", Tags = [new("scope-key", "different-value")] });
         using var activityV1 = sourceV1.StartActivity("span-v1-a");
         using var equivalentActivityV1 = equivalentSourceV1.StartActivity("span-v1-b");
         using var activityV2 = sourceV2.StartActivity("span-v2");
         using var activityWithSchema = sourceWithSchema.StartActivity("span-schema");
         using var activityWithTags = sourceWithTags.StartActivity("span-tags");
+        using var equivalentActivityWithTags = equivalentSourceWithTags.StartActivity("span-tags-equivalent");
+        using var activityWithDifferentTags = sourceWithDifferentTags.StartActivity("span-tags-different");
 
         Assert.NotNull(activityV1);
         Assert.NotNull(equivalentActivityV1);
         Assert.NotNull(activityV2);
         Assert.NotNull(activityWithSchema);
         Assert.NotNull(activityWithTags);
+        Assert.NotNull(equivalentActivityWithTags);
+        Assert.NotNull(activityWithDifferentTags);
 
-        var activities = new[] { activityV1, equivalentActivityV1, activityV2, activityWithSchema, activityWithTags };
+        var activities = new[] { activityV1, equivalentActivityV1, activityV2, activityWithSchema, activityWithTags, equivalentActivityWithTags, activityWithDifferentTags };
         var batch = new Batch<Activity>(activities, activities.Length);
         var request = CreateTraceExportRequest(DefaultSdkLimitOptions, batch, ResourceBuilder.CreateEmpty().Build());
 
         var scopeSpans = Assert.Single(request.ResourceSpans).ScopeSpans;
-        Assert.Equal(4, scopeSpans.Count);
+        Assert.Equal(5, scopeSpans.Count);
         Assert.Contains(scopeSpans, scope => scope.Scope.Version == "1.0" && scope.SchemaUrl.Length == 0 && scope.Scope.Attributes.Count == 0 && scope.Spans.Count == 2);
         Assert.Contains(scopeSpans, scope => scope.Scope.Version == "2.0" && Assert.Single(scope.Spans).Name == "span-v2");
         Assert.Contains(scopeSpans, scope => scope.SchemaUrl == "https://opentelemetry.io/schemas/1.0.0" && Assert.Single(scope.Spans).Name == "span-schema");
-        Assert.Contains(scopeSpans, scope => scope.Scope.Attributes.Count == 1 && Assert.Single(scope.Scope.Attributes).Key == "scope-key" && Assert.Single(scope.Spans).Name == "span-tags");
+        Assert.Contains(scopeSpans, scope => scope.Scope.Attributes.Count == 1 && Assert.Single(scope.Scope.Attributes).Value.StringValue == "scope-value" && scope.Spans.Count == 2);
+        Assert.Contains(scopeSpans, scope => scope.Scope.Attributes.Count == 1 && Assert.Single(scope.Scope.Attributes).Value.StringValue == "different-value" && Assert.Single(scope.Spans).Name == "span-tags-different");
     }
 
     [Fact]

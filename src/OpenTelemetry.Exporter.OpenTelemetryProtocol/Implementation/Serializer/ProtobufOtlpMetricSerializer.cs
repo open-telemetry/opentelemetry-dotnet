@@ -44,9 +44,18 @@ internal static class ProtobufOtlpMetricSerializer
         // would merge it into the next export on this thread.
         try
         {
+            InstrumentationScope previousInstrumentationScope = default;
+            List<Metric>? previousMetrics = null;
+
             foreach (var metric in batch)
             {
                 var instrumentationScope = new InstrumentationScope(metric);
+                if (previousMetrics != null && instrumentationScope.Equals(previousInstrumentationScope))
+                {
+                    previousMetrics.Add(metric);
+                    continue;
+                }
+
                 if (!scopeMetricsList.TryGetValue(instrumentationScope, out var metrics))
                 {
                     metrics = metricListPool.Count > 0 ? metricListPool.Pop() : [];
@@ -54,6 +63,8 @@ internal static class ProtobufOtlpMetricSerializer
                 }
 
                 metrics.Add(metric);
+                previousInstrumentationScope = instrumentationScope;
+                previousMetrics = metrics;
             }
 
             writePosition = TryWriteResourceMetrics(ref buffer, writePosition, resource, scopeMetricsList, maxBufferSize);
@@ -696,25 +707,7 @@ internal static class ProtobufOtlpMetricSerializer
             this.Version = identity.MeterVersion;
             this.SchemaUrl = identity.MeterSchemaUrl;
             this.Tags = identity.MeterTags;
-
-#if NET || NETSTANDARD2_1_OR_GREATER
-            HashCode hashCode = default;
-            hashCode.Add(this.Name, StringComparer.Ordinal);
-            hashCode.Add(this.Version, StringComparer.Ordinal);
-            hashCode.Add(this.SchemaUrl, StringComparer.Ordinal);
-            hashCode.Add(this.Tags);
-            this.hashCode = hashCode.ToHashCode();
-#else
-            unchecked
-            {
-                var hash = 17;
-                hash = (hash * 31) + this.Name.GetHashCode();
-                hash = (hash * 31) + this.Version.GetHashCode();
-                hash = (hash * 31) + this.SchemaUrl.GetHashCode();
-                hash = (hash * 31) + (this.Tags?.GetHashCode() ?? 0);
-                this.hashCode = hash;
-            }
-#endif
+            this.hashCode = identity.MeterIdentityHashCode;
         }
 
         public string Name { get; }
@@ -726,7 +719,8 @@ internal static class ProtobufOtlpMetricSerializer
         public Tags? Tags { get; }
 
         public bool Equals(InstrumentationScope other)
-            => string.Equals(this.Name, other.Name, StringComparison.Ordinal)
+            => this.hashCode == other.hashCode
+            && string.Equals(this.Name, other.Name, StringComparison.Ordinal)
             && string.Equals(this.Version, other.Version, StringComparison.Ordinal)
             && string.Equals(this.SchemaUrl, other.SchemaUrl, StringComparison.Ordinal)
             && Nullable.Equals(this.Tags, other.Tags);
