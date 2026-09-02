@@ -13,7 +13,7 @@ Notes](../../RELEASENOTES.md).
   low-priority resource defaults. It also registers the host's live
   configuration into DI so that extensions receiving only `IServiceCollection`
   can contribute configuration sources during setup.
-  ([#XXXX](https://github.com/open-telemetry/opentelemetry-dotnet/pull/XXXX))
+  ([#7723](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7723))
 
 ## 1.18.0
 
