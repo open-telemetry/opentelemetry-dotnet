@@ -419,7 +419,6 @@ public class AggregatorTests
     [Fact]
     public void RecordSumFalseCountAndBucketsStillAggregateNormally()
     {
-        var boundaries = new HistogramExplicitBounds([10, 20]);
         var aggregatorStore = new AggregatorStore(
             MetricStreamIdentity,
             AggregationType.HistogramWithMinMaxBuckets,
@@ -483,6 +482,10 @@ public class AggregatorTests
             cardinalityLimit: 1024,
             recordSum: false);
 
+        var expectedHistogram = new Base2ExponentialBucketHistogram();
+        expectedHistogram.Record(-5);
+        expectedHistogram.Record(3);
+
         aggregatorStore.Update(-5, []);
         aggregatorStore.Update(3, []);
         aggregatorStore.Snapshot();
@@ -491,6 +494,7 @@ public class AggregatorTests
 
         Assert.Equal(2, metricPoint.GetHistogramCount());
         Assert.False(metricPoint.TryGetHistogramSum(out _));
+        AssertExponentialBucketsAreCorrect(expectedHistogram, metricPoint.GetExponentialHistogramData());
     }
 
     internal static void AssertExponentialBucketsAreCorrect(Base2ExponentialBucketHistogram expectedHistogram, ExponentialHistogramData data)
