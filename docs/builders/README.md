@@ -5,7 +5,7 @@ application model.
 
 | Entry Point | Best For | Multi-Signal | Lifecycle |
 | --- | --- | --- | --- |
-| [`services.AddOpenTelemetry()`][add] | ASP.NET Core, worker services, hosted apps | Yes | Managed by the host |
+| [`AddOpenTelemetry()`][add] | ASP.NET Core, worker services, hosted apps | Yes | Managed by the host |
 | [`OpenTelemetrySdk.Create()`][create] | Console apps, background jobs, CLI tools | Yes | Single `Dispose()` call |
 | [`Sdk.CreateTracerProviderBuilder()`][tracer] | Legacy / <= 1.9.0 codebases, single-signal tests | No (per-signal) | Dispose each provider individually |
 
@@ -13,6 +13,9 @@ application model.
 > For new projects, use `AddOpenTelemetry()` (hosted) or
 > `OpenTelemetrySdk.Create()` (non-hosted). The per-signal `Sdk.Create*Builder`
 > methods are retained for backward compatibility.
+>
+> On a host, call `AddOpenTelemetry()` on the builder itself
+> (`builder.AddOpenTelemetry()`) rather than on `builder.Services`.
 
 ## Quick links
 
