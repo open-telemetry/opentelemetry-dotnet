@@ -109,5 +109,4 @@ public static class OpenTelemetryHostApplicationBuilderExtensions
                     environment,
                     serviceProvider.GetService<IConfiguration>()));
     }
-
 }
