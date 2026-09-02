@@ -1,4 +1,4 @@
-# services.AddOpenTelemetry()
+# AddOpenTelemetry()
 
 > [!NOTE]
 > This is the recommended approach for any application using the .NET Generic
@@ -20,8 +20,7 @@ using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddOpenTelemetry()
-    .ConfigureResource(r => r.AddService("my-web-api"))
+builder.AddOpenTelemetry()
     .WithTracing(tracing => tracing
         .AddAspNetCoreInstrumentation()
         .AddConsoleExporter());
@@ -29,6 +28,17 @@ builder.Services.AddOpenTelemetry()
 var app = builder.Build();
 app.MapGet("/", () => "Hello World");
 app.Run();
+```
+
+`service.name` defaults to `IHostEnvironment.ApplicationName` and
+`deployment.environment.name` defaults to `IHostEnvironment.EnvironmentName`.
+To set an explicit name or add `service.version`, use `ConfigureResource`:
+
+```csharp
+builder.AddOpenTelemetry()
+    .ConfigureResource(r => r
+        .AddService(serviceName: "my-web-api", serviceVersion: "1.0.0"))
+    .WithTracing(...);
 ```
 
 ## Full multi-signal example
@@ -43,7 +53,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Clear default log providers if you want OTel to be the sole log sink
 builder.Logging.ClearProviders();
 
-builder.Services.AddOpenTelemetry()
+builder.AddOpenTelemetry()
     .ConfigureResource(r => r
         .AddService(
             serviceName: "my-web-api",
@@ -73,8 +83,7 @@ using OpenTelemetry.Trace;
 
 var builder = Host.CreateApplicationBuilder(args);
 
-builder.Services.AddOpenTelemetry()
-    .ConfigureResource(r => r.AddService("my-worker"))
+builder.AddOpenTelemetry()
     .WithTracing(tracing => tracing
         .AddSource("MyWorker")
         .AddOtlpExporter());
@@ -83,6 +92,19 @@ builder.Services.AddHostedService<MyWorker>();
 
 var host = builder.Build();
 host.Run();
+```
+
+## Non-host scenarios
+
+When the application does not use the .NET Generic Host, call `AddOpenTelemetry`
+on `IServiceCollection` directly:
+
+```csharp
+services.AddOpenTelemetry()
+    .ConfigureResource(r => r.AddService("my-app"))
+    .WithTracing(tracing => tracing
+        .AddSource("MyApp")
+        .AddOtlpExporter());
 ```
 
 ## API surface
@@ -124,7 +146,7 @@ app.MapGet("/trace-id", (TracerProvider tp) =>
 ### Registering a custom processor
 
 ```csharp
-builder.Services.AddOpenTelemetry()
+builder.AddOpenTelemetry()
     .WithTracing(tracing => tracing
         .AddProcessor<MyFilteringProcessor>());  // resolved from DI
 

@@ -1,0 +1,2 @@
+Microsoft.Extensions.Hosting.OpenTelemetryHostApplicationBuilderExtensions
+static Microsoft.Extensions.Hosting.OpenTelemetryHostApplicationBuilderExtensions.AddOpenTelemetry(this Microsoft.Extensions.Hosting.IHostApplicationBuilder! builder) -> OpenTelemetry.OpenTelemetryBuilder!
