@@ -480,6 +480,108 @@ public class MetricViewTests : MetricTestsBase
     }
 
     [Fact]
+    public void ViewReturningFreshConfigWithDropAggregationKindIsTreatedAsDrop()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("counterNotInteresting", new MetricStreamConfiguration { AggregationKind = AggregationKind.Drop })
+            .AddInMemoryExporter(exportedItems));
+
+        var counterInteresting = meter.CreateCounter<long>("counterInteresting");
+        var counterNotInteresting = meter.CreateCounter<long>("counterNotInteresting");
+        counterInteresting.Add(10);
+        counterNotInteresting.Add(10);
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        Assert.Single(exportedItems);
+        Assert.Equal("counterInteresting", exportedItems[0].Name);
+    }
+
+    [Fact]
+    public void CompatibleHistogramAggregationOnDoubleCounterProducesHistogram()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("myCounter", new MetricStreamConfiguration { AggregationKind = AggregationKind.Histogram })
+            .AddInMemoryExporter(exportedItems));
+
+        var counter = meter.CreateCounter<double>("myCounter");
+        counter.Add(1.5);
+        counter.Add(2.5);
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        Assert.Single(exportedItems);
+        Assert.Equal(MetricType.Histogram, exportedItems[0].MetricType);
+    }
+
+    [Fact]
+    public void SumAggregationOnLongHistogramProducesNonMonotonicLongSum()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("myHistogram", new MetricStreamConfiguration { AggregationKind = AggregationKind.Sum })
+            .AddInMemoryExporter(exportedItems));
+
+        var histogram = meter.CreateHistogram<long>("myHistogram");
+        histogram.Record(5);
+        histogram.Record(10);
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        Assert.Single(exportedItems);
+        var metric = exportedItems[0];
+        Assert.Equal(MetricType.LongSumNonMonotonic, metric.MetricType);
+
+        List<MetricPoint> metricPoints = [];
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        Assert.Equal(15, metricPoints[0].GetSumLong());
+    }
+
+    [Fact]
+    public void SumAggregationOnDoubleHistogramProducesNonMonotonicDoubleSum()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("myHistogram", new MetricStreamConfiguration { AggregationKind = AggregationKind.Sum })
+            .AddInMemoryExporter(exportedItems));
+
+        var histogram = meter.CreateHistogram<double>("myHistogram");
+        histogram.Record(1.5);
+        histogram.Record(2.5);
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        Assert.Single(exportedItems);
+        var metric = exportedItems[0];
+        Assert.Equal(MetricType.DoubleSumNonMonotonic, metric.MetricType);
+
+        List<MetricPoint> metricPoints = [];
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        Assert.Equal(4.0, metricPoints[0].GetSumDouble());
+    }
+
+    [Fact]
     public void ViewWithHistogramConfigurationIgnoredWhenAppliedToNonHistogram()
     {
         using var meter = new Meter(Utils.GetCurrentMethodName());

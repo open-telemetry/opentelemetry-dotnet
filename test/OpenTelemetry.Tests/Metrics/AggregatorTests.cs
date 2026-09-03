@@ -358,6 +358,34 @@ public class AggregatorTests
     }
 
     [Fact]
+    public void ExponentialHistogramAggregationKindOnPlainConfigUsesSdkDefaults()
+    {
+        using var meter = new Meter("ExpHistogramAgg");
+        var counter = meter.CreateCounter<long>("myCounter");
+
+        var config = new MetricStreamConfiguration { AggregationKind = AggregationKind.ExponentialHistogram };
+
+        var identity = new MetricStreamIdentity(counter, config);
+
+        Assert.Equal(Metric.DefaultExponentialHistogramMaxBuckets, identity.ExponentialHistogramMaxSize);
+        Assert.Equal(Metric.DefaultExponentialHistogramMaxScale, identity.ExponentialHistogramMaxScale);
+    }
+
+    [Fact]
+    public void ExponentialHistogramAggregationKindOnSizedConfigRespectsExplicitValues()
+    {
+        using var meter = new Meter("ExpHistogramAgg");
+        var counter = meter.CreateCounter<long>("myCounter");
+
+        var config = new Base2ExponentialBucketHistogramConfiguration { MaxSize = 40, MaxScale = 5 };
+
+        var identity = new MetricStreamIdentity(counter, config);
+
+        Assert.Equal(40, identity.ExponentialHistogramMaxSize);
+        Assert.Equal(5, identity.ExponentialHistogramMaxScale);
+    }
+
+    [Fact]
     public void TryGetHistogramSumWhenRecordSumTrueReturnsTrueWithCorrectSum()
     {
         var aggregatorStore = new AggregatorStore(
