@@ -6,6 +6,11 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added the experimental
+  `OTEL_DOTNET_EXPERIMENTAL_METRICS_ENABLE_LAZY_ALLOCATION` environment
+  variable for enabling lazy metric point allocation.
+  ([#7346](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7346))
+
 ## 1.18.0
 
 Released 2026-Aug-21

@@ -20,6 +20,7 @@ public abstract partial class MetricReader
 
     private int metricLimit;
     private int cardinalityLimit;
+    private bool enableLazyAllocation;
     private Metric?[] metrics = [];
     private Metric[] metricsCurrentBatch = [];
     private int metricIndex = -1;
@@ -83,7 +84,8 @@ public abstract partial class MetricReader
                         metricStreamIdentity,
                         this.GetAggregationTemporality(metricStreamIdentity.InstrumentType),
                         this.cardinalityLimit,
-                        exemplarFilter);
+                        exemplarFilter,
+                        enableLazyAllocation: this.enableLazyAllocation);
                 }
                 catch (NotSupportedException nse)
                 {
@@ -173,7 +175,8 @@ public abstract partial class MetricReader
                         this.GetAggregationTemporality(metricStreamIdentity.InstrumentType),
                         metricStreamConfig?.CardinalityLimit ?? this.cardinalityLimit,
                         exemplarFilter,
-                        metricStreamConfig?.ExemplarReservoirFactory);
+                        metricStreamConfig?.ExemplarReservoirFactory,
+                        this.enableLazyAllocation);
 
                     this.instrumentIdentityToMetric[metricStreamIdentity] = metric;
                     this.metrics[index] = metric;
@@ -190,6 +193,7 @@ public abstract partial class MetricReader
     internal void ApplyParentProviderSettings(
         int metricLimit,
         int cardinalityLimit,
+        bool enableLazyAllocation,
         ExemplarFilterType? exemplarFilter,
         ExemplarFilterType? exemplarFilterForHistograms)
     {
@@ -197,6 +201,7 @@ public abstract partial class MetricReader
         this.metrics = new Metric[metricLimit];
         this.metricsCurrentBatch = new Metric[metricLimit];
         this.cardinalityLimit = cardinalityLimit;
+        this.enableLazyAllocation = enableLazyAllocation;
         this.exemplarFilter = exemplarFilter;
         this.exemplarFilterForHistograms = exemplarFilterForHistograms;
     }
