@@ -35,6 +35,9 @@ Released 2026-Aug-21
   to finish enqueueing before flushing.
   ([#7598](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7598))
 
+* Added prototype support for treating `Counter<T>` instrument-level tags as
+  bound metric point attributes.
+  ([#7611](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7611))
 * Fix logger, meter and tracer providers leaking background threads if an
   exception is thrown by their constructor after resource creation.
   ([#7615](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7615))
