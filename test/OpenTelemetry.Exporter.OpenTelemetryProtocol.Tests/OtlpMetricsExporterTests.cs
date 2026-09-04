@@ -300,6 +300,44 @@ public sealed class OtlpMetricsExporterTests : IDisposable
         VerifyExemplars(longValue, doubleValue, enableExemplars, d => d.Exemplars.FirstOrDefault(), dataPoint);
     }
 
+    [Fact]
+    public void MetricsAreGroupedByFullInstrumentationScope()
+    {
+        var metrics = new List<Metric>();
+        var meterName = nameof(this.MetricsAreGroupedByFullInstrumentationScope);
+        using var meterV1 = new Meter(meterName, "1.0");
+        using var equivalentMeterV1 = new Meter(meterName, "1.0");
+        using var meterV2 = new Meter(meterName, "2.0");
+        using var meterWithSchema = new Meter(new MeterOptions(meterName) { Version = "1.0", TelemetrySchemaUrl = "https://opentelemetry.io/schemas/1.0.0" });
+        using var meterWithTags = new Meter(new MeterOptions(meterName) { Version = "1.0", Tags = [new("scope-key", "scope-value")] });
+        using var equivalentMeterWithTags = new Meter(new MeterOptions(meterName) { Version = "1.0", Tags = [new("scope-key", "scope-value")] });
+        using var meterWithDifferentTags = new Meter(new MeterOptions(meterName) { Version = "1.0", Tags = [new("scope-key", "different-value")] });
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meterName)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        meterV1.CreateCounter<int>("counter-v1").Add(1);
+        meterV2.CreateCounter<int>("counter-v2").Add(1);
+        equivalentMeterV1.CreateCounter<int>("counter-v1-equivalent").Add(1);
+        meterWithTags.CreateCounter<int>("counter-tags").Add(1);
+        meterWithDifferentTags.CreateCounter<int>("counter-tags-different").Add(1);
+        equivalentMeterWithTags.CreateCounter<int>("counter-tags-equivalent").Add(1);
+        meterWithSchema.CreateCounter<int>("counter-schema").Add(1);
+        provider.ForceFlush();
+
+        var batch = new Batch<Metric>([.. metrics], metrics.Count);
+        var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
+
+        var scopeMetrics = Assert.Single(request.ResourceMetrics).ScopeMetrics;
+        Assert.Equal(5, scopeMetrics.Count);
+        Assert.Contains(scopeMetrics, scope => scope.Scope.Version == "1.0" && scope.SchemaUrl.Length == 0 && scope.Scope.Attributes.Count == 0 && scope.Metrics.Count == 2);
+        Assert.Contains(scopeMetrics, scope => scope.Scope.Version == "2.0" && Assert.Single(scope.Metrics).Name == "counter-v2");
+        Assert.Contains(scopeMetrics, scope => scope.SchemaUrl == "https://opentelemetry.io/schemas/1.0.0" && Assert.Single(scope.Metrics).Name == "counter-schema");
+        Assert.Contains(scopeMetrics, scope => scope.Scope.Attributes.Count == 1 && Assert.Single(scope.Scope.Attributes).Value.StringValue == "scope-value" && scope.Metrics.Count == 2);
+        Assert.Contains(scopeMetrics, scope => scope.Scope.Attributes.Count == 1 && Assert.Single(scope.Scope.Attributes).Value.StringValue == "different-value" && Assert.Single(scope.Metrics).Name == "counter-tags-different");
+    }
+
     [Theory]
     [InlineData("test_counter", null, null, 123L, null, MetricReaderTemporalityPreference.Cumulative)]
     [InlineData("test_counter", null, null, null, 123.45, MetricReaderTemporalityPreference.Cumulative)]
