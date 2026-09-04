@@ -4,16 +4,17 @@
 namespace OpenTelemetry.Configuration;
 
 /// <summary>
-/// The result of a typed read from <see cref="ConfigProperties"/>, combining a <see cref="ConfigValueOutcome"/>
-/// with the typed value when the outcome is <see cref="ConfigValueOutcome.Present"/>.
+/// The result of a typed read from <see cref="ConfigProperties"/>, combining a
+/// <see cref="ConfigValueOutcome"/> with the typed value and source position.
 /// </summary>
 /// <typeparam name="T">The type of the value.</typeparam>
 internal readonly struct ConfigValueResult<T>
 {
-    internal ConfigValueResult(ConfigValueOutcome outcome, T? value)
+    internal ConfigValueResult(ConfigValueOutcome outcome, T? value, ConfigValuePosition position)
     {
         this.Outcome = outcome;
         this.Value = value;
+        this.Position = position;
     }
 
     /// <summary>
@@ -25,6 +26,12 @@ internal readonly struct ConfigValueResult<T>
     /// Gets the value when <see cref="Outcome"/> is <see cref="ConfigValueOutcome.Present"/>; otherwise the default for <typeparamref name="T"/>.
     /// </summary>
     public T? Value { get; }
+
+    /// <summary>
+    /// Gets the position at which the property was authored, or the default when the property is
+    /// absent or its position is unknown.
+    /// </summary>
+    public ConfigValuePosition Position { get; }
 
     /// <summary>
     /// Deconstructs into <paramref name="outcome"/> and <paramref name="value"/>.

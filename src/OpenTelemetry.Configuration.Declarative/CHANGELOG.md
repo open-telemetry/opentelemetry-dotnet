@@ -27,3 +27,8 @@ Notes](../../RELEASENOTES.md).
   components and plugins to register named factories for declarative-config
   components which participate in YAML-driven configuration.
   ([#7710](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7710))
+
+* Parse the full configuration document, including top-level sections the
+  package does not yet apply. Substitution and YAML structure validation is
+  applied, so previously ignored errors are now reported.
+  ([#7716](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7716))

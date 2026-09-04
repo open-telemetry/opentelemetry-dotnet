@@ -69,6 +69,13 @@ internal sealed class TestEventListener : EventListener
     }
 
     /// <summary>
+    /// Gets the events already captured without waiting for new ones.
+    /// Use this instead of <see cref="Messages"/> when asserting that no events were fired,
+    /// since the queue is already fully populated by the time synchronous EventSource calls return.
+    /// </summary>
+    public IList<EventWrittenEventArgs> CurrentMessages => [.. this.events];
+
+    /// <summary>
     /// Clears all event messages so that testing can assert expected counts.
     /// </summary>
     public void ClearMessages() => this.events = [];

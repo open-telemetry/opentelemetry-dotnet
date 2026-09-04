@@ -25,16 +25,23 @@ internal readonly struct ConfigValue
 
     private readonly object? payload;
 
-    private ConfigValue(ConfigValueKind kind, object? payload)
+    private ConfigValue(ConfigValueKind kind, object? payload, ConfigValuePosition position = default)
     {
         this.Kind = kind;
         this.payload = payload;
+        this.Position = position;
     }
 
     /// <summary>
     /// Gets the kind of value stored in this instance.
     /// </summary>
     internal ConfigValueKind Kind { get; }
+
+    /// <summary>
+    /// Gets the position at which this value was authored in its source document, or the default
+    /// when the position is unknown.
+    /// </summary>
+    internal ConfigValuePosition Position { get; }
 
     /// <summary>
     /// Gets a value indicating whether an integer value could not be represented as a <see cref="long"/>.
@@ -118,6 +125,13 @@ internal readonly struct ConfigValue
 
         return new(ConfigValueKind.Sequence, Array.AsReadOnly(snapshot));
     }
+
+    /// <summary>
+    /// Returns a copy of this value carrying <paramref name="position"/>.
+    /// </summary>
+    /// <param name="position">The position to record.</param>
+    /// <returns>A <see cref="ConfigValue"/> with the same kind and payload, and the supplied position.</returns>
+    internal ConfigValue WithPosition(ConfigValuePosition position) => new(this.Kind, this.payload, position);
 
     /// <summary>
     /// Returns the value as a string. Only valid when <see cref="Kind"/> is <see cref="ConfigValueKind.String"/>.
