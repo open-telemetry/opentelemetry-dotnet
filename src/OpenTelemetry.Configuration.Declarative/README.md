@@ -24,11 +24,12 @@ OTEL_CONFIG_FILE=/path/to/otel-config.yaml
 
 ### 2. Wire it into your OTel setup
 
-**Recommended on `HostApplicationBuilder` / `WebApplicationBuilder`:**
+**On `IHostApplicationBuilder` (`WebApplicationBuilder` /**
+**`HostApplicationBuilder`) - recommended:**
 
 ```csharp
-builder.Configuration.AddOpenTelemetryDeclarativeConfiguration(); // reads OTEL_CONFIG_FILE
-builder.Services.AddOpenTelemetry()
+builder.AddOpenTelemetry()
+    .UseDeclarativeConfiguration()
     .WithTracing(b => b.AddSource("MyApp.*").AddConsoleExporter());
 ```
 
@@ -41,8 +42,8 @@ hostBuilder.ConfigureServices(services =>
     services.AddOpenTelemetry().WithTracing(...));
 ```
 
-**Alternative:** wire through `IOpenTelemetryBuilder` (reads `OTEL_CONFIG_FILE`
-when called without a path):
+**Without a host** (plain `IServiceCollection`), wire through
+`IOpenTelemetryBuilder` (reads `OTEL_CONFIG_FILE` when called without a path):
 
 ```csharp
 services.AddOpenTelemetry()
@@ -58,14 +59,8 @@ services.AddOpenTelemetry()
     .WithTracing(...);
 ```
 
-`UseDeclarativeConfiguration()` works best on modern hosts
-(`WebApplicationBuilder`, `HostApplicationBuilder`) where `IConfiguration` is
-already registered before `AddOpenTelemetry()` is called. With `HostBuilder`,
-use the `ConfigureAppConfiguration` approach instead so the YAML source is added
-before DI configuration is built. Calling `UseDeclarativeConfiguration()` twice
-on the same `IServiceCollection` is a no-op - the first file path wins and a
-warning is emitted via EventSource. Calling it with a different path does not
-replace the first registration.
+Calling `UseDeclarativeConfiguration()` twice on the same `IServiceCollection`
+is a no-op and the first file path wins.
 
 Only one declarative configuration file is supported per
 `IConfigurationBuilder`. Registering the same file again is a no-op. Registering
@@ -167,13 +162,16 @@ merged per key; the typed YAML document cannot, so exactly one document is used.
   provide the specification's strict mode that ignores other SDK environment
   variables when `OTEL_CONFIG_FILE` is set.
 - `UseDeclarativeConfiguration()` applies YAML values by extending the
-  `IConfiguration` registered at the time it is called. An application that
+  configuration available to it at the time it is called. An application that
   replaces its `IConfiguration` registration, or clears its configuration
   sources, *after* that call detaches the YAML source: flat keys lose the YAML
-  values while typed consumers still read the document. Register declarative
-  configuration after your configuration sources are settled, or use
-  `builder.Configuration.AddOpenTelemetryDeclarativeConfiguration()`, which adds
-  the source directly and is not affected.
+  values while typed consumers still read the document. Following
+  `builder.AddOpenTelemetry()` the source is added to `builder.Configuration`
+  directly, so a later `builder.Configuration.Sources.Clear()` detaches it;
+  following `services.AddOpenTelemetry()` (non-host) the source is added to the
+  `IConfiguration` resolved from the container, so a later registration of
+  `IConfiguration` detaches it. Register declarative configuration after your
+  configuration sources are settled.
 - Only string-valued structured resource attributes are emitted. Unsupported
   typed attributes are skipped and reported.
 - For duplicate structured resource attribute names, the first occurrence wins.
