@@ -29,6 +29,10 @@ Released 2026-Aug-21
 * Added the `otel.sdk.processor.span.processed` SDK self-observability metric.
   ([#7598](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7598))
 
+* Added SDK self-observability metrics for the current size and configured
+  capacity of the batching span and log processor queues.
+  ([#7642](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7642))
+
 * `BatchActivityExportProcessor` and `SimpleActivityExportProcessor` no longer
   forward spans to the exporter once `Shutdown` has been called, and
   `BatchActivityExportProcessor.Shutdown` now waits for in-flight `OnEnd` calls
