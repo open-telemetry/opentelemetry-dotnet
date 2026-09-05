@@ -10,12 +10,13 @@ namespace OpenTelemetry.Configuration.Declarative;
 internal static class DeclarativeConfigurationReader
 {
     // Top-level keys this package recognises. Anything else is logged and ignored.
-    private static readonly HashSet<string> KnownTopLevelKeys = new(StringComparer.Ordinal)
-    {
+    private static readonly HashSet<string> KnownTopLevelKeys =
+    [
+        with(StringComparer.Ordinal),
         YamlKeys.FileFormat,
         YamlKeys.Disabled,
         YamlKeys.Resource,
-    };
+    ];
 
     /// <summary>
     /// Opens <paramref name="filePath"/>, validates <c>file_format</c>, parses the typed model,
