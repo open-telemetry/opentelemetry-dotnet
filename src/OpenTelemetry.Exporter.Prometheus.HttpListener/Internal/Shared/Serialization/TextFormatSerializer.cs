@@ -522,7 +522,7 @@ internal abstract class TextFormatSerializer
 #endif
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int WriteLabelValue(byte[] buffer, int cursor, object? value)
+    internal static int WriteLabelValue(byte[] buffer, int cursor, object? value, string key = "")
     {
         switch (value)
         {
@@ -586,6 +586,16 @@ internal abstract class TextFormatSerializer
             case Guid guidValue:
                 return WriteSpanFormattableLabelValue(buffer, cursor, guidValue, stackalloc char[36]);
 #endif
+
+            // See https://github.com/open-telemetry/opentelemetry-specification/blob/v1.60.0/specification/common/README.md#byte-arrays;
+            // byte arrays are Base64-encoded rather than falling through to the array handling below.
+            case byte[] byteArrayValue:
+                return WriteLabelValue(buffer, cursor, Convert.ToBase64String(byteArrayValue));
+
+            // Arrays and maps are JSON-encoded, per
+            // https://github.com/open-telemetry/opentelemetry-specification/blob/v1.60.0/specification/common/README.md#anyvalue-representation-for-non-otlp-protocols.
+            case Array or IEnumerable<KeyValuePair<string, object?>>:
+                return WriteLabelValue(buffer, cursor, PrometheusAnyValueWriter.Instance.ToLabelValueString(key, value));
 
             case IFormattable formattableValue:
                 return WriteLabelValue(buffer, cursor, formattableValue.ToString(null, CultureInfo.InvariantCulture) ?? string.Empty);
@@ -1004,7 +1014,7 @@ internal abstract class TextFormatSerializer
 
             writtenKeyRanges[writtenKeyRangeCount++] = (keyStart, writtenKey.Length);
 
-            cursor = WriteSanitizedLabel(buffer, cursor, value);
+            cursor = WriteSanitizedLabel(buffer, cursor, value, key);
             wroteLabel = true;
 
             return true;
@@ -1387,7 +1397,7 @@ internal abstract class TextFormatSerializer
         in MetricPoint metricPoint,
         in TextFormatSerializerOptions options);
 
-    private static string GetLabelValueString(object? labelValue) => labelValue switch
+    private static string GetLabelValueString(string key, object? labelValue) => labelValue switch
     {
         null => string.Empty,
         string stringValue => stringValue,
@@ -1403,6 +1413,8 @@ internal abstract class TextFormatSerializer
         float floatValue => GetCanonicalLabelValueString(floatValue),
         double doubleValue => GetCanonicalLabelValueString(doubleValue),
         decimal decimalValue => decimalValue.ToString(CultureInfo.InvariantCulture),
+        byte[] byteArrayValue => Convert.ToBase64String(byteArrayValue),
+        Array or IEnumerable<KeyValuePair<string, object?>> => PrometheusAnyValueWriter.Instance.ToLabelValueString(key, labelValue),
         IFormattable formattableValue => formattableValue.ToString(null, CultureInfo.InvariantCulture) ?? string.Empty,
         _ => labelValue.ToString() ?? string.Empty,
     };
@@ -1470,19 +1482,23 @@ internal abstract class TextFormatSerializer
 
     private static List<LabelData> CreateScopeLabelData(Metric metric)
     {
+        const string OTelScopeNameKey = "otel_scope_name";
+        const string OTelScopeVersionKey = "otel_scope_version";
+        const string OTelScopeSchemaUrlKey = "otel_scope_schema_url";
+
         var scopeLabels = new List<LabelData>(3)
         {
-            new("otel_scope_name", "otel_scope_name", GetLabelValueString(metric.MeterName)),
+            new(OTelScopeNameKey, OTelScopeNameKey, GetLabelValueString(OTelScopeNameKey, metric.MeterName)),
         };
 
         if (!string.IsNullOrEmpty(metric.MeterVersion))
         {
-            scopeLabels.Add(new("otel_scope_version", "otel_scope_version", GetLabelValueString(metric.MeterVersion)));
+            scopeLabels.Add(new(OTelScopeVersionKey, OTelScopeVersionKey, GetLabelValueString(OTelScopeVersionKey, metric.MeterVersion)));
         }
 
         if (!string.IsNullOrEmpty(metric.MeterSchemaUrl))
         {
-            scopeLabels.Add(new("otel_scope_schema_url", "otel_scope_schema_url", GetLabelValueString(metric.MeterSchemaUrl)));
+            scopeLabels.Add(new(OTelScopeSchemaUrlKey, OTelScopeSchemaUrlKey, GetLabelValueString(OTelScopeSchemaUrlKey, metric.MeterSchemaUrl)));
         }
 
         if (metric.MeterTags == null)
@@ -1499,7 +1515,7 @@ internal abstract class TextFormatSerializer
                 continue;
             }
 
-            scopeLabels.Add(new(tag.Key, labelKey, GetLabelValueString(tag.Value)));
+            scopeLabels.Add(new(tag.Key, labelKey, GetLabelValueString(tag.Key, tag.Value)));
         }
 
         return scopeLabels;
@@ -1699,13 +1715,13 @@ internal abstract class TextFormatSerializer
 #endif
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int WriteSanitizedLabel(byte[] buffer, int cursor, object? labelValue)
+    private static int WriteSanitizedLabel(byte[] buffer, int cursor, object? labelValue, string key = "")
     {
         buffer[cursor++] = unchecked((byte)'=');
         buffer[cursor++] = unchecked((byte)'"');
 
         // In Prometheus, a label with an empty label value is considered equivalent to a label that does not exist.
-        cursor = WriteLabelValue(buffer, cursor, labelValue);
+        cursor = WriteLabelValue(buffer, cursor, labelValue, key);
         buffer[cursor++] = unchecked((byte)'"');
 
         return cursor;
@@ -1724,7 +1740,7 @@ internal abstract class TextFormatSerializer
         }
 
         labels ??= [];
-        labels.Add(new LabelData(originalKey, outputKey, GetLabelValueString(value)));
+        labels.Add(new LabelData(originalKey, outputKey, GetLabelValueString(originalKey, value)));
     }
 
     private static bool IsValidLabelKey(string value)
@@ -1943,7 +1959,7 @@ internal abstract class TextFormatSerializer
                 // The grouped key is already the final output key; it is written verbatim, or
                 // quoted when the allow-utf-8 scheme produced a non-legacy label name.
                 cursor = WriteLabelName(buffer, cursor, key);
-                cursor = WriteSanitizedLabel(buffer, cursor, value);
+                cursor = WriteSanitizedLabel(buffer, cursor, value, key);
                 buffer[cursor++] = unchecked((byte)',');
                 wroteLabel = true;
             }

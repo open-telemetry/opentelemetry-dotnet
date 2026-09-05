@@ -25,7 +25,18 @@ internal abstract class JsonStringArrayTagWriter<TTagState> : TagWriter<TTagStat
 
     protected abstract void WriteArrayTag(ref TTagState writer, string key, ArraySegment<byte> arrayUtf8JsonBytes);
 
-    protected override bool TryWriteByteArrayTag(ref TTagState consoleTag, string key, ReadOnlySpan<byte> value) => false;
+    protected override bool TryWriteByteArrayTag(ref TTagState state, string key, ReadOnlySpan<byte> value)
+    {
+        // See https://github.com/open-telemetry/opentelemetry-specification/blob/v1.60.0/specification/common/README.md#byte-arrays;
+        // byte arrays SHOULD be Base64-encoded when represented as a string for non-OTLP protocols.
+#if NET
+        var base64 = Convert.ToBase64String(value);
+#else
+        var base64 = Convert.ToBase64String(value.ToArray());
+#endif
+        this.WriteStringTag(ref state, key, base64.AsSpan());
+        return true;
+    }
 
     internal readonly struct JsonArrayTagWriterState(MemoryStream stream, Utf8JsonWriter writer)
     {
@@ -58,29 +69,19 @@ internal abstract class JsonStringArrayTagWriter<TTagState> : TagWriter<TTagStat
         }
 
         public override void WriteBooleanValue(ref JsonArrayTagWriterState state, bool value)
-        {
-            state.Writer.WriteBooleanValue(value);
-        }
+            => state.Writer.WriteBooleanValue(value);
 
         public override void WriteFloatingPointValue(ref JsonArrayTagWriterState state, double value)
-        {
-            state.Writer.WriteNumberValue(value);
-        }
+            => state.Writer.WriteNumberValue(value);
 
         public override void WriteIntegralValue(ref JsonArrayTagWriterState state, long value)
-        {
-            state.Writer.WriteNumberValue(value);
-        }
+            => state.Writer.WriteNumberValue(value);
 
         public override void WriteNullValue(ref JsonArrayTagWriterState state)
-        {
-            state.Writer.WriteNullValue();
-        }
+            => state.Writer.WriteNullValue();
 
         public override void WriteStringValue(ref JsonArrayTagWriterState state, ReadOnlySpan<char> value)
-        {
-            state.Writer.WriteStringValue(value);
-        }
+            => state.Writer.WriteStringValue(value);
 
         private static JsonArrayTagWriterState EnsureWriter()
         {

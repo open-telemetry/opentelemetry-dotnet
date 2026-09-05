@@ -11,6 +11,10 @@ Notes](../../RELEASENOTES.md).
   These attributes will be serialized as JSON objects.
   ([#7679](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7679))
 
+* Fixed `byte[]`-valued tags being serialized as a JSON array of numbers
+  (e.g. `[1,2,3]`) instead of being Base64-encoded as-per the specification.
+  ([#7694](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7694))
+
 ## 1.18.0
 
 Released 2026-Aug-21
