@@ -7,7 +7,7 @@ Notes](../../RELEASENOTES.md).
 ## Unreleased
 
 * Added Schema URL to internally created `Resource` instances.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7726](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7726))
 
 ## 1.18.0
 
