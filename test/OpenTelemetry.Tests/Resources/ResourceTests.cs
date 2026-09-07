@@ -714,6 +714,19 @@ public sealed class ResourceTests : IDisposable
         Assert.True(validTestRun);
     }
 
+    [Fact]
+    public void AddServiceCriticality_AddsServiceCriticality()
+    {
+        // Act
+        var resource = ResourceBuilder.CreateDefault()
+            .AddServiceCriticality("very-important")
+            .Build();
+
+        // Assert
+        var attributes = resource.Attributes;
+        Assert.Contains(new KeyValuePair<string, object>("service.criticality", "very-important"), attributes);
+    }
+
     internal static void ValidateTelemetrySdkAttributes(IEnumerable<KeyValuePair<string, object>> attributes)
     {
         Assert.Contains(new KeyValuePair<string, object>("telemetry.sdk.name", "opentelemetry"), attributes);
