@@ -322,22 +322,19 @@ public class ConsoleLogRecordExporterTests
     {
         // Arrange
         var logRecords = new List<LogRecord>();
-
-        var options = new LoggerOptions()
+        using var loggerFactory = LoggerFactory.Create(builder =>
         {
-            Name = nameof(this.Export_WithLoggerVersionAndSchemaUrl),
-            SchemaUrl = "https://opentelemetry.io/schemas/1.24.0",
-            Version = "1.0.0",
-        };
+            builder.AddOpenTelemetry(options =>
+            {
+                options.SchemaUrl = "https://opentelemetry.io/schemas/1.24.0";
+                options.Version = "1.0.0";
+                options.AddInMemoryExporter(logRecords);
+            });
+        });
 
-        using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
-                   .AddInMemoryExporter(logRecords)
-                   .Build())
-        {
-            var logger = loggerProvider.GetLogger(options);
-
-            logger.EmitLog(new LogRecordData());
-        }
+        // Act
+        var logger = loggerFactory.CreateLogger<ConsoleLogRecordExporterTests>();
+        logger.LogInformation("Test message with logger version and schema URL");
 
         // Assert
         Assert.Single(logRecords);
