@@ -80,7 +80,7 @@ public sealed class LogRecord
             this.AttributeData = stateValues;
         }
 
-        this.Logger = InstrumentationScopeLogger.GetInstrumentationScopeLoggerForName(categoryName);
+        this.Logger = InstrumentationScopeLogger.GetInstrumentationScopeLogger(new() { Name = categoryName });
     }
 
     internal enum LogRecordSource
@@ -190,7 +190,7 @@ public sealed class LogRecord
         {
             if (this.Logger.Name != value)
             {
-                this.Logger = InstrumentationScopeLogger.GetInstrumentationScopeLoggerForName(value);
+                this.Logger = InstrumentationScopeLogger.GetInstrumentationScopeLogger(new() { Name = value });
             }
         }
     }

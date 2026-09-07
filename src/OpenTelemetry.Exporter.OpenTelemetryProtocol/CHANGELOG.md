@@ -25,6 +25,11 @@ Notes](../../RELEASENOTES.md).
   for PEM-encoded certificates that only contain a public key.
   ([#7693](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7693))
 
+* The OTLP log exporter now exports `schema_url` on `ScopeLogs`. Log
+  records emitted from a `Logger` with a schema URL set now populate
+  `ScopeLogs.schema_url` in exported OTLP requests.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.18.0
 
 Released 2026-Aug-21

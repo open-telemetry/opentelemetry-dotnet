@@ -12,6 +12,10 @@ Notes](../../RELEASENOTES.md).
 * Reduced allocations when setting baggage through the `params` overload.
   ([#7697](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7697))
 
+* Added `Logger.SchemaUrl` and a `LoggerProvider.GetLogger` overload accepting
+  a schema URL parameter using the new `LoggerOptions` type.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.18.0
 
 Released 2026-Aug-21

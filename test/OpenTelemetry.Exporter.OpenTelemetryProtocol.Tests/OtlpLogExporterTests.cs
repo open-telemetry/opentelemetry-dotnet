@@ -1884,6 +1884,76 @@ public class OtlpLogExporterTests
     }
 
     [Theory]
+    [InlineData("https://opentelemetry.io/schemas/1.0.0", "https://opentelemetry.io/schemas/1.0.0")]
+    [InlineData(null, "")]
+    [InlineData("", "")]
+#pragma warning disable CA1054 // Change the type of parameter from 'string' to 'System.Uri'
+    public void LogRecordLoggerSchemaUrlIsExportedWhenUsingBridgeApi(string? schemaUrl, string expectedSchemaUrl)
+#pragma warning restore CA1054 // Change the type of parameter from 'string' to 'System.Uri'
+    {
+        var logRecords = new List<LogRecord>();
+
+        var options = new LoggerOptions()
+        {
+            Name = "MyLogger",
+            SchemaUrl = schemaUrl,
+            Version = "1.0.0",
+        };
+
+        using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+                   .AddInMemoryExporter(logRecords)
+                   .Build())
+        {
+            var logger = loggerProvider.GetLogger(options);
+            logger.EmitLog(new LogRecordData());
+        }
+
+        Assert.Single(logRecords);
+
+        var batch = new Batch<LogRecord>([logRecords[0]], 1);
+        var request = CreateLogsExportRequest(DefaultSdkLimitOptions, new ExperimentalOptions(), batch, ResourceBuilder.CreateEmpty().Build());
+
+        Assert.NotNull(request);
+        Assert.Single(request.ResourceLogs);
+        Assert.Single(request.ResourceLogs[0].ScopeLogs);
+
+        Assert.Equal(expectedSchemaUrl, request.ResourceLogs[0].ScopeLogs[0].SchemaUrl);
+    }
+
+    [Fact]
+    public void LogRecordsFromLoggersWithSameNameVersionAndDifferentSchemaUrlsAreExportedAsSeparateScopes()
+    {
+        var logRecords = new List<LogRecord>();
+
+        using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+                   .AddInMemoryExporter(logRecords)
+                   .Build())
+        {
+            loggerProvider.GetLogger(new LoggerOptions() { Name = "MyLogger", Version = "1.0.0", SchemaUrl = "https://opentelemetry.io/schemas/1.0.0" }).EmitLog(new LogRecordData());
+            loggerProvider.GetLogger(new LoggerOptions() { Name = "MyLogger", Version = "1.0.0", SchemaUrl = "https://opentelemetry.io/schemas/2.0.0" }).EmitLog(new LogRecordData());
+            loggerProvider.GetLogger(new LoggerOptions() { Name = "MyLogger", Version = "1.0.0", SchemaUrl = "https://opentelemetry.io/schemas/1.0.0" }).EmitLog(new LogRecordData());
+        }
+
+        Assert.Equal(3, logRecords.Count);
+
+        var batch = new Batch<LogRecord>([.. logRecords], logRecords.Count);
+        var request = CreateLogsExportRequest(DefaultSdkLimitOptions, new ExperimentalOptions(), batch, ResourceBuilder.CreateEmpty().Build());
+
+        Assert.NotNull(request);
+        Assert.Single(request.ResourceLogs);
+
+        var scopeLogs = request.ResourceLogs[0].ScopeLogs;
+        Assert.Equal(2, scopeLogs.Count);
+        Assert.All(scopeLogs, scopeLog => Assert.Equal("MyLogger", scopeLog.Scope?.Name));
+
+        var schema1 = Assert.Single(scopeLogs, scopeLog => scopeLog.SchemaUrl == "https://opentelemetry.io/schemas/1.0.0");
+        Assert.Equal(2, schema1.LogRecords.Count);
+
+        var schema2 = Assert.Single(scopeLogs, scopeLog => scopeLog.SchemaUrl == "https://opentelemetry.io/schemas/2.0.0");
+        Assert.Single(schema2.LogRecords);
+    }
+
+    [Theory]
     [InlineData("1.0.0", "1.0.0")]
     [InlineData(null, "")]
     [InlineData("", "")]

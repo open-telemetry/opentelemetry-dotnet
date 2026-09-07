@@ -1,0 +1,4 @@
+OpenTelemetry.Logs.OpenTelemetryLoggerOptions.SchemaUrl.get -> string?
+OpenTelemetry.Logs.OpenTelemetryLoggerOptions.SchemaUrl.set -> void
+OpenTelemetry.Logs.OpenTelemetryLoggerOptions.Version.get -> string?
+OpenTelemetry.Logs.OpenTelemetryLoggerOptions.Version.set -> void

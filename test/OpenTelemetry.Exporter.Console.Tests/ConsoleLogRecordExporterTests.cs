@@ -318,6 +318,39 @@ public class ConsoleLogRecordExporterTests
     }
 
     [Fact]
+    public void Export_WithLoggerVersionAndSchemaUrl()
+    {
+        // Arrange
+        var logRecords = new List<LogRecord>();
+
+        var options = new LoggerOptions()
+        {
+            Name = nameof(this.Export_WithLoggerVersionAndSchemaUrl),
+            SchemaUrl = "https://opentelemetry.io/schemas/1.24.0",
+            Version = "1.0.0",
+        };
+
+        using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+                   .AddInMemoryExporter(logRecords)
+                   .Build())
+        {
+            var logger = loggerProvider.GetLogger(options);
+
+            logger.EmitLog(new LogRecordData());
+        }
+
+        // Assert
+        Assert.Single(logRecords);
+
+        // Act
+        using var exporter = new ConsoleLogRecordExporter(new ConsoleExporterOptions());
+        var actual = exporter.Export(new Batch<LogRecord>([.. logRecords], logRecords.Count));
+
+        // Assert
+        Assert.Equal(ExportResult.Success, actual);
+    }
+
+    [Fact]
     public void Export_WithResource()
     {
         // Arrange

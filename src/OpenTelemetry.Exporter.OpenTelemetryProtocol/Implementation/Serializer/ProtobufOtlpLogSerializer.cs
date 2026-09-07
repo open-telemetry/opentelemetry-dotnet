@@ -44,7 +44,7 @@ internal static class ProtobufOtlpLogSerializer
             foreach (var logRecord in logRecordBatch)
             {
                 var logger = logRecord.Logger;
-                var scope = new InstrumentationScope(logger.Name, logger.Version);
+                var scope = new InstrumentationScope(logger.Name, logger.Version, logger.SchemaUrl);
                 if (!scopeLogsList.TryGetValue(scope, out var logRecords))
                 {
                     logRecords = logsListPool.Count > 0 ? logsListPool.Pop() : [];
@@ -203,6 +203,11 @@ internal static class ProtobufOtlpLogSerializer
         for (var i = 0; i < logRecords.Count; i++)
         {
             writePosition = WriteLogRecord(buffer, writePosition, sdkLimitOptions, experimentalOptions, logRecords[i]);
+        }
+
+        if (!string.IsNullOrEmpty(scope.SchemaUrl))
+        {
+            writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpLogFieldNumberConstants.ScopeLogs_Schema_Url, scope.SchemaUrl!);
         }
 
         return writePosition;
@@ -413,23 +418,26 @@ internal static class ProtobufOtlpLogSerializer
 
     /// <summary>
     /// Identifies the instrumentation scope log records are grouped by. Loggers
-    /// sharing a name but reporting different versions are distinct scopes and
-    /// must be emitted as separate ScopeLogs entries.
+    /// sharing a name but reporting different versions or schema URLs are
+    /// distinct scopes and must be emitted as separate ScopeLogs entries.
     /// </summary>
     internal readonly record struct InstrumentationScope
     {
         public readonly string Name;
         public readonly string? Version;
+        public readonly string? SchemaUrl;
 
-        public InstrumentationScope(string name, string? version)
+        public InstrumentationScope(string name, string? version, string? schemaUrl)
         {
             this.Name = name;
             this.Version = version;
+            this.SchemaUrl = schemaUrl;
         }
 
         public bool Equals(InstrumentationScope other)
             => string.Equals(this.Name, other.Name, StringComparison.Ordinal)
-            && string.Equals(this.Version, other.Version, StringComparison.Ordinal);
+            && string.Equals(this.Version, other.Version, StringComparison.Ordinal)
+            && string.Equals(this.SchemaUrl, other.SchemaUrl, StringComparison.Ordinal);
 
         public override int GetHashCode()
         {
@@ -437,6 +445,7 @@ internal static class ProtobufOtlpLogSerializer
             HashCode hashCode = default;
             hashCode.Add(this.Name, StringComparer.Ordinal);
             hashCode.Add(this.Version, StringComparer.Ordinal);
+            hashCode.Add(this.SchemaUrl, StringComparer.Ordinal);
             return hashCode.ToHashCode();
 #else
             unchecked
@@ -444,6 +453,7 @@ internal static class ProtobufOtlpLogSerializer
                 var hash = 17;
                 hash = (hash * 31) + (this.Name is null ? 0 : StringComparer.Ordinal.GetHashCode(this.Name));
                 hash = (hash * 31) + (this.Version is null ? 0 : StringComparer.Ordinal.GetHashCode(this.Version));
+                hash = (hash * 31) + (this.SchemaUrl is null ? 0 : StringComparer.Ordinal.GetHashCode(this.SchemaUrl));
                 return hash;
             }
 #endif

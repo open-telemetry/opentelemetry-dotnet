@@ -6,6 +6,12 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added `OpenTelemetryLoggerOptions.Version` and
+  `OpenTelemetryLoggerOptions.SchemaUrl` options to set an
+  instrumentation library version and schema URL applied to logs emitted via
+  the `Microsoft.Extensions.Logging` `ILogger` integration.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.18.0
 
 Released 2026-Aug-21

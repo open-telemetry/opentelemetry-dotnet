@@ -11,6 +11,10 @@ Notes](../../RELEASENOTES.md).
   These attributes will be serialized as JSON objects.
   ([#7679](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7679))
 
+* `ConsoleLogRecordExporter` now writes an `Instrumentation scope (Logger)`
+  section (Name, Version, and Schema URL) for each exported `LogRecord`.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.18.0
 
 Released 2026-Aug-21
