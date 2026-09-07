@@ -9,7 +9,7 @@ Notes](../../RELEASENOTES.md).
 * Add support for setting the operational criticality of a service using the
   new `AddServiceCriticality()` extension method on `ResourceBuilder` with
   the [`service.criticality` resource attribute](https://github.com/open-telemetry/semantic-conventions/blob/c381bc8a42ec5628bc7becdca4ce904ae0ed66c3/docs/registry/attributes/service.md#service-criticality).
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7725](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7725))
 
 ## 1.18.0
 
