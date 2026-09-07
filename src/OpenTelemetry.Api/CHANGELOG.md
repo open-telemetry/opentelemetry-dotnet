@@ -14,7 +14,7 @@ Notes](../../RELEASENOTES.md).
 
 * Added `Logger.SchemaUrl` and a `LoggerProvider.GetLogger` overload accepting
   a schema URL parameter using the new `LoggerOptions` type.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
 
 ## 1.18.0
 

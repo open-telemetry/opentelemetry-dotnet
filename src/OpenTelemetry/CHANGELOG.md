@@ -10,7 +10,7 @@ Notes](../../RELEASENOTES.md).
   `OpenTelemetryLoggerOptions.SchemaUrl` options to set an
   instrumentation library version and schema URL applied to logs emitted via
   the `Microsoft.Extensions.Logging` `ILogger` integration.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
 
 ## 1.18.0
 

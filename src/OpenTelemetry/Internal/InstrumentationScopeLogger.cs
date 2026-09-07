@@ -23,7 +23,7 @@ internal sealed class InstrumentationScopeLogger : Logger
             ? Default
             : Cache.GetOrAdd(
                 (options.Name, options.Version, options.SchemaUrl),
-                static (n) => new(n.Name, n.Version, n.SchemaUrl));
+                static (o) => new(o.Name, o.Version, o.SchemaUrl));
 
     public override void EmitLog(in LogRecordData data, in LogRecordAttributeList attributes)
         => throw new NotSupportedException();
