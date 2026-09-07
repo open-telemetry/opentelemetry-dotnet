@@ -298,7 +298,7 @@ public class ZipkinActivityConversionTests
     }
 
     [Fact]
-    public void ToZipkinSpan_ByteArrayTag_IsBase64Encoded()
+    public void ToZipkinSpan_ByteArrayTag_IsSerializedAsJsonArray()
     {
         // Arrange
         using var activity = new Activity(ZipkinSpanName);
@@ -318,6 +318,6 @@ public class ZipkinActivityConversionTests
         var json = Encoding.UTF8.GetString(stream.GetBuffer(), 0, (int)stream.Length);
 
         // Assert
-        Assert.Contains(@"""bytes"":""AQID""", json, StringComparison.Ordinal);
+        Assert.Contains(@"""bytes"":""[1,2,3]""", json, StringComparison.Ordinal);
     }
 }
