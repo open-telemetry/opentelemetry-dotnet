@@ -61,4 +61,17 @@ public class SpanAttributesTests
     [Fact]
     public void ValidateConstructorWithNullList()
         => Assert.Throws<ArgumentNullException>(() => new SpanAttributes(null!));
+
+    [Fact]
+    public void ValidateConstructorWithArray()
+    {
+        KeyValuePair<string, object?>[] attributes =
+        [
+            new("Span attribute int", 1),
+            new("Span attribute string", "str"),
+        ];
+
+        var spanAttributes = new SpanAttributes(attributes);
+        Assert.Equal(2, spanAttributes.Attributes.Count);
+    }
 }
