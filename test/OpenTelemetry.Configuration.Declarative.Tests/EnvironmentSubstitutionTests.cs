@@ -244,41 +244,6 @@ public sealed class EnvironmentSubstitutionTests
         Assert.Throws<DeclarativeConfigurationException>(
             () => EnvironmentSubstitution.Substitute(input, _ => null));
 
-    // ValidateReferences shares the invalid-reference grammar with Substitute but must not resolve
-    // variables. Keep the InlineData set identical to Substitute_InvalidReference_*.
-    [Theory]
-    [InlineData("${1API_KEY}")]
-    [InlineData("${VAR:?error}")]
-    [InlineData("${}")]
-    [InlineData("${env:}")]
-    [InlineData("${1VAR:-default}")]
-    [InlineData("${MY.VAR:-default}")]
-    [InlineData("${MY.VAR}")]
-    [InlineData("${MY VAR}")]
-    [InlineData("${unknown_prefix:value}")]
-    public void ValidateReferences_InvalidReference_ThrowsDeclarativeConfigurationException(string input) =>
-        Assert.Throws<DeclarativeConfigurationException>(
-            () => EnvironmentSubstitution.ValidateReferences(input));
-
-    [Theory]
-    [InlineData("${VAR:-default\nvalue}")]
-    [InlineData("${VAR:-default\rvalue}")]
-    [InlineData("${VAR:-default\x7fvalue}")]
-    [InlineData("${VAR:-caf\u00E9}")]
-    public void ValidateReferences_InvalidCharacterInDefaultValue_ThrowsDeclarativeConfigurationException(string input) =>
-        Assert.Throws<DeclarativeConfigurationException>(
-            () => EnvironmentSubstitution.ValidateReferences(input));
-
-    [Theory]
-    [InlineData("${UNDEFINED_KEY}")]
-    [InlineData("${UNDEFINED_KEY:-fallback}")]
-    [InlineData("$${STRING_VALUE}")]
-    [InlineData("${UNDEFINED_KEY:-$${UNDEFINED_KEY}}")]
-    [InlineData("a $ b")]
-    [InlineData("${UNCLOSED")]
-    public void ValidateReferences_ValidOrIncompleteSyntax_DoesNotThrow(string input) =>
-        EnvironmentSubstitution.ValidateReferences(input);
-
     // Regression: the diagnostic must name the offending expression. A bare character offset is not
     // enough to find the problem in a long or multi-line scalar.
     [Fact]

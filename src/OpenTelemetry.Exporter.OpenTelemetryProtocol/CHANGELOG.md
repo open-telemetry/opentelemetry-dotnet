@@ -17,6 +17,14 @@ Notes](../../RELEASENOTES.md).
   `kvlist` values.
   ([#7679](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7679))
 
+* Disable HttpClientFactory integration on browser WebAssembly (e.g. Blazor)
+  environments to avoid stalled export requests when async HTTP handlers are used.
+  ([#7709](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7709))
+
+* Fixed CA certificate loading (e.g. using `OTEL_EXPORTER_OTLP_CERTIFICATE`)
+  for PEM-encoded certificates that only contain a public key.
+  ([#7693](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7693))
+
 ## 1.18.0
 
 Released 2026-Aug-21
