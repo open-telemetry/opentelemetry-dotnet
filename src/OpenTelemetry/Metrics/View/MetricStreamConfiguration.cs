@@ -95,6 +95,17 @@ public class MetricStreamConfiguration
         }
     }
 
+    /// <summary>
+    /// Gets or sets the optional aggregation type for the metric stream.
+    /// </summary>
+    /// <remarks>
+    /// <para>Note: If not provided the default aggregation for the
+    /// instrument type will be used.</para>
+    /// <para>If the specified aggregation is not compatible with the
+    /// instrument type, the view will be ignored.</para>
+    /// </remarks>
+    public AggregationKind? AggregationKind { get; set; }
+
 #pragma warning disable CA1819 // Properties should not return arrays
     /// <summary>
     /// Gets or sets the optional tag keys to exclude from the metric stream.
@@ -146,6 +157,8 @@ public class MetricStreamConfiguration
 #else
     internal Func<ExemplarReservoir?>? ExemplarReservoirFactory { get; set; }
 #endif
+
+    internal virtual AggregationKind? ImpliedAggregationKind => null;
 
     internal string[]? CopiedTagKeys { get; private set; }
 

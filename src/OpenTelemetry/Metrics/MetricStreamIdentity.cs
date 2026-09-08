@@ -27,8 +27,20 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
         this.ExcludedTagKeys = metricStreamConfiguration?.CopiedExcludedTagKeys;
         this.HistogramBucketBounds = GetExplicitBucketHistogramBounds(instrument, metricStreamConfiguration);
         this.HistogramBucketDisplayBounds = GetExplicitBucketHistogramDisplayBounds(instrument, this.HistogramBucketBounds);
-        this.ExponentialHistogramMaxSize = (metricStreamConfiguration as Base2ExponentialBucketHistogramConfiguration)?.MaxSize ?? 0;
-        this.ExponentialHistogramMaxScale = (metricStreamConfiguration as Base2ExponentialBucketHistogramConfiguration)?.MaxScale ?? 0;
+
+        if (metricStreamConfiguration?.AggregationKind == Metrics.AggregationKind.ExponentialHistogram && metricStreamConfiguration is not Base2ExponentialBucketHistogramConfiguration)
+        {
+            this.ExponentialHistogramMaxSize = Metric.DefaultExponentialHistogramMaxBuckets;
+            this.ExponentialHistogramMaxScale = Metric.DefaultExponentialHistogramMaxScale;
+        }
+        else
+        {
+            this.ExponentialHistogramMaxSize = (metricStreamConfiguration as Base2ExponentialBucketHistogramConfiguration)?.MaxSize ?? 0;
+            this.ExponentialHistogramMaxScale = (metricStreamConfiguration as Base2ExponentialBucketHistogramConfiguration)?.MaxScale ?? 0;
+        }
+
+        this.AggregationKind = metricStreamConfiguration?.AggregationKind
+        ?? metricStreamConfiguration?.ImpliedAggregationKind;
         this.HistogramRecordMinMax = (metricStreamConfiguration as HistogramConfiguration)?.RecordMinMax ?? true;
 
 #if NET || NETSTANDARD2_1_OR_GREATER
@@ -43,6 +55,7 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
         hashCode.Add(this.Unit);
         hashCode.Add(this.Description);
         hashCode.Add(this.ViewId);
+        hashCode.Add(this.AggregationKind);
 
         // Note: The this.TagKeys! / this.ExcludedTagKeys! here is strange but
         // it is fine for the value to be null. HashCode.Add is coded to handle
@@ -79,6 +92,7 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
             hash = (hash * 31) + this.Unit.GetHashCode();
             hash = (hash * 31) + this.Description.GetHashCode();
             hash = (hash * 31) + (this.ViewId ?? 0);
+            hash = (hash * 31) + (this.AggregationKind?.GetHashCode() ?? 0);
             hash = (hash * 31) + (this.TagKeys != null ? StringArrayComparer.GetHashCode(this.TagKeys) : 0);
             hash = (hash * 31) + (this.ExcludedTagKeys != null ? StringArrayComparer.GetHashCode(this.ExcludedTagKeys) : 0);
             if (this.HistogramBucketBounds != null)
@@ -136,6 +150,8 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
 
     public bool HistogramRecordMinMax { get; }
 
+    public AggregationKind? AggregationKind { get; }
+
     public bool IsHistogram =>
         this.InstrumentType == typeof(Histogram<long>)
         || this.InstrumentType == typeof(Histogram<int>)
@@ -180,6 +196,7 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
         && this.Unit == other.Unit
         && this.Description == other.Description
         && this.ViewId == other.ViewId
+        && this.AggregationKind == other.AggregationKind
         && this.MeterTags == other.MeterTags
         && this.HistogramRecordMinMax == other.HistogramRecordMinMax
         && this.ExponentialHistogramMaxSize == other.ExponentialHistogramMaxSize

@@ -13,4 +13,6 @@ public class HistogramConfiguration : MetricStreamConfiguration
     /// should be collected.
     /// </summary>
     public bool RecordMinMax { get; set; } = true;
+
+    internal override AggregationKind? ImpliedAggregationKind => Metrics.AggregationKind.Histogram;
 }

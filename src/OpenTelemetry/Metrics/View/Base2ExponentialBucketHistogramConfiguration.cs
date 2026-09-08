@@ -59,4 +59,6 @@ public sealed class Base2ExponentialBucketHistogramConfiguration : HistogramConf
             field = value;
         }
     }
+
+    internal override AggregationKind? ImpliedAggregationKind => Metrics.AggregationKind.ExponentialHistogram;
 }
