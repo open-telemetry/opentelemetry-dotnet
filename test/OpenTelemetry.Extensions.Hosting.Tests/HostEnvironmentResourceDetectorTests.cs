@@ -18,10 +18,35 @@ public class HostEnvironmentResourceDetectorTests
 
         var resource = detector.Detect();
 
-        Assert.Contains(resource.Attributes, a => a.Key == "service.name"
-            && (string)a.Value == "MyApp");
-        Assert.Contains(resource.Attributes, a => a.Key == "deployment.environment.name"
-            && (string)a.Value == "Staging");
+        Assert.Contains(resource.Attributes, a => a.Key == "service.name" && (string)a.Value == "MyApp");
+        Assert.Contains(resource.Attributes, a => a.Key == "deployment.environment.name" && (string)a.Value == "staging");
+    }
+
+    [Theory]
+    [InlineData("Development", "development")]
+    [InlineData("Production", "production")]
+    [InlineData("Staging", "staging")]
+    [InlineData("Test", "test")]
+    [InlineData("PRODUCTION", "production")]
+    public void Detect_WellKnownEnvironmentName_NormalizesToLowercase(string input, string expected)
+    {
+        var env = CreateEnvironment("App", input);
+        var detector = new HostEnvironmentResourceDetector(env, configuration: null);
+
+        var resource = detector.Detect();
+
+        Assert.Contains(resource.Attributes, a => a.Key == "deployment.environment.name" && (string)a.Value == expected);
+    }
+
+    [Fact]
+    public void Detect_CustomEnvironmentName_PassesThroughUnchanged()
+    {
+        var env = CreateEnvironment("App", "MyCustomEnv");
+        var detector = new HostEnvironmentResourceDetector(env, configuration: null);
+
+        var resource = detector.Detect();
+
+        Assert.Contains(resource.Attributes, a => a.Key == "deployment.environment.name" && (string)a.Value == "MyCustomEnv");
     }
 
     [Fact]

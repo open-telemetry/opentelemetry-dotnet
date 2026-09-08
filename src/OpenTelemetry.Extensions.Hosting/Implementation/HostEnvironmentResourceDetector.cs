@@ -18,21 +18,23 @@ internal sealed class HostEnvironmentResourceDetector(
 {
     private const string OtelServiceNameKey = "OTEL_SERVICE_NAME";
     private const string OtelResourceAttributesKey = "OTEL_RESOURCE_ATTRIBUTES";
+    private const string ServiceNameAttribute = "service.name";
+    private const string DeploymentEnvironmentNameAttribute = "deployment.environment.name";
 
     public Resource Detect()
     {
         var attributes = new List<KeyValuePair<string, object>>();
 
-        if (!this.IsAttributeSetInConfiguration("service.name") &&
+        if (!this.IsAttributeSetInConfiguration(ServiceNameAttribute) &&
             !string.IsNullOrWhiteSpace(environment.ApplicationName))
         {
-            attributes.Add(new("service.name", environment.ApplicationName));
+            attributes.Add(new(ServiceNameAttribute, environment.ApplicationName));
         }
 
-        if (!this.IsAttributeInOtelResourceAttributes("deployment.environment.name") &&
+        if (!this.IsAttributeInOtelResourceAttributes(DeploymentEnvironmentNameAttribute) &&
             !string.IsNullOrWhiteSpace(environment.EnvironmentName))
         {
-            attributes.Add(new("deployment.environment.name", environment.EnvironmentName));
+            attributes.Add(new(DeploymentEnvironmentNameAttribute, NormalizeEnvironmentName(environment.EnvironmentName)));
         }
 
         return new Resource(attributes);
@@ -46,7 +48,7 @@ internal sealed class HostEnvironmentResourceDetector(
             return false;
         }
 
-        if (attributeName == "service.name" && !string.IsNullOrWhiteSpace(configuration[OtelServiceNameKey]))
+        if (attributeName == ServiceNameAttribute && !string.IsNullOrWhiteSpace(configuration[OtelServiceNameKey]))
         {
             return true;
         }
@@ -65,11 +67,11 @@ internal sealed class HostEnvironmentResourceDetector(
         foreach (var pair in raw.Split(','))
         {
 #if NETFRAMEWORK || NETSTANDARD2_0
-            var eq = pair.IndexOf('=');
+            var index = pair.IndexOf('=');
 #else
-            var eq = pair.IndexOf('=', StringComparison.Ordinal);
+            var index = pair.IndexOf('=', StringComparison.Ordinal);
 #endif
-            if (eq > 0 && string.Equals(pair.Substring(0, eq).Trim(), attributeName, StringComparison.Ordinal))
+            if (index > 0 && string.Equals(pair.Substring(0, index).Trim(), attributeName, StringComparison.Ordinal))
             {
                 return true;
             }
@@ -77,4 +79,14 @@ internal sealed class HostEnvironmentResourceDetector(
 
         return false;
     }
+
+    // The spec (https://opentelemetry.io/docs/specs/semconv/registry/attributes/deployment/#deployment-attributes) mandates these four well-known values in lowercase.
+    private static string NormalizeEnvironmentName(string name) => name switch
+    {
+        _ when string.Equals(name, "development", StringComparison.OrdinalIgnoreCase) => "development",
+        _ when string.Equals(name, "production", StringComparison.OrdinalIgnoreCase) => "production",
+        _ when string.Equals(name, "staging", StringComparison.OrdinalIgnoreCase) => "staging",
+        _ when string.Equals(name, "test", StringComparison.OrdinalIgnoreCase) => "test",
+        _ => name,
+    };
 }

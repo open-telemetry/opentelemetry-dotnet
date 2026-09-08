@@ -170,7 +170,7 @@ public class OpenTelemetryHostApplicationBuilderExtensionsTests
         using var host = builder.Build();
         var resource = host.Services.GetRequiredService<TracerProvider>().GetResource();
 
-        Assert.Contains(resource.Attributes, a => a.Key == "deployment.environment.name" && (string)a.Value == "Staging");
+        Assert.Contains(resource.Attributes, a => a.Key == "deployment.environment.name" && (string)a.Value == "staging");
     }
 
     [Fact]
@@ -187,19 +187,17 @@ public class OpenTelemetryHostApplicationBuilderExtensionsTests
 
         using var host = builder.Build();
 
-        BaseProvider[] providers =
-        [
-            host.Services.GetRequiredService<LoggerProvider>(),
-            host.Services.GetRequiredService<MeterProvider>(),
-            host.Services.GetRequiredService<TracerProvider>(),
-        ];
+        var loggerResource = host.Services.GetRequiredService<LoggerProvider>().GetResource();
+        Assert.Contains(loggerResource.Attributes, a => a.Key == "service.name" && (string)a.Value == "MyTestApp");
+        Assert.Contains(loggerResource.Attributes, a => a.Key == "deployment.environment.name" && (string)a.Value == "staging");
 
-        foreach (var provider in providers)
-        {
-            var resource = provider.GetResource();
-            Assert.Contains(resource.Attributes, a => a.Key == "service.name" && (string)a.Value == "MyTestApp");
-            Assert.Contains(resource.Attributes, a => a.Key == "deployment.environment.name" && (string)a.Value == "Staging");
-        }
+        var meterResource = host.Services.GetRequiredService<MeterProvider>().GetResource();
+        Assert.Contains(meterResource.Attributes, a => a.Key == "service.name" && (string)a.Value == "MyTestApp");
+        Assert.Contains(meterResource.Attributes, a => a.Key == "deployment.environment.name" && (string)a.Value == "staging");
+
+        var tracerResource = host.Services.GetRequiredService<TracerProvider>().GetResource();
+        Assert.Contains(tracerResource.Attributes, a => a.Key == "service.name" && (string)a.Value == "MyTestApp");
+        Assert.Contains(tracerResource.Attributes, a => a.Key == "deployment.environment.name" && (string)a.Value == "staging");
     }
 
     [Fact]
@@ -560,7 +558,7 @@ public class OpenTelemetryHostApplicationBuilderExtensionsTests
 
         Assert.DoesNotContain(resource.Attributes, a => a.Key == "service.name" && (string)a.Value == "MyTestApp");
         Assert.Contains(resource.Attributes, a => a.Key == "service.name" && (string)a.Value == "explicit-service");
-        Assert.Contains(resource.Attributes, a => a.Key == "deployment.environment.name" && (string)a.Value == "Staging");
+        Assert.Contains(resource.Attributes, a => a.Key == "deployment.environment.name" && (string)a.Value == "staging");
     }
 
     [Fact]
@@ -578,7 +576,7 @@ public class OpenTelemetryHostApplicationBuilderExtensionsTests
         var resource = host.Services.GetRequiredService<TracerProvider>().GetResource();
 
         Assert.Contains(resource.Attributes, a => a.Key == "service.name" && (string)a.Value == "MyTestApp");
-        Assert.Contains(resource.Attributes, a => a.Key == "deployment.environment.name" && (string)a.Value == "Staging");
+        Assert.Contains(resource.Attributes, a => a.Key == "deployment.environment.name" && (string)a.Value == "staging");
         Assert.Contains(resource.Attributes, a => a.Key == "custom.attr" && (string)a.Value == "custom-value");
     }
 
@@ -686,7 +684,7 @@ public class OpenTelemetryHostApplicationBuilderExtensionsTests
 
         Assert.DoesNotContain(resource.Attributes, a => a.Key == "service.name" && (string)a.Value == "MyTestApp");
         Assert.Contains(resource.Attributes, a => a.Key == "service.name" && (string)a.Value == "env-service");
-        Assert.Contains(resource.Attributes, a => a.Key == "deployment.environment.name" && (string)a.Value == "Staging");
+        Assert.Contains(resource.Attributes, a => a.Key == "deployment.environment.name" && (string)a.Value == "staging");
     }
 
     [Fact]
@@ -763,7 +761,7 @@ public class OpenTelemetryHostApplicationBuilderExtensionsTests
         var resource = host.Services.GetRequiredService<TracerProvider>().GetResource();
 
         Assert.Contains(resource.Attributes, a => a.Key == "service.name" && (string)a.Value == "MyTestApp");
-        Assert.Contains(resource.Attributes, a => a.Key == "deployment.environment.name" && (string)a.Value == "Staging");
+        Assert.Contains(resource.Attributes, a => a.Key == "deployment.environment.name" && (string)a.Value == "staging");
     }
 
     private static HostApplicationBuilder CreateBuilderWithoutOtelResourceEnvironmentVariables()
