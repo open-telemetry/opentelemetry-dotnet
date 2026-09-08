@@ -26,7 +26,7 @@ public sealed class DeclarativeConfigurationEventSourceTests
         using var listener = CreateWarningListener();
 
         Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
-        Assert.Empty(listener.Messages);
+        Assert.Empty(listener.CurrentMessages);
     }
 
     [Fact]
@@ -42,7 +42,7 @@ public sealed class DeclarativeConfigurationEventSourceTests
         using var listener = CreateWarningListener();
 
         Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
-        Assert.Empty(listener.Messages);
+        Assert.Empty(listener.CurrentMessages);
     }
 
     [Fact]
@@ -104,26 +104,12 @@ public sealed class DeclarativeConfigurationEventSourceTests
         EnvironmentSubstitution.Substitute("${MY_NOTSET_VAR:-fallback}", _ => null);
         EnvironmentSubstitution.Substitute("${MY_EMPTY_VAR:-fallback}", _ => string.Empty);
 
-        Assert.DoesNotContain(listener.Messages, e => e.EventId == 15);
-        Assert.DoesNotContain(listener.Messages, e => e.EventId == 20);
+        Assert.DoesNotContain(listener.CurrentMessages, e => e.EventId == 15);
+        Assert.DoesNotContain(listener.CurrentMessages, e => e.EventId == 20);
     }
 
     [Fact]
-    public void ValidateReferences_DoesNotEmitEnvironmentVariableDiagnosticEvents()
-    {
-        using var listener = CreateVerboseListener();
-
-        EnvironmentSubstitution.ValidateReferences("${MY_NOTSET_VAR}");
-        EnvironmentSubstitution.ValidateReferences("${MY_NOTSET_VAR:-fallback}");
-        EnvironmentSubstitution.ValidateReferences("${UNCLOSED");
-
-        Assert.DoesNotContain(listener.Messages, e => e.EventId == 15);
-        Assert.DoesNotContain(listener.Messages, e => e.EventId == 16);
-        Assert.DoesNotContain(listener.Messages, e => e.EventId == 24);
-    }
-
-    [Fact]
-    public void ReadConfiguration_ValidReferenceInIgnoredTopLevelSection_DoesNotEmitEnvironmentVariableNotSet()
+    public void ReadConfiguration_ValidReferenceInUninterpretedTopLevelSection_EmitsEnvironmentVariableNotSet()
     {
         const string environmentVariable = "OTEL_DECLARATIVE_TEST_IGNORED_SECTION_EVENT";
         const string yaml = """
@@ -138,8 +124,9 @@ public sealed class DeclarativeConfigurationEventSourceTests
 
         Assert.Empty(ReadConfiguration(yaml));
 
-        Assert.Single(listener.Messages, e => e.EventId == 2); // unknown section warning only
-        Assert.DoesNotContain(listener.Messages, e => e.EventId == 15);
+        Assert.Single(listener.Messages, e => e.EventId == 2);
+        var notSet = Assert.Single(listener.Messages, e => e.EventId == 15);
+        Assert.Equal(environmentVariable, notSet.Payload![0]);
         Assert.DoesNotContain(listener.Messages, e => e.EventId == 16);
         Assert.DoesNotContain(listener.Messages, e => e.EventId == 24);
     }
@@ -178,7 +165,7 @@ public sealed class DeclarativeConfigurationEventSourceTests
         using var listener = CreateWarningListener();
 
         Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
-        Assert.Empty(listener.Messages);
+        Assert.Empty(listener.CurrentMessages);
     }
 
     [Fact]
@@ -354,7 +341,7 @@ public sealed class DeclarativeConfigurationEventSourceTests
 
         _ = ReadConfiguration(yaml);
 
-        Assert.DoesNotContain(listener.Messages, e => e.EventId == 22);
+        Assert.DoesNotContain(listener.CurrentMessages, e => e.EventId == 22);
     }
 
     [Fact]
@@ -376,7 +363,7 @@ public sealed class DeclarativeConfigurationEventSourceTests
 
         _ = ReadConfiguration(string.Empty);
 
-        Assert.DoesNotContain(listener.Messages, e => e.EventId == 23);
+        Assert.DoesNotContain(listener.CurrentMessages, e => e.EventId == 23);
     }
 
     [Fact]
@@ -440,7 +427,7 @@ public sealed class DeclarativeConfigurationEventSourceTests
         using var listener = CreateWarningListener();
 
         Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
-        Assert.Empty(listener.Messages);
+        Assert.Empty(listener.CurrentMessages);
     }
 
     // Mixed-case spellings are strings under the YAML 1.2 core schema, so they take the generic
@@ -456,7 +443,7 @@ public sealed class DeclarativeConfigurationEventSourceTests
         using var listener = CreateWarningListener();
 
         Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
-        Assert.Empty(listener.Messages);
+        Assert.Empty(listener.CurrentMessages);
     }
 
     [Fact]
@@ -472,7 +459,7 @@ public sealed class DeclarativeConfigurationEventSourceTests
         using var listener = CreateWarningListener();
 
         Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
-        Assert.Empty(listener.Messages);
+        Assert.Empty(listener.CurrentMessages);
     }
 
     [Fact]
@@ -487,11 +474,11 @@ public sealed class DeclarativeConfigurationEventSourceTests
         using var listener = CreateWarningListener();
 
         Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
-        Assert.Empty(listener.Messages);
+        Assert.Empty(listener.CurrentMessages);
     }
 
     [Fact]
-    public void ReadConfiguration_MergeLikeKeyAtRoot_IsIgnoredAsUnknownSection()
+    public void ReadConfiguration_MergeLikeKeyAtRoot_FailsWithoutDiagnostics()
     {
         const string yaml = """
             defaults: &d
@@ -502,32 +489,8 @@ public sealed class DeclarativeConfigurationEventSourceTests
 
         using var listener = CreateWarningListener();
 
-        var data = ReadConfiguration(yaml);
-
-        Assert.Empty(data);
-        var events = listener.Messages.Where(e => e.EventId == 2).ToArray();
-        Assert.Equal(2, events.Length);
-        Assert.Contains(events, e => Equals(e.Payload![0], "defaults"));
-        Assert.Contains(events, e => Equals(e.Payload![0], "<<"));
-    }
-
-    [Fact]
-    public void ReadConfiguration_MergeLikeKeyInResource_ThrowsSchemaErrorAndEmitsUnknownPropertyEvent()
-    {
-        const string yaml = """
-            defaults: &d
-              attributes_list: service.name=from-merge
-            file_format: "1.0"
-            resource:
-              <<: *d
-            """;
-
-        using var listener = CreateWarningListener();
-
         Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
-
-        var evt = Assert.Single(listener.Messages, e => e.EventId == 25);
-        Assert.Equal("resource.<<", evt.Payload![0]);
+        Assert.Empty(listener.CurrentMessages);
     }
 
     [Fact]
@@ -609,14 +572,14 @@ public sealed class DeclarativeConfigurationEventSourceTests
 
         _ = ReadConfiguration(yaml);
 
-        Assert.DoesNotContain(listener.Messages, e => e.EventId is 25 or 26);
+        Assert.DoesNotContain(listener.CurrentMessages, e => e.EventId is 25 or 26);
     }
 
     [Fact]
-    public void ReadConfiguration_QuotedMergeLikeKeyAtRoot_IsLoggedAsUnknownSectionNotRejected()
+    public void ReadConfiguration_QuotedMergeLikeKeyAtRoot_IsLoggedAsUnknownSectionNotMerged()
     {
-        // Under the YAML 1.2 core schema "<<" is an ordinary string key, and the top-level schema
-        // object sets additionalProperties=true, so this document is legal.
+        // Quoting `<<` makes it an ordinary string key, and the top-level schema object sets
+        // additionalProperties=true.
         const string yaml = """
             file_format: "1.1"
             "<<": some-extension-value
@@ -632,7 +595,7 @@ public sealed class DeclarativeConfigurationEventSourceTests
     }
 
     [Fact]
-    public void ReadConfiguration_StrTaggedMergeLikeKeyAtRoot_IsAccepted()
+    public void ReadConfiguration_StrTaggedMergeLikeKeyAtRoot_IsNotMerged()
     {
         const string yaml = """
             file_format: "1.1"
@@ -643,11 +606,12 @@ public sealed class DeclarativeConfigurationEventSourceTests
 
         _ = ReadConfiguration(yaml);
 
-        Assert.Single(listener.Messages, e => e.EventId == 2);
+        var evt = Assert.Single(listener.Messages, e => e.EventId == 2);
+        Assert.Equal("<<", evt.Payload![0]);
     }
 
     [Fact]
-    public void ReadConfiguration_PlainMergeLikeKeyAtRoot_IsLoggedAsUnknownSection()
+    public void ReadConfiguration_PlainMergeLikeKeyAtRoot_FailsBeforeUnknownSectionDiagnostics()
     {
         const string yaml = """
             file_format: "1.1"
@@ -656,28 +620,86 @@ public sealed class DeclarativeConfigurationEventSourceTests
 
         using var listener = CreateWarningListener();
 
-        var data = ReadConfiguration(yaml);
-
-        Assert.Empty(data);
-        var evt = Assert.Single(listener.Messages, e => e.EventId == 2);
-        Assert.Equal("<<", evt.Payload![0]);
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+        Assert.Empty(listener.CurrentMessages);
     }
 
+    // Unknown-section warnings are advice about a document that loaded. Emitting them for a document
+    // that then fails to load would tell the author to fix a section that was never accepted, so the
+    // warning must not be reached until the whole read has succeeded.
     [Fact]
-    public void ReadConfiguration_PlainMergeLikeKeyInResource_IsRejectedAsUnknownProperty()
+    public void ReadConfiguration_UnknownSectionInDocumentThatFailsToLoad_IsNotLogged()
     {
         const string yaml = """
             file_format: "1.1"
-            resource:
-              <<: {x: 1}
+            vendor: &cycle
+              self: *cycle
             """;
 
         using var listener = CreateWarningListener();
 
         Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
 
-        var evt = Assert.Single(listener.Messages, e => e.EventId == 25);
-        Assert.Equal("resource.<<", evt.Payload![0]);
+        Assert.DoesNotContain(listener.CurrentMessages, e => e.EventId == 2);
+    }
+
+    [Fact]
+    public void Create_UnknownName_EmitsComponentProviderNotFoundEvent()
+    {
+        var services = new ServiceCollection();
+        services.AddPluginComponentProvider("always_on", new TestComponentProvider());
+
+        using var serviceProvider = services.BuildServiceProvider();
+        var registry = new PluginComponentProviderRegistry(serviceProvider);
+
+        using var listener = CreateWarningListener();
+
+        Assert.Throws<DeclarativeConfigurationException>(
+            () => registry.Create<TestComponent>("always_upside_down", ConfigProperties.Empty));
+
+        var evt = Assert.Single(listener.Messages, e => e.EventId == 33);
+        Assert.Contains(nameof(TestComponent), evt.Payload![0] as string, StringComparison.Ordinal);
+        Assert.Equal("always_upside_down", evt.Payload[1]);
+        Assert.Contains("always_on", evt.Payload[2] as string, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AddPluginComponentProvider_Duplicate_EmitsDuplicateRejectedEvent()
+    {
+        var services = new ServiceCollection();
+        services.AddPluginComponentProvider("always_on", new TestComponentProvider());
+
+        using var listener = CreateWarningListener();
+
+        Assert.Throws<InvalidOperationException>(
+            () => services.AddPluginComponentProvider("always_on", new TestComponentProvider()));
+
+        var evt = Assert.Single(listener.Messages, e => e.EventId == 34);
+        Assert.Contains(nameof(TestComponent), evt.Payload![0] as string, StringComparison.Ordinal);
+        Assert.Equal("always_on", evt.Payload[1]);
+        Assert.Contains(nameof(TestComponentProvider), evt.Payload[2] as string, StringComparison.Ordinal);
+        Assert.Contains(nameof(TestComponentProvider), evt.Payload[3] as string, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void PluginComponentProvider_RegistrationAndCreation_EmitVerboseEvents()
+    {
+        using var listener = CreateVerboseListener();
+
+        var services = new ServiceCollection();
+        services.AddPluginComponentProvider("always_on", new TestComponentProvider());
+
+        using var serviceProvider = services.BuildServiceProvider();
+        new PluginComponentProviderRegistry(serviceProvider).Create<TestComponent>("always_on", ConfigProperties.Empty);
+
+        var registered = Assert.Single(listener.Messages, e => e.EventId == 31);
+        Assert.Contains(nameof(TestComponentProvider), registered.Payload![0] as string, StringComparison.Ordinal);
+        Assert.Contains(nameof(TestComponent), registered.Payload[1] as string, StringComparison.Ordinal);
+        Assert.Equal("always_on", registered.Payload[2]);
+
+        var created = Assert.Single(listener.Messages, e => e.EventId == 32);
+        Assert.Contains(nameof(TestComponent), created.Payload![0] as string, StringComparison.Ordinal);
+        Assert.Equal("always_on", created.Payload[1]);
     }
 
     private static TestEventListener CreateVerboseListener()

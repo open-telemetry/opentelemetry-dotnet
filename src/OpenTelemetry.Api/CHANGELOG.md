@@ -6,6 +6,12 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Reduced allocations when creating log record attributes from an array.
+  ([#7699](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7699))
+
+* Reduced allocations when setting baggage through the `params` overload.
+  ([#7697](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7697))
+
 * Reduced allocations when constructing `SpanAttributes` from an array.
   ([#7698](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7698))
 

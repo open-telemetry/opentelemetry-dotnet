@@ -1,11 +1,13 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Collections;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
+using OpenTelemetry.Internal;
 using OtlpCommon = OpenTelemetry.Proto.Common.V1;
 using OtlpTrace = OpenTelemetry.Proto.Trace.V1;
 
@@ -182,6 +184,156 @@ public sealed class OtlpKvListAttributeTests : IDisposable
         Assert.True(TryTransformTag(kvp, out var attribute));
         Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.KvlistValue, attribute.Value.ValueCase);
         Assert.Equal(2, attribute.Value.KvlistValue.Values.Count);
+    }
+
+    [Fact]
+    public void StringDictionaryAsKvList()
+    {
+        var dict = new Dictionary<string, string>
+        {
+            ["region"] = "eu",
+            ["env"] = "prod",
+        };
+        var kvp = new KeyValuePair<string, object?>("key", dict);
+
+        Assert.True(TryTransformTag(kvp, out var attribute));
+        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.KvlistValue, attribute.Value.ValueCase);
+
+        var values = attribute.Value.KvlistValue.Values;
+        Assert.Equal(2, values.Count);
+
+        Assert.Equal("region", values[0].Key);
+        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.StringValue, values[0].Value.ValueCase);
+        Assert.Equal("eu", values[0].Value.StringValue);
+
+        Assert.Equal("env", values[1].Key);
+        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.StringValue, values[1].Value.ValueCase);
+        Assert.Equal("prod", values[1].Value.StringValue);
+    }
+
+    [Fact]
+    public void StringDictionaryWithNullValueAsKvList()
+    {
+        var dict = new Dictionary<string, string?>
+        {
+            ["present"] = "value",
+            ["missing"] = null,
+        };
+        var kvp = new KeyValuePair<string, object?>("key", dict);
+
+        Assert.True(TryTransformTag(kvp, out var attribute));
+        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.KvlistValue, attribute.Value.ValueCase);
+
+        var values = attribute.Value.KvlistValue.Values;
+        Assert.Equal(2, values.Count);
+
+        Assert.Equal("present", values[0].Key);
+        Assert.Equal("value", values[0].Value.StringValue);
+
+        Assert.Equal("missing", values[1].Key);
+        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.None, values[1].Value.ValueCase);
+    }
+
+    [Theory]
+    [InlineData(typeof(int))]
+    [InlineData(typeof(long))]
+    [InlineData(typeof(short))]
+    public void IntegralDictionaryAsKvList(Type valueType)
+    {
+        object dict = valueType == typeof(int)
+            ? new Dictionary<string, int> { ["a"] = 1, ["b"] = 2 }
+            : valueType == typeof(long)
+                ? new Dictionary<string, long> { ["a"] = 1L, ["b"] = 2L }
+                : new Dictionary<string, short> { ["a"] = 1, ["b"] = 2 };
+
+        var kvp = new KeyValuePair<string, object?>("key", dict);
+
+        Assert.True(TryTransformTag(kvp, out var attribute));
+        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.KvlistValue, attribute.Value.ValueCase);
+
+        var values = attribute.Value.KvlistValue.Values;
+        Assert.Equal(2, values.Count);
+
+        Assert.Equal("a", values[0].Key);
+        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.IntValue, values[0].Value.ValueCase);
+        Assert.Equal(1L, values[0].Value.IntValue);
+
+        Assert.Equal("b", values[1].Key);
+        Assert.Equal(2L, values[1].Value.IntValue);
+    }
+
+    [Fact]
+    public void HashtableAsKvList()
+    {
+        var hashtable = new Hashtable
+        {
+            ["name"] = "acme",
+            [42] = "answer",
+        };
+        var kvp = new KeyValuePair<string, object?>("key", hashtable);
+
+        Assert.True(TryTransformTag(kvp, out var attribute));
+        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.KvlistValue, attribute.Value.ValueCase);
+
+        var values = attribute.Value.KvlistValue.Values;
+        Assert.Equal(2, values.Count);
+
+        // Hashtable enumeration order is unspecified.
+        var byKey = values.ToDictionary(v => v.Key, v => v.Value);
+        Assert.Equal("acme", byKey["name"].StringValue);
+
+        // Non-string keys are converted to their invariant string representation.
+        Assert.Equal("answer", byKey["42"].StringValue);
+    }
+
+    [Fact]
+    public void NestedStringDictionaryAsKvList()
+    {
+        var outer = new Dictionary<string, object?>
+        {
+            ["labels"] = new Dictionary<string, string> { ["x"] = "y" },
+        };
+        var kvp = new KeyValuePair<string, object?>("key", outer);
+
+        Assert.True(TryTransformTag(kvp, out var attribute));
+        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.KvlistValue, attribute.Value.ValueCase);
+
+        var outerValues = attribute.Value.KvlistValue.Values;
+        Assert.Single(outerValues);
+        Assert.Equal("labels", outerValues[0].Key);
+        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.KvlistValue, outerValues[0].Value.ValueCase);
+
+        var innerValues = outerValues[0].Value.KvlistValue.Values;
+        Assert.Single(innerValues);
+        Assert.Equal("x", innerValues[0].Key);
+        Assert.Equal("y", innerValues[0].Value.StringValue);
+    }
+
+    [Fact]
+    public void StringDictionaryBeyondMaxDepthFallsBackToString()
+    {
+        var innermost = new Dictionary<string, string> { ["x"] = "y" };
+        object nested = innermost;
+        for (var i = 0; i < TagWriter<object, object>.MaxRecursionDepth; i++)
+        {
+            nested = new Dictionary<string, object?> { ["nested"] = nested };
+        }
+
+        var kvp = new KeyValuePair<string, object?>("key", nested);
+
+        Assert.True(TryTransformTag(kvp, out var attribute));
+
+        var attributeValue = attribute.Value;
+        for (var i = 0; i < TagWriter<object, object>.MaxRecursionDepth - 1; i++)
+        {
+            Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.KvlistValue, attributeValue.ValueCase);
+            attributeValue = attributeValue.KvlistValue.Values[0].Value;
+        }
+
+        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.KvlistValue, attributeValue.ValueCase);
+        Assert.Equal(
+            Convert.ToString(innermost, CultureInfo.InvariantCulture),
+            attributeValue.KvlistValue.Values[0].Value.StringValue);
     }
 
     [Fact]

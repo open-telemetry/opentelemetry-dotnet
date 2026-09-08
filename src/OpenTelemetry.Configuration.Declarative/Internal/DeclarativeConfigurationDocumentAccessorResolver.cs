@@ -132,6 +132,9 @@ internal static class DeclarativeConfigurationDocumentAccessorResolver
                     case ChainedConfigurationSource chained:
                         Collect(chained.Configuration, accessors);
                         break;
+
+                    default:
+                        break;
                 }
             }
 
@@ -157,6 +160,9 @@ internal static class DeclarativeConfigurationDocumentAccessorResolver
                 // its configuration from another IConfigurationRoot.
                 case ChainedConfigurationProvider chained:
                     Collect(chained.Configuration, accessors);
+                    break;
+
+                default:
                     break;
             }
         }

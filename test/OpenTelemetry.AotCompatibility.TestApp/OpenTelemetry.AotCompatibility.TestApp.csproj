@@ -11,6 +11,7 @@
   <ItemGroup>
     <TrimmerRootAssembly Include="OpenTelemetry.Api.ProviderBuilderExtensions" />
     <TrimmerRootAssembly Include="OpenTelemetry.Api" />
+    <TrimmerRootAssembly Include="OpenTelemetry.Configuration.Declarative" />
     <TrimmerRootAssembly Include="OpenTelemetry.Exporter.Console" />
     <TrimmerRootAssembly Include="OpenTelemetry.Exporter.InMemory" />
     <TrimmerRootAssembly Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
