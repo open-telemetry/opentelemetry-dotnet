@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Reduced allocations when formatting self-diagnostics events with up to
+  three parameters.
+  ([#7730](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7730))
+
 ## 1.18.0
 
 Released 2026-Aug-21
