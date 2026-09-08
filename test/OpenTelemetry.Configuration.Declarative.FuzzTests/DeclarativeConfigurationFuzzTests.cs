@@ -171,9 +171,11 @@ public class DeclarativeConfigurationFuzzTests
             case AliasValue { AnchorIndex: > 0 }:
                 yield return new AliasValue(0);
                 break;
+
             case ScalarValue { Value: not "text" }:
                 yield return new ScalarValue("text");
                 break;
+
             case CollectionValue collection:
                 if (collection is MappingValue { UsesMergeKey: true } merging)
                 {
@@ -206,6 +208,9 @@ public class DeclarativeConfigurationFuzzTests
                 }
 
                 break;
+
+            default:
+                break;
         }
     }
 
@@ -217,10 +222,12 @@ public class DeclarativeConfigurationFuzzTests
         {
             case ScalarValue scalar:
                 builder.Append(' ').AppendLine(scalar.Value);
-                return;
+                break;
+
             case AliasValue alias:
                 builder.Append(' ').AppendLine(state.GetAlias(alias.AnchorIndex) ?? "text");
-                return;
+                break;
+
             case CollectionValue collection:
                 if (collection.HasAnchor)
                 {
@@ -250,7 +257,10 @@ public class DeclarativeConfigurationFuzzTests
                     AppendValue(builder, state, collection.Children[i], indent + 1);
                 }
 
-                return;
+                break;
+
+            default:
+                break;
         }
     }
 
