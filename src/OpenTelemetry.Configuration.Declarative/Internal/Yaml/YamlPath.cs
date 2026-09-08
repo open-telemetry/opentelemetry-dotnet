@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Globalization;
+
 namespace OpenTelemetry.Configuration.Declarative;
 
 /// <summary>
@@ -27,5 +29,5 @@ internal static class YamlPath
     /// <param name="parent">The path of the sequence that holds the item.</param>
     /// <param name="index">The zero-based item index.</param>
     /// <returns>The composed path.</returns>
-    internal static string Index(string parent, int index) => $"{parent}[{index}]";
+    internal static string Index(string parent, int index) => $"{parent}[{index.ToString(CultureInfo.InvariantCulture)}]";
 }

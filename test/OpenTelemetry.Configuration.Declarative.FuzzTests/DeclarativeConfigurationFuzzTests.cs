@@ -146,19 +146,11 @@ public class DeclarativeConfigurationFuzzTests
             (2, sequenceGenerator));
     }
 
-    // Range/index syntax is unavailable on net462, which this project targets.
-    private static T[] AllButLast<T>(T[] items)
-    {
-        var result = new T[items.Length - 1];
-        Array.Copy(items, result, result.Length);
-        return result;
-    }
-
     private static IEnumerable<YamlDocument> ShrinkYamlDocument(YamlDocument document)
     {
         if (document.Sections.Length > 1)
         {
-            yield return new YamlDocument(AllButLast(document.Sections));
+            yield return new YamlDocument([.. document.Sections.Take(document.Sections.Length - 1)]);
         }
 
         for (var i = 0; i < document.Sections.Length; i++)
@@ -195,7 +187,7 @@ public class DeclarativeConfigurationFuzzTests
 
                 if (collection.Children.Length > 1)
                 {
-                    yield return collection.With(collection.HasAnchor, AllButLast(collection.Children));
+                    yield return collection.With(collection.HasAnchor, [.. collection.Children.Take(collection.Children.Length - 1)]);
                 }
 
                 foreach (var child in collection.Children)

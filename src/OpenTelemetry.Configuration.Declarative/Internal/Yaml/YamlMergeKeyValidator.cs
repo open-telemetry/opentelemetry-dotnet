@@ -27,14 +27,25 @@ internal static class YamlMergeKeyValidator
         Visit(root, YamlPath.Root, visited);
     }
 
-    private static bool IsMergeKey(YamlNode key) =>
-        key is YamlScalarNode scalar &&
-        ((!scalar.Tag.IsEmpty &&
-                !scalar.Tag.IsNonSpecific &&
-                string.Equals(scalar.Tag.Value, MergeTag, StringComparison.Ordinal)) ||
-            (string.Equals(scalar.Value, MergeKey, StringComparison.Ordinal) &&
-                YamlScalarResolver.IsPlain(scalar) &&
-                scalar.Tag.IsEmpty));
+    private static bool IsMergeKey(YamlNode key)
+    {
+        if (key is not YamlScalarNode scalar)
+        {
+            return false;
+        }
+
+        var hasExplicitMergeTag =
+            !scalar.Tag.IsEmpty &&
+            !scalar.Tag.IsNonSpecific &&
+            string.Equals(scalar.Tag.Value, MergeTag, StringComparison.Ordinal);
+
+        var isImplicitMergeKey =
+            string.Equals(scalar.Value, MergeKey, StringComparison.Ordinal) &&
+            YamlScalarResolver.IsPlain(scalar) &&
+            scalar.Tag.IsEmpty;
+
+        return hasExplicitMergeTag || isImplicitMergeKey;
+    }
 
     private static void Visit(YamlNode node, string path, HashSet<YamlNode> visited)
     {
@@ -69,6 +80,9 @@ internal static class YamlMergeKeyValidator
                     Visit(sequence.Children[i], YamlPath.Index(path, i), visited);
                 }
 
+                break;
+
+            default:
                 break;
         }
     }
