@@ -104,10 +104,18 @@ Only string-valued `resource.attributes` are currently supported. Boolean,
 integer, double, and array attributes are reported and skipped.
 
 All other top-level sections (e.g. `tracer_provider`, `propagator`) are logged
-and ignored. You can track this issue for missing features:
-[#6380](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6380).
+and are not applied. Structurally invalid content can fail configuration
+loading.
 
-## Environment-variable substitution
+## Parsing and validation
+
+The configuration file is expected to conform to the YAML 1.2 specification.
+
+YAML 1.1 merge keys (`<<: *defaults`) are rejected before any configuration
+is interpreted. Quoted or explicitly string-tagged `<<` keys remain ordinary
+property names under the YAML 1.2 core schema.
+
+### Environment-variable substitution
 
 Values in the YAML file may reference environment variables using the `${...}`
 syntax, per the OTel spec:
@@ -179,16 +187,9 @@ merged per key; the typed YAML document cannot, so exactly one document is used.
 - For duplicate structured resource attribute names, the first occurrence wins.
   A structured attribute also takes precedence over the same name in
   `resource.attributes_list`, even when its type is not currently supported.
-- Unknown top-level sections are logged and ignored. Unknown fields within
-  `resource` or a resource attribute are schema errors and fail the load.
-- YAML merge keys (`<<: *defaults`) are rejected. Merge keys are a YAML 1.1
-  feature and are not part of the required YAML 1.2 core schema.
-- Plain (unquoted) YAML scalars that resolve to `null`, `Null`, `NULL`, or `~`
-  after environment variable substitution are treated as YAML null. Nullable
-  fields apply their specified null behaviour; non-nullable fields fail schema
-  validation. To preserve the string `"null"` as a value, use a quoted scalar:
-  `value: "null"`. This is consistent with YAML 1.2 core schema semantics
-  applied post-substitution as required by the OTel specification.
+- Unknown top-level sections are logged and are not applied, but their `${...}`
+  references are resolved during the load, so an unset variable in one is
+  reported.
 
 ### Pitfalls to avoid
 
