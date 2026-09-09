@@ -6,6 +6,9 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added Schema URL to internally created `Resource` instances.
+  ([#7726](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7726))
+
 ## 1.18.0
 
 Released 2026-Aug-21
