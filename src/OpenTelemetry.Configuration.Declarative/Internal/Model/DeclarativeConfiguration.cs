@@ -13,7 +13,10 @@ namespace OpenTelemetry.Configuration.Declarative;
 /// walk that builds it lives in <see cref="DeclarativeConfigurationParser"/>, so a future non-YAML source
 /// (for example a telemetry-policy push) could construct the same model without taking a YAML dependency.
 /// </remarks>
-/// <param name="FileFormat">The validated <c>file_format</c> value.</param>
+/// <param name="FileFormat">
+/// The validated <c>file_format</c> value, or an empty string when the document was empty and there
+/// was no version to validate.
+/// </param>
 internal sealed record DeclarativeConfiguration(string FileFormat)
 {
     /// <summary>

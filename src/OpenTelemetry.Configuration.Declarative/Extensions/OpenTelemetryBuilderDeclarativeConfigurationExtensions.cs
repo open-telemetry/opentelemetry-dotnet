@@ -74,20 +74,35 @@ public static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
             return;
         }
 
+        // Last registered IConfiguration wins in DI.
+        var descriptor = services.LastOrDefault(d => d.ServiceType == typeof(IConfiguration));
+
+        // The accessor this call contributes if no declarative source is registered already. When one
+        // is, the existing accessor wins and this instance is discarded unused.
+        var candidateAccessor = new DeclarativeConfigurationDocumentAccessor(filePath);
+
         services.AddSingleton(new DeclarativeConfigurationOverlayMarker(filePath));
+
         OpenTelemetryDeclarativeConfigurationEventSource.Log.OverlayRegistrationStarted(filePath.DisplayPath);
 
         // TODO(strict-mode): branch here on a future DeclarativeConfigurationMode (Default vs Strict). See https://github.com/open-telemetry/opentelemetry-dotnet/issues/6380.
 
-        // Last registered IConfiguration wins in DI.
-        var descriptor = services.LastOrDefault(d => d.ServiceType == typeof(IConfiguration));
-
         if (descriptor?.ImplementationInstance is IConfigurationBuilder liveBuilder)
         {
             // ConfigurationManager registered as instance: mutate in-place, preserve reload.
-            liveBuilder.AddOpenTelemetryDeclarativeConfiguration(filePath);
+            liveBuilder.AddOpenTelemetryDeclarativeConfiguration(candidateAccessor);
+            services.TryAddSingleton(
+                DeclarativeConfigurationDocumentAccessorResolver.FindInConfiguration(liveBuilder)
+                    ?? candidateAccessor);
             return;
         }
+
+        // Explicit singleton registration. Resolving IConfiguration first is what makes the scan
+        // meaningful: the source below is only inserted while the configuration is being built, so
+        // until that has happened there is nothing to find.
+        services.TryAddSingleton(sp =>
+            DeclarativeConfigurationDocumentAccessorResolver.FindInConfiguration(sp)
+                ?? candidateAccessor);
 
         // Factory/type registration: replace descriptor, wrap or insert on first resolve.
         var existingFactory = descriptor?.ImplementationFactory;
@@ -120,15 +135,14 @@ public static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
                 if (existing is IConfigurationBuilder existingAsBuilder)
                 {
                     // Resolved config is a live builder (HostApplicationBuilder): insert in-place.
-                    existingAsBuilder.AddOpenTelemetryDeclarativeConfiguration(filePath);
+                    existingAsBuilder.AddOpenTelemetryDeclarativeConfiguration(candidateAccessor);
                     return existing;
                 }
 
                 // ConfigurationRoot: chain existing, append YAML last. alreadyRegistered is deferred to
                 // resolve time because HostBuilder's factory-built root is not available until then.
-                var alreadyRegistered = existing is IConfigurationRoot existingRoot &&
-                    existingRoot.Providers.OfType<DeclarativeConfigurationProvider>().Any(p =>
-                        p.FilePath == filePath);
+                var existingAccessor = DeclarativeConfigurationDocumentAccessorResolver.FindInConfiguration(existing);
+                var alreadyRegistered = existingAccessor != null;
 
 #pragma warning disable CA2000 // Ownership transferred to DI container via factory return value; lifetime matches the replaced descriptor's lifetime
                 var manager = new ConfigurationManager();
@@ -141,11 +155,21 @@ public static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
 
                 if (alreadyRegistered)
                 {
-                    OpenTelemetryDeclarativeConfigurationEventSource.Log.SourceAlreadyPresentInExistingConfiguration(filePath.DisplayPath);
+                    if (existingAccessor!.FilePath == filePath)
+                    {
+                        OpenTelemetryDeclarativeConfigurationEventSource.Log.SourceAlreadyPresentInExistingConfiguration(
+                            filePath.DisplayPath);
+                    }
+                    else
+                    {
+                        OpenTelemetryDeclarativeConfigurationEventSource.Log.DifferentSourceAlreadyRegistered(
+                            existingAccessor.FilePath.DisplayPath,
+                            filePath.DisplayPath);
+                    }
                 }
                 else
                 {
-                    manager.AddOpenTelemetryDeclarativeConfiguration(filePath);
+                    manager.AddOpenTelemetryDeclarativeConfiguration(candidateAccessor);
                 }
 
                 return manager;

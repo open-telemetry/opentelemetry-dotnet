@@ -18,7 +18,7 @@ public static class DeclarativeConfigurationBuilderExtensions
     /// <remarks>
     /// Appends the source after existing ones (YAML overrides earlier sources; sources added
     /// later override YAML). No-op when <c>OTEL_CONFIG_FILE</c> is unset, empty, or whitespace,
-    /// or when the same file is already registered.
+    /// or when a declarative configuration file is already registered. The first file wins.
     /// </remarks>
     /// <param name="builder">The <see cref="IConfigurationBuilder"/> to add to.</param>
     /// <returns>The original <see cref="IConfigurationBuilder"/> for chaining.</returns>
@@ -60,18 +60,40 @@ public static class DeclarativeConfigurationBuilderExtensions
     // so callers that already hold a FilePath (e.g. overlay registration) can pass it directly.
     internal static IConfigurationBuilder AddOpenTelemetryDeclarativeConfiguration(
         this IConfigurationBuilder builder,
-        FilePath path)
+        FilePath path) =>
+        builder.AddOpenTelemetryDeclarativeConfiguration(new DeclarativeConfigurationDocumentAccessor(path));
+
+    // Overload accepting an already-created accessor, so UseDeclarativeConfiguration can register
+    // the same accessor instance in both DI and the configuration source.
+    internal static IConfigurationBuilder AddOpenTelemetryDeclarativeConfiguration(
+        this IConfigurationBuilder builder,
+        DeclarativeConfigurationDocumentAccessor accessor)
     {
         Guard.ThrowIfNull(builder);
 
-        if (builder.Sources.OfType<DeclarativeConfigurationSource>().Any(s => s.FilePath == path))
+        var existingSource = builder.Sources
+            .OfType<DeclarativeConfigurationSource>()
+            .FirstOrDefault();
+
+        if (existingSource != null)
         {
-            OpenTelemetryDeclarativeConfigurationEventSource.Log.SourceAlreadyRegisteredInBuilder(path.DisplayPath);
+            if (existingSource.FilePath == accessor.FilePath)
+            {
+                OpenTelemetryDeclarativeConfigurationEventSource.Log.SourceAlreadyRegisteredInBuilder(
+                    accessor.FilePath.DisplayPath);
+            }
+            else
+            {
+                OpenTelemetryDeclarativeConfigurationEventSource.Log.DifferentSourceAlreadyRegistered(
+                    existingSource.FilePath.DisplayPath,
+                    accessor.FilePath.DisplayPath);
+            }
+
             return builder;
         }
 
-        builder.Sources.Add(new DeclarativeConfigurationSource(path));
-        OpenTelemetryDeclarativeConfigurationEventSource.Log.SourceRegistered(path.DisplayPath);
+        builder.Sources.Add(new DeclarativeConfigurationSource(accessor));
+        OpenTelemetryDeclarativeConfigurationEventSource.Log.SourceRegistered(accessor.FilePath.DisplayPath);
         return builder;
     }
 }

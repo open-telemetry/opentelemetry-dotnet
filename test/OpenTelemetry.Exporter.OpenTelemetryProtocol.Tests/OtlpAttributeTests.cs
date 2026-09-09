@@ -144,6 +144,7 @@ public class OtlpAttributeTests
     [Theory]
     [InlineData(char.MaxValue)]
     [InlineData("string")]
+    [InlineData(ulong.MaxValue)]
     public void StringTypesSupported(object value)
     {
         var kvp = new KeyValuePair<string, object?>("key", value);
@@ -225,8 +226,13 @@ public class OtlpAttributeTests
     {
         var testValues = new object[]
         {
+#if NET
+            nint.MaxValue,
+            nuint.MaxValue,
+#else
             (nint)int.MaxValue,
             (nuint)uint.MaxValue,
+#endif
             decimal.MaxValue,
             new(),
         };
@@ -268,6 +274,35 @@ public class OtlpAttributeTests
                     Assert.Equal(array.GetValue(i)!.ToString(), attribute.Value.ArrayValue.Values[i].StringValue);
                 }
             }
+        }
+    }
+
+    [Theory]
+    [InlineData(4)]
+    [InlineData(100)]
+    public void ScalarSpanFormattableTypesRespectTagValueMaxLength(int tagValueMaxLength)
+    {
+        AssertTruncated(new DateTime(2024, 5, 6, 7, 8, 9, DateTimeKind.Utc), tagValueMaxLength);
+        AssertTruncated(new DateTimeOffset(2024, 5, 6, 7, 8, 9, TimeSpan.FromHours(2)), tagValueMaxLength);
+        AssertTruncated(TimeSpan.FromMilliseconds(123456.789), tagValueMaxLength);
+        AssertTruncated(Guid.NewGuid(), tagValueMaxLength);
+        AssertTruncated(12345.6789m, tagValueMaxLength);
+        AssertTruncated(ulong.MaxValue, tagValueMaxLength);
+
+        static void AssertTruncated<T>(T value, int tagValueMaxLength)
+            where T : notnull
+        {
+            var expected = Convert.ToString(value, CultureInfo.InvariantCulture)!;
+            var kvp = new KeyValuePair<string, object?>("key", value);
+
+            Assert.True(TryTransformTag(kvp, out var attribute, tagValueMaxLength));
+            Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.StringValue, attribute.Value.ValueCase);
+
+            var expectedValue = expected.Length > tagValueMaxLength
+                ? expected.Substring(0, tagValueMaxLength)
+                : expected;
+
+            Assert.Equal(expectedValue, attribute.Value.StringValue);
         }
     }
 
@@ -353,7 +388,7 @@ public class OtlpAttributeTests
         }
     }
 
-    private static bool TryTransformTag(KeyValuePair<string, object?> tag, [NotNullWhen(true)] out OtlpCommon.KeyValue? attribute)
+    private static bool TryTransformTag(KeyValuePair<string, object?> tag, [NotNullWhen(true)] out OtlpCommon.KeyValue? attribute, int? tagValueMaxLength = null)
     {
         var otlpTagWriterState = new ProtobufOtlpTagWriter.OtlpTagWriterState
         {
@@ -361,7 +396,7 @@ public class OtlpAttributeTests
             WritePosition = 0,
         };
 
-        if (ProtobufOtlpTagWriter.Instance.TryWriteTag(ref otlpTagWriterState, tag))
+        if (ProtobufOtlpTagWriter.Instance.TryWriteTag(ref otlpTagWriterState, tag, tagValueMaxLength))
         {
             // Deserialize the ResourceSpans and validate the attributes.
             using var stream = new MemoryStream(otlpTagWriterState.Buffer, 0, otlpTagWriterState.WritePosition);

@@ -11,6 +11,20 @@ Notes](../../RELEASENOTES.md).
   now be dropped.
   ([#7688](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7688))
 
+* Extended key/value list attribute serialization to cover additional
+  dictionary shapes (`IEnumerable<KeyValuePair<string, string?>>` and
+  `IDictionary`). These attributes will be serialized as nested OTLP
+  `kvlist` values.
+  ([#7679](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7679))
+
+* Disable HttpClientFactory integration on browser WebAssembly (e.g. Blazor)
+  environments to avoid stalled export requests when async HTTP handlers are used.
+  ([#7709](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7709))
+
+* Fixed CA certificate loading (e.g. using `OTEL_EXPORTER_OTLP_CERTIFICATE`)
+  for PEM-encoded certificates that only contain a public key.
+  ([#7693](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7693))
+
 ## 1.18.0
 
 Released 2026-Aug-21

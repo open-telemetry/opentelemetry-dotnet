@@ -105,6 +105,28 @@ INVALID CERTIFICATE DATA
     }
 
     [Fact]
+    public void LoadCaCertificate_LoadsCertificate_WhenPemFileHasNoPrivateKey()
+    {
+        using var selfSignedCertificate = CreateSelfSignedCertificate();
+        var certificateOnlyPem = selfSignedCertificate.ExportCertificatePem();
+
+        var tempCertFile = Path.GetTempFileName();
+        File.WriteAllText(tempCertFile, certificateOnlyPem);
+
+        try
+        {
+            using var caCertificate = OpenTelemetryProtocol.Implementation.OtlpCertificateManager.LoadCaCertificate(tempCertFile);
+
+            Assert.Equal(selfSignedCertificate.Thumbprint, caCertificate.Thumbprint);
+            Assert.False(caCertificate.HasPrivateKey);
+        }
+        finally
+        {
+            File.Delete(tempCertFile);
+        }
+    }
+
+    [Fact]
     public void LoadCaCertificate_ThrowsInvalidOperationException_WhenTrustStoreFileIsEmpty()
     {
         var tempTrustStoreFile = Path.GetTempFileName();

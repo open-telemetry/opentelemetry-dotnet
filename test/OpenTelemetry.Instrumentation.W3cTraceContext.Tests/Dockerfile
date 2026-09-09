@@ -5,9 +5,9 @@
 ARG BUILD_SDK_VERSION=10.0
 ARG TEST_SDK_VERSION=10.0
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0.424-azurelinux3.0@sha256:072fecca7ce6215cb7d6c8c5ae0bf3ac7135adb642123035f529d0fea8ca73eb AS dotnet-sdk-8.0
-FROM mcr.microsoft.com/dotnet/sdk:9.0.317-azurelinux3.0@sha256:c9c558d6730a709144f578823ac0a3934eb7715bc8e18c5c1e5072bf42b3e0de AS dotnet-sdk-9.0
-FROM mcr.microsoft.com/dotnet/sdk:10.0.400-azurelinux3.0@sha256:d1348cda1563f5dc1a1d419023a2067389a3dbe7a1e0686913d9839f85053f00 AS dotnet-sdk-10.0
+FROM mcr.microsoft.com/dotnet/sdk:8.0.425-azurelinux3.0@sha256:ad067df078201b7c4cba12a2a8d92be1a0a53777b26bc320d39431edfb5f5884 AS dotnet-sdk-8.0
+FROM mcr.microsoft.com/dotnet/sdk:9.0.318-azurelinux3.0@sha256:49e105cb9e208a4562c904605afb28ea2377d6a83110c8c29fd745d446bc81dd AS dotnet-sdk-9.0
+FROM mcr.microsoft.com/dotnet/sdk:10.0.401-azurelinux3.0@sha256:40195d80f8c217195a16f65c1be7e8acad646317e9bda2801d91df681c60b3f4 AS dotnet-sdk-10.0
 
 FROM dotnet-sdk-${BUILD_SDK_VERSION} AS build
 ARG PUBLISH_CONFIGURATION=Release

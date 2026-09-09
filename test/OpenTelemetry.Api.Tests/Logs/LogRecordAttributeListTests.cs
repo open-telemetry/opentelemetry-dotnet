@@ -144,6 +144,26 @@ public sealed class LogRecordAttributeListTests
     [InlineData(1)]
     [InlineData(8)]
     [InlineData(9)]
+    public void CreateFromArrayTest(int numberOfItems)
+    {
+        var sourceAttributes = Enumerable.Range(0, numberOfItems)
+            .Select(i => new KeyValuePair<string, object?>($"key{i}", i))
+            .ToArray();
+
+        var attributes = LogRecordAttributeList.CreateFromEnumerable(sourceAttributes);
+
+        Assert.Equal(sourceAttributes.Length, attributes.Count);
+        for (var i = 0; i < attributes.Count; i++)
+        {
+            Assert.Equal(sourceAttributes[i], attributes[i]);
+        }
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(8)]
+    [InlineData(9)]
     [InlineData(64)]
     public void ExportTest(int numberOfItems)
     {
