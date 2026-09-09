@@ -57,6 +57,48 @@ Targeting `Microsoft.Extensions.DependencyInjection.IServiceCollection`:
   * `WithMetrics`: Enables metrics and optionally configures the
   `MeterProvider`.
 
+Targeting `Microsoft.Extensions.Hosting.IHostApplicationBuilder`:
+
+* `AddOpenTelemetry`: Does everything the `IServiceCollection` method above
+  does, using
+  [IHostApplicationBuilder.Services](https://learn.microsoft.com/dotnet/api/microsoft.extensions.hosting.ihostapplicationbuilder.services),
+  and additionally:
+
+  * Seeds `service.name` from
+    [`IHostEnvironment.ApplicationName`](https://learn.microsoft.com/dotnet/api/microsoft.extensions.hosting.ihostenvironment.applicationname)
+    and `deployment.environment.name` from
+    [`IHostEnvironment.EnvironmentName`](https://learn.microsoft.com/dotnet/api/microsoft.extensions.hosting.ihostenvironment.environmentname)
+    as low-priority resource defaults. Both are superseded by the
+    `OTEL_SERVICE_NAME` / `OTEL_RESOURCE_ATTRIBUTES` environment variables or
+    by any explicit
+    [`ConfigureResource`](https://learn.microsoft.com/dotnet/api/opentelemetry.opentelemetrybuildersdk-extensions.configureresource)
+    call.
+
+  * Makes the host's
+    [Configuration](https://learn.microsoft.com/dotnet/api/microsoft.extensions.hosting.ihostapplicationbuilder.configuration)
+    available to OpenTelemetry extensions during setup. It also registers that
+    configuration as an `IConfigurationManager` singleton when the application
+    has not already registered one.
+
+  It returns the same `OpenTelemetryBuilder` class, so the only change to an
+  existing setup is the first line:
+
+  ```csharp
+  var builder = Host.CreateApplicationBuilder(args);
+
+  builder.AddOpenTelemetry()
+      .WithTracing(tracing => tracing.AddSource("MyApp"));
+  ```
+
+  > [!NOTE]
+  > A host registers `IConfiguration` as a factory so that the container owns
+  its disposal, which leaves the underlying configuration unreachable while the
+  application is still being built. Registering it makes the application's
+  configuration available to OpenTelemetry extensions that only receive an
+  `IServiceCollection`, so they can contribute configuration sources during
+  setup rather than replacing the `IConfiguration` registration afterwards. An
+  `IConfigurationManager` already registered by the application is left in place.
+
 ## Usage
 
 The following example shows how to register OpenTelemetry tracing & metrics in
@@ -64,14 +106,12 @@ an ASP.NET Core host using the OpenTelemetry.Extensions.Hosting extensions.
 
 ```csharp
 using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
 var appBuilder = WebApplication.CreateBuilder(args);
 
-appBuilder.Services.AddOpenTelemetry()
-    .ConfigureResource(builder => builder.AddService(serviceName: "MyService"))
+appBuilder.AddOpenTelemetry()
     .WithTracing(builder => builder.AddConsoleExporter())
     .WithMetrics(builder => builder.AddConsoleExporter());
 
