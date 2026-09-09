@@ -23,7 +23,7 @@ internal sealed class HostEnvironmentResourceDetector(
 
     public Resource Detect()
     {
-        var attributes = new List<KeyValuePair<string, object>>();
+        var attributes = new List<KeyValuePair<string, object>>(2);
 
         if (!this.IsAttributeSetInConfiguration(ServiceNameAttribute) &&
             !string.IsNullOrWhiteSpace(environment.ApplicationName))
@@ -37,7 +37,7 @@ internal sealed class HostEnvironmentResourceDetector(
             attributes.Add(new(DeploymentEnvironmentNameAttribute, NormalizeEnvironmentName(environment.EnvironmentName)));
         }
 
-        return new Resource(attributes);
+        return attributes.Count < 1 ? Resource.Empty : new Resource(attributes);
     }
 
     internal bool IsAttributeSetInConfiguration(string attributeName)
@@ -80,7 +80,7 @@ internal sealed class HostEnvironmentResourceDetector(
         return false;
     }
 
-    // The spec (https://opentelemetry.io/docs/specs/semconv/registry/attributes/deployment/#deployment-attributes) mandates these four well-known values in lowercase.
+    // The spec (https://github.com/open-telemetry/semantic-conventions/blob/v1.44.0/docs/registry/attributes/deployment.md) mandates these four well-known values in lowercase.
     private static string NormalizeEnvironmentName(string name) => name switch
     {
         _ when string.Equals(name, "development", StringComparison.OrdinalIgnoreCase) => "development",

@@ -3,10 +3,10 @@
 
 namespace OpenTelemetry;
 
-// Carries IConfiguration across the assembly boundary without introducing a dependency on
-// Microsoft.Extensions.Configuration.Abstractions in OpenTelemetry.Api.ProviderBuilderExtensions.
-// Callers in layers that already reference that assembly cast Configuration to IConfiguration themselves.
+/// <summary>Provides access to the host's IConfiguration instance for OTel extensions resolving it from DI.</summary>
 internal sealed class OpenTelemetryBuilderConfigurationAccessor(object configuration)
 {
+    // Uses object to avoid a dependency on Microsoft.Extensions.Configuration.Abstractions in this assembly;
+    // callers that already reference that package cast Configuration to IConfiguration.
     internal object Configuration { get; } = configuration;
 }
