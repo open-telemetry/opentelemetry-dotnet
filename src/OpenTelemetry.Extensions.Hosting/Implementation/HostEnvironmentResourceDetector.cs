@@ -3,6 +3,7 @@
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
 namespace OpenTelemetry.Extensions.Hosting.Implementation;
@@ -37,7 +38,7 @@ internal sealed class HostEnvironmentResourceDetector(
             attributes.Add(new(DeploymentEnvironmentNameAttribute, NormalizeEnvironmentName(environment.EnvironmentName)));
         }
 
-        return attributes.Count < 1 ? Resource.Empty : new Resource(attributes);
+        return attributes.Count < 1 ? Resource.Empty : new Resource(attributes, SchemaUrls.Get(SemanticConventionsVersion.Current));
     }
 
     internal bool IsAttributeSetInConfiguration(string attributeName)
