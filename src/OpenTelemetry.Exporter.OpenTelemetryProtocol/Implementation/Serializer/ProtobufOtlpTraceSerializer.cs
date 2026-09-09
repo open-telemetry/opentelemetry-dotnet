@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
@@ -15,10 +16,18 @@ internal static class ProtobufOtlpTraceSerializer
     private const int TraceIdSize = 16;
     private const int SpanIdSize = 8;
 
+    // A source's scope identity is fixed at construction, so the hash is computed once per
+    // source rather than once per span.
+#if NETFRAMEWORK || NETSTANDARD2_0
+    private static readonly ConditionalWeakTable<ActivitySource, StrongBox<int>> CachedScopeHashCodes = new();
+#else
+    private static readonly ConditionalWeakTable<ActivitySource, StrongBox<int>> CachedScopeHashCodes = [];
+#endif
+
     [ThreadStatic]
     private static Stack<List<Activity>>? activityListPool;
     [ThreadStatic]
-    private static Dictionary<string, List<Activity>>? scopeTracesList;
+    private static Dictionary<InstrumentationScope, List<Activity>>? scopeTracesList;
 
     internal static int WriteTraceData(
         ref byte[] buffer,
@@ -39,11 +48,11 @@ internal static class ProtobufOtlpTraceSerializer
         {
             foreach (var activity in batch)
             {
-                var sourceName = activity.Source.Name;
-                if (!scopeTracesList.TryGetValue(sourceName, out var activities))
+                var instrumentationScope = new InstrumentationScope(activity.Source);
+                if (!scopeTracesList.TryGetValue(instrumentationScope, out var activities))
                 {
                     activities = activityListPool.Count > 0 ? activityListPool.Pop() : [];
-                    scopeTracesList[sourceName] = activities;
+                    scopeTracesList[instrumentationScope] = activities;
                 }
 
                 activities.Add(activity);
@@ -137,7 +146,7 @@ internal static class ProtobufOtlpTraceSerializer
                 var resourceSpansScopeSpansLengthPosition = writePosition;
                 writePosition += ReserveSizeForLength;
 
-                writePosition = WriteScopeSpan(buffer, writePosition, sdkLimitOptions, entry.Value[0].Source, entry.Value);
+                writePosition = WriteScopeSpan(buffer, writePosition, sdkLimitOptions, entry.Key.Source, entry.Value);
                 ProtobufSerializer.WriteReservedLength(buffer, resourceSpansScopeSpansLengthPosition, writePosition - (resourceSpansScopeSpansLengthPosition + ReserveSizeForLength));
             }
         }
@@ -586,5 +595,105 @@ internal static class ProtobufOtlpTraceSerializer
         position = ProtobufSerializer.WriteEnumWithTag(buffer, position, ProtobufOtlpTraceFieldNumberConstants.Status_Code, finalStatusCode);
 
         return position;
+    }
+
+    /// <summary>
+    /// Identifies the instrumentation scope spans are grouped by. Sources sharing a name but
+    /// reporting a different version, schema URL, or tags are distinct scopes and must be
+    /// emitted as separate ScopeSpans entries.
+    /// </summary>
+    private readonly struct InstrumentationScope : IEquatable<InstrumentationScope>
+    {
+        private readonly int hashCode;
+
+        public InstrumentationScope(ActivitySource source)
+        {
+            this.Source = source;
+            this.hashCode = CachedScopeHashCodes.GetValue(source, static s => new StrongBox<int>(ComputeHashCode(s))).Value;
+        }
+
+        public ActivitySource Source { get; }
+
+        public bool Equals(InstrumentationScope other)
+        {
+            var ours = this.Source;
+            var theirs = other.Source;
+
+            return ReferenceEquals(ours, theirs)
+                || (this.hashCode == other.hashCode
+                    && string.Equals(ours.Name, theirs.Name, StringComparison.Ordinal)
+                    && string.Equals(ours.Version, theirs.Version, StringComparison.Ordinal)
+                    && string.Equals(ours.TelemetrySchemaUrl, theirs.TelemetrySchemaUrl, StringComparison.Ordinal)
+                    && TagsEqual(ours.Tags, theirs.Tags));
+        }
+
+        public override bool Equals(object? obj) => obj is InstrumentationScope other && this.Equals(other);
+
+        public override int GetHashCode() => this.hashCode;
+
+        private static int ComputeHashCode(ActivitySource source)
+        {
+#if NET || NETSTANDARD2_1_OR_GREATER
+            HashCode hashCode = default;
+            hashCode.Add(source.Name, StringComparer.Ordinal);
+            hashCode.Add(source.Version, StringComparer.Ordinal);
+            hashCode.Add(source.TelemetrySchemaUrl, StringComparer.Ordinal);
+
+            if (source.Tags != null)
+            {
+                foreach (var tag in source.Tags)
+                {
+                    hashCode.Add(tag.Key, StringComparer.Ordinal);
+                    hashCode.Add(tag.Value);
+                }
+            }
+
+            return hashCode.ToHashCode();
+#else
+            unchecked
+            {
+                var hash = 17;
+                hash = (hash * 31) + source.Name.GetHashCode();
+                hash = (hash * 31) + (source.Version?.GetHashCode() ?? 0);
+                hash = (hash * 31) + (source.TelemetrySchemaUrl?.GetHashCode() ?? 0);
+
+                if (source.Tags != null)
+                {
+                    foreach (var tag in source.Tags)
+                    {
+                        hash = (hash * 31) + tag.Key.GetHashCode();
+                        hash = (hash * 31) + (tag.Value?.GetHashCode() ?? 0);
+                    }
+                }
+
+                return hash;
+            }
+#endif
+        }
+
+        private static bool TagsEqual(
+            IEnumerable<KeyValuePair<string, object?>>? left,
+            IEnumerable<KeyValuePair<string, object?>>? right)
+        {
+            if (left is null || right is null)
+            {
+                return left is null && right is null;
+            }
+
+            using var leftEnumerator = left.GetEnumerator();
+            using var rightEnumerator = right.GetEnumerator();
+
+            while (leftEnumerator.MoveNext())
+            {
+                if (!rightEnumerator.MoveNext()
+                    || !string.Equals(leftEnumerator.Current.Key, rightEnumerator.Current.Key, StringComparison.Ordinal)
+                    || !EqualityComparer<object?>.Default.Equals(leftEnumerator.Current.Value, rightEnumerator.Current.Value))
+                {
+                    return false;
+                }
+            }
+
+            return !rightEnumerator.MoveNext();
+        }
     }
 }

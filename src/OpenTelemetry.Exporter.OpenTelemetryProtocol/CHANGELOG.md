@@ -11,6 +11,10 @@ Notes](../../RELEASENOTES.md).
   now be dropped.
   ([#7688](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7688))
 
+* Fixed traces and metrics with the same instrumentation scope name but
+  different versions, schema URLs, or attributes being exported under the same
+  OTLP scope.
+  ([#7687](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7687))
 * Extended key/value list attribute serialization to cover additional
   dictionary shapes (`IEnumerable<KeyValuePair<string, string?>>` and
   `IDictionary`). These attributes will be serialized as nested OTLP
