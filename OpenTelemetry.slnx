@@ -155,6 +155,7 @@
     <File Path="src/Shared/Guard.cs" />
     <File Path="src/Shared/PeriodicExportingMetricReaderHelper.cs" />
     <File Path="src/Shared/ResourceSemanticConventions.cs" />
+    <File Path="src/Shared/SchemaUrls.cs" />
     <File Path="src/Shared/SemanticConventions.cs" />
     <File Path="src/Shared/SpanAttributeConstants.cs" />
     <File Path="src/Shared/StatusHelper.cs" />

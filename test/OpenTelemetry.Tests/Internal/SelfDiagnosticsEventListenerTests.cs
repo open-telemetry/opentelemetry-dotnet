@@ -69,6 +69,39 @@ public class SelfDiagnosticsEventListenerTests
         AssertFileOutput(LOGFILEPATH, eventMessage);
     }
 
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    [InlineData(7)]
+    public void SelfDiagnosticsEventListener_WriteEvent_FormatMessage(int payloadCount)
+    {
+        // Arrange
+        var logFilePath = $"Diagnostics-{payloadCount}.log";
+        var memoryMappedFile = MemoryMappedFile.CreateFromFile(logFilePath, FileMode.Create, null, 1024);
+        Stream stream = memoryMappedFile.CreateViewStream();
+        using var configRefresher = new TestSelfDiagnosticsConfigRefresher(stream);
+        using var listener = new SelfDiagnosticsEventListener(EventLevel.Error, configRefresher, formatMessage: true);
+        var payload = new object?[payloadCount];
+        for (var i = 0; i < payload.Length; i++)
+        {
+            payload[i] = $"value{i}";
+        }
+
+        var eventMessage = string.Join(" ", Enumerable.Range(0, payloadCount).Select(i => $"{{{i}}}"));
+        var expectedMessage = string.Join(" ", payload);
+
+        // Act
+        listener.WriteEvent(eventMessage, Array.AsReadOnly(payload));
+
+        // Assert
+        Assert.True(configRefresher.TryGetLogStreamCalled);
+        stream.Dispose();
+        memoryMappedFile.Dispose();
+        AssertFileOutput(logFilePath, expectedMessage);
+    }
+
     [Fact]
     public void SelfDiagnosticsEventListener_DateTimeGetBytes()
     {
