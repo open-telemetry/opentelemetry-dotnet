@@ -1,7 +1,6 @@
 <Project>
   <PropertyGroup>
-    <!-- TODO Restore to latest once .NET 11 is stable -->
-    <LangVersion>preview</LangVersion>
+    <LangVersion>latest</LangVersion>
     <SignAssembly>true</SignAssembly>
     <RepoRoot>$([System.IO.Directory]::GetParent($(MSBuildThisFileDirectory)).Parent.FullName)</RepoRoot>
     <StrongNameKeyBase64File>$(MSBuildThisFileDirectory)OpenTelemetry.snk.base64</StrongNameKeyBase64File>
