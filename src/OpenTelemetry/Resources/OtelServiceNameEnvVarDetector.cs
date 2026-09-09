@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using Microsoft.Extensions.Configuration;
+using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Resources;
 
@@ -22,10 +23,9 @@ internal sealed class OtelServiceNameEnvVarDetector : IResourceDetector
 
         if (this.configuration.TryGetStringValue(EnvVarKey, out var envResourceAttributeValue))
         {
-            resource = new Resource(new Dictionary<string, object>
-            {
-                [ResourceSemanticConventions.AttributeServiceName] = envResourceAttributeValue,
-            });
+            resource = new(
+                [new(ResourceSemanticConventions.AttributeServiceName, envResourceAttributeValue)],
+                SchemaUrls.Get(SemanticConventionsVersion.Current));
         }
 
         return resource;

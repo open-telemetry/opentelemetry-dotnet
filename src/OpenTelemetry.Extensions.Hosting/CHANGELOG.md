@@ -6,6 +6,15 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added an `AddOpenTelemetry` extension method for `IHostApplicationBuilder`.
+  It registers the OpenTelemetry SDK services and additionally seeds
+  `service.name` from `IHostEnvironment.ApplicationName` and
+  `deployment.environment.name` from `IHostEnvironment.EnvironmentName` as
+  low-priority resource defaults. It also registers the host's live
+  configuration into DI so that extensions receiving only `IServiceCollection`
+  can contribute configuration sources during setup.
+  ([#7723](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7723))
+
 ## 1.18.0
 
 Released 2026-Aug-21

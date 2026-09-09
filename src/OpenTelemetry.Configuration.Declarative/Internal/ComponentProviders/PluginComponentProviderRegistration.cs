@@ -39,5 +39,5 @@ internal sealed class PluginComponentProviderRegistration<TComponent> : IPluginC
 
     /// <inheritdoc />
     public object Create(ConfigProperties properties, IServiceProvider serviceProvider)
-        => this.providerFactory(serviceProvider).Create(properties, serviceProvider)!;
+        => this.providerFactory(serviceProvider).Create(properties, serviceProvider);
 }
