@@ -60,6 +60,11 @@ public static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
         return builder;
     }
 
+    /// <summary>
+    /// Adds declarative configuration to services configured by an OpenTelemetry builder.
+    /// </summary>
+    /// <param name="services">The services used to configure OpenTelemetry.</param>
+    /// <param name="filePath">The path to the declarative configuration file.</param>
     internal static void AddDeclarativeConfigurationOverlay(IServiceCollection services, FilePath filePath)
     {
         // Second call on the same IServiceCollection is a no-op (first file path wins).
@@ -74,8 +79,12 @@ public static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
             return;
         }
 
-        // Last registered IConfiguration wins in DI.
-        var descriptor = services.LastOrDefault(d => d.ServiceType == typeof(IConfiguration));
+        // A host registers IConfiguration as a factory, so the application's live configuration
+        // cannot be reached through the descriptor below. AddOpenTelemetry(IHostApplicationBuilder)
+        // contributes an accessor that makes the instance reachable here.
+        var configurationAccessor = services
+            .LastOrDefault(d => d.ServiceType == typeof(OpenTelemetryBuilderConfigurationAccessor))
+            ?.ImplementationInstance as OpenTelemetryBuilderConfigurationAccessor;
 
         // The accessor this call contributes if no declarative source is registered already. When one
         // is, the existing accessor wins and this instance is discarded unused.
@@ -85,14 +94,28 @@ public static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
 
         OpenTelemetryDeclarativeConfigurationEventSource.Log.OverlayRegistrationStarted(filePath.DisplayPath);
 
-        // TODO(strict-mode): branch here on a future DeclarativeConfigurationMode (Default vs Strict). See https://github.com/open-telemetry/opentelemetry-dotnet/issues/6380.
+        // TODO(strict-mode): branch here on a future DeclarativeConfigurationMode (Default vs Strict).
+        // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/6380.
 
-        if (descriptor?.ImplementationInstance is IConfigurationBuilder liveBuilder)
+        // Fast path: hosting API accessor exposes a live ConfigurationManager; mutate in-place and skip descriptor scan.
+        if (configurationAccessor?.Configuration is IConfigurationBuilder accessorBuilder)
         {
-            // ConfigurationManager registered as instance: mutate in-place, preserve reload.
-            liveBuilder.AddOpenTelemetryDeclarativeConfiguration(candidateAccessor);
+            accessorBuilder.AddOpenTelemetryDeclarativeConfiguration(candidateAccessor);
             services.TryAddSingleton(
-                DeclarativeConfigurationDocumentAccessorResolver.FindInConfiguration(liveBuilder)
+                DeclarativeConfigurationDocumentAccessorResolver.FindInConfiguration(accessorBuilder)
+                    ?? candidateAccessor);
+            return;
+        }
+
+        // Last registered IConfiguration wins in DI.
+        var descriptor = services.LastOrDefault(d => d.ServiceType == typeof(IConfiguration));
+
+        // IConfiguration is a singleton instance that is also a live builder; mutate in-place.
+        if (descriptor?.ImplementationInstance is IConfigurationBuilder instanceBuilder)
+        {
+            instanceBuilder.AddOpenTelemetryDeclarativeConfiguration(candidateAccessor);
+            services.TryAddSingleton(
+                DeclarativeConfigurationDocumentAccessorResolver.FindInConfiguration(instanceBuilder)
                     ?? candidateAccessor);
             return;
         }
