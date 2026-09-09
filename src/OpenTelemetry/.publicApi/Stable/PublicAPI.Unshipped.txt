@@ -1,3 +1,4 @@
 OpenTelemetry.Trace.AlwaysRecordSampler
 OpenTelemetry.Trace.AlwaysRecordSampler.AlwaysRecordSampler(OpenTelemetry.Trace.Sampler! rootSampler) -> void
 override OpenTelemetry.Trace.AlwaysRecordSampler.ShouldSample(in OpenTelemetry.Trace.SamplingParameters samplingParameters) -> OpenTelemetry.Trace.SamplingResult
+static OpenTelemetry.Resources.ResourceBuilderExtensions.AddServiceCriticality(this OpenTelemetry.Resources.ResourceBuilder! resourceBuilder, string! serviceCriticality) -> OpenTelemetry.Resources.ResourceBuilder!
