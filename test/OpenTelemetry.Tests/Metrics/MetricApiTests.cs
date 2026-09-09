@@ -875,7 +875,7 @@ public class MetricApiTests : MetricTestsBase
         ValidateMetricPointTags(tags3, metricPoint3.Tags);
     }
 
-    [Theory(Skip = "https://github.com/open-telemetry/opentelemetry-specification/issues/1874")]
+    [Theory]
     [InlineData(true)]
     [InlineData(false)]
     public void ObservableCounterSpatialAggregationTest(bool exportDelta)
@@ -936,9 +936,426 @@ public class MetricApiTests : MetricTestsBase
         var metricPoint1 = metricPoints[0];
         ValidateMetricPointTags(emptyTags, metricPoint1.Tags);
 
-        // This will fail, as SDK is not "spatially" aggregating the
-        // requestCount
         Assert.Equal(30, metricPoint1.GetSumLong());
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ObservableCounterSpatialAggregationMultipleCyclesTest(bool exportDelta)
+    {
+        var exportedItems = new List<Metric>();
+
+        var tags1 = new List<KeyValuePair<string, object?>>
+        {
+            new("statusCode", 200),
+            new("verb", "get"),
+        };
+        var tags2 = new List<KeyValuePair<string, object?>>
+        {
+            new("statusCode", 200),
+            new("verb", "post"),
+        };
+        var tags3 = new List<KeyValuePair<string, object?>>
+        {
+            new("statusCode", 500),
+            new("verb", "get"),
+        };
+
+        var callbackValue = 10L;
+
+        using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
+        meter.CreateObservableCounter(
+            "requestCount",
+            () => new List<Measurement<long>>
+            {
+                new(callbackValue, tags1),
+                new(callbackValue, tags2),
+                new(callbackValue, tags3),
+            });
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems, metricReaderOptions =>
+            {
+                metricReaderOptions.TemporalityPreference = exportDelta
+                    ? MetricReaderTemporalityPreference.Delta
+                    : MetricReaderTemporalityPreference.Cumulative;
+            })
+            .AddView("requestCount", new MetricStreamConfiguration() { TagKeys = [] }));
+
+        var emptyTags = new List<KeyValuePair<string, object?>>();
+
+        // --- Collection 1 ---
+        // callbackValue=10 per stream, all three collapse to empty tags.
+        // Delta:      10 + 10 + 10 = 30  (10-0 per stream then summed)
+        // Cumulative: 10 + 10 + 10 = 30
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        List<MetricPoint> metricPoints = [];
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        ValidateMetricPointTags(emptyTags, metricPoints[0].Tags);
+        Assert.Equal(30, metricPoints[0].GetSumLong());
+
+        // --- Collection 2 ---
+        // callbackValue still 10 per stream (cumulative values unchanged).
+        // Delta per stream: 10-10 = 0. Spatial aggregation: 0 + 0 + 0 = 0.
+        // Cumulative: unchanged at 30.
+        exportedItems.Clear();
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        metricPoints.Clear();
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        ValidateMetricPointTags(emptyTags, metricPoints[0].Tags);
+        Assert.Equal(exportDelta ? 0 : 30, metricPoints[0].GetSumLong());
+
+        // --- Collection 3 ---
+        // callbackValue increases to 20 per stream.
+        // Delta per stream: 20-10 = 10. Spatial aggregation: 10 + 10 + 10 = 30.
+        // Cumulative: 20 + 20 + 20 = 60.
+        exportedItems.Clear();
+        callbackValue = 20L;
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        metricPoints.Clear();
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        ValidateMetricPointTags(emptyTags, metricPoints[0].Tags);
+        Assert.Equal(exportDelta ? 30 : 60, metricPoints[0].GetSumLong());
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ObservableCounterSpatialAggregationTest_Double(bool exportDelta)
+    {
+        var exportedItems = new List<Metric>();
+
+        var tags1 = new List<KeyValuePair<string, object?>>
+        {
+            new("statusCode", 200),
+            new("verb", "get"),
+        };
+        var tags2 = new List<KeyValuePair<string, object?>>
+        {
+            new("statusCode", 200),
+            new("verb", "post"),
+        };
+        var tags3 = new List<KeyValuePair<string, object?>>
+        {
+            new("statusCode", 500),
+            new("verb", "get"),
+        };
+
+        var callbackValue = 10.5;
+
+        using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
+        meter.CreateObservableCounter(
+            "requestCount",
+            () => new List<Measurement<double>>
+            {
+                new(callbackValue, tags1),
+                new(callbackValue, tags2),
+                new(callbackValue, tags3),
+            });
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems, metricReaderOptions =>
+            {
+                metricReaderOptions.TemporalityPreference = exportDelta
+                    ? MetricReaderTemporalityPreference.Delta
+                    : MetricReaderTemporalityPreference.Cumulative;
+            })
+            .AddView("requestCount", new MetricStreamConfiguration() { TagKeys = [] }));
+
+        var emptyTags = new List<KeyValuePair<string, object?>>();
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        List<MetricPoint> metricPoints = [];
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        ValidateMetricPointTags(emptyTags, metricPoints[0].Tags);
+        Assert.Equal(31.5, metricPoints[0].GetSumDouble());
+
+        // Collection 2: values unchanged, delta = 0, cumulative = 31.5
+        exportedItems.Clear();
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        metricPoints.Clear();
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        Assert.Equal(exportDelta ? 0.0 : 31.5, metricPoints[0].GetSumDouble());
+
+        // Collection 3: callbackValue grows to 21.5 per stream
+        // Delta per stream: 21.5 - 10.5 = 11.0. Spatial: 11.0 + 11.0 + 11.0 = 33.0
+        // Cumulative: 21.5 + 21.5 + 21.5 = 64.5
+        exportedItems.Clear();
+        callbackValue = 21.5;
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        metricPoints.Clear();
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        Assert.Equal(exportDelta ? 33.0 : 64.5, metricPoints[0].GetSumDouble());
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ObservableCounterSpatialAggregationPartialTagFilteringTest(bool exportDelta)
+    {
+        // This test verifies that aggregation is applied selectively per resulting attribute set, not globally across all measurements.
+
+        var exportedItems = new List<Metric>();
+
+        var tagsGetSuccess = new List<KeyValuePair<string, object?>>
+        {
+            new("verb", "get"),
+            new("statusCode", 200),
+        };
+        var tagsGetError = new List<KeyValuePair<string, object?>>
+        {
+            new("verb", "get"),
+            new("statusCode", 500),
+        };
+        var tagsPostSuccess = new List<KeyValuePair<string, object?>>
+        {
+            new("verb", "post"),
+            new("statusCode", 200),
+        };
+
+        using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
+        meter.CreateObservableCounter(
+            "requestCount",
+            () => new List<Measurement<long>>
+            {
+                new(10L, tagsGetSuccess),
+                new(10L, tagsGetError),
+                new(10L, tagsPostSuccess),
+            });
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems, metricReaderOptions =>
+            {
+                metricReaderOptions.TemporalityPreference = exportDelta
+                    ? MetricReaderTemporalityPreference.Delta
+                    : MetricReaderTemporalityPreference.Cumulative;
+            })
+            .AddView("requestCount", new MetricStreamConfiguration() { TagKeys = ["verb"] }));
+
+        // MetricPoints are exported in the order their filtered tag sets were first seen:
+        // Index 0: {verb=get}  (first measurement triggers creation)
+        // Index 1: {verb=post} (third measurement triggers creation)
+        var verbGetTags = new List<KeyValuePair<string, object?>> { new("verb", "get") };
+        var verbPostTags = new List<KeyValuePair<string, object?>> { new("verb", "post") };
+
+        // Collection 1
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        List<MetricPoint> metricPoints = [];
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Equal(2, metricPoints.Count);
+
+        ValidateMetricPointTags(verbGetTags, metricPoints[0].Tags);
+        Assert.Equal(20, metricPoints[0].GetSumLong());
+
+        ValidateMetricPointTags(verbPostTags, metricPoints[1].Tags);
+        Assert.Equal(10, metricPoints[1].GetSumLong());
+
+        // Collection 2
+        // Same callback values delta=0 per stream, cumulative unchanged.
+        exportedItems.Clear();
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        metricPoints.Clear();
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Equal(2, metricPoints.Count);
+        ValidateMetricPointTags(verbGetTags, metricPoints[0].Tags);
+        Assert.Equal(exportDelta ? 0 : 20, metricPoints[0].GetSumLong());
+
+        ValidateMetricPointTags(verbPostTags, metricPoints[1].Tags);
+        Assert.Equal(exportDelta ? 0 : 10, metricPoints[1].GetSumLong());
+    }
+
+    [Fact]
+    public void ObservableUpDownCounterSpatialAggregationTest()
+    {
+        var exportedItems = new List<Metric>();
+
+        var tags1 = new List<KeyValuePair<string, object?>>
+        {
+            new("direction", "up"),
+            new("entity", "A"),
+        };
+        var tags2 = new List<KeyValuePair<string, object?>>
+        {
+            new("direction", "down"),
+            new("entity", "A"),
+        };
+        var tags3 = new List<KeyValuePair<string, object?>>
+        {
+            new("direction", "up"),
+            new("entity", "B"),
+        };
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        meter.CreateObservableUpDownCounter(
+            "concurrentOps",
+            () => new List<Measurement<long>>
+            {
+                new(5L,  tags1),
+                new(-3L, tags2),
+                new(7L,  tags3),
+            });
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems)
+            .AddView("concurrentOps", new MetricStreamConfiguration() { TagKeys = [] }));
+
+        var emptyTags = new List<KeyValuePair<string, object?>>();
+
+        // Collection 1: all three collapse to empty tags.
+        // Spatial aggregation: 5 + (-3) + 7 = 9.
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        List<MetricPoint> metricPoints = [];
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        ValidateMetricPointTags(emptyTags, metricPoints[0].Tags);
+        Assert.Equal(9, metricPoints[0].GetSumLong());
+
+        // Collection 2: same values reported, UpDownCounter is always cumulative.
+        // No change in absolute values, result stays 9.
+        exportedItems.Clear();
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        metricPoints.Clear();
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        Assert.Equal(9, metricPoints[0].GetSumLong());
+    }
+
+    [Fact]
+    public void ObservableGaugeSpatialAggregationTest()
+    {
+        var exportedItems = new List<Metric>();
+
+        var tags1 = new List<KeyValuePair<string, object?>>
+        {
+            new("entity", "A"),
+            new("region", "west"),
+        };
+        var tags2 = new List<KeyValuePair<string, object?>>
+        {
+            new("entity", "B"),
+            new("region", "east"),
+        };
+        var tags3 = new List<KeyValuePair<string, object?>>
+        {
+            new("entity", "C"),
+            new("region", "west"),
+        };
+
+        var callbackValues = new long[] { 5L, 3L, 7L };
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        meter.CreateObservableGauge(
+            "temperature",
+            () => new List<Measurement<long>>
+            {
+                new(callbackValues[0], tags1),
+                new(callbackValues[1], tags2),
+                new(callbackValues[2], tags3),
+            });
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems)
+            .AddView("temperature", new MetricStreamConfiguration() { TagKeys = [] }));
+
+        var emptyTags = new List<KeyValuePair<string, object?>>();
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        List<MetricPoint> metricPoints = [];
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        ValidateMetricPointTags(emptyTags, metricPoints[0].Tags);
+        Assert.Equal(callbackValues[2], metricPoints[0].GetGaugeLastValueLong());
+
+        exportedItems.Clear();
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        metricPoints.Clear();
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        ValidateMetricPointTags(emptyTags, metricPoints[0].Tags);
+        Assert.Equal(callbackValues[2], metricPoints[0].GetGaugeLastValueLong());
+
+        exportedItems.Clear();
+        callbackValues = [10L, 20L, 15L];
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        metricPoints.Clear();
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        ValidateMetricPointTags(emptyTags, metricPoints[0].Tags);
+        Assert.Equal(callbackValues[2], metricPoints[0].GetGaugeLastValueLong());
     }
 
     [Theory]
@@ -1058,6 +1475,293 @@ public class MetricApiTests : MetricTestsBase
 
         // Same for both cumulative and delta. MetricReaderTemporalityPreference.Delta implies cumulative for UpDownCounters.
         Assert.Equal(30, sumReceived);
+    }
+
+    [Fact(Skip = "Fails, no spec decision yet on how to handle an absent stream https://github.com/open-telemetry/opentelemetry-specification/issues/4861")]
+    public void ObservableCounterSpatialAggregationDelta_StreamDisappears_DeltaIsCorrect()
+    {
+        // Regression test for delta correctness when a stream disappears under
+        // spatial aggregation.
+        //
+        // The fix accumulates streams into a single collapsed runningValue and
+        // TakeSnapshot(delta=true) computes: delta = runningValue - deltaLastValue.
+        //
+        // When stream B disappears in cycle 2, runningValue = 15 (only A).
+        // deltaLastValue = 20 (from cycle 1 snapshot).
+        // Without per-stream delta tracking: 15 - 20 = -5.  incorrect
+        // Correct result: sum of per-stream deltas = (15-10) = 5.
+        //
+        // This test documents the required behaviour and will fail if the
+        // implementation diffs only the collapsed aggregate.
+
+        var exportedItems = new List<Metric>();
+
+        var tagsA = new List<KeyValuePair<string, object?>> { new("verb", "get") };
+        var tagsB = new List<KeyValuePair<string, object?>> { new("verb", "post") };
+
+        var measurements = new List<Measurement<long>>
+        {
+            new(10L, tagsA),
+            new(10L, tagsB),
+        };
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        meter.CreateObservableCounter(
+            "requestCount",
+            () => measurements);
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems, o =>
+            {
+                o.TemporalityPreference = MetricReaderTemporalityPreference.Delta;
+            })
+            .AddView("requestCount", new MetricStreamConfiguration() { TagKeys = [] }));
+
+        var emptyTags = new List<KeyValuePair<string, object?>>();
+
+        // Cycle 1: A=10, B=10  collapsed delta = 20.
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        List<MetricPoint> metricPoints = [];
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        ValidateMetricPointTags(emptyTags, metricPoints[0].Tags);
+        Assert.Equal(20, metricPoints[0].GetSumLong());
+
+        // Cycle 2: A=15, B absent.
+        // Correct per-stream delta: (15 - 10) = 5.
+        // Incorrect collapsed diff: 15 - 20 = -5.
+        exportedItems.Clear();
+        measurements = [new(15L, tagsA)];
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        metricPoints.Clear();
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        Assert.Equal(5, metricPoints[0].GetSumLong());
+    }
+
+    [Fact(Skip = "Fails, no spec decision yet on how to handle an absent stream https://github.com/open-telemetry/opentelemetry-specification/issues/4861")]
+    public void ObservableCounterSpatialAggregationDelta_UnchangedStreamAndMissingStream_DeltaIsZero()
+    {
+        // Smallest reproduction of the collapsed-diff bug.
+        //
+        // Cycle 1: A=10, B=10  delta = 20.
+        // Cycle 2: A=10, B absent.
+        //   Correct per-stream delta: (10-10) = 0.
+        //   Incorrect collapsed diff: 10 - 20 = -10.
+        //
+        // A negative delta is never valid for a monotonic counter.
+
+        var exportedItems = new List<Metric>();
+
+        var tagsA = new List<KeyValuePair<string, object?>> { new("verb", "get") };
+        var tagsB = new List<KeyValuePair<string, object?>> { new("verb", "post") };
+
+        var measurements = new List<Measurement<long>>
+        {
+            new(10L, tagsA),
+            new(10L, tagsB),
+        };
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        meter.CreateObservableCounter(
+            "requestCount",
+            () => measurements);
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems, o =>
+            {
+                o.TemporalityPreference = MetricReaderTemporalityPreference.Delta;
+            })
+            .AddView("requestCount", new MetricStreamConfiguration() { TagKeys = [] }));
+
+        var emptyTags = new List<KeyValuePair<string, object?>>();
+
+        // Cycle 1.
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        List<MetricPoint> metricPoints = [];
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Equal(20, metricPoints[0].GetSumLong());
+
+        // Cycle 2: A unchanged, B absent  expected delta = 0.
+        exportedItems.Clear();
+        measurements = [new(10L, tagsA)];
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        metricPoints.Clear();
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        Assert.Equal(0, metricPoints[0].GetSumLong());
+    }
+
+    [Fact(Skip = "Fails, no spec decision yet on how to handle an absent stream https://github.com/open-telemetry/opentelemetry-specification/issues/4861")]
+    public void ObservableCounterSpatialAggregationDelta_Double_StreamDisappears_DeltaIsCorrect()
+    {
+        // Same scenario as ObservableCounterSpatialAggregationDelta_StreamDisappears
+        // but exercises the UpdateDoubleCustomTags path, which carries the same
+        // collapsed-diff risk as the long path.
+        //
+        // Cycle 1: A=10.5, B=10.5  delta = 21.0.
+        // Cycle 2: A=15.5, B absent.
+        //   Correct per-stream delta: 15.5 - 10.5 = 5.0.
+        //   Incorrect collapsed diff: 15.5 - 21.0 = -5.5.
+
+        var exportedItems = new List<Metric>();
+
+        var tagsA = new List<KeyValuePair<string, object?>> { new("verb", "get") };
+        var tagsB = new List<KeyValuePair<string, object?>> { new("verb", "post") };
+
+        var measurements = new List<Measurement<double>>
+        {
+            new(10.5, tagsA),
+            new(10.5, tagsB),
+        };
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        meter.CreateObservableCounter(
+            "requestCount",
+            () => measurements);
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems, o =>
+            {
+                o.TemporalityPreference = MetricReaderTemporalityPreference.Delta;
+            })
+            .AddView("requestCount", new MetricStreamConfiguration() { TagKeys = [] }));
+
+        var emptyTags = new List<KeyValuePair<string, object?>>();
+
+        // Cycle 1.
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        List<MetricPoint> metricPoints = [];
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        ValidateMetricPointTags(emptyTags, metricPoints[0].Tags);
+        Assert.Equal(21.0, metricPoints[0].GetSumDouble());
+
+        // Cycle 2: A=15.5, B absent  expected delta = 5.0.
+        exportedItems.Clear();
+        measurements = [new(15.5, tagsA)];
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        metricPoints.Clear();
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        Assert.Equal(5.0, metricPoints[0].GetSumDouble(), precision: 10);
+    }
+
+    [Fact(Skip = "Fails, no spec decision yet on how to handle an absent stream https://github.com/open-telemetry/opentelemetry-specification/issues/4861")]
+    public void ObservableCounterSpatialAggregationDelta_StreamReappearsAfterGap_DeltaIsCorrect()
+    {
+        // Verifies three-cycle behaviour: stream disappears then reappears.
+        //
+        // Cycle 1: A=10, B=10  delta = 20.
+        // Cycle 2: A=15, B absent.
+        //   Correct delta: (15-10) = 5.
+        // Cycle 3: A=20, B=25.
+        //   A delta: (20-15) = 5.
+        //   B delta: B reappears; per the existing single-stream delta behaviour
+        //   (ObservableCounterDeltaAttributeSetReappearsAfterGapTest), when a
+        //   stream reappears its baseline resets to zero: B delta = 25.
+        //   Total delta = 5 + 25 = 30.
+        //
+        // This three-cycle sequence catches both the disappear and the reappear
+        // code paths under spatial aggregation.
+
+        var exportedItems = new List<Metric>();
+
+        var tagsA = new List<KeyValuePair<string, object?>> { new("verb", "get") };
+        var tagsB = new List<KeyValuePair<string, object?>> { new("verb", "post") };
+
+        var measurements = new List<Measurement<long>>
+        {
+            new(10L, tagsA),
+            new(10L, tagsB),
+        };
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        meter.CreateObservableCounter(
+            "requestCount",
+            () => measurements);
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems, o =>
+            {
+                o.TemporalityPreference = MetricReaderTemporalityPreference.Delta;
+            })
+            .AddView("requestCount", new MetricStreamConfiguration() { TagKeys = [] }));
+
+        var emptyTags = new List<KeyValuePair<string, object?>>();
+
+        // Cycle 1: A=10, B=10  delta = 20.
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Single(exportedItems);
+        List<MetricPoint> metricPoints = [];
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        ValidateMetricPointTags(emptyTags, metricPoints[0].Tags);
+        Assert.Equal(20, metricPoints[0].GetSumLong());
+
+        // Cycle 2: A=15, B absent  delta = 5.
+        exportedItems.Clear();
+        measurements = [new(15L, tagsA)];
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        metricPoints.Clear();
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        Assert.Equal(5, metricPoints[0].GetSumLong());
+
+        // Cycle 3: A=20, B=25 (B reappears).
+        // A delta: 20 - 15 = 5.
+        // B delta: reappears from zero baseline = 25.
+        // Total delta = 30.
+        exportedItems.Clear();
+        measurements = [new(20L, tagsA), new(25L, tagsB)];
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        metricPoints.Clear();
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Single(metricPoints);
+        Assert.Equal(30, metricPoints[0].GetSumLong());
     }
 
     [Theory]
