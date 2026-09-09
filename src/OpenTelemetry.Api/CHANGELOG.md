@@ -12,6 +12,9 @@ Notes](../../RELEASENOTES.md).
 * Reduced allocations when setting baggage through the `params` overload.
   ([#7697](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7697))
 
+* Reduced allocations when constructing `SpanAttributes` from an array.
+  ([#7698](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7698))
+
 * Added `Logger.SchemaUrl` and a `LoggerProvider.GetLogger` overload accepting
   a schema URL parameter using the new `LoggerOptions` type.
   ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))

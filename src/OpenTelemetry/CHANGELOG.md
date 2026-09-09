@@ -6,6 +6,16 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added Schema URL to internally created `Resource` instances.
+  ([#7726](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7726))
+
+* Reduced allocations when formatting self-diagnostics events with up to
+  three parameters.
+  ([#7730](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7730))
+
+* Added `AlwaysRecordSampler`.
+  ([#7695](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7695))
+
 * Added `OpenTelemetryLoggerOptions.Version` and
   `OpenTelemetryLoggerOptions.SchemaUrl` options to set an
   instrumentation library version and schema URL applied to logs emitted via
