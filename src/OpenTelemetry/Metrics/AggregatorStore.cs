@@ -14,6 +14,8 @@ namespace OpenTelemetry.Metrics;
 
 internal sealed class AggregatorStore
 {
+    internal const int TransientMetricPointLookupFailure = -2;
+
 #if NET
     internal readonly FrozenSet<string>? TagKeysInteresting;
     internal readonly FrozenSet<string>? ExcludedTagKeys;
@@ -195,6 +197,44 @@ internal sealed class AggregatorStore
         try
         {
             this.updateLongCallback(value, tags);
+        }
+        catch (Exception)
+        {
+            Interlocked.Increment(ref this.DroppedMeasurements);
+            OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, "SDK internal error occurred.", "Contact SDK owners.");
+        }
+    }
+
+    internal MetricPointUpdateHandle Bind(ReadOnlySpan<KeyValuePair<string, object?>> tags)
+        => new(this, tags.ToArray());
+
+    internal int ResolveBoundMetricPoint(ReadOnlySpan<KeyValuePair<string, object?>> tags)
+        => this.TagKeysInteresting != null
+            ? this.FindMetricAggregatorsCustomTag(tags)
+            : this.ExcludedTagKeys != null
+                ? this.FindMetricAggregatorsExcludeTag(tags)
+                : this.FindMetricAggregatorsDefault(tags);
+
+    internal void UpdateBound(MetricPointUpdateHandle handle, long value)
+    {
+        try
+        {
+            var metricPointIndex = handle.GetMetricPointIndex();
+            this.UpdateBoundLongMetricPoint(metricPointIndex, value, handle.Tags);
+        }
+        catch (Exception)
+        {
+            Interlocked.Increment(ref this.DroppedMeasurements);
+            OpenTelemetrySdkEventSource.Log.MeasurementDropped(this.name, "SDK internal error occurred.", "Contact SDK owners.");
+        }
+    }
+
+    internal void UpdateBound(MetricPointUpdateHandle handle, double value)
+    {
+        try
+        {
+            var metricPointIndex = handle.GetMetricPointIndex();
+            this.UpdateBoundDoubleMetricPoint(metricPointIndex, value, handle.Tags);
         }
         catch (Exception)
         {
@@ -958,8 +998,8 @@ internal sealed class AggregatorStore
                     // Super rare case: Snapshot method had already marked the MetricPoint available for reuse as it has not been updated in last collect cycle even in the retry attempt.
                     // Example scenario mentioned in `LookupAggregatorStoreForDeltaWithReclaim` method.
 
-                    // Don't retry again and drop the measurement.
-                    return -1;
+                    // Don't retry again for this measurement.
+                    return TransientMetricPointLookupFailure;
                 }
                 else if (metricPointAtIndex.LookupData != lookupData)
                 {
@@ -969,8 +1009,8 @@ internal sealed class AggregatorStore
                     // Remove reference since its not the right MetricPoint.
                     Interlocked.Decrement(ref metricPointAtIndex.ReferenceCount);
 
-                    // Don't retry again and drop the measurement.
-                    return -1;
+                    // Don't retry again for this measurement.
+                    return TransientMetricPointLookupFailure;
                 }
             }
 
@@ -1024,6 +1064,39 @@ internal sealed class AggregatorStore
         else
         {
             this.metricPoints[metricPointIndex].UpdateWithExemplar(
+                value,
+                tags,
+                offerExemplar: Activity.Current?.Recorded ?? false);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void UpdateBoundLongMetricPoint(int metricPointIndex, long value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
+    {
+        if (metricPointIndex < 0)
+        {
+            Interlocked.Increment(ref this.DroppedMeasurements);
+            this.InitializeOverflowTagPointIfNotInitialized();
+            this.metricPoints[1].Update(value);
+
+            return;
+        }
+
+        var exemplarFilterType = this.exemplarFilter;
+        if (exemplarFilterType == ExemplarFilterType.AlwaysOff)
+        {
+            this.metricPoints[metricPointIndex].UpdateBound(value);
+        }
+        else if (exemplarFilterType == ExemplarFilterType.AlwaysOn)
+        {
+            this.metricPoints[metricPointIndex].UpdateBoundWithExemplar(
+                value,
+                tags,
+                offerExemplar: true);
+        }
+        else
+        {
+            this.metricPoints[metricPointIndex].UpdateBoundWithExemplar(
                 value,
                 tags,
                 offerExemplar: Activity.Current?.Recorded ?? false);
@@ -1085,6 +1158,39 @@ internal sealed class AggregatorStore
         else
         {
             this.metricPoints[metricPointIndex].UpdateWithExemplar(
+                value,
+                tags,
+                offerExemplar: Activity.Current?.Recorded ?? false);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void UpdateBoundDoubleMetricPoint(int metricPointIndex, double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
+    {
+        if (metricPointIndex < 0)
+        {
+            Interlocked.Increment(ref this.DroppedMeasurements);
+            this.InitializeOverflowTagPointIfNotInitialized();
+            this.metricPoints[1].Update(value);
+
+            return;
+        }
+
+        var exemplarFilterType = this.exemplarFilter;
+        if (exemplarFilterType == ExemplarFilterType.AlwaysOff)
+        {
+            this.metricPoints[metricPointIndex].UpdateBound(value);
+        }
+        else if (exemplarFilterType == ExemplarFilterType.AlwaysOn)
+        {
+            this.metricPoints[metricPointIndex].UpdateBoundWithExemplar(
+                value,
+                tags,
+                offerExemplar: true);
+        }
+        else
+        {
+            this.metricPoints[metricPointIndex].UpdateBoundWithExemplar(
                 value,
                 tags,
                 offerExemplar: Activity.Current?.Recorded ?? false);

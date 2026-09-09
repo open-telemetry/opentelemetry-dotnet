@@ -19,6 +19,7 @@ internal sealed class ThreadStaticStorage
 
     private readonly TagStorage[] primaryTagStorage = new TagStorage[MaxTagCacheSize];
     private readonly TagStorage[] secondaryTagStorage = new TagStorage[MaxTagCacheSize];
+    private readonly TagStorage[] combinedTagStorage = new TagStorage[MaxTagCacheSize];
 
     private ThreadStaticStorage()
     {
@@ -26,12 +27,38 @@ internal sealed class ThreadStaticStorage
         {
             this.primaryTagStorage[i] = new TagStorage(i + 1);
             this.secondaryTagStorage[i] = new TagStorage(i + 1);
+            this.combinedTagStorage[i] = new TagStorage(i + 1);
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static ThreadStaticStorage GetStorage()
         => storage ??= new ThreadStaticStorage();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void CombineTags(
+        ReadOnlySpan<KeyValuePair<string, object?>> instrumentTags,
+        ReadOnlySpan<KeyValuePair<string, object?>> measurementTags,
+        out KeyValuePair<string, object?>[] combinedTags,
+        out int combinedTagCount)
+    {
+        var maxLength = instrumentTags.Length + measurementTags.Length;
+        combinedTags = maxLength <= MaxTagCacheSize
+            ? this.combinedTagStorage[maxLength - 1].TagKeysAndValues
+            : new KeyValuePair<string, object?>[maxLength];
+
+        instrumentTags.CopyTo(combinedTags);
+
+        combinedTagCount = instrumentTags.Length;
+        for (var i = 0; i < measurementTags.Length; i++)
+        {
+            var measurementTag = measurementTags[i];
+            if (!ContainsTagKey(instrumentTags, measurementTag.Key))
+            {
+                combinedTags[combinedTagCount++] = measurementTag;
+            }
+        }
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void SplitToKeysAndValues(
@@ -189,6 +216,21 @@ internal sealed class ThreadStaticStorage
             : (new KeyValuePair<string, object?>[tagLength]);
 
         Array.Copy(inputTagKeysAndValues, 0, clonedTagKeysAndValues, 0, tagLength);
+    }
+
+    private static bool ContainsTagKey(
+        ReadOnlySpan<KeyValuePair<string, object?>> tags,
+        string key)
+    {
+        for (var i = 0; i < tags.Length; i++)
+        {
+            if (string.Equals(tags[i].Key, key, StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     internal sealed class TagStorage

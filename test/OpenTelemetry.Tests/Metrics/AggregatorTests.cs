@@ -22,6 +22,110 @@ public class AggregatorTests
     public static TheoryData<HistogramBoundaryTestCase> HistogramInfinityBoundariesTestCases => HistogramBoundaryTestCase.HistogramInfinityBoundariesTestCases();
 
     [Fact]
+    public void BoundHandlePinsExistingDeltaMetricPointAcrossCollections()
+    {
+        using var meter = new Meter(nameof(this.BoundHandlePinsExistingDeltaMetricPointAcrossCollections));
+        var counter = meter.CreateCounter<long>("counter");
+        var metricStreamIdentity = new MetricStreamIdentity(counter, null);
+        var aggregatorStore = new AggregatorStore(
+            metricStreamIdentity,
+            AggregationType.LongSumIncomingDelta,
+            AggregationTemporality.Delta,
+            cardinalityLimit: 1);
+        KeyValuePair<string, object?>[] tags = [new("key", "value")];
+
+        aggregatorStore.Update(1, tags);
+        aggregatorStore.Snapshot();
+
+        var handle = aggregatorStore.Bind(tags);
+        handle.Update(2);
+        aggregatorStore.Snapshot();
+
+        var metricPoints = aggregatorStore.GetMetricPoints();
+        var metricPointEnumerator = metricPoints.GetEnumerator();
+        Assert.True(metricPointEnumerator.MoveNext());
+        Assert.Equal(1, metricPointEnumerator.Current.ReferenceCount);
+        Assert.Equal(2, metricPointEnumerator.Current.GetSumLong());
+        Assert.Equal("key", metricPointEnumerator.Current.Tags.KeyAndValues[0].Key);
+        Assert.Equal("value", metricPointEnumerator.Current.Tags.KeyAndValues[0].Value);
+        Assert.False(metricPointEnumerator.MoveNext());
+
+        aggregatorStore.Snapshot();
+
+        handle.Update(3);
+        aggregatorStore.Snapshot();
+
+        metricPoints = aggregatorStore.GetMetricPoints();
+        metricPointEnumerator = metricPoints.GetEnumerator();
+        Assert.True(metricPointEnumerator.MoveNext());
+        Assert.Equal(1, metricPointEnumerator.Current.ReferenceCount);
+        Assert.Equal(3, metricPointEnumerator.Current.GetSumLong());
+        Assert.Equal("key", metricPointEnumerator.Current.Tags.KeyAndValues[0].Key);
+        Assert.Equal("value", metricPointEnumerator.Current.Tags.KeyAndValues[0].Value);
+        Assert.False(metricPointEnumerator.MoveNext());
+    }
+
+    [Fact]
+    public void BoundLongCounterUpdateRetainsDeltaReference()
+    {
+        using var meter = new Meter(nameof(this.BoundLongCounterUpdateRetainsDeltaReference));
+        var counter = meter.CreateCounter<long>("counter");
+        var metricStreamIdentity = new MetricStreamIdentity(counter, null);
+        var aggregatorStore = new AggregatorStore(
+            metricStreamIdentity,
+            AggregationType.LongSumIncomingDelta,
+            AggregationTemporality.Delta,
+            cardinalityLimit: 1);
+        var metricPoint = new MetricPoint(
+            aggregatorStore,
+            AggregationType.LongSumIncomingDelta,
+            [new("key", "value")],
+            new HistogramExplicitBounds([]),
+            Metric.DefaultExponentialHistogramMaxBuckets,
+            Metric.DefaultExponentialHistogramMaxScale);
+
+        for (var i = 0; i < 100; i++)
+        {
+            metricPoint.UpdateBound(1);
+        }
+
+        Assert.Equal(1, metricPoint.ReferenceCount);
+
+        metricPoint.TakeSnapshot(outputDelta: true);
+        Assert.Equal(100, metricPoint.GetSumLong());
+    }
+
+    [Fact]
+    public void BoundDoubleCounterUpdateRetainsDeltaReference()
+    {
+        using var meter = new Meter(nameof(this.BoundDoubleCounterUpdateRetainsDeltaReference));
+        var counter = meter.CreateCounter<double>("counter");
+        var metricStreamIdentity = new MetricStreamIdentity(counter, null);
+        var aggregatorStore = new AggregatorStore(
+            metricStreamIdentity,
+            AggregationType.DoubleSumIncomingDelta,
+            AggregationTemporality.Delta,
+            cardinalityLimit: 1);
+        var metricPoint = new MetricPoint(
+            aggregatorStore,
+            AggregationType.DoubleSumIncomingDelta,
+            [new("key", "value")],
+            new HistogramExplicitBounds([]),
+            Metric.DefaultExponentialHistogramMaxBuckets,
+            Metric.DefaultExponentialHistogramMaxScale);
+
+        for (var i = 0; i < 100; i++)
+        {
+            metricPoint.UpdateBound(0.5);
+        }
+
+        Assert.Equal(1, metricPoint.ReferenceCount);
+
+        metricPoint.TakeSnapshot(outputDelta: true);
+        Assert.Equal(50, metricPoint.GetSumDouble());
+    }
+
+    [Fact]
     public void HistogramDistributeToAllBucketsDefault()
     {
         var boundaries = new HistogramExplicitBounds(Metric.DefaultHistogramBounds);

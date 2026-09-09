@@ -24,6 +24,584 @@ public class MetricApiTests : MetricTestsBase
     }
 
     [Fact]
+    public void InstrumentTagsAreAppliedToMeasurements()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems));
+
+        var counter = meter.CreateCounter<long>(
+            "myCounter",
+            unit: null,
+            description: null,
+            tags: [new("instrument-tag", "instrument-value")]);
+
+        counter.Add(10);
+        counter.Add(20, new KeyValuePair<string, object?>("measurement-tag", "measurement-value"));
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        Assert.Single(exportedItems);
+        List<MetricPoint> metricPoints = [];
+        foreach (ref readonly var metricPoint in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(metricPoint);
+        }
+
+        Assert.Equal(2, metricPoints.Count);
+
+        Assert.Equal(10, metricPoints[0].GetSumLong());
+        ValidateMetricPointTags(
+            [new("instrument-tag", "instrument-value")],
+            metricPoints[0].Tags);
+
+        Assert.Equal(20, metricPoints[1].GetSumLong());
+        ValidateMetricPointTags(
+            [
+                new("instrument-tag", "instrument-value"),
+                new("measurement-tag", "measurement-value"),
+            ],
+            metricPoints[1].Tags);
+    }
+
+    [Fact]
+    public void InstrumentTagsTakePrecedenceOverMeasurementTags()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("myCounter", new MetricStreamConfiguration { TagKeys = ["shared-tag"] })
+            .AddInMemoryExporter(exportedItems));
+
+        var counter = meter.CreateCounter<long>(
+            "myCounter",
+            unit: null,
+            description: null,
+            tags: [new("shared-tag", "instrument-value")]);
+
+        counter.Add(10, new KeyValuePair<string, object?>("shared-tag", "measurement-value"));
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        var metricPoint = GetFirstMetricPoint(exportedItems);
+        Assert.NotNull(metricPoint);
+        Assert.Equal(10, metricPoint.Value.GetSumLong());
+        ValidateMetricPointTags(
+            [new("shared-tag", "instrument-value")],
+            metricPoint.Value.Tags);
+    }
+
+    [Fact]
+    public void InstrumentTagsEmitSdkLog()
+    {
+        using var eventListener = new TestEventListener(OpenTelemetrySdkEventSource.Log);
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out _, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems));
+
+        meter.CreateCounter<long>(
+            "myCounter",
+            unit: null,
+            description: null,
+            tags: [new("instrument-tag", "instrument-value")]);
+
+        Assert.Contains(
+            eventListener.Messages,
+            e => e.EventId == 39
+                && e.Payload is { Count: > 0 }
+                && e.Payload[0] is string message
+                && message.Contains("Instrument-level tags will be attached", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void InstrumentTagsRemainBoundAcrossDeltaCollections()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        var metricReader = new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
+        {
+            TemporalityPreference = MetricReaderTemporalityPreference.Delta,
+        };
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddReader(metricReader));
+
+        var counter = meter.CreateCounter<long>(
+            "myCounter",
+            unit: null,
+            description: null,
+            tags: [new("instrument-tag", "instrument-value")]);
+
+        counter.Add(10);
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Equal(10, GetFirstMetricPoint(exportedItems)!.Value.GetSumLong());
+
+        exportedItems.Clear();
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        exportedItems.Clear();
+        counter.Add(20);
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        var metricPoint = GetFirstMetricPoint(exportedItems);
+        Assert.NotNull(metricPoint);
+        Assert.Equal(20, metricPoint.Value.GetSumLong());
+        ValidateMetricPointTags(
+            [new("instrument-tag", "instrument-value")],
+            metricPoint.Value.Tags);
+    }
+
+    [Fact]
+    public void InstrumentTagsDoNotCreateMetricPointBeforeMeasurement()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems));
+
+        meter.CreateCounter<long>(
+            "myCounter",
+            unit: null,
+            description: null,
+            tags: [new("instrument-tag", "instrument-value")]);
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        Assert.Empty(exportedItems);
+    }
+
+    [Fact]
+    public void InstrumentTagsAreAppliedToDoubleCounter()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems));
+
+        var counter = meter.CreateCounter<double>(
+            "myCounter",
+            unit: null,
+            description: null,
+            tags: [new("instrument-tag", "instrument-value")]);
+
+        counter.Add(10.5);
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        var metricPoint = GetFirstMetricPoint(exportedItems);
+        Assert.NotNull(metricPoint);
+        Assert.Equal(10.5, metricPoint.Value.GetSumDouble());
+        ValidateMetricPointTags(
+            [new("instrument-tag", "instrument-value")],
+            metricPoint.Value.Tags);
+    }
+
+    [Fact]
+    public void InstrumentAndMeasurementTagsAreAppliedToDoubleCounter()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems));
+
+        var counter = meter.CreateCounter<double>(
+            "myCounter",
+            unit: null,
+            description: null,
+            tags: [new("instrument-tag", "instrument-value")]);
+
+        counter.Add(10.5, new KeyValuePair<string, object?>("measurement-tag", "measurement-value"));
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        var metricPoint = GetFirstMetricPoint(exportedItems);
+        Assert.NotNull(metricPoint);
+        Assert.Equal(10.5, metricPoint.Value.GetSumDouble());
+        ValidateMetricPointTags(
+            [
+                new("instrument-tag", "instrument-value"),
+                new("measurement-tag", "measurement-value"),
+            ],
+            metricPoint.Value.Tags);
+    }
+
+    [Fact]
+    public void ViewFiltersInstrumentTags()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("myCounter", new MetricStreamConfiguration { TagKeys = ["included"] })
+            .AddInMemoryExporter(exportedItems));
+
+        var counter = meter.CreateCounter<long>(
+            "myCounter",
+            unit: null,
+            description: null,
+            tags:
+            [
+                new("included", "included-value"),
+                new("excluded", "excluded-value"),
+            ]);
+
+        counter.Add(10);
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        var metricPoint = GetFirstMetricPoint(exportedItems);
+        Assert.NotNull(metricPoint);
+        ValidateMetricPointTags(
+            [new("included", "included-value")],
+            metricPoint.Value.Tags);
+        foreach (var tag in metricPoint.Value.Tags)
+        {
+            Assert.NotEqual("excluded", tag.Key);
+        }
+    }
+
+    [Fact]
+    public void ViewExcludesInstrumentTags()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("myCounter", new MetricStreamConfiguration { ExcludedTagKeys = ["excluded"] })
+            .AddInMemoryExporter(exportedItems));
+
+        var counter = meter.CreateCounter<long>(
+            "myCounter",
+            unit: null,
+            description: null,
+            tags:
+            [
+                new("included", "included-value"),
+                new("excluded", "excluded-value"),
+            ]);
+
+        counter.Add(10);
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        var metricPoint = GetFirstMetricPoint(exportedItems);
+        Assert.NotNull(metricPoint);
+        ValidateMetricPointTags(
+            [new("included", "included-value")],
+            metricPoint.Value.Tags);
+    }
+
+    [Fact]
+    public void InstrumentTagsAreBoundForEachView()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView(
+                "myCounter",
+                new MetricStreamConfiguration
+                {
+                    Name = "first",
+                    TagKeys = ["first-tag", "measurement-tag"],
+                })
+            .AddView(
+                "myCounter",
+                new MetricStreamConfiguration
+                {
+                    Name = "second",
+                    TagKeys = ["second-tag", "measurement-tag"],
+                })
+            .AddInMemoryExporter(exportedItems));
+
+        var counter = meter.CreateCounter<long>(
+            "myCounter",
+            unit: null,
+            description: null,
+            tags:
+            [
+                new("first-tag", "first-value"),
+                new("second-tag", "second-value"),
+            ]);
+
+        counter.Add(10, new KeyValuePair<string, object?>("measurement-tag", "measurement-value"));
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        Assert.Equal(2, exportedItems.Count);
+
+        var firstMetricPoint = GetFirstMetricPoint(exportedItems.Where(metric => metric.Name == "first"));
+        Assert.NotNull(firstMetricPoint);
+        ValidateMetricPointTags(
+            [
+                new("first-tag", "first-value"),
+                new("measurement-tag", "measurement-value"),
+            ],
+            firstMetricPoint.Value.Tags);
+
+        var secondMetricPoint = GetFirstMetricPoint(exportedItems.Where(metric => metric.Name == "second"));
+        Assert.NotNull(secondMetricPoint);
+        ValidateMetricPointTags(
+            [
+                new("measurement-tag", "measurement-value"),
+                new("second-tag", "second-value"),
+            ],
+            secondMetricPoint.Value.Tags);
+    }
+
+    [Fact]
+    public void InstrumentTagsAreBoundOnceDuringConcurrentFirstUse()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems));
+
+        var counter = meter.CreateCounter<long>(
+            "myCounter",
+            unit: null,
+            description: null,
+            tags: [new("instrument-tag", "instrument-value")]);
+
+        Parallel.For(0, 1000, _ => counter.Add(1));
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        Assert.Single(exportedItems);
+        var metricPoint = GetFirstMetricPoint(exportedItems);
+        Assert.NotNull(metricPoint);
+        Assert.Equal(1000, metricPoint.Value.GetSumLong());
+        ValidateMetricPointTags(
+            [new("instrument-tag", "instrument-value")],
+            metricPoint.Value.Tags);
+    }
+
+    [Fact]
+    public void BoundInstrumentMeasurementTagsRespectCardinalityLimit()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("myCounter", new MetricStreamConfiguration { CardinalityLimit = 1 })
+            .AddInMemoryExporter(exportedItems));
+
+        var counter = meter.CreateCounter<long>(
+            "myCounter",
+            unit: null,
+            description: null,
+            tags: [new("instrument-tag", "instrument-value")]);
+
+        counter.Add(1);
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        var metricPoints = GetMetricPoints(exportedItems);
+        var instrumentMetricPoint = Assert.Single(metricPoints);
+        Assert.Equal(1, instrumentMetricPoint.GetSumLong());
+        ValidateMetricPointTags(
+            [new("instrument-tag", "instrument-value")],
+            instrumentMetricPoint.Tags);
+
+        exportedItems.Clear();
+        counter.Add(2, new KeyValuePair<string, object?>("measurement-tag", "measurement-value"));
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        metricPoints = GetMetricPoints(exportedItems);
+        Assert.Equal(2, metricPoints.Count);
+
+        instrumentMetricPoint = metricPoints.Single(metricPoint => metricPoint.Tags.Count == 1
+            && metricPoint.Tags.KeyAndValues[0].Key == "instrument-tag");
+        Assert.Equal(1, instrumentMetricPoint.GetSumLong());
+
+        var overflowMetricPoint = metricPoints.Single(metricPoint => metricPoint.Tags.Count == 1
+            && metricPoint.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
+        Assert.Equal(2, overflowMetricPoint.GetSumLong());
+    }
+
+    [Fact]
+    public void BoundDoubleCountersRespectCardinalityLimit()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("myCounter", new MetricStreamConfiguration { CardinalityLimit = 1 })
+            .AddInMemoryExporter(exportedItems));
+
+        var firstCounter = meter.CreateCounter<double>(
+            "myCounter",
+            unit: null,
+            description: null,
+            tags: [new("instrument-tag", "first")]);
+        var secondCounter = meter.CreateCounter<double>(
+            "myCounter",
+            unit: null,
+            description: null,
+            tags: [new("instrument-tag", "second")]);
+
+        firstCounter.Add(1.5);
+        secondCounter.Add(2.5);
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        var metricPoints = GetMetricPoints(exportedItems);
+        Assert.Equal(2, metricPoints.Count);
+
+        var firstMetricPoint = metricPoints.Single(metricPoint => metricPoint.Tags.Count == 1
+            && metricPoint.Tags.KeyAndValues[0].Key == "instrument-tag");
+        Assert.Equal(1.5, firstMetricPoint.GetSumDouble());
+        ValidateMetricPointTags(
+            [new("instrument-tag", "first")],
+            firstMetricPoint.Tags);
+
+        var overflowMetricPoint = metricPoints.Single(metricPoint => metricPoint.Tags.Count == 1
+            && metricPoint.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
+        Assert.Equal(2.5, overflowMetricPoint.GetSumDouble());
+    }
+
+    [Fact]
+    public void EquivalentCountersWithDifferentInstrumentTagsRespectCardinalityLimit()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("myCounter", new MetricStreamConfiguration { CardinalityLimit = 1 })
+            .AddInMemoryExporter(exportedItems));
+
+        var firstCounter = meter.CreateCounter<long>(
+            "myCounter",
+            unit: null,
+            description: null,
+            tags: [new("instrument-tag", "first")]);
+        var secondCounter = meter.CreateCounter<long>(
+            "myCounter",
+            unit: null,
+            description: null,
+            tags: [new("instrument-tag", "second")]);
+
+        firstCounter.Add(1);
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        var metricPoints = GetMetricPoints(exportedItems);
+        var firstMetricPoint = Assert.Single(metricPoints);
+        Assert.Equal(1, firstMetricPoint.GetSumLong());
+        ValidateMetricPointTags(
+            [new("instrument-tag", "first")],
+            firstMetricPoint.Tags);
+
+        exportedItems.Clear();
+        secondCounter.Add(2);
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        metricPoints = GetMetricPoints(exportedItems);
+        Assert.Equal(2, metricPoints.Count);
+
+        firstMetricPoint = metricPoints.Single(metricPoint => metricPoint.Tags.Count == 1
+            && metricPoint.Tags.KeyAndValues[0].Key == "instrument-tag");
+        Assert.Equal(1, firstMetricPoint.GetSumLong());
+        ValidateMetricPointTags(
+            [new("instrument-tag", "first")],
+            firstMetricPoint.Tags);
+
+        var overflowMetricPoint = metricPoints.Single(metricPoint => metricPoint.Tags.Count == 1
+            && metricPoint.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
+        Assert.Equal(2, overflowMetricPoint.GetSumLong());
+
+        exportedItems.Clear();
+        firstCounter.Add(3);
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        metricPoints = GetMetricPoints(exportedItems);
+        Assert.Equal(2, metricPoints.Count);
+        firstMetricPoint = metricPoints.Single(metricPoint => metricPoint.Tags.Count == 1
+            && metricPoint.Tags.KeyAndValues[0].Key == "instrument-tag");
+        Assert.Equal(4, firstMetricPoint.GetSumLong());
+        overflowMetricPoint = metricPoints.Single(metricPoint => metricPoint.Tags.Count == 1
+            && metricPoint.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
+        Assert.Equal(2, overflowMetricPoint.GetSumLong());
+    }
+
+    [Fact]
+    public void InstrumentTagsRemainBoundToOverflowAfterDeltaCardinalityReclaim()
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var exportedItems = new List<Metric>();
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        var metricReader = new BaseExportingMetricReader(new InMemoryExporter<Metric>(exportedItems))
+        {
+            TemporalityPreference = MetricReaderTemporalityPreference.Delta,
+        };
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("myCounter", new MetricStreamConfiguration { CardinalityLimit = 1 })
+            .AddReader(metricReader));
+
+        var counter = meter.CreateCounter<long>("myCounter");
+        var boundCounter = meter.CreateCounter<long>(
+            "myCounter",
+            unit: null,
+            description: null,
+            tags: [new("instrument-tag", "instrument-value")]);
+
+        counter.Add(1, new KeyValuePair<string, object?>("measurement-tag", "measurement-value"));
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        var metricPoints = GetMetricPoints(exportedItems);
+        var metricPoint = Assert.Single(metricPoints);
+        Assert.Equal(1, metricPoint.GetSumLong());
+        ValidateMetricPointTags(
+            [new("measurement-tag", "measurement-value")],
+            metricPoint.Tags);
+
+        exportedItems.Clear();
+        boundCounter.Add(2);
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        metricPoints = GetMetricPoints(exportedItems);
+        metricPoint = Assert.Single(metricPoints);
+        Assert.Equal(2, metricPoint.GetSumLong());
+        ValidateMetricPointTags(
+            [new("otel.metric.overflow", true)],
+            metricPoint.Tags);
+
+        exportedItems.Clear();
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+        Assert.Empty(exportedItems);
+
+        boundCounter.Add(3);
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        metricPoints = GetMetricPoints(exportedItems);
+        metricPoint = Assert.Single(metricPoints);
+        Assert.Equal(3, metricPoint.GetSumLong());
+        ValidateMetricPointTags(
+            [new("otel.metric.overflow", true)],
+            metricPoint.Tags);
+    }
+
+    [Fact]
     public void MeasurementWithNullValuedTag()
     {
         using var meter = new Meter(Utils.GetCurrentMethodName());
