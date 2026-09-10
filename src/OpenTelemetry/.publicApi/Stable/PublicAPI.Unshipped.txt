@@ -1,3 +1,7 @@
+OpenTelemetry.Logs.OpenTelemetryLoggerOptions.SchemaUrl.get -> string?
+OpenTelemetry.Logs.OpenTelemetryLoggerOptions.SchemaUrl.set -> void
+OpenTelemetry.Logs.OpenTelemetryLoggerOptions.Version.get -> string?
+OpenTelemetry.Logs.OpenTelemetryLoggerOptions.Version.set -> void
 OpenTelemetry.Trace.AlwaysRecordSampler
 OpenTelemetry.Trace.AlwaysRecordSampler.AlwaysRecordSampler(OpenTelemetry.Trace.Sampler! rootSampler) -> void
 override OpenTelemetry.Trace.AlwaysRecordSampler.ShouldSample(in OpenTelemetry.Trace.SamplingParameters samplingParameters) -> OpenTelemetry.Trace.SamplingResult

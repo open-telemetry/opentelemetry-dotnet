@@ -8,21 +8,26 @@ namespace OpenTelemetry.Internal;
 
 internal sealed class InstrumentationScopeLogger : Logger
 {
-    private static readonly ConcurrentDictionary<string, InstrumentationScopeLogger> Cache = new();
+    private static readonly ConcurrentDictionary<(string Name, string? Version, string? SchemaUrl), InstrumentationScopeLogger> Cache = new();
 
-    private InstrumentationScopeLogger(string name)
+    private InstrumentationScopeLogger(string? name, string? version, string? schemaUrl)
         : base(name)
     {
+        this.SetInstrumentationScope(version, schemaUrl);
     }
 
-    public static InstrumentationScopeLogger Default { get; } = new(string.Empty);
+    public static InstrumentationScopeLogger Default { get; } = new(string.Empty, null, null);
 
-    public static InstrumentationScopeLogger GetInstrumentationScopeLoggerForName(string? name)
-        => string.IsNullOrWhiteSpace(name)
+    public static InstrumentationScopeLogger GetInstrumentationScopeLogger(LoggerOptions options)
+    {
+        var name = options.Name is { Length: > 0 } ? options.Name : string.Empty;
+
+        return name.Length == 0 && options.Version is null && options.SchemaUrl is null
             ? Default
-#pragma warning disable IDE0370 // Suppression is unnecessary
-            : Cache.GetOrAdd(name!, static n => new(n));
-#pragma warning restore IDE0370 // Suppression is unnecessary
+            : Cache.GetOrAdd(
+                (name, options.Version, options.SchemaUrl),
+                static (o) => new(o.Name, o.Version, o.SchemaUrl));
+    }
 
     public override void EmitLog(in LogRecordData data, in LogRecordAttributeList attributes)
         => throw new NotSupportedException();

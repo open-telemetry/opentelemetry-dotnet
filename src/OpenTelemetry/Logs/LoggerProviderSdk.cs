@@ -202,11 +202,11 @@ internal sealed class LoggerProviderSdk : LoggerProvider
     internal
 #endif
         override bool TryCreateLogger(
-        string? name,
+        LoggerOptions options,
         [NotNullWhen(true)]
         out Logger? logger)
     {
-        logger = new LoggerSdk(this, name);
+        logger = new LoggerSdk(this, options);
         return true;
     }
 

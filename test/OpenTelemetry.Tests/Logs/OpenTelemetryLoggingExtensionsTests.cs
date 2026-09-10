@@ -10,6 +10,8 @@ using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Logs.Tests;
 
+#pragma warning disable CA1848 // Use the LoggerMessage delegates
+
 public sealed class OpenTelemetryLoggingExtensionsTests
 {
     [Theory]
@@ -211,17 +213,19 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         Assert.Equal(2, afterDelegateIndex);
     }
 
-    // This test validates that the OpenTelemetryLoggerOptions contains only primitive type properties.
-    // This is necessary to ensure trim correctness since that class is effectively deserialized from
-    // configuration. The top level properties are ensured via annotation on the RegisterProviderOptions API
-    // but if there was any complex type property, members of the complex type would not be preserved
-    // and could lead to incompatibilities with trimming.
+    // This test validates that the OpenTelemetryLoggerOptions contains only primitive (or string) type
+    // properties. This is necessary to ensure trim correctness since that class is effectively deserialized
+    // from configuration. The top level properties are ensured via annotation on the RegisterProviderOptions
+    // API but if there was any complex type property, members of the complex type would not be preserved
+    // and could lead to incompatibilities with trimming. string is allowed alongside the primitive types
+    // recognized by Type.IsPrimitive because it binds from configuration natively and has no members that
+    // need to be separately preserved.
     [Fact]
     public void TestTrimmingCorrectnessOfOpenTelemetryLoggerOptions()
     {
         foreach (var prop in typeof(OpenTelemetryLoggerOptions).GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
         {
-            Assert.True(prop.PropertyType.IsPrimitive, $"Property OpenTelemetryLoggerOptions.{prop.Name} doesn't have a primitive type. This is potentially a trim compatibility issue.");
+            Assert.True(prop.PropertyType.IsPrimitive || prop.PropertyType == typeof(string), $"Property OpenTelemetryLoggerOptions.{prop.Name} doesn't have a primitive or string type. This is potentially a trim compatibility issue.");
         }
     }
 
@@ -301,6 +305,35 @@ public sealed class OpenTelemetryLoggingExtensionsTests
 
         Assert.NotNull(loggerProvider);
         Assert.IsType<TestLogProcessorWithILoggerFactoryDependency>(loggerProvider.Processor);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    public void LoggerWithBlankCategoryNameRetainsVersionAndSchemaUrlTest(string categoryName)
+    {
+        var logRecords = new List<LogRecord>();
+        var services = new ServiceCollection();
+
+        services.AddLogging(logging => logging.AddOpenTelemetry(options =>
+        {
+            options.Version = "1.0.0";
+            options.SchemaUrl = "https://opentelemetry.io/schemas/1.0.0";
+            options.AddInMemoryExporter(logRecords);
+        }));
+
+        using var sp = services.BuildServiceProvider();
+
+        var factory = sp.GetRequiredService<ILoggerFactory>();
+        var logger = factory.CreateLogger(categoryName);
+
+        logger.LogInformation("Test message");
+
+        var logRecord = Assert.Single(logRecords);
+
+        Assert.NotNull(logRecord.Logger);
+        Assert.Equal("1.0.0", logRecord.Logger.Version);
+        Assert.Equal("https://opentelemetry.io/schemas/1.0.0", logRecord.Logger.SchemaUrl);
     }
 
     [Theory]
