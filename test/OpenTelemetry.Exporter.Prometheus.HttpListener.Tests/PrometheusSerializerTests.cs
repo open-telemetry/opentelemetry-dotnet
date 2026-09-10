@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Collections;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Globalization;
@@ -118,6 +119,12 @@ public sealed partial class PrometheusSerializerTests
             },
             """{\"flag\":true,\"dbl\":1.5,\"nan\":\"NaN\",\"empty\":null}"""
         },
+        { new Dictionary<string, string?> { ["a"] = "b" }, """{\"a\":\"b\"}""" },
+        { new Hashtable { ["a"] = 1 }, """{\"a\":1}""" },
+        { new double[] { double.NaN, double.PositiveInfinity, double.NegativeInfinity, 1.5 }, """[\"NaN\",\"Infinity\",\"-Infinity\",1.5]""" },
+        { new object[] { LabelValueArrayCase }, "[[1,2,3]]" },
+        { new object[] { LabelValueByteArrayCase }, """[\"AQID\"]""" },
+        { new object[] { new Dictionary<string, object?> { ["a"] = 1 } }, """[{\"a\":1}]""" },
     };
 
     [Fact]

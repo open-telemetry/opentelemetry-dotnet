@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using System.Globalization;
 using System.Text.Json;
 
 namespace OpenTelemetry.Internal;
@@ -72,7 +73,17 @@ internal abstract class JsonStringArrayTagWriter<TTagState> : TagWriter<TTagStat
             => state.Writer.WriteBooleanValue(value);
 
         public override void WriteFloatingPointValue(ref JsonArrayTagWriterState state, double value)
-            => state.Writer.WriteNumberValue(value);
+        {
+            if (double.IsNaN(value) || double.IsInfinity(value))
+            {
+                // JSON has no representation for NaN or infinity, so those are emitted as strings.
+                state.Writer.WriteStringValue(value.ToString(CultureInfo.InvariantCulture));
+            }
+            else
+            {
+                state.Writer.WriteNumberValue(value);
+            }
+        }
 
         public override void WriteIntegralValue(ref JsonArrayTagWriterState state, long value)
             => state.Writer.WriteNumberValue(value);
@@ -82,6 +93,36 @@ internal abstract class JsonStringArrayTagWriter<TTagState> : TagWriter<TTagStat
 
         public override void WriteStringValue(ref JsonArrayTagWriterState state, ReadOnlySpan<char> value)
             => state.Writer.WriteStringValue(value);
+
+        public override bool TryWriteByteArrayValue(ref JsonArrayTagWriterState state, ReadOnlySpan<byte> value)
+        {
+            // See https://github.com/open-telemetry/opentelemetry-specification/blob/v1.60.0/specification/common/README.md#byte-arrays;
+            // byte arrays are Base64-encoded when nested inside another array or map, the same
+            // as when they are the top-level attribute value.
+            state.Writer.WriteBase64StringValue(value);
+            return true;
+        }
+
+        public override bool TryBeginNestedArrayValue(ref JsonArrayTagWriterState state)
+        {
+            state.Writer.WriteStartArray();
+            return true;
+        }
+
+        public override void EndNestedArrayValue(ref JsonArrayTagWriterState state)
+            => state.Writer.WriteEndArray();
+
+        public override bool TryBeginNestedObjectValue(ref JsonArrayTagWriterState state)
+        {
+            state.Writer.WriteStartObject();
+            return true;
+        }
+
+        public override void WriteNestedObjectPropertyName(ref JsonArrayTagWriterState state, string name)
+            => state.Writer.WritePropertyName(name);
+
+        public override void EndNestedObjectValue(ref JsonArrayTagWriterState state)
+            => state.Writer.WriteEndObject();
 
         private static JsonArrayTagWriterState EnsureWriter()
         {

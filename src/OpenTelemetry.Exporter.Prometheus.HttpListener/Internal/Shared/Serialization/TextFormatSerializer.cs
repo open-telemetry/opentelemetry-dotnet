@@ -10,6 +10,7 @@ using System.Collections.Immutable;
 #endif
 #endif
 using System.Buffers;
+using System.Collections;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -594,7 +595,7 @@ internal abstract class TextFormatSerializer
 
             // Arrays and maps are JSON-encoded, per
             // https://github.com/open-telemetry/opentelemetry-specification/blob/v1.60.0/specification/common/README.md#anyvalue-representation-for-non-otlp-protocols.
-            case Array or IEnumerable<KeyValuePair<string, object?>>:
+            case Array or IEnumerable<KeyValuePair<string, object?>> or IEnumerable<KeyValuePair<string, string?>> or IDictionary:
                 return WriteLabelValue(buffer, cursor, PrometheusAnyValueWriter.Instance.ToLabelValueString(key, value));
 
             case IFormattable formattableValue:
@@ -1414,7 +1415,7 @@ internal abstract class TextFormatSerializer
         double doubleValue => GetCanonicalLabelValueString(doubleValue),
         decimal decimalValue => decimalValue.ToString(CultureInfo.InvariantCulture),
         byte[] byteArrayValue => Convert.ToBase64String(byteArrayValue),
-        Array or IEnumerable<KeyValuePair<string, object?>> => PrometheusAnyValueWriter.Instance.ToLabelValueString(key, labelValue),
+        Array or IEnumerable<KeyValuePair<string, object?>> or IEnumerable<KeyValuePair<string, string?>> or IDictionary => PrometheusAnyValueWriter.Instance.ToLabelValueString(key, labelValue),
         IFormattable formattableValue => formattableValue.ToString(null, CultureInfo.InvariantCulture) ?? string.Empty,
         _ => labelValue.ToString() ?? string.Empty,
     };
