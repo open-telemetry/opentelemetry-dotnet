@@ -67,6 +67,8 @@ internal sealed class ZipkinTagWriter : JsonStringArrayTagWriter<Utf8JsonWriter>
 
     protected override bool TryWriteEmptyTag(ref Utf8JsonWriter state, string key, object? value) => false;
 
+    protected override bool TryWriteByteArrayTag(ref Utf8JsonWriter state, string key, ReadOnlySpan<byte> value) => false;
+
     protected override void WriteKvListTag(ref Utf8JsonWriter writer, string key, IEnumerable<KeyValuePair<string, object?>> value, int? tagValueMaxLength)
     {
         using var stream = new MemoryStream();

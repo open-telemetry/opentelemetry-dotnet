@@ -7,6 +7,13 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed array- and map-valued attributes being serialized as the .NET type
+  name (e.g. `System.Byte[]`, `System.Int32[]`) instead of being JSON-encoded
+  as per the specification. `byte[]`-valued attributes are now
+  Base64-encoded, and other array- and map-valued attributes are now
+  JSON-encoded.
+  ([#7694](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7694))
+
 ## 1.18.0-beta.1
 
 Released 2026-Aug-21
