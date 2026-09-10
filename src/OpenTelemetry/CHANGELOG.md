@@ -16,9 +16,6 @@ Notes](../../RELEASENOTES.md).
 * Added `AlwaysRecordSampler`.
   ([#7695](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7695))
 
-* Introduce `SamplerOptions` to encapsulate trace sampler configuration, parsing
-  `OTEL_TRACES_SAMPLER` and `OTEL_TRACES_SAMPLER_ARG` from `IConfiguration`.
-
 * Added `SamplerOptions`, which allows the trace sampler to be configured using
   the options pattern (including binding from `appsettings.json`) in addition to
   the `OTEL_TRACES_SAMPLER` and `OTEL_TRACES_SAMPLER_ARG` environment variables.
