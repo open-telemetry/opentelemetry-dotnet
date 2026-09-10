@@ -650,7 +650,7 @@ internal sealed class PrometheusCollectionManager
 
             if (metadataState.Type != prometheusMetric.Type)
             {
-                droppedMetricNames ??= new(StringComparer.Ordinal);
+                droppedMetricNames ??= [with(StringComparer.Ordinal)];
                 droppedMetricNames.Add(metadataName);
                 PrometheusExporterEventSource.Log.ConflictingType(metadataName, metadataState.Type, prometheusMetric.Type);
             }

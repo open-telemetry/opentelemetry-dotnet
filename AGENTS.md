@@ -29,7 +29,7 @@ dotnet test test/OpenTelemetry.Tests/OpenTelemetry.Tests.csproj --filter "FullyQ
 **Test for a specific TFM** (Windows also supports `net462`):
 
 ```sh
-dotnet test --framework net10.0
+dotnet test --framework net11.0
 ```
 
 **Check code formatting:**

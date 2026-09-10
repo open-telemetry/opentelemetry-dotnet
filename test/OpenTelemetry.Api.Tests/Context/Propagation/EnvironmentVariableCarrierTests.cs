@@ -214,10 +214,8 @@ public class EnvironmentVariableCarrierTests
     [Theory]
     [InlineData(ActivityTraceFlags.None, "00")]
     [InlineData(ActivityTraceFlags.Recorded, "01")]
-    //// https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899
-    //// will change this to use ActivityTraceFlags.RandomTraceId instead.
-    [InlineData((ActivityTraceFlags)2, "02")]
-    [InlineData((ActivityTraceFlags)2 | ActivityTraceFlags.Recorded, "03")]
+    [InlineData(ActivityTraceFlags.RandomTraceId, "02")]
+    [InlineData(ActivityTraceFlags.RandomTraceId | ActivityTraceFlags.Recorded, "03")]
     public void TraceContextPropagator_RoundTripsThroughEnvironmentVariableCarrier(
         ActivityTraceFlags flags,
         string expectedSuffix)
@@ -314,7 +312,7 @@ public class EnvironmentVariableCarrierTests
 
     private sealed class DictionaryOnlyCarrier : IDictionary<string, string?>
     {
-        private readonly Dictionary<string, string?> inner = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, string?> inner = [with(StringComparer.Ordinal)];
 
         public ICollection<string> Keys => this.inner.Keys;
 

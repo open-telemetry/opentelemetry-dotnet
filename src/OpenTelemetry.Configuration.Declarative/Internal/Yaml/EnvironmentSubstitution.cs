@@ -115,7 +115,13 @@ internal static class EnvironmentSubstitution
             }
 
             var exprStart = i;
+
+#if NET11_0_OR_GREATER
+            var closingBrace = value.IndexOf('}', exprStart + 2, end - (exprStart + 2), StringComparison.Ordinal);
+#else
             var closingBrace = value.IndexOf('}', exprStart + 2, end - (exprStart + 2));
+#endif
+
             if (closingBrace < 0)
             {
                 // No '}' in the remainder of this region, so no complete SUBSTITUTION-REF exists

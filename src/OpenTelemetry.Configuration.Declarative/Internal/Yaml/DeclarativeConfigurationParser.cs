@@ -17,18 +17,20 @@ namespace OpenTelemetry.Configuration.Declarative;
 /// <param name="context">The context for the parse this parser belongs to.</param>
 internal sealed class DeclarativeConfigurationParser(YamlParseContext context)
 {
-    private static readonly HashSet<string> KnownResourceKeys = new(StringComparer.Ordinal)
-    {
+    private static readonly HashSet<string> KnownResourceKeys =
+    [
+        with(StringComparer.Ordinal),
         YamlKeys.Attributes,
         YamlKeys.AttributesList,
-    };
+    ];
 
-    private static readonly HashSet<string> KnownAttributeKeys = new(StringComparer.Ordinal)
-    {
+    private static readonly HashSet<string> KnownAttributeKeys =
+    [
+        with(StringComparer.Ordinal),
         YamlKeys.Name,
         YamlKeys.Value,
         YamlKeys.Type,
-    };
+    ];
 
     private readonly YamlPropertyReader reader = new(context);
 
