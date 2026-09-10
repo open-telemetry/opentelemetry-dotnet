@@ -1953,6 +1953,34 @@ public class OtlpLogExporterTests
         Assert.Single(schema2.LogRecords);
     }
 
+    [Fact]
+    public void LogRecordsFromLoggersWithNullAndEmptySchemaUrlAreExportedAsTheSameScope()
+    {
+        var logRecords = new List<LogRecord>();
+
+        using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+                   .AddInMemoryExporter(logRecords)
+                   .Build())
+        {
+            loggerProvider.GetLogger(new LoggerOptions() { Name = "MyLogger", Version = "1.0.0", SchemaUrl = null }).EmitLog(new LogRecordData());
+            loggerProvider.GetLogger(new LoggerOptions() { Name = "MyLogger", Version = "1.0.0", SchemaUrl = string.Empty }).EmitLog(new LogRecordData());
+        }
+
+        Assert.Equal(2, logRecords.Count);
+
+        var batch = new Batch<LogRecord>([.. logRecords], logRecords.Count);
+        var request = CreateLogsExportRequest(DefaultSdkLimitOptions, new ExperimentalOptions(), batch, ResourceBuilder.CreateEmpty().Build());
+
+        Assert.NotNull(request);
+
+        var logs = Assert.Single(request.ResourceLogs);
+        var scopeLog = Assert.Single(logs.ScopeLogs);
+
+        Assert.Equal("MyLogger", scopeLog.Scope?.Name);
+        Assert.Equal(string.Empty, scopeLog.SchemaUrl);
+        Assert.Equal(2, scopeLog.LogRecords.Count);
+    }
+
     [Theory]
     [InlineData("1.0.0", "1.0.0")]
     [InlineData(null, "")]

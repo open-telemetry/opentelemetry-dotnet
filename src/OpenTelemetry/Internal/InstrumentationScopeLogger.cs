@@ -19,11 +19,15 @@ internal sealed class InstrumentationScopeLogger : Logger
     public static InstrumentationScopeLogger Default { get; } = new(string.Empty, null, null);
 
     public static InstrumentationScopeLogger GetInstrumentationScopeLogger(LoggerOptions options)
-        => options.Name is not { Length: > 0 }
+    {
+        var name = options.Name is { Length: > 0 } ? options.Name : string.Empty;
+
+        return name.Length == 0 && options.Version is null && options.SchemaUrl is null
             ? Default
             : Cache.GetOrAdd(
-                (options.Name, options.Version, options.SchemaUrl),
+                (name, options.Version, options.SchemaUrl),
                 static (o) => new(o.Name, o.Version, o.SchemaUrl));
+    }
 
     public override void EmitLog(in LogRecordData data, in LogRecordAttributeList attributes)
         => throw new NotSupportedException();

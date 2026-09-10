@@ -341,10 +341,29 @@ public class ConsoleLogRecordExporterTests
 
         // Act
         using var exporter = new ConsoleLogRecordExporter(new ConsoleExporterOptions());
-        var actual = exporter.Export(new Batch<LogRecord>([.. logRecords], logRecords.Count));
+
+        var originalOut = System.Console.Out;
+        using var output = new StringWriter();
+        System.Console.SetOut(output);
+
+        ExportResult actual;
+
+        try
+        {
+            actual = exporter.Export(new Batch<LogRecord>([.. logRecords], logRecords.Count));
+        }
+        finally
+        {
+            System.Console.SetOut(originalOut);
+        }
 
         // Assert
         Assert.Equal(ExportResult.Success, actual);
+
+        var consoleOutput = output.ToString();
+        Assert.Contains($"Name: {typeof(ConsoleLogRecordExporterTests).FullName}", consoleOutput, StringComparison.Ordinal);
+        Assert.Contains("Version: 1.0.0", consoleOutput, StringComparison.Ordinal);
+        Assert.Contains("Schema URL: https://opentelemetry.io/schemas/1.24.0", consoleOutput, StringComparison.Ordinal);
     }
 
     [Fact]

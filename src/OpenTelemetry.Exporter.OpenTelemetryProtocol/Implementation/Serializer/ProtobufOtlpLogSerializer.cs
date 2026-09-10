@@ -431,7 +431,7 @@ internal static class ProtobufOtlpLogSerializer
         {
             this.Name = name;
             this.Version = version;
-            this.SchemaUrl = schemaUrl;
+            this.SchemaUrl = string.IsNullOrEmpty(schemaUrl) ? null : schemaUrl;
         }
 
         public bool Equals(InstrumentationScope other)

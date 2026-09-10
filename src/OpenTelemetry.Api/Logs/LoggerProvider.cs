@@ -69,10 +69,10 @@ public class LoggerProvider : BaseProvider
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
-    /// Gets a logger with the given name and version.
+    /// Gets a logger with the given options.
     /// </summary>
     /// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
-    /// <param name="options">The options to use to create the logger.</param>
+    /// <param name="options">The options to use to create the logger, including the name, version, and schema URL.</param>
     /// <returns><see cref="Logger"/> instance.</returns>
     [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
     public
@@ -99,10 +99,10 @@ public class LoggerProvider : BaseProvider
 
 #if EXPOSE_EXPERIMENTAL_FEATURES
     /// <summary>
-    /// Try to create a logger with the given name.
+    /// Try to create a logger with the given options.
     /// </summary>
     /// <remarks><inheritdoc cref="Logger" path="/remarks"/></remarks>
-    /// <param name="options">The options to use to create the logger.</param>
+    /// <param name="options">The options to use to create the logger, including the name, version, and schema URL.</param>
     /// <param name="logger">If successful, contains the created <see cref="Logger"/>.</param>
     /// <returns><see langword="true"/> if the logger was created.</returns>
     [Experimental(DiagnosticDefinitions.LogsBridgeExperimentalApi, UrlFormat = DiagnosticDefinitions.ExperimentalApiUrlFormat)]
