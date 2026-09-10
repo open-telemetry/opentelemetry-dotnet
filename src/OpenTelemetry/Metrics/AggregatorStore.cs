@@ -38,12 +38,7 @@ internal sealed class AggregatorStore
     // This holds the reclaimed MetricPoints that are available for reuse.
     private readonly Queue<int>? availableMetricPoints;
 
-    private readonly ConcurrentDictionary<Tags, int> tagsToMetricPointIndexDictionary =
-#if NET9_0_OR_GREATER
-        new(TagsComparer.Instance);
-#else
-        new();
-#endif
+    private readonly ConcurrentDictionary<Tags, int> tagsToMetricPointIndexDictionary;
 
 #if NET9_0_OR_GREATER
     // Alternate lookup that resolves a MetricPoint directly from the incoming
@@ -135,21 +130,25 @@ internal sealed class AggregatorStore
         // Newer attributes should be added starting at the index: 2
         this.metricPointIndex = 1;
 
+        // There is no overload which only takes capacity as the parameter
+        // Using the DefaultConcurrencyLevel defined in the ConcurrentDictionary class: https://github.com/dotnet/runtime/blob/v10.0.0/src/libraries/System.Collections.Concurrent/src/System/Collections/Concurrent/ConcurrentDictionary.cs#L2054
+        // We expect at the most (user provided cardinality limit) * 2 entries- one for sorted and one for unsorted input
+        var concurrencyLevel = Environment.ProcessorCount;
+        var capacity = cardinalityLimit * 2;
+
 #if NET9_0_OR_GREATER
+        this.tagsToMetricPointIndexDictionary = new(concurrencyLevel, capacity, comparer: TagsComparer.Instance);
+
         this.tagsToMetricPointIndexLookup =
             this.tagsToMetricPointIndexDictionary.GetAlternateLookup<ReadOnlySpan<KeyValuePair<string, object?>>>();
+#else
+        this.tagsToMetricPointIndexDictionary = new(concurrencyLevel, capacity);
 #endif
 
         // Always reclaim unused MetricPoints for Delta aggregation temporality
         if (this.OutputDelta)
         {
             this.availableMetricPoints = new Queue<int>(cardinalityLimit);
-
-            // There is no overload which only takes capacity as the parameter
-            // Using the DefaultConcurrencyLevel defined in the ConcurrentDictionary class: https://github.com/dotnet/runtime/blob/v10.0.0/src/libraries/System.Collections.Concurrent/src/System/Collections/Concurrent/ConcurrentDictionary.cs#L2054
-            // We expect at the most (user provided cardinality limit) * 2 entries- one for sorted and one for unsorted input
-            var concurrencyLevel = Environment.ProcessorCount;
-            var capacity = cardinalityLimit * 2;
 
 #if NET9_0_OR_GREATER
             this.TagsToMetricPointIndexDictionaryDelta = new(concurrencyLevel, capacity, comparer: TagsComparer.Instance);
