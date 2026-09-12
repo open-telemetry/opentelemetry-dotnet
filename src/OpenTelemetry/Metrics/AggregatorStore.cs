@@ -131,10 +131,19 @@ internal sealed class AggregatorStore
         this.metricPointIndex = 1;
 
         // There is no overload which only takes capacity as the parameter
-        // Using the DefaultConcurrencyLevel defined in the ConcurrentDictionary class: https://github.com/dotnet/runtime/blob/v10.0.0/src/libraries/System.Collections.Concurrent/src/System/Collections/Concurrent/ConcurrentDictionary.cs#L2054
-        // We expect at the most (user provided cardinality limit) * 2 entries- one for sorted and one for unsorted input
-        var concurrencyLevel = Environment.ProcessorCount;
-        var capacity = cardinalityLimit * 2;
+        // ConcurrentDictionary treats -1 as a special case to use the on .NET 9+: https://github.com/dotnet/runtime/blob/9d5a6a9aa463d6d10b0b0ba6d5982cc82f363dc3/src/libraries/System.Collections.Concurrent/src/System/Collections/Concurrent/ConcurrentDictionary.cs#L160-L168
+        var concurrencyLevel =
+#if NET
+            -1;
+#else
+            Environment.ProcessorCount;
+#endif
+
+        // We expect at the most (user provided cardinality limit) * 2 entries - one for sorted and one for unsorted input.
+        // Clamp to int.MaxValue to avoid an overflow when cardinalityLimit is close to int.MaxValue.
+        var capacity = cardinalityLimit <= int.MaxValue / 2
+            ? cardinalityLimit * 2
+            : int.MaxValue;
 
 #if NET9_0_OR_GREATER
         this.tagsToMetricPointIndexDictionary = new(concurrencyLevel, capacity, comparer: TagsComparer.Instance);
