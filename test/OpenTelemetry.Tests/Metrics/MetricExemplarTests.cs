@@ -175,6 +175,62 @@ public class MetricExemplarTests : MetricTestsBase
     }
 
     [Theory]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative, ExemplarFilterType.AlwaysOn)]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative, ExemplarFilterType.TraceBased)]
+    [InlineData(MetricReaderTemporalityPreference.Delta, ExemplarFilterType.AlwaysOn)]
+    [InlineData(MetricReaderTemporalityPreference.Delta, ExemplarFilterType.TraceBased)]
+    public void TestExemplarsBoundCounter(
+        MetricReaderTemporalityPreference temporality,
+        ExemplarFilterType exemplarFilter)
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var counterDouble = meter.CreateCounter<double>(
+            "testCounterDouble",
+            unit: null,
+            description: null,
+            tags: [new("instrument-tag", "double")]);
+        var counterLong = meter.CreateCounter<long>(
+            "testCounterLong",
+            unit: null,
+            description: null,
+            tags: [new("instrument-tag", "long")]);
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .SetExemplarFilter(exemplarFilter)
+            .AddInMemoryExporter(exportedItems, metricReaderOptions =>
+            {
+                metricReaderOptions.TemporalityPreference = temporality;
+            }));
+
+        using var activity = new Activity("test");
+        if (exemplarFilter == ExemplarFilterType.TraceBased)
+        {
+            activity.Start();
+            activity.ActivityTraceFlags = ActivityTraceFlags.Recorded;
+        }
+
+        counterDouble.Add(18.5);
+        counterLong.Add(18);
+
+        Assert.True(meterProvider.ForceFlush(MaxTimeToAllowForFlush));
+
+        var doubleMetricPoint = GetFirstMetricPoint(exportedItems.Where(metric => metric.Name == "testCounterDouble"));
+        Assert.NotNull(doubleMetricPoint);
+        Assert.Equal(18.5, doubleMetricPoint.Value.GetSumDouble());
+        var doubleExemplar = Assert.Single(GetExemplars(doubleMetricPoint.Value));
+        Assert.Equal(18.5, doubleExemplar.DoubleValue);
+
+        var longMetricPoint = GetFirstMetricPoint(exportedItems.Where(metric => metric.Name == "testCounterLong"));
+        Assert.NotNull(longMetricPoint);
+        Assert.Equal(18, longMetricPoint.Value.GetSumLong());
+        var longExemplar = Assert.Single(GetExemplars(longMetricPoint.Value));
+        Assert.Equal(18, longExemplar.LongValue);
+    }
+
+    [Theory]
     [InlineData(MetricReaderTemporalityPreference.Cumulative)]
     [InlineData(MetricReaderTemporalityPreference.Delta)]
     public void TestExemplarsObservable(MetricReaderTemporalityPreference temporality)

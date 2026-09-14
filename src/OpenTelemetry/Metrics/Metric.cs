@@ -266,6 +266,9 @@ public sealed class Metric
     internal void UpdateDouble(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
         => this.AggregatorStore.Update(value, tags);
 
+    internal MetricPointUpdateHandle Bind(ReadOnlySpan<KeyValuePair<string, object?>> tags)
+        => this.AggregatorStore.Bind(tags);
+
     internal int Snapshot()
         => this.AggregatorStore.Snapshot();
 }
