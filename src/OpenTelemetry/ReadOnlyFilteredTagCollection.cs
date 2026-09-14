@@ -13,8 +13,12 @@ namespace OpenTelemetry;
 /// </summary>
 // Note: Does not implement IReadOnlyCollection<> or IEnumerable<> to
 // prevent accidental boxing.
+// Note: Equality is intentionally not implemented - this type is a view over
+// a shared array and element-wise comparison would be O(n) on hot paths.
+#pragma warning disable CA1815 // Override equals and operator equals on value types
 #pragma warning disable CA1711 // Identifiers should not have incorrect suffix
 public readonly struct ReadOnlyFilteredTagCollection
+#pragma warning restore CA1815 // Override equals and operator equals on value types
 #pragma warning restore CA1711 // Identifiers should not have incorrect suffix
 {
 #if NET
@@ -74,9 +78,13 @@ public readonly struct ReadOnlyFilteredTagCollection
     /// Enumerates the elements of a <see cref="ReadOnlyTagCollection"/>.
     /// </summary>
     // Note: Does not implement IEnumerator<> to prevent accidental boxing.
+    // Note: Equality is intentionally not implemented - enumerators are
+    // mutable cursors and comparing instances is not a supported scenario.
+#pragma warning disable CA1815 // Override equals and operator equals on value types
 #pragma warning disable CA1034 // Nested types should not be visible - already part of public API
     public struct Enumerator
 #pragma warning restore CA1034 // Nested types should not be visible - already part of public API
+#pragma warning restore CA1815 // Override equals and operator equals on value types
     {
         private readonly ReadOnlyFilteredTagCollection source;
         private int index;

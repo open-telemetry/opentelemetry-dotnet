@@ -16,7 +16,12 @@ namespace OpenTelemetry.Metrics;
 /// Specification: <see
 /// href="https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#exemplar"/>.
 /// </remarks>
+// Note: Equality is intentionally not implemented - exemplars are mutable
+// and updated concurrently via Interlocked operations, so field-by-field
+// equality is not meaningful.
+#pragma warning disable CA1815 // Override equals and operator equals on value types
 public struct Exemplar
+#pragma warning restore CA1815 // Override equals and operator equals on value types
 {
 #if NET
     internal FrozenSet<string>? ViewDefinedTagKeys;

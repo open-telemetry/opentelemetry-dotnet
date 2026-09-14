@@ -7,7 +7,12 @@ namespace OpenTelemetry.Metrics;
 /// A struct for accessing the <see cref="MetricPoint"/>s collected for a
 /// <see cref="Metric"/>.
 /// </summary>
+// Note: Equality is intentionally not implemented - this type is a view over
+// shared arrays whose contents change between collections, so element-wise
+// comparison is not meaningful.
+#pragma warning disable CA1815 // Override equals and operator equals on value types
 public readonly struct MetricPointsAccessor
+#pragma warning restore CA1815 // Override equals and operator equals on value types
 {
     private readonly MetricPoint[] metricsPoints;
     private readonly int[] metricPointsToProcess;
@@ -27,12 +32,16 @@ public readonly struct MetricPointsAccessor
     public Enumerator GetEnumerator()
         => new(this.metricsPoints, this.metricPointsToProcess, this.targetCount);
 
+    // Note: Equality is intentionally not implemented - enumerators are
+    // mutable cursors and comparing instances is not a supported scenario.
+#pragma warning disable CA1815 // Override equals and operator equals on value types
 #pragma warning disable CA1034 // Nested types should not be visible - already part of public API
     /// <summary>
     /// Enumerates the elements of a <see cref="MetricPointsAccessor"/>.
     /// </summary>
     public struct Enumerator
 #pragma warning restore CA1034 // Nested types should not be visible - already part of public API
+#pragma warning restore CA1815 // Override equals and operator equals on value types
     {
         private readonly MetricPoint[] metricsPoints;
         private readonly int[] metricPointsToProcess;

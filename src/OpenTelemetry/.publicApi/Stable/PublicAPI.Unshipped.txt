@@ -1,3 +1,18 @@
+OpenTelemetry.Logs.LogRecordScope.Equals(OpenTelemetry.Logs.LogRecordScope other) -> bool
+OpenTelemetry.Metrics.HistogramBucket.Equals(OpenTelemetry.Metrics.HistogramBucket other) -> bool
 OpenTelemetry.Trace.AlwaysRecordSampler
 OpenTelemetry.Trace.AlwaysRecordSampler.AlwaysRecordSampler(OpenTelemetry.Trace.Sampler! rootSampler) -> void
+OpenTelemetry.Trace.SamplingParameters.Equals(OpenTelemetry.Trace.SamplingParameters other) -> bool
+override OpenTelemetry.Logs.LogRecordScope.Equals(object? obj) -> bool
+override OpenTelemetry.Logs.LogRecordScope.GetHashCode() -> int
+override OpenTelemetry.Metrics.HistogramBucket.Equals(object? obj) -> bool
+override OpenTelemetry.Metrics.HistogramBucket.GetHashCode() -> int
 override OpenTelemetry.Trace.AlwaysRecordSampler.ShouldSample(in OpenTelemetry.Trace.SamplingParameters samplingParameters) -> OpenTelemetry.Trace.SamplingResult
+override OpenTelemetry.Trace.SamplingParameters.Equals(object? obj) -> bool
+override OpenTelemetry.Trace.SamplingParameters.GetHashCode() -> int
+static OpenTelemetry.Logs.LogRecordScope.operator !=(OpenTelemetry.Logs.LogRecordScope scope1, OpenTelemetry.Logs.LogRecordScope scope2) -> bool
+static OpenTelemetry.Logs.LogRecordScope.operator ==(OpenTelemetry.Logs.LogRecordScope scope1, OpenTelemetry.Logs.LogRecordScope scope2) -> bool
+static OpenTelemetry.Metrics.HistogramBucket.operator !=(OpenTelemetry.Metrics.HistogramBucket bucket1, OpenTelemetry.Metrics.HistogramBucket bucket2) -> bool
+static OpenTelemetry.Metrics.HistogramBucket.operator ==(OpenTelemetry.Metrics.HistogramBucket bucket1, OpenTelemetry.Metrics.HistogramBucket bucket2) -> bool
+static OpenTelemetry.Trace.SamplingParameters.operator !=(OpenTelemetry.Trace.SamplingParameters parameters1, OpenTelemetry.Trace.SamplingParameters parameters2) -> bool
+static OpenTelemetry.Trace.SamplingParameters.operator ==(OpenTelemetry.Trace.SamplingParameters parameters1, OpenTelemetry.Trace.SamplingParameters parameters2) -> bool

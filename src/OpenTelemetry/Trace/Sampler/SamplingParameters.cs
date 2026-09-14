@@ -8,7 +8,7 @@ namespace OpenTelemetry.Trace;
 /// <summary>
 /// Sampling parameters passed to a <see cref="Sampler"/> for it to make a sampling decision.
 /// </summary>
-public readonly struct SamplingParameters
+public readonly struct SamplingParameters : IEquatable<SamplingParameters>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="SamplingParameters"/> struct.
@@ -77,4 +77,54 @@ public readonly struct SamplingParameters
     /// Gets the links to be added to the activity to be created.
     /// </summary>
     public IEnumerable<ActivityLink>? Links { get; }
+
+    /// <summary>
+    /// Compare two <see cref="SamplingParameters"/> for equality.
+    /// </summary>
+    /// <param name="parameters1">First parameters to compare.</param>
+    /// <param name="parameters2">Second parameters to compare.</param>
+    public static bool operator ==(SamplingParameters parameters1, SamplingParameters parameters2) => parameters1.Equals(parameters2);
+
+    /// <summary>
+    /// Compare two <see cref="SamplingParameters"/> for not equality.
+    /// </summary>
+    /// <param name="parameters1">First parameters to compare.</param>
+    /// <param name="parameters2">Second parameters to compare.</param>
+    public static bool operator !=(SamplingParameters parameters1, SamplingParameters parameters2) => !parameters1.Equals(parameters2);
+
+    /// <inheritdoc/>
+    public override bool Equals(object? obj)
+        => obj is SamplingParameters other && this.Equals(other);
+
+    /// <inheritdoc/>
+    public override int GetHashCode()
+    {
+        // Note: Tags and Links are deliberately not included in the hash code
+        // because equality for them is based on their content. Enumerating
+        // them here would add cost on hot paths and hashing the enumerable
+        // instances would not be consistent with Equals.
+#if NET || NETSTANDARD2_1_OR_GREATER
+        return HashCode.Combine(this.ParentContext, this.TraceId, this.Name, this.Kind);
+#else
+        var hash = 17;
+        unchecked
+        {
+            hash = (31 * hash) + this.ParentContext.GetHashCode();
+            hash = (31 * hash) + this.TraceId.GetHashCode();
+            hash = (31 * hash) + (this.Name?.GetHashCode() ?? 0);
+            hash = (31 * hash) + this.Kind.GetHashCode();
+        }
+
+        return hash;
+#endif
+    }
+
+    /// <inheritdoc/>
+    public bool Equals(SamplingParameters other) =>
+        this.ParentContext == other.ParentContext &&
+        this.TraceId == other.TraceId &&
+        this.Name == other.Name &&
+        this.Kind == other.Kind &&
+        (this.Tags ?? []).SequenceEqual(other.Tags ?? []) &&
+        (this.Links ?? []).SequenceEqual(other.Links ?? []);
 }

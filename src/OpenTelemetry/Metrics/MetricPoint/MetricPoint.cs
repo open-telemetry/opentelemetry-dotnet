@@ -9,7 +9,12 @@ namespace OpenTelemetry.Metrics;
 /// <summary>
 /// Represents a metric data point.
 /// </summary>
+// Note: Equality is intentionally not implemented - metric points are mutable
+// and updated concurrently by aggregation, so field-by-field equality is not
+// meaningful.
+#pragma warning disable CA1815 // Override equals and operator equals on value types
 public struct MetricPoint
+#pragma warning restore CA1815 // Override equals and operator equals on value types
 {
     // Represents the number of update threads using this MetricPoint at any given point of time.
     // If the value is equal to int.MinValue which is -2147483648, it means that this MetricPoint is available for reuse.

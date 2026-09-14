@@ -6,8 +6,13 @@ namespace OpenTelemetry.Metrics;
 /// <summary>
 /// A read-only collection of <see cref="Exemplar" />s.
 /// </summary>
+// Note: Equality is intentionally not implemented - this type is a view over
+// a shared array whose contents can be updated concurrently, so element-wise
+// comparison is not meaningful.
+#pragma warning disable CA1815 // Override equals and operator equals on value types
 #pragma warning disable CA1711 // Identifiers should not have incorrect suffix
 public readonly struct ReadOnlyExemplarCollection
+#pragma warning restore CA1815 // Override equals and operator equals on value types
 #pragma warning restore CA1711 // Identifiers should not have incorrect suffix
 {
     internal static readonly ReadOnlyExemplarCollection Empty = new([]);
@@ -72,12 +77,16 @@ public readonly struct ReadOnlyExemplarCollection
         return list;
     }
 
+    // Note: Equality is intentionally not implemented - enumerators are
+    // mutable cursors and comparing instances is not a supported scenario.
+#pragma warning disable CA1815 // Override equals and operator equals on value types
 #pragma warning disable CA1034 // Nested types should not be visible - already part of public API
     /// <summary>
     /// Enumerates the elements of a <see cref="ReadOnlyExemplarCollection"/>.
     /// </summary>
     public struct Enumerator
 #pragma warning restore CA1034 // Nested types should not be visible - already part of public API
+#pragma warning restore CA1815 // Override equals and operator equals on value types
     {
         private readonly Exemplar[] exemplars;
         private int index;
