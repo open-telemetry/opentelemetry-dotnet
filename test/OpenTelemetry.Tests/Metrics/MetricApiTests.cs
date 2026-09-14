@@ -1535,20 +1535,21 @@ public class MetricApiTests : MetricTestsBase
     }
 
     [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void HighCardinalityTagsAboveMaxTagCacheSizeProduceDistinctMetricPoints(bool exportDelta)
+    [InlineData(true, ThreadStaticStorage.MaxTagCacheSize + 1)]
+    [InlineData(false, ThreadStaticStorage.MaxTagCacheSize + 1)]
+    [InlineData(true, ThreadStaticStorage.MaxLargeTagCacheSize + 1)]
+    [InlineData(false, ThreadStaticStorage.MaxLargeTagCacheSize + 1)]
+    public void HighCardinalityTagsAboveMaxTagCacheSizeProduceDistinctMetricPoints(bool exportDelta, int tagCount)
     {
         // ThreadStaticStorage caches per-length tag arrays for up to
         // MaxTagCacheSize tags and falls back to grow-on-demand buffers for
-        // any additional tags. Use one more tag than the cache size to
-        // exercise that fallback path and confirm distinct tag sets are not
-        // aliased to the same underlying array.
-        var tagCount = ThreadStaticStorage.MaxTagCacheSize + 1;
-
+        // any additional tags, up to MaxLargeTagCacheSize. Above that it
+        // allocates per measurement again. Run just above both thresholds to
+        // exercise each fallback and confirm distinct tag sets are not aliased
+        // to the same underlying array.
         var exportedItems = new List<Metric>();
 
-        using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
+        using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}.{tagCount}");
         var counterLong = meter.CreateCounter<long>("Counter");
 
         using var container = BuildMeterProvider(out var meterProvider, builder => builder
@@ -1563,7 +1564,9 @@ public class MetricApiTests : MetricTestsBase
             var tags = new KeyValuePair<string, object?>[tagCount];
             for (var i = 0; i < tagCount - 1; i++)
             {
-                tags[i] = new KeyValuePair<string, object?>($"Key{i}", $"Value{i}");
+                // Zero padded, so insertion order matches the ordinal sort
+                // order the MetricPoint stores tags in.
+                tags[i] = new KeyValuePair<string, object?>($"Key{i:D3}", $"Value{i}");
             }
 
             tags[tagCount - 1] = new KeyValuePair<string, object?>("KeyDistinguishing", distinguishingValue);
