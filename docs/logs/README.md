@@ -373,6 +373,10 @@ Logs](./customizing-the-sdk/README.md#log-filtering) document has provided
 instructions for basic filtering based on logger category name and severity
 level.
 
+Log records can also be filtered from being exported based on their content
+using a custom processor. See [Filtering
+Processor](./extending-the-sdk/README.md#filtering-processor) for details.
+
 For more advanced filtering and sampling, the .NET team has a plan to cover it
 in .NET 9 timeframe, please use this [runtime
 issue](https://github.com/dotnet/runtime/issues/82465) to track the progress or

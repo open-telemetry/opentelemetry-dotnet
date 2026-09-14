@@ -88,6 +88,35 @@ class MyProcessor : BaseProcessor<LogRecord>
 
 A demo processor is shown [here](./MyProcessor.cs).
 
+### Filtering Processor
+
+Another common use case of writing a custom processor is to filter log records
+from being exported. Unlike `Activity`, `LogRecord` does not have a `Recorded`
+flag which exporting processors check to skip telemetry, so a
+"FilteringProcessor" can be written by deriving from
+`BatchLogRecordExportProcessor` or `SimpleLogRecordExportProcessor` and only
+calling `base.OnEnd` for the log records which should be exported. An example
+"FilteringProcessor" is shown [here](./MyFilteringProcessor.cs).
+
+When using such a filtering processor it replaces the exporting processor it
+derives from:
+
+```csharp
+var loggerFactory = LoggerFactory.Create(builder =>
+{
+    builder.AddOpenTelemetry(options =>
+    {
+        options.AddProcessor(new MyFilteringProcessor(new MyExporter(), logRecord => true));
+    });
+});
+```
+
+> [!NOTE]
+> A filtering processor wraps an exporter directly, so it must be registered
+> manually using `AddProcessor` (as shown above). The `Add*Exporter` extension
+> methods shipped from this repo register their own exporting processor and
+> cannot be combined with a filtering processor.
+
 ## Sampler
 
 TBD
