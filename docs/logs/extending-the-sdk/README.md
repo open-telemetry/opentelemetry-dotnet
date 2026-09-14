@@ -96,10 +96,10 @@ flag which exporting processors check to skip telemetry, so a
 "FilteringProcessor" can be written by deriving from
 `BatchLogRecordExportProcessor` or `SimpleLogRecordExportProcessor` and only
 calling `base.OnEnd` for the log records which should be exported. An example
-"FilteringProcessor" is shown [here](./MyFilteringProcessor.cs).
+filtering processor is shown [here](./MyFilteringProcessor.cs).
 
-When using such a filtering processor it replaces the exporting processor it
-derives from:
+A filtering processor like this is registered in place of the export
+processor it derives from:
 
 ```csharp
 var loggerFactory = LoggerFactory.Create(builder =>

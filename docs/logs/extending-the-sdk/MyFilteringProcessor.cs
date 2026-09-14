@@ -16,7 +16,7 @@ internal sealed class MyFilteringProcessor : BatchLogRecordExportProcessor
     /// class.
     /// </summary>
     /// <param name="exporter">Log record exporter.</param>
-    /// <param name="filter">Function used to test if a <see cref="LogRecord"/>
+    /// <param name="filter">A predicate used to test if a <see cref="LogRecord"/>
     /// should be exported or dropped. Return <see langword="true"/> to export
     /// or <see langword="false"/> to drop.</param>
     public MyFilteringProcessor(BaseExporter<LogRecord> exporter, Func<LogRecord, bool> filter)
