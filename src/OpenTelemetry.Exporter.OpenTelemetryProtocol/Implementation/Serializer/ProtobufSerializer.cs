@@ -46,18 +46,33 @@ internal static class ProtobufSerializer
     /// </summary>
     internal const int ReserveSizeForCompactLength = 1;
 
+    /// <summary>
+    /// The number of bytes to reserve for a length prefix that will be filled in by
+    /// <see cref="WriteShortReservedLength"/>.
+    /// </summary>
+    internal const int ReserveSizeForShortLength = 2;
+
     private const uint UInt128 = 0x80;
     private const ulong ULong128 = 0x80;
     private const int Fixed32Size = 4;
     private const int Fixed64Size = 8;
     private const int MaskBitsLow = 0b_0111_1111;
     private const int MaskBitHigh = 0b_1000_0000;
+    private const int MaxTwoByteVarInt32Value = 0b_0011_1111_1111_1111;
 
     // A UTF-16 character encodes to at most 3 UTF-8 bytes (a surrogate pair encodes to 4
     // bytes across 2 characters, so 3 is the per-character worst case), so any string of
     // this length or shorter encodes to at most MaskBitsLow bytes and its protobuf length
     // prefix therefore always fits in a single varint byte.
     private const int MaxCharsWithSingleByteUtf8Length = MaskBitsLow / 3;
+
+    // A nested message holding nothing but a string - an AnyValue wrapping a string_value,
+    // or an ArrayValue entry doing the same - carries two length prefixes: its own, and the
+    // inner string's. The inner one is the encoded byte count and the outer is that plus the
+    // inner tag and length bytes, so both fit in a single varint byte when the encoded form
+    // is at most MaskBitsLow - 2 bytes. At worst 3 bytes per character, that gives this many
+    // characters.
+    private const int MaxCharsWithSingleByteNestedUtf8Length = (MaskBitsLow - 2) / 3;
 #if NETFRAMEWORK || NETSTANDARD2_0
     private const int MaxThreadStaticCharBufferSize = 1024;
 #endif
@@ -144,6 +159,45 @@ internal static class ProtobufSerializer
         Debug.Assert(endOfLength == contentPosition + shift, "The length prefix did not end where the content starts");
 
         return writePosition + shift;
+    }
+
+    /// <summary>
+    /// Fills in the length of a nested message whose length prefix was reserved with
+    /// <see cref="ReserveSizeForShortLength"/>, padding the varint to two bytes.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Two bytes represent lengths up to <c>2^14 - 1</c>, which covers every span, span
+    /// event and span link in practice, so unlike <see cref="WriteCompactLength"/> this
+    /// almost never has to move the content, and unlike <see cref="WriteReservedLength"/>
+    /// it does not put two dead bytes on the wire for each one.
+    /// </para>
+    /// <para>
+    /// Content that does not fit is moved to make room for a wider prefix, exactly as in
+    /// <see cref="WriteCompactLength"/>.
+    /// </para>
+    /// </remarks>
+    /// <param name="buffer">The buffer being written to.</param>
+    /// <param name="lengthPosition">The position reserved for the length prefix.</param>
+    /// <param name="writePosition">The position just past the message content.</param>
+    /// <returns>The new write position, which moves when the content had to be shifted.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int WriteShortReservedLength(byte[] buffer, int lengthPosition, int writePosition)
+    {
+        var contentLength = writePosition - (lengthPosition + ReserveSizeForShortLength);
+
+        Debug.Assert(contentLength >= 0, "contentLength was negative");
+
+        if (contentLength > MaxTwoByteVarInt32Value)
+        {
+            return WidenShortReservedLength(buffer, lengthPosition, writePosition, contentLength);
+        }
+
+        var slice = buffer.AsSpan(lengthPosition, ReserveSizeForShortLength);
+        slice[0] = (byte)((contentLength & MaskBitsLow) | MaskBitHigh);
+        slice[1] = (byte)((contentLength >> 7) & MaskBitsLow);
+
+        return writePosition;
     }
 
     internal static int ComputeVarInt32Size(uint value)
@@ -478,6 +532,118 @@ internal static class ProtobufSerializer
     }
 
     /// <summary>
+    /// Writes a nested message holding nothing but a string field - an <c>AnyValue</c>
+    /// wrapping a <c>string_value</c>, or an <c>ArrayValue</c> entry doing the same - under
+    /// <paramref name="outerFieldNumber"/>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Both length prefixes are only known once the characters have been encoded, so the
+    /// obvious implementation measures the string with a byte count pass and then encodes it
+    /// with a second pass over the same characters. String attribute values are the most
+    /// numerous thing in a payload, so that second pass is worth removing.
+    /// </para>
+    /// <para>
+    /// When the string is short enough that both prefixes are certain to be a single byte,
+    /// this reserves both, encodes once, and backfills them, the same way
+    /// <see cref="WriteStringWithTag(byte[], int, int, string)"/> does for a bare string.
+    /// Longer strings fall back to measuring first.
+    /// </para>
+    /// </remarks>
+    /// <param name="buffer">The buffer being written to.</param>
+    /// <param name="writePosition">The position to write at.</param>
+    /// <param name="outerFieldNumber">The field number of the nested message.</param>
+    /// <param name="innerFieldNumber">The field number of the string inside it. Must be 15 or less, so its tag is one byte.</param>
+    /// <param name="value">The string to write.</param>
+    /// <returns>The new write position.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int WriteNestedStringWithTag(
+        byte[] buffer,
+        int writePosition,
+        int outerFieldNumber,
+        int innerFieldNumber,
+        string value)
+    {
+        Debug.Assert(innerFieldNumber <= 15, "innerFieldNumber did not fit in a single byte tag.");
+
+        if (value.Length > MaxCharsWithSingleByteNestedUtf8Length)
+        {
+            return WriteNestedStringWithTagSlow(buffer, writePosition, outerFieldNumber, innerFieldNumber, value);
+        }
+
+        writePosition = WriteTag(buffer, writePosition, outerFieldNumber, ProtobufWireType.LEN);
+        var outerLengthPosition = writePosition++;
+        writePosition = WriteTag(buffer, writePosition, innerFieldNumber, ProtobufWireType.LEN);
+        var innerLengthPosition = writePosition++;
+
+        // Claim both reserved bytes before encoding. It keeps the out-of-space
+        // failure an IndexOutOfRangeException, the same as the slower path.
+        buffer[outerLengthPosition] = 0;
+        buffer[innerLengthPosition] = 0;
+
+#if NETFRAMEWORK || NETSTANDARD2_0
+        var bytesWritten = Utf8Encoding.GetBytes(value, 0, value.Length, buffer, writePosition);
+#else
+        var bytesWritten = Utf8Encoding.GetBytes(value.AsSpan(), buffer.AsSpan(writePosition));
+#endif
+
+        Debug.Assert(bytesWritten + 2 <= MaskBitsLow, "The nested lengths did not fit in single byte varints.");
+
+        buffer[innerLengthPosition] = (byte)bytesWritten;
+        buffer[outerLengthPosition] = (byte)(bytesWritten + 2);
+
+        return writePosition + bytesWritten;
+    }
+
+    /// <inheritdoc cref="WriteNestedStringWithTag(byte[], int, int, int, string)"/>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int WriteNestedStringWithTag(
+        byte[] buffer,
+        int writePosition,
+        int outerFieldNumber,
+        int innerFieldNumber,
+        ReadOnlySpan<char> value)
+    {
+        Debug.Assert(innerFieldNumber <= 15, "innerFieldNumber did not fit in a single byte tag.");
+
+        if (value.Length > MaxCharsWithSingleByteNestedUtf8Length)
+        {
+            return WriteNestedStringWithTagSlow(buffer, writePosition, outerFieldNumber, innerFieldNumber, value);
+        }
+
+        writePosition = WriteTag(buffer, writePosition, outerFieldNumber, ProtobufWireType.LEN);
+        var outerLengthPosition = writePosition++;
+        writePosition = WriteTag(buffer, writePosition, innerFieldNumber, ProtobufWireType.LEN);
+        var innerLengthPosition = writePosition++;
+
+        buffer[outerLengthPosition] = 0;
+        buffer[innerLengthPosition] = 0;
+
+#if NETFRAMEWORK || NETSTANDARD2_0
+        int bytesWritten;
+        if (value.Length == 0)
+        {
+            bytesWritten = 0;
+        }
+        else
+        {
+            var charBuffer = GetCharBuffer(value.Length);
+            value.CopyTo(charBuffer);
+            bytesWritten = Utf8Encoding.GetBytes(charBuffer, 0, value.Length, buffer, writePosition);
+        }
+#else
+        var bytesWritten = Utf8Encoding.GetBytes(value, buffer.AsSpan(writePosition));
+#endif
+
+        Debug.Assert(bytesWritten + 2 <= MaskBitsLow, "the nested lengths did not fit in single byte varints.");
+
+        buffer[innerLengthPosition] = (byte)bytesWritten;
+        buffer[outerLengthPosition] = (byte)(bytesWritten + 2);
+
+        return writePosition + bytesWritten;
+    }
+
+    /// <summary>
     /// Rents a serialization buffer of at least <paramref name="minimumSize"/>
     /// bytes from the pool. The returned array may be larger than requested and
     /// its contents are not cleared.
@@ -565,6 +731,61 @@ internal static class ProtobufSerializer
         ReturnBuffer(pool, smallerBuffer);
 
         return true;
+    }
+
+    /// <summary>
+    /// Handles the rare <see cref="WriteShortReservedLength"/> case where the content does
+    /// not fit a two byte prefix, by shifting it along to make room for the full varint.
+    /// </summary>
+    /// <remarks>
+    /// Kept out of line so the common case stays small enough to inline.
+    /// </remarks>
+    private static int WidenShortReservedLength(byte[] buffer, int lengthPosition, int writePosition, int contentLength)
+    {
+        // Span.CopyTo handles the overlap, and throws when the buffer is too
+        // small, which the callers turn into a resize and a retry.
+        var shift = ComputeVarInt32Size((uint)contentLength) - ReserveSizeForShortLength;
+        var contentPosition = lengthPosition + ReserveSizeForShortLength;
+
+        buffer.AsSpan(contentPosition, contentLength).CopyTo(buffer.AsSpan(contentPosition + shift));
+
+        var endOfLength = WriteVarInt32(buffer, lengthPosition, (uint)contentLength);
+
+        Debug.Assert(endOfLength == contentPosition + shift, "The length prefix did not end where the content starts.");
+
+        return writePosition + shift;
+    }
+
+    private static int WriteNestedStringWithTagSlow(
+        byte[] buffer,
+        int writePosition,
+        int outerFieldNumber,
+        int innerFieldNumber,
+        string value)
+    {
+        var numberOfUtf8CharsInString = GetNumberOfUtf8CharsInString(value);
+        var serializedLengthSize = ComputeVarInt64Size((ulong)numberOfUtf8CharsInString);
+
+        // length = numberOfUtf8CharsInString + inner tag size + inner length field size.
+        writePosition = WriteTagAndLength(buffer, writePosition, numberOfUtf8CharsInString + 1 + serializedLengthSize, outerFieldNumber, ProtobufWireType.LEN);
+
+        return WriteStringWithTag(buffer, writePosition, innerFieldNumber, numberOfUtf8CharsInString, value);
+    }
+
+    private static int WriteNestedStringWithTagSlow(
+        byte[] buffer,
+        int writePosition,
+        int outerFieldNumber,
+        int innerFieldNumber,
+        ReadOnlySpan<char> value)
+    {
+        var numberOfUtf8CharsInString = GetNumberOfUtf8CharsInString(value);
+        var serializedLengthSize = ComputeVarInt64Size((ulong)numberOfUtf8CharsInString);
+
+        // length = numberOfUtf8CharsInString + inner tag size + inner length field size.
+        writePosition = WriteTagAndLength(buffer, writePosition, numberOfUtf8CharsInString + 1 + serializedLengthSize, outerFieldNumber, ProtobufWireType.LEN);
+
+        return WriteStringWithTag(buffer, writePosition, innerFieldNumber, numberOfUtf8CharsInString, value);
     }
 
 #if NETFRAMEWORK || NETSTANDARD2_0

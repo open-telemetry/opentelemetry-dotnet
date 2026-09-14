@@ -252,7 +252,7 @@ internal static class ProtobufOtlpTraceSerializer
     {
         writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpTraceFieldNumberConstants.ScopeSpans_Span, ProtobufWireType.LEN);
         var spanLengthPosition = writePosition;
-        writePosition += ReserveSizeForLength;
+        writePosition += ProtobufSerializer.ReserveSizeForShortLength;
 
         writePosition = ProtobufSerializer.WriteTagAndLength(buffer, writePosition, TraceIdSize, ProtobufOtlpTraceFieldNumberConstants.Span_Trace_Id, ProtobufWireType.LEN);
         writePosition = WriteTraceId(buffer, writePosition, activity.TraceId);
@@ -282,7 +282,7 @@ internal static class ProtobufOtlpTraceSerializer
         writePosition = WriteSpanEvents(buffer, writePosition, sdkLimitOptions, activity);
         writePosition = WriteSpanLinks(buffer, writePosition, sdkLimitOptions, activity);
         writePosition = WriteSpanStatus(buffer, writePosition, activity, statusCode, statusMessage);
-        ProtobufSerializer.WriteReservedLength(buffer, spanLengthPosition, writePosition - (spanLengthPosition + ReserveSizeForLength));
+        writePosition = ProtobufSerializer.WriteShortReservedLength(buffer, spanLengthPosition, writePosition);
 
         return writePosition;
     }
@@ -398,13 +398,13 @@ internal static class ProtobufOtlpTraceSerializer
             {
                 writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpTraceFieldNumberConstants.Span_Events, ProtobufWireType.LEN);
                 var spanEventsLengthPosition = writePosition;
-                writePosition += ReserveSizeForLength; // Reserve 4 bytes for length
+                writePosition += ProtobufSerializer.ReserveSizeForShortLength;
 
                 writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpTraceFieldNumberConstants.Event_Name, evnt.Name);
                 writePosition = ProtobufSerializer.WriteFixed64WithTag(buffer, writePosition, ProtobufOtlpTraceFieldNumberConstants.Event_Time_Unix_Nano, (ulong)evnt.Timestamp.ToUnixTimeNanoseconds());
                 writePosition = WriteEventAttributes(ref buffer, writePosition, sdkLimitOptions, evnt);
 
-                ProtobufSerializer.WriteReservedLength(buffer, spanEventsLengthPosition, writePosition - (spanEventsLengthPosition + ReserveSizeForLength));
+                writePosition = ProtobufSerializer.WriteShortReservedLength(buffer, spanEventsLengthPosition, writePosition);
                 eventCount++;
             }
             else
@@ -480,7 +480,7 @@ internal static class ProtobufOtlpTraceSerializer
             {
                 writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpTraceFieldNumberConstants.Span_Links, ProtobufWireType.LEN);
                 var spanLinksLengthPosition = writePosition;
-                writePosition += ReserveSizeForLength; // Reserve 4 bytes for length
+                writePosition += ProtobufSerializer.ReserveSizeForShortLength;
 
                 writePosition = ProtobufSerializer.WriteTagAndLength(buffer, writePosition, TraceIdSize, ProtobufOtlpTraceFieldNumberConstants.Link_Trace_Id, ProtobufWireType.LEN);
                 writePosition = WriteTraceId(buffer, writePosition, link.Context.TraceId);
@@ -488,13 +488,13 @@ internal static class ProtobufOtlpTraceSerializer
                 writePosition = WriteSpanId(buffer, writePosition, link.Context.SpanId);
                 if (link.Context.TraceState != null)
                 {
-                    writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpTraceFieldNumberConstants.Span_Trace_State, link.Context.TraceState);
+                    writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpTraceFieldNumberConstants.Link_Trace_State, link.Context.TraceState);
                 }
 
                 writePosition = WriteLinkAttributes(buffer, writePosition, sdkLimitOptions, link);
                 writePosition = WriteTraceFlags(buffer, writePosition, link.Context.TraceFlags, link.Context.IsRemote, ProtobufOtlpTraceFieldNumberConstants.Link_Flags);
 
-                ProtobufSerializer.WriteReservedLength(buffer, spanLinksLengthPosition, writePosition - (spanLinksLengthPosition + ReserveSizeForLength));
+                writePosition = ProtobufSerializer.WriteShortReservedLength(buffer, spanLinksLengthPosition, writePosition);
                 linkCount++;
             }
             else
