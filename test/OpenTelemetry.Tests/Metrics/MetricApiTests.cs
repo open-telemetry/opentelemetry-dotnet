@@ -1535,6 +1535,71 @@ public class MetricApiTests : MetricTestsBase
     }
 
     [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void HighCardinalityTagsAboveMaxTagCacheSizeProduceDistinctMetricPoints(bool exportDelta)
+    {
+        // ThreadStaticStorage caches per-length tag arrays for up to
+        // MaxTagCacheSize tags and falls back to grow-on-demand buffers for
+        // any additional tags. Use one more tag than the cache size to
+        // exercise that fallback path and confirm distinct tag sets are not
+        // aliased to the same underlying array.
+        var tagCount = ThreadStaticStorage.MaxTagCacheSize + 1;
+
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}");
+        var counterLong = meter.CreateCounter<long>("Counter");
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems, metricReaderOptions =>
+            {
+                metricReaderOptions.TemporalityPreference = exportDelta ? MetricReaderTemporalityPreference.Delta : MetricReaderTemporalityPreference.Cumulative;
+            }));
+
+        KeyValuePair<string, object?>[] BuildTags(string distinguishingValue)
+        {
+            var tags = new KeyValuePair<string, object?>[tagCount];
+            for (var i = 0; i < tagCount - 1; i++)
+            {
+                tags[i] = new KeyValuePair<string, object?>($"Key{i}", $"Value{i}");
+            }
+
+            tags[tagCount - 1] = new KeyValuePair<string, object?>("KeyDistinguishing", distinguishingValue);
+            return tags;
+        }
+
+        // Two distinct tag sets, each measured twice, and each repeated
+        // measurement uses a different in-memory order for the shared tags to
+        // also confirm order-insensitivity still holds at this tag count.
+        var firstTags = BuildTags("First");
+        var secondTags = BuildTags("Second");
+        var firstTagsReordered = (KeyValuePair<string, object?>[])firstTags.Clone();
+        Array.Reverse(firstTagsReordered, 0, tagCount - 1);
+        var secondTagsReordered = (KeyValuePair<string, object?>[])secondTags.Clone();
+        Array.Reverse(secondTagsReordered, 0, tagCount - 1);
+
+        counterLong.Add(5, firstTags);
+        counterLong.Add(10, firstTagsReordered);
+        counterLong.Add(20, secondTags);
+        counterLong.Add(40, secondTagsReordered);
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        Assert.Equal(2, GetNumberOfMetricPoints(exportedItems));
+
+        List<KeyValuePair<string, object?>> expectedTagsForFirstMetricPoint = [.. firstTags];
+        List<KeyValuePair<string, object?>> expectedTagsForSecondMetricPoint = [.. secondTags];
+
+        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFirstMetricPoint, 1);
+        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForSecondMetricPoint, 2);
+
+        var sumReceived = GetLongSum(exportedItems);
+        Assert.Equal(75, sumReceived);
+    }
+
+    [Theory]
     [InlineData(MetricReaderTemporalityPreference.Cumulative)]
     [InlineData(MetricReaderTemporalityPreference.Delta)]
     public void TestInstrumentDisposal(MetricReaderTemporalityPreference temporality)
