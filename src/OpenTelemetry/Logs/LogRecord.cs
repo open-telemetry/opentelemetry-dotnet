@@ -24,9 +24,9 @@ public sealed class LogRecord
     internal LogRecordSource Source = LogRecordSource.CreatedManually;
     internal int PoolReferenceCount = int.MaxValue;
 
-    private static readonly Action<object?, List<object?>> AddScopeToBufferedList = static (scope, state) =>
+    private static readonly Action<object?, LogRecord> AddScopeToRecord = static (scope, record) =>
     {
-        state.Add(scope);
+        (record.ScopeStorage ??= new List<object?>(LogRecordPoolHelper.DefaultMaxNumberOfScopes)).Add(scope);
     };
 
     internal LogRecord()
@@ -538,13 +538,11 @@ public sealed class LogRecord
             return;
         }
 
-        var scopeStorage = this.ScopeStorage ??= new List<object?>(LogRecordPoolHelper.DefaultMaxNumberOfScopes);
-
-        scopeProvider.ForEachScope(AddScopeToBufferedList, scopeStorage);
+        scopeProvider.ForEachScope(AddScopeToRecord, this);
 
         this.ILoggerData.ScopeProvider = null;
 
-        this.ILoggerData.BufferedScopes = scopeStorage;
+        this.ILoggerData.BufferedScopes = this.ScopeStorage;
     }
 
     internal struct LogRecordILoggerData

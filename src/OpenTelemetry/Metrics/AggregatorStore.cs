@@ -516,19 +516,17 @@ internal sealed class AggregatorStore
                         return -1;
                     }
 
-                    // Note: We are using storage from ThreadStatic (for upto MaxTagCacheSize tags) for both the input order of tags and the sorted order of tags,
-                    // so we need to make a deep copy for Dictionary storage.
-                    if (length <= ThreadStaticStorage.MaxTagCacheSize)
-                    {
-                        var givenTagKeysAndValues = new KeyValuePair<string, object?>[length];
-                        tagKeysAndValues.CopyTo(givenTagKeysAndValues.AsSpan());
+                    // Note: We are using storage from ThreadStatic for both the input order of
+                    // tags and the sorted order of tags - at every length, including above
+                    // MaxTagCacheSize - so we always need to make a deep copy for Dictionary storage.
+                    var givenTagKeysAndValues = new KeyValuePair<string, object?>[length];
+                    tagKeysAndValues.CopyTo(givenTagKeysAndValues.AsSpan());
 
-                        var sortedTagKeysAndValues = new KeyValuePair<string, object?>[length];
-                        tempSortedTagKeysAndValues.CopyTo(sortedTagKeysAndValues.AsSpan());
+                    var sortedTagKeysAndValues = new KeyValuePair<string, object?>[length];
+                    tempSortedTagKeysAndValues.CopyTo(sortedTagKeysAndValues.AsSpan());
 
-                        givenTags = new Tags(givenTagKeysAndValues);
-                        sortedTags = new Tags(sortedTagKeysAndValues);
-                    }
+                    givenTags = new Tags(givenTagKeysAndValues);
+                    sortedTags = new Tags(sortedTagKeysAndValues);
 
                     lock (this.tagsToMetricPointIndexDictionary)
                     {
@@ -634,19 +632,17 @@ internal sealed class AggregatorStore
 
                 if (!this.TagsToMetricPointIndexDictionaryDelta.TryGetValue(sortedTags, out lookupData))
                 {
-                    // Note: We are using storage from ThreadStatic (for up to MaxTagCacheSize tags) for both the input order of tags and the sorted order of tags,
-                    // so we need to make a deep copy for Dictionary storage.
-                    if (length <= ThreadStaticStorage.MaxTagCacheSize)
-                    {
-                        var givenTagKeysAndValues = new KeyValuePair<string, object?>[length];
-                        tagKeysAndValues.CopyTo(givenTagKeysAndValues.AsSpan());
+                    // Note: We are using storage from ThreadStatic for both the input order of
+                    // tags and the sorted order of tags - at every length, including above
+                    // MaxTagCacheSize - so we always need to make a deep copy for Dictionary storage.
+                    var givenTagKeysAndValues = new KeyValuePair<string, object?>[length];
+                    tagKeysAndValues.CopyTo(givenTagKeysAndValues.AsSpan());
 
-                        var sortedTagKeysAndValues = new KeyValuePair<string, object?>[length];
-                        tempSortedTagKeysAndValues.CopyTo(sortedTagKeysAndValues.AsSpan());
+                    var sortedTagKeysAndValues = new KeyValuePair<string, object?>[length];
+                    tempSortedTagKeysAndValues.CopyTo(sortedTagKeysAndValues.AsSpan());
 
-                        givenTags = new Tags(givenTagKeysAndValues);
-                        sortedTags = new Tags(sortedTagKeysAndValues);
-                    }
+                    givenTags = new Tags(givenTagKeysAndValues);
+                    sortedTags = new Tags(sortedTagKeysAndValues);
 
                     Debug.Assert(this.availableMetricPoints != null, "this.availableMetricPoints was null");
 
