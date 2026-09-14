@@ -56,8 +56,8 @@ public readonly struct LogRecordScope : IEquatable<LogRecordScope>
     /// <summary>
     /// LogRecordScope enumerator.
     /// </summary>
-    // Note: Does not implement equality - enumerators are mutable cursors
-    // and comparing instances is not a supported scenario.
+    // Note: Equality is intentionally not implemented - enumerators are
+    // mutable cursors and comparing instances is not a supported scenario.
 #pragma warning disable CA1815 // Override equals and operator equals on value types
     public struct Enumerator : IEnumerator<KeyValuePair<string, object?>>
 #pragma warning restore CA1815 // Override equals and operator equals on value types
