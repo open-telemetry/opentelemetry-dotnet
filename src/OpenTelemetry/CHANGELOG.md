@@ -16,6 +16,11 @@ Notes](../../RELEASENOTES.md).
 * Added `AlwaysRecordSampler`.
   ([#7695](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7695))
 
+* Added equality members (`Equals`, `GetHashCode`, `==`, `!=`) to the
+  `HistogramBucket`, `LogRecordScope`, and `SamplingParameters` value types
+  and removed the project-wide `CA1815` suppression.
+  ([#7744](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7744))
+
 ## 1.18.0
 
 Released 2026-Aug-21
