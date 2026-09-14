@@ -73,6 +73,7 @@ internal static class ProtobufSerializer
     // is at most MaskBitsLow - 2 bytes. At worst 3 bytes per character, that gives this many
     // characters.
     private const int MaxCharsWithSingleByteNestedUtf8Length = (MaskBitsLow - 2) / 3;
+
 #if NETFRAMEWORK || NETSTANDARD2_0
     private const int MaxThreadStaticCharBufferSize = 1024;
 #endif
