@@ -516,9 +516,13 @@ internal sealed class AggregatorStore
                         return -1;
                     }
 
-                    // Note: We are using storage from ThreadStatic (for upto MaxTagCacheSize tags) for both the input order of tags and the sorted order of tags,
-                    // so we need to make a deep copy for Dictionary storage.
-                    if (length <= ThreadStaticStorage.MaxTagCacheSize)
+                    // Note: Both arrays may be storage owned by ThreadStatic - for the input
+                    // order of tags and for the sorted order of tags - so at those lengths we
+                    // need a deep copy before handing them to the Dictionary. Above
+                    // MaxLargeTagCacheSize the thread-static storage deliberately does not
+                    // cache, so the arrays are already freshly allocated and can be used
+                    // directly.
+                    if (length <= ThreadStaticStorage.MaxLargeTagCacheSize)
                     {
                         var givenTagKeysAndValues = new KeyValuePair<string, object?>[length];
                         tagKeysAndValues.CopyTo(givenTagKeysAndValues.AsSpan());
@@ -634,9 +638,13 @@ internal sealed class AggregatorStore
 
                 if (!this.TagsToMetricPointIndexDictionaryDelta.TryGetValue(sortedTags, out lookupData))
                 {
-                    // Note: We are using storage from ThreadStatic (for up to MaxTagCacheSize tags) for both the input order of tags and the sorted order of tags,
-                    // so we need to make a deep copy for Dictionary storage.
-                    if (length <= ThreadStaticStorage.MaxTagCacheSize)
+                    // Note: Both arrays may be storage owned by ThreadStatic - for the input
+                    // order of tags and for the sorted order of tags - so at those lengths we
+                    // need a deep copy before handing them to the Dictionary. Above
+                    // MaxLargeTagCacheSize the thread-static storage deliberately does not
+                    // cache, so the arrays are already freshly allocated and can be used
+                    // directly.
+                    if (length <= ThreadStaticStorage.MaxLargeTagCacheSize)
                     {
                         var givenTagKeysAndValues = new KeyValuePair<string, object?>[length];
                         tagKeysAndValues.CopyTo(givenTagKeysAndValues.AsSpan());

@@ -1006,6 +1006,39 @@ public sealed class OtlpTraceExporterTests : IDisposable
         }
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ToOtlpSpanLinkTraceStateTest(bool traceStateWasSet)
+    {
+        using var activitySource = new ActivitySource(nameof(this.ToOtlpSpanLinkTraceStateTest));
+        var tracestate = "a=b;c=d";
+        var linkContext = new ActivityContext(
+            ActivityTraceId.CreateRandom(),
+            ActivitySpanId.CreateRandom(),
+            ActivityTraceFlags.Recorded,
+            traceStateWasSet ? tracestate : null);
+
+        var links = new[] { new ActivityLink(linkContext) };
+
+        using var activity = activitySource.StartActivity("Name", ActivityKind.Client, default(ActivityContext), tags: null, links);
+        Assert.NotNull(activity);
+
+        var otlpSpan = ToOtlpSpan(DefaultSdkLimitOptions, activity);
+        Assert.NotNull(otlpSpan);
+
+        var otlpLink = Assert.Single(otlpSpan.Links);
+
+        if (traceStateWasSet)
+        {
+            Assert.Equal(tracestate, otlpLink.TraceState);
+        }
+        else
+        {
+            Assert.Equal(string.Empty, otlpLink.TraceState);
+        }
+    }
+
     [Fact]
     public void UseOpenTelemetryProtocolActivityExporterWithCustomActivityProcessor()
     {

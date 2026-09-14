@@ -26,8 +26,7 @@ public class MetricViewTests : MetricTestsBase
         var counterLong = meter.CreateCounter<long>("name1");
         counterLong.Add(10);
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        var metric = exportedItems[0];
+        var metric = Assert.Single(exportedItems);
         Assert.Equal("renamed", metric.Name);
     }
 
@@ -50,8 +49,8 @@ public class MetricViewTests : MetricTestsBase
         counter.Add(10);
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
-        Assert.Single(exportedItems);
-        Assert.Equal(viewNewName, exportedItems[0].Name);
+        var metric = Assert.Single(exportedItems);
+        Assert.Equal(viewNewName, metric.Name);
     }
 
     [Theory]
@@ -70,8 +69,8 @@ public class MetricViewTests : MetricTestsBase
         counter.Add(10);
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
-        Assert.Single(exportedItems);
-        Assert.Equal(viewNewName, exportedItems[0].Name);
+        var metric = Assert.Single(exportedItems);
+        Assert.Equal(viewNewName, metric.Name);
     }
 
     [Fact]
@@ -192,8 +191,8 @@ public class MetricViewTests : MetricTestsBase
 
         // Counter is still reported with 2nd View
         // even if 1st View is ignored due to View exception.
-        Assert.Single(exportedItems);
-        Assert.Equal("newname", exportedItems[0].Name);
+        var metric = Assert.Single(exportedItems);
+        Assert.Equal("newname", metric.Name);
     }
 
     [Theory]
@@ -289,8 +288,7 @@ public class MetricViewTests : MetricTestsBase
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
         // Expecting one metric stream.
-        Assert.Single(exportedItems);
-        var metric = exportedItems[0];
+        var metric = Assert.Single(exportedItems);
         Assert.Equal(viewNewName, metric.Name);
     }
 
@@ -357,9 +355,9 @@ public class MetricViewTests : MetricTestsBase
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
-        Assert.Single(exportedItems);
-        Assert.Equal(viewNewName, exportedItems[0].Name);
-        Assert.Equal("new description", exportedItems[0].Description);
+        var metric = Assert.Single(exportedItems);
+        Assert.Equal(viewNewName, metric.Name);
+        Assert.Equal("new description", metric.Description);
     }
 
     [Theory]
@@ -392,8 +390,7 @@ public class MetricViewTests : MetricTestsBase
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
         // Expecting one metric stream.
-        Assert.Single(exportedItems);
-        var metric = exportedItems[0];
+        var metric = Assert.Single(exportedItems);
         Assert.Equal(viewNewName, metric.Name);
     }
 
@@ -428,8 +425,7 @@ public class MetricViewTests : MetricTestsBase
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
         // Expecting one metric stream.
-        Assert.Single(exportedItems);
-        var metric = exportedItems[0];
+        var metric = Assert.Single(exportedItems);
         Assert.Equal(counter1.Name, metric.Name);
     }
 
@@ -495,8 +491,7 @@ public class MetricViewTests : MetricTestsBase
         counter.Add(10);
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
-        Assert.Single(exportedItems);
-        var metric = exportedItems[0];
+        var metric = Assert.Single(exportedItems);
 
         Assert.Equal("NotAHistogram", metric.Name);
 
@@ -506,8 +501,7 @@ public class MetricViewTests : MetricTestsBase
             metricPoints.Add(mp);
         }
 
-        Assert.Single(metricPoints);
-        var metricPoint = metricPoints[0];
+        var metricPoint = Assert.Single(metricPoints);
         Assert.Equal(10, metricPoint.GetSumLong());
     }
 
@@ -546,8 +540,7 @@ public class MetricViewTests : MetricTestsBase
             metricPointsDefault.Add(mp);
         }
 
-        Assert.Single(metricPointsDefault);
-        var histogramPoint = metricPointsDefault[0];
+        var histogramPoint = Assert.Single(metricPointsDefault);
 
         var count = histogramPoint.GetHistogramCount();
         var sum = histogramPoint.GetHistogramSum();
@@ -573,8 +566,7 @@ public class MetricViewTests : MetricTestsBase
             metricPointsCustom.Add(mp);
         }
 
-        Assert.Single(metricPointsCustom);
-        histogramPoint = metricPointsCustom[0];
+        histogramPoint = Assert.Single(metricPointsCustom);
 
         count = histogramPoint.GetHistogramCount();
         sum = histogramPoint.GetHistogramSum();
@@ -666,8 +658,7 @@ public class MetricViewTests : MetricTestsBase
                 metricPointsCustom.Add(mp);
             }
 
-            Assert.Single(metricPointsCustom);
-            var histogramPoint = metricPointsCustom[0];
+            var histogramPoint = Assert.Single(metricPointsCustom);
 
             var count = histogramPoint.GetHistogramCount();
             var sum = histogramPoint.GetHistogramSum();
@@ -737,8 +728,7 @@ public class MetricViewTests : MetricTestsBase
         histogram.Record(22);
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        var metricCustom = exportedItems[0];
+        var metricCustom = Assert.Single(exportedItems);
 
         Assert.Equal("MyHistogram", metricCustom.Name);
 
@@ -748,8 +738,7 @@ public class MetricViewTests : MetricTestsBase
             metricPointsCustom.Add(mp);
         }
 
-        Assert.Single(metricPointsCustom);
-        var histogramPoint = metricPointsCustom[0];
+        var histogramPoint = Assert.Single(metricPointsCustom);
 
         var count = histogramPoint.GetHistogramCount();
         var sum = histogramPoint.GetHistogramSum();
@@ -808,8 +797,7 @@ public class MetricViewTests : MetricTestsBase
         histogram.Record(0.5f);    // Should be in bucket with upper bound 0.5 (index 7)
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        var metric = exportedItems[0];
+        var metric = Assert.Single(exportedItems);
 
         List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
@@ -817,8 +805,7 @@ public class MetricViewTests : MetricTestsBase
             metricPoints.Add(mp);
         }
 
-        Assert.Single(metricPoints);
-        var histogramPoint = metricPoints[0];
+        var histogramPoint = Assert.Single(metricPoints);
 
         // The exported ExplicitBound values should be clean decimal values
         // (via DisplayBounds), not values with floating-point precision artifacts
@@ -881,8 +868,7 @@ public class MetricViewTests : MetricTestsBase
         }
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        var metric = exportedItems[0];
+        var metric = Assert.Single(exportedItems);
 
         Assert.Equal("MyHistogram", metric.Name);
 
@@ -892,8 +878,7 @@ public class MetricViewTests : MetricTestsBase
             metricPoints.Add(mp);
         }
 
-        Assert.Single(metricPoints);
-        var metricPoint = metricPoints[0];
+        var metricPoint = Assert.Single(metricPoints);
 
         var count = metricPoint.GetHistogramCount();
         var sum = metricPoint.GetHistogramSum();
@@ -1078,8 +1063,7 @@ public class MetricViewTests : MetricTestsBase
         counterNotInteresting.Add(10);
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        var metric = exportedItems[0];
+        var metric = Assert.Single(exportedItems);
         Assert.Equal("counterInteresting", metric.Name);
     }
 
@@ -1099,8 +1083,7 @@ public class MetricViewTests : MetricTestsBase
         meter.CreateObservableCounter("observableCounterInteresting", () => { return 10; }, "ms");
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        var metric = exportedItems[0];
+        var metric = Assert.Single(exportedItems);
         Assert.Equal("observableCounterInteresting", metric.Name);
     }
 
@@ -1120,8 +1103,7 @@ public class MetricViewTests : MetricTestsBase
         meter.CreateObservableGauge("observableGaugeInteresting", () => { return 10; }, "ms");
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        var metric = exportedItems[0];
+        var metric = Assert.Single(exportedItems);
         Assert.Equal("observableGaugeInteresting", metric.Name);
     }
 
@@ -1172,8 +1154,8 @@ public class MetricViewTests : MetricTestsBase
         serverRequests.Add(10);
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        Assert.Equal("server.request_renamed", exportedItems[0].Name);
+        var metric = Assert.Single(exportedItems);
+        Assert.Equal("server.request_renamed", metric.Name);
     }
 
     [Fact]
@@ -1207,8 +1189,7 @@ public class MetricViewTests : MetricTestsBase
             metric1MetricPoints.Add(mp);
         }
 
-        Assert.Single(metric1MetricPoints);
-        var metricPoint1 = metric1MetricPoints[0];
+        var metricPoint1 = Assert.Single(metric1MetricPoints);
         Assert.Equal(10, metricPoint1.GetSumLong());
 
         List<MetricPoint> metric2MetricPoints = [];
@@ -1217,8 +1198,7 @@ public class MetricViewTests : MetricTestsBase
             metric2MetricPoints.Add(mp);
         }
 
-        Assert.Single(metric2MetricPoints);
-        var metricPoint2 = metric2MetricPoints[0];
+        var metricPoint2 = Assert.Single(metric2MetricPoints);
         Assert.Equal(10, metricPoint2.GetSumLong());
     }
 
@@ -1330,8 +1310,8 @@ public class MetricViewTests : MetricTestsBase
                 metricPoints.Add(mp);
             }
 
-            Assert.Single(metricPoints);
-            return metricPoints[0].GetSumLong();
+            var metricPoint = Assert.Single(metricPoints);
+            return metricPoint.GetSumLong();
         }
     }
 
@@ -1470,8 +1450,7 @@ public class MetricViewTests : MetricTestsBase
             metricPoints.Add(mp);
         }
 
-        Assert.Single(metricPoints);
-        var metricPoint = metricPoints[0];
+        var metricPoint = Assert.Single(metricPoints);
         Assert.Equal(2, metricPoint.GetHistogramCount());
         Assert.Equal(30, metricPoint.GetHistogramSum());
 
@@ -1491,8 +1470,7 @@ public class MetricViewTests : MetricTestsBase
             metricPoints.Add(mp);
         }
 
-        Assert.Single(metricPoints);
-        metricPoint = metricPoints[0];
+        metricPoint = Assert.Single(metricPoints);
         Assert.Equal(2, metricPoint.GetHistogramCount());
         Assert.Equal(30, metricPoint.GetHistogramSum());
 
@@ -1570,11 +1548,11 @@ public class MetricViewTests : MetricTestsBase
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
-        Assert.Single(exportedItems);
-        var metric1 = new List<Metric>() { exportedItems[0] };
+        var metric = Assert.Single(exportedItems);
+        var metrics = new List<Metric>() { metric };
 
-        Assert.Equal("othername", exportedItems[0].Name);
-        Assert.Equal(10, GetLongSum(metric1));
+        Assert.Equal("othername", metric.Name);
+        Assert.Equal(10, GetLongSum(metrics));
     }
 
     [Fact]
@@ -1600,8 +1578,7 @@ public class MetricViewTests : MetricTestsBase
         counter.Add(10, new("name", "apple"), new("color", "red"), new("size", "medium"));
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        var metric = exportedItems[0];
+        var metric = Assert.Single(exportedItems);
         Assert.Equal("ExcludeColorAndSize", metric.Name);
         List<MetricPoint> metricPoints = [];
         foreach (ref readonly var mp in metric.GetMetricPoints())
@@ -1695,8 +1672,7 @@ public class MetricViewTests : MetricTestsBase
         counter.Add(10, new("name", "orange"), new("color", "blue"), new("size", "large"));
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        var metric = exportedItems[0];
+        var metric = Assert.Single(exportedItems);
         Assert.Equal("EmptyExclude", metric.Name);
 
         // All attributes preserved (same as default)
@@ -1729,8 +1705,7 @@ public class MetricViewTests : MetricTestsBase
         counter.Add(10, new("name", "orange"), new("color", "blue"), new("size", "large"));
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
-        Assert.Single(exportedItems);
-        var metric = exportedItems[0];
+        var metric = Assert.Single(exportedItems);
         Assert.Equal("NoMatchExclude", metric.Name);
 
         // All attributes preserved (no tags matched exclusion)
@@ -1764,8 +1739,7 @@ public class MetricViewTests : MetricTestsBase
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
         // Empty TagKeys = no attributes; all measurements collapse to a single point
-        Assert.Single(exportedItems);
-        var metric = exportedItems[0];
+        var metric = Assert.Single(exportedItems);
         Assert.Equal("FruitCounter", metric.Name);
         long sum = 0;
         foreach (ref readonly var mp in metric.GetMetricPoints())
@@ -1774,5 +1748,74 @@ public class MetricViewTests : MetricTestsBase
         }
 
         Assert.Equal(10, sum);
+    }
+
+    [Theory]
+    [InlineData(true, ThreadStaticStorage.MaxTagCacheSize + 2)]
+    [InlineData(false, ThreadStaticStorage.MaxTagCacheSize + 2)]
+    [InlineData(true, ThreadStaticStorage.MaxLargeTagCacheSize + 2)]
+    [InlineData(false, ThreadStaticStorage.MaxLargeTagCacheSize + 2)]
+    public void ViewTagFilteringAboveMaxTagCacheSizeDoesNotLeakStaleTags(bool useExcludedTagKeys, int survivingTagCount)
+    {
+        var droppedTag = new KeyValuePair<string, object?>("Other", "Value");
+
+        var firstSurvivingTags = BuildSurvivingTags(survivingTagCount);
+        var secondSurvivingTags = BuildSurvivingTags(survivingTagCount - 1);
+
+        var configuration = useExcludedTagKeys
+            ? new MetricStreamConfiguration { ExcludedTagKeys = [droppedTag.Key] }
+            : new MetricStreamConfiguration { TagKeys = [.. firstSurvivingTags.Select(t => t.Key), "Unused"] };
+
+        using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{useExcludedTagKeys}.{survivingTagCount}");
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView("FruitCounter", configuration)
+            .AddInMemoryExporter(exportedItems));
+
+        var counter = meter.CreateCounter<long>("FruitCounter");
+        counter.Add(10, WithDroppedTag(firstSurvivingTags));
+        counter.Add(20, WithDroppedTag(secondSurvivingTags));
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        var item = Assert.Single(exportedItems);
+
+        List<MetricPoint> metricPoints = [];
+        foreach (ref readonly var mp in item.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Equal(2, metricPoints.Count);
+
+        // The filtered-out tag must not appear on either point, and the shorter
+        // measurement must not inherit the extra tag from the longer one.
+        ValidateMetricPointTags(firstSurvivingTags, metricPoints[0].Tags);
+        ValidateMetricPointTags(secondSurvivingTags, metricPoints[1].Tags);
+
+        Assert.Equal(10, metricPoints[0].GetSumLong());
+        Assert.Equal(20, metricPoints[1].GetSumLong());
+
+        static List<KeyValuePair<string, object?>> BuildSurvivingTags(int count)
+        {
+            Assert.InRange(count, ThreadStaticStorage.MaxTagCacheSize + 1, 999);
+
+            List<KeyValuePair<string, object?>> tags = [];
+            for (var i = 0; i < count; i++)
+            {
+                // Zero padded, so insertion order matches the ordinal sort
+                // order the MetricPoint stores tags in.
+                tags.Add(new($"Key{i:D3}", $"Value{i}"));
+            }
+
+            return tags;
+        }
+
+        KeyValuePair<string, object?>[] WithDroppedTag(List<KeyValuePair<string, object?>> survivingTags)
+        {
+            return [.. survivingTags, droppedTag];
+        }
     }
 }

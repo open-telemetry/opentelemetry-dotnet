@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Collections.Concurrent;
+using Microsoft.Extensions.Logging;
 
 namespace OpenTelemetry.Logs.Tests;
 
@@ -322,6 +323,48 @@ public sealed class LogRecordSharedPoolTests
         await Task.WhenAll(tasks);
 
         Assert.True(duplicateMessages.IsEmpty, string.Join(Environment.NewLine, duplicateMessages));
+    }
+
+    [Fact]
+    public void RecycledRecordWithNoScopesDoesNotBufferAnEmptyScopeList()
+    {
+        LogRecordSharedPool.Resize(LogRecordSharedPool.DefaultMaxPoolSize);
+
+        var pool = LogRecordSharedPool.Current;
+
+        var scopeProvider = new LoggerExternalScopeProvider();
+
+        var logRecord = pool.Rent();
+
+        using (scopeProvider.Push("scope"))
+        {
+            logRecord.ILoggerData.ScopeProvider = scopeProvider;
+            logRecord.Buffer();
+        }
+
+        var bufferedScopes = logRecord.ILoggerData.BufferedScopes;
+        Assert.NotNull(bufferedScopes);
+        Assert.Single(bufferedScopes);
+
+        pool.Return(logRecord);
+
+        // LogRecordPoolHelper.Clear keeps ScopeStorage and only clears it, so
+        // the recycled record comes back with a non-null but empty list.
+        Assert.NotNull(logRecord.ScopeStorage);
+        Assert.Empty(logRecord.ScopeStorage);
+
+        logRecord = pool.Rent();
+        logRecord.ILoggerData.BufferedScopes = null;
+        logRecord.ILoggerData.ScopeProvider = scopeProvider;
+
+        // No scopes are active this time.
+        logRecord.Buffer();
+
+        // Must stay null, so that Copy has no empty list to duplicate.
+        Assert.Null(logRecord.ILoggerData.BufferedScopes);
+
+        var copy = logRecord.Copy();
+        Assert.Null(copy.ILoggerData.BufferedScopes);
     }
 
     private sealed class NoopExporter : BaseExporter<LogRecord>
