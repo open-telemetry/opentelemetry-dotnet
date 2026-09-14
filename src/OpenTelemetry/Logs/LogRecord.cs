@@ -542,7 +542,14 @@ public sealed class LogRecord
 
         this.ILoggerData.ScopeProvider = null;
 
-        this.ILoggerData.BufferedScopes = this.ScopeStorage;
+        // Note: Left null when no scopes were collected. A pooled record can
+        // arrive with a non-null but empty ScopeStorage, because
+        // LogRecordPoolHelper.Clear keeps the list and only clears it, and
+        // assigning that would make LogRecordILoggerData.Copy duplicate an
+        // empty list.
+        var scopeStorage = this.ScopeStorage;
+
+        this.ILoggerData.BufferedScopes = scopeStorage?.Count > 0 ? scopeStorage : null;
     }
 
     internal struct LogRecordILoggerData

@@ -1751,20 +1751,22 @@ public class MetricViewTests : MetricTestsBase
     }
 
     [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void ViewTagFilteringAboveMaxTagCacheSizeDoesNotLeakStaleTags(bool useExcludedTagKeys)
+    [InlineData(true, ThreadStaticStorage.MaxTagCacheSize + 2)]
+    [InlineData(false, ThreadStaticStorage.MaxTagCacheSize + 2)]
+    [InlineData(true, ThreadStaticStorage.MaxLargeTagCacheSize + 2)]
+    [InlineData(false, ThreadStaticStorage.MaxLargeTagCacheSize + 2)]
+    public void ViewTagFilteringAboveMaxTagCacheSizeDoesNotLeakStaleTags(bool useExcludedTagKeys, int survivingTagCount)
     {
         var droppedTag = new KeyValuePair<string, object?>("Other", "Value");
 
-        var firstSurvivingTags = BuildSurvivingTags(ThreadStaticStorage.MaxTagCacheSize + 2);
-        var secondSurvivingTags = BuildSurvivingTags(ThreadStaticStorage.MaxTagCacheSize + 1);
+        var firstSurvivingTags = BuildSurvivingTags(survivingTagCount);
+        var secondSurvivingTags = BuildSurvivingTags(survivingTagCount - 1);
 
         var configuration = useExcludedTagKeys
             ? new MetricStreamConfiguration { ExcludedTagKeys = [droppedTag.Key] }
             : new MetricStreamConfiguration { TagKeys = [.. firstSurvivingTags.Select(t => t.Key), "Unused"] };
 
-        using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{useExcludedTagKeys}");
+        using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{useExcludedTagKeys}.{survivingTagCount}");
         var exportedItems = new List<Metric>();
 
         using var container = BuildMeterProvider(out var meterProvider, builder => builder
@@ -1798,13 +1800,14 @@ public class MetricViewTests : MetricTestsBase
 
         static List<KeyValuePair<string, object?>> BuildSurvivingTags(int count)
         {
+            Assert.InRange(count, ThreadStaticStorage.MaxTagCacheSize + 1, 999);
+
             List<KeyValuePair<string, object?>> tags = [];
             for (var i = 0; i < count; i++)
             {
-                // Single digit suffixes only, so insertion order matches the
-                // ordinal sort order the MetricPoint stores tags in.
-                Assert.InRange(i, 0, 9);
-                tags.Add(new($"Key{i}", $"Value{i}"));
+                // Zero padded, so insertion order matches the ordinal sort
+                // order the MetricPoint stores tags in.
+                tags.Add(new($"Key{i:D3}", $"Value{i}"));
             }
 
             return tags;
