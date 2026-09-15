@@ -146,7 +146,7 @@ internal sealed class MeterProviderSdk : MeterProvider
             if (state.MeterSources.Exists(WildcardHelper.ContainsWildcard))
             {
                 var regex = WildcardHelper.GetWildcardRegex(state.MeterSources);
-                this.shouldListenTo = instrument => regex.IsMatch(instrument.Meter.Name);
+                this.shouldListenTo = instrument => WildcardHelper.IsMatch(regex, instrument.Meter.Name);
             }
             else if (state.MeterSources.Count > 0)
             {

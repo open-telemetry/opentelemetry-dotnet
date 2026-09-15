@@ -1,10 +1,28 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
+
 namespace OpenTelemetry.Internal.Tests;
 
 public class WildcardHelperTests
 {
+    [Fact]
+    public void GetWildcardRegex_DoesNotCatastrophicallyBacktrack()
+    {
+        var patterns = new[] { "*a*a*a*a*a*a*a*a*b" };
+        var regex = WildcardHelper.GetWildcardRegex(patterns);
+
+        var input = new string('a', 100);
+
+        var sw = Stopwatch.StartNew();
+        var isMatch = WildcardHelper.IsMatch(regex, input);
+        sw.Stop();
+
+        Assert.False(isMatch, "The pattern should not have matched.");
+        Assert.True(sw.Elapsed < TimeSpan.FromSeconds(5), $"Non-matching input took {sw.Elapsed.TotalSeconds:F1}s.");
+    }
+
     [Theory]
     [InlineData(new[] { "a" }, "a", true)]
     [InlineData(new[] { "a.*" }, "a.b", true)]
@@ -29,7 +47,5 @@ public class WildcardHelperTests
     [InlineData("a.*", true)]
     [InlineData("a.?", true)]
     public void Verify_ContainsWildcard(string? pattern, bool expected)
-    {
-        Assert.Equal(expected, WildcardHelper.ContainsWildcard(pattern));
-    }
+        => Assert.Equal(expected, WildcardHelper.ContainsWildcard(pattern));
 }
