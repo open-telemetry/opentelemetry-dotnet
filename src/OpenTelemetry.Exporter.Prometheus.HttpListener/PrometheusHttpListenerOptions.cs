@@ -22,6 +22,11 @@ public class PrometheusHttpListenerOptions
     internal const string PrometheusPortEnvVar = "OTEL_EXPORTER_PROMETHEUS_PORT";
 
     /// <summary>
+    /// Default value for <see cref="ScrapeResponseTimeoutMilliseconds"/> (60 seconds).
+    /// </summary>
+    internal const int DefaultScrapeResponseTimeoutMilliseconds = 60_000;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="PrometheusHttpListenerOptions"/> class.
     /// </summary>
     public PrometheusHttpListenerOptions()
@@ -49,6 +54,7 @@ public class PrometheusHttpListenerOptions
         this.Host = host;
         this.Port = port;
         this.ScrapeResponseCacheDurationMilliseconds = 300;
+        this.ScrapeResponseTimeoutMilliseconds = DefaultScrapeResponseTimeoutMilliseconds;
         this.MaxScrapeResponseSizeBytes = PrometheusExporterOptions.DefaultMaxScrapeResponseSizeBytes;
     }
 
@@ -96,6 +102,20 @@ public class PrometheusHttpListenerOptions
         set
         {
             Guard.ThrowIfOutOfRange(value, min: 0);
+            field = value;
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the maximum time in milliseconds the server will spend producing and writing a
+    /// single scrape response before it is cancelled. Default value: 60000 (60 seconds).
+    /// </summary>
+    public int ScrapeResponseTimeoutMilliseconds
+    {
+        get;
+        set
+        {
+            Guard.ThrowIfOutOfRange(value, min: 1);
             field = value;
         }
     }

@@ -602,6 +602,63 @@ public class PrometheusHttpListenerTests
         Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
     }
 
+    [Fact]
+    public async Task ScrapeClientThatStopsReadingTheResponseBodyDoesNotBlockOtherScrapesIndefinitely()
+    {
+        using var meter = new Meter(MeterName, MeterVersion);
+
+        const int ScrapeTimeoutMilliseconds = 2_000;
+
+        using var context = CreateMeterProvider(
+            meter,
+            configureListener: options =>
+            {
+                options.Port = GetRandomPort();
+                options.ScrapeResponseTimeoutMilliseconds = ScrapeTimeoutMilliseconds;
+                return options.Port;
+            });
+
+        // Emit a payload far larger than any socket / HTTP.sys send buffer (including autotuned
+        // ones) so the response write cannot complete until the client actually drains the body.
+        // Stay under the SDK's default 1000-metric-stream cap and use a large label value on each
+        // stream instead; this produces roughly 12 MB of exposition text.
+        var padding = new string('x', 24_576);
+        for (var x = 0; x < 500; x++)
+        {
+            var counter = meter.CreateCounter<long>("counter_long_" + x.ToString(CultureInfo.InvariantCulture));
+            counter.Add(1, new KeyValuePair<string, object?>("key", padding));
+        }
+
+        // The scraper asks for the metrics and then never reads them.
+        using var stalledClient = new System.Net.Sockets.TcpClient();
+        await stalledClient.ConnectAsync(IPAddress.Loopback, context.Port);
+        var request = System.Text.Encoding.ASCII.GetBytes(
+            $"GET /metrics HTTP/1.1\r\nHost: localhost:{context.Port}\r\nConnection: keep-alive\r\n\r\n");
+        var stalledStream = stalledClient.GetStream();
+
+#if NET
+        await stalledStream.WriteAsync(request);
+#else
+        await stalledStream.WriteAsync(request, 0, request.Length);
+#endif
+
+        await stalledStream.FlushAsync();
+
+        // Wait past the server-side timeout so the stalled request has cancelled its write and
+        // released the reader slot while the stalled client is still connected and still not
+        // reading: recovery must come from the server timeout, not from the client disconnecting.
+        await Task.Delay(TimeSpan.FromMilliseconds((ScrapeTimeoutMilliseconds * 2) + 1000));
+
+        Assert.True(stalledClient.Connected);
+
+        using var client = new HttpClient { BaseAddress = context.BaseAddress };
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+
+        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative), cts.Token);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
     internal static MeterProviderTestContext CreateMeterProvider(
         Meter meter,
         Func<PrometheusHttpListenerOptions, int>? configureListener = null,

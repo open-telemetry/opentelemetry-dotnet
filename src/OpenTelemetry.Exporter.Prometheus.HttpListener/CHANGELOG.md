@@ -7,6 +7,12 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added `PrometheusHttpListenerOptions.ScrapeResponseTimeoutMilliseconds`
+  (default `60000`) which bounds how long the server spends producing and
+  writing a single scrape response. `X-Prometheus-Scrape-Timeout-Seconds`
+  request header values may only shorten this limit.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.18.0-beta.1
 
 Released 2026-Aug-21

@@ -18,6 +18,7 @@ internal sealed class PrometheusHttpListener : IDisposable
     private readonly PrometheusExporter exporter;
     private readonly HttpListener httpListener = new();
     private readonly Lock syncObject = new();
+    private readonly TimeSpan scrapeResponseTimeout;
 
     private volatile bool disposed;
     private int activeRequestCount;
@@ -35,6 +36,7 @@ internal sealed class PrometheusHttpListener : IDisposable
         Guard.ThrowIfNull(options);
 
         this.exporter = exporter;
+        this.scrapeResponseTimeout = TimeSpan.FromMilliseconds(options.ScrapeResponseTimeoutMilliseconds);
 
         var path = options.ScrapeEndpointPath ?? PrometheusHttpListenerOptions.DefaultScrapeEndpointPath;
 
@@ -261,13 +263,18 @@ internal sealed class PrometheusHttpListener : IDisposable
         {
             using var requestCancelled = new CancellationTokenSource();
 
-            Stopwatch? scrapeStopwatch = null;
-
-            if (TryGetScrapeTimeout(context.Request.Headers, out var scrapeTimeout))
+            // Always bound the request. A client that never drains the response body must not be
+            // able to hold the shared collection reader slot indefinitely. A client-supplied
+            // X-Prometheus-Scrape-Timeout-Seconds may only shorten this limit, never extend it.
+            var scrapeTimeout = this.scrapeResponseTimeout;
+            if (TryGetScrapeTimeout(context.Request.Headers, out var clientTimeout) &&
+                clientTimeout.GetValueOrDefault() < scrapeTimeout)
             {
-                requestCancelled.CancelAfter(scrapeTimeout.GetValueOrDefault());
-                scrapeStopwatch = Stopwatch.StartNew();
+                scrapeTimeout = clientTimeout.GetValueOrDefault();
             }
+
+            requestCancelled.CancelAfter(scrapeTimeout);
+            var scrapeStopwatch = Stopwatch.StartNew();
 
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(requestCancelled.Token, cancellationToken);
 
@@ -280,8 +287,7 @@ internal sealed class PrometheusHttpListener : IDisposable
             try
             {
                 if (!requestCancelled.IsCancellationRequested &&
-                    scrapeTimeout is { } configuredTimeout &&
-                    scrapeStopwatch!.Elapsed >= configuredTimeout)
+                    scrapeStopwatch.Elapsed >= scrapeTimeout)
                 {
                     // The deadline has genuinely elapsed, but the CancelAfter callback may not
                     // have been dispatched yet (for example, if the thread pool is saturated).
@@ -320,11 +326,30 @@ internal sealed class PrometheusHttpListener : IDisposable
                         context.Response.Headers.Add("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
                         context.Response.ContentType = PrometheusProtocol.GetContentType(protocol);
 
+                        // HttpListener's response stream does not reliably observe a CancellationToken once
+                        // a write is in flight to HTTP.sys, so abort the response if the deadline elapses
+                        // mid-write. This unblocks a write stalled because the client stopped reading the
+                        // body, so the collection reader slot is released and other scrapes are not blocked.
+                        using (requestCancelled.Token.Register(
+                            static (state) =>
+                            {
+                                try
+                                {
+                                    ((HttpListenerContext?)state)?.Response.Abort();
+                                }
+                                catch (Exception)
+                                {
+                                    // Ignore
+                                }
+                            },
+                            context))
+                        {
 #if NET
-                        await context.Response.OutputStream.WriteAsync(dataView.Array.AsMemory(0, dataView.Count), linkedCts.Token).ConfigureAwait(false);
+                            await context.Response.OutputStream.WriteAsync(dataView.Array.AsMemory(0, dataView.Count), linkedCts.Token).ConfigureAwait(false);
 #else
-                        await context.Response.OutputStream.WriteAsync(dataView.Array, 0, dataView.Count, linkedCts.Token).ConfigureAwait(false);
+                            await context.Response.OutputStream.WriteAsync(dataView.Array, 0, dataView.Count, linkedCts.Token).ConfigureAwait(false);
 #endif
+                        }
                     }
                     else
                     {
@@ -334,15 +359,13 @@ internal sealed class PrometheusHttpListener : IDisposable
                     }
                 }
             }
-            catch (OperationCanceledException ex) when (ex.CancellationToken == requestCancelled.Token)
+            catch (Exception) when (requestCancelled.IsCancellationRequested && !this.disposed && !cancellationToken.IsCancellationRequested)
             {
-                if (scrapeTimeout is { } timeout)
-                {
-                    PrometheusExporterEventSource.Log.ScrapeTimedOut(timeout.TotalSeconds);
-                }
-
-                context.Response.StatusCode = 408;
-                context.Response.ContentLength64 = 0;
+                // The request exceeded its deadline (a client-supplied timeout or the server
+                // maximum). The response may already have been aborted to unblock a stalled write,
+                // so setting a status code can fail; that is fine, the client is no longer reading.
+                PrometheusExporterEventSource.Log.ScrapeTimedOut(scrapeTimeout.TotalSeconds);
+                TrySetStatusCode(context, 408);
             }
             finally
             {
@@ -351,13 +374,12 @@ internal sealed class PrometheusHttpListener : IDisposable
         }
         catch (OperationCanceledException) when (this.disposed || cancellationToken.IsCancellationRequested)
         {
-            context.Response.StatusCode = 503;
-            context.Response.ContentLength64 = 0;
+            TrySetStatusCode(context, 503);
         }
         catch (Exception ex)
         {
             PrometheusExporterEventSource.Log.FailedExport(ex);
-            context.Response.StatusCode = 500;
+            TrySetStatusCode(context, 500);
         }
 
         try
@@ -366,6 +388,19 @@ internal sealed class PrometheusHttpListener : IDisposable
         }
         catch
         {
+        }
+
+        static void TrySetStatusCode(HttpListenerContext context, int statusCode)
+        {
+            try
+            {
+                context.Response.StatusCode = statusCode;
+                context.Response.ContentLength64 = 0;
+            }
+            catch (Exception)
+            {
+                // Ignore - the response may already have been sent or aborted
+            }
         }
 
         static bool TryGetScrapeTimeout(
