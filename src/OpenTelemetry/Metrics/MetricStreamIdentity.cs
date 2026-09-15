@@ -31,6 +31,16 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
         this.ExponentialHistogramMaxScale = (metricStreamConfiguration as Base2ExponentialBucketHistogramConfiguration)?.MaxScale ?? 0;
         this.HistogramRecordMinMax = (metricStreamConfiguration as HistogramConfiguration)?.RecordMinMax ?? true;
 
+        unchecked
+        {
+            var meterHash = 17;
+            meterHash = (meterHash * 31) + StringComparer.Ordinal.GetHashCode(this.MeterName);
+            meterHash = (meterHash * 31) + StringComparer.Ordinal.GetHashCode(this.MeterVersion);
+            meterHash = (meterHash * 31) + StringComparer.Ordinal.GetHashCode(this.MeterSchemaUrl);
+            meterHash = (meterHash * 31) + (this.MeterTags?.GetHashCode() ?? 0);
+            this.MeterIdentityHashCode = meterHash;
+        }
+
 #if NET || NETSTANDARD2_1_OR_GREATER
         HashCode hashCode = default;
         hashCode.Add(this.InstrumentType);
@@ -163,6 +173,8 @@ internal readonly struct MetricStreamIdentity : IEquatable<MetricStreamIdentity>
         || this.InstrumentType == typeof(ObservableGauge<byte>)
         || this.InstrumentType == typeof(ObservableGauge<float>)
         || this.InstrumentType == typeof(ObservableGauge<double>);
+
+    internal int MeterIdentityHashCode { get; }
 
     public static bool operator ==(MetricStreamIdentity metricIdentity1, MetricStreamIdentity metricIdentity2) => metricIdentity1.Equals(metricIdentity2);
 
