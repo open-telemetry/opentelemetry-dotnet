@@ -34,8 +34,12 @@ jobs:
         $baseRef = if (${env:GITHUB_BASE_REF}) { "origin/${env:GITHUB_BASE_REF}" } else { "HEAD~1" }
         $changedFiles = git diff --name-only "$baseRef...HEAD"
 
-        if ($changedFiles -contains 'global.json') {
-          Write-Output "global.json was changed - checking all files."
+        $formatConfigurationFiles = $changedFiles | Where-Object {
+          $_ -match '(^|/)(\.editorconfig|.*\.(csproj|globalconfig|props|ruleset|targets))$'
+        }
+
+        if (($changedFiles -contains 'global.json') -or $formatConfigurationFiles) {
+          Write-Output "A format configuration or global.json was changed - checking all files."
           "run-format=true" >> ${env:GITHUB_OUTPUT}
           "include-args=" >> ${env:GITHUB_OUTPUT}
         } else {
