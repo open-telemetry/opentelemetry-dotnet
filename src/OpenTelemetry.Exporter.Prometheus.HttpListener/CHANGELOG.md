@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed OpenMetrics `_created` series being emitted for metric points with a
+  default start time.
+  ([#7754](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7754))
+
 ## 1.18.0-beta.1
 
 Released 2026-Aug-21
