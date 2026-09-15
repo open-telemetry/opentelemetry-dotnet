@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* **Breaking Change** The `PrometheusTranslationStrategy` enum was renamed
+  to `PrometheusAspNetCoreTranslationStrategy`.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.18.0-beta.1
 
 Released 2026-Aug-21
