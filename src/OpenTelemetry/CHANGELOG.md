@@ -24,7 +24,7 @@ Notes](../../RELEASENOTES.md).
   rather than recorded, so they can no longer permanently corrupt the sum,
   min, and max of a cumulative histogram stream. This aligns the explicit-bucket
   and exponential histograms with the metrics SDK specification.
-  ([#7726](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7726))
+  ([#7759](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7759))
 
 ## 1.18.0
 
