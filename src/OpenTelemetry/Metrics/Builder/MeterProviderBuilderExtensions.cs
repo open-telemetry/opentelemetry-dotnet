@@ -169,13 +169,17 @@ public static class MeterProviderBuilderExtensions
                 if (instrumentName.Contains('*'))
 #endif
                 {
-#if NET || NETSTANDARD2_1_OR_GREATER
+#if NET
                     var pattern = '^' + Regex.Escape(instrumentName).Replace("\\*", ".*", StringComparison.Ordinal);
+                    var regex = new Regex(pattern, RegexOptions.NonBacktracking | RegexOptions.IgnoreCase);
+#elif NETSTANDARD2_1_OR_GREATER
+                    var pattern = '^' + Regex.Escape(instrumentName).Replace("\\*", ".*", StringComparison.Ordinal);
+                    var regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase, TimeSpan.FromSeconds(1));
 #else
                     var pattern = '^' + Regex.Escape(instrumentName).Replace("\\*", ".*");
+                    var regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase, TimeSpan.FromSeconds(1));
 #endif
-                    var regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
-                    meterProviderBuilderSdk.AddView(instrument => regex.IsMatch(instrument.Name) ? metricStreamConfiguration : null);
+                    meterProviderBuilderSdk.AddView(instrument => WildcardHelper.IsMatch(regex, instrument.Name) ? metricStreamConfiguration : null);
                 }
                 else
                 {
