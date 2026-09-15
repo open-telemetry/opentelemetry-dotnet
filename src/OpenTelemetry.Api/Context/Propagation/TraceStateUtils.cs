@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 
@@ -26,9 +25,7 @@ internal static class TraceStateUtils
     /// <returns>True if string was parsed successfully and tracestate was recognized, false otherwise.</returns>
     internal static bool AppendTraceState(string traceStateString, List<KeyValuePair<string, string>> tracestate)
     {
-        Debug.Assert(tracestate != null, "tracestate list cannot be null");
-
-        if (string.IsNullOrEmpty(traceStateString))
+        if (tracestate is null || string.IsNullOrEmpty(traceStateString))
         {
             return false;
         }
@@ -88,11 +85,7 @@ internal static class TraceStateUtils
 
             if (!isValid)
             {
-#if NET
                 tracestate.Clear();
-#else
-                tracestate!.Clear();
-#endif
                 return false;
             }
 
