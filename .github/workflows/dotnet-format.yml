@@ -35,10 +35,10 @@ jobs:
         $changedFiles = git diff --name-only "$baseRef...HEAD"
 
         $formatConfigurationFiles = $changedFiles | Where-Object {
-          $_ -match '(^|/)(\.editorconfig|.*\.(csproj|globalconfig|props|ruleset|targets))$'
+          $_ -match '(^|/)(global\.json|\.editorconfig|.*\.(csproj|globalconfig|props|ruleset|targets))$'
         }
 
-        if (($changedFiles -contains 'global.json') -or $formatConfigurationFiles) {
+        if ($formatConfigurationFiles) {
           Write-Output "A format configuration or global.json was changed - checking all files."
           "run-format=true" >> ${env:GITHUB_OUTPUT}
           "include-args=" >> ${env:GITHUB_OUTPUT}
