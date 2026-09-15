@@ -25,6 +25,10 @@ Notes](../../RELEASENOTES.md).
   for PEM-encoded certificates that only contain a public key.
   ([#7693](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7693))
 
+* Suppressed routine informational logs from the HTTP clients used by the OTLP
+  exporters while preserving explicit application logging configuration.
+  ([#7743](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7743))
+
 ## 1.18.0
 
 Released 2026-Aug-21
