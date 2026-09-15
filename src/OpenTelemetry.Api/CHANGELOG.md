@@ -15,6 +15,11 @@ Notes](../../RELEASENOTES.md).
 * Reduced allocations when constructing `SpanAttributes` from an array.
   ([#7698](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7698))
 
+* Fixed parsing of an inbound `tracestate` header whose member value trimed
+  to a empty value that previously threw an `IndexOutOfRangeException`
+  internally and could silently truncate the tracestate.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.18.0
 
 Released 2026-Aug-21

@@ -101,6 +101,10 @@ internal static class TraceStateUtils
         catch (Exception ex)
         {
             OpenTelemetryApiEventSource.Log.TracestateExtractException(ex);
+
+            // Never hand back a partially-parsed tracestate: an unexpected failure mid-parse must
+            // not leave the caller with a silently truncated subset of the members.
+            tracestate.Clear();
         }
 
         return false;
@@ -235,7 +239,7 @@ internal static class TraceStateUtils
         // Value is opaque string up to 256 characters printable ASCII RFC0020 characters (i.e., the range
         // 0x20 to 0x7E) except comma , and =.
 
-        if (value.Length > ValueMaxSize || value[value.Length - 1] == ' ' /* '\u0020' */)
+        if (value.Length == 0 || value.Length > ValueMaxSize || value[value.Length - 1] == ' ' /* '\u0020' */)
         {
             return false;
         }
