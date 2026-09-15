@@ -54,24 +54,55 @@ public static class ProtobufOtlpMetricSerializerTests
     }
 
     [Fact]
-    public static void WriteMetricsData_DoesNotCacheMetadataLargerThanMaximumBufferSize()
+    public static void WriteMetricsData_RejectsMetadataLargerThanMaximumBufferSize()
     {
         const int maxBufferSize = 1024;
 
         var metrics = GenerateMetricWithDescription(new string('a', maxBufferSize));
-        var metric = GetFirstMetric(metrics);
 
         // Model ArrayPool returning more capacity than the configured maximum.
         var buffer = new byte[maxBufferSize * 2];
 
-        Assert.Throws<ArgumentException>(() => ProtobufOtlpMetricSerializer.WriteMetricsData(
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() => ProtobufOtlpMetricSerializer.WriteMetricsData(
             ref buffer,
             0,
             Resource.Empty,
             metrics,
             maxBufferSize));
 
-        Assert.False(IsMetricMetadataCached(metric), "Oversized metric metadata should not be cached.");
+        Assert.Equal("size", exception.ParamName);
+        var actualValue = Assert.IsType<long>(exception.ActualValue);
+        Assert.True(actualValue > maxBufferSize, $"Metadata size {actualValue} did not exceed {maxBufferSize}.");
+    }
+
+    [Fact]
+    public static void WriteMetricsData_RejectsCachedMetadataLargerThanMaximumBufferSize()
+    {
+        const int maxBufferSize = 1024;
+
+        var metrics = GenerateMetricWithDescription(new string('a', maxBufferSize));
+        var initialBuffer = new byte[maxBufferSize * 4];
+
+        var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(
+            ref initialBuffer,
+            0,
+            Resource.Empty,
+            metrics,
+            initialBuffer.Length);
+        Assert.True(writePosition > 0);
+
+        // Model ArrayPool returning more capacity than the configured maximum.
+        var limitedBuffer = new byte[maxBufferSize * 2];
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() => ProtobufOtlpMetricSerializer.WriteMetricsData(
+            ref limitedBuffer,
+            0,
+            Resource.Empty,
+            metrics,
+            maxBufferSize));
+
+        Assert.Equal("cachedMetadata", exception.ParamName);
+        var actualValue = Assert.IsType<long>(exception.ActualValue);
+        Assert.True(actualValue > maxBufferSize, $"Metadata size {actualValue} did not exceed {maxBufferSize}.");
     }
 
     [Fact]
@@ -420,27 +451,6 @@ public static class ProtobufOtlpMetricSerializerTests
         }
 
         return metrics;
-    }
-
-    private static Metric GetFirstMetric(in Batch<Metric> metrics)
-    {
-        foreach (var metric in metrics)
-        {
-            return metric;
-        }
-
-        throw new InvalidOperationException("The metric batch was empty.");
-    }
-
-    private static bool IsMetricMetadataCached(Metric metric)
-    {
-        var field = typeof(ProtobufOtlpMetricSerializer).GetField(
-            "CachedMetricMetadata",
-            BindingFlags.NonPublic | BindingFlags.Static);
-        Assert.NotNull(field);
-
-        var cache = Assert.IsType<ConditionalWeakTable<Metric, byte[]>>(field.GetValue(null));
-        return cache.TryGetValue(metric, out _);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]

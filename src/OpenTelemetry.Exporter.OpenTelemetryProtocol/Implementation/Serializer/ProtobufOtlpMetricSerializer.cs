@@ -674,7 +674,10 @@ internal static class ProtobufOtlpMetricSerializer
 
         if (cachedMetadata.Length > availableBufferSize)
         {
-            throw CreateMetricMetadataTooLargeException(cachedMetadata.Length, availableBufferSize);
+            throw CreateMetricMetadataTooLargeException(
+                nameof(cachedMetadata),
+                cachedMetadata.Length,
+                availableBufferSize);
         }
 
         return cachedMetadata;
@@ -701,7 +704,7 @@ internal static class ProtobufOtlpMetricSerializer
 
         if (size > availableBufferSize)
         {
-            throw CreateMetricMetadataTooLargeException(size, availableBufferSize);
+            throw CreateMetricMetadataTooLargeException(nameof(size), size, availableBufferSize);
         }
 
         var buffer = new byte[(int)size];
@@ -726,10 +729,14 @@ internal static class ProtobufOtlpMetricSerializer
         ProtobufSerializer.ComputeVarInt32Size((uint)numberOfUtf8Chars) +
         (long)numberOfUtf8Chars;
 
-    private static ArgumentException CreateMetricMetadataTooLargeException(long size, int availableBufferSize)
+    private static ArgumentOutOfRangeException CreateMetricMetadataTooLargeException(
+        string paramName,
+        long actualValue,
+        int availableBufferSize)
         => new(
-            $"Metric metadata size of {size} bytes exceeds the available " +
-            $"serialization buffer capacity of {availableBufferSize} bytes.");
+            paramName,
+            actualValue,
+            $"Metric metadata exceeds the available serialization buffer capacity of {availableBufferSize} bytes.");
 
     private sealed class CachedAttributes(int fieldNumber, byte[] bytes)
     {
