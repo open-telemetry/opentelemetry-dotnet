@@ -24,9 +24,9 @@ public sealed class LogRecord
     internal LogRecordSource Source = LogRecordSource.CreatedManually;
     internal int PoolReferenceCount = int.MaxValue;
 
-    private static readonly Action<object?, List<object?>> AddScopeToBufferedList = static (scope, state) =>
+    private static readonly Action<object?, LogRecord> AddScopeToRecord = static (scope, record) =>
     {
-        state.Add(scope);
+        (record.ScopeStorage ??= new List<object?>(LogRecordPoolHelper.DefaultMaxNumberOfScopes)).Add(scope);
     };
 
     internal LogRecord()
@@ -538,13 +538,18 @@ public sealed class LogRecord
             return;
         }
 
-        var scopeStorage = this.ScopeStorage ??= [with(LogRecordPoolHelper.DefaultMaxNumberOfScopes)];
-
-        scopeProvider.ForEachScope(AddScopeToBufferedList, scopeStorage);
+        scopeProvider.ForEachScope(AddScopeToRecord, this);
 
         this.ILoggerData.ScopeProvider = null;
 
-        this.ILoggerData.BufferedScopes = scopeStorage;
+        // Note: Left null when no scopes were collected. A pooled record can
+        // arrive with a non-null but empty ScopeStorage, because
+        // LogRecordPoolHelper.Clear keeps the list and only clears it, and
+        // assigning that would make LogRecordILoggerData.Copy duplicate an
+        // empty list.
+        var scopeStorage = this.ScopeStorage;
+
+        this.ILoggerData.BufferedScopes = scopeStorage?.Count > 0 ? scopeStorage : null;
     }
 
     internal struct LogRecordILoggerData
