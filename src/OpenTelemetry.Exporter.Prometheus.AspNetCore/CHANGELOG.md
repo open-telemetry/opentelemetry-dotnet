@@ -9,7 +9,7 @@ Notes](../../RELEASENOTES.md).
 
 * **Breaking Change** The `PrometheusTranslationStrategy` enum was renamed
   to `PrometheusAspNetCoreTranslationStrategy`.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7751](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7751))
 
 ## 1.18.0-beta.1
 
