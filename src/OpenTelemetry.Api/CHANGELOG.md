@@ -16,7 +16,7 @@ Notes](../../RELEASENOTES.md).
   ([#7698](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7698))
 
 * Fixed parsing of an inbound `tracestate` header whose member value trimmed
-  to a empty value that previously threw an `IndexOutOfRangeException`
+  to an empty value that previously threw an `IndexOutOfRangeException`
   internally and could silently truncate the tracestate.
   ([#7756](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7756))
 
