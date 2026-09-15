@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Prometheus text/OpenMetrics escaping of label values, label names and help
+  text is now more efficient.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.18.0-beta.1
 
 Released 2026-Aug-21
