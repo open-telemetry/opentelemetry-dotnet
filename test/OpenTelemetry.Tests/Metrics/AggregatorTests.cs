@@ -21,6 +21,30 @@ public class AggregatorTests
 
     public static TheoryData<HistogramBoundaryTestCase> HistogramInfinityBoundariesTestCases => HistogramBoundaryTestCase.HistogramInfinityBoundariesTestCases();
 
+    [Theory]
+    [InlineData(double.NaN)]
+    [InlineData(double.PositiveInfinity)]
+    [InlineData(double.NegativeInfinity)]
+    public void NonFiniteMeasurementIsIgnoredByCumulativeHistogram(double nonFinite)
+    {
+        var boundaries = new HistogramExplicitBounds(Metric.DefaultHistogramBounds);
+        var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
+
+        histogramPoint.Update(1);
+        histogramPoint.Update(nonFinite);
+        histogramPoint.Update(2);
+        histogramPoint.Update(3);
+
+        // Cumulative snapshot (outputDelta: false) retains the running values.
+        histogramPoint.TakeSnapshot(false);
+
+        // The non-finite measurement is dropped: only the three finite values are counted...
+        Assert.Equal(3, histogramPoint.GetHistogramCount());
+
+        // ...and the sum is exactly 1 + 2 + 3, not poisoned to NaN/Infinity.
+        Assert.Equal(6, histogramPoint.GetHistogramSum());
+    }
+
     [Fact]
     public void HistogramDistributeToAllBucketsDefault()
     {
