@@ -176,6 +176,11 @@ internal abstract class OpenMetricsSerializer : TextFormatSerializer
         in TextFormatSerializerOptions options,
         IReadOnlyCollection<string>? reservedOutputKeys = null)
     {
+        if (metricPoint.StartTime == default)
+        {
+            return cursor;
+        }
+
         cursor = this.WriteSeriesAndTags(buffer, cursor, metric, prometheusMetric, metricPoint.Tags, options, "_created", reservedOutputKeys);
 
         buffer[cursor++] = unchecked((byte)' ');
