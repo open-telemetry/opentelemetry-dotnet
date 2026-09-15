@@ -169,7 +169,15 @@ public struct Exemplar
         {
             Debug.Assert(this.tagStorage != null, "tagStorage was null");
 
-            destination.tagStorage = new KeyValuePair<string, object?>[destination.tagCount];
+            // Grow-only reuse of the destination buffer. Collect copies into
+            // a long-lived snapshot array (see FixedSizeExemplarReservoir.Collect)
+            // so allocating here would allocate once per exemplar per collection
+            // cycle. FilteredTags only ever reads tagCount entries.
+            if (destination.tagStorage == null || destination.tagStorage.Length < destination.tagCount)
+            {
+                destination.tagStorage = new KeyValuePair<string, object?>[destination.tagCount];
+            }
+
             Array.Copy(this.tagStorage, 0, destination.tagStorage, 0, destination.tagCount);
         }
     }

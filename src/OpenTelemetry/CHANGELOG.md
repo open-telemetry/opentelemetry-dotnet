@@ -16,6 +16,10 @@ Notes](../../RELEASENOTES.md).
 * Added `AlwaysRecordSampler`.
   ([#7695](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7695))
 
+* Fixed `CircularBufferBuckets` so the first delta histogram insertion after a
+  reset does not result in an unnecessary scale reduction.
+  ([#7749](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7749))
+
 * Added `OpenTelemetryLoggerOptions.Version` and
   `OpenTelemetryLoggerOptions.SchemaUrl` options to set an
   instrumentation library version and schema URL applied to logs emitted via

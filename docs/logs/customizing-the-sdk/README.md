@@ -120,6 +120,10 @@ builder.AddFilter<OpenTelemetryLoggerProvider>("*", LogLevel.Error);
 builder.AddFilter<OpenTelemetryLoggerProvider>("MyProduct.MyLibrary.MyClass", LogLevel.Warning);
 ```
 
+Filtering on the content of individual log records (for example, their
+attributes or body) can be achieved with a custom processor. See [Filtering
+Processor](../extending-the-sdk/README.md#filtering-processor) for details.
+
 ## Learn more
 
 * See also the official guide for
