@@ -21,7 +21,7 @@ Notes](../../RELEASENOTES.md).
   ([#7749](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7749))
 
 * Improved wildcard source/meter name matching to avoid excessive matching
-  duration runtime.
+  time at runtime.
   ([#7760](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7760))
 
 ## 1.18.0
