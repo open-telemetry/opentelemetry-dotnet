@@ -26,7 +26,7 @@ public sealed class LogRecord
 
     private static readonly Action<object?, LogRecord> AddScopeToRecord = static (scope, record) =>
     {
-        (record.ScopeStorage ??= new List<object?>(LogRecordPoolHelper.DefaultMaxNumberOfScopes)).Add(scope);
+        (record.ScopeStorage ??= [with(LogRecordPoolHelper.DefaultMaxNumberOfScopes)]).Add(scope);
     };
 
     internal LogRecord()
