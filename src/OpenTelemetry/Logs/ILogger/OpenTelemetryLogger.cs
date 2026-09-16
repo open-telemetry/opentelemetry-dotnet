@@ -234,13 +234,4 @@ internal sealed class OpenTelemetryLogger : ILogger
         originalFormat = null;
         return false;
     }
-
-    private sealed class NullScope : IDisposable
-    {
-        public static NullScope Instance { get; } = new();
-
-        public void Dispose()
-        {
-        }
-    }
 }

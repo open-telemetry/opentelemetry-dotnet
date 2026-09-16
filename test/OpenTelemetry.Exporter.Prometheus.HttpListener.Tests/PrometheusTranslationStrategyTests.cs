@@ -20,7 +20,7 @@ public sealed class PrometheusTranslationStrategyTests
 
     [Fact]
     public void HttpListenerOptions_DefaultTranslationStrategy_IsUnderscoreEscapingWithSuffixes()
-        => Assert.Equal(PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes, new PrometheusHttpListenerOptions().TranslationStrategy);
+        => Assert.Equal(PrometheusHttpListenerTranslationStrategy.UnderscoreEscapingWithSuffixes, new PrometheusHttpListenerOptions().TranslationStrategy);
 
     [Theory]
     [InlineData(PrometheusTranslationStrategy.NoTranslation, EscapingScheme.AllowUtf8)]

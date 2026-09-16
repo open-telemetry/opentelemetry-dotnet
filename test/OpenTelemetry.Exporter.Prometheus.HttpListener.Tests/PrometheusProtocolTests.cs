@@ -1,6 +1,12 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if PROMETHEUS_ASPNETCORE
+using PublicPrometheusTranslationStrategy = OpenTelemetry.Exporter.PrometheusAspNetCoreTranslationStrategy;
+#else
+using PublicPrometheusTranslationStrategy = OpenTelemetry.Exporter.PrometheusHttpListenerTranslationStrategy;
+#endif
+
 namespace OpenTelemetry.Exporter.Prometheus.Tests;
 
 public class PrometheusProtocolTests
@@ -778,17 +784,17 @@ public class PrometheusProtocolTests
 
     [Theory]
     //// A strategy which passes UTF-8 names through applies whatever was negotiated
-    [InlineData(PrometheusTranslationStrategy.NoTranslation, PrometheusProtocol.AllowUtf8Escaping, PrometheusProtocol.AllowUtf8Escaping)]
-    [InlineData(PrometheusTranslationStrategy.NoTranslation, PrometheusProtocol.UnderscoresEscaping, PrometheusProtocol.UnderscoresEscaping)]
-    [InlineData(PrometheusTranslationStrategy.NoTranslation, PrometheusProtocol.DotsEscaping, PrometheusProtocol.DotsEscaping)]
-    [InlineData(PrometheusTranslationStrategy.NoUTF8EscapingWithSuffixes, PrometheusProtocol.ValuesEscaping, PrometheusProtocol.ValuesEscaping)]
+    [InlineData(PublicPrometheusTranslationStrategy.NoTranslation, PrometheusProtocol.AllowUtf8Escaping, PrometheusProtocol.AllowUtf8Escaping)]
+    [InlineData(PublicPrometheusTranslationStrategy.NoTranslation, PrometheusProtocol.UnderscoresEscaping, PrometheusProtocol.UnderscoresEscaping)]
+    [InlineData(PublicPrometheusTranslationStrategy.NoTranslation, PrometheusProtocol.DotsEscaping, PrometheusProtocol.DotsEscaping)]
+    [InlineData(PublicPrometheusTranslationStrategy.NoUTF8EscapingWithSuffixes, PrometheusProtocol.ValuesEscaping, PrometheusProtocol.ValuesEscaping)]
     //// A strategy which escapes to '_' reports the escaping it applied, whatever was negotiated
-    [InlineData(PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes, PrometheusProtocol.AllowUtf8Escaping, PrometheusProtocol.UnderscoresEscaping)]
-    [InlineData(PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes, PrometheusProtocol.UnderscoresEscaping, PrometheusProtocol.UnderscoresEscaping)]
-    [InlineData(PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes, PrometheusProtocol.DotsEscaping, PrometheusProtocol.UnderscoresEscaping)]
-    [InlineData(PrometheusTranslationStrategy.UnderscoreEscapingWithoutSuffixes, PrometheusProtocol.ValuesEscaping, PrometheusProtocol.UnderscoresEscaping)]
+    [InlineData(PublicPrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes, PrometheusProtocol.AllowUtf8Escaping, PrometheusProtocol.UnderscoresEscaping)]
+    [InlineData(PublicPrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes, PrometheusProtocol.UnderscoresEscaping, PrometheusProtocol.UnderscoresEscaping)]
+    [InlineData(PublicPrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes, PrometheusProtocol.DotsEscaping, PrometheusProtocol.UnderscoresEscaping)]
+    [InlineData(PublicPrometheusTranslationStrategy.UnderscoreEscapingWithoutSuffixes, PrometheusProtocol.ValuesEscaping, PrometheusProtocol.UnderscoresEscaping)]
     public void ApplyTranslationStrategy_ReportsEscapingApplied(
-        PrometheusTranslationStrategy strategy,
+        PublicPrometheusTranslationStrategy strategy,
         string negotiated,
         string expected)
     {
@@ -798,7 +804,7 @@ public class PrometheusProtocolTests
             PrometheusProtocol.PrometheusV1,
             false);
 
-        var actual = PrometheusProtocol.ApplyTranslationStrategy(protocol, strategy);
+        var actual = PrometheusProtocol.ApplyTranslationStrategy(protocol, (PrometheusTranslationStrategy)strategy);
 
         Assert.Equal(expected, actual.Escaping);
         Assert.Equal(PrometheusEscaping.FromString(expected), actual.EscapingScheme);
@@ -806,11 +812,11 @@ public class PrometheusProtocolTests
     }
 
     [Theory]
-    [InlineData(PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes)]
-    [InlineData(PrometheusTranslationStrategy.NoTranslation)]
-    public void ApplyTranslationStrategy_ClassicFormats_DoNotNegotiateEscaping(PrometheusTranslationStrategy strategy)
+    [InlineData(PublicPrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes)]
+    [InlineData(PublicPrometheusTranslationStrategy.NoTranslation)]
+    public void ApplyTranslationStrategy_ClassicFormats_DoNotNegotiateEscaping(PublicPrometheusTranslationStrategy strategy)
     {
-        var actual = PrometheusProtocol.ApplyTranslationStrategy(PrometheusProtocol.Fallback, strategy);
+        var actual = PrometheusProtocol.ApplyTranslationStrategy(PrometheusProtocol.Fallback, (PrometheusTranslationStrategy)strategy);
 
         Assert.Equal(PrometheusProtocol.Fallback, actual);
         Assert.Null(actual.Escaping);

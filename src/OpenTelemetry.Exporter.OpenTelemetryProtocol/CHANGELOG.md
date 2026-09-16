@@ -25,6 +25,10 @@ Notes](../../RELEASENOTES.md).
   for PEM-encoded certificates that only contain a public key.
   ([#7693](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7693))
 
+* Prevented oversized metric metadata from being cached when it cannot fit
+  within the configured request size.
+  ([#7752](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7752))
+
 * The OTLP log exporter now exports `schema_url` on `ScopeLogs`. Log
   records emitted from a `Logger` with a schema URL set now populate
   `ScopeLogs.schema_url` in exported OTLP requests.
