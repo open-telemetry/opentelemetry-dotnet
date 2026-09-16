@@ -7,6 +7,14 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* **Breaking Change** The `PrometheusTranslationStrategy` enum was renamed
+  to `PrometheusAspNetCoreTranslationStrategy`.
+  ([#7751](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7751))
+
+* Fixed OpenMetrics `_created` series being emitted for metric points with a
+  default start time.
+  ([#7754](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7754))
+
 * Prometheus text/OpenMetrics escaping of label values, label names and help
   text is now more efficient.
   ([#7758](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7758))
