@@ -493,13 +493,36 @@ public sealed class LogRecord
         // directly below.
         this.BufferLogScopes();
 
+        List<KeyValuePair<string, object?>>? attributeData = null;
+        if (this.AttributeData is { } attributes)
+        {
+            attributeData = new List<KeyValuePair<string, object?>>(attributes.Count);
+            CopyAttributes(attributes, attributeData);
+        }
+
         return new()
         {
             Data = this.Data,
             ILoggerData = this.ILoggerData.Copy(),
-            AttributeData = this.AttributeData is null ? null : new List<KeyValuePair<string, object?>>(this.AttributeData),
+            AttributeData = attributeData,
             Logger = this.Logger,
         };
+    }
+
+    private static void CopyAttributes(
+        IReadOnlyList<KeyValuePair<string, object?>> source,
+        List<KeyValuePair<string, object?>> destination)
+    {
+        // Deliberately indexed rather than List<T>.AddRange. The state types
+        // produced by Microsoft.Extensions.Logging (FormattedLogValues and
+        // the structs generated for [LoggerMessage]) implement IReadOnlyList<T>
+        // but not ICollection<T>, so AddRange() would fall back to their
+        // GetEnumerator(), which for the generated structs allocates an iterator
+        // per log record.
+        for (var i = 0; i < source.Count; i++)
+        {
+            destination.Add(source[i]);
+        }
     }
 
     /// <summary>
@@ -516,12 +539,11 @@ public sealed class LogRecord
 
         var attributeStorage = this.AttributeStorage ??= new List<KeyValuePair<string, object?>>(attributes.Count);
 
-        // Note: AddRange here will copy all of the KeyValuePairs from
-        // attributes to AttributeStorage. This "captures" the state and
-        // fixes issues where the values are generated at enumeration time
-        // like
+        // Copying the KeyValuePairs from attributes to AttributeStorage
+        // "captures" the state and fixes issues where the values are generated
+        // at enumeration time like
         // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2905.
-        attributeStorage.AddRange(attributes);
+        CopyAttributes(attributes, attributeStorage);
 
         this.AttributeData = attributeStorage;
     }
