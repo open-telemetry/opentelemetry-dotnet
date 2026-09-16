@@ -439,15 +439,17 @@ public readonly struct Baggage : IEquatable<Baggage>
             else
             {
                 var currentBaggage = newBaggage ?? this.baggage;
+                string? existingValue = null;
+                var keyExists = currentBaggage != null && currentBaggage.TryGetValue(item.Key, out existingValue);
 
-                if (currentBaggage != null &&
-                    currentBaggage.TryGetValue(item.Key, out var existingValue) &&
-                    existingValue == item.Value)
+                if (keyExists && existingValue == item.Value)
                 {
                     continue;
                 }
 
-                newBaggage ??= this.CopyBaggage(scanForNetNewKeys ? this.CountNewKeys(baggageItems.Slice(i)) : 0);
+                // When there is only a single item there is nothing to scan: the lookup
+                // above already tells us whether it is a net-new key (+1) or an update (+0).
+                newBaggage ??= this.CopyBaggage(scanForNetNewKeys ? this.CountNewKeys(baggageItems.Slice(i)) : (keyExists ? 0 : 1));
                 newBaggage[item.Key] = item.Value;
             }
         }
