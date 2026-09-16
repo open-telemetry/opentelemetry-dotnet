@@ -12,6 +12,14 @@ Notes](../../RELEASENOTES.md).
 * Reduced allocations when setting baggage through the `params` overload.
   ([#7697](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7697))
 
+* Reduced allocations when constructing `SpanAttributes` from an array.
+  ([#7698](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7698))
+
+* Fixed parsing of an inbound `tracestate` header whose member value trimmed
+  to an empty value that previously threw an `IndexOutOfRangeException`
+  internally and could silently truncate the tracestate.
+  ([#7756](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7756))
+
 ## 1.18.0
 
 Released 2026-Aug-21

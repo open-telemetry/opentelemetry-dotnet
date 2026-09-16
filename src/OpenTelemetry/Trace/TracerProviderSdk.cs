@@ -116,7 +116,7 @@ internal sealed class TracerProviderSdk : TracerProvider
             if (this.supportLegacyActivity)
             {
                 Func<Activity, bool>? legacyActivityPredicate = legacyActivityWildcardModeRegex != null
-                    ? (activity => legacyActivityWildcardModeRegex.IsMatch(activity.OperationName))
+                    ? (activity => WildcardHelper.IsMatch(legacyActivityWildcardModeRegex, activity.OperationName))
                     : (activity => state.LegacyActivityOperationNames.Contains(activity.OperationName));
 
                 activityListener.ActivityStarted = activity =>
@@ -255,8 +255,8 @@ internal sealed class TracerProviderSdk : TracerProvider
                     // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
                     // or not.
                     activityListener.ShouldListenTo = this.supportLegacyActivity ?
-                        (activitySource) => string.IsNullOrEmpty(activitySource.Name) || regex.IsMatch(activitySource.Name) :
-                        (activitySource) => regex.IsMatch(activitySource.Name);
+                        (activitySource) => string.IsNullOrEmpty(activitySource.Name) || WildcardHelper.IsMatch(regex, activitySource.Name) :
+                        (activitySource) => WildcardHelper.IsMatch(regex, activitySource.Name);
                 }
                 else
                 {
@@ -471,6 +471,28 @@ internal sealed class TracerProviderSdk : TracerProvider
         return 1.0;
     }
 
+    private static void ApplySamplingAttributes<TState>(
+        IEnumerable<KeyValuePair<string, object>> attributes,
+        TState state,
+        Action<TState, string, object> setTag)
+    {
+        if (attributes is IReadOnlyList<KeyValuePair<string, object>> attributeList)
+        {
+            for (var i = 0; i < attributeList.Count; i++)
+            {
+                var att = attributeList[i];
+                setTag(state, att.Key, att.Value);
+            }
+        }
+        else
+        {
+            foreach (var att in attributes)
+            {
+                setTag(state, att.Key, att.Value);
+            }
+        }
+    }
+
     private static ActivitySamplingResult ComputeActivitySamplingResult(
         ref ActivityCreationOptions<ActivityContext> options,
         Sampler sampler)
@@ -501,10 +523,8 @@ internal sealed class TracerProviderSdk : TracerProvider
         {
             if (samplingResult.AttributesOrNull is { } attributes)
             {
-                foreach (var att in attributes)
-                {
-                    options.SamplingTags[att.Key] = att.Value;
-                }
+                var tags = options.SamplingTags;
+                ApplySamplingAttributes(attributes, tags, static (tags, key, value) => tags[key] = value);
             }
         }
 
@@ -647,10 +667,7 @@ internal sealed class TracerProviderSdk : TracerProvider
         {
             if (samplingResult.AttributesOrNull is { } attributes)
             {
-                foreach (var att in attributes)
-                {
-                    activity.SetTag(att.Key, att.Value);
-                }
+                ApplySamplingAttributes(attributes, activity, static (activity, key, value) => activity.SetTag(key, value));
             }
         }
 

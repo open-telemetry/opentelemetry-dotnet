@@ -81,60 +81,6 @@ internal static class EnvironmentSubstitution
         return sb.ToString();
     }
 
-    /// <summary>
-    /// Returns a copy of <paramref name="value"/> with all substitution expressions replaced,
-    /// resolving against the current process environment variables.
-    /// </summary>
-    /// <param name="value">The scalar string value to process.</param>
-    /// <returns>The string with substitution expressions replaced.</returns>
-    /// <exception cref="DeclarativeConfigurationException">
-    /// Thrown when <paramref name="value"/> contains a well-formed <c>${...}</c> expression whose
-    /// content is not a valid environment variable reference.
-    /// </exception>
-    internal static string Substitute(string value)
-        => Substitute(value, Environment.GetEnvironmentVariable);
-
-    /// <summary>
-    /// Throws if <paramref name="value"/> contains a well-formed but invalid <c>${...}</c>
-    /// reference, without resolving variables or emitting diagnostics.
-    /// </summary>
-    /// <param name="value">The scalar string to validate.</param>
-    /// <remarks>
-    /// Used for scalar values in root sections this package does not apply: the spec still requires
-    /// invalid substitution syntax to fail the parse, but looking up environment variables or
-    /// logging unset/empty diagnostics would imply those values were being used.
-    /// </remarks>
-    /// <exception cref="DeclarativeConfigurationException">
-    /// Thrown when <paramref name="value"/> contains a well-formed <c>${...}</c> expression whose
-    /// content is not a valid environment variable reference.
-    /// </exception>
-    internal static void ValidateReferences(string value)
-    {
-        Guard.ThrowIfNull(value);
-
-        if (!ContainsDollar(value))
-        {
-            return;
-        }
-
-        var regionStart = 0;
-
-        while (true)
-        {
-            var escapeIndex = value.IndexOf("$$", regionStart, StringComparison.Ordinal);
-            var regionEnd = escapeIndex < 0 ? value.Length : escapeIndex;
-
-            ValidateRegion(value, regionStart, regionEnd);
-
-            if (escapeIndex < 0)
-            {
-                break;
-            }
-
-            regionStart = escapeIndex + 2;
-        }
-    }
-
     private static bool ContainsDollar(string value)
     {
         if (value.Length == 0)
@@ -182,31 +128,6 @@ internal static class EnvironmentSubstitution
             }
 
             output.Append(ResolveSubstitution(value, exprStart, closingBrace, resolveVariable));
-            i = closingBrace + 1;
-        }
-    }
-
-    // Same region walk as AppendSubstitutedRegion, but only validates complete references.
-    // Incomplete ${... forms are not errors and must not emit diagnostics.
-    private static void ValidateRegion(string value, int start, int end)
-    {
-        var i = start;
-        while (i < end)
-        {
-            if (value[i] != '$' || i + 1 >= end || value[i + 1] != '{')
-            {
-                i++;
-                continue;
-            }
-
-            var exprStart = i;
-            var closingBrace = value.IndexOf('}', exprStart + 2, end - (exprStart + 2));
-            if (closingBrace < 0)
-            {
-                return;
-            }
-
-            ParseSubstitutionReference(value, exprStart, closingBrace);
             i = closingBrace + 1;
         }
     }

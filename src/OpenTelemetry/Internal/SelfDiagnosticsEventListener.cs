@@ -292,7 +292,13 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
             if (this.formatMessage && eventMessage != null && payload != null && payload.Count > 0)
             {
                 // Use string.Format to format the message with parameters
-                var messageToWrite = string.Format(System.Globalization.CultureInfo.InvariantCulture, eventMessage, [.. payload]);
+                var messageToWrite = payload.Count switch
+                {
+                    1 => string.Format(System.Globalization.CultureInfo.InvariantCulture, eventMessage, payload[0]),
+                    2 => string.Format(System.Globalization.CultureInfo.InvariantCulture, eventMessage, payload[0], payload[1]),
+                    3 => string.Format(System.Globalization.CultureInfo.InvariantCulture, eventMessage, payload[0], payload[1], payload[2]),
+                    _ => string.Format(System.Globalization.CultureInfo.InvariantCulture, eventMessage, [.. payload]),
+                };
                 pos = EncodeInBuffer(messageToWrite, false, buffer, pos);
             }
             else

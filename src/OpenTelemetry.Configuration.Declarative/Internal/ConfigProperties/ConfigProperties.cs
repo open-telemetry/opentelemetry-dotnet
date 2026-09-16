@@ -38,19 +38,19 @@ internal sealed class ConfigProperties
     {
         if (!this.TryGetValue(key, out var value))
         {
-            return new(ConfigValueOutcome.Absent, default);
+            return new(ConfigValueOutcome.Absent, default, ConfigValuePosition.Unknown);
         }
 
         return value.Kind switch
         {
-            ConfigValueKind.Null => new(ConfigValueOutcome.PresentNull, default),
-            ConfigValueKind.String => new(ConfigValueOutcome.Present, value.AsString()),
+            ConfigValueKind.Null => new(ConfigValueOutcome.PresentNull, default, value.Position),
+            ConfigValueKind.String => new(ConfigValueOutcome.Present, value.AsString(), value.Position),
             ConfigValueKind.Boolean or
             ConfigValueKind.Double or
             ConfigValueKind.Integer or
             ConfigValueKind.Mapping or
             ConfigValueKind.Sequence or
-            _ => new(ConfigValueOutcome.TypeMismatch, default),
+            _ => new(ConfigValueOutcome.TypeMismatch, default, value.Position),
         };
     }
 
@@ -63,19 +63,19 @@ internal sealed class ConfigProperties
     {
         if (!this.TryGetValue(key, out var value))
         {
-            return new(ConfigValueOutcome.Absent, default);
+            return new(ConfigValueOutcome.Absent, default, ConfigValuePosition.Unknown);
         }
 
         return value.Kind switch
         {
-            ConfigValueKind.Null => new(ConfigValueOutcome.PresentNull, default),
-            ConfigValueKind.Boolean => new(ConfigValueOutcome.Present, value.AsBoolean()),
+            ConfigValueKind.Null => new(ConfigValueOutcome.PresentNull, default, value.Position),
+            ConfigValueKind.Boolean => new(ConfigValueOutcome.Present, value.AsBoolean(), value.Position),
             ConfigValueKind.Double or
             ConfigValueKind.Integer or
             ConfigValueKind.Mapping or
             ConfigValueKind.Sequence or
             ConfigValueKind.String or
-            _ => new(ConfigValueOutcome.TypeMismatch, default),
+            _ => new(ConfigValueOutcome.TypeMismatch, default, value.Position),
         };
     }
 
@@ -88,21 +88,21 @@ internal sealed class ConfigProperties
     {
         if (!this.TryGetValue(key, out var value))
         {
-            return new(ConfigValueOutcome.Absent, default);
+            return new(ConfigValueOutcome.Absent, default, ConfigValuePosition.Unknown);
         }
 
         return value.Kind switch
         {
-            ConfigValueKind.Null => new(ConfigValueOutcome.PresentNull, default),
+            ConfigValueKind.Null => new(ConfigValueOutcome.PresentNull, default, value.Position),
             ConfigValueKind.Integer when !value.IsUnrepresentable && TryLongToInt(value.AsLong(), out var fromInteger)
-                => new(ConfigValueOutcome.Present, fromInteger),
+                => new(ConfigValueOutcome.Present, fromInteger, value.Position),
             ConfigValueKind.Double when TryDoubleToInt(value.AsDouble(), out var fromDouble)
-                => new(ConfigValueOutcome.Present, fromDouble),
+                => new(ConfigValueOutcome.Present, fromDouble, value.Position),
             ConfigValueKind.Boolean or
             ConfigValueKind.Mapping or
             ConfigValueKind.Sequence or
             ConfigValueKind.String or
-            _ => new(ConfigValueOutcome.TypeMismatch, default),
+            _ => new(ConfigValueOutcome.TypeMismatch, default, value.Position),
         };
     }
 
@@ -115,20 +115,20 @@ internal sealed class ConfigProperties
     {
         if (!this.TryGetValue(key, out var value))
         {
-            return new(ConfigValueOutcome.Absent, default);
+            return new(ConfigValueOutcome.Absent, default, ConfigValuePosition.Unknown);
         }
 
         return value.Kind switch
         {
-            ConfigValueKind.Null => new(ConfigValueOutcome.PresentNull, default),
-            ConfigValueKind.Integer when !value.IsUnrepresentable => new(ConfigValueOutcome.Present, value.AsLong()),
+            ConfigValueKind.Null => new(ConfigValueOutcome.PresentNull, default, value.Position),
+            ConfigValueKind.Integer when !value.IsUnrepresentable => new(ConfigValueOutcome.Present, value.AsLong(), value.Position),
             ConfigValueKind.Double when TryDoubleToLong(value.AsDouble(), out var fromDouble)
-                => new(ConfigValueOutcome.Present, fromDouble),
+                => new(ConfigValueOutcome.Present, fromDouble, value.Position),
             ConfigValueKind.Boolean or
             ConfigValueKind.Mapping or
             ConfigValueKind.Sequence or
             ConfigValueKind.String or
-            _ => new(ConfigValueOutcome.TypeMismatch, default),
+            _ => new(ConfigValueOutcome.TypeMismatch, default, value.Position),
         };
     }
 
@@ -141,19 +141,19 @@ internal sealed class ConfigProperties
     {
         if (!this.TryGetValue(key, out var value))
         {
-            return new(ConfigValueOutcome.Absent, default);
+            return new(ConfigValueOutcome.Absent, default, ConfigValuePosition.Unknown);
         }
 
         return value.Kind switch
         {
-            ConfigValueKind.Null => new(ConfigValueOutcome.PresentNull, default),
-            ConfigValueKind.Double => new(ConfigValueOutcome.Present, value.AsDouble()),
-            ConfigValueKind.Integer when !value.IsUnrepresentable => new(ConfigValueOutcome.Present, value.AsLong()),
+            ConfigValueKind.Null => new(ConfigValueOutcome.PresentNull, default, value.Position),
+            ConfigValueKind.Double => new(ConfigValueOutcome.Present, value.AsDouble(), value.Position),
+            ConfigValueKind.Integer when !value.IsUnrepresentable => new(ConfigValueOutcome.Present, value.AsLong(), value.Position),
             ConfigValueKind.Boolean or
             ConfigValueKind.Mapping or
             ConfigValueKind.Sequence or
             ConfigValueKind.String or
-            _ => new(ConfigValueOutcome.TypeMismatch, default),
+            _ => new(ConfigValueOutcome.TypeMismatch, default, value.Position),
         };
     }
 
@@ -167,19 +167,19 @@ internal sealed class ConfigProperties
     {
         if (!this.TryGetValue(key, out var value))
         {
-            return new(ConfigValueOutcome.Absent, default);
+            return new(ConfigValueOutcome.Absent, default, ConfigValuePosition.Unknown);
         }
 
         return value.Kind switch
         {
-            ConfigValueKind.Null => new(ConfigValueOutcome.PresentNull, default),
-            ConfigValueKind.Mapping => new(ConfigValueOutcome.Present, value.AsMapping()),
+            ConfigValueKind.Null => new(ConfigValueOutcome.PresentNull, default, value.Position),
+            ConfigValueKind.Mapping => new(ConfigValueOutcome.Present, value.AsMapping(), value.Position),
             ConfigValueKind.Boolean or
             ConfigValueKind.Double or
             ConfigValueKind.Integer or
             ConfigValueKind.Sequence or
             ConfigValueKind.String or
-            _ => new(ConfigValueOutcome.TypeMismatch, default),
+            _ => new(ConfigValueOutcome.TypeMismatch, default, value.Position),
         };
     }
 
@@ -193,20 +193,20 @@ internal sealed class ConfigProperties
     {
         if (!this.TryGetValue(key, out var value))
         {
-            return new(ConfigValueOutcome.Absent, default);
+            return new(ConfigValueOutcome.Absent, default, ConfigValuePosition.Unknown);
         }
 
         return value.Kind switch
         {
-            ConfigValueKind.Null => new(ConfigValueOutcome.PresentNull, default),
+            ConfigValueKind.Null => new(ConfigValueOutcome.PresentNull, default, value.Position),
             ConfigValueKind.Sequence when TryBuildPropertiesList(value.AsSequence(), out var list)
-                => new(ConfigValueOutcome.Present, list),
+                => new(ConfigValueOutcome.Present, list, value.Position),
             ConfigValueKind.Boolean or
             ConfigValueKind.Double or
             ConfigValueKind.Integer or
             ConfigValueKind.Mapping or
             ConfigValueKind.String or
-            _ => new(ConfigValueOutcome.TypeMismatch, default),
+            _ => new(ConfigValueOutcome.TypeMismatch, default, value.Position),
         };
     }
 
@@ -253,20 +253,20 @@ internal sealed class ConfigProperties
 
         if (!this.TryGetValue(key, out var value))
         {
-            return new(ConfigValueOutcome.Absent, default);
+            return new(ConfigValueOutcome.Absent, default, ConfigValuePosition.Unknown);
         }
 
         return value.Kind switch
         {
-            ConfigValueKind.Null => new(ConfigValueOutcome.PresentNull, default),
+            ConfigValueKind.Null => new(ConfigValueOutcome.PresentNull, default, value.Position),
             ConfigValueKind.Sequence when TryBuildScalarList<T>(value.AsSequence(), out var list)
-                => new(ConfigValueOutcome.Present, list),
+                => new(ConfigValueOutcome.Present, list, value.Position),
             ConfigValueKind.Boolean or
             ConfigValueKind.Double or
             ConfigValueKind.Integer or
             ConfigValueKind.Mapping or
             ConfigValueKind.String or
-            _ => new(ConfigValueOutcome.TypeMismatch, default),
+            _ => new(ConfigValueOutcome.TypeMismatch, default, value.Position),
         };
     }
 

@@ -17,7 +17,7 @@ internal sealed class OpenTelemetryDeclarativeConfigurationEventSource : EventSo
     [Event(1, Message = "Declarative config file_format warning: {0}", Level = EventLevel.Warning)]
     public void FileFormatWarning(string message) => this.WriteEvent(1, message);
 
-    [Event(2, Message = "Declarative config: unknown top-level section '{0}' is not supported in this version and will be ignored.", Level = EventLevel.Warning)]
+    [Event(2, Message = "Declarative config: top-level section '{0}' is retained but not interpreted by this implementation.", Level = EventLevel.Warning)]
     public void UnknownConfigurationSection(string sectionName) => this.WriteEvent(2, sectionName);
 
     [Event(3, Message = "Declarative config: invalid resource attribute - {0}", Level = EventLevel.Warning)]

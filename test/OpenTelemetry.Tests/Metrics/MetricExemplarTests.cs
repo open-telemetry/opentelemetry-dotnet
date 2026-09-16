@@ -944,6 +944,81 @@ public class MetricExemplarTests : MetricTestsBase
     }
 
     [Fact]
+    public void ViewToExcludeTagKeys_ExemplarFilteredTagsDoNotLeakAcrossCollections()
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+
+        var histogram = meter.CreateHistogram<double>("testHistogram");
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
+            .AddView(
+                histogram.Name,
+                new MetricStreamConfiguration()
+                {
+                    ExcludedTagKeys = ["color", "size"],
+                })
+            .AddInMemoryExporter(exportedItems, metricReaderOptions =>
+            {
+                metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Cumulative;
+            }));
+
+        // Three raw tags, two of which the view filters out.
+        histogram.Record(
+            10,
+            new("name", "apple"),
+            new("color", "red"),
+            new("size", "small"));
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        Assert.Single(exportedItems);
+
+        var firstExemplar = GetSingleExemplar(exportedItems);
+        Assert.Equal(3, firstExemplar.FilteredTags.MaximumCount);
+
+        var firstFilteredTags = firstExemplar.FilteredTags.ToReadOnlyList();
+        Assert.Equal(2, firstFilteredTags.Count);
+        Assert.Contains(new("color", "red"), firstFilteredTags);
+        Assert.Contains(new("size", "small"), firstFilteredTags);
+
+        exportedItems.Clear();
+
+        histogram.Record(
+            10,
+            new("name", "apple"),
+            new("color", "blue"));
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        Assert.Single(exportedItems);
+
+        var secondExemplar = GetSingleExemplar(exportedItems);
+
+        Assert.Equal(2, secondExemplar.FilteredTags.MaximumCount);
+
+        var secondFilteredTags = secondExemplar.FilteredTags.ToReadOnlyList();
+        Assert.Single(secondFilteredTags);
+        Assert.Contains(new("color", "blue"), secondFilteredTags);
+        Assert.DoesNotContain(new("color", "red"), secondFilteredTags);
+        Assert.DoesNotContain(new("size", "small"), secondFilteredTags);
+
+        static Exemplar GetSingleExemplar(List<Metric> metrics)
+        {
+            var metricPoint = GetFirstMetricPoint(metrics);
+            Assert.NotNull(metricPoint);
+
+            var exemplars = GetExemplars(metricPoint.Value);
+            Assert.Single(exemplars);
+
+            return exemplars[0];
+        }
+    }
+
+    [Fact]
     public void ExemplarReservoirOfferThrowingForLongCounter_ExceptionSwallowedAndMeasurementRecorded()
     {
         var exportedItems = new List<Metric>();

@@ -1,0 +1,3 @@
+OpenTelemetry.Trace.AlwaysRecordSampler
+OpenTelemetry.Trace.AlwaysRecordSampler.AlwaysRecordSampler(OpenTelemetry.Trace.Sampler! rootSampler) -> void
+override OpenTelemetry.Trace.AlwaysRecordSampler.ShouldSample(in OpenTelemetry.Trace.SamplingParameters samplingParameters) -> OpenTelemetry.Trace.SamplingResult

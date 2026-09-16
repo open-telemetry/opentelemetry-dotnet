@@ -11,7 +11,7 @@ namespace OpenTelemetry.Exporter;
 /// over an escaping axis (escape discouraged characters to <c>_</c> versus pass UTF-8 through
 /// unaltered) and a suffix axis (append unit and type suffixes versus not).
 /// </remarks>
-public enum PrometheusTranslationStrategy
+internal enum PrometheusTranslationStrategy
 {
     /// <summary>
     /// Discouraged characters are escaped to <c>_</c> and unit and type (e.g. <c>_total</c>)

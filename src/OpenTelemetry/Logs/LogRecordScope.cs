@@ -32,7 +32,8 @@ public readonly struct LogRecordScope
     /// </summary>
     public struct Enumerator : IEnumerator<KeyValuePair<string, object?>>
     {
-        private readonly IReadOnlyList<KeyValuePair<string, object?>> scope;
+        private readonly IReadOnlyList<KeyValuePair<string, object?>>? scope;
+        private readonly IEnumerator<KeyValuePair<string, object?>>? enumerator;
         private int position;
 
         /// <summary>
@@ -44,14 +45,17 @@ public readonly struct LogRecordScope
             if (scope is IReadOnlyList<KeyValuePair<string, object?>> scopeList)
             {
                 this.scope = scopeList;
+                this.enumerator = null;
             }
             else if (scope is IEnumerable<KeyValuePair<string, object?>> scopeEnumerable)
             {
-                this.scope = [.. scopeEnumerable];
+                this.scope = null;
+                this.enumerator = scopeEnumerable.GetEnumerator();
             }
             else
             {
                 this.scope = [new KeyValuePair<string, object?>(string.Empty, scope)];
+                this.enumerator = null;
             }
 
             this.position = 0;
@@ -66,7 +70,18 @@ public readonly struct LogRecordScope
         /// <inheritdoc/>
         public bool MoveNext()
         {
-            if (this.position < this.scope.Count)
+            if (this.enumerator != null)
+            {
+                if (this.enumerator.MoveNext())
+                {
+                    this.Current = this.enumerator.Current;
+                    return true;
+                }
+
+                return false;
+            }
+
+            if (this.scope != null && this.position < this.scope.Count)
             {
                 this.Current = this.scope[this.position++];
                 return true;
@@ -77,8 +92,7 @@ public readonly struct LogRecordScope
 
         /// <inheritdoc/>
         public readonly void Dispose()
-        {
-        }
+            => this.enumerator?.Dispose();
 
         /// <inheritdoc/>
         public void Reset()

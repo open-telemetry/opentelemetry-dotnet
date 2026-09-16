@@ -24,11 +24,12 @@ OTEL_CONFIG_FILE=/path/to/otel-config.yaml
 
 ### 2. Wire it into your OTel setup
 
-**Recommended on `HostApplicationBuilder` / `WebApplicationBuilder`:**
+**On `IHostApplicationBuilder` (`WebApplicationBuilder` /**
+**`HostApplicationBuilder`) - recommended:**
 
 ```csharp
-builder.Configuration.AddOpenTelemetryDeclarativeConfiguration(); // reads OTEL_CONFIG_FILE
-builder.Services.AddOpenTelemetry()
+builder.AddOpenTelemetry()
+    .UseDeclarativeConfiguration()
     .WithTracing(b => b.AddSource("MyApp.*").AddConsoleExporter());
 ```
 
@@ -41,8 +42,8 @@ hostBuilder.ConfigureServices(services =>
     services.AddOpenTelemetry().WithTracing(...));
 ```
 
-**Alternative:** wire through `IOpenTelemetryBuilder` (reads `OTEL_CONFIG_FILE`
-when called without a path):
+**Without a host** (plain `IServiceCollection`), wire through
+`IOpenTelemetryBuilder` (reads `OTEL_CONFIG_FILE` when called without a path):
 
 ```csharp
 services.AddOpenTelemetry()
@@ -58,14 +59,8 @@ services.AddOpenTelemetry()
     .WithTracing(...);
 ```
 
-`UseDeclarativeConfiguration()` works best on modern hosts
-(`WebApplicationBuilder`, `HostApplicationBuilder`) where `IConfiguration` is
-already registered before `AddOpenTelemetry()` is called. With `HostBuilder`,
-use the `ConfigureAppConfiguration` approach instead so the YAML source is added
-before DI configuration is built. Calling `UseDeclarativeConfiguration()` twice
-on the same `IServiceCollection` is a no-op - the first file path wins and a
-warning is emitted via EventSource. Calling it with a different path does not
-replace the first registration.
+Calling `UseDeclarativeConfiguration()` twice on the same `IServiceCollection`
+is a no-op and the first file path wins.
 
 Only one declarative configuration file is supported per
 `IConfigurationBuilder`. Registering the same file again is a no-op. Registering
@@ -104,10 +99,18 @@ Only string-valued `resource.attributes` are currently supported. Boolean,
 integer, double, and array attributes are reported and skipped.
 
 All other top-level sections (e.g. `tracer_provider`, `propagator`) are logged
-and ignored. You can track this issue for missing features:
-[#6380](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6380).
+and are not applied. Structurally invalid content can fail configuration
+loading.
 
-## Environment-variable substitution
+## Parsing and validation
+
+The configuration file is expected to conform to the YAML 1.2 specification.
+
+YAML 1.1 merge keys (`<<: *defaults`) are rejected before any configuration
+is interpreted. Quoted or explicitly string-tagged `<<` keys remain ordinary
+property names under the YAML 1.2 core schema.
+
+### Environment-variable substitution
 
 Values in the YAML file may reference environment variables using the `${...}`
 syntax, per the OTel spec:
@@ -167,28 +170,24 @@ merged per key; the typed YAML document cannot, so exactly one document is used.
   provide the specification's strict mode that ignores other SDK environment
   variables when `OTEL_CONFIG_FILE` is set.
 - `UseDeclarativeConfiguration()` applies YAML values by extending the
-  `IConfiguration` registered at the time it is called. An application that
+  configuration available to it at the time it is called. An application that
   replaces its `IConfiguration` registration, or clears its configuration
   sources, *after* that call detaches the YAML source: flat keys lose the YAML
-  values while typed consumers still read the document. Register declarative
-  configuration after your configuration sources are settled, or use
-  `builder.Configuration.AddOpenTelemetryDeclarativeConfiguration()`, which adds
-  the source directly and is not affected.
+  values while typed consumers still read the document. Following
+  `builder.AddOpenTelemetry()` the source is added to `builder.Configuration`
+  directly, so a later `builder.Configuration.Sources.Clear()` detaches it;
+  following `services.AddOpenTelemetry()` (non-host) the source is added to the
+  `IConfiguration` resolved from the container, so a later registration of
+  `IConfiguration` detaches it. Register declarative configuration after your
+  configuration sources are settled.
 - Only string-valued structured resource attributes are emitted. Unsupported
   typed attributes are skipped and reported.
 - For duplicate structured resource attribute names, the first occurrence wins.
   A structured attribute also takes precedence over the same name in
   `resource.attributes_list`, even when its type is not currently supported.
-- Unknown top-level sections are logged and ignored. Unknown fields within
-  `resource` or a resource attribute are schema errors and fail the load.
-- YAML merge keys (`<<: *defaults`) are rejected. Merge keys are a YAML 1.1
-  feature and are not part of the required YAML 1.2 core schema.
-- Plain (unquoted) YAML scalars that resolve to `null`, `Null`, `NULL`, or `~`
-  after environment variable substitution are treated as YAML null. Nullable
-  fields apply their specified null behaviour; non-nullable fields fail schema
-  validation. To preserve the string `"null"` as a value, use a quoted scalar:
-  `value: "null"`. This is consistent with YAML 1.2 core schema semantics
-  applied post-substitution as required by the OTel specification.
+- Unknown top-level sections are logged and are not applied, but their `${...}`
+  references are resolved during the load, so an unset variable in one is
+  reported.
 
 ### Pitfalls to avoid
 

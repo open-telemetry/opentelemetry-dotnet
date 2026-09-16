@@ -344,4 +344,126 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
         var config = host.Services.GetRequiredService<IConfiguration>();
         Assert.Equal("app-value", config["some-app-key"]);
     }
+
+    [Fact]
+    public void ModernHost_AddOpenTelemetryOnHostBuilder_YamlVisibleDuringSetup()
+    {
+        // AddOpenTelemetry(IHostApplicationBuilder) registers the host's live configuration, so
+        // the overlay inserts the YAML source in-place during setup. Without it the source is
+        // only inserted when IConfiguration is first resolved from the container, so values are
+        // invisible to anything reading builder.Configuration while the application is built.
+        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(
+            resourceAttributes: new Dictionary<string, string> { ["service.name"] = "setup-visible" });
+
+        var builder = Host.CreateApplicationBuilder();
+        builder.AddOpenTelemetry()
+            .UseDeclarativeConfiguration(yamlFile.Path)
+            .WithTracing();
+
+        Assert.Equal("service.name=setup-visible", builder.Configuration["OTEL_RESOURCE_ATTRIBUTES"]);
+    }
+
+    [Fact]
+    public void ModernHost_AddOpenTelemetryOnHostBuilder_WithExistingConfigurationManager_UsesHostConfiguration()
+    {
+        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(
+            resourceAttributes: new Dictionary<string, string> { ["service.name"] = "setup-visible" });
+
+        var builder = Host.CreateApplicationBuilder();
+        using var applicationConfiguration = new ConfigurationManager();
+        builder.Services.AddSingleton<IConfigurationManager>(applicationConfiguration);
+
+        builder.AddOpenTelemetry()
+            .UseDeclarativeConfiguration(yamlFile.Path)
+            .WithTracing();
+
+        Assert.Equal("service.name=setup-visible", builder.Configuration["OTEL_RESOURCE_ATTRIBUTES"]);
+        Assert.Null(applicationConfiguration["OTEL_RESOURCE_ATTRIBUTES"]);
+    }
+
+    [Fact]
+    public void ModernHost_AddOpenTelemetryOnServiceCollection_YamlNotVisibleDuringSetup()
+    {
+        // Characterises the difference the host-builder entry point makes. Reaching the overlay
+        // through IServiceCollection leaves the host's configuration unreachable, so the source
+        // is only inserted when IConfiguration is resolved from the container. The values still
+        // reach the SDK (see ModernHost_UseDeclarativeConfiguration_ResourceAttributesFlowToSdk),
+        // but not in time for code reading builder.Configuration during setup.
+        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(
+            resourceAttributes: new Dictionary<string, string> { ["service.name"] = "setup-visible" });
+
+        var builder = Host.CreateApplicationBuilder();
+        builder.Services.AddOpenTelemetry()
+            .UseDeclarativeConfiguration(yamlFile.Path)
+            .WithTracing();
+
+        Assert.Null(builder.Configuration["OTEL_RESOURCE_ATTRIBUTES"]);
+    }
+
+    [Fact]
+    public void ModernHost_AddOpenTelemetryOnHostBuilder_AddsSourceInPlace()
+    {
+        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: false);
+
+        var builder = Host.CreateApplicationBuilder();
+        var sourcesBefore = builder.Configuration.Sources.Count;
+        var configurationDescriptorsBefore = builder.Services
+            .Count(d => d.ServiceType == typeof(IConfiguration));
+
+        builder.AddOpenTelemetry().UseDeclarativeConfiguration(yamlFile.Path);
+
+        // The YAML source is appended to the host's own sources, after env vars and appsettings.
+        Assert.Equal(sourcesBefore + 1, builder.Configuration.Sources.Count);
+        Assert.IsType<DeclarativeConfigurationSource>(
+            builder.Configuration.Sources[builder.Configuration.Sources.Count - 1]);
+
+        // No descriptor surgery: the application's IConfiguration registration is left alone.
+        Assert.Equal(
+            configurationDescriptorsBefore,
+            builder.Services.Count(d => d.ServiceType == typeof(IConfiguration)));
+    }
+
+    [Fact]
+    public void ModernHost_AddOpenTelemetryOnHostBuilder_ResourceAttributesFlowToSdk()
+    {
+        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(
+            resourceAttributes: new Dictionary<string, string> { ["service.name"] = "modern-host-svc-via-builder" });
+
+        var builder = Host.CreateApplicationBuilder();
+        builder.AddOpenTelemetry()
+            .UseDeclarativeConfiguration(yamlFile.Path)
+            .WithTracing();
+
+        using var host = builder.Build();
+
+        var resource = host.Services.GetRequiredService<TracerProvider>().GetResource();
+
+        Assert.Contains(
+            resource.Attributes,
+            a => a.Key == "service.name" && (string)a.Value == "modern-host-svc-via-builder");
+    }
+
+    [Fact]
+    public void ModernHost_AddOpenTelemetryOnHostBuilder_YamlOverridesSourceAddedBeforeIt()
+    {
+        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(
+            resourceAttributes: new Dictionary<string, string> { ["service.name"] = "from-yaml" });
+
+        var builder = Host.CreateApplicationBuilder();
+        builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["OTEL_RESOURCE_ATTRIBUTES"] = "service.name=from-in-memory",
+        });
+
+        builder.AddOpenTelemetry()
+            .UseDeclarativeConfiguration(yamlFile.Path)
+            .WithTracing();
+
+        using var host = builder.Build();
+
+        var resource = host.Services.GetRequiredService<TracerProvider>().GetResource();
+        Assert.Contains(
+            resource.Attributes,
+            a => a.Key == "service.name" && (string)a.Value == "from-yaml");
+    }
 }

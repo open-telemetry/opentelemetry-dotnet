@@ -14,12 +14,13 @@ public static class ResourceBuilderExtensions
 {
     private static readonly string InstanceId = Guid.NewGuid().ToString();
 
-    private static Resource TelemetryResource { get; } = new Resource(new Dictionary<string, object>
-    {
-        [ResourceSemanticConventions.AttributeTelemetrySdkName] = "opentelemetry",
-        [ResourceSemanticConventions.AttributeTelemetrySdkLanguage] = "dotnet",
-        [ResourceSemanticConventions.AttributeTelemetrySdkVersion] = Sdk.InformationalVersion,
-    });
+    private static Resource TelemetryResource { get; } = new(
+        [
+            new(ResourceSemanticConventions.AttributeTelemetrySdkName, "opentelemetry"),
+            new(ResourceSemanticConventions.AttributeTelemetrySdkLanguage, "dotnet"),
+            new(ResourceSemanticConventions.AttributeTelemetrySdkVersion, Sdk.InformationalVersion),
+        ],
+        SchemaUrls.Get(SemanticConventionsVersion.Current));
 
     /// <summary>
     /// Adds service information to a <see cref="ResourceBuilder"/>
@@ -45,27 +46,19 @@ public static class ResourceBuilderExtensions
         Guard.ThrowIfNull(resourceBuilder);
         Guard.ThrowIfNullOrEmpty(serviceName);
 
-        var resourceAttributes = new Dictionary<string, object>
+        var resourceAttributes = new Dictionary<string, object>(4)
         {
-            { ResourceSemanticConventions.AttributeServiceName, serviceName },
+            [ResourceSemanticConventions.AttributeServiceName] = serviceName,
         };
 
-        if (!string.IsNullOrEmpty(serviceNamespace))
+        if (serviceNamespace is { Length: > 0 })
         {
-#if NET || NETSTANDARD2_1_OR_GREATER
             resourceAttributes.Add(ResourceSemanticConventions.AttributeServiceNamespace, serviceNamespace);
-#else
-            resourceAttributes.Add(ResourceSemanticConventions.AttributeServiceNamespace, serviceNamespace!);
-#endif
         }
 
-        if (!string.IsNullOrEmpty(serviceVersion))
+        if (serviceVersion is { Length: > 0 })
         {
-#if NET || NETSTANDARD2_1_OR_GREATER
             resourceAttributes.Add(ResourceSemanticConventions.AttributeServiceVersion, serviceVersion);
-#else
-            resourceAttributes.Add(ResourceSemanticConventions.AttributeServiceVersion, serviceVersion!);
-#endif
         }
 
         if (serviceInstanceId == null && autoGenerateServiceInstanceId)
@@ -73,13 +66,13 @@ public static class ResourceBuilderExtensions
             serviceInstanceId = InstanceId;
         }
 
-        if (serviceInstanceId != null)
+        if (serviceInstanceId is { Length: > 0 })
         {
             resourceAttributes.Add(ResourceSemanticConventions.AttributeServiceInstance, serviceInstanceId);
         }
 
 #pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
-        return resourceBuilder.AddResource(new Resource(resourceAttributes));
+        return resourceBuilder.AddResource(new Resource(resourceAttributes, SchemaUrls.Get(SemanticConventionsVersion.Current)));
 #pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
     }
 

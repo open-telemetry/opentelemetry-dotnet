@@ -149,10 +149,9 @@ public class ResourceBuilder
             // GetCurrentProcess can throw PlatformNotSupportedException
         }
 
-        return new Resource(new Dictionary<string, object>
-        {
-            [ResourceSemanticConventions.AttributeServiceName] = defaultServiceName,
-        });
+        return new Resource(
+            [new(ResourceSemanticConventions.AttributeServiceName, defaultServiceName)],
+            SchemaUrls.Get(SemanticConventionsVersion.Current));
     }
 
     internal sealed class WrapperResourceDetector : IResourceDetector
@@ -177,11 +176,9 @@ public class ResourceBuilder
             this.resourceDetectorFactory = resourceDetectorFactory;
         }
 
-        public void Resolve(IServiceProvider? serviceProvider)
-        {
+        public void Resolve(IServiceProvider? serviceProvider) =>
             this.resourceDetector = this.resourceDetectorFactory(serviceProvider)
                 ?? throw new InvalidOperationException("ResourceDetector factory did not return a ResourceDetector instance.");
-        }
 
         public Resource Detect()
         {

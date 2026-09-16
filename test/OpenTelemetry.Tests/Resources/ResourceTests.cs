@@ -523,11 +523,20 @@ public sealed class ResourceTests : IDisposable
         const string SchemaUrl = "https://opentelemetry.io/schemas/1.36.0";
 
         // A detector contributes a Schema URL; other contributors leave it empty.
-        var resource = ResourceBuilder.CreateDefault()
+        var resource = ResourceBuilder.CreateEmpty()
+            .AddAttributes([new KeyValuePair<string, object>($"{KeyName}0", $"{ValueName}0")])
             .AddAttributes([new KeyValuePair<string, object>(KeyName, ValueName)], SchemaUrl)
             .Build();
 
         Assert.Equal(SchemaUrl, resource.SchemaUrl);
+    }
+
+    [Fact]
+    public void ResourceBuilder_Build_DefaultContributorsShareSchemaUrlWithoutConflict()
+    {
+        var resource = ResourceBuilder.CreateDefault().Build();
+
+        Assert.StartsWith("https://opentelemetry.io/schemas/", resource.SchemaUrl, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -541,6 +550,7 @@ public sealed class ResourceTests : IDisposable
         Assert.Equal(4, attributes.Count());
         ValidateDefaultAttributes(attributes);
         ValidateTelemetrySdkAttributes(attributes);
+        Assert.StartsWith("https://opentelemetry.io/schemas/", resource.SchemaUrl, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -554,6 +564,7 @@ public sealed class ResourceTests : IDisposable
         Assert.Equal(4, attributes.Count());
         ValidateDefaultAttributes(attributes);
         ValidateTelemetrySdkAttributes(attributes);
+        Assert.StartsWith("https://opentelemetry.io/schemas/", resource.SchemaUrl, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -568,6 +579,7 @@ public sealed class ResourceTests : IDisposable
         ValidateAttributes(attributes, 0, 1);
         ValidateDefaultAttributes(attributes);
         ValidateTelemetrySdkAttributes(attributes);
+        Assert.StartsWith("https://opentelemetry.io/schemas/", resource.SchemaUrl, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -585,6 +597,7 @@ public sealed class ResourceTests : IDisposable
         Assert.Contains(new KeyValuePair<string, object>("EVKey1", "EVVal1"), attributes);
         Assert.Contains(new KeyValuePair<string, object>("EVKey2", "EVVal2"), attributes);
         ValidateTelemetrySdkAttributes(attributes);
+        Assert.StartsWith("https://opentelemetry.io/schemas/", resource.SchemaUrl, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -600,6 +613,7 @@ public sealed class ResourceTests : IDisposable
         Assert.Contains(new KeyValuePair<string, object>("EVKey1", "EVVal1"), attributes);
         Assert.Contains(new KeyValuePair<string, object>("EVKey2", "EVVal2"), attributes);
         ValidateTelemetrySdkAttributes(attributes);
+        Assert.StartsWith("https://opentelemetry.io/schemas/", resource.SchemaUrl, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -615,6 +629,7 @@ public sealed class ResourceTests : IDisposable
         ValidateAttributes(attributes, 0, 1);
         Assert.Contains(new KeyValuePair<string, object>("service.name", "some-service"), attributes);
         ValidateTelemetrySdkAttributes(attributes);
+        Assert.StartsWith("https://opentelemetry.io/schemas/", resource.SchemaUrl, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -631,6 +646,7 @@ public sealed class ResourceTests : IDisposable
         ValidateAttributes(attributes, 0, 1);
         Assert.Contains(new KeyValuePair<string, object>("service.name", "from-service-name"), attributes);
         ValidateTelemetrySdkAttributes(attributes);
+        Assert.StartsWith("https://opentelemetry.io/schemas/", resource.SchemaUrl, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -647,6 +663,7 @@ public sealed class ResourceTests : IDisposable
         ValidateAttributes(attributes, 0, 1);
         Assert.Contains(new KeyValuePair<string, object>("service.name", "from-code"), attributes);
         ValidateTelemetrySdkAttributes(attributes);
+        Assert.StartsWith("https://opentelemetry.io/schemas/", resource.SchemaUrl, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -673,6 +690,8 @@ public sealed class ResourceTests : IDisposable
         var resource = builder.Build();
 
         Assert.True(factoryExecuted);
+        Assert.NotNull(resource);
+        Assert.StartsWith("https://opentelemetry.io/schemas/", resource.SchemaUrl, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -709,17 +728,23 @@ public sealed class ResourceTests : IDisposable
             return new NoopResourceDetector();
         });
 
-        builder.Build();
+        var resource = builder.Build();
 
         Assert.True(validTestRun);
+        Assert.NotNull(resource);
+        Assert.StartsWith("https://opentelemetry.io/schemas/", resource.SchemaUrl, StringComparison.Ordinal);
     }
 
     internal static void ValidateTelemetrySdkAttributes(IEnumerable<KeyValuePair<string, object>> attributes)
     {
         Assert.Contains(new KeyValuePair<string, object>("telemetry.sdk.name", "opentelemetry"), attributes);
         Assert.Contains(new KeyValuePair<string, object>("telemetry.sdk.language", "dotnet"), attributes);
+
         var versionAttribute = attributes.Where(pair => pair.Key.Equals("telemetry.sdk.version", StringComparison.Ordinal));
-        Assert.Single(versionAttribute);
+        var version = Assert.Single(versionAttribute);
+        var versionString = Assert.IsType<string>(version.Value);
+
+        Assert.NotEmpty(versionString);
     }
 
     internal static void ValidateDefaultAttributes(IEnumerable<KeyValuePair<string, object>> attributes)

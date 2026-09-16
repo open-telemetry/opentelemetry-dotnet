@@ -81,7 +81,7 @@ finally
 
   <Target Name="GenerateAssemblyOriginatorKeyFile" BeforeTargets="ResolveKeySource" Condition="'$(SignAssembly)' == 'true'">
     <PropertyGroup>
-      <AssemblyOriginatorKeyFile>$([System.IO.Path]::Combine('$(BaseIntermediateOutputPath)', 'OpenTelemetry.snk'))</AssemblyOriginatorKeyFile>
+      <AssemblyOriginatorKeyFile>$([System.IO.Path]::Combine('$(IntermediateOutputPath)', 'OpenTelemetry.snk'))</AssemblyOriginatorKeyFile>
     </PropertyGroup>
 
     <ItemGroup>

@@ -6,6 +6,28 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added Schema URL to internally created `Resource` instances.
+  ([#7726](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7726))
+
+* Reduced allocations when formatting self-diagnostics events with up to
+  three parameters.
+  ([#7730](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7730))
+
+* Added `AlwaysRecordSampler`.
+  ([#7695](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7695))
+
+* Fixed `CircularBufferBuckets` so the first delta histogram insertion after a
+  reset does not result in an unnecessary scale reduction.
+  ([#7749](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7749))
+
+* Improved wildcard source/meter name matching to avoid excessive matching
+  time at runtime.
+  ([#7760](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7760))
+
+* Fixed lazy logger provider builds after a failure from reusing partially
+  initialized provider state.
+  ([#7761](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7761))
+
 ## 1.18.0
 
 Released 2026-Aug-21

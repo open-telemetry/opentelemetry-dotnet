@@ -13,6 +13,7 @@ public class ResourceBuilderTests
         Assert.Contains(new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceName, "my-service"), resource.Attributes);
         Assert.Single(resource.Attributes, kvp => kvp.Key == ResourceSemanticConventions.AttributeServiceName);
         Assert.True(Guid.TryParse((string)resource.Attributes.Single(kvp => kvp.Key == ResourceSemanticConventions.AttributeServiceInstance).Value, out _));
+        Assert.StartsWith("https://opentelemetry.io/schemas/", resource.SchemaUrl, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -22,6 +23,7 @@ public class ResourceBuilderTests
         Assert.Equal(2, resource.Attributes.Count());
         Assert.Contains(new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceName, "my-service"), resource.Attributes);
         Assert.Contains(new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceInstance, "123"), resource.Attributes);
+        Assert.StartsWith("https://opentelemetry.io/schemas/", resource.SchemaUrl, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -32,6 +34,7 @@ public class ResourceBuilderTests
         Assert.Contains(new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceName, "my-service"), resource.Attributes);
         Assert.Contains(new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceInstance, "123"), resource.Attributes);
         Assert.Contains(new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceNamespace, "my-namespace"), resource.Attributes);
+        Assert.StartsWith("https://opentelemetry.io/schemas/", resource.SchemaUrl, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -43,6 +46,7 @@ public class ResourceBuilderTests
         Assert.Contains(new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceInstance, "123"), resource.Attributes);
         Assert.Contains(new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceNamespace, "my-namespace"), resource.Attributes);
         Assert.Contains(new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceVersion, "1.2.3"), resource.Attributes);
+        Assert.StartsWith("https://opentelemetry.io/schemas/", resource.SchemaUrl, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -51,6 +55,7 @@ public class ResourceBuilderTests
         var resource = ResourceBuilder.CreateEmpty().AddService("my-service", autoGenerateServiceInstanceId: false).Build();
         Assert.Single(resource.Attributes);
         Assert.Contains(new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceName, "my-service"), resource.Attributes);
+        Assert.StartsWith("https://opentelemetry.io/schemas/", resource.SchemaUrl, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -81,5 +86,6 @@ public class ResourceBuilderTests
             .Build();
         Assert.Single(resource.Attributes);
         Assert.Contains(new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceName, "my-service"), resource.Attributes);
+        Assert.StartsWith("https://opentelemetry.io/schemas/", resource.SchemaUrl, StringComparison.Ordinal);
     }
 }

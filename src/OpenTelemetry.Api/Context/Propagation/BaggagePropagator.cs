@@ -138,7 +138,14 @@ public class BaggagePropagator : TextMapPropagator
         if (e.MoveNext())
         {
             var itemCount = 0;
-            var baggage = new StringBuilder();
+
+            // Pre-size the builder to avoid repeated internal buffer growth. This
+            // value is a rough estimate (16 chars/item covers most "key=value" pairs),
+            // clamped to the maximum number of items that can be serialized.
+            var estimatedItemCount = Math.Min(context.Baggage.Count, MaxBaggageItems);
+            var estimatedCapacity = Math.Min(MaxBaggageLength, estimatedItemCount * 16);
+            var baggage = new StringBuilder(estimatedCapacity);
+
             do
             {
                 var item = e.Current;
@@ -277,14 +284,14 @@ public class BaggagePropagator : TextMapPropagator
         return result;
     }
 
-    private static string EncodeValue(ReadOnlySpan<char> value) => Encode(value, isKey: false);
+    private static string EncodeValue(string value) => Encode(value, isKey: false);
 
-    private static string Encode(ReadOnlySpan<char> value, bool isKey)
+    private static string Encode(string value, bool isKey)
     {
 #if NET
-        if (!value.ContainsAnyExcept(isKey ? ValidKeySearcher : ValidValueSearcher))
+        if (!value.AsSpan().ContainsAnyExcept(isKey ? ValidKeySearcher : ValidValueSearcher))
         {
-            return value.ToString();
+            return value;
         }
 #else
         var validChars = isKey ? ValidKeyChars : ValidValueChars;
@@ -300,7 +307,7 @@ public class BaggagePropagator : TextMapPropagator
 
         if (allValid)
         {
-            return value.ToString();
+            return value;
         }
 #endif
 
