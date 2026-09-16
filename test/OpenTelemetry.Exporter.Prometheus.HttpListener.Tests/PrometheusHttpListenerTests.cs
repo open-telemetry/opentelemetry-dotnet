@@ -631,7 +631,7 @@ public class PrometheusHttpListenerTests
 
         // The scraper asks for the metrics and then never reads them.
         using var stalledClient = new System.Net.Sockets.TcpClient();
-        await stalledClient.ConnectAsync(IPAddress.Loopback, context.Port);
+        await stalledClient.ConnectAsync(context.BaseAddress.Host, context.Port);
         var request = System.Text.Encoding.ASCII.GetBytes(
             $"GET /metrics HTTP/1.1\r\nHost: localhost:{context.Port}\r\nConnection: keep-alive\r\n\r\n");
         var stalledStream = stalledClient.GetStream();
