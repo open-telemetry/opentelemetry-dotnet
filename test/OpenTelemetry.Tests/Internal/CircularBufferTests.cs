@@ -109,6 +109,57 @@ public class CircularBufferTests
     }
 
     [Fact]
+    public void CheckTryAddWithoutCountOverload()
+    {
+        var circularBuffer = new CircularBuffer<string>(capacity: 1);
+
+        Assert.True(circularBuffer.TryAdd("a", maxSpinCount: 1));
+        Assert.False(circularBuffer.TryAdd("b", maxSpinCount: 1));
+    }
+
+    [Fact]
+    public async Task CheckTryAddExceedsMaxSpinCount()
+    {
+        if (Environment.ProcessorCount < 2)
+        {
+            return;
+        }
+
+        var circularBuffer = new CircularBuffer<string>(1_000_000);
+
+        using var cts = new CancellationTokenSource();
+
+        var writers = new List<Task>();
+        for (var i = 0; i < Environment.ProcessorCount; i++)
+        {
+            writers.Add(Task.Run(() =>
+            {
+                while (!cts.IsCancellationRequested)
+                {
+                    circularBuffer.Add("item");
+                }
+            }));
+        }
+
+        var exceededMaxSpinCount = false;
+
+        for (var i = 0; i < 1_000_000 && !exceededMaxSpinCount; i++)
+        {
+            if (!circularBuffer.TryAdd("item", maxSpinCount: 1, out var count))
+            {
+                Assert.Equal(0, count);
+                exceededMaxSpinCount = true;
+            }
+        }
+
+        await cts.CancelAsync();
+        await Task.WhenAll(writers);
+
+        Assert.True(exceededMaxSpinCount);
+        Assert.True(circularBuffer.Count < circularBuffer.Capacity);
+    }
+
+    [Fact]
     public async Task CpuPressureTest()
     {
         if (Environment.ProcessorCount < 2)
