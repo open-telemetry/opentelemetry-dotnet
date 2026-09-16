@@ -152,7 +152,11 @@ public class CircularBufferTests
             }
         }
 
+#if NET
         await cts.CancelAsync();
+#else
+        cts.Cancel();
+#endif
         await Task.WhenAll(writers);
 
         Assert.True(exceededMaxSpinCount);
