@@ -9,6 +9,10 @@ namespace OpenTelemetry;
 
 internal static class WildcardHelper
 {
+#if !NET
+    private static readonly TimeSpan RegexMatchTimeout = TimeSpan.FromSeconds(1);
+#endif
+
     public static bool ContainsWildcard(
         [NotNullWhen(true)]
         string? value)
@@ -37,6 +41,24 @@ internal static class WildcardHelper
             from p in patterns select "(?:" + Regex.Escape(p).Replace("\\*", ".*").Replace("\\?", ".") + ')');
 #endif
 
-        return new Regex("^(?:" + convertedPattern + ")$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        var pattern = "^(?:" + convertedPattern + ")$";
+
+#if NET
+        return new Regex(pattern, RegexOptions.NonBacktracking | RegexOptions.IgnoreCase);
+#else
+        return new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase, RegexMatchTimeout);
+#endif
+    }
+
+    public static bool IsMatch(Regex regex, string input)
+    {
+        try
+        {
+            return regex.IsMatch(input);
+        }
+        catch (RegexMatchTimeoutException)
+        {
+            return false;
+        }
     }
 }

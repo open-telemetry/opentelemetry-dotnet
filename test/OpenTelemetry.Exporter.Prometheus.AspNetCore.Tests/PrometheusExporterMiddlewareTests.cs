@@ -455,7 +455,7 @@ public sealed class PrometheusExporterMiddlewareTests
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
             configureOptions: o =>
             {
-                o.TranslationStrategy = PrometheusTranslationStrategy.NoTranslation;
+                o.TranslationStrategy = PrometheusAspNetCoreTranslationStrategy.NoTranslation;
 
                 // Disabled to keep the snapshot focused on name translation.
                 o.ScopeInfoEnabled = false;
@@ -497,7 +497,7 @@ public sealed class PrometheusExporterMiddlewareTests
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
             configureOptions: o =>
             {
-                o.TranslationStrategy = PrometheusTranslationStrategy.UnderscoreEscapingWithoutSuffixes;
+                o.TranslationStrategy = PrometheusAspNetCoreTranslationStrategy.UnderscoreEscapingWithoutSuffixes;
                 o.ScopeInfoEnabled = false;
                 o.TargetInfoEnabled = false;
             });
@@ -524,7 +524,7 @@ public sealed class PrometheusExporterMiddlewareTests
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
             configureOptions: o =>
             {
-                o.TranslationStrategy = PrometheusTranslationStrategy.NoUTF8EscapingWithSuffixes;
+                o.TranslationStrategy = PrometheusAspNetCoreTranslationStrategy.NoUTF8EscapingWithSuffixes;
                 o.ScopeInfoEnabled = false;
                 o.TargetInfoEnabled = false;
             });
@@ -555,7 +555,7 @@ public sealed class PrometheusExporterMiddlewareTests
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
             configureOptions: o =>
             {
-                o.TranslationStrategy = PrometheusTranslationStrategy.NoTranslation;
+                o.TranslationStrategy = PrometheusAspNetCoreTranslationStrategy.NoTranslation;
                 o.ScopeInfoEnabled = false;
                 o.TargetInfoEnabled = false;
             });
@@ -594,7 +594,7 @@ public sealed class PrometheusExporterMiddlewareTests
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
             configureOptions: o =>
             {
-                o.TranslationStrategy = PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes;
+                o.TranslationStrategy = PrometheusAspNetCoreTranslationStrategy.UnderscoreEscapingWithSuffixes;
                 o.ScopeInfoEnabled = false;
                 o.TargetInfoEnabled = false;
             });
@@ -634,7 +634,7 @@ public sealed class PrometheusExporterMiddlewareTests
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
             configureOptions: o =>
             {
-                o.TranslationStrategy = PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes;
+                o.TranslationStrategy = PrometheusAspNetCoreTranslationStrategy.UnderscoreEscapingWithSuffixes;
                 o.ScopeInfoEnabled = false;
                 o.TargetInfoEnabled = false;
             });
@@ -669,20 +669,20 @@ public sealed class PrometheusExporterMiddlewareTests
 
     // See https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk_exporters/prometheus.md#interaction-with-translation-strategy
     [Theory]
-    [InlineData(PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes, null, "foo_bar_bytes_total")]
-    [InlineData(PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes, "underscores", "foo_bar_bytes_total")]
-    [InlineData(PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes, "allow-utf-8", "foo_bar_bytes_total")]
-    [InlineData(PrometheusTranslationStrategy.UnderscoreEscapingWithoutSuffixes, null, "foo_bar")]
-    [InlineData(PrometheusTranslationStrategy.UnderscoreEscapingWithoutSuffixes, "underscores", "foo_bar")]
-    [InlineData(PrometheusTranslationStrategy.UnderscoreEscapingWithoutSuffixes, "allow-utf-8", "foo_bar")]
-    [InlineData(PrometheusTranslationStrategy.NoUTF8EscapingWithSuffixes, null, "foo_bar_bytes_total")]
-    [InlineData(PrometheusTranslationStrategy.NoUTF8EscapingWithSuffixes, "underscores", "foo_bar_bytes_total")]
-    [InlineData(PrometheusTranslationStrategy.NoUTF8EscapingWithSuffixes, "allow-utf-8", "foo.bar_bytes_total")]
-    [InlineData(PrometheusTranslationStrategy.NoTranslation, null, "foo_bar")]
-    [InlineData(PrometheusTranslationStrategy.NoTranslation, "underscores", "foo_bar")]
-    [InlineData(PrometheusTranslationStrategy.NoTranslation, "allow-utf-8", "foo.bar")]
+    [InlineData(PrometheusAspNetCoreTranslationStrategy.UnderscoreEscapingWithSuffixes, null, "foo_bar_bytes_total")]
+    [InlineData(PrometheusAspNetCoreTranslationStrategy.UnderscoreEscapingWithSuffixes, "underscores", "foo_bar_bytes_total")]
+    [InlineData(PrometheusAspNetCoreTranslationStrategy.UnderscoreEscapingWithSuffixes, "allow-utf-8", "foo_bar_bytes_total")]
+    [InlineData(PrometheusAspNetCoreTranslationStrategy.UnderscoreEscapingWithoutSuffixes, null, "foo_bar")]
+    [InlineData(PrometheusAspNetCoreTranslationStrategy.UnderscoreEscapingWithoutSuffixes, "underscores", "foo_bar")]
+    [InlineData(PrometheusAspNetCoreTranslationStrategy.UnderscoreEscapingWithoutSuffixes, "allow-utf-8", "foo_bar")]
+    [InlineData(PrometheusAspNetCoreTranslationStrategy.NoUTF8EscapingWithSuffixes, null, "foo_bar_bytes_total")]
+    [InlineData(PrometheusAspNetCoreTranslationStrategy.NoUTF8EscapingWithSuffixes, "underscores", "foo_bar_bytes_total")]
+    [InlineData(PrometheusAspNetCoreTranslationStrategy.NoUTF8EscapingWithSuffixes, "allow-utf-8", "foo.bar_bytes_total")]
+    [InlineData(PrometheusAspNetCoreTranslationStrategy.NoTranslation, null, "foo_bar")]
+    [InlineData(PrometheusAspNetCoreTranslationStrategy.NoTranslation, "underscores", "foo_bar")]
+    [InlineData(PrometheusAspNetCoreTranslationStrategy.NoTranslation, "allow-utf-8", "foo.bar")]
     public async Task RunWithTranslationStrategy_MatchesSpecification(
-        PrometheusTranslationStrategy strategy,
+        PrometheusAspNetCoreTranslationStrategy strategy,
         string? escaping,
         string expectedName)
     {

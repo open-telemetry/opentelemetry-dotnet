@@ -20,6 +20,14 @@ Notes](../../RELEASENOTES.md).
   reset does not result in an unnecessary scale reduction.
   ([#7749](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7749))
 
+* Improved wildcard source/meter name matching to avoid excessive matching
+  time at runtime.
+  ([#7760](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7760))
+
+* Fixed lazy logger provider builds after a failure from reusing partially
+  initialized provider state.
+  ([#7761](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7761))
+
 * Non-finite histogram measurements (`NaN`, `+Inf`, `-Inf`) are now dropped
   rather than recorded, so they can no longer permanently corrupt the sum,
   min, and max of a cumulative histogram stream. This aligns the explicit-bucket
