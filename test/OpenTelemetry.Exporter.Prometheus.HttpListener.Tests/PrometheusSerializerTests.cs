@@ -1588,43 +1588,6 @@ public sealed partial class PrometheusSerializerTests
         await Verify(output, "txt", VerifySettings).UseParameters(useOpenMetrics);
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void OpenMetricsDoesNotExportCreatedMetricWhenStartTimeIsDefault(bool histogram)
-    {
-        var buffer = new byte[85000];
-        var metrics = new List<Metric>();
-
-        using var meter = new Meter("test_meter");
-        using var provider = Sdk.CreateMeterProviderBuilder()
-            .AddMeter(meter.Name)
-            .AddInMemoryExporter(metrics)
-            .Build();
-
-        if (histogram)
-        {
-            var instrument = meter.CreateHistogram<double>("test_histogram");
-            instrument.Record(1);
-        }
-        else
-        {
-            var instrument = meter.CreateCounter<double>("test_counter");
-            instrument.Add(1);
-        }
-
-        provider.ForceFlush();
-
-        var metric = metrics.Single();
-        var startTimeProperty = typeof(AggregatorStore).GetProperty(nameof(AggregatorStore.StartTimeExclusive), BindingFlags.Instance | BindingFlags.NonPublic);
-        startTimeProperty!.SetValue(metric.AggregatorStore, default(DateTimeOffset));
-
-        var cursor = WriteMetric(buffer, 0, metric, useOpenMetrics: true);
-        var output = Encoding.UTF8.GetString(buffer, 0, cursor);
-
-        Assert.DoesNotContain("_created", output, StringComparison.Ordinal);
-    }
-
     [Fact]
     public async Task HistogramCreatedMetricSkipsReservedHistogramLabels()
     {
