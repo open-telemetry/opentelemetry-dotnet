@@ -21,7 +21,7 @@ internal sealed class DeferredOpenTelemetryLogger : ILogger
     }
 
     public IDisposable BeginScope<TState>(TState state)
-        where TState : notnull => this.loggerProvider.ScopeProvider?.Push(state) ?? NullScope.Instance;
+        where TState : notnull => this.loggerProvider.ScopeProvider?.Push(state) ?? OpenTelemetryLogger.NullScope.Instance;
 
     public bool IsEnabled(LogLevel logLevel)
         => logLevel != LogLevel.None && !Sdk.SuppressInstrumentation;
@@ -68,14 +68,5 @@ internal sealed class DeferredOpenTelemetryLogger : ILogger
         public OpenTelemetryLogger Logger { get; } = logger;
 
         public LoggerProviderSdk Provider { get; } = provider;
-    }
-
-    private sealed class NullScope : IDisposable
-    {
-        public static NullScope Instance { get; } = new();
-
-        public void Dispose()
-        {
-        }
     }
 }
