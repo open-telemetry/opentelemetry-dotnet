@@ -44,7 +44,7 @@ jobs:
         persist-credentials: false
         show-progress: false
     - name: Filter paths
-      uses: AurorNZ/paths-filter@c9dd42e99db87803313ff6f4b1150cc9f6c836af # v5.0.0
+      uses: AurorNZ/paths-filter@ead37777b84ca4c3301a92f453c4040b85287e76 # v5.1.0
       id: changes
       with:
         filters: |
