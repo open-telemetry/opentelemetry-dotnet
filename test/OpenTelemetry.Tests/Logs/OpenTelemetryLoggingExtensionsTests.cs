@@ -303,6 +303,44 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         Assert.IsType<TestLogProcessorWithILoggerFactoryDependency>(loggerProvider.Processor);
     }
 
+    [Fact]
+    public void LazyProviderRetriesAfterFailedBuildTest()
+    {
+        var configureInvocationCount = 0;
+        TestLogProcessor? configuredProcessor = null;
+        var services = new ServiceCollection();
+
+        services.AddLogging(logging => logging.AddOpenTelemetry());
+
+        services.ConfigureOpenTelemetryLoggerProvider((sp, builder) =>
+        {
+            if (Interlocked.Increment(ref configureInvocationCount) == 1)
+            {
+                throw new InvalidOperationException("The first logger provider build is expected to fail.");
+            }
+
+            configuredProcessor = new TestLogProcessor();
+            builder.AddProcessor(configuredProcessor);
+        });
+
+        using var serviceProvider = services.BuildServiceProvider();
+        var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+
+        Assert.Throws<InvalidOperationException>(() => loggerFactory.CreateLogger("FirstLogger"));
+
+        var logger = loggerFactory.CreateLogger("SecondLogger");
+        logger.Log(
+            LogLevel.Information,
+            new EventId(1),
+            "This record should be processed.",
+            exception: null,
+            static (state, _) => state);
+
+        var processor = Assert.IsType<TestLogProcessor>(configuredProcessor);
+        Assert.Equal(2, configureInvocationCount);
+        Assert.Equal(1, processor.OnEndCount);
+    }
+
     [Theory]
     [InlineData(true, false)]
     [InlineData(false, true)]
@@ -387,6 +425,15 @@ public sealed class OpenTelemetryLoggingExtensionsTests
     private sealed class TestLogProcessor : BaseProcessor<LogRecord>
     {
         public bool Disposed;
+
+        public int OnEndCount;
+
+        public override void OnEnd(LogRecord data)
+        {
+            this.OnEndCount++;
+
+            base.OnEnd(data);
+        }
 
         protected override void Dispose(bool disposing)
         {

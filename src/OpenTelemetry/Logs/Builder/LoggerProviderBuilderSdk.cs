@@ -39,6 +39,14 @@ internal sealed class LoggerProviderBuilderSdk : LoggerProviderBuilder, ILoggerP
         this.loggerProvider = loggerProvider;
     }
 
+    public void UnregisterProvider(LoggerProviderSdk loggerProvider)
+    {
+        if (ReferenceEquals(this.loggerProvider, loggerProvider))
+        {
+            this.loggerProvider = null;
+        }
+    }
+
     public override LoggerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)
     {
         var instance = instrumentationFactory();

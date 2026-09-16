@@ -79,6 +79,7 @@ internal sealed class LoggerProviderSdk : LoggerProvider
         }
         catch (Exception)
         {
+            state.UnregisterProvider(this);
             this.DisposeBuiltState(state);
             throw;
         }
