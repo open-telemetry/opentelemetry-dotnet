@@ -415,9 +415,14 @@ public readonly struct Baggage : IEquatable<Baggage>
 
     private Baggage SetBaggage(ReadOnlySpan<KeyValuePair<string, string?>> baggageItems)
     {
+        // For a single item there is nothing to overestimate, so skip the net-new-key
+        // scan below and reuse the plain copy-constructor-sized allocation for it.
+        var scanForNetNewKeys = baggageItems.Length > 1;
+
         Dictionary<string, string>? newBaggage = null;
-        foreach (ref readonly var item in baggageItems)
+        for (var i = 0; i < baggageItems.Length; i++)
         {
+            ref readonly var item = ref baggageItems[i];
             if (string.IsNullOrEmpty(item.Key))
             {
                 continue;
@@ -427,7 +432,7 @@ public readonly struct Baggage : IEquatable<Baggage>
                 var currentBaggage = newBaggage ?? this.baggage;
                 if (currentBaggage?.ContainsKey(item.Key) == true)
                 {
-                    newBaggage ??= this.CopyBaggage(additionalCapacity: baggageItems.Length);
+                    newBaggage ??= this.CopyBaggage(scanForNetNewKeys ? this.CountNewKeys(baggageItems.Slice(i)) : 0);
                     newBaggage.Remove(item.Key);
                 }
             }
@@ -442,13 +447,32 @@ public readonly struct Baggage : IEquatable<Baggage>
                     continue;
                 }
 
-                newBaggage ??= this.CopyBaggage(additionalCapacity: baggageItems.Length);
+                newBaggage ??= this.CopyBaggage(scanForNetNewKeys ? this.CountNewKeys(baggageItems.Slice(i)) : 0);
                 newBaggage[item.Key] = item.Value;
             }
         }
 
         // If nothing was changed return the current instance
         return newBaggage == null ? this : new Baggage(newBaggage);
+    }
+
+    private int CountNewKeys(ReadOnlySpan<KeyValuePair<string, string?>> baggageItems)
+    {
+        // Counts only the items that will actually add a new key so that a batch of
+        // updates/removals to existing keys does not cause the copy to over-allocate.
+        var count = 0;
+
+        foreach (ref readonly var item in baggageItems)
+        {
+            if (!string.IsNullOrEmpty(item.Key) &&
+                item.Value != null &&
+                this.baggage?.ContainsKey(item.Key) != true)
+            {
+                count++;
+            }
+        }
+
+        return count;
     }
 
     private Dictionary<string, string> CopyBaggage(int additionalCapacity)
