@@ -116,7 +116,7 @@ internal sealed class TracerProviderSdk : TracerProvider
             if (this.supportLegacyActivity)
             {
                 Func<Activity, bool>? legacyActivityPredicate = legacyActivityWildcardModeRegex != null
-                    ? (activity => legacyActivityWildcardModeRegex.IsMatch(activity.OperationName))
+                    ? (activity => WildcardHelper.IsMatch(legacyActivityWildcardModeRegex, activity.OperationName))
                     : (activity => state.LegacyActivityOperationNames.Contains(activity.OperationName));
 
                 activityListener.ActivityStarted = activity =>
@@ -255,8 +255,8 @@ internal sealed class TracerProviderSdk : TracerProvider
                     // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
                     // or not.
                     activityListener.ShouldListenTo = this.supportLegacyActivity ?
-                        (activitySource) => string.IsNullOrEmpty(activitySource.Name) || regex.IsMatch(activitySource.Name) :
-                        (activitySource) => regex.IsMatch(activitySource.Name);
+                        (activitySource) => string.IsNullOrEmpty(activitySource.Name) || WildcardHelper.IsMatch(regex, activitySource.Name) :
+                        (activitySource) => WildcardHelper.IsMatch(regex, activitySource.Name);
                 }
                 else
                 {

@@ -1,7 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 
@@ -26,9 +25,7 @@ internal static class TraceStateUtils
     /// <returns>True if string was parsed successfully and tracestate was recognized, false otherwise.</returns>
     internal static bool AppendTraceState(string traceStateString, List<KeyValuePair<string, string>> tracestate)
     {
-        Debug.Assert(tracestate != null, "tracestate list cannot be null");
-
-        if (string.IsNullOrEmpty(traceStateString))
+        if (tracestate is null || string.IsNullOrEmpty(traceStateString))
         {
             return false;
         }
@@ -88,11 +85,7 @@ internal static class TraceStateUtils
 
             if (!isValid)
             {
-#if NET
                 tracestate.Clear();
-#else
-                tracestate!.Clear();
-#endif
                 return false;
             }
 
@@ -101,6 +94,10 @@ internal static class TraceStateUtils
         catch (Exception ex)
         {
             OpenTelemetryApiEventSource.Log.TracestateExtractException(ex);
+
+            // Never hand back a partially-parsed tracestate: an unexpected failure mid-parse must
+            // not leave the caller with a silently truncated subset of the members.
+            tracestate.Clear();
         }
 
         return false;
@@ -235,7 +232,7 @@ internal static class TraceStateUtils
         // Value is opaque string up to 256 characters printable ASCII RFC0020 characters (i.e., the range
         // 0x20 to 0x7E) except comma , and =.
 
-        if (value.Length > ValueMaxSize || value[value.Length - 1] == ' ' /* '\u0020' */)
+        if (value.Length == 0 || value.Length > ValueMaxSize || value[value.Length - 1] == ' ' /* '\u0020' */)
         {
             return false;
         }
