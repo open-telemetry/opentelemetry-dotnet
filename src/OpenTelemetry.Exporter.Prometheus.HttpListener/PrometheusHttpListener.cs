@@ -326,6 +326,16 @@ internal sealed class PrometheusHttpListener : IDisposable
                         context.Response.Headers.Add("Last-Modified", collectionResponse.GeneratedAtUtc.ToString("R"));
                         context.Response.ContentType = PrometheusProtocol.GetContentType(protocol);
 
+                        // Set an explicit Content-Length instead of letting the response fall back to
+                        // chunked encoding. On the managed (non-Windows) HttpListener implementation,
+                        // Response.Abort() closes the response stream before the socket, and closing a
+                        // chunked response performs a blocking, uncancellable write of the final chunk
+                        // trailer on that same socket. Against a client that stopped reading, that write
+                        // never returns, so Abort() never reaches the socket shutdown that would actually
+                        // unblock the stalled write below. A Content-Length response has no trailer to
+                        // write, so Abort() falls straight through to closing the socket.
+                        context.Response.ContentLength64 = dataView.Count;
+
                         // HttpListener's response stream does not reliably observe a CancellationToken once
                         // a write is in flight to HTTP.sys, so abort the response if the deadline elapses
                         // mid-write. This unblocks a write stalled because the client stopped reading the
