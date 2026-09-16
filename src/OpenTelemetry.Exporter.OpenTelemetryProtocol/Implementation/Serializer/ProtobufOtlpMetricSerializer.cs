@@ -83,7 +83,7 @@ internal static class ProtobufOtlpMetricSerializer
                 var mericsDataLengthPosition = writePosition;
                 writePosition += ReserveSizeForLength;
 
-                writePosition = WriteResourceMetrics(buffer, writePosition, resource, scopeMetrics);
+                writePosition = WriteResourceMetrics(buffer, writePosition, resource, scopeMetrics, maxBufferSize);
 
                 ProtobufSerializer.WriteReservedLength(buffer, mericsDataLengthPosition, writePosition - (mericsDataLengthPosition + ReserveSizeForLength));
 
@@ -117,10 +117,15 @@ internal static class ProtobufOtlpMetricSerializer
         }
     }
 
-    private static int WriteResourceMetrics(byte[] buffer, int writePosition, Resources.Resource? resource, Dictionary<string, List<Metric>> scopeMetrics)
+    private static int WriteResourceMetrics(
+        byte[] buffer,
+        int writePosition,
+        Resources.Resource? resource,
+        Dictionary<string, List<Metric>> scopeMetrics,
+        int maxBufferSize)
     {
         writePosition = ProtobufOtlpResourceSerializer.WriteResource(buffer, writePosition, resource);
-        writePosition = WriteScopeMetrics(buffer, writePosition, scopeMetrics);
+        writePosition = WriteScopeMetrics(buffer, writePosition, scopeMetrics, maxBufferSize);
 
         if (resource?.SchemaUrl is { Length: > 0 } schemaUrl)
         {
@@ -130,7 +135,11 @@ internal static class ProtobufOtlpMetricSerializer
         return writePosition;
     }
 
-    private static int WriteScopeMetrics(byte[] buffer, int writePosition, Dictionary<string, List<Metric>> scopeMetrics)
+    private static int WriteScopeMetrics(
+        byte[] buffer,
+        int writePosition,
+        Dictionary<string, List<Metric>> scopeMetrics,
+        int maxBufferSize)
     {
         if (scopeMetrics != null)
         {
@@ -140,7 +149,7 @@ internal static class ProtobufOtlpMetricSerializer
                 var resourceMetricsScopeMetricsLengthPosition = writePosition;
                 writePosition += ReserveSizeForLength;
 
-                writePosition = WriteScopeMetric(buffer, writePosition, entry.Key, entry.Value);
+                writePosition = WriteScopeMetric(buffer, writePosition, entry.Key, entry.Value, maxBufferSize);
 
                 ProtobufSerializer.WriteReservedLength(buffer, resourceMetricsScopeMetricsLengthPosition, writePosition - (resourceMetricsScopeMetricsLengthPosition + ReserveSizeForLength));
             }
@@ -149,7 +158,12 @@ internal static class ProtobufOtlpMetricSerializer
         return writePosition;
     }
 
-    private static int WriteScopeMetric(byte[] buffer, int writePosition, string meterName, List<Metric> metrics)
+    private static int WriteScopeMetric(
+        byte[] buffer,
+        int writePosition,
+        string meterName,
+        List<Metric> metrics,
+        int maxBufferSize)
     {
         writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ScopeMetrics_Scope, ProtobufWireType.LEN);
         var instrumentationScopeLengthPosition = writePosition;
@@ -189,7 +203,7 @@ internal static class ProtobufOtlpMetricSerializer
 
         for (var i = 0; i < metrics.Count; i++)
         {
-            writePosition = WriteMetric(buffer, writePosition, metrics[i]);
+            writePosition = WriteMetric(buffer, writePosition, metrics[i], maxBufferSize);
         }
 
         if (!string.IsNullOrEmpty(meterSchemaUrl))
@@ -200,13 +214,17 @@ internal static class ProtobufOtlpMetricSerializer
         return writePosition;
     }
 
-    private static int WriteMetric(byte[] buffer, int writePosition, Metric metric)
+    private static int WriteMetric(byte[] buffer, int writePosition, Metric metric, int maxBufferSize)
     {
         writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ScopeMetrics_Metrics, ProtobufWireType.LEN);
         var metricLengthPosition = writePosition;
         writePosition += ReserveSizeForLength;
 
-        var cachedMetadata = CachedMetricMetadata.GetOrAdd(metric, SerializeMetricMetadataToBytes);
+        // Do not allocate the cached copy until the destination buffer has grown
+        // enough to hold it. ArrayPool may return more than was requested, so the
+        // configured maximum must also be applied here.
+        var availableBufferSize = Math.Max(0, Math.Min(buffer.Length, maxBufferSize) - writePosition);
+        var cachedMetadata = GetOrCreateCachedMetricMetadata(metric, availableBufferSize);
         Buffer.BlockCopy(cachedMetadata, 0, buffer, writePosition, cachedMetadata.Length);
         writePosition += cachedMetadata.Length;
 
@@ -645,7 +663,27 @@ internal static class ProtobufOtlpMetricSerializer
         }
     }
 
-    private static byte[] SerializeMetricMetadataToBytes(Metric metric)
+    private static byte[] GetOrCreateCachedMetricMetadata(Metric metric, int availableBufferSize)
+    {
+        if (!CachedMetricMetadata.TryGetValue(metric, out var cachedMetadata))
+        {
+            cachedMetadata = CachedMetricMetadata.GetOrAdd(
+                metric,
+                key => SerializeMetricMetadataToBytes(key, availableBufferSize));
+        }
+
+        if (cachedMetadata.Length > availableBufferSize)
+        {
+            throw CreateMetricMetadataTooLargeException(
+                nameof(cachedMetadata),
+                cachedMetadata.Length,
+                availableBufferSize);
+        }
+
+        return cachedMetadata;
+    }
+
+    private static byte[] SerializeMetricMetadataToBytes(Metric metric, int availableBufferSize)
     {
         var nameUtf8Length = ProtobufSerializer.GetNumberOfUtf8CharsInString(metric.Name);
         var size = ComputeStringWithTagSize(ProtobufOtlpMetricFieldNumberConstants.Metric_Name, nameUtf8Length);
@@ -664,7 +702,12 @@ internal static class ProtobufOtlpMetricSerializer
             size += ComputeStringWithTagSize(ProtobufOtlpMetricFieldNumberConstants.Metric_Unit, unitUtf8Length);
         }
 
-        var buffer = new byte[size];
+        if (size > availableBufferSize)
+        {
+            throw CreateMetricMetadataTooLargeException(nameof(size), size, availableBufferSize);
+        }
+
+        var buffer = new byte[(int)size];
         var writePosition = ProtobufSerializer.WriteStringWithTag(buffer, 0, ProtobufOtlpMetricFieldNumberConstants.Metric_Name, nameUtf8Length, metric.Name);
 
         if (metric.Description != null)
@@ -681,10 +724,19 @@ internal static class ProtobufOtlpMetricSerializer
         return buffer;
     }
 
-    private static int ComputeStringWithTagSize(int fieldNumber, int numberOfUtf8Chars) =>
+    private static long ComputeStringWithTagSize(int fieldNumber, int numberOfUtf8Chars) =>
         ProtobufSerializer.ComputeVarInt32Size(ProtobufSerializer.GetTagValue(fieldNumber, ProtobufWireType.LEN)) +
         ProtobufSerializer.ComputeVarInt32Size((uint)numberOfUtf8Chars) +
-        numberOfUtf8Chars;
+        (long)numberOfUtf8Chars;
+
+    private static ArgumentOutOfRangeException CreateMetricMetadataTooLargeException(
+        string paramName,
+        long actualValue,
+        int availableBufferSize)
+        => new(
+            paramName,
+            actualValue,
+            $"Metric metadata exceeds the available serialization buffer capacity of {availableBufferSize} bytes.");
 
     private sealed class CachedAttributes(int fieldNumber, byte[] bytes)
     {

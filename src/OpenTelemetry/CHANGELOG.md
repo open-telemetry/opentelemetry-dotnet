@@ -20,6 +20,10 @@ Notes](../../RELEASENOTES.md).
   reset does not result in an unnecessary scale reduction.
   ([#7749](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7749))
 
+* Improved wildcard source/meter name matching to avoid excessive matching
+  time at runtime.
+  ([#7760](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7760))
+
 * Fixed lazy logger provider builds after a failure from reusing partially
   initialized provider state.
   ([#7761](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7761))
