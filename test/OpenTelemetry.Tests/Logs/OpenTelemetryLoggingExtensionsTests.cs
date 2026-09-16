@@ -341,6 +341,79 @@ public sealed class OpenTelemetryLoggingExtensionsTests
         Assert.Equal(1, processor.OnEndCount);
     }
 
+    [Fact]
+    public void LazyProviderDoesNotRetryAfterFailedBuildMutatesBuilderStateTest()
+    {
+        var configureInvocationCount = 0;
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        var processor = new TestLogProcessor();
+#pragma warning restore CA2000 // Dispose objects before losing scope
+        var services = new ServiceCollection();
+
+        services.AddLogging(logging => logging.AddOpenTelemetry());
+
+        services.ConfigureOpenTelemetryLoggerProvider((sp, builder) =>
+        {
+            configureInvocationCount++;
+            builder.AddProcessor(processor);
+            throw new InvalidOperationException("The logger provider build is expected to fail.");
+        });
+
+        using var serviceProvider = services.BuildServiceProvider();
+        var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+
+        var firstException = Assert.Throws<InvalidOperationException>(
+            () => loggerFactory.CreateLogger("FirstLogger"));
+
+        Assert.True(processor.Disposed);
+
+        var secondException = Assert.Throws<InvalidOperationException>(
+            () => loggerFactory.CreateLogger("SecondLogger"));
+
+        Assert.Same(firstException, secondException);
+        Assert.Equal(1, configureInvocationCount);
+    }
+
+    [Fact]
+    public void LazyProviderRetriesAfterReentrantFailedBuildTest()
+    {
+        var configureInvocationCount = 0;
+        TestLogProcessor? configuredProcessor = null;
+        ILogger? reentrantLogger = null;
+        var services = new ServiceCollection();
+
+        services.AddLogging(logging => logging.AddOpenTelemetry());
+
+        services.ConfigureOpenTelemetryLoggerProvider((sp, builder) =>
+        {
+            if (Interlocked.Increment(ref configureInvocationCount) == 1)
+            {
+                reentrantLogger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("ReentrantLogger");
+                throw new InvalidOperationException("The first logger provider build is expected to fail.");
+            }
+
+            configuredProcessor = new TestLogProcessor();
+            builder.AddProcessor(configuredProcessor);
+        });
+
+        using var serviceProvider = services.BuildServiceProvider();
+        var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+
+        Assert.Throws<InvalidOperationException>(() => loggerFactory.CreateLogger("FirstLogger"));
+
+        var logger = Assert.IsAssignableFrom<ILogger>(reentrantLogger);
+        logger.Log(
+            LogLevel.Information,
+            new EventId(1),
+            "This record should be processed after the retry.",
+            exception: null,
+            static (state, _) => state);
+
+        var processor = Assert.IsType<TestLogProcessor>(configuredProcessor);
+        Assert.Equal(2, configureInvocationCount);
+        Assert.Equal(1, processor.OnEndCount);
+    }
+
     [Theory]
     [InlineData(true, false)]
     [InlineData(false, true)]
