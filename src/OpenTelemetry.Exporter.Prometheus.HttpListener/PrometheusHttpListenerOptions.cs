@@ -80,9 +80,9 @@ public class PrometheusHttpListenerOptions
 
     /// <summary>
     /// Gets or sets the strategy used to translate OpenTelemetry metric and label names into
-    /// Prometheus names. Default value: <see cref="PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes"/>.
+    /// Prometheus names. Default value: <see cref="PrometheusHttpListenerTranslationStrategy.UnderscoreEscapingWithSuffixes"/>.
     /// </summary>
-    public PrometheusTranslationStrategy TranslationStrategy { get; set; } = PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes;
+    public PrometheusHttpListenerTranslationStrategy TranslationStrategy { get; set; } = PrometheusHttpListenerTranslationStrategy.UnderscoreEscapingWithSuffixes;
 
     /// <summary>
     /// Gets or sets a value indicating whether the scope information (name, version, schema URL) is added to the scrape response.

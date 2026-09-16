@@ -180,16 +180,16 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
     }
 
     [EnabledOnDockerPlatformTheory(DockerPlatform.Linux)]
-    [InlineData("", PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes)]
-    [InlineData("OpenMetricsText0.0.1", PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes)]
-    [InlineData("OpenMetricsText1.0.0", PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes)]
-    [InlineData("PrometheusText0.0.4", PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes)]
-    [InlineData("PrometheusText1.0.0", PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes)]
-    [InlineData("PrometheusText1.0.0", PrometheusTranslationStrategy.NoUTF8EscapingWithSuffixes)]
-    [InlineData("PrometheusText0.0.4", PrometheusTranslationStrategy.NoUTF8EscapingWithSuffixes)]
+    [InlineData("", PrometheusAspNetCoreTranslationStrategy.UnderscoreEscapingWithSuffixes)]
+    [InlineData("OpenMetricsText0.0.1", PrometheusAspNetCoreTranslationStrategy.UnderscoreEscapingWithSuffixes)]
+    [InlineData("OpenMetricsText1.0.0", PrometheusAspNetCoreTranslationStrategy.UnderscoreEscapingWithSuffixes)]
+    [InlineData("PrometheusText0.0.4", PrometheusAspNetCoreTranslationStrategy.UnderscoreEscapingWithSuffixes)]
+    [InlineData("PrometheusText1.0.0", PrometheusAspNetCoreTranslationStrategy.UnderscoreEscapingWithSuffixes)]
+    [InlineData("PrometheusText1.0.0", PrometheusAspNetCoreTranslationStrategy.NoUTF8EscapingWithSuffixes)]
+    [InlineData("PrometheusText0.0.4", PrometheusAspNetCoreTranslationStrategy.NoUTF8EscapingWithSuffixes)]
     public async Task Prometheus_Can_Scrape_Metrics(
         string scrapeProtocol,
-        PrometheusTranslationStrategy translationStrategy) => await GenerateMetricsAsync(
+        PrometheusAspNetCoreTranslationStrategy translationStrategy) => await GenerateMetricsAsync(
         async (baseAddress) =>
     {
         // Arrange
@@ -221,7 +221,7 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
             // the strategy does not escape them to '_' in the first place, and even then only if a
             // v0 protocol is not explicitly negotiated.
             var usesUtf8Names =
-                translationStrategy is PrometheusTranslationStrategy.NoUTF8EscapingWithSuffixes &&
+                translationStrategy is PrometheusAspNetCoreTranslationStrategy.NoUTF8EscapingWithSuffixes &&
                 !scrapeProtocol.Contains("0.0.", StringComparison.Ordinal);
 
             HashSet<string> expectedSeries = usesUtf8Names
@@ -543,7 +543,7 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
 
     private static async Task GenerateMetricsAsync(
         Func<Uri, Task> actAndAssert,
-        PrometheusTranslationStrategy translationStrategy = PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes)
+        PrometheusAspNetCoreTranslationStrategy translationStrategy = PrometheusAspNetCoreTranslationStrategy.UnderscoreEscapingWithSuffixes)
     {
         // Arrange
         const string meterName = "prometheus.integration.tests";

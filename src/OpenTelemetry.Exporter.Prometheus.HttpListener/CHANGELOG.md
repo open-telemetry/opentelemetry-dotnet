@@ -7,11 +7,19 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* **Breaking Change** The `PrometheusTranslationStrategy` enum was renamed
+  to `PrometheusHttpListenerTranslationStrategy`.
+  ([#7751](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7751))
+
+* Fixed OpenMetrics `_created` series being emitted for metric points with a
+  default start time.
+  ([#7754](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7754))
+
 * Added `PrometheusHttpListenerOptions.ScrapeResponseTimeoutMilliseconds`
   (default `60000`) which bounds how long the server spends producing and
   writing a single scrape response. `X-Prometheus-Scrape-Timeout-Seconds`
   request header values may only shorten this limit.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7757](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7757))
 
 ## 1.18.0-beta.1
 
