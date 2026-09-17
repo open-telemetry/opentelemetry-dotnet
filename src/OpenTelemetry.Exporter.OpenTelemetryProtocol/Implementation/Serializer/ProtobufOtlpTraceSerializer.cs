@@ -599,13 +599,13 @@ internal static class ProtobufOtlpTraceSerializer
 #if NET9_0_OR_GREATER
     private static void DecodeHex(string hex, Span<byte> destination)
     {
-        // ActivityTraceId/ActivitySpanId.CopyTo() both decode the id one
-        // character at a time with a digit-or-letter branch per character.
-        // Ids are effectively random, so that branch mispredicts constantly
-        // and dominates the per-span serialization cost. Convert.FromHexString()
-        // decodes 16 characters per step with SIMD.
-        var status = Convert.FromHexString(hex.AsSpan(), destination, out _, out var bytesWritten);
-        Debug.Assert(status == System.Buffers.OperationStatus.Done && bytesWritten == destination.Length, "Trace/span id was not valid hex.");
+        // This optimization can be removed if https://github.com/dotnet/runtime/pull/134135 is
+        // merged and we update to a version of System.Diagnostics.DiagnosticSource that includes it.
+        var status = Convert.FromHexString(hex.AsSpan(), destination, out _, out int bytesWritten);
+        if (status != System.Buffers.OperationStatus.Done || bytesWritten != destination.Length)
+        {
+            throw new ArgumentOutOfRangeException(nameof(destination));
+        }
     }
 #endif
 }
