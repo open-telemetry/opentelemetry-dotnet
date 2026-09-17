@@ -107,7 +107,11 @@ internal sealed class PrometheusExporterMiddleware
                 if (!collectionResponse.Succeeded)
                 {
                     PrometheusExporterEventSource.Log.ScrapeFailed();
-                    response.StatusCode = StatusCodes.Status500InternalServerError;
+
+                    if (!response.HasStarted)
+                    {
+                        response.StatusCode = StatusCodes.Status500InternalServerError;
+                    }
                 }
                 else
                 {

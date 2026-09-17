@@ -15,6 +15,13 @@ Notes](../../RELEASENOTES.md).
   default start time.
   ([#7754](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7754))
 
+* A scrape request whose connection is aborted, or whose
+  `X-Prometheus-Scrape-Timeout-Seconds` deadline elapses, now stops waiting
+  for an in-progress metrics collection instead of continuing to wait for it
+  to finish. The collection itself is not cancelled and continues running in
+  the background.
+  ([#7757](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7757))
+
 ## 1.18.0-beta.1
 
 Released 2026-Aug-21

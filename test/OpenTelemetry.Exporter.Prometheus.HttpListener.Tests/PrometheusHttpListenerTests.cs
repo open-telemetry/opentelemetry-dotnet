@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Globalization;
 using System.Net;
@@ -531,6 +532,46 @@ public class PrometheusHttpListenerTests
         Assert.Equal(HttpStatusCode.RequestTimeout, response.StatusCode);
     }
 
+    [Fact]
+    public async Task WhenClientRequestsLongerTimeoutThanServer_Returns408AtServerDeadline()
+    {
+        EnsureThreadPoolWorkerThreadsAvailable();
+
+        var serverTimeout = TimeSpan.FromSeconds(1);
+        var clientTimeout = TimeSpan.FromSeconds(30);
+
+        using var context = CreateListener(configureListener: options =>
+        {
+            options.ScrapeResponseTimeoutMilliseconds = (int)serverTimeout.TotalMilliseconds;
+        });
+
+        context.Exporter.Collect = _ =>
+        {
+            using var deadlinePassed = new CancellationTokenSource(serverTimeout + DeadlineMargin);
+            deadlinePassed.Token.WaitHandle.WaitOne(MaxCollectWait);
+            return true;
+        };
+
+        using var client = new HttpClient { BaseAddress = context.BaseAddress };
+        client.DefaultRequestHeaders.Add(
+            "X-Prometheus-Scrape-Timeout-Seconds",
+            clientTimeout.TotalSeconds.ToString(CultureInfo.InvariantCulture));
+
+        var stopwatch = Stopwatch.StartNew();
+
+        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative));
+
+        stopwatch.Stop();
+
+        Assert.Equal(HttpStatusCode.RequestTimeout, response.StatusCode);
+
+        // The response must have come back around the server's own (shorter) deadline,
+        // not the longer one the client asked for.
+        Assert.True(
+            stopwatch.Elapsed < clientTimeout,
+            $"Expected the server's {serverTimeout} deadline to apply, but the response took {stopwatch.Elapsed}.");
+    }
+
     [Theory]
     [InlineData("-1")]
     [InlineData("0")]
@@ -612,8 +653,15 @@ public class PrometheusHttpListenerTests
             counter.Add(1, new KeyValuePair<string, object?>("key", padding));
         }
 
-        // The scraper asks for the metrics and then never reads them.
-        using var stalledClient = new System.Net.Sockets.TcpClient();
+        // The scraper asks for the metrics and then never reads them. Shrink the receive
+        // buffer to (as close to) the platform's minimum as possible so back-pressure on
+        // the server's write is deterministic rather than depending on whatever the
+        // platform happens to auto-tune the socket buffers to for this connection.
+        using var stalledClient = new System.Net.Sockets.TcpClient
+        {
+            ReceiveBufferSize = 1,
+        };
+
         await stalledClient.ConnectAsync(context.BaseAddress.Host, context.Port);
         var request = System.Text.Encoding.ASCII.GetBytes(
             $"GET /metrics HTTP/1.1\r\nHost: localhost:{context.Port}\r\nConnection: keep-alive\r\n\r\n");
@@ -626,6 +674,29 @@ public class PrometheusHttpListenerTests
 #endif
 
         await stalledStream.FlushAsync();
+
+        // Read just enough to confirm the response actually started (headers plus whatever
+        // part of the body fits in the receive buffer), without draining the rest of the body.
+        var buffer = new byte[512];
+
+        using (var headerCts = new CancellationTokenSource(MaxCollectWait))
+        {
+#if NET
+            var bytesRead = await stalledStream.ReadAsync(buffer, headerCts.Token);
+#else
+            var bytesRead = await stalledStream.ReadAsync(buffer, 0, buffer.Length, headerCts.Token);
+#endif
+            Assert.True(bytesRead > 0, "Expected to receive the start of the response.");
+        }
+
+        // Prove the write is genuinely stalled
+        await Task.Delay(TimeSpan.FromSeconds(1));
+
+        var available = stalledClient.Available;
+
+        Assert.True(
+            available < padding.Length * 10,
+            $"Expected the unread, buffered response to stay far below the ~12 MB body, but {available} bytes are already buffered.");
 
         // Wait past the server-side timeout so the stalled request has cancelled its write and
         // released the reader slot while the stalled client is still connected and still not

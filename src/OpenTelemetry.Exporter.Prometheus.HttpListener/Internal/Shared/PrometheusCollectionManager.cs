@@ -278,41 +278,48 @@ internal sealed class PrometheusCollectionManager
 
     /// <summary>
     /// Runs the collection for <paramref name="collectionContext"/> and publishes its
-    /// result (or, if the collection itself throws, its exception - propagated to any
-    /// scrape still awaiting it exactly as it would have been had the collection run
-    /// inline on that scrape's own thread). Always completes <paramref name="collectionContext"/>'s
-    /// task and clears it from <see cref="collectionContext"/> when done, so a failure
-    /// here can never leave future scrapes permanently joined to a collection that will
-    /// never complete.
+    /// result. Never faults <paramref name="collectionContext"/>'s task: every scrape
+    /// still awaiting it must get back a completed (if failed) result so its own
+    /// unconditional <see cref="ExitCollect"/> is reached, since letting an exception
+    /// propagate instead would skip that call for anyone still waiting (see the
+    /// <c>EnterCollect</c>/<c>ExitCollect</c> callers in <c>PrometheusHttpListener.cs</c>
+    /// and <c>PrometheusExporterMiddleware.cs</c>) and permanently leak their reader
+    /// slot. Always clears <paramref name="collectionContext"/> from <see cref="collectionContext"/>
+    /// before publishing its result, so a scrape whose continuation runs as soon as the
+    /// result is published (which can happen on another thread) can never observe a
+    /// completed collection still registered as the in-flight one and join a context
+    /// that will never collect again.
     /// </summary>
     /// <param name="collectionContext">The collection context to execute and publish.</param>
     private void ExecuteCollectAndPublish(CollectionContext collectionContext)
     {
+        CollectionResult result;
+
         try
         {
-            var result = this.ExecuteCollect(collectionContext);
-            collectionContext.SetResult(result);
+            result = this.ExecuteCollect(collectionContext);
         }
         catch (Exception ex)
         {
-            collectionContext.SetException(ex);
+            PrometheusExporterEventSource.Log.FailedExport(ex);
+            result = this.CreateCollectionResult(collectionContext, succeeded: false, default);
+        }
+
+        this.EnterGlobalLock();
+
+        try
+        {
+            if (ReferenceEquals(this.collectionContext, collectionContext))
+            {
+                this.collectionContext = null;
+            }
         }
         finally
         {
-            this.EnterGlobalLock();
-
-            try
-            {
-                if (ReferenceEquals(this.collectionContext, collectionContext))
-                {
-                    this.collectionContext = null;
-                }
-            }
-            finally
-            {
-                this.ExitGlobalLock();
-            }
+            this.ExitGlobalLock();
         }
+
+        collectionContext.SetResult(result);
     }
 
 #if NET
@@ -458,13 +465,20 @@ internal sealed class PrometheusCollectionManager
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private CollectionResult ExecuteCollect(CollectionContext collectionContext)
     {
+        var collect = this.exporter.Collect;
+
+        if (collect is null)
+        {
+            return this.CreateCollectionResult(collectionContext, succeeded: false, default);
+        }
+
         this.onCollectContext = collectionContext;
         this.collectionExecutionResult = default;
         this.exporter.OnExport = this.onCollectRef;
 
         try
         {
-            var succeeded = this.exporter.Collect!(Timeout.Infinite);
+            var succeeded = collect(Timeout.Infinite);
             return this.CreateCollectionResult(collectionContext, succeeded, this.collectionExecutionResult);
         }
         finally
@@ -1003,9 +1017,6 @@ internal sealed class PrometheusCollectionManager
 
         public void SetResult(CollectionResult result)
             => this.tcs.SetResult(result);
-
-        public void SetException(Exception exception)
-            => this.tcs.SetException(exception);
 
         public bool TryRegisterProtocol(in PrometheusProtocol protocol, bool hasActiveReaders)
         {
