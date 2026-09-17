@@ -974,6 +974,31 @@ public class MetricViewTests : MetricTestsBase
         Assert.False(histogramPoint.TryGetHistogramMinMaxValues(out var _, out var _));
     }
 
+    [Theory]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData(MetricReaderTemporalityPreference.Delta)]
+    public void AllNonFiniteHistogramMeasurementsProduceNoMetricPoints(MetricReaderTemporalityPreference temporalityPreference)
+    {
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var histogram = meter.CreateHistogram<double>("MyHistogram");
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems, o => o.TemporalityPreference = temporalityPreference));
+
+        histogram.Record(double.NaN);
+        histogram.Record(double.PositiveInfinity);
+        histogram.Record(double.NegativeInfinity);
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        // Every measurement was non-finite and dropped, so the stream never had a valid
+        // measurement recorded against it: nothing is exported, rather than an "empty"
+        // histogram with a count and sum of zero.
+        Assert.Empty(exportedItems);
+    }
+
     [Fact]
     public void ViewToSelectTagKeys()
     {

@@ -299,7 +299,7 @@ public class MetricOverflowAttributeTests
     {
         var exportedItems = new List<Metric>();
 
-        var meter = new Meter(Utils.GetCurrentMethodName());
+        using var meter = new Meter(Utils.GetCurrentMethodName());
         var histogram = meter.CreateHistogram<double>("TestHistogram");
 
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
