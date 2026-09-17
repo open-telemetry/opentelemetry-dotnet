@@ -17,10 +17,10 @@ Notes](../../RELEASENOTES.md).
 
 * Added `PrometheusHttpListenerOptions.ScrapeResponseTimeoutMilliseconds`
   (default `60000`) which bounds how long a scrape request waits for its
-  response before failing with an HTTP 408. `X-Prometheus-Scrape-Timeout-Seconds`
-  request header values may only shorten this limit. The limit bounds the
-  request's wait only: a metrics collection already running when it is
-  reached is not cancelled and continues running in the background.
+  response. `X-Prometheus-Scrape-Timeout-Seconds` request header values may
+  only shorten this limit. The limit bounds the request's wait only: a metrics
+  collection already running when it is reached is not cancelled and continues
+  running in the background.
   ([#7757](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7757))
 
 ## 1.18.0-beta.1

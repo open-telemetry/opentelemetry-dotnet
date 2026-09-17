@@ -264,12 +264,12 @@ internal sealed class PrometheusCollectionManager
             return CollectStep.Pending(pendingCollectionTask, joinedActiveCollection);
         }
 
-        // Run the collection (which invokes user-controlled observable instrument
-        // callbacks and the exporter) on a dedicated thread rather than inline on
-        // this call stack. This scrape's own deadline is enforced only while
-        // awaiting the resulting task (see WaitForCollectionResponseAsync); a
-        // collection started here must not be able to pin the calling thread
-        // indefinitely if it hangs.
+        // Queue the collection (which invokes user-controlled observable instrument
+        // callbacks and the exporter) to run on the thread pool rather than inline on
+        // this call stack, so a hung callback pins a pool worker instead of the calling
+        // request's own thread. This scrape's own deadline is enforced only while
+        // awaiting the resulting task (see WaitForCollectionResponseAsync); a collection
+        // started here must not be able to pin the calling thread indefinitely if it hangs.
         var collectionContextToRun = activeCollectionContext!;
         _ = Task.Run(() => this.ExecuteCollectAndPublish(collectionContextToRun));
 
@@ -389,17 +389,18 @@ internal sealed class PrometheusCollectionManager
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                // The caller's deadline elapsed while waiting. Degrade to a failed response
-                // (mirroring the MaxCollectAttempts exhaustion path below) instead of
-                // continuing to wait indefinitely.
+                // The caller's deadline elapsed while waiting (a scrape timeout or, for the
+                // ASP.NET Core exporter, a client disconnect) - an expected outcome, not a
+                // collection failure, so this is not logged as one; the caller already
+                // reports the cancellation itself (e.g. ScrapeTimedOut). Degrade to a failed
+                // response (mirroring the MaxCollectAttempts exhaustion path below) instead
+                // of continuing to wait indefinitely.
                 if (!step.JoinedActiveCollection)
                 {
                     // No reader slot was taken for what was being awaited; take one now so
                     // the caller's unconditional ExitCollect has exactly one slot to release.
                     this.IncrementReaderCount(protocol);
                 }
-
-                PrometheusExporterEventSource.Log.CollectFailed();
 
                 return default;
             }

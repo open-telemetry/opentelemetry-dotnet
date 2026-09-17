@@ -108,8 +108,7 @@ public class PrometheusHttpListenerOptions
 
     /// <summary>
     /// Gets or sets the maximum time in milliseconds a scrape request will wait for its
-    /// response before it is failed with an HTTP 408 response. Default value: 60000 (60
-    /// seconds).
+    /// response. Default value: 60000 (60 seconds).
     /// </summary>
     public int ScrapeResponseTimeoutMilliseconds
     {
