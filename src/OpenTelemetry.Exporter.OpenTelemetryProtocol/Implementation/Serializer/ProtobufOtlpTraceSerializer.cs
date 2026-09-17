@@ -599,8 +599,8 @@ internal static class ProtobufOtlpTraceSerializer
 #if NET9_0_OR_GREATER
     private static void DecodeHex(string hex, Span<byte> destination)
     {
-        // This optimization can be removed if https://github.com/dotnet/runtime/pull/134135 is
-        // merged and we update to a version of System.Diagnostics.DiagnosticSource that includes it.
+        // This optimization can be removed once https://github.com/dotnet/runtime/pull/134135
+        // is available in a future version of System.Diagnostics.DiagnosticSource.
         var status = Convert.FromHexString(hex.AsSpan(), destination, out _, out int bytesWritten);
         if (status != System.Buffers.OperationStatus.Done || bytesWritten != destination.Length)
         {
