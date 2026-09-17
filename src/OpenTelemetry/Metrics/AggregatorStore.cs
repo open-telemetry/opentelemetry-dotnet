@@ -55,6 +55,7 @@ internal sealed class AggregatorStore
     private readonly MetricPoint[] metricPoints;
     private readonly int[] currentMetricPointBatch;
     private readonly AggregationType aggType;
+    private readonly bool isHistogramAggregation;
     private readonly HistogramExplicitBounds histogramExplicitBounds;
     private readonly int exponentialHistogramMaxSize;
     private readonly int exponentialHistogramMaxScale;
@@ -93,6 +94,15 @@ internal sealed class AggregatorStore
         this.exponentialHistogramMaxScale = metricStreamIdentity.ExponentialHistogramMaxScale;
         this.StartTimeExclusive = DateTimeOffset.UtcNow;
         this.ExemplarReservoirFactory = exemplarReservoirFactory;
+
+        this.isHistogramAggregation = aggType is
+            AggregationType.Histogram
+            or AggregationType.HistogramWithMinMax
+            or AggregationType.HistogramWithBuckets
+            or AggregationType.HistogramWithMinMaxBuckets
+            or AggregationType.Base2ExponentialHistogram
+            or AggregationType.Base2ExponentialHistogramWithMinMax;
+
         if (metricStreamIdentity.TagKeys != null)
         {
             this.updateLongCallback = this.UpdateLongCustomTags;
@@ -213,6 +223,14 @@ internal sealed class AggregatorStore
 
     internal void Update(double value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
+        if (this.isHistogramAggregation && (double.IsNaN(value) || double.IsInfinity(value)))
+        {
+            // Reject non-finite histogram measurements before tag lookup: the value is always
+            // dropped, so a unique tag set carrying only non-finite values must not consume a
+            // cardinality slot that a subsequent, valid tag set could need.
+            return;
+        }
+
         try
         {
             this.updateDoubleCallback(value, tags);

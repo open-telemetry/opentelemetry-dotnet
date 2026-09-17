@@ -21,28 +21,79 @@ public class AggregatorTests
 
     public static TheoryData<HistogramBoundaryTestCase> HistogramInfinityBoundariesTestCases => HistogramBoundaryTestCase.HistogramInfinityBoundariesTestCases();
 
-    [Theory]
-    [InlineData(double.NaN)]
-    [InlineData(double.PositiveInfinity)]
-    [InlineData(double.NegativeInfinity)]
-    public void NonFiniteMeasurementIsIgnoredByCumulativeHistogram(double nonFinite)
+    public static TheoryData<int, double, bool> NonFiniteHistogramMeasurementTestCases()
     {
+        var data = new TheoryData<int, double, bool>();
+
+        // Typed as an integer as AggregationType is internal
+        AggregationType[] aggregationTypes =
+        [
+            AggregationType.Histogram,
+            AggregationType.HistogramWithMinMax,
+            AggregationType.HistogramWithBuckets,
+            AggregationType.HistogramWithMinMaxBuckets,
+            AggregationType.Base2ExponentialHistogram,
+            AggregationType.Base2ExponentialHistogramWithMinMax,
+        ];
+
+        double[] nonFiniteValues = [double.NaN, double.PositiveInfinity, double.NegativeInfinity];
+
+        foreach (var aggregationType in aggregationTypes)
+        {
+            foreach (var nonFinite in nonFiniteValues)
+            {
+                data.Add((int)aggregationType, nonFinite, false);
+                data.Add((int)aggregationType, nonFinite, true);
+            }
+        }
+
+        return data;
+    }
+
+    [Theory]
+    [MemberData(nameof(NonFiniteHistogramMeasurementTestCases))]
+    public void NonFiniteMeasurementIsIgnoredByHistogram(int aggregationTypeValue, double nonFinite, bool outputDelta)
+    {
+        var aggregationType = (AggregationType)aggregationTypeValue;
         var boundaries = new HistogramExplicitBounds(Metric.DefaultHistogramBounds);
-        var histogramPoint = new MetricPoint(this.aggregatorStore, AggregationType.HistogramWithBuckets, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
+        var temporality = outputDelta ? AggregationTemporality.Delta : AggregationTemporality.Cumulative;
+        var aggregatorStore = new AggregatorStore(MetricStreamIdentity, aggregationType, temporality, 1024);
+        var histogramPoint = new MetricPoint(aggregatorStore, aggregationType, null, boundaries, Metric.DefaultExponentialHistogramMaxBuckets, Metric.DefaultExponentialHistogramMaxScale);
 
         histogramPoint.Update(1);
         histogramPoint.Update(nonFinite);
         histogramPoint.Update(2);
         histogramPoint.Update(3);
 
-        // Cumulative snapshot (outputDelta: false) retains the running values.
-        histogramPoint.TakeSnapshot(false);
+        histogramPoint.TakeSnapshot(outputDelta);
 
         // The non-finite measurement is dropped: only the three finite values are counted...
         Assert.Equal(3, histogramPoint.GetHistogramCount());
 
         // ...and the sum is exactly 1 + 2 + 3, not poisoned to NaN/Infinity.
         Assert.Equal(6, histogramPoint.GetHistogramSum());
+
+        if (aggregationType is AggregationType.HistogramWithMinMax or
+            AggregationType.HistogramWithMinMaxBuckets or
+            AggregationType.Base2ExponentialHistogramWithMinMax)
+        {
+            // Min/max are not poisoned to NaN/Infinity either.
+            Assert.True(histogramPoint.TryGetHistogramMinMaxValues(out var min, out var max));
+            Assert.Equal(1, min);
+            Assert.Equal(3, max);
+        }
+
+        if (aggregationType is AggregationType.HistogramWithBuckets or AggregationType.HistogramWithMinMaxBuckets)
+        {
+            // The non-finite measurement was not distributed into any explicit bucket.
+            var bucketedCount = 0L;
+            foreach (var bucket in histogramPoint.GetHistogramBuckets())
+            {
+                bucketedCount += bucket.BucketCount;
+            }
+
+            Assert.Equal(3, bucketedCount);
+        }
     }
 
     [Fact]
