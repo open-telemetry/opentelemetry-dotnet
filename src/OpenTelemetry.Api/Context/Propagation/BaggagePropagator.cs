@@ -284,14 +284,14 @@ public class BaggagePropagator : TextMapPropagator
         return result;
     }
 
-    private static string EncodeValue(ReadOnlySpan<char> value) => Encode(value, isKey: false);
+    private static string EncodeValue(string value) => Encode(value, isKey: false);
 
-    private static string Encode(ReadOnlySpan<char> value, bool isKey)
+    private static string Encode(string value, bool isKey)
     {
 #if NET
-        if (!value.ContainsAnyExcept(isKey ? ValidKeySearcher : ValidValueSearcher))
+        if (!value.AsSpan().ContainsAnyExcept(isKey ? ValidKeySearcher : ValidValueSearcher))
         {
-            return value.ToString();
+            return value;
         }
 #else
         var validChars = isKey ? ValidKeyChars : ValidValueChars;
@@ -307,7 +307,7 @@ public class BaggagePropagator : TextMapPropagator
 
         if (allValid)
         {
-            return value.ToString();
+            return value;
         }
 #endif
 

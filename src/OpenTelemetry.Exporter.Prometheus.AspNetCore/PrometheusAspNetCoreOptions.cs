@@ -87,12 +87,12 @@ public class PrometheusAspNetCoreOptions
 
     /// <summary>
     /// Gets or sets the strategy used to translate OpenTelemetry metric and label names into
-    /// Prometheus names. Default value: <see cref="PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes"/>.
+    /// Prometheus names. Default value: <see cref="PrometheusAspNetCoreTranslationStrategy.UnderscoreEscapingWithSuffixes"/>.
     /// </summary>
-    public PrometheusTranslationStrategy TranslationStrategy
+    public PrometheusAspNetCoreTranslationStrategy TranslationStrategy
     {
-        get => this.ExporterOptions.TranslationStrategy;
-        set => this.ExporterOptions.TranslationStrategy = value;
+        get => (PrometheusAspNetCoreTranslationStrategy)this.ExporterOptions.TranslationStrategy;
+        set => this.ExporterOptions.TranslationStrategy = (PrometheusTranslationStrategy)value;
     }
 
     internal PrometheusExporterOptions ExporterOptions { get; } = new();
