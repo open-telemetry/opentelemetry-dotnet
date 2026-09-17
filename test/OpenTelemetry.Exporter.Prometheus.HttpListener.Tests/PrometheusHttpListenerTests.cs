@@ -323,50 +323,33 @@ public class PrometheusHttpListenerTests
         var baseAddress = new UriBuilder(Uri.UriSchemeHttp, "localhost", port).Uri;
         using var client = new HttpClient { BaseAddress = baseAddress };
 
-        // Send a scrape request; it will block inside EnterCollect.
+        // Send a scrape request; it will block inside the collection.
         var scrapeTask = client.GetAsync(new Uri("metrics", UriKind.Relative), HttpCompletionOption.ResponseHeadersRead);
 
         // Wait until the request is actually inside the Collect delegate.
         Assert.True(collectEntered.Wait(TimeSpan.FromSeconds(10)), "Request did not enter Collect in time.");
 
-        // Dispose the provider on a dedicated thread. This sets disposed = true,
-        // cancels the CancellationToken, and then blocks on SpinWait waiting for
-        // the in-flight request to drain. A dedicated thread is used rather than a
-        // thread pool work item because the held request already owns a pool worker:
-        // on a busy agent a queued work item can sit unstarted for longer than the
-        // window below, and the scrape would then be released before disposal had
-        // cancelled anything, producing a 200 instead of a 503.
-        using var disposeStarted = new ManualResetEventSlim(false);
-        var disposeTask = Task.Factory.StartNew(
-            () =>
-            {
-                disposeStarted.Set();
-                provider.Dispose();
-            },
-            CancellationToken.None,
-            TaskCreationOptions.LongRunning,
-            TaskScheduler.Default);
+        // Disposing cancels the listener's shutdown token, which the request is
+        // waiting on while its collection is still blocked. The request gives up on
+        // that collection as soon as the token is cancelled rather than waiting for
+        // it to finish, so disposal completes promptly without needing the
+        // collection itself to be released first.
+        var disposeTask = Task.Run(provider.Dispose);
 
-        Assert.True(disposeStarted.Wait(TimeSpan.FromSeconds(10)), "Disposal did not start in time.");
+        using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10)))
+        {
+            var completed = await Task.WhenAny(disposeTask, Task.Delay(Timeout.Infinite, cts.Token));
+            Assert.Same(disposeTask, completed);
+        }
 
-        // Confirm Dispose() is actually blocked (meaning it has cancelled the
-        // token and is now waiting for activeRequestCount to reach 0). If
-        // disposeTask completes within 500ms it means the request wasn't held.
-        var timeout = TimeSpan.FromSeconds(0.5);
-        using var cts = new CancellationTokenSource(timeout);
-        var completed = await Task.WhenAny(disposeTask, Task.Delay(timeout, cts.Token));
-        Assert.NotSame(disposeTask, completed);
-
-        // Release the blocker so EnterCollect can finish. Once it has,
-        // ProcessRequestAsync observes that disposal has started and returns 503
-        // instead of sending the collected response.
-        collectBlocker.Set();
-
-        // Wait for both the scrape response and disposal to complete.
-        using var response = await scrapeTask;
         await disposeTask;
 
+        using var response = await scrapeTask;
+
         Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+
+        // Release the still-running background collection so it does not leak past the test.
+        collectBlocker.Set();
     }
 
     [Fact]

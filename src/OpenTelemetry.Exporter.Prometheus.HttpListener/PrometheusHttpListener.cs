@@ -282,7 +282,7 @@ internal sealed class PrometheusHttpListener : IDisposable
                 Negotiate(context.Request),
                 this.exporter.TranslationStrategy);
 
-            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(protocol).ConfigureAwait(false);
+            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(protocol, linkedCts.Token).ConfigureAwait(false);
 
             try
             {

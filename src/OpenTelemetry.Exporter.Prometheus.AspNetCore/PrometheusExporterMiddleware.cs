@@ -84,7 +84,7 @@ internal sealed class PrometheusExporterMiddleware
                 Negotiate(requestHeaders),
                 this.exporter.TranslationStrategy);
 
-            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(protocol);
+            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(protocol, linkedCts.Token);
 
             try
             {

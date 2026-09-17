@@ -59,9 +59,9 @@ internal sealed class PrometheusCollectionManager
     internal Func<TimeSpan> GetElapsedTime { get; set; }
 
 #if NET
-    public ValueTask<CollectionResponse> EnterCollect(in PrometheusProtocol protocol)
+    public ValueTask<CollectionResponse> EnterCollect(in PrometheusProtocol protocol, CancellationToken cancellationToken = default)
 #else
-    public Task<CollectionResponse> EnterCollect(in PrometheusProtocol protocol)
+    public Task<CollectionResponse> EnterCollect(in PrometheusProtocol protocol, CancellationToken cancellationToken = default)
 #endif
     {
         var step = this.TryEnterCollect(protocol);
@@ -75,12 +75,38 @@ internal sealed class PrometheusCollectionManager
 #endif
         }
 
-        return this.WaitForCollectionResponseAsync(protocol, step);
+        return this.WaitForCollectionResponseAsync(protocol, step, cancellationToken);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void ExitCollect(in PrometheusProtocol protocol)
         => this.GetProtocolState(protocol).DecrementReaderCount();
+
+#if !NET
+    /// <summary>
+    /// A <c>Task.WaitAsync(CancellationToken)</c> equivalent for TFMs that predate it.
+    /// Faults and results propagate exactly as a plain <c>await task</c> would (unlike
+    /// <see cref="Task.Wait(CancellationToken)"/>, which wraps a fault in an
+    /// <see cref="AggregateException"/>), and it never blocks a thread while waiting.
+    /// </summary>
+    private static async Task<T> WaitForTask<T>(Task<T> task, CancellationToken cancellationToken)
+    {
+        if (!task.IsCompleted && cancellationToken.CanBeCanceled)
+        {
+            var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            using (cancellationToken.Register(static (state) => ((TaskCompletionSource<bool>?)state)?.TrySetResult(true), tcs))
+            {
+                if (await Task.WhenAny(task, tcs.Task).ConfigureAwait(false) == tcs.Task)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                }
+            }
+        }
+
+        return await task.ConfigureAwait(false);
+    }
+#endif
 
     /// <summary>
     /// Performs a single synchronous attempt to enter a collection. Returns a
@@ -238,76 +264,137 @@ internal sealed class PrometheusCollectionManager
             return CollectStep.Pending(pendingCollectionTask, joinedActiveCollection);
         }
 
-        var result = this.ExecuteCollect(activeCollectionContext!);
+        // Run the collection (which invokes user-controlled observable instrument
+        // callbacks and the exporter) on a dedicated thread rather than inline on
+        // this call stack. This scrape's own deadline is enforced only while
+        // awaiting the resulting task (see WaitForCollectionResponseAsync); a
+        // collection started here must not be able to pin the calling thread
+        // indefinitely if it hangs.
+        var collectionContextToRun = activeCollectionContext!;
+        _ = Task.Run(() => this.ExecuteCollectAndPublish(collectionContextToRun));
 
-        activeCollectionContext!.SetResult(result);
+        return CollectStep.Pending(collectionContextToRun.Task, joinedActiveCollection: true);
+    }
 
-        this.EnterGlobalLock();
-
+    /// <summary>
+    /// Runs the collection for <paramref name="collectionContext"/> and publishes its
+    /// result (or, if the collection itself throws, its exception - propagated to any
+    /// scrape still awaiting it exactly as it would have been had the collection run
+    /// inline on that scrape's own thread). Always completes <paramref name="collectionContext"/>'s
+    /// task and clears it from <see cref="collectionContext"/> when done, so a failure
+    /// here can never leave future scrapes permanently joined to a collection that will
+    /// never complete.
+    /// </summary>
+    /// <param name="collectionContext">The collection context to execute and publish.</param>
+    private void ExecuteCollectAndPublish(CollectionContext collectionContext)
+    {
         try
         {
-            if (ReferenceEquals(this.collectionContext, activeCollectionContext))
-            {
-                this.collectionContext = null;
-            }
+            var result = this.ExecuteCollect(collectionContext);
+            collectionContext.SetResult(result);
+        }
+        catch (Exception ex)
+        {
+            collectionContext.SetException(ex);
         }
         finally
         {
-            this.ExitGlobalLock();
-        }
+            this.EnterGlobalLock();
 
-        return result.TryGetResponse(protocol, out var collectedResponse)
-            ? CollectStep.Completed(collectedResponse)
-            : CollectStep.Completed(default);
+            try
+            {
+                if (ReferenceEquals(this.collectionContext, collectionContext))
+                {
+                    this.collectionContext = null;
+                }
+            }
+            finally
+            {
+                this.ExitGlobalLock();
+            }
+        }
     }
 
 #if NET
-    private async ValueTask<CollectionResponse> WaitForCollectionResponseAsync(PrometheusProtocol protocol, CollectStep step)
+    private async ValueTask<CollectionResponse> WaitForCollectionResponseAsync(PrometheusProtocol protocol, CollectStep step, CancellationToken cancellationToken)
 #else
-    private async Task<CollectionResponse> WaitForCollectionResponseAsync(PrometheusProtocol protocol, CollectStep step)
+    private async Task<CollectionResponse> WaitForCollectionResponseAsync(PrometheusProtocol protocol, CollectStep step, CancellationToken cancellationToken)
 #endif
     {
         for (var attempt = 0; attempt < MaxCollectAttempts; attempt++)
         {
-            if (step.PendingCollectionTask is { } pendingCollectionTask)
+            try
             {
-                var collectionResult = await pendingCollectionTask.ConfigureAwait(false);
-
-                if (step.JoinedActiveCollection)
+                if (step.PendingCollectionTask is { } pendingCollectionTask)
                 {
-                    // This scrape shared the collection, so the collection's outcome is
-                    // this scrape's outcome. When it produced no response for this
-                    // protocol it failed, and this scrape reports that failure rather
-                    // than collecting again: a retry cannot reuse the collection it just
-                    // shared, so it would have to start a new one, and every scrape
-                    // sharing the failure would queue up behind the active readers to do so.
-                    if (!collectionResult.TryGetResponse(protocol, out var response))
-                    {
-                        PrometheusExporterEventSource.Log.CollectFailed();
+                    // Bounded by cancellationToken so that a collection stuck inside a user
+                    // callback or the exporter cannot hold this scrape past its own deadline.
+                    // The collection itself is not aborted: it keeps running in the background
+                    // and ExecuteCollectAndPublish still publishes its result and clears
+                    // collectionContext whenever (if ever) it completes.
+#if NET
+                    var collectionResult = await pendingCollectionTask.WaitAsync(cancellationToken).ConfigureAwait(false);
+#else
+                    var collectionResult = await WaitForTask(pendingCollectionTask, cancellationToken).ConfigureAwait(false);
+#endif
 
-                        // The reader slot taken when joining is left outstanding for the
-                        // caller's ExitCollect to release.
-                        return default;
+                    if (step.JoinedActiveCollection)
+                    {
+                        // This scrape shared the collection, so the collection's outcome is
+                        // this scrape's outcome. When it produced no response for this
+                        // protocol it failed, and this scrape reports that failure rather
+                        // than collecting again: a retry cannot reuse the collection it just
+                        // shared, so it would have to start a new one, and every scrape
+                        // sharing the failure would queue up behind the active readers to do so.
+                        if (!collectionResult.TryGetResponse(protocol, out var response))
+                        {
+                            PrometheusExporterEventSource.Log.CollectFailed();
+
+                            // The reader slot taken when joining is left outstanding for the
+                            // caller's ExitCollect to release.
+                            return default;
+                        }
+
+                        return response;
                     }
 
-                    return response;
+                    // This scrape never registered with the collection it observed, so that
+                    // collection was never going to produce a response for it: make another
+                    // attempt. Loop here (bounded by MaxCollectAttempts) rather than
+                    // recursing back into EnterCollect: when the awaited collection
+                    // completes synchronously the continuation runs inline, so a recursive
+                    // retry would grow the stack on every iteration and eventually overflow
+                    // under contention.
+                }
+                else if (step.ReadersDrainedTask is { } readersDrainedTask)
+                {
+                    // Awaiting the readers releases this thread while they finish. Spinning
+                    // until they drain would instead hold it, and holding it can starve the
+                    // very scrapes being waited on: each of them needs a thread to resume on
+                    // before it can release its reader slot. Bounded by cancellationToken for
+                    // the same reason as the pending-collection wait above.
+#if NET
+                    await readersDrainedTask.WaitAsync(cancellationToken).ConfigureAwait(false);
+#else
+                    await WaitForTask(readersDrainedTask, cancellationToken).ConfigureAwait(false);
+#endif
+                }
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                // The caller's deadline elapsed while waiting. Degrade to a failed response
+                // (mirroring the MaxCollectAttempts exhaustion path below) instead of
+                // continuing to wait indefinitely.
+                if (!step.JoinedActiveCollection)
+                {
+                    // No reader slot was taken for what was being awaited; take one now so
+                    // the caller's unconditional ExitCollect has exactly one slot to release.
+                    this.IncrementReaderCount(protocol);
                 }
 
-                // This scrape never registered with the collection it observed, so that
-                // collection was never going to produce a response for it: make another
-                // attempt. Loop here (bounded by MaxCollectAttempts) rather than
-                // recursing back into EnterCollect: when the awaited collection
-                // completes synchronously the continuation runs inline, so a recursive
-                // retry would grow the stack on every iteration and eventually overflow
-                // under contention.
-            }
-            else if (step.ReadersDrainedTask is { } readersDrainedTask)
-            {
-                // Awaiting the readers releases this thread while they finish. Spinning
-                // until they drain would instead hold it, and holding it can starve the
-                // very scrapes being waited on: each of them needs a thread to resume on
-                // before it can release its reader slot.
-                await readersDrainedTask.ConfigureAwait(false);
+                PrometheusExporterEventSource.Log.CollectFailed();
+
+                return default;
             }
 
             step = this.TryEnterCollect(protocol);
@@ -916,6 +1003,9 @@ internal sealed class PrometheusCollectionManager
 
         public void SetResult(CollectionResult result)
             => this.tcs.SetResult(result);
+
+        public void SetException(Exception exception)
+            => this.tcs.SetException(exception);
 
         public bool TryRegisterProtocol(in PrometheusProtocol protocol, bool hasActiveReaders)
         {
