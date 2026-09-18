@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Collections;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Globalization;
@@ -17,6 +18,8 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests;
 public sealed partial class PrometheusSerializerTests
 {
     internal static readonly VerifySettings VerifySettings = CreateVerifySettings();
+    private static readonly int[] LabelValueArrayCase = [1, 2, 3];
+    private static readonly byte[] LabelValueByteArrayCase = [1, 2, 3];
 
     public static TheoryData<string> EscapingSchemes =>
     [
@@ -101,6 +104,27 @@ public sealed partial class PrometheusSerializerTests
         { new DateTime(2024, 5, 6, 7, 8, 9, DateTimeKind.Utc), "05/06/2024 07:08:09" },
         { new DateTimeOffset(2024, 5, 6, 7, 8, 9, TimeSpan.FromHours(2)), "05/06/2024 07:08:09 +02:00" },
         { TimeSpan.FromTicks(1234567890), "00:02:03.4567890" },
+        { LabelValueByteArrayCase, "AQID" },
+        { LabelValueArrayCase, "[1,2,3]" },
+        { new Dictionary<string, object?> { ["a"] = 1 }, """{\"a\":1}""" },
+        { new Dictionary<string, object?> { ["b"] = LabelValueByteArrayCase }, """{\"b\":\"AQID\"}""" },
+        {
+            new Dictionary<string, object?>
+            {
+                ["flag"] = true,
+                ["dbl"] = 1.5,
+                ["nan"] = double.NaN,
+                ["empty"] = null,
+                ["bad"] = new UnsupportedValue(),
+            },
+            """{\"flag\":true,\"dbl\":1.5,\"nan\":\"NaN\",\"empty\":null}"""
+        },
+        { new Dictionary<string, string?> { ["a"] = "b" }, """{\"a\":\"b\"}""" },
+        { new Hashtable { ["a"] = 1 }, """{\"a\":1}""" },
+        { new double[] { double.NaN, double.PositiveInfinity, double.NegativeInfinity, 1.5 }, """[\"NaN\",\"Infinity\",\"-Infinity\",1.5]""" },
+        { new object[] { LabelValueArrayCase }, "[[1,2,3]]" },
+        { new object[] { LabelValueByteArrayCase }, """[\"AQID\"]""" },
+        { new object[] { new Dictionary<string, object?> { ["a"] = 1 } }, """[{\"a\":1}]""" },
     };
 
     [Fact]
@@ -2456,4 +2480,9 @@ public sealed partial class PrometheusSerializerTests
 
     private static Regex SdkVersion() => new("telemetry_sdk_version=\"[^\"]*\"", RegexOptions.Compiled);
 #endif
+
+    private sealed class UnsupportedValue
+    {
+        public override string? ToString() => null;
+    }
 }
