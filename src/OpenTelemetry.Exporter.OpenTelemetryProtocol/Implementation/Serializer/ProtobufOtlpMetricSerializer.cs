@@ -581,14 +581,10 @@ internal static class ProtobufOtlpMetricSerializer
         if (exemplar.SpanId != default)
         {
             writePosition = ProtobufSerializer.WriteTagAndLength(buffer, writePosition, SpanIdSize, ProtobufOtlpMetricFieldNumberConstants.Exemplar_Span_Id, ProtobufWireType.LEN);
-            var spanIdBytes = new Span<byte>(buffer, writePosition, SpanIdSize);
-            exemplar.SpanId.CopyTo(spanIdBytes);
-            writePosition += SpanIdSize;
+            writePosition = ProtobufOtlpTraceSerializer.WriteSpanId(buffer, writePosition, exemplar.SpanId);
 
             writePosition = ProtobufSerializer.WriteTagAndLength(buffer, writePosition, TraceIdSize, ProtobufOtlpMetricFieldNumberConstants.Exemplar_Trace_Id, ProtobufWireType.LEN);
-            var traceIdBytes = new Span<byte>(buffer, writePosition, TraceIdSize);
-            exemplar.TraceId.CopyTo(traceIdBytes);
-            writePosition += TraceIdSize;
+            writePosition = ProtobufOtlpTraceSerializer.WriteTraceId(buffer, writePosition, exemplar.TraceId);
         }
 
         ProtobufSerializer.WriteReservedLength(buffer, exemplarLengthPosition, writePosition - (exemplarLengthPosition + ReserveSizeForLength));

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Globalization;
 using System.Net;
@@ -323,50 +324,33 @@ public class PrometheusHttpListenerTests
         var baseAddress = new UriBuilder(Uri.UriSchemeHttp, "localhost", port).Uri;
         using var client = new HttpClient { BaseAddress = baseAddress };
 
-        // Send a scrape request; it will block inside EnterCollect.
+        // Send a scrape request; it will block inside the collection.
         var scrapeTask = client.GetAsync(new Uri("metrics", UriKind.Relative), HttpCompletionOption.ResponseHeadersRead);
 
         // Wait until the request is actually inside the Collect delegate.
         Assert.True(collectEntered.Wait(TimeSpan.FromSeconds(10)), "Request did not enter Collect in time.");
 
-        // Dispose the provider on a dedicated thread. This sets disposed = true,
-        // cancels the CancellationToken, and then blocks on SpinWait waiting for
-        // the in-flight request to drain. A dedicated thread is used rather than a
-        // thread pool work item because the held request already owns a pool worker:
-        // on a busy agent a queued work item can sit unstarted for longer than the
-        // window below, and the scrape would then be released before disposal had
-        // cancelled anything, producing a 200 instead of a 503.
-        using var disposeStarted = new ManualResetEventSlim(false);
-        var disposeTask = Task.Factory.StartNew(
-            () =>
-            {
-                disposeStarted.Set();
-                provider.Dispose();
-            },
-            CancellationToken.None,
-            TaskCreationOptions.LongRunning,
-            TaskScheduler.Default);
+        // Disposing cancels the listener's shutdown token, which the request is
+        // waiting on while its collection is still blocked. The request gives up on
+        // that collection as soon as the token is cancelled rather than waiting for
+        // it to finish, so disposal completes promptly without needing the
+        // collection itself to be released first.
+        var disposeTask = Task.Run(provider.Dispose);
 
-        Assert.True(disposeStarted.Wait(TimeSpan.FromSeconds(10)), "Disposal did not start in time.");
+        using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10)))
+        {
+            var completed = await Task.WhenAny(disposeTask, Task.Delay(Timeout.Infinite, cts.Token));
+            Assert.Same(disposeTask, completed);
+        }
 
-        // Confirm Dispose() is actually blocked (meaning it has cancelled the
-        // token and is now waiting for activeRequestCount to reach 0). If
-        // disposeTask completes within 500ms it means the request wasn't held.
-        var timeout = TimeSpan.FromSeconds(0.5);
-        using var cts = new CancellationTokenSource(timeout);
-        var completed = await Task.WhenAny(disposeTask, Task.Delay(timeout, cts.Token));
-        Assert.NotSame(disposeTask, completed);
-
-        // Release the blocker so EnterCollect can finish. Once it has,
-        // ProcessRequestAsync observes that disposal has started and returns 503
-        // instead of sending the collected response.
-        collectBlocker.Set();
-
-        // Wait for both the scrape response and disposal to complete.
-        using var response = await scrapeTask;
         await disposeTask;
 
+        using var response = await scrapeTask;
+
         Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+
+        // Release the still-running background collection so it does not leak past the test.
+        collectBlocker.Set();
     }
 
     [Fact]
@@ -548,6 +532,46 @@ public class PrometheusHttpListenerTests
         Assert.Equal(HttpStatusCode.RequestTimeout, response.StatusCode);
     }
 
+    [Fact]
+    public async Task WhenClientRequestsLongerTimeoutThanServer_Returns408AtServerDeadline()
+    {
+        EnsureThreadPoolWorkerThreadsAvailable();
+
+        var serverTimeout = TimeSpan.FromSeconds(1);
+        var clientTimeout = TimeSpan.FromSeconds(30);
+
+        using var context = CreateListener(configureListener: options =>
+        {
+            options.ScrapeResponseTimeoutMilliseconds = (int)serverTimeout.TotalMilliseconds;
+        });
+
+        context.Exporter.Collect = _ =>
+        {
+            using var deadlinePassed = new CancellationTokenSource(serverTimeout + DeadlineMargin);
+            deadlinePassed.Token.WaitHandle.WaitOne(MaxCollectWait);
+            return true;
+        };
+
+        using var client = new HttpClient { BaseAddress = context.BaseAddress };
+        client.DefaultRequestHeaders.Add(
+            "X-Prometheus-Scrape-Timeout-Seconds",
+            clientTimeout.TotalSeconds.ToString(CultureInfo.InvariantCulture));
+
+        var stopwatch = Stopwatch.StartNew();
+
+        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative));
+
+        stopwatch.Stop();
+
+        Assert.Equal(HttpStatusCode.RequestTimeout, response.StatusCode);
+
+        // The response must have come back around the server's own (shorter) deadline,
+        // not the longer one the client asked for.
+        Assert.True(
+            stopwatch.Elapsed < clientTimeout,
+            $"Expected the server's {serverTimeout} deadline to apply, but the response took {stopwatch.Elapsed}.");
+    }
+
     [Theory]
     [InlineData("-1")]
     [InlineData("0")]
@@ -600,6 +624,93 @@ public class PrometheusHttpListenerTests
         using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative));
 
         Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task ScrapeClientThatStopsReadingTheResponseBodyDoesNotBlockOtherScrapesIndefinitely()
+    {
+        using var meter = new Meter(MeterName, MeterVersion);
+
+        const int ScrapeTimeoutMilliseconds = 2_000;
+
+        using var context = CreateMeterProvider(
+            meter,
+            configureListener: options =>
+            {
+                options.Port = GetRandomPort();
+                options.ScrapeResponseTimeoutMilliseconds = ScrapeTimeoutMilliseconds;
+                return options.Port;
+            });
+
+        // Emit a payload far larger than any socket / HTTP.sys send buffer (including autotuned
+        // ones) so the response write cannot complete until the client actually drains the body.
+        // Stay under the SDK's default 1000-metric-stream cap and use a large label value on each
+        // stream instead; this produces roughly 12 MB of exposition text.
+        var padding = new string('x', 24_576);
+        for (var x = 0; x < 500; x++)
+        {
+            var counter = meter.CreateCounter<long>("counter_long_" + x.ToString(CultureInfo.InvariantCulture));
+            counter.Add(1, new KeyValuePair<string, object?>("key", padding));
+        }
+
+        // The scraper asks for the metrics and then never reads them. Shrink the receive
+        // buffer to (as close to) the platform's minimum as possible so back-pressure on
+        // the server's write is deterministic rather than depending on whatever the
+        // platform happens to auto-tune the socket buffers to for this connection.
+        using var stalledClient = new System.Net.Sockets.TcpClient
+        {
+            ReceiveBufferSize = 1,
+        };
+
+        await stalledClient.ConnectAsync(context.BaseAddress.Host, context.Port);
+        var request = System.Text.Encoding.ASCII.GetBytes(
+            $"GET /metrics HTTP/1.1\r\nHost: localhost:{context.Port}\r\nConnection: keep-alive\r\n\r\n");
+        var stalledStream = stalledClient.GetStream();
+
+#if NET
+        await stalledStream.WriteAsync(request);
+#else
+        await stalledStream.WriteAsync(request, 0, request.Length);
+#endif
+
+        await stalledStream.FlushAsync();
+
+        // Read just enough to confirm the response actually started (headers plus whatever
+        // part of the body fits in the receive buffer), without draining the rest of the body.
+        var buffer = new byte[512];
+
+        using (var headerCts = new CancellationTokenSource(MaxCollectWait))
+        {
+#if NET
+            var bytesRead = await stalledStream.ReadAsync(buffer, headerCts.Token);
+#else
+            var bytesRead = await stalledStream.ReadAsync(buffer, 0, buffer.Length, headerCts.Token);
+#endif
+            Assert.True(bytesRead > 0, "Expected to receive the start of the response.");
+        }
+
+        // Prove the write is genuinely stalled
+        await Task.Delay(TimeSpan.FromSeconds(1));
+
+        var available = stalledClient.Available;
+
+        Assert.True(
+            available < padding.Length * 10,
+            $"Expected the unread, buffered response to stay far below the ~12 MB body, but {available} bytes are already buffered.");
+
+        // Wait past the server-side timeout so the stalled request has cancelled its write and
+        // released the reader slot while the stalled client is still connected and still not
+        // reading: recovery must come from the server timeout, not from the client disconnecting.
+        await Task.Delay(TimeSpan.FromMilliseconds((ScrapeTimeoutMilliseconds * 2) + 1000));
+
+        Assert.True(stalledClient.Connected);
+
+        using var client = new HttpClient { BaseAddress = context.BaseAddress };
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+
+        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative), cts.Token);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     internal static MeterProviderTestContext CreateMeterProvider(

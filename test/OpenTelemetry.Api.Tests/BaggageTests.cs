@@ -115,6 +115,55 @@ public class BaggageTests
         Assert.Equal(V1, baggage.GetBaggage(K1));
     }
 
+#if NET
+    [Fact]
+    public void SetBaggageDoesNotOverallocateForUpdatesOrDuplicateKeys()
+    {
+        var baggage = Baggage.Create(new Dictionary<string, string>
+        {
+            [K1] = V1,
+            [K2] = V2,
+            [K3] = V3,
+        });
+        var originalCapacity = GetCapacity(baggage);
+
+        var updated = baggage.SetBaggage(K1, V2);
+        Assert.Equal(originalCapacity, GetCapacity(updated));
+
+        IEnumerable<KeyValuePair<string, string?>> enumerableUpdate =
+        [
+            new(K1, V2),
+        ];
+        updated = baggage.SetBaggage(enumerableUpdate);
+        Assert.Equal(originalCapacity, GetCapacity(updated));
+
+        IEnumerable<KeyValuePair<string, string?>> enumerableRemoval =
+        [
+            new(K1, null),
+        ];
+        updated = baggage.SetBaggage(enumerableRemoval);
+        Assert.Equal(originalCapacity, GetCapacity(updated));
+
+        updated = baggage.SetBaggage(
+            new KeyValuePair<string, string?>(K1, null),
+            new KeyValuePair<string, string?>("Key4", "Value4"));
+        Assert.Equal(originalCapacity, GetCapacity(updated));
+
+        var singleKey = default(Baggage).SetBaggage(K1, V1);
+        var duplicateKeys = default(Baggage).SetBaggage(
+            new KeyValuePair<string, string?>(K1, V1),
+            new KeyValuePair<string, string?>(K1, V2),
+            new KeyValuePair<string, string?>(K1, V3),
+            new KeyValuePair<string, string?>(K1, V1));
+        Assert.Equal(GetCapacity(singleKey), GetCapacity(duplicateKeys));
+
+        static int GetCapacity(Baggage value)
+        {
+            return Assert.IsType<Dictionary<string, string>>(value.GetBaggage()).EnsureCapacity(0);
+        }
+    }
+#endif
+
     [Fact]
     public void SetEmptyNameTest()
     {

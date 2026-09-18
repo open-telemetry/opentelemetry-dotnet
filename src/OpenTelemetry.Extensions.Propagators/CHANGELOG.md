@@ -6,6 +6,14 @@ covering all components see: [Release Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.19.0
+
+Released 2026-Sep-18
+
+## 1.19.0-rc.1
+
+Released 2026-Sep-18
+
 ## 1.18.0
 
 Released 2026-Aug-21
