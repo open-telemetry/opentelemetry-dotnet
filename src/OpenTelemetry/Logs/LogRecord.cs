@@ -513,13 +513,18 @@ public sealed class LogRecord
         IReadOnlyList<KeyValuePair<string, object?>> source,
         List<KeyValuePair<string, object?>> destination)
     {
-        // Deliberately indexed rather than List<T>.AddRange. The state types
-        // produced by Microsoft.Extensions.Logging (FormattedLogValues and
-        // the structs generated for [LoggerMessage]) implement IReadOnlyList<T>
-        // but not ICollection<T>, so AddRange() would fall back to their
-        // GetEnumerator(), which for the generated structs allocates an iterator
-        // per log record.
-        for (var i = 0; i < source.Count; i++)
+        // The state types produced by Microsoft.Extensions.Logging
+        // (FormattedLogValues and the structs generated for
+        // [LoggerMessage]) implement IReadOnlyList<T> but not
+        // ICollection<T>, so AddRange() would allocate.
+        if (source is ICollection<KeyValuePair<string, object?>> collection)
+        {
+            destination.AddRange(collection);
+            return;
+        }
+
+        var count = source.Count;
+        for (var i = 0; i < count; i++)
         {
             destination.Add(source[i]);
         }
