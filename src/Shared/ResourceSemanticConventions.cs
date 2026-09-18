@@ -9,6 +9,7 @@ internal static class ResourceSemanticConventions
     public const string AttributeServiceNamespace = "service.namespace";
     public const string AttributeServiceInstance = "service.instance.id";
     public const string AttributeServiceVersion = "service.version";
+    public const string AttributeServiceCriticality = "service.criticality";
 
     public const string AttributeTelemetrySdkName = "telemetry.sdk.name";
     public const string AttributeTelemetrySdkLanguage = "telemetry.sdk.language";

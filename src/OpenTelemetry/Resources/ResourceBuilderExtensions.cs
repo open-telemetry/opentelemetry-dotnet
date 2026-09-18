@@ -142,4 +142,32 @@ public static class ResourceBuilderExtensions
             .AddDetectorInternal(sp => new OtelEnvResourceDetector(sp?.GetService<IConfiguration>() ?? configuration.Value))
             .AddDetectorInternal(sp => new OtelServiceNameEnvVarDetector(sp?.GetService<IConfiguration>() ?? configuration.Value));
     }
+
+    /// <summary>
+    /// Adds the operational criticality of the service to a <see cref="ResourceBuilder"/>
+    /// following <a
+    /// href="https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/resource/semantic_conventions#service">semantic
+    /// conventions</a>.
+    /// </summary>
+    /// <param name="resourceBuilder"><see cref="ResourceBuilder"/>.</param>
+    /// <param name="serviceCriticality">The operational criticality of the service.</param>
+    /// <returns>Returns <see cref="ResourceBuilder"/> for chaining.</returns>
+    public static ResourceBuilder AddServiceCriticality(
+        this ResourceBuilder resourceBuilder,
+        string serviceCriticality)
+    {
+        Guard.ThrowIfNull(resourceBuilder);
+        Guard.ThrowIfNullOrEmpty(serviceCriticality);
+
+        var resourceAttributes = new Dictionary<string, object>(1)
+        {
+            [ResourceSemanticConventions.AttributeServiceCriticality] = serviceCriticality,
+        };
+
+        // TODO Specify the schema URL once https://github.com/open-telemetry/semantic-conventions/pull/4054 is merged and released
+
+#pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
+        return resourceBuilder.AddResource(new Resource(resourceAttributes));
+#pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
+    }
 }
