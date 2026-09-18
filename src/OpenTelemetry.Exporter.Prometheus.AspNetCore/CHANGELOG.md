@@ -15,6 +15,10 @@ Notes](../../RELEASENOTES.md).
   default start time.
   ([#7754](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7754))
 
+* Prometheus text/OpenMetrics escaping of label values, label names and help
+  text is now more efficient.
+  ([#7758](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7758))
+
 * A scrape request whose connection is aborted, or whose
   `X-Prometheus-Scrape-Timeout-Seconds` deadline elapses, now stops waiting
   for an in-progress metrics collection instead of continuing to wait for it
