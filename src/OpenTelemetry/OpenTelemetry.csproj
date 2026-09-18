@@ -27,6 +27,7 @@
     <Compile Include="$(RepoRoot)\src\Shared\SchemaUrls.cs" Link="Includes\SchemaUrls.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\Shims\NullableAttributes.cs" Link="Includes\Shims\NullableAttributes.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\StopwatchExtensions.cs" Link="Includes\StopwatchExtensions.cs" />
+    <Compile Include="$(RepoRoot)\src\Shared\StringBuilderCache.cs" Link="Includes\StringBuilderCache.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\ThreadSafeRandom.cs" Link="Includes\ThreadSafeRandom.cs" />
   </ItemGroup>
 
