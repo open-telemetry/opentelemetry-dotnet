@@ -4,6 +4,43 @@ This file contains highlights and announcements covering all components.
 For more details see `CHANGELOG.md` files maintained in the root source
 directory of each individual package.
 
+## 1.19.0
+
+Release details: [1.19.0](https://github.com/open-telemetry/opentelemetry-dotnet/releases/tag/core-1.19.0)
+
+* Added Schema URL to internally created `Resource` instances.
+* Added `AlwaysRecordSampler`.
+* Added an `AddOpenTelemetry` extension method for `IHostApplicationBuilder`. It
+  registers the OpenTelemetry SDK services and additionally seeds `service.name`
+  from `IHostEnvironment.ApplicationName` and `deployment.environment.name` from
+  `IHostEnvironment.EnvironmentName` as low-priority resource defaults. It also
+  registers the host's live configuration into DI so that extensions receiving
+  only `IServiceCollection` can contribute configuration sources during setup.
+* Extended key/value list attribute handling to cover additional dictionary
+  shapes (`IEnumerable<KeyValuePair<string, string?>>` and `IDictionary`). These
+  attributes will be serialized as JSON objects or `kvlist`, as appropriate.
+* If an exception is thrown when serializing an attribute, the attribute will now
+  be dropped.
+* Disable HttpClientFactory integration on browser WebAssembly (e.g. Blazor)
+  environments to avoid stalled export requests when async HTTP handlers are used.
+* Fixed CA certificate loading (e.g. using `OTEL_EXPORTER_OTLP_CERTIFICATE`) for
+  PEM-encoded certificates that only contain a public key.
+* Fixed `CircularBufferBuckets` so the first delta histogram insertion after a
+  reset does not result in an unnecessary scale reduction.
+* Fixed lazy logger provider builds after a failure from reusing partially
+  initialized provider state.
+* Fixed parsing of an inbound `tracestate` header whose member value trimmed to
+  an empty value that previously threw an `IndexOutOfRangeException` internally
+  and could silently truncate the tracestate.
+* Prevented oversized metric metadata from being cached when it cannot fit within
+  the configured request size.
+* Reduced allocations when formatting self-diagnostics events with up to three parameters.
+* Improved wildcard source/meter name matching to avoid excessive matching time
+  at runtime.
+* Reduced allocations when creating log record attributes from an array.
+* Reduced allocations when setting baggage through the `params` overload.
+* Reduced allocations when constructing `SpanAttributes` from an array.
+
 ## 1.18.0
 
 Release details: [1.18.0](https://github.com/open-telemetry/opentelemetry-dotnet/releases/tag/core-1.18.0)
