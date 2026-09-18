@@ -496,7 +496,7 @@ public sealed class LogRecord
         List<KeyValuePair<string, object?>>? attributeData = null;
         if (this.AttributeData is { } attributes)
         {
-            attributeData = new List<KeyValuePair<string, object?>>(attributes.Count);
+            attributeData = [with(attributes.Count)];
             CopyAttributes(attributes, attributeData);
         }
 
