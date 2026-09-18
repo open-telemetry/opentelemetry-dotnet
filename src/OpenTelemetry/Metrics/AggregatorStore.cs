@@ -709,7 +709,7 @@ internal sealed class AggregatorStore
 
                 if (this.availableMetricPoints!.Count == 0)
                 {
-                    // No MetricPoint is available for reuse. See the multi-tag branch above.
+                    // No MetricPoint is available for reuse
                     return -1;
                 }
 
