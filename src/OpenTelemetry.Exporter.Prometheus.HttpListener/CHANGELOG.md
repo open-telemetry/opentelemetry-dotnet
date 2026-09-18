@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.19.0-beta.1
+
+Released 2026-Sep-18
+
 * **Breaking Change** The `PrometheusTranslationStrategy` enum was renamed
   to `PrometheusHttpListenerTranslationStrategy`.
   ([#7751](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7751))
