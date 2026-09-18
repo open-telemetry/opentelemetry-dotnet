@@ -157,7 +157,12 @@ public sealed class PrometheusCollectionManagerTests
             // This should use the cache and ignore the second counter update.
             var task = exporter.CollectionManager.EnterCollect(protocol);
 
-            Assert.True(task.IsCompleted, "Collection did not complete.");
+            if (cacheEnabled)
+            {
+                // A cache hit is resolved synchronously without starting a new collection.
+                Assert.True(task.IsCompleted, "Collection did not complete.");
+            }
+
             var response = await task;
 
             if (cacheEnabled)
@@ -840,6 +845,51 @@ public sealed class PrometheusCollectionManagerTests
         {
             exporter.CollectionManager.ExitCollect(protocol);
         }
+    }
+
+    [Fact]
+    public async Task EnterCollectDoesNotFlowCallersExecutionContextIntoTheCollection()
+    {
+        using var meter = CreateMeter();
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+#if PROMETHEUS_HTTP_LISTENER
+            .AddPrometheusHttpListener(x => x.ScrapeResponseCacheDurationMilliseconds = 0)
+#elif PROMETHEUS_ASPNETCORE
+            .AddPrometheusExporter(x => x.ScrapeResponseCacheDurationMilliseconds = 0)
+#endif
+            .Build();
+
+#pragma warning disable CA2000 // MeterProvider owns exporter lifecycle
+        Assert.True(provider.TryFindExporter(out PrometheusExporter? exporter));
+#pragma warning restore CA2000 // MeterProvider owns exporter lifecycle
+
+        var asyncLocal = new AsyncLocal<string?>();
+        string? observedValue = "not observed";
+
+        meter.CreateObservableGauge("gauge", () =>
+        {
+            observedValue = asyncLocal.Value;
+            return 1;
+        });
+
+        // Simulate request-scoped ambient state is only meaningful for the lifetime of this call
+        asyncLocal.Value = "request-scoped-value";
+
+        var protocol = GetProtocol(openMetricsRequested: false);
+        var response = await exporter!.CollectionManager.EnterCollect(protocol);
+
+        try
+        {
+            Assert.True(response.Succeeded);
+        }
+        finally
+        {
+            exporter.CollectionManager.ExitCollect(protocol);
+        }
+
+        Assert.Null(observedValue);
     }
 
     [Fact]
