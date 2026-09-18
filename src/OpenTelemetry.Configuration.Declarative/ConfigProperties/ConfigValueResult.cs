@@ -1,14 +1,18 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-namespace OpenTelemetry.Configuration;
+using System.Diagnostics.CodeAnalysis;
+
+namespace OpenTelemetry.Configuration.Declarative;
 
 /// <summary>
 /// The result of a typed read from <see cref="ConfigProperties"/>, combining a
-/// <see cref="ConfigValueOutcome"/> with the typed value and source position.
+/// <see cref="ConfigValueOutcome"/> with the typed value.
 /// </summary>
 /// <typeparam name="T">The type of the value.</typeparam>
-internal readonly struct ConfigValueResult<T>
+#pragma warning disable CA1815 // This transient read result is consumed through Outcome and Value, not equality comparisons.
+public readonly struct ConfigValueResult<T>
+#pragma warning restore CA1815 // Override equals and operator equals on value types
 {
     internal ConfigValueResult(ConfigValueOutcome outcome, T? value, ConfigValuePosition position)
     {
@@ -42,5 +46,23 @@ internal readonly struct ConfigValueResult<T>
     {
         outcome = this.Outcome;
         value = this.Value;
+    }
+
+    /// <summary>
+    /// Attempts to get the value when <see cref="Outcome"/> is
+    /// <see cref="ConfigValueOutcome.Present"/>.
+    /// </summary>
+    /// <param name="value">
+    /// When this method returns <see langword="true"/>, the value; otherwise, the default for
+    /// <typeparamref name="T"/>.
+    /// </param>
+    /// <returns>
+    /// <see langword="true"/> when <see cref="Outcome"/> is <see cref="ConfigValueOutcome.Present"/>;
+    /// otherwise <see langword="false"/>.
+    /// </returns>
+    public bool TryGetValue([NotNullWhen(true)] out T? value)
+    {
+        value = this.Value;
+        return this.Outcome == ConfigValueOutcome.Present;
     }
 }
