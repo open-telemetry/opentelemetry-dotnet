@@ -261,7 +261,7 @@ internal
 
         Debug.Assert(readonlyCount <= 8, "Invalid size detected.");
 
-        attributeStorage ??= new List<KeyValuePair<string, object?>>(OverflowAdditionalCapacity);
+        attributeStorage ??= [with(OverflowAdditionalCapacity)];
 
         // TODO: Perf test this, adjust as needed.
         attributeStorage.Add(this.attribute1);
@@ -315,7 +315,7 @@ internal
     {
         Debug.Assert(this.Count - 1 == OverflowMaxCount, "count did not match OverflowMaxCount");
 
-        var attributes = this.OverflowAttributes ??= new(OverflowAdditionalCapacity);
+        var attributes = this.OverflowAttributes ??= [with(OverflowAdditionalCapacity)];
         Debug.Assert(attributes.Count == 0, "Overflow attributes should be empty before transfer.");
 
         attributes.Add(this.attribute1);

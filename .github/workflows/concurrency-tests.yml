@@ -24,7 +24,7 @@ jobs:
           - ubuntu-24.04
           # renovate: datasource=github-runners depType=github-runner
           - windows-2025
-        version: [ net8.0, net10.0 ]
+        version: [ net10.0, net11.0 ]
         project: [ OpenTelemetry.Tests, OpenTelemetry.Api.Tests ]
 
     runs-on: ${{ matrix.os }}
