@@ -20,10 +20,10 @@ concurrency:
 
 jobs:
   lint-misspell-sanitycheck:
-    uses: ./.github/workflows/sanitycheck.yml
+    uses: $/.github/workflows/sanitycheck.yml
 
   code-ql:
-    uses: ./.github/workflows/codeql-analysis-steps.yml
+    uses: $/.github/workflows/codeql-analysis-steps.yml
     permissions:
       actions: read # Scan GitHub Actions workflows
       contents: read # Checkout the repository
@@ -73,7 +73,7 @@ jobs:
     needs: detect-changes
     if: |
       contains(needs.detect-changes.outputs.changes, 'github')
-    uses: ./.github/workflows/actionlint.yml
+    uses: $/.github/workflows/actionlint.yml
     permissions:
       actions: read # Read GitHub Actions workflows
       contents: read # Read repository contents
@@ -83,14 +83,14 @@ jobs:
     if: |
       contains(needs.detect-changes.outputs.changes, 'md')
       || contains(needs.detect-changes.outputs.changes, 'build')
-    uses: ./.github/workflows/markdownlint.yml
+    uses: $/.github/workflows/markdownlint.yml
 
   lint-pwsh:
     needs: detect-changes
     if: |
       contains(needs.detect-changes.outputs.changes, 'pwsh')
       || contains(needs.detect-changes.outputs.changes, 'github')
-    uses: ./.github/workflows/pwshlint.yml
+    uses: $/.github/workflows/pwshlint.yml
     permissions:
       contents: read # To checkout the code
 
@@ -99,14 +99,14 @@ jobs:
     if: |
       contains(needs.detect-changes.outputs.changes, 'code')
       || contains(needs.detect-changes.outputs.changes, 'build')
-    uses: ./.github/workflows/dotnet-format.yml
+    uses: $/.github/workflows/dotnet-format.yml
 
   test-pwsh:
     needs: detect-changes
     if: |
       contains(needs.detect-changes.outputs.changes, 'pwsh')
       || contains(needs.detect-changes.outputs.changes, 'build')
-    uses: ./.github/workflows/pwsh-test.yml
+    uses: $/.github/workflows/pwsh-test.yml
     permissions:
       contents: read # To checkout the code
 
@@ -116,7 +116,7 @@ jobs:
       contains(needs.detect-changes.outputs.changes, 'solution')
       || contains(needs.detect-changes.outputs.changes, 'build')
       || contains(needs.detect-changes.outputs.changes, 'shared')
-    uses: ./.github/workflows/Component.BuildTest.yml
+    uses: $/.github/workflows/Component.BuildTest.yml
     with:
       project-name: 'OpenTelemetry.slnx'
       code-cov-name: 'Solution'
@@ -129,7 +129,7 @@ jobs:
       contains(needs.detect-changes.outputs.changes, 'code')
       || contains(needs.detect-changes.outputs.changes, 'build')
       || contains(needs.detect-changes.outputs.changes, 'shared')
-    uses: ./.github/workflows/Component.BuildTest.yml
+    uses: $/.github/workflows/Component.BuildTest.yml
     with:
       project-name: './build/OpenTelemetry.proj'
       project-build-commands: '-p:ExposeExperimentalFeatures=false'
@@ -142,7 +142,7 @@ jobs:
       contains(needs.detect-changes.outputs.changes, 'code')
       || contains(needs.detect-changes.outputs.changes, 'build')
       || contains(needs.detect-changes.outputs.changes, 'shared')
-    uses: ./.github/workflows/Component.BuildTest.yml
+    uses: $/.github/workflows/Component.BuildTest.yml
     with:
       project-name: './build/OpenTelemetry.proj'
       project-build-commands: '-p:ExposeExperimentalFeatures=true'
@@ -156,7 +156,7 @@ jobs:
       contains(needs.detect-changes.outputs.changes, 'unstable-core-packages')
       || contains(needs.detect-changes.outputs.changes, 'build')
       || contains(needs.detect-changes.outputs.changes, 'shared')
-    uses: ./.github/workflows/Component.BuildTest.yml
+    uses: $/.github/workflows/Component.BuildTest.yml
     with:
       project-name: './build/UnstableCoreLibraries.proj'
       project-build-commands: '-p:RunningDotNetPack=true -p:ExposeExperimentalFeatures=true'
@@ -199,7 +199,7 @@ jobs:
       || contains(needs.detect-changes.outputs.changes, 'otlp')
       || contains(needs.detect-changes.outputs.changes, 'build')
       || contains(needs.detect-changes.outputs.changes, 'shared')
-    uses: ./.github/workflows/android-tests.yml
+    uses: $/.github/workflows/android-tests.yml
     with:
       trigger: ${{ github.event_name }}
 
@@ -211,7 +211,7 @@ jobs:
       || contains(needs.detect-changes.outputs.changes, 'otlp')
       || contains(needs.detect-changes.outputs.changes, 'build')
       || contains(needs.detect-changes.outputs.changes, 'shared')
-    uses: ./.github/workflows/apple-tests.yml
+    uses: $/.github/workflows/apple-tests.yml
     with:
       trigger: ${{ github.event_name }}
 
@@ -223,7 +223,7 @@ jobs:
       || contains(needs.detect-changes.outputs.changes, 'otlp')
       || contains(needs.detect-changes.outputs.changes, 'build')
       || contains(needs.detect-changes.outputs.changes, 'shared')
-    uses: ./.github/workflows/blazor-wasm-integration-test.yml
+    uses: $/.github/workflows/blazor-wasm-integration-test.yml
     with:
       trigger: ${{ github.event_name }}
 
@@ -236,7 +236,7 @@ jobs:
       || contains(needs.detect-changes.outputs.changes, 'otlp')
       || contains(needs.detect-changes.outputs.changes, 'build')
       || contains(needs.detect-changes.outputs.changes, 'shared')
-    uses: ./.github/workflows/maui-tests.yml
+    uses: $/.github/workflows/maui-tests.yml
     with:
       trigger: ${{ github.event_name }}
 
@@ -307,7 +307,7 @@ jobs:
       contains(needs.detect-changes.outputs.changes, 'packaged-code')
       || contains(needs.detect-changes.outputs.changes, 'build')
       || contains(needs.detect-changes.outputs.changes, 'shared')
-    uses: ./.github/workflows/package-validation.yml
+    uses: $/.github/workflows/package-validation.yml
 
   generate-docs:
     needs: detect-changes
@@ -316,7 +316,7 @@ jobs:
       || contains(needs.detect-changes.outputs.changes, 'md')
       || contains(needs.detect-changes.outputs.changes, 'build')
       || contains(needs.detect-changes.outputs.changes, 'shared')
-    uses: ./.github/workflows/docfx.yml
+    uses: $/.github/workflows/docfx.yml
 
   verify-aot-compat:
     needs: detect-changes
@@ -324,7 +324,7 @@ jobs:
       contains(needs.detect-changes.outputs.changes, 'packaged-code')
       || contains(needs.detect-changes.outputs.changes, 'build')
       || contains(needs.detect-changes.outputs.changes, 'shared')
-    uses: ./.github/workflows/verifyaotcompat.yml
+    uses: $/.github/workflows/verifyaotcompat.yml
     with:
       trigger: ${{ github.event_name }}
 
@@ -335,7 +335,7 @@ jobs:
       || contains(needs.detect-changes.outputs.changes, 'sdk-code')
       || contains(needs.detect-changes.outputs.changes, 'build')
       || contains(needs.detect-changes.outputs.changes, 'shared')
-    uses: ./.github/workflows/concurrency-tests.yml
+    uses: $/.github/workflows/concurrency-tests.yml
     with:
       trigger: ${{ github.event_name }}
 

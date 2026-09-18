@@ -7,6 +7,17 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed array- and map-valued attributes being serialized as the .NET type
+  name (e.g. `System.Byte[]`, `System.Int32[]`) instead of being JSON-encoded
+  as per the specification. `byte[]`-valued attributes are now
+  Base64-encoded, and other array- and map-valued attributes are now
+  JSON-encoded.
+  ([#7694](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7694))
+
+## 1.19.0-beta.1
+
+Released 2026-Sep-18
+
 * **Breaking Change** The `PrometheusTranslationStrategy` enum was renamed
   to `PrometheusHttpListenerTranslationStrategy`.
   ([#7751](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7751))
@@ -15,12 +26,20 @@ Notes](../../RELEASENOTES.md).
   default start time.
   ([#7754](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7754))
 
-* Fixed array- and map-valued attributes being serialized as the .NET type
-  name (e.g. `System.Byte[]`, `System.Int32[]`) instead of being JSON-encoded
-  as per the specification. `byte[]`-valued attributes are now
-  Base64-encoded, and other array- and map-valued attributes are now
-  JSON-encoded.
-  ([#7694](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7694))
+* Prometheus text/OpenMetrics escaping of label values, label names and help
+  text is now more efficient.
+  ([#7758](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7758))
+
+* Added `PrometheusHttpListenerOptions.ScrapeResponseTimeoutMilliseconds`
+  (default `60000`) which bounds how long a scrape request waits for its
+  response. `X-Prometheus-Scrape-Timeout-Seconds` request header values may
+  only shorten this limit. The limit bounds the request's wait only: a metrics
+  collection already running when it is reached is not cancelled and continues
+  running in the background.
+  ([#7757](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7757))
+
+* Updated OpenTelemetry core component version(s) to `1.19.0`.
+  ([#7785](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7785))
 
 ## 1.18.0-beta.1
 
