@@ -642,11 +642,7 @@ internal sealed class AggregatorStore
 
                     if (this.availableMetricPoints!.Count == 0)
                     {
-                        // No MetricPoint is available for reuse. Bail out before
-                        // copying the tags and taking the lock, as the cumulative
-                        // path does. The unsynchronized read is safe: at worst a
-                        // slot freed concurrently by Snapshot is missed and this
-                        // measurement goes to the overflow point.
+                        // No MetricPoint is available for reuse
                         return -1;
                     }
 
