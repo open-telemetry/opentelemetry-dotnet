@@ -350,7 +350,9 @@ If no sampler is explicitly configured, the default is to use
 be used to set sampler. Only one sampler can be associated with a provider. If
 `SetSampler` is called multiple times, the last one wins. Also, it is not
 possible to change the sampler *after* the provider is built, by calling the
-`Build()` method on the `TracerProviderBuilder`.
+`Build()` method on the `TracerProviderBuilder`. To adjust the sampler the SDK
+selected instead of choosing it outright, see
+[Adjusting the sampler](#adjusting-the-sampler).
 
 The snippet below shows configuring a custom sampler to the provider.
 
@@ -385,6 +387,35 @@ probability configured via the `OTEL_TRACES_SAMPLER_ARG` environment variable.
 
 Follow [this](../extending-the-sdk/README.md#sampler) document
 to learn about writing custom samplers.
+
+#### Adjusting the sampler
+
+`SetSampler` chooses the sampler outright, which means any `OTEL_TRACES_SAMPLER`
+value the user configured is ignored. This is fine for an application, which owns
+that choice, but it is a problem for a library that wants to take part in
+sampling without overriding the user.
+
+`ConfigureSampler` registers a callback which receives the sampler the SDK
+resolved - whether that came from `SetSampler`, from `OTEL_TRACES_SAMPLER`, or
+from the default - and returns the sampler to use. The callback can return the
+sampler it was given, wrap it, or return a different one:
+
+```csharp
+using OpenTelemetry;
+using OpenTelemetry.Trace;
+
+var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .ConfigureSampler((serviceProvider, sampler) => new MySamplerWrapper(sampler))
+    .Build();
+```
+
+The callback runs once, while the provider is being built. Registering it several
+times chains the callbacks in registration order, each one receiving the sampler
+returned by the previous one, so several libraries can take part without
+conflicting. Returning `null` or throwing from a callback fails the build.
+
+When a callback returns a sampler other than the one it was given, the provider
+disposes only the sampler it ends up holding.
 
 #### Troubleshooting: spans dropped due to an unsampled parent
 
@@ -570,6 +601,11 @@ it is shutdown.
 * `AddProcessor(Func<IServiceProvider, BaseProcessor<Activity>>
   implementationFactory)`: Adds a processor into the `TracerProvider` using a
   factory function to create the processor instance.
+
+* `ConfigureSampler(Func<IServiceProvider, Sampler, Sampler> configureSampler)`:
+  Registers a callback function which receives the sampler the SDK resolved and
+  returns the sampler the `TracerProvider` should use. See
+  [Adjusting the sampler](#adjusting-the-sampler).
 
 * `ConfigureServices`: Registers a callback function for configuring the
   `IServiceCollection` used by the `TracerProviderBuilder`.

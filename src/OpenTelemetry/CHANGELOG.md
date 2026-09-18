@@ -28,6 +28,12 @@ Notes](../../RELEASENOTES.md).
   initialized provider state.
   ([#7761](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7761))
 
+* Added `TracerProviderBuilder.ConfigureSampler` which registers a callback
+  invoked during provider construction with the resolved `Sampler`, allowing the
+  sampler to be wrapped, conditionally replaced, or observed without discarding a
+  sampler the user configured through `OTEL_TRACES_SAMPLER`.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.18.0
 
 Released 2026-Aug-21
