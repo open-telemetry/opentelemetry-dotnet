@@ -64,6 +64,28 @@ internal sealed class TracerProviderSdk : TracerProvider
             this.Sampler = GetSampler(serviceProvider!.GetRequiredService<IConfiguration>(), state.Sampler);
             OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Sampler added = \"{this.Sampler.GetType()}\".");
 
+            // this.Sampler is assigned on each iteration so a sampler returned by any
+            // callback remains reachable by DisposeBuiltState if a later callback fails.
+            var samplerConfigurators = state.SamplerConfigurators;
+            for (var i = 0; i < samplerConfigurators.Count; i++)
+            {
+                var currentSampler = this.Sampler;
+                var configuredSampler = samplerConfigurators[i](serviceProvider!, currentSampler)
+                    ?? throw new InvalidOperationException($"A callback registered using '{nameof(TracerProviderBuilderExtensions.ConfigureSampler)}' returned null. The callback must return a Sampler instance.");
+
+                if (!ReferenceEquals(configuredSampler, currentSampler))
+                {
+                    this.Sampler = configuredSampler;
+                    OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent(
+                        $"Sampler configurator {i + 1} of {samplerConfigurators.Count} changed sampler from \"{currentSampler.GetType()}\" to \"{configuredSampler.GetType()}\".");
+                }
+                else
+                {
+                    OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent(
+                        $"Sampler configurator {i + 1} of {samplerConfigurators.Count} left sampler \"{currentSampler.GetType()}\" unchanged.");
+                }
+            }
+
             this.supportLegacyActivity = state.LegacyActivityOperationNames.Count > 0;
 
             Regex? legacyActivityWildcardModeRegex = null;

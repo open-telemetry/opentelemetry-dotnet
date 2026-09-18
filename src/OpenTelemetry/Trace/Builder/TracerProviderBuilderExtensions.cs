@@ -48,6 +48,14 @@ public static class TracerProviderBuilderExtensions
     /// <summary>
     /// Sets sampler.
     /// </summary>
+    /// <remarks>
+    /// <para sampler-precedence="true">Note: A sampler set programmatically
+    /// takes precedence over the <c>OTEL_TRACES_SAMPLER</c> environment
+    /// variable, which in turn takes precedence over the default sampler
+    /// (<c>ParentBased(AlwaysOnSampler)</c>). To adjust the sampler the SDK
+    /// resolves, instead of overriding it, use
+    /// <see cref="ConfigureSampler(TracerProviderBuilder, Func{IServiceProvider, Sampler, Sampler})"/>.</para>
+    /// </remarks>
     /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
     /// <param name="sampler">Sampler instance.</param>
     /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
@@ -70,8 +78,9 @@ public static class TracerProviderBuilderExtensions
     /// Sets the sampler on the provider.
     /// </summary>
     /// <remarks>
-    /// Note: The type specified by <typeparamref name="T"/> will be
-    /// registered as a singleton service into application services.
+    /// <para>Note: The type specified by <typeparamref name="T"/> will be
+    /// registered as a singleton application service.</para>
+    /// <inheritdoc cref="SetSampler(TracerProviderBuilder, Sampler)" path="/remarks/para"/>
     /// </remarks>
     /// <typeparam name="T">Sampler type.</typeparam>
     /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
@@ -99,6 +108,7 @@ public static class TracerProviderBuilderExtensions
     /// <summary>
     /// Sets the sampler on the provider.
     /// </summary>
+    /// <remarks><inheritdoc cref="SetSampler(TracerProviderBuilder, Sampler)" path="/remarks/para"/></remarks>
     /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
     /// <param name="implementationFactory">The factory that creates the service.</param>
     /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
@@ -113,6 +123,50 @@ public static class TracerProviderBuilderExtensions
             if (builder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
             {
                 tracerProviderBuilderSdk.SetSampler(implementationFactory(sp));
+            }
+        });
+
+        return tracerProviderBuilder;
+    }
+
+    /// <summary>
+    /// Registers a callback which receives the <see cref="Sampler"/> resolved
+    /// by the SDK and returns the <see cref="Sampler"/> the provider should
+    /// use.
+    /// </summary>
+    /// <remarks>
+    /// <para>Note: Unlike <see cref="SetSampler(TracerProviderBuilder, Sampler)"/>,
+    /// this method does not discard a sampler configured using the
+    /// <c>OTEL_TRACES_SAMPLER</c> environment variable.</para>
+    /// <para>The callback is invoked once, while the
+    /// <see cref="TracerProvider"/> is being built, and is passed the sampler
+    /// which would otherwise have been used. The callback may return the original
+    /// sampler unchanged. Returning <see langword="null"/> or throwing an exception
+    /// causes building the trace provider to fail.</para>
+    /// <para>When called multiple times the callbacks are chained in
+    /// registration order, each receiving the sampler returned by the previous
+    /// one.</para>
+    /// <para>The provider only disposes the final resolved sampler. Any sampler
+    /// which is replaced by a callback is not disposed of by the provider; a callback which
+    /// discards the sampler it receives, or wraps it, is responsible for that
+    /// sampler's lifetime.</para>
+    /// </remarks>
+    /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
+    /// <param name="configureSampler">Callback which receives the resolved
+    /// <see cref="Sampler"/> and returns the <see cref="Sampler"/> to use.</param>
+    /// <returns>The supplied <see cref="TracerProviderBuilder"/> for chaining.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="configureSampler"/> is <see langword="null"/>.</exception>
+    public static TracerProviderBuilder ConfigureSampler(
+        this TracerProviderBuilder tracerProviderBuilder,
+        Func<IServiceProvider, Sampler, Sampler> configureSampler)
+    {
+        Guard.ThrowIfNull(configureSampler);
+
+        tracerProviderBuilder.ConfigureBuilder((sp, builder) =>
+        {
+            if (builder is TracerProviderBuilderSdk tracerProviderBuilderSdk)
+            {
+                tracerProviderBuilderSdk.AddSamplerConfigurator(configureSampler);
             }
         });
 
