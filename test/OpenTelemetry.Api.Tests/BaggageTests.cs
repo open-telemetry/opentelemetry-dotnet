@@ -159,7 +159,7 @@ public class BaggageTests
 
         static int GetCapacity(Baggage value)
         {
-            Assert.IsType<Dictionary<string, string>>(value.GetBaggage()).EnsureCapacity(0);
+            return Assert.IsType<Dictionary<string, string>>(value.GetBaggage()).EnsureCapacity(0);
         }
     }
 #endif
