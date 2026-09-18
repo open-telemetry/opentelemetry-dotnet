@@ -27,6 +27,9 @@ Notes](../../RELEASENOTES.md).
   running in the background.
   ([#7757](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7757))
 
+* Updated OpenTelemetry core component version(s) to `1.19.0`.
+  ([#7785](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7785))
+
 ## 1.18.0-beta.1
 
 Released 2026-Aug-21
