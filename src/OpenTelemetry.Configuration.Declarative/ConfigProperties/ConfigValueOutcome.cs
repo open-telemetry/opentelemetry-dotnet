@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-namespace OpenTelemetry.Configuration;
+namespace OpenTelemetry.Configuration.Declarative;
 
 /// <summary>
 /// The four outcomes of a typed read from a <see cref="ConfigProperties"/>.
@@ -13,7 +13,7 @@ namespace OpenTelemetry.Configuration;
 /// which a component provider needs in order to report an error rather than silently accept a
 /// default.
 /// </remarks>
-internal enum ConfigValueOutcome
+public enum ConfigValueOutcome
 {
     /// <summary>
     /// The key did not appear in the mapping.
@@ -31,7 +31,7 @@ internal enum ConfigValueOutcome
     Present,
 
     /// <summary>
-    /// The key appeared with a value that is not of the requested type.
+    /// The key appeared with a value that cannot be represented as the requested type.
     /// </summary>
     TypeMismatch,
 }
