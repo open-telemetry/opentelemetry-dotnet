@@ -53,7 +53,7 @@ public static class TracerProviderBuilderExtensions
     /// takes precedence over the <c>OTEL_TRACES_SAMPLER</c> environment
     /// variable, which in turn takes precedence over the default sampler
     /// (<c>ParentBased(AlwaysOnSampler)</c>). To adjust the sampler the SDK
-    /// resolved, instead of overriding it, use
+    /// resolves, instead of overriding it, use
     /// <see cref="ConfigureSampler(TracerProviderBuilder, Func{IServiceProvider, Sampler, Sampler})"/>.</para>
     /// </remarks>
     /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
@@ -79,7 +79,7 @@ public static class TracerProviderBuilderExtensions
     /// </summary>
     /// <remarks>
     /// <para>Note: The type specified by <typeparamref name="T"/> will be
-    /// registered as a singleton service into application services.</para>
+    /// registered as a singleton application service.</para>
     /// <inheritdoc cref="SetSampler(TracerProviderBuilder, Sampler)" path="/remarks/para"/>
     /// </remarks>
     /// <typeparam name="T">Sampler type.</typeparam>
@@ -136,19 +136,19 @@ public static class TracerProviderBuilderExtensions
     /// </summary>
     /// <remarks>
     /// <para>Note: Unlike <see cref="SetSampler(TracerProviderBuilder, Sampler)"/>,
-    /// this method does not discard a sampler configured by the user through the
+    /// this method does not discard a sampler configured using the
     /// <c>OTEL_TRACES_SAMPLER</c> environment variable.</para>
     /// <para>The callback is invoked once, while the
     /// <see cref="TracerProvider"/> is being built, and is passed the sampler
-    /// which would otherwise have been used. Returning that sampler unchanged
-    /// is valid. Returning <see langword="null"/>, or throwing, fails the
-    /// build.</para>
+    /// which would otherwise have been used. The callback may return the original
+    /// sampler unchanged. Returning <see langword="null"/> or throwing an exception
+    /// causes the build to fail.</para>
     /// <para>When called multiple times the callbacks are chained in
     /// registration order, each receiving the sampler returned by the previous
     /// one.</para>
-    /// <para>The provider disposes only the sampler it ends up holding. A sampler
-    /// which a callback replaced is not disposed by the provider; a callback which
-    /// discards the sampler it was given, or wraps it, is responsible for that
+    /// <para>The provider only disposes the final resolved sampler. Any sampler
+    /// which is replaced by a callback is not disposed of by the provider; a callback which
+    /// discards the sampler it receives, or wraps it, is responsible for that
     /// sampler's lifetime.</para>
     /// </remarks>
     /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>

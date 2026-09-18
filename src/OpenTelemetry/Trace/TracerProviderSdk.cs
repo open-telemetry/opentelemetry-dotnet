@@ -64,9 +64,8 @@ internal sealed class TracerProviderSdk : TracerProvider
             this.Sampler = GetSampler(serviceProvider!.GetRequiredService<IConfiguration>(), state.Sampler);
             OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Sampler added = \"{this.Sampler.GetType()}\".");
 
-            // Note: this.Sampler is assigned on each iteration so a sampler returned
-            // by a callback remains reachable by DisposeBuiltState if a later
-            // callback fails.
+            // this.Sampler is assigned on each iteration so a sampler returned by any
+            // callback remains reachable by DisposeBuiltState if a later callback fails.
             var samplerConfigurators = state.SamplerConfigurators;
             for (var i = 0; i < samplerConfigurators.Count; i++)
             {

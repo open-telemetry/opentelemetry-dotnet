@@ -390,10 +390,10 @@ to learn about writing custom samplers.
 
 #### Adjusting the sampler
 
-`SetSampler` chooses the sampler outright, which means any `OTEL_TRACES_SAMPLER`
-value the user configured is ignored. This is fine for an application, which owns
-that choice, but it is a problem for a library that wants to take part in
-sampling without overriding the user.
+`SetSampler` sets the sampler unconditionally: any `OTEL_TRACES_SAMPLER` value
+is ignored. This is appropriate for an application that fully controls its own
+configuration, but causes problems for a library that wants to influence
+sampling without affecting any explicit user configuration of the sampler.
 
 `ConfigureSampler` registers a callback which receives the sampler the SDK
 resolved - whether that came from `SetSampler`, from `OTEL_TRACES_SAMPLER`, or
@@ -415,7 +415,7 @@ returned by the previous one, so several libraries can take part without
 conflicting. Returning `null` or throwing from a callback fails the build.
 
 When a callback returns a sampler other than the one it was given, the provider
-disposes only the sampler it ends up holding.
+disposes only the final resolved sampler.
 
 #### Troubleshooting: spans dropped due to an unsampled parent
 
