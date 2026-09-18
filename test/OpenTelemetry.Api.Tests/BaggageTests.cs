@@ -158,7 +158,9 @@ public class BaggageTests
         Assert.Equal(GetCapacity(singleKey), GetCapacity(duplicateKeys));
 
         static int GetCapacity(Baggage value)
-            => Assert.IsType<Dictionary<string, string>>(value.GetBaggage()).EnsureCapacity(0);
+        {
+            Assert.IsType<Dictionary<string, string>>(value.GetBaggage()).EnsureCapacity(0);
+        }
     }
 #endif
 
