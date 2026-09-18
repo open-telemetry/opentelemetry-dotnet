@@ -10,7 +10,7 @@ permissions: {}
 jobs:
   code-ql:
     if: github.event_name != 'schedule' || (github.event_name == 'schedule' && github.event.repository.fork == false)
-    uses: ./.github/workflows/codeql-analysis-steps.yml
+    uses: $/.github/workflows/codeql-analysis-steps.yml
     permissions:
       actions: read # Scan GitHub Actions workflows
       contents: read # Checkout the repository

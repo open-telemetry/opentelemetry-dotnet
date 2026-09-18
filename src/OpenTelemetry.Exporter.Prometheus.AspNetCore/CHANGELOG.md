@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.19.0-beta.1
+
+Released 2026-Sep-18
+
 * **Breaking Change** The `PrometheusTranslationStrategy` enum was renamed
   to `PrometheusAspNetCoreTranslationStrategy`.
   ([#7751](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7751))
@@ -14,6 +18,20 @@ Notes](../../RELEASENOTES.md).
 * Fixed OpenMetrics `_created` series being emitted for metric points with a
   default start time.
   ([#7754](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7754))
+
+* Prometheus text/OpenMetrics escaping of label values, label names and help
+  text is now more efficient.
+  ([#7758](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7758))
+
+* A scrape request whose connection is aborted, or whose
+  `X-Prometheus-Scrape-Timeout-Seconds` deadline elapses, now stops waiting
+  for an in-progress metrics collection instead of continuing to wait for it
+  to finish. The collection itself is not cancelled and continues running in
+  the background.
+  ([#7757](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7757))
+
+* Updated OpenTelemetry core component version(s) to `1.19.0`.
+  ([#7785](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7785))
 
 ## 1.18.0-beta.1
 
