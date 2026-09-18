@@ -271,9 +271,31 @@ internal sealed class PrometheusCollectionManager
         // awaiting the resulting task (see WaitForCollectionResponseAsync); a collection
         // started here must not be able to pin the calling thread indefinitely if it hangs.
         var collectionContextToRun = activeCollectionContext!;
-        _ = Task.Run(() => this.ExecuteCollectAndPublish(collectionContextToRun));
+        this.QueueCollectAndPublish(collectionContextToRun);
 
         return CollectStep.Pending(collectionContextToRun.Task, joinedActiveCollection: true);
+    }
+
+    /// <summary>
+    /// Queues <see cref="ExecuteCollectAndPublish"/> to run on the thread pool without
+    /// flowing the calling scrape's <see cref="ExecutionContext"/>.
+    /// </summary>
+    /// <param name="collectionContext">The collection context to execute and publish.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void QueueCollectAndPublish(CollectionContext collectionContext)
+    {
+        if (ExecutionContext.IsFlowSuppressed())
+        {
+            _ = Task.Run(() => this.ExecuteCollectAndPublish(collectionContext));
+        }
+        else
+        {
+            // Avoid capturing AsyncLocal state like HttpContext.Current or Activity.Current
+            using (ExecutionContext.SuppressFlow())
+            {
+                _ = Task.Run(() => this.ExecuteCollectAndPublish(collectionContext));
+            }
+        }
     }
 
     /// <summary>
