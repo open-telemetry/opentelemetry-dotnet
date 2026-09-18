@@ -142,7 +142,7 @@ public static class TracerProviderBuilderExtensions
     /// <see cref="TracerProvider"/> is being built, and is passed the sampler
     /// which would otherwise have been used. The callback may return the original
     /// sampler unchanged. Returning <see langword="null"/> or throwing an exception
-    /// causes the build to fail.</para>
+    /// causes building the trace provider to fail.</para>
     /// <para>When called multiple times the callbacks are chained in
     /// registration order, each receiving the sampler returned by the previous
     /// one.</para>
