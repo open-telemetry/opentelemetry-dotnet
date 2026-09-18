@@ -15,6 +15,10 @@ Notes](../../RELEASENOTES.md).
   default start time.
   ([#7754](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7754))
 
+* Prometheus text/OpenMetrics escaping of label values, label names and help
+  text is now more efficient.
+  ([#7758](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7758))
+
 ## 1.18.0-beta.1
 
 Released 2026-Aug-21
