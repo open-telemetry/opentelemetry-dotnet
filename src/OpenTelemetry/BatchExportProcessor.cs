@@ -15,8 +15,8 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
     where T : class
 {
     internal const int DefaultMaxQueueSize = 2048;
-    internal const int DefaultScheduledDelayMilliseconds = 5000;
-    internal const int DefaultExporterTimeoutMilliseconds = 30000;
+    internal const int DefaultScheduledDelayMilliseconds = 5_000;
+    internal const int DefaultExporterTimeoutMilliseconds = 30_000;
     internal const int DefaultMaxExportBatchSize = 512;
 
     internal readonly int MaxExportBatchSize;
@@ -124,9 +124,16 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool TryExport(T data)
     {
-        if (this.circularBuffer.TryAdd(data, maxSpinCount: 50000))
+        if (this.circularBuffer.TryAdd(data, maxSpinCount: 50_000, out var count))
         {
-            if (this.circularBuffer.Count >= this.MaxExportBatchSize)
+            // Only the add which brings the queue up to the export batch size
+            // needs to wake the worker. While the queue stays at or above that
+            // size the worker exports continuously without waiting, so signalling
+            // for every item would cost each caller a kernel transition (and on
+            // Unix a process-wide lock inside the runtime's wait subsystem) for
+            // nothing. A crossing while the worker is idle is always observed by
+            // exactly one caller because the tail cannot move while it waits.
+            if (count == this.MaxExportBatchSize)
             {
                 this.worker.TriggerExport();
             }
