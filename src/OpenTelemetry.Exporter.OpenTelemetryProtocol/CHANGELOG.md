@@ -7,6 +7,11 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* The OTLP log exporter now exports `schema_url` on `ScopeLogs`. Log
+  records emitted from a `Logger` with a schema URL set now populate
+  `ScopeLogs.schema_url` in exported OTLP requests.
+  ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
+
 ## 1.19.0
 
 Released 2026-Sep-18
@@ -36,11 +41,6 @@ Released 2026-Sep-18
 * Prevented oversized metric metadata from being cached when it cannot fit
   within the configured request size.
   ([#7752](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7752))
-
-* The OTLP log exporter now exports `schema_url` on `ScopeLogs`. Log
-  records emitted from a `Logger` with a schema URL set now populate
-  `ScopeLogs.schema_url` in exported OTLP requests.
-  ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
 
 ## 1.18.0
 

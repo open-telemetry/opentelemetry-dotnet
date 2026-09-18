@@ -6,6 +6,12 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added `OpenTelemetryLoggerOptions.Version` and
+  `OpenTelemetryLoggerOptions.SchemaUrl` options to set an
+  instrumentation library version and schema URL applied to logs emitted via
+  the `Microsoft.Extensions.Logging` `ILogger` integration.
+  ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
+
 ## 1.19.0
 
 Released 2026-Sep-18
@@ -35,12 +41,6 @@ Released 2026-Sep-18
 * Fixed lazy logger provider builds after a failure from reusing partially
   initialized provider state.
   ([#7761](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7761))
-
-* Added `OpenTelemetryLoggerOptions.Version` and
-  `OpenTelemetryLoggerOptions.SchemaUrl` options to set an
-  instrumentation library version and schema URL applied to logs emitted via
-  the `Microsoft.Extensions.Logging` `ILogger` integration.
-  ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
 
 ## 1.18.0
 

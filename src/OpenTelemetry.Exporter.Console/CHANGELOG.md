@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* `ConsoleLogRecordExporter` now writes an `Instrumentation scope (Logger)`
+  section (Name, Version, and Schema URL) for each exported `LogRecord`.
+  ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
+
 ## 1.19.0
 
 Released 2026-Sep-18
@@ -18,10 +22,6 @@ Released 2026-Sep-18
   shapes (`IEnumerable<KeyValuePair<string, string?>>` and `IDictionary`).
   These attributes will be serialized as JSON objects.
   ([#7679](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7679))
-
-* `ConsoleLogRecordExporter` now writes an `Instrumentation scope (Logger)`
-  section (Name, Version, and Schema URL) for each exported `LogRecord`.
-  ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
 
 ## 1.18.0
 
