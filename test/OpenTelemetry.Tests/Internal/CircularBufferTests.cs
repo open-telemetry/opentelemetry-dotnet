@@ -7,9 +7,7 @@ public class CircularBufferTests
 {
     [Fact]
     public void CheckInvalidArgument()
-    {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new CircularBuffer<string>(0));
-    }
+        => Assert.Throws<ArgumentOutOfRangeException>(() => new CircularBuffer<string>(0));
 
     [Fact]
     public void CheckCapacity()
@@ -84,6 +82,85 @@ public class CircularBufferTests
         Assert.Equal(2, circularBuffer.AddedCount);
         Assert.Equal(1, circularBuffer.RemovedCount);
         Assert.Equal(1, circularBuffer.Count);
+    }
+
+    [Fact]
+    public void CheckTryAddReportsCountAfterAdd()
+    {
+        var circularBuffer = new CircularBuffer<string>(capacity: 3);
+
+        Assert.True(circularBuffer.TryAdd("a", maxSpinCount: 0, out var count));
+        Assert.Equal(1, count);
+
+        Assert.True(circularBuffer.TryAdd("b", maxSpinCount: 1, out count));
+        Assert.Equal(2, count);
+
+        _ = circularBuffer.Read();
+
+        Assert.True(circularBuffer.TryAdd("c", maxSpinCount: 1, out count));
+        Assert.Equal(2, count);
+
+        Assert.True(circularBuffer.TryAdd("d", maxSpinCount: 1, out count));
+        Assert.Equal(3, count);
+
+        Assert.False(circularBuffer.TryAdd("e", maxSpinCount: 1, out count));
+        Assert.Equal(0, count);
+        Assert.Equal(3, circularBuffer.Count);
+    }
+
+    [Fact]
+    public void CheckTryAddWithoutCountOverload()
+    {
+        var circularBuffer = new CircularBuffer<string>(capacity: 1);
+
+        Assert.True(circularBuffer.TryAdd("a", maxSpinCount: 1));
+        Assert.False(circularBuffer.TryAdd("b", maxSpinCount: 1));
+    }
+
+    [Fact]
+    public async Task CheckTryAddExceedsMaxSpinCount()
+    {
+        if (Environment.ProcessorCount < 2)
+        {
+            return;
+        }
+
+        var circularBuffer = new CircularBuffer<string>(1_000_000);
+
+        using var cts = new CancellationTokenSource();
+
+        var writers = new List<Task>();
+        for (var i = 0; i < Environment.ProcessorCount; i++)
+        {
+            writers.Add(Task.Run(() =>
+            {
+                while (!cts.IsCancellationRequested)
+                {
+                    circularBuffer.Add("item");
+                }
+            }));
+        }
+
+        var exceededMaxSpinCount = false;
+
+        for (var i = 0; i < 1_000_000 && !exceededMaxSpinCount; i++)
+        {
+            if (!circularBuffer.TryAdd("item", maxSpinCount: 1, out var count))
+            {
+                Assert.Equal(0, count);
+                exceededMaxSpinCount = true;
+            }
+        }
+
+#if NET
+        await cts.CancelAsync();
+#else
+        cts.Cancel();
+#endif
+        await Task.WhenAll(writers);
+
+        Assert.True(exceededMaxSpinCount);
+        Assert.True(circularBuffer.Count < circularBuffer.Capacity);
     }
 
     [Fact]

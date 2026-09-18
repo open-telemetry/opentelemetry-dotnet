@@ -290,14 +290,22 @@ internal static class ProtobufOtlpTraceSerializer
     internal static int WriteTraceId(byte[] buffer, int position, ActivityTraceId activityTraceId)
     {
         var traceBytes = new Span<byte>(buffer, position, TraceIdSize);
+#if NET9_0_OR_GREATER
+        DecodeHex(activityTraceId.ToHexString(), traceBytes);
+#else
         activityTraceId.CopyTo(traceBytes);
+#endif
         return position + TraceIdSize;
     }
 
     internal static int WriteSpanId(byte[] buffer, int position, ActivitySpanId activitySpanId)
     {
         var spanIdBytes = new Span<byte>(buffer, position, SpanIdSize);
+#if NET9_0_OR_GREATER
+        DecodeHex(activitySpanId.ToHexString(), spanIdBytes);
+#else
         activitySpanId.CopyTo(spanIdBytes);
+#endif
         return position + SpanIdSize;
     }
 
@@ -587,4 +595,17 @@ internal static class ProtobufOtlpTraceSerializer
 
         return position;
     }
+
+#if NET9_0_OR_GREATER
+    private static void DecodeHex(string hex, Span<byte> destination)
+    {
+        // This optimization can be removed once https://github.com/dotnet/runtime/pull/134135
+        // is available in a future version of System.Diagnostics.DiagnosticSource.
+        var status = Convert.FromHexString(hex.AsSpan(), destination, out _, out int bytesWritten);
+        if (status != System.Buffers.OperationStatus.Done || bytesWritten != destination.Length)
+        {
+            throw new ArgumentOutOfRangeException(nameof(destination));
+        }
+    }
+#endif
 }

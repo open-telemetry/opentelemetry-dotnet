@@ -656,6 +656,14 @@ internal sealed class AggregatorStore
 
                 if (!this.TagsToMetricPointIndexDictionaryDelta.TryGetValue(sortedTags, out lookupData))
                 {
+                    Debug.Assert(this.availableMetricPoints != null, "this.availableMetricPoints was null");
+
+                    if (this.availableMetricPoints!.Count == 0)
+                    {
+                        // No MetricPoint is available for reuse
+                        return -1;
+                    }
+
                     // Note: Both arrays may be storage owned by ThreadStatic - for the input
                     // order of tags and for the sorted order of tags - so at those lengths we
                     // need a deep copy before handing them to the Dictionary. Above
@@ -673,8 +681,6 @@ internal sealed class AggregatorStore
                         givenTags = new Tags(givenTagKeysAndValues);
                         sortedTags = new Tags(sortedTagKeysAndValues);
                     }
-
-                    Debug.Assert(this.availableMetricPoints != null, "this.availableMetricPoints was null");
 
                     lock (this.TagsToMetricPointIndexDictionaryDelta)
                     {
@@ -713,14 +719,20 @@ internal sealed class AggregatorStore
             {
                 // This else block is for tag length = 1
 
+                Debug.Assert(this.availableMetricPoints != null, "this.availableMetricPoints was null");
+
+                if (this.availableMetricPoints!.Count == 0)
+                {
+                    // No MetricPoint is available for reuse
+                    return -1;
+                }
+
                 // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
                 var givenTagKeysAndValues = new KeyValuePair<string, object?>[length];
 
                 tagKeysAndValues.CopyTo(givenTagKeysAndValues.AsSpan());
 
                 givenTags = new Tags(givenTagKeysAndValues);
-
-                Debug.Assert(this.availableMetricPoints != null, "this.availableMetricPoints was null");
 
                 lock (this.TagsToMetricPointIndexDictionaryDelta)
                 {

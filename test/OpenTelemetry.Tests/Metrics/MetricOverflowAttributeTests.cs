@@ -295,6 +295,81 @@ public class MetricOverflowAttributeTests
     [Theory]
     [InlineData(MetricReaderTemporalityPreference.Delta)]
     [InlineData(MetricReaderTemporalityPreference.Cumulative)]
+    public void MetricOverflowAttributeIsRecordedCorrectlyForMultipleTags(MetricReaderTemporalityPreference temporalityPreference)
+    {
+        // Every measurement carries two tags so the multi-tag lookup path hits the limit.
+        const int CardinalityLimit = 10;
+
+        var exportedItems = new List<Metric>();
+
+        var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateCounter<long>("TestCounter");
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("TestCounter", new MetricStreamConfiguration { CardinalityLimit = CardinalityLimit })
+            .AddInMemoryExporter(exportedItems, metricReaderOptions => metricReaderOptions.TemporalityPreference = temporalityPreference)
+            .Build();
+
+        for (var i = 0; i < CardinalityLimit; i++)
+        {
+            counter.Add(10, new KeyValuePair<string, object?>("Key1", i), new KeyValuePair<string, object?>("Key2", "fixed"));
+        }
+
+        // Store is full: new tag sets in either key order go to the overflow point.
+        counter.Add(5, new KeyValuePair<string, object?>("Key1", CardinalityLimit), new KeyValuePair<string, object?>("Key2", "fixed"));
+        counter.Add(7, new KeyValuePair<string, object?>("Key2", "fixed"), new KeyValuePair<string, object?>("Key1", CardinalityLimit + 1));
+
+        meterProvider.ForceFlush();
+
+        var metricPoints = new List<MetricPoint>();
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Equal(CardinalityLimit, metricPoints.Count(mp => mp.Tags.Count == 2));
+
+        var overflowMetricPoint = metricPoints.Single(mp => mp.Tags.Count == 1 && mp.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
+        Assert.Equal(12, overflowMetricPoint.GetSumLong());
+
+        exportedItems.Clear();
+        metricPoints.Clear();
+
+        // A collect with no measurements lets delta reclaim the points; cumulative never reclaims.
+        meterProvider.ForceFlush();
+
+        exportedItems.Clear();
+
+        for (var i = 100; i < 100 + CardinalityLimit + 3; i++)
+        {
+            counter.Add(1, new KeyValuePair<string, object?>("Key1", i), new KeyValuePair<string, object?>("Key2", "fixed"));
+        }
+
+        meterProvider.ForceFlush();
+
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        overflowMetricPoint = metricPoints.Single(mp => mp.Tags.Count == 1 && mp.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
+
+        if (temporalityPreference == MetricReaderTemporalityPreference.Delta)
+        {
+            Assert.Equal(CardinalityLimit, metricPoints.Count(mp => mp.Tags.Count == 2));
+            Assert.Equal(3, overflowMetricPoint.GetSumLong());
+        }
+        else
+        {
+            Assert.Equal(CardinalityLimit, metricPoints.Count(mp => mp.Tags.Count == 2));
+            Assert.Equal(12 + CardinalityLimit + 3, overflowMetricPoint.GetSumLong());
+        }
+    }
+
+    [Theory]
+    [InlineData(MetricReaderTemporalityPreference.Delta)]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative)]
     public void NonFiniteHistogramMeasurementsDoNotConsumeCardinality(MetricReaderTemporalityPreference temporalityPreference)
     {
         var exportedItems = new List<Metric>();
