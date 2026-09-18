@@ -6,6 +6,14 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.19.0
+
+Released 2026-Sep-18
+
+## 1.19.0-rc.1
+
+Released 2026-Sep-18
+
 * Extended key/value list attribute handling to cover additional dictionary
   shapes (`IEnumerable<KeyValuePair<string, string?>>` and `IDictionary`).
   These attributes will be serialized as JSON objects.
