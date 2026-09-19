@@ -380,7 +380,7 @@ public class MetricOverflowAttributeTests
     {
         var exportedItems = new List<Metric>();
 
-        var meter = new Meter(Utils.GetCurrentMethodName());
+        using var meter = new Meter(Utils.GetCurrentMethodName());
         var counter = meter.CreateCounter<long>("TestCounter");
 
         using var meterProvider = Sdk.CreateMeterProviderBuilder()

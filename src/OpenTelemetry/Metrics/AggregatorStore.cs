@@ -263,17 +263,21 @@ internal sealed class AggregatorStore
             this.batchSize++;
         }
 
-        // Index 0 and 1 are reserved for no tags and overflow
+        // Index 0 and 1 are reserved for no tags and overflow. Visit the slots in
+        // the same strided order in which they were first handed out, so that the
+        // slots reclaimed in one collect cycle re-enter the free queue in that order
+        // and points created after a reclaim are again spread apart.
         for (var i = 2; i < this.NumberOfMetricPoints; i++)
         {
-            ref var metricPoint = ref this.metricPoints[i];
+            var slot = this.ToSlot(i);
+            ref var metricPoint = ref this.metricPoints[slot];
 
             if (metricPoint.MetricPointStatus == MetricPointStatus.NoCollectPending)
             {
                 // Reclaim the MetricPoint if it was marked for it in the previous collect cycle
                 if (metricPoint.LookupData != null && metricPoint.LookupData.DeferredReclaim)
                 {
-                    this.ReclaimMetricPoint(ref metricPoint, i);
+                    this.ReclaimMetricPoint(ref metricPoint, slot);
                     continue;
                 }
 
@@ -296,7 +300,7 @@ internal sealed class AggregatorStore
                     // would otherwise let a MetricPoint that still holds an unexported measurement be reclaimed (losing the measurement).
                     if (!metricPoint.HasUnexportedData())
                     {
-                        this.ReclaimMetricPoint(ref metricPoint, i);
+                        this.ReclaimMetricPoint(ref metricPoint, slot);
                     }
                     else
                     {
@@ -307,7 +311,7 @@ internal sealed class AggregatorStore
 
                         this.TakeMetricPointSnapshot(ref metricPoint, outputDelta: true);
 
-                        this.currentMetricPointBatch[this.batchSize] = i;
+                        this.currentMetricPointBatch[this.batchSize] = slot;
                         this.batchSize++;
                     }
                 }
@@ -317,7 +321,7 @@ internal sealed class AggregatorStore
 
             this.TakeMetricPointSnapshot(ref metricPoint, outputDelta: true);
 
-            this.currentMetricPointBatch[this.batchSize] = i;
+            this.currentMetricPointBatch[this.batchSize] = slot;
             this.batchSize++;
         }
 
