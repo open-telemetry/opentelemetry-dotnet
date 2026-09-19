@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Globalization;
+
 namespace OpenTelemetry.Metrics.Tests;
 
 public class TagsTests
@@ -133,5 +135,37 @@ public class TagsTests
         ];
 
         Assert.Equal(tags.GetHashCode(), Tags.ComputeHashCode(span));
+    }
+
+    [Fact]
+    public void Equals_ReturnsFalse_ForDifferentKeysWithMatchingFingerprintsAndEqualValues()
+    {
+        var tag1 = new Tags([new("abXcd", true)]);
+        var tag2 = new Tags([new("abYcd", true)]);
+
+        Assert.Equal(tag1.GetHashCode(), tag2.GetHashCode());
+        Assert.False(tag1.Equals(tag2));
+        Assert.True(tag1 != tag2);
+
+        ReadOnlySpan<KeyValuePair<string, object?>> span = [new("abYcd", true)];
+        Assert.False(tag1.Equals(span));
+        Assert.True(tag2.Equals(span));
+    }
+
+    [Fact]
+    public void ComputeHashCode_DistinguishesSameLengthKeysVaryingInPrefixOrSuffix()
+    {
+        var hashes = new HashSet<int>();
+
+        for (var i = 0; i < 100; i++)
+        {
+            var suffix = i.ToString("D2", CultureInfo.InvariantCulture);
+            hashes.Add(Tags.ComputeHashCode([new("flag_" + suffix, true)]));
+            hashes.Add(Tags.ComputeHashCode([new(suffix + "_flag", true)]));
+        }
+
+        Assert.Equal(200, hashes.Count);
+        Assert.NotEqual(Tags.ComputeHashCode([new(string.Empty, true)]), Tags.ComputeHashCode([new("a", true)]));
+        Assert.NotEqual(Tags.ComputeHashCode([new("a", true)]), Tags.ComputeHashCode([new("b", true)]));
     }
 }

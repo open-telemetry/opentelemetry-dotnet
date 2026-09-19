@@ -54,10 +54,11 @@ internal readonly struct Tags : IEquatable<Tags>
     {
         // Every entry in a lookup dictionary belongs to a single metric stream, so
         // the entries (almost always) share the same tag keys. Hashing each key
-        // string costs a full string hash but adds no entropy to the bucket
-        // distribution, so only the key length is mixed in; the values, which carry
-        // the entropy, are hashed in full. Tag sets that differ only in equal-length
-        // keys with identical values collide on the hash and are then told apart by
+        // string costs a full string hash but adds little entropy to the bucket
+        // distribution, so only a constant-time fingerprint of the key (its length
+        // and first two and last two characters) is mixed in; the values, which carry the
+        // entropy, are hashed in full. Tag sets whose keys share a fingerprint and
+        // whose values are identical collide on the hash and are then told apart by
         // Equals, which compares the keys first.
 #if NET || NETSTANDARD2_1_OR_GREATER
         HashCode hashCode = default;
@@ -65,7 +66,7 @@ internal readonly struct Tags : IEquatable<Tags>
         for (var i = 0; i < keyValuePairs.Length; i++)
         {
             ref readonly var item = ref keyValuePairs[i];
-            hashCode.Add(item.Key.Length);
+            hashCode.Add(GetKeyFingerprint(item.Key));
             hashCode.Add(item.Value);
         }
 
@@ -80,7 +81,7 @@ internal readonly struct Tags : IEquatable<Tags>
             ref readonly var item = ref keyValuePairs[i];
             unchecked
             {
-                hash = (hash ^ (uint)item.Key.Length) * 0x9E3779B1u;
+                hash = (hash ^ (uint)GetKeyFingerprint(item.Key)) * 0x9E3779B1u;
                 hash = (hash ^ (uint)(item.Value?.GetHashCode() ?? 0)) * 0x9E3779B1u;
             }
         }
@@ -96,6 +97,27 @@ internal readonly struct Tags : IEquatable<Tags>
 
         return (int)hash;
 #endif
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int GetKeyFingerprint(string key)
+    {
+        // Constant-time stand-in for the key's hash: its length combined with its
+        // first two and last two characters. Cheap next to the value hash, while
+        // still separating dynamically generated keys of equal length that vary
+        // in a prefix or suffix (for example "flag_017" or "017_flag").
+        var length = key.Length;
+
+        if (length < 2)
+        {
+            return length == 0 ? 0 : key[0];
+        }
+
+        return length
+            ^ (key[0] << 8)
+            ^ (key[1] << 16)
+            ^ (key[length - 2] << 4)
+            ^ (key[length - 1] << 12);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
