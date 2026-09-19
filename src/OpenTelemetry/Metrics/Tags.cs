@@ -52,32 +52,77 @@ internal readonly struct Tags : IEquatable<Tags>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int ComputeHashCode(ReadOnlySpan<KeyValuePair<string, object?>> keyValuePairs)
     {
+        // Every entry in a lookup dictionary belongs to a single metric stream, so
+        // the entries (almost always) share the same tag keys, and those keys are
+        // almost always the same string instances (literals or cached constants)
+        // on every measurement. Hashing each key string on every lookup is
+        // therefore repeated work: the key hashes are served from a per-thread
+        // cache keyed by string reference instead (see GetKeyHashCode), while the
+        // values, which carry the entropy, are hashed in full.
+        var keyHashCache = ThreadStaticStorage.GetStorage().KeyHashCache;
 #if NET || NETSTANDARD2_1_OR_GREATER
         HashCode hashCode = default;
 
         for (var i = 0; i < keyValuePairs.Length; i++)
         {
             ref readonly var item = ref keyValuePairs[i];
-            hashCode.Add(item.Key.GetHashCode(StringComparison.Ordinal));
+            hashCode.Add(GetKeyHashCode(keyHashCache, item.Key));
             hashCode.Add(item.Value);
         }
 
         return hashCode.ToHashCode();
 #else
-        var hash = 17;
+        // Combine the inputs with a multiply-xor chain and a final avalanche step
+        // (murmur3 fmix32) so that the low bits used for bucketing depend on every input.
+        var hash = (uint)keyValuePairs.Length;
 
         for (var i = 0; i < keyValuePairs.Length; i++)
         {
             ref readonly var item = ref keyValuePairs[i];
             unchecked
             {
-                hash = (hash * 31) + item.Key.GetHashCode();
-                hash = (hash * 31) + (item.Value?.GetHashCode() ?? 0);
+                hash = (hash ^ (uint)GetKeyHashCode(keyHashCache, item.Key)) * 0x9E3779B1u;
+                hash = (hash ^ (uint)(item.Value?.GetHashCode() ?? 0)) * 0x9E3779B1u;
             }
         }
 
-        return hash;
+        unchecked
+        {
+            hash ^= hash >> 16;
+            hash *= 0x85EBCA6Bu;
+            hash ^= hash >> 13;
+            hash *= 0xC2B2AE35u;
+            hash ^= hash >> 16;
+        }
+
+        return (int)hash;
 #endif
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int GetKeyHashCode(ThreadStaticStorage.KeyHashCacheEntry[] cache, string key)
+    {
+        var length = key.Length;
+        var index = length == 0
+            ? 0
+            : (length + (key[0] << 1) + key[length - 1]) & (ThreadStaticStorage.KeyHashCacheSize - 1);
+
+        ref var entry = ref cache[index];
+        if (ReferenceEquals(entry.Key, key))
+        {
+            return entry.Hash;
+        }
+
+#if NET || NETSTANDARD2_1_OR_GREATER
+        var hash = key.GetHashCode(StringComparison.Ordinal);
+#else
+        var hash = key.GetHashCode();
+#endif
+
+        entry.Key = key;
+        entry.Hash = hash;
+
+        return hash;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
