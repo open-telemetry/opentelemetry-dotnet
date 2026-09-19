@@ -65,6 +65,7 @@ internal sealed class AggregatorStore
 
     private int metricPointIndex;
     private int batchSize;
+    private int lastAssignedSlot;
     private bool zeroTagMetricPointInitialized;
     private bool overflowTagMetricPointInitialized;
 
@@ -173,7 +174,7 @@ internal sealed class AggregatorStore
             // Index 0 and 1 are reserved for no tags and overflow
             for (var i = 2; i < this.NumberOfMetricPoints; i++)
             {
-                this.availableMetricPoints.Enqueue(i);
+                this.availableMetricPoints.Enqueue(this.ToSlot(i));
             }
 
             this.lookupAggregatorStore = this.LookupAggregatorStoreForDeltaWithReclaim;
@@ -263,17 +264,21 @@ internal sealed class AggregatorStore
             this.batchSize++;
         }
 
-        // Index 0 and 1 are reserved for no tags and overflow
+        // Index 0 and 1 are reserved for no tags and overflow. Visit the slots in
+        // the same strided order in which they were first handed out, so that the
+        // slots reclaimed in one collect cycle re-enter the free queue in that order
+        // and points created after a reclaim are again spread apart.
         for (var i = 2; i < this.NumberOfMetricPoints; i++)
         {
-            ref var metricPoint = ref this.metricPoints[i];
+            var slot = this.ToSlot(i);
+            ref var metricPoint = ref this.metricPoints[slot];
 
             if (metricPoint.MetricPointStatus == MetricPointStatus.NoCollectPending)
             {
                 // Reclaim the MetricPoint if it was marked for it in the previous collect cycle
                 if (metricPoint.LookupData != null && metricPoint.LookupData.DeferredReclaim)
                 {
-                    this.ReclaimMetricPoint(ref metricPoint, i);
+                    this.ReclaimMetricPoint(ref metricPoint, slot);
                     continue;
                 }
 
@@ -296,7 +301,7 @@ internal sealed class AggregatorStore
                     // would otherwise let a MetricPoint that still holds an unexported measurement be reclaimed (losing the measurement).
                     if (!metricPoint.HasUnexportedData())
                     {
-                        this.ReclaimMetricPoint(ref metricPoint, i);
+                        this.ReclaimMetricPoint(ref metricPoint, slot);
                     }
                     else
                     {
@@ -307,7 +312,7 @@ internal sealed class AggregatorStore
 
                         this.TakeMetricPointSnapshot(ref metricPoint, outputDelta: true);
 
-                        this.currentMetricPointBatch[this.batchSize] = i;
+                        this.currentMetricPointBatch[this.batchSize] = slot;
                         this.batchSize++;
                     }
                 }
@@ -317,7 +322,7 @@ internal sealed class AggregatorStore
 
             this.TakeMetricPointSnapshot(ref metricPoint, outputDelta: true);
 
-            this.currentMetricPointBatch[this.batchSize] = i;
+            this.currentMetricPointBatch[this.batchSize] = slot;
             this.batchSize++;
         }
 
@@ -331,7 +336,8 @@ internal sealed class AggregatorStore
     {
         for (var i = 0; i <= indexSnapshot; i++)
         {
-            ref var metricPoint = ref this.metricPoints[i];
+            var slot = this.ToSlot(i);
+            ref var metricPoint = ref this.metricPoints[slot];
             if (!metricPoint.IsInitialized)
             {
                 continue;
@@ -347,7 +353,7 @@ internal sealed class AggregatorStore
 
             this.TakeMetricPointSnapshot(ref metricPoint, outputDelta: false);
 
-            this.currentMetricPointBatch[this.batchSize] = i;
+            this.currentMetricPointBatch[this.batchSize] = slot;
             this.batchSize++;
         }
     }
@@ -373,6 +379,68 @@ internal sealed class AggregatorStore
         }
 
         return Metric.DefaultHistogramBounds;
+    }
+
+    /// <summary>
+    /// Maps the creation ordinal of a MetricPoint to the array slot that holds it.
+    /// </summary>
+    /// <param name="ordinal">The ordinal of the <see cref="MetricPoint"/>.</param>
+    /// <returns>
+    /// The array slot that holds the MetricPoint.
+    /// </returns>
+    /// <remarks>
+    /// Maps the creation ordinal of a MetricPoint (the reserved indices 0 and 1
+    /// map to themselves) to the array slot that holds it. A <see cref="MetricPoint"/>
+    /// is larger than half a cache line, so points in adjacent slots always share
+    /// a cache line and updates to them from different threads contend with each
+    /// other (false sharing). Placing consecutively created points two slots apart
+    /// (all even offsets first, then all odd offsets) keeps the points a store creates
+    /// around the same time - which are the ones most likely to be hot at the same
+    /// time - on separate cache lines until the store is half full. Update paths
+    /// never call this; they resolve the slot from the lookup dictionary.
+    /// </remarks>
+    private int ToSlot(int ordinal)
+    {
+        if (ordinal < 2)
+        {
+            return ordinal;
+        }
+
+        var count = this.NumberOfMetricPoints - 2;
+        var half = (count + 1) / 2;
+        var k = ordinal - 2;
+
+        return 2 + (k < half ? 2 * k : (2 * (k - half)) + 1);
+    }
+
+    private int DequeueAvailableMetricPoint()
+    {
+        // Hands out the next free slot for a delta stream. Must be called under
+        // lock (this.TagsToMetricPointIndexDictionaryDelta). Reclaimed slots re-enter
+        // the queue in the order they were reclaimed, so after a partial reclaim the
+        // head of the queue can be adjacent to the slot handed out just before it.
+        // While that previous point is still live, adjacent slots are rotated to
+        // the back of the queue until a non-adjacent one is found, so that
+        // consecutively created points stay on separate cache lines. Only the two
+        // slots either side of the previous one can be adjacent to it, so this
+        // rotates at most twice; if the queue holds nothing else the adjacent slot
+        // is used. A reclaimed neighbour no longer receives updates and is ignored.
+        var queue = this.availableMetricPoints!;
+        var slot = queue.Dequeue();
+        var last = this.lastAssignedSlot;
+
+        if (this.metricPoints[last].LookupData != null)
+        {
+            var remaining = queue.Count;
+            while (remaining-- > 0 && Math.Abs(slot - last) == 1)
+            {
+                queue.Enqueue(slot);
+                slot = queue.Dequeue();
+            }
+        }
+
+        this.lastAssignedSlot = slot;
+        return slot;
     }
 
     private void TakeMetricPointSnapshot(ref MetricPoint metricPoint, bool outputDelta)
@@ -549,6 +617,8 @@ internal sealed class AggregatorStore
                                 return -1;
                             }
 
+                            aggregatorIndex = this.ToSlot(aggregatorIndex);
+
                             ref var metricPoint = ref this.metricPoints[aggregatorIndex];
                             metricPoint = new MetricPoint(this, this.aggType, sortedTags.KeyValuePairs, this.histogramExplicitBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale);
 
@@ -597,6 +667,8 @@ internal sealed class AggregatorStore
                             // we can re-claim them here.
                             return -1;
                         }
+
+                        aggregatorIndex = this.ToSlot(aggregatorIndex);
 
                         ref var metricPoint = ref this.metricPoints[aggregatorIndex];
                         metricPoint = new MetricPoint(this, this.aggType, givenTags.KeyValuePairs, this.histogramExplicitBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale);
@@ -672,7 +744,7 @@ internal sealed class AggregatorStore
                             // Check for an available MetricPoint
                             if (this.availableMetricPoints!.Count > 0)
                             {
-                                index = this.availableMetricPoints.Dequeue();
+                                index = this.DequeueAvailableMetricPoint();
                             }
                             else
                             {
@@ -724,7 +796,7 @@ internal sealed class AggregatorStore
                         // Check for an available MetricPoint
                         if (this.availableMetricPoints!.Count > 0)
                         {
-                            index = this.availableMetricPoints.Dequeue();
+                            index = this.DequeueAvailableMetricPoint();
                         }
                         else
                         {
@@ -844,7 +916,7 @@ internal sealed class AggregatorStore
                 // Check for an available MetricPoint
                 if (this.availableMetricPoints!.Count > 0)
                 {
-                    index = this.availableMetricPoints.Dequeue();
+                    index = this.DequeueAvailableMetricPoint();
                 }
                 else
                 {
@@ -875,7 +947,7 @@ internal sealed class AggregatorStore
                 // Check for an available MetricPoint
                 if (this.availableMetricPoints!.Count > 0)
                 {
-                    index = this.availableMetricPoints.Dequeue();
+                    index = this.DequeueAvailableMetricPoint();
                 }
                 else
                 {

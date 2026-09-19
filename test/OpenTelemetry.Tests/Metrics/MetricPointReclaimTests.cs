@@ -275,6 +275,179 @@ public class MetricPointReclaimTests
         Assert.Equal(Interlocked.Read(ref recordedSum), Interlocked.Read(ref exportedSum));
     }
 
+    [Fact]
+    public void ReclaimedMetricPointsAreReusedInStridedOrder()
+    {
+        const int CardinalityLimit = 4;
+
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateCounter<long>("counter");
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = CardinalityLimit })
+            .AddInMemoryExporter(exportedItems, metricReaderOptions => metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta)
+            .Build();
+
+        // Use every slot once.
+        for (var i = 0; i < CardinalityLimit; i++)
+        {
+            counter.Add(1, new KeyValuePair<string, object?>("key", i));
+        }
+
+        // First collect exports the points, second collect reclaims them all.
+        Assert.True(meterProvider.ForceFlush());
+        Assert.True(meterProvider.ForceFlush());
+
+        var store = exportedItems[0].AggregatorStore;
+        Assert.Empty(store.TagsToMetricPointIndexDictionaryDelta!);
+
+        // Two points created back-to-back from the reclaimed slots.
+        counter.Add(10, new KeyValuePair<string, object?>("key", 10));
+        counter.Add(11, new KeyValuePair<string, object?>("key", 11));
+
+        exportedItems.Clear();
+        Assert.True(meterProvider.ForceFlush());
+
+        var slots = store.TagsToMetricPointIndexDictionaryDelta!.Values
+            .ToDictionary(lookupData => (int)lookupData.GivenTags.KeyValuePairs[0].Value!, lookupData => lookupData.Index);
+
+        Assert.Equal(2, slots.Count);
+        Assert.True(Math.Abs(slots[10] - slots[11]) >= 2, $"Consecutively created points were placed in adjacent slots {slots[10]} and {slots[11]}.");
+
+        // And the reused points still aggregate correctly.
+        var metricPoints = new List<MetricPoint>();
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Equal(2, metricPoints.Count);
+        Assert.Equal(10, Assert.Single(metricPoints, mp => Equals(mp.Tags.KeyAndValues[0].Value, 10)).GetSumLong());
+        Assert.Equal(11, Assert.Single(metricPoints, mp => Equals(mp.Tags.KeyAndValues[0].Value, 11)).GetSumLong());
+    }
+
+    [Fact]
+    public void PartiallyReclaimedMetricPointsAreReusedNonAdjacently()
+    {
+        const int CardinalityLimit = 4;
+
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateCounter<long>("counter");
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = CardinalityLimit })
+            .AddInMemoryExporter(exportedItems, metricReaderOptions => metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta)
+            .Build();
+
+        // Use every slot once: tag values 0..3 land in slots 2, 4, 3, 5.
+        for (var i = 0; i < CardinalityLimit; i++)
+        {
+            counter.Add(1, new KeyValuePair<string, object?>("key", i));
+        }
+
+        Assert.True(meterProvider.ForceFlush());
+
+        var store = exportedItems[0].AggregatorStore;
+        var slotsBefore = store.TagsToMetricPointIndexDictionaryDelta!.Values
+            .ToDictionary(lookupData => (int)lookupData.GivenTags.KeyValuePairs[0].Value!, lookupData => lookupData.Index);
+        Assert.Equal(4, slotsBefore[1]);
+
+        // Keep the point in slot 4 alive; the second collect reclaims the other three.
+        counter.Add(1, new KeyValuePair<string, object?>("key", 1));
+        Assert.True(meterProvider.ForceFlush());
+        Assert.Single(store.TagsToMetricPointIndexDictionaryDelta!);
+
+        // Two points created back-to-back from the partially reclaimed slots.
+        counter.Add(10, new KeyValuePair<string, object?>("key", 10));
+        counter.Add(11, new KeyValuePair<string, object?>("key", 11));
+
+        // Read the slots before the next collect, which reclaims the idle point in slot 4.
+        var slots = store.TagsToMetricPointIndexDictionaryDelta!.Values
+            .ToDictionary(lookupData => (int)lookupData.GivenTags.KeyValuePairs[0].Value!, lookupData => lookupData.Index);
+
+        Assert.Equal(3, slots.Count);
+        Assert.Equal(4, slots[1]);
+        Assert.True(Math.Abs(slots[10] - slots[11]) >= 2, $"Consecutively created points were placed in adjacent slots {slots[10]} and {slots[11]}.");
+
+        exportedItems.Clear();
+        Assert.True(meterProvider.ForceFlush());
+
+        var metricPoints = new List<MetricPoint>();
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Equal(2, metricPoints.Count);
+        Assert.Equal(10, Assert.Single(metricPoints, mp => Equals(mp.Tags.KeyAndValues[0].Value, 10)).GetSumLong());
+        Assert.Equal(11, Assert.Single(metricPoints, mp => Equals(mp.Tags.KeyAndValues[0].Value, 11)).GetSumLong());
+    }
+
+    [Fact]
+    public void PartiallyReclaimedMetricPointsSkipEverySlotAdjacentToTheLivePoint()
+    {
+        // With four data slots the strided order is [2, 4, 3, 5]. Using only 2 and 4,
+        // then reclaiming 2 while 4 stays alive, leaves the free queue as [3, 5, 2]:
+        // both slots at the front neighbour the live slot 4, so the allocator must
+        // rotate past both of them and hand out slot 2.
+        const int CardinalityLimit = 4;
+
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateCounter<long>("counter");
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = CardinalityLimit })
+            .AddInMemoryExporter(exportedItems, metricReaderOptions => metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta)
+            .Build();
+
+        // Tag values 0 and 1 land in slots 2 and 4.
+        counter.Add(1, new KeyValuePair<string, object?>("key", 0));
+        counter.Add(1, new KeyValuePair<string, object?>("key", 1));
+
+        Assert.True(meterProvider.ForceFlush());
+
+        var store = exportedItems[0].AggregatorStore;
+        var slotsBefore = store.TagsToMetricPointIndexDictionaryDelta!.Values
+            .ToDictionary(lookupData => (int)lookupData.GivenTags.KeyValuePairs[0].Value!, lookupData => lookupData.Index);
+        Assert.Equal(2, slotsBefore[0]);
+        Assert.Equal(4, slotsBefore[1]);
+
+        // Keep the point in slot 4 alive; the second collect reclaims slot 2.
+        counter.Add(1, new KeyValuePair<string, object?>("key", 1));
+        Assert.True(meterProvider.ForceFlush());
+        Assert.Single(store.TagsToMetricPointIndexDictionaryDelta!);
+
+        counter.Add(10, new KeyValuePair<string, object?>("key", 10));
+
+        // Read the slots before the next collect, which reclaims the idle point in slot 4.
+        var slots = store.TagsToMetricPointIndexDictionaryDelta!.Values
+            .ToDictionary(lookupData => (int)lookupData.GivenTags.KeyValuePairs[0].Value!, lookupData => lookupData.Index);
+
+        Assert.Equal(2, slots.Count);
+        Assert.Equal(4, slots[1]);
+        Assert.True(Math.Abs(slots[10] - slots[1]) >= 2, $"The new point was placed in slot {slots[10]}, adjacent to the live point in slot {slots[1]}.");
+
+        exportedItems.Clear();
+        Assert.True(meterProvider.ForceFlush());
+
+        var metricPoints = new List<MetricPoint>();
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Equal(10, Assert.Single(metricPoints, mp => Equals(mp.Tags.KeyAndValues[0].Value, 10)).GetSumLong());
+    }
+
     private sealed class ThreadArguments
     {
         public int Counter;

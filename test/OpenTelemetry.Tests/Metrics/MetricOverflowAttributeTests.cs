@@ -366,4 +366,60 @@ public class MetricOverflowAttributeTests
             Assert.Equal(12 + CardinalityLimit + 3, overflowMetricPoint.GetSumLong());
         }
     }
+
+    [Theory]
+    [InlineData(MetricReaderTemporalityPreference.Delta, 1)]
+    [InlineData(MetricReaderTemporalityPreference.Delta, 2)]
+    [InlineData(MetricReaderTemporalityPreference.Delta, 7)]
+    [InlineData(MetricReaderTemporalityPreference.Delta, 8)]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative, 1)]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative, 2)]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative, 7)]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative, 8)]
+    public void EveryMetricPointSlotIsUsedExactlyOnceUpToTheCardinalityLimit(MetricReaderTemporalityPreference temporalityPreference, int cardinalityLimit)
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateCounter<long>("TestCounter");
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("TestCounter", new MetricStreamConfiguration { CardinalityLimit = cardinalityLimit })
+            .AddInMemoryExporter(exportedItems, metricReaderOptions => metricReaderOptions.TemporalityPreference = temporalityPreference)
+            .Build();
+
+        for (var i = 0; i < cardinalityLimit; i++)
+        {
+            counter.Add(i + 1, new KeyValuePair<string, object?>("Key", i));
+        }
+
+        // One more tag set than the limit goes to the overflow point.
+        counter.Add(100, new KeyValuePair<string, object?>("Key", cardinalityLimit));
+
+        meterProvider.ForceFlush();
+
+        var metricPoints = new List<MetricPoint>();
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        var taggedPoints = metricPoints.Where(mp => mp.Tags.KeyAndValues[0].Key == "Key").ToList();
+        Assert.Equal(cardinalityLimit, taggedPoints.Count);
+
+        for (var i = 0; i < cardinalityLimit; i++)
+        {
+            var point = Assert.Single(taggedPoints, mp => Equals(mp.Tags.KeyAndValues[0].Value, i));
+            Assert.Equal(i + 1, point.GetSumLong());
+        }
+
+        if (temporalityPreference == MetricReaderTemporalityPreference.Cumulative)
+        {
+            Assert.Equal(Enumerable.Range(0, cardinalityLimit), taggedPoints.Select(mp => (int)mp.Tags.KeyAndValues[0].Value!));
+        }
+
+        var overflowMetricPoint = Assert.Single(metricPoints, mp => mp.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
+        Assert.Equal(100, overflowMetricPoint.GetSumLong());
+    }
 }
