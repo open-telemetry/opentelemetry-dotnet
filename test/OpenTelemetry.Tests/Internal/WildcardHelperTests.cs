@@ -23,6 +23,17 @@ public class WildcardHelperTests
         Assert.True(sw.Elapsed < TimeSpan.FromSeconds(5), $"Non-matching input took {sw.Elapsed.TotalSeconds:F1}s.");
     }
 
+    [Fact]
+    public void GetWildcardRegex_HandlesLargeNumberOfPatterns()
+    {
+        var patterns = Enumerable.Range(0, 300).Select(i => $"Some.Namespace.Source.{i}.*").ToArray();
+
+        var regex = WildcardHelper.GetWildcardRegex(patterns);
+
+        Assert.True(WildcardHelper.IsMatch(regex, "Some.Namespace.Source.42.Foo"));
+        Assert.False(WildcardHelper.IsMatch(regex, "Some.Other.Namespace"));
+    }
+
     [Theory]
     [InlineData(new[] { "a" }, "a", true)]
     [InlineData(new[] { "a.*" }, "a.b", true)]

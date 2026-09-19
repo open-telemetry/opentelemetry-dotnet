@@ -9,9 +9,7 @@ namespace OpenTelemetry;
 
 internal static class WildcardHelper
 {
-#if !NET
     private static readonly TimeSpan RegexMatchTimeout = TimeSpan.FromSeconds(1);
-#endif
 
     public static bool ContainsWildcard(
         [NotNullWhen(true)]
@@ -44,10 +42,21 @@ internal static class WildcardHelper
         var pattern = "^(?:" + convertedPattern + ")$";
 
 #if NET
-        return new Regex(pattern, RegexOptions.NonBacktracking | RegexOptions.IgnoreCase);
-#else
-        return new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase, RegexMatchTimeout);
+        try
+        {
+            return new Regex(pattern, RegexOptions.NonBacktracking | RegexOptions.IgnoreCase);
+        }
+        catch (NotSupportedException)
+        {
+            // RegexOptions.NonBacktracking has a fixed limit on the size of the automata it can
+            // build (e.g., 1,000 nodes on .NET 8, larger on later versions). A very large number
+            // of source/meter patterns can exceed that limit and cause the constructor to throw.
+            // If this happens, fall back to a backtracking regex bounded by a match timeout.
+            // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/7787.
+        }
 #endif
+
+        return new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase, RegexMatchTimeout);
     }
 
     public static bool IsMatch(Regex regex, string input)

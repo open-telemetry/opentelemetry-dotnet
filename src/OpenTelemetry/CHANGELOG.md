@@ -6,6 +6,11 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed `NotSupportedException` thrown when building a `TracerProvider` or
+  `MeterProvider` with a large number of wildcard source/meter patterns on
+  `net8.0`.
+  ([#7788](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7788))
+
 ## 1.19.0
 
 Released 2026-Sep-18
