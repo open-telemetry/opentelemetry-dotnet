@@ -509,6 +509,63 @@ public class MetricPointReclaimTests
         Assert.Equal(10, Assert.Single(metricPoints, mp => Equals(mp.Tags.KeyAndValues[0].Value, 10)).GetSumLong());
     }
 
+    [Fact]
+    public void ReclaimedMetricPointsAvoidTheOverflowPointsSlot()
+    {
+        // The overflow point (slot 1) is initialized on demand, never reclaimed, and
+        // once active can be updated concurrently by many threads, so it is a live
+        // neighbour for slot 2 like any other. With cardinality limit 6, filling and
+        // then fully reclaiming all six data slots (2..7) leaves the free queue in
+        // strided order [2, 4, 6, 3, 5, 7]: slot 2 is next to the live overflow point,
+        // while slot 4 has no live neighbour on either side, so a new point must be
+        // placed in slot 4, not slot 2.
+        const int CardinalityLimit = 6;
+
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateCounter<long>("counter");
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = CardinalityLimit })
+            .AddInMemoryExporter(exportedItems, metricReaderOptions => metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta)
+            .Build();
+
+        // Fill all six data slots, then exceed the limit to initialize the overflow point.
+        for (var i = 0; i < CardinalityLimit; i++)
+        {
+            counter.Add(1, new KeyValuePair<string, object?>("key", i));
+        }
+
+        counter.Add(1, new KeyValuePair<string, object?>("key", CardinalityLimit));
+
+        // First collect exports everything; second collect reclaims all six data
+        // slots (the overflow point in slot 1 is never reclaimed).
+        Assert.True(meterProvider.ForceFlush());
+        Assert.True(meterProvider.ForceFlush());
+
+        var store = exportedItems[0].AggregatorStore;
+        Assert.Empty(store.TagsToMetricPointIndexDictionaryDelta!);
+
+        counter.Add(100, new KeyValuePair<string, object?>("key", 100));
+
+        // Read the slot before the next collect, which reclaims the new point too.
+        var slot = Assert.Single(store.TagsToMetricPointIndexDictionaryDelta!.Values).Index;
+        Assert.NotEqual(2, slot);
+
+        exportedItems.Clear();
+        Assert.True(meterProvider.ForceFlush());
+
+        var metricPoints = new List<MetricPoint>();
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Equal(100, Assert.Single(metricPoints, mp => Equals(mp.Tags.KeyAndValues[0].Value, 100)).GetSumLong());
+    }
+
     private sealed class ThreadArguments
     {
         public int Counter;

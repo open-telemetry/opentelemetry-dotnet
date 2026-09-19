@@ -465,12 +465,17 @@ internal sealed class AggregatorStore
 
     private int CountLiveNeighbours(int slot)
     {
-        // Counts the data slots either side of the given slot that hold a live
-        // MetricPoint. A reclaimed slot has a null LookupData and no longer receives
-        // updates, so it does not count; neither do the reserved slots 0 and 1.
+        // Counts the array slots either side of the given data slot that hold a
+        // live MetricPoint. A reclaimed data slot has a null LookupData and no
+        // longer receives updates, so it does not count. Slot 1 (the overflow
+        // point) is included on the left of slot 2: it is initialized on demand,
+        // never reclaimed, and once active can be updated concurrently by many
+        // threads, so it is exactly the kind of live neighbour this check exists
+        // to find. Slot 0 (the zero-tag point) is never adjacent to a reusable
+        // data slot, since the lowest data slot is 2.
         var count = 0;
 
-        if (slot > 2 && this.metricPoints[slot - 1].LookupData != null)
+        if (slot > 1 && this.metricPoints[slot - 1].LookupData != null)
         {
             count++;
         }
