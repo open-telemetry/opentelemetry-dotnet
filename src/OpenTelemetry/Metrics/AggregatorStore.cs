@@ -419,24 +419,23 @@ internal sealed class AggregatorStore
         // lock (this.TagsToMetricPointIndexDictionaryDelta). Reclaimed slots re-enter
         // the queue in the order they were reclaimed, so after a partial reclaim the
         // head of the queue can be adjacent to the slot handed out just before it.
-        // When that previous point is still live and the next free slot is not
-        // adjacent to it, the head is moved to the back and the next slot is used
-        // instead, so that consecutively created points stay on separate cache
-        // lines. A reclaimed neighbour no longer receives updates and is ignored.
+        // While that previous point is still live, adjacent slots are rotated to
+        // the back of the queue until a non-adjacent one is found, so that
+        // consecutively created points stay on separate cache lines. Only the two
+        // slots either side of the previous one can be adjacent to it, so this
+        // rotates at most twice; if the queue holds nothing else the adjacent slot
+        // is used. A reclaimed neighbour no longer receives updates and is ignored.
         var queue = this.availableMetricPoints!;
         var slot = queue.Dequeue();
         var last = this.lastAssignedSlot;
 
-        if (queue.Count > 0 &&
-            Math.Abs(slot - last) == 1 &&
-            this.metricPoints[last].LookupData != null)
+        if (this.metricPoints[last].LookupData != null)
         {
-            var next = queue.Peek();
-            if (Math.Abs(next - last) != 1)
+            var remaining = queue.Count;
+            while (remaining-- > 0 && Math.Abs(slot - last) == 1)
             {
-                queue.Dequeue();
                 queue.Enqueue(slot);
-                slot = next;
+                slot = queue.Dequeue();
             }
         }
 
