@@ -29,6 +29,11 @@ internal sealed class AggregatorStore
     internal long DroppedMeasurements;
 
     private const ExemplarFilterType DefaultExemplarFilter = ExemplarFilterType.AlwaysOff;
+
+    // Upper bound on the number of further free slots examined when the head of
+    // the free-slot queue sits next to a live MetricPoint (see DequeueAvailableMetricPoint).
+    private const int MaxFreeSlotCandidates = 16;
+
     private static readonly Comparison<KeyValuePair<string, object?>> DimensionComparisonDelegate = (x, y) => string.Compare(x.Key, y.Key, StringComparison.Ordinal);
 
     private readonly Lock lockZeroTags = new();
@@ -65,7 +70,6 @@ internal sealed class AggregatorStore
 
     private int metricPointIndex;
     private int batchSize;
-    private int lastAssignedSlot;
     private bool zeroTagMetricPointInitialized;
     private bool overflowTagMetricPointInitialized;
 
@@ -418,29 +422,67 @@ internal sealed class AggregatorStore
         // Hands out the next free slot for a delta stream. Must be called under
         // lock (this.TagsToMetricPointIndexDictionaryDelta). Reclaimed slots re-enter
         // the queue in the order they were reclaimed, so after a partial reclaim the
-        // head of the queue can be adjacent to the slot handed out just before it.
-        // While that previous point is still live, adjacent slots are rotated to
-        // the back of the queue until a non-adjacent one is found, so that
-        // consecutively created points stay on separate cache lines. Only the two
-        // slots either side of the previous one can be adjacent to it, so this
-        // rotates at most twice; if the queue holds nothing else the adjacent slot
-        // is used. A reclaimed neighbour no longer receives updates and is ignored.
+        // head of the queue can sit next to a point that is still live and being
+        // updated. When it does, up to MaxFreeSlotCandidates further slots are
+        // examined and the one with the fewest live neighbours is used (stopping at
+        // the first with none); the others go back to the queue. The bound keeps
+        // point creation from scanning the whole queue in a heavily fragmented
+        // store, where some adjacency is unavoidable anyway.
         var queue = this.availableMetricPoints!;
-        var slot = queue.Dequeue();
-        var last = this.lastAssignedSlot;
+        var best = queue.Dequeue();
+        var bestLiveNeighbours = this.CountLiveNeighbours(best);
 
-        if (this.metricPoints[last].LookupData != null)
+        if (bestLiveNeighbours == 0 || queue.Count == 0)
         {
-            var remaining = queue.Count;
-            while (remaining-- > 0 && Math.Abs(slot - last) == 1)
+            return best;
+        }
+
+        Span<int> skipped = stackalloc int[MaxFreeSlotCandidates];
+        var skippedCount = 0;
+
+        while (skippedCount < skipped.Length && queue.Count > 0 && bestLiveNeighbours > 0)
+        {
+            var candidate = queue.Dequeue();
+            var candidateLiveNeighbours = this.CountLiveNeighbours(candidate);
+
+            if (candidateLiveNeighbours < bestLiveNeighbours)
             {
-                queue.Enqueue(slot);
-                slot = queue.Dequeue();
+                skipped[skippedCount++] = best;
+                best = candidate;
+                bestLiveNeighbours = candidateLiveNeighbours;
+            }
+            else
+            {
+                skipped[skippedCount++] = candidate;
             }
         }
 
-        this.lastAssignedSlot = slot;
-        return slot;
+        for (var i = 0; i < skippedCount; i++)
+        {
+            queue.Enqueue(skipped[i]);
+        }
+
+        return best;
+    }
+
+    private int CountLiveNeighbours(int slot)
+    {
+        // Counts the data slots either side of the given slot that hold a live
+        // MetricPoint. A reclaimed slot has a null LookupData and no longer receives
+        // updates, so it does not count; neither do the reserved slots 0 and 1.
+        var count = 0;
+
+        if (slot > 2 && this.metricPoints[slot - 1].LookupData != null)
+        {
+            count++;
+        }
+
+        if (slot + 1 < this.NumberOfMetricPoints && this.metricPoints[slot + 1].LookupData != null)
+        {
+            count++;
+        }
+
+        return count;
     }
 
     private void TakeMetricPointSnapshot(ref MetricPoint metricPoint, bool outputDelta)

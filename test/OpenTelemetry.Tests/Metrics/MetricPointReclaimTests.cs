@@ -345,7 +345,9 @@ public class MetricPointReclaimTests
             .AddInMemoryExporter(exportedItems, metricReaderOptions => metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta)
             .Build();
 
-        // Use every slot once: tag values 0..3 land in slots 2, 4, 3, 5.
+        // Use every slot once. The exact fill order depends on the allocator, but the
+        // first two points always take slots 2 and 4, and the test only relies on the
+        // point for tag value 1 being in slot 4.
         for (var i = 0; i < CardinalityLimit; i++)
         {
             counter.Add(1, new KeyValuePair<string, object?>("key", i));
@@ -435,6 +437,65 @@ public class MetricPointReclaimTests
         Assert.Equal(2, slots.Count);
         Assert.Equal(4, slots[1]);
         Assert.True(Math.Abs(slots[10] - slots[1]) >= 2, $"The new point was placed in slot {slots[10]}, adjacent to the live point in slot {slots[1]}.");
+
+        exportedItems.Clear();
+        Assert.True(meterProvider.ForceFlush());
+
+        var metricPoints = new List<MetricPoint>();
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Equal(10, Assert.Single(metricPoints, mp => Equals(mp.Tags.KeyAndValues[0].Value, 10)).GetSumLong());
+    }
+
+    [Fact]
+    public void PartiallyReclaimedMetricPointsAvoidSlotsNextToAnyLivePoint()
+    {
+        // Using slots 2 and 4, then reclaiming 4 while 2 stays alive, leaves
+        // the free queue as [3, 5, 4]. Slot 3 is next to the live slot 2 even
+        // though the most recently assigned slot (4) is dead, so the allocator
+        // must look at the candidate's own neighbours and hand out 5.
+        const int CardinalityLimit = 4;
+
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateCounter<long>("counter");
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = CardinalityLimit })
+            .AddInMemoryExporter(exportedItems, metricReaderOptions => metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta)
+            .Build();
+
+        // Tag values 0 and 1 land in slots 2 and 4.
+        counter.Add(1, new KeyValuePair<string, object?>("key", 0));
+        counter.Add(1, new KeyValuePair<string, object?>("key", 1));
+
+        Assert.True(meterProvider.ForceFlush());
+
+        var store = exportedItems[0].AggregatorStore;
+        var slotsBefore = store.TagsToMetricPointIndexDictionaryDelta!.Values
+            .ToDictionary(lookupData => (int)lookupData.GivenTags.KeyValuePairs[0].Value!, lookupData => lookupData.Index);
+        Assert.Equal(2, slotsBefore[0]);
+        Assert.Equal(4, slotsBefore[1]);
+
+        // Keep the point in slot 2 alive; the second collect reclaims slot 4.
+        counter.Add(1, new KeyValuePair<string, object?>("key", 0));
+        Assert.True(meterProvider.ForceFlush());
+        Assert.Single(store.TagsToMetricPointIndexDictionaryDelta!);
+
+        counter.Add(10, new KeyValuePair<string, object?>("key", 10));
+
+        // Read the slots before the next collect, which reclaims the idle point in slot 2.
+        var slots = store.TagsToMetricPointIndexDictionaryDelta!.Values
+            .ToDictionary(lookupData => (int)lookupData.GivenTags.KeyValuePairs[0].Value!, lookupData => lookupData.Index);
+
+        Assert.Equal(2, slots.Count);
+        Assert.Equal(2, slots[0]);
+        Assert.True(Math.Abs(slots[10] - slots[0]) >= 2, $"The new point was placed in slot {slots[10]}, adjacent to the live point in slot {slots[0]}.");
 
         exportedItems.Clear();
         Assert.True(meterProvider.ForceFlush());
