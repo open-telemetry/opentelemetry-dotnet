@@ -65,6 +65,7 @@ internal sealed class AggregatorStore
 
     private int metricPointIndex;
     private int batchSize;
+    private int lastAssignedSlot;
     private bool zeroTagMetricPointInitialized;
     private bool overflowTagMetricPointInitialized;
 
@@ -412,6 +413,37 @@ internal sealed class AggregatorStore
         return 2 + (k < half ? 2 * k : (2 * (k - half)) + 1);
     }
 
+    private int DequeueAvailableMetricPoint()
+    {
+        // Hands out the next free slot for a delta stream. Must be called under
+        // lock (this.TagsToMetricPointIndexDictionaryDelta). Reclaimed slots re-enter
+        // the queue in the order they were reclaimed, so after a partial reclaim the
+        // head of the queue can be adjacent to the slot handed out just before it.
+        // When that previous point is still live and the next free slot is not
+        // adjacent to it, the head is moved to the back and the next slot is used
+        // instead, so that consecutively created points stay on separate cache
+        // lines. A reclaimed neighbour no longer receives updates and is ignored.
+        var queue = this.availableMetricPoints!;
+        var slot = queue.Dequeue();
+        var last = this.lastAssignedSlot;
+
+        if (queue.Count > 0 &&
+            Math.Abs(slot - last) == 1 &&
+            this.metricPoints[last].LookupData != null)
+        {
+            var next = queue.Peek();
+            if (Math.Abs(next - last) != 1)
+            {
+                queue.Dequeue();
+                queue.Enqueue(slot);
+                slot = next;
+            }
+        }
+
+        this.lastAssignedSlot = slot;
+        return slot;
+    }
+
     private void TakeMetricPointSnapshot(ref MetricPoint metricPoint, bool outputDelta)
     {
         if (this.IsExemplarEnabled())
@@ -713,7 +745,7 @@ internal sealed class AggregatorStore
                             // Check for an available MetricPoint
                             if (this.availableMetricPoints!.Count > 0)
                             {
-                                index = this.availableMetricPoints.Dequeue();
+                                index = this.DequeueAvailableMetricPoint();
                             }
                             else
                             {
@@ -765,7 +797,7 @@ internal sealed class AggregatorStore
                         // Check for an available MetricPoint
                         if (this.availableMetricPoints!.Count > 0)
                         {
-                            index = this.availableMetricPoints.Dequeue();
+                            index = this.DequeueAvailableMetricPoint();
                         }
                         else
                         {
@@ -885,7 +917,7 @@ internal sealed class AggregatorStore
                 // Check for an available MetricPoint
                 if (this.availableMetricPoints!.Count > 0)
                 {
-                    index = this.availableMetricPoints.Dequeue();
+                    index = this.DequeueAvailableMetricPoint();
                 }
                 else
                 {
@@ -916,7 +948,7 @@ internal sealed class AggregatorStore
                 // Check for an available MetricPoint
                 if (this.availableMetricPoints!.Count > 0)
                 {
-                    index = this.availableMetricPoints.Dequeue();
+                    index = this.DequeueAvailableMetricPoint();
                 }
                 else
                 {
