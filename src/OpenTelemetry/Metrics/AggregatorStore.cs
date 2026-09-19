@@ -30,10 +30,6 @@ internal sealed class AggregatorStore
 
     private const ExemplarFilterType DefaultExemplarFilter = ExemplarFilterType.AlwaysOff;
 
-    // Upper bound on the number of further free slots examined when the head of
-    // the free-slot queue sits next to a live MetricPoint (see DequeueAvailableMetricPoint).
-    private const int MaxFreeSlotCandidates = 16;
-
     private static readonly Comparison<KeyValuePair<string, object?>> DimensionComparisonDelegate = (x, y) => string.Compare(x.Key, y.Key, StringComparison.Ordinal);
 
     private readonly Lock lockZeroTags = new();
@@ -428,6 +424,8 @@ internal sealed class AggregatorStore
         // the first with none); the others go back to the queue. The bound keeps
         // point creation from scanning the whole queue in a heavily fragmented
         // store, where some adjacency is unavoidable anyway.
+        const int MaxFreeSlotCandidates = 16;
+
         var queue = this.availableMetricPoints!;
         var best = queue.Dequeue();
         var bestLiveNeighbours = this.CountLiveNeighbours(best);
