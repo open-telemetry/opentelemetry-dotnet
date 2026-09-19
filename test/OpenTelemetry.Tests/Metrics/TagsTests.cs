@@ -138,34 +138,43 @@ public class TagsTests
     }
 
     [Fact]
-    public void Equals_ReturnsFalse_ForDifferentKeysWithMatchingFingerprintsAndEqualValues()
+    public void ComputeHashCode_IsIndependentOfKeyStringInstance()
     {
-        var tag1 = new Tags([new("abXcd", true)]);
-        var tag2 = new Tags([new("abYcd", true)]);
+        var literalKey = "key1";
+        var copiedKey = new string(literalKey.ToCharArray());
+        Assert.NotSame(literalKey, copiedKey);
 
-        Assert.Equal(tag1.GetHashCode(), tag2.GetHashCode());
-        Assert.False(tag1.Equals(tag2));
-        Assert.True(tag1 != tag2);
+        var expected = Tags.ComputeHashCode([new(literalKey, "value1")]);
 
-        ReadOnlySpan<KeyValuePair<string, object?>> span = [new("abYcd", true)];
-        Assert.False(tag1.Equals(span));
-        Assert.True(tag2.Equals(span));
+        Assert.Equal(expected, Tags.ComputeHashCode([new(copiedKey, "value1")]));
+        Assert.Equal(expected, Tags.ComputeHashCode([new(literalKey, "value1")]));
+        Assert.Equal(expected, new Tags([new(copiedKey, "value1")]).GetHashCode());
     }
 
     [Fact]
-    public void ComputeHashCode_DistinguishesSameLengthKeysVaryingInPrefixOrSuffix()
+    public void ComputeHashCode_KeysSharingACacheSlotKeepTheirOwnHashes()
     {
+        var key1 = "abXcd";
+        var key2 = "abYcd";
+
+        var expected1 = Tags.ComputeHashCode([new(new string(key1.ToCharArray()), true)]);
+        var expected2 = Tags.ComputeHashCode([new(new string(key2.ToCharArray()), true)]);
+
+        Assert.NotEqual(expected1, expected2);
+
+        for (var i = 0; i < 10; i++)
+        {
+            Assert.Equal(expected1, Tags.ComputeHashCode([new(key1, true)]));
+            Assert.Equal(expected2, Tags.ComputeHashCode([new(key2, true)]));
+        }
+
         var hashes = new HashSet<int>();
 
         for (var i = 0; i < 100; i++)
         {
-            var suffix = i.ToString("D2", CultureInfo.InvariantCulture);
-            hashes.Add(Tags.ComputeHashCode([new("flag_" + suffix, true)]));
-            hashes.Add(Tags.ComputeHashCode([new(suffix + "_flag", true)]));
+            hashes.Add(Tags.ComputeHashCode([new("ab" + i.ToString("D3", CultureInfo.InvariantCulture) + "cd", true)]));
         }
 
-        Assert.Equal(200, hashes.Count);
-        Assert.NotEqual(Tags.ComputeHashCode([new(string.Empty, true)]), Tags.ComputeHashCode([new("a", true)]));
-        Assert.NotEqual(Tags.ComputeHashCode([new("a", true)]), Tags.ComputeHashCode([new("b", true)]));
+        Assert.True(hashes.Count >= 99, $"Only {hashes.Count} distinct hashes for 100 distinct keys.");
     }
 }

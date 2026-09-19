@@ -53,20 +53,20 @@ internal readonly struct Tags : IEquatable<Tags>
     internal static int ComputeHashCode(ReadOnlySpan<KeyValuePair<string, object?>> keyValuePairs)
     {
         // Every entry in a lookup dictionary belongs to a single metric stream, so
-        // the entries (almost always) share the same tag keys. Hashing each key
-        // string costs a full string hash but adds little entropy to the bucket
-        // distribution, so only a constant-time fingerprint of the key (its length
-        // and first two and last two characters) is mixed in; the values, which carry the
-        // entropy, are hashed in full. Tag sets whose keys share a fingerprint and
-        // whose values are identical collide on the hash and are then told apart by
-        // Equals, which compares the keys first.
+        // the entries (almost always) share the same tag keys, and those keys are
+        // almost always the same string instances (literals or cached constants)
+        // on every measurement. Hashing each key string on every lookup is
+        // therefore repeated work: the key hashes are served from a per-thread
+        // cache keyed by string reference instead (see GetKeyHashCode), while the
+        // values, which carry the entropy, are hashed in full.
+        var keyHashCache = ThreadStaticStorage.GetStorage().KeyHashCache;
 #if NET || NETSTANDARD2_1_OR_GREATER
         HashCode hashCode = default;
 
         for (var i = 0; i < keyValuePairs.Length; i++)
         {
             ref readonly var item = ref keyValuePairs[i];
-            hashCode.Add(GetKeyFingerprint(item.Key));
+            hashCode.Add(GetKeyHashCode(keyHashCache, item.Key));
             hashCode.Add(item.Value);
         }
 
@@ -81,7 +81,7 @@ internal readonly struct Tags : IEquatable<Tags>
             ref readonly var item = ref keyValuePairs[i];
             unchecked
             {
-                hash = (hash ^ (uint)GetKeyFingerprint(item.Key)) * 0x9E3779B1u;
+                hash = (hash ^ (uint)GetKeyHashCode(keyHashCache, item.Key)) * 0x9E3779B1u;
                 hash = (hash ^ (uint)(item.Value?.GetHashCode() ?? 0)) * 0x9E3779B1u;
             }
         }
@@ -100,24 +100,29 @@ internal readonly struct Tags : IEquatable<Tags>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int GetKeyFingerprint(string key)
+    private static int GetKeyHashCode(ThreadStaticStorage.KeyHashCacheEntry[] cache, string key)
     {
-        // Constant-time stand-in for the key's hash: its length combined with its
-        // first two and last two characters. Cheap next to the value hash, while
-        // still separating dynamically generated keys of equal length that vary
-        // in a prefix or suffix (for example "flag_017" or "017_flag").
         var length = key.Length;
+        var index = length == 0
+            ? 0
+            : (length + (key[0] << 1) + key[length - 1]) & (ThreadStaticStorage.KeyHashCacheSize - 1);
 
-        if (length < 2)
+        ref var entry = ref cache[index];
+        if (ReferenceEquals(entry.Key, key))
         {
-            return length == 0 ? 0 : key[0];
+            return entry.Hash;
         }
 
-        return length
-            ^ (key[0] << 8)
-            ^ (key[1] << 16)
-            ^ (key[length - 2] << 4)
-            ^ (key[length - 1] << 12);
+#if NET || NETSTANDARD2_1_OR_GREATER
+        var hash = key.GetHashCode(StringComparison.Ordinal);
+#else
+        var hash = key.GetHashCode();
+#endif
+
+        entry.Key = key;
+        entry.Hash = hash;
+
+        return hash;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
