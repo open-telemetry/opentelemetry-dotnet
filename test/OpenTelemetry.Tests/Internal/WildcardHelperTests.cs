@@ -34,6 +34,24 @@ public class WildcardHelperTests
         Assert.False(WildcardHelper.IsMatch(regex, "Some.Other.Namespace"));
     }
 
+    [Fact]
+    public void GetWildcardRegex_HandlesRealWorldSourcePatternCombination()
+    {
+        var patterns = new[]
+        {
+            "SomeApplication.App",
+            "AWSSDK.*",
+            "System.Net.Http",
+            "OpenTelemetry.Instrumentation.AWSLambda",
+        };
+
+        var regex = WildcardHelper.GetWildcardRegex(patterns);
+
+        Assert.True(WildcardHelper.IsMatch(regex, "SomeApplication.App"));
+        Assert.True(WildcardHelper.IsMatch(regex, "AWSSDK.DynamoDB"));
+        Assert.False(WildcardHelper.IsMatch(regex, "Unrelated.Source"));
+    }
+
     [Theory]
     [InlineData(new[] { "a" }, "a", true)]
     [InlineData(new[] { "a.*" }, "a.b", true)]

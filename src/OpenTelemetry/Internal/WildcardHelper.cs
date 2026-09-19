@@ -41,21 +41,11 @@ internal static class WildcardHelper
 
         var pattern = "^(?:" + convertedPattern + ")$";
 
-#if NET
-        try
-        {
-            return new Regex(pattern, RegexOptions.NonBacktracking | RegexOptions.IgnoreCase);
-        }
-        catch (NotSupportedException)
-        {
-            // RegexOptions.NonBacktracking has a fixed limit on the size of the automata it can
-            // build (e.g., 1,000 nodes on .NET 8, larger on later versions). A very large number
-            // of source/meter patterns can exceed that limit and cause the constructor to throw.
-            // If this happens, fall back to a backtracking regex bounded by a match timeout.
-            // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/7787.
-        }
-#endif
-
+        // RegexOptions.NonBacktracking is not used as it has a fixed automata-size limit that many
+        // source patterns can exceed and it retains a much larger automaton per Regex instance
+        // than a backtracking regex, which can lead to an OutOfMemoryException in applications.
+        // The match timeout bounds worst-case matching time to protect against catastrophic backtracking.
+        // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/7787.
         return new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase, RegexMatchTimeout);
     }
 

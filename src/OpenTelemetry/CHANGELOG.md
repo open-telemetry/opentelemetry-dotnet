@@ -8,7 +8,8 @@ Notes](../../RELEASENOTES.md).
 
 * Fixed `NotSupportedException` thrown when building a `TracerProvider` or
   `MeterProvider` with a large number of wildcard source/meter patterns on
-  `net8.0`.
+  `net8.0`, and a related `OutOfMemoryException` that could occur when many
+  such providers were built over the lifetime of a process.
   ([#7788](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7788))
 
 ## 1.19.0
