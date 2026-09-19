@@ -544,7 +544,6 @@ public class TraceContextPropagator : TextMapPropagator
         Span<int> memberStarts = stackalloc int[Limit];
         Span<int> memberLengths = stackalloc int[Limit];
         Span<int> keyLengths = stackalloc int[Limit];
-        Span<int> keyHashes = stackalloc int[Limit];
 
         var memberCount = 0;
         var totalLength = 0;
@@ -553,31 +552,22 @@ public class TraceContextPropagator : TextMapPropagator
 
         while (begin < tracestateSpan.Length)
         {
-            var end = begin;
-            while (end < tracestateSpan.Length && tracestateSpan[end] != ',')
-            {
-                end++;
-            }
+            var remaining = tracestateSpan.Slice(begin);
+            var separator = remaining.IndexOf(',');
+            var rawMember = separator < 0 ? remaining : remaining.Slice(0, separator);
+            var end = begin + rawMember.Length;
 
-            var memberStart = begin;
-            var memberEnd = end;
+            // Trim optional whitespace around the list member.
+            var listMember = rawMember.TrimStart();
+            var memberStart = begin + (rawMember.Length - listMember.Length);
+            listMember = listMember.TrimEnd();
 
-            while (memberStart < memberEnd && char.IsWhiteSpace(tracestateSpan[memberStart]))
-            {
-                memberStart++;
-            }
-
-            while (memberEnd > memberStart && char.IsWhiteSpace(tracestateSpan[memberEnd - 1]))
-            {
-                memberEnd--;
-            }
-
-            if (memberStart != begin || memberEnd != end)
+            if (listMember.Length != rawMember.Length)
             {
                 normalized = true;
             }
 
-            var memberLength = memberEnd - memberStart;
+            var memberLength = listMember.Length;
             if (memberLength > 0)
             {
                 if (memberCount >= Limit)
@@ -585,9 +575,8 @@ public class TraceContextPropagator : TextMapPropagator
                     return false;
                 }
 
-                var listMember = tracestateSpan.Slice(memberStart, memberLength);
                 var keyLength = listMember.IndexOf('=');
-                if (keyLength == listMember.Length || keyLength == -1)
+                if (keyLength == -1)
                 {
                     return false;
                 }
@@ -604,36 +593,23 @@ public class TraceContextPropagator : TextMapPropagator
                     return false;
                 }
 
+                // Duplicate detection: keys are short and few (at most 32), so a length and
+                // first-character filter followed by SequenceEqual is cheaper than hashing.
                 var duplicateKey = false;
-                var useHashedDuplicateCheck = keyLength <= Limit;
-                var keyHash = 0;
-                if (useHashedDuplicateCheck)
+                var firstKeyChar = key[0];
+                for (var i = 0; i < memberCount; i++)
                 {
-                    keyHash = GetKeyHashCode(key);
-                    for (var i = 0; i < memberCount; i++)
+                    if (keyLengths[i] != keyLength)
                     {
-                        if (keyHashes[i] != keyHash || keyLengths[i] != keyLength)
-                        {
-                            continue;
-                        }
-
-                        if (key.SequenceEqual(tracestateSpan.Slice(memberStarts[i], keyLength)))
-                        {
-                            duplicateKey = true;
-                            break;
-                        }
+                        continue;
                     }
-                }
-                else
-                {
-                    for (var i = 0; i < memberCount; i++)
+
+                    var previousStart = memberStarts[i];
+                    if (tracestateSpan[previousStart] == firstKeyChar &&
+                        key.SequenceEqual(tracestateSpan.Slice(previousStart, keyLength)))
                     {
-                        if (keyLengths[i] == keyLength &&
-                            key.SequenceEqual(tracestateSpan.Slice(memberStarts[i], keyLength)))
-                        {
-                            duplicateKey = true;
-                            break;
-                        }
+                        duplicateKey = true;
+                        break;
                     }
                 }
 
@@ -647,7 +623,6 @@ public class TraceContextPropagator : TextMapPropagator
                 memberStarts[memberCount] = memberStart;
                 memberLengths[memberCount] = memberLength;
                 keyLengths[memberCount] = keyLength;
-                keyHashes[memberCount] = keyHash;
 
                 memberCount++;
                 totalLength += memberLength;
@@ -816,31 +791,6 @@ public class TraceContextPropagator : TextMapPropagator
     private static bool IsAsciiLetterOrDigitLower(char c)
         => char.IsAsciiDigit(c) || char.IsAsciiLetterLower(c);
 #endif
-
-    private static int GetKeyHashCode(ReadOnlySpan<char> key)
-    {
-#if NET
-        HashCode hash = default;
-
-        for (var i = 0; i < key.Length; i++)
-        {
-            hash.Add(key[i]);
-        }
-
-        return hash.ToHashCode();
-#else
-        unchecked
-        {
-            var hash = (int)2166136261;
-            for (var i = 0; i < key.Length; i++)
-            {
-                hash = (hash ^ key[i]) * 16777619;
-            }
-
-            return hash;
-        }
-#endif
-    }
 
 #if NET
     private static SearchValues<char> CreateTraceStateValueChars(int firstCharacter)
