@@ -650,6 +650,77 @@ public class MetricApiTests : MetricTestsBase
     }
 
     [Fact]
+    public void MeterSourcesAllMetersWildcardMatchesAllMeters()
+    {
+        using var meter1 = new Meter("AbcCompany.XyzProduct.ComponentA");
+        using var meter2 = new Meter("DefCompany.XyzProduct.ComponentB");
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter("*")
+            .AddInMemoryExporter(exportedItems));
+
+        var measurement = new Measurement<int>(100);
+        meter1.CreateObservableGauge("gauge1", () => measurement);
+        meter2.CreateObservableGauge("gauge2", () => measurement);
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        Assert.Contains(exportedItems, m => m.Name == "gauge1");
+        Assert.Contains(exportedItems, m => m.Name == "gauge2");
+    }
+
+    [Fact]
+    public void MeterSourcesSingleGenuineWildcardMatches()
+    {
+        using var matchingMeter = new Meter("AbcCompany.XyzProduct.ComponentA");
+        using var nonMatchingMeter = new Meter("AbcCompany.XyzProduct.ComponentAA");
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter("AbcCompany.XyzProduct.Component?")
+            .AddInMemoryExporter(exportedItems));
+
+        var measurement = new Measurement<int>(100);
+        matchingMeter.CreateObservableGauge("matching", () => measurement);
+        nonMatchingMeter.CreateObservableGauge("nonMatching", () => measurement);
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        Assert.Single(exportedItems);
+        Assert.Equal("matching", exportedItems[0].Name);
+    }
+
+    [Fact]
+    public void MeterSourcesExactSingleTrailingWildcardAndGenuineWildcardMatch()
+    {
+        using var exactMeter = new Meter("AbcCompany.XyzProduct.ComponentA");
+        using var prefixMeter = new Meter("DefCompany.XyzProduct.ComponentB");
+        using var wildcardMeter = new Meter("GhiCompany.XyzProduct.ComponentC");
+        using var nonMatchingMeter = new Meter("JklCompany.XyzProduct.ComponentD");
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter("AbcCompany.XyzProduct.ComponentA")
+            .AddMeter("DefCompany.*")
+            .AddMeter("GhiCompany.XyzProduct.Component?")
+            .AddInMemoryExporter(exportedItems));
+
+        var measurement = new Measurement<int>(100);
+        exactMeter.CreateObservableGauge("exact", () => measurement);
+        prefixMeter.CreateObservableGauge("prefix", () => measurement);
+        wildcardMeter.CreateObservableGauge("wildcard", () => measurement);
+        nonMatchingMeter.CreateObservableGauge("nonMatching", () => measurement);
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        Assert.Equal(3, exportedItems.Count);
+        Assert.Equal("exact", exportedItems[0].Name);
+        Assert.Equal("prefix", exportedItems[1].Name);
+        Assert.Equal("wildcard", exportedItems[2].Name);
+    }
+
+    [Fact]
     public void MeterSourcesMultipleTrailingWildcardsMatch()
     {
         using var meter1 = new Meter("AbcCompany.XyzProduct.ComponentA");

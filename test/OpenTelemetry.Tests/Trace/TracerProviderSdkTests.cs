@@ -130,6 +130,85 @@ public sealed class TracerProviderSdkTests : IDisposable
     }
 
     [Fact]
+    public void TracerProviderSdkAddSourceWithAllSourcesWildcard()
+    {
+        using var sourceA = new ActivitySource($"{Utils.GetCurrentMethodName()}.A");
+        using var sourceB = new ActivitySource($"{Utils.GetCurrentMethodName()}.B");
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource("*")
+            .Build();
+
+        using (var activity = sourceA.StartActivity("test"))
+        {
+            Assert.NotNull(activity);
+        }
+
+        using (var activity = sourceB.StartActivity("test"))
+        {
+            Assert.NotNull(activity);
+        }
+    }
+
+    [Fact]
+    public void TracerProviderSdkAddSourceWithSingleGenuineWildcard()
+    {
+        var methodName = Utils.GetCurrentMethodName();
+        using var sourceA = new ActivitySource($"{methodName}.A");
+        using var sourceB = new ActivitySource($"{methodName}.Ab");
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource($"{methodName}.?")
+            .Build();
+
+        using (var activity = sourceA.StartActivity("test"))
+        {
+            Assert.NotNull(activity);
+        }
+
+        using (var activity = sourceB.StartActivity("test"))
+        {
+            Assert.Null(activity);
+        }
+    }
+
+    [Fact]
+    public void TracerProviderSdkAddSourceWithExactSingleTrailingWildcardAndGenuineWildcard()
+    {
+        var methodName = Utils.GetCurrentMethodName();
+        using var sourceA = new ActivitySource($"{methodName}.A");
+        using var sourceB = new ActivitySource($"{methodName}.B");
+        using var sourceC = new ActivitySource($"{methodName}.C");
+        using var sourceD = new ActivitySource($"{methodName}.DD");
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(sourceA.Name)
+            .AddSource($"{methodName}.B*")
+            .AddSource($"{methodName}.?")
+            .Build();
+
+        using (var activity = sourceA.StartActivity("test"))
+        {
+            Assert.NotNull(activity);
+        }
+
+        using (var activity = sourceB.StartActivity("test"))
+        {
+            Assert.NotNull(activity);
+        }
+
+        using (var activity = sourceC.StartActivity("test"))
+        {
+            Assert.NotNull(activity);
+        }
+
+        using (var activity = sourceD.StartActivity("test"))
+        {
+            Assert.Null(activity);
+        }
+    }
+
+    [Fact]
     public void TracerProviderSdkAddSourceExactMatchIsCaseInsensitive()
     {
         using var source1 = new ActivitySource($"{Utils.GetCurrentMethodName()}.A");
