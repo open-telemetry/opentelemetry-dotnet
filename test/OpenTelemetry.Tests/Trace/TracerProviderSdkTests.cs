@@ -101,6 +101,35 @@ public sealed class TracerProviderSdkTests : IDisposable
     }
 
     [Fact]
+    public void TracerProviderSdkAddSourceWithMultipleTrailingWildcards()
+    {
+        var methodName = Utils.GetCurrentMethodName();
+        using var sourceA = new ActivitySource($"{methodName}.A");
+        using var sourceB = new ActivitySource($"{methodName}.B");
+        using var sourceC = new ActivitySource($"{methodName}.C");
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource($"{methodName}.A*")
+            .AddSource($"{methodName}.B*")
+            .Build();
+
+        using (var activity = sourceA.StartActivity("test"))
+        {
+            Assert.NotNull(activity);
+        }
+
+        using (var activity = sourceB.StartActivity("test"))
+        {
+            Assert.NotNull(activity);
+        }
+
+        using (var activity = sourceC.StartActivity("test"))
+        {
+            Assert.Null(activity);
+        }
+    }
+
+    [Fact]
     public void TracerProviderSdkAddSourceExactMatchIsCaseInsensitive()
     {
         using var source1 = new ActivitySource($"{Utils.GetCurrentMethodName()}.A");

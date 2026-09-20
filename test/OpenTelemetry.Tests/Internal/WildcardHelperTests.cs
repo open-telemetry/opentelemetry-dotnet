@@ -77,4 +77,20 @@ public class WildcardHelperTests
     [InlineData("a.?", true)]
     public void Verify_ContainsWildcard(string? pattern, bool expected)
         => Assert.Equal(expected, WildcardHelper.ContainsWildcard(pattern));
+
+    [Theory]
+    [InlineData("", false, null)]
+    [InlineData("a*", true, "a")]
+    [InlineData("*", true, "")]
+    [InlineData("a", false, null)]
+    [InlineData("a.*.b", false, null)]
+    [InlineData("a*b*", false, null)]
+    [InlineData("a?*", false, null)]
+    public void TryGetWildcardPrefix_ReturnsExpectedResult(string pattern, bool expectedResult, string? expectedPrefix)
+    {
+        var result = WildcardHelper.TryGetWildcardPrefix(pattern, out var prefix);
+
+        Assert.Equal(expectedResult, result);
+        Assert.Equal(expectedPrefix, prefix);
+    }
 }

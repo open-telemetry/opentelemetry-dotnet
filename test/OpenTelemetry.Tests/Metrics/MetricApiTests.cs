@@ -627,6 +627,52 @@ public class MetricApiTests : MetricTestsBase
         Assert.Equal("myGauge1", exportedItems[0].Name);
         Assert.Equal("myGauge2", exportedItems[1].Name);
     }
+
+    [Fact]
+    public void MeterSourcesSingleTrailingWildcardMatchesCaseInsensitive()
+    {
+        using var matchingMeter = new Meter("AbcCompany.XyzProduct.ComponentA");
+        using var nonMatchingMeter = new Meter("DefCompany.XyzProduct.ComponentB");
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter("abccompany.*")
+            .AddInMemoryExporter(exportedItems));
+
+        var measurement = new Measurement<int>(100);
+        matchingMeter.CreateObservableGauge("matching", () => measurement);
+        nonMatchingMeter.CreateObservableGauge("nonMatching", () => measurement);
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        Assert.Single(exportedItems);
+        Assert.Equal("matching", exportedItems[0].Name);
+    }
+
+    [Fact]
+    public void MeterSourcesMultipleTrailingWildcardsMatch()
+    {
+        using var meter1 = new Meter("AbcCompany.XyzProduct.ComponentA");
+        using var meter2 = new Meter("DefCompany.XyzProduct.ComponentB");
+        using var meter3 = new Meter("GhiCompany.XyzProduct.ComponentC");
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter("AbcCompany.*")
+            .AddMeter("DefCompany.*")
+            .AddInMemoryExporter(exportedItems));
+
+        var measurement = new Measurement<int>(100);
+        meter1.CreateObservableGauge("gauge1", () => measurement);
+        meter2.CreateObservableGauge("gauge2", () => measurement);
+        meter3.CreateObservableGauge("gauge3", () => measurement);
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        Assert.Equal(2, exportedItems.Count);
+        Assert.Equal("gauge1", exportedItems[0].Name);
+        Assert.Equal("gauge2", exportedItems[1].Name);
+    }
 #endif
 
     [Theory]
