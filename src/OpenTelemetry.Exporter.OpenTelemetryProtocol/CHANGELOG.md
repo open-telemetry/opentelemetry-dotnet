@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Suppressed routine informational logs from the HTTP clients used by the OTLP
+  exporters while preserving explicit application logging configuration.
+  ([#7743](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7743))
+
 ## 1.19.1
 
 Released 2026-Sep-21
@@ -44,10 +48,6 @@ Released 2026-Sep-18
 * Prevented oversized metric metadata from being cached when it cannot fit
   within the configured request size.
   ([#7752](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7752))
-
-* Suppressed routine informational logs from the HTTP clients used by the OTLP
-  exporters while preserving explicit application logging configuration.
-  ([#7743](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7743))
 
 ## 1.18.0
 
