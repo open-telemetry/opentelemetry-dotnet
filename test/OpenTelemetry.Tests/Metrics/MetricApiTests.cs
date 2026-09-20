@@ -555,7 +555,7 @@ public class MetricApiTests : MetricTestsBase
         using var meter4 = new Meter("DefCompany.XyzProduct.ComponentC"); // Wildcard match supports matching multiple patterns.
         using var meter5 = new Meter("GhiCompany.qweProduct.ComponentN");
         using var meter6 = new Meter("SomeCompany.SomeProduct.SomeComponent");
-        using var meter7 = new Meter("ghiCompany.QWEProduct.componentn"); // Exact match is case insensitive.
+        using var meter7 = new Meter("ghiCompany.QWEProduct.componentN"); // Exact match is case insensitive.
 
         var exportedItems = new List<Metric>();
 
