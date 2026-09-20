@@ -369,70 +369,94 @@ internal sealed class TracerProviderSdk : TracerProvider
 
     private static Func<ActivitySource, bool>? CreateFilterPredicate(List<string> sources, bool supportLegacyActivity)
     {
-        if (sources.Count > 0)
+        if (sources.Count == 0)
         {
-            if (sources.Count == 1 && sources[0] == "*")
+            return supportLegacyActivity ? static (source) => string.IsNullOrEmpty(source.Name) : null;
+        }
+
+        if (sources.Count == 1 && sources[0] == "*")
+        {
+            return static (_) => true;
+        }
+
+        List<string>? prefixes = null;
+        List<string>? wildcards = null;
+        HashSet<string>? names = supportLegacyActivity
+            ? new HashSet<string>(StringComparer.OrdinalIgnoreCase) { string.Empty }
+            : null;
+
+        foreach (var source in sources)
+        {
+            if (WildcardHelper.TryGetWildcardPrefix(source, out var prefix))
             {
-                return static (_) => true;
+                (prefixes ??= []).Add(prefix);
             }
-            else if (sources.Exists(WildcardHelper.ContainsWildcard))
+            else if (WildcardHelper.ContainsWildcard(source))
             {
-                var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-                if (supportLegacyActivity)
-                {
-                    names.Add(string.Empty);
-                }
-
-                var wildcards = new List<string>();
-
-                foreach (var source in sources)
-                {
-                    if (WildcardHelper.ContainsWildcard(source))
-                    {
-                        wildcards.Add(source);
-                    }
-                    else
-                    {
-                        names.Add(source);
-                    }
-                }
-
-                var regex = WildcardHelper.GetWildcardRegex(wildcards);
-                var regexPredicate = supportLegacyActivity ? new LegacyRegexPredicate(regex) : new RegexPredicate(regex);
-
-                if (names.Count > 0)
-                {
-                    var hashSetPredicate = new HashSetPredicate(names);
-                    var compositePredicate = new CompositePredicate(hashSetPredicate, regexPredicate);
-                    return compositePredicate.IsMatch;
-                }
-
-                return regexPredicate.IsMatch;
+                (wildcards ??= []).Add(source);
             }
             else
             {
-                var names = new HashSet<string>(sources, StringComparer.OrdinalIgnoreCase);
-
-                if (supportLegacyActivity)
-                {
-                    names.Add(string.Empty);
-                }
-
-#if NET
-                var frozenNames = names.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
-                return (source) => frozenNames.Contains(source.Name);
-#else
-                return (source) => names.Contains(source.Name);
-#endif
+                (names ??= new(StringComparer.OrdinalIgnoreCase)).Add(source);
             }
         }
-        else if (supportLegacyActivity)
-        {
-            return static (source) => string.IsNullOrEmpty(source.Name);
-        }
 
-        return null;
+        var hasNames = names is { Count: > 0 };
+        var hasPrefixes = prefixes is { Count: > 0 };
+        var hasWildcards = wildcards is { Count: > 0 };
+        var categoryCount = (hasNames ? 1 : 0) + (hasPrefixes ? 1 : 0) + (hasWildcards ? 1 : 0);
+
+        if (categoryCount == 1)
+        {
+            if (hasNames)
+            {
+#if NET
+                var frozenNames = names!.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+                return (source) => frozenNames.Contains(source.Name);
+#else
+                return (source) => names!.Contains(source.Name);
+#endif
+            }
+
+            if (hasPrefixes)
+            {
+                if (prefixes!.Count == 1)
+                {
+                    var singlePrefix = prefixes[0];
+                    return (source) => source.Name.StartsWith(singlePrefix, StringComparison.OrdinalIgnoreCase);
+                }
+
+                var prefixArray = prefixes.ToArray();
+                return (source) => WildcardHelper.PrefixMatch(prefixArray, source.Name);
+            }
+
+            var regex = WildcardHelper.GetWildcardRegex(wildcards!);
+            var regexPredicate = supportLegacyActivity ? new LegacyRegexPredicate(regex) : new RegexPredicate(regex);
+            return regexPredicate.IsMatch;
+        }
+        else
+        {
+            var namesPredicate = hasNames ? new HashSetPredicate(names!) : null;
+            PrefixPredicate? prefixPredicate = null;
+
+            if (hasPrefixes)
+            {
+                prefixPredicate = prefixes!.Count == 1
+                    ? new SinglePrefixPredicate(prefixes[0])
+                    : new MultiPrefixPredicate(prefixes.ToArray());
+            }
+
+            RegexPredicate? regexPredicate = null;
+
+            if (hasWildcards)
+            {
+                var wildcardRegex = WildcardHelper.GetWildcardRegex(wildcards!);
+                regexPredicate = supportLegacyActivity ? new LegacyRegexPredicate(wildcardRegex) : new RegexPredicate(wildcardRegex);
+            }
+
+            var compositePredicate = new CompositePredicate(namesPredicate, prefixPredicate, regexPredicate);
+            return compositePredicate.IsMatch;
+        }
     }
 
     private static Sampler GetSampler(IConfiguration configuration, Sampler? stateSampler)
@@ -715,12 +739,16 @@ internal sealed class TracerProviderSdk : TracerProvider
         }
     }
 
-    private sealed class CompositePredicate(HashSetPredicate hashSet, RegexPredicate regex)
+    private sealed class CompositePredicate(HashSetPredicate? hashSet, PrefixPredicate? prefix, RegexPredicate? regex)
     {
-        private readonly HashSetPredicate hashSet = hashSet;
-        private readonly RegexPredicate regex = regex;
+        private readonly HashSetPredicate? hashSet = hashSet;
+        private readonly PrefixPredicate? prefix = prefix;
+        private readonly RegexPredicate? regex = regex;
 
-        public bool IsMatch(ActivitySource source) => this.hashSet.IsMatch(source) || this.regex.IsMatch(source);
+        public bool IsMatch(ActivitySource source) =>
+            (this.hashSet?.IsMatch(source) ?? false) ||
+            (this.prefix?.IsMatch(source) ?? false) ||
+            (this.regex?.IsMatch(source) ?? false);
     }
 
     private sealed class HashSetPredicate(HashSet<string> hashSet)
@@ -732,6 +760,25 @@ internal sealed class TracerProviderSdk : TracerProvider
 #endif
 
         public bool IsMatch(ActivitySource source) => this.set.Contains(source.Name);
+    }
+
+    private abstract class PrefixPredicate
+    {
+        public abstract bool IsMatch(ActivitySource source);
+    }
+
+    private sealed class SinglePrefixPredicate(string prefix) : PrefixPredicate
+    {
+        private readonly string prefix = prefix;
+
+        public override bool IsMatch(ActivitySource source) => source.Name.StartsWith(this.prefix, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private sealed class MultiPrefixPredicate(string[] prefixes) : PrefixPredicate
+    {
+        private readonly string[] prefixes = prefixes;
+
+        public override bool IsMatch(ActivitySource source) => WildcardHelper.PrefixMatch(this.prefixes, source.Name);
     }
 
     private class RegexPredicate(Regex regex)

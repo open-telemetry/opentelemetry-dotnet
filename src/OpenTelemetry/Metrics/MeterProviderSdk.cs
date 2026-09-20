@@ -512,48 +512,80 @@ internal sealed class MeterProviderSdk : MeterProvider
         {
             return static (_) => true;
         }
-        else if (sources.Exists(WildcardHelper.ContainsWildcard))
+        else if (sources.Count == 0)
         {
-            var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var wildcards = new List<string>();
+            return null;
+        }
 
-            foreach (var source in sources)
+        HashSet<string>? names = null;
+        List<string>? prefixes = null;
+        List<string>? wildcards = null;
+
+        foreach (var source in sources)
+        {
+            if (WildcardHelper.TryGetWildcardPrefix(source, out var prefix))
             {
-                if (WildcardHelper.ContainsWildcard(source))
-                {
-                    wildcards.Add(source);
-                }
-                else
-                {
-                    names.Add(source);
-                }
+                (prefixes ??= []).Add(prefix);
             }
-
-            var regex = WildcardHelper.GetWildcardRegex(wildcards);
-            var regexPredicate = new RegexPredicate(regex);
-
-            if (names.Count > 0)
+            else if (WildcardHelper.ContainsWildcard(source))
             {
-                var hashSetPredicate = new HashSetPredicate(names);
-                var compositePredicate = new CompositePredicate(hashSetPredicate, regexPredicate);
-                return compositePredicate.IsMatch;
+                (wildcards ??= []).Add(source);
             }
             else
             {
-                return regexPredicate.IsMatch;
+                (names ??= new(StringComparer.OrdinalIgnoreCase)).Add(source);
             }
         }
-        else if (sources.Count > 0)
-        {
-#if NET
-            var names = new HashSet<string>(sources, StringComparer.OrdinalIgnoreCase).ToFrozenSet(StringComparer.OrdinalIgnoreCase);
-#else
-            var names = new HashSet<string>(sources, StringComparer.OrdinalIgnoreCase);
-#endif
-            return (instrument) => names.Contains(instrument.Meter.Name);
-        }
 
-        return null;
+        var hasNames = names is { Count: > 0 };
+        var hasPrefixes = prefixes is { Count: > 0 };
+        var hasWildcards = wildcards is { Count: > 0 };
+        var categoryCount = (hasNames ? 1 : 0) + (hasPrefixes ? 1 : 0) + (hasWildcards ? 1 : 0);
+
+        if (categoryCount == 1)
+        {
+            if (hasNames)
+            {
+#if NET
+                var frozenNames = names!.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+                return (instrument) => frozenNames.Contains(instrument.Meter.Name);
+#else
+                return (instrument) => names!.Contains(instrument.Meter.Name);
+#endif
+            }
+
+            if (hasPrefixes)
+            {
+                if (prefixes!.Count == 1)
+                {
+                    var singlePrefix = prefixes[0];
+                    return (instrument) => instrument.Meter.Name.StartsWith(singlePrefix, StringComparison.OrdinalIgnoreCase);
+                }
+
+                var prefixArray = prefixes.ToArray();
+                return (instrument) => WildcardHelper.PrefixMatch(prefixArray, instrument.Meter.Name);
+            }
+
+            var regex = WildcardHelper.GetWildcardRegex(wildcards!);
+            var regexPredicate = new RegexPredicate(regex);
+            return regexPredicate.IsMatch;
+        }
+        else
+        {
+            var namesPredicate = hasNames ? new HashSetPredicate(names!) : null;
+            PrefixPredicate? prefixPredicate = null;
+
+            if (hasPrefixes)
+            {
+                prefixPredicate = prefixes!.Count == 1
+                    ? new SinglePrefixPredicate(prefixes[0])
+                    : new MultiPrefixPredicate(prefixes.ToArray());
+            }
+
+            var regexPredicate = hasWildcards ? new RegexPredicate(WildcardHelper.GetWildcardRegex(wildcards!)) : null;
+            var compositePredicate = new CompositePredicate(namesPredicate, prefixPredicate, regexPredicate);
+            return compositePredicate.IsMatch;
+        }
     }
 
     private void DisposeBuiltState(MeterProviderBuilderSdk state)
@@ -660,12 +692,16 @@ internal sealed class MeterProviderSdk : MeterProvider
         }
     }
 
-    private sealed class CompositePredicate(HashSetPredicate hashSet, RegexPredicate regex)
+    private sealed class CompositePredicate(HashSetPredicate? hashSet, PrefixPredicate? prefix, RegexPredicate? regex)
     {
-        private readonly HashSetPredicate hashSet = hashSet;
-        private readonly RegexPredicate regex = regex;
+        private readonly HashSetPredicate? hashSet = hashSet;
+        private readonly PrefixPredicate? prefix = prefix;
+        private readonly RegexPredicate? regex = regex;
 
-        public bool IsMatch(Instrument instrument) => this.hashSet.IsMatch(instrument) || this.regex.IsMatch(instrument);
+        public bool IsMatch(Instrument instrument) =>
+            (this.hashSet?.IsMatch(instrument) ?? false) ||
+            (this.prefix?.IsMatch(instrument) ?? false) ||
+            (this.regex?.IsMatch(instrument) ?? false);
     }
 
     private sealed class HashSetPredicate(HashSet<string> hashSet)
@@ -677,6 +713,25 @@ internal sealed class MeterProviderSdk : MeterProvider
 #endif
 
         public bool IsMatch(Instrument instrument) => this.set.Contains(instrument.Meter.Name);
+    }
+
+    private abstract class PrefixPredicate
+    {
+        public abstract bool IsMatch(Instrument instrument);
+    }
+
+    private sealed class SinglePrefixPredicate(string prefix) : PrefixPredicate
+    {
+        private readonly string prefix = prefix;
+
+        public override bool IsMatch(Instrument instrument) => instrument.Meter.Name.StartsWith(this.prefix, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private sealed class MultiPrefixPredicate(string[] prefixes) : PrefixPredicate
+    {
+        private readonly string[] prefixes = prefixes;
+
+        public override bool IsMatch(Instrument instrument) => WildcardHelper.PrefixMatch(this.prefixes, instrument.Meter.Name);
     }
 
     private sealed class RegexPredicate(Regex regex)

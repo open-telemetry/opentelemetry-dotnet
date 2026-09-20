@@ -27,6 +27,59 @@ internal static class WildcardHelper
 #endif
     }
 
+    /// <summary>
+    /// Determines whether <paramref name="pattern"/> is a simple <c>prefix*</c> pattern:
+    /// exactly one <c>*</c>, located at the end, and no <c>?</c> at all.
+    /// </summary>
+    /// <param name="pattern">The pattern to inspect.</param>
+    /// <param name="prefix">The literal prefix, when <paramref name="pattern"/> is a simple trailing-wildcard pattern.</param>
+    /// <returns>
+    /// <see langword="true"/> if <paramref name="pattern"/> is a simple trailing-wildcard pattern.
+    /// </returns>
+    public static bool TryGetWildcardPrefix(string pattern, [NotNullWhen(true)] out string? prefix)
+    {
+        var lastIndex = pattern.Length - 1;
+
+        if (lastIndex >= 0 && pattern[lastIndex] == '*')
+        {
+            for (var i = 0; i < lastIndex; i++)
+            {
+                if (pattern[i] is '*' or '?')
+                {
+                    prefix = null;
+                    return false;
+                }
+            }
+
+            prefix = pattern.Substring(0, lastIndex);
+            return true;
+        }
+
+        prefix = null;
+        return false;
+    }
+
+    /// <summary>
+    /// Matches <paramref name="value"/> against multiple simple prefixes.
+    /// </summary>
+    /// <param name="prefixes">The prefixes to match against.</param>
+    /// <param name="value">The value to test.</param>
+    /// <returns>
+    /// <see langword="true"/> if <paramref name="value"/> starts with any of <paramref name="prefixes"/>.
+    /// </returns>
+    public static bool PrefixMatch(string[] prefixes, string value)
+    {
+        foreach (var prefix in prefixes)
+        {
+            if (value.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public static Regex GetWildcardRegex(IEnumerable<string> patterns)
     {
         Debug.Assert(patterns?.Any() == true, "patterns was null or empty");
