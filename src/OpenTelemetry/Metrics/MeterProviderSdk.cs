@@ -1,9 +1,13 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if NET
+using System.Collections.Frozen;
+#endif
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
@@ -27,7 +31,7 @@ internal sealed class MeterProviderSdk : MeterProvider
     private readonly List<Func<Instrument, MetricStreamConfiguration?>> viewConfigs;
     private readonly Lock collectLock = new();
     private readonly MeterListener listener;
-    private readonly Func<Instrument, bool> shouldListenTo = instrument => false;
+    private readonly Predicate<Instrument> shouldListenTo = static _ => false;
     private CompositeMetricReader? compositeMetricReader;
 
     internal MeterProviderSdk(
@@ -143,18 +147,14 @@ internal sealed class MeterProviderSdk : MeterProvider
             }
 
             // Setup Listener
-            if (state.MeterSources.Exists(WildcardHelper.ContainsWildcard))
+            var meterSources = state.MeterSources;
+
+            if (CreateFilterPredicate(meterSources) is { } predicate)
             {
-                var regex = WildcardHelper.GetWildcardRegex(state.MeterSources);
-                this.shouldListenTo = instrument => WildcardHelper.IsMatch(regex, instrument.Meter.Name);
-            }
-            else if (state.MeterSources.Count > 0)
-            {
-                var meterSourcesToSubscribe = new HashSet<string>(state.MeterSources, StringComparer.OrdinalIgnoreCase);
-                this.shouldListenTo = instrument => meterSourcesToSubscribe.Contains(instrument.Meter.Name);
+                this.shouldListenTo = predicate;
             }
 
-            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Listening to following meters = \"{string.Join(";", state.MeterSources)}\".");
+            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Listening to following meters = \"{string.Join(";", meterSources)}\".");
 
             this.listener = new MeterListener();
             var viewConfigCount = this.viewConfigs.Count;
@@ -506,6 +506,53 @@ internal sealed class MeterProviderSdk : MeterProvider
         base.Dispose(disposing);
     }
 
+    private static Predicate<Instrument>? CreateFilterPredicate(List<string> sources)
+    {
+        if (sources.Count == 1 && sources[0] == "*")
+        {
+            return static (_) => true;
+        }
+        else if (sources.Exists(WildcardHelper.ContainsWildcard))
+        {
+            var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var wildcards = new List<string>();
+
+            foreach (var source in sources)
+            {
+                if (WildcardHelper.ContainsWildcard(source))
+                {
+                    wildcards.Add(source);
+                }
+                else
+                {
+                    names.Add(source);
+                }
+            }
+
+            var regex = WildcardHelper.GetWildcardRegex(wildcards);
+            var regexPredicate = new RegexPredicate(regex);
+
+            if (names.Count > 0)
+            {
+                var hashSetPredicate = new HashSetPredicate(names);
+                var compositePredicate = new CompositePredicate(hashSetPredicate, regexPredicate);
+                return compositePredicate.IsMatch;
+            }
+            else
+            {
+                return regexPredicate.IsMatch;
+            }
+        }
+        else if (sources.Count > 0)
+        {
+            var names = new HashSet<string>(sources, StringComparer.OrdinalIgnoreCase);
+            var predicate = new HashSetPredicate(names);
+            return predicate.IsMatch;
+        }
+
+        return null;
+    }
+
     private void DisposeBuiltState(MeterProviderBuilderSdk state)
     {
         foreach (var reader in state.Readers)
@@ -608,5 +655,31 @@ internal sealed class MeterProviderSdk : MeterProvider
             exemplarFilter = null;
             return false;
         }
+    }
+
+    private sealed class CompositePredicate(HashSetPredicate hashSet, RegexPredicate regex)
+    {
+        private readonly HashSetPredicate hashSet = hashSet;
+        private readonly RegexPredicate regex = regex;
+
+        public bool IsMatch(Instrument instrument) => this.hashSet.IsMatch(instrument) || this.regex.IsMatch(instrument);
+    }
+
+    private sealed class HashSetPredicate(HashSet<string> hashSet)
+    {
+#if NET
+        private readonly FrozenSet<string> set = hashSet.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+#else
+        private readonly HashSet<string> set = hashSet;
+#endif
+
+        public bool IsMatch(Instrument instrument) => this.set.Contains(instrument.Meter.Name);
+    }
+
+    private sealed class RegexPredicate(Regex regex)
+    {
+        private readonly Regex regex = regex;
+
+        public bool IsMatch(Instrument instrument) => WildcardHelper.IsMatch(this.regex, instrument.Meter.Name);
     }
 }

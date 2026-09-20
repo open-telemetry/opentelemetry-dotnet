@@ -101,6 +101,46 @@ public sealed class TracerProviderSdkTests : IDisposable
     }
 
     [Fact]
+    public void TracerProviderSdkAddSourceExactMatchIsCaseInsensitive()
+    {
+        using var source1 = new ActivitySource($"{Utils.GetCurrentMethodName()}.A");
+        using var source2 = new ActivitySource($"{Utils.GetCurrentMethodName()}.B");
+
+        // Exact source names only.
+        using (var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(source1.Name.ToUpperInvariant())
+            .Build())
+        {
+            using (var activity = source1.StartActivity("test"))
+            {
+                Assert.NotNull(activity);
+            }
+
+            using (var activity = source2.StartActivity("test"))
+            {
+                Assert.Null(activity);
+            }
+        }
+
+        // Mix of exact source names and wildcards.
+        using (var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(source1.Name.ToUpperInvariant())
+            .AddSource("NoMatch.*")
+            .Build())
+        {
+            using (var activity = source1.StartActivity("test"))
+            {
+                Assert.NotNull(activity);
+            }
+
+            using (var activity = source2.StartActivity("test"))
+            {
+                Assert.Null(activity);
+            }
+        }
+    }
+
+    [Fact]
     public void TracerProviderSdkInvokesSamplingWithCorrectParameters()
     {
         var activitySourceName = Utils.GetCurrentMethodName();

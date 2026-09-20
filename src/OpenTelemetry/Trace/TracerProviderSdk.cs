@@ -1,6 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if NET
+using System.Collections.Frozen;
+#endif
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -230,7 +233,7 @@ internal sealed class TracerProviderSdk : TracerProvider
             }
             else if (this.Sampler is AlwaysOffSampler)
             {
-                activityListener.Sample = (ref options) =>
+                activityListener.Sample = static (ref options) =>
                     !Sdk.SuppressInstrumentation ? PropagateOrIgnoreData(ref options) : ActivitySamplingResult.None;
                 this.getRequestedDataAction = this.RunGetRequestedDataAlwaysOffSampler;
             }
@@ -242,42 +245,9 @@ internal sealed class TracerProviderSdk : TracerProvider
                 this.getRequestedDataAction = this.RunGetRequestedDataOtherSampler;
             }
 
-            // Sources can be null. This happens when user
-            // is only interested in InstrumentationLibraries
-            // which do not depend on ActivitySources.
-            if (state.Sources.Count > 0)
+            if (CreateFilterPredicate(state.Sources, this.supportLegacyActivity) is { } filter)
             {
-                // Validation of source name is already done in builder.
-                if (state.Sources.Any(WildcardHelper.ContainsWildcard))
-                {
-                    var regex = WildcardHelper.GetWildcardRegex(state.Sources);
-
-                    // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
-                    // or not.
-                    activityListener.ShouldListenTo = this.supportLegacyActivity ?
-                        (activitySource) => string.IsNullOrEmpty(activitySource.Name) || WildcardHelper.IsMatch(regex, activitySource.Name) :
-                        (activitySource) => WildcardHelper.IsMatch(regex, activitySource.Name);
-                }
-                else
-                {
-                    var activitySources = new HashSet<string>(state.Sources, StringComparer.OrdinalIgnoreCase);
-
-                    if (this.supportLegacyActivity)
-                    {
-                        activitySources.Add(string.Empty);
-                    }
-
-                    // Function which takes ActivitySource and returns true/false to indicate if it should be subscribed to
-                    // or not.
-                    activityListener.ShouldListenTo = activitySource => activitySources.Contains(activitySource.Name);
-                }
-            }
-            else
-            {
-                if (this.supportLegacyActivity)
-                {
-                    activityListener.ShouldListenTo = activitySource => string.IsNullOrEmpty(activitySource.Name);
-                }
+                activityListener.ShouldListenTo = filter;
             }
 
             ActivitySource.AddActivityListener(activityListener);
@@ -395,6 +365,70 @@ internal sealed class TracerProviderSdk : TracerProvider
         }
 
         base.Dispose(disposing);
+    }
+
+    private static Func<ActivitySource, bool>? CreateFilterPredicate(List<string> sources, bool supportLegacyActivity)
+    {
+        if (sources.Count > 0)
+        {
+            if (sources.Count == 1 && sources[0] == "*")
+            {
+                return static (_) => true;
+            }
+            else if (sources.Exists(WildcardHelper.ContainsWildcard))
+            {
+                var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                if (supportLegacyActivity)
+                {
+                    names.Add(string.Empty);
+                }
+
+                var wildcards = new List<string>();
+
+                foreach (var source in sources)
+                {
+                    if (WildcardHelper.ContainsWildcard(source))
+                    {
+                        wildcards.Add(source);
+                    }
+                    else
+                    {
+                        names.Add(source);
+                    }
+                }
+
+                var regex = WildcardHelper.GetWildcardRegex(wildcards);
+                var regexPredicate = supportLegacyActivity ? new LegacyRegexPredicate(regex) : new RegexPredicate(regex);
+
+                if (names.Count > 0)
+                {
+                    var hashSetPredicate = new HashSetPredicate(names);
+                    var compositePredicate = new CompositePredicate(hashSetPredicate, regexPredicate);
+                    return compositePredicate.IsMatch;
+                }
+
+                return regexPredicate.IsMatch;
+            }
+            else
+            {
+                var names = new HashSet<string>(sources, StringComparer.OrdinalIgnoreCase);
+
+                if (supportLegacyActivity)
+                {
+                    names.Add(string.Empty);
+                }
+
+                var predicate = new HashSetPredicate(names);
+                return predicate.IsMatch;
+            }
+        }
+        else if (supportLegacyActivity)
+        {
+            return static (source) => string.IsNullOrEmpty(source.Name);
+        }
+
+        return null;
     }
 
     private static Sampler GetSampler(IConfiguration configuration, Sampler? stateSampler)
@@ -675,5 +709,36 @@ internal sealed class TracerProviderSdk : TracerProvider
         {
             activity.TraceStateString = samplingResult.TraceStateString;
         }
+    }
+
+    private sealed class CompositePredicate(HashSetPredicate hashSet, RegexPredicate regex)
+    {
+        private readonly HashSetPredicate hashSet = hashSet;
+        private readonly RegexPredicate regex = regex;
+
+        public bool IsMatch(ActivitySource source) => this.hashSet.IsMatch(source) || this.regex.IsMatch(source);
+    }
+
+    private sealed class HashSetPredicate(HashSet<string> hashSet)
+    {
+#if NET
+        private readonly FrozenSet<string> set = hashSet.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+#else
+        private readonly HashSet<string> set = hashSet;
+#endif
+
+        public bool IsMatch(ActivitySource source) => this.set.Contains(source.Name);
+    }
+
+    private class RegexPredicate(Regex regex)
+    {
+        private readonly Regex regex = regex;
+
+        public virtual bool IsMatch(ActivitySource source) => WildcardHelper.IsMatch(this.regex, source.Name);
+    }
+
+    private sealed class LegacyRegexPredicate(Regex regex) : RegexPredicate(regex)
+    {
+        public override bool IsMatch(ActivitySource source) => string.IsNullOrEmpty(source.Name) || base.IsMatch(source);
     }
 }

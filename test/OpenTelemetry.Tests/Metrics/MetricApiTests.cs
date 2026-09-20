@@ -555,6 +555,7 @@ public class MetricApiTests : MetricTestsBase
         using var meter4 = new Meter("DefCompany.XyzProduct.ComponentC"); // Wildcard match supports matching multiple patterns.
         using var meter5 = new Meter("GhiCompany.qweProduct.ComponentN");
         using var meter6 = new Meter("SomeCompany.SomeProduct.SomeComponent");
+        using var meter7 = new Meter("ghiCompany.QWEProduct.componentn"); // Exact match is case insensitive.
 
         var exportedItems = new List<Metric>();
 
@@ -579,10 +580,11 @@ public class MetricApiTests : MetricTestsBase
         meter4.CreateObservableGauge("myGauge4", () => measurement);
         meter5.CreateObservableGauge("myGauge5", () => measurement);
         meter6.CreateObservableGauge("myGauge6", () => measurement);
+        meter7.CreateObservableGauge("myGauge7", () => measurement);
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
-        Assert.Equal(5, exportedItems.Count); // "SomeCompany.SomeProduct.SomeComponent" will not be subscribed.
+        Assert.Equal(6, exportedItems.Count); // "SomeCompany.SomeProduct.SomeComponent" will not be subscribed.
 
         if (hasView)
         {
@@ -597,6 +599,33 @@ public class MetricApiTests : MetricTestsBase
         Assert.Equal("myGauge3", exportedItems[2].Name);
         Assert.Equal("myGauge4", exportedItems[3].Name);
         Assert.Equal("myGauge5", exportedItems[4].Name);
+        Assert.Equal("myGauge7", exportedItems[5].Name);
+    }
+
+    [Fact]
+    public void MeterSourcesExactMatchIsCaseInsensitiveTest()
+    {
+        using var meter1 = new Meter("AbcCompany.XyzProduct.ComponentA");
+        using var meter2 = new Meter("defCompany.ABCProduct.componentB");
+        using var meter3 = new Meter("SomeCompany.SomeProduct.SomeComponent");
+
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter("abcCompany.xyzProduct.COMPONENTA") // Exact match is case insensitive.
+            .AddMeter("DefCompany.AbcProduct.ComponentB")
+            .AddInMemoryExporter(exportedItems));
+
+        var measurement = new Measurement<int>(100, new("name", "apple"), new("color", "red"));
+        meter1.CreateObservableGauge("myGauge1", () => measurement);
+        meter2.CreateObservableGauge("myGauge2", () => measurement);
+        meter3.CreateObservableGauge("myGauge3", () => measurement);
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        Assert.Equal(2, exportedItems.Count); // "SomeCompany.SomeProduct.SomeComponent" will not be subscribed.
+        Assert.Equal("myGauge1", exportedItems[0].Name);
+        Assert.Equal("myGauge2", exportedItems[1].Name);
     }
 #endif
 
