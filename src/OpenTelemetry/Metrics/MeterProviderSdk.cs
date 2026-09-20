@@ -537,6 +537,20 @@ internal sealed class MeterProviderSdk : MeterProvider
             }
         }
 
+        if (prefixes is { Count: > 1 })
+        {
+            // A linear StartsWith scan over multiple prefixes is only worthwhile for a single
+            // prefix; beyond that, a compiled Regex is simpler and at least as fast, especially
+            // when the prefixes share a long common substring.
+            wildcards ??= [];
+            foreach (var prefix in prefixes)
+            {
+                wildcards.Add(prefix + "*");
+            }
+
+            prefixes = null;
+        }
+
         var hasNames = names is { Count: > 0 };
         var hasPrefixes = prefixes is { Count: > 0 };
         var hasWildcards = wildcards is { Count: > 0 };
@@ -556,14 +570,8 @@ internal sealed class MeterProviderSdk : MeterProvider
 
             if (hasPrefixes)
             {
-                if (prefixes!.Count == 1)
-                {
-                    var singlePrefix = prefixes[0];
-                    return (instrument) => instrument.Meter.Name.StartsWith(singlePrefix, StringComparison.OrdinalIgnoreCase);
-                }
-
-                var prefixArray = prefixes.ToArray();
-                return (instrument) => WildcardHelper.PrefixMatch(prefixArray, instrument.Meter.Name);
+                var singlePrefix = prefixes![0];
+                return (instrument) => instrument.Meter.Name.StartsWith(singlePrefix, StringComparison.OrdinalIgnoreCase);
             }
 
             var regex = WildcardHelper.GetWildcardRegex(wildcards!);
@@ -573,15 +581,7 @@ internal sealed class MeterProviderSdk : MeterProvider
         else
         {
             var namesPredicate = hasNames ? new HashSetPredicate(names!) : null;
-            PrefixPredicate? prefixPredicate = null;
-
-            if (hasPrefixes)
-            {
-                prefixPredicate = prefixes!.Count == 1
-                    ? new SinglePrefixPredicate(prefixes[0])
-                    : new MultiPrefixPredicate(prefixes.ToArray());
-            }
-
+            var prefixPredicate = hasPrefixes ? new PrefixPredicate(prefixes![0]) : null;
             var regexPredicate = hasWildcards ? new RegexPredicate(WildcardHelper.GetWildcardRegex(wildcards!)) : null;
             var compositePredicate = new CompositePredicate(namesPredicate, prefixPredicate, regexPredicate);
             return compositePredicate.IsMatch;
@@ -715,23 +715,11 @@ internal sealed class MeterProviderSdk : MeterProvider
         public bool IsMatch(Instrument instrument) => this.set.Contains(instrument.Meter.Name);
     }
 
-    private abstract class PrefixPredicate
-    {
-        public abstract bool IsMatch(Instrument instrument);
-    }
-
-    private sealed class SinglePrefixPredicate(string prefix) : PrefixPredicate
+    private sealed class PrefixPredicate(string prefix)
     {
         private readonly string prefix = prefix;
 
-        public override bool IsMatch(Instrument instrument) => instrument.Meter.Name.StartsWith(this.prefix, StringComparison.OrdinalIgnoreCase);
-    }
-
-    private sealed class MultiPrefixPredicate(string[] prefixes) : PrefixPredicate
-    {
-        private readonly string[] prefixes = prefixes;
-
-        public override bool IsMatch(Instrument instrument) => WildcardHelper.PrefixMatch(this.prefixes, instrument.Meter.Name);
+        public bool IsMatch(Instrument instrument) => instrument.Meter.Name.StartsWith(this.prefix, StringComparison.OrdinalIgnoreCase);
     }
 
     private sealed class RegexPredicate(Regex regex)

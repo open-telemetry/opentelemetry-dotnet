@@ -401,6 +401,20 @@ internal sealed class TracerProviderSdk : TracerProvider
             }
         }
 
+        if (prefixes is { Count: > 1 })
+        {
+            // A linear StartsWith scan over multiple prefixes is only worthwhile for a single
+            // prefix; beyond that, a compiled Regex is simpler and at least as fast, especially
+            // when the prefixes share a long common substring.
+            wildcards ??= [];
+            foreach (var prefix in prefixes)
+            {
+                wildcards.Add(prefix + "*");
+            }
+
+            prefixes = null;
+        }
+
         var hasNames = names is { Count: > 0 };
         var hasPrefixes = prefixes is { Count: > 0 };
         var hasWildcards = wildcards is { Count: > 0 };
@@ -420,14 +434,8 @@ internal sealed class TracerProviderSdk : TracerProvider
 
             if (hasPrefixes)
             {
-                if (prefixes!.Count == 1)
-                {
-                    var singlePrefix = prefixes[0];
-                    return (source) => source.Name.StartsWith(singlePrefix, StringComparison.OrdinalIgnoreCase);
-                }
-
-                var prefixArray = prefixes.ToArray();
-                return (source) => WildcardHelper.PrefixMatch(prefixArray, source.Name);
+                var singlePrefix = prefixes![0];
+                return (source) => source.Name.StartsWith(singlePrefix, StringComparison.OrdinalIgnoreCase);
             }
 
             var regex = WildcardHelper.GetWildcardRegex(wildcards!);
@@ -437,14 +445,7 @@ internal sealed class TracerProviderSdk : TracerProvider
         else
         {
             var namesPredicate = hasNames ? new HashSetPredicate(names!) : null;
-            PrefixPredicate? prefixPredicate = null;
-
-            if (hasPrefixes)
-            {
-                prefixPredicate = prefixes!.Count == 1
-                    ? new SinglePrefixPredicate(prefixes[0])
-                    : new MultiPrefixPredicate(prefixes.ToArray());
-            }
+            var prefixPredicate = hasPrefixes ? new PrefixPredicate(prefixes![0]) : null;
 
             RegexPredicate? regexPredicate = null;
 
@@ -762,23 +763,11 @@ internal sealed class TracerProviderSdk : TracerProvider
         public bool IsMatch(ActivitySource source) => this.set.Contains(source.Name);
     }
 
-    private abstract class PrefixPredicate
-    {
-        public abstract bool IsMatch(ActivitySource source);
-    }
-
-    private sealed class SinglePrefixPredicate(string prefix) : PrefixPredicate
+    private sealed class PrefixPredicate(string prefix)
     {
         private readonly string prefix = prefix;
 
-        public override bool IsMatch(ActivitySource source) => source.Name.StartsWith(this.prefix, StringComparison.OrdinalIgnoreCase);
-    }
-
-    private sealed class MultiPrefixPredicate(string[] prefixes) : PrefixPredicate
-    {
-        private readonly string[] prefixes = prefixes;
-
-        public override bool IsMatch(ActivitySource source) => WildcardHelper.PrefixMatch(this.prefixes, source.Name);
+        public bool IsMatch(ActivitySource source) => source.Name.StartsWith(this.prefix, StringComparison.OrdinalIgnoreCase);
     }
 
     private class RegexPredicate(Regex regex)

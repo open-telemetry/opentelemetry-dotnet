@@ -59,27 +59,6 @@ internal static class WildcardHelper
         return false;
     }
 
-    /// <summary>
-    /// Matches <paramref name="value"/> against multiple simple prefixes.
-    /// </summary>
-    /// <param name="prefixes">The prefixes to match against.</param>
-    /// <param name="value">The value to test.</param>
-    /// <returns>
-    /// <see langword="true"/> if <paramref name="value"/> starts with any of <paramref name="prefixes"/>.
-    /// </returns>
-    public static bool PrefixMatch(string[] prefixes, string value)
-    {
-        foreach (var prefix in prefixes)
-        {
-            if (value.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     public static Regex GetWildcardRegex(IEnumerable<string> patterns)
     {
         Debug.Assert(patterns?.Any() == true, "patterns was null or empty");
