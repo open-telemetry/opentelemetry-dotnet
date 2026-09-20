@@ -545,9 +545,12 @@ internal sealed class MeterProviderSdk : MeterProvider
         }
         else if (sources.Count > 0)
         {
+#if NET
+            var names = new HashSet<string>(sources, StringComparer.OrdinalIgnoreCase).ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+#else
             var names = new HashSet<string>(sources, StringComparer.OrdinalIgnoreCase);
-            var predicate = new HashSetPredicate(names);
-            return predicate.IsMatch;
+#endif
+            return (instrument) => names.Contains(instrument.Meter.Name);
         }
 
         return null;

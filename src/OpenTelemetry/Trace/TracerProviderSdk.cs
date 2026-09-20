@@ -419,8 +419,12 @@ internal sealed class TracerProviderSdk : TracerProvider
                     names.Add(string.Empty);
                 }
 
-                var predicate = new HashSetPredicate(names);
-                return predicate.IsMatch;
+#if NET
+                var frozenNames = names.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+                return (source) => frozenNames.Contains(source.Name);
+#else
+                return (source) => names.Contains(source.Name);
+#endif
             }
         }
         else if (supportLegacyActivity)
