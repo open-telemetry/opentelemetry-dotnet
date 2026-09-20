@@ -382,7 +382,7 @@ internal sealed class TracerProviderSdk : TracerProvider
         List<string>? prefixes = null;
         List<string>? wildcards = null;
         HashSet<string>? names = supportLegacyActivity
-            ? new HashSet<string>(StringComparer.OrdinalIgnoreCase) { string.Empty }
+            ? new(StringComparer.OrdinalIgnoreCase) { string.Empty }
             : null;
 
         foreach (var source in sources)
