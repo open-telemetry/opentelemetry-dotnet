@@ -209,6 +209,36 @@ public sealed class TracerProviderSdkTests : IDisposable
     }
 
     [Fact]
+    public void TracerProviderSdkAddSourceWithLegacySourceAndGenuineWildcard()
+    {
+        var methodName = Utils.GetCurrentMethodName();
+        using var sourceA = new ActivitySource($"{methodName}.A");
+        using var sourceB = new ActivitySource($"{methodName}.Ab");
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddLegacySource("LegacyOperation")
+            .AddSource($"{methodName}.?")
+            .Build();
+
+        using (var activity = sourceA.StartActivity("test"))
+        {
+            Assert.NotNull(activity);
+        }
+
+        using (var activity = sourceB.StartActivity("test"))
+        {
+            Assert.Null(activity);
+        }
+
+        using var legacyActivity = new Activity("LegacyOperation");
+        legacyActivity.Start();
+
+        Assert.True(legacyActivity.IsAllDataRequested);
+
+        legacyActivity.Stop();
+    }
+
+    [Fact]
     public void TracerProviderSdkAddSourceExactMatchIsCaseInsensitive()
     {
         using var source1 = new ActivitySource($"{Utils.GetCurrentMethodName()}.A");
