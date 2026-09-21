@@ -11,9 +11,16 @@ namespace OpenTelemetry.Exporter;
 
 internal static class OtlpServiceCollectionExtensions
 {
-    private const string OtlpLogExporterHttpClientCategory = "System.Net.Http.HttpClient.OtlpLogExporter";
-    private const string OtlpMetricExporterHttpClientCategory = "System.Net.Http.HttpClient.OtlpMetricExporter";
-    private const string OtlpTraceExporterHttpClientCategory = "System.Net.Http.HttpClient.OtlpTraceExporter";
+    private const string HttpClientCategoryNamePrefix = "System.Net.Http.HttpClient.";
+
+    private const string OtlpLogExporterHttpClientCategory =
+        HttpClientCategoryNamePrefix + OtlpExporterHttpClientNames.LogExporter;
+
+    private const string OtlpMetricExporterHttpClientCategory =
+        HttpClientCategoryNamePrefix + OtlpExporterHttpClientNames.MetricExporter;
+
+    private const string OtlpTraceExporterHttpClientCategory =
+        HttpClientCategoryNamePrefix + OtlpExporterHttpClientNames.TraceExporter;
 
     public static void AddOtlpExporterLoggingServices(this IServiceCollection services)
         => AddOtlpExporterSharedServices(
