@@ -6,6 +6,12 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Self-diagnostic features are explicitly disabled on browser-based
+  platforms (e.g. Blazor) and are now non-functional. Previously, attempting
+  to enable self-diagnostics on such platforms would result in an exception
+  at runtime.
+  ([#7799](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7799))
+
 ## 1.19.1
 
 Released 2026-Sep-21
