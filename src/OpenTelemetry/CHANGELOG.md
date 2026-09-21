@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.19.1-rc.1
+
+Released 2026-Sep-21
+
 * Fixed `NotSupportedException` thrown when building a `TracerProvider` or
   `MeterProvider` with a large number of wildcard source/meter patterns on
   `net8.0`, and a related `OutOfMemoryException` that could occur when many
