@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-namespace OpenTelemetry.Configuration;
+namespace OpenTelemetry.Configuration.Declarative;
 
 /// <summary>
 /// A non-generic component provider registration, used to store registrations for different

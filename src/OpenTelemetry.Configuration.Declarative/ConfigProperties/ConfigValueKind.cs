@@ -1,17 +1,13 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-namespace OpenTelemetry.Configuration;
+namespace OpenTelemetry.Configuration.Declarative;
 
 /// <summary>
-/// The kinds of value a <see cref="ConfigValue"/> can hold.
+/// The kinds of value represented by a <see cref="ConfigProperties"/> property.
 /// </summary>
-/// <remarks>
-/// The scalar members cover the same set of types as the YAML 1.2 core schema tags, but are restated
-/// here rather than reused from the YAML layer so that the value model stays independent of the source format.
-/// A future JSON or OpAMP source maps onto the same kinds.
-/// </remarks>
-internal enum ConfigValueKind
+#pragma warning disable CA1720 // Enum members intentionally use the configuration value-kind names.
+public enum ConfigValueKind
 {
     /// <summary>
     /// A null value.
@@ -47,7 +43,8 @@ internal enum ConfigValueKind
     Mapping,
 
     /// <summary>
-    /// A sequence of <see cref="ConfigValue"/> items.
+    /// A sequence of configuration values.
     /// </summary>
     Sequence,
 }
+#pragma warning restore CA1720 // Identifiers should not contain type names.

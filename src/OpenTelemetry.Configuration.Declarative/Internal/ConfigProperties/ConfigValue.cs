@@ -3,7 +3,7 @@
 
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Configuration;
+namespace OpenTelemetry.Configuration.Declarative;
 
 /// <summary>
 /// A discriminated-union value that can hold any type representable in the OTel configuration schema.
