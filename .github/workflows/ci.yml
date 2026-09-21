@@ -172,7 +172,7 @@ jobs:
       || contains(needs.detect-changes.outputs.changes, 'otlp')
       || contains(needs.detect-changes.outputs.changes, 'build')
       || contains(needs.detect-changes.outputs.changes, 'shared')
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     strategy:
       fail-fast: ${{ github.event_name == 'merge_group' }}
       matrix:
@@ -249,7 +249,7 @@ jobs:
       || contains(needs.detect-changes.outputs.changes, 'instrumentation')
       || contains(needs.detect-changes.outputs.changes, 'build')
       || contains(needs.detect-changes.outputs.changes, 'shared')
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     strategy:
       fail-fast: ${{ github.event_name == 'merge_group' }}
       matrix:
@@ -367,7 +367,7 @@ jobs:
       concurrency-tests
       ]
     if: always()
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
     - name: Report CI status
       shell: bash
