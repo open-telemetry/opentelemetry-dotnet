@@ -467,8 +467,8 @@ or reader
   | `OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE`          | Path to client certificate file (PEM) |
   | `OTEL_EXPORTER_OTLP_CLIENT_KEY`                  | Path to client private key file (PEM) |
 
-  > [!NOTE]
-  > mTLS is not supported on browser-based platforms.
+> [!NOTE]
+> mTLS is not supported on browser-based platforms.
 
 * Logs:
 
@@ -683,10 +683,10 @@ want to solicit feedback from the community.
       managed on disk, refer to the [File
       details](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.PersistentStorage.FileSystem#file-details).
 
-      > [!NOTE]
-      > Disk retry is not supported on browser-based platforms.
-
       Added in **TBD** (Unreleased).
+
+> [!NOTE]
+> Disk retry is not supported on browser-based platforms.
 
 * Logs
 

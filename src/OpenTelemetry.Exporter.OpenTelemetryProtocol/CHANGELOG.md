@@ -9,7 +9,7 @@ Notes](../../RELEASENOTES.md).
 
 * mTLS-related options and the experimental disk retry feature as explicitly
   marked as not supported on browser-based platforms (e.g. Blazor).
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7799](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7799))
 
 ## 1.19.1
 
