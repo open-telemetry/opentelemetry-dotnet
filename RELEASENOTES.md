@@ -4,6 +4,15 @@ This file contains highlights and announcements covering all components.
 For more details see `CHANGELOG.md` files maintained in the root source
 directory of each individual package.
 
+## 1.19.1
+
+Release details: [1.19.1](https://github.com/open-telemetry/opentelemetry-dotnet/releases/tag/core-1.19.1)
+
+* Fixed `NotSupportedException` thrown when building a `TracerProvider` or
+  `MeterProvider` with a large number of wildcard source/meter patterns on
+  `net8.0`, and a related `OutOfMemoryException` that could occur when many
+  such providers were built over the lifetime of a process.
+
 ## 1.19.0
 
 Release details: [1.19.0](https://github.com/open-telemetry/opentelemetry-dotnet/releases/tag/core-1.19.0)
