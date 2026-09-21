@@ -36,4 +36,4 @@ Notes](../../RELEASENOTES.md).
 * Added public APIs for reading the complete parsed declarative configuration
   document from `IServiceProvider` or `IConfigurationRoot`, with typed access to
   YAML values through `ConfigProperties`.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7781](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7781))
