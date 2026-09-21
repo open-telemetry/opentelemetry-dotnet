@@ -106,7 +106,7 @@ internal static class OtlpExporterOptionsExtensions
 #if NET
             if (OperatingSystem.IsBrowser())
             {
-                throw new NotSupportedException("Disk retry is not supported on browser-based platforms.");
+                throw new PlatformNotSupportedException("Disk retry is not supported on browser-based platforms.");
             }
 #endif
 

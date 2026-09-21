@@ -114,7 +114,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
             {
                 if (OperatingSystem.IsBrowser())
                 {
-                    throw new NotSupportedException("Mutual TLS is not supported on browser-based platforms.");
+                    throw new PlatformNotSupportedException("Mutual TLS is not supported on browser-based platforms.");
                 }
 
                 return OtlpSecureHttpClientFactory.CreateSecureHttpClient(
