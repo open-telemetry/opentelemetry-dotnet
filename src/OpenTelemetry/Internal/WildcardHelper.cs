@@ -9,9 +9,7 @@ namespace OpenTelemetry;
 
 internal static class WildcardHelper
 {
-#if !NET
     private static readonly TimeSpan RegexMatchTimeout = TimeSpan.FromSeconds(1);
-#endif
 
     public static bool ContainsWildcard(
         [NotNullWhen(true)]
@@ -43,11 +41,12 @@ internal static class WildcardHelper
 
         var pattern = "^(?:" + convertedPattern + ")$";
 
-#if NET
-        return new Regex(pattern, RegexOptions.NonBacktracking | RegexOptions.IgnoreCase);
-#else
+        // RegexOptions.NonBacktracking is not used as it has a fixed automata-size limit that many
+        // source patterns can exceed and it retains a much larger automaton per Regex instance
+        // than a backtracking regex, which can lead to an OutOfMemoryException in applications.
+        // The match timeout bounds worst-case matching time to protect against catastrophic backtracking.
+        // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/7787.
         return new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase, RegexMatchTimeout);
-#endif
     }
 
     public static bool IsMatch(Regex regex, string input)
