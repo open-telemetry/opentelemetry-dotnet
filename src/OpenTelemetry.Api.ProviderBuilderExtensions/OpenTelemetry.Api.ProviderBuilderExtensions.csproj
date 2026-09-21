@@ -5,6 +5,7 @@
     <Description>Contains extensions to register OpenTelemetry in applications using Microsoft.Extensions.DependencyInjection</Description>
     <RootNamespace>OpenTelemetry</RootNamespace>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
+    <SupportsBrowserAndMobilePlatforms>true</SupportsBrowserAndMobilePlatforms>
   </PropertyGroup>
 
   <ItemGroup>

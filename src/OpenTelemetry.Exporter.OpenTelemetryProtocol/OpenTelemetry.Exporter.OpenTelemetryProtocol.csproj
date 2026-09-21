@@ -18,6 +18,7 @@
       and https://github.com/dotnet/runtime/issues/92509
     -->
     <NoWarn>$(NoWarn);SYSLIB1100;SYSLIB1101</NoWarn>
+    <SupportsBrowserAndMobilePlatforms>true</SupportsBrowserAndMobilePlatforms>
   </PropertyGroup>
 
   <!-- This package is explicitly upgraded for .NET 8 to fix native AoT compatibility issues -->

@@ -103,6 +103,13 @@ internal static class OtlpExporterOptionsExtensions
         }
         else if (experimentalOptions.EnableDiskRetry)
         {
+#if NET
+            if (OperatingSystem.IsBrowser())
+            {
+                throw new NotSupportedException("Disk retry is not supported on browser-based platforms.");
+            }
+#endif
+
             Debug.Assert(!string.IsNullOrEmpty(experimentalOptions.DiskRetryDirectoryPath), $"{nameof(experimentalOptions.DiskRetryDirectoryPath)} is null or empty");
 
             return new OtlpExporterPersistentStorageTransmissionHandler(

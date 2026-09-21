@@ -28,7 +28,15 @@ public static class Sdk
 
         Activity.DefaultIdFormat = ActivityIdFormat.W3C;
         Activity.ForceDefaultIdFormat = true;
+
+#if NET
+        if (!OperatingSystem.IsBrowser())
+        {
+            SelfDiagnostics.EnsureInitialized();
+        }
+#else
         SelfDiagnostics.EnsureInitialized();
+#endif
 
         var sdkAssembly = typeof(Sdk).Assembly;
         InformationalVersion = sdkAssembly.GetPackageVersion();

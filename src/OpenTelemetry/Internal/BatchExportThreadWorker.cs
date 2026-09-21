@@ -9,6 +9,9 @@ namespace OpenTelemetry.Internal;
 /// Thread-based implementation of batch export worker.
 /// </summary>
 /// <typeparam name="T">The type of telemetry object to be exported.</typeparam>
+#if NET
+[System.Runtime.Versioning.UnsupportedOSPlatform("browser")]
+#endif
 internal sealed class BatchExportThreadWorker<T> : BatchExportWorker<T>
     where T : class
 {

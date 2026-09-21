@@ -5,6 +5,7 @@
     <Description>Contains extensions to start OpenTelemetry in applications using Microsoft.Extensions.Hosting</Description>
     <RootNamespace>OpenTelemetry</RootNamespace>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
+    <SupportsBrowserAndMobilePlatforms>true</SupportsBrowserAndMobilePlatforms>
   </PropertyGroup>
 
   <ItemGroup>

@@ -9,6 +9,9 @@ namespace OpenTelemetry.Internal;
 /// <summary>
 /// Thread-based implementation of periodic exporting metric reader worker.
 /// </summary>
+#if NET
+[System.Runtime.Versioning.UnsupportedOSPlatform("browser")]
+#endif
 internal sealed class PeriodicExportingMetricReaderThreadWorker : PeriodicExportingMetricReaderWorker
 {
     private readonly Thread exporterThread;

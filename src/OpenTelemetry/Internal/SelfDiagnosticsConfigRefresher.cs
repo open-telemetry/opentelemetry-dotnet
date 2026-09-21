@@ -15,6 +15,9 @@ namespace OpenTelemetry.Internal;
 /// file is present and valid. Otherwise, the stream object would be unavailable,
 /// nothing will be logged to any file.
 /// </summary>
+#if NET
+[System.Runtime.Versioning.UnsupportedOSPlatform("browser")]
+#endif
 internal class SelfDiagnosticsConfigRefresher : IDisposable
 {
     public static readonly byte[] MessageOnNewFile = "If you are seeing this message, it means that the OpenTelemetry SDK has successfully created the log file used to write self-diagnostic logs. This file will be appended with logs as they appear. If you do not see any logs following this line, it means no logs of the configured LogLevel is occurring. You may change the LogLevel to show lower log levels, so that logs of lower severities will be shown.\n"u8.ToArray();
