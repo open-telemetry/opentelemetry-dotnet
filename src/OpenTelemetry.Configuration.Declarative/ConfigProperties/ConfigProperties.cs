@@ -29,7 +29,6 @@ public sealed class ConfigProperties
     /// <summary>
     /// Gets all keys present in this mapping.
     /// </summary>
-    /// <remarks>The returned collection is read-only.</remarks>
     public IReadOnlyCollection<string> Keys => this.values.Keys;
 
     /// <summary>

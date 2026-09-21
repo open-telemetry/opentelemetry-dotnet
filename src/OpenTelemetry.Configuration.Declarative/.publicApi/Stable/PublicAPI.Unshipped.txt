@@ -32,6 +32,7 @@ OpenTelemetry.Configuration.Declarative.ConfigValueOutcome.TypeMismatch = 3 -> O
 OpenTelemetry.Configuration.Declarative.ConfigValueResult<T>
 OpenTelemetry.Configuration.Declarative.ConfigValueResult<T>.ConfigValueResult() -> void
 OpenTelemetry.Configuration.Declarative.ConfigValueResult<T>.Deconstruct(out OpenTelemetry.Configuration.Declarative.ConfigValueOutcome outcome, out T? value) -> void
+OpenTelemetry.Configuration.Declarative.ConfigValueResult<T>.Equals(OpenTelemetry.Configuration.Declarative.ConfigValueResult<T> other) -> bool
 OpenTelemetry.Configuration.Declarative.ConfigValueResult<T>.Outcome.get -> OpenTelemetry.Configuration.Declarative.ConfigValueOutcome
 OpenTelemetry.Configuration.Declarative.ConfigValueResult<T>.Position.get -> OpenTelemetry.Configuration.Declarative.ConfigValuePosition
 OpenTelemetry.Configuration.Declarative.ConfigValueResult<T>.TryGetValue(out T? value) -> bool
@@ -39,6 +40,7 @@ OpenTelemetry.Configuration.Declarative.ConfigValueResult<T>.Value.get -> T?
 OpenTelemetry.Configuration.Declarative.ConfigValuePosition
 OpenTelemetry.Configuration.Declarative.ConfigValuePosition.Column.get -> long
 OpenTelemetry.Configuration.Declarative.ConfigValuePosition.ConfigValuePosition() -> void
+OpenTelemetry.Configuration.Declarative.ConfigValuePosition.Equals(OpenTelemetry.Configuration.Declarative.ConfigValuePosition other) -> bool
 OpenTelemetry.Configuration.Declarative.ConfigValuePosition.HasPosition.get -> bool
 OpenTelemetry.Configuration.Declarative.ConfigValuePosition.Line.get -> long
 OpenTelemetry.Configuration.Declarative.DeclarativeConfigurationDocument
@@ -48,11 +50,19 @@ OpenTelemetry.Configuration.Declarative.DeclarativeConfigurationException.Declar
 OpenTelemetry.Configuration.Declarative.DeclarativeConfigurationException.DeclarativeConfigurationException(string! message) -> void
 OpenTelemetry.Configuration.Declarative.DeclarativeConfigurationException.DeclarativeConfigurationException(string! message, System.Exception! innerException) -> void
 OpenTelemetry.OpenTelemetryBuilderDeclarativeConfigurationExtensions
+override OpenTelemetry.Configuration.Declarative.ConfigValuePosition.Equals(object? obj) -> bool
+override OpenTelemetry.Configuration.Declarative.ConfigValuePosition.GetHashCode() -> int
+override OpenTelemetry.Configuration.Declarative.ConfigValueResult<T>.Equals(object? obj) -> bool
+override OpenTelemetry.Configuration.Declarative.ConfigValueResult<T>.GetHashCode() -> int
 static Microsoft.Extensions.Configuration.DeclarativeConfigurationBuilderExtensions.AddOpenTelemetryDeclarativeConfiguration(this Microsoft.Extensions.Configuration.IConfigurationBuilder! builder) -> Microsoft.Extensions.Configuration.IConfigurationBuilder!
 static Microsoft.Extensions.Configuration.DeclarativeConfigurationBuilderExtensions.AddOpenTelemetryDeclarativeConfiguration(this Microsoft.Extensions.Configuration.IConfigurationBuilder! builder, string! filePath) -> Microsoft.Extensions.Configuration.IConfigurationBuilder!
 static Microsoft.Extensions.Configuration.DeclarativeConfigurationExtensions.GetOpenTelemetryDeclarativeConfiguration(this Microsoft.Extensions.Configuration.IConfigurationRoot! configuration) -> OpenTelemetry.Configuration.Declarative.DeclarativeConfigurationDocument?
 static Microsoft.Extensions.DependencyInjection.DeclarativeConfigurationServiceProviderExtensions.GetOpenTelemetryDeclarativeConfiguration(this System.IServiceProvider! serviceProvider) -> OpenTelemetry.Configuration.Declarative.DeclarativeConfigurationDocument?
 static OpenTelemetry.Configuration.Declarative.ConfigProperties.Empty.get -> OpenTelemetry.Configuration.Declarative.ConfigProperties!
+static OpenTelemetry.Configuration.Declarative.ConfigValuePosition.operator !=(OpenTelemetry.Configuration.Declarative.ConfigValuePosition left, OpenTelemetry.Configuration.Declarative.ConfigValuePosition right) -> bool
+static OpenTelemetry.Configuration.Declarative.ConfigValuePosition.operator ==(OpenTelemetry.Configuration.Declarative.ConfigValuePosition left, OpenTelemetry.Configuration.Declarative.ConfigValuePosition right) -> bool
+static OpenTelemetry.Configuration.Declarative.ConfigValueResult<T>.operator !=(OpenTelemetry.Configuration.Declarative.ConfigValueResult<T> left, OpenTelemetry.Configuration.Declarative.ConfigValueResult<T> right) -> bool
+static OpenTelemetry.Configuration.Declarative.ConfigValueResult<T>.operator ==(OpenTelemetry.Configuration.Declarative.ConfigValueResult<T> left, OpenTelemetry.Configuration.Declarative.ConfigValueResult<T> right) -> bool
 static OpenTelemetry.Configuration.Declarative.ConfigValuePosition.Unknown.get -> OpenTelemetry.Configuration.Declarative.ConfigValuePosition
 static OpenTelemetry.OpenTelemetryBuilderDeclarativeConfigurationExtensions.UseDeclarativeConfiguration(this OpenTelemetry.IOpenTelemetryBuilder! builder) -> OpenTelemetry.IOpenTelemetryBuilder!
 static OpenTelemetry.OpenTelemetryBuilderDeclarativeConfigurationExtensions.UseDeclarativeConfiguration(this OpenTelemetry.IOpenTelemetryBuilder! builder, string! filePath) -> OpenTelemetry.IOpenTelemetryBuilder!

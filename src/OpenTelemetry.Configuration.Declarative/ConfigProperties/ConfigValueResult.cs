@@ -10,9 +10,7 @@ namespace OpenTelemetry.Configuration.Declarative;
 /// <see cref="ConfigValueOutcome"/> with the typed value.
 /// </summary>
 /// <typeparam name="T">The type of the value.</typeparam>
-#pragma warning disable CA1815 // This transient read result is consumed through Outcome and Value, not equality comparisons.
-public readonly struct ConfigValueResult<T>
-#pragma warning restore CA1815 // Override equals and operator equals on value types
+public readonly struct ConfigValueResult<T> : IEquatable<ConfigValueResult<T>>
 {
     internal ConfigValueResult(ConfigValueOutcome outcome, T? value, ConfigValuePosition position)
     {
@@ -36,6 +34,22 @@ public readonly struct ConfigValueResult<T>
     /// absent or its position is unknown.
     /// </summary>
     public ConfigValuePosition Position { get; }
+
+    /// <summary>
+    /// Returns a value indicating whether two <see cref="ConfigValueResult{T}"/> instances are equal.
+    /// </summary>
+    /// <param name="left">The left instance.</param>
+    /// <param name="right">The right instance.</param>
+    /// <returns><see langword="true"/> if the instances are equal; otherwise <see langword="false"/>.</returns>
+    public static bool operator ==(ConfigValueResult<T> left, ConfigValueResult<T> right) => left.Equals(right);
+
+    /// <summary>
+    /// Returns a value indicating whether two <see cref="ConfigValueResult{T}"/> instances are not equal.
+    /// </summary>
+    /// <param name="left">The left instance.</param>
+    /// <param name="right">The right instance.</param>
+    /// <returns><see langword="true"/> if the instances are not equal; otherwise <see langword="false"/>.</returns>
+    public static bool operator !=(ConfigValueResult<T> left, ConfigValueResult<T> right) => !left.Equals(right);
 
     /// <summary>
     /// Deconstructs into <paramref name="outcome"/> and <paramref name="value"/>.
@@ -65,4 +79,31 @@ public readonly struct ConfigValueResult<T>
         value = this.Value;
         return this.Outcome == ConfigValueOutcome.Present;
     }
+
+    /// <inheritdoc/>
+    public override bool Equals(object? obj) => obj is ConfigValueResult<T> other && this.Equals(other);
+
+    /// <inheritdoc/>
+    public override int GetHashCode()
+    {
+#if NET || NETSTANDARD2_1_OR_GREATER
+        return HashCode.Combine(this.Outcome, this.Value, this.Position);
+#else
+        var hash = 17;
+        unchecked
+        {
+            hash = (31 * hash) + this.Outcome.GetHashCode();
+            hash = (31 * hash) + (this.Value?.GetHashCode() ?? 0);
+            hash = (31 * hash) + this.Position.GetHashCode();
+        }
+
+        return hash;
+#endif
+    }
+
+    /// <inheritdoc/>
+    public bool Equals(ConfigValueResult<T> other)
+        => this.Outcome == other.Outcome
+        && EqualityComparer<T>.Default.Equals(this.Value!, other.Value!)
+        && this.Position == other.Position;
 }
