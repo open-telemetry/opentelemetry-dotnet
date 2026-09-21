@@ -11,6 +11,20 @@ Notes](../../RELEASENOTES.md).
   the [`service.criticality` resource attribute](https://github.com/open-telemetry/semantic-conventions/blob/c381bc8a42ec5628bc7becdca4ce904ae0ed66c3/docs/registry/attributes/service.md#service-criticality).
   ([#7725](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7725))
 
+## 1.19.1
+
+Released 2026-Sep-21
+
+## 1.19.1-rc.1
+
+Released 2026-Sep-21
+
+* Fixed `NotSupportedException` thrown when building a `TracerProvider` or
+  `MeterProvider` with a large number of wildcard source/meter patterns on
+  `net8.0`, and a related `OutOfMemoryException` that could occur when many
+  such providers were built over the lifetime of a process.
+  ([#7788](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7788))
+
 ## 1.19.0
 
 Released 2026-Sep-18
