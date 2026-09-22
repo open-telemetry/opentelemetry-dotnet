@@ -133,16 +133,12 @@ public class SuppressInstrumentationTests
     }
 
     [Fact]
-    public Task SuppressInstrumentationScopeEnterIsLocalToInheritedAsyncFlow()
-    {
-        return VerifyReferenceCountIncrementIsLocalToAsyncFlow(SuppressInstrumentationScope.Enter);
-    }
+    public async Task SuppressInstrumentationScopeEnterIsLocalToInheritedAsyncFlow()
+        => await VerifyReferenceCountIncrementIsLocalToAsyncFlow(SuppressInstrumentationScope.Enter);
 
     [Fact]
-    public Task SuppressInstrumentationScopeIncrementIsLocalToInheritedAsyncFlow()
-    {
-        return VerifyReferenceCountIncrementIsLocalToAsyncFlow(SuppressInstrumentationScope.IncrementIfTriggered);
-    }
+    public async Task SuppressInstrumentationScopeIncrementIsLocalToInheritedAsyncFlow()
+        => await VerifyReferenceCountIncrementIsLocalToAsyncFlow(SuppressInstrumentationScope.IncrementIfTriggered);
 
     [Fact]
     public async Task SuppressInstrumentationScopeDecrementIsLocalToInheritedAsyncFlow()
