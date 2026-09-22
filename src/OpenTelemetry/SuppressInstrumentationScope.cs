@@ -143,13 +143,8 @@ public sealed class SuppressInstrumentationScope : IDisposable
             : new SuppressionState(depth);
     }
 
-    private sealed class SuppressionState
+    private sealed class SuppressionState(int depth)
     {
-        public SuppressionState(int depth)
-        {
-            this.Depth = depth;
-        }
-
-        public int Depth { get; }
+        public int Depth { get; } = depth;
     }
 }
