@@ -92,6 +92,7 @@ public class HttpRetryTestCase
                 new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 5000)
             ],
             expectedRetryAttempts: 4),
+        new(
             "Expired deadline",
             [
                 new(statusCode: HttpStatusCode.ServiceUnavailable, isDeadlineExceeded: true, expectedSuccess: false)
