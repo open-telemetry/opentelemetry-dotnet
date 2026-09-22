@@ -23,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
     <ProjectReference Include="..\OpenTelemetry.Api.ProviderBuilderExtensions\OpenTelemetry.Api.ProviderBuilderExtensions.csproj" />
   </ItemGroup>
 
@@ -33,7 +34,6 @@
     <Compile Include="$(RepoRoot)\src\Shared\Guard.cs" Link="Includes\Guard.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\Shims\ExperimentalAttribute.cs" Link="Includes\Shims\ExperimentalAttribute.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\Shims\IsExternalInit.cs" Link="Includes\Shims\IsExternalInit.cs" />
-    <Compile Include="$(RepoRoot)\src\Shared\Shims\NullableAttributes.cs" Link="Includes\Shims\NullableAttributes.cs" />
   </ItemGroup>
 
   <ItemGroup>

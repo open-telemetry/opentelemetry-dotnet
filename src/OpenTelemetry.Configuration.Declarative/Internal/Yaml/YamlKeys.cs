@@ -13,6 +13,7 @@ internal static class YamlKeys
     internal const string Resource = "resource";
     internal const string Attributes = "attributes";
     internal const string AttributesList = "attributes_list";
+    internal const string SchemaUrl = "schema_url";
     internal const string Name = "name";
     internal const string Value = "value";
     internal const string Type = "type";

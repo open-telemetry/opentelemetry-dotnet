@@ -25,10 +25,11 @@ internal sealed class DeclarativeYamlTestFile : IDisposable
     public static DeclarativeYamlTestFile CreateDeclarativeYaml(
         string fileFormat = "1.0",
         bool? disabled = null,
-        IReadOnlyDictionary<string, string>? resourceAttributes = null)
+        IReadOnlyDictionary<string, string>? resourceAttributes = null,
+        string? resourceAttributesList = null)
     {
         var factory = new DeclarativeYamlTestFileFactory();
-        var path = factory.CreateDeclarativeYaml(fileFormat, disabled, resourceAttributes);
+        var path = factory.CreateDeclarativeYaml(fileFormat, disabled, resourceAttributes, resourceAttributesList);
         return new DeclarativeYamlTestFile(factory, path);
     }
 

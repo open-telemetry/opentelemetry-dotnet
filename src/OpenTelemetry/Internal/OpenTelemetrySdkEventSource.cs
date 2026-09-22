@@ -348,6 +348,10 @@ internal sealed class OpenTelemetrySdkEventSource : EventSource, IConfigurationE
     public void ResourceSchemaUrlMergeConflict(string oldSchemaUrl, string updatingSchemaUrl)
         => this.WriteEvent(59, oldSchemaUrl, updatingSchemaUrl);
 
+    [Event(60, Message = "ResourceBuilder encountered conflicting Schema URL overrides: previous = '{0}', new = '{1}'. The final resource's Schema URL will be '{1}'.", Level = EventLevel.Warning)]
+    public void ResourceSchemaUrlOverrideConflict(string? previousSchemaUrl, string? newSchemaUrl)
+        => this.WriteEvent(60, previousSchemaUrl ?? string.Empty, newSchemaUrl ?? string.Empty);
+
     void IConfigurationExtensionsLogger.LogInvalidConfigurationValue(string key, string value)
         => this.InvalidConfigurationValue(key, value);
 

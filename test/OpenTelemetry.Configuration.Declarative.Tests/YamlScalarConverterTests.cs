@@ -8,6 +8,18 @@ namespace OpenTelemetry.Configuration.Declarative.Tests;
 
 public sealed class YamlScalarConverterTests
 {
+    public static TheoryData<string, long> DecimalFloatRoundingCases => new()
+    {
+        { "0.1", 4591870180066957722L },
+        { "0.2", 4596373779694328218L },
+        { "0.3", 4599075939470750515L },
+        { "1.1", 4607632778762754458L },
+        { "3.14", 4614253070214989087L },
+        { "1e-10", 4457293557087583675L },
+        { "1.23456789", 4608238818662014491L },
+        { "-0.0", -9223372036854775808L },
+    };
+
     public static TheoryData<string, double> FloatIntegerOverflowBoundaries => new()
     {
         { "0x" + new string('f', 13) + "8" + new string('0', 242), double.MaxValue },
@@ -187,6 +199,16 @@ public sealed class YamlScalarConverterTests
 
         Assert.Equal(ConfigValueKind.Double, result.Kind);
         Assert.Equal(double.PositiveInfinity, result.AsDouble());
+    }
+
+    [Theory]
+    [MemberData(nameof(DecimalFloatRoundingCases))]
+    public void Convert_Float_Decimal_IsExact(string value, long expectedBits)
+    {
+        var result = YamlScalarConverter.Convert(new(value, YamlScalarKind.Float));
+
+        Assert.Equal(ConfigValueKind.Double, result.Kind);
+        Assert.Equal(expectedBits, BitConverter.DoubleToInt64Bits(result.AsDouble()));
     }
 
     [Theory]

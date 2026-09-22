@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -89,12 +90,14 @@ public sealed class DeclarativeConfigurationSdkIntegrationTests
     [Fact]
     public void ResourceAttributes_SingleAttribute_FlowToSdkResource()
     {
+        // resource.attributes routes through DeclarativeResourceDetector; UseDeclarativeConfiguration
+        // registers both the config source and the detector.
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(
             resourceAttributes: new Dictionary<string, string> { ["service.name"] = "my-test-service" });
 
-        using var tracerProvider = BuildTracerProvider(yamlFile.Path);
+        using var host = BuildHostWithTracerProvider(yamlFile.Path);
 
-        var resource = tracerProvider.GetResource();
+        var resource = host.Services.GetRequiredService<TracerProvider>().GetResource();
         Assert.Contains(
             resource.Attributes,
             a => a.Key == "service.name" && (string)a.Value == "my-test-service");
@@ -111,12 +114,47 @@ public sealed class DeclarativeConfigurationSdkIntegrationTests
                 ["deployment.environment"] = "test",
             });
 
-        using var tracerProvider = BuildTracerProvider(yamlFile.Path);
+        using var host = BuildHostWithTracerProvider(yamlFile.Path);
 
-        var resource = tracerProvider.GetResource();
+        var resource = host.Services.GetRequiredService<TracerProvider>().GetResource();
         Assert.Contains(resource.Attributes, a => a.Key == "service.name" && (string)a.Value == "svc");
         Assert.Contains(resource.Attributes, a => a.Key == "service.version" && (string)a.Value == "2.0.0");
         Assert.Contains(resource.Attributes, a => a.Key == "deployment.environment" && (string)a.Value == "test");
+    }
+
+    [Fact]
+    public void ResourceAttributesAndSchemaUrl_FlowToAllSignalResources()
+    {
+        const string schemaUrl = "https://opentelemetry.io/schemas/1.24.0";
+        const string yaml = $"""
+            file_format: "1.0"
+            resource:
+              schema_url: "{schemaUrl}"
+              attributes:
+                - name: deployment.replicas
+                  type: int
+                  value: 3
+            """;
+
+        using var yamlFile = DeclarativeYamlTestFile.CreateYamlFile(yaml);
+        using var host = new HostBuilder()
+            .ConfigureServices(services =>
+                services.AddOpenTelemetry()
+                    .UseDeclarativeConfiguration(yamlFile.Path)
+                    .WithTracing()
+                    .WithMetrics()
+                    .WithLogging())
+            .Build();
+
+        AssertDeclarativeResource(
+            host.Services.GetRequiredService<TracerProvider>().GetResource(),
+            schemaUrl);
+        AssertDeclarativeResource(
+            host.Services.GetRequiredService<MeterProvider>().GetResource(),
+            schemaUrl);
+        AssertDeclarativeResource(
+            host.Services.GetRequiredService<LoggerProvider>().GetResource(),
+            schemaUrl);
     }
 
     [Theory]
@@ -130,6 +168,7 @@ public sealed class DeclarativeConfigurationSdkIntegrationTests
         string yamlValue,
         string expected)
     {
+        // The detector path does not URL-encode values, so whitespace is preserved verbatim.
         var yaml = $"""
             file_format: "1.1"
             resource:
@@ -139,9 +178,9 @@ public sealed class DeclarativeConfigurationSdkIntegrationTests
             """;
 
         using var yamlFile = DeclarativeYamlTestFile.CreateYamlFile(yaml);
-        using var tracerProvider = BuildTracerProvider(yamlFile.Path);
+        using var host = BuildHostWithTracerProvider(yamlFile.Path);
 
-        var actual = tracerProvider.GetResource().Attributes
+        var actual = host.Services.GetRequiredService<TracerProvider>().GetResource().Attributes
             .Single(attribute => attribute.Key == "review.whitespace")
             .Value;
 
@@ -163,9 +202,9 @@ public sealed class DeclarativeConfigurationSdkIntegrationTests
         using var envScope = EnvironmentVariableScope.Create("OTEL_TEST_SVC_NAME", null);
 
         using var yamlFile = DeclarativeYamlTestFile.CreateYamlFile(yaml);
-        using var tracerProvider = BuildTracerProvider(yamlFile.Path);
+        using var host = BuildHostWithTracerProvider(yamlFile.Path);
 
-        var resource = tracerProvider.GetResource();
+        var resource = host.Services.GetRequiredService<TracerProvider>().GetResource();
         Assert.Contains(
             resource.Attributes,
             a => a.Key == "service.name" && (string)a.Value == "substituted-service");
@@ -184,9 +223,9 @@ public sealed class DeclarativeConfigurationSdkIntegrationTests
 
         using var envScope = EnvironmentVariableScope.Create("OTEL_TEST_SVC_NAME", "from-env");
         using var yamlFile = DeclarativeYamlTestFile.CreateYamlFile(yaml);
-        using var tracerProvider = BuildTracerProvider(yamlFile.Path);
+        using var host = BuildHostWithTracerProvider(yamlFile.Path);
 
-        var resource = tracerProvider.GetResource();
+        var resource = host.Services.GetRequiredService<TracerProvider>().GetResource();
         Assert.Contains(
             resource.Attributes,
             a => a.Key == "service.name" && (string)a.Value == "from-env");
@@ -198,11 +237,11 @@ public sealed class DeclarativeConfigurationSdkIntegrationTests
         // Prove overlay ordering: a source added after YAML (higher position in the
         // IConfiguration chain) takes precedence over YAML values.
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(
-            resourceAttributes: new Dictionary<string, string> { ["service.name"] = "from-yaml" });
+            resourceAttributesList: "service.name=from-yaml");
 
         // YAML is added first, then the in-memory source is added after it.
         // Because the in-memory source occupies a higher position in the chain,
-        // it wins regardless of source types.
+        // its OTEL_RESOURCE_ATTRIBUTES value wins.
         var config = new ConfigurationBuilder()
             .AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path)
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -225,19 +264,103 @@ public sealed class DeclarativeConfigurationSdkIntegrationTests
     [Fact]
     public void OverlayPrecedence_YamlWinsOverSourceAddedBeforeIt()
     {
-        // Prove overlay ordering: YAML beats sources that were already in the builder
-        // when AddOpenTelemetryDeclarativeConfiguration was called, because YAML is
-        // appended last (highest position at that point).
+        // DeclarativeResourceDetector (position 5) outranks OtelEnvResourceDetector (position 3).
+        // Even when OTEL_RESOURCE_ATTRIBUTES says "from-env", the YAML typed attribute wins.
+        const string envVarName = "OTEL_RESOURCE_ATTRIBUTES";
+        using var envScope = EnvironmentVariableScope.Create(envVarName, "service.name=from-env");
+
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(
             resourceAttributes: new Dictionary<string, string> { ["service.name"] = "from-yaml" });
 
-        // In-memory source is added first, YAML is appended after it.
-        // YAML occupies a higher position so its value wins.
+        using var host = BuildHostWithTracerProvider(yamlFile.Path);
+
+        var resource = host.Services.GetRequiredService<TracerProvider>().GetResource();
+
+        Assert.Contains(
+            resource.Attributes,
+            a => a.Key == "service.name" && (string)a.Value == "from-yaml");
+    }
+
+    [Fact]
+    public void ResourceAttributes_OverrideSameNameAttributesListEntry()
+    {
+        const string yaml = """
+            file_format: "1.0"
+            resource:
+              attributes_list: precedence.key=from-list
+              attributes:
+                - name: precedence.key
+                  value: from-attributes
+            """;
+
+        using var yamlFile = DeclarativeYamlTestFile.CreateYamlFile(yaml);
+        using var host = BuildHostWithTracerProvider(yamlFile.Path);
+
+        var attribute = Assert.Single(
+            host.Services.GetRequiredService<TracerProvider>().GetResource().Attributes,
+            item => item.Key == "precedence.key");
+
+        Assert.Equal("from-attributes", Assert.IsType<string>(attribute.Value));
+    }
+
+    [Fact]
+    public void ResourceAttributes_ServiceNameOverridesOtelServiceName()
+    {
+        using var environment = EnvironmentVariableScope.Create(
+            "OTEL_SERVICE_NAME",
+            "from-environment");
+        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(
+            resourceAttributes: new Dictionary<string, string> { ["service.name"] = "from-yaml" });
+        using var host = BuildHostWithTracerProvider(yamlFile.Path);
+
+        var attribute = Assert.Single(
+            host.Services.GetRequiredService<TracerProvider>().GetResource().Attributes,
+            item => item.Key == "service.name");
+
+        Assert.Equal("from-yaml", Assert.IsType<string>(attribute.Value));
+    }
+
+    [Fact]
+    public void ConfigureResource_BeforeDeclarativeConfiguration_IsOverriddenByYaml()
+    {
+        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(
+            resourceAttributes: new Dictionary<string, string> { ["precedence.key"] = "from-yaml" });
+        using var host = BuildHostWithProgrammaticResource(
+            yamlFile.Path,
+            configureAfterDeclarativeConfiguration: false);
+
+        var attribute = Assert.Single(
+            host.Services.GetRequiredService<TracerProvider>().GetResource().Attributes,
+            item => item.Key == "precedence.key");
+
+        Assert.Equal("from-yaml", Assert.IsType<string>(attribute.Value));
+    }
+
+    [Fact]
+    public void ConfigureResource_AfterDeclarativeConfiguration_OverridesYaml()
+    {
+        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(
+            resourceAttributes: new Dictionary<string, string> { ["precedence.key"] = "from-yaml" });
+        using var host = BuildHostWithProgrammaticResource(
+            yamlFile.Path,
+            configureAfterDeclarativeConfiguration: true);
+
+        var attribute = Assert.Single(
+            host.Services.GetRequiredService<TracerProvider>().GetResource().Attributes,
+            item => item.Key == "precedence.key");
+
+        Assert.Equal("from-programmatic", Assert.IsType<string>(attribute.Value));
+    }
+
+    [Fact]
+    public void SourceOnlyPath_ResourceAttributes_DoNotContributeToResource()
+    {
+        // AddOpenTelemetryDeclarativeConfiguration does NOT register the detector.
+        // Under option A, resource.attributes on that path contribute nothing to the Resource.
+        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(
+            resourceAttributes: new Dictionary<string, string> { ["service.name"] = "should-not-appear" });
+
         var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["OTEL_RESOURCE_ATTRIBUTES"] = "service.name=from-in-memory",
-            })
             .AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path)
             .Build();
 
@@ -247,9 +370,9 @@ public sealed class DeclarativeConfigurationSdkIntegrationTests
 
         var resource = tracerProvider.GetResource();
 
-        Assert.Contains(
+        Assert.DoesNotContain(
             resource.Attributes,
-            a => a.Key == "service.name" && (string)a.Value == "from-yaml");
+            a => a.Key == "service.name" && a.Value is string v && v == "should-not-appear");
     }
 
     [Fact]
@@ -344,6 +467,52 @@ public sealed class DeclarativeConfigurationSdkIntegrationTests
             .Build()!;
     }
 #endif
+
+    private static IHost BuildHostWithTracerProvider(string yamlPath) =>
+        new HostBuilder()
+            .ConfigureServices(services =>
+                services.AddOpenTelemetry()
+                    .UseDeclarativeConfiguration(yamlPath)
+                    .WithTracing())
+            .Build();
+
+    private static IHost BuildHostWithProgrammaticResource(
+        string yamlPath,
+        bool configureAfterDeclarativeConfiguration)
+    {
+        return new HostBuilder()
+            .ConfigureServices(services =>
+            {
+                var builder = services.AddOpenTelemetry();
+
+                if (!configureAfterDeclarativeConfiguration)
+                {
+                    builder.ConfigureResource(resource => resource.AddAttributes(
+                        [new("precedence.key", "from-programmatic")]));
+                }
+
+                builder.UseDeclarativeConfiguration(yamlPath);
+
+                if (configureAfterDeclarativeConfiguration)
+                {
+                    builder.ConfigureResource(resource => resource.AddAttributes(
+                        [new("precedence.key", "from-programmatic")]));
+                }
+
+                builder.WithTracing();
+            })
+            .Build();
+    }
+
+    private static void AssertDeclarativeResource(Resource resource, string expectedSchemaUrl)
+    {
+        var attribute = Assert.Single(
+            resource.Attributes,
+            item => item.Key == "deployment.replicas");
+
+        Assert.Equal(3L, Assert.IsType<long>(attribute.Value));
+        Assert.Equal(expectedSchemaUrl, resource.SchemaUrl);
+    }
 
     private sealed class EmptyResourceDetector : IResourceDetector
     {

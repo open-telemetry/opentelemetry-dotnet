@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Collections.ObjectModel;
-using System.Text;
-using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Configuration.Declarative.Tests;
 
@@ -48,44 +46,6 @@ public sealed class DeclarativeConfigurationReaderTests
     }
 
     [Fact]
-    public void Translate_SingleResourceAttribute_BuildsFlatString()
-    {
-        const string yaml = """
-            file_format: "1.0"
-            resource:
-              attributes:
-                - name: service.name
-                  value: my-service
-            """;
-
-        var data = ReadConfiguration(yaml);
-
-        Assert.Equal("service.name=my-service", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
-    }
-
-    [Fact]
-    public void Translate_MultipleResourceAttributes_PreservesOrderWithCommaDelimiter()
-    {
-        const string yaml = """
-            file_format: "1.0"
-            resource:
-              attributes:
-                - name: service.name
-                  value: my-service
-                - name: service.version
-                  value: 1.2.3
-                - name: deployment.environment
-                  value: production
-            """;
-
-        var data = ReadConfiguration(yaml);
-
-        Assert.Equal(
-            "service.name=my-service,service.version=1.2.3,deployment.environment=production",
-            data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
-    }
-
-    [Fact]
     public void Translate_EmptyYaml_ProducesNoKeys()
     {
         // Intentional: an empty stream is a no-op and does not require file_format.
@@ -123,47 +83,6 @@ public sealed class DeclarativeConfigurationReaderTests
 
         Assert.DoesNotContain("tracer_provider", data.Keys, StringComparer.OrdinalIgnoreCase);
         Assert.DoesNotContain("propagator", data.Keys, StringComparer.OrdinalIgnoreCase);
-    }
-
-    [Fact]
-    public void Translate_EnvVarSubstitution_ResolvesValueFromEnvironment()
-    {
-        // Use a constant name so the YAML value can be a plain raw-string literal
-        // (avoiding $"..." interpolation which would conflict with ${...} syntax).
-        const string envVarName = "OTEL_DECLARATIVE_TEST_SVC_NAME";
-        const string yaml = """
-            file_format: "1.0"
-            resource:
-              attributes:
-                - name: service.name
-                  value: ${OTEL_DECLARATIVE_TEST_SVC_NAME}
-            """;
-
-        using var envScope = EnvironmentVariableScope.Create(envVarName, "my-substituted-service");
-
-        var data = ReadConfiguration(yaml);
-
-        Assert.Equal(
-            "service.name=my-substituted-service",
-            data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
-    }
-
-    [Fact]
-    public void Translate_EnvVarSubstitutionWithDefault_UsesDefaultWhenEnvVarUnset()
-    {
-        const string yaml = """
-            file_format: "1.0"
-            resource:
-              attributes:
-                - name: service.name
-                  value: ${OTEL_DECLARATIVE_TEST_MISSING_VAR:-fallback-service}
-            """;
-
-        var data = ReadConfiguration(yaml);
-
-        Assert.Equal(
-            "service.name=fallback-service",
-            data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
     }
 
     [Fact]
@@ -205,66 +124,6 @@ public sealed class DeclarativeConfigurationReaderTests
             """;
 
         Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
-    }
-
-    [Fact]
-    public void Translate_DoubleQuotedDefaultWithTabEscape_IsAccepted()
-    {
-        // TAB is WSP and therefore a legal DEFAULT-VALUE character, so \t decodes and survives.
-        const string yaml = """
-            file_format: "1.0"
-            resource:
-              attributes:
-                - name: note
-                  value: "${OTEL_DECLARATIVE_TEST_DQ_TAB_DEFAULT:-a\tb}"
-            """;
-
-        var data = ReadConfiguration(yaml);
-
-        Assert.Equal("note=a\tb", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
-    }
-
-    [Fact]
-    public void Translate_DoubleQuotedDollarHexEscape_StillFormsAReference()
-    {
-        // "\x24" decodes to '$' before substitution, so a YAML escape cannot hide a reference.
-        const string envVarName = "OTEL_DECLARATIVE_TEST_DQ_DOLLAR_ESCAPE";
-        const string yaml = """
-            file_format: "1.0"
-            resource:
-              attributes:
-                - name: note
-                  value: "\x24{OTEL_DECLARATIVE_TEST_DQ_DOLLAR_ESCAPE}"
-            """;
-
-        using var environment = EnvironmentVariableScope.Create(envVarName, "resolved");
-
-        var data = ReadConfiguration(yaml);
-
-        Assert.Equal("note=resolved", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
-    }
-
-    [Fact]
-    public void Translate_DoubleQuotedEnvValueWithLiteralBackslashN_IsNotYamlUnescaped()
-    {
-        // Env values are inserted verbatim and the result is never re-parsed as YAML, so a value
-        // containing the characters '\' and 'n' stays those two characters.
-        const string envVarName = "OTEL_DECLARATIVE_TEST_LITERAL_SLASH_N";
-        const string yaml = """
-            file_format: "1.0"
-            resource:
-              attributes:
-                - name: note
-                  value: "${OTEL_DECLARATIVE_TEST_LITERAL_SLASH_N}"
-            """;
-
-        using var envScope = EnvironmentVariableScope.Create(envVarName, "a\\nb");
-
-        var data = ReadConfiguration(yaml);
-
-        Assert.Equal(
-            "note=a\\nb",
-            data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
     }
 
     [Fact]
@@ -364,121 +223,6 @@ public sealed class DeclarativeConfigurationReaderTests
     }
 
     [Fact]
-    public void Translate_ResourceAttributeValueWithComma_IsUrlEncoded()
-    {
-        // The spec requires ',' and '=' to be percent-encoded in OTEL_RESOURCE_ATTRIBUTES values
-        // so they do not corrupt the flat key=value,key=value format. OtelEnvResourceDetector
-        // URL-decodes values via WebUtility.UrlDecode, which handles %XX sequences correctly.
-
-        const string yaml = """
-            file_format: "1.0"
-            resource:
-              attributes:
-                - name: custom.attr
-                  value: a,b
-            """;
-
-        var data = ReadConfiguration(yaml);
-
-        Assert.Equal("custom.attr=a%2Cb", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
-    }
-
-    [Fact]
-    public void Translate_ResourceAttributeValueWithEquals_IsUrlEncoded()
-    {
-        const string yaml = """
-            file_format: "1.0"
-            resource:
-              attributes:
-                - name: custom.attr
-                  value: key=value
-            """;
-
-        var data = ReadConfiguration(yaml);
-
-        Assert.Equal("custom.attr=key%3Dvalue", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
-    }
-
-    [Fact]
-    public void Translate_ResourceAttributeValueWithPercent_IsUrlEncoded()
-    {
-        const string yaml = """
-            file_format: "1.0"
-            resource:
-              attributes:
-                - name: custom.attr
-                  value: 50%
-            """;
-
-        var data = ReadConfiguration(yaml);
-
-        // % must be encoded to prevent unexpected UrlDecode behaviour in OtelEnvResourceDetector.
-        Assert.Equal("custom.attr=50%25", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
-    }
-
-    [Theory]
-    [InlineData("my=key")] // equals sign corrupts flat format
-    [InlineData("my,key")] // comma corrupts flat format
-    public void Translate_ResourceAttributeHardInvalidName_IsSkipped(string name)
-    {
-        // Names containing '=' or ',' are hard-rejected: they would corrupt the flat
-        // key=value,key=value format consumed by OtelEnvResourceDetector.
-        var yaml = $"""
-            file_format: "1.0"
-            resource:
-              attributes:
-                - name: {name}
-                  value: some-value
-            """;
-
-        var data = ReadConfiguration(yaml);
-
-        Assert.DoesNotContain(DeclarativeConfigurationConverter.ResourceAttributesKey, data.Keys);
-    }
-
-    [Theory]
-    [InlineData("1invalid")] // starts with digit
-    [InlineData("my key")] // contains space
-    public void Translate_ResourceAttributeSoftNonConformingName_IsEmittedVerbatim(string name)
-    {
-        // Names that fail the naming convention but contain no ',' or '=' are emitted
-        // as-is (soft warn, Event 22). The flat format is not corrupted by these names.
-        var yaml = $"""
-            file_format: "1.0"
-            resource:
-              attributes:
-                - name: "{name}"
-                  value: some-value
-            """;
-
-        var data = ReadConfiguration(yaml);
-
-        Assert.True(data.ContainsKey(DeclarativeConfigurationConverter.ResourceAttributesKey));
-        Assert.Contains(name, data[DeclarativeConfigurationConverter.ResourceAttributesKey], StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void Translate_ResourceAttributeValidNameFollowedBySoftNonConformingName_BothAreEmitted()
-    {
-        // A conventional name and a soft-non-conforming name (starts with digit) are both emitted.
-        const string yaml = """
-            file_format: "1.0"
-            resource:
-              attributes:
-                - name: service.name
-                  value: my-service
-                - name: "1invalid"
-                  value: also-emitted
-            """;
-
-        var data = ReadConfiguration(yaml);
-
-        var attrs = data[DeclarativeConfigurationConverter.ResourceAttributesKey];
-        Assert.Contains("service.name=my-service", attrs, StringComparison.Ordinal);
-        Assert.Contains("1invalid=also-emitted", attrs, StringComparison.Ordinal);
-    }
-
-    [Fact]
     public void Translate_MultipleDocuments_ProcessesOnlyFirstDocument()
     {
         // A YAML stream with more than one document should log a warning and
@@ -562,59 +306,6 @@ public sealed class DeclarativeConfigurationReaderTests
         Assert.Contains($"{FileFormatValidator.SupportedMajorVersion}.{FileFormatValidator.MaxSupportedMinorVersion}", ex.Message, StringComparison.Ordinal);
     }
 
-    // Round-trip tests: mirror OtelEnvResourceDetector (trim the value segment, then UrlDecode).
-    // The encoder percent-encodes '%', ',', '=', '+', and leading/trailing whitespace so surrounding
-    // whitespace survives that trim; interior whitespace and all other characters pass through as-is.
-    [Theory]
-    [InlineData("a+b")] // + is encoded as %2B, decoded back to +
-    [InlineData("foo bar")] // internal space passes through unencoded; Trim only strips edges
-    [InlineData(" leading")] // leading whitespace must survive detector Trim
-    [InlineData("trailing ")] // trailing whitespace must survive detector Trim
-    [InlineData(" both ")]
-    [InlineData("\tleading\t")] // tab is whitespace and must be encoded
-    [InlineData("50%")] // % is encoded as %25
-    [InlineData("key=val")] // = is encoded as %3D
-    [InlineData("a,b")] // , is encoded as %2C
-    [InlineData("http://x:9090")] // other special chars pass through unencoded
-    public void Translate_ResourceAttributeValue_RoundTripsThroughUrlDecode(string originalValue)
-    {
-        Guard.ThrowIfNull(originalValue);
-
-        var yaml = $"""
-            file_format: "1.0"
-            resource:
-              attributes:
-                - name: my.attr
-                  value: "{EscapeYamlDoubleQuoted(originalValue)}"
-            """;
-
-        var data = ReadConfiguration(yaml);
-
-        var flatValue = data[DeclarativeConfigurationConverter.ResourceAttributesKey];
-        var encodedValue = flatValue!.Split(['='], 2)[1];
-        var decoded = DecodeResourceAttributeValue(encodedValue);
-        Assert.Equal(originalValue, decoded);
-    }
-
-    [Fact]
-    public void Translate_ResourceAttributeQuotedEmptyValue_RoundTripsThroughUrlDecode()
-    {
-        const string yaml = """
-            file_format: "1.0"
-            resource:
-              attributes:
-                - name: my.attr
-                  value: ""
-            """;
-
-        var data = ReadConfiguration(yaml);
-
-        var flatValue = data[DeclarativeConfigurationConverter.ResourceAttributesKey];
-        var encodedValue = flatValue!.Split(['='], 2)[1];
-        var decoded = DecodeResourceAttributeValue(encodedValue);
-        Assert.Equal(string.Empty, decoded);
-    }
-
     [Fact]
     public void Translate_ResourceAttributeUnsetEnvVarPlainValue_IsSkipped()
     {
@@ -632,76 +323,6 @@ public sealed class DeclarativeConfigurationReaderTests
         var data = ReadConfiguration(yaml);
 
         Assert.DoesNotContain(DeclarativeConfigurationConverter.ResourceAttributesKey, data.Keys);
-    }
-
-    [Fact]
-    public void Translate_ResourceAttributeUnsetEnvVarQuotedValue_EmitsEmptyString()
-    {
-        const string envVarName = "OTEL_DECLARATIVE_TEST_RESOURCE_ATTR_QUOTED_UNSET";
-        const string yaml = """
-            file_format: "1.0"
-            resource:
-              attributes:
-                - name: my.attr
-                  value: "${OTEL_DECLARATIVE_TEST_RESOURCE_ATTR_QUOTED_UNSET}"
-            """;
-
-        using var envScope = EnvironmentVariableScope.Create(envVarName, null);
-
-        var data = ReadConfiguration(yaml);
-
-        Assert.Equal("my.attr=", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
-    }
-
-    [Theory]
-    [InlineData("'~'", "~")]
-    [InlineData("'null'", "null")]
-    public void Translate_ResourceAttributeQuotedNullLikeValue_EmitsString(string yamlValue, string expectedValue)
-    {
-        var yaml = $"""
-            file_format: "1.0"
-            resource:
-              attributes:
-                - name: my.attr
-                  value: {yamlValue}
-            """;
-
-        var data = ReadConfiguration(yaml);
-
-        Assert.Equal($"my.attr={expectedValue}", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
-    }
-
-    [Fact]
-    public void Translate_MultipleResourceAttributes_AllRoundTripThroughUrlDecode()
-    {
-        // Verifies that the comma separator between attributes is not confused with
-        // an encoded comma inside any individual value, and that each value decodes correctly.
-        const string yaml = """
-            file_format: "1.0"
-            resource:
-              attributes:
-                - name: service.name
-                  value: my+service
-                - name: deployment.environment
-                  value: prod,staging
-                - name: custom.percent
-                  value: 100%
-            """;
-
-        var data = ReadConfiguration(yaml);
-
-        var flat = data[DeclarativeConfigurationConverter.ResourceAttributesKey]!;
-        var pairs = flat.Split(',');
-        Assert.Equal(3, pairs.Length);
-
-        static string DecodeValue(string pair)
-        {
-            return DecodeResourceAttributeValue(pair.Split(['='], 2)[1]);
-        }
-
-        Assert.Equal("my+service", DecodeValue(pairs[0]));
-        Assert.Equal("prod,staging", DecodeValue(pairs[1]));
-        Assert.Equal("100%", DecodeValue(pairs[2]));
     }
 
     [Fact]
@@ -727,48 +348,6 @@ public sealed class DeclarativeConfigurationReaderTests
             """;
 
         Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
-    }
-
-    [Fact]
-    public void Translate_DuplicateResourceAttributeNames_FirstWins()
-    {
-        const string yaml = """
-            file_format: "1.0"
-            resource:
-              attributes:
-                - name: service.name
-                  value: first-value
-                - name: service.name
-                  value: second-value
-            """;
-
-        var data = ReadConfiguration(yaml);
-
-        // first-wins: only the first occurrence is emitted
-        Assert.Equal("service.name=first-value", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
-    }
-
-    [Fact]
-    public void Translate_DuplicateResourceAttributeNameAmongMultiple_EmitsOnlyFirstOccurrenceOfDuplicate()
-    {
-        const string yaml = """
-            file_format: "1.0"
-            resource:
-              attributes:
-                - name: service.name
-                  value: my-service
-                - name: env
-                  value: prod
-                - name: service.name
-                  value: duplicate-ignored
-            """;
-
-        var data = ReadConfiguration(yaml);
-
-        var flat = data[DeclarativeConfigurationConverter.ResourceAttributesKey]!;
-        Assert.Contains("service.name=my-service", flat, StringComparison.Ordinal);
-        Assert.Contains("env=prod", flat, StringComparison.Ordinal);
-        Assert.DoesNotContain("duplicate-ignored", flat, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -809,30 +388,6 @@ public sealed class DeclarativeConfigurationReaderTests
             """;
 
         Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
-    }
-
-    [Theory]
-    [InlineData("~")]
-    [InlineData("null")]
-    [InlineData("Null")]
-    [InlineData("NULL")]
-    [InlineData("")]
-    public void Translate_ResourceAttributeNullValue_IsSkipped(string nullValue)
-    {
-        // The null entry is skipped; a valid sibling in the same attributes block must still be emitted.
-        var yaml = $"""
-            file_format: "1.0"
-            resource:
-              attributes:
-                - name: my.attr
-                  value: {nullValue}
-                - name: service.name
-                  value: my-service
-            """;
-
-        var data = ReadConfiguration(yaml);
-
-        Assert.Equal("service.name=my-service", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
     }
 
     [Fact]
@@ -1045,132 +600,21 @@ public sealed class DeclarativeConfigurationReaderTests
     }
 
     [Fact]
-    public void Translate_ResourceAttributesAndAttributesList_AttributesKeyWinsWithNoDuplicates()
+    public void Translate_SkippedAttributeEntry_DoesNotSuppressAttributesList()
     {
-        // When both fields are present and share a key, the attributes entry wins and the
-        // attributes_list entry for that key is filtered out. The output contains each key
-        // exactly once; non-overlapping attributes_list entries are preserved.
         const string yaml = """
-            file_format: "1.0"
-            resource:
-              attributes_list: "service.name=from-list,region=us-east-1"
-              attributes:
-                - name: service.name
-                  value: from-attributes
-            """;
-
-        var data = ReadConfiguration(yaml);
-
-        Assert.Equal(
-            "region=us-east-1,service.name=from-attributes",
-            data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
-    }
-
-    [Fact]
-    public void Translate_ResourceAttributesAndAttributesList_WhitespaceInAttributeNameStillShadowsList()
-    {
-        // OtelEnvResourceDetector trims flat-format keys. The precedence comparison must therefore
-        // use the same normalization, otherwise the lower-priority list entry survives and wins.
-        const string yaml = """
-            file_format: "1.0"
-            resource:
-              attributes_list: region=from-list
-              attributes:
-                - name: "region "
-                  value: from-attributes
-            """;
-
-        var data = ReadConfiguration(yaml);
-
-        Assert.Equal(
-            "region =from-attributes",
-            data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
-    }
-
-    [Fact]
-    public void Translate_ResourceAttributesAndAttributesList_AllListKeysOverridden_EmitsOnlyAttributes()
-    {
-        // When every key in attributes_list is also present in attributes, the filtered
-        // attributes_list is empty and the output contains only the attributes entries.
-        const string yaml = """
-            file_format: "1.0"
-            resource:
-              attributes_list: "service.name=from-list"
-              attributes:
-                - name: service.name
-                  value: from-attributes
-            """;
-
-        var data = ReadConfiguration(yaml);
-
-        Assert.Equal(
-            "service.name=from-attributes",
-            data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
-    }
-
-    [Theory]
-    [InlineData("int", "3")]
-    [InlineData("bool", "true")]
-    [InlineData("double", "1.5")]
-    public void Translate_UnsupportedScalarTypeInAttributes_StillShadowsAttributesList(
-        string type, string value)
-    {
-        // resource.attributes outranks resource.attributes_list, so a declared name must suppress
-        // the list entry even when this projection cannot carry the higher-priority value. Falling
-        // back to the list value would silently emit the lower-priority string "5".
-        var yaml = $"""
             file_format: "1.1"
             resource:
               attributes_list: retry.count=5
               attributes:
                 - name: retry.count
-                  type: {type}
-                  value: {value}
-            """;
-
-        var data = ReadConfiguration(yaml);
-
-        Assert.DoesNotContain(DeclarativeConfigurationConverter.ResourceAttributesKey, data.Keys);
-    }
-
-    [Fact]
-    public void Translate_UnsupportedArrayTypeInAttributes_StillShadowsAttributesList()
-    {
-        const string yaml = """
-            file_format: "1.1"
-            resource:
-              attributes_list: tags=from-list
-              attributes:
-                - name: tags
-                  type: string_array
-                  value: [a, b]
-            """;
-
-        var data = ReadConfiguration(yaml);
-
-        Assert.DoesNotContain(DeclarativeConfigurationConverter.ResourceAttributesKey, data.Keys);
-    }
-
-    [Fact]
-    public void Translate_UnsupportedTypeShadowing_AppliesWhenAnotherAttributeProjects()
-    {
-        const string yaml = """
-            file_format: "1.1"
-            resource:
-              attributes_list: "retry.count=5,region=us-east-1"
-              attributes:
-                - name: retry.count
                   type: int
                   value: 3
-                - name: keep
-                  value: kept
             """;
 
         var data = ReadConfiguration(yaml);
 
-        Assert.Equal(
-            "region=us-east-1,keep=kept",
-            data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
+        Assert.Equal("retry.count=5", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
     }
 
     [Fact]
@@ -1190,63 +634,6 @@ public sealed class DeclarativeConfigurationReaderTests
         var data = ReadConfiguration(yaml);
 
         Assert.Equal("note=from-list", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
-    }
-
-    [Fact]
-    public void Translate_UnsupportedTypeThenSameNameString_ProjectsTheStringEntry()
-    {
-        // The shadowing set and the first-wins duplicate set must stay separate: reserving the name
-        // for the skipped int entry must not make the later projectable entry look like a duplicate.
-        const string yaml = """
-            file_format: "1.1"
-            resource:
-              attributes:
-                - name: x
-                  type: int
-                  value: 3
-                - name: x
-                  value: str
-            """;
-
-        var data = ReadConfiguration(yaml);
-
-        Assert.Equal("x=str", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
-    }
-
-    [Fact]
-    public void Translate_NullValueThenSameNameString_ProjectsTheStringEntry()
-    {
-        const string yaml = """
-            file_format: "1.1"
-            resource:
-              attributes:
-                - name: x
-                  value: null
-                - name: x
-                  value: str
-            """;
-
-        var data = ReadConfiguration(yaml);
-
-        Assert.Equal("x=str", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
-    }
-
-    [Fact]
-    public void Translate_DuplicateStringAttributeNames_FirstStillWins()
-    {
-        const string yaml = """
-            file_format: "1.1"
-            resource:
-              attributes:
-                - name: x
-                  value: first
-                - name: x
-                  value: second
-            """;
-
-        var data = ReadConfiguration(yaml);
-
-        Assert.Equal("x=first", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
     }
 
     [Fact]
@@ -1284,32 +671,6 @@ public sealed class DeclarativeConfigurationReaderTests
     }
 
     [Fact]
-    public void Translate_ResourceAttributesAndAttributesList_FilterPreservesEncodedCommaInListValue()
-    {
-        // When attributes_list and attributes are merged, FilterAttributesList must not split
-        // on %2C inside an attributes_list value while removing the overlapping key.
-        const string yaml = """
-            file_format: "1.0"
-            resource:
-              attributes_list: "description=hello%2Cworld,service.name=from-list,region=us-east-1"
-              attributes:
-                - name: service.name
-                  value: from-attributes
-            """;
-
-        var data = ReadConfiguration(yaml);
-
-        Assert.Equal(
-            "description=hello%2Cworld,region=us-east-1,service.name=from-attributes",
-            data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
-
-        var flat = data[DeclarativeConfigurationConverter.ResourceAttributesKey]!;
-        var descriptionPair = flat.Split(',')[0];
-        var encodedValue = descriptionPair.Split(['='], 2)[1];
-        Assert.Equal("hello,world", System.Net.WebUtility.UrlDecode(encodedValue));
-    }
-
-    [Fact]
     public void Translate_ResourceAttributesList_UnencodedCommaInValue_SplitsAtComma()
     {
         // Documented limitation: attributes_list is comma-split naively (same as
@@ -1324,30 +685,6 @@ public sealed class DeclarativeConfigurationReaderTests
 
         // Parsed as two malformed entries: description=hello and world (no '=').
         Assert.Equal("description=hello,world", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
-    }
-
-    [Fact]
-    public void Translate_ResourceAttributeArrayValue_IsSkipped()
-    {
-        // Array-typed attribute values (e.g. string_array) cannot be represented in the flat
-        // OTEL_RESOURCE_ATTRIBUTES key=value format. The entry is skipped; other valid entries
-        // in the same attributes block are still emitted.
-        const string yaml = """
-            file_format: "1.0"
-            resource:
-              attributes:
-                - name: service.name
-                  value: my-service
-                - name: my.hosts
-                  type: string_array
-                  value:
-                    - host1
-                    - host2
-            """;
-
-        var data = ReadConfiguration(yaml);
-
-        Assert.Equal("service.name=my-service", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
     }
 
     [Theory]
@@ -1428,23 +765,6 @@ public sealed class DeclarativeConfigurationReaderTests
     }
 
     // type field handling (fix 2.3)
-
-    [Fact]
-    public void Translate_ResourceAttributeStringType_EmitsAttribute()
-    {
-        const string yaml = """
-            file_format: "1.0"
-            resource:
-              attributes:
-                - name: my.attr
-                  type: string
-                  value: some-value
-            """;
-
-        var data = ReadConfiguration(yaml);
-
-        Assert.Equal("my.attr=some-value", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
-    }
 
     [Theory]
     [InlineData("string_array")]
@@ -2013,27 +1333,6 @@ public sealed class DeclarativeConfigurationReaderTests
         Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
     }
 
-    // Substitution cannot inject YAML syntax. Surrounding whitespace therefore remains part of a
-    // plain string instead of being trimmed into a null or numeric token.
-    [Fact]
-    public void Translate_SubstitutedValueWithSurroundingWhitespace_RemainsString()
-    {
-        const string envVarName = "OTEL_DECLARATIVE_TEST_PADDED_NULL";
-        const string yaml = """
-            file_format: "1.0"
-            resource:
-              attributes:
-                - name: my.attr
-                  value: ${OTEL_DECLARATIVE_TEST_PADDED_NULL}
-            """;
-
-        using var envScope = EnvironmentVariableScope.Create(envVarName, "  null  ");
-
-        var data = ReadConfiguration(yaml);
-
-        Assert.Equal("my.attr=%20%20null%20%20", data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
-    }
-
     [Fact]
     public void Translate_SubstitutedFileFormatWithSurroundingWhitespace_RemainsInvalidString()
     {
@@ -2049,53 +1348,31 @@ public sealed class DeclarativeConfigurationReaderTests
         Assert.Contains("Unsupported file_format '  1.0  '", exception.Message, StringComparison.Ordinal);
     }
 
-    // An unterminated '${' is literal text, not an error, so a document containing one still loads.
     [Fact]
-    public void Translate_UnterminatedSubstitutionInAttributeValue_IsLiteralText()
+    public void Translate_ResourceWithSchemaUrl_DoesNotThrow()
     {
         const string yaml = """
             file_format: "1.0"
             resource:
-              attributes:
-                - name: my.attr
-                  value: "${UNTERMINATED"
+              schema_url: "https://opentelemetry.io/schemas/1.28.0"
             """;
 
         var data = ReadConfiguration(yaml);
 
-        Assert.Equal(
-            "my.attr=${UNTERMINATED",
-            data[DeclarativeConfigurationConverter.ResourceAttributesKey]);
+        Assert.Empty(data);
     }
 
-    private static string EscapeYamlDoubleQuoted(string value)
+    [Fact]
+    public void Translate_ResourceWithUnrecognizedKey_Throws()
     {
-        var firstIndex = value.IndexOfAny(['\\', '"']);
-        if (firstIndex < 0)
-        {
-            return value;
-        }
+        const string yaml = """
+            file_format: "1.0"
+            resource:
+              detection: {}
+            """;
 
-        var builder = new StringBuilder(value.Length + 4);
-        builder.Append(value, 0, firstIndex);
-
-        for (var i = firstIndex; i < value.Length; i++)
-        {
-            var ch = value[i];
-            if (ch is '\\' or '"')
-            {
-                builder.Append('\\');
-            }
-
-            builder.Append(ch);
-        }
-
-        return builder.ToString();
+        Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
     }
-
-    // Matches OtelEnvResourceDetector: trim the value segment, then URL-decode.
-    private static string DecodeResourceAttributeValue(string encodedValue) =>
-        System.Net.WebUtility.UrlDecode(encodedValue.Trim());
 
     private static ReadOnlyDictionary<string, string?> ReadConfiguration(string yaml)
     {

@@ -62,6 +62,8 @@ public class ResourceBuilder
     public Resource Build()
     {
         var finalResource = Resource.Empty;
+        var schemaUrlOverrideSet = false;
+        string? schemaUrlOverride = null;
 
         foreach (var resourceDetector in this.ResourceDetectors)
         {
@@ -75,9 +77,23 @@ public class ResourceBuilder
             {
                 finalResource = finalResource.Merge(resource);
             }
+
+            if (resourceDetector is IResourceSchemaUrlOverrideProvider schemaUrlOverrideProvider
+                && schemaUrlOverrideProvider.TryGetSchemaUrlOverride(out var overrideUrl))
+            {
+                if (schemaUrlOverrideSet && !string.Equals(schemaUrlOverride, overrideUrl, StringComparison.Ordinal))
+                {
+                    OpenTelemetrySdkEventSource.Log.ResourceSchemaUrlOverrideConflict(schemaUrlOverride, overrideUrl);
+                }
+
+                schemaUrlOverride = overrideUrl;
+                schemaUrlOverrideSet = true;
+            }
         }
 
-        return finalResource;
+        return schemaUrlOverrideSet
+            ? new Resource(finalResource.Attributes, schemaUrlOverride)
+            : finalResource;
     }
 
     /// <summary>
@@ -166,7 +182,7 @@ public class ResourceBuilder
         public Resource Detect() => this.resource;
     }
 
-    private sealed class ResolvingResourceDetector : IResourceDetector
+    private sealed class ResolvingResourceDetector : IResourceDetector, IResourceSchemaUrlOverrideProvider
     {
         private readonly Func<IServiceProvider?, IResourceDetector> resourceDetectorFactory;
         private IResourceDetector? resourceDetector;
@@ -189,6 +205,19 @@ public class ResourceBuilder
 #pragma warning disable CA1508 // Avoid dead conditional code
             return detector?.Detect() ?? Resource.Empty;
 #pragma warning restore CA1508 // Avoid dead conditional code
+        }
+
+        // Forwards to the resolved detector so callers do not need to know the resolved detector was
+        // wrapped in order to check it for optional capabilities like this one.
+        public bool TryGetSchemaUrlOverride(out string? schemaUrl)
+        {
+            if (this.resourceDetector is IResourceSchemaUrlOverrideProvider schemaUrlOverrideProvider)
+            {
+                return schemaUrlOverrideProvider.TryGetSchemaUrlOverride(out schemaUrl);
+            }
+
+            schemaUrl = null;
+            return false;
         }
     }
 }
