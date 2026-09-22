@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed `SuppressInstrumentationScope` reference counts leaking between
+  inherited asynchronous execution contexts.
+  ([#7803](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7803))
+
 ## 1.19.1
 
 Released 2026-Sep-21
