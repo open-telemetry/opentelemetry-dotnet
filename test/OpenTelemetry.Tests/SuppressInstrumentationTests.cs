@@ -51,25 +51,39 @@ public class SuppressInstrumentationTests
     [Fact]
     public void ReferenceCountingDoesNotEndExplicitScope()
     {
-        Assert.False(Sdk.SuppressInstrumentation);
+        Assert.False(
+            Sdk.SuppressInstrumentation,
+            "Instrumentation should not be suppressed before entering an explicit scope.");
 
         using (SuppressInstrumentationScope.Begin())
         {
-            Assert.True(Sdk.SuppressInstrumentation);
+            Assert.True(
+                Sdk.SuppressInstrumentation,
+                "The outer scope should suppress instrumentation.");
 
             using (SuppressInstrumentationScope.Begin(false))
             {
-                Assert.False(Sdk.SuppressInstrumentation);
+                Assert.False(
+                    Sdk.SuppressInstrumentation,
+                    "The inner false scope should override outer suppression.");
                 Assert.Equal(1, SuppressInstrumentationScope.Enter());
-                Assert.True(Sdk.SuppressInstrumentation);
+                Assert.True(
+                    Sdk.SuppressInstrumentation,
+                    "Entering reference-counting mode should suppress instrumentation.");
                 Assert.Equal(0, SuppressInstrumentationScope.DecrementIfTriggered());
-                Assert.False(Sdk.SuppressInstrumentation);
+                Assert.False(
+                    Sdk.SuppressInstrumentation,
+                    "A zero reference count should retain the inner scope's unsuppressed state.");
             }
 
-            Assert.True(Sdk.SuppressInstrumentation);
+            Assert.True(
+                Sdk.SuppressInstrumentation,
+                "Disposing the inner scope should restore outer suppression.");
         }
 
-        Assert.False(Sdk.SuppressInstrumentation);
+        Assert.False(
+            Sdk.SuppressInstrumentation,
+            "Disposing the outer scope should restore the unsuppressed state.");
     }
 
     [Fact]
@@ -92,7 +106,9 @@ public class SuppressInstrumentationTests
             }
         }
 
-        Assert.False(Sdk.SuppressInstrumentation);
+        Assert.False(
+            Sdk.SuppressInstrumentation,
+            "Balanced deep reference counts should restore the unsuppressed state.");
     }
 
     [Fact]
@@ -165,10 +181,14 @@ public class SuppressInstrumentationTests
 
         Assert.Equal(1, childDecrementedDepth);
         Assert.Equal(1, parentDecrementedDepth);
-        Assert.True(parentIsSuppressed);
+        Assert.True(
+            parentIsSuppressed,
+            "A child decrement should not change the parent's suppression state.");
         Assert.Equal(2, childIncrementedDepth);
         Assert.Equal(0, parentFinalDepth);
-        Assert.False(Sdk.SuppressInstrumentation);
+        Assert.False(
+            Sdk.SuppressInstrumentation,
+            "The parent reference count should return to the unsuppressed state.");
     }
 
     [Fact]
@@ -238,7 +258,11 @@ public class SuppressInstrumentationTests
         Assert.Equal(2, childIncrementedDepth);
         Assert.Equal(0, parentDecrementedDepth);
         Assert.Equal(1, childDecrementedDepth);
-        Assert.False(parentIsSuppressed);
-        Assert.False(Sdk.SuppressInstrumentation);
+        Assert.False(
+            parentIsSuppressed,
+            "A child increment should not change the parent's suppression state.");
+        Assert.False(
+            Sdk.SuppressInstrumentation,
+            "The parent reference count should remain in the unsuppressed state.");
     }
 }
