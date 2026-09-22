@@ -16,18 +16,28 @@ The .NET [OpenTelemetry](https://opentelemetry.io/) implementation.
 <details>
 <summary>Table of Contents</summary>
 
-* [Supported .NET versions](#supported-net-versions)
-* [Project status](#project-status)
-* [Getting started](#getting-started)
-  * [Getting started with Logging](#getting-started-with-logging)
-  * [Getting started with Metrics](#getting-started-with-metrics)
-  * [Getting started with Tracing](#getting-started-with-tracing)
-* [Repository structure](#repository-structure)
-* [Troubleshooting](#troubleshooting)
-* [Extensibility](#extensibility)
-* [Releases](#releases)
-* [Contributing](#contributing)
-* [References](#references)
+- [OpenTelemetry .NET](#opentelemetry-net)
+  - [Supported .NET versions](#supported-net-versions)
+  - [Project status](#project-status)
+  - [Getting started](#getting-started)
+    - [Getting started with Logging](#getting-started-with-logging)
+    - [Getting started with Metrics](#getting-started-with-metrics)
+    - [Getting started with Tracing](#getting-started-with-tracing)
+  - [Repository structure](#repository-structure)
+  - [Troubleshooting](#troubleshooting)
+  - [Extensibility](#extensibility)
+  - [Releases](#releases)
+    - [Digital signing](#digital-signing)
+      - [Version 1.14.0 and later](#version-1140-and-later)
+      - [Versions 1.10.0 - 1.14.0-rc.1](#versions-1100---1140-rc1)
+    - [Attestation](#attestation)
+  - [Contributing](#contributing)
+    - [Maintainers](#maintainers)
+    - [Approvers](#approvers)
+    - [Triagers](#triagers)
+    - [Emeritus](#emeritus)
+    - [Thanks to all the people who have contributed](#thanks-to-all-the-people-who-have-contributed)
+  - [References](#references)
 
 </details>
 
@@ -289,6 +299,7 @@ For more information about the maintainer role, see the [community repository](h
 ### Approvers
 
 * [Cijo Thomas](https://github.com/cijothomas), Microsoft
+* [Matthew Hensley](https://github.com/matt-hensley), Grafana Labs
 * [Steve Gordon](https://github.com/stevejgordon), Elastic
 
 For more information about the approver role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#approver).
