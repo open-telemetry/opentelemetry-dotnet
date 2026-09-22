@@ -187,6 +187,124 @@ public class MetricPointReclaimTests
         Assert.Equal(sum, exporter.Sum);
     }
 
+    [Theory]
+    [InlineData(1, false, MetricReaderTemporalityPreference.Delta)]
+    [InlineData(1, true, MetricReaderTemporalityPreference.Delta)]
+    [InlineData(2, false, MetricReaderTemporalityPreference.Delta)]
+    [InlineData(2, true, MetricReaderTemporalityPreference.Delta)]
+    [InlineData(1, false, MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData(1, true, MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData(2, false, MetricReaderTemporalityPreference.Cumulative)]
+    [InlineData(2, true, MetricReaderTemporalityPreference.Cumulative)]
+    public void ConcurrentMeasurementsForLastAvailableMetricPointAreNotSentToOverflow(
+        int tagCount,
+        bool useDouble,
+        MetricReaderTemporalityPreference temporalityPreference)
+    {
+        const int CardinalityLimit = 2;
+
+        using var lookupBlocked = new ManualResetEventSlim();
+        using var continueLookup = new ManualResetEventSlim();
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+
+        Action<double, KeyValuePair<string, object?>[]> recordMeasurement;
+        if (useDouble)
+        {
+            var counter = meter.CreateCounter<double>("TestCounter");
+            recordMeasurement = (value, tags) => counter.Add(value, tags);
+        }
+        else
+        {
+            var counter = meter.CreateCounter<long>("TestCounter");
+            recordMeasurement = (value, tags) => counter.Add((long)value, tags);
+        }
+
+        var exportedItems = new List<Metric>();
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("TestCounter", new MetricStreamConfiguration
+            {
+                CardinalityLimit = CardinalityLimit,
+                TagKeys = tagCount == 1 ? ["a"] : ["a", "b"],
+            })
+            .AddInMemoryExporter(
+                exportedItems,
+                options => options.TemporalityPreference = temporalityPreference)
+            .Build();
+
+        // The tag values deliberately collide. The blocked lookup captures the seed bucket,
+        // then pauses while another thread publishes the target at the head of that bucket and
+        // consumes the last MetricPoint. Resuming from the old bucket makes the first lookup miss.
+        var seedTags = CreateCollidingTags(tagCount, "seed", blockLookup: false, lookupBlocked, continueLookup);
+        var blockedTags = CreateCollidingTags(tagCount, "target", blockLookup: true, lookupBlocked, continueLookup);
+        var creatorTags = CreateCollidingTags(tagCount, "target", blockLookup: false, lookupBlocked, continueLookup);
+        var overflowTags = CreateCollidingTags(tagCount, "overflow", blockLookup: false, lookupBlocked, continueLookup);
+
+        Assert.Equal(new Tags(creatorTags), new Tags(blockedTags));
+        recordMeasurement(1, seedTags);
+
+        Exception? blockedMeasurementException = null;
+        var blockedMeasurement = new Thread(() =>
+        {
+            try
+            {
+                recordMeasurement(20, blockedTags);
+            }
+            catch (Exception ex)
+            {
+                blockedMeasurementException = ex;
+            }
+        });
+        blockedMeasurement.Start();
+
+        try
+        {
+            Assert.True(lookupBlocked.Wait(TimeSpan.FromSeconds(5)));
+            recordMeasurement(10, creatorTags);
+
+            if (temporalityPreference == MetricReaderTemporalityPreference.Cumulative)
+            {
+                // Advance the cumulative store's index to its full sentinel after the target
+                // was published but before the stale target lookup resumes.
+                recordMeasurement(40, overflowTags);
+            }
+        }
+        finally
+        {
+            continueLookup.Set();
+        }
+
+        Assert.True(blockedMeasurement.Join(TimeSpan.FromSeconds(5)));
+        Assert.Null(blockedMeasurementException);
+
+        Assert.True(meterProvider.ForceFlush());
+        var metric = Assert.Single(exportedItems);
+        Assert.Equal(
+            temporalityPreference == MetricReaderTemporalityPreference.Cumulative ? 1 : 0,
+            metric.AggregatorStore.DroppedMeasurements);
+
+        var sums = new List<double>();
+        double? overflowSum = null;
+        foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+        {
+            var sum = useDouble ? metricPoint.GetSumDouble() : metricPoint.GetSumLong();
+            if (metricPoint.Tags.Count == 1 && metricPoint.Tags.KeyAndValues[0].Key == "otel.metric.overflow")
+            {
+                overflowSum = sum;
+            }
+            else
+            {
+                sums.Add(sum);
+            }
+        }
+
+        sums.Sort();
+        Assert.Equal([1, 30], sums);
+        Assert.Equal(
+            temporalityPreference == MetricReaderTemporalityPreference.Cumulative ? 40 : null,
+            overflowSum);
+    }
+
     // Regression test for a metric point reclaim data race where a measurement recorded
     // concurrently with a snapshot could be stranded on a metric point that then looked
     // "drained" and was reclaimed, permanently losing the value.
@@ -275,9 +393,61 @@ public class MetricPointReclaimTests
         Assert.Equal(Interlocked.Read(ref recordedSum), Interlocked.Read(ref exportedSum));
     }
 
+    private static KeyValuePair<string, object?>[] CreateCollidingTags(
+        int tagCount,
+        string value,
+        bool blockLookup,
+        ManualResetEventSlim lookupBlocked,
+        ManualResetEventSlim continueLookup)
+    {
+        var tagA = new KeyValuePair<string, object?>(
+            "a",
+            new CollidingTagValue(value, blockLookup, blockComparison: true, lookupBlocked, continueLookup));
+
+        return tagCount == 1
+            ? [tagA]
+            :
+            [
+                new KeyValuePair<string, object?>(
+                    "b",
+                    new CollidingTagValue(value, blockLookup, blockComparison: false, lookupBlocked, continueLookup)),
+                tagA,
+            ];
+    }
+
     private sealed class ThreadArguments
     {
         public int Counter;
+    }
+
+    private sealed class CollidingTagValue(
+        string value,
+        bool blockLookup,
+        bool blockComparison,
+        ManualResetEventSlim lookupBlocked,
+        ManualResetEventSlim continueLookup)
+    {
+        private readonly string value = value;
+        private readonly bool blockLookup = blockLookup;
+        private readonly bool blockComparison = blockComparison;
+        private readonly ManualResetEventSlim lookupBlocked = lookupBlocked;
+        private readonly ManualResetEventSlim continueLookup = continueLookup;
+
+        public override bool Equals(object? obj)
+        {
+            if (this.blockComparison &&
+                string.Equals(this.value, "seed", StringComparison.Ordinal) &&
+                obj is CollidingTagValue { blockLookup: true })
+            {
+                this.lookupBlocked.Set();
+                this.continueLookup.Wait();
+            }
+
+            return obj is CollidingTagValue other &&
+                string.Equals(this.value, other.value, StringComparison.Ordinal);
+        }
+
+        public override int GetHashCode() => 0;
     }
 
     private sealed class SumCapturingExporter : BaseExporter<Metric>

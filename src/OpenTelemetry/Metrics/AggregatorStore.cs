@@ -509,11 +509,21 @@ internal sealed class AggregatorStore
                     aggregatorIndex = this.metricPointIndex;
                     if (aggregatorIndex >= this.NumberOfMetricPoints)
                     {
-                        // sorry! out of data points.
-                        // TODO: Once we support cleanup of
-                        // unused points (typically with delta)
-                        // we can re-claim them here.
-                        return -1;
+                        // Another thread may have published these tags after the lookup above.
+                        // Recheck under the lock before treating this measurement as overflow.
+                        lock (this.tagsToMetricPointIndexDictionary)
+                        {
+                            if (!this.tagsToMetricPointIndexDictionary.TryGetValue(sortedTags, out aggregatorIndex))
+                            {
+                                // sorry! out of data points.
+                                // TODO: Once we support cleanup of
+                                // unused points (typically with delta)
+                                // we can re-claim them here.
+                                return -1;
+                            }
+                        }
+
+                        return aggregatorIndex;
                     }
 
                     // Note: Both arrays may be storage owned by ThreadStatic - for the input
@@ -569,11 +579,21 @@ internal sealed class AggregatorStore
                 aggregatorIndex = this.metricPointIndex;
                 if (aggregatorIndex >= this.NumberOfMetricPoints)
                 {
-                    // sorry! out of data points.
-                    // TODO: Once we support cleanup of
-                    // unused points (typically with delta)
-                    // we can re-claim them here.
-                    return -1;
+                    // Another thread may have published these tags after the lookup above.
+                    // Recheck under the lock before treating this measurement as overflow.
+                    lock (this.tagsToMetricPointIndexDictionary)
+                    {
+                        if (!this.tagsToMetricPointIndexDictionary.TryGetValue(givenTags, out aggregatorIndex))
+                        {
+                            // sorry! out of data points.
+                            // TODO: Once we support cleanup of
+                            // unused points (typically with delta)
+                            // we can re-claim them here.
+                            return -1;
+                        }
+                    }
+
+                    return aggregatorIndex;
                 }
 
                 // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
@@ -642,8 +662,22 @@ internal sealed class AggregatorStore
 
                     if (this.availableMetricPoints!.Count == 0)
                     {
-                        // No MetricPoint is available for reuse
-                        return -1;
+                        // A creator dequeues an index before publishing its tag mapping. Queue
+                        // emptiness is therefore authoritative only after rechecking under the lock.
+                        lock (this.TagsToMetricPointIndexDictionaryDelta)
+                        {
+                            if (!this.TagsToMetricPointIndexDictionaryDelta.TryGetValue(sortedTags, out lookupData) &&
+                                this.availableMetricPoints.Count == 0)
+                            {
+                                // No MetricPoint is available for reuse
+                                return -1;
+                            }
+                        }
+
+                        if (lookupData != null)
+                        {
+                            return this.ResolveExistingDeltaMetricPoint(lookupData, length);
+                        }
                     }
 
                     // Note: Both arrays may be storage owned by ThreadStatic - for the input
@@ -705,8 +739,22 @@ internal sealed class AggregatorStore
 
                 if (this.availableMetricPoints!.Count == 0)
                 {
-                    // No MetricPoint is available for reuse
-                    return -1;
+                    // A creator dequeues an index before publishing its tag mapping. Queue
+                    // emptiness is therefore authoritative only after rechecking under the lock.
+                    lock (this.TagsToMetricPointIndexDictionaryDelta)
+                    {
+                        if (!this.TagsToMetricPointIndexDictionaryDelta.TryGetValue(givenTags, out lookupData) &&
+                            this.availableMetricPoints.Count == 0)
+                        {
+                            // No MetricPoint is available for reuse
+                            return -1;
+                        }
+                    }
+
+                    if (lookupData != null)
+                    {
+                        return this.ResolveExistingDeltaMetricPoint(lookupData, length);
+                    }
                 }
 
                 // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
