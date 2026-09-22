@@ -40,4 +40,4 @@ Notes](../../RELEASENOTES.md).
 
 * Added declarative configuration support for typed resource attributes and
   resource schema URLs.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7806](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7806))
