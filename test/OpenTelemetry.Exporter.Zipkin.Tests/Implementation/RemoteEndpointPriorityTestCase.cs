@@ -9,7 +9,7 @@ namespace OpenTelemetry.Exporter.Zipkin.Implementation.Tests;
 public class RemoteEndpointPriorityTestCase
 #pragma warning restore CA1515 // Consider making public types internal
 {
-    public static TheoryData<RemoteEndpointPriorityTestCase> TestCases => new(
+    public static TheoryData<RemoteEndpointPriorityTestCase> TestCases =>
     [
         new()
         {
@@ -144,7 +144,7 @@ public class RemoteEndpointPriorityTestCase
                 [SemanticConventions.AttributePeerService] = "PeerService",
             },
         },
-    ]);
+    ];
 
     public string? Name { get; private set; }
 

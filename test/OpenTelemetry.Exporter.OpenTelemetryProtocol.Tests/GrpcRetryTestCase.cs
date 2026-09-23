@@ -26,7 +26,7 @@ public class GrpcRetryTestCase
 
     internal GrpcRetryAttempt[] RetryAttempts { get; }
 
-    public static TheoryData<GrpcRetryTestCase> GetGrpcTestCases() => new(
+    public static TheoryData<GrpcRetryTestCase> GetGrpcTestCases() =>
     [
         new("Cancelled", [new(StatusCode.Cancelled)]),
         new("DeadlineExceeded", [new(StatusCode.DeadlineExceeded)]),
@@ -89,7 +89,7 @@ public class GrpcRetryTestCase
                 new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 5000)
             ],
             expectedRetryAttempts: 9),
-    ]);
+    ];
 
     public override string ToString()
         => this.testRunnerName;

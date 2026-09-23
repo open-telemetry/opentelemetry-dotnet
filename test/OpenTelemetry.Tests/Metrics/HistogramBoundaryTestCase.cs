@@ -23,7 +23,7 @@ public class HistogramBoundaryTestCase(
 
     public string TestName { get; set; } = testName;
 
-    public static TheoryData<HistogramBoundaryTestCase> HistogramInfinityBoundariesTestCases() => new(
+    public static TheoryData<HistogramBoundaryTestCase> HistogramInfinityBoundariesTestCases() =>
     [
         new(
             testName: "Custom boundaries with no infinity in explicit boundaries",
@@ -59,5 +59,5 @@ public class HistogramBoundaryTestCase(
             inputValues: [-10, 0, 10],
             expectedBucketCounts: [3],
             expectedBucketBounds: [double.PositiveInfinity]),
-    ]);
+    ];
 }

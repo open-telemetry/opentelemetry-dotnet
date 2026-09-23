@@ -5,7 +5,7 @@ namespace OpenTelemetry.Metrics.Tests;
 
 internal static class MetricTestData
 {
-    public static TheoryData<string> InvalidInstrumentNames => new(
+    public static TheoryData<string> InvalidInstrumentNames =>
     [
         " ",
         "-first-char-not-alphabetic",
@@ -13,9 +13,9 @@ internal static class MetricTestData
         "invalid+separator",
         new('m', 256),
         "a\xb5", // `\xb5` is the Micro character
-    ]);
+    ];
 
-    public static TheoryData<string> ValidInstrumentNames => new(
+    public static TheoryData<string> ValidInstrumentNames =>
     [
         "m",
         "first-char-alphabetic",
@@ -25,9 +25,9 @@ internal static class MetricTestData
         new('m', 255),
         "CaSe-InSeNsItIvE",
         "my_metric/environment/database",
-    ]);
+    ];
 
-    public static TheoryData<double[]> InvalidHistogramBoundaries => new(
+    public static TheoryData<double[]> InvalidHistogramBoundaries =>
     [
         [0.0, 0.0],
         [1.0, 0.0],
@@ -35,7 +35,7 @@ internal static class MetricTestData
         [0.0, 1.0, 2.0, -1.0],
         [double.NaN],
         [0.0, double.NaN, 1.0],
-    ]);
+    ];
 
     public static TheoryData<double[], HistogramConfiguration, double, double> ValidHistogramMinMax => new()
     {
