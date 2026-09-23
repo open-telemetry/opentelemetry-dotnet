@@ -40,10 +40,10 @@ jobs:
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
 
       - name: Restore workloads
-        run: dotnet workload restore
+        run: dotnet workload restore ./OpenTelemetry.Extended.slnx
 
       - name: Restore NuGet packages
-        run: dotnet restore
+        run: dotnet restore ./OpenTelemetry.Extended.slnx
 
       - name: Component detection
         uses: advanced-security/component-detection-dependency-submission-action@b282c67b1008fde9b60da4bdfcd8849613e293b2 # v0.1.6
