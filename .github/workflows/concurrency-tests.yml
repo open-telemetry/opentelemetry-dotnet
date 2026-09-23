@@ -52,3 +52,4 @@ jobs:
       with:
         name: ${{ matrix.os }}-${{ matrix.project }}-${{ matrix.version }}-coyoteoutput
         path: '**/*_CoyoteOutput.*'
+        if-no-files-found: error

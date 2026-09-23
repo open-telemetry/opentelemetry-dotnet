@@ -55,7 +55,7 @@ jobs:
       shell: bash
       env:
         TARGET_FRAMEWORK: ${{ matrix.version }}
-      run: dotnet test test/OpenTelemetry.Apple.Tests/OpenTelemetry.Apple.Tests.csproj --configuration Debug --framework "${TARGET_FRAMEWORK}" --logger:"GitHubActions;report-warnings=false"
+      run: dotnet test test/OpenTelemetry.Apple.Tests/OpenTelemetry.Apple.Tests.csproj --configuration Debug --framework "${TARGET_FRAMEWORK}" --logger:"GitHubActions;report-warnings=false;summary-include-passed=false"
 
     - name: Upload test result artifacts
       if: ${{ failure() }}

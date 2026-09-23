@@ -28,7 +28,7 @@ public class HttpRetryTestCase
 
     internal HttpRetryAttempt[] RetryAttempts { get; }
 
-    public static TheoryData<HttpRetryTestCase> GetHttpTestCases() =>
+    public static TheoryData<HttpRetryTestCase> GetHttpTestCases() => new(
     [
         new("NetworkError", [new(statusCode: null)]),
         new("NetworkError with expired deadline", [new(statusCode: null, isDeadlineExceeded: true, expectedSuccess: false)]),
@@ -97,7 +97,7 @@ public class HttpRetryTestCase
             [
                 new(statusCode: HttpStatusCode.ServiceUnavailable, isDeadlineExceeded: true, expectedSuccess: false)
             ]),
-    ];
+    ]);
 
     public override string ToString() => this.testRunnerName;
 

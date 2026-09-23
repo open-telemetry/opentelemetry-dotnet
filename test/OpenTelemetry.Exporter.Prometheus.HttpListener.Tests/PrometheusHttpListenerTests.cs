@@ -18,6 +18,7 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests;
 public class PrometheusHttpListenerTests
 {
     private const string MeterVersion = "1.0.1";
+    private const string VerifyFileExtension = "txt";
 
     private const string MeterName = nameof(PrometheusHttpListenerTests);
 
@@ -31,7 +32,7 @@ public class PrometheusHttpListenerTests
     {
         var output = await RunPrometheusExporterHttpServerIntegrationTest();
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Theory]
@@ -47,7 +48,7 @@ public class PrometheusHttpListenerTests
             },
             assertResponseContent: false);
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings).UseParameters(scopeInfoEnabled);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings).UseParameters(scopeInfoEnabled);
     }
 
     [Theory]
@@ -63,7 +64,7 @@ public class PrometheusHttpListenerTests
             },
             assertResponseContent: false);
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings).UseParameters(targetInfoEnabled);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings).UseParameters(targetInfoEnabled);
     }
 
     [Theory]
@@ -85,7 +86,7 @@ public class PrometheusHttpListenerTests
             },
             assertResponseContent: false);
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings).UseParameters(filter);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings).UseParameters(filter);
     }
 
     [Fact]
@@ -93,7 +94,7 @@ public class PrometheusHttpListenerTests
     {
         var output = await RunPrometheusExporterHttpServerIntegrationTest(skipMetrics: true);
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -101,7 +102,7 @@ public class PrometheusHttpListenerTests
     {
         var output = await RunPrometheusExporterHttpServerIntegrationTest(acceptHeader: string.Empty);
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -111,7 +112,7 @@ public class PrometheusHttpListenerTests
             acceptHeader: "application/openmetrics-text; version=1.0.0",
             contentType: "application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores");
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -127,7 +128,7 @@ public class PrometheusHttpListenerTests
             acceptHeader: string.Empty,
             meterTags: tags);
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -144,7 +145,7 @@ public class PrometheusHttpListenerTests
             contentType: "application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores",
             meterTags: tags);
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
