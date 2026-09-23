@@ -140,10 +140,12 @@ public sealed class BlazorWasmEndToEndTests : IClassFixture<BlazorWasmAppFixture
         });
     }
 
-    private static async Task NavigateAndWaitForStartupAsync(IPage page, string url)
+    private static async Task NavigateAndWaitForStartupAsync(IPage page, string url, CancellationToken cancellationToken = default)
     {
         for (var attempt = 0; attempt < StartupAttempts; attempt++)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             try
             {
                 await page.GotoAsync(url, new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle });
@@ -155,7 +157,7 @@ public sealed class BlazorWasmEndToEndTests : IClassFixture<BlazorWasmAppFixture
                 // A transient network error (e.g. ERR_NETWORK_CHANGED) can abort the
                 // WASM asset downloads on a cold boot, leaving the app stuck loading.
                 // Reload and try again.
-                await Task.Delay(1_000);
+                await Task.Delay(1_000, cancellationToken);
             }
         }
 

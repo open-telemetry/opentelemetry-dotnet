@@ -7,21 +7,17 @@ namespace OpenTelemetry.Exporter.Prometheus.Tests;
 
 public sealed class PrometheusMetricTests
 {
-    public static TheoryData<MetricsMappingTestData> GetPrometheusType_Data()
-    {
-        var data = new TheoryData<MetricsMappingTestData>
-        {
-            new(MetricType.LongSum, PrometheusType.Counter),
-            new(MetricType.DoubleSum, PrometheusType.Counter),
-            new(MetricType.LongGauge, PrometheusType.Gauge),
-            new(MetricType.DoubleGauge, PrometheusType.Gauge),
-            new(MetricType.Histogram, PrometheusType.Histogram),
-            new(MetricType.ExponentialHistogram, PrometheusType.Histogram),
-            new(MetricType.LongSumNonMonotonic, PrometheusType.Gauge),
-            new(MetricType.DoubleSumNonMonotonic, PrometheusType.Gauge),
-        };
-        return data;
-    }
+    public static TheoryData<MetricsMappingTestData> GetPrometheusType_Data => new(
+    [
+        new(MetricType.LongSum, PrometheusType.Counter),
+        new(MetricType.DoubleSum, PrometheusType.Counter),
+        new(MetricType.LongGauge, PrometheusType.Gauge),
+        new(MetricType.DoubleGauge, PrometheusType.Gauge),
+        new(MetricType.Histogram, PrometheusType.Histogram),
+        new(MetricType.ExponentialHistogram, PrometheusType.Histogram),
+        new(MetricType.LongSumNonMonotonic, PrometheusType.Gauge),
+        new(MetricType.DoubleSumNonMonotonic, PrometheusType.Gauge),
+    ]);
 
     [Fact]
     public void SanitizeMetricName_Valid()

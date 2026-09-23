@@ -55,7 +55,7 @@ internal static class TraceStateUtils
                 var keyStr = key.ToString();
                 if (names.Add(keyStr))
                 {
-                    tracestate.Add(new KeyValuePair<string, string>(keyStr, value.ToString()));
+                    tracestate.Add(new(keyStr, value.ToString()));
                 }
                 else
                 {

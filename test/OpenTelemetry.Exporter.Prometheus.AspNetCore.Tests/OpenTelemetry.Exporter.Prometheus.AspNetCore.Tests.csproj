@@ -5,6 +5,8 @@
     <TargetFrameworks>$(TargetFrameworksForAspNetCoreTests)</TargetFrameworks>
     <DefineConstants>$(DefineConstants);PROMETHEUS_ASPNETCORE</DefineConstants>
     <NoWarn>$(NoWarn);CA1019;CA1062;CA1515</NoWarn>
+    <!-- Avoid conflicting port registrations if TFMs tested in parallel -->
+    <TestTfmsInParallel>false</TestTfmsInParallel>
   </PropertyGroup>
 
   <ItemGroup>
