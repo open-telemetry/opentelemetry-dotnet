@@ -128,18 +128,17 @@ application.
 | `resource.attributes_list` | Adds resource attributes from a pre-formatted `key=value` list | Flat SDK key | Yes |
 | `resource.schema_url` | Sets the schema URL on the resource | Typed resource detector | No |
 
-### Configuration layering boundary
+The following attribute types defined by the OTel configuration schema are
+supported for `resource.attributes`:
 
-The original "YAML is another .NET configuration source" model applies only to
-simple settings that map cleanly onto existing SDK configuration keys.
-Structured declarative configuration is model-driven, so later configuration
-sources cannot implicitly override it.
-
-All eight attribute types defined by the OTel configuration schema are
-supported: `string`, `bool`, `int`, `double`, `string_array`, `bool_array`,
-`int_array`, `double_array`. Each type reaches the built `Resource` with its
-declared CLR type (`int` maps to `long`, `double` remains `double`, and array
-types map to their corresponding one-dimensional CLR array type).
+- `string`
+- `bool`
+- `int` (stored as `long`)
+- `double`
+- `string_array` (stored as `string[]`)
+- `bool_array` (stored as `bool[]`)
+- `int_array` (stored as `long[]`)
+- `double_array` (stored as `double[]`)
 
 `resource.attributes_list` is treated as containing a `OTEL_RESOURCE_ATTRIBUTES`
 string that has not been percent-encoded and is passed through without

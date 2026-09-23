@@ -147,8 +147,7 @@ internal static class YamlScalarConverter
             return significand;
         }
 
-        var roundUp = (significand & 1) != 0
-            && (hasDiscardedNonzeroBits || (significand & 2) != 0);
+        var roundUp = (significand & 1) != 0 && (hasDiscardedNonzeroBits || (significand & 2) != 0);
         significand = (significand >> 1) + (roundUp ? 1UL : 0UL);
         exponent++;
 
