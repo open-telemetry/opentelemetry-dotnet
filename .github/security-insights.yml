@@ -1,6 +1,6 @@
 header:
-  last-reviewed: '2026-06-18'
-  last-updated: '2026-06-18'
+  last-reviewed: '2026-09-23'
+  last-updated: '2026-09-23'
   schema-version: 2.0.0
   url: https://raw.githubusercontent.com/open-telemetry/opentelemetry-dotnet/main/.github/security-insights.yml
   comment: |
@@ -69,10 +69,6 @@ repository:
     - name: Martin Costello
       affiliation: Grafana Labs
       social: https://github.com/martincostello
-      primary: false
-    - name: Mikel Blanchard
-      affiliation: Microsoft
-      social: https://github.com/CodeBlanch
       primary: false
     - name: "Piotr Kie\u0142kowicz"
       affiliation: Splunk
