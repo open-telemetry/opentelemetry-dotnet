@@ -587,9 +587,6 @@ public sealed class MockCollectorIntegrationTests
         return (first, second);
     }
 
-    // TcpPortProvider can only tell us a port was free at the moment it checked; something
-    // else can claim it before Kestrel actually binds. Retry with freshly selected ports if
-    // that happens instead of failing the test.
     private static async Task<IHost> StartHostWithRetryAsync(Func<int, int, IHostBuilder> configureHostBuilder)
     {
         const int MaxAttempts = 5;
