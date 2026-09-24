@@ -30,39 +30,45 @@ public sealed class MockCollectorIntegrationTests
     [Fact]
     public async Task TestRecoveryAfterFailedExport()
     {
-        (var grpcPort, var httpPort) = GetTwoOpenPorts();
+        var grpcPort = 0;
+        var httpPort = 0;
 
-        using var host = await new HostBuilder()
-           .ConfigureWebHostDefaults(webBuilder => webBuilder
-                .ConfigureKestrel(options =>
-                {
-                    options.ListenLocalhost(httpPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1);
-                    options.ListenLocalhost(grpcPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http2);
-                })
-               .ConfigureServices(services =>
-               {
-                   services.AddSingleton(new MockCollectorState());
-                   services.AddGrpc();
-               })
-               .ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders())
-               .Configure(app =>
-               {
-                   app.UseRouting();
+        using var host = await StartHostWithRetryAsync((grpc, http) =>
+        {
+            grpcPort = grpc;
+            httpPort = http;
 
-                   app.UseEndpoints(endpoints =>
+            return new HostBuilder()
+               .ConfigureWebHostDefaults(webBuilder => webBuilder
+                    .ConfigureKestrel(options =>
+                    {
+                        options.ListenLocalhost(httpPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1);
+                        options.ListenLocalhost(grpcPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http2);
+                    })
+                   .ConfigureServices(services =>
                    {
-                       endpoints.MapGet(
-                           "/MockCollector/SetResponseCodes/{responseCodesCsv}",
-                           (MockCollectorState collectorState, string responseCodesCsv) =>
-                           {
-                               var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x, CultureInfo.InvariantCulture)).ToArray();
-                               collectorState.SetStatusCodes(codes);
-                           });
+                       services.AddSingleton(new MockCollectorState());
+                       services.AddGrpc();
+                   })
+                   .ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders())
+                   .Configure(app =>
+                   {
+                       app.UseRouting();
 
-                       endpoints.MapGrpcService<MockTraceService>();
-                   });
-               }))
-           .StartAsync();
+                       app.UseEndpoints(endpoints =>
+                       {
+                           endpoints.MapGet(
+                               "/MockCollector/SetResponseCodes/{responseCodesCsv}",
+                               (MockCollectorState collectorState, string responseCodesCsv) =>
+                               {
+                                   var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x, CultureInfo.InvariantCulture)).ToArray();
+                                   collectorState.SetStatusCodes(codes);
+                               });
+
+                           endpoints.MapGrpcService<MockTraceService>();
+                       });
+                   }));
+        });
 
         using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{httpPort}") };
 
@@ -133,39 +139,45 @@ public sealed class MockCollectorIntegrationTests
     [InlineData(false, ExportResult.Failure, Grpc.Core.StatusCode.DeadlineExceeded)]
     public async Task GrpcRetryTests(bool useRetryTransmissionHandler, ExportResult expectedResult, Grpc.Core.StatusCode initialStatusCode)
     {
-        (var grpcPort, var httpPort) = GetTwoOpenPorts();
+        var grpcPort = 0;
+        var httpPort = 0;
 
-        using var host = await new HostBuilder()
-           .ConfigureWebHostDefaults(webBuilder => webBuilder
-                .ConfigureKestrel(options =>
-                {
-                    options.ListenLocalhost(httpPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1);
-                    options.ListenLocalhost(grpcPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http2);
-                })
-               .ConfigureServices(services =>
-               {
-                   services.AddSingleton(new MockCollectorState());
-                   services.AddGrpc();
-               })
-               .ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders())
-               .Configure(app =>
-               {
-                   app.UseRouting();
+        using var host = await StartHostWithRetryAsync((grpc, http) =>
+        {
+            grpcPort = grpc;
+            httpPort = http;
 
-                   app.UseEndpoints(endpoints =>
+            return new HostBuilder()
+               .ConfigureWebHostDefaults(webBuilder => webBuilder
+                    .ConfigureKestrel(options =>
+                    {
+                        options.ListenLocalhost(httpPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1);
+                        options.ListenLocalhost(grpcPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http2);
+                    })
+                   .ConfigureServices(services =>
                    {
-                       endpoints.MapGet(
-                           "/MockCollector/SetResponseCodes/{responseCodesCsv}",
-                           (MockCollectorState collectorState, string responseCodesCsv) =>
-                           {
-                               var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x, CultureInfo.InvariantCulture)).ToArray();
-                               collectorState.SetStatusCodes(codes);
-                           });
+                       services.AddSingleton(new MockCollectorState());
+                       services.AddGrpc();
+                   })
+                   .ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders())
+                   .Configure(app =>
+                   {
+                       app.UseRouting();
 
-                       endpoints.MapGrpcService<MockTraceService>();
-                   });
-               }))
-           .StartAsync();
+                       app.UseEndpoints(endpoints =>
+                       {
+                           endpoints.MapGet(
+                               "/MockCollector/SetResponseCodes/{responseCodesCsv}",
+                               (MockCollectorState collectorState, string responseCodesCsv) =>
+                               {
+                                   var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x, CultureInfo.InvariantCulture)).ToArray();
+                                   collectorState.SetStatusCodes(codes);
+                               });
+
+                           endpoints.MapGrpcService<MockTraceService>();
+                       });
+                   }));
+        });
 
         using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{httpPort}") };
 
@@ -218,43 +230,47 @@ public sealed class MockCollectorIntegrationTests
     [InlineData(false, ExportResult.Failure, HttpStatusCode.BadRequest)]
     public async Task HttpRetryTests(bool useRetryTransmissionHandler, ExportResult expectedResult, HttpStatusCode initialHttpStatusCode)
     {
-        var httpPort = TcpPortProvider.GetOpenPort();
+        int httpPort = 0;
 
-        using var host = await new HostBuilder()
-           .ConfigureWebHostDefaults(webBuilder => webBuilder
-                .ConfigureKestrel(options =>
-                {
-                    options.ListenLocalhost(httpPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1);
-                })
-               .ConfigureServices(services =>
-               {
-                   services.AddSingleton(new MockCollectorHttpState());
-               })
-               .ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders())
-               .Configure(app =>
-               {
-                   app.UseRouting();
+        using var host = await StartHostWithRetryAsync(http =>
+        {
+            httpPort = http;
 
-                   app.UseEndpoints(endpoints =>
+            return new HostBuilder()
+               .ConfigureWebHostDefaults(webBuilder => webBuilder
+                    .ConfigureKestrel(options =>
+                    {
+                        options.ListenLocalhost(httpPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1);
+                    })
+                   .ConfigureServices(services =>
                    {
-                       endpoints.MapGet(
-                           "/MockCollector/SetResponseCodes/{responseCodesCsv}",
-                           (MockCollectorHttpState collectorState, string responseCodesCsv) =>
-                           {
-                               var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x, CultureInfo.InvariantCulture)).ToArray();
-                               collectorState.SetStatusCodes(codes);
-                           });
+                       services.AddSingleton(new MockCollectorHttpState());
+                   })
+                   .ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders())
+                   .Configure(app =>
+                   {
+                       app.UseRouting();
 
-                       endpoints.MapPost("/v1/traces", async ctx =>
+                       app.UseEndpoints(endpoints =>
                        {
-                           var state = ctx.RequestServices.GetRequiredService<MockCollectorHttpState>();
-                           ctx.Response.StatusCode = (int)state.NextStatus();
+                           endpoints.MapGet(
+                               "/MockCollector/SetResponseCodes/{responseCodesCsv}",
+                               (MockCollectorHttpState collectorState, string responseCodesCsv) =>
+                               {
+                                   var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x, CultureInfo.InvariantCulture)).ToArray();
+                                   collectorState.SetStatusCodes(codes);
+                               });
 
-                           await ctx.Response.WriteAsync("Request Received.");
+                           endpoints.MapPost("/v1/traces", async ctx =>
+                           {
+                               var state = ctx.RequestServices.GetRequiredService<MockCollectorHttpState>();
+                               ctx.Response.StatusCode = (int)state.NextStatus();
+
+                               await ctx.Response.WriteAsync("Request Received.");
+                           });
                        });
-                   });
-               }))
-           .StartAsync();
+                   }));
+        });
 
         using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{httpPort}") };
 
@@ -304,43 +320,47 @@ public sealed class MockCollectorIntegrationTests
     [InlineData(false, ExportResult.Failure, HttpStatusCode.BadRequest)]
     public async Task HttpPersistentStorageRetryTests(bool usePersistentStorageTransmissionHandler, ExportResult expectedResult, HttpStatusCode initialHttpStatusCode)
     {
-        (var grpcPort, var httpPort) = GetTwoOpenPorts();
+        int httpPort = 0;
 
-        using var host = await new HostBuilder()
-           .ConfigureWebHostDefaults(webBuilder => webBuilder
-                .ConfigureKestrel(options =>
-                {
-                    options.ListenLocalhost(httpPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1);
-                })
-               .ConfigureServices(services =>
-               {
-                   services.AddSingleton(new MockCollectorHttpState());
-               })
-               .ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders())
-               .Configure(app =>
-               {
-                   app.UseRouting();
+        using var host = await StartHostWithRetryAsync(http =>
+        {
+            httpPort = http;
 
-                   app.UseEndpoints(endpoints =>
+            return new HostBuilder()
+               .ConfigureWebHostDefaults(webBuilder => webBuilder
+                    .ConfigureKestrel(options =>
+                    {
+                        options.ListenLocalhost(httpPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1);
+                    })
+                   .ConfigureServices(services =>
                    {
-                       endpoints.MapGet(
-                           "/MockCollector/SetResponseCodes/{responseCodesCsv}",
-                           (MockCollectorHttpState collectorState, string responseCodesCsv) =>
-                           {
-                               var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x, CultureInfo.InvariantCulture)).ToArray();
-                               collectorState.SetStatusCodes(codes);
-                           });
+                       services.AddSingleton(new MockCollectorHttpState());
+                   })
+                   .ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders())
+                   .Configure(app =>
+                   {
+                       app.UseRouting();
 
-                       endpoints.MapPost("/v1/traces", async ctx =>
+                       app.UseEndpoints(endpoints =>
                        {
-                           var state = ctx.RequestServices.GetRequiredService<MockCollectorHttpState>();
-                           ctx.Response.StatusCode = (int)state.NextStatus();
+                           endpoints.MapGet(
+                               "/MockCollector/SetResponseCodes/{responseCodesCsv}",
+                               (MockCollectorHttpState collectorState, string responseCodesCsv) =>
+                               {
+                                   var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x, CultureInfo.InvariantCulture)).ToArray();
+                                   collectorState.SetStatusCodes(codes);
+                               });
 
-                           await ctx.Response.WriteAsync("Request Received.");
+                           endpoints.MapPost("/v1/traces", async ctx =>
+                           {
+                               var state = ctx.RequestServices.GetRequiredService<MockCollectorHttpState>();
+                               ctx.Response.StatusCode = (int)state.NextStatus();
+
+                               await ctx.Response.WriteAsync("Request Received.");
+                           });
                        });
-                   });
-               }))
-           .StartAsync();
+                   }));
+        });
 
         using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{httpPort}") };
 
@@ -441,39 +461,45 @@ public sealed class MockCollectorIntegrationTests
     [InlineData(false, ExportResult.Failure, Grpc.Core.StatusCode.DeadlineExceeded)]
     public async Task GrpcPersistentStorageRetryTests(bool usePersistentStorageTransmissionHandler, ExportResult expectedResult, Grpc.Core.StatusCode initialgrpcStatusCode)
     {
-        (var grpcPort, var httpPort) = GetTwoOpenPorts();
+        var grpcPort = 0;
+        var httpPort = 0;
 
-        using var host = await new HostBuilder()
-           .ConfigureWebHostDefaults(webBuilder => webBuilder
-                .ConfigureKestrel(options =>
-                {
-                    options.ListenLocalhost(httpPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1);
-                    options.ListenLocalhost(grpcPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http2);
-                })
-               .ConfigureServices(services =>
-               {
-                   services.AddSingleton(new MockCollectorState());
-                   services.AddGrpc();
-               })
-               .ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders())
-               .Configure(app =>
-               {
-                   app.UseRouting();
+        using var host = await StartHostWithRetryAsync((grpc, http) =>
+        {
+            grpcPort = grpc;
+            httpPort = http;
 
-                   app.UseEndpoints(endpoints =>
+            return new HostBuilder()
+               .ConfigureWebHostDefaults(webBuilder => webBuilder
+                    .ConfigureKestrel(options =>
+                    {
+                        options.ListenLocalhost(httpPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1);
+                        options.ListenLocalhost(grpcPort, listenOptions => listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http2);
+                    })
+                   .ConfigureServices(services =>
                    {
-                       endpoints.MapGet(
-                           "/MockCollector/SetResponseCodes/{responseCodesCsv}",
-                           (MockCollectorState collectorState, string responseCodesCsv) =>
-                           {
-                               var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x, CultureInfo.InvariantCulture)).ToArray();
-                               collectorState.SetStatusCodes(codes);
-                           });
+                       services.AddSingleton(new MockCollectorState());
+                       services.AddGrpc();
+                   })
+                   .ConfigureLogging(loggingBuilder => loggingBuilder.ClearProviders())
+                   .Configure(app =>
+                   {
+                       app.UseRouting();
 
-                       endpoints.MapGrpcService<MockTraceService>();
-                   });
-               }))
-           .StartAsync();
+                       app.UseEndpoints(endpoints =>
+                       {
+                           endpoints.MapGet(
+                               "/MockCollector/SetResponseCodes/{responseCodesCsv}",
+                               (MockCollectorState collectorState, string responseCodesCsv) =>
+                               {
+                                   var codes = responseCodesCsv.Split(",").Select(x => int.Parse(x, CultureInfo.InvariantCulture)).ToArray();
+                                   collectorState.SetStatusCodes(codes);
+                               });
+
+                           endpoints.MapGrpcService<MockTraceService>();
+                       });
+                   }));
+        });
 
         using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{httpPort}") };
 
@@ -559,6 +585,53 @@ public sealed class MockCollectorIntegrationTests
         }
 
         return (first, second);
+    }
+
+    // TcpPortProvider can only tell us a port was free at the moment it checked; something
+    // else can claim it before Kestrel actually binds. Retry with freshly selected ports if
+    // that happens instead of failing the test.
+    private static async Task<IHost> StartHostWithRetryAsync(Func<int, int, IHostBuilder> configureHostBuilder)
+    {
+        const int maxAttempts = 5;
+
+        for (var attempt = 1; ; attempt++)
+        {
+            (var grpcPort, var httpPort) = GetTwoOpenPorts();
+
+            var host = configureHostBuilder(grpcPort, httpPort).Build();
+
+            try
+            {
+                await host.StartAsync();
+                return host;
+            }
+            catch (IOException) when (attempt < maxAttempts)
+            {
+                host.Dispose();
+            }
+        }
+    }
+
+    private static async Task<IHost> StartHostWithRetryAsync(Func<int, IHostBuilder> configureHostBuilder)
+    {
+        const int maxAttempts = 5;
+
+        for (var attempt = 1; ; attempt++)
+        {
+            var httpPort = TcpPortProvider.GetOpenPort();
+
+            var host = configureHostBuilder(httpPort).Build();
+
+            try
+            {
+                await host.StartAsync();
+                return host;
+            }
+            catch (IOException) when (attempt < maxAttempts)
+            {
+                host.Dispose();
+            }
+        }
     }
 
     private sealed class MockCollectorState
