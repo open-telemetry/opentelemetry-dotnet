@@ -144,7 +144,7 @@ jobs:
       run: dotnet-coverage merge -f cobertura -o ./TestResults/Cobertura.xml ./TestResults/**/*.coverage
 
     - name: Upload code coverage ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}
-      uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+      uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
       continue-on-error: true # Note: Don't fail for upload failures
       timeout-minutes: 5
       env:
@@ -162,7 +162,7 @@ jobs:
 
     - name: Upload test results ${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}
       if: ${{ !cancelled() && hashFiles('./TestResults/junit.xml') != '' }}
-      uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+      uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
       continue-on-error: true # Note: Don't fail for upload failures
       timeout-minutes: 5
       with:
