@@ -230,7 +230,7 @@ public sealed class MockCollectorIntegrationTests
     [InlineData(false, ExportResult.Failure, HttpStatusCode.BadRequest)]
     public async Task HttpRetryTests(bool useRetryTransmissionHandler, ExportResult expectedResult, HttpStatusCode initialHttpStatusCode)
     {
-        int httpPort = 0;
+        var httpPort = 0;
 
         using var host = await StartHostWithRetryAsync(http =>
         {
@@ -320,7 +320,7 @@ public sealed class MockCollectorIntegrationTests
     [InlineData(false, ExportResult.Failure, HttpStatusCode.BadRequest)]
     public async Task HttpPersistentStorageRetryTests(bool usePersistentStorageTransmissionHandler, ExportResult expectedResult, HttpStatusCode initialHttpStatusCode)
     {
-        int httpPort = 0;
+        var httpPort = 0;
 
         using var host = await StartHostWithRetryAsync(http =>
         {
@@ -592,7 +592,7 @@ public sealed class MockCollectorIntegrationTests
     // that happens instead of failing the test.
     private static async Task<IHost> StartHostWithRetryAsync(Func<int, int, IHostBuilder> configureHostBuilder)
     {
-        const int maxAttempts = 5;
+        const int MaxAttempts = 5;
 
         for (var attempt = 1; ; attempt++)
         {
@@ -609,7 +609,7 @@ public sealed class MockCollectorIntegrationTests
             {
                 host.Dispose();
 
-                if (attempt >= maxAttempts)
+                if (attempt >= MaxAttempts)
                 {
                     throw;
                 }
@@ -619,7 +619,7 @@ public sealed class MockCollectorIntegrationTests
 
     private static async Task<IHost> StartHostWithRetryAsync(Func<int, IHostBuilder> configureHostBuilder)
     {
-        const int maxAttempts = 5;
+        const int MaxAttempts = 5;
 
         for (var attempt = 1; ; attempt++)
         {
@@ -636,7 +636,7 @@ public sealed class MockCollectorIntegrationTests
             {
                 host.Dispose();
 
-                if (attempt >= maxAttempts)
+                if (attempt >= MaxAttempts)
                 {
                     throw;
                 }
