@@ -479,10 +479,10 @@ public sealed class PrometheusExporterMiddlewareTests
         // unaltered survive the second escaping pass content negotiation applies.
         client.DefaultRequestHeaders.Add("Accept", "text/plain; version=1.0.0; escaping=allow-utf-8");
 
-        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
-        var output = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings();
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative), TestContext.Current.CancellationToken);
+        var output = (await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)).ReplaceLineEndings();
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(
             "text/plain; version=1.0.0; charset=utf-8; escaping=allow-utf-8",
@@ -510,10 +510,10 @@ public sealed class PrometheusExporterMiddlewareTests
         host.Services.GetRequiredService<MeterProvider>().ForceFlush();
 
         using var client = host.GetTestClient();
-        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
-        var output = await response.Content.ReadAsStringAsync();
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative), TestContext.Current.CancellationToken);
+        var output = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
 
         await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
@@ -541,10 +541,10 @@ public sealed class PrometheusExporterMiddlewareTests
         // through unaltered survives the second escaping pass content negotiation applies.
         client.DefaultRequestHeaders.Add("Accept", "text/plain; version=1.0.0; escaping=allow-utf-8");
 
-        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
-        var output = await response.Content.ReadAsStringAsync();
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative), TestContext.Current.CancellationToken);
+        var output = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
 
         await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
@@ -576,10 +576,10 @@ public sealed class PrometheusExporterMiddlewareTests
         // added.
         client.DefaultRequestHeaders.Add("Accept", "text/plain; version=1.0.0; escaping=underscores");
 
-        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
-        var output = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings();
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative), TestContext.Current.CancellationToken);
+        var output = (await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)).ReplaceLineEndings();
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(
             "text/plain; version=1.0.0; charset=utf-8; escaping=underscores",
@@ -614,10 +614,10 @@ public sealed class PrometheusExporterMiddlewareTests
         // revert them. The response reports the escaping that was applied, not the one negotiated.
         client.DefaultRequestHeaders.Add("Accept", "text/plain; version=1.0.0; escaping=allow-utf-8");
 
-        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
-        var output = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings();
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative), TestContext.Current.CancellationToken);
+        var output = (await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)).ReplaceLineEndings();
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(
             "text/plain; version=1.0.0; charset=utf-8; escaping=underscores",
@@ -655,10 +655,10 @@ public sealed class PrometheusExporterMiddlewareTests
         // escaped and the response reports the escaping that was applied instead.
         client.DefaultRequestHeaders.Add("Accept", $"text/plain; version=1.0.0; escaping={escaping}");
 
-        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
-        var output = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings("\n");
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative), TestContext.Current.CancellationToken);
+        var output = (await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)).ReplaceLineEndings("\n");
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(
             "text/plain; version=1.0.0; charset=utf-8; escaping=underscores",
@@ -711,10 +711,10 @@ public sealed class PrometheusExporterMiddlewareTests
 
         client.DefaultRequestHeaders.Add("Accept", accept);
 
-        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
-        var output = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings("\n");
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative), TestContext.Current.CancellationToken);
+        var output = (await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)).ReplaceLineEndings("\n");
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
 
         // A name that is not a valid legacy name is written using the quoted exposition format,
         // where the metric name is the first entry of the label set rather than a prefix.
@@ -743,12 +743,12 @@ public sealed class PrometheusExporterMiddlewareTests
 
         using var client = host.GetTestClient();
 
-        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
-        var output = await response.Content.ReadAsStringAsync();
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative), TestContext.Current.CancellationToken);
+        var output = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.NotEmpty(output);
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
 
         await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
@@ -774,11 +774,11 @@ public sealed class PrometheusExporterMiddlewareTests
 
         using var client = host.GetTestClient();
 
-        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative), TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
     }
 
     [Fact]

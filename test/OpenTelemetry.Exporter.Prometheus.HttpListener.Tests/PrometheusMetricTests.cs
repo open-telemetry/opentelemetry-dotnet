@@ -9,7 +9,7 @@ public sealed class PrometheusMetricTests
 {
     public static TheoryData<MetricsMappingTestData> GetPrometheusType_Data => new(
     [
-        new(MetricType.LongSum, PrometheusType.Counter),
+        new MetricsMappingTestData(MetricType.LongSum, PrometheusType.Counter),
         new(MetricType.DoubleSum, PrometheusType.Counter),
         new(MetricType.LongGauge, PrometheusType.Gauge),
         new(MetricType.DoubleGauge, PrometheusType.Gauge),

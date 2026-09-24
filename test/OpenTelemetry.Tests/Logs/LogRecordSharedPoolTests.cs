@@ -179,33 +179,35 @@ public sealed class LogRecordSharedPoolTests
 
         for (var i = 0; i < Environment.ProcessorCount; i++)
         {
-            tasks.Add(Task.Run(async () =>
-            {
-                var random =
+            tasks.Add(Task.Run(
+                async () =>
+                {
+                    var random =
 #if NET
-                    Random.Shared;
+                        Random.Shared;
 #else
-                    new Random();
+                        new Random();
 #endif
 
 #pragma warning disable CA5394 // Do not use insecure randomness
-                await Task.Delay(random.Next(100, 150));
+                    await Task.Delay(random.Next(100, 150));
 #pragma warning restore CA5394 // Do not use insecure randomness
 
-                for (var i = 0; i < 1000; i++)
-                {
-                    var logRecord = pool.Rent();
+                    for (var i = 0; i < 1000; i++)
+                    {
+                        var logRecord = pool.Rent();
 
-                    processor.OnEnd(logRecord);
+                        processor.OnEnd(logRecord);
 
-                    // This should no-op mostly.
-                    pool.Return(logRecord);
+                        // This should no-op mostly.
+                        pool.Return(logRecord);
 
 #pragma warning disable CA5394 // Do not use insecure randomness
-                    await Task.Delay(random.Next(0, 20));
+                        await Task.Delay(random.Next(0, 20), TestContext.Current.CancellationToken);
 #pragma warning restore CA5394 // Do not use insecure randomness
-                }
-            }));
+                    }
+                },
+                TestContext.Current.CancellationToken));
         }
 
         await Task.WhenAll(tasks);
@@ -244,17 +246,19 @@ public sealed class LogRecordSharedPoolTests
 
         for (var i = 0; i < Environment.ProcessorCount; i++)
         {
-            tasks.Add(Task.Run(async () =>
-            {
-                await Task.Delay(2_000);
-
-                for (var i = 0; i < 100_000; i++)
+            tasks.Add(Task.Run(
+                async () =>
                 {
-                    var logRecord = pool.Rent();
+                    await Task.Delay(2_000);
 
-                    pool.Return(logRecord);
-                }
-            }));
+                    for (var i = 0; i < 100_000; i++)
+                    {
+                        var logRecord = pool.Rent();
+
+                        pool.Return(logRecord);
+                    }
+                },
+                TestContext.Current.CancellationToken));
         }
 
         await Task.WhenAll(tasks);
@@ -287,37 +291,39 @@ public sealed class LogRecordSharedPoolTests
 
         for (var t = 0; t < Environment.ProcessorCount; t++)
         {
-            tasks.Add(Task.Run(() =>
-            {
-                barrier.SignalAndWait(); // Synchronize start for maximum contention
-
-                for (var i = 0; i < 10_000; i++)
+            tasks.Add(Task.Run(
+                () =>
                 {
-                    var record = pool.Rent();
+                    barrier.SignalAndWait(); // Synchronize start for maximum contention
 
-                    // Check if this record is already in use by another thread
-                    if (!inUseRecords.TryAdd(record, Environment.CurrentManagedThreadId))
+                    for (var i = 0; i < 10_000; i++)
                     {
-                        if (inUseRecords.TryGetValue(record, out var firstThreadId))
+                        var record = pool.Rent();
+
+                        // Check if this record is already in use by another thread
+                        if (!inUseRecords.TryAdd(record, Environment.CurrentManagedThreadId))
                         {
-                            duplicateMessages.Enqueue(
-                                $"LogRecord {record.GetHashCode()} rented by thread {firstThreadId} and {Environment.CurrentManagedThreadId}");
+                            if (inUseRecords.TryGetValue(record, out var firstThreadId))
+                            {
+                                duplicateMessages.Enqueue(
+                                    $"LogRecord {record.GetHashCode()} rented by thread {firstThreadId} and {Environment.CurrentManagedThreadId}");
+                            }
+                            else
+                            {
+                                duplicateMessages.Enqueue(
+                                    $"LogRecord {record.GetHashCode()} duplicate rental detected by thread {Environment.CurrentManagedThreadId}");
+                            }
                         }
-                        else
-                        {
-                            duplicateMessages.Enqueue(
-                                $"LogRecord {record.GetHashCode()} duplicate rental detected by thread {Environment.CurrentManagedThreadId}");
-                        }
+
+                        // Simulate some work
+                        Thread.SpinWait(10);
+
+                        // Remove from tracking before return
+                        inUseRecords.TryRemove(record, out _);
+                        pool.Return(record);
                     }
-
-                    // Simulate some work
-                    Thread.SpinWait(10);
-
-                    // Remove from tracking before return
-                    inUseRecords.TryRemove(record, out _);
-                    pool.Return(record);
-                }
-            }));
+                },
+                TestContext.Current.CancellationToken));
         }
 
         await Task.WhenAll(tasks);

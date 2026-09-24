@@ -39,6 +39,11 @@
     <Compile Include="$(RepoRoot)\test\Shared\StrongNameTests.cs" Link="StrongNameTests.cs" />
   </ItemGroup>
 
+  <!-- This class is a temporary shim until https://github.com/open-telemetry/opentelemetry-dotnet/pull/7805 is merged -->
+  <ItemGroup Condition="'$(IsTestProject)' == 'true'">
+    <Compile Include="$(RepoRoot)\test\Shared\TestContext.cs" Link="TestContext.cs" />
+  </ItemGroup>
+
   <PropertyGroup>
     <!-- Running unit tests from VSCode does not work with .NET SDK 6.0.200 without ProduceReferenceAssemblyInOutDir -->
     <!-- Related breaking change: https://docs.microsoft.com/en-us/dotnet/core/compatibility/sdk/6.0/write-reference-assemblies-to-obj -->

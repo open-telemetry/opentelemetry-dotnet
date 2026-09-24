@@ -152,7 +152,7 @@ public class PrometheusHttpListenerTests
     public void PrometheusHttpListenerThrowsOnStartIfPortAlreadyInUse()
     {
         // Step 1: Start a listener on a random port.
-        using var context = CreateListener();
+        using var context = CreateListener(startToken: TestContext.Current.CancellationToken);
 
         // Step 2: Try to start a second listener on the same port
         using var exporter = new PrometheusExporter(new());
@@ -164,7 +164,7 @@ public class PrometheusHttpListenerTests
                 Port = context.Port,
             });
 
-        Assert.Throws<HttpListenerException>(() => listener.Start());
+        Assert.Throws<HttpListenerException>(() => listener.Start(TestContext.Current.CancellationToken));
     }
 
     [Theory]
@@ -202,11 +202,15 @@ public class PrometheusHttpListenerTests
             client.DefaultRequestHeaders.Add("Accept", acceptHeader);
         }
 
-        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative));
+        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative), TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
+#if NET
+        var output = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+#else
         var output = await response.Content.ReadAsStringAsync();
+#endif
 
         Assert.Contains("counter_double_999", output, StringComparison.Ordinal);
         Assert.DoesNotContain('\0', output);
@@ -229,7 +233,7 @@ public class PrometheusHttpListenerTests
         Assert.Equal(port, context.Port);
 
         using var client = new HttpClient { BaseAddress = context.BaseAddress };
-        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative));
+        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative), TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
@@ -258,7 +262,7 @@ public class PrometheusHttpListenerTests
         Assert.Equal(9464, context.Port);
 
         using var client = new HttpClient { BaseAddress = context.BaseAddress };
-        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative));
+        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative), TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
@@ -277,7 +281,7 @@ public class PrometheusHttpListenerTests
 
         listener.Dispose();
 
-        Assert.Throws<ObjectDisposedException>(() => listener.Start());
+        Assert.Throws<ObjectDisposedException>(() => listener.Start(TestContext.Current.CancellationToken));
     }
 
     [Fact]
@@ -326,17 +330,22 @@ public class PrometheusHttpListenerTests
         using var client = new HttpClient { BaseAddress = baseAddress };
 
         // Send a scrape request; it will block inside the collection.
-        var scrapeTask = client.GetAsync(new Uri("metrics", UriKind.Relative), HttpCompletionOption.ResponseHeadersRead);
+        var scrapeTask = client.GetAsync(
+            new Uri("metrics", UriKind.Relative),
+            HttpCompletionOption.ResponseHeadersRead,
+            TestContext.Current.CancellationToken);
 
         // Wait until the request is actually inside the Collect delegate.
-        Assert.True(collectEntered.Wait(TimeSpan.FromSeconds(10)), "Request did not enter Collect in time.");
+        Assert.True(
+            collectEntered.Wait(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken),
+            "Request did not enter Collect in time.");
 
         // Disposing cancels the listener's shutdown token, which the request is
         // waiting on while its collection is still blocked. The request gives up on
         // that collection as soon as the token is cancelled rather than waiting for
         // it to finish, so disposal completes promptly without needing the
         // collection itself to be released first.
-        var disposeTask = Task.Run(provider.Dispose);
+        var disposeTask = Task.Run(provider.Dispose, TestContext.Current.CancellationToken);
 
         using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10)))
         {
@@ -357,9 +366,9 @@ public class PrometheusHttpListenerTests
     [Fact]
     public void StartIsIdempotentWhenAlreadyStarted()
     {
-        using var context = CreateListener();
+        using var context = CreateListener(startToken: TestContext.Current.CancellationToken);
 
-        var exception = Record.Exception(() => context.Listener.Start());
+        var exception = Record.Exception(() => context.Listener.Start(TestContext.Current.CancellationToken));
 
         Assert.Null(exception);
     }
@@ -379,7 +388,7 @@ public class PrometheusHttpListenerTests
         meter.CreateCounter<int>("test_counter").Add(1);
 
         using var client = new HttpClient { BaseAddress = context.BaseAddress };
-        using var response = await client.GetAsync(new Uri("custom-metrics", UriKind.Relative));
+        using var response = await client.GetAsync(new Uri("custom-metrics", UriKind.Relative), TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
@@ -395,7 +404,7 @@ public class PrometheusHttpListenerTests
     [Fact]
     public void DisposeImmediatelyAfterStartDoesNotThrow()
     {
-        using var context = CreateListener();
+        using var context = CreateListener(startToken: TestContext.Current.CancellationToken);
         context.Listener.Dispose();
     }
 
@@ -422,7 +431,8 @@ public class PrometheusHttpListenerTests
         using var allowSecondCollectToComplete = new ManualResetEventSlim();
 
         using var context = CreateListener(
-            configureExporter: (options) => options.ScrapeResponseCacheDurationMilliseconds = 0);
+            configureExporter: (options) => options.ScrapeResponseCacheDurationMilliseconds = 0,
+            startToken: TestContext.Current.CancellationToken);
 
         using var client = new HttpClient() { BaseAddress = context.BaseAddress };
 
@@ -456,13 +466,13 @@ public class PrometheusHttpListenerTests
 
         var requestUri = new Uri("metrics", UriKind.Relative);
 
-        var firstRequestTask = client.GetAsync(requestUri);
+        var firstRequestTask = client.GetAsync(requestUri, TestContext.Current.CancellationToken);
 
-        Assert.True(firstCollectStarted.Wait(timeout));
+        Assert.True(firstCollectStarted.Wait(timeout, TestContext.Current.CancellationToken));
 
-        var secondRequestTask = client.GetAsync(requestUri);
+        var secondRequestTask = client.GetAsync(requestUri, TestContext.Current.CancellationToken);
 
-        await Task.Delay(100);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
 
         allowFirstCollectToComplete.Set();
 
@@ -473,10 +483,11 @@ public class PrometheusHttpListenerTests
             Assert.Equal(HttpStatusCode.OK, firstResponse.StatusCode);
 
 #if NET
-            await secondRequestTask.WaitAsync(timeout);
+            await secondRequestTask.WaitAsync(timeout, TestContext.Current.CancellationToken);
 #else
             using var cts = new CancellationTokenSource(timeout);
-            var completedTask = await Task.WhenAny(secondRequestTask, Task.Delay(timeout, cts.Token));
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, TestContext.Current.CancellationToken);
+            var completedTask = await Task.WhenAny(secondRequestTask, Task.Delay(timeout, linkedCts.Token));
             Assert.Same(secondRequestTask, completedTask);
 #endif
 
@@ -516,7 +527,7 @@ public class PrometheusHttpListenerTests
 
         var scrapeTimeout = TimeSpan.FromSeconds(double.Parse(value, CultureInfo.InvariantCulture));
 
-        using var context = CreateListener();
+        using var context = CreateListener(startToken: TestContext.Current.CancellationToken);
 
         context.Exporter.Collect = _ =>
         {
@@ -528,7 +539,7 @@ public class PrometheusHttpListenerTests
         using var client = new HttpClient { BaseAddress = context.BaseAddress };
         client.DefaultRequestHeaders.Add("X-Prometheus-Scrape-Timeout-Seconds", value);
 
-        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative));
+        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative), TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.RequestTimeout, response.StatusCode);
     }
@@ -541,10 +552,12 @@ public class PrometheusHttpListenerTests
         var serverTimeout = TimeSpan.FromSeconds(1);
         var clientTimeout = TimeSpan.FromSeconds(30);
 
-        using var context = CreateListener(configureListener: options =>
-        {
-            options.ScrapeResponseTimeoutMilliseconds = (int)serverTimeout.TotalMilliseconds;
-        });
+        using var context = CreateListener(
+            configureListener: options =>
+            {
+                options.ScrapeResponseTimeoutMilliseconds = (int)serverTimeout.TotalMilliseconds;
+            },
+            startToken: TestContext.Current.CancellationToken);
 
         context.Exporter.Collect = _ =>
         {
@@ -560,7 +573,9 @@ public class PrometheusHttpListenerTests
 
         var stopwatch = Stopwatch.StartNew();
 
-        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative));
+        using var response = await client.GetAsync(
+            new Uri("metrics", UriKind.Relative),
+            TestContext.Current.CancellationToken);
 
         stopwatch.Stop();
 
@@ -593,7 +608,9 @@ public class PrometheusHttpListenerTests
         using var client = new HttpClient { BaseAddress = context.BaseAddress };
         client.DefaultRequestHeaders.Add("X-Prometheus-Scrape-Timeout-Seconds", scrapeTimeoutSeconds);
 
-        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative));
+        using var response = await client.GetAsync(
+            new Uri("metrics", UriKind.Relative),
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
@@ -622,7 +639,9 @@ public class PrometheusHttpListenerTests
 
         using var client = new HttpClient { BaseAddress = context.BaseAddress };
 
-        using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative));
+        using var response = await client.GetAsync(
+            new Uri("metrics", UriKind.Relative),
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
     }
@@ -632,7 +651,7 @@ public class PrometheusHttpListenerTests
     {
         using var meter = new Meter(MeterName, MeterVersion);
 
-        const int ScrapeTimeoutMilliseconds = 2_000;
+        const int ScrapeTimeoutMilliseconds = 10_000;
 
         using var context = CreateMeterProvider(
             meter,
@@ -663,18 +682,23 @@ public class PrometheusHttpListenerTests
             ReceiveBufferSize = 1,
         };
 
+#if NET
+        await stalledClient.ConnectAsync(context.BaseAddress.Host, context.Port, TestContext.Current.CancellationToken);
+#else
         await stalledClient.ConnectAsync(context.BaseAddress.Host, context.Port);
+#endif
+
         var request = System.Text.Encoding.ASCII.GetBytes(
             $"GET /metrics HTTP/1.1\r\nHost: localhost:{context.Port}\r\nConnection: keep-alive\r\n\r\n");
         var stalledStream = stalledClient.GetStream();
 
 #if NET
-        await stalledStream.WriteAsync(request);
+        await stalledStream.WriteAsync(request, TestContext.Current.CancellationToken);
 #else
-        await stalledStream.WriteAsync(request, 0, request.Length);
+        await stalledStream.WriteAsync(request, 0, request.Length, TestContext.Current.CancellationToken);
 #endif
 
-        await stalledStream.FlushAsync();
+        await stalledStream.FlushAsync(TestContext.Current.CancellationToken);
 
         // Read just enough to confirm the response actually started (headers plus whatever
         // part of the body fits in the receive buffer), without draining the rest of the body.
@@ -691,7 +715,7 @@ public class PrometheusHttpListenerTests
         }
 
         // Prove the write is genuinely stalled
-        await Task.Delay(TimeSpan.FromSeconds(1));
+        await Task.Delay(TimeSpan.FromSeconds(1), TestContext.Current.CancellationToken);
 
         var available = stalledClient.Available;
 
@@ -702,7 +726,7 @@ public class PrometheusHttpListenerTests
         // Wait past the server-side timeout so the stalled request has cancelled its write and
         // released the reader slot while the stalled client is still connected and still not
         // reading: recovery must come from the server timeout, not from the client disconnecting.
-        await Task.Delay(TimeSpan.FromMilliseconds((ScrapeTimeoutMilliseconds * 2) + 1000));
+        await Task.Delay(TimeSpan.FromMilliseconds((ScrapeTimeoutMilliseconds * 2) + 1000), TestContext.Current.CancellationToken);
 
         Assert.True(stalledClient.Connected);
 

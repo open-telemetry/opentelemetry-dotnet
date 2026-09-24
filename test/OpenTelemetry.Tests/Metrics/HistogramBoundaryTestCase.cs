@@ -25,7 +25,7 @@ public class HistogramBoundaryTestCase(
 
     public static TheoryData<HistogramBoundaryTestCase> HistogramInfinityBoundariesTestCases() => new(
     [
-        new(
+        new HistogramBoundaryTestCase(
             testName: "Custom boundaries with no infinity in explicit boundaries",
             inputBoundaries: [0, 10],
             inputValues: [-10, 0, 5, 10, 100],
