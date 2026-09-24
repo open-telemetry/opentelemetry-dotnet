@@ -10,7 +10,7 @@ namespace OpenTelemetry.Configuration.Declarative;
 /// An <see cref="IResourceDetector"/> that reads <c>resource.attributes</c> and <c>resource.schema_url</c>
 /// from the declarative configuration document and applies them to the SDK resource.
 /// </summary>
-internal sealed partial class DeclarativeResourceDetector : IResourceDetector, IResourceSchemaUrlOverrideProvider
+internal sealed partial class DeclarativeResourceDetector : IResourceDetector
 {
     // Per the OTel attribute naming spec: starts with a letter or underscore,
     // followed by letters, digits, underscores, hyphens, or dots.
@@ -24,8 +24,6 @@ internal sealed partial class DeclarativeResourceDetector : IResourceDetector, I
 #endif
 
     private readonly DeclarativeConfigurationDocumentAccessor accessor;
-    private bool schemaUrlOverrideSet;
-    private string? schemaUrlOverride;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DeclarativeResourceDetector"/> class.
@@ -45,18 +43,9 @@ internal sealed partial class DeclarativeResourceDetector : IResourceDetector, I
             return Resource.Empty;
         }
 
-        // resource.schema_url is a three-state property: absent means no override (leave
-        // whatever the merged resource ends up with), present-null means an explicit override
-        // to "no schema URL", and present means an explicit override to the given URL. Both of
-        // the latter two must be applied, so schemaUrlOverride alone can't tell them apart from
-        // "absent" (both leave it null); schemaUrlOverrideSet disambiguates.
-        if (!resourceConfig.SchemaUrl.IsAbsent)
-        {
-            this.schemaUrlOverride = resourceConfig.SchemaUrl.IsPresent
-                ? resourceConfig.SchemaUrl.Value
-                : null;
-            this.schemaUrlOverrideSet = true;
-        }
+        // The schema URL goes through the standard Resource.Merge rules, so a value that differs from
+        // one contributed by another detector (including the SDK defaults) results in no schema URL.
+        resourceConfig.SchemaUrl.TryGetValue(out var schemaUrl);
 
         var attributes = new List<KeyValuePair<string, object>>();
 
@@ -87,16 +76,9 @@ internal sealed partial class DeclarativeResourceDetector : IResourceDetector, I
             }
         }
 
-        return attributes.Count == 0
+        return attributes.Count == 0 && string.IsNullOrEmpty(schemaUrl)
             ? Resource.Empty
-            : new Resource(attributes);
-    }
-
-    /// <inheritdoc/>
-    public bool TryGetSchemaUrlOverride(out string? schemaUrl)
-    {
-        schemaUrl = this.schemaUrlOverride;
-        return this.schemaUrlOverrideSet;
+            : new Resource(attributes, schemaUrl);
     }
 
 #if NET

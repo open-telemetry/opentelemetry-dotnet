@@ -532,74 +532,6 @@ public sealed class ResourceTests : IDisposable
     }
 
     [Fact]
-    public void ResourceBuilder_Build_SchemaUrlOverrideReplacesConflictingMergedSchemaUrls()
-    {
-        const string FirstContributorSchemaUrl = "https://opentelemetry.io/schemas/1.36.0";
-        const string SecondContributorSchemaUrl = "https://opentelemetry.io/schemas/1.40.0";
-        const string OverrideSchemaUrl = "https://opentelemetry.io/schemas/1.44.0";
-
-        var resourceBuilder = ResourceBuilder.CreateEmpty()
-            .AddAttributes([new KeyValuePair<string, object>($"{KeyName}0", $"{ValueName}0")], FirstContributorSchemaUrl)
-            .AddAttributes([new KeyValuePair<string, object>(KeyName, ValueName)], SecondContributorSchemaUrl)
-            .AddDetector(new SchemaUrlOverrideProvidingResourceDetector(OverrideSchemaUrl));
-
-        var resource = resourceBuilder.Build();
-
-        Assert.Equal(OverrideSchemaUrl, resource.SchemaUrl);
-        Assert.Contains(new KeyValuePair<string, object>($"{KeyName}0", $"{ValueName}0"), resource.Attributes);
-        Assert.Contains(new KeyValuePair<string, object>(KeyName, ValueName), resource.Attributes);
-    }
-
-    [Fact]
-    public void ResourceBuilder_Clear_RemovesSchemaUrlOverride()
-    {
-        var resourceBuilder = ResourceBuilder.CreateEmpty()
-            .AddDetector(new SchemaUrlOverrideProvidingResourceDetector("https://opentelemetry.io/schemas/1.44.0"));
-
-        var resource = resourceBuilder.Clear().Build();
-
-        Assert.Null(resource.SchemaUrl);
-    }
-
-    [Fact]
-    public void ResourceBuilder_Build_LogsWhenSchemaUrlOverridesConflict()
-    {
-        const string FirstOverrideSchemaUrl = "https://opentelemetry.io/schemas/1.40.0";
-        const string SecondOverrideSchemaUrl = "https://opentelemetry.io/schemas/1.44.0";
-
-        using var listener = new TestEventListener(OpenTelemetrySdkEventSource.Log, EventLevel.Warning);
-
-        var resourceBuilder = ResourceBuilder.CreateEmpty()
-            .AddDetector(new SchemaUrlOverrideProvidingResourceDetector(FirstOverrideSchemaUrl))
-            .AddDetector(new SchemaUrlOverrideProvidingResourceDetector(SecondOverrideSchemaUrl));
-
-        var resource = resourceBuilder.Build();
-
-        Assert.Equal(SecondOverrideSchemaUrl, resource.SchemaUrl);
-
-        var conflictEvent = Assert.Single(listener.Messages, e => e.EventId == 60);
-        Assert.Equal(FirstOverrideSchemaUrl, conflictEvent.Payload?[0]);
-        Assert.Equal(SecondOverrideSchemaUrl, conflictEvent.Payload?[1]);
-    }
-
-    [Fact]
-    public void ResourceBuilder_Build_DoesNotLogWhenSchemaUrlOverridesMatch()
-    {
-        const string OverrideSchemaUrl = "https://opentelemetry.io/schemas/1.44.0";
-
-        using var listener = new TestEventListener(OpenTelemetrySdkEventSource.Log, EventLevel.Warning);
-
-        var resourceBuilder = ResourceBuilder.CreateEmpty()
-            .AddDetector(new SchemaUrlOverrideProvidingResourceDetector(OverrideSchemaUrl))
-            .AddDetector(new SchemaUrlOverrideProvidingResourceDetector(OverrideSchemaUrl));
-
-        var resource = resourceBuilder.Build();
-
-        Assert.Equal(OverrideSchemaUrl, resource.SchemaUrl);
-        Assert.DoesNotContain(listener.CurrentMessages, e => e.EventId == 60);
-    }
-
-    [Fact]
     public void ResourceBuilder_Build_DefaultContributorsShareSchemaUrlWithoutConflict()
     {
         var resource = ResourceBuilder.CreateDefault().Build();
@@ -858,23 +790,5 @@ public sealed class ResourceTests : IDisposable
     private sealed class NoopResourceDetector : IResourceDetector
     {
         public Resource Detect() => Resource.Empty;
-    }
-
-    private sealed class SchemaUrlOverrideProvidingResourceDetector : IResourceDetector, IResourceSchemaUrlOverrideProvider
-    {
-        private readonly string? schemaUrl;
-
-        public SchemaUrlOverrideProvidingResourceDetector(string? schemaUrl)
-        {
-            this.schemaUrl = schemaUrl;
-        }
-
-        public Resource Detect() => Resource.Empty;
-
-        public bool TryGetSchemaUrlOverride(out string? schemaUrl)
-        {
-            schemaUrl = this.schemaUrl;
-            return true;
-        }
     }
 }

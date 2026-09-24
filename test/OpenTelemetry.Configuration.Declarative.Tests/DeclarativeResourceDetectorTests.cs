@@ -560,25 +560,49 @@ public sealed class DeclarativeResourceDetectorTests
     }
 
     [Fact]
-    public void Detect_SchemaUrlPresentNull_OverridesToNoSchemaUrl()
+    public void Detect_SchemaUrlPresentNull_KeepsSchemaUrlFromOtherDetectors()
     {
-        // Present-null ("schema_url: ~") means "no schema URL", an explicit override that must
-        // clear a schema URL contributed by an earlier detector; distinct from schema_url being
-        // absent entirely, which leaves the merged resource's schema URL untouched.
-        using var factory = new DeclarativeYamlTestFileFactory();
-        var filePath = new FilePath(factory.CreateYamlFile("""
+        var resource = BuildResource(
+            """
             file_format: "1.0"
             resource:
               schema_url: ~
-            """));
-        var accessor = new DeclarativeConfigurationDocumentAccessor(filePath);
-        var resourceBuilder = ResourceBuilder.CreateEmpty();
-        resourceBuilder.AddDetector(new SchemaUrlResourceDetector("https://opentelemetry.io/schemas/1.24.0"));
-        resourceBuilder.AddDetector(new DeclarativeResourceDetector(accessor));
+            """,
+            "https://opentelemetry.io/schemas/1.24.0");
 
-        var resource = resourceBuilder.Build();
+        Assert.Equal("https://opentelemetry.io/schemas/1.24.0", resource.SchemaUrl);
+    }
+
+    [Fact]
+    public void Detect_SchemaUrlMatchesOtherDetectors_IsRetained()
+    {
+        var resource = BuildResource(
+            """
+            file_format: "1.0"
+            resource:
+              schema_url: "https://opentelemetry.io/schemas/1.24.0"
+            """,
+            "https://opentelemetry.io/schemas/1.24.0");
+
+        Assert.Equal("https://opentelemetry.io/schemas/1.24.0", resource.SchemaUrl);
+    }
+
+    [Fact]
+    public void Detect_SchemaUrlConflictsWithOtherDetectors_ResourceSchemaUrlIsNull()
+    {
+        var resource = BuildResource(
+            """
+            file_format: "1.0"
+            resource:
+              schema_url: "https://opentelemetry.io/schemas/1.24.0"
+              attributes:
+                - name: service.name
+                  value: "svc"
+            """,
+            "https://opentelemetry.io/schemas/1.44.0");
 
         Assert.Null(resource.SchemaUrl);
+        Assert.Contains(resource.Attributes, a => a.Key == "service.name" && (string)a.Value == "svc");
     }
 
     [Fact]
@@ -616,12 +640,17 @@ public sealed class DeclarativeResourceDetectorTests
         return new DeclarativeResourceDetector(accessor).Detect();
     }
 
-    private static Resource BuildResource(string yaml)
+    private static Resource BuildResource(string yaml, string? existingSchemaUrl = null)
     {
         using var factory = new DeclarativeYamlTestFileFactory();
         var filePath = new FilePath(factory.CreateYamlFile(yaml));
         var accessor = new DeclarativeConfigurationDocumentAccessor(filePath);
         var resourceBuilder = ResourceBuilder.CreateEmpty();
+        if (existingSchemaUrl != null)
+        {
+            resourceBuilder.AddDetector(new SchemaUrlResourceDetector(existingSchemaUrl));
+        }
+
         resourceBuilder.AddDetector(new DeclarativeResourceDetector(accessor));
         return resourceBuilder.Build();
     }

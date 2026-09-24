@@ -123,38 +123,21 @@ public sealed class DeclarativeConfigurationSdkIntegrationTests
     }
 
     [Fact]
-    public void ResourceAttributesAndSchemaUrl_FlowToAllSignalResources()
+    public void ResourceAttributesAndMatchingSchemaUrl_FlowToAllSignalResources()
     {
-        const string schemaUrl = "https://opentelemetry.io/schemas/1.24.0";
-        const string yaml = $"""
-            file_format: "1.0"
-            resource:
-              schema_url: "{schemaUrl}"
-              attributes:
-                - name: deployment.replicas
-                  type: int
-                  value: 3
-            """;
+        var sdkSchemaUrl = ResourceBuilder.CreateDefault().Build().SchemaUrl;
+        Assert.NotNull(sdkSchemaUrl);
 
-        using var yamlFile = DeclarativeYamlTestFile.CreateYamlFile(yaml);
-        using var host = new HostBuilder()
-            .ConfigureServices(services =>
-                services.AddOpenTelemetry()
-                    .UseDeclarativeConfiguration(yamlFile.Path)
-                    .WithTracing()
-                    .WithMetrics()
-                    .WithLogging())
-            .Build();
+        AssertResourceOnAllSignals(configuredSchemaUrl: sdkSchemaUrl, expectedSchemaUrl: sdkSchemaUrl);
+    }
 
-        AssertDeclarativeResource(
-            host.Services.GetRequiredService<TracerProvider>().GetResource(),
-            schemaUrl);
-        AssertDeclarativeResource(
-            host.Services.GetRequiredService<MeterProvider>().GetResource(),
-            schemaUrl);
-        AssertDeclarativeResource(
-            host.Services.GetRequiredService<LoggerProvider>().GetResource(),
-            schemaUrl);
+    [Fact]
+    public void ConflictingSchemaUrl_ResultsInNoSchemaUrlOnAllSignalResources()
+    {
+        const string conflictingSchemaUrl = "https://opentelemetry.io/schemas/1.24.0";
+        Assert.NotEqual(conflictingSchemaUrl, ResourceBuilder.CreateDefault().Build().SchemaUrl);
+
+        AssertResourceOnAllSignals(configuredSchemaUrl: conflictingSchemaUrl, expectedSchemaUrl: null);
     }
 
     [Theory]
@@ -504,7 +487,40 @@ public sealed class DeclarativeConfigurationSdkIntegrationTests
             .Build();
     }
 
-    private static void AssertDeclarativeResource(Resource resource, string expectedSchemaUrl)
+    private static void AssertResourceOnAllSignals(string configuredSchemaUrl, string? expectedSchemaUrl)
+    {
+        var yaml = $"""
+            file_format: "1.0"
+            resource:
+              schema_url: "{configuredSchemaUrl}"
+              attributes:
+                - name: deployment.replicas
+                  type: int
+                  value: 3
+            """;
+
+        using var yamlFile = DeclarativeYamlTestFile.CreateYamlFile(yaml);
+        using var host = new HostBuilder()
+            .ConfigureServices(services =>
+                services.AddOpenTelemetry()
+                    .UseDeclarativeConfiguration(yamlFile.Path)
+                    .WithTracing()
+                    .WithMetrics()
+                    .WithLogging())
+            .Build();
+
+        AssertDeclarativeResource(
+            host.Services.GetRequiredService<TracerProvider>().GetResource(),
+            expectedSchemaUrl);
+        AssertDeclarativeResource(
+            host.Services.GetRequiredService<MeterProvider>().GetResource(),
+            expectedSchemaUrl);
+        AssertDeclarativeResource(
+            host.Services.GetRequiredService<LoggerProvider>().GetResource(),
+            expectedSchemaUrl);
+    }
+
+    private static void AssertDeclarativeResource(Resource resource, string? expectedSchemaUrl)
     {
         var attribute = Assert.Single(
             resource.Attributes,

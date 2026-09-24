@@ -126,7 +126,7 @@ application.
 | `disabled` | Disables the OpenTelemetry SDK when `true` | Flat SDK key | Yes |
 | `resource.attributes` | Adds typed structured resource attributes to all signals | Typed resource detector | No |
 | `resource.attributes_list` | Adds resource attributes from a pre-formatted `key=value` list | Flat SDK key | Yes |
-| `resource.schema_url` | Sets the schema URL on the resource | Typed resource detector | No |
+| `resource.schema_url` | Contributes a schema URL to the resource (see below) | Typed resource detector | No |
 
 The following attribute types defined by the OTel configuration schema are
 supported for `resource.attributes`:
@@ -144,6 +144,12 @@ supported for `resource.attributes`:
 string that has not been percent-encoded and is passed through without
 modification. In particular, literal `+` in a value must be written as `%2B`,
 otherwise the SDK will decode it as a space character.
+
+`resource.schema_url` is merged with the schema URLs contributed by other
+resource detectors, including the SDK's default resource, using the standard
+[resource merge rules](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md#merge).
+If the configured value differs from a schema URL contributed by another
+detector, the final resource has no schema URL.
 
 `resource.attributes` and `resource.schema_url` are only applied when using
 `UseDeclarativeConfiguration()` on an `IOpenTelemetryBuilder`. When the source
