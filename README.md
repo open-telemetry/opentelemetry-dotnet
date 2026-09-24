@@ -128,21 +128,21 @@ how to install and get started, and details about the individual changes made
 
 Here are the most commonly used components:
 
-* [OpenTelemetry API](./src/OpenTelemetry.Api/README.md)
-* [OpenTelemetry SDK](./src/OpenTelemetry/README.md)
-* [OpenTelemetry Hosting
+- [OpenTelemetry API](./src/OpenTelemetry.Api/README.md)
+- [OpenTelemetry SDK](./src/OpenTelemetry/README.md)
+- [OpenTelemetry Hosting
   Extensions](./src/OpenTelemetry.Extensions.Hosting/README.md)
 
 Here are the [exporter
 libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#exporter-library):
 
-* [Console](./src/OpenTelemetry.Exporter.Console/README.md)
-* [In-memory](./src/OpenTelemetry.Exporter.InMemory/README.md)
-* [OTLP](./src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
+- [Console](./src/OpenTelemetry.Exporter.Console/README.md)
+- [In-memory](./src/OpenTelemetry.Exporter.InMemory/README.md)
+- [OTLP](./src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md)
   (OpenTelemetry Protocol)
-* [Prometheus AspNetCore](./src/OpenTelemetry.Exporter.Prometheus.AspNetCore/README.md)
-* [Prometheus HttpListener](./src/OpenTelemetry.Exporter.Prometheus.HttpListener/README.md)
-* [Zipkin](./src/OpenTelemetry.Exporter.Zipkin/README.md) (Deprecated)
+- [Prometheus AspNetCore](./src/OpenTelemetry.Exporter.Prometheus.AspNetCore/README.md)
+- [Prometheus HttpListener](./src/OpenTelemetry.Exporter.Prometheus.HttpListener/README.md)
+- [Zipkin](./src/OpenTelemetry.Exporter.Zipkin/README.md) (Deprecated)
 
 Additional packages including [instrumentation
 libraries](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/glossary.md#instrumentation-library),
@@ -164,16 +164,16 @@ troubleshooting information.
 OpenTelemetry .NET is designed to be extensible. Here are the most common
 extension scenarios:
 
-* Building a custom [instrumentation
+- Building a custom [instrumentation
   library](./docs/trace/extending-the-sdk/README.md#instrumentation-library).
-* Building a custom exporter for
+- Building a custom exporter for
   [logs](./docs/logs/extending-the-sdk/README.md#exporter),
   [metrics](./docs/metrics/extending-the-sdk/README.md#exporter), and
   [traces](./docs/trace/extending-the-sdk/README.md#exporter).
-* Building a custom processor for
+- Building a custom processor for
   [logs](./docs/logs/extending-the-sdk/README.md#processor) and
   [traces](./docs/trace/extending-the-sdk/README.md#processor).
-* Building a custom sampler for
+- Building a custom sampler for
   [traces](./docs/trace/extending-the-sdk/README.md#sampler).
 
 ## Releases
@@ -289,18 +289,18 @@ you're more than welcome to participate!
 
 ### Maintainers
 
-* [Alan West](https://github.com/alanwest), New Relic
-* [Martin Costello](https://github.com/martincostello), Grafana Labs
-* [Piotr Kie&#x142;kowicz](https://github.com/Kielek), Splunk
-* [Rajkumar Rangaraj](https://github.com/rajkumar-rangaraj), Microsoft
+- [Alan West](https://github.com/alanwest), New Relic
+- [Martin Costello](https://github.com/martincostello), Grafana Labs
+- [Piotr Kie&#x142;kowicz](https://github.com/Kielek), Splunk
+- [Rajkumar Rangaraj](https://github.com/rajkumar-rangaraj), Microsoft
 
 For more information about the maintainer role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#maintainer).
 
 ### Approvers
 
-* [Cijo Thomas](https://github.com/cijothomas), Microsoft
-* [Matthew Hensley](https://github.com/matt-hensley), Grafana Labs
-* [Steve Gordon](https://github.com/stevejgordon), Elastic
+- [Cijo Thomas](https://github.com/cijothomas), Microsoft
+- [Matthew Hensley](https://github.com/matt-hensley), Grafana Labs
+- [Steve Gordon](https://github.com/stevejgordon), Elastic
 
 For more information about the approver role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#approver).
 
@@ -310,20 +310,20 @@ For more information about the triager role, see the [community repository](http
 
 ### Emeritus
 
-* [Bruno Garcia](https://github.com/bruno-garcia), Approver
-* [Eddy Nakamura](https://github.com/eddynaka), Approver
-* [Liudmila Molkova](https://github.com/lmolkova), Approver
-* [Martin Thwaites](https://github.com/martinjt), Triager
-* [Mike Goldsmith](https://github.com/MikeGoldsmith), Maintainer
-* [Mikel Blanchard](https://github.com/CodeBlanch), Maintainer
-* [Paulo Janotti](https://github.com/pjanotti), Approver
-* [Reiley Yang](https://github.com/reyang), Approver
-* [Robert Paj&#x105;k](https://github.com/pellared), Approver
-* [Sergey Kanzhelev](https://github.com/SergeyKanzhelev), Maintainer
-* [Timothy "Mothra" Lee](https://github.com/TimothyMothra), Triager
-* [Utkarsh Umesan Pillai](https://github.com/utpilla), Maintainer
-* [Victor Lu](https://github.com/victlu), Triager
-* [Vishwesh Bankwar](https://github.com/vishweshbankwar), Approver
+- [Bruno Garcia](https://github.com/bruno-garcia), Approver
+- [Eddy Nakamura](https://github.com/eddynaka), Approver
+- [Liudmila Molkova](https://github.com/lmolkova), Approver
+- [Martin Thwaites](https://github.com/martinjt), Triager
+- [Mike Goldsmith](https://github.com/MikeGoldsmith), Maintainer
+- [Mikel Blanchard](https://github.com/CodeBlanch), Maintainer
+- [Paulo Janotti](https://github.com/pjanotti), Approver
+- [Reiley Yang](https://github.com/reyang), Approver
+- [Robert Paj&#x105;k](https://github.com/pellared), Approver
+- [Sergey Kanzhelev](https://github.com/SergeyKanzhelev), Maintainer
+- [Timothy "Mothra" Lee](https://github.com/TimothyMothra), Triager
+- [Utkarsh Umesan Pillai](https://github.com/utpilla), Maintainer
+- [Victor Lu](https://github.com/victlu), Triager
+- [Vishwesh Bankwar](https://github.com/vishweshbankwar), Approver
 
 For more information about the emeritus role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#emeritus-maintainerapprovertriager).
 
@@ -333,5 +333,5 @@ For more information about the emeritus role, see the [community repository](htt
 
 ## References
 
-* [OpenTelemetry Project](https://opentelemetry.io/)
-* [OpenTelemetry Specification](https://github.com/open-telemetry/opentelemetry-specification)
+- [OpenTelemetry Project](https://opentelemetry.io/)
+- [OpenTelemetry Specification](https://github.com/open-telemetry/opentelemetry-specification)
