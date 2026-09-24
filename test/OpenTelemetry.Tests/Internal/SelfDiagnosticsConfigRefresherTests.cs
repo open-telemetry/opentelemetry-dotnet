@@ -61,7 +61,7 @@ public class SelfDiagnosticsConfigRefresherTests
             logLine = FindLogLine(logText, expectedMessage);
         }
 
-        this.output.WriteLine(logText);  // for debugging in case the test fails
+        this.output.WriteLine(logText ?? string.Empty);  // for debugging in case the test fails
         Assert.StartsWith(MessageOnNewFileString, logText!, StringComparison.Ordinal);
 
         // The event was captured

@@ -5,7 +5,6 @@
 using System.Diagnostics.CodeAnalysis;
 #endif
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using OpenTelemetry.Configuration;
 using OpenTelemetry.Configuration.Declarative;
 using OpenTelemetry.Internal;
 

@@ -198,11 +198,11 @@ public class BatchLogRecordExportProcessorSelfObservabilityTests
         var simplePoints = points.Where(p => HasTagValue(p, "otel.component.type", "simple_log_processor")).ToList();
 
         Assert.Equal(2, batchPoints.Count);
-        Assert.Single(simplePoints);
+        var point = Assert.Single(simplePoints);
 
         // Each batch processor received the same 2 logs (composite processor fans out).
         Assert.All(batchPoints, p => Assert.Equal(2, p.GetSumLong()));
-        Assert.Equal(2, simplePoints[0].GetSumLong());
+        Assert.Equal(2, point.GetSumLong());
 
         // Verify component names are distinct across batch processors.
         var batchNames = batchPoints

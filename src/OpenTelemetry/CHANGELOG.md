@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed `SuppressInstrumentationScope` reference counts leaking between
+  inherited asynchronous execution contexts.
+  ([#7803](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7803))
+
 * Self-diagnostic features are explicitly disabled on browser-based
   platforms (e.g. Blazor) and are now non-functional. Previously, attempting
   to enable self-diagnostics on such platforms would result in an exception

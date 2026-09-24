@@ -24,6 +24,7 @@ public sealed class PrometheusExporterMiddlewareTests
 {
     private const string MeterName = nameof(PrometheusExporterMiddlewareTests);
     private const string MeterVersion = "1.0.1";
+    private const string VerifyFileExtension = "txt";
 
     private static readonly TimeSpan DeadlineMargin = TimeSpan.FromSeconds(1);
     private static readonly TimeSpan MaxCollectWait = TimeSpan.FromSeconds(30);
@@ -35,7 +36,7 @@ public sealed class PrometheusExporterMiddlewareTests
             "/metrics",
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint());
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Theory]
@@ -49,7 +50,7 @@ public sealed class PrometheusExporterMiddlewareTests
             services => services.Configure<PrometheusAspNetCoreOptions>(o => o.ScopeInfoEnabled = scopeInfoEnabled),
             assertResponseContent: false);
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings).UseParameters(scopeInfoEnabled);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings).UseParameters(scopeInfoEnabled);
     }
 
     [Theory]
@@ -63,7 +64,7 @@ public sealed class PrometheusExporterMiddlewareTests
             services => services.Configure<PrometheusAspNetCoreOptions>(o => o.TargetInfoEnabled = targetInfoEnabled),
             assertResponseContent: false);
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings).UseParameters(targetInfoEnabled);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings).UseParameters(targetInfoEnabled);
     }
 
     [Theory]
@@ -83,7 +84,7 @@ public sealed class PrometheusExporterMiddlewareTests
             }),
             assertResponseContent: false);
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings).UseParameters(filter);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings).UseParameters(filter);
     }
 
     [Fact]
@@ -94,7 +95,7 @@ public sealed class PrometheusExporterMiddlewareTests
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
             services => services.Configure<PrometheusAspNetCoreOptions>(o => o.ScrapeEndpointPath = "metrics_options"));
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -105,7 +106,7 @@ public sealed class PrometheusExporterMiddlewareTests
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
             services => services.Configure<PrometheusAspNetCoreOptions>(o => o.ScrapeEndpointPath = null));
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -119,7 +120,7 @@ public sealed class PrometheusExporterMiddlewareTests
                 o.ScrapeEndpointPath = "/metrics_from_AddPrometheusExporter";
             });
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -129,7 +130,7 @@ public sealed class PrometheusExporterMiddlewareTests
             "/metrics_override",
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint("/metrics_override"));
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -148,7 +149,7 @@ public sealed class PrometheusExporterMiddlewareTests
                 services.Configure<PrometheusAspNetCoreOptions>("myOptions", o => o.ScrapeEndpointPath = "/metrics_override");
             });
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -159,7 +160,7 @@ public sealed class PrometheusExporterMiddlewareTests
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(
                 httpContext => httpContext.Request.Path == "/metrics_predicate" && httpContext.Request.Query["enabled"] == "true"));
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -188,7 +189,7 @@ public sealed class PrometheusExporterMiddlewareTests
                 Assert.Equal("true", headers.FirstOrDefault());
             });
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -217,7 +218,7 @@ public sealed class PrometheusExporterMiddlewareTests
                 Assert.Equal("true", headers.FirstOrDefault());
             });
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -239,7 +240,7 @@ public sealed class PrometheusExporterMiddlewareTests
                 optionsName: null),
             registerMeterProvider: false);
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -250,7 +251,7 @@ public sealed class PrometheusExporterMiddlewareTests
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
             skipMetrics: true);
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -261,7 +262,7 @@ public sealed class PrometheusExporterMiddlewareTests
             app => app.UseRouting().UseEndpoints(builder => builder.MapPrometheusScrapingEndpoint()),
             services => services.AddRouting());
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -272,7 +273,7 @@ public sealed class PrometheusExporterMiddlewareTests
             app => app.UseRouting().UseEndpoints(builder => builder.MapPrometheusScrapingEndpoint("metrics_path")),
             services => services.AddRouting());
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -291,7 +292,7 @@ public sealed class PrometheusExporterMiddlewareTests
                 services.Configure<PrometheusAspNetCoreOptions>("myOptions", o => o.ScrapeEndpointPath = "/metrics_path");
             });
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -313,7 +314,7 @@ public sealed class PrometheusExporterMiddlewareTests
             services => services.AddRouting(),
             registerMeterProvider: false);
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -324,7 +325,7 @@ public sealed class PrometheusExporterMiddlewareTests
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
             acceptHeader: "text/plain");
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -336,7 +337,7 @@ public sealed class PrometheusExporterMiddlewareTests
             acceptHeader: "application/openmetrics-text; version=1.0.0",
             contentType: "application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores");
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Theory]
@@ -410,7 +411,7 @@ public sealed class PrometheusExporterMiddlewareTests
             acceptHeader: "text/plain",
             meterTags: meterTags);
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -429,7 +430,7 @@ public sealed class PrometheusExporterMiddlewareTests
             contentType: "application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores",
             meterTags: meterTags);
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -487,7 +488,7 @@ public sealed class PrometheusExporterMiddlewareTests
             "text/plain; version=1.0.0; charset=utf-8; escaping=allow-utf-8",
             response.Content.Headers.ContentType!.ToString());
 
-        await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -514,7 +515,7 @@ public sealed class PrometheusExporterMiddlewareTests
 
         await host.StopAsync();
 
-        await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -545,7 +546,7 @@ public sealed class PrometheusExporterMiddlewareTests
 
         await host.StopAsync();
 
-        await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -584,7 +585,7 @@ public sealed class PrometheusExporterMiddlewareTests
             "text/plain; version=1.0.0; charset=utf-8; escaping=underscores",
             response.Content.Headers.ContentType!.ToString());
 
-        await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -622,7 +623,7 @@ public sealed class PrometheusExporterMiddlewareTests
             "text/plain; version=1.0.0; charset=utf-8; escaping=underscores",
             response.Content.Headers.ContentType!.ToString());
 
-        await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Theory]
@@ -749,7 +750,7 @@ public sealed class PrometheusExporterMiddlewareTests
 
         await host.StopAsync();
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]

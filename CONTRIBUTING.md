@@ -202,7 +202,7 @@ git remote add fork https://github.com/YOUR_GITHUB_USERNAME/opentelemetry-dotnet
 Run tests:
 
 ```sh
-dotnet test
+dotnet test ./OpenTelemetry.slnx
 ```
 
 If you made changes to the Markdown documents (`*.md` files), install the latest
