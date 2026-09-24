@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed `SuppressInstrumentationScope` reference counts leaking between
+  inherited asynchronous execution contexts.
+  ([#7803](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7803))
+
 * Added `OpenTelemetryLoggerOptions.Version` and
   `OpenTelemetryLoggerOptions.SchemaUrl` options to set an
   instrumentation library version and schema URL applied to logs emitted via

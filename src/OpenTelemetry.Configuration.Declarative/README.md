@@ -81,6 +81,42 @@ resource:
       value: "1.0.0"
 ```
 
+## Read the parsed document
+
+Applications and distributions can read the complete parsed document, including
+sections that this package retains but does not yet apply:
+
+```csharp
+var document =
+    serviceProvider.GetOpenTelemetryDeclarativeConfiguration();
+
+if (document is not null)
+{
+    if (document.Properties
+        .GetMapping("distribution")
+        .TryGetValue(out var distribution))
+    {
+        var name = distribution.GetString("name");
+    }
+}
+```
+
+Use the `IServiceProvider` overload after the application has been built. When
+no service provider is available, such as during registration, read the
+document from configuration instead:
+
+```csharp
+builder.Configuration
+    .AddOpenTelemetryDeclarativeConfiguration("otel-config.yaml");
+
+var document =
+    builder.Configuration.GetOpenTelemetryDeclarativeConfiguration();
+```
+
+If more than one declarative configuration file is found, the file with the
+highest priority is used and a warning is logged. Register only one file per
+application.
+
 ## Supported settings
 
 | YAML field | Effect |

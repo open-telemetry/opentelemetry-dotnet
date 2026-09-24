@@ -3,7 +3,10 @@
   <PropertyGroup>
     <Description>Unit test project for OpenTelemetry</Description>
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
-    <NoWarn>$(NoWarn),CS0618</NoWarn>
+    <NoWarn>$(NoWarn);CS0618;CA1515</NoWarn>
+    <!--
+      CA1515: Because an application's API isn't typically referenced from outside the assembly, types can be made internal
+    -->
     <ReferenceCoyotePackages>true</ReferenceCoyotePackages>
   </PropertyGroup>
 

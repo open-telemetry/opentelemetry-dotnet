@@ -289,6 +289,7 @@ For more information about the maintainer role, see the [community repository](h
 ### Approvers
 
 * [Cijo Thomas](https://github.com/cijothomas), Microsoft
+* [Steve Gordon](https://github.com/stevejgordon), Elastic
 
 For more information about the approver role, see the [community repository](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#approver).
 

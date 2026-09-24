@@ -10,9 +10,7 @@ public class BatchExportActivityProcessorTests
 {
     [Fact]
     public void CheckNullExporter()
-    {
-        Assert.Throws<ArgumentNullException>(() => new BatchActivityExportProcessor(null!));
-    }
+        => Assert.Throws<ArgumentNullException>(() => new BatchActivityExportProcessor(null!));
 
     [Fact]
     public void CheckConstructorWithInvalidValues()
