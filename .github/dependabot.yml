@@ -1,10 +1,8 @@
 # This file is retained solely for automated tooling to see we do automated
 # dependency updates as not all such scanners recognize the use of Renovate.
-# It also works around a limitation that Automatic dependency submission does
-# not automatically detect .slnx files to signify the use of .NET in a repo.
 version: 2
 updates:
-  - package-ecosystem: "nuget"
+  - package-ecosystem: "github-actions"
     cooldown:
       default-days: 3
     directory: "/"
