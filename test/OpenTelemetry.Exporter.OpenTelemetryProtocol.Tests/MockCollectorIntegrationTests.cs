@@ -594,18 +594,14 @@ public sealed class MockCollectorIntegrationTests
         for (var attempt = 1; ; attempt++)
         {
             (var grpcPort, var httpPort) = GetTwoOpenPorts();
-
-            var host = configureHostBuilder(grpcPort, httpPort).Build();
+            var builder = configureHostBuilder(grpcPort, httpPort);
 
             try
             {
-                await host.StartAsync();
-                return host;
+                return await CreateAndStartHostAsync(builder);
             }
             catch (IOException)
             {
-                host.Dispose();
-
                 if (attempt >= MaxAttempts)
                 {
                     throw;
@@ -621,23 +617,35 @@ public sealed class MockCollectorIntegrationTests
         for (var attempt = 1; ; attempt++)
         {
             var httpPort = TcpPortProvider.GetOpenPort();
-
-            var host = configureHostBuilder(httpPort).Build();
+            var builder = configureHostBuilder(httpPort);
 
             try
             {
-                await host.StartAsync();
-                return host;
+                return await CreateAndStartHostAsync(builder);
             }
             catch (IOException)
             {
-                host.Dispose();
-
                 if (attempt >= MaxAttempts)
                 {
                     throw;
                 }
             }
+        }
+    }
+
+    private static async Task<IHost> CreateAndStartHostAsync(IHostBuilder builder)
+    {
+        var host = builder.Build();
+
+        try
+        {
+            await host.StartAsync();
+            return host;
+        }
+        catch (IOException)
+        {
+            host.Dispose();
+            throw;
         }
     }
 
