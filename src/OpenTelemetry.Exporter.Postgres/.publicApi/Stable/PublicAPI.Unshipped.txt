@@ -1,0 +1,21 @@
+#nullable enable
+OpenTelemetry.Exporter.PostgresActivityExporter
+OpenTelemetry.Exporter.PostgresActivityExporter.PostgresActivityExporter(OpenTelemetry.Exporter.PostgresExporterOptions! options) -> void
+OpenTelemetry.Exporter.PostgresExporterOptions
+OpenTelemetry.Exporter.PostgresExporterOptions.PostgresExporterOptions() -> void
+OpenTelemetry.Exporter.PostgresExporterOptions.ConnectionString.get -> string!
+OpenTelemetry.Exporter.PostgresExporterOptions.ConnectionString.set -> void
+OpenTelemetry.Exporter.PostgresExporterOptions.CreateSchema.get -> bool
+OpenTelemetry.Exporter.PostgresExporterOptions.CreateSchema.set -> void
+OpenTelemetry.Exporter.PostgresExporterOptions.SchemaName.get -> string!
+OpenTelemetry.Exporter.PostgresExporterOptions.SchemaName.set -> void
+OpenTelemetry.Exporter.PostgresLogRecordExporter
+OpenTelemetry.Exporter.PostgresLogRecordExporter.PostgresLogRecordExporter(OpenTelemetry.Exporter.PostgresExporterOptions! options) -> void
+OpenTelemetry.Exporter.PostgresMetricExporter
+OpenTelemetry.Exporter.PostgresMetricExporter.PostgresMetricExporter(OpenTelemetry.Exporter.PostgresExporterOptions! options) -> void
+OpenTelemetry.Logs.PostgresLogExporterExtensions
+OpenTelemetry.Metrics.PostgresMetricExporterExtensions
+OpenTelemetry.Trace.PostgresExporterHelperExtensions
+static OpenTelemetry.Logs.PostgresLogExporterExtensions.AddPostgresExporter(this OpenTelemetry.Logs.LoggerProviderBuilder! builder, System.Action<OpenTelemetry.Exporter.PostgresExporterOptions!>? configure = null) -> OpenTelemetry.Logs.LoggerProviderBuilder!
+static OpenTelemetry.Metrics.PostgresMetricExporterExtensions.AddPostgresExporter(this OpenTelemetry.Metrics.MeterProviderBuilder! builder, System.Action<OpenTelemetry.Exporter.PostgresExporterOptions!>? configure = null) -> OpenTelemetry.Metrics.MeterProviderBuilder!
+static OpenTelemetry.Trace.PostgresExporterHelperExtensions.AddPostgresExporter(this OpenTelemetry.Trace.TracerProviderBuilder! builder, System.Action<OpenTelemetry.Exporter.PostgresExporterOptions!>? configure = null) -> OpenTelemetry.Trace.TracerProviderBuilder!

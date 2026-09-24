@@ -63,6 +63,7 @@
     <!--
         OTel packages always point to latest stable release.
     -->
+    <PackageVersion Include="Npgsql" Version="8.0.6" />
     <PackageVersion Include="OpenTelemetry" Version="[$(OTelLatestStableVer),2.0)" />
     <PackageVersion Include="OpenTelemetry.Api" Version="[$(OTelLatestStableVer),2.0)" />
     <PackageVersion Include="OpenTelemetry.Api.ProviderBuilderExtensions" Version="[$(OTelLatestStableVer),2.0)" />
