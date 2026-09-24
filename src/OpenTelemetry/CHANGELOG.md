@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed `SuppressInstrumentationScope` reference counts leaking between
+  inherited asynchronous execution contexts.
+  ([#7803](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7803))
+
 * Fixed a race that could incorrectly route a concurrent metric measurement to
   the overflow point when its tag set was published as the cardinality limit was
   reached.

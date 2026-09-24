@@ -96,8 +96,8 @@ public sealed class MockCollectorIntegrationTests
 
         source.StartActivity()?.Stop();
 
-        Assert.Single(exportResults);
-        Assert.Equal(ExportResult.Failure, exportResults[0]);
+        var result = Assert.Single(exportResults);
+        Assert.Equal(ExportResult.Failure, result);
 
         source.StartActivity()?.Stop();
 

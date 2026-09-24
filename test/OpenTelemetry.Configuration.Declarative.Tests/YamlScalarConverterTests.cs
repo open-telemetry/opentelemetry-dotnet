@@ -130,7 +130,7 @@ public sealed class YamlScalarConverterTests
         var d = result.AsDouble();
         Assert.Equal(0.0, d);
 
-        // double.IsNegative is not available on net462; this is the idiomatic substitute.
+        // double.IsNegative is not available on netfx; this is the idiomatic substitute.
         Assert.Equal(double.NegativeInfinity, 1.0 / d);
     }
 
