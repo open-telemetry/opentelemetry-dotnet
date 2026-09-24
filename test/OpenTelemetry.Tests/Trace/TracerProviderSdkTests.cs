@@ -101,6 +101,184 @@ public sealed class TracerProviderSdkTests : IDisposable
     }
 
     [Fact]
+    public void TracerProviderSdkAddSourceWithMultipleTrailingWildcards()
+    {
+        var methodName = Utils.GetCurrentMethodName();
+        using var sourceA = new ActivitySource($"{methodName}.A");
+        using var sourceB = new ActivitySource($"{methodName}.B");
+        using var sourceC = new ActivitySource($"{methodName}.C");
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource($"{methodName}.A*")
+            .AddSource($"{methodName}.B*")
+            .Build();
+
+        using (var activity = sourceA.StartActivity("test"))
+        {
+            Assert.NotNull(activity);
+        }
+
+        using (var activity = sourceB.StartActivity("test"))
+        {
+            Assert.NotNull(activity);
+        }
+
+        using (var activity = sourceC.StartActivity("test"))
+        {
+            Assert.Null(activity);
+        }
+    }
+
+    [Fact]
+    public void TracerProviderSdkAddSourceWithAllSourcesWildcard()
+    {
+        using var sourceA = new ActivitySource($"{Utils.GetCurrentMethodName()}.A");
+        using var sourceB = new ActivitySource($"{Utils.GetCurrentMethodName()}.B");
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource("*")
+            .Build();
+
+        using (var activity = sourceA.StartActivity("test"))
+        {
+            Assert.NotNull(activity);
+        }
+
+        using (var activity = sourceB.StartActivity("test"))
+        {
+            Assert.NotNull(activity);
+        }
+    }
+
+    [Fact]
+    public void TracerProviderSdkAddSourceWithSingleGenuineWildcard()
+    {
+        var methodName = Utils.GetCurrentMethodName();
+        using var sourceA = new ActivitySource($"{methodName}.A");
+        using var sourceB = new ActivitySource($"{methodName}.Ab");
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource($"{methodName}.?")
+            .Build();
+
+        using (var activity = sourceA.StartActivity("test"))
+        {
+            Assert.NotNull(activity);
+        }
+
+        using (var activity = sourceB.StartActivity("test"))
+        {
+            Assert.Null(activity);
+        }
+    }
+
+    [Fact]
+    public void TracerProviderSdkAddSourceWithExactSingleTrailingWildcardAndGenuineWildcard()
+    {
+        var methodName = Utils.GetCurrentMethodName();
+        using var sourceA = new ActivitySource($"{methodName}.A");
+        using var sourceB = new ActivitySource($"{methodName}.B");
+        using var sourceC = new ActivitySource($"{methodName}.C");
+        using var sourceD = new ActivitySource($"{methodName}.DD");
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(sourceA.Name)
+            .AddSource($"{methodName}.B*")
+            .AddSource($"{methodName}.?")
+            .Build();
+
+        using (var activity = sourceA.StartActivity("test"))
+        {
+            Assert.NotNull(activity);
+        }
+
+        using (var activity = sourceB.StartActivity("test"))
+        {
+            Assert.NotNull(activity);
+        }
+
+        using (var activity = sourceC.StartActivity("test"))
+        {
+            Assert.NotNull(activity);
+        }
+
+        using (var activity = sourceD.StartActivity("test"))
+        {
+            Assert.Null(activity);
+        }
+    }
+
+    [Fact]
+    public void TracerProviderSdkAddSourceWithLegacySourceAndGenuineWildcard()
+    {
+        var methodName = Utils.GetCurrentMethodName();
+        using var sourceA = new ActivitySource($"{methodName}.A");
+        using var sourceB = new ActivitySource($"{methodName}.Ab");
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddLegacySource("LegacyOperation")
+            .AddSource($"{methodName}.?")
+            .Build();
+
+        using (var activity = sourceA.StartActivity("test"))
+        {
+            Assert.NotNull(activity);
+        }
+
+        using (var activity = sourceB.StartActivity("test"))
+        {
+            Assert.Null(activity);
+        }
+
+        using var legacyActivity = new Activity("LegacyOperation");
+        legacyActivity.Start();
+
+        Assert.True(legacyActivity.IsAllDataRequested);
+
+        legacyActivity.Stop();
+    }
+
+    [Fact]
+    public void TracerProviderSdkAddSourceExactMatchIsCaseInsensitive()
+    {
+        using var source1 = new ActivitySource($"{Utils.GetCurrentMethodName()}.A");
+        using var source2 = new ActivitySource($"{Utils.GetCurrentMethodName()}.B");
+
+        // Exact source names only.
+        using (var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(source1.Name.ToUpperInvariant())
+            .Build())
+        {
+            using (var activity = source1.StartActivity("test"))
+            {
+                Assert.NotNull(activity);
+            }
+
+            using (var activity = source2.StartActivity("test"))
+            {
+                Assert.Null(activity);
+            }
+        }
+
+        // Mix of exact source names and wildcards.
+        using (var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(source1.Name.ToUpperInvariant())
+            .AddSource("NoMatch.*")
+            .Build())
+        {
+            using (var activity = source1.StartActivity("test"))
+            {
+                Assert.NotNull(activity);
+            }
+
+            using (var activity = source2.StartActivity("test"))
+            {
+                Assert.Null(activity);
+            }
+        }
+    }
+
+    [Fact]
     public void TracerProviderSdkInvokesSamplingWithCorrectParameters()
     {
         var activitySourceName = Utils.GetCurrentMethodName();

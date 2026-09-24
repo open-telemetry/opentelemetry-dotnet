@@ -49,7 +49,7 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
 
         app.MapPrometheusScrapingEndpoint();
 
-        await app.StartAsync();
+        await app.StartAsync(TestContext.Current.CancellationToken);
 
         var server = app.Services.GetRequiredService<IServer>();
         var addresses = server.Features.Get<IServerAddressesFeature>();
@@ -59,13 +59,13 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
             .Last();
 
         using var httpClient = new HttpClient();
-        using var response = await httpClient.GetAsync(new Uri(baseAddress, "metrics"));
+        using var response = await httpClient.GetAsync(new Uri(baseAddress, "metrics"), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Null(response.Content.Headers.ContentType);
 
-        var content = await response.Content.ReadAsStringAsync();
+        var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.Empty(content);
     }
@@ -87,7 +87,7 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
 
         app.MapPrometheusScrapingEndpoint();
 
-        await app.StartAsync();
+        await app.StartAsync(TestContext.Current.CancellationToken);
 
         var server = app.Services.GetRequiredService<IServer>();
         var addresses = server.Features.Get<IServerAddressesFeature>();
@@ -100,7 +100,7 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
 
         httpClient.DefaultRequestHeaders.Add("Accept-Encoding", "gzip");
 
-        using var response = await httpClient.GetAsync(new Uri(baseAddress, "metrics"));
+        using var response = await httpClient.GetAsync(new Uri(baseAddress, "metrics"), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -111,11 +111,11 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
         Assert.NotNull(response.Content.Headers.ContentType);
         Assert.Equal("text/plain; version=0.0.4; charset=utf-8", response.Content.Headers.ContentType.ToString());
 
-        using var compressed = await response.Content.ReadAsStreamAsync();
+        using var compressed = await response.Content.ReadAsStreamAsync(TestContext.Current.CancellationToken);
         using var decompressed = new GZipStream(compressed, CompressionMode.Decompress);
         using var reader = new StreamReader(decompressed);
 
-        var content = await reader.ReadToEndAsync();
+        var content = await reader.ReadToEndAsync(TestContext.Current.CancellationToken);
 
         Assert.NotEmpty(content);
         Assert.DoesNotContain("# EOF", content, StringComparison.Ordinal);
@@ -147,7 +147,7 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
 
         app.MapPrometheusScrapingEndpoint();
 
-        await app.StartAsync();
+        await app.StartAsync(TestContext.Current.CancellationToken);
 
         var counter = meter.CreateCounter<double>("test_counter");
         counter.Add(1);
@@ -168,13 +168,13 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
             .Last();
 
         using var httpClient = new HttpClient();
-        using var response = await httpClient.GetAsync(new Uri(baseAddress, "metrics"));
+        using var response = await httpClient.GetAsync(new Uri(baseAddress, "metrics"), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.NotNull(response.Content);
 
-        var output = await response.Content.ReadAsStringAsync();
+        var output = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
     }

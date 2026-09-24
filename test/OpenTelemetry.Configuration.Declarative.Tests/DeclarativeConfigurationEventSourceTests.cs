@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics.Tracing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Configuration.Declarative.Tests;
@@ -46,7 +47,7 @@ public sealed class DeclarativeConfigurationEventSourceTests
     }
 
     [Fact]
-    public void ReadConfiguration_DuplicateResourceAttributeName_EmitsDuplicateNameWarning()
+    public void DetectResource_DuplicateResourceAttributeName_EmitsDuplicateNameWarning()
     {
         const string yaml = """
             file_format: "1.0"
@@ -60,10 +61,33 @@ public sealed class DeclarativeConfigurationEventSourceTests
 
         using var listener = CreateWarningListener();
 
-        _ = ReadConfiguration(yaml);
+        DetectResource(yaml);
 
         var warning = Assert.Single(listener.Messages, e => e.EventId == 18);
         Assert.Equal("service.name", warning.Payload![0]);
+    }
+
+    [Theory]
+    [InlineData("int", "99999999999999999999")]
+    [InlineData("int_array", "[1, 99999999999999999999]")]
+    public void DetectResource_UnrepresentableInteger_EmitsOverflowWarning(string type, string value)
+    {
+        var yaml = $"""
+            file_format: "1.0"
+            resource:
+              attributes:
+                - name: retry.count
+                  type: {type}
+                  value: {value}
+            """;
+
+        using var listener = CreateWarningListener();
+
+        DetectResource(yaml);
+
+        var warning = Assert.Single(listener.Messages, e => e.EventId == 35);
+        Assert.Equal("retry.count", warning.Payload![0]);
+        Assert.Equal("99999999999999999999", warning.Payload[1]);
     }
 
     // Test events 15 and 16 by injecting a custom resolver into EnvironmentSubstitution.Substitute
@@ -189,7 +213,7 @@ public sealed class DeclarativeConfigurationEventSourceTests
     }
 
     [Fact]
-    public void ReadConfiguration_ResourceAttributeNullValue_EmitsNullValueWarning()
+    public void DetectResource_NullAttributeValue_EmitsNullValueWarning()
     {
         // value: ~ is present-but-null: distinct from a missing 'value' key. The diagnostic
         // must say "null" rather than "missing required 'value' field".
@@ -203,34 +227,12 @@ public sealed class DeclarativeConfigurationEventSourceTests
 
         using var listener = CreateWarningListener();
 
-        _ = ReadConfiguration(yaml);
+        DetectResource(yaml);
 
         var warning = Assert.Single(listener.Messages, e => e.EventId == 3);
         var message = warning.Payload![0] as string;
         Assert.Contains("null", message, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("missing", message, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
-    public void ReadConfiguration_NonStringResourceAttribute_EmitsLosslessProjectionWarning()
-    {
-        const string yaml = """
-            file_format: "1.0"
-            resource:
-              attributes:
-                - name: integer.attribute
-                  type: int
-                  value: 42
-            """;
-
-        using var listener = CreateWarningListener();
-
-        _ = ReadConfiguration(yaml);
-
-        var warning = Assert.Single(listener.Messages, e => e.EventId == 3);
-        var message = warning.Payload![0] as string;
-        Assert.Contains("int", message, StringComparison.Ordinal);
-        Assert.Contains("without losing its type", message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -281,34 +283,10 @@ public sealed class DeclarativeConfigurationEventSourceTests
     [Theory]
     [InlineData("my=key")]
     [InlineData("my,key")]
-    public void ReadConfiguration_ResourceAttributeHardInvalidName_EmitsInvalidResourceAttributeEvent(string name)
-    {
-        // Names containing '=' or ',' are hard-rejected (Event 3) because they would corrupt
-        // the OTEL_RESOURCE_ATTRIBUTES flat key=value,key=value format.
-        var yaml = $"""
-            file_format: "1.0"
-            resource:
-              attributes:
-                - name: {name}
-                  value: some-value
-            """;
-
-        using var listener = CreateWarningListener();
-
-        _ = ReadConfiguration(yaml);
-
-        var evt = Assert.Single(listener.Messages, e => e.EventId == 3);
-        Assert.Contains(name, evt.Payload![0] as string, StringComparison.Ordinal);
-        Assert.DoesNotContain(listener.Messages, e => e.EventId == 22);
-    }
-
-    [Theory]
     [InlineData("1invalid")]
     [InlineData("my key")]
-    public void ReadConfiguration_ResourceAttributeSoftNonConformingName_EmitsNameNotCompliantWarning(string name)
+    public void DetectResource_NonConformingAttributeName_EmitsNameNotCompliantWarning(string name)
     {
-        // Names that fail the naming convention but contain no ',' or '=' are emitted with
-        // Event 22 (ResourceAttributeNameNotCompliant) rather than being hard-rejected.
         var yaml = $"""
             file_format: "1.0"
             resource:
@@ -319,11 +297,29 @@ public sealed class DeclarativeConfigurationEventSourceTests
 
         using var listener = CreateWarningListener();
 
-        _ = ReadConfiguration(yaml);
+        DetectResource(yaml);
 
         var evt = Assert.Single(listener.Messages, e => e.EventId == 22);
         Assert.Equal(name, evt.Payload![0]);
         Assert.DoesNotContain(listener.Messages, e => e.EventId == 3);
+    }
+
+    [Fact]
+    public void DetectResource_ConventionalAttributeName_DoesNotEmitNameNotCompliantWarning()
+    {
+        const string yaml = """
+            file_format: "1.0"
+            resource:
+              attributes:
+                - name: service.name
+                  value: my-service
+            """;
+
+        using var listener = CreateWarningListener();
+
+        DetectResource(yaml);
+
+        Assert.DoesNotContain(listener.CurrentMessages, e => e.EventId == 22);
     }
 
     [Fact]
@@ -726,6 +722,15 @@ public sealed class DeclarativeConfigurationEventSourceTests
     {
         using var factory = new DeclarativeYamlTestFileFactory();
         return DeclarativeConfigurationReader.Read(new FilePath(factory.CreateYamlFile(yaml))).FlatKeys;
+    }
+
+    private static void DetectResource(string yaml)
+    {
+        using var factory = new DeclarativeYamlTestFileFactory();
+        var accessor = new DeclarativeConfigurationDocumentAccessor(new FilePath(factory.CreateYamlFile(yaml)));
+        var resourceBuilder = ResourceBuilder.CreateEmpty();
+        resourceBuilder.AddDetector(new DeclarativeResourceDetector(accessor));
+        _ = resourceBuilder.Build();
     }
 
     private sealed class TestEventSourceBuilder : IOpenTelemetryBuilder

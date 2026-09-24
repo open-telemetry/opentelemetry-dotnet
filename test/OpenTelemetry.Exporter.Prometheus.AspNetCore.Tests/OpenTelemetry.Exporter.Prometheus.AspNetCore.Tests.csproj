@@ -49,6 +49,7 @@
   <ItemGroup>
     <Compile Include="$(RepoRoot)\test\Shared\ContainerFixture.cs" Link="Includes\ContainerFixture.cs" />
     <Compile Include="$(RepoRoot)\test\Shared\ContainerFixture{T}.cs" Link="Includes\ContainerFixture{T}.cs" />
+    <Compile Include="$(RepoRoot)\test\Shared\CultureSwitcher.cs" Link="Includes\CultureSwitcher.cs" />
     <Compile Include="$(RepoRoot)\test\Shared\DockerHelper.cs" Link="Includes\DockerHelper.cs" />
     <Compile Include="$(RepoRoot)\test\Shared\DockerPlatform.cs" Link="Includes\DockerPlatform.cs" />
     <Compile Include="$(RepoRoot)\test\Shared\EnabledOnDockerPlatformFactAttribute.cs" Link="Includes\EnabledOnDockerPlatformFactAttribute.cs" />

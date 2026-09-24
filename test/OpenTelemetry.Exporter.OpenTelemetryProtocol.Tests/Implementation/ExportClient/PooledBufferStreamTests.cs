@@ -73,11 +73,11 @@ public class PooledBufferStreamTests
     {
         var stream = new PooledBufferStream();
 
-        await stream.WriteAsync(new byte[] { 10, 20, 30 });
+        await stream.WriteAsync(new byte[] { 10, 20, 30 }, TestContext.Current.CancellationToken);
         stream.Position = 0;
 
         var readBuffer = new byte[3];
-        Assert.Equal(3, await stream.ReadAsync(readBuffer));
+        Assert.Equal(3, await stream.ReadAsync(readBuffer, TestContext.Current.CancellationToken));
         Assert.Equal(new byte[] { 10, 20, 30 }, readBuffer);
 
         using var cancellationTokenSource = new CancellationTokenSource();
@@ -88,8 +88,8 @@ public class PooledBufferStreamTests
 
         await stream.DisposeAsync();
 
-        await Assert.ThrowsAsync<ObjectDisposedException>(() => stream.ReadAsync(new byte[1]).AsTask());
-        await Assert.ThrowsAsync<ObjectDisposedException>(() => stream.WriteAsync(new byte[1]).AsTask());
+        await Assert.ThrowsAsync<ObjectDisposedException>(() => stream.ReadAsync(new byte[1], TestContext.Current.CancellationToken).AsTask());
+        await Assert.ThrowsAsync<ObjectDisposedException>(() => stream.WriteAsync(new byte[1], TestContext.Current.CancellationToken).AsTask());
     }
 
     [Fact]

@@ -46,7 +46,7 @@ public sealed class BlazorWasmEndToEndTests : IClassFixture<BlazorWasmAppFixture
 
         await this.browserFixture.WithPageAsync(async page =>
         {
-            await NavigateAndWaitForStartupAsync(page, collector.BaseUrl);
+            await NavigateAndWaitForStartupAsync(page, collector.BaseUrl, TestContext.Current.CancellationToken);
 
             // Act
             await page.Locator("#increment-counter").ClickAsync();
@@ -76,7 +76,7 @@ public sealed class BlazorWasmEndToEndTests : IClassFixture<BlazorWasmAppFixture
 
         await this.browserFixture.WithPageAsync(async page =>
         {
-            await NavigateAndWaitForStartupAsync(page, collector.BaseUrl);
+            await NavigateAndWaitForStartupAsync(page, collector.BaseUrl, TestContext.Current.CancellationToken);
 
             // Act
             await page.Locator("#increment-counter").ClickAsync();
@@ -101,7 +101,7 @@ public sealed class BlazorWasmEndToEndTests : IClassFixture<BlazorWasmAppFixture
         await this.browserFixture.WithPageAsync(async (page) =>
         {
             // Act
-            await NavigateAndWaitForStartupAsync(page, collector.BaseUrl);
+            await NavigateAndWaitForStartupAsync(page, collector.BaseUrl, TestContext.Current.CancellationToken);
 
             // Assert
             AssertNoAppErrors(await GetErrorAsync(page));
@@ -120,7 +120,7 @@ public sealed class BlazorWasmEndToEndTests : IClassFixture<BlazorWasmAppFixture
 
         await this.browserFixture.WithPageAsync(async page =>
         {
-            await NavigateAndWaitForStartupAsync(page, collector.BaseUrl);
+            await NavigateAndWaitForStartupAsync(page, collector.BaseUrl, TestContext.Current.CancellationToken);
 
             // Act
             await page.Locator("#call-http").ClickAsync();
@@ -140,7 +140,7 @@ public sealed class BlazorWasmEndToEndTests : IClassFixture<BlazorWasmAppFixture
         });
     }
 
-    private static async Task NavigateAndWaitForStartupAsync(IPage page, string url, CancellationToken cancellationToken = default)
+    private static async Task NavigateAndWaitForStartupAsync(IPage page, string url, CancellationToken cancellationToken)
     {
         for (var attempt = 0; attempt < StartupAttempts; attempt++)
         {

@@ -73,7 +73,9 @@ public sealed class MockCollectorIntegrationTests
         using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{httpPort}") };
 
         var codes = new[] { Grpc.Core.StatusCode.Unimplemented, Grpc.Core.StatusCode.OK };
-        await httpClient.GetAsync(new Uri($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}", UriKind.Relative));
+        await httpClient.GetAsync(
+            new Uri($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}", UriKind.Relative),
+            TestContext.Current.CancellationToken);
 
         var exportResults = new List<ExportResult>();
         using var otlpExporter = new OtlpTraceExporter(new OtlpExporterOptions() { Endpoint = new Uri($"http://localhost:{grpcPort}") });
@@ -110,7 +112,7 @@ public sealed class MockCollectorIntegrationTests
         Assert.Equal(2, exportResults.Count);
         Assert.Equal(ExportResult.Success, exportResults[1]);
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
     }
 
     // For `Grpc.Core.StatusCode.DeadlineExceeded`
@@ -183,7 +185,9 @@ public sealed class MockCollectorIntegrationTests
 
         // First reply with failure and then Ok
         var codes = new[] { initialStatusCode, Grpc.Core.StatusCode.OK };
-        await httpClient.GetAsync(new Uri($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}", UriKind.Relative));
+        await httpClient.GetAsync(
+            new Uri($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}", UriKind.Relative),
+            TestContext.Current.CancellationToken);
 
         var endpoint = new Uri($"http://localhost:{grpcPort}");
 
@@ -214,7 +218,7 @@ public sealed class MockCollectorIntegrationTests
 
         Assert.Equal(expectedResult, exportResult);
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
     }
 
     [Theory]
@@ -275,7 +279,9 @@ public sealed class MockCollectorIntegrationTests
         using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{httpPort}") };
 
         var codes = new[] { initialHttpStatusCode, HttpStatusCode.OK };
-        await httpClient.GetAsync(new Uri($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}", UriKind.Relative));
+        await httpClient.GetAsync(
+            new Uri($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}", UriKind.Relative),
+            TestContext.Current.CancellationToken);
 
         var endpoint = new Uri($"http://localhost:{httpPort}/v1/traces");
 
@@ -365,7 +371,9 @@ public sealed class MockCollectorIntegrationTests
         using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{httpPort}") };
 
         var codes = new[] { initialHttpStatusCode, HttpStatusCode.OK };
-        await httpClient.GetAsync(new Uri($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}", UriKind.Relative));
+        await httpClient.GetAsync(
+            new Uri($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}", UriKind.Relative),
+            TestContext.Current.CancellationToken);
 
         var endpoint = new Uri($"http://localhost:{httpPort}/v1/traces");
 
@@ -504,7 +512,9 @@ public sealed class MockCollectorIntegrationTests
         using var httpClient = new HttpClient() { BaseAddress = new Uri($"http://localhost:{httpPort}") };
 
         var codes = new[] { initialgrpcStatusCode, Grpc.Core.StatusCode.OK };
-        await httpClient.GetAsync(new Uri($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}", UriKind.Relative));
+        await httpClient.GetAsync(
+            new Uri($"/MockCollector/SetResponseCodes/{string.Join(",", codes.Select(x => (int)x))}", UriKind.Relative),
+            TestContext.Current.CancellationToken);
 
         var endpoint = new Uri($"http://localhost:{grpcPort}");
 

@@ -36,7 +36,11 @@ public class OtlpHttpExportClientTests
             httpClient,
             string.Empty);
 
-        var response = exportClient.SendExportRequest("hello world"u8.ToArray(), 11, DateTime.MaxValue);
+        var response = exportClient.SendExportRequest(
+            "hello world"u8.ToArray(),
+            11,
+            DateTime.MaxValue,
+            TestContext.Current.CancellationToken);
 
         Assert.False(response.Success);
         Assert.IsType<ResponseSizeLimitExceededException>(response.Exception);
@@ -66,7 +70,12 @@ public class OtlpHttpExportClientTests
             string.Empty);
 
         // The limit is inclusive, so a response of exactly this size is accepted.
-        Assert.True(exportClient.SendExportRequest("hello world"u8.ToArray(), 11, DateTime.MaxValue).Success);
+        Assert.True(
+            exportClient.SendExportRequest(
+                "hello world"u8.ToArray(),
+                11,
+                DateTime.MaxValue,
+                TestContext.Current.CancellationToken).Success);
     }
 
     [Theory]
@@ -116,7 +125,11 @@ public class OtlpHttpExportClientTests
             httpClient,
             string.Empty);
 
-        exportClient.SendExportRequest(payload, payload.Length, DateTime.UtcNow.AddSeconds(10));
+        exportClient.SendExportRequest(
+            payload,
+            payload.Length,
+            DateTime.UtcNow.AddSeconds(10),
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(payload, testHandler.HttpRequestContent);
 
@@ -143,7 +156,11 @@ public class OtlpHttpExportClientTests
             httpClient,
             string.Empty);
 
-        exportClient.SendExportRequest(payload, payload.Length, DateTime.UtcNow.AddSeconds(10));
+        exportClient.SendExportRequest(
+            payload,
+            payload.Length,
+            DateTime.UtcNow.AddSeconds(10),
+            TestContext.Current.CancellationToken);
 
         var content = testHandler.HttpRequestContent;
 
