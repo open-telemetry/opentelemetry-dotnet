@@ -17,6 +17,33 @@ public static class ProtobufOtlpMetricSerializerTests
 {
     private const string HistogramName = "histogram";
 
+#if NET8_0_OR_GREATER
+    [Fact]
+    public static void CachedMetricMetadataDoesNotAllocate()
+    {
+        var metrics = GenerateMetricWithDescription("Cached metadata");
+        var getMetadata = typeof(ProtobufOtlpMetricSerializer)
+            .GetMethod("GetOrCreateCachedMetricMetadata", BindingFlags.NonPublic | BindingFlags.Static)!
+            .CreateDelegate<Func<Metric, int, byte[]>>();
+        foreach (var metric in metrics)
+        {
+            for (var i = 0; i < 10000; i++)
+            {
+                getMetadata(metric, 1024);
+            }
+
+            var allocatedBefore = GC.GetAllocatedBytesForCurrentThread();
+            for (var i = 0; i < 1000; i++)
+            {
+                getMetadata(metric, 1024);
+            }
+
+            var allocated = GC.GetAllocatedBytesForCurrentThread() - allocatedBefore;
+            Assert.Equal(0, allocated);
+        }
+    }
+#endif
+
     [Theory]
     [InlineData(700)]
     [InlineData(2000)]
