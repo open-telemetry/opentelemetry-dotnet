@@ -78,7 +78,7 @@ internal static class WildcardHelper
         // than a backtracking regex, which can lead to an OutOfMemoryException in applications.
         // The match timeout bounds worst-case matching time to protect against catastrophic backtracking.
         // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/7787.
-        return new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase, RegexMatchTimeout);
+        return new Regex(pattern, RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase, RegexMatchTimeout);
     }
 
     public static bool IsMatch(Regex regex, string input)

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Internal.Tests;
 
@@ -68,6 +69,19 @@ public class WildcardHelperTests
         var result = regex.IsMatch(matchWith);
 
         Assert.True(result == isMatch);
+    }
+
+    [Fact]
+    public void GetWildcardRegex_IsCultureInvariantWhenMatchingMultiplePatterns()
+    {
+        using (CultureSwitcher.UseCulture("tr-TR"))
+        {
+            string[] patterns = ["FILE*", "Other*"];
+
+            var regex = WildcardHelper.GetWildcardRegex(patterns);
+
+            Assert.True(WildcardHelper.IsMatch(regex, "file.api"));
+        }
     }
 
     [Theory]
