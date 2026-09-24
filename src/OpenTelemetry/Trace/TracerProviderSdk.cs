@@ -397,7 +397,7 @@ internal sealed class TracerProviderSdk : TracerProvider
             }
             else
             {
-                (names ??= new(StringComparer.OrdinalIgnoreCase)).Add(source);
+                (names ??= [with(StringComparer.OrdinalIgnoreCase)]).Add(source);
             }
         }
 
