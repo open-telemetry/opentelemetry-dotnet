@@ -19,7 +19,7 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
         // Recommended API for HostApplicationBuilder: add source directly on
         // builder.Configuration (the live ConfigurationManager).
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(
-            resourceAttributes: new Dictionary<string, string> { ["service.name"] = "modern-host-svc" });
+            resourceAttributesList: "service.name=modern-host-svc");
 
         var builder = Host.CreateApplicationBuilder();
         builder.Configuration.AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path);
@@ -134,7 +134,7 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
     public void ModernHost_SourceAddedAfterYaml_OverridesYaml()
     {
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(
-            resourceAttributes: new Dictionary<string, string> { ["service.name"] = "from-yaml" });
+            resourceAttributesList: "service.name=from-yaml");
 
         var builder = Host.CreateApplicationBuilder();
 
@@ -158,8 +158,10 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
     [Fact]
     public void ModernHost_YamlOverridesSourceAddedBeforeIt()
     {
+        // Source-only path: attributes_list feeds OTEL_RESOURCE_ATTRIBUTES. Because YAML is appended
+        // after the in-memory source, the YAML value for the flat key wins in IConfiguration.
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(
-            resourceAttributes: new Dictionary<string, string> { ["service.name"] = "from-yaml" });
+            resourceAttributesList: "service.name=from-yaml");
 
         var builder = Host.CreateApplicationBuilder();
 
@@ -187,7 +189,7 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
         // so it becomes part of the host's composed IConfiguration.
         using var yamlFile = new DeclarativeYamlTestFileFactory();
         var yamlPath = yamlFile.CreateDeclarativeYaml(
-            resourceAttributes: new Dictionary<string, string> { ["service.name"] = "classic-host-svc" });
+            resourceAttributesList: "service.name=classic-host-svc");
 
         using var host = new HostBuilder()
             .ConfigureAppConfiguration(configBuilder =>
@@ -285,10 +287,12 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
     [Fact]
     public void ModernHost_YamlOverridesOtelEnvVar_WhenEnvRegisteredFirst()
     {
+        // Source-only path: attributes_list feeds OTEL_RESOURCE_ATTRIBUTES. The YAML source
+        // is appended after the env-var source, so the YAML flat value wins in IConfiguration.
         const string envVarName = "OTEL_RESOURCE_ATTRIBUTES";
         using var envScope = EnvironmentVariableScope.Create(envVarName, "service.name=from-env");
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(
-            resourceAttributes: new Dictionary<string, string> { ["service.name"] = "from-yaml" });
+            resourceAttributesList: "service.name=from-yaml");
 
         var builder = Host.CreateApplicationBuilder();
         builder.Configuration.AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path);
@@ -352,8 +356,9 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
         // the overlay inserts the YAML source in-place during setup. Without it the source is
         // only inserted when IConfiguration is first resolved from the container, so values are
         // invisible to anything reading builder.Configuration while the application is built.
+        // Use attributes_list (flat projection) to verify the key is visible during setup.
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(
-            resourceAttributes: new Dictionary<string, string> { ["service.name"] = "setup-visible" });
+            resourceAttributesList: "service.name=setup-visible");
 
         var builder = Host.CreateApplicationBuilder();
         builder.AddOpenTelemetry()
@@ -367,7 +372,7 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
     public void ModernHost_AddOpenTelemetryOnHostBuilder_WithExistingConfigurationManager_UsesHostConfiguration()
     {
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(
-            resourceAttributes: new Dictionary<string, string> { ["service.name"] = "setup-visible" });
+            resourceAttributesList: "service.name=setup-visible");
 
         var builder = Host.CreateApplicationBuilder();
         using var applicationConfiguration = new ConfigurationManager();
