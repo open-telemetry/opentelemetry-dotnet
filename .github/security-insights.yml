@@ -1,6 +1,6 @@
 header:
-  last-reviewed: '2026-09-23'
-  last-updated: '2026-09-23'
+  last-reviewed: '2026-09-24'
+  last-updated: '2026-09-24'
   schema-version: 2.0.0
   url: https://raw.githubusercontent.com/open-telemetry/opentelemetry-dotnet/main/.github/security-insights.yml
   comment: |
