@@ -6,6 +6,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Trace;
@@ -93,7 +95,8 @@ public static class OtlpTraceExporterHelperExtensions
                 sp,
                 exporterOptions,
                 sdkLimitOptions,
-                sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName));
+                sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName),
+                optionsName: name);
         });
     }
 
@@ -102,7 +105,8 @@ public static class OtlpTraceExporterHelperExtensions
         OtlpExporterOptions exporterOptions,
         SdkLimitOptions sdkLimitOptions,
         ExperimentalOptions experimentalOptions,
-        Func<BaseExporter<Activity>, BaseExporter<Activity>>? configureExporterInstance = null)
+        Func<BaseExporter<Activity>, BaseExporter<Activity>>? configureExporterInstance = null,
+        string? optionsName = null)
         => BuildOtlpExporterProcessor(
             serviceProvider,
             exporterOptions,
@@ -111,7 +115,8 @@ public static class OtlpTraceExporterHelperExtensions
             exporterOptions.ExportProcessorType,
             exporterOptions.BatchExportProcessorOptions ?? new BatchExportActivityProcessorOptions(),
             skipUseOtlpExporterRegistrationCheck: false,
-            configureExporterInstance: configureExporterInstance);
+            configureExporterInstance: configureExporterInstance,
+            optionsName: optionsName);
 
     internal static BaseProcessor<Activity> BuildOtlpExporterProcessor(
         IServiceProvider serviceProvider,
@@ -121,7 +126,8 @@ public static class OtlpTraceExporterHelperExtensions
         ExportProcessorType exportProcessorType,
         BatchExportProcessorOptions<Activity> batchExportProcessorOptions,
         bool skipUseOtlpExporterRegistrationCheck = false,
-        Func<BaseExporter<Activity>, BaseExporter<Activity>>? configureExporterInstance = null)
+        Func<BaseExporter<Activity>, BaseExporter<Activity>>? configureExporterInstance = null,
+        string? optionsName = null)
     {
 #if NETFRAMEWORK || NETSTANDARD2_0
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
@@ -139,10 +145,31 @@ public static class OtlpTraceExporterHelperExtensions
             serviceProvider.EnsureNoUseOtlpExporterRegistrations();
         }
 
-        exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpTraceExporter");
+        var usesHttpClientFactory = exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpTraceExporter");
+
+        OtlpExporterTransmissionHandler? transmissionHandler = null;
+        ReloadableExportClient? reloadableClient = null;
+        if (optionsName != null)
+        {
+            var ownsHttpClient = usesHttpClientFactory || ReferenceEquals(exporterOptions.HttpClientFactory, exporterOptions.DefaultHttpClientFactory);
+#pragma warning disable CA2000 // Ownership passes to the exporter.
+            reloadableClient = new ReloadableExportClient(
+                exporterOptions,
+                exporterOptions.GetExportClient(OtlpSignalType.Traces, ownsHttpClient),
+                ownsHttpClient,
+                serviceProvider,
+                optionsName,
+                "OtlpTraceExporter",
+                OtlpSignalType.Traces,
+                skipUseOtlpExporterRegistrationCheck);
+            transmissionHandler = exporterOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Traces, exportClientOverride: reloadableClient);
+#pragma warning restore CA2000 // Ownership passes to the exporter.
+        }
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
-        BaseExporter<Activity> otlpExporter = new OtlpTraceExporter(exporterOptions, sdkLimitOptions, experimentalOptions);
+        BaseExporter<Activity> otlpExporter = reloadableClient is null
+            ? new OtlpTraceExporter(exporterOptions, sdkLimitOptions, experimentalOptions)
+            : new ReloadableOtlpTraceExporter(exporterOptions, sdkLimitOptions, experimentalOptions, transmissionHandler!, reloadableClient);
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
         try

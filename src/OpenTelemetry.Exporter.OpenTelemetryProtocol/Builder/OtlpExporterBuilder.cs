@@ -202,7 +202,8 @@ internal sealed class OtlpExporterBuilder
                     builderOptions.LogRecordExportProcessorOptions ?? throw new InvalidOperationException("LogRecordExportProcessorOptions were missing with logging enabled"),
                     builderOptions.SdkLimitOptions,
                     builderOptions.ExperimentalOptions,
-                    skipUseOtlpExporterRegistrationCheck: true);
+                    skipUseOtlpExporterRegistrationCheck: true,
+                    optionsName: name);
 
                 processor.PipelineWeight = DefaultProcessorPipelineWeight;
 
@@ -220,7 +221,8 @@ internal sealed class OtlpExporterBuilder
                         builderOptions.MetricsOptionsInstance.ApplyDefaults(builderOptions.DefaultOptionsInstance),
                         builderOptions.MetricReaderOptions ?? throw new InvalidOperationException("MetricReaderOptions were missing with metrics enabled"),
                         builderOptions.ExperimentalOptions,
-                        skipUseOtlpExporterRegistrationCheck: true));
+                        skipUseOtlpExporterRegistrationCheck: true,
+                        optionsName: name));
             });
 
         services.ConfigureOpenTelemetryTracerProvider(
@@ -237,7 +239,8 @@ internal sealed class OtlpExporterBuilder
                     builderOptions.ExperimentalOptions,
                     processorOptions.ExportProcessorType,
                     processorOptions.BatchExportProcessorOptions,
-                    skipUseOtlpExporterRegistrationCheck: true);
+                    skipUseOtlpExporterRegistrationCheck: true,
+                    optionsName: name);
 
                 processor.PipelineWeight = DefaultProcessorPipelineWeight;
 

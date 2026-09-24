@@ -17,4 +17,12 @@ internal sealed class LazyExportClient : IExportClient
 
     public bool Shutdown(int timeoutMilliseconds)
         => !this.exportClient.IsValueCreated || this.exportClient.Value.Shutdown(timeoutMilliseconds);
+
+    internal void DisposeHttpClient()
+    {
+        if (this.exportClient.IsValueCreated && this.exportClient.Value is OtlpExportClient client)
+        {
+            client.HttpClient.Dispose();
+        }
+    }
 }
