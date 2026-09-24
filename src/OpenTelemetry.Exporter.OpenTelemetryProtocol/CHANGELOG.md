@@ -7,6 +7,9 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Avoid closure allocations when serializing cached metric metadata.
+  ([#7841](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7841))
+
 ## 1.19.1
 
 Released 2026-Sep-21
