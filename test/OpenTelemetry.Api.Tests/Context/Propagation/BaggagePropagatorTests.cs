@@ -663,7 +663,7 @@ public class BaggagePropagatorTests
         Assert.Equal("key+name", entry.Key);
     }
 
-    [Theory(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/pull/7051")]
+    [Theory(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/5677")]
     [InlineData(" ", "%20")]
     [InlineData("(", "%28")]
     [InlineData(":", "%3A")]
