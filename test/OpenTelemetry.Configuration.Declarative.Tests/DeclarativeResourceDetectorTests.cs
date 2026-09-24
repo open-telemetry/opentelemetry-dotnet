@@ -657,6 +657,6 @@ public sealed class DeclarativeResourceDetectorTests
 
     private sealed class SchemaUrlResourceDetector(string schemaUrl) : IResourceDetector
     {
-        public Resource Detect() => new(Array.Empty<KeyValuePair<string, object>>(), schemaUrl);
+        public Resource Detect() => new([], schemaUrl);
     }
 }
