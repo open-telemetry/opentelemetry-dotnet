@@ -436,7 +436,27 @@ public class BaggagePropagator : TextMapPropagator
 
         var sb = new StringBuilder(value.Length);
 
-        var byteBuffer = new byte[value.Length];
+#if NET
+        const int StackallocByteThreshold = 256;
+        if (value.Length <= StackallocByteThreshold)
+        {
+            Span<byte> byteBuffer = stackalloc byte[value.Length];
+            DecodeInto(value, byteBuffer, sb);
+        }
+        else
+        {
+            DecodeInto(value, new byte[value.Length], sb);
+        }
+#else
+        DecodeInto(value, new byte[value.Length], sb);
+#endif
+
+        return sb.ToString();
+    }
+
+#if NET
+    private static void DecodeInto(ReadOnlySpan<char> value, Span<byte> byteBuffer, StringBuilder sb)
+    {
         var byteCount = 0;
         var i = 0;
 
@@ -465,8 +485,49 @@ public class BaggagePropagator : TextMapPropagator
         }
 
         FlushByteBuffer(sb, byteBuffer, ref byteCount);
+    }
 
-        return sb.ToString();
+    private static void FlushByteBuffer(StringBuilder sb, Span<byte> buffer, ref int count)
+    {
+        if (count == 0)
+        {
+            return;
+        }
+
+        sb.Append(Encoding.UTF8.GetString(buffer.Slice(0, count)));
+        count = 0;
+    }
+#else
+    private static void DecodeInto(ReadOnlySpan<char> value, byte[] buffer, StringBuilder sb)
+    {
+        var byteCount = 0;
+        var i = 0;
+
+        while (i < value.Length)
+        {
+            if (value[i] == '%')
+            {
+                if (i + 2 < value.Length && IsHexDigit(value[i + 1]) && IsHexDigit(value[i + 2]))
+                {
+                    buffer[byteCount++] = (byte)((HexDigitValue(value[i + 1]) << 4) | HexDigitValue(value[i + 2]));
+                    i += 3;
+                }
+                else
+                {
+                    FlushByteBuffer(sb, buffer, ref byteCount);
+                    sb.Append('\uFFFD');
+                    i++;
+                }
+            }
+            else
+            {
+                FlushByteBuffer(sb, buffer, ref byteCount);
+                sb.Append(value[i]);
+                i++;
+            }
+        }
+
+        FlushByteBuffer(sb, buffer, ref byteCount);
     }
 
     private static void FlushByteBuffer(StringBuilder sb, byte[] buffer, ref int count)
@@ -479,6 +540,7 @@ public class BaggagePropagator : TextMapPropagator
         sb.Append(Encoding.UTF8.GetString(buffer, 0, count));
         count = 0;
     }
+#endif
 
     private static bool IsHexDigit(char c) =>
         char.IsAsciiDigit(c) || c is (>= 'A' and <= 'F') or (>= 'a' and <= 'f');
