@@ -605,9 +605,14 @@ public sealed class MockCollectorIntegrationTests
                 await host.StartAsync();
                 return host;
             }
-            catch (IOException) when (attempt < maxAttempts)
+            catch (IOException)
             {
                 host.Dispose();
+
+                if (attempt >= maxAttempts)
+                {
+                    throw;
+                }
             }
         }
     }
@@ -627,9 +632,14 @@ public sealed class MockCollectorIntegrationTests
                 await host.StartAsync();
                 return host;
             }
-            catch (IOException) when (attempt < maxAttempts)
+            catch (IOException)
             {
                 host.Dispose();
+
+                if (attempt >= maxAttempts)
+                {
+                    throw;
+                }
             }
         }
     }
