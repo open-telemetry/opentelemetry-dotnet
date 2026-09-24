@@ -17,7 +17,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#if NET462
+#if NETFRAMEWORK
 using System.Net.Http;
 #endif
 using System.Net.Http.Headers;
@@ -30,7 +30,7 @@ internal static class TrailingHeadersHelpers
 
     public static HttpHeaders TrailingHeaders(this HttpResponseMessage responseMessage)
     {
-#if !NETSTANDARD2_0 && !NET462
+#if !NETSTANDARD2_0 && !NETFRAMEWORK
         return responseMessage.TrailingHeaders;
 #else
         if (responseMessage.RequestMessage.Properties.TryGetValue(ResponseTrailersKey, out var headers) &&
@@ -46,7 +46,7 @@ internal static class TrailingHeadersHelpers
 #endif
     }
 
-#if NETSTANDARD2_0 || NET462
+#if NETSTANDARD2_0 || NETFRAMEWORK
     public static void EnsureTrailingHeaders(this HttpResponseMessage responseMessage)
     {
         if (!responseMessage.RequestMessage.Properties.ContainsKey(ResponseTrailersKey))

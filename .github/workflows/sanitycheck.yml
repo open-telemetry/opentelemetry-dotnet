@@ -9,7 +9,7 @@ permissions:
 jobs:
   run-typos:
     name: Check for typos
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     steps:
     - name: Checkout code
@@ -20,11 +20,11 @@ jobs:
         show-progress: false
 
     - name: Check for typos
-      uses: crate-ci/typos@d43b6c087ac471e2ea7b8af622ff15f05c0c365b # v1.50.1
+      uses: crate-ci/typos@512fc24f32f44ab01972217aaaf3dc86ec234d53 # v1.50.2
 
   run-sanitycheck:
     name: Run sanity check
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     steps:
     - name: Checkout code

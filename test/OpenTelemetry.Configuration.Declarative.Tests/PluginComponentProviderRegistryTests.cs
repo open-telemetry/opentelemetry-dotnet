@@ -282,10 +282,10 @@ public sealed class PluginComponentProviderRegistryTests
         Assert.Equal(0.25, component.Properties.GetDouble("ratio").Value);
         Assert.Equal(
             "secret",
-            component.Properties.GetProperties("headers").Value!.GetString("authorization").Value);
+            component.Properties.GetMapping("headers").Value!.GetString("authorization").Value);
         Assert.Equal(
             expectedTags,
-            component.Properties.GetScalarList<string>("tags").Value);
+            component.Properties.GetStringList("tags").Value);
     }
 
     private static ServiceProvider BuildServiceProvider(
