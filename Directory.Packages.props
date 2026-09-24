@@ -100,7 +100,7 @@
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
     <PackageVersion Include="CommandLineParser" Version="2.9.1" />
     <PackageVersion Include="FSharp.Core" Version="10.1.401" />
-    <PackageVersion Include="FsCheck.Xunit" Version="3.4.0" />
+    <PackageVersion Include="FsCheck.Xunit.v3" Version="3.4.0" />
     <PackageVersion Include="GitHubActionsTestLogger" Version="3.0.5" />
     <PackageVersion Include="Google.Protobuf" Version="3.36.2" />
     <PackageVersion Include="Grpc" Version="2.46.6" />
@@ -137,9 +137,9 @@
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="10.2.3" />
     <PackageVersion Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
     <PackageVersion Include="Testcontainers" Version="4.15.0" />
-    <PackageVersion Include="Verify.Xunit" Version="31.12.5" />
-    <PackageVersion Include="xunit" Version="2.9.3" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="[2.8.2,)" />
+    <PackageVersion Include="Verify.XunitV3" Version="32.0.1" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.0" />
+    <PackageVersion Include="xunit.v3.mtp-off" Version="4.0.1" />
     <PackageVersion Include="YamlDotNet" Version="18.1.0" />
   </ItemGroup>
 

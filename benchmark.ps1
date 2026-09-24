@@ -46,10 +46,10 @@ Runs only the target benchmark and skips the baseline ref.
 Runs the matching benchmarks for the current branch only.
 
 .EXAMPLE
-./benchmark.ps1 @("*ExporterBenchmarks*") -Target my-feature -Job Short -Runtimes @("net10.0", "net462")
+./benchmark.ps1 @("*ExporterBenchmarks*") -Target my-feature -Job Short -Runtimes @("net10.0", "net472")
 
 Runs the matching exporter benchmarks for the my-feature branch and main using the
-"Short" job for .NET 10 and .NET Framework 4.6.2.
+"Short" job for .NET 10 and .NET Framework 4.7.2.
 #>
 
 param(
@@ -133,7 +133,7 @@ $Configuration = "Release"
 $Framework = "net10.0"
 
 if (-not ($Runtimes | Where-Object { $_ -notmatch "^net4\d+$" })) {
-    $Framework = "net462"
+    $Framework = "net472"
 }
 
 if ($Benchmarks.Count -eq 0) {
