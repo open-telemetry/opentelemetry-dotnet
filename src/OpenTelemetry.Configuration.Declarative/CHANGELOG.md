@@ -37,3 +37,7 @@ Notes](../../RELEASENOTES.md).
   document from `IServiceProvider` or `IConfigurationRoot`, with typed access to
   YAML values through `ConfigProperties`.
   ([#7781](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7781))
+
+* Added declarative configuration support for typed resource attributes and
+  resource schema URLs.
+  ([#7806](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7806))

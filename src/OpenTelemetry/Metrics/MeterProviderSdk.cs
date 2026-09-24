@@ -1,9 +1,13 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if NET
+using System.Collections.Frozen;
+#endif
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Internal;
@@ -27,7 +31,7 @@ internal sealed class MeterProviderSdk : MeterProvider
     private readonly List<Func<Instrument, MetricStreamConfiguration?>> viewConfigs;
     private readonly Lock collectLock = new();
     private readonly MeterListener listener;
-    private readonly Func<Instrument, bool> shouldListenTo = instrument => false;
+    private readonly Predicate<Instrument> shouldListenTo = static _ => false;
     private CompositeMetricReader? compositeMetricReader;
 
     internal MeterProviderSdk(
@@ -143,18 +147,14 @@ internal sealed class MeterProviderSdk : MeterProvider
             }
 
             // Setup Listener
-            if (state.MeterSources.Exists(WildcardHelper.ContainsWildcard))
+            var meterSources = state.MeterSources;
+
+            if (CreateFilterPredicate(meterSources) is { } predicate)
             {
-                var regex = WildcardHelper.GetWildcardRegex(state.MeterSources);
-                this.shouldListenTo = instrument => WildcardHelper.IsMatch(regex, instrument.Meter.Name);
-            }
-            else if (state.MeterSources.Count > 0)
-            {
-                var meterSourcesToSubscribe = new HashSet<string>(state.MeterSources, StringComparer.OrdinalIgnoreCase);
-                this.shouldListenTo = instrument => meterSourcesToSubscribe.Contains(instrument.Meter.Name);
+                this.shouldListenTo = predicate;
             }
 
-            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Listening to following meters = \"{string.Join(";", state.MeterSources)}\".");
+            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Listening to following meters = \"{string.Join(";", meterSources)}\".");
 
             this.listener = new MeterListener();
             var viewConfigCount = this.viewConfigs.Count;
@@ -506,6 +506,88 @@ internal sealed class MeterProviderSdk : MeterProvider
         base.Dispose(disposing);
     }
 
+    private static Predicate<Instrument>? CreateFilterPredicate(List<string> sources)
+    {
+        if (sources.Count == 1 && sources[0] == "*")
+        {
+            return static (_) => true;
+        }
+        else if (sources.Count == 0)
+        {
+            return null;
+        }
+
+        HashSet<string>? names = null;
+        List<string>? prefixes = null;
+        List<string>? wildcards = null;
+
+        foreach (var source in sources)
+        {
+            if (WildcardHelper.TryGetWildcardPrefix(source, out var prefix))
+            {
+                (prefixes ??= []).Add(prefix);
+            }
+            else if (WildcardHelper.ContainsWildcard(source))
+            {
+                (wildcards ??= []).Add(source);
+            }
+            else
+            {
+                (names ??= new(StringComparer.OrdinalIgnoreCase)).Add(source);
+            }
+        }
+
+        if (prefixes is { Count: > 1 })
+        {
+            // A linear StartsWith scan over multiple prefixes is only worthwhile for a single
+            // prefix; beyond that, a compiled Regex is simpler and at least as fast, especially
+            // when the prefixes share a long common substring.
+            wildcards ??= [];
+            foreach (var prefix in prefixes)
+            {
+                wildcards.Add(prefix + "*");
+            }
+
+            prefixes = null;
+        }
+
+        var hasNames = names is { Count: > 0 };
+        var hasPrefixes = prefixes is { Count: > 0 };
+        var hasWildcards = wildcards is { Count: > 0 };
+        var categoryCount = (hasNames ? 1 : 0) + (hasPrefixes ? 1 : 0) + (hasWildcards ? 1 : 0);
+
+        if (categoryCount == 1)
+        {
+            if (hasNames)
+            {
+#if NET
+                var frozenNames = names!.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+                return (instrument) => frozenNames.Contains(instrument.Meter.Name);
+#else
+                return (instrument) => names!.Contains(instrument.Meter.Name);
+#endif
+            }
+
+            if (hasPrefixes)
+            {
+                var singlePrefix = prefixes![0];
+                return (instrument) => instrument.Meter.Name.StartsWith(singlePrefix, StringComparison.OrdinalIgnoreCase);
+            }
+
+            var regex = WildcardHelper.GetWildcardRegex(wildcards!);
+            var regexPredicate = new RegexPredicate(regex);
+            return regexPredicate.IsMatch;
+        }
+        else
+        {
+            var namesPredicate = hasNames ? new HashSetPredicate(names!) : null;
+            var prefixPredicate = hasPrefixes ? new PrefixPredicate(prefixes![0]) : null;
+            var regexPredicate = hasWildcards ? new RegexPredicate(WildcardHelper.GetWildcardRegex(wildcards!)) : null;
+            var compositePredicate = new CompositePredicate(namesPredicate, prefixPredicate, regexPredicate);
+            return compositePredicate.IsMatch;
+        }
+    }
+
     private void DisposeBuiltState(MeterProviderBuilderSdk state)
     {
         foreach (var reader in state.Readers)
@@ -608,5 +690,42 @@ internal sealed class MeterProviderSdk : MeterProvider
             exemplarFilter = null;
             return false;
         }
+    }
+
+    private sealed class CompositePredicate(HashSetPredicate? hashSet, PrefixPredicate? prefix, RegexPredicate? regex)
+    {
+        private readonly HashSetPredicate? hashSet = hashSet;
+        private readonly PrefixPredicate? prefix = prefix;
+        private readonly RegexPredicate? regex = regex;
+
+        public bool IsMatch(Instrument instrument) =>
+            (this.hashSet?.IsMatch(instrument) ?? false) ||
+            (this.prefix?.IsMatch(instrument) ?? false) ||
+            (this.regex?.IsMatch(instrument) ?? false);
+    }
+
+    private sealed class HashSetPredicate(HashSet<string> hashSet)
+    {
+#if NET
+        private readonly FrozenSet<string> set = hashSet.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+#else
+        private readonly HashSet<string> set = hashSet;
+#endif
+
+        public bool IsMatch(Instrument instrument) => this.set.Contains(instrument.Meter.Name);
+    }
+
+    private sealed class PrefixPredicate(string prefix)
+    {
+        private readonly string prefix = prefix;
+
+        public bool IsMatch(Instrument instrument) => instrument.Meter.Name.StartsWith(this.prefix, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private sealed class RegexPredicate(Regex regex)
+    {
+        private readonly Regex regex = regex;
+
+        public bool IsMatch(Instrument instrument) => WildcardHelper.IsMatch(this.regex, instrument.Meter.Name);
     }
 }

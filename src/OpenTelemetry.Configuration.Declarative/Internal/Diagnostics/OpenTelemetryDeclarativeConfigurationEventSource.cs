@@ -131,4 +131,7 @@ internal sealed class OpenTelemetryDeclarativeConfigurationEventSource : EventSo
 
     [Event(34, Message = "Declarative config: component type '{0}' with name '{1}' is claimed by both '{2}' and '{3}'. Each component type and name combination must be unique.", Level = EventLevel.Error)]
     public void DuplicateComponentProviderRejected(string componentType, string name, string existingProviderType, string duplicateProviderType) => this.WriteEvent(34, componentType, name, existingProviderType, duplicateProviderType);
+
+    [Event(35, Message = "Declarative config: resource.attributes entry '{0}' has an integer value '{1}' that exceeds the 64-bit integer range and will be skipped.", Level = EventLevel.Warning)]
+    public void UnrepresentableResourceAttributeInteger(string name, string value) => this.WriteEvent(35, name, value);
 }

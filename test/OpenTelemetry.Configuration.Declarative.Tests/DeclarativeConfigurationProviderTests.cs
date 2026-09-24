@@ -24,9 +24,7 @@ public sealed class DeclarativeConfigurationProviderTests
     [Fact]
     public void Load_ValidFile_PopulatesFlatKeys()
     {
-        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(
-            disabled: true,
-            resourceAttributes: new Dictionary<string, string> { ["service.name"] = "my-service" });
+        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: true);
 
         var provider = new DeclarativeConfigurationProvider(new DeclarativeConfigurationDocumentAccessor(new FilePath(yamlFile.Path)));
         provider.Load();
@@ -34,8 +32,8 @@ public sealed class DeclarativeConfigurationProviderTests
         Assert.True(provider.TryGet(OtelEnvironmentVariables.SdkDisabled, out var disabled));
         Assert.Equal("true", disabled);
 
-        Assert.True(provider.TryGet(OtelEnvironmentVariables.ResourceAttributes, out var attrs));
-        Assert.Equal("service.name=my-service", attrs);
+        // resource.attributes goes through DeclarativeResourceDetector, not the flat projection.
+        Assert.False(provider.TryGet(OtelEnvironmentVariables.ResourceAttributes, out _));
     }
 
     [Fact]
@@ -177,12 +175,11 @@ public sealed class DeclarativeConfigurationProviderTests
     [Fact]
     public void Load_SubstitutesThenTranslates()
     {
+        // attributes_list (not attributes) is the flat-projection path; verify substitution runs first.
         const string yaml = """
             file_format: "1.0"
             resource:
-              attributes:
-                - name: service.name
-                  value: ${SERVICE_NAME:-default-svc}
+              attributes_list: service.name=${SERVICE_NAME:-default-svc}
             """;
 
         using var yamlFile = DeclarativeYamlTestFile.CreateYamlFile(yaml);

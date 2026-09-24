@@ -22,6 +22,7 @@ internal sealed class DeclarativeConfigurationParser(YamlParseContext context)
         with(StringComparer.Ordinal),
         YamlKeys.Attributes,
         YamlKeys.AttributesList,
+        YamlKeys.SchemaUrl,
     ];
 
     private static readonly HashSet<string> KnownAttributeKeys =
@@ -82,11 +83,15 @@ internal sealed class DeclarativeConfigurationParser(YamlParseContext context)
         {
             AttributesList = this.ReadAttributesList(node),
             Attributes = this.ReadAttributes(node),
+            SchemaUrl = this.ReadSchemaUrl(node),
         };
     }
 
     private ModelProperty<string> ReadAttributesList(YamlMappingNode node) =>
         this.reader.ReadString(node, YamlKeys.AttributesList);
+
+    private ModelProperty<string> ReadSchemaUrl(YamlMappingNode node) =>
+        this.reader.ReadString(node, YamlKeys.SchemaUrl);
 
     private ModelProperty<IReadOnlyList<ResourceAttributeEntry>> ReadAttributes(YamlMappingNode node)
     {
