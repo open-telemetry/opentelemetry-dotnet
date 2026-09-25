@@ -28,9 +28,9 @@ public class HttpRetryTestCase
 
     internal HttpRetryAttempt[] RetryAttempts { get; }
 
-    public static TheoryData<HttpRetryTestCase> GetHttpTestCases() =>
+    public static TheoryData<HttpRetryTestCase> GetHttpTestCases() => new(
     [
-        new("NetworkError", [new(statusCode: null)]),
+        new HttpRetryTestCase("NetworkError", [new(statusCode: null)]),
         new("NetworkError with expired deadline", [new(statusCode: null, isDeadlineExceeded: true, expectedSuccess: false)]),
 #if NET
         new("Unknown HttpRequestError", [new(statusCode: null, httpRequestException: new(HttpRequestError.Unknown))]),
@@ -97,7 +97,7 @@ public class HttpRetryTestCase
             [
                 new(statusCode: HttpStatusCode.ServiceUnavailable, isDeadlineExceeded: true, expectedSuccess: false)
             ]),
-    ];
+    ]);
 
     public override string ToString() => this.testRunnerName;
 
@@ -111,7 +111,6 @@ public class HttpRetryTestCase
         public bool ExpectedThrottled;
 
         private readonly Func<ExportClientHttpResponse> createResponse;
-        private ExportClientHttpResponse? response;
 
         internal HttpRetryAttempt(
             HttpStatusCode? statusCode,
@@ -172,6 +171,10 @@ public class HttpRetryTestCase
         /// takes long enough for that to happen, so the response is built when a test
         /// reaches it rather than when the case is created.
         /// </remarks>
-        public ExportClientHttpResponse Response => this.response ??= this.createResponse();
+        public ExportClientHttpResponse Response
+        {
+            get => field ??= this.createResponse();
+            private set;
+        }
     }
 }

@@ -110,7 +110,7 @@ public class MetricReaderTests
 
         var firstCollectTask = Task.Run(() => metricReader.Collect(Timeout.Infinite));
 
-        Assert.True(metricReader.CollectionStarted.Wait(TimeSpan.FromSeconds(5)));
+        Assert.True(metricReader.CollectionStarted.Wait(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken));
 
         var secondCollectTask = Task.Run(() => metricReader.Collect(50));
 

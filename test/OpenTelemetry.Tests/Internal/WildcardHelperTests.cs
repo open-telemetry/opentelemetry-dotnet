@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Internal.Tests;
 
@@ -23,6 +24,35 @@ public class WildcardHelperTests
         Assert.True(sw.Elapsed < TimeSpan.FromSeconds(5), $"Non-matching input took {sw.Elapsed.TotalSeconds:F1}s.");
     }
 
+    [Fact]
+    public void GetWildcardRegex_HandlesLargeNumberOfPatterns()
+    {
+        var patterns = Enumerable.Range(0, 300).Select(i => $"Some.Namespace.Source.{i}.*").ToArray();
+
+        var regex = WildcardHelper.GetWildcardRegex(patterns);
+
+        Assert.True(WildcardHelper.IsMatch(regex, "Some.Namespace.Source.42.Foo"));
+        Assert.False(WildcardHelper.IsMatch(regex, "Some.Other.Namespace"));
+    }
+
+    [Fact]
+    public void GetWildcardRegex_HandlesRealWorldSourcePatternCombination()
+    {
+        var patterns = new[]
+        {
+            "SomeApplication.App",
+            "AWSSDK.*",
+            "System.Net.Http",
+            "OpenTelemetry.Instrumentation.AWSLambda",
+        };
+
+        var regex = WildcardHelper.GetWildcardRegex(patterns);
+
+        Assert.True(WildcardHelper.IsMatch(regex, "SomeApplication.App"));
+        Assert.True(WildcardHelper.IsMatch(regex, "AWSSDK.DynamoDB"));
+        Assert.False(WildcardHelper.IsMatch(regex, "Unrelated.Source"));
+    }
+
     [Theory]
     [InlineData(new[] { "a" }, "a", true)]
     [InlineData(new[] { "a.*" }, "a.b", true)]
@@ -41,6 +71,19 @@ public class WildcardHelperTests
         Assert.True(result == isMatch);
     }
 
+    [Fact]
+    public void GetWildcardRegex_IsCultureInvariantWhenMatchingMultiplePatterns()
+    {
+        using (CultureSwitcher.UseCulture("tr-TR"))
+        {
+            string[] patterns = ["FILE*", "Other*"];
+
+            var regex = WildcardHelper.GetWildcardRegex(patterns);
+
+            Assert.True(WildcardHelper.IsMatch(regex, "file.api"));
+        }
+    }
+
     [Theory]
     [InlineData(null, false)]
     [InlineData("a", false)]
@@ -48,4 +91,20 @@ public class WildcardHelperTests
     [InlineData("a.?", true)]
     public void Verify_ContainsWildcard(string? pattern, bool expected)
         => Assert.Equal(expected, WildcardHelper.ContainsWildcard(pattern));
+
+    [Theory]
+    [InlineData("", false, null)]
+    [InlineData("a*", true, "a")]
+    [InlineData("*", true, "")]
+    [InlineData("a", false, null)]
+    [InlineData("a.*.b", false, null)]
+    [InlineData("a*b*", false, null)]
+    [InlineData("a?*", false, null)]
+    public void TryGetWildcardPrefix_ReturnsExpectedResult(string pattern, bool expectedResult, string? expectedPrefix)
+    {
+        var result = WildcardHelper.TryGetWildcardPrefix(pattern, out var prefix);
+
+        Assert.Equal(expectedResult, result);
+        Assert.Equal(expectedPrefix, prefix);
+    }
 }

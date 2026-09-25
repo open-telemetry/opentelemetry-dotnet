@@ -1,10 +1,68 @@
 Microsoft.Extensions.Configuration.DeclarativeConfigurationBuilderExtensions
+Microsoft.Extensions.Configuration.DeclarativeConfigurationExtensions
+Microsoft.Extensions.DependencyInjection.DeclarativeConfigurationServiceProviderExtensions
+OpenTelemetry.Configuration.Declarative.ConfigProperties
+OpenTelemetry.Configuration.Declarative.ConfigProperties.GetBoolean(string! key) -> OpenTelemetry.Configuration.Declarative.ConfigValueResult<bool>
+OpenTelemetry.Configuration.Declarative.ConfigProperties.GetBooleanList(string! key) -> OpenTelemetry.Configuration.Declarative.ConfigValueResult<System.Collections.Generic.IReadOnlyList<bool>!>
+OpenTelemetry.Configuration.Declarative.ConfigProperties.GetDouble(string! key) -> OpenTelemetry.Configuration.Declarative.ConfigValueResult<double>
+OpenTelemetry.Configuration.Declarative.ConfigProperties.GetDoubleList(string! key) -> OpenTelemetry.Configuration.Declarative.ConfigValueResult<System.Collections.Generic.IReadOnlyList<double>!>
+OpenTelemetry.Configuration.Declarative.ConfigProperties.GetInt(string! key) -> OpenTelemetry.Configuration.Declarative.ConfigValueResult<int>
+OpenTelemetry.Configuration.Declarative.ConfigProperties.GetIntList(string! key) -> OpenTelemetry.Configuration.Declarative.ConfigValueResult<System.Collections.Generic.IReadOnlyList<int>!>
+OpenTelemetry.Configuration.Declarative.ConfigProperties.GetLong(string! key) -> OpenTelemetry.Configuration.Declarative.ConfigValueResult<long>
+OpenTelemetry.Configuration.Declarative.ConfigProperties.GetLongList(string! key) -> OpenTelemetry.Configuration.Declarative.ConfigValueResult<System.Collections.Generic.IReadOnlyList<long>!>
+OpenTelemetry.Configuration.Declarative.ConfigProperties.GetMapping(string! key) -> OpenTelemetry.Configuration.Declarative.ConfigValueResult<OpenTelemetry.Configuration.Declarative.ConfigProperties!>
+OpenTelemetry.Configuration.Declarative.ConfigProperties.GetMappingList(string! key) -> OpenTelemetry.Configuration.Declarative.ConfigValueResult<System.Collections.Generic.IReadOnlyList<OpenTelemetry.Configuration.Declarative.ConfigProperties!>!>
+OpenTelemetry.Configuration.Declarative.ConfigProperties.GetString(string! key) -> OpenTelemetry.Configuration.Declarative.ConfigValueResult<string!>
+OpenTelemetry.Configuration.Declarative.ConfigProperties.GetStringList(string! key) -> OpenTelemetry.Configuration.Declarative.ConfigValueResult<System.Collections.Generic.IReadOnlyList<string!>!>
+OpenTelemetry.Configuration.Declarative.ConfigProperties.GetValueKind(string! key) -> OpenTelemetry.Configuration.Declarative.ConfigValueKind?
+OpenTelemetry.Configuration.Declarative.ConfigProperties.Keys.get -> System.Collections.Generic.IReadOnlyCollection<string!>!
+OpenTelemetry.Configuration.Declarative.ConfigValueKind
+OpenTelemetry.Configuration.Declarative.ConfigValueKind.Boolean = 2 -> OpenTelemetry.Configuration.Declarative.ConfigValueKind
+OpenTelemetry.Configuration.Declarative.ConfigValueKind.Double = 4 -> OpenTelemetry.Configuration.Declarative.ConfigValueKind
+OpenTelemetry.Configuration.Declarative.ConfigValueKind.Integer = 3 -> OpenTelemetry.Configuration.Declarative.ConfigValueKind
+OpenTelemetry.Configuration.Declarative.ConfigValueKind.Mapping = 5 -> OpenTelemetry.Configuration.Declarative.ConfigValueKind
+OpenTelemetry.Configuration.Declarative.ConfigValueKind.Null = 0 -> OpenTelemetry.Configuration.Declarative.ConfigValueKind
+OpenTelemetry.Configuration.Declarative.ConfigValueKind.Sequence = 6 -> OpenTelemetry.Configuration.Declarative.ConfigValueKind
+OpenTelemetry.Configuration.Declarative.ConfigValueKind.String = 1 -> OpenTelemetry.Configuration.Declarative.ConfigValueKind
+OpenTelemetry.Configuration.Declarative.ConfigValueOutcome
+OpenTelemetry.Configuration.Declarative.ConfigValueOutcome.Absent = 0 -> OpenTelemetry.Configuration.Declarative.ConfigValueOutcome
+OpenTelemetry.Configuration.Declarative.ConfigValueOutcome.Present = 2 -> OpenTelemetry.Configuration.Declarative.ConfigValueOutcome
+OpenTelemetry.Configuration.Declarative.ConfigValueOutcome.PresentNull = 1 -> OpenTelemetry.Configuration.Declarative.ConfigValueOutcome
+OpenTelemetry.Configuration.Declarative.ConfigValueOutcome.TypeMismatch = 3 -> OpenTelemetry.Configuration.Declarative.ConfigValueOutcome
+OpenTelemetry.Configuration.Declarative.ConfigValueResult<T>
+OpenTelemetry.Configuration.Declarative.ConfigValueResult<T>.ConfigValueResult() -> void
+OpenTelemetry.Configuration.Declarative.ConfigValueResult<T>.Deconstruct(out OpenTelemetry.Configuration.Declarative.ConfigValueOutcome outcome, out T? value) -> void
+OpenTelemetry.Configuration.Declarative.ConfigValueResult<T>.Equals(OpenTelemetry.Configuration.Declarative.ConfigValueResult<T> other) -> bool
+OpenTelemetry.Configuration.Declarative.ConfigValueResult<T>.Outcome.get -> OpenTelemetry.Configuration.Declarative.ConfigValueOutcome
+OpenTelemetry.Configuration.Declarative.ConfigValueResult<T>.Position.get -> OpenTelemetry.Configuration.Declarative.ConfigValuePosition
+OpenTelemetry.Configuration.Declarative.ConfigValueResult<T>.TryGetValue(out T? value) -> bool
+OpenTelemetry.Configuration.Declarative.ConfigValueResult<T>.Value.get -> T?
+OpenTelemetry.Configuration.Declarative.ConfigValuePosition
+OpenTelemetry.Configuration.Declarative.ConfigValuePosition.Column.get -> long
+OpenTelemetry.Configuration.Declarative.ConfigValuePosition.ConfigValuePosition() -> void
+OpenTelemetry.Configuration.Declarative.ConfigValuePosition.Equals(OpenTelemetry.Configuration.Declarative.ConfigValuePosition other) -> bool
+OpenTelemetry.Configuration.Declarative.ConfigValuePosition.HasPosition.get -> bool
+OpenTelemetry.Configuration.Declarative.ConfigValuePosition.Line.get -> long
+OpenTelemetry.Configuration.Declarative.DeclarativeConfigurationDocument
+OpenTelemetry.Configuration.Declarative.DeclarativeConfigurationDocument.Properties.get -> OpenTelemetry.Configuration.Declarative.ConfigProperties!
 OpenTelemetry.Configuration.Declarative.DeclarativeConfigurationException
 OpenTelemetry.Configuration.Declarative.DeclarativeConfigurationException.DeclarativeConfigurationException() -> void
 OpenTelemetry.Configuration.Declarative.DeclarativeConfigurationException.DeclarativeConfigurationException(string! message) -> void
 OpenTelemetry.Configuration.Declarative.DeclarativeConfigurationException.DeclarativeConfigurationException(string! message, System.Exception! innerException) -> void
 OpenTelemetry.OpenTelemetryBuilderDeclarativeConfigurationExtensions
+override OpenTelemetry.Configuration.Declarative.ConfigValuePosition.Equals(object? obj) -> bool
+override OpenTelemetry.Configuration.Declarative.ConfigValuePosition.GetHashCode() -> int
+override OpenTelemetry.Configuration.Declarative.ConfigValueResult<T>.Equals(object? obj) -> bool
+override OpenTelemetry.Configuration.Declarative.ConfigValueResult<T>.GetHashCode() -> int
 static Microsoft.Extensions.Configuration.DeclarativeConfigurationBuilderExtensions.AddOpenTelemetryDeclarativeConfiguration(this Microsoft.Extensions.Configuration.IConfigurationBuilder! builder) -> Microsoft.Extensions.Configuration.IConfigurationBuilder!
 static Microsoft.Extensions.Configuration.DeclarativeConfigurationBuilderExtensions.AddOpenTelemetryDeclarativeConfiguration(this Microsoft.Extensions.Configuration.IConfigurationBuilder! builder, string! filePath) -> Microsoft.Extensions.Configuration.IConfigurationBuilder!
+static Microsoft.Extensions.Configuration.DeclarativeConfigurationExtensions.GetOpenTelemetryDeclarativeConfiguration(this Microsoft.Extensions.Configuration.IConfigurationRoot! configuration) -> OpenTelemetry.Configuration.Declarative.DeclarativeConfigurationDocument?
+static Microsoft.Extensions.DependencyInjection.DeclarativeConfigurationServiceProviderExtensions.GetOpenTelemetryDeclarativeConfiguration(this System.IServiceProvider! serviceProvider) -> OpenTelemetry.Configuration.Declarative.DeclarativeConfigurationDocument?
+static OpenTelemetry.Configuration.Declarative.ConfigProperties.Empty.get -> OpenTelemetry.Configuration.Declarative.ConfigProperties!
+static OpenTelemetry.Configuration.Declarative.ConfigValuePosition.operator !=(OpenTelemetry.Configuration.Declarative.ConfigValuePosition left, OpenTelemetry.Configuration.Declarative.ConfigValuePosition right) -> bool
+static OpenTelemetry.Configuration.Declarative.ConfigValuePosition.operator ==(OpenTelemetry.Configuration.Declarative.ConfigValuePosition left, OpenTelemetry.Configuration.Declarative.ConfigValuePosition right) -> bool
+static OpenTelemetry.Configuration.Declarative.ConfigValueResult<T>.operator !=(OpenTelemetry.Configuration.Declarative.ConfigValueResult<T> left, OpenTelemetry.Configuration.Declarative.ConfigValueResult<T> right) -> bool
+static OpenTelemetry.Configuration.Declarative.ConfigValueResult<T>.operator ==(OpenTelemetry.Configuration.Declarative.ConfigValueResult<T> left, OpenTelemetry.Configuration.Declarative.ConfigValueResult<T> right) -> bool
+static OpenTelemetry.Configuration.Declarative.ConfigValuePosition.Unknown.get -> OpenTelemetry.Configuration.Declarative.ConfigValuePosition
 static OpenTelemetry.OpenTelemetryBuilderDeclarativeConfigurationExtensions.UseDeclarativeConfiguration(this OpenTelemetry.IOpenTelemetryBuilder! builder) -> OpenTelemetry.IOpenTelemetryBuilder!
 static OpenTelemetry.OpenTelemetryBuilderDeclarativeConfigurationExtensions.UseDeclarativeConfiguration(this OpenTelemetry.IOpenTelemetryBuilder! builder, string! filePath) -> OpenTelemetry.IOpenTelemetryBuilder!

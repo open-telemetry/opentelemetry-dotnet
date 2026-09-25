@@ -65,7 +65,7 @@ public class OpenTelemetryHostApplicationBuilderExtensionsTests
 
         using var host = builder.Build();
 
-        await host.StartAsync();
+        await host.StartAsync(TestContext.Current.CancellationToken);
 
         var tracerProvider = host.Services.GetRequiredService<TracerProvider>();
         Assert.NotNull(tracerProvider);
@@ -73,7 +73,7 @@ public class OpenTelemetryHostApplicationBuilderExtensionsTests
         using var activitySource = new ActivitySource("MyApp");
         Assert.True(activitySource.HasListeners());
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
     }
 
     [Fact]

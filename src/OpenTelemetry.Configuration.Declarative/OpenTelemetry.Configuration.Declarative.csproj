@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\OpenTelemetry.Api.ProviderBuilderExtensions\OpenTelemetry.Api.ProviderBuilderExtensions.csproj" />
+    <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>
 
   <ItemGroup>

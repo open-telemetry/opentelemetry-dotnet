@@ -10,6 +10,13 @@ Notes](../../RELEASENOTES.md).
 * Reload OTLP export clients when named exporter options or `UseOtlpExporter`
   configuration changes, without recreating providers. Protocol and maximum
   request size remain fixed for the lifetime of each exporter.
+## 1.19.1
+
+Released 2026-Sep-21
+
+## 1.19.1-rc.1
+
+Released 2026-Sep-21
 
 ## 1.19.0
 
