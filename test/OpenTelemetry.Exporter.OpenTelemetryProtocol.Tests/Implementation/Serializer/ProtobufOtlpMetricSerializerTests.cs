@@ -17,6 +17,36 @@ public static class ProtobufOtlpMetricSerializerTests
 {
     private const string HistogramName = "histogram";
 
+#if NET8_0_OR_GREATER
+    [Fact]
+    public static void WriteMetricsData_WithWarmedCacheDoesNotAllocate()
+    {
+        var metrics = GenerateMetricWithDescription("Cached metadata");
+        var buffer = new byte[16 * 1024];
+
+        // Warm metadata caches and serializer pools before measuring repeated exports.
+        for (var i = 0; i < 10000; i++)
+        {
+            ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, Resource.Empty, metrics);
+        }
+
+        var writePosition = 0;
+        var allocatedBefore = GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < 1000; i++)
+        {
+            writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, Resource.Empty, metrics);
+        }
+
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - allocatedBefore;
+        Assert.Equal(0, allocated);
+
+        using var stream = new MemoryStream(buffer, 0, writePosition);
+        var request = OtlpCollector.ExportMetricsServiceRequest.Parser.ParseFrom(stream);
+        var parsedMetric = Assert.Single(Assert.Single(Assert.Single(request.ResourceMetrics).ScopeMetrics).Metrics);
+        Assert.Equal("Cached metadata", parsedMetric.Description);
+    }
+#endif
+
     [Theory]
     [InlineData(700)]
     [InlineData(2000)]
