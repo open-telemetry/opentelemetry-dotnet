@@ -108,7 +108,7 @@ finally
     <TargetFrameworksForLibraries>net11.0;net10.0;netstandard2.0;$(NetFrameworkMinimumSupportedVersion)</TargetFrameworksForLibraries>
     <TargetFrameworksForLibrariesExtended>net11.0;net10.0;netstandard2.1;netstandard2.0;$(NetFrameworkMinimumSupportedVersion)</TargetFrameworksForLibrariesExtended>
     <TargetFrameworksForPrometheusAspNetCore>net11.0;net10.0</TargetFrameworksForPrometheusAspNetCore>
-    <TargetFrameworksRequiringSystemTextJsonDirectReference>netstandard2.1;netstandard2.0;$(NetFrameworkMinimumSupportedVersion)</TargetFrameworksRequiringSystemTextJsonDirectReference>
+    <TargetFrameworksRequiringSystemTextJsonDirectReference>netstandard2.1;netstandard2.0;$(NetFrameworkMinimumSupportedVersion);net472</TargetFrameworksRequiringSystemTextJsonDirectReference>
 
     <!-- non-production TFMs -->
     <TargetFrameworksForAspNetCoreTests>net11.0;net10.0</TargetFrameworksForAspNetCoreTests>
@@ -119,7 +119,7 @@ finally
     </TargetFrameworksForDocs>
     <TargetFrameworksForTests>net11.0;net10.0</TargetFrameworksForTests>
     <TargetFrameworksForTests Condition="$(OS) == 'Windows_NT'">
-      $(TargetFrameworksForTests);$(NetFrameworkMinimumSupportedVersion)
+      $(TargetFrameworksForTests);net472
     </TargetFrameworksForTests>
   </PropertyGroup>
 

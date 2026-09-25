@@ -28,9 +28,9 @@ public class OpenTelemetryServicesExtensionsTests
 
         var host = builder.Build();
 
-        await host.StartAsync();
+        await host.StartAsync(TestContext.Current.CancellationToken);
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -68,9 +68,9 @@ public class OpenTelemetryServicesExtensionsTests
 
         var host = builder.Build();
 
-        await Assert.ThrowsAsync<NotSupportedException>(() => host.StartAsync());
+        await Assert.ThrowsAsync<NotSupportedException>(() => host.StartAsync(TestContext.Current.CancellationToken));
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
 
         Assert.True(expectedInnerExceptionThrown);
     }
@@ -165,11 +165,11 @@ public class OpenTelemetryServicesExtensionsTests
 
         Assert.False(configureBuilderCalled);
 
-        await host.StartAsync();
+        await host.StartAsync(TestContext.Current.CancellationToken);
 
         Assert.True(configureBuilderCalled);
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
 
         host.Dispose();
     }
@@ -292,11 +292,11 @@ public class OpenTelemetryServicesExtensionsTests
 
         Assert.False(configureBuilderCalled);
 
-        await host.StartAsync();
+        await host.StartAsync(TestContext.Current.CancellationToken);
 
         Assert.True(configureBuilderCalled);
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
 
         host.Dispose();
     }
@@ -470,7 +470,7 @@ public class OpenTelemetryServicesExtensionsTests
 
         // Act
         using var host = builder.Build();
-        await host.StartAsync();
+        await host.StartAsync(TestContext.Current.CancellationToken);
 
         var service = host.Services
             .GetServices<IHostedService>()
@@ -480,7 +480,7 @@ public class OpenTelemetryServicesExtensionsTests
         // Give the background service some time to run.
         await Task.WhenAny(service.ExecuteTask!, Task.Delay(TimeSpan.FromSeconds(5), CancellationToken.None));
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
 
         // Assert
         var activity = Assert.Single(exportedItems);
@@ -542,11 +542,11 @@ public class OpenTelemetryServicesExtensionsTests
         Assert.Same(customInitializer, host.Services.GetRequiredService<ITelemetryHostInitializer>());
         Assert.False(customInitializer.Initialized, "Custom initializer was invoked.");
 
-        await host.StartAsync();
+        await host.StartAsync(TestContext.Current.CancellationToken);
 
         Assert.True(customInitializer.Initialized, "Custom initializer was not invoked.");
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
     }
 
 #pragma warning disable CA1812 // Avoid uninstantiated internal classes

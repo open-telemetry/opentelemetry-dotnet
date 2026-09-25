@@ -43,7 +43,7 @@ public sealed class AndroidAppFixture : IAsyncLifetime
 
     internal string DeviceRunOutput { get; private set; } = string.Empty;
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         // Bind on all interfaces so the emulator can reach the collector via
         // 10.0.2.2 (the alias for the host loopback).
@@ -87,7 +87,7 @@ public sealed class AndroidAppFixture : IAsyncLifetime
         this.DeviceRunOutput = installOutput + Environment.NewLine + runOutput;
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         if (this.Collector is not null)
         {

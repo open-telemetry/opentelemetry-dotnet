@@ -11,7 +11,7 @@ public class RemoteEndpointPriorityTestCase
 {
     public static TheoryData<RemoteEndpointPriorityTestCase> TestCases =>
     [
-        new()
+        new RemoteEndpointPriorityTestCase()
         {
             Name = "Rank 1: Only peer.service provided",
             ExpectedResult = "PeerService",

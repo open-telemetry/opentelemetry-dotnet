@@ -30,7 +30,7 @@ public class HttpRetryTestCase
 
     public static TheoryData<HttpRetryTestCase> GetHttpTestCases() =>
     [
-        new("NetworkError", [new(statusCode: null)]),
+        new HttpRetryTestCase("NetworkError", [new(statusCode: null)]),
         new("NetworkError with expired deadline", [new(statusCode: null, isDeadlineExceeded: true, expectedSuccess: false)]),
 #if NET
         new("Unknown HttpRequestError", [new(statusCode: null, httpRequestException: new(HttpRequestError.Unknown))]),

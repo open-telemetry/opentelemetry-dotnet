@@ -28,7 +28,7 @@ public class GrpcRetryTestCase
 
     public static TheoryData<GrpcRetryTestCase> GetGrpcTestCases() =>
     [
-        new("Cancelled", [new(StatusCode.Cancelled)]),
+        new GrpcRetryTestCase("Cancelled", [new(StatusCode.Cancelled)]),
         new("DeadlineExceeded", [new(StatusCode.DeadlineExceeded)]),
         new("Aborted", [new(StatusCode.Aborted)]),
         new("OutOfRange", [new(StatusCode.OutOfRange)]),

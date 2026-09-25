@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics.Metrics;
+using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
 
@@ -359,7 +360,10 @@ public class MetricPointReclaimTests
 
     private sealed class SkipOnNetFrameworkArmFactAttribute : FactAttribute
     {
-        public SkipOnNetFrameworkArmFactAttribute()
+        public SkipOnNetFrameworkArmFactAttribute(
+            [CallerFilePath] string? sourceFilePath = null,
+            [CallerLineNumber] int sourceLineNumber = -1)
+            : base(sourceFilePath, sourceLineNumber)
         {
 #if NETFRAMEWORK
             foreach (var variable in new[] { "PROCESSOR_ARCHITEW6432", "PROCESSOR_ARCHITECTURE" })
