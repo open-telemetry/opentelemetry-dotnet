@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.Internal;
 
@@ -211,7 +212,8 @@ public static class OtlpLogExporterHelperExtensions
                 exporterOptions,
                 sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(finalOptionsName),
                 sdkLimitOptions,
-                sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName));
+                sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName),
+                optionsName: name);
         });
     }
 
@@ -257,6 +259,9 @@ public static class OtlpLogExporterHelperExtensions
 
             // Configuration delegate is executed inline.
             configureExporterAndProcessor?.Invoke(exporterOptions, processorOptions);
+            Action<OtlpExporterOptions>? configureOnReload = name != null && configureExporterAndProcessor != null
+                ? options => configureExporterAndProcessor(options, processorOptions)
+                : null;
 
             // Note: Not using finalOptionsName here for SdkLimitOptions.
             // There should only be one provider for a given service
@@ -269,7 +274,9 @@ public static class OtlpLogExporterHelperExtensions
                 exporterOptions,
                 processorOptions,
                 sdkLimitOptions,
-                sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName));
+                sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName),
+                optionsName: name,
+                configureOnReload: configureOnReload);
         });
     }
 
@@ -280,7 +287,9 @@ public static class OtlpLogExporterHelperExtensions
         SdkLimitOptions sdkLimitOptions,
         ExperimentalOptions experimentalOptions,
         bool skipUseOtlpExporterRegistrationCheck = false,
-        Func<BaseExporter<LogRecord>, BaseExporter<LogRecord>>? configureExporterInstance = null)
+        Func<BaseExporter<LogRecord>, BaseExporter<LogRecord>>? configureExporterInstance = null,
+        string? optionsName = null,
+        Action<OtlpExporterOptions>? configureOnReload = null)
     {
 #if NETFRAMEWORK || NETSTANDARD2_0
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
@@ -299,7 +308,22 @@ public static class OtlpLogExporterHelperExtensions
         }
 
         OtlpExporterTransmissionHandler? transmissionHandler = null;
-        if (exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpLogExporter"))
+        var usesHttpClientFactory = exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpLogExporter");
+        if (optionsName != null)
+        {
+#pragma warning disable CA2000 // Ownership passes to the exporter.
+            var client = ReloadableExportClient.Create(
+                exporterOptions,
+                serviceProvider,
+                optionsName,
+                OtlpSignalType.Logs,
+                skipUseOtlpExporterRegistrationCheck,
+                usesHttpClientFactory,
+                configureOnReload);
+            transmissionHandler = exporterOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Logs, exportClientOverride: client);
+#pragma warning restore CA2000 // Ownership passes to the exporter.
+        }
+        else if (usesHttpClientFactory)
         {
             transmissionHandler = exporterOptions.GetExportTransmissionHandler(
                 experimentalOptions,

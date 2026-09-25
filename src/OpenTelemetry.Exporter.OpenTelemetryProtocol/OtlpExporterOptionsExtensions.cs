@@ -72,12 +72,20 @@ internal static class OtlpExporterOptionsExtensions
         this OtlpExporterOptions options,
         ExperimentalOptions experimentalOptions,
         OtlpSignalType otlpSignalType,
-        bool deferExportClientCreation = false)
+        bool deferExportClientCreation = false,
+        IExportClient? exportClientOverride = null)
     {
         IExportClient exportClient;
         double timeoutMilliseconds;
 
-        if (deferExportClientCreation)
+        if (exportClientOverride != null)
+        {
+            exportClient = exportClientOverride;
+            timeoutMilliseconds = exportClientOverride is ReloadableExportClient reloadable
+                ? reloadable.TimeoutMilliseconds
+                : options.TimeoutMilliseconds;
+        }
+        else if (deferExportClientCreation)
         {
             // Defer creating the export client until the first export so named
             // HttpClient pipelines can safely resolve logging services after
@@ -116,35 +124,47 @@ internal static class OtlpExporterOptionsExtensions
         }
     }
 
-    public static IExportClient GetExportClient(this OtlpExporterOptions options, OtlpSignalType otlpSignalType)
+    public static IExportClient GetExportClient(this OtlpExporterOptions options, OtlpSignalType otlpSignalType, bool disposeHttpClientOnFailure = false)
     {
         var httpClient = options.HttpClientFactory?.Invoke() ?? throw new InvalidOperationException("OtlpExporterOptions was missing HttpClientFactory or it returned null.");
 
-#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
-        if (options.Protocol is not OtlpExportProtocol.Grpc and not OtlpExportProtocol.HttpProtobuf)
+        try
         {
-            throw new NotSupportedException($"Protocol {options.Protocol} is not supported.");
-        }
+#pragma warning disable CS0618 // Suppressing gRPC obsolete warning
+            if (options.Protocol is not OtlpExportProtocol.Grpc and not OtlpExportProtocol.HttpProtobuf)
+            {
+                throw new NotSupportedException($"Protocol {options.Protocol} is not supported.");
+            }
 
-        bool isGrpc = options.Protocol == OtlpExportProtocol.Grpc;
+            bool isGrpc = options.Protocol == OtlpExportProtocol.Grpc;
 #pragma warning restore CS0618 // Suppressing gRPC obsolete warning
 
-        return otlpSignalType switch
+            return otlpSignalType switch
+            {
+                OtlpSignalType.Traces => isGrpc
+                    ? new OtlpGrpcExportClient(options, httpClient, TraceGrpcServicePath)
+                    : new OtlpHttpExportClient(options, httpClient, TraceHttpServicePath),
+
+                OtlpSignalType.Metrics => isGrpc
+                    ? new OtlpGrpcExportClient(options, httpClient, MetricsGrpcServicePath)
+                    : new OtlpHttpExportClient(options, httpClient, MetricsHttpServicePath),
+
+                OtlpSignalType.Logs => isGrpc
+                    ? new OtlpGrpcExportClient(options, httpClient, LogsGrpcServicePath)
+                    : new OtlpHttpExportClient(options, httpClient, LogsHttpServicePath),
+
+                _ => throw new NotSupportedException($"OtlpSignalType {otlpSignalType} is not supported."),
+            };
+        }
+        catch
         {
-            OtlpSignalType.Traces => isGrpc
-                ? new OtlpGrpcExportClient(options, httpClient, TraceGrpcServicePath)
-                : new OtlpHttpExportClient(options, httpClient, TraceHttpServicePath),
+            if (disposeHttpClientOnFailure)
+            {
+                httpClient.Dispose();
+            }
 
-            OtlpSignalType.Metrics => isGrpc
-                ? new OtlpGrpcExportClient(options, httpClient, MetricsGrpcServicePath)
-                : new OtlpHttpExportClient(options, httpClient, MetricsHttpServicePath),
-
-            OtlpSignalType.Logs => isGrpc
-                ? new OtlpGrpcExportClient(options, httpClient, LogsGrpcServicePath)
-                : new OtlpHttpExportClient(options, httpClient, LogsHttpServicePath),
-
-            _ => throw new NotSupportedException($"OtlpSignalType {otlpSignalType} is not supported."),
-        };
+            throw;
+        }
     }
 
     public static bool TryEnableIHttpClientFactoryIntegration(this OtlpExporterOptions options, IServiceProvider serviceProvider, string httpClientName)

@@ -176,4 +176,18 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
             this.serializationBuffer.Release();
         }
     }
+
+    /// <inheritdoc />
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            if (this.transmissionHandler.ExportClient is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
+        }
+
+        base.Dispose(disposing);
+    }
 }

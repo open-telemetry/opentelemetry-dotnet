@@ -363,6 +363,23 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     internal void RequestDiscardedDueToSizeLimit(string signalType, long itemCount, int requestSizeBytes, int maxRequestSizeBytes)
         => this.WriteEvent(41, signalType, itemCount, requestSizeBytes, maxRequestSizeBytes);
 
+    [Event(42, Message = "OTLP export client reload failed. The previous client remains active. Exception: {0}", Level = EventLevel.Warning)]
+    internal void ExportClientReloadFailed(string exception)
+        => this.WriteEvent(42, exception);
+
+    [Event(43, Message = "OTLP export client reload ignored a protocol change. The exporter must be restarted to change protocol.", Level = EventLevel.Warning)]
+    internal void ExportClientProtocolChangeIgnored()
+        => this.WriteEvent(43);
+
+    [NonEvent]
+    internal void ExportClientReloadFailed(Exception ex)
+    {
+        if (Log.IsEnabled(EventLevel.Warning, EventKeywords.All))
+        {
+            this.ExportClientReloadFailed(ex.ToInvariantString());
+        }
+    }
+
     private static string RedactEndpointUri(Uri endpoint)
         => endpoint.GetComponents(UriComponents.SchemeAndServer | UriComponents.Path, UriFormat.UriEscaped);
 }
