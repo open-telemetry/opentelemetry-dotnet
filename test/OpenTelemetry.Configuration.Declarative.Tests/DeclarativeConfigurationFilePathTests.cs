@@ -54,10 +54,7 @@ public sealed class DeclarativeConfigurationFilePathTests
     [Fact]
     public void Equals_DifferentPathCasingOnWindows_AreEqual()
     {
-        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            return;
-        }
+        Assert.SkipUnless(RuntimeInformation.IsOSPlatform(OSPlatform.Windows), "This test can only be run on Windows.");
 
         using var factory = new DeclarativeYamlTestFileFactory();
         var absolutePath = factory.CreateDeclarativeYaml(disabled: true);
@@ -90,10 +87,7 @@ public sealed class DeclarativeConfigurationFilePathTests
     [Fact]
     public void GetHashCode_DifferentPathCasingOnWindows_SameHashCode()
     {
-        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            return;
-        }
+        Assert.SkipUnless(RuntimeInformation.IsOSPlatform(OSPlatform.Windows), "This test can only be run on Windows.");
 
         using var factory = new DeclarativeYamlTestFileFactory();
         var absolutePath = factory.CreateDeclarativeYaml(disabled: true);
@@ -142,10 +136,7 @@ public sealed class DeclarativeConfigurationFilePathTests
         // Path.IsPathRooted returns true but resolution still depends on the current drive.
         // FilePath resolves it by combining with AppContext.BaseDirectory, so the drive
         // letter comes from the application directory rather than the ambient current drive.
-        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            return;
-        }
+        Assert.SkipUnless(RuntimeInformation.IsOSPlatform(OSPlatform.Windows), "This test can only be run on Windows.");
 
         var rootRelative = @"\otel-root-relative-test.yaml";
         var expected = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, rootRelative));
