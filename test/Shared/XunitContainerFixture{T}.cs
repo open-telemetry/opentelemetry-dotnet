@@ -8,5 +8,4 @@ namespace OpenTelemetry.Tests;
 public abstract class XunitContainerFixture<T> : ContainerFixture<T>, IAsyncLifetime
     where T : IContainer
 {
-    Task IAsyncLifetime.DisposeAsync() => this.DisposeAsync().AsTask();
 }

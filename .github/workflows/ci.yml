@@ -297,7 +297,7 @@ jobs:
       run: |
         $runtimes = @("net10.0")
         if ($IsWindows) {
-          $runtimes += "net462"
+          $runtimes += "net472"
         }
         ./benchmark.ps1 @("*SamplerBenchmarks*") -EnableMemoryDiagnoser -Job Short -Runtimes $runtimes -SkipBaseline
 

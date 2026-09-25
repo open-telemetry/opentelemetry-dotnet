@@ -83,13 +83,13 @@ On all platforms, the minimum requirements are:
 * Visual Studio 2022+ for Mac or Visual Studio Code
 
 Mono might be required by your IDE but is not required by this project. This is
-because unit tests targeting .NET Framework (i.e: `net462`) are disabled outside
+because unit tests targeting .NET Framework (i.e: `net472`) are disabled outside
 of Windows.
 
 ### Windows
 
 * Visual Studio 2022+ or Visual Studio Code
-* .NET Framework 4.6.2+
+* .NET Framework 4.7.2+
 
 ## Public API validation
 
