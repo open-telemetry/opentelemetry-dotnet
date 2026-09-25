@@ -159,7 +159,7 @@ comments as claims to verify, not facts.
 
 ### Detailed Findings
 
-#### :white_check_mark: / :warning: / :x: <Category> — <Brief description>
+#### :white_check_mark: / :warning: / :x: <Category> - <Brief description>
 
 <Explanation, citing file/line and the specific AGENTS.md/REVIEW.md rule.>
 
