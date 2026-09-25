@@ -20,7 +20,7 @@ public class RemoteEndpointPriorityTestCase
                 [SemanticConventions.AttributePeerService] = "PeerService",
             },
         },
-        new()
+        new RemoteEndpointPriorityTestCase()
         {
             Name = "Rank 2: Only server.address provided",
             ExpectedResult = "ServerAddress",
@@ -29,7 +29,7 @@ public class RemoteEndpointPriorityTestCase
                 [SemanticConventions.AttributeServerAddress] = "ServerAddress",
             },
         },
-        new()
+        new RemoteEndpointPriorityTestCase()
         {
             Name = "Rank 3: Only net.peer.name provided",
             ExpectedResult = "NetPeerName",
@@ -38,7 +38,7 @@ public class RemoteEndpointPriorityTestCase
                 [SemanticConventions.AttributeNetPeerName] = "NetPeerName",
             },
         },
-        new()
+        new RemoteEndpointPriorityTestCase()
         {
             Name = "Rank 4: network.peer.address and network.peer.port provided",
             ExpectedResult = "1.2.3.4:5678",
@@ -48,7 +48,7 @@ public class RemoteEndpointPriorityTestCase
                 [SemanticConventions.AttributeNetworkPeerPort] = "5678",
             },
         },
-        new()
+        new RemoteEndpointPriorityTestCase()
         {
             Name = "Rank 4: Only network.peer.address provided",
             ExpectedResult = "1.2.3.4",
@@ -57,7 +57,7 @@ public class RemoteEndpointPriorityTestCase
                 [SemanticConventions.AttributeNetworkPeerAddress] = "1.2.3.4",
             },
         },
-        new()
+        new RemoteEndpointPriorityTestCase()
         {
             Name = "Rank 5: Only server.socket.domain provided",
             ExpectedResult = "SocketDomain",
@@ -66,7 +66,7 @@ public class RemoteEndpointPriorityTestCase
                 [SemanticConventions.AttributeServerSocketDomain] = "SocketDomain",
             },
         },
-        new()
+        new RemoteEndpointPriorityTestCase()
         {
             Name = "Rank 6: server.socket.address and server.socket.port provided",
             ExpectedResult = "SocketAddress:4321",
@@ -76,7 +76,7 @@ public class RemoteEndpointPriorityTestCase
                 [SemanticConventions.AttributeServerSocketPort] = "4321",
             },
         },
-        new()
+        new RemoteEndpointPriorityTestCase()
         {
             Name = "Rank 7: Only net.sock.peer.name provided",
             ExpectedResult = "NetSockPeerName",
@@ -85,7 +85,7 @@ public class RemoteEndpointPriorityTestCase
                 [SemanticConventions.AttributeNetSockPeerName] = "NetSockPeerName",
             },
         },
-        new()
+        new RemoteEndpointPriorityTestCase()
         {
             Name = "Rank 8: net.sock.peer.addr and net.sock.peer.port provided",
             ExpectedResult = "5.6.7.8:8765",
@@ -95,7 +95,7 @@ public class RemoteEndpointPriorityTestCase
                 [SemanticConventions.AttributeNetSockPeerPort] = "8765",
             },
         },
-        new()
+        new RemoteEndpointPriorityTestCase()
         {
             Name = "Rank 9: Only peer.hostname provided",
             ExpectedResult = "PeerHostname",
@@ -104,7 +104,7 @@ public class RemoteEndpointPriorityTestCase
                 [SemanticConventions.AttributePeerHostname] = "PeerHostname",
             },
         },
-        new()
+        new RemoteEndpointPriorityTestCase()
         {
             Name = "Rank 10: Only peer.address provided",
             ExpectedResult = "PeerAddress",
@@ -113,7 +113,7 @@ public class RemoteEndpointPriorityTestCase
                 [SemanticConventions.AttributePeerAddress] = "PeerAddress",
             },
         },
-        new()
+        new RemoteEndpointPriorityTestCase()
         {
             Name = "Rank 11: Only db.name provided",
             ExpectedResult = "DbName",
@@ -122,7 +122,7 @@ public class RemoteEndpointPriorityTestCase
                 [SemanticConventions.AttributeDbName] = "DbName",
             },
         },
-        new()
+        new RemoteEndpointPriorityTestCase()
         {
             Name = "Multiple attributes: highest rank wins",
             ExpectedResult = "PeerService",

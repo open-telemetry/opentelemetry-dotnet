@@ -31,48 +31,48 @@ public class HttpRetryTestCase
     public static TheoryData<HttpRetryTestCase> GetHttpTestCases() =>
     [
         new HttpRetryTestCase("NetworkError", [new(statusCode: null)]),
-        new("NetworkError with expired deadline", [new(statusCode: null, isDeadlineExceeded: true, expectedSuccess: false)]),
+        new HttpRetryTestCase("NetworkError with expired deadline", [new(statusCode: null, isDeadlineExceeded: true, expectedSuccess: false)]),
 #if NET
-        new("Unknown HttpRequestError", [new(statusCode: null, httpRequestException: new(HttpRequestError.Unknown))]),
-        new("NameResolutionError HttpRequestError", [new(statusCode: null, httpRequestException: new(HttpRequestError.NameResolutionError))]),
-        new("ConnectionError HttpRequestError", [new(statusCode: null, httpRequestException: new(HttpRequestError.ConnectionError))]),
-        new("SecureConnectionError HttpRequestError", [new(statusCode: null, httpRequestException: new(HttpRequestError.SecureConnectionError))]),
-        new("HttpProtocolError HttpRequestError", [new(statusCode: null, httpRequestException: new(HttpRequestError.HttpProtocolError))]),
-        new("ExtendedConnectNotSupported HttpRequestError", [new(statusCode: null, expectedSuccess: false, httpRequestException: new(HttpRequestError.ExtendedConnectNotSupported))]),
-        new("VersionNegotiationError HttpRequestError", [new(statusCode: null, expectedSuccess: false, httpRequestException: new(HttpRequestError.VersionNegotiationError))]),
-        new("UserAuthenticationError HttpRequestError", [new(statusCode: null, expectedSuccess: false, httpRequestException: new(HttpRequestError.UserAuthenticationError))]),
-        new("ProxyTunnelError HttpRequestError without status code", [new(statusCode: null, httpRequestException: new(HttpRequestError.ProxyTunnelError))]),
-        new("ProxyTunnelError HttpRequestError with ProxyAuthenticationRequired status code", [new(statusCode: null, expectedSuccess: false, httpRequestException: new(HttpRequestError.ProxyTunnelError, statusCode: HttpStatusCode.ProxyAuthenticationRequired))]),
-        new("ProxyTunnelError HttpRequestError with BadGateway status code", [new(statusCode: null, httpRequestException: new(HttpRequestError.ProxyTunnelError, statusCode: HttpStatusCode.BadGateway))]),
-        new("ProxyTunnelError HttpRequestError with ServiceUnavailable status code", [new(statusCode: null, httpRequestException: new(HttpRequestError.ProxyTunnelError, statusCode: HttpStatusCode.ServiceUnavailable))]),
-        new("InvalidResponse HttpRequestError", [new(statusCode: null, expectedSuccess: false, httpRequestException: new(HttpRequestError.InvalidResponse))]),
-        new("ResponseEnded HttpRequestError", [new(statusCode: null, httpRequestException: new(HttpRequestError.ResponseEnded))]),
-        new("ConfigurationLimitExceeded HttpRequestError", [new(statusCode: null, expectedSuccess: false, httpRequestException: new(HttpRequestError.ConfigurationLimitExceeded))]),
+        new HttpRetryTestCase("Unknown HttpRequestError", [new(statusCode: null, httpRequestException: new(HttpRequestError.Unknown))]),
+        new HttpRetryTestCase("NameResolutionError HttpRequestError", [new(statusCode: null, httpRequestException: new(HttpRequestError.NameResolutionError))]),
+        new HttpRetryTestCase("ConnectionError HttpRequestError", [new(statusCode: null, httpRequestException: new(HttpRequestError.ConnectionError))]),
+        new HttpRetryTestCase("SecureConnectionError HttpRequestError", [new(statusCode: null, httpRequestException: new(HttpRequestError.SecureConnectionError))]),
+        new HttpRetryTestCase("HttpProtocolError HttpRequestError", [new(statusCode: null, httpRequestException: new(HttpRequestError.HttpProtocolError))]),
+        new HttpRetryTestCase("ExtendedConnectNotSupported HttpRequestError", [new(statusCode: null, expectedSuccess: false, httpRequestException: new(HttpRequestError.ExtendedConnectNotSupported))]),
+        new HttpRetryTestCase("VersionNegotiationError HttpRequestError", [new(statusCode: null, expectedSuccess: false, httpRequestException: new(HttpRequestError.VersionNegotiationError))]),
+        new HttpRetryTestCase("UserAuthenticationError HttpRequestError", [new(statusCode: null, expectedSuccess: false, httpRequestException: new(HttpRequestError.UserAuthenticationError))]),
+        new HttpRetryTestCase("ProxyTunnelError HttpRequestError without status code", [new(statusCode: null, httpRequestException: new(HttpRequestError.ProxyTunnelError))]),
+        new HttpRetryTestCase("ProxyTunnelError HttpRequestError with ProxyAuthenticationRequired status code", [new(statusCode: null, expectedSuccess: false, httpRequestException: new(HttpRequestError.ProxyTunnelError, statusCode: HttpStatusCode.ProxyAuthenticationRequired))]),
+        new HttpRetryTestCase("ProxyTunnelError HttpRequestError with BadGateway status code", [new(statusCode: null, httpRequestException: new(HttpRequestError.ProxyTunnelError, statusCode: HttpStatusCode.BadGateway))]),
+        new HttpRetryTestCase("ProxyTunnelError HttpRequestError with ServiceUnavailable status code", [new(statusCode: null, httpRequestException: new(HttpRequestError.ProxyTunnelError, statusCode: HttpStatusCode.ServiceUnavailable))]),
+        new HttpRetryTestCase("InvalidResponse HttpRequestError", [new(statusCode: null, expectedSuccess: false, httpRequestException: new(HttpRequestError.InvalidResponse))]),
+        new HttpRetryTestCase("ResponseEnded HttpRequestError", [new(statusCode: null, httpRequestException: new(HttpRequestError.ResponseEnded))]),
+        new HttpRetryTestCase("ConfigurationLimitExceeded HttpRequestError", [new(statusCode: null, expectedSuccess: false, httpRequestException: new(HttpRequestError.ConfigurationLimitExceeded))]),
 #endif
-        new("GatewayTimeout", [new(statusCode: HttpStatusCode.GatewayTimeout, throttleDelay: TimeSpan.FromSeconds(1))]),
-        new("ServiceUnavailable", [new(statusCode: HttpStatusCode.ServiceUnavailable, throttleDelay: TimeSpan.FromSeconds(1), expectedThrottled: true)]),
+        new HttpRetryTestCase("GatewayTimeout", [new(statusCode: HttpStatusCode.GatewayTimeout, throttleDelay: TimeSpan.FromSeconds(1))]),
+        new HttpRetryTestCase("ServiceUnavailable", [new(statusCode: HttpStatusCode.ServiceUnavailable, throttleDelay: TimeSpan.FromSeconds(1), expectedThrottled: true)]),
 
         // A "Retry-After: 0" is clamped to a non-zero minimum
-        new("ServiceUnavailable w/ zero Retry-After", [new(statusCode: HttpStatusCode.ServiceUnavailable, throttleDelay: TimeSpan.Zero, expectedThrottled: true, expectedRetryDelay: MinThrottleDelay, expectedNextRetryDelayMilliseconds: 150)]),
+        new HttpRetryTestCase("ServiceUnavailable w/ zero Retry-After", [new(statusCode: HttpStatusCode.ServiceUnavailable, throttleDelay: TimeSpan.Zero, expectedThrottled: true, expectedRetryDelay: MinThrottleDelay, expectedNextRetryDelayMilliseconds: 150)]),
 
         // A throttle delay that would push the retry past the configured deadline must
         // fail fast and drop the data rather than blocking for the throttle duration.
-        new("ServiceUnavailable (Delta) exceeds deadline", [new(statusCode: HttpStatusCode.ServiceUnavailable, throttleDelay: TimeSpan.FromSeconds(30), deadlineFromNow: TimeSpan.FromSeconds(1), expectedSuccess: false)]),
-        new("ServiceUnavailable (HTTP-Date) exceeds deadline", [new(statusCode: HttpStatusCode.ServiceUnavailable, throttleDelay: TimeSpan.FromSeconds(30), deadlineFromNow: TimeSpan.FromSeconds(1), expectedSuccess: false, useDateForRetryCondition: true)]),
+        new HttpRetryTestCase("ServiceUnavailable (Delta) exceeds deadline", [new(statusCode: HttpStatusCode.ServiceUnavailable, throttleDelay: TimeSpan.FromSeconds(30), deadlineFromNow: TimeSpan.FromSeconds(1), expectedSuccess: false)]),
+        new HttpRetryTestCase("ServiceUnavailable (HTTP-Date) exceeds deadline", [new(statusCode: HttpStatusCode.ServiceUnavailable, throttleDelay: TimeSpan.FromSeconds(30), deadlineFromNow: TimeSpan.FromSeconds(1), expectedSuccess: false, useDateForRetryCondition: true)]),
 
 #if NET
-        new("TooManyRequests (Delta)", [new(statusCode: HttpStatusCode.TooManyRequests, throttleDelay: TimeSpan.FromSeconds(1), expectedThrottled: true)]),
-        new("TooManyRequests (HTTP-Date)", [new(statusCode: HttpStatusCode.TooManyRequests, throttleDelay: TimeSpan.FromSeconds(1), expectedThrottled: true, useDateForRetryCondition: true)]),
-        new("TooManyRequests (Delta) too large", [new(statusCode: HttpStatusCode.TooManyRequests, throttleDelay: TimeSpan.FromSeconds(30), expectedNextRetryDelayMilliseconds: 5000, expectedThrottled: true)]),
-        new("TooManyRequests (HTTP-Date) too large", [new(statusCode: HttpStatusCode.TooManyRequests, throttleDelay: TimeSpan.FromSeconds(30), expectedNextRetryDelayMilliseconds: 5000, expectedThrottled: true, useDateForRetryCondition: true)]),
+        new HttpRetryTestCase("TooManyRequests (Delta)", [new(statusCode: HttpStatusCode.TooManyRequests, throttleDelay: TimeSpan.FromSeconds(1), expectedThrottled: true)]),
+        new HttpRetryTestCase("TooManyRequests (HTTP-Date)", [new(statusCode: HttpStatusCode.TooManyRequests, throttleDelay: TimeSpan.FromSeconds(1), expectedThrottled: true, useDateForRetryCondition: true)]),
+        new HttpRetryTestCase("TooManyRequests (Delta) too large", [new(statusCode: HttpStatusCode.TooManyRequests, throttleDelay: TimeSpan.FromSeconds(30), expectedNextRetryDelayMilliseconds: 5000, expectedThrottled: true)]),
+        new HttpRetryTestCase("TooManyRequests (HTTP-Date) too large", [new(statusCode: HttpStatusCode.TooManyRequests, throttleDelay: TimeSpan.FromSeconds(30), expectedNextRetryDelayMilliseconds: 5000, expectedThrottled: true, useDateForRetryCondition: true)]),
 #else
-        new("TooManyRequests (Delta)", [new(statusCode: (HttpStatusCode)429, throttleDelay: TimeSpan.FromSeconds(1), expectedThrottled: true)]),
-        new("TooManyRequests (HTTP-Date)", [new(statusCode: (HttpStatusCode)429, throttleDelay: TimeSpan.FromSeconds(1), expectedThrottled: true, useDateForRetryCondition: true)]),
-        new("TooManyRequests (Delta) too large", [new(statusCode: (HttpStatusCode)429, throttleDelay: TimeSpan.FromSeconds(30), expectedNextRetryDelayMilliseconds: 5000, expectedThrottled: true)]),
-        new("TooManyRequests (HTTP-Date) too large", [new(statusCode: (HttpStatusCode)429, throttleDelay: TimeSpan.FromSeconds(30), expectedNextRetryDelayMilliseconds: 5000, expectedThrottled: true, useDateForRetryCondition: true)]),
+        new HttpRetryTestCase("TooManyRequests (Delta)", [new(statusCode: (HttpStatusCode)429, throttleDelay: TimeSpan.FromSeconds(1), expectedThrottled: true)]),
+        new HttpRetryTestCase("TooManyRequests (HTTP-Date)", [new(statusCode: (HttpStatusCode)429, throttleDelay: TimeSpan.FromSeconds(1), expectedThrottled: true, useDateForRetryCondition: true)]),
+        new HttpRetryTestCase("TooManyRequests (Delta) too large", [new(statusCode: (HttpStatusCode)429, throttleDelay: TimeSpan.FromSeconds(30), expectedNextRetryDelayMilliseconds: 5000, expectedThrottled: true)]),
+        new HttpRetryTestCase("TooManyRequests (HTTP-Date) too large", [new(statusCode: (HttpStatusCode)429, throttleDelay: TimeSpan.FromSeconds(30), expectedNextRetryDelayMilliseconds: 5000, expectedThrottled: true, useDateForRetryCondition: true)]),
 #endif
 
-        new(
+        new HttpRetryTestCase(
             "Exponential Backoff",
             [
                 new(statusCode: null, expectedNextRetryDelayMilliseconds: 1500),
@@ -82,7 +82,7 @@ public class HttpRetryTestCase
                 new(statusCode: null, expectedNextRetryDelayMilliseconds: 5000)
             ],
             expectedRetryAttempts: 5),
-        new(
+        new HttpRetryTestCase(
             "Retry until non-retryable status code encountered",
             [
                 new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 1500),
@@ -92,7 +92,7 @@ public class HttpRetryTestCase
                 new(statusCode: HttpStatusCode.ServiceUnavailable, expectedNextRetryDelayMilliseconds: 5000)
             ],
             expectedRetryAttempts: 4),
-        new(
+        new HttpRetryTestCase(
             "Expired deadline",
             [
                 new(statusCode: HttpStatusCode.ServiceUnavailable, isDeadlineExceeded: true, expectedSuccess: false)

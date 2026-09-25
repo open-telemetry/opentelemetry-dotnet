@@ -32,28 +32,28 @@ public class HistogramBoundaryTestCase(
             expectedBucketCounts: [2, 2, 1],
             expectedBucketBounds: [0, 10, double.PositiveInfinity]),
 
-        new(
+        new HistogramBoundaryTestCase(
             testName: "Custom boundaries with positive infinity",
             inputBoundaries: [0, double.PositiveInfinity],
             inputValues: [-10, 0, 10, 100],
             expectedBucketCounts: [2, 2],
             expectedBucketBounds: [0, double.PositiveInfinity]),
 
-        new(
+        new HistogramBoundaryTestCase(
             testName: "Custom boundaries with negative infinity",
             inputBoundaries: [double.NegativeInfinity, 0, 10],
             inputValues: [-100, -10, 0, 5, 10, 100],
             expectedBucketCounts: [3, 2, 1],
             expectedBucketBounds: [0, 10, double.PositiveInfinity]),
 
-        new(
+        new HistogramBoundaryTestCase(
             testName: "Custom boundaries with both infinities",
             inputBoundaries: [double.NegativeInfinity, 0, 10, double.PositiveInfinity],
             inputValues: [-100, -10, 0, 5, 10, 100],
             expectedBucketCounts: [3, 2, 1],
             expectedBucketBounds: [0, 10, double.PositiveInfinity]),
 
-        new(
+        new HistogramBoundaryTestCase(
             testName: "Custom boundaries with infinities only",
             inputBoundaries: [double.NegativeInfinity, double.PositiveInfinity],
             inputValues: [-10, 0, 10],

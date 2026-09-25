@@ -29,30 +29,30 @@ public class GrpcRetryTestCase
     public static TheoryData<GrpcRetryTestCase> GetGrpcTestCases() =>
     [
         new GrpcRetryTestCase("Cancelled", [new(StatusCode.Cancelled)]),
-        new("DeadlineExceeded", [new(StatusCode.DeadlineExceeded)]),
-        new("Aborted", [new(StatusCode.Aborted)]),
-        new("OutOfRange", [new(StatusCode.OutOfRange)]),
-        new("DataLoss", [new(StatusCode.DataLoss)]),
-        new("Unavailable", [new(StatusCode.Unavailable)]),
+        new GrpcRetryTestCase("DeadlineExceeded", [new(StatusCode.DeadlineExceeded)]),
+        new GrpcRetryTestCase("Aborted", [new(StatusCode.Aborted)]),
+        new GrpcRetryTestCase("OutOfRange", [new(StatusCode.OutOfRange)]),
+        new GrpcRetryTestCase("DataLoss", [new(StatusCode.DataLoss)]),
+        new GrpcRetryTestCase("Unavailable", [new(StatusCode.Unavailable)]),
 
-        new("OK", [new(StatusCode.OK, expectedSuccess: false)]),
-        new("PermissionDenied", [new(StatusCode.PermissionDenied, expectedSuccess: false)]),
-        new("Unknown", [new(StatusCode.Unknown, expectedSuccess: false)]),
+        new GrpcRetryTestCase("OK", [new(StatusCode.OK, expectedSuccess: false)]),
+        new GrpcRetryTestCase("PermissionDenied", [new(StatusCode.PermissionDenied, expectedSuccess: false)]),
+        new GrpcRetryTestCase("Unknown", [new(StatusCode.Unknown, expectedSuccess: false)]),
 
-        new("ResourceExhausted w/o RetryInfo", [new(StatusCode.ResourceExhausted, expectedSuccess: false)]),
-        new("ResourceExhausted w/ RetryInfo", [new(StatusCode.ResourceExhausted, throttleDelay: GetThrottleDelayString(new Duration { Seconds = 2 }), expectedNextRetryDelayMilliseconds: 3000)]),
-        new("ResourceExhausted w/ zero RetryInfo", [new(StatusCode.ResourceExhausted, throttleDelay: GetThrottleDelayString(new Duration()), expectedRetryDelay: MinThrottleDelay, expectedNextRetryDelayMilliseconds: 150)]),
-        new("ResourceExhausted w/ sub-millisecond RetryInfo", [new(StatusCode.ResourceExhausted, throttleDelay: GetThrottleDelayString(new Duration { Nanos = 1 }), expectedRetryDelay: MinThrottleDelay, expectedNextRetryDelayMilliseconds: 150)]),
+        new GrpcRetryTestCase("ResourceExhausted w/o RetryInfo", [new(StatusCode.ResourceExhausted, expectedSuccess: false)]),
+        new GrpcRetryTestCase("ResourceExhausted w/ RetryInfo", [new(StatusCode.ResourceExhausted, throttleDelay: GetThrottleDelayString(new Duration { Seconds = 2 }), expectedNextRetryDelayMilliseconds: 3000)]),
+        new GrpcRetryTestCase("ResourceExhausted w/ zero RetryInfo", [new(StatusCode.ResourceExhausted, throttleDelay: GetThrottleDelayString(new Duration()), expectedRetryDelay: MinThrottleDelay, expectedNextRetryDelayMilliseconds: 150)]),
+        new GrpcRetryTestCase("ResourceExhausted w/ sub-millisecond RetryInfo", [new(StatusCode.ResourceExhausted, throttleDelay: GetThrottleDelayString(new Duration { Nanos = 1 }), expectedRetryDelay: MinThrottleDelay, expectedNextRetryDelayMilliseconds: 150)]),
 
-        new("Unavailable w/ RetryInfo", [new(StatusCode.Unavailable, throttleDelay: GetThrottleDelayString(Duration.FromTimeSpan(TimeSpan.FromMilliseconds(2000))), expectedNextRetryDelayMilliseconds: 3000)]),
+        new GrpcRetryTestCase("Unavailable w/ RetryInfo", [new(StatusCode.Unavailable, throttleDelay: GetThrottleDelayString(Duration.FromTimeSpan(TimeSpan.FromMilliseconds(2000))), expectedNextRetryDelayMilliseconds: 3000)]),
 
-        new("Expired deadline", [new(StatusCode.Unavailable, deadlineExceeded: true, expectedSuccess: false)]),
+        new GrpcRetryTestCase("Expired deadline", [new(StatusCode.Unavailable, deadlineExceeded: true, expectedSuccess: false)]),
 
         // A throttle delay that would push the retry past the configured deadline must
         // fail fast and drop the data rather than blocking for the throttle duration.
-        new("Throttle delay exceeds deadline", [new(StatusCode.ResourceExhausted, throttleDelay: GetThrottleDelayString(Duration.FromTimeSpan(TimeSpan.FromSeconds(30))), deadlineFromNow: TimeSpan.FromSeconds(1), expectedSuccess: false)]),
+        new GrpcRetryTestCase("Throttle delay exceeds deadline", [new(StatusCode.ResourceExhausted, throttleDelay: GetThrottleDelayString(Duration.FromTimeSpan(TimeSpan.FromSeconds(30))), deadlineFromNow: TimeSpan.FromSeconds(1), expectedSuccess: false)]),
 
-        new(
+        new GrpcRetryTestCase(
             "Exponential backoff",
             [
                 new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 1500),
@@ -63,7 +63,7 @@ public class GrpcRetryTestCase
             ],
             expectedRetryAttempts: 5),
 
-        new(
+        new GrpcRetryTestCase(
             "Retry until non-retryable status code encountered",
             [
                 new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 1500),
@@ -75,7 +75,7 @@ public class GrpcRetryTestCase
             expectedRetryAttempts: 4),
 
         // Test throttling affects exponential backoff.
-        new(
+        new GrpcRetryTestCase(
             "Exponential backoff after throttling",
             [
                 new(StatusCode.Unavailable, expectedNextRetryDelayMilliseconds: 1500),
