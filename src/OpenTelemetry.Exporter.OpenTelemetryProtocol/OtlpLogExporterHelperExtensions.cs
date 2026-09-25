@@ -299,7 +299,9 @@ public static class OtlpLogExporterHelperExtensions
         }
 
         OtlpExporterTransmissionHandler? transmissionHandler = null;
-        if (exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpLogExporter"))
+        if (exporterOptions.TryEnableIHttpClientFactoryIntegration(
+            serviceProvider,
+            OtlpExporterHttpClientNames.LogExporter))
         {
             transmissionHandler = exporterOptions.GetExportTransmissionHandler(
                 experimentalOptions,
