@@ -115,7 +115,7 @@ public class JsonStringArrayTagWriterTests
 
     [Theory]
     [InlineData([new object?[] { }, "[]"])]
-    [InlineData([new object?[] { null, float.MinValue, float.MaxValue, double.MinValue, double.MaxValue, int.MinValue, int.MaxValue, long.MinValue, long.MaxValue, true, false, "Hello world", new object[] { "inner array" } }, """[null,-3.4028234663852886E+38,3.4028234663852886E+38,-1.7976931348623157E+308,1.7976931348623157E+308,-2147483648,2147483647,-9223372036854775808,9223372036854775807,true,false,"Hello world","System.Object[]"]"""])]
+    [InlineData([new object?[] { null, float.MinValue, float.MaxValue, double.MinValue, double.MaxValue, int.MinValue, int.MaxValue, long.MinValue, long.MaxValue, true, false, "Hello world", new object[] { "inner array" } }, """[null,-3.4028234663852886E+38,3.4028234663852886E+38,-1.7976931348623157E+308,1.7976931348623157E+308,-2147483648,2147483647,-9223372036854775808,9223372036854775807,true,false,"Hello world",["inner array"]]"""])]
     public void ObjectArray(object?[] data, string expectedValue)
         => VerifySerialization(data, expectedValue);
 
