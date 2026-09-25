@@ -19,28 +19,31 @@ public static class ProtobufOtlpMetricSerializerTests
 
 #if NET8_0_OR_GREATER
     [Fact]
-    public static void CachedMetricMetadataDoesNotAllocate()
+    public static void WriteMetricsData_WithWarmedCacheDoesNotAllocate()
     {
         var metrics = GenerateMetricWithDescription("Cached metadata");
-        var getMetadata = typeof(ProtobufOtlpMetricSerializer)
-            .GetMethod("GetOrCreateCachedMetricMetadata", BindingFlags.NonPublic | BindingFlags.Static)!
-            .CreateDelegate<Func<Metric, int, byte[]>>();
-        foreach (var metric in metrics)
+        var buffer = new byte[16 * 1024];
+
+        // Warm metadata caches and serializer pools before measuring repeated exports.
+        for (var i = 0; i < 10000; i++)
         {
-            for (var i = 0; i < 10000; i++)
-            {
-                getMetadata(metric, 1024);
-            }
-
-            var allocatedBefore = GC.GetAllocatedBytesForCurrentThread();
-            for (var i = 0; i < 1000; i++)
-            {
-                getMetadata(metric, 1024);
-            }
-
-            var allocated = GC.GetAllocatedBytesForCurrentThread() - allocatedBefore;
-            Assert.Equal(0, allocated);
+            ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, Resource.Empty, metrics);
         }
+
+        var writePosition = 0;
+        var allocatedBefore = GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < 1000; i++)
+        {
+            writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, Resource.Empty, metrics);
+        }
+
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - allocatedBefore;
+        Assert.Equal(0, allocated);
+
+        using var stream = new MemoryStream(buffer, 0, writePosition);
+        var request = OtlpCollector.ExportMetricsServiceRequest.Parser.ParseFrom(stream);
+        var parsedMetric = Assert.Single(Assert.Single(Assert.Single(request.ResourceMetrics).ScopeMetrics).Metrics);
+        Assert.Equal("Cached metadata", parsedMetric.Description);
     }
 #endif
 
