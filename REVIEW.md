@@ -87,10 +87,11 @@ Experimental APIs require additional process beyond code review:
 
 ## Banned APIs
 
-The repository bans several APIs via `build/BannedSymbols.txt`.
-These banned APIs must not be used in the production codebase.
-Some banned APIs may still appear in test code or examples, but they should not
-be introduced into the main production code.
+The repository bans several APIs in the production codebase via
+`build/BannedSymbols.txt`. These banned APIs must not be used in the production
+codebase. Some banned APIs may still appear in test code or examples, but they
+should not be introduced into the main production code.
+
 A Roslyn analyzer catches them at build time, but flag them in review too:
 
 ### Unsafe code

@@ -269,8 +269,8 @@ section. Format:
 
 ## Banned APIs
 
-Several APIs are banned via `build/BannedSymbols.txt` and will cause a build
-error if used:
+Several APIs are banned in production code via `build/BannedSymbols.txt` and
+will cause a build error if used:
 
 - Use `string.Equals(a, b, StringComparison)` (**static**), not the instance
   method `a.Equals(b, StringComparison)`.

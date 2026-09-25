@@ -80,6 +80,11 @@ consistent input data across runs.
 runs both. **It requires a clean working tree** because it switches branches
 - commit your change (or use a separate worktree/stash) before running it.
 
+The selected benchmark must exist with the same name in both refs. For a new
+benchmark, place the benchmark in a benchmark-only commit and use that commit
+for `-Baseline`; comparing directly with `main` cannot produce a baseline
+result for a benchmark that is not yet present in that branch.
+
 ```powershell
 # Compare the current branch against main
 ./benchmark.ps1 @("*MyBenchmarks*")
