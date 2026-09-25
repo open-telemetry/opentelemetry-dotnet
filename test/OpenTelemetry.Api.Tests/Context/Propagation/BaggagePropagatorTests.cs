@@ -310,6 +310,25 @@ public class BaggagePropagatorTests
     }
 
     [Fact]
+    public void ValidatePercentEncodedLongValueDecodesCorrectly()
+    {
+        var prefix = new string('a', 300);
+        var suffix = new string('b', 10);
+
+        var carrier = new Dictionary<string, string>
+        {
+            [BaggagePropagator.BaggageHeaderName] = $"key={prefix}%20{suffix}",
+        };
+
+        var propagationContext = this.baggage.Extract(default, carrier, Getter);
+
+        var baggage = Assert.Single(propagationContext.Baggage.GetBaggage());
+
+        Assert.Equal("key", baggage.Key);
+        Assert.Equal($"{prefix} {suffix}", baggage.Value);
+    }
+
+    [Fact]
     public void ValidateInjectionOfSixtyFourEntries()
     {
         var baggageDict = new Dictionary<string, string>();
@@ -644,7 +663,7 @@ public class BaggagePropagatorTests
         Assert.Equal("key+name", entry.Key);
     }
 
-    [Theory(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/pull/7051")]
+    [Theory(Skip = "https://github.com/open-telemetry/opentelemetry-dotnet/issues/5677")]
     [InlineData(" ", "%20")]
     [InlineData("(", "%28")]
     [InlineData(":", "%3A")]
