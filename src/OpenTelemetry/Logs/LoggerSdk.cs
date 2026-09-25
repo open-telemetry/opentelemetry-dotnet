@@ -15,8 +15,8 @@ internal sealed class LoggerSdk : Logger
 
     public LoggerSdk(
         LoggerProviderSdk loggerProvider,
-        string? name)
-        : base(name)
+        LoggerOptions options)
+        : base(options.Name)
     {
         Guard.ThrowIfNull(loggerProvider);
 
