@@ -112,6 +112,11 @@ public class OtlpExporterOptions : IOtlpExporterOptions
             // If TLS configuration is enabled (mTLS or CA only), create a secure client
             if (this.MtlsOptions?.IsEnabled == true)
             {
+                if (OperatingSystem.IsBrowser())
+                {
+                    throw new PlatformNotSupportedException("Mutual TLS is not supported on browser-based platforms.");
+                }
+
                 return OtlpSecureHttpClientFactory.CreateSecureHttpClient(
                     this.MtlsOptions,
                     client =>

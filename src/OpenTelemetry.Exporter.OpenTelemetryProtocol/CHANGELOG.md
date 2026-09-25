@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* mTLS-related options and the experimental disk retry feature are explicitly
+  marked as not supported on browser-based platforms (e.g. Blazor).
+  ([#7799](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7799))
+
 ## 1.19.1
 
 Released 2026-Sep-21
