@@ -10,7 +10,12 @@ internal sealed class ReloadableOtlpTraceExporter : OtlpTraceExporter
 {
     private readonly ReloadableExportClient client;
 
-    internal ReloadableOtlpTraceExporter(OtlpExporterOptions options, SdkLimitOptions sdkLimitOptions, ExperimentalOptions experimentalOptions, OtlpExporterTransmissionHandler transmissionHandler, ReloadableExportClient client)
+    internal ReloadableOtlpTraceExporter(
+        OtlpExporterOptions options,
+        SdkLimitOptions sdkLimitOptions,
+        ExperimentalOptions experimentalOptions,
+        OtlpExporterTransmissionHandler transmissionHandler,
+        ReloadableExportClient client)
         : base(options, sdkLimitOptions, experimentalOptions, transmissionHandler)
     {
         this.client = client;

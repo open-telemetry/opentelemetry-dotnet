@@ -17,7 +17,6 @@ using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
-[Collection("EnvVars")]
 public sealed class OtlpExporterReloadTests
 {
     [Fact]

@@ -311,20 +311,14 @@ public static class OtlpLogExporterHelperExtensions
         var usesHttpClientFactory = exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpLogExporter");
         if (optionsName != null)
         {
-            var ownsHttpClient = usesHttpClientFactory || ReferenceEquals(exporterOptions.HttpClientFactory, exporterOptions.DefaultHttpClientFactory);
-            IExportClient initialClient = usesHttpClientFactory
-                ? new LazyExportClient(() => exporterOptions.GetExportClient(OtlpSignalType.Logs, ownsHttpClient))
-                : exporterOptions.GetExportClient(OtlpSignalType.Logs, ownsHttpClient);
 #pragma warning disable CA2000 // Ownership passes to the exporter.
-            var client = new ReloadableExportClient(
+            var client = ReloadableExportClient.Create(
                 exporterOptions,
-                initialClient,
-                ownsHttpClient,
                 serviceProvider,
                 optionsName,
-                "OtlpLogExporter",
                 OtlpSignalType.Logs,
                 skipUseOtlpExporterRegistrationCheck,
+                usesHttpClientFactory,
                 configureOnReload);
             transmissionHandler = exporterOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Logs, exportClientOverride: client);
 #pragma warning restore CA2000 // Ownership passes to the exporter.

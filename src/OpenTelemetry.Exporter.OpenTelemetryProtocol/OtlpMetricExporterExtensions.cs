@@ -194,17 +194,14 @@ public static class OtlpMetricExporterExtensions
         ReloadableExportClient? reloadableClient = null;
         if (optionsName != null)
         {
-            var ownsHttpClient = usesHttpClientFactory || ReferenceEquals(exporterOptions.HttpClientFactory, exporterOptions.DefaultHttpClientFactory);
 #pragma warning disable CA2000 // Ownership passes to the exporter.
-            reloadableClient = new ReloadableExportClient(
+            reloadableClient = ReloadableExportClient.Create(
                 exporterOptions,
-                exporterOptions.GetExportClient(OtlpSignalType.Metrics, ownsHttpClient),
-                ownsHttpClient,
                 serviceProvider,
                 optionsName,
-                "OtlpMetricExporter",
                 OtlpSignalType.Metrics,
                 skipUseOtlpExporterRegistrationCheck,
+                usesHttpClientFactory,
                 configureOnReload);
             transmissionHandler = exporterOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Metrics, exportClientOverride: reloadableClient);
 #pragma warning restore CA2000 // Ownership passes to the exporter.

@@ -182,7 +182,10 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
     {
         if (disposing)
         {
-            (this.transmissionHandler.ExportClient as IDisposable)?.Dispose();
+            if (this.transmissionHandler.ExportClient is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
         }
 
         base.Dispose(disposing);

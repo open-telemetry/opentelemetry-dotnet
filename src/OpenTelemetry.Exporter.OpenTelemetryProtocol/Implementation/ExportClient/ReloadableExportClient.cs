@@ -26,7 +26,7 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
     private double timeoutMilliseconds;
     private bool stopped;
 
-    internal ReloadableExportClient(
+    private ReloadableExportClient(
         OtlpExporterOptions initialOptions,
         IExportClient initialClient,
         bool ownsInitialHttpClient,
@@ -99,8 +99,7 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
             bool release;
             lock (this.gate)
             {
-                release = --selected.ActiveSends == 0 && selected.Retired && !selected.Released && (!selected.ShuttingDown || selected.ShutdownComplete);
-                selected.Released |= release;
+                release = --selected.ActiveSends == 0 && selected.Retired;
             }
 
             if (release)
@@ -122,8 +121,6 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
 
             this.stopped = true;
             selected = this.current;
-            selected.Retired = true;
-            selected.ShuttingDown = true;
         }
 
         this.optionsSubscription?.Dispose();
@@ -139,9 +136,8 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
             bool release;
             lock (this.gate)
             {
-                selected.ShutdownComplete = true;
-                release = selected.ActiveSends == 0 && !selected.Released;
-                selected.Released |= release;
+                selected.Retired = true;
+                release = selected.ActiveSends == 0;
             }
 
             if (release)
@@ -154,6 +150,39 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
     }
 
     public void Dispose() => this.Shutdown(Timeout.Infinite);
+
+    internal static ReloadableExportClient Create(
+        OtlpExporterOptions options,
+        IServiceProvider serviceProvider,
+        string optionsName,
+        OtlpSignalType signalType,
+        bool useOtlpExporter,
+        bool usesHttpClientFactory,
+        Action<OtlpExporterOptions>? configureOnReload = null)
+    {
+        var ownsHttpClient = usesHttpClientFactory || ReferenceEquals(options.HttpClientFactory, options.DefaultHttpClientFactory);
+        var httpClientName = signalType switch
+        {
+            OtlpSignalType.Traces => "OtlpTraceExporter",
+            OtlpSignalType.Metrics => "OtlpMetricExporter",
+            OtlpSignalType.Logs => "OtlpLogExporter",
+            _ => throw new NotSupportedException(),
+        };
+        IExportClient initialClient = usesHttpClientFactory && signalType == OtlpSignalType.Logs
+            ? new LazyExportClient(() => options.GetExportClient(signalType, ownsHttpClient))
+            : options.GetExportClient(signalType, ownsHttpClient);
+
+        return new(
+            options,
+            initialClient,
+            ownsHttpClient,
+            serviceProvider,
+            optionsName,
+            httpClientName,
+            signalType,
+            useOtlpExporter,
+            configureOnReload);
+    }
 
     private static double GetTimeout(OtlpExporterOptions options, IExportClient client) =>
         client is OtlpHttpExportClient httpClient
@@ -215,8 +244,7 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
                     this.current = next;
                     Volatile.Write(ref this.timeoutMilliseconds, nextTimeout);
                     old.Retired = true;
-                    releaseOld = old.ActiveSends == 0 && !old.Released;
-                    old.Released |= releaseOld;
+                    releaseOld = old.ActiveSends == 0;
                 }
 
                 if (releaseOld)
@@ -256,8 +284,5 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
         internal readonly bool OwnsHttpClient = ownsHttpClient;
         internal int ActiveSends;
         internal bool Retired;
-        internal bool Released;
-        internal bool ShuttingDown;
-        internal bool ShutdownComplete;
     }
 }

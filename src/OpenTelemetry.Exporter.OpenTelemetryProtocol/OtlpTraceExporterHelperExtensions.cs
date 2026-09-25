@@ -151,17 +151,14 @@ public static class OtlpTraceExporterHelperExtensions
         ReloadableExportClient? reloadableClient = null;
         if (optionsName != null)
         {
-            var ownsHttpClient = usesHttpClientFactory || ReferenceEquals(exporterOptions.HttpClientFactory, exporterOptions.DefaultHttpClientFactory);
 #pragma warning disable CA2000 // Ownership passes to the exporter.
-            reloadableClient = new ReloadableExportClient(
+            reloadableClient = ReloadableExportClient.Create(
                 exporterOptions,
-                exporterOptions.GetExportClient(OtlpSignalType.Traces, ownsHttpClient),
-                ownsHttpClient,
                 serviceProvider,
                 optionsName,
-                "OtlpTraceExporter",
                 OtlpSignalType.Traces,
-                skipUseOtlpExporterRegistrationCheck);
+                skipUseOtlpExporterRegistrationCheck,
+                usesHttpClientFactory);
             transmissionHandler = exporterOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Traces, exportClientOverride: reloadableClient);
 #pragma warning restore CA2000 // Ownership passes to the exporter.
         }
