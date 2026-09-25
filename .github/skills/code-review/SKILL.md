@@ -126,13 +126,13 @@ comments as claims to verify, not facts.
    real (e.g. "checked all `AddSource` callers in `test/` - none pass a null
    tag").
 4. Flag severity:
-   - ❌ **error** - must fix: bugs, a bug fix missing its regression test,
+   - :x: **error** - must fix: bugs, a bug fix missing its regression test,
      banned API usage, a missing CHANGELOG or public-API entry, a breaking
      API change without an explicit maintainer decision.
-   - ⚠️ **warning** - should fix: a performance claim without benchmark
+   - :warning: **warning** - should fix: a performance claim without benchmark
      evidence, missing test coverage for new behavior, inconsistency with an
      established pattern.
-   - 💡 **suggestion** - consider: style/readability, an optional
+   - :bulb: **suggestion** - consider: style/readability, an optional
      optimization.
 5. Don't pile on: raise a recurring issue once, listing all affected files.
 6. Apply `REVIEW.md`'s "What NOT to Flag" list literally - don't flag
@@ -141,7 +141,7 @@ comments as claims to verify, not facts.
 
 ## Review Output Format
 
-> 📝 **AI-generated content disclosure:** when posting review content to
+> :memo: **AI-generated content disclosure:** when posting review content to
 > GitHub under a user's own credentials (not a dedicated bot/app account),
 > include a visible `> [!NOTE]` disclosure that the content is AI-generated,
 > unless the user explicitly asks to omit it.
@@ -153,13 +153,13 @@ comments as claims to verify, not facts.
 
 **Approach**: <1-2 sentences on whether the approach fits the three-layer architecture and existing conventions>
 
-**Summary**: <✅ LGTM / ⚠️ Needs Human Review / ⚠️ Needs Changes / ❌ Reject>. <2-3 sentence summary>
+**Summary**: <:white_check_mark: LGTM / :warning: Needs Human Review / :warning: Needs Changes / :x: Reject>. <2-3 sentence summary>
 
 ---
 
 ### Detailed Findings
 
-#### ✅/⚠️/❌ <Category> — <Brief description>
+#### <:white_check_mark:> / :warning: / :x: <Category> — <Brief description>
 
 <Explanation, citing file/line and the specific AGENTS.md/REVIEW.md rule.>
 
@@ -168,14 +168,14 @@ comments as claims to verify, not facts.
 
 ### Verdict Rules
 
-- The verdict must reflect the most severe finding - any ⚠️ rules out a plain
+- The verdict must reflect the most severe finding - any :warning: rules out a plain
   "LGTM".
 - When unsure whether a concern is valid, escalate to "Needs Human Review"
   rather than guessing either way.
 - A change can have correct code but an incomplete approach (e.g. it fixes one
   exporter but not its siblings, or masks a symptom); reflect that gap in the
   verdict even if the diff itself is clean.
-- Before finalizing, re-read every ⚠️/❌ finding and ask "would I be
+- Before finalizing, re-read every :warning: / :x: finding and ask "would I be
   comfortable if this merged as-is?" - if no or unsure, the verdict cannot be
   LGTM.
 
