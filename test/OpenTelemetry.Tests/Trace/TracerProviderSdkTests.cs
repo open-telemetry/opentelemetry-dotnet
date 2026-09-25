@@ -647,7 +647,7 @@ public sealed class TracerProviderSdkTests : IDisposable
         activity.Stop();
 
         Assert.False(activity.IsAllDataRequested);
-        Assert.Equal(ActivityTraceFlags.None, activity.ActivityTraceFlags);
+        Assert.Equal(ActivityTraceFlags.RandomTraceId, activity.ActivityTraceFlags);
         Assert.False(activity.Recorded);
         Assert.False(startCalled);
         Assert.False(endCalled);
@@ -1016,11 +1016,12 @@ public sealed class TracerProviderSdkTests : IDisposable
 
         Assert.True(activity.IsAllDataRequested);
         Assert.True(activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.Recorded));
+        Assert.True(activity.ActivityTraceFlags.HasFlag(ActivityTraceFlags.RandomTraceId));
 
         // Validating ActivityTraceFlags is not enough as it does not get reflected on
         // Id, If the Id is accessed before the sampler runs.
         // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
-        Assert.EndsWith("-01", activity.Id, StringComparison.Ordinal);
+        Assert.EndsWith("-03", activity.Id, StringComparison.Ordinal);
 
         activity.Stop();
     }
@@ -1043,7 +1044,7 @@ public sealed class TracerProviderSdkTests : IDisposable
         // Validating ActivityTraceFlags is not enough as it does not get reflected on
         // Id, If the Id is accessed before the sampler runs.
         // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
-        Assert.EndsWith("-00", activity.Id, StringComparison.Ordinal);
+        Assert.EndsWith("-02", activity.Id, StringComparison.Ordinal);
 
         activity.Stop();
     }
@@ -1071,7 +1072,7 @@ public sealed class TracerProviderSdkTests : IDisposable
         // Validating ActivityTraceFlags is not enough as it does not get reflected on
         // Id, If the Id is accessed before the sampler runs.
         // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2700
-        Assert.EndsWith(hasRecordedFlag ? "-01" : "-00", activity.Id, StringComparison.Ordinal);
+        Assert.EndsWith(hasRecordedFlag ? "-03" : "-02", activity.Id, StringComparison.Ordinal);
 
         activity.Stop();
     }

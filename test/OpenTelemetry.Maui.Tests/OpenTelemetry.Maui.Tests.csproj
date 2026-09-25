@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Description>End-to-end tests that drive the MAUI test app on an Android emulator and validate the OpenTelemetry SDK under a .NET MAUI application host by decoding the OTLP it exports.</Description>
     <NoWarn>$(NoWarn);CA1515;CA2007</NoWarn>
-    <TargetFrameworks>net10.0</TargetFrameworks>
+    <TargetFrameworks>net11.0;net10.0</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>

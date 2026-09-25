@@ -5,7 +5,7 @@
     <EnableMSTestRunner>true</EnableMSTestRunner>
     <NoWarn>$(NoWarn);CA1515;CA1707;CA1848</NoWarn>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net10.0-ios</TargetFrameworks>
+    <TargetFrameworks>net11.0-ios;net10.0-ios</TargetFrameworks>
   </PropertyGroup>
 
   <!--

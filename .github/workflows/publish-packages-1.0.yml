@@ -81,7 +81,7 @@ jobs:
 
     - name: dotnet build
       shell: pwsh
-      run: dotnet build ./build/OpenTelemetry.proj --configuration Release --no-restore -p:Deterministic=true -p:"BuildNumber=${env:GITHUB_RUN_NUMBER}" -p:RunningDotNetPack=true
+      run: dotnet build ./build/OpenTelemetry.proj --configuration Release --no-restore -p:"BuildNumber=${env:GITHUB_RUN_NUMBER}" -p:RunningDotNetPack=true
 
     - name: Sign DLLs with Cosign Keyless
       shell: pwsh
