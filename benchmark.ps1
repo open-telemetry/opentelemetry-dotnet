@@ -31,6 +31,9 @@ The BenchmarkDotNet job to use (e.g. "Short"). Defaults to "Default".
 .PARAMETER Runtimes
 One or more target frameworks to benchmark. Defaults to "net10.0".
 
+.PARAMETER Affinity
+The BenchmarkDotNet affinity mask to set for the benchmark process. Defaults to none.
+
 .PARAMETER EnableMemoryDiagnoser
 Enables the BenchmarkDotNet memory diagnoser.
 
@@ -58,6 +61,7 @@ param(
     [Parameter(Mandatory = $false)][string] $Baseline = "main",
     [Parameter(Mandatory = $false)][string] $Job = "Default",
     [Parameter(Mandatory = $false)][string[]] $Runtimes = @("net10.0"),
+    [Parameter(Mandatory = $false)][string] $Affinity = "",
     [Parameter(Mandatory = $false)][switch] $EnableMemoryDiagnoser,
     [Parameter(Mandatory = $false)][switch] $EnableEventPipeProfiler,
     [Parameter(Mandatory = $false)][switch] $SkipBaseline
@@ -247,6 +251,11 @@ try {
 
         $additionalArgs += "--filter"
         $additionalArgs += $Benchmarks
+
+        if (-Not [string]::IsNullOrEmpty($Affinity)) {
+            $additionalArgs += "--affinity"
+            $additionalArgs += $Affinity
+        }
 
         if (-not [string]::IsNullOrEmpty($Job)) {
             $additionalArgs += "--job"

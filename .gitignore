@@ -52,6 +52,7 @@ TestResult.xml
 dlldata.c
 
 # Benchmark Results
+.bdn/
 BenchmarkDotNet.Artifacts/
 
 # .NET Core
