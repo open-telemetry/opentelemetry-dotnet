@@ -7,6 +7,9 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Avoid closure allocations when serializing cached metric metadata.
+  ([#7841](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7841))
+
 * Reload OTLP export clients when named exporter options or `UseOtlpExporter`
   configuration changes, without recreating providers. Protocol and maximum
   request size remain fixed for the lifetime of each exporter.
