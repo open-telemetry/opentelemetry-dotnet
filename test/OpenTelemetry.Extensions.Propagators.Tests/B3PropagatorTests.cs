@@ -47,7 +47,7 @@ public class B3PropagatorTests
     {
         var carrier = new Dictionary<string, string>();
         var context = new ActivityContext(TraceId, SpanId, ActivityTraceFlags.None);
-        this.output.WriteLine(context.ToString());
+        this.output.WriteLine(context.ToString() ?? string.Empty);
         this.b3propagator.Inject(new PropagationContext(context, default), carrier, Setter);
         this.ContainsExactly(carrier, new Dictionary<string, string> { { B3Propagator.XB3TraceId, TraceIdBase16 }, { B3Propagator.XB3SpanId, SpanIdBase16 } });
     }
@@ -255,7 +255,7 @@ public class B3PropagatorTests
     {
         var carrier = new Dictionary<string, string>();
         var activityContext = new ActivityContext(TraceId, SpanId, ActivityTraceFlags.None);
-        this.output.WriteLine(activityContext.ToString());
+        this.output.WriteLine(activityContext.ToString() ?? string.Empty);
         this.b3PropagatorSingleHeader.Inject(new PropagationContext(activityContext, default), carrier, Setter);
         this.ContainsExactly(carrier, new Dictionary<string, string> { { B3Propagator.XB3Combined, $"{TraceIdBase16}-{SpanIdBase16}" } });
     }

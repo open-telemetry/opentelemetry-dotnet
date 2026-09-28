@@ -29,7 +29,8 @@ internal sealed class DeclarativeYamlTestFileFactory : IDisposable
     public string CreateDeclarativeYaml(
         string fileFormat = "1.0",
         bool? disabled = null,
-        IReadOnlyDictionary<string, string>? resourceAttributes = null)
+        IReadOnlyDictionary<string, string>? resourceAttributes = null,
+        string? resourceAttributesList = null)
     {
         var builder = new StringBuilder();
         builder.Append("file_format: \"").Append(EscapeYaml(fileFormat)).AppendLine("\"");
@@ -39,15 +40,26 @@ internal sealed class DeclarativeYamlTestFileFactory : IDisposable
             builder.Append("disabled: ").AppendLine(disabled.Value ? "true" : "false");
         }
 
-        if (resourceAttributes != null && resourceAttributes.Count > 0)
+        var hasResourceSection = (resourceAttributes != null && resourceAttributes.Count > 0)
+            || !string.IsNullOrEmpty(resourceAttributesList);
+
+        if (hasResourceSection)
         {
             builder.AppendLine("resource:");
-            builder.AppendLine("  attributes:");
 
-            foreach (var attribute in resourceAttributes)
+            if (resourceAttributes != null && resourceAttributes.Count > 0)
             {
-                builder.Append("    - name: \"").Append(EscapeYaml(attribute.Key)).AppendLine("\"");
-                builder.Append("      value: \"").Append(EscapeYaml(attribute.Value)).AppendLine("\"");
+                builder.AppendLine("  attributes:");
+                foreach (var attribute in resourceAttributes)
+                {
+                    builder.Append("    - name: \"").Append(EscapeYaml(attribute.Key)).AppendLine("\"");
+                    builder.Append("      value: \"").Append(EscapeYaml(attribute.Value)).AppendLine("\"");
+                }
+            }
+
+            if (!string.IsNullOrEmpty(resourceAttributesList))
+            {
+                builder.Append("  attributes_list: \"").Append(EscapeYaml(resourceAttributesList!)).AppendLine("\"");
             }
         }
 

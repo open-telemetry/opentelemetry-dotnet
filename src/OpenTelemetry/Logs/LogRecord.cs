@@ -493,13 +493,41 @@ public sealed class LogRecord
         // directly below.
         this.BufferLogScopes();
 
+        List<KeyValuePair<string, object?>>? attributeData = null;
+        if (this.AttributeData is { } attributes)
+        {
+            attributeData = new List<KeyValuePair<string, object?>>(attributes.Count);
+            CopyAttributes(attributes, attributeData);
+        }
+
         return new()
         {
             Data = this.Data,
             ILoggerData = this.ILoggerData.Copy(),
-            AttributeData = this.AttributeData is null ? null : new List<KeyValuePair<string, object?>>(this.AttributeData),
+            AttributeData = attributeData,
             Logger = this.Logger,
         };
+    }
+
+    private static void CopyAttributes(
+        IReadOnlyList<KeyValuePair<string, object?>> source,
+        List<KeyValuePair<string, object?>> destination)
+    {
+        // The state types produced by Microsoft.Extensions.Logging
+        // (FormattedLogValues and the structs generated for
+        // [LoggerMessage]) implement IReadOnlyList<T> but not
+        // ICollection<T>, so AddRange() would allocate.
+        if (source is ICollection<KeyValuePair<string, object?>> collection)
+        {
+            destination.AddRange(collection);
+            return;
+        }
+
+        var count = source.Count;
+        for (var i = 0; i < count; i++)
+        {
+            destination.Add(source[i]);
+        }
     }
 
     /// <summary>
@@ -516,12 +544,11 @@ public sealed class LogRecord
 
         var attributeStorage = this.AttributeStorage ??= new List<KeyValuePair<string, object?>>(attributes.Count);
 
-        // Note: AddRange here will copy all of the KeyValuePairs from
-        // attributes to AttributeStorage. This "captures" the state and
-        // fixes issues where the values are generated at enumeration time
-        // like
+        // Copying the KeyValuePairs from attributes to AttributeStorage
+        // "captures" the state and fixes issues where the values are generated
+        // at enumeration time like
         // https://github.com/open-telemetry/opentelemetry-dotnet/issues/2905.
-        attributeStorage.AddRange(attributes);
+        CopyAttributes(attributes, attributeStorage);
 
         this.AttributeData = attributeStorage;
     }
@@ -576,7 +603,19 @@ public sealed class LogRecord
             var bufferedScopes = this.BufferedScopes;
             if (bufferedScopes != null)
             {
-                copy.BufferedScopes = [.. bufferedScopes];
+                // The scopes are copied one at a time. A collection
+                // expression hits a JIT code generation issue on x64
+                // that can make the code up to 10x slower. See:
+                // https://github.com/dotnet/runtime/issues/133784
+                // https://github.com/dotnet/runtime/issues/134723
+                List<object?> scopes = new(bufferedScopes.Count);
+
+                foreach (var scope in bufferedScopes)
+                {
+                    scopes.Add(scope);
+                }
+
+                copy.BufferedScopes = scopes;
             }
 
             return copy;

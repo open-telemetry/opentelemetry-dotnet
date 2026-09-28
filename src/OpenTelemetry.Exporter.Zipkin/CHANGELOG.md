@@ -6,6 +6,22 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.19.1
+
+Released 2026-Sep-21
+
+## 1.19.1-rc.1
+
+Released 2026-Sep-21
+
+## 1.19.0
+
+Released 2026-Sep-18
+
+## 1.19.0-rc.1
+
+Released 2026-Sep-18
+
 * Key/value list attribute values are now written as a JSON object embedded
   in a string, mirroring the existing array handling, instead of their
   `ToString()` representation. This also covers additional dictionary shapes

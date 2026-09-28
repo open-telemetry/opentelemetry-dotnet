@@ -6,6 +6,22 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.19.1
+
+Released 2026-Sep-21
+
+## 1.19.1-rc.1
+
+Released 2026-Sep-21
+
+## 1.19.0
+
+Released 2026-Sep-18
+
+## 1.19.0-rc.1
+
+Released 2026-Sep-18
+
 * Added an `AddOpenTelemetry` extension method for `IHostApplicationBuilder`.
   It registers the OpenTelemetry SDK services and additionally seeds
   `service.name` from `IHostEnvironment.ApplicationName` and

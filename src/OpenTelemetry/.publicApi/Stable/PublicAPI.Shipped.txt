@@ -332,6 +332,8 @@ OpenTelemetry.Trace.AlwaysOffSampler
 OpenTelemetry.Trace.AlwaysOffSampler.AlwaysOffSampler() -> void
 OpenTelemetry.Trace.AlwaysOnSampler
 OpenTelemetry.Trace.AlwaysOnSampler.AlwaysOnSampler() -> void
+OpenTelemetry.Trace.AlwaysRecordSampler
+OpenTelemetry.Trace.AlwaysRecordSampler.AlwaysRecordSampler(OpenTelemetry.Trace.Sampler! rootSampler) -> void
 OpenTelemetry.Trace.BatchExportActivityProcessorOptions
 OpenTelemetry.Trace.BatchExportActivityProcessorOptions.BatchExportActivityProcessorOptions() -> void
 OpenTelemetry.Trace.ParentBasedSampler
@@ -405,6 +407,7 @@ override OpenTelemetry.SimpleLogRecordExportProcessor.OnEnd(OpenTelemetry.Logs.L
 override OpenTelemetry.SimpleLogRecordExportProcessor.OnShutdown(int timeoutMilliseconds) -> bool
 override OpenTelemetry.Trace.AlwaysOffSampler.ShouldSample(in OpenTelemetry.Trace.SamplingParameters samplingParameters) -> OpenTelemetry.Trace.SamplingResult
 override OpenTelemetry.Trace.AlwaysOnSampler.ShouldSample(in OpenTelemetry.Trace.SamplingParameters samplingParameters) -> OpenTelemetry.Trace.SamplingResult
+override OpenTelemetry.Trace.AlwaysRecordSampler.ShouldSample(in OpenTelemetry.Trace.SamplingParameters samplingParameters) -> OpenTelemetry.Trace.SamplingResult
 override OpenTelemetry.Trace.ParentBasedSampler.ShouldSample(in OpenTelemetry.Trace.SamplingParameters samplingParameters) -> OpenTelemetry.Trace.SamplingResult
 override OpenTelemetry.Trace.SamplingResult.Equals(object? obj) -> bool
 override OpenTelemetry.Trace.SamplingResult.GetHashCode() -> int

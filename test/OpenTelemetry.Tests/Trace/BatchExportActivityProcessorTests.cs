@@ -10,9 +10,7 @@ public class BatchExportActivityProcessorTests
 {
     [Fact]
     public void CheckNullExporter()
-    {
-        Assert.Throws<ArgumentNullException>(() => new BatchActivityExportProcessor(null!));
-    }
+        => Assert.Throws<ArgumentNullException>(() => new BatchActivityExportProcessor(null!));
 
     [Fact]
     public void CheckConstructorWithInvalidValues()
@@ -91,7 +89,7 @@ public class BatchExportActivityProcessorTests
         Assert.Equal(0, processor.ProcessedCount);
 
         // waiting to see if time is triggering the exporter
-        await Task.Delay(TimeSpan.FromSeconds(2));
+        await Task.Delay(TimeSpan.FromSeconds(2), TestContext.Current.CancellationToken);
         Assert.Empty(exportedItems);
 
         // forcing flush

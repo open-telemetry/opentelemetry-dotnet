@@ -7,6 +7,25 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Avoid closure allocations when serializing cached metric metadata.
+  ([#7841](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7841))
+
+## 1.19.1
+
+Released 2026-Sep-21
+
+## 1.19.1-rc.1
+
+Released 2026-Sep-21
+
+## 1.19.0
+
+Released 2026-Sep-18
+
+## 1.19.0-rc.1
+
+Released 2026-Sep-18
+
 * If an exception is thrown when serializing an attribute, the attribute will
   now be dropped.
   ([#7688](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7688))

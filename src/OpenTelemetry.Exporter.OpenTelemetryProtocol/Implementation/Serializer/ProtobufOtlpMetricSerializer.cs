@@ -581,14 +581,10 @@ internal static class ProtobufOtlpMetricSerializer
         if (exemplar.SpanId != default)
         {
             writePosition = ProtobufSerializer.WriteTagAndLength(buffer, writePosition, SpanIdSize, ProtobufOtlpMetricFieldNumberConstants.Exemplar_Span_Id, ProtobufWireType.LEN);
-            var spanIdBytes = new Span<byte>(buffer, writePosition, SpanIdSize);
-            exemplar.SpanId.CopyTo(spanIdBytes);
-            writePosition += SpanIdSize;
+            writePosition = ProtobufOtlpTraceSerializer.WriteSpanId(buffer, writePosition, exemplar.SpanId);
 
             writePosition = ProtobufSerializer.WriteTagAndLength(buffer, writePosition, TraceIdSize, ProtobufOtlpMetricFieldNumberConstants.Exemplar_Trace_Id, ProtobufWireType.LEN);
-            var traceIdBytes = new Span<byte>(buffer, writePosition, TraceIdSize);
-            exemplar.TraceId.CopyTo(traceIdBytes);
-            writePosition += TraceIdSize;
+            writePosition = ProtobufOtlpTraceSerializer.WriteTraceId(buffer, writePosition, exemplar.TraceId);
         }
 
         ProtobufSerializer.WriteReservedLength(buffer, exemplarLengthPosition, writePosition - (exemplarLengthPosition + ReserveSizeForLength));
@@ -667,9 +663,20 @@ internal static class ProtobufOtlpMetricSerializer
     {
         if (!CachedMetricMetadata.TryGetValue(metric, out var cachedMetadata))
         {
+#if NET10_0_OR_GREATER
             cachedMetadata = CachedMetricMetadata.GetOrAdd(
                 metric,
-                key => SerializeMetricMetadataToBytes(key, availableBufferSize));
+                static (key, bufferSize) => SerializeMetricMetadataToBytes(key, bufferSize),
+                availableBufferSize);
+#else
+            // Keep the closure allocation on the cache-miss path on older frameworks.
+            static byte[] GetOrAddMetricMetadata(Metric metric, int bufferSize)
+                => CachedMetricMetadata.GetOrAdd(
+                    metric,
+                    key => SerializeMetricMetadataToBytes(key, bufferSize));
+
+            cachedMetadata = GetOrAddMetricMetadata(metric, availableBufferSize);
+#endif
         }
 
         if (cachedMetadata.Length > availableBufferSize)

@@ -65,29 +65,7 @@ internal sealed class CircularBuffer<T>
     /// <c>false</c> if the buffer is full.
     /// </returns>
     public bool Add(T value)
-    {
-        Debug.Assert(value != null, "value was null");
-
-        while (true)
-        {
-            var tailSnapshot = Volatile.Read(ref this.tail);
-            var headSnapshot = Volatile.Read(ref this.head);
-
-            if (headSnapshot - tailSnapshot >= this.Capacity)
-            {
-                return false; // buffer is full
-            }
-
-            if (Interlocked.CompareExchange(ref this.head, headSnapshot + 1, headSnapshot) != headSnapshot)
-            {
-                continue;
-            }
-
-            Volatile.Write(ref this.trait[headSnapshot % this.Capacity], value);
-
-            return true;
-        }
-    }
+        => this.TryAdd(value, maxSpinCount: 0, out _);
 
     /// <summary>
     /// Attempts to add the specified item to the buffer.
@@ -99,12 +77,26 @@ internal sealed class CircularBuffer<T>
     /// <c>false</c> if the buffer is full or the spin count exceeded <paramref name="maxSpinCount"/>.
     /// </returns>
     public bool TryAdd(T value, int maxSpinCount)
-    {
-        if (maxSpinCount <= 0)
-        {
-            return this.Add(value);
-        }
+        => this.TryAdd(value, maxSpinCount, out _);
 
+    /// <summary>
+    /// Attempts to add the specified item to the buffer.
+    /// </summary>
+    /// <param name="value">The value to add.</param>
+    /// <param name="maxSpinCount">The maximum allowed spin count, when set to a negative number or zero, will spin indefinitely.</param>
+    /// <param name="count">
+    /// When this method returns <c>true</c>, the number of items in the buffer
+    /// immediately after <paramref name="value"/> was added. Items may be read
+    /// concurrently, so the true count at the time of the add may have been
+    /// higher but is never lower than this value. When this method returns
+    /// <c>false</c>, zero.
+    /// </param>
+    /// <returns>
+    /// Returns <c>true</c> if the item was added to the buffer successfully;
+    /// <c>false</c> if the buffer is full or the spin count exceeded <paramref name="maxSpinCount"/>.
+    /// </returns>
+    public bool TryAdd(T value, int maxSpinCount, out long count)
+    {
         Debug.Assert(value != null, "value was null");
 
         var spinCountDown = maxSpinCount;
@@ -116,13 +108,15 @@ internal sealed class CircularBuffer<T>
 
             if (headSnapshot - tailSnapshot >= this.Capacity)
             {
+                count = 0;
                 return false; // buffer is full
             }
 
             if (Interlocked.CompareExchange(ref this.head, headSnapshot + 1, headSnapshot) != headSnapshot)
             {
-                if (spinCountDown-- == 0)
+                if (maxSpinCount > 0 && spinCountDown-- == 0)
                 {
+                    count = 0;
                     return false; // exceeded maximum spin count
                 }
 
@@ -131,6 +125,12 @@ internal sealed class CircularBuffer<T>
 
             Volatile.Write(ref this.trait[headSnapshot % this.Capacity], value);
 
+            // Re-read the tail after the add: the tail only ever grows, so this
+            // count can be lower than the true count at the moment of the add but
+            // never higher. While the reader is idle the tail cannot move and the
+            // count is exact, which is what BatchExportProcessor relies on to
+            // detect the add that brings the queue up to the export batch size.
+            count = headSnapshot + 1 - Volatile.Read(ref this.tail);
             return true;
         }
     }
