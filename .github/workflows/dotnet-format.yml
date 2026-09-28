@@ -10,7 +10,7 @@ permissions: {}
 jobs:
   check-dotnet-format:
     name: Check for changes
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     outputs:
       include-args: ${{ steps.check.outputs.include-args }}
@@ -34,8 +34,12 @@ jobs:
         $baseRef = if (${env:GITHUB_BASE_REF}) { "origin/${env:GITHUB_BASE_REF}" } else { "HEAD~1" }
         $changedFiles = git diff --name-only "$baseRef...HEAD"
 
-        if ($changedFiles -contains 'global.json') {
-          Write-Output "global.json was changed - checking all files."
+        $formatConfigurationFiles = $changedFiles | Where-Object {
+          $_ -match '(^|/)(global\.json|\.editorconfig|.*\.(csproj|globalconfig|props|ruleset|targets))$'
+        }
+
+        if ($formatConfigurationFiles) {
+          Write-Output "A format configuration or global.json was changed - checking all files."
           "run-format=true" >> ${env:GITHUB_OUTPUT}
           "include-args=" >> ${env:GITHUB_OUTPUT}
         } else {

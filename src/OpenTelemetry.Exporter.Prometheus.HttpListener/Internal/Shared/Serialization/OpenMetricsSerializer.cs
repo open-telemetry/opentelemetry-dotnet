@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
 using OpenTelemetry.Metrics;
 
 namespace OpenTelemetry.Exporter.Prometheus.Serialization;
@@ -176,11 +177,19 @@ internal abstract class OpenMetricsSerializer : TextFormatSerializer
         in TextFormatSerializerOptions options,
         IReadOnlyCollection<string>? reservedOutputKeys = null)
     {
+        var startTime = metricPoint.StartTime;
+        Debug.Assert(startTime != default, "Metric points must have a valid start time.");
+
+        if (startTime == default)
+        {
+            return cursor;
+        }
+
         cursor = this.WriteSeriesAndTags(buffer, cursor, metric, prometheusMetric, metricPoint.Tags, options, "_created", reservedOutputKeys);
 
         buffer[cursor++] = unchecked((byte)' ');
 
-        cursor = WriteUnixTimeSeconds(buffer, cursor, metricPoint.StartTime);
+        cursor = WriteUnixTimeSeconds(buffer, cursor, startTime);
 
         buffer[cursor++] = AsciiLineFeed;
 

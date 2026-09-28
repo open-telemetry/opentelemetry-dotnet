@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-namespace OpenTelemetry.Configuration;
+namespace OpenTelemetry.Configuration.Declarative;
 
 /// <summary>
 /// The base class for a provider that creates <typeparamref name="TComponent"/> instances from a
@@ -21,7 +21,7 @@ internal abstract class PluginComponentProvider<TComponent>
     /// <remarks>
     /// Called for every component the configuration names; the registry does not cache results,
     /// and providers should not cache the value they return. Throw a
-    /// <see cref="Declarative.DeclarativeConfigurationException"/> when the supplied properties do
+    /// <see cref="DeclarativeConfigurationException"/> when the supplied properties do
     /// not satisfy the component's configuration schema.
     /// </remarks>
     /// <param name="properties">The configuration properties for the component.</param>

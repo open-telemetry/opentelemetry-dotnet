@@ -31,14 +31,14 @@ public sealed class PrometheusExporterMeterProviderBuilderExtensionsTests
 
     [Fact]
     public void TranslationStrategy_DefaultsToUnderscoreEscapingWithSuffixes()
-        => Assert.Equal(PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes, new PrometheusAspNetCoreOptions().TranslationStrategy);
+        => Assert.Equal(PrometheusAspNetCoreTranslationStrategy.UnderscoreEscapingWithSuffixes, new PrometheusAspNetCoreOptions().TranslationStrategy);
 
     [Fact]
     public void TranslationStrategy_DelegatesToExporterOptions()
     {
         var options = new PrometheusAspNetCoreOptions
         {
-            TranslationStrategy = PrometheusTranslationStrategy.NoTranslation,
+            TranslationStrategy = PrometheusAspNetCoreTranslationStrategy.NoTranslation,
         };
 
         Assert.Equal(PrometheusTranslationStrategy.NoTranslation, options.ExporterOptions.TranslationStrategy);

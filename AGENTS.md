@@ -26,7 +26,7 @@ dotnet test test/OpenTelemetry.Tests/OpenTelemetry.Tests.csproj
 dotnet test test/OpenTelemetry.Tests/OpenTelemetry.Tests.csproj --filter "FullyQualifiedName~MyTestName"
 ```
 
-**Test for a specific TFM** (Windows also supports `net462`):
+**Test for a specific TFM** (Windows also supports `net472`):
 
 ```sh
 dotnet test --framework net10.0
@@ -64,7 +64,7 @@ python3 ./build/scripts/sanitycheck.py
   violations fail the build.
 - Tests run **serially** by default
   (`build/xunit.runner.json`: `maxParallelThreads: 1`).
-- `net462` tests only run on Windows.
+- `net472` tests only run on Windows.
 
 ---
 
@@ -132,7 +132,7 @@ services.AddOpenTelemetry()
 - Production libraries use `$(TargetFrameworksForLibraries)` - All supported versions
   of .NET plus `netstandard2.0` and `net462`.
 - Tests use `$(TargetFrameworksForTests)` = All supported versions
-  of .NET plus `net462` on Windows.
+  of .NET plus `net472` on Windows.
 - Set these via the shared MSBuild properties rather than hardcoding in `.csproj`.
 
 ### Experimental features

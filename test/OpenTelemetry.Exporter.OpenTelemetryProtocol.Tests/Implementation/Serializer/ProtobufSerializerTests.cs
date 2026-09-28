@@ -90,6 +90,95 @@ public class ProtobufSerializerTests
             () => ProtobufSerializer.WriteCompactLength(buffer, LengthPosition, contentPosition + ContentLength));
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(16383)]
+    public void WriteShortReservedLength_ShortContentIsNotMoved(int contentLength)
+    {
+        var buffer = new byte[contentLength + 64];
+        const int LengthPosition = 3;
+
+        var contentPosition = LengthPosition + ProtobufSerializer.ReserveSizeForShortLength;
+        FillContent(buffer, contentPosition, contentLength);
+
+        var writePosition = ProtobufSerializer.WriteShortReservedLength(buffer, LengthPosition, contentPosition + contentLength);
+
+        // The two reserved bytes are enough, so nothing shifts.
+        Assert.Equal(contentPosition + contentLength, writePosition);
+        Assert.Equal((uint)contentLength, ReadVarInt32(buffer, LengthPosition, out var lengthSize));
+        Assert.Equal(ProtobufSerializer.ReserveSizeForShortLength, lengthSize);
+        AssertContent(buffer, contentPosition, contentLength);
+    }
+
+    [Theory]
+    [InlineData(0, new byte[] { 0x80, 0x00 })]
+    [InlineData(1, new byte[] { 0x81, 0x00 })]
+    [InlineData(127, new byte[] { 0xFF, 0x00 })]
+    [InlineData(128, new byte[] { 0x80, 0x01 })]
+    [InlineData(16383, new byte[] { 0xFF, 0x7F })]
+    public void WriteShortReservedLength_WritesCorrectBytes(int contentLength, byte[] expectedBytes)
+    {
+#if NET
+        Assert.NotNull(expectedBytes);
+#else
+        if (expectedBytes == null)
+        {
+            throw new ArgumentNullException(nameof(expectedBytes));
+        }
+#endif
+
+        var buffer = new byte[16];
+
+        var writePosition = ProtobufSerializer.WriteShortReservedLength(buffer, 0, ProtobufSerializer.ReserveSizeForShortLength + contentLength);
+
+        Assert.Equal(ProtobufSerializer.ReserveSizeForShortLength + contentLength, writePosition);
+        Assert.Equal(expectedBytes[0], buffer[0]);
+        Assert.Equal(expectedBytes[1], buffer[1]);
+    }
+
+    [Theory]
+    [InlineData(16384, 3)]
+    [InlineData(100000, 3)]
+    [InlineData(2097151, 3)]
+    [InlineData(2097152, 4)]
+    public void WriteShortReservedLength_LongContentIsShiftedToMakeRoom(int contentLength, int expectedLengthSize)
+    {
+        var buffer = new byte[contentLength + 64];
+        const int LengthPosition = 3;
+
+        var contentPosition = LengthPosition + ProtobufSerializer.ReserveSizeForShortLength;
+        FillContent(buffer, contentPosition, contentLength);
+
+        var writePosition = ProtobufSerializer.WriteShortReservedLength(buffer, LengthPosition, contentPosition + contentLength);
+
+        var shift = expectedLengthSize - ProtobufSerializer.ReserveSizeForShortLength;
+
+        Assert.Equal(contentPosition + contentLength + shift, writePosition);
+
+        // The length prefix occupies exactly the bytes ahead of the content...
+        Assert.Equal((uint)contentLength, ReadVarInt32(buffer, LengthPosition, out var lengthSize));
+        Assert.Equal(expectedLengthSize, lengthSize);
+
+        // ...and the content survived the move intact.
+        AssertContent(buffer, LengthPosition + expectedLengthSize, contentLength);
+    }
+
+    [Fact]
+    public void WriteShortReservedLength_ThrowsWhenBufferCannotHoldTheShiftedContent()
+    {
+        // One byte short of what the wider length prefix needs.
+        const int ContentLength = 20000;
+        const int LengthPosition = 0;
+
+        var buffer = new byte[LengthPosition + ProtobufSerializer.ReserveSizeForShortLength + ContentLength];
+        var contentPosition = LengthPosition + ProtobufSerializer.ReserveSizeForShortLength;
+
+        // The serializers translate this into a buffer resize and a retry.
+        Assert.Throws<ArgumentException>(
+            () => ProtobufSerializer.WriteShortReservedLength(buffer, LengthPosition, contentPosition + ContentLength));
+    }
+
     [Fact]
     public void WriteLength_WritesCorrectly()
     {
@@ -439,6 +528,235 @@ public class ProtobufSerializerTests
     }
 
     [Fact]
+    public void WriteNestedStringWithTag_String_EmptyString_WritesCorrectly()
+    {
+        var buffer = new byte[16];
+
+        var position = ProtobufSerializer.WriteNestedStringWithTag(
+            buffer,
+            0,
+            ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value,
+            ProtobufOtlpCommonFieldNumberConstants.AnyValue_String_Value,
+            string.Empty);
+
+        // Outer tag, outer length (0 content + 2 for the inner tag/length), inner tag, inner length (0).
+        Assert.Equal(4, position);
+        Assert.Equal([0x12, 0x02, 0x0A, 0x00], buffer.AsSpan(0, 4).ToArray());
+
+        var (value, endPosition) = ReadNestedString(buffer, 0);
+        Assert.Equal(string.Empty, value);
+        Assert.Equal(position, endPosition);
+    }
+
+    [Fact]
+    public void WriteNestedStringWithTag_String_ShortAsciiString_UsesSingleByteLengths()
+    {
+        var buffer = new byte[16];
+
+        var position = ProtobufSerializer.WriteNestedStringWithTag(
+            buffer,
+            0,
+            ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value,
+            ProtobufOtlpCommonFieldNumberConstants.AnyValue_String_Value,
+            "Hello");
+
+        Assert.Equal(9, position);
+        Assert.Equal(0x12, buffer[0]); // Outer tag
+        Assert.Equal(0x07, buffer[1]); // Outer length: 5 content bytes + 2 for inner tag/length
+        Assert.Equal(0x0A, buffer[2]); // Inner tag
+        Assert.Equal(0x05, buffer[3]); // Inner length
+
+        var (value, endPosition) = ReadNestedString(buffer, 0);
+        Assert.Equal("Hello", value);
+        Assert.Equal(position, endPosition);
+    }
+
+    [Fact]
+    public void WriteNestedStringWithTag_String_UnicodeString_RoundTrips()
+    {
+        var buffer = new byte[32];
+        var unicodeString = "\u3053\u3093\u306b\u3061\u306f"; // "Hello" in Japanese, 3 bytes/char in UTF-8.
+
+        var position = ProtobufSerializer.WriteNestedStringWithTag(
+            buffer,
+            0,
+            ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value,
+            ProtobufOtlpCommonFieldNumberConstants.AnyValue_String_Value,
+            unicodeString);
+
+        Assert.Equal(4 + 15, position); // Two tags, two single-byte lengths, 15 content bytes.
+
+        var (value, endPosition) = ReadNestedString(buffer, 0);
+        Assert.Equal(unicodeString, value);
+        Assert.Equal(position, endPosition);
+    }
+
+    [Fact]
+    public void WriteNestedStringWithTag_String_AtFastPathBoundary_UsesSingleByteLengths()
+    {
+        // The largest ASCII string for which both length prefixes are guaranteed
+        // to fit in a single byte, exercising the boundary of the fast path.
+        var value = new string('a', 41);
+        var buffer = new byte[64];
+
+        var position = ProtobufSerializer.WriteNestedStringWithTag(
+            buffer,
+            0,
+            ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value,
+            ProtobufOtlpCommonFieldNumberConstants.AnyValue_String_Value,
+            value);
+
+        Assert.Equal(0x12, buffer[0]);
+        Assert.Equal(43, buffer[1]); // 41 content bytes + 2
+        Assert.Equal(0x0A, buffer[2]);
+        Assert.Equal(41, buffer[3]);
+
+        var (decoded, endPosition) = ReadNestedString(buffer, 0);
+        Assert.Equal(value, decoded);
+        Assert.Equal(position, endPosition);
+    }
+
+    [Fact]
+    public void WriteNestedStringWithTag_String_JustOverFastPathBoundary_RoundTrips()
+    {
+        // One character past the fast path threshold: falls back to the
+        // measure-then-write slow path, but must still produce a correct result.
+        var value = new string('a', 42);
+        var buffer = new byte[64];
+
+        var position = ProtobufSerializer.WriteNestedStringWithTag(
+            buffer,
+            0,
+            ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value,
+            ProtobufOtlpCommonFieldNumberConstants.AnyValue_String_Value,
+            value);
+
+        var (decoded, endPosition) = ReadNestedString(buffer, 0);
+        Assert.Equal(value, decoded);
+        Assert.Equal(position, endPosition);
+    }
+
+    [Fact]
+    public void WriteNestedStringWithTag_String_LongAsciiString_MultiByteLengths()
+    {
+        // Long enough that both the inner and outer length prefixes need more
+        // than a single varint byte, forcing the slow path.
+        var value = new string('a', 1000);
+        var buffer = new byte[1100];
+
+        var position = ProtobufSerializer.WriteNestedStringWithTag(
+            buffer,
+            0,
+            ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value,
+            ProtobufOtlpCommonFieldNumberConstants.AnyValue_String_Value,
+            value);
+
+        var (decoded, endPosition) = ReadNestedString(buffer, 0);
+        Assert.Equal(value, decoded);
+        Assert.Equal(position, endPosition);
+    }
+
+    [Fact]
+    public void WriteNestedStringWithTag_String_LongUnicodeString_RoundTrips()
+    {
+        // More than the fast path character threshold, and multi-byte per
+        // character, so both the length computation and the encoding matter.
+        var value = string.Concat(Enumerable.Repeat("\u3042\u3044\u3046\u3048\u304A", 20)); // 100 chars, 3 bytes each.
+        var buffer = new byte[512];
+
+        var position = ProtobufSerializer.WriteNestedStringWithTag(
+            buffer,
+            0,
+            ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value,
+            ProtobufOtlpCommonFieldNumberConstants.AnyValue_String_Value,
+            value);
+
+        var (decoded, endPosition) = ReadNestedString(buffer, 0);
+        Assert.Equal(value, decoded);
+        Assert.Equal(position, endPosition);
+    }
+
+    [Fact]
+    public void WriteNestedStringWithTag_Span_ShortAsciiString_UsesSingleByteLengths()
+    {
+        var buffer = new byte[16];
+        ReadOnlySpan<char> value = "Hello";
+
+        var position = ProtobufSerializer.WriteNestedStringWithTag(
+            buffer,
+            0,
+            ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value,
+            ProtobufOtlpCommonFieldNumberConstants.AnyValue_String_Value,
+            value);
+
+        Assert.Equal(9, position);
+        Assert.Equal(0x12, buffer[0]);
+        Assert.Equal(0x07, buffer[1]);
+        Assert.Equal(0x0A, buffer[2]);
+        Assert.Equal(0x05, buffer[3]);
+
+        var (decoded, endPosition) = ReadNestedString(buffer, 0);
+        Assert.Equal("Hello", decoded);
+        Assert.Equal(position, endPosition);
+    }
+
+    [Fact]
+    public void WriteNestedStringWithTag_Span_SlicedSpan_RoundTrips()
+    {
+        var buffer = new byte[16];
+        var value = "012345".AsSpan(1, 3);
+
+        var position = ProtobufSerializer.WriteNestedStringWithTag(
+            buffer,
+            0,
+            ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value,
+            ProtobufOtlpCommonFieldNumberConstants.AnyValue_String_Value,
+            value);
+
+        var (decoded, endPosition) = ReadNestedString(buffer, 0);
+        Assert.Equal("123", decoded);
+        Assert.Equal(position, endPosition);
+    }
+
+    [Fact]
+    public void WriteNestedStringWithTag_Span_LongAsciiString_MultiByteLengths()
+    {
+        var value = new string('b', 1000).AsSpan();
+        var buffer = new byte[1100];
+
+        var position = ProtobufSerializer.WriteNestedStringWithTag(
+            buffer,
+            0,
+            ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value,
+            ProtobufOtlpCommonFieldNumberConstants.AnyValue_String_Value,
+            value);
+
+        var (decoded, endPosition) = ReadNestedString(buffer, 0);
+        Assert.Equal(value.ToString(), decoded);
+        Assert.Equal(position, endPosition);
+    }
+
+    [Fact]
+    public void WriteNestedStringWithTag_Span_EmptyString_WritesCorrectly()
+    {
+        var buffer = new byte[16];
+
+        var position = ProtobufSerializer.WriteNestedStringWithTag(
+            buffer,
+            0,
+            ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value,
+            ProtobufOtlpCommonFieldNumberConstants.AnyValue_String_Value,
+            []);
+
+        Assert.Equal(4, position);
+        Assert.Equal([0x12, 0x02, 0x0A, 0x00], buffer.AsSpan(0, 4).ToArray());
+
+        var (decoded, endPosition) = ReadNestedString(buffer, 0);
+        Assert.Equal(string.Empty, decoded);
+        Assert.Equal(position, endPosition);
+    }
+
+    [Fact]
     public void RentBuffer_ReturnsBufferOfAtLeastRequestedSize()
     {
         var buffer = ProtobufSerializer.RentBuffer(1000);
@@ -522,6 +840,37 @@ public class ProtobufSerializerTests
 
             shift += 7;
         }
+    }
+
+    /// <summary>
+    /// Decodes a nested message written by <c>WriteNestedStringWithTag</c>: an outer
+    /// length-delimited field (the <c>KeyValue.Value</c>/<c>ArrayValue</c> entry) that
+    /// contains exactly one inner length-delimited field (the <c>AnyValue.string_value</c>).
+    /// Validates that the outer length exactly spans the inner tag, length, and content,
+    /// then returns the decoded string and the position just past it.
+    /// </summary>
+    private static (string Value, int EndPosition) ReadNestedString(byte[] buffer, int position)
+    {
+        _ = ReadVarInt32(buffer, position, out var outerTagSize);
+        position += outerTagSize;
+
+        var outerLength = ReadVarInt32(buffer, position, out var outerLengthSize);
+        position += outerLengthSize;
+
+        var innerStart = position;
+
+        _ = ReadVarInt32(buffer, position, out var innerTagSize);
+        position += innerTagSize;
+
+        var innerLength = ReadVarInt32(buffer, position, out var innerLengthSize);
+        position += innerLengthSize;
+
+        var value = Encoding.UTF8.GetString(buffer, position, (int)innerLength);
+        position += (int)innerLength;
+
+        Assert.Equal((uint)(position - innerStart), outerLength);
+
+        return (value, position);
     }
 
     private sealed class TrackingArrayPool : ArrayPool<byte>

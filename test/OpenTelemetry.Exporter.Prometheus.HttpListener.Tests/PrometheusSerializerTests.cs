@@ -11,6 +11,7 @@ using System.Text.RegularExpressions;
 using OpenTelemetry.Exporter.Prometheus.Serialization;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.Prometheus.Tests;
 
@@ -1390,12 +1391,8 @@ public sealed partial class PrometheusSerializerTests
     [Fact]
     public void WriteMetricSerializesCollidingStaticMeterTagValuesUsingInvariantFormatting()
     {
-        var previousCulture = CultureInfo.CurrentCulture;
-
-        try
+        using (CultureSwitcher.UseCulture("fr-FR"))
         {
-            CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("fr-FR");
-
             var output = WriteGaugeMetricWithMeterTags(
                 new("meter tag", 1.23m),
                 new("meter_tag", 4.56m));
@@ -1404,10 +1401,6 @@ public sealed partial class PrometheusSerializerTests
                 "# TYPE test_gauge gauge\n"
                  + "test_gauge{otel_scope_name=\"test_meter\",otel_scope_meter_tag=\"1.23;4.56\"} 123\n",
                 output);
-        }
-        finally
-        {
-            CultureInfo.CurrentCulture = previousCulture;
         }
     }
 

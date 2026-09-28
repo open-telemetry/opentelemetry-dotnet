@@ -1120,6 +1120,29 @@ public sealed class LogRecordTests
         Assert.Equal(localNow.ToUniversalTime(), record.ObservedTimestamp);
     }
 
+    [Fact]
+    public void BufferSnapshotsAttributeSourceCountOnce()
+    {
+        var attribute = new KeyValuePair<string, object?>("key", "value");
+        var attributeStorage = new List<KeyValuePair<string, object?>> { attribute };
+        var attributes = new CountOnceReadOnlyList<KeyValuePair<string, object?>>(attributeStorage);
+
+        var logRecord = new LogRecord
+        {
+            AttributeStorage = attributeStorage,
+            Attributes = attributes,
+        };
+
+        logRecord.Buffer();
+
+        Assert.Equal(1, attributes.CountAccesses);
+        Assert.Same(attributeStorage, logRecord.Attributes);
+
+        Assert.Equal(2, attributeStorage.Count);
+        Assert.Equal(attribute, attributeStorage[0]);
+        Assert.Equal(attribute, attributeStorage[1]);
+    }
+
     private static ILoggerFactory InitializeLoggerFactory(out List<LogRecord> exportedItems, Action<OpenTelemetryLoggerOptions>? configure = null)
     {
         var items = exportedItems = [];
@@ -1209,6 +1232,27 @@ public sealed class LogRecordTests
                 yield return this[i];
             }
         }
+
+        IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+    }
+
+    // Deliberately does not implement ICollection<T> to exercise fallback path using indexer
+    private sealed class CountOnceReadOnlyList<T>(IReadOnlyList<T> list) : IReadOnlyList<T>
+    {
+        public int CountAccesses { get; private set; }
+
+        public int Count
+        {
+            get
+            {
+                this.CountAccesses++;
+                return list.Count;
+            }
+        }
+
+        public T this[int index] => list[index];
+
+        public IEnumerator<T> GetEnumerator() => list.GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
     }

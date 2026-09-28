@@ -322,6 +322,7 @@ OpenTelemetry .NET SDK has provided the following built-in samplers:
 
 * [AlwaysOffSampler](../../../src/OpenTelemetry/Trace/Sampler/AlwaysOffSampler.cs)
 * [AlwaysOnSampler](../../../src/OpenTelemetry/Trace/Sampler/AlwaysOnSampler.cs)
+* [AlwaysRecordSampler](../../../src/OpenTelemetry/Trace/Sampler/AlwaysRecordSampler.cs)
 * [ParentBasedSampler](../../../src/OpenTelemetry/Trace/Sampler/ParentBasedSampler.cs)
 * [TraceIdRatioBasedSampler](../../../src/OpenTelemetry/Trace/Sampler/TraceIdRatioBasedSampler.cs)
 

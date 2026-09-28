@@ -84,7 +84,7 @@ internal sealed class PrometheusExporterMiddleware
                 Negotiate(requestHeaders),
                 this.exporter.TranslationStrategy);
 
-            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(protocol);
+            var collectionResponse = await this.exporter.CollectionManager.EnterCollect(protocol, linkedCts.Token);
 
             try
             {
@@ -107,7 +107,11 @@ internal sealed class PrometheusExporterMiddleware
                 if (!collectionResponse.Succeeded)
                 {
                     PrometheusExporterEventSource.Log.ScrapeFailed();
-                    response.StatusCode = StatusCodes.Status500InternalServerError;
+
+                    if (!response.HasStarted)
+                    {
+                        response.StatusCode = StatusCodes.Status500InternalServerError;
+                    }
                 }
                 else
                 {

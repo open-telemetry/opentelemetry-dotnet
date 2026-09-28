@@ -91,7 +91,7 @@ public sealed class DeclarativeConfigurationDocumentParityTests
         // so binding the real environment would make these assertions machine-dependent.
         var properties = DeclarativeConfigurationReader.Read(new FilePath(path), _ => null).Properties;
 
-        return AssertPresent(properties.GetProperties("vendor"));
+        return AssertPresent(properties.GetMapping("vendor"));
     }
 
     private static T AssertPresent<T>(ConfigValueResult<T> result)

@@ -7,6 +7,30 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Avoid closure allocations when serializing cached metric metadata.
+  ([#7841](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7841))
+
+* The OTLP exporter now omits `HistogramDataPoint.sum` on the wire (rather
+  than serializing `0`) for histograms that do not record a sum, per
+  `metrics.proto`'s field semantics.
+  ([#7557](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7557))
+
+## 1.19.1
+
+Released 2026-Sep-21
+
+## 1.19.1-rc.1
+
+Released 2026-Sep-21
+
+## 1.19.0
+
+Released 2026-Sep-18
+
+## 1.19.0-rc.1
+
+Released 2026-Sep-18
+
 * If an exception is thrown when serializing an attribute, the attribute will
   now be dropped.
   ([#7688](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7688))
@@ -25,10 +49,9 @@ Notes](../../RELEASENOTES.md).
   for PEM-encoded certificates that only contain a public key.
   ([#7693](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7693))
 
-* The OTLP exporter now omits `HistogramDataPoint.sum` on the wire (rather
-  than serializing `0`) for histograms that do not record a sum, per
-  `metrics.proto`'s field semantics.
-  ([#7557](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7557))
+* Prevented oversized metric metadata from being cached when it cannot fit
+  within the configured request size.
+  ([#7752](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7752))
 
 ## 1.18.0
 

@@ -249,18 +249,18 @@ public readonly struct Baggage : IEquatable<Baggage>
             return this.RemoveBaggage(name);
         }
 
-        if (this.baggage != null &&
-            this.baggage.TryGetValue(name, out var existingValue) &&
-            existingValue == value)
+        string? existingValue = null;
+        var keyExists = this.baggage != null && this.baggage.TryGetValue(name, out existingValue);
+
+        if (keyExists && existingValue == value)
         {
             return this;
         }
 
-        return new Baggage(
-            new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.Ordinal)
-            {
-                [name] = value,
-            });
+        var baggageCopy = this.CopyBaggage(additionalCapacity: keyExists ? 0 : 1);
+        baggageCopy[name] = value;
+
+        return new Baggage(baggageCopy);
     }
 
     /// <summary>
@@ -297,22 +297,22 @@ public readonly struct Baggage : IEquatable<Baggage>
                 var currentBaggage = newBaggage ?? this.baggage;
                 if (currentBaggage?.ContainsKey(item.Key) == true)
                 {
-                    newBaggage ??= new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.Ordinal);
+                    newBaggage ??= this.CopyBaggage(additionalCapacity: 0);
                     newBaggage.Remove(item.Key);
                 }
             }
             else
             {
                 var currentBaggage = newBaggage ?? this.baggage;
+                string? existingValue = null;
+                var keyExists = currentBaggage != null && currentBaggage.TryGetValue(item.Key, out existingValue);
 
-                if (currentBaggage != null &&
-                    currentBaggage.TryGetValue(item.Key, out var existingValue) &&
-                    existingValue == item.Value)
+                if (keyExists && existingValue == item.Value)
                 {
                     continue;
                 }
 
-                newBaggage ??= new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.Ordinal);
+                newBaggage ??= this.CopyBaggage(additionalCapacity: keyExists ? 0 : 1);
                 newBaggage[item.Key] = item.Value;
             }
         }
@@ -417,8 +417,9 @@ public readonly struct Baggage : IEquatable<Baggage>
     private Baggage SetBaggage(ReadOnlySpan<KeyValuePair<string, string?>> baggageItems)
     {
         Dictionary<string, string>? newBaggage = null;
-        foreach (ref readonly var item in baggageItems)
+        for (var i = 0; i < baggageItems.Length; i++)
         {
+            ref readonly var item = ref baggageItems[i];
             if (string.IsNullOrEmpty(item.Key))
             {
                 continue;
@@ -428,28 +429,45 @@ public readonly struct Baggage : IEquatable<Baggage>
                 var currentBaggage = newBaggage ?? this.baggage;
                 if (currentBaggage?.ContainsKey(item.Key) == true)
                 {
-                    newBaggage ??= new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.Ordinal);
+                    newBaggage ??= this.CopyBaggage(additionalCapacity: 0);
                     newBaggage.Remove(item.Key);
                 }
             }
             else
             {
                 var currentBaggage = newBaggage ?? this.baggage;
+                string? existingValue = null;
+                var keyExists = currentBaggage != null && currentBaggage.TryGetValue(item.Key, out existingValue);
 
-                if (currentBaggage != null &&
-                    currentBaggage.TryGetValue(item.Key, out var existingValue) &&
-                    existingValue == item.Value)
+                if (keyExists && existingValue == item.Value)
                 {
                     continue;
                 }
 
-                newBaggage ??= new Dictionary<string, string>(this.baggage ?? EmptyBaggage, StringComparer.Ordinal);
+                newBaggage ??= this.CopyBaggage(additionalCapacity: keyExists ? 0 : 1);
                 newBaggage[item.Key] = item.Value;
             }
         }
 
         // If nothing was changed return the current instance
         return newBaggage == null ? this : new Baggage(newBaggage);
+    }
+
+    private Dictionary<string, string> CopyBaggage(int additionalCapacity)
+    {
+        // additionalCapacity is used to avoid multiple resizes of the dictionary when adding new items.
+        var source = this.baggage;
+        var copy = new Dictionary<string, string>((source?.Count ?? 0) + additionalCapacity, StringComparer.Ordinal);
+
+        if (source != null)
+        {
+            foreach (var item in source)
+            {
+                copy.Add(item.Key, item.Value);
+            }
+        }
+
+        return copy;
     }
 
     private sealed class BaggageHolder

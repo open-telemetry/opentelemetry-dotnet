@@ -22,9 +22,7 @@ public sealed class OtelServiceNameEnvVarDetectorTests : IDisposable
 
     [Fact]
     public void OtelServiceNameEnvVar_EnvVarKey()
-    {
-        Assert.Equal("OTEL_SERVICE_NAME", OtelServiceNameEnvVarDetector.EnvVarKey);
-    }
+        => Assert.Equal("OTEL_SERVICE_NAME", OtelServiceNameEnvVarDetector.EnvVarKey);
 
     [Fact]
     public void OtelServiceNameEnvVar_Null()
@@ -36,6 +34,7 @@ public sealed class OtelServiceNameEnvVarDetectorTests : IDisposable
 
         // Assert
         Assert.Equal(Resource.Empty, resource);
+        Assert.Null(resource.SchemaUrl);
     }
 
     [Fact]
@@ -53,6 +52,7 @@ public sealed class OtelServiceNameEnvVarDetectorTests : IDisposable
         // Assert
         Assert.NotEqual(Resource.Empty, resource);
         Assert.Contains(new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceName, envVarValue), resource.Attributes);
+        Assert.StartsWith("https://opentelemetry.io/schemas/", resource.SchemaUrl, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -71,5 +71,6 @@ public sealed class OtelServiceNameEnvVarDetectorTests : IDisposable
 
         Assert.NotEqual(Resource.Empty, resource);
         Assert.Contains(new KeyValuePair<string, object>(ResourceSemanticConventions.AttributeServiceName, "my-service"), resource.Attributes);
+        Assert.StartsWith("https://opentelemetry.io/schemas/", resource.SchemaUrl, StringComparison.Ordinal);
     }
 }

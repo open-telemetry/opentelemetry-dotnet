@@ -24,11 +24,12 @@ OTEL_CONFIG_FILE=/path/to/otel-config.yaml
 
 ### 2. Wire it into your OTel setup
 
-**Recommended on `HostApplicationBuilder` / `WebApplicationBuilder`:**
+**On `IHostApplicationBuilder` (`WebApplicationBuilder` /**
+**`HostApplicationBuilder`) - recommended:**
 
 ```csharp
-builder.Configuration.AddOpenTelemetryDeclarativeConfiguration(); // reads OTEL_CONFIG_FILE
-builder.Services.AddOpenTelemetry()
+builder.AddOpenTelemetry()
+    .UseDeclarativeConfiguration()
     .WithTracing(b => b.AddSource("MyApp.*").AddConsoleExporter());
 ```
 
@@ -38,11 +39,13 @@ builder.Services.AddOpenTelemetry()
 hostBuilder.ConfigureAppConfiguration(b =>
     b.AddOpenTelemetryDeclarativeConfiguration("otel-config.yaml"));
 hostBuilder.ConfigureServices(services =>
-    services.AddOpenTelemetry().WithTracing(...));
+    services.AddOpenTelemetry()
+        .UseDeclarativeConfiguration("otel-config.yaml")
+        .WithTracing(...));
 ```
 
-**Alternative:** wire through `IOpenTelemetryBuilder` (reads `OTEL_CONFIG_FILE`
-when called without a path):
+**Without a host** (plain `IServiceCollection`), wire through
+`IOpenTelemetryBuilder` (reads `OTEL_CONFIG_FILE` when called without a path):
 
 ```csharp
 services.AddOpenTelemetry()
@@ -58,14 +61,8 @@ services.AddOpenTelemetry()
     .WithTracing(...);
 ```
 
-`UseDeclarativeConfiguration()` works best on modern hosts
-(`WebApplicationBuilder`, `HostApplicationBuilder`) where `IConfiguration` is
-already registered before `AddOpenTelemetry()` is called. With `HostBuilder`,
-use the `ConfigureAppConfiguration` approach instead so the YAML source is added
-before DI configuration is built. Calling `UseDeclarativeConfiguration()` twice
-on the same `IServiceCollection` is a no-op - the first file path wins and a
-warning is emitted via EventSource. Calling it with a different path does not
-replace the first registration.
+Calling `UseDeclarativeConfiguration()` twice on the same `IServiceCollection`
+is a no-op and the first file path wins.
 
 Only one declarative configuration file is supported per
 `IConfigurationBuilder`. Registering the same file again is a no-op. Registering
@@ -86,22 +83,80 @@ resource:
       value: "1.0.0"
 ```
 
+## Read the parsed document
+
+Applications and distributions can read the complete parsed document, including
+sections that this package retains but does not yet apply:
+
+```csharp
+var document =
+    serviceProvider.GetOpenTelemetryDeclarativeConfiguration();
+
+if (document is not null)
+{
+    if (document.Properties
+        .GetMapping("distribution")
+        .TryGetValue(out var distribution))
+    {
+        var name = distribution.GetString("name");
+    }
+}
+```
+
+Use the `IServiceProvider` overload after the application has been built. When
+no service provider is available, such as during registration, read the
+document from configuration instead:
+
+```csharp
+builder.Configuration
+    .AddOpenTelemetryDeclarativeConfiguration("otel-config.yaml");
+
+var document =
+    builder.Configuration.GetOpenTelemetryDeclarativeConfiguration();
+```
+
+If more than one declarative configuration file is found, the file with the
+highest priority is used and a warning is logged. Register only one file per
+application.
+
 ## Supported settings
 
-| YAML field | Effect |
-| --- | --- |
-| `disabled` | Disables the OpenTelemetry SDK when `true` |
-| `resource.attributes` | Adds structured resource attributes to all signals |
-| `resource.attributes_list` | Adds resource attributes from a pre-formatted `key=value` list |
+| YAML field | Effect | Application path | Later `IConfiguration` source overrides |
+| --- | --- | --- | --- |
+| `disabled` | Disables the OpenTelemetry SDK when `true` | Flat SDK key | Yes |
+| `resource.attributes` | Adds typed structured resource attributes to all signals | Typed resource detector | No |
+| `resource.attributes_list` | Adds resource attributes from a pre-formatted `key=value` list | Flat SDK key | Yes |
+| `resource.schema_url` | Contributes a schema URL to the resource (see below) | Typed resource detector | No |
+
+The following attribute types defined by the OTel configuration schema are
+supported for `resource.attributes`:
+
+- `string`
+- `bool`
+- `int` (stored as `long`)
+- `double`
+- `string_array` (stored as `string[]`)
+- `bool_array` (stored as `bool[]`)
+- `int_array` (stored as `long[]`)
+- `double_array` (stored as `double[]`)
 
 `resource.attributes_list` is treated as containing a `OTEL_RESOURCE_ATTRIBUTES`
 string that has not been percent-encoded and is passed through without
 modification. In particular, literal `+` in a value must be written as `%2B`,
-otherwise the SDK will decode it as a space character. Use `resource.attributes`
-when you need the encoding to be handled automatically.
+otherwise the SDK will decode it as a space character.
 
-Only string-valued `resource.attributes` are currently supported. Boolean,
-integer, double, and array attributes are reported and skipped.
+`resource.schema_url` is merged with the schema URLs contributed by other
+resource detectors, including the SDK's default resource, using the standard
+[resource merge rules](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md#merge).
+If the configured value differs from a schema URL contributed by another
+detector, the final resource has no schema URL.
+
+`resource.attributes` and `resource.schema_url` are only applied when using
+`UseDeclarativeConfiguration()` on an `IOpenTelemetryBuilder`. When the source
+is registered via `AddOpenTelemetryDeclarativeConfiguration()` alone (the
+source-only path), `resource.attributes` entries and `resource.schema_url` are
+not applied to the SDK resource; only `resource.attributes_list` and `disabled`
+take effect on that path.
 
 All other top-level sections (e.g. `tracer_provider`, `propagator`) are logged
 and are not applied. Structurally invalid content can fail configuration
@@ -149,16 +204,18 @@ value: "${PORT}"         # always resolves to a string
 When you call `UseDeclarativeConfiguration()` or
 `AddOpenTelemetryDeclarativeConfiguration()`, the YAML source is **appended
 after** all sources already registered on the builder at that point. That means
-declarative configuration **takes precedence over** environment variables,
-`appsettings.json`, and other sources that were registered earlier.
+flat settings projected by the declarative source **take precedence over**
+environment variables, `appsettings.json`, and other sources that were
+registered earlier.
 
-Sources you add **after** that call take precedence over YAML values (same as
-standard `IConfiguration` ordering).
+For those flat settings, sources added **after** the declarative source take
+precedence using standard `IConfiguration` ordering. The currently supported
+flat settings are `disabled` and `resource.attributes_list`.
 
-This layering applies between YAML and other kinds of configuration source
-(environment variables, `appsettings.json`, in-memory values, etc.). It
-does not apply between two declarative configuration files. Flat keys can be
-merged per key; the typed YAML document cannot, so exactly one document is used.
+This source ordering does not apply to model-driven settings such as
+`resource.attributes` and `resource.schema_url`, or between two declarative
+configuration files. Flat keys can be merged per key; the typed YAML document
+cannot, so exactly one document is used.
 
 ## Known current limitations
 
@@ -171,25 +228,26 @@ merged per key; the typed YAML document cannot, so exactly one document is used.
   Calling `IConfigurationRoot.Reload()` does not re-read the YAML file or change
   the configuration in use. The reload is ignored and a warning is emitted via
   EventSource.
-- The package uses standard `IConfiguration` source ordering. It does not yet
-  provide the specification's strict mode that ignores other SDK environment
-  variables when `OTEL_CONFIG_FILE` is set.
+- The package uses standard `IConfiguration` source ordering for flat keys. It
+  does not yet provide the specification's strict mode that ignores other SDK
+  environment variables when `OTEL_CONFIG_FILE` is set.
 - `UseDeclarativeConfiguration()` applies YAML values by extending the
-  `IConfiguration` registered at the time it is called. An application that
+  configuration available to it at the time it is called. An application that
   replaces its `IConfiguration` registration, or clears its configuration
   sources, *after* that call detaches the YAML source: flat keys lose the YAML
-  values while typed consumers still read the document. Register declarative
-  configuration after your configuration sources are settled, or use
-  `builder.Configuration.AddOpenTelemetryDeclarativeConfiguration()`, which adds
-  the source directly and is not affected.
-- Only string-valued structured resource attributes are emitted. Unsupported
-  typed attributes are skipped and reported.
+  values while typed consumers still read the document. Following
+  `builder.AddOpenTelemetry()` the source is added to `builder.Configuration`
+  directly, so a later `builder.Configuration.Sources.Clear()` detaches it;
+  following `services.AddOpenTelemetry()` (non-host) the source is added to the
+  `IConfiguration` resolved from the container, so a later registration of
+  `IConfiguration` detaches it. Register declarative configuration after your
+  configuration sources are settled.
 - For duplicate structured resource attribute names, the first occurrence wins.
-  A structured attribute also takes precedence over the same name in
-  `resource.attributes_list`, even when its type is not currently supported.
 - Unknown top-level sections are logged and are not applied, but their `${...}`
   references are resolved during the load, so an unset variable in one is
   reported.
+- `resource.detection/development` (the SDK's resource detector discovery
+  mechanism) is not yet implemented.
 
 ### Pitfalls to avoid
 

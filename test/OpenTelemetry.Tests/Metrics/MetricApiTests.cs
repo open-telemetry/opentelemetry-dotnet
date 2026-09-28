@@ -555,6 +555,7 @@ public class MetricApiTests : MetricTestsBase
         using var meter4 = new Meter("DefCompany.XyzProduct.ComponentC"); // Wildcard match supports matching multiple patterns.
         using var meter5 = new Meter("GhiCompany.qweProduct.ComponentN");
         using var meter6 = new Meter("SomeCompany.SomeProduct.SomeComponent");
+        using var meter7 = new Meter("ghiCompany.QWEProduct.componentN"); // Exact match is case insensitive.
 
         var exportedItems = new List<Metric>();
 
@@ -579,10 +580,11 @@ public class MetricApiTests : MetricTestsBase
         meter4.CreateObservableGauge("myGauge4", () => measurement);
         meter5.CreateObservableGauge("myGauge5", () => measurement);
         meter6.CreateObservableGauge("myGauge6", () => measurement);
+        meter7.CreateObservableGauge("myGauge7", () => measurement);
 
         meterProvider.ForceFlush(MaxTimeToAllowForFlush);
 
-        Assert.Equal(5, exportedItems.Count); // "SomeCompany.SomeProduct.SomeComponent" will not be subscribed.
+        Assert.Equal(6, exportedItems.Count); // "SomeCompany.SomeProduct.SomeComponent" will not be subscribed.
 
         if (hasView)
         {
@@ -597,6 +599,150 @@ public class MetricApiTests : MetricTestsBase
         Assert.Equal("myGauge3", exportedItems[2].Name);
         Assert.Equal("myGauge4", exportedItems[3].Name);
         Assert.Equal("myGauge5", exportedItems[4].Name);
+        Assert.Equal("myGauge7", exportedItems[5].Name);
+    }
+
+    [Fact]
+    public void MeterSourcesExactMatchIsCaseInsensitiveTest()
+    {
+        using var meter1 = new Meter("AbcCompany.XyzProduct.ComponentA");
+        using var meter2 = new Meter("defCompany.ABCProduct.componentB");
+        using var meter3 = new Meter("SomeCompany.SomeProduct.SomeComponent");
+
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter("abcCompany.xyzProduct.COMPONENTA") // Exact match is case insensitive.
+            .AddMeter("DefCompany.AbcProduct.ComponentB")
+            .AddInMemoryExporter(exportedItems));
+
+        var measurement = new Measurement<int>(100, new("name", "apple"), new("color", "red"));
+        meter1.CreateObservableGauge("myGauge1", () => measurement);
+        meter2.CreateObservableGauge("myGauge2", () => measurement);
+        meter3.CreateObservableGauge("myGauge3", () => measurement);
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        Assert.Equal(2, exportedItems.Count); // "SomeCompany.SomeProduct.SomeComponent" will not be subscribed.
+        Assert.Equal("myGauge1", exportedItems[0].Name);
+        Assert.Equal("myGauge2", exportedItems[1].Name);
+    }
+
+    [Fact]
+    public void MeterSourcesSingleTrailingWildcardMatchesCaseInsensitive()
+    {
+        using var matchingMeter = new Meter("AbcCompany.XyzProduct.ComponentA");
+        using var nonMatchingMeter = new Meter("DefCompany.XyzProduct.ComponentB");
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter("abccompany.*")
+            .AddInMemoryExporter(exportedItems));
+
+        var measurement = new Measurement<int>(100);
+        matchingMeter.CreateObservableGauge("matching", () => measurement);
+        nonMatchingMeter.CreateObservableGauge("nonMatching", () => measurement);
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        Assert.Single(exportedItems);
+        Assert.Equal("matching", exportedItems[0].Name);
+    }
+
+    [Fact]
+    public void MeterSourcesAllMetersWildcardMatchesAllMeters()
+    {
+        using var meter1 = new Meter("AbcCompany.XyzProduct.ComponentA");
+        using var meter2 = new Meter("DefCompany.XyzProduct.ComponentB");
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter("*")
+            .AddInMemoryExporter(exportedItems));
+
+        var measurement = new Measurement<int>(100);
+        meter1.CreateObservableGauge("gauge1", () => measurement);
+        meter2.CreateObservableGauge("gauge2", () => measurement);
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        Assert.Contains(exportedItems, m => m.Name == "gauge1");
+        Assert.Contains(exportedItems, m => m.Name == "gauge2");
+    }
+
+    [Fact]
+    public void MeterSourcesSingleGenuineWildcardMatches()
+    {
+        using var matchingMeter = new Meter("AbcCompany.XyzProduct.ComponentA");
+        using var nonMatchingMeter = new Meter("AbcCompany.XyzProduct.ComponentAA");
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter("AbcCompany.XyzProduct.Component?")
+            .AddInMemoryExporter(exportedItems));
+
+        var measurement = new Measurement<int>(100);
+        matchingMeter.CreateObservableGauge("matching", () => measurement);
+        nonMatchingMeter.CreateObservableGauge("nonMatching", () => measurement);
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        Assert.Single(exportedItems);
+        Assert.Equal("matching", exportedItems[0].Name);
+    }
+
+    [Fact]
+    public void MeterSourcesExactSingleTrailingWildcardAndGenuineWildcardMatch()
+    {
+        using var exactMeter = new Meter("AbcCompany.XyzProduct.ComponentA");
+        using var prefixMeter = new Meter("DefCompany.XyzProduct.ComponentB");
+        using var wildcardMeter = new Meter("GhiCompany.XyzProduct.ComponentC");
+        using var nonMatchingMeter = new Meter("JklCompany.XyzProduct.ComponentD");
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter("AbcCompany.XyzProduct.ComponentA")
+            .AddMeter("DefCompany.*")
+            .AddMeter("GhiCompany.XyzProduct.Component?")
+            .AddInMemoryExporter(exportedItems));
+
+        var measurement = new Measurement<int>(100);
+        exactMeter.CreateObservableGauge("exact", () => measurement);
+        prefixMeter.CreateObservableGauge("prefix", () => measurement);
+        wildcardMeter.CreateObservableGauge("wildcard", () => measurement);
+        nonMatchingMeter.CreateObservableGauge("nonMatching", () => measurement);
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        Assert.Equal(3, exportedItems.Count);
+        Assert.Equal("exact", exportedItems[0].Name);
+        Assert.Equal("prefix", exportedItems[1].Name);
+        Assert.Equal("wildcard", exportedItems[2].Name);
+    }
+
+    [Fact]
+    public void MeterSourcesMultipleTrailingWildcardsMatch()
+    {
+        using var meter1 = new Meter("AbcCompany.XyzProduct.ComponentA");
+        using var meter2 = new Meter("DefCompany.XyzProduct.ComponentB");
+        using var meter3 = new Meter("GhiCompany.XyzProduct.ComponentC");
+        var exportedItems = new List<Metric>();
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter("AbcCompany.*")
+            .AddMeter("DefCompany.*")
+            .AddInMemoryExporter(exportedItems));
+
+        var measurement = new Measurement<int>(100);
+        meter1.CreateObservableGauge("gauge1", () => measurement);
+        meter2.CreateObservableGauge("gauge2", () => measurement);
+        meter3.CreateObservableGauge("gauge3", () => measurement);
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        Assert.Equal(2, exportedItems.Count);
+        Assert.Equal("gauge1", exportedItems[0].Name);
+        Assert.Equal("gauge2", exportedItems[1].Name);
     }
 #endif
 
@@ -1532,6 +1678,74 @@ public class MetricApiTests : MetricTestsBase
         {
             Assert.Equal(145, sumReceived);
         }
+    }
+
+    [Theory]
+    [InlineData(true, ThreadStaticStorage.MaxTagCacheSize + 1)]
+    [InlineData(false, ThreadStaticStorage.MaxTagCacheSize + 1)]
+    [InlineData(true, ThreadStaticStorage.MaxLargeTagCacheSize + 1)]
+    [InlineData(false, ThreadStaticStorage.MaxLargeTagCacheSize + 1)]
+    public void HighCardinalityTagsAboveMaxTagCacheSizeProduceDistinctMetricPoints(bool exportDelta, int tagCount)
+    {
+        // ThreadStaticStorage caches per-length tag arrays for up to
+        // MaxTagCacheSize tags and falls back to grow-on-demand buffers for
+        // any additional tags, up to MaxLargeTagCacheSize. Above that it
+        // allocates per measurement again. Run just above both thresholds to
+        // exercise each fallback and confirm distinct tag sets are not aliased
+        // to the same underlying array.
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter($"{Utils.GetCurrentMethodName()}.{exportDelta}.{tagCount}");
+        var counterLong = meter.CreateCounter<long>("Counter");
+
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(exportedItems, metricReaderOptions =>
+            {
+                metricReaderOptions.TemporalityPreference = exportDelta ? MetricReaderTemporalityPreference.Delta : MetricReaderTemporalityPreference.Cumulative;
+            }));
+
+        KeyValuePair<string, object?>[] BuildTags(string distinguishingValue)
+        {
+            var tags = new KeyValuePair<string, object?>[tagCount];
+            for (var i = 0; i < tagCount - 1; i++)
+            {
+                // Zero padded, so insertion order matches the ordinal sort
+                // order the MetricPoint stores tags in.
+                tags[i] = new KeyValuePair<string, object?>($"Key{i:D3}", $"Value{i}");
+            }
+
+            tags[tagCount - 1] = new KeyValuePair<string, object?>("KeyDistinguishing", distinguishingValue);
+            return tags;
+        }
+
+        // Two distinct tag sets, each measured twice, and each repeated
+        // measurement uses a different in-memory order for the shared tags to
+        // also confirm order-insensitivity still holds at this tag count.
+        var firstTags = BuildTags("First");
+        var secondTags = BuildTags("Second");
+        var firstTagsReordered = (KeyValuePair<string, object?>[])firstTags.Clone();
+        Array.Reverse(firstTagsReordered, 0, tagCount - 1);
+        var secondTagsReordered = (KeyValuePair<string, object?>[])secondTags.Clone();
+        Array.Reverse(secondTagsReordered, 0, tagCount - 1);
+
+        counterLong.Add(5, firstTags);
+        counterLong.Add(10, firstTagsReordered);
+        counterLong.Add(20, secondTags);
+        counterLong.Add(40, secondTagsReordered);
+
+        meterProvider.ForceFlush(MaxTimeToAllowForFlush);
+
+        Assert.Equal(2, GetNumberOfMetricPoints(exportedItems));
+
+        List<KeyValuePair<string, object?>> expectedTagsForFirstMetricPoint = [.. firstTags];
+        List<KeyValuePair<string, object?>> expectedTagsForSecondMetricPoint = [.. secondTags];
+
+        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForFirstMetricPoint, 1);
+        CheckTagsForNthMetricPoint(exportedItems, expectedTagsForSecondMetricPoint, 2);
+
+        var sumReceived = GetLongSum(exportedItems);
+        Assert.Equal(75, sumReceived);
     }
 
     [Theory]

@@ -14,11 +14,22 @@ internal sealed class ThreadStaticStorage
 {
     internal const int MaxTagCacheSize = 8;
 
+    // Tag sets longer than this are not cached, so a one-off measurement with a very
+    // large tag set cannot leave a large array rooted for the lifetime of the thread.
+    internal const int MaxLargeTagCacheSize = 64;
+
     [ThreadStatic]
     private static ThreadStaticStorage? storage;
 
     private readonly TagStorage[] primaryTagStorage = new TagStorage[MaxTagCacheSize];
     private readonly TagStorage[] secondaryTagStorage = new TagStorage[MaxTagCacheSize];
+
+    // Grow-on-demand buffers for measurements carrying between MaxTagCacheSize
+    // and MaxLargeTagCacheSize tags. Without these, every such measurement
+    // allocates a new array (twice, for the filtered paths which also trim).
+    private KeyValuePair<string, object?>[]? largePrimaryTagStorage;
+    private KeyValuePair<string, object?>[]? largeTrimmedTagStorage;
+    private KeyValuePair<string, object?>[]? largeSecondaryTagStorage;
 
     private ThreadStaticStorage()
     {
@@ -43,7 +54,7 @@ internal sealed class ThreadStaticStorage
 
         tagKeysAndValues = tagLength <= MaxTagCacheSize
             ? this.primaryTagStorage[tagLength - 1].TagKeysAndValues
-            : (new KeyValuePair<string, object?>[tagLength]);
+            : Rent(ref this.largePrimaryTagStorage, tagLength);
 
         tags.CopyTo(tagKeysAndValues);
     }
@@ -66,7 +77,7 @@ internal sealed class ThreadStaticStorage
             ? null
             : maxLength <= MaxTagCacheSize
                 ? this.primaryTagStorage[maxLength - 1].TagKeysAndValues
-                : (new KeyValuePair<string, object?>[maxLength]);
+                : Rent(ref this.largePrimaryTagStorage, maxLength);
 
         actualLength = 0;
         for (var n = 0; n < tagLength; n++)
@@ -107,7 +118,7 @@ internal sealed class ThreadStaticStorage
             }
             else
             {
-                var tmpTagKeysAndValues = new KeyValuePair<string, object?>[actualLength];
+                var tmpTagKeysAndValues = Rent(ref this.largeTrimmedTagStorage, actualLength);
 
                 Array.Copy(tagKeysAndValues, 0, tmpTagKeysAndValues, 0, actualLength);
 
@@ -134,7 +145,7 @@ internal sealed class ThreadStaticStorage
             ? null
             : maxLength <= MaxTagCacheSize
                 ? this.primaryTagStorage[maxLength - 1].TagKeysAndValues
-                : (new KeyValuePair<string, object?>[maxLength]);
+                : Rent(ref this.largePrimaryTagStorage, maxLength);
 
         actualLength = 0;
         for (var n = 0; n < tagLength; n++)
@@ -167,7 +178,7 @@ internal sealed class ThreadStaticStorage
             }
             else
             {
-                var tmpTagKeysAndValues = new KeyValuePair<string, object?>[actualLength];
+                var tmpTagKeysAndValues = Rent(ref this.largeTrimmedTagStorage, actualLength);
 
                 Array.Copy(tagKeysAndValues, 0, tmpTagKeysAndValues, 0, actualLength);
 
@@ -186,9 +197,32 @@ internal sealed class ThreadStaticStorage
 
         clonedTagKeysAndValues = tagLength <= MaxTagCacheSize
             ? this.secondaryTagStorage[tagLength - 1].TagKeysAndValues
-            : (new KeyValuePair<string, object?>[tagLength]);
+            : Rent(ref this.largeSecondaryTagStorage, tagLength);
 
         Array.Copy(inputTagKeysAndValues, 0, clonedTagKeysAndValues, 0, tagLength);
+    }
+
+    // These buffers are handed to Tags, which hashes and compares the whole
+    // array, so a buffer must be exactly `length` long rather than merely large
+    // enough. A stream whose tag count varies within the cacheable range
+    // therefore re-allocates when the count changes; a stream with a stable tag
+    // count (the normal case) allocates once per thread.
+    private static KeyValuePair<string, object?>[] Rent(
+        ref KeyValuePair<string, object?>[]? cache,
+        int length)
+    {
+        if (length > MaxLargeTagCacheSize)
+        {
+            return new KeyValuePair<string, object?>[length];
+        }
+
+        var buffer = cache;
+        if (buffer == null || buffer.Length != length)
+        {
+            buffer = cache = new KeyValuePair<string, object?>[length];
+        }
+
+        return buffer;
     }
 
     internal sealed class TagStorage
