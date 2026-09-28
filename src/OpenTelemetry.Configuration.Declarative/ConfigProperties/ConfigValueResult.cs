@@ -102,8 +102,8 @@ public readonly struct ConfigValueResult<T> : IEquatable<ConfigValueResult<T>>
     }
 
     /// <inheritdoc/>
-    public bool Equals(ConfigValueResult<T> other)
-        => this.Outcome == other.Outcome
-        && EqualityComparer<T>.Default.Equals(this.Value!, other.Value!)
-        && this.Position == other.Position;
+    public bool Equals(ConfigValueResult<T> other) =>
+        this.Outcome == other.Outcome &&
+        EqualityComparer<T?>.Default.Equals(this.Value, other.Value) &&
+        this.Position == other.Position;
 }

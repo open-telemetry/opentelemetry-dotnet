@@ -67,7 +67,8 @@ public static class DeclarativeConfigurationBuilderExtensions
     // the same accessor instance in both DI and the configuration source.
     internal static IConfigurationBuilder AddOpenTelemetryDeclarativeConfiguration(
         this IConfigurationBuilder builder,
-        DeclarativeConfigurationDocumentAccessor accessor)
+        DeclarativeConfigurationDocumentAccessor accessor,
+        bool removeSourceOnFailure = false)
     {
         Guard.ThrowIfNull(builder);
 
@@ -92,7 +93,19 @@ public static class DeclarativeConfigurationBuilderExtensions
             return builder;
         }
 
-        builder.Sources.Add(new DeclarativeConfigurationSource(accessor));
+        var source = new DeclarativeConfigurationSource(accessor);
+        try
+        {
+            builder.Sources.Add(source);
+        }
+        catch when (removeSourceOnFailure)
+        {
+            // The DI overlay is transactional. ConfigurationManager may retain a source after its
+            // eager load fails, which would prevent a later valid first-source-wins registration.
+            builder.Sources.Remove(source);
+            throw;
+        }
+
         OpenTelemetryDeclarativeConfigurationEventSource.Log.SourceRegistered(accessor.FilePath.DisplayPath);
         return builder;
     }

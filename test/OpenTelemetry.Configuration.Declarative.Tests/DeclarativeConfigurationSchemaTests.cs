@@ -55,8 +55,6 @@ public sealed class DeclarativeConfigurationSchemaTests
             file_format: "1.0"
             resource:
               attributes:
-                - name: retained
-                  value: text
                 - name: array
                   type: {type}
                   value: {value}
@@ -64,7 +62,7 @@ public sealed class DeclarativeConfigurationSchemaTests
 
         var configuration = ReadConfiguration(yaml);
 
-        Assert.Equal("retained=text", configuration[DeclarativeConfigurationConverter.ResourceAttributesKey]);
+        Assert.DoesNotContain(DeclarativeConfigurationConverter.ResourceAttributesKey, configuration.Keys);
     }
 
     [Theory]
@@ -131,11 +129,12 @@ public sealed class DeclarativeConfigurationSchemaTests
     }
 
     [Theory]
-    [InlineData("\"1.0\"", "1.0")]
-    [InlineData("\"true\"", "true")]
-    [InlineData("!!str 0x3A", "0x3A")]
-    public void ResourceAttribute_ExplicitStringValue_IsProjected(string value, string expected)
+    [InlineData("\"1.0\"")]
+    [InlineData("\"true\"")]
+    [InlineData("!!str 0x3A")]
+    public void ResourceAttribute_ExplicitStringValue_IsAcceptedButNotProjectedFlat(string value)
     {
+        // Explicit string attributes go through DeclarativeResourceDetector, not the flat projection.
         var yaml = $"""
             file_format: "1.0"
             resource:
@@ -146,7 +145,7 @@ public sealed class DeclarativeConfigurationSchemaTests
 
         var configuration = ReadConfiguration(yaml);
 
-        Assert.Equal($"attribute={expected}", configuration[DeclarativeConfigurationConverter.ResourceAttributesKey]);
+        Assert.DoesNotContain(DeclarativeConfigurationConverter.ResourceAttributesKey, configuration.Keys);
     }
 
     [Fact]
@@ -225,7 +224,8 @@ public sealed class DeclarativeConfigurationSchemaTests
 
         var configuration = ReadConfiguration(yaml);
 
-        Assert.Equal("attribute=value", configuration[DeclarativeConfigurationConverter.ResourceAttributesKey]);
+        // Attributes go through DeclarativeResourceDetector, not the flat projection.
+        Assert.DoesNotContain(DeclarativeConfigurationConverter.ResourceAttributesKey, configuration.Keys);
     }
 
     [Theory]
@@ -309,10 +309,11 @@ public sealed class DeclarativeConfigurationSchemaTests
 
         var configuration = ReadConfiguration(yaml);
 
-        Assert.Equal(
-            "attribute=value\ninjected: true",
-            configuration[DeclarativeConfigurationConverter.ResourceAttributesKey]);
+        // The injected text is a literal string value - it cannot promote 'injected' to a top-level key.
         Assert.DoesNotContain(DeclarativeConfigurationConverter.DisabledKey, configuration.Keys);
+
+        // Attributes go through DeclarativeResourceDetector, not the flat projection.
+        Assert.DoesNotContain(DeclarativeConfigurationConverter.ResourceAttributesKey, configuration.Keys);
     }
 
     [Fact]

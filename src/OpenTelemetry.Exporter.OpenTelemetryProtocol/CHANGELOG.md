@@ -7,6 +7,9 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Avoid closure allocations when serializing cached metric metadata.
+  ([#7841](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7841))
+
 * Suppressed routine informational logs from the HTTP clients used by the OTLP
   exporters while preserving explicit application logging configuration.
   ([#7743](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7743))

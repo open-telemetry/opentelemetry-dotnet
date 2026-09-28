@@ -151,10 +151,9 @@ public sealed class DeclarativeConfigurationDocumentAcquisitionTests
         using var sp = services.BuildServiceProvider();
 
         using var listener = CreateErrorListener();
-        var ex1 = Assert.Throws<DeclarativeConfigurationException>(
-            () => sp.GetOpenTelemetryDeclarativeConfiguration());
-        var ex2 = Assert.Throws<DeclarativeConfigurationException>(
-            () => sp.GetOpenTelemetryDeclarativeConfiguration());
+
+        var ex1 = Assert.Throws<DeclarativeConfigurationException>(sp.GetOpenTelemetryDeclarativeConfiguration);
+        var ex2 = Assert.Throws<DeclarativeConfigurationException>(sp.GetOpenTelemetryDeclarativeConfiguration);
 
         Assert.Same(ex1, ex2);
         Assert.Single(listener.Messages, e => e.EventId == FailedToLoadConfigurationEventId);
@@ -172,10 +171,8 @@ public sealed class DeclarativeConfigurationDocumentAcquisitionTests
         Assert.Throws<DeclarativeConfigurationException>(() =>
             configuration.AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path));
 
-        var ex1 = Assert.Throws<DeclarativeConfigurationException>(
-            () => configuration.GetOpenTelemetryDeclarativeConfiguration());
-        var ex2 = Assert.Throws<DeclarativeConfigurationException>(
-            () => configuration.GetOpenTelemetryDeclarativeConfiguration());
+        var ex1 = Assert.Throws<DeclarativeConfigurationException>(configuration.GetOpenTelemetryDeclarativeConfiguration);
+        var ex2 = Assert.Throws<DeclarativeConfigurationException>(configuration.GetOpenTelemetryDeclarativeConfiguration);
 
         Assert.Same(ex1, ex2);
     }

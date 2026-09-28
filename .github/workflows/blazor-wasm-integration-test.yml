@@ -65,7 +65,7 @@ jobs:
         dotnet test test/OpenTelemetry.BlazorWasm.Tests/OpenTelemetry.BlazorWasm.Tests.csproj
         --configuration Release
         --framework ${env:TARGET_FRAMEWORK}
-        --logger:"GitHubActions;report-warnings=false"
+        --logger:"GitHubActions;report-warnings=false;summary-include-passed=false"
       env:
         TARGET_FRAMEWORK: ${{ matrix.version }}
 

@@ -11,13 +11,14 @@ public class InterlockedHelperTests
         var timeout = TimeSpan.FromSeconds(2);
         var value = double.NaN;
 
-        var task = Task.Run(() => InterlockedHelper.Add(ref value, 1d));
+        var task = Task.Run(() => InterlockedHelper.Add(ref value, 1d), TestContext.Current.CancellationToken);
 
 #if NET
-        await task.WaitAsync(timeout);
+        await task.WaitAsync(timeout, TestContext.Current.CancellationToken);
 #else
         using var cts = new CancellationTokenSource(timeout);
-        var completed = await Task.WhenAny(task, Task.Delay(timeout, cts.Token)) == task;
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, TestContext.Current.CancellationToken);
+        var completed = await Task.WhenAny(task, Task.Delay(timeout, linkedCts.Token)) == task;
         Assert.True(completed);
 #endif
 
