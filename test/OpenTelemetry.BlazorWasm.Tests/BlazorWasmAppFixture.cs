@@ -19,7 +19,7 @@ public sealed class BlazorWasmAppFixture : IAsyncLifetime
 
     internal OtlpHttpCollector Collector { get; private set; } = null!;
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         InstallPlaywright();
 
@@ -50,7 +50,7 @@ public sealed class BlazorWasmAppFixture : IAsyncLifetime
             });
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         if (this.Collector is not null)
         {

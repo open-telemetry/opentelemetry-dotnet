@@ -70,6 +70,10 @@ repository:
       affiliation: Grafana Labs
       social: https://github.com/martincostello
       primary: false
+    - name: Matthew Hensley
+      affiliation: Grafana Labs
+      social: https://github.com/matt-hensley
+      primary: false
     - name: "Piotr Kie\u0142kowicz"
       affiliation: Splunk
       social: https://github.com/Kielek

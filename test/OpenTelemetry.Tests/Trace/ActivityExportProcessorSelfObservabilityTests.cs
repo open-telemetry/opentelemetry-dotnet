@@ -54,7 +54,7 @@ public class ActivityExportProcessorSelfObservabilityTests
         var flushTask = Task.Run(() => processor.ForceFlush());
         try
         {
-            Assert.True(exportStarted.Wait(TimeSpan.FromSeconds(5)));
+            Assert.True(exportStarted.Wait(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken));
             meterProvider.ForceFlush();
 
             var points = GetMetricPoints(exportedMetrics);
@@ -107,7 +107,7 @@ public class ActivityExportProcessorSelfObservabilityTests
 
         // First span triggers the worker; wait for it to block in Export.
         StartAndStopActivities(source, 1);
-        Assert.True(exportStarted.Wait(TimeSpan.FromSeconds(5)));
+        Assert.True(exportStarted.Wait(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken));
 
         // Now the queue is being drained but the worker is blocked.
         // Subsequent spans will overflow the queue (size=1).

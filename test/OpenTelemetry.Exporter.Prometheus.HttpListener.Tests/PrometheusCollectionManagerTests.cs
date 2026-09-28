@@ -155,7 +155,7 @@ public sealed class PrometheusCollectionManagerTests
         try
         {
             // This should use the cache and ignore the second counter update.
-            var task = exporter.CollectionManager.EnterCollect(protocol);
+            var task = exporter.CollectionManager.EnterCollect(protocol, TestContext.Current.CancellationToken);
 
             if (cacheEnabled)
             {
@@ -246,7 +246,7 @@ public sealed class PrometheusCollectionManagerTests
 
         var protocol = GetProtocol(openMetricsRequested: false);
 
-        var firstResponse = await exporter.CollectionManager.EnterCollect(protocol);
+        var firstResponse = await exporter.CollectionManager.EnterCollect(protocol, TestContext.Current.CancellationToken);
         var firstCollectExited = false;
         try
         {
@@ -357,17 +357,19 @@ public sealed class PrometheusCollectionManagerTests
         var enteringScrape = new TaskCompletionSource<Task<PrometheusCollectionManager.CollectionResponse>>(TaskCreationOptions.RunContinuationsAsynchronously);
 
 #pragma warning disable CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
-        _ = Task.Run(() =>
-        {
-            try
+        _ = Task.Run(
+            () =>
             {
-                enteringScrape.SetResult(EnterCollectAsync(exporter, protocol));
-            }
-            catch (Exception ex)
-            {
-                enteringScrape.SetException(ex);
-            }
-        });
+                try
+                {
+                    enteringScrape.SetResult(EnterCollectAsync(exporter, protocol));
+                }
+                catch (Exception ex)
+                {
+                    enteringScrape.SetException(ex);
+                }
+            },
+            TestContext.Current.CancellationToken);
 #pragma warning restore CA2025 // The test awaits the scheduled work before disposing the provider/exporter.
 
         var entered = await Task.WhenAny(enteringScrape.Task, Task.Delay(testTimeout, cts.Token));
@@ -790,7 +792,7 @@ public sealed class PrometheusCollectionManagerTests
         meter.CreateCounter<int>("counter_1").Add(1);
 
         var protocol = GetProtocol(openMetricsRequested: true);
-        var response = await exporter!.CollectionManager.EnterCollect(protocol);
+        var response = await exporter!.CollectionManager.EnterCollect(protocol, TestContext.Current.CancellationToken);
 
         try
         {
@@ -830,7 +832,7 @@ public sealed class PrometheusCollectionManagerTests
         meter.CreateObservableGauge("otel.scope.info", () => 2);
 
         var protocol = GetProtocol(openMetricsRequested: true);
-        var response = await exporter!.CollectionManager.EnterCollect(protocol);
+        var response = await exporter!.CollectionManager.EnterCollect(protocol, TestContext.Current.CancellationToken);
 
         try
         {
@@ -878,7 +880,7 @@ public sealed class PrometheusCollectionManagerTests
         asyncLocal.Value = "request-scoped-value";
 
         var protocol = GetProtocol(openMetricsRequested: false);
-        var response = await exporter!.CollectionManager.EnterCollect(protocol);
+        var response = await exporter!.CollectionManager.EnterCollect(protocol, TestContext.Current.CancellationToken);
 
         try
         {
@@ -918,7 +920,7 @@ public sealed class PrometheusCollectionManagerTests
         counter2.Add(2, [new("source", "b")]);
 
         var protocol = GetProtocol(openMetricsRequested: false);
-        var response = await exporter!.CollectionManager.EnterCollect(protocol);
+        var response = await exporter!.CollectionManager.EnterCollect(protocol, TestContext.Current.CancellationToken);
 
         try
         {
@@ -959,7 +961,7 @@ public sealed class PrometheusCollectionManagerTests
         counter2.Add(2, [new("source", "b")]);
 
         var protocol = GetProtocol(openMetricsRequested: false);
-        var response = await exporter!.CollectionManager.EnterCollect(protocol);
+        var response = await exporter!.CollectionManager.EnterCollect(protocol, TestContext.Current.CancellationToken);
 
         try
         {
@@ -1000,7 +1002,7 @@ public sealed class PrometheusCollectionManagerTests
         counter2.Add(2, [new("source", "b")]);
 
         var protocol = GetProtocol(openMetricsRequested: false);
-        var response = await exporter!.CollectionManager.EnterCollect(protocol);
+        var response = await exporter!.CollectionManager.EnterCollect(protocol, TestContext.Current.CancellationToken);
 
         try
         {
@@ -1041,7 +1043,7 @@ public sealed class PrometheusCollectionManagerTests
         counter2.Add(2, [new("source", "b")]);
 
         var protocol = GetProtocol(openMetricsRequested: false);
-        var response = await exporter!.CollectionManager.EnterCollect(protocol);
+        var response = await exporter!.CollectionManager.EnterCollect(protocol, TestContext.Current.CancellationToken);
 
         try
         {
@@ -1080,7 +1082,7 @@ public sealed class PrometheusCollectionManagerTests
         counter.Add(1);
 
         var protocol = GetProtocol(openMetricsRequested: true);
-        var response = await exporter!.CollectionManager.EnterCollect(protocol);
+        var response = await exporter!.CollectionManager.EnterCollect(protocol, TestContext.Current.CancellationToken);
 
         try
         {
@@ -1122,7 +1124,7 @@ public sealed class PrometheusCollectionManagerTests
         meter2.CreateObservableGauge("test-metric", () => 2, description: "Test help");
 
         var protocol = GetProtocol(openMetricsRequested: true);
-        var response = await exporter!.CollectionManager.EnterCollect(protocol);
+        var response = await exporter!.CollectionManager.EnterCollect(protocol, TestContext.Current.CancellationToken);
 
         try
         {
@@ -1174,7 +1176,7 @@ public sealed class PrometheusCollectionManagerTests
         }
 
         var protocol = GetProtocol(openMetricsRequested);
-        var response = await exporter!.CollectionManager.EnterCollect(protocol);
+        var response = await exporter!.CollectionManager.EnterCollect(protocol, TestContext.Current.CancellationToken);
 
         try
         {
@@ -1236,7 +1238,7 @@ public sealed class PrometheusCollectionManagerTests
         }
 
         var protocol = GetProtocol(openMetricsRequested: false);
-        var response = await exporter!.CollectionManager.EnterCollect(protocol);
+        var response = await exporter!.CollectionManager.EnterCollect(protocol, TestContext.Current.CancellationToken);
 
         try
         {

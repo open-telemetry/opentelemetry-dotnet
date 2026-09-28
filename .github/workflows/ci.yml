@@ -272,6 +272,7 @@ jobs:
     if: |
       contains(needs.detect-changes.outputs.changes, 'code') ||
       contains(needs.detect-changes.outputs.changes, 'build') ||
+      contains(needs.detect-changes.outputs.changes, 'pwsh') ||
       contains(needs.detect-changes.outputs.changes, 'shared')
     strategy:
       fail-fast: ${{ github.event_name == 'merge_group' }}
@@ -297,7 +298,7 @@ jobs:
       run: |
         $runtimes = @("net10.0")
         if ($IsWindows) {
-          $runtimes += "net462"
+          $runtimes += "net472"
         }
         ./benchmark.ps1 @("*SamplerBenchmarks*") -EnableMemoryDiagnoser -Job Short -Runtimes $runtimes -SkipBaseline
 

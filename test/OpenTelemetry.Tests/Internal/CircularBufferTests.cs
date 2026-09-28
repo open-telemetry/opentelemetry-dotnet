@@ -120,10 +120,7 @@ public class CircularBufferTests
     [Fact]
     public async Task CheckTryAddExceedsMaxSpinCount()
     {
-        if (Environment.ProcessorCount < 2)
-        {
-            return;
-        }
+        Assert.SkipWhen(Environment.ProcessorCount < 2, "This machine does not have enough processors to run this test.");
 
         var circularBuffer = new CircularBuffer<string>(1_000_000);
 
@@ -132,13 +129,15 @@ public class CircularBufferTests
         var writers = new List<Task>();
         for (var i = 0; i < Environment.ProcessorCount; i++)
         {
-            writers.Add(Task.Run(() =>
-            {
-                while (!cts.IsCancellationRequested)
+            writers.Add(Task.Run(
+                () =>
                 {
-                    circularBuffer.Add("item");
-                }
-            }));
+                    while (!cts.IsCancellationRequested)
+                    {
+                        circularBuffer.Add("item");
+                    }
+                },
+                TestContext.Current.CancellationToken));
         }
 
         var exceededMaxSpinCount = false;
@@ -166,10 +165,7 @@ public class CircularBufferTests
     [Fact]
     public async Task CpuPressureTest()
     {
-        if (Environment.ProcessorCount < 2)
-        {
-            return;
-        }
+        Assert.SkipWhen(Environment.ProcessorCount < 2, "This machine does not have enough processors to run this test.");
 
         var circularBuffer = new CircularBuffer<string>(2048);
 
@@ -181,44 +177,46 @@ public class CircularBufferTests
         {
             var tid = i;
 
-            tasks.Add(Task.Run(async () =>
-            {
-                await Task.Delay(2000);
-
-                if (tid == 0)
+            tasks.Add(Task.Run(
+                async () =>
                 {
-                    for (var i = 0; i < numberOfItemsPerWorker * (Environment.ProcessorCount - 1); i++)
-                    {
-                        SpinWait wait = default;
-                        while (true)
-                        {
-                            if (circularBuffer.Count > 0)
-                            {
-                                circularBuffer.Read();
-                                break;
-                            }
+                    await Task.Delay(2000);
 
-                            wait.SpinOnce();
+                    if (tid == 0)
+                    {
+                        for (var i = 0; i < numberOfItemsPerWorker * (Environment.ProcessorCount - 1); i++)
+                        {
+                            SpinWait wait = default;
+                            while (true)
+                            {
+                                if (circularBuffer.Count > 0)
+                                {
+                                    circularBuffer.Read();
+                                    break;
+                                }
+
+                                wait.SpinOnce();
+                            }
                         }
                     }
-                }
-                else
-                {
-                    for (var i = 0; i < numberOfItemsPerWorker; i++)
+                    else
                     {
-                        SpinWait wait = default;
-                        while (true)
+                        for (var i = 0; i < numberOfItemsPerWorker; i++)
                         {
-                            if (circularBuffer.Add("item"))
+                            SpinWait wait = default;
+                            while (true)
                             {
-                                break;
-                            }
+                                if (circularBuffer.Add("item"))
+                                {
+                                    break;
+                                }
 
-                            wait.SpinOnce();
+                                wait.SpinOnce();
+                            }
                         }
                     }
-                }
-            }));
+                },
+                TestContext.Current.CancellationToken));
         }
 
         await Task.WhenAll(tasks);
