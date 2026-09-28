@@ -49,7 +49,7 @@ public class BatchLogRecordExportProcessorSelfObservabilityTests
         var flushTask = Task.Run(() => processor.ForceFlush());
         try
         {
-            Assert.True(exportStarted.Wait(TimeSpan.FromSeconds(5)));
+            Assert.True(exportStarted.Wait(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken));
             meterProvider.ForceFlush();
 
             var metric = exportedMetrics.Single(m => m.Name == "otel.sdk.processor.log.processed");
@@ -103,7 +103,7 @@ public class BatchLogRecordExportProcessorSelfObservabilityTests
 
         // First log triggers the worker; wait for it to block in Export
         logger.EmitLog(new LogRecordData());
-        exportStarted.Wait();
+        exportStarted.Wait(TestContext.Current.CancellationToken);
 
         // Now the queue is being drained but the worker is blocked.
         // Subsequent logs will overflow the queue (size=1).

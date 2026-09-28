@@ -7,6 +7,9 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Avoid closure allocations when serializing cached metric metadata.
+  ([#7841](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7841))
+
 * The OTLP log exporter now exports `schema_url` on `ScopeLogs`. Log
   records emitted from a `Logger` with a schema URL set now populate
   `ScopeLogs.schema_url` in exported OTLP requests.
