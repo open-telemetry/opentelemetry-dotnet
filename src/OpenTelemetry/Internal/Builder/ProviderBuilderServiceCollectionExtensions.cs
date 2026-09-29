@@ -51,6 +51,7 @@ internal static class ProviderBuilderServiceCollectionExtensions
 #pragma warning disable CS8604 // Possible null reference argument.
         services.TryAddSingleton<TracerProviderBuilderSdk>();
         services.RegisterOptionsFactory(configuration => new BatchExportActivityProcessorOptions(configuration));
+        services.RegisterOptionsFactory(configuration => new SamplerOptions(configuration));
         services.RegisterOptionsFactory(
             (sp, configuration, name) => new ActivityExportProcessorOptions(
                 sp.GetRequiredService<IOptionsMonitor<BatchExportActivityProcessorOptions>>().Get(name)));
