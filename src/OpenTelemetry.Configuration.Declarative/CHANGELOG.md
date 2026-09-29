@@ -41,3 +41,6 @@ Notes](../../RELEASENOTES.md).
 * Added declarative configuration support for typed resource attributes and
   resource schema URLs.
   ([#7806](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7806))
+
+* Declarative configuration now uses strict mode.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
