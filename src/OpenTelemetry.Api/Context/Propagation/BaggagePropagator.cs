@@ -487,7 +487,7 @@ public class BaggagePropagator : TextMapPropagator
         FlushByteBuffer(sb, byteBuffer, ref byteCount);
     }
 
-    private static void FlushByteBuffer(StringBuilder sb, Span<byte> buffer, ref int count)
+    private static void FlushByteBuffer(StringBuilder sb, ReadOnlySpan<byte> buffer, ref int count)
     {
         if (count == 0)
         {
