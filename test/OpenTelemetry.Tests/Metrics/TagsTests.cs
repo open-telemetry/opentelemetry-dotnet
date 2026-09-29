@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Globalization;
+
 namespace OpenTelemetry.Metrics.Tests;
 
 public class TagsTests
@@ -133,5 +135,46 @@ public class TagsTests
         ];
 
         Assert.Equal(tags.GetHashCode(), Tags.ComputeHashCode(span));
+    }
+
+    [Fact]
+    public void ComputeHashCode_IsIndependentOfKeyStringInstance()
+    {
+        var literalKey = "key1";
+        var copiedKey = new string(literalKey.ToCharArray());
+        Assert.NotSame(literalKey, copiedKey);
+
+        var expected = Tags.ComputeHashCode([new(literalKey, "value1")]);
+
+        Assert.Equal(expected, Tags.ComputeHashCode([new(copiedKey, "value1")]));
+        Assert.Equal(expected, Tags.ComputeHashCode([new(literalKey, "value1")]));
+        Assert.Equal(expected, new Tags([new(copiedKey, "value1")]).GetHashCode());
+    }
+
+    [Fact]
+    public void ComputeHashCode_KeysSharingACacheSlotKeepTheirOwnHashes()
+    {
+        var key1 = "abXcd";
+        var key2 = "abYcd";
+
+        var expected1 = Tags.ComputeHashCode([new(new string(key1.ToCharArray()), true)]);
+        var expected2 = Tags.ComputeHashCode([new(new string(key2.ToCharArray()), true)]);
+
+        Assert.NotEqual(expected1, expected2);
+
+        for (var i = 0; i < 10; i++)
+        {
+            Assert.Equal(expected1, Tags.ComputeHashCode([new(key1, true)]));
+            Assert.Equal(expected2, Tags.ComputeHashCode([new(key2, true)]));
+        }
+
+        var hashes = new HashSet<int>();
+
+        for (var i = 0; i < 100; i++)
+        {
+            hashes.Add(Tags.ComputeHashCode([new("ab" + i.ToString("D3", CultureInfo.InvariantCulture) + "cd", true)]));
+        }
+
+        Assert.True(hashes.Count >= 99, $"Only {hashes.Count} distinct hashes for 100 distinct keys.");
     }
 }
