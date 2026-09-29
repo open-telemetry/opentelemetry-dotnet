@@ -38,8 +38,7 @@ set in your output.
 
 If the repository defines area-specific review agents under `.github/agents/`,
 check for one matching the changed component and invoke it as a subtask,
-integrating its findings. None exist in this repository today, so unless one
-has since been added, continue the review yourself.
+integrating its findings.
 
 ### Step 1: Gather Code Context Before Reading the PR Narrative
 
