@@ -7,6 +7,9 @@ namespace OpenTelemetry.Internal;
 /// Self diagnostics class captures the EventSource events sent by OpenTelemetry
 /// modules and writes them to local file for internal troubleshooting.
 /// </summary>
+#if NET
+[System.Runtime.Versioning.UnsupportedOSPlatform("browser")]
+#endif
 internal sealed class SelfDiagnostics : IDisposable
 {
     /// <summary>

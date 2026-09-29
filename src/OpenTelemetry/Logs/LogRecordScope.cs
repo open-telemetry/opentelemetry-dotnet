@@ -34,6 +34,8 @@ public readonly struct LogRecordScope
     {
         private readonly IReadOnlyList<KeyValuePair<string, object?>>? scope;
         private readonly IEnumerator<KeyValuePair<string, object?>>? enumerator;
+        private readonly object? scalarScope;
+        private readonly bool hasScalarScope;
         private int position;
 
         /// <summary>
@@ -54,8 +56,8 @@ public readonly struct LogRecordScope
             }
             else
             {
-                this.scope = [new KeyValuePair<string, object?>(string.Empty, scope)];
-                this.enumerator = null;
+                this.scalarScope = scope;
+                this.hasScalarScope = true;
             }
 
             this.position = 0;
@@ -75,6 +77,18 @@ public readonly struct LogRecordScope
                 if (this.enumerator.MoveNext())
                 {
                     this.Current = this.enumerator.Current;
+                    return true;
+                }
+
+                return false;
+            }
+
+            if (this.hasScalarScope)
+            {
+                if (this.position == 0)
+                {
+                    this.Current = new KeyValuePair<string, object?>(string.Empty, this.scalarScope);
+                    this.position = 1;
                     return true;
                 }
 

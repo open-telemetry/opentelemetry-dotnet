@@ -547,9 +547,7 @@ public sealed class DeclarativeConfigurationDocumentPropertiesTests
             file_format: "1.0"
             disabled: true
             resource:
-              attributes:
-                - name: service.name
-                  value: my-service
+              attributes_list: "service.name=my-service"
             tracer_provider:
               processors:
                 - batch:
