@@ -13,7 +13,7 @@ permissions: {}
 jobs:
   apple-tests:
     name: Apple (iOS) end-to-end tests
-    runs-on: xcode-27
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
 
     permissions:
@@ -22,7 +22,9 @@ jobs:
     strategy:
       fail-fast: ${{ inputs.trigger == 'merge_group' }}
       matrix:
-        version: [ net10.0 ]
+        include:
+          - version: net10.0
+            runner: macos-26
 
     steps:
     - name: Checkout code
@@ -59,15 +61,47 @@ jobs:
         fi
         required="${BASH_REMATCH[0]}"
         echo "The ios workload requires Xcode ${required}."
+        required_major="${required%%.*}"
+        required_minor="${required#*.}"
 
-        available=$(find /Applications -maxdepth 1 -name 'Xcode_*.app' | sed -e 's|.*/Xcode_||' -e 's|\.app$||' | grep -E '^[0-9]+(\.[0-9]+)*$' | sort -t. -k1,1n -k2,2n -k3,3n)
-        version=$(echo "${available}" | grep -E "^${required//./\\.}(\.|$)" | tail -n 1)
-        if [ -z "${version}" ]; then
-          echo "::error::Xcode ${required} is required by the ios workload but is not installed on the runner. Available versions: $(echo "${available}" | paste -sd ' ' -)."
+        # The runner images install several Xcode versions, each of which also has
+        # symlinks with alternative names (e.g. Xcode_26.6.app is also available as
+        # Xcode_26.6.0.app and Xcode.app, and Xcode_27.1_beta.app as Xcode_27.1.app).
+        # Resolve every candidate to its real path and read the version from the app
+        # bundle itself rather than trusting the name, as some tools (such as the
+        # install_name_tool lookup done by the net10.0 ios workload) fail to locate
+        # the SDKs if DEVELOPER_DIR points at a symlink instead of the real Xcode.
+        installed=$(
+          for app in /Applications/Xcode*.app; do
+            if [ ! -d "${app}" ]; then
+              continue
+            fi
+            path=$(cd "${app}" && pwd -P)
+            version=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "${path}/Contents/Info.plist" 2> /dev/null || true)
+            if [[ "${version}" =~ ^([0-9]+)\.([0-9]+)(\.([0-9]+))?$ ]]; then
+              echo "${BASH_REMATCH[1]} ${BASH_REMATCH[2]} ${BASH_REMATCH[4]:-0} ${version} ${path}"
+            fi
+          done | sort -u | sort -k1,1n -k2,2n -k3,3n
+        )
+        echo "Installed Xcode versions:"
+        echo "${installed}" | awk 'NF { print "  " $4 " (" $5 ")" }'
+
+        # Prefer the latest patch of the exact version the workload requires, and
+        # otherwise fall back to the closest newer minor version of the same major
+        # version, as the runner images regularly remove older minor versions.
+        selected=$(echo "${installed}" | awk -v major="${required_major}" -v minor="${required_minor}" '$1 == major && $2 == minor' | tail -n 1)
+        if [ -z "${selected}" ]; then
+          selected=$(echo "${installed}" | awk -v major="${required_major}" -v minor="${required_minor}" '$1 == major && $2 > minor' | head -n 1)
+          if [ -n "${selected}" ]; then
+            echo "::warning::Xcode ${required} is required by the ios workload for ${TARGET_FRAMEWORK} but is not installed on the runner, so Xcode $(echo "${selected}" | awk '{ print $4 }') will be used instead."
+          fi
+        fi
+        if [ -z "${selected}" ]; then
+          echo "::error::Xcode ${required} is required by the ios workload for ${TARGET_FRAMEWORK} but is not installed on the runner. Available versions: $(echo "${installed}" | awk '{ print $4 }' | paste -sd ' ' -). Update the runner for ${TARGET_FRAMEWORK} in the matrix to an image that includes Xcode ${required_major}."
           exit 1
         fi
 
-        developer_dir="/Applications/Xcode_${version}.app/Contents/Developer"
+        developer_dir="$(echo "${selected}" | cut -d ' ' -f 5-)/Contents/Developer"
         sudo xcode-select --switch "${developer_dir}"
         echo "DEVELOPER_DIR=${developer_dir}" >> "${GITHUB_ENV}"
         xcodebuild -version
