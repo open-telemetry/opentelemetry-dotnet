@@ -7,6 +7,22 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Avoid closure allocations when serializing cached metric metadata.
+  ([#7841](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7841))
+
+* Custom TLS certificate options (custom CA trust and mTLS) and the experimental
+  disk retry feature are explicitly marked as not supported on browser-based
+  platforms (e.g. Blazor).
+  ([#7799](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7799))
+
+## 1.19.1
+
+Released 2026-Sep-21
+
+## 1.19.1-rc.1
+
+Released 2026-Sep-21
+
 ## 1.19.0
 
 Released 2026-Sep-18

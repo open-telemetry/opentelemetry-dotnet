@@ -37,7 +37,7 @@ public class TaskWorkerTests
 
         worker.Start();
 
-        await Task.Delay(GetIdleWaitDuration());
+        await Task.Delay(GetIdleWaitDuration(), TestContext.Current.CancellationToken);
 
         using var activity = new Activity("test");
 
@@ -69,7 +69,7 @@ public class TaskWorkerTests
 
         var baselineCollectCount = reader.CollectCount;
 
-        await Task.Delay(PostBaselinePauseMilliseconds);
+        await Task.Delay(PostBaselinePauseMilliseconds, TestContext.Current.CancellationToken);
 
         Assert.True(worker.TriggerExport());
 

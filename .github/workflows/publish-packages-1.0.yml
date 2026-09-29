@@ -267,7 +267,7 @@ jobs:
   publish:
     name: Publish
     needs: [build-pack, validate]
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     permissions:
       attestations: read # Read GitHub attestations for the NuGet packages
@@ -314,7 +314,7 @@ jobs:
 
   post-build:
     name: Post build release tasks
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     permissions:
       contents: read # Download the published artifacts

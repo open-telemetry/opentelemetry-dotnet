@@ -40,7 +40,11 @@ public class OtlpGrpcExportClientTests
             string.Empty);
 
         var payload = "payload"u8.ToArray();
-        var response = exportClient.SendExportRequest(BuildGrpcFrame(payload), GrpcHeaderSize + payload.Length, DateTime.MaxValue);
+        var response = exportClient.SendExportRequest(
+            BuildGrpcFrame(payload),
+            GrpcHeaderSize + payload.Length,
+            DateTime.MaxValue,
+            TestContext.Current.CancellationToken);
 
         Assert.False(response.Success);
         Assert.IsType<ResponseSizeLimitExceededException>(response.Exception);
@@ -69,7 +73,11 @@ public class OtlpGrpcExportClientTests
             string.Empty);
 
         var payload = "payload"u8.ToArray();
-        var response = exportClient.SendExportRequest(BuildGrpcFrame(payload), GrpcHeaderSize + payload.Length, DateTime.MaxValue);
+        var response = exportClient.SendExportRequest(
+            BuildGrpcFrame(payload),
+            GrpcHeaderSize + payload.Length,
+            DateTime.MaxValue,
+            TestContext.Current.CancellationToken);
 
         Assert.IsNotType<ResponseSizeLimitExceededException>(response.Exception);
     }
@@ -92,7 +100,11 @@ public class OtlpGrpcExportClientTests
             httpClient,
             string.Empty);
 
-        exportClient.SendExportRequest(buffer, buffer.Length, DateTime.UtcNow.AddSeconds(10));
+        exportClient.SendExportRequest(
+            buffer,
+            buffer.Length,
+            DateTime.UtcNow.AddSeconds(10),
+            TestContext.Current.CancellationToken);
 
         Assert.NotNull(testHandler.CapturedRequestBytes);
         var content = testHandler.CapturedRequestBytes;
@@ -126,7 +138,11 @@ public class OtlpGrpcExportClientTests
             httpClient,
             string.Empty);
 
-        exportClient.SendExportRequest(buffer, buffer.Length, DateTime.UtcNow.AddSeconds(10));
+        exportClient.SendExportRequest(
+            buffer,
+            buffer.Length,
+            DateTime.UtcNow.AddSeconds(10),
+            TestContext.Current.CancellationToken);
 
         Assert.NotNull(testHandler.CapturedRequestBytes);
         var content = testHandler.CapturedRequestBytes;
@@ -156,7 +172,11 @@ public class OtlpGrpcExportClientTests
             httpClient,
             string.Empty);
 
-        exportClient.SendExportRequest(buffer, buffer.Length, DateTime.UtcNow.AddSeconds(10));
+        exportClient.SendExportRequest(
+            buffer,
+            buffer.Length,
+            DateTime.UtcNow.AddSeconds(10),
+            TestContext.Current.CancellationToken);
 
         Assert.NotNull(testHandler.CapturedRequestBytes);
         var content = testHandler.CapturedRequestBytes;
@@ -228,7 +248,11 @@ public class OtlpGrpcExportClientTests
             httpClient,
             string.Empty);
 
-        var response = exportClient.SendExportRequest(buffer, buffer.Length, DateTime.UtcNow.AddMinutes(5));
+        var response = exportClient.SendExportRequest(
+            buffer,
+            buffer.Length,
+            DateTime.UtcNow.AddMinutes(5),
+            TestContext.Current.CancellationToken);
 
         Assert.True(
             testHandler.BytesProduced <= configuredLimit + (256 * 1024),
