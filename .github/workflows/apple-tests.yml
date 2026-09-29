@@ -34,22 +34,43 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
 
-    - name: Select the latest version of Xcode
+    - name: Install ios workload
       shell: bash
+      run: dotnet workload install ios
+
+    - name: Select the Xcode version required by the ios workload
+      shell: bash
+      env:
+        DOTNET_NOLOGO: 'true'
+        TARGET_FRAMEWORK: ${{ matrix.version }}
       run: |
-        version=$(find /Applications -maxdepth 1 -name 'Xcode_*.app' -type d | sed -e 's|.*/Xcode_||' -e 's|\.app$||' | sort -t. -k1,1n -k2,2n -k3,3n | tail -1)
-        if [ -z "${version}" ]; then
-          echo "::error::No Xcode installation was found in /Applications."
+        project="test/OpenTelemetry.Apple.TestApp/OpenTelemetry.Apple.TestApp.csproj"
+        get_property() {
+          dotnet msbuild "${project}" -getProperty:"$1" -p:TargetFramework="${TARGET_FRAMEWORK}-ios" | tail -n 1 | tr -d '[:space:]'
+        }
+
+        required=$(get_property RecommendedXcodeVersion)
+        if [ -z "${required}" ]; then
+          required=$(get_property _RecommendedXcodeVersion)
+        fi
+        if ! [[ "${required}" =~ ^[0-9]+\.[0-9]+ ]]; then
+          echo "::error::Unable to determine the Xcode version required by the ios workload (got '${required}')."
           exit 1
         fi
+        required="${BASH_REMATCH[0]}"
+        echo "The ios workload requires Xcode ${required}."
+
+        available=$(find /Applications -maxdepth 1 -name 'Xcode_*.app' | sed -e 's|.*/Xcode_||' -e 's|\.app$||' | grep -E '^[0-9]+(\.[0-9]+)*$' | sort -t. -k1,1n -k2,2n -k3,3n)
+        version=$(echo "${available}" | grep -E "^${required//./\\.}(\.|$)" | tail -n 1)
+        if [ -z "${version}" ]; then
+          echo "::error::Xcode ${required} is required by the ios workload but is not installed on the runner. Available versions: $(echo "${available}" | paste -sd ' ' -)."
+          exit 1
+        fi
+
         developer_dir="/Applications/Xcode_${version}.app/Contents/Developer"
         sudo xcode-select --switch "${developer_dir}"
         echo "DEVELOPER_DIR=${developer_dir}" >> "${GITHUB_ENV}"
         xcodebuild -version
-
-    - name: Install ios workload
-      shell: bash
-      run: dotnet workload install ios
 
     - name: Run Apple end-to-end tests on the simulator
       shell: bash
