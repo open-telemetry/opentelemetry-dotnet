@@ -18,6 +18,7 @@
 
   <PropertyGroup Condition="$(MSBuildProjectName.EndsWith('.Tests')) OR $(MSBuildProjectName.EndsWith('.FuzzTests'))">
     <IsTestProject>true</IsTestProject>
+    <OutputType>Exe</OutputType>
   </PropertyGroup>
 
   <ItemGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">
@@ -31,17 +32,12 @@
     <PackageReference Include="JunitXml.TestLogger" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Microsoft.Testing.Platform" Condition="'$(EnableMSTestRunner)' != 'true'" ExcludeAssets="build;buildMultiTargeting;buildTransitive" />
-    <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="All" />
+    <PackageReference Include="xunit.v3.mtp-off" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(IsTestProject)' == 'true'">
     <Compile Include="$(RepoRoot)\test\Shared\StrongNameTests.cs" Link="StrongNameTests.cs" />
-  </ItemGroup>
-
-  <!-- This class is a temporary shim until https://github.com/open-telemetry/opentelemetry-dotnet/pull/7805 is merged -->
-  <ItemGroup Condition="'$(IsTestProject)' == 'true'">
-    <Compile Include="$(RepoRoot)\test\Shared\TestContext.cs" Link="TestContext.cs" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -59,7 +55,7 @@
     errors will be generated for projects which do not implement the requested
     target. In order to enable running tests for a given framework across a
     solution/project with mixed targets (eg: dotnet test OpenTelemetry.slnx -f
-    net462) we convert this into a skip message only. -->
+    net472) we convert this into a skip message only. -->
     <PropertyGroup Condition="$(TargetFrameworks.Contains($(TargetFramework))) != 'true'">
       <_SkipTests>true</_SkipTests>
       <IsTestProject>false</IsTestProject>
