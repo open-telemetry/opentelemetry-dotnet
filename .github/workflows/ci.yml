@@ -121,7 +121,6 @@ jobs:
       project-name: 'OpenTelemetry.slnx'
       code-cov-name: 'Solution'
       trigger: ${{ github.event_name }}
-      install-wasm-tools: true
 
   build-test-project-stable:
     needs: detect-changes
