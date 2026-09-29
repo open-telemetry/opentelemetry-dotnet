@@ -10,7 +10,7 @@ namespace OpenTelemetry.Configuration.Declarative;
 /// <remarks>
 /// This is a lossy, one-way conversion: only the fields expressible in the env-var format are
 /// emitted. Fields absent or present-null in the model produce no output, leaving SDK defaults
-/// and other IConfiguration sources in effect.
+/// in effect.
 /// </remarks>
 internal static class DeclarativeConfigurationConverter
 {
