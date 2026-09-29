@@ -16,6 +16,13 @@ Notes](../../RELEASENOTES.md).
   at runtime.
   ([#7799](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7799))
 
+* Added `TracerProviderBuilder.ConfigureSampler` which receives the resolved
+  `Sampler` whether set programmatically, via `OTEL_TRACES_SAMPLER`, or by
+  default, and returns a replacement. Intended for library authors who need to
+  influence sampling without overriding a sampler the application has
+  configured.
+  ([#7780](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7780))
+
 * Add support for setting the operational criticality of a service using the
   new `AddServiceCriticality()` extension method on `ResourceBuilder` with
   the [`service.criticality` resource attribute](https://github.com/open-telemetry/semantic-conventions/blob/c381bc8a42ec5628bc7becdca4ce904ae0ed66c3/docs/registry/attributes/service.md#service-criticality).
