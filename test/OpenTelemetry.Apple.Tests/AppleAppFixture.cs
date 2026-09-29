@@ -42,7 +42,7 @@ public sealed class AppleAppFixture : IAsyncLifetime
     private static readonly TimeSpan BuildTimeout = TimeSpan.FromMinutes(10);
     private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(500);
     private static readonly TimeSpan SimulatorBootTimeout = TimeSpan.FromMinutes(5);
-    private static readonly TimeSpan SimulatorCommandTimeout = TimeSpan.FromMinutes(2);
+    private static readonly TimeSpan SimulatorCommandTimeout = TimeSpan.FromMinutes(5);
     private static readonly TimeSpan TestRunTimeout = TimeSpan.FromMinutes(5);
 
     private readonly StringBuilder log = new();
