@@ -5,6 +5,7 @@
     <Description>OpenTelemetry .NET SDK</Description>
     <MinVerTagPrefix>core-</MinVerTagPrefix>
     <NoWarn>$(NoWarn);CA1815</NoWarn> <!-- CA1815: Override equals and operator equals on value types - https://github.com/open-telemetry/opentelemetry-dotnet/issues/6278 -->
+    <SupportsBrowserAndMobilePlatforms>true</SupportsBrowserAndMobilePlatforms>
   </PropertyGroup>
 
   <ItemGroup>

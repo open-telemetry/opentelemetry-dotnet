@@ -373,16 +373,13 @@ internal static class ProtobufOtlpLogSerializer
         }
     }
 
-    private static int WriteLogRecordBody(byte[] buffer, int writePosition, string value)
-    {
-        var numberOfUtf8CharsInString = ProtobufSerializer.GetNumberOfUtf8CharsInString(value);
-        var serializedLengthSize = ProtobufSerializer.ComputeVarInt64Size((ulong)numberOfUtf8CharsInString);
-
-        // length = numberOfUtf8CharsInString + tagSize + length field size.
-        writePosition = ProtobufSerializer.WriteTagAndLength(buffer, writePosition, numberOfUtf8CharsInString + 1 + serializedLengthSize, ProtobufOtlpLogFieldNumberConstants.LogRecord_Body, ProtobufWireType.LEN);
-        writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpCommonFieldNumberConstants.AnyValue_String_Value, numberOfUtf8CharsInString, value);
-        return writePosition;
-    }
+    private static int WriteLogRecordBody(byte[] buffer, int writePosition, string value) =>
+        ProtobufSerializer.WriteNestedStringWithTag(
+            buffer,
+            writePosition,
+            ProtobufOtlpLogFieldNumberConstants.LogRecord_Body,
+            ProtobufOtlpCommonFieldNumberConstants.AnyValue_String_Value,
+            value);
 
     private static void AddLogAttribute(SerializationState state, KeyValuePair<string, object?> attribute)
         => AddLogAttribute(state, attribute.Key, attribute.Value);

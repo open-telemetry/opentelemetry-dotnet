@@ -120,10 +120,7 @@ public class CircularBufferTests
     [Fact]
     public async Task CheckTryAddExceedsMaxSpinCount()
     {
-        if (Environment.ProcessorCount < 2)
-        {
-            return;
-        }
+        Assert.SkipWhen(Environment.ProcessorCount < 2, "This machine does not have enough processors to run this test.");
 
         var circularBuffer = new CircularBuffer<string>(1_000_000);
 
@@ -168,10 +165,7 @@ public class CircularBufferTests
     [Fact]
     public async Task CpuPressureTest()
     {
-        if (Environment.ProcessorCount < 2)
-        {
-            return;
-        }
+        Assert.SkipWhen(Environment.ProcessorCount < 2, "This machine does not have enough processors to run this test.");
 
         var circularBuffer = new CircularBuffer<string>(2048);
 

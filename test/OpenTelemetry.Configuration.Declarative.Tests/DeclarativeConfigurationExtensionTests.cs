@@ -236,10 +236,7 @@ public sealed class DeclarativeConfigurationExtensionTests
     [Fact]
     public void AddOpenTelemetryDeclarativeConfiguration_DifferentPathCasingOnWindows_InsertsSourceOnce()
     {
-        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            return;
-        }
+        Assert.SkipUnless(RuntimeInformation.IsOSPlatform(OSPlatform.Windows), "This test can only be run on Windows.");
 
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: true);
 

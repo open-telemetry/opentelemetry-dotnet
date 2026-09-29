@@ -16,6 +16,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 /// This class provides functionality for both simple server certificate trust
 /// (for self-signed certificates) and mTLS client authentication scenarios.
 /// </remarks>
+#if NET
+[System.Runtime.Versioning.UnsupportedOSPlatform("browser")]
+#endif
 internal static class OtlpCertificateManager
 {
     internal const string CaCertificateType = "CA Certificate";
