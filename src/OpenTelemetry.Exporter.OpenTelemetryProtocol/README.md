@@ -468,7 +468,9 @@ or reader
   | `OTEL_EXPORTER_OTLP_CLIENT_KEY`                  | Path to client private key file (PEM) |
 
 > [!NOTE]
-> mTLS is not supported on browser-based platforms.
+> Custom TLS certificate configuration (both custom CA trust via
+> `OTEL_EXPORTER_OTLP_CERTIFICATE` and mTLS) is not supported on
+> browser-based platforms.
 
 * Logs:
 

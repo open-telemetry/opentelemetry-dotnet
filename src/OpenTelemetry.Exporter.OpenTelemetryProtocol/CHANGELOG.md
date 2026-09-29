@@ -10,8 +10,9 @@ Notes](../../RELEASENOTES.md).
 * Avoid closure allocations when serializing cached metric metadata.
   ([#7841](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7841))
 
-* mTLS-related options and the experimental disk retry feature are explicitly
-  marked as not supported on browser-based platforms (e.g. Blazor).
+* Custom TLS certificate options (custom CA trust and mTLS) and the experimental
+  disk retry feature are explicitly marked as not supported on browser-based
+  platforms (e.g. Blazor).
   ([#7799](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7799))
 
 ## 1.19.1
