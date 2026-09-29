@@ -18,6 +18,11 @@ internal sealed class ThreadStaticStorage
     // large tag set cannot leave a large array rooted for the lifetime of the thread.
     internal const int MaxLargeTagCacheSize = 64;
 
+    // Direct-mapped cache of tag key string reference -> the string's hash code.
+    internal const int KeyHashCacheSize = 64;
+
+    internal readonly KeyHashCacheEntry[] KeyHashCache = new KeyHashCacheEntry[KeyHashCacheSize];
+
     [ThreadStatic]
     private static ThreadStaticStorage? storage;
 
@@ -223,6 +228,12 @@ internal sealed class ThreadStaticStorage
         }
 
         return buffer;
+    }
+
+    internal struct KeyHashCacheEntry
+    {
+        public string? Key;
+        public int Hash;
     }
 
     internal sealed class TagStorage

@@ -10,6 +10,11 @@ Notes](../../RELEASENOTES.md).
 * Avoid closure allocations when serializing cached metric metadata.
   ([#7841](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7841))
 
+* Custom TLS certificate options (custom CA trust and mTLS) and the experimental
+  disk retry feature are explicitly marked as not supported on browser-based
+  platforms (e.g. Blazor).
+  ([#7799](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7799))
+
 * Suppressed routine informational logs from the HTTP clients used by the OTLP
   exporters while preserving explicit application logging configuration.
   ([#7743](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7743))
