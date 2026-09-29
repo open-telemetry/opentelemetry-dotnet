@@ -52,9 +52,10 @@ public static class TracerProviderBuilderExtensions
     /// <para sampler-precedence="true">Note: A sampler set programmatically
     /// takes precedence over the <c>OTEL_TRACES_SAMPLER</c> environment
     /// variable, which in turn takes precedence over the default sampler
-    /// (<c>ParentBased(AlwaysOnSampler)</c>). To adjust the sampler the SDK
-    /// resolves, instead of overriding it, use
-    /// <see cref="ConfigureSampler(TracerProviderBuilder, Func{IServiceProvider, Sampler, Sampler})"/>.</para>
+    /// (<c>ParentBased(AlwaysOnSampler)</c>).
+    /// <see cref="ConfigureSampler(TracerProviderBuilder, Func{IServiceProvider, Sampler, Sampler})"/>
+    /// callbacks run after this selection and can wrap or replace the sampler,
+    /// regardless of registration order.</para>
     /// </remarks>
     /// <param name="tracerProviderBuilder"><see cref="TracerProviderBuilder"/>.</param>
     /// <param name="sampler">Sampler instance.</param>
@@ -135,9 +136,11 @@ public static class TracerProviderBuilderExtensions
     /// use.
     /// </summary>
     /// <remarks>
-    /// <para>Note: Unlike <see cref="SetSampler(TracerProviderBuilder, Sampler)"/>,
-    /// this method does not discard a sampler configured using the
-    /// <c>OTEL_TRACES_SAMPLER</c> environment variable.</para>
+    /// <para>Callbacks run after the SDK selects a sampler from
+    /// <see cref="SetSampler(TracerProviderBuilder, Sampler)"/>, the
+    /// <c>OTEL_TRACES_SAMPLER</c> environment variable, or the default,
+    /// regardless of whether they are registered before or after
+    /// <c>SetSampler</c>.</para>
     /// <para>The callback is invoked once, while the
     /// <see cref="TracerProvider"/> is being built, and is passed the sampler
     /// which would otherwise have been used. The callback may return the original

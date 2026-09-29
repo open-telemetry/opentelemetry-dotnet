@@ -391,9 +391,11 @@ to learn about writing custom samplers.
 #### Adjusting the sampler
 
 `SetSampler` sets the sampler unconditionally: any `OTEL_TRACES_SAMPLER` value
-is ignored. This is appropriate for an application that fully controls its own
-configuration, but causes problems for a library that wants to influence
-sampling without affecting any explicit user configuration of the sampler.
+is ignored. `ConfigureSampler` callbacks run after that selection and can wrap
+or replace the result. Use `SetSampler` when an application fully controls its
+own configuration; use `ConfigureSampler` for library code that wants to
+influence sampling without overriding any sampler the application has
+configured.
 
 `ConfigureSampler` registers a callback which receives the sampler the SDK
 resolved - whether that came from `SetSampler`, from `OTEL_TRACES_SAMPLER`, or
@@ -409,8 +411,9 @@ var tracerProvider = Sdk.CreateTracerProviderBuilder()
     .Build();
 ```
 
-The callback runs once, while the provider is being built. Registering it several
-times chains the callbacks in registration order, each one receiving the sampler
+The callback runs once, while the provider is being built, regardless of whether
+it was registered before or after `SetSampler`. Registering it several times
+chains the callbacks in registration order, each one receiving the sampler
 returned by the previous one, so several libraries can take part without
 conflicting. Returning `null` or throwing from a callback fails the build.
 

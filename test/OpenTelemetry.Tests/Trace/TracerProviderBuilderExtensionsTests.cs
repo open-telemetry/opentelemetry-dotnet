@@ -642,23 +642,63 @@ public class TracerProviderBuilderExtensionsTests
         Assert.Same(receivedSampler, tracerProvider.Sampler);
     }
 
-    [Fact]
-    public void ConfigureSamplerReceivesSamplerSetProgrammatically()
+    [Theory]
+    [InlineData(false, "instance")]
+    [InlineData(true, "instance")]
+    [InlineData(false, "type")]
+    [InlineData(true, "type")]
+    [InlineData(false, "factory")]
+    [InlineData(true, "factory")]
+    public void ConfigureSamplerOverridesSetSamplerRegardlessOfRegistrationOrder(bool configureSamplerFirst, string setSamplerOverload)
     {
-        var resolvedSampler = new MySampler();
-
+        using var activitySource = new ActivitySource(Utils.GetCurrentMethodName());
         Sampler? receivedSampler = null;
+        var builder = Sdk.CreateTracerProviderBuilder()
+            .AddSource(activitySource.Name)
+            .AddSamplerConfiguration("always_on");
 
-        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .SetSampler(resolvedSampler)
-            .ConfigureSampler((sp, sampler) =>
+        if (configureSamplerFirst)
+        {
+            RegisterConfigurator();
+        }
+
+        switch (setSamplerOverload)
+        {
+            case "instance":
+                builder.SetSampler(new MySampler());
+                break;
+            case "type":
+                builder.SetSampler<MySampler>();
+                break;
+            case "factory":
+                builder.SetSampler(sp => new MySampler());
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(setSamplerOverload));
+        }
+
+        if (!configureSamplerFirst)
+        {
+            RegisterConfigurator();
+        }
+
+        using var tracerProvider = builder.Build() as TracerProviderSdk;
+
+        Assert.NotNull(tracerProvider);
+        Assert.IsType<MySampler>(receivedSampler);
+        Assert.IsType<AlwaysOffSampler>(tracerProvider.Sampler);
+
+        using var activity = activitySource.StartActivity("Activity");
+
+        Assert.NotNull(activity);
+        Assert.False(activity.Recorded);
+
+        void RegisterConfigurator() =>
+            builder.ConfigureSampler((sp, sampler) =>
             {
                 receivedSampler = sampler;
-                return sampler;
-            })
-            .Build();
-
-        Assert.Same(resolvedSampler, receivedSampler);
+                return new AlwaysOffSampler();
+            });
     }
 
     [Fact]
@@ -732,25 +772,6 @@ public class TracerProviderBuilderExtensionsTests
         Assert.Contains(
             $"Sampler configurator 2 of 2 left sampler \"{typeof(MyWrappingSampler)}\" unchanged.",
             messages);
-    }
-
-    [Fact]
-    public void ConfigureSamplerReceivesResolvedSamplerWhenRegisteredBeforeSetSampler()
-    {
-        var resolvedSampler = new MySampler();
-
-        Sampler? receivedSampler = null;
-
-        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .ConfigureSampler((sp, sampler) =>
-            {
-                receivedSampler = sampler;
-                return sampler;
-            })
-            .SetSampler(resolvedSampler)
-            .Build();
-
-        Assert.Same(resolvedSampler, receivedSampler);
     }
 
     [Fact]
