@@ -65,8 +65,8 @@ internal abstract class TextFormatSerializer
     private const int MaxFormattedDoubleCharacters = 32;
 
 #if NET
-    private static readonly SearchValues<char> UnicodeEscapeChars = SearchValues.Create("\\\n");
-    private static readonly SearchValues<char> LabelValueEscapeChars = SearchValues.Create("\"\\\n");
+    private static readonly SearchValues<char> UnicodeVerbatimChars = SearchValues.Create(BuildAsciiVerbatimChars(escapeQuotationMarks: false));
+    private static readonly SearchValues<char> LabelValueVerbatimChars = SearchValues.Create(BuildAsciiVerbatimChars(escapeQuotationMarks: true));
 #endif
 
 #if NET9_0_OR_GREATER
@@ -518,7 +518,7 @@ internal abstract class TextFormatSerializer
 #if NET
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int WriteLabelValue(byte[] buffer, int cursor, ReadOnlySpan<char> value)
-        => WriteEscapedUtf8String(buffer, cursor, value, LabelValueEscapeChars);
+        => WriteEscapedUtf8String(buffer, cursor, value, LabelValueVerbatimChars);
 #endif
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1545,8 +1545,25 @@ internal abstract class TextFormatSerializer
         char.IsAsciiLetterOrDigit(value) || value is '_';
 
 #if NET
+    private static string BuildAsciiVerbatimChars(bool escapeQuotationMarks)
+    {
+        var chars = new char[0x80];
+        var count = 0;
+        for (var c = 0; c <= 0x7F; c++)
+        {
+            if (c == '\\' || c == '\n' || (escapeQuotationMarks && c == '"'))
+            {
+                continue;
+            }
+
+            chars[count++] = (char)c;
+        }
+
+        return new string(chars, 0, count);
+    }
+
     private static int WriteEscapedString(byte[] buffer, int cursor, string value, bool escapeQuotationMarks)
-        => WriteEscapedUtf8String(buffer, cursor, value.AsSpan(), escapeQuotationMarks ? LabelValueEscapeChars : UnicodeEscapeChars);
+        => WriteEscapedUtf8String(buffer, cursor, value.AsSpan(), escapeQuotationMarks ? LabelValueVerbatimChars : UnicodeVerbatimChars);
 
     private static int WriteUtf8NoEscape(byte[] buffer, int cursor, ReadOnlySpan<char> value)
     {
@@ -1556,17 +1573,11 @@ internal abstract class TextFormatSerializer
             : cursor + Encoding.UTF8.GetBytes(value, buffer.AsSpan(cursor));
     }
 
-    private static int WriteEscapedUtf8String(byte[] buffer, int cursor, ReadOnlySpan<char> value, SearchValues<char> escapedChars)
+    private static int WriteEscapedUtf8String(byte[] buffer, int cursor, ReadOnlySpan<char> value, SearchValues<char> verbatimChars)
     {
         while (!value.IsEmpty)
         {
-            var escapedIndex = value.IndexOfAny(escapedChars);
-            var nonAsciiIndex = value.IndexOfAnyExceptInRange((char)0x00, (char)0x7F);
-
-            var specialIndex =
-                escapedIndex < 0 ? nonAsciiIndex
-                : nonAsciiIndex < 0 ? escapedIndex
-                : Math.Min(escapedIndex, nonAsciiIndex);
+            var specialIndex = value.IndexOfAnyExcept(verbatimChars);
 
             if (specialIndex < 0)
             {

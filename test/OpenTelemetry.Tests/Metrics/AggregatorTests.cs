@@ -510,6 +510,49 @@ public class AggregatorTests
         }
     }
 
+    [Fact]
+    internal void ExponentialHistogramDeltaSnapshotResetsBucketState()
+    {
+        var streamConfiguration = new Base2ExponentialBucketHistogramConfiguration
+        {
+            MaxSize = 2,
+            MaxScale = 20,
+        };
+        var metricStreamIdentity = new MetricStreamIdentity(Instrument, streamConfiguration);
+
+        var aggregatorStore = new AggregatorStore(
+            metricStreamIdentity,
+            AggregationType.Base2ExponentialHistogram,
+            AggregationTemporality.Delta,
+            cardinalityLimit: 1024);
+
+        aggregatorStore.Update(1, []);
+        aggregatorStore.Snapshot();
+
+        var metricPoints = new List<MetricPoint>();
+        foreach (ref readonly var mp in aggregatorStore.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        var metricPoint = Assert.Single(metricPoints);
+        metricPoint.TakeSnapshot(outputDelta: true);
+
+        metricPoint.Update(2);
+        metricPoint.TakeSnapshot(outputDelta: true);
+
+        var data = metricPoint.GetExponentialHistogramData();
+        Assert.Equal(20, data.Scale);
+        Assert.Equal(1, metricPoint.GetHistogramCount());
+        Assert.Equal(2, metricPoint.GetHistogramSum());
+        Assert.Equal(1_048_575, data.PositiveBuckets.Offset);
+
+        var buckets = data.PositiveBuckets.GetEnumerator();
+        Assert.True(buckets.MoveNext());
+        Assert.Equal(1, buckets.Current);
+        Assert.False(buckets.MoveNext());
+    }
+
     [Theory]
     [InlineData(-5)]
     [InlineData(0)]

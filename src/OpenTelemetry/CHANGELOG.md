@@ -6,6 +6,50 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed `SuppressInstrumentationScope` reference counts leaking between
+  inherited asynchronous execution contexts.
+  ([#7803](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7803))
+
+* Self-diagnostic features are explicitly disabled on browser-based
+  platforms (e.g. Blazor) and are now non-functional. Previously, attempting
+  to enable self-diagnostics on such platforms would result in an exception
+  at runtime.
+  ([#7799](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7799))
+
+* Added `TracerProviderBuilder.ConfigureSampler` which receives the resolved
+  `Sampler` whether set programmatically, via `OTEL_TRACES_SAMPLER`, or by
+  default, and returns a replacement. Intended for library authors who need to
+  influence sampling without overriding a sampler the application has
+  configured.
+  ([#7780](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7780))
+
+* Added `SamplerOptions`, which allows the trace sampler to be configured using
+  the options pattern (including binding from `appsettings.json`) in addition to
+  the `OTEL_TRACES_SAMPLER` and `OTEL_TRACES_SAMPLER_ARG` environment variables.
+  ([#7192](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7192))
+
+## 1.19.1
+
+Released 2026-Sep-21
+
+## 1.19.1-rc.1
+
+Released 2026-Sep-21
+
+* Fixed `NotSupportedException` thrown when building a `TracerProvider` or
+  `MeterProvider` with a large number of wildcard source/meter patterns on
+  `net8.0`, and a related `OutOfMemoryException` that could occur when many
+  such providers were built over the lifetime of a process.
+  ([#7788](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7788))
+
+## 1.19.0
+
+Released 2026-Sep-18
+
+## 1.19.0-rc.1
+
+Released 2026-Sep-18
+
 * Added Schema URL to internally created `Resource` instances.
   ([#7726](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7726))
 
@@ -16,10 +60,17 @@ Notes](../../RELEASENOTES.md).
 * Added `AlwaysRecordSampler`.
   ([#7695](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7695))
 
-* Added `SamplerOptions`, which allows the trace sampler to be configured using
-  the options pattern (including binding from `appsettings.json`) in addition to
-  the `OTEL_TRACES_SAMPLER` and `OTEL_TRACES_SAMPLER_ARG` environment variables.
-  ([#7192](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7192))
+* Fixed `CircularBufferBuckets` so the first delta histogram insertion after a
+  reset does not result in an unnecessary scale reduction.
+  ([#7749](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7749))
+
+* Improved wildcard source/meter name matching to avoid excessive matching
+  time at runtime.
+  ([#7760](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7760))
+
+* Fixed lazy logger provider builds after a failure from reusing partially
+  initialized provider state.
+  ([#7761](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7761))
 
 ## 1.18.0
 

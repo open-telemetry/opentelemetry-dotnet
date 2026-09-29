@@ -274,11 +274,7 @@ public class OtlpTlsOptionsTests
     /// Some platforms (e.g., certain CI environments or restricted OS configurations) may not support
     /// specific cryptographic operations required for TLS/mTLS certificate handling. This method wraps
     /// test execution to catch <see cref="PlatformNotSupportedException"/> and <see cref="CryptographicException"/>
-    /// (when indicating lack of support), allowing tests to pass gracefully on unsupported platforms.
-    /// </para>
-    /// <para>
-    /// Note: xUnit 2.x does not support runtime test skipping. The test will appear as "passed" rather than
-    /// "skipped" when crypto is not supported. Consider upgrading to xUnit v3 for proper <c>Assert.Skip()</c> support.
+    /// (when indicating lack of support), allowing tests to skip gracefully on unsupported platforms.
     /// </para>
     /// </remarks>
     /// <param name="testBody">The test action to execute.</param>
@@ -290,15 +286,13 @@ public class OtlpTlsOptionsTests
         }
         catch (PlatformNotSupportedException ex)
         {
-            // Platform does not support the required cryptographic operations.
-            // Test is effectively skipped but will appear as passed in xUnit 2.x.
-            Console.WriteLine($"[SKIPPED] TLS test skipped due to platform limitation: {ex.Message}");
+            // Platform does not support the required cryptographic operations
+            Assert.Skip("TLS test skipped due to platform limitation: " + ex.Message);
         }
         catch (CryptographicException ex) when (ex.Message.Contains("not supported", StringComparison.OrdinalIgnoreCase))
         {
-            // Cryptographic operation not supported on this platform/configuration.
-            // Test is effectively skipped but will appear as passed in xUnit 2.x.
-            Console.WriteLine($"[SKIPPED] TLS test skipped due to crypto limitation: {ex.Message}");
+            // Cryptographic operation not supported on this platform/configuration
+            Assert.Skip($"TLS test skipped due to crypto limitation: {ex.Message}");
         }
     }
 }

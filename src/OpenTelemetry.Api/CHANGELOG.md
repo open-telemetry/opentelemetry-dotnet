@@ -6,6 +6,22 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.19.1
+
+Released 2026-Sep-21
+
+## 1.19.1-rc.1
+
+Released 2026-Sep-21
+
+## 1.19.0
+
+Released 2026-Sep-18
+
+## 1.19.0-rc.1
+
+Released 2026-Sep-18
+
 * Reduced allocations when creating log record attributes from an array.
   ([#7699](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7699))
 
@@ -14,6 +30,11 @@ Notes](../../RELEASENOTES.md).
 
 * Reduced allocations when constructing `SpanAttributes` from an array.
   ([#7698](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7698))
+
+* Fixed parsing of an inbound `tracestate` header whose member value trimmed
+  to an empty value that previously threw an `IndexOutOfRangeException`
+  internally and could silently truncate the tracestate.
+  ([#7756](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7756))
 
 ## 1.18.0
 

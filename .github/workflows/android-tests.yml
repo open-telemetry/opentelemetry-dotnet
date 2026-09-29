@@ -13,7 +13,7 @@ permissions: {}
 jobs:
   android-tests:
     name: Android end-to-end tests
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 20
 
     permissions:
@@ -26,10 +26,10 @@ jobs:
 
     steps:
     - name: Setup JDK 17
-      uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+      uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
       with:
         distribution: temurin
-        java-version: 17
+        java-version: 25.0.4+101.0.LTS
 
     - name: Checkout code
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -64,7 +64,7 @@ jobs:
         target: google_apis
         script: |
           set +e
-          dotnet test test/OpenTelemetry.Android.Tests/OpenTelemetry.Android.Tests.csproj --configuration Debug --framework "${TARGET_FRAMEWORK}" --logger:"GitHubActions;report-warnings=false"
+          dotnet test test/OpenTelemetry.Android.Tests/OpenTelemetry.Android.Tests.csproj --configuration Debug --framework "${TARGET_FRAMEWORK}" --logger:"GitHubActions;report-warnings=false;summary-include-passed=false"
           exit_code=$?
           adb pull /storage/emulated/0/Android/data/io.opentelemetry.dotnet.android/files/TestResults ./TestResults || true
           exit $exit_code

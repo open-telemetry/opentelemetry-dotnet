@@ -96,8 +96,15 @@ public class OpenTelemetryLoggerProvider : BaseProvider, ILoggerProvider, ISuppo
                     // it is intentionally left in place so the next access
                     // retries instead of caching the failure.
                     provider = this.loggerProviderFactory!();
-                    Volatile.Write(ref this.provider, provider);
-                    this.loggerProviderFactory = null;
+
+                    // A provider which is still being built may be returned to
+                    // break an ILoggerFactory circular dependency. Do not cache
+                    // it until construction has completed successfully.
+                    if (provider is not LoggerProviderSdk { IsBuilt: false })
+                    {
+                        Volatile.Write(ref this.provider, provider);
+                        this.loggerProviderFactory = null;
+                    }
                 }
 
                 return provider;
@@ -141,12 +148,19 @@ public class OpenTelemetryLoggerProvider : BaseProvider, ILoggerProvider, ISuppo
                 logger = (this.loggers[categoryName] as ILogger)!;
                 if (logger == null)
                 {
-                    logger = this.Provider is not LoggerProviderSdk loggerProviderSdk
-                        ? NullLogger.Instance
-                        : new OpenTelemetryLogger(loggerProviderSdk, this.Options, categoryName)
+                    var provider = this.Provider;
+                    logger = provider switch
+                    {
+                        LoggerProviderSdk { IsBuilt: true } loggerProviderSdk => new OpenTelemetryLogger(
+                            loggerProviderSdk,
+                            this.Options,
+                            categoryName)
                         {
                             ScopeProvider = this.ScopeProvider,
-                        };
+                        },
+                        LoggerProviderSdk => new DeferredOpenTelemetryLogger(this, categoryName),
+                        _ => NullLogger.Instance,
+                    };
 
                     this.loggers[categoryName] = logger;
                 }

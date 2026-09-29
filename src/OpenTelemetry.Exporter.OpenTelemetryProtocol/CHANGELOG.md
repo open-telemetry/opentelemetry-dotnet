@@ -7,6 +7,30 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Avoid closure allocations when serializing cached metric metadata.
+  ([#7841](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7841))
+
+* Custom TLS certificate options (custom CA trust and mTLS) and the experimental
+  disk retry feature are explicitly marked as not supported on browser-based
+  platforms (e.g. Blazor).
+  ([#7799](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7799))
+
+## 1.19.1
+
+Released 2026-Sep-21
+
+## 1.19.1-rc.1
+
+Released 2026-Sep-21
+
+## 1.19.0
+
+Released 2026-Sep-18
+
+## 1.19.0-rc.1
+
+Released 2026-Sep-18
+
 * If an exception is thrown when serializing an attribute, the attribute will
   now be dropped.
   ([#7688](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7688))
@@ -24,6 +48,10 @@ Notes](../../RELEASENOTES.md).
 * Fixed CA certificate loading (e.g. using `OTEL_EXPORTER_OTLP_CERTIFICATE`)
   for PEM-encoded certificates that only contain a public key.
   ([#7693](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7693))
+
+* Prevented oversized metric metadata from being cached when it cannot fit
+  within the configured request size.
+  ([#7752](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7752))
 
 ## 1.18.0
 

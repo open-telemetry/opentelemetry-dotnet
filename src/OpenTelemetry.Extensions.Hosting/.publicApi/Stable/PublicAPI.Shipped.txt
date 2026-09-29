@@ -1,5 +1,6 @@
 #nullable enable
 Microsoft.Extensions.DependencyInjection.OpenTelemetryServicesExtensions
+Microsoft.Extensions.Hosting.OpenTelemetryHostApplicationBuilderExtensions
 OpenTelemetry.ITelemetryHostInitializer
 OpenTelemetry.ITelemetryHostInitializer.Initialize() -> void
 OpenTelemetry.OpenTelemetryBuilder
@@ -13,3 +14,4 @@ OpenTelemetry.OpenTelemetryBuilder.WithMetrics(System.Action<OpenTelemetry.Metri
 OpenTelemetry.OpenTelemetryBuilder.WithTracing() -> OpenTelemetry.OpenTelemetryBuilder!
 OpenTelemetry.OpenTelemetryBuilder.WithTracing(System.Action<OpenTelemetry.Trace.TracerProviderBuilder!>! configure) -> OpenTelemetry.OpenTelemetryBuilder!
 static Microsoft.Extensions.DependencyInjection.OpenTelemetryServicesExtensions.AddOpenTelemetry(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> OpenTelemetry.OpenTelemetryBuilder!
+static Microsoft.Extensions.Hosting.OpenTelemetryHostApplicationBuilderExtensions.AddOpenTelemetry(this Microsoft.Extensions.Hosting.IHostApplicationBuilder! builder) -> OpenTelemetry.OpenTelemetryBuilder!
