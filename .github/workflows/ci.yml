@@ -272,6 +272,7 @@ jobs:
     if: |
       contains(needs.detect-changes.outputs.changes, 'code') ||
       contains(needs.detect-changes.outputs.changes, 'build') ||
+      contains(needs.detect-changes.outputs.changes, 'pwsh') ||
       contains(needs.detect-changes.outputs.changes, 'shared')
     strategy:
       fail-fast: ${{ github.event_name == 'merge_group' }}
