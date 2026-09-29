@@ -647,20 +647,9 @@ services.AddHttpClient(
 
 ### HttpClient logging
 
-OTLP exporter registration adds a default `Warning` logging filter for each
-signal's named HTTP client category:
-
-* `System.Net.Http.HttpClient.OtlpTraceExporter`
-* `System.Net.Http.HttpClient.OtlpMetricExporter`
-* `System.Net.Http.HttpClient.OtlpLogExporter`
-
-These filters suppress routine `IHttpClientFactory` request logs below `Warning`
-for those category prefixes, including their `.LogicalHandler` and
-`.ClientHandler` categories. Other HTTP client categories are unaffected.
-
-To restore informational request logs, configure the exporter categories
-explicitly. For applications using standard .NET logging configuration, add the
-following to `appsettings.json`:
+OTLP exporter registration adds default `Warning` logging filters for its named
+HTTP client categories. To restore informational request logs in applications
+using standard .NET logging configuration, add the following to `appsettings.json`:
 
 ```json
 {
@@ -674,16 +663,8 @@ following to `appsettings.json`:
 }
 ```
 
-Use `Debug` or `Trace` instead for more detailed HTTP client logging, or `None` to
-disable it. These category-specific settings override the exporter defaults.
-A broader setting such as `System.Net.Http.HttpClient` does not override the
-more-specific exporter filters. Provider-specific logging settings take precedence
-over provider-independent settings, so configure the categories under that
-provider's `LogLevel` section if needed.
-
-The default filters also suppress HTTP request failure messages emitted at
-`Information`. Exporter failures are still reported through the exporter's
-`EventSource`; see [Troubleshooting](#troubleshooting) to enable those diagnostics.
+Use these specific categories; a broader setting such as
+`System.Net.Http.HttpClient` does not override the exporter defaults.
 
 ## Experimental features
 
