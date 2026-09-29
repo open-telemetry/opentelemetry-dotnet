@@ -43,4 +43,4 @@ Notes](../../RELEASENOTES.md).
   ([#7806](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7806))
 
 * Declarative configuration now uses strict mode.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7849](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7849))
