@@ -15,8 +15,8 @@ Notes](../../RELEASENOTES.md).
   platforms (e.g. Blazor).
   ([#7799](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7799))
 
-* Suppressed routine informational logs from the HTTP clients used by the OTLP
-  exporters while preserving explicit application logging configuration.
+* Suppressed informational HTTP client logs from OTLP exporters by default. See
+  [HttpClient logging](README.md#httpclient-logging) for configuration overrides.
   ([#7743](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7743))
 
 ## 1.19.1
