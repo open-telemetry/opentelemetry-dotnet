@@ -24,7 +24,7 @@ jobs:
       matrix:
         include:
           - version: net10.0
-            runner: macos-26
+            runner: xcode-27
           - version: net11.0
             runner: macos-26
 
