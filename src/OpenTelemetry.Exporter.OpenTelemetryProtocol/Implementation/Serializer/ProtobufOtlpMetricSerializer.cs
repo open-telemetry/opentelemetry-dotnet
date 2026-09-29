@@ -673,9 +673,11 @@ internal static class ProtobufOtlpMetricSerializer
 #else
             // Keep the closure allocation on the cache-miss path on older frameworks.
             static byte[] GetOrAddMetricMetadata(Metric metric, int bufferSize)
-                => CachedMetricMetadata.GetOrAdd(
+            {
+                return CachedMetricMetadata.GetOrAdd(
                     metric,
                     key => SerializeMetricMetadataToBytes(key, bufferSize));
+            }
 
             cachedMetadata = GetOrAddMetricMetadata(metric, availableBufferSize);
 #endif

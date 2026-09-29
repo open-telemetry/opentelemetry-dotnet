@@ -68,7 +68,7 @@ Only one declarative configuration file is supported per
 `IConfigurationBuilder`. Registering the same file again is a no-op. Registering
 a different file leaves the first one in effect. Declarative configuration files
 are not layered against each other: one YAML document is chosen, never a merge
-of two. See [Precedence](#precedence).
+of two. See [Strict mode](#strict-mode).
 
 ### 3. Write a YAML config file
 
@@ -121,12 +121,12 @@ application.
 
 ## Supported settings
 
-| YAML field | Effect | Application path | Later `IConfiguration` source overrides |
-| --- | --- | --- | --- |
-| `disabled` | Disables the OpenTelemetry SDK when `true` | Flat SDK key | Yes |
-| `resource.attributes` | Adds typed structured resource attributes to all signals | Typed resource detector | No |
-| `resource.attributes_list` | Adds resource attributes from a pre-formatted `key=value` list | Flat SDK key | Yes |
-| `resource.schema_url` | Contributes a schema URL to the resource (see below) | Typed resource detector | No |
+| YAML field | Effect | Application path |
+| --- | --- | --- |
+| `disabled` | Disables the OpenTelemetry SDK when `true` | Flat SDK key |
+| `resource.attributes` | Adds typed structured resource attributes to all signals | Typed resource detector |
+| `resource.attributes_list` | Adds resource attributes from a pre-formatted `key=value` list | Flat SDK key |
+| `resource.schema_url` | Contributes a schema URL to the resource (see below) | Typed resource detector |
 
 The following attribute types defined by the OTel configuration schema are
 supported for `resource.attributes`:
@@ -199,23 +199,25 @@ value: ${PORT}           # may resolve to a number
 value: "${PORT}"         # always resolves to a string
 ```
 
-## Precedence
+## Strict mode
 
-When you call `UseDeclarativeConfiguration()` or
-`AddOpenTelemetryDeclarativeConfiguration()`, the YAML source is **appended
-after** all sources already registered on the builder at that point. That means
-flat settings projected by the declarative source **take precedence over**
-environment variables, `appsettings.json`, and other sources that were
-registered earlier.
+Declarative configuration uses the specification's strict mode. When a
+configuration file is used, other `OTEL_*` settings are ignored unless the
+file references them through
+[environment-variable substitution](#environment-variable-substitution).
+This prevents settings outside the file from being combined with it
+unintentionally.
 
-For those flat settings, sources added **after** the declarative source take
-precedence using standard `IConfiguration` ordering. The currently supported
-flat settings are `disabled` and `resource.attributes_list`.
+To continue using an environment variable, reference it from the YAML file:
 
-This source ordering does not apply to model-driven settings such as
-`resource.attributes` and `resource.schema_url`, or between two declarative
-configuration files. Flat keys can be merged per key; the typed YAML document
-cannot, so exactly one document is used.
+```yaml
+file_format: "1.1"
+
+disabled: ${OTEL_SDK_DISABLED:-false}
+```
+
+`OTEL_DOTNET_*` settings and configuration applied directly in code are not
+affected by strict mode.
 
 ## Known current limitations
 
@@ -228,9 +230,6 @@ cannot, so exactly one document is used.
   Calling `IConfigurationRoot.Reload()` does not re-read the YAML file or change
   the configuration in use. The reload is ignored and a warning is emitted via
   EventSource.
-- The package uses standard `IConfiguration` source ordering for flat keys. It
-  does not yet provide the specification's strict mode that ignores other SDK
-  environment variables when `OTEL_CONFIG_FILE` is set.
 - `UseDeclarativeConfiguration()` applies YAML values by extending the
   configuration available to it at the time it is called. An application that
   replaces its `IConfiguration` registration, or clears its configuration
@@ -248,6 +247,8 @@ cannot, so exactly one document is used.
   reported.
 - `resource.detection/development` (the SDK's resource detector discovery
   mechanism) is not yet implemented.
+- Some components that read environment variables directly are not yet covered
+  by strict mode.
 
 ### Pitfalls to avoid
 
@@ -257,6 +258,8 @@ cannot, so exactly one document is used.
 - A second call to `UseDeclarativeConfiguration()` on the same
   `IServiceCollection` is ignored. Only the first file path applies; a later
   call with a different path does not replace it.
+- Configuration sources added after declarative configuration may override
+  values from the file.
 
 ## Provide feedback
 

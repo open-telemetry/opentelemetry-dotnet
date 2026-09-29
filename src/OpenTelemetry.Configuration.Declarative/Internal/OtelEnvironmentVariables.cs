@@ -23,4 +23,15 @@ internal static class OtelEnvironmentVariables
     /// Path to the declarative configuration YAML file.
     /// </summary>
     internal const string ConfigFile = "OTEL_CONFIG_FILE";
+
+    /// <summary>
+    /// The prefix shared by all specification-defined OTel environment variables.
+    /// </summary>
+    internal const string Prefix = "OTEL_";
+
+    /// <summary>
+    /// The prefix used by .NET-specific OTel environment variables that are exempt from strict
+    /// mode masking until each graduates into the declarative configuration document.
+    /// </summary>
+    internal const string DotNetPrefix = "OTEL_DOTNET_";
 }

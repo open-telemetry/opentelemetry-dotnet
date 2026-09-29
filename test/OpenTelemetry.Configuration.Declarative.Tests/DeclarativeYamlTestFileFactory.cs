@@ -40,8 +40,9 @@ internal sealed class DeclarativeYamlTestFileFactory : IDisposable
             builder.Append("disabled: ").AppendLine(disabled.Value ? "true" : "false");
         }
 
-        var hasResourceSection = (resourceAttributes != null && resourceAttributes.Count > 0)
-            || !string.IsNullOrEmpty(resourceAttributesList);
+        var hasResourceSection =
+            (resourceAttributes != null && resourceAttributes.Count > 0) ||
+            resourceAttributesList is { Length: > 0 };
 
         if (hasResourceSection)
         {
@@ -57,9 +58,9 @@ internal sealed class DeclarativeYamlTestFileFactory : IDisposable
                 }
             }
 
-            if (!string.IsNullOrEmpty(resourceAttributesList))
+            if (resourceAttributesList is { Length: > 0 })
             {
-                builder.Append("  attributes_list: \"").Append(EscapeYaml(resourceAttributesList!)).AppendLine("\"");
+                builder.Append("  attributes_list: \"").Append(EscapeYaml(resourceAttributesList)).AppendLine("\"");
             }
         }
 

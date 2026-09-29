@@ -17,6 +17,7 @@ internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerP
 
     private readonly IServiceProvider serviceProvider;
     private TracerProviderSdk? tracerProvider;
+    private List<Func<IServiceProvider, Sampler, Sampler>>? samplerConfigurators;
 
     public TracerProviderBuilderSdk(IServiceProvider serviceProvider)
     {
@@ -36,6 +37,9 @@ internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerP
     public HashSet<string> LegacyActivityOperationNames { get; } = new(StringComparer.OrdinalIgnoreCase);
 
     public Sampler? Sampler { get; private set; }
+
+    public IReadOnlyList<Func<IServiceProvider, Sampler, Sampler>> SamplerConfigurators
+        => this.samplerConfigurators ?? [];
 
     public bool ExceptionProcessorEnabled { get; private set; }
 
@@ -123,6 +127,15 @@ internal sealed class TracerProviderBuilderSdk : TracerProviderBuilder, ITracerP
         Debug.Assert(sampler != null, "sampler was null");
 
         this.Sampler = sampler;
+
+        return this;
+    }
+
+    public TracerProviderBuilder AddSamplerConfigurator(Func<IServiceProvider, Sampler, Sampler> configurator)
+    {
+        Debug.Assert(configurator != null, "configurator was null");
+
+        (this.samplerConfigurators ??= []).Add(configurator!);
 
         return this;
     }

@@ -10,6 +10,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 /// <summary>
 /// Factory for creating HttpClient instances configured with TLS settings.
 /// </summary>
+#if NET
+[System.Runtime.Versioning.UnsupportedOSPlatform("browser")]
+#endif
 internal static class OtlpSecureHttpClientFactory
 {
     /// <summary>

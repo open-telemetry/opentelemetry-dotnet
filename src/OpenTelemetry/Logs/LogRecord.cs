@@ -603,6 +603,7 @@ public sealed class LogRecord
             var bufferedScopes = this.BufferedScopes;
             if (bufferedScopes != null)
             {
+#pragma warning disable IDE0028 // Collection initialization can be simplified
                 // The scopes are copied one at a time. A collection
                 // expression hits a JIT code generation issue on x64
                 // that can make the code up to 10x slower. See:
@@ -616,6 +617,7 @@ public sealed class LogRecord
                 }
 
                 copy.BufferedScopes = scopes;
+#pragma warning restore IDE0028 // Collection initialization can be simplified
             }
 
             return copy;
