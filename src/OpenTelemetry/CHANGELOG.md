@@ -10,6 +10,12 @@ Notes](../../RELEASENOTES.md).
   inherited asynchronous execution contexts.
   ([#7803](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7803))
 
+* Self-diagnostic features are explicitly disabled on browser-based
+  platforms (e.g. Blazor) and are now non-functional. Previously, attempting
+  to enable self-diagnostics on such platforms would result in an exception
+  at runtime.
+  ([#7799](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7799))
+
 * Added `OpenTelemetryLoggerOptions.Version` and
   `OpenTelemetryLoggerOptions.SchemaUrl` options to set an
   instrumentation library version and schema URL applied to logs emitted via

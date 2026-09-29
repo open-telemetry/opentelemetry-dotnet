@@ -467,6 +467,11 @@ or reader
   | `OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE`          | Path to client certificate file (PEM) |
   | `OTEL_EXPORTER_OTLP_CLIENT_KEY`                  | Path to client private key file (PEM) |
 
+> [!NOTE]
+> Custom TLS certificate configuration (both custom CA trust via
+> `OTEL_EXPORTER_OTLP_CERTIFICATE` and mTLS) is not supported on
+> browser-based platforms.
+
 * Logs:
 
   The following environment variables can be used to override the default values
@@ -681,6 +686,9 @@ want to solicit feedback from the community.
       details](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.PersistentStorage.FileSystem#file-details).
 
       Added in **TBD** (Unreleased).
+
+> [!NOTE]
+> Disk retry is not supported on browser-based platforms.
 
 * Logs
 

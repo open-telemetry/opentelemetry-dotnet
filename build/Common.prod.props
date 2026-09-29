@@ -49,6 +49,13 @@
     <AdditionalFiles Include="$(MSBuildThisFileDirectory)/BannedSymbols.txt" />
   </ItemGroup>
 
+  <!-- Android, Browser and iOS are not supported platforms checked for compatibility warnings by default -->
+  <ItemGroup Condition="'$(SupportsBrowserAndMobilePlatforms)' == 'true'">
+    <SupportedPlatform Include="android" />
+    <SupportedPlatform Include="browser" />
+    <SupportedPlatform Include="ios" />
+  </ItemGroup>
+
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)opentelemetry-icon-color.png" Pack="true" PackagePath="\" />
     <SourceRoot Condition="'$(Deterministic)'=='true'" Include="$(MSBuildThisFileDirectory)/" />

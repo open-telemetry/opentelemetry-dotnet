@@ -10,6 +10,11 @@ Notes](../../RELEASENOTES.md).
 * Avoid closure allocations when serializing cached metric metadata.
   ([#7841](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7841))
 
+* Custom TLS certificate options (custom CA trust and mTLS) and the experimental
+  disk retry feature are explicitly marked as not supported on browser-based
+  platforms (e.g. Blazor).
+  ([#7799](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7799))
+
 * The OTLP log exporter now exports `schema_url` on `ScopeLogs`. Log
   records emitted from a `Logger` with a schema URL set now populate
   `ScopeLogs.schema_url` in exported OTLP requests.
