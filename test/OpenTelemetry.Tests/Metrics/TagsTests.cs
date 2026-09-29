@@ -221,6 +221,33 @@ public class TagsTests
         Assert.True(benignComparisons <= 8, $"Expected at most a handful of comparisons, but a benign lookup performed {benignComparisons}.");
     }
 
+    [Fact]
+    public void Lookup_DoesNotConcentrateLegacyCollidingKeysInOneBucket()
+    {
+        const int CardinalityLimit = 2000;
+
+        var comparer = new CountingTagsComparer();
+        var lookup = new System.Collections.Concurrent.ConcurrentDictionary<Tags, int>(comparer);
+
+        var keys = CreateLegacyCollidingValues(CardinalityLimit + 1);
+
+        for (var i = 0; i < CardinalityLimit; i++)
+        {
+            Assert.True(lookup.TryAdd(new Tags([new(keys[i], "value")]), i));
+        }
+
+        comparer.EqualsCalls = 0;
+        Assert.False(lookup.TryGetValue(new Tags([new(keys[CardinalityLimit], "value")]), out _));
+        var legacyCollidingComparisons = comparer.EqualsCalls;
+
+        comparer.EqualsCalls = 0;
+        Assert.False(lookup.TryGetValue(new Tags([new("benign-key", "value")]), out _));
+        var benignComparisons = comparer.EqualsCalls;
+
+        Assert.True(legacyCollidingComparisons <= 8, $"Expected at most a handful of comparisons, but a legacy-colliding-key lookup performed {legacyCollidingComparisons}.");
+        Assert.True(benignComparisons <= 8, $"Expected at most a handful of comparisons, but a benign lookup performed {benignComparisons}.");
+    }
+
     private static string[] CreateLegacyCollidingValues(int count)
         => [.. Enumerable.Range(0, count).Select(i => "\0" + new string('A', 64) + i.ToString("D5", CultureInfo.InvariantCulture))];
 
