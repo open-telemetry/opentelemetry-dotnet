@@ -10,6 +10,12 @@ Notes](../../RELEASENOTES.md).
   inherited asynchronous execution contexts.
   ([#7803](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7803))
 
+* Self-diagnostic features are explicitly disabled on browser-based
+  platforms (e.g. Blazor) and are now non-functional. Previously, attempting
+  to enable self-diagnostics on such platforms would result in an exception
+  at runtime.
+  ([#7799](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7799))
+
 * Added `TracerProviderBuilder.ConfigureSampler` which receives the resolved
   `Sampler` whether set programmatically, via `OTEL_TRACES_SAMPLER`, or by
   default, and returns a replacement. Intended for library authors who need to
