@@ -36,7 +36,6 @@
   <PropertyGroup Label="SourceLinkProperties">
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <ContinuousIntegrationBuild Condition="'$(Deterministic)'=='true'">true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
   <ItemGroup>

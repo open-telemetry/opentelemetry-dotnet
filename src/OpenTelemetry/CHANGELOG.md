@@ -16,6 +16,13 @@ Notes](../../RELEASENOTES.md).
   at runtime.
   ([#7799](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7799))
 
+* Added `TracerProviderBuilder.ConfigureSampler` which receives the resolved
+  `Sampler` whether set programmatically, via `OTEL_TRACES_SAMPLER`, or by
+  default, and returns a replacement. Intended for library authors who need to
+  influence sampling without overriding a sampler the application has
+  configured.
+  ([#7780](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7780))
+
 * Added `OpenTelemetryLoggerOptions.Version` and
   `OpenTelemetryLoggerOptions.SchemaUrl` options to set an
   instrumentation library version and schema URL applied to logs emitted via
