@@ -17,32 +17,31 @@ internal sealed class OtlpSpanLimits
     {
         this.WarningTracker = new LimitExceededWarningTracker(warningRateLimiter ?? new LimitExceededWarningRateLimiter());
 
+        this.AttributeCountLimit = spanLimitOptions.AttributeCountLimit;
+        this.AttributePerEventCountLimit = spanLimitOptions.AttributePerEventCountLimit;
+        this.AttributePerLinkCountLimit = spanLimitOptions.AttributePerLinkCountLimit;
+        this.EventCountLimit = spanLimitOptions.EventCountLimit;
+        this.LinkCountLimit = spanLimitOptions.LinkCountLimit;
         this.ScopeAttributeCountLimit = attributeLimitOptions.AttributeCountLimit;
         this.ScopeAttributeValueLengthLimit = attributeLimitOptions.AttributeValueLengthLimit;
-
         this.SpanAttributeValueLengthLimit = spanLimitOptions.AttributeValueLengthLimit;
-        this.AttributeCountLimit = spanLimitOptions.AttributeCountLimit;
-        this.EventCountLimit = spanLimitOptions.EventCountLimit;
-        this.AttributePerEventCountLimit = spanLimitOptions.AttributePerEventCountLimit;
-        this.LinkCountLimit = spanLimitOptions.LinkCountLimit;
-        this.AttributePerLinkCountLimit = spanLimitOptions.AttributePerLinkCountLimit;
     }
+
+    internal int AttributeCountLimit { get; }
+
+    internal int AttributePerEventCountLimit { get; }
+
+    internal int AttributePerLinkCountLimit { get; }
+
+    internal int EventCountLimit { get; }
+
+    internal int LinkCountLimit { get; }
 
     internal int ScopeAttributeCountLimit { get; }
 
     internal int? ScopeAttributeValueLengthLimit { get; }
 
     internal int? SpanAttributeValueLengthLimit { get; }
-
-    internal int AttributeCountLimit { get; }
-
-    internal int EventCountLimit { get; }
-
-    internal int AttributePerEventCountLimit { get; }
-
-    internal int LinkCountLimit { get; }
-
-    internal int AttributePerLinkCountLimit { get; }
 
     internal LimitExceededWarningTracker WarningTracker { get; }
 }

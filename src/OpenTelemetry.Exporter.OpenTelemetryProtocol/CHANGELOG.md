@@ -21,14 +21,14 @@ Notes](../../RELEASENOTES.md).
 
 * The OTLP exporter now reads span and log record limits from
   `SpanLimitOptions`, `LogRecordLimitOptions`, and `AttributeLimitOptions`.
-  ([7859](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7859))
+  ([#7859](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7859))
 
 * **Breaking Change**: Byte array attribute values are truncated to the
   attribute value length limit. The span event and span link attribute count
   limits (`OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT` and
   `OTEL_LINK_ATTRIBUTE_COUNT_LIMIT`) fall back to `OTEL_ATTRIBUTE_COUNT_LIMIT`
   and then 128. They no longer fall back to `OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT`.
-  ([7859](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7859))
+  ([#7859](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7859))
 
 ## 1.19.1
 
