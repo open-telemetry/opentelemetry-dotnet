@@ -12,7 +12,7 @@ Notes](../../RELEASENOTES.md).
   for an in-progress metrics collection instead of continuing to wait for it
   to finish. The collection itself is not cancelled and continues running in
   the background.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7856](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7856))
 
 ## 1.19.1-beta.1
 
