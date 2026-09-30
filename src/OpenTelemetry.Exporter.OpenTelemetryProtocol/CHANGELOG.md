@@ -19,6 +19,15 @@ Notes](../../RELEASENOTES.md).
   [HttpClient logging](README.md#httpclient-logging) for configuration overrides.
   ([#7743](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7743))
 
+* Hardened the experimental disk retry feature.
+    * The retry directory and the blob files within it are now created
+      accessible to the current user only on non-Windows platforms.
+    * Directory size accounting no longer follows subdirectories, avoiding
+      a symbolic-link/junction walk.
+    * Expired lease-file cleanup now correctly locates the lease timestamp
+      delimiter within the file name rather than the whole path.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.19.1
 
 Released 2026-Sep-21

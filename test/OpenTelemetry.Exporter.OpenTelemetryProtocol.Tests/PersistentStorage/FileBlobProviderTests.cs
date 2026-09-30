@@ -63,6 +63,41 @@ public class FileBlobProviderTests
         }
     }
 
+#if NET
+    [Fact]
+    public void TryCreateBlob_RestrictsStoragePermissionsToOwner()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes do not apply on Windows.");
+            return;
+        }
+
+        const UnixFileMode GroupAndOther =
+            UnixFileMode.GroupRead | UnixFileMode.GroupWrite | UnixFileMode.GroupExecute |
+            UnixFileMode.OtherRead | UnixFileMode.OtherWrite | UnixFileMode.OtherExecute;
+
+        var root = CreateTempDirectory();
+
+        try
+        {
+            var path = Path.Combine(root, "traces");
+            using var provider = new FileBlobProvider(path);
+
+            Assert.True(provider.TryCreateBlob(new byte[] { 1, 2, 3 }.AsSpan(), out var blob));
+
+            var blobPath = Assert.IsType<FileBlob>(blob).FullPath;
+
+            Assert.Equal(UnixFileMode.None, File.GetUnixFileMode(path) & GroupAndOther);
+            Assert.Equal(UnixFileMode.None, File.GetUnixFileMode(blobPath) & GroupAndOther);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+#endif
+
     private static string CreateTempDirectory()
     {
         var path = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());

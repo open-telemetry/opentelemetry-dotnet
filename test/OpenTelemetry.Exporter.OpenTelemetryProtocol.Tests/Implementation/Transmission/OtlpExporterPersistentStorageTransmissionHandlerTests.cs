@@ -7,6 +7,7 @@ using System.Net.Http;
 #endif
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.PersistentStorage.Abstractions;
+using OpenTelemetry.PersistentStorage.FileSystem;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission.Tests;
 
@@ -105,6 +106,52 @@ public class OtlpExporterPersistentStorageTransmissionHandlerTests
         Assert.True(handler.InitiateAndWaitForRetryProcess(5_000));
         Assert.False(blob1.WasDeleted, "blob1 must be retained when the export client throws");
         Assert.True(blob2.WasDeleted, "blob2 must be processed in the same pass after blob1 throws");
+    }
+
+    [Fact]
+    public void RetryStoredRequests_TransmitsStoredBlobVerbatim()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        Directory.CreateDirectory(directory);
+
+        try
+        {
+            var content = new byte[] { 0x0A, 0x01, 0x02, 0x03, 0xFF };
+
+            // The suffix after the timestamp must not contain '-': the name is parsed by splitting
+            // on the last '-', exactly as the exporter's own "{timestamp}-{guid:N}.blob" names are.
+            var blobName = $"{DateTime.UtcNow.AddMinutes(-1):yyyy-MM-ddTHHmmss.fffffffZ}-storedblob.blob";
+            File.WriteAllBytes(Path.Combine(directory, blobName), content);
+
+            var exportClient = new RecordingExportClient();
+
+            using (var blobProvider = new FileBlobProvider(directory))
+            using (var handler = new OtlpExporterPersistentStorageTransmissionHandler(blobProvider, exportClient, timeoutMilliseconds: 10_000))
+            {
+                Assert.True(handler.InitiateAndWaitForRetryProcess(30_000));
+            }
+
+            Assert.NotNull(exportClient.LastRequest);
+            Assert.True(content.AsSpan().SequenceEqual(exportClient.LastRequest), "The stored bytes were not sent unchanged.");
+            Assert.Empty(Directory.EnumerateFiles(directory));
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    private sealed class RecordingExportClient : IExportClient
+    {
+        public byte[]? LastRequest { get; private set; }
+
+        public ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default)
+        {
+            this.LastRequest = buffer.AsSpan(0, contentLength).ToArray();
+            return new ExportClientHttpResponse(success: true, deadlineUtc: deadlineUtc, response: null, exception: null);
+        }
+
+        public bool Shutdown(int timeoutMilliseconds) => true;
     }
 
     private sealed class FailingExportClient : IExportClient

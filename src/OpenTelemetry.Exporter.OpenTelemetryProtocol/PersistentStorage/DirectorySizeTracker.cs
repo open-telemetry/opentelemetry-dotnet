@@ -60,6 +60,10 @@ internal sealed class DirectorySizeTracker
         long directorySize = 0;
         try
         {
+            // Only the files written directly into the storage directory are counted. The exporter
+            // never creates subdirectories, so recursing into them serves no purpose - and a
+            // subdirectory that is actually a symbolic link or junction would let this walk follow
+            // links out of the storage directory, potentially into a cycle or across the whole file system.
             foreach (var file in Directory.EnumerateFiles(path))
             {
                 if (File.Exists(file))
@@ -67,11 +71,6 @@ internal sealed class DirectorySizeTracker
                     var fileInfo = new FileInfo(file);
                     directorySize += fileInfo.Length;
                 }
-            }
-
-            foreach (var dir in Directory.GetDirectories(path))
-            {
-                directorySize += CalculateFolderSize(dir);
             }
         }
         catch (Exception ex)

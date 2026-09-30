@@ -228,4 +228,28 @@ public class PersistentStorageHelperTests
 
         Assert.False(result);
     }
+
+    [Fact]
+    public void RemoveExpiredLease_WithoutLeaseDelimiterInDirectoryContainingAtSign_DoesNotMoveFileOutOfStorageDirectory()
+    {
+        var root = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        var storage = Path.Combine(root, "user@host", "traces");
+        Directory.CreateDirectory(storage);
+
+        try
+        {
+            var leaseFile = Path.Combine(storage, "invalid-format.lock");
+            File.WriteAllText(leaseFile, "lease");
+
+            var result = PersistentStorageHelper.RemoveExpiredLease(DateTime.UtcNow, leaseFile);
+
+            Assert.False(result);
+            Assert.True(File.Exists(leaseFile), "The lease file should have been left in place.");
+            Assert.False(File.Exists(Path.Combine(root, "user")), "The lease file must not be moved outside the storage directory.");
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
 }

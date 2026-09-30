@@ -40,13 +40,20 @@ internal static class PersistentStorageHelper
             var fileDateTime = GetDateTimeFromLeaseName(filePath);
             if (fileDateTime < leaseDeadline)
             {
-                var atSignIndex = filePath.LastIndexOf('@');
+                var directory = Path.GetDirectoryName(filePath);
+                var fileName = Path.GetFileName(filePath);
+
+                var atSignIndex = fileName.LastIndexOf('@');
                 if (atSignIndex == -1)
                 {
                     return false;
                 }
 
-                var newFilePath = filePath.Substring(0, atSignIndex);
+                var newFileName = fileName.Substring(0, atSignIndex);
+                var newFilePath = string.IsNullOrEmpty(directory)
+                    ? newFileName
+                    : Path.Combine(directory, newFileName);
+
                 try
                 {
                     File.Move(filePath, newFilePath);
@@ -120,7 +127,19 @@ internal static class PersistentStorageHelper
     internal static void WriteAllBytes(string path, ReadOnlySpan<byte> buffer)
     {
 #if NET
-        using var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None);
+        var options = new FileStreamOptions
+        {
+            Access = FileAccess.Write,
+            Mode = FileMode.Create,
+            Share = FileShare.None,
+        };
+
+        if (!OperatingSystem.IsWindows())
+        {
+            options.UnixCreateMode = UnixFileMode.UserRead | UnixFileMode.UserWrite;
+        }
+
+        using var stream = new FileStream(path, options);
         stream.Write(buffer);
 #else
         File.WriteAllBytes(path, buffer.ToArray());
@@ -141,8 +160,33 @@ internal static class PersistentStorageHelper
 
     internal static string CreateSubdirectory(string path)
     {
+#if NET
+        // The retry directory holds serialized telemetry that is later replayed to the collector
+        // with the exporter's own credentials. Restrict it to the current user so other local
+        // users cannot read the stored telemetry or plant blobs that would be sent on the app's
+        // behalf. Only tighten a directory this call actually creates, to avoid changing the
+        // permissions of a directory an operator has deliberately configured and shared. On
+        // Windows the created directory inherits the parent ACL.
+        var created = !Directory.Exists(path);
+        Directory.CreateDirectory(path);
+
+        if (created && !OperatingSystem.IsWindows())
+        {
+            try
+            {
+                File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+            }
+            catch (Exception ex)
+            {
+                PersistentStorageEventSource.Log.PersistentStorageException(nameof(PersistentStorageHelper), $"Could not restrict permissions on directory {path}", ex);
+            }
+        }
+
+        return path;
+#else
         Directory.CreateDirectory(path);
         return path;
+#endif
     }
 
     internal static DateTime GetDateTimeFromBlobName(string filePath)
