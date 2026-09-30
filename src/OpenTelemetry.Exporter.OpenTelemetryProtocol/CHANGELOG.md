@@ -20,7 +20,7 @@ Notes](../../RELEASENOTES.md).
   ([#7743](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7743))
 
 * Avoid logging malformed HTTP request headers in the exporter's diagnostic log.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7858](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7858))
 
 ## 1.19.1
 
