@@ -68,13 +68,18 @@ internal sealed class PrometheusExporterMiddleware
 
             using var requestCancelled = new CancellationTokenSource();
 
-            Stopwatch? scrapeStopwatch = null;
-
-            if (TryGetScrapeTimeout(httpContext.Request.Headers, out var scrapeTimeout))
+            // Always bound the request. A client that never drains the response body must not be
+            // able to hold the shared collection reader slot indefinitely. A client-supplied
+            // X-Prometheus-Scrape-Timeout-Seconds may only shorten this limit, never extend it.
+            var scrapeTimeout = TimeSpan.FromMilliseconds(this.exporter.ScrapeResponseTimeoutMilliseconds);
+            if (TryGetScrapeTimeout(httpContext.Request.Headers, out var clientTimeout) &&
+                clientTimeout.GetValueOrDefault() < scrapeTimeout)
             {
-                requestCancelled.CancelAfter(scrapeTimeout.GetValueOrDefault());
-                scrapeStopwatch = Stopwatch.StartNew();
+                scrapeTimeout = clientTimeout.GetValueOrDefault();
             }
+
+            requestCancelled.CancelAfter(scrapeTimeout);
+            var scrapeStopwatch = Stopwatch.StartNew();
 
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(requestCancelled.Token, httpContext.RequestAborted);
 
@@ -89,8 +94,7 @@ internal sealed class PrometheusExporterMiddleware
             try
             {
                 if (!requestCancelled.IsCancellationRequested &&
-                    scrapeTimeout is { } configuredTimeout &&
-                    scrapeStopwatch!.Elapsed >= configuredTimeout)
+                    scrapeStopwatch.Elapsed >= scrapeTimeout)
                 {
                     // The deadline has genuinely elapsed, but the CancelAfter callback may not
                     // have been dispatched yet (for example, if the thread pool is saturated).
@@ -133,11 +137,13 @@ internal sealed class PrometheusExporterMiddleware
                     }
                 }
             }
-            catch (OperationCanceledException ex) when (ex.CancellationToken == linkedCts.Token)
+            catch (OperationCanceledException) when (linkedCts.IsCancellationRequested)
             {
-                if (scrapeTimeout is { } timeout)
+                // The request exceeded its deadline (a client-supplied timeout or the server
+                // maximum). The response may already have been aborted to unblock a stalled write.
+                if (requestCancelled.IsCancellationRequested)
                 {
-                    PrometheusExporterEventSource.Log.ScrapeTimedOut(timeout.TotalSeconds);
+                    PrometheusExporterEventSource.Log.ScrapeTimedOut(scrapeTimeout.TotalSeconds);
                 }
 
                 if (!response.HasStarted)
