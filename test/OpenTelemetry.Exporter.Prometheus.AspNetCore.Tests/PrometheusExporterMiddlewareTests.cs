@@ -949,7 +949,9 @@ public sealed class PrometheusExporterMiddlewareTests
         }
     }
 
-    private static async Task<(WebApplication App, Uri BaseAddress)> StartKestrelHostWithLargeScrapeResponseAsync(Meter meter, int? scrapeResponseTimeoutMilliseconds = null)
+    private static async Task<(WebApplication App, Uri BaseAddress)> StartKestrelHostWithLargeScrapeResponseAsync(
+        Meter meter,
+        int? scrapeResponseTimeoutMilliseconds = null)
     {
         var builder = WebApplication.CreateBuilder();
 
