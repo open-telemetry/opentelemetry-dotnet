@@ -14,6 +14,8 @@ OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.ScrapeEndpointPath.get -> str
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.ScrapeEndpointPath.set -> void
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.ScrapeResponseCacheDurationMilliseconds.get -> int
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.ScrapeResponseCacheDurationMilliseconds.set -> void
+OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.ScrapeResponseTimeoutMilliseconds.get -> int
+OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.ScrapeResponseTimeoutMilliseconds.set -> void
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.TargetInfoEnabled.get -> bool
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.TargetInfoEnabled.set -> void
 OpenTelemetry.Exporter.PrometheusAspNetCoreOptions.TranslationStrategy.get -> OpenTelemetry.Exporter.PrometheusAspNetCoreTranslationStrategy

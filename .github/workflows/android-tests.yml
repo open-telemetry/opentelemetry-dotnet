@@ -13,7 +13,7 @@ permissions: {}
 jobs:
   android-tests:
     name: Android end-to-end tests
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 20
 
     permissions:
@@ -64,7 +64,7 @@ jobs:
         target: google_apis
         script: |
           set +e
-          dotnet test test/OpenTelemetry.Android.Tests/OpenTelemetry.Android.Tests.csproj --configuration Debug --framework "${TARGET_FRAMEWORK}" --logger:"GitHubActions;report-warnings=false"
+          dotnet test test/OpenTelemetry.Android.Tests/OpenTelemetry.Android.Tests.csproj --configuration Debug --framework "${TARGET_FRAMEWORK}" --logger:"GitHubActions;report-warnings=false;summary-include-passed=false"
           exit_code=$?
           adb pull /storage/emulated/0/Android/data/io.opentelemetry.dotnet.android/files/TestResults ./TestResults || true
           exit $exit_code

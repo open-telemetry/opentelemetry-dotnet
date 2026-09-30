@@ -7,6 +7,13 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* A scrape request whose connection is aborted, or whose
+  `X-Prometheus-Scrape-Timeout-Seconds` deadline elapses, now stops waiting
+  for an in-progress metrics collection instead of continuing to wait for it
+  to finish. The collection itself is not cancelled and continues running in
+  the background.
+  ([#7856](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7856))
+
 * Fixed array- and map-valued attributes being serialized as the .NET type
   name (e.g. `System.Byte[]`, `System.Int32[]`) instead of being JSON-encoded
   as per the specification. `byte[]`-valued attributes are now
