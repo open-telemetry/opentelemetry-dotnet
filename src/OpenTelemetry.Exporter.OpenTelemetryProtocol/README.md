@@ -561,6 +561,36 @@ or reader
 
 ### Attribute limits
 
+Configure limits programmatically using `AttributeLimitOptions` for general
+attribute limits, `SpanLimitOptions` for spans, and `LogRecordLimitOptions` for
+log records. For example:
+
+```csharp
+using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Trace;
+
+services.Configure<SpanLimitOptions>(options =>
+{
+    options.AttributeCountLimit = 64;
+    options.AttributeValueLengthLimit = 1024;
+    options.EventCountLimit = 32;
+});
+
+services.AddOpenTelemetry()
+    .WithTracing(tracing => tracing.AddOtlpExporter());
+```
+
+Programmatic configuration overrides the corresponding environment variables.
+Signal-specific limits take precedence over general attribute limits.
+
+> [!NOTE]
+> Limits are enforced during OTLP serialization. They do not modify recorded
+> telemetry or limit data passed to processors and other exporters. Limit
+> options are resolved once and are not reloaded when `IConfiguration` changes.
+> Each exporter captures its limits when it is constructed. Each limit options
+> instance is shared by all exporters for its signal in an
+> `IServiceCollection`; named limit options are not supported.
+
 The [OpenTelemetry
 Specification](https://github.com/open-telemetry/opentelemetry-specification/)
 defines environment variables which can be used to configure [attribute

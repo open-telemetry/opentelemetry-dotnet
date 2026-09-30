@@ -237,7 +237,7 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
 
         Assert.NotNull(activity);
 
-        var otlpSpan = ToOtlpSpanWithExtendedBuffer(new SdkLimitOptions(), activity);
+        var otlpSpan = ToOtlpSpanWithExtendedBuffer(OtlpTestHelpers.CreateDefaultSpanLimits(), activity);
 
         Assert.NotNull(otlpSpan);
         Assert.Equal(3, otlpSpan.Attributes.Count);
@@ -272,7 +272,7 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
         using var activity = activitySource.StartActivity("root", ActivityKind.Server, default(ActivityContext), tags);
 
         Assert.NotNull(activity);
-        Assert.Throws<ArgumentException>(() => ToOtlpSpan(new SdkLimitOptions(), activity));
+        Assert.Throws<ArgumentException>(() => ToOtlpSpan(OtlpTestHelpers.CreateDefaultSpanLimits(), activity));
     }
 
     [Fact]
@@ -359,14 +359,14 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
 
         Assert.NotNull(activity);
         var batch = new Batch<Activity>([activity], 1);
-        RunTest(new(), batch);
+        RunTest(OtlpTestHelpers.CreateDefaultSpanLimits(), batch);
 
-        static void RunTest(SdkLimitOptions sdkOptions, Batch<Activity> batch)
+        static void RunTest(OtlpSpanLimits otlpSpanLimits, Batch<Activity> batch)
         {
             var buffer = ProtobufSerializer.RentBuffer(4096);
             try
             {
-                var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, ResourceBuilder.CreateEmpty().Build(), batch);
+                var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, otlpSpanLimits, ResourceBuilder.CreateEmpty().Build(), batch);
                 using var stream = new MemoryStream(buffer, 0, writePosition);
                 var tracesData = OtlpTrace.TracesData.Parser.ParseFrom(stream);
                 var request = new OtlpCollector.ExportTraceServiceRequest();
@@ -394,19 +394,19 @@ public sealed class OtlpArrayTagWriterTests : IDisposable
 
     public void Dispose() => this.activityListener.Dispose();
 
-    private static OtlpTrace.Span? ToOtlpSpan(SdkLimitOptions sdkOptions, Activity activity)
+    private static OtlpTrace.Span? ToOtlpSpan(OtlpSpanLimits otlpSpanLimits, Activity activity)
     {
         var buffer = new byte[4096];
-        var writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, sdkOptions, activity);
+        var writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, otlpSpanLimits, activity);
         using var stream = new MemoryStream(buffer, 0, writePosition);
         var scopeSpans = OtlpTrace.ScopeSpans.Parser.ParseFrom(stream);
         return scopeSpans.Spans.FirstOrDefault();
     }
 
-    private static OtlpTrace.Span? ToOtlpSpanWithExtendedBuffer(SdkLimitOptions sdkOptions, Activity activity)
+    private static OtlpTrace.Span? ToOtlpSpanWithExtendedBuffer(OtlpSpanLimits otlpSpanLimits, Activity activity)
     {
         var buffer = new byte[4194304];
-        var writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, sdkOptions, activity);
+        var writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, otlpSpanLimits, activity);
         using var stream = new MemoryStream(buffer, 0, writePosition);
         var scopeSpans = OtlpTrace.ScopeSpans.Parser.ParseFrom(stream);
         return scopeSpans.Spans.FirstOrDefault();

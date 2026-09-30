@@ -1,14 +1,34 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics.Tracing;
 using System.Globalization;
 using Google.Protobuf.Collections;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Trace;
 using OtlpCommon = OpenTelemetry.Proto.Common.V1;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
 internal static class OtlpTestHelpers
 {
+    public const int SpanLimitsExceededEventId = 42;
+    public const int LogRecordLimitsExceededEventId = 43;
+
+    // Limits carry warning rate-limiter state, so each test needs its own instance.
+    public static OtlpSpanLimits CreateDefaultSpanLimits()
+        => new(new SpanLimitOptions(), new AttributeLimitOptions());
+
+    public static OtlpLogRecordLimits CreateDefaultLogRecordLimits()
+        => new(new LogRecordLimitOptions());
+
+    public static bool IsSpanLimitsExceededEvent(EventWrittenEventArgs e)
+        => e.EventId == SpanLimitsExceededEventId;
+
+    public static bool IsLogRecordLimitsExceededEvent(EventWrittenEventArgs e)
+        => e.EventId == LogRecordLimitsExceededEventId;
+
     public static void AssertOtlpAttributes(
         IEnumerable<KeyValuePair<string, object?>> expected,
         RepeatedField<OtlpCommon.KeyValue> actual)

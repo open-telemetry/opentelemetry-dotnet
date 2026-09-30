@@ -83,16 +83,14 @@ public static class OtlpTraceExporterHelperExtensions
                 exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(finalOptionsName);
             }
 
-            // Note: Not using finalOptionsName here for SdkLimitOptions.
-            // There should only be one provider for a given service
-            // collection so SdkLimitOptions is treated as a single default
-            // instance.
-            var sdkLimitOptions = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
+            var spanLimitOptions = sp.GetRequiredService<IOptionsMonitor<SpanLimitOptions>>().CurrentValue;
+            var attributeLimitOptions = sp.GetRequiredService<IOptionsMonitor<AttributeLimitOptions>>().CurrentValue;
+            var otlpSpanLimits = new OtlpSpanLimits(spanLimitOptions, attributeLimitOptions);
 
             return BuildOtlpExporterProcessor(
                 sp,
                 exporterOptions,
-                sdkLimitOptions,
+                otlpSpanLimits,
                 sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName));
         });
     }
@@ -100,13 +98,13 @@ public static class OtlpTraceExporterHelperExtensions
     internal static BaseProcessor<Activity> BuildOtlpExporterProcessor(
         IServiceProvider serviceProvider,
         OtlpExporterOptions exporterOptions,
-        SdkLimitOptions sdkLimitOptions,
+        OtlpSpanLimits otlpSpanLimits,
         ExperimentalOptions experimentalOptions,
         Func<BaseExporter<Activity>, BaseExporter<Activity>>? configureExporterInstance = null)
         => BuildOtlpExporterProcessor(
             serviceProvider,
             exporterOptions,
-            sdkLimitOptions,
+            otlpSpanLimits,
             experimentalOptions,
             exporterOptions.ExportProcessorType,
             exporterOptions.BatchExportProcessorOptions ?? new BatchExportActivityProcessorOptions(),
@@ -116,7 +114,7 @@ public static class OtlpTraceExporterHelperExtensions
     internal static BaseProcessor<Activity> BuildOtlpExporterProcessor(
         IServiceProvider serviceProvider,
         OtlpExporterOptions exporterOptions,
-        SdkLimitOptions sdkLimitOptions,
+        OtlpSpanLimits otlpSpanLimits,
         ExperimentalOptions experimentalOptions,
         ExportProcessorType exportProcessorType,
         BatchExportProcessorOptions<Activity> batchExportProcessorOptions,
@@ -144,7 +142,7 @@ public static class OtlpTraceExporterHelperExtensions
             OtlpExporterHttpClientNames.TraceExporter);
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
-        BaseExporter<Activity> otlpExporter = new OtlpTraceExporter(exporterOptions, sdkLimitOptions, experimentalOptions);
+        BaseExporter<Activity> otlpExporter = new OtlpTraceExporter(exporterOptions, otlpSpanLimits, experimentalOptions);
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
         try

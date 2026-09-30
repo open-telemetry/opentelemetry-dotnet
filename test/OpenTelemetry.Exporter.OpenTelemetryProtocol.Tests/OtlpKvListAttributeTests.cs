@@ -5,7 +5,6 @@ using System.Collections;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using OpenTelemetry.Internal;
 using OtlpCommon = OpenTelemetry.Proto.Common.V1;
@@ -400,7 +399,7 @@ public sealed class OtlpKvListAttributeTests : IDisposable
         {
             try
             {
-                writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, new SdkLimitOptions(), activity);
+                writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, OtlpTestHelpers.CreateDefaultSpanLimits(), activity);
                 break;
             }
             catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
@@ -447,7 +446,7 @@ public sealed class OtlpKvListAttributeTests : IDisposable
 
         var buffer = new byte[1_000_000];
 
-        var writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, new SdkLimitOptions(), activity);
+        var writePosition = ProtobufOtlpTraceSerializer.WriteSpan(buffer, 0, OtlpTestHelpers.CreateDefaultSpanLimits(), activity);
 
         using var stream = new MemoryStream(buffer, 0, writePosition);
         var scopeSpans = OtlpTrace.ScopeSpans.Parser.ParseFrom(stream);
@@ -506,6 +505,23 @@ public sealed class OtlpKvListAttributeTests : IDisposable
         }
     }
 
+    [Fact]
+    public void ByteArrayValuesAreTruncatedToValueLengthLimit()
+    {
+        Assert.True(TryTransformTag(new("key", new byte[] { 1, 2, 3, 4, 5 }), out var attribute, maxLength: 3), "The byte array should be transformed.");
+        Assert.Equal(new byte[] { 1, 2, 3 }, attribute.Value.BytesValue.ToByteArray());
+
+        Assert.True(TryTransformTag(new("key", new byte[] { 1, 2, 3 }), out attribute, maxLength: 0), "The byte array should be transformed.");
+        Assert.Empty(attribute.Value.BytesValue);
+
+        var map = new Dictionary<string, object?> { ["bytes"] = new byte[] { 1, 2, 3, 4, 5 } };
+        Assert.True(TryTransformTag(new("key", map), out attribute, maxLength: 2), "The map containing the byte array should be transformed.");
+        Assert.Equal(new byte[] { 1, 2 }, attribute.Value.KvlistValue.Values[0].Value.BytesValue.ToByteArray());
+
+        Assert.True(TryTransformTag(new("key", new byte[] { 1, 2 }), out attribute, maxLength: 3), "The byte array should be transformed.");
+        Assert.Equal(new byte[] { 1, 2 }, attribute.Value.BytesValue.ToByteArray());
+    }
+
     public void Dispose()
         => this.activityListener.Dispose();
 
@@ -522,7 +538,10 @@ public sealed class OtlpKvListAttributeTests : IDisposable
         return list;
     }
 
-    private static bool TryTransformTag(KeyValuePair<string, object?> tag, [NotNullWhen(true)] out OtlpCommon.KeyValue? attribute)
+    private static bool TryTransformTag(
+        KeyValuePair<string, object?> tag,
+        [NotNullWhen(true)] out OtlpCommon.KeyValue? attribute,
+        int? maxLength = null)
     {
         var otlpTagWriterState = new ProtobufOtlpTagWriter.OtlpTagWriterState
         {
@@ -530,7 +549,7 @@ public sealed class OtlpKvListAttributeTests : IDisposable
             WritePosition = 0,
         };
 
-        if (ProtobufOtlpTagWriter.Instance.TryWriteTag(ref otlpTagWriterState, tag))
+        if (ProtobufOtlpTagWriter.Instance.TryWriteTag(ref otlpTagWriterState, tag, maxLength))
         {
             using var stream = new MemoryStream(otlpTagWriterState.Buffer, 0, otlpTagWriterState.WritePosition);
             var keyValue = OtlpCommon.KeyValue.Parser.ParseFrom(stream);

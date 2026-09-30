@@ -51,7 +51,7 @@ public class ProtobufOtlpLogSerializerBenchmarks
     ];
 
     private readonly byte[] buffer = new byte[64 * 1024];
-    private readonly SdkLimitOptions sdkLimitOptions = new();
+    private readonly OtlpLogRecordLimits otlpLogRecordLimits = new(new LogRecordLimitOptions());
     private readonly ExperimentalOptions experimentalOptions = new();
     private LogRecord logRecord = null!;
 
@@ -92,7 +92,7 @@ public class ProtobufOtlpLogSerializerBenchmarks
 
     [Benchmark]
     public int WriteLogRecord()
-        => ProtobufOtlpLogSerializer.WriteLogRecord(this.buffer, 0, this.sdkLimitOptions, this.experimentalOptions, this.logRecord);
+        => ProtobufOtlpLogSerializer.WriteLogRecord(this.buffer, 0, this.otlpLogRecordLimits, this.experimentalOptions, this.logRecord);
 
     private static List<KeyValuePair<string, object?>> BuildKvList(int entryCount)
     {

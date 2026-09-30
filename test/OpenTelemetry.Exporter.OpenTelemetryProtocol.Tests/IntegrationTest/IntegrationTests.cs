@@ -23,7 +23,6 @@ public sealed class IntegrationTests : IDisposable
     private const string ProtobufEndpointHttp = ":4318/v1/";
     private const string ProtobufEndpointHttps = ":5318/v1/";
 
-    private static readonly SdkLimitOptions DefaultSdkLimitOptions = new();
     private static readonly ExperimentalOptions DefaultExperimentalOptions = new();
     private static readonly string? CollectorHostname = SkipUnlessEnvVarFoundTheoryAttribute.GetEnvironmentVariable(CollectorHostnameEnvVarName);
 
@@ -130,7 +129,7 @@ public sealed class IntegrationTests : IDisposable
         builder.AddProcessor(sp => OtlpTraceExporterHelperExtensions.BuildOtlpExporterProcessor(
             serviceProvider: sp,
             exporterOptions: exporterOptions,
-            sdkLimitOptions: DefaultSdkLimitOptions,
+            otlpSpanLimits: OtlpTestHelpers.CreateDefaultSpanLimits(),
             experimentalOptions: DefaultExperimentalOptions,
             configureExporterInstance: otlpExporter =>
             {
@@ -303,7 +302,7 @@ public sealed class IntegrationTests : IDisposable
                             sp,
                             exporterOptions,
                             processorOptions,
-                            DefaultSdkLimitOptions,
+                            OtlpTestHelpers.CreateDefaultLogRecordLimits(),
                             DefaultExperimentalOptions,
                             configureExporterInstance: otlpExporter =>
                             {

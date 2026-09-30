@@ -70,7 +70,7 @@ public static class OtlpLogExporterHelperExtensions
                 sp,
                 exporterOptions,
                 processorOptions,
-                GetOptions(sp, Options.DefaultName, Options.DefaultName, (sp, c, n) => new SdkLimitOptions(c)),
+                CreateLogLimits(sp),
                 GetOptions(sp, name, finalOptionsName, (sp, c, n) => new ExperimentalOptions(c)));
         });
     }
@@ -118,7 +118,7 @@ public static class OtlpLogExporterHelperExtensions
                 sp,
                 exporterOptions,
                 processorOptions,
-                GetOptions(sp, Options.DefaultName, Options.DefaultName, (sp, c, n) => new SdkLimitOptions(c)),
+                CreateLogLimits(sp),
                 GetOptions(sp, name, finalOptionsName, (sp, c, n) => new ExperimentalOptions(c)));
         });
     }
@@ -200,17 +200,11 @@ public static class OtlpLogExporterHelperExtensions
                 exporterOptions = sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(finalOptionsName);
             }
 
-            // Note: Not using finalOptionsName here for SdkLimitOptions.
-            // There should only be one provider for a given service
-            // collection so SdkLimitOptions is treated as a single default
-            // instance.
-            var sdkLimitOptions = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
-
             return BuildOtlpLogExporter(
                 sp,
                 exporterOptions,
                 sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(finalOptionsName),
-                sdkLimitOptions,
+                CreateLogLimits(sp),
                 sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName));
         });
     }
@@ -258,17 +252,11 @@ public static class OtlpLogExporterHelperExtensions
             // Configuration delegate is executed inline.
             configureExporterAndProcessor?.Invoke(exporterOptions, processorOptions);
 
-            // Note: Not using finalOptionsName here for SdkLimitOptions.
-            // There should only be one provider for a given service
-            // collection so SdkLimitOptions is treated as a single default
-            // instance.
-            var sdkLimitOptions = sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue;
-
             return BuildOtlpLogExporter(
                 sp,
                 exporterOptions,
                 processorOptions,
-                sdkLimitOptions,
+                CreateLogLimits(sp),
                 sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName));
         });
     }
@@ -277,7 +265,7 @@ public static class OtlpLogExporterHelperExtensions
         IServiceProvider serviceProvider,
         OtlpExporterOptions exporterOptions,
         LogRecordExportProcessorOptions processorOptions,
-        SdkLimitOptions sdkLimitOptions,
+        OtlpLogRecordLimits otlpLogRecordLimits,
         ExperimentalOptions experimentalOptions,
         bool skipUseOtlpExporterRegistrationCheck = false,
         Func<BaseExporter<LogRecord>, BaseExporter<LogRecord>>? configureExporterInstance = null)
@@ -312,7 +300,7 @@ public static class OtlpLogExporterHelperExtensions
 #pragma warning disable CA2000 // Dispose objects before losing scope
         BaseExporter<LogRecord> otlpExporter = new OtlpLogExporter(
             exporterOptions,
-            sdkLimitOptions,
+            otlpLogRecordLimits,
             experimentalOptions,
             transmissionHandler);
 #pragma warning restore CA2000 // Dispose objects before losing scope
@@ -383,6 +371,9 @@ public static class OtlpLogExporterHelperExtensions
             exporterTimeoutMilliseconds,
             maxExportBatchSize);
     }
+
+    private static OtlpLogRecordLimits CreateLogLimits(IServiceProvider sp)
+        => new(sp.GetRequiredService<IOptionsMonitor<LogRecordLimitOptions>>().CurrentValue);
 
     private static T GetOptions<T>(
         IServiceProvider sp,

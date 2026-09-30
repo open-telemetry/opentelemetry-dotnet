@@ -102,7 +102,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
                 return this.TryWriteKvListTagWithinDepthLimit(ref state, key, value, kvList, tagValueMaxLength);
 
             case Array array:
-                if (value.GetType() == typeof(byte[]) && this.TryWriteByteArrayTag(ref state, key, ((byte[])value).AsSpan()))
+                if (value.GetType() == typeof(byte[]) && this.TryWriteByteArrayTag(ref state, key, TruncateBytes(((byte[])value).AsSpan(), tagValueMaxLength)))
                 {
                     return true;
                 }
@@ -205,6 +205,11 @@ internal abstract class TagWriter<TTagState, TArrayState>
     protected abstract void OnUnsupportedTagDropped(
         string tagKey,
         string tagValueTypeFullName);
+
+    private static ReadOnlySpan<byte> TruncateBytes(ReadOnlySpan<byte> value, int? maxLength)
+        => maxLength is { } maxLengthValue && value.Length > maxLengthValue
+           ? value.Slice(0, maxLengthValue)
+           : value;
 
     private static ReadOnlySpan<char> TruncateString(ReadOnlySpan<char> value, int? maxLength)
         => maxLength is { } maxLengthValue && value.Length > maxLengthValue

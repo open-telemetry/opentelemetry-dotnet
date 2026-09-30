@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Buffers.Binary;
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
@@ -22,7 +23,7 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
     // towards OtlpExporterOptions.MaxRequestSizeBytes without resizing often.
     private const int InitialBufferSize = ProtobufSerializer.InitialBufferSize;
 
-    private readonly SdkLimitOptions sdkLimitOptions;
+    private readonly OtlpLogRecordLimits otlpLogRecordLimits;
     private readonly ExperimentalOptions experimentalOptions;
     private readonly OtlpExporterTransmissionHandler transmissionHandler;
     private readonly int startWritePosition;
@@ -34,25 +35,22 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
     /// </summary>
     /// <param name="options">Configuration options for the exporter.</param>
     public OtlpLogExporter(OtlpExporterOptions options)
-        : this(options ?? throw new ArgumentNullException(nameof(options)), sdkLimitOptions: new(), experimentalOptions: new(), transmissionHandler: null)
+        : this(
+            options ?? throw new ArgumentNullException(nameof(options)),
+            CreateLogRecordLimits(),
+            experimentalOptions: new(),
+            transmissionHandler: null)
     {
     }
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="OtlpLogExporter"/> class.
-    /// </summary>
-    /// <param name="exporterOptions"><see cref="OtlpExporterOptions"/>.</param>
-    /// <param name="sdkLimitOptions"><see cref="SdkLimitOptions"/>.</param>
-    /// <param name="experimentalOptions"><see cref="ExperimentalOptions"/>.</param>
-    /// <param name="transmissionHandler"><see cref="OtlpExporterTransmissionHandler"/>.</param>
     internal OtlpLogExporter(
         OtlpExporterOptions exporterOptions,
-        SdkLimitOptions sdkLimitOptions,
+        OtlpLogRecordLimits otlpLogRecordLimits,
         ExperimentalOptions experimentalOptions,
         OtlpExporterTransmissionHandler? transmissionHandler = null)
     {
         this.experimentalOptions = experimentalOptions;
-        this.sdkLimitOptions = sdkLimitOptions;
+        this.otlpLogRecordLimits = otlpLogRecordLimits;
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
         this.startWritePosition = exporterOptions.Protocol == OtlpExportProtocol.Grpc ? GrpcStartWritePosition : 0;
 #pragma warning restore CS0618 // Suppressing gRPC obsolete warning
@@ -90,7 +88,7 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
                 writePosition = ProtobufOtlpLogSerializer.WriteLogsData(
                     ref buffer,
                     this.startWritePosition,
-                    this.sdkLimitOptions,
+                    this.otlpLogRecordLimits,
                     this.experimentalOptions,
                     this.Resource,
                     logRecordBatch,
@@ -175,5 +173,13 @@ public sealed class OtlpLogExporter : BaseExporter<LogRecord>
         {
             this.serializationBuffer.Release();
         }
+    }
+
+    private static OtlpLogRecordLimits CreateLogRecordLimits()
+    {
+        var configuration = new ConfigurationBuilder().AddEnvironmentVariables().Build();
+        var attributeLimitOptions = new AttributeLimitOptions(configuration);
+        var logRecordLimitOptions = new LogRecordLimitOptions(configuration, attributeLimitOptions);
+        return new OtlpLogRecordLimits(logRecordLimitOptions);
     }
 }

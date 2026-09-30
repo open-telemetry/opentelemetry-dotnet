@@ -16,7 +16,7 @@ public class ProtobufOtlpLogSerializerTests
     [Property(MaxTest = 100)]
     public Property SerializedDataNeverExceedsBufferSize() => Prop.ForAll(
         Generators.BufferSizeArbitrary(),
-        Generators.SdkLimitOptionsArbitrary(),
+        Generators.OtlpLogRecordLimitsArbitrary(),
         Generators.LogRecordSeverityArbitrary(),
         (bufferSize, sdkLimits, severity) =>
         {
@@ -46,7 +46,7 @@ public class ProtobufOtlpLogSerializerTests
 
     [Property(MaxTest = 100)]
     public Property WriteLogsDataReturnsNonNegativePosition() => Prop.ForAll(
-        Generators.SdkLimitOptionsArbitrary(),
+        Generators.OtlpLogRecordLimitsArbitrary(),
         Generators.ResourceArbitrary(),
         Generators.LogRecordSeverityArbitrary(),
         (sdkLimits, resource, severity) =>
@@ -77,7 +77,7 @@ public class ProtobufOtlpLogSerializerTests
 
     [Property(MaxTest = 50)]
     public Property WriteLogsDataHandlesEmptyBatches() => Prop.ForAll(
-        Generators.SdkLimitOptionsArbitrary(),
+        Generators.OtlpLogRecordLimitsArbitrary(),
         sdkLimits =>
         {
             try
@@ -104,7 +104,7 @@ public class ProtobufOtlpLogSerializerTests
 
     [Property(MaxTest = 50)]
     public Property BufferAutoResizesWhenNeeded() => Prop.ForAll(
-        Generators.SdkLimitOptionsArbitrary(),
+        Generators.OtlpLogRecordLimitsArbitrary(),
         Generators.ResourceArbitrary(),
         Generators.LogRecordSeverityArbitrary(),
         (sdkLimits, resource, severity) =>
@@ -136,7 +136,7 @@ public class ProtobufOtlpLogSerializerTests
 
     [Property(MaxTest = 50)]
     public Property SerializedOutputCanBeDeserialized() => Prop.ForAll(
-        Generators.SdkLimitOptionsArbitrary(),
+        Generators.OtlpLogRecordLimitsArbitrary(),
         Generators.ResourceArbitrary(),
         Generators.LogRecordSeverityArbitrary(),
         (sdkLimits, resource, severity) =>
@@ -177,7 +177,7 @@ public class ProtobufOtlpLogSerializerTests
     [Property(MaxTest = 50)]
     public Property WriteLogsDataHandlesVariousSeverityLevels() => Prop.ForAll(
         Generators.LogRecordSeverityArbitrary(),
-        Generators.SdkLimitOptionsArbitrary(),
+        Generators.OtlpLogRecordLimitsArbitrary(),
         (severity, sdkLimits) =>
         {
             var logRecord = Generators.LogRecordArbitrary(severity).Generator.Sample(1).ToArray();
@@ -207,7 +207,7 @@ public class ProtobufOtlpLogSerializerTests
     [Property(MaxTest = 50)]
     public Property WriteLogsDataHandlesInvalidSeverities() => Prop.ForAll(
         Gen.Choose(int.MinValue, int.MaxValue).ToArbitrary(),
-        Generators.SdkLimitOptionsArbitrary(),
+        Generators.OtlpLogRecordLimitsArbitrary(),
         (severity, sdkLimits) =>
         {
             var logRecord = Generators.LogRecordArbitrary((LogRecordSeverity)severity).Generator.Sample(1).ToArray();
@@ -237,7 +237,7 @@ public class ProtobufOtlpLogSerializerTests
     [Property(MaxTest = 100)]
     public Property KvListAttributesStayInBounds() => Prop.ForAll(
         Generators.LogRecordsWithKvListArbitrary(),
-        Generators.SdkLimitOptionsArbitrary(),
+        Generators.OtlpLogRecordLimitsArbitrary(),
         (logRecords, sdkLimits) =>
         {
             try
@@ -265,7 +265,7 @@ public class ProtobufOtlpLogSerializerTests
     [Property(MaxTest = 100)]
     public Property KvListAttributesRoundTrip() => Prop.ForAll(
         Generators.LogRecordsWithKvListArbitrary(),
-        Generators.SdkLimitOptionsArbitrary(),
+        Generators.OtlpLogRecordLimitsArbitrary(),
         Generators.ResourceArbitrary(),
         (logRecords, sdkLimits, resource) =>
         {
@@ -306,7 +306,7 @@ public class ProtobufOtlpLogSerializerTests
 
     [Property(MaxTest = 100)]
     public Property ResourceSchemaUrlRoundTrips() => Prop.ForAll(
-        Generators.SdkLimitOptionsArbitrary(),
+        Generators.OtlpLogRecordLimitsArbitrary(),
         Generators.ResourceArbitrary(),
         Generators.LogRecordSeverityArbitrary(),
         (sdkLimits, resource, severity) =>

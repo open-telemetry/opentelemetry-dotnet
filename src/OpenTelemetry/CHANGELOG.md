@@ -28,6 +28,10 @@ Notes](../../RELEASENOTES.md).
   `IConfiguration` does not contain those settings.
   ([#7855](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7855))
 
+* Added `AttributeLimitOptions`, `SpanLimitOptions`, and `LogRecordLimitOptions`
+  public options types for configuring attribute, span, and log record limits.
+  ([#7859](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7859))
+
 ## 1.19.1
 
 Released 2026-Sep-21

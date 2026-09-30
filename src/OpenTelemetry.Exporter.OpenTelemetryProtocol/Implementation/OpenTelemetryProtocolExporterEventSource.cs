@@ -363,6 +363,20 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     internal void RequestDiscardedDueToSizeLimit(string signalType, long itemCount, int requestSizeBytes, int maxRequestSizeBytes)
         => this.WriteEvent(41, signalType, itemCount, requestSizeBytes, maxRequestSizeBytes);
 
+    [Event(
+        42,
+        Message = "Since the previous limit warning or exporter initialization, discarded {1} attribute(s), {2} event(s), and {3} link(s) from {0} span(s) because of span limits or unsupported attribute values.",
+        Level = EventLevel.Warning)]
+    internal void SpanLimitsExceeded(long spanCount, long droppedAttributeCount, long droppedEventCount, long droppedLinkCount)
+        => this.WriteEvent(42, spanCount, droppedAttributeCount, droppedEventCount, droppedLinkCount);
+
+    [Event(
+        43,
+        Message = "Since the previous limit warning or exporter initialization, discarded {1} attribute(s) from {0} log record(s) because of log record limits or unsupported attribute values.",
+        Level = EventLevel.Warning)]
+    internal void LogRecordLimitsExceeded(long logRecordCount, long droppedAttributeCount)
+        => this.WriteEvent(43, logRecordCount, droppedAttributeCount);
+
     private static string RedactEndpointUri(Uri endpoint)
         => endpoint.GetComponents(UriComponents.SchemeAndServer | UriComponents.Path, UriFormat.UriEscaped);
 }

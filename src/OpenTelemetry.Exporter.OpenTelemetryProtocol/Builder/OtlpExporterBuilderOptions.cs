@@ -12,7 +12,6 @@ namespace OpenTelemetry.Exporter;
 
 internal sealed class OtlpExporterBuilderOptions
 {
-    internal readonly SdkLimitOptions SdkLimitOptions;
     internal readonly ExperimentalOptions ExperimentalOptions;
     internal readonly LogRecordExportProcessorOptions? LogRecordExportProcessorOptions;
     internal readonly MetricReaderOptions? MetricReaderOptions;
@@ -26,7 +25,6 @@ internal sealed class OtlpExporterBuilderOptions
     internal OtlpExporterBuilderOptions(
         IConfiguration configuration,
         OtlpExporterOptions defaultOptions,
-        SdkLimitOptions sdkLimitOptions,
         ExperimentalOptions experimentalOptions,
         LogRecordExportProcessorOptions? logRecordExportProcessorOptions,
         MetricReaderOptions? metricReaderOptions,
@@ -34,10 +32,8 @@ internal sealed class OtlpExporterBuilderOptions
     {
         Debug.Assert(configuration != null, "configuration was null");
         Debug.Assert(defaultOptions != null, "defaultOptions was null");
-        Debug.Assert(sdkLimitOptions != null, "sdkLimitOptions was null");
         Debug.Assert(experimentalOptions != null, "experimentalOptions was null");
 
-        this.SdkLimitOptions = sdkLimitOptions!;
         this.ExperimentalOptions = experimentalOptions!;
         this.LogRecordExportProcessorOptions = logRecordExportProcessorOptions;
         this.MetricReaderOptions = metricReaderOptions;

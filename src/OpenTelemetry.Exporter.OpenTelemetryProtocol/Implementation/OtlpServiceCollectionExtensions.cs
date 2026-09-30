@@ -25,14 +25,12 @@ internal static class OtlpServiceCollectionExtensions
     public static void AddOtlpExporterLoggingServices(this IServiceCollection services)
         => AddOtlpExporterSharedServices(
             services,
-            registerSdkLimitOptions: true,
             OtlpLogExporterHttpClientCategory);
 
     public static void AddOtlpExporterMetricsServices(this IServiceCollection services, string name)
     {
         AddOtlpExporterSharedServices(
             services,
-            registerSdkLimitOptions: false,
             OtlpMetricExporterHttpClientCategory);
 
         services.AddOptions<MetricReaderOptions>(name).Configure<IConfiguration>(
@@ -65,12 +63,10 @@ internal static class OtlpServiceCollectionExtensions
     public static void AddOtlpExporterTracingServices(this IServiceCollection services)
         => AddOtlpExporterSharedServices(
             services,
-            registerSdkLimitOptions: true,
             OtlpTraceExporterHttpClientCategory);
 
     private static void AddOtlpExporterSharedServices(
         IServiceCollection services,
-        bool registerSdkLimitOptions,
         string httpClientCategoryName)
     {
         services.Configure<LoggerFilterOptions>(loggerFilterOptions =>
@@ -80,11 +76,6 @@ internal static class OtlpServiceCollectionExtensions
 
         services.RegisterOptionsFactory(OtlpExporterOptions.CreateOtlpExporterOptions);
         services.RegisterOptionsFactory(configuration => new ExperimentalOptions(configuration));
-
-        if (registerSdkLimitOptions)
-        {
-            services.RegisterOptionsFactory(configuration => new SdkLimitOptions(configuration));
-        }
     }
 
     private static void AddOtlpHttpClientLoggerFilter(LoggerFilterOptions loggerFilterOptions, string categoryName)

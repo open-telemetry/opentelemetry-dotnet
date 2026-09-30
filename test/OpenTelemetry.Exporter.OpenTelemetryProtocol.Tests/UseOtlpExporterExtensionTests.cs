@@ -371,6 +371,81 @@ public sealed class UseOtlpExporterExtensionTests : IDisposable
         OtlpSpecConfigDefinitionTests.MetricsData.AssertMatches(metricReaderOptions);
     }
 
+    [Fact]
+    public void UseOtlpExporterAppliesConfiguredAttributeAndSpanLimits()
+    {
+        using var requestCapture = new OtlpHttpRequestCapture();
+        using var activitySource = new ActivitySource(
+            new ActivitySourceOptions(nameof(this.UseOtlpExporterAppliesConfiguredAttributeAndSpanLimits))
+            {
+                Tags = [new("1_ScopeTag", "a"), new("2_ScopeTag", "b"), new("3_ScopeTag", "c")],
+            });
+
+        var services = new ServiceCollection();
+        services.Configure<AttributeLimitOptions>(options => options.AttributeCountLimit = 2);
+        services.Configure<SpanLimitOptions>(options => options.AttributeCountLimit = 1);
+        services.AddOpenTelemetry()
+            .WithTracing(tracing => tracing.AddSource(activitySource.Name))
+            .UseOtlpExporter(builder =>
+            {
+                builder.ConfigureDefaultExporterOptions(requestCapture.ConfigureTransport);
+                builder.ConfigureTracingProcessorOptions(options => options.ExportProcessorType = ExportProcessorType.Simple);
+            });
+
+        using var sp = services.BuildServiceProvider();
+        Assert.NotNull(sp.GetRequiredService<TracerProvider>());
+
+        using (var activity = activitySource.StartActivity(
+            "Test",
+            ActivityKind.Internal,
+            default(ActivityContext),
+            new ActivityTagsCollection
+            {
+                { "First", "one" },
+                { "Second", "two" },
+            }))
+        {
+            Assert.NotNull(activity);
+        }
+
+        var scopeSpans = requestCapture.GetSingleScopeSpans();
+        Assert.NotNull(scopeSpans.Scope);
+        Assert.Equal(2, scopeSpans.Scope.Attributes.Count);
+        Assert.Equal(1u, scopeSpans.Scope.DroppedAttributesCount);
+
+        var span = Assert.Single(scopeSpans.Spans);
+        Assert.Single(span.Attributes);
+        Assert.Equal(1u, span.DroppedAttributesCount);
+    }
+
+    [Fact]
+    public void UseOtlpExporterAppliesConfiguredLogRecordLimits()
+    {
+        using var requestCapture = new OtlpHttpRequestCapture();
+
+        var services = new ServiceCollection();
+        services.Configure<LogRecordLimitOptions>(options => options.AttributeCountLimit = 1);
+        services.AddOpenTelemetry()
+            .UseOtlpExporter(builder =>
+            {
+                builder.ConfigureDefaultExporterOptions(requestCapture.ConfigureTransport);
+                builder.ConfigureLoggingProcessorOptions(options => options.ExportProcessorType = ExportProcessorType.Simple);
+            });
+
+        using var sp = services.BuildServiceProvider();
+
+        LogRecordAttributeList attributes = default;
+        attributes.Add("First", "one");
+        attributes.Add("Second", "two");
+        sp.GetRequiredService<LoggerProvider>()
+            .GetLogger(nameof(this.UseOtlpExporterAppliesConfiguredLogRecordLimits))
+            .EmitLog(new LogRecordData(), attributes);
+
+        var logRecord = requestCapture.GetSingleLogRecord();
+        Assert.Single(logRecord.Attributes);
+        Assert.Equal(1u, logRecord.DroppedAttributesCount);
+    }
+
     private static void VerifyOptionsApplied(ServiceProvider serviceProvider, string? name)
     {
         var exporterOptions = serviceProvider.GetRequiredService<IOptionsMonitor<OtlpExporterBuilderOptions>>().Get(name);

@@ -3,10 +3,12 @@
 
 using System.Buffers.Binary;
 using System.Diagnostics;
+using Microsoft.Extensions.Configuration;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter;
 
@@ -22,7 +24,7 @@ public class OtlpTraceExporter : BaseExporter<Activity>
     // towards OtlpExporterOptions.MaxRequestSizeBytes without resizing often.
     private const int InitialBufferSize = ProtobufSerializer.InitialBufferSize;
 
-    private readonly SdkLimitOptions sdkLimitOptions;
+    private readonly OtlpSpanLimits otlpSpanLimits;
     private readonly OtlpExporterTransmissionHandler transmissionHandler;
     private readonly int startWritePosition;
     private readonly int maxRequestSizeBytes;
@@ -33,24 +35,21 @@ public class OtlpTraceExporter : BaseExporter<Activity>
     /// </summary>
     /// <param name="options">Configuration options for the export.</param>
     public OtlpTraceExporter(OtlpExporterOptions options)
-        : this(options ?? throw new ArgumentNullException(nameof(options)), sdkLimitOptions: new(), experimentalOptions: new(), transmissionHandler: null)
+        : this(
+            options ?? throw new ArgumentNullException(nameof(options)),
+            CreateSpanLimits(),
+            experimentalOptions: new(),
+            transmissionHandler: null)
     {
     }
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="OtlpTraceExporter"/> class.
-    /// </summary>
-    /// <param name="exporterOptions"><see cref="OtlpExporterOptions"/>.</param>
-    /// <param name="sdkLimitOptions"><see cref="SdkLimitOptions"/>.</param>
-    /// <param name="experimentalOptions"><see cref="ExperimentalOptions"/>.</param>
-    /// <param name="transmissionHandler"><see cref="OtlpExporterTransmissionHandler"/>.</param>
     internal OtlpTraceExporter(
         OtlpExporterOptions exporterOptions,
-        SdkLimitOptions sdkLimitOptions,
+        OtlpSpanLimits otlpSpanLimits,
         ExperimentalOptions experimentalOptions,
         OtlpExporterTransmissionHandler? transmissionHandler = null)
     {
-        this.sdkLimitOptions = sdkLimitOptions;
+        this.otlpSpanLimits = otlpSpanLimits;
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
         this.startWritePosition = exporterOptions.Protocol == OtlpExportProtocol.Grpc ? GrpcStartWritePosition : 0;
 #pragma warning restore CS0618 // Suppressing gRPC obsolete warning
@@ -88,7 +87,7 @@ public class OtlpTraceExporter : BaseExporter<Activity>
                 writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(
                     ref buffer,
                     this.startWritePosition,
-                    this.sdkLimitOptions,
+                    this.otlpSpanLimits,
                     this.Resource,
                     activityBatch,
                     this.maxRequestSizeBytes + this.startWritePosition);
@@ -172,5 +171,13 @@ public class OtlpTraceExporter : BaseExporter<Activity>
         {
             this.serializationBuffer.Release();
         }
+    }
+
+    private static OtlpSpanLimits CreateSpanLimits()
+    {
+        var configuration = new ConfigurationBuilder().AddEnvironmentVariables().Build();
+        var attributeLimitOptions = new AttributeLimitOptions(configuration);
+        var spanLimitOptions = new SpanLimitOptions(configuration, attributeLimitOptions);
+        return new OtlpSpanLimits(spanLimitOptions, attributeLimitOptions);
     }
 }

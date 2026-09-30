@@ -9,6 +9,7 @@ using BenchmarkDotNet.Attributes;
 using Benchmarks.Helper;
 using OpenTelemetry;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 
@@ -19,7 +20,7 @@ public class ProtobufOtlpTraceSerializationBenchmarks
 {
     private const int InitialBufferSize = 750000;
 
-    private readonly SdkLimitOptions sdkLimitOptions = new();
+    private readonly OtlpSpanLimits otlpSpanLimits = new(new SpanLimitOptions(), new AttributeLimitOptions());
     private readonly Resource resource = Resource.Empty;
     private Activity[] activities = null!;
     private int batchCount;
@@ -47,7 +48,7 @@ public class ProtobufOtlpTraceSerializationBenchmarks
         // never hits the growth path (mirrors a warmed-up exporter instance).
         this.steadyStateBuffer = ProtobufSerializer.RentBuffer(InitialBufferSize);
         var batch = new Batch<Activity>(this.activities, this.batchCount);
-        ProtobufOtlpTraceSerializer.WriteTraceData(ref this.steadyStateBuffer, 0, this.sdkLimitOptions, this.resource, batch);
+        ProtobufOtlpTraceSerializer.WriteTraceData(ref this.steadyStateBuffer, 0, this.otlpSpanLimits, this.resource, batch);
     }
 
     [GlobalCleanup]
@@ -66,7 +67,7 @@ public class ProtobufOtlpTraceSerializationBenchmarks
     {
         var buffer = this.steadyStateBuffer;
         var batch = new Batch<Activity>(this.activities, this.batchCount);
-        return ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, this.sdkLimitOptions, this.resource, batch);
+        return ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, this.otlpSpanLimits, this.resource, batch);
     }
 
     // Every iteration begins from an initial-size rental and exercises resize plus
@@ -80,7 +81,7 @@ public class ProtobufOtlpTraceSerializationBenchmarks
         try
         {
             var batch = new Batch<Activity>(this.activities, this.batchCount);
-            return ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, this.sdkLimitOptions, this.resource, batch);
+            return ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, this.otlpSpanLimits, this.resource, batch);
         }
         finally
         {
@@ -98,7 +99,7 @@ public class ProtobufOtlpTraceSerializationBenchmarks
         try
         {
             var batch = new Batch<Activity>(this.activities, this.batchCount);
-            var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, this.sdkLimitOptions, this.resource, batch);
+            var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, this.otlpSpanLimits, this.resource, batch);
             this.bufferSize = Math.Max(InitialBufferSize, writePosition);
             return writePosition;
         }
