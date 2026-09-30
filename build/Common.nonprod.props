@@ -7,6 +7,12 @@
     <CodeAnalysisRuleSet>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), 'OpenTelemetry.slnx'))\build\OpenTelemetry.test.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
 
+  <!-- Verify Open Source Maintenance Fee (OSMF) exemption for Open Source projects -->
+  <PropertyGroup>
+    <Verify_SponsorshipExemption>OpenSource</Verify_SponsorshipExemption>
+    <Verify_SponsorshipExemptionUntil>$([System.DateTime]::UtcNow.AddMonths(12).ToString("yyyy-MM"))</Verify_SponsorshipExemptionUntil>
+  </PropertyGroup>
+
   <PropertyGroup>
     <DefaultTargetFrameworkForExampleApps>net10.0</DefaultTargetFrameworkForExampleApps>
   </PropertyGroup>
