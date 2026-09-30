@@ -508,18 +508,18 @@ public sealed class OtlpKvListAttributeTests : IDisposable
     [Fact]
     public void ByteArrayValuesAreTruncatedToValueLengthLimit()
     {
-        Assert.True(TryTransformTag(new("key", new byte[] { 1, 2, 3, 4, 5 }), out var attribute, maxLength: 3), "The byte array should be transformed.");
-        Assert.Equal(new byte[] { 1, 2, 3 }, attribute.Value.BytesValue.ToByteArray());
+        Assert.True(TryTransformTag(new("key", (byte[])[1, 2, 3, 4, 5]), out var attribute, maxLength: 3), "The byte array should be transformed.");
+        Assert.Equal((byte[])[1, 2, 3], attribute.Value.BytesValue.ToByteArray());
 
-        Assert.True(TryTransformTag(new("key", new byte[] { 1, 2, 3 }), out attribute, maxLength: 0), "The byte array should be transformed.");
+        Assert.True(TryTransformTag(new("key", (byte[])[1, 2, 3]), out attribute, maxLength: 0), "The byte array should be transformed.");
         Assert.Empty(attribute.Value.BytesValue);
 
-        var map = new Dictionary<string, object?> { ["bytes"] = new byte[] { 1, 2, 3, 4, 5 } };
+        var map = new Dictionary<string, object?> { ["bytes"] = (byte[])[1, 2, 3, 4, 5] };
         Assert.True(TryTransformTag(new("key", map), out attribute, maxLength: 2), "The map containing the byte array should be transformed.");
-        Assert.Equal(new byte[] { 1, 2 }, attribute.Value.KvlistValue.Values[0].Value.BytesValue.ToByteArray());
+        Assert.Equal((byte[])[1, 2], attribute.Value.KvlistValue.Values[0].Value.BytesValue.ToByteArray());
 
-        Assert.True(TryTransformTag(new("key", new byte[] { 1, 2 }), out attribute, maxLength: 3), "The byte array should be transformed.");
-        Assert.Equal(new byte[] { 1, 2 }, attribute.Value.BytesValue.ToByteArray());
+        Assert.True(TryTransformTag(new("key", (byte[])[1, 2]), out attribute, maxLength: 3), "The byte array should be transformed.");
+        Assert.Equal((byte[])[1, 2], attribute.Value.BytesValue.ToByteArray());
     }
 
     public void Dispose()
