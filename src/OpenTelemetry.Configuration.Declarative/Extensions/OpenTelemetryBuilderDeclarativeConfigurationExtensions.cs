@@ -22,9 +22,11 @@ public static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
     /// Adds the declarative configuration (YAML) source into DI, reading the path from the <c>OTEL_CONFIG_FILE</c> environment variable.
     /// </summary>
     /// <remarks>
-    /// Appends YAML after existing sources. Flat settings projected into <see cref="IConfiguration"/>
-    /// follow standard source ordering, so YAML overrides earlier sources and later sources override
-    /// YAML. Model-driven settings do not follow <see cref="IConfiguration"/> source ordering.
+    /// The configuration file is the only source of OTel settings. Keys set in sources registered
+    /// before it are ignored. Values from process environment variables can be imported explicitly
+    /// through environment variable substitution. <c>OTEL_DOTNET_*</c> keys are unaffected.
+    /// Code-based configuration (for example <c>Configure&lt;T&gt;</c> or builder methods such as
+    /// <c>AddOtlpExporter</c>) still applies.
     /// </remarks>
     /// <param name="builder">The <see cref="IOpenTelemetryBuilder"/> builder.</param>
     /// <returns>The original <see cref="IOpenTelemetryBuilder"/> for chaining.</returns>
@@ -94,9 +96,6 @@ public static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
         var candidateAccessor = new DeclarativeConfigurationDocumentAccessor(filePath);
 
         OpenTelemetryDeclarativeConfigurationEventSource.Log.OverlayRegistrationStarted(filePath.DisplayPath);
-
-        // TODO(strict-mode): branch here on a future DeclarativeConfigurationMode (Default vs Strict).
-        // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/6380.
 
         // Fast path: hosting API accessor exposes a live ConfigurationManager; mutate in-place and skip descriptor scan.
         if (configurationAccessor?.Configuration is IConfigurationBuilder accessorBuilder)
