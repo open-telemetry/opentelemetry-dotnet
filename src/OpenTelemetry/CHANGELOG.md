@@ -23,6 +23,11 @@ Notes](../../RELEASENOTES.md).
   configured.
   ([#7780](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7780))
 
+* Fixed `ResourceBuilder.CreateDefault` ignoring `OTEL_RESOURCE_ATTRIBUTES`
+  and `OTEL_SERVICE_NAME` environment variables when the host
+  `IConfiguration` does not contain those settings.
+  ([#6789](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6789))
+
 ## 1.19.1
 
 Released 2026-Sep-21
