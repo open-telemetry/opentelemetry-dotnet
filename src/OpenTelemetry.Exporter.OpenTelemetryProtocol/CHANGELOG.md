@@ -19,6 +19,9 @@ Notes](../../RELEASENOTES.md).
   [HttpClient logging](README.md#httpclient-logging) for configuration overrides.
   ([#7743](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7743))
 
+* Avoid logging malformed HTTP request headers in the exporter's diagnostic log.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.19.1
 
 Released 2026-Sep-21
