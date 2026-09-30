@@ -20,13 +20,13 @@ Notes](../../RELEASENOTES.md).
   ([#7743](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7743))
 
 * Hardened the experimental disk retry feature.
-    * The retry directory and the blob files within it are now created
-      accessible to the current user only on non-Windows platforms.
-    * Directory size accounting no longer follows subdirectories, avoiding
-      a symbolic-link/junction walk.
-    * Expired lease-file cleanup now correctly locates the lease timestamp
-      delimiter within the file name rather than the whole path.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  * The retry directory and the blob files within it are now created
+    accessible to the current user only on non-Windows platforms.
+  * Directory size accounting no longer follows subdirectories, avoiding
+    a symbolic-link/junction walk.
+  * Expired lease-file cleanup now correctly locates the lease timestamp
+    delimiter within the file name rather than the whole path.
+  ([#7857](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7857))
 
 ## 1.19.1
 
