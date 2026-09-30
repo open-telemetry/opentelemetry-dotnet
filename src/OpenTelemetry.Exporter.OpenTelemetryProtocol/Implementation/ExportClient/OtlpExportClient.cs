@@ -129,7 +129,14 @@ internal abstract class OtlpExportClient : IExportClient
 
         foreach (var header in this.Headers)
         {
-            request.Headers.Add(header.Key, header.Value);
+            try
+            {
+                request.Headers.Add(header.Key, header.Value);
+            }
+            catch (FormatException)
+            {
+                throw new FormatException($"The value configured for the '{header.Key}' header is not a valid HTTP header value.");
+            }
         }
 
         request.Content = this.CreateHttpContent(buffer, contentLength);

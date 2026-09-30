@@ -19,6 +19,9 @@ Notes](../../RELEASENOTES.md).
   [HttpClient logging](README.md#httpclient-logging) for configuration overrides.
   ([#7743](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7743))
 
+* Avoid logging malformed HTTP request headers in the exporter's diagnostic log.
+  ([#7858](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7858))
+
 * Hardened the experimental disk retry feature.
   * The retry directory and the blob files within it are now created
     accessible to the current user only on non-Windows platforms.
