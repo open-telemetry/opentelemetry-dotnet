@@ -15,6 +15,13 @@ Notes](../../RELEASENOTES.md).
   platforms (e.g. Blazor).
   ([#7799](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7799))
 
+* Suppressed informational HTTP client logs from OTLP exporters by default. See
+  [HttpClient logging](README.md#httpclient-logging) for configuration overrides.
+  ([#7743](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7743))
+
+* Avoid logging malformed HTTP request headers in the exporter's diagnostic log.
+  ([#7858](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7858))
+
 * The OTLP log exporter now exports `schema_url` on `ScopeLogs`. Log
   records emitted from a `Logger` with a schema URL set now populate
   `ScopeLogs.schema_url` in exported OTLP requests.

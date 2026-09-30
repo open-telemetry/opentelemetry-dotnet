@@ -22,6 +22,7 @@ implementation.
     * [Exporter configuration](#exporter-configuration)
     * [Attribute limits](#attribute-limits)
   * [Configure HttpClient](#configure-httpclient)
+    * [HttpClient logging](#httpclient-logging)
 * [Experimental features](#experimental-features)
 * [Troubleshooting](#troubleshooting)
 
@@ -643,6 +644,27 @@ services.AddHttpClient(
 > [Send()](https://learn.microsoft.com/dotnet/api/system.net.http.delegatinghandler.send)
 > methods to ensure that their custom logic is executed for all HTTP requests
 > made by the OTLP exporter.
+
+### HttpClient logging
+
+OTLP exporter registration adds default `Warning` logging filters for its named
+HTTP client categories. To restore informational request logs in applications
+using standard .NET logging configuration, add the following to `appsettings.json`:
+
+```json
+{
+  "Logging": {
+    "LogLevel": {
+      "System.Net.Http.HttpClient.OtlpTraceExporter": "Information",
+      "System.Net.Http.HttpClient.OtlpMetricExporter": "Information",
+      "System.Net.Http.HttpClient.OtlpLogExporter": "Information"
+    }
+  }
+}
+```
+
+Use these specific categories; a broader setting such as
+`System.Net.Http.HttpClient` does not override the exporter defaults.
 
 ## Experimental features
 
