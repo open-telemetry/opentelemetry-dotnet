@@ -152,11 +152,13 @@ public sealed class OtlpHttpClientLoggingTests
         Assert.True(logger.IsEnabled(LogLevel.Information));
 
         static void AddApplicationFilter(IServiceCollection services)
-            => services.Configure<LoggerFilterOptions>(options => options.Rules.Add(new LoggerFilterRule(
+        {
+            services.Configure<LoggerFilterOptions>(options => options.Rules.Add(new LoggerFilterRule(
                 providerName: null,
                 OtlpMetricExporterHttpClientCategory,
                 LogLevel.Information,
                 filter: null)));
+        }
     }
 
     [Fact]
