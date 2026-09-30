@@ -134,13 +134,25 @@ public static class ResourceBuilderExtensions
     public static ResourceBuilder AddEnvironmentVariableDetector(this ResourceBuilder resourceBuilder)
     {
         Guard.ThrowIfNull(resourceBuilder);
-        var configuration = new Lazy<IConfiguration>(() => new ConfigurationBuilder().AddEnvironmentVariables().Build());
+        var environmentConfiguration = new Lazy<IConfiguration>(
+            () => new ConfigurationBuilder().AddEnvironmentVariables().Build());
+
+        IConfiguration GetConfiguration(IServiceProvider? serviceProvider, string key)
+        {
+            var hostConfiguration = serviceProvider?.GetService<IConfiguration>();
+            if (hostConfiguration != null && hostConfiguration[key] != null)
+            {
+                return hostConfiguration;
+            }
+
+            return environmentConfiguration.Value;
+        }
 
 #pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
         return resourceBuilder
 #pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
-            .AddDetectorInternal(sp => new OtelEnvResourceDetector(sp?.GetService<IConfiguration>() ?? configuration.Value))
-            .AddDetectorInternal(sp => new OtelServiceNameEnvVarDetector(sp?.GetService<IConfiguration>() ?? configuration.Value));
+            .AddDetectorInternal(sp => new OtelEnvResourceDetector(GetConfiguration(sp, OtelEnvResourceDetector.EnvVarKey)))
+            .AddDetectorInternal(sp => new OtelServiceNameEnvVarDetector(GetConfiguration(sp, OtelServiceNameEnvVarDetector.EnvVarKey)));
     }
 
     /// <summary>

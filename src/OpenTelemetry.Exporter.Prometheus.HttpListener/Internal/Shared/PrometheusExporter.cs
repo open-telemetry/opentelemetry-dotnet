@@ -30,6 +30,7 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
         this.TranslationStrategy = options.TranslationStrategy;
         this.ResourceConstantLabels = options.ResourceConstantLabels;
         this.MaxScrapeResponseSizeBytes = options.MaxScrapeResponseSizeBytes;
+        this.ScrapeResponseTimeoutMilliseconds = options.ScrapeResponseTimeoutMilliseconds;
 
         this.CollectionManager = new PrometheusCollectionManager(this);
     }
@@ -62,6 +63,8 @@ internal sealed class PrometheusExporter : BaseExporter<Metric>, IPullMetricExpo
     internal Func<string, bool>? ResourceConstantLabels { get; }
 
     internal int MaxScrapeResponseSizeBytes { get; }
+
+    internal int ScrapeResponseTimeoutMilliseconds { get; }
 
     internal Resource Resource
     {
