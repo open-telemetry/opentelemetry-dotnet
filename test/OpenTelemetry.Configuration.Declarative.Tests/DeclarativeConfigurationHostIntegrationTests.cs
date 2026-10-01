@@ -39,7 +39,7 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
     public void ModernHost_UseDeclarativeConfiguration_ResourceAttributesFlowToSdk()
     {
         // Alternative API: wire through IOpenTelemetryBuilder.UseDeclarativeConfiguration.
-        // The overlay detects the factory-registered ConfigurationManager and inserts
+        // Declarative registration detects the factory-registered ConfigurationManager and inserts
         // the source in-place via the resolved instance.
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(
             resourceAttributes: new Dictionary<string, string> { ["service.name"] = "modern-host-svc-via-otel" });
@@ -353,9 +353,9 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
     public void ModernHost_AddOpenTelemetryOnHostBuilder_YamlVisibleDuringSetup()
     {
         // AddOpenTelemetry(IHostApplicationBuilder) registers the host's live configuration, so
-        // the overlay inserts the YAML source in-place during setup. Without it the source is
-        // only inserted when IConfiguration is first resolved from the container, so values are
-        // invisible to anything reading builder.Configuration while the application is built.
+        // declarative registration inserts the YAML source in-place during setup. Without it the
+        // source is only inserted when IConfiguration is first resolved from the container, so
+        // values are invisible to anything reading builder.Configuration while the application is built.
         // Use attributes_list (flat projection) to verify the key is visible during setup.
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(
             resourceAttributesList: "service.name=setup-visible");
@@ -389,10 +389,10 @@ public sealed class DeclarativeConfigurationHostIntegrationTests
     [Fact]
     public void ModernHost_AddOpenTelemetryOnServiceCollection_YamlNotVisibleDuringSetup()
     {
-        // Characterises the difference the host-builder entry point makes. Reaching the overlay
-        // through IServiceCollection leaves the host's configuration unreachable, so the source
-        // is only inserted when IConfiguration is resolved from the container. The values still
-        // reach the SDK (see ModernHost_UseDeclarativeConfiguration_ResourceAttributesFlowToSdk),
+        // Characterises the difference the host-builder entry point makes. Registering declarative
+        // configuration through IServiceCollection leaves the host's configuration unreachable, so
+        // the source is only inserted when IConfiguration is resolved from the container. The values
+        // still reach the SDK (see ModernHost_UseDeclarativeConfiguration_ResourceAttributesFlowToSdk),
         // but not in time for code reading builder.Configuration during setup.
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(
             resourceAttributes: new Dictionary<string, string> { ["service.name"] = "setup-visible" });
