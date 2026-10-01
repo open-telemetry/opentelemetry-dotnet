@@ -29,9 +29,6 @@
 > mechanism](#legacy-self-diagnostics-mechanism) for the mechanism available in
 > current stable releases.
 
-<!-- TODO: update the NOTE and the legacy mechanism section once a release
-ships this feature. -->
-
 ## Self-diagnostics
 
 Every component shipped from the OpenTelemetry .NET repository reports its own
