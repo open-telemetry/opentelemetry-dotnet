@@ -91,9 +91,9 @@ internal sealed class SelfDiagnosticsTextFormatter : ISelfDiagnosticsFormatter
         }
 
         // Span ID: first 6 hex chars or dashes.
-        var spanStr = string.IsNullOrEmpty(spanIdHex)
+        var spanStr = spanIdHex is not { Length: > 0 }
             ? EmptySpanId
-            : spanIdHex!.Length >= maxLen ? spanIdHex.Substring(0, maxLen) : spanIdHex.PadRight(maxLen, '-');
+            : spanIdHex.Length >= maxLen ? spanIdHex.Substring(0, maxLen) : spanIdHex.PadRight(maxLen, '-');
 
         builder
             .Append('[').Append(timestampUtc.ToString("O", CultureInfo.InvariantCulture)).Append(']')
@@ -116,6 +116,6 @@ internal sealed class SelfDiagnosticsTextFormatter : ISelfDiagnosticsFormatter
         LogLevel.Warning => "Warning",
         LogLevel.Error => "Error",
         LogLevel.Critical => "Critical",
-        _ => "None",
+        LogLevel.None or _ => "None",
     };
 }

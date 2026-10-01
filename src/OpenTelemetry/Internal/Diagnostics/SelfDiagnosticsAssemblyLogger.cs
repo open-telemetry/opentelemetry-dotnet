@@ -35,12 +35,12 @@ internal sealed class SelfDiagnosticsAssemblyLogger : IDisposable
     // Assemblies with no independent diagnostic value - their identity is already captured
     // by the runtime version string, or they are pure infrastructure shims.
     private static readonly string[] SkipByName =
-    {
+    [
         "mscorlib",
         "netstandard",
         "System.Private.CoreLib",
         "dotnet",
-    };
+    ];
 
     private readonly ILogger logger;
     private readonly AssemblyLoadEventHandler assemblyLoadHandler;
