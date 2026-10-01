@@ -8,6 +8,27 @@ OpenTelemetry.Logs.LogRecordLimitOptions.AttributeCountLimit.get -> int
 OpenTelemetry.Logs.LogRecordLimitOptions.AttributeCountLimit.set -> void
 OpenTelemetry.Logs.LogRecordLimitOptions.AttributeValueLengthLimit.get -> int?
 OpenTelemetry.Logs.LogRecordLimitOptions.AttributeValueLengthLimit.set -> void
+OpenTelemetry.SelfDiagnostics.EnvironmentVariableLogMode
+OpenTelemetry.SelfDiagnostics.EnvironmentVariableLogMode.AllValues = 3 -> OpenTelemetry.SelfDiagnostics.EnvironmentVariableLogMode
+OpenTelemetry.SelfDiagnostics.EnvironmentVariableLogMode.KnownSafeValues = 2 -> OpenTelemetry.SelfDiagnostics.EnvironmentVariableLogMode
+OpenTelemetry.SelfDiagnostics.EnvironmentVariableLogMode.Names = 1 -> OpenTelemetry.SelfDiagnostics.EnvironmentVariableLogMode
+OpenTelemetry.SelfDiagnostics.EnvironmentVariableLogMode.None = 0 -> OpenTelemetry.SelfDiagnostics.EnvironmentVariableLogMode
+OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions
+OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.EnvironmentVariables.get -> OpenTelemetry.SelfDiagnostics.EnvironmentVariableLogMode
+OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.EnvironmentVariables.set -> void
+OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.FileSizeLimitKilobytes.get -> int
+OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.FileSizeLimitKilobytes.set -> void
+OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.LogDirectory.get -> string?
+OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.LogDirectory.set -> void
+OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.LogToStderr.get -> bool
+OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.LogToStderr.set -> void
+OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.LogToStdout.get -> bool
+OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.LogToStdout.set -> void
+OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.MaxRetainedFiles.get -> int
+OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.MaxRetainedFiles.set -> void
+OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.MinimumLevel.get -> Microsoft.Extensions.Logging.LogLevel
+OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.MinimumLevel.set -> void
+OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.SelfDiagnosticsOptions() -> void
 OpenTelemetry.Trace.SpanLimitOptions
 OpenTelemetry.Trace.SpanLimitOptions.AttributeCountLimit.get -> int
 OpenTelemetry.Trace.SpanLimitOptions.AttributeCountLimit.set -> void
@@ -21,4 +42,5 @@ OpenTelemetry.Trace.SpanLimitOptions.EventCountLimit.get -> int
 OpenTelemetry.Trace.SpanLimitOptions.EventCountLimit.set -> void
 OpenTelemetry.Trace.SpanLimitOptions.LinkCountLimit.get -> int
 OpenTelemetry.Trace.SpanLimitOptions.LinkCountLimit.set -> void
+static OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.GetDefaultLogDirectory() -> string?
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.ConfigureSampler(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, System.Func<System.IServiceProvider!, OpenTelemetry.Trace.Sampler!, OpenTelemetry.Trace.Sampler!>! configureSampler) -> OpenTelemetry.Trace.TracerProviderBuilder!
