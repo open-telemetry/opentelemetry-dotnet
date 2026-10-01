@@ -15,6 +15,9 @@ namespace OpenTelemetry.Internal;
 /// <see cref="SelfDiagnosticsConfigRefresher"/> (the legacy <c>OTEL_DIAGNOSTICS.json</c>
 /// mechanism, retained for backwards compatibility).
 /// </remarks>
+#if NET
+[System.Runtime.Versioning.UnsupportedOSPlatform("browser")]
+#endif
 internal sealed class SelfDiagnostics : IDisposable
 {
     /// <summary>

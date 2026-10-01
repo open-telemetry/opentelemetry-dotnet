@@ -244,7 +244,7 @@ public class SelfDiagnosticsSinkDispatcherTests
             1,
             (_, _, _) => firstApplied.Set()));
         Assert.True(
-            firstApplied.Wait(TimeSpan.FromSeconds(5)),
+            firstApplied.Wait(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken),
             "Configuration was not applied by the pump within the timeout");
 
         var warning = SelfDiagnosticsLogEntry.Capture(LogLevel.Warning, default, "before level update", null);
@@ -337,7 +337,7 @@ public class SelfDiagnosticsSinkDispatcherTests
                     continueFirstCallback.Wait();
                 }));
             Assert.True(
-                firstConfigurationApplying.Wait(TimeSpan.FromSeconds(5)),
+                firstConfigurationApplying.Wait(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken),
                 "expected the first configuration to begin applying on the pump thread");
 
             Assert.True(
@@ -345,7 +345,7 @@ public class SelfDiagnosticsSinkDispatcherTests
                 "expected the second configuration to queue while the first was still applying");
             continueFirstConfiguration.Set();
             Assert.True(
-                firstConfigurationApplied.Wait(TimeSpan.FromSeconds(5)),
+                firstConfigurationApplied.Wait(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken),
                 "expected the first configuration applied callback to run");
 
             Assert.False(dispatcher.IsEnabled(LogLevel.Debug));
@@ -503,7 +503,7 @@ public class SelfDiagnosticsSinkDispatcherTests
             1,
             (_, _, _) => firstApplied.Set()));
         Assert.True(
-            firstApplied.Wait(TimeSpan.FromSeconds(5)),
+            firstApplied.Wait(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken),
             "Configuration was not applied by the pump within the timeout");
 
         currentSinks = [replacement];

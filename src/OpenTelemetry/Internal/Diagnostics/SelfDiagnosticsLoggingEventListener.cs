@@ -19,6 +19,9 @@ namespace OpenTelemetry.Internal;
 /// Contextual data (timestamp, thread, activity context) is captured at event time so entries
 /// remain accurate after spending time in the dispatcher queue or deferred buffer.
 /// </remarks>
+#if NET
+[System.Runtime.Versioning.UnsupportedOSPlatform("browser")]
+#endif
 internal sealed class SelfDiagnosticsLoggingEventListener : EventListener
 {
     internal const string OpenTelemetryEventSourceNamePrefix = "OpenTelemetry-";

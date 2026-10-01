@@ -32,6 +32,9 @@ namespace OpenTelemetry.Internal;
 /// <see cref="Flush"/> once per drained burst, turning N syscalls into one.
 /// </para>
 /// </remarks>
+#if NET
+[System.Runtime.Versioning.UnsupportedOSPlatform("browser")]
+#endif
 internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
 {
     private static readonly TimeSpan DefaultRetryInterval = TimeSpan.FromSeconds(30);
@@ -215,6 +218,14 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
     {
         try
         {
+#if NET
+            if (OperatingSystem.IsIOS())
+            {
+                // Process.StartTime is unsupported on iOS.
+                return CreateFallbackProcessIdentity(Guid.NewGuid());
+            }
+#endif
+
             using var process = Process.GetCurrentProcess();
             return CreateProcessIdentity(
                 process.Id,

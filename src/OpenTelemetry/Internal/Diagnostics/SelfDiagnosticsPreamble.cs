@@ -17,6 +17,9 @@ namespace OpenTelemetry.Internal;
 /// <summary>
 /// Builds the one-time preamble written at the top of each self-diagnostics log file.
 /// </summary>
+#if NET
+[System.Runtime.Versioning.UnsupportedOSPlatform("browser")]
+#endif
 internal static class SelfDiagnosticsPreamble
 {
     // Well-known runtime-level env vars logged unconditionally. Values are always disclosed
@@ -90,7 +93,10 @@ internal static class SelfDiagnosticsPreamble
             sb.Append("Process ID           : ").AppendLine(process.Id.ToString(CultureInfo.InvariantCulture));
             sb.Append("Process name         : ").AppendLine(process.ProcessName);
 #if NET
-            sb.Append("Process start time   : ").AppendLine(process.StartTime.ToUniversalTime().ToString("O"));
+            if (!OperatingSystem.IsIOS())
+            {
+                sb.Append("Process start time   : ").AppendLine(process.StartTime.ToUniversalTime().ToString("O"));
+            }
 #endif
             sb.Append("Process working set  : ").Append(process.WorkingSet64.ToString(CultureInfo.InvariantCulture)).AppendLine(" bytes");
             sb.Append("Thread count         : ").AppendLine(process.Threads.Count.ToString(CultureInfo.InvariantCulture));

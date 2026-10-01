@@ -34,6 +34,9 @@ namespace OpenTelemetry.Internal;
     "Design",
     "CA1001:Types that own disposable fields should be disposable",
     Justification = "Sink lifetime is owned by SelfDiagnosticsSinkDispatcher: replaced sinks are disposed via reference diff and the live set by the dispatcher's Dispose. This type only tracks sink identity to decide recreate-versus-update.")]
+#if NET
+[System.Runtime.Versioning.UnsupportedOSPlatform("browser")]
+#endif
 internal sealed class SelfDiagnosticsSinkManager
 {
     private readonly Func<SelfDiagnosticsOptions.SelfDiagnosticsConfiguration, string> preambleBuilder;

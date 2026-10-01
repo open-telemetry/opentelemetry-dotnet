@@ -5,9 +5,13 @@
 using System.Diagnostics.Metrics;
 using System.Globalization;
 using System.Net;
+using System.Net.Sockets;
+using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.TestHost;
@@ -24,6 +28,7 @@ public sealed class PrometheusExporterMiddlewareTests
 {
     private const string MeterName = nameof(PrometheusExporterMiddlewareTests);
     private const string MeterVersion = "1.0.1";
+    private const string VerifyFileExtension = "txt";
 
     private static readonly TimeSpan DeadlineMargin = TimeSpan.FromSeconds(1);
     private static readonly TimeSpan MaxCollectWait = TimeSpan.FromSeconds(30);
@@ -35,7 +40,7 @@ public sealed class PrometheusExporterMiddlewareTests
             "/metrics",
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint());
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Theory]
@@ -49,7 +54,7 @@ public sealed class PrometheusExporterMiddlewareTests
             services => services.Configure<PrometheusAspNetCoreOptions>(o => o.ScopeInfoEnabled = scopeInfoEnabled),
             assertResponseContent: false);
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings).UseParameters(scopeInfoEnabled);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings).UseParameters(scopeInfoEnabled);
     }
 
     [Theory]
@@ -63,7 +68,7 @@ public sealed class PrometheusExporterMiddlewareTests
             services => services.Configure<PrometheusAspNetCoreOptions>(o => o.TargetInfoEnabled = targetInfoEnabled),
             assertResponseContent: false);
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings).UseParameters(targetInfoEnabled);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings).UseParameters(targetInfoEnabled);
     }
 
     [Theory]
@@ -83,7 +88,7 @@ public sealed class PrometheusExporterMiddlewareTests
             }),
             assertResponseContent: false);
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings).UseParameters(filter);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings).UseParameters(filter);
     }
 
     [Fact]
@@ -94,7 +99,7 @@ public sealed class PrometheusExporterMiddlewareTests
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
             services => services.Configure<PrometheusAspNetCoreOptions>(o => o.ScrapeEndpointPath = "metrics_options"));
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -105,7 +110,7 @@ public sealed class PrometheusExporterMiddlewareTests
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
             services => services.Configure<PrometheusAspNetCoreOptions>(o => o.ScrapeEndpointPath = null));
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -119,7 +124,7 @@ public sealed class PrometheusExporterMiddlewareTests
                 o.ScrapeEndpointPath = "/metrics_from_AddPrometheusExporter";
             });
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -129,7 +134,7 @@ public sealed class PrometheusExporterMiddlewareTests
             "/metrics_override",
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint("/metrics_override"));
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -148,7 +153,7 @@ public sealed class PrometheusExporterMiddlewareTests
                 services.Configure<PrometheusAspNetCoreOptions>("myOptions", o => o.ScrapeEndpointPath = "/metrics_override");
             });
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -159,7 +164,7 @@ public sealed class PrometheusExporterMiddlewareTests
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(
                 httpContext => httpContext.Request.Path == "/metrics_predicate" && httpContext.Request.Query["enabled"] == "true"));
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -188,7 +193,7 @@ public sealed class PrometheusExporterMiddlewareTests
                 Assert.Equal("true", headers.FirstOrDefault());
             });
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -217,7 +222,7 @@ public sealed class PrometheusExporterMiddlewareTests
                 Assert.Equal("true", headers.FirstOrDefault());
             });
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -239,7 +244,7 @@ public sealed class PrometheusExporterMiddlewareTests
                 optionsName: null),
             registerMeterProvider: false);
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -250,7 +255,7 @@ public sealed class PrometheusExporterMiddlewareTests
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
             skipMetrics: true);
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -261,7 +266,7 @@ public sealed class PrometheusExporterMiddlewareTests
             app => app.UseRouting().UseEndpoints(builder => builder.MapPrometheusScrapingEndpoint()),
             services => services.AddRouting());
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -272,7 +277,7 @@ public sealed class PrometheusExporterMiddlewareTests
             app => app.UseRouting().UseEndpoints(builder => builder.MapPrometheusScrapingEndpoint("metrics_path")),
             services => services.AddRouting());
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -291,7 +296,7 @@ public sealed class PrometheusExporterMiddlewareTests
                 services.Configure<PrometheusAspNetCoreOptions>("myOptions", o => o.ScrapeEndpointPath = "/metrics_path");
             });
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -313,7 +318,7 @@ public sealed class PrometheusExporterMiddlewareTests
             services => services.AddRouting(),
             registerMeterProvider: false);
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -324,7 +329,7 @@ public sealed class PrometheusExporterMiddlewareTests
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
             acceptHeader: "text/plain");
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -336,7 +341,7 @@ public sealed class PrometheusExporterMiddlewareTests
             acceptHeader: "application/openmetrics-text; version=1.0.0",
             contentType: "application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores");
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Theory]
@@ -410,7 +415,7 @@ public sealed class PrometheusExporterMiddlewareTests
             acceptHeader: "text/plain",
             meterTags: meterTags);
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -429,7 +434,7 @@ public sealed class PrometheusExporterMiddlewareTests
             contentType: "application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores",
             meterTags: meterTags);
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -455,7 +460,7 @@ public sealed class PrometheusExporterMiddlewareTests
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
             configureOptions: o =>
             {
-                o.TranslationStrategy = PrometheusTranslationStrategy.NoTranslation;
+                o.TranslationStrategy = PrometheusAspNetCoreTranslationStrategy.NoTranslation;
 
                 // Disabled to keep the snapshot focused on name translation.
                 o.ScopeInfoEnabled = false;
@@ -478,16 +483,16 @@ public sealed class PrometheusExporterMiddlewareTests
         // unaltered survive the second escaping pass content negotiation applies.
         client.DefaultRequestHeaders.Add("Accept", "text/plain; version=1.0.0; escaping=allow-utf-8");
 
-        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
-        var output = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings();
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative), TestContext.Current.CancellationToken);
+        var output = (await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)).ReplaceLineEndings();
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(
             "text/plain; version=1.0.0; charset=utf-8; escaping=allow-utf-8",
             response.Content.Headers.ContentType!.ToString());
 
-        await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -497,7 +502,7 @@ public sealed class PrometheusExporterMiddlewareTests
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
             configureOptions: o =>
             {
-                o.TranslationStrategy = PrometheusTranslationStrategy.UnderscoreEscapingWithoutSuffixes;
+                o.TranslationStrategy = PrometheusAspNetCoreTranslationStrategy.UnderscoreEscapingWithoutSuffixes;
                 o.ScopeInfoEnabled = false;
                 o.TargetInfoEnabled = false;
             });
@@ -509,12 +514,12 @@ public sealed class PrometheusExporterMiddlewareTests
         host.Services.GetRequiredService<MeterProvider>().ForceFlush();
 
         using var client = host.GetTestClient();
-        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
-        var output = await response.Content.ReadAsStringAsync();
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative), TestContext.Current.CancellationToken);
+        var output = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
 
-        await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -524,7 +529,7 @@ public sealed class PrometheusExporterMiddlewareTests
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
             configureOptions: o =>
             {
-                o.TranslationStrategy = PrometheusTranslationStrategy.NoUTF8EscapingWithSuffixes;
+                o.TranslationStrategy = PrometheusAspNetCoreTranslationStrategy.NoUTF8EscapingWithSuffixes;
                 o.ScopeInfoEnabled = false;
                 o.TargetInfoEnabled = false;
             });
@@ -540,12 +545,12 @@ public sealed class PrometheusExporterMiddlewareTests
         // through unaltered survives the second escaping pass content negotiation applies.
         client.DefaultRequestHeaders.Add("Accept", "text/plain; version=1.0.0; escaping=allow-utf-8");
 
-        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
-        var output = await response.Content.ReadAsStringAsync();
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative), TestContext.Current.CancellationToken);
+        var output = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
 
-        await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -555,7 +560,7 @@ public sealed class PrometheusExporterMiddlewareTests
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
             configureOptions: o =>
             {
-                o.TranslationStrategy = PrometheusTranslationStrategy.NoTranslation;
+                o.TranslationStrategy = PrometheusAspNetCoreTranslationStrategy.NoTranslation;
                 o.ScopeInfoEnabled = false;
                 o.TargetInfoEnabled = false;
             });
@@ -575,16 +580,16 @@ public sealed class PrometheusExporterMiddlewareTests
         // added.
         client.DefaultRequestHeaders.Add("Accept", "text/plain; version=1.0.0; escaping=underscores");
 
-        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
-        var output = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings();
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative), TestContext.Current.CancellationToken);
+        var output = (await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)).ReplaceLineEndings();
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(
             "text/plain; version=1.0.0; charset=utf-8; escaping=underscores",
             response.Content.Headers.ContentType!.ToString());
 
-        await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -594,7 +599,7 @@ public sealed class PrometheusExporterMiddlewareTests
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
             configureOptions: o =>
             {
-                o.TranslationStrategy = PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes;
+                o.TranslationStrategy = PrometheusAspNetCoreTranslationStrategy.UnderscoreEscapingWithSuffixes;
                 o.ScopeInfoEnabled = false;
                 o.TargetInfoEnabled = false;
             });
@@ -613,16 +618,16 @@ public sealed class PrometheusExporterMiddlewareTests
         // revert them. The response reports the escaping that was applied, not the one negotiated.
         client.DefaultRequestHeaders.Add("Accept", "text/plain; version=1.0.0; escaping=allow-utf-8");
 
-        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
-        var output = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings();
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative), TestContext.Current.CancellationToken);
+        var output = (await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)).ReplaceLineEndings();
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(
             "text/plain; version=1.0.0; charset=utf-8; escaping=underscores",
             response.Content.Headers.ContentType!.ToString());
 
-        await Verify(output, "txt", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Theory]
@@ -634,7 +639,7 @@ public sealed class PrometheusExporterMiddlewareTests
             app => app.UseOpenTelemetryPrometheusScrapingEndpoint(),
             configureOptions: o =>
             {
-                o.TranslationStrategy = PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes;
+                o.TranslationStrategy = PrometheusAspNetCoreTranslationStrategy.UnderscoreEscapingWithSuffixes;
                 o.ScopeInfoEnabled = false;
                 o.TargetInfoEnabled = false;
             });
@@ -654,10 +659,10 @@ public sealed class PrometheusExporterMiddlewareTests
         // escaped and the response reports the escaping that was applied instead.
         client.DefaultRequestHeaders.Add("Accept", $"text/plain; version=1.0.0; escaping={escaping}");
 
-        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
-        var output = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings("\n");
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative), TestContext.Current.CancellationToken);
+        var output = (await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)).ReplaceLineEndings("\n");
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(
             "text/plain; version=1.0.0; charset=utf-8; escaping=underscores",
@@ -669,20 +674,20 @@ public sealed class PrometheusExporterMiddlewareTests
 
     // See https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk_exporters/prometheus.md#interaction-with-translation-strategy
     [Theory]
-    [InlineData(PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes, null, "foo_bar_bytes_total")]
-    [InlineData(PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes, "underscores", "foo_bar_bytes_total")]
-    [InlineData(PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes, "allow-utf-8", "foo_bar_bytes_total")]
-    [InlineData(PrometheusTranslationStrategy.UnderscoreEscapingWithoutSuffixes, null, "foo_bar")]
-    [InlineData(PrometheusTranslationStrategy.UnderscoreEscapingWithoutSuffixes, "underscores", "foo_bar")]
-    [InlineData(PrometheusTranslationStrategy.UnderscoreEscapingWithoutSuffixes, "allow-utf-8", "foo_bar")]
-    [InlineData(PrometheusTranslationStrategy.NoUTF8EscapingWithSuffixes, null, "foo_bar_bytes_total")]
-    [InlineData(PrometheusTranslationStrategy.NoUTF8EscapingWithSuffixes, "underscores", "foo_bar_bytes_total")]
-    [InlineData(PrometheusTranslationStrategy.NoUTF8EscapingWithSuffixes, "allow-utf-8", "foo.bar_bytes_total")]
-    [InlineData(PrometheusTranslationStrategy.NoTranslation, null, "foo_bar")]
-    [InlineData(PrometheusTranslationStrategy.NoTranslation, "underscores", "foo_bar")]
-    [InlineData(PrometheusTranslationStrategy.NoTranslation, "allow-utf-8", "foo.bar")]
+    [InlineData(PrometheusAspNetCoreTranslationStrategy.UnderscoreEscapingWithSuffixes, null, "foo_bar_bytes_total")]
+    [InlineData(PrometheusAspNetCoreTranslationStrategy.UnderscoreEscapingWithSuffixes, "underscores", "foo_bar_bytes_total")]
+    [InlineData(PrometheusAspNetCoreTranslationStrategy.UnderscoreEscapingWithSuffixes, "allow-utf-8", "foo_bar_bytes_total")]
+    [InlineData(PrometheusAspNetCoreTranslationStrategy.UnderscoreEscapingWithoutSuffixes, null, "foo_bar")]
+    [InlineData(PrometheusAspNetCoreTranslationStrategy.UnderscoreEscapingWithoutSuffixes, "underscores", "foo_bar")]
+    [InlineData(PrometheusAspNetCoreTranslationStrategy.UnderscoreEscapingWithoutSuffixes, "allow-utf-8", "foo_bar")]
+    [InlineData(PrometheusAspNetCoreTranslationStrategy.NoUTF8EscapingWithSuffixes, null, "foo_bar_bytes_total")]
+    [InlineData(PrometheusAspNetCoreTranslationStrategy.NoUTF8EscapingWithSuffixes, "underscores", "foo_bar_bytes_total")]
+    [InlineData(PrometheusAspNetCoreTranslationStrategy.NoUTF8EscapingWithSuffixes, "allow-utf-8", "foo.bar_bytes_total")]
+    [InlineData(PrometheusAspNetCoreTranslationStrategy.NoTranslation, null, "foo_bar")]
+    [InlineData(PrometheusAspNetCoreTranslationStrategy.NoTranslation, "underscores", "foo_bar")]
+    [InlineData(PrometheusAspNetCoreTranslationStrategy.NoTranslation, "allow-utf-8", "foo.bar")]
     public async Task RunWithTranslationStrategy_MatchesSpecification(
-        PrometheusTranslationStrategy strategy,
+        PrometheusAspNetCoreTranslationStrategy strategy,
         string? escaping,
         string expectedName)
     {
@@ -710,10 +715,10 @@ public sealed class PrometheusExporterMiddlewareTests
 
         client.DefaultRequestHeaders.Add("Accept", accept);
 
-        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
-        var output = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings("\n");
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative), TestContext.Current.CancellationToken);
+        var output = (await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)).ReplaceLineEndings("\n");
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
 
         // A name that is not a valid legacy name is written using the quoted exposition format,
         // where the metric name is the first entry of the label set rather than a prefix.
@@ -742,14 +747,14 @@ public sealed class PrometheusExporterMiddlewareTests
 
         using var client = host.GetTestClient();
 
-        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
-        var output = await response.Content.ReadAsStringAsync();
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative), TestContext.Current.CancellationToken);
+        var output = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.NotEmpty(output);
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
 
-        await Verify(output, "text", PrometheusSerializerTests.VerifySettings);
+        await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
 
     [Fact]
@@ -773,11 +778,11 @@ public sealed class PrometheusExporterMiddlewareTests
 
         using var client = host.GetTestClient();
 
-        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative), TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -909,6 +914,124 @@ public sealed class PrometheusExporterMiddlewareTests
         await middleware.InvokeAsync(context);
 
         Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
+    }
+
+    [Fact]
+    public async Task ScrapeClientThatStopsReadingTheResponseBodyDoesNotBlockOtherScrapesIndefinitely()
+    {
+        const int ScrapeTimeoutMilliseconds = 2000;
+
+        using var meter = new Meter(MeterName, MeterVersion);
+        var (app, baseAddress) = await StartKestrelHostWithLargeScrapeResponseAsync(meter, ScrapeTimeoutMilliseconds);
+
+        try
+        {
+            using var stalledClient = await StartScrapeThatNeverReadsAsync(baseAddress);
+
+            Assert.NotNull(stalledClient);
+
+            // Wait past the server timeout (and the 300ms response cache) so the
+            // stalled request has been cancelled and its reader slot released,
+            // while the stalled client is still open and still not reading.
+            await Task.Delay(TimeSpan.FromMilliseconds((ScrapeTimeoutMilliseconds * 2) + 1000), TestContext.Current.CancellationToken);
+
+            using var client = new HttpClient { BaseAddress = baseAddress };
+            using var cts = new CancellationTokenSource(MaxCollectWait);
+
+            using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative), cts.Token);
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        }
+        finally
+        {
+            await app.StopAsync(TestContext.Current.CancellationToken);
+            await app.DisposeAsync();
+        }
+    }
+
+    private static async Task<(WebApplication App, Uri BaseAddress)> StartKestrelHostWithLargeScrapeResponseAsync(
+        Meter meter,
+        int? scrapeResponseTimeoutMilliseconds = null)
+    {
+        var builder = WebApplication.CreateBuilder();
+
+        builder.Logging.ClearProviders();
+
+        // Real Kestrel (not TestServer) with its default limits, so socket back-pressure applies
+        builder.WebHost.UseUrls("http://127.0.0.1:0");
+
+        builder.Services
+            .AddOpenTelemetry()
+            .WithMetrics(metrics => metrics.AddMeter(meter.Name).AddPrometheusExporter(options =>
+            {
+                if (scrapeResponseTimeoutMilliseconds.HasValue)
+                {
+                    options.ScrapeResponseTimeoutMilliseconds = scrapeResponseTimeoutMilliseconds.Value;
+                }
+            }));
+
+        var app = builder.Build();
+
+        app.UseOpenTelemetryPrometheusScrapingEndpoint();
+
+        await app.StartAsync(TestContext.Current.CancellationToken);
+
+        var baseAddress = app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!.Addresses
+            .Select(address => new Uri(address))
+            .Last();
+
+        // Emit a payload far larger than any socket send buffer so writing the response
+        // cannot complete until the client drains it. Stay under the SDK's default
+        // 1000-metric-stream cap; this produces roughly 12 MB of exposition text.
+        var padding = new string('x', 24_576);
+        for (var x = 0; x < 500; x++)
+        {
+            var counter = meter.CreateCounter<long>("counter_long_" + x.ToString(CultureInfo.InvariantCulture));
+            counter.Add(1, new KeyValuePair<string, object?>("key", padding));
+        }
+
+        return (app, baseAddress);
+    }
+
+    private static async Task<TcpClient?> StartScrapeThatNeverReadsAsync(Uri baseAddress)
+    {
+        // Shrink the receive buffer to (as close to) the platform's minimum as possible
+        // so the server cannot hand much of the response off to this connection.
+        var client = new TcpClient { ReceiveBufferSize = 1 };
+
+        try
+        {
+            await client.ConnectAsync(baseAddress.Host, baseAddress.Port, TestContext.Current.CancellationToken);
+
+            var stream = client.GetStream();
+            var request = Encoding.ASCII.GetBytes($"GET /metrics HTTP/1.1\r\nHost: {baseAddress.Authority}\r\n\r\n");
+
+            await stream.WriteAsync(request, TestContext.Current.CancellationToken);
+            await stream.FlushAsync(TestContext.Current.CancellationToken);
+
+            // Read just enough to confirm the response started, without draining the body
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+
+            try
+            {
+                if (await stream.ReadAsync(new byte[512], cts.Token) > 0)
+                {
+                    var started = client;
+                    client = null;
+                    return started;
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // The response did not start, for example because it is waiting for a reader slot
+            }
+
+            return null;
+        }
+        finally
+        {
+            client?.Dispose();
+        }
     }
 
     private static void EnsureThreadPoolWorkerThreadsAvailable()

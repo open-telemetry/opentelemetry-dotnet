@@ -229,19 +229,23 @@ public sealed class SelfDiagnosticsControllerTests : IDisposable
         var registration = controller.Register(monitor);
         using var start = new ManualResetEventSlim();
 
-        var reloadTask = Task.Run(() =>
-        {
-            start.Wait();
-            for (var i = 0; i < 100; i++)
+        var reloadTask = Task.Run(
+            () =>
             {
-                monitor.Set(i % 2 == 0 ? FileOptions(directory) : new SelfDiagnosticsOptions());
-            }
-        });
-        var disposeTask = Task.Run(() =>
-        {
-            start.Wait();
-            registration.Dispose();
-        });
+                start.Wait();
+                for (var i = 0; i < 100; i++)
+                {
+                    monitor.Set(i % 2 == 0 ? FileOptions(directory) : new SelfDiagnosticsOptions());
+                }
+            },
+            TestContext.Current.CancellationToken);
+        var disposeTask = Task.Run(
+            () =>
+            {
+                start.Wait();
+                registration.Dispose();
+            },
+            TestContext.Current.CancellationToken);
 
         start.Set();
         await Task.WhenAll(reloadTask, disposeTask);

@@ -15,6 +15,9 @@ namespace OpenTelemetry.Internal;
 /// because sink construction runs on the pump rather than on the calling thread. Configuration
 /// callbacks run after the dispatcher has installed the corresponding sink set.
 /// </remarks>
+#if NET
+[System.Runtime.Versioning.UnsupportedOSPlatform("browser")]
+#endif
 internal sealed class SelfDiagnosticsLogger : IDisposable, ILogger
 {
     private readonly Lock updateLock = new();

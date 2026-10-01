@@ -86,13 +86,23 @@ public class PrometheusAspNetCoreOptions
     }
 
     /// <summary>
-    /// Gets or sets the strategy used to translate OpenTelemetry metric and label names into
-    /// Prometheus names. Default value: <see cref="PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes"/>.
+    /// Gets or sets the maximum time in milliseconds a scrape request will wait for its
+    /// response. Default value: 60000 (60 seconds).
     /// </summary>
-    public PrometheusTranslationStrategy TranslationStrategy
+    public int ScrapeResponseTimeoutMilliseconds
     {
-        get => this.ExporterOptions.TranslationStrategy;
-        set => this.ExporterOptions.TranslationStrategy = value;
+        get => this.ExporterOptions.ScrapeResponseTimeoutMilliseconds;
+        set => this.ExporterOptions.ScrapeResponseTimeoutMilliseconds = value;
+    }
+
+    /// <summary>
+    /// Gets or sets the strategy used to translate OpenTelemetry metric and label names into
+    /// Prometheus names. Default value: <see cref="PrometheusAspNetCoreTranslationStrategy.UnderscoreEscapingWithSuffixes"/>.
+    /// </summary>
+    public PrometheusAspNetCoreTranslationStrategy TranslationStrategy
+    {
+        get => (PrometheusAspNetCoreTranslationStrategy)this.ExporterOptions.TranslationStrategy;
+        set => this.ExporterOptions.TranslationStrategy = (PrometheusTranslationStrategy)value;
     }
 
     internal PrometheusExporterOptions ExporterOptions { get; } = new();

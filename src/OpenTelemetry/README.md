@@ -124,6 +124,9 @@ Self-diagnostics captures the internal logs of all OpenTelemetry components
 (every `EventSource` whose name starts with "OpenTelemetry-") and writes them to
 a rolling log file, to the console, or to both. It is disabled by default.
 
+> [!NOTE]
+> Self-diagnostics are not supported on browser-based platforms (e.g. Blazor WebAssembly).
+
 The quickest way to enable it is with environment variables:
 
 ```shell

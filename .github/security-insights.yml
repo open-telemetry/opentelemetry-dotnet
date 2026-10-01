@@ -1,6 +1,6 @@
 header:
-  last-reviewed: '2026-06-18'
-  last-updated: '2026-06-18'
+  last-reviewed: '2026-09-24'
+  last-updated: '2026-09-24'
   schema-version: 2.0.0
   url: https://raw.githubusercontent.com/open-telemetry/opentelemetry-dotnet/main/.github/security-insights.yml
   comment: |
@@ -70,9 +70,9 @@ repository:
       affiliation: Grafana Labs
       social: https://github.com/martincostello
       primary: false
-    - name: Mikel Blanchard
-      affiliation: Microsoft
-      social: https://github.com/CodeBlanch
+    - name: Matthew Hensley
+      affiliation: Grafana Labs
+      social: https://github.com/matt-hensley
       primary: false
     - name: "Piotr Kie\u0142kowicz"
       affiliation: Splunk
@@ -81,6 +81,10 @@ repository:
     - name: Rajkumar Rangaraj
       affiliation: Microsoft
       social: https://github.com/rajkumar-rangaraj
+      primary: false
+    - name: Steve Gordon
+      affiliation: Elastic
+      social: https://github.com/stevejgordon
       primary: false
   documentation:
     contributing-guide: https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/CONTRIBUTING.md

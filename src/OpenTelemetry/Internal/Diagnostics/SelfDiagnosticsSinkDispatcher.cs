@@ -32,6 +32,9 @@ namespace OpenTelemetry.Internal;
 /// Sinks with a <see langword="null"/> formatter receive the raw entry only.
 /// </para>
 /// </remarks>
+#if NET
+[System.Runtime.Versioning.UnsupportedOSPlatform("browser")]
+#endif
 internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
 {
     internal const int DefaultMaxQueuedEntries = 2048;

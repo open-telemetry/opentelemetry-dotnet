@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Runtime.ExceptionServices;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Resources;
 
@@ -14,6 +15,7 @@ internal sealed class LoggerProviderBuilderSdk : LoggerProviderBuilder, ILoggerP
     private const string DefaultInstrumentationVersion = "1.0.0.0";
 
     private readonly IServiceProvider serviceProvider;
+    private ExceptionDispatchInfo? providerBuildException;
     private LoggerProviderSdk? loggerProvider;
 
     public LoggerProviderBuilderSdk(IServiceProvider serviceProvider)
@@ -31,12 +33,40 @@ internal sealed class LoggerProviderBuilderSdk : LoggerProviderBuilder, ILoggerP
 
     public void RegisterProvider(LoggerProviderSdk loggerProvider)
     {
+        this.providerBuildException?.Throw();
+
         if (this.loggerProvider != null)
         {
             throw new NotSupportedException("LoggerProvider cannot be accessed while build is executing.");
         }
 
         this.loggerProvider = loggerProvider;
+    }
+
+    public void HandleProviderBuildFailure(LoggerProviderSdk loggerProvider, Exception exception)
+    {
+        if (ReferenceEquals(this.loggerProvider, loggerProvider))
+        {
+            this.loggerProvider = null;
+
+            // Processors and instrumentations are disposed when provider
+            // construction fails. If any were added, retrying would either
+            // reuse disposed instances or lose configuration that was
+            // transferred destructively from OpenTelemetryLoggerOptions.
+            if (this.Processors.Count != 0
+                || this.Instrumentation.Count != 0
+                || this.ResourceBuilder != null)
+            {
+                this.providerBuildException = ExceptionDispatchInfo.Capture(exception);
+            }
+        }
+    }
+
+    public void ResetBuildState()
+    {
+        this.Processors.Clear();
+        this.Instrumentation.Clear();
+        this.ResourceBuilder = null;
     }
 
     public override LoggerProviderBuilder AddInstrumentation<TInstrumentation>(Func<TInstrumentation> instrumentationFactory)

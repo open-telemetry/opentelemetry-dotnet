@@ -179,7 +179,7 @@ public class SelfDiagnosticsLoggerTests
             1,
             (_, _, _) => applied.Set());
         using var listener = new SelfDiagnosticsLoggingEventListener(logger, LogLevel.Warning);
-        Assert.True(applied.Wait(TimeSpan.FromSeconds(5)), "Configuration was not applied by the pump within the timeout");
+        Assert.True(applied.Wait(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken), "Configuration was not applied by the pump within the timeout");
         using var eventSource = new TestEventSource();
         eventSource.DiagnosticEvent("event payload");
 

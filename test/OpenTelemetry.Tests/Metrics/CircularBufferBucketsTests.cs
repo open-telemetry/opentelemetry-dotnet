@@ -48,6 +48,26 @@ public class CircularBufferBucketsTests
     }
 
     [Fact]
+    public void ResetClearsStateBeforePostResetInsertion()
+    {
+        var buckets = new CircularBufferBuckets(5);
+
+        buckets.TryIncrement(10);
+        buckets.TryIncrement(11);
+
+        buckets.Reset();
+
+        Assert.Equal(0, buckets.Offset);
+        Assert.Equal(0, buckets.Size);
+
+        var result = buckets.TryIncrement(20);
+
+        Assert.Equal(
+            (Result: 0, Offset: 20, Size: 1, Count: 1L),
+            (Result: result, Offset: buckets.Offset, Size: buckets.Size, Count: buckets[20]));
+    }
+
+    [Fact]
     public void PositiveInsertions()
     {
         var buckets = new CircularBufferBuckets(5);

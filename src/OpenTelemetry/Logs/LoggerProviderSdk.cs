@@ -19,6 +19,7 @@ internal sealed class LoggerProviderSdk : LoggerProvider
     internal IDisposable? OwnedServiceProvider;
     internal bool Disposed;
     internal int ShutdownCount;
+    private int isBuilt;
     private ILogRecordPool? threadStaticPool = LogRecordThreadStaticPool.Instance;
 
     private IDisposable? selfDiagnosticsRegistration;
@@ -81,10 +82,13 @@ internal sealed class LoggerProviderSdk : LoggerProvider
             }
 
             OpenTelemetrySdkEventSource.Log.LoggerProviderSdkEvent("LoggerProviderSdk built successfully.");
+            Volatile.Write(ref this.isBuilt, 1);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            state.HandleProviderBuildFailure(this, ex);
             this.DisposeBuiltState(state);
+            state.ResetBuildState();
             throw;
         }
     }
@@ -96,6 +100,8 @@ internal sealed class LoggerProviderSdk : LoggerProvider
     public BaseProcessor<LogRecord>? Processor { get; private set; }
 
     public ILogRecordPool LogRecordPool => this.threadStaticPool ?? LogRecordSharedPool.Current;
+
+    internal bool IsBuilt => Volatile.Read(ref this.isBuilt) != 0;
 
     public static bool ContainsBatchProcessor(BaseProcessor<LogRecord> processor)
     {

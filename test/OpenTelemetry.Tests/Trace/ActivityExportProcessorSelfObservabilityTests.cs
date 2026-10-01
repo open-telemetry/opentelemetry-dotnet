@@ -54,7 +54,7 @@ public class ActivityExportProcessorSelfObservabilityTests
         var flushTask = Task.Run(() => processor.ForceFlush());
         try
         {
-            Assert.True(exportStarted.Wait(TimeSpan.FromSeconds(5)));
+            Assert.True(exportStarted.Wait(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken));
             meterProvider.ForceFlush();
 
             var points = GetMetricPoints(exportedMetrics);
@@ -107,7 +107,7 @@ public class ActivityExportProcessorSelfObservabilityTests
 
         // First span triggers the worker; wait for it to block in Export.
         StartAndStopActivities(source, 1);
-        Assert.True(exportStarted.Wait(TimeSpan.FromSeconds(5)));
+        Assert.True(exportStarted.Wait(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken));
 
         // Now the queue is being drained but the worker is blocked.
         // Subsequent spans will overflow the queue (size=1).
@@ -236,11 +236,11 @@ public class ActivityExportProcessorSelfObservabilityTests
         var simplePoints = points.Where(p => HasTagValue(p, "otel.component.type", "simple_span_processor")).ToList();
 
         Assert.Equal(2, batchPoints.Count);
-        Assert.Single(simplePoints);
+        var point = Assert.Single(simplePoints);
 
         // Each batch processor received the same 2 spans (composite processor fans out).
         Assert.All(batchPoints, p => Assert.Equal(2, p.GetSumLong()));
-        Assert.Equal(2, simplePoints[0].GetSumLong());
+        Assert.Equal(2, point.GetSumLong());
 
         // Verify component names are distinct across batch processors.
         var batchNames = batchPoints

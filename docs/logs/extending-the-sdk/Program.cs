@@ -16,6 +16,7 @@ internal sealed class Program
                 options.IncludeScopes = true;
                 options.AddProcessor(new MyProcessor("ProcessorA"))
                        .AddProcessor(new MyProcessor("ProcessorB"))
+                       .AddProcessor(new MyFilteringProcessor(new MyExporter("ExporterY"), logRecord => logRecord.Body?.Contains("broken", StringComparison.Ordinal) != true))
                        .AddProcessor(new SimpleLogRecordExportProcessor(new MyExporter("ExporterX")))
                        .AddMyExporter();
             }));

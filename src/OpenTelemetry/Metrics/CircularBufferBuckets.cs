@@ -66,9 +66,9 @@ internal sealed class CircularBufferBuckets
     {
         var capacity = this.Capacity;
 
-        if (this.trait == null)
+        if (this.trait == null || this.end < this.Offset)
         {
-            this.trait = new long[capacity];
+            this.trait ??= new long[capacity];
 
             this.Offset = index;
             this.end = index;
@@ -273,6 +273,9 @@ internal sealed class CircularBufferBuckets
             Array.Clear(this.trait, 0, this.trait.Length);
 #endif
         }
+
+        this.Offset = 0;
+        this.end = -1;
     }
 
     internal void Copy(long[] dst)

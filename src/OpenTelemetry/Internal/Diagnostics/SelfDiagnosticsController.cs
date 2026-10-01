@@ -27,6 +27,9 @@ namespace OpenTelemetry.Internal;
 /// sink set and disables event delivery rather than tearing the stack down.
 /// </para>
 /// </remarks>
+#if NET
+[System.Runtime.Versioning.UnsupportedOSPlatform("browser")]
+#endif
 internal sealed class SelfDiagnosticsController : IDisposable
 {
     private readonly Lock stateLock = new();
