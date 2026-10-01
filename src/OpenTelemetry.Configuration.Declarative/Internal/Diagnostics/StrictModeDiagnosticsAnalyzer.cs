@@ -140,7 +140,7 @@ internal static class StrictModeDiagnosticsAnalyzer
                 }
 
                 if (index < declarativeIndex
-                    && IsBlockedByDeclarativeRoute(entry, declarativeEntry, key))
+                    && IsKeyOverriddenByDeclarativeRoute(entry, declarativeEntry, key))
                 {
                     continue;
                 }
@@ -207,7 +207,7 @@ internal static class StrictModeDiagnosticsAnalyzer
     /// <param name="declarative">The declarative provider.</param>
     /// <param name="key">The configuration key.</param>
     /// <returns><see langword="true"/> if the declarative route supplies the key.</returns>
-    private static bool IsBlockedByDeclarativeRoute(
+    private static bool IsKeyOverriddenByDeclarativeRoute(
         ProviderEntry candidate,
         ProviderEntry declarative,
         string key)
