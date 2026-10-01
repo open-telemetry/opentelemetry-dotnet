@@ -24,7 +24,7 @@
 </details>
 
 > [!NOTE]
-> As at 1.17.0, the self-diagnostics features described on this page are
+> As at 1.19.1, the self-diagnostics features described on this page are
 > not yet released. See [Legacy self-diagnostics
 > mechanism](#legacy-self-diagnostics-mechanism) for the mechanism available in
 > current stable releases.
