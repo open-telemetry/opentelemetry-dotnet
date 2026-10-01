@@ -14,6 +14,8 @@ internal sealed class OpenTelemetryDeclarativeConfigurationEventSource : EventSo
 {
     public static readonly OpenTelemetryDeclarativeConfigurationEventSource Log = new();
 
+    private const string StrictModeDocumentation = "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/src/OpenTelemetry.Configuration.Declarative/README.md#strict-mode";
+
     [Event(1, Message = "Declarative config file_format warning: {0}", Level = EventLevel.Warning)]
     public void FileFormatWarning(string message) => this.WriteEvent(1, message);
 
@@ -137,25 +139,25 @@ internal sealed class OpenTelemetryDeclarativeConfigurationEventSource : EventSo
 
     [Event(
         36,
-        Message = "Declarative config: declarative configuration from '{0}' is in use, so these OpenTelemetry settings from environment variables or earlier configuration sources are ignored: {1}. To keep an environment value, reference its variable from the configuration file using environment variable substitution. Move values from other configuration sources into the file.",
+        Message = "Declarative config: strict mode is ignoring these OpenTelemetry settings because '{0}' is in use: {1}. See " + StrictModeDocumentation,
         Level = EventLevel.Warning)]
     public void StrictModeSettingsIgnored(string filePath, string keys) => this.WriteEvent(36, filePath, keys);
 
     [Event(
         37,
-        Message = "Declarative config: configuration provider '{1}' is not masked by the declarative configuration from '{0}', because it is registered after it or outside the configuration it was added to. Its values for {2} can override the document. Register declarative configuration after all other configuration sources.",
+        Message = "Declarative config: configuration provider '{1}' is not masked by '{0}' and can override the document for {2}. See " + StrictModeDocumentation,
         Level = EventLevel.Warning)]
     public void LaterSourceOverridesStrictMode(string filePath, string providerType, string keys) => this.WriteEvent(37, filePath, providerType, keys);
 
     [Event(
         38,
-        Message = "Declarative config: an environment variables configuration provider is not masked by the declarative configuration from '{0}', because it is registered after it or outside the configuration it was added to. Its values for {1} can override the document, which the OpenTelemetry specification does not permit when a configuration file is used. Register declarative configuration after all other configuration sources.",
+        Message = "Declarative config: an environment variables configuration provider is not masked by '{0}' and can override the document for {1}. See " + StrictModeDocumentation,
         Level = EventLevel.Warning)]
     public void LaterEnvironmentVariablesOverrideStrictMode(string filePath, string keys) => this.WriteEvent(38, filePath, keys);
 
     [Event(
         39,
-        Message = "Declarative config: declarative configuration uses '{0}' as passed to UseDeclarativeConfiguration. OTEL_CONFIG_FILE is set to '{1}' and is ignored.",
+        Message = "Declarative config: using '{0}' as passed to UseDeclarativeConfiguration; OTEL_CONFIG_FILE '{1}' is ignored.",
         Level = EventLevel.Warning)]
     public void ExplicitFilePathOverridesConfigFile(string filePath, string configFileValue) => this.WriteEvent(39, filePath, configFileValue);
 
@@ -164,7 +166,7 @@ internal sealed class OpenTelemetryDeclarativeConfigurationEventSource : EventSo
 
     [Event(
         41,
-        Message = "Declarative config: the source for '{0}' is not reachable from the application's IConfiguration. Strict mode cannot mask OTEL_* settings, so flat configuration may be combined with the declarative document. Register declarative configuration after IConfiguration and its sources are finalized.",
+        Message = "Declarative config: the source for '{0}' is not reachable from the application's IConfiguration, so strict mode cannot mask OTEL_* settings. See " + StrictModeDocumentation,
         Level = EventLevel.Warning)]
     public void StrictModeConfigurationSourceUnreachable(string filePath) => this.WriteEvent(41, filePath);
 }

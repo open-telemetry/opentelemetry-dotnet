@@ -1,9 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-#if !NET
 using System.Runtime.InteropServices;
-#endif
 
 namespace OpenTelemetry.Configuration.Declarative;
 
@@ -40,9 +38,5 @@ internal static class OtelEnvironmentVariables
     internal const string DotNetPrefix = "OTEL_DOTNET_";
 
     internal static StringComparer NameComparer { get; } =
-#if NET
-        OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
-#else
         RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
-#endif
 }

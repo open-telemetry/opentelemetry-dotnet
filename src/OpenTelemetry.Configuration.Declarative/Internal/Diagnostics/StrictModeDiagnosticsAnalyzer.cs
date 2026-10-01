@@ -35,7 +35,7 @@ internal static class StrictModeDiagnosticsAnalyzer
         {
             return Analysis.Unavailable(
                 Failure.ConfigurationIsNotRoot,
-                "the application's IConfiguration is not an IConfigurationRoot");
+                $"the application's {nameof(IConfiguration)} is not an {nameof(IConfigurationRoot)}");
         }
 
         var entries = new List<ProviderEntry>();
@@ -46,7 +46,7 @@ internal static class StrictModeDiagnosticsAnalyzer
         {
             return Analysis.Unavailable(
                 Failure.DeclarativeProviderNotFound,
-                "no declarative configuration provider is reachable from the application's IConfiguration");
+                $"no declarative configuration provider is reachable from the application's {nameof(IConfiguration)}");
         }
 
         var declarativeEntry = entries[declarativeIndex];
@@ -140,7 +140,7 @@ internal static class StrictModeDiagnosticsAnalyzer
                 }
 
                 if (index < declarativeIndex
-                    && IsBlockedByDeclarativeBranch(entry, declarativeEntry, key))
+                    && IsBlockedByDeclarativeRoute(entry, declarativeEntry, key))
                 {
                     continue;
                 }
@@ -157,26 +157,25 @@ internal static class StrictModeDiagnosticsAnalyzer
         return providers;
     }
 
+    /// <summary>
+    /// Determines whether an environment variables provider's value for a key is the value the
+    /// document imports. Substitution of <c>${KEY}</c> reads the unprefixed process variable, so a
+    /// provider value is only imported when it matches the value the document resolved for that
+    /// variable. A prefixed provider that exposes <c>APP_KEY</c> as <c>KEY</c> therefore does not
+    /// count unless both hold the same value, in which case nothing is masked.
+    /// </summary>
+    /// <param name="provider">The provider to inspect.</param>
+    /// <param name="key">The configuration key.</param>
+    /// <param name="document">The declarative configuration document.</param>
+    /// <returns><see langword="true"/> if the document imports the provider's value.</returns>
     private static bool IsImportedEnvironmentVariable(
         IConfigurationProvider provider,
         string key,
-        DeclarativeConfigurationDocument document)
-    {
-        if (provider is not EnvironmentVariablesConfigurationProvider
-            || !document.ReferencesEnvironmentVariable(key)
-            || !provider.TryGet(key, out _))
-        {
-            return false;
-        }
-
-        // A prefixed environment provider can expose APP_OTEL_SERVICE_NAME as OTEL_SERVICE_NAME,
-        // but substitution of ${OTEL_SERVICE_NAME} reads the unprefixed process variable. The
-        // provider does not expose its prefix as an API; its documented string representation is
-        // the only non-reflection metadata that distinguishes a prefixed provider.
-        var providerDescription = provider.ToString();
-        return providerDescription == null
-            || providerDescription.IndexOf(" Prefix: '", StringComparison.Ordinal) < 0;
-    }
+        DeclarativeConfigurationDocument document) =>
+            provider is EnvironmentVariablesConfigurationProvider
+            && document.TryGetReferencedEnvironmentVariable(key, out var importedValue)
+            && provider.TryGet(key, out var providerValue)
+            && string.Equals(providerValue, importedValue, StringComparison.Ordinal);
 
     // Returns the first-segment keys in scope for strict mode that the provider sets.
     private static IEnumerable<string> GetInScopeKeys(
@@ -198,29 +197,40 @@ internal static class StrictModeDiagnosticsAnalyzer
         }
     }
 
-    private static bool IsBlockedByDeclarativeBranch(
+    /// <summary>
+    /// Determines whether an earlier provider is overridden by the declarative route for a key. That
+    /// happens when the route supplies the key at the first root both routes share (a chain reports a
+    /// missing key as not found, so the earlier provider would otherwise win in the enclosing root).
+    /// Such a root always exists because the candidate is never the declarative provider.
+    /// </summary>
+    /// <param name="candidate">The earlier provider.</param>
+    /// <param name="declarative">The declarative provider.</param>
+    /// <param name="key">The configuration key.</param>
+    /// <returns><see langword="true"/> if the declarative route supplies the key.</returns>
+    private static bool IsBlockedByDeclarativeRoute(
         ProviderEntry candidate,
         ProviderEntry declarative,
         string key)
     {
-        // An earlier provider is overridden by the declarative branch if that branch supplies the key at
-        // the first root both routes share (a chain reports a missing key as not found, so the earlier
-        // provider would otherwise win in the enclosing root). Such a root always exists because the
-        // candidate is never the declarative provider.
-        var declarativeBranch = declarative.SelfAndAncestors().FirstOrDefault(
+        var declarativeRoute = declarative.SelfAndAncestors().FirstOrDefault(
             route => candidate.SelfAndAncestors().Any(route.HasSameOwnerOccurrence));
 
-        return declarativeBranch != null && declarativeBranch.Provider.TryGet(key, out _);
+        return declarativeRoute != null && declarativeRoute.Provider.TryGet(key, out _);
     }
 
+    /// <summary>
+    /// Appends every leaf provider reachable from <paramref name="root"/> in ascending order of
+    /// precedence. Chain providers are retained as parent nodes so analysis can honor their
+    /// null-as-not-found boundary.
+    /// </summary>
+    /// <param name="root">The configuration root to flatten.</param>
+    /// <param name="entries">The list that receives the leaf providers.</param>
+    /// <param name="parent">The chain entry that contains <paramref name="root"/>, if any.</param>
     private static void Flatten(
         IConfigurationRoot root,
         List<ProviderEntry> entries,
         ProviderEntry? parent = null)
     {
-        // Appends every leaf provider reachable from root in ascending order of precedence. Chain
-        // providers are retained as parent nodes so analysis can honor their null-as-not-found boundary.
-
         foreach (var provider in root.Providers)
         {
             var entry = new ProviderEntry(provider, root, parent);
@@ -304,8 +314,12 @@ internal static class StrictModeDiagnosticsAnalyzer
             }
         }
 
-        // True when this provider is reached through the same occurrence of the root that owns
-        // target, directly or through chained roots.
+        /// <summary>
+        /// Gets a value indicating whether this provider is reached through the same occurrence of the
+        /// root that owns <paramref name="target"/>, directly or through chained roots.
+        /// </summary>
+        /// <param name="target">The provider whose owner occurrence is compared.</param>
+        /// <returns><see langword="true"/> if this provider is within the target's owner occurrence.</returns>
         public bool IsWithinSameOwnerOccurrence(ProviderEntry target) =>
             this.SelfAndAncestors().Any(target.HasSameOwnerOccurrence);
 
@@ -313,14 +327,27 @@ internal static class StrictModeDiagnosticsAnalyzer
             ReferenceEquals(this.Owner, other.Owner)
             && ReferenceEquals(this.Parent, other.Parent);
 
-        // True when every chain between this provider and the application root exposes a non-empty
-        // value for key. ChainedConfigurationProvider treats null and empty values as not found.
+        /// <summary>
+        /// Determines whether every chain between this provider and the application root exposes a
+        /// non-empty value for <paramref name="key"/>. <see cref="ChainedConfigurationProvider"/>
+        /// treats null and empty values as not found.
+        /// </summary>
+        /// <param name="key">The configuration key.</param>
+        /// <returns><see langword="true"/> if the key is exposed through all containing chains.</returns>
         public bool IsExposedThroughContainingChains(string key) =>
             this.SelfAndAncestors().Skip(1).All(chain => chain.Provider.TryGet(key, out _));
 
-        // True when this provider is directly in target's owner occurrence, or every intervening
-        // chain exposes a non-empty value for key before reaching it. Callers only pass entries
-        // within target's owner occurrence, so the walk up the chains always ends at it.
+        /// <summary>
+        /// Determines whether this provider is directly in <paramref name="target"/>'s owner
+        /// occurrence, or every intervening chain exposes a non-empty value for
+        /// <paramref name="key"/> before reaching it.
+        /// <para/>
+        /// Callers only pass entries within the target's owner occurrence, so the walk up the chains
+        /// always ends at it.
+        /// </summary>
+        /// <param name="target">The provider whose owner occurrence is the destination.</param>
+        /// <param name="key">The configuration key.</param>
+        /// <returns><see langword="true"/> if the provider's value for the key reaches the target.</returns>
         public bool IsExposedTo(ProviderEntry target, string key) => this.SelfAndAncestors()
             .TakeWhile(entry => !entry.HasSameOwnerOccurrence(target))
             .All(entry => entry.Parent?.Provider.TryGet(key, out _) == true);

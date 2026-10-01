@@ -10,19 +10,19 @@ namespace OpenTelemetry.Configuration.Declarative;
 /// </summary>
 public sealed class DeclarativeConfigurationDocument
 {
-    private readonly HashSet<string> referencedEnvironmentVariables;
+    private readonly Dictionary<string, string?> referencedEnvironmentVariables;
 
     internal DeclarativeConfigurationDocument(
         DeclarativeConfiguration model,
         ReadOnlyDictionary<string, string?> flatKeys,
         ConfigProperties properties,
-        HashSet<string>? referencedEnvironmentVariables = null)
+        Dictionary<string, string?>? referencedEnvironmentVariables = null)
     {
         this.Model = model;
         this.FlatKeys = flatKeys;
         this.Properties = properties;
         this.referencedEnvironmentVariables = referencedEnvironmentVariables
-            ?? new HashSet<string>(OtelEnvironmentVariables.NameComparer);
+            ?? new Dictionary<string, string?>(OtelEnvironmentVariables.NameComparer);
     }
 
     /// <summary>
@@ -49,5 +49,19 @@ public sealed class DeclarativeConfigurationDocument
     /// <see langword="false"/>.
     /// </returns>
     internal bool ReferencesEnvironmentVariable(string name) =>
-        this.referencedEnvironmentVariables.Contains(name);
+        this.referencedEnvironmentVariables.ContainsKey(name);
+
+    /// <summary>
+    /// Gets the value an environment variable resolved to when the document was read.
+    /// </summary>
+    /// <param name="name">The environment variable name.</param>
+    /// <param name="value">
+    /// The resolved value, or <see langword="null"/> if the variable was not set.
+    /// </param>
+    /// <returns>
+    /// <see langword="true"/> when the document references the variable; otherwise,
+    /// <see langword="false"/>.
+    /// </returns>
+    internal bool TryGetReferencedEnvironmentVariable(string name, out string? value) =>
+        this.referencedEnvironmentVariables.TryGetValue(name, out value);
 }

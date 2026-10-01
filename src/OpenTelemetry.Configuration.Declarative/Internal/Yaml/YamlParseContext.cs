@@ -31,16 +31,18 @@ internal sealed class YamlParseContext
 
         this.resolveVariable = name =>
         {
-            this.ReferencedEnvironmentVariables.Add(name);
-            return resolveVariable(name);
+            var value = resolveVariable(name);
+            this.ReferencedEnvironmentVariables[name] = value;
+            return value;
         };
     }
 
     /// <summary>
-    /// Gets the names of the environment variables that substitution references in scalars
-    /// resolved so far, whether or not each reference has a default.
+    /// Gets the environment variables that substitution references in scalars resolved so far,
+    /// whether or not each reference has a default, mapped to the value each resolved to
+    /// (<see langword="null"/> if it was not set).
     /// </summary>
-    internal HashSet<string> ReferencedEnvironmentVariables { get; } =
+    internal Dictionary<string, string?> ReferencedEnvironmentVariables { get; } =
         new(OtelEnvironmentVariables.NameComparer);
 
     /// <summary>

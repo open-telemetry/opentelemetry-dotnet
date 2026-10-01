@@ -133,8 +133,8 @@ public sealed class StrictModeDiagnosticsTests
     [Fact]
     public void EnvironmentReference_DoesNotExemptPrefixedEnvironmentProvider()
     {
-        using var referencedScope = EnvironmentVariableScope.Create("OTEL_SERVICE_NAME", "same-value");
-        using var prefixedScope = EnvironmentVariableScope.Create("APP_OTEL_SERVICE_NAME", "same-value");
+        using var referencedScope = EnvironmentVariableScope.Create("OTEL_SERVICE_NAME", "referenced-value");
+        using var prefixedScope = EnvironmentVariableScope.Create("APP_OTEL_SERVICE_NAME", "prefixed-value");
         using var yamlFile = DeclarativeYamlTestFile.CreateYamlFile("""
             file_format: "1.0"
             custom_section:
@@ -152,6 +152,90 @@ public sealed class StrictModeDiagnosticsTests
 
         var evt = Assert.Single(listener.Messages, e => e.EventId == SettingsIgnoredEventId);
         Assert.Equal("OTEL_SERVICE_NAME", evt.Payload![1]);
+    }
+
+    [Fact]
+    public void EnvironmentReference_DoesNotExemptPrefixedEnvironmentProvider_UnprefixedVariableUnset()
+    {
+        using var referencedScope = EnvironmentVariableScope.Create("OTEL_SERVICE_NAME", null);
+        using var prefixedScope = EnvironmentVariableScope.Create("APP_OTEL_SERVICE_NAME", "prefixed-value");
+        using var yamlFile = DeclarativeYamlTestFile.CreateYamlFile("""
+            file_format: "1.0"
+            custom_section:
+              service_name: ${OTEL_SERVICE_NAME}
+            """);
+
+        var config = new ConfigurationBuilder()
+            .AddEnvironmentVariables("APP_")
+            .AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path)
+            .Build();
+
+        using var listener = CreateListener(EventLevel.Warning);
+
+        StrictModeDiagnostics.Report(config);
+
+        var evt = Assert.Single(listener.Messages, e => e.EventId == SettingsIgnoredEventId);
+        Assert.Equal("OTEL_SERVICE_NAME", evt.Payload![1]);
+    }
+
+    [Fact]
+    public void EnvironmentReference_ExemptsPrefixedEnvironmentProvider_WhenValueMatchesReferencedVariable()
+    {
+        using var referencedScope = EnvironmentVariableScope.Create("OTEL_SERVICE_NAME", "same-value");
+        using var prefixedScope = EnvironmentVariableScope.Create("APP_OTEL_SERVICE_NAME", "same-value");
+        using var yamlFile = DeclarativeYamlTestFile.CreateYamlFile("""
+            file_format: "1.0"
+            custom_section:
+              service_name: ${OTEL_SERVICE_NAME}
+            """);
+
+        var config = new ConfigurationBuilder()
+            .AddEnvironmentVariables("APP_")
+            .AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path)
+            .Build();
+
+        using var listener = CreateListener(EventLevel.Warning);
+
+        StrictModeDiagnostics.Report(config);
+
+        // Both variables resolve to the same value, so the document already uses it and nothing is masked.
+        Assert.DoesNotContain(listener.CurrentMessages, e => e.EventId == SettingsIgnoredEventId);
+    }
+
+    [Theory]
+    [InlineData("loaded-value", false)]
+    [InlineData("changed-value", true)]
+    public void EnvironmentReference_UsesValueCapturedWhenDocumentWasLoaded(
+        string providerValue,
+        bool expectIgnoredSetting)
+    {
+        using var referencedScope = EnvironmentVariableScope.Create("OTEL_SERVICE_NAME", "loaded-value");
+        using var prefixedScope = EnvironmentVariableScope.Create("APP_OTEL_SERVICE_NAME", providerValue);
+        using var yamlFile = DeclarativeYamlTestFile.CreateYamlFile("""
+            file_format: "1.0"
+            custom_section:
+              service_name: ${OTEL_SERVICE_NAME}
+            """);
+
+        var config = new ConfigurationBuilder()
+            .AddEnvironmentVariables("APP_")
+            .AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path)
+            .Build();
+
+        using var changedScope = EnvironmentVariableScope.Create("OTEL_SERVICE_NAME", "changed-value");
+        using var listener = CreateListener(EventLevel.Warning);
+
+        StrictModeDiagnostics.Report(config);
+
+        if (expectIgnoredSetting)
+        {
+            var evt = Assert.Single(listener.Messages, e => e.EventId == SettingsIgnoredEventId);
+            Assert.Equal("OTEL_SERVICE_NAME", evt.Payload![1]);
+        }
+        else
+        {
+            Assert.DoesNotContain(listener.CurrentMessages, e => e.EventId == SettingsIgnoredEventId);
+        }
     }
 
     [Fact]

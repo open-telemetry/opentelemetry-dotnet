@@ -27,9 +27,9 @@ OTEL_CONFIG_FILE=/path/to/otel-config.yaml
 works; setting it in `appsettings.json` or on the command line does not. To use
 another source, pass the path to `UseDeclarativeConfiguration` instead.
 
-A relative path is resolved against `AppContext.BaseDirectory` (the build
-output directory), not the content root that `appsettings.json` uses. Copy the
-file to the output directory, or use an absolute path:
+A relative path is resolved against `AppContext.BaseDirectory` (the build or
+publish output directory), not the content root that `appsettings.json` uses.
+Copy the file to the output directory, or use an absolute path:
 
 ```xml
 <ItemGroup>
@@ -48,7 +48,7 @@ builder.AddOpenTelemetry()
     .WithTracing(b => b.AddSource("MyApp.*").AddConsoleExporter());
 ```
 
-This form adds the YAML source directly to `builder.Configuration`, so the
+This approach adds the YAML source directly to `builder.Configuration`, so the
 document can be read during registration, and it registers the host's resource
 defaults (such as `service.name` from the application name).
 `builder.Services.AddOpenTelemetry()` also works, but the source is only added
