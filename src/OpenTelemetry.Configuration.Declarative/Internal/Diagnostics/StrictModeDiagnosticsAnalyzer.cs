@@ -203,33 +203,14 @@ internal static class StrictModeDiagnosticsAnalyzer
         ProviderEntry declarative,
         string key)
     {
-        // Returns true when the branch containing the selected declarative provider supplies the key at
-        // the first root where the candidate and declarative provider routes diverge. In that case the
-        // higher-precedence branch prevents an earlier provider in the enclosing root from being used.
+        // An earlier provider is overridden by the declarative branch if that branch supplies the key at
+        // the first root both routes share (a chain reports a missing key as not found, so the earlier
+        // provider would otherwise win in the enclosing root). Such a root always exists because the
+        // candidate is never the declarative provider.
+        var declarativeBranch = declarative.SelfAndAncestors().FirstOrDefault(
+            route => candidate.SelfAndAncestors().Any(route.HasSameOwnerOccurrence));
 
-        for (var declarativeRoute = declarative;
-            declarativeRoute != null;
-            declarativeRoute = declarativeRoute.Parent)
-        {
-            for (var candidateRoute = candidate;
-                candidateRoute != null;
-                candidateRoute = candidateRoute.Parent)
-            {
-                if (!declarativeRoute.HasSameOwnerOccurrence(candidateRoute))
-                {
-                    continue;
-                }
-
-                if (!ReferenceEquals(declarativeRoute, candidateRoute))
-                {
-                    return declarativeRoute.Provider.TryGet(key, out _);
-                }
-
-                break;
-            }
-        }
-
-        return false;
+        return declarativeBranch != null && declarativeBranch.Provider.TryGet(key, out _);
     }
 
     private static void Flatten(
@@ -315,66 +296,33 @@ internal static class StrictModeDiagnosticsAnalyzer
 
         public ProviderEntry? Parent { get; } = parent;
 
-        public bool IsWithinSameOwnerOccurrence(ProviderEntry target)
+        public IEnumerable<ProviderEntry> SelfAndAncestors()
         {
-            // True when this provider is reached through the same occurrence of the root that owns
-            // target, directly or through chained roots.
-
             for (var entry = this; entry != null; entry = entry.Parent)
             {
-                if (entry.HasSameOwnerOccurrence(target))
-                {
-                    return true;
-                }
+                yield return entry;
             }
-
-            return false;
         }
+
+        // True when this provider is reached through the same occurrence of the root that owns
+        // target, directly or through chained roots.
+        public bool IsWithinSameOwnerOccurrence(ProviderEntry target) =>
+            this.SelfAndAncestors().Any(target.HasSameOwnerOccurrence);
 
         public bool HasSameOwnerOccurrence(ProviderEntry other) =>
             ReferenceEquals(this.Owner, other.Owner)
             && ReferenceEquals(this.Parent, other.Parent);
 
-        public bool IsExposedThroughContainingChains(string key)
-        {
-            // True when every chain between this provider and the application root exposes a non-empty
-            // value for key. ChainedConfigurationProvider treats null and empty values as not found.
+        // True when every chain between this provider and the application root exposes a non-empty
+        // value for key. ChainedConfigurationProvider treats null and empty values as not found.
+        public bool IsExposedThroughContainingChains(string key) =>
+            this.SelfAndAncestors().Skip(1).All(chain => chain.Provider.TryGet(key, out _));
 
-            for (var entry = this.Parent; entry != null; entry = entry.Parent)
-            {
-                if (!entry.Provider.TryGet(key, out _))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        public bool IsExposedTo(ProviderEntry target, string key)
-        {
-            // True when this provider is directly in target's owner occurrence, or every intervening
-            // chain exposes a non-empty value for key before reaching it.
-
-            if (this.HasSameOwnerOccurrence(target))
-            {
-                return true;
-            }
-
-            for (var entry = this.Parent; entry != null; entry = entry.Parent)
-            {
-                if (!entry.Provider.TryGet(key, out _))
-                {
-                    return false;
-                }
-
-                if (entry.HasSameOwnerOccurrence(target))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
+        // True when this provider is directly in target's owner occurrence, or every intervening
+        // chain exposes a non-empty value for key before reaching it. Callers only pass entries
+        // within target's owner occurrence, so the walk up the chains always ends at it.
+        public bool IsExposedTo(ProviderEntry target, string key) => this.SelfAndAncestors()
+            .TakeWhile(entry => !entry.HasSameOwnerOccurrence(target))
+            .All(entry => entry.Parent?.Provider.TryGet(key, out _) == true);
     }
 }

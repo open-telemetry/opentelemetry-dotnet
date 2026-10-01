@@ -317,6 +317,30 @@ public sealed class StrictModeDiagnosticsTests
     }
 
     [Fact]
+    public void ChainedConfiguration_EarlierSettingHiddenByChain_IsNotReportedAsIgnored()
+    {
+        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: false);
+
+        var earlier = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["OTEL_SERVICE_NAME"] = "hidden" })
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["OTEL_SERVICE_NAME"] = null })
+            .Build();
+
+        var outer = new ConfigurationBuilder()
+            .AddConfiguration(earlier)
+            .AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path)
+            .Build();
+
+        Assert.Null(outer["OTEL_SERVICE_NAME"]);
+
+        using var listener = CreateListener(EventLevel.Warning);
+
+        StrictModeDiagnostics.Report(outer);
+
+        Assert.DoesNotContain(listener.Messages, e => e.EventId == SettingsIgnoredEventId);
+    }
+
+    [Fact]
     public void ChainedConfiguration_SameProviderBeforeAndAfterDocument_ReportsOverride()
     {
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: false);
