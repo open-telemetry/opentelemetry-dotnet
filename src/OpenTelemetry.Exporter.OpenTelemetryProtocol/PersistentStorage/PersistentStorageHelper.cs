@@ -160,33 +160,37 @@ internal static class PersistentStorageHelper
 
     internal static string CreateSubdirectory(string path)
     {
-#if NET
-        // The retry directory holds serialized telemetry that is later replayed to the collector
-        // with the exporter's own credentials. Restrict it to the current user so other local
-        // users cannot read the stored telemetry or plant blobs that would be sent on the app's
-        // behalf. Only tighten a directory this call actually creates, to avoid changing the
-        // permissions of a directory an operator has deliberately configured and shared. On
-        // Windows the created directory inherits the parent ACL.
-        var created = !Directory.Exists(path);
-        Directory.CreateDirectory(path);
-
-        if (created && !OperatingSystem.IsWindows())
+        try
         {
-            try
+#if NET
+            // The retry directory holds serialized telemetry that is later replayed to the collector
+            // with the exporter's own credentials. Restrict it to the current user so other local
+            // users cannot read the stored telemetry or plant blobs that would be sent on the app's
+            // behalf. The mode is applied atomically when the directory is created, and the
+            // permissions of a directory that already exists (for example one an operator has
+            // deliberately configured and shared) are left unchanged. On Windows the created
+            // directory inherits the parent ACL.
+            if (OperatingSystem.IsWindows())
             {
-                File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+                Directory.CreateDirectory(path);
             }
-            catch (Exception ex)
+            else
             {
-                PersistentStorageEventSource.Log.PersistentStorageException(nameof(PersistentStorageHelper), $"Could not restrict permissions on directory {path}", ex);
+                Directory.CreateDirectory(
+                    path,
+                    UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
             }
+#else
+            Directory.CreateDirectory(path);
+#endif
+        }
+        catch (Exception ex)
+        {
+            PersistentStorageEventSource.Log.PersistentStorageException(nameof(PersistentStorageHelper), $"Could not create directory {path}", ex);
+            throw;
         }
 
         return path;
-#else
-        Directory.CreateDirectory(path);
-        return path;
-#endif
     }
 
     internal static DateTime GetDateTimeFromBlobName(string filePath)

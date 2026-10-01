@@ -23,8 +23,9 @@ Notes](../../RELEASENOTES.md).
   ([#7858](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7858))
 
 * Hardened the experimental disk retry feature.
-  * The retry directory and the blob files within it are now created
-    accessible to the current user only on non-Windows platforms.
+  * When running on .NET on non-Windows platforms, the retry directory and
+    the blob files within it are now created accessible to the current user
+    only, including when the directory is recreated after being deleted.
   * Directory size accounting no longer follows subdirectories, avoiding
     a symbolic-link/junction walk.
   * Expired lease-file cleanup now correctly locates the lease timestamp
