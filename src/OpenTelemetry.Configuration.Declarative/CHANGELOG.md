@@ -48,4 +48,4 @@ Notes](../../RELEASENOTES.md).
 * Added strict mode warnings that name ignored `OTEL_*` settings, configuration
   sources that override the file, and an explicit path that differs from
   `OTEL_CONFIG_FILE`.
-  ([#NNNN](https://github.com/open-telemetry/opentelemetry-dotnet/pull/NNNN))
+  ([#7873](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7873))
