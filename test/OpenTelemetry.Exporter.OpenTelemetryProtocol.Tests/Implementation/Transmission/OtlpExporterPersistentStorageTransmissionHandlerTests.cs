@@ -8,6 +8,7 @@ using System.Net.Http;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.PersistentStorage.Abstractions;
 using OpenTelemetry.PersistentStorage.FileSystem;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission.Tests;
 
@@ -111,34 +112,26 @@ public class OtlpExporterPersistentStorageTransmissionHandlerTests
     [Fact]
     public void RetryStoredRequests_TransmitsStoredBlobVerbatim()
     {
-        var directory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-        Directory.CreateDirectory(directory);
+        using var temp = new TemporaryDirectory();
 
-        try
+        var content = new byte[] { 0x0A, 0x01, 0x02, 0x03, 0xFF };
+
+        // The suffix after the timestamp must not contain '-': the name is parsed by splitting
+        // on the last '-', exactly as the exporter's own "{timestamp}-{guid:N}.blob" names are.
+        var blobName = $"{DateTime.UtcNow.AddMinutes(-1):yyyy-MM-ddTHHmmss.fffffffZ}-storedblob.blob";
+        File.WriteAllBytes(Path.Combine(temp.Path, blobName), content);
+
+        var exportClient = new RecordingExportClient();
+
+        using (var blobProvider = new FileBlobProvider(temp.Path))
+        using (var handler = new OtlpExporterPersistentStorageTransmissionHandler(blobProvider, exportClient, timeoutMilliseconds: 10_000))
         {
-            var content = new byte[] { 0x0A, 0x01, 0x02, 0x03, 0xFF };
-
-            // The suffix after the timestamp must not contain '-': the name is parsed by splitting
-            // on the last '-', exactly as the exporter's own "{timestamp}-{guid:N}.blob" names are.
-            var blobName = $"{DateTime.UtcNow.AddMinutes(-1):yyyy-MM-ddTHHmmss.fffffffZ}-storedblob.blob";
-            File.WriteAllBytes(Path.Combine(directory, blobName), content);
-
-            var exportClient = new RecordingExportClient();
-
-            using (var blobProvider = new FileBlobProvider(directory))
-            using (var handler = new OtlpExporterPersistentStorageTransmissionHandler(blobProvider, exportClient, timeoutMilliseconds: 10_000))
-            {
-                Assert.True(handler.InitiateAndWaitForRetryProcess(30_000));
-            }
-
-            Assert.NotNull(exportClient.LastRequest);
-            Assert.True(content.AsSpan().SequenceEqual(exportClient.LastRequest), "The stored bytes were not sent unchanged.");
-            Assert.Empty(Directory.EnumerateFiles(directory));
+            Assert.True(handler.InitiateAndWaitForRetryProcess(30_000));
         }
-        finally
-        {
-            Directory.Delete(directory, recursive: true);
-        }
+
+        Assert.NotNull(exportClient.LastRequest);
+        Assert.True(content.AsSpan().SequenceEqual(exportClient.LastRequest), "The stored bytes were not sent unchanged.");
+        Assert.Empty(Directory.EnumerateFiles(temp.Path));
     }
 
     private sealed class RecordingExportClient : IExportClient

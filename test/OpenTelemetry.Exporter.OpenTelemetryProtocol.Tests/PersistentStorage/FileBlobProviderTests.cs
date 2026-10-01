@@ -41,7 +41,7 @@ public class FileBlobProviderTests
         Assert.True(provider.TryCreateBlob(new byte[4].AsSpan(), out var blob));
         Assert.NotNull(blob);
         Assert.Single(Directory.EnumerateFiles(temp.Path, "*.blob"));
-        Assert.True(blob!.TryDelete());
+        Assert.True(blob.TryDelete());
     }
 
     [Fact]
