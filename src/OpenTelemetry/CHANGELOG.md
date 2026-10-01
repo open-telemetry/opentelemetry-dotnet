@@ -28,6 +28,11 @@ Notes](../../RELEASENOTES.md).
   `IConfiguration` does not contain those settings.
   ([#7855](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7855))
 
+* Added improved self-diagnostics logging to improve the support experience.
+  The new `SelfDiagnosticsOptions` class configures a rolling file sink and a
+  console sink through the standard options pipeline. Sinks are off by default.
+  ([#7588](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7588))
+
 ## 1.19.1
 
 Released 2026-Sep-21
