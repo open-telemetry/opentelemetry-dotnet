@@ -402,6 +402,9 @@ internal sealed class SelfDiagnosticsSinkDispatcher : IDisposable
                         case WorkItemKind.Shutdown:
                             shutdown = true;
                             break;
+
+                        default:
+                            break;
                     }
 
                     if (shutdown)
