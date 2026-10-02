@@ -366,4 +366,51 @@ public class MetricOverflowAttributeTests
             Assert.Equal(12 + CardinalityLimit + 3, overflowMetricPoint.GetSumLong());
         }
     }
+
+    [Theory]
+    [InlineData(MetricReaderTemporalityPreference.Delta)]
+    [InlineData(MetricReaderTemporalityPreference.Cumulative)]
+    public void NonFiniteHistogramMeasurementsDoNotConsumeCardinality(MetricReaderTemporalityPreference temporalityPreference)
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var histogram = meter.CreateHistogram<double>("TestHistogram");
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView(histogram.Name, new ExplicitBucketHistogramConfiguration { CardinalityLimit = 3 })
+            .AddInMemoryExporter(exportedItems, metricReaderOptions => metricReaderOptions.TemporalityPreference = temporalityPreference)
+            .Build();
+
+        histogram.Record(double.NaN, new KeyValuePair<string, object?>("Key", 1));
+        histogram.Record(double.PositiveInfinity, new KeyValuePair<string, object?>("Key", 2));
+        histogram.Record(double.NegativeInfinity, new KeyValuePair<string, object?>("Key", 3));
+
+        histogram.Record(42, new KeyValuePair<string, object?>("Key", 4));
+        histogram.Record(42, new KeyValuePair<string, object?>("Key", 5));
+        histogram.Record(42, new KeyValuePair<string, object?>("Key", 6));
+
+        meterProvider.ForceFlush();
+
+        Assert.Single(exportedItems);
+        var metric = exportedItems[0];
+
+        var metricPoints = new List<MetricPoint>();
+        foreach (ref readonly var mp in metric.GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        // The non-finite measurements never occupied a MetricPoint, so no overflow occurred.
+        Assert.DoesNotContain(metricPoints, mp => mp.Tags.Count != 0 && mp.Tags.KeyAndValues[0].Key == "otel.metric.overflow");
+
+        var taggedMetricPoints = metricPoints.Where(mp => mp.Tags.Count != 0).ToList();
+        Assert.Equal(3, taggedMetricPoints.Count);
+        foreach (var mp in taggedMetricPoints)
+        {
+            Assert.Equal(1, mp.GetHistogramCount());
+            Assert.Equal(42, mp.GetHistogramSum());
+        }
+    }
 }

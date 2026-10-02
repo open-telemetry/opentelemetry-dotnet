@@ -947,6 +947,13 @@ public struct MetricPoint
 
     private void UpdateHistogram(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool offerExemplar = false)
     {
+        if (double.IsNaN(number) || double.IsInfinity(number))
+        {
+            // Non-finite values would poison RunningSum for the lifetime of a cumulative stream.
+            this.CompleteUpdateWithoutMeasurement();
+            return;
+        }
+
         var histogramBuckets = this.mpComponents!.HistogramBuckets!;
 
         this.mpComponents.AcquireLock();
@@ -966,6 +973,14 @@ public struct MetricPoint
 
     private void UpdateHistogramWithMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool offerExemplar = false)
     {
+        if (double.IsNaN(number) || double.IsInfinity(number))
+        {
+            // Non-finite values would poison RunningSum/RunningMin/RunningMax for the lifetime of
+            // a cumulative stream.
+            this.CompleteUpdateWithoutMeasurement();
+            return;
+        }
+
         var histogramBuckets = this.mpComponents!.HistogramBuckets!;
 
         this.mpComponents.AcquireLock();
@@ -988,6 +1003,13 @@ public struct MetricPoint
 
     private void UpdateHistogramWithBuckets(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool offerExemplar = false)
     {
+        if (double.IsNaN(number) || double.IsInfinity(number))
+        {
+            // Non-finite values would poison RunningSum for the lifetime of a cumulative stream.
+            this.CompleteUpdateWithoutMeasurement();
+            return;
+        }
+
         var histogramBuckets = this.mpComponents!.HistogramBuckets!;
 
         var bucketIndex = histogramBuckets.FindBucketIndex(number);
@@ -1010,6 +1032,14 @@ public struct MetricPoint
 
     private void UpdateHistogramWithBucketsAndMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool offerExemplar = false)
     {
+        if (double.IsNaN(number) || double.IsInfinity(number))
+        {
+            // Non-finite values would poison RunningSum/RunningMin/RunningMax for the lifetime of
+            // a cumulative stream.
+            this.CompleteUpdateWithoutMeasurement();
+            return;
+        }
+
         var histogramBuckets = this.mpComponents!.HistogramBuckets!;
 
         var bucketIndex = histogramBuckets.FindBucketIndex(number);
@@ -1035,8 +1065,10 @@ public struct MetricPoint
 
     private void UpdateBase2ExponentialHistogram(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool offerExemplar = false)
     {
-        if (number < 0)
+        if (number < 0 || double.IsNaN(number) || double.IsInfinity(number))
         {
+            // Negatives are undefined for exponential histograms; non-finite values would also
+            // poison RunningSum/RunningMin/RunningMax for the lifetime of a cumulative stream.
             this.CompleteUpdateWithoutMeasurement();
             return;
         }
@@ -1061,8 +1093,10 @@ public struct MetricPoint
 
     private void UpdateBase2ExponentialHistogramWithMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool offerExemplar = false)
     {
-        if (number < 0)
+        if (number < 0 || double.IsNaN(number) || double.IsInfinity(number))
         {
+            // Negatives are undefined for exponential histograms; non-finite values would also
+            // poison RunningSum/RunningMin/RunningMax for the lifetime of a cumulative stream.
             this.CompleteUpdateWithoutMeasurement();
             return;
         }
