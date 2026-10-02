@@ -6,6 +6,47 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed `SuppressInstrumentationScope` reference counts leaking between
+  inherited asynchronous execution contexts.
+  ([#7803](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7803))
+
+* Self-diagnostic features are explicitly disabled on browser-based
+  platforms (e.g. Blazor) and are now non-functional. Previously, attempting
+  to enable self-diagnostics on such platforms would result in an exception
+  at runtime.
+  ([#7799](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7799))
+
+* Added `TracerProviderBuilder.ConfigureSampler` which receives the resolved
+  `Sampler` whether set programmatically, via `OTEL_TRACES_SAMPLER`, or by
+  default, and returns a replacement. Intended for library authors who need to
+  influence sampling without overriding a sampler the application has
+  configured.
+  ([#7780](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7780))
+
+* Fixed `ResourceBuilder.CreateDefault` ignoring `OTEL_RESOURCE_ATTRIBUTES`
+  and `OTEL_SERVICE_NAME` environment variables when the host
+  `IConfiguration` does not contain those settings.
+  ([#7855](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7855))
+
+* Added improved self-diagnostics logging to improve the support experience.
+  The new `SelfDiagnosticsOptions` class configures a rolling file sink and a
+  console sink through the standard options pipeline. Sinks are off by default.
+  ([#7588](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7588))
+
+## 1.19.1
+
+Released 2026-Sep-21
+
+## 1.19.1-rc.1
+
+Released 2026-Sep-21
+
+* Fixed `NotSupportedException` thrown when building a `TracerProvider` or
+  `MeterProvider` with a large number of wildcard source/meter patterns on
+  `net8.0`, and a related `OutOfMemoryException` that could occur when many
+  such providers were built over the lifetime of a process.
+  ([#7788](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7788))
+
 ## 1.19.0
 
 Released 2026-Sep-18

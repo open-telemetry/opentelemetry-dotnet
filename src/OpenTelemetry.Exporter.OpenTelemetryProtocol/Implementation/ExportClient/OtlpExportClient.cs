@@ -15,6 +15,10 @@ internal abstract class OtlpExportClient : IExportClient
 
 #if NET
     // See: https://github.com/dotnet/runtime/blob/280f2a0c60ce0378b8db49adc0eecc463d00fe5d/src/libraries/System.Net.Http/src/System/Net/Http/HttpClientHandler.AnyMobile.cs#L767
+    [System.Runtime.Versioning.UnsupportedOSPlatformGuard("android")]
+    [System.Runtime.Versioning.UnsupportedOSPlatformGuard("browser")]
+    [System.Runtime.Versioning.UnsupportedOSPlatformGuard("ios")]
+    [System.Runtime.Versioning.UnsupportedOSPlatformGuard("tvos")]
     private static readonly bool SynchronousSendSupportedByCurrentPlatform = !OperatingSystem.IsAndroid()
             && !OperatingSystem.IsIOS()
             && !OperatingSystem.IsTvOS()
@@ -125,7 +129,14 @@ internal abstract class OtlpExportClient : IExportClient
 
         foreach (var header in this.Headers)
         {
-            request.Headers.Add(header.Key, header.Value);
+            try
+            {
+                request.Headers.Add(header.Key, header.Value);
+            }
+            catch (FormatException)
+            {
+                throw new FormatException($"The value configured for the '{header.Key}' header is not a valid HTTP header value.");
+            }
         }
 
         request.Content = this.CreateHttpContent(buffer, contentLength);

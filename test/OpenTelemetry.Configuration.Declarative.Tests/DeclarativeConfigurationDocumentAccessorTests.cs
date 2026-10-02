@@ -164,8 +164,8 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
 
         using var listener = new ConcurrentEventListener();
         var consumerTask = Task.Run(() => accessor.GetDocument());
-        Assert.True(parseStarted.Wait(TimeSpan.FromSeconds(10)));
-        var providerTask = Task.Run(provider.Load);
+        Assert.True(parseStarted.Wait(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken));
+        var providerTask = Task.Run(provider.Load, TestContext.Current.CancellationToken);
         releaseParse.Set();
         await Task.WhenAll(consumerTask, providerTask);
 
@@ -192,9 +192,9 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
         var provider = new DeclarativeConfigurationProvider(accessor);
 
         using var listener = new ConcurrentEventListener();
-        var providerTask = Task.Run(provider.Load);
-        Assert.True(parseStarted.Wait(TimeSpan.FromSeconds(10)));
-        var consumerTask = Task.Run(() => accessor.GetDocument());
+        var providerTask = Task.Run(provider.Load, TestContext.Current.CancellationToken);
+        Assert.True(parseStarted.Wait(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken));
+        var consumerTask = Task.Run(() => accessor.GetDocument(), TestContext.Current.CancellationToken);
         releaseParse.Set();
         await Task.WhenAll(providerTask, consumerTask);
 

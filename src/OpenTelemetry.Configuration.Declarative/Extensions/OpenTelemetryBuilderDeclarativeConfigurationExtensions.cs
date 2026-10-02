@@ -6,6 +6,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Configuration.Declarative;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry;
 
@@ -18,10 +22,11 @@ public static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
     /// Adds the declarative configuration (YAML) source into DI, reading the path from the <c>OTEL_CONFIG_FILE</c> environment variable.
     /// </summary>
     /// <remarks>
-    /// Appends YAML after existing sources (YAML overrides earlier env/appsettings; sources added
-    /// later override YAML). Inserts in-place on <see cref="ConfigurationManager"/> when
-    /// possible; otherwise wraps the existing root. No-op when <c>OTEL_CONFIG_FILE</c> is unset,
-    /// empty, or whitespace.
+    /// The configuration file is the only source of OTel settings. Keys set in sources registered
+    /// before it are ignored. Values from process environment variables can be imported explicitly
+    /// through environment variable substitution. <c>OTEL_DOTNET_*</c> keys are unaffected.
+    /// Code-based configuration (for example <c>Configure&lt;T&gt;</c> or builder methods such as
+    /// <c>AddOtlpExporter</c>) still applies.
     /// </remarks>
     /// <param name="builder">The <see cref="IOpenTelemetryBuilder"/> builder.</param>
     /// <returns>The original <see cref="IOpenTelemetryBuilder"/> for chaining.</returns>
@@ -90,20 +95,18 @@ public static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
         // is, the existing accessor wins and this instance is discarded unused.
         var candidateAccessor = new DeclarativeConfigurationDocumentAccessor(filePath);
 
-        services.AddSingleton(new DeclarativeConfigurationOverlayMarker(filePath));
-
         OpenTelemetryDeclarativeConfigurationEventSource.Log.OverlayRegistrationStarted(filePath.DisplayPath);
-
-        // TODO(strict-mode): branch here on a future DeclarativeConfigurationMode (Default vs Strict).
-        // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/6380.
 
         // Fast path: hosting API accessor exposes a live ConfigurationManager; mutate in-place and skip descriptor scan.
         if (configurationAccessor?.Configuration is IConfigurationBuilder accessorBuilder)
         {
-            accessorBuilder.AddOpenTelemetryDeclarativeConfiguration(candidateAccessor);
+            accessorBuilder.AddOpenTelemetryDeclarativeConfiguration(
+                candidateAccessor,
+                removeSourceOnFailure: true);
             services.TryAddSingleton(
                 DeclarativeConfigurationDocumentAccessorResolver.FindInConfiguration(accessorBuilder)
                     ?? candidateAccessor);
+            CompleteDeclarativeConfigurationRegistration(services, filePath);
             return;
         }
 
@@ -113,10 +116,13 @@ public static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
         // IConfiguration is a singleton instance that is also a live builder; mutate in-place.
         if (descriptor?.ImplementationInstance is IConfigurationBuilder instanceBuilder)
         {
-            instanceBuilder.AddOpenTelemetryDeclarativeConfiguration(candidateAccessor);
+            instanceBuilder.AddOpenTelemetryDeclarativeConfiguration(
+                candidateAccessor,
+                removeSourceOnFailure: true);
             services.TryAddSingleton(
                 DeclarativeConfigurationDocumentAccessorResolver.FindInConfiguration(instanceBuilder)
                     ?? candidateAccessor);
+            CompleteDeclarativeConfigurationRegistration(services, filePath);
             return;
         }
 
@@ -158,7 +164,9 @@ public static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
                 if (existing is IConfigurationBuilder existingAsBuilder)
                 {
                     // Resolved config is a live builder (HostApplicationBuilder): insert in-place.
-                    existingAsBuilder.AddOpenTelemetryDeclarativeConfiguration(candidateAccessor);
+                    existingAsBuilder.AddOpenTelemetryDeclarativeConfiguration(
+                        candidateAccessor,
+                        removeSourceOnFailure: true);
                     return existing;
                 }
 
@@ -192,13 +200,29 @@ public static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
                 }
                 else
                 {
-                    manager.AddOpenTelemetryDeclarativeConfiguration(candidateAccessor);
+                    manager.AddOpenTelemetryDeclarativeConfiguration(
+                        candidateAccessor,
+                        removeSourceOnFailure: true);
                 }
 
                 return manager;
             },
             lifetime));
+
+        CompleteDeclarativeConfigurationRegistration(services, filePath);
     }
+
+    private static void CompleteDeclarativeConfigurationRegistration(IServiceCollection services, FilePath filePath)
+    {
+        services.AddSingleton(new DeclarativeConfigurationOverlayMarker(filePath));
+        services.ConfigureOpenTelemetryTracerProvider(b => b.ConfigureResource(AddDeclarativeResourceDetector));
+        services.ConfigureOpenTelemetryMeterProvider(b => b.ConfigureResource(AddDeclarativeResourceDetector));
+        services.ConfigureOpenTelemetryLoggerProvider(b => b.ConfigureResource(AddDeclarativeResourceDetector));
+    }
+
+    private static void AddDeclarativeResourceDetector(ResourceBuilder resourceBuilder) =>
+        resourceBuilder.AddDetector(sp => new DeclarativeResourceDetector(
+            sp.GetRequiredService<DeclarativeConfigurationDocumentAccessor>()));
 
     private sealed class DeclarativeConfigurationOverlayMarker(FilePath filePath)
     {

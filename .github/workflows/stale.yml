@@ -15,7 +15,7 @@ jobs:
     permissions:
       issues: write  # For actions/stale to close stale issues
       pull-requests: write  # For actions/stale to close stale PRs
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Mark stale issues and pull requests
         uses: actions/stale@4391f3da665fdf50b6810c1a66712fb9ba21aa93 # v11.0.0

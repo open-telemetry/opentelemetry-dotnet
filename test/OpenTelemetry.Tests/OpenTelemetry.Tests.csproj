@@ -3,7 +3,10 @@
   <PropertyGroup>
     <Description>Unit test project for OpenTelemetry</Description>
     <TargetFrameworks>$(TargetFrameworksForTests)</TargetFrameworks>
-    <NoWarn>$(NoWarn),CS0618</NoWarn>
+    <NoWarn>$(NoWarn);CS0618;CA1515</NoWarn>
+    <!--
+      CA1515: Because an application's API isn't typically referenced from outside the assembly, types can be made internal
+    -->
     <ReferenceCoyotePackages>true</ReferenceCoyotePackages>
   </PropertyGroup>
 
@@ -20,6 +23,7 @@
     <Compile Include="$(RepoRoot)\src\Shared\Metrics\Base2ExponentialBucketHistogramHelper.cs" Link="Includes\Metrics\Base2ExponentialBucketHistogramHelper.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\PeriodicExportingMetricReaderHelper.cs" Link="Includes\PeriodicExportingMetricReaderHelper.cs" />
     <Compile Include="$(RepoRoot)\src\Shared\TagWriter\*.cs" Link="Includes\TagWriter\%(Filename).cs" />
+    <Compile Include="$(RepoRoot)\test\Shared\CultureSwitcher.cs" Link="Includes\CultureSwitcher.cs" />
   </ItemGroup>
 
 </Project>

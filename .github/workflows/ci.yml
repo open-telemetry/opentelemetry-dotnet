@@ -121,7 +121,6 @@ jobs:
       project-name: 'OpenTelemetry.slnx'
       code-cov-name: 'Solution'
       trigger: ${{ github.event_name }}
-      install-wasm-tools: true
 
   build-test-project-stable:
     needs: detect-changes
@@ -172,7 +171,7 @@ jobs:
       || contains(needs.detect-changes.outputs.changes, 'otlp')
       || contains(needs.detect-changes.outputs.changes, 'build')
       || contains(needs.detect-changes.outputs.changes, 'shared')
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     strategy:
       fail-fast: ${{ github.event_name == 'merge_group' }}
       matrix:
@@ -249,7 +248,7 @@ jobs:
       || contains(needs.detect-changes.outputs.changes, 'instrumentation')
       || contains(needs.detect-changes.outputs.changes, 'build')
       || contains(needs.detect-changes.outputs.changes, 'shared')
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     strategy:
       fail-fast: ${{ github.event_name == 'merge_group' }}
       matrix:
@@ -272,13 +271,14 @@ jobs:
     if: |
       contains(needs.detect-changes.outputs.changes, 'code') ||
       contains(needs.detect-changes.outputs.changes, 'build') ||
+      contains(needs.detect-changes.outputs.changes, 'pwsh') ||
       contains(needs.detect-changes.outputs.changes, 'shared')
     strategy:
       fail-fast: ${{ github.event_name == 'merge_group' }}
       matrix:
         os:
           # renovate: datasource=github-runners depType=github-runner
-          - ubuntu-24.04
+          - ubuntu-26.04
           # renovate: datasource=github-runners depType=github-runner
           - windows-2025
     runs-on: ${{ matrix.os }}
@@ -297,7 +297,7 @@ jobs:
       run: |
         $runtimes = @("net10.0")
         if ($IsWindows) {
-          $runtimes += "net462"
+          $runtimes += "net472"
         }
         ./benchmark.ps1 @("*SamplerBenchmarks*") -EnableMemoryDiagnoser -Job Short -Runtimes $runtimes -SkipBaseline
 
@@ -367,7 +367,7 @@ jobs:
       concurrency-tests
       ]
     if: always()
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
     - name: Report CI status
       shell: bash

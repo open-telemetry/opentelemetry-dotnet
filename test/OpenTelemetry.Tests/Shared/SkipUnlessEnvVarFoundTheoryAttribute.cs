@@ -1,11 +1,17 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Runtime.CompilerServices;
+
 namespace OpenTelemetry.Tests;
 
 internal sealed class SkipUnlessEnvVarFoundTheoryAttribute : TheoryAttribute
 {
-    public SkipUnlessEnvVarFoundTheoryAttribute(string environmentVariable)
+    public SkipUnlessEnvVarFoundTheoryAttribute(
+        string environmentVariable,
+        [CallerFilePath] string? sourceFilePath = null,
+        [CallerLineNumber] int sourceLineNumber = -1)
+        : base(sourceFilePath, sourceLineNumber)
     {
         this.EnvironmentVariable = environmentVariable;
         if (string.IsNullOrEmpty(GetEnvironmentVariable(environmentVariable)))

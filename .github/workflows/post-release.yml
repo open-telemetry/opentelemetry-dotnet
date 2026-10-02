@@ -39,7 +39,7 @@ jobs:
 
   push-packages-and-publish-release:
     name: Push packages and publish release
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     needs: automation
 
@@ -107,7 +107,7 @@ jobs:
 
   post-release-published:
     name: Post release published notice
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     needs:
     - automation
@@ -189,7 +189,7 @@ jobs:
   wait-nuget:
     name: Wait for NuGet package publishing
     needs: [automation, post-release-published]
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 60
     if: needs.post-release-published.outputs.pr-number != ''
 

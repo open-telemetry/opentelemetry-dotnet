@@ -113,6 +113,20 @@ public class MetricViewTests : MetricTestsBase
     }
 
     [Fact]
+    public void AddViewWithLargeWildcardPatternDoesNotThrow()
+    {
+        var instrumentName = string.Concat(Enumerable.Repeat("a*", 1000));
+
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        using var container = BuildMeterProvider(out var meterProvider, builder => builder
+            .AddMeter(meter.Name)
+            .AddView(instrumentName, new MetricStreamConfiguration())
+            .AddInMemoryExporter(exportedItems));
+    }
+
+    [Fact]
     public void AddViewWithExceptionInUserCallbackAppliedDefault()
     {
         var exportedItems = new List<Metric>();

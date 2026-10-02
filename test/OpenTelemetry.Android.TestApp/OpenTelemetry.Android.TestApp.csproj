@@ -35,6 +35,18 @@
     <PackageReference Include="MSTest" />
   </ItemGroup>
 
+  <!--
+    Remove the packages that are referenced by default for test projects for the
+    same reason: they are not used by the on-device run and the app bundle only
+    needs to contain what the tests actually require.
+  -->
+  <ItemGroup>
+    <PackageReference Remove="GitHubActionsTestLogger" />
+    <PackageReference Remove="Microsoft.NET.Test.Sdk" />
+    <PackageReference Remove="xunit.runner.visualstudio" />
+    <PackageReference Remove="xunit.v3" />
+  </ItemGroup>
+
   <ItemGroup>
     <Compile Remove="$(RepoRoot)\test\Shared\StrongNameTests.cs" />
   </ItemGroup>
