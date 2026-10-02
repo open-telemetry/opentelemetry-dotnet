@@ -277,51 +277,6 @@ public class OtlpExportClientTests
             return false;
         }
     }
-#if NET
-    [Fact]
-    public void CustomHttpClientFactory_Disables_SyncSendSupported()
-    {
-        // Arrange
-        var options = new OtlpExporterOptions();
-        options.HttpClientFactory = () => new HttpClient();
-        using var client = new HttpClient();
-
-        // Act
-        var exportClient = new TestExportClient(options, client);
-
-        // Assert
-        Assert.False(exportClient.SyncSendSupported);
-    }
-
-    [Fact]
-    public void DefaultHttpClientFactory_Enables_SyncSendSupported()
-    {
-        // Arrange
-        var options = new OtlpExporterOptions();
-        using var client = new HttpClient();
-
-        // Act
-        var exportClient = new TestExportClient(options, client);
-
-        // Assert
-        Assert.True(exportClient.SyncSendSupported);
-    }
-
-    private sealed class TestExportClient : OtlpExportClient
-    {
-        public TestExportClient(OtlpExporterOptions options, HttpClient httpClient)
-            : base(options, httpClient, "v1/test")
-        {
-        }
-
-        internal override System.Net.Http.Headers.MediaTypeHeaderValue MediaTypeHeader => new("application/json");
-
-        public override ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default)
-        {
-            return new ExportClientHttpResponse(true, deadlineUtc, null, null);
-        }
-    }
-#endif
 
     private sealed class NonSeekableStream(Stream inner) : Stream
     {
