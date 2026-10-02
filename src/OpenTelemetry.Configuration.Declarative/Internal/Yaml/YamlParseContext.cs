@@ -12,10 +12,10 @@ namespace OpenTelemetry.Configuration.Declarative;
 internal sealed class YamlParseContext
 {
     private readonly Dictionary<YamlNode, ResolvedYamlScalar> resolved =
-        new(YamlNodeReferenceEqualityComparer.Instance);
+        [with(YamlNodeReferenceEqualityComparer.Instance)];
 
     private readonly Dictionary<YamlNode, IReadOnlyList<KeyValuePair<string, YamlNode>>> mappingKeys =
-        new(YamlNodeReferenceEqualityComparer.Instance);
+        [with(YamlNodeReferenceEqualityComparer.Instance)];
 
     private readonly Func<string, string?> resolveVariable;
 

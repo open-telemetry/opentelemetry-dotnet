@@ -247,7 +247,12 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
     private static int ParseFileIndex(string path)
     {
         var name = Path.GetFileNameWithoutExtension(path);
+
+#if NET11_0_OR_GREATER
+        var separator = name.LastIndexOf('-', StringComparison.Ordinal);
+#else
         var separator = name.LastIndexOf('-');
+#endif
 
         if (separator < 0 || separator >= name.Length - 1)
         {

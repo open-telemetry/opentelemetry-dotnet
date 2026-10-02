@@ -21,7 +21,7 @@ public class B3PropagatorFuzzTests
     private const string SampledHeader = "X-B3-Sampled";
 
     [Property(MaxTest = MaxTests)]
-    public Property MultipleHeaderInjectExtractRoundTripPreservesTraceContext() => Prop.ForAll(Generators.ActivityContextArbitrary(), (activityContext) =>
+    public Property MultipleHeaderInjectExtractRoundTripPreservesTraceContext() => Prop.ForAll(Generators.ActivityContextArbitrary(supportsRandomTraceId: false), (activityContext) =>
     {
         try
         {
@@ -47,7 +47,7 @@ public class B3PropagatorFuzzTests
     });
 
     [Property(MaxTest = MaxTests)]
-    public Property SingleHeaderInjectExtractRoundTripPreservesTraceContext() => Prop.ForAll(Generators.ActivityContextArbitrary(), (activityContext) =>
+    public Property SingleHeaderInjectExtractRoundTripPreservesTraceContext() => Prop.ForAll(Generators.ActivityContextArbitrary(supportsRandomTraceId: false), (activityContext) =>
     {
         try
         {

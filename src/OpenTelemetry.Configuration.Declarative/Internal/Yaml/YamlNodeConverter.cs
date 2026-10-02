@@ -34,7 +34,7 @@ internal static class YamlNodeConverter
 
         internal ConfigProperties ConvertRoot(YamlMappingNode root)
         {
-            this.inProgress = new(YamlNodeReferenceEqualityComparer.Instance) { root };
+            this.inProgress = [with(YamlNodeReferenceEqualityComparer.Instance), root];
             return this.ConvertMapping(root, YamlPath.Root);
         }
 
@@ -75,7 +75,7 @@ internal static class YamlNodeConverter
 
             if (shareable)
             {
-                this.converted ??= new(YamlNodeReferenceEqualityComparer.Instance);
+                this.converted ??= [with(YamlNodeReferenceEqualityComparer.Instance)];
                 this.converted.Add(node, value);
             }
 
