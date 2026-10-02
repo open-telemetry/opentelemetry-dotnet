@@ -163,6 +163,31 @@ public class BatchExportActivityProcessorTests
     }
 
     [Fact]
+    public void CheckExportForRecordingButNotSampledActivityWhenExportUnsampledSpansIsTrue()
+    {
+        var exportedItems = new List<Activity>();
+        using var exporter = new InMemoryExporter<Activity>(exportedItems);
+        using var processor = new BatchActivityExportProcessor(
+            exporter,
+            maxQueueSize: 1,
+            maxExportBatchSize: 1)
+        {
+            ExportUnsampledSpans = true,
+        };
+
+        using var activity = new Activity("start")
+        {
+            ActivityTraceFlags = ActivityTraceFlags.None,
+        };
+
+        processor.OnEnd(activity);
+        processor.Shutdown();
+
+        Assert.Single(exportedItems);
+        Assert.Equal(1, processor.ProcessedCount);
+    }
+
+    [Fact]
     public void CheckExportDrainsBatchOnFailure()
     {
         using var processor = new BatchActivityExportProcessor(

@@ -21,3 +21,9 @@ OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.MinimumLevel.set -> void
 OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.SelfDiagnosticsOptions() -> void
 static OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.GetDefaultLogDirectory() -> string?
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.ConfigureSampler(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, System.Func<System.IServiceProvider!, OpenTelemetry.Trace.Sampler!, OpenTelemetry.Trace.Sampler!>! configureSampler) -> OpenTelemetry.Trace.TracerProviderBuilder!
+OpenTelemetry.BatchActivityExportProcessor.ExportUnsampledSpans.get -> bool
+OpenTelemetry.BatchActivityExportProcessor.ExportUnsampledSpans.set -> void
+OpenTelemetry.SimpleActivityExportProcessor.ExportUnsampledSpans.get -> bool
+OpenTelemetry.SimpleActivityExportProcessor.ExportUnsampledSpans.set -> void
+OpenTelemetry.Trace.ActivityExportProcessorOptions.ExportUnsampledSpans.get -> bool
+OpenTelemetry.Trace.ActivityExportProcessorOptions.ExportUnsampledSpans.set -> void

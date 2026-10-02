@@ -112,13 +112,22 @@ public static class ZipkinExporterHelperExtensions
         var zipkinExporter = new ZipkinExporter(options);
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
-        return options.ExportProcessorType == ExportProcessorType.Simple
-            ? new SimpleActivityExportProcessor(zipkinExporter)
-            : new BatchActivityExportProcessor(
-                zipkinExporter,
-                options.BatchExportProcessorOptions.MaxQueueSize,
-                options.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
-                options.BatchExportProcessorOptions.ExporterTimeoutMilliseconds,
-                options.BatchExportProcessorOptions.MaxExportBatchSize);
+        if (options.ExportProcessorType == ExportProcessorType.Simple)
+        {
+            return new SimpleActivityExportProcessor(zipkinExporter)
+            {
+                ExportUnsampledSpans = options.ExportUnsampledSpans,
+            };
+        }
+
+        return new BatchActivityExportProcessor(
+            zipkinExporter,
+            options.BatchExportProcessorOptions.MaxQueueSize,
+            options.BatchExportProcessorOptions.ScheduledDelayMilliseconds,
+            options.BatchExportProcessorOptions.ExporterTimeoutMilliseconds,
+            options.BatchExportProcessorOptions.MaxExportBatchSize)
+        {
+            ExportUnsampledSpans = options.ExportUnsampledSpans,
+        };
     }
 }

@@ -58,6 +58,12 @@ public sealed class ZipkinExporterOptions
     public bool UseShortTraceIds { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether spans that are unsampled but recording
+    /// should be exported. The default value is <see langword="false"/>.
+    /// </summary>
+    public bool ExportUnsampledSpans { get; set; }
+
+    /// <summary>
     /// Gets or sets the maximum payload size in bytes. Default value: 4096.
     /// </summary>
     public int? MaxPayloadSizeInBytes { get; set; } = DefaultMaxPayloadSizeInBytes;

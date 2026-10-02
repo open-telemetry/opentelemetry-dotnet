@@ -7,6 +7,9 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added `ExportUnsampledSpans` to `OtlpExporterOptions` to optionally allow exporting spans that are recorded but not sampled.
+  ([#6452](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6452))
+
 * Avoid closure allocations when serializing cached metric metadata.
   ([#7841](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7841))
 

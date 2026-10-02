@@ -1,0 +1,2 @@
+OpenTelemetry.Exporter.OtlpExporterOptions.ExportUnsampledSpans.get -> bool
+OpenTelemetry.Exporter.OtlpExporterOptions.ExportUnsampledSpans.set -> void

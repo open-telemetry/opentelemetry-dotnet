@@ -6,6 +6,9 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Added `ExportUnsampledSpans` to `ActivityExportProcessorOptions`, `BatchActivityExportProcessor`, and `SimpleActivityExportProcessor` to optionally allow exporting spans that are recorded but not sampled.
+  ([#6452](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6452))
+
 * Fixed `SuppressInstrumentationScope` reference counts leaking between
   inherited asynchronous execution contexts.
   ([#7803](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7803))

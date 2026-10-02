@@ -36,12 +36,18 @@ public class SimpleActivityExportProcessor : SimpleExportProcessor<Activity>
         this.alreadyShutdownTags = [.. baseTags, new("error.type", "already_shutdown")];
     }
 
+    /// <summary>
+    /// Gets or sets a value indicating whether spans that are unsampled but recording
+    /// should be exported. The default value is <see langword="false"/>.
+    /// </summary>
+    public bool ExportUnsampledSpans { get; set; }
+
     /// <inheritdoc />
     public override void OnEnd(Activity data)
     {
         Guard.ThrowIfNull(data);
 #pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
-        if (!data.Recorded)
+        if (!data.Recorded && !this.ExportUnsampledSpans)
 #pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
         {
             if (data.IsAllDataRequested)
