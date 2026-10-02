@@ -357,12 +357,14 @@ public sealed class SelfDiagnosticsControllerTests : IDisposable
     private static IDisposable BuildProvider(string providerKind, string directory)
     {
         void Configure(IServiceCollection services)
-            => services.Configure<SelfDiagnosticsOptions>(options =>
+        {
+            services.Configure<SelfDiagnosticsOptions>(options =>
             {
                 options.MinimumLevel = LogLevel.Warning;
                 options.LogDirectory = directory;
                 options.EnvironmentVariables = EnvironmentVariableLogMode.None;
             });
+        }
 
         return providerKind switch
         {

@@ -25,7 +25,9 @@ internal static class SelfDiagnosticsLogDirectoryResolver
             return platformProvider() switch
             {
                 SelfDiagnosticsPlatform.Windows => ResolveWindows(specialFolderProvider),
-#if !NETFRAMEWORK
+#if NETFRAMEWORK
+                SelfDiagnosticsPlatform.MacOS or SelfDiagnosticsPlatform.Unix => null,
+#else
                 SelfDiagnosticsPlatform.MacOS => ResolveMacOS(specialFolderProvider),
                 SelfDiagnosticsPlatform.Unix => ResolveUnix(specialFolderProvider, environmentVariableProvider),
 #endif
