@@ -22,6 +22,21 @@ Notes](../../RELEASENOTES.md).
 * Avoid logging malformed HTTP request headers in the exporter's diagnostic log.
   ([#7858](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7858))
 
+* Hardened the experimental disk retry feature.
+  * When running on .NET on non-Windows platforms, the retry directory and
+    the blob files within it are now created accessible to the current user
+    only, including when the directory is recreated after being deleted.
+  * Directory size accounting no longer follows subdirectories, avoiding
+    a symbolic-link/junction walk.
+  * Expired lease-file cleanup now correctly locates the lease timestamp
+    delimiter within the file name rather than the whole path.
+  * Storage maintenance no longer deletes or renames files with a `.blob`,
+    `.tmp` or `.lock` extension that the exporter did not create when the
+    retry directory is shared with other files. Only files named the way the
+    exporter names its blobs, and the temporary and lease files derived from
+    them, are now removed or renamed.
+  ([#7857](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7857))
+
 ## 1.19.1
 
 Released 2026-Sep-21
