@@ -22,6 +22,21 @@ has been built against the OpenTelemetry configuration schema v1.1.
 OTEL_CONFIG_FILE=/path/to/otel-config.yaml
 ```
 
+`OTEL_CONFIG_FILE` is read from the process environment, not from
+`IConfiguration`. Setting it in `launchSettings.json`, a container, or a shell
+works; setting it in `appsettings.json` or on the command line does not. To use
+another source, pass the path to `UseDeclarativeConfiguration` instead.
+
+A relative path is resolved against `AppContext.BaseDirectory` (the build or
+publish output directory), not the content root that `appsettings.json` uses.
+Copy the file to the output directory, or use an absolute path:
+
+```xml
+<ItemGroup>
+  <None Update="otel-config.yaml" CopyToOutputDirectory="PreserveNewest" />
+</ItemGroup>
+```
+
 ### 2. Wire it into your OTel setup
 
 **On `IHostApplicationBuilder` (`WebApplicationBuilder` /**
@@ -32,6 +47,13 @@ builder.AddOpenTelemetry()
     .UseDeclarativeConfiguration()
     .WithTracing(b => b.AddSource("MyApp.*").AddConsoleExporter());
 ```
+
+This approach adds the YAML source directly to `builder.Configuration`, so the
+document can be read during registration, and it registers the host's resource
+defaults (such as `service.name` from the application name).
+`builder.Services.AddOpenTelemetry()` also works, but the source is only added
+when `IConfiguration` is first resolved, and the host's resource defaults are
+not registered.
 
 **With `HostBuilder`**, add the source inside `ConfigureAppConfiguration`:
 
@@ -219,6 +241,34 @@ disabled: ${OTEL_SDK_DISABLED:-false}
 `OTEL_DOTNET_*` settings and configuration applied directly in code are not
 affected by strict mode.
 
+To keep other common settings, reference them in the same way:
+
+```yaml
+file_format: "1.1"
+
+resource:
+  attributes:
+    - name: service.name
+      value: ${OTEL_SERVICE_NAME:-my-service}
+  attributes_list: ${OTEL_RESOURCE_ATTRIBUTES}
+```
+
+The specification's
+[migration configuration](https://github.com/open-telemetry/opentelemetry-configuration/blob/main/examples/otel-sdk-migration-config.yaml)
+references every standard environment variable and is a useful starting point.
+
+Points to be aware of:
+
+- Tools that inject `OTEL_*` environment variables, such as .NET Aspire or
+  Kubernetes operators, are affected in the same way. Reference the variables
+  they set from the file.
+- On the `builder.AddOpenTelemetry()` path, `OTEL_SERVICE_NAME` and
+  `OTEL_RESOURCE_ATTRIBUTES` no longer replace the host's default `service.name`
+  unless the file references them.
+- Configuration sources added *after* declarative configuration still override
+  it, as do `OTEL_*` settings from sources outside the configuration it was
+  added to.
+
 ## Known current limitations
 
 > [!NOTE]
@@ -247,8 +297,13 @@ affected by strict mode.
   reported.
 - `resource.detection/development` (the SDK's resource detector discovery
   mechanism) is not yet implemented.
-- Some components that read environment variables directly are not yet covered
-  by strict mode.
+- Some components read environment variables directly and are not covered by
+  strict mode: including options created with a public
+  parameterless constructor in application code (for example
+  `new OtlpExporterOptions()`), and a `ResourceBuilder` built without a service
+  provider.
+- When the source is registered with `AddOpenTelemetryDeclarativeConfiguration()`
+  alone, strict mode applies but its warnings are not written.
 
 ### Pitfalls to avoid
 
