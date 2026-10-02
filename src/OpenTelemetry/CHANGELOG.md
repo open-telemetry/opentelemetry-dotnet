@@ -6,9 +6,6 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* Added `ExportUnsampledSpans` to `ActivityExportProcessorOptions`, `BatchActivityExportProcessor`, and `SimpleActivityExportProcessor` to optionally allow exporting spans that are recorded but not sampled.
-  ([#6452](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6452))
-
 * Fixed `SuppressInstrumentationScope` reference counts leaking between
   inherited asynchronous execution contexts.
   ([#7803](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7803))
@@ -35,6 +32,9 @@ Notes](../../RELEASENOTES.md).
   The new `SelfDiagnosticsOptions` class configures a rolling file sink and a
   console sink through the standard options pipeline. Sinks are off by default.
   ([#7588](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7588))
+
+* Added `ExportUnsampledSpans` to `ActivityExportProcessorOptions`, `BatchActivityExportProcessor`, and `SimpleActivityExportProcessor` to optionally allow exporting spans that are recorded but not sampled.
+  ([#6452](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6452))
 
 ## 1.19.1
 

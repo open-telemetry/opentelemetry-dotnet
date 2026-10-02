@@ -50,13 +50,6 @@ internal abstract class OtlpExportClient : IExportClient
         this.HttpClient = httpClient;
         this.CompressionEnabled = options.Compression == OtlpExportCompression.GZip;
         this.MaxResponseSizeBytes = options.MaxResponseSizeBytes;
-
-#if NET
-        // Synchronous send is only supported if the platform allows it,
-        // and if a custom HttpClientFactory is NOT being used.
-        // Custom factories often return clients with DelegatingHandlers that only override SendAsync.
-        this.SyncSendSupported = SynchronousSendSupportedByCurrentPlatform && ReferenceEquals(options.HttpClientFactory, options.DefaultHttpClientFactory);
-#endif
     }
 
     internal HttpClient HttpClient { get; }
@@ -66,10 +59,6 @@ internal abstract class OtlpExportClient : IExportClient
     internal IReadOnlyDictionary<string, string> Headers { get; }
 
     internal bool CompressionEnabled { get; }
-
-#if NET
-    internal bool SyncSendSupported { get; }
-#endif
 
     /// <summary>
     /// Gets the maximum size, in bytes, of a response the exporter will accept.
@@ -177,7 +166,7 @@ internal abstract class OtlpExportClient : IExportClient
 #if NET
         // Note: SendAsync must be used with HTTP/2 because synchronous send is
         // not supported.
-        this.RequireHttp2 || !this.SyncSendSupported
+        this.RequireHttp2 || !SynchronousSendSupportedByCurrentPlatform
             ? this.HttpClient.SendAsync(request, this.CompletionOption, cancellationToken).GetAwaiter().GetResult()
             : this.HttpClient.Send(request, this.CompletionOption, cancellationToken);
 #else
