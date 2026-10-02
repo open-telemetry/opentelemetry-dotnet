@@ -204,6 +204,13 @@ public sealed class ZipkinExporterTests : IDisposable
     }
 
     [Fact]
+    public void ExportUnsampledSpans_DefaultsToFalse()
+    {
+        var options = new ZipkinExporterOptions();
+        Assert.False(options.ExportUnsampledSpans);
+    }
+
+    [Fact]
     public void UserHttpFactoryCalled()
     {
         ZipkinExporterOptions options = new();

@@ -30,6 +30,7 @@ public sealed class OtlpExporterOptionsTests : IDisposable
         Assert.Null(options.Headers);
         Assert.Equal(10000, options.TimeoutMilliseconds);
         Assert.Equal(OtlpExporterOptions.DefaultOtlpExportProtocol, options.Protocol);
+        Assert.False(options.ExportUnsampledSpans);
     }
 
     [Fact]
