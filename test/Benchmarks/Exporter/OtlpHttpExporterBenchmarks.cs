@@ -9,6 +9,7 @@ using Benchmarks.Helper;
 using OpenTelemetry;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
+using OpenTelemetry.Trace;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
@@ -20,6 +21,8 @@ namespace Benchmarks.Exporter;
 public class OtlpHttpExporterBenchmarks
 #pragma warning restore CA1001 // Types that own disposable fields should be disposable - handled by GlobalCleanup
 {
+    private static readonly OtlpSpanLimits DefaultSpanLimits = new(new SpanLimitOptions(), new AttributeLimitOptions());
+
     private readonly byte[] buffer = new byte[1024 * 1024];
     private IDisposable? server;
     private string? serverHost;
@@ -63,7 +66,7 @@ public class OtlpHttpExporterBenchmarks
         };
         this.exporter = new OtlpTraceExporter(
             options,
-            new SdkLimitOptions(),
+            DefaultSpanLimits,
             new ExperimentalOptions(),
 #pragma warning disable CA2000 // Dispose objects before losing scope
             new OtlpExporterTransmissionHandler(new OtlpHttpExportClient(options, options.HttpClientFactory(), "v1/traces"), options.TimeoutMilliseconds));

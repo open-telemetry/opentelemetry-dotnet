@@ -25,6 +25,11 @@ internal static class ProviderBuilderServiceCollectionExtensions
         services.RegisterOptionsFactory(
             (sp, configuration, name) => new LogRecordExportProcessorOptions(
                 sp.GetRequiredService<IOptionsMonitor<BatchExportLogRecordProcessorOptions>>().Get(name)));
+        services.RegisterOptionsFactory(
+            (sp, configuration, name) => new LogRecordLimitOptions(
+                configuration,
+                sp.GetRequiredService<IOptionsMonitor<AttributeLimitOptions>>().Get(name)));
+        services.DisableOptionsReloading<LogRecordLimitOptions>();
 #pragma warning restore CS8604 // Possible null reference argument.
 
         return services;
@@ -55,6 +60,11 @@ internal static class ProviderBuilderServiceCollectionExtensions
         services.RegisterOptionsFactory(
             (sp, configuration, name) => new ActivityExportProcessorOptions(
                 sp.GetRequiredService<IOptionsMonitor<BatchExportActivityProcessorOptions>>().Get(name)));
+        services.RegisterOptionsFactory(
+            (sp, configuration, name) => new SpanLimitOptions(
+                configuration,
+                sp.GetRequiredService<IOptionsMonitor<AttributeLimitOptions>>().Get(name)));
+        services.DisableOptionsReloading<SpanLimitOptions>();
 #pragma warning restore CS8604 // Possible null reference argument.
 
         return services;
@@ -70,7 +80,6 @@ internal static class ProviderBuilderServiceCollectionExtensions
 
 #pragma warning disable CS8604 // Possible null reference argument.
         services.AddOptions();
-#pragma warning restore CS8604 // Possible null reference argument.
 
         // Note: When using a host builder IConfiguration is automatically
         // registered and this registration will no-op. This only runs for
@@ -79,6 +88,9 @@ internal static class ProviderBuilderServiceCollectionExtensions
         // those cases.
         services.TryAddSingleton<IConfiguration>(
             sp => new ConfigurationBuilder().AddEnvironmentVariables().Build());
+        services.RegisterOptionsFactory(configuration => new AttributeLimitOptions(configuration));
+        services.DisableOptionsReloading<AttributeLimitOptions>();
+#pragma warning restore CS8604 // Possible null reference argument.
 
         // Register the self-diagnostics options factory. The factory ctor reads env-var defaults
         // via IConfiguration; Configure<SelfDiagnosticsOptions> calls override those defaults.

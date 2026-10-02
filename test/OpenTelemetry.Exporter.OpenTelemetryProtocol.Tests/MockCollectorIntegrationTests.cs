@@ -200,7 +200,10 @@ public sealed class MockCollectorIntegrationTests
                                  })
                                  .Build();
 
-        using var otlpExporter = new OtlpTraceExporter(exporterOptions, new SdkLimitOptions(), new ExperimentalOptions(configuration));
+        using var otlpExporter = new OtlpTraceExporter(
+            exporterOptions,
+            OtlpTestHelpers.CreateDefaultSpanLimits(),
+            new ExperimentalOptions(configuration));
 
         var activitySourceName = "otel.grpc.retry.test";
         using var source = new ActivitySource(activitySourceName);
@@ -294,7 +297,10 @@ public sealed class MockCollectorIntegrationTests
                                  })
                                  .Build();
 
-        using var otlpExporter = new OtlpTraceExporter(exporterOptions, new SdkLimitOptions(), new ExperimentalOptions(configuration));
+        using var otlpExporter = new OtlpTraceExporter(
+            exporterOptions,
+            OtlpTestHelpers.CreateDefaultSpanLimits(),
+            new ExperimentalOptions(configuration));
 
         var activitySourceName = "otel.http.retry.test";
         using var source = new ActivitySource(activitySourceName);
@@ -398,7 +404,7 @@ public sealed class MockCollectorIntegrationTests
             transmissionHandler = new OtlpExporterTransmissionHandler(exportClient, exporterOptions.TimeoutMilliseconds);
         }
 
-        using var otlpExporter = new OtlpTraceExporter(exporterOptions, new(), new(), transmissionHandler);
+        using var otlpExporter = new OtlpTraceExporter(exporterOptions, OtlpTestHelpers.CreateDefaultSpanLimits(), new ExperimentalOptions(), transmissionHandler);
 
         var activitySourceName = "otel.http.persistent.storage.retry.test";
         using var source = new ActivitySource(activitySourceName);
@@ -539,7 +545,7 @@ public sealed class MockCollectorIntegrationTests
             transmissionHandler = new OtlpExporterTransmissionHandler(exportClient, exporterOptions.TimeoutMilliseconds);
         }
 
-        using var otlpExporter = new OtlpTraceExporter(exporterOptions, new(), new(), transmissionHandler);
+        using var otlpExporter = new OtlpTraceExporter(exporterOptions, OtlpTestHelpers.CreateDefaultSpanLimits(), new ExperimentalOptions(), transmissionHandler);
 
         var activitySourceName = "otel.grpc.persistent.storage.retry.test";
         using var source = new ActivitySource(activitySourceName);

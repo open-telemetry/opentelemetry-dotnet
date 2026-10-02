@@ -20,10 +20,21 @@ internal static class ProtobufOtlpTraceSerializer
     [ThreadStatic]
     private static Dictionary<string, List<Activity>>? scopeTracesList;
 
+    // Totals of items discarded due to span limits, accumulated while a batch
+    // is serialized so that at most one message is logged per batch.
+    [ThreadStatic]
+    private static int spansWithDroppedItemsCount;
+    [ThreadStatic]
+    private static long spanDroppedAttributeCount;
+    [ThreadStatic]
+    private static long spanDroppedEventCount;
+    [ThreadStatic]
+    private static long spanDroppedLinkCount;
+
     internal static int WriteTraceData(
         ref byte[] buffer,
         int writePosition,
-        SdkLimitOptions sdkLimitOptions,
+        OtlpSpanLimits otlpSpanLimits,
         Resources.Resource? resource,
         in Batch<Activity> batch,
         int maxBufferSize = ProtobufSerializer.MaxBufferSize)
@@ -49,7 +60,7 @@ internal static class ProtobufOtlpTraceSerializer
                 activities.Add(activity);
             }
 
-            writePosition = TryWriteResourceSpans(ref buffer, writePosition, sdkLimitOptions, resource, maxBufferSize);
+            writePosition = TryWriteResourceSpans(ref buffer, writePosition, otlpSpanLimits, resource, maxBufferSize);
         }
         finally
         {
@@ -62,7 +73,7 @@ internal static class ProtobufOtlpTraceSerializer
     internal static int TryWriteResourceSpans(
         ref byte[] buffer,
         int writePosition,
-        SdkLimitOptions sdkLimitOptions,
+        OtlpSpanLimits otlpSpanLimits,
         Resources.Resource? resource,
         int maxBufferSize = ProtobufSerializer.MaxBufferSize)
     {
@@ -70,15 +81,27 @@ internal static class ProtobufOtlpTraceSerializer
         {
             var entryWritePosition = writePosition;
 
+            // A retry with a larger buffer serializes every span again,
+            // so the totals restart with each attempt.
+            ResetSpanLimitDropTotals();
+
             try
             {
                 writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpTraceFieldNumberConstants.TracesData_Resource_Spans, ProtobufWireType.LEN);
                 var resourceSpansScopeSpansLengthPosition = writePosition;
                 writePosition += ReserveSizeForLength;
 
-                writePosition = WriteResourceSpans(buffer, writePosition, sdkLimitOptions, resource);
+                writePosition = WriteResourceSpans(buffer, writePosition, otlpSpanLimits, resource);
 
                 ProtobufSerializer.WriteReservedLength(buffer, resourceSpansScopeSpansLengthPosition, writePosition - (resourceSpansScopeSpansLengthPosition + ReserveSizeForLength));
+
+                otlpSpanLimits.WarningTracker.RecordAndWarnIfDue(
+                    new(spansWithDroppedItemsCount, spanDroppedAttributeCount, spanDroppedEventCount, spanDroppedLinkCount),
+                    static totals => OpenTelemetryProtocolExporterEventSource.Log.SpanLimitsExceeded(
+                        totals.AffectedItemCount,
+                        totals.DroppedAttributeCount,
+                        totals.DroppedEventCount,
+                        totals.DroppedLinkCount));
 
                 // Serialization succeeded, return the final write position
                 return writePosition;
@@ -114,10 +137,10 @@ internal static class ProtobufOtlpTraceSerializer
         }
     }
 
-    internal static int WriteResourceSpans(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, Resources.Resource? resource)
+    internal static int WriteResourceSpans(byte[] buffer, int writePosition, OtlpSpanLimits otlpSpanLimits, Resources.Resource? resource)
     {
         writePosition = ProtobufOtlpResourceSerializer.WriteResource(buffer, writePosition, resource);
-        writePosition = WriteScopeSpans(buffer, writePosition, sdkLimitOptions);
+        writePosition = WriteScopeSpans(buffer, writePosition, otlpSpanLimits);
 
         if (resource?.SchemaUrl is { Length: > 0 } schemaUrl)
         {
@@ -127,7 +150,7 @@ internal static class ProtobufOtlpTraceSerializer
         return writePosition;
     }
 
-    internal static int WriteScopeSpans(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions)
+    internal static int WriteScopeSpans(byte[] buffer, int writePosition, OtlpSpanLimits otlpSpanLimits)
     {
         if (scopeTracesList != null)
         {
@@ -137,7 +160,7 @@ internal static class ProtobufOtlpTraceSerializer
                 var resourceSpansScopeSpansLengthPosition = writePosition;
                 writePosition += ReserveSizeForLength;
 
-                writePosition = WriteScopeSpan(buffer, writePosition, sdkLimitOptions, entry.Value[0].Source, entry.Value);
+                writePosition = WriteScopeSpan(buffer, writePosition, otlpSpanLimits, entry.Value[0].Source, entry.Value);
                 ProtobufSerializer.WriteReservedLength(buffer, resourceSpansScopeSpansLengthPosition, writePosition - (resourceSpansScopeSpansLengthPosition + ReserveSizeForLength));
             }
         }
@@ -145,7 +168,7 @@ internal static class ProtobufOtlpTraceSerializer
         return writePosition;
     }
 
-    internal static int WriteScopeSpan(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ActivitySource activitySource, List<Activity> activities)
+    internal static int WriteScopeSpan(byte[] buffer, int writePosition, OtlpSpanLimits otlpSpanLimits, ActivitySource activitySource, List<Activity> activities)
     {
         writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpTraceFieldNumberConstants.ScopeSpans_Scope, ProtobufWireType.LEN);
         var instrumentationScopeLengthPosition = writePosition;
@@ -159,8 +182,8 @@ internal static class ProtobufOtlpTraceSerializer
 
         if (activitySource.Tags != null)
         {
-            var maxAttributeCount = sdkLimitOptions.SpanAttributeCountLimit ?? int.MaxValue;
-            var maxAttributeValueLength = sdkLimitOptions.AttributeValueLengthLimit ?? int.MaxValue;
+            var maxAttributeCount = otlpSpanLimits.ScopeAttributeCountLimit;
+            var maxAttributeValueLength = otlpSpanLimits.ScopeAttributeValueLengthLimit ?? int.MaxValue;
             var otlpTagWriterState = new ProtobufOtlpTagWriter.OtlpTagWriterState
             {
                 Buffer = buffer,
@@ -235,7 +258,7 @@ internal static class ProtobufOtlpTraceSerializer
 
         for (var i = 0; i < activities.Count; i++)
         {
-            writePosition = WriteSpan(buffer, writePosition, sdkLimitOptions, activities[i]);
+            writePosition = WriteSpan(buffer, writePosition, otlpSpanLimits, activities[i]);
         }
 
         if (!string.IsNullOrEmpty(activitySource.TelemetrySchemaUrl))
@@ -248,7 +271,7 @@ internal static class ProtobufOtlpTraceSerializer
         return writePosition;
     }
 
-    internal static int WriteSpan(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, Activity activity)
+    internal static int WriteSpan(byte[] buffer, int writePosition, OtlpSpanLimits otlpSpanLimits, Activity activity)
     {
         writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpTraceFieldNumberConstants.ScopeSpans_Span, ProtobufWireType.LEN);
         var spanLengthPosition = writePosition;
@@ -278,11 +301,19 @@ internal static class ProtobufOtlpTraceSerializer
         writePosition = ProtobufSerializer.WriteFixed64WithTag(buffer, writePosition, ProtobufOtlpTraceFieldNumberConstants.Span_Start_Time_Unix_Nano, (ulong)startTimeUnixNano);
         writePosition = ProtobufSerializer.WriteFixed64WithTag(buffer, writePosition, ProtobufOtlpTraceFieldNumberConstants.Span_End_Time_Unix_Nano, (ulong)(startTimeUnixNano + activity.Duration.ToNanoseconds()));
 
-        (writePosition, var statusCode, var statusMessage) = WriteActivityTags(buffer, writePosition, sdkLimitOptions, activity);
-        writePosition = WriteSpanEvents(buffer, writePosition, sdkLimitOptions, activity);
-        writePosition = WriteSpanLinks(buffer, writePosition, sdkLimitOptions, activity);
+        (writePosition, var statusCode, var statusMessage, var droppedAttributeCount) = WriteActivityTags(buffer, writePosition, otlpSpanLimits, activity);
+        writePosition = WriteSpanEvents(buffer, writePosition, otlpSpanLimits, activity, ref droppedAttributeCount, out var droppedEventCount);
+        writePosition = WriteSpanLinks(buffer, writePosition, otlpSpanLimits, activity, ref droppedAttributeCount, out var droppedLinkCount);
         writePosition = WriteSpanStatus(buffer, writePosition, activity, statusCode, statusMessage);
         writePosition = ProtobufSerializer.WriteShortReservedLength(buffer, spanLengthPosition, writePosition);
+
+        if (droppedAttributeCount > 0 || droppedEventCount > 0 || droppedLinkCount > 0)
+        {
+            spansWithDroppedItemsCount++;
+            spanDroppedAttributeCount += droppedAttributeCount;
+            spanDroppedEventCount += droppedEventCount;
+            spanDroppedLinkCount += droppedLinkCount;
+        }
 
         return writePosition;
     }
@@ -324,12 +355,12 @@ internal static class ProtobufOtlpTraceSerializer
         return position;
     }
 
-    internal static (int Position, StatusCode? StatusCode, string? StatusMessage) WriteActivityTags(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, Activity activity)
+    internal static (int Position, StatusCode? StatusCode, string? StatusMessage, int DroppedAttributeCount) WriteActivityTags(byte[] buffer, int writePosition, OtlpSpanLimits otlpSpanLimits, Activity activity)
     {
         StatusCode? statusCode = null;
         string? statusMessage = null;
-        var maxAttributeCount = sdkLimitOptions.SpanAttributeCountLimit ?? int.MaxValue;
-        var maxAttributeValueLength = sdkLimitOptions.SpanAttributeValueLengthLimit ?? int.MaxValue;
+        var maxAttributeCount = otlpSpanLimits.AttributeCountLimit;
+        var maxAttributeValueLength = otlpSpanLimits.SpanAttributeValueLengthLimit ?? int.MaxValue;
         var otlpTagWriterState = new ProtobufOtlpTagWriter.OtlpTagWriterState
         {
             Buffer = buffer,
@@ -392,14 +423,14 @@ internal static class ProtobufOtlpTraceSerializer
             otlpTagWriterState.WritePosition = ProtobufSerializer.WriteVarInt32(buffer, otlpTagWriterState.WritePosition, (uint)otlpTagWriterState.DroppedTagCount);
         }
 
-        return (otlpTagWriterState.WritePosition, statusCode, statusMessage);
+        return (otlpTagWriterState.WritePosition, statusCode, statusMessage, otlpTagWriterState.DroppedTagCount);
     }
 
-    internal static int WriteSpanEvents(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, Activity activity)
+    internal static int WriteSpanEvents(byte[] buffer, int writePosition, OtlpSpanLimits otlpSpanLimits, Activity activity, ref int droppedAttributeCount, out int droppedEventCount)
     {
-        var maxEventCountLimit = sdkLimitOptions.SpanEventCountLimit ?? int.MaxValue;
+        var maxEventCountLimit = otlpSpanLimits.EventCountLimit;
         var eventCount = 0;
-        var droppedEventCount = 0;
+        droppedEventCount = 0;
         foreach (ref readonly var evnt in activity.EnumerateEvents())
         {
             if (eventCount < maxEventCountLimit)
@@ -410,7 +441,7 @@ internal static class ProtobufOtlpTraceSerializer
 
                 writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpTraceFieldNumberConstants.Event_Name, evnt.Name);
                 writePosition = ProtobufSerializer.WriteFixed64WithTag(buffer, writePosition, ProtobufOtlpTraceFieldNumberConstants.Event_Time_Unix_Nano, (ulong)evnt.Timestamp.ToUnixTimeNanoseconds());
-                writePosition = WriteEventAttributes(ref buffer, writePosition, sdkLimitOptions, evnt);
+                writePosition = WriteEventAttributes(ref buffer, writePosition, otlpSpanLimits, evnt, ref droppedAttributeCount);
 
                 writePosition = ProtobufSerializer.WriteShortReservedLength(buffer, spanEventsLengthPosition, writePosition);
                 eventCount++;
@@ -430,10 +461,10 @@ internal static class ProtobufOtlpTraceSerializer
         return writePosition;
     }
 
-    internal static int WriteEventAttributes(ref byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ActivityEvent evnt)
+    internal static int WriteEventAttributes(ref byte[] buffer, int writePosition, OtlpSpanLimits otlpSpanLimits, ActivityEvent evnt, ref int droppedAttributeCount)
     {
-        var maxAttributeCount = sdkLimitOptions.SpanEventAttributeCountLimit ?? int.MaxValue;
-        var maxAttributeValueLength = sdkLimitOptions.SpanAttributeValueLengthLimit ?? int.MaxValue;
+        var maxAttributeCount = otlpSpanLimits.AttributePerEventCountLimit;
+        var maxAttributeValueLength = otlpSpanLimits.SpanAttributeValueLengthLimit ?? int.MaxValue;
 
         var otlpTagWriterState = new ProtobufOtlpTagWriter.OtlpTagWriterState
         {
@@ -469,6 +500,7 @@ internal static class ProtobufOtlpTraceSerializer
 
         if (otlpTagWriterState.DroppedTagCount > 0)
         {
+            droppedAttributeCount += otlpTagWriterState.DroppedTagCount;
             otlpTagWriterState.WritePosition = ProtobufSerializer.WriteTag(buffer, otlpTagWriterState.WritePosition, ProtobufOtlpTraceFieldNumberConstants.Event_Dropped_Attributes_Count, ProtobufWireType.VARINT);
             otlpTagWriterState.WritePosition = ProtobufSerializer.WriteVarInt32(buffer, otlpTagWriterState.WritePosition, (uint)otlpTagWriterState.DroppedTagCount);
         }
@@ -476,11 +508,11 @@ internal static class ProtobufOtlpTraceSerializer
         return otlpTagWriterState.WritePosition;
     }
 
-    internal static int WriteSpanLinks(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, Activity activity)
+    internal static int WriteSpanLinks(byte[] buffer, int writePosition, OtlpSpanLimits otlpSpanLimits, Activity activity, ref int droppedAttributeCount, out int droppedLinkCount)
     {
-        var maxLinksCount = sdkLimitOptions.SpanLinkCountLimit ?? int.MaxValue;
+        var maxLinksCount = otlpSpanLimits.LinkCountLimit;
         var linkCount = 0;
-        var droppedLinkCount = 0;
+        droppedLinkCount = 0;
 
         foreach (ref readonly var link in activity.EnumerateLinks())
         {
@@ -499,7 +531,7 @@ internal static class ProtobufOtlpTraceSerializer
                     writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpTraceFieldNumberConstants.Link_Trace_State, link.Context.TraceState);
                 }
 
-                writePosition = WriteLinkAttributes(buffer, writePosition, sdkLimitOptions, link);
+                writePosition = WriteLinkAttributes(buffer, writePosition, otlpSpanLimits, link, ref droppedAttributeCount);
                 writePosition = WriteTraceFlags(buffer, writePosition, link.Context.TraceFlags, link.Context.IsRemote, ProtobufOtlpTraceFieldNumberConstants.Link_Flags);
 
                 writePosition = ProtobufSerializer.WriteShortReservedLength(buffer, spanLinksLengthPosition, writePosition);
@@ -520,10 +552,10 @@ internal static class ProtobufOtlpTraceSerializer
         return writePosition;
     }
 
-    internal static int WriteLinkAttributes(byte[] buffer, int writePosition, SdkLimitOptions sdkLimitOptions, ActivityLink link)
+    internal static int WriteLinkAttributes(byte[] buffer, int writePosition, OtlpSpanLimits otlpSpanLimits, ActivityLink link, ref int droppedAttributeCount)
     {
-        var maxAttributeCount = sdkLimitOptions.SpanLinkAttributeCountLimit ?? int.MaxValue;
-        var maxAttributeValueLength = sdkLimitOptions.SpanAttributeValueLengthLimit ?? int.MaxValue;
+        var maxAttributeCount = otlpSpanLimits.AttributePerLinkCountLimit;
+        var maxAttributeValueLength = otlpSpanLimits.SpanAttributeValueLengthLimit ?? int.MaxValue;
         var otlpTagWriterState = new ProtobufOtlpTagWriter.OtlpTagWriterState
         {
             Buffer = buffer,
@@ -558,6 +590,7 @@ internal static class ProtobufOtlpTraceSerializer
 
         if (otlpTagWriterState.DroppedTagCount > 0)
         {
+            droppedAttributeCount += otlpTagWriterState.DroppedTagCount;
             otlpTagWriterState.WritePosition = ProtobufSerializer.WriteTag(buffer, otlpTagWriterState.WritePosition, ProtobufOtlpTraceFieldNumberConstants.Link_Dropped_Attributes_Count, ProtobufWireType.VARINT);
             otlpTagWriterState.WritePosition = ProtobufSerializer.WriteVarInt32(buffer, otlpTagWriterState.WritePosition, (uint)otlpTagWriterState.DroppedTagCount);
         }
@@ -608,4 +641,12 @@ internal static class ProtobufOtlpTraceSerializer
         }
     }
 #endif
+
+    private static void ResetSpanLimitDropTotals()
+    {
+        spansWithDroppedItemsCount = 0;
+        spanDroppedAttributeCount = 0;
+        spanDroppedEventCount = 0;
+        spanDroppedLinkCount = 0;
+    }
 }

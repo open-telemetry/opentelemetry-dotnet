@@ -21,7 +21,7 @@ public class ProtobufOtlpTraceSerializerTests
     [Property(MaxTest = 200)]
     public Property SerializedDataNeverExceedsBufferSize() => Prop.ForAll(
         Generators.ActivityBatchArbitrary(),
-        Generators.SdkLimitOptionsArbitrary(),
+        Generators.OtlpSpanLimitsArbitrary(),
         (activities, sdkLimits) =>
         {
             try
@@ -54,7 +54,7 @@ public class ProtobufOtlpTraceSerializerTests
     [Property(MaxTest = 200)]
     public Property WriteTraceDataReturnsNonNegativePosition() => Prop.ForAll(
         Generators.ActivityBatchArbitrary(),
-        Generators.SdkLimitOptionsArbitrary(),
+        Generators.OtlpSpanLimitsArbitrary(),
         Generators.ResourceArbitrary(),
         (activities, sdkLimits, resource) =>
         {
@@ -87,7 +87,7 @@ public class ProtobufOtlpTraceSerializerTests
 
     [Property(MaxTest = 100)]
     public Property WriteTraceDataHandlesEmptyBatches() => Prop.ForAll(
-        Generators.SdkLimitOptionsArbitrary(),
+        Generators.OtlpSpanLimitsArbitrary(),
         sdkLimits =>
         {
             try
@@ -113,7 +113,7 @@ public class ProtobufOtlpTraceSerializerTests
     [Property(MaxTest = 100)]
     public Property BufferAutoResizesWhenNeeded() => Prop.ForAll(
         Generators.ActivityBatchArbitrary(),
-        Generators.SdkLimitOptionsArbitrary(),
+        Generators.OtlpSpanLimitsArbitrary(),
         (activities, sdkLimits) =>
         {
             try
@@ -148,7 +148,7 @@ public class ProtobufOtlpTraceSerializerTests
     [Property(MaxTest = 100)]
     public Property SerializedOutputCanBeDeserialized() => Prop.ForAll(
         Generators.ActivityBatchArbitrary(),
-        Generators.SdkLimitOptionsArbitrary(),
+        Generators.OtlpSpanLimitsArbitrary(),
         Generators.ResourceArbitrary(),
         (activities, sdkLimits, resource) =>
         {
@@ -196,7 +196,7 @@ public class ProtobufOtlpTraceSerializerTests
     [Property(MaxTest = 100)]
     public Property MultipleSerializationCallsAreConsistent() => Prop.ForAll(
         Generators.ActivityBatchArbitrary(),
-        Generators.SdkLimitOptionsArbitrary(),
+        Generators.OtlpSpanLimitsArbitrary(),
         Generators.ResourceArbitrary(),
         (activities, sdkLimits, resource) =>
         {
@@ -254,7 +254,7 @@ public class ProtobufOtlpTraceSerializerTests
     [Property(MaxTest = 200)]
     public Property HandlesArbitraryActivityStatusCodes() => Prop.ForAll(
         Gen.Choose(int.MinValue, int.MaxValue).ToArbitrary(),
-        Generators.SdkLimitOptionsArbitrary(),
+        Generators.OtlpSpanLimitsArbitrary(),
         (statusCode, sdkLimits) =>
         {
             var activities = Generators.ActivityArbitrary((ActivityStatusCode)statusCode).Generator.Sample(1).ToArray();
@@ -289,7 +289,7 @@ public class ProtobufOtlpTraceSerializerTests
     [Property(MaxTest = 100)]
     public Property KvListAttributesStayInBounds() => Prop.ForAll(
         Generators.ActivityWithKvListBatchArbitrary(),
-        Generators.SdkLimitOptionsArbitrary(),
+        Generators.OtlpSpanLimitsArbitrary(),
         (activities, sdkLimits) =>
         {
             try
@@ -322,7 +322,7 @@ public class ProtobufOtlpTraceSerializerTests
     [Property(MaxTest = 100)]
     public Property KvListAttributesRoundTrip() => Prop.ForAll(
         Generators.ActivityWithKvListBatchArbitrary(),
-        Generators.SdkLimitOptionsArbitrary(),
+        Generators.OtlpSpanLimitsArbitrary(),
         Generators.ResourceArbitrary(),
         (activities, sdkLimits, resource) =>
         {
@@ -369,7 +369,7 @@ public class ProtobufOtlpTraceSerializerTests
     [Property(MaxTest = 50)]
     public Property KvListSerializationIsDeterministic() => Prop.ForAll(
         Generators.ActivityWithKvListBatchArbitrary(),
-        Generators.SdkLimitOptionsArbitrary(),
+        Generators.OtlpSpanLimitsArbitrary(),
         (activities, sdkLimits) =>
         {
             try
@@ -411,7 +411,7 @@ public class ProtobufOtlpTraceSerializerTests
 
     [Property(MaxTest = 50)]
     public Property SelfReferencingKvListDoesNotCrash() => Prop.ForAll(
-        Generators.SdkLimitOptionsArbitrary(),
+        Generators.OtlpSpanLimitsArbitrary(),
         Gen.Choose(1, 10).ToArbitrary(),
         (sdkLimits, selfRefCount) =>
         {
@@ -454,7 +454,7 @@ public class ProtobufOtlpTraceSerializerTests
 
     [Property(MaxTest = 50)]
     public Property FaultyKvListEnumerableIsDropped() => Prop.ForAll(
-        Generators.SdkLimitOptionsArbitrary(),
+        Generators.OtlpSpanLimitsArbitrary(),
         Gen.Choose(1, 5).ToArbitrary(),
         (sdkLimits, faultyCount) =>
         {
@@ -498,7 +498,7 @@ public class ProtobufOtlpTraceSerializerTests
     [Property(MaxTest = 100)]
     public Property ResourceSchemaUrlRoundTrips() => Prop.ForAll(
         Generators.ActivityBatchArbitrary(),
-        Generators.SdkLimitOptionsArbitrary(),
+        Generators.OtlpSpanLimitsArbitrary(),
         Generators.ResourceArbitrary(),
         (activities, sdkLimits, resource) =>
         {

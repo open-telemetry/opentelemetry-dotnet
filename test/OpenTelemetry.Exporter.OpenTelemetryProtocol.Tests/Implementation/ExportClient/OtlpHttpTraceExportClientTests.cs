@@ -16,8 +16,6 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
 public sealed class OtlpHttpTraceExportClientTests : IDisposable
 {
-    private static readonly SdkLimitOptions DefaultSdkLimitOptions = new();
-
     private readonly ActivityListener activityListener;
 
     static OtlpHttpTraceExportClientTests()
@@ -139,7 +137,7 @@ public sealed class OtlpHttpTraceExportClientTests : IDisposable
             var deadlineUtc = DateTime.UtcNow.AddMilliseconds(httpClient.Timeout.TotalMilliseconds);
             var request = new OtlpCollector.ExportTraceServiceRequest();
 
-            var (buffer, contentLength) = CreateTraceExportRequest(DefaultSdkLimitOptions, batch, resourceBuilder.Build());
+            var (buffer, contentLength) = CreateTraceExportRequest(OtlpTestHelpers.CreateDefaultSpanLimits(), batch, resourceBuilder.Build());
 
             // Act
             ExportClientResponse result;
@@ -193,12 +191,12 @@ public sealed class OtlpHttpTraceExportClientTests : IDisposable
         }
     }
 
-    private static (byte[] Buffer, int ContentLength) CreateTraceExportRequest(SdkLimitOptions sdkOptions, in Batch<Activity> batch, Resource resource)
+    private static (byte[] Buffer, int ContentLength) CreateTraceExportRequest(OtlpSpanLimits otlpSpanLimits, in Batch<Activity> batch, Resource resource)
     {
         var buffer = ProtobufSerializer.RentBuffer(4096);
         try
         {
-            var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, resource, batch);
+            var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, otlpSpanLimits, resource, batch);
             return (buffer, writePosition);
         }
         catch

@@ -9,6 +9,7 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.FuzzTests;
 
@@ -53,25 +54,43 @@ internal static class Generators
         "https://opentelemetry.io/schemas/1.36.0",
     ]);
 
-    public static Arbitrary<SdkLimitOptions> SdkLimitOptionsArbitrary()
+    public static Arbitrary<OtlpSpanLimits> OtlpSpanLimitsArbitrary()
     {
-        var gen = from spanAttributesLimit in Gen.Choose(0, 1000).Select(x => (int?)x)
-                  from spanEventsLimit in Gen.Choose(0, 1000).Select(x => (int?)x)
-                  from spanLinksLimit in Gen.Choose(0, 1000).Select(x => (int?)x)
-                  from spanEventAttributesLimit in Gen.Choose(0, 1000).Select(x => (int?)x)
-                  from spanLinkAttributesLimit in Gen.Choose(0, 1000).Select(x => (int?)x)
-                  from attributeValueLimit in Gen.Choose(0, 10000).Select(x => (int?)x)
-                  from logAttributesLimit in Gen.Choose(0, 1000).Select(x => (int?)x)
-                  select new SdkLimitOptions
-                  {
-                      AttributeValueLengthLimit = attributeValueLimit,
-                      LogRecordAttributeCountLimit = logAttributesLimit,
-                      SpanAttributeCountLimit = spanAttributesLimit,
-                      SpanEventAttributeCountLimit = spanEventAttributesLimit,
-                      SpanEventCountLimit = spanEventsLimit,
-                      SpanLinkAttributeCountLimit = spanLinkAttributesLimit,
-                      SpanLinkCountLimit = spanLinksLimit,
-                  };
+        var gen = from spanAttrCount in Gen.Choose(0, 1000)
+                  from spanEventCount in Gen.Choose(0, 1000)
+                  from spanLinkCount in Gen.Choose(0, 1000)
+                  from spanEventAttrCount in Gen.Choose(0, 1000)
+                  from spanLinkAttrCount in Gen.Choose(0, 1000)
+                  from spanAttrValueLen in Gen.Choose(0, 10000).Select(x => (int?)x)
+                  from generalAttrValueLen in Gen.Choose(0, 10000).Select(x => (int?)x)
+                  select new OtlpSpanLimits(
+                      new SpanLimitOptions
+                      {
+                          AttributeCountLimit = spanAttrCount,
+                          EventCountLimit = spanEventCount,
+                          LinkCountLimit = spanLinkCount,
+                          AttributePerEventCountLimit = spanEventAttrCount,
+                          AttributePerLinkCountLimit = spanLinkAttrCount,
+                          AttributeValueLengthLimit = spanAttrValueLen,
+                      },
+                      new AttributeLimitOptions
+                      {
+                          AttributeValueLengthLimit = generalAttrValueLen,
+                      });
+
+        return gen.ToArbitrary();
+    }
+
+    public static Arbitrary<OtlpLogRecordLimits> OtlpLogRecordLimitsArbitrary()
+    {
+        var gen = from logAttrCount in Gen.Choose(0, 1000)
+                  from logAttrValueLen in Gen.Choose(0, 10000).Select(x => (int?)x)
+                  select new OtlpLogRecordLimits(
+                      new LogRecordLimitOptions
+                      {
+                          AttributeCountLimit = logAttrCount,
+                          AttributeValueLengthLimit = logAttrValueLen,
+                      });
 
         return gen.ToArbitrary();
     }

@@ -13,6 +13,7 @@ using BenchmarkDotNet.Attributes;
 using Benchmarks.Helper;
 using OpenTelemetry;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Trace;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
@@ -26,6 +27,8 @@ public class OtlpExporterCompressionBenchmarks
 {
     private const int NumberOfBatches = 2;
     private const int NumberOfSpans = 10_000;
+
+    private static readonly OtlpSpanLimits DefaultSpanLimits = new(new SpanLimitOptions(), new AttributeLimitOptions());
 
     private OtlpTraceExporter? exporter;
     private Activity? activity;
@@ -46,7 +49,7 @@ public class OtlpExporterCompressionBenchmarks
 
         this.exporter = new OtlpTraceExporter(
             options,
-            new SdkLimitOptions(),
+            DefaultSpanLimits,
             new ExperimentalOptions(),
 #pragma warning disable CA2000 // Dispose objects before losing scope
             new OtlpExporterTransmissionHandler(new OtlpGrpcExportClient(options, options.HttpClientFactory(), "opentelemetry.proto.collector.trace.v1.TraceService/Export"), options.TimeoutMilliseconds));

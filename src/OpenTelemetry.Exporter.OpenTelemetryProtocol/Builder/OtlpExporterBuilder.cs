@@ -176,10 +176,6 @@ internal sealed class OtlpExporterBuilder
         services.RegisterOptionsFactory((sp, configuration, name) => new OtlpExporterBuilderOptions(
             configuration,
             sp.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get(name),
-            /* Note: We don't use name for SdkLimitOptions. There should only be
-            one provider for a given service collection so SdkLimitOptions is
-            treated as a single default instance. */
-            sp.GetRequiredService<IOptionsMonitor<SdkLimitOptions>>().CurrentValue,
             sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(name),
             /* Note: We allow LogRecordExportProcessorOptions,
             MetricReaderOptions, & ActivityExportProcessorOptions to be null
@@ -196,11 +192,14 @@ internal sealed class OtlpExporterBuilder
             {
                 var builderOptions = GetBuilderOptionsAndValidateRegistrations(sp, name);
 
+                var logRecordLimitOptions = sp.GetRequiredService<IOptionsMonitor<LogRecordLimitOptions>>().CurrentValue;
+                var otlpLogRecordLimits = new OtlpLogRecordLimits(logRecordLimitOptions);
+
                 var processor = OtlpLogExporterHelperExtensions.BuildOtlpLogExporter(
                     sp,
                     builderOptions.LoggingOptionsInstance.ApplyDefaults(builderOptions.DefaultOptionsInstance),
                     builderOptions.LogRecordExportProcessorOptions ?? throw new InvalidOperationException("LogRecordExportProcessorOptions were missing with logging enabled"),
-                    builderOptions.SdkLimitOptions,
+                    otlpLogRecordLimits,
                     builderOptions.ExperimentalOptions,
                     skipUseOtlpExporterRegistrationCheck: true);
 
@@ -230,10 +229,14 @@ internal sealed class OtlpExporterBuilder
 
                 var processorOptions = builderOptions.ActivityExportProcessorOptions ?? throw new InvalidOperationException("ActivityExportProcessorOptions were missing with tracing enabled");
 
+                var spanLimitOptions = sp.GetRequiredService<IOptionsMonitor<SpanLimitOptions>>().CurrentValue;
+                var attributeLimitOptions = sp.GetRequiredService<IOptionsMonitor<AttributeLimitOptions>>().CurrentValue;
+                var otlpSpanLimits = new OtlpSpanLimits(spanLimitOptions, attributeLimitOptions);
+
                 var processor = OtlpTraceExporterHelperExtensions.BuildOtlpExporterProcessor(
                     sp,
                     builderOptions.TracingOptionsInstance.ApplyDefaults(builderOptions.DefaultOptionsInstance),
-                    builderOptions.SdkLimitOptions,
+                    otlpSpanLimits,
                     builderOptions.ExperimentalOptions,
                     processorOptions.ExportProcessorType,
                     processorOptions.BatchExportProcessorOptions,

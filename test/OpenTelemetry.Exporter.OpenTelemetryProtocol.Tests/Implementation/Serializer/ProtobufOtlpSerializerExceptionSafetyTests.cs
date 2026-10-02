@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using System.Diagnostics.Tracing;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using Microsoft.Extensions.Logging;
@@ -11,6 +12,8 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Tests;
+using OpenTelemetry.Trace;
 using OtlpCollectorMetrics = OpenTelemetry.Proto.Collector.Metrics.V1;
 using OtlpLogs = OpenTelemetry.Proto.Logs.V1;
 using OtlpTrace = OpenTelemetry.Proto.Trace.V1;
@@ -21,6 +24,122 @@ public class ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBuff
     : IClassFixture<MaxSizeSerializationBufferFixture>
 {
     private readonly MaxSizeSerializationBufferFixture maxSizeBuffer = maxSizeBuffer;
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void WriteTraceData_BufferRetryOrFailure_DoesNotDoubleCountLimitWarnings(bool failFirst)
+        => RunOnDedicatedThread(() =>
+        {
+            using var source = new ActivitySource(new ActivitySourceOptions(nameof(this.WriteTraceData_BufferRetryOrFailure_DoesNotDoubleCountLimitWarnings)));
+            using var activityListener = CreateActivityListener(source);
+            using var first = source.StartActivity("first", ActivityKind.Internal, default(ActivityContext), links: [new ActivityLink(default)]);
+            using var second = source.StartActivity("second", ActivityKind.Internal, default(ActivityContext), links: [new ActivityLink(default)]);
+            Assert.NotNull(first);
+            Assert.NotNull(second);
+
+            first.SetTag("dropped", 1);
+            first.AddEvent(new ActivityEvent("dropped"));
+            second.SetTag("dropped", 1);
+            second.AddEvent(new ActivityEvent("dropped"));
+
+            var limits = new OtlpSpanLimits(
+                new SpanLimitOptions { AttributeCountLimit = 0, EventCountLimit = 0, LinkCountLimit = 0 },
+                new AttributeLimitOptions());
+            var batch = new Batch<Activity>([first, second], 2);
+            var buffer = ProtobufSerializer.RentBuffer(1024);
+            var initialBufferLength = buffer.Length;
+
+            // The second span's name overflows the buffer after the first span's totals were recorded.
+            second.DisplayName = new string('x', initialBufferLength * 4);
+
+            using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Warning);
+            try
+            {
+                if (failFirst)
+                {
+                    var exception = Record.Exception(() => ProtobufOtlpTraceSerializer.WriteTraceData(
+                        ref buffer, 0, limits, Resource.Empty, batch, maxBufferSize: initialBufferLength));
+                    Assert.True(exception is IndexOutOfRangeException or ArgumentException, $"The first serialization should fail with a buffer-related exception, but got: {exception}.");
+                    Assert.DoesNotContain(listener.CurrentMessages, OtlpTestHelpers.IsSpanLimitsExceededEvent);
+                    second.DisplayName = "second";
+                }
+
+                var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, limits, Resource.Empty, batch);
+                Assert.Equal(!failFirst, buffer.Length > initialBufferLength);
+
+                using var stream = new MemoryStream(buffer, 0, writePosition);
+                var spans = Assert.Single(Assert.Single(OtlpTrace.TracesData.Parser.ParseFrom(stream).ResourceSpans).ScopeSpans).Spans;
+                Assert.Equal(2, spans.Count);
+                Assert.All(spans, span =>
+                {
+                    Assert.Equal(1u, span.DroppedAttributesCount);
+                    Assert.Equal(1u, span.DroppedEventsCount);
+                    Assert.Equal(1u, span.DroppedLinksCount);
+                });
+
+                var warning = Assert.Single(listener.Messages, OtlpTestHelpers.IsSpanLimitsExceededEvent);
+                Assert.NotNull(warning.Payload);
+                Assert.Equal([2L, 2L, 2L, 2L], warning.Payload);
+            }
+            finally
+            {
+                ProtobufSerializer.ReturnBuffer(buffer);
+            }
+        });
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void WriteLogsData_BufferRetryOrFailure_DoesNotDoubleCountLimitWarnings(bool failFirst)
+        => RunOnDedicatedThread(() =>
+        {
+            var logRecords = new List<LogRecord>();
+            using var provider = Sdk.CreateLoggerProviderBuilder().AddInMemoryExporter(logRecords).Build();
+            var logger = provider.GetLogger(nameof(this.WriteLogsData_BufferRetryOrFailure_DoesNotDoubleCountLimitWarnings));
+            LogRecordAttributeList attributes = default;
+            attributes.Add("dropped", 1);
+            logger.EmitLog(new LogRecordData { Body = "first" }, attributes);
+            logger.EmitLog(new LogRecordData { Body = "second" }, attributes);
+            Assert.Equal(2, logRecords.Count);
+
+            var limits = new OtlpLogRecordLimits(new LogRecordLimitOptions { AttributeCountLimit = 0 });
+            var batch = new Batch<LogRecord>([.. logRecords], logRecords.Count);
+            var buffer = ProtobufSerializer.RentBuffer(1024);
+            var initialBufferLength = buffer.Length;
+
+            // The second record's body overflows the buffer after the first record's totals were recorded.
+            logRecords[1].Body = new string('x', initialBufferLength * 4);
+
+            using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Warning);
+            try
+            {
+                if (failFirst)
+                {
+                    var exception = Record.Exception(() => ProtobufOtlpLogSerializer.WriteLogsData(
+                        ref buffer, 0, limits, new(), Resource.Empty, batch, maxBufferSize: initialBufferLength));
+                    Assert.True(exception is IndexOutOfRangeException or ArgumentException, $"The first serialization should fail with a buffer-related exception, but got: {exception}.");
+                    Assert.DoesNotContain(listener.CurrentMessages, OtlpTestHelpers.IsLogRecordLimitsExceededEvent);
+                    logRecords[1].Body = "second";
+                }
+
+                var writePosition = ProtobufOtlpLogSerializer.WriteLogsData(ref buffer, 0, limits, new(), Resource.Empty, batch);
+                Assert.Equal(!failFirst, buffer.Length > initialBufferLength);
+
+                using var stream = new MemoryStream(buffer, 0, writePosition);
+                var records = Assert.Single(Assert.Single(OtlpLogs.LogsData.Parser.ParseFrom(stream).ResourceLogs).ScopeLogs).LogRecords;
+                Assert.Equal(2, records.Count);
+                Assert.All(records, record => Assert.Equal(1u, record.DroppedAttributesCount));
+
+                var warning = Assert.Single(listener.Messages, OtlpTestHelpers.IsLogRecordLimitsExceededEvent);
+                Assert.NotNull(warning.Payload);
+                Assert.Equal([2L, 2L], warning.Payload);
+            }
+            finally
+            {
+                ProtobufSerializer.ReturnBuffer(buffer);
+            }
+        });
 
     [Fact]
     public void WriteTraceData_AfterFailedSerialization_DoesNotCarryStaleBatchIntoNextExport()
@@ -46,7 +165,7 @@ public class ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBuff
             Assert.Throws<IndexOutOfRangeException>(() => ProtobufOtlpTraceSerializer.WriteTraceData(
                 ref failingBuffer,
                 failingBuffer.Length,
-                new SdkLimitOptions(),
+                OtlpTestHelpers.CreateDefaultSpanLimits(),
                 Resource.Empty,
                 batchA,
                 MaxSizeSerializationBufferFixture.MaxBufferSize));
@@ -57,7 +176,7 @@ public class ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBuff
             var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(
                 ref buffer,
                 0,
-                new SdkLimitOptions(),
+                OtlpTestHelpers.CreateDefaultSpanLimits(),
                 Resource.Empty,
                 batchB);
 
@@ -98,7 +217,7 @@ public class ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBuff
             Assert.Throws<IndexOutOfRangeException>(() => ProtobufOtlpLogSerializer.WriteLogsData(
                 ref failingBuffer,
                 failingBuffer.Length,
-                new SdkLimitOptions(),
+                OtlpTestHelpers.CreateDefaultLogRecordLimits(),
                 new ExperimentalOptions(),
                 Resource.Empty,
                 batchA,
@@ -180,7 +299,7 @@ public class ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBuff
                 Assert.Throws<IndexOutOfRangeException>(() => ProtobufOtlpLogSerializer.WriteLogsData(
                     ref failingBuffer,
                     failingBuffer.Length,
-                    new SdkLimitOptions(),
+                    OtlpTestHelpers.CreateDefaultLogRecordLimits(),
                     new ExperimentalOptions(),
                     Resource.Empty,
                     batch,
@@ -224,7 +343,7 @@ public class ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBuff
                 Assert.Throws<InvalidOperationException>(() => ProtobufOtlpLogSerializer.WriteLogsData(
                     ref failingBuffer,
                     0,
-                    new SdkLimitOptions(),
+                    OtlpTestHelpers.CreateDefaultLogRecordLimits(),
                     new ExperimentalOptions(),
                     Resource.Empty,
                     batchA));
@@ -293,7 +412,7 @@ public class ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBuff
         var writePosition = ProtobufOtlpLogSerializer.WriteLogsData(
             ref buffer,
             0,
-            new SdkLimitOptions(),
+            OtlpTestHelpers.CreateDefaultLogRecordLimits(),
             new ExperimentalOptions(),
             Resource.Empty,
             batch);
@@ -339,7 +458,7 @@ public class ProtobufOtlpSerializerExceptionSafetyTests(MaxSizeSerializationBuff
             Assert.Throws<InvalidOperationException>(() => ProtobufOtlpLogSerializer.WriteLogsData(
                 ref buffer,
                 0,
-                new SdkLimitOptions(),
+                OtlpTestHelpers.CreateDefaultLogRecordLimits(),
                 new ExperimentalOptions(),
                 Resource.Empty,
                 batch));
