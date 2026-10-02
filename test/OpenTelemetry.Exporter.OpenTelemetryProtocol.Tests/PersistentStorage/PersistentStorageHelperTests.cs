@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Globalization;
+using System.Runtime.InteropServices;
 using OpenTelemetry.PersistentStorage.FileSystem;
 using OpenTelemetry.Tests;
 
@@ -9,6 +10,9 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.PersistentStorage;
 
 public class PersistentStorageHelperTests
 {
+    internal const long DefaultRetentionMilliseconds = 172_800_000; // 2 days (FileBlobProvider default)
+    internal const long DefaultWriteTimeoutMilliseconds = 60_000; // 1 minute (FileBlobProvider default)
+
     [Theory]
     [InlineData("2024-01-15T143025.1234567Z-abc123.blob", "2024-01-15T14:30:25.1234567Z")]
     [InlineData("2023-12-31T235959.9999999Z-def456.blob", "2023-12-31T23:59:59.9999999Z")]
@@ -246,5 +250,105 @@ public class PersistentStorageHelperTests
         Assert.False(result);
         Assert.True(File.Exists(leaseFile), "The lease file should have been left in place.");
         Assert.False(File.Exists(Path.Combine(root.Path, "user")), "The lease file must not be moved outside the storage directory.");
+    }
+
+    [Fact]
+    public void RemoveExpiredLease_InDirectoryContainingAtSign_RestoresBlobInStorageDirectory()
+    {
+        using var root = new TemporaryDirectory();
+
+        var storage = Path.Combine(root.Path, "user@host", "traces");
+        Directory.CreateDirectory(storage);
+
+        var blobName = "2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdef.blob";
+        var leaseFile = Path.Combine(storage, $"{blobName}@2020-01-01T000500.0000000Z.lock");
+        File.WriteAllText(leaseFile, "lease");
+
+        var result = PersistentStorageHelper.RemoveExpiredLease(DateTime.UtcNow, leaseFile);
+
+        Assert.True(result);
+        Assert.False(File.Exists(leaseFile));
+        Assert.True(File.Exists(Path.Combine(storage, blobName)));
+    }
+
+    [Theory]
+    [InlineData("worldmap.blob")]
+    [InlineData("cache-v2.blob")]
+    [InlineData("2020-01-01T000000.0000000Z-notaguid.blob")]
+    [InlineData("important-notes.tmp")]
+    [InlineData("2020-01-01T000000.0000000Z-notaguid.blob.tmp")]
+    [InlineData("database.lock")]
+    [InlineData("backup@2020-01-01T000000.0000000Z.lock")]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdef.blob@notes.lock")]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdef.blob@.lock")]
+    public void RemoveExpiredBlobs_DoesNotRemoveFilesItDidNotCreate(string fileName)
+    {
+        using var temp = new TemporaryDirectory();
+
+        var foreignFile = CreateFile(temp.Path, fileName);
+
+        PersistentStorageHelper.RemoveExpiredBlobs(temp.Path, DefaultRetentionMilliseconds, DefaultWriteTimeoutMilliseconds);
+
+        Assert.True(File.Exists(foreignFile), $"{fileName} was removed.");
+    }
+
+    [Theory]
+    [InlineData("foreign\\2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdef.blob")]
+    [InlineData("foreign\\2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdef.blob.tmp")]
+    [InlineData("foreign\\2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdef.blob@2020-01-01T000000.0000000Z.lock")]
+    public void RemoveExpiredBlobs_DoesNotRemoveFilesWithBackslashesInTheirNameItDidNotCreate(string fileName)
+    {
+        // A backslash is a valid file name character on non-Windows platforms, so must not be treated as a directory separator.
+        Assert.SkipWhen(RuntimeInformation.IsOSPlatform(OSPlatform.Windows), "Backslash is not a valid file name character on Windows.");
+
+        using var temp = new TemporaryDirectory();
+
+        var foreignFile = CreateFile(temp.Path, fileName);
+
+        PersistentStorageHelper.RemoveExpiredBlobs(temp.Path, DefaultRetentionMilliseconds, DefaultWriteTimeoutMilliseconds);
+
+        Assert.True(File.Exists(foreignFile), $"{fileName} was removed.");
+    }
+
+    [Fact]
+    public void RemoveExpiredBlobs_RemovesItsOwnExpiredFiles()
+    {
+        using var temp = new TemporaryDirectory();
+
+        var expired = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        var recentBlob = CreateFile(temp.Path, PersistentStorageHelper.GetUniqueFileName(".blob"));
+        var expiredBlob = CreateFile(temp.Path, BlobName(expired));
+        var timedOutTemporaryFile = CreateFile(temp.Path, BlobName(expired) + ".tmp");
+
+        var leasedBlob = Path.Combine(temp.Path, BlobName(DateTime.UtcNow));
+        var expiredLease = CreateFile(temp.Path, Path.GetFileName(leasedBlob) + "@2020-01-01T000000.0000000Z.lock");
+
+        var blobWithMalformedLease = Path.Combine(temp.Path, BlobName(DateTime.UtcNow));
+        var malformedLease = CreateFile(temp.Path, Path.GetFileName(blobWithMalformedLease) + "@not-a-timestamp.lock");
+
+        PersistentStorageHelper.RemoveExpiredBlobs(temp.Path, DefaultRetentionMilliseconds, DefaultWriteTimeoutMilliseconds);
+
+        Assert.True(File.Exists(recentBlob));
+        Assert.False(File.Exists(expiredBlob));
+        Assert.False(File.Exists(timedOutTemporaryFile));
+
+        // Expired leases are released.
+        Assert.False(File.Exists(expiredLease));
+        Assert.True(File.Exists(leasedBlob));
+
+        // A lease whose timestamp is not in the format the component uses was not created by it, so is left alone.
+        Assert.True(File.Exists(malformedLease));
+        Assert.False(File.Exists(blobWithMalformedLease));
+    }
+
+    internal static string BlobName(DateTime timestamp)
+        => FormattableString.Invariant($"{timestamp:yyyy-MM-ddTHHmmss.fffffffZ}-{Guid.NewGuid():N}.blob");
+
+    internal static string CreateFile(string directory, string fileName)
+    {
+        var path = Path.Combine(directory, fileName);
+        File.WriteAllText(path, "data");
+        return path;
     }
 }

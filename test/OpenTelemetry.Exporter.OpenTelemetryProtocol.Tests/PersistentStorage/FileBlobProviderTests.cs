@@ -61,6 +61,35 @@ public class FileBlobProviderTests
         Assert.True(blob.TryDelete());
     }
 
+    [Fact]
+    public async Task MaintenanceEvent_DoesNotRemoveFilesItDidNotCreate()
+    {
+        using var temp = new TemporaryDirectory();
+
+        var foreignBlob = PersistentStorageHelperTests.CreateFile(temp.Path, "someones-database.blob");
+        var expiredBlob = PersistentStorageHelperTests.CreateFile(
+            temp.Path,
+            PersistentStorageHelperTests.BlobName(new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc)));
+
+        using var provider = new FileBlobProvider(
+            temp.Path,
+            maintenancePeriodInMilliseconds: 100,
+            retentionPeriodInMilliseconds: PersistentStorageHelperTests.DefaultRetentionMilliseconds,
+            writeTimeoutInMilliseconds: (int)PersistentStorageHelperTests.DefaultWriteTimeoutMilliseconds);
+
+        // The removal of the provider's own expired blob shows that the maintenance timer has run.
+        var timeout = TimeSpan.FromSeconds(30);
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+        while (File.Exists(expiredBlob) && stopwatch.Elapsed < timeout)
+        {
+            await Task.Delay(50, TestContext.Current.CancellationToken);
+        }
+
+        Assert.False(File.Exists(expiredBlob), "The maintenance timer did not run.");
+        Assert.True(File.Exists(foreignBlob), "The maintenance timer removed a file it did not create.");
+    }
+
 #if NET
     [Fact]
     public async Task MaintenanceEvent_RecreatesDeletedDirectoryWithOwnerOnlyPermissions()

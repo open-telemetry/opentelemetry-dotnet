@@ -30,6 +30,11 @@ Notes](../../RELEASENOTES.md).
     a symbolic-link/junction walk.
   * Expired lease-file cleanup now correctly locates the lease timestamp
     delimiter within the file name rather than the whole path.
+  * Storage maintenance no longer deletes or renames files with a `.blob`,
+    `.tmp` or `.lock` extension that the exporter did not create when the
+    retry directory is shared with other files. Only files named the way the
+    exporter names its blobs, and the temporary and lease files derived from
+    them, are now removed or renamed.
   ([#7857](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7857))
 
 ## 1.19.1
