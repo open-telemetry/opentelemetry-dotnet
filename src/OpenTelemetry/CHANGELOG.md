@@ -33,6 +33,12 @@ Notes](../../RELEASENOTES.md).
   console sink through the standard options pipeline. Sinks are off by default.
   ([#7588](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7588))
 
+* Added `OpenTelemetryLoggerOptions.Version` and
+  `OpenTelemetryLoggerOptions.SchemaUrl` options to set an
+  instrumentation library version and schema URL applied to logs emitted via
+  the `Microsoft.Extensions.Logging` `ILogger` integration.
+  ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
+
 ## 1.19.1
 
 Released 2026-Sep-21

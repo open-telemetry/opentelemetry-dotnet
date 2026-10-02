@@ -998,6 +998,66 @@ public sealed class LogRecordTests
     }
 
     [Fact]
+    public void LogRecordInstrumentationScopeVersionAndSchemaUrlTest()
+    {
+        using var loggerFactory = InitializeLoggerFactory(
+            out var exportedItems,
+            configure: o =>
+            {
+                o.Version = "1.0.0";
+                o.SchemaUrl = "https://opentelemetry.io/schemas/1.24.0";
+            });
+
+        var logger = loggerFactory.CreateLogger<LogRecordTests>();
+
+        logger.HelloWorld();
+
+        var logRecord = exportedItems.FirstOrDefault();
+
+        Assert.NotNull(logRecord);
+        Assert.NotNull(logRecord.Logger);
+        Assert.Equal("OpenTelemetry.Logs.Tests.LogRecordTests", logRecord.Logger.Name);
+        Assert.Equal("1.0.0", logRecord.Logger.Version);
+        Assert.Equal("https://opentelemetry.io/schemas/1.24.0", logRecord.Logger.SchemaUrl);
+    }
+
+    [Fact]
+    public void LogRecordInstrumentationScopeVersionAndSchemaUrlAreIsolatedPerProviderTest()
+    {
+        // Two providers configuring different Version/SchemaUrl for the
+        // same ILogger category name must not collide with each other.
+        var categoryName = Utils.GetCurrentMethodName();
+
+        using var loggerFactoryA = InitializeLoggerFactory(
+            out var exportedItemsA,
+            configure: o =>
+            {
+                o.Version = "1.0.0";
+                o.SchemaUrl = "https://opentelemetry.io/schemas/1.0.0";
+            });
+
+        using var loggerFactoryB = InitializeLoggerFactory(
+            out var exportedItemsB,
+            configure: o =>
+            {
+                o.Version = "2.0.0";
+                o.SchemaUrl = "https://opentelemetry.io/schemas/2.0.0";
+            });
+
+        loggerFactoryA.CreateLogger(categoryName).HelloWorld();
+        loggerFactoryB.CreateLogger(categoryName).HelloWorld();
+
+        var logRecordA = Assert.Single(exportedItemsA);
+        var logRecordB = Assert.Single(exportedItemsB);
+
+        Assert.Equal("1.0.0", logRecordA.Logger.Version);
+        Assert.Equal("https://opentelemetry.io/schemas/1.0.0", logRecordA.Logger.SchemaUrl);
+
+        Assert.Equal("2.0.0", logRecordB.Logger.Version);
+        Assert.Equal("https://opentelemetry.io/schemas/2.0.0", logRecordB.Logger.SchemaUrl);
+    }
+
+    [Fact]
     public void LogRecordCategoryNameAliasForInstrumentationScopeTests()
     {
         LogRecord logRecord = new();

@@ -318,6 +318,55 @@ public class ConsoleLogRecordExporterTests
     }
 
     [Fact]
+    public void Export_WithLoggerVersionAndSchemaUrl()
+    {
+        // Arrange
+        var logRecords = new List<LogRecord>();
+        using var loggerFactory = LoggerFactory.Create(builder =>
+        {
+            builder.AddOpenTelemetry(options =>
+            {
+                options.SchemaUrl = "https://opentelemetry.io/schemas/1.24.0";
+                options.Version = "1.0.0";
+                options.AddInMemoryExporter(logRecords);
+            });
+        });
+
+        // Act
+        var logger = loggerFactory.CreateLogger<ConsoleLogRecordExporterTests>();
+        logger.LogInformation("Test message with logger version and schema URL");
+
+        // Assert
+        Assert.Single(logRecords);
+
+        // Act
+        using var exporter = new ConsoleLogRecordExporter(new ConsoleExporterOptions());
+
+        var originalOut = System.Console.Out;
+        using var output = new StringWriter();
+        System.Console.SetOut(output);
+
+        ExportResult actual;
+
+        try
+        {
+            actual = exporter.Export(new Batch<LogRecord>([.. logRecords], logRecords.Count));
+        }
+        finally
+        {
+            System.Console.SetOut(originalOut);
+        }
+
+        // Assert
+        Assert.Equal(ExportResult.Success, actual);
+
+        var consoleOutput = output.ToString();
+        Assert.Contains($"Name: {typeof(ConsoleLogRecordExporterTests).FullName}", consoleOutput, StringComparison.Ordinal);
+        Assert.Contains("Version: 1.0.0", consoleOutput, StringComparison.Ordinal);
+        Assert.Contains("Schema URL: https://opentelemetry.io/schemas/1.24.0", consoleOutput, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Export_WithResource()
     {
         // Arrange
