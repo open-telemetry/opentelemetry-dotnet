@@ -85,14 +85,10 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
         ClientState selected;
         lock (this.gate)
         {
-#if NET
-            ObjectDisposedException.ThrowIf(this.stopped, this);
-#else
             if (this.stopped)
             {
-                throw new ObjectDisposedException(nameof(ReloadableExportClient));
+                throw new InvalidOperationException("The export client has been shut down.");
             }
-#endif
 
             selected = this.current;
             selected.ActiveSends++;
