@@ -25,6 +25,7 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
     private ClientState current;
     private double timeoutMilliseconds;
     private bool stopped;
+    private bool disposed;
 
     private ReloadableExportClient(
         OtlpExporterOptions initialOptions,
@@ -85,6 +86,15 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
         ClientState selected;
         lock (this.gate)
         {
+#if NET
+            ObjectDisposedException.ThrowIf(this.disposed, this);
+#else
+            if (this.disposed)
+            {
+                throw new ObjectDisposedException(nameof(ReloadableExportClient));
+            }
+#endif
+
             if (this.stopped)
             {
                 throw new InvalidOperationException("The export client has been shut down.");
@@ -153,7 +163,20 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
         return result;
     }
 
-    public void Dispose() => this.Shutdown(Timeout.Infinite);
+    public void Dispose()
+    {
+        lock (this.gate)
+        {
+            if (this.disposed)
+            {
+                return;
+            }
+
+            this.disposed = true;
+        }
+
+        this.Shutdown(Timeout.Infinite);
+    }
 
     internal static ReloadableExportClient Create(
         OtlpExporterOptions options,
