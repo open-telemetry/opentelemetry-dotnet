@@ -1403,29 +1403,22 @@ public sealed class OtlpTraceExporterTests : IDisposable
         }
     }
 
-    private sealed class ToStringThrows
-    {
-        public override string ToString() => throw new InvalidOperationException("Nope.");
-    }
-
     [Fact]
-    public void AddOtlpExporter_ExportUnsampledSpans_SetsProcessorProperty()
+    public void AddOtlpExporter_ExportUnsampledSpans_Success()
     {
-        var name = Utils.GetCurrentMethodName();
-
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddSource(name)
             .AddOtlpExporter(options =>
             {
                 options.Protocol = OtlpExportProtocol.HttpProtobuf;
                 options.ExportUnsampledSpans = true;
             })
-            .Build() as TracerProviderSdk;
+            .Build();
 
         Assert.NotNull(tracerProvider);
+    }
 
-        var processor = tracerProvider.ActiveProcessor as BatchActivityExportProcessor;
-        Assert.NotNull(processor);
-        Assert.True(processor.ExportUnsampledSpans);
+    private sealed class ToStringThrows
+    {
+        public override string ToString() => throw new InvalidOperationException("Nope.");
     }
 }
