@@ -194,34 +194,68 @@ public static class OtlpMetricExporterExtensions
 
         OtlpExporterTransmissionHandler? transmissionHandler = null;
         ReloadableExportClient? reloadableClient = null;
-        if (optionsName != null)
+        BaseExporter<Metric>? metricExporter = null;
+        MetricReader? reader = null;
+        try
         {
+            if (optionsName != null)
+            {
 #pragma warning disable CA2000 // Ownership passes to the exporter.
-            reloadableClient = ReloadableExportClient.Create(
-                exporterOptions,
-                serviceProvider,
-                optionsName,
-                OtlpSignalType.Metrics,
-                skipUseOtlpExporterRegistrationCheck,
-                usesHttpClientFactory,
-                configureOnReload);
-            transmissionHandler = exporterOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Metrics, exportClientOverride: reloadableClient);
+                reloadableClient = ReloadableExportClient.Create(
+                    exporterOptions,
+                    serviceProvider,
+                    optionsName,
+                    OtlpSignalType.Metrics,
+                    skipUseOtlpExporterRegistrationCheck,
+                    usesHttpClientFactory,
+                    configureOnReload);
+                transmissionHandler = exporterOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Metrics, exportClientOverride: reloadableClient);
 #pragma warning restore CA2000 // Ownership passes to the exporter.
-        }
+            }
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
-        BaseExporter<Metric> metricExporter = reloadableClient is null
-            ? new OtlpMetricExporter(exporterOptions, experimentalOptions)
-            : new ReloadableOtlpMetricExporter(exporterOptions, experimentalOptions, transmissionHandler!, reloadableClient);
+            metricExporter = reloadableClient is null
+                ? new OtlpMetricExporter(exporterOptions, experimentalOptions)
+                : new ReloadableOtlpMetricExporter(exporterOptions, experimentalOptions, transmissionHandler!, reloadableClient);
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
-        if (configureExporterInstance != null)
-        {
-            metricExporter = configureExporterInstance(metricExporter);
-        }
+            if (configureExporterInstance != null)
+            {
+                metricExporter = configureExporterInstance(metricExporter);
+            }
 
-        return PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(
-            metricExporter,
-            metricReaderOptions);
+            reader = PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(
+                metricExporter,
+                metricReaderOptions);
+            return reader;
+        }
+        finally
+        {
+            if (reader is null && reloadableClient != null)
+            {
+                try
+                {
+                    try
+                    {
+                        transmissionHandler?.Shutdown(Timeout.Infinite);
+                    }
+                    finally
+                    {
+                        transmissionHandler?.Dispose();
+                    }
+                }
+                finally
+                {
+                    try
+                    {
+                        metricExporter?.Dispose();
+                    }
+                    finally
+                    {
+                        reloadableClient.Dispose();
+                    }
+                }
+            }
+        }
     }
 }

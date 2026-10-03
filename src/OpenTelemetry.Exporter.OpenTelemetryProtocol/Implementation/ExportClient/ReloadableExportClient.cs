@@ -44,30 +44,38 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
         this.protocol = initialOptions.Protocol;
         this.configureOnReload = configureOnReload;
         this.current = new(initialClient, ownsInitialHttpClient);
-        this.timeoutMilliseconds = GetTimeout(initialOptions, initialClient);
-        this.optionsMonitor = serviceProvider.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>();
-
-        if (useOtlpExporter)
+        try
         {
-            this.builderOptionsMonitor = serviceProvider.GetRequiredService<IOptionsMonitor<OtlpExporterBuilderOptions>>();
-            this.builderOptionsCache = serviceProvider.GetRequiredService<IOptionsMonitorCache<OtlpExporterBuilderOptions>>();
-            this.builderOptionsSubscription = this.builderOptionsMonitor.OnChange((_, name) =>
+            this.timeoutMilliseconds = GetTimeout(initialOptions, initialClient);
+            this.optionsMonitor = serviceProvider.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>();
+
+            if (useOtlpExporter)
+            {
+                this.builderOptionsMonitor = serviceProvider.GetRequiredService<IOptionsMonitor<OtlpExporterBuilderOptions>>();
+                this.builderOptionsCache = serviceProvider.GetRequiredService<IOptionsMonitorCache<OtlpExporterBuilderOptions>>();
+                this.builderOptionsSubscription = this.builderOptionsMonitor.OnChange((_, name) =>
+                {
+                    if (string.Equals(name, this.optionsName, StringComparison.Ordinal))
+                    {
+                        this.Reload();
+                    }
+                });
+            }
+
+            this.optionsSubscription = this.optionsMonitor.OnChange((_, name) =>
             {
                 if (string.Equals(name, this.optionsName, StringComparison.Ordinal))
                 {
+                    this.builderOptionsCache?.TryRemove(this.optionsName);
                     this.Reload();
                 }
             });
         }
-
-        this.optionsSubscription = this.optionsMonitor.OnChange((_, name) =>
+        catch
         {
-            if (string.Equals(name, this.optionsName, StringComparison.Ordinal))
-            {
-                this.builderOptionsCache?.TryRemove(this.optionsName);
-                this.Reload();
-            }
-        });
+            this.Dispose();
+            throw;
+        }
     }
 
     internal double TimeoutMilliseconds => Volatile.Read(ref this.timeoutMilliseconds);

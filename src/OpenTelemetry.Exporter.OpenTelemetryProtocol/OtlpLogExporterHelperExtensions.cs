@@ -311,38 +311,43 @@ public static class OtlpLogExporterHelperExtensions
         var usesHttpClientFactory = exporterOptions.TryEnableIHttpClientFactoryIntegration(
             serviceProvider,
             OtlpExporterHttpClientNames.LogExporter);
-        if (optionsName != null)
-        {
-#pragma warning disable CA2000 // Ownership passes to the exporter.
-            var client = ReloadableExportClient.Create(
-                exporterOptions,
-                serviceProvider,
-                optionsName,
-                OtlpSignalType.Logs,
-                skipUseOtlpExporterRegistrationCheck,
-                usesHttpClientFactory,
-                configureOnReload);
-            transmissionHandler = exporterOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Logs, exportClientOverride: client);
-#pragma warning restore CA2000 // Ownership passes to the exporter.
-        }
-        else if (usesHttpClientFactory)
-        {
-            transmissionHandler = exporterOptions.GetExportTransmissionHandler(
-                experimentalOptions,
-                OtlpSignalType.Logs,
-                deferExportClientCreation: true);
-        }
-
-#pragma warning disable CA2000 // Dispose objects before losing scope
-        BaseExporter<LogRecord> otlpExporter = new OtlpLogExporter(
-            exporterOptions,
-            sdkLimitOptions,
-            experimentalOptions,
-            transmissionHandler);
-#pragma warning restore CA2000 // Dispose objects before losing scope
-
+        ReloadableExportClient? reloadableClient = null;
+        BaseExporter<LogRecord>? otlpExporter = null;
+        BaseProcessor<LogRecord>? processor = null;
         try
         {
+            if (optionsName != null)
+            {
+#pragma warning disable CA2000 // Ownership passes to the exporter.
+                reloadableClient = ReloadableExportClient.Create(
+                    exporterOptions,
+                    serviceProvider,
+                    optionsName,
+                    OtlpSignalType.Logs,
+                    skipUseOtlpExporterRegistrationCheck,
+                    usesHttpClientFactory,
+                    configureOnReload);
+                transmissionHandler = exporterOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Logs, exportClientOverride: reloadableClient);
+#pragma warning restore CA2000 // Ownership passes to the exporter.
+            }
+            else if (usesHttpClientFactory)
+            {
+#pragma warning disable CA2000 // Owned by the exporter; finally disposes on construction failure.
+                transmissionHandler = exporterOptions.GetExportTransmissionHandler(
+                    experimentalOptions,
+                    OtlpSignalType.Logs,
+                    deferExportClientCreation: true);
+#pragma warning restore CA2000 // Owned by the exporter; finally disposes on construction failure.
+            }
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+            otlpExporter = new OtlpLogExporter(
+                exporterOptions,
+                sdkLimitOptions,
+                experimentalOptions,
+                transmissionHandler);
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
             if (configureExporterInstance != null)
             {
                 otlpExporter = configureExporterInstance(otlpExporter);
@@ -354,25 +359,53 @@ public static class OtlpLogExporterHelperExtensions
 
             if (exportProcessorType == ExportProcessorType.Simple)
             {
-                return new SimpleLogRecordExportProcessor(otlpExporter);
+                processor = new SimpleLogRecordExportProcessor(otlpExporter);
             }
             else
             {
                 var (maxQueueSize, scheduledDelayMilliseconds, exporterTimeoutMilliseconds, maxExportBatchSize)
                     = GetBatchExportProcessorOptions(exporterOptions, processorOptions);
 
-                return new BatchLogRecordExportProcessor(
+                processor = new BatchLogRecordExportProcessor(
                     otlpExporter,
                     maxQueueSize,
                     scheduledDelayMilliseconds,
                     exporterTimeoutMilliseconds,
                     maxExportBatchSize);
             }
+
+            return processor;
         }
-        catch
+        finally
         {
-            otlpExporter.Dispose();
-            throw;
+            if (processor is null)
+            {
+                try
+                {
+                    try
+                    {
+                        if (reloadableClient != null)
+                        {
+                            transmissionHandler?.Shutdown(Timeout.Infinite);
+                        }
+                    }
+                    finally
+                    {
+                        transmissionHandler?.Dispose();
+                    }
+                }
+                finally
+                {
+                    try
+                    {
+                        otlpExporter?.Dispose();
+                    }
+                    finally
+                    {
+                        reloadableClient?.Dispose();
+                    }
+                }
+            }
         }
     }
 

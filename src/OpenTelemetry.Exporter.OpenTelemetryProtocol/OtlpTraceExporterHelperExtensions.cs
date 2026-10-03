@@ -151,34 +151,36 @@ public static class OtlpTraceExporterHelperExtensions
 
         OtlpExporterTransmissionHandler? transmissionHandler = null;
         ReloadableExportClient? reloadableClient = null;
-        if (optionsName != null)
-        {
-#pragma warning disable CA2000 // Ownership passes to the exporter.
-            reloadableClient = ReloadableExportClient.Create(
-                exporterOptions,
-                serviceProvider,
-                optionsName,
-                OtlpSignalType.Traces,
-                skipUseOtlpExporterRegistrationCheck,
-                usesHttpClientFactory);
-            transmissionHandler = exporterOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Traces, exportClientOverride: reloadableClient);
-#pragma warning restore CA2000 // Ownership passes to the exporter.
-        }
-
-#pragma warning disable CA2000 // Dispose objects before losing scope
-        BaseExporter<Activity> otlpExporter = reloadableClient is null
-            ? new OtlpTraceExporter(exporterOptions, sdkLimitOptions, experimentalOptions)
-            : new ReloadableOtlpTraceExporter(exporterOptions, sdkLimitOptions, experimentalOptions, transmissionHandler!, reloadableClient);
-#pragma warning restore CA2000 // Dispose objects before losing scope
-
+        BaseExporter<Activity>? otlpExporter = null;
+        BaseProcessor<Activity>? processor = null;
         try
         {
+            if (optionsName != null)
+            {
+#pragma warning disable CA2000 // Ownership passes to the exporter.
+                reloadableClient = ReloadableExportClient.Create(
+                    exporterOptions,
+                    serviceProvider,
+                    optionsName,
+                    OtlpSignalType.Traces,
+                    skipUseOtlpExporterRegistrationCheck,
+                    usesHttpClientFactory);
+                transmissionHandler = exporterOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Traces, exportClientOverride: reloadableClient);
+#pragma warning restore CA2000 // Ownership passes to the exporter.
+            }
+
+#pragma warning disable CA2000 // Dispose objects before losing scope
+            otlpExporter = reloadableClient is null
+                ? new OtlpTraceExporter(exporterOptions, sdkLimitOptions, experimentalOptions)
+                : new ReloadableOtlpTraceExporter(exporterOptions, sdkLimitOptions, experimentalOptions, transmissionHandler!, reloadableClient);
+#pragma warning restore CA2000 // Dispose objects before losing scope
+
             if (configureExporterInstance != null)
             {
                 otlpExporter = configureExporterInstance(otlpExporter);
             }
 
-            return exportProcessorType == ExportProcessorType.Simple
+            processor = exportProcessorType == ExportProcessorType.Simple
                 ? new SimpleActivityExportProcessor(otlpExporter)
                 : new BatchActivityExportProcessor(
                     otlpExporter,
@@ -186,11 +188,38 @@ public static class OtlpTraceExporterHelperExtensions
                     batchExportProcessorOptions.ScheduledDelayMilliseconds,
                     batchExportProcessorOptions.ExporterTimeoutMilliseconds,
                     batchExportProcessorOptions.MaxExportBatchSize);
+            return processor;
         }
-        catch
+        finally
         {
-            otlpExporter.Dispose();
-            throw;
+            if (processor is null)
+            {
+                try
+                {
+                    if (reloadableClient != null)
+                    {
+                        try
+                        {
+                            transmissionHandler?.Shutdown(Timeout.Infinite);
+                        }
+                        finally
+                        {
+                            transmissionHandler?.Dispose();
+                        }
+                    }
+                }
+                finally
+                {
+                    try
+                    {
+                        otlpExporter?.Dispose();
+                    }
+                    finally
+                    {
+                        reloadableClient?.Dispose();
+                    }
+                }
+            }
         }
     }
 }
