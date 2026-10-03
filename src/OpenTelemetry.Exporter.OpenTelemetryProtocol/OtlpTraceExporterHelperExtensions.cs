@@ -154,14 +154,23 @@ public static class OtlpTraceExporterHelperExtensions
                 otlpExporter = configureExporterInstance(otlpExporter);
             }
 
-            return exportProcessorType == ExportProcessorType.Simple
-                ? new SimpleActivityExportProcessor(otlpExporter)
-                : new BatchActivityExportProcessor(
-                    otlpExporter,
-                    batchExportProcessorOptions.MaxQueueSize,
-                    batchExportProcessorOptions.ScheduledDelayMilliseconds,
-                    batchExportProcessorOptions.ExporterTimeoutMilliseconds,
-                    batchExportProcessorOptions.MaxExportBatchSize);
+            if (exportProcessorType == ExportProcessorType.Simple)
+            {
+                return new SimpleActivityExportProcessor(otlpExporter)
+                {
+                    ExportUnsampledSpans = exporterOptions.ExportUnsampledSpans,
+                };
+            }
+
+            return new BatchActivityExportProcessor(
+                otlpExporter,
+                batchExportProcessorOptions.MaxQueueSize,
+                batchExportProcessorOptions.ScheduledDelayMilliseconds,
+                batchExportProcessorOptions.ExporterTimeoutMilliseconds,
+                batchExportProcessorOptions.MaxExportBatchSize)
+            {
+                ExportUnsampledSpans = exporterOptions.ExportUnsampledSpans,
+            };
         }
         catch
         {

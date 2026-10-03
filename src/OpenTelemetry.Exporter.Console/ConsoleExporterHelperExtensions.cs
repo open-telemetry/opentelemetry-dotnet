@@ -52,7 +52,10 @@ public static class ConsoleExporterHelperExtensions
         {
             var options = sp.GetRequiredService<IOptionsMonitor<ConsoleExporterOptions>>().Get(name);
 
-            return new SimpleActivityExportProcessor(new ConsoleActivityExporter(options));
+            return new SimpleActivityExportProcessor(new ConsoleActivityExporter(options))
+            {
+                ExportUnsampledSpans = options.ExportUnsampledSpans,
+            };
         });
     }
 }

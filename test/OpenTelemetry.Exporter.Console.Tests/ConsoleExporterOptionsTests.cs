@@ -13,6 +13,7 @@ public class ConsoleExporterOptionsTests
 
         // Assert
         Assert.Equal(ConsoleExporterOutputTargets.Console, options.Targets);
+        Assert.False(options.ExportUnsampledSpans);
     }
 
     [Fact]

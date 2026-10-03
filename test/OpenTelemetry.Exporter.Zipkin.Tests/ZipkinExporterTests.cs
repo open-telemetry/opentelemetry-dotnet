@@ -204,6 +204,13 @@ public sealed class ZipkinExporterTests : IDisposable
     }
 
     [Fact]
+    public void ExportUnsampledSpans_DefaultsToFalse()
+    {
+        var options = new ZipkinExporterOptions();
+        Assert.False(options.ExportUnsampledSpans);
+    }
+
+    [Fact]
     public void UserHttpFactoryCalled()
     {
         ZipkinExporterOptions options = new();
@@ -464,6 +471,16 @@ public sealed class ZipkinExporterTests : IDisposable
                 + @"""otel.library.name"":""ZipkinActivitySource"""
             + "}}]",
             Responses[requestId]);
+    }
+
+    [Fact]
+    public void AddZipkinExporter_ExportUnsampledSpans_Success()
+    {
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddZipkinExporter(options => options.ExportUnsampledSpans = true)
+            .Build();
+
+        Assert.NotNull(tracerProvider);
     }
 
     private sealed class OversizedResponseHandler(long totalBytes) : HttpMessageHandler

@@ -263,6 +263,13 @@ public class OtlpExporterOptions : IOtlpExporterOptions
     }
 
     /// <summary>
+    /// Gets or sets a value indicating whether spans that are unsampled but recording
+    /// should be exported. The default value is <see langword="false"/>.
+    /// </summary>
+    /// <remarks>Note: This only applies when exporting traces.</remarks>
+    public bool ExportUnsampledSpans { get; set; }
+
+    /// <summary>
     /// Gets or sets the BatchExportProcessor options. Ignored unless ExportProcessorType is Batch.
     /// </summary>
     /// <remarks>Note: This only applies when exporting traces.</remarks>

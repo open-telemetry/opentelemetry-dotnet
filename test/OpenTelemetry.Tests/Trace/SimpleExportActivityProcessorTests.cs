@@ -108,4 +108,23 @@ public class SimpleExportActivityProcessorTests
         processor.OnEnd(activity);
         Assert.Empty(exportedItems);
     }
+
+    [Fact]
+    public void CheckExportForRecordingButNotSampledActivityWhenExportUnsampledSpansIsTrue()
+    {
+        var exportedItems = new List<Activity>();
+        using var exporter = new InMemoryExporter<Activity>(exportedItems);
+        using var processor = new SimpleActivityExportProcessor(exporter)
+        {
+            ExportUnsampledSpans = true,
+        };
+
+        using var activity = new Activity("start")
+        {
+            ActivityTraceFlags = ActivityTraceFlags.None,
+        };
+
+        processor.OnEnd(activity);
+        Assert.Single(exportedItems);
+    }
 }

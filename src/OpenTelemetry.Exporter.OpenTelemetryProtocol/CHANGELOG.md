@@ -22,6 +22,10 @@ Notes](../../RELEASENOTES.md).
 * Avoid logging malformed HTTP request headers in the exporter's diagnostic log.
   ([#7858](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7858))
 
+* Added `ExportUnsampledSpans` to `OtlpExporterOptions` to optionally allow
+  exporting spans that are recorded but not sampled.
+  ([#7876](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7876))
+
 ## 1.19.1
 
 Released 2026-Sep-21

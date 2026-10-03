@@ -33,6 +33,11 @@ Notes](../../RELEASENOTES.md).
   console sink through the standard options pipeline. Sinks are off by default.
   ([#7588](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7588))
 
+* Added `ExportUnsampledSpans` to `ActivityExportProcessorOptions`,
+  `BatchActivityExportProcessor`, and `SimpleActivityExportProcessor` to
+  optionally allow exporting spans that are recorded but not sampled.
+  ([#7876](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7876))
+
 ## 1.19.1
 
 Released 2026-Sep-21

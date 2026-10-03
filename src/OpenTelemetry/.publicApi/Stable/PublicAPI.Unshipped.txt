@@ -1,3 +1,5 @@
+OpenTelemetry.BatchActivityExportProcessor.ExportUnsampledSpans.get -> bool
+OpenTelemetry.BatchActivityExportProcessor.ExportUnsampledSpans.set -> void
 OpenTelemetry.SelfDiagnostics.EnvironmentVariableLogMode
 OpenTelemetry.SelfDiagnostics.EnvironmentVariableLogMode.AllValues = 3 -> OpenTelemetry.SelfDiagnostics.EnvironmentVariableLogMode
 OpenTelemetry.SelfDiagnostics.EnvironmentVariableLogMode.KnownSafeValues = 2 -> OpenTelemetry.SelfDiagnostics.EnvironmentVariableLogMode
@@ -19,5 +21,9 @@ OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.MaxRetainedFiles.set -> voi
 OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.MinimumLevel.get -> Microsoft.Extensions.Logging.LogLevel
 OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.MinimumLevel.set -> void
 OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.SelfDiagnosticsOptions() -> void
+OpenTelemetry.SimpleActivityExportProcessor.ExportUnsampledSpans.get -> bool
+OpenTelemetry.SimpleActivityExportProcessor.ExportUnsampledSpans.set -> void
+OpenTelemetry.Trace.ActivityExportProcessorOptions.ExportUnsampledSpans.get -> bool
+OpenTelemetry.Trace.ActivityExportProcessorOptions.ExportUnsampledSpans.set -> void
 static OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.GetDefaultLogDirectory() -> string?
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.ConfigureSampler(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, System.Func<System.IServiceProvider!, OpenTelemetry.Trace.Sampler!, OpenTelemetry.Trace.Sampler!>! configureSampler) -> OpenTelemetry.Trace.TracerProviderBuilder!

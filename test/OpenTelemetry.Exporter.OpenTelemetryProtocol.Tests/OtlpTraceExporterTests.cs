@@ -1403,6 +1403,20 @@ public sealed class OtlpTraceExporterTests : IDisposable
         }
     }
 
+    [Fact]
+    public void AddOtlpExporter_ExportUnsampledSpans_Success()
+    {
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddOtlpExporter(options =>
+            {
+                options.Protocol = OtlpExportProtocol.HttpProtobuf;
+                options.ExportUnsampledSpans = true;
+            })
+            .Build();
+
+        Assert.NotNull(tracerProvider);
+    }
+
     private sealed class ToStringThrows
     {
         public override string ToString() => throw new InvalidOperationException("Nope.");
