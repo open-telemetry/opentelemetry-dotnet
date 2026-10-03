@@ -22,6 +22,7 @@ implementation.
     * [Exporter configuration](#exporter-configuration)
     * [Attribute limits](#attribute-limits)
   * [Configure HttpClient](#configure-httpclient)
+    * [HttpClient logging](#httpclient-logging)
 * [Experimental features](#experimental-features)
 * [Troubleshooting](#troubleshooting)
 
@@ -467,6 +468,11 @@ or reader
   | `OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE`          | Path to client certificate file (PEM) |
   | `OTEL_EXPORTER_OTLP_CLIENT_KEY`                  | Path to client private key file (PEM) |
 
+> [!NOTE]
+> Custom TLS certificate configuration (both custom CA trust via
+> `OTEL_EXPORTER_OTLP_CERTIFICATE` and mTLS) is not supported on
+> browser-based platforms.
+
 * Logs:
 
   The following environment variables can be used to override the default values
@@ -639,6 +645,27 @@ services.AddHttpClient(
 > methods to ensure that their custom logic is executed for all HTTP requests
 > made by the OTLP exporter.
 
+### HttpClient logging
+
+OTLP exporter registration adds default `Warning` logging filters for its named
+HTTP client categories. To restore informational request logs in applications
+using standard .NET logging configuration, add the following to `appsettings.json`:
+
+```json
+{
+  "Logging": {
+    "LogLevel": {
+      "System.Net.Http.HttpClient.OtlpTraceExporter": "Information",
+      "System.Net.Http.HttpClient.OtlpMetricExporter": "Information",
+      "System.Net.Http.HttpClient.OtlpLogExporter": "Information"
+    }
+  }
+}
+```
+
+Use these specific categories; a broader setting such as
+`System.Net.Http.HttpClient` does not override the exporter defaults.
+
 ## Experimental features
 
 The following features are exposed experimentally in the OTLP Exporter. Features
@@ -681,6 +708,9 @@ want to solicit feedback from the community.
       details](https://github.com/open-telemetry/opentelemetry-dotnet-contrib/tree/main/src/OpenTelemetry.PersistentStorage.FileSystem#file-details).
 
       Added in **TBD** (Unreleased).
+
+> [!NOTE]
+> Disk retry is not supported on browser-based platforms.
 
 * Logs
 

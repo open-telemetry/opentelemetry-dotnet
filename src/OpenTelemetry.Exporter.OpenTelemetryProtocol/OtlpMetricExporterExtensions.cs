@@ -188,7 +188,9 @@ public static class OtlpMetricExporterExtensions
             serviceProvider.EnsureNoUseOtlpExporterRegistrations();
         }
 
-        var usesHttpClientFactory = exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpMetricExporter");
+        var usesHttpClientFactory = exporterOptions.TryEnableIHttpClientFactoryIntegration(
+            serviceProvider,
+            OtlpExporterHttpClientNames.MetricExporter);
 
         OtlpExporterTransmissionHandler? transmissionHandler = null;
         ReloadableExportClient? reloadableClient = null;

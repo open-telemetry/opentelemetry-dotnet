@@ -308,7 +308,9 @@ public static class OtlpLogExporterHelperExtensions
         }
 
         OtlpExporterTransmissionHandler? transmissionHandler = null;
-        var usesHttpClientFactory = exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpLogExporter");
+        var usesHttpClientFactory = exporterOptions.TryEnableIHttpClientFactoryIntegration(
+            serviceProvider,
+            OtlpExporterHttpClientNames.LogExporter);
         if (optionsName != null)
         {
 #pragma warning disable CA2000 // Ownership passes to the exporter.

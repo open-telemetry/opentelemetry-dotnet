@@ -145,7 +145,9 @@ public static class OtlpTraceExporterHelperExtensions
             serviceProvider.EnsureNoUseOtlpExporterRegistrations();
         }
 
-        var usesHttpClientFactory = exporterOptions.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpTraceExporter");
+        var usesHttpClientFactory = exporterOptions.TryEnableIHttpClientFactoryIntegration(
+            serviceProvider,
+            OtlpExporterHttpClientNames.TraceExporter);
 
         OtlpExporterTransmissionHandler? transmissionHandler = null;
         ReloadableExportClient? reloadableClient = null;

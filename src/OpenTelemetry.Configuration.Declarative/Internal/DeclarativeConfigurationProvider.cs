@@ -41,4 +41,39 @@ internal sealed class DeclarativeConfigurationProvider(DeclarativeConfigurationD
             OpenTelemetryDeclarativeConfigurationEventSource.Log.SdkDisabledDetected(this.FilePath.DisplayPath);
         }
     }
+
+    /// <inheritdoc/>
+    public override bool TryGet(string key, out string? value)
+    {
+        if (this.Data.TryGetValue(key, out value))
+        {
+            return true; // the document supplies it
+        }
+
+        if (StrictModeKeyScope.IsInScope(key))
+        {
+            value = null; // earlier sources are not consulted for this key
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <inheritdoc/>
+    public override IEnumerable<string> GetChildKeys(IEnumerable<string> earlierKeys, string? parentPath)
+    {
+        // Hide earlier sources' in-scope keys from enumeration, so GetChildren(), AsEnumerable()
+        // and GetSection(...).Exists() agree with TryGet. The document's own keys are added by
+        // the base implementation.
+        if (parentPath is null)
+        {
+            earlierKeys = earlierKeys.Where(key => !StrictModeKeyScope.IsInScope(key));
+        }
+        else if (StrictModeKeyScope.IsInScope(parentPath))
+        {
+            earlierKeys = [];
+        }
+
+        return base.GetChildKeys(earlierKeys, parentPath);
+    }
 }

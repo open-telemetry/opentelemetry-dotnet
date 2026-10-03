@@ -217,7 +217,7 @@ public abstract class BatchExportProcessor<T> : BaseExportProcessor<T>
     {
 #if NET
         // Use task-based worker for browser platform where threading may be limited
-        if (ThreadingHelper.IsThreadingDisabled())
+        if (!ThreadingHelper.IsThreadingEnabled())
         {
             return new BatchExportTaskWorker<T>(
                 this.circularBuffer,

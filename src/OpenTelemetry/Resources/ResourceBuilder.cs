@@ -136,22 +136,37 @@ public class ResourceBuilder
     {
         var defaultServiceName = "unknown_service";
 
-        try
+        string? processName = GetProcessName();
+
+        if (processName is { Length: > 0 })
         {
-            var processName = Process.GetCurrentProcess().ProcessName;
-            if (!string.IsNullOrWhiteSpace(processName))
-            {
-                defaultServiceName = $"{defaultServiceName}:{processName}";
-            }
-        }
-        catch
-        {
-            // GetCurrentProcess can throw PlatformNotSupportedException
+            defaultServiceName = $"{defaultServiceName}:{processName}";
         }
 
         return new Resource(
             [new(ResourceSemanticConventions.AttributeServiceName, defaultServiceName)],
             SchemaUrls.Get(SemanticConventionsVersion.Current));
+
+        static string? GetProcessName()
+        {
+#if NET
+            if (OperatingSystem.IsBrowser())
+            {
+                return null;
+            }
+#endif
+
+            try
+            {
+                using var process = Process.GetCurrentProcess();
+                return process.ProcessName;
+            }
+            catch
+            {
+                // GetCurrentProcess can throw PlatformNotSupportedException
+                return null;
+            }
+        }
     }
 
     internal sealed class WrapperResourceDetector : IResourceDetector

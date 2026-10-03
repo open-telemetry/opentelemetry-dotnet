@@ -3,7 +3,7 @@ services:
   # OTEL Collector to receive logs, metrics and traces from the application
   # plus a UI to query logs, traces and metrics and visualize them.
   otel-lgtm:
-    image: grafana/otel-lgtm:0.33.1@sha256:d6c52678ab5b7144f27ae569fd778608121c0f4a10eb411983750a0d67c1fbe3
+    image: grafana/otel-lgtm:0.34.0@sha256:b966ea107831d526d9eb8fe4d2d86c9e5731392fad9dce8296bcf2072031f07c
 
     ports:
       - 3000:3000 # UI

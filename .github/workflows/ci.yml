@@ -121,7 +121,6 @@ jobs:
       project-name: 'OpenTelemetry.slnx'
       code-cov-name: 'Solution'
       trigger: ${{ github.event_name }}
-      install-wasm-tools: true
 
   build-test-project-stable:
     needs: detect-changes
@@ -272,6 +271,7 @@ jobs:
     if: |
       contains(needs.detect-changes.outputs.changes, 'code') ||
       contains(needs.detect-changes.outputs.changes, 'build') ||
+      contains(needs.detect-changes.outputs.changes, 'pwsh') ||
       contains(needs.detect-changes.outputs.changes, 'shared')
     strategy:
       fail-fast: ${{ github.event_name == 'merge_group' }}

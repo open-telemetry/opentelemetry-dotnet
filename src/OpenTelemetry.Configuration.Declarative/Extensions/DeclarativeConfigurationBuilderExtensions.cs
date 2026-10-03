@@ -16,8 +16,10 @@ public static class DeclarativeConfigurationBuilderExtensions
     /// Adds the declarative YAML source, reading the file path from the <c>OTEL_CONFIG_FILE</c> environment variable.
     /// </summary>
     /// <remarks>
-    /// Appends the source after existing ones (YAML overrides earlier sources; sources added
-    /// later override YAML). No-op when <c>OTEL_CONFIG_FILE</c> is unset, empty, or whitespace,
+    /// The configuration file is the only source of OTel settings once registered. Keys set in
+    /// sources registered before it are ignored. Values from process environment variables can
+    /// be imported explicitly through environment variable substitution. <c>OTEL_DOTNET_*</c>
+    /// keys are unaffected. No-op when <c>OTEL_CONFIG_FILE</c> is unset, empty, or whitespace,
     /// or when a declarative configuration file is already registered. The first file wins.
     /// </remarks>
     /// <param name="builder">The <see cref="IConfigurationBuilder"/> to add to.</param>

@@ -1,0 +1,1 @@
+static OpenTelemetry.Trace.TracerProviderBuilderExtensions.ConfigureSampler(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, System.Func<System.IServiceProvider!, OpenTelemetry.Trace.Sampler!, OpenTelemetry.Trace.Sampler!>! configureSampler) -> OpenTelemetry.Trace.TracerProviderBuilder!
