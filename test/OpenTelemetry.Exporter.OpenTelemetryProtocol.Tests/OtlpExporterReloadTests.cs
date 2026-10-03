@@ -108,10 +108,10 @@ public sealed class OtlpExporterReloadTests
 
         try
         {
-            Assert.True(entered.Wait(TimeSpan.FromSeconds(10)));
+            Assert.True(entered.Wait(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken));
             configuration["Endpoint"] = "http://localhost:4318/second";
-            var reload = Task.Run(configuration.Reload);
-            Assert.Same(reload, await Task.WhenAny(reload, Task.Delay(TimeSpan.FromSeconds(10))).ConfigureAwait(true));
+            var reload = Task.Run(configuration.Reload, TestContext.Current.CancellationToken);
+            Assert.Same(reload, await Task.WhenAny(reload, Task.Delay(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken)).ConfigureAwait(true));
             await reload.ConfigureAwait(true);
         }
         finally
