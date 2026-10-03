@@ -549,4 +549,21 @@ public sealed class ZipkinExporterTests : IDisposable
             public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
         }
     }
+
+    [Fact]
+    public void AddZipkinExporter_ExportUnsampledSpans_SetsProcessorProperty()
+    {
+        var name = Utils.GetCurrentMethodName();
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(name)
+            .AddZipkinExporter(options => options.ExportUnsampledSpans = true)
+            .Build() as TracerProviderSdk;
+
+        Assert.NotNull(tracerProvider);
+
+        var processor = tracerProvider.ActiveProcessor as BatchActivityExportProcessor;
+        Assert.NotNull(processor);
+        Assert.True(processor.ExportUnsampledSpans);
+    }
 }

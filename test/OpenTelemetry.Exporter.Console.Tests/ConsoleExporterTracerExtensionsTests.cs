@@ -126,4 +126,26 @@ public class ConsoleExporterTracerExtensionsTests
         TracerProviderBuilder? builder = null;
         Assert.Throws<ArgumentNullException>(() => builder!.AddConsoleExporter());
     }
+
+    [Fact]
+    public void AddConsoleExporter_WithExportUnsampledSpans_Success()
+    {
+        // Arrange
+        var name = Utils.GetCurrentMethodName();
+        using var activitySource = new ActivitySource(name);
+
+        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource(name)
+            .AddConsoleExporter(options => options.ExportUnsampledSpans = true)
+            .Build();
+
+        // Act
+        using (var activity = activitySource.StartActivity("TestActivity"))
+        {
+            activity?.SetTag("test.key", "test.value");
+        }
+
+        // Assert
+        Assert.NotNull(tracerProvider);
+    }
 }
