@@ -9,7 +9,7 @@ Notes](../../RELEASENOTES.md).
 * Added support for escaping `*`, `?`, and `\` using backslashes in
   `TracerProviderBuilder.AddSource` and `MeterProviderBuilder.AddMeter` wildcard
   patterns.
-  ([#6763](https://github.com/open-telemetry/opentelemetry-dotnet/issues/6763))
+  ([#7877](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7877))
 
 * Fixed `SuppressInstrumentationScope` reference counts leaking between
   inherited asynchronous execution contexts.
