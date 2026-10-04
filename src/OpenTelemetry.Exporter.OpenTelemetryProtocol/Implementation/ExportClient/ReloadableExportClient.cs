@@ -9,8 +9,8 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 // Keeps a client alive until every send that selected it has finished.
 internal sealed class ReloadableExportClient : IExportClient, IDisposable
 {
-    private readonly object stateLock = new();
-    private readonly object reloadGate = new();
+    private readonly Lock stateLock = new();
+    private readonly Lock reloadGate = new();
     private readonly IServiceProvider serviceProvider;
     private readonly IOptionsMonitor<OtlpExporterOptions> optionsMonitor;
     private readonly IOptionsMonitor<OtlpExporterBuilderOptions>? builderOptionsMonitor;
