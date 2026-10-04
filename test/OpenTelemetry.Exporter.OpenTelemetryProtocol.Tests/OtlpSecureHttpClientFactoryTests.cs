@@ -6,7 +6,6 @@
 using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
@@ -109,7 +108,7 @@ public class OtlpSecureHttpClientFactoryTests
             {
                 // Create a self-signed certificate for testing as CA root
                 using var caCert = CreateSelfSignedCertificate();
-                File.WriteAllText(tempTrustStoreFile, ExportCertificateWithPrivateKey(caCert));
+                File.WriteAllText(tempTrustStoreFile, caCert.ExportCertificatePem());
 
                 var options = new OtlpMtlsOptions
                 {
@@ -148,7 +147,7 @@ public class OtlpSecureHttpClientFactoryTests
             try
             {
                 using var caCertificate = CreateCertificateAuthority();
-                File.WriteAllText(tempTrustStoreFile, ExportCertificateWithPrivateKey(caCertificate));
+                File.WriteAllText(tempTrustStoreFile, caCertificate.ExportCertificatePem());
 
                 var options = new OtlpMtlsOptions
                 {
@@ -187,7 +186,7 @@ public class OtlpSecureHttpClientFactoryTests
             try
             {
                 using var caCertificate = CreateCertificateAuthority();
-                File.WriteAllText(tempTrustStoreFile, ExportCertificateWithPrivateKey(caCertificate));
+                File.WriteAllText(tempTrustStoreFile, caCertificate.ExportCertificatePem());
 
                 var options = new OtlpMtlsOptions
                 {
@@ -444,22 +443,6 @@ public class OtlpSecureHttpClientFactoryTests
         return new X509Certificate2(cert.Export(X509ContentType.Pfx), (string?)null, X509KeyStorageFlags.Exportable);
 #pragma warning restore SYSLIB0057
 #endif
-    }
-
-    private static string ExportCertificateWithPrivateKey(X509Certificate2 certificate)
-    {
-        var builder = new StringBuilder();
-        builder.AppendLine(certificate.ExportCertificatePem().Trim());
-
-        using var privateKey = certificate.GetRSAPrivateKey();
-        if (privateKey != null)
-        {
-            var pkcs8Bytes = privateKey.ExportPkcs8PrivateKey();
-            var privateKeyPem = PemEncoding.Write("PRIVATE KEY", pkcs8Bytes);
-            builder.AppendLine(new string(privateKeyPem).Trim());
-        }
-
-        return builder.ToString();
     }
 
     /// <summary>
