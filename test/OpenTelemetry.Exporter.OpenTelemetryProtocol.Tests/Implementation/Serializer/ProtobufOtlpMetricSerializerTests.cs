@@ -347,8 +347,10 @@ public static class ProtobufOtlpMetricSerializerTests
         await stream.WriteAsync(buffer, 0, actual);
 #endif
 
+        // Shorten names to keep multi-target received paths within Windows limits.
         await Verify(stream, "bin")
             .IgnoreParametersForVerified()
+            .UseTypeName("OtlpMetricSerializer")
             .UseDirectory("snapshots");
     }
 
