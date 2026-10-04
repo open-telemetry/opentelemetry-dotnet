@@ -101,7 +101,7 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
             }
 
             selected = this.current;
-            selected.ActiveSends++;
+            selected.BeginSend();
         }
 
         try
@@ -110,16 +110,7 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
         }
         finally
         {
-            bool release;
-            lock (this.stateLock)
-            {
-                release = --selected.ActiveSends == 0 && selected.Retired;
-            }
-
-            if (release)
-            {
-                ReleaseClient(selected);
-            }
+            selected.EndSend();
         }
     }
 
@@ -147,17 +138,7 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
         }
         finally
         {
-            bool release;
-            lock (this.stateLock)
-            {
-                selected.Retired = true;
-                release = selected.ActiveSends == 0;
-            }
-
-            if (release)
-            {
-                ReleaseClient(selected);
-            }
+            selected.Retire();
         }
 
         return result;
@@ -216,18 +197,6 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
             ? httpClient.HttpClient.Timeout.TotalMilliseconds
             : options.TimeoutMilliseconds;
 
-    private static void ReleaseClient(ClientState state)
-    {
-        if (state.OwnsHttpClient && state.Client is OtlpExportClient client)
-        {
-            client.HttpClient.Dispose();
-        }
-        else if (state.OwnsHttpClient && state.Client is LazyExportClient lazyClient)
-        {
-            lazyClient.DisposeHttpClient();
-        }
-    }
-
     private void Reload()
     {
         lock (this.reloadGate)
@@ -257,27 +226,21 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
                 var next = new ClientState(client, ownsHttpClient);
                 var nextTimeout = GetTimeout(options, client);
                 ClientState old;
-                bool releaseOld;
 
                 lock (this.stateLock)
                 {
                     if (this.stopped)
                     {
-                        ReleaseClient(next);
+                        next.Retire();
                         return;
                     }
 
                     old = this.current;
                     this.current = next;
                     Volatile.Write(ref this.timeoutMilliseconds, nextTimeout);
-                    old.Retired = true;
-                    releaseOld = old.ActiveSends == 0;
                 }
 
-                if (releaseOld)
-                {
-                    ReleaseClient(old);
-                }
+                old.Retire();
             }
             catch (Exception ex)
             {
@@ -307,9 +270,65 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
 
     private sealed class ClientState(IExportClient client, bool ownsHttpClient)
     {
-        internal readonly IExportClient Client = client;
-        internal readonly bool OwnsHttpClient = ownsHttpClient;
-        internal int ActiveSends;
-        internal bool Retired;
+        private readonly Lock sendLock = new();
+        private readonly bool ownsHttpClient = ownsHttpClient;
+        private int activeSends;
+        private bool retired;
+
+        internal IExportClient Client { get; } = client;
+
+        internal void BeginSend()
+        {
+            lock (this.sendLock)
+            {
+                this.activeSends++;
+            }
+        }
+
+        internal void EndSend()
+        {
+            bool release;
+            lock (this.sendLock)
+            {
+                release = --this.activeSends == 0 && this.retired;
+            }
+
+            if (release)
+            {
+                this.ReleaseClient();
+            }
+        }
+
+        internal void Retire()
+        {
+            bool release;
+            lock (this.sendLock)
+            {
+                if (this.retired)
+                {
+                    return;
+                }
+
+                this.retired = true;
+                release = this.activeSends == 0;
+            }
+
+            if (release)
+            {
+                this.ReleaseClient();
+            }
+        }
+
+        private void ReleaseClient()
+        {
+            if (this.ownsHttpClient && this.Client is OtlpExportClient exportClient)
+            {
+                exportClient.HttpClient.Dispose();
+            }
+            else if (this.ownsHttpClient && this.Client is LazyExportClient lazyClient)
+            {
+                lazyClient.DisposeHttpClient();
+            }
+        }
     }
 }

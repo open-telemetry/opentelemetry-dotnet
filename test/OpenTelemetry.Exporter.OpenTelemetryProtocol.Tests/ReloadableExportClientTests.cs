@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Net;
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
@@ -79,6 +80,78 @@ public sealed class ReloadableExportClientTests
         Assert.Equal(ownsHttpClient ? 1 : 0, httpClient.DisposeCount);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ShutdownDefersHttpClientDisposalUntilAllSendsFinish(bool ownsHttpClient)
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var entered = new CountdownEvent(2);
+        using var releaseFirst = new ManualResetEventSlim();
+        using var releaseSecond = new ManualResetEventSlim();
+        var services = new ServiceCollection();
+        services.AddOptions<OtlpExporterOptions>();
+        using var serviceProvider = services.BuildServiceProvider();
+        using var handler = new BlockingHandler(entered, [releaseFirst, releaseSecond], cancellationToken);
+        using var httpClient = new TrackingHttpClient(handler);
+        using var client = CreateClient(serviceProvider, httpClient, ownsHttpClient);
+        var sends = new[]
+        {
+            Task.Run(Send, cancellationToken),
+            Task.Run(Send, cancellationToken),
+        };
+
+        try
+        {
+            Assert.True(entered.Wait(TimeSpan.FromSeconds(10), cancellationToken));
+            Assert.True(client.Shutdown(Timeout.Infinite));
+            Assert.Equal(0, httpClient.DisposeCount);
+
+            releaseFirst.Set();
+            var timeout = Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
+            var completed = await Task.WhenAny(sends[0], sends[1], timeout).ConfigureAwait(true);
+            Assert.NotSame(timeout, completed);
+            await completed.ConfigureAwait(true);
+            Assert.Equal(0, httpClient.DisposeCount);
+
+            releaseSecond.Set();
+            await Task.WhenAll(sends).ConfigureAwait(true);
+            Assert.Equal(ownsHttpClient ? 1 : 0, httpClient.DisposeCount);
+            client.Dispose();
+            Assert.Equal(ownsHttpClient ? 1 : 0, httpClient.DisposeCount);
+        }
+        finally
+        {
+            releaseFirst.Set();
+            releaseSecond.Set();
+            await Task.WhenAll(sends).ConfigureAwait(true);
+        }
+
+        ExportClientResponse Send() => client.SendExportRequest([], 0, DateTime.UtcNow.AddSeconds(30), cancellationToken);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void CancelledSendReleasesItsReference(bool ownsHttpClient)
+    {
+        var services = new ServiceCollection();
+        services.AddOptions<OtlpExporterOptions>();
+        using var serviceProvider = services.BuildServiceProvider();
+        using var httpClient = new TrackingHttpClient();
+        using var client = CreateClient(serviceProvider, httpClient, ownsHttpClient);
+        using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        cancellation.Cancel();
+
+        Assert.ThrowsAny<OperationCanceledException>(() => client.SendExportRequest(
+            [],
+            0,
+            DateTime.UtcNow.AddSeconds(30),
+            cancellation.Token));
+        Assert.True(client.Shutdown(Timeout.Infinite));
+        Assert.Equal(ownsHttpClient ? 1 : 0, httpClient.DisposeCount);
+    }
+
     private static ReloadableExportClient CreateClient(IServiceProvider serviceProvider, HttpClient httpClient, bool ownsHttpClient = false)
     {
         var options = new OtlpExporterOptions
@@ -98,16 +171,50 @@ public sealed class ReloadableExportClientTests
 
     private sealed class TrackingHttpClient : HttpClient
     {
-        internal int DisposeCount { get; private set; }
+        private int disposeCount;
+
+        internal TrackingHttpClient()
+        {
+        }
+
+        internal TrackingHttpClient(HttpMessageHandler handler)
+            : base(handler, disposeHandler: false)
+        {
+        }
+
+        internal int DisposeCount => Volatile.Read(ref this.disposeCount);
 
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                this.DisposeCount++;
+                Interlocked.Increment(ref this.disposeCount);
             }
 
             base.Dispose(disposing);
+        }
+    }
+
+    private sealed class BlockingHandler(CountdownEvent entered, ManualResetEventSlim[] releases, CancellationToken testCancellationToken) : HttpMessageHandler
+    {
+        private int nextSend;
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            => Task.FromResult(this.SendCore());
+
+#if NET
+        protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
+            => this.SendCore();
+#endif
+
+        private HttpResponseMessage SendCore()
+        {
+            var release = releases[Interlocked.Increment(ref this.nextSend) - 1];
+            entered.Signal();
+
+            // Keep the request pending after Shutdown cancels its token, until the test releases it.
+            release.Wait(testCancellationToken);
+            return new HttpResponseMessage(HttpStatusCode.OK);
         }
     }
 }
