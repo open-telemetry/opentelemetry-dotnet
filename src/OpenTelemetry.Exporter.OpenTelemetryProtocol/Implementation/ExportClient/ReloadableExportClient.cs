@@ -158,9 +158,9 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
         var ownsHttpClient = usesHttpClientFactory || ReferenceEquals(options.HttpClientFactory, options.DefaultHttpClientFactory);
         var httpClientName = signalType switch
         {
-            OtlpSignalType.Traces => "OtlpTraceExporter",
-            OtlpSignalType.Metrics => "OtlpMetricExporter",
-            OtlpSignalType.Logs => "OtlpLogExporter",
+            OtlpSignalType.Traces => OtlpExporterHttpClientNames.TraceExporter,
+            OtlpSignalType.Metrics => OtlpExporterHttpClientNames.MetricExporter,
+            OtlpSignalType.Logs => OtlpExporterHttpClientNames.LogExporter,
             _ => throw new NotSupportedException(),
         };
         IExportClient initialClient = usesHttpClientFactory && signalType == OtlpSignalType.Logs
