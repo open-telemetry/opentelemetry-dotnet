@@ -9,7 +9,7 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClie
 // Keeps a client alive until every send that selected it has finished.
 internal sealed class ReloadableExportClient : IExportClient, IDisposable
 {
-    private readonly object gate = new();
+    private readonly object stateLock = new();
     private readonly object reloadGate = new();
     private readonly IServiceProvider serviceProvider;
     private readonly IOptionsMonitor<OtlpExporterOptions> optionsMonitor;
@@ -84,7 +84,7 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
     public ExportClientResponse SendExportRequest(byte[] buffer, int contentLength, DateTime deadlineUtc, CancellationToken cancellationToken = default)
     {
         ClientState selected;
-        lock (this.gate)
+        lock (this.stateLock)
         {
 #if NET
             ObjectDisposedException.ThrowIf(this.disposed, this);
@@ -111,7 +111,7 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
         finally
         {
             bool release;
-            lock (this.gate)
+            lock (this.stateLock)
             {
                 release = --selected.ActiveSends == 0 && selected.Retired;
             }
@@ -126,7 +126,7 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
     public bool Shutdown(int timeoutMilliseconds)
     {
         ClientState selected;
-        lock (this.gate)
+        lock (this.stateLock)
         {
             if (this.stopped)
             {
@@ -148,7 +148,7 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
         finally
         {
             bool release;
-            lock (this.gate)
+            lock (this.stateLock)
             {
                 selected.Retired = true;
                 release = selected.ActiveSends == 0;
@@ -165,7 +165,7 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
 
     public void Dispose()
     {
-        lock (this.gate)
+        lock (this.stateLock)
         {
             if (this.disposed)
             {
@@ -232,7 +232,7 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
     {
         lock (this.reloadGate)
         {
-            lock (this.gate)
+            lock (this.stateLock)
             {
                 if (this.stopped)
                 {
@@ -259,7 +259,7 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
                 ClientState old;
                 bool releaseOld;
 
-                lock (this.gate)
+                lock (this.stateLock)
                 {
                     if (this.stopped)
                     {
