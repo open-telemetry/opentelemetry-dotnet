@@ -54,23 +54,10 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
             {
                 this.builderOptionsMonitor = serviceProvider.GetRequiredService<IOptionsMonitor<OtlpExporterBuilderOptions>>();
                 this.builderOptionsCache = serviceProvider.GetRequiredService<IOptionsMonitorCache<OtlpExporterBuilderOptions>>();
-                this.builderOptionsSubscription = this.builderOptionsMonitor.OnChange((_, name) =>
-                {
-                    if (string.Equals(name, this.optionsName, StringComparison.Ordinal))
-                    {
-                        this.Reload();
-                    }
-                });
+                this.builderOptionsSubscription = this.builderOptionsMonitor.OnChange(this.OnBuilderOptionsChanged);
             }
 
-            this.optionsSubscription = this.optionsMonitor.OnChange((_, name) =>
-            {
-                if (string.Equals(name, this.optionsName, StringComparison.Ordinal))
-                {
-                    this.builderOptionsCache?.TryRemove(this.optionsName);
-                    this.Reload();
-                }
-            });
+            this.optionsSubscription = this.optionsMonitor.OnChange(this.OnExporterOptionsChanged);
         }
         catch
         {
@@ -196,6 +183,27 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
         client is OtlpHttpExportClient httpClient
             ? httpClient.HttpClient.Timeout.TotalMilliseconds
             : options.TimeoutMilliseconds;
+
+    private void OnBuilderOptionsChanged(OtlpExporterBuilderOptions options, string? name)
+        => this.OnOptionsChanged(name, invalidateBuilderOptionsCache: false);
+
+    private void OnExporterOptionsChanged(OtlpExporterOptions options, string? name)
+        => this.OnOptionsChanged(name, invalidateBuilderOptionsCache: true);
+
+    private void OnOptionsChanged(string? name, bool invalidateBuilderOptionsCache)
+    {
+        if (!string.Equals(name, this.optionsName, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        if (invalidateBuilderOptionsCache)
+        {
+            this.builderOptionsCache?.TryRemove(this.optionsName);
+        }
+
+        this.Reload();
+    }
 
     private void Reload()
     {
