@@ -5,7 +5,6 @@
 using System.Diagnostics.CodeAnalysis;
 #endif
 using System.Diagnostics.Metrics;
-using System.Text.RegularExpressions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Internal;
@@ -163,30 +162,15 @@ public static class MeterProviderBuilderExtensions
         {
             if (builder is MeterProviderBuilderSdk meterProviderBuilderSdk)
             {
-#if NET || NETSTANDARD2_1_OR_GREATER
-                if (instrumentName.Contains('*', StringComparison.Ordinal))
-#else
-                if (instrumentName.Contains('*'))
-#endif
+                if (WildcardHelper.ContainsWildcard(instrumentName))
                 {
-#if NET || NETSTANDARD2_1_OR_GREATER
-                    var pattern = '^' + Regex.Escape(instrumentName).Replace("\\*", ".*", StringComparison.Ordinal);
-#else
-                    var pattern = '^' + Regex.Escape(instrumentName).Replace("\\*", ".*");
-#endif
-
-                    // RegexOptions.NonBacktracking is not used as it retains a much larger automaton
-                    // per Regex instance than a backtracking regex, which can lead to an
-                    // OutOfMemoryException in applications that build many providers with wildcard
-                    // views over their lifetime. The match timeout bounds worst-case matching time
-                    // to protect against catastrophic backtracking.
-                    // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/7787.
-                    var regex = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase, TimeSpan.FromSeconds(1));
+                    var regex = WildcardHelper.GetWildcardRegex([instrumentName]);
                     meterProviderBuilderSdk.AddView(instrument => WildcardHelper.IsMatch(regex, instrument.Name) ? metricStreamConfiguration : null);
                 }
                 else
                 {
-                    meterProviderBuilderSdk.AddView(instrument => string.Equals(instrument.Name, instrumentName, StringComparison.OrdinalIgnoreCase) ? metricStreamConfiguration : null);
+                    var unescapedInstrumentName = WildcardHelper.Unescape(instrumentName);
+                    meterProviderBuilderSdk.AddView(instrument => string.Equals(instrument.Name, unescapedInstrumentName, StringComparison.OrdinalIgnoreCase) ? metricStreamConfiguration : null);
                 }
             }
         });

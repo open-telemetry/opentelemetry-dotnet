@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace OpenTelemetry;
@@ -21,18 +22,53 @@ internal static class WildcardHelper
         }
 
 #if NET || NETSTANDARD2_1_OR_GREATER
-        return value.Contains('*', StringComparison.Ordinal) || value.Contains('?', StringComparison.Ordinal);
+        if (!value.Contains('*', StringComparison.Ordinal) && !value.Contains('?', StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        if (!value.Contains('\\', StringComparison.Ordinal))
+        {
+            return true;
+        }
 #else
-        return value.Contains('*') || value.Contains('?');
+        if (!value.Contains('*') && !value.Contains('?'))
+        {
+            return false;
+        }
+
+        if (!value.Contains('\\'))
+        {
+            return true;
+        }
 #endif
+
+        for (var i = 0; i < value.Length; i++)
+        {
+            if (value[i] is '*' or '?')
+            {
+                var backslashCount = 0;
+                for (var j = i - 1; j >= 0 && value[j] == '\\'; j--)
+                {
+                    backslashCount++;
+                }
+
+                if ((backslashCount & 1) == 0)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /// <summary>
     /// Determines whether <paramref name="pattern"/> is a simple <c>prefix*</c> pattern:
-    /// exactly one <c>*</c>, located at the end, and no <c>?</c> at all.
+    /// exactly one unescaped <c>*</c>, located at the end, and no unescaped <c>?</c> at all.
     /// </summary>
     /// <param name="pattern">The pattern to inspect.</param>
-    /// <param name="prefix">The literal prefix, when <paramref name="pattern"/> is a simple trailing-wildcard pattern.</param>
+    /// <param name="prefix">The unescaped literal prefix, when <paramref name="pattern"/> is a simple trailing-wildcard pattern.</param>
     /// <returns>
     /// <see langword="true"/> if <paramref name="pattern"/> is a simple trailing-wildcard pattern.
     /// </returns>
@@ -42,16 +78,38 @@ internal static class WildcardHelper
 
         if (lastIndex >= 0 && pattern[lastIndex] == '*')
         {
+            var trailingBackslashCount = 0;
+            for (var j = lastIndex - 1; j >= 0 && pattern[j] == '\\'; j--)
+            {
+                trailingBackslashCount++;
+            }
+
+            // If the trailing '*' is escaped (odd number of preceding backslashes), it is not a wildcard.
+            if ((trailingBackslashCount & 1) != 0)
+            {
+                prefix = null;
+                return false;
+            }
+
             for (var i = 0; i < lastIndex; i++)
             {
                 if (pattern[i] is '*' or '?')
                 {
-                    prefix = null;
-                    return false;
+                    var backslashCount = 0;
+                    for (var j = i - 1; j >= 0 && pattern[j] == '\\'; j--)
+                    {
+                        backslashCount++;
+                    }
+
+                    if ((backslashCount & 1) == 0)
+                    {
+                        prefix = null;
+                        return false;
+                    }
                 }
             }
 
-            prefix = pattern.Substring(0, lastIndex);
+            prefix = Unescape(pattern.Substring(0, lastIndex));
             return true;
         }
 
@@ -65,11 +123,7 @@ internal static class WildcardHelper
 
         var convertedPattern = string.Join(
             "|",
-#if NET || NETSTANDARD2_1_OR_GREATER
-            from p in patterns select "(?:" + Regex.Escape(p).Replace("\\*", ".*", StringComparison.Ordinal).Replace("\\?", ".", StringComparison.Ordinal) + ')');
-#else
-            from p in patterns select "(?:" + Regex.Escape(p).Replace("\\*", ".*").Replace("\\?", ".") + ')');
-#endif
+            from p in patterns select "(?:" + PatternToRegex(p) + ')');
 
         var pattern = "^(?:" + convertedPattern + ")$";
 
@@ -91,5 +145,84 @@ internal static class WildcardHelper
         {
             return false;
         }
+    }
+
+    /// <summary>
+    /// Unescapes escaped wildcards (<c>\*</c> -> <c>*</c>, <c>\?</c> -> <c>?</c>) and escaped backslashes (<c>\\</c> -> <c>\</c>).
+    /// </summary>
+    /// <param name="pattern">The pattern to unescape.</param>
+    /// <returns>The unescaped string.</returns>
+    public static string Unescape(string pattern)
+    {
+        if (string.IsNullOrEmpty(pattern))
+        {
+            return pattern;
+        }
+
+#if NET || NETSTANDARD2_1_OR_GREATER
+        if (!pattern.Contains('\\', StringComparison.Ordinal))
+        {
+            return pattern;
+        }
+#else
+        if (!pattern.Contains('\\'))
+        {
+            return pattern;
+        }
+#endif
+
+        var sb = new StringBuilder(pattern.Length);
+        for (var i = 0; i < pattern.Length; i++)
+        {
+            var c = pattern[i];
+            if (c == '\\' && i + 1 < pattern.Length)
+            {
+                var next = pattern[i + 1];
+                if (next is '*' or '?' or '\\')
+                {
+                    sb.Append(next);
+                    i++;
+                    continue;
+                }
+            }
+
+            sb.Append(c);
+        }
+
+        return sb.ToString();
+    }
+
+    private static string PatternToRegex(string pattern)
+    {
+        var sb = new StringBuilder(pattern.Length * 2);
+        for (var i = 0; i < pattern.Length; i++)
+        {
+            var c = pattern[i];
+            if (c == '\\' && i + 1 < pattern.Length)
+            {
+                var next = pattern[i + 1];
+                if (next is '*' or '?' or '\\')
+                {
+                    sb.Append(Regex.Escape(next.ToString()));
+                    i++;
+                    continue;
+                }
+            }
+
+            if (c == '*')
+            {
+                sb.Append(".*");
+            }
+            else if (c == '?')
+            {
+                sb.Append('.');
+            }
+            else
+            {
+                sb.Append(Regex.Escape(c.ToString()));
+            }
+        }
+
+        return sb.ToString();
     }
 }

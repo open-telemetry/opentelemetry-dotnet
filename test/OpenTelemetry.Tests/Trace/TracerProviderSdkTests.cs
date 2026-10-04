@@ -101,6 +101,29 @@ public sealed class TracerProviderSdkTests : IDisposable
     }
 
     [Fact]
+    public void TracerProviderSdkAddSourceWithEscapedWildcards()
+    {
+        var methodName = Utils.GetCurrentMethodName();
+        using var literalStarSource = new ActivitySource($"{methodName}.*");
+        using var otherSource = new ActivitySource($"{methodName}.Other");
+
+        using (var tracerProvider = Sdk.CreateTracerProviderBuilder()
+            .AddSource($@"{methodName}.\*")
+            .Build())
+        {
+            using (var activity = literalStarSource.StartActivity("test"))
+            {
+                Assert.NotNull(activity);
+            }
+
+            using (var activity = otherSource.StartActivity("test"))
+            {
+                Assert.Null(activity);
+            }
+        }
+    }
+
+    [Fact]
     public void TracerProviderSdkAddSourceWithMultipleTrailingWildcards()
     {
         var methodName = Utils.GetCurrentMethodName();

@@ -408,6 +408,7 @@ internal sealed class TracerProviderSdk : TracerProvider
         }
 
         List<string>? prefixes = null;
+        List<string>? prefixPatterns = null;
         List<string>? wildcards = null;
         HashSet<string>? names = supportLegacyActivity
             ? new(StringComparer.OrdinalIgnoreCase) { string.Empty }
@@ -418,6 +419,7 @@ internal sealed class TracerProviderSdk : TracerProvider
             if (WildcardHelper.TryGetWildcardPrefix(source, out var prefix))
             {
                 (prefixes ??= []).Add(prefix);
+                (prefixPatterns ??= []).Add(source);
             }
             else if (WildcardHelper.ContainsWildcard(source))
             {
@@ -425,7 +427,7 @@ internal sealed class TracerProviderSdk : TracerProvider
             }
             else
             {
-                (names ??= new(StringComparer.OrdinalIgnoreCase)).Add(source);
+                (names ??= new(StringComparer.OrdinalIgnoreCase)).Add(WildcardHelper.Unescape(source));
             }
         }
 
@@ -435,12 +437,13 @@ internal sealed class TracerProviderSdk : TracerProvider
             // prefix; beyond that, a compiled Regex is simpler and at least as fast, especially
             // when the prefixes share a long common substring.
             wildcards ??= [];
-            foreach (var prefix in prefixes)
+            foreach (var pattern in prefixPatterns!)
             {
-                wildcards.Add(prefix + "*");
+                wildcards.Add(pattern);
             }
 
             prefixes = null;
+            prefixPatterns = null;
         }
 
         var hasNames = names is { Count: > 0 };
