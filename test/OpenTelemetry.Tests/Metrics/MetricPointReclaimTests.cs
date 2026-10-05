@@ -567,6 +567,97 @@ public class MetricPointReclaimTests
         Assert.Equal(100, Assert.Single(metricPoints, mp => Equals(mp.Tags.KeyAndValues[0].Value, 100)).GetSumLong());
     }
 
+    [Fact]
+    public void ConcurrentCreationWithFreeSlotsDoesNotOverflow()
+    {
+        const int CardinalityLimit = 32;
+        const int WorkerCount = 4;
+        const int Rounds = 4_000;
+
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        using var start = new Barrier(WorkerCount + 1);
+        using var finish = new Barrier(WorkerCount + 1);
+        Counter<long>? counter = null;
+        var stop = false;
+
+        var workers = new Thread[WorkerCount];
+        for (var t = 0; t < WorkerCount; t++)
+        {
+            var value = 100 + t;
+            workers[t] = new Thread(() =>
+            {
+                while (true)
+                {
+                    start.SignalAndWait(cancellationToken);
+                    if (stop)
+                    {
+                        return;
+                    }
+
+                    counter!.Add(1, new KeyValuePair<string, object?>("key", value));
+                    finish.SignalAndWait(cancellationToken);
+                }
+            });
+            workers[t].Start();
+        }
+
+        var overflowRounds = 0;
+        var overflowSum = 0L;
+
+        try
+        {
+            for (var round = 0; round < Rounds; round++)
+            {
+                var exportedItems = new List<Metric>();
+
+                using var meter = new Meter(Utils.GetCurrentMethodName() + round);
+                counter = meter.CreateCounter<long>("counter");
+
+                using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                    .AddMeter(meter.Name)
+                    .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = CardinalityLimit })
+                    .AddInMemoryExporter(exportedItems, metricReaderOptions => metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta)
+                    .Build();
+
+                // Occupy half the data slots, leaving the other half free but forcing the
+                // strided allocator's candidate scan on every subsequent creation.
+                for (var i = 0; i < CardinalityLimit / 2; i++)
+                {
+                    counter.Add(1, new KeyValuePair<string, object?>("key", i));
+                }
+
+                start.SignalAndWait(cancellationToken);
+                finish.SignalAndWait(cancellationToken);
+
+                Assert.True(meterProvider.ForceFlush());
+
+                foreach (ref readonly var point in exportedItems[0].GetMetricPoints())
+                {
+                    if (point.Tags.Count != 0 && point.Tags.KeyAndValues[0].Key == "otel.metric.overflow")
+                    {
+                        overflowRounds++;
+                        overflowSum += point.GetSumLong();
+                    }
+                }
+            }
+        }
+        finally
+        {
+            stop = true;
+            start.SignalAndWait(cancellationToken);
+
+            foreach (var worker in workers)
+            {
+                worker.Join();
+            }
+        }
+
+        Assert.True(
+            overflowRounds == 0,
+            $"Overflow appeared in {overflowRounds} of {Rounds} rounds, with {overflowSum} measurement(s), despite every round staying below the cardinality limit of {CardinalityLimit}.");
+    }
+
     private sealed class ThreadArguments
     {
         public int Counter;
