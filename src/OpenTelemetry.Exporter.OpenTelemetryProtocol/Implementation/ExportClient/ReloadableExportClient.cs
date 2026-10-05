@@ -1,9 +1,6 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 
 // Keeps a client alive until every send that selected it has finished.
@@ -11,59 +8,20 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
 {
     private readonly Lock stateLock = new();
     private readonly Lock reloadGate = new();
-    private readonly IServiceProvider serviceProvider;
-    private readonly IOptionsMonitor<OtlpExporterOptions> optionsMonitor;
-    private readonly IOptionsMonitor<OtlpExporterBuilderOptions>? builderOptionsMonitor;
-    private readonly IOptionsMonitorCache<OtlpExporterBuilderOptions>? builderOptionsCache;
-    private readonly string optionsName;
-    private readonly string httpClientName;
-    private readonly OtlpSignalType signalType;
-    private readonly OtlpExportProtocol protocol;
-    private readonly Action<OtlpExporterOptions>? configureOnReload;
-    private readonly IDisposable? optionsSubscription;
-    private readonly IDisposable? builderOptionsSubscription;
+    private readonly OtlpExportClientRegistration registration;
     private ClientState current;
     private double timeoutMilliseconds;
     private bool stopped;
     private bool disposed;
 
     private ReloadableExportClient(
-        OtlpExporterOptions initialOptions,
-        IExportClient initialClient,
-        bool ownsInitialHttpClient,
-        IServiceProvider serviceProvider,
-        string optionsName,
-        string httpClientName,
-        OtlpSignalType signalType,
-        bool useOtlpExporter,
-        Action<OtlpExporterOptions>? configureOnReload = null)
+        OtlpExportClientRegistration registration,
+        ClientState initialClient,
+        double timeoutMilliseconds)
     {
-        this.serviceProvider = serviceProvider;
-        this.optionsName = optionsName;
-        this.httpClientName = httpClientName;
-        this.signalType = signalType;
-        this.protocol = initialOptions.Protocol;
-        this.configureOnReload = configureOnReload;
-        this.current = new(initialClient, ownsInitialHttpClient);
-        try
-        {
-            this.timeoutMilliseconds = GetTimeout(initialOptions, initialClient);
-            this.optionsMonitor = serviceProvider.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>();
-
-            if (useOtlpExporter)
-            {
-                this.builderOptionsMonitor = serviceProvider.GetRequiredService<IOptionsMonitor<OtlpExporterBuilderOptions>>();
-                this.builderOptionsCache = serviceProvider.GetRequiredService<IOptionsMonitorCache<OtlpExporterBuilderOptions>>();
-                this.builderOptionsSubscription = this.builderOptionsMonitor.OnChange(this.OnBuilderOptionsChanged);
-            }
-
-            this.optionsSubscription = this.optionsMonitor.OnChange(this.OnExporterOptionsChanged);
-        }
-        catch
-        {
-            this.Dispose();
-            throw;
-        }
+        this.registration = registration;
+        this.current = initialClient;
+        this.timeoutMilliseconds = timeoutMilliseconds;
     }
 
     internal double TimeoutMilliseconds => Volatile.Read(ref this.timeoutMilliseconds);
@@ -115,8 +73,7 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
             selected = this.current;
         }
 
-        this.optionsSubscription?.Dispose();
-        this.builderOptionsSubscription?.Dispose();
+        this.registration.Dispose();
 
         bool result;
         try
@@ -155,54 +112,42 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
         bool usesHttpClientFactory,
         Action<OtlpExporterOptions>? configureOnReload = null)
     {
+        var registration = new OtlpExportClientRegistration(
+            options,
+            serviceProvider,
+            optionsName,
+            signalType,
+            useOtlpExporter,
+            configureOnReload);
         var ownsHttpClient = usesHttpClientFactory || ReferenceEquals(options.HttpClientFactory, options.DefaultHttpClientFactory);
-        var httpClientName = signalType switch
-        {
-            OtlpSignalType.Traces => OtlpExporterHttpClientNames.TraceExporter,
-            OtlpSignalType.Metrics => OtlpExporterHttpClientNames.MetricExporter,
-            OtlpSignalType.Logs => OtlpExporterHttpClientNames.LogExporter,
-            _ => throw new NotSupportedException(),
-        };
         IExportClient initialClient = usesHttpClientFactory && signalType == OtlpSignalType.Logs
             ? new LazyExportClient(() => options.GetExportClient(signalType, ownsHttpClient))
             : options.GetExportClient(signalType, ownsHttpClient);
 
-        return new(
-            options,
-            initialClient,
-            ownsHttpClient,
-            serviceProvider,
-            optionsName,
-            httpClientName,
-            signalType,
-            useOtlpExporter,
-            configureOnReload);
-    }
-
-    private static double GetTimeout(OtlpExporterOptions options, IExportClient client) =>
-        client is OtlpHttpExportClient httpClient
-            ? httpClient.HttpClient.Timeout.TotalMilliseconds
-            : options.TimeoutMilliseconds;
-
-    private void OnBuilderOptionsChanged(OtlpExporterBuilderOptions options, string? name)
-        => this.OnOptionsChanged(name, invalidateBuilderOptionsCache: false);
-
-    private void OnExporterOptionsChanged(OtlpExporterOptions options, string? name)
-        => this.OnOptionsChanged(name, invalidateBuilderOptionsCache: true);
-
-    private void OnOptionsChanged(string? name, bool invalidateBuilderOptionsCache)
-    {
-        if (!string.Equals(name, this.optionsName, StringComparison.Ordinal))
+        var initialState = new ClientState(initialClient, ownsHttpClient);
+        ReloadableExportClient? client = null;
+        try
         {
-            return;
+            client = new(
+                registration,
+                initialState,
+                OtlpExportClientRegistration.GetTimeout(options, initialClient));
+            registration.Subscribe(client.Reload);
+            return client;
         }
-
-        if (invalidateBuilderOptionsCache)
+        catch
         {
-            this.builderOptionsCache?.TryRemove(this.optionsName);
-        }
+            if (client is null)
+            {
+                initialState.Retire();
+            }
+            else
+            {
+                client.Dispose();
+            }
 
-        this.Reload();
+            throw;
+        }
     }
 
     private void Reload()
@@ -219,20 +164,12 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
 
             try
             {
-                var options = this.GetOptions();
-                this.configureOnReload?.Invoke(options);
-                if (options.Protocol != this.protocol)
+                if (this.registration.CreateExportClient() is not { } replacement)
                 {
-                    // The exporter serializes gRPC framing at construction time.
-                    OpenTelemetryProtocolExporterEventSource.Log.ExportClientProtocolChangeIgnored();
                     return;
                 }
 
-                var ownsHttpClient = options.TryEnableIHttpClientFactoryIntegration(this.serviceProvider, this.httpClientName)
-                    || ReferenceEquals(options.HttpClientFactory, options.DefaultHttpClientFactory);
-                var client = options.GetExportClient(this.signalType, ownsHttpClient);
-                var next = new ClientState(client, ownsHttpClient);
-                var nextTimeout = GetTimeout(options, client);
+                var next = new ClientState(replacement.Client, replacement.OwnsHttpClient);
                 ClientState old;
 
                 lock (this.stateLock)
@@ -245,7 +182,7 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
 
                     old = this.current;
                     this.current = next;
-                    Volatile.Write(ref this.timeoutMilliseconds, nextTimeout);
+                    Volatile.Write(ref this.timeoutMilliseconds, replacement.TimeoutMilliseconds);
                 }
 
                 old.Retire();
@@ -255,25 +192,6 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
                 OpenTelemetryProtocolExporterEventSource.Log.ExportClientReloadFailed(ex);
             }
         }
-    }
-
-    private OtlpExporterOptions GetOptions()
-    {
-        if (this.builderOptionsMonitor is not { } monitor)
-        {
-            return this.optionsMonitor.Get(this.optionsName);
-        }
-
-        var builderOptions = monitor.Get(this.optionsName);
-        var signalOptions = this.signalType switch
-        {
-            OtlpSignalType.Traces => builderOptions.TracingOptionsInstance,
-            OtlpSignalType.Metrics => builderOptions.MetricsOptionsInstance,
-            OtlpSignalType.Logs => builderOptions.LoggingOptionsInstance,
-            _ => throw new NotSupportedException(),
-        };
-
-        return signalOptions.ApplyDefaults(builderOptions.DefaultOptionsInstance);
     }
 
     private sealed class ClientState(IExportClient client, bool ownsHttpClient)

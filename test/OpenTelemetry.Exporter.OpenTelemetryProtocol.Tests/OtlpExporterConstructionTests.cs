@@ -69,21 +69,45 @@ public sealed class OtlpExporterConstructionTests
         Assert.Equal(0, client.DisposeCount);
     }
 
-    [Fact]
-    public void SubscriptionFailureReleasesInitialClientAndEarlierSubscription()
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public void SubscriptionFailureReleasesInitialClientAndEarlierSubscriptions(
+        bool builderSubscriptionFails,
+        bool ownsHttpClient)
     {
-        var monitor = new TrackingOptionsMonitor<OtlpExporterOptions>(CreateOptions) { ThrowOnSubscribe = true };
+        using var customHttpClient = new TrackingHttpClient();
+        var monitor = new TrackingOptionsMonitor<OtlpExporterOptions>(CreateOptions)
+        {
+            ThrowOnSubscribe = !builderSubscriptionFails,
+        };
         var builderMonitor = new TrackingOptionsMonitor<OtlpExporterBuilderOptions>(
-            () => throw new InvalidOperationException("Unexpected options access."));
+            () => throw new InvalidOperationException("Unexpected options access."))
+        {
+            ThrowOnSubscribe = builderSubscriptionFails,
+        };
         var factory = new TrackingHttpClientFactory();
         var services = new ServiceCollection();
         services.AddSingleton<IOptionsMonitor<OtlpExporterOptions>>(monitor);
         services.AddSingleton<IOptionsMonitor<OtlpExporterBuilderOptions>>(builderMonitor);
         services.AddSingleton<IOptionsMonitorCache<OtlpExporterBuilderOptions>>(new OptionsCache<OtlpExporterBuilderOptions>());
-        services.AddSingleton<IHttpClientFactory>(factory);
+        if (ownsHttpClient)
+        {
+            services.AddSingleton<IHttpClientFactory>(factory);
+        }
+
         using var serviceProvider = services.BuildServiceProvider();
         var options = CreateOptions();
-        Assert.True(options.TryEnableIHttpClientFactoryIntegration(serviceProvider, OtlpExporterHttpClientNames.TraceExporter));
+        if (!ownsHttpClient)
+        {
+            options.HttpClientFactory = () => customHttpClient;
+        }
+
+        Assert.Equal(
+            ownsHttpClient,
+            options.TryEnableIHttpClientFactoryIntegration(serviceProvider, OtlpExporterHttpClientNames.TraceExporter));
 
         Assert.Throws<InvalidOperationException>(() => ReloadableExportClient.Create(
             options,
@@ -91,10 +115,19 @@ public sealed class OtlpExporterConstructionTests
             "reload",
             OtlpSignalType.Traces,
             useOtlpExporter: true,
-            usesHttpClientFactory: true));
+            usesHttpClientFactory: ownsHttpClient));
 
+        Assert.Empty(monitor.Listeners);
         Assert.Empty(builderMonitor.Listeners);
-        Assert.Equal(1, Assert.Single(factory.Clients).DisposeCount);
+        Assert.Equal(0, customHttpClient.DisposeCount);
+        if (ownsHttpClient)
+        {
+            Assert.Equal(1, Assert.Single(factory.Clients).DisposeCount);
+        }
+        else
+        {
+            Assert.Empty(factory.Clients);
+        }
     }
 
     [Theory]
