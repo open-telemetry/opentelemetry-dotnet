@@ -164,8 +164,8 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
 
         using var listener = new ConcurrentEventListener();
         var consumerTask = Task.Run(() => accessor.GetDocument());
-        Assert.True(parseStarted.Wait(TimeSpan.FromSeconds(10)));
-        var providerTask = Task.Run(provider.Load);
+        Assert.True(parseStarted.Wait(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken));
+        var providerTask = Task.Run(provider.Load, TestContext.Current.CancellationToken);
         releaseParse.Set();
         await Task.WhenAll(consumerTask, providerTask);
 
@@ -192,9 +192,9 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
         var provider = new DeclarativeConfigurationProvider(accessor);
 
         using var listener = new ConcurrentEventListener();
-        var providerTask = Task.Run(provider.Load);
-        Assert.True(parseStarted.Wait(TimeSpan.FromSeconds(10)));
-        var consumerTask = Task.Run(() => accessor.GetDocument());
+        var providerTask = Task.Run(provider.Load, TestContext.Current.CancellationToken);
+        Assert.True(parseStarted.Wait(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken));
+        var consumerTask = Task.Run(() => accessor.GetDocument(), TestContext.Current.CancellationToken);
         releaseParse.Set();
         await Task.WhenAll(providerTask, consumerTask);
 
@@ -589,7 +589,7 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
         // configuration would turn up. The two views can still disagree, as they do here: nothing
         // stops an application replacing its IConfiguration registration, or clearing its sources,
         // after the accessor was registered. Explicit registration wins by design because it is the
-        // caller's stated intent; the flat overlay is what is lost in that case.
+        // caller's stated intent; the flat declarative source is what is lost in that case.
         using var yamlFile1 = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: true);
         using var yamlFile2 = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: false);
 

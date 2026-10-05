@@ -88,11 +88,11 @@ internal sealed class BatchExportTaskWorker<T> : BatchExportWorker<T>
             return false;
         }
 
-        // On Wasm (single-threaded), calling .GetAwaiter().GetResult() would deadlock
+        // On WASM (single-threaded), calling .GetAwaiter().GetResult() would deadlock
         // because there is no second thread to complete the async work. Instead, just
-        // trigger the export and let the async worker loop drain the buffer. Wasm apps
+        // trigger the export and let the async worker loop drain the buffer. WASM apps
         // don't have a real exit path so there is no risk of data loss.
-        if (ThreadingHelper.IsThreadingDisabled())
+        if (!ThreadingHelper.IsThreadingEnabled())
         {
             return true;
         }

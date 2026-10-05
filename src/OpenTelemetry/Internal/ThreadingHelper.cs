@@ -27,21 +27,33 @@ internal static class ThreadingHelper
     }
 
     /// <summary>
-    /// Determines whether threading should be considered unavailable for the
+    /// Determines whether threading should be considered available for the
     /// current context, honoring any scoped overrides.
     /// </summary>
-    /// <returns>True when threading is treated as disabled for the current context.</returns>
-    internal static bool IsThreadingDisabled()
+    /// <returns>
+    /// <see langword="true"/> when threading is treated as enabled for the
+    /// current context; otherwise, <see langword="false"/>.
+    /// </returns>
+#if NET
+    [System.Runtime.Versioning.UnsupportedOSPlatformGuard("browser")]
+#endif
+    internal static bool IsThreadingEnabled()
     {
-        if (ThreadingDisabledOverride.Value.HasValue)
+        // Inverted to support use of [UnsupportedOSPlatformGuard]
+        return !IsDisabled();
+
+        static bool IsDisabled()
         {
-            return ThreadingDisabledOverride.Value.Value;
+            if (ThreadingDisabledOverride.Value.HasValue)
+            {
+                return ThreadingDisabledOverride.Value.Value;
+            }
+
+            // if the threadpool isn't using threads assume they aren't enabled
+            ThreadPool.GetMaxThreads(out int workerThreads, out int completionPortThreads);
+
+            return workerThreads == 1 && completionPortThreads == 1;
         }
-
-        // if the threadpool isn't using threads assume they aren't enabled
-        ThreadPool.GetMaxThreads(out int workerThreads, out int completionPortThreads);
-
-        return workerThreads == 1 && completionPortThreads == 1;
     }
 
     private sealed class ThreadingOverrideScope : IDisposable

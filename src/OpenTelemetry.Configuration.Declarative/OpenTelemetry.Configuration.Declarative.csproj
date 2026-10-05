@@ -8,6 +8,7 @@
       as an IConfigurationSource/IConfigurationProvider.</Description>
     <PackageTags>$(PackageTags);configuration;declarative;yaml</PackageTags>
     <MinVerTagPrefix>declarativeconfig-</MinVerTagPrefix>
+    <SupportsBrowserAndMobilePlatforms>true</SupportsBrowserAndMobilePlatforms>
   </PropertyGroup>
 
   <!-- Do not run Package Baseline Validation as this package has never released a stable version.
@@ -23,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\OpenTelemetry.Api.ProviderBuilderExtensions\OpenTelemetry.Api.ProviderBuilderExtensions.csproj" />
+    <ProjectReference Include="..\OpenTelemetry\OpenTelemetry.csproj" />
   </ItemGroup>
 
   <ItemGroup>

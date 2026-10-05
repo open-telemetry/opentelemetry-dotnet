@@ -24,16 +24,12 @@ on:
         required: false
         type: string
       tfm-list:
-        default: '[ "net462", "net8.0", "net9.0", "net10.0" ]'
+        default: '[ "net472", "net8.0", "net9.0", "net10.0" ]'
         required: false
         type: string
       trigger:
         required: true
         type: string
-      install-wasm-tools:
-        default: false
-        required: false
-        type: boolean
 
 permissions:
   contents: read
@@ -50,16 +46,16 @@ jobs:
         exclude:
         # renovate: datasource=github-runners depType=github-runner
         - os: ubuntu-26.04
-          version: net462
+          version: net472
         # renovate: datasource=github-runners depType=github-runner
         - os: ubuntu-26.04-arm
-          version: net462
+          version: net472
 
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
 
     env:
-      DISABLE_APP_DOMAIN: ${{ matrix.version == 'net462' && 'false' || 'true' }}
+      DISABLE_APP_DOMAIN: ${{ matrix.version == 'net472' && 'false' || 'true' }}
       PROJECT_NAME: ${{ inputs.project-name }}
       PROJECT_BUILD_COMMANDS: ${{ inputs.project-build-commands }}
       TARGET_FRAMEWORK: ${{ matrix.version }}
@@ -84,11 +80,6 @@ jobs:
 
     - name: Setup .NET
       uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
-
-    - name: Install wasm-tools workload
-      if: ${{ inputs.install-wasm-tools }}
-      shell: pwsh
-      run: dotnet workload install wasm-tools
 
     - name: dotnet restore ${{ inputs.project-name }}
       shell: pwsh

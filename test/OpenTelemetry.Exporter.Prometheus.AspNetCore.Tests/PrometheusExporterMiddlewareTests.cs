@@ -5,9 +5,13 @@
 using System.Diagnostics.Metrics;
 using System.Globalization;
 using System.Net;
+using System.Net.Sockets;
+using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.TestHost;
@@ -479,10 +483,10 @@ public sealed class PrometheusExporterMiddlewareTests
         // unaltered survive the second escaping pass content negotiation applies.
         client.DefaultRequestHeaders.Add("Accept", "text/plain; version=1.0.0; escaping=allow-utf-8");
 
-        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
-        var output = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings();
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative), TestContext.Current.CancellationToken);
+        var output = (await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)).ReplaceLineEndings();
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(
             "text/plain; version=1.0.0; charset=utf-8; escaping=allow-utf-8",
@@ -510,10 +514,10 @@ public sealed class PrometheusExporterMiddlewareTests
         host.Services.GetRequiredService<MeterProvider>().ForceFlush();
 
         using var client = host.GetTestClient();
-        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
-        var output = await response.Content.ReadAsStringAsync();
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative), TestContext.Current.CancellationToken);
+        var output = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
 
         await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
@@ -541,10 +545,10 @@ public sealed class PrometheusExporterMiddlewareTests
         // through unaltered survives the second escaping pass content negotiation applies.
         client.DefaultRequestHeaders.Add("Accept", "text/plain; version=1.0.0; escaping=allow-utf-8");
 
-        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
-        var output = await response.Content.ReadAsStringAsync();
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative), TestContext.Current.CancellationToken);
+        var output = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
 
         await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
@@ -576,10 +580,10 @@ public sealed class PrometheusExporterMiddlewareTests
         // added.
         client.DefaultRequestHeaders.Add("Accept", "text/plain; version=1.0.0; escaping=underscores");
 
-        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
-        var output = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings();
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative), TestContext.Current.CancellationToken);
+        var output = (await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)).ReplaceLineEndings();
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(
             "text/plain; version=1.0.0; charset=utf-8; escaping=underscores",
@@ -614,10 +618,10 @@ public sealed class PrometheusExporterMiddlewareTests
         // revert them. The response reports the escaping that was applied, not the one negotiated.
         client.DefaultRequestHeaders.Add("Accept", "text/plain; version=1.0.0; escaping=allow-utf-8");
 
-        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
-        var output = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings();
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative), TestContext.Current.CancellationToken);
+        var output = (await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)).ReplaceLineEndings();
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(
             "text/plain; version=1.0.0; charset=utf-8; escaping=underscores",
@@ -655,10 +659,10 @@ public sealed class PrometheusExporterMiddlewareTests
         // escaped and the response reports the escaping that was applied instead.
         client.DefaultRequestHeaders.Add("Accept", $"text/plain; version=1.0.0; escaping={escaping}");
 
-        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
-        var output = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings("\n");
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative), TestContext.Current.CancellationToken);
+        var output = (await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)).ReplaceLineEndings("\n");
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(
             "text/plain; version=1.0.0; charset=utf-8; escaping=underscores",
@@ -711,10 +715,10 @@ public sealed class PrometheusExporterMiddlewareTests
 
         client.DefaultRequestHeaders.Add("Accept", accept);
 
-        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
-        var output = (await response.Content.ReadAsStringAsync()).ReplaceLineEndings("\n");
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative), TestContext.Current.CancellationToken);
+        var output = (await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken)).ReplaceLineEndings("\n");
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
 
         // A name that is not a valid legacy name is written using the quoted exposition format,
         // where the metric name is the first entry of the label set rather than a prefix.
@@ -743,12 +747,12 @@ public sealed class PrometheusExporterMiddlewareTests
 
         using var client = host.GetTestClient();
 
-        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
-        var output = await response.Content.ReadAsStringAsync();
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative), TestContext.Current.CancellationToken);
+        var output = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         Assert.NotEmpty(output);
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
 
         await Verify(output, VerifyFileExtension, PrometheusSerializerTests.VerifySettings);
     }
@@ -774,11 +778,11 @@ public sealed class PrometheusExporterMiddlewareTests
 
         using var client = host.GetTestClient();
 
-        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative));
+        using var response = await client.GetAsync(new Uri("/metrics", UriKind.Relative), TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
 
-        await host.StopAsync();
+        await host.StopAsync(TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -910,6 +914,124 @@ public sealed class PrometheusExporterMiddlewareTests
         await middleware.InvokeAsync(context);
 
         Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
+    }
+
+    [Fact]
+    public async Task ScrapeClientThatStopsReadingTheResponseBodyDoesNotBlockOtherScrapesIndefinitely()
+    {
+        const int ScrapeTimeoutMilliseconds = 2000;
+
+        using var meter = new Meter(MeterName, MeterVersion);
+        var (app, baseAddress) = await StartKestrelHostWithLargeScrapeResponseAsync(meter, ScrapeTimeoutMilliseconds);
+
+        try
+        {
+            using var stalledClient = await StartScrapeThatNeverReadsAsync(baseAddress);
+
+            Assert.NotNull(stalledClient);
+
+            // Wait past the server timeout (and the 300ms response cache) so the
+            // stalled request has been cancelled and its reader slot released,
+            // while the stalled client is still open and still not reading.
+            await Task.Delay(TimeSpan.FromMilliseconds((ScrapeTimeoutMilliseconds * 2) + 1000), TestContext.Current.CancellationToken);
+
+            using var client = new HttpClient { BaseAddress = baseAddress };
+            using var cts = new CancellationTokenSource(MaxCollectWait);
+
+            using var response = await client.GetAsync(new Uri("metrics", UriKind.Relative), cts.Token);
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        }
+        finally
+        {
+            await app.StopAsync(TestContext.Current.CancellationToken);
+            await app.DisposeAsync();
+        }
+    }
+
+    private static async Task<(WebApplication App, Uri BaseAddress)> StartKestrelHostWithLargeScrapeResponseAsync(
+        Meter meter,
+        int? scrapeResponseTimeoutMilliseconds = null)
+    {
+        var builder = WebApplication.CreateBuilder();
+
+        builder.Logging.ClearProviders();
+
+        // Real Kestrel (not TestServer) with its default limits, so socket back-pressure applies
+        builder.WebHost.UseUrls("http://127.0.0.1:0");
+
+        builder.Services
+            .AddOpenTelemetry()
+            .WithMetrics(metrics => metrics.AddMeter(meter.Name).AddPrometheusExporter(options =>
+            {
+                if (scrapeResponseTimeoutMilliseconds.HasValue)
+                {
+                    options.ScrapeResponseTimeoutMilliseconds = scrapeResponseTimeoutMilliseconds.Value;
+                }
+            }));
+
+        var app = builder.Build();
+
+        app.UseOpenTelemetryPrometheusScrapingEndpoint();
+
+        await app.StartAsync(TestContext.Current.CancellationToken);
+
+        var baseAddress = app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!.Addresses
+            .Select(address => new Uri(address))
+            .Last();
+
+        // Emit a payload far larger than any socket send buffer so writing the response
+        // cannot complete until the client drains it. Stay under the SDK's default
+        // 1000-metric-stream cap; this produces roughly 12 MB of exposition text.
+        var padding = new string('x', 24_576);
+        for (var x = 0; x < 500; x++)
+        {
+            var counter = meter.CreateCounter<long>("counter_long_" + x.ToString(CultureInfo.InvariantCulture));
+            counter.Add(1, new KeyValuePair<string, object?>("key", padding));
+        }
+
+        return (app, baseAddress);
+    }
+
+    private static async Task<TcpClient?> StartScrapeThatNeverReadsAsync(Uri baseAddress)
+    {
+        // Shrink the receive buffer to (as close to) the platform's minimum as possible
+        // so the server cannot hand much of the response off to this connection.
+        var client = new TcpClient { ReceiveBufferSize = 1 };
+
+        try
+        {
+            await client.ConnectAsync(baseAddress.Host, baseAddress.Port, TestContext.Current.CancellationToken);
+
+            var stream = client.GetStream();
+            var request = Encoding.ASCII.GetBytes($"GET /metrics HTTP/1.1\r\nHost: {baseAddress.Authority}\r\n\r\n");
+
+            await stream.WriteAsync(request, TestContext.Current.CancellationToken);
+            await stream.FlushAsync(TestContext.Current.CancellationToken);
+
+            // Read just enough to confirm the response started, without draining the body
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+
+            try
+            {
+                if (await stream.ReadAsync(new byte[512], cts.Token) > 0)
+                {
+                    var started = client;
+                    client = null;
+                    return started;
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // The response did not start, for example because it is waiting for a reader slot
+            }
+
+            return null;
+        }
+        finally
+        {
+            client?.Dispose();
+        }
     }
 
     private static void EnsureThreadPoolWorkerThreadsAvailable()

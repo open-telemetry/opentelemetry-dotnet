@@ -7,6 +7,21 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Avoid closure allocations when serializing cached metric metadata.
+  ([#7841](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7841))
+
+* Custom TLS certificate options (custom CA trust and mTLS) and the experimental
+  disk retry feature are explicitly marked as not supported on browser-based
+  platforms (e.g. Blazor).
+  ([#7799](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7799))
+
+* Suppressed informational HTTP client logs from OTLP exporters by default. See
+  [HttpClient logging](README.md#httpclient-logging) for configuration overrides.
+  ([#7743](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7743))
+
+* Avoid logging malformed HTTP request headers in the exporter's diagnostic log.
+  ([#7858](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7858))
+
 ## 1.19.1
 
 Released 2026-Sep-21
