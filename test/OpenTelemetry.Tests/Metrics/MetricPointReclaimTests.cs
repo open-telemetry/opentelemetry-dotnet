@@ -587,16 +587,23 @@ public class MetricPointReclaimTests
             var value = 100 + t;
             workers[t] = new Thread(() =>
             {
-                while (true)
+                try
                 {
-                    start.SignalAndWait(cancellationToken);
-                    if (stop)
+                    while (true)
                     {
-                        return;
-                    }
+                        start.SignalAndWait(cancellationToken);
+                        if (stop)
+                        {
+                            return;
+                        }
 
-                    counter!.Add(1, new KeyValuePair<string, object?>("key", value));
-                    finish.SignalAndWait(cancellationToken);
+                        counter!.Add(1, new KeyValuePair<string, object?>("key", value));
+                        finish.SignalAndWait(cancellationToken);
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    // Ignore
                 }
             });
             workers[t].Start();
@@ -645,7 +652,15 @@ public class MetricPointReclaimTests
         finally
         {
             stop = true;
-            start.SignalAndWait(cancellationToken);
+
+            try
+            {
+                start.SignalAndWait(cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                // Ignore
+            }
 
             foreach (var worker in workers)
             {

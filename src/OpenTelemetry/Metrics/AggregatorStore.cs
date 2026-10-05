@@ -757,39 +757,37 @@ internal sealed class AggregatorStore
                 {
                     Debug.Assert(this.availableMetricPoints != null, "this.availableMetricPoints was null");
 
-                    // Note: Both arrays may be storage owned by ThreadStatic - for the input
-                    // order of tags and for the sorted order of tags - so at those lengths we
-                    // need a deep copy before handing them to the Dictionary. Above
-                    // MaxLargeTagCacheSize the thread-static storage deliberately does not
-                    // cache, so the arrays are already freshly allocated and can be used
-                    // directly.
-                    if (length <= ThreadStaticStorage.MaxLargeTagCacheSize)
-                    {
-                        var givenTagKeysAndValues = new KeyValuePair<string, object?>[length];
-                        tagKeysAndValues.CopyTo(givenTagKeysAndValues.AsSpan());
-
-                        var sortedTagKeysAndValues = new KeyValuePair<string, object?>[length];
-                        tempSortedTagKeysAndValues.CopyTo(sortedTagKeysAndValues.AsSpan());
-
-                        givenTags = new Tags(givenTagKeysAndValues);
-                        sortedTags = new Tags(sortedTagKeysAndValues);
-                    }
-
                     lock (this.TagsToMetricPointIndexDictionaryDelta)
                     {
                         // check again after acquiring lock.
                         if (!this.TagsToMetricPointIndexDictionaryDelta.TryGetValue(sortedTags, out lookupData))
                         {
-                            // Check for an available MetricPoint
-                            if (this.availableMetricPoints!.Count > 0)
-                            {
-                                index = this.DequeueAvailableMetricPoint();
-                            }
-                            else
+                            // Check for an available MetricPoint before copying the tags below
+                            if (this.availableMetricPoints!.Count == 0)
                             {
                                 // No MetricPoint is available for reuse
                                 return -1;
                             }
+
+                            // Note: Both arrays may be storage owned by ThreadStatic - for the input
+                            // order of tags and for the sorted order of tags - so at those lengths we
+                            // need a deep copy before handing them to the Dictionary. Above
+                            // MaxLargeTagCacheSize the thread-static storage deliberately does not
+                            // cache, so the arrays are already freshly allocated and can be used
+                            // directly.
+                            if (length <= ThreadStaticStorage.MaxLargeTagCacheSize)
+                            {
+                                var givenTagKeysAndValues = new KeyValuePair<string, object?>[length];
+                                tagKeysAndValues.CopyTo(givenTagKeysAndValues.AsSpan());
+
+                                var sortedTagKeysAndValues = new KeyValuePair<string, object?>[length];
+                                tempSortedTagKeysAndValues.CopyTo(sortedTagKeysAndValues.AsSpan());
+
+                                givenTags = new Tags(givenTagKeysAndValues);
+                                sortedTags = new Tags(sortedTagKeysAndValues);
+                            }
+
+                            index = this.DequeueAvailableMetricPoint();
 
                             lookupData = new LookupData(index, sortedTags, givenTags);
 
@@ -814,28 +812,24 @@ internal sealed class AggregatorStore
 
                 Debug.Assert(this.availableMetricPoints != null, "this.availableMetricPoints was null");
 
-                // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
-                var givenTagKeysAndValues = new KeyValuePair<string, object?>[length];
-
-                tagKeysAndValues.CopyTo(givenTagKeysAndValues.AsSpan());
-
-                givenTags = new Tags(givenTagKeysAndValues);
-
                 lock (this.TagsToMetricPointIndexDictionaryDelta)
                 {
                     // check again after acquiring lock.
                     if (!this.TagsToMetricPointIndexDictionaryDelta.TryGetValue(givenTags, out lookupData))
                     {
-                        // Check for an available MetricPoint
-                        if (this.availableMetricPoints!.Count > 0)
-                        {
-                            index = this.DequeueAvailableMetricPoint();
-                        }
-                        else
+                        // Check for an available MetricPoint before copying the tag below
+                        if (this.availableMetricPoints!.Count == 0)
                         {
                             // No MetricPoint is available for reuse
                             return -1;
                         }
+
+                        // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
+                        var givenTagKeysAndValues = new KeyValuePair<string, object?>[length];
+                        tagKeysAndValues.CopyTo(givenTagKeysAndValues.AsSpan());
+                        givenTags = new Tags(givenTagKeysAndValues);
+
+                        index = this.DequeueAvailableMetricPoint();
 
                         lookupData = new LookupData(index, Tags.EmptyTags, givenTags);
 
