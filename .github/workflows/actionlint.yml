@@ -12,7 +12,7 @@ env:
 jobs:
   lint:
     name: Lint GitHub Actions workflows
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     permissions:
       actions: read # Read GitHub Actions workflows

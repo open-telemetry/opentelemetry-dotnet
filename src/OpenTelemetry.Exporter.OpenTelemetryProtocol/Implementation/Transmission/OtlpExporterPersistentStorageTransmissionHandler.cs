@@ -8,6 +8,9 @@ using OpenTelemetry.PersistentStorage.FileSystem;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 
+#if NET
+[System.Runtime.Versioning.UnsupportedOSPlatform("browser")]
+#endif
 internal sealed class OtlpExporterPersistentStorageTransmissionHandler : OtlpExporterTransmissionHandler, IDisposable
 {
     private const int RetryIntervalInMilliseconds = 60000;

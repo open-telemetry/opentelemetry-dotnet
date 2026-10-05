@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
+
 namespace OpenTelemetry.Internal.Tests;
 
 public class CircularBufferTests
@@ -120,10 +122,7 @@ public class CircularBufferTests
     [Fact]
     public async Task CheckTryAddExceedsMaxSpinCount()
     {
-        if (Environment.ProcessorCount < 2)
-        {
-            return;
-        }
+        Assert.SkipWhen(Environment.ProcessorCount < 2, "This machine does not have enough processors to run this test.");
 
         var circularBuffer = new CircularBuffer<string>(1_000_000);
 
@@ -132,23 +131,39 @@ public class CircularBufferTests
         var writers = new List<Task>();
         for (var i = 0; i < Environment.ProcessorCount; i++)
         {
-            writers.Add(Task.Run(() =>
-            {
-                while (!cts.IsCancellationRequested)
+            writers.Add(Task.Run(
+                () =>
                 {
-                    circularBuffer.Add("item");
-                }
-            }));
+                    while (!cts.IsCancellationRequested)
+                    {
+                        circularBuffer.Add("item");
+                    }
+                },
+                TestContext.Current.CancellationToken));
         }
 
         var exceededMaxSpinCount = false;
+        var timeout = Stopwatch.StartNew();
 
-        for (var i = 0; i < 1_000_000 && !exceededMaxSpinCount; i++)
+        while (!exceededMaxSpinCount && timeout.Elapsed < TimeSpan.FromSeconds(30))
         {
             if (!circularBuffer.TryAdd("item", maxSpinCount: 1, out var count))
             {
                 Assert.Equal(0, count);
-                exceededMaxSpinCount = true;
+
+                // TryAdd() also returns false if the buffer is full. This is the only
+                // reader, so Count cannot have decreased since TryAdd() returned: if
+                // the buffer is not full now, then it was not full when TryAdd() failed.
+                exceededMaxSpinCount = circularBuffer.Count < circularBuffer.Capacity;
+            }
+
+            // Drain the buffer so that the writers never fill it up
+            if (!exceededMaxSpinCount && circularBuffer.Count >= circularBuffer.Capacity / 2)
+            {
+                for (var i = circularBuffer.Count; i > 0; i--)
+                {
+                    circularBuffer.Read();
+                }
             }
         }
 
@@ -160,16 +175,12 @@ public class CircularBufferTests
         await Task.WhenAll(writers);
 
         Assert.True(exceededMaxSpinCount);
-        Assert.True(circularBuffer.Count < circularBuffer.Capacity);
     }
 
     [Fact]
     public async Task CpuPressureTest()
     {
-        if (Environment.ProcessorCount < 2)
-        {
-            return;
-        }
+        Assert.SkipWhen(Environment.ProcessorCount < 2, "This machine does not have enough processors to run this test.");
 
         var circularBuffer = new CircularBuffer<string>(2048);
 
@@ -181,44 +192,46 @@ public class CircularBufferTests
         {
             var tid = i;
 
-            tasks.Add(Task.Run(async () =>
-            {
-                await Task.Delay(2000);
-
-                if (tid == 0)
+            tasks.Add(Task.Run(
+                async () =>
                 {
-                    for (var i = 0; i < numberOfItemsPerWorker * (Environment.ProcessorCount - 1); i++)
-                    {
-                        SpinWait wait = default;
-                        while (true)
-                        {
-                            if (circularBuffer.Count > 0)
-                            {
-                                circularBuffer.Read();
-                                break;
-                            }
+                    await Task.Delay(2000);
 
-                            wait.SpinOnce();
+                    if (tid == 0)
+                    {
+                        for (var i = 0; i < numberOfItemsPerWorker * (Environment.ProcessorCount - 1); i++)
+                        {
+                            SpinWait wait = default;
+                            while (true)
+                            {
+                                if (circularBuffer.Count > 0)
+                                {
+                                    circularBuffer.Read();
+                                    break;
+                                }
+
+                                wait.SpinOnce();
+                            }
                         }
                     }
-                }
-                else
-                {
-                    for (var i = 0; i < numberOfItemsPerWorker; i++)
+                    else
                     {
-                        SpinWait wait = default;
-                        while (true)
+                        for (var i = 0; i < numberOfItemsPerWorker; i++)
                         {
-                            if (circularBuffer.Add("item"))
+                            SpinWait wait = default;
+                            while (true)
                             {
-                                break;
-                            }
+                                if (circularBuffer.Add("item"))
+                                {
+                                    break;
+                                }
 
-                            wait.SpinOnce();
+                                wait.SpinOnce();
+                            }
                         }
                     }
-                }
-            }));
+                },
+                TestContext.Current.CancellationToken));
         }
 
         await Task.WhenAll(tasks);

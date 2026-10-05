@@ -42,7 +42,7 @@ public sealed class AppleAppFixture : IAsyncLifetime
     private static readonly TimeSpan BuildTimeout = TimeSpan.FromMinutes(10);
     private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(500);
     private static readonly TimeSpan SimulatorBootTimeout = TimeSpan.FromMinutes(5);
-    private static readonly TimeSpan SimulatorCommandTimeout = TimeSpan.FromMinutes(2);
+    private static readonly TimeSpan SimulatorCommandTimeout = TimeSpan.FromMinutes(5);
     private static readonly TimeSpan TestRunTimeout = TimeSpan.FromMinutes(5);
 
     private readonly StringBuilder log = new();
@@ -59,7 +59,7 @@ public sealed class AppleAppFixture : IAsyncLifetime
         private set;
     }
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         // Bound to the IPv4 loopback address rather than to 'localhost', which
         // would make Kestrel listen on both loopback addresses. The app addresses
@@ -79,7 +79,7 @@ public sealed class AppleAppFixture : IAsyncLifetime
         }
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         if (this.simulatorBootedByFixture is not null)
         {

@@ -10,22 +10,36 @@
     <File Path=".github/ISSUE_TEMPLATE/feature_request.yml" />
   </Folder>
   <Folder Name="/.github/workflows/">
+    <File Path=".github/workflows/actionlint.yml" />
     <File Path=".github/workflows/add-labels.yml" />
+    <File Path=".github/workflows/android-tests.yml" />
+    <File Path=".github/workflows/apple-tests.yml" />
     <File Path=".github/workflows/automation.yml" />
+    <File Path=".github/workflows/blazor-wasm-integration-test.yml" />
     <File Path=".github/workflows/ci.yml" />
+    <File Path=".github/workflows/codeql-analysis-steps.yml" />
     <File Path=".github/workflows/codeql-analysis.yml" />
     <File Path=".github/workflows/Component.BuildTest.yml" />
     <File Path=".github/workflows/concurrency-tests.yml" />
     <File Path=".github/workflows/docfx.yml" />
     <File Path=".github/workflows/dotnet-format.yml" />
+    <File Path=".github/workflows/first-time-pr.yml" />
+    <File Path=".github/workflows/fossa.yml" />
     <File Path=".github/workflows/markdownlint.yml" />
+    <File Path=".github/workflows/maui-tests.yml" />
+    <File Path=".github/workflows/ossf-scorecard.yml" />
     <File Path=".github/workflows/package-validation.yml" />
     <File Path=".github/workflows/post-release.yml" />
     <File Path=".github/workflows/prepare-release.yml" />
     <File Path=".github/workflows/publish-packages-1.0.yml" />
+    <File Path=".github/workflows/pwsh-test.yml" />
+    <File Path=".github/workflows/pwshlint.yml" />
     <File Path=".github/workflows/sanitycheck.yml" />
     <File Path=".github/workflows/stale.yml" />
+    <File Path=".github/workflows/survey-on-merged-pr.yml" />
+    <File Path=".github/workflows/unreleased-changes-report.yml" />
     <File Path=".github/workflows/verifyaotcompat.yml" />
+    <File Path=".github/workflows/zizmor.yml" />
   </Folder>
   <Folder Name="/build/">
     <File Path="build/BannedSymbols.txt" />
@@ -192,6 +206,7 @@
   <Folder Name="/Solution Items/">
     <File Path=".dockerignore" />
     <File Path=".editorconfig" />
+    <File Path=".gitattributes" />
     <File Path=".gitignore" />
     <File Path="CONTRIBUTING.md" />
     <File Path="Directory.Build.props" />

@@ -36,7 +36,11 @@ public class OtlpHttpExportClientTests
             httpClient,
             string.Empty);
 
-        var response = exportClient.SendExportRequest("hello world"u8.ToArray(), 11, DateTime.MaxValue);
+        var response = exportClient.SendExportRequest(
+            "hello world"u8.ToArray(),
+            11,
+            DateTime.MaxValue,
+            TestContext.Current.CancellationToken);
 
         Assert.False(response.Success);
         Assert.IsType<ResponseSizeLimitExceededException>(response.Exception);
@@ -66,7 +70,12 @@ public class OtlpHttpExportClientTests
             string.Empty);
 
         // The limit is inclusive, so a response of exactly this size is accepted.
-        Assert.True(exportClient.SendExportRequest("hello world"u8.ToArray(), 11, DateTime.MaxValue).Success);
+        Assert.True(
+            exportClient.SendExportRequest(
+                "hello world"u8.ToArray(),
+                11,
+                DateTime.MaxValue,
+                TestContext.Current.CancellationToken).Success);
     }
 
     [Theory]
@@ -116,7 +125,11 @@ public class OtlpHttpExportClientTests
             httpClient,
             string.Empty);
 
-        exportClient.SendExportRequest(payload, payload.Length, DateTime.UtcNow.AddSeconds(10));
+        exportClient.SendExportRequest(
+            payload,
+            payload.Length,
+            DateTime.UtcNow.AddSeconds(10),
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(payload, testHandler.HttpRequestContent);
 
@@ -143,7 +156,11 @@ public class OtlpHttpExportClientTests
             httpClient,
             string.Empty);
 
-        exportClient.SendExportRequest(payload, payload.Length, DateTime.UtcNow.AddSeconds(10));
+        exportClient.SendExportRequest(
+            payload,
+            payload.Length,
+            DateTime.UtcNow.AddSeconds(10),
+            TestContext.Current.CancellationToken);
 
         var content = testHandler.HttpRequestContent;
 
@@ -278,6 +295,39 @@ public class OtlpHttpExportClientTests
 
         Assert.Throws<OperationCanceledException>(() =>
             exportClient.SendExportRequest(payload, payload.Length, DateTime.UtcNow.AddSeconds(10), cts.Token));
+    }
+
+    [Fact]
+    public void SendExportRequest_MalformedAuthorizationHeader_DoesNotLeakSecretIntoDiagnosticLog()
+    {
+        const int FailedToReachCollectorEventId = 2;
+        const string FakeSecret = "s3cr3t-token-value";
+
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Error);
+
+        using var testHandler = new ThrowingHttpMessageHandler(new InvalidOperationException("unused"));
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false);
+
+        var exportClient = new OtlpHttpExportClient(
+            new OtlpExporterOptions
+            {
+                Endpoint = new Uri("http://localhost:4318"),
+                Protocol = OtlpExportProtocol.HttpProtobuf,
+                Headers = $"Authorization=Api-Key: {FakeSecret}",
+            },
+            httpClient,
+            string.Empty);
+
+        var payload = "hello world"u8.ToArray();
+        var response = exportClient.SendExportRequest(payload, payload.Length, DateTime.UtcNow.AddSeconds(10), TestContext.Current.CancellationToken);
+
+        Assert.False(response.Success);
+
+        var logged = Assert.Single(listener.Messages, e => e.EventId == FailedToReachCollectorEventId);
+
+        var loggedException = (string)logged.Payload![1]!;
+        Assert.DoesNotContain(FakeSecret, loggedException, StringComparison.Ordinal);
+        Assert.Contains("Authorization", loggedException, StringComparison.Ordinal);
     }
 
     private static ExportClientResponse SendExportRequestThatThrows(Exception exception)
