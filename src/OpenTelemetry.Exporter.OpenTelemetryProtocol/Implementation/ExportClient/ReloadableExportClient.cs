@@ -119,33 +119,30 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
             signalType,
             useOtlpExporter,
             configureOnReload);
-        var ownsHttpClient = usesHttpClientFactory || ReferenceEquals(options.HttpClientFactory, options.DefaultHttpClientFactory);
-        IExportClient initialClient = usesHttpClientFactory && signalType == OtlpSignalType.Logs
-            ? new LazyExportClient(() => options.GetExportClient(signalType, ownsHttpClient))
-            : options.GetExportClient(signalType, ownsHttpClient);
+        var ownsHttpClient = usesHttpClientFactory
+            || ReferenceEquals(options.HttpClientFactory, options.DefaultHttpClientFactory);
+        IExportClient exportClient;
+        if (usesHttpClientFactory && signalType == OtlpSignalType.Logs)
+        {
+            exportClient = new LazyExportClient(() => options.GetExportClient(signalType, ownsHttpClient));
+        }
+        else
+        {
+            exportClient = options.GetExportClient(signalType, ownsHttpClient);
+        }
 
-        var initialState = new ClientState(initialClient, ownsHttpClient);
-        ReloadableExportClient? client = null;
+        var client = new ReloadableExportClient(
+            registration,
+            new ClientState(exportClient, ownsHttpClient),
+            OtlpExportClientRegistration.GetTimeout(options, exportClient));
         try
         {
-            client = new(
-                registration,
-                initialState,
-                OtlpExportClientRegistration.GetTimeout(options, initialClient));
             registration.Subscribe(client.Reload);
             return client;
         }
         catch
         {
-            if (client is null)
-            {
-                initialState.Retire();
-            }
-            else
-            {
-                client.Dispose();
-            }
-
+            client.Dispose();
             throw;
         }
     }
