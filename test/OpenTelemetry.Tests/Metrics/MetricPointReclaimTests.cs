@@ -260,7 +260,7 @@ public class MetricPointReclaimTests
 
         try
         {
-            Assert.True(lookupBlocked.Wait(TimeSpan.FromSeconds(5)));
+            Assert.True(lookupBlocked.Wait(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken));
             recordMeasurement(10, creatorTags);
 
             if (temporalityPreference == MetricReaderTemporalityPreference.Cumulative)
