@@ -622,11 +622,21 @@ internal sealed class AggregatorStore
                     aggregatorIndex = this.metricPointIndex;
                     if (aggregatorIndex >= this.NumberOfMetricPoints)
                     {
-                        // sorry! out of data points.
-                        // TODO: Once we support cleanup of
-                        // unused points (typically with delta)
-                        // we can re-claim them here.
-                        return -1;
+                        // Another thread may have published these tags after the lookup above.
+                        // Recheck under the lock before treating this measurement as overflow.
+                        lock (this.tagsToMetricPointIndexDictionary)
+                        {
+                            if (!this.tagsToMetricPointIndexDictionary.TryGetValue(sortedTags, out aggregatorIndex))
+                            {
+                                // sorry! out of data points.
+                                // TODO: Once we support cleanup of
+                                // unused points (typically with delta)
+                                // we can re-claim them here.
+                                return -1;
+                            }
+                        }
+
+                        return aggregatorIndex;
                     }
 
                     // Note: Both arrays may be storage owned by ThreadStatic - for the input
@@ -684,11 +694,21 @@ internal sealed class AggregatorStore
                 aggregatorIndex = this.metricPointIndex;
                 if (aggregatorIndex >= this.NumberOfMetricPoints)
                 {
-                    // sorry! out of data points.
-                    // TODO: Once we support cleanup of
-                    // unused points (typically with delta)
-                    // we can re-claim them here.
-                    return -1;
+                    // Another thread may have published these tags after the lookup above.
+                    // Recheck under the lock before treating this measurement as overflow.
+                    lock (this.tagsToMetricPointIndexDictionary)
+                    {
+                        if (!this.tagsToMetricPointIndexDictionary.TryGetValue(givenTags, out aggregatorIndex))
+                        {
+                            // sorry! out of data points.
+                            // TODO: Once we support cleanup of
+                            // unused points (typically with delta)
+                            // we can re-claim them here.
+                            return -1;
+                        }
+                    }
+
+                    return aggregatorIndex;
                 }
 
                 // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
