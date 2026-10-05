@@ -56,17 +56,20 @@ internal sealed class OtlpExportClientRegistration : IDisposable
         this.builderOptionsSubscription?.Dispose();
     }
 
-    internal static double GetTimeout(OtlpExporterOptions options, IExportClient client) =>
-        client is OtlpHttpExportClient httpClient
-            ? httpClient.HttpClient.Timeout.TotalMilliseconds
-            : options.TimeoutMilliseconds;
-
     internal void Subscribe(Action reload)
     {
         this.reload = reload;
         this.builderOptionsSubscription = this.builderOptionsMonitor?.OnChange(this.OnBuilderOptionsChanged);
         this.optionsSubscription = this.optionsMonitor.OnChange(this.OnExporterOptionsChanged);
     }
+
+    internal (IExportClient Client, bool OwnsHttpClient, double TimeoutMilliseconds) CreateInitialClient(
+        OtlpExporterOptions options,
+        bool usesHttpClientFactory)
+        => this.CreateClient(
+            options,
+            usesHttpClientFactory,
+            deferCreation: usesHttpClientFactory && this.signalType == OtlpSignalType.Logs);
 
     internal (IExportClient Client, bool OwnsHttpClient, double TimeoutMilliseconds)? CreateExportClient()
     {
@@ -79,10 +82,31 @@ internal sealed class OtlpExportClientRegistration : IDisposable
             return null;
         }
 
-        var ownsHttpClient = options.TryEnableIHttpClientFactoryIntegration(this.serviceProvider, this.httpClientName)
+        var usesHttpClientFactory = options.TryEnableIHttpClientFactoryIntegration(this.serviceProvider, this.httpClientName);
+        return this.CreateClient(options, usesHttpClientFactory, deferCreation: false);
+    }
+
+    private (IExportClient Client, bool OwnsHttpClient, double TimeoutMilliseconds) CreateClient(
+        OtlpExporterOptions options,
+        bool usesHttpClientFactory,
+        bool deferCreation)
+    {
+        var ownsHttpClient = usesHttpClientFactory
             || ReferenceEquals(options.HttpClientFactory, options.DefaultHttpClientFactory);
-        var client = options.GetExportClient(this.signalType, ownsHttpClient);
-        return (client, ownsHttpClient, GetTimeout(options, client));
+        IExportClient client;
+        if (deferCreation)
+        {
+            client = new LazyExportClient(() => options.GetExportClient(this.signalType, ownsHttpClient));
+        }
+        else
+        {
+            client = options.GetExportClient(this.signalType, ownsHttpClient);
+        }
+
+        var timeoutMilliseconds = client is OtlpHttpExportClient httpClient
+            ? httpClient.HttpClient.Timeout.TotalMilliseconds
+            : options.TimeoutMilliseconds;
+        return (client, ownsHttpClient, timeoutMilliseconds);
     }
 
     private void OnBuilderOptionsChanged(OtlpExporterBuilderOptions options, string? name)

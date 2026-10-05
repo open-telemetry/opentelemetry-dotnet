@@ -16,12 +16,11 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
 
     private ReloadableExportClient(
         OtlpExportClientRegistration registration,
-        ClientState initialClient,
-        double timeoutMilliseconds)
+        (IExportClient Client, bool OwnsHttpClient, double TimeoutMilliseconds) initialClient)
     {
         this.registration = registration;
-        this.current = initialClient;
-        this.timeoutMilliseconds = timeoutMilliseconds;
+        this.current = new ClientState(initialClient.Client, initialClient.OwnsHttpClient);
+        this.timeoutMilliseconds = initialClient.TimeoutMilliseconds;
     }
 
     internal double TimeoutMilliseconds => Volatile.Read(ref this.timeoutMilliseconds);
@@ -119,22 +118,8 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
             signalType,
             useOtlpExporter,
             configureOnReload);
-        var ownsHttpClient = usesHttpClientFactory
-            || ReferenceEquals(options.HttpClientFactory, options.DefaultHttpClientFactory);
-        IExportClient exportClient;
-        if (usesHttpClientFactory && signalType == OtlpSignalType.Logs)
-        {
-            exportClient = new LazyExportClient(() => options.GetExportClient(signalType, ownsHttpClient));
-        }
-        else
-        {
-            exportClient = options.GetExportClient(signalType, ownsHttpClient);
-        }
-
-        var client = new ReloadableExportClient(
-            registration,
-            new ClientState(exportClient, ownsHttpClient),
-            OtlpExportClientRegistration.GetTimeout(options, exportClient));
+        var initialClient = registration.CreateInitialClient(options, usesHttpClientFactory);
+        var client = new ReloadableExportClient(registration, initialClient);
         try
         {
             registration.Subscribe(client.Reload);
