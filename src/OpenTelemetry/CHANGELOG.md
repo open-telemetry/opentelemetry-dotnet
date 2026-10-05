@@ -33,6 +33,11 @@ Notes](../../RELEASENOTES.md).
   console sink through the standard options pipeline. Sinks are off by default.
   ([#7588](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7588))
 
+* Fixed a race that could incorrectly route a concurrent metric measurement to
+  the overflow point when its tag set was published as the cardinality limit was
+  reached.
+  ([#7804](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7804))
+
 ## 1.19.1
 
 Released 2026-Sep-21
