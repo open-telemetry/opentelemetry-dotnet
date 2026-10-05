@@ -22,6 +22,10 @@ Notes](../../RELEASENOTES.md).
 * Avoid logging malformed HTTP request headers in the exporter's diagnostic log.
   ([#7858](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7858))
 
+* Avoid buffering the whole compressed request body in memory before sending it
+  on .NET Framework when using HTTP/protobuf with gzip compression.
+  ([#7879](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7879))
+
 * Reload OTLP export clients when named exporter options or `UseOtlpExporter`
   configuration changes, without recreating providers. Protocol and maximum
   request size remain fixed for the lifetime of each exporter.
