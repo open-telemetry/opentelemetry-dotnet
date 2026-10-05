@@ -28,7 +28,7 @@ internal sealed class SelfDiagnosticsLoggingEventListener : EventListener
 
     private static readonly WaitCallback ProcessReconciliationCallback = static state =>
     {
-        var workItem = (SourceReconciliationWorkItem)state!;
+        var workItem = (SourceReconciliationWorkItem?)state!;
 
         try
         {
@@ -243,7 +243,7 @@ internal sealed class SelfDiagnosticsLoggingEventListener : EventListener
         LogLevel.Critical => EventLevel.Critical,
 
         // LogLevel.None never reaches here: ApplyLevel routes it to DisableEvents.
-        _ => EventLevel.LogAlways,
+        LogLevel.None or _ => EventLevel.LogAlways,
     };
 
     private void OnEventWrittenCore(EventWrittenEventArgs eventData)

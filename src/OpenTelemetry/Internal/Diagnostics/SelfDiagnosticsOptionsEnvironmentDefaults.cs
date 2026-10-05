@@ -120,10 +120,11 @@ internal static class SelfDiagnosticsOptionsEnvironmentDefaults
             case "NONE":
                 level = LogLevel.None;
                 return true;
-        }
 
-        level = LogLevel.None;
-        return false;
+            default:
+                level = LogLevel.None;
+                return false;
+        }
     }
 
     /// <summary>
@@ -151,10 +152,11 @@ internal static class SelfDiagnosticsOptionsEnvironmentDefaults
             case "ALL":
                 mode = EnvironmentVariableLogMode.AllValues;
                 return true;
-        }
 
-        mode = EnvironmentVariableLogMode.KnownSafeValues;
-        return false;
+            default:
+                mode = EnvironmentVariableLogMode.KnownSafeValues;
+                return false;
+        }
     }
 
     private static void AddWarning(ref List<string>? warnings, string name, string value, string expected)

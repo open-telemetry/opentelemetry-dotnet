@@ -316,7 +316,7 @@ public class SelfDiagnosticsOptionsTests
         var resolverCalls = 0;
 
         var options = CreateOptions(
-            new Dictionary<string, string?>(),
+            [],
             () =>
             {
                 resolverCalls++;
@@ -427,12 +427,10 @@ public class SelfDiagnosticsOptionsTests
     }
 
     [Fact]
-    public void GetDefaultLogDirectory_MatchesParameterlessResolver()
-    {
+    public void GetDefaultLogDirectory_MatchesParameterlessResolver() =>
         Assert.Equal(
             SelfDiagnosticsLogDirectoryResolver.Resolve(),
             SelfDiagnosticsOptions.GetDefaultLogDirectory());
-    }
 
     [Fact]
     public void DefaultLogDirectory_ParameterlessResolve_DoesNotThrow()
