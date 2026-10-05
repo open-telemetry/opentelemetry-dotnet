@@ -28,6 +28,16 @@ internal sealed class OtlpHttpExportClient : OtlpExportClient
         try
         {
             using var httpRequest = this.CreateHttpRequest(buffer, contentLength);
+
+#if NETFRAMEWORK
+            if (this.CompressionEnabled)
+            {
+                // The length of the compressed content is not known up front, so unless the request
+                // is sent chunked HttpClientHandler buffers the entire compressed body in memory first.
+                httpRequest.Headers.TransferEncodingChunked = true;
+            }
+#endif
+
             using var httpResponse = this.SendHttpRequest(httpRequest, cancellationToken);
 
             if (this.IsResponseTooLarge(httpResponse, out var responseTooLarge))
