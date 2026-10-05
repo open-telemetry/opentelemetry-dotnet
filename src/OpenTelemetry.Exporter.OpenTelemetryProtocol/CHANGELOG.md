@@ -24,7 +24,7 @@ Notes](../../RELEASENOTES.md).
 
 * Avoid buffering the whole compressed request body in memory before sending it
   on .NET Framework when using HTTP/protobuf with gzip compression.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7879](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7879))
 
 ## 1.19.1
 
