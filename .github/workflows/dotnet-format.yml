@@ -10,7 +10,7 @@ permissions: {}
 jobs:
   check-dotnet-format:
     name: Check for changes
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     outputs:
       include-args: ${{ steps.check.outputs.include-args }}

@@ -24,18 +24,20 @@ public sealed class DeclarativeConfigurationProviderTests
     [Fact]
     public void Load_ValidFile_PopulatesFlatKeys()
     {
-        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(
-            disabled: true,
-            resourceAttributes: new Dictionary<string, string> { ["service.name"] = "my-service" });
+        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: true);
 
         var provider = new DeclarativeConfigurationProvider(new DeclarativeConfigurationDocumentAccessor(new FilePath(yamlFile.Path)));
         provider.Load();
 
-        Assert.True(provider.TryGet(OtelEnvironmentVariables.SdkDisabled, out var disabled));
+        Assert.True(provider.TryGet(OtelEnvironmentVariables.SdkDisabled, out var disabled), "Expected the provider to contain the SDK disabled key.");
         Assert.Equal("true", disabled);
 
-        Assert.True(provider.TryGet(OtelEnvironmentVariables.ResourceAttributes, out var attrs));
-        Assert.Equal("service.name=my-service", attrs);
+        // resource.attributes goes through DeclarativeResourceDetector, not the flat projection,
+        // but strict mode still claims the key: it is in scope, so it masks rather than falls through.
+        Assert.True(
+            provider.TryGet(OtelEnvironmentVariables.ResourceAttributes, out var resourceAttributes),
+            "Expected the provider to claim the resource attributes key.");
+        Assert.Null(resourceAttributes);
     }
 
     [Fact]
@@ -45,8 +47,15 @@ public sealed class DeclarativeConfigurationProviderTests
         var provider = new DeclarativeConfigurationProvider(new DeclarativeConfigurationDocumentAccessor(new FilePath(yamlFile.Path)));
         provider.Load();
 
-        Assert.False(provider.TryGet(OtelEnvironmentVariables.SdkDisabled, out _));
-        Assert.False(provider.TryGet(OtelEnvironmentVariables.ResourceAttributes, out _));
+        // An empty file masks every in-scope key without supplying a value for any of them.
+        Assert.True(
+            provider.TryGet(OtelEnvironmentVariables.SdkDisabled, out var disabled),
+            "Expected the provider to claim the SDK disabled key.");
+        Assert.Null(disabled);
+        Assert.True(
+            provider.TryGet(OtelEnvironmentVariables.ResourceAttributes, out var resourceAttributes),
+            "Expected the provider to claim the resource attributes key.");
+        Assert.Null(resourceAttributes);
     }
 
     [Fact]
@@ -66,14 +75,20 @@ public sealed class DeclarativeConfigurationProviderTests
         var accessor = new DeclarativeConfigurationDocumentAccessor(new FilePath(yamlFile.Path));
         var provider = new DeclarativeConfigurationProvider(accessor);
         provider.Load();
-        Assert.True(provider.TryGet(OtelEnvironmentVariables.SdkDisabled, out _));
+        Assert.True(
+            provider.TryGet(OtelEnvironmentVariables.SdkDisabled, out var disabled),
+            "Expected the provider to contain the SDK disabled key after the first load.");
+        Assert.Equal("true", disabled);
 
         // Rewrite the file; the second Load() must ignore the change.
         File.WriteAllText(yamlFile.Path, yamlWithoutDisabled);
         provider.Load();
 
-        // Key still present - second load was a no-op.
-        Assert.True(provider.TryGet(OtelEnvironmentVariables.SdkDisabled, out _));
+        // The document's value is unchanged - second load was a no-op.
+        Assert.True(
+            provider.TryGet(OtelEnvironmentVariables.SdkDisabled, out disabled),
+            "Expected the provider to retain the SDK disabled key after the second load.");
+        Assert.Equal("true", disabled);
         Assert.Single(listener.Messages, e => e.EventId == 26);
     }
 
@@ -177,19 +192,20 @@ public sealed class DeclarativeConfigurationProviderTests
     [Fact]
     public void Load_SubstitutesThenTranslates()
     {
+        // attributes_list (not attributes) is the flat-projection path; verify substitution runs first.
         const string yaml = """
             file_format: "1.0"
             resource:
-              attributes:
-                - name: service.name
-                  value: ${SERVICE_NAME:-default-svc}
+              attributes_list: service.name=${SERVICE_NAME:-default-svc}
             """;
 
         using var yamlFile = DeclarativeYamlTestFile.CreateYamlFile(yaml);
         var provider = new DeclarativeConfigurationProvider(new DeclarativeConfigurationDocumentAccessor(new FilePath(yamlFile.Path)));
         provider.Load();
 
-        Assert.True(provider.TryGet(OtelEnvironmentVariables.ResourceAttributes, out var attrs));
+        Assert.True(
+            provider.TryGet(OtelEnvironmentVariables.ResourceAttributes, out var attrs),
+            "Expected the provider to contain the translated resource attributes key.");
         Assert.Equal("service.name=default-svc", attrs);
     }
 

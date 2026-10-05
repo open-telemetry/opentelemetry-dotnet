@@ -3,7 +3,7 @@
 
 using OpenTelemetry.Internal;
 
-namespace OpenTelemetry.Configuration;
+namespace OpenTelemetry.Configuration.Declarative;
 
 /// <summary>
 /// A mutable builder that accumulates key/value pairs and produces an immutable <see cref="ConfigProperties"/>.

@@ -32,3 +32,20 @@ Notes](../../RELEASENOTES.md).
   package does not yet apply. Substitution and YAML structure validation is
   applied, so previously ignored errors are now reported.
   ([#7716](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7716))
+
+* Added public APIs for reading the complete parsed declarative configuration
+  document from `IServiceProvider` or `IConfigurationRoot`, with typed access to
+  YAML values through `ConfigProperties`.
+  ([#7781](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7781))
+
+* Added declarative configuration support for typed resource attributes and
+  resource schema URLs.
+  ([#7806](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7806))
+
+* Declarative configuration now uses strict mode.
+  ([#7849](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7849))
+
+* Added strict mode warnings that name ignored `OTEL_*` settings, configuration
+  sources that override the file, and an explicit path that differs from
+  `OTEL_CONFIG_FILE`.
+  ([#7873](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7873))

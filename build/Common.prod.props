@@ -36,7 +36,6 @@
   <PropertyGroup Label="SourceLinkProperties">
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <ContinuousIntegrationBuild Condition="'$(Deterministic)'=='true'">true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
   <ItemGroup>
@@ -47,6 +46,13 @@
 
   <ItemGroup>
     <AdditionalFiles Include="$(MSBuildThisFileDirectory)/BannedSymbols.txt" />
+  </ItemGroup>
+
+  <!-- Android, Browser and iOS are not supported platforms checked for compatibility warnings by default -->
+  <ItemGroup Condition="'$(SupportsBrowserAndMobilePlatforms)' == 'true'">
+    <SupportedPlatform Include="android" />
+    <SupportedPlatform Include="browser" />
+    <SupportedPlatform Include="ios" />
   </ItemGroup>
 
   <ItemGroup>

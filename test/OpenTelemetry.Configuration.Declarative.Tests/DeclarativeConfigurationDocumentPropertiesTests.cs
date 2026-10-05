@@ -70,7 +70,7 @@ public sealed class DeclarativeConfigurationDocumentPropertiesTests
 
         Assert.Equal("1.0", AssertPresent(properties.GetString("file_format")));
         Assert.True(AssertPresent(properties.GetBoolean("disabled")), "The 'disabled' property should be true.");
-        Assert.NotNull(AssertPresent(properties.GetProperties("resource")));
+        Assert.NotNull(AssertPresent(properties.GetMapping("resource")));
     }
 
     [Fact]
@@ -88,12 +88,12 @@ public sealed class DeclarativeConfigurationDocumentPropertiesTests
             """);
 
         var processors = AssertPresent(
-            AssertPresent(properties.GetProperties("tracer_provider")).GetPropertiesList("processors"));
+            AssertPresent(properties.GetMapping("tracer_provider")).GetMappingList("processors"));
 
         var otlp = AssertPresent(
             AssertPresent(
-                AssertPresent(Assert.Single(processors).GetProperties("batch")).GetProperties("exporter"))
-            .GetProperties("otlp_http"));
+                AssertPresent(Assert.Single(processors).GetMapping("batch")).GetMapping("exporter"))
+            .GetMapping("otlp_http"));
 
         Assert.Equal("http://localhost:4318", AssertPresent(otlp.GetString("endpoint")));
         Assert.Equal(10000, AssertPresent(otlp.GetInt("timeout")));
@@ -109,10 +109,10 @@ public sealed class DeclarativeConfigurationDocumentPropertiesTests
               weights: [1, 2, 3]
             """);
 
-        var propagator = AssertPresent(properties.GetProperties("propagator"));
+        var propagator = AssertPresent(properties.GetMapping("propagator"));
 
-        Assert.Equal(["tracecontext", "baggage"], AssertPresent(propagator.GetScalarList<string>("composite")));
-        Assert.Equal([1L, 2L, 3L], AssertPresent(propagator.GetScalarList<long>("weights")));
+        Assert.Equal(["tracecontext", "baggage"], AssertPresent(propagator.GetStringList("composite")));
+        Assert.Equal([1L, 2L, 3L], AssertPresent(propagator.GetLongList("weights")));
     }
 
     // The specification's worked example: absent, present-null and present must stay distinguishable
@@ -128,15 +128,15 @@ public sealed class DeclarativeConfigurationDocumentPropertiesTests
               tilde_null: ~
               aggregation:
                 drop:
-            """).GetProperties("vendor"));
+            """).GetMapping("vendor"));
 
         Assert.Equal(ConfigValueOutcome.Absent, vendor.GetString("missing").Outcome);
         Assert.Equal(ConfigValueOutcome.PresentNull, vendor.GetString("explicit_null").Outcome);
         Assert.Equal(ConfigValueOutcome.PresentNull, vendor.GetString("tilde_null").Outcome);
         Assert.Equal("value", AssertPresent(vendor.GetString("present")));
 
-        var aggregation = AssertPresent(vendor.GetProperties("aggregation"));
-        Assert.Equal(ConfigValueOutcome.PresentNull, aggregation.GetProperties("drop").Outcome);
+        var aggregation = AssertPresent(vendor.GetMapping("aggregation"));
+        Assert.Equal(ConfigValueOutcome.PresentNull, aggregation.GetMapping("drop").Outcome);
     }
 
     [Fact]
@@ -147,15 +147,15 @@ public sealed class DeclarativeConfigurationDocumentPropertiesTests
             vendor:
               mixed: [1, two, true]
               nested: [[1, 2], [3]]
-            """).GetProperties("vendor"));
+            """).GetMapping("vendor"));
 
         Assert.Equal(["mixed", "nested"], vendor.Keys.OrderBy(k => k, StringComparer.Ordinal));
 
-        Assert.Equal(ConfigValueOutcome.TypeMismatch, vendor.GetScalarList<string>("mixed").Outcome);
-        Assert.Equal(ConfigValueOutcome.TypeMismatch, vendor.GetScalarList<long>("mixed").Outcome);
-        Assert.Equal(ConfigValueOutcome.TypeMismatch, vendor.GetPropertiesList("mixed").Outcome);
-        Assert.Equal(ConfigValueOutcome.TypeMismatch, vendor.GetScalarList<long>("nested").Outcome);
-        Assert.Equal(ConfigValueOutcome.TypeMismatch, vendor.GetPropertiesList("nested").Outcome);
+        Assert.Equal(ConfigValueOutcome.TypeMismatch, vendor.GetStringList("mixed").Outcome);
+        Assert.Equal(ConfigValueOutcome.TypeMismatch, vendor.GetLongList("mixed").Outcome);
+        Assert.Equal(ConfigValueOutcome.TypeMismatch, vendor.GetMappingList("mixed").Outcome);
+        Assert.Equal(ConfigValueOutcome.TypeMismatch, vendor.GetLongList("nested").Outcome);
+        Assert.Equal(ConfigValueOutcome.TypeMismatch, vendor.GetMappingList("nested").Outcome);
     }
 
     // A value whose kind is known but whose CLR representation is unavailable loads: an unquoted
@@ -169,7 +169,7 @@ public sealed class DeclarativeConfigurationDocumentPropertiesTests
               huge: 123456789012345678901
               overflow: 1e999
               underflow: 1e-999
-            """).GetProperties("vendor"));
+            """).GetMapping("vendor"));
 
         Assert.Equal(["huge", "overflow", "underflow"], vendor.Keys.OrderBy(k => k, StringComparer.Ordinal));
 
@@ -201,7 +201,7 @@ public sealed class DeclarativeConfigurationDocumentPropertiesTests
                 "EMPTY_VAR" => string.Empty,
                 "SET_VAR" => "resolved-value",
                 _ => null,
-            }).GetProperties("vendor"));
+            }).GetMapping("vendor"));
 
         Assert.Equal("resolved-value", AssertPresent(vendor.GetString("set")));
         Assert.Equal("fallback", AssertPresent(vendor.GetString("unset_with_default")));
@@ -224,7 +224,7 @@ public sealed class DeclarativeConfigurationDocumentPropertiesTests
             file_format: "1.0"
             vendor:
               setting: ${{{UnsetVariable}}}
-            """).GetProperties("vendor"));
+            """).GetMapping("vendor"));
 
         Assert.Equal(ConfigValueOutcome.PresentNull, vendor.GetString("setting").Outcome);
 
@@ -245,7 +245,7 @@ public sealed class DeclarativeConfigurationDocumentPropertiesTests
             vendor:
               setting: "${{{UnsetVariable}}}"
             """,
-            name => name == UnsetVariable ? string.Empty : null).GetProperties("vendor"));
+            name => name == UnsetVariable ? string.Empty : null).GetMapping("vendor"));
 
         Assert.Equal(string.Empty, AssertPresent(vendor.GetString("setting")));
 
@@ -265,7 +265,7 @@ public sealed class DeclarativeConfigurationDocumentPropertiesTests
             file_format: "1.0"
             vendor:
               setting: "${UNCLOSED"
-            """).GetProperties("vendor"));
+            """).GetMapping("vendor"));
 
         Assert.Equal("${UNCLOSED", AssertPresent(vendor.GetString("setting")));
 
@@ -296,7 +296,7 @@ public sealed class DeclarativeConfigurationDocumentPropertiesTests
               "<<": value
             """);
 
-        var vendor = AssertPresent(properties.GetProperties("vendor"));
+        var vendor = AssertPresent(properties.GetMapping("vendor"));
         Assert.Equal("value", AssertPresent(vendor.GetString("<<")));
     }
 
@@ -385,13 +385,13 @@ public sealed class DeclarativeConfigurationDocumentPropertiesTests
         {
             Assert.Equal(
                 "http://localhost:4318",
-                AssertPresent(AssertPresent(properties.GetProperties(key)).GetString("endpoint")));
+                AssertPresent(AssertPresent(properties.GetMapping(key)).GetString("endpoint")));
         }
 
-        var anchor = properties.GetProperties("anchored").Position;
+        var anchor = properties.GetMapping("anchored").Position;
         Assert.True(anchor.HasPosition);
-        Assert.Equal(anchor.Line, properties.GetProperties("first_alias").Position.Line);
-        Assert.Equal(anchor.Column, properties.GetProperties("second_alias").Position.Column);
+        Assert.Equal(anchor.Line, properties.GetMapping("first_alias").Position.Line);
+        Assert.Equal(anchor.Column, properties.GetMapping("second_alias").Position.Column);
     }
 
     [Fact]
@@ -457,7 +457,7 @@ public sealed class DeclarativeConfigurationDocumentPropertiesTests
 
         Assert.Equal(1, properties.GetString("file_format").Position.Line);
 
-        var vendorResult = properties.GetProperties("vendor");
+        var vendorResult = properties.GetMapping("vendor");
         Assert.Equal(3, vendorResult.Position.Line);
         Assert.Equal(3, vendorResult.Position.Column);
         var vendor = AssertPresent(vendorResult);
@@ -466,7 +466,7 @@ public sealed class DeclarativeConfigurationDocumentPropertiesTests
         Assert.Equal(3, scalar.Position.Line);
         Assert.Equal(11, scalar.Position.Column);
 
-        var items = vendor.GetScalarList<string>("items");
+        var items = vendor.GetStringList("items");
         Assert.Equal(5, items.Position.Line);
         Assert.Equal(5, items.Position.Column);
     }
@@ -547,9 +547,7 @@ public sealed class DeclarativeConfigurationDocumentPropertiesTests
             file_format: "1.0"
             disabled: true
             resource:
-              attributes:
-                - name: service.name
-                  value: my-service
+              attributes_list: "service.name=my-service"
             tracer_provider:
               processors:
                 - batch:

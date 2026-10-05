@@ -18,7 +18,7 @@
 // limitations under the License.
 
 using System.Globalization;
-#if NET462
+#if NETFRAMEWORK
 using System.Net.Http;
 #endif
 using System.Net.Http.Headers;

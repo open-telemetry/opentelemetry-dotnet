@@ -81,7 +81,7 @@ jobs:
 
     - name: dotnet build
       shell: pwsh
-      run: dotnet build ./build/OpenTelemetry.proj --configuration Release --no-restore -p:Deterministic=true -p:"BuildNumber=${env:GITHUB_RUN_NUMBER}" -p:RunningDotNetPack=true
+      run: dotnet build ./build/OpenTelemetry.proj --configuration Release --no-restore -p:"BuildNumber=${env:GITHUB_RUN_NUMBER}" -p:RunningDotNetPack=true
 
     - name: Sign DLLs with Cosign Keyless
       shell: pwsh
@@ -267,7 +267,7 @@ jobs:
   publish:
     name: Publish
     needs: [build-pack, validate]
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     permissions:
       attestations: read # Read GitHub attestations for the NuGet packages
@@ -314,7 +314,7 @@ jobs:
 
   post-build:
     name: Post build release tasks
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     permissions:
       contents: read # Download the published artifacts

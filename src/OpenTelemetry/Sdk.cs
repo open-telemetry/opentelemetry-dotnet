@@ -10,6 +10,7 @@ using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
+using static OpenTelemetry.Internal.SelfDiagnostics;
 
 namespace OpenTelemetry;
 
@@ -28,7 +29,15 @@ public static class Sdk
 
         Activity.DefaultIdFormat = ActivityIdFormat.W3C;
         Activity.ForceDefaultIdFormat = true;
-        SelfDiagnostics.EnsureInitialized();
+
+#if NET
+        if (!OperatingSystem.IsBrowser())
+        {
+            EnsureInitialized();
+        }
+#else
+        EnsureInitialized();
+#endif
 
         var sdkAssembly = typeof(Sdk).Assembly;
         InformationalVersion = sdkAssembly.GetPackageVersion();
