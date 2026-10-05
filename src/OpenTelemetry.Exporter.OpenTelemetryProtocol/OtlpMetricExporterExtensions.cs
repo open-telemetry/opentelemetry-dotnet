@@ -233,27 +233,11 @@ public static class OtlpMetricExporterExtensions
         {
             if (reader is null && reloadableClient != null)
             {
-                try
+                using (reloadableClient)
+                using (metricExporter)
+                using (transmissionHandler)
                 {
-                    try
-                    {
-                        transmissionHandler?.Shutdown(Timeout.Infinite);
-                    }
-                    finally
-                    {
-                        transmissionHandler?.Dispose();
-                    }
-                }
-                finally
-                {
-                    try
-                    {
-                        metricExporter?.Dispose();
-                    }
-                    finally
-                    {
-                        reloadableClient.Dispose();
-                    }
+                    transmissionHandler?.Shutdown(Timeout.Infinite);
                 }
             }
         }

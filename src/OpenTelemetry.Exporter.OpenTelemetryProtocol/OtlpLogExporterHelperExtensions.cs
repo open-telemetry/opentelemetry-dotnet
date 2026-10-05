@@ -380,29 +380,13 @@ public static class OtlpLogExporterHelperExtensions
         {
             if (processor is null)
             {
-                try
+                using (reloadableClient)
+                using (otlpExporter)
+                using (transmissionHandler)
                 {
-                    try
+                    if (reloadableClient != null)
                     {
-                        if (reloadableClient != null)
-                        {
-                            transmissionHandler?.Shutdown(Timeout.Infinite);
-                        }
-                    }
-                    finally
-                    {
-                        transmissionHandler?.Dispose();
-                    }
-                }
-                finally
-                {
-                    try
-                    {
-                        otlpExporter?.Dispose();
-                    }
-                    finally
-                    {
-                        reloadableClient?.Dispose();
+                        transmissionHandler?.Shutdown(Timeout.Infinite);
                     }
                 }
             }

@@ -194,29 +194,13 @@ public static class OtlpTraceExporterHelperExtensions
         {
             if (processor is null)
             {
-                try
+                using (reloadableClient)
+                using (otlpExporter)
+                using (transmissionHandler)
                 {
                     if (reloadableClient != null)
                     {
-                        try
-                        {
-                            transmissionHandler?.Shutdown(Timeout.Infinite);
-                        }
-                        finally
-                        {
-                            transmissionHandler?.Dispose();
-                        }
-                    }
-                }
-                finally
-                {
-                    try
-                    {
-                        otlpExporter?.Dispose();
-                    }
-                    finally
-                    {
-                        reloadableClient?.Dispose();
+                        transmissionHandler?.Shutdown(Timeout.Infinite);
                     }
                 }
             }
