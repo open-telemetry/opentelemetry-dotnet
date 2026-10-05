@@ -589,7 +589,7 @@ public sealed class DeclarativeConfigurationDocumentAccessorTests
         // configuration would turn up. The two views can still disagree, as they do here: nothing
         // stops an application replacing its IConfiguration registration, or clearing its sources,
         // after the accessor was registered. Explicit registration wins by design because it is the
-        // caller's stated intent; the flat overlay is what is lost in that case.
+        // caller's stated intent; the flat declarative source is what is lost in that case.
         using var yamlFile1 = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: true);
         using var yamlFile2 = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: false);
 

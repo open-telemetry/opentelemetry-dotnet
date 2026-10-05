@@ -83,6 +83,7 @@ public sealed class StrictModeMaskTests
                 [OtelEnvironmentVariables.ConfigFile] = "/some/path.yaml",
                 ["OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY"] = "true",
                 ["Logging:OpenTelemetry:LogLevel:Default"] = "Warning",
+                ["OpenTelemetry:Otlp:Endpoint"] = "http://collector:4318",
                 ["some-app-key"] = "app-value",
             })
             .AddOpenTelemetryDeclarativeConfiguration(yamlFile.Path)
@@ -91,9 +92,73 @@ public sealed class StrictModeMaskTests
         Assert.Equal("/some/path.yaml", config[OtelEnvironmentVariables.ConfigFile]);
         Assert.Equal("true", config["OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY"]);
         Assert.Equal("Warning", config["Logging:OpenTelemetry:LogLevel:Default"]);
+
+        // The OpenTelemetry section is not masked until a binder reads it into SDK settings.
+        Assert.Equal("http://collector:4318", config["OpenTelemetry:Otlp:Endpoint"]);
         Assert.Equal("app-value", config["some-app-key"]);
         Assert.Contains(config.GetChildren(), section => section.Key == "Logging");
         Assert.Contains(config.GetSection("Logging").GetChildren(), section => section.Key == "OpenTelemetry");
+    }
+
+    [Fact]
+    public void ConfigurationManagerInstance_EarlierKeyIsMasked()
+    {
+        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: false);
+
+        using var config = new ConfigurationManager();
+        config.AddInMemoryCollection(new Dictionary<string, string?> { ["OTEL_TRACES_SAMPLER"] = "always_off" });
+
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(config);
+        services.AddOpenTelemetry().UseDeclarativeConfiguration(yamlFile.Path);
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        Assert.Null(serviceProvider.GetRequiredService<IConfiguration>()["OTEL_TRACES_SAMPLER"]);
+    }
+
+    [Fact]
+    public void ConfigurationRootInstance_DescriptorReplaced_EarlierKeyIsMasked()
+    {
+        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: false);
+
+        var root = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["OTEL_TRACES_SAMPLER"] = "always_off" })
+            .Build();
+
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(root);
+        services.AddOpenTelemetry().UseDeclarativeConfiguration(yamlFile.Path);
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        Assert.Null(serviceProvider.GetRequiredService<IConfiguration>()["OTEL_TRACES_SAMPLER"]);
+    }
+
+    [Fact]
+    public void LegacyHostBuilder_EarlierKeyIsMasked()
+    {
+        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: false);
+
+        using var host = new HostBuilder()
+            .ConfigureAppConfiguration(c => c.AddInMemoryCollection(new Dictionary<string, string?> { ["OTEL_TRACES_SAMPLER"] = "always_off" }))
+            .ConfigureServices(s => s.AddOpenTelemetry().UseDeclarativeConfiguration(yamlFile.Path))
+            .Build();
+
+        Assert.Null(host.Services.GetRequiredService<IConfiguration>()["OTEL_TRACES_SAMPLER"]);
+    }
+
+    [Fact]
+    public void BeforeLoad_InScopeKeysReadNull()
+    {
+        using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(disabled: false);
+
+        var provider = new DeclarativeConfigurationProvider(
+            new DeclarativeConfigurationDocumentAccessor(new FilePath(yamlFile.Path)));
+
+        Assert.True(provider.TryGet("OTEL_TRACES_SAMPLER", out var value), "Expected the in-scope key to be found.");
+        Assert.Null(value);
+        Assert.False(provider.TryGet("some-app-key", out _), "Expected the out-of-scope key not to be found.");
     }
 
     [Fact]
