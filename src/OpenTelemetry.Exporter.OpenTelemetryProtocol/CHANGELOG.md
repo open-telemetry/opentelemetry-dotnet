@@ -22,6 +22,10 @@ Notes](../../RELEASENOTES.md).
 * Avoid logging malformed HTTP request headers in the exporter's diagnostic log.
   ([#7858](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7858))
 
+* Avoid buffering the whole compressed request body in memory before sending it
+  on .NET Framework when using HTTP/protobuf with gzip compression.
+  ([#7879](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7879))
+
 ## 1.19.1
 
 Released 2026-Sep-21
