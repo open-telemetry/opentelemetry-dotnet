@@ -28,6 +28,14 @@ public abstract class MeterProviderBuilder
     /// <summary>
     /// Adds given Meter names to the list of subscribed meters.
     /// </summary>
+    /// <remarks>
+    /// Meter names support wildcard matching:
+    /// <list type="bullet">
+    /// <item><description><c>*</c> matches zero or more characters.</description></item>
+    /// <item><description><c>?</c> matches exactly one character.</description></item>
+    /// </list>
+    /// Escaping wildcard characters is not supported.
+    /// </remarks>
     /// <param name="names">Meter names.</param>
     /// <returns>Returns <see cref="MeterProviderBuilder"/> for chaining.</returns>
     public abstract MeterProviderBuilder AddMeter(params string[] names);
