@@ -212,7 +212,7 @@ public class MetricPointReclaimTests
         if (useDouble)
         {
             var counter = meter.CreateCounter<double>("TestCounter");
-            recordMeasurement = (value, tags) => counter.Add(value, tags);
+            recordMeasurement = counter.Add;
         }
         else
         {

@@ -43,7 +43,7 @@ internal sealed class YamlParseContext
     /// (<see langword="null"/> if it was not set).
     /// </summary>
     internal Dictionary<string, string?> ReferencedEnvironmentVariables { get; } =
-        new(OtelEnvironmentVariables.NameComparer);
+        [with(OtelEnvironmentVariables.NameComparer)];
 
     /// <summary>
     /// Applies environment variable substitution and then YAML 1.2 core-schema resolution to
