@@ -44,6 +44,14 @@ Notes](../../RELEASENOTES.md).
   the `Microsoft.Extensions.Logging` `ILogger` integration.
   ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
 
+* Fixed `LogRecord.CategoryName` resetting the current `Logger`'s `Version`
+  to `null` when set to a new value.
+  ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
+
+* Bounded the internal cache of `Logger` scopes keyed by instrumentation to
+  avoid unbounded growth.
+  ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
+
 ## 1.19.1
 
 Released 2026-Sep-21

@@ -8,7 +8,11 @@ namespace OpenTelemetry.Internal;
 
 internal sealed class InstrumentationScopeLogger : Logger
 {
+    private const int MaxCacheSize = 1024;
+
     private static readonly ConcurrentDictionary<(string Name, string? Version, string? SchemaUrl), InstrumentationScopeLogger> Cache = new();
+
+    private static int cacheSize;
 
     private InstrumentationScopeLogger(string? name, string? version, string? schemaUrl)
         : base(name)
@@ -22,11 +26,25 @@ internal sealed class InstrumentationScopeLogger : Logger
     {
         var name = options.Name is { Length: > 0 } ? options.Name : string.Empty;
 
-        return name.Length == 0 && options.Version is null && options.SchemaUrl is null
-            ? Default
-            : Cache.GetOrAdd(
-                (name, options.Version, options.SchemaUrl),
-                static (o) => new(o.Name, o.Version, o.SchemaUrl));
+        if (name.Length == 0 && options.Version is null && options.SchemaUrl is null)
+        {
+            return Default;
+        }
+
+        var key = (name, options.Version, options.SchemaUrl);
+
+        if (Cache.TryGetValue(key, out var existing))
+        {
+            return existing;
+        }
+
+        if (Volatile.Read(ref cacheSize) >= MaxCacheSize)
+        {
+            return new(name, options.Version, options.SchemaUrl);
+        }
+
+        Interlocked.Increment(ref cacheSize);
+        return Cache.GetOrAdd(key, static (o) => new(o.Name, o.Version, o.SchemaUrl));
     }
 
     public override void EmitLog(in LogRecordData data, in LogRecordAttributeList attributes)
