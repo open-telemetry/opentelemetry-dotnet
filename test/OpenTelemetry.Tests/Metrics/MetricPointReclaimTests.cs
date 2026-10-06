@@ -791,6 +791,82 @@ public class MetricPointReclaimTests
             $"Overflow appeared in {overflowRounds} of {Rounds} rounds, with {overflowSum} measurement(s), despite every round staying below the cardinality limit of {CardinalityLimit}.");
     }
 
+    [Theory]
+    [InlineData(2, false)]
+    [InlineData(3, false)]
+    [InlineData(2, true)]
+    [InlineData(3, true)]
+    public void ReentrantTagHashingDoesNotLoseTheOuterMeasurement(int callbackHashOrdinal, bool sameSeries)
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName() + callbackHashOrdinal + sameSeries);
+        var counter = meter.CreateCounter<long>("counter");
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = 1 })
+            .AddInMemoryExporter(exportedItems, metricReaderOptions => metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta)
+            .Build();
+
+        var tagValue = new ReentrantTagValue(counter, callbackHashOrdinal, sameSeries);
+        counter.Add(1, new KeyValuePair<string, object?>("key", tagValue));
+
+        Assert.True(meterProvider.ForceFlush());
+
+        long exportedSum = 0;
+        foreach (ref readonly var point in exportedItems[0].GetMetricPoints())
+        {
+            exportedSum += point.GetSumLong();
+        }
+
+        var expectedSum = 1 + tagValue.NestedMeasurements;
+        Assert.True(
+            exportedSum == expectedSum,
+            $"Expected {expectedSum} recorded measurement(s), exported {exportedSum}; {tagValue.NestedMeasurements} were recorded from GetHashCode.");
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ReentrantTagHashingWithMultipleTagsDoesNotLoseTheOuterMeasurement(bool sameSeries)
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName() + sameSeries);
+        var counter = meter.CreateCounter<long>("counter");
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = 1 })
+            .AddInMemoryExporter(exportedItems, metricReaderOptions => metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta)
+            .Build();
+
+        // Hashing for the multi-tag path happens one call later on .NET 9+, which also
+        // hashes the tags for the alternate span-based lookup before falling back here.
+#if NET9_0_OR_GREATER
+        const int CallbackHashOrdinal = 4;
+#else
+        const int CallbackHashOrdinal = 3;
+#endif
+        var tagValue = new ReentrantTagValue(counter, CallbackHashOrdinal, sameSeries, tagCount: 2);
+        counter.Add(
+            1,
+            new KeyValuePair<string, object?>("key", tagValue),
+            new KeyValuePair<string, object?>("group", "fixed"));
+
+        Assert.True(meterProvider.ForceFlush());
+
+        long exportedSum = 0;
+        foreach (ref readonly var point in exportedItems[0].GetMetricPoints())
+        {
+            exportedSum += point.GetSumLong();
+        }
+
+        Assert.Equal(1, tagValue.NestedMeasurements);
+        Assert.True(exportedSum == 2, $"Expected 2 recorded measurements, exported {exportedSum} with two tags.");
+    }
+
     private static KeyValuePair<string, object?>[] CreateCollidingTags(
         int tagCount,
         string value,
@@ -811,6 +887,34 @@ public class MetricPointReclaimTests
                     new CollidingTagValue(value, blockLookup, blockComparison: false, lookupBlocked, continueLookup)),
                 tagA,
             ];
+    }
+
+    private sealed class ReentrantTagValue(Counter<long> counter, int callbackHashOrdinal, bool sameSeries, int tagCount = 1)
+    {
+        private int hashCalls;
+
+        public int NestedMeasurements { get; private set; }
+
+        public override int GetHashCode()
+        {
+            if (++this.hashCalls == callbackHashOrdinal)
+            {
+                this.NestedMeasurements++;
+                var tag = new KeyValuePair<string, object?>("key", sameSeries ? this : "nested");
+                if (tagCount == 1)
+                {
+                    counter.Add(1, tag);
+                }
+                else
+                {
+                    counter.Add(1, tag, new KeyValuePair<string, object?>("group", "fixed"));
+                }
+            }
+
+            return 7;
+        }
+
+        public override string ToString() => "outer";
     }
 
     private sealed class ThreadArguments

@@ -807,21 +807,37 @@ internal sealed class AggregatorStore
                                 sortedTags = new Tags(sortedTagKeysAndValues);
                             }
 
-                            index = this.DequeueAvailableMetricPoint();
+                            // Note: Constructing Tags above hashes the tag values, which can run
+                            // arbitrary user code (a custom GetHashCode()). This lock is re-entrant,
+                            // so that code could record another measurement on this same instrument
+                            // on this same thread, which may have published the very series being
+                            // created here, or consumed the last available slot for a different one.
+                            // Re-check both before dequeueing - the Count > 0 check above is no
+                            // longer authoritative once user code may have run.
+                            if (!this.TagsToMetricPointIndexDictionaryDelta.TryGetValue(sortedTags, out lookupData))
+                            {
+                                if (this.availableMetricPoints!.Count == 0)
+                                {
+                                    // No MetricPoint is available for reuse
+                                    return -1;
+                                }
 
-                            lookupData = new LookupData(index, sortedTags, givenTags);
+                                index = this.DequeueAvailableMetricPoint();
 
-                            ref var metricPoint = ref this.metricPoints[index];
-                            metricPoint = new MetricPoint(this, this.aggType, sortedTags.KeyValuePairs, this.histogramExplicitBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale, lookupData);
-                            newMetricPointCreated = true;
+                                lookupData = new LookupData(index, sortedTags, givenTags);
 
-                            // Add to dictionary *after* initializing MetricPoint
-                            // as other threads can start writing to the
-                            // MetricPoint, if dictionary entry found.
+                                ref var metricPoint = ref this.metricPoints[index];
+                                metricPoint = new MetricPoint(this, this.aggType, sortedTags.KeyValuePairs, this.histogramExplicitBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale, lookupData);
+                                newMetricPointCreated = true;
 
-                            // Add the sorted order along with the given order of tags
-                            this.TagsToMetricPointIndexDictionaryDelta.TryAdd(sortedTags, lookupData);
-                            this.TagsToMetricPointIndexDictionaryDelta.TryAdd(givenTags, lookupData);
+                                // Add to dictionary *after* initializing MetricPoint
+                                // as other threads can start writing to the
+                                // MetricPoint, if dictionary entry found.
+
+                                // Add the sorted order along with the given order of tags
+                                this.TagsToMetricPointIndexDictionaryDelta.TryAdd(sortedTags, lookupData);
+                                this.TagsToMetricPointIndexDictionaryDelta.TryAdd(givenTags, lookupData);
+                            }
                         }
                     }
                 }
@@ -849,20 +865,36 @@ internal sealed class AggregatorStore
                         tagKeysAndValues.CopyTo(givenTagKeysAndValues.AsSpan());
                         givenTags = new Tags(givenTagKeysAndValues);
 
-                        index = this.DequeueAvailableMetricPoint();
+                        // Note: Constructing Tags above hashes the tag value, which can run
+                        // arbitrary user code (a custom GetHashCode()). This lock is re-entrant,
+                        // so that code could record another measurement on this same instrument
+                        // on this same thread, which may have published the very series being
+                        // created here, or consumed the last available slot for a different one.
+                        // Re-check both before dequeueing - the Count > 0 check above is no
+                        // longer authoritative once user code may have run.
+                        if (!this.TagsToMetricPointIndexDictionaryDelta.TryGetValue(givenTags, out lookupData))
+                        {
+                            if (this.availableMetricPoints!.Count == 0)
+                            {
+                                // No MetricPoint is available for reuse
+                                return -1;
+                            }
 
-                        lookupData = new LookupData(index, Tags.EmptyTags, givenTags);
+                            index = this.DequeueAvailableMetricPoint();
 
-                        ref var metricPoint = ref this.metricPoints[index];
-                        metricPoint = new MetricPoint(this, this.aggType, givenTags.KeyValuePairs, this.histogramExplicitBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale, lookupData);
-                        newMetricPointCreated = true;
+                            lookupData = new LookupData(index, Tags.EmptyTags, givenTags);
 
-                        // Add to dictionary *after* initializing MetricPoint
-                        // as other threads can start writing to the
-                        // MetricPoint, if dictionary entry found.
+                            ref var metricPoint = ref this.metricPoints[index];
+                            metricPoint = new MetricPoint(this, this.aggType, givenTags.KeyValuePairs, this.histogramExplicitBounds, this.exponentialHistogramMaxSize, this.exponentialHistogramMaxScale, lookupData);
+                            newMetricPointCreated = true;
 
-                        // givenTags will always be sorted when tags length == 1
-                        this.TagsToMetricPointIndexDictionaryDelta.TryAdd(givenTags, lookupData);
+                            // Add to dictionary *after* initializing MetricPoint
+                            // as other threads can start writing to the
+                            // MetricPoint, if dictionary entry found.
+
+                            // givenTags will always be sorted when tags length == 1
+                            this.TagsToMetricPointIndexDictionaryDelta.TryAdd(givenTags, lookupData);
+                        }
                     }
                 }
             }
