@@ -12,6 +12,8 @@ internal sealed class InstrumentationScopeLogger : Logger
 
     private static readonly ConcurrentDictionary<(string Name, string? Version, string? SchemaUrl), InstrumentationScopeLogger> Cache = new();
 
+    private static readonly Lock CacheLock = new();
+
     private static int cacheSize;
 
     private InstrumentationScopeLogger(string? name, string? version, string? schemaUrl)
@@ -38,13 +40,28 @@ internal sealed class InstrumentationScopeLogger : Logger
             return existing;
         }
 
-        if (Volatile.Read(ref cacheSize) >= MaxCacheSize)
+        lock (CacheLock)
         {
-            return new(name, options.Version, options.SchemaUrl);
-        }
+            if (Cache.TryGetValue(key, out existing))
+            {
+                return existing;
+            }
 
-        Interlocked.Increment(ref cacheSize);
-        return Cache.GetOrAdd(key, static (o) => new(o.Name, o.Version, o.SchemaUrl));
+            if (cacheSize >= MaxCacheSize)
+            {
+                return new(name, options.Version, options.SchemaUrl);
+            }
+
+            var scope = new InstrumentationScopeLogger(name, options.Version, options.SchemaUrl);
+
+            if (Cache.TryAdd(key, scope))
+            {
+                cacheSize++;
+                return scope;
+            }
+
+            return Cache[key];
+        }
     }
 
     public override void EmitLog(in LogRecordData data, in LogRecordAttributeList attributes)
