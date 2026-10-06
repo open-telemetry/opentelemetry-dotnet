@@ -7,11 +7,17 @@
     <MinVerTagPrefix>core-</MinVerTagPrefix>
     <ReferenceSystemTextJsonPackages>true</ReferenceSystemTextJsonPackages>
     <SupportsBrowserAndMobilePlatforms>true</SupportsBrowserAndMobilePlatforms>
+    <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
   </PropertyGroup>
 
   <PropertyGroup>
     <NoWarn>$(NoWarn),CS1591</NoWarn>
   </PropertyGroup>
+
+  <!-- This package is explicitly upgraded for .NET 8 to fix native AoT compatibility issues -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" VersionOverride="8.0.2" Condition="'$(TargetFramework)' == 'net8.0'" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)\src\OpenTelemetry\OpenTelemetry.csproj" />

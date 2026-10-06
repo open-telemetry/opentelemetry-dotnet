@@ -9,6 +9,9 @@ Notes](../../RELEASENOTES.md).
 * `ConsoleLogRecordExporter` now writes an `Instrumentation scope (Logger)`
   section (Name, Version, and Schema URL) for each exported `LogRecord`.
   ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
+* `AddConsoleExporter()` now binds the `ConsoleExporterOptions` from the
+  `OpenTelemetry:Console` configuration section.
+  ([#7880](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7880))
 
 ## 1.19.1
 

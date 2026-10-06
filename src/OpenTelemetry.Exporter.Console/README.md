@@ -40,6 +40,45 @@ You can configure the `ConsoleExporter` through `Options` types properties
 and environment variables.
 The `Options` type setters take precedence over the environment variables.
 
+### Configuration via `appsettings.json`
+
+The default `AddConsoleExporter()` registration can be
+configured from the `OpenTelemetry:Console` section of your app's
+configuration, for example in `appsettings.json`:
+
+```json
+{
+  "OpenTelemetry": {
+    "Console": {
+      "Targets": "Console, Debug"
+    }
+  }
+}
+```
+
+A few things to know about this configuration section:
+
+* `Targets` accepts a comma-separated combination of `Console` and `Debug`
+  (case-insensitive). Omit `Targets` to use the default (`Console`).
+* Configuration is applied once, at app startup. Changing the value while the
+  app is running has no effect until it is restarted.
+* Options set in code, via the delegate passed to `AddConsoleExporter(...)` or
+  via `Configure<ConsoleExporterOptions>`, take precedence over values from
+  this section.
+* An invalid value, such as a misspelled target, causes an exception to be
+  thrown while setting up the provider.
+* Named registrations, such as `AddConsoleExporter("name", ...)`, are not
+  automatically bound to this section. Use the .NET options APIs to explicitly
+  bind a configuration section to a named registration, for example:
+
+```csharp
+services.Configure<ConsoleExporterOptions>(
+    "name", configuration.GetSection("OpenTelemetry:Console"));
+
+services.AddOpenTelemetry()
+    .WithTracing(builder => builder.AddConsoleExporter("name", configure: null));
+```
+
 ### MetricReaderOptions (metrics)
 
 For metrics, `AddConsoleExporter()` pairs the exporter with a

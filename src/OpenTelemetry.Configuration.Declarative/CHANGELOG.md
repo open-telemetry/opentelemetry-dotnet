@@ -49,3 +49,8 @@ Notes](../../RELEASENOTES.md).
   sources that override the file, and an explicit path that differs from
   `OTEL_CONFIG_FILE`.
   ([#7873](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7873))
+
+* Strict mode now also masks the `OpenTelemetry:Console` configuration section,
+  which the Console exporter binds into its options. Other keys under
+  `OpenTelemetry` remain visible.
+  ([#7880](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7880))
