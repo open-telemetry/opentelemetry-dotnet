@@ -34,10 +34,15 @@ internal sealed class MeterProviderSdk : MeterProvider
     private readonly Predicate<Instrument> shouldListenTo = static _ => false;
     private CompositeMetricReader? compositeMetricReader;
 
+    private IDisposable? selfDiagnosticsRegistration;
+
     internal MeterProviderSdk(
         IServiceProvider serviceProvider,
-        bool ownsServiceProvider)
+        bool ownsServiceProvider,
+        IDisposable selfDiagnosticsRegistration)
     {
+        this.selfDiagnosticsRegistration = selfDiagnosticsRegistration;
+
         var state = serviceProvider.GetRequiredService<MeterProviderBuilderSdk>();
         state.RegisterProvider(this);
 
@@ -518,6 +523,8 @@ internal sealed class MeterProviderSdk : MeterProvider
 
             this.Disposed = true;
             OpenTelemetrySdkEventSource.Log.ProviderDisposed(nameof(MeterProvider));
+            this.selfDiagnosticsRegistration?.Dispose();
+            this.selfDiagnosticsRegistration = null;
         }
 
         base.Dispose(disposing);

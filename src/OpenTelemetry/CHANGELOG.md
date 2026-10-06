@@ -28,6 +28,30 @@ Notes](../../RELEASENOTES.md).
   `IConfiguration` does not contain those settings.
   ([#7855](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7855))
 
+* Added improved self-diagnostics logging to improve the support experience.
+  The new `SelfDiagnosticsOptions` class configures a rolling file sink and a
+  console sink through the standard options pipeline. Sinks are off by default.
+  ([#7588](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7588))
+
+* Fixed a race that could incorrectly route a concurrent metric measurement to
+  the overflow point when its tag set was published as the cardinality limit was
+  reached.
+  ([#7804](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7804))
+
+* Added `OpenTelemetryLoggerOptions.Version` and
+  `OpenTelemetryLoggerOptions.SchemaUrl` options to set an
+  instrumentation library version and schema URL applied to logs emitted via
+  the `Microsoft.Extensions.Logging` `ILogger` integration.
+  ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
+
+* Fixed `LogRecord.CategoryName` resetting the current `Logger`'s `Version`
+  to `null` when set to a new value.
+  ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
+
+* Bounded the internal cache of `Logger` scopes keyed by instrumentation to
+  avoid unbounded growth.
+  ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
+
 * Added `AggregationKind` support to `MetricStreamConfiguration`, allowing a
   View to configure the Aggregation used where the instrument/aggregation
   pairing is compatible.
