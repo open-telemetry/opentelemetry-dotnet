@@ -64,7 +64,7 @@ internal static class DeclarativeConfigurationReader
 
         if (stream.Documents.Count == 0)
         {
-            // Empty file is a no-op in overlay mode; informational event for diagnostics.
+            // An empty file contributes no keys; emit an informational event for diagnostics.
             OpenTelemetryDeclarativeConfigurationEventSource.Log.EmptyConfigurationFile(filePath.DisplayPath);
 
             return new DeclarativeConfigurationDocument(
@@ -115,7 +115,8 @@ internal static class DeclarativeConfigurationReader
         return new DeclarativeConfigurationDocument(
             config,
             new ReadOnlyDictionary<string, string?>(data),
-            properties);
+            properties,
+            context.ReferencedEnvironmentVariables);
     }
 
     // Root additionalProperties=true: unrecognized top-level keys (schema extras or not-yet-
