@@ -618,9 +618,10 @@ public sealed class LogRecordTests
                 }
             },
             null);
-        Assert.Single(scopes);
+
+        var scope1 = Assert.Single(scopes);
         Assert.Equal(0, reachedDepth);
-        Assert.Equal("string_scope", scopes[0]);
+        Assert.Equal("string_scope", scope1);
 
         scopes.Clear();
 
@@ -759,8 +760,8 @@ public sealed class LogRecordTests
 
         Assert.Null(logRecord.State);
         Assert.NotNull(logRecord.StateValues);
-        Assert.Single(logRecord.StateValues);
-        Assert.Equal(new KeyValuePair<string, object?>("Key1", "Value1"), logRecord.StateValues[0]);
+        var state = Assert.Single(logRecord.StateValues);
+        Assert.Equal(new KeyValuePair<string, object?>("Key1", "Value1"), state);
     }
 
     [Fact]
@@ -781,8 +782,8 @@ public sealed class LogRecordTests
 
         Assert.Null(logRecord.State);
         Assert.NotNull(logRecord.StateValues);
-        Assert.Single(logRecord.StateValues);
-        Assert.Equal(new KeyValuePair<string, object?>("Key1", "Value1"), logRecord.StateValues[0]);
+        var state = Assert.Single(logRecord.StateValues);
+        Assert.Equal(new KeyValuePair<string, object?>("Key1", "Value1"), state);
     }
 
     [Fact]
@@ -803,8 +804,8 @@ public sealed class LogRecordTests
 
         Assert.Null(logRecord.State);
         Assert.NotNull(logRecord.StateValues);
-        Assert.Single(logRecord.StateValues);
-        Assert.Equal(new KeyValuePair<string, object?>("Key1", "Value1"), logRecord.StateValues[0]);
+        var state = Assert.Single(logRecord.StateValues);
+        Assert.Equal(new KeyValuePair<string, object?>("Key1", "Value1"), state);
     }
 
     [Fact]
@@ -857,9 +858,7 @@ public sealed class LogRecordTests
 
         Assert.Null(logRecord.State);
         Assert.NotNull(logRecord.StateValues);
-        Assert.Single(logRecord.StateValues);
-
-        var actualState = logRecord.StateValues[0];
+        var actualState = Assert.Single(logRecord.StateValues);
 
         Assert.Same("Value", actualState.Key);
         Assert.Same("Hello world", actualState.Value);
@@ -1086,10 +1085,37 @@ public sealed class LogRecordTests
             logger.EmitLog(default);
         }
 
-        Assert.Single(exportedItems);
+        var exportedItem = Assert.Single(exportedItems);
 
-        Assert.Equal("TestName", exportedItems[0].CategoryName);
-        Assert.Equal(exportedItems[0].CategoryName, exportedItems[0].Logger.Name);
+        Assert.Equal("TestName", exportedItem.CategoryName);
+        Assert.Equal(exportedItem.CategoryName, exportedItem.Logger.Name);
+
+        // Changing CategoryName must preserve the current logger's Version and
+        // SchemaUrl rather than resetting them to null.
+        var exportedItemsWithScope = new List<LogRecord>();
+        using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+#pragma warning disable CA2000 // Dispose objects before losing scope
+            .AddProcessor(new BatchLogRecordExportProcessor(new InMemoryExporter<LogRecord>(exportedItemsWithScope)))
+#pragma warning restore CA2000 // Dispose objects before losing scope
+            .Build())
+        {
+            var logger = loggerProvider.GetLogger(new LoggerOptions
+            {
+                Name = "TestName",
+                Version = "1.0.0",
+                SchemaUrl = "https://opentelemetry.io/schemas/1.0.0",
+            });
+
+            logger.EmitLog(default);
+        }
+
+        var logRecordWithScope = Assert.Single(exportedItemsWithScope);
+
+        logRecordWithScope.CategoryName = "RenamedTestName";
+
+        Assert.Equal("RenamedTestName", logRecordWithScope.CategoryName);
+        Assert.Equal("1.0.0", logRecordWithScope.Logger.Version);
+        Assert.Equal("https://opentelemetry.io/schemas/1.0.0", logRecordWithScope.Logger.SchemaUrl);
     }
 
     [Theory]

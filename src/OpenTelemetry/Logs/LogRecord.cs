@@ -190,7 +190,12 @@ public sealed class LogRecord
         {
             if (this.Logger.Name != value)
             {
-                this.Logger = InstrumentationScopeLogger.GetInstrumentationScopeLogger(new() { Name = value });
+                this.Logger = InstrumentationScopeLogger.GetInstrumentationScopeLogger(new()
+                {
+                    Name = value,
+                    Version = this.Logger.Version,
+                    SchemaUrl = this.Logger.SchemaUrl,
+                });
             }
         }
     }

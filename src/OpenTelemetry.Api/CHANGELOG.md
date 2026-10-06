@@ -10,6 +10,14 @@ Notes](../../RELEASENOTES.md).
   a schema URL parameter using the new `LoggerOptions` type.
   ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
 
+* **Breaking change** (pre-release only versions): `LoggerProvider`'s
+  protected `TryCreateLogger(string? name, out Logger? logger)` extensibility
+  method has been replaced by `TryCreateLogger(LoggerOptions options, out
+  Logger? logger)`. Custom `LoggerProvider` subclasses that override the
+  previous overload must update to override the new one; the old overload is
+  no longer called.
+  ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
+
 ## 1.19.1
 
 Released 2026-Sep-21
