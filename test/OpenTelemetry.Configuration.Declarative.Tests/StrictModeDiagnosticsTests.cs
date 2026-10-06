@@ -364,7 +364,15 @@ public sealed class StrictModeDiagnosticsTests
             .AddConfiguration(inner)
             .Build();
 
+        // Starting with .NET 11, ChainedConfigurationProvider.TryGet treats an empty string as present
+        // (previously only non-empty values counted), so the inner configuration's empty override now
+        // wins over the outer, earlier provider instead of falling through to it.
+        // See: https://github.com/dotnet/runtime/pull/131480 and https://github.com/dotnet/docs/issues/55653
+#if NET11_0_OR_GREATER || NETFRAMEWORK
+        Assert.Equal(string.Empty, outer["OTEL_SDK_DISABLED"]);
+#else
         Assert.Equal("false", outer["OTEL_SDK_DISABLED"]);
+#endif
 
         using var listener = CreateListener(EventLevel.Warning);
 
