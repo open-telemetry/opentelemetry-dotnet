@@ -41,5 +41,7 @@ message Resource {
   // Note: keys in the references MUST exist in attributes of this message.
   //
   // Status: [Development]
+  //
+  // [Since v1.6.0]
   repeated opentelemetry.proto.common.v1.EntityRef entity_refs = 3;
 }

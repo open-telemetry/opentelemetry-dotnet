@@ -222,5 +222,7 @@ message LogRecord {
   // as an event.
   //
   // [Optional].
+  //
+  // [Since v1.5.0]
   string event_name = 12;
 }
