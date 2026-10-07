@@ -104,8 +104,9 @@ provider to start collecting traces from them.
 `AddSource` method on `TracerProviderBuilder` can be used to add a
 `ActivitySource` to the provider. The name of the `ActivitySource`
 (case-insensitive) must be the argument to this method. Multiple `AddSource` can
-be called to add more than one source. It also supports wildcard subscription
-model as well.
+be called to add more than one source. It also supports a wildcard subscription
+model (`*` matches zero or more characters, `?` matches exactly one
+character; escaping wildcard characters is not supported).
 
 It is not possible to add sources *after* the provider is built, by calling the
 `Build()` method on the `TracerProviderBuilder`.
