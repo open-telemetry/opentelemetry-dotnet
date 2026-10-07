@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Collections.Concurrent;
 using System.Diagnostics.Metrics;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
@@ -867,6 +868,120 @@ public class MetricPointReclaimTests
         Assert.True(exportedSum == 2, $"Expected 2 recorded measurements, exported {exportedSum} with two tags.");
     }
 
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    public void TagHashDoesNotInvertTheCallerAndMetricCreationLocks(int tagCount)
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var callerGate = new object();
+        using var gateHeld = new ManualResetEventSlim();
+        using var hashRequested = new ManualResetEventSlim();
+        using var firstWriterDone = new ManualResetEventSlim();
+        var errors = new ConcurrentQueue<Exception>();
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName() + tagCount);
+        var counter = meter.CreateCounter<long>("counter");
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = 2 })
+            .AddInMemoryExporter(exportedItems, metricReaderOptions => metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta)
+            .Build();
+
+        // Hashing for the multi-tag path happens one call later on .NET 9+, which also
+        // hashes the tags for the alternate span-based lookup before falling back here.
+#if NET9_0_OR_GREATER
+        var blockingHashOrdinal = tagCount == 1 ? 3 : 4;
+#else
+        var blockingHashOrdinal = tagCount == 1 ? 2 : 3;
+#endif
+        var tagValue = new GateHashedValue(callerGate, hashRequested, blockingHashOrdinal);
+
+        void Record(object value)
+        {
+            var tag = new KeyValuePair<string, object?>("key", value);
+            if (tagCount == 1)
+            {
+                counter.Add(1, tag);
+            }
+            else
+            {
+                counter.Add(1, tag, new KeyValuePair<string, object?>("group", "fixed"));
+            }
+        }
+
+        var caller = new Thread(() =>
+        {
+            try
+            {
+                lock (callerGate)
+                {
+                    gateHeld.Set();
+
+                    // Also allow an implementation that avoids the extra hash call entirely.
+                    var signaled = WaitHandle.WaitAny(
+                        [hashRequested.WaitHandle, firstWriterDone.WaitHandle, cancellationToken.WaitHandle],
+                        TimeSpan.FromSeconds(10));
+                    if (signaled == WaitHandle.WaitTimeout)
+                    {
+                        throw new TimeoutException("Neither hashing nor the first recording completed.");
+                    }
+
+                    cancellationToken.ThrowIfCancellationRequested();
+                    Record("other");
+                }
+            }
+            catch (Exception ex)
+            {
+                errors.Enqueue(ex);
+            }
+        })
+        { IsBackground = true };
+
+        var writer = new Thread(() =>
+        {
+            try
+            {
+                if (!gateHeld.Wait(TimeSpan.FromSeconds(10), cancellationToken))
+                {
+                    throw new TimeoutException("The caller did not acquire its gate.");
+                }
+
+                Record(tagValue);
+            }
+            catch (Exception ex)
+            {
+                errors.Enqueue(ex);
+            }
+            finally
+            {
+                firstWriterDone.Set();
+            }
+        })
+        { IsBackground = true };
+
+        caller.Start();
+        writer.Start();
+        var writerJoined = writer.Join(TimeSpan.FromSeconds(10));
+        var callerJoined = caller.Join(TimeSpan.FromSeconds(10));
+        Assert.True(writerJoined && callerJoined, "Both recording threads must finish.");
+        Assert.Empty(errors);
+        Assert.True(meterProvider.ForceFlush());
+
+        long exportedSum = 0;
+        foreach (ref readonly var point in exportedItems[0].GetMetricPoints())
+        {
+            exportedSum += point.GetSumLong();
+        }
+
+        Assert.Equal(2, exportedSum);
+        Assert.False(
+            tagValue.LockTimedOut,
+            "Hashing could not acquire the caller gate while its owner was recording. An unbounded lock in GetHashCode would deadlock these recording threads.");
+    }
+
     private static KeyValuePair<string, object?>[] CreateCollidingTags(
         int tagCount,
         string value,
@@ -887,6 +1002,35 @@ public class MetricPointReclaimTests
                     new CollidingTagValue(value, blockLookup, blockComparison: false, lookupBlocked, continueLookup)),
                 tagA,
             ];
+    }
+
+    private sealed class GateHashedValue(object callerGate, ManualResetEventSlim hashRequested, int blockingHashOrdinal)
+    {
+        private int hashCalls;
+
+        public bool LockTimedOut { get; private set; }
+
+        public override int GetHashCode()
+        {
+            if (++this.hashCalls == blockingHashOrdinal)
+            {
+                hashRequested.Set();
+
+                // Bound the lock attempt so that detecting the cycle cannot hang the test host.
+                if (Monitor.TryEnter(callerGate, TimeSpan.FromSeconds(2)))
+                {
+                    Monitor.Exit(callerGate);
+                }
+                else
+                {
+                    this.LockTimedOut = true;
+                }
+            }
+
+            return 7;
+        }
+
+        public override string ToString() => "outer";
     }
 
     private sealed class ReentrantTagValue(Counter<long> counter, int callbackHashOrdinal, bool sameSeries, int tagCount = 1)

@@ -777,6 +777,9 @@ internal sealed class AggregatorStore
                 {
                     Debug.Assert(this.availableMetricPoints != null, "this.availableMetricPoints was null");
 
+                    KeyValuePair<string, object?>[]? givenTagKeysAndValuesCopy = null;
+                    KeyValuePair<string, object?>[]? sortedTagKeysAndValuesCopy = null;
+
                     lock (this.TagsToMetricPointIndexDictionaryDelta)
                     {
                         // check again after acquiring lock.
@@ -794,26 +797,44 @@ internal sealed class AggregatorStore
                             // need a deep copy before handing them to the Dictionary. Above
                             // MaxLargeTagCacheSize the thread-static storage deliberately does not
                             // cache, so the arrays are already freshly allocated and can be used
-                            // directly.
+                            // directly. This is a plain array copy - it never runs user code - so
+                            // it is safe to do while holding this lock.
                             if (length <= ThreadStaticStorage.MaxLargeTagCacheSize)
                             {
-                                var givenTagKeysAndValues = new KeyValuePair<string, object?>[length];
-                                tagKeysAndValues.CopyTo(givenTagKeysAndValues.AsSpan());
+                                givenTagKeysAndValuesCopy = new KeyValuePair<string, object?>[length];
+                                tagKeysAndValues.CopyTo(givenTagKeysAndValuesCopy.AsSpan());
 
-                                var sortedTagKeysAndValues = new KeyValuePair<string, object?>[length];
-                                tempSortedTagKeysAndValues.CopyTo(sortedTagKeysAndValues.AsSpan());
-
-                                givenTags = new Tags(givenTagKeysAndValues);
-                                sortedTags = new Tags(sortedTagKeysAndValues);
+                                sortedTagKeysAndValuesCopy = new KeyValuePair<string, object?>[length];
+                                tempSortedTagKeysAndValues.CopyTo(sortedTagKeysAndValuesCopy.AsSpan());
                             }
+                        }
+                    }
 
-                            // Note: Constructing Tags above hashes the tag values, which can run
-                            // arbitrary user code (a custom GetHashCode()). This lock is re-entrant,
-                            // so that code could record another measurement on this same instrument
-                            // on this same thread, which may have published the very series being
-                            // created here, or consumed the last available slot for a different one.
-                            // Re-check both before dequeueing - the Count > 0 check above is no
-                            // longer authoritative once user code may have run.
+                    if (lookupData == null)
+                    {
+                        // Not found, and capacity was available at the check above. Construct
+                        // Tags - which hashes the tag values and can run arbitrary user code (a
+                        // custom GetHashCode()) - outside the lock. That user code could itself
+                        // try to record a measurement on this same instrument, which needs this
+                        // same lock; running it while holding the lock would risk a cross-thread
+                        // lock-order inversion against another thread that holds a lock of its
+                        // own while recording (thread A: this lock, then waits on the user's
+                        // lock inside GetHashCode; thread B: the user's lock, then waits on this
+                        // lock to record - neither can proceed). Above MaxLargeTagCacheSize no
+                        // copy was made above, so givenTags/sortedTags are left as the ones
+                        // already hashed before this method took any lock.
+                        if (givenTagKeysAndValuesCopy != null)
+                        {
+                            givenTags = new Tags(givenTagKeysAndValuesCopy);
+                            sortedTags = new Tags(sortedTagKeysAndValuesCopy!);
+                        }
+
+                        lock (this.TagsToMetricPointIndexDictionaryDelta)
+                        {
+                            // Check again after releasing and reacquiring the lock for hashing
+                            // above - another thread (or, for re-entrant hashing, this same
+                            // thread) could have published this series or exhausted capacity
+                            // while this thread held neither lock.
                             if (!this.TagsToMetricPointIndexDictionaryDelta.TryGetValue(sortedTags, out lookupData))
                             {
                                 if (this.availableMetricPoints!.Count == 0)
@@ -848,6 +869,8 @@ internal sealed class AggregatorStore
 
                 Debug.Assert(this.availableMetricPoints != null, "this.availableMetricPoints was null");
 
+                KeyValuePair<string, object?>[]? givenTagKeysAndValuesCopy = null;
+
                 lock (this.TagsToMetricPointIndexDictionaryDelta)
                 {
                     // check again after acquiring lock.
@@ -860,18 +883,30 @@ internal sealed class AggregatorStore
                             return -1;
                         }
 
-                        // Note: We are using storage from ThreadStatic, so need to make a deep copy for Dictionary storage.
-                        var givenTagKeysAndValues = new KeyValuePair<string, object?>[length];
-                        tagKeysAndValues.CopyTo(givenTagKeysAndValues.AsSpan());
-                        givenTags = new Tags(givenTagKeysAndValues);
+                        // Note: We are using storage from ThreadStatic, so need to make a deep
+                        // copy for Dictionary storage. This is a plain array copy - it never
+                        // runs user code - so it is safe to do while holding this lock.
+                        givenTagKeysAndValuesCopy = new KeyValuePair<string, object?>[length];
+                        tagKeysAndValues.CopyTo(givenTagKeysAndValuesCopy.AsSpan());
+                    }
+                }
 
-                        // Note: Constructing Tags above hashes the tag value, which can run
-                        // arbitrary user code (a custom GetHashCode()). This lock is re-entrant,
-                        // so that code could record another measurement on this same instrument
-                        // on this same thread, which may have published the very series being
-                        // created here, or consumed the last available slot for a different one.
-                        // Re-check both before dequeueing - the Count > 0 check above is no
-                        // longer authoritative once user code may have run.
+                if (lookupData == null)
+                {
+                    // Not found, and capacity was available at the check above. Construct Tags -
+                    // which hashes the tag value and can run arbitrary user code (a custom
+                    // GetHashCode()) - outside the lock. See the equivalent comment in the
+                    // length > 1 branch above for why: holding this lock while that code runs
+                    // risks a cross-thread lock-order inversion with another thread that holds
+                    // a lock of its own while recording.
+                    givenTags = new Tags(givenTagKeysAndValuesCopy!);
+
+                    lock (this.TagsToMetricPointIndexDictionaryDelta)
+                    {
+                        // Check again after releasing and reacquiring the lock for hashing
+                        // above - another thread (or, for re-entrant hashing, this same thread)
+                        // could have published this series or exhausted capacity while this
+                        // thread held neither lock.
                         if (!this.TagsToMetricPointIndexDictionaryDelta.TryGetValue(givenTags, out lookupData))
                         {
                             if (this.availableMetricPoints!.Count == 0)
