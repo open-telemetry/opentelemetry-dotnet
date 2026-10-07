@@ -325,7 +325,7 @@ when reviewing pull requests in this repository.
 
 Agent skills for common tasks in this repository are in [`.github/skills`](.github/skills):
 
-- [`code-review`](.github/skills/code-review/SKILL.md) — review a pull request or
+- [`code-review`](.github/skills/code-review/SKILL.md) - review a pull request or
   code change against this repository's conventions.
-- [`performance-benchmark`](.github/skills/performance-benchmark/SKILL.md) — write
+- [`performance-benchmark`](.github/skills/performance-benchmark/SKILL.md) - write
   and run BenchmarkDotNet benchmarks to validate the performance impact of a change.
