@@ -303,3 +303,29 @@ will cause a build error if used:
 
 See [`REVIEW.md`](./REVIEW.md) for guidance used by automated code review agents
 when reviewing pull requests in this repository.
+
+## Pull requests
+
+- Pull request descriptions **must** follow the [pull request template](.github/PULL_REQUEST_TEMPLATE.md).
+- Pull request descriptions authored by an agent **must** disclose which agent was
+  used to create the pull request. Add a note at the bottom of the description,
+  for example:
+
+  ```markdown
+  > [!NOTE]
+  > This PR description was generated with GitHub Copilot.
+  ```
+
+- The same applies to PR reviews, PR comments and issue comments posted by an
+  agent under a user's own account, rather than a dedicated bot account or app.
+- Replies to pull requests, comments, and issues **must** be made by the end-user
+  themselves, not autonomously by an agent.
+
+## Skills
+
+Agent skills for common tasks in this repository are in [`.github/skills`](.github/skills):
+
+- [`code-review`](.github/skills/code-review/SKILL.md) — review a pull request or
+  code change against this repository's conventions.
+- [`performance-benchmark`](.github/skills/performance-benchmark/SKILL.md) — write
+  and run BenchmarkDotNet benchmarks to validate the performance impact of a change.
