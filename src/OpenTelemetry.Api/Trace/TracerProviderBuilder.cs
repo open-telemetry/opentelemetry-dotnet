@@ -33,7 +33,7 @@ public abstract class TracerProviderBuilder
     /// <remarks>
     /// Source names support wildcard matching:
     /// <list type="bullet">
-    /// <item><description><c>*</c> matches zero or more characters.</description></item>
+    /// <item><description><c>*</c> matches zero or more characters;</description></item>
     /// <item><description><c>?</c> matches exactly one character.</description></item>
     /// </list>
     /// Escaping wildcard characters is not supported.
