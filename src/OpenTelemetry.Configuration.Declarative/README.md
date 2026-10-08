@@ -271,7 +271,7 @@ Points to be aware of:
 
 The `OpenTelemetry:Exporters:Console` configuration section, which the Console
 exporter binds into its options, is masked the same way as `OTEL_*` settings,
-including its environment-variable spelling 
+including its environment-variable spelling
 (`OpenTelemetry__Exporters__Console__Targets`). Only the paths the SDK binds are
 masked. Other keys under `OpenTelemetry` stay visible.
 
