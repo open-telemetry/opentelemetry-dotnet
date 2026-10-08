@@ -125,7 +125,7 @@ public sealed class B3Propagator : TextMapPropagator
             var spanId = context.ActivityContext.SpanId.ToHexString();
 
             var value = (context.ActivityContext.TraceFlags & ActivityTraceFlags.Recorded) != 0
-                ? string.Concat(traceId, XB3CombinedDelimiterString, spanId, XB3CombinedDelimiterString, SampledValue)
+                ? string.Concat(traceId, XB3CombinedDelimiterString, spanId, XB3CombinedDelimiterString + SampledValue)
                 : string.Concat(traceId, XB3CombinedDelimiterString, spanId);
 
             setter(carrier, XB3Combined, value);
