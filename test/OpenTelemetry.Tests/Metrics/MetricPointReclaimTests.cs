@@ -395,6 +395,52 @@ public class MetricPointReclaimTests
         Assert.Equal(Interlocked.Read(ref recordedSum), Interlocked.Read(ref exportedSum));
     }
 
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    [InlineData(5)]
+    [InlineData(8)]
+    [InlineData(9)]
+    [InlineData(16)]
+    [InlineData(17)]
+    public void EveryMetricPointIsCollectedAsTheStoreFillsUp(int cardinalityLimit)
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateCounter<long>("counter");
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = cardinalityLimit })
+            .AddInMemoryExporter(exportedItems, metricReaderOptions => metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta)
+            .Build();
+
+        // Collect a point with every slot handed out so far, up to and including the last one. A collect only
+        // visits the slots that have been handed out, so each of them must be found whatever the limit.
+        for (var created = 1; created <= cardinalityLimit; created++)
+        {
+            for (var i = 0; i < created; i++)
+            {
+                counter.Add(1, new KeyValuePair<string, object?>("key", i));
+            }
+
+            exportedItems.Clear();
+            Assert.True(meterProvider.ForceFlush());
+
+            var sums = new Dictionary<int, long>();
+            foreach (ref readonly var mp in exportedItems.Single().GetMetricPoints())
+            {
+                sums.Add((int)mp.Tags.KeyAndValues[0].Value!, mp.GetSumLong());
+            }
+
+            Assert.Equal(created, sums.Count);
+            Assert.All(sums.Values, sum => Assert.Equal(1, sum));
+        }
+    }
+
     [Fact]
     public void ReclaimedMetricPointsAreReusedInStridedOrder()
     {
