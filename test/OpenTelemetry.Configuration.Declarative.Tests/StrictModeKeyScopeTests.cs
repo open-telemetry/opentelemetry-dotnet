@@ -21,7 +21,7 @@ public sealed class StrictModeKeyScopeTests
     [InlineData("OTELX", false)]
     [InlineData("OpenTelemetry:Exporters:Console", true)]
     [InlineData("OpenTelemetry:Exporters:Console:Targets", true)]
-    [InlineData("opentelemetry:console:targets", true)]
+    [InlineData("opentelemetry:exporters:console:targets", true)]
     [InlineData("OpenTelemetry", false)]
     [InlineData("OpenTelemetry:X", false)]
     [InlineData("OpenTelemetry:ServiceName", false)]
