@@ -618,6 +618,27 @@ public sealed class OtlpTraceExporterTests : IDisposable
     }
 
     [Fact]
+    public void ByteArraySpanAttributeIsTruncatedToValueLengthLimit()
+    {
+        var sdkOptions = new SdkLimitOptions() { AttributeValueLengthLimit = 4 };
+
+        using var activitySource = new ActivitySource(nameof(this.ByteArraySpanAttributeIsTruncatedToValueLengthLimit));
+        using var activity = activitySource.StartActivity("root");
+
+        Assert.NotNull(activity);
+        activity.SetTag("Over", new byte[] { 1, 2, 3, 4, 5, 6 });
+        activity.SetTag("At", new byte[] { 1, 2, 3, 4 });
+        activity.SetTag("Under", new byte[] { 1, 2 });
+
+        var otlpSpan = ToOtlpSpan(sdkOptions, activity);
+
+        Assert.NotNull(otlpSpan);
+        Assert.Equal(new byte[] { 1, 2, 3, 4 }, otlpSpan.Attributes.Single(a => a.Key == "Over").Value.BytesValue.ToByteArray());
+        Assert.Equal(new byte[] { 1, 2, 3, 4 }, otlpSpan.Attributes.Single(a => a.Key == "At").Value.BytesValue.ToByteArray());
+        Assert.Equal(new byte[] { 1, 2 }, otlpSpan.Attributes.Single(a => a.Key == "Under").Value.BytesValue.ToByteArray());
+    }
+
+    [Fact]
     public void SpanAttributeValueLengthLimitOverridesAttributeValueLengthLimit()
     {
         var sdkOptions = new SdkLimitOptions()
