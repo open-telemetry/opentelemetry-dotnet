@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Globalization;
 using Microsoft.Extensions.Configuration;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
@@ -14,6 +15,10 @@ internal sealed class ExperimentalOptions
     public const string OtlpRetryEnvVar = "OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY";
 
     public const string OtlpDiskRetryDirectoryPathEnvVar = "OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_DIRECTORY_PATH";
+
+    public const string OtlpDiskRetryMaxSizeInMbEnvVar = "OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_MAX_SIZE_IN_MB";
+
+    public const int DefaultDiskRetryMaxSizeInMb = 50;
 
     public ExperimentalOptions()
         : this(new ConfigurationBuilder().AddEnvironmentVariables().Build())
@@ -41,6 +46,11 @@ internal sealed class ExperimentalOptions
                     ? path
                     : throw new NotSupportedException(
                         $"Retry Policy '{retryPolicy}' requires '{OtlpDiskRetryDirectoryPathEnvVar}' to be configured.");
+
+                this.DiskRetryMaxSizeInBytes = configuration.TryGetStringValue(OtlpDiskRetryMaxSizeInMbEnvVar, out var maxSizeInMb)
+                    && long.TryParse(maxSizeInMb, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedMaxSizeInMb)
+                    ? parsedMaxSizeInMb * 1024 * 1024
+                    : (long)DefaultDiskRetryMaxSizeInMb * 1024 * 1024;
             }
             else
             {
@@ -72,4 +82,9 @@ internal sealed class ExperimentalOptions
     /// Gets the path on disk where the telemetry will be stored for retries at a later point.
     /// </summary>
     public string? DiskRetryDirectoryPath { get; }
+
+    /// <summary>
+    /// Gets the maximum allowed size in bytes for the disk retry storage folder.
+    /// </summary>
+    public long DiskRetryMaxSizeInBytes { get; }
 }

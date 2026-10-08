@@ -21,9 +21,9 @@ internal sealed class OtlpExporterPersistentStorageTransmissionHandler : OtlpExp
     private readonly PersistentBlobProvider persistentBlobProvider;
     private bool disposed;
 
-    public OtlpExporterPersistentStorageTransmissionHandler(IExportClient exportClient, double timeoutMilliseconds, string storagePath)
+    public OtlpExporterPersistentStorageTransmissionHandler(IExportClient exportClient, double timeoutMilliseconds, string storagePath, long maxSizeInBytes)
 #pragma warning disable CA2000 // Dispose objects before losing scope
-        : this(new FileBlobProvider(storagePath), exportClient, timeoutMilliseconds)
+        : this(new FileBlobProvider(storagePath, maxSizeInBytes), exportClient, timeoutMilliseconds)
 #pragma warning restore CA2000 // Dispose objects before losing scope
     {
     }

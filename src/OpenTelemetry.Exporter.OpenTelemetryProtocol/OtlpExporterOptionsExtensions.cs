@@ -115,7 +115,8 @@ internal static class OtlpExporterOptionsExtensions
             return new OtlpExporterPersistentStorageTransmissionHandler(
                 exportClient,
                 timeoutMilliseconds,
-                Path.Combine(experimentalOptions.DiskRetryDirectoryPath, GetSignalStorageDirectoryName(otlpSignalType)));
+                Path.Combine(experimentalOptions.DiskRetryDirectoryPath, GetSignalStorageDirectoryName(otlpSignalType)),
+                experimentalOptions.DiskRetryMaxSizeInBytes);
         }
         else
         {

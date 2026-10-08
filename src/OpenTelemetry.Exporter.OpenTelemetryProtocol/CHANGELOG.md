@@ -31,6 +31,11 @@ Notes](../../RELEASENOTES.md).
   `ScopeLogs.schema_url` in exported OTLP requests.
   ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
 
+* Added support for configuring the maximum disk retry storage size via the
+  `OTEL_DOTNET_EXPERIMENTAL_OTLP_DISK_RETRY_MAX_SIZE_IN_MB` environment
+  variable (value in megabytes).
+  ([#NNNN](https://github.com/open-telemetry/opentelemetry-dotnet/pull/NNNN))
+
 ## 1.19.1
 
 Released 2026-Sep-21
