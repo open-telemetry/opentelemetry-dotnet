@@ -31,6 +31,12 @@ Notes](../../RELEASENOTES.md).
   `ScopeLogs.schema_url` in exported OTLP requests.
   ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
 
+* **Breaking:** `OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT` and
+  `OTEL_LINK_ATTRIBUTE_COUNT_LIMIT` now fall back to
+  `OTEL_ATTRIBUTE_COUNT_LIMIT` (then the default of 128) when not set, instead
+  of falling back to `OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT`.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.19.1
 
 Released 2026-Sep-21
