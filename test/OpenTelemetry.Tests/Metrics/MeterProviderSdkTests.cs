@@ -212,4 +212,61 @@ public class MeterProviderSdkTests
         // Every instrument was disposed and collected, so no registration should remain.
         Assert.Empty(metricStreamNames);
     }
+
+    [Fact]
+    public void MeterProviderSdkAddMeterWithWildcards()
+    {
+        var methodName = Utils.GetCurrentMethodName();
+        using var meter1 = new Meter($"{methodName}.A");
+        using var meter2 = new Meter($"{methodName}.Ab");
+        using var meter3 = new Meter($"{methodName}.Abc");
+        using var meter4 = new Meter($"{methodName}.B");
+
+        var exportedItems = new List<Metric>();
+
+        using (var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter($"{methodName}.*")
+            .AddInMemoryExporter(exportedItems)
+            .Build())
+        {
+            var counter1 = meter1.CreateCounter<long>("test1");
+            var counter2 = meter2.CreateCounter<long>("test2");
+            var counter3 = meter3.CreateCounter<long>("test3");
+            var counter4 = meter4.CreateCounter<long>("test4");
+
+            counter1.Add(1);
+            counter2.Add(1);
+            counter3.Add(1);
+            counter4.Add(1);
+
+            meterProvider.ForceFlush();
+
+            Assert.Equal(4, exportedItems.Count);
+        }
+
+        exportedItems.Clear();
+
+        using (var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter($"{methodName}.?")
+            .AddInMemoryExporter(exportedItems)
+            .Build())
+        {
+            var counter1 = meter1.CreateCounter<long>("test1_q");
+            var counter2 = meter2.CreateCounter<long>("test2_q");
+            var counter3 = meter3.CreateCounter<long>("test3_q");
+            var counter4 = meter4.CreateCounter<long>("test4_q");
+
+            counter1.Add(1);
+            counter2.Add(1);
+            counter3.Add(1);
+            counter4.Add(1);
+
+            meterProvider.ForceFlush();
+
+            // Only meter1 (.A) and meter4 (.B) match the single-character wildcard '?'
+            Assert.Equal(2, exportedItems.Count);
+            Assert.Contains(exportedItems, item => item.MeterName == meter1.Name);
+            Assert.Contains(exportedItems, item => item.MeterName == meter4.Name);
+        }
+    }
 }
