@@ -59,6 +59,6 @@ internal static class StrictModeKeyScope
     }
 
     private static bool IsPathOrDescendant(string key, string path) =>
-        key.StartsWith(path, StringComparison.OrdinalIgnoreCase)
-            && (key.Length == path.Length || key[path.Length] == ':');
+        key.StartsWith(path, StringComparison.OrdinalIgnoreCase) &&
+        (key.Length == path.Length || key[path.Length] == ':');
 }
