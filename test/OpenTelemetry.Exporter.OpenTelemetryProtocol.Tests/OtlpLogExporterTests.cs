@@ -965,7 +965,7 @@ public class OtlpLogExporterTests
         Assert.NotNull(otlpLogRecord);
         var attribute = TryGetAttribute(otlpLogRecord, "Bytes");
         Assert.NotNull(attribute);
-        Assert.Equal(new byte[] { 1, 2, 3, 4 }, attribute.Value.BytesValue.ToByteArray());
+        Assert.Equal([1, 2, 3, 4], attribute.Value.BytesValue.ToByteArray());
     }
 
     [Fact]

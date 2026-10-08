@@ -633,9 +633,9 @@ public sealed class OtlpTraceExporterTests : IDisposable
         var otlpSpan = ToOtlpSpan(sdkOptions, activity);
 
         Assert.NotNull(otlpSpan);
-        Assert.Equal(new byte[] { 1, 2, 3, 4 }, otlpSpan.Attributes.Single(a => a.Key == "Over").Value.BytesValue.ToByteArray());
-        Assert.Equal(new byte[] { 1, 2, 3, 4 }, otlpSpan.Attributes.Single(a => a.Key == "At").Value.BytesValue.ToByteArray());
-        Assert.Equal(new byte[] { 1, 2 }, otlpSpan.Attributes.Single(a => a.Key == "Under").Value.BytesValue.ToByteArray());
+        Assert.Equal([1, 2, 3, 4], otlpSpan.Attributes.Single(a => a.Key == "Over").Value.BytesValue.ToByteArray());
+        Assert.Equal([1, 2, 3, 4], otlpSpan.Attributes.Single(a => a.Key == "At").Value.BytesValue.ToByteArray());
+        Assert.Equal([1, 2], otlpSpan.Attributes.Single(a => a.Key == "Under").Value.BytesValue.ToByteArray());
     }
 
     [Fact]

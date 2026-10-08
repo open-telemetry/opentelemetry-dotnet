@@ -329,7 +329,7 @@ public class OtlpAttributeTests
 
         Assert.True(TryTransformTag(kvp, out var attribute, 2));
         var inner = Assert.Single(attribute.Value.KvlistValue.Values);
-        Assert.Equal(new byte[] { 1, 2 }, inner.Value.BytesValue.ToByteArray());
+        Assert.Equal([1, 2], inner.Value.BytesValue.ToByteArray());
     }
 
     [Fact]
