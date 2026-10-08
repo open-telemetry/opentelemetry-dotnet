@@ -6,6 +6,7 @@ using System.Collections.Frozen;
 #endif
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using System.Diagnostics.Tracing;
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Configuration;
@@ -272,7 +273,10 @@ internal sealed class MeterProviderSdk : MeterProvider
 
         try
         {
-            OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Started publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
+            if (OpenTelemetrySdkEventSource.Log.IsEnabled(EventLevel.Verbose, EventKeywords.All))
+            {
+                OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Started publishing Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\".");
+            }
 
             if (viewConfigCount <= 0)
             {
@@ -385,12 +389,20 @@ internal sealed class MeterProviderSdk : MeterProvider
 
             if (state != null)
             {
-                OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Measurements for Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\" will be processed and aggregated by the SDK.");
+                if (OpenTelemetrySdkEventSource.Log.IsEnabled(EventLevel.Verbose, EventKeywords.All))
+                {
+                    OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Measurements for Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\" will be processed and aggregated by the SDK.");
+                }
+
                 return state;
             }
             else
             {
-                OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Measurements for Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\" will be dropped by the SDK.");
+                if (OpenTelemetrySdkEventSource.Log.IsEnabled(EventLevel.Verbose, EventKeywords.All))
+                {
+                    OpenTelemetrySdkEventSource.Log.MeterProviderSdkEvent($"Measurements for Instrument = \"{instrument.Name}\" of Meter = \"{instrument.Meter.Name}\" will be dropped by the SDK.");
+                }
+
                 return null;
             }
         }
