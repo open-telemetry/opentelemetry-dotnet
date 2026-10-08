@@ -22,12 +22,12 @@ internal static class StrictModeKeyScope
     /// </summary>
 #if NET
     private static readonly FrozenSet<string> ReservedSectionPaths = FrozenSet.ToFrozenSet(
-        ["OpenTelemetry:Console"],
+        ["OpenTelemetry:Exporters:Console"],
         StringComparer.OrdinalIgnoreCase);
 #else
     private static readonly HashSet<string> ReservedSectionPaths = new(StringComparer.OrdinalIgnoreCase)
     {
-        "OpenTelemetry:Console",
+        "OpenTelemetry:Exporters:Console",
     };
 #endif
 

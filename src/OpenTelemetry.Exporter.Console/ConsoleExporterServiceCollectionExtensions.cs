@@ -13,12 +13,12 @@ namespace OpenTelemetry.Exporter;
 /// </summary>
 internal static class ConsoleExporterServiceCollectionExtensions
 {
-    private const string ConsoleSectionPath = "OpenTelemetry:Console";
+    private const string ConsoleSectionPath = "OpenTelemetry:Exporters:Console";
 
     /// <summary>
     /// Registers an <see cref="IOptionsFactory{TOptions}"/> that binds the
     /// <see cref="ConsoleExporterOptions"/> instance registered under the default name
-    /// from the <c>OpenTelemetry:Console</c> configuration section when the options are
+    /// from the <c>OpenTelemetry:Exporters:Console</c> configuration section when the options are
     /// created.
     /// </summary>
     /// <remarks>
@@ -33,6 +33,8 @@ internal static class ConsoleExporterServiceCollectionExtensions
             {
                 var options = new ConsoleExporterOptions();
 
+                // Binding for named options is out of scope for now: it needs an agreed
+                // key convention and handling of collisions with reserved keys.
                 if (name == Options.DefaultName)
                 {
                     configuration.GetSection(ConsoleSectionPath).Bind(options);

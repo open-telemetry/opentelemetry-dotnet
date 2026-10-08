@@ -43,7 +43,7 @@ The `Options` type setters take precedence over the environment variables.
 ### Configuration via `appsettings.json`
 
 The default `AddConsoleExporter()` registration can be
-configured from the `OpenTelemetry:Console` section of your app's
+configured from the `OpenTelemetry:Exporters:Console` section of your app's
 configuration, for example in `appsettings.json`:
 
 ```json
@@ -73,7 +73,7 @@ A few things to know about this configuration section:
 
 ```csharp
 services.Configure<ConsoleExporterOptions>(
-    "name", configuration.GetSection("OpenTelemetry:Console"));
+    "name", configuration.GetSection("OpenTelemetry:Exporters:Console"));
 
 services.AddOpenTelemetry()
     .WithTracing(builder => builder.AddConsoleExporter("name", configure: null));

@@ -45,7 +45,7 @@ public class ConsoleExporterBindingTests
         using var activitySource = new ActivitySource(name);
 
         var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Console:Targets"] = "Debug" })
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Exporters:Console:Targets"] = "Debug" })
             .Build();
 
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -68,7 +68,7 @@ public class ConsoleExporterBindingTests
         using var activitySource = new ActivitySource(name);
 
         var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Console:Targets"] = "Debug" })
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Exporters:Console:Targets"] = "Debug" })
             .Build();
 
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -93,13 +93,13 @@ public class ConsoleExporterBindingTests
         using var activitySource = new ActivitySource(name);
 
         var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Console:Targets"] = "Debug" })
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Exporters:Console:Targets"] = "Debug" })
             .Build();
 
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .ConfigureServices(s => s.AddSingleton<IConfiguration>(config))
             .ConfigureServices(s => s.Configure<ConsoleExporterOptions>(
-                "custom-name", config.GetSection("OpenTelemetry:Console")))
+                "custom-name", config.GetSection("OpenTelemetry:Exporters:Console")))
             .AddSource(name)
             .AddConsoleExporter("custom-name", configure: null)
             .Build();
@@ -118,7 +118,7 @@ public class ConsoleExporterBindingTests
         using var activitySource = new ActivitySource(name);
 
         var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Console:Targets"] = "Debug" })
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Exporters:Console:Targets"] = "Debug" })
             .Build();
 
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -141,7 +141,7 @@ public class ConsoleExporterBindingTests
         using var activitySource = new ActivitySource(name);
 
         var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Console:Targets"] = "Debug" })
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Exporters:Console:Targets"] = "Debug" })
             .Build();
 
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -165,7 +165,7 @@ public class ConsoleExporterBindingTests
         using var activitySource = new ActivitySource(name);
 
         var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Console:Targets"] = "Debug" })
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Exporters:Console:Targets"] = "Debug" })
             .Build();
 
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -189,7 +189,7 @@ public class ConsoleExporterBindingTests
         using var activitySource = new ActivitySource(name);
 
         var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Console:Targets"] = "Debug" })
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Exporters:Console:Targets"] = "Debug" })
             .Build();
 
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -209,7 +209,7 @@ public class ConsoleExporterBindingTests
     public void DefaultNameBinding_AppliesThroughLoggingOnlyRegistration()
     {
         var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Console:Targets"] = "Debug" })
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Exporters:Console:Targets"] = "Debug" })
             .Build();
 
         IServiceProvider? capturedServices = null;
@@ -233,7 +233,7 @@ public class ConsoleExporterBindingTests
     public void DefaultNameBinding_AppliesThroughMetricsOnlyRegistration()
     {
         var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Console:Targets"] = "Debug" })
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Exporters:Console:Targets"] = "Debug" })
             .Build();
 
         IServiceProvider? capturedServices = null;
@@ -256,7 +256,7 @@ public class ConsoleExporterBindingTests
     [Fact]
     public void DefaultNameBinding_EnvironmentOnlyFallback_NoExplicitIConfiguration()
     {
-        const string envVarName = "OpenTelemetry__Console__Targets";
+        const string envVarName = "OpenTelemetry__Exporters__Console__Targets";
         Environment.SetEnvironmentVariable(envVarName, "Debug");
         try
         {
@@ -295,7 +295,7 @@ public class ConsoleExporterBindingTests
     public void SectionBinding_SourceGenPath_BindsExpectedTargets(string configuredValue, ConsoleExporterOutputTargets expected)
     {
         var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Console:Targets"] = configuredValue })
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Exporters:Console:Targets"] = configuredValue })
             .Build();
 
         // Production path: exercises AddConsoleExporterServices as compiled inside
@@ -317,13 +317,13 @@ public class ConsoleExporterBindingTests
     public void SectionBinding_ReflectionPath_BindsExpectedTargets(string configuredValue, ConsoleExporterOutputTargets expected)
     {
         var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Console:Targets"] = configuredValue })
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Exporters:Console:Targets"] = configuredValue })
             .Build();
 
         // Reflection path: ConfigurationBinder.Bind compiled in this test assembly, which does
         // not enable the generator, so this always uses reflection regardless of TFM.
         var reflection = new ConsoleExporterOptions();
-        ConfigurationBinder.Bind(config.GetSection("OpenTelemetry:Console"), reflection);
+        ConfigurationBinder.Bind(config.GetSection("OpenTelemetry:Exporters:Console"), reflection);
 
         Assert.Equal(expected, reflection.Targets);
     }
@@ -341,7 +341,7 @@ public class ConsoleExporterBindingTests
         try
         {
             var config = new ConfigurationBuilder()
-                .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Console:Targets"] = "Debug" })
+                .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Exporters:Console:Targets"] = "Debug" })
                 .AddOpenTelemetryDeclarativeConfiguration(yamlPath)
                 .Build();
 
@@ -353,7 +353,7 @@ public class ConsoleExporterBindingTests
 
             activitySource.StartActivity("work")?.Stop();
 
-            // The declarative mask hides "OpenTelemetry:Console:Targets" from the section binder,
+            // The declarative mask hides "OpenTelemetry:Exporters:Console:Targets" from the section binder,
             // so the default (Console) applies, not the earlier source's "Debug".
             Assert.Contains("Activity.DisplayName", capture.ConsoleOutput, StringComparison.Ordinal);
             Assert.DoesNotContain("Activity.DisplayName", capture.TraceOutput, StringComparison.Ordinal);
@@ -368,8 +368,8 @@ public class ConsoleExporterBindingTests
     public void SameKeyInTwoProviders_LastProviderWins()
     {
         var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Console:Targets"] = "Debug" })
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Console:Targets"] = "Console" })
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Exporters:Console:Targets"] = "Debug" })
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Exporters:Console:Targets"] = "Console" })
             .Build();
 
         Assert.Equal(ConsoleExporterOutputTargets.Console, CreateDefaultOptions(config).Targets);
@@ -386,7 +386,7 @@ public class ConsoleExporterBindingTests
     public void InvalidTargets_Throws(string invalidValue)
     {
         var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Console:Targets"] = invalidValue })
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Exporters:Console:Targets"] = invalidValue })
             .Build();
 
         Assert.Throws<InvalidOperationException>(() => CreateDefaultOptions(config));
@@ -396,7 +396,7 @@ public class ConsoleExporterBindingTests
     public void InvalidTargets_ThrowsWhenProviderIsBuilt()
     {
         var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Console:Targets"] = "Consloe" })
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Exporters:Console:Targets"] = "Consloe" })
             .Build();
 
         var builder = Sdk.CreateTracerProviderBuilder()
@@ -410,7 +410,7 @@ public class ConsoleExporterBindingTests
     public void InvalidTargets_UnderNamedRegistration_DoesNotThrow()
     {
         var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Console:Targets"] = "Consloe" })
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Exporters:Console:Targets"] = "Consloe" })
             .Build();
 
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
@@ -428,7 +428,7 @@ public class ConsoleExporterBindingTests
     public void Targets_ValueIsCaseInsensitive_AndTrimmed(string configuredValue, ConsoleExporterOutputTargets expected)
     {
         var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Console:Targets"] = configuredValue })
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Exporters:Console:Targets"] = configuredValue })
             .Build();
 
         Assert.Equal(expected, CreateDefaultOptions(config).Targets);
@@ -438,7 +438,7 @@ public class ConsoleExporterBindingTests
     public void EmptyTargets()
     {
         var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Console:Targets"] = string.Empty })
+            .AddInMemoryCollection(new Dictionary<string, string?> { ["OpenTelemetry:Exporters:Console:Targets"] = string.Empty })
             .Build();
 
 #if NET8_0
@@ -456,9 +456,9 @@ public class ConsoleExporterBindingTests
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["OpenTelemetry:Console:Targets"] = "Debug",
-                ["OpenTelemetry:Console:NotAnOption"] = "x",
-                ["OpenTelemetry:ConsoleFoo:Targets"] = "Console",
+                ["OpenTelemetry:Exporters:Console:Targets"] = "Debug",
+                ["OpenTelemetry:Exporters:Console:NotAnOption"] = "x",
+                ["OpenTelemetry:Exporters:ConsoleFoo:Targets"] = "Console",
                 ["OpenTelemetry:ServiceName"] = "app-owned",
             })
             .Build();
