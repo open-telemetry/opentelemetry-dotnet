@@ -308,6 +308,10 @@ internal static class ProtobufOtlpMetricSerializer
 
             case MetricType.Histogram:
                 {
+                    // All of the data points of a histogram share the same explicit bounds,
+                    // so they are only encoded for the first data point and copied afterwards.
+                    var explicitBoundsCache = default(ExplicitBoundsCache);
+
                     writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.Metric_Data_Histogram, ProtobufWireType.LEN);
                     var metricTypeLengthPosition = writePosition;
                     writePosition += ReserveSizeForLength;
@@ -340,7 +344,7 @@ internal static class ProtobufOtlpMetricSerializer
                             writePosition = ProtobufSerializer.WriteDoubleWithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Max, max);
                         }
 
-                        writePosition = WriteHistogramBuckets(buffer, writePosition, metricPoint.GetHistogramBuckets());
+                        writePosition = WriteHistogramBuckets(buffer, writePosition, metricPoint.GetHistogramBuckets(), ref explicitBoundsCache);
 
                         writePosition = WriteDoubleExemplars(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.HistogramDataPoint_Exemplars, in metricPoint);
 
@@ -591,7 +595,7 @@ internal static class ProtobufOtlpMetricSerializer
         return writePosition;
     }
 
-    private static int WriteHistogramBuckets(byte[] buffer, int writePosition, HistogramBuckets buckets)
+    private static int WriteHistogramBuckets(byte[] buffer, int writePosition, HistogramBuckets buckets, ref ExplicitBoundsCache explicitBoundsCache)
     {
         writePosition = WriteBucketCounts(buffer, writePosition, buckets.BucketCounts);
 
@@ -599,7 +603,21 @@ internal static class ProtobufOtlpMetricSerializer
         {
             // Use DisplayBounds (cleaned values) for export if available,
             // otherwise fall back to raw ExplicitBounds
-            writePosition = WriteExplicitBounds(buffer, writePosition, buckets.DisplayBounds ?? explicitBounds);
+            var bounds = buckets.DisplayBounds ?? explicitBounds;
+
+            if (ReferenceEquals(bounds, explicitBoundsCache.Bounds))
+            {
+                Buffer.BlockCopy(buffer, explicitBoundsCache.Start, buffer, writePosition, explicitBoundsCache.Length);
+                return writePosition + explicitBoundsCache.Length;
+            }
+
+            var start = writePosition;
+            writePosition = WriteExplicitBounds(buffer, writePosition, bounds);
+
+            if (writePosition > start)
+            {
+                explicitBoundsCache = new ExplicitBoundsCache(bounds, start, writePosition - start);
+            }
         }
 
         return writePosition;
@@ -746,6 +764,18 @@ internal static class ProtobufOtlpMetricSerializer
             paramName,
             actualValue,
             $"Metric metadata exceeds the available serialization buffer capacity of {availableBufferSize} bytes.");
+
+    /// <summary>
+    /// The location in the buffer of the encoded explicit bounds of a histogram data point.
+    /// </summary>
+    private readonly struct ExplicitBoundsCache(double[] bounds, int start, int length)
+    {
+        public readonly double[]? Bounds { get; } = bounds;
+
+        public readonly int Start { get; } = start;
+
+        public readonly int Length { get; } = length;
+    }
 
     private sealed class CachedAttributes(int fieldNumber, byte[] bytes)
     {
