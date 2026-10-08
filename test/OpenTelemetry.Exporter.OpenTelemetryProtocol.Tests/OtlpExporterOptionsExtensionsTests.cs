@@ -284,6 +284,30 @@ public class OtlpExporterOptionsExtensionsTests
         }
     }
 
+    [Theory]
+    [InlineData(null, 50)]
+    [InlineData("200", 200)]
+    [InlineData("abc", 50)]
+    public void ExperimentalOptions_DiskRetryMaxSizeInMb_ParsesCorrectly(string? maxSizeInMb, int expectedMb)
+    {
+        var configDict = new Dictionary<string, string?>
+        {
+            [ExperimentalOptions.OtlpRetryEnvVar] = "disk",
+            [ExperimentalOptions.OtlpDiskRetryDirectoryPathEnvVar] = Path.GetTempPath(),
+        };
+        if (maxSizeInMb is not null)
+        {
+            configDict[ExperimentalOptions.OtlpDiskRetryMaxSizeInMbEnvVar] = maxSizeInMb;
+        }
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(configDict)
+            .Build();
+
+        var experimentalOptions = new ExperimentalOptions(configuration);
+        Assert.Equal((long)expectedMb * 1024 * 1024, experimentalOptions.DiskRetryMaxSizeInBytes);
+    }
+
     private static void AssertTransmissionHandler(OtlpExporterTransmissionHandler transmissionHandler, Type exportClientType, int expectedTimeoutMilliseconds, string? retryStrategy)
     {
         if (retryStrategy == "in_memory")
