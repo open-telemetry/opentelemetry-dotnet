@@ -206,8 +206,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
         var batch = new Batch<Metric>([.. metrics], metrics.Count);
         var request = CreateMetricExportRequest(batch, resourceBuilder.Build());
 
-        Assert.Single(request.ResourceMetrics);
-        var resourceMetric = request.ResourceMetrics.First();
+        var resourceMetric = Assert.Single(request.ResourceMetrics);
         var otlpResource = resourceMetric.Resource;
 
         if (includeServiceNameInResource)
@@ -220,8 +219,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
             Assert.DoesNotContain(otlpResource.Attributes, kvp => kvp.Key == ResourceSemanticConventions.AttributeServiceName);
         }
 
-        Assert.Single(resourceMetric.ScopeMetrics);
-        var instrumentationLibraryMetrics = resourceMetric.ScopeMetrics.First();
+        var instrumentationLibraryMetrics = Assert.Single(resourceMetric.ScopeMetrics);
         Assert.Equal(telemetrySchemaUrl, instrumentationLibraryMetrics.SchemaUrl);
         Assert.Equal(meter.Name, instrumentationLibraryMetrics.Scope.Name);
         Assert.Equal("0.0.1", instrumentationLibraryMetrics.Scope.Version);
@@ -279,8 +277,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
         Assert.Null(actual.ExponentialHistogram);
         Assert.Null(actual.Summary);
 
-        Assert.Single(actual.Gauge.DataPoints);
-        var dataPoint = actual.Gauge.DataPoints.First();
+        var dataPoint = Assert.Single(actual.Gauge.DataPoints);
         Assert.True(dataPoint.StartTimeUnixNano > 0);
         Assert.True(dataPoint.TimeUnixNano > 0);
 
@@ -365,8 +362,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
             : OtlpMetrics.AggregationTemporality.Delta;
         Assert.Equal(otlpAggregationTemporality, actual.Sum.AggregationTemporality);
 
-        Assert.Single(actual.Sum.DataPoints);
-        var dataPoint = actual.Sum.DataPoints.First();
+        var dataPoint = Assert.Single(actual.Sum.DataPoints);
         Assert.True(dataPoint.StartTimeUnixNano > 0);
         Assert.True(dataPoint.TimeUnixNano > 0);
 
@@ -461,8 +457,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
             : OtlpMetrics.AggregationTemporality.Cumulative;
         Assert.Equal(otlpAggregationTemporality, actual.Sum.AggregationTemporality);
 
-        Assert.Single(actual.Sum.DataPoints);
-        var dataPoint = actual.Sum.DataPoints.First();
+        var dataPoint = Assert.Single(actual.Sum.DataPoints);
         Assert.True(dataPoint.StartTimeUnixNano > 0);
         Assert.True(dataPoint.TimeUnixNano > 0);
 
@@ -560,8 +555,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
             : OtlpMetrics.AggregationTemporality.Delta;
         Assert.Equal(otlpAggregationTemporality, actual.ExponentialHistogram.AggregationTemporality);
 
-        Assert.Single(actual.ExponentialHistogram.DataPoints);
-        var dataPoint = actual.ExponentialHistogram.DataPoints.First();
+        var dataPoint = Assert.Single(actual.ExponentialHistogram.DataPoints);
         Assert.True(dataPoint.StartTimeUnixNano > 0);
         Assert.True(dataPoint.TimeUnixNano > 0);
 
@@ -625,6 +619,43 @@ public sealed class OtlpMetricsExporterTests : IDisposable
         {
             VerifyExemplars(null, 0, enableExemplars, d => d.Exemplars.Skip(1).FirstOrDefault(), dataPoint);
         }
+    }
+
+    [Fact]
+    public void TestExponentialHistogramBucketCountsToOtlpMetric()
+    {
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .AddView(instrument => new Base2ExponentialBucketHistogramConfiguration())
+            .Build();
+
+        var histogram = meter.CreateHistogram<double>("test_histogram");
+
+        // A count over 127 needs a multi-byte varint within the packed bucket counts.
+        for (var i = 0; i < 300; i++)
+        {
+            histogram.Record(1.5);
+        }
+
+        histogram.Record(3);
+        histogram.Record(3);
+        histogram.Record(1000);
+
+        provider.ForceFlush();
+
+        var batch = new Batch<Metric>([.. metrics], metrics.Count);
+        var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
+
+        var dataPoint = request.ResourceMetrics.Single().ScopeMetrics.Single().Metrics.Single().ExponentialHistogram.DataPoints.Single();
+
+        Assert.Equal(303UL, dataPoint.Count);
+        Assert.Equal(300UL, dataPoint.Positive.BucketCounts[0]);
+        Assert.Equal(303UL, dataPoint.Positive.BucketCounts.Aggregate(0UL, (total, count) => total + count));
+        Assert.True(dataPoint.Positive.BucketCounts.Count > 2);
     }
 
     [Theory]
@@ -692,8 +723,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
             : OtlpMetrics.AggregationTemporality.Delta;
         Assert.Equal(otlpAggregationTemporality, actual.Histogram.AggregationTemporality);
 
-        Assert.Single(actual.Histogram.DataPoints);
-        var dataPoint = actual.Histogram.DataPoints.First();
+        var dataPoint = Assert.Single(actual.Histogram.DataPoints);
         Assert.True(dataPoint.StartTimeUnixNano > 0);
         Assert.True(dataPoint.TimeUnixNano > 0);
 
@@ -843,12 +873,10 @@ public sealed class OtlpMetricsExporterTests : IDisposable
         var batch = new Batch<Metric>([.. exportedItems], exportedItems.Count);
         var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
 
-        Assert.Single(request.ResourceMetrics);
-        var resourceMetric = request.ResourceMetrics.First();
+        var resourceMetric = Assert.Single(request.ResourceMetrics);
         var otlpResource = resourceMetric.Resource;
 
-        Assert.Single(resourceMetric.ScopeMetrics);
-        var instrumentationLibraryMetrics = resourceMetric.ScopeMetrics.First();
+        var instrumentationLibraryMetrics = Assert.Single(resourceMetric.ScopeMetrics);
         Assert.Equal(meter.Name, instrumentationLibraryMetrics.Scope.Name);
 
         var scopeMetrics = resourceMetric.ScopeMetrics.Single();
@@ -865,8 +893,7 @@ public sealed class OtlpMetricsExporterTests : IDisposable
         void AssertExemplars<T>(T value, OtlpMetrics.Metric metric)
             where T : struct
         {
-            Assert.Single(metric.Sum.DataPoints);
-            var dataPoint = metric.Sum.DataPoints.First();
+            var dataPoint = Assert.Single(metric.Sum.DataPoints);
             var otlpExemplar = dataPoint.Exemplars.First();
 
             Assert.NotEqual(default, otlpExemplar.TimeUnixNano);
@@ -955,11 +982,9 @@ public sealed class OtlpMetricsExporterTests : IDisposable
 
             Assert.True(buffer.Length > 50);
 
-            Assert.Single(request.ResourceMetrics);
-            var resourceMetric = request.ResourceMetrics.First();
+            var resourceMetric = Assert.Single(request.ResourceMetrics);
 
-            Assert.Single(resourceMetric.ScopeMetrics);
-            var instrumentationLibraryMetrics = resourceMetric.ScopeMetrics.First();
+            var instrumentationLibraryMetrics = Assert.Single(resourceMetric.ScopeMetrics);
             Assert.Equal(string.Empty, instrumentationLibraryMetrics.SchemaUrl);
             Assert.Equal(meter.Name, instrumentationLibraryMetrics.Scope.Name);
             Assert.Equal("0.0.1", instrumentationLibraryMetrics.Scope.Version);
