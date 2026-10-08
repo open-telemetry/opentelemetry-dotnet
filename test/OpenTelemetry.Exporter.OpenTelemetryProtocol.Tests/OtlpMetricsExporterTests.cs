@@ -648,14 +648,31 @@ public sealed class OtlpMetricsExporterTests : IDisposable
         provider.ForceFlush();
 
         var batch = new Batch<Metric>([.. metrics], metrics.Count);
-        var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
 
-        var dataPoint = request.ResourceMetrics.Single().ScopeMetrics.Single().Metrics.Single().ExponentialHistogram.DataPoints.Single();
+        var buffer = ProtobufSerializer.RentBuffer(4096);
+        try
+        {
+            var writePosition = ProtobufOtlpMetricSerializer.WriteMetricsData(ref buffer, 0, ResourceBuilder.CreateEmpty().Build(), in batch);
 
-        Assert.Equal(303UL, dataPoint.Count);
-        Assert.Equal(300UL, dataPoint.Positive.BucketCounts[0]);
-        Assert.Equal(303UL, dataPoint.Positive.BucketCounts.Aggregate(0UL, (total, count) => total + count));
-        Assert.True(dataPoint.Positive.BucketCounts.Count > 2);
+            // A parser accepts both the packed and unpacked encodings of a repeated scalar
+            // field, so decoding the payload alone would not regress to the unpacked encoding.
+            // Assert on the raw wire format to confirm bucket_counts is written as a single
+            // length-delimited (packed) field rather than one varint per bucket.
+            AssertBucketCountsArePacked(buffer, writePosition);
+
+            using var stream = new MemoryStream(buffer, 0, writePosition);
+            var metricsData = OtlpMetrics.MetricsData.Parser.ParseFrom(stream);
+            var dataPoint = metricsData.ResourceMetrics.Single().ScopeMetrics.Single().Metrics.Single().ExponentialHistogram.DataPoints.Single();
+
+            Assert.Equal(303UL, dataPoint.Count);
+            Assert.Equal(300UL, dataPoint.Positive.BucketCounts[0]);
+            Assert.Equal(303UL, dataPoint.Positive.BucketCounts.Aggregate(0UL, (total, count) => total + count));
+            Assert.True(dataPoint.Positive.BucketCounts.Count > 2);
+        }
+        finally
+        {
+            ProtobufSerializer.ReturnBuffer(buffer);
+        }
     }
 
     [Theory]
@@ -1454,6 +1471,62 @@ public sealed class OtlpMetricsExporterTests : IDisposable
             // whatever buffer it ended up with to the pool.
             ProtobufSerializer.ReturnBuffer(buffer);
         }
+    }
+
+    private static void AssertBucketCountsArePacked(byte[] buffer, int length)
+    {
+        var resourceMetricsBytes = ReadSingleNestedMessage(buffer, 0, length, ProtobufOtlpMetricFieldNumberConstants.MetricsData_Resource_Metrics);
+        var scopeMetricsBytes = ReadSingleNestedMessage(resourceMetricsBytes, 0, resourceMetricsBytes.Length, ProtobufOtlpMetricFieldNumberConstants.ResourceMetrics_Scope_Metrics);
+        var metricBytes = ReadSingleNestedMessage(scopeMetricsBytes, 0, scopeMetricsBytes.Length, ProtobufOtlpMetricFieldNumberConstants.ScopeMetrics_Metrics);
+        var exponentialHistogramBytes = ReadSingleNestedMessage(metricBytes, 0, metricBytes.Length, ProtobufOtlpMetricFieldNumberConstants.Metric_Data_Exponential_Histogram);
+        var dataPointBytes = ReadSingleNestedMessage(exponentialHistogramBytes, 0, exponentialHistogramBytes.Length, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogram_Data_Points);
+        var positiveBucketsBytes = ReadSingleNestedMessage(dataPointBytes, 0, dataPointBytes.Length, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogramDataPoint_Positive);
+
+        var packedOccurrences = 0;
+        var unpackedOccurrences = 0;
+
+        using (var bucketCountsInput = new CodedInputStream(positiveBucketsBytes))
+        {
+            uint tag;
+            while ((tag = bucketCountsInput.ReadTag()) != 0)
+            {
+                if (WireFormat.GetTagFieldNumber(tag) == ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogramDataPoint_Buckets_Bucket_Counts)
+                {
+                    if (WireFormat.GetTagWireType(tag) == WireFormat.WireType.LengthDelimited)
+                    {
+                        packedOccurrences++;
+                    }
+                    else
+                    {
+                        unpackedOccurrences++;
+                    }
+                }
+
+                bucketCountsInput.SkipLastField();
+            }
+        }
+
+        Assert.Equal(1, packedOccurrences);
+        Assert.Equal(0, unpackedOccurrences);
+    }
+
+    private static byte[] ReadSingleNestedMessage(byte[] buffer, int offset, int length, int fieldNumber)
+    {
+        using var input = new CodedInputStream(buffer, offset, length);
+
+        uint tag;
+        while ((tag = input.ReadTag()) != 0)
+        {
+            if (WireFormat.GetTagFieldNumber(tag) == fieldNumber)
+            {
+                Assert.Equal(WireFormat.WireType.LengthDelimited, WireFormat.GetTagWireType(tag));
+                return input.ReadBytes().ToByteArray();
+            }
+
+            input.SkipLastField();
+        }
+
+        throw new InvalidOperationException($"Field {fieldNumber} was not found in the message.");
     }
 
     private sealed class ToStringThrows

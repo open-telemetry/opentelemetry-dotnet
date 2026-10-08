@@ -398,6 +398,8 @@ internal static class ProtobufOtlpMetricSerializer
 
                         // The bucket counts are a repeated scalar field, which proto3 packs into a single
                         // length-delimited value by default instead of repeating the tag for every bucket.
+                        // Most data points have few populated buckets, so the length prefix is reserved as
+                        // a single byte rather than padded out to four.
                         var bucketCountsLengthPosition = -1;
 
                         foreach (var bucketCount in exponentialHistogramData.PositiveBuckets)
@@ -406,7 +408,7 @@ internal static class ProtobufOtlpMetricSerializer
                             {
                                 writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogramDataPoint_Buckets_Bucket_Counts, ProtobufWireType.LEN);
                                 bucketCountsLengthPosition = writePosition;
-                                writePosition += ReserveSizeForLength;
+                                writePosition += ProtobufSerializer.ReserveSizeForCompactLength;
                             }
 
                             writePosition = ProtobufSerializer.WriteVarInt64(buffer, writePosition, (ulong)bucketCount);
@@ -414,7 +416,7 @@ internal static class ProtobufOtlpMetricSerializer
 
                         if (bucketCountsLengthPosition >= 0)
                         {
-                            ProtobufSerializer.WriteReservedLength(buffer, bucketCountsLengthPosition, writePosition - (bucketCountsLengthPosition + ReserveSizeForLength));
+                            writePosition = ProtobufSerializer.WriteCompactLength(buffer, bucketCountsLengthPosition, writePosition);
                         }
 
                         ProtobufSerializer.WriteReservedLength(buffer, positiveBucketsLengthPosition, writePosition - (positiveBucketsLengthPosition + ReserveSizeForLength));
