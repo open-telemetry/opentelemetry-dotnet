@@ -33,7 +33,7 @@ Notes](../../RELEASENOTES.md).
 
 * Exponential histogram bucket counts are now serialized in the packed
   encoding, which reduces the size of the exported payload.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7897](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7897))
 
 ## 1.19.1
 
