@@ -35,7 +35,7 @@ Notes](../../RELEASENOTES.md).
   `OTEL_LINK_ATTRIBUTE_COUNT_LIMIT` now fall back to
   `OTEL_ATTRIBUTE_COUNT_LIMIT` (then the default of 128) when not set, instead
   of falling back to `OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT`.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7894](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7894))
 
 ## 1.19.1
 
