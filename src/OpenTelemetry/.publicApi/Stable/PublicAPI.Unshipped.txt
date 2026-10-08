@@ -25,3 +25,12 @@ OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.MinimumLevel.set -> void
 OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.SelfDiagnosticsOptions() -> void
 static OpenTelemetry.SelfDiagnostics.SelfDiagnosticsOptions.GetDefaultLogDirectory() -> string?
 static OpenTelemetry.Trace.TracerProviderBuilderExtensions.ConfigureSampler(this OpenTelemetry.Trace.TracerProviderBuilder! tracerProviderBuilder, System.Func<System.IServiceProvider!, OpenTelemetry.Trace.Sampler!, OpenTelemetry.Trace.Sampler!>! configureSampler) -> OpenTelemetry.Trace.TracerProviderBuilder!
+OpenTelemetry.Metrics.AggregationKind
+OpenTelemetry.Metrics.AggregationKind.Drop = 4 -> OpenTelemetry.Metrics.AggregationKind
+OpenTelemetry.Metrics.AggregationKind.ExponentialHistogram = 3 -> OpenTelemetry.Metrics.AggregationKind
+OpenTelemetry.Metrics.AggregationKind.Gauge = 1 -> OpenTelemetry.Metrics.AggregationKind
+OpenTelemetry.Metrics.AggregationKind.Histogram = 2 -> OpenTelemetry.Metrics.AggregationKind
+OpenTelemetry.Metrics.AggregationKind.Sum = 0 -> OpenTelemetry.Metrics.AggregationKind
+OpenTelemetry.Metrics.MetricPoint.TryGetHistogramSum(out double sum) -> bool
+OpenTelemetry.Metrics.MetricStreamConfiguration.AggregationKind.get -> OpenTelemetry.Metrics.AggregationKind?
+OpenTelemetry.Metrics.MetricStreamConfiguration.AggregationKind.set -> void
