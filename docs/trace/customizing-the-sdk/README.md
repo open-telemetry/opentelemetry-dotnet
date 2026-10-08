@@ -104,8 +104,9 @@ provider to start collecting traces from them.
 `AddSource` method on `TracerProviderBuilder` can be used to add a
 `ActivitySource` to the provider. The name of the `ActivitySource`
 (case-insensitive) must be the argument to this method. Multiple `AddSource` can
-be called to add more than one source. It also supports wildcard subscription
-model as well.
+be called to add more than one source. It also supports a wildcard subscription
+model (`*` matches zero or more characters, `?` matches exactly one
+character; escaping wildcard characters is not supported).
 
 It is not possible to add sources *after* the provider is built, by calling the
 `Build()` method on the `TracerProviderBuilder`.
@@ -478,9 +479,9 @@ default `ParentBased` sampler then drops the custom activity because its parent
 was not recorded.
 
 You can confirm this is what is happening by enabling
-[self-diagnostics](../../../src/OpenTelemetry/README.md#self-diagnostics) at the
-`Verbose` level. The SDK emits an event explaining that the activity was dropped
-because its local parent is not recorded, together with the name of the
+[self-diagnostics](../../troubleshooting/README.md) with `MinimumLevel` set to
+`Trace`. The SDK emits an event explaining that the activity was dropped because
+its local parent is not recorded, together with the name of the
 `ActivitySource`.
 
 To resolve this, pick whichever option best suits your needs:

@@ -16,8 +16,10 @@ public static class DeclarativeConfigurationBuilderExtensions
     /// Adds the declarative YAML source, reading the file path from the <c>OTEL_CONFIG_FILE</c> environment variable.
     /// </summary>
     /// <remarks>
-    /// Appends the source after existing ones (YAML overrides earlier sources; sources added
-    /// later override YAML). No-op when <c>OTEL_CONFIG_FILE</c> is unset, empty, or whitespace,
+    /// The configuration file is the only source of OTel settings once registered. Keys set in
+    /// sources registered before it are ignored. Values from process environment variables can
+    /// be imported explicitly through environment variable substitution. <c>OTEL_DOTNET_*</c>
+    /// keys are unaffected. No-op when <c>OTEL_CONFIG_FILE</c> is unset, empty, or whitespace,
     /// or when a declarative configuration file is already registered. The first file wins.
     /// </remarks>
     /// <param name="builder">The <see cref="IConfigurationBuilder"/> to add to.</param>
@@ -52,12 +54,13 @@ public static class DeclarativeConfigurationBuilderExtensions
         string filePath)
     {
         Guard.ThrowIfNull(builder);
+        Guard.ThrowIfNullOrWhitespace(filePath);
         return builder.AddOpenTelemetryDeclarativeConfiguration(new FilePath(filePath));
     }
 
     // Internal overload so the path is never round-tripped through a string and re-resolved
     // by Path.GetFullPath. The FilePath struct stores the absolute path at construction time,
-    // so callers that already hold a FilePath (e.g. overlay registration) can pass it directly.
+    // so callers that already hold a FilePath (e.g. declarative registration) can pass it directly.
     internal static IConfigurationBuilder AddOpenTelemetryDeclarativeConfiguration(
         this IConfigurationBuilder builder,
         FilePath path) =>
@@ -100,7 +103,7 @@ public static class DeclarativeConfigurationBuilderExtensions
         }
         catch when (removeSourceOnFailure)
         {
-            // The DI overlay is transactional. ConfigurationManager may retain a source after its
+            // The DI registration is transactional. ConfigurationManager may retain a source after its
             // eager load fails, which would prevent a later valid first-source-wins registration.
             builder.Sources.Remove(source);
             throw;

@@ -29,10 +29,17 @@ internal sealed class PrometheusExporterOptions
     /// </remarks>
     public const int DefaultMaxScrapeResponseSizeBytes = InitialScrapeResponseSizeBytes * 2048;
 
+    /// <summary>
+    /// The default maximum time in milliseconds a single scrape response is allowed to take
+    /// (60 seconds).
+    /// </summary>
+    public const int DefaultScrapeResponseTimeoutMilliseconds = 60_000;
+
     public PrometheusExporterOptions()
     {
         this.ScopeInfoEnabled = true;
         this.ScrapeResponseCacheDurationMilliseconds = 300;
+        this.ScrapeResponseTimeoutMilliseconds = DefaultScrapeResponseTimeoutMilliseconds;
         this.TargetInfoEnabled = true;
         this.MaxScrapeResponseSizeBytes = DefaultMaxScrapeResponseSizeBytes;
         this.TranslationStrategy = PrometheusTranslationStrategy.UnderscoreEscapingWithSuffixes;
@@ -98,6 +105,22 @@ internal sealed class PrometheusExporterOptions
         set
         {
             Guard.ThrowIfOutOfRange(value, min: InitialScrapeResponseSizeBytes);
+            field = value;
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the maximum time in milliseconds a single scrape response is allowed to take,
+    /// after which the request is cancelled. This bounds how long a client that stops reading the
+    /// response body can hold the shared collection reader slot. Default value:
+    /// <see cref="DefaultScrapeResponseTimeoutMilliseconds"/> (60 seconds).
+    /// </summary>
+    public int ScrapeResponseTimeoutMilliseconds
+    {
+        get;
+        set
+        {
+            Guard.ThrowIfOutOfRange(value, min: 1);
             field = value;
         }
     }

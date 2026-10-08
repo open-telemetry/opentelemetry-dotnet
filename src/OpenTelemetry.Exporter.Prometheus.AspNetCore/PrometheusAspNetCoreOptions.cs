@@ -86,6 +86,16 @@ public class PrometheusAspNetCoreOptions
     }
 
     /// <summary>
+    /// Gets or sets the maximum time in milliseconds a scrape request will wait for its
+    /// response. Default value: 60000 (60 seconds).
+    /// </summary>
+    public int ScrapeResponseTimeoutMilliseconds
+    {
+        get => this.ExporterOptions.ScrapeResponseTimeoutMilliseconds;
+        set => this.ExporterOptions.ScrapeResponseTimeoutMilliseconds = value;
+    }
+
+    /// <summary>
     /// Gets or sets the strategy used to translate OpenTelemetry metric and label names into
     /// Prometheus names. Default value: <see cref="PrometheusAspNetCoreTranslationStrategy.UnderscoreEscapingWithSuffixes"/>.
     /// </summary>

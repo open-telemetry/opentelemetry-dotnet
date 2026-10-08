@@ -22,9 +22,11 @@ public static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
     /// Adds the declarative configuration (YAML) source into DI, reading the path from the <c>OTEL_CONFIG_FILE</c> environment variable.
     /// </summary>
     /// <remarks>
-    /// Appends YAML after existing sources. Flat settings projected into <see cref="IConfiguration"/>
-    /// follow standard source ordering, so YAML overrides earlier sources and later sources override
-    /// YAML. Model-driven settings do not follow <see cref="IConfiguration"/> source ordering.
+    /// The configuration file is the only source of OTel settings. Keys set in sources registered
+    /// before it are ignored. Values from process environment variables can be imported explicitly
+    /// through environment variable substitution. <c>OTEL_DOTNET_*</c> keys are unaffected.
+    /// Code-based configuration (for example <c>Configure&lt;T&gt;</c> or builder methods such as
+    /// <c>AddOtlpExporter</c>) still applies.
     /// </remarks>
     /// <param name="builder">The <see cref="IOpenTelemetryBuilder"/> builder.</param>
     /// <returns>The original <see cref="IOpenTelemetryBuilder"/> for chaining.</returns>
@@ -41,7 +43,8 @@ public static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
             return builder;
         }
 
-        return builder.UseDeclarativeConfiguration(filePath);
+        RegisterDeclarativeConfiguration(builder.Services, new FilePath(filePath));
+        return builder;
     }
 
     /// <summary>
@@ -58,8 +61,12 @@ public static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
         string filePath)
     {
         Guard.ThrowIfNull(builder);
+        Guard.ThrowIfNullOrWhitespace(filePath);
 
-        AddDeclarativeConfigurationOverlay(builder.Services, new FilePath(filePath));
+        var path = new FilePath(filePath);
+        WarnIfConfigFileEnvVarDiffers(path);
+        RegisterDeclarativeConfiguration(builder.Services, path);
+
         return builder;
     }
 
@@ -68,12 +75,12 @@ public static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
     /// </summary>
     /// <param name="services">The services used to configure OpenTelemetry.</param>
     /// <param name="filePath">The path to the declarative configuration file.</param>
-    internal static void AddDeclarativeConfigurationOverlay(IServiceCollection services, FilePath filePath)
+    internal static void RegisterDeclarativeConfiguration(IServiceCollection services, FilePath filePath)
     {
         // Second call on the same IServiceCollection is a no-op (first file path wins).
         var existingMarker = services
             .Select(d => d.ImplementationInstance)
-            .OfType<DeclarativeConfigurationOverlayMarker>()
+            .OfType<DeclarativeConfigurationRegistrationMarker>()
             .FirstOrDefault();
 
         if (existingMarker != null)
@@ -93,10 +100,7 @@ public static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
         // is, the existing accessor wins and this instance is discarded unused.
         var candidateAccessor = new DeclarativeConfigurationDocumentAccessor(filePath);
 
-        OpenTelemetryDeclarativeConfigurationEventSource.Log.OverlayRegistrationStarted(filePath.DisplayPath);
-
-        // TODO(strict-mode): branch here on a future DeclarativeConfigurationMode (Default vs Strict).
-        // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/6380.
+        OpenTelemetryDeclarativeConfigurationEventSource.Log.RegistrationStarted(filePath.DisplayPath);
 
         // Fast path: hosting API accessor exposes a live ConfigurationManager; mutate in-place and skip descriptor scan.
         if (configurationAccessor?.Configuration is IConfigurationBuilder accessorBuilder)
@@ -215,17 +219,50 @@ public static class OpenTelemetryBuilderDeclarativeConfigurationExtensions
 
     private static void CompleteDeclarativeConfigurationRegistration(IServiceCollection services, FilePath filePath)
     {
-        services.AddSingleton(new DeclarativeConfigurationOverlayMarker(filePath));
+        services.AddSingleton(new DeclarativeConfigurationRegistrationMarker(filePath));
+
+        // Strict mode diagnostics run at the first provider build, against the final configuration.
+        services.TryAddSingleton<StrictModeDiagnostics>();
+        services.ConfigureOpenTelemetryTracerProvider((sp, _) => sp.GetRequiredService<StrictModeDiagnostics>().ReportOnce(sp));
+        services.ConfigureOpenTelemetryMeterProvider((sp, _) => sp.GetRequiredService<StrictModeDiagnostics>().ReportOnce(sp));
+        services.ConfigureOpenTelemetryLoggerProvider((sp, _) => sp.GetRequiredService<StrictModeDiagnostics>().ReportOnce(sp));
+
         services.ConfigureOpenTelemetryTracerProvider(b => b.ConfigureResource(AddDeclarativeResourceDetector));
         services.ConfigureOpenTelemetryMeterProvider(b => b.ConfigureResource(AddDeclarativeResourceDetector));
         services.ConfigureOpenTelemetryLoggerProvider(b => b.ConfigureResource(AddDeclarativeResourceDetector));
+    }
+
+    private static void WarnIfConfigFileEnvVarDiffers(FilePath filePath)
+    {
+        var configFile = Environment.GetEnvironmentVariable(OtelEnvironmentVariables.ConfigFile);
+
+        if (string.IsNullOrWhiteSpace(configFile))
+        {
+            return;
+        }
+
+        bool differs;
+        try
+        {
+            differs = new FilePath(configFile) != filePath;
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            // OTEL_CONFIG_FILE is not a usable path, so it cannot be the file in use.
+            differs = true;
+        }
+
+        if (differs)
+        {
+            OpenTelemetryDeclarativeConfigurationEventSource.Log.ExplicitFilePathOverridesConfigFile(filePath.DisplayPath, configFile);
+        }
     }
 
     private static void AddDeclarativeResourceDetector(ResourceBuilder resourceBuilder) =>
         resourceBuilder.AddDetector(sp => new DeclarativeResourceDetector(
             sp.GetRequiredService<DeclarativeConfigurationDocumentAccessor>()));
 
-    private sealed class DeclarativeConfigurationOverlayMarker(FilePath filePath)
+    private sealed class DeclarativeConfigurationRegistrationMarker(FilePath filePath)
     {
         internal FilePath FilePath { get; } = filePath;
     }

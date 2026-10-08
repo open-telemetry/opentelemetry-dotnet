@@ -186,6 +186,11 @@ public class OtlpHttpExportClientTests
         Assert.NotNull(request);
         Assert.NotNull(request.Content);
         Assert.Contains(request.Content.Headers, h => h.Key == "Content-Encoding" && h.Value.Contains("gzip"));
+
+#if NETFRAMEWORK
+        // Without chunked transfer, HttpClientHandler buffers the whole compressed body before sending it.
+        Assert.True(request.Headers.TransferEncodingChunked);
+#endif
     }
 
     [Fact]
@@ -295,6 +300,39 @@ public class OtlpHttpExportClientTests
 
         Assert.Throws<OperationCanceledException>(() =>
             exportClient.SendExportRequest(payload, payload.Length, DateTime.UtcNow.AddSeconds(10), cts.Token));
+    }
+
+    [Fact]
+    public void SendExportRequest_MalformedAuthorizationHeader_DoesNotLeakSecretIntoDiagnosticLog()
+    {
+        const int FailedToReachCollectorEventId = 2;
+        const string FakeSecret = "s3cr3t-token-value";
+
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Error);
+
+        using var testHandler = new ThrowingHttpMessageHandler(new InvalidOperationException("unused"));
+        using var httpClient = new HttpClient(testHandler, disposeHandler: false);
+
+        var exportClient = new OtlpHttpExportClient(
+            new OtlpExporterOptions
+            {
+                Endpoint = new Uri("http://localhost:4318"),
+                Protocol = OtlpExportProtocol.HttpProtobuf,
+                Headers = $"Authorization=Api-Key: {FakeSecret}",
+            },
+            httpClient,
+            string.Empty);
+
+        var payload = "hello world"u8.ToArray();
+        var response = exportClient.SendExportRequest(payload, payload.Length, DateTime.UtcNow.AddSeconds(10), TestContext.Current.CancellationToken);
+
+        Assert.False(response.Success);
+
+        var logged = Assert.Single(listener.Messages, e => e.EventId == FailedToReachCollectorEventId);
+
+        var loggedException = (string)logged.Payload![1]!;
+        Assert.DoesNotContain(FakeSecret, loggedException, StringComparison.Ordinal);
+        Assert.Contains("Authorization", loggedException, StringComparison.Ordinal);
     }
 
     private static ExportClientResponse SendExportRequestThatThrows(Exception exception)

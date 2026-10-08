@@ -79,7 +79,16 @@ public sealed class DeclarativeConfigurationExtensionTests
     public void AddOpenTelemetryDeclarativeConfiguration_WhitespaceFilePath_Throws(string filePath)
     {
         var builder = new ConfigurationBuilder();
-        Assert.ThrowsAny<ArgumentException>(() => builder.AddOpenTelemetryDeclarativeConfiguration(filePath));
+        var exception = Assert.ThrowsAny<ArgumentException>(() => builder.AddOpenTelemetryDeclarativeConfiguration(filePath));
+        Assert.Equal("filePath", exception.ParamName);
+    }
+
+    [Fact]
+    public void AddOpenTelemetryDeclarativeConfiguration_NullFilePath_Throws()
+    {
+        var builder = new ConfigurationBuilder();
+        var exception = Assert.ThrowsAny<ArgumentException>(() => builder.AddOpenTelemetryDeclarativeConfiguration(null!));
+        Assert.Equal("filePath", exception.ParamName);
     }
 
     [Fact]
@@ -436,7 +445,8 @@ public sealed class DeclarativeConfigurationExtensionTests
 
         // ArgumentException.ThrowIfNullOrEmpty throws ArgumentNullException on modern .NET
         // and ArgumentException on .NET Framework, both of which satisfy this assertion.
-        Assert.ThrowsAny<ArgumentException>(() => builder.UseDeclarativeConfiguration(null!));
+        var exception = Assert.ThrowsAny<ArgumentException>(() => builder.UseDeclarativeConfiguration(null!));
+        Assert.Equal("filePath", exception.ParamName);
     }
 
     [Theory]
@@ -445,7 +455,8 @@ public sealed class DeclarativeConfigurationExtensionTests
     public void UseDeclarativeConfiguration_WhitespaceFilePath_Throws(string filePath)
     {
         var builder = new TestOpenTelemetryBuilder(new ServiceCollection());
-        Assert.ThrowsAny<ArgumentException>(() => builder.UseDeclarativeConfiguration(filePath));
+        var exception = Assert.ThrowsAny<ArgumentException>(() => builder.UseDeclarativeConfiguration(filePath));
+        Assert.Equal("filePath", exception.ParamName);
     }
 
     [Fact]
