@@ -14,10 +14,12 @@ internal sealed class YamlParseContext
     private readonly Dictionary<YamlNode, ResolvedYamlScalar> resolved =
         new(YamlNodeReferenceEqualityComparer.Instance);
 
-    private readonly Dictionary<YamlNode, IReadOnlyList<KeyValuePair<string, YamlNode>>> mappingKeys =
+    private readonly Dictionary<YamlNode, IReadOnlyList<ResolvedYamlMappingEntry>> mappingKeys =
         new(YamlNodeReferenceEqualityComparer.Instance);
 
     private readonly Func<string, string?> resolveVariable;
+
+    private readonly YamlDocumentTrackingParser? documentTrackingParser;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="YamlParseContext"/> class.
@@ -25,9 +27,14 @@ internal sealed class YamlParseContext
     /// <param name="resolveVariable">
     /// Returns the value of a named environment variable, or <see langword="null"/> if not set.
     /// </param>
-    internal YamlParseContext(Func<string, string?> resolveVariable)
+    /// <param name="documentTrackingParser">The parser that tracked alias-key positions, if available.</param>
+    internal YamlParseContext(
+        Func<string, string?> resolveVariable,
+        YamlDocumentTrackingParser? documentTrackingParser = null)
     {
         Guard.ThrowIfNull(resolveVariable);
+
+        this.documentTrackingParser = documentTrackingParser;
 
         this.resolveVariable = name =>
         {
@@ -72,22 +79,22 @@ internal sealed class YamlParseContext
 
     /// <summary>
     /// Validates that <paramref name="mappingNode"/> has unique YAML string keys and returns them paired
-    /// with their value nodes, returning the memoized result on any later call for the same node.
+    /// with their value nodes and key positions, returning the memoized result on any later call for the same node.
     /// </summary>
     /// <param name="mappingNode">The mapping to validate.</param>
     /// <param name="path">The path of <paramref name="mappingNode"/>, used in error messages.</param>
-    /// <returns>The resolved keys paired with their value nodes, in document order.</returns>
+    /// <returns>The resolved keys, value nodes, and key positions, in document order.</returns>
     /// <exception cref="DeclarativeConfigurationException">
     /// Thrown when a key is not a YAML string scalar, or when two keys resolve to the same string.
     /// </exception>
-    internal IReadOnlyList<KeyValuePair<string, YamlNode>> ResolveMappingKeys(YamlMappingNode mappingNode, string path)
+    internal IReadOnlyList<ResolvedYamlMappingEntry> ResolveMappingKeys(YamlMappingNode mappingNode, string path)
     {
         if (this.mappingKeys.TryGetValue(mappingNode, out var existing))
         {
             return existing;
         }
 
-        var keys = mappingNode.EnsureUniqueStringKeys(path);
+        var keys = mappingNode.EnsureUniqueStringKeys(path, this.documentTrackingParser);
 
         this.mappingKeys.Add(mappingNode, keys);
         return keys;

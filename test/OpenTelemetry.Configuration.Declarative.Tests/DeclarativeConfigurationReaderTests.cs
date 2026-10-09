@@ -2,11 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Collections.ObjectModel;
+using System.Diagnostics.Tracing;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Configuration.Declarative.Tests;
 
 public sealed class DeclarativeConfigurationReaderTests
 {
+    private const int UnknownSectionEventId = 2;
+    private const int UndefinedRootPropertyEventId = 42;
+    private const int UndefinedPropertyRetainedEventId = 43;
+
     [Fact]
     public void Translate_DisabledTrue_SetsOtelSdkDisabled()
     {
@@ -73,7 +79,8 @@ public sealed class DeclarativeConfigurationReaderTests
         const string yaml = """
             file_format: "1.0"
             tracer_provider:
-              some_key: some_value
+              sampler:
+                always_on:
             propagator:
               composite: [tracecontext, baggage]
             """;
@@ -1372,6 +1379,99 @@ public sealed class DeclarativeConfigurationReaderTests
             """;
 
         Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+    }
+
+    [Fact]
+    public void Read_UndefinedKeyAndBindingError_ReportsTheUndefinedKeyFirst()
+    {
+        const string yaml = """
+            file_format: "1.2"
+            resource:
+              attributes:
+                - name: a
+                  value: 1
+                  type: string
+              foo: 1
+            """;
+
+        var exception = Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+
+        Assert.StartsWith("Property 'resource.foo'", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Read_WalkErrorAndBindingError_ReportsTheWalkError()
+    {
+        const string yaml = """
+            file_format: "1.2"
+            resource:
+              attributes:
+                - name: a
+            distribution: !!map [1]
+            """;
+
+        var exception = Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+
+        Assert.Contains("explicit tag", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Read_RetainedKeysInADocumentRejectedByBinding_AreNotReported()
+    {
+        const string yaml = """
+            file_format: "1.3"
+            my_vendor: 1
+            resource:
+              foo: 1
+              attributes:
+                - name: a
+            """;
+
+        using var listener = new TestEventListener(OpenTelemetryDeclarativeConfigurationEventSource.Log, EventLevel.Verbose);
+
+        _ = Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+
+        Assert.DoesNotContain(
+            listener.CurrentMessages,
+            e => e.EventId is UndefinedRootPropertyEventId or UndefinedPropertyRetainedEventId);
+    }
+
+    [Fact]
+    public void Read_ValueAlternatives_AreNotInspectedByTheSchemaWalk()
+    {
+        const string yaml = """
+            file_format: "1.2"
+            resource:
+              attributes:
+                - name: a
+                  value:
+                    nested: 1
+            """;
+
+        var exception = Assert.Throws<DeclarativeConfigurationException>(() => ReadConfiguration(yaml));
+
+        Assert.Contains("mapping as its 'value'", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Read_SchemaDefinedUnappliedRootSection_ReportsTheUnknownSectionEvent()
+    {
+        const string yaml = """
+            file_format: "1.2"
+            tracer_provider:
+              processors:
+                - batch:
+                    exporter:
+                      console:
+            """;
+
+        using var listener = new TestEventListener(OpenTelemetryDeclarativeConfigurationEventSource.Log, EventLevel.Verbose);
+
+        _ = ReadConfiguration(yaml);
+
+        var evt = Assert.Single(listener.CurrentMessages, e => e.EventId == UnknownSectionEventId);
+        Assert.Equal("tracer_provider", evt.Payload![0]);
+        Assert.DoesNotContain(listener.CurrentMessages, e => e.EventId == UndefinedRootPropertyEventId);
     }
 
     private static ReadOnlyDictionary<string, string?> ReadConfiguration(string yaml)

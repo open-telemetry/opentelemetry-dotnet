@@ -1,0 +1,22 @@
+file_format: "1.2"
+
+tracer_provider:
+  processors:
+    - batch:
+        exporter:
+          otlp_http:
+            # SNIPPET_START
+            endpoint: http://localhost:4318/v1/traces
+            tls:
+              ca_file: /app/cert.pem
+              key_file: /app/cert.pem
+              cert_file: /app/cert.pem
+            headers:
+              - name: api-key
+                value: "1234"
+            headers_list: "api-key=1234"
+            compression: gzip
+            max_request_size: 67108864
+            max_response_size: 4194304
+            timeout: 10000
+            encoding: protobuf

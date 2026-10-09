@@ -17,20 +17,6 @@ namespace OpenTelemetry.Configuration.Declarative;
 /// <param name="context">The context for the parse this parser belongs to.</param>
 internal sealed class DeclarativeConfigurationParser(YamlParseContext context)
 {
-    private static readonly HashSet<string> KnownResourceKeys = new(StringComparer.Ordinal)
-    {
-        YamlKeys.Attributes,
-        YamlKeys.AttributesList,
-        YamlKeys.SchemaUrl,
-    };
-
-    private static readonly HashSet<string> KnownAttributeKeys = new(StringComparer.Ordinal)
-    {
-        YamlKeys.Name,
-        YamlKeys.Value,
-        YamlKeys.Type,
-    };
-
     private readonly YamlPropertyReader reader = new(context);
 
     /// <summary>
@@ -71,19 +57,13 @@ internal sealed class DeclarativeConfigurationParser(YamlParseContext context)
     private ModelProperty<ResourceConfiguration> ReadResource(YamlMappingNode node) =>
         this.reader.ReadMapping(node, YamlKeys.Resource, this.ReadResourceConfiguration);
 
-    private ResourceConfiguration ReadResourceConfiguration(YamlMappingNode node)
-    {
-        // Reported before the known fields are read so that a misspelling is still surfaced when a
-        // sibling field goes on to fail validation - the misspelling is often the actual cause.
-        node.EnsureNoUnrecognizedProperties(YamlKeys.Resource, KnownResourceKeys);
-
-        return new()
+    private ResourceConfiguration ReadResourceConfiguration(YamlMappingNode node) =>
+        new()
         {
             AttributesList = this.ReadAttributesList(node),
             Attributes = this.ReadAttributes(node),
             SchemaUrl = this.ReadSchemaUrl(node),
         };
-    }
 
     private ModelProperty<string> ReadAttributesList(YamlMappingNode node) =>
         this.reader.ReadString(node, YamlKeys.AttributesList);
@@ -124,7 +104,6 @@ internal sealed class DeclarativeConfigurationParser(YamlParseContext context)
             var path = YamlPath.Index(YamlPath.Child(YamlKeys.Resource, YamlKeys.Attributes), i);
             attributeNode.EnsureCoreCollectionTag(path);
             _ = context.ResolveMappingKeys(attributeNode, path);
-            attributeNode.EnsureNoUnrecognizedProperties(path, KnownAttributeKeys);
 
             var nameProperty = this.reader.ReadString(attributeNode, YamlKeys.Name);
             if (!nameProperty.TryGetValue(out var name))

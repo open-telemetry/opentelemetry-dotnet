@@ -96,8 +96,8 @@ internal sealed class OpenTelemetryDeclarativeConfigurationEventSource : EventSo
     [Event(24, Message = "Declarative config: '{0}' is not a complete environment variable substitution reference - there is no closing brace before the end of the value or the next '$$' escape - so it is left as literal text.", Level = EventLevel.Verbose)]
     public void UnresolvedSubstitutionExpression(string expression) => this.WriteEvent(24, expression);
 
-    [Event(25, Message = "Declarative config: property '{0}' is not supported by this declarative configuration implementation. The configuration is invalid; check for a misspelling.", Level = EventLevel.Warning)]
-    public void UnknownConfigurationProperty(string propertyPath) => this.WriteEvent(25, propertyPath);
+    [Event(25, Message = "Declarative config: property '{0}' (line {1}, column {2}) is not defined by the OpenTelemetry configuration schema and is not permitted at this location. Check for a misspelling.", Level = EventLevel.Error)]
+    public void UndefinedConfigurationProperty(string propertyPath, long line, long column) => this.WriteEvent(25, propertyPath, line, column);
 
     [Event(26, Message = "Declarative config: '{0}' has already been loaded. Declarative configuration is read once at start-up, so this reload had no effect and the configuration in use is unchanged.", Level = EventLevel.Warning)]
     public void ConfigurationReloadIgnored(string filePath) => this.WriteEvent(26, filePath);
@@ -169,4 +169,16 @@ internal sealed class OpenTelemetryDeclarativeConfigurationEventSource : EventSo
         Message = "Declarative config: the source for '{0}' is not reachable from the application's IConfiguration, so strict mode cannot mask OTEL_* settings. See " + StrictModeDocumentation,
         Level = EventLevel.Warning)]
     public void StrictModeConfigurationSourceUnreachable(string filePath) => this.WriteEvent(41, filePath);
+
+    [Event(
+        42,
+        Message = "Declarative config: top-level property '{0}' is not defined by the OpenTelemetry configuration schema. It is retained but the SDK does not interpret it.",
+        Level = EventLevel.Informational)]
+    public void UndefinedRootPropertyRetained(string propertyPath) => this.WriteEvent(42, propertyPath);
+
+    [Event(
+        43,
+        Message = "Declarative config: property '{0}' is not defined by OpenTelemetry configuration schema {2}. It is retained but not applied: {3} (the document declares file_format '{1}').",
+        Level = EventLevel.Warning)]
+    public void UndefinedPropertyRetained(string propertyPath, string fileFormat, string schemaVersion, string reason) => this.WriteEvent(43, propertyPath, fileFormat, schemaVersion, reason);
 }
