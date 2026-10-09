@@ -1,0 +1,18 @@
+file_format: "1.2"
+
+meter_provider:
+  readers:
+    - periodic:
+        exporter:
+          console:
+        cardinality_limits:
+          # SNIPPET_START
+          # specify .default to set cardinality limits for all instruments, or specify instrument-specific limits. Instrument-specific limits take priority over .default. In this contrived example, the cardinality limits of each instrument type are set to 2000, overriding the value from .default.
+          default: 100
+          counter: 2000
+          gauge: 2000
+          histogram: 2000
+          observable_counter: 2000
+          observable_gauge: 2000
+          observable_up_down_counter: 2000
+          up_down_counter: 2000

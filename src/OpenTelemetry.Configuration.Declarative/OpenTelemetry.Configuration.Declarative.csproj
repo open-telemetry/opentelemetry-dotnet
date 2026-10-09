@@ -38,6 +38,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Schema\opentelemetry_configuration.json" LogicalName="OpenTelemetry.Configuration.Declarative.Schema.opentelemetry_configuration.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="OpenTelemetry.Configuration.Declarative.FuzzTests" PublicKey="$(StrongNamePublicKey)" />
     <InternalsVisibleTo Include="OpenTelemetry.Configuration.Declarative.Tests" PublicKey="$(StrongNamePublicKey)" />
   </ItemGroup>

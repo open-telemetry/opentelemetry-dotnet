@@ -1,0 +1,9 @@
+file_format: "1.2"
+
+tracer_provider:
+  processors:
+    - batch:
+        exporter:
+          otlp_file/development:
+            # SNIPPET_START
+            output_stream: stdout

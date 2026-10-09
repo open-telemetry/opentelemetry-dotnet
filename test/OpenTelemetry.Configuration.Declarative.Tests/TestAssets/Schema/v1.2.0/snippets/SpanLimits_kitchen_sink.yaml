@@ -1,0 +1,22 @@
+file_format: "1.2"
+
+attribute_limits:
+  attribute_value_length_limit: 2048
+  attribute_value_depth_limit: 32
+  attribute_count_limit: 64
+
+tracer_provider:
+  processors:
+    - simple:
+        exporter:
+          console:
+  limits:
+    # SNIPPET_START
+    # .tracer_provider.limits take priority over general .attribute_limits. In this contrived example, attribute_value_length_limit is set to 4096, attribute_value_depth_limit is set to 64, and attribute_count_limit is set to 128, overriding the values from general .attribute_limits.
+    attribute_count_limit: 128
+    attribute_value_depth_limit: 64
+    attribute_value_length_limit: 4096
+    event_attribute_count_limit: 128
+    event_count_limit: 128
+    link_attribute_count_limit: 128
+    link_count_limit: 128

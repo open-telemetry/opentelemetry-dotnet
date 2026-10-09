@@ -12,6 +12,8 @@ public sealed class FileFormatValidatorTests
     [InlineData("1.0-rc.99")]
     [InlineData("1.1")]
     [InlineData("1.1-rc.1")]
+    [InlineData("1.2")]
+    [InlineData("1.2-rc.1")]
     public void Validate_KnownVersions_AcceptWithNoWarning(string format)
     {
         var warnings = new List<string>();
@@ -19,6 +21,20 @@ public sealed class FileFormatValidatorTests
         FileFormatValidator.Validate(format, warnings.Add);
 
         Assert.Empty(warnings);
+    }
+
+    [Theory]
+    [InlineData("1.0", 1, 0, false)]
+    [InlineData("1.2", 1, 2, false)]
+    [InlineData("1.2-rc.3", 1, 2, false)]
+    [InlineData("1.3", 1, 3, true)]
+    [InlineData("1.30-rc.1", 1, 30, true)]
+    public void Validate_ReturnsTheParsedVersion(string format, int major, int minor, bool isNewerMinorVersion)
+    {
+        var version = FileFormatValidator.Validate(format, _ => { });
+
+        Assert.Equal(new FileFormatVersion(format, major, minor), version);
+        Assert.Equal(isNewerMinorVersion, version.IsNewerMinorVersion);
     }
 
     [Fact]
@@ -36,8 +52,8 @@ public sealed class FileFormatValidatorTests
 
     // Minor versions newer than MaxSupportedMinorVersion are accepted but warn (some features may not take effect).
     [Theory]
-    [InlineData("1.2")]
-    [InlineData("1.2-rc.1")]
+    [InlineData("1.3")]
+    [InlineData("1.3-rc.1")]
     [InlineData("1.99")]
     public void Validate_FutureMinorVersion_AcceptsWithWarning(string format)
     {

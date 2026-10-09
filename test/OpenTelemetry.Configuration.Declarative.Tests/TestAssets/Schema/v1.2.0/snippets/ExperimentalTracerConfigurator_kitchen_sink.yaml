@@ -1,0 +1,15 @@
+file_format: "1.2"
+
+tracer_provider:
+  processors:
+    - simple:
+        exporter:
+          console:
+  tracer_configurator/development:
+    # SNIPPET_START
+    default_config:
+      enabled: false
+    tracers:
+      - name: io.opentelemetry.contrib.*
+        config:
+          enabled: true

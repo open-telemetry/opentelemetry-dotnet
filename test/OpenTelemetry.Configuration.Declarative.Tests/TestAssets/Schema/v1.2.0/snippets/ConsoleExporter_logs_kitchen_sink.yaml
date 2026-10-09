@@ -1,0 +1,8 @@
+file_format: "1.2"
+
+logger_provider:
+  processors:
+    - simple:
+        exporter:
+          console:
+            # SNIPPET_START

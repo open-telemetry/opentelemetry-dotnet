@@ -1,0 +1,97 @@
+# otel-sdk-config.yaml is a comprehensive starting point for configuring the SDK, including exporting to
+# localhost via OTLP.
+#
+# NOTE: With the exception of env var substitution syntax (i.e. ${MY_ENV}), SDKs ignore
+# environment variables when interpreting config files. This including ignoring all env
+# vars defined in https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/.
+#
+# For schema documentation, including required properties, semantics, default behavior, etc,
+# see: https://opentelemetry.io/docs/specs/otel-config/types/
+file_format: "1.2"
+disabled: false
+log_level: info
+resource:
+  attributes:
+    - name: service.name
+      value: unknown_service
+attribute_limits:
+  attribute_value_length_limit:
+  attribute_value_depth_limit: 64
+  attribute_count_limit: 128
+propagator:
+  composite:
+    - tracecontext:
+    - baggage:
+tracer_provider:
+  processors:
+    - batch:
+        schedule_delay: 5000
+        export_timeout: 30000
+        max_queue_size: 2048
+        max_export_batch_size: 512
+        exporter:
+          otlp_http:
+            endpoint: http://localhost:4318/v1/traces
+            tls:
+              ca_file:
+              key_file:
+              cert_file:
+            compression: gzip
+            timeout: 10000
+  limits:
+    attribute_value_length_limit:
+    attribute_value_depth_limit: 64
+    attribute_count_limit: 128
+    event_count_limit: 128
+    link_count_limit: 128
+    event_attribute_count_limit: 128
+    link_attribute_count_limit: 128
+  sampler:
+    parent_based:
+      root:
+        always_on:
+      remote_parent_sampled:
+        always_on:
+      remote_parent_not_sampled:
+        always_off:
+      local_parent_sampled:
+        always_on:
+      local_parent_not_sampled:
+        always_off:
+meter_provider:
+  readers:
+    - periodic:
+        interval: 60000
+        timeout: 30000
+        exporter:
+          otlp_http:
+            endpoint: http://localhost:4318/v1/metrics
+            tls:
+              ca_file:
+              key_file:
+              cert_file:
+            compression: gzip
+            timeout: 10000
+            temporality_preference: cumulative
+            default_histogram_aggregation: explicit_bucket_histogram
+  exemplar_filter: trace_based
+logger_provider:
+  processors:
+    - batch:
+        schedule_delay: 1000
+        export_timeout: 30000
+        max_queue_size: 2048
+        max_export_batch_size: 512
+        exporter:
+          otlp_http:
+            endpoint: http://localhost:4318/v1/logs
+            tls:
+              ca_file:
+              key_file:
+              cert_file:
+            compression: gzip
+            timeout: 10000
+  limits:
+    attribute_value_length_limit:
+    attribute_value_depth_limit: 64
+    attribute_count_limit: 128

@@ -12,7 +12,7 @@ Declarative configuration allows you to configure the OpenTelemetry SDK using a
 YAML file instead of (or in addition to) environment variables and code-based
 setup. This package implements a subset of the stable OTel declarative
 configuration specification. It accepts any `file_format: "1.x"` document and
-has been built against the OpenTelemetry configuration schema v1.1.
+has been built against the OpenTelemetry configuration schema v1.2.
 
 ## Getting started
 
@@ -188,9 +188,39 @@ loading.
 
 The configuration file is expected to conform to the YAML 1.2 specification.
 
+Mappings and sequences may be nested up to depth 128, with the document root at
+depth zero. This applies to the whole document, including custom sections and
+paths through YAML aliases.
+
+An alias used as a mapping key must refer to an anchor already defined in the
+same document. Invalid alias keys are rejected during parsing.
+
 YAML 1.1 merge keys (`<<: *defaults`) are rejected before any configuration
 is interpreted. Quoted or explicitly string-tagged `<<` keys remain ordinary
 property names under the YAML 1.2 core schema.
+
+### Property names
+
+Property names are checked against the OpenTelemetry configuration schema. A
+property the schema does not define is an error wherever the schema does not
+allow additional properties, for example`tracer_provider.procesors` or
+`resource.foo`.
+
+Additional properties are retained and readable through
+`DeclarativeConfigurationDocument.Properties` where the schema allows them.
+
+Undefined properties are retained with a warning, instead of being an error, in
+two cases:
+
+- The document declares a `file_format` minor version newer than the schema
+  version this package was built against, which may define properties the
+  package does not know.
+- The property is, or is nested in, a property whose name ends in
+  `/development`, `/alpha` or `/beta`. These are exempt from the schema's
+  stability guarantees.
+
+In both cases a misspelled property name is reported as a warning and is not
+applied.
 
 ### Environment-variable substitution
 
@@ -292,11 +322,13 @@ Points to be aware of:
   `IConfiguration` detaches it. Register declarative configuration after your
   configuration sources are settled.
 - For duplicate structured resource attribute names, the first occurrence wins.
-- Unknown top-level sections are logged and are not applied, but their `${...}`
+- Top-level sections that are not applied are logged, but their `${...}`
   references are resolved during the load, so an unset variable in one is
   reported.
 - `resource.detection/development` (the SDK's resource detector discovery
-  mechanism) is not yet implemented.
+  mechanism) is accepted but not yet implemented.
+- Property names are validated against the schema, but value types, ranges and
+  required properties are not.
 - Some components read environment variables directly and are not covered by
   strict mode: including options created with a public
   parameterless constructor in application code (for example

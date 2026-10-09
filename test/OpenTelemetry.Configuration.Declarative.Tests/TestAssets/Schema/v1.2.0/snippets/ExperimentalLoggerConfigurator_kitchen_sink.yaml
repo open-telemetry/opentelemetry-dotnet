@@ -1,0 +1,17 @@
+file_format: "1.2"
+
+logger_provider:
+  processors:
+    - simple:
+        exporter:
+          console:
+  logger_configurator/development:
+    # SNIPPET_START
+    default_config:
+      enabled: false
+    loggers:
+      - name: io.opentelemetry.contrib.*
+        config:
+          enabled: true
+          minimum_severity: info
+          trace_based: true

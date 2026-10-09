@@ -1,0 +1,18 @@
+file_format: "1.2"
+
+tracer_provider:
+  processors:
+    - simple:
+        exporter:
+          console:
+  sampler:
+    # SNIPPET_START
+    # Record all spans so compatible processors can observe them, for example
+    # span-to-metrics processors. No such processor is configured in this
+    # snippet; the wrapped sampler still controls which spans are exported.
+    always_record:
+      root:
+        parent_based:
+          root:
+            trace_id_ratio_based:
+              ratio: 0.01
