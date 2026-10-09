@@ -1273,6 +1273,7 @@ public sealed class TracerProviderSdkTests : IDisposable
     [InlineData("always_on", null, "AlwaysOnSampler")]
     [InlineData("always_off", null, "AlwaysOffSampler")]
     [InlineData("always_OFF", null, "AlwaysOffSampler")]
+    [InlineData("traceidratio", null, "TraceIdRatioBasedSampler{1.000000}")]
     [InlineData("traceidratio", "0.5", "TraceIdRatioBasedSampler{0.500000}")]
     [InlineData("traceidratio", "not_a_double", "TraceIdRatioBasedSampler{1.000000}")]
     [InlineData("traceidratio", "2.0", "TraceIdRatioBasedSampler{1.000000}")]
@@ -1290,8 +1291,8 @@ public sealed class TracerProviderSdkTests : IDisposable
 
         configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
         {
-            [TracerProviderSdk.TracesSamplerConfigKey] = configValue,
-            [TracerProviderSdk.TracesSamplerArgConfigKey] = argValue,
+            [SamplerOptions.TracesSamplerConfigKey] = configValue,
+            [SamplerOptions.TracesSamplerArgConfigKey] = argValue,
         });
 
         var builder = Sdk.CreateTracerProviderBuilder();
@@ -1310,7 +1311,7 @@ public sealed class TracerProviderSdkTests : IDisposable
         var configBuilder = new ConfigurationBuilder();
         configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
         {
-            [TracerProviderSdk.TracesSamplerConfigKey] = "always_off",
+            [SamplerOptions.TracesSamplerConfigKey] = "always_off",
         });
 
         var builder = Sdk.CreateTracerProviderBuilder();
