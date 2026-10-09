@@ -451,6 +451,67 @@ public sealed class OtlpTraceExporterTests : IDisposable
         }
     }
 
+    [Theory]
+    [InlineData(null, 1, 3, 0u)]
+    [InlineData(1, null, 1, 2u)]
+    [InlineData(1, 3, 1, 2u)]
+    public void ScopeAttributesUseGeneralAttributeCountLimit(int? attributeCountLimit, int? spanAttributeCountLimit, int expectedCount, uint expectedDroppedCount)
+    {
+        var sdkOptions = new SdkLimitOptions();
+
+        if (attributeCountLimit.HasValue)
+        {
+            sdkOptions.AttributeCountLimit = attributeCountLimit;
+        }
+
+        if (spanAttributeCountLimit.HasValue)
+        {
+            sdkOptions.SpanAttributeCountLimit = spanAttributeCountLimit;
+        }
+
+        var activitySourceTags = new TagList
+        {
+            new("a", "1"),
+            new("b", "2"),
+            new("c", "3"),
+        };
+
+        using var activitySource = new ActivitySource(new ActivitySourceOptions(nameof(this.ScopeAttributesUseGeneralAttributeCountLimit))
+        {
+            Tags = activitySourceTags,
+        });
+
+        var scope = ExportScope(sdkOptions, activitySource);
+
+        Assert.Equal(expectedCount, scope.Attributes.Count);
+        Assert.Equal(expectedDroppedCount, scope.DroppedAttributesCount);
+    }
+
+    [Fact]
+    public void ScopeAttributesIgnoreSpanAttributeValueLengthLimit()
+    {
+        var sdkOptions = new SdkLimitOptions()
+        {
+            AttributeValueLengthLimit = null,
+            SpanAttributeValueLengthLimit = 2,
+        };
+
+        var activitySourceTags = new TagList
+        {
+            new("a", "12345"),
+        };
+
+        using var activitySource = new ActivitySource(new ActivitySourceOptions(nameof(this.ScopeAttributesIgnoreSpanAttributeValueLengthLimit))
+        {
+            Tags = activitySourceTags,
+        });
+
+        var scope = ExportScope(sdkOptions, activitySource);
+
+        var attribute = Assert.Single(scope.Attributes);
+        Assert.Equal("12345", attribute.Value.StringValue);
+    }
+
     [Fact]
     public void SpanAttributeWithThrowingToStringIsDroppedTest()
     {
@@ -1364,6 +1425,18 @@ public sealed class OtlpTraceExporterTests : IDisposable
         using var stream = new MemoryStream(buffer, 0, writePosition);
         var scopeSpans = OtlpTrace.ScopeSpans.Parser.ParseFrom(stream);
         return scopeSpans.Spans.FirstOrDefault();
+    }
+
+    private static OtlpCommon.InstrumentationScope ExportScope(SdkLimitOptions sdkOptions, ActivitySource activitySource)
+    {
+        using var activity = activitySource.StartActivity("root");
+        Assert.NotNull(activity);
+
+        var batch = new Batch<Activity>([activity], 1);
+        var request = CreateTraceExportRequest(sdkOptions, batch, ResourceBuilder.CreateEmpty().Build());
+
+        var scopeSpans = Assert.Single(Assert.Single(request.ResourceSpans).ScopeSpans);
+        return scopeSpans.Scope;
     }
 
     private static OtlpCollector.ExportTraceServiceRequest CreateTraceExportRequest(SdkLimitOptions sdkOptions, in Batch<Activity> batch, Resource resource)

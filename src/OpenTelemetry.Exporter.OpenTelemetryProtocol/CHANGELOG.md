@@ -31,6 +31,13 @@ Notes](../../RELEASENOTES.md).
   `ScopeLogs.schema_url` in exported OTLP requests.
   ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
 
+* **Breaking:** Instrumentation scope attributes exported from
+  `ActivitySource.Tags` are now limited by `OTEL_ATTRIBUTE_COUNT_LIMIT` instead
+  of `OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT`. Only applications that set
+  `OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT` to a different value from
+  `OTEL_ATTRIBUTE_COUNT_LIMIT` are affected.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.19.1
 
 Released 2026-Sep-21
