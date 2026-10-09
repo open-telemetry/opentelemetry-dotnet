@@ -42,6 +42,13 @@ Notes](../../RELEASENOTES.md).
   of falling back to `OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT`.
   ([#7894](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7894))
 
+* **Breaking:** Instrumentation scope attributes exported from
+  `ActivitySource.Tags` are now limited by `OTEL_ATTRIBUTE_COUNT_LIMIT` instead
+  of `OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT`. Only applications that set
+  `OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT` to a different value from
+  `OTEL_ATTRIBUTE_COUNT_LIMIT` are affected.
+  ([#7902](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7902))
+
 ## 1.19.1
 
 Released 2026-Sep-21
