@@ -424,6 +424,50 @@ public sealed partial class PrometheusSerializerTests
         await Verify(output, "txt", VerifySettings).UseParameters(useOpenMetrics);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task WriteMetricWithResourceConstantLabels(bool useOpenMetrics)
+    {
+        var buffer = new byte[85000];
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter(nameof(this.WriteMetricWithResourceConstantLabels), "1.0.0");
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        var counter = meter.CreateCounter<int>("test_counter");
+        counter.Add(1, new KeyValuePair<string, object?>("x", "1"));
+        counter.Add(2, new KeyValuePair<string, object?>("x", "2"), new KeyValuePair<string, object?>("service_name", "point"));
+        counter.Add(3, new KeyValuePair<string, object?>("otel_scope_name", "point"));
+
+        var histogram = meter.CreateHistogram<double>("test_histogram");
+        histogram.Record(18, new KeyValuePair<string, object?>("x", "1"));
+        histogram.Record(100, new KeyValuePair<string, object?>("service_name", "point"));
+
+        provider.ForceFlush();
+
+        IReadOnlyList<KeyValuePair<string, object>> resourceConstantLabels =
+        [
+            new("service.name", "svc"),
+            new("le", "reserved"),
+            new("host.name", "host-1"),
+            new("retries", 3),
+        ];
+
+        var output = new StringBuilder();
+
+        foreach (var metric in metrics.OrderBy(m => m.Name, StringComparer.Ordinal))
+        {
+            var cursor = WriteMetric(buffer, 0, metric, useOpenMetrics, resourceConstantLabels: resourceConstantLabels);
+            output.Append(Encoding.UTF8.GetString(buffer, 0, cursor));
+        }
+
+        await Verify(output.ToString(), "txt", VerifySettings).UseParameters(useOpenMetrics);
+    }
+
     [Fact]
     public void WriteMetricNameSanitizesNonAsciiCharacters()
     {
@@ -2324,11 +2368,12 @@ public sealed partial class PrometheusSerializerTests
         Metric metric,
         bool useOpenMetrics,
         bool suppressScopeInfo = false,
-        bool appendSuffixes = true)
+        bool appendSuffixes = true,
+        IReadOnlyList<KeyValuePair<string, object>>? resourceConstantLabels = null)
     {
         TextFormatSerializer serializer = useOpenMetrics ? TextFormatSerializer.OpenMetricsV1 : TextFormatSerializer.PrometheusV1;
         var prometheusMetric = PrometheusMetric.Create(metric, disableTotalNameSuffixForCounters: false, appendSuffixes);
-        var options = new TextFormatSerializerOptions(suppressScopeInfo, null);
+        var options = new TextFormatSerializerOptions(suppressScopeInfo, resourceConstantLabels);
 
         return serializer.WriteMetric(
             buffer,

@@ -195,6 +195,8 @@ internal abstract class TextFormatSerializer
 
             foreach (ref readonly var metricPoint in metric.GetMetricPoints())
             {
+                var seriesStart = cursor;
+
                 cursor = this.WriteSeriesAndTags(
                     buffer,
                     cursor,
@@ -204,6 +206,8 @@ internal abstract class TextFormatSerializer
                     options,
                     suffix: null,
                     reservedOutputKeys: null);
+
+                var seriesEnd = cursor;
 
                 buffer[cursor++] = unchecked((byte)' ');
 
@@ -224,7 +228,14 @@ internal abstract class TextFormatSerializer
 
                 buffer[cursor++] = AsciiLineFeed;
 
-                cursor = this.WriteCounterCreated(buffer, cursor, metric, prometheusMetric, in metricPoint, in options);
+                cursor = this.WriteCounterCreated(
+                    buffer,
+                    cursor,
+                    metric,
+                    prometheusMetric,
+                    in metricPoint,
+                    in options,
+                    new ReadOnlySpan<byte>(buffer, seriesStart, seriesEnd - seriesStart));
             }
         }
         else
@@ -300,7 +311,7 @@ internal abstract class TextFormatSerializer
                         buffer[cursor++] = AsciiLineFeed;
                     }
 
-                    cursor = this.WriteHistogramCreated(buffer, cursor, metric, prometheusMetric, in metricPoint, in options);
+                    cursor = this.WriteHistogramCreated(buffer, cursor, prometheusMetric, in metricPoint, serializedTags);
                 }
                 finally
                 {
@@ -852,35 +863,33 @@ internal abstract class TextFormatSerializer
                 buffer[cursor++] = unchecked((byte)'{');
             }
 
-            // The fast path writes scope labels and point tags directly to the buffer. It cannot
-            // account for resource constant labels (which may collide with, and therefore need to be
-            // merged with, point tags), so it is skipped whenever any are present.
-            if (!hasResourceConstantLabels)
+            // The fast path writes scope labels, point tags and resource constant labels directly to
+            // the buffer. A label that collides with one already written (a resource constant label
+            // can share its name with a point tag) has to be merged with it, which only the slow path
+            // below can do.
+            if (!quotedNameBytes.IsEmpty)
             {
-                if (!quotedNameBytes.IsEmpty)
+                cursor = WriteQuotedName(buffer, cursor, quotedNameBytes, quotedNameSuffix);
+                wroteLabel = true;
+            }
+
+            if (!options.SuppressScopeInfo)
+            {
+                WriteScopeLabels();
+            }
+
+            if (TryWritePointTags())
+            {
+                if (writeEnclosingBraces)
                 {
-                    cursor = WriteQuotedName(buffer, cursor, quotedNameBytes, quotedNameSuffix);
-                    wroteLabel = true;
+                    buffer[cursor++] = unchecked((byte)'}');
+                }
+                else if (wroteLabel)
+                {
+                    buffer[cursor++] = unchecked((byte)',');
                 }
 
-                if (!options.SuppressScopeInfo)
-                {
-                    WriteScopeLabels();
-                }
-
-                if (TryWritePointTags())
-                {
-                    if (writeEnclosingBraces)
-                    {
-                        buffer[cursor++] = unchecked((byte)'}');
-                    }
-                    else if (wroteLabel)
-                    {
-                        buffer[cursor++] = unchecked((byte)',');
-                    }
-
-                    return cursor;
-                }
+                return cursor;
             }
 
             cursor = startCursor;
@@ -941,6 +950,20 @@ internal abstract class TextFormatSerializer
                 if (!TryWriteLabel(tag.Key, tag.Value))
                 {
                     return false;
+                }
+            }
+
+            if (hasResourceConstantLabels)
+            {
+                // The list is indexed rather than enumerated to avoid allocating an enumerator.
+                for (var i = 0; i < resourceConstantLabels!.Count; i++)
+                {
+                    var resourceLabel = resourceConstantLabels[i];
+
+                    if (!TryWriteLabel(resourceLabel.Key, resourceLabel.Value))
+                    {
+                        return false;
+                    }
                 }
             }
 
@@ -1335,6 +1358,7 @@ internal abstract class TextFormatSerializer
     /// <param name="prometheusMetric">The Prometheus metric.</param>
     /// <param name="metricPoint">The metric point.</param>
     /// <param name="options">The serializer options.</param>
+    /// <param name="seriesAndTags">The series name and tags already written for the counter sample.</param>
     /// <returns>The new cursor position after writing.</returns>
     protected abstract int WriteCounterCreated(
         byte[] buffer,
@@ -1342,7 +1366,8 @@ internal abstract class TextFormatSerializer
         Metric metric,
         PrometheusMetric prometheusMetric,
         in MetricPoint metricPoint,
-        in TextFormatSerializerOptions options);
+        in TextFormatSerializerOptions options,
+        ReadOnlySpan<byte> seriesAndTags);
 
     /// <summary>
     /// Writes the exemplar (if any) that follows a histogram bucket sample value.
@@ -1374,18 +1399,16 @@ internal abstract class TextFormatSerializer
     /// </summary>
     /// <param name="buffer">The buffer to write to.</param>
     /// <param name="cursor">The current position in the buffer.</param>
-    /// <param name="metric">The metric.</param>
     /// <param name="prometheusMetric">The Prometheus metric.</param>
     /// <param name="metricPoint">The metric point.</param>
-    /// <param name="options">The serializer options.</param>
+    /// <param name="serializedTags">The serialized tags of the histogram's series.</param>
     /// <returns>The new cursor position after writing.</returns>
     protected abstract int WriteHistogramCreated(
         byte[] buffer,
         int cursor,
-        Metric metric,
         PrometheusMetric prometheusMetric,
         in MetricPoint metricPoint,
-        in TextFormatSerializerOptions options);
+        ReadOnlySpan<byte> serializedTags);
 
     private static string GetLabelValueString(object? labelValue) => labelValue switch
     {
@@ -1830,6 +1853,20 @@ internal abstract class TextFormatSerializer
             return false;
         }
 
+        // The reserved keys are normally arrays, which are enumerated without boxing an enumerator.
+        if (reservedOutputKeys is string[] reservedArray)
+        {
+            foreach (var reserved in reservedArray)
+            {
+                if (SpanEqualsAscii(writtenKey, reserved))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         foreach (var reserved in reservedOutputKeys)
         {
             if (SpanEqualsAscii(writtenKey, reserved))
@@ -1908,7 +1945,21 @@ internal abstract class TextFormatSerializer
             wroteLabel = true;
         }
 
-        if (labels != null && labels.Count > 0)
+        if (labels != null && labels.Count > 0 && !HasDuplicateOutputKeys(labels))
+        {
+            // The labels have distinct output keys, so there is nothing to merge: write them
+            // as they are, in order, without grouping them by key first.
+            for (var i = 0; i < labels.Count; i++)
+            {
+                var label = labels[i];
+
+                if (WriteLabel(buffer, ref cursor, label.OutputKey, label.Value, maxLabelSetCharacters, ref labelSetCharacters))
+                {
+                    wroteLabel = true;
+                }
+            }
+        }
+        else if (labels != null && labels.Count > 0)
         {
             List<string>? orderedKeys = null;
             Dictionary<string, List<LabelData>>? labelsBySanitizedKey = null;
@@ -1940,23 +1991,10 @@ internal abstract class TextFormatSerializer
             {
                 var value = GetMergedLabelValue(groupedLabels[key]);
 
-                if (maxLabelSetCharacters is { } maxCharactersValue)
+                if (WriteLabel(buffer, ref cursor, key, value, maxLabelSetCharacters, ref labelSetCharacters))
                 {
-                    var labelCharacters = GetUtf8CodePointCount(key) + GetUtf8CodePointCount(value);
-                    if (labelSetCharacters + labelCharacters > maxCharactersValue)
-                    {
-                        continue;
-                    }
-
-                    labelSetCharacters += labelCharacters;
+                    wroteLabel = true;
                 }
-
-                // The grouped key is already the final output key; it is written verbatim, or
-                // quoted when the allow-utf-8 scheme produced a non-legacy label name.
-                cursor = WriteLabelName(buffer, cursor, key);
-                cursor = WriteSanitizedLabel(buffer, cursor, value);
-                buffer[cursor++] = unchecked((byte)',');
-                wroteLabel = true;
             }
         }
 
@@ -1973,6 +2011,60 @@ internal abstract class TextFormatSerializer
         }
 
         return cursor;
+    }
+
+    private static bool HasDuplicateOutputKeys(IReadOnlyList<LabelData> labels)
+    {
+        // Label sets are small, so a pairwise comparison is cheaper than building a set.
+        const int MaxLabelsToCompare = 32;
+
+        if (labels.Count > MaxLabelsToCompare)
+        {
+            return true;
+        }
+
+        for (var i = 1; i < labels.Count; i++)
+        {
+            var key = labels[i].OutputKey;
+
+            for (var j = 0; j < i; j++)
+            {
+                if (string.Equals(labels[j].OutputKey, key, StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static bool WriteLabel(
+        byte[] buffer,
+        ref int cursor,
+        string key,
+        string value,
+        int? maxLabelSetCharacters,
+        ref int labelSetCharacters)
+    {
+        if (maxLabelSetCharacters is { } maxCharactersValue)
+        {
+            var labelCharacters = GetUtf8CodePointCount(key) + GetUtf8CodePointCount(value);
+            if (labelSetCharacters + labelCharacters > maxCharactersValue)
+            {
+                return false;
+            }
+
+            labelSetCharacters += labelCharacters;
+        }
+
+        // The key is already the final output key; it is written verbatim, or
+        // quoted when the allow-utf-8 scheme produced a non-legacy label name.
+        cursor = WriteLabelName(buffer, cursor, key);
+        cursor = WriteSanitizedLabel(buffer, cursor, value);
+        buffer[cursor++] = unchecked((byte)',');
+
+        return true;
     }
 
     private static int GetUtf8CodePointCount(string value)
