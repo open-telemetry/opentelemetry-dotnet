@@ -12,10 +12,10 @@ namespace OpenTelemetry.Configuration.Declarative;
 internal sealed class YamlParseContext
 {
     private readonly Dictionary<YamlNode, ResolvedYamlScalar> resolved =
-        new(YamlNodeReferenceEqualityComparer.Instance);
+        [with(YamlNodeReferenceEqualityComparer.Instance)];
 
     private readonly Dictionary<YamlNode, IReadOnlyList<KeyValuePair<string, YamlNode>>> mappingKeys =
-        new(YamlNodeReferenceEqualityComparer.Instance);
+        [with(YamlNodeReferenceEqualityComparer.Instance)];
 
     private readonly Func<string, string?> resolveVariable;
 
@@ -43,7 +43,7 @@ internal sealed class YamlParseContext
     /// (<see langword="null"/> if it was not set).
     /// </summary>
     internal Dictionary<string, string?> ReferencedEnvironmentVariables { get; } =
-        new(OtelEnvironmentVariables.NameComparer);
+        [with(OtelEnvironmentVariables.NameComparer)];
 
     /// <summary>
     /// Applies environment variable substitution and then YAML 1.2 core-schema resolution to

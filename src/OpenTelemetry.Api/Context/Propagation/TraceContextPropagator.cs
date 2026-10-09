@@ -169,8 +169,6 @@ public class TraceContextPropagator : TextMapPropagator
 
             context.SpanId.ToHexString().CopyTo(destination.Slice(36));
 
-            // https://github.com/open-telemetry/opentelemetry-dotnet-contrib/pull/3867
-            // will change this code to use ActivityTraceFlags.RandomTraceId instead of 2.
             // If new enum values are added in the future the Fallback path will ensure
             // that the handling is functionally correct, but the condition should be updated
             // to include the new value(s) for better readability and performance where possible.
@@ -178,11 +176,11 @@ public class TraceContextPropagator : TextMapPropagator
             {
                 "-01".CopyTo(destination[52..]);
             }
-            else if (context.TraceFlags == (ActivityTraceFlags)2)
+            else if (context.TraceFlags == ActivityTraceFlags.RandomTraceId)
             {
                 "-02".CopyTo(destination[52..]);
             }
-            else if (context.TraceFlags == (ActivityTraceFlags.Recorded | (ActivityTraceFlags)2))
+            else if (context.TraceFlags == (ActivityTraceFlags.Recorded | ActivityTraceFlags.RandomTraceId))
             {
                 "-03".CopyTo(destination[52..]);
             }
@@ -197,8 +195,6 @@ public class TraceContextPropagator : TextMapPropagator
 #else
         static string FormatActivityTraceFlags(ActivityTraceFlags flags)
         {
-            // https://github.com/open-telemetry/opentelemetry-dotnet-contrib/pull/3867
-            // will change this code to use ActivityTraceFlags.RandomTraceId instead of 2.
             // If new enum values are added in the future the Fallback path will ensure
             // that the handling is functionally correct, but the switch should be updated
             // to include the new value(s) for better readability and performance where possible.
@@ -206,8 +202,8 @@ public class TraceContextPropagator : TextMapPropagator
             {
                 ActivityTraceFlags.None => "-00",
                 ActivityTraceFlags.Recorded => "-01",
-                (ActivityTraceFlags)2 => "-02",
-                ActivityTraceFlags.Recorded | (ActivityTraceFlags)2 => "-03",
+                ActivityTraceFlags.RandomTraceId => "-02",
+                ActivityTraceFlags.Recorded | ActivityTraceFlags.RandomTraceId => "-03",
                 _ => Fallback((byte)flags),
             };
 
@@ -342,9 +338,7 @@ public class TraceContextPropagator : TextMapPropagator
 
         if ((optionsLowByte & 2) == 2)
         {
-            // https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899
-            // will change this to use ActivityTraceFlags.RandomTraceId instead.
-            traceOptions |= (ActivityTraceFlags)2;
+            traceOptions |= ActivityTraceFlags.RandomTraceId;
         }
 
         if ((!bestAttempt) && (traceparent.Length != VersionAndTraceIdAndSpanIdLength + OptionsLength))
