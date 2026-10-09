@@ -203,8 +203,7 @@ property names under the YAML 1.2 core schema.
 
 Property names are checked against the OpenTelemetry configuration schema. A
 property the schema does not define is an error wherever the schema does not
-allow additional properties, for example`tracer_provider.procesors` or
-`resource.foo`.
+allow additional properties.
 
 Additional properties are retained and readable through
 `DeclarativeConfigurationDocument.Properties` where the schema allows them.

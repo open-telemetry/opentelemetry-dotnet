@@ -199,6 +199,10 @@ public sealed class YamlDepthValidatorTests
     }
 
     [Fact]
+    public void ThrowIfExceeded_ScalarRoot_DoesNotThrow() =>
+        YamlDepthValidator.ThrowIfExceeded(new YamlScalarNode("value"));
+
+    [Fact]
     public void ThrowIfExceeded_SelfReferentialMapping_ThrowsCycleDiagnostic()
     {
         var root = new YamlMappingNode();

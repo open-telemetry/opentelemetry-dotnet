@@ -114,6 +114,25 @@ public sealed class SchemaPropertyNameValidatorTests
         {
             """
             file_format: "1.2"
+            tracer_provider:
+              processors:
+                - batch:
+                    exporter:
+                      otlp_http:
+                        headers: &shared
+                          - name: a
+                            value: b
+                            nope: 1
+                - batch:
+                    exporter:
+                      otlp_http:
+                        headers: *shared
+            """,
+            "tracer_provider.processors[0].batch.exporter.otlp_http.headers[0].nope@10:17"
+        },
+        {
+            """
+            file_format: "1.2"
             log_level: &key foo
             resource:
               *key : 1
