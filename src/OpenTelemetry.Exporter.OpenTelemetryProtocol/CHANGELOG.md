@@ -36,6 +36,12 @@ Notes](../../RELEASENOTES.md).
   truncated to that many bytes instead of being exported in full.
   ([#7893](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7893))
 
+* **Breaking:** `OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT` and
+  `OTEL_LINK_ATTRIBUTE_COUNT_LIMIT` now fall back to
+  `OTEL_ATTRIBUTE_COUNT_LIMIT` (then the default of 128) when not set, instead
+  of falling back to `OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT`.
+  ([#7894](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7894))
+
 ## 1.19.1
 
 Released 2026-Sep-21
