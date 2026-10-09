@@ -36,7 +36,7 @@ Notes](../../RELEASENOTES.md).
   of `OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT`. Only applications that set
   `OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT` to a different value from
   `OTEL_ATTRIBUTE_COUNT_LIMIT` are affected.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7902](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7902))
 
 ## 1.19.1
 
