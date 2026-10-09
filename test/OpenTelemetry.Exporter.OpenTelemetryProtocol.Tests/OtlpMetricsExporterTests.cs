@@ -734,6 +734,62 @@ public sealed class OtlpMetricsExporterTests : IDisposable
         VerifyExemplars(null, longValue ?? doubleValue, enableExemplars, d => d.Exemplars.FirstOrDefault(), dataPoint);
     }
 
+    [Fact]
+    public void TestHistogramWithMultipleDataPointsToOtlpMetric()
+    {
+        var metrics = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddInMemoryExporter(metrics)
+            .AddView("custom_histogram", new ExplicitBucketHistogramConfiguration { Boundaries = [1, 2, 3] })
+            .Build();
+
+        // Every data point of a histogram has the same explicit bounds, which must be exported for all of them.
+        var customHistogram = meter.CreateHistogram<double>("custom_histogram");
+        var defaultHistogram = meter.CreateHistogram<double>("default_histogram");
+
+        for (var i = 0; i < 4; i++)
+        {
+            var tag = new KeyValuePair<string, object?>("series", i);
+
+            customHistogram.Record(i + 0.5, tag);
+            defaultHistogram.Record(i * 10, tag);
+        }
+
+        provider.ForceFlush();
+
+        var batch = new Batch<Metric>([.. metrics], metrics.Count);
+        var request = CreateMetricExportRequest(batch, ResourceBuilder.CreateEmpty().Build());
+
+        var exported = request.ResourceMetrics.Single().ScopeMetrics.Single().Metrics.ToDictionary(metric => metric.Name);
+
+        var customDataPoints = exported["custom_histogram"].Histogram.DataPoints;
+        Assert.Equal(4, customDataPoints.Count);
+
+        foreach (var dataPoint in customDataPoints)
+        {
+            Assert.Equal([1d, 2d, 3d], dataPoint.ExplicitBounds);
+            Assert.Equal(4, dataPoint.BucketCounts.Count);
+            Assert.Equal(1UL, dataPoint.Count);
+            Assert.Equal(1UL, dataPoint.BucketCounts.Aggregate(0UL, (total, count) => total + count));
+        }
+
+        var defaultDataPoints = exported["default_histogram"].Histogram.DataPoints;
+        Assert.Equal(4, defaultDataPoints.Count);
+
+        var defaultBounds = defaultDataPoints[0].ExplicitBounds.ToArray();
+        Assert.Equal(15, defaultBounds.Length);
+
+        foreach (var dataPoint in defaultDataPoints)
+        {
+            Assert.Equal(defaultBounds, dataPoint.ExplicitBounds);
+            Assert.Equal(16, dataPoint.BucketCounts.Count);
+            Assert.Equal(1UL, dataPoint.BucketCounts.Aggregate(0UL, (total, count) => total + count));
+        }
+    }
+
     [Theory]
     [InlineData("cuMulative", MetricReaderTemporalityPreference.Cumulative)]
     [InlineData("DeltA", MetricReaderTemporalityPreference.Delta)]
