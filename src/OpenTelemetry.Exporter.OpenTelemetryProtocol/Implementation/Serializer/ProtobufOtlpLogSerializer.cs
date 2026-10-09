@@ -205,9 +205,9 @@ internal static class ProtobufOtlpLogSerializer
             writePosition = WriteLogRecord(buffer, writePosition, sdkLimitOptions, experimentalOptions, logRecords[i]);
         }
 
-        if (!string.IsNullOrEmpty(scope.SchemaUrl))
+        if (scope.SchemaUrl is { Length: > 0 })
         {
-            writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpLogFieldNumberConstants.ScopeLogs_Schema_Url, scope.SchemaUrl!);
+            writePosition = ProtobufSerializer.WriteStringWithTag(buffer, writePosition, ProtobufOtlpLogFieldNumberConstants.ScopeLogs_Schema_Url, scope.SchemaUrl);
         }
 
         return writePosition;

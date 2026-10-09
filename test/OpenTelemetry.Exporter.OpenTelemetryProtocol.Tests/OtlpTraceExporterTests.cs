@@ -451,6 +451,67 @@ public sealed class OtlpTraceExporterTests : IDisposable
         }
     }
 
+    [Theory]
+    [InlineData(null, 1, 3, 0u)]
+    [InlineData(1, null, 1, 2u)]
+    [InlineData(1, 3, 1, 2u)]
+    public void ScopeAttributesUseGeneralAttributeCountLimit(int? attributeCountLimit, int? spanAttributeCountLimit, int expectedCount, uint expectedDroppedCount)
+    {
+        var sdkOptions = new SdkLimitOptions();
+
+        if (attributeCountLimit.HasValue)
+        {
+            sdkOptions.AttributeCountLimit = attributeCountLimit;
+        }
+
+        if (spanAttributeCountLimit.HasValue)
+        {
+            sdkOptions.SpanAttributeCountLimit = spanAttributeCountLimit;
+        }
+
+        var activitySourceTags = new TagList
+        {
+            new("a", "1"),
+            new("b", "2"),
+            new("c", "3"),
+        };
+
+        using var activitySource = new ActivitySource(new ActivitySourceOptions(nameof(this.ScopeAttributesUseGeneralAttributeCountLimit))
+        {
+            Tags = activitySourceTags,
+        });
+
+        var scope = ExportScope(sdkOptions, activitySource);
+
+        Assert.Equal(expectedCount, scope.Attributes.Count);
+        Assert.Equal(expectedDroppedCount, scope.DroppedAttributesCount);
+    }
+
+    [Fact]
+    public void ScopeAttributesIgnoreSpanAttributeValueLengthLimit()
+    {
+        var sdkOptions = new SdkLimitOptions()
+        {
+            AttributeValueLengthLimit = null,
+            SpanAttributeValueLengthLimit = 2,
+        };
+
+        var activitySourceTags = new TagList
+        {
+            new("a", "12345"),
+        };
+
+        using var activitySource = new ActivitySource(new ActivitySourceOptions(nameof(this.ScopeAttributesIgnoreSpanAttributeValueLengthLimit))
+        {
+            Tags = activitySourceTags,
+        });
+
+        var scope = ExportScope(sdkOptions, activitySource);
+
+        var attribute = Assert.Single(scope.Attributes);
+        Assert.Equal("12345", attribute.Value.StringValue);
+    }
+
     [Fact]
     public void SpanAttributeWithThrowingToStringIsDroppedTest()
     {
@@ -615,6 +676,67 @@ public sealed class OtlpTraceExporterTests : IDisposable
         Assert.Equal("1234", otlpSpan.Links[0].Attributes[0].Value.StringValue);
         ArrayValueAsserts(otlpSpan.Links[0].Attributes[1].Value.ArrayValue.Values);
         Assert.Equal(new object().ToString()!.Substring(0, 4), otlpSpan.Links[0].Attributes[2].Value.StringValue);
+    }
+
+    [Fact]
+    public void SpanAttributeCountLimitDoesNotLimitEventAndLinkAttributes()
+    {
+        var sdkOptions = new SdkLimitOptions()
+        {
+            SpanAttributeCountLimit = 1,
+        };
+
+        ActivityTagsCollection tags =
+        [
+            new("Tag1", "1"),
+            new("Tag2", "2"),
+            new("Tag3", "3"),
+        ];
+
+        ActivityLink[] links = [new(default, tags)];
+
+        using var activitySource = new ActivitySource(nameof(this.SpanAttributeCountLimitDoesNotLimitEventAndLinkAttributes));
+        using var activity = activitySource.StartActivity("root", ActivityKind.Server, default(ActivityContext), tags, links);
+
+        Assert.NotNull(activity);
+        activity.AddEvent(new ActivityEvent("Event", DateTime.UtcNow, tags));
+
+        var otlpSpan = ToOtlpSpan(sdkOptions, activity);
+
+        Assert.NotNull(otlpSpan);
+        var spanAttribute = Assert.Single(otlpSpan.Attributes);
+        Assert.Equal("Tag1", spanAttribute.Key);
+        Assert.Equal("1", spanAttribute.Value.StringValue);
+        Assert.Equal(2u, otlpSpan.DroppedAttributesCount);
+
+        var otlpEvent = Assert.Single(otlpSpan.Events);
+        Assert.Equal(["Tag1", "Tag2", "Tag3"], otlpEvent.Attributes.Select(a => a.Key));
+        Assert.Equal(0u, otlpEvent.DroppedAttributesCount);
+
+        var otlpLink = Assert.Single(otlpSpan.Links);
+        Assert.Equal(["Tag1", "Tag2", "Tag3"], otlpLink.Attributes.Select(a => a.Key));
+        Assert.Equal(0u, otlpLink.DroppedAttributesCount);
+    }
+
+    [Fact]
+    public void ByteArraySpanAttributeIsTruncatedToValueLengthLimit()
+    {
+        var sdkOptions = new SdkLimitOptions() { AttributeValueLengthLimit = 4 };
+
+        using var activitySource = new ActivitySource(nameof(this.ByteArraySpanAttributeIsTruncatedToValueLengthLimit));
+        using var activity = activitySource.StartActivity("root");
+
+        Assert.NotNull(activity);
+        activity.SetTag("Over", new byte[] { 1, 2, 3, 4, 5, 6 });
+        activity.SetTag("At", new byte[] { 1, 2, 3, 4 });
+        activity.SetTag("Under", new byte[] { 1, 2 });
+
+        var otlpSpan = ToOtlpSpan(sdkOptions, activity);
+
+        Assert.NotNull(otlpSpan);
+        Assert.Equal([1, 2, 3, 4], otlpSpan.Attributes.Single(a => a.Key == "Over").Value.BytesValue.ToByteArray());
+        Assert.Equal([1, 2, 3, 4], otlpSpan.Attributes.Single(a => a.Key == "At").Value.BytesValue.ToByteArray());
+        Assert.Equal([1, 2], otlpSpan.Attributes.Single(a => a.Key == "Under").Value.BytesValue.ToByteArray());
     }
 
     [Fact]
@@ -1364,6 +1486,18 @@ public sealed class OtlpTraceExporterTests : IDisposable
         using var stream = new MemoryStream(buffer, 0, writePosition);
         var scopeSpans = OtlpTrace.ScopeSpans.Parser.ParseFrom(stream);
         return scopeSpans.Spans.FirstOrDefault();
+    }
+
+    private static OtlpCommon.InstrumentationScope ExportScope(SdkLimitOptions sdkOptions, ActivitySource activitySource)
+    {
+        using var activity = activitySource.StartActivity("root");
+        Assert.NotNull(activity);
+
+        var batch = new Batch<Activity>([activity], 1);
+        var request = CreateTraceExportRequest(sdkOptions, batch, ResourceBuilder.CreateEmpty().Build());
+
+        var scopeSpans = Assert.Single(Assert.Single(request.ResourceSpans).ScopeSpans);
+        return scopeSpans.Scope;
     }
 
     private static OtlpCollector.ExportTraceServiceRequest CreateTraceExportRequest(SdkLimitOptions sdkOptions, in Batch<Activity> batch, Resource resource)

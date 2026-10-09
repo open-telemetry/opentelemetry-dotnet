@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Collections.Concurrent;
 using System.Diagnostics.Metrics;
 using System.Runtime.CompilerServices;
 using OpenTelemetry.Internal;
@@ -212,7 +213,7 @@ public class MetricPointReclaimTests
         if (useDouble)
         {
             var counter = meter.CreateCounter<double>("TestCounter");
-            recordMeasurement = (value, tags) => counter.Add(value, tags);
+            recordMeasurement = counter.Add;
         }
         else
         {
@@ -394,6 +395,741 @@ public class MetricPointReclaimTests
         Assert.Equal(Interlocked.Read(ref recordedSum), Interlocked.Read(ref exportedSum));
     }
 
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    [InlineData(5)]
+    [InlineData(8)]
+    [InlineData(9)]
+    [InlineData(16)]
+    [InlineData(17)]
+    public void EveryMetricPointIsCollectedAsTheStoreFillsUp(int cardinalityLimit)
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateCounter<long>("counter");
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = cardinalityLimit })
+            .AddInMemoryExporter(exportedItems, metricReaderOptions => metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta)
+            .Build();
+
+        // Collect a point with every slot handed out so far, up to and including the last one. A collect only
+        // visits the slots that have been handed out, so each of them must be found whatever the limit.
+        for (var created = 1; created <= cardinalityLimit; created++)
+        {
+            for (var i = 0; i < created; i++)
+            {
+                counter.Add(1, new KeyValuePair<string, object?>("key", i));
+            }
+
+            exportedItems.Clear();
+            Assert.True(meterProvider.ForceFlush());
+
+            var sums = new Dictionary<int, long>();
+            foreach (ref readonly var mp in exportedItems.Single().GetMetricPoints())
+            {
+                sums.Add((int)mp.Tags.KeyAndValues[0].Value!, mp.GetSumLong());
+            }
+
+            Assert.Equal(created, sums.Count);
+            Assert.All(sums.Values, sum => Assert.Equal(1, sum));
+        }
+    }
+
+    [Theory]
+    [InlineData("counter-long")]
+    [InlineData("counter-double")]
+    [InlineData("histogram")]
+    [InlineData("exponential")]
+    public async Task NewSeriesDuringBoundedScanIsExportedExactlyOnceOnNextCollect(string kind)
+    {
+        using var collecting = new ManualResetEventSlim();
+        using var resume = new ManualResetEventSlim();
+        using var meter = new Meter(Utils.GetCurrentMethodName() + kind);
+        var snapshots = new List<MetricSnapshot>();
+        var reservoirs = 0;
+
+        MetricStreamConfiguration view = kind == "exponential"
+            ? new Base2ExponentialBucketHistogramConfiguration()
+            : new MetricStreamConfiguration();
+        view.CardinalityLimit = 9;
+        view.ExemplarReservoirFactory = () => new BlockingReservoir(Interlocked.Increment(ref reservoirs) == 1, collecting, resume);
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("metric", view)
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
+            .AddInMemoryExporter(snapshots, options => options.TemporalityPreference = MetricReaderTemporalityPreference.Delta)
+            .Build();
+
+        Action<int, int> record;
+        if (kind == "counter-long")
+        {
+            var counter = meter.CreateCounter<long>("metric");
+            record = (value, tag) => counter.Add(value, new KeyValuePair<string, object?>("key", tag));
+        }
+        else if (kind == "counter-double")
+        {
+            var counter = meter.CreateCounter<double>("metric");
+            record = (value, tag) => counter.Add(value, new KeyValuePair<string, object?>("key", tag));
+        }
+        else
+        {
+            var histogram = meter.CreateHistogram<int>("metric");
+            record = (value, tag) => histogram.Record(value, new KeyValuePair<string, object?>("key", tag));
+        }
+
+        record(7, 0);
+
+        using var flush = Task.Run(() => meterProvider.ForceFlush(), TestContext.Current.CancellationToken);
+
+        try
+        {
+            Assert.True(collecting.Wait(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken));
+
+            // The first data slot is already being snapshotted, so the scan bound
+            // has been captured. This new series must be outside that bound.
+            record(13, 1);
+        }
+        finally
+        {
+            resume.Set();
+        }
+
+        var completed = await Task.WhenAny(flush, Task.Delay(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken));
+        Assert.Same(flush, completed);
+        Assert.True(await flush);
+
+        var first = Assert.Single(Assert.Single(snapshots).MetricPoints);
+        Assert.Equal(0, first.Tags.KeyAndValues[0].Value);
+        Assert.Equal(7, SumOf(first, kind));
+
+        // The series created during the scan is picked up, in full, by the next collect.
+        Assert.True(meterProvider.ForceFlush());
+        Assert.Equal(2, snapshots.Count);
+
+        var second = Assert.Single(snapshots[1].MetricPoints);
+        Assert.Equal(1, second.Tags.KeyAndValues[0].Value);
+        Assert.Equal(13, SumOf(second, kind));
+
+        // Nothing is exported a second time.
+        Assert.True(meterProvider.ForceFlush());
+        Assert.Equal(2, snapshots.Count);
+
+        double total = 0;
+        foreach (var snapshot in snapshots)
+        {
+            foreach (var point in snapshot.MetricPoints)
+            {
+                total += SumOf(point, kind);
+            }
+        }
+
+        Assert.Equal(20, total);
+
+        static double SumOf(MetricPoint point, string kind)
+        {
+            return kind switch
+            {
+                "counter-long" => point.GetSumLong(),
+                "counter-double" => point.GetSumDouble(),
+                _ => point.GetHistogramSum(),
+            };
+        }
+    }
+
+    [Fact]
+    public void ReclaimedMetricPointsAreReusedInStridedOrder()
+    {
+        const int CardinalityLimit = 4;
+
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateCounter<long>("counter");
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = CardinalityLimit })
+            .AddInMemoryExporter(exportedItems, metricReaderOptions => metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta)
+            .Build();
+
+        // Use every slot once.
+        for (var i = 0; i < CardinalityLimit; i++)
+        {
+            counter.Add(1, new KeyValuePair<string, object?>("key", i));
+        }
+
+        // First collect exports the points, second collect reclaims them all.
+        Assert.True(meterProvider.ForceFlush());
+        Assert.True(meterProvider.ForceFlush());
+
+        var store = exportedItems[0].AggregatorStore;
+        Assert.Empty(store.TagsToMetricPointIndexDictionaryDelta!);
+
+        // Two points created back-to-back from the reclaimed slots.
+        counter.Add(10, new KeyValuePair<string, object?>("key", 10));
+        counter.Add(11, new KeyValuePair<string, object?>("key", 11));
+
+        exportedItems.Clear();
+        Assert.True(meterProvider.ForceFlush());
+
+        var slots = store.TagsToMetricPointIndexDictionaryDelta!.Values
+            .ToDictionary(lookupData => (int)lookupData.GivenTags.KeyValuePairs[0].Value!, lookupData => lookupData.Index);
+
+        Assert.Equal(2, slots.Count);
+        Assert.True(Math.Abs(slots[10] - slots[11]) >= 2, $"Consecutively created points were placed in adjacent slots {slots[10]} and {slots[11]}.");
+
+        // And the reused points still aggregate correctly.
+        var metricPoints = new List<MetricPoint>();
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Equal(2, metricPoints.Count);
+        Assert.Equal(10, Assert.Single(metricPoints, mp => Equals(mp.Tags.KeyAndValues[0].Value, 10)).GetSumLong());
+        Assert.Equal(11, Assert.Single(metricPoints, mp => Equals(mp.Tags.KeyAndValues[0].Value, 11)).GetSumLong());
+    }
+
+    [Fact]
+    public void PartiallyReclaimedMetricPointsAreReusedNonAdjacently()
+    {
+        const int CardinalityLimit = 4;
+
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateCounter<long>("counter");
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = CardinalityLimit })
+            .AddInMemoryExporter(exportedItems, metricReaderOptions => metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta)
+            .Build();
+
+        // Use every slot once. The exact fill order depends on the allocator, but the
+        // first two points always take slots 2 and 4, and the test only relies on the
+        // point for tag value 1 being in slot 4.
+        for (var i = 0; i < CardinalityLimit; i++)
+        {
+            counter.Add(1, new KeyValuePair<string, object?>("key", i));
+        }
+
+        Assert.True(meterProvider.ForceFlush());
+
+        var store = exportedItems[0].AggregatorStore;
+        var slotsBefore = store.TagsToMetricPointIndexDictionaryDelta!.Values
+            .ToDictionary(lookupData => (int)lookupData.GivenTags.KeyValuePairs[0].Value!, lookupData => lookupData.Index);
+        Assert.Equal(4, slotsBefore[1]);
+
+        // Keep the point in slot 4 alive; the second collect reclaims the other three.
+        counter.Add(1, new KeyValuePair<string, object?>("key", 1));
+        Assert.True(meterProvider.ForceFlush());
+        Assert.Single(store.TagsToMetricPointIndexDictionaryDelta!);
+
+        // Two points created back-to-back from the partially reclaimed slots.
+        counter.Add(10, new KeyValuePair<string, object?>("key", 10));
+        counter.Add(11, new KeyValuePair<string, object?>("key", 11));
+
+        // Read the slots before the next collect, which reclaims the idle point in slot 4.
+        var slots = store.TagsToMetricPointIndexDictionaryDelta!.Values
+            .ToDictionary(lookupData => (int)lookupData.GivenTags.KeyValuePairs[0].Value!, lookupData => lookupData.Index);
+
+        Assert.Equal(3, slots.Count);
+        Assert.Equal(4, slots[1]);
+        Assert.True(Math.Abs(slots[10] - slots[11]) >= 2, $"Consecutively created points were placed in adjacent slots {slots[10]} and {slots[11]}.");
+
+        exportedItems.Clear();
+        Assert.True(meterProvider.ForceFlush());
+
+        var metricPoints = new List<MetricPoint>();
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Equal(2, metricPoints.Count);
+        Assert.Equal(10, Assert.Single(metricPoints, mp => Equals(mp.Tags.KeyAndValues[0].Value, 10)).GetSumLong());
+        Assert.Equal(11, Assert.Single(metricPoints, mp => Equals(mp.Tags.KeyAndValues[0].Value, 11)).GetSumLong());
+    }
+
+    [Fact]
+    public void PartiallyReclaimedMetricPointsSkipEverySlotAdjacentToTheLivePoint()
+    {
+        // With four data slots the strided order is [2, 4, 3, 5]. Using only 2 and 4,
+        // then reclaiming 2 while 4 stays alive, leaves the free queue as [3, 5, 2]:
+        // both slots at the front neighbour the live slot 4, so the allocator must
+        // rotate past both of them and hand out slot 2.
+        const int CardinalityLimit = 4;
+
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateCounter<long>("counter");
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = CardinalityLimit })
+            .AddInMemoryExporter(exportedItems, metricReaderOptions => metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta)
+            .Build();
+
+        // Tag values 0 and 1 land in slots 2 and 4.
+        counter.Add(1, new KeyValuePair<string, object?>("key", 0));
+        counter.Add(1, new KeyValuePair<string, object?>("key", 1));
+
+        Assert.True(meterProvider.ForceFlush());
+
+        var store = exportedItems[0].AggregatorStore;
+        var slotsBefore = store.TagsToMetricPointIndexDictionaryDelta!.Values
+            .ToDictionary(lookupData => (int)lookupData.GivenTags.KeyValuePairs[0].Value!, lookupData => lookupData.Index);
+        Assert.Equal(2, slotsBefore[0]);
+        Assert.Equal(4, slotsBefore[1]);
+
+        // Keep the point in slot 4 alive; the second collect reclaims slot 2.
+        counter.Add(1, new KeyValuePair<string, object?>("key", 1));
+        Assert.True(meterProvider.ForceFlush());
+        Assert.Single(store.TagsToMetricPointIndexDictionaryDelta!);
+
+        counter.Add(10, new KeyValuePair<string, object?>("key", 10));
+
+        // Read the slots before the next collect, which reclaims the idle point in slot 4.
+        var slots = store.TagsToMetricPointIndexDictionaryDelta!.Values
+            .ToDictionary(lookupData => (int)lookupData.GivenTags.KeyValuePairs[0].Value!, lookupData => lookupData.Index);
+
+        Assert.Equal(2, slots.Count);
+        Assert.Equal(4, slots[1]);
+        Assert.True(Math.Abs(slots[10] - slots[1]) >= 2, $"The new point was placed in slot {slots[10]}, adjacent to the live point in slot {slots[1]}.");
+
+        exportedItems.Clear();
+        Assert.True(meterProvider.ForceFlush());
+
+        var metricPoints = new List<MetricPoint>();
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Equal(10, Assert.Single(metricPoints, mp => Equals(mp.Tags.KeyAndValues[0].Value, 10)).GetSumLong());
+    }
+
+    [Fact]
+    public void PartiallyReclaimedMetricPointsAvoidSlotsNextToAnyLivePoint()
+    {
+        // Using slots 2 and 4, then reclaiming 4 while 2 stays alive, leaves
+        // the free queue as [3, 5, 4]. Slot 3 is next to the live slot 2 even
+        // though the most recently assigned slot (4) is dead, so the allocator
+        // must look at the candidate's own neighbours and hand out 5.
+        const int CardinalityLimit = 4;
+
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateCounter<long>("counter");
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = CardinalityLimit })
+            .AddInMemoryExporter(exportedItems, metricReaderOptions => metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta)
+            .Build();
+
+        // Tag values 0 and 1 land in slots 2 and 4.
+        counter.Add(1, new KeyValuePair<string, object?>("key", 0));
+        counter.Add(1, new KeyValuePair<string, object?>("key", 1));
+
+        Assert.True(meterProvider.ForceFlush());
+
+        var store = exportedItems[0].AggregatorStore;
+        var slotsBefore = store.TagsToMetricPointIndexDictionaryDelta!.Values
+            .ToDictionary(lookupData => (int)lookupData.GivenTags.KeyValuePairs[0].Value!, lookupData => lookupData.Index);
+        Assert.Equal(2, slotsBefore[0]);
+        Assert.Equal(4, slotsBefore[1]);
+
+        // Keep the point in slot 2 alive; the second collect reclaims slot 4.
+        counter.Add(1, new KeyValuePair<string, object?>("key", 0));
+        Assert.True(meterProvider.ForceFlush());
+        Assert.Single(store.TagsToMetricPointIndexDictionaryDelta!);
+
+        counter.Add(10, new KeyValuePair<string, object?>("key", 10));
+
+        // Read the slots before the next collect, which reclaims the idle point in slot 2.
+        var slots = store.TagsToMetricPointIndexDictionaryDelta!.Values
+            .ToDictionary(lookupData => (int)lookupData.GivenTags.KeyValuePairs[0].Value!, lookupData => lookupData.Index);
+
+        Assert.Equal(2, slots.Count);
+        Assert.Equal(2, slots[0]);
+        Assert.True(Math.Abs(slots[10] - slots[0]) >= 2, $"The new point was placed in slot {slots[10]}, adjacent to the live point in slot {slots[0]}.");
+
+        exportedItems.Clear();
+        Assert.True(meterProvider.ForceFlush());
+
+        var metricPoints = new List<MetricPoint>();
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Equal(10, Assert.Single(metricPoints, mp => Equals(mp.Tags.KeyAndValues[0].Value, 10)).GetSumLong());
+    }
+
+    [Fact]
+    public void ReclaimedMetricPointsAvoidTheOverflowPointsSlot()
+    {
+        // The overflow point (slot 1) is initialized on demand, never reclaimed, and
+        // once active can be updated concurrently by many threads, so it is a live
+        // neighbour for slot 2 like any other. With cardinality limit 6, filling and
+        // then fully reclaiming all six data slots (2..7) leaves the free queue in
+        // strided order [2, 4, 6, 3, 5, 7]: slot 2 is next to the live overflow point,
+        // while slot 4 has no live neighbour on either side, so a new point must be
+        // placed in slot 4, not slot 2.
+        const int CardinalityLimit = 6;
+
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateCounter<long>("counter");
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = CardinalityLimit })
+            .AddInMemoryExporter(exportedItems, metricReaderOptions => metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta)
+            .Build();
+
+        // Fill all six data slots, then exceed the limit to initialize the overflow point.
+        for (var i = 0; i < CardinalityLimit; i++)
+        {
+            counter.Add(1, new KeyValuePair<string, object?>("key", i));
+        }
+
+        counter.Add(1, new KeyValuePair<string, object?>("key", CardinalityLimit));
+
+        // First collect exports everything; second collect reclaims all six data
+        // slots (the overflow point in slot 1 is never reclaimed).
+        Assert.True(meterProvider.ForceFlush());
+        Assert.True(meterProvider.ForceFlush());
+
+        var store = exportedItems[0].AggregatorStore;
+        Assert.Empty(store.TagsToMetricPointIndexDictionaryDelta!);
+
+        counter.Add(100, new KeyValuePair<string, object?>("key", 100));
+
+        // Read the slot before the next collect, which reclaims the new point too.
+        var slot = Assert.Single(store.TagsToMetricPointIndexDictionaryDelta!.Values).Index;
+        Assert.NotEqual(2, slot);
+
+        exportedItems.Clear();
+        Assert.True(meterProvider.ForceFlush());
+
+        var metricPoints = new List<MetricPoint>();
+        foreach (ref readonly var mp in exportedItems[0].GetMetricPoints())
+        {
+            metricPoints.Add(mp);
+        }
+
+        Assert.Equal(100, Assert.Single(metricPoints, mp => Equals(mp.Tags.KeyAndValues[0].Value, 100)).GetSumLong());
+    }
+
+    [Fact]
+    public void ConcurrentCreationWithFreeSlotsDoesNotOverflow()
+    {
+        const int CardinalityLimit = 32;
+        const int WorkerCount = 4;
+        const int Rounds = 4_000;
+
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        using var start = new Barrier(WorkerCount + 1);
+        using var finish = new Barrier(WorkerCount + 1);
+        Counter<long>? counter = null;
+        var stop = false;
+
+        var workers = new Thread[WorkerCount];
+        for (var t = 0; t < WorkerCount; t++)
+        {
+            var value = 100 + t;
+            workers[t] = new Thread(() =>
+            {
+                try
+                {
+                    while (true)
+                    {
+                        start.SignalAndWait(cancellationToken);
+                        if (stop)
+                        {
+                            return;
+                        }
+
+                        counter!.Add(1, new KeyValuePair<string, object?>("key", value));
+                        finish.SignalAndWait(cancellationToken);
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    // Ignore
+                }
+            });
+            workers[t].Start();
+        }
+
+        var overflowRounds = 0;
+        var overflowSum = 0L;
+
+        try
+        {
+            for (var round = 0; round < Rounds; round++)
+            {
+                var exportedItems = new List<Metric>();
+
+                using var meter = new Meter(Utils.GetCurrentMethodName() + round);
+                counter = meter.CreateCounter<long>("counter");
+
+                using var meterProvider = Sdk.CreateMeterProviderBuilder()
+                    .AddMeter(meter.Name)
+                    .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = CardinalityLimit })
+                    .AddInMemoryExporter(exportedItems, metricReaderOptions => metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta)
+                    .Build();
+
+                // Occupy half the data slots, leaving the other half free but forcing the
+                // strided allocator's candidate scan on every subsequent creation.
+                for (var i = 0; i < CardinalityLimit / 2; i++)
+                {
+                    counter.Add(1, new KeyValuePair<string, object?>("key", i));
+                }
+
+                start.SignalAndWait(cancellationToken);
+                finish.SignalAndWait(cancellationToken);
+
+                Assert.True(meterProvider.ForceFlush());
+
+                foreach (ref readonly var point in exportedItems[0].GetMetricPoints())
+                {
+                    if (point.Tags.Count != 0 && point.Tags.KeyAndValues[0].Key == "otel.metric.overflow")
+                    {
+                        overflowRounds++;
+                        overflowSum += point.GetSumLong();
+                    }
+                }
+            }
+        }
+        finally
+        {
+            stop = true;
+
+            try
+            {
+                start.SignalAndWait(cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                // Ignore
+            }
+
+            foreach (var worker in workers)
+            {
+                worker.Join();
+            }
+        }
+
+        Assert.True(
+            overflowRounds == 0,
+            $"Overflow appeared in {overflowRounds} of {Rounds} rounds, with {overflowSum} measurement(s), despite every round staying below the cardinality limit of {CardinalityLimit}.");
+    }
+
+    [Theory]
+    [InlineData(2, false)]
+    [InlineData(3, false)]
+    [InlineData(2, true)]
+    [InlineData(3, true)]
+    public void ReentrantTagHashingDoesNotLoseTheOuterMeasurement(int callbackHashOrdinal, bool sameSeries)
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName() + callbackHashOrdinal + sameSeries);
+        var counter = meter.CreateCounter<long>("counter");
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = 1 })
+            .AddInMemoryExporter(exportedItems, metricReaderOptions => metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta)
+            .Build();
+
+        var tagValue = new ReentrantTagValue(counter, callbackHashOrdinal, sameSeries);
+        counter.Add(1, new KeyValuePair<string, object?>("key", tagValue));
+
+        Assert.True(meterProvider.ForceFlush());
+
+        long exportedSum = 0;
+        foreach (ref readonly var point in exportedItems[0].GetMetricPoints())
+        {
+            exportedSum += point.GetSumLong();
+        }
+
+        var expectedSum = 1 + tagValue.NestedMeasurements;
+        Assert.True(
+            exportedSum == expectedSum,
+            $"Expected {expectedSum} recorded measurement(s), exported {exportedSum}; {tagValue.NestedMeasurements} were recorded from GetHashCode.");
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ReentrantTagHashingWithMultipleTagsDoesNotLoseTheOuterMeasurement(bool sameSeries)
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName() + sameSeries);
+        var counter = meter.CreateCounter<long>("counter");
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = 1 })
+            .AddInMemoryExporter(exportedItems, metricReaderOptions => metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta)
+            .Build();
+
+        // Hashing for the multi-tag path happens one call later on .NET 9+, which also
+        // hashes the tags for the alternate span-based lookup before falling back here.
+#if NET9_0_OR_GREATER
+        const int CallbackHashOrdinal = 4;
+#else
+        const int CallbackHashOrdinal = 3;
+#endif
+        var tagValue = new ReentrantTagValue(counter, CallbackHashOrdinal, sameSeries, tagCount: 2);
+        counter.Add(
+            1,
+            new KeyValuePair<string, object?>("key", tagValue),
+            new KeyValuePair<string, object?>("group", "fixed"));
+
+        Assert.True(meterProvider.ForceFlush());
+
+        long exportedSum = 0;
+        foreach (ref readonly var point in exportedItems[0].GetMetricPoints())
+        {
+            exportedSum += point.GetSumLong();
+        }
+
+        Assert.Equal(1, tagValue.NestedMeasurements);
+        Assert.True(exportedSum == 2, $"Expected 2 recorded measurements, exported {exportedSum} with two tags.");
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    public void TagHashDoesNotInvertTheCallerAndMetricCreationLocks(int tagCount)
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var callerGate = new object();
+        using var gateHeld = new ManualResetEventSlim();
+        using var hashRequested = new ManualResetEventSlim();
+        using var firstWriterDone = new ManualResetEventSlim();
+        var errors = new ConcurrentQueue<Exception>();
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName() + tagCount);
+        var counter = meter.CreateCounter<long>("counter");
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = 2 })
+            .AddInMemoryExporter(exportedItems, metricReaderOptions => metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta)
+            .Build();
+
+        // Hashing for the multi-tag path happens one call later on .NET 9+, which also
+        // hashes the tags for the alternate span-based lookup before falling back here.
+#if NET9_0_OR_GREATER
+        var blockingHashOrdinal = tagCount == 1 ? 3 : 4;
+#else
+        var blockingHashOrdinal = tagCount == 1 ? 2 : 3;
+#endif
+        var tagValue = new GateHashedValue(callerGate, hashRequested, blockingHashOrdinal);
+
+        void Record(object value)
+        {
+            var tag = new KeyValuePair<string, object?>("key", value);
+            if (tagCount == 1)
+            {
+                counter.Add(1, tag);
+            }
+            else
+            {
+                counter.Add(1, tag, new KeyValuePair<string, object?>("group", "fixed"));
+            }
+        }
+
+        var caller = new Thread(() =>
+        {
+            try
+            {
+                lock (callerGate)
+                {
+                    gateHeld.Set();
+
+                    // Also allow an implementation that avoids the extra hash call entirely.
+                    var signaled = WaitHandle.WaitAny(
+                        [hashRequested.WaitHandle, firstWriterDone.WaitHandle, cancellationToken.WaitHandle],
+                        TimeSpan.FromSeconds(10));
+                    if (signaled == WaitHandle.WaitTimeout)
+                    {
+                        throw new TimeoutException("Neither hashing nor the first recording completed.");
+                    }
+
+                    cancellationToken.ThrowIfCancellationRequested();
+                    Record("other");
+                }
+            }
+            catch (Exception ex)
+            {
+                errors.Enqueue(ex);
+            }
+        })
+        { IsBackground = true };
+
+        var writer = new Thread(() =>
+        {
+            try
+            {
+                if (!gateHeld.Wait(TimeSpan.FromSeconds(10), cancellationToken))
+                {
+                    throw new TimeoutException("The caller did not acquire its gate.");
+                }
+
+                Record(tagValue);
+            }
+            catch (Exception ex)
+            {
+                errors.Enqueue(ex);
+            }
+            finally
+            {
+                firstWriterDone.Set();
+            }
+        })
+        { IsBackground = true };
+
+        caller.Start();
+        writer.Start();
+        var writerJoined = writer.Join(TimeSpan.FromSeconds(10));
+        var callerJoined = caller.Join(TimeSpan.FromSeconds(10));
+        Assert.True(writerJoined && callerJoined, "Both recording threads must finish.");
+        Assert.Empty(errors);
+        Assert.True(meterProvider.ForceFlush());
+
+        long exportedSum = 0;
+        foreach (ref readonly var point in exportedItems[0].GetMetricPoints())
+        {
+            exportedSum += point.GetSumLong();
+        }
+
+        Assert.Equal(2, exportedSum);
+        Assert.False(
+            tagValue.LockTimedOut,
+            "Hashing could not acquire the caller gate while its owner was recording. An unbounded lock in GetHashCode would deadlock these recording threads.");
+    }
+
     private static KeyValuePair<string, object?>[] CreateCollidingTags(
         int tagCount,
         string value,
@@ -414,6 +1150,63 @@ public class MetricPointReclaimTests
                     new CollidingTagValue(value, blockLookup, blockComparison: false, lookupBlocked, continueLookup)),
                 tagA,
             ];
+    }
+
+    private sealed class GateHashedValue(object callerGate, ManualResetEventSlim hashRequested, int blockingHashOrdinal)
+    {
+        private int hashCalls;
+
+        public bool LockTimedOut { get; private set; }
+
+        public override int GetHashCode()
+        {
+            if (++this.hashCalls == blockingHashOrdinal)
+            {
+                hashRequested.Set();
+
+                // Bound the lock attempt so that detecting the cycle cannot hang the test host.
+                if (Monitor.TryEnter(callerGate, TimeSpan.FromSeconds(2)))
+                {
+                    Monitor.Exit(callerGate);
+                }
+                else
+                {
+                    this.LockTimedOut = true;
+                }
+            }
+
+            return 7;
+        }
+
+        public override string ToString() => "outer";
+    }
+
+    private sealed class ReentrantTagValue(Counter<long> counter, int callbackHashOrdinal, bool sameSeries, int tagCount = 1)
+    {
+        private int hashCalls;
+
+        public int NestedMeasurements { get; private set; }
+
+        public override int GetHashCode()
+        {
+            if (++this.hashCalls == callbackHashOrdinal)
+            {
+                this.NestedMeasurements++;
+                var tag = new KeyValuePair<string, object?>("key", sameSeries ? this : "nested");
+                if (tagCount == 1)
+                {
+                    counter.Add(1, tag);
+                }
+                else
+                {
+                    counter.Add(1, tag, new KeyValuePair<string, object?>("group", "fixed"));
+                }
+            }
+
+            return 7;
+        }
+
+        public override string ToString() => "outer";
     }
 
     private sealed class ThreadArguments
@@ -449,6 +1242,32 @@ public class MetricPointReclaimTests
         }
 
         public override int GetHashCode() => 0;
+    }
+
+    private sealed class BlockingReservoir(bool block, ManualResetEventSlim collecting, ManualResetEventSlim resume) : FixedSizeExemplarReservoir(1)
+    {
+        private int collections;
+
+        public override void Offer(in ExemplarMeasurement<long> measurement)
+        {
+        }
+
+        public override void Offer(in ExemplarMeasurement<double> measurement)
+        {
+        }
+
+        protected override void OnCollected()
+        {
+            if (block && Interlocked.Increment(ref this.collections) == 1)
+            {
+                collecting.Set();
+
+                if (!resume.Wait(TimeSpan.FromSeconds(10)))
+                {
+                    throw new TimeoutException("The test did not resume collection.");
+                }
+            }
+        }
     }
 
     private sealed class SumCapturingExporter : BaseExporter<Metric>
