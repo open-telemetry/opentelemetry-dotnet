@@ -6,21 +6,6 @@ using BenchmarkDotNet.Attributes;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 
-/*
-BenchmarkDotNet v0.13.10, Windows 11 (10.0.23424.1000)
-Intel Core i7-9700 CPU 3.00GHz, 1 CPU, 8 logical and 8 physical cores
-.NET SDK 8.0.100
-  [Host]     : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
-  DefaultJob : .NET 8.0.0 (8.0.23.53103), X64 RyuJIT AVX2
-
-
-| Method                        | Mean     | Error   | StdDev  | Gen0   | Allocated |
-|------------------------------ |---------:|--------:|--------:|-------:|----------:|
-| SamplerNotModifyingTraceState | 293.3 ns | 3.55 ns | 3.15 ns | 0.0520 |     328 B |
-| SamplerModifyingTraceState    | 289.4 ns | 5.64 ns | 6.27 ns | 0.0520 |     328 B |
-| SamplerAppendingTraceState    | 312.7 ns | 6.07 ns | 8.10 ns | 0.0610 |     384 B |
-*/
-
 namespace Benchmarks.Trace;
 
 #pragma warning disable CA1001 // Types that own disposable fields should be disposable - handled by GlobalCleanup
@@ -34,6 +19,8 @@ public class SamplerBenchmarks
     private TracerProvider? tracerProviderNotModifyTracestate;
     private TracerProvider? tracerProviderModifyTracestate;
     private TracerProvider? tracerProviderAppendTracestate;
+    private TraceIdRatioBasedSampler? ratioBasedSampler;
+    private SamplingParameters samplingParameters;
 
     [GlobalSetup]
     public void Setup()
@@ -42,6 +29,14 @@ public class SamplerBenchmarks
         this.sourceModifyTracestate = new("SamplerModifyingTraceState");
         this.sourceAppendTracestate = new("SamplerAppendingTraceState");
         this.parentContext = new ActivityContext(ActivityTraceId.CreateRandom(), ActivitySpanId.CreateRandom(), ActivityTraceFlags.Recorded, "a=b", true);
+        this.ratioBasedSampler = new TraceIdRatioBasedSampler(0.5);
+        this.samplingParameters = new SamplingParameters(
+            default,
+            ActivityTraceId.CreateFromString("0af7651916cd43dd8448eb211c80319c".AsSpan()),
+            "Benchmark",
+            ActivityKind.Server,
+            null,
+            null);
 
         var testSamplerNotModifyTracestate = new TestSampler
         {
@@ -95,6 +90,10 @@ public class SamplerBenchmarks
     }
 
     [Benchmark]
+    public SamplingResult TraceIdRatioBasedDecision()
+        => this.ratioBasedSampler!.ShouldSample(in this.samplingParameters);
+
+    [Benchmark]
     public void SamplerNotModifyingTraceState()
     {
         using var activity = this.sourceNotModifyTracestate!.StartActivity("Benchmark", ActivityKind.Server, this.parentContext);
@@ -117,8 +116,6 @@ public class SamplerBenchmarks
         public Func<SamplingParameters, SamplingResult>? SamplingAction { get; set; }
 
         public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
-        {
-            return this.SamplingAction?.Invoke(samplingParameters) ?? new SamplingResult(SamplingDecision.RecordAndSample);
-        }
+            => this.SamplingAction?.Invoke(samplingParameters) ?? new SamplingResult(SamplingDecision.RecordAndSample);
     }
 }
