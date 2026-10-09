@@ -1,5 +1,6 @@
 **/.classpath
 **/.dockerignore
+**/.dotnet
 **/.env
 **/.git
 **/.gitignore
@@ -13,6 +14,7 @@
 **/*.jfm
 **/docker-compose*
 **/Dockerfile*
+**/artifacts
 **/bin
 **/obj
 **/*.yaml

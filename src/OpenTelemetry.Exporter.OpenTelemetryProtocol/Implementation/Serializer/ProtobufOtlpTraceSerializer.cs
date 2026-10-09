@@ -159,7 +159,8 @@ internal static class ProtobufOtlpTraceSerializer
 
         if (activitySource.Tags != null)
         {
-            var maxAttributeCount = sdkLimitOptions.SpanAttributeCountLimit ?? int.MaxValue;
+            // Scope attributes use the general limits, not the span limits.
+            var maxAttributeCount = sdkLimitOptions.AttributeCountLimit ?? int.MaxValue;
             var maxAttributeValueLength = sdkLimitOptions.AttributeValueLengthLimit ?? int.MaxValue;
             var otlpTagWriterState = new ProtobufOtlpTagWriter.OtlpTagWriterState
             {

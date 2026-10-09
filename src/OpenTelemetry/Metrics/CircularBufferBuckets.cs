@@ -280,7 +280,7 @@ internal sealed class CircularBufferBuckets
 
     internal void Copy(long[] dst)
     {
-        Debug.Assert(dst.Length == this.Capacity, "The length of the destination array must equal the capacity.");
+        Debug.Assert(dst.Length >= this.Size, "The length of the destination array must be at least the size.");
 
         if (this.trait != null)
         {
