@@ -395,6 +395,154 @@ public class MetricPointReclaimTests
         Assert.Equal(Interlocked.Read(ref recordedSum), Interlocked.Read(ref exportedSum));
     }
 
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    [InlineData(5)]
+    [InlineData(8)]
+    [InlineData(9)]
+    [InlineData(16)]
+    [InlineData(17)]
+    public void EveryMetricPointIsCollectedAsTheStoreFillsUp(int cardinalityLimit)
+    {
+        var exportedItems = new List<Metric>();
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateCounter<long>("counter");
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = cardinalityLimit })
+            .AddInMemoryExporter(exportedItems, metricReaderOptions => metricReaderOptions.TemporalityPreference = MetricReaderTemporalityPreference.Delta)
+            .Build();
+
+        // Collect a point with every slot handed out so far, up to and including the last one. A collect only
+        // visits the slots that have been handed out, so each of them must be found whatever the limit.
+        for (var created = 1; created <= cardinalityLimit; created++)
+        {
+            for (var i = 0; i < created; i++)
+            {
+                counter.Add(1, new KeyValuePair<string, object?>("key", i));
+            }
+
+            exportedItems.Clear();
+            Assert.True(meterProvider.ForceFlush());
+
+            var sums = new Dictionary<int, long>();
+            foreach (ref readonly var mp in exportedItems.Single().GetMetricPoints())
+            {
+                sums.Add((int)mp.Tags.KeyAndValues[0].Value!, mp.GetSumLong());
+            }
+
+            Assert.Equal(created, sums.Count);
+            Assert.All(sums.Values, sum => Assert.Equal(1, sum));
+        }
+    }
+
+    [Theory]
+    [InlineData("counter-long")]
+    [InlineData("counter-double")]
+    [InlineData("histogram")]
+    [InlineData("exponential")]
+    public async Task NewSeriesDuringBoundedScanIsExportedExactlyOnceOnNextCollect(string kind)
+    {
+        using var collecting = new ManualResetEventSlim();
+        using var resume = new ManualResetEventSlim();
+        using var meter = new Meter(Utils.GetCurrentMethodName() + kind);
+        var snapshots = new List<MetricSnapshot>();
+        var reservoirs = 0;
+
+        MetricStreamConfiguration view = kind == "exponential"
+            ? new Base2ExponentialBucketHistogramConfiguration()
+            : new MetricStreamConfiguration();
+        view.CardinalityLimit = 9;
+        view.ExemplarReservoirFactory = () => new BlockingReservoir(Interlocked.Increment(ref reservoirs) == 1, collecting, resume);
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("metric", view)
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
+            .AddInMemoryExporter(snapshots, options => options.TemporalityPreference = MetricReaderTemporalityPreference.Delta)
+            .Build();
+
+        Action<int, int> record;
+        if (kind == "counter-long")
+        {
+            var counter = meter.CreateCounter<long>("metric");
+            record = (value, tag) => counter.Add(value, new KeyValuePair<string, object?>("key", tag));
+        }
+        else if (kind == "counter-double")
+        {
+            var counter = meter.CreateCounter<double>("metric");
+            record = (value, tag) => counter.Add(value, new KeyValuePair<string, object?>("key", tag));
+        }
+        else
+        {
+            var histogram = meter.CreateHistogram<int>("metric");
+            record = (value, tag) => histogram.Record(value, new KeyValuePair<string, object?>("key", tag));
+        }
+
+        record(7, 0);
+
+        using var flush = Task.Run(() => meterProvider.ForceFlush(), TestContext.Current.CancellationToken);
+
+        try
+        {
+            Assert.True(collecting.Wait(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken));
+
+            // The first data slot is already being snapshotted, so the scan bound
+            // has been captured. This new series must be outside that bound.
+            record(13, 1);
+        }
+        finally
+        {
+            resume.Set();
+        }
+
+        var completed = await Task.WhenAny(flush, Task.Delay(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken));
+        Assert.Same(flush, completed);
+        Assert.True(await flush);
+
+        var first = Assert.Single(Assert.Single(snapshots).MetricPoints);
+        Assert.Equal(0, first.Tags.KeyAndValues[0].Value);
+        Assert.Equal(7, SumOf(first, kind));
+
+        // The series created during the scan is picked up, in full, by the next collect.
+        Assert.True(meterProvider.ForceFlush());
+        Assert.Equal(2, snapshots.Count);
+
+        var second = Assert.Single(snapshots[1].MetricPoints);
+        Assert.Equal(1, second.Tags.KeyAndValues[0].Value);
+        Assert.Equal(13, SumOf(second, kind));
+
+        // Nothing is exported a second time.
+        Assert.True(meterProvider.ForceFlush());
+        Assert.Equal(2, snapshots.Count);
+
+        double total = 0;
+        foreach (var snapshot in snapshots)
+        {
+            foreach (var point in snapshot.MetricPoints)
+            {
+                total += SumOf(point, kind);
+            }
+        }
+
+        Assert.Equal(20, total);
+
+        static double SumOf(MetricPoint point, string kind)
+        {
+            return kind switch
+            {
+                "counter-long" => point.GetSumLong(),
+                "counter-double" => point.GetSumDouble(),
+                _ => point.GetHistogramSum(),
+            };
+        }
+    }
+
     [Fact]
     public void ReclaimedMetricPointsAreReusedInStridedOrder()
     {
@@ -1094,6 +1242,32 @@ public class MetricPointReclaimTests
         }
 
         public override int GetHashCode() => 0;
+    }
+
+    private sealed class BlockingReservoir(bool block, ManualResetEventSlim collecting, ManualResetEventSlim resume) : FixedSizeExemplarReservoir(1)
+    {
+        private int collections;
+
+        public override void Offer(in ExemplarMeasurement<long> measurement)
+        {
+        }
+
+        public override void Offer(in ExemplarMeasurement<double> measurement)
+        {
+        }
+
+        protected override void OnCollected()
+        {
+            if (block && Interlocked.Increment(ref this.collections) == 1)
+            {
+                collecting.Set();
+
+                if (!resume.Wait(TimeSpan.FromSeconds(10)))
+                {
+                    throw new TimeoutException("The test did not resume collection.");
+                }
+            }
+        }
     }
 
     private sealed class SumCapturingExporter : BaseExporter<Metric>
