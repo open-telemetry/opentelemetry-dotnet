@@ -17,7 +17,7 @@
     configuring and building OpenTelemetry providers.
   - OpenTelemetry - contains the main implementation of the OpenTelemetry SDK,
     including the core tracing, metrics, and logging functionality.
-  - OpenTelemetry.Extensions.Hosting - contains extension methods and helpers fo
+  - OpenTelemetry.Extensions.Hosting - contains extension methods and helpers for
     integrating OpenTelemetry with .NET hosting infrastructure, such as ASP.NET
     Core applications.
   - OpenTelemetry.Exporter.OpenTelemetryProtocol - contains the implementation of
