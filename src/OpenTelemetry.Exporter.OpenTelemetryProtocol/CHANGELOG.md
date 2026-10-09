@@ -31,6 +31,11 @@ Notes](../../RELEASENOTES.md).
   `ScopeLogs.schema_url` in exported OTLP requests.
   ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
 
+* **Breaking:** `byte[]` attributes longer than the configured attribute value
+  length limit (for example `OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT`) are now
+  truncated to that many bytes instead of being exported in full.
+  ([#7893](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7893))
+
 * **Breaking:** `OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT` and
   `OTEL_LINK_ATTRIBUTE_COUNT_LIMIT` now fall back to
   `OTEL_ATTRIBUTE_COUNT_LIMIT` (then the default of 128) when not set, instead

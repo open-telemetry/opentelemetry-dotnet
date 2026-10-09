@@ -1,6 +1,10 @@
 {
   "sdk": {
     "allowPrerelease": false,
+    "paths": [
+      ".dotnet",
+      "$host$"
+    ],
     "version": "10.0.401"
   }
 }

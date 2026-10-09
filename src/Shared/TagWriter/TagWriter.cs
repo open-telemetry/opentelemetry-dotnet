@@ -102,9 +102,18 @@ internal abstract class TagWriter<TTagState, TArrayState>
                 return this.TryWriteKvListTagWithinDepthLimit(ref state, key, value, kvList, tagValueMaxLength);
 
             case Array array:
-                if (value.GetType() == typeof(byte[]) && this.TryWriteByteArrayTag(ref state, key, ((byte[])value).AsSpan()))
+                if (value.GetType() == typeof(byte[]))
                 {
-                    return true;
+                    var bytes = ((byte[])value).AsSpan();
+                    if (tagValueMaxLength is { } byteLimit && bytes.Length > byteLimit)
+                    {
+                        bytes = bytes.Slice(0, byteLimit);
+                    }
+
+                    if (this.TryWriteByteArrayTag(ref state, key, bytes))
+                    {
+                        return true;
+                    }
                 }
 
                 try
