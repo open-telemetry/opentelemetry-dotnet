@@ -679,6 +679,67 @@ public sealed class OtlpTraceExporterTests : IDisposable
     }
 
     [Fact]
+    public void SpanAttributeCountLimitDoesNotLimitEventAndLinkAttributes()
+    {
+        var sdkOptions = new SdkLimitOptions()
+        {
+            SpanAttributeCountLimit = 1,
+        };
+
+        ActivityTagsCollection tags =
+        [
+            new("Tag1", "1"),
+            new("Tag2", "2"),
+            new("Tag3", "3"),
+        ];
+
+        ActivityLink[] links = [new(default, tags)];
+
+        using var activitySource = new ActivitySource(nameof(this.SpanAttributeCountLimitDoesNotLimitEventAndLinkAttributes));
+        using var activity = activitySource.StartActivity("root", ActivityKind.Server, default(ActivityContext), tags, links);
+
+        Assert.NotNull(activity);
+        activity.AddEvent(new ActivityEvent("Event", DateTime.UtcNow, tags));
+
+        var otlpSpan = ToOtlpSpan(sdkOptions, activity);
+
+        Assert.NotNull(otlpSpan);
+        var spanAttribute = Assert.Single(otlpSpan.Attributes);
+        Assert.Equal("Tag1", spanAttribute.Key);
+        Assert.Equal("1", spanAttribute.Value.StringValue);
+        Assert.Equal(2u, otlpSpan.DroppedAttributesCount);
+
+        var otlpEvent = Assert.Single(otlpSpan.Events);
+        Assert.Equal(["Tag1", "Tag2", "Tag3"], otlpEvent.Attributes.Select(a => a.Key));
+        Assert.Equal(0u, otlpEvent.DroppedAttributesCount);
+
+        var otlpLink = Assert.Single(otlpSpan.Links);
+        Assert.Equal(["Tag1", "Tag2", "Tag3"], otlpLink.Attributes.Select(a => a.Key));
+        Assert.Equal(0u, otlpLink.DroppedAttributesCount);
+    }
+
+    [Fact]
+    public void ByteArraySpanAttributeIsTruncatedToValueLengthLimit()
+    {
+        var sdkOptions = new SdkLimitOptions() { AttributeValueLengthLimit = 4 };
+
+        using var activitySource = new ActivitySource(nameof(this.ByteArraySpanAttributeIsTruncatedToValueLengthLimit));
+        using var activity = activitySource.StartActivity("root");
+
+        Assert.NotNull(activity);
+        activity.SetTag("Over", new byte[] { 1, 2, 3, 4, 5, 6 });
+        activity.SetTag("At", new byte[] { 1, 2, 3, 4 });
+        activity.SetTag("Under", new byte[] { 1, 2 });
+
+        var otlpSpan = ToOtlpSpan(sdkOptions, activity);
+
+        Assert.NotNull(otlpSpan);
+        Assert.Equal([1, 2, 3, 4], otlpSpan.Attributes.Single(a => a.Key == "Over").Value.BytesValue.ToByteArray());
+        Assert.Equal([1, 2, 3, 4], otlpSpan.Attributes.Single(a => a.Key == "At").Value.BytesValue.ToByteArray());
+        Assert.Equal([1, 2], otlpSpan.Attributes.Single(a => a.Key == "Under").Value.BytesValue.ToByteArray());
+    }
+
+    [Fact]
     public void SpanAttributeValueLengthLimitOverridesAttributeValueLengthLimit()
     {
         var sdkOptions = new SdkLimitOptions()
