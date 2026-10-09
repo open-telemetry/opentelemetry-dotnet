@@ -170,12 +170,11 @@ public class FileBlobProvider : PersistentBlobProvider, IDisposable
         {
             if (!Directory.Exists(this.DirectoryPath))
             {
-                Directory.CreateDirectory(this.DirectoryPath);
+                PersistentStorageHelper.CreateSubdirectory(this.DirectoryPath);
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            PersistentStorageEventSource.Log.PersistentStorageException(nameof(FileBlobProvider), $"Error creating directory {this.DirectoryPath}", ex);
             return;
         }
 
