@@ -54,4 +54,4 @@ Notes](../../RELEASENOTES.md).
   define is rejected. Limits YAML collection nesting to depth 128, including
   paths through aliases, with the document root at depth zero. Rejects
   unresolved mapping-key aliases during parsing.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7904](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7904))
