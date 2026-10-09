@@ -328,6 +328,47 @@ public class BaggagePropagatorTests
         Assert.Equal($"{prefix} {suffix}", baggage.Value);
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(127)]
+    [InlineData(128)]
+    [InlineData(129)]
+    [InlineData(255)]
+    [InlineData(256)]
+    [InlineData(257)]
+    [InlineData(1024)]
+    public void ValidatePercentEncodedValuesWithLongLiteralSegments(int literalLength)
+    {
+        var prefix = new string('a', literalLength);
+        var suffix = new string('z', literalLength);
+        (string Encoded, string Decoded)[] cases =
+        [
+            ("%20", " "),
+            ("%C3%A9", "\u00E9"),
+            ("%F0%9F%98%80", "\U0001F600"),
+            ("%E2%82", "\uFFFD"),
+            ("%C0%AF", "\uFFFD\uFFFD"),
+            ("%E2x%82%AC", "\uFFFDx\uFFFD\uFFFD"),
+            ("%", "\uFFFD"),
+            ("%2", "\uFFFD2"),
+            ("%%20", "\uFFFD "),
+        ];
+
+        foreach (var (encoded, decoded) in cases)
+        {
+            var carrier = new Dictionary<string, string>
+            {
+                [BaggagePropagator.BaggageHeaderName] = $"key={prefix}{encoded}{suffix}",
+            };
+
+            var context = this.baggage.Extract(default, carrier, Getter);
+            var entry = Assert.Single(context.Baggage.GetBaggage());
+
+            Assert.Equal("key", entry.Key);
+            Assert.Equal($"{prefix}{decoded}{suffix}", entry.Value);
+        }
+    }
+
     [Fact]
     public void ValidateInjectionOfSixtyFourEntries()
     {
@@ -762,9 +803,8 @@ public class BaggagePropagatorTests
         };
 
         var propagationContext = this.baggage.Extract(default, carrier, Getter);
-        Assert.Single(propagationContext.Baggage.GetBaggage());
+        var entry = Assert.Single(propagationContext.Baggage.GetBaggage());
 
-        var entry = propagationContext.Baggage.GetBaggage().First();
         Assert.Equal("key", entry.Key);
         Assert.Equal("a+b c", entry.Value); // '+' stays as '+', not ' '
     }
@@ -794,8 +834,8 @@ public class BaggagePropagatorTests
         };
 
         var propagationContext = this.baggage.Extract(default, carrier, Getter);
-        Assert.Single(propagationContext.Baggage.GetBaggage());
-        Assert.Equal(key, propagationContext.Baggage.GetBaggage().First().Key);
+        var entry = Assert.Single(propagationContext.Baggage.GetBaggage());
+        Assert.Equal(key, entry.Key);
     }
 
     [Theory]
@@ -827,8 +867,8 @@ public class BaggagePropagatorTests
         };
 
         var propagationContext = this.baggage.Extract(default, carrier, Getter);
-        Assert.Single(propagationContext.Baggage.GetBaggage());
-        Assert.Equal("valid-key", propagationContext.Baggage.GetBaggage().First().Key);
+        var entry = Assert.Single(propagationContext.Baggage.GetBaggage());
+        Assert.Equal("valid-key", entry.Key);
     }
 
     [Fact]
