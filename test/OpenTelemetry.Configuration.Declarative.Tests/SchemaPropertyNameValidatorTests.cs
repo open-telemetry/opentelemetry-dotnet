@@ -23,9 +23,9 @@ public sealed class SchemaPropertyNameValidatorTests
             """
             file_format: "1.2"
             tracer_provider:
-              procesors: []
+              processor: []
             """,
-            "tracer_provider.procesors@3:3"
+            "tracer_provider.processor@3:3"
         },
         {
             """
@@ -35,9 +35,9 @@ public sealed class SchemaPropertyNameValidatorTests
                 - batch:
                     exporter:
                       otlp_http:
-                        endpont: x
+                        address: x
             """,
-            "tracer_provider.processors[0].batch.exporter.otlp_http.endpont@7:13"
+            "tracer_provider.processors[0].batch.exporter.otlp_http.address@7:13"
         },
         {
             """
@@ -85,9 +85,9 @@ public sealed class SchemaPropertyNameValidatorTests
               foo: 1
               bar: 2
             tracer_provider:
-              procesors: []
+              processor: []
             """,
-            "resource.foo@3:3;resource.bar@4:3;tracer_provider.procesors@6:3"
+            "resource.foo@3:3;resource.bar@4:3;tracer_provider.processor@6:3"
         },
         {
             """
@@ -507,7 +507,7 @@ public sealed class SchemaPropertyNameValidatorTests
             .AppendLine("    - batch: &shared")
             .AppendLine("        exporter:")
             .AppendLine("          otlp_http:")
-            .AppendLine("            endpont: x");
+            .AppendLine("            address: x");
 
         for (var i = 1; i < copies; i++)
         {
@@ -520,7 +520,7 @@ public sealed class SchemaPropertyNameValidatorTests
 
         Assert.DoesNotContain("more undefined", exception.Message, StringComparison.Ordinal);
         Assert.Equal(
-            ["tracer_provider.processors[0].batch.exporter.otlp_http.endpont@7:13"],
+            ["tracer_provider.processors[0].batch.exporter.otlp_http.address@7:13"],
             UndefinedKeys(listener));
     }
 
