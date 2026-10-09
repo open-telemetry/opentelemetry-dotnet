@@ -29,7 +29,9 @@ public sealed class ExponentialHistogramBuckets
 
     internal void SnapshotBuckets(CircularBufferBuckets buckets)
     {
-        if (this.buckets.Length != buckets.Capacity)
+        // Most histograms never record a value in one of the two bucket ranges (typically the
+        // negative one), so only allocate the snapshot array once there is something to copy.
+        if (this.buckets.Length != buckets.Capacity && buckets.Size > 0)
         {
             this.buckets = new long[buckets.Capacity];
         }
