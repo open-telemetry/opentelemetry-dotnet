@@ -454,6 +454,21 @@ public class TraceContextPropagatorTests
         Assert.Equal($"{key}=1", actual);
     }
 
+    [Theory]
+    [InlineData(1)]
+    [InlineData(125)]
+    [InlineData(251)]
+    [InlineData(252)]
+    [InlineData(256)]
+    public void TryExtractTracestate_NormalizesWhitespaceAndDuplicateKeys(int valueLength)
+    {
+        var value = new string('v', valueLength);
+        var header = $" , a={value} , , a=ignored,b={value},c=3, ";
+
+        Assert.True(TraceContextPropagator.TryExtractTracestate([header], out var actual));
+        Assert.Equal($"a={value},b={value},c=3", actual);
+    }
+
     [Fact]
     public async Task Extract_DoesNotHangWhenLaterKeyAppearsInsideEarlierValue()
     {

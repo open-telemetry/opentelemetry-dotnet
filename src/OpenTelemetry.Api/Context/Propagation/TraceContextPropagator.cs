@@ -646,19 +646,26 @@ public class TraceContextPropagator : TextMapPropagator
             return true;
         }
 
-        var result = new StringBuilder(totalLength + memberCount - 1);
+        // Cap the stack usage at the W3C limit for the combined tracestate (512 characters).
+        // Longer values are not rejected here, so they are normalized on the heap instead.
+        const int StackallocCharThreshold = 512;
+
+        var resultLength = totalLength + memberCount - 1;
+        Span<char> result = resultLength <= StackallocCharThreshold
+            ? stackalloc char[resultLength]
+            : new char[resultLength];
+
+        var position = 0;
+
         for (var i = 0; i < memberCount; i++)
         {
             if (i > 0)
             {
-                result.Append(',');
+                result[position++] = ',';
             }
 
-#if NET
-            result.Append(tracestateSpan.Slice(memberStarts[i], memberLengths[i]));
-#else
-            result.Append(tracestate.Substring(memberStarts[i], memberLengths[i]));
-#endif
+            tracestateSpan.Slice(memberStarts[i], memberLengths[i]).CopyTo(result.Slice(position));
+            position += memberLengths[i];
         }
 
         tracestateResult = result.ToString();
