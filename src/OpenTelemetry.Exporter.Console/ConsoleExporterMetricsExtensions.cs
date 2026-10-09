@@ -54,6 +54,8 @@ public static class ConsoleExporterMetricsExtensions
             builder.ConfigureServices(services => services.Configure(name, configureExporter));
         }
 
+        builder.ConfigureServices(services => services.AddConsoleExporterServices());
+
         return builder.AddReader(sp =>
         {
             return BuildConsoleExporterMetricReader(
@@ -92,6 +94,8 @@ public static class ConsoleExporterMetricsExtensions
         Guard.ThrowIfNull(builder);
 
         name ??= Options.DefaultName;
+
+        builder.ConfigureServices(services => services.AddConsoleExporterServices());
 
         return builder.AddReader(sp =>
         {
