@@ -135,15 +135,21 @@ public class ConsoleKvListAttributeTests
     [Fact]
     public void KvListWithByteArrayValue()
     {
-        // The console exporter has no byte array representation, so a byte[] is
-        // written as a JSON array of numbers rather than being dropped.
         var kvList = new List<KeyValuePair<string, object?>>
         {
             new("bytes", new byte[] { 1, 2, 3 }),
         };
 
         Assert.True(this.tagWriter.TryTransformTag("key", kvList, out var result));
-        Assert.Equal("""{"bytes":[1,2,3]}""", result.Value);
+        Assert.Equal("""{"bytes":"AQID"}""", result.Value);
+        Assert.Empty(this.droppedTags);
+    }
+
+    [Fact]
+    public void TopLevelByteArrayValueIsBase64Encoded()
+    {
+        Assert.True(this.tagWriter.TryTransformTag("key", new byte[] { 1, 2, 3 }, out var result));
+        Assert.Equal("AQID", result.Value);
         Assert.Empty(this.droppedTags);
     }
 

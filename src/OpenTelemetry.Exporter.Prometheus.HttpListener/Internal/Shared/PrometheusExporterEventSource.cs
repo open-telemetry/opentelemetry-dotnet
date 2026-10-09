@@ -111,4 +111,8 @@ internal sealed class PrometheusExporterEventSource : EventSource, IConfiguratio
     [Event(12, Message = "Failed to collect metrics for a scrape request; the scrape endpoint may be under heavy load.", Level = EventLevel.Error)]
     public void CollectFailed()
         => this.WriteEvent(12);
+
+    [Event(13, Message = "Unsupported attribute type '{0}' for '{1}'. Attribute will not be exported.", Level = EventLevel.Warning)]
+    public void UnsupportedAttributeType(string type, string key)
+        => this.WriteEvent(13, type, key);
 }
