@@ -49,6 +49,10 @@ Notes](../../RELEASENOTES.md).
   `OTEL_ATTRIBUTE_COUNT_LIMIT` are affected.
   ([#7902](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7902))
 
+* Exponential histogram bucket counts are now serialized in the packed
+  encoding, which reduces the size of the exported payload.
+  ([#7897](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7897))
+
 ## 1.19.1
 
 Released 2026-Sep-21

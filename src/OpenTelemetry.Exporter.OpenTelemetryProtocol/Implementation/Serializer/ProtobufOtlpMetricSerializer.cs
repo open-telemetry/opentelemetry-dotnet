@@ -396,9 +396,27 @@ internal static class ProtobufOtlpMetricSerializer
 
                         writePosition = ProtobufSerializer.WriteSInt32WithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogramDataPoint_Buckets_Offset, exponentialHistogramData.PositiveBuckets.Offset);
 
+                        // The bucket counts are a repeated scalar field, which proto3 packs into a single
+                        // length-delimited value by default instead of repeating the tag for every bucket.
+                        // Most data points have few populated buckets, so the length prefix is reserved as
+                        // a single byte rather than padded out to four.
+                        var bucketCountsLengthPosition = -1;
+
                         foreach (var bucketCount in exponentialHistogramData.PositiveBuckets)
                         {
-                            writePosition = ProtobufSerializer.WriteInt64WithTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogramDataPoint_Buckets_Bucket_Counts, (ulong)bucketCount);
+                            if (bucketCountsLengthPosition < 0)
+                            {
+                                writePosition = ProtobufSerializer.WriteTag(buffer, writePosition, ProtobufOtlpMetricFieldNumberConstants.ExponentialHistogramDataPoint_Buckets_Bucket_Counts, ProtobufWireType.LEN);
+                                bucketCountsLengthPosition = writePosition;
+                                writePosition += ProtobufSerializer.ReserveSizeForCompactLength;
+                            }
+
+                            writePosition = ProtobufSerializer.WriteVarInt64(buffer, writePosition, (ulong)bucketCount);
+                        }
+
+                        if (bucketCountsLengthPosition >= 0)
+                        {
+                            writePosition = ProtobufSerializer.WriteCompactLength(buffer, bucketCountsLengthPosition, writePosition);
                         }
 
                         ProtobufSerializer.WriteReservedLength(buffer, positiveBucketsLengthPosition, writePosition - (positiveBucketsLengthPosition + ReserveSizeForLength));
