@@ -14,6 +14,10 @@ internal static class DoubleExtensions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static bool IsFinite(double value) =>
             !double.IsInfinity(value) && !double.IsNaN(value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static bool IsNegative(double d) =>
+            BitConverter.DoubleToInt64Bits(d) < 0;
     }
 }
 

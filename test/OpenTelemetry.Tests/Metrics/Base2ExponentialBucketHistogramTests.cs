@@ -7,13 +7,6 @@ namespace OpenTelemetry.Metrics.Tests;
 
 public class Base2ExponentialBucketHistogramTests
 {
-    private readonly ITestOutputHelper output;
-
-    public Base2ExponentialBucketHistogramTests(ITestOutputHelper output)
-    {
-        this.output = output;
-    }
-
     [Fact]
     public void ScalingFactorCalculation()
     {
@@ -359,21 +352,17 @@ public class Base2ExponentialBucketHistogramTests
         Assert.Equal(-2147, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 0000000000000000000000000000000000000000000000000010"))); // double.Epsilon * 2
         Assert.Equal(-2145, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 0000000000000000000000000000000000000000000000000011"))); // double.Epsilon * 3
         Assert.Equal(-2145, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 0000000000000000000000000000000000000000000000000100"))); // double.Epsilon * 4
-
-        // Assert.Equal(-2143, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 0000000000000000000000000000000000000000000000000101"))); // double.Epsilon * 5
+        Assert.Equal(-2144, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 0000000000000000000000000000000000000000000000000101"))); // double.Epsilon * 5
         Assert.Equal(-2143, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 0000000000000000000000000000000000000000000000000110"))); // double.Epsilon * 6
         Assert.Equal(-2143, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 0000000000000000000000000000000000000000000000000111"))); // double.Epsilon * 7
         Assert.Equal(-2143, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 0000000000000000000000000000000000000000000000001000"))); // double.Epsilon * 8
         Assert.Equal(-2049, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 0100000000000000000000000000000000000000000000000000"))); // ~5.562684646268003E-309 (2 ^ -1024)
-
-        // Assert.Equal(-2048, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 0100000000000000000000000000000000000000000000000001"))); // ~5.56268464626801E-309
+        Assert.Equal(-2048, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 0100000000000000000000000000000000000000000000000001"))); // ~5.56268464626801E-309
         Assert.Equal(-2047, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 1000000000000000000000000000000000000000000000000000"))); // ~1.1125369292536007E-308 (2 ^ -1023)
-
-        // Assert.Equal(-2046, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 1000000000000000000000000000000000000000000000000001"))); // ~1.112536929253601E-308
+        Assert.Equal(-2046, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 1000000000000000000000000000000000000000000000000001"))); // ~1.112536929253601E-308
         Assert.Equal(-2045, histogram.MapToIndex(IEEE754Double.FromString("0 00000000000 1111111111111111111111111111111111111111111111111111"))); // ~2.2250738585072009E-308 (maximum subnormal positive)
         Assert.Equal(-2045, histogram.MapToIndex(IEEE754Double.FromString("0 00000000001 0000000000000000000000000000000000000000000000000000"))); // ~2.2250738585072014E-308 (minimum normal positive, 2 ^ -1022)
-
-        // Assert.Equal(-2044, histogram.MapToIndex(IEEE754Double.FromString("0 00000000001 0000000000000000000000000000000000000000000000000001"))); // ~2.225073858507202E-308
+        Assert.Equal(-2044, histogram.MapToIndex(IEEE754Double.FromString("0 00000000001 0000000000000000000000000000000000000000000000000001"))); // ~2.225073858507202E-308
         Assert.Equal(-15, histogram.MapToIndex(IEEE754Double.FromString("0 01111111000 0000000000000000000000000000000000000000000000000000"))); // 1/128
         Assert.Equal(-13, histogram.MapToIndex(IEEE754Double.FromString("0 01111111001 0000000000000000000000000000000000000000000000000000"))); // 1/64
         Assert.Equal(-11, histogram.MapToIndex(IEEE754Double.FromString("0 01111111010 0000000000000000000000000000000000000000000000000000"))); // 1/32
@@ -394,8 +383,7 @@ public class Base2ExponentialBucketHistogramTests
         Assert.Equal(105, histogram.MapToIndex(IEEE754Double.FromString("0 10000110011 1111111111111111111111111111111111111111111111111111"))); // 9,007,199,254,740,991 (Number.MAX_SAFE_INTEGER, 2 ^ 53 - 1)
         Assert.Equal(105, histogram.MapToIndex(IEEE754Double.FromString("0 10000110100 0000000000000000000000000000000000000000000000000000"))); // 9,007,199,254,740,992 (Number.MAX_SAFE_INTEGER + 1, 2 ^ 53)
         Assert.Equal(2045, histogram.MapToIndex(IEEE754Double.FromString("0 11111111110 0000000000000000000000000000000000000000000000000000"))); // ~8.98846567431158E+307 (2 ^ 1023)
-
-        // Assert.Equal(2046, histogram.MapToIndex(IEEE754Double.FromString("0 11111111110 0000000000000000000000000000000000000000000000000001"))); // ~8.988465674311582E+307 (2 ^ 1023 + 1)
+        Assert.Equal(2046, histogram.MapToIndex(IEEE754Double.FromString("0 11111111110 0000000000000000000000000000000000000000000000000001"))); // ~8.988465674311582E+307 (2 ^ 1023 + 1)
         Assert.Equal(2047, histogram.MapToIndex(IEEE754Double.FromString("0 11111111110 1111111111111111111111111111111111111111111111111110"))); // ~1.7976931348623155E+308 (2 ^ 1024 - 2)
         Assert.Equal(2047, histogram.MapToIndex(IEEE754Double.FromString("0 11111111110 1111111111111111111111111111111111111111111111111111"))); // ~1.7976931348623157E+308 (maximum normal positive, double.MaxValue, 2 ^ 1024 - 1)
     }
@@ -462,106 +450,179 @@ public class Base2ExponentialBucketHistogramTests
         Assert.Equal(2, histogram.ZeroCount);
     }
 
-    [Fact]
-    public void ScaleOneIndexesWithPowerOfTwoLowerBound()
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(5)]
+    [InlineData(8)]
+    [InlineData(10)]
+    public void PositiveScaleIndexesAreExactAtPowerOfTwoLowerBounds(int scale)
     {
         /*
-        The range of indexes tested is fixed to evaluate values recorded
-        within [2^-25, 2^25] or approximately [0.00000002980232239, 33554432].
+        Buckets are lower bound exclusive, so MapToIndex(LowerBoundOfBucketN) = N - 1 and
+        MapToIndex(BitIncrement(LowerBoundOfBucketN)) = N, where BitIncrement produces the
+        next representable value. Lower bounds that are exact powers of two are tested for
+        values between 2^-25 and 2^25, or approximately [0.00000002980232239, 33554432].
 
-        For perspective, assume the unit of values recorded is seconds then this
-        test represents the imprecision of MapToIndex for values recorded between
-        approximately 29.80 nanoseconds and 1.06 years.
+        For perspective, assume the unit of values recorded is seconds then this test covers
+        values recorded between approximately 29.80 nanoseconds and 1.06 years.
 
-        The output of this test is as follows:
-
-            Scale: 1
-            Indexes per power of 2: 2
-            Index range: [-50, 50]
-            Value range: [2.9802322387695312E-08, 33554432]
-            Successes: 18
-            Failures: 33
-            Average number of values near a bucket boundary that are off by one: 2.878787878787879
-            Average range of values near a bucket boundary that are off by one: 3.0880480139955346E-09
-
-        That is, there are ~2.89 values near each bucket boundary tested that
-        are mapped to an index off by one. The range of these incorrectly mapped
-        values, assuming seconds as the unit, is ~3.09 nanoseconds.
+        These assertions only hold because the lookup table used for positive scales up to
+        PositiveScaleIndexTable.MaxScale is exact. The logarithm method used for larger
+        scales is imprecise near bucket boundaries, which IndexLookupScaleTwenty allows for.
         */
+        Assert.True(scale <= Base2ExponentialBucketHistogram.PositiveScaleIndexTable.MaxScale);
 
-        // This test only tests scale 1, but it can be adjusted to test any
-        // positive scale by changing the scale of the histogram. The output
-        // and results are identical for all positive scales.
-        var scale = 1;
         var histogram = new Base2ExponentialBucketHistogram(scale: scale);
-
-        // These are used to capture stats for an analysis for where MapToIndex is off by one.
-        var successes = 0;
-        var failures = 0;
-        var diffs = new List<double>();
-        var numValuesOffByOne = new List<int>();
-
-        // Only indexes with a lower bound that is an exact power of two are tested.
         var indexesPerPowerOf2 = 1 << scale;
-        var exp = -25;
 
-        var index = exp * indexesPerPowerOf2;
-        var endIndex = Math.Abs(index);
-        var lowerBound = Math.Pow(2, exp);
-
-        this.output.WriteLine(string.Empty);
-        this.output.WriteLine($"Scale: {scale}");
-        this.output.WriteLine($"Indexes per power of 2: {indexesPerPowerOf2}");
-        this.output.WriteLine($"Index range: [{index}, {endIndex}]");
-        this.output.WriteLine($"Value range: [{lowerBound}, {Math.Pow(2, Math.Abs(exp))}]");
-
-        for (; index <= endIndex; index += indexesPerPowerOf2, lowerBound = Math.Pow(2, ++exp))
+        for (var exp = -25; exp <= 25; exp++)
         {
-            // Buckets are lower bound exclusive, therefore
-            // MapToIndex(LowerBoundOfBucketN) = IndexOfBucketN - 1.
+            var index = exp * indexesPerPowerOf2;
+            var lowerBound = Math.Pow(2, exp);
+
             Assert.Equal(index - 1, histogram.MapToIndex(lowerBound));
+            Assert.Equal(index, histogram.MapToIndex(Math.BitIncrement(lowerBound)));
+        }
+    }
 
-            // If MapToIndex was mathematically precise, the following assertion would pass.
-            // BitIncrement(lowerBound) increments lowerBound by the smallest increment possible.
-            // MapToIndex(BitIncrement(LowerBoundOfBucketN)) should equal IndexOfBucketN.
-            // However, because MapToIndex at positive scales is imprecise, the assertion can fail
-            // for values very close to a bucket boundary.
+#if NET
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    [InlineData(5)]
+    [InlineData(6)]
+    [InlineData(7)]
+    [InlineData(8)]
+    [InlineData(9)]
+    [InlineData(10)]
+    public void PositiveScaleTableBoundariesAreTight(int scale)
+    {
+        // Each boundary must be the largest double that does not exceed 2^(k / 2^scale), so the
+        // boundary itself belongs to bucket k - 1 and the next representable value to bucket k.
+        var table = Base2ExponentialBucketHistogram.PositiveScaleIndexTable.GetOrCreate(scale);
 
-            // Assert.Equal(index, histogram.MapToIndex(BitIncrement(lowerBound)));
+        Assert.NotNull(table);
+        Assert.Equal((1 << scale) + 1, table.Count);
+        Assert.Equal(1, table.GetBoundary(0));
+        Assert.Equal(2, table.GetBoundary(1 << scale));
 
-            // Knowing that MapToIndex is imprecise near bucket boundaries,
-            // the following produces an analysis of the magnitude of imprecision.
+        for (var k = 1; k < (1 << scale); k++)
+        {
+            var boundary = table.GetBoundary(k);
 
-            var incremented = Math.BitIncrement(lowerBound);
+            Assert.True(boundary > table.GetBoundary(k - 1));
+            Assert.Equal(k - 1, ExactIndex(boundary, scale));
+            Assert.Equal(k, ExactIndex(Math.BitIncrement(boundary), scale));
+        }
+    }
 
-            if (index == histogram.MapToIndex(incremented))
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    [InlineData(5)]
+    [InlineData(6)]
+    [InlineData(7)]
+    [InlineData(8)]
+    [InlineData(9)]
+    [InlineData(10)]
+    public void PositiveScaleIndexesMatchExactArithmetic(int scale)
+    {
+        var histogram = new Base2ExponentialBucketHistogram(scale: scale);
+        var indexesPerPowerOf2 = 1 << scale;
+
+        // Values on and around bucket boundaries, which the logarithm method gets wrong,
+        // including subnormal and very large values.
+        var step = Math.Max(1, indexesPerPowerOf2 / 64);
+
+        foreach (var exp in new[] { -1074, -1060, -1023, -1022, -1000, -30, -3, -1, 0, 1, 3, 30, 1000, 1023 })
+        {
+            for (var k = 0; k < indexesPerPowerOf2; k += step)
             {
-                // This is a scenario where the assertion above would have passed.
-                ++successes;
-            }
-            else
-            {
-                // This is a scenario where the assertion above would have failed.
-                ++failures;
+                var value = Math.ScaleB(Math.Pow(2, (double)k / indexesPerPowerOf2), exp);
 
-                // Count the number of values near the bucket boundary
-                // for which MapToIndex produces a result that is off by one.
-                var increments = 1;
-                while (index != histogram.MapToIndex(incremented))
+                if (!double.IsFinite(value) || value == 0)
                 {
-                    incremented = Math.BitIncrement(incremented);
-                    increments++;
+                    continue;
                 }
 
-                // Capture stats for this bucket index.
-                numValuesOffByOne.Add(increments - 1);
-                diffs.Add(incremented - lowerBound);
+                var neighbor = value;
+
+                for (var i = 0; i < 3; i++)
+                {
+                    AssertIndex(histogram, neighbor, scale);
+                    neighbor = Math.BitIncrement(neighbor);
+                }
+
+                neighbor = value;
+
+                for (var i = 0; i < 3; i++)
+                {
+                    neighbor = Math.BitDecrement(neighbor);
+                    AssertIndex(histogram, neighbor, scale);
+                }
             }
         }
 
-        this.output.WriteLine($"Successes: {successes}");
-        this.output.WriteLine($"Failures: {failures}");
-        this.output.WriteLine($"Average number of values near a bucket boundary that are off by one: {numValuesOffByOne.Average()}");
-        this.output.WriteLine($"Average range of values near a bucket boundary that are off by one: {diffs.Average()}");
+        // Values with uniformly random bit patterns, which cover every exponent.
+#pragma warning disable CA5394 // Do not use insecure randomness
+        var random = new Random(scale);
+
+        for (var i = 0; i < 2000; i++)
+        {
+            var value = BitConverter.Int64BitsToDouble(random.NextInt64() & 0x7FFFFFFFFFFFFFFFL);
+
+            if (!double.IsFinite(value) || value == 0)
+            {
+                continue;
+            }
+
+            AssertIndex(histogram, value, scale);
+        }
+#pragma warning restore CA5394 // Do not use insecure randomness
+
+        static void AssertIndex(Base2ExponentialBucketHistogram histogram, double value, int scale)
+        {
+            // Stepping below the smallest subnormal reaches zero and negative values, which are not mapped.
+            if (!double.IsFinite(value) || value <= 0)
+            {
+                return;
+            }
+
+            var expected = ExactIndex(value, scale);
+            var actual = histogram.MapToIndex(value);
+
+            Assert.True(expected == actual, $"MapToIndex({value:R}) at scale {scale} returned {actual}, expected {expected}.");
+        }
     }
+
+    /// <summary>
+    /// Computes the bucket index of a value with exact integer arithmetic. The value is
+    /// m * 2^e for an integer m, and with n = 2^scale the bucket (base^i, base^(i + 1)]
+    /// contains it when 2^i &lt; value^n &lt;= 2^(i + 1), where value^n = m^n * 2^(e * n).
+    /// </summary>
+    private static int ExactIndex(double value, int scale)
+    {
+        var bits = BitConverter.DoubleToInt64Bits(value);
+        var exponent = (int)((bits >> 52) & 0x7FF);
+        var fraction = bits & 0xFFFFFFFFFFFFFL;
+
+        var m = exponent == 0 ? fraction : fraction | (1L << 52);
+        var e = exponent == 0 ? -1074 : exponent - 1075;
+
+        var n = 1 << scale;
+        var power = System.Numerics.BigInteger.Pow(m, n);
+
+        // floor(log2(value^n)) = floor(log2(m^n)) + e * n, and a value exactly on a boundary
+        // (value^n is a power of two) belongs to the bucket below.
+        var index = power.GetBitLength() - 1 + ((long)e * n);
+
+        return checked((int)(power.IsPowerOfTwo ? index - 1 : index));
+    }
+#endif
 }

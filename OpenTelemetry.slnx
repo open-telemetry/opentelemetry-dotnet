@@ -168,6 +168,7 @@
     <File Path="src/Shared/DoubleExtensions.cs" />
     <File Path="src/Shared/ExceptionExtensions.cs" />
     <File Path="src/Shared/Guard.cs" />
+    <File Path="src/Shared/MathExtensions.cs" />
     <File Path="src/Shared/PeriodicExportingMetricReaderHelper.cs" />
     <File Path="src/Shared/ResourceSemanticConventions.cs" />
     <File Path="src/Shared/SchemaUrls.cs" />
