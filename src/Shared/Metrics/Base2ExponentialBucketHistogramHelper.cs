@@ -31,8 +31,25 @@ internal static class Base2ExponentialBucketHistogramHelper
                 // and scaling by 2^q is exact, so this is the same boundary MapToIndex compares against.
                 var r = index & ((1 << scale) - 1);
                 var q = index >> scale;
+                var boundary = indexTable.GetBoundary(r);
 
-                lowerBound = Math.ScaleB(indexTable.GetBoundary(r), q);
+                if (q < -1022)
+                {
+                    // The result is subnormal, so scaling would round to nearest and could round up
+                    // above the true boundary. A subnormal is f * 2^-1074 for an integer f and the
+                    // table's boundary is m * 2^(q - 52) for its 53-bit integer mantissa m, so the
+                    // largest subnormal not exceeding it has f = floor(m * 2^(q + 1022)), which is a
+                    // right shift. The table's boundary is within an ulp of the true boundary and the
+                    // shift is at least one bit, so no subnormal lies between the two.
+                    var mantissa = (BitConverter.DoubleToInt64Bits(boundary) & 0xFFFFFFFFFFFFFL) | (1L << 52);
+                    var shift = -1022 - q;
+
+                    lowerBound = shift < 64 ? BitConverter.Int64BitsToDouble(mantissa >> shift) : 0;
+                }
+                else
+                {
+                    lowerBound = Math.ScaleB(boundary, q);
+                }
             }
             else
             {

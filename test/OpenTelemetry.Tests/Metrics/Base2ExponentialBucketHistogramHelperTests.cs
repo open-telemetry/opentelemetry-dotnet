@@ -169,6 +169,53 @@ public class Base2ExponentialBucketHistogramHelperTests
         Assert.Equal(minIndex, roundTrip);
     }
 
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    [InlineData(5)]
+    [InlineData(6)]
+    [InlineData(7)]
+    [InlineData(8)]
+    [InlineData(9)]
+    [InlineData(10)]
+    public void TestPositiveScalesLowerBoundarySubnormalRoundTrip(int scale)
+    {
+        Assert.True(scale <= Base2ExponentialBucketHistogram.PositiveScaleIndexTable.MaxScale);
+
+        var histogram = new Base2ExponentialBucketHistogram(scale: scale);
+        var indexesPerPowerOf2 = 1 << scale;
+
+        foreach (var exponent in new[] { -1023, -1030, -1040 })
+        {
+            foreach (var remainder in new[] { 1, indexesPerPowerOf2 / 2, indexesPerPowerOf2 - 1 })
+            {
+                var index = (exponent * indexesPerPowerOf2) + remainder;
+                var lowerBound = Base2ExponentialBucketHistogramHelper.CalculateLowerBoundary(index, scale);
+
+                Assert.True(lowerBound > 0 && (BitConverter.DoubleToInt64Bits(lowerBound) >> 52) == 0, $"{lowerBound} should be subnormal");
+                Assert.Equal(index - 1, histogram.MapToIndex(lowerBound));
+                Assert.Equal(index, histogram.MapToIndex(Math.BitIncrement(lowerBound)));
+            }
+        }
+    }
+
+    [Fact]
+    public void TestPositiveScalesLowerBoundaryNearMinimumDoesNotRoundUp()
+    {
+        const int Scale = 10;
+        var index = (-1074 << Scale) + 768;
+
+        var lowerBound = Base2ExponentialBucketHistogramHelper.CalculateLowerBoundary(index, Scale);
+
+        Assert.Equal(double.Epsilon, lowerBound);
+
+        var histogram = new Base2ExponentialBucketHistogram(scale: Scale);
+
+        Assert.True(histogram.MapToIndex(lowerBound) < index);
+    }
+
     private void DisplayHeader(bool displayDebugInfo)
     {
         if (!displayDebugInfo)
