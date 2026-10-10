@@ -163,9 +163,10 @@ internal sealed class CircularBufferBuckets
             return;
         }
 
-        // 0 <= offset < capacity <= 2147483647
-        var capacity = this.Capacity;
-        var offset = this.offsetSlot;
+        // 0 <= offset < capacity <= 2147483647. The slot arithmetic is done in uint so that
+        // offset + distance cannot overflow for a capacity above half of int.MaxValue.
+        var capacity = (uint)this.Capacity;
+        var offset = (uint)this.offsetSlot;
 
         var currentBegin = this.Offset;
         var currentEnd = this.end;
@@ -202,28 +203,26 @@ internal sealed class CircularBufferBuckets
         this.Offset = currentBegin;
         this.end = currentEnd;
 
-        return;
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static void ScaleDownInternal(long[] array, int offset, int begin, int end, int capacity)
+        static void ScaleDownInternal(long[] array, uint offset, int begin, int end, uint capacity)
         {
             for (var index = begin + 1; index < end; index++)
             {
-                Consolidate(array, Wrap(offset + (index - begin), capacity), Wrap(offset + ((index >> 1) - (begin >> 1)), capacity));
+                Consolidate(array, Wrap(offset + (uint)(index - begin), capacity), Wrap(offset + (uint)((index >> 1) - (begin >> 1)), capacity));
             }
 
             // Don't merge below call into above for loop.
             // Merging causes above loop to be infinite if end = int.MaxValue, because index <= int.MaxValue is always true.
-            Consolidate(array, Wrap(offset + (end - begin), capacity), Wrap(offset + ((end >> 1) - (begin >> 1)), capacity));
+            Consolidate(array, Wrap(offset + (uint)(end - begin), capacity), Wrap(offset + (uint)((end >> 1) - (begin >> 1)), capacity));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static int Wrap(int slot, int capacity)
+        static int Wrap(uint slot, uint capacity)
         {
             // offset is at most capacity and the distance is less than capacity, so one wrap suffices.
-            Debug.Assert(slot >= 0 && slot < 2 * capacity, "slot was out of range");
+            Debug.Assert(slot < 2 * capacity, "slot was out of range");
 
-            return slot >= capacity ? slot - capacity : slot;
+            return (int)(slot >= capacity ? slot - capacity : slot);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -278,12 +277,17 @@ internal sealed class CircularBufferBuckets
     {
         Debug.Assert(index >= this.Offset && index - this.Offset < this.Capacity, "index was outside the window");
 
-        var capacity = this.Capacity;
-        var slot = this.offsetSlot + (index - this.Offset);
+        // Both terms are below the capacity, so their sum fits in a uint even for a capacity
+        // above half of int.MaxValue, where an int sum would overflow.
+        var capacity = (uint)this.Capacity;
+        var slot = (uint)this.offsetSlot + (uint)(index - this.Offset);
 
         // Subtract the capacity when the slot has run past the end of the array. Whether it
         // has depends on the value being recorded, so this is done with a mask rather than a
-        // branch, which would mispredict for a window that wraps around the array.
-        return slot - (capacity & ((capacity - 1 - slot) >> 31));
+        // branch, which would mispredict for a window that wraps around the array. The
+        // subtraction wraps to a value with the top bit set exactly when slot >= capacity.
+        var wrap = (int)(capacity - 1 - slot) >> 31;
+
+        return (int)(slot - (capacity & (uint)wrap));
     }
 }

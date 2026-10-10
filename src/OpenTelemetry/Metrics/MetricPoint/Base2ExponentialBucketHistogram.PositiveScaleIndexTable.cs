@@ -286,9 +286,9 @@ internal sealed partial class Base2ExponentialBucketHistogram
 
             static int BitLength(BigInteger value)
             {
-    #if NET
+#if NET
                 return (int)value.GetBitLength();
-    #else
+#else
                 // The array is little-endian two's complement, so a positive value whose top bit is
                 // set carries an extra zero byte that must be skipped.
                 var bytes = value.ToByteArray();
@@ -307,7 +307,7 @@ internal sealed partial class Base2ExponentialBucketHistogram
                 }
 
                 return length;
-    #endif
+#endif
             }
         }
 
