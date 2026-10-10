@@ -1,6 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if NET
+using System.Buffers;
+#endif
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
@@ -27,6 +30,10 @@ internal
 #endif
 static class EnvironmentVariableCarrier
 {
+#if NET
+    private static readonly SearchValues<char> NormalizedChars = SearchValues.Create("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_");
+#endif
+
     /// <summary>
     /// Gets a snapshot of the current process' environment variables.
     /// </summary>
@@ -174,6 +181,9 @@ static class EnvironmentVariableCarrier
             return false;
         }
 
+#if NET
+        return !key.AsSpan().ContainsAnyExcept(NormalizedChars);
+#else
         foreach (var ch in key)
         {
             if (!IsNormalized(ch))
@@ -183,6 +193,7 @@ static class EnvironmentVariableCarrier
         }
 
         return true;
+#endif
     }
 
     private static string CreateNormalizedKey(string key)

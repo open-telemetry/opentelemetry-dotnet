@@ -16,6 +16,9 @@ public class EnvironmentVariableCarrierBenchmarks
     private static readonly CompositeTextMapPropagator CompositePropagator =
         new([new TraceContextPropagator(), new BaggagePropagator()]);
 
+    private readonly string normalizedKey = "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT";
+    private readonly string unnormalizedKey = "otel.exporter.otlp.traces.endpoint";
+
     [Params(false, true)]
     public bool IncludeBaggage { get; set; }
 
@@ -86,4 +89,10 @@ public class EnvironmentVariableCarrierBenchmarks
             TraceContextPropagator.Inject(this.InjectContext, this.InjectCarrier, EnvironmentVariableCarrier.Set);
         }
     }
+
+    [Benchmark]
+    public string NormalizeKeyNormalized() => EnvironmentVariableCarrier.NormalizeKey(this.normalizedKey);
+
+    [Benchmark]
+    public string NormalizeKeyNotNormalized() => EnvironmentVariableCarrier.NormalizeKey(this.unnormalizedKey);
 }
