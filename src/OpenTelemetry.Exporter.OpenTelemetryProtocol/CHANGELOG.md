@@ -49,6 +49,11 @@ Notes](../../RELEASENOTES.md).
   `OTEL_ATTRIBUTE_COUNT_LIMIT` are affected.
   ([#7902](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7902))
 
+* Reload OTLP export clients when named exporter options or `UseOtlpExporter`
+  configuration changes, without recreating providers. Protocol and maximum
+  request size remain fixed for the lifetime of each exporter.
+  ([#7842](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7842))
+
 ## 1.19.1
 
 Released 2026-Sep-21

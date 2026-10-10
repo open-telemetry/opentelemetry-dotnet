@@ -5,6 +5,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Metrics;
@@ -86,7 +88,8 @@ public static class OtlpMetricExporterExtensions
                 sp,
                 exporterOptions,
                 sp.GetRequiredService<IOptionsMonitor<MetricReaderOptions>>().Get(finalOptionsName),
-                sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName));
+                sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName),
+                optionsName: name);
         });
     }
 
@@ -145,12 +148,17 @@ public static class OtlpMetricExporterExtensions
             var metricReaderOptions = sp.GetRequiredService<IOptionsMonitor<MetricReaderOptions>>().Get(finalOptionsName);
 
             configureExporterAndMetricReader?.Invoke(exporterOptions, metricReaderOptions);
+            Action<OtlpExporterOptions>? configureOnReload = name != null && configureExporterAndMetricReader != null
+                ? options => configureExporterAndMetricReader(options, metricReaderOptions)
+                : null;
 
             return BuildOtlpExporterMetricReader(
                 sp,
                 exporterOptions,
                 metricReaderOptions,
-                sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName));
+                sp.GetRequiredService<IOptionsMonitor<ExperimentalOptions>>().Get(finalOptionsName),
+                optionsName: name,
+                configureOnReload: configureOnReload);
         });
     }
 
@@ -160,7 +168,9 @@ public static class OtlpMetricExporterExtensions
         MetricReaderOptions metricReaderOptions,
         ExperimentalOptions experimentalOptions,
         bool skipUseOtlpExporterRegistrationCheck = false,
-        Func<BaseExporter<Metric>, BaseExporter<Metric>>? configureExporterInstance = null)
+        Func<BaseExporter<Metric>, BaseExporter<Metric>>? configureExporterInstance = null,
+        string? optionsName = null,
+        Action<OtlpExporterOptions>? configureOnReload = null)
     {
 #if NETFRAMEWORK || NETSTANDARD2_0
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
@@ -178,21 +188,58 @@ public static class OtlpMetricExporterExtensions
             serviceProvider.EnsureNoUseOtlpExporterRegistrations();
         }
 
-        exporterOptions.TryEnableIHttpClientFactoryIntegration(
+        var usesHttpClientFactory = exporterOptions.TryEnableIHttpClientFactoryIntegration(
             serviceProvider,
             OtlpExporterHttpClientNames.MetricExporter);
 
+        OtlpExporterTransmissionHandler? transmissionHandler = null;
+        ReloadableExportClient? reloadableClient = null;
+        BaseExporter<Metric>? metricExporter = null;
+        MetricReader? reader = null;
+        try
+        {
+            if (optionsName != null)
+            {
+#pragma warning disable CA2000 // Ownership passes to the exporter.
+                reloadableClient = ReloadableExportClient.Create(
+                    exporterOptions,
+                    serviceProvider,
+                    optionsName,
+                    OtlpSignalType.Metrics,
+                    skipUseOtlpExporterRegistrationCheck,
+                    usesHttpClientFactory,
+                    configureOnReload);
+                transmissionHandler = exporterOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Metrics, exportClientOverride: reloadableClient);
+#pragma warning restore CA2000 // Ownership passes to the exporter.
+            }
+
 #pragma warning disable CA2000 // Dispose objects before losing scope
-        BaseExporter<Metric> metricExporter = new OtlpMetricExporter(exporterOptions, experimentalOptions);
+            metricExporter = reloadableClient is null
+                ? new OtlpMetricExporter(exporterOptions, experimentalOptions)
+                : new ReloadableOtlpMetricExporter(exporterOptions, experimentalOptions, transmissionHandler!, reloadableClient);
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
-        if (configureExporterInstance != null)
-        {
-            metricExporter = configureExporterInstance(metricExporter);
-        }
+            if (configureExporterInstance != null)
+            {
+                metricExporter = configureExporterInstance(metricExporter);
+            }
 
-        return PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(
-            metricExporter,
-            metricReaderOptions);
+            reader = PeriodicExportingMetricReaderHelper.CreatePeriodicExportingMetricReader(
+                metricExporter,
+                metricReaderOptions);
+            return reader;
+        }
+        finally
+        {
+            if (reader is null && reloadableClient != null)
+            {
+                using (reloadableClient)
+                using (metricExporter)
+                using (transmissionHandler)
+                {
+                    transmissionHandler?.Shutdown(Timeout.Infinite);
+                }
+            }
+        }
     }
 }

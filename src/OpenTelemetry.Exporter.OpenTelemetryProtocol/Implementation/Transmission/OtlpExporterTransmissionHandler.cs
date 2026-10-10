@@ -9,17 +9,21 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmissi
 
 internal class OtlpExporterTransmissionHandler : IDisposable
 {
+    private readonly double initialTimeoutMilliseconds;
+
     public OtlpExporterTransmissionHandler(IExportClient exportClient, double timeoutMilliseconds)
     {
         Guard.ThrowIfNull(exportClient);
 
         this.ExportClient = exportClient;
-        this.TimeoutMilliseconds = timeoutMilliseconds;
+        this.initialTimeoutMilliseconds = timeoutMilliseconds;
     }
 
     internal IExportClient ExportClient { get; }
 
-    internal double TimeoutMilliseconds { get; }
+    internal double TimeoutMilliseconds => this.ExportClient is ReloadableExportClient reloadable
+        ? reloadable.TimeoutMilliseconds
+        : this.initialTimeoutMilliseconds;
 
     /// <summary>
     /// Attempts to send an export request to the server.
