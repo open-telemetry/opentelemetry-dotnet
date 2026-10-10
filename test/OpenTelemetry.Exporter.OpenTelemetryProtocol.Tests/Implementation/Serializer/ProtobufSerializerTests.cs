@@ -804,6 +804,33 @@ public class ProtobufSerializerTests
         }
     }
 
+    [Fact]
+    public void ComputeVarInt64Size_MatchesEncodedLength()
+    {
+        // Every bit length from 0 to 64, with the smallest and largest value of that length.
+        for (var bits = 0; bits <= 64; bits++)
+        {
+            var smallest = bits == 0 ? 0UL : 1UL << (bits - 1);
+            var largest = bits == 64 ? ulong.MaxValue : (1UL << bits) - 1;
+
+            Assert.Equal(EncodedVarIntLength(smallest), ProtobufSerializer.ComputeVarInt64Size(smallest));
+            Assert.Equal(EncodedVarIntLength(largest), ProtobufSerializer.ComputeVarInt64Size(largest));
+        }
+    }
+
+    [Fact]
+    public void ComputeVarInt32Size_MatchesEncodedLength()
+    {
+        for (var bits = 0; bits <= 32; bits++)
+        {
+            var smallest = bits == 0 ? 0U : 1U << (bits - 1);
+            var largest = bits == 32 ? uint.MaxValue : (1U << bits) - 1;
+
+            Assert.Equal(EncodedVarIntLength(smallest), ProtobufSerializer.ComputeVarInt32Size(smallest));
+            Assert.Equal(EncodedVarIntLength(largest), ProtobufSerializer.ComputeVarInt32Size(largest));
+        }
+    }
+
     private static void FillContent(byte[] buffer, int position, int length)
     {
         for (var i = 0; i < length; i++)
@@ -871,6 +898,12 @@ public class ProtobufSerializerTests
         Assert.Equal((uint)(position - innerStart), outerLength);
 
         return (value, position);
+    }
+
+    private static int EncodedVarIntLength(ulong value)
+    {
+        var buffer = new byte[10];
+        return ProtobufSerializer.WriteVarInt64(buffer, 0, value);
     }
 
     private sealed class TrackingArrayPool : ArrayPool<byte>
