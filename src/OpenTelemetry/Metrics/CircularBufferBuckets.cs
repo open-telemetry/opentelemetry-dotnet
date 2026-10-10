@@ -10,10 +10,21 @@ namespace OpenTelemetry.Metrics;
 /// <summary>
 /// A histogram buckets implementation based on circular buffer.
 /// </summary>
+/// <remarks>
+/// The bucket with index <see cref="Offset"/> lives in an arbitrary slot of the
+/// underlying array and the following buckets occupy the following slots, wrapping
+/// at the end of the array. Because every live index lies within
+/// <see cref="Capacity"/> of <see cref="Offset"/>, a slot is found with a single
+/// subtraction and at most one wrap, so no division is needed on the measurement
+/// path and the slots never have to be moved when the scale changes.
+/// </remarks>
 internal sealed class CircularBufferBuckets
 {
     private long[]? trait;
     private int end = -1;
+
+    // The slot of the underlying array that holds Bucket[Offset].
+    private int offsetSlot;
 
     public CircularBufferBuckets(int capacity)
     {
@@ -46,7 +57,7 @@ internal sealed class CircularBufferBuckets
     /// This method does not validate if "index" falls into [begin, end],
     /// the caller is responsible for the validation.
     /// </remarks>
-    public long this[int index] => this.trait![this.ModuloIndex(index)];
+    public long this[int index] => this.trait![this.Slot(index)];
 
     /// <summary>
     /// Attempts to increment the value of <c>Bucket[index]</c> by <c>value</c>.
@@ -72,7 +83,8 @@ internal sealed class CircularBufferBuckets
 
             this.Offset = index;
             this.end = index;
-            this.trait[this.ModuloIndex(index)] += value;
+            this.offsetSlot = 0;
+            this.trait[0] += value;
 
             return 0;
         }
@@ -90,7 +102,7 @@ internal sealed class CircularBufferBuckets
         }
         else
         {
-            this.trait[this.ModuloIndex(index)] += value;
+            this.trait[this.Slot(index)] += value;
 
             return 0;
         }
@@ -102,10 +114,24 @@ internal sealed class CircularBufferBuckets
             return CalculateScaleReduction(begin, end, capacity);
         }
 
+        if (begin < this.Offset)
+        {
+            // The window grew downwards, so the slot of the first bucket moves back by
+            // the same amount. The distance is less than the capacity, so one wrap suffices.
+            var slot = this.offsetSlot - (this.Offset - begin);
+
+            if (slot < 0)
+            {
+                slot += capacity;
+            }
+
+            this.offsetSlot = slot;
+        }
+
         this.Offset = begin;
         this.end = end;
 
-        this.trait[this.ModuloIndex(index)] += value;
+        this.trait[this.Slot(index)] += value;
 
         return 0;
 
@@ -138,8 +164,8 @@ internal sealed class CircularBufferBuckets
         }
 
         // 0 <= offset < capacity <= 2147483647
-        var capacity = (uint)this.Capacity;
-        var offset = (uint)this.ModuloIndex(this.Offset);
+        var capacity = this.Capacity;
+        var offset = this.offsetSlot;
 
         var currentBegin = this.Offset;
         var currentEnd = this.end;
@@ -170,97 +196,42 @@ internal sealed class CircularBufferBuckets
             currentEnd = newEnd;
         }
 
+        // Each level consolidates Bucket[index] into the slot offset + (index >> 1) - (begin >> 1),
+        // so after every level the first bucket of the new window is still in the original slot
+        // of the first bucket and offsetSlot does not change.
         this.Offset = currentBegin;
         this.end = currentEnd;
-
-        if (capacity > 1)
-        {
-            AdjustPosition(this.trait, offset, (uint)this.ModuloIndex(currentBegin), (uint)(currentEnd - currentBegin + 1), capacity);
-        }
 
         return;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static void ScaleDownInternal(long[] array, uint offset, int begin, int end, uint capacity)
+        static void ScaleDownInternal(long[] array, int offset, int begin, int end, int capacity)
         {
             for (var index = begin + 1; index < end; index++)
             {
-                Consolidate(array, (offset + (uint)(index - begin)) % capacity, (offset + (uint)((index >> 1) - (begin >> 1))) % capacity);
+                Consolidate(array, Wrap(offset + (index - begin), capacity), Wrap(offset + ((index >> 1) - (begin >> 1)), capacity));
             }
 
             // Don't merge below call into above for loop.
             // Merging causes above loop to be infinite if end = int.MaxValue, because index <= int.MaxValue is always true.
-            Consolidate(array, (offset + (uint)(end - begin)) % capacity, (offset + (uint)((end >> 1) - (begin >> 1))) % capacity);
+            Consolidate(array, Wrap(offset + (end - begin), capacity), Wrap(offset + ((end >> 1) - (begin >> 1)), capacity));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static void AdjustPosition(long[] array, uint src, uint dst, uint size, uint capacity)
+        static int Wrap(int slot, int capacity)
         {
-            var advancement = (dst + capacity - src) % capacity;
+            // offset is at most capacity and the distance is less than capacity, so one wrap suffices.
+            Debug.Assert(slot >= 0 && slot < 2 * capacity, "slot was out of range");
 
-            if (advancement == 0)
-            {
-                return;
-            }
-
-            if (size - 1 == advancement && advancement << 1 == capacity)
-            {
-                Exchange(array, src++, dst++);
-                size -= 2;
-            }
-            else if (advancement < size)
-            {
-                src = src + size - 1;
-                dst = dst + size - 1;
-
-                while (size-- != 0)
-                {
-                    Move(array, src-- % capacity, dst-- % capacity);
-                }
-
-                return;
-            }
-
-            while (size-- != 0)
-            {
-                Move(array, src++ % capacity, dst++ % capacity);
-            }
+            return slot >= capacity ? slot - capacity : slot;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static void Consolidate(long[] array, uint src, uint dst)
+        static void Consolidate(long[] array, int src, int dst)
         {
             array[dst] += array[src];
             array[src] = 0;
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static void Exchange(long[] array, uint src, uint dst)
-        {
-            (array[dst], array[src]) = (array[src], array[dst]);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static void Move(long[] array, uint src, uint dst)
-        {
-            array[dst] = array[src];
-            array[src] = 0;
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static int PositiveModulo32(int value, int divisor)
-    {
-        Debug.Assert(divisor > 0, $"{nameof(divisor)} must be a positive integer.");
-
-        value %= divisor;
-
-        if (value < 0)
-        {
-            value += divisor;
-        }
-
-        return value;
     }
 
     internal void Reset()
@@ -276,6 +247,7 @@ internal sealed class CircularBufferBuckets
 
         this.Offset = 0;
         this.end = -1;
+        this.offsetSlot = 0;
     }
 
     internal void Copy(long[] dst)
@@ -285,7 +257,7 @@ internal sealed class CircularBufferBuckets
         if (this.trait != null)
         {
             var size = this.Size;
-            var offset = this.ModuloIndex(this.Offset);
+            var offset = this.offsetSlot;
             var first = Math.Min(size, this.Capacity - offset);
             Array.Copy(this.trait, offset, dst, 0, first);
 
@@ -296,7 +268,22 @@ internal sealed class CircularBufferBuckets
         }
     }
 
+    /// <summary>
+    /// Returns the slot of the underlying array that holds <c>Bucket[index]</c>.
+    /// </summary>
+    /// <param name="index">The index of the bucket, which must be within the window.</param>
+    /// <returns>The slot.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private int ModuloIndex(int value)
-        => PositiveModulo32(value, this.Capacity);
+    private int Slot(int index)
+    {
+        Debug.Assert(index >= this.Offset && index - this.Offset < this.Capacity, "index was outside the window");
+
+        var capacity = this.Capacity;
+        var slot = this.offsetSlot + (index - this.Offset);
+
+        // Subtract the capacity when the slot has run past the end of the array. Whether it
+        // has depends on the value being recorded, so this is done with a mask rather than a
+        // branch, which would mispredict for a window that wraps around the array.
+        return slot - (capacity & ((capacity - 1 - slot) >> 31));
+    }
 }

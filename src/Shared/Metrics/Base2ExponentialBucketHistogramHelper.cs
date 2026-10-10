@@ -21,12 +21,26 @@ internal static class Base2ExponentialBucketHistogramHelper
     {
         if (scale > 0)
         {
-#if NET
-            var inverseFactor = Math.ScaleB(Ln2, -scale);
-#else
-            var inverseFactor = ScaleB(Ln2, -scale);
-#endif
-            var lowerBound = Math.Exp(index * inverseFactor);
+            double lowerBound;
+            var indexTable = Base2ExponentialBucketHistogram.PositiveScaleIndexTable.GetOrCreate(scale);
+
+            if (indexTable != null)
+            {
+                // The boundary is 2^(index / 2^scale) = 2^q * 2^(r / 2^scale) for index = q * 2^scale + r
+                // with 0 <= r < 2^scale. The table holds the largest double not exceeding 2^(r / 2^scale)
+                // and scaling by 2^q is exact, so this is the same boundary MapToIndex compares against.
+                var r = index & ((1 << scale) - 1);
+                var q = index >> scale;
+
+                lowerBound = Math.ScaleB(indexTable.GetBoundary(r), q);
+            }
+            else
+            {
+                var inverseFactor = Math.ScaleB(Ln2, -scale);
+
+                lowerBound = Math.Exp(index * inverseFactor);
+            }
+
             return lowerBound == 0 ? double.Epsilon : lowerBound;
         }
         else
@@ -47,70 +61,7 @@ internal static class Base2ExponentialBucketHistogramHelper
                 return double.Epsilon;
             }
 
-#if NET
             return Math.ScaleB(1, n);
-#else
-            return ScaleB(1, n);
-#endif
         }
     }
-
-#if !NET
-    // Math.ScaleB was introduced in .NET Core 3.0.
-    // This implementation is from:
-    // https://github.com/dotnet/runtime/blob/v7.0.0/src/libraries/System.Private.CoreLib/src/System/Math.cs#L1494
-#pragma warning disable SA1201 // Elements should appear in the correct order
-#pragma warning disable SA1203 // Constants should appear before fields
-#pragma warning disable SA1310 // Field names should not contain underscore
-#pragma warning disable SA1119 // Statement should not use unnecessary parenthesis
-    private const double SCALEB_C1 = 8.98846567431158E+307; // 0x1p1023
-    private const double SCALEB_C2 = 2.2250738585072014E-308; // 0x1p-1022
-    private const double SCALEB_C3 = 9007199254740992; // 0x1p53
-
-    private static double ScaleB(double x, int n)
-    {
-        // Implementation based on https://git.musl-libc.org/cgit/musl/tree/src/math/scalbln.c
-        //
-        // Performs the calculation x * 2^n efficiently. It constructs a double from 2^n by building
-        // the correct biased exponent. If n is greater than the maximum exponent (1023) or less than
-        // the minimum exponent (-1022), adjust x and n to compute correct result.
-
-        var y = x;
-        if (n > 1023)
-        {
-            y *= SCALEB_C1;
-            n -= 1023;
-            if (n > 1023)
-            {
-                y *= SCALEB_C1;
-                n -= 1023;
-                if (n > 1023)
-                {
-                    n = 1023;
-                }
-            }
-        }
-        else if (n < -1022)
-        {
-            y *= SCALEB_C2 * SCALEB_C3;
-            n += 1022 - 53;
-            if (n < -1022)
-            {
-                y *= SCALEB_C2 * SCALEB_C3;
-                n += 1022 - 53;
-                if (n < -1022)
-                {
-                    n = -1022;
-                }
-            }
-        }
-
-        var u = BitConverter.Int64BitsToDouble((long)(0x3ff + n) << 52);
-        return y * u;
-    }
-#pragma warning restore SA1119 // Statement should not use unnecessary parenthesis
-#pragma warning restore SA1310 // Field names should not contain underscore
-#pragma warning restore SA1203 // Constants should appear before fields
-#pragma warning restore SA1201 // Elements should appear in the correct order
-#endif
 }
