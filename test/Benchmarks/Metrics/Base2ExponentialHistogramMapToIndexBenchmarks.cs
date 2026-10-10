@@ -20,7 +20,7 @@ public class Base2ExponentialHistogramMapToIndexBenchmarks
         => this.exponentialHistogram = new Base2ExponentialBucketHistogram(scale: this.Scale);
 
     [Benchmark]
-    public void MapToIndex()
+    public int MapToIndex()
 #pragma warning disable CA5394 // Do not use insecure randomness
         => this.exponentialHistogram!.MapToIndex(this.random.Next(MaxValue));
 #pragma warning restore CA5394 // Do not use insecure randomness

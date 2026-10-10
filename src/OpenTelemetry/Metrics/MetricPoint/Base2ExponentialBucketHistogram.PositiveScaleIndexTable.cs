@@ -59,6 +59,7 @@ internal sealed partial class Base2ExponentialBucketHistogram
         private const double TwoPow52 = 4503599627370496.0;
 
         private static readonly PositiveScaleIndexTable?[] Tables = new PositiveScaleIndexTable?[MaxScale + 1];
+        private static readonly Lock TablesLock = new();
 
         private readonly Entry[] entries;
         private readonly long[] boundaries;
@@ -127,8 +128,18 @@ internal sealed partial class Base2ExponentialBucketHistogram
 
             if (table == null)
             {
-                table = new(scale);
-                table = Interlocked.CompareExchange(ref Tables[scale], table, null) ?? table;
+                // Building a table is comparatively expensive, so threads that race to the first
+                // use of a scale wait for one of them to build it rather than each building it.
+                lock (TablesLock)
+                {
+                    table = Tables[scale];
+
+                    if (table == null)
+                    {
+                        table = new(scale);
+                        Volatile.Write(ref Tables[scale], table);
+                    }
+                }
             }
 
             return table;
@@ -181,19 +192,21 @@ internal sealed partial class Base2ExponentialBucketHistogram
         {
             var count = 1 << scale;
 
-            // The runtime's estimate is within an ulp of the true boundary. Starting a few ulps
-            // above it guarantees the start exceeds the boundary whichever side the estimate is
-            // on, so a single downward search finds the largest double that does not exceed it.
-            const int EstimateMarginInUlps = 4;
+            // The runtime's estimate is close to the true boundary but may be on either side of
+            // it, and its accuracy is not guaranteed across platforms. Step up until the candidate
+            // exceeds the boundary, then down to the largest double that does not, so the result
+            // is exact however far off the estimate is.
+            var bits = BitConverter.DoubleToInt64Bits(Math.Pow(2, (double)k / count));
 
-            var bits = BitConverter.DoubleToInt64Bits(Math.Pow(2, (double)k / count)) + EstimateMarginInUlps;
+            while (!ExceedsBoundary(bits, k, scale))
+            {
+                bits++;
+            }
 
             while (ExceedsBoundary(bits, k, scale))
             {
                 bits--;
             }
-
-            Debug.Assert(!ExceedsBoundary(bits, k, scale) && ExceedsBoundary(bits + 1, k, scale), "the search did not stop at the boundary");
 
             return bits;
         }
