@@ -7,6 +7,7 @@ using System.Diagnostics;
 #if NETFRAMEWORK || NETSTANDARD2_0
 using System.Diagnostics.CodeAnalysis;
 #endif
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -201,17 +202,13 @@ internal static class ProtobufSerializer
         return writePosition;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int ComputeVarInt32Size(uint value)
     {
-        var size = 1;
+        // See ComputeVarInt64Size.
+        var highestBit = 31 - LeadingZeroCount(value | 1);
 
-        while (value >= 0x80)
-        {
-            size++;
-            value >>= 7;
-        }
-
-        return size;
+        return ((highestBit * 9) + 73) >> 6;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -332,70 +329,33 @@ internal static class ProtobufSerializer
     /// </summary>
     /// <remarks>
     /// Protocol Buffers uses variable-length encoding (varint) to serialize integers efficiently:
-    /// - Each byte uses 7 bits to encode the number and 1 bit (MSB) to indicate if more bytes follow
-    /// - The algorithm checks how many significant bits the number contains by shifting and masking
-    /// - Numbers are encoded in groups of 7 bits, from least to most significant
-    /// - Each group requires one byte, so the method returns the number of 7-bit groups needed
-    ///
+    /// - Each byte uses 7 bits to encode the number and 1 bit (MSB) to indicate if more bytes follow;
+    /// - Numbers are encoded in groups of 7 bits, from least to most significant;
+    /// - Each group requires one byte, so the size is the number of significant bits divided by 7, rounded up.
+    /// <para/>
+    /// The number of significant bits is found with a leading zero count (with the lowest bit
+    /// forced on so that zero has one significant bit), and the division by 7 with rounding up
+    /// is replaced by the integer expression (9 * (bits - 1) + 73) / 64, which gives the same
+    /// result for every bit count from 1 to 64 without a division. This is the same expression
+    /// the protobuf runtime uses.
+    /// <para/>
     /// Examples:
     /// - Values 0-127 (7 bits) require 1 byte
     /// - Values 128-16383 (14 bits) require 2 bytes
     /// - Values 16384-2097151 (21 bits) require 3 bytes
     /// And so on...
-    ///
+    /// <para/>
     /// For more details, see:
     /// - Protocol Buffers encoding reference: https://developers.google.com/protocol-buffers/docs/encoding#varints.
     /// </remarks>
     /// <param name="value">The unsigned 64-bit integer to be encoded.</param>
     /// <returns>Number of bytes needed to encode the value.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int ComputeVarInt64Size(ulong value)
     {
-        if ((value & (0xffffffffffffffffL << 7)) == 0)
-        {
-            return 1;
-        }
+        var highestBit = 63 - LeadingZeroCount(value | 1);
 
-        if ((value & (0xffffffffffffffffL << 14)) == 0)
-        {
-            return 2;
-        }
-
-        if ((value & (0xffffffffffffffffL << 21)) == 0)
-        {
-            return 3;
-        }
-
-        if ((value & (0xffffffffffffffffL << 28)) == 0)
-        {
-            return 4;
-        }
-
-        if ((value & (0xffffffffffffffffL << 35)) == 0)
-        {
-            return 5;
-        }
-
-        if ((value & (0xffffffffffffffffL << 42)) == 0)
-        {
-            return 6;
-        }
-
-        if ((value & (0xffffffffffffffffL << 49)) == 0)
-        {
-            return 7;
-        }
-
-        if ((value & (0xffffffffffffffffL << 56)) == 0)
-        {
-            return 8;
-        }
-
-        if ((value & (0xffffffffffffffffL << 63)) == 0)
-        {
-            return 9;
-        }
-
-        return 10;
+        return ((highestBit * 9) + 73) >> 6;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -810,5 +770,61 @@ internal static class ProtobufSerializer
     [DoesNotReturn]
     private static void ThrowBufferTooSmallException(string paramName)
         => throw new ArgumentException("The buffer is too small to hold the data being written.", paramName);
+#endif
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int LeadingZeroCount(ulong value)
+    {
+#if NET
+        return BitOperations.LeadingZeroCount(value);
+#else
+        // Binary search for the highest set bit; the value is never zero.
+        var count = 0;
+
+        if ((value >> 32) == 0)
+        {
+            count += 32;
+            value <<= 32;
+        }
+
+        if ((value >> 48) == 0)
+        {
+            count += 16;
+            value <<= 16;
+        }
+
+        if ((value >> 56) == 0)
+        {
+            count += 8;
+            value <<= 8;
+        }
+
+        if ((value >> 60) == 0)
+        {
+            count += 4;
+            value <<= 4;
+        }
+
+        if ((value >> 62) == 0)
+        {
+            count += 2;
+            value <<= 2;
+        }
+
+        if ((value >> 63) == 0)
+        {
+            count += 1;
+        }
+
+        return count;
+#endif
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int LeadingZeroCount(uint value) =>
+#if NET
+        BitOperations.LeadingZeroCount(value);
+#else
+        BitOperations.LeadingZeroCount(value) - 32;
 #endif
 }
