@@ -18,7 +18,11 @@ public class HistogramBuckets
     // (e.g., 0.025 instead of 0.02500000037252903).
     internal readonly double[]? DisplayBounds;
 
-    internal readonly HistogramBucketValues[] BucketCounts;
+    // The running and snapshot counts are kept in separate arrays rather than as an array of
+    // pairs, so that a snapshot is a block copy (and, for delta, a block clear) of the running
+    // counts, and so that only the running counts are touched on the measurement path.
+    internal readonly long[] RunningBucketCounts;
+    internal readonly long[] SnapshotBucketCounts;
 
     internal double RunningSum;
     internal double SnapshotSum;
@@ -36,7 +40,9 @@ public class HistogramBuckets
         this.histogramExplicitBounds = histogramExplicitBounds;
         this.ExplicitBounds = histogramExplicitBounds?.Bounds;
         this.DisplayBounds = histogramExplicitBounds?.DisplayBounds;
-        this.BucketCounts = this.ExplicitBounds != null ? new HistogramBucketValues[this.ExplicitBounds.Length + 1] : [];
+        var numberOfBuckets = this.ExplicitBounds != null ? this.ExplicitBounds.Length + 1 : 0;
+        this.RunningBucketCounts = numberOfBuckets > 0 ? new long[numberOfBuckets] : [];
+        this.SnapshotBucketCounts = numberOfBuckets > 0 ? new long[numberOfBuckets] : [];
     }
 
     /// <summary>
@@ -49,7 +55,8 @@ public class HistogramBuckets
     {
         var copy = new HistogramBuckets(this.histogramExplicitBounds);
 
-        Array.Copy(this.BucketCounts, copy.BucketCounts, this.BucketCounts.Length);
+        Array.Copy(this.RunningBucketCounts, copy.RunningBucketCounts, this.RunningBucketCounts.Length);
+        Array.Copy(this.SnapshotBucketCounts, copy.SnapshotBucketCounts, this.SnapshotBucketCounts.Length);
         copy.SnapshotSum = this.SnapshotSum;
         copy.SnapshotMin = this.SnapshotMin;
         copy.SnapshotMax = this.SnapshotMax;
@@ -64,25 +71,14 @@ public class HistogramBuckets
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void Snapshot(bool outputDelta)
     {
-        var bucketCounts = this.BucketCounts;
+        var running = this.RunningBucketCounts;
+        var length = running.Length;
+
+        Array.Copy(running, this.SnapshotBucketCounts, length);
 
         if (outputDelta)
         {
-            for (var i = 0; i < bucketCounts.Length; i++)
-            {
-                ref var values = ref bucketCounts[i];
-                ref var running = ref values.RunningValue;
-                values.SnapshotValue = running;
-                running = 0L;
-            }
-        }
-        else
-        {
-            for (var i = 0; i < bucketCounts.Length; i++)
-            {
-                ref var values = ref bucketCounts[i];
-                values.SnapshotValue = values.RunningValue;
-            }
+            Array.Clear(running, 0, length);
         }
     }
 
@@ -103,7 +99,7 @@ public class HistogramBuckets
             this.histogramMeasurements = histogramMeasurements;
             this.index = 0;
             this.Current = default;
-            this.numberOfBuckets = histogramMeasurements.BucketCounts.Length;
+            this.numberOfBuckets = histogramMeasurements.SnapshotBucketCounts.Length;
         }
 
         /// <summary>
@@ -128,7 +124,7 @@ public class HistogramBuckets
                 var explicitBound = this.index < this.numberOfBuckets - 1
                     ? (this.histogramMeasurements.DisplayBounds ?? this.histogramMeasurements.ExplicitBounds)![this.index]
                     : double.PositiveInfinity;
-                var bucketCount = this.histogramMeasurements.BucketCounts[this.index].SnapshotValue;
+                var bucketCount = this.histogramMeasurements.SnapshotBucketCounts[this.index];
                 this.Current = new HistogramBucket(explicitBound, bucketCount);
                 this.index++;
                 return true;
@@ -136,11 +132,5 @@ public class HistogramBuckets
 
             return false;
         }
-    }
-
-    internal struct HistogramBucketValues
-    {
-        public long RunningValue;
-        public long SnapshotValue;
     }
 }
