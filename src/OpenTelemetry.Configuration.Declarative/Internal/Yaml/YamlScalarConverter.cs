@@ -151,9 +151,14 @@ internal static class YamlScalarConverter
         significand = (significand >> 1) + (roundUp ? 1UL : 0UL);
         exponent++;
 
+        // Scaling by a power of two is exact, so the rounding above is the only rounding
         return exponent > 971
             ? double.PositiveInfinity
+#if NET
+            : Math.ScaleB(significand, exponent);
+#else
             : significand * Math.Pow(2, exponent);
+#endif
     }
 
     private static ulong DigitValue(char c, ulong numberBase)
