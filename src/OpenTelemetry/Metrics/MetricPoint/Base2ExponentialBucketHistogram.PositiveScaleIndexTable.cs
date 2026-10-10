@@ -198,14 +198,20 @@ internal sealed partial class Base2ExponentialBucketHistogram
             // is exact however far off the estimate is.
             var bits = BitConverter.DoubleToInt64Bits(Math.Pow(2, (double)k / count));
 
-            while (!ExceedsBoundary(bits, k, scale))
+            if (ExceedsBoundary(bits, k, scale))
             {
-                bits++;
+                do
+                {
+                    bits--;
+                }
+                while (ExceedsBoundary(bits, k, scale));
             }
-
-            while (ExceedsBoundary(bits, k, scale))
+            else
             {
-                bits--;
+                while (!ExceedsBoundary(bits + 1, k, scale))
+                {
+                    bits++;
+                }
             }
 
             return bits;
@@ -214,12 +220,95 @@ internal sealed partial class Base2ExponentialBucketHistogram
         private static bool ExceedsBoundary(long bits, int k, int scale)
         {
             // The double is m * 2^-52 for the 53-bit integer m, so it exceeds 2^(k / 2^scale)
-            // exactly when m^(2^scale) > 2^(k + 52 * 2^scale), which integer arithmetic decides.
-            var count = 1 << scale;
-            var mantissa = new BigInteger((bits & FractionMask) | ImplicitBit);
-            var power = BigInteger.Pow(mantissa, count);
+            // exactly when m^(2^scale) > 2^(k + 52 * 2^scale). The power has 53 * 2^scale bits,
+            // which is expensive to compute in full at the larger scales, so it is first squared
+            // 'scale' times at a fixed precision, keeping a lower and an upper bound that bracket
+            // the exact value. A double candidate differs from the irrational boundary by far more
+            // than the bounds' width, so this decides the comparison; the exact power is computed
+            // only in the vanishingly rare case that the bounds straddle the threshold.
+            const int Precision = 192;
 
-            return power > (BigInteger.One << (k + (FractionWidth * count)));
+            var mantissa = new BigInteger((bits & FractionMask) | ImplicitBit);
+            var threshold = k + (FractionWidth << scale);
+
+            var lower = mantissa;
+            var upper = mantissa;
+            long exponent = 0;
+
+            for (var i = 0; i < scale; i++)
+            {
+                lower *= lower;
+                upper *= upper;
+                exponent *= 2;
+
+                var excess = BitLength(lower) - Precision;
+
+                if (excess > 0)
+                {
+                    // Truncating rounds the lower bound down; adding one after truncating rounds
+                    // the upper bound up, so the exact value stays between them.
+                    lower >>= excess;
+                    upper = (upper >> excess) + BigInteger.One;
+                    exponent += excess;
+                }
+            }
+
+            // The value is between lower * 2^exponent and upper * 2^exponent, compared with 2^threshold.
+            var shift = threshold - exponent;
+
+            if (shift < 0)
+            {
+                // Even the lower bound is at least 2^exponent, which is above the threshold.
+                return true;
+            }
+
+            if (shift > Precision + 1)
+            {
+                // Even the upper bound, which has at most Precision + 1 bits, is below the threshold.
+                return false;
+            }
+
+            var limit = BigInteger.One << (int)shift;
+
+            if (lower > limit)
+            {
+                return true;
+            }
+
+            if (upper < limit)
+            {
+                return false;
+            }
+
+            // Fallback path for the extremely rare case that the bounds straddle the threshold
+            var power = BigInteger.Pow(mantissa, 1 << scale);
+            return power > (BigInteger.One << threshold);
+
+            static int BitLength(BigInteger value)
+            {
+    #if NET
+                return (int)value.GetBitLength();
+    #else
+                // The array is little-endian two's complement, so a positive value whose top bit is
+                // set carries an extra zero byte that must be skipped.
+                var bytes = value.ToByteArray();
+                var top = bytes.Length - 1;
+
+                while (top > 0 && bytes[top] == 0)
+                {
+                    top--;
+                }
+
+                var length = top * 8;
+
+                for (var b = bytes[top]; b != 0; b >>= 1)
+                {
+                    length++;
+                }
+
+                return length;
+    #endif
+            }
         }
 
         /// <summary>
