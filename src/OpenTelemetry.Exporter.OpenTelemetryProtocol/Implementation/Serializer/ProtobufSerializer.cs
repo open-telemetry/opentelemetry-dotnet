@@ -332,19 +332,19 @@ internal static class ProtobufSerializer
     /// - Each byte uses 7 bits to encode the number and 1 bit (MSB) to indicate if more bytes follow
     /// - Numbers are encoded in groups of 7 bits, from least to most significant
     /// - Each group requires one byte, so the size is the number of significant bits divided by 7, rounded up
-    ///
+    /// <para/>
     /// The number of significant bits is found with a leading zero count (with the lowest bit
     /// forced on so that zero has one significant bit), and the division by 7 with rounding up
     /// is replaced by the integer expression (9 * (bits - 1) + 73) / 64, which gives the same
     /// result for every bit count from 1 to 64 without a division. This is the same expression
     /// the protobuf runtime uses.
-    ///
+    /// <para/>
     /// Examples:
     /// - Values 0-127 (7 bits) require 1 byte
     /// - Values 128-16383 (14 bits) require 2 bytes
     /// - Values 16384-2097151 (21 bits) require 3 bytes
     /// And so on...
-    ///
+    /// <para/>
     /// For more details, see:
     /// - Protocol Buffers encoding reference: https://developers.google.com/protocol-buffers/docs/encoding#varints.
     /// </remarks>
