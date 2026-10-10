@@ -365,15 +365,36 @@ public readonly struct Baggage : IEquatable<Baggage>
             return true;
         }
 
-        var baggageIsNullOrEmpty = this.baggage == null || this.baggage.Count <= 0;
+        var count = this.baggage?.Count ?? 0;
 
-        return
-            baggageIsNullOrEmpty == (other.baggage == null || other.baggage.Count <= 0) &&
-#if NET
-            (baggageIsNullOrEmpty || this.baggage!.SequenceEqual(other.baggage!));
-#else
-            (baggageIsNullOrEmpty || this.baggage.SequenceEqual(other.baggage));
-#endif
+        if (count != (other.baggage?.Count ?? 0))
+        {
+            return false;
+        }
+
+        if (count == 0)
+        {
+            return true;
+        }
+
+        // Compare the entries pairwise in enumeration order like
+        // Enumerable.SequenceEqual() would do, but by hand to avoid boxing.
+        var thisEnumerator = this.baggage!.GetEnumerator();
+        var otherEnumerator = other.baggage!.GetEnumerator();
+
+        while (thisEnumerator.MoveNext() && otherEnumerator.MoveNext())
+        {
+            var thisItem = thisEnumerator.Current;
+            var otherItem = otherEnumerator.Current;
+
+            if (!string.Equals(thisItem.Key, otherItem.Key, StringComparison.Ordinal) ||
+                !string.Equals(thisItem.Value, otherItem.Value, StringComparison.Ordinal))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /// <inheritdoc/>
