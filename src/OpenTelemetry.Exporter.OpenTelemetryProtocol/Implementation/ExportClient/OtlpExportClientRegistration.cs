@@ -20,7 +20,7 @@ internal sealed class OtlpExportClientRegistration : IDisposable
     private readonly Action<OtlpExporterOptions>? configureOnReload;
     private IDisposable? optionsSubscription;
     private IDisposable? builderOptionsSubscription;
-    private Action? reload;
+    private Action? reloadClient;
 
     internal OtlpExportClientRegistration(
         OtlpExporterOptions initialOptions,
@@ -56,9 +56,9 @@ internal sealed class OtlpExportClientRegistration : IDisposable
         this.builderOptionsSubscription?.Dispose();
     }
 
-    internal void Subscribe(Action reload)
+    internal void Subscribe(Action reloadClient)
     {
-        this.reload = reload;
+        this.reloadClient = reloadClient;
         this.builderOptionsSubscription = this.builderOptionsMonitor?.OnChange(this.OnBuilderOptionsChanged);
         this.optionsSubscription = this.optionsMonitor.OnChange(this.OnExporterOptionsChanged);
     }
@@ -127,7 +127,7 @@ internal sealed class OtlpExportClientRegistration : IDisposable
             this.builderOptionsCache?.TryRemove(this.optionsName);
         }
 
-        this.reload?.Invoke();
+        this.reloadClient?.Invoke();
     }
 
     private OtlpExporterOptions GetOptions()

@@ -74,17 +74,14 @@ internal sealed class ReloadableExportClient : IExportClient, IDisposable
 
         this.registration.Dispose();
 
-        bool result;
         try
         {
-            result = selected.Client.Shutdown(timeoutMilliseconds);
+            return selected.Client.Shutdown(timeoutMilliseconds);
         }
         finally
         {
             selected.Retire();
         }
-
-        return result;
     }
 
     public void Dispose()
