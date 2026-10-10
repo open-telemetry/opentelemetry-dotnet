@@ -395,4 +395,66 @@ public class CircularBufferBucketsTests
 
         Assert.Equal(expected, copy);
     }
+
+    [Theory]
+    [InlineData(5, 0, 5, 1)] // Even first index, full capacity.
+    [InlineData(5, 1, 5, 1)] // Odd first index, full capacity.
+    [InlineData(5, 2, 4, 1)] // Even first index, partial capacity.
+    [InlineData(6, 3, 4, 1)] // Odd first index, partial capacity.
+    [InlineData(8, 0, 8, 2)] // Two levels at once.
+    [InlineData(8, 5, 8, 3)] // Three levels at once, odd first index.
+    [InlineData(5, -3, 5, 1)] // Negative indexes.
+    public void ScaleDownHandlesWrappedStorage(int capacity, int start, int count, int level)
+    {
+        var buckets = new CircularBufferBuckets(capacity);
+        var expected = new Dictionary<int, long>();
+
+        for (var i = count - 1; i >= 0; i--)
+        {
+            var index = start + i;
+            var value = 1L << i;
+
+            Assert.Equal(0, buckets.TryIncrement(index, value));
+
+            var scaledIndex = index >> level;
+            expected[scaledIndex] = expected.TryGetValue(scaledIndex, out var sum) ? sum + value : value;
+        }
+
+        buckets.ScaleDown(level);
+
+        Assert.Equal(start >> level, buckets.Offset);
+        Assert.Equal(expected.Count, buckets.Size);
+
+        var copy = new long[capacity];
+        buckets.Copy(copy);
+
+        for (var i = 0; i < buckets.Size; i++)
+        {
+            var index = buckets.Offset + i;
+
+            Assert.Equal(expected[index], buckets[index]);
+            Assert.Equal(expected[index], copy[i]);
+        }
+
+        for (var i = buckets.Size; i < capacity; i++)
+        {
+            Assert.Equal(0, copy[i]);
+        }
+
+        var below = buckets.Offset - 1;
+        var above = buckets.Offset + buckets.Size;
+
+        Assert.Equal(0, buckets.TryIncrement(below, 100));
+        Assert.Equal(0, buckets.TryIncrement(above, 200));
+
+        Assert.Equal(below, buckets.Offset);
+        Assert.Equal(expected.Count + 2, buckets.Size);
+        Assert.Equal(100, buckets[below]);
+        Assert.Equal(200, buckets[above]);
+
+        foreach (var pair in expected)
+        {
+            Assert.Equal(pair.Value, buckets[pair.Key]);
+        }
+    }
 }
