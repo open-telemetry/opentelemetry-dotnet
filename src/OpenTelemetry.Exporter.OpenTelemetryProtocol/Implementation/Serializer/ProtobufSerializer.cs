@@ -329,9 +329,9 @@ internal static class ProtobufSerializer
     /// </summary>
     /// <remarks>
     /// Protocol Buffers uses variable-length encoding (varint) to serialize integers efficiently:
-    /// - Each byte uses 7 bits to encode the number and 1 bit (MSB) to indicate if more bytes follow
-    /// - Numbers are encoded in groups of 7 bits, from least to most significant
-    /// - Each group requires one byte, so the size is the number of significant bits divided by 7, rounded up
+    /// - Each byte uses 7 bits to encode the number and 1 bit (MSB) to indicate if more bytes follow;
+    /// - Numbers are encoded in groups of 7 bits, from least to most significant;
+    /// - Each group requires one byte, so the size is the number of significant bits divided by 7, rounded up.
     /// <para/>
     /// The number of significant bits is found with a leading zero count (with the lowest bit
     /// forced on so that zero has one significant bit), and the division by 7 with rounding up
