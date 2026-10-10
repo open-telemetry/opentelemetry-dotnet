@@ -1,7 +1,9 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+#if !NET
 using System.Runtime.CompilerServices;
+#endif
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Context.Propagation;
@@ -194,8 +196,16 @@ internal static class TraceStateUtils
         // key = (lcalpha / DIGIT) 0*255(keychar)
         // keychar = lcalpha / DIGIT / "_" / "-" / "*" / "/" / "@"
         if (key.IsEmpty
-            || key.Length > KeyMaxSize
-            || !IsValidFirstCharacter(key[0]))
+            || key.Length > KeyMaxSize)
+        {
+            return false;
+        }
+
+#if NET
+        return TraceContextPropagator.TraceStateKeyFirstChars.Contains(key[0])
+            && !key.Slice(1).ContainsAnyExcept(TraceContextPropagator.TraceStateKeyChars);
+#else
+        if (!IsValidFirstCharacter(key[0]))
         {
             return false;
         }
@@ -221,14 +231,24 @@ internal static class TraceStateUtils
         {
             return IsValidFirstCharacter(c) || c is '_' or '-' or '*' or '/' or '@';
         }
+#endif
     }
 
     private static bool ValidateValue(ReadOnlySpan<char> value)
     {
         // Value is opaque string up to 256 characters printable ASCII RFC0020 characters (i.e., the range
-        // 0x20 to 0x7E) except comma , and =.
+        // 0x20 to 0x7E) except comma , and =. The last character must not be a space.
 
-        if (value.Length == 0 || value.Length > ValueMaxSize || value[value.Length - 1] == ' ' /* '\u0020' */)
+        if (value.Length == 0 || value.Length > ValueMaxSize)
+        {
+            return false;
+        }
+
+#if NET
+        return !value.Slice(0, value.Length - 1).ContainsAnyExcept(TraceContextPropagator.TraceStateValueChars)
+            && TraceContextPropagator.TraceStateValueLastChars.Contains(value[value.Length - 1]);
+#else
+        if (value[value.Length - 1] == ' ' /* '\u0020' */)
         {
             return false;
         }
@@ -242,6 +262,7 @@ internal static class TraceStateUtils
         }
 
         return true;
+#endif
     }
 
     private static int GetCombinedLength(List<string> entries)
