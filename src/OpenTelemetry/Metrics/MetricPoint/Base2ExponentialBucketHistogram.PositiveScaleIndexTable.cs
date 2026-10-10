@@ -181,19 +181,19 @@ internal sealed partial class Base2ExponentialBucketHistogram
         {
             var count = 1 << scale;
 
-            // Start from the runtime's estimate, which is within a few ulps of the true
-            // boundary, then step to the largest double that does not exceed it.
-            var bits = BitConverter.DoubleToInt64Bits(Math.Pow(2, (double)k / count));
+            // The runtime's estimate is within an ulp of the true boundary. Starting a few ulps
+            // above it guarantees the start exceeds the boundary whichever side the estimate is
+            // on, so a single downward search finds the largest double that does not exceed it.
+            const int EstimateMarginInUlps = 4;
+
+            var bits = BitConverter.DoubleToInt64Bits(Math.Pow(2, (double)k / count)) + EstimateMarginInUlps;
 
             while (ExceedsBoundary(bits, k, scale))
             {
                 bits--;
             }
 
-            while (!ExceedsBoundary(bits + 1, k, scale))
-            {
-                bits++;
-            }
+            Debug.Assert(!ExceedsBoundary(bits, k, scale) && ExceedsBoundary(bits + 1, k, scale), "the search did not stop at the boundary");
 
             return bits;
         }

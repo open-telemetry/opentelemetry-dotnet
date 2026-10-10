@@ -52,6 +52,10 @@ Notes](../../RELEASENOTES.md).
   avoid unbounded growth.
   ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
 
+* Improve the assignment of values to exponential histogram buckets when the
+  value is near a bucket boundary by using a pre-computed lookup table.
+  ([#7911](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7911))
+
 ## 1.19.1
 
 Released 2026-Sep-21
