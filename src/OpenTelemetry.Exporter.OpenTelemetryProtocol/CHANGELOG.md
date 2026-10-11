@@ -49,6 +49,11 @@ Notes](../../RELEASENOTES.md).
   `OTEL_ATTRIBUTE_COUNT_LIMIT` are affected.
   ([#7902](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7902))
 
+* Fixed spans and metrics from `ActivitySource` or `Meter` instances which
+  share a name but differ by version, schema URL or tags being exported under
+  a single instrumentation scope.
+  ([#NNNN](https://github.com/open-telemetry/opentelemetry-dotnet/pull/NNNN))
+
 ## 1.19.1
 
 Released 2026-Sep-21

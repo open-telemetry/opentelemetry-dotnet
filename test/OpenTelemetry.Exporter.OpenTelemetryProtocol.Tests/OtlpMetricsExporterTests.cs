@@ -231,6 +231,122 @@ public sealed class OtlpMetricsExporterTests : IDisposable
         Assert.Contains(instrumentationLibraryMetrics.Scope.Attributes, (kvp) => kvp.Key == "key2" && kvp.Value.StringValue == "value2");
     }
 
+    [Fact]
+    public void ScopeMetricsAreSeparatedByMeterVersion()
+    {
+        var name = nameof(this.ScopeMetricsAreSeparatedByMeterVersion);
+
+        using var meter1 = new Meter(new MeterOptions(name) { Version = "1.0" });
+        using var meter2 = new Meter(new MeterOptions(name) { Version = "2.0" });
+
+        var resourceMetrics = ExportOneCounterPerMeter(meter1, meter2);
+
+        Assert.Equal(2, resourceMetrics.ScopeMetrics.Count);
+
+        var scopeMetrics1 = Assert.Single(resourceMetrics.ScopeMetrics, s => s.Scope.Version == "1.0");
+        Assert.Equal("counter-0", Assert.Single(scopeMetrics1.Metrics).Name);
+
+        var scopeMetrics2 = Assert.Single(resourceMetrics.ScopeMetrics, s => s.Scope.Version == "2.0");
+        Assert.Equal("counter-1", Assert.Single(scopeMetrics2.Metrics).Name);
+    }
+
+    [Fact]
+    public void ScopeMetricsAreGroupedWhenMetersAreInterleaved()
+    {
+        var name = nameof(this.ScopeMetricsAreGroupedWhenMetersAreInterleaved);
+
+        using var meter1 = new Meter(new MeterOptions(name) { Version = "1.0" });
+        using var meter2 = new Meter(new MeterOptions(name) { Version = "2.0" });
+
+        var resourceMetrics = ExportOneCounterPerMeter(meter1, meter2, meter1, meter2);
+
+        Assert.Equal(2, resourceMetrics.ScopeMetrics.Count);
+
+        var scopeMetrics1 = Assert.Single(resourceMetrics.ScopeMetrics, s => s.Scope.Version == "1.0");
+        Assert.Equal(["counter-0", "counter-2"], scopeMetrics1.Metrics.Select(m => m.Name).OrderBy(n => n, StringComparer.Ordinal));
+
+        var scopeMetrics2 = Assert.Single(resourceMetrics.ScopeMetrics, s => s.Scope.Version == "2.0");
+        Assert.Equal(["counter-1", "counter-3"], scopeMetrics2.Metrics.Select(m => m.Name).OrderBy(n => n, StringComparer.Ordinal));
+    }
+
+    [Fact]
+    public void ScopeMetricsAreSeparatedByMeterSchemaUrl()
+    {
+        var name = nameof(this.ScopeMetricsAreSeparatedByMeterSchemaUrl);
+        const string schemaUrl1 = "https://opentelemetry.io/schemas/1.0.0";
+        const string schemaUrl2 = "https://opentelemetry.io/schemas/2.0.0";
+
+        using var meter1 = new Meter(new MeterOptions(name) { Version = "1.0", TelemetrySchemaUrl = schemaUrl1 });
+        using var meter2 = new Meter(new MeterOptions(name) { Version = "1.0", TelemetrySchemaUrl = schemaUrl2 });
+
+        var resourceMetrics = ExportOneCounterPerMeter(meter1, meter2);
+
+        Assert.Equal(2, resourceMetrics.ScopeMetrics.Count);
+
+        var scopeMetrics1 = Assert.Single(resourceMetrics.ScopeMetrics, s => s.SchemaUrl == schemaUrl1);
+        Assert.Equal("counter-0", Assert.Single(scopeMetrics1.Metrics).Name);
+
+        var scopeMetrics2 = Assert.Single(resourceMetrics.ScopeMetrics, s => s.SchemaUrl == schemaUrl2);
+        Assert.Equal("counter-1", Assert.Single(scopeMetrics2.Metrics).Name);
+    }
+
+    [Fact]
+    public void ScopeMetricsAreSeparatedByMeterTags()
+    {
+        var name = nameof(this.ScopeMetricsAreSeparatedByMeterTags);
+
+        using var meter1 = new Meter(new MeterOptions(name) { Version = "1.0", Tags = [new("key", "value1")] });
+        using var meter2 = new Meter(new MeterOptions(name) { Version = "1.0", Tags = [new("key", "value2")] });
+
+        var resourceMetrics = ExportOneCounterPerMeter(meter1, meter2);
+
+        Assert.Equal(2, resourceMetrics.ScopeMetrics.Count);
+
+        var scopeMetrics1 = Assert.Single(resourceMetrics.ScopeMetrics, s => Assert.Single(s.Scope.Attributes).Value.StringValue == "value1");
+        Assert.Equal("counter-0", Assert.Single(scopeMetrics1.Metrics).Name);
+
+        var scopeMetrics2 = Assert.Single(resourceMetrics.ScopeMetrics, s => Assert.Single(s.Scope.Attributes).Value.StringValue == "value2");
+        Assert.Equal("counter-1", Assert.Single(scopeMetrics2.Metrics).Name);
+    }
+
+    [Fact]
+    public void ScopeMetricsAreSeparatedWhenOnlyOneMeterHasTags()
+    {
+        var name = nameof(this.ScopeMetricsAreSeparatedWhenOnlyOneMeterHasTags);
+
+        using var meter1 = new Meter(new MeterOptions(name) { Version = "1.0" });
+        using var meter2 = new Meter(new MeterOptions(name) { Version = "1.0", Tags = [new("key", "value")] });
+
+        var resourceMetrics = ExportOneCounterPerMeter(meter1, meter2);
+
+        Assert.Equal(2, resourceMetrics.ScopeMetrics.Count);
+
+        var scopeMetrics1 = Assert.Single(resourceMetrics.ScopeMetrics, s => s.Scope.Attributes.Count == 0);
+        Assert.Equal("counter-0", Assert.Single(scopeMetrics1.Metrics).Name);
+
+        var scopeMetrics2 = Assert.Single(resourceMetrics.ScopeMetrics, s => s.Scope.Attributes.Count == 1);
+        Assert.Equal("counter-1", Assert.Single(scopeMetrics2.Metrics).Name);
+    }
+
+    [Fact]
+    public void ScopeMetricsAreSharedByMetersWithTheSameScope()
+    {
+        var name = nameof(this.ScopeMetricsAreSharedByMetersWithTheSameScope);
+        const string schemaUrl = "https://opentelemetry.io/schemas/1.0.0";
+
+        using var meter1 = new Meter(new MeterOptions(name) { Version = "1.0", TelemetrySchemaUrl = schemaUrl, Tags = [new("key", "value")] });
+        using var meter2 = new Meter(new MeterOptions(name) { Version = "1.0", TelemetrySchemaUrl = schemaUrl, Tags = [new("key", "value")] });
+
+        var resourceMetrics = ExportOneCounterPerMeter(meter1, meter2);
+
+        var scopeMetrics = Assert.Single(resourceMetrics.ScopeMetrics);
+        Assert.Equal(name, scopeMetrics.Scope.Name);
+        Assert.Equal("1.0", scopeMetrics.Scope.Version);
+        Assert.Equal(schemaUrl, scopeMetrics.SchemaUrl);
+        Assert.Equal("value", Assert.Single(scopeMetrics.Scope.Attributes).Value.StringValue);
+        Assert.Equal(["counter-0", "counter-1"], scopeMetrics.Metrics.Select(m => m.Name).OrderBy(n => n, StringComparer.Ordinal));
+    }
+
     [Theory]
     [InlineData("test_gauge", null, null, 123L, null)]
     [InlineData("test_gauge", null, null, null, 123.45)]
@@ -1407,6 +1523,30 @@ public sealed class OtlpMetricsExporterTests : IDisposable
         {
             Assert.Null(exemplar);
         }
+    }
+
+    private static OtlpMetrics.ResourceMetrics ExportOneCounterPerMeter(params Meter[] meters)
+    {
+        var metrics = new List<Metric>();
+
+        using var provider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meters[0].Name)
+            .AddInMemoryExporter(metrics)
+            .Build();
+
+        for (var i = 0; i < meters.Length; i++)
+        {
+            meters[i].CreateCounter<int>($"counter-{i}").Add(1);
+        }
+
+        provider.ForceFlush();
+
+        Assert.Equal(meters.Length, metrics.Count);
+
+        var batch = new Batch<Metric>([.. metrics], metrics.Count);
+        var request = CreateMetricExportRequest(batch, Resource.Empty);
+
+        return Assert.Single(request.ResourceMetrics);
     }
 
     private static OtlpCollector.ExportMetricsServiceRequest CreateMetricExportRequest(in Batch<Metric> batch, Resource resource)

@@ -18,7 +18,7 @@ internal static class ProtobufOtlpTraceSerializer
     [ThreadStatic]
     private static Stack<List<Activity>>? activityListPool;
     [ThreadStatic]
-    private static Dictionary<string, List<Activity>>? scopeTracesList;
+    private static Dictionary<InstrumentationScope, List<Activity>>? scopeTracesList;
 
     internal static int WriteTraceData(
         ref byte[] buffer,
@@ -37,13 +37,24 @@ internal static class ProtobufOtlpTraceSerializer
         // would merge it into the next export on this thread.
         try
         {
+            // Note: Consecutive activities very often come from the same source, so
+            // the previous lookup is reused to avoid hashing the scope each time.
+            ActivitySource? lastSource = null;
+            List<Activity>? activities = null;
+
             foreach (var activity in batch)
             {
-                var sourceName = activity.Source.Name;
-                if (!scopeTracesList.TryGetValue(sourceName, out var activities))
+                var source = activity.Source;
+                if (activities == null || !ReferenceEquals(source, lastSource))
                 {
-                    activities = activityListPool.Count > 0 ? activityListPool.Pop() : [];
-                    scopeTracesList[sourceName] = activities;
+                    var scope = new InstrumentationScope(source);
+                    if (!scopeTracesList.TryGetValue(scope, out activities))
+                    {
+                        activities = activityListPool.Count > 0 ? activityListPool.Pop() : [];
+                        scopeTracesList[scope] = activities;
+                    }
+
+                    lastSource = source;
                 }
 
                 activities.Add(activity);
@@ -137,7 +148,7 @@ internal static class ProtobufOtlpTraceSerializer
                 var resourceSpansScopeSpansLengthPosition = writePosition;
                 writePosition += ReserveSizeForLength;
 
-                writePosition = WriteScopeSpan(buffer, writePosition, sdkLimitOptions, entry.Value[0].Source, entry.Value);
+                writePosition = WriteScopeSpan(buffer, writePosition, sdkLimitOptions, entry.Key.Source, entry.Value);
                 ProtobufSerializer.WriteReservedLength(buffer, resourceSpansScopeSpansLengthPosition, writePosition - (resourceSpansScopeSpansLengthPosition + ReserveSizeForLength));
             }
         }
@@ -609,4 +620,120 @@ internal static class ProtobufOtlpTraceSerializer
         }
     }
 #endif
+
+    /// <summary>
+    /// Identifies the instrumentation scope spans are grouped by. Activity
+    /// sources sharing a name but reporting different versions, schema URLs or
+    /// tags are distinct scopes and must be emitted as separate ScopeSpans
+    /// entries.
+    /// </summary>
+    internal readonly record struct InstrumentationScope
+    {
+        public readonly ActivitySource Source;
+
+        public InstrumentationScope(ActivitySource source)
+        {
+            this.Source = source;
+        }
+
+        public bool Equals(InstrumentationScope other)
+        {
+            var source = this.Source;
+            var otherSource = other.Source;
+
+            if (ReferenceEquals(source, otherSource))
+            {
+                return true;
+            }
+
+            return string.Equals(source.Name, otherSource.Name, StringComparison.Ordinal)
+                && string.Equals(source.Version, otherSource.Version, StringComparison.Ordinal)
+                && string.Equals(NormalizeSchemaUrl(source.TelemetrySchemaUrl), NormalizeSchemaUrl(otherSource.TelemetrySchemaUrl), StringComparison.Ordinal)
+                && TagsEqual(source.Tags, otherSource.Tags);
+        }
+
+        public override int GetHashCode()
+        {
+            // Note: Tags are deliberately left out of the hash code. Sources
+            // which differ only by their tags are rare and are still told apart
+            // by Equals, so hashing them would only add cost to every lookup.
+            var source = this.Source;
+            var schemaUrl = NormalizeSchemaUrl(source.TelemetrySchemaUrl);
+#if NET || NETSTANDARD2_1_OR_GREATER
+            HashCode hashCode = default;
+            hashCode.Add(source.Name, StringComparer.Ordinal);
+            hashCode.Add(source.Version, StringComparer.Ordinal);
+            hashCode.Add(schemaUrl, StringComparer.Ordinal);
+            return hashCode.ToHashCode();
+#else
+            unchecked
+            {
+                var hash = 17;
+                hash = (hash * 31) + StringComparer.Ordinal.GetHashCode(source.Name);
+                hash = (hash * 31) + (source.Version is null ? 0 : StringComparer.Ordinal.GetHashCode(source.Version));
+                hash = (hash * 31) + (schemaUrl is null ? 0 : StringComparer.Ordinal.GetHashCode(schemaUrl));
+                return hash;
+            }
+#endif
+        }
+
+        // Note: A null and an empty schema URL are both exported as no schema URL.
+        private static string? NormalizeSchemaUrl(string? schemaUrl)
+            => string.IsNullOrEmpty(schemaUrl) ? null : schemaUrl;
+
+        private static bool TagsEqual(IEnumerable<KeyValuePair<string, object?>>? tags, IEnumerable<KeyValuePair<string, object?>>? otherTags)
+        {
+            if (ReferenceEquals(tags, otherTags))
+            {
+                return true;
+            }
+
+            // Note: ActivitySource stores its tags as a list sorted by key, so
+            // the indexed path is the one taken in practice and does not allocate.
+            if (tags is IReadOnlyList<KeyValuePair<string, object?>> tagsList
+                && otherTags is IReadOnlyList<KeyValuePair<string, object?>> otherTagsList)
+            {
+                if (tagsList.Count != otherTagsList.Count)
+                {
+                    return false;
+                }
+
+                for (var i = 0; i < tagsList.Count; i++)
+                {
+                    if (!TagEquals(tagsList[i], otherTagsList[i]))
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            using var enumerator = (tags ?? []).GetEnumerator();
+            using var otherEnumerator = (otherTags ?? []).GetEnumerator();
+
+            while (true)
+            {
+                var hasNext = enumerator.MoveNext();
+                if (hasNext != otherEnumerator.MoveNext())
+                {
+                    return false;
+                }
+
+                if (!hasNext)
+                {
+                    return true;
+                }
+
+                if (!TagEquals(enumerator.Current, otherEnumerator.Current))
+                {
+                    return false;
+                }
+            }
+        }
+
+        private static bool TagEquals(KeyValuePair<string, object?> tag, KeyValuePair<string, object?> otherTag)
+            => string.Equals(tag.Key, otherTag.Key, StringComparison.Ordinal)
+            && Equals(tag.Value, otherTag.Value);
+    }
 }
