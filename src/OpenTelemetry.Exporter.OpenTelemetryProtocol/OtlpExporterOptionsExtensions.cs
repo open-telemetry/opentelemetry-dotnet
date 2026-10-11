@@ -176,26 +176,48 @@ internal static class OtlpExporterOptionsExtensions
                 var httpClientFactoryType = Type.GetType("System.Net.Http.IHttpClientFactory, Microsoft.Extensions.Http", throwOnError: false);
                 if (httpClientFactoryType != null)
                 {
-                    var httpClientFactory = serviceProvider.GetService(httpClientFactoryType);
-                    if (httpClientFactory != null)
+                    // Note: This factory may be invoked lazily on the first
+                    // export (see LazyExportClient) which can happen while the
+                    // IServiceProvider is being disposed, for example when a
+                    // LoggerProvider flushes its pending batch from Dispose().
+                    // IHttpClientFactory cannot be used once the container has
+                    // been disposed so fall back to the default HttpClient
+                    // rather than failing the export and dropping the batch.
+                    // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/7915.
+                    try
                     {
-                        var createClientMethod = httpClientFactoryType.GetMethod(
-                            "CreateClient",
-                            BindingFlags.Public | BindingFlags.Instance,
-                            binder: null,
-                            [typeof(string)],
-                            modifiers: null);
-                        if (createClientMethod != null)
+                        var httpClientFactory = serviceProvider.GetService(httpClientFactoryType);
+                        if (httpClientFactory != null)
                         {
-                            var client = (HttpClient?)createClientMethod.Invoke(httpClientFactory, [httpClientName]);
-
-                            if (client != null)
+                            var createClientMethod = httpClientFactoryType.GetMethod(
+                                "CreateClient",
+                                BindingFlags.Public | BindingFlags.Instance,
+                                binder: null,
+                                [typeof(string)],
+                                modifiers: null);
+                            if (createClientMethod != null)
                             {
-                                client.Timeout = TimeSpan.FromMilliseconds(options.TimeoutMilliseconds);
+                                var client = (HttpClient?)createClientMethod.Invoke(httpClientFactory, [httpClientName]);
 
-                                return client;
+                                if (client != null)
+                                {
+                                    client.Timeout = TimeSpan.FromMilliseconds(options.TimeoutMilliseconds);
+
+                                    return client;
+                                }
                             }
                         }
+                    }
+                    catch (ObjectDisposedException ex)
+                    {
+                        OpenTelemetryProtocolExporterEventSource.Log.HttpClientFactoryUnavailable(httpClientName, ex);
+                    }
+                    catch (TargetInvocationException ex) when (ex.InnerException is ObjectDisposedException)
+                    {
+                        // Thrown via reflection by IHttpClientFactory.CreateClient()
+                        // when the factory could still be resolved but the
+                        // container it creates handler scopes from is disposed.
+                        OpenTelemetryProtocolExporterEventSource.Log.HttpClientFactoryUnavailable(httpClientName, ex.InnerException);
                     }
                 }
 

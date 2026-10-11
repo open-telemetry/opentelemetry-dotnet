@@ -5,9 +5,7 @@
 using System.Net.Http;
 #endif
 using Microsoft.Extensions.Configuration;
-#if NET
 using Microsoft.Extensions.DependencyInjection;
-#endif
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
@@ -136,6 +134,58 @@ public class OtlpExporterOptionsExtensionsTests
         Assert.Same(options.DefaultHttpClientFactory, options.HttpClientFactory);
     }
 #endif
+
+    [Fact]
+    public void TryEnableIHttpClientFactoryIntegration_UsesIHttpClientFactory_WhenServiceProviderIsNotDisposed()
+    {
+        var services = new ServiceCollection();
+
+        var invocations = 0;
+
+        services.AddHttpClient("OtlpLogExporter", configureClient: (client) => invocations++);
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var options = new OtlpExporterOptions { Protocol = OtlpExportProtocol.HttpProtobuf };
+
+        Assert.True(options.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpLogExporter"));
+
+        using var client = options.HttpClientFactory();
+
+        Assert.NotNull(client);
+        Assert.Equal(1, invocations);
+    }
+
+    [Fact]
+    public void TryEnableIHttpClientFactoryIntegration_FallsBackToDefaultHttpClient_WhenServiceProviderIsDisposed()
+    {
+        var services = new ServiceCollection();
+
+        var invocations = 0;
+
+        services.AddHttpClient("OtlpLogExporter", configureClient: (client) => invocations++);
+
+        var serviceProvider = services.BuildServiceProvider();
+
+        var options = new OtlpExporterOptions
+        {
+            Protocol = OtlpExportProtocol.HttpProtobuf,
+            TimeoutMilliseconds = 1234,
+        };
+
+        Assert.True(options.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpLogExporter"));
+
+        // Simulate the service provider being disposed before the deferred
+        // export client is created, e.g. when the first export of logs happens
+        // from LoggerProvider.Dispose() while the container is being disposed.
+        serviceProvider.Dispose();
+
+        using var client = options.HttpClientFactory();
+
+        Assert.NotNull(client);
+        Assert.Equal(0, invocations);
+        Assert.Equal(TimeSpan.FromMilliseconds(1234), client.Timeout);
+    }
 
     [Theory]
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
