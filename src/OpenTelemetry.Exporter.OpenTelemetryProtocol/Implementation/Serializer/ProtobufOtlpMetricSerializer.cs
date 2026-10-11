@@ -663,7 +663,7 @@ internal static class ProtobufOtlpMetricSerializer
     {
         if (!CachedMetricMetadata.TryGetValue(metric, out var cachedMetadata))
         {
-#if NET10_0_OR_GREATER
+#if NET
             cachedMetadata = CachedMetricMetadata.GetOrAdd(
                 metric,
                 static (key, bufferSize) => SerializeMetricMetadataToBytes(key, bufferSize),

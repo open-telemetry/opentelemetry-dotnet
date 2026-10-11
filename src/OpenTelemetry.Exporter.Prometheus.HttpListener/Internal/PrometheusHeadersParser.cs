@@ -3,7 +3,7 @@
 
 using System.Globalization;
 
-#if NET8_0_OR_GREATER
+#if NET
 using SupportedVersions = System.Collections.Immutable.ImmutableHashSet<System.Version>;
 #else
 using SupportedVersions = System.Collections.Generic.HashSet<System.Version>;

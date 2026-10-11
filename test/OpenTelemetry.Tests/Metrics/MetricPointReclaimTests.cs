@@ -993,7 +993,7 @@ public class MetricPointReclaimTests
 
         // Hashing for the multi-tag path happens one call later on .NET 9+, which also
         // hashes the tags for the alternate span-based lookup before falling back here.
-#if NET9_0_OR_GREATER
+#if NET
         const int CallbackHashOrdinal = 4;
 #else
         const int CallbackHashOrdinal = 3;
@@ -1040,7 +1040,7 @@ public class MetricPointReclaimTests
 
         // Hashing for the multi-tag path happens one call later on .NET 9+, which also
         // hashes the tags for the alternate span-based lookup before falling back here.
-#if NET9_0_OR_GREATER
+#if NET
         var blockingHashOrdinal = tagCount == 1 ? 3 : 4;
 #else
         var blockingHashOrdinal = tagCount == 1 ? 2 : 3;

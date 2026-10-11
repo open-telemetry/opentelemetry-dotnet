@@ -229,7 +229,7 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
             HashSet<string> expectedSeries = usesUtf8Names
                 ?
                 [
-#if NET10_0_OR_GREATER
+#if NET
                     "aspnetcore.memory_pool.allocated_bytes_total",
 #endif
                     "http.server.active_requests",
@@ -246,7 +246,7 @@ public class PrometheusIntegrationTests(PromToolFixture promtool, ITestOutputHel
                 ]
                 :
                 [
-#if NET10_0_OR_GREATER
+#if NET
                     "aspnetcore_memory_pool_allocated_bytes_total",
 #endif
                     "http_server_active_requests",

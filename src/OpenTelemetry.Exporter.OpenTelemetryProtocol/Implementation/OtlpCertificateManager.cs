@@ -38,7 +38,7 @@ internal static class OtlpCertificateManager
 
         try
         {
-#if NET9_0_OR_GREATER
+#if NET
             var caCertificate = X509CertificateLoader.LoadCertificateFromFile(caCertificatePath);
 #else
             var pemContents = File.ReadAllText(caCertificatePath);

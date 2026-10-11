@@ -78,7 +78,7 @@ public abstract class ContainerFixture : IAsyncDisposable
     {
         using var cts = new CancellationTokenSource(timeout);
 
-#if NET8_0_OR_GREATER
+#if NET
         await task.WaitAsync(cts.Token).ConfigureAwait(false);
 #else
         var completed = await Task.WhenAny(task, Task.Delay(timeout, cts.Token)).ConfigureAwait(false);
