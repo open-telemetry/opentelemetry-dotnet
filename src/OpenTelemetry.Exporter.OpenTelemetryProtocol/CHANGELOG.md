@@ -52,7 +52,7 @@ Notes](../../RELEASENOTES.md).
 * Fixed spans and metrics from `ActivitySource` or `Meter` instances which
   share a name but differ by version, schema URL or tags being exported under
   a single instrumentation scope.
-  ([#NNNN](https://github.com/open-telemetry/opentelemetry-dotnet/pull/NNNN))
+  ([#7917](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7917))
 
 ## 1.19.1
 
