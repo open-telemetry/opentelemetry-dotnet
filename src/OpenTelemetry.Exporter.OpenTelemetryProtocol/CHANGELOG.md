@@ -53,7 +53,7 @@ Notes](../../RELEASENOTES.md).
   with `IHttpClientFactory` integration if the first export of logs happens
   while the `IServiceProvider` is being disposed. The exporter now falls back
   to the default `HttpClient` instead of failing the export.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7916](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7916))
 
 ## 1.19.1
 
