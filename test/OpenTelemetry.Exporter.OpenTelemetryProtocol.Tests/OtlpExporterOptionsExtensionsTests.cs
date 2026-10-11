@@ -1,15 +1,18 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics.Tracing;
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
+using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.PersistentStorage.FileSystem;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
@@ -187,6 +190,66 @@ public class OtlpExporterOptionsExtensionsTests
         Assert.Equal(TimeSpan.FromMilliseconds(1234), client.Timeout);
     }
 
+    [Fact]
+    public void TryEnableIHttpClientFactoryIntegration_FallsBackToDefaultHttpClient_WhenCreateClientThrowsObjectDisposedException()
+    {
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Warning);
+
+        var services = new ServiceCollection();
+
+        var httpClientFactory = new ThrowingHttpClientFactory(new ObjectDisposedException("IServiceProvider"));
+
+        services.AddSingleton<IHttpClientFactory>(httpClientFactory);
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var options = new OtlpExporterOptions
+        {
+            Protocol = OtlpExportProtocol.HttpProtobuf,
+            TimeoutMilliseconds = 1234,
+        };
+
+        Assert.True(options.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpLogExporter"));
+
+        using var client = options.HttpClientFactory();
+
+        Assert.NotNull(client);
+        Assert.Equal(["OtlpLogExporter"], httpClientFactory.RequestedNames);
+        Assert.Equal(TimeSpan.FromMilliseconds(1234), client.Timeout);
+
+        var message = Assert.Single(listener.CurrentMessages);
+        Assert.Equal(42, message.EventId);
+        Assert.Equal(EventLevel.Warning, message.Level);
+        Assert.Equal("OtlpLogExporter", message.Payload?[0]);
+    }
+
+    [Fact]
+    public void TryEnableIHttpClientFactoryIntegration_DoesNotFallBack_WhenCreateClientThrowsOtherException()
+    {
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Warning);
+
+        var services = new ServiceCollection();
+
+        var httpClientFactory = new ThrowingHttpClientFactory(new InvalidOperationException("Misconfigured named client."));
+
+        services.AddSingleton<IHttpClientFactory>(httpClientFactory);
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var options = new OtlpExporterOptions { Protocol = OtlpExportProtocol.HttpProtobuf };
+
+        Assert.True(options.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpLogExporter"));
+
+        // Only ObjectDisposedException falls back to the default HttpClient.
+        // Other failures to create the named client must still surface so
+        // that misconfiguration is not silently masked.
+        var exception = Assert.Throws<TargetInvocationException>(() => options.HttpClientFactory());
+
+        Assert.IsType<InvalidOperationException>(exception.InnerException);
+        Assert.Equal(["OtlpLogExporter"], httpClientFactory.RequestedNames);
+        Assert.Empty(listener.CurrentMessages);
+    }
+
     [Theory]
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
     [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcExportClient), false, 10000, null)]
@@ -287,7 +350,7 @@ public class OtlpExporterOptionsExtensionsTests
             using var transmissionHandler = exporterOptions.GetExportTransmissionHandler(new ExperimentalOptions(configuration), signalType);
             var persistentStorageTransmissionHandler = Assert.IsType<OtlpExporterPersistentStorageTransmissionHandler>(transmissionHandler);
 
-            var fileBlobProviderField = typeof(OtlpExporterPersistentStorageTransmissionHandler).GetField("persistentBlobProvider", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var fileBlobProviderField = typeof(OtlpExporterPersistentStorageTransmissionHandler).GetField("persistentBlobProvider", BindingFlags.NonPublic | BindingFlags.Instance);
             var persistentBlobProvider = Assert.IsType<FileBlobProvider>(fileBlobProviderField?.GetValue(persistentStorageTransmissionHandler));
 
             Assert.EndsWith(expectedDirectoryName, persistentBlobProvider.DirectoryPath, StringComparison.Ordinal);
@@ -397,6 +460,17 @@ public class OtlpExporterOptionsExtensionsTests
         foreach (var std in options.StandardHeaders)
         {
             Assert.Contains(headers, h => h.Key == std.Key && h.Value == std.Value);
+        }
+    }
+
+    private sealed class ThrowingHttpClientFactory(Exception exception) : IHttpClientFactory
+    {
+        public List<string> RequestedNames { get; } = [];
+
+        public HttpClient CreateClient(string name)
+        {
+            this.RequestedNames.Add(name);
+            throw exception;
         }
     }
 }
