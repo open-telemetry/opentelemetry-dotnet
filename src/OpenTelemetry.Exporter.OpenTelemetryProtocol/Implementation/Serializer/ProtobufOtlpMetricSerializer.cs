@@ -797,28 +797,11 @@ internal static class ProtobufOtlpMetricSerializer
             && string.Equals(this.SchemaUrl, other.SchemaUrl, StringComparison.Ordinal)
             && TagsEqual(this.Tags, other.Tags);
 
+        // Note: Only the name is hashed. Meters which share a name but differ
+        // by version, schema URL or tags are rare and are still told apart by
+        // Equals, so hashing those as well would only add cost to every lookup.
         public override int GetHashCode()
-        {
-            // Note: Tags are deliberately left out of the hash code. Meters
-            // which differ only by their tags are rare and are still told apart
-            // by Equals, so hashing them would only add cost to every lookup.
-#if NET || NETSTANDARD2_1_OR_GREATER
-            HashCode hashCode = default;
-            hashCode.Add(this.Name, StringComparer.Ordinal);
-            hashCode.Add(this.Version, StringComparer.Ordinal);
-            hashCode.Add(this.SchemaUrl, StringComparer.Ordinal);
-            return hashCode.ToHashCode();
-#else
-            unchecked
-            {
-                var hash = 17;
-                hash = (hash * 31) + (this.Name is null ? 0 : StringComparer.Ordinal.GetHashCode(this.Name));
-                hash = (hash * 31) + (this.Version is null ? 0 : StringComparer.Ordinal.GetHashCode(this.Version));
-                hash = (hash * 31) + (this.SchemaUrl is null ? 0 : StringComparer.Ordinal.GetHashCode(this.SchemaUrl));
-                return hash;
-            }
-#endif
-        }
+            => this.Name is null ? 0 : StringComparer.Ordinal.GetHashCode(this.Name);
 
         private static bool TagsEqual(Tags? tags, Tags? otherTags)
         {

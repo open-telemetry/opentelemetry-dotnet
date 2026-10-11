@@ -652,30 +652,11 @@ internal static class ProtobufOtlpTraceSerializer
                 && TagsEqual(source.Tags, otherSource.Tags);
         }
 
+        // Note: Only the name is hashed. Sources which share a name but differ
+        // by version, schema URL or tags are rare and are still told apart by
+        // Equals, so hashing those as well would only add cost to every lookup.
         public override int GetHashCode()
-        {
-            // Note: Tags are deliberately left out of the hash code. Sources
-            // which differ only by their tags are rare and are still told apart
-            // by Equals, so hashing them would only add cost to every lookup.
-            var source = this.Source;
-            var schemaUrl = NormalizeSchemaUrl(source.TelemetrySchemaUrl);
-#if NET || NETSTANDARD2_1_OR_GREATER
-            HashCode hashCode = default;
-            hashCode.Add(source.Name, StringComparer.Ordinal);
-            hashCode.Add(source.Version, StringComparer.Ordinal);
-            hashCode.Add(schemaUrl, StringComparer.Ordinal);
-            return hashCode.ToHashCode();
-#else
-            unchecked
-            {
-                var hash = 17;
-                hash = (hash * 31) + StringComparer.Ordinal.GetHashCode(source.Name);
-                hash = (hash * 31) + (source.Version is null ? 0 : StringComparer.Ordinal.GetHashCode(source.Version));
-                hash = (hash * 31) + (schemaUrl is null ? 0 : StringComparer.Ordinal.GetHashCode(schemaUrl));
-                return hash;
-            }
-#endif
-        }
+            => StringComparer.Ordinal.GetHashCode(this.Source.Name);
 
         // Note: A null and an empty schema URL are both exported as no schema URL.
         private static string? NormalizeSchemaUrl(string? schemaUrl)
