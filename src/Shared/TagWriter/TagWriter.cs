@@ -159,6 +159,29 @@ internal abstract class TagWriter<TTagState, TArrayState>
             case IDictionary dictionary:
                 return this.TryWriteKvListTagWithinDepthLimit(ref state, key, value, AdaptDictionary(dictionary), tagValueMaxLength);
 
+#if NET
+            // Checked after the built-in types above, most of which also implement this interface.
+            case IUtf8SpanFormattable utf8SpanFormattable:
+                try
+                {
+                    if (this.TryWriteUtf8SpanFormattableTag(ref state, key, utf8SpanFormattable, tagValueMaxLength))
+                    {
+                        break;
+                    }
+                }
+                catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
+                {
+                    throw;
+                }
+                catch
+                {
+                    // If TryFormat throws an exception then the tag is ignored.
+                    return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
+                }
+
+                goto default;
+#endif
+
             // All other types are converted to strings including the following
             // built-in value types:
             // case nint:    Pointer type.
@@ -271,6 +294,24 @@ internal abstract class TagWriter<TTagState, TArrayState>
     protected abstract void WriteStringTag(ref TTagState state, string key, ReadOnlySpan<char> value);
 
     protected abstract void WriteArrayTag(ref TTagState state, string key, ref TArrayState value);
+
+#if NET
+    /// <summary>
+    /// Writes a string tag whose value encodes itself as UTF-8 directly into the
+    /// destination, without first being converted to a <see cref="string"/>.
+    /// </summary>
+    /// <remarks>
+    /// Writers that do not override this fall back to writing the value's
+    /// <see cref="object.ToString"/> result as a string tag.
+    /// </remarks>
+    /// <param name="state">The writer state.</param>
+    /// <param name="key">The tag key.</param>
+    /// <param name="value">The tag value.</param>
+    /// <param name="tagValueMaxLength">The maximum length, in UTF-16 characters, to write the value as, if any.</param>
+    /// <returns><see langword="true"/> if the tag was written; <see langword="false"/> to fall back to <see cref="object.ToString"/>.</returns>
+    protected virtual bool TryWriteUtf8SpanFormattableTag(ref TTagState state, string key, IUtf8SpanFormattable value, int? tagValueMaxLength)
+        => false;
+#endif
 
     protected abstract void WriteKvListTag(ref TTagState state, string key, IEnumerable<KeyValuePair<string, object?>> kvList, int? tagValueMaxLength);
 
