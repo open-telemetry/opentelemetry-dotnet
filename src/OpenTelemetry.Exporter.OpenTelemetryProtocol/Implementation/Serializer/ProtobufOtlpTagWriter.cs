@@ -2,10 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Buffers;
-#if NET
-using System.Globalization;
-using System.Text;
-#endif
 using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
@@ -130,37 +126,30 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
     }
 
 #if NET
-    protected override bool TryWriteUtf8SpanFormattableTag(ref OtlpTagWriterState state, string key, IUtf8SpanFormattable value, int? tagValueMaxLength)
+    protected override bool TryBeginUtf8StringTag(ref OtlpTagWriterState state, string key, out Span<byte> destination)
     {
         state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Key, key);
 
         state.WritePosition = ProtobufSerializer.WriteTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value, ProtobufWireType.LEN);
-        var anyValueLengthPosition = state.WritePosition;
         state.WritePosition += ReserveSizeForLength;
 
         state.WritePosition = ProtobufSerializer.WriteTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.AnyValue_String_Value, ProtobufWireType.LEN);
-        var stringLengthPosition = state.WritePosition;
         state.WritePosition += ReserveSizeForLength;
 
-        var destination = state.Buffer.AsSpan(state.WritePosition);
-        if (!value.TryFormat(destination, out var bytesWritten, format: default, CultureInfo.InvariantCulture))
-        {
-            // Surfaces as the same out-of-space failure as every other write, so the
-            // serializer grows the buffer and retries the batch.
-            throw new ArgumentException("The buffer is too small to hold the data being written.", nameof(state));
-        }
+        destination = state.Buffer.AsSpan(state.WritePosition);
+        return true;
+    }
 
-        if (tagValueMaxLength is { } maxLength && bytesWritten > maxLength)
-        {
-            bytesWritten = GetUtf8ByteCountForMaxChars(destination[..bytesWritten], maxLength);
-        }
+    protected override void EndUtf8StringTag(ref OtlpTagWriterState state, int bytesWritten)
+    {
+        // Laid out by TryBeginUtf8StringTag: each reserved length is followed by a single byte tag.
+        var stringLengthPosition = state.WritePosition - ReserveSizeForLength;
+        var anyValueLengthPosition = stringLengthPosition - 1 - ReserveSizeForLength;
 
         state.WritePosition += bytesWritten;
 
         ProtobufSerializer.WriteReservedLength(state.Buffer, stringLengthPosition, bytesWritten);
         ProtobufSerializer.WriteReservedLength(state.Buffer, anyValueLengthPosition, state.WritePosition - (anyValueLengthPosition + ReserveSizeForLength));
-
-        return true;
     }
 #endif
 
@@ -258,29 +247,6 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         ProtobufSerializer.WriteReservedLength(state.Buffer, kvlistLengthPos, state.WritePosition - (kvlistLengthPos + ReserveSizeForLength));
         ProtobufSerializer.WriteReservedLength(state.Buffer, anyValueLengthPos, state.WritePosition - (anyValueLengthPos + ReserveSizeForLength));
     }
-
-#if NET
-    // Truncates on whole code points, so a UTF-8 sequence or surrogate pair is never split.
-    private static int GetUtf8ByteCountForMaxChars(ReadOnlySpan<byte> utf8, int maxChars)
-    {
-        var bytes = 0;
-        var chars = 0;
-
-        while (bytes < utf8.Length)
-        {
-            Rune.DecodeFromUtf8(utf8[bytes..], out var rune, out var consumed);
-            if (chars + rune.Utf16SequenceLength > maxChars)
-            {
-                break;
-            }
-
-            chars += rune.Utf16SequenceLength;
-            bytes += consumed;
-        }
-
-        return bytes;
-    }
-#endif
 
     internal struct OtlpTagWriterState
     {
