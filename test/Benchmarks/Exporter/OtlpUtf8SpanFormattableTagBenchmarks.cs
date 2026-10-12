@@ -1,0 +1,73 @@
+// Copyright The OpenTelemetry Authors
+// SPDX-License-Identifier: Apache-2.0
+
+#if NET
+extern alias OpenTelemetryProtocol;
+
+using System.Buffers;
+using System.Text.Json;
+using BenchmarkDotNet.Attributes;
+using OpenTelemetryProtocol::OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
+
+namespace Benchmarks.Exporter;
+
+[MemoryDiagnoser]
+public class OtlpUtf8SpanFormattableTagBenchmarks
+{
+    private readonly byte[] buffer = new byte[1024 * 1024];
+    private Deal[] deals = [];
+
+    [Params(10, 1000)]
+    public int DealCount { get; set; }
+
+    [GlobalSetup]
+    public void Setup()
+        => this.deals = [.. Enumerable.Range(0, this.DealCount).Select(i => new Deal($"deal-{i}", i * 1.5, i % 2 == 0))];
+
+    [Benchmark(Baseline = true)]
+    public int StringTag()
+    {
+        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState { Buffer = this.buffer };
+        ProtobufOtlpTagWriter.WriteKeyValue(ref state, 1, "deals", JsonSerializer.Serialize(this.deals));
+        return state.WritePosition;
+    }
+
+    [Benchmark]
+    public int Utf8SpanFormattableTag()
+    {
+        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState { Buffer = this.buffer };
+        ProtobufOtlpTagWriter.WriteKeyValue(ref state, 1, "deals", new JsonTagValue<Deal[]>(this.deals));
+        return state.WritePosition;
+    }
+
+    internal sealed record Deal(string Id, double Price, bool Enabled);
+
+    // Serializes at export time through a reused writer, so the only per-tag allocation is this wrapper.
+    private sealed class JsonTagValue<T>(T value) : IUtf8SpanFormattable
+    {
+        [ThreadStatic]
+        private static ArrayBufferWriter<byte>? bufferWriter;
+
+        [ThreadStatic]
+        private static Utf8JsonWriter? jsonWriter;
+
+        public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+        {
+            var output = bufferWriter ??= new ArrayBufferWriter<byte>();
+            output.ResetWrittenCount();
+
+            var writer = jsonWriter ??= new Utf8JsonWriter(output);
+            writer.Reset(output);
+
+            JsonSerializer.Serialize(writer, value);
+
+            bytesWritten = output.WrittenCount;
+            return output.WrittenSpan.TryCopyTo(utf8Destination);
+        }
+
+        public string ToString(string? format, IFormatProvider? formatProvider) => JsonSerializer.Serialize(value);
+
+        public override string ToString() => JsonSerializer.Serialize(value);
+    }
+}
+#endif
