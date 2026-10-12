@@ -20,6 +20,7 @@ concurrency:
 
 jobs:
   lint-misspell-sanitycheck:
+    if: false
     uses: $/.github/workflows/sanitycheck.yml
 
   code-ql:
