@@ -5,12 +5,11 @@
 using System.Collections.Frozen;
 #endif
 using System.Diagnostics;
-using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Resources;
 
@@ -18,9 +17,6 @@ namespace OpenTelemetry.Trace;
 
 internal sealed class TracerProviderSdk : TracerProvider
 {
-    internal const string TracesSamplerConfigKey = "OTEL_TRACES_SAMPLER";
-    internal const string TracesSamplerArgConfigKey = "OTEL_TRACES_SAMPLER_ARG";
-
     internal readonly IServiceProvider ServiceProvider;
     internal IDisposable? OwnedServiceProvider;
     internal int ShutdownCount;
@@ -68,7 +64,9 @@ internal sealed class TracerProviderSdk : TracerProvider
             resourceBuilder.ServiceProvider = serviceProvider;
             this.Resource = resourceBuilder.Build();
 
-            this.Sampler = GetSampler(serviceProvider!.GetRequiredService<IConfiguration>(), state.Sampler);
+            this.Sampler = SamplerFactory.GetSampler(
+                serviceProvider!.GetRequiredService<IOptions<SamplerOptions>>().Value,
+                state.Sampler);
             OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Sampler added = \"{this.Sampler.GetType()}\".");
 
             // this.Sampler is assigned on each iteration so a sampler returned by any
@@ -486,80 +484,6 @@ internal sealed class TracerProviderSdk : TracerProvider
             var compositePredicate = new CompositePredicate(namesPredicate, prefixPredicate, regexPredicate);
             return compositePredicate.IsMatch;
         }
-    }
-
-    private static Sampler GetSampler(IConfiguration configuration, Sampler? stateSampler)
-    {
-        var sampler = stateSampler;
-
-        if (configuration.TryGetStringValue(TracesSamplerConfigKey, out var configValue))
-        {
-            if (sampler != null)
-            {
-                OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent(
-                    $"Trace sampler configuration value '{configValue}' has been ignored because a value '{sampler.GetType().FullName}' was set programmatically.");
-                return sampler;
-            }
-
-            switch (configValue)
-            {
-                case var _ when string.Equals(configValue, "always_on", StringComparison.OrdinalIgnoreCase):
-                    sampler = AlwaysOnSampler.Instance;
-                    break;
-                case var _ when string.Equals(configValue, "always_off", StringComparison.OrdinalIgnoreCase):
-                    sampler = AlwaysOffSampler.Instance;
-                    break;
-                case var _ when string.Equals(configValue, "traceidratio", StringComparison.OrdinalIgnoreCase):
-                    {
-                        var traceIdRatio = ReadTraceIdRatio(configuration);
-                        sampler = new TraceIdRatioBasedSampler(traceIdRatio);
-                        break;
-                    }
-
-                case var _ when string.Equals(configValue, "parentbased_always_on", StringComparison.OrdinalIgnoreCase):
-                    sampler = new ParentBasedSampler(AlwaysOnSampler.Instance);
-                    break;
-                case var _ when string.Equals(configValue, "parentbased_always_off", StringComparison.OrdinalIgnoreCase):
-                    sampler = new ParentBasedSampler(AlwaysOffSampler.Instance);
-                    break;
-                case var _ when string.Equals(configValue, "parentbased_traceidratio", StringComparison.OrdinalIgnoreCase):
-                    {
-                        var traceIdRatio = ReadTraceIdRatio(configuration);
-                        sampler = new ParentBasedSampler(new TraceIdRatioBasedSampler(traceIdRatio));
-                        break;
-                    }
-
-                default:
-                    OpenTelemetrySdkEventSource.Log.TracesSamplerConfigInvalid(configValue);
-                    break;
-            }
-
-            if (sampler != null)
-            {
-                OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent($"Trace sampler set to '{sampler.GetType().FullName}' from configuration.");
-            }
-        }
-
-        return sampler ?? new ParentBasedSampler(AlwaysOnSampler.Instance);
-    }
-
-    private static double ReadTraceIdRatio(IConfiguration configuration)
-    {
-        if (configuration.TryGetStringValue(TracesSamplerArgConfigKey, out var configValue) &&
-                double.TryParse(configValue, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out var traceIdRatio) &&
-                !double.IsNaN(traceIdRatio) &&
-                !double.IsInfinity(traceIdRatio) &&
-                traceIdRatio >= 0.0 &&
-                traceIdRatio <= 1.0)
-        {
-            return traceIdRatio;
-        }
-        else
-        {
-            OpenTelemetrySdkEventSource.Log.TracesSamplerArgConfigInvalid(configValue ?? string.Empty);
-        }
-
-        return 1.0;
     }
 
     private static void ApplySamplingAttributes<TState>(
