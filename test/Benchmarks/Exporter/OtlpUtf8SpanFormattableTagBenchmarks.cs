@@ -17,15 +17,26 @@ public class OtlpUtf8SpanFormattableTagBenchmarks
     private readonly byte[] buffer = new byte[1024 * 1024];
     private Deal[] deals = [];
 
-    [Params(10, 1000)]
-    public int DealCount { get; set; }
-
     [GlobalSetup]
     public void Setup()
-        => this.deals = [.. Enumerable.Range(0, this.DealCount).Select(i => new Deal($"deal-{i}", i * 1.5, i % 2 == 0))];
+    {
+        this.deals = [.. Enumerable.Range(0, 12).Select(i => new Deal(
+            Id: $"deal-{i:D4}",
+            SeatId: $"seat-{i % 3}",
+            FloorPrice: 1.25 + (i * 0.5),
+            Currency: "USD",
+            Formats: i % 2 == 0 ? ["banner", "video"] : ["native"],
+            Enabled: i % 4 != 0))];
+
+        var size = JsonSerializer.SerializeToUtf8Bytes(this.deals).Length;
+        if (size is < 1024 or > 2048)
+        {
+            throw new InvalidOperationException($"Expected a 1-2 KB JSON payload but got {size} bytes.");
+        }
+    }
 
     [Benchmark(Baseline = true)]
-    public int StringTag()
+    public int JsonStringTag()
     {
         var state = new ProtobufOtlpTagWriter.OtlpTagWriterState { Buffer = this.buffer };
         ProtobufOtlpTagWriter.WriteKeyValue(ref state, 1, "deals", JsonSerializer.Serialize(this.deals));
@@ -33,14 +44,14 @@ public class OtlpUtf8SpanFormattableTagBenchmarks
     }
 
     [Benchmark]
-    public int Utf8SpanFormattableTag()
+    public int JsonUtf8SpanFormattableTag()
     {
         var state = new ProtobufOtlpTagWriter.OtlpTagWriterState { Buffer = this.buffer };
         ProtobufOtlpTagWriter.WriteKeyValue(ref state, 1, "deals", new JsonTagValue<Deal[]>(this.deals));
         return state.WritePosition;
     }
 
-    internal sealed record Deal(string Id, double Price, bool Enabled);
+    internal sealed record Deal(string Id, string SeatId, double FloorPrice, string Currency, string[] Formats, bool Enabled);
 
     // Serializes at export time through a reused writer, so the only per-tag allocation is this wrapper.
     private sealed class JsonTagValue<T>(T value) : IUtf8SpanFormattable
