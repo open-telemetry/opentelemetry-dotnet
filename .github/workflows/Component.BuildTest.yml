@@ -79,6 +79,11 @@ jobs:
         reg add "HKLM\SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps" /v DumpFolder /t REG_EXPAND_SZ /d "%RUNNER_TEMP%\crash-dumps" /f
         reg add "HKLM\SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps" /v DumpType /t REG_DWORD /d 2 /f
         reg add "HKLM\SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps" /v DumpCount /t REG_DWORD /d 10 /f
+        >> "%GITHUB_ENV%" echo DOTNET_DbgEnableMiniDump=1
+        >> "%GITHUB_ENV%" echo DOTNET_DbgMiniDumpType=4
+        >> "%GITHUB_ENV%" echo DOTNET_DbgMiniDumpName=%RUNNER_TEMP%\crash-dumps\%%e-%%p.dmp
+        >> "%GITHUB_ENV%" echo DOTNET_CreateDumpDiagnostics=1
+        >> "%GITHUB_ENV%" echo DOTNET_CreateDumpLogToFile=%RUNNER_TEMP%\crash-dumps\createdump-%%p.log
 
     - name: Setup previous .NET runtimes
       uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
@@ -93,7 +98,9 @@ jobs:
     - name: Collect crash events
       if: ${{ failure() && runner.os == 'Windows' }}
       shell: cmd
-      run: wevtutil qe Application /q:"*[System[(EventID=1000 or EventID=1026)]]" /c:20 /rd:true /f:text
+      run: |
+        wevtutil qe Application /q:"*[System[(Level=1 or Level=2 or Level=3) and TimeCreated[timediff(@SystemTime) <= 900000]]]" /c:50 /rd:true /f:text
+        dir "%RUNNER_TEMP%\crash-dumps"
 
     - name: Upload hang dumps and test platform logs
       if: ${{ failure() || cancelled() }}
@@ -103,7 +110,7 @@ jobs:
         name: hang-dumps-${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}-${{ matrix.os }}-${{ matrix.version }}-attempt-${{ github.run_attempt }}
         retention-days: 7
         path: |
-          ${{ runner.temp }}/crash-dumps/*.dmp
+          ${{ runner.temp }}/crash-dumps/*
           **/TestResults/**/*hangdump*.dmp
           **/TestResults/**/Sequence_*.xml
           **/TestResults/diag/*
