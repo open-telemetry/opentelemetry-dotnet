@@ -939,6 +939,36 @@ public class OtlpLogExporterTests
     }
 
     [Fact]
+    public void ByteArrayLogRecordAttributeIsTruncatedToValueLengthLimit()
+    {
+        var sdkLimitOptions = new SdkLimitOptions { AttributeValueLengthLimit = 4 };
+
+        var logRecords = new List<LogRecord>();
+        using var loggerFactory = LoggerFactory.Create(builder =>
+        {
+            builder.UseOpenTelemetry(
+                logging => logging.AddInMemoryExporter(logRecords),
+                options => options.ParseStateValues = true);
+        });
+
+        var logger = loggerFactory.CreateLogger(string.Empty);
+        var state = new List<KeyValuePair<string, object?>> { new("Bytes", new byte[] { 1, 2, 3, 4, 5, 6 }) };
+        logger.Log(
+            LogLevel.Information,
+            default,
+            state,
+            null,
+            (s, _) => "message");
+
+        var otlpLogRecord = ToOtlpLogs(sdkLimitOptions, new(), logRecords[0]);
+
+        Assert.NotNull(otlpLogRecord);
+        var attribute = TryGetAttribute(otlpLogRecord, "Bytes");
+        Assert.NotNull(attribute);
+        Assert.Equal([1, 2, 3, 4], attribute.Value.BytesValue.ToByteArray());
+    }
+
+    [Fact]
     public void Export_WhenExportClientIsProvidedInCtor_UsesProvidedExportClient()
     {
         // Arrange.

@@ -66,6 +66,11 @@ internal sealed class AggregatorStore
 
     private int metricPointIndex;
     private int batchSize;
+
+    // The highest creation ordinal (see ToSlot) ever handed out by DequeueAvailableMetricPoint.
+    // Only written under the delta dictionary lock. Slots with a higher ordinal have never held
+    // a MetricPoint, so a delta Snapshot does not need to visit them.
+    private int deltaOrdinalHighWaterMark = 1;
     private bool zeroTagMetricPointInitialized;
     private bool overflowTagMetricPointInitialized;
 
@@ -268,7 +273,13 @@ internal sealed class AggregatorStore
         // the same strided order in which they were first handed out, so that the
         // slots reclaimed in one collect cycle re-enter the free queue in that order
         // and points created after a reclaim are again spread apart.
-        for (var i = 2; i < this.NumberOfMetricPoints; i++)
+        //
+        // Only the ordinals that have ever been handed out can hold a MetricPoint. A point
+        // created concurrently with this loop is simply picked up by the next collect cycle,
+        // exactly as if the loop had visited its (still empty) slot just before it was created.
+        var highWaterMark = Volatile.Read(ref this.deltaOrdinalHighWaterMark);
+
+        for (var i = 2; i <= highWaterMark; i++)
         {
             var slot = this.ToSlot(i);
             ref var metricPoint = ref this.metricPoints[slot];
@@ -432,6 +443,7 @@ internal sealed class AggregatorStore
 
         if (bestLiveNeighbours == 0 || queue.Count == 0)
         {
+            this.RecordHandedOut(best);
             return best;
         }
 
@@ -460,7 +472,21 @@ internal sealed class AggregatorStore
             queue.Enqueue(skipped[i]);
         }
 
+        this.RecordHandedOut(best);
         return best;
+    }
+
+    private void RecordHandedOut(int slot)
+    {
+        // The inverse of ToSlot. Must be called under lock (this.TagsToMetricPointIndexDictionaryDelta).
+        var j = slot - 2;
+        var half = (this.NumberOfMetricPoints - 1) / 2;
+        var ordinal = (j & 1) == 0 ? 2 + (j / 2) : 2 + half + ((j - 1) / 2);
+
+        if (ordinal > this.deltaOrdinalHighWaterMark)
+        {
+            Volatile.Write(ref this.deltaOrdinalHighWaterMark, ordinal);
+        }
     }
 
     private int CountLiveNeighbours(int slot)
