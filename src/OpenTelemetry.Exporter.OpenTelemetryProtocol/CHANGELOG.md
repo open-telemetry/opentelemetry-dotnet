@@ -50,8 +50,10 @@ Notes](../../RELEASENOTES.md).
   ([#7902](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7902))
 
 * Reload OTLP export clients when named exporter options or `UseOtlpExporter`
-  configuration changes, without recreating providers. Protocol and maximum
-  request size remain fixed for the lifetime of each exporter.
+  configuration changes, without recreating providers. Protocol, maximum request
+  size, experimental/retry settings, processor/batch options, and metric reader
+  options remain fixed for the lifetime of each exporter or pipeline. See
+  [reloading named exporter configuration](README.md#reloading-named-exporter-configuration).
   ([#7842](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7842))
 
 ## 1.19.1

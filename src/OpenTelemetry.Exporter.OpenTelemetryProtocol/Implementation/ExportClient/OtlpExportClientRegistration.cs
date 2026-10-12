@@ -50,6 +50,10 @@ internal sealed class OtlpExportClientRegistration : IDisposable
         }
     }
 
+    internal OtlpSignalType SignalType => this.signalType;
+
+    internal string OptionsName => this.optionsName;
+
     public void Dispose()
     {
         this.optionsSubscription?.Dispose();
@@ -134,7 +138,7 @@ internal sealed class OtlpExportClientRegistration : IDisposable
     {
         if (this.builderOptionsMonitor is not { } monitor)
         {
-            return this.optionsMonitor.Get(this.optionsName);
+            return this.optionsMonitor.Get(this.optionsName).Copy();
         }
 
         var builderOptions = monitor.Get(this.optionsName);
@@ -146,6 +150,6 @@ internal sealed class OtlpExportClientRegistration : IDisposable
             _ => throw new NotSupportedException(),
         };
 
-        return signalOptions.ApplyDefaults(builderOptions.DefaultOptionsInstance);
+        return signalOptions.Copy().ApplyDefaults(builderOptions.DefaultOptionsInstance);
     }
 }

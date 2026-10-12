@@ -61,7 +61,7 @@ public static class OtlpLogExporterHelperExtensions
         return loggerOptions.AddProcessor(sp =>
 #pragma warning restore CA1062 // Validate arguments of public methods
         {
-            var exporterOptions = GetOptions(sp, name, finalOptionsName, OtlpExporterOptions.CreateOtlpExporterOptions);
+            var exporterOptions = GetOptions(sp, name, finalOptionsName, OtlpExporterOptions.CreateOtlpExporterOptions).Copy();
 
             var processorOptions = sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(finalOptionsName);
 
@@ -109,10 +109,11 @@ public static class OtlpLogExporterHelperExtensions
         return loggerOptions.AddProcessor(sp =>
 #pragma warning restore CA1062 // Validate arguments of public methods
         {
-            var exporterOptions = GetOptions(sp, name, finalOptionsName, OtlpExporterOptions.CreateOtlpExporterOptions);
+            var exporterOptions = GetOptions(sp, name, finalOptionsName, OtlpExporterOptions.CreateOtlpExporterOptions).Copy();
 
             var processorOptions = sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(finalOptionsName);
 
+            processorOptions = processorOptions.Copy();
             configureExporterAndProcessor?.Invoke(exporterOptions, processorOptions);
 
             return BuildOtlpLogExporter(
@@ -257,10 +258,14 @@ public static class OtlpLogExporterHelperExtensions
 
             var processorOptions = sp.GetRequiredService<IOptionsMonitor<LogRecordExportProcessorOptions>>().Get(finalOptionsName);
 
+            exporterOptions = exporterOptions.Copy();
+            var processorDefaults = processorOptions.Copy();
+            processorOptions = processorDefaults.Copy();
+
             // Configuration delegate is executed inline.
             configureExporterAndProcessor?.Invoke(exporterOptions, processorOptions);
             Action<OtlpExporterOptions>? configureOnReload = name != null && configureExporterAndProcessor != null
-                ? options => configureExporterAndProcessor(options, processorOptions)
+                ? options => configureExporterAndProcessor(options, processorDefaults.Copy())
                 : null;
 
             // Note: Not using finalOptionsName here for SdkLimitOptions.
@@ -289,7 +294,8 @@ public static class OtlpLogExporterHelperExtensions
         bool skipUseOtlpExporterRegistrationCheck = false,
         Func<BaseExporter<LogRecord>, BaseExporter<LogRecord>>? configureExporterInstance = null,
         string? optionsName = null,
-        Action<OtlpExporterOptions>? configureOnReload = null)
+        Action<OtlpExporterOptions>? configureOnReload = null,
+        bool useOtlpExporter = false)
     {
 #if NETFRAMEWORK || NETSTANDARD2_0
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
@@ -308,6 +314,7 @@ public static class OtlpLogExporterHelperExtensions
         }
 
         OtlpExporterTransmissionHandler? transmissionHandler = null;
+        exporterOptions = exporterOptions.Copy();
         var usesHttpClientFactory = exporterOptions.TryEnableIHttpClientFactoryIntegration(
             serviceProvider,
             OtlpExporterHttpClientNames.LogExporter);
@@ -324,8 +331,8 @@ public static class OtlpLogExporterHelperExtensions
                     serviceProvider,
                     optionsName,
                     OtlpSignalType.Logs,
-                    skipUseOtlpExporterRegistrationCheck,
-                    usesHttpClientFactory,
+                    useOtlpExporter: useOtlpExporter,
+                    usesHttpClientFactory: usesHttpClientFactory,
                     configureOnReload);
                 transmissionHandler = exporterOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Logs, exportClientOverride: reloadableClient);
 #pragma warning restore CA2000 // Ownership passes to the exporter.

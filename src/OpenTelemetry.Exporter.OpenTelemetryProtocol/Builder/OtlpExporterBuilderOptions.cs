@@ -45,7 +45,7 @@ internal sealed class OtlpExporterBuilderOptions
 
         var defaultBatchOptions = this.ActivityExportProcessorOptions!.BatchExportProcessorOptions;
 
-        this.DefaultOptionsInstance = defaultOptions!;
+        this.DefaultOptionsInstance = defaultOptions!.Copy();
 
         this.LoggingOptionsInstance = new OtlpExporterOptions(configuration!, OtlpExporterOptionsConfigurationType.Logs, defaultBatchOptions);
 

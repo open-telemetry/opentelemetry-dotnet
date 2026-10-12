@@ -127,7 +127,8 @@ public static class OtlpTraceExporterHelperExtensions
         BatchExportProcessorOptions<Activity> batchExportProcessorOptions,
         bool skipUseOtlpExporterRegistrationCheck = false,
         Func<BaseExporter<Activity>, BaseExporter<Activity>>? configureExporterInstance = null,
-        string? optionsName = null)
+        string? optionsName = null,
+        bool useOtlpExporter = false)
     {
 #if NETFRAMEWORK || NETSTANDARD2_0
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
@@ -145,6 +146,7 @@ public static class OtlpTraceExporterHelperExtensions
             serviceProvider.EnsureNoUseOtlpExporterRegistrations();
         }
 
+        exporterOptions = exporterOptions.Copy();
         var usesHttpClientFactory = exporterOptions.TryEnableIHttpClientFactoryIntegration(
             serviceProvider,
             OtlpExporterHttpClientNames.TraceExporter);
@@ -163,16 +165,14 @@ public static class OtlpTraceExporterHelperExtensions
                     serviceProvider,
                     optionsName,
                     OtlpSignalType.Traces,
-                    skipUseOtlpExporterRegistrationCheck,
-                    usesHttpClientFactory);
+                    useOtlpExporter: useOtlpExporter,
+                    usesHttpClientFactory: usesHttpClientFactory);
                 transmissionHandler = exporterOptions.GetExportTransmissionHandler(experimentalOptions, OtlpSignalType.Traces, exportClientOverride: reloadableClient);
 #pragma warning restore CA2000 // Ownership passes to the exporter.
             }
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
-            otlpExporter = reloadableClient is null
-                ? new OtlpTraceExporter(exporterOptions, sdkLimitOptions, experimentalOptions)
-                : new ReloadableOtlpTraceExporter(exporterOptions, sdkLimitOptions, experimentalOptions, transmissionHandler!, reloadableClient);
+            otlpExporter = new OtlpTraceExporter(exporterOptions, sdkLimitOptions, experimentalOptions, transmissionHandler);
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
             if (configureExporterInstance != null)
