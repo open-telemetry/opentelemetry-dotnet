@@ -450,15 +450,12 @@ internal abstract class TagWriter<TTagState, TArrayState>
 #if NET
     private bool WriteUtf8SpanFormattableTag(ref TTagState state, string key, IUtf8SpanFormattable value, Span<byte> destination, int? tagValueMaxLength)
     {
+        bool formatted;
         int bytesWritten;
-        string? stringValue = null;
 
         try
         {
-            if (!value.TryFormat(destination, out bytesWritten, format: default, CultureInfo.InvariantCulture))
-            {
-                stringValue = value.ToString() ?? string.Empty;
-            }
+            formatted = value.TryFormat(destination, out bytesWritten, format: default, CultureInfo.InvariantCulture);
         }
         catch
         {
@@ -466,12 +463,13 @@ internal abstract class TagWriter<TTagState, TArrayState>
             return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
         }
 
-        if (stringValue != null)
+        if (!formatted)
         {
-            // Throws if the string does not fit either, which writers treat as out of space.
-            bytesWritten = Encoding.UTF8.GetBytes(TruncateString(stringValue.AsSpan(), tagValueMaxLength), destination);
+            // Writers treat this as out of space: the buffer is grown and the write retried.
+            throw new ArgumentOutOfRangeException(nameof(destination), "The buffer is too small to hold the data being written.");
         }
-        else if (tagValueMaxLength is { } maxLength && bytesWritten > maxLength)
+
+        if (tagValueMaxLength is { } maxLength && bytesWritten > maxLength)
         {
             bytesWritten = GetUtf8ByteCountForMaxChars(destination[..bytesWritten], maxLength);
         }
