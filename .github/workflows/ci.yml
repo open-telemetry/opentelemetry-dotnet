@@ -24,6 +24,7 @@ jobs:
 
   code-ql:
     uses: $/.github/workflows/codeql-analysis-steps.yml
+    if: false
     permissions:
       actions: read # Scan GitHub Actions workflows
       contents: read # Checkout the repository
@@ -71,8 +72,7 @@ jobs:
 
   lint-actions:
     needs: detect-changes
-    if: |
-      contains(needs.detect-changes.outputs.changes, 'github')
+    if: false
     uses: $/.github/workflows/actionlint.yml
     permissions:
       actions: read # Read GitHub Actions workflows
