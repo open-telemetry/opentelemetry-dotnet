@@ -470,10 +470,13 @@ public class OtlpAttributeTests
         Assert.Throws<ArgumentException>(() => ProtobufOtlpTagWriter.Instance.TryWriteTag(ref state, tag));
     }
 
-    [Fact]
-    public void ExceptionInUtf8TryFormatIsCaught()
+    [Theory]
+    [InlineData(typeof(InvalidOperationException))]
+    [InlineData(typeof(ArgumentException))]
+    [InlineData(typeof(IndexOutOfRangeException))]
+    public void ExceptionInUtf8TryFormatIsCaught(Type exceptionType)
     {
-        var kvp = new KeyValuePair<string, object?>("key", new Utf8ValueThatThrows());
+        var kvp = new KeyValuePair<string, object?>("key", new Utf8ValueThatThrows(exceptionType));
         Assert.False(TryTransformTag(kvp, out _));
     }
 
@@ -511,10 +514,10 @@ public class OtlpAttributeTests
         public override string ToString() => value;
     }
 
-    private sealed class Utf8ValueThatThrows : IUtf8SpanFormattable
+    private sealed class Utf8ValueThatThrows(Type exceptionType) : IUtf8SpanFormattable
     {
         public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
-            => throw new InvalidOperationException("Nope.");
+            => throw (Exception)Activator.CreateInstance(exceptionType, "Nope.")!;
     }
 
 #endif

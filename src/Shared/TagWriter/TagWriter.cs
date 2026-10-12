@@ -4,6 +4,9 @@
 using System.Collections;
 using System.Diagnostics;
 using System.Globalization;
+#if NET
+using System.Text;
+#endif
 
 namespace OpenTelemetry.Internal;
 
@@ -161,25 +164,8 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
 #if NET
             // Checked after the built-in types above, most of which also implement this interface.
-            case IUtf8SpanFormattable utf8SpanFormattable:
-                try
-                {
-                    if (this.TryWriteUtf8SpanFormattableTag(ref state, key, utf8SpanFormattable, tagValueMaxLength))
-                    {
-                        break;
-                    }
-                }
-                catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException)
-                {
-                    throw;
-                }
-                catch
-                {
-                    // If TryFormat throws an exception then the tag is ignored.
-                    return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
-                }
-
-                goto default;
+            case IUtf8SpanFormattable utf8SpanFormattable when this.TryBeginUtf8StringTag(ref state, key, out var destination):
+                return this.TryWriteUtf8StringTag(ref state, key, utf8SpanFormattable, destination, tagValueMaxLength);
 #endif
 
             // All other types are converted to strings including the following
@@ -297,20 +283,33 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
 #if NET
     /// <summary>
-    /// Writes a string tag whose value encodes itself as UTF-8 directly into the
-    /// destination, without first being converted to a <see cref="string"/>.
+    /// Writes the key of a string tag and provides the space its UTF-8 value is
+    /// formatted into, so the value never has to exist as a <see cref="string"/>.
     /// </summary>
     /// <remarks>
     /// Writers that do not override this fall back to writing the value's
-    /// <see cref="object.ToString"/> result as a string tag.
+    /// <see cref="object.ToString"/> result as a string tag. A writer that
+    /// returns <see langword="true"/> must discard what it wrote for the tag
+    /// if <see cref="TryWriteTag(ref TTagState, string, object?, int?)"/> then
+    /// returns <see langword="false"/>.
     /// </remarks>
     /// <param name="state">The writer state.</param>
     /// <param name="key">The tag key.</param>
-    /// <param name="value">The tag value.</param>
-    /// <param name="tagValueMaxLength">The maximum length, in UTF-16 characters, to write the value as, if any.</param>
-    /// <returns><see langword="true"/> if the tag was written; <see langword="false"/> to fall back to <see cref="object.ToString"/>.</returns>
-    protected virtual bool TryWriteUtf8SpanFormattableTag(ref TTagState state, string key, IUtf8SpanFormattable value, int? tagValueMaxLength)
-        => false;
+    /// <param name="destination">The space the value is formatted into.</param>
+    /// <returns><see langword="true"/> if <paramref name="destination"/> is provided; otherwise <see langword="false"/>.</returns>
+    protected virtual bool TryBeginUtf8StringTag(ref TTagState state, string key, out Span<byte> destination)
+    {
+        destination = default;
+        return false;
+    }
+
+    /// <summary>
+    /// Completes a string tag started by <see cref="TryBeginUtf8StringTag"/>.
+    /// </summary>
+    /// <param name="state">The writer state.</param>
+    /// <param name="bytesWritten">The number of bytes of the value written at the start of the destination.</param>
+    protected virtual void EndUtf8StringTag(ref TTagState state, int bytesWritten)
+        => throw new NotSupportedException();
 #endif
 
     protected abstract void WriteKvListTag(ref TTagState state, string key, IEnumerable<KeyValuePair<string, object?>> kvList, int? tagValueMaxLength);
@@ -323,6 +322,29 @@ internal abstract class TagWriter<TTagState, TArrayState>
         => maxLength is { } maxLengthValue && value.Length > maxLengthValue
            ? value.Slice(0, maxLengthValue)
            : value;
+
+#if NET
+    // Truncates on whole code points, so a UTF-8 sequence or surrogate pair is never split.
+    private static int GetUtf8ByteCountForMaxChars(ReadOnlySpan<byte> utf8, int maxChars)
+    {
+        var bytes = 0;
+        var chars = 0;
+
+        while (bytes < utf8.Length)
+        {
+            Rune.DecodeFromUtf8(utf8[bytes..], out var rune, out var consumed);
+            if (chars + rune.Utf16SequenceLength > maxChars)
+            {
+                break;
+            }
+
+            chars += rune.Utf16SequenceLength;
+            bytes += consumed;
+        }
+
+        return bytes;
+    }
+#endif
 
     private static IEnumerable<KeyValuePair<string, object?>> AdaptStringKvList(IEnumerable<KeyValuePair<string, string?>> source)
     {
@@ -422,6 +444,39 @@ internal abstract class TagWriter<TTagState, TArrayState>
             var stringValue = value.ToString(null, CultureInfo.InvariantCulture) ?? string.Empty;
             this.WriteStringTag(ref state, key, TruncateString(stringValue.AsSpan(), tagValueMaxLength));
         }
+    }
+#endif
+
+#if NET
+    private bool TryWriteUtf8StringTag(ref TTagState state, string key, IUtf8SpanFormattable value, Span<byte> destination, int? tagValueMaxLength)
+    {
+        bool formatted;
+        int bytesWritten;
+
+        try
+        {
+            formatted = value.TryFormat(destination, out bytesWritten, format: default, CultureInfo.InvariantCulture);
+        }
+        catch
+        {
+            // Any exception here comes from the value itself, so only the tag is dropped.
+            // Out-of-space is signalled by TryFormat returning false instead.
+            return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
+        }
+
+        if (!formatted)
+        {
+            // Writers treat this as out of space: the buffer is grown and the write retried.
+            throw new ArgumentException("The buffer is too small to hold the data being written.", nameof(state));
+        }
+
+        if (tagValueMaxLength is { } maxLength && bytesWritten > maxLength)
+        {
+            bytesWritten = GetUtf8ByteCountForMaxChars(destination[..bytesWritten], maxLength);
+        }
+
+        this.EndUtf8StringTag(ref state, bytesWritten);
+        return true;
     }
 #endif
 
