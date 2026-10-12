@@ -392,6 +392,122 @@ public sealed class OtlpTraceExporterTests : IDisposable
     }
 
     [Fact]
+    public void ScopeSpansAreSeparatedByActivitySourceVersion()
+    {
+        var name = nameof(this.ScopeSpansAreSeparatedByActivitySourceVersion);
+
+        using var source1 = new ActivitySource(new ActivitySourceOptions(name) { Version = "1.0" });
+        using var source2 = new ActivitySource(new ActivitySourceOptions(name) { Version = "2.0" });
+
+        var resourceSpans = ExportOneSpanPerActivitySource(source1, source2);
+
+        Assert.Equal(2, resourceSpans.ScopeSpans.Count);
+
+        var scopeSpans1 = Assert.Single(resourceSpans.ScopeSpans, s => s.Scope.Version == "1.0");
+        Assert.Equal("span-0", Assert.Single(scopeSpans1.Spans).Name);
+
+        var scopeSpans2 = Assert.Single(resourceSpans.ScopeSpans, s => s.Scope.Version == "2.0");
+        Assert.Equal("span-1", Assert.Single(scopeSpans2.Spans).Name);
+    }
+
+    [Fact]
+    public void ScopeSpansAreGroupedWhenActivitySourcesAreInterleaved()
+    {
+        var name = nameof(this.ScopeSpansAreGroupedWhenActivitySourcesAreInterleaved);
+
+        using var source1 = new ActivitySource(new ActivitySourceOptions(name) { Version = "1.0" });
+        using var source2 = new ActivitySource(new ActivitySourceOptions(name) { Version = "2.0" });
+
+        var resourceSpans = ExportOneSpanPerActivitySource(source1, source2, source1, source2);
+
+        Assert.Equal(2, resourceSpans.ScopeSpans.Count);
+
+        var scopeSpans1 = Assert.Single(resourceSpans.ScopeSpans, s => s.Scope.Version == "1.0");
+        Assert.Equal(["span-0", "span-2"], scopeSpans1.Spans.Select(s => s.Name));
+
+        var scopeSpans2 = Assert.Single(resourceSpans.ScopeSpans, s => s.Scope.Version == "2.0");
+        Assert.Equal(["span-1", "span-3"], scopeSpans2.Spans.Select(s => s.Name));
+    }
+
+    [Fact]
+    public void ScopeSpansAreSeparatedByActivitySourceSchemaUrl()
+    {
+        var name = nameof(this.ScopeSpansAreSeparatedByActivitySourceSchemaUrl);
+        const string schemaUrl1 = "https://opentelemetry.io/schemas/1.0.0";
+        const string schemaUrl2 = "https://opentelemetry.io/schemas/2.0.0";
+
+        using var source1 = new ActivitySource(new ActivitySourceOptions(name) { Version = "1.0", TelemetrySchemaUrl = schemaUrl1 });
+        using var source2 = new ActivitySource(new ActivitySourceOptions(name) { Version = "1.0", TelemetrySchemaUrl = schemaUrl2 });
+
+        var resourceSpans = ExportOneSpanPerActivitySource(source1, source2);
+
+        Assert.Equal(2, resourceSpans.ScopeSpans.Count);
+
+        var scopeSpans1 = Assert.Single(resourceSpans.ScopeSpans, s => s.SchemaUrl == schemaUrl1);
+        Assert.Equal("span-0", Assert.Single(scopeSpans1.Spans).Name);
+
+        var scopeSpans2 = Assert.Single(resourceSpans.ScopeSpans, s => s.SchemaUrl == schemaUrl2);
+        Assert.Equal("span-1", Assert.Single(scopeSpans2.Spans).Name);
+    }
+
+    [Fact]
+    public void ScopeSpansAreSeparatedByActivitySourceTags()
+    {
+        var name = nameof(this.ScopeSpansAreSeparatedByActivitySourceTags);
+
+        using var source1 = new ActivitySource(new ActivitySourceOptions(name) { Version = "1.0", Tags = [new("key", "value1")] });
+        using var source2 = new ActivitySource(new ActivitySourceOptions(name) { Version = "1.0", Tags = [new("key", "value2")] });
+
+        var resourceSpans = ExportOneSpanPerActivitySource(source1, source2);
+
+        Assert.Equal(2, resourceSpans.ScopeSpans.Count);
+
+        var scopeSpans1 = Assert.Single(resourceSpans.ScopeSpans, s => Assert.Single(s.Scope.Attributes).Value.StringValue == "value1");
+        Assert.Equal("span-0", Assert.Single(scopeSpans1.Spans).Name);
+
+        var scopeSpans2 = Assert.Single(resourceSpans.ScopeSpans, s => Assert.Single(s.Scope.Attributes).Value.StringValue == "value2");
+        Assert.Equal("span-1", Assert.Single(scopeSpans2.Spans).Name);
+    }
+
+    [Fact]
+    public void ScopeSpansAreSeparatedWhenOnlyOneActivitySourceHasTags()
+    {
+        var name = nameof(this.ScopeSpansAreSeparatedWhenOnlyOneActivitySourceHasTags);
+
+        using var source1 = new ActivitySource(new ActivitySourceOptions(name) { Version = "1.0" });
+        using var source2 = new ActivitySource(new ActivitySourceOptions(name) { Version = "1.0", Tags = [new("key", "value")] });
+
+        var resourceSpans = ExportOneSpanPerActivitySource(source1, source2);
+
+        Assert.Equal(2, resourceSpans.ScopeSpans.Count);
+
+        var scopeSpans1 = Assert.Single(resourceSpans.ScopeSpans, s => s.Scope.Attributes.Count == 0);
+        Assert.Equal("span-0", Assert.Single(scopeSpans1.Spans).Name);
+
+        var scopeSpans2 = Assert.Single(resourceSpans.ScopeSpans, s => s.Scope.Attributes.Count == 1);
+        Assert.Equal("span-1", Assert.Single(scopeSpans2.Spans).Name);
+    }
+
+    [Fact]
+    public void ScopeSpansAreSharedByActivitySourcesWithTheSameScope()
+    {
+        var name = nameof(this.ScopeSpansAreSharedByActivitySourcesWithTheSameScope);
+        const string schemaUrl = "https://opentelemetry.io/schemas/1.0.0";
+
+        using var source1 = new ActivitySource(new ActivitySourceOptions(name) { Version = "1.0", TelemetrySchemaUrl = schemaUrl, Tags = [new("key", "value")] });
+        using var source2 = new ActivitySource(new ActivitySourceOptions(name) { Version = "1.0", TelemetrySchemaUrl = schemaUrl, Tags = [new("key", "value")] });
+
+        var resourceSpans = ExportOneSpanPerActivitySource(source1, source2);
+
+        var scopeSpans = Assert.Single(resourceSpans.ScopeSpans);
+        Assert.Equal(name, scopeSpans.Scope.Name);
+        Assert.Equal("1.0", scopeSpans.Scope.Version);
+        Assert.Equal(schemaUrl, scopeSpans.SchemaUrl);
+        Assert.Equal("value", Assert.Single(scopeSpans.Scope.Attributes).Value.StringValue);
+        Assert.Equal(["span-0", "span-1"], scopeSpans.Spans.Select(s => s.Name));
+    }
+
+    [Fact]
     public void ScopeAttributesLimitsTest()
     {
         var sdkOptions = new SdkLimitOptions()
@@ -1498,6 +1614,23 @@ public sealed class OtlpTraceExporterTests : IDisposable
 
         var scopeSpans = Assert.Single(Assert.Single(request.ResourceSpans).ScopeSpans);
         return scopeSpans.Scope;
+    }
+
+    private static OtlpTrace.ResourceSpans ExportOneSpanPerActivitySource(params ActivitySource[] activitySources)
+    {
+        var activities = new Activity[activitySources.Length];
+        for (var i = 0; i < activitySources.Length; i++)
+        {
+            var activity = activitySources[i].StartActivity($"span-{i}");
+            Assert.NotNull(activity);
+            activity.Stop();
+            activities[i] = activity;
+        }
+
+        var batch = new Batch<Activity>(activities, activities.Length);
+        var request = CreateTraceExportRequest(DefaultSdkLimitOptions, batch, Resource.Empty);
+
+        return Assert.Single(request.ResourceSpans);
     }
 
     private static OtlpCollector.ExportTraceServiceRequest CreateTraceExportRequest(SdkLimitOptions sdkOptions, in Batch<Activity> batch, Resource resource)

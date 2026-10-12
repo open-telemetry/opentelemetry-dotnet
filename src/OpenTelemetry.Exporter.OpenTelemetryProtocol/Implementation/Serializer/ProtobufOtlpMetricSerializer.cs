@@ -24,7 +24,7 @@ internal static class ProtobufOtlpMetricSerializer
     [ThreadStatic]
     private static Stack<List<Metric>>? metricListPool;
     [ThreadStatic]
-    private static Dictionary<string, List<Metric>>? scopeMetricsList;
+    private static Dictionary<InstrumentationScope, List<Metric>>? scopeMetricsList;
 
     private delegate int WriteExemplarFunc(byte[] buffer, int writePosition, in Exemplar exemplar);
 
@@ -44,13 +44,23 @@ internal static class ProtobufOtlpMetricSerializer
         // would merge it into the next export on this thread.
         try
         {
+            // Note: Consecutive metrics very often come from the same meter, so
+            // the previous lookup is reused to avoid hashing the scope each time.
+            InstrumentationScope lastScope = default;
+            List<Metric>? metrics = null;
+
             foreach (var metric in batch)
             {
-                var metricName = metric.MeterName;
-                if (!scopeMetricsList.TryGetValue(metricName, out var metrics))
+                var scope = new InstrumentationScope(metric);
+                if (metrics == null || !scope.IsSameMeterAs(in lastScope))
                 {
-                    metrics = metricListPool.Count > 0 ? metricListPool.Pop() : [];
-                    scopeMetricsList[metricName] = metrics;
+                    if (!scopeMetricsList.TryGetValue(scope, out metrics))
+                    {
+                        metrics = metricListPool.Count > 0 ? metricListPool.Pop() : [];
+                        scopeMetricsList[scope] = metrics;
+                    }
+
+                    lastScope = scope;
                 }
 
                 metrics.Add(metric);
@@ -70,7 +80,7 @@ internal static class ProtobufOtlpMetricSerializer
         ref byte[] buffer,
         int writePosition,
         Resources.Resource? resource,
-        Dictionary<string, List<Metric>> scopeMetrics,
+        Dictionary<InstrumentationScope, List<Metric>> scopeMetrics,
         int maxBufferSize = ProtobufSerializer.MaxBufferSize)
     {
         while (true)
@@ -121,7 +131,7 @@ internal static class ProtobufOtlpMetricSerializer
         byte[] buffer,
         int writePosition,
         Resources.Resource? resource,
-        Dictionary<string, List<Metric>> scopeMetrics,
+        Dictionary<InstrumentationScope, List<Metric>> scopeMetrics,
         int maxBufferSize)
     {
         writePosition = ProtobufOtlpResourceSerializer.WriteResource(buffer, writePosition, resource);
@@ -138,7 +148,7 @@ internal static class ProtobufOtlpMetricSerializer
     private static int WriteScopeMetrics(
         byte[] buffer,
         int writePosition,
-        Dictionary<string, List<Metric>> scopeMetrics,
+        Dictionary<InstrumentationScope, List<Metric>> scopeMetrics,
         int maxBufferSize)
     {
         if (scopeMetrics != null)
@@ -149,7 +159,7 @@ internal static class ProtobufOtlpMetricSerializer
                 var resourceMetricsScopeMetricsLengthPosition = writePosition;
                 writePosition += ReserveSizeForLength;
 
-                writePosition = WriteScopeMetric(buffer, writePosition, entry.Key, entry.Value, maxBufferSize);
+                writePosition = WriteScopeMetric(buffer, writePosition, entry.Key.Name, entry.Value, maxBufferSize);
 
                 ProtobufSerializer.WriteReservedLength(buffer, resourceMetricsScopeMetricsLengthPosition, writePosition - (resourceMetricsScopeMetricsLengthPosition + ReserveSizeForLength));
             }
@@ -746,6 +756,66 @@ internal static class ProtobufOtlpMetricSerializer
             paramName,
             actualValue,
             $"Metric metadata exceeds the available serialization buffer capacity of {availableBufferSize} bytes.");
+
+    /// <summary>
+    /// Identifies the instrumentation scope metrics are grouped by. Meters
+    /// sharing a name but reporting different versions, schema URLs or tags are
+    /// distinct scopes and must be emitted as separate ScopeMetrics entries.
+    /// </summary>
+    internal readonly record struct InstrumentationScope
+    {
+        public readonly string Name;
+        public readonly string Version;
+        public readonly string SchemaUrl;
+        public readonly Tags? Tags;
+
+        public InstrumentationScope(Metric metric)
+        {
+            this.Name = metric.MeterName;
+            this.Version = metric.MeterVersion;
+            this.SchemaUrl = metric.MeterSchemaUrl;
+            this.Tags = metric.InstrumentIdentity.MeterTags;
+        }
+
+        /// <summary>
+        /// Cheap check for two scopes built from metrics of the same <see
+        /// cref="System.Diagnostics.Metrics.Meter"/>, which share its string
+        /// instances. A <see langword="false"/> result does not mean the scopes
+        /// differ, use <see cref="Equals(InstrumentationScope)"/> for that.
+        /// </summary>
+        /// <param name="other">The scope to compare with.</param>
+        /// <returns><see langword="true"/> if the scopes are known to be equal.</returns>
+        public bool IsSameMeterAs(in InstrumentationScope other)
+            => ReferenceEquals(this.Name, other.Name)
+            && ReferenceEquals(this.Version, other.Version)
+            && ReferenceEquals(this.SchemaUrl, other.SchemaUrl)
+            && TagsEqual(this.Tags, other.Tags);
+
+        public bool Equals(InstrumentationScope other)
+            => string.Equals(this.Name, other.Name, StringComparison.Ordinal)
+            && string.Equals(this.Version, other.Version, StringComparison.Ordinal)
+            && string.Equals(this.SchemaUrl, other.SchemaUrl, StringComparison.Ordinal)
+            && TagsEqual(this.Tags, other.Tags);
+
+        // Note: Only the name is hashed. Meters which share a name but differ
+        // by version, schema URL or tags are rare and are still told apart by
+        // Equals, so hashing those as well would only add cost to every lookup.
+        public override int GetHashCode()
+            => this.Name is null ? 0 : StringComparer.Ordinal.GetHashCode(this.Name);
+
+        private static bool TagsEqual(Tags? tags, Tags? otherTags)
+        {
+            if (tags.HasValue && otherTags.HasValue)
+            {
+                return tags.GetValueOrDefault().Equals(otherTags.GetValueOrDefault());
+            }
+
+            // Note: A meter without tags and a meter with an empty set of tags
+            // are both exported as a scope with no attributes.
+            return (tags?.KeyValuePairs.Length ?? 0) == 0
+                && (otherTags?.KeyValuePairs.Length ?? 0) == 0;
+        }
+    }
 
     private sealed class CachedAttributes(int fieldNumber, byte[] bytes)
     {
