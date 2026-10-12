@@ -71,6 +71,14 @@ jobs:
         persist-credentials: false
         show-progress: false
 
+    # HACK Workaround for https://github.com/dotnet/runtime/issues/131636
+    - name: Increase GC gen0 budget
+      if: runner.os == 'Windows' && runner.arch == 'ARM64'
+      shell: cmd
+      run: |
+        rem GCgen0size is a hex value: 4000000 = 64 MiB.
+        >> "%GITHUB_ENV%" echo DOTNET_GCgen0size=4000000
+
     - name: Setup previous .NET runtimes
       uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
       with:
