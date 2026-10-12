@@ -394,7 +394,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
         {
             if (!value.TryFormat(destination, out bytesWritten, format: default, CultureInfo.InvariantCulture))
             {
-                stringValue = Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty;
+                stringValue = value.ToString() ?? string.Empty;
             }
         }
         catch
