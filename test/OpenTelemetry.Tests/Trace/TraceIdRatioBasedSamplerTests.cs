@@ -11,15 +11,11 @@ public class TraceIdRatioBasedSamplerTests
 
     [Fact]
     public void OutOfRangeHighProbability()
-    {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new TraceIdRatioBasedSampler(1.01));
-    }
+        => Assert.Throws<ArgumentOutOfRangeException>(() => new TraceIdRatioBasedSampler(1.01));
 
     [Fact]
     public void OutOfRangeLowProbability()
-    {
-        Assert.Throws<ArgumentOutOfRangeException>(() => new TraceIdRatioBasedSampler(-0.00001));
-    }
+        => Assert.Throws<ArgumentOutOfRangeException>(() => new TraceIdRatioBasedSampler(-0.00001));
 
     [Fact]
     public void SampleBasedOnTraceId()
@@ -119,12 +115,26 @@ public class TraceIdRatioBasedSamplerTests
         Assert.Equal(SamplingDecision.RecordAndSample, result.Decision);
     }
 
-    private static ActivityTraceId CreateTraceIdProducingLongMinValue()
+    [Theory]
+    [InlineData("3fffffffffffffff0000000000000000", SamplingDecision.RecordAndSample)]
+    [InlineData("40000000000000000000000000000000", SamplingDecision.Drop)]
+    [InlineData("3fffffffffffffffffffffffffffffff", SamplingDecision.RecordAndSample)]
+    [InlineData("4000000000000000ffffffffffffffff", SamplingDecision.Drop)]
+    [InlineData("bfffffffffffffff0000000000000000", SamplingDecision.RecordAndSample)]
+    [InlineData("c0000000000000000000000000000000", SamplingDecision.Drop)]
+    public void ShouldSample_HonorsBigEndianThresholdAndSignBit(string traceIdHex, SamplingDecision expected)
     {
-        return ActivityTraceId.CreateFromBytes(
+        var sampler = new TraceIdRatioBasedSampler(0.5);
+        var traceId = ActivityTraceId.CreateFromString(traceIdHex.AsSpan());
+        var parameters = new SamplingParameters(default, traceId, ActivityDisplayName, ActivityKind.Server, null, null);
+
+        Assert.Equal(expected, sampler.ShouldSample(in parameters).Decision);
+    }
+
+    private static ActivityTraceId CreateTraceIdProducingLongMinValue() =>
+        ActivityTraceId.CreateFromBytes(
         [
             0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         ]);
-    }
 }
