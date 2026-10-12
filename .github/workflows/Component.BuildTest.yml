@@ -59,6 +59,8 @@ jobs:
       PROJECT_NAME: ${{ inputs.project-name }}
       PROJECT_BUILD_COMMANDS: ${{ inputs.project-build-commands }}
       TARGET_FRAMEWORK: ${{ matrix.version }}
+      # HACK Workaround for https://github.com/dotnet/runtime/issues/131636 - GCgen0size is a hex value: 4000000 = 64 MiB.
+      DOTNET_GCgen0size: ${{ matrix.os == 'windows-11-arm' && '4000000' || '' }}
 
     steps:
     - name: Checkout code
