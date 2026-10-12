@@ -159,6 +159,13 @@ public class BaggagePropagator : TextMapPropagator
                 }
 
                 var encodedKey = item.Key;
+
+                // Encoding never shortens a value, so a value this long cannot fit once the key and '=' are added.
+                if (item.Value.Length >= MaxBaggageLength)
+                {
+                    break;
+                }
+
                 var encodedValue = EncodeValue(item.Value);
                 var baggageItemLength = encodedKey.Length + encodedValue.Length + 1;
 
@@ -283,21 +290,16 @@ public class BaggagePropagator : TextMapPropagator
         return result;
     }
 
-    private static string EncodeValue(string value) => Encode(value, isKey: false);
-
-    private static string Encode(string value, bool isKey)
+    private static string EncodeValue(string value)
     {
 #if NET
-        if (!value.AsSpan().ContainsAnyExcept(isKey ? ValidKeySearcher : ValidValueSearcher))
-        {
-            return value;
-        }
+        // Keep this check separate from the encoding so values that need no escaping stay cheap.
+        return value.AsSpan().ContainsAnyExcept(ValidValueSearcher) ? EncodeEscapedValue(value) : value;
 #else
-        var validChars = isKey ? ValidKeyChars : ValidValueChars;
         var allValid = true;
         foreach (var c in value)
         {
-            if (Array.IndexOf(validChars, c) < 0)
+            if (Array.IndexOf(ValidValueChars, c) < 0)
             {
                 allValid = false;
                 break;
@@ -308,39 +310,9 @@ public class BaggagePropagator : TextMapPropagator
         {
             return value;
         }
-#endif
 
         var sb = new StringBuilder(value.Length);
 
-#if NET
-        Span<byte> utf8Buffer = stackalloc byte[4];
-        foreach (var rune in value.EnumerateRunes())
-        {
-            if (rune.IsAscii)
-            {
-                var c = (char)rune.Value;
-                if (isKey ? !IsValidKey(c) : !IsValidValueChar(c))
-                {
-                    AppendPercentEncoded(sb, (byte)c);
-                }
-                else
-                {
-                    sb.Append(c);
-                }
-            }
-            else
-            {
-                // Non-ASCII rune: always encode as UTF-8 bytes.
-                // This correctly handles non-BMP scalar values (emoji, etc.)
-                // because Rune represents the full codepoint, not a surrogate half.
-                var byteCount = rune.EncodeToUtf8(utf8Buffer);
-                foreach (var b in utf8Buffer[..byteCount])
-                {
-                    AppendPercentEncoded(sb, b);
-                }
-            }
-        }
-#else
         var i = 0;
         while (i < value.Length)
         {
@@ -360,8 +332,7 @@ public class BaggagePropagator : TextMapPropagator
             }
             else
             {
-                var shouldEncode = isKey ? !IsValidKey(c) : !IsValidValueChar(c);
-                if (shouldEncode)
+                if (!IsValidValueChar(c))
                 {
                     if (c > '\x7F')
                     {
@@ -383,10 +354,81 @@ public class BaggagePropagator : TextMapPropagator
                 i++;
             }
         }
-#endif
 
         return sb.ToString();
+#endif
     }
+
+#if NET
+    private static string EncodeEscapedValue(string value)
+    {
+        // Every escaped character is written as at most three '%XX' escapes (a UTF-8 sequence of up to 3 bytes per UTF-16
+        // character), so a buffer of nine times the length of the value is always large enough to encode it in a single pass.
+        const int StackallocCharThreshold = 512;
+        const int MaxEncodedCharsPerChar = 9;
+
+        var maxLength = checked(value.Length * MaxEncodedCharsPerChar);
+        char[]? rentedChars = null;
+
+        Span<char> buffer = maxLength <= StackallocCharThreshold
+            ? stackalloc char[StackallocCharThreshold]
+            : (rentedChars = ArrayPool<char>.Shared.Rent(maxLength));
+
+        var written = 0;
+
+        try
+        {
+            written = WriteEncodedValue(value, buffer);
+            return new(buffer.Slice(0, written));
+        }
+        finally
+        {
+            if (rentedChars != null)
+            {
+                // Baggage values may be sensitive, so do not leave them in the shared pool.
+                buffer.Slice(0, written).Clear();
+                ArrayPool<char>.Shared.Return(rentedChars);
+            }
+        }
+    }
+
+    private static int WriteEncodedValue(ReadOnlySpan<char> value, Span<char> destination)
+    {
+        var length = destination.Length;
+        Span<byte> utf8Buffer = stackalloc byte[4];
+
+        while (!value.IsEmpty)
+        {
+            var escapeIndex = value.IndexOfAnyExcept(ValidValueSearcher);
+            if (escapeIndex < 0)
+            {
+                value.CopyTo(destination);
+                destination = destination.Slice(value.Length);
+                break;
+            }
+
+            value.Slice(0, escapeIndex).CopyTo(destination);
+            destination = destination.Slice(escapeIndex);
+            value = value.Slice(escapeIndex);
+
+            // DecodeFromUtf16 returns the replacement rune for invalid UTF-16 (such as a lone surrogate).
+            Rune.DecodeFromUtf16(value, out var rune, out var charsConsumed);
+            var byteCount = rune.EncodeToUtf8(utf8Buffer);
+
+            foreach (var b in utf8Buffer.Slice(0, byteCount))
+            {
+                destination[0] = '%';
+                destination[1] = Hex[b >> 4];
+                destination[2] = Hex[b & 0xF];
+                destination = destination.Slice(3);
+            }
+
+            value = value.Slice(charsConsumed);
+        }
+
+        return length - destination.Length;
+    }
+#endif
 
     private static bool IsValidValueChar(char c) =>
 #if NET
