@@ -17,6 +17,13 @@ namespace OpenTelemetry.Context.Propagation;
 /// </summary>
 public class TraceContextPropagator : TextMapPropagator
 {
+#if NET
+    internal static readonly SearchValues<char> TraceStateKeyFirstChars = SearchValues.Create("0123456789abcdefghijklmnopqrstuvwxyz");
+    internal static readonly SearchValues<char> TraceStateKeyChars = SearchValues.Create("0123456789abcdefghijklmnopqrstuvwxyz_-*/@");
+    internal static readonly SearchValues<char> TraceStateValueChars = CreateTraceStateValueChars(0x20);
+    internal static readonly SearchValues<char> TraceStateValueLastChars = CreateTraceStateValueChars(0x21);
+#endif
+
     private const string TraceParent = "traceparent";
     private const string TraceState = "tracestate";
 
@@ -41,10 +48,6 @@ public class TraceContextPropagator : TextMapPropagator
     private static readonly int TraceparentLengthV0 = "00-0af7651916cd43dd8448eb211c80319c-00f067aa0ba902b7-00".Length;
 
 #if NET
-    private static readonly SearchValues<char> TraceStateKeyFirstChars = SearchValues.Create("0123456789abcdefghijklmnopqrstuvwxyz");
-    private static readonly SearchValues<char> TraceStateKeyChars = SearchValues.Create("0123456789abcdefghijklmnopqrstuvwxyz_-*/@");
-    private static readonly SearchValues<char> TraceStateValueChars = CreateTraceStateValueChars(0x20);
-    private static readonly SearchValues<char> TraceStateValueLastChars = CreateTraceStateValueChars(0x21);
     private static readonly ImmutableHashSet<string> AllFields = [TraceState, TraceParent];
 #else
     private static readonly HashSet<string> AllFields = [TraceState, TraceParent];
