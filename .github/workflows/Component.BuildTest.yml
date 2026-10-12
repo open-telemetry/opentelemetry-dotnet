@@ -20,7 +20,7 @@ on:
         required: false
         type: string
       os-list:
-        default: '[ "windows-2025", "windows-11-arm", "ubuntu-26.04", "ubuntu-26.04-arm" ]'
+        default: '[ "windows-11-arm" ]'
         required: false
         type: string
       tfm-list:
@@ -71,6 +71,15 @@ jobs:
         persist-credentials: false
         show-progress: false
 
+    - name: Enable crash dumps
+      if: ${{ runner.os == 'Windows' }}
+      shell: cmd
+      run: |
+        mkdir "%RUNNER_TEMP%\crash-dumps"
+        reg add "HKLM\SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps" /v DumpFolder /t REG_EXPAND_SZ /d "%RUNNER_TEMP%\crash-dumps" /f
+        reg add "HKLM\SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps" /v DumpType /t REG_DWORD /d 2 /f
+        reg add "HKLM\SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps" /v DumpCount /t REG_DWORD /d 10 /f
+
     - name: Setup previous .NET runtimes
       uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
       with:
@@ -112,6 +121,11 @@ jobs:
         RunConfiguration.DisableAppDomain=${env:DISABLE_APP_DOMAIN}
         RunConfiguration.TestSessionTimeout=900000
 
+    - name: Collect crash events
+      if: ${{ failure() && runner.os == 'Windows' }}
+      shell: cmd
+      run: wevtutil qe Application /q:"*[System[(EventID=1000 or EventID=1026)]]" /c:20 /rd:true /f:text
+
     - name: Upload hang dumps and test platform logs
       if: ${{ failure() || cancelled() }}
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -120,6 +134,7 @@ jobs:
         name: hang-dumps-${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}-${{ matrix.os }}-${{ matrix.version }}-attempt-${{ github.run_attempt }}
         retention-days: 7
         path: |
+          ${{ runner.temp }}/crash-dumps/*.dmp
           **/TestResults/**/*hangdump*.dmp
           **/TestResults/**/Sequence_*.xml
           **/TestResults/diag/*
