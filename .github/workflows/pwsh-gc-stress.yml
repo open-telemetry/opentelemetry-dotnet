@@ -1,0 +1,169 @@
+# Temporary workflow to investigate https://github.com/dotnet/runtime/issues/131636.
+#
+# Launches pwsh in a loop on a windows-11-arm runner, the same way actions/setup-dotnet does (spawned
+# from Node, which does not hide the window, so that PowerShell creates its taskbar jump list), and
+# counts how many launches crash. Each configuration sets different GC knobs to see whether the
+# crash rate depends on how often the GC runs.
+name: pwsh-gc-stress
+
+on:
+  pull_request:
+    paths:
+    - '.github/workflows/pwsh-gc-stress.yml'
+    - 'build/scripts/analyze-crash-dumps.ps1'
+  workflow_dispatch:
+    inputs:
+      seconds:
+        description: 'How long each job launches pwsh for, in seconds'
+        default: '480'
+        required: false
+        type: string
+      parallel:
+        description: 'How many pwsh processes to launch at the same time'
+        default: '2'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  stress:
+    name: stress (${{ matrix.config.name }}, replica ${{ matrix.replica }})
+    runs-on: windows-11-arm
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        replica: [ 1, 2, 3 ]
+        config:
+        - name: default
+          knobs: ''
+        # GCgen0MaxBudget is in hex: 40000 = 256 KiB, 100000 = 1 MiB.
+        - name: gen0-budget-256k
+          knobs: 'DOTNET_GCgen0MaxBudget=40000'
+        - name: gen0-budget-1m
+          knobs: 'DOTNET_GCgen0MaxBudget=100000'
+        - name: gc-non-concurrent
+          knobs: 'DOTNET_gcConcurrent=0'
+        # GCgen0size is in hex: 4000000 = 64 MiB.
+        - name: gen0-size-64m
+          knobs: 'DOTNET_GCgen0size=4000000'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+        show-progress: false
+
+    # Uses cmd rather than pwsh, as pwsh is the process that crashes.
+    - name: Enable crash dumps
+      shell: cmd
+      run: |
+        mkdir "%RUNNER_TEMP%\crash-dumps"
+        >> "%GITHUB_ENV%" echo DOTNET_DbgEnableMiniDump=1
+        >> "%GITHUB_ENV%" echo DOTNET_DbgMiniDumpType=4
+        >> "%GITHUB_ENV%" echo DOTNET_DbgMiniDumpName=%RUNNER_TEMP%\crash-dumps\%%e-%%p.dmp
+        >> "%GITHUB_ENV%" echo DOTNET_CreateDumpDiagnostics=1
+        >> "%GITHUB_ENV%" echo DOTNET_CreateDumpLogToFile=%RUNNER_TEMP%\crash-dumps\createdump-%%p.log
+
+    - name: Apply GC settings
+      shell: bash
+      env:
+        KNOBS: ${{ matrix.config.knobs }}
+      run: |
+        for knob in ${KNOBS}; do
+          echo "${knob}" | tee -a "${GITHUB_ENV}"
+        done
+
+    - name: Show environment
+      shell: cmd
+      run: |
+        ver
+        pwsh -NoProfile -Command "$PSVersionTable.PSVersion.ToString(); [System.Runtime.InteropServices.RuntimeInformation]::FrameworkDescription; (Get-CimInstance Win32_Processor | Select-Object -First 1).Name; (Get-CimInstance Win32_OperatingSystem).LastBootUpTime"
+        set DOTNET_
+
+    - name: Launch pwsh repeatedly
+      shell: bash
+      env:
+        STRESS_CONFIG: ${{ matrix.config.name }}
+        STRESS_REPLICA: ${{ matrix.replica }}
+        STRESS_PARALLEL: ${{ inputs.parallel || '2' }}
+        STRESS_SECONDS: ${{ inputs.seconds || '480' }}
+      run: |
+        node - <<'EOF'
+        const { spawn } = require('node:child_process');
+        const { appendFileSync } = require('node:fs');
+
+        const seconds = Number(process.env.STRESS_SECONDS);
+        const parallel = Number(process.env.STRESS_PARALLEL);
+        const started = Date.now();
+        let launches = 0;
+        let crashes = 0;
+        let stop = false;
+
+        function launch() {
+          return new Promise((resolve) => {
+            const child = spawn(
+              'pwsh',
+              ['-NoLogo', '-Sta', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Unrestricted', '-Command', 'exit 0'],
+              { windowsHide: false, stdio: ['ignore', 'pipe', 'pipe'] });
+            let output = '';
+            child.stdout.on('data', (data) => { output += data; });
+            child.stderr.on('data', (data) => { output += data; });
+            child.on('error', (error) => { output += String(error); });
+            child.on('close', (code) => {
+              launches++;
+              if (code !== 0) {
+                crashes++;
+                stop = true;
+                console.log(`::error::pwsh exited with ${code} after ${launches} launches: ${output.slice(0, 300).replace(/\r?\n/g, ' ')}`);
+              }
+              resolve();
+            });
+          });
+        }
+
+        async function worker() {
+          while (!stop && Date.now() - started < seconds * 1000) {
+            await launch();
+          }
+        }
+
+        (async () => {
+          await Promise.all(Array.from({ length: parallel }, worker));
+          const elapsed = (Date.now() - started) / 1000;
+          const summary = `${process.env.STRESS_CONFIG} (replica ${process.env.STRESS_REPLICA}): ${launches} launches, ${crashes} crashes, ${elapsed.toFixed(0)}s, ${(launches / elapsed).toFixed(1)} launches/s`;
+          console.log(summary);
+          appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${summary}\n\n`);
+          process.exit(crashes > 0 ? 1 : 0);
+        })();
+        EOF
+
+    # Uses Windows PowerShell rather than pwsh for the same reason as "Enable crash dumps", and runs
+    # from the temp directory so that global.json is not resolved.
+    - name: Analyze crash dumps
+      if: ${{ failure() }}
+      shell: powershell
+      continue-on-error: true
+      timeout-minutes: 15
+      working-directory: ${{ runner.temp }}
+      env:
+        # renovate: datasource=nuget depName=dotnet-dump
+        DOTNET_DUMP_VERSION: '10.0.750501'
+        DOTNET_DbgEnableMiniDump: '0'
+        DOTNET_ROLL_FORWARD: 'Major'
+      run: |
+        & "$env:GITHUB_WORKSPACE\build\scripts\analyze-crash-dumps.ps1"
+        exit 0
+
+    - name: Upload crash dumps
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        if-no-files-found: ignore
+        name: stress-${{ matrix.config.name }}-replica-${{ matrix.replica }}
+        retention-days: 7
+        path: ${{ runner.temp }}/crash-dumps/*
