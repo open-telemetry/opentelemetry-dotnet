@@ -229,7 +229,7 @@ public class OtlpLogExporterTests
                 });
         });
 
-        var serviceProvider = services.BuildServiceProvider();
+        using var serviceProvider = services.BuildServiceProvider();
 
         var logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(OtlpLogExporterTests));
 

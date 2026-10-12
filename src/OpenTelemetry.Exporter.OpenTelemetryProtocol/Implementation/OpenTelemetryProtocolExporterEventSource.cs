@@ -374,7 +374,7 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
 
     [Event(
         42,
-        Message = "IHttpClientFactory could not be used to create the HttpClient named '{0}' because an ObjectDisposedException was thrown, which typically means the IServiceProvider has been disposed. The default HttpClient will be used instead. Exception: {1}",
+        Message = "IHttpClientFactory could not be resolved to create the HttpClient named '{0}' because the IServiceProvider has been disposed. The default HttpClient will be used instead. Exception: {1}",
         Level = EventLevel.Warning)]
     internal void HttpClientFactoryUnavailable(string httpClientName, string exceptionMessage)
         => this.WriteEvent(42, httpClientName, exceptionMessage);

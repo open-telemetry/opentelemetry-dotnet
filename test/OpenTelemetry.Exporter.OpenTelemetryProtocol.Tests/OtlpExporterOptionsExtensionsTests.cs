@@ -162,6 +162,8 @@ public class OtlpExporterOptionsExtensionsTests
     [Fact]
     public void TryEnableIHttpClientFactoryIntegration_FallsBackToDefaultHttpClient_WhenServiceProviderIsDisposed()
     {
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Warning);
+
         var services = new ServiceCollection();
 
         var invocations = 0;
@@ -188,34 +190,6 @@ public class OtlpExporterOptionsExtensionsTests
         Assert.NotNull(client);
         Assert.Equal(0, invocations);
         Assert.Equal(TimeSpan.FromMilliseconds(1234), client.Timeout);
-    }
-
-    [Fact]
-    public void TryEnableIHttpClientFactoryIntegration_FallsBackToDefaultHttpClient_WhenCreateClientThrowsObjectDisposedException()
-    {
-        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Warning);
-
-        var services = new ServiceCollection();
-
-        var httpClientFactory = new ThrowingHttpClientFactory(new ObjectDisposedException("IServiceProvider"));
-
-        services.AddSingleton<IHttpClientFactory>(httpClientFactory);
-
-        using var serviceProvider = services.BuildServiceProvider();
-
-        var options = new OtlpExporterOptions
-        {
-            Protocol = OtlpExportProtocol.HttpProtobuf,
-            TimeoutMilliseconds = 1234,
-        };
-
-        Assert.True(options.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpLogExporter"));
-
-        using var client = options.HttpClientFactory();
-
-        Assert.NotNull(client);
-        Assert.Equal(["OtlpLogExporter"], httpClientFactory.RequestedNames);
-        Assert.Equal(TimeSpan.FromMilliseconds(1234), client.Timeout);
 
         var message = Assert.Single(listener.CurrentMessages);
         Assert.Equal(42, message.EventId);
@@ -223,14 +197,17 @@ public class OtlpExporterOptionsExtensionsTests
         Assert.Equal("OtlpLogExporter", message.Payload?[0]);
     }
 
-    [Fact]
-    public void TryEnableIHttpClientFactoryIntegration_DoesNotFallBack_WhenCreateClientThrowsOtherException()
+    [Theory]
+    [InlineData(typeof(ObjectDisposedException))]
+    [InlineData(typeof(InvalidOperationException))]
+    public void TryEnableIHttpClientFactoryIntegration_DoesNotFallBack_WhenCreateClientThrows(Type exceptionType)
     {
         using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Warning);
 
         var services = new ServiceCollection();
 
-        var httpClientFactory = new ThrowingHttpClientFactory(new InvalidOperationException("Misconfigured named client."));
+        var exception = (Exception)Activator.CreateInstance(exceptionType, "Named client pipeline failed.")!;
+        var httpClientFactory = new ThrowingHttpClientFactory(exception);
 
         services.AddSingleton<IHttpClientFactory>(httpClientFactory);
 
@@ -240,12 +217,15 @@ public class OtlpExporterOptionsExtensionsTests
 
         Assert.True(options.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpLogExporter"));
 
-        // Only ObjectDisposedException falls back to the default HttpClient.
-        // Other failures to create the named client must still surface so
-        // that misconfiguration is not silently masked.
-        var exception = Assert.Throws<TargetInvocationException>(() => options.HttpClientFactory());
+        // Only a failure to resolve IHttpClientFactory from a disposed container
+        // falls back to the default HttpClient. Failures while creating the
+        // named client itself (including an ObjectDisposedException thrown by a
+        // user's handler) must surface so a configured pipeline, e.g. one that
+        // adds authentication, is never silently bypassed while the container
+        // is healthy.
+        var actual = Assert.Throws<TargetInvocationException>(() => options.HttpClientFactory());
 
-        Assert.IsType<InvalidOperationException>(exception.InnerException);
+        Assert.Same(exception, actual.InnerException);
         Assert.Equal(["OtlpLogExporter"], httpClientFactory.RequestedNames);
         Assert.Empty(listener.CurrentMessages);
     }
