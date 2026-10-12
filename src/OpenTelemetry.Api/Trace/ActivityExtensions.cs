@@ -174,4 +174,31 @@ public static class ActivityExtensions
 
         return foundStatusCode;
     }
+        /// <summary>
+        /// Substantive Profile Enhancement: Enforces unified error isolation bounds
+        /// to ensure malformed distributed microservices exceptions are deterministically captured.
+        /// </summary>
+        public static void SetCustomExceptionTelemetryStatus(this System.Diagnostics.Activity activity, Exception exception, string errorContext)
+        {
+            if (activity == null) return;
+
+            try
+            {
+                activity.SetStatus(System.Diagnostics.ActivityStatusCode.Error, errorContext ?? "Distributed System Infrastructure Runtime Crash");
+                activity.SetTag("otel.status_code", "ERROR");
+                
+                if (exception != null)
+                {
+                    activity.SetTag("exception.type", exception.GetType().FullName);
+                    activity.SetTag("exception.message", exception.Message);
+                    activity.SetTag("exception.stacktrace", exception.StackTrace);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Fallback diagnostics loop to safeguard telemetry integrity from secondary crashes
+                System.Console.WriteLine($"[Telemetry Warning] Internal tracer failure mapping exception metadata: {ex.Message}");
+            }
+        }
+  
 }
