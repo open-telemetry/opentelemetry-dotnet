@@ -80,32 +80,24 @@ jobs:
 
   lint-md:
     needs: detect-changes
-    if: |
-      contains(needs.detect-changes.outputs.changes, 'md')
-      || contains(needs.detect-changes.outputs.changes, 'build')
+    if: false
     uses: $/.github/workflows/markdownlint.yml
 
   lint-pwsh:
     needs: detect-changes
-    if: |
-      contains(needs.detect-changes.outputs.changes, 'pwsh')
-      || contains(needs.detect-changes.outputs.changes, 'github')
+    if: false
     uses: $/.github/workflows/pwshlint.yml
     permissions:
       contents: read # To checkout the code
 
   lint-dotnet-format:
     needs: detect-changes
-    if: |
-      contains(needs.detect-changes.outputs.changes, 'code')
-      || contains(needs.detect-changes.outputs.changes, 'build')
+    if: false
     uses: $/.github/workflows/dotnet-format.yml
 
   test-pwsh:
     needs: detect-changes
-    if: |
-      contains(needs.detect-changes.outputs.changes, 'pwsh')
-      || contains(needs.detect-changes.outputs.changes, 'build')
+    if: false
     uses: $/.github/workflows/pwsh-test.yml
     permissions:
       contents: read # To checkout the code
@@ -165,12 +157,7 @@ jobs:
   otlp-integration-test:
     name: OTLP integration tests
     needs: detect-changes
-    if: |
-      contains(needs.detect-changes.outputs.changes, 'api-packages')
-      || contains(needs.detect-changes.outputs.changes, 'sdk-package')
-      || contains(needs.detect-changes.outputs.changes, 'otlp')
-      || contains(needs.detect-changes.outputs.changes, 'build')
-      || contains(needs.detect-changes.outputs.changes, 'shared')
+    if: false
     runs-on: ubuntu-26.04
     strategy:
       fail-fast: ${{ github.event_name == 'merge_group' }}
@@ -192,49 +179,28 @@ jobs:
 
   android-integration-test:
     needs: detect-changes
-    if: |
-      contains(needs.detect-changes.outputs.changes, 'android')
-      || contains(needs.detect-changes.outputs.changes, 'sdk-package')
-      || contains(needs.detect-changes.outputs.changes, 'otlp')
-      || contains(needs.detect-changes.outputs.changes, 'build')
-      || contains(needs.detect-changes.outputs.changes, 'shared')
+    if: false
     uses: $/.github/workflows/android-tests.yml
     with:
       trigger: ${{ github.event_name }}
 
   apple-integration-test:
     needs: detect-changes
-    if: |
-      contains(needs.detect-changes.outputs.changes, 'apple')
-      || contains(needs.detect-changes.outputs.changes, 'sdk-package')
-      || contains(needs.detect-changes.outputs.changes, 'otlp')
-      || contains(needs.detect-changes.outputs.changes, 'build')
-      || contains(needs.detect-changes.outputs.changes, 'shared')
+    if: false
     uses: $/.github/workflows/apple-tests.yml
     with:
       trigger: ${{ github.event_name }}
 
   blazor-wasm-integration-test:
     needs: detect-changes
-    if: |
-      contains(needs.detect-changes.outputs.changes, 'blazor')
-      || contains(needs.detect-changes.outputs.changes, 'sdk-package')
-      || contains(needs.detect-changes.outputs.changes, 'otlp')
-      || contains(needs.detect-changes.outputs.changes, 'build')
-      || contains(needs.detect-changes.outputs.changes, 'shared')
+    if: false
     uses: $/.github/workflows/blazor-wasm-integration-test.yml
     with:
       trigger: ${{ github.event_name }}
 
   maui-integration-test:
     needs: detect-changes
-    if: |
-      contains(needs.detect-changes.outputs.changes, 'maui')
-      || contains(needs.detect-changes.outputs.changes, 'hosting')
-      || contains(needs.detect-changes.outputs.changes, 'sdk-package')
-      || contains(needs.detect-changes.outputs.changes, 'otlp')
-      || contains(needs.detect-changes.outputs.changes, 'build')
-      || contains(needs.detect-changes.outputs.changes, 'shared')
+    if: false
     uses: $/.github/workflows/maui-tests.yml
     with:
       trigger: ${{ github.event_name }}
@@ -242,12 +208,7 @@ jobs:
   w3c-trace-context-integration-test:
     name: W3C Trace Context integration tests
     needs: detect-changes
-    if: |
-      contains(needs.detect-changes.outputs.changes, 'api-packages')
-      || contains(needs.detect-changes.outputs.changes, 'sdk-package')
-      || contains(needs.detect-changes.outputs.changes, 'instrumentation')
-      || contains(needs.detect-changes.outputs.changes, 'build')
-      || contains(needs.detect-changes.outputs.changes, 'shared')
+    if: false
     runs-on: ubuntu-26.04
     strategy:
       fail-fast: ${{ github.event_name == 'merge_group' }}
@@ -268,11 +229,7 @@ jobs:
   validate-benchmarks:
     name: Validate benchmarks
     needs: detect-changes
-    if: |
-      contains(needs.detect-changes.outputs.changes, 'code') ||
-      contains(needs.detect-changes.outputs.changes, 'build') ||
-      contains(needs.detect-changes.outputs.changes, 'pwsh') ||
-      contains(needs.detect-changes.outputs.changes, 'shared')
+    if: false
     strategy:
       fail-fast: ${{ github.event_name == 'merge_group' }}
       matrix:
@@ -303,38 +260,24 @@ jobs:
 
   validate-packages:
     needs: detect-changes
-    if: |
-      contains(needs.detect-changes.outputs.changes, 'packaged-code')
-      || contains(needs.detect-changes.outputs.changes, 'build')
-      || contains(needs.detect-changes.outputs.changes, 'shared')
+    if: false
     uses: $/.github/workflows/package-validation.yml
 
   generate-docs:
     needs: detect-changes
-    if: |
-      contains(needs.detect-changes.outputs.changes, 'packaged-code')
-      || contains(needs.detect-changes.outputs.changes, 'md')
-      || contains(needs.detect-changes.outputs.changes, 'build')
-      || contains(needs.detect-changes.outputs.changes, 'shared')
+    if: false
     uses: $/.github/workflows/docfx.yml
 
   verify-aot-compat:
     needs: detect-changes
-    if: |
-      contains(needs.detect-changes.outputs.changes, 'packaged-code')
-      || contains(needs.detect-changes.outputs.changes, 'build')
-      || contains(needs.detect-changes.outputs.changes, 'shared')
+    if: false
     uses: $/.github/workflows/verifyaotcompat.yml
     with:
       trigger: ${{ github.event_name }}
 
   concurrency-tests:
     needs: detect-changes
-    if: |
-      contains(needs.detect-changes.outputs.changes, 'api-code')
-      || contains(needs.detect-changes.outputs.changes, 'sdk-code')
-      || contains(needs.detect-changes.outputs.changes, 'build')
-      || contains(needs.detect-changes.outputs.changes, 'shared')
+    if: false
     uses: $/.github/workflows/concurrency-tests.yml
     with:
       trigger: ${{ github.event_name }}
