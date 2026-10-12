@@ -471,6 +471,25 @@ public class OtlpAttributeTests
     }
 
     [Theory]
+    [InlineData(null, "caf\u00E9 \U0001F600")]
+    [InlineData(4, "caf\u00E9")]
+    public void Utf8SpanFormattableThatCannotFormatFallsBackToToString(int? tagValueMaxLength, string expected)
+    {
+        var kvp = new KeyValuePair<string, object?>("key", new Utf8ValueThatCannotFormat("caf\u00E9 \U0001F600"));
+
+        Assert.True(TryTransformTag(kvp, out var attribute, tagValueMaxLength));
+        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.StringValue, attribute.Value.ValueCase);
+        Assert.Equal(expected, attribute.Value.StringValue);
+    }
+
+    [Fact]
+    public void Utf8SpanFormattableThatCannotFormatAndToStringThrowsIsDropped()
+    {
+        var kvp = new KeyValuePair<string, object?>("key", new Utf8ValueThatCannotFormat(null));
+        Assert.False(TryTransformTag(kvp, out _));
+    }
+
+    [Theory]
     [InlineData(typeof(InvalidOperationException))]
     [InlineData(typeof(ArgumentException))]
     [InlineData(typeof(IndexOutOfRangeException))]
@@ -512,6 +531,17 @@ public class OtlpAttributeTests
             => System.Text.Encoding.UTF8.TryGetBytes(value, utf8Destination, out bytesWritten);
 
         public override string ToString() => value;
+    }
+
+    private sealed class Utf8ValueThatCannotFormat(string? value) : IUtf8SpanFormattable
+    {
+        public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+        {
+            bytesWritten = 0;
+            return false;
+        }
+
+        public override string ToString() => value ?? throw new InvalidOperationException("Nope.");
     }
 
     private sealed class Utf8ValueThatThrows(Type exceptionType) : IUtf8SpanFormattable
