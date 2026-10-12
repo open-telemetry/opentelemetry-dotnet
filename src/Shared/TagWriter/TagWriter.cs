@@ -165,7 +165,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
 #if NET
             // Checked after the built-in types above, most of which also implement this interface.
             case IUtf8SpanFormattable utf8SpanFormattable when this.TryBeginUtf8StringTag(ref state, key, out var destination):
-                return this.TryWriteUtf8StringTag(ref state, key, utf8SpanFormattable, destination, tagValueMaxLength);
+                return this.WriteUtf8SpanFormattableTag(ref state, key, utf8SpanFormattable, destination, tagValueMaxLength);
 #endif
 
             // All other types are converted to strings including the following
@@ -385,29 +385,30 @@ internal abstract class TagWriter<TTagState, TArrayState>
 #endif
 
 #if NET
-    private bool TryWriteUtf8StringTag(ref TTagState state, string key, IUtf8SpanFormattable value, Span<byte> destination, int? tagValueMaxLength)
+    private bool WriteUtf8SpanFormattableTag(ref TTagState state, string key, IUtf8SpanFormattable value, Span<byte> destination, int? tagValueMaxLength)
     {
-        bool formatted;
         int bytesWritten;
+        string? stringValue = null;
 
         try
         {
-            formatted = value.TryFormat(destination, out bytesWritten, format: default, CultureInfo.InvariantCulture);
+            if (!value.TryFormat(destination, out bytesWritten, format: default, CultureInfo.InvariantCulture))
+            {
+                stringValue = Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty;
+            }
         }
         catch
         {
             // Any exception here comes from the value itself, so only the tag is dropped.
-            // Out-of-space is signalled by TryFormat returning false instead.
             return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
         }
 
-        if (!formatted)
+        if (stringValue != null)
         {
-            // Writers treat this as out of space: the buffer is grown and the write retried.
-            throw new ArgumentException("The buffer is too small to hold the data being written.", nameof(state));
+            // Throws if the string does not fit either, which writers treat as out of space.
+            bytesWritten = Encoding.UTF8.GetBytes(TruncateString(stringValue.AsSpan(), tagValueMaxLength), destination);
         }
-
-        if (tagValueMaxLength is { } maxLength && bytesWritten > maxLength)
+        else if (tagValueMaxLength is { } maxLength && bytesWritten > maxLength)
         {
             bytesWritten = GetUtf8ByteCountForMaxChars(destination[..bytesWritten], maxLength);
         }
