@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Text;
+
 namespace OpenTelemetry.Context.Propagation.Tests;
 
 public class BaggagePropagatorTests
@@ -1104,6 +1106,127 @@ public class BaggagePropagatorTests
         this.baggage.Inject(propagationContext, carrier, Setter);
 
         Assert.Contains(expectedEncoding, carrier[BaggagePropagator.BaggageHeaderName], StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("a% b,\";\\\t\n\0", "a%25%20b%2C%22%3B%5C%09%0A%00")]
+    public void InjectEncodesEscapedValues(string value, string expectedEncoding)
+    {
+        var context = new PropagationContext(
+            default,
+            Baggage.Create(new Dictionary<string, string> { ["key"] = value }));
+        var carrier = new Dictionary<string, string>();
+
+        this.baggage.Inject(context, carrier, Setter);
+
+        Assert.Equal("key=" + expectedEncoding, carrier[BaggagePropagator.BaggageHeaderName]);
+    }
+
+    [Theory]
+    [InlineData(new[] { 0x61, 0xD800, 0x62 }, "a%EF%BF%BDb")]
+    [InlineData(new[] { 0xDC00 }, "%EF%BF%BD")]
+    [InlineData(new[] { 0xD800, 0xD800, 0xDC00 }, "%EF%BF%BD%F0%90%80%80")]
+    public void InjectReplacesInvalidSurrogates(int[] codeUnits, string expectedEncoding)
+    {
+        // Construct invalid UTF-16 at runtime because attribute strings are decoded from UTF-8 metadata.
+        var value = new string([.. codeUnits.Select(static codeUnit => (char)codeUnit)]);
+        var context = new PropagationContext(
+            default,
+            Baggage.Create(new Dictionary<string, string> { ["key"] = value }));
+        var carrier = new Dictionary<string, string>();
+
+        this.baggage.Inject(context, carrier, Setter);
+
+        Assert.Equal("key=" + expectedEncoding, carrier[BaggagePropagator.BaggageHeaderName]);
+    }
+
+    [Theory]
+    [InlineData(127)]
+    [InlineData(128)]
+    [InlineData(129)]
+    [InlineData(255)]
+    [InlineData(256)]
+    [InlineData(257)]
+    public void InjectEncodesLongEscapedValues(int length)
+    {
+        var context = new PropagationContext(
+            default,
+            Baggage.Create(new Dictionary<string, string> { ["key"] = new string(' ', length) }));
+        var carrier = new Dictionary<string, string>();
+
+        this.baggage.Inject(context, carrier, Setter);
+
+        Assert.Equal("key=" + string.Concat(Enumerable.Repeat("%20", length)), carrier[BaggagePropagator.BaggageHeaderName]);
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(55)]
+    [InlineData(56)]
+    [InlineData(57)]
+    [InlineData(63)]
+    [InlineData(64)]
+    [InlineData(65)]
+    [InlineData(127)]
+    [InlineData(128)]
+    [InlineData(129)]
+    [InlineData(1000)]
+    [InlineData(2500)]
+    public void InjectEncodesLongMixedValues(int length)
+    {
+        // Mix verbatim characters, ASCII escapes, BMP characters and surrogate pairs so that
+        // the escapes straddle the vector widths and the stack/pooled buffer size boundary.
+        (string Value, string Encoded)[] tokens =
+        [
+            ("a", "a"),
+            ("bc", "bc"),
+            (" ", "%20"),
+            ("\u00E9", "%C3%A9"),
+            ("\U0001F600", "%F0%9F%98%80"),
+            ("~", "~"),
+            ("%", "%25"),
+            ("\u65E5", "%E6%97%A5"),
+            ("def", "def"),
+            ("\"", "%22"),
+            ("{}", "{}"),
+        ];
+
+        var value = new StringBuilder();
+        var expected = new StringBuilder("key=");
+
+        for (var i = 0; value.Length < length; i++)
+        {
+#pragma warning disable IDE0047 // Remove unnecessary parentheses
+            var (tokenValue, tokenEncoded) = tokens[(i * 7) % tokens.Length];
+#pragma warning restore IDE0047 // Remove unnecessary parentheses
+            value.Append(tokenValue);
+            expected.Append(tokenEncoded);
+        }
+
+        var context = new PropagationContext(
+            default,
+            Baggage.Create(new Dictionary<string, string> { ["key"] = value.ToString() }));
+        var carrier = new Dictionary<string, string>();
+
+        this.baggage.Inject(context, carrier, Setter);
+
+        Assert.Equal(expected.ToString(), carrier[BaggagePropagator.BaggageHeaderName]);
+    }
+
+    [Theory]
+    [InlineData('a')]
+    [InlineData(' ')]
+    [InlineData('\u00E9')]
+    public void InjectSkipsValuesThatCannotFitInTheHeader(char character)
+    {
+        var context = new PropagationContext(
+            default,
+            Baggage.Create(new Dictionary<string, string> { ["key"] = new string(character, MaxBaggageLength + 1) }));
+        var carrier = new Dictionary<string, string>();
+
+        this.baggage.Inject(context, carrier, Setter);
+
+        Assert.Empty(carrier);
     }
 
     [Fact]
