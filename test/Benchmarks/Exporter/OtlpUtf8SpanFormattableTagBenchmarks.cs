@@ -48,29 +48,29 @@ public class OtlpUtf8SpanFormattableTagBenchmarks
     internal sealed record TestDTO(string Id, string SeatId, double FloorPrice, string Currency, string[] Formats, bool Enabled);
 
     // Serializes at export time through a reused writer, so the only per-tag allocation is this wrapper.
-private sealed class JsonTagValue<T>(T value) : IUtf8SpanFormattable
-{
-    [ThreadStatic]
-    private static ArrayBufferWriter<byte>? bufferWriter;
-
-    [ThreadStatic]
-    private static Utf8JsonWriter? jsonWriter;
-
-    public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+    private sealed class JsonTagValue<T>(T value) : IUtf8SpanFormattable
     {
-        var output = bufferWriter ??= new ArrayBufferWriter<byte>();
-        output.ResetWrittenCount();
+        [ThreadStatic]
+        private static ArrayBufferWriter<byte>? bufferWriter;
 
-        var writer = jsonWriter ??= new Utf8JsonWriter(output);
-        writer.Reset(output);
+        [ThreadStatic]
+        private static Utf8JsonWriter? jsonWriter;
 
-        JsonSerializer.Serialize(writer, value);
+        public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+        {
+            var output = bufferWriter ??= new ArrayBufferWriter<byte>();
+            output.ResetWrittenCount();
 
-        bytesWritten = output.WrittenCount;
-        return output.WrittenSpan.TryCopyTo(utf8Destination);
+            var writer = jsonWriter ??= new Utf8JsonWriter(output);
+            writer.Reset(output);
+
+            JsonSerializer.Serialize(writer, value);
+
+            bytesWritten = output.WrittenCount;
+            return output.WrittenSpan.TryCopyTo(utf8Destination);
+        }
+
+        public override string ToString() => JsonSerializer.Serialize(value);
     }
-
-    public override string ToString() => JsonSerializer.Serialize(value);
-}
 }
 #endif
