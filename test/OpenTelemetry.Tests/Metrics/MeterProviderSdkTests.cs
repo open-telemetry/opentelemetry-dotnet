@@ -151,8 +151,8 @@ public class MeterProviderSdkTests
 
             meterProvider.ForceFlush();
 
-            Assert.Single(exportedItems);
-            Assert.Equal("Counter", exportedItems[0].Name);
+            var item = Assert.Single(exportedItems);
+            Assert.Equal("Counter", item.Name);
         }
 
         // No instrument should ever have been dropped due to exhausted storage.
@@ -195,8 +195,8 @@ public class MeterProviderSdkTests
 
             meterProvider.ForceFlush();
 
-            Assert.Single(exportedItems);
-            Assert.Equal($"Counter{i}", exportedItems[0].Name);
+            var item = Assert.Single(exportedItems);
+            Assert.Equal($"Counter{i}", item.Name);
         }
 
         // The stream-name registrations must be released as metrics are removed,
@@ -211,6 +211,39 @@ public class MeterProviderSdkTests
 
         // Every instrument was disposed and collected, so no registration should remain.
         Assert.Empty(metricStreamNames);
+    }
+
+    [Fact]
+    public void MetricsListenerDoesNotKeepMeterProviderAliveAfterDisposeTest()
+    {
+        var (listener, meterProviderReference) = CreateAndDisposeListener();
+
+        for (var i = 0; i < 3; i++)
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+        }
+
+        Assert.False(meterProviderReference.IsAlive);
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateCounter<long>("counter");
+
+        Assert.False(listener.InstrumentPublished(counter, out var state));
+        Assert.Null(state);
+
+        GC.KeepAlive(listener);
+
+        static (OpenTelemetryMetricsListener Listener, WeakReference MeterProviderReference) CreateAndDisposeListener()
+        {
+            var meterProvider = Sdk.CreateMeterProviderBuilder().Build();
+            var listener = new OpenTelemetryMetricsListener(meterProvider);
+
+            meterProvider.Dispose();
+            listener.Dispose();
+
+            return (listener, new WeakReference(meterProvider));
+        }
     }
 
     [Fact]
