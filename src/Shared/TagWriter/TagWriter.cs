@@ -219,23 +219,14 @@ internal abstract class TagWriter<TTagState, TArrayState>
     protected abstract void WriteArrayTag(ref TTagState state, string key, ref TArrayState value);
 
 #if NET
-    /// <summary>
-    /// Starts a string tag and provides the space a UTF-8 value can be formatted into.
-    /// </summary>
-    /// <remarks>
-    /// Writers that do not override this write the value's <see cref="object.ToString"/>
-    /// result instead. A writer that overrides this must also override
-    /// <see cref="EndUtf8StringTag"/>.
-    /// </remarks>
+    // Writers that don't override this get the value's ToString() instead.
+    // Overriding this requires overriding EndUtf8StringTag too.
     protected virtual bool TryStartUtf8StringTag(ref TTagState state, string key, out Span<byte> buffer)
     {
         buffer = default;
         return false;
     }
 
-    /// <summary>
-    /// Completes a string tag started by <see cref="TryStartUtf8StringTag"/>.
-    /// </summary>
     protected virtual void EndUtf8StringTag(ref TTagState state, ReadOnlySpan<byte> utf8Value)
         => throw new NotSupportedException();
 #endif
