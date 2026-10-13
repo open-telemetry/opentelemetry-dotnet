@@ -55,7 +55,7 @@ Notes](../../RELEASENOTES.md).
 * Fixed a race condition between recording a measurement and collecting a
   histogram with delta temporality that could cause an empty data point
   (with a count of zero) to be exported in the next collection cycle.
-  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+  ([#7923](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7923))
 
 ## 1.19.1
 
