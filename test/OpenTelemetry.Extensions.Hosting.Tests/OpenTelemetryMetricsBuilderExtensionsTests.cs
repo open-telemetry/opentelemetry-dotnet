@@ -315,6 +315,78 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
         Assert.Single(metricInstrumentRemovedEvents);
     }
 
+    [Theory]
+    [InlineData(false, "")]
+    [InlineData(true, "")]
+    [InlineData(false, ".*")]
+    [InlineData(true, ".*")]
+    public void EnableMetricsViaIConfigurationUsingPrefixAndDefaultRulesTest(bool useWithMetricsStyle, string ruleSuffix)
+    {
+        // Arrange
+        var prefix = Utils.GetCurrentMethodName();
+        var rule = prefix + ruleSuffix;
+
+        using var enabledMeter = new Meter($"{prefix}.Enabled");
+        using var disabledMeter = new Meter($"Disabled.{prefix}");
+        List<Metric> exportedItems = [];
+
+        using (MetricTestsBase.BuildHost(
+            useWithMetricsStyle,
+            configureAppConfiguration: (context, builder) => builder.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Metrics:EnabledMetrics:Default"] = "false",
+                [$"Metrics:EnabledMetrics:{rule}"] = "true",
+            }),
+            configureMeterProviderBuilder: builder => builder.AddInMemoryExporter(exportedItems)))
+        {
+            enabledMeter.CreateCounter<long>("EnabledCounter").Add(1);
+            disabledMeter.CreateCounter<long>("DisabledCounter").Add(1);
+        }
+
+        // Assert
+        var metric = Assert.Single(exportedItems);
+        Assert.Equal("EnabledCounter", metric.Name);
+    }
+
+    [Theory]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    public void EnableMetricsViaIConfigurationAddConfigurationRequiresSectionTest(bool useWithMetricsStyle, bool passSection)
+    {
+        // Arrange
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        List<Metric> exportedItems = [];
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Metrics:EnabledMetrics:Default"] = "false",
+                [$"Metrics:EnabledMetrics:{meter.Name}"] = "true",
+            })
+            .Build();
+
+        using (MetricTestsBase.BuildHost(
+            useWithMetricsStyle,
+            configureMetricsBuilder: builder => builder.AddConfiguration(
+                passSection ? configuration.GetSection("Metrics") : configuration),
+            configureMeterProviderBuilder: builder => builder.AddInMemoryExporter(exportedItems)))
+        {
+            meter.CreateCounter<long>("TestCounter").Add(1);
+        }
+
+        // Assert
+        if (passSection)
+        {
+            AssertSingleMetricWithLongSum(exportedItems);
+        }
+        else
+        {
+            Assert.Empty(exportedItems);
+        }
+    }
+
     [Fact]
     public void WhenOpenTelemetrySdkIsDisabledExceptionNotThrown()
     {
@@ -347,9 +419,9 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
 
     private static void AssertSingleMetricWithLongSum(List<Metric> exportedItems, long expectedValue = 1)
     {
-        Assert.Single(exportedItems);
+        var item = Assert.Single(exportedItems);
 
-        AssertMetricWithLongSum(exportedItems[0], expectedValue);
+        AssertMetricWithLongSum(item, expectedValue);
     }
 
     private static void AssertMetricWithLongSum(Metric metric, long expectedValue = 1)
@@ -360,17 +432,15 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
             metricPoints.Add(mp);
         }
 
-        Assert.Single(metricPoints);
-
-        var metricPoint = metricPoints[0];
+        var metricPoint = Assert.Single(metricPoints);
         Assert.Equal(expectedValue, metricPoint.GetSumLong());
     }
 
     private static void AssertSingleMetricWithDoubleSum(List<Metric> exportedItems, double expectedValue = 1)
     {
-        Assert.Single(exportedItems);
+        var item = Assert.Single(exportedItems);
 
-        AssertMetricWithDoubleSum(exportedItems[0], expectedValue);
+        AssertMetricWithDoubleSum(item, expectedValue);
     }
 
     private static void AssertMetricWithDoubleSum(Metric metric, double expectedValue = 1)
@@ -381,9 +451,7 @@ public class OpenTelemetryMetricsBuilderExtensionsTests
             metricPoints.Add(mp);
         }
 
-        Assert.Single(metricPoints);
-
-        var metricPoint = metricPoints[0];
+        var metricPoint = Assert.Single(metricPoints);
         Assert.Equal(expectedValue, metricPoint.GetSumDouble());
     }
 }
