@@ -346,60 +346,6 @@ internal abstract class TagWriter<TTagState, TArrayState>
 #if NET
     private bool WriteUtf8SpanFormattableTag(ref TTagState state, string key, IUtf8SpanFormattable value, Span<byte> buffer, int? tagValueMaxLength)
     {
-        bool formatted;
-        int bytesWritten;
-
-        try
-        {
-            formatted = value.TryFormat(buffer, out bytesWritten, format: default, CultureInfo.InvariantCulture);
-        }
-        catch
-        {
-            // Any exception here comes from the value itself, so only the tag is dropped.
-            return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
-        }
-
-        if (!formatted)
-        {
-            if (tagValueMaxLength is not { } maxLength)
-            {
-                // Writers treat this as out of space: the buffer is grown and the write retried.
-                throw new ArgumentOutOfRangeException(nameof(state), "The buffer is too small to hold the data being written.");
-            }
-
-            // TryFormat cannot produce part of a value, so truncate its string form instead
-            // of growing the buffer for a full value that is then mostly cut off.
-            string? stringValue;
-
-            try
-            {
-                stringValue = value.ToString();
-            }
-            catch
-            {
-                return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
-            }
-
-            if (stringValue == null)
-            {
-                return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
-            }
-
-            var truncated = TruncateString(stringValue.AsSpan(), maxLength);
-            if (truncated.Length < stringValue.Length && truncated.Length > 0 && char.IsHighSurrogate(truncated[^1]))
-            {
-                truncated = truncated[..^1];
-            }
-
-            // Throws if even the truncated value does not fit, which writers treat as out of space.
-            bytesWritten = Encoding.UTF8.GetBytes(truncated, buffer);
-            this.EndUtf8StringTag(ref state, buffer[..bytesWritten]);
-            return true;
-        }
-
-        this.EndUtf8StringTag(ref state, TruncateUtf8String(buffer[..bytesWritten], tagValueMaxLength));
-        return true;
-
         // Truncates on whole code points, so a UTF-8 sequence or surrogate pair is never split.
         static ReadOnlySpan<byte> TruncateUtf8String(ReadOnlySpan<byte> value, int? maxLength)
         {
@@ -424,6 +370,27 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
             return value[..bytes];
         }
+
+        bool formatted;
+        int bytesWritten;
+
+        try
+        {
+            formatted = value.TryFormat(buffer, out bytesWritten, format: default, CultureInfo.InvariantCulture);
+        }
+        catch
+        {
+            // Any exception here comes from the value itself, so only the tag is dropped.
+            return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
+        }
+
+        if (!formatted)
+        {
+            throw new ArgumentOutOfRangeException(nameof(state), "The buffer is too small to hold the data being written.");
+        }
+
+        this.EndUtf8StringTag(ref state, TruncateUtf8String(buffer[..bytesWritten], tagValueMaxLength));
+        return true;
     }
 #endif
 
