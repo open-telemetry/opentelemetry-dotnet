@@ -164,7 +164,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
 #if NET
             // Checked after the built-in types above, most of which also implement this interface.
-            case IUtf8SpanFormattable utf8SpanFormattable when this.TryGetUtf8Buffer(ref state, key, out var buffer):
+            case IUtf8SpanFormattable utf8SpanFormattable when this.TryStartUtf8StringTag(ref state, key, out var buffer):
                 return this.WriteUtf8SpanFormattableTag(ref state, key, utf8SpanFormattable, buffer, tagValueMaxLength);
 #endif
 
@@ -283,32 +283,23 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
 #if NET
     /// <summary>
-    /// Starts a string tag and provides the space its UTF-8 value is formatted
-    /// into, so the value never has to exist as a <see cref="string"/>.
+    /// Starts a string tag and provides the space a UTF-8 value can be formatted into.
     /// </summary>
     /// <remarks>
     /// Writers that do not override this write the value's <see cref="object.ToString"/>
     /// result instead. A writer that overrides this must also override
-    /// <see cref="WriteUtf8StringTag"/>. If the value does not fit, an
-    /// <see cref="ArgumentException"/> is thrown to signal that the writer is
-    /// out of space.
+    /// <see cref="EndUtf8StringTag"/>.
     /// </remarks>
-    /// <param name="state">The writer state.</param>
-    /// <param name="key">The tag key.</param>
-    /// <param name="buffer">The space the value is formatted into.</param>
-    /// <returns><see langword="true"/> if <paramref name="buffer"/> is provided; otherwise <see langword="false"/>.</returns>
-    protected virtual bool TryGetUtf8Buffer(ref TTagState state, string key, out Span<byte> buffer)
+    protected virtual bool TryStartUtf8StringTag(ref TTagState state, string key, out Span<byte> buffer)
     {
         buffer = default;
         return false;
     }
 
     /// <summary>
-    /// Completes a string tag started by <see cref="TryGetUtf8Buffer"/>.
+    /// Completes a string tag started by <see cref="TryStartUtf8StringTag"/>.
     /// </summary>
-    /// <param name="state">The writer state.</param>
-    /// <param name="utf8Value">The formatted value, at the start of the space from <see cref="TryGetUtf8Buffer"/>.</param>
-    protected virtual void WriteUtf8StringTag(ref TTagState state, ReadOnlySpan<byte> utf8Value)
+    protected virtual void EndUtf8StringTag(ref TTagState state, ReadOnlySpan<byte> utf8Value)
         => throw new NotSupportedException();
 #endif
 
@@ -474,28 +465,27 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
             // Throws if even the truncated value does not fit, which writers treat as out of space.
             bytesWritten = Encoding.UTF8.GetBytes(truncated, buffer);
-            this.WriteUtf8StringTag(ref state, buffer[..bytesWritten]);
+            this.EndUtf8StringTag(ref state, buffer[..bytesWritten]);
             return true;
         }
 
-        this.WriteUtf8StringTag(ref state, TruncateUtf8String(buffer[..bytesWritten], tagValueMaxLength));
+        this.EndUtf8StringTag(ref state, TruncateUtf8String(buffer[..bytesWritten], tagValueMaxLength));
         return true;
 
         // Truncates on whole code points, so a UTF-8 sequence or surrogate pair is never split.
         static ReadOnlySpan<byte> TruncateUtf8String(ReadOnlySpan<byte> value, int? maxLength)
         {
-            if (maxLength is not { } maxChars || value.Length <= maxChars)
+            if (!maxLength.HasValue || value.Length <= maxLength)
             {
                 return value;
             }
 
-            var bytes = 0;
-            var chars = 0;
+            int bytes = 0, chars = 0;
 
             while (bytes < value.Length)
             {
                 Rune.DecodeFromUtf8(value[bytes..], out var rune, out var consumed);
-                if (chars + rune.Utf16SequenceLength > maxChars)
+                if (chars + rune.Utf16SequenceLength > maxLength)
                 {
                     break;
                 }
