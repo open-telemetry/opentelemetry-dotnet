@@ -5,6 +5,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.Globalization;
 #if NET
+using System.Buffers;
 using System.Text;
 #endif
 
@@ -15,6 +16,12 @@ internal abstract class TagWriter<TTagState, TArrayState>
     where TArrayState : notnull
 {
     internal const int MaxRecursionDepth = 3; // TODO https://github.com/open-telemetry/semantic-conventions/issues/3648
+
+#if NET
+    // Each retry with a larger buffer formats the whole value again, so start large enough for typical values.
+    private const int Utf8BufferInitialSize = 16 * 1024;
+    private const int Utf8BufferMaxSize = 1024 * 1024;
+#endif
 
     [ThreadStatic]
     private static int recursionDepth;
@@ -220,28 +227,30 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
 #if NET
     /// <summary>
-    /// Starts a string tag whose UTF-8 value is formatted directly into the returned space.
+    /// Provides space to format a string tag's UTF-8 value directly into, avoiding a copy.
+    /// </summary>
+    /// <remarks>
+    /// Writers that do not override this get the value formatted into a pooled buffer.
+    /// If the value does not fit the space provided, an <see cref="ArgumentOutOfRangeException"/>
+    /// is thrown to signal that the writer is out of space.
+    /// </remarks>
+    /// <param name="state">The writer state.</param>
+    /// <param name="key">The tag key.</param>
+    /// <param name="buffer">The space the value is formatted into.</param>
+    /// <returns><see langword="true"/> if <paramref name="buffer"/> is provided; otherwise <see langword="false"/>.</returns>
+    protected virtual bool TryGetUtf8Buffer(ref TTagState state, string key, out Span<byte> buffer)
+    {
+        buffer = default;
+        return false;
+    }
+
+    /// <summary>
+    /// Writes a string tag from its UTF-8 value.
     /// </summary>
     /// <param name="state">The writer state.</param>
     /// <param name="key">The tag key.</param>
-    /// <returns>The space the value is formatted into.</returns>
-    protected abstract Span<byte> BeginUtf8StringTag(ref TTagState state, string key);
-
-    /// <summary>
-    /// Provides more space for a value that did not fit the space last provided.
-    /// </summary>
-    /// <param name="state">The writer state.</param>
-    /// <param name="destination">The larger space the value is formatted into.</param>
-    /// <returns><see langword="true"/> if more space was provided; <see langword="false"/> to drop the tag.</returns>
-    protected abstract bool TryResizeUtf8StringTag(ref TTagState state, out Span<byte> destination);
-
-    /// <summary>
-    /// Completes a string tag started by <see cref="BeginUtf8StringTag"/>.
-    /// </summary>
-    /// <param name="state">The writer state.</param>
-    /// <param name="key">The tag key.</param>
-    /// <param name="utf8Value">The formatted value, at the start of the space last provided.</param>
-    protected abstract void EndUtf8StringTag(ref TTagState state, string key, ReadOnlySpan<byte> utf8Value);
+    /// <param name="utf8Value">The value, at the start of the space from <see cref="TryGetUtf8Buffer"/> if it returned <see langword="true"/>.</param>
+    protected abstract void WriteUtf8StringTag(ref TTagState state, string key, ReadOnlySpan<byte> utf8Value);
 #endif
 
     protected abstract void WriteKvListTag(ref TTagState state, string key, IEnumerable<KeyValuePair<string, object?>> kvList, int? tagValueMaxLength);
@@ -257,14 +266,19 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
 #if NET
     // Truncates on whole code points, so a UTF-8 sequence or surrogate pair is never split.
-    private static int GetUtf8ByteCountForMaxChars(ReadOnlySpan<byte> utf8, int maxChars)
+    private static ReadOnlySpan<byte> TruncateUtf8String(ReadOnlySpan<byte> value, int? maxLength)
     {
+        if (maxLength is not { } maxChars || value.Length <= maxChars)
+        {
+            return value;
+        }
+
         var bytes = 0;
         var chars = 0;
 
-        while (bytes < utf8.Length)
+        while (bytes < value.Length)
         {
-            Rune.DecodeFromUtf8(utf8[bytes..], out var rune, out var consumed);
+            Rune.DecodeFromUtf8(value[bytes..], out var rune, out var consumed);
             if (chars + rune.Utf16SequenceLength > maxChars)
             {
                 break;
@@ -274,7 +288,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
             bytes += consumed;
         }
 
-        return bytes;
+        return value[..bytes];
     }
 #endif
 
@@ -382,39 +396,69 @@ internal abstract class TagWriter<TTagState, TArrayState>
 #if NET
     private bool WriteUtf8SpanFormattableTag(ref TTagState state, string key, IUtf8SpanFormattable value, int? tagValueMaxLength)
     {
-        var destination = this.BeginUtf8StringTag(ref state, key);
+        if (this.TryGetUtf8Buffer(ref state, key, out var buffer))
+        {
+            if (!this.TryFormatUtf8Value(key, value, buffer, out var formatted, out var bytesWritten))
+            {
+                return false;
+            }
+
+            if (!formatted)
+            {
+                // Writers treat this as out of space: the buffer is grown and the write retried.
+                throw new ArgumentOutOfRangeException(nameof(state), "The buffer is too small to hold the data being written.");
+            }
+
+            this.WriteUtf8StringTag(ref state, key, TruncateUtf8String(buffer[..bytesWritten], tagValueMaxLength));
+            return true;
+        }
+
+        var pool = ArrayPool<byte>.Shared;
+        var bufferSize = Utf8BufferInitialSize;
 
         while (true)
         {
-            bool formatted;
-            int bytesWritten;
-
+            var pooledBuffer = pool.Rent(bufferSize);
             try
             {
-                formatted = value.TryFormat(destination, out bytesWritten, format: default, CultureInfo.InvariantCulture);
-            }
-            catch
-            {
-                // Any exception here comes from the value itself, so only the tag is dropped.
-                return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
-            }
-
-            if (formatted)
-            {
-                var utf8Value = destination[..bytesWritten];
-                if (tagValueMaxLength is { } maxLength && bytesWritten > maxLength)
+                if (!this.TryFormatUtf8Value(key, value, pooledBuffer, out var formatted, out var bytesWritten))
                 {
-                    utf8Value = utf8Value[..GetUtf8ByteCountForMaxChars(utf8Value, maxLength)];
+                    return false;
                 }
 
-                this.EndUtf8StringTag(ref state, key, utf8Value);
-                return true;
-            }
+                if (formatted)
+                {
+                    this.WriteUtf8StringTag(ref state, key, TruncateUtf8String(pooledBuffer.AsSpan(0, bytesWritten), tagValueMaxLength));
+                    return true;
+                }
 
-            if (!this.TryResizeUtf8StringTag(ref state, out destination))
-            {
-                return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
+                if (pooledBuffer.Length >= Utf8BufferMaxSize)
+                {
+                    return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
+                }
+
+                bufferSize = Math.Min(pooledBuffer.Length * 2, Utf8BufferMaxSize);
             }
+            finally
+            {
+                pool.Return(pooledBuffer);
+            }
+        }
+    }
+
+    private bool TryFormatUtf8Value(string key, IUtf8SpanFormattable value, Span<byte> destination, out bool formatted, out int bytesWritten)
+    {
+        try
+        {
+            formatted = value.TryFormat(destination, out bytesWritten, format: default, CultureInfo.InvariantCulture);
+            return true;
+        }
+        catch
+        {
+            // Any exception here comes from the value itself, so only the tag is dropped.
+            formatted = false;
+            bytesWritten = 0;
+            return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
         }
     }
 #endif

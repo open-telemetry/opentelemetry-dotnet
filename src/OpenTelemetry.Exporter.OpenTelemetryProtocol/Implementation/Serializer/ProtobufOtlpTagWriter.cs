@@ -126,7 +126,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
     }
 
 #if NET
-    protected override Span<byte> BeginUtf8StringTag(ref OtlpTagWriterState state, string key)
+    protected override bool TryGetUtf8Buffer(ref OtlpTagWriterState state, string key, out Span<byte> buffer)
     {
         state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Key, key);
 
@@ -136,24 +136,14 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         state.WritePosition = ProtobufSerializer.WriteTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.AnyValue_String_Value, ProtobufWireType.LEN);
         state.WritePosition += ReserveSizeForLength;
 
-        return state.Buffer.AsSpan(state.WritePosition);
+        buffer = state.Buffer.AsSpan(state.WritePosition);
+        return true;
     }
 
-    protected override bool TryResizeUtf8StringTag(ref OtlpTagWriterState state, out Span<byte> destination)
+    protected override void WriteUtf8StringTag(ref OtlpTagWriterState state, string key, ReadOnlySpan<byte> utf8Value)
     {
-        if (state.Buffer.Length >= ProtobufSerializer.MaxBufferSize)
-        {
-            destination = default;
-            return false;
-        }
-
-        // The export buffer can only grow by re-serializing the batch, which the serializer does on this exception.
-        throw new ArgumentOutOfRangeException(nameof(state), "The buffer is too small to hold the data being written.");
-    }
-
-    protected override void EndUtf8StringTag(ref OtlpTagWriterState state, string key, ReadOnlySpan<byte> utf8Value)
-    {
-        // Laid out by BeginUtf8StringTag: each reserved length is followed by a single byte tag.
+        // Laid out by TryGetUtf8Buffer, which always provides the buffer, so the value is already in place.
+        // Each reserved length is followed by a single byte tag.
         var stringLengthPosition = state.WritePosition - ReserveSizeForLength;
         var anyValueLengthPosition = stringLengthPosition - 1 - ReserveSizeForLength;
 

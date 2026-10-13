@@ -12,15 +12,6 @@ internal sealed class ZipkinTagWriter : JsonStringArrayTagWriter<Utf8JsonWriter>
 {
     public const int StackallocByteThreshold = 256;
 
-#if NET
-    // Each resize formats the whole value again, so start large enough for typical values.
-    private const int Utf8BufferInitialSize = 16 * 1024;
-    private const int Utf8BufferMaxSize = 1024 * 1024;
-
-    [ThreadStatic]
-    private static byte[]? utf8Buffer;
-#endif
-
     private ZipkinTagWriter()
     {
     }
@@ -60,23 +51,7 @@ internal sealed class ZipkinTagWriter : JsonStringArrayTagWriter<Utf8JsonWriter>
         => writer.WriteString(key, value);
 
 #if NET
-    protected override Span<byte> BeginUtf8StringTag(ref Utf8JsonWriter writer, string key)
-        => utf8Buffer ??= new byte[Utf8BufferInitialSize];
-
-    protected override bool TryResizeUtf8StringTag(ref Utf8JsonWriter writer, out Span<byte> destination)
-    {
-        var length = utf8Buffer?.Length ?? 0;
-        if (length >= Utf8BufferMaxSize)
-        {
-            destination = default;
-            return false;
-        }
-
-        destination = utf8Buffer = new byte[Math.Min(Math.Max(length * 2, Utf8BufferInitialSize), Utf8BufferMaxSize)];
-        return true;
-    }
-
-    protected override void EndUtf8StringTag(ref Utf8JsonWriter writer, string key, ReadOnlySpan<byte> utf8Value)
+    protected override void WriteUtf8StringTag(ref Utf8JsonWriter writer, string key, ReadOnlySpan<byte> utf8Value)
         => writer.WriteString(key, utf8Value);
 #endif
 

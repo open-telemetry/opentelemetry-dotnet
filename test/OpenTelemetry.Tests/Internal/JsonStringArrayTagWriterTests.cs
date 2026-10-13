@@ -178,13 +178,7 @@ public class JsonStringArrayTagWriterTests
             => throw new NotImplementedException();
 
 #if NET
-        protected override Span<byte> BeginUtf8StringTag(ref Tag tag, string key)
-            => throw new NotImplementedException();
-
-        protected override bool TryResizeUtf8StringTag(ref Tag tag, out Span<byte> destination)
-            => throw new NotImplementedException();
-
-        protected override void EndUtf8StringTag(ref Tag tag, string key, ReadOnlySpan<byte> utf8Value)
+        protected override void WriteUtf8StringTag(ref Tag tag, string key, ReadOnlySpan<byte> utf8Value)
             => throw new NotImplementedException();
 #endif
 
