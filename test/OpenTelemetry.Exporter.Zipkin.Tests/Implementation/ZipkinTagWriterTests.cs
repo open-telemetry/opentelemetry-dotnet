@@ -70,6 +70,29 @@ public class ZipkinTagWriterTests
         Assert.Equal(value, document.RootElement.GetProperty("key").GetString());
     }
 
+    [Fact]
+    public void Utf8SpanFormattableTagLargerThanTheBufferIsWrittenAfterResizing()
+    {
+        var value = new string('v', 64 * 1024);
+
+        var json = WriteTag("key", new Utf8Value(value));
+
+        using var document = JsonDocument.Parse(json);
+        Assert.Equal(value, document.RootElement.GetProperty("key").GetString());
+    }
+
+    [Fact]
+    public void Utf8SpanFormattableTagThatNeverFitsIsDropped()
+    {
+        using var stream = new MemoryStream();
+        using var writer = new Utf8JsonWriter(stream);
+
+        var writerAlias = writer;
+        writerAlias.WriteStartObject();
+
+        Assert.False(ZipkinTagWriter.Instance.TryWriteTag(ref writerAlias, "key", new Utf8ValueThatNeverFits()));
+    }
+
 #endif
     private static string WriteTag(string key, object? value)
     {
@@ -92,6 +115,15 @@ public class ZipkinTagWriterTests
     {
         public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
             => Encoding.UTF8.TryGetBytes(value, utf8Destination, out bytesWritten);
+    }
+
+    private sealed class Utf8ValueThatNeverFits : IUtf8SpanFormattable
+    {
+        public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+        {
+            bytesWritten = 0;
+            return false;
+        }
     }
 #endif
 }

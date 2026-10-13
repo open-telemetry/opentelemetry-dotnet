@@ -5,7 +5,6 @@ using System.Collections;
 using System.Diagnostics;
 using System.Globalization;
 #if NET
-using System.Buffers;
 using System.Text;
 #endif
 
@@ -16,12 +15,6 @@ internal abstract class TagWriter<TTagState, TArrayState>
     where TArrayState : notnull
 {
     internal const int MaxRecursionDepth = 3; // TODO https://github.com/open-telemetry/semantic-conventions/issues/3648
-
-#if NET
-    // Each retry with a larger buffer formats the whole value again, so start large enough for typical values.
-    private const int Utf8SpanFormattableInitialBufferSize = 16 * 1024;
-    private const int Utf8SpanFormattableMaxBufferSize = 1024 * 1024;
-#endif
 
     [ThreadStatic]
     private static int recursionDepth;
@@ -226,7 +219,29 @@ internal abstract class TagWriter<TTagState, TArrayState>
     protected abstract void WriteArrayTag(ref TTagState state, string key, ref TArrayState value);
 
 #if NET
-    protected abstract void WriteStringTag(ref TTagState state, string key, ReadOnlySpan<byte> utf8Value);
+    /// <summary>
+    /// Starts a string tag whose UTF-8 value is formatted directly into the returned space.
+    /// </summary>
+    /// <param name="state">The writer state.</param>
+    /// <param name="key">The tag key.</param>
+    /// <returns>The space the value is formatted into.</returns>
+    protected abstract Span<byte> BeginUtf8StringTag(ref TTagState state, string key);
+
+    /// <summary>
+    /// Provides more space for a value that did not fit the space last provided.
+    /// </summary>
+    /// <param name="state">The writer state.</param>
+    /// <param name="destination">The larger space the value is formatted into.</param>
+    /// <returns><see langword="true"/> if more space was provided; <see langword="false"/> to drop the tag.</returns>
+    protected abstract bool TryResizeUtf8StringTag(ref TTagState state, out Span<byte> destination);
+
+    /// <summary>
+    /// Completes a string tag started by <see cref="BeginUtf8StringTag"/>.
+    /// </summary>
+    /// <param name="state">The writer state.</param>
+    /// <param name="key">The tag key.</param>
+    /// <param name="utf8Value">The formatted value, at the start of the space last provided.</param>
+    protected abstract void EndUtf8StringTag(ref TTagState state, string key, ReadOnlySpan<byte> utf8Value);
 #endif
 
     protected abstract void WriteKvListTag(ref TTagState state, string key, IEnumerable<KeyValuePair<string, object?>> kvList, int? tagValueMaxLength);
@@ -367,49 +382,38 @@ internal abstract class TagWriter<TTagState, TArrayState>
 #if NET
     private bool WriteUtf8SpanFormattableTag(ref TTagState state, string key, IUtf8SpanFormattable value, int? tagValueMaxLength)
     {
-        var pool = ArrayPool<byte>.Shared;
-        var bufferSize = Utf8SpanFormattableInitialBufferSize;
+        var destination = this.BeginUtf8StringTag(ref state, key);
 
         while (true)
         {
-            var buffer = pool.Rent(bufferSize);
+            bool formatted;
+            int bytesWritten;
+
             try
             {
-                bool formatted;
-                int bytesWritten;
-
-                try
-                {
-                    formatted = value.TryFormat(buffer, out bytesWritten, format: default, CultureInfo.InvariantCulture);
-                }
-                catch
-                {
-                    // Any exception here comes from the value itself, so only the tag is dropped.
-                    return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
-                }
-
-                if (formatted)
-                {
-                    var utf8Value = buffer.AsSpan(0, bytesWritten);
-                    if (tagValueMaxLength is { } maxLength && bytesWritten > maxLength)
-                    {
-                        utf8Value = utf8Value[..GetUtf8ByteCountForMaxChars(utf8Value, maxLength)];
-                    }
-
-                    this.WriteStringTag(ref state, key, utf8Value);
-                    return true;
-                }
-
-                if (buffer.Length >= Utf8SpanFormattableMaxBufferSize)
-                {
-                    return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
-                }
-
-                bufferSize = Math.Min(buffer.Length * 2, Utf8SpanFormattableMaxBufferSize);
+                formatted = value.TryFormat(destination, out bytesWritten, format: default, CultureInfo.InvariantCulture);
             }
-            finally
+            catch
             {
-                pool.Return(buffer);
+                // Any exception here comes from the value itself, so only the tag is dropped.
+                return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
+            }
+
+            if (formatted)
+            {
+                var utf8Value = destination[..bytesWritten];
+                if (tagValueMaxLength is { } maxLength && bytesWritten > maxLength)
+                {
+                    utf8Value = utf8Value[..GetUtf8ByteCountForMaxChars(utf8Value, maxLength)];
+                }
+
+                this.EndUtf8StringTag(ref state, key, utf8Value);
+                return true;
+            }
+
+            if (!this.TryResizeUtf8StringTag(ref state, out destination))
+            {
+                return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
             }
         }
     }

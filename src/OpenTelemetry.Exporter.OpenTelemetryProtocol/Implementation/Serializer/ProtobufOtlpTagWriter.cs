@@ -126,8 +126,42 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
     }
 
 #if NET
-    protected override void WriteStringTag(ref OtlpTagWriterState state, string key, ReadOnlySpan<byte> utf8Value)
-        => WriteLengthDelimitedTag(ref state, key, ProtobufOtlpCommonFieldNumberConstants.AnyValue_String_Value, utf8Value);
+    protected override Span<byte> BeginUtf8StringTag(ref OtlpTagWriterState state, string key)
+    {
+        state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Key, key);
+
+        state.WritePosition = ProtobufSerializer.WriteTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value, ProtobufWireType.LEN);
+        state.WritePosition += ReserveSizeForLength;
+
+        state.WritePosition = ProtobufSerializer.WriteTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.AnyValue_String_Value, ProtobufWireType.LEN);
+        state.WritePosition += ReserveSizeForLength;
+
+        return state.Buffer.AsSpan(state.WritePosition);
+    }
+
+    protected override bool TryResizeUtf8StringTag(ref OtlpTagWriterState state, out Span<byte> destination)
+    {
+        if (state.Buffer.Length >= ProtobufSerializer.MaxBufferSize)
+        {
+            destination = default;
+            return false;
+        }
+
+        // The export buffer can only grow by re-serializing the batch, which the serializer does on this exception.
+        throw new ArgumentOutOfRangeException(nameof(state), "The buffer is too small to hold the data being written.");
+    }
+
+    protected override void EndUtf8StringTag(ref OtlpTagWriterState state, string key, ReadOnlySpan<byte> utf8Value)
+    {
+        // Laid out by BeginUtf8StringTag: each reserved length is followed by a single byte tag.
+        var stringLengthPosition = state.WritePosition - ReserveSizeForLength;
+        var anyValueLengthPosition = stringLengthPosition - 1 - ReserveSizeForLength;
+
+        state.WritePosition += utf8Value.Length;
+
+        ProtobufSerializer.WriteReservedLength(state.Buffer, stringLengthPosition, utf8Value.Length);
+        ProtobufSerializer.WriteReservedLength(state.Buffer, anyValueLengthPosition, state.WritePosition - (anyValueLengthPosition + ReserveSizeForLength));
+    }
 #endif
 
     protected override void WriteArrayTag(ref OtlpTagWriterState state, string key, ref OtlpTagWriterArrayState value)
@@ -164,7 +198,15 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
 
     protected override bool TryWriteByteArrayTag(ref OtlpTagWriterState state, string key, ReadOnlySpan<byte> value)
     {
-        WriteLengthDelimitedTag(ref state, key, ProtobufOtlpCommonFieldNumberConstants.AnyValue_Bytes_Value, value);
+        // Write KeyValue tag
+        state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Key, key);
+
+        var serializedLengthSize = ProtobufSerializer.ComputeVarInt64Size((ulong)value.Length);
+
+        // length = value.Length + tagSize + length field size.
+        state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, value.Length + 1 + serializedLengthSize, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value, ProtobufWireType.LEN);
+        state.WritePosition = ProtobufSerializer.WriteByteArrayWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.AnyValue_Bytes_Value, value);
+
         return true;
     }
 
@@ -215,18 +257,6 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         // Fill in reserved lengths
         ProtobufSerializer.WriteReservedLength(state.Buffer, kvlistLengthPos, state.WritePosition - (kvlistLengthPos + ReserveSizeForLength));
         ProtobufSerializer.WriteReservedLength(state.Buffer, anyValueLengthPos, state.WritePosition - (anyValueLengthPos + ReserveSizeForLength));
-    }
-
-    private static void WriteLengthDelimitedTag(ref OtlpTagWriterState state, string key, int anyValueFieldNumber, ReadOnlySpan<byte> value)
-    {
-        // Write KeyValue tag
-        state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Key, key);
-
-        var serializedLengthSize = ProtobufSerializer.ComputeVarInt64Size((ulong)value.Length);
-
-        // length = value.Length + tagSize + length field size.
-        state.WritePosition = ProtobufSerializer.WriteTagAndLength(state.Buffer, state.WritePosition, value.Length + 1 + serializedLengthSize, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value, ProtobufWireType.LEN);
-        state.WritePosition = ProtobufSerializer.WriteByteArrayWithTag(state.Buffer, state.WritePosition, anyValueFieldNumber, value);
     }
 
     internal struct OtlpTagWriterState
