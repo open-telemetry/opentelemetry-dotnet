@@ -52,6 +52,12 @@ Notes](../../RELEASENOTES.md).
   avoid unbounded growth.
   ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
 
+* Fixed the `MeterProvider` and its `IServiceProvider` being kept alive after
+  the host is disposed when using `Microsoft.Extensions.Diagnostics` versions
+  prior to 9.0, which never dispose their `MetricsSubscriptionManager` (and its
+  underlying `MeterListener`).
+  ([#7924](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7924))
+
 ## 1.19.1
 
 Released 2026-Sep-21

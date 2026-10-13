@@ -3,6 +3,7 @@
 
 using System.Diagnostics.Metrics;
 using System.Reflection;
+using Microsoft.Extensions.Diagnostics.Metrics;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
 
@@ -151,8 +152,8 @@ public class MeterProviderSdkTests
 
             meterProvider.ForceFlush();
 
-            Assert.Single(exportedItems);
-            Assert.Equal("Counter", exportedItems[0].Name);
+            var item = Assert.Single(exportedItems);
+            Assert.Equal("Counter", item.Name);
         }
 
         // No instrument should ever have been dropped due to exhausted storage.
@@ -195,8 +196,8 @@ public class MeterProviderSdkTests
 
             meterProvider.ForceFlush();
 
-            Assert.Single(exportedItems);
-            Assert.Equal($"Counter{i}", exportedItems[0].Name);
+            var item = Assert.Single(exportedItems);
+            Assert.Equal($"Counter{i}", item.Name);
         }
 
         // The stream-name registrations must be released as metrics are removed,
@@ -211,6 +212,43 @@ public class MeterProviderSdkTests
 
         // Every instrument was disposed and collected, so no registration should remain.
         Assert.Empty(metricStreamNames);
+    }
+
+    [Fact]
+    public void MetricsListenerDoesNotKeepMeterProviderAliveAfterDisposeTest()
+    {
+        var (listener, meterProviderReference, sourceReference) = CreateAndDisposeListener();
+
+        for (var i = 0; i < 3; i++)
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+        }
+
+        Assert.False(meterProviderReference.IsAlive);
+        Assert.False(sourceReference.IsAlive);
+
+        using var meter = new Meter(Utils.GetCurrentMethodName());
+        var counter = meter.CreateCounter<long>("counter");
+
+        Assert.False(listener.InstrumentPublished(counter, out var state));
+        Assert.Null(state);
+
+        GC.KeepAlive(listener);
+
+        static (OpenTelemetryMetricsListener Listener, WeakReference MeterProviderReference, WeakReference SourceReference) CreateAndDisposeListener()
+        {
+            var meterProvider = Sdk.CreateMeterProviderBuilder().Build();
+            var listener = new OpenTelemetryMetricsListener(meterProvider);
+            var source = new TestObservableInstrumentsSource();
+
+            listener.Initialize(source);
+
+            meterProvider.Dispose();
+            listener.Dispose();
+
+            return (listener, new WeakReference(meterProvider), new WeakReference(source));
+        }
     }
 
     [Fact]
@@ -267,6 +305,13 @@ public class MeterProviderSdkTests
             Assert.Equal(2, exportedItems.Count);
             Assert.Contains(exportedItems, item => item.MeterName == meter1.Name);
             Assert.Contains(exportedItems, item => item.MeterName == meter4.Name);
+        }
+    }
+
+    private sealed class TestObservableInstrumentsSource : IObservableInstrumentsSource
+    {
+        public void RecordObservableInstruments()
+        {
         }
     }
 }
