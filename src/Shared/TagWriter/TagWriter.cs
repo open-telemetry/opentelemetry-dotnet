@@ -164,8 +164,8 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
 #if NET
             // Checked after the built-in types above, most of which also implement this interface.
-            case IUtf8SpanFormattable utf8SpanFormattable when this is IUtf8StringTagWriter<TTagState> utf8StringTagWriter:
-                return this.WriteUtf8SpanFormattableTag(utf8StringTagWriter, ref state, key, utf8SpanFormattable, tagValueMaxLength);
+            case IUtf8SpanFormattable utf8SpanFormattable when this.TryGetUtf8Buffer(ref state, key, out var buffer):
+                return this.WriteUtf8SpanFormattableTag(ref state, key, utf8SpanFormattable, buffer, tagValueMaxLength);
 #endif
 
             // All other types are converted to strings including the following
@@ -217,6 +217,37 @@ internal abstract class TagWriter<TTagState, TArrayState>
     protected abstract void WriteStringTag(ref TTagState state, string key, ReadOnlySpan<char> value);
 
     protected abstract void WriteArrayTag(ref TTagState state, string key, ref TArrayState value);
+
+#if NET
+    /// <summary>
+    /// Starts a string tag and provides the space its UTF-8 value is formatted
+    /// into, so the value never has to exist as a <see cref="string"/>.
+    /// </summary>
+    /// <remarks>
+    /// Writers that do not override this write the value's <see cref="object.ToString"/>
+    /// result instead. A writer that overrides this must also override
+    /// <see cref="WriteUtf8StringTag"/>. If the value does not fit, an
+    /// <see cref="ArgumentOutOfRangeException"/> is thrown to signal that the
+    /// writer is out of space.
+    /// </remarks>
+    /// <param name="state">The writer state.</param>
+    /// <param name="key">The tag key.</param>
+    /// <param name="buffer">The space the value is formatted into.</param>
+    /// <returns><see langword="true"/> if <paramref name="buffer"/> is provided; otherwise <see langword="false"/>.</returns>
+    protected virtual bool TryGetUtf8Buffer(ref TTagState state, string key, out Span<byte> buffer)
+    {
+        buffer = default;
+        return false;
+    }
+
+    /// <summary>
+    /// Completes a string tag started by <see cref="TryGetUtf8Buffer"/>.
+    /// </summary>
+    /// <param name="state">The writer state.</param>
+    /// <param name="utf8Value">The formatted value, at the start of the space from <see cref="TryGetUtf8Buffer"/>.</param>
+    protected virtual void WriteUtf8StringTag(ref TTagState state, ReadOnlySpan<byte> utf8Value)
+        => throw new NotSupportedException();
+#endif
 
     protected abstract void WriteKvListTag(ref TTagState state, string key, IEnumerable<KeyValuePair<string, object?>> kvList, int? tagValueMaxLength);
 
@@ -359,10 +390,8 @@ internal abstract class TagWriter<TTagState, TArrayState>
 #endif
 
 #if NET
-    private bool WriteUtf8SpanFormattableTag(IUtf8StringTagWriter<TTagState> utf8StringTagWriter, ref TTagState state, string key, IUtf8SpanFormattable value, int? tagValueMaxLength)
+    private bool WriteUtf8SpanFormattableTag(ref TTagState state, string key, IUtf8SpanFormattable value, Span<byte> buffer, int? tagValueMaxLength)
     {
-        var buffer = utf8StringTagWriter.GetUtf8Buffer(ref state, key);
-
         bool formatted;
         int bytesWritten;
 
@@ -382,7 +411,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
             throw new ArgumentOutOfRangeException(nameof(state), "The buffer is too small to hold the data being written.");
         }
 
-        utf8StringTagWriter.WriteUtf8StringTag(ref state, TruncateUtf8String(buffer[..bytesWritten], tagValueMaxLength));
+        this.WriteUtf8StringTag(ref state, TruncateUtf8String(buffer[..bytesWritten], tagValueMaxLength));
         return true;
     }
 #endif
