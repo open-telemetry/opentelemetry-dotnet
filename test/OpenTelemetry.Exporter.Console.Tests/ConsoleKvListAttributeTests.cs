@@ -335,29 +335,10 @@ public class ConsoleKvListAttributeTests
 
 #if NET
     [Fact]
-    public void Utf8SpanFormattableIsWrittenAsString()
+    public void Utf8SpanFormattableIsWrittenUsingToString()
     {
-        var value = "{\"name\":\"caf\u00E9\"}";
-
-        Assert.True(this.tagWriter.TryTransformTag("key", new Utf8Value(value), out var result));
-        Assert.Equal("key", result.Key);
-        Assert.Equal(value, result.Value);
-    }
-
-    [Fact]
-    public void Utf8SpanFormattableLargerThanTheBufferIsWrittenAfterResizing()
-    {
-        var value = new string('v', 64 * 1024);
-
-        Assert.True(this.tagWriter.TryTransformTag("key", new Utf8Value(value), out var result));
-        Assert.Equal(value, result.Value);
-    }
-
-    [Fact]
-    public void Utf8SpanFormattableThatNeverFitsIsDropped()
-    {
-        Assert.False(this.tagWriter.TryTransformTag("key", new Utf8ValueThatNeverFits(), out _));
-        Assert.Equal("key", Assert.Single(this.droppedTags).Key);
+        Assert.True(this.tagWriter.TryTransformTag("key", new Utf8ValueWithToString("value"), out var result));
+        Assert.Equal("value", result.Value);
     }
 
 #endif
@@ -396,19 +377,16 @@ public class ConsoleKvListAttributeTests
     }
 
 #if NET
-    private sealed class Utf8Value(string value) : IUtf8SpanFormattable
-    {
-        public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
-            => System.Text.Encoding.UTF8.TryGetBytes(value, utf8Destination, out bytesWritten);
-    }
-
-    private sealed class Utf8ValueThatNeverFits : IUtf8SpanFormattable
+    // TryFormat never succeeds, so the value can only be written through ToString.
+    private sealed class Utf8ValueWithToString(string value) : IUtf8SpanFormattable
     {
         public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
         {
             bytesWritten = 0;
             return false;
         }
+
+        public override string ToString() => value;
     }
 #endif
 }

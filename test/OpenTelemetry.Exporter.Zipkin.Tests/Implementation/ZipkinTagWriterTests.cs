@@ -60,37 +60,12 @@ public class ZipkinTagWriterTests
 
 #if NET
     [Fact]
-    public void Utf8SpanFormattableTagIsWrittenAsString()
+    public void Utf8SpanFormattableTagIsWrittenUsingToString()
     {
-        var value = "{\"name\":\"caf\u00E9\"}";
-
-        var json = WriteTag("key", new Utf8Value(value));
+        var json = WriteTag("key", new Utf8ValueWithToString("value"));
 
         using var document = JsonDocument.Parse(json);
-        Assert.Equal(value, document.RootElement.GetProperty("key").GetString());
-    }
-
-    [Fact]
-    public void Utf8SpanFormattableTagLargerThanTheBufferIsWrittenAfterResizing()
-    {
-        var value = new string('v', 64 * 1024);
-
-        var json = WriteTag("key", new Utf8Value(value));
-
-        using var document = JsonDocument.Parse(json);
-        Assert.Equal(value, document.RootElement.GetProperty("key").GetString());
-    }
-
-    [Fact]
-    public void Utf8SpanFormattableTagThatNeverFitsIsDropped()
-    {
-        using var stream = new MemoryStream();
-        using var writer = new Utf8JsonWriter(stream);
-
-        var writerAlias = writer;
-        writerAlias.WriteStartObject();
-
-        Assert.False(ZipkinTagWriter.Instance.TryWriteTag(ref writerAlias, "key", new Utf8ValueThatNeverFits()));
+        Assert.Equal("value", document.RootElement.GetProperty("key").GetString());
     }
 
 #endif
@@ -111,19 +86,16 @@ public class ZipkinTagWriterTests
     }
 
 #if NET
-    private sealed class Utf8Value(string value) : IUtf8SpanFormattable
-    {
-        public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
-            => Encoding.UTF8.TryGetBytes(value, utf8Destination, out bytesWritten);
-    }
-
-    private sealed class Utf8ValueThatNeverFits : IUtf8SpanFormattable
+    // TryFormat never succeeds, so the value can only be written through ToString.
+    private sealed class Utf8ValueWithToString(string value) : IUtf8SpanFormattable
     {
         public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
         {
             bytesWritten = 0;
             return false;
         }
+
+        public override string ToString() => value;
     }
 #endif
 }
