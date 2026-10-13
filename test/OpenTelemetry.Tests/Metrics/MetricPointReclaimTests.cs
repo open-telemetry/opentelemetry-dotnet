@@ -448,7 +448,7 @@ public class MetricPointReclaimTests
     [InlineData("explicit-no-bounds-min-max")]
     [InlineData("exponential")]
     [InlineData("exponential-min-max")]
-    public async Task UpdateRacingWithCollectDoesNotExportAnEmptyHistogramPoint(string kind)
+    public async Task UpdateRacingWithCollectExportsTheMeasurementAndItsExemplarOnce(string kind)
     {
         using var offering = new ManualResetEventSlim();
         using var resume = new ManualResetEventSlim();
@@ -479,15 +479,14 @@ public class MetricPointReclaimTests
         // Mark the point as having data so that the first collect below snapshots it.
         histogram.Record(5);
 
-        // The second measurement is added to the point, and then the updater is paused
-        // inside the exemplar reservoir, i.e. after the value was written to the point.
+        // The second measurement is paused while it is being offered to the exemplar reservoir.
         using var update = Task.Run(() => histogram.Record(7), TestContext.Current.CancellationToken);
 
         try
         {
             Assert.True(offering.Wait(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken));
 
-            // The collect includes the second measurement and clears the "has data" state of the point.
+            // The collect races with the update, so it must export all of the first measurement.
             Assert.True(meterProvider.ForceFlush());
         }
         finally
@@ -497,13 +496,38 @@ public class MetricPointReclaimTests
 
         await update;
 
-        var point = Assert.Single(Assert.Single(snapshots).MetricPoints);
-        Assert.Equal(2, point.GetHistogramCount());
-        Assert.Equal(12, point.GetHistogramSum());
-
-        // The measurements were all exported already, so there is nothing to export.
+        // The measurement that raced with the collect, and its exemplar, are exported by the
+        // next collect. Neither of them is lost, and the point it is exported in is not empty.
         Assert.True(meterProvider.ForceFlush());
-        Assert.Single(snapshots);
+
+        double count = 0;
+        double sum = 0;
+        var exemplars = new List<double>();
+
+        foreach (var snapshot in snapshots)
+        {
+            foreach (var point in snapshot.MetricPoints)
+            {
+                Assert.NotEqual(0, point.GetHistogramCount());
+                count += point.GetHistogramCount();
+                sum += point.GetHistogramSum();
+
+                Assert.True(point.TryGetExemplars(out var pointExemplars));
+
+                foreach (var exemplar in pointExemplars)
+                {
+                    exemplars.Add(exemplar.DoubleValue);
+                }
+            }
+        }
+
+        Assert.Equal(2, count);
+        Assert.Equal(12, sum);
+        Assert.Equal([5, 7], exemplars);
+
+        // Everything was exported already, so there is nothing more to export.
+        Assert.True(meterProvider.ForceFlush());
+        Assert.Equal(2, snapshots.Count);
     }
 
     [Theory]
@@ -1340,12 +1364,11 @@ public class MetricPointReclaimTests
         private int offers;
 
         public override void Offer(in ExemplarMeasurement<long> measurement)
-        {
-        }
+            => this.UpdateExemplar(0, in measurement);
 
         public override void Offer(in ExemplarMeasurement<double> measurement)
         {
-            // Pause the second offer, which happens after its measurement was added to the point.
+            // Pause the second offer before the measurement is stored.
             if (Interlocked.Increment(ref this.offers) == 2)
             {
                 offering.Set();
@@ -1355,10 +1378,8 @@ public class MetricPointReclaimTests
                     throw new TimeoutException("The test did not resume the update.");
                 }
             }
-        }
 
-        protected override void OnCollected()
-        {
+            this.UpdateExemplar(0, in measurement);
         }
     }
 

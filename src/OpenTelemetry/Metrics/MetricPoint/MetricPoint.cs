@@ -949,6 +949,13 @@ public struct MetricPoint
     {
         var histogramBuckets = this.mpComponents!.HistogramBuckets!;
 
+        // Offer the exemplar before the value is added. The status below is set in the same critical
+        // section as the value, so TakeSnapshot (which takes the same lock) can never observe the
+        // value without the flag, which would export an empty data point in the next collection.
+        // Offering the exemplar after that instead would let a racing collection clear the flag, and
+        // leave the exemplar unexported until another measurement is recorded.
+        this.UpdateExemplar(number, tags, offerExemplar);
+
         this.mpComponents.AcquireLock();
 
         unchecked
@@ -957,14 +964,10 @@ public struct MetricPoint
             histogramBuckets.RunningSum += number;
         }
 
-        // Mark the point as updated while still holding the lock so that TakeSnapshot, which
-        // holds the same lock, can never observe the new value without also observing the flag
-        // (otherwise it would export an empty data point in the next collection cycle).
+        // Set while still holding the lock, see above.
         this.MetricPointStatus = MetricPointStatus.CollectPending;
 
         this.mpComponents.ReleaseLock();
-
-        this.UpdateExemplar(number, tags, offerExemplar);
 
         this.CompleteUpdateWithoutMeasurement();
     }
@@ -972,6 +975,9 @@ public struct MetricPoint
     private void UpdateHistogramWithMinMax(double number, ReadOnlySpan<KeyValuePair<string, object?>> tags = default, bool offerExemplar = false)
     {
         var histogramBuckets = this.mpComponents!.HistogramBuckets!;
+
+        // Offer the exemplar before the update, as for UpdateHistogram().
+        this.UpdateExemplar(number, tags, offerExemplar);
 
         this.mpComponents.AcquireLock();
 
@@ -984,12 +990,9 @@ public struct MetricPoint
         histogramBuckets.RunningMin = Math.Min(histogramBuckets.RunningMin, number);
         histogramBuckets.RunningMax = Math.Max(histogramBuckets.RunningMax, number);
 
-        // Set the flag under the lock too (see UpdateHistogram).
         this.MetricPointStatus = MetricPointStatus.CollectPending;
 
         this.mpComponents.ReleaseLock();
-
-        this.UpdateExemplar(number, tags, offerExemplar);
 
         this.CompleteUpdateWithoutMeasurement();
     }
@@ -1000,6 +1003,9 @@ public struct MetricPoint
 
         var bucketIndex = histogramBuckets.FindBucketIndex(number);
 
+        // Offer the exemplar before the update, as for UpdateHistogram().
+        this.UpdateExemplar(number, tags, offerExemplar, bucketIndex);
+
         this.mpComponents.AcquireLock();
 
         unchecked
@@ -1009,12 +1015,9 @@ public struct MetricPoint
             histogramBuckets.BucketCounts[bucketIndex].RunningValue++;
         }
 
-        // Set the flag under the lock too (see UpdateHistogram).
         this.MetricPointStatus = MetricPointStatus.CollectPending;
 
         this.mpComponents.ReleaseLock();
-
-        this.UpdateExemplar(number, tags, offerExemplar, bucketIndex);
 
         this.CompleteUpdateWithoutMeasurement();
     }
@@ -1024,6 +1027,9 @@ public struct MetricPoint
         var histogramBuckets = this.mpComponents!.HistogramBuckets!;
 
         var bucketIndex = histogramBuckets.FindBucketIndex(number);
+
+        // Offer the exemplar before the update, as for UpdateHistogram().
+        this.UpdateExemplar(number, tags, offerExemplar, bucketIndex);
 
         this.mpComponents.AcquireLock();
 
@@ -1037,12 +1043,9 @@ public struct MetricPoint
         histogramBuckets.RunningMin = Math.Min(histogramBuckets.RunningMin, number);
         histogramBuckets.RunningMax = Math.Max(histogramBuckets.RunningMax, number);
 
-        // Set the flag under the lock too (see UpdateHistogram).
         this.MetricPointStatus = MetricPointStatus.CollectPending;
 
         this.mpComponents.ReleaseLock();
-
-        this.UpdateExemplar(number, tags, offerExemplar, bucketIndex);
 
         this.CompleteUpdateWithoutMeasurement();
     }
@@ -1057,6 +1060,9 @@ public struct MetricPoint
 
         var histogram = this.mpComponents!.Base2ExponentialBucketHistogram!;
 
+        // Offer the exemplar before the update, as for UpdateHistogram().
+        this.UpdateExemplar(number, tags, offerExemplar);
+
         this.mpComponents.AcquireLock();
 
         unchecked
@@ -1066,12 +1072,9 @@ public struct MetricPoint
             histogram.Record(number);
         }
 
-        // Set the flag under the lock too (see UpdateHistogram).
         this.MetricPointStatus = MetricPointStatus.CollectPending;
 
         this.mpComponents.ReleaseLock();
-
-        this.UpdateExemplar(number, tags, offerExemplar);
 
         this.CompleteUpdateWithoutMeasurement();
     }
@@ -1086,6 +1089,9 @@ public struct MetricPoint
 
         var histogram = this.mpComponents!.Base2ExponentialBucketHistogram!;
 
+        // Offer the exemplar before the update, as for UpdateHistogram().
+        this.UpdateExemplar(number, tags, offerExemplar);
+
         this.mpComponents.AcquireLock();
 
         unchecked
@@ -1098,12 +1104,9 @@ public struct MetricPoint
         histogram.RunningMin = Math.Min(histogram.RunningMin, number);
         histogram.RunningMax = Math.Max(histogram.RunningMax, number);
 
-        // Set the flag under the lock too (see UpdateHistogram).
         this.MetricPointStatus = MetricPointStatus.CollectPending;
 
         this.mpComponents.ReleaseLock();
-
-        this.UpdateExemplar(number, tags, offerExemplar);
 
         this.CompleteUpdateWithoutMeasurement();
     }
