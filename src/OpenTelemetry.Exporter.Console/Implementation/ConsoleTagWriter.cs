@@ -70,15 +70,6 @@ internal sealed class ConsoleTagWriter : JsonStringArrayTagWriter<ConsoleTagWrit
         state.IsJsonLiteral = false;
     }
 
-#if NET
-    protected override void WriteUtf8StringTag(ref ConsoleTag state, string key, ReadOnlySpan<byte> utf8Value)
-    {
-        state.Key = key;
-        state.Value = Encoding.UTF8.GetString(utf8Value);
-        state.IsJsonLiteral = false;
-    }
-#endif
-
     protected override void WriteArrayTag(ref ConsoleTag state, string key, ArraySegment<byte> arrayUtf8JsonBytes)
     {
         state.Key = key;
