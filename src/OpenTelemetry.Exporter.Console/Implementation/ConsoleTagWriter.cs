@@ -11,6 +11,11 @@ namespace OpenTelemetry.Exporter;
 
 internal sealed class ConsoleTagWriter : JsonStringArrayTagWriter<ConsoleTagWriter.ConsoleTag>
 {
+#if NET
+    private const int Utf8BufferInitialSize = 256;
+    private const int Utf8BufferMaxSize = 1024 * 1024;
+
+#endif
     private readonly Action<string, string> onUnsupportedTagDropped;
 
     public ConsoleTagWriter(Action<string, string> onUnsupportedTagDropped)
@@ -71,11 +76,28 @@ internal sealed class ConsoleTagWriter : JsonStringArrayTagWriter<ConsoleTagWrit
     }
 
 #if NET
-    protected override void WriteStringTag(ref ConsoleTag state, string key, ReadOnlySpan<byte> utf8Value)
+    protected override Span<byte> BeginUtf8StringTag(ref ConsoleTag state, string key)
+        => state.Utf8Buffer = new byte[Utf8BufferInitialSize];
+
+    protected override bool TryResizeUtf8StringTag(ref ConsoleTag state, out Span<byte> destination)
+    {
+        var length = state.Utf8Buffer?.Length ?? 0;
+        if (length >= Utf8BufferMaxSize)
+        {
+            destination = default;
+            return false;
+        }
+
+        destination = state.Utf8Buffer = new byte[Math.Min(Math.Max(length * 2, Utf8BufferInitialSize), Utf8BufferMaxSize)];
+        return true;
+    }
+
+    protected override void EndUtf8StringTag(ref ConsoleTag state, string key, ReadOnlySpan<byte> utf8Value)
     {
         state.Key = key;
         state.Value = Encoding.UTF8.GetString(utf8Value);
         state.IsJsonLiteral = false;
+        state.Utf8Buffer = null;
     }
 #endif
 
@@ -159,5 +181,9 @@ internal sealed class ConsoleTagWriter : JsonStringArrayTagWriter<ConsoleTagWrit
         // embedded in JSON. Written by the tag writing methods so that nested
         // values do not have to be inferred from the serialized text.
         public bool IsJsonLiteral;
+
+#if NET
+        public byte[]? Utf8Buffer;
+#endif
     }
 }

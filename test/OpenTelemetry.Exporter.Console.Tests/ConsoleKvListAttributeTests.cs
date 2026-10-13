@@ -350,6 +350,22 @@ public class ConsoleKvListAttributeTests
         Assert.Equal(value, result.Value);
     }
 
+    [Fact]
+    public void Utf8SpanFormattableLargerThanTheBufferIsWrittenAfterResizing()
+    {
+        var value = new string('v', 64 * 1024);
+
+        Assert.True(this.tagWriter.TryTransformTag("key", new Utf8Value(value), out var result));
+        Assert.Equal(value, result.Value);
+    }
+
+    [Fact]
+    public void Utf8SpanFormattableThatNeverFitsIsDropped()
+    {
+        Assert.False(this.tagWriter.TryTransformTag("key", new Utf8ValueThatNeverFits(), out _));
+        Assert.Equal("key", Assert.Single(this.droppedTags).Key);
+    }
+
 #endif
     private static IEnumerable<KeyValuePair<string, object?>> FaultyKvList()
     {
@@ -390,6 +406,15 @@ public class ConsoleKvListAttributeTests
     {
         public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
             => System.Text.Encoding.UTF8.TryGetBytes(value, utf8Destination, out bytesWritten);
+    }
+
+    private sealed class Utf8ValueThatNeverFits : IUtf8SpanFormattable
+    {
+        public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+        {
+            bytesWritten = 0;
+            return false;
+        }
     }
 #endif
 }
