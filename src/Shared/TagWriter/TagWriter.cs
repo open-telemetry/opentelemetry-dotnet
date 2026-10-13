@@ -323,34 +323,6 @@ internal abstract class TagWriter<TTagState, TArrayState>
            ? value.Slice(0, maxLengthValue)
            : value;
 
-#if NET
-    // Truncates on whole code points, so a UTF-8 sequence or surrogate pair is never split.
-    private static ReadOnlySpan<byte> TruncateUtf8String(ReadOnlySpan<byte> value, int? maxLength)
-    {
-        if (maxLength is not { } maxChars || value.Length <= maxChars)
-        {
-            return value;
-        }
-
-        var bytes = 0;
-        var chars = 0;
-
-        while (bytes < value.Length)
-        {
-            Rune.DecodeFromUtf8(value[bytes..], out var rune, out var consumed);
-            if (chars + rune.Utf16SequenceLength > maxChars)
-            {
-                break;
-            }
-
-            chars += rune.Utf16SequenceLength;
-            bytes += consumed;
-        }
-
-        return value[..bytes];
-    }
-#endif
-
     private static IEnumerable<KeyValuePair<string, object?>> AdaptStringKvList(IEnumerable<KeyValuePair<string, string?>> source)
     {
         foreach (var item in source)
@@ -476,6 +448,32 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
         this.WriteUtf8StringTag(ref state, TruncateUtf8String(buffer[..bytesWritten], tagValueMaxLength));
         return true;
+
+        // Truncates on whole code points, so a UTF-8 sequence or surrogate pair is never split.
+        static ReadOnlySpan<byte> TruncateUtf8String(ReadOnlySpan<byte> value, int? maxLength)
+        {
+            if (maxLength is not { } maxChars || value.Length <= maxChars)
+            {
+                return value;
+            }
+
+            var bytes = 0;
+            var chars = 0;
+
+            while (bytes < value.Length)
+            {
+                Rune.DecodeFromUtf8(value[bytes..], out var rune, out var consumed);
+                if (chars + rune.Utf16SequenceLength > maxChars)
+                {
+                    break;
+                }
+
+                chars += rune.Utf16SequenceLength;
+                bytes += consumed;
+            }
+
+            return value[..bytes];
+        }
     }
 #endif
 
