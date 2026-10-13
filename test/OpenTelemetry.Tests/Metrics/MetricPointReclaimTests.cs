@@ -442,6 +442,71 @@ public class MetricPointReclaimTests
     }
 
     [Theory]
+    [InlineData("explicit-bounds")]
+    [InlineData("explicit-bounds-min-max")]
+    [InlineData("explicit-no-bounds")]
+    [InlineData("explicit-no-bounds-min-max")]
+    [InlineData("exponential")]
+    [InlineData("exponential-min-max")]
+    public async Task UpdateRacingWithCollectDoesNotExportAnEmptyHistogramPoint(string kind)
+    {
+        using var offering = new ManualResetEventSlim();
+        using var resume = new ManualResetEventSlim();
+        using var meter = new Meter(Utils.GetCurrentMethodName() + kind);
+        var snapshots = new List<MetricSnapshot>();
+
+        MetricStreamConfiguration view = kind switch
+        {
+            "explicit-bounds" => new ExplicitBucketHistogramConfiguration { Boundaries = [10], RecordMinMax = false },
+            "explicit-bounds-min-max" => new ExplicitBucketHistogramConfiguration { Boundaries = [10], RecordMinMax = true },
+            "explicit-no-bounds" => new ExplicitBucketHistogramConfiguration { Boundaries = [], RecordMinMax = false },
+            "explicit-no-bounds-min-max" => new ExplicitBucketHistogramConfiguration { Boundaries = [], RecordMinMax = true },
+            "exponential" => new Base2ExponentialBucketHistogramConfiguration { RecordMinMax = false },
+            _ => new Base2ExponentialBucketHistogramConfiguration { RecordMinMax = true },
+        };
+
+        view.ExemplarReservoirFactory = () => new OfferBlockingReservoir(offering, resume);
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("metric", view)
+            .SetExemplarFilter(ExemplarFilterType.AlwaysOn)
+            .AddInMemoryExporter(snapshots, options => options.TemporalityPreference = MetricReaderTemporalityPreference.Delta)
+            .Build();
+
+        var histogram = meter.CreateHistogram<double>("metric");
+
+        // Mark the point as having data so that the first collect below snapshots it.
+        histogram.Record(5);
+
+        // The second measurement is added to the point, and then the updater is paused
+        // inside the exemplar reservoir, i.e. after the value was written to the point.
+        using var update = Task.Run(() => histogram.Record(7), TestContext.Current.CancellationToken);
+
+        try
+        {
+            Assert.True(offering.Wait(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken));
+
+            // The collect includes the second measurement and clears the "has data" state of the point.
+            Assert.True(meterProvider.ForceFlush());
+        }
+        finally
+        {
+            resume.Set();
+        }
+
+        await update;
+
+        var point = Assert.Single(Assert.Single(snapshots).MetricPoints);
+        Assert.Equal(2, point.GetHistogramCount());
+        Assert.Equal(12, point.GetHistogramSum());
+
+        // The measurements were all exported already, so there is nothing to export.
+        Assert.True(meterProvider.ForceFlush());
+        Assert.Single(snapshots);
+    }
+
+    [Theory]
     [InlineData("counter-long")]
     [InlineData("counter-double")]
     [InlineData("histogram")]
@@ -1267,6 +1332,33 @@ public class MetricPointReclaimTests
                     throw new TimeoutException("The test did not resume collection.");
                 }
             }
+        }
+    }
+
+    private sealed class OfferBlockingReservoir(ManualResetEventSlim offering, ManualResetEventSlim resume) : FixedSizeExemplarReservoir(1)
+    {
+        private int offers;
+
+        public override void Offer(in ExemplarMeasurement<long> measurement)
+        {
+        }
+
+        public override void Offer(in ExemplarMeasurement<double> measurement)
+        {
+            // Pause the second offer, which happens after its measurement was added to the point.
+            if (Interlocked.Increment(ref this.offers) == 2)
+            {
+                offering.Set();
+
+                if (!resume.Wait(TimeSpan.FromSeconds(10)))
+                {
+                    throw new TimeoutException("The test did not resume the update.");
+                }
+            }
+        }
+
+        protected override void OnCollected()
+        {
         }
     }
 

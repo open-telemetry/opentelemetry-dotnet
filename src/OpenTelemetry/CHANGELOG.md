@@ -52,6 +52,11 @@ Notes](../../RELEASENOTES.md).
   avoid unbounded growth.
   ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
 
+* Fixed a race condition between recording a measurement and collecting a
+  histogram with delta temporality that could cause an empty data point
+  (with a count of zero) to be exported in the next collection cycle.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.19.1
 
 Released 2026-Sep-21
