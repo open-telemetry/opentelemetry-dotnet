@@ -954,6 +954,11 @@ public struct MetricPoint
         // value without the flag, which would export an empty data point in the next collection.
         // Offering the exemplar after that instead would let a racing collection clear the flag, and
         // leave the exemplar unexported until another measurement is recorded.
+        //
+        // The exemplar and the value are still not updated atomically, as that would require running
+        // the (potentially user-defined) reservoir while holding the lock. A collection that happens
+        // between the two can export the exemplar one interval before the measurement it was offered
+        // for is aggregated, but neither is lost or exported twice, and no empty data point is exported.
         this.UpdateExemplar(number, tags, offerExemplar);
 
         this.mpComponents.AcquireLock();
