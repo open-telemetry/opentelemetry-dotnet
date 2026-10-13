@@ -302,6 +302,11 @@ public class JsonStringArrayTagWriterTests
             state.Value = value.ToString();
         }
 
+#if NET
+        protected override void WriteStringTag(ref Tag state, string key, ReadOnlySpan<byte> utf8Value)
+            => throw new NotImplementedException();
+#endif
+
         protected override void WriteArrayTag(ref Tag state, string key, ArraySegment<byte> arrayUtf8JsonBytes)
         {
 #pragma warning disable IDE0370 // Suppression is unnecessary
