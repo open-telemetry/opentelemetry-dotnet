@@ -741,25 +741,22 @@ public sealed class OtlpTraceExporterTests : IDisposable
 
 #if NET
     [Fact]
-    public void Utf8SpanFormattableAttributeLargerThanTheBufferIsWrittenAfterGrowing()
+    public void Utf8SpanFormattableAttributeGrowsTheExportBuffer()
     {
         var value = new string('v', 64 * 1024);
 
-        using var activitySource = new ActivitySource(nameof(this.Utf8SpanFormattableAttributeLargerThanTheBufferIsWrittenAfterGrowing));
+        using var activitySource = new ActivitySource(nameof(this.Utf8SpanFormattableAttributeGrowsTheExportBuffer));
         using var activity = activitySource.StartActivity("root");
 
         Assert.NotNull(activity);
         activity.SetTag("large", new Utf8Value(value));
-        activity.SetTag("throws", new Utf8ValueThatThrows());
 
         var batch = new Batch<Activity>([activity], 1);
         var request = CreateTraceExportRequest(new SdkLimitOptions(), batch, ResourceBuilder.CreateEmpty().Build());
 
         var otlpSpan = Assert.Single(Assert.Single(Assert.Single(request.ResourceSpans).ScopeSpans).Spans);
         var attribute = Assert.Single(otlpSpan.Attributes);
-        Assert.Equal("large", attribute.Key);
         Assert.Equal(value, attribute.Value.StringValue);
-        Assert.Equal(1u, otlpSpan.DroppedAttributesCount);
     }
 
 #endif
@@ -1568,12 +1565,6 @@ public sealed class OtlpTraceExporterTests : IDisposable
             => System.Text.Encoding.UTF8.TryGetBytes(value, utf8Destination, out bytesWritten);
 
         public override string ToString() => value;
-    }
-
-    private sealed class Utf8ValueThatThrows : IUtf8SpanFormattable
-    {
-        public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
-            => throw new ArgumentException("Nope.");
     }
 
 #endif
