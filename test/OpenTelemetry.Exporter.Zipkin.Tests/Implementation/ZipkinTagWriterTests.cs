@@ -58,6 +58,19 @@ public class ZipkinTagWriterTests
         Assert.Equal("prod", labelsDocument.RootElement.GetProperty("env").GetString());
     }
 
+#if NET
+    [Fact]
+    public void Utf8SpanFormattableTagIsWrittenAsString()
+    {
+        var value = "{\"name\":\"caf\u00E9\"}";
+
+        var json = WriteTag("key", new Utf8Value(value));
+
+        using var document = JsonDocument.Parse(json);
+        Assert.Equal(value, document.RootElement.GetProperty("key").GetString());
+    }
+
+#endif
     private static string WriteTag(string key, object? value)
     {
         using var stream = new MemoryStream();
@@ -73,4 +86,12 @@ public class ZipkinTagWriterTests
 
         return Encoding.UTF8.GetString(stream.ToArray());
     }
+
+#if NET
+    private sealed class Utf8Value(string value) : IUtf8SpanFormattable
+    {
+        public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+            => Encoding.UTF8.TryGetBytes(value, utf8Destination, out bytesWritten);
+    }
+#endif
 }

@@ -5,6 +5,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.Globalization;
 #if NET
+using System.Buffers;
 using System.Text;
 #endif
 
@@ -15,6 +16,12 @@ internal abstract class TagWriter<TTagState, TArrayState>
     where TArrayState : notnull
 {
     internal const int MaxRecursionDepth = 3; // TODO https://github.com/open-telemetry/semantic-conventions/issues/3648
+
+#if NET
+    // Each retry with a larger buffer formats the whole value again, so start large enough for typical values.
+    private const int Utf8SpanFormattableInitialBufferSize = 16 * 1024;
+    private const int Utf8SpanFormattableMaxBufferSize = 1024 * 1024;
+#endif
 
     [ThreadStatic]
     private static int recursionDepth;
@@ -164,8 +171,8 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
 #if NET
             // Checked after the built-in types above, most of which also implement this interface.
-            case IUtf8SpanFormattable utf8SpanFormattable when this.TryBeginUtf8StringTag(ref state, key, out var destination):
-                return this.WriteUtf8SpanFormattableTag(ref state, key, utf8SpanFormattable, destination, tagValueMaxLength);
+            case IUtf8SpanFormattable utf8SpanFormattable:
+                return this.WriteUtf8SpanFormattableTag(ref state, key, utf8SpanFormattable, tagValueMaxLength);
 #endif
 
             // All other types are converted to strings including the following
@@ -219,34 +226,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
     protected abstract void WriteArrayTag(ref TTagState state, string key, ref TArrayState value);
 
 #if NET
-    /// <summary>
-    /// Writes the key of a string tag and provides the space its UTF-8 value is
-    /// formatted into, so the value never has to exist as a <see cref="string"/>.
-    /// </summary>
-    /// <remarks>
-    /// Writers that do not override this fall back to writing the value's
-    /// <see cref="object.ToString"/> result as a string tag. A writer that
-    /// returns <see langword="true"/> must discard what it wrote for the tag
-    /// if <see cref="TryWriteTag(ref TTagState, string, object?, int?)"/> then
-    /// returns <see langword="false"/>.
-    /// </remarks>
-    /// <param name="state">The writer state.</param>
-    /// <param name="key">The tag key.</param>
-    /// <param name="destination">The space the value is formatted into.</param>
-    /// <returns><see langword="true"/> if <paramref name="destination"/> is provided; otherwise <see langword="false"/>.</returns>
-    protected virtual bool TryBeginUtf8StringTag(ref TTagState state, string key, out Span<byte> destination)
-    {
-        destination = default;
-        return false;
-    }
-
-    /// <summary>
-    /// Completes a string tag started by <see cref="TryBeginUtf8StringTag"/>.
-    /// </summary>
-    /// <param name="state">The writer state.</param>
-    /// <param name="bytesWritten">The number of bytes of the value written at the start of the destination.</param>
-    protected virtual void EndUtf8StringTag(ref TTagState state, int bytesWritten)
-        => throw new NotSupportedException();
+    protected abstract void WriteStringTag(ref TTagState state, string key, ReadOnlySpan<byte> utf8Value);
 #endif
 
     protected abstract void WriteKvListTag(ref TTagState state, string key, IEnumerable<KeyValuePair<string, object?>> kvList, int? tagValueMaxLength);
@@ -385,34 +365,53 @@ internal abstract class TagWriter<TTagState, TArrayState>
 #endif
 
 #if NET
-    private bool WriteUtf8SpanFormattableTag(ref TTagState state, string key, IUtf8SpanFormattable value, Span<byte> destination, int? tagValueMaxLength)
+    private bool WriteUtf8SpanFormattableTag(ref TTagState state, string key, IUtf8SpanFormattable value, int? tagValueMaxLength)
     {
-        bool formatted;
-        int bytesWritten;
+        var pool = ArrayPool<byte>.Shared;
+        var bufferSize = Utf8SpanFormattableInitialBufferSize;
 
-        try
+        while (true)
         {
-            formatted = value.TryFormat(destination, out bytesWritten, format: default, CultureInfo.InvariantCulture);
-        }
-        catch
-        {
-            // Any exception here comes from the value itself, so only the tag is dropped.
-            return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
-        }
+            var buffer = pool.Rent(bufferSize);
+            try
+            {
+                bool formatted;
+                int bytesWritten;
 
-        if (!formatted)
-        {
-            // Writers treat this as out of space: the buffer is grown and the write retried.
-            throw new ArgumentOutOfRangeException(nameof(destination), "The buffer is too small to hold the data being written.");
-        }
+                try
+                {
+                    formatted = value.TryFormat(buffer, out bytesWritten, format: default, CultureInfo.InvariantCulture);
+                }
+                catch
+                {
+                    // Any exception here comes from the value itself, so only the tag is dropped.
+                    return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
+                }
 
-        if (tagValueMaxLength is { } maxLength && bytesWritten > maxLength)
-        {
-            bytesWritten = GetUtf8ByteCountForMaxChars(destination[..bytesWritten], maxLength);
-        }
+                if (formatted)
+                {
+                    var utf8Value = buffer.AsSpan(0, bytesWritten);
+                    if (tagValueMaxLength is { } maxLength && bytesWritten > maxLength)
+                    {
+                        utf8Value = utf8Value[..GetUtf8ByteCountForMaxChars(utf8Value, maxLength)];
+                    }
 
-        this.EndUtf8StringTag(ref state, bytesWritten);
-        return true;
+                    this.WriteStringTag(ref state, key, utf8Value);
+                    return true;
+                }
+
+                if (buffer.Length >= Utf8SpanFormattableMaxBufferSize)
+                {
+                    return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
+                }
+
+                bufferSize = Math.Min(buffer.Length * 2, Utf8SpanFormattableMaxBufferSize);
+            }
+            finally
+            {
+                pool.Return(buffer);
+            }
+        }
     }
 #endif
 

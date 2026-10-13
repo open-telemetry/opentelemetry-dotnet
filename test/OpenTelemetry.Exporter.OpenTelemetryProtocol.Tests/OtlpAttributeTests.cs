@@ -453,7 +453,14 @@ public class OtlpAttributeTests
 
         var tag = new KeyValuePair<string, object?>("key", new Utf8Value(new string('v', 1024)));
 
-        Assert.Throws<ArgumentOutOfRangeException>(() => ProtobufOtlpTagWriter.Instance.TryWriteTag(ref state, tag));
+        Assert.Throws<ArgumentException>(() => ProtobufOtlpTagWriter.Instance.TryWriteTag(ref state, tag));
+    }
+
+    [Fact]
+    public void Utf8SpanFormattableThatNeverFitsIsDropped()
+    {
+        var kvp = new KeyValuePair<string, object?>("key", new Utf8ValueThatNeverFits());
+        Assert.False(TryTransformTag(kvp, out _));
     }
 
     [Theory]
@@ -498,6 +505,15 @@ public class OtlpAttributeTests
             => System.Text.Encoding.UTF8.TryGetBytes(value, utf8Destination, out bytesWritten);
 
         public override string ToString() => value;
+    }
+
+    private sealed class Utf8ValueThatNeverFits : IUtf8SpanFormattable
+    {
+        public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+        {
+            bytesWritten = 0;
+            return false;
+        }
     }
 
     private sealed class Utf8ValueThatThrows(Type exceptionType) : IUtf8SpanFormattable
