@@ -3,6 +3,7 @@
 
 using System.Diagnostics.Metrics;
 using System.Reflection;
+using Microsoft.Extensions.Diagnostics.Metrics;
 using OpenTelemetry.Internal;
 using OpenTelemetry.Tests;
 
@@ -216,7 +217,7 @@ public class MeterProviderSdkTests
     [Fact]
     public void MetricsListenerDoesNotKeepMeterProviderAliveAfterDisposeTest()
     {
-        var (listener, meterProviderReference) = CreateAndDisposeListener();
+        var (listener, meterProviderReference, sourceReference) = CreateAndDisposeListener();
 
         for (var i = 0; i < 3; i++)
         {
@@ -225,6 +226,7 @@ public class MeterProviderSdkTests
         }
 
         Assert.False(meterProviderReference.IsAlive);
+        Assert.False(sourceReference.IsAlive);
 
         using var meter = new Meter(Utils.GetCurrentMethodName());
         var counter = meter.CreateCounter<long>("counter");
@@ -234,15 +236,18 @@ public class MeterProviderSdkTests
 
         GC.KeepAlive(listener);
 
-        static (OpenTelemetryMetricsListener Listener, WeakReference MeterProviderReference) CreateAndDisposeListener()
+        static (OpenTelemetryMetricsListener Listener, WeakReference MeterProviderReference, WeakReference SourceReference) CreateAndDisposeListener()
         {
             var meterProvider = Sdk.CreateMeterProviderBuilder().Build();
             var listener = new OpenTelemetryMetricsListener(meterProvider);
+            var source = new TestObservableInstrumentsSource();
+
+            listener.Initialize(source);
 
             meterProvider.Dispose();
             listener.Dispose();
 
-            return (listener, new WeakReference(meterProvider));
+            return (listener, new WeakReference(meterProvider), new WeakReference(source));
         }
     }
 
@@ -300,6 +305,13 @@ public class MeterProviderSdkTests
             Assert.Equal(2, exportedItems.Count);
             Assert.Contains(exportedItems, item => item.MeterName == meter1.Name);
             Assert.Contains(exportedItems, item => item.MeterName == meter4.Name);
+        }
+    }
+
+    private sealed class TestObservableInstrumentsSource : IObservableInstrumentsSource
+    {
+        public void RecordObservableInstruments()
+        {
         }
     }
 }
