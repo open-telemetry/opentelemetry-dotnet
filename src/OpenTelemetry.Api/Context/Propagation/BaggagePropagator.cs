@@ -437,11 +437,9 @@ public class BaggagePropagator : TextMapPropagator
         Array.IndexOf(ValidValueChars, c) >= 0;
 #endif
 
-    private static bool IsValidKey(char c) =>
 #if NET
+    private static bool IsValidKey(char c) =>
         ValidKeySearcher.Contains(c);
-#else
-        Array.IndexOf(ValidKeyChars, c) >= 0;
 #endif
 
     private static bool IsValidKey(ReadOnlySpan<char> key)
