@@ -6,7 +6,7 @@ using OpenTelemetry.Internal;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 
-internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.OtlpTagWriterState, ProtobufOtlpTagWriter.OtlpTagWriterArrayState>, IUtf8StringTagWriter<ProtobufOtlpTagWriter.OtlpTagWriterState>
+internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.OtlpTagWriterState, ProtobufOtlpTagWriter.OtlpTagWriterArrayState>
 {
     private const int ReserveSizeForLength = 4;
 
@@ -64,31 +64,6 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         state.WritePosition = ProtobufSerializer.WriteCompactLength(state.Buffer, lengthPosition, state.WritePosition);
 
         return true;
-    }
-
-    Span<byte> IUtf8StringTagWriter<OtlpTagWriterState>.GetUtf8Buffer(ref OtlpTagWriterState state, string key)
-    {
-        state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Key, key);
-
-        state.WritePosition = ProtobufSerializer.WriteTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value, ProtobufWireType.LEN);
-        state.WritePosition += ReserveSizeForLength;
-
-        state.WritePosition = ProtobufSerializer.WriteTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.AnyValue_String_Value, ProtobufWireType.LEN);
-        state.WritePosition += ReserveSizeForLength;
-
-        return state.Buffer.AsSpan(state.WritePosition);
-    }
-
-    void IUtf8StringTagWriter<OtlpTagWriterState>.WriteUtf8StringTag(ref OtlpTagWriterState state, ReadOnlySpan<byte> utf8Value)
-    {
-        // Laid out by GetUtf8Buffer: each reserved length is followed by a single byte tag.
-        var stringLengthPosition = state.WritePosition - ReserveSizeForLength;
-        var anyValueLengthPosition = stringLengthPosition - 1 - ReserveSizeForLength;
-
-        state.WritePosition += utf8Value.Length;
-
-        ProtobufSerializer.WriteReservedLength(state.Buffer, stringLengthPosition, utf8Value.Length);
-        ProtobufSerializer.WriteReservedLength(state.Buffer, anyValueLengthPosition, state.WritePosition - (anyValueLengthPosition + ReserveSizeForLength));
     }
 
     protected override void WriteIntegralTag(ref OtlpTagWriterState state, string key, long value)
@@ -149,6 +124,34 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
             ProtobufOtlpCommonFieldNumberConstants.AnyValue_String_Value,
             value);
     }
+
+#if NET
+    protected override bool TryGetUtf8Buffer(ref OtlpTagWriterState state, string key, out Span<byte> buffer)
+    {
+        state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Key, key);
+
+        state.WritePosition = ProtobufSerializer.WriteTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Value, ProtobufWireType.LEN);
+        state.WritePosition += ReserveSizeForLength;
+
+        state.WritePosition = ProtobufSerializer.WriteTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.AnyValue_String_Value, ProtobufWireType.LEN);
+        state.WritePosition += ReserveSizeForLength;
+
+        buffer = state.Buffer.AsSpan(state.WritePosition);
+        return true;
+    }
+
+    protected override void WriteUtf8StringTag(ref OtlpTagWriterState state, ReadOnlySpan<byte> utf8Value)
+    {
+        // Laid out by TryGetUtf8Buffer: each reserved length is followed by a single byte tag.
+        var stringLengthPosition = state.WritePosition - ReserveSizeForLength;
+        var anyValueLengthPosition = stringLengthPosition - 1 - ReserveSizeForLength;
+
+        state.WritePosition += utf8Value.Length;
+
+        ProtobufSerializer.WriteReservedLength(state.Buffer, stringLengthPosition, utf8Value.Length);
+        ProtobufSerializer.WriteReservedLength(state.Buffer, anyValueLengthPosition, state.WritePosition - (anyValueLengthPosition + ReserveSizeForLength));
+    }
+#endif
 
     protected override void WriteArrayTag(ref OtlpTagWriterState state, string key, ref OtlpTagWriterArrayState value)
     {
