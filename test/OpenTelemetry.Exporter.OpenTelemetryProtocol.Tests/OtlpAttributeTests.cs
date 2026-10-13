@@ -457,6 +457,33 @@ public class OtlpAttributeTests
     }
 
     [Theory]
+    [InlineData("", 10, "\U0001F600vvvvvvvv")]
+    [InlineData("vvvvvvvvv", 10, "vvvvvvvvv")]
+    public void Utf8SpanFormattableThatDoesNotFitIsTruncatedFromToString(string prefix, int tagValueMaxLength, string expected)
+    {
+        // Larger than the 1 KiB test buffer, so TryFormat fails and the value is written from its truncated string.
+        var value = prefix + "\U0001F600" + new string('v', 4096);
+        var kvp = new KeyValuePair<string, object?>("key", new Utf8Value(value));
+
+        Assert.True(TryTransformTag(kvp, out var attribute, tagValueMaxLength));
+        Assert.Equal(expected, attribute.Value.StringValue);
+    }
+
+    [Fact]
+    public void Utf8SpanFormattableThatDoesNotFitEvenTruncatedThrowsSoTheBufferIsGrown()
+    {
+        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState
+        {
+            Buffer = new byte[64],
+            WritePosition = 0,
+        };
+
+        var tag = new KeyValuePair<string, object?>("key", new Utf8Value(new string('v', 1024)));
+
+        Assert.Throws<ArgumentException>(() => ProtobufOtlpTagWriter.Instance.TryWriteTag(ref state, tag, tagValueMaxLength: 512));
+    }
+
+    [Theory]
     [InlineData(typeof(InvalidOperationException))]
     [InlineData(typeof(ArgumentException))]
     [InlineData(typeof(IndexOutOfRangeException))]
