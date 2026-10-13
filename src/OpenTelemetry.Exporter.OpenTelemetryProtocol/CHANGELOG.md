@@ -199,6 +199,13 @@ Released 2026-Oct-15
   to the default `HttpClient` instead of failing the export.
   ([#7916](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7916))
 
+* Attribute values implementing `IUtf8SpanFormattable` (.NET 8+) that are not
+  already handled as a built-in type are now formatted directly into the
+  export buffer with `TryFormat` and exported as string attributes, instead of
+  through `ToString()`. This avoids allocating a string for each value. If
+  `TryFormat` throws, only that attribute is dropped.
+  ([#NNNN](https://github.com/open-telemetry/opentelemetry-dotnet/pull/NNNN))
+
 ## 1.19.1
 
 Released 2026-Sep-21
