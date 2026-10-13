@@ -86,13 +86,12 @@ public class ZipkinTagWriterTests
     }
 
 #if NET
-    // TryFormat never succeeds, so the value can only be written through ToString.
     private sealed class Utf8ValueWithToString(string value) : IUtf8SpanFormattable
     {
         public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
         {
             bytesWritten = 0;
-            return false;
+            return true;
         }
 
         public override string ToString() => value;
