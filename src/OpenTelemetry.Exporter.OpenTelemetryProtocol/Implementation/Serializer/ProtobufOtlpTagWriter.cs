@@ -126,7 +126,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
     }
 
 #if NET
-    protected override bool TryGetUtf8Buffer(ref OtlpTagWriterState state, string key, out Span<byte> buffer)
+    protected override bool TryStartUtf8StringTag(ref OtlpTagWriterState state, string key, out Span<byte> buffer)
     {
         state.WritePosition = ProtobufSerializer.WriteStringWithTag(state.Buffer, state.WritePosition, ProtobufOtlpCommonFieldNumberConstants.KeyValue_Key, key);
 
@@ -140,7 +140,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         return true;
     }
 
-    protected override void WriteUtf8StringTag(ref OtlpTagWriterState state, ReadOnlySpan<byte> utf8Value)
+    protected override void EndUtf8StringTag(ref OtlpTagWriterState state, ReadOnlySpan<byte> utf8Value)
     {
         // Laid out by TryGetUtf8Buffer: each reserved length is followed by a single byte tag.
         var stringLengthPosition = state.WritePosition - ReserveSizeForLength;
