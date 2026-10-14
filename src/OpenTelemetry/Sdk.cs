@@ -21,11 +21,7 @@ public static class Sdk
 {
     static Sdk()
     {
-        Propagators.DefaultTextMapPropagator = new CompositeTextMapPropagator(
-        [
-            new TraceContextPropagator(),
-            new BaggagePropagator(),
-        ]);
+        Propagators.DefaultTextMapPropagator = CreateDefaultTextMapPropagator();
 
         Activity.DefaultIdFormat = ActivityIdFormat.W3C;
         Activity.ForceDefaultIdFormat = true;
@@ -49,6 +45,23 @@ public static class Sdk
     public static bool SuppressInstrumentation => SuppressInstrumentationScope.IsSuppressed;
 
     internal static string InformationalVersion { get; }
+
+    /// <summary>
+    /// Creates the SDK's default <see cref="TextMapPropagator"/>, which propagates
+    /// W3C Trace Context and Baggage.
+    /// </summary>
+    /// <remarks>
+    /// This method creates a new instance without changing the current global
+    /// propagator. Use <see cref="SetDefaultTextMapPropagator"/> to set it as the
+    /// global default.
+    /// </remarks>
+    /// <returns>A new instance of the SDK's default <see cref="TextMapPropagator"/>.</returns>
+    public static TextMapPropagator CreateDefaultTextMapPropagator()
+        => new CompositeTextMapPropagator(
+        [
+            new TraceContextPropagator(),
+            new BaggagePropagator(),
+        ]);
 
     /// <summary>
     /// Sets the Default TextMapPropagator.
