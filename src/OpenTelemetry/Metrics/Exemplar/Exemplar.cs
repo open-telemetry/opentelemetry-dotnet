@@ -135,6 +135,15 @@ public struct Exemplar
 
     internal void Collect(ref Exemplar destination, bool reset)
     {
+        // Most of the exemplars of a reservoir are usually empty, so avoid acquiring and releasing
+        // the lock for them. If a measurement is being offered to the exemplar concurrently with
+        // this check then it is not part of this collection, and is collected with the next one.
+        if (!this.IsUpdated())
+        {
+            destination.Reset();
+            return;
+        }
+
         if (Interlocked.Exchange(ref this.isCriticalSectionOccupied, 1) != 0)
         {
             this.AcquireLockRare();

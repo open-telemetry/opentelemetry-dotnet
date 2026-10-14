@@ -59,6 +59,8 @@ jobs:
       PROJECT_NAME: ${{ inputs.project-name }}
       PROJECT_BUILD_COMMANDS: ${{ inputs.project-build-commands }}
       TARGET_FRAMEWORK: ${{ matrix.version }}
+      # HACK Workaround for https://github.com/dotnet/runtime/issues/131636 - GCgen0size is a hex value: 4000000 = 64 MiB.
+      DOTNET_GCgen0size: ${{ matrix.os == 'windows-11-arm' && '4000000' || '' }}
 
     steps:
     - name: Checkout code
@@ -114,7 +116,7 @@ jobs:
 
     - name: Upload hang dumps and test platform logs
       if: ${{ failure() || cancelled() }}
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         if-no-files-found: ignore
         name: hang-dumps-${{ inputs.code-cov-prefix }}-${{ inputs.code-cov-name }}-${{ matrix.os }}-${{ matrix.version }}-attempt-${{ github.run_attempt }}

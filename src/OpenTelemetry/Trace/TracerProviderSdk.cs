@@ -29,6 +29,7 @@ internal sealed class TracerProviderSdk : TracerProvider
     private readonly ActivityListener listener;
     private readonly Action<Activity> getRequestedDataAction;
     private readonly bool supportLegacyActivity;
+    private readonly Func<ActivitySource, bool>? shouldListenTo;
 
     private IDisposable? selfDiagnosticsRegistration;
 
@@ -217,38 +218,8 @@ internal sealed class TracerProviderSdk : TracerProvider
             }
             else
             {
-                activityListener.ActivityStarted = activity =>
-                {
-                    OpenTelemetrySdkEventSource.Log.ActivityStarted(activity);
-
-                    if (activity.IsAllDataRequested && SuppressInstrumentationScope.IncrementIfTriggered() == 0)
-                    {
-                        this.Processor?.OnStart(activity);
-                    }
-                };
-
-                activityListener.ActivityStopped = activity =>
-                {
-                    OpenTelemetrySdkEventSource.Log.ActivityStopped(activity);
-
-                    if (!activity.IsAllDataRequested)
-                    {
-                        return;
-                    }
-
-                    // Spec says IsRecording must be false once span ends.
-                    // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#isrecording
-                    // However, Activity has slightly different semantic
-                    // than Span and we don't have strong reason to do this
-                    // now, as Activity anyway allows read/write always.
-                    // Intentionally commenting the following line.
-                    // activity.IsAllDataRequested = false;
-
-                    if (SuppressInstrumentationScope.DecrementIfTriggered() == 0)
-                    {
-                        this.Processor?.OnEnd(activity);
-                    }
-                };
+                activityListener.ActivityStarted = this.OnActivityStarted;
+                activityListener.ActivityStopped = this.OnActivityStopped;
             }
 
             if (this.Sampler is AlwaysOnSampler)
@@ -274,6 +245,7 @@ internal sealed class TracerProviderSdk : TracerProvider
             if (CreateFilterPredicate(state.Sources, this.supportLegacyActivity) is { } filter)
             {
                 activityListener.ShouldListenTo = filter;
+                this.shouldListenTo = filter;
             }
 
             ActivitySource.AddActivityListener(activityListener);
@@ -294,6 +266,39 @@ internal sealed class TracerProviderSdk : TracerProvider
     internal BaseProcessor<Activity>? Processor { get; private set; }
 
     internal Sampler Sampler { get; }
+
+    internal void OnActivityStarted(Activity activity)
+    {
+        OpenTelemetrySdkEventSource.Log.ActivityStarted(activity);
+
+        if (activity.IsAllDataRequested && SuppressInstrumentationScope.IncrementIfTriggered() == 0)
+        {
+            this.Processor?.OnStart(activity);
+        }
+    }
+
+    internal void OnActivityStopped(Activity activity)
+    {
+        OpenTelemetrySdkEventSource.Log.ActivityStopped(activity);
+
+        if (!activity.IsAllDataRequested)
+        {
+            return;
+        }
+
+        // Spec says IsRecording must be false once span ends.
+        // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md#isrecording
+        // However, Activity has slightly different semantic
+        // than Span and we don't have strong reason to do this
+        // now, as Activity anyway allows read/write always.
+        // Intentionally commenting the following line.
+        // activity.IsAllDataRequested = false;
+
+        if (SuppressInstrumentationScope.DecrementIfTriggered() == 0)
+        {
+            this.Processor?.OnEnd(activity);
+        }
+    }
 
     internal TracerProviderSdk AddProcessor(BaseProcessor<Activity> processor)
     {
