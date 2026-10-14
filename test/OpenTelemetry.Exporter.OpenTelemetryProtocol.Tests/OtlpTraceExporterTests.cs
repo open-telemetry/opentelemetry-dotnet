@@ -1566,8 +1566,8 @@ public sealed class OtlpTraceExporterTests : IDisposable
 
         public override string ToString() => value;
     }
-
 #endif
+
     private sealed class ToStringThrows
     {
         public override string ToString() => throw new InvalidOperationException("Nope.");
