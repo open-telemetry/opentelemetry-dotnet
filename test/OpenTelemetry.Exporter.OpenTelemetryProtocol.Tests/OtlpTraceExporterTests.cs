@@ -761,6 +761,40 @@ public sealed class OtlpTraceExporterTests : IDisposable
         var attribute = Assert.Single(otlpSpan.Attributes);
         Assert.Equal(value, attribute.Value.StringValue);
     }
+
+    [Fact]
+    public void Utf8SpanFormattableAttributeOverTheLengthLimitDoesNotGrowTheExportBuffer()
+    {
+        using var activitySource = new ActivitySource(nameof(this.Utf8SpanFormattableAttributeOverTheLengthLimitDoesNotGrowTheExportBuffer));
+        using var activity = activitySource.StartActivity("root");
+
+        Assert.NotNull(activity);
+        activity.SetTag("large", new Utf8Value(new string('v', 1024 * 1024)));
+        activity.SetTag("small", "value");
+
+        var sdkOptions = new SdkLimitOptions { AttributeValueLengthLimit = 10 };
+        var batch = new Batch<Activity>([activity], 1);
+
+        var buffer = ProtobufSerializer.RentBuffer(4096);
+        var initialBufferLength = buffer.Length;
+        try
+        {
+            var writePosition = ProtobufOtlpTraceSerializer.WriteTraceData(ref buffer, 0, sdkOptions, ResourceBuilder.CreateEmpty().Build(), batch);
+
+            Assert.Equal(initialBufferLength, buffer.Length);
+
+            using var stream = new MemoryStream(buffer, 0, writePosition);
+            var tracesData = OtlpTrace.TracesData.Parser.ParseFrom(stream);
+            var otlpSpan = Assert.Single(Assert.Single(Assert.Single(tracesData.ResourceSpans).ScopeSpans).Spans);
+            var attribute = Assert.Single(otlpSpan.Attributes);
+            Assert.Equal("small", attribute.Key);
+            Assert.Equal(1u, otlpSpan.DroppedAttributesCount);
+        }
+        finally
+        {
+            ProtobufSerializer.ReturnBuffer(buffer);
+        }
+    }
 #endif
 
     [Fact]
