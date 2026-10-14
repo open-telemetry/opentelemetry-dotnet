@@ -26,7 +26,7 @@ jobs:
           - version: net10.0
             runner: macos-26
           - version: net11.0
-            runner: macos-26
+            runner: xcode-27
 
     steps:
     - name: Checkout code
