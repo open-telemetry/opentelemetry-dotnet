@@ -363,6 +363,13 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     internal void RequestDiscardedDueToSizeLimit(string signalType, long itemCount, int requestSizeBytes, int maxRequestSizeBytes)
         => this.WriteEvent(41, signalType, itemCount, requestSizeBytes, maxRequestSizeBytes);
 
+    [Event(
+        42,
+        Message = "Attribute '{0}' was dropped because its value is longer than the attribute value length limit of {1}.",
+        Level = EventLevel.Warning)]
+    internal void AttributeValueTooLong(string key, int tagValueMaxLength)
+        => this.WriteEvent(42, key, tagValueMaxLength);
+
     private static string RedactEndpointUri(Uri endpoint)
         => endpoint.GetComponents(UriComponents.SchemeAndServer | UriComponents.Path, UriFormat.UriEscaped);
 }
