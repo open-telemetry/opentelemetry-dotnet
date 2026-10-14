@@ -49,3 +49,9 @@ Notes](../../RELEASENOTES.md).
   sources that override the file, and an explicit path that differs from
   `OTEL_CONFIG_FILE`.
   ([#7873](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7873))
+
+* Dropped suport for .NET 8.0 and 9.0.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Add support for .NET 11.0.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))

@@ -49,6 +49,12 @@ Notes](../../RELEASENOTES.md).
   `OTEL_ATTRIBUTE_COUNT_LIMIT` are affected.
   ([#7902](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7902))
 
+* **Breaking Change** Dropped suport for `net8.0` and `net9.0`.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Add support for .NET 11.0.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
 ## 1.19.1
 
 Released 2026-Sep-21
