@@ -227,7 +227,7 @@ public class BaggagePropagator : TextMapPropagator
 #if NET
     private static string BuildHeader(Baggage baggage)
     {
-        // Items are written into one pooled buffer, so the header is copied only once, into the returned string.
+        // Items are written straight into one pooled buffer, so the header is copied only once, into the returned string.
         var buffer = ArrayPool<char>.Shared.Rent(MaxBaggageLength);
         var length = 0;
 
@@ -264,7 +264,7 @@ public class BaggagePropagator : TextMapPropagator
                 break;
             }
 
-            if (!TryAppendItem(buffer, ref length, item.Key, EncodeValue(item.Value)))
+            if (!TryAppendItem(buffer, ref length, item.Key, item.Value))
             {
                 // Drop anything partially written past the committed length before the buffer is reused.
                 buffer.Slice(length).Clear();
@@ -278,10 +278,10 @@ public class BaggagePropagator : TextMapPropagator
     }
 
     // Appends "key=encodedValue", preceded by a ',' when the header is not empty. Returns false, leaving length unchanged, if the item does not fit.
-    private static bool TryAppendItem(Span<char> buffer, ref int length, ReadOnlySpan<char> key, ReadOnlySpan<char> encodedValue)
+    private static bool TryAppendItem(Span<char> buffer, ref int length, ReadOnlySpan<char> key, ReadOnlySpan<char> value)
     {
         var position = length > 0 ? length + 1 : length;
-        if (position + key.Length + 1 + encodedValue.Length > buffer.Length)
+        if (position + key.Length + 1 > buffer.Length)
         {
             return false;
         }
@@ -294,9 +294,14 @@ public class BaggagePropagator : TextMapPropagator
         key.CopyTo(buffer.Slice(position));
         position += key.Length;
         buffer[position++] = '=';
-        encodedValue.CopyTo(buffer.Slice(position));
 
-        length = position + encodedValue.Length;
+        var valueLength = TryWriteEncodedValue(value, buffer.Slice(position));
+        if (valueLength < 0)
+        {
+            return false;
+        }
+
+        length = position + valueLength;
         return true;
     }
 #else
@@ -326,25 +331,21 @@ public class BaggagePropagator : TextMapPropagator
                 break;
             }
 
-            var encodedValue = EncodeValue(item.Value);
             var previousLength = header.Length;
-            var itemLength = item.Key.Length + encodedValue.Length + 1;
-            if (previousLength > 0)
-            {
-                itemLength++;
-            }
-
-            if (previousLength + itemLength > MaxBaggageLength)
-            {
-                break;
-            }
-
             if (previousLength > 0)
             {
                 header.Append(',');
             }
 
-            header.Append(item.Key).Append('=').Append(encodedValue);
+            header.Append(item.Key).Append('=');
+            AppendEncodedValue(header, item.Value);
+
+            if (header.Length > MaxBaggageLength)
+            {
+                header.Length = previousLength;
+                break;
+            }
+
             itemCount++;
         }
 
@@ -367,30 +368,72 @@ public class BaggagePropagator : TextMapPropagator
         return result;
     }
 
-    private static string EncodeValue(string value)
-    {
 #if NET
-        // Keep this check separate from the encoding so values that need no escaping stay cheap.
-        return value.AsSpan().ContainsAnyExcept(ValidValueSearcher) ? EncodeEscapedValue(value) : value;
-#else
-        var allValid = true;
-        foreach (var c in value)
+    // Writes the percent-encoded form of value into destination. Returns the number of chars written, or -1 if it does not fit.
+    private static int TryWriteEncodedValue(ReadOnlySpan<char> value, Span<char> destination)
+    {
+        var written = 0;
+        Span<byte> utf8Buffer = stackalloc byte[4];
+
+        while (!value.IsEmpty)
         {
-            if (c >= 0x80 || !ValidValueLookup[c])
+            var escapeIndex = value.IndexOfAnyExcept(ValidValueSearcher);
+            if (escapeIndex != 0)
             {
-                allValid = false;
-                break;
+                // Copy the run of characters that need no escaping in one step.
+                var validLength = escapeIndex < 0 ? value.Length : escapeIndex;
+                if (written + validLength > destination.Length)
+                {
+                    return -1;
+                }
+
+                value.Slice(0, validLength).CopyTo(destination.Slice(written));
+                written += validLength;
+                value = value.Slice(validLength);
+                continue;
             }
+
+            if (value[0] < 0x80)
+            {
+                // An ASCII character is a single UTF-8 byte, so it can be escaped without decoding a rune.
+                if (written + 3 > destination.Length)
+                {
+                    return -1;
+                }
+
+                destination[written] = '%';
+                destination[written + 1] = Hex[value[0] >> 4];
+                destination[written + 2] = Hex[value[0] & 0xF];
+                written += 3;
+                value = value.Slice(1);
+                continue;
+            }
+
+            // DecodeFromUtf16 returns the replacement rune for invalid UTF-16 (such as a lone surrogate).
+            Rune.DecodeFromUtf16(value, out var rune, out var charsConsumed);
+            var byteCount = rune.EncodeToUtf8(utf8Buffer);
+            if (written + (byteCount * 3) > destination.Length)
+            {
+                return -1;
+            }
+
+            foreach (var b in utf8Buffer.Slice(0, byteCount))
+            {
+                destination[written] = '%';
+                destination[written + 1] = Hex[b >> 4];
+                destination[written + 2] = Hex[b & 0xF];
+                written += 3;
+            }
+
+            value = value.Slice(charsConsumed);
         }
 
-        if (allValid)
-        {
-            return value;
-        }
-
-        var sb = new StringBuilder(value.Length);
-
-        // Runs of characters that need no escaping are appended in one step rather than one character at a time.
+        return written;
+    }
+#else
+    // Appends the percent-encoded form of value to sb. Runs of characters that need no escaping are appended in one step.
+    private static void AppendEncodedValue(StringBuilder sb, string value)
+    {
         var runStart = 0;
         for (var i = 0; i < value.Length; i++)
         {
@@ -420,11 +463,8 @@ public class BaggagePropagator : TextMapPropagator
         }
 
         sb.Append(value, runStart, value.Length - runStart);
-        return sb.ToString();
-#endif
     }
 
-#if !NET
     private static void AppendPercentEncodedCodePoint(StringBuilder sb, int codePoint)
     {
         if (codePoint < 0x80)
@@ -450,84 +490,6 @@ public class BaggagePropagator : TextMapPropagator
             AppendPercentEncoded(sb, (byte)(0x80 | (codePoint & 0x3F)));
         }
     }
-#endif
-
-#if NET
-    private static string EncodeEscapedValue(string value)
-    {
-        // Every escaped character is written as at most three '%XX' escapes (a UTF-8 sequence of up to 3 bytes per UTF-16
-        // character), so a buffer of nine times the length of the value is always large enough to encode it in a single pass.
-        const int StackallocCharThreshold = 512;
-        const int MaxEncodedCharsPerChar = 9;
-
-        var maxLength = checked(value.Length * MaxEncodedCharsPerChar);
-        char[]? rentedChars = null;
-
-        Span<char> buffer = maxLength <= StackallocCharThreshold
-            ? stackalloc char[StackallocCharThreshold]
-            : (rentedChars = ArrayPool<char>.Shared.Rent(maxLength));
-
-        var written = 0;
-
-        try
-        {
-            written = WriteEncodedValue(value, buffer);
-            return new(buffer.Slice(0, written));
-        }
-        finally
-        {
-            if (rentedChars != null)
-            {
-                // Baggage values may be sensitive, so do not leave them in the shared pool.
-                buffer.Slice(0, written).Clear();
-                ArrayPool<char>.Shared.Return(rentedChars);
-            }
-        }
-    }
-
-    private static int WriteEncodedValue(ReadOnlySpan<char> value, Span<char> destination)
-    {
-        var length = destination.Length;
-        Span<byte> utf8Buffer = stackalloc byte[4];
-
-        while (!value.IsEmpty)
-        {
-            var escapeIndex = value.IndexOfAnyExcept(ValidValueSearcher);
-            if (escapeIndex < 0)
-            {
-                value.CopyTo(destination);
-                destination = destination.Slice(value.Length);
-                break;
-            }
-
-            value.Slice(0, escapeIndex).CopyTo(destination);
-            destination = destination.Slice(escapeIndex);
-            value = value.Slice(escapeIndex);
-
-            // DecodeFromUtf16 returns the replacement rune for invalid UTF-16 (such as a lone surrogate).
-            Rune.DecodeFromUtf16(value, out var rune, out var charsConsumed);
-            var byteCount = rune.EncodeToUtf8(utf8Buffer);
-
-            foreach (var b in utf8Buffer.Slice(0, byteCount))
-            {
-                destination[0] = '%';
-                destination[1] = Hex[b >> 4];
-                destination[2] = Hex[b & 0xF];
-                destination = destination.Slice(3);
-            }
-
-            value = value.Slice(charsConsumed);
-        }
-
-        return length - destination.Length;
-    }
-#endif
-
-    private static bool IsValidValueChar(char c) =>
-#if NET
-        ValidValueSearcher.Contains(c);
-#else
-        c < 0x80 && ValidValueLookup[c];
 #endif
 
 #if NET
