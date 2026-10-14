@@ -215,6 +215,97 @@ public class MeterProviderSdkTests
     }
 
     [Fact]
+    public void TransientMetricStorageIsCompactedAfterCollectTest()
+    {
+        var meterName = Utils.GetCurrentMethodName();
+        var exportedItems = new List<Metric>();
+
+        const int MaxMetricStreams = 16;
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .SetMaxMetricStreams(MaxMetricStreams)
+            .AddMeter(meterName)
+            .AddInMemoryExporter(exportedItems)
+            .Build() as MeterProviderSdk;
+
+        Assert.NotNull(meterProvider);
+
+        // Publish many instruments so the storage high-water mark grows, then
+        // dispose them all and collect.
+        using (var meter = new Meter(meterName))
+        {
+            for (var i = 0; i < MaxMetricStreams; i++)
+            {
+                meter.CreateCounter<int>($"Counter{i}").Add(1);
+            }
+        }
+
+        meterProvider.ForceFlush();
+
+        // Storage must be compacted to the live streams (none), so collection
+        // does not keep scanning the slots freed by the removed instruments.
+        var metricIndexField = typeof(MetricReader).GetField("metricIndex", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(metricIndexField);
+        Assert.Equal(-1, Assert.IsType<int>(metricIndexField.GetValue(meterProvider.Reader)));
+
+        // The reclaimed storage must still accept new instruments.
+        exportedItems.Clear();
+        using (var meter = new Meter(meterName))
+        {
+            meter.CreateCounter<int>("Counter").Add(1);
+            meterProvider.ForceFlush();
+        }
+
+        var item = Assert.Single(exportedItems);
+        Assert.Equal("Counter", item.Name);
+    }
+
+    [Fact]
+    public void LiveMetricSurvivesStorageCompactionTest()
+    {
+        var meterName = Utils.GetCurrentMethodName();
+        var exportedItems = new List<Metric>();
+
+        const int MaxMetricStreams = 16;
+        const int TransientCount = 8;
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .SetMaxMetricStreams(MaxMetricStreams)
+            .AddMeter(meterName)
+            .AddInMemoryExporter(exportedItems)
+            .Build() as MeterProviderSdk;
+
+        Assert.NotNull(meterProvider);
+
+        // The live instrument is published after the transient ones, so it
+        // occupies a high storage index that compaction must move down.
+        var transientMeter = new Meter(meterName);
+        for (var i = 0; i < TransientCount; i++)
+        {
+            transientMeter.CreateCounter<int>($"Transient{i}").Add(1);
+        }
+
+        using var liveMeter = new Meter(meterName);
+        var liveCounter = liveMeter.CreateCounter<int>("Live");
+        liveCounter.Add(1);
+
+        transientMeter.Dispose();
+        meterProvider.ForceFlush();
+
+        var metricIndexField = typeof(MetricReader).GetField("metricIndex", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(metricIndexField);
+        Assert.Equal(0, Assert.IsType<int>(metricIndexField.GetValue(meterProvider.Reader)));
+
+        // The live instrument must still be exported after it has been moved.
+        exportedItems.Clear();
+        liveCounter.Add(1);
+        meterProvider.ForceFlush();
+
+        var item = Assert.Single(exportedItems);
+        Assert.Equal("Live", item.Name);
+    }
+
+    [Fact]
     public void MetricsListenerDoesNotKeepMeterProviderAliveAfterDisposeTest()
     {
         var (listener, meterProviderReference, sourceReference) = CreateAndDisposeListener();
