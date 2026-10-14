@@ -29,7 +29,7 @@ repository. It also helps guide AI coding and review agents to make them more ef
   etc.).
 - If a single PR modifies multiple components, each affected component's
   `CHANGELOG.md` needs its own entry with the same PR link.
-- "Breaking change" entries should be prefixed with `**Breaking Change**:`.
+- "Breaking change" entries should be prefixed with `**Breaking Change**`.
 
 ## NuGet Package References
 
