@@ -267,6 +267,30 @@ internal sealed class TracerProviderSdk : TracerProvider
 
     internal Sampler Sampler { get; }
 
+    /// <summary>
+    /// Determines whether this provider is itself subscribed to the given
+    /// <see cref="ActivitySource"/> through <c>AddSource</c>.
+    /// </summary>
+    /// <param name="source">The <see cref="ActivitySource"/>.</param>
+    /// <returns><see langword="true"/> if the provider listens to the source directly.</returns>
+    internal bool IsListeningTo(ActivitySource source)
+        => this.shouldListenTo?.Invoke(source) ?? false;
+
+    internal ActivitySamplingResult OnSample(ref ActivityCreationOptions<ActivityContext> options)
+    {
+        if (Sdk.SuppressInstrumentation)
+        {
+            return ActivitySamplingResult.None;
+        }
+
+        return this.Sampler switch
+        {
+            AlwaysOnSampler => ActivitySamplingResult.AllDataAndRecorded,
+            AlwaysOffSampler => PropagateOrIgnoreData(ref options),
+            _ => ComputeActivitySamplingResult(ref options, this.Sampler),
+        };
+    }
+
     internal void OnActivityStarted(Activity activity)
     {
         OpenTelemetrySdkEventSource.Log.ActivityStarted(activity);

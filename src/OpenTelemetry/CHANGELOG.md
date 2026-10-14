@@ -58,6 +58,13 @@ Notes](../../RELEASENOTES.md).
   underlying `MeterListener`).
   ([#7924](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7924))
 
+* Added support for enabling `ActivitySource`s from configuration using the
+  `Microsoft.Extensions.Diagnostics` tracing APIs introduced in .NET 11 (for
+  example, `services.AddTracing(b => b.AddConfiguration(section))`).
+  Activities from sources enabled this way are processed by the OpenTelemetry
+  `TracerProvider` registered through `AddOpenTelemetry().WithTracing()`.
+  ([#TODO](https://github.com/open-telemetry/opentelemetry-dotnet/pull/TODO))
+
 ## 1.19.1
 
 Released 2026-Sep-21

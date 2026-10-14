@@ -126,6 +126,10 @@ public static class OpenTelemetryBuilderSdkExtensions
 #pragma warning disable CA1062 // Validate arguments of public methods - needed for netstandard2.1
         var tracerProviderBuilder = new TracerProviderBuilderBase(builder.Services);
 
+#if NET11_0_OR_GREATER
+        OpenTelemetryTracingListener.RegisterTracingListener(builder.Services);
+#endif
+
         configure(tracerProviderBuilder);
 #pragma warning restore CA1062 // Validate arguments of public methods - needed for netstandard2.1
 
