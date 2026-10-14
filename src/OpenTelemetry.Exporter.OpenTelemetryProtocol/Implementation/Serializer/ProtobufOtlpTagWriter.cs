@@ -151,6 +151,9 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         ProtobufSerializer.WriteReservedLength(state.Buffer, stringLengthPosition, utf8Value.Length);
         ProtobufSerializer.WriteReservedLength(state.Buffer, anyValueLengthPosition, state.WritePosition - (anyValueLengthPosition + ReserveSizeForLength));
     }
+
+    protected override void OnUtf8StringTagTooLong(string tagKey, int tagValueMaxLength)
+        => OpenTelemetryProtocolExporterEventSource.Log.AttributeValueTooLong(tagKey, tagValueMaxLength);
 #endif
 
     protected override void WriteArrayTag(ref OtlpTagWriterState state, string key, ref OtlpTagWriterArrayState value)
