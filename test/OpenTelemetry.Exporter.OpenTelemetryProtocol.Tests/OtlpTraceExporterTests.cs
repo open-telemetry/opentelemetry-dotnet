@@ -761,8 +761,8 @@ public sealed class OtlpTraceExporterTests : IDisposable
         var attribute = Assert.Single(otlpSpan.Attributes);
         Assert.Equal(value, attribute.Value.StringValue);
     }
-
 #endif
+
     [Fact]
     public void SpanAttributeValueLengthLimitOverridesAttributeValueLengthLimit()
     {
