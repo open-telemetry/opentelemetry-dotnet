@@ -239,7 +239,7 @@ internal static class TraceStateUtils
         // Value is opaque string up to 256 characters printable ASCII RFC0020 characters (i.e., the range
         // 0x20 to 0x7E) except comma , and =. The last character must not be a space.
 
-        if (value.Length == 0 || value.Length > ValueMaxSize)
+        if (value.Length is 0 or > ValueMaxSize)
         {
             return false;
         }
