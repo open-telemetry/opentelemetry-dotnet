@@ -442,9 +442,6 @@ public class OtlpAttributeTests
 
     [Theory]
     [InlineData(0, "")]
-    [InlineData(1, "a")]
-    [InlineData(2, "a\u00E9")]
-    [InlineData(3, "a\u00E9\u20AC")]
     [InlineData(4, "a\u00E9\u20AC")]
     [InlineData(5, "a\u00E9\u20AC\U0001F600")]
     [InlineData(100, "a\u00E9\u20AC\U0001F600b")]
@@ -457,8 +454,19 @@ public class OtlpAttributeTests
     }
 
     [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    public void Utf8SpanFormattableLongerThanThreeBytesPerCharOfTheLimitIsDropped(int tagValueMaxLength)
+    {
+        var kvp = new KeyValuePair<string, object?>("key", new Utf8Value("a\u00E9\u20AC\U0001F600b"));
+
+        Assert.False(TryTransformTag(kvp, out _, tagValueMaxLength));
+    }
+
+    [Theory]
     [InlineData(null)]
-    [InlineData(10)]
+    [InlineData(100)]
     public void Utf8SpanFormattableThatDoesNotFitThrowsSoTheBufferIsGrown(int? tagValueMaxLength)
     {
         var state = new ProtobufOtlpTagWriter.OtlpTagWriterState

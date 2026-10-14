@@ -283,7 +283,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
 #if NET
     // Writers that don't override this get the value's ToString() instead.
-    // Overriding this requires overriding EndUtf8StringTag too.
+    // Overriding this requires overriding EndUtf8StringTag and OnUtf8StringTagTooLong too.
     protected virtual bool TryStartUtf8StringTag(ref TTagState state, string key, out Span<byte> buffer)
     {
         buffer = default;
@@ -291,6 +291,9 @@ internal abstract class TagWriter<TTagState, TArrayState>
     }
 
     protected virtual void EndUtf8StringTag(ref TTagState state, ReadOnlySpan<byte> utf8Value)
+        => throw new NotSupportedException();
+
+    protected virtual void OnUtf8StringTagTooLong(string tagKey, int tagValueMaxLength)
         => throw new NotSupportedException();
 #endif
 
@@ -409,6 +412,23 @@ internal abstract class TagWriter<TTagState, TArrayState>
 #if NET
     private bool WriteUtf8SpanFormattableTag(ref TTagState state, string key, IUtf8SpanFormattable value, Span<byte> buffer, int? tagValueMaxLength)
     {
+        // A UTF-16 char is at most 3 UTF-8 bytes, so any value within the length limit fits in the capped
+        // buffer. Capping stops an oversized value from growing the export buffer until the batch is dropped.
+        const int MaxUtf8BytesPerChar = 3;
+
+        if (tagValueMaxLength == 0)
+        {
+            this.EndUtf8StringTag(ref state, default);
+            return true;
+        }
+
+        var isBufferCapped = false;
+        if (tagValueMaxLength is { } maxLength && buffer.Length >= (long)maxLength * MaxUtf8BytesPerChar)
+        {
+            buffer = buffer[..(maxLength * MaxUtf8BytesPerChar)];
+            isBufferCapped = true;
+        }
+
         bool formatted;
         int bytesWritten;
 
@@ -424,6 +444,12 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
         if (!formatted)
         {
+            if (isBufferCapped)
+            {
+                this.OnUtf8StringTagTooLong(key, tagValueMaxLength!.Value);
+                return false;
+            }
+
             throw new ArgumentOutOfRangeException(nameof(state), "The buffer is too small to hold the data being written.");
         }
 

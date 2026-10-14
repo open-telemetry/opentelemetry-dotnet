@@ -386,6 +386,13 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     internal void RetryDeadlineExceeded()
         => this.WriteEvent(43);
 
+    [Event(
+        44,
+        Message = "Attribute '{0}' was dropped because its value is longer than the attribute value length limit of {1}.",
+        Level = EventLevel.Warning)]
+    internal void AttributeValueTooLong(string key, int tagValueMaxLength)
+        => this.WriteEvent(44, key, tagValueMaxLength);
+
     private static string RedactEndpointUri(Uri endpoint)
     {
         var authority = endpoint.GetComponents(UriComponents.SchemeAndServer, UriFormat.UriEscaped);
