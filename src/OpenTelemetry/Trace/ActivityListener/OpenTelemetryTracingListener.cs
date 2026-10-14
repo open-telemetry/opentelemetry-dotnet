@@ -61,7 +61,16 @@ internal static class OpenTelemetryTracingListener
         // Resolve it here so that sources enabled through configuration are observed without the application
         // needing to resolve the factory itself (for example, when only ITelemetryHostInitializer is used).
         // Neither this nor the listener resolve the TracerProvider, so there is no dependency cycle.
-        _ = serviceProvider.GetService<ActivitySourceFactory>();
+        try
+        {
+            _ = serviceProvider.GetService<ActivitySourceFactory>();
+        }
+        catch
+        {
+            // The caller never receives the bridge if this fails, so it cannot detach the provider itself.
+            bridge.Detach(tracerProvider);
+            throw;
+        }
 
         return bridge;
     }

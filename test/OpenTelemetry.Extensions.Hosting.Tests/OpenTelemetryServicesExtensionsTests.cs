@@ -360,6 +360,28 @@ public class OpenTelemetryServicesExtensionsTests
     }
 
     [Fact]
+    public void AddOpenTelemetry_WithTracing_ActivitySourcesEnabledUsingTracingBuilderDetachesWhenFactoryFailsTest()
+    {
+        var sourceName = Utils.GetCurrentMethodName();
+
+        var services = new ServiceCollection();
+
+        services.AddTracing(builder => builder.EnableTracing(sourceName));
+        services.AddSingleton<ActivitySourceFactory>(static _ => throw new InvalidOperationException("The factory failed."));
+        services.AddOpenTelemetry().WithTracing(builder => builder.AddSource(sourceName + ".Other"));
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        Assert.Throws<InvalidOperationException>(() => serviceProvider.GetRequiredService<TracerProvider>());
+
+        var bridge = serviceProvider.GetRequiredService<OpenTelemetryTracingListener.TracerProviderBridge>();
+
+        using var source = new ActivitySource(sourceName);
+
+        Assert.Null(bridge.GetProviderFor(source));
+    }
+
+    [Fact]
     public void AddOpenTelemetry_WithTracing_ActivitySourcesEnabledUsingTracingBuilderDoesNotProcessLegacyActivitiesTest()
     {
         var sourceName = Utils.GetCurrentMethodName();
