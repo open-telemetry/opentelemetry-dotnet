@@ -343,7 +343,7 @@ public abstract partial class MetricReader
 
     private void CompactMetrics()
     {
-        // Note: Holding instrumentCreationLock keeps AddMetricWith*Views from
+        // Holding instrumentCreationLock keeps AddMetricWith*Views from
         // writing to the storage array while entries are moved. Preserving the
         // relative order keeps exported metric ordering stable.
         lock (this.instrumentCreationLock)
