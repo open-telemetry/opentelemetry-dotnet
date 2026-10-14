@@ -54,6 +54,10 @@ public class BaggagePropagator : TextMapPropagator
         'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
         'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
     ];
+
+    // ASCII lookup tables so membership checks do not scan the char arrays above for every character.
+    private static readonly bool[] ValidKeyLookup = CreateAsciiLookup(ValidKeyChars);
+    private static readonly bool[] ValidValueLookup = CreateAsciiLookup(ValidValueChars);
 #endif
 
 #if NET
@@ -299,7 +303,7 @@ public class BaggagePropagator : TextMapPropagator
         var allValid = true;
         foreach (var c in value)
         {
-            if (Array.IndexOf(ValidValueChars, c) < 0)
+            if (c >= 0x80 || !ValidValueLookup[c])
             {
                 allValid = false;
                 break;
@@ -434,7 +438,7 @@ public class BaggagePropagator : TextMapPropagator
 #if NET
         ValidValueSearcher.Contains(c);
 #else
-        Array.IndexOf(ValidValueChars, c) >= 0;
+        c < 0x80 && ValidValueLookup[c];
 #endif
 
 #if NET
@@ -449,7 +453,7 @@ public class BaggagePropagator : TextMapPropagator
 #else
         foreach (var c in key)
         {
-            if (Array.IndexOf(ValidKeyChars, c) < 0)
+            if (c >= 0x80 || !ValidKeyLookup[c])
             {
                 return false;
             }
@@ -458,6 +462,19 @@ public class BaggagePropagator : TextMapPropagator
         return true;
 #endif
     }
+
+#if !NET
+    private static bool[] CreateAsciiLookup(char[] validChars)
+    {
+        var lookup = new bool[0x80];
+        foreach (var c in validChars)
+        {
+            lookup[c] = true;
+        }
+
+        return lookup;
+    }
+#endif
 
     private static string Decode(ReadOnlySpan<char> value)
     {
