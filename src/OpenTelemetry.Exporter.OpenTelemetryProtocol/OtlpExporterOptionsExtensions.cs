@@ -176,7 +176,29 @@ internal static class OtlpExporterOptionsExtensions
                 var httpClientFactoryType = Type.GetType("System.Net.Http.IHttpClientFactory, Microsoft.Extensions.Http", throwOnError: false);
                 if (httpClientFactoryType != null)
                 {
-                    var httpClientFactory = serviceProvider.GetService(httpClientFactoryType);
+                    object? httpClientFactory;
+
+                    try
+                    {
+                        httpClientFactory = serviceProvider.GetService(httpClientFactoryType);
+                    }
+                    catch (ObjectDisposedException ex)
+                    {
+                        // Note: This factory may be invoked lazily on the first
+                        // export (see LazyExportClient) which can happen while the
+                        // IServiceProvider is being disposed, for example when a
+                        // LoggerProvider flushes its pending batch from Dispose().
+                        // IHttpClientFactory cannot be resolved once the container
+                        // has been disposed so fall back to the default HttpClient
+                        // rather than failing the export and dropping the batch.
+                        // Only resolution failures are handled here; failures to
+                        // create the named client itself are allowed to surface
+                        // so that a misconfigured pipeline is not silently bypassed.
+                        // See https://github.com/open-telemetry/opentelemetry-dotnet/issues/7915.
+                        OpenTelemetryProtocolExporterEventSource.Log.HttpClientFactoryUnavailable(httpClientName, ex);
+                        httpClientFactory = null;
+                    }
+
                     if (httpClientFactory != null)
                     {
                         var createClientMethod = httpClientFactoryType.GetMethod(
