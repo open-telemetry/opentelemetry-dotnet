@@ -32,6 +32,9 @@ internal sealed class TracerProviderSdk : TracerProvider
     private readonly Func<ActivitySource, bool>? shouldListenTo;
 
     private IDisposable? selfDiagnosticsRegistration;
+#if NET11_0_OR_GREATER
+    private OpenTelemetryTracingListener.TracerProviderBridge? tracingBridge;
+#endif
 
     internal TracerProviderSdk(
         IServiceProvider serviceProvider,
@@ -250,6 +253,11 @@ internal sealed class TracerProviderSdk : TracerProvider
 
             ActivitySource.AddActivityListener(activityListener);
             this.listener = activityListener;
+
+#if NET11_0_OR_GREATER
+            this.tracingBridge = OpenTelemetryTracingListener.Attach(serviceProvider!, this);
+#endif
+
             OpenTelemetrySdkEventSource.Log.TracerProviderSdkEvent("TracerProvider built successfully.");
         }
         catch (Exception)
@@ -378,6 +386,10 @@ internal sealed class TracerProviderSdk : TracerProvider
 
         this.Instrumentations.Clear();
 
+#if NET11_0_OR_GREATER
+        this.DetachTracingBridge();
+#endif
+
         var result = this.Processor?.Shutdown(timeoutMilliseconds);
         this.listener?.Dispose();
         return result ?? true;
@@ -395,6 +407,12 @@ internal sealed class TracerProviderSdk : TracerProvider
                 }
 
                 this.Instrumentations.Clear();
+
+#if NET11_0_OR_GREATER
+                // Stop forwarding from the listener owned by ActivitySourceFactory before
+                // the sampler and processors are disposed, as it outlives this provider.
+                this.DetachTracingBridge();
+#endif
 
                 (this.Sampler as IDisposable)?.Dispose();
 
@@ -681,8 +699,17 @@ internal sealed class TracerProviderSdk : TracerProvider
             : ActivitySamplingResult.None;
     }
 
+#if NET11_0_OR_GREATER
+    private void DetachTracingBridge()
+        => this.tracingBridge?.Detach(this);
+#endif
+
     private void DisposeBuiltState(TracerProviderBuilderSdk state)
     {
+#if NET11_0_OR_GREATER
+        this.DetachTracingBridge();
+#endif
+
         foreach (var processor in state.Processors)
         {
             CleanUp(() => processor.Shutdown(0));
