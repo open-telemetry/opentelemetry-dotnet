@@ -760,14 +760,13 @@ public sealed class OtlpTraceExporterTests : IDisposable
     }
 
     [Fact]
-    public void Utf8SpanFormattableAttributeOverTheLengthLimitDoesNotGrowTheExportBuffer()
+    public void Utf8SpanFormattableAttributeOverTheLengthLimitIsTruncatedWithoutGrowingTheExportBuffer()
     {
-        using var activitySource = new ActivitySource(nameof(this.Utf8SpanFormattableAttributeOverTheLengthLimitDoesNotGrowTheExportBuffer));
+        using var activitySource = new ActivitySource(nameof(this.Utf8SpanFormattableAttributeOverTheLengthLimitIsTruncatedWithoutGrowingTheExportBuffer));
         using var activity = activitySource.StartActivity("root");
 
         Assert.NotNull(activity);
         activity.SetTag("large", new Utf8Value(new string('v', 1024 * 1024)));
-        activity.SetTag("small", "value");
 
         var sdkOptions = new SdkLimitOptions { AttributeValueLengthLimit = 10 };
         var batch = new Batch<Activity>([activity], 1);
@@ -784,8 +783,7 @@ public sealed class OtlpTraceExporterTests : IDisposable
             var tracesData = OtlpTrace.TracesData.Parser.ParseFrom(stream);
             var otlpSpan = Assert.Single(Assert.Single(Assert.Single(tracesData.ResourceSpans).ScopeSpans).Spans);
             var attribute = Assert.Single(otlpSpan.Attributes);
-            Assert.Equal("small", attribute.Key);
-            Assert.Equal(1u, otlpSpan.DroppedAttributesCount);
+            Assert.Equal(new string('v', 10), attribute.Value.StringValue);
         }
         finally
         {
