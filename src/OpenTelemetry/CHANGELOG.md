@@ -58,6 +58,11 @@ Notes](../../RELEASENOTES.md).
   underlying `MeterListener`).
   ([#7924](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7924))
 
+* Fixed a race condition between recording a measurement and collecting a
+  histogram with delta temporality that could cause an empty data point
+  (with a count of zero) to be exported in the next collection cycle.
+  ([#7923](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7923))
+
 * Improve the assignment of values to exponential histogram buckets when the
   value is near a bucket boundary by using a pre-computed lookup table.
   ([#7911](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7911))
