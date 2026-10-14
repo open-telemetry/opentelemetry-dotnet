@@ -363,6 +363,22 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     internal void RequestDiscardedDueToSizeLimit(string signalType, long itemCount, int requestSizeBytes, int maxRequestSizeBytes)
         => this.WriteEvent(41, signalType, itemCount, requestSizeBytes, maxRequestSizeBytes);
 
+    [NonEvent]
+    internal void HttpClientFactoryUnavailable(string httpClientName, Exception ex)
+    {
+        if (Log.IsEnabled(EventLevel.Warning, EventKeywords.All))
+        {
+            this.HttpClientFactoryUnavailable(httpClientName, ex.ToInvariantString());
+        }
+    }
+
+    [Event(
+        42,
+        Message = "IHttpClientFactory could not be resolved to create the HttpClient named '{0}' because the IServiceProvider has been disposed. The default HttpClient will be used instead. Exception: {1}",
+        Level = EventLevel.Warning)]
+    internal void HttpClientFactoryUnavailable(string httpClientName, string exceptionMessage)
+        => this.WriteEvent(42, httpClientName, exceptionMessage);
+
     private static string RedactEndpointUri(Uri endpoint)
         => endpoint.GetComponents(UriComponents.SchemeAndServer | UriComponents.Path, UriFormat.UriEscaped);
 }
