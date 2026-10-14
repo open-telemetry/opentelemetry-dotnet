@@ -428,6 +428,9 @@ public class OtlpAttributeTests
 
     [Theory]
     [InlineData(0, "")]
+    [InlineData(1, "a")]
+    [InlineData(2, "a\u00E9")]
+    [InlineData(3, "a\u00E9\u20AC")]
     [InlineData(4, "a\u00E9\u20AC")]
     [InlineData(5, "a\u00E9\u20AC\U0001F600")]
     [InlineData(100, "a\u00E9\u20AC\U0001F600b")]
@@ -437,17 +440,6 @@ public class OtlpAttributeTests
 
         Assert.True(TryTransformTag(kvp, out var attribute, tagValueMaxLength));
         Assert.Equal(expected, attribute.Value.StringValue);
-    }
-
-    [Theory]
-    [InlineData(1)]
-    [InlineData(2)]
-    [InlineData(3)]
-    public void Utf8SpanFormattableLongerThanThreeBytesPerCharOfTheLimitIsDropped(int tagValueMaxLength)
-    {
-        var kvp = new KeyValuePair<string, object?>("key", new Utf8Value("a\u00E9\u20AC\U0001F600b"));
-
-        Assert.False(TryTransformTag(kvp, out _, tagValueMaxLength));
     }
 
     [Theory]
@@ -464,6 +456,13 @@ public class OtlpAttributeTests
         var tag = new KeyValuePair<string, object?>("key", new Utf8Value(new string('v', 1024)));
 
         Assert.Throws<ArgumentOutOfRangeException>(() => ProtobufOtlpTagWriter.Instance.TryWriteTag(ref state, tag, tagValueMaxLength));
+    }
+
+    [Fact]
+    public void ExceptionInUtf8ToStringFallbackIsCaught()
+    {
+        var kvp = new KeyValuePair<string, object?>("key", new Utf8ValueThatDoesNotFitAndThrowsInToString());
+        Assert.False(TryTransformTag(kvp, out _, tagValueMaxLength: 1));
     }
 
     [Theory]
@@ -514,6 +513,17 @@ public class OtlpAttributeTests
     {
         public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
             => throw (Exception)Activator.CreateInstance(exceptionType, "Nope.")!;
+    }
+
+    private sealed class Utf8ValueThatDoesNotFitAndThrowsInToString : IUtf8SpanFormattable
+    {
+        public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+        {
+            bytesWritten = 0;
+            return false;
+        }
+
+        public override string ToString() => throw new InvalidOperationException("Nope.");
     }
 
 #endif

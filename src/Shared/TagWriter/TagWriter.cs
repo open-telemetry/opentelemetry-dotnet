@@ -220,7 +220,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
 #if NET
     // Writers that don't override this get the value's ToString() instead.
-    // Overriding this requires overriding EndUtf8StringTag and OnUtf8StringTagTooLong too.
+    // Overriding this requires overriding EndUtf8StringTag too.
     protected virtual bool TryStartUtf8StringTag(ref TTagState state, string key, out Span<byte> buffer)
     {
         buffer = default;
@@ -228,9 +228,6 @@ internal abstract class TagWriter<TTagState, TArrayState>
     }
 
     protected virtual void EndUtf8StringTag(ref TTagState state, ReadOnlySpan<byte> utf8Value)
-        => throw new NotSupportedException();
-
-    protected virtual void OnUtf8StringTagTooLong(string tagKey, int tagValueMaxLength)
         => throw new NotSupportedException();
 #endif
 
@@ -349,8 +346,8 @@ internal abstract class TagWriter<TTagState, TArrayState>
 #if NET
     private bool WriteUtf8SpanFormattableTag(ref TTagState state, string key, IUtf8SpanFormattable value, Span<byte> buffer, int? tagValueMaxLength)
     {
-        // A UTF-16 char is at most 3 UTF-8 bytes, so any value within the length limit fits in the capped
-        // buffer. Capping stops an oversized value from growing the export buffer until the batch is dropped.
+        // A UTF-16 char is at most 3 UTF-8 bytes, so a value truncated to the length limit always fits in the
+        // capped buffer. An oversized value falls back to a truncated ToString() rather than growing the export buffer.
         const int MaxUtf8BytesPerChar = 3;
 
         if (tagValueMaxLength == 0)
@@ -383,8 +380,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
         {
             if (isBufferCapped)
             {
-                this.OnUtf8StringTagTooLong(key, tagValueMaxLength!.Value);
-                return false;
+                return this.WriteTruncatedToStringAsUtf8StringTag(ref state, key, value, buffer, tagValueMaxLength);
             }
 
             throw new ArgumentOutOfRangeException(nameof(state), "The buffer is too small to hold the data being written.");
@@ -417,6 +413,29 @@ internal abstract class TagWriter<TTagState, TArrayState>
 
             return value[..bytes];
         }
+    }
+
+    private bool WriteTruncatedToStringAsUtf8StringTag(ref TTagState state, string key, IUtf8SpanFormattable value, Span<byte> buffer, int? tagValueMaxLength)
+    {
+        string? stringValue;
+
+        try
+        {
+            stringValue = value.ToString();
+        }
+        catch
+        {
+            return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
+        }
+
+        if (stringValue == null)
+        {
+            return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
+        }
+
+        var bytesWritten = Encoding.UTF8.GetBytes(TruncateString(stringValue.AsSpan(), tagValueMaxLength), buffer);
+        this.EndUtf8StringTag(ref state, buffer[..bytesWritten]);
+        return true;
     }
 #endif
 
