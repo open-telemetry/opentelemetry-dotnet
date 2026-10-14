@@ -58,6 +58,11 @@ Notes](../../RELEASENOTES.md).
   underlying `MeterListener`).
   ([#7924](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7924))
 
+* Fixed a race condition between recording a measurement and collecting a
+  histogram with delta temporality that could cause an empty data point
+  (with a count of zero) to be exported in the next collection cycle.
+  ([#7923](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7923))
+
 * **Breaking Change** Dropped support for `net8.0` and `net9.0`.
   ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
 
