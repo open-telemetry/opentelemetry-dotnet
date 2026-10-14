@@ -193,18 +193,24 @@ public sealed class OtlpExporterReloadTests
         });
     }
 
-    [Fact]
-    public void NamedTraceExporterReloadsEndpointAndHeadersWithoutRecreatingProvider()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void NamedTraceExporterReloadsEndpointAndHeadersWithoutRecreatingProvider(bool changeProtocol)
     {
         var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
         {
             ["Endpoint"] = "http://localhost:4318/first",
             ["Protocol"] = "HttpProtobuf",
             ["Headers"] = "test=first",
+            ["TimeoutMilliseconds"] = "1000",
         }).Build();
         var requests = new ConcurrentQueue<(Uri Uri, string Header)>();
+        var clients = new List<HttpClient>();
         var services = new ServiceCollection();
-        services.AddHttpClient("OtlpTraceExporter").ConfigurePrimaryHttpMessageHandler(() => new RecordingHandler(requests));
+        services.AddHttpClient("OtlpTraceExporter")
+            .ConfigureHttpClient(clients.Add)
+            .ConfigurePrimaryHttpMessageHandler(() => new RecordingHandler(requests));
         services.Configure<OtlpExporterOptions>("trace", configuration);
         services.AddOpenTelemetry().WithTracing(builder => builder
             .AddSource("reload-test")
@@ -216,12 +222,23 @@ public sealed class OtlpExporterReloadTests
 
         Export();
         Assert.Contains(requests, r => r.Uri.AbsolutePath == "/first" && r.Header == "first");
+        Assert.Equal(TimeSpan.FromMilliseconds(1000), clients.Last().Timeout);
+
+        if (changeProtocol)
+        {
+            configuration["Protocol"] = "Grpc";
+        }
 
         configuration["Endpoint"] = "http://localhost:4318/second";
         configuration["Headers"] = "test=second";
+        configuration["TimeoutMilliseconds"] = "2000";
         configuration.Reload();
         Export();
         Assert.Contains(requests, r => r.Uri.AbsolutePath == "/second" && r.Header == "second");
+        Assert.Equal(TimeSpan.FromMilliseconds(2000), clients.Last().Timeout);
+        Assert.Equal(
+            changeProtocol ? "Grpc" : "HttpProtobuf",
+            serviceProvider.GetRequiredService<IOptionsMonitor<OtlpExporterOptions>>().Get("trace").Protocol.ToString());
 
         configuration["Endpoint"] = "http://localhost:4318/invalid";
         configuration["Headers"] = "invalid";

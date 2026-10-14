@@ -83,7 +83,7 @@ internal sealed class OtlpExportClientRegistration : IDisposable
         {
             // The exporter serializes gRPC framing at construction time.
             OpenTelemetryProtocolExporterEventSource.Log.ExportClientProtocolChangeIgnored();
-            return null;
+            options.Protocol = this.protocol;
         }
 
         var usesHttpClientFactory = options.TryEnableIHttpClientFactoryIntegration(this.serviceProvider, this.httpClientName);
