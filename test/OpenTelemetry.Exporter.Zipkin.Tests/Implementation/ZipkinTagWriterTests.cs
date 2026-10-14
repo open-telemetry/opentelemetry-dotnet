@@ -67,8 +67,8 @@ public class ZipkinTagWriterTests
         using var document = JsonDocument.Parse(json);
         Assert.Equal("value", document.RootElement.GetProperty("key").GetString());
     }
-
 #endif
+
     private static string WriteTag(string key, object? value)
     {
         using var stream = new MemoryStream();
