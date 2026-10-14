@@ -481,8 +481,8 @@ public class OtlpAttributeTests
         var kvp = new KeyValuePair<string, object?>("key", new Utf8ValueThatThrows(exceptionType));
         Assert.False(TryTransformTag(kvp, out _));
     }
-
 #endif
+
     private static bool TryTransformTag(KeyValuePair<string, object?> tag, [NotNullWhen(true)] out OtlpCommon.KeyValue? attribute, int? tagValueMaxLength = null)
     {
         var otlpTagWriterState = new ProtobufOtlpTagWriter.OtlpTagWriterState
