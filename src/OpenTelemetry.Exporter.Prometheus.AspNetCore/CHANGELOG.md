@@ -14,7 +14,7 @@ Notes](../../RELEASENOTES.md).
   the background.
   ([#7856](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7856))
 
-* **Breaking Change** Dropped suport for `net8.0` and `net9.0`.
+* **Breaking Change** Dropped support for `net8.0` and `net9.0`.
   ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
 
 * Add support for .NET 11.0.

@@ -50,7 +50,7 @@ Notes](../../RELEASENOTES.md).
   `OTEL_CONFIG_FILE`.
   ([#7873](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7873))
 
-* Dropped suport for .NET 8.0 and 9.0.
+* Dropped support for .NET 8.0 and 9.0.
   ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
 
 * Add support for .NET 11.0.

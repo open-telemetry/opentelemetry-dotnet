@@ -18,7 +18,7 @@ Notes](../../RELEASENOTES.md).
   no longer called.
   ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
 
-* **Breaking Change** Dropped suport for `net8.0` and `net9.0`.
+* **Breaking Change** Dropped support for `net8.0` and `net9.0`.
   ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
 
 * Update `System.Diagnostics.DiagnosticSource` dependency to `11.0.0-rc.2.26504.105`
