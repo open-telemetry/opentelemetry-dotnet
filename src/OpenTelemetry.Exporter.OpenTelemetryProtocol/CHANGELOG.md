@@ -205,8 +205,8 @@ Released 2026-Oct-15
   through `ToString()`. This avoids allocating a string for each value. If
   `TryFormat` throws, only that attribute is dropped. When an attribute value
   length limit is set, a value is formatted into at most three bytes per
-  allowed character; a value that does not fit is dropped rather than
-  truncated.
+  allowed character; a value that does not fit falls back to a truncated
+  `ToString()` instead of growing the export buffer.
   ([#7929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7929))
 
 ## 1.19.1
