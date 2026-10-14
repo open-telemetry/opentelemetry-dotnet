@@ -60,6 +60,7 @@ Notes](../../RELEASENOTES.md).
 
 * Added `Sdk.CreateDefaultTextMapPropagator` to create a new instance of the
   SDK default propagator for W3C Trace Context and Baggage.
+  ([#7930](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7930))
 
 ## 1.19.1
 
