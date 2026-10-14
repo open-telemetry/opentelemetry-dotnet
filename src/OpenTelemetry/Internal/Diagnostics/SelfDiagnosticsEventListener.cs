@@ -236,7 +236,8 @@ internal sealed class SelfDiagnosticsEventListener : EventListener
 
         bytes[pos++] = (byte)'.';
 
-        num = (int)(Math.Round(datetime.TimeOfDay.TotalMilliseconds * 10000) % 10000000);
+        // The fraction of the second in ticks, which are 100 nanoseconds, so there are seven digits
+        num = (int)(datetime.TimeOfDay.Ticks % TimeSpan.TicksPerSecond);
         bytes[pos++] = (byte)('0' + ((num / 1000000) % 10));
         bytes[pos++] = (byte)('0' + ((num / 100000) % 10));
         bytes[pos++] = (byte)('0' + ((num / 10000) % 10));
