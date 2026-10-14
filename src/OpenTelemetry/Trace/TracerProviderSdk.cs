@@ -32,7 +32,7 @@ internal sealed class TracerProviderSdk : TracerProvider
     private readonly Func<ActivitySource, bool>? shouldListenTo;
 
     private IDisposable? selfDiagnosticsRegistration;
-#if NET11_0_OR_GREATER
+#if !NET10_0
     private OpenTelemetryTracingListener.TracerProviderBridge? tracingBridge;
 #endif
 
@@ -254,7 +254,7 @@ internal sealed class TracerProviderSdk : TracerProvider
             ActivitySource.AddActivityListener(activityListener);
             this.listener = activityListener;
 
-#if NET11_0_OR_GREATER
+#if !NET10_0
             this.tracingBridge = OpenTelemetryTracingListener.Attach(serviceProvider!, this);
 #endif
 

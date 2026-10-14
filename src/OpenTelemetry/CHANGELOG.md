@@ -69,6 +69,7 @@ Notes](../../RELEASENOTES.md).
   example, `services.AddTracing(b => b.AddConfiguration(section))`).
   Activities from sources enabled this way are processed by the OpenTelemetry
   `TracerProvider` registered through `AddOpenTelemetry().WithTracing()`.
+  Not supported when targeting `net10.0`.
   ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
 
 ## 1.19.1
