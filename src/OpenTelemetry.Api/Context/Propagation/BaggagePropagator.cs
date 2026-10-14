@@ -136,70 +136,15 @@ public class BaggagePropagator : TextMapPropagator
             return;
         }
 
-        using var e = context.Baggage.GetEnumerator();
-
-        if (e.MoveNext())
+        if (context.Baggage.Count == 0)
         {
-            var itemCount = 0;
+            return;
+        }
 
-            // Pre-size the builder to avoid repeated internal buffer growth. This
-            // value is a rough estimate (16 chars/item covers most "key=value" pairs),
-            // clamped to the maximum number of items that can be serialized.
-            var estimatedItemCount = Math.Min(context.Baggage.Count, MaxBaggageItems);
-            var estimatedCapacity = Math.Min(MaxBaggageLength, estimatedItemCount * 16);
-            var baggage = new StringBuilder(estimatedCapacity);
-
-            do
-            {
-                var item = e.Current;
-                if (item.Value == null)
-                {
-                    continue;
-                }
-
-                if (!IsValidKey(item.Key))
-                {
-                    continue;
-                }
-
-                var encodedKey = item.Key;
-
-                // Encoding never shortens a value, so a value this long cannot fit once the key and '=' are added.
-                if (item.Value.Length >= MaxBaggageLength)
-                {
-                    break;
-                }
-
-                var encodedValue = EncodeValue(item.Value);
-                var baggageItemLength = encodedKey.Length + encodedValue.Length + 1;
-
-                if (baggage.Length > 0)
-                {
-                    baggageItemLength++;
-                }
-
-                if (baggage.Length + baggageItemLength > MaxBaggageLength)
-                {
-                    break;
-                }
-
-                if (baggage.Length > 0)
-                {
-                    baggage.Append(',');
-                }
-
-                baggage.Append(encodedKey)
-                       .Append('=')
-                       .Append(encodedValue);
-
-                itemCount++;
-            }
-            while (itemCount < MaxBaggageItems && e.MoveNext());
-
-            if (baggage.Length > 0)
-            {
-                setter(carrier, BaggageHeaderName, baggage.ToString());
-            }
+        var header = BuildHeader(context.Baggage);
+        if (header.Length > 0)
+        {
+            setter(carrier, BaggageHeaderName, header);
         }
     }
 
@@ -278,6 +223,134 @@ public class BaggagePropagator : TextMapPropagator
         baggage = baggageDictionary;
         return baggageDictionary != null;
     }
+
+#if NET
+    private static string BuildHeader(Baggage baggage)
+    {
+        // Items are written into one pooled buffer, so the header is copied only once, into the returned string.
+        var buffer = ArrayPool<char>.Shared.Rent(MaxBaggageLength);
+        var length = 0;
+
+        try
+        {
+            length = WriteBaggageItems(baggage, buffer.AsSpan(0, MaxBaggageLength));
+            return new string(buffer, 0, length);
+        }
+        finally
+        {
+            // Baggage values may be sensitive, so do not leave them in the shared pool.
+            buffer.AsSpan(0, length).Clear();
+            ArrayPool<char>.Shared.Return(buffer);
+        }
+    }
+
+    private static int WriteBaggageItems(Baggage baggage, Span<char> buffer)
+    {
+        var length = 0;
+        var itemCount = 0;
+
+        using var e = baggage.GetEnumerator();
+        while (itemCount < MaxBaggageItems && e.MoveNext())
+        {
+            var item = e.Current;
+            if (item.Value == null || !IsValidKey(item.Key))
+            {
+                continue;
+            }
+
+            // Encoding never shortens a value, so a value this long cannot fit once the key and '=' are added.
+            if (item.Value.Length >= MaxBaggageLength)
+            {
+                break;
+            }
+
+            if (!TryAppendItem(buffer, ref length, item.Key, EncodeValue(item.Value)))
+            {
+                // Drop anything partially written past the committed length before the buffer is reused.
+                buffer.Slice(length).Clear();
+                break;
+            }
+
+            itemCount++;
+        }
+
+        return length;
+    }
+
+    // Appends "key=encodedValue", preceded by a ',' when the header is not empty. Returns false, leaving length unchanged, if the item does not fit.
+    private static bool TryAppendItem(Span<char> buffer, ref int length, ReadOnlySpan<char> key, ReadOnlySpan<char> encodedValue)
+    {
+        var position = length > 0 ? length + 1 : length;
+        if (position + key.Length + 1 + encodedValue.Length > buffer.Length)
+        {
+            return false;
+        }
+
+        if (length > 0)
+        {
+            buffer[length] = ',';
+        }
+
+        key.CopyTo(buffer.Slice(position));
+        position += key.Length;
+        buffer[position++] = '=';
+        encodedValue.CopyTo(buffer.Slice(position));
+
+        length = position + encodedValue.Length;
+        return true;
+    }
+#else
+    private static string BuildHeader(Baggage baggage)
+    {
+        // Pre-size the builder to avoid repeated internal buffer growth. This
+        // value is a rough estimate (16 chars/item covers most "key=value" pairs),
+        // clamped to the maximum number of items that can be serialized.
+        var estimatedItemCount = Math.Min(baggage.Count, MaxBaggageItems);
+        var estimatedCapacity = Math.Min(MaxBaggageLength, estimatedItemCount * 16);
+        var header = new StringBuilder(estimatedCapacity);
+
+        var itemCount = 0;
+
+        using var e = baggage.GetEnumerator();
+        while (itemCount < MaxBaggageItems && e.MoveNext())
+        {
+            var item = e.Current;
+            if (item.Value == null || !IsValidKey(item.Key))
+            {
+                continue;
+            }
+
+            // Encoding never shortens a value, so a value this long cannot fit once the key and '=' are added.
+            if (item.Value.Length >= MaxBaggageLength)
+            {
+                break;
+            }
+
+            var encodedValue = EncodeValue(item.Value);
+            var previousLength = header.Length;
+            var itemLength = item.Key.Length + encodedValue.Length + 1;
+            if (previousLength > 0)
+            {
+                itemLength++;
+            }
+
+            if (previousLength + itemLength > MaxBaggageLength)
+            {
+                break;
+            }
+
+            if (previousLength > 0)
+            {
+                header.Append(',');
+            }
+
+            header.Append(item.Key).Append('=').Append(encodedValue);
+            itemCount++;
+        }
+
+        return header.ToString();
+    }
+#endif
 
     private static ReadOnlySpan<char> ReadNextSegment(ref ReadOnlySpan<char> remaining, char separator)
     {
