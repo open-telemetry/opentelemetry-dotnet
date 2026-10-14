@@ -317,51 +317,67 @@ public class BaggagePropagator : TextMapPropagator
 
         var sb = new StringBuilder(value.Length);
 
-        var i = 0;
-        while (i < value.Length)
+        // Runs of characters that need no escaping are appended in one step rather than one character at a time.
+        var runStart = 0;
+        for (var i = 0; i < value.Length; i++)
         {
             var c = value[i];
+            if (c < 0x80 && ValidValueLookup[c])
+            {
+                continue;
+            }
 
+            sb.Append(value, runStart, i - runStart);
+
+            var codePoint = (int)c;
             if (char.IsHighSurrogate(c) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
             {
-                // Non-BMP pair: encode both chars as one UTF-8 sequence.
-                // Passing the pair to Encoding.UTF8 produces the correct 4-byte result
-                // rather than two replacement characters.
-                foreach (var b in Encoding.UTF8.GetBytes(new string([c, value[i + 1]])))
-                {
-                    AppendPercentEncoded(sb, b);
-                }
-
-                i += 2;
-            }
-            else
-            {
-                if (!IsValidValueChar(c))
-                {
-                    if (c > '\x7F')
-                    {
-                        foreach (var b in Encoding.UTF8.GetBytes(c.ToString()))
-                        {
-                            AppendPercentEncoded(sb, b);
-                        }
-                    }
-                    else
-                    {
-                        AppendPercentEncoded(sb, (byte)c);
-                    }
-                }
-                else
-                {
-                    sb.Append(c);
-                }
-
+                // Non-BMP pair: encode both chars as one 4-byte UTF-8 sequence.
                 i++;
+                codePoint = char.ConvertToUtf32(c, value[i]);
             }
+            else if (char.IsSurrogate(c))
+            {
+                // A lone surrogate has no UTF-8 form, so it is replaced with U+FFFD as Encoding.UTF8 does.
+                codePoint = 0xFFFD;
+            }
+
+            AppendPercentEncodedCodePoint(sb, codePoint);
+            runStart = i + 1;
         }
 
+        sb.Append(value, runStart, value.Length - runStart);
         return sb.ToString();
 #endif
     }
+
+#if !NET
+    private static void AppendPercentEncodedCodePoint(StringBuilder sb, int codePoint)
+    {
+        if (codePoint < 0x80)
+        {
+            AppendPercentEncoded(sb, (byte)codePoint);
+        }
+        else if (codePoint < 0x800)
+        {
+            AppendPercentEncoded(sb, (byte)(0xC0 | (codePoint >> 6)));
+            AppendPercentEncoded(sb, (byte)(0x80 | (codePoint & 0x3F)));
+        }
+        else if (codePoint < 0x10000)
+        {
+            AppendPercentEncoded(sb, (byte)(0xE0 | (codePoint >> 12)));
+            AppendPercentEncoded(sb, (byte)(0x80 | ((codePoint >> 6) & 0x3F)));
+            AppendPercentEncoded(sb, (byte)(0x80 | (codePoint & 0x3F)));
+        }
+        else
+        {
+            AppendPercentEncoded(sb, (byte)(0xF0 | (codePoint >> 18)));
+            AppendPercentEncoded(sb, (byte)(0x80 | ((codePoint >> 12) & 0x3F)));
+            AppendPercentEncoded(sb, (byte)(0x80 | ((codePoint >> 6) & 0x3F)));
+            AppendPercentEncoded(sb, (byte)(0x80 | (codePoint & 0x3F)));
+        }
+    }
+#endif
 
 #if NET
     private static string EncodeEscapedValue(string value)
