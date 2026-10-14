@@ -58,6 +58,11 @@ Notes](../../RELEASENOTES.md).
   underlying `MeterListener`).
   ([#7924](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7924))
 
+* Fixed a race condition between recording a measurement and collecting a
+  histogram with delta temporality that could cause an empty data point
+  (with a count of zero) to be exported in the next collection cycle.
+  ([#7923](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7923))
+
 * Improved metric collection performance after metric streams are removed by
   compacting metric storage during collection.
   ([#7945](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7945))

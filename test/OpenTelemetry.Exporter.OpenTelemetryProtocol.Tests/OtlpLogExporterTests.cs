@@ -185,6 +185,72 @@ public class OtlpLogExporterTests
         Assert.NotNull(testHandler.HttpRequestMessage);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void LogsAreExportedWhenServiceProviderIsDisposedBeforeFirstExport(bool callUseOpenTelemetry)
+    {
+        var requests = new List<string>();
+
+        using var server = TestHttpServer.RunServer(
+            context =>
+            {
+                lock (requests)
+                {
+                    requests.Add(context.Request.Url!.AbsolutePath);
+                }
+
+                context.Response.StatusCode = 200;
+                context.Response.Close();
+            },
+            out var host,
+            out var port);
+
+        var services = new ServiceCollection();
+
+        var namedClientInvocations = 0;
+
+        services.AddHttpClient("OtlpLogExporter", configureClient: (client) => namedClientInvocations++);
+
+        services.AddLogging(builder =>
+        {
+            ConfigureOtlpExporter(
+                builder,
+                callUseOpenTelemetry,
+                configureExporterAndProcessor: (exporter, processor) =>
+                {
+                    exporter.Protocol = OtlpExportProtocol.HttpProtobuf;
+                    exporter.Endpoint = new Uri($"http://{host}:{port}/v1/logs");
+                    processor.ExportProcessorType = ExportProcessorType.Batch;
+
+                    // Ensure the only export is the one triggered by disposal
+                    // rather than the batch processor's scheduled timer.
+                    processor.BatchExportProcessorOptions.ScheduledDelayMilliseconds = int.MaxValue;
+                });
+        });
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(OtlpLogExporterTests));
+
+        logger.HelloFrom("tomato", 2.99);
+
+        // No export has happened yet so the export client has not been created.
+        Assert.Equal(0, namedClientInvocations);
+
+        // Disposing the container disposes the LoggerProvider which flushes the
+        // pending batch. The container is already marked as disposed by then so
+        // IHttpClientFactory cannot be resolved from it.
+        serviceProvider.Dispose();
+
+        lock (requests)
+        {
+            Assert.Equal(["/v1/logs"], requests);
+        }
+
+        Assert.Equal(0, namedClientInvocations);
+    }
+
     [Fact]
     public void AddOtlpExporterSetsDefaultBatchExportProcessor()
     {
