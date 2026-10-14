@@ -65,6 +65,7 @@ public class OtlpUtf8SpanFormattableTagBenchmarks
             writer.Reset(output);
 
             JsonSerializer.Serialize(writer, value);
+            writer.Flush();
 
             bytesWritten = output.WrittenCount;
             return output.WrittenSpan.TryCopyTo(utf8Destination);
