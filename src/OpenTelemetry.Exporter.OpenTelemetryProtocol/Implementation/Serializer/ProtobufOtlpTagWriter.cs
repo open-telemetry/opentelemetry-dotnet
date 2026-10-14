@@ -142,7 +142,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
 
     protected override void EndUtf8StringTag(ref OtlpTagWriterState state, ReadOnlySpan<byte> utf8Value)
     {
-        // Laid out by TryGetUtf8Buffer: each reserved length is followed by a single byte tag.
+        // Laid out by TryStartUtf8StringTag: each reserved length is followed by a single byte tag.
         var stringLengthPosition = state.WritePosition - ReserveSizeForLength;
         var anyValueLengthPosition = stringLengthPosition - 1 - ReserveSizeForLength;
 
