@@ -58,6 +58,10 @@ Notes](../../RELEASENOTES.md).
   underlying `MeterListener`).
   ([#7924](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7924))
 
+* Improved metric collection performance after metric streams are removed by
+  compacting metric storage during collection.
+  ([#7945](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7945))
+
 ## 1.19.1
 
 Released 2026-Sep-21
