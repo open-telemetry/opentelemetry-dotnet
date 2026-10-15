@@ -63,6 +63,10 @@ Notes](../../RELEASENOTES.md).
   (with a count of zero) to be exported in the next collection cycle.
   ([#7923](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7923))
 
+* Improved metric collection performance after metric streams are removed by
+  compacting metric storage during collection.
+  ([#7945](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7945))
+
 ## 1.19.1
 
 Released 2026-Sep-21
