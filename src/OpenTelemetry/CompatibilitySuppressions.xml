@@ -51,6 +51,13 @@
     </Suppression>
     <Suppression>
         <DiagnosticId>CP0008</DiagnosticId>
+        <Target>T:OpenTelemetry.SelfDiagnostics.EnvironmentVariableLogMode</Target>
+        <Left>lib/net8.0/OpenTelemetry.dll</Left>
+        <Right>lib/netstandard2.1/OpenTelemetry.dll</Right>
+        <IsBaselineSuppression>true</IsBaselineSuppression>
+    </Suppression>
+    <Suppression>
+        <DiagnosticId>CP0008</DiagnosticId>
         <Target>T:OpenTelemetry.Trace.SamplingDecision</Target>
         <Left>lib/net8.0/OpenTelemetry.dll</Left>
         <Right>lib/netstandard2.1/OpenTelemetry.dll</Right>
@@ -101,6 +108,13 @@
     <Suppression>
         <DiagnosticId>CP0008</DiagnosticId>
         <Target>T:OpenTelemetry.Metrics.MetricType</Target>
+        <Left>lib/net9.0/OpenTelemetry.dll</Left>
+        <Right>lib/netstandard2.1/OpenTelemetry.dll</Right>
+        <IsBaselineSuppression>true</IsBaselineSuppression>
+    </Suppression>
+    <Suppression>
+        <DiagnosticId>CP0008</DiagnosticId>
+        <Target>T:OpenTelemetry.SelfDiagnostics.EnvironmentVariableLogMode</Target>
         <Left>lib/net9.0/OpenTelemetry.dll</Left>
         <Right>lib/netstandard2.1/OpenTelemetry.dll</Right>
         <IsBaselineSuppression>true</IsBaselineSuppression>
