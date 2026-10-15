@@ -930,6 +930,7 @@ public class MetricPointReclaimTests
     {
         const int WorkerCount = 8;
 
+        var cancellationToken = TestContext.Current.CancellationToken;
         var exportedItems = new List<Metric>();
         using var meter = new Meter(Utils.GetCurrentMethodName() + initializeOverflowPoint);
         var counter = meter.CreateCounter<long>("counter");
@@ -956,7 +957,7 @@ public class MetricPointReclaimTests
             {
                 try
                 {
-                    start.SignalAndWait();
+                    start.SignalAndWait(cancellationToken);
 
                     if (initializeOverflowPoint)
                     {
@@ -975,7 +976,7 @@ public class MetricPointReclaimTests
             workers[i].Start();
         }
 
-        start.SignalAndWait();
+        start.SignalAndWait(cancellationToken);
 
         foreach (var worker in workers)
         {
