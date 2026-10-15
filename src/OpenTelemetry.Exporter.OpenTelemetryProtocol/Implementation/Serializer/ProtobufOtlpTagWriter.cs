@@ -248,12 +248,10 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         ProtobufSerializer.WriteReservedLength(state.Buffer, anyValueLengthPos, state.WritePosition - (anyValueLengthPos + ReserveSizeForLength));
     }
 
-    // Rolls back a dropped tag. Its bytes are cleared because only the buffer up to the
-    // final write position is scrubbed before it is returned to the shared pool.
-    private static void RollBackTo(ref OtlpTagWriterState state, int position)
+    private static void RollBackTo(ref OtlpTagWriterState state, int startPosition)
     {
-        state.Buffer.AsSpan(position, state.WritePosition - position).Clear();
-        state.WritePosition = position;
+        state.Buffer.AsSpan(startPosition, state.WritePosition - startPosition).Clear();
+        state.WritePosition = startPosition;
     }
 
     internal struct OtlpTagWriterState
