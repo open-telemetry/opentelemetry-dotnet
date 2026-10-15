@@ -63,6 +63,11 @@ Notes](../../RELEASENOTES.md).
   (with a count of zero) to be exported in the next collection cycle.
   ([#7923](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7923))
 
+* Fixed a possible race condition on ARM64 when multiple threads record the
+  first measurement with no tags, or the first overflow measurement, that could
+  cause the measurement to be recorded incorrectly.
+  ([#7951](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7951))
+
 ## 1.19.1
 
 Released 2026-Sep-21
