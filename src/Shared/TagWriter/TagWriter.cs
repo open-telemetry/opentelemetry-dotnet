@@ -386,6 +386,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
         }
 
         // The failed TryFormat may have filled the buffer beyond what the shorter fallback overwrites.
+        // Not needed before the throw above: callers that grow the buffer clear the whole of the old one.
         buffer.Clear();
 
         try
