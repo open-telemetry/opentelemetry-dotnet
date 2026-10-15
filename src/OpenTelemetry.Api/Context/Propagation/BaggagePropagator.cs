@@ -23,6 +23,14 @@ public class BaggagePropagator : TextMapPropagator
     private const int MaxBaggageLength = 8192;
     private const int MaxBaggageItems = 180;
 
+#if !NET
+    // First code point outside ASCII. The lookup tables only cover ASCII.
+    private const int AsciiLimit = 0x80;
+
+    // Replacement for a lone surrogate, the same as Encoding.UTF8 uses.
+    private const int ReplacementCharacter = 0xFFFD;
+#endif
+
 #if NET
     private static readonly SearchValues<char> ValidKeySearcher = SearchValues.Create(
         "!#$%&'*+-.^_`|~0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
@@ -303,7 +311,7 @@ public class BaggagePropagator : TextMapPropagator
         var allValid = true;
         foreach (var c in value)
         {
-            if (c >= 0x80 || !ValidValueLookup[c])
+            if (c >= AsciiLimit || !ValidValueLookup[c])
             {
                 allValid = false;
                 break;
@@ -322,7 +330,7 @@ public class BaggagePropagator : TextMapPropagator
         for (var i = 0; i < value.Length; i++)
         {
             var c = value[i];
-            if (c < 0x80 && ValidValueLookup[c])
+            if (c < AsciiLimit && ValidValueLookup[c])
             {
                 continue;
             }
@@ -339,7 +347,7 @@ public class BaggagePropagator : TextMapPropagator
             else if (char.IsSurrogate(c))
             {
                 // A lone surrogate has no UTF-8 form, so it is replaced with U+FFFD as Encoding.UTF8 does.
-                codePoint = 0xFFFD;
+                codePoint = ReplacementCharacter;
             }
 
             AppendPercentEncodedCodePoint(sb, codePoint);
@@ -354,7 +362,7 @@ public class BaggagePropagator : TextMapPropagator
 #if !NET
     private static void AppendPercentEncodedCodePoint(StringBuilder sb, int codePoint)
     {
-        if (codePoint < 0x80)
+        if (codePoint < AsciiLimit)
         {
             AppendPercentEncoded(sb, (byte)codePoint);
         }
@@ -462,7 +470,7 @@ public class BaggagePropagator : TextMapPropagator
 #else
         foreach (var c in key)
         {
-            if (c >= 0x80 || !ValidKeyLookup[c])
+            if (c >= AsciiLimit || !ValidKeyLookup[c])
             {
                 return false;
             }
@@ -475,7 +483,7 @@ public class BaggagePropagator : TextMapPropagator
 #if !NET
     private static bool[] CreateAsciiLookup(char[] validChars)
     {
-        var lookup = new bool[0x80];
+        var lookup = new bool[AsciiLimit];
         foreach (var c in validChars)
         {
             lookup[c] = true;
