@@ -6,6 +6,19 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed a possible race condition on ARM64 when multiple threads record the
+  first measurement with no tags, or the first overflow measurement, that could
+  cause the measurement to be recorded incorrectly.
+  ([#7951](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7951))
+
+## 1.20.0
+
+Released 2026-Oct-15
+
+## 1.20.0-rc.1
+
+Released 2026-Oct-15
+
 * Fixed `SuppressInstrumentationScope` reference counts leaking between
   inherited asynchronous execution contexts.
   ([#7803](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7803))
@@ -63,10 +76,9 @@ Notes](../../RELEASENOTES.md).
   (with a count of zero) to be exported in the next collection cycle.
   ([#7923](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7923))
 
-* Fixed a possible race condition on ARM64 when multiple threads record the
-  first measurement with no tags, or the first overflow measurement, that could
-  cause the measurement to be recorded incorrectly.
-  ([#7951](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7951))
+* Improved metric collection performance after metric streams are removed by
+  compacting metric storage during collection.
+  ([#7945](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7945))
 
 ## 1.19.1
 

@@ -6,6 +6,14 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.20.0
+
+Released 2026-Oct-15
+
+## 1.20.0-rc.1
+
+Released 2026-Oct-15
+
 * `ConsoleLogRecordExporter` now writes an `Instrumentation scope (Logger)`
   section (Name, Version, and Schema URL) for each exported `LogRecord`.
   ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))

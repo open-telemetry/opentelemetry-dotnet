@@ -139,6 +139,19 @@ public class BaggagePropagatorTests
     }
 
     [Fact]
+    public void ValidateInjectWithNullSetterDoesNothing()
+    {
+        var carrier = new Dictionary<string, string>();
+        var propagationContext = new PropagationContext(
+            default,
+            Baggage.Create(new Dictionary<string, string> { ["key"] = "value" }));
+
+        this.baggage.Inject(propagationContext, carrier, null!);
+
+        Assert.Empty(carrier);
+    }
+
+    [Fact]
     public void ValidateBaggageInjection()
     {
         var carrier = new Dictionary<string, string>();
