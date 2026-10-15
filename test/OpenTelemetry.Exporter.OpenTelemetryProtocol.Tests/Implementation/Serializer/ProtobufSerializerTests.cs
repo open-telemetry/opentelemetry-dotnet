@@ -773,6 +773,27 @@ public class ProtobufSerializerTests
     }
 
     [Fact]
+    public void IncreaseBufferSize_ClearsReplacedBuffer()
+    {
+        var buffer = ProtobufSerializer.RentBuffer(1024);
+        var original = buffer;
+        original.AsSpan().Fill(0xAB);
+
+        var increased = ProtobufSerializer.IncreaseBufferSize(ref buffer, OtlpSignalType.Traces);
+
+        try
+        {
+            Assert.True(increased);
+            Assert.NotSame(original, buffer);
+            Assert.All(original, static value => Assert.Equal(0, value));
+        }
+        finally
+        {
+            ProtobufSerializer.ReturnBuffer(buffer);
+        }
+    }
+
+    [Fact]
     public void ReturnBuffer_ClearsReturnedBuffer()
     {
         var pool = new TrackingArrayPool();
