@@ -489,6 +489,53 @@ public class OtlpAttributeTests
         var kvp = new KeyValuePair<string, object?>("key", new Utf8ValueThatThrows(exceptionType));
         Assert.False(TryTransformTag(kvp, out _));
     }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData(10)]
+    public void DroppedUtf8SpanFormattableLeavesNoBytesInBuffer(int? tagValueMaxLength)
+    {
+        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState
+        {
+            Buffer = new byte[1024],
+            WritePosition = 0,
+        };
+
+        Assert.False(ProtobufOtlpTagWriter.WriteKeyValue(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", new Utf8ValueThatFillsBufferAndThrows(), tagValueMaxLength));
+
+        Assert.Equal(0, state.WritePosition);
+        Assert.All(state.Buffer, b => Assert.Equal(0, b));
+    }
+
+    [Fact]
+    public void DroppedKvListEntryLeavesNoBytesInBuffer()
+    {
+        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState
+        {
+            Buffer = new byte[1024],
+            WritePosition = 0,
+        };
+
+        var kvList = new Dictionary<string, object?> { ["inner"] = new Utf8ValueThatFillsBufferAndThrows() };
+
+        Assert.True(ProtobufOtlpTagWriter.WriteKeyValue(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", kvList));
+
+        Assert.All(state.Buffer.Skip(state.WritePosition), b => Assert.Equal(0, b));
+    }
+
+    [Fact]
+    public void Utf8SpanFormattableToStringFallbackLeavesNoFormatterBytesInBuffer()
+    {
+        var state = new ProtobufOtlpTagWriter.OtlpTagWriterState
+        {
+            Buffer = new byte[1024],
+            WritePosition = 0,
+        };
+
+        Assert.True(ProtobufOtlpTagWriter.WriteKeyValue(ref state, ProtobufOtlpTraceFieldNumberConstants.Span_Attributes, "key", new Utf8ValueThatFillsBufferAndDoesNotFit("a"), tagValueMaxLength: 10));
+
+        Assert.All(state.Buffer.Skip(state.WritePosition), b => Assert.Equal(0, b));
+    }
 #endif
 
     private static bool TryTransformTag(KeyValuePair<string, object?> tag, [NotNullWhen(true)] out OtlpCommon.KeyValue? attribute, int? tagValueMaxLength = null)
@@ -539,6 +586,27 @@ public class OtlpAttributeTests
         }
 
         public override string ToString() => throw new InvalidOperationException("Nope.");
+    }
+
+    private sealed class Utf8ValueThatFillsBufferAndThrows : IUtf8SpanFormattable
+    {
+        public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+        {
+            utf8Destination.Fill((byte)'x');
+            throw new InvalidOperationException("Nope.");
+        }
+    }
+
+    private sealed class Utf8ValueThatFillsBufferAndDoesNotFit(string value) : IUtf8SpanFormattable
+    {
+        public bool TryFormat(Span<byte> utf8Destination, out int bytesWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
+        {
+            utf8Destination.Fill((byte)'x');
+            bytesWritten = 0;
+            return false;
+        }
+
+        public override string ToString() => value;
     }
 
 #endif
