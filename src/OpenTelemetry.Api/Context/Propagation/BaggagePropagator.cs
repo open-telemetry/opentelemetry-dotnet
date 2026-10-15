@@ -450,13 +450,6 @@ public class BaggagePropagator : TextMapPropagator
     }
 #endif
 
-    private static bool IsValidValueChar(char c) =>
-#if NET
-        ValidValueSearcher.Contains(c);
-#else
-        c < 0x80 && ValidValueLookup[c];
-#endif
-
 #if NET
     private static bool IsValidKey(char c) =>
         ValidKeySearcher.Contains(c);
