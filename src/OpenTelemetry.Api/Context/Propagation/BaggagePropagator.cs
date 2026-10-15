@@ -4,7 +4,9 @@
 #if NET
 using System.Buffers;
 using System.Collections.Immutable;
+#endif
 using System.Diagnostics;
+#if NET
 using System.Diagnostics.CodeAnalysis;
 #endif
 using System.Text;
@@ -31,38 +33,17 @@ public class BaggagePropagator : TextMapPropagator
     private const int ReplacementCharacter = 0xFFFD;
 #endif
 
-#if NET
-    private static readonly SearchValues<char> ValidKeySearcher = SearchValues.Create(
-        "!#$%&'*+-.^_`|~0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
+    private const string ValidKeyChars =
+        "!#$%&'*+-.^_`|~0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
     // W3C Baggage 3.3 baggage-octet, '%' excluded so raw '%' is always encoded as %25
-    private static readonly SearchValues<char> ValidValueSearcher = SearchValues.Create(
-        "!#$&'()*+-./:<=>?@[]^_`|~0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz{}");
+    private const string ValidValueChars =
+        "!#$&'()*+-./:<=>?@[]^_`{|}~0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
+#if NET
+    private static readonly SearchValues<char> ValidKeySearcher = SearchValues.Create(ValidKeyChars);
+    private static readonly SearchValues<char> ValidValueSearcher = SearchValues.Create(ValidValueChars);
 #else
-
-    private static readonly char[] ValidKeyChars =
-    [
-        '!', '#', '$', '%', '&', '\'', '*', '+', '-', '.', '^', '_', '`', '|', '~',
-        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-        'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-        'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-    ];
-
-    // baggage-octet minus %, so raw % is always encoded as %25
-    private static readonly char[] ValidValueChars =
-    [
-        '!', '#', '$', '&', '\'', '(', ')', '*', '+', '-', '.', '/', ':',
-        '<', '=', '>', '?', '@', '[', ']', '^', '_', '`', '{', '|', '}', '~',
-        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-        'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-        'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-    ];
-
     // ASCII lookup tables so membership checks do not scan the char arrays above for every character.
     private static readonly bool[] ValidKeyLookup = CreateAsciiLookup(ValidKeyChars);
     private static readonly bool[] ValidValueLookup = CreateAsciiLookup(ValidValueChars);
@@ -481,12 +462,14 @@ public class BaggagePropagator : TextMapPropagator
     }
 
 #if !NET
-    private static bool[] CreateAsciiLookup(char[] validChars)
+    private static bool[] CreateAsciiLookup(string validChars)
     {
         var lookup = new bool[AsciiLimit];
-        foreach (var c in validChars)
+
+        foreach (var ch in validChars)
         {
-            lookup[c] = true;
+            Debug.Assert(ch < AsciiLimit, "Valid character is outside ASCII range.");
+            lookup[ch] = true;
         }
 
         return lookup;
