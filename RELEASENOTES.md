@@ -52,7 +52,7 @@ Release details: [1.20.0](https://github.com/open-telemetry/opentelemetry-dotnet
   the overflow point when its tag set was published as the cardinality limit was
   reached.
 * Fixed `LogRecord.CategoryName` resetting the current `Logger`'s `Version` to
-* `null` when set to a new value.
+  `null` when set to a new value.
 * Bounded the internal cache of `Logger` scopes keyed by instrumentation to
   avoid unbounded growth.
 * Fixed the `MeterProvider` and its `IServiceProvider` being kept alive after the
