@@ -18,6 +18,10 @@ Notes](../../RELEASENOTES.md).
   no longer called.
   ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
 
+* Optimize performance of `BaggagePropagator.Inject` on .NET Framework using
+  lookup tables.
+  ([#7947](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7947))
+
 ## 1.19.1
 
 Released 2026-Sep-21

@@ -4,7 +4,9 @@
 #if NET
 using System.Buffers;
 using System.Collections.Immutable;
+#endif
 using System.Diagnostics;
+#if NET
 using System.Diagnostics.CodeAnalysis;
 #endif
 using System.Text;
@@ -23,37 +25,28 @@ public class BaggagePropagator : TextMapPropagator
     private const int MaxBaggageLength = 8192;
     private const int MaxBaggageItems = 180;
 
-#if NET
-    private static readonly SearchValues<char> ValidKeySearcher = SearchValues.Create(
-        "!#$%&'*+-.^_`|~0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
+#if !NET
+    // First code point outside ASCII. The lookup tables only cover ASCII.
+    private const int AsciiLimit = 0x80;
+
+    // Replacement for a lone surrogate, the same as Encoding.UTF8 uses.
+    private const int ReplacementCharacter = 0xFFFD;
+#endif
+
+    private const string ValidKeyChars =
+        "!#$%&'*+-.^_`|~0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
     // W3C Baggage 3.3 baggage-octet, '%' excluded so raw '%' is always encoded as %25
-    private static readonly SearchValues<char> ValidValueSearcher = SearchValues.Create(
-        "!#$&'()*+-./:<=>?@[]^_`|~0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz{}");
+    private const string ValidValueChars =
+        "!#$&'()*+-./:<=>?@[]^_`{|}~0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
+#if NET
+    private static readonly SearchValues<char> ValidKeySearcher = SearchValues.Create(ValidKeyChars);
+    private static readonly SearchValues<char> ValidValueSearcher = SearchValues.Create(ValidValueChars);
 #else
-
-    private static readonly char[] ValidKeyChars =
-    [
-        '!', '#', '$', '%', '&', '\'', '*', '+', '-', '.', '^', '_', '`', '|', '~',
-        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-        'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-        'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-    ];
-
-    // baggage-octet minus %, so raw % is always encoded as %25
-    private static readonly char[] ValidValueChars =
-    [
-        '!', '#', '$', '&', '\'', '(', ')', '*', '+', '-', '.', '/', ':',
-        '<', '=', '>', '?', '@', '[', ']', '^', '_', '`', '{', '|', '}', '~',
-        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-        'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-        'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-    ];
+    // ASCII lookup tables so membership checks do not scan the char arrays above for every character.
+    private static readonly bool[] ValidKeyLookup = CreateAsciiLookup(ValidKeyChars);
+    private static readonly bool[] ValidValueLookup = CreateAsciiLookup(ValidValueChars);
 #endif
 
 #if NET
@@ -299,7 +292,7 @@ public class BaggagePropagator : TextMapPropagator
         var allValid = true;
         foreach (var c in value)
         {
-            if (Array.IndexOf(ValidValueChars, c) < 0)
+            if (c >= AsciiLimit || !ValidValueLookup[c])
             {
                 allValid = false;
                 break;
@@ -313,51 +306,67 @@ public class BaggagePropagator : TextMapPropagator
 
         var sb = new StringBuilder(value.Length);
 
-        var i = 0;
-        while (i < value.Length)
+        // Runs of characters that need no escaping are appended in one step rather than one character at a time.
+        var runStart = 0;
+        for (var i = 0; i < value.Length; i++)
         {
             var c = value[i];
+            if (c < AsciiLimit && ValidValueLookup[c])
+            {
+                continue;
+            }
 
+            sb.Append(value, runStart, i - runStart);
+
+            var codePoint = (int)c;
             if (char.IsHighSurrogate(c) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
             {
-                // Non-BMP pair: encode both chars as one UTF-8 sequence.
-                // Passing the pair to Encoding.UTF8 produces the correct 4-byte result
-                // rather than two replacement characters.
-                foreach (var b in Encoding.UTF8.GetBytes(new string([c, value[i + 1]])))
-                {
-                    AppendPercentEncoded(sb, b);
-                }
-
-                i += 2;
-            }
-            else
-            {
-                if (!IsValidValueChar(c))
-                {
-                    if (c > '\x7F')
-                    {
-                        foreach (var b in Encoding.UTF8.GetBytes(c.ToString()))
-                        {
-                            AppendPercentEncoded(sb, b);
-                        }
-                    }
-                    else
-                    {
-                        AppendPercentEncoded(sb, (byte)c);
-                    }
-                }
-                else
-                {
-                    sb.Append(c);
-                }
-
+                // Non-BMP pair: encode both chars as one 4-byte UTF-8 sequence.
                 i++;
+                codePoint = char.ConvertToUtf32(c, value[i]);
             }
+            else if (char.IsSurrogate(c))
+            {
+                // A lone surrogate has no UTF-8 form, so it is replaced with U+FFFD as Encoding.UTF8 does.
+                codePoint = ReplacementCharacter;
+            }
+
+            AppendPercentEncodedCodePoint(sb, codePoint);
+            runStart = i + 1;
         }
 
+        sb.Append(value, runStart, value.Length - runStart);
         return sb.ToString();
 #endif
     }
+
+#if !NET
+    private static void AppendPercentEncodedCodePoint(StringBuilder sb, int codePoint)
+    {
+        if (codePoint < AsciiLimit)
+        {
+            AppendPercentEncoded(sb, (byte)codePoint);
+        }
+        else if (codePoint < 0x800)
+        {
+            AppendPercentEncoded(sb, (byte)(0xC0 | (codePoint >> 6)));
+            AppendPercentEncoded(sb, (byte)(0x80 | (codePoint & 0x3F)));
+        }
+        else if (codePoint < 0x10000)
+        {
+            AppendPercentEncoded(sb, (byte)(0xE0 | (codePoint >> 12)));
+            AppendPercentEncoded(sb, (byte)(0x80 | ((codePoint >> 6) & 0x3F)));
+            AppendPercentEncoded(sb, (byte)(0x80 | (codePoint & 0x3F)));
+        }
+        else
+        {
+            AppendPercentEncoded(sb, (byte)(0xF0 | (codePoint >> 18)));
+            AppendPercentEncoded(sb, (byte)(0x80 | ((codePoint >> 12) & 0x3F)));
+            AppendPercentEncoded(sb, (byte)(0x80 | ((codePoint >> 6) & 0x3F)));
+            AppendPercentEncoded(sb, (byte)(0x80 | (codePoint & 0x3F)));
+        }
+    }
+#endif
 
 #if NET
     private static string EncodeEscapedValue(string value)
@@ -430,13 +439,6 @@ public class BaggagePropagator : TextMapPropagator
     }
 #endif
 
-    private static bool IsValidValueChar(char c) =>
-#if NET
-        ValidValueSearcher.Contains(c);
-#else
-        Array.IndexOf(ValidValueChars, c) >= 0;
-#endif
-
 #if NET
     private static bool IsValidKey(char c) =>
         ValidKeySearcher.Contains(c);
@@ -449,7 +451,7 @@ public class BaggagePropagator : TextMapPropagator
 #else
         foreach (var c in key)
         {
-            if (Array.IndexOf(ValidKeyChars, c) < 0)
+            if (c >= AsciiLimit || !ValidKeyLookup[c])
             {
                 return false;
             }
@@ -458,6 +460,21 @@ public class BaggagePropagator : TextMapPropagator
         return true;
 #endif
     }
+
+#if !NET
+    private static bool[] CreateAsciiLookup(string validChars)
+    {
+        var lookup = new bool[AsciiLimit];
+
+        foreach (var ch in validChars)
+        {
+            Debug.Assert(ch < AsciiLimit, "Valid character is outside ASCII range.");
+            lookup[ch] = true;
+        }
+
+        return lookup;
+    }
+#endif
 
     private static string Decode(ReadOnlySpan<char> value)
     {
