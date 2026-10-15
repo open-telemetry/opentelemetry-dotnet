@@ -6,6 +6,28 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* **Breaking Change** Dropped support for `net8.0` and `net9.0`.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Add support for .NET 11.0.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Added support for enabling `ActivitySource`s from configuration using the
+  `Microsoft.Extensions.Diagnostics` tracing APIs introduced in .NET 11 (for
+  example, `services.AddTracing(b => b.AddConfiguration(section))`).
+  Activities from sources enabled this way are processed by the OpenTelemetry
+  `TracerProvider` registered through `AddOpenTelemetry().WithTracing()`.
+  Not supported when targeting `net10.0`.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+## 1.20.0
+
+Released 2026-Oct-15
+
+## 1.20.0-rc.1
+
+Released 2026-Oct-15
+
 * Fixed `SuppressInstrumentationScope` reference counts leaking between
   inherited asynchronous execution contexts.
   ([#7803](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7803))
@@ -63,19 +85,9 @@ Notes](../../RELEASENOTES.md).
   (with a count of zero) to be exported in the next collection cycle.
   ([#7923](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7923))
 
-* **Breaking Change** Dropped support for `net8.0` and `net9.0`.
-  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
-
-* Add support for .NET 11.0.
-  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
-
-* Added support for enabling `ActivitySource`s from configuration using the
-  `Microsoft.Extensions.Diagnostics` tracing APIs introduced in .NET 11 (for
-  example, `services.AddTracing(b => b.AddConfiguration(section))`).
-  Activities from sources enabled this way are processed by the OpenTelemetry
-  `TracerProvider` registered through `AddOpenTelemetry().WithTracing()`.
-  Not supported when targeting `net10.0`.
-  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+* Improved metric collection performance after metric streams are removed by
+  compacting metric storage during collection.
+  ([#7945](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7945))
 
 ## 1.19.1
 

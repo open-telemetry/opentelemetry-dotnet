@@ -6,18 +6,6 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
-* Added `Logger.SchemaUrl` and a `LoggerProvider.GetLogger` overload accepting
-  a schema URL parameter using the new `LoggerOptions` type.
-  ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
-
-* **Breaking change** (pre-release only versions): `LoggerProvider`'s
-  protected `TryCreateLogger(string? name, out Logger? logger)` extensibility
-  method has been replaced by `TryCreateLogger(LoggerOptions options, out
-  Logger? logger)`. Custom `LoggerProvider` subclasses that override the
-  previous overload must update to override the new one; the old overload is
-  no longer called.
-  ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
-
 * **Breaking Change** Dropped support for `net8.0` and `net9.0`.
   ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
 
@@ -30,6 +18,30 @@ Notes](../../RELEASENOTES.md).
 
 * Add support for .NET 11.0.
   ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+## 1.20.0
+
+Released 2026-Oct-15
+
+## 1.20.0-rc.1
+
+Released 2026-Oct-15
+
+* Added `Logger.SchemaUrl` and a `LoggerProvider.GetLogger` overload accepting
+  a schema URL parameter using the new `LoggerOptions` type.
+  ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
+
+* **Breaking change** (pre-release only versions): `LoggerProvider`'s
+  protected `TryCreateLogger(string? name, out Logger? logger)` extensibility
+  method has been replaced by `TryCreateLogger(LoggerOptions options, out
+  Logger? logger)`. Custom `LoggerProvider` subclasses that override the
+  previous overload must update to override the new one; the old overload is
+  no longer called.
+  ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
+
+* Optimize performance of `BaggagePropagator.Inject` on .NET Framework using
+  lookup tables.
+  ([#7947](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7947))
 
 ## 1.19.1
 

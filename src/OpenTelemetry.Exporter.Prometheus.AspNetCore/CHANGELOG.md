@@ -7,6 +7,16 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* **Breaking Change** Dropped support for `net8.0` and `net9.0`.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+* Add support for .NET 11.0.
+  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+
+## 1.20.0-beta.1
+
+Released 2026-Oct-15
+
 * A scrape request whose connection is aborted, or whose
   `X-Prometheus-Scrape-Timeout-Seconds` deadline elapses, now stops waiting
   for an in-progress metrics collection instead of continuing to wait for it
@@ -14,11 +24,8 @@ Notes](../../RELEASENOTES.md).
   the background.
   ([#7856](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7856))
 
-* **Breaking Change** Dropped support for `net8.0` and `net9.0`.
-  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
-
-* Add support for .NET 11.0.
-  ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
+* Updated OpenTelemetry core component version(s) to `1.20.0`.
+  ([#7950](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7950))
 
 ## 1.19.1-beta.1
 

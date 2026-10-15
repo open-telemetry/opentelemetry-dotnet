@@ -13,6 +13,14 @@ Notes](../../RELEASENOTES.md).
 * Add support for .NET 11.0.
   ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
 
+## 1.20.0
+
+Released 2026-Oct-15
+
+## 1.20.0-rc.1
+
+Released 2026-Oct-15
+
 ## 1.19.1
 
 Released 2026-Sep-21

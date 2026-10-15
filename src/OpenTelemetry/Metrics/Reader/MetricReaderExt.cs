@@ -34,7 +34,9 @@ public abstract partial class MetricReader
             // during the next collect/export. The freed storage slot is then
             // reused for a subsequently published instrument (see
             // TryReserveMetricIndex), so repeatedly creating and disposing
-            // meters/instruments does not exhaust the metric storage.
+            // meters/instruments does not exhaust the metric storage. Once the
+            // removal is processed, the array is compacted so that collection
+            // keeps scanning only live streams (see CompactMetrics).
             metric.Active = false;
 
             OpenTelemetrySdkEventSource.Log.MetricInstrumentDeactivated(
@@ -272,6 +274,14 @@ public abstract partial class MetricReader
                 }
             }
 
+            // Reclaim the free slots left by removed metrics so that subsequent
+            // scans only visit live streams. Runs only on the collect path, so
+            // no other scan can observe the array while entries are moved.
+            if (!this.availableMetricIndices.IsEmpty)
+            {
+                this.CompactMetrics();
+            }
+
             return (metricCountCurrentBatch > 0) ? new Batch<Metric>(this.metricsCurrentBatch, metricCountCurrentBatch) : default;
         }
         catch (Exception ex)
@@ -329,6 +339,40 @@ public abstract partial class MetricReader
         // must happen after the slot has been cleared above so that a concurrent
         // AddMetricWith*Views call observes a null slot before writing to it.
         this.availableMetricIndices.Enqueue(index);
+    }
+
+    private void CompactMetrics()
+    {
+        // Holding instrumentCreationLock keeps AddMetricWith*Views from
+        // writing to the storage array while entries are moved. Preserving the
+        // relative order keeps exported metric ordering stable.
+        lock (this.instrumentCreationLock)
+        {
+            var highIndex = this.metricIndex;
+            var writeIndex = 0;
+            for (var readIndex = 0; readIndex <= highIndex; readIndex++)
+            {
+                var metric = this.metrics[readIndex];
+                if (metric != null)
+                {
+                    this.metrics[writeIndex++] = metric;
+                }
+            }
+
+            // Clear the vacated tail so stale references are not retained.
+            for (var i = writeIndex; i <= highIndex; i++)
+            {
+                this.metrics[i] = null;
+            }
+
+            this.metricIndex = writeIndex - 1;
+
+            // Every free slot was below the old high-water mark and has been
+            // compacted away, so the free list no longer refers to valid slots.
+            while (this.availableMetricIndices.TryDequeue(out _))
+            {
+            }
+        }
     }
 
     private bool TryReserveMetricIndex(out int index)
