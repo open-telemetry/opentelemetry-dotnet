@@ -374,6 +374,8 @@ internal abstract class TagWriter<TTagState, TArrayState>
         }
         catch (Exception)
         {
+            // How much the formatter wrote is unknown, and the buffer may be returned to a shared pool.
+            buffer.Clear();
             return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
         }
 
@@ -382,6 +384,9 @@ internal abstract class TagWriter<TTagState, TArrayState>
             // Available buffer size was limited: throw so that the caller knows to grow the buffer
             throw new ArgumentOutOfRangeException(nameof(state), "The buffer is too small to hold the data being written.");
         }
+
+        // The failed TryFormat may have filled the buffer beyond what the shorter fallback overwrites.
+        buffer.Clear();
 
         try
         {

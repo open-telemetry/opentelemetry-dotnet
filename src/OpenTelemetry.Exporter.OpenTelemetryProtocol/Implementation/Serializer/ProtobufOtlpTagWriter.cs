@@ -57,7 +57,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
 
         if (!Instance.TryWriteTag(ref state, key, value, tagValueMaxLength))
         {
-            state.WritePosition = startPosition;
+            RollBackTo(ref state, startPosition);
             return false;
         }
 
@@ -229,7 +229,7 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
                 // Drop a tag if we fail to write it, and reset the position to the start of the entry to overwrite the reserved tag and length for the next entry.
                 if (!this.TryWriteTag(ref state, kvp.Key, kvp.Value, tagValueMaxLength))
                 {
-                    state.WritePosition = startEntryPosition;
+                    RollBackTo(ref state, startEntryPosition);
                     continue;
                 }
 
@@ -246,6 +246,14 @@ internal sealed class ProtobufOtlpTagWriter : TagWriter<ProtobufOtlpTagWriter.Ot
         // Fill in reserved lengths
         ProtobufSerializer.WriteReservedLength(state.Buffer, kvlistLengthPos, state.WritePosition - (kvlistLengthPos + ReserveSizeForLength));
         ProtobufSerializer.WriteReservedLength(state.Buffer, anyValueLengthPos, state.WritePosition - (anyValueLengthPos + ReserveSizeForLength));
+    }
+
+    // Rolls back a dropped tag. Its bytes are cleared because only the buffer up to the
+    // final write position is scrubbed before it is returned to the shared pool.
+    private static void RollBackTo(ref OtlpTagWriterState state, int position)
+    {
+        state.Buffer.AsSpan(position, state.WritePosition - position).Clear();
+        state.WritePosition = position;
     }
 
     internal struct OtlpTagWriterState
