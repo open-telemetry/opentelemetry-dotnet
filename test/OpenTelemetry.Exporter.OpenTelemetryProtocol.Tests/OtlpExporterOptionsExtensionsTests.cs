@@ -1,17 +1,18 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics.Tracing;
 #if NETFRAMEWORK
 using System.Net.Http;
 #endif
+using System.Reflection;
 using Microsoft.Extensions.Configuration;
-#if NET
 using Microsoft.Extensions.DependencyInjection;
-#endif
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.ExportClient;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmission;
 using OpenTelemetry.PersistentStorage.FileSystem;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
@@ -137,6 +138,98 @@ public class OtlpExporterOptionsExtensionsTests
     }
 #endif
 
+    [Fact]
+    public void TryEnableIHttpClientFactoryIntegration_UsesIHttpClientFactory_WhenServiceProviderIsNotDisposed()
+    {
+        var services = new ServiceCollection();
+
+        var invocations = 0;
+
+        services.AddHttpClient("OtlpLogExporter", configureClient: (client) => invocations++);
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var options = new OtlpExporterOptions { Protocol = OtlpExportProtocol.HttpProtobuf };
+
+        Assert.True(options.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpLogExporter"));
+
+        using var client = options.HttpClientFactory();
+
+        Assert.NotNull(client);
+        Assert.Equal(1, invocations);
+    }
+
+    [Fact]
+    public void TryEnableIHttpClientFactoryIntegration_FallsBackToDefaultHttpClient_WhenServiceProviderIsDisposed()
+    {
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Warning);
+
+        var services = new ServiceCollection();
+
+        var invocations = 0;
+
+        services.AddHttpClient("OtlpLogExporter", configureClient: (client) => invocations++);
+
+        var serviceProvider = services.BuildServiceProvider();
+
+        var options = new OtlpExporterOptions
+        {
+            Protocol = OtlpExportProtocol.HttpProtobuf,
+            TimeoutMilliseconds = 1234,
+        };
+
+        Assert.True(options.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpLogExporter"));
+
+        // Simulate the service provider being disposed before the deferred
+        // export client is created, e.g. when the first export of logs happens
+        // from LoggerProvider.Dispose() while the container is being disposed.
+        serviceProvider.Dispose();
+
+        using var client = options.HttpClientFactory();
+
+        Assert.NotNull(client);
+        Assert.Equal(0, invocations);
+        Assert.Equal(TimeSpan.FromMilliseconds(1234), client.Timeout);
+
+        var message = Assert.Single(listener.CurrentMessages);
+        Assert.Equal(42, message.EventId);
+        Assert.Equal(EventLevel.Warning, message.Level);
+        Assert.Equal("OtlpLogExporter", message.Payload?[0]);
+    }
+
+    [Theory]
+    [InlineData(typeof(ObjectDisposedException))]
+    [InlineData(typeof(InvalidOperationException))]
+    public void TryEnableIHttpClientFactoryIntegration_DoesNotFallBack_WhenCreateClientThrows(Type exceptionType)
+    {
+        using var listener = new TestEventListener(OpenTelemetryProtocolExporterEventSource.Log, EventLevel.Warning);
+
+        var services = new ServiceCollection();
+
+        var exception = (Exception)Activator.CreateInstance(exceptionType, "Named client pipeline failed.")!;
+        var httpClientFactory = new ThrowingHttpClientFactory(exception);
+
+        services.AddSingleton<IHttpClientFactory>(httpClientFactory);
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var options = new OtlpExporterOptions { Protocol = OtlpExportProtocol.HttpProtobuf };
+
+        Assert.True(options.TryEnableIHttpClientFactoryIntegration(serviceProvider, "OtlpLogExporter"));
+
+        // Only a failure to resolve IHttpClientFactory from a disposed container
+        // falls back to the default HttpClient. Failures while creating the
+        // named client itself (including an ObjectDisposedException thrown by a
+        // user's handler) must surface so a configured pipeline, e.g. one that
+        // adds authentication, is never silently bypassed while the container
+        // is healthy.
+        var actual = Assert.Throws<TargetInvocationException>(() => options.HttpClientFactory());
+
+        Assert.Same(exception, actual.InnerException);
+        Assert.Equal(["OtlpLogExporter"], httpClientFactory.RequestedNames);
+        Assert.Empty(listener.CurrentMessages);
+    }
+
     [Theory]
 #pragma warning disable CS0618 // Suppressing gRPC obsolete warning
     [InlineData(OtlpExportProtocol.Grpc, typeof(OtlpGrpcExportClient), false, 10000, null)]
@@ -237,7 +330,7 @@ public class OtlpExporterOptionsExtensionsTests
             using var transmissionHandler = exporterOptions.GetExportTransmissionHandler(new ExperimentalOptions(configuration), signalType);
             var persistentStorageTransmissionHandler = Assert.IsType<OtlpExporterPersistentStorageTransmissionHandler>(transmissionHandler);
 
-            var fileBlobProviderField = typeof(OtlpExporterPersistentStorageTransmissionHandler).GetField("persistentBlobProvider", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var fileBlobProviderField = typeof(OtlpExporterPersistentStorageTransmissionHandler).GetField("persistentBlobProvider", BindingFlags.NonPublic | BindingFlags.Instance);
             var persistentBlobProvider = Assert.IsType<FileBlobProvider>(fileBlobProviderField?.GetValue(persistentStorageTransmissionHandler));
 
             Assert.EndsWith(expectedDirectoryName, persistentBlobProvider.DirectoryPath, StringComparison.Ordinal);
@@ -347,6 +440,17 @@ public class OtlpExporterOptionsExtensionsTests
         foreach (var std in options.StandardHeaders)
         {
             Assert.Contains(headers, h => h.Key == std.Key && h.Value == std.Value);
+        }
+    }
+
+    private sealed class ThrowingHttpClientFactory(Exception exception) : IHttpClientFactory
+    {
+        public List<string> RequestedNames { get; } = [];
+
+        public HttpClient CreateClient(string name)
+        {
+            this.RequestedNames.Add(name);
+            throw exception;
         }
     }
 }
