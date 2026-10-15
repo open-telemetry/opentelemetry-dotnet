@@ -7,6 +7,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.20.0-beta.1
+
+Released 2026-Oct-15
+
 * A scrape request whose connection is aborted, or whose
   `X-Prometheus-Scrape-Timeout-Seconds` deadline elapses, now stops waiting
   for an in-progress metrics collection instead of continuing to wait for it
