@@ -66,8 +66,14 @@ internal static class PrometheusHeadersParser
 
                 if (parameter.StartsWith("q=".AsSpan(), StringComparison.OrdinalIgnoreCase))
                 {
+#if NET
+                    var qualityValue = parameter.Slice(2);
+#else
+                    var qualityValue = parameter.Slice(2).ToString();
+#endif
+
                     if (double.TryParse(
-                        parameter.Slice(2).ToString(),
+                        qualityValue,
                         NumberStyles.AllowDecimalPoint,
                         CultureInfo.InvariantCulture,
                         out var parsedQuality) &&
@@ -155,7 +161,11 @@ internal static class PrometheusHeadersParser
     {
         var trimmed = TrimQuotes(value);
 
+#if NET
+        return Version.TryParse(trimmed, out var version) && supportedVersions.Contains(version)
+#else
         return Version.TryParse(trimmed.ToString(), out var version) && supportedVersions.Contains(version)
+#endif
             ? version
             : null;
     }
