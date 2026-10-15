@@ -204,9 +204,8 @@ Released 2026-Oct-15
   export buffer with `TryFormat` and exported as string attributes, instead of
   through `ToString()`. This avoids allocating a string for each value. If
   `TryFormat` throws, only that attribute is dropped. When an attribute value
-  length limit is set, a value is formatted into at most three bytes per
-  allowed character; a value that does not fit falls back to a truncated
-  `ToString()` instead of growing the export buffer.
+  length limit is set, a value is formatted into a capped buffer; a value that
+  does not fit falls back to a truncated `ToString()` instead.
   ([#7929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7929))
 
 ## 1.19.1
