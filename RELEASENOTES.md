@@ -4,6 +4,76 @@ This file contains highlights and announcements covering all components.
 For more details see `CHANGELOG.md` files maintained in the root source
 directory of each individual package.
 
+## 1.20.0
+
+Release details: [1.20.0](https://github.com/open-telemetry/opentelemetry-dotnet/releases/tag/core-1.20.0)
+
+* **Breaking change** `byte[]` attributes longer than the configured attribute value
+  length limit (for example `OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT`) are now truncated
+  to that many bytes instead of being exported in full.
+* **Breaking change** `OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT` and `OTEL_LINK_ATTRIBUTE_COUNT_LIMIT`
+  now fall back to `OTEL_ATTRIBUTE_COUNT_LIMIT` (then the default of 128) when
+  not set, instead of falling back to `OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT`.
+* **Breaking change** Instrumentation scope attributes exported from `ActivitySource.Tags`
+  are now limited by `OTEL_ATTRIBUTE_COUNT_LIMIT` instead of
+  `OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT`. Only applications that set
+  `OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT` to a different value from `OTEL_ATTRIBUTE_COUNT_LIMIT`
+  are affected.
+* **Breaking change** (pre-release only versions): `LoggerProvider`'s protected
+  `TryCreateLogger(string? name, out Logger? logger)` extensibility method has
+  been replaced by `TryCreateLogger(LoggerOptions options, out Logger? logger)`.
+* Added `OpenTelemetryLoggerOptions.Version` and
+  `OpenTelemetryLoggerOptions.SchemaUrl` options to set an instrumentation
+  library version and schema URL applied to logs emitted via the
+  `Microsoft.Extensions.Logging` `ILogger` integration.
+* Added `Logger.SchemaUrl` and a `LoggerProvider.GetLogger` overload accepting
+  a schema URL parameter using the new `LoggerOptions` type.
+* `ConsoleLogRecordExporter` now writes an `Instrumentation scope (Logger)` section
+  (Name, Version, and Schema URL) for each exported `LogRecord`.
+* The OTLP log exporter now exports `schema_url` on `ScopeLogs`. Log records
+  emitted from a `Logger` with a schema URL set now populate `ScopeLogs.schema_url`
+  in exported OTLP requests.
+* Custom TLS certificate options (custom CA trust and mTLS) and the experimental
+  disk retry feature are explicitly marked as not supported on browser-based
+  platforms (e.g. Blazor).
+* Suppressed informational HTTP client logs from OTLP exporters by default.
+* Added improved self-diagnostics logging to improve the support experience.
+* Self-diagnostic features are explicitly disabled on browser-based platforms
+  (e.g. Blazor) and are now non-functional.
+* Added `TracerProviderBuilder.ConfigureSampler` intended for library authors
+  who need to influence sampling without overriding a sampler the application
+  has configured.
+* Fixed `SuppressInstrumentationScope` reference counts leaking between
+  inherited asynchronous execution contexts.
+* Fixed `ResourceBuilder.CreateDefault` ignoring `OTEL_RESOURCE_ATTRIBUTES` and
+  `OTEL_SERVICE_NAME` environment variables when the host `IConfiguration` does
+  not contain those settings.
+* Fixed a race that could incorrectly route a concurrent metric measurement to
+  the overflow point when its tag set was published as the cardinality limit was
+  reached.
+* Fixed `LogRecord.CategoryName` resetting the current `Logger`'s `Version` to
+  `null` when set to a new value.
+* Bounded the internal cache of `Logger` scopes keyed by instrumentation to
+  avoid unbounded growth.
+* Fixed the `MeterProvider` and its `IServiceProvider` being kept alive after the
+  host is disposed when using `Microsoft.Extensions.Diagnostics` versions prior
+  to .NET 9.0.
+* Fixed a race condition between recording a measurement and collecting a
+  histogram with delta temporality that could cause an empty data point to be exported.
+* Improved metric collection performance after metric streams are removed by
+  compacting metric storage during collection.
+* Optimize performance of `BaggagePropagator.Inject` on .NET Framework using
+  lookup tables.
+* Avoid closure allocations when serializing cached metric metadata.
+* Avoid logging malformed HTTP request headers in the exporter's diagnostic log.
+* Avoid buffering the whole compressed request body in memory before sending it
+  on .NET Framework when using HTTP/protobuf with gzip compression.
+* Fixed log records being dropped when using `OtlpExportProtocol.HttpProtobuf`
+  with `IHttpClientFactory` integration if the first export of logs happens while
+  the `IServiceProvider` is being disposed. The exporter now falls back to the
+  default `HttpClient` instead of failing the export.
+* Dozens of other minor performance improvements.
+
 ## 1.19.1
 
 Release details: [1.19.1](https://github.com/open-telemetry/opentelemetry-dotnet/releases/tag/core-1.19.1)

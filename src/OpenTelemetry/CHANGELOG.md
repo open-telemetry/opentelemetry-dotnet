@@ -6,6 +6,14 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.20.0
+
+Released 2026-Oct-15
+
+## 1.20.0-rc.1
+
+Released 2026-Oct-15
+
 * Fixed `SuppressInstrumentationScope` reference counts leaking between
   inherited asynchronous execution contexts.
   ([#7803](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7803))
@@ -62,6 +70,10 @@ Notes](../../RELEASENOTES.md).
   histogram with delta temporality that could cause an empty data point
   (with a count of zero) to be exported in the next collection cycle.
   ([#7923](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7923))
+
+* Improved metric collection performance after metric streams are removed by
+  compacting metric storage during collection.
+  ([#7945](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7945))
 
 ## 1.19.1
 
