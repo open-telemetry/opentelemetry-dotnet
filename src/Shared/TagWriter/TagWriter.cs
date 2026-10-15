@@ -409,8 +409,7 @@ internal abstract class TagWriter<TTagState, TArrayState>
 #if NET
     private bool WriteUtf8SpanFormattableTag(ref TTagState state, string key, IUtf8SpanFormattable value, Span<byte> buffer, int? tagValueMaxLength)
     {
-        // A UTF-16 char is at most 3 UTF-8 bytes, so a value truncated to the length limit always fits in the
-        // capped buffer. An oversized value falls back to a truncated ToString() rather than growing the export buffer.
+        // A UTF-16 char is at most 3 UTF-8 bytes
         const int MaxUtf8BytesPerChar = 3;
 
         if (tagValueMaxLength == 0)
@@ -419,6 +418,8 @@ internal abstract class TagWriter<TTagState, TArrayState>
             return true;
         }
 
+        // If max attribute length is in place, we'll cap the buffer size to avoid very large values exhausting the buffer
+        // If the buffer isn't large enough to contain the max possible truncated output, we'll pass it as-is and grow it if the write fails
         var isBufferCapped = false;
         if (tagValueMaxLength is { } maxLength && buffer.Length >= (long)maxLength * MaxUtf8BytesPerChar)
         {
@@ -426,31 +427,36 @@ internal abstract class TagWriter<TTagState, TArrayState>
             isBufferCapped = true;
         }
 
-        bool formatted;
-        int bytesWritten;
-
         try
         {
-            formatted = value.TryFormat(buffer, out bytesWritten, format: default, CultureInfo.InvariantCulture);
+            if (value.TryFormat(buffer, out var bytesWritten, format: default, CultureInfo.InvariantCulture))
+            {
+                this.EndUtf8StringTag(ref state, TruncateUtf8String(buffer[..bytesWritten], tagValueMaxLength));
+                return true;
+            }
         }
-        catch
+        catch (Exception)
         {
-            // Any exception here comes from the value itself, so only the tag is dropped.
             return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
         }
 
-        if (!formatted)
+        if (!isBufferCapped)
         {
-            if (isBufferCapped)
-            {
-                return this.WriteTruncatedToStringAsUtf8StringTag(ref state, key, value, buffer, tagValueMaxLength);
-            }
-
+            // Available buffer size was limited: throw so that the caller knows to grow the buffer
             throw new ArgumentOutOfRangeException(nameof(state), "The buffer is too small to hold the data being written.");
         }
 
-        this.EndUtf8StringTag(ref state, TruncateUtf8String(buffer[..bytesWritten], tagValueMaxLength));
-        return true;
+        try
+        {
+            // We don't want to grow the buffer indefinitely- just convert to string and truncate this
+            var bytesWritten = Encoding.UTF8.GetBytes(TruncateString(value.ToString().AsSpan(), tagValueMaxLength), buffer);
+            this.EndUtf8StringTag(ref state, buffer[..bytesWritten]);
+            return true;
+        }
+        catch (Exception)
+        {
+            return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
+        }
 
         // Truncates on whole code points, so a UTF-8 sequence or surrogate pair is never split.
         static ReadOnlySpan<byte> TruncateUtf8String(ReadOnlySpan<byte> value, int? maxLength)
@@ -478,28 +484,6 @@ internal abstract class TagWriter<TTagState, TArrayState>
         }
     }
 
-    private bool WriteTruncatedToStringAsUtf8StringTag(ref TTagState state, string key, IUtf8SpanFormattable value, Span<byte> buffer, int? tagValueMaxLength)
-    {
-        string? stringValue;
-
-        try
-        {
-            stringValue = value.ToString();
-        }
-        catch
-        {
-            return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
-        }
-
-        if (stringValue == null)
-        {
-            return this.LogUnsupportedTagTypeAndReturnFalse(key, value);
-        }
-
-        var bytesWritten = Encoding.UTF8.GetBytes(TruncateString(stringValue.AsSpan(), tagValueMaxLength), buffer);
-        this.EndUtf8StringTag(ref state, buffer[..bytesWritten]);
-        return true;
-    }
 #endif
 
     private void WriteCharValue(ref TArrayState state, char value)
