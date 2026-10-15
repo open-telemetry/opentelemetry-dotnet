@@ -7,6 +7,29 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Hardened the experimental disk retry feature.
+  * When running on .NET on non-Windows platforms, the retry directory and
+    the blob files within it are now created accessible to the current user
+    only, including when the directory is recreated after being deleted.
+  * Directory size accounting no longer follows subdirectories, avoiding
+    a symbolic-link/junction walk.
+  * Expired lease-file cleanup now correctly locates the lease timestamp
+    delimiter within the file name rather than the whole path.
+  * Storage maintenance no longer deletes or renames files with a `.blob`,
+    `.tmp` or `.lock` extension that the exporter did not create when the
+    retry directory is shared with other files. Only files named the way the
+    exporter names its blobs, and the temporary and lease files derived from
+    them, are now removed or renamed.
+  ([#7857](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7857))
+
+## 1.20.0
+
+Released 2026-Oct-15
+
+## 1.20.0-rc.1
+
+Released 2026-Oct-15
+
 * Avoid closure allocations when serializing cached metric metadata.
   ([#7841](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7841))
 
@@ -49,20 +72,11 @@ Notes](../../RELEASENOTES.md).
   `OTEL_ATTRIBUTE_COUNT_LIMIT` are affected.
   ([#7902](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7902))
 
-* Hardened the experimental disk retry feature.
-  * When running on .NET on non-Windows platforms, the retry directory and
-    the blob files within it are now created accessible to the current user
-    only, including when the directory is recreated after being deleted.
-  * Directory size accounting no longer follows subdirectories, avoiding
-    a symbolic-link/junction walk.
-  * Expired lease-file cleanup now correctly locates the lease timestamp
-    delimiter within the file name rather than the whole path.
-  * Storage maintenance no longer deletes or renames files with a `.blob`,
-    `.tmp` or `.lock` extension that the exporter did not create when the
-    retry directory is shared with other files. Only files named the way the
-    exporter names its blobs, and the temporary and lease files derived from
-    them, are now removed or renamed.
-  ([#7857](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7857))
+* Fixed log records being dropped when using `OtlpExportProtocol.HttpProtobuf`
+  with `IHttpClientFactory` integration if the first export of logs happens
+  while the `IServiceProvider` is being disposed. The exporter now falls back
+  to the default `HttpClient` instead of failing the export.
+  ([#7916](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7916))
 
 ## 1.19.1
 

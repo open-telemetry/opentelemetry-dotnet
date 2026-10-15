@@ -1,6 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Buffers.Binary;
 using System.Globalization;
 using OpenTelemetry.Internal;
 
@@ -73,20 +74,7 @@ public sealed class TraceIdRatioBasedSampler
         Span<byte> traceIdBytes = stackalloc byte[16];
         samplingParameters.TraceId.CopyTo(traceIdBytes);
 #endif
-        return new SamplingResult((GetLowerLong(traceIdBytes) & long.MaxValue) < this.idUpperBound);
-    }
 
-    private static long GetLowerLong(ReadOnlySpan<byte> bytes)
-    {
-        long result = 0;
-        for (var i = 0; i < 8; i++)
-        {
-            result <<= 8;
-#pragma warning disable CS0675 // Bitwise-or operator used on a sign-extended operand
-            result |= bytes[i] & 0xff;
-#pragma warning restore CS0675 // Bitwise-or operator used on a sign-extended operand
-        }
-
-        return result;
+        return new SamplingResult((BinaryPrimitives.ReadInt64BigEndian(traceIdBytes) & long.MaxValue) < this.idUpperBound);
     }
 }
