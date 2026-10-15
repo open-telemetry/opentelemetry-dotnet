@@ -363,9 +363,9 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
     internal void RequestDiscardedDueToSizeLimit(string signalType, long itemCount, int requestSizeBytes, int maxRequestSizeBytes)
         => this.WriteEvent(41, signalType, itemCount, requestSizeBytes, maxRequestSizeBytes);
 
-    [Event(42, Message = "OTLP {0} export client reload failed for options '{1}'. The previous client remains active. Exception: {2}", Level = EventLevel.Warning)]
+    [Event(44, Message = "OTLP {0} export client reload failed for options '{1}'. The previous client remains active. Exception: {2}", Level = EventLevel.Warning)]
     internal void ExportClientReloadFailed(string signalType, string optionsName, string exception)
-        => this.WriteEvent(42, signalType, optionsName, exception);
+        => this.WriteEvent(44, signalType, optionsName, exception);
 
     [Event(43, Message = "OTLP export client reload ignored a protocol change. The exporter must be restarted to change protocol.", Level = EventLevel.Warning)]
     internal void ExportClientProtocolChangeIgnored()
@@ -379,6 +379,22 @@ internal sealed class OpenTelemetryProtocolExporterEventSource : EventSource, IC
             this.ExportClientReloadFailed(signalType.ToString(), optionsName, ex.ToInvariantString());
         }
     }
+
+    [NonEvent]
+    internal void HttpClientFactoryUnavailable(string httpClientName, Exception ex)
+    {
+        if (Log.IsEnabled(EventLevel.Warning, EventKeywords.All))
+        {
+            this.HttpClientFactoryUnavailable(httpClientName, ex.ToInvariantString());
+        }
+    }
+
+    [Event(
+        42,
+        Message = "IHttpClientFactory could not be resolved to create the HttpClient named '{0}' because the IServiceProvider has been disposed. The default HttpClient will be used instead. Exception: {1}",
+        Level = EventLevel.Warning)]
+    internal void HttpClientFactoryUnavailable(string httpClientName, string exceptionMessage)
+        => this.WriteEvent(42, httpClientName, exceptionMessage);
 
     private static string RedactEndpointUri(Uri endpoint)
         => endpoint.GetComponents(UriComponents.SchemeAndServer | UriComponents.Path, UriFormat.UriEscaped);

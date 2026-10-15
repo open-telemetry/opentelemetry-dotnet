@@ -81,7 +81,7 @@ public sealed class ReloadableExportClientTests
 
         configuration["Headers"] = "invalid";
         configuration.Reload();
-        var warning = Assert.Single(listener.Messages, message => message.EventId == 42);
+        var warning = Assert.Single(listener.Messages, message => message.EventId == 44);
         Assert.NotNull(warning.Payload);
         Assert.Equal("Metrics", warning.Payload[0]);
         Assert.Equal("reload-fails", warning.Payload[1]);

@@ -7,6 +7,21 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Reload OTLP export clients when named exporter options or `UseOtlpExporter`
+  configuration changes, without recreating providers. Protocol, maximum request
+  size, experimental/retry settings, processor/batch options, and metric reader
+  options remain fixed for the lifetime of each exporter or pipeline. See
+  [reloading named exporter configuration](README.md#reloading-named-exporter-configuration).
+  ([#7842](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7842))
+
+## 1.20.0
+
+Released 2026-Oct-15
+
+## 1.20.0-rc.1
+
+Released 2026-Oct-15
+
 * Avoid closure allocations when serializing cached metric metadata.
   ([#7841](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7841))
 
@@ -49,12 +64,11 @@ Notes](../../RELEASENOTES.md).
   `OTEL_ATTRIBUTE_COUNT_LIMIT` are affected.
   ([#7902](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7902))
 
-* Reload OTLP export clients when named exporter options or `UseOtlpExporter`
-  configuration changes, without recreating providers. Protocol, maximum request
-  size, experimental/retry settings, processor/batch options, and metric reader
-  options remain fixed for the lifetime of each exporter or pipeline. See
-  [reloading named exporter configuration](README.md#reloading-named-exporter-configuration).
-  ([#7842](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7842))
+* Fixed log records being dropped when using `OtlpExportProtocol.HttpProtobuf`
+  with `IHttpClientFactory` integration if the first export of logs happens
+  while the `IServiceProvider` is being disposed. The exporter now falls back
+  to the default `HttpClient` instead of failing the export.
+  ([#7916](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7916))
 
 ## 1.19.1
 

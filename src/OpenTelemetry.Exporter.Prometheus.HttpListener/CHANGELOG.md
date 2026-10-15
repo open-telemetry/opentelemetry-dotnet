@@ -7,6 +7,13 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.20.0-beta.1
+
+Released 2026-Oct-15
+
+* Updated OpenTelemetry core component version(s) to `1.20.0`.
+  ([#7950](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7950))
+
 ## 1.19.1-beta.1
 
 Released 2026-Sep-21
