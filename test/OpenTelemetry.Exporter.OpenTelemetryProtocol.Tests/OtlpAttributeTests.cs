@@ -469,6 +469,7 @@ public class OtlpAttributeTests
     [InlineData(typeof(InvalidOperationException))]
     [InlineData(typeof(ArgumentException))]
     [InlineData(typeof(IndexOutOfRangeException))]
+    [InlineData(typeof(ArgumentOutOfRangeException))]
     public void ExceptionInUtf8TryFormatIsCaught(Type exceptionType)
     {
         var kvp = new KeyValuePair<string, object?>("key", new Utf8ValueThatThrows(exceptionType));
