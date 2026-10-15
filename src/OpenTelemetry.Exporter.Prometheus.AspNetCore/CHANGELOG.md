@@ -7,6 +7,17 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed array- and map-valued attributes being serialized as the .NET type
+  name (e.g. `System.Byte[]`, `System.Int32[]`) instead of being JSON-encoded
+  as per the specification. `byte[]`-valued attributes are now
+  Base64-encoded, and other array- and map-valued attributes are now
+  JSON-encoded.
+  ([#7694](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7694))
+
+## 1.20.0-beta.1
+
+Released 2026-Oct-15
+
 * A scrape request whose connection is aborted, or whose
   `X-Prometheus-Scrape-Timeout-Seconds` deadline elapses, now stops waiting
   for an in-progress metrics collection instead of continuing to wait for it
@@ -14,12 +25,8 @@ Notes](../../RELEASENOTES.md).
   the background.
   ([#7856](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7856))
 
-* Fixed array- and map-valued attributes being serialized as the .NET type
-  name (e.g. `System.Byte[]`, `System.Int32[]`) instead of being JSON-encoded
-  as per the specification. `byte[]`-valued attributes are now
-  Base64-encoded, and other array- and map-valued attributes are now
-  JSON-encoded.
-  ([#7694](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7694))
+* Updated OpenTelemetry core component version(s) to `1.20.0`.
+  ([#7950](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7950))
 
 ## 1.19.1-beta.1
 

@@ -14,6 +14,8 @@ internal sealed class OpenTelemetryDeclarativeConfigurationEventSource : EventSo
 {
     public static readonly OpenTelemetryDeclarativeConfigurationEventSource Log = new();
 
+    private const string StrictModeDocumentation = "https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/src/OpenTelemetry.Configuration.Declarative/README.md#strict-mode";
+
     [Event(1, Message = "Declarative config file_format warning: {0}", Level = EventLevel.Warning)]
     public void FileFormatWarning(string message) => this.WriteEvent(1, message);
 
@@ -35,8 +37,8 @@ internal sealed class OpenTelemetryDeclarativeConfigurationEventSource : EventSo
     [Event(7, Message = "Declarative config: UseDeclarativeConfiguration has already been called on this IServiceCollection with '{0}'; the request to use '{1}' will be ignored. Only the first registered file path applies.", Level = EventLevel.Warning)]
     public void DeclarativeConfigurationAlreadyRegistered(string originalFilePath, string newFilePath) => this.WriteEvent(7, originalFilePath, newFilePath);
 
-    [Event(8, Message = "Declarative config: overlay registration started for file '{0}'.", Level = EventLevel.Verbose)]
-    public void OverlayRegistrationStarted(string filePath) => this.WriteEvent(8, filePath);
+    [Event(8, Message = "Declarative config: registration started for file '{0}'.", Level = EventLevel.Verbose)]
+    public void RegistrationStarted(string filePath) => this.WriteEvent(8, filePath);
 
     [Event(9, Message = "Declarative config: source registered for file '{0}'.", Level = EventLevel.Verbose)]
     public void SourceRegistered(string filePath) => this.WriteEvent(9, filePath);
@@ -77,7 +79,7 @@ internal sealed class OpenTelemetryDeclarativeConfigurationEventSource : EventSo
     [Event(18, Message = "Declarative config: resource.attributes contains a duplicate name '{0}'; only the first occurrence is used and this entry will be skipped.", Level = EventLevel.Warning)]
     public void DuplicateResourceAttributeName(string name) => this.WriteEvent(18, name);
 
-    [Event(19, Message = "Declarative config: the existing IConfiguration descriptor could not be resolved to an IConfiguration instance when registering '{0}'; prior configuration will not be carried forward into the declarative configuration overlay.", Level = EventLevel.Warning)]
+    [Event(19, Message = "Declarative config: the existing IConfiguration descriptor could not be resolved to an IConfiguration instance when registering '{0}'; prior configuration will not be carried forward when declarative configuration is registered.", Level = EventLevel.Warning)]
     public void PriorConfigurationResolutionFailed(string filePath) => this.WriteEvent(19, filePath);
 
     [Event(20, Message = "Declarative config: no IConfiguration was registered at the time UseDeclarativeConfiguration was called for '{0}'. If host infrastructure registers IConfiguration after this call, it will take precedence and the declarative configuration source will be unreachable.", Level = EventLevel.Warning)]
@@ -134,4 +136,37 @@ internal sealed class OpenTelemetryDeclarativeConfigurationEventSource : EventSo
 
     [Event(35, Message = "Declarative config: resource.attributes entry '{0}' has an integer value '{1}' that exceeds the 64-bit integer range and will be skipped.", Level = EventLevel.Warning)]
     public void UnrepresentableResourceAttributeInteger(string name, string value) => this.WriteEvent(35, name, value);
+
+    [Event(
+        36,
+        Message = "Declarative config: strict mode is ignoring these OpenTelemetry settings because '{0}' is in use: {1}. See " + StrictModeDocumentation,
+        Level = EventLevel.Warning)]
+    public void StrictModeSettingsIgnored(string filePath, string keys) => this.WriteEvent(36, filePath, keys);
+
+    [Event(
+        37,
+        Message = "Declarative config: configuration provider '{1}' is not masked by '{0}' and can override the document for {2}. See " + StrictModeDocumentation,
+        Level = EventLevel.Warning)]
+    public void LaterSourceOverridesStrictMode(string filePath, string providerType, string keys) => this.WriteEvent(37, filePath, providerType, keys);
+
+    [Event(
+        38,
+        Message = "Declarative config: an environment variables configuration provider is not masked by '{0}' and can override the document for {1}. See " + StrictModeDocumentation,
+        Level = EventLevel.Warning)]
+    public void LaterEnvironmentVariablesOverrideStrictMode(string filePath, string keys) => this.WriteEvent(38, filePath, keys);
+
+    [Event(
+        39,
+        Message = "Declarative config: using '{0}' as passed to UseDeclarativeConfiguration; OTEL_CONFIG_FILE '{1}' is ignored.",
+        Level = EventLevel.Warning)]
+    public void ExplicitFilePathOverridesConfigFile(string filePath, string configFileValue) => this.WriteEvent(39, filePath, configFileValue);
+
+    [Event(40, Message = "Declarative config: strict mode diagnostics could not be evaluated: {0}", Level = EventLevel.Verbose)]
+    public void StrictModeDiagnosticsUnavailable(string reason) => this.WriteEvent(40, reason);
+
+    [Event(
+        41,
+        Message = "Declarative config: the source for '{0}' is not reachable from the application's IConfiguration, so strict mode cannot mask OTEL_* settings. See " + StrictModeDocumentation,
+        Level = EventLevel.Warning)]
+    public void StrictModeConfigurationSourceUnreachable(string filePath) => this.WriteEvent(41, filePath);
 }

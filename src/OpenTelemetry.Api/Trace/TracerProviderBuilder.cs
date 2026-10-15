@@ -30,6 +30,14 @@ public abstract class TracerProviderBuilder
     /// <summary>
     /// Adds the given <see cref="ActivitySource"/> names to the list of subscribed sources.
     /// </summary>
+    /// <remarks>
+    /// Source names support wildcard matching:
+    /// <list type="bullet">
+    /// <item><description><c>*</c> matches zero or more characters;</description></item>
+    /// <item><description><c>?</c> matches exactly one character.</description></item>
+    /// </list>
+    /// Escaping wildcard characters is not supported.
+    /// </remarks>
     /// <param name="names">Activity source names.</param>
     /// <returns>Returns <see cref="TracerProviderBuilder"/> for chaining.</returns>
     public abstract TracerProviderBuilder AddSource(params string[] names);

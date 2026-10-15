@@ -195,11 +195,11 @@ message Metric {
   string description = 2;
 
   // The unit in which the metric value is reported. Follows the format
-  // described by https://unitsofmeasure.org/ucum.html.
+  // described by https://ucum.org/ucum and https://units-of-measurement.org/ 
   string unit = 3;
 
   // Data determines the aggregation type (if any) of the metric, what is the
-  // reported value type for the data points, as well as the relatationship to
+  // reported value type for the data points, as well as the relationship to
   // the time interval over which they are reported.
   oneof data {
     Gauge gauge = 5;
@@ -217,6 +217,8 @@ message Metric {
   // Attribute keys MUST be unique (it is not allowed to have more than one
   // attribute with the same key).
   // The behavior of software that receives duplicated keys can be unpredictable.
+  //
+  // [Since v1.2.0]
   repeated opentelemetry.proto.common.v1.KeyValue metadata = 12;
 }
 

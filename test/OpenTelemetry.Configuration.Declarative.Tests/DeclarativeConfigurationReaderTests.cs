@@ -49,7 +49,7 @@ public sealed class DeclarativeConfigurationReaderTests
     public void Translate_EmptyYaml_ProducesNoKeys()
     {
         // Intentional: an empty stream is a no-op and does not require file_format.
-        // In overlay mode an empty/missing file contributes nothing so the SDK uses defaults.
+        // An empty file contributes no keys, so the SDK uses defaults.
         var data = ReadConfiguration(string.Empty);
 
         Assert.Empty(data);

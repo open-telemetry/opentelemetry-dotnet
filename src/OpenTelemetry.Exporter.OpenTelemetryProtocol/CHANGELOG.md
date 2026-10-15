@@ -7,6 +7,14 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.20.0
+
+Released 2026-Oct-15
+
+## 1.20.0-rc.1
+
+Released 2026-Oct-15
+
 * Avoid closure allocations when serializing cached metric metadata.
   ([#7841](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7841))
 
@@ -21,6 +29,39 @@ Notes](../../RELEASENOTES.md).
 
 * Avoid logging malformed HTTP request headers in the exporter's diagnostic log.
   ([#7858](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7858))
+
+* Avoid buffering the whole compressed request body in memory before sending it
+  on .NET Framework when using HTTP/protobuf with gzip compression.
+  ([#7879](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7879))
+
+* The OTLP log exporter now exports `schema_url` on `ScopeLogs`. Log
+  records emitted from a `Logger` with a schema URL set now populate
+  `ScopeLogs.schema_url` in exported OTLP requests.
+  ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
+
+* **Breaking:** `byte[]` attributes longer than the configured attribute value
+  length limit (for example `OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT`) are now
+  truncated to that many bytes instead of being exported in full.
+  ([#7893](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7893))
+
+* **Breaking:** `OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT` and
+  `OTEL_LINK_ATTRIBUTE_COUNT_LIMIT` now fall back to
+  `OTEL_ATTRIBUTE_COUNT_LIMIT` (then the default of 128) when not set, instead
+  of falling back to `OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT`.
+  ([#7894](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7894))
+
+* **Breaking:** Instrumentation scope attributes exported from
+  `ActivitySource.Tags` are now limited by `OTEL_ATTRIBUTE_COUNT_LIMIT` instead
+  of `OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT`. Only applications that set
+  `OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT` to a different value from
+  `OTEL_ATTRIBUTE_COUNT_LIMIT` are affected.
+  ([#7902](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7902))
+
+* Fixed log records being dropped when using `OtlpExportProtocol.HttpProtobuf`
+  with `IHttpClientFactory` integration if the first export of logs happens
+  while the `IServiceProvider` is being disposed. The exporter now falls back
+  to the default `HttpClient` instead of failing the export.
+  ([#7916](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7916))
 
 ## 1.19.1
 

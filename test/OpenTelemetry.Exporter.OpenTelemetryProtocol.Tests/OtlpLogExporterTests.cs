@@ -185,6 +185,72 @@ public class OtlpLogExporterTests
         Assert.NotNull(testHandler.HttpRequestMessage);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void LogsAreExportedWhenServiceProviderIsDisposedBeforeFirstExport(bool callUseOpenTelemetry)
+    {
+        var requests = new List<string>();
+
+        using var server = TestHttpServer.RunServer(
+            context =>
+            {
+                lock (requests)
+                {
+                    requests.Add(context.Request.Url!.AbsolutePath);
+                }
+
+                context.Response.StatusCode = 200;
+                context.Response.Close();
+            },
+            out var host,
+            out var port);
+
+        var services = new ServiceCollection();
+
+        var namedClientInvocations = 0;
+
+        services.AddHttpClient("OtlpLogExporter", configureClient: (client) => namedClientInvocations++);
+
+        services.AddLogging(builder =>
+        {
+            ConfigureOtlpExporter(
+                builder,
+                callUseOpenTelemetry,
+                configureExporterAndProcessor: (exporter, processor) =>
+                {
+                    exporter.Protocol = OtlpExportProtocol.HttpProtobuf;
+                    exporter.Endpoint = new Uri($"http://{host}:{port}/v1/logs");
+                    processor.ExportProcessorType = ExportProcessorType.Batch;
+
+                    // Ensure the only export is the one triggered by disposal
+                    // rather than the batch processor's scheduled timer.
+                    processor.BatchExportProcessorOptions.ScheduledDelayMilliseconds = int.MaxValue;
+                });
+        });
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(OtlpLogExporterTests));
+
+        logger.HelloFrom("tomato", 2.99);
+
+        // No export has happened yet so the export client has not been created.
+        Assert.Equal(0, namedClientInvocations);
+
+        // Disposing the container disposes the LoggerProvider which flushes the
+        // pending batch. The container is already marked as disposed by then so
+        // IHttpClientFactory cannot be resolved from it.
+        serviceProvider.Dispose();
+
+        lock (requests)
+        {
+            Assert.Equal(["/v1/logs"], requests);
+        }
+
+        Assert.Equal(0, namedClientInvocations);
+    }
+
     [Fact]
     public void AddOtlpExporterSetsDefaultBatchExportProcessor()
     {
@@ -936,6 +1002,36 @@ public class OtlpLogExporterTests
 
         attribute = TryGetAttribute(otlpLogRecord, "AttributeThree");
         Assert.Null(attribute);
+    }
+
+    [Fact]
+    public void ByteArrayLogRecordAttributeIsTruncatedToValueLengthLimit()
+    {
+        var sdkLimitOptions = new SdkLimitOptions { AttributeValueLengthLimit = 4 };
+
+        var logRecords = new List<LogRecord>();
+        using var loggerFactory = LoggerFactory.Create(builder =>
+        {
+            builder.UseOpenTelemetry(
+                logging => logging.AddInMemoryExporter(logRecords),
+                options => options.ParseStateValues = true);
+        });
+
+        var logger = loggerFactory.CreateLogger(string.Empty);
+        var state = new List<KeyValuePair<string, object?>> { new("Bytes", new byte[] { 1, 2, 3, 4, 5, 6 }) };
+        logger.Log(
+            LogLevel.Information,
+            default,
+            state,
+            null,
+            (s, _) => "message");
+
+        var otlpLogRecord = ToOtlpLogs(sdkLimitOptions, new(), logRecords[0]);
+
+        Assert.NotNull(otlpLogRecord);
+        var attribute = TryGetAttribute(otlpLogRecord, "Bytes");
+        Assert.NotNull(attribute);
+        Assert.Equal([1, 2, 3, 4], attribute.Value.BytesValue.ToByteArray());
     }
 
     [Fact]
@@ -1881,6 +1977,104 @@ public class OtlpLogExporterTests
         Assert.Single(request.ResourceLogs[0].ScopeLogs);
 
         Assert.Equal(expectedScopeName, request.ResourceLogs[0].ScopeLogs[0].Scope?.Name);
+    }
+
+    [Theory]
+    [InlineData("https://opentelemetry.io/schemas/1.0.0", "https://opentelemetry.io/schemas/1.0.0")]
+    [InlineData(null, "")]
+    [InlineData("", "")]
+#pragma warning disable CA1054 // Change the type of parameter from 'string' to 'System.Uri'
+    public void LogRecordLoggerSchemaUrlIsExportedWhenUsingBridgeApi(string? schemaUrl, string expectedSchemaUrl)
+#pragma warning restore CA1054 // Change the type of parameter from 'string' to 'System.Uri'
+    {
+        var logRecords = new List<LogRecord>();
+
+        var options = new LoggerOptions()
+        {
+            Name = "MyLogger",
+            SchemaUrl = schemaUrl,
+            Version = "1.0.0",
+        };
+
+        using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+                   .AddInMemoryExporter(logRecords)
+                   .Build())
+        {
+            var logger = loggerProvider.GetLogger(options);
+            logger.EmitLog(new LogRecordData());
+        }
+
+        Assert.Single(logRecords);
+
+        var batch = new Batch<LogRecord>([logRecords[0]], 1);
+        var request = CreateLogsExportRequest(DefaultSdkLimitOptions, new ExperimentalOptions(), batch, ResourceBuilder.CreateEmpty().Build());
+
+        Assert.NotNull(request);
+        Assert.Single(request.ResourceLogs);
+        Assert.Single(request.ResourceLogs[0].ScopeLogs);
+
+        Assert.Equal(expectedSchemaUrl, request.ResourceLogs[0].ScopeLogs[0].SchemaUrl);
+    }
+
+    [Fact]
+    public void LogRecordsFromLoggersWithSameNameVersionAndDifferentSchemaUrlsAreExportedAsSeparateScopes()
+    {
+        var logRecords = new List<LogRecord>();
+
+        using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+                   .AddInMemoryExporter(logRecords)
+                   .Build())
+        {
+            loggerProvider.GetLogger(new LoggerOptions() { Name = "MyLogger", Version = "1.0.0", SchemaUrl = "https://opentelemetry.io/schemas/1.0.0" }).EmitLog(new LogRecordData());
+            loggerProvider.GetLogger(new LoggerOptions() { Name = "MyLogger", Version = "1.0.0", SchemaUrl = "https://opentelemetry.io/schemas/2.0.0" }).EmitLog(new LogRecordData());
+            loggerProvider.GetLogger(new LoggerOptions() { Name = "MyLogger", Version = "1.0.0", SchemaUrl = "https://opentelemetry.io/schemas/1.0.0" }).EmitLog(new LogRecordData());
+        }
+
+        Assert.Equal(3, logRecords.Count);
+
+        var batch = new Batch<LogRecord>([.. logRecords], logRecords.Count);
+        var request = CreateLogsExportRequest(DefaultSdkLimitOptions, new ExperimentalOptions(), batch, ResourceBuilder.CreateEmpty().Build());
+
+        Assert.NotNull(request);
+        Assert.Single(request.ResourceLogs);
+
+        var scopeLogs = request.ResourceLogs[0].ScopeLogs;
+        Assert.Equal(2, scopeLogs.Count);
+        Assert.All(scopeLogs, scopeLog => Assert.Equal("MyLogger", scopeLog.Scope?.Name));
+
+        var schema1 = Assert.Single(scopeLogs, scopeLog => scopeLog.SchemaUrl == "https://opentelemetry.io/schemas/1.0.0");
+        Assert.Equal(2, schema1.LogRecords.Count);
+
+        var schema2 = Assert.Single(scopeLogs, scopeLog => scopeLog.SchemaUrl == "https://opentelemetry.io/schemas/2.0.0");
+        Assert.Single(schema2.LogRecords);
+    }
+
+    [Fact]
+    public void LogRecordsFromLoggersWithNullAndEmptySchemaUrlAreExportedAsTheSameScope()
+    {
+        var logRecords = new List<LogRecord>();
+
+        using (var loggerProvider = Sdk.CreateLoggerProviderBuilder()
+                   .AddInMemoryExporter(logRecords)
+                   .Build())
+        {
+            loggerProvider.GetLogger(new LoggerOptions() { Name = "MyLogger", Version = "1.0.0", SchemaUrl = null }).EmitLog(new LogRecordData());
+            loggerProvider.GetLogger(new LoggerOptions() { Name = "MyLogger", Version = "1.0.0", SchemaUrl = string.Empty }).EmitLog(new LogRecordData());
+        }
+
+        Assert.Equal(2, logRecords.Count);
+
+        var batch = new Batch<LogRecord>([.. logRecords], logRecords.Count);
+        var request = CreateLogsExportRequest(DefaultSdkLimitOptions, new ExperimentalOptions(), batch, ResourceBuilder.CreateEmpty().Build());
+
+        Assert.NotNull(request);
+
+        var logs = Assert.Single(request.ResourceLogs);
+        var scopeLog = Assert.Single(logs.ScopeLogs);
+
+        Assert.Equal("MyLogger", scopeLog.Scope?.Name);
+        Assert.Equal(string.Empty, scopeLog.SchemaUrl);
+        Assert.Equal(2, scopeLog.LogRecords.Count);
     }
 
     [Theory]

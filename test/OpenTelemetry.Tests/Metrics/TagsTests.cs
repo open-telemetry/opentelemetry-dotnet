@@ -177,4 +177,91 @@ public class TagsTests
 
         Assert.True(hashes.Count >= 99, $"Only {hashes.Count} distinct hashes for 100 distinct keys.");
     }
+
+#if NETFRAMEWORK
+    [Fact]
+    public void ComputeHashCode_LegacyCollidingStringValuesDoNotShareAHashCode()
+    {
+        var values = CreateLegacyCollidingValues(256);
+
+        Assert.Equal(values.Length, values.Distinct(StringComparer.Ordinal).Count());
+
+        var hashes = values
+            .Select(value => new Tags([new("tenant", value)]).GetHashCode())
+            .Distinct()
+            .Count();
+
+        Assert.True(hashes >= values.Length - 1, $"Only {hashes} distinct hashes for {values.Length} distinct values.");
+    }
+
+    [Fact]
+    public void Lookup_DoesNotConcentrateLegacyCollidingValuesInOneBucket()
+    {
+        const int CardinalityLimit = 2000;
+
+        var comparer = new CountingTagsComparer();
+        var lookup = new System.Collections.Concurrent.ConcurrentDictionary<Tags, int>(comparer);
+
+        var values = CreateLegacyCollidingValues(CardinalityLimit + 1);
+
+        for (var i = 0; i < CardinalityLimit; i++)
+        {
+            Assert.True(lookup.TryAdd(new Tags([new("tenant", values[i])]), i));
+        }
+
+        comparer.EqualsCalls = 0;
+        Assert.False(lookup.TryGetValue(new Tags([new("tenant", values[CardinalityLimit])]), out _));
+        var legacyCollidingComparisons = comparer.EqualsCalls;
+
+        comparer.EqualsCalls = 0;
+        Assert.False(lookup.TryGetValue(new Tags([new("tenant", "benign-value")]), out _));
+        var benignComparisons = comparer.EqualsCalls;
+
+        Assert.True(legacyCollidingComparisons <= 8, $"Expected at most a handful of comparisons, but a legacy-colliding lookup performed {legacyCollidingComparisons}.");
+        Assert.True(benignComparisons <= 8, $"Expected at most a handful of comparisons, but a benign lookup performed {benignComparisons}.");
+    }
+
+    [Fact]
+    public void Lookup_DoesNotConcentrateLegacyCollidingKeysInOneBucket()
+    {
+        const int CardinalityLimit = 2000;
+
+        var comparer = new CountingTagsComparer();
+        var lookup = new System.Collections.Concurrent.ConcurrentDictionary<Tags, int>(comparer);
+
+        var keys = CreateLegacyCollidingValues(CardinalityLimit + 1);
+
+        for (var i = 0; i < CardinalityLimit; i++)
+        {
+            Assert.True(lookup.TryAdd(new Tags([new(keys[i], "value")]), i));
+        }
+
+        comparer.EqualsCalls = 0;
+        Assert.False(lookup.TryGetValue(new Tags([new(keys[CardinalityLimit], "value")]), out _));
+        var legacyCollidingComparisons = comparer.EqualsCalls;
+
+        comparer.EqualsCalls = 0;
+        Assert.False(lookup.TryGetValue(new Tags([new("benign-key", "value")]), out _));
+        var benignComparisons = comparer.EqualsCalls;
+
+        Assert.True(legacyCollidingComparisons <= 8, $"Expected at most a handful of comparisons, but a legacy-colliding-key lookup performed {legacyCollidingComparisons}.");
+        Assert.True(benignComparisons <= 8, $"Expected at most a handful of comparisons, but a benign lookup performed {benignComparisons}.");
+    }
+
+    private static string[] CreateLegacyCollidingValues(int count)
+        => [.. Enumerable.Range(0, count).Select(i => "\0" + new string('A', 64) + i.ToString("D5", CultureInfo.InvariantCulture))];
+
+    private sealed class CountingTagsComparer : IEqualityComparer<Tags>
+    {
+        public int EqualsCalls { get; set; }
+
+        public bool Equals(Tags x, Tags y)
+        {
+            this.EqualsCalls++;
+            return TagsComparer.Instance.Equals(x, y);
+        }
+
+        public int GetHashCode(Tags obj) => TagsComparer.Instance.GetHashCode(obj);
+    }
+#endif
 }

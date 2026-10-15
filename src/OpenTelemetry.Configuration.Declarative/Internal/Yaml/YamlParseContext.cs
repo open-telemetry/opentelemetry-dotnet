@@ -29,8 +29,21 @@ internal sealed class YamlParseContext
     {
         Guard.ThrowIfNull(resolveVariable);
 
-        this.resolveVariable = resolveVariable;
+        this.resolveVariable = name =>
+        {
+            var value = resolveVariable(name);
+            this.ReferencedEnvironmentVariables[name] = value;
+            return value;
+        };
     }
+
+    /// <summary>
+    /// Gets the environment variables that substitution references in scalars resolved so far,
+    /// whether or not each reference has a default, mapped to the value each resolved to
+    /// (<see langword="null"/> if it was not set).
+    /// </summary>
+    internal Dictionary<string, string?> ReferencedEnvironmentVariables { get; } =
+        new(OtelEnvironmentVariables.NameComparer);
 
     /// <summary>
     /// Applies environment variable substitution and then YAML 1.2 core-schema resolution to

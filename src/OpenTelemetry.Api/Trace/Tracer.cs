@@ -78,9 +78,7 @@ public class Tracer
         SpanAttributes? initialAttributes = null,
         IEnumerable<Link>? links = null,
         DateTimeOffset startTime = default)
-    {
-        return this.StartSpanHelper(StartSpanBehaviors.NewSpanAsRoot | StartSpanBehaviors.DeactivateNewSpan, name, kind, default, initialAttributes, links, startTime);
-    }
+        => this.StartSpanHelper(StartSpanBehaviors.NewSpanAsRoot | StartSpanBehaviors.DeactivateNewSpan, name, kind, default, initialAttributes, links, startTime);
 
     /// <summary>
     /// Starts a span and does not make it as current span.
@@ -101,9 +99,7 @@ public class Tracer
         SpanAttributes? initialAttributes = null,
         IEnumerable<Link>? links = null,
         DateTimeOffset startTime = default)
-    {
-        return this.StartSpan(name, kind, parentSpan?.Context ?? default, initialAttributes, links, startTime);
-    }
+        => this.StartSpan(name, kind, parentSpan?.Context ?? default, initialAttributes, links, startTime);
 
     /// <summary>
     /// Starts a span and does not make it as current span.
@@ -124,9 +120,7 @@ public class Tracer
         SpanAttributes? initialAttributes = null,
         IEnumerable<Link>? links = null,
         DateTimeOffset startTime = default)
-    {
-        return this.StartSpanHelper(StartSpanBehaviors.DeactivateNewSpan, name, kind, in parentContext, initialAttributes, links, startTime);
-    }
+        => this.StartSpanHelper(StartSpanBehaviors.DeactivateNewSpan, name, kind, in parentContext, initialAttributes, links, startTime);
 
     /// <summary>
     /// Starts a span and make it the current active span.
@@ -147,9 +141,7 @@ public class Tracer
         SpanAttributes? initialAttributes = null,
         IEnumerable<Link>? links = null,
         DateTimeOffset startTime = default)
-    {
-        return this.StartActiveSpan(name, kind, parentSpan?.Context ?? default, initialAttributes, links, startTime);
-    }
+        => this.StartActiveSpan(name, kind, parentSpan?.Context ?? default, initialAttributes, links, startTime);
 
     /// <summary>
     /// Starts a span and make it the current active span.
@@ -170,23 +162,18 @@ public class Tracer
         SpanAttributes? initialAttributes = null,
         IEnumerable<Link>? links = null,
         DateTimeOffset startTime = default)
-    {
-        return this.StartSpanHelper(StartSpanBehaviors.ActivateNewSpan, name, kind, in parentContext, initialAttributes, links, startTime);
-    }
+        => this.StartSpanHelper(StartSpanBehaviors.ActivateNewSpan, name, kind, in parentContext, initialAttributes, links, startTime);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static ActivityKind ConvertToActivityKind(SpanKind kind)
+    private static ActivityKind ConvertToActivityKind(SpanKind kind) => kind switch
     {
-        return kind switch
-        {
-            SpanKind.Client => ActivityKind.Client,
-            SpanKind.Consumer => ActivityKind.Consumer,
-            SpanKind.Internal => ActivityKind.Internal,
-            SpanKind.Producer => ActivityKind.Producer,
-            SpanKind.Server => ActivityKind.Server,
-            _ => ActivityKind.Internal,
-        };
-    }
+        SpanKind.Client => ActivityKind.Client,
+        SpanKind.Consumer => ActivityKind.Consumer,
+        SpanKind.Internal => ActivityKind.Internal,
+        SpanKind.Producer => ActivityKind.Producer,
+        SpanKind.Server => ActivityKind.Server,
+        _ => ActivityKind.Internal,
+    };
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private TelemetrySpan StartSpanHelper(
@@ -206,7 +193,11 @@ public class Tracer
         }
 
         var activityKind = ConvertToActivityKind(kind);
-        var activityLinks = links?.Select(l => l.ActivityLink);
+
+        IEnumerable<ActivityLink>? activityLinks = links is ICollection<Link> { Count: 0 }
+            ? []
+            : links?.Select(l => l.ActivityLink);
+
         var previousActivity = Activity.Current;
 
         if (startSpanBehavior.HasFlag(StartSpanBehaviors.NewSpanAsRoot)

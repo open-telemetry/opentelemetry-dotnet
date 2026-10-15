@@ -693,12 +693,14 @@ public class TracerProviderBuilderExtensionsTests
         Assert.NotNull(activity);
         Assert.False(activity.Recorded);
 
-        void RegisterConfigurator() =>
+        void RegisterConfigurator()
+        {
             builder.ConfigureSampler((sp, sampler) =>
             {
                 receivedSampler = sampler;
                 return new AlwaysOffSampler();
             });
+        }
     }
 
     [Fact]
@@ -993,8 +995,8 @@ public class TracerProviderBuilderExtensionsTests
         Assert.Equal(3, configureBuilderInvocations);
 
         Assert.True(provider.Sampler is MySampler);
-        Assert.Single(provider.Instrumentations);
-        Assert.True(provider.Instrumentations[0] is MyInstrumentation);
+        var instrumentation = Assert.Single(provider.Instrumentations);
+        Assert.True(instrumentation is MyInstrumentation);
         Assert.True(provider.Processor is MyProcessor);
 
         postAction(provider);

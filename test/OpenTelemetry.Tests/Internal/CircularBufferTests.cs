@@ -1,6 +1,8 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
+using System.Diagnostics;
+
 namespace OpenTelemetry.Internal.Tests;
 
 public class CircularBufferTests
@@ -141,13 +143,27 @@ public class CircularBufferTests
         }
 
         var exceededMaxSpinCount = false;
+        var timeout = Stopwatch.StartNew();
 
-        for (var i = 0; i < 1_000_000 && !exceededMaxSpinCount; i++)
+        while (!exceededMaxSpinCount && timeout.Elapsed < TimeSpan.FromSeconds(30))
         {
             if (!circularBuffer.TryAdd("item", maxSpinCount: 1, out var count))
             {
                 Assert.Equal(0, count);
-                exceededMaxSpinCount = true;
+
+                // TryAdd() also returns false if the buffer is full. This is the only
+                // reader, so Count cannot have decreased since TryAdd() returned: if
+                // the buffer is not full now, then it was not full when TryAdd() failed.
+                exceededMaxSpinCount = circularBuffer.Count < circularBuffer.Capacity;
+            }
+
+            // Drain the buffer so that the writers never fill it up
+            if (!exceededMaxSpinCount && circularBuffer.Count >= circularBuffer.Capacity / 2)
+            {
+                for (var i = circularBuffer.Count; i > 0; i--)
+                {
+                    circularBuffer.Read();
+                }
             }
         }
 
@@ -159,7 +175,6 @@ public class CircularBufferTests
         await Task.WhenAll(writers);
 
         Assert.True(exceededMaxSpinCount);
-        Assert.True(circularBuffer.Count < circularBuffer.Capacity);
     }
 
     [Fact]

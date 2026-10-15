@@ -186,6 +186,11 @@ public class OtlpHttpExportClientTests
         Assert.NotNull(request);
         Assert.NotNull(request.Content);
         Assert.Contains(request.Content.Headers, h => h.Key == "Content-Encoding" && h.Value.Contains("gzip"));
+
+#if NETFRAMEWORK
+        // Without chunked transfer, HttpClientHandler buffers the whole compressed body before sending it.
+        Assert.True(request.Headers.TransferEncodingChunked);
+#endif
     }
 
     [Fact]

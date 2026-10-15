@@ -6,6 +6,14 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.20.0
+
+Released 2026-Oct-15
+
+## 1.20.0-rc.1
+
+Released 2026-Oct-15
+
 * Fixed `SuppressInstrumentationScope` reference counts leaking between
   inherited asynchronous execution contexts.
   ([#7803](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7803))
@@ -27,6 +35,45 @@ Notes](../../RELEASENOTES.md).
   and `OTEL_SERVICE_NAME` environment variables when the host
   `IConfiguration` does not contain those settings.
   ([#7855](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7855))
+
+* Added improved self-diagnostics logging to improve the support experience.
+  The new `SelfDiagnosticsOptions` class configures a rolling file sink and a
+  console sink through the standard options pipeline. Sinks are off by default.
+  ([#7588](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7588))
+
+* Fixed a race that could incorrectly route a concurrent metric measurement to
+  the overflow point when its tag set was published as the cardinality limit was
+  reached.
+  ([#7804](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7804))
+
+* Added `OpenTelemetryLoggerOptions.Version` and
+  `OpenTelemetryLoggerOptions.SchemaUrl` options to set an
+  instrumentation library version and schema URL applied to logs emitted via
+  the `Microsoft.Extensions.Logging` `ILogger` integration.
+  ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
+
+* Fixed `LogRecord.CategoryName` resetting the current `Logger`'s `Version`
+  to `null` when set to a new value.
+  ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
+
+* Bounded the internal cache of `Logger` scopes keyed by instrumentation to
+  avoid unbounded growth.
+  ([#7727](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7727))
+
+* Fixed the `MeterProvider` and its `IServiceProvider` being kept alive after
+  the host is disposed when using `Microsoft.Extensions.Diagnostics` versions
+  prior to 9.0, which never dispose their `MetricsSubscriptionManager` (and its
+  underlying `MeterListener`).
+  ([#7924](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7924))
+
+* Fixed a race condition between recording a measurement and collecting a
+  histogram with delta temporality that could cause an empty data point
+  (with a count of zero) to be exported in the next collection cycle.
+  ([#7923](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7923))
+
+* Improved metric collection performance after metric streams are removed by
+  compacting metric storage during collection.
+  ([#7945](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7945))
 
 ## 1.19.1
 

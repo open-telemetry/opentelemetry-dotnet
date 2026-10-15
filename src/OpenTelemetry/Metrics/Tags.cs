@@ -9,6 +9,12 @@ internal readonly struct Tags : IEquatable<Tags>
 {
     public static readonly Tags EmptyTags = new([]);
 
+#if !NET && !NETSTANDARD2_1_OR_GREATER
+    // A per-process random seed used to hash string tag keys/values
+    // on target frameworks whose string.GetHashCode() is not randomized.
+    private static readonly ulong HashSeed = GenerateHashSeed();
+#endif
+
     private readonly int hashCode;
 
     public Tags(KeyValuePair<string, object?>[] keyValuePairs)
@@ -82,7 +88,7 @@ internal readonly struct Tags : IEquatable<Tags>
             unchecked
             {
                 hash = (hash ^ (uint)GetKeyHashCode(keyHashCache, item.Key)) * 0x9E3779B1u;
-                hash = (hash ^ (uint)(item.Value?.GetHashCode() ?? 0)) * 0x9E3779B1u;
+                hash = (hash ^ (uint)GetValueHashCode(item.Value)) * 0x9E3779B1u;
             }
         }
 
@@ -116,7 +122,7 @@ internal readonly struct Tags : IEquatable<Tags>
 #if NET || NETSTANDARD2_1_OR_GREATER
         var hash = key.GetHashCode(StringComparison.Ordinal);
 #else
-        var hash = key.GetHashCode();
+        var hash = GetSeededStringHashCode(key);
 #endif
 
         entry.Key = key;
@@ -124,6 +130,59 @@ internal readonly struct Tags : IEquatable<Tags>
 
         return hash;
     }
+
+#if !NET && !NETSTANDARD2_1_OR_GREATER
+    private static int GetValueHashCode(object? value)
+        => value is string s ? GetSeededStringHashCode(s) : (value?.GetHashCode() ?? 0);
+
+    private static int GetSeededStringHashCode(string value)
+    {
+        // Produces a hash of a string tag key/value for the metric-point lookup dictionary on target
+        // frameworks that lack System.HashCode. On .NET Framework, string.GetHashCode() is not
+        // randomized by default and its 64-bit implementation stops at the first NUL character, so a
+        // malicious actor who controls a tag value could precompute distinct values that share a hash
+        // code and collapse every colliding tag set into one dictionary bucket - turning each lookup into
+        // an O(n) scan of full string comparisons. Hashing the UTF-16 code units with a per-process random
+        // seed and non-linear (splitmix64) mixing makes such collisions impossible to precompute and
+        // independent of any embedded NUL. The seed is constant within a process, so equal tag sets
+        // still hash equally and dictionary lookups remain correct.
+        unchecked
+        {
+            var hash = HashSeed;
+
+            foreach (var c in value)
+            {
+                hash = SplitMix64(hash + c);
+            }
+
+            hash = SplitMix64(hash + (uint)value.Length);
+
+            return (int)hash ^ (int)(hash >> 32);
+        }
+    }
+
+    private static ulong SplitMix64(ulong z)
+    {
+        unchecked
+        {
+            z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9UL;
+            z = (z ^ (z >> 27)) * 0x94D049BB133111EBUL;
+            return z ^ (z >> 31);
+        }
+    }
+
+    private static ulong GenerateHashSeed()
+    {
+        var seed = new byte[sizeof(ulong)];
+
+        using (var randomNumberGenerator = System.Security.Cryptography.RandomNumberGenerator.Create())
+        {
+            randomNumberGenerator.GetBytes(seed);
+        }
+
+        return BitConverter.ToUInt64(seed, 0);
+    }
+#endif
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool SequenceEqual(

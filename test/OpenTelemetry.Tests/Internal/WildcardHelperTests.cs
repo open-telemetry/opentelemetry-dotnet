@@ -62,6 +62,11 @@ public class WildcardHelperTests
     [InlineData(new[] { "a", "x", "y" }, "abbbt", false)]
     [InlineData(new[] { "a", "x", "y" }, "ccxccc", false)]
     [InlineData(new[] { "a", "x", "y" }, "wecgy", false)]
+    [InlineData(new[] { "a.?" }, "a.b", true)]
+    [InlineData(new[] { "a.?" }, "a.bc", false)]
+    [InlineData(new[] { "a.?" }, "a.", false)]
+    [InlineData(new[] { "a.?.*" }, "a.b.c", true)]
+    [InlineData(new[] { "a.?.*" }, "a.bc.c", false)]
     public void WildcardRegex_ShouldMatch(string[] patterns, string matchWith, bool isMatch)
     {
         var regex = WildcardHelper.GetWildcardRegex(patterns);

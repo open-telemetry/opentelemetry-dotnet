@@ -215,9 +215,9 @@ public sealed class DeclarativeConfigurationSdkIntegrationTests
     }
 
     [Fact]
-    public void OverlayPrecedence_SourceAddedAfterYaml_OverridesYaml()
+    public void ConfigurationPrecedence_SourceAddedAfterYaml_OverridesYaml()
     {
-        // Prove overlay ordering: a source added after YAML (higher position in the
+        // Prove IConfiguration ordering: a source added after YAML (higher position in the
         // IConfiguration chain) takes precedence over YAML values.
         using var yamlFile = DeclarativeYamlTestFile.CreateDeclarativeYaml(
             resourceAttributesList: "service.name=from-yaml");
@@ -245,7 +245,7 @@ public sealed class DeclarativeConfigurationSdkIntegrationTests
     }
 
     [Fact]
-    public void OverlayPrecedence_YamlWinsOverSourceAddedBeforeIt()
+    public void ResourcePrecedence_YamlWinsOverSourceAddedBeforeIt()
     {
         // DeclarativeResourceDetector (position 5) outranks OtelEnvResourceDetector (position 3).
         // Even when OTEL_RESOURCE_ATTRIBUTES says "from-env", the YAML typed attribute wins.

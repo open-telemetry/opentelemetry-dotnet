@@ -26,10 +26,15 @@ option go_package = "go.opentelemetry.io/proto/otlp/collector/profiles/v1develop
 
 // Service that can be used to push profiles between one Application instrumented with
 // OpenTelemetry and a collector, or between a collector and a central collector.
+//
+// [Since v1.4.0]
 service ProfilesService {
   rpc Export(ExportProfilesServiceRequest) returns (ExportProfilesServiceResponse) {}
 }
 
+// Status: [Alpha]
+//
+// [Since v1.4.0]
 message ExportProfilesServiceRequest {
   // An array of ResourceProfiles.
   // For data coming from a single resource this array will typically contain one
@@ -39,9 +44,14 @@ message ExportProfilesServiceRequest {
   repeated opentelemetry.proto.profiles.v1development.ResourceProfiles resource_profiles = 1;
 
   // The reference table containing all data shared by profiles across the message being sent.
+  //
+  // [Since v1.7.0]
   opentelemetry.proto.profiles.v1development.ProfilesDictionary dictionary = 2;
 }
 
+// Status: [Alpha]
+//
+// [Since v1.4.0]
 message ExportProfilesServiceResponse {
   // The details of a partially successful export request.
   //
@@ -61,6 +71,9 @@ message ExportProfilesServiceResponse {
   ExportProfilesPartialSuccess partial_success = 1;
 }
 
+// Status: [Alpha]
+//
+// [Since v1.4.0]
 message ExportProfilesPartialSuccess {
   // The number of rejected profiles.
   //

@@ -10,6 +10,7 @@ using OpenTelemetry.Internal;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
+using static OpenTelemetry.Internal.SelfDiagnostics;
 
 namespace OpenTelemetry;
 
@@ -32,10 +33,10 @@ public static class Sdk
 #if NET
         if (!OperatingSystem.IsBrowser())
         {
-            SelfDiagnostics.EnsureInitialized();
+            EnsureInitialized();
         }
 #else
-        SelfDiagnostics.EnsureInitialized();
+        EnsureInitialized();
 #endif
 
         var sdkAssembly = typeof(Sdk).Assembly;

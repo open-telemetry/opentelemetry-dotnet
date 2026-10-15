@@ -43,12 +43,10 @@ public class TelemetrySpan : IDisposable
     /// Sets the status of the span execution.
     /// </summary>
     /// <param name="value">Status to be set.</param>
-    public void SetStatus(Status value)
-    {
+    public void SetStatus(Status value) =>
 #pragma warning disable CS0618 // Type or member is obsolete
         this.Activity.SetStatus(value);
 #pragma warning restore CS0618 // Type or member is obsolete
-    }
 
     /// <summary>
     /// Updates the <see cref="TelemetrySpan"/> name.
@@ -62,11 +60,7 @@ public class TelemetrySpan : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public TelemetrySpan UpdateName(string name)
     {
-        if (this.Activity != null)
-        {
-            this.Activity.DisplayName = name;
-        }
-
+        this.Activity?.DisplayName = name;
         return this;
     }
 
@@ -255,10 +249,8 @@ public class TelemetrySpan : IDisposable
     /// End the span.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void End()
-    {
+    public void End() =>
         this.Activity?.Stop();
-    }
 
     /// <summary>
     /// End the span.
@@ -362,7 +354,8 @@ public class TelemetrySpan : IDisposable
         }
     }
 
-    private void SetAttributeInternal(string key, object? value)
+    // This method is generic so that value-type attributes are only boxed when the span is recording
+    private void SetAttributeInternal<T>(string key, T value)
     {
         if (this.IsRecording)
         {

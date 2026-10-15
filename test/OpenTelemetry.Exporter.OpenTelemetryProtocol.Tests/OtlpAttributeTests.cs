@@ -306,6 +306,32 @@ public class OtlpAttributeTests
         }
     }
 
+    [Theory]
+    [InlineData(4, 3, 3)]
+    [InlineData(4, 4, 4)]
+    [InlineData(4, 5, 4)]
+    [InlineData(null, 5, 5)]
+    public void ByteArrayRespectsTagValueMaxLength(int? tagValueMaxLength, int byteCount, int expectedCount)
+    {
+        var bytes = Enumerable.Range(1, byteCount).Select(i => (byte)i).ToArray();
+        var kvp = new KeyValuePair<string, object?>("key", bytes);
+
+        Assert.True(TryTransformTag(kvp, out var attribute, tagValueMaxLength));
+        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.BytesValue, attribute.Value.ValueCase);
+        Assert.Equal(bytes.Take(expectedCount).ToArray(), attribute.Value.BytesValue.ToByteArray());
+    }
+
+    [Fact]
+    public void ByteArrayNestedInKvListRespectsTagValueMaxLength()
+    {
+        var kvList = new List<KeyValuePair<string, object?>> { new("inner", new byte[] { 1, 2, 3, 4, 5 }) };
+        var kvp = new KeyValuePair<string, object?>("key", kvList);
+
+        Assert.True(TryTransformTag(kvp, out var attribute, 2));
+        var inner = Assert.Single(attribute.Value.KvlistValue.Values);
+        Assert.Equal([1, 2], inner.Value.BytesValue.ToByteArray());
+    }
+
     [Fact]
     public void ExceptionInToStringIsCaught()
     {
