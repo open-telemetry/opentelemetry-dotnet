@@ -6,6 +6,10 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed legacy self-diagnostics logging terminating the process when the log
+  file is truncated or the log volume runs out of space.
+  ([#7956](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7956))
+
 ## 1.20.0
 
 Released 2026-Oct-15
