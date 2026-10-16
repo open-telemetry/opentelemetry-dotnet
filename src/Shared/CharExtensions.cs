@@ -34,6 +34,10 @@ internal static class CharExtensions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static bool IsAsciiHexDigit(char value) =>
             value is (>= '0' and <= '9') or (>= 'a' and <= 'f') or (>= 'A' and <= 'F');
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static bool IsAsciiHexDigitLower(char value) =>
+            value is (>= '0' and <= '9') or (>= 'a' and <= 'f');
     }
 }
 

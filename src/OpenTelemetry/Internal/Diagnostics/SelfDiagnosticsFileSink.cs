@@ -292,11 +292,15 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
 
     private static FileStream OpenLogFile(string path)
     {
+        // The index is always past any file already in the series, so the name is expected to
+        // be free; an existing entry is most likely a symbolic link planted by another user of
+        // the log directory. FileMode.CreateNew fails instead of following it (and writing into
+        // its target), and the next attempt moves on to the next index.
         // FileShare.Read lets external tools tail the log while it's open.
 #if NET
         var options = new FileStreamOptions
         {
-            Mode = FileMode.Append,
+            Mode = FileMode.CreateNew,
             Access = FileAccess.Write,
             Share = FileShare.Read,
         };
@@ -308,7 +312,7 @@ internal sealed class SelfDiagnosticsFileSink : ISelfDiagnosticsSink
 
         return new FileStream(path, options);
 #else
-        return new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.Read);
+        return new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.Read);
 #endif
     }
 

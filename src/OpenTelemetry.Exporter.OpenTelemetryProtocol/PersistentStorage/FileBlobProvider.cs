@@ -104,7 +104,14 @@ public class FileBlobProvider : PersistentBlobProvider, IDisposable
 
         foreach (var file in Directory.EnumerateFiles(this.DirectoryPath, "*.blob", SearchOption.TopDirectoryOnly).OrderByDescending(f => f))
         {
-            var fileDateTime = PersistentStorageHelper.GetDateTimeFromBlobName(file);
+            // The storage directory can be shared with files that were not created by this component, which must not be
+            // leased, read and deleted as if they were blobs. On Windows, *.blob also matches differently cased extensions.
+            if (!PersistentStorageHelper.IsBlobFileName(Path.GetFileName(file)))
+            {
+                continue;
+            }
+
+            var fileDateTime = PersistentStorageHelper.GetBlobCreationTime(file);
             if (fileDateTime > retentionDeadline)
             {
                 yield return new FileBlob(file, this.directorySizeTracker);
@@ -170,12 +177,11 @@ public class FileBlobProvider : PersistentBlobProvider, IDisposable
         {
             if (!Directory.Exists(this.DirectoryPath))
             {
-                Directory.CreateDirectory(this.DirectoryPath);
+                PersistentStorageHelper.CreateSubdirectory(this.DirectoryPath);
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            PersistentStorageEventSource.Log.PersistentStorageException(nameof(FileBlobProvider), $"Error creating directory {this.DirectoryPath}", ex);
             return;
         }
 
