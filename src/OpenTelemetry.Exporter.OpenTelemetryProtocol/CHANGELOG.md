@@ -48,6 +48,11 @@ Notes](../../RELEASENOTES.md).
     are symbolic links are also no longer read.
   ([#7857](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7857))
 
+* Only the first 4 KiB of the body of an unsuccessful response is now read and
+  written to the exporter's diagnostic log, instead of up to
+  `MaxResponseSizeBytes`.
+  ([#7969](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7969))
+
 * Fixed attributes whose value is converted with `ToString()` (for example
   enums, `Uri` or `StringValues`) being dropped as unsupported, and for metric
   data points omitted from every later export, when the export buffer had to
