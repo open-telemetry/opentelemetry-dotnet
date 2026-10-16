@@ -7,6 +7,14 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+## 1.20.0
+
+Released 2026-Oct-15
+
+## 1.20.0-rc.1
+
+Released 2026-Oct-15
+
 * Avoid closure allocations when serializing cached metric metadata.
   ([#7841](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7841))
 
@@ -57,6 +65,12 @@ Notes](../../RELEASENOTES.md).
   length limit is set, a value is formatted into a capped buffer; a value that
   does not fit falls back to a truncated `ToString()` instead.
   ([#7929](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7929))
+  
+* Fixed log records being dropped when using `OtlpExportProtocol.HttpProtobuf`
+  with `IHttpClientFactory` integration if the first export of logs happens
+  while the `IServiceProvider` is being disposed. The exporter now falls back
+  to the default `HttpClient` instead of failing the export.
+  ([#7916](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7916))
 
 ## 1.19.1
 
