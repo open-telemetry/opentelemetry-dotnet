@@ -22,7 +22,7 @@ Notes](../../RELEASENOTES.md).
   enums, `Uri` or `StringValues`) being dropped as unsupported, and for metric
   data points omitted from every later export, when the export buffer had to
   be resized while the attribute was being written.
-  ([#NNNN](https://github.com/open-telemetry/opentelemetry-dotnet/pull/NNNN))
+  ([#7973](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7973))
 
 ## 1.20.0
 
