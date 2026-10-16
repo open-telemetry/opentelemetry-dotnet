@@ -131,7 +131,9 @@ public class OtlpExporterOptions : IOtlpExporterOptions
                 new HttpClientHandler
                 {
                     AllowAutoRedirect = false,
-#if NET
+#if NETSTANDARD
+                    CheckCertificateRevocationList = true,
+#elif NET
 #pragma warning disable CA1416 // Validate platform compatibility
                     CheckCertificateRevocationList = !OperatingSystem.IsBrowser(),
 #pragma warning restore CA1416 // Validate platform compatibility
