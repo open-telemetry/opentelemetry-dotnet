@@ -34,7 +34,7 @@ Notes](../../RELEASENOTES.md).
 * Self-diagnostics messages written to the sinks configured by
   `SelfDiagnosticsOptions` are now truncated to 16,384 characters so that the
   memory used by entries waiting to be written is bounded.
-  ([#NNNN](https://github.com/open-telemetry/opentelemetry-dotnet/pull/NNNN))
+  ([#7969](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7969))
 
 ## 1.20.0
 

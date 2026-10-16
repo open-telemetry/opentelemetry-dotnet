@@ -21,7 +21,7 @@ Notes](../../RELEASENOTES.md).
 * Only the first 4 KiB of the body of an unsuccessful response is now read and
   written to the exporter's diagnostic log, instead of up to
   `MaxResponseSizeBytes`.
-  ([#NNNN](https://github.com/open-telemetry/opentelemetry-dotnet/pull/NNNN))
+  ([#7969](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7969))
 
 ## 1.20.0
 
