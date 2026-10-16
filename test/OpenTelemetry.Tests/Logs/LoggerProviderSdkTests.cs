@@ -4,6 +4,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Exporter;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Logs.Tests;
 
@@ -49,6 +50,74 @@ public sealed class LoggerProviderSdkTests
         Assert.True(provider.ForceFlush());
 
         Assert.Single(exportedItems);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void EmitLogRespectsSuppressInstrumentationTest(bool includeAttributes)
+    {
+        List<LogRecord> exportedItems = [];
+
+        using var provider = Sdk.CreateLoggerProviderBuilder()
+            .AddInMemoryExporter(exportedItems)
+            .Build();
+
+        var logger = provider.GetLogger("TestLogger");
+
+        using (SuppressInstrumentationScope.Begin())
+        {
+            if (includeAttributes)
+            {
+                logger.EmitLog(new() { Body = "Suppressed" }, new() { { "key", "value" } });
+            }
+            else
+            {
+                logger.EmitLog(new() { Body = "Suppressed" });
+            }
+        }
+
+        Assert.Empty(exportedItems);
+
+        logger.EmitLog(new() { Body = "Hello world" });
+
+        var logRecord = Assert.Single(exportedItems);
+        Assert.Equal("Hello world", logRecord.Body);
+    }
+
+    [Theory]
+    [InlineData(ExportResult.Success)]
+    [InlineData(ExportResult.Failure)]
+    public void EmitLogDuringExportIsNotFedBackIntoPipelineTest(ExportResult exportResult)
+    {
+        Logger? logger = null;
+        var exportCount = 0;
+
+        using var provider = Sdk.CreateLoggerProviderBuilder()
+#pragma warning disable CA2000 // Dispose objects before losing scope
+            .AddProcessor(new SimpleLogRecordExportProcessor(new DelegatingExporter<LogRecord>
+            {
+                OnExportFunc = batch =>
+                {
+                    using var scope = SuppressInstrumentationScope.Begin();
+
+                    // Bound recursion so the regression cannot overflow the test host's stack.
+                    if (++exportCount < 3)
+                    {
+                        logger!.EmitLog(new() { Body = "Emitted during export" });
+                    }
+
+                    return exportResult;
+                },
+            }))
+#pragma warning restore CA2000 // Dispose objects before losing scope
+            .Build();
+
+        logger = provider.GetLogger("TestLogger");
+
+        logger.EmitLog(new() { Body = "Hello world" });
+
+        Assert.Equal(1, exportCount);
     }
 
     [Fact]
