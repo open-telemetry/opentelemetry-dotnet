@@ -46,6 +46,10 @@ Notes](../../RELEASENOTES.md).
   all subsequent telemetry in that execution context to be suppressed.
   ([#7966](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7966))
 
+* Self-diagnostics log files, whether configured through `OTEL_DIAGNOSTICS.json`
+  or `SelfDiagnosticsOptions`, are now always created as new files.
+  ([#7968](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7968))
+
 ## 1.20.0
 
 Released 2026-Oct-15

@@ -74,6 +74,44 @@ public class SelfDiagnosticsConfigRefresherTests
     }
 
     [Fact]
+    public void SelfDiagnosticsConfigRefresher_ReplacesExistingLogFile()
+    {
+        var logDirectory = Utils.GetCurrentMethodName();
+        var logFilePath = GetLogFilePath(logDirectory);
+
+        Directory.CreateDirectory(logDirectory);
+        File.WriteAllText(logFilePath, "stale content");
+
+        using var configRefresher = CreateRefresher(logDirectory);
+
+        Assert.StartsWith(MessageOnNewFileString, ReadLogFile(logDirectory), StringComparison.Ordinal);
+    }
+
+#if NET
+    [Fact]
+    public void SelfDiagnosticsConfigRefresher_DoesNotFollowLink()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "Creating symbolic links requires elevated privileges on Windows.");
+
+        var logDirectory = Utils.GetCurrentMethodName();
+        var logFilePath = GetLogFilePath(logDirectory);
+        var linkTarget = Path.GetFullPath(Path.Combine(logDirectory, "target.txt"));
+
+        Directory.CreateDirectory(logDirectory);
+        File.Delete(logFilePath);
+        File.WriteAllText(linkTarget, "target content");
+        File.CreateSymbolicLink(logFilePath, linkTarget);
+
+        using var configRefresher = CreateRefresher(logDirectory);
+
+        // The link was replaced by the log file and its target was left alone.
+        Assert.Equal("target content", File.ReadAllText(linkTarget));
+        Assert.Null(new FileInfo(logFilePath).LinkTarget);
+        Assert.StartsWith(MessageOnNewFileString, ReadLogFile(logDirectory), StringComparison.Ordinal);
+    }
+#endif
+
+    [Fact]
     public void SelfDiagnosticsConfigRefresher_CaptureAfterLogFileTruncated()
     {
         var logDirectory = Utils.GetCurrentMethodName();
