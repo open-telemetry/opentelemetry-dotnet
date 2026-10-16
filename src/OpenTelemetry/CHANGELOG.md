@@ -19,6 +19,10 @@ Notes](../../RELEASENOTES.md).
   through `OpenTelemetryLoggerOptions`.
   ([#7959](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7959))
 
+* Fixed legacy self-diagnostics logging terminating the process when the log
+  file is truncated or the log volume runs out of space.
+  ([#7956](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7956))
+
 * Improve the assignment of values to exponential histogram buckets when the
   value is near a bucket boundary by using a pre-computed lookup table.
   ([#7911](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7911))

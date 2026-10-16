@@ -35,7 +35,7 @@ public class SelfDiagnosticsEventListenerTests
 
         // Emitting a Verbose event. Or any EventSource event with lower severity than Error.
         OpenTelemetrySdkEventSource.Log.ActivityStarted("Activity started", "1");
-        Assert.False(configRefresher.TryGetLogStreamCalled);
+        Assert.False(configRefresher.WriteLogCalled);
     }
 
     [Fact]
@@ -46,7 +46,7 @@ public class SelfDiagnosticsEventListenerTests
 
         // Emitting an Error event. Or any EventSource event with higher than or equal to to Error severity.
         OpenTelemetrySdkEventSource.Log.TracerProviderException("TestEvent", "Exception Details");
-        Assert.True(configRefresher.TryGetLogStreamCalled);
+        Assert.True(configRefresher.WriteLogCalled);
     }
 
     [Fact]
@@ -63,7 +63,7 @@ public class SelfDiagnosticsEventListenerTests
         listener.WriteEvent(eventMessage, null);
 
         // Assert
-        Assert.True(configRefresher.TryGetLogStreamCalled);
+        Assert.True(configRefresher.WriteLogCalled);
         stream.Dispose();
         memoryMappedFile.Dispose();
         AssertFileOutput(LOGFILEPATH, eventMessage);
@@ -96,7 +96,7 @@ public class SelfDiagnosticsEventListenerTests
         listener.WriteEvent(eventMessage, Array.AsReadOnly(payload));
 
         // Assert
-        Assert.True(configRefresher.TryGetLogStreamCalled);
+        Assert.True(configRefresher.WriteLogCalled);
         stream.Dispose();
         memoryMappedFile.Dispose();
         AssertFileOutput(logFilePath, expectedMessage);
@@ -153,7 +153,7 @@ public class SelfDiagnosticsEventListenerTests
         OpenTelemetrySdkEventSource.Log.ActivityStarted("ActivityStart", "123");
 
         // Assert
-        Assert.False(configRefresher.TryGetLogStreamCalled);
+        Assert.False(configRefresher.WriteLogCalled);
         stream.Dispose();
         memoryMappedFile.Dispose();
 
@@ -190,7 +190,7 @@ public class SelfDiagnosticsEventListenerTests
         OpenTelemetrySdkEventSource.Log.TracerProviderException("TestEvent", "Exception Details");
 
         // Assert
-        Assert.True(configRefresher.TryGetLogStreamCalled);
+        Assert.True(configRefresher.WriteLogCalled);
         stream.Dispose();
         memoryMappedFile.Dispose();
 
