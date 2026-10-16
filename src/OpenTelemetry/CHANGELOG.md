@@ -6,6 +6,11 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed a possible race condition on ARM64 when multiple threads record the
+  first measurement with no tags, or the first overflow measurement, that could
+  cause the measurement to be recorded incorrectly.
+  ([#7951](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7951))
+
 * Fixed legacy self-diagnostics logging terminating the process when the log
   file is truncated or the log volume runs out of space.
   ([#7956](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7956))
