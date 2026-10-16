@@ -38,7 +38,9 @@ internal static class OpenTelemetryConfigurationExtensions
 
         if (!Uri.TryCreate(stringValue, UriKind.Absolute, out value))
         {
-            logger.LogInvalidConfigurationValue(key, stringValue);
+            // A URI may carry credentials in its userinfo, path, or query and one
+            // which cannot be parsed cannot be reduced to the parts safe to log.
+            logger.LogInvalidConfigurationValue(key, "[REDACTED]");
             return false;
         }
 

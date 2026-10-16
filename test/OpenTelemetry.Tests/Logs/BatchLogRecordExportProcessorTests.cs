@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #if !NETFRAMEWORK
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Internal;
+using OpenTelemetry.Tests;
 
 namespace OpenTelemetry.Logs.Tests;
 
@@ -73,8 +75,8 @@ public sealed class BatchLogRecordExportProcessorTests
 
         processor.Shutdown();
 
-        Assert.Single(exportedItems);
-        Assert.Same(logRecord, exportedItems[0]);
+        var item = Assert.Single(exportedItems);
+        Assert.Same(logRecord, item);
     }
 
     [Fact]
@@ -101,8 +103,8 @@ public sealed class BatchLogRecordExportProcessorTests
         processor.OnEnd(logRecord);
         processor.Shutdown();
 
-        Assert.Single(exportedItems);
-        Assert.Same(logRecord, exportedItems[0]);
+        var item = Assert.Single(exportedItems);
+        Assert.Same(logRecord, item);
 
         state.Dispose();
 
@@ -133,8 +135,8 @@ public sealed class BatchLogRecordExportProcessorTests
         processor.OnEnd(logRecord);
         processor.Shutdown();
 
-        Assert.Single(exportedItems);
-        Assert.NotSame(logRecord, exportedItems[0]);
+        var item = Assert.Single(exportedItems);
+        Assert.NotSame(logRecord, item);
     }
 
     [Fact]
@@ -152,8 +154,79 @@ public sealed class BatchLogRecordExportProcessorTests
         processor.OnEnd(logRecord);
         processor.Shutdown();
 
-        Assert.Single(exportedItems);
-        Assert.Same(logRecord, exportedItems[0]);
+        var item = Assert.Single(exportedItems);
+        Assert.Same(logRecord, item);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void LogRecordIsNotReusedWhenSimpleProcessorExporterStopsEnumeratingTest(bool simpleProcessorFirst)
+    {
+        List<KeyValuePair<string, object?>[]> exportedAttributes = [];
+
+        using var failingExporter = new DelegatingExporter<LogRecord>
+        {
+            OnExportFunc = batch =>
+            {
+                foreach (var logRecord in batch)
+                {
+                    // Leaves the enumerator before it reaches the end.
+                    return ExportResult.Failure;
+                }
+
+                return ExportResult.Success;
+            },
+        };
+
+        using var exporter = new DelegatingExporter<LogRecord>
+        {
+            OnExportFunc = batch =>
+            {
+                foreach (var logRecord in batch)
+                {
+                    exportedAttributes.Add([.. logRecord.Attributes!]);
+                }
+
+                return ExportResult.Success;
+            },
+        };
+
+        var services = new ServiceCollection();
+
+        services.AddLogging(logging => logging.AddOpenTelemetry(options =>
+        {
+            if (simpleProcessorFirst)
+            {
+                options.AddProcessor(new SimpleLogRecordExportProcessor(failingExporter));
+            }
+
+            options.AddProcessor(new BatchLogRecordExportProcessor(exporter, scheduledDelayMilliseconds: int.MaxValue));
+
+            if (!simpleProcessorFirst)
+            {
+                options.AddProcessor(new SimpleLogRecordExportProcessor(failingExporter));
+            }
+        }));
+
+        using (var serviceProvider = services.BuildServiceProvider())
+        {
+            var logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("TestLogger");
+
+            for (var i = 0; i < 3; i++)
+            {
+                var state = new Dictionary<string, object?> { ["index"] = i };
+
+                logger.Log(LogLevel.Information, default, state, exception: null, static (_, _) => "Hello world");
+            }
+        }
+
+        Assert.Equal(3, exportedAttributes.Count);
+
+        for (var i = 0; i < 3; i++)
+        {
+            Assert.Equal([new("index", i)], exportedAttributes[i]);
+        }
     }
 
     [Theory]
