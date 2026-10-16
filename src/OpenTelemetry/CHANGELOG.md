@@ -34,7 +34,7 @@ Notes](../../RELEASENOTES.md).
 * The self-diagnostics file sink now creates its log directory and log files
   so that only the owner can access them (`0700`/`0600`) on Linux and macOS,
   instead of inheriting the process umask.
-  ([#NNNN](https://github.com/open-telemetry/opentelemetry-dotnet/pull/NNNN))
+  ([#7967](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7967))
 
 ## 1.20.0
 
