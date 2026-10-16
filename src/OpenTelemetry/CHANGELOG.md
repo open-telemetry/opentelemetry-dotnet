@@ -6,6 +6,19 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed a possible race condition on ARM64 when multiple threads record the
+  first measurement with no tags, or the first overflow measurement, that could
+  cause the measurement to be recorded incorrectly.
+  ([#7951](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7951))
+
+* Fixed self-diagnostics preamble redaction of quoted or encoded PEM material
+  and prefixed JWTs.
+  ([#7955](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7955))
+
+* Fixed default HTTP client log filtering when registering the OTLP log exporter
+  through `OpenTelemetryLoggerOptions`.
+  ([#7959](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7959))
+
 ## 1.20.0
 
 Released 2026-Oct-15
@@ -398,7 +411,7 @@ Released 2025-Jan-22
 
 Released 2025-Jan-15
 
-* [Meter.Tags](https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.metrics.meter.tags?view=net-9.0)
+* [Meter.Tags](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.meter.tags)
   will now be considered when resolving the SDK metric to update when
   measurements are recorded. Meters with the same name and different tags will
   now lead to unique metrics.

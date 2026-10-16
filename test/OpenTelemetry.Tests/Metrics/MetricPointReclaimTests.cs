@@ -923,6 +923,87 @@ public class MetricPointReclaimTests
         Assert.Equal(100, Assert.Single(metricPoints, mp => Equals(mp.Tags.KeyAndValues[0].Value, 100)).GetSumLong());
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ConcurrentFirstMeasurementObservesInitializedReservedMetricPoint(bool initializeOverflowPoint)
+    {
+        const int WorkerCount = 8;
+
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var exportedItems = new List<Metric>();
+        using var meter = new Meter(Utils.GetCurrentMethodName() + initializeOverflowPoint);
+        var counter = meter.CreateCounter<long>("counter");
+
+        using var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .AddMeter(meter.Name)
+            .AddView("counter", new MetricStreamConfiguration { CardinalityLimit = 1 })
+            .AddInMemoryExporter(exportedItems)
+            .Build();
+
+        if (initializeOverflowPoint)
+        {
+            counter.Add(1, new KeyValuePair<string, object?>("key", "first"));
+        }
+
+        using var start = new Barrier(WorkerCount + 1);
+        var exceptions = new ConcurrentQueue<Exception>();
+        var workers = new Thread[WorkerCount];
+
+        for (var i = 0; i < WorkerCount; i++)
+        {
+            var value = i;
+            workers[i] = new Thread(() =>
+            {
+                try
+                {
+                    start.SignalAndWait(cancellationToken);
+
+                    if (initializeOverflowPoint)
+                    {
+                        counter.Add(1, new KeyValuePair<string, object?>("key", $"overflow-{value}"));
+                    }
+                    else
+                    {
+                        counter.Add(1);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    exceptions.Enqueue(ex);
+                }
+            });
+            workers[i].Start();
+        }
+
+        start.SignalAndWait(cancellationToken);
+
+        foreach (var worker in workers)
+        {
+            Assert.True(worker.Join(TimeSpan.FromSeconds(5)));
+        }
+
+        Assert.Empty(exceptions);
+        Assert.True(meterProvider.ForceFlush());
+
+        var metric = Assert.Single(exportedItems);
+        var foundReservedPoint = false;
+        foreach (ref readonly var metricPoint in metric.GetMetricPoints())
+        {
+            var isReservedPoint = initializeOverflowPoint
+                ? metricPoint.Tags.Count == 1 && metricPoint.Tags.KeyAndValues[0].Key == "otel.metric.overflow"
+                : metricPoint.Tags.Count == 0;
+
+            if (isReservedPoint)
+            {
+                foundReservedPoint = true;
+                Assert.Equal(WorkerCount, metricPoint.GetSumLong());
+            }
+        }
+
+        Assert.True(foundReservedPoint);
+    }
+
     [Fact]
     public void ConcurrentCreationWithFreeSlotsDoesNotOverflow()
     {
