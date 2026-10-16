@@ -6,6 +6,11 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed a possible race condition on ARM64 when multiple threads record the
+  first measurement with no tags, or the first overflow measurement, that could
+  cause the measurement to be recorded incorrectly.
+  ([#7951](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7951))
+
 * Fixed self-diagnostics preamble redaction of quoted or encoded PEM material
   and prefixed JWTs.
   ([#7955](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7955))
