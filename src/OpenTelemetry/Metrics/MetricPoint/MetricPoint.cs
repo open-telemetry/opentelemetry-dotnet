@@ -665,14 +665,27 @@ public struct MetricPoint
                 {
                     if (outputDelta)
                     {
-                        var initValue = InterlockedHelper.Read(ref this.runningValue.AsDouble);
-                        this.snapshotValue.AsDouble = initValue - this.deltaLastValue.AsDouble;
-                        this.deltaLastValue.AsDouble = initValue;
+                        double initValue;
+                        if (this.aggType == AggregationType.DoubleSumIncomingDelta)
+                        {
+                            // Reset synchronous sums each interval to avoid carrying non-finite values
+                            // or losing precision when subtracting large process-lifetime totals.
+                            // deltaLastValue stays zero for HasUnexportedData.
+                            initValue = 0;
+                            this.snapshotValue.AsDouble = Interlocked.Exchange(ref this.runningValue.AsDouble, initValue);
+                        }
+                        else
+                        {
+                            initValue = InterlockedHelper.Read(ref this.runningValue.AsDouble);
+                            this.snapshotValue.AsDouble = initValue - this.deltaLastValue.AsDouble;
+                            this.deltaLastValue.AsDouble = initValue;
+                        }
+
                         this.MetricPointStatus = MetricPointStatus.NoCollectPending;
 
                         // Check again if value got updated, if yes reset status.
                         // This ensures no Updates get Lost.
-                        if (initValue != InterlockedHelper.Read(ref this.runningValue.AsDouble))
+                        if (!InterlockedHelper.AreSame(initValue, InterlockedHelper.Read(ref this.runningValue.AsDouble)))
                         {
                             this.MetricPointStatus = MetricPointStatus.CollectPending;
                         }
@@ -714,7 +727,7 @@ public struct MetricPoint
 
                     // Check again if value got updated, if yes reset status.
                     // This ensures no Updates get Lost.
-                    if (this.snapshotValue.AsDouble != InterlockedHelper.Read(ref this.runningValue.AsDouble))
+                    if (!InterlockedHelper.AreSame(this.snapshotValue.AsDouble, InterlockedHelper.Read(ref this.runningValue.AsDouble)))
                     {
                         this.MetricPointStatus = MetricPointStatus.CollectPending;
                     }
@@ -912,13 +925,13 @@ public struct MetricPoint
 
             case AggregationType.DoubleSumIncomingDelta:
             case AggregationType.DoubleSumIncomingCumulative:
-                return InterlockedHelper.Read(ref this.runningValue.AsDouble) != this.deltaLastValue.AsDouble;
+                return !InterlockedHelper.AreSame(InterlockedHelper.Read(ref this.runningValue.AsDouble), this.deltaLastValue.AsDouble);
 
             case AggregationType.LongGauge:
                 return Interlocked.Read(ref this.runningValue.AsLong) != this.snapshotValue.AsLong;
 
             case AggregationType.DoubleGauge:
-                return InterlockedHelper.Read(ref this.runningValue.AsDouble) != this.snapshotValue.AsDouble;
+                return !InterlockedHelper.AreSame(InterlockedHelper.Read(ref this.runningValue.AsDouble), this.snapshotValue.AsDouble);
 
             case AggregationType.Base2ExponentialHistogram:
             case AggregationType.Base2ExponentialHistogramWithMinMax:
