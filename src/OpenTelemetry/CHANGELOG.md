@@ -33,7 +33,7 @@ Notes](../../RELEASENOTES.md).
 
 * Self-diagnostics log files, whether configured through `OTEL_DIAGNOSTICS.json`
   or `SelfDiagnosticsOptions`, are now always created as new files.
-  ([#NNNN](https://github.com/open-telemetry/opentelemetry-dotnet/pull/NNNN))
+  ([#7968](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7968))
 
 ## 1.20.0
 
