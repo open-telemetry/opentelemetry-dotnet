@@ -13,6 +13,7 @@ namespace OpenTelemetry.Logs;
 public class OpenTelemetryLoggerOptions
 {
     internal readonly List<Func<IServiceProvider, BaseProcessor<LogRecord>>> ProcessorFactories = [];
+    internal readonly List<Action<Microsoft.Extensions.Logging.LoggerFilterOptions>> LoggerFilterConfigurations = [];
     internal ResourceBuilder? ResourceBuilder;
 
     /// <summary>
