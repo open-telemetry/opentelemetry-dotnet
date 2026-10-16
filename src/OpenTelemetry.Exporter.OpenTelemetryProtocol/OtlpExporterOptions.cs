@@ -127,23 +127,38 @@ public class OtlpExporterOptions : IOtlpExporterOptions
             }
 #endif
 
-            return new HttpClient(
-                new HttpClientHandler
+            HttpClientHandler? handler = null;
+
+            try
+            {
+                handler = new HttpClientHandler
                 {
                     AllowAutoRedirect = false,
 #if NETSTANDARD
                     CheckCertificateRevocationList = true,
-#elif NET
-#pragma warning disable CA1416 // Validate platform compatibility
-                    CheckCertificateRevocationList = !OperatingSystem.IsBrowser(),
-#pragma warning restore CA1416 // Validate platform compatibility
 #endif
-                },
-                disposeHandler: true)
+                };
+
+#if NET
+                if (!OperatingSystem.IsBrowser())
+                {
+                    handler.CheckCertificateRevocationList = true;
+                }
+#endif
+
+#pragma warning disable CA5400 // HttpClient is created without enabling CheckCertificateRevocationList
+                return new HttpClient(handler, disposeHandler: true)
+                {
+                    MaxResponseContentBufferSize = this.MaxResponseSizeBytes,
+                    Timeout = timeout,
+                };
+#pragma warning restore CA5400 // HttpClient is created without enabling CheckCertificateRevocationList
+            }
+            catch (Exception)
             {
-                MaxResponseContentBufferSize = this.MaxResponseSizeBytes,
-                Timeout = timeout,
-            };
+                handler?.Dispose();
+                throw;
+            }
         };
 
         this.batchExportProcessorOptions = new(defaultBatchOptions);
