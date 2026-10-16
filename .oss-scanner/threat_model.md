@@ -25,6 +25,11 @@
     local or remote OTLP collector using either gRPC or HTTP/protobuf.
   - OpenTelemetry.Exporter.Prometheus.AspNetCore - contains the implementation of
     the Prometheus exporter for ASP.NET Core applications.
+    - Note that a correct deployment of the Prometheus exporter should not expose
+      the scrape endpoint to untrusted clients as described by
+      [the documentation](../src/OpenTelemetry.Exporter.Prometheus.AspNetCore/README.md).
+      This may reduce the severity of potential security risks associated with
+      the Prometheus exporter's scrape endpoint.
   - OpenTelemetry.Exporter.Prometheus.HttpListener - contains the implementation
     of the Prometheus exporter for applications using HttpListener.
   - OpenTelemetry.Extensions.Propagators - contains implementations of various
