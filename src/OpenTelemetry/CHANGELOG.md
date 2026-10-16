@@ -35,6 +35,12 @@ Notes](../../RELEASENOTES.md).
   value is near a bucket boundary by using a pre-computed lookup table.
   ([#7911](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7911))
 
+* Fixed `LogRecord`s being returned to the shared pool while still queued for
+  export when an exporter stops enumerating a single-item or array
+  `Batch<LogRecord>` early which could cause a `BatchLogRecordExportProcessor`
+  on the same provider to export missing or incorrect data.
+  ([#7965](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7965))
+
 * Fixed a `SuppressInstrumentationScope.Enter()` reference count never being
   released when the `Activity` it was entered for is not recorded, which caused
   all subsequent telemetry in that execution context to be suppressed.
