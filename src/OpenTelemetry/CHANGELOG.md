@@ -31,6 +31,10 @@ Notes](../../RELEASENOTES.md).
   or large value and idle metric points with a `NaN` value failing to be reclaimed.
   ([#7963](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7963))
 
+* Improve the assignment of values to exponential histogram buckets when the
+  value is near a bucket boundary by using a pre-computed lookup table.
+  ([#7911](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7911))
+
 * Fixed a `SuppressInstrumentationScope.Enter()` reference count never being
   released when the `Activity` it was entered for is not recorded, which caused
   all subsequent telemetry in that execution context to be suppressed.
