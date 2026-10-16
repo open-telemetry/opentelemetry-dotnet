@@ -11,6 +11,10 @@ Notes](../../RELEASENOTES.md).
   cause the measurement to be recorded incorrectly.
   ([#7951](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7951))
 
+* Fixed self-diagnostics preamble redaction of quoted or encoded PEM material
+  and prefixed JWTs.
+  ([#7955](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7955))
+
 * Fixed legacy self-diagnostics logging terminating the process when the log
   file is truncated or the log volume runs out of space.
   ([#7956](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7956))
@@ -407,7 +411,7 @@ Released 2025-Jan-22
 
 Released 2025-Jan-15
 
-* [Meter.Tags](https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.metrics.meter.tags?view=net-9.0)
+* [Meter.Tags](https://learn.microsoft.com/dotnet/api/system.diagnostics.metrics.meter.tags)
   will now be considered when resolving the SDK metric to update when
   measurements are recorded. Meters with the same name and different tags will
   now lead to unique metrics.
