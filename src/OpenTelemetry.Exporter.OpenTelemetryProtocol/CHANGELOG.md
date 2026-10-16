@@ -24,7 +24,7 @@ Notes](../../RELEASENOTES.md).
   separated by a subdirectory derived from the exporter's `Protocol`,
   `Endpoint` and `Headers`. Telemetry stored on disk by earlier versions is
   not resent.
-  ([#NNNN](https://github.com/open-telemetry/opentelemetry-dotnet/pull/NNNN))
+  ([#7972](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7972))
 
 ## 1.20.0
 
