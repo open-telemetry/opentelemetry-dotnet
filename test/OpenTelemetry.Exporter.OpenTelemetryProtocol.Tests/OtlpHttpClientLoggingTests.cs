@@ -7,10 +7,12 @@ using System.Net.Http;
 using System.Collections.Concurrent;
 using System.Diagnostics.Metrics;
 using System.Diagnostics.Tracing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
 
@@ -60,6 +62,227 @@ public sealed class OtlpHttpClientLoggingTests
             loggerProvider.Entries,
             entry => entry.LogLevel == LogLevel.Information
                 && entry.Category.StartsWith(OtlpMetricExporterHttpClientCategory, StringComparison.Ordinal));
+    }
+
+    [Theory]
+    [InlineData(false, false, false)]
+    [InlineData(false, false, true)]
+    [InlineData(false, true, false)]
+    [InlineData(false, true, true)]
+    [InlineData(true, false, false)]
+    [InlineData(true, false, true)]
+    [InlineData(true, true, false)]
+    [InlineData(true, true, true)]
+    public void LogExportUsingOpenTelemetryLoggerOptionsSuppressesInformationLogsAfterReload(
+        bool configureExporterAndProcessor,
+        bool namedOptions,
+        bool requestLoggerProviderFirst)
+    {
+        using var httpMessageHandler = new TestHttpMessageHandler();
+        using var loggerProvider = new CollectingLoggerProvider();
+        using var configuration = (ConfigurationRoot)new ConfigurationBuilder().Build();
+
+        var configureInvocations = 0;
+        var services = new ServiceCollection();
+        services.AddLogging(builder =>
+        {
+            builder.AddConfiguration(configuration);
+            builder.SetMinimumLevel(LogLevel.Information);
+            builder.AddProvider(loggerProvider);
+            builder.AddOpenTelemetry(options =>
+            {
+                configureInvocations++;
+                if (configureExporterAndProcessor)
+                {
+                    if (namedOptions)
+                    {
+                        options.AddOtlpExporter("NamedExporter", (exporter, processor) => ConfigureExporter(exporter));
+                    }
+                    else
+                    {
+                        options.AddOtlpExporter((exporter, processor) => ConfigureExporter(exporter));
+                    }
+                }
+                else if (namedOptions)
+                {
+                    options.AddOtlpExporter("NamedExporter", ConfigureExporter);
+                }
+                else
+                {
+                    options.AddOtlpExporter(ConfigureExporter);
+                }
+            });
+        });
+        services.AddHttpClient("OtlpLogExporter")
+            .ConfigurePrimaryHttpMessageHandler(() => httpMessageHandler);
+
+        using var serviceProvider = services.BuildServiceProvider();
+        if (requestLoggerProviderFirst)
+        {
+            serviceProvider.GetRequiredService<LoggerProvider>();
+        }
+
+        var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+        var logger = loggerFactory.CreateLogger(nameof(OtlpHttpClientLoggingTests));
+
+        logger.HelloFrom("tomato", 2.99);
+        Assert.NotNull(httpMessageHandler.HttpRequestMessage);
+        Assert.DoesNotContain(loggerProvider.Entries, IsHttpClientInformationLog);
+
+        configuration.Reload();
+        logger.HelloFrom("tomato", 2.99);
+
+        Assert.DoesNotContain(loggerProvider.Entries, IsHttpClientInformationLog);
+        Assert.Equal(1, configureInvocations);
+
+        var httpClientLogger = loggerFactory.CreateLogger($"{OtlpLogExporterHttpClientCategory}.LogicalHandler");
+        Assert.False(httpClientLogger.IsEnabled(LogLevel.Information));
+        Assert.True(httpClientLogger.IsEnabled(LogLevel.Warning));
+        Assert.True(httpClientLogger.IsEnabled(LogLevel.Error));
+        Assert.Single(
+            serviceProvider.GetRequiredService<IOptionsMonitor<LoggerFilterOptions>>().CurrentValue.Rules,
+            rule => rule.CategoryName == OtlpLogExporterHttpClientCategory);
+
+        static bool IsHttpClientInformationLog(LogEntry entry)
+            => entry.LogLevel == LogLevel.Information
+                && entry.Category.StartsWith(OtlpLogExporterHttpClientCategory, StringComparison.Ordinal);
+
+        static void ConfigureExporter(OtlpExporterOptions options)
+        {
+            options.Protocol = OtlpExportProtocol.HttpProtobuf;
+            options.Endpoint = new Uri("http://localhost:4318");
+            options.ExportProcessorType = ExportProcessorType.Simple;
+        }
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void OpenTelemetryLoggerOptionsPreservesApplicationFilterAfterReload(bool configureBeforeExporter)
+    {
+        using var configuration = (ConfigurationRoot)new ConfigurationBuilder().Build();
+        var services = new ServiceCollection();
+        services.AddLogging(builder =>
+        {
+            builder.AddConfiguration(configuration);
+            if (configureBeforeExporter)
+            {
+                builder.AddFilter(OtlpLogExporterHttpClientCategory, LogLevel.Information);
+            }
+
+            builder.AddOpenTelemetry(options => options.AddOtlpExporter());
+
+            if (!configureBeforeExporter)
+            {
+                builder.AddFilter(OtlpLogExporterHttpClientCategory, LogLevel.Information);
+            }
+        });
+
+        using var serviceProvider = services.BuildServiceProvider();
+        var logger = serviceProvider.GetRequiredService<ILoggerFactory>()
+            .CreateLogger($"{OtlpLogExporterHttpClientCategory}.LogicalHandler");
+
+        Assert.True(logger.IsEnabled(LogLevel.Information));
+        configuration.Reload();
+        Assert.True(logger.IsEnabled(LogLevel.Information));
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void OpenTelemetryLoggerOptionsRegistersDefaultFilterOnce(bool registerExporterServices)
+    {
+        var services = new ServiceCollection();
+        services.AddLogging(builder =>
+        {
+            builder.AddOpenTelemetry(options => options.AddOtlpExporter());
+            builder.AddOpenTelemetry(options => options.AddOtlpExporter());
+        });
+        if (registerExporterServices)
+        {
+            services.AddOtlpExporterLoggingServices();
+        }
+
+        using var serviceProvider = services.BuildServiceProvider();
+        _ = serviceProvider.GetRequiredService<ILoggerFactory>();
+        var options = serviceProvider.GetRequiredService<IOptionsMonitor<LoggerFilterOptions>>().CurrentValue;
+
+        var rule = Assert.Single(options.Rules, rule => rule.CategoryName == OtlpLogExporterHttpClientCategory);
+        Assert.Equal(LogLevel.Warning, rule.LogLevel);
+    }
+
+    [Fact]
+    public void PostConfiguredExporterRebuildsEarlyMonitorOptions()
+    {
+        var services = new ServiceCollection();
+        services.AddLogging(builder => builder.AddOpenTelemetry());
+        services.PostConfigure<OpenTelemetryLoggerOptions>(options => options.AddOtlpExporter());
+
+        using var serviceProvider = services.BuildServiceProvider();
+        using var scope = serviceProvider.CreateScope();
+        var options = serviceProvider.GetRequiredService<IOptions<LoggerFilterOptions>>().Value;
+        var monitorOptions = serviceProvider.GetRequiredService<IOptionsMonitor<LoggerFilterOptions>>().CurrentValue;
+        var snapshotOptions = scope.ServiceProvider.GetRequiredService<IOptionsSnapshot<LoggerFilterOptions>>().Value;
+
+        Assert.NotSame(options, monitorOptions);
+        Assert.NotSame(options, snapshotOptions);
+        Assert.NotSame(monitorOptions, snapshotOptions);
+
+        var logger = serviceProvider.GetRequiredService<ILoggerFactory>()
+            .CreateLogger($"{OtlpLogExporterHttpClientCategory}.LogicalHandler");
+
+        Assert.False(logger.IsEnabled(LogLevel.Information));
+        foreach (var filters in new[] { options, monitorOptions, snapshotOptions })
+        {
+            Assert.DoesNotContain(filters.Rules, rule => rule.CategoryName == OtlpLogExporterHttpClientCategory);
+        }
+
+        var currentOptions = serviceProvider.GetRequiredService<IOptionsMonitor<LoggerFilterOptions>>().CurrentValue;
+        Assert.NotSame(monitorOptions, currentOptions);
+        var rule = Assert.Single(currentOptions.Rules, rule => rule.CategoryName == OtlpLogExporterHttpClientCategory);
+        Assert.Equal(LogLevel.Warning, rule.LogLevel);
+    }
+
+    [Fact]
+    public async Task ExporterRegistrationDoesNotModifyFilterOptionsBeingConfigured()
+    {
+        using var filterConfigurationStarted = new ManualResetEventSlim();
+        using var completeFilterConfiguration = new ManualResetEventSlim();
+        var invocations = 0;
+        var services = new ServiceCollection();
+        services.AddLogging(builder => builder.AddOpenTelemetry(options => options.AddOtlpExporter()));
+        services.Configure<LoggerFilterOptions>(options =>
+        {
+            if (Interlocked.Increment(ref invocations) == 1)
+            {
+                filterConfigurationStarted.Set();
+                Assert.True(completeFilterConfiguration.Wait(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken));
+                Assert.DoesNotContain(options.Rules, rule => rule.CategoryName == OtlpLogExporterHttpClientCategory);
+            }
+        });
+
+        using var serviceProvider = services.BuildServiceProvider();
+        var monitor = serviceProvider.GetRequiredService<IOptionsMonitor<LoggerFilterOptions>>();
+        var pendingOptions = Task.Run(() => monitor.CurrentValue, TestContext.Current.CancellationToken);
+        try
+        {
+            Assert.True(filterConfigurationStarted.Wait(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken));
+            var logger = serviceProvider.GetRequiredService<ILoggerFactory>()
+                .CreateLogger($"{OtlpLogExporterHttpClientCategory}.LogicalHandler");
+
+            Assert.False(logger.IsEnabled(LogLevel.Information));
+        }
+        finally
+        {
+            completeFilterConfiguration.Set();
+        }
+
+        Assert.Same(
+            pendingOptions,
+            await Task.WhenAny(pendingOptions, Task.Delay(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken)));
+        var earlyOptions = await pendingOptions;
+        Assert.NotSame(earlyOptions, monitor.CurrentValue);
+        Assert.DoesNotContain(earlyOptions.Rules, rule => rule.CategoryName == OtlpLogExporterHttpClientCategory);
     }
 
     [Fact]
