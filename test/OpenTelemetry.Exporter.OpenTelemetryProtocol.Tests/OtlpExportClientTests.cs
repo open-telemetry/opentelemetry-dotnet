@@ -264,12 +264,7 @@ public class OtlpExportClientTests
         var logged = Assert.Single(listener.Messages, e => e.EventId == HttpRequestFailedEventId);
         var loggedResponse = (string)logged.Payload![1]!;
 
-#if NETFRAMEWORK
-        // EnsureSuccessStatusCode disposes the content of an unsuccessful response, so there is no body to log.
-        Assert.Empty(loggedResponse);
-#else
         Assert.Equal(new string('E', OtlpExportClient.MaxLoggedResponseSizeBytes) + TruncationSuffix, loggedResponse);
-#endif
     }
 
     private sealed class UnsuccessfulResponseHttpMessageHandler : HttpMessageHandler

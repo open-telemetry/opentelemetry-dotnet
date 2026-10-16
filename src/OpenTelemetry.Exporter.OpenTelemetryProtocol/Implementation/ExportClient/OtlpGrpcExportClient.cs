@@ -90,7 +90,7 @@ internal sealed class OtlpGrpcExportClient : OtlpExportClient
                 {
                     // The body was buffered with the response, as CompletionOption is ResponseContentRead,
                     // so reading it cannot block and does not need to be bounded by the deadline.
-                    var response = TryGetResponseBody(httpResponse, this.MaxResponseSizeBytes, cancellationToken);
+                    var response = TryGetResponseBody(httpResponse, Math.Min(this.MaxResponseSizeBytes, MaxLoggedResponseSizeBytes), cancellationToken);
                     OpenTelemetryProtocolExporterEventSource.Log.HttpRequestFailed(this.Endpoint, response, ex);
                 }
 
