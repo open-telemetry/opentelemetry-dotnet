@@ -146,6 +146,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
                 }
 #endif
 
+#pragma warning disable CA5399 // HttpClient is created without enabling CheckCertificateRevocationList
 #pragma warning disable CA5400 // HttpClient is created without enabling CheckCertificateRevocationList
                 return new HttpClient(handler, disposeHandler: true)
                 {
@@ -153,6 +154,7 @@ public class OtlpExporterOptions : IOtlpExporterOptions
                     Timeout = timeout,
                 };
 #pragma warning restore CA5400 // HttpClient is created without enabling CheckCertificateRevocationList
+#pragma warning restore CA5399 // HttpClient is created without enabling CheckCertificateRevocationList
             }
             catch (Exception)
             {
