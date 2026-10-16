@@ -86,6 +86,25 @@ public class SelfDiagnosticsPreambleTests
         Assert.DoesNotContain("super-secret-token", preamble, StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData(EnvironmentVariableLogMode.KnownSafeValues)]
+    [InlineData(EnvironmentVariableLogMode.Names)]
+    [InlineData(EnvironmentVariableLogMode.None)]
+    public void RestrictiveModes_DoNotDiscloseQuotedInlineKeyMaterial(EnvironmentVariableLogMode mode)
+    {
+        using var scope = EnvironmentVariableScope.Create(
+            "OTEL_EXPORTER_OTLP_CLIENT_KEY",
+            "\"-----BEGIN PRIVATE KEY-----\\nMIIEvQIBADAN\\n-----END PRIVATE KEY-----\"");
+
+        var preamble = Build(mode);
+
+        Assert.DoesNotContain("MIIEvQIBADAN", preamble, StringComparison.Ordinal);
+        if (mode == EnvironmentVariableLogMode.KnownSafeValues)
+        {
+            Assert.Contains("OTEL_EXPORTER_OTLP_CLIENT_KEY = [REDACTED]", preamble, StringComparison.Ordinal);
+        }
+    }
+
     [Fact]
     public void KnownSafeValuesMode_ReducesEndpointsToTheirAuthority()
     {
@@ -103,14 +122,17 @@ public class SelfDiagnosticsPreambleTests
     [Fact]
     public void AllValuesMode_DisclosesEverythingVerbatim()
     {
+        const string Pem = "\"-----BEGIN PRIVATE KEY-----\\nMIIEvQIBADAN\\n-----END PRIVATE KEY-----\"";
         using var scope = EnvironmentVariableScope.Create(
             (UnclassifiedVar, UnclassifiedValue),
-            ("OTEL_EXPORTER_OTLP_HEADERS", "Authorization=Bearer opt-in-token"));
+            ("OTEL_EXPORTER_OTLP_HEADERS", "Authorization=Bearer opt-in-token"),
+            ("OTEL_EXPORTER_OTLP_CLIENT_KEY", Pem));
 
         var preamble = Build(EnvironmentVariableLogMode.AllValues);
 
         Assert.Contains($"{UnclassifiedVar} = {UnclassifiedValue}", preamble, StringComparison.Ordinal);
         Assert.Contains("opt-in-token", preamble, StringComparison.Ordinal);
+        Assert.Contains($"OTEL_EXPORTER_OTLP_CLIENT_KEY = {Pem}", preamble, StringComparison.Ordinal);
     }
 
     [Fact]
