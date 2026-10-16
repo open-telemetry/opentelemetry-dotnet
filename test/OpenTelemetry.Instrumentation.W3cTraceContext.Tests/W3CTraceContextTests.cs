@@ -24,7 +24,7 @@ public sealed class W3CTraceContextTests : IDisposable
 
     static W3CTraceContextTests()
     {
-        // See https://learn.microsoft.com/en-us/dotnet/core/compatibility/core-libraries/10.0/default-trace-context-propagator
+        // See https://learn.microsoft.com/dotnet/core/compatibility/core-libraries/10.0/default-trace-context-propagator
         DistributedContextPropagator.Current = DistributedContextPropagator.CreatePreW3CPropagator();
     }
 

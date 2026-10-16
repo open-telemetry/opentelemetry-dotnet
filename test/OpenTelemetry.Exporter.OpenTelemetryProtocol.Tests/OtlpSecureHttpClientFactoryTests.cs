@@ -6,7 +6,6 @@
 using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
@@ -72,6 +71,41 @@ public class OtlpSecureHttpClientFactoryTests
     }
 
     [Fact]
+    public void CreateHttpClient_DoesNotFollowRedirects()
+    {
+        var tempCertFile = Path.GetTempFileName();
+
+        try
+        {
+            using var cert = CreateSelfSignedCertificate();
+            File.WriteAllBytes(tempCertFile, cert.Export(X509ContentType.Pfx));
+
+            var options = new OtlpMtlsOptions
+            {
+                ClientCertificatePath = tempCertFile,
+                EnableCertificateChainValidation = false, // Ignore validation for test cert
+            };
+
+            using var httpClient = OpenTelemetryProtocol.Implementation.OtlpSecureHttpClientFactory.CreateSecureHttpClient(options);
+
+            var handlerField = typeof(HttpMessageInvoker).GetField(
+                "_handler",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            var handler = Assert.IsType<HttpClientHandler>(handlerField?.GetValue(httpClient), exactMatch: false);
+
+            Assert.False(handler.AllowAutoRedirect);
+        }
+        finally
+        {
+            if (File.Exists(tempCertFile))
+            {
+                File.Delete(tempCertFile);
+            }
+        }
+    }
+
+    [Fact]
     public void CreateHttpClient_CapsResponseContentBuffering()
     {
         var tempCertFile = Path.GetTempFileName();
@@ -109,7 +143,7 @@ public class OtlpSecureHttpClientFactoryTests
             {
                 // Create a self-signed certificate for testing as CA root
                 using var caCert = CreateSelfSignedCertificate();
-                File.WriteAllText(tempTrustStoreFile, ExportCertificateWithPrivateKey(caCert));
+                File.WriteAllText(tempTrustStoreFile, caCert.ExportCertificatePem());
 
                 var options = new OtlpMtlsOptions
                 {
@@ -148,7 +182,7 @@ public class OtlpSecureHttpClientFactoryTests
             try
             {
                 using var caCertificate = CreateCertificateAuthority();
-                File.WriteAllText(tempTrustStoreFile, ExportCertificateWithPrivateKey(caCertificate));
+                File.WriteAllText(tempTrustStoreFile, caCertificate.ExportCertificatePem());
 
                 var options = new OtlpMtlsOptions
                 {
@@ -187,7 +221,7 @@ public class OtlpSecureHttpClientFactoryTests
             try
             {
                 using var caCertificate = CreateCertificateAuthority();
-                File.WriteAllText(tempTrustStoreFile, ExportCertificateWithPrivateKey(caCertificate));
+                File.WriteAllText(tempTrustStoreFile, caCertificate.ExportCertificatePem());
 
                 var options = new OtlpMtlsOptions
                 {
@@ -421,22 +455,6 @@ public class OtlpSecureHttpClientFactoryTests
             DateTimeOffset.UtcNow.AddDays(-1));
 
         return X509CertificateLoader.LoadPkcs12(cert.Export(X509ContentType.Pfx), null, X509KeyStorageFlags.Exportable);
-    }
-
-    private static string ExportCertificateWithPrivateKey(X509Certificate2 certificate)
-    {
-        var builder = new StringBuilder();
-        builder.AppendLine(certificate.ExportCertificatePem().Trim());
-
-        using var privateKey = certificate.GetRSAPrivateKey();
-        if (privateKey != null)
-        {
-            var pkcs8Bytes = privateKey.ExportPkcs8PrivateKey();
-            var privateKeyPem = PemEncoding.Write("PRIVATE KEY", pkcs8Bytes);
-            builder.AppendLine(new string(privateKeyPem).Trim());
-        }
-
-        return builder.ToString();
     }
 
     /// <summary>

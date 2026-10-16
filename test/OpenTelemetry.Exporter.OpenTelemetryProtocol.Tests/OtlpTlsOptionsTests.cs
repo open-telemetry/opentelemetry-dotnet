@@ -6,7 +6,6 @@
 using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
@@ -60,7 +59,7 @@ public class OtlpTlsOptionsTests
             try
             {
                 using var cert = CreateSelfSignedCertificate();
-                File.WriteAllText(tempCertFile, ExportCertificateWithPrivateKey(cert));
+                File.WriteAllText(tempCertFile, cert.ExportCertificatePem());
 
                 var options = new OtlpTlsOptions
                 {
@@ -231,22 +230,6 @@ public class OtlpTlsOptionsTests
             serialNumber);
 
         return X509CertificateLoader.LoadPkcs12(cert.Export(X509ContentType.Pfx), null, X509KeyStorageFlags.Exportable);
-    }
-
-    private static string ExportCertificateWithPrivateKey(X509Certificate2 certificate)
-    {
-        var builder = new StringBuilder();
-        builder.AppendLine(certificate.ExportCertificatePem().Trim());
-
-        using var privateKey = certificate.GetRSAPrivateKey();
-        if (privateKey != null)
-        {
-            var pkcs8Bytes = privateKey.ExportPkcs8PrivateKey();
-            var privateKeyPem = PemEncoding.Write("PRIVATE KEY", pkcs8Bytes);
-            builder.AppendLine(new string(privateKeyPem).Trim());
-        }
-
-        return builder.ToString();
     }
 
     /// <summary>

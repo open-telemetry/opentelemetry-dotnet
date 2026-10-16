@@ -71,8 +71,8 @@ internal sealed class AggregatorStore
     // Only written under the delta dictionary lock. Slots with a higher ordinal have never held
     // a MetricPoint, so a delta Snapshot does not need to visit them.
     private int deltaOrdinalHighWaterMark = 1;
-    private bool zeroTagMetricPointInitialized;
-    private bool overflowTagMetricPointInitialized;
+    private volatile bool zeroTagMetricPointInitialized;
+    private volatile bool overflowTagMetricPointInitialized;
 
     internal AggregatorStore(
         MetricStreamIdentity metricStreamIdentity,

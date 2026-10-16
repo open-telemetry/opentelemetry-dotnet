@@ -7,6 +7,12 @@ Notes](../../RELEASENOTES.md).
 
 ## Unreleased
 
+* Fixed scrape responses being handed to the server in a single write, which
+  made the server buffer a full copy of the response for each client that did
+  not read it until the request completed or timed out. Responses are now
+  written in bounded slices so the server's back-pressure applies.
+  ([#7957](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7957))
+
 * **Breaking Change** Dropped support for `net8.0` and `net9.0`.
   ([#6899](https://github.com/open-telemetry/opentelemetry-dotnet/pull/6899))
 
