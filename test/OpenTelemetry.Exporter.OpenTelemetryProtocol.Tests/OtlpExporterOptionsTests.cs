@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using Microsoft.Extensions.Configuration;
+using OpenTelemetry.Trace;
 
 namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests;
 
@@ -15,6 +16,108 @@ public sealed class OtlpExporterOptionsTests : IDisposable
 
     public void Dispose() =>
         OtlpSpecConfigDefinitionTests.ClearEnvVars();
+
+    [Fact]
+    public void CopyPreservesUnsetValuesAndEndpointPrecedence()
+    {
+        var source = new OtlpExporterOptions(new ConfigurationBuilder().Build(), OtlpExporterOptionsConfigurationType.Default, new());
+        var copy = source.Copy();
+        Assert.Equal(source.HasData, copy.HasData);
+        Assert.Null(copy.ExportProcessorTypeValue);
+        Assert.Null(copy.BatchExportProcessorOptions.MaxQueueSizeValue);
+        var defaults = new OtlpExporterOptions
+        {
+            Endpoint = new Uri("http://localhost:4318/common"),
+            Protocol = OtlpExportProtocol.HttpProtobuf,
+            TimeoutMilliseconds = 1234,
+            MaxResponseSizeBytes = 4096,
+            MaxRequestSizeBytes = 1_000_000,
+            Compression = OtlpExportCompression.GZip,
+        };
+        copy.ApplyDefaults(defaults);
+        Assert.Equal(defaults.Endpoint, copy.Endpoint);
+        Assert.Equal(defaults.Protocol, copy.Protocol);
+        Assert.Equal(defaults.TimeoutMilliseconds, copy.TimeoutMilliseconds);
+        Assert.Equal(defaults.MaxResponseSizeBytes, copy.MaxResponseSizeBytes);
+        Assert.Equal(defaults.MaxRequestSizeBytes, copy.MaxRequestSizeBytes);
+        Assert.Equal(defaults.Compression, copy.Compression);
+        Assert.True(copy.AppendSignalPathToEndpoint);
+        Assert.NotEqual(defaults.Endpoint, source.Endpoint);
+        copy.Endpoint = new Uri("http://localhost:4318/signal");
+        Assert.False(copy.Copy().AppendSignalPathToEndpoint);
+        Assert.Equal(copy.Endpoint, copy.Copy().ApplyDefaults(defaults).Endpoint);
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    public void CopyDefaultHttpClientFactoryUsesItsOwnOptions(bool explicitlyAssigned, bool inherited)
+    {
+        var source = new OtlpExporterOptions { TimeoutMilliseconds = 1000, MaxResponseSizeBytes = 2048 };
+        if (explicitlyAssigned)
+        {
+            source.HttpClientFactory = source.DefaultHttpClientFactory;
+        }
+
+        var copy = inherited
+            ? new OtlpExporterOptions().Copy().ApplyDefaults(source)
+            : source.Copy();
+        copy.TimeoutMilliseconds = 2000;
+        copy.MaxResponseSizeBytes = 4096;
+        Assert.Same(copy.DefaultHttpClientFactory, copy.HttpClientFactory);
+        Assert.NotSame(source.DefaultHttpClientFactory, copy.DefaultHttpClientFactory);
+        using var client = copy.HttpClientFactory();
+        Assert.Equal(TimeSpan.FromMilliseconds(2000), client.Timeout);
+        Assert.Equal(4096, client.MaxResponseContentBufferSize);
+        Assert.Equal(1000, source.TimeoutMilliseconds);
+    }
+
+    [Fact]
+    public void CopyIsolatesBatchDefaultsWithoutMakingUnsetValuesExplicit()
+    {
+        var defaults = new BatchExportActivityProcessorOptions { MaxQueueSize = 4096 };
+        var source = new OtlpExporterOptions(new ConfigurationBuilder().Build(), OtlpExporterOptionsConfigurationType.Default, defaults);
+        source.BatchExportProcessorOptions.MaxExportBatchSize = 1024;
+        var copy = source.Copy();
+        defaults.MaxQueueSize = 8192;
+        source.BatchExportProcessorOptions.MaxExportBatchSize = 2048;
+        Assert.Equal(4096, copy.BatchExportProcessorOptions.MaxQueueSize);
+        Assert.Null(copy.BatchExportProcessorOptions.MaxQueueSizeValue);
+        Assert.Equal(1024, copy.BatchExportProcessorOptions.MaxExportBatchSizeValue);
+        copy.BatchExportProcessorOptions.ScheduledDelayMilliseconds = 1;
+        Assert.Null(source.BatchExportProcessorOptions.ScheduledDelayMillisecondsValue);
+    }
+
+#if NET
+    [Fact]
+    public void CopyIsolatesTlsOptionsAndDefaultFactory()
+    {
+        var source = new OtlpExporterOptions
+        {
+            MtlsOptions = new OtlpMtlsOptions
+            {
+                CaCertificatePath = "ca.pem",
+                ClientCertificatePath = "client.pem",
+                ClientKeyPath = "key.pem",
+                EnableCertificateChainValidation = false,
+            },
+        };
+        var copy = source.Copy();
+        Assert.NotSame(source.MtlsOptions, copy.MtlsOptions);
+        Assert.Equal("ca.pem", copy.MtlsOptions!.CaCertificatePath);
+        Assert.Equal("client.pem", copy.MtlsOptions.ClientCertificatePath);
+        Assert.Equal("key.pem", copy.MtlsOptions.ClientKeyPath);
+        Assert.False(copy.MtlsOptions.EnableCertificateChainValidation);
+        copy.MtlsOptions.CaCertificatePath = null;
+        copy.MtlsOptions.ClientCertificatePath = null;
+        copy.MtlsOptions.ClientKeyPath = null;
+        using var client = copy.HttpClientFactory();
+        Assert.Equal("ca.pem", source.MtlsOptions.CaCertificatePath);
+        Assert.Equal("client.pem", source.MtlsOptions.ClientCertificatePath);
+    }
+#endif
 
     [Fact]
     public void OtlpExporterOptions_Defaults()

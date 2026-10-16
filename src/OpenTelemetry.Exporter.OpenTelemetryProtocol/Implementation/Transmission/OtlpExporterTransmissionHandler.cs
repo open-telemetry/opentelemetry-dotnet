@@ -9,17 +9,23 @@ namespace OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Transmissi
 
 internal class OtlpExporterTransmissionHandler : IDisposable
 {
+    private readonly double initialTimeoutMilliseconds;
+    private int shutdown;
+    private int disposed;
+
     public OtlpExporterTransmissionHandler(IExportClient exportClient, double timeoutMilliseconds)
     {
         Guard.ThrowIfNull(exportClient);
 
         this.ExportClient = exportClient;
-        this.TimeoutMilliseconds = timeoutMilliseconds;
+        this.initialTimeoutMilliseconds = timeoutMilliseconds;
     }
 
     internal IExportClient ExportClient { get; }
 
-    internal double TimeoutMilliseconds { get; }
+    internal double TimeoutMilliseconds => this.ExportClient is ReloadableExportClient reloadable
+        ? reloadable.TimeoutMilliseconds
+        : this.initialTimeoutMilliseconds;
 
     /// <summary>
     /// Attempts to send an export request to the server.
@@ -63,21 +69,47 @@ internal class OtlpExporterTransmissionHandler : IDisposable
 
         long? timestamp = timeoutMilliseconds == Timeout.Infinite ? null : Stopwatch.GetTimestamp();
 
-        this.OnShutdown(timeoutMilliseconds);
-
-        if (timestamp is { } startedAt)
+        try
         {
-            timeoutMilliseconds = Stopwatch.Remaining(timeoutMilliseconds, startedAt);
+            return Interlocked.Exchange(ref this.shutdown, 1) == 0
+                && this.ExportClient.Shutdown(timeoutMilliseconds);
         }
+        finally
+        {
+            if (timestamp is { } startedAt)
+            {
+                timeoutMilliseconds = Stopwatch.Remaining(timeoutMilliseconds, startedAt);
+            }
 
-        return this.ExportClient.Shutdown(timeoutMilliseconds);
+            // Cancel pending exports before waiting for a retry worker to finish.
+            this.OnShutdown(timeoutMilliseconds);
+        }
     }
 
     /// <inheritdoc/>
     public void Dispose()
     {
-        this.Dispose(true);
-        GC.SuppressFinalize(this);
+        if (Interlocked.Exchange(ref this.disposed, 1) != 0)
+        {
+            return;
+        }
+
+        using (this.ExportClient as IDisposable)
+        {
+            try
+            {
+                this.Shutdown(Timeout.Infinite);
+            }
+            catch (ObjectDisposedException)
+            {
+                // A caller-owned HTTP client may have been disposed already.
+            }
+            finally
+            {
+                this.Dispose(true);
+                GC.SuppressFinalize(this);
+            }
+        }
     }
 
     /// <summary>

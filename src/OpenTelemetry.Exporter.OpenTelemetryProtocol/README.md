@@ -15,6 +15,7 @@ implementation.
 * [Enable Trace Exporter](#enable-trace-exporter)
 * [Enable OTLP Exporter for all signals](#enable-otlp-exporter-for-all-signals)
 * [Configuration](#configuration)
+  * [Reloading named exporter configuration](#reloading-named-exporter-configuration)
   * [OtlpExporterOptions](#otlpexporteroptions)
   * [LogRecordExportProcessorOptions](#logrecordexportprocessoroptions)
   * [MetricReaderOptions](#metricreaderoptions)
@@ -324,6 +325,33 @@ appBuilder.Services.AddOptions<OtlpExporterOptions>()
 >         options.Endpoint = new Uri("http://localhost/logs");
 >     }));
 > ```
+
+### Reloading named exporter configuration
+
+Named `AddOtlpExporter` registrations on provider builders and `UseOtlpExporter`
+observe their options monitors. Configuration changes rebuild export clients
+without recreating the providers. Client settings such as endpoint, headers,
+timeout, compression, response-size limit, HTTP client factory, and TLS options
+are read again when a client is replaced. Invalid client configuration retains
+the previous client and emits a warning identifying the signal and options name.
+
+The following settings remain fixed for the lifetime of each exporter or pipeline:
+
+* Protocol and maximum request size.
+* Experimental options, including in-memory and disk retry settings.
+* Processor type and batch processor options.
+* Metric reader options, including interval, timeout, temporality, and aggregation.
+
+Recreate the provider to apply changes to these settings. Inline callbacks that
+configure an exporter together with its processor or reader run again on private
+options, but changes to the processor or reader during reload do not change the
+existing pipeline. Common configuration registered by options name still applies
+to all exporters using that name.
+
+Reloading lets requests already using a replaced client finish. `Shutdown` cancels
+pending requests from both current and replaced clients and rejects new sends.
+Subsequent export attempts through these reloadable registrations return failure.
+Caller-provided HTTP clients remain owned by the caller.
 
 ### OtlpExporterOptions
 
