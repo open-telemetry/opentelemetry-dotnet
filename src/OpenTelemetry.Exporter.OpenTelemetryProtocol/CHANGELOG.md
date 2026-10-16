@@ -19,7 +19,14 @@ Notes](../../RELEASENOTES.md).
     `.tmp` or `.lock` extension that the exporter did not create when the
     retry directory is shared with other files. Only files named the way the
     exporter names its blobs, and the temporary and lease files derived from
-    them, are now removed or renamed.
+    them, are now removed or renamed, and only blobs named that way are now
+    retried.
+  * Timestamps in blob and lease file names are now always written using the
+    Gregorian calendar. Previously, when the current culture used a different
+    calendar, files were given timestamps that caused them never to be
+    removed or released when the storage was maintained.
+  * A stored request whose lease has expired is no longer deleted after it has
+    been retried, as it may have since been leased again for another retry.
   ([#7857](https://github.com/open-telemetry/opentelemetry-dotnet/pull/7857))
 
 ## 1.20.0

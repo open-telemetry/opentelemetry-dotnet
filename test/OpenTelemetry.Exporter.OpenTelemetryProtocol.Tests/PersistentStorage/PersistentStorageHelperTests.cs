@@ -342,8 +342,291 @@ public class PersistentStorageHelperTests
         Assert.False(File.Exists(blobWithMalformedLease));
     }
 
+    [Theory]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdef.BLOB")]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdef.Blob")]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdef.blob.TMP")]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdef.BLOB.tmp")]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdef.blob@2020-01-01T000000.0000000Z.LOCK")]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdef.BLOB@2020-01-01T000000.0000000Z.lock")]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdef.blob@2020-01-01T000000.0000000Z.lock.TMP")]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdef.blob@2020-01-01T000000.0000000Z.LOCK.tmp")]
+    public void RemoveExpiredBlobs_DoesNotRemoveFilesWithDifferentlyCasedExtensionsItDidNotCreate(string fileName)
+    {
+        // The exporter only creates files with lowercase extensions.
+        using var temp = new TemporaryDirectory();
+
+        var foreignFile = CreateFile(temp.Path, fileName);
+
+        PersistentStorageHelper.RemoveExpiredBlobs(temp.Path, DefaultRetentionMilliseconds, DefaultWriteTimeoutMilliseconds);
+
+        Assert.True(File.Exists(foreignFile), $"{fileName} was removed or renamed.");
+    }
+
+    [Theory]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789ABCDEF0123456789ABCDEF.blob")]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdeF.blob")]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789ABCDEF0123456789ABCDEF.blob.tmp")]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789ABCDEF0123456789ABCDEF.blob@2020-01-01T000000.0000000Z.lock")]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789ABCDEF0123456789ABCDEF.blob@2020-01-01T000000.0000000Z.lock.tmp")]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789ABCDEF0123456789ABCDEF.blob@2020-01-01T000000.0000000Z.lock@2020-01-01T000000.0000000Z.lock")]
+    public void RemoveExpiredBlobs_DoesNotRemoveFilesWithUppercaseGuidsItDidNotCreate(string fileName)
+    {
+        // The exporter only creates files with GUIDs formatted as lowercase hexadecimal digits.
+        using var temp = new TemporaryDirectory();
+
+        var foreignFile = CreateFile(temp.Path, fileName);
+
+        PersistentStorageHelper.RemoveExpiredBlobs(temp.Path, DefaultRetentionMilliseconds, DefaultWriteTimeoutMilliseconds);
+
+        Assert.True(File.Exists(foreignFile), $"{fileName} was removed or renamed.");
+    }
+
+    [Theory]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdef.blob@2020-01-01T000000.0000000Z.lock@notes.lock")]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdef.blob@notes.lock@2020-01-01T000000.0000000Z.lock")]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdef.blob@2020-01-01T000000.0000000Z.LOCK@2020-01-01T000000.0000000Z.lock")]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdef.blob@2020-01-01T000000.0000000Z.lock@.lock")]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdef.blob@@2020-01-01T000000.0000000Z.lock")]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdef.blob@2020-01-01T000000.0000000Z.lock@2020-01-01T000000.0000000Z.lock.TMP")]
+    [InlineData("worldmap.blob@2020-01-01T000000.0000000Z.lock@2020-01-01T000000.0000000Z.lock")]
+    [InlineData("2020-01-01T000000.0000000Z-notaguid.blob@2020-01-01T000000.0000000Z.lock@2020-01-01T000000.0000000Z.lock.tmp")]
+    public void RemoveExpiredBlobs_DoesNotRemoveNestedLeasesItDidNotCreate(string fileName)
+    {
+        using var temp = new TemporaryDirectory();
+
+        var foreignFile = CreateFile(temp.Path, fileName);
+
+        PersistentStorageHelper.RemoveExpiredBlobs(temp.Path, DefaultRetentionMilliseconds, DefaultWriteTimeoutMilliseconds);
+
+        Assert.True(File.Exists(foreignFile), $"{fileName} was removed or renamed.");
+    }
+
+    [Theory]
+    [InlineData("2020-01-01T000000.0000000Z- 0123456789abcdef0123456789abcdef.blob")]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdef .blob")]
+    [InlineData("2020-01-01T000000.0000000Z- 0123456789abcdef0123456789abcdef .blob")]
+    [InlineData(" 2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdef.blob")]
+    [InlineData("2020-01-01T000000.0000000Z -0123456789abcdef0123456789abcdef.blob")]
+    [InlineData("2020-01-01T000000.0000000Z- 0123456789abcdef0123456789abcdef.blob.tmp")]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdef .blob.tmp")]
+    [InlineData("2020-01-01T000000.0000000Z- 0123456789abcdef0123456789abcdef.blob@2020-01-01T000000.0000000Z.lock")]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdef .blob@2020-01-01T000000.0000000Z.lock")]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdef.blob@ 2020-01-01T000000.0000000Z.lock")]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdef.blob@2020-01-01T000000.0000000Z .lock")]
+    public void RemoveExpiredBlobs_DoesNotRemoveFilesWithWhitespacePaddedNamesItDidNotCreate(string fileName)
+    {
+        using var temp = new TemporaryDirectory();
+
+        var foreignFile = CreateFile(temp.Path, fileName);
+
+        PersistentStorageHelper.RemoveExpiredBlobs(temp.Path, DefaultRetentionMilliseconds, DefaultWriteTimeoutMilliseconds);
+
+        Assert.True(File.Exists(foreignFile), $"{fileName} was removed or renamed.");
+    }
+
+    [Fact]
+    public void RemoveExpiredBlobs_ReleasesExpiredNestedLeases()
+    {
+        // Previous versions appended a further lease to the name of a leased blob that was written to with a new lease: {blob}@{timestamp}.lock@{timestamp}.lock
+        using var temp = new TemporaryDirectory();
+
+        var utcNow = DateTime.UtcNow;
+        var blob = BlobName(utcNow);
+        var expiredLease = CreateFile(temp.Path, $"{blob}@2020-01-01T000000.0000000Z.lock@2020-01-01T000500.0000000Z.lock");
+        var activeLease = CreateFile(temp.Path, $"{blob}@2020-01-01T000000.0000000Z.lock@{FormatTimestamp(utcNow.AddHours(1))}.lock");
+
+        PersistentStorageHelper.RemoveExpiredBlobs(temp.Path, DefaultRetentionMilliseconds, DefaultWriteTimeoutMilliseconds);
+
+        Assert.False(File.Exists(expiredLease), "The expired nested lease was not released.");
+        Assert.True(File.Exists(Path.Combine(temp.Path, $"{blob}@2020-01-01T000000.0000000Z.lock")), "The expired nested lease was not released to the lease it was derived from.");
+        Assert.True(File.Exists(activeLease), "The active nested lease was released.");
+    }
+
+    [Fact]
+    public void RemoveExpiredBlobs_RemovesTimedOutTemporaryFilesOfNestedLeases()
+    {
+        using var temp = new TemporaryDirectory();
+
+        var utcNow = DateTime.UtcNow;
+        var expiredLease = CreateFile(temp.Path, BlobName(utcNow) + "@2020-01-01T000000.0000000Z.lock@2020-01-01T000500.0000000Z.lock.tmp");
+        var activeLease = CreateFile(temp.Path, BlobName(utcNow) + $"@2020-01-01T000000.0000000Z.lock@{FormatTimestamp(utcNow.AddHours(1))}.lock.tmp");
+
+        PersistentStorageHelper.RemoveExpiredBlobs(temp.Path, DefaultRetentionMilliseconds, DefaultWriteTimeoutMilliseconds);
+
+        Assert.False(File.Exists(expiredLease), "The temporary file of an expired nested lease was not removed.");
+        Assert.True(File.Exists(activeLease), "The temporary file of an active nested lease was removed.");
+    }
+
+    [Fact]
+    public void RemoveExpiredBlobs_RemovesTimedOutTemporaryFilesOfLeasedBlobs()
+    {
+        // A temporary file of a leased blob written by previous versions is named {blob}@{timestamp}.lock.tmp,
+        // and is only abandoned once the lease has expired, regardless of when the blob itself was created.
+        using var temp = new TemporaryDirectory();
+
+        var utcNow = DateTime.UtcNow;
+        var expiredLease = CreateFile(temp.Path, BlobName(utcNow) + "@2020-01-01T000000.0000000Z.lock.tmp");
+        var activeLease = CreateFile(temp.Path, BlobName(new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc)) + $"@{FormatTimestamp(utcNow.AddHours(1))}.lock.tmp");
+
+        PersistentStorageHelper.RemoveExpiredBlobs(temp.Path, DefaultRetentionMilliseconds, DefaultWriteTimeoutMilliseconds);
+
+        Assert.False(File.Exists(expiredLease), "The temporary file of an expired lease was not removed.");
+        Assert.True(File.Exists(activeLease), "The temporary file of an active lease was removed.");
+    }
+
+    [Fact]
+    public void RemoveExpiredLease_BeforeTheYear2000_IsNotTreatedAsLegacy()
+    {
+        // Devices without a real-time clock may start with a clock in the past, such as 1970, until it is synchronized.
+        using var temp = new TemporaryDirectory();
+
+        var leasePath = CreateFile(temp.Path, $"{BlobName(new DateTime(1999, 1, 1, 0, 0, 0, DateTimeKind.Utc))}@1999-01-01T000500.0000000Z.lock");
+
+        Assert.False(PersistentStorageHelper.RemoveExpiredLease(new DateTime(1999, 1, 1, 0, 1, 0, DateTimeKind.Utc), leasePath));
+        Assert.True(File.Exists(leasePath));
+    }
+
+    [Fact]
+    public void RemoveReplacedFile_RemovesLeasedFile()
+    {
+        using var temp = new TemporaryDirectory();
+
+        var utcNow = DateTime.UtcNow;
+        var blobPath = Path.Combine(temp.Path, BlobName(utcNow));
+        var leasePath = CreateFile(temp.Path, $"{Path.GetFileName(blobPath)}@{FormatTimestamp(utcNow.AddMinutes(1))}.lock");
+
+        Assert.Equal(4, PersistentStorageHelper.RemoveReplacedFile(leasePath, $"{blobPath}@{FormatTimestamp(utcNow.AddMinutes(2))}.lock"));
+        Assert.Empty(Directory.GetFiles(temp.Path));
+    }
+
+    [Fact]
+    public void RemoveReplacedFile_RemovesFileWhoseLeaseWasReleased()
+    {
+        // The lease expired and was released by the storage maintenance after the blob's new content was moved into place.
+        using var temp = new TemporaryDirectory();
+
+        var utcNow = DateTime.UtcNow;
+        var blobPath = CreateFile(temp.Path, BlobName(utcNow));
+        var leasePath = $"{blobPath}@{FormatTimestamp(utcNow.AddMinutes(1))}.lock";
+
+        Assert.Equal(4, PersistentStorageHelper.RemoveReplacedFile(leasePath, $"{blobPath}@{FormatTimestamp(utcNow.AddMinutes(2))}.lock"));
+        Assert.Empty(Directory.GetFiles(temp.Path));
+    }
+
+    [Fact]
+    public void RemoveReplacedFile_RemovesFileWhoseNestedLeaseWasPartiallyReleased()
+    {
+        // Previous versions nested leases when a leased blob was written to with a new lease, and the storage
+        // maintenance releases the leases one at a time, so the file may have had only its last lease released.
+        using var temp = new TemporaryDirectory();
+
+        var utcNow = DateTime.UtcNow;
+        var blobPath = Path.Combine(temp.Path, BlobName(utcNow));
+        var partiallyReleasedPath = CreateFile(temp.Path, $"{Path.GetFileName(blobPath)}@2020-01-01T000000.0000000Z.lock");
+        var nestedLeasePath = $"{partiallyReleasedPath}@2020-01-01T000500.0000000Z.lock";
+
+        Assert.Equal(4, PersistentStorageHelper.RemoveReplacedFile(nestedLeasePath, $"{blobPath}@{FormatTimestamp(utcNow.AddMinutes(2))}.lock"));
+        Assert.Empty(Directory.GetFiles(temp.Path));
+    }
+
+    [Fact]
+    public void RemoveReplacedFile_DoesNotRemoveNewContentIfReplacedFileWasRemoved()
+    {
+        using var temp = new TemporaryDirectory();
+
+        var utcNow = DateTime.UtcNow;
+        var blobPath = CreateFile(temp.Path, BlobName(utcNow));
+        var leasePath = $"{blobPath}@{FormatTimestamp(utcNow.AddMinutes(1))}.lock";
+
+        Assert.Equal(0, PersistentStorageHelper.RemoveReplacedFile(leasePath, blobPath));
+        Assert.Equal([blobPath], Directory.GetFiles(temp.Path));
+    }
+
+    [Fact]
+    public void RemoveReplacedFile_DoesNotLeaveFileBehindIfReleasedConcurrently()
+    {
+        using var temp = new TemporaryDirectory();
+
+        var utcNow = DateTime.UtcNow;
+        var blobPath = CreateFile(temp.Path, BlobName(utcNow));
+        var leasePath = $"{blobPath}@{FormatTimestamp(utcNow.AddMinutes(-1))}.lock";
+        var destination = $"{blobPath}@{FormatTimestamp(utcNow.AddMinutes(2))}.lock";
+
+        Assert.Equal(4, PersistentStorageHelper.RemoveReplacedFile(leasePath, destination));
+        Assert.Empty(Directory.GetFiles(temp.Path));
+    }
+
+    [Fact]
+    public void RemoveReplacedFile_ReturnsZeroIfFileDoesNotExist()
+    {
+        using var temp = new TemporaryDirectory();
+
+        var utcNow = DateTime.UtcNow;
+        var blobPath = Path.Combine(temp.Path, BlobName(utcNow));
+        var leasePath = $"{blobPath}@{FormatTimestamp(utcNow.AddMinutes(1))}.lock";
+
+        Assert.Equal(0, PersistentStorageHelper.RemoveReplacedFile(leasePath, $"{blobPath}@{FormatTimestamp(utcNow.AddMinutes(2))}.lock"));
+        Assert.Equal(0, PersistentStorageHelper.RemoveReplacedFile(blobPath, $"{blobPath}@{FormatTimestamp(utcNow.AddMinutes(2))}.lock"));
+    }
+
+    [Theory]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdef.BLOB")]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdef.Blob")]
+    public void IsBlobFileName_RequiresLowercaseExtension(string fileName)
+        => Assert.False(PersistentStorageHelper.IsBlobFileName(fileName));
+
+    [Theory]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789ABCDEF0123456789ABCDEF.blob")]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdeF.blob")]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdeg.blob")]
+    [InlineData("2020-01-01T000000.0000000Z-{0123456789abcdef0123456789abcde}.blob")]
+    public void IsBlobFileName_RequiresLowercaseHexadecimalGuid(string fileName)
+        => Assert.False(PersistentStorageHelper.IsBlobFileName(fileName));
+
+    [Theory]
+    [InlineData("2020-01-01T000000.0000000Z- 0123456789abcdef0123456789abcdef.blob")]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdef .blob")]
+    [InlineData("2020-01-01T000000.0000000Z-\t0123456789abcdef0123456789abcdef.blob")]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdef\t.blob")]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdef\n.blob")]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcde.blob")]
+    [InlineData("2020-01-01T000000.0000000Z-0123456789abcdef0123456789abcdef0.blob")]
+    public void IsBlobFileName_RejectsGuidsThatAreNotExactly32HexCharacters(string fileName)
+        => Assert.False(PersistentStorageHelper.IsBlobFileName(fileName));
+
+    [Theory]
+    [InlineData("2567-02-29T000000.000000Z-0123456789abcdef0123456789abcdef.blob")]
+    [InlineData("2567-02-29 000000.0000000Z-0123456789abcdef0123456789abcdef.blob")]
+    [InlineData("2567-02-29T00:00:00.0000000Z-0123456789abcdef0123456789abcdef.blob")]
+    [InlineData("2567-O2-29T000000.0000000Z-0123456789abcdef0123456789abcdef.blob")]
+    [InlineData("\u0662\u0665\u0666\u0667-02-29T000000.0000000Z-0123456789abcdef0123456789abcdef.blob")]
+    public void IsBlobFileName_RejectsTimestampsInOtherFormats(string fileName)
+        => Assert.False(PersistentStorageHelper.IsBlobFileName(fileName));
+
+    [Fact]
+    public void GetUniqueFileName_UsesInvariantCalendar()
+    {
+        string fileName;
+        DateTime before;
+        DateTime after;
+
+        using (CultureSwitcher.UseCulture("th-TH"))
+        {
+            before = DateTime.UtcNow;
+            fileName = PersistentStorageHelper.GetUniqueFileName(".blob");
+            after = DateTime.UtcNow;
+        }
+
+        Assert.True(PersistentStorageHelper.IsBlobFileName(fileName), $"{fileName} is not a valid blob name.");
+        Assert.InRange(PersistentStorageHelper.GetDateTimeFromBlobName(fileName), before, after);
+    }
+
     internal static string BlobName(DateTime timestamp)
-        => FormattableString.Invariant($"{timestamp:yyyy-MM-ddTHHmmss.fffffffZ}-{Guid.NewGuid():N}.blob");
+        => $"{FormatTimestamp(timestamp)}-{Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture)}.blob";
+
+    internal static string FormatTimestamp(DateTime timestamp)
+        => timestamp.ToString("yyyy-MM-ddTHHmmss.fffffffZ", CultureInfo.InvariantCulture);
 
     internal static string CreateFile(string directory, string fileName)
     {

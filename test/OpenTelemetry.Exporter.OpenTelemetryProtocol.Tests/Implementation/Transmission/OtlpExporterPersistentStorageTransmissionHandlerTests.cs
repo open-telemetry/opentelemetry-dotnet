@@ -116,9 +116,9 @@ public class OtlpExporterPersistentStorageTransmissionHandlerTests
 
         var content = new byte[] { 0x0A, 0x01, 0x02, 0x03, 0xFF };
 
-        // The suffix after the timestamp must not contain '-': the name is parsed by splitting
-        // on the last '-', exactly as the exporter's own "{timestamp}-{guid:N}.blob" names are.
-        var blobName = $"{DateTime.UtcNow.AddMinutes(-1):yyyy-MM-ddTHHmmss.fffffffZ}-storedblob.blob";
+        // The blob must be named the way the exporter names its own blobs ("{timestamp}-{guid:N}.blob"),
+        // otherwise it is not treated as a blob created by the exporter and is ignored.
+        var blobName = FormattableString.Invariant($"{DateTime.UtcNow.AddMinutes(-1):yyyy-MM-ddTHHmmss.fffffffZ}-{Guid.NewGuid():N}.blob");
         File.WriteAllBytes(Path.Combine(temp.Path, blobName), content);
 
         var exportClient = new RecordingExportClient();
